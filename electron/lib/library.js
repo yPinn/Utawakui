@@ -85,6 +85,38 @@ function isServableFilename(filename) {
   return AUDIO_EXTENSIONS.has(path.extname(filename).toLowerCase());
 }
 
+function compareFilenames(a, b) {
+  const lowerA = a.toLowerCase();
+  const lowerB = b.toLowerCase();
+  if (lowerA < lowerB) return -1;
+  if (lowerA > lowerB) return 1;
+  if (a < b) return -1;
+  if (a > b) return 1;
+  return 0;
+}
+
+function trackIdFromFilename(filename) {
+  return path.basename(filename, path.extname(filename));
+}
+
+function compareOptionalStrings(a, b) {
+  const hasA = typeof a === 'string' && a.length > 0;
+  const hasB = typeof b === 'string' && b.length > 0;
+  if (hasA && !hasB) return -1;
+  if (!hasA && hasB) return 1;
+  if (!hasA && !hasB) return 0;
+  return a.localeCompare(b, undefined, { sensitivity: 'base' });
+}
+
+function compareTracks(a, b) {
+  return (
+    compareOptionalStrings(a.artist, b.artist) ||
+    compareOptionalStrings(a.title, b.title) ||
+    compareFilenames(a.filename, b.filename) ||
+    a.id.localeCompare(b.id)
+  );
+}
+
 // trackId is untrusted IPC input — checked against the .separated ROOT
 // specifically, not just `dir`: a trackId of "../evil" resolves to
 // <dir>/evil, which is technically still inside `dir` and would wrongly
@@ -128,10 +160,19 @@ function listTracks(dir) {
 
   const index = loadIndex(dir);
 
+  const seenIds = new Set();
+
   return entries
     .filter((entry) => entry.isFile() && isServableFilename(entry.name))
+    .sort((a, b) => compareFilenames(a.name, b.name))
+    .filter((entry) => {
+      const id = trackIdFromFilename(entry.name);
+      if (seenIds.has(id)) return false;
+      seenIds.add(id);
+      return true;
+    })
     .map((entry) => {
-      const id = path.basename(entry.name, path.extname(entry.name));
+      const id = trackIdFromFilename(entry.name);
       const indexed = index.tracks[id];
       // Existence-checked directly against the filesystem, same as the
       // track enumeration itself — not tracked in library.json, which
@@ -162,7 +203,52 @@ function listTracks(dir) {
           ? `utawakui-media://separated/${encodeURIComponent(id)}/stems.wav`
           : undefined,
       };
-    });
+    })
+    .sort(compareTracks);
+}
+
+// trackId is the filename stem — the extension isn't known ahead of time
+// (mp3/webm/m4a/etc.), so this scans dir the same way listTracks() does
+// rather than trying each extension.
+function findTrackFilename(dir, trackId) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+  const match = entries
+    .filter((entry) => entry.isFile() && isServableFilename(entry.name))
+    .sort((a, b) => compareFilenames(a.name, b.name))
+    .find((entry) => trackIdFromFilename(entry.name) === trackId);
+  return match ? match.name : null;
+}
+
+// Deletes the original audio file, its vocal-separation output (if any),
+// and its library.json entry. Returns false without touching anything if
+// trackId doesn't resolve to a real file — the filesystem enumeration is
+// what listTracks() itself trusts (see the file-level comment above), so
+// this is the same check used to decide whether there's anything to delete.
+function deleteTrack(dir, trackId) {
+  const filename = findTrackFilename(dir, trackId);
+  if (!filename) return false;
+
+  const filePath = resolveTrackPath(dir, filename);
+  if (!filePath) return false;
+  fs.unlinkSync(filePath);
+
+  const separatedDir = resolveSeparatedDir(dir, trackId);
+  if (separatedDir) {
+    fs.rmSync(separatedDir, { recursive: true, force: true });
+  }
+
+  const index = loadIndex(dir);
+  if (trackId in index.tracks) {
+    delete index.tracks[trackId];
+    atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
+  }
+
+  return true;
 }
 
 let backfillInProgress = false;
@@ -259,6 +345,7 @@ function buildRangeResponse(filePath, rangeHeader) {
 
 module.exports = {
   buildRangeResponse,
+  deleteTrack,
   hasSeparation,
   INDEX_FILENAME,
   isServableFilename,

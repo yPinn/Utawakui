@@ -21,6 +21,7 @@ const { loadConfig, saveConfig } = require('./lib/config');
 const { extractVideoId, extractPlaylistId } = require('./lib/youtube');
 const {
   buildRangeResponse,
+  deleteTrack,
   listTracks,
   resolveSeparatedDir,
   resolveSeparatedFilePath,
@@ -28,11 +29,23 @@ const {
   runBackfillPass,
   saveIndexEntry,
 } = require('./lib/library');
+const {
+  createPlaylist,
+  deletePlaylist,
+  loadPlaylists,
+  removeTrackFromAllPlaylists,
+  renamePlaylist,
+  setPlaylistTracks,
+} = require('./lib/playlists');
 const { renderGlyphPng } = require('./lib/thumbar-icons');
 const { ensureModel } = require('./lib/vocalSeparation');
 
 const isDev = process.argv.includes('--dev');
 const MEDIA_SCHEME = 'utawakui-media';
+const APP_NAME = 'Utawakui';
+const APP_USER_MODEL_ID = 'com.utawakui.app';
+
+app.setName(APP_NAME);
 
 // Must run before app.whenReady() — Electron only accepts scheme privilege
 // registration at module load time. The one exception to "everything
@@ -68,6 +81,17 @@ function resolveDownloadDir(config) {
   // OS Music folder, not userData — userData is Chromium's internal engine
   // state; downloads are user content the user may want to browse directly.
   return config.downloadDir || path.join(app.getPath('music'), 'Utawakui');
+}
+
+function quoteWindowsCommandArg(value) {
+  return `"${String(value).replaceAll('"', '\\"')}"`;
+}
+
+function buildRelaunchCommand() {
+  const args = process.defaultApp
+    ? [app.getAppPath(), ...(isDev ? ['--dev'] : [])]
+    : process.argv.slice(1);
+  return [process.execPath, ...args].map(quoteWindowsCommandArg).join(' ');
 }
 
 let mainWindow = null;
@@ -109,9 +133,9 @@ function getThumbarIcon(glyph, systemIsDark) {
   return image;
 }
 
-// No queue yet (see PlayerBar.vue) — prev/next are always disabled,
-// matching the control panel's own transport row. Only the play/pause
-// button is interactive.
+// The renderer now owns playlist queue controls in PlayerBar.vue. The
+// Windows taskbar thumbar still exposes play/pause only until those
+// queue commands are bridged explicitly.
 function updateThumbar() {
   if (process.platform !== 'win32' || !mainWindow) return;
 
@@ -151,7 +175,7 @@ function createWindow() {
     // must match --ui-bg in public/tokens.css — this can't read the CSS
     // variable, keep the two literal values in sync by hand
     backgroundColor: '#20222a',
-    title: 'Utawakui',
+    title: APP_NAME,
     icon: iconPath,
     show: false,
     autoHideMenuBar: true,
@@ -163,6 +187,16 @@ function createWindow() {
       backgroundThrottling: false,
     },
   });
+
+  if (process.platform === 'win32') {
+    mainWindow.setAppDetails({
+      appId: APP_USER_MODEL_ID,
+      appIconPath: iconPath,
+      appIconIndex: 0,
+      relaunchCommand: buildRelaunchCommand(),
+      relaunchDisplayName: APP_NAME,
+    });
+  }
 
   if (isDev) {
     mainWindow.loadURL('http://localhost:5173');
@@ -203,7 +237,7 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
-    if (process.platform === 'win32') app.setAppUserModelId('com.utawakui.app');
+    if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID);
     session.defaultSession.setPermissionRequestHandler(
       (webContents, permission, callback) => {
         callback(false);
@@ -270,6 +304,43 @@ if (!gotSingleInstanceLock) {
         }
       });
       return tracks;
+    });
+
+    ipcMain.handle('library:delete-track', async (event, trackId) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const deleted = deleteTrack(dir, trackId);
+      if (deleted) {
+        // Cascades into any playlist that referenced this track — a
+        // playlist can otherwise end up pointing at a trackId that no
+        // longer has a file, which is harmless (see setPlaylistTracks's
+        // own comment) but pointless to leave behind when we already know
+        // exactly which id just disappeared.
+        removeTrackFromAllPlaylists(dir, trackId);
+        if (mainWindow) mainWindow.webContents.send('library:updated');
+      }
+      return deleted;
+    });
+
+    // Every mutation resolves to the full playlist array so the renderer
+    // can replace its state directly instead of a separate refetch.
+    ipcMain.handle('playlists:list', async () => {
+      return loadPlaylists(resolveDownloadDir(cachedConfig));
+    });
+
+    ipcMain.handle('playlists:create', async (event, name) => {
+      return createPlaylist(resolveDownloadDir(cachedConfig), name);
+    });
+
+    ipcMain.handle('playlists:rename', async (event, id, name) => {
+      return renamePlaylist(resolveDownloadDir(cachedConfig), id, name);
+    });
+
+    ipcMain.handle('playlists:delete', async (event, id) => {
+      return deletePlaylist(resolveDownloadDir(cachedConfig), id);
+    });
+
+    ipcMain.handle('playlists:set-tracks', async (event, id, trackIds) => {
+      return setPlaylistTracks(resolveDownloadDir(cachedConfig), id, trackIds);
     });
 
     ipcMain.handle('yt:list-playlist', async (event, input) => {
@@ -392,11 +463,18 @@ if (!gotSingleInstanceLock) {
       cachedConfig = saveConfig(configPath, {
         downloadDir: result.filePaths[0],
       });
+      // Invalidates both the renderer's track list AND usePlaylists.js's
+      // module-scope playlist cache — that composable survives Setlist tab
+      // switches, so without this push it would keep the old dir's
+      // playlists and silently write them (with stale trackIds) into the
+      // new dir on the next mutation.
+      if (mainWindow) mainWindow.webContents.send('library:updated');
       return result.filePaths[0];
     });
 
     ipcMain.handle('config:reset-download-dir', async () => {
       cachedConfig = saveConfig(configPath, { downloadDir: null });
+      if (mainWindow) mainWindow.webContents.send('library:updated');
       return resolveDownloadDir(cachedConfig);
     });
 

@@ -1,0 +1,380 @@
+import fs from 'fs';
+import os from 'os';
+import path from 'path';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import {
+  loadPlaylists,
+  createPlaylist,
+  renamePlaylist,
+  deletePlaylist,
+  setPlaylistTracks,
+  removeTrackFromAllPlaylists,
+  PLAYLISTS_FILENAME,
+} from './playlists.js';
+
+describe('loadPlaylists', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns an empty array when the file is missing', () => {
+    expect(loadPlaylists(dir)).toEqual([]);
+  });
+
+  it('throws non-missing read errors instead of treating them as empty', () => {
+    fs.mkdirSync(path.join(dir, PLAYLISTS_FILENAME));
+
+    expect(() => loadPlaylists(dir)).toThrow();
+  });
+
+  it('returns an empty array for corrupted JSON and backs up the original', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(filePath, '{not valid json');
+
+    expect(loadPlaylists(dir)).toEqual([]);
+    expect(fs.existsSync(filePath)).toBe(false);
+    const backups = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith(`${PLAYLISTS_FILENAME}.corrupted-`));
+    expect(backups).toHaveLength(1);
+  });
+
+  it('returns an empty array and backs up when the top level has no playlists array', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(filePath, JSON.stringify({ playlists: 'nope' }));
+
+    expect(loadPlaylists(dir)).toEqual([]);
+    expect(fs.existsSync(filePath)).toBe(false);
+  });
+
+  it('returns an empty array and backs up when the top level is an array', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(filePath, JSON.stringify([1, 2, 3]));
+
+    expect(loadPlaylists(dir)).toEqual([]);
+    expect(fs.existsSync(filePath)).toBe(false);
+  });
+
+  it('returns an empty array and backs up when the top level is null', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(filePath, JSON.stringify(null));
+
+    expect(loadPlaylists(dir)).toEqual([]);
+    expect(fs.existsSync(filePath)).toBe(false);
+  });
+
+  it('drops a malformed entry without discarding the rest of the file', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 1,
+        playlists: [
+          { id: 'a', name: 'Good', trackIds: ['t1'] },
+          { id: '', name: 'No id', trackIds: [] },
+          null,
+        ],
+      }),
+    );
+
+    expect(loadPlaylists(dir)).toEqual([
+      { id: 'a', name: 'Good', trackIds: ['t1'], addedAt: {} },
+    ]);
+  });
+
+  it('sanitizes non-string trackIds instead of dropping the whole entry', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 1,
+        playlists: [
+          { id: 'a', name: 'Mix', trackIds: ['t1', 42, null, 't1', 't2'] },
+        ],
+      }),
+    );
+
+    const [playlist] = loadPlaylists(dir);
+    expect(playlist.trackIds).toEqual(['t1', 't2']);
+    expect(playlist.addedAt).toEqual({});
+  });
+
+  it('keeps valid addedAt values for surviving track ids only', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 1,
+        playlists: [
+          {
+            id: 'a',
+            name: 'Mix',
+            trackIds: ['t1', 't2'],
+            addedAt: {
+              t1: '2026-08-10T01:02:03.000Z',
+              t2: 'not a date',
+              stale: '2026-08-10T04:05:06.000Z',
+            },
+          },
+        ],
+      }),
+    );
+
+    const [playlist] = loadPlaylists(dir);
+    expect(playlist.addedAt).toEqual({
+      t1: '2026-08-10T01:02:03.000Z',
+    });
+  });
+});
+
+describe('createPlaylist', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('appends a new playlist with a trimmed name and empty trackIds', () => {
+    const result = createPlaylist(dir, '  安可曲  ');
+    expect(result).toHaveLength(1);
+    expect(result[0].name).toBe('安可曲');
+    expect(result[0].trackIds).toEqual([]);
+    expect(result[0].addedAt).toEqual({});
+    expect(typeof result[0].id).toBe('string');
+    expect(result[0].id.length).toBeGreaterThan(0);
+  });
+
+  it('uses the first default playlist number when no name is provided', () => {
+    const result = createPlaylist(dir);
+
+    expect(result[0].name).toBe('播放清單 #1');
+  });
+
+  it('uses the first unused default playlist number', () => {
+    createPlaylist(dir);
+    const [, second] = createPlaylist(dir);
+    renamePlaylist(dir, second.id, '播放清單 #3');
+
+    const result = createPlaylist(dir);
+
+    expect(result.map((p) => p.name)).toEqual([
+      '播放清單 #1',
+      '播放清單 #3',
+      '播放清單 #2',
+    ]);
+  });
+
+  it('treats a blank explicit name as a request for a default name', () => {
+    const result = createPlaylist(dir, '   ');
+
+    expect(result[0].name).toBe('播放清單 #1');
+  });
+
+  it('assigns unique ids across two creates and preserves append order', () => {
+    createPlaylist(dir, 'First');
+    const result = createPlaylist(dir, 'Second');
+    expect(result).toHaveLength(2);
+    expect(result[0].id).not.toBe(result[1].id);
+    expect(result.map((p) => p.name)).toEqual(['First', 'Second']);
+  });
+
+  it('succeeds even when the download directory does not exist yet', () => {
+    const freshDir = path.join(dir, 'does-not-exist-yet');
+    expect(() => createPlaylist(freshDir, 'First Playlist')).not.toThrow();
+    expect(loadPlaylists(freshDir)).toHaveLength(1);
+  });
+
+  it('does not overwrite an unreadable playlist file with a new empty base', () => {
+    fs.mkdirSync(path.join(dir, PLAYLISTS_FILENAME));
+
+    expect(() => createPlaylist(dir, 'Should Not Save')).toThrow();
+    expect(fs.statSync(path.join(dir, PLAYLISTS_FILENAME)).isDirectory()).toBe(
+      true,
+    );
+  });
+
+  it('persists across a fresh load', () => {
+    createPlaylist(dir, 'Persisted');
+    expect(loadPlaylists(dir)[0].name).toBe('Persisted');
+  });
+
+  it('leaves no leftover .tmp file after saving', () => {
+    createPlaylist(dir, 'Song');
+    expect(fs.existsSync(path.join(dir, `${PLAYLISTS_FILENAME}.tmp`))).toBe(
+      false,
+    );
+  });
+});
+
+describe('renamePlaylist', () => {
+  let dir;
+  let id;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+    id = createPlaylist(dir, 'Original')[0].id;
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('updates the name and persists it', () => {
+    const result = renamePlaylist(dir, id, 'Renamed');
+    expect(result[0].name).toBe('Renamed');
+    expect(loadPlaylists(dir)[0].name).toBe('Renamed');
+  });
+
+  it('returns the list unchanged for an unknown id, without throwing', () => {
+    const before = loadPlaylists(dir);
+    const result = renamePlaylist(dir, 'unknown-id', 'X');
+    expect(result).toEqual(before);
+  });
+});
+
+describe('deletePlaylist', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('removes the matching playlist and leaves the rest', () => {
+    createPlaylist(dir, 'Keep');
+    const [, toDelete] = createPlaylist(dir, 'Remove');
+    const result = deletePlaylist(dir, toDelete.id);
+    expect(result.map((p) => p.name)).toEqual(['Keep']);
+  });
+
+  it('returns the list unchanged for an unknown id, without throwing', () => {
+    createPlaylist(dir, 'Keep');
+    const before = loadPlaylists(dir);
+    const result = deletePlaylist(dir, 'unknown-id');
+    expect(result).toEqual(before);
+  });
+});
+
+describe('setPlaylistTracks', () => {
+  let dir;
+  let id;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+    id = createPlaylist(dir, 'List')[0].id;
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    vi.useRealTimers();
+  });
+
+  it('sets and persists the track order exactly', () => {
+    vi.setSystemTime(new Date('2026-08-10T01:02:03.000Z'));
+    const result = setPlaylistTracks(dir, id, ['c', 'a', 'b']);
+    expect(result[0].trackIds).toEqual(['c', 'a', 'b']);
+    expect(loadPlaylists(dir)[0].trackIds).toEqual(['c', 'a', 'b']);
+    expect(result[0].addedAt).toEqual({
+      c: '2026-08-10T01:02:03.000Z',
+      a: '2026-08-10T01:02:03.000Z',
+      b: '2026-08-10T01:02:03.000Z',
+    });
+  });
+
+  it('round-trips a reorder of the same set exactly without changing addedAt', () => {
+    vi.setSystemTime(new Date('2026-08-10T01:02:03.000Z'));
+    setPlaylistTracks(dir, id, ['a', 'b', 'c']);
+    vi.setSystemTime(new Date('2026-08-11T01:02:03.000Z'));
+    const result = setPlaylistTracks(dir, id, ['b', 'c', 'a']);
+    expect(result[0].trackIds).toEqual(['b', 'c', 'a']);
+    expect(result[0].addedAt).toEqual({
+      a: '2026-08-10T01:02:03.000Z',
+      b: '2026-08-10T01:02:03.000Z',
+      c: '2026-08-10T01:02:03.000Z',
+    });
+  });
+
+  it('dedupes track ids', () => {
+    vi.setSystemTime(new Date('2026-08-10T01:02:03.000Z'));
+    const result = setPlaylistTracks(dir, id, ['a', 'b', 'a']);
+    expect(result[0].trackIds).toEqual(['a', 'b']);
+    expect(result[0].addedAt).toEqual({
+      a: '2026-08-10T01:02:03.000Z',
+      b: '2026-08-10T01:02:03.000Z',
+    });
+  });
+
+  it('drops addedAt values for removed tracks', () => {
+    vi.setSystemTime(new Date('2026-08-10T01:02:03.000Z'));
+    setPlaylistTracks(dir, id, ['a', 'b']);
+
+    const result = setPlaylistTracks(dir, id, ['b']);
+
+    expect(result[0].trackIds).toEqual(['b']);
+    expect(result[0].addedAt).toEqual({
+      b: '2026-08-10T01:02:03.000Z',
+    });
+  });
+
+  it('returns the list unchanged for an unknown id, without throwing', () => {
+    const before = loadPlaylists(dir);
+    const result = setPlaylistTracks(dir, 'unknown-id', ['a']);
+    expect(result).toEqual(before);
+  });
+});
+
+describe('removeTrackFromAllPlaylists', () => {
+  let dir;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    vi.useRealTimers();
+  });
+
+  it('removes the track id from every playlist that has it, leaving others untouched', () => {
+    vi.setSystemTime(new Date('2026-08-10T01:02:03.000Z'));
+    const id1 = createPlaylist(dir, 'A')[0].id;
+    const [, p2] = createPlaylist(dir, 'B');
+    const id2 = p2.id;
+    setPlaylistTracks(dir, id1, ['a', 'shared', 'b']);
+    setPlaylistTracks(dir, id2, ['shared', 'c']);
+
+    const result = removeTrackFromAllPlaylists(dir, 'shared');
+    const byId = Object.fromEntries(result.map((p) => [p.id, p]));
+    expect(byId[id1].trackIds).toEqual(['a', 'b']);
+    expect(byId[id2].trackIds).toEqual(['c']);
+    expect(byId[id1].addedAt).not.toHaveProperty('shared');
+    expect(byId[id2].addedAt).not.toHaveProperty('shared');
+  });
+
+  it('is a no-op (and does not write) when the track is in no playlist', () => {
+    const id = createPlaylist(dir, 'A')[0].id;
+    setPlaylistTracks(dir, id, ['a', 'b']);
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    const before = fs.statSync(filePath).mtimeMs;
+
+    const result = removeTrackFromAllPlaylists(dir, 'never-there');
+
+    expect(result[0].trackIds).toEqual(['a', 'b']);
+    expect(fs.statSync(filePath).mtimeMs).toBe(before);
+  });
+});

@@ -13,6 +13,7 @@ import {
   saveIndexEntry,
   buildRangeResponse,
   runBackfillPass,
+  deleteTrack,
   INDEX_FILENAME,
 } from './library.js';
 
@@ -217,6 +218,44 @@ describe('listTracks', () => {
     expect(track.needsBackfill).toBe(false);
   });
 
+  it('sorts by artist first, then title, then filename fallback', () => {
+    fs.writeFileSync(path.join(dir, 'zeta.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'alpha.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'orphan.mp3'), 'x');
+    saveIndexEntry(dir, 'zeta', {
+      title: 'Second Song',
+      artist: 'Beta',
+    });
+    saveIndexEntry(dir, 'alpha', {
+      title: 'First Song',
+      artist: 'Alpha',
+    });
+
+    expect(listTracks(dir).map((track) => track.id)).toEqual([
+      'alpha',
+      'zeta',
+      'orphan',
+    ]);
+  });
+
+  it('sorts tracks by title within the same artist', () => {
+    fs.writeFileSync(path.join(dir, 'later.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'earlier.mp3'), 'x');
+    saveIndexEntry(dir, 'later', {
+      title: 'B Song',
+      artist: 'Same Artist',
+    });
+    saveIndexEntry(dir, 'earlier', {
+      title: 'A Song',
+      artist: 'Same Artist',
+    });
+
+    expect(listTracks(dir).map((track) => track.id)).toEqual([
+      'earlier',
+      'later',
+    ]);
+  });
+
   it('falls back to the id for title and needs backfill when unindexed', () => {
     fs.writeFileSync(path.join(dir, 'def.mp3'), 'x');
     const [track] = listTracks(dir);
@@ -238,6 +277,17 @@ describe('listTracks', () => {
     fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
     saveIndexEntry(dir, 'orphan', { title: 'Deleted Track' });
     expect(listTracks(dir).map((t) => t.id)).toEqual(['abc']);
+  });
+
+  it('deduplicates same-stem audio files so renderer keys and playlist ids do not collide', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'abc.webm'), 'y');
+
+    const tracks = listTracks(dir);
+
+    expect(tracks).toHaveLength(1);
+    expect(tracks[0].id).toBe('abc');
+    expect(tracks[0].filename).toBe('abc.mp3');
   });
 
   it('reports hasSeparation false and omits stemsUrl when unseparated', () => {
@@ -381,6 +431,70 @@ describe('buildRangeResponse', () => {
 
   it('falls back to a full 200 response for a malformed Range header', () => {
     expect(buildRangeResponse(filePath, 'not-a-range').status).toBe(200);
+  });
+});
+
+describe('deleteTrack', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-delete-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('removes the audio file and returns true', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    expect(deleteTrack(dir, 'abc')).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(false);
+  });
+
+  it('removes the matching .separated/<trackId> directory too', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    const sepDir = path.join(dir, '.separated', 'abc');
+    fs.mkdirSync(sepDir, { recursive: true });
+    fs.writeFileSync(path.join(sepDir, 'stems.wav'), 'x');
+
+    expect(deleteTrack(dir, 'abc')).toBe(true);
+    expect(fs.existsSync(sepDir)).toBe(false);
+  });
+
+  it('removes the library.json entry', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    saveIndexEntry(dir, 'abc', { title: 'Song' });
+
+    deleteTrack(dir, 'abc');
+    expect(loadIndex(dir).tracks.abc).toBeUndefined();
+  });
+
+  it('does not touch other tracks or their separated output', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    fs.writeFileSync(path.join(dir, 'def.mp3'), 'y');
+    const sepDir = path.join(dir, '.separated', 'def');
+    fs.mkdirSync(sepDir, { recursive: true });
+    fs.writeFileSync(path.join(sepDir, 'stems.wav'), 'x');
+
+    deleteTrack(dir, 'abc');
+    expect(fs.existsSync(path.join(dir, 'def.mp3'))).toBe(true);
+    expect(fs.existsSync(sepDir)).toBe(true);
+  });
+
+  it('returns false and touches nothing when trackId has no matching file', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    expect(deleteTrack(dir, 'missing')).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(true);
+  });
+
+  it('deletes the same deterministic representative listTracks exposes for duplicate stems', () => {
+    fs.writeFileSync(path.join(dir, 'abc.webm'), 'y');
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+
+    expect(listTracks(dir)[0].filename).toBe('abc.mp3');
+    expect(deleteTrack(dir, 'abc')).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'abc.webm'))).toBe(true);
   });
 });
 
