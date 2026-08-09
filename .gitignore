@@ -1,6 +1,7 @@
 node_modules/
 dist/
 *.log
+tasks/
 
 # Vocal-separation model cache (electron/lib/vocalSeparation.js's
 # ensureModel) — a ~50MB third-party asset downloaded on first use, not
@@ -8,6 +9,7 @@ dist/
 # is <userData>/models/, outside the repo entirely.
 .models/
 
+.agents/settings.local.json
 .claude/settings.local.json
 .env
 .env.local

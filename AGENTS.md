@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project
 
@@ -47,9 +47,9 @@ The codebase is a Vite + Vue 3 control panel inside an Electron shell (Phase 0 i
 - **Data model**: continuous autosave is the baseline; named "preset" snapshots (playlist + theme + layout) are an optional additional layer on top, not a replacement for autosave.
 - **`<userData>/config.json` is machine-local settings, never the shareable layer**: `electron/lib/config.js` (`loadConfig`/`saveConfig`) persists things like the download directory — anything that's meaningful only on this machine (a filesystem path, later maybe OBS connection info). It is **never** exported or included in a preset. spec.md §2's named-preset contract is explicitly "歌單+主題+顯示設定" (playlist + theme + display settings) — no machine paths — so when that feature gets built, it must be its own file format that structurally excludes `config.json`'s keys, not a filter applied on top of this one. Like `downloader.js`, `config.js` takes its file path as a parameter and has no Electron API calls, so it's testable under plain Node. It's deliberately tolerant of a missing, corrupted, or hand-edited file (falls back to per-field defaults rather than throwing — see spec.md's MVP requirement for corruption backup/recovery) and writes atomically (`.tmp` + rename) to avoid a half-written file surviving a crash.
 
-## `.claude/` project conventions
+## `.agents/` project conventions
 
-`.claude/agents/`, `.claude/skills/`, `.claude/commands/`, and `.claude/settings.json` are project standard and tracked in git — this is how AI-assisted development conventions stay consistent across contributors/sessions on this repo. Only `.claude/settings.local.json` is gitignored (personal machine-local overrides, per Claude Code's own convention). Don't pre-create empty agents/skills/commands speculatively — add them when a real, repeated need shows up (see `.claude/skills/run-electron/SKILL.md` for the kind of thing that belongs there: concrete, hard-won knowledge about this specific repo/sandbox, not generic advice).
+`.agents/agents/`, `.agents/skills/`, `.agents/commands/`, and `.agents/settings.json` are project standard and tracked in git — this is how AI-assisted development conventions stay consistent across contributors/sessions on this repo. Only `.agents/settings.local.json` is gitignored (personal machine-local overrides, per Codex's own convention). Don't pre-create empty agents/skills/commands speculatively — add them when a real, repeated need shows up (see `.agents/skills/run-electron/SKILL.md` for the kind of thing that belongs there: concrete, hard-won knowledge about this specific repo/sandbox, not generic advice).
 
 ## CSS tokens
 
@@ -78,7 +78,7 @@ Icon sizing has the same hand-synced-literal problem, in the opposite direction:
 
 ## Shared UI primitives (`src/components/ui/`)
 
-`UiButton.vue` (ghost/accent, icon + optional label), `UiTrackRow.vue` (title/artist/duration list row with `lead`/`trail` slots, or pass a whole `:track` object), and `UiPageHeader.vue` (page title + optional `#actions` slot, replacing each view's own `<h1>`) exist because the same CSS had drifted into multiple files with slightly different values before being consolidated. Same threshold as the `.claude/` conventions above: add a new primitive here only once a real, already-existing duplication needs collapsing — don't pre-build a component library for UI that doesn't exist yet.
+`UiButton.vue` (ghost/accent, icon + optional label), `UiTrackRow.vue` (title/artist/duration list row with `lead`/`trail` slots, or pass a whole `:track` object), and `UiPageHeader.vue` (page title + optional `#actions` slot, replacing each view's own `<h1>`) exist because the same CSS had drifted into multiple files with slightly different values before being consolidated. Same threshold as the `.agents/` conventions above: add a new primitive here only once a real, already-existing duplication needs collapsing — don't pre-build a component library for UI that doesn't exist yet.
 
 Two call sites are **deliberately not** using `UiButton`, not oversights:
 
