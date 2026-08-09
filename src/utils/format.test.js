@@ -1,0 +1,48 @@
+import { describe, it, expect } from 'vitest';
+import { formatDuration } from './format.js';
+
+describe('formatDuration', () => {
+  it('formats a normal duration', () => {
+    expect(formatDuration(261)).toBe('4:21');
+  });
+
+  it('formats an exact minute', () => {
+    expect(formatDuration(120)).toBe('2:00');
+  });
+
+  it('formats zero', () => {
+    expect(formatDuration(0)).toBe('0:00');
+  });
+
+  it('formats a sub-minute duration', () => {
+    expect(formatDuration(45)).toBe('0:45');
+  });
+
+  it('floors fractional seconds', () => {
+    expect(formatDuration(45.9)).toBe('0:45');
+  });
+
+  it('formats ten-plus minutes', () => {
+    expect(formatDuration(630)).toBe('10:30');
+  });
+
+  it('falls back to --:-- for NaN', () => {
+    expect(formatDuration(NaN)).toBe('--:--');
+  });
+
+  it('falls back to --:-- for Infinity', () => {
+    expect(formatDuration(Infinity)).toBe('--:--');
+  });
+
+  it('falls back to --:-- for undefined', () => {
+    expect(formatDuration(undefined)).toBe('--:--');
+  });
+
+  // Not guarded: state.currentTime/state.duration only ever come from the
+  // <audio> element, which the browser guarantees is non-negative. This
+  // documents the actual (garbled) output rather than adding a guard for
+  // an input that can't occur in practice.
+  it("garbles negative input, which can't happen in practice", () => {
+    expect(formatDuration(-5)).toBe('-1:-5');
+  });
+});

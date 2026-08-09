@@ -1,0 +1,20 @@
+{
+  "extraKnownMarketplaces": {
+    "gsap-skills": {
+      "source": {
+        "source": "github",
+        "repo": "greensock/gsap-skills"
+      }
+    },
+    "vue-skills": {
+      "source": {
+        "source": "github",
+        "repo": "vuejs-ai/skills"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "gsap-skills@gsap-skills": true,
+    "vue-skills-bundle@vue-skills": true
+  }
+}

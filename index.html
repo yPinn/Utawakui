@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="zh-TW">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; media-src 'self' utawakui-media:"
+    />
+    <title>Utawakui</title>
+    <link rel="stylesheet" href="/tokens.css" />
+    <style>
+      body {
+        margin: 0;
+        height: 100vh;
+        background: var(--ui-bg);
+        color: var(--ui-text);
+        font-family: var(--font-ui);
+        font-size: var(--ui-text-md);
+      }
+      #app {
+        height: 100%;
+      }
+      /* color-scheme hardcoded to dark for now — tokens.css only has one
+         palette yet; needs to follow the active theme once light exists. */
+      input[type='range'] {
+        color-scheme: dark;
+        accent-color: var(--ui-accent);
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
