@@ -1,8 +1,15 @@
+import { onUnmounted } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { isEditableTarget } from '../utils/dom.js';
 
 // Global keyboard shortcuts — instantiated once in App.vue, which lives
-// for the app's whole lifetime, so there's no unmount to clean up on.
+// for the app's whole lifetime. The listener is still removed on unmount
+// (via onUnmounted) rather than left to leak: in prod App.vue never
+// unmounts so this is a no-op, but under `npm run dev` Vite HMR re-runs
+// this composable's setup on every edit without a real unmount, and
+// without this cleanup each reload stacks another 'keydown' listener —
+// e.g. a single arrow-key press bumping volume by 30% instead of 10%
+// after two hot reloads.
 // Ignored while typing in an editable field, and whenever a modifier key
 // is held (reserves Ctrl/Alt/Cmd+<key> combos for future shortcuts).
 
@@ -20,7 +27,7 @@ export function useKeyboardShortcuts() {
     setVolume(Math.round(next * 100) / 100);
   }
 
-  window.addEventListener('keydown', (event) => {
+  function handleKeydown(event) {
     if (event.ctrlKey || event.altKey || event.metaKey) return;
     if (isEditableTarget(event.target)) return;
 
@@ -44,5 +51,8 @@ export function useKeyboardShortcuts() {
       default:
         break;
     }
-  });
+  }
+
+  window.addEventListener('keydown', handleKeydown);
+  onUnmounted(() => window.removeEventListener('keydown', handleKeydown));
 }
