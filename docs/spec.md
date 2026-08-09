@@ -57,7 +57,7 @@
 
 ## 4. 技術架構
 
-```
+```text
 Overlay(純 HTML/CSS/JS)→ OBS Browser Source 讀取,與殼技術棧解耦
 串流平台 API 用戶端 → Spotify Web API(讀取歌單)/ YT Music 目錄解析,OAuth 走系統瀏覽器彈出+本機回呼監聽
 音源下載 → yt-dlp 外部程序

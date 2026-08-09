@@ -22,6 +22,8 @@ jobs:
 
       - run: npm run format:check
 
+      - run: npm run lint:md
+
       - run: npm test
 
       - run: npm run build
