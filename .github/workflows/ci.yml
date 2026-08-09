@@ -10,6 +10,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # full history, not just the latest commit — gitleaks below scans all of it
+
+      - name: Gitleaks secret scan
+        uses: docker://ghcr.io/gitleaks/gitleaks:latest
+        with:
+          args: detect --source . --verbose --redact
 
       - uses: actions/setup-node@v4
         with:
@@ -17,6 +24,10 @@ jobs:
           cache: npm
 
       - run: npm ci
+
+      # critical only — onnxruntime-node's adm-zip dependency has a known
+      # high-severity advisory with no non-breaking fix; not blocking CI on it
+      - run: npm audit --audit-level=critical
 
       - run: npm run lint
 
