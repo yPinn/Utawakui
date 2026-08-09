@@ -1,17 +1,10 @@
 import { usePlayer } from './usePlayer.js';
+import { isEditableTarget } from '../utils/dom.js';
 
 // Global keyboard shortcuts — instantiated once in App.vue, which lives
 // for the app's whole lifetime, so there's no unmount to clean up on.
 // Ignored while typing in an editable field, and whenever a modifier key
 // is held (reserves Ctrl/Alt/Cmd+<key> combos for future shortcuts).
-function isEditableTarget(target) {
-  if (!target) return false;
-  return (
-    target.tagName === 'INPUT' ||
-    target.tagName === 'TEXTAREA' ||
-    target.isContentEditable
-  );
-}
 
 const VOLUME_STEP = 0.1;
 
