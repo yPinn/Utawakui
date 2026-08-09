@@ -6,7 +6,12 @@ defineProps({
 
 <template>
   <div class="ui-page-header">
-    <h1 class="ui-page-header__title">{{ title }}</h1>
+    <h1 class="ui-page-header__title">
+      <!-- Optional override for an inline-editable title (e.g. renaming a
+           playlist in place) — every existing caller keeps rendering the
+           plain title prop since they don't fill this slot. -->
+      <slot name="title">{{ title }}</slot>
+    </h1>
     <div v-if="$slots.actions" class="ui-page-header__actions">
       <slot name="actions" />
     </div>

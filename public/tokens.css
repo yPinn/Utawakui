@@ -6,8 +6,10 @@
   --ui-text: #f4f4f5;
   --ui-text-muted: #9a9ba5;
   --ui-border: #3a3d4a;
+  --ui-overlay-shadow: 0 12px 30px rgb(0 0 0 / 28%);
   --ui-accent: #6c8cff;
   --ui-accent-hover: #7f9cff;
+  --ui-sort-indicator: #1ed760;
   /* Semantic "text/icon on top of --ui-accent" — not just an alias for
      --ui-bg. They read the same in dark theme, but a light theme's --ui-bg
      would go white, which would break every accent-filled control if this
@@ -25,6 +27,8 @@
   --ui-text-sm: 0.875rem; /* 14px */
   --ui-text-md: 1rem; /* 16px */
   --ui-text-lg: 1.25rem; /* 20px */
+  --ui-text-xl: 2rem; /* 32px */
+  --ui-text-2xl: 2.5rem; /* 40px */
   --ui-font-weight-strong: 600;
 
   --ui-radius: 6px;

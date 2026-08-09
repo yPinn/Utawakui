@@ -20,6 +20,15 @@
       #app {
         height: 100%;
       }
+      * {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      *::-webkit-scrollbar {
+        width: 0;
+        height: 0;
+        display: none;
+      }
       /* color-scheme hardcoded to dark for now — tokens.css only has one
          palette yet; needs to follow the active theme once light exists. */
       input[type='range'] {
