@@ -5,9 +5,20 @@ import { reactive, readonly } from 'vue';
 // and <audio> element.
 
 const DEFAULT_VOLUME = 0.5;
+export const PLAYBACK_MODES = {
+  sequence: 'sequence',
+  repeatList: 'repeat-list',
+  repeatOne: 'repeat-one',
+};
+const PLAYBACK_MODE_ORDER = [
+  PLAYBACK_MODES.sequence,
+  PLAYBACK_MODES.repeatList,
+  PLAYBACK_MODES.repeatOne,
+];
 // AudioParam.setTargetAtTime ramp: an instant 0<->1 gain jump is audible as
 // a click; ~30ms is short enough to feel immediate but long enough not to.
 const GAIN_RAMP_SECONDS = 0.03;
+const LOOP_WRAP_EDGE_SECONDS = 1;
 
 const audio = new Audio();
 // Required or createMediaElementSource() below produces silence —
@@ -42,8 +53,9 @@ splitter.connect(mergerVoc, 2, 0);
 splitter.connect(mergerVoc, 3, 1);
 
 const vocalGain = audioCtx.createGain();
-// Defaults ON — see state.guideVocalLevel below for why.
-vocalGain.gain.value = 1;
+// Defaults off and resets per track. Guide vocal is a song-specific assist,
+// not a session-wide playback preference.
+vocalGain.gain.value = 0;
 mergerVoc.connect(vocalGain);
 
 const masterGain = audioCtx.createGain();
@@ -55,6 +67,11 @@ masterGain.connect(audioCtx.destination);
 function rampGain(audioParam, target) {
   audioParam.setTargetAtTime(target, audioCtx.currentTime, GAIN_RAMP_SECONDS);
 }
+
+function setGuideVocalLevel(level) {
+  state.guideVocalLevel = level;
+  rampGain(vocalGain.gain, level);
+}
 // ----------------------------------------------------------------------
 
 const state = reactive({
@@ -64,51 +81,71 @@ const state = reactive({
   duration: 0,
   volume: DEFAULT_VOLUME,
   isMuted: false,
+  playbackMode: PLAYBACK_MODES.sequence,
   isLooping: false,
   error: null,
-  // On/off only (0 or 1), session-global not per-track. Defaults on: the
-  // guide vocal should be audible by default, with a one-click toggle to
-  // drop it once the singer is confident.
-  guideVocalLevel: 1,
+  // On/off only (0 or 1), reset to off whenever a new track is loaded.
+  guideVocalLevel: 0,
 });
+
+const endedListeners = new Set();
+let lastObservedCurrentTime = 0;
 
 // Two kinds of state, written two different ways:
 // - isPlaying/currentTime/duration/error can change on their own (autoplay
 //   rejection, track finishing, decode errors) — written ONLY from the
 //   element's events below. Actions never assign them directly; that
 //   second write path is exactly how this would drift out of sync.
-// - volume/isMuted/isLooping/guideVocalLevel only change via our own
-//   actions (no native controls UI to flip them behind our back), so
-//   those actions write the AudioParam/element property and the state
-//   field directly — no event to listen for, no desync risk.
-audio.addEventListener('play', () => {
+// - volume/isMuted/playbackMode/guideVocalLevel mostly change via our own
+//   actions. The one event-owned guide-vocal write is native repeat-one
+//   wraparound: audio.loop restarts the same media without calling
+//   playTrack(), so the per-track default-off rule has to be enforced here.
+function handlePlay() {
   state.isPlaying = true;
-});
-audio.addEventListener('pause', () => {
+}
+
+function handlePause() {
   state.isPlaying = false;
-});
-audio.addEventListener('ended', () => {
-  // No auto-advance — there's no queue concept yet. That's a separate,
-  // later feature; for now the track just stops (unless looping, in which
-  // case the browser restarts it and this event doesn't fire at all).
+}
+
+function handleEnded() {
   state.isPlaying = false;
-});
-audio.addEventListener('timeupdate', () => {
-  state.currentTime = audio.currentTime;
-});
-audio.addEventListener('loadedmetadata', () => {
+  endedListeners.forEach((listener) => listener());
+}
+
+function handleTimeUpdate() {
+  const nextTime = audio.currentTime;
+  if (isRepeatOneLoopWrap(lastObservedCurrentTime, nextTime)) {
+    setGuideVocalLevel(0);
+  }
+  lastObservedCurrentTime = nextTime;
+  state.currentTime = nextTime;
+}
+
+function handleLoadedMetadata() {
   state.duration = audio.duration;
-});
-audio.addEventListener('error', () => {
+  lastObservedCurrentTime = audio.currentTime || 0;
+}
+
+function handleError() {
   state.error = audio.error ? audio.error.message : 'playback error';
   state.isPlaying = false;
-});
+}
+
+audio.addEventListener('play', handlePlay);
+audio.addEventListener('pause', handlePause);
+audio.addEventListener('ended', handleEnded);
+audio.addEventListener('timeupdate', handleTimeUpdate);
+audio.addEventListener('loadedmetadata', handleLoadedMetadata);
+audio.addEventListener('error', handleError);
 
 async function playTrack(track) {
   state.error = null;
   state.track = track;
   state.currentTime = 0;
   state.duration = 0;
+  lastObservedCurrentTime = 0;
+  setGuideVocalLevel(0);
   audio.src = track.url;
   try {
     // Graph output is silent while suspended (its initial state) — every
@@ -140,7 +177,39 @@ function toggle() {
 }
 
 function seek(time) {
+  lastObservedCurrentTime = time;
   audio.currentTime = time;
+}
+
+function restartTrack() {
+  if (!state.track) return;
+  setGuideVocalLevel(0);
+  seek(0);
+}
+
+function clearTrack(trackId = null) {
+  if (trackId !== null && state.track?.id !== trackId) return false;
+
+  audio.pause();
+  audio.removeAttribute('src');
+  audio.load();
+  state.track = null;
+  state.currentTime = 0;
+  state.duration = 0;
+  state.error = null;
+  lastObservedCurrentTime = 0;
+  setGuideVocalLevel(0);
+  return true;
+}
+
+function isRepeatOneLoopWrap(previousTime, nextTime) {
+  return (
+    state.playbackMode === PLAYBACK_MODES.repeatOne &&
+    Number.isFinite(state.duration) &&
+    state.duration > 0 &&
+    previousTime >= state.duration - LOOP_WRAP_EDGE_SECONDS &&
+    nextTime <= LOOP_WRAP_EDGE_SECONDS
+  );
 }
 
 function setVolume(volume) {
@@ -153,19 +222,61 @@ function toggleMute() {
   rampGain(masterGain.gain, state.isMuted ? 0 : state.volume);
 }
 
-// Native looping. Deliberately not reset by playTrack() — like mute, this
-// is a mode the user turned on, not a per-track setting.
-function toggleRepeat() {
-  audio.loop = !audio.loop;
+function setPlaybackMode(mode) {
+  const nextMode = PLAYBACK_MODE_ORDER.includes(mode)
+    ? mode
+    : PLAYBACK_MODES.sequence;
+  state.playbackMode = nextMode;
+  audio.loop = nextMode === PLAYBACK_MODES.repeatOne;
   state.isLooping = audio.loop;
+}
+
+function cyclePlaybackMode() {
+  const index = PLAYBACK_MODE_ORDER.indexOf(state.playbackMode);
+  const nextIndex = index === -1 ? 0 : (index + 1) % PLAYBACK_MODE_ORDER.length;
+  setPlaybackMode(PLAYBACK_MODE_ORDER[nextIndex]);
+}
+
+// Backward-compatible alias for older callers; the UI now cycles through
+// sequence, list repeat, and single-track repeat.
+function toggleRepeat() {
+  cyclePlaybackMode();
+}
+
+function onEnded(listener) {
+  endedListeners.add(listener);
+  return () => endedListeners.delete(listener);
+}
+
+function cleanupPlayerResources() {
+  audio.removeEventListener('play', handlePlay);
+  audio.removeEventListener('pause', handlePause);
+  audio.removeEventListener('ended', handleEnded);
+  audio.removeEventListener('timeupdate', handleTimeUpdate);
+  audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
+  audio.removeEventListener('error', handleError);
+  endedListeners.clear();
+  audio.pause();
+  audio.removeAttribute('src');
+  audio.load();
+  sourceNode.disconnect();
+  splitter.disconnect();
+  mergerInst.disconnect();
+  mergerVoc.disconnect();
+  vocalGain.disconnect();
+  masterGain.disconnect();
+  audioCtx.close();
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(cleanupPlayerResources);
 }
 
 // Icon toggle only — no adjustable level. 0 and 1 are the only two values
 // state.guideVocalLevel ever takes.
 function toggleGuideVocal() {
   const next = state.guideVocalLevel > 0 ? 0 : 1;
-  state.guideVocalLevel = next;
-  rampGain(vocalGain.gain, next);
+  setGuideVocalLevel(next);
 }
 
 export function usePlayer() {
@@ -176,9 +287,14 @@ export function usePlayer() {
     pause,
     toggle,
     seek,
+    restartTrack,
+    clearTrack,
     setVolume,
     toggleMute,
+    setPlaybackMode,
+    cyclePlaybackMode,
     toggleRepeat,
     toggleGuideVocal,
+    onEnded,
   };
 }

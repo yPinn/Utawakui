@@ -1,12 +1,11 @@
 <script setup>
-// Previous/next stay disabled — there's no queue concept yet, only a
-// single "currently playing track" from usePlayer. That's a separate,
-// later feature; wiring fake prev/next here would be dishonest UI.
-import { computed } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
+  ListMusic,
   MicVocal,
   Pause,
   Play,
+  Repeat,
   Repeat1,
   Shuffle,
   SkipBack,
@@ -14,20 +13,36 @@ import {
   Volume2,
   VolumeX,
 } from '@lucide/vue';
-import { usePlayer } from '../composables/usePlayer.js';
+import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
+import { PLAYBACK_MODES, usePlayer } from '../composables/usePlayer.js';
 import { formatDuration } from '../utils/format.js';
+import { toPlayableTrack } from '../utils/playableTrack.js';
 import { ICON_SIZE } from '../constants/ui.js';
+import PlaybackQueuePanel from './PlaybackQueuePanel.vue';
 import UiButton from './ui/UiButton.vue';
 
 const {
   state,
+  playTrack,
   toggle,
   seek,
+  restartTrack,
   setVolume,
   toggleMute,
-  toggleRepeat,
+  cyclePlaybackMode,
   toggleGuideVocal,
+  onEnded,
 } = usePlayer();
+const {
+  state: queueState,
+  canGoNext,
+  previousTrack,
+  nextTrack,
+  restartSourceQueue,
+  toggleShuffle,
+} = usePlaybackQueue();
+
+const isQueueOpen = ref(false);
 
 const progress = computed({
   get: () => state.currentTime,
@@ -40,41 +55,101 @@ const volume = computed({
 });
 
 const volumePercent = computed(() => Math.round(state.volume * 100));
+const canShuffle = computed(() => queueState.tracks.length > 1);
+const playbackModeIcon = computed(() =>
+  state.playbackMode === PLAYBACK_MODES.repeatOne ? Repeat1 : Repeat,
+);
+const playbackModeActionLabel = computed(() => {
+  if (state.playbackMode === PLAYBACK_MODES.repeatList) {
+    return '啟用單曲循環';
+  }
+  if (state.playbackMode === PLAYBACK_MODES.repeatOne) {
+    return '停用重複播放';
+  }
+  return '啟用重複播放';
+});
+const playbackModeActive = computed(
+  () => state.playbackMode !== PLAYBACK_MODES.sequence,
+);
 
 // SetlistView always plays a separated track's stems variant, so "has
 // separation" and "stems are playing" are the same check.
 const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
+
+function playQueuedTrack(track) {
+  if (!track) return;
+  playTrack(toPlayableTrack(track));
+}
+
+function playPrevious() {
+  const previous = previousTrack();
+  if (previous) {
+    playQueuedTrack(previous);
+    return;
+  }
+
+  restartTrack();
+}
+
+function playNext() {
+  playQueuedTrack(nextTrack());
+}
+
+function playNextAfterEnded() {
+  const next =
+    nextTrack() ||
+    (state.playbackMode === PLAYBACK_MODES.repeatList
+      ? restartSourceQueue()
+      : null);
+  playQueuedTrack(next);
+}
+
+function toggleQueuePanel() {
+  isQueueOpen.value = !isQueueOpen.value;
+}
+
+let unsubscribeEnded;
+
+onMounted(() => {
+  unsubscribeEnded = onEnded(playNextAfterEnded);
+});
+
+onUnmounted(() => {
+  unsubscribeEnded?.();
+});
 </script>
 
 <template>
   <div class="player-bar" role="region" aria-label="播放控制列">
     <div class="player-bar__track">
-      <template v-if="state.track">
-        <span class="player-bar__track-title">{{ state.track.title }}</span>
-        <span v-if="state.track.artist" class="player-bar__track-artist">{{
-          state.track.artist
-        }}</span>
-      </template>
-      <span v-else class="player-bar__track-empty">尚未播放</span>
+      <div class="player-bar__track-copy">
+        <template v-if="state.track">
+          <span class="player-bar__track-title">{{ state.track.title }}</span>
+          <span v-if="state.track.artist" class="player-bar__track-artist">
+            {{ state.track.artist }}
+          </span>
+        </template>
+        <span v-else class="player-bar__track-empty">尚未播放</span>
+      </div>
     </div>
 
     <div class="player-bar__center">
       <div class="player-bar__transport">
-        <!-- No queue to shuffle yet — honest "not wired up" placeholder.
-             aria-disabled (not disabled) so the title tooltip and screen
-             reader can still explain why, instead of the element being
-             silently dropped from the tab order. -->
         <UiButton
           :icon="Shuffle"
-          aria-disabled="true"
-          aria-label="隨機播放"
-          title="尚未支援播放佇列"
+          :active="queueState.isShuffle"
+          :disabled="!canShuffle"
+          :aria-label="queueState.isShuffle ? '關閉隨機播放' : '開啟隨機播放'"
+          :aria-pressed="queueState.isShuffle"
+          title="隨機播放"
+          @click="toggleShuffle"
         />
         <UiButton
           :icon="SkipBack"
-          aria-disabled="true"
+          :disabled="!state.track"
           aria-label="上一首"
-          title="尚未支援播放佇列"
+          title="上一首"
+          @click="playPrevious"
         />
         <button
           type="button"
@@ -88,17 +163,18 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
         </button>
         <UiButton
           :icon="SkipForward"
-          aria-disabled="true"
+          :disabled="!canGoNext"
           aria-label="下一首"
-          title="尚未支援播放佇列"
+          title="下一首"
+          @click="playNext"
         />
         <UiButton
-          :icon="Repeat1"
-          :active="state.isLooping"
-          :disabled="!state.track"
-          :aria-label="state.isLooping ? '關閉單曲重播' : '開啟單曲重播'"
-          :aria-pressed="state.isLooping"
-          @click="toggleRepeat"
+          :icon="playbackModeIcon"
+          :active="playbackModeActive"
+          :aria-label="playbackModeActionLabel"
+          :aria-pressed="playbackModeActive"
+          :title="playbackModeActionLabel"
+          @click="cyclePlaybackMode"
         />
       </div>
 
@@ -122,8 +198,6 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
       </div>
     </div>
 
-    <!-- Right-side utility controls share one region so they read as a
-         grouped cluster instead of scattered top-level flex items. -->
     <div class="player-bar__extras">
       <UiButton
         v-if="showGuideVocal"
@@ -131,8 +205,17 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
         :active="state.guideVocalLevel > 0"
         :aria-label="state.guideVocalLevel > 0 ? '關閉導唱' : '開啟導唱'"
         :aria-pressed="state.guideVocalLevel > 0"
-        title="開關導唱(人聲) (G)"
+        title="開關導唱(分離後) (G)"
         @click="toggleGuideVocal"
+      />
+
+      <UiButton
+        :icon="ListMusic"
+        :active="isQueueOpen"
+        :aria-label="isQueueOpen ? '關閉播放佇列' : '開啟播放佇列'"
+        :aria-pressed="isQueueOpen"
+        title="播放佇列"
+        @click="toggleQueuePanel"
       />
 
       <div class="player-bar__volume">
@@ -155,6 +238,8 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
         <span class="player-bar__volume-value">{{ volumePercent }}%</span>
       </div>
     </div>
+
+    <PlaybackQueuePanel :open="isQueueOpen" @close="isQueueOpen = false" />
   </div>
 </template>
 
@@ -174,6 +259,13 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
 
 .player-bar__track {
   flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.player-bar__track-copy {
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -248,7 +340,7 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
   flex: 1;
 }
 
-/* Fixed width, not min-width — elapsed time crossing e.g. 9:59 -> 10:00
+/* Fixed width, not min-width: elapsed time crossing e.g. 9:59 -> 10:00
    would still push the slider and shift the row otherwise. */
 .player-bar__time {
   flex-shrink: 0;
@@ -282,7 +374,7 @@ const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
 }
 
 .player-bar__volume input {
-  width: 5rem; /* rem, not px — see .player-bar__center's max-width above */
+  width: 5rem; /* rem, not px: see .player-bar__center's max-width above */
 }
 
 .player-bar__volume-value {
