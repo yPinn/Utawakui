@@ -1,4 +1,4 @@
-import { watchEffect } from 'vue';
+import { onUnmounted, watchEffect } from 'vue';
 import { usePlayer } from './usePlayer.js';
 
 // Standard Web Media Session API — confirmed working against Windows SMTC
@@ -45,4 +45,15 @@ export function useMediaSession() {
   // state.isPlaying directly (see usePlayer.js).
   navigator.mediaSession.setActionHandler('play', () => play());
   navigator.mediaSession.setActionHandler('pause', () => pause());
+
+  const clearActionHandlers = () => {
+    navigator.mediaSession.setActionHandler('play', null);
+    navigator.mediaSession.setActionHandler('pause', null);
+  };
+
+  onUnmounted(clearActionHandlers);
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(clearActionHandlers);
+  }
 }

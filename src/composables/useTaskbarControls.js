@@ -1,4 +1,4 @@
-import { watchEffect } from 'vue';
+import { onUnmounted, watchEffect } from 'vue';
 import { usePlayer } from './usePlayer.js';
 
 // Bridges usePlayer to the Windows taskbar thumbar without coupling
@@ -20,7 +20,13 @@ export function useTaskbarControls() {
     });
   });
 
-  window.Utawakui.onPlayerCommand((command) => {
+  const unsubscribeCommand = window.Utawakui.onPlayerCommand((command) => {
     if (command === 'toggle') toggle();
   });
+
+  onUnmounted(unsubscribeCommand);
+
+  if (import.meta.hot) {
+    import.meta.hot.dispose(unsubscribeCommand);
+  }
 }

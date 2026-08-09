@@ -15,10 +15,20 @@ const state = reactive({
   errors: new Map(),
 });
 
+let unsubscribeProgress = null;
+
 // Subscribed once at module load, same lifetime as App.vue's composables.
 if (typeof window !== 'undefined' && window.Utawakui) {
-  window.Utawakui.onSeparationProgress(({ trackId, stage, percent }) => {
-    state.inFlight.set(trackId, { stage, percent });
+  unsubscribeProgress = window.Utawakui.onSeparationProgress(
+    ({ trackId, stage, percent }) => {
+      state.inFlight.set(trackId, { stage, percent });
+    },
+  );
+}
+
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    unsubscribeProgress?.();
   });
 }
 

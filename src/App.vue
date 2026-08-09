@@ -11,8 +11,8 @@ import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 
-// App.vue lives for the app's whole lifetime, so these never need an
-// unmount/unsubscribe path.
+// App.vue lives for the app's whole lifetime in production; each composable
+// still owns cleanup for dev HMR and test-like remounts.
 useTaskbarControls();
 useWindowTitle();
 useMediaSession();
