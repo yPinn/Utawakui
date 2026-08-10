@@ -66,7 +66,7 @@ Overlay 伺服器 + 狀態廣播 → 本機 HTTP/WebSocket,單一權威狀態源
 控制面板 UI → Electron 渲染程序,Vite + Vue 3(無 vue-router/Pinia,固定分頁 + 單一共享 composable)
 ```
 
-殼:Electron(`electron/main.js`,`contextIsolation`/`sandbox`/`nodeIntegration:false`)。已超出最小骨架:自訂 `utawakui-media:` protocol 供本機音訊播放(含 HTTP Range/206 支援,供 seek 使用)、yt-dlp 下載管線與背景 metadata 回填、`config.json`/`library.json` 持久化。
+殼:Electron(`electron/main.js`,`contextIsolation`/`sandbox`/`nodeIntegration:false`)。已超出最小骨架:自訂 `utawakui-media:` protocol 供本機音訊與縮圖資產播放/顯示(音訊含 HTTP Range/206 支援,供 seek 使用)、yt-dlp 下載管線與背景 metadata/info/thumbnail 回填、`config.json`/`library.json` 持久化。曲庫根目錄下的新下載採 `tracks/<trackId>/audio.<ext>`、`thumbnail.<ext>`、`info.json`、`stems.wav` 的結構化儲存。
 
 ## 5. 競品比較
 

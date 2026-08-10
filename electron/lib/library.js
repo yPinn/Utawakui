@@ -9,7 +9,7 @@ const { VIDEO_ID_RE } = require('./youtube');
 // Single source of truth for "what's a servable audio file" — also the
 // Content-Type used when serving it (see buildRangeResponse). Derived as
 // a Set below rather than duplicating the extension list separately.
-const MIME_TYPES = {
+const AUDIO_MIME_TYPES = {
   '.webm': 'audio/webm',
   '.m4a': 'audio/mp4',
   '.opus': 'audio/ogg',
@@ -17,7 +17,15 @@ const MIME_TYPES = {
   '.wav': 'audio/wav',
   '.flac': 'audio/flac',
 };
-const AUDIO_EXTENSIONS = new Set(Object.keys(MIME_TYPES));
+const IMAGE_MIME_TYPES = {
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
+};
+const MIME_TYPES = { ...AUDIO_MIME_TYPES, ...IMAGE_MIME_TYPES };
+const AUDIO_EXTENSIONS = new Set(Object.keys(AUDIO_MIME_TYPES));
+const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
 
 // Vocal-separation output lives in its own subdirectory — listTracks()'s
 // isFile() filter already skips it, no enumeration change needed. A single
@@ -25,8 +33,17 @@ const AUDIO_EXTENSIONS = new Set(Object.keys(MIME_TYPES));
 // channels in a FIXED order (0/1 instrumental L/R, 2/3 vocals L/R) that
 // usePlayer.js's ChannelSplitter routing depends on — changing one side
 // without the other silently swaps instrumental and vocals.
-const SEPARATED_DIRNAME = '.separated';
+const TRACKS_DIRNAME = 'tracks';
+const DUPLICATES_DIRNAME = '.duplicates';
+const LEGACY_SEPARATED_DIRNAME = '.separated';
+const STRUCTURED_AUDIO_BASENAME = 'audio';
+const ARTWORK_BASENAME = 'thumbnail';
+const LYRICS_DIRNAME = 'lyrics';
+const LYRICS_MANIFEST_FILENAME = 'lyrics.json';
+const LYRICS_MANIFEST_VERSION = 6;
 const SEPARATED_VARIANTS = new Set(['stems.wav']);
+const LYRICS_EXTENSIONS = new Set(['.vtt']);
+const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);
 
 // Interim, text-only metadata store — deliberately not the future SQLite
 // index (pitch/tempo, lyrics offset). Lives inside the download dir so it
@@ -75,14 +92,40 @@ function saveIndexEntry(dir, id, entry) {
   return index;
 }
 
-// Shared gate between the protocol handler and listTracks: the handler must
-// never be able to serve anything listTracks couldn't have returned. Flat
-// namespace only — no path separators — since tracks live directly in the
-// resolved download dir, not in subfolders.
+// Shared gate for legacy root-level audio and structured `audio.<ext>` files.
+// Asset-serving helpers apply stricter basename checks on top of this, and no
+// caller accepts path separators.
 function isServableFilename(filename) {
   if (typeof filename !== 'string' || filename.length === 0) return false;
   if (filename.includes('/') || filename.includes('\\')) return false;
   return AUDIO_EXTENSIONS.has(path.extname(filename).toLowerCase());
+}
+
+function isStructuredAudioFilename(filename) {
+  if (!isServableFilename(filename)) return false;
+  return (
+    path.basename(filename, path.extname(filename)) ===
+    STRUCTURED_AUDIO_BASENAME
+  );
+}
+
+function isArtworkFilename(filename) {
+  if (typeof filename !== 'string' || filename.length === 0) return false;
+  if (filename.includes('/') || filename.includes('\\')) return false;
+  if (path.basename(filename, path.extname(filename)) !== ARTWORK_BASENAME) {
+    return false;
+  }
+  return IMAGE_EXTENSIONS.has(path.extname(filename).toLowerCase());
+}
+
+function isLyricsSubtitleFilename(filename) {
+  if (typeof filename !== 'string' || filename.length === 0) return false;
+  if (filename.includes('/') || filename.includes('\\')) return false;
+  const ext = path.extname(filename).toLowerCase();
+  const stem = path.basename(filename, ext);
+  if (!LYRICS_EXTENSIONS.has(ext)) return false;
+  if (stem.length === 0 || stem === '.' || stem === '..') return false;
+  return /^[A-Za-z0-9._-]+$/.test(stem);
 }
 
 function compareFilenames(a, b) {
@@ -97,6 +140,394 @@ function compareFilenames(a, b) {
 
 function trackIdFromFilename(filename) {
   return path.basename(filename, path.extname(filename));
+}
+
+function isSafeTrackId(trackId) {
+  if (typeof trackId !== 'string' || trackId.length === 0) return false;
+  if (trackId.includes('/') || trackId.includes('\\')) return false;
+  if (trackId === '.' || trackId === '..') return false;
+  if (/^[A-Za-z]:/.test(trackId)) return false;
+  return !path.isAbsolute(trackId) && !path.win32.isAbsolute(trackId);
+}
+
+function resolveChildPath(root, childName) {
+  const resolvedRoot = path.resolve(root);
+  const resolved = path.resolve(resolvedRoot, childName);
+  const relative = path.relative(resolvedRoot, resolved);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) return null;
+  return resolved;
+}
+
+function resolveTrackDir(dir, trackId) {
+  if (!isSafeTrackId(trackId)) return null;
+  const tracksRoot = path.resolve(dir, TRACKS_DIRNAME);
+  return resolveChildPath(tracksRoot, trackId);
+}
+
+function findFirstFile(dir, predicate) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return null;
+  }
+
+  const match = entries
+    .filter((entry) => entry.isFile() && predicate(entry.name))
+    .map((entry) => entry.name)
+    .sort(compareFilenames)[0];
+  return match || null;
+}
+
+function findStructuredAudioFilename(trackDir) {
+  return findFirstFile(trackDir, isStructuredAudioFilename);
+}
+
+function findArtworkFilename(trackDir) {
+  return findFirstFile(trackDir, isArtworkFilename);
+}
+
+function inferLyricsLanguage(filename) {
+  return path.basename(filename, path.extname(filename));
+}
+
+function isTranslatedLyricsLanguage(language) {
+  if (typeof language !== 'string' || language.length === 0) return false;
+  const subtags = language
+    .toLowerCase()
+    .split(/[._-]+/)
+    .filter(Boolean);
+  if (subtags.length < 2 || subtags.at(-1) === 'orig') return false;
+  return subtags
+    .slice(1)
+    .some((subtag) => TRANSLATED_SUBTITLE_TARGET_SUBTAGS.has(subtag));
+}
+
+function isAutomaticLyricsLanguage(language) {
+  const normalized = String(language || '')
+    .toLowerCase()
+    .replaceAll('_', '-');
+  return normalized.endsWith('-orig') || normalized.endsWith('.orig');
+}
+
+function isYtDlpArtworkSidecar(filename) {
+  if (typeof filename !== 'string' || filename.length === 0) return false;
+  if (filename.includes('/') || filename.includes('\\')) return false;
+  if (path.basename(filename, path.extname(filename)) !== 'audio') return false;
+  return IMAGE_EXTENSIONS.has(path.extname(filename).toLowerCase());
+}
+
+function extractYtDlpSubtitleLanguage(filename) {
+  if (typeof filename !== 'string' || filename.length === 0) return null;
+  if (filename.includes('/') || filename.includes('\\')) return null;
+  const ext = path.extname(filename).toLowerCase();
+  if (!LYRICS_EXTENSIONS.has(ext)) return null;
+  const stem = path.basename(filename, ext);
+  if (!stem.startsWith(`${STRUCTURED_AUDIO_BASENAME}.`)) return null;
+  const language = stem.slice(STRUCTURED_AUDIO_BASENAME.length + 1);
+  if (isAutomaticLyricsLanguage(language)) return null;
+  if (isTranslatedLyricsLanguage(language)) return null;
+  return isLyricsSubtitleFilename(`${language}${ext}`) ? language : null;
+}
+
+function getLyricsDirFromTrackDir(trackDir) {
+  return path.join(trackDir, LYRICS_DIRNAME);
+}
+
+function loadTrackLyricsManifest(trackDir) {
+  try {
+    const manifest = JSON.parse(
+      fs.readFileSync(
+        path.join(getLyricsDirFromTrackDir(trackDir), LYRICS_MANIFEST_FILENAME),
+        'utf8',
+      ),
+    );
+    if (
+      typeof manifest !== 'object' ||
+      manifest === null ||
+      !Array.isArray(manifest.sources)
+    ) {
+      return { checked: false, needsScan: false, sources: [] };
+    }
+    return {
+      checked: Boolean(manifest.checked),
+      needsScan: manifest.version !== LYRICS_MANIFEST_VERSION,
+      sources: manifest.sources.filter(
+        (source) =>
+          source &&
+          isLyricsSubtitleFilename(source.filename) &&
+          typeof source.language === 'string',
+      ),
+    };
+  } catch {
+    return { checked: false, needsScan: false, sources: [] };
+  }
+}
+
+function listTrackLyricsSources(trackDir) {
+  const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+  let filenames;
+  try {
+    filenames = fs
+      .readdirSync(lyricsDir, { withFileTypes: true })
+      .filter((entry) => entry.isFile() && isLyricsSubtitleFilename(entry.name))
+      .map((entry) => entry.name)
+      .filter(
+        (filename) =>
+          !isAutomaticLyricsLanguage(inferLyricsLanguage(filename)) &&
+          !isTranslatedLyricsLanguage(inferLyricsLanguage(filename)),
+      )
+      .sort(compareFilenames);
+  } catch {
+    filenames = [];
+  }
+
+  const manifest = loadTrackLyricsManifest(trackDir);
+  const manifestByFilename = new Map(
+    manifest.sources.map((source) => [source.filename, source]),
+  );
+  const sources = filenames.map((filename) => {
+    const manifestSource = manifestByFilename.get(filename);
+    return {
+      filename,
+      language: manifestSource?.language || inferLyricsLanguage(filename),
+      kind: manifestSource?.kind || 'youtube-cc',
+    };
+  });
+
+  return {
+    checked: manifest.checked || sources.length > 0,
+    needsScan: manifest.needsScan,
+    sources,
+  };
+}
+
+function getTrackLyricsState(trackDir) {
+  const { checked, needsScan, sources } = listTrackLyricsSources(trackDir);
+  return {
+    status:
+      sources.length > 0 ? 'available' : checked ? 'missing' : 'unchecked',
+    needsScan,
+    sources,
+  };
+}
+
+function saveTrackLyricsManifest(trackDir, sources) {
+  const normalizedSources = (Array.isArray(sources) ? sources : [])
+    .filter((source) => source && isLyricsSubtitleFilename(source.filename))
+    .filter(
+      (source) =>
+        !isAutomaticLyricsLanguage(
+          typeof source.language === 'string'
+            ? source.language
+            : inferLyricsLanguage(source.filename),
+        ) &&
+        !isTranslatedLyricsLanguage(
+          typeof source.language === 'string'
+            ? source.language
+            : inferLyricsLanguage(source.filename),
+        ),
+    )
+    .map((source) => ({
+      filename: source.filename,
+      language:
+        typeof source.language === 'string' && source.language.length > 0
+          ? source.language
+          : inferLyricsLanguage(source.filename),
+      kind:
+        typeof source.kind === 'string' && source.kind.length > 0
+          ? source.kind
+          : 'youtube-cc',
+    }))
+    .sort((a, b) => compareFilenames(a.filename, b.filename));
+
+  const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+  fs.mkdirSync(lyricsDir, { recursive: true });
+  atomicWriteJson(path.join(lyricsDir, LYRICS_MANIFEST_FILENAME), {
+    version: LYRICS_MANIFEST_VERSION,
+    checked: true,
+    checkedAt: new Date().toISOString(),
+    sources: normalizedSources,
+  });
+  return normalizedSources;
+}
+
+function normalizeTrackLyricsSidecars(trackDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(trackDir, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  const sidecars = entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => ({
+      filename: entry.name,
+      language: extractYtDlpSubtitleLanguage(entry.name),
+    }))
+    .filter((entry) => entry.language)
+    .sort((a, b) => compareFilenames(a.filename, b.filename));
+
+  for (const entry of entries) {
+    if (!entry.isFile()) continue;
+    const ext = path.extname(entry.name).toLowerCase();
+    const stem = path.basename(entry.name, ext);
+    if (
+      LYRICS_EXTENSIONS.has(ext) &&
+      stem.startsWith(`${STRUCTURED_AUDIO_BASENAME}.`)
+    ) {
+      const language = stem.slice(STRUCTURED_AUDIO_BASENAME.length + 1);
+      if (
+        isAutomaticLyricsLanguage(language) ||
+        isTranslatedLyricsLanguage(language)
+      ) {
+        try {
+          fs.rmSync(path.join(trackDir, entry.name), { force: true });
+        } catch {
+          // Leave the rejected sidecar if it is temporarily locked.
+        }
+      }
+    }
+  }
+
+  if (sidecars.length > 0) {
+    const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+    try {
+      fs.mkdirSync(lyricsDir, { recursive: true });
+    } catch {
+      return listTrackLyricsSources(trackDir).sources;
+    }
+
+    for (const sidecar of sidecars) {
+      const targetFilename = `${sidecar.language}${path
+        .extname(sidecar.filename)
+        .toLowerCase()}`;
+      const targetPath = path.join(lyricsDir, targetFilename);
+      try {
+        fs.rmSync(targetPath, { force: true });
+        fs.renameSync(path.join(trackDir, sidecar.filename), targetPath);
+      } catch {
+        // Leave the sidecar in place if the filesystem is temporarily locked.
+      }
+    }
+  }
+
+  return listTrackLyricsSources(trackDir).sources;
+}
+
+function normalizeStructuredTrackSidecars(trackDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(trackDir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  const filenames = entries
+    .filter((entry) => entry.isFile())
+    .map((entry) => entry.name)
+    .sort(compareFilenames);
+
+  if (
+    filenames.includes('audio.info.json') &&
+    !filenames.includes('info.json')
+  ) {
+    try {
+      fs.renameSync(
+        path.join(trackDir, 'audio.info.json'),
+        path.join(trackDir, 'info.json'),
+      );
+    } catch {
+      // Leave the sidecar in place if the filesystem is temporarily locked.
+    }
+  }
+
+  normalizeTrackLyricsSidecars(trackDir);
+
+  if (filenames.some(isArtworkFilename)) return;
+
+  const artworkSidecar = filenames.find(isYtDlpArtworkSidecar);
+  if (!artworkSidecar) return;
+
+  try {
+    fs.renameSync(
+      path.join(trackDir, artworkSidecar),
+      path.join(
+        trackDir,
+        `${ARTWORK_BASENAME}${path.extname(artworkSidecar).toLowerCase()}`,
+      ),
+    );
+  } catch {
+    // Leave the sidecar in place if the filesystem is temporarily locked.
+  }
+}
+
+function hasTrackInfo(trackDir) {
+  return fs.existsSync(path.join(trackDir, 'info.json'));
+}
+
+function resolveTrackAudioPath(dir, trackId) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir) return null;
+  const audioFilename = findStructuredAudioFilename(trackDir);
+  return audioFilename ? path.join(trackDir, audioFilename) : null;
+}
+
+function resolveTrackAssetPath(dir, trackId, assetFilename) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir) return null;
+  if (typeof assetFilename !== 'string' || assetFilename.length === 0) {
+    return null;
+  }
+  if (assetFilename.includes('/') || assetFilename.includes('\\')) return null;
+
+  if (isStructuredAudioFilename(assetFilename)) {
+    const audioFilename = findStructuredAudioFilename(trackDir);
+    return audioFilename === assetFilename
+      ? path.join(trackDir, assetFilename)
+      : null;
+  }
+
+  if (isArtworkFilename(assetFilename)) {
+    const artworkFilename = findArtworkFilename(trackDir);
+    return artworkFilename === assetFilename
+      ? path.join(trackDir, assetFilename)
+      : null;
+  }
+
+  if (SEPARATED_VARIANTS.has(assetFilename)) {
+    return path.join(trackDir, assetFilename);
+  }
+
+  return null;
+}
+
+function resolveTrackLyricsPath(dir, trackId, lyricsFilename) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir || !isLyricsSubtitleFilename(lyricsFilename)) return null;
+  const { sources } = listTrackLyricsSources(trackDir);
+  if (!sources.some((source) => source.filename === lyricsFilename)) {
+    return null;
+  }
+  return path.join(trackDir, LYRICS_DIRNAME, lyricsFilename);
+}
+
+function readTrackLyrics(dir, trackId, lyricsFilename = null) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir) return null;
+  const { sources } = listTrackLyricsSources(trackDir);
+  const source = lyricsFilename
+    ? sources.find((candidate) => candidate.filename === lyricsFilename)
+    : sources[0];
+  if (!source) return null;
+
+  const lyricsPath = resolveTrackLyricsPath(dir, trackId, source.filename);
+  if (!lyricsPath) return null;
+  return {
+    source,
+    text: fs.readFileSync(lyricsPath, 'utf8'),
+  };
 }
 
 function compareOptionalStrings(a, b) {
@@ -117,19 +548,11 @@ function compareTracks(a, b) {
   );
 }
 
-// trackId is untrusted IPC input — checked against the .separated ROOT
-// specifically, not just `dir`: a trackId of "../evil" resolves to
-// <dir>/evil, which is technically still inside `dir` and would wrongly
-// pass a check that only verified containment within `dir` itself.
+// Backward-compatible name for callers that still think in "separation
+// output dir" terms. In the structured layout, stems.wav lives directly in
+// the track directory alongside audio/artwork/source metadata.
 function resolveSeparatedDir(dir, trackId) {
-  if (typeof trackId !== 'string' || trackId.length === 0) return null;
-
-  const separatedRoot = path.resolve(dir, SEPARATED_DIRNAME);
-  const separatedDir = path.resolve(separatedRoot, trackId);
-  const relative = path.relative(separatedRoot, separatedDir);
-
-  if (relative.startsWith('..') || path.isAbsolute(relative)) return null;
-  return separatedDir;
+  return resolveTrackDir(dir, trackId);
 }
 
 // For the protocol handler — variantFilename is checked against the fixed
@@ -137,9 +560,7 @@ function resolveSeparatedDir(dir, trackId) {
 // touches the filesystem.
 function resolveSeparatedFilePath(dir, trackId, variantFilename) {
   if (!SEPARATED_VARIANTS.has(variantFilename)) return null;
-  const separatedDir = resolveSeparatedDir(dir, trackId);
-  if (!separatedDir) return null;
-  return path.join(separatedDir, variantFilename);
+  return resolveTrackAssetPath(dir, trackId, variantFilename);
 }
 
 function hasSeparation(dir, trackId) {
@@ -150,7 +571,146 @@ function hasSeparation(dir, trackId) {
   );
 }
 
-function listTracks(dir) {
+function uniquePathForDuplicate(baseDir, filename) {
+  let candidate = path.join(baseDir, filename);
+  const parsed = path.parse(filename);
+  let suffix = 1;
+  while (fs.existsSync(candidate)) {
+    candidate = path.join(baseDir, `${parsed.name}-${suffix}${parsed.ext}`);
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function migrateLegacyAudioFiles(dir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(dir, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  const seenIds = new Set();
+  const audioEntries = entries
+    .filter((entry) => entry.isFile() && isServableFilename(entry.name))
+    .map((entry) => entry.name)
+    .sort(compareFilenames);
+
+  for (const filename of audioEntries) {
+    const trackId = trackIdFromFilename(filename);
+    if (!isSafeTrackId(trackId)) continue;
+
+    const trackDir = resolveTrackDir(dir, trackId);
+    if (!trackDir) continue;
+
+    const sourcePath = path.join(dir, filename);
+    const shouldBecomeRepresentative =
+      !seenIds.has(trackId) && !findStructuredAudioFilename(trackDir);
+    seenIds.add(trackId);
+
+    try {
+      if (shouldBecomeRepresentative) {
+        fs.mkdirSync(trackDir, { recursive: true });
+        fs.renameSync(
+          sourcePath,
+          path.join(
+            trackDir,
+            `${STRUCTURED_AUDIO_BASENAME}${path.extname(filename)}`,
+          ),
+        );
+      } else {
+        const duplicateDir = path.join(dir, DUPLICATES_DIRNAME, trackId);
+        fs.mkdirSync(duplicateDir, { recursive: true });
+        fs.renameSync(
+          sourcePath,
+          uniquePathForDuplicate(duplicateDir, filename),
+        );
+      }
+    } catch {
+      // Leave legacy audio where it is if migration cannot complete.
+    }
+  }
+}
+
+function migrateLegacySeparation(dir) {
+  const legacyRoot = path.join(dir, LEGACY_SEPARATED_DIRNAME);
+  let entries;
+  try {
+    entries = fs.readdirSync(legacyRoot, { withFileTypes: true });
+  } catch {
+    return;
+  }
+
+  for (const entry of entries) {
+    if (!entry.isDirectory() || !isSafeTrackId(entry.name)) continue;
+    const legacyTrackDir = path.join(legacyRoot, entry.name);
+    const legacyStemsPath = path.join(legacyTrackDir, 'stems.wav');
+    if (!fs.existsSync(legacyStemsPath)) continue;
+
+    const trackDir = resolveTrackDir(dir, entry.name);
+    if (!trackDir || !findStructuredAudioFilename(trackDir)) continue;
+    const targetPath = path.join(trackDir, 'stems.wav');
+
+    try {
+      if (!fs.existsSync(targetPath)) {
+        fs.renameSync(legacyStemsPath, targetPath);
+      }
+      fs.rmSync(legacyTrackDir, { recursive: true, force: true });
+    } catch {
+      // Keep legacy stems if migration cannot complete.
+    }
+  }
+
+  try {
+    if (fs.readdirSync(legacyRoot).length === 0) {
+      fs.rmSync(legacyRoot, { recursive: true, force: true });
+    }
+  } catch {
+    // ignore cleanup failures
+  }
+}
+
+function migrateLibrary(dir) {
+  migrateLegacyAudioFiles(dir);
+  migrateLegacySeparation(dir);
+}
+
+function listStructuredTracks(dir) {
+  const tracksRoot = path.join(dir, TRACKS_DIRNAME);
+  let entries;
+  try {
+    entries = fs.readdirSync(tracksRoot, { withFileTypes: true });
+  } catch {
+    return [];
+  }
+
+  return entries
+    .filter((entry) => entry.isDirectory() && isSafeTrackId(entry.name))
+    .map((entry) => {
+      const trackDir = path.join(tracksRoot, entry.name);
+      normalizeStructuredTrackSidecars(trackDir);
+      const audioFilename = findStructuredAudioFilename(trackDir);
+      if (!audioFilename) return null;
+      const artworkFilename = findArtworkFilename(trackDir);
+      const lyrics = getTrackLyricsState(trackDir);
+      const ext = path.extname(audioFilename);
+      return {
+        id: entry.name,
+        filename: `${entry.name}${ext}`,
+        audioFilename,
+        hasInfo: hasTrackInfo(trackDir),
+        hasArtwork: Boolean(artworkFilename),
+        lyrics,
+        url: `utawakui-media://track/${encodeURIComponent(entry.name)}/${encodeURIComponent(audioFilename)}`,
+        thumbnailUrl: artworkFilename
+          ? `utawakui-media://track/${encodeURIComponent(entry.name)}/${encodeURIComponent(artworkFilename)}`
+          : undefined,
+      };
+    })
+    .filter(Boolean);
+}
+
+function listLegacyTracks(dir, structuredIds) {
   let entries;
   try {
     entries = fs.readdirSync(dir, { withFileTypes: true });
@@ -158,70 +718,75 @@ function listTracks(dir) {
     return [];
   }
 
-  const index = loadIndex(dir);
-
   const seenIds = new Set();
-
   return entries
     .filter((entry) => entry.isFile() && isServableFilename(entry.name))
-    .sort((a, b) => compareFilenames(a.name, b.name))
-    .filter((entry) => {
-      const id = trackIdFromFilename(entry.name);
-      if (seenIds.has(id)) return false;
+    .map((entry) => entry.name)
+    .sort(compareFilenames)
+    .filter((filename) => {
+      const id = trackIdFromFilename(filename);
+      if (seenIds.has(id) || structuredIds.has(id)) return false;
       seenIds.add(id);
       return true;
     })
-    .map((entry) => {
-      const id = trackIdFromFilename(entry.name);
+    .map((filename) => ({
+      id: trackIdFromFilename(filename),
+      filename,
+      audioFilename: filename,
+      hasInfo: false,
+      hasArtwork: false,
+      lyrics: { status: 'unchecked', sources: [] },
+      url: `utawakui-media://local/${encodeURIComponent(filename)}`,
+      thumbnailUrl: undefined,
+    }));
+}
+
+function listTrackRecords(dir) {
+  migrateLibrary(dir);
+  const structured = listStructuredTracks(dir);
+  const structuredIds = new Set(structured.map((track) => track.id));
+  return [...structured, ...listLegacyTracks(dir, structuredIds)];
+}
+
+function listTracks(dir) {
+  const index = loadIndex(dir);
+
+  return listTrackRecords(dir)
+    .map((record) => {
+      const id = record.id;
       const indexed = index.tracks[id];
-      // Existence-checked directly against the filesystem, same as the
-      // track enumeration itself — not tracked in library.json, which
-      // stays pure metadata (see the file-level comment above).
       const separated = hasSeparation(dir, id);
+      const metadataNeedsBackfill =
+        !indexed?.title ||
+        indexed?.artist === undefined ||
+        indexed?.duration === undefined;
+      const assetNeedsBackfill =
+        VIDEO_ID_RE.test(id) &&
+        (!record.hasInfo ||
+          !record.hasArtwork ||
+          record.lyrics.status === 'unchecked' ||
+          record.lyrics.needsScan);
       return {
         id,
-        filename: entry.name,
-        url: `utawakui-media://local/${encodeURIComponent(entry.name)}`,
-        // Falls back to the id (filename stem) — covers both a failed/
-        // missing index write and a locally imported file with an
-        // already-meaningful filename.
+        filename: record.filename,
+        url: record.url,
         title: indexed?.title || id,
-        // No fallback — undefined when absent, renderer just omits it.
         artist: indexed?.artist,
         duration: indexed?.duration,
-        // From the raw index lookup, before the title fallback above — a
-        // real title could coincidentally equal the id, which shouldn't
-        // also suppress a backfill retry.
-        needsBackfill:
-          !indexed?.title ||
-          indexed?.artist === undefined ||
-          indexed?.duration === undefined,
+        needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
         hasSeparation: separated,
-        // 4-channel file — see SEPARATED_VARIANTS's comment above for the
-        // fixed channel order the player relies on.
         stemsUrl: separated
-          ? `utawakui-media://separated/${encodeURIComponent(id)}/stems.wav`
+          ? `utawakui-media://track/${encodeURIComponent(id)}/stems.wav`
           : undefined,
+        thumbnailUrl: record.thumbnailUrl,
+        lyrics: record.lyrics,
       };
     })
     .sort(compareTracks);
 }
 
-// trackId is the filename stem — the extension isn't known ahead of time
-// (mp3/webm/m4a/etc.), so this scans dir the same way listTracks() does
-// rather than trying each extension.
-function findTrackFilename(dir, trackId) {
-  let entries;
-  try {
-    entries = fs.readdirSync(dir, { withFileTypes: true });
-  } catch {
-    return null;
-  }
-  const match = entries
-    .filter((entry) => entry.isFile() && isServableFilename(entry.name))
-    .sort((a, b) => compareFilenames(a.name, b.name))
-    .find((entry) => trackIdFromFilename(entry.name) === trackId);
-  return match ? match.name : null;
+function findTrackRecord(dir, trackId) {
+  return listTrackRecords(dir).find((track) => track.id === trackId) || null;
 }
 
 // Deletes the original audio file, its vocal-separation output (if any),
@@ -230,16 +795,16 @@ function findTrackFilename(dir, trackId) {
 // what listTracks() itself trusts (see the file-level comment above), so
 // this is the same check used to decide whether there's anything to delete.
 function deleteTrack(dir, trackId) {
-  const filename = findTrackFilename(dir, trackId);
-  if (!filename) return false;
+  const record = findTrackRecord(dir, trackId);
+  if (!record) return false;
 
-  const filePath = resolveTrackPath(dir, filename);
-  if (!filePath) return false;
-  fs.unlinkSync(filePath);
-
-  const separatedDir = resolveSeparatedDir(dir, trackId);
-  if (separatedDir) {
-    fs.rmSync(separatedDir, { recursive: true, force: true });
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (trackDir && resolveTrackAudioPath(dir, trackId)) {
+    fs.rmSync(trackDir, { recursive: true, force: true });
+  } else {
+    const filePath = resolveTrackPath(dir, record.filename);
+    if (!filePath) return false;
+    fs.unlinkSync(filePath);
   }
 
   const index = loadIndex(dir);
@@ -258,8 +823,19 @@ const backfillFailedIds = new Set();
 
 // fetchMetadata is injected so this module stays yt-dlp-agnostic. Resolves
 // to whether anything changed; only one pass runs at a time.
-async function runBackfillPass(dir, tracks, fetchMetadata) {
-  if (backfillInProgress) return false;
+function notifyBackfillStatus(onStatus, payload) {
+  if (typeof onStatus !== 'function') return;
+  onStatus(payload);
+}
+
+async function runBackfillPass(dir, tracks, fetchMetadata, onStatus = null) {
+  if (backfillInProgress) {
+    notifyBackfillStatus(onStatus, {
+      stage: 'running',
+      isRunning: true,
+    });
+    return false;
+  }
 
   const candidates = tracks.filter(
     (track) =>
@@ -267,28 +843,82 @@ async function runBackfillPass(dir, tracks, fetchMetadata) {
       track.needsBackfill &&
       !backfillFailedIds.has(track.id),
   );
-  if (candidates.length === 0) return false;
+  if (candidates.length === 0) {
+    notifyBackfillStatus(onStatus, {
+      stage: 'idle',
+      isRunning: false,
+      total: 0,
+      completed: 0,
+    });
+    return false;
+  }
 
   backfillInProgress = true;
   let updated = false;
+  let completed = 0;
   try {
+    notifyBackfillStatus(onStatus, {
+      stage: 'start',
+      isRunning: true,
+      total: candidates.length,
+      completed,
+    });
     for (const track of candidates) {
-      const metadata = await fetchMetadata(track.id);
-      if (!metadata || !metadata.title) {
+      const trackDir = resolveTrackDir(dir, track.id);
+      notifyBackfillStatus(onStatus, {
+        stage: 'track',
+        isRunning: true,
+        total: candidates.length,
+        completed,
+        trackId: track.id,
+        title: track.title,
+      });
+      const result = await fetchMetadata(track.id, trackDir);
+      completed += 1;
+      if (!result || (!result.title && !result.assetsUpdated)) {
         backfillFailedIds.add(track.id);
+        notifyBackfillStatus(onStatus, {
+          stage: 'progress',
+          isRunning: true,
+          total: candidates.length,
+          completed,
+          trackId: track.id,
+          title: track.title,
+          updated: false,
+        });
         continue;
       }
+      const metadata = { ...result };
+      delete metadata.assetsUpdated;
       try {
-        saveIndexEntry(dir, track.id, metadata);
+        if (metadata.title) {
+          saveIndexEntry(dir, track.id, metadata);
+        }
         updated = true;
       } catch {
         // Leave needsBackfill true (don't add to backfillFailedIds) so a
         // transient write failure gets retried on the next pass instead
         // of silently dropping this track's metadata for the session.
       }
+      notifyBackfillStatus(onStatus, {
+        stage: 'progress',
+        isRunning: true,
+        total: candidates.length,
+        completed,
+        trackId: track.id,
+        title: metadata.title || track.title,
+        updated: Boolean(result.title || result.assetsUpdated),
+      });
     }
   } finally {
     backfillInProgress = false;
+    notifyBackfillStatus(onStatus, {
+      stage: 'done',
+      isRunning: false,
+      total: candidates.length,
+      completed,
+      updated,
+    });
   }
 
   return updated;
@@ -348,12 +978,25 @@ module.exports = {
   deleteTrack,
   hasSeparation,
   INDEX_FILENAME,
+  isArtworkFilename,
+  isAutomaticLyricsLanguage,
+  isLyricsSubtitleFilename,
+  isTranslatedLyricsLanguage,
   isServableFilename,
+  isStructuredAudioFilename,
+  LYRICS_MANIFEST_VERSION,
   listTracks,
   loadIndex,
+  normalizeTrackLyricsSidecars,
+  readTrackLyrics,
+  resolveTrackLyricsPath,
   resolveSeparatedDir,
   resolveSeparatedFilePath,
+  resolveTrackAssetPath,
+  resolveTrackAudioPath,
+  resolveTrackDir,
   resolveTrackPath,
   runBackfillPass,
   saveIndexEntry,
+  saveTrackLyricsManifest,
 };

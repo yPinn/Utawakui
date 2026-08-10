@@ -13,6 +13,7 @@ const {
   nativeTheme,
 } = require('electron');
 const {
+  backfillTrackInfo,
   downloadAudio,
   fetchMetadata,
   listPlaylist,
@@ -23,6 +24,9 @@ const {
   buildRangeResponse,
   deleteTrack,
   listTracks,
+  readTrackLyrics,
+  resolveTrackAssetPath,
+  resolveTrackAudioPath,
   resolveSeparatedDir,
   resolveSeparatedFilePath,
   resolveTrackPath,
@@ -33,6 +37,7 @@ const {
   createPlaylist,
   deletePlaylist,
   loadPlaylists,
+  reorderPlaylists,
   removeTrackFromAllPlaylists,
   renamePlaylist,
   setPlaylistTracks,
@@ -95,6 +100,11 @@ function buildRelaunchCommand() {
 }
 
 let mainWindow = null;
+
+function sendBackfillStatus(payload) {
+  if (!mainWindow) return;
+  mainWindow.webContents.send('library:backfill-status', payload);
+}
 
 // Guards against overlapping separation:run calls — see the handler's own
 // comment for why this can't just be left to the renderer's disabled state.
@@ -266,7 +276,13 @@ if (!gotSingleInstanceLock) {
       const url = new URL(request.url);
       const dir = resolveDownloadDir(cachedConfig);
       let filePath;
-      if (url.hostname === 'separated') {
+      if (url.hostname === 'track') {
+        const [trackId, assetFilename] = url.pathname
+          .split('/')
+          .filter(Boolean)
+          .map(decodeURIComponent);
+        filePath = resolveTrackAssetPath(dir, trackId, assetFilename);
+      } else if (url.hostname === 'separated') {
         const [trackId, variantFilename] = url.pathname
           .split('/')
           .filter(Boolean)
@@ -298,11 +314,19 @@ if (!gotSingleInstanceLock) {
       const tracks = listTracks(dir);
       // Fire-and-forget — don't make the renderer wait on a network-bound
       // metadata pass just to see the tracks it already has.
-      runBackfillPass(dir, tracks, fetchMetadata).then((updated) => {
-        if (updated && mainWindow) {
-          mainWindow.webContents.send('library:updated');
-        }
-      });
+      runBackfillPass(dir, tracks, backfillTrackInfo, sendBackfillStatus)
+        .then((updated) => {
+          if (updated && mainWindow) {
+            mainWindow.webContents.send('library:updated');
+          }
+        })
+        .catch((err) => {
+          sendBackfillStatus({
+            stage: 'error',
+            isRunning: false,
+            error: err instanceof Error ? err.message : String(err),
+          });
+        });
       return tracks;
     });
 
@@ -319,6 +343,13 @@ if (!gotSingleInstanceLock) {
         if (mainWindow) mainWindow.webContents.send('library:updated');
       }
       return deleted;
+    });
+
+    ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const result = readTrackLyrics(dir, trackId, filename);
+      if (!result) return null;
+      return result;
     });
 
     // Every mutation resolves to the full playlist array so the renderer
@@ -339,6 +370,18 @@ if (!gotSingleInstanceLock) {
       return deletePlaylist(resolveDownloadDir(cachedConfig), id);
     });
 
+    ipcMain.handle(
+      'playlists:reorder',
+      async (event, draggedId, targetId, position) => {
+        return reorderPlaylists(
+          resolveDownloadDir(cachedConfig),
+          draggedId,
+          targetId,
+          position,
+        );
+      },
+    );
+
     ipcMain.handle('playlists:set-tracks', async (event, id, trackIds) => {
       return setPlaylistTracks(resolveDownloadDir(cachedConfig), id, trackIds);
     });
@@ -353,6 +396,20 @@ if (!gotSingleInstanceLock) {
         ...entry,
         alreadyDownloaded: existingIds.has(entry.id),
       }));
+    });
+
+    ipcMain.handle('yt:fetch-metadata', async (event, input) => {
+      const videoId = extractVideoId(input);
+      if (!videoId) throw new Error('invalid video id or YouTube URL');
+      const metadata = await fetchMetadata(videoId);
+      if (!metadata) throw new Error('unable to fetch video metadata');
+      const dir = resolveDownloadDir(cachedConfig);
+      const existingIds = new Set(listTracks(dir).map((track) => track.id));
+      return {
+        id: videoId,
+        ...metadata,
+        alreadyDownloaded: existingIds.has(videoId),
+      };
     });
 
     ipcMain.handle('yt:download-audio', async (event, input) => {
@@ -384,7 +441,8 @@ if (!gotSingleInstanceLock) {
 
       const outDir = resolveSeparatedDir(dir, trackId);
       if (!outDir) throw new Error('invalid track id');
-      const inputPath = resolveTrackPath(dir, track.filename);
+      const inputPath = resolveTrackAudioPath(dir, track.id);
+      if (!inputPath) throw new Error(`missing audio for track id: ${trackId}`);
 
       // Running two separations at once (same track racing writes, or
       // different tracks saturating ONNX's all-cores pool while the user

@@ -10,10 +10,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
   // not an error, the renderer falls back to the single-video
   // downloadAudio flow.
   listPlaylist: (input) => ipcRenderer.invoke('yt:list-playlist', input),
+  fetchVideoMetadata: (input) => ipcRenderer.invoke('yt:fetch-metadata', input),
   getConfig: () => ipcRenderer.invoke('config:get'),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),
+  getTrackLyrics: (trackId, filename) =>
+    ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   // Deletes the original audio file and its separation output together —
   // resolves to false if trackId no longer matches a real file. Also
   // cascades into any playlist that referenced it (see main.js's handler).
@@ -27,6 +30,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   renamePlaylist: (id, name) =>
     ipcRenderer.invoke('playlists:rename', id, name),
   deletePlaylist: (id) => ipcRenderer.invoke('playlists:delete', id),
+  reorderPlaylist: (draggedId, targetId, position) =>
+    ipcRenderer.invoke('playlists:reorder', draggedId, targetId, position),
   setPlaylistTracks: (id, trackIds) =>
     ipcRenderer.invoke('playlists:set-tracks', id, trackIds),
   // Slow (tens of seconds). Rejects if another separation is already
@@ -46,6 +51,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     const listener = () => callback();
     ipcRenderer.on('library:updated', listener);
     return () => ipcRenderer.removeListener('library:updated', listener);
+  },
+  onLibraryBackfillStatus: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('library:backfill-status', listener);
+    return () =>
+      ipcRenderer.removeListener('library:backfill-status', listener);
   },
   // One-way notification (send, not invoke) — main has nothing to return,
   // it just redraws the Windows taskbar thumbar to match.

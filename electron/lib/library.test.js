@@ -4,12 +4,21 @@ import path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   isServableFilename,
+  isArtworkFilename,
+  isAutomaticLyricsLanguage,
+  isLyricsSubtitleFilename,
+  isTranslatedLyricsLanguage,
   resolveTrackPath,
+  resolveTrackDir,
+  resolveTrackAudioPath,
+  resolveTrackAssetPath,
+  resolveTrackLyricsPath,
   resolveSeparatedDir,
   resolveSeparatedFilePath,
   hasSeparation,
   listTracks,
   loadIndex,
+  readTrackLyrics,
   saveIndexEntry,
   buildRangeResponse,
   runBackfillPass,
@@ -39,6 +48,64 @@ describe('isServableFilename', () => {
   it('rejects empty or non-string input', () => {
     expect(isServableFilename('')).toBe(false);
     expect(isServableFilename(null)).toBe(false);
+  });
+});
+
+describe('isArtworkFilename', () => {
+  it('accepts thumbnail image variants', () => {
+    expect(isArtworkFilename('thumbnail.jpg')).toBe(true);
+    expect(isArtworkFilename('thumbnail.jpeg')).toBe(true);
+    expect(isArtworkFilename('thumbnail.png')).toBe(true);
+    expect(isArtworkFilename('thumbnail.webp')).toBe(true);
+  });
+
+  it('rejects non-thumbnail or unsafe image filenames', () => {
+    expect(isArtworkFilename('cover.jpg')).toBe(false);
+    expect(isArtworkFilename('thumbnail.gif')).toBe(false);
+    expect(isArtworkFilename('sub/thumbnail.jpg')).toBe(false);
+  });
+});
+
+describe('isLyricsSubtitleFilename', () => {
+  it('accepts VTT language filenames', () => {
+    expect(isLyricsSubtitleFilename('ja.vtt')).toBe(true);
+    expect(isLyricsSubtitleFilename('zh-Hant.vtt')).toBe(true);
+    expect(isLyricsSubtitleFilename('en.orig.vtt')).toBe(true);
+  });
+
+  it('rejects unsafe or unsupported lyrics filenames', () => {
+    expect(isLyricsSubtitleFilename('lyrics.srt')).toBe(false);
+    expect(isLyricsSubtitleFilename('lyrics/ja.vtt')).toBe(false);
+    expect(isLyricsSubtitleFilename('../ja.vtt')).toBe(false);
+    expect(isLyricsSubtitleFilename('ja')).toBe(false);
+  });
+});
+
+describe('isTranslatedLyricsLanguage', () => {
+  it('rejects YouTube translated caption language tags', () => {
+    expect(isTranslatedLyricsLanguage('ja-zh-TW')).toBe(true);
+    expect(isTranslatedLyricsLanguage('en-ja')).toBe(true);
+  });
+
+  it('allows normal BCP-47 variants and original automatic tags', () => {
+    expect(isTranslatedLyricsLanguage('zh-Hant')).toBe(false);
+    expect(isTranslatedLyricsLanguage('zh-TW')).toBe(false);
+    expect(isTranslatedLyricsLanguage('en-US')).toBe(false);
+    expect(isTranslatedLyricsLanguage('zh-Hant-orig')).toBe(false);
+  });
+});
+
+describe('isAutomaticLyricsLanguage', () => {
+  it('detects YouTube original automatic caption language tags', () => {
+    expect(isAutomaticLyricsLanguage('en-orig')).toBe(true);
+    expect(isAutomaticLyricsLanguage('zh_Hant_orig')).toBe(true);
+    expect(isAutomaticLyricsLanguage('ja.orig')).toBe(true);
+  });
+
+  it('allows normal manual caption language tags', () => {
+    expect(isAutomaticLyricsLanguage('zh-Hant')).toBe(false);
+    expect(isAutomaticLyricsLanguage('zh-TW')).toBe(false);
+    expect(isAutomaticLyricsLanguage('en-US')).toBe(false);
   });
 });
 
@@ -94,9 +161,9 @@ describe('resolveSeparatedDir', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('resolves to <dir>/.separated/<trackId>', () => {
+  it('resolves to <dir>/tracks/<trackId>', () => {
     expect(resolveSeparatedDir(dir, 'dQw4w9WgXcQ')).toBe(
-      path.join(path.resolve(dir), '.separated', 'dQw4w9WgXcQ'),
+      path.join(path.resolve(dir), 'tracks', 'dQw4w9WgXcQ'),
     );
   });
 
@@ -108,9 +175,37 @@ describe('resolveSeparatedDir', () => {
     expect(resolveSeparatedDir(dir, 'C:\\Windows')).toBe(null);
   });
 
+  it('rejects a Windows drive-relative trackId', () => {
+    expect(resolveSeparatedDir(dir, 'C:Windows')).toBe(null);
+  });
+
   it('rejects empty or non-string trackId', () => {
     expect(resolveSeparatedDir(dir, '')).toBe(null);
     expect(resolveSeparatedDir(dir, null)).toBe(null);
+  });
+});
+
+describe('resolveTrackDir', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-trackdir-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('resolves a safe structured track directory', () => {
+    expect(resolveTrackDir(dir, 'abc')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc'),
+    );
+  });
+
+  it('rejects traversal and Windows path forms', () => {
+    expect(resolveTrackDir(dir, '../abc')).toBe(null);
+    expect(resolveTrackDir(dir, 'C:\\Windows')).toBe(null);
+    expect(resolveTrackDir(dir, 'C:Windows')).toBe(null);
   });
 });
 
@@ -127,7 +222,7 @@ describe('resolveSeparatedFilePath', () => {
 
   it('resolves an allowlisted variant filename', () => {
     expect(resolveSeparatedFilePath(dir, 'abc', 'stems.wav')).toBe(
-      path.join(path.resolve(dir), '.separated', 'abc', 'stems.wav'),
+      path.join(path.resolve(dir), 'tracks', 'abc', 'stems.wav'),
     );
   });
 
@@ -139,6 +234,78 @@ describe('resolveSeparatedFilePath', () => {
 
   it('rejects a traversal attempt via trackId even with a valid variant name', () => {
     expect(resolveSeparatedFilePath(dir, '../evil', 'stems.wav')).toBe(null);
+  });
+});
+
+describe('resolveTrackAssetPath', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-asset-test-'));
+    const trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'thumbnail.jpg'), 'y');
+    fs.writeFileSync(path.join(trackDir, 'stems.wav'), 'z');
+    fs.writeFileSync(path.join(trackDir, 'info.json'), '{}');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('resolves structured audio, artwork, and stems assets', () => {
+    expect(resolveTrackAudioPath(dir, 'abc')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc', 'audio.mp3'),
+    );
+    expect(resolveTrackAssetPath(dir, 'abc', 'audio.mp3')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc', 'audio.mp3'),
+    );
+    expect(resolveTrackAssetPath(dir, 'abc', 'thumbnail.jpg')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc', 'thumbnail.jpg'),
+    );
+    expect(resolveTrackAssetPath(dir, 'abc', 'stems.wav')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc', 'stems.wav'),
+    );
+  });
+
+  it('does not serve source metadata or traversal attempts', () => {
+    expect(resolveTrackAssetPath(dir, 'abc', 'info.json')).toBe(null);
+    expect(resolveTrackAssetPath(dir, 'abc', '../audio.mp3')).toBe(null);
+    expect(resolveTrackAssetPath(dir, '../abc', 'audio.mp3')).toBe(null);
+  });
+});
+
+describe('resolveTrackLyricsPath', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-test-'));
+    const lyricsDir = path.join(dir, 'tracks', 'abc', 'lyrics');
+    fs.mkdirSync(lyricsDir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'tracks', 'abc', 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(lyricsDir, 'ja.vtt'), 'WEBVTT');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('resolves an existing lyrics file inside the track lyrics directory', () => {
+    expect(resolveTrackLyricsPath(dir, 'abc', 'ja.vtt')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc', 'lyrics', 'ja.vtt'),
+    );
+    expect(readTrackLyrics(dir, 'abc', 'ja.vtt')).toEqual({
+      source: { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
+      text: 'WEBVTT',
+    });
+  });
+
+  it('rejects traversal and non-existent lyrics filenames', () => {
+    expect(resolveTrackLyricsPath(dir, 'abc', '../ja.vtt')).toBe(null);
+    expect(resolveTrackLyricsPath(dir, '../abc', 'ja.vtt')).toBe(null);
+    expect(resolveTrackLyricsPath(dir, 'abc', 'missing.vtt')).toBe(null);
+    expect(readTrackLyrics(dir, 'abc', 'missing.vtt')).toBe(null);
   });
 });
 
@@ -158,13 +325,13 @@ describe('hasSeparation', () => {
   });
 
   it('is false when the directory exists but stems.wav does not (interrupted separation)', () => {
-    const sepDir = path.join(dir, '.separated', 'abc');
+    const sepDir = path.join(dir, 'tracks', 'abc');
     fs.mkdirSync(sepDir, { recursive: true });
     expect(hasSeparation(dir, 'abc')).toBe(false);
   });
 
   it('is true once stems.wav exists', () => {
-    const sepDir = path.join(dir, '.separated', 'abc');
+    const sepDir = path.join(dir, 'tracks', 'abc');
     fs.mkdirSync(sepDir, { recursive: true });
     fs.writeFileSync(path.join(sepDir, 'stems.wav'), 'x');
     expect(hasSeparation(dir, 'abc')).toBe(true);
@@ -194,7 +361,11 @@ describe('listTracks', () => {
 
     const tracks = listTracks(dir).sort((a, b) => a.id.localeCompare(b.id));
     expect(tracks.map((t) => t.id)).toEqual(['abc', 'def']);
-    expect(tracks[0].url).toBe('utawakui-media://local/abc.mp3');
+    expect(tracks[0].url).toBe('utawakui-media://track/abc/audio.mp3');
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc', 'audio.mp3'))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(false);
   });
 
   it('never lists library.json itself as a track', () => {
@@ -288,6 +459,9 @@ describe('listTracks', () => {
     expect(tracks).toHaveLength(1);
     expect(tracks[0].id).toBe('abc');
     expect(tracks[0].filename).toBe('abc.mp3');
+    expect(
+      fs.existsSync(path.join(dir, '.duplicates', 'abc', 'abc.webm')),
+    ).toBe(true);
   });
 
   it('reports hasSeparation false and omits stemsUrl when unseparated', () => {
@@ -307,7 +481,175 @@ describe('listTracks', () => {
     expect(tracks).toHaveLength(1);
     const [track] = tracks;
     expect(track.hasSeparation).toBe(true);
-    expect(track.stemsUrl).toBe('utawakui-media://separated/abc/stems.wav');
+    expect(track.stemsUrl).toBe('utawakui-media://track/abc/stems.wav');
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc', 'stems.wav'))).toBe(
+      true,
+    );
+  });
+
+  it('reports thumbnailUrl for structured track artwork', () => {
+    const trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'thumbnail.jpg'), 'y');
+
+    const [track] = listTracks(dir);
+    expect(track.thumbnailUrl).toBe('utawakui-media://track/abc/thumbnail.jpg');
+  });
+
+  it('normalizes yt-dlp artwork sidecars before reporting thumbnailUrl', () => {
+    const trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'audio.webp'), 'image');
+
+    const [track] = listTracks(dir);
+
+    expect(track.thumbnailUrl).toBe(
+      'utawakui-media://track/abc/thumbnail.webp',
+    );
+    expect(fs.existsSync(path.join(trackDir, 'thumbnail.webp'))).toBe(true);
+    expect(fs.existsSync(path.join(trackDir, 'audio.webp'))).toBe(false);
+  });
+
+  it('normalizes yt-dlp VTT subtitle sidecars into the lyrics directory', () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'audio.ja.vtt'), 'WEBVTT');
+
+    const [track] = listTracks(dir);
+
+    expect(track.lyrics).toEqual({
+      status: 'available',
+      needsScan: false,
+      sources: [{ filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' }],
+    });
+    expect(fs.existsSync(path.join(trackDir, 'lyrics', 'ja.vtt'))).toBe(true);
+    expect(fs.existsSync(path.join(trackDir, 'audio.ja.vtt'))).toBe(false);
+  });
+
+  it('drops translated yt-dlp VTT sidecars instead of listing them as lyrics', () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'audio.ja-zh-TW.vtt'), 'WEBVTT');
+
+    const [track] = listTracks(dir);
+
+    expect(track.lyrics).toEqual({
+      status: 'unchecked',
+      needsScan: false,
+      sources: [],
+    });
+    expect(fs.existsSync(path.join(trackDir, 'lyrics', 'ja-zh-TW.vtt'))).toBe(
+      false,
+    );
+    expect(fs.existsSync(path.join(trackDir, 'audio.ja-zh-TW.vtt'))).toBe(
+      false,
+    );
+  });
+
+  it('drops automatic yt-dlp VTT sidecars instead of listing them as lyrics', () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'audio.en-orig.vtt'), 'WEBVTT');
+
+    const [track] = listTracks(dir);
+
+    expect(track.lyrics).toEqual({
+      status: 'unchecked',
+      needsScan: false,
+      sources: [],
+    });
+    expect(fs.existsSync(path.join(trackDir, 'lyrics', 'en-orig.vtt'))).toBe(
+      false,
+    );
+    expect(fs.existsSync(path.join(trackDir, 'audio.en-orig.vtt'))).toBe(false);
+  });
+
+  it('marks a YouTube-id track for backfill when artwork or info is missing', () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+
+    const [track] = listTracks(dir);
+
+    expect(track.needsBackfill).toBe(true);
+  });
+
+  it('marks a YouTube-id track for backfill when lyrics have not been checked yet', () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'info.json'), '{}');
+    fs.writeFileSync(path.join(trackDir, 'thumbnail.jpg'), 'image');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+
+    const [track] = listTracks(dir);
+
+    expect(track.needsBackfill).toBe(true);
+    expect(track.lyrics).toEqual({
+      status: 'unchecked',
+      needsScan: false,
+      sources: [],
+    });
+  });
+
+  it('marks tracks scanned with an old lyrics manifest version for one rescan', () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    const lyricsDir = path.join(trackDir, 'lyrics');
+    fs.mkdirSync(lyricsDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'info.json'), '{}');
+    fs.writeFileSync(path.join(trackDir, 'thumbnail.jpg'), 'image');
+    fs.writeFileSync(path.join(lyricsDir, 'ja.vtt'), 'WEBVTT');
+    fs.writeFileSync(
+      path.join(lyricsDir, 'lyrics.json'),
+      JSON.stringify({
+        version: 2,
+        checked: true,
+        sources: [{ filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' }],
+      }),
+    );
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+
+    const [track] = listTracks(dir);
+
+    expect(track.needsBackfill).toBe(true);
+    expect(track.lyrics).toMatchObject({
+      status: 'available',
+      needsScan: true,
+    });
+  });
+
+  it('does not require artwork or info backfill for a non-YouTube local track', () => {
+    const trackDir = path.join(dir, 'tracks', 'local-song');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveIndexEntry(dir, 'local-song', {
+      title: 'Local Song',
+      artist: 'Local Artist',
+      duration: 120,
+    });
+
+    const [track] = listTracks(dir);
+
+    expect(track.needsBackfill).toBe(false);
   });
 });
 
@@ -449,6 +791,7 @@ describe('deleteTrack', () => {
     fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
     expect(deleteTrack(dir, 'abc')).toBe(true);
     expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc'))).toBe(false);
   });
 
   it('removes the matching .separated/<trackId> directory too', () => {
@@ -459,6 +802,7 @@ describe('deleteTrack', () => {
 
     expect(deleteTrack(dir, 'abc')).toBe(true);
     expect(fs.existsSync(sepDir)).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc'))).toBe(false);
   });
 
   it('removes the library.json entry', () => {
@@ -477,14 +821,20 @@ describe('deleteTrack', () => {
     fs.writeFileSync(path.join(sepDir, 'stems.wav'), 'x');
 
     deleteTrack(dir, 'abc');
-    expect(fs.existsSync(path.join(dir, 'def.mp3'))).toBe(true);
-    expect(fs.existsSync(sepDir)).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'tracks', 'def', 'audio.mp3'))).toBe(
+      true,
+    );
+    expect(fs.existsSync(path.join(dir, 'tracks', 'def', 'stems.wav'))).toBe(
+      true,
+    );
   });
 
   it('returns false and touches nothing when trackId has no matching file', () => {
     fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
     expect(deleteTrack(dir, 'missing')).toBe(false);
-    expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc', 'audio.mp3'))).toBe(
+      true,
+    );
   });
 
   it('deletes the same deterministic representative listTracks exposes for duplicate stems', () => {
@@ -493,8 +843,10 @@ describe('deleteTrack', () => {
 
     expect(listTracks(dir)[0].filename).toBe('abc.mp3');
     expect(deleteTrack(dir, 'abc')).toBe(true);
-    expect(fs.existsSync(path.join(dir, 'abc.mp3'))).toBe(false);
-    expect(fs.existsSync(path.join(dir, 'abc.webm'))).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc'))).toBe(false);
+    expect(
+      fs.existsSync(path.join(dir, '.duplicates', 'abc', 'abc.webm')),
+    ).toBe(true);
   });
 });
 
@@ -523,7 +875,111 @@ describe('runBackfillPass', () => {
 
     expect(updated).toBe(true);
     expect(fetchMetadata).toHaveBeenCalledTimes(1);
-    expect(fetchMetadata).toHaveBeenCalledWith('dQw4w9WgXcQ');
+    expect(fetchMetadata).toHaveBeenCalledWith(
+      'dQw4w9WgXcQ',
+      path.join(dir, 'tracks', 'dQw4w9WgXcQ'),
+    );
+  });
+
+  it('queries a YouTube-id track again when only thumbnail or info is missing', async () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+    const fetchMetadata = vi.fn(async () => ({
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    }));
+
+    const updated = await runBackfillPass(dir, listTracks(dir), fetchMetadata);
+
+    expect(updated).toBe(true);
+    expect(fetchMetadata).toHaveBeenCalledWith('dQw4w9WgXcQ', trackDir);
+  });
+
+  it('treats thumbnail-only backfill as an update without writing asset flags into library.json', async () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+    const fetchMetadata = vi.fn(async () => ({ assetsUpdated: true }));
+
+    const updated = await runBackfillPass(dir, listTracks(dir), fetchMetadata);
+
+    expect(updated).toBe(true);
+    expect(loadIndex(dir).tracks.dQw4w9WgXcQ).toEqual({
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+  });
+
+  it('treats lyrics scan completion as an update even when subtitles are missing', async () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    fs.writeFileSync(path.join(trackDir, 'info.json'), '{}');
+    fs.writeFileSync(path.join(trackDir, 'thumbnail.jpg'), 'image');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+    const fetchMetadata = vi.fn(async () => ({ assetsUpdated: true }));
+
+    const updated = await runBackfillPass(dir, listTracks(dir), fetchMetadata);
+
+    expect(updated).toBe(true);
+    expect(fetchMetadata).toHaveBeenCalledWith('dQw4w9WgXcQ', trackDir);
+    expect(loadIndex(dir).tracks.dQw4w9WgXcQ).toEqual({
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    });
+  });
+
+  it('reports backfill progress while traversing reload candidates', async () => {
+    fs.writeFileSync(path.join(dir, 'dQw4w9WgXcQ.mp3'), 'x');
+    const fetchMetadata = vi.fn(async () => ({
+      title: 'Never Gonna Give You Up',
+      artist: 'Rick Astley',
+      duration: 213,
+    }));
+    const onStatus = vi.fn();
+
+    await runBackfillPass(dir, listTracks(dir), fetchMetadata, onStatus);
+
+    expect(onStatus).toHaveBeenCalledWith({
+      stage: 'start',
+      isRunning: true,
+      total: 1,
+      completed: 0,
+    });
+    expect(onStatus).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stage: 'track',
+        isRunning: true,
+        total: 1,
+        completed: 0,
+        trackId: 'dQw4w9WgXcQ',
+      }),
+    );
+    expect(onStatus).toHaveBeenLastCalledWith({
+      stage: 'done',
+      isRunning: false,
+      total: 1,
+      completed: 1,
+      updated: true,
+    });
   });
 
   it('writes back title/artist/duration on a successful lookup', async () => {
