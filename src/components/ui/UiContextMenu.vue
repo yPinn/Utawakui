@@ -180,85 +180,23 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div
-    v-if="open"
-    ref="menu"
-    class="ui-context-menu"
-    :style="menuStyle"
-    role="menu"
-    @click.stop
-    @contextmenu.prevent
-  >
-    <p v-if="title" class="ui-context-menu__title">{{ title }}</p>
-    <p v-if="items.length === 0" class="ui-context-menu__empty">
-      {{ emptyText }}
-    </p>
-    <template v-for="item in items" :key="itemKey(item)">
-      <div
-        v-if="item.separator"
-        class="ui-context-menu__separator"
-        role="separator"
-      />
-      <button
-        v-else
-        type="button"
-        class="ui-context-menu__item"
-        :class="{
-          'ui-context-menu__item--danger': item.danger,
-          'ui-context-menu__item--active':
-            item.children?.length && itemKey(item) === activeSubmenuKey,
-        }"
-        :disabled="item.disabled"
-        role="menuitem"
-        :aria-haspopup="item.children?.length ? 'menu' : undefined"
-        :aria-expanded="
-          item.children?.length ? itemKey(item) === activeSubmenuKey : undefined
-        "
-        @mouseenter="showSubmenu(item)"
-        @focus="showSubmenu(item)"
-        @click="selectItem(item)"
-      >
-        <span class="ui-context-menu__icon-slot" aria-hidden="true">
-          <component
-            :is="item.icon"
-            v-if="item.icon"
-            class="ui-context-menu__icon"
-            :size="ICON_SIZE"
-          />
-        </span>
-        <span class="ui-context-menu__text">
-          <span class="ui-context-menu__label">{{ item.label }}</span>
-          <span v-if="item.description" class="ui-context-menu__description">
-            {{ item.description }}
-          </span>
-        </span>
-        <span class="ui-context-menu__status">
-          {{ item.status || '' }}
-        </span>
-        <span class="ui-context-menu__chevron-slot" aria-hidden="true">
-          <ChevronRight
-            v-if="item.children?.length"
-            class="ui-context-menu__chevron"
-            :size="ICON_SIZE"
-          />
-        </span>
-      </button>
-    </template>
-
+  <Teleport to="body">
     <div
-      v-if="activeSubmenuItem"
-      class="ui-context-menu ui-context-menu--submenu"
-      :style="submenuStyle"
+      v-if="open"
+      ref="menu"
+      class="ui-context-menu"
+      :style="menuStyle"
       role="menu"
       @click.stop
       @contextmenu.prevent
     >
-      <template
-        v-for="child in activeSubmenuItem.children"
-        :key="itemKey(child)"
-      >
+      <p v-if="title" class="ui-context-menu__title">{{ title }}</p>
+      <p v-if="items.length === 0" class="ui-context-menu__empty">
+        {{ emptyText }}
+      </p>
+      <template v-for="item in items" :key="itemKey(item)">
         <div
-          v-if="child.separator"
+          v-if="item.separator"
           class="ui-context-menu__separator"
           role="separator"
         />
@@ -266,39 +204,108 @@ onUnmounted(() => {
           v-else
           type="button"
           class="ui-context-menu__item"
-          :class="{ 'ui-context-menu__item--danger': child.danger }"
-          :disabled="child.disabled"
+          :class="{
+            'ui-context-menu__item--danger': item.danger,
+            'ui-context-menu__item--active':
+              item.children?.length && itemKey(item) === activeSubmenuKey,
+          }"
+          :disabled="item.disabled"
           role="menuitem"
-          @click="selectItem(child)"
+          :aria-haspopup="item.children?.length ? 'menu' : undefined"
+          :aria-expanded="
+            item.children?.length
+              ? itemKey(item) === activeSubmenuKey
+              : undefined
+          "
+          @mouseenter="showSubmenu(item)"
+          @focus="showSubmenu(item)"
+          @click="selectItem(item)"
         >
           <span class="ui-context-menu__icon-slot" aria-hidden="true">
             <component
-              :is="child.icon"
-              v-if="child.icon"
+              :is="item.icon"
+              v-if="item.icon"
               class="ui-context-menu__icon"
               :size="ICON_SIZE"
             />
           </span>
           <span class="ui-context-menu__text">
-            <span class="ui-context-menu__label">{{ child.label }}</span>
-            <span v-if="child.description" class="ui-context-menu__description">
-              {{ child.description }}
+            <span class="ui-context-menu__label">{{ item.label }}</span>
+            <span v-if="item.description" class="ui-context-menu__description">
+              {{ item.description }}
             </span>
           </span>
           <span class="ui-context-menu__status">
-            {{ child.status || '' }}
+            {{ item.status || '' }}
           </span>
-          <span class="ui-context-menu__chevron-slot" aria-hidden="true" />
+          <span class="ui-context-menu__chevron-slot" aria-hidden="true">
+            <ChevronRight
+              v-if="item.children?.length"
+              class="ui-context-menu__chevron"
+              :size="ICON_SIZE"
+            />
+          </span>
         </button>
       </template>
+
+      <div
+        v-if="activeSubmenuItem"
+        class="ui-context-menu ui-context-menu--submenu"
+        :style="submenuStyle"
+        role="menu"
+        @click.stop
+        @contextmenu.prevent
+      >
+        <template
+          v-for="child in activeSubmenuItem.children"
+          :key="itemKey(child)"
+        >
+          <div
+            v-if="child.separator"
+            class="ui-context-menu__separator"
+            role="separator"
+          />
+          <button
+            v-else
+            type="button"
+            class="ui-context-menu__item"
+            :class="{ 'ui-context-menu__item--danger': child.danger }"
+            :disabled="child.disabled"
+            role="menuitem"
+            @click="selectItem(child)"
+          >
+            <span class="ui-context-menu__icon-slot" aria-hidden="true">
+              <component
+                :is="child.icon"
+                v-if="child.icon"
+                class="ui-context-menu__icon"
+                :size="ICON_SIZE"
+              />
+            </span>
+            <span class="ui-context-menu__text">
+              <span class="ui-context-menu__label">{{ child.label }}</span>
+              <span
+                v-if="child.description"
+                class="ui-context-menu__description"
+              >
+                {{ child.description }}
+              </span>
+            </span>
+            <span class="ui-context-menu__status">
+              {{ child.status || '' }}
+            </span>
+            <span class="ui-context-menu__chevron-slot" aria-hidden="true" />
+          </button>
+        </template>
+      </div>
     </div>
-  </div>
+  </Teleport>
 </template>
 
 <style scoped>
 .ui-context-menu {
   position: fixed;
-  z-index: 20;
+  z-index: var(--ui-z-context-menu);
   box-sizing: border-box;
   max-height: min(320px, calc(100vh - 16px));
   overflow-y: auto;
@@ -310,7 +317,7 @@ onUnmounted(() => {
 }
 
 .ui-context-menu--submenu {
-  z-index: 21;
+  z-index: var(--ui-z-context-menu-submenu);
 }
 
 .ui-context-menu__title,

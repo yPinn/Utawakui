@@ -1,4 +1,7 @@
 <script setup>
+import UiMarqueeText from '../ui/UiMarqueeText.vue';
+import { getTrackInitial } from '../../utils/trackDisplay.js';
+
 defineProps({
   track: { type: Object, required: true },
   current: { type: Boolean, default: false },
@@ -13,13 +16,6 @@ const emit = defineEmits([
   'drop',
   'dragend',
 ]);
-
-function trackInitial(track) {
-  return String(track.title || track.id || '?')
-    .trim()
-    .slice(0, 1)
-    .toUpperCase();
-}
 </script>
 
 <template>
@@ -35,9 +31,19 @@ function trackInitial(track) {
     @drop="emit('drop', $event)"
     @dragend="emit('dragend', $event)"
   >
-    <span class="queue-track__cover">{{ trackInitial(track) }}</span>
+    <span class="queue-track__cover">
+      <img
+        v-if="track.thumbnailUrl"
+        class="queue-track__image"
+        :src="track.thumbnailUrl"
+        alt=""
+        aria-hidden="true"
+        draggable="false"
+      />
+      <span v-else>{{ getTrackInitial(track) }}</span>
+    </span>
     <span class="queue-track__copy">
-      <span class="queue-track__title">{{ track.title }}</span>
+      <UiMarqueeText class="queue-track__title" :text="track.title" />
       <span v-if="track.artist" class="queue-track__artist">
         {{ track.artist }}
       </span>
@@ -47,7 +53,7 @@ function trackInitial(track) {
 
 <style scoped>
 .queue-track {
-  --queue-track-cover-size: 40px;
+  --queue-track-cover-size: 48px;
 
   box-sizing: border-box;
   display: grid;
@@ -99,6 +105,17 @@ function trackInitial(track) {
   font-size: var(--ui-text-lg);
   font-weight: var(--ui-font-weight-strong);
   text-transform: uppercase;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.queue-track__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .queue-track__copy {
@@ -107,7 +124,6 @@ function trackInitial(track) {
   flex-direction: column;
 }
 
-.queue-track__title,
 .queue-track__artist {
   overflow: hidden;
   text-overflow: ellipsis;

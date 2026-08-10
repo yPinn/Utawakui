@@ -245,7 +245,7 @@ function clearSourceDragState() {
   position: fixed;
   right: var(--ui-space-3);
   bottom: calc(var(--queue-panel-bottom-offset) + var(--ui-space-3));
-  z-index: 20;
+  z-index: var(--ui-z-dropdown);
   box-sizing: border-box;
   width: min(var(--queue-panel-width), calc(100vw - var(--ui-space-5)));
   max-height: min(640px, calc(100vh - var(--queue-panel-max-height-offset)));

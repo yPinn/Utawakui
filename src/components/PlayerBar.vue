@@ -17,9 +17,11 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { PLAYBACK_MODES, usePlayer } from '../composables/usePlayer.js';
 import { formatDuration } from '../utils/format.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
+import { getTrackInitial } from '../utils/trackDisplay.js';
 import { ICON_SIZE } from '../constants/ui.js';
 import PlaybackQueuePanel from './PlaybackQueuePanel.vue';
 import UiButton from './ui/UiButton.vue';
+import UiMarqueeText from './ui/UiMarqueeText.vue';
 
 const {
   state,
@@ -56,6 +58,7 @@ const volume = computed({
 
 const volumePercent = computed(() => Math.round(state.volume * 100));
 const canShuffle = computed(() => queueState.tracks.length > 1);
+const currentTrackInitial = computed(() => getTrackInitial(state.track));
 const playbackModeIcon = computed(() =>
   state.playbackMode === PLAYBACK_MODES.repeatOne ? Repeat1 : Repeat,
 );
@@ -122,9 +125,22 @@ onUnmounted(() => {
 <template>
   <div class="player-bar" role="region" aria-label="播放控制列">
     <div class="player-bar__track">
+      <span v-if="state.track" class="player-bar__artwork" aria-hidden="true">
+        <img
+          v-if="state.track.thumbnailUrl"
+          class="player-bar__artwork-image"
+          :src="state.track.thumbnailUrl"
+          alt=""
+          draggable="false"
+        />
+        <span v-else>{{ currentTrackInitial }}</span>
+      </span>
       <div class="player-bar__track-copy">
         <template v-if="state.track">
-          <span class="player-bar__track-title">{{ state.track.title }}</span>
+          <UiMarqueeText
+            class="player-bar__track-title"
+            :text="state.track.title"
+          />
           <span v-if="state.track.artist" class="player-bar__track-artist">
             {{ state.track.artist }}
           </span>
@@ -265,6 +281,32 @@ onUnmounted(() => {
   gap: var(--ui-space-2);
 }
 
+.player-bar__artwork {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface-hover);
+  color: var(--ui-text);
+  font-size: var(--ui-text-lg);
+  font-weight: var(--ui-font-weight-strong);
+  overflow: hidden;
+  text-transform: uppercase;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.player-bar__artwork-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
 .player-bar__track-copy {
   min-width: 0;
   display: flex;
@@ -279,9 +321,6 @@ onUnmounted(() => {
 .player-bar__track-title {
   color: var(--ui-text);
   font-size: var(--ui-text-sm);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .player-bar__track-artist {
@@ -313,7 +352,7 @@ onUnmounted(() => {
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 999px;
+  border-radius: var(--ui-radius-pill);
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
   cursor: pointer;

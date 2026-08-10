@@ -7,6 +7,7 @@ import {
   createPlaylist,
   renamePlaylist,
   deletePlaylist,
+  reorderPlaylists,
   setPlaylistTracks,
   removeTrackFromAllPlaylists,
   PLAYLISTS_FILENAME,
@@ -265,6 +266,75 @@ describe('deletePlaylist', () => {
     const before = loadPlaylists(dir);
     const result = deletePlaylist(dir, 'unknown-id');
     expect(result).toEqual(before);
+  });
+});
+
+describe('reorderPlaylists', () => {
+  let dir;
+  let first;
+  let second;
+  let third;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+    [first] = createPlaylist(dir, 'First');
+    [, second] = createPlaylist(dir, 'Second');
+    [, , third] = createPlaylist(dir, 'Third');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('moves a playlist before the target and persists the array order', () => {
+    const result = reorderPlaylists(dir, third.id, first.id, 'before');
+
+    expect(result.map((playlist) => playlist.name)).toEqual([
+      'Third',
+      'First',
+      'Second',
+    ]);
+    expect(loadPlaylists(dir).map((playlist) => playlist.name)).toEqual([
+      'Third',
+      'First',
+      'Second',
+    ]);
+  });
+
+  it('moves a playlist after the target', () => {
+    const result = reorderPlaylists(dir, first.id, third.id, 'after');
+
+    expect(result.map((playlist) => playlist.name)).toEqual([
+      'Second',
+      'Third',
+      'First',
+    ]);
+  });
+
+  it('returns the list unchanged for unknown ids without writing', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    const before = fs.statSync(filePath).mtimeMs;
+    const result = reorderPlaylists(dir, 'unknown', second.id, 'before');
+
+    expect(result.map((playlist) => playlist.name)).toEqual([
+      'First',
+      'Second',
+      'Third',
+    ]);
+    expect(fs.statSync(filePath).mtimeMs).toBe(before);
+  });
+
+  it('is a no-op when the reordered array would not change', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    const before = fs.statSync(filePath).mtimeMs;
+    const result = reorderPlaylists(dir, first.id, second.id, 'before');
+
+    expect(result.map((playlist) => playlist.name)).toEqual([
+      'First',
+      'Second',
+      'Third',
+    ]);
+    expect(fs.statSync(filePath).mtimeMs).toBe(before);
   });
 });
 

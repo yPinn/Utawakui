@@ -113,6 +113,47 @@ async function remove(id) {
   await enqueue(() => window.Utawakui.deletePlaylist(id), '刪除歌單失敗');
 }
 
+function reorderPlaylist(draggedId, targetId, position = 'before') {
+  if (!draggedId || !targetId || draggedId === targetId) return;
+  if (typeof window.Utawakui.reorderPlaylist !== 'function') {
+    state.error = '播放清單排序需要重新啟動應用程式才能載入新版橋接 API。';
+    return;
+  }
+
+  const dragged = state.playlists.find((playlist) => playlist.id === draggedId);
+  if (
+    !dragged ||
+    !state.playlists.some((playlist) => playlist.id === targetId)
+  ) {
+    return;
+  }
+
+  const withoutDragged = state.playlists.filter(
+    (playlist) => playlist.id !== draggedId,
+  );
+  const targetIndex = withoutDragged.findIndex(
+    (playlist) => playlist.id === targetId,
+  );
+  if (targetIndex === -1) return;
+
+  const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+  const next = [...withoutDragged];
+  next.splice(insertIndex, 0, dragged);
+
+  if (
+    next.map((playlist) => playlist.id).join('\0') ===
+    state.playlists.map((playlist) => playlist.id).join('\0')
+  ) {
+    return;
+  }
+
+  state.playlists = next;
+  enqueue(
+    () => window.Utawakui.reorderPlaylist(draggedId, targetId, position),
+    '歌單排序儲存失敗',
+  );
+}
+
 function findPlaylist(id) {
   return state.playlists.find((p) => p.id === id);
 }
@@ -202,6 +243,7 @@ export function usePlaylists() {
     create,
     rename,
     remove,
+    reorderPlaylist,
     addTrack,
     removeTrack,
     setTracks,

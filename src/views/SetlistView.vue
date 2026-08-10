@@ -23,10 +23,12 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import PlaylistSidebar from '../components/PlaylistSidebar.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
+import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatDuration } from '../utils/format.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
+import { getTrackInitial } from '../utils/trackDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
 // Owned at module scope (see useSeparation.js), not locally — this view
@@ -51,6 +53,7 @@ const {
 const {
   state: playlistState,
   selectedPlaylist,
+  select: selectPlaylistAction,
   create: createPlaylistAction,
   rename: renamePlaylistAction,
   remove: removePlaylistAction,
@@ -79,6 +82,13 @@ const TRACK_MENU_ACTIONS = {
   addToPlaylist: 'add-to-playlist',
   createPlaylist: 'create-playlist',
   removeFromPlaylist: 'remove-from-playlist',
+};
+
+const PLAYLIST_MENU_ACTIONS = {
+  addToQueue: 'add-to-queue',
+  editDetails: 'edit-details',
+  delete: 'delete',
+  createPlaylist: 'create-playlist',
 };
 
 const PLAYLIST_SORT_KEYS = {
@@ -355,13 +365,6 @@ function playlistSortLabel(key, label) {
   return `${label}${playlistSort.value.direction === 'asc' ? '升冪' : '降冪'}排序`;
 }
 
-function trackInitial(track) {
-  return String(track.title || track.id || '?')
-    .trim()
-    .slice(0, 1)
-    .toUpperCase();
-}
-
 async function loadTracks() {
   tracks.value = await window.Utawakui.listTracks();
 }
@@ -405,6 +408,16 @@ function startRename() {
   isRenaming.value = true;
 }
 
+function startPlaylistRename(playlistId) {
+  const playlist = playlistState.playlists.find(
+    (item) => item.id === playlistId,
+  );
+  if (!playlist) return;
+  selectPlaylistAction(playlist.id);
+  renameValue.value = playlist.name;
+  isRenaming.value = true;
+}
+
 // Enter commits, Escape/blur cancels — same pattern as PlaylistSidebar's
 // create input. A blank name is a no-op rather than clearing the name.
 function commitRename() {
@@ -422,14 +435,45 @@ function cancelRename() {
 // window.confirm (not prompt — Electron doesn't support prompt) states
 // explicitly that this doesn't touch the audio files, since that's the
 // first fear an operator will have about a "delete" on a track list page.
-function confirmDeletePlaylist() {
-  const playlist = selectedPlaylist.value;
+function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
   if (!playlist) return;
   const confirmed = window.confirm(
     `確定要刪除歌單「${playlist.name || '(未命名歌單)'}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會刪除這個歌單,且無法復原。`,
   );
   if (!confirmed) return;
   removePlaylistAction(playlist.id);
+}
+
+function addPlaylistToQueue(playlistId) {
+  const playlist = playlistState.playlists.find(
+    (item) => item.id === playlistId,
+  );
+  if (!playlist) return;
+
+  for (const trackId of playlist.trackIds) {
+    const track = tracksById.value.get(trackId);
+    if (track) enqueueTrack(track);
+  }
+}
+
+async function handlePlaylistMenuAction(value) {
+  if (value.action === PLAYLIST_MENU_ACTIONS.createPlaylist) {
+    await createPlaylistAction();
+    return;
+  }
+
+  const playlist = playlistState.playlists.find(
+    (item) => item.id === value.playlistId,
+  );
+  if (!playlist) return;
+
+  if (value.action === PLAYLIST_MENU_ACTIONS.addToQueue) {
+    addPlaylistToQueue(playlist.id);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.editDetails) {
+    startPlaylistRename(playlist.id);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.delete) {
+    confirmDeletePlaylist(playlist);
+  }
 }
 
 function openAddMenu(track, event) {
@@ -558,7 +602,10 @@ onUnmounted(() => {
 
 <template>
   <div class="setlist">
-    <PlaylistSidebar class="setlist__sidebar" />
+    <PlaylistSidebar
+      class="setlist__sidebar"
+      @playlist-action="handlePlaylistMenuAction"
+    />
 
     <div class="setlist__main">
       <template v-if="selectedPlaylist">
@@ -569,7 +616,15 @@ onUnmounted(() => {
               :key="track.id"
               class="playlist-cover__cell"
             >
-              {{ trackInitial(track) }}
+              <img
+                v-if="track.thumbnailUrl"
+                class="playlist-cover__image"
+                :src="track.thumbnailUrl"
+                alt=""
+                aria-hidden="true"
+                draggable="false"
+              />
+              <span v-else>{{ getTrackInitial(track) }}</span>
             </div>
             <div
               v-for="index in playlistCoverEmptySlots"
@@ -616,18 +671,14 @@ onUnmounted(() => {
               aria-label="重新命名歌單"
               title="重新命名歌單"
               @click="startRename"
-            >
-              重新命名
-            </UiButton>
+            />
             <UiButton
               v-if="!isRenaming"
               :icon="Trash2"
               aria-label="刪除歌單"
               title="刪除歌單(不會刪除音檔)"
-              @click="confirmDeletePlaylist"
-            >
-              刪除
-            </UiButton>
+              @click="confirmDeletePlaylist()"
+            />
           </div>
 
           <div class="playlist-toolbar__tools">
@@ -651,7 +702,12 @@ onUnmounted(() => {
                 <X :size="16" aria-hidden="true" />
               </button>
             </label>
-            <UiButton :icon="RefreshCw" @click="refresh">重新整理</UiButton>
+            <UiButton
+              :icon="RefreshCw"
+              aria-label="重新整理"
+              title="重新整理"
+              @click="refresh"
+            />
           </div>
         </section>
       </template>
@@ -678,7 +734,12 @@ onUnmounted(() => {
               <X :size="16" aria-hidden="true" />
             </button>
           </label>
-          <UiButton :icon="RefreshCw" @click="refresh">重新整理</UiButton>
+          <UiButton
+            :icon="RefreshCw"
+            aria-label="重新整理"
+            title="重新整理"
+            @click="refresh"
+          />
         </template>
       </UiPageHeader>
 
@@ -870,9 +931,24 @@ onUnmounted(() => {
                   visibleIndex + 1
                 }}</span>
                 <span class="playlist-track__main">
-                  <span class="playlist-track__title">{{ track.title }}</span>
-                  <span v-if="track.artist" class="playlist-track__subtitle">
-                    {{ track.artist }}
+                  <span class="playlist-track__thumb" aria-hidden="true">
+                    <img
+                      v-if="track.thumbnailUrl"
+                      class="playlist-track__thumb-image"
+                      :src="track.thumbnailUrl"
+                      alt=""
+                      draggable="false"
+                    />
+                    <span v-else>{{ getTrackInitial(track) }}</span>
+                  </span>
+                  <span class="playlist-track__copy">
+                    <UiMarqueeText
+                      class="playlist-track__title"
+                      :text="track.title"
+                    />
+                    <span v-if="track.artist" class="playlist-track__subtitle">
+                      {{ track.artist }}
+                    </span>
                   </span>
                 </span>
                 <span class="playlist-track__added">
@@ -944,6 +1020,8 @@ onUnmounted(() => {
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
   border: 1px solid var(--ui-border);
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .playlist-cover__cell {
@@ -966,6 +1044,14 @@ onUnmounted(() => {
 
 .playlist-cover__cell--empty {
   color: var(--ui-text-muted);
+}
+
+.playlist-cover__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
 }
 
 .playlist-hero__content {
@@ -1223,7 +1309,7 @@ onUnmounted(() => {
 
 .playlist-track {
   position: relative;
-  min-height: 44px;
+  min-height: 52px;
   padding: var(--ui-space-2) var(--ui-space-3);
   border-radius: var(--ui-radius);
   color: var(--ui-text);
@@ -1250,7 +1336,7 @@ onUnmounted(() => {
   left: var(--ui-space-3);
   right: var(--ui-space-3);
   height: 2px;
-  border-radius: 999px;
+  border-radius: var(--ui-radius-pill);
   background: var(--ui-accent);
   pointer-events: none;
 }
@@ -1302,10 +1388,42 @@ onUnmounted(() => {
 .playlist-track__main {
   min-width: 0;
   display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.playlist-track__thumb {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: calc(var(--ui-radius) - 2px);
+  background: var(--ui-surface-hover);
+  color: var(--ui-text);
+  font-size: var(--ui-text-sm);
+  font-weight: var(--ui-font-weight-strong);
+  overflow: hidden;
+  text-transform: uppercase;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.playlist-track__thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.playlist-track__copy {
+  min-width: 0;
+  display: flex;
   flex-direction: column;
 }
 
-.playlist-track__title,
 .playlist-track__subtitle,
 .playlist-track__added {
   overflow: hidden;

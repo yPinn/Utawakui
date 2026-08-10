@@ -1,0 +1,296 @@
+import { describe, expect, it } from 'vitest';
+import {
+  formatLyricTime,
+  inferPreferredLyricsLanguagePrefixes,
+  isNonLyricCue,
+  parseVtt,
+  pickPreferredLyricsSource,
+} from './lyrics.js';
+
+describe('parseVtt', () => {
+  it('parses timed lyric lines', () => {
+    expect(
+      parseVtt(`WEBVTT
+
+00:00:01.000 --> 00:00:03.500
+Hello &amp; goodbye
+
+00:00:04.000 --> 00:00:05.000
+Second line`),
+    ).toEqual([
+      { start: 1, end: 3.5, text: 'Hello & goodbye' },
+      { start: 4, end: 5, text: 'Second line' },
+    ]);
+  });
+
+  it('filters non-lyric music cues from YouTube captions', () => {
+    expect(
+      parseVtt(`WEBVTT
+
+00:00:01.000 --> 00:00:02.000
+[Music]
+
+00:00:03.000 --> 00:00:04.000
+(instrumental)
+
+00:00:05.000 --> 00:00:06.000
+Real lyric`),
+    ).toEqual([{ start: 5, end: 6, text: 'Real lyric' }]);
+  });
+
+  it('filters YouTube CC stage directions and strips music-note decorations', () => {
+    expect(
+      parseVtt(
+        `WEBVTT
+
+00:00:20.000 --> 00:00:21.000
+[MANUAL WINDING]
+
+00:00:23.000 --> 00:00:24.000
+[TURNING ON BIT]
+
+00:00:35.000 --> 00:00:38.000
+♪ (LOOK OUT FOR YOURSELF) ♪
+
+00:00:39.000 --> 00:00:43.000
+♪ I WAKE UP TO THE SOUNDS
+OF THE SILENCE THAT ALLOWS ♪`,
+        { source: { kind: 'youtube-cc', language: 'en' } },
+      ),
+    ).toEqual([
+      { start: 35, end: 38, text: '(LOOK OUT FOR YOURSELF)' },
+      {
+        start: 39,
+        end: 43,
+        text: 'I WAKE UP TO THE SOUNDS\nOF THE SILENCE THAT ALLOWS',
+      },
+    ]);
+  });
+
+  it('filters Chinese YouTube CC music and applause cues', () => {
+    expect(
+      parseVtt(
+        `WEBVTT
+
+00:00:01.000 --> 00:00:02.000
+[音樂]
+
+00:00:03.000 --> 00:00:04.000
+[拍手]
+
+00:00:05.000 --> 00:00:06.000
+真正的歌詞`,
+        { source: { kind: 'youtube-cc', language: 'zh-TW' } },
+      ),
+    ).toEqual([{ start: 5, end: 6, text: '真正的歌詞' }]);
+  });
+  it('dedupes nearby rolling YouTube CC lyric cues', () => {
+    expect(
+      parseVtt(
+        `WEBVTT
+
+00:00:20.000 --> 00:00:23.000
+\u7a7a\u306e\u9752\u3055
+
+00:00:23.000 --> 00:00:25.000
+\u7a7a\u306e\u9752\u3055
+
+00:00:23.000 --> 00:00:28.000
+\u7a7a\u306e\u9752\u3055
+\u306b\u76ee\u3092\u596a\u308f\u308c
+
+00:00:28.000 --> 00:00:30.000
+\u306b\u76ee\u3092\u596a\u308f\u308c
+
+00:00:28.000 --> 00:00:33.000
+\u306b\u76ee\u3092\u596a\u308f\u308c
+\u3066\u8db3\u3082\u5143\u306e\u82b1`,
+        { source: { kind: 'youtube-cc', language: 'ja' } },
+      ),
+    ).toEqual([
+      { start: 20, end: 23, text: '\u7a7a\u306e\u9752\u3055' },
+      { start: 23, end: 28, text: '\u306b\u76ee\u3092\u596a\u308f\u308c' },
+      { start: 28, end: 33, text: '\u3066\u8db3\u3082\u5143\u306e\u82b1' },
+    ]);
+  });
+
+  it('keeps repeated lyrics when they are not adjacent rolling captions', () => {
+    expect(
+      parseVtt(
+        `WEBVTT
+
+00:00:10.000 --> 00:00:12.000
+Stay with me
+
+00:00:40.000 --> 00:00:42.000
+Stay with me`,
+        { source: { kind: 'youtube-cc', language: 'en' } },
+      ),
+    ).toEqual([
+      { start: 10, end: 12, text: 'Stay with me' },
+      { start: 40, end: 42, text: 'Stay with me' },
+    ]);
+  });
+
+  it('removes nearby repeated rolling captions before keeping the new suffix', () => {
+    expect(
+      parseVtt(
+        `WEBVTT
+
+00:01:00.000 --> 00:01:08.000
+\u3042\u3063\u3066\u601d\u3044\u51fa\u3059\u8272\u306e\u306a\u3044\u4e16\u754c\u6b8b\u308b\u9999\u308a\u306b\u4f1a
+
+00:01:09.000 --> 00:01:11.000
+\u3042\u3063\u3066\u601d\u3044\u51fa\u3059\u8272\u306e\u306a\u3044\u4e16\u754c\u6b8b\u308b\u9999\u308a\u306b\u4f1a
+
+00:01:09.000 --> 00:01:15.000
+\u3042\u3063\u3066\u601d\u3044\u51fa\u3059\u8272\u306e\u306a\u3044\u4e16\u754c\u6b8b\u308b\u9999\u308a\u306b\u4f1a
+\u3070\u304b\u308a\u304c\u52df\u3063\u3066`,
+        { source: { kind: 'youtube-cc', language: 'ja' } },
+      ),
+    ).toEqual([
+      {
+        start: 60,
+        end: 68,
+        text: '\u3042\u3063\u3066\u601d\u3044\u51fa\u3059\u8272\u306e\u306a\u3044\u4e16\u754c\u6b8b\u308b\u9999\u308a\u306b\u4f1a',
+      },
+      {
+        start: 69,
+        end: 75,
+        text: '\u3070\u304b\u308a\u304c\u52df\u3063\u3066',
+      },
+    ]);
+  });
+
+  it('keeps the richest cue when nearby captions share a start time', () => {
+    expect(
+      parseVtt(
+        `WEBVTT
+
+00:00:10.000 --> 00:00:11.000
+Line one
+
+00:00:10.000 --> 00:00:13.000
+Line one
+Line two`,
+        { source: { kind: 'youtube-cc', language: 'en' } },
+      ),
+    ).toEqual([{ start: 10, end: 13, text: 'Line one\nLine two' }]);
+  });
+});
+
+describe('isNonLyricCue', () => {
+  it('detects bracketed music and sound-effect cues', () => {
+    expect(isNonLyricCue('[Music]')).toBe(true);
+    expect(isNonLyricCue('(music)')).toBe(true);
+    expect(isNonLyricCue('[APPLAUSE]')).toBe(true);
+    expect(isNonLyricCue('[音樂]', { language: 'zh-TW' })).toBe(true);
+    expect(isNonLyricCue('[拍手]', { language: 'zh-TW' })).toBe(true);
+  });
+
+  it('keeps real lyrics that contain cue-like words', () => {
+    expect(isNonLyricCue('Music starts in my heart')).toBe(false);
+    expect(isNonLyricCue('[Music] starts in my heart')).toBe(false);
+  });
+});
+
+describe('formatLyricTime', () => {
+  it('formats seconds as m:ss', () => {
+    expect(formatLyricTime(65.9)).toBe('1:05');
+    expect(formatLyricTime(Number.NaN)).toBe('--:--');
+  });
+});
+
+describe('inferPreferredLyricsLanguagePrefixes', () => {
+  it('infers Chinese for Chinese title text', () => {
+    expect(
+      inferPreferredLyricsLanguagePrefixes({
+        title: '你到底在選擇什麼 Official Music Video',
+        artist: 'GGteens',
+      }),
+    ).toEqual(['zh-tw', 'zh-hant', 'zh-hk', 'zh-mo', 'zh']);
+  });
+
+  it('infers Japanese when kana is present', () => {
+    expect(
+      inferPreferredLyricsLanguagePrefixes({
+        title: 'アイドル',
+        artist: 'YOASOBI',
+      }),
+    ).toEqual(['ja']);
+  });
+
+  it('infers Korean when hangul is present', () => {
+    expect(
+      inferPreferredLyricsLanguagePrefixes({
+        title: 'I NEED U',
+        artist: 'BTS (방탄소년단)',
+      }),
+    ).toEqual(['ko']);
+  });
+
+  it('infers English for latin-only metadata', () => {
+    expect(
+      inferPreferredLyricsLanguagePrefixes({
+        title: 'Enemy',
+        artist: 'Imagine Dragons',
+      }),
+    ).toEqual(['en']);
+  });
+});
+
+describe('pickPreferredLyricsSource', () => {
+  const sources = [
+    { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
+    { filename: 'zh-Hant.vtt', language: 'zh-Hant', kind: 'youtube-cc' },
+    { filename: 'en.vtt', language: 'en', kind: 'youtube-cc' },
+  ];
+
+  it('picks Chinese captions for Chinese songs instead of the first source', () => {
+    expect(
+      pickPreferredLyricsSource({
+        title: '沒空想你',
+        artist: 'Sabrina',
+        lyrics: { status: 'available', sources },
+      }),
+    ).toEqual(sources[1]);
+  });
+
+  it('prefers zh-TW over simplified Chinese for Chinese songs', () => {
+    const chineseSources = [
+      { filename: 'zh-Hans.vtt', language: 'zh-Hans', kind: 'youtube-cc' },
+      { filename: 'zh-TW.vtt', language: 'zh-TW', kind: 'youtube-cc' },
+    ];
+
+    expect(
+      pickPreferredLyricsSource({
+        title: '你到底在選擇什麼',
+        artist: 'GGteens',
+        lyrics: { status: 'available', sources: chineseSources },
+      }),
+    ).toEqual(chineseSources[1]);
+  });
+
+  it('preserves the current filename when requested for the same track', () => {
+    expect(
+      pickPreferredLyricsSource(
+        {
+          title: '沒空想你',
+          artist: 'Sabrina',
+          lyrics: { status: 'available', sources },
+        },
+        'ja.vtt',
+      ),
+    ).toEqual(sources[0]);
+  });
+
+  it('falls back to the first source when there is no useful language hint', () => {
+    expect(
+      pickPreferredLyricsSource({
+        title: '12345',
+        artist: '',
+        lyrics: { status: 'available', sources },
+      }),
+    ).toEqual(sources[0]);
+  });
+});

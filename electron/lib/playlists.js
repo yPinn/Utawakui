@@ -182,6 +182,38 @@ function deletePlaylist(dir, id) {
 // renderer's own join simply won't render it, and because the renderer
 // always sends back the array it rendered, a stale id is dropped for free
 // on the next mutation. Same orphan doctrine as library.js.
+function reorderPlaylists(dir, draggedId, targetId, position = 'before') {
+  const playlists = loadPlaylists(dir);
+  if (!draggedId || !targetId || draggedId === targetId) return playlists;
+
+  const dragged = playlists.find((playlist) => playlist.id === draggedId);
+  if (!dragged || !playlists.some((playlist) => playlist.id === targetId)) {
+    return playlists;
+  }
+
+  const withoutDragged = playlists.filter(
+    (playlist) => playlist.id !== draggedId,
+  );
+  const targetIndex = withoutDragged.findIndex(
+    (playlist) => playlist.id === targetId,
+  );
+  if (targetIndex === -1) return playlists;
+
+  const insertIndex = position === 'after' ? targetIndex + 1 : targetIndex;
+  const next = [...withoutDragged];
+  next.splice(insertIndex, 0, dragged);
+
+  if (
+    next.map((playlist) => playlist.id).join('\0') ===
+    playlists.map((playlist) => playlist.id).join('\0')
+  ) {
+    return playlists;
+  }
+
+  writePlaylists(dir, next);
+  return next;
+}
+
 function setPlaylistTracks(dir, id, trackIds) {
   const playlists = loadPlaylists(dir);
   const index = playlists.findIndex((p) => p.id === id);
@@ -238,6 +270,7 @@ module.exports = {
   deletePlaylist,
   loadPlaylists,
   PLAYLISTS_FILENAME,
+  reorderPlaylists,
   removeTrackFromAllPlaylists,
   renamePlaylist,
   setPlaylistTracks,

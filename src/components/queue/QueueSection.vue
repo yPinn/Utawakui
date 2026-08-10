@@ -121,7 +121,7 @@ const emit = defineEmits([
   left: var(--ui-space-1);
   right: var(--ui-space-1);
   height: 2px;
-  border-radius: 999px;
+  border-radius: var(--ui-radius-pill);
   background: var(--ui-accent);
   pointer-events: none;
 }

@@ -10,6 +10,7 @@ let getPlaylistsMock;
 let createPlaylistMock;
 let renamePlaylistMock;
 let deletePlaylistMock;
+let reorderPlaylistMock;
 let setPlaylistTracksMock;
 
 function flushMicrotasks() {
@@ -32,6 +33,7 @@ beforeEach(() => {
   createPlaylistMock = vi.fn();
   renamePlaylistMock = vi.fn();
   deletePlaylistMock = vi.fn();
+  reorderPlaylistMock = vi.fn();
   setPlaylistTracksMock = vi.fn();
   vi.stubGlobal('window', {
     Utawakui: {
@@ -39,6 +41,7 @@ beforeEach(() => {
       createPlaylist: createPlaylistMock,
       renamePlaylist: renamePlaylistMock,
       deletePlaylist: deletePlaylistMock,
+      reorderPlaylist: reorderPlaylistMock,
       setPlaylistTracks: setPlaylistTracksMock,
       onLibraryUpdated: (callback) => {
         libraryUpdatedCallback = callback;
@@ -272,6 +275,123 @@ describe('setTracks', () => {
       t2: '2026-08-10T01:03:03.000Z',
       t3: '2026-08-10T01:04:03.000Z',
     });
+  });
+});
+
+describe('reorderPlaylist', () => {
+  it('is a no-op when dragged and target ids match', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+    ]);
+    const { reorderPlaylist } = await loadPlaylists();
+
+    reorderPlaylist('p1', 'p1', 'before');
+    await flushMicrotasks();
+
+    expect(reorderPlaylistMock).not.toHaveBeenCalled();
+  });
+
+  it('shows a restart hint instead of throwing when the preload API is stale', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+    ]);
+    delete window.Utawakui.reorderPlaylist;
+    const { reorderPlaylist, state } = await loadPlaylists();
+
+    reorderPlaylist('p2', 'p1', 'before');
+    await flushMicrotasks();
+
+    expect(state.playlists.map((playlist) => playlist.id)).toEqual([
+      'p1',
+      'p2',
+    ]);
+    expect(state.error).toBe(
+      '播放清單排序需要重新啟動應用程式才能載入新版橋接 API。',
+    );
+  });
+
+  it('optimistically reorders playlists and persists the new order', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+      { id: 'p3', name: 'Third', trackIds: [] },
+    ]);
+    reorderPlaylistMock.mockResolvedValueOnce([
+      { id: 'p3', name: 'Third', trackIds: [] },
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+    ]);
+    const { reorderPlaylist, state } = await loadPlaylists();
+
+    reorderPlaylist('p3', 'p1', 'before');
+
+    expect(state.playlists.map((playlist) => playlist.id)).toEqual([
+      'p3',
+      'p1',
+      'p2',
+    ]);
+    await flushMicrotasks();
+
+    expect(reorderPlaylistMock).toHaveBeenCalledWith('p3', 'p1', 'before');
+    expect(state.playlists.map((playlist) => playlist.id)).toEqual([
+      'p3',
+      'p1',
+      'p2',
+    ]);
+  });
+
+  it('records a readable error when playlist reorder persistence fails', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+    ]);
+    reorderPlaylistMock.mockRejectedValueOnce(new Error('disk full'));
+    const { reorderPlaylist, state } = await loadPlaylists();
+
+    reorderPlaylist('p2', 'p1', 'before');
+    await flushMicrotasks();
+
+    expect(state.error).toBe('歌單排序儲存失敗: disk full');
+  });
+
+  it('two rapid reorders both compute from the latest optimistic order', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+      { id: 'p3', name: 'Third', trackIds: [] },
+    ]);
+    reorderPlaylistMock
+      .mockResolvedValueOnce([
+        { id: 'p2', name: 'Second', trackIds: [] },
+        { id: 'p1', name: 'First', trackIds: [] },
+        { id: 'p3', name: 'Third', trackIds: [] },
+      ])
+      .mockResolvedValueOnce([
+        { id: 'p2', name: 'Second', trackIds: [] },
+        { id: 'p3', name: 'Third', trackIds: [] },
+        { id: 'p1', name: 'First', trackIds: [] },
+      ]);
+    const { reorderPlaylist, state } = await loadPlaylists();
+
+    reorderPlaylist('p2', 'p1', 'before');
+    reorderPlaylist('p1', 'p3', 'after');
+    await flushMicrotasks();
+
+    expect(reorderPlaylistMock).toHaveBeenCalledTimes(2);
+    expect(reorderPlaylistMock).toHaveBeenNthCalledWith(
+      1,
+      'p2',
+      'p1',
+      'before',
+    );
+    expect(reorderPlaylistMock).toHaveBeenNthCalledWith(2, 'p1', 'p3', 'after');
+    expect(state.playlists.map((playlist) => playlist.id)).toEqual([
+      'p2',
+      'p3',
+      'p1',
+    ]);
   });
 });
 

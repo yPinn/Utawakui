@@ -16,7 +16,7 @@
      token didn't exist separately. */
   --ui-accent-contrast: #20222a;
   --ui-focus: #6c8cff;
-  --ui-danger: #e5484d;
+  --ui-danger: #ff6b70;
 
   --ui-space-1: 0.25rem; /* 4px */
   --ui-space-2: 0.5rem; /* 8px */
@@ -32,6 +32,11 @@
   --ui-font-weight-strong: 600;
 
   --ui-radius: 6px;
+  --ui-radius-pill: 999px;
+
+  --ui-z-dropdown: 20;
+  --ui-z-context-menu: 100;
+  --ui-z-context-menu-submenu: 101;
 
   --font-ui:
     'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,

@@ -3,6 +3,8 @@
 // status label) without forking the CSS per caller.
 import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
+import { getTrackInitial } from '../../utils/trackDisplay.js';
+import UiMarqueeText from './UiMarqueeText.vue';
 
 // Either pass a whole `track` object or the flat props individually — the
 // flat props win when both are given, so a caller can override one field
@@ -19,6 +21,10 @@ const props = defineProps({
 const displayTitle = computed(() => props.title ?? props.track?.title);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
 const displayDuration = computed(() => props.duration ?? props.track?.duration);
+const thumbnailUrl = computed(() => props.track?.thumbnailUrl);
+const displayInitial = computed(() =>
+  getTrackInitial({ title: displayTitle.value, id: props.track?.id }),
+);
 </script>
 
 <template>
@@ -30,8 +36,20 @@ const displayDuration = computed(() => props.duration ?? props.track?.duration);
     }"
   >
     <slot name="lead" />
+    <span class="ui-track__thumb" aria-hidden="true">
+      <img
+        v-if="thumbnailUrl"
+        class="ui-track__thumb-image"
+        :src="thumbnailUrl"
+        alt=""
+        draggable="false"
+      />
+      <span v-else class="ui-track__thumb-fallback">
+        {{ displayInitial }}
+      </span>
+    </span>
     <div class="ui-track__info">
-      <span class="ui-track__title">{{ displayTitle }}</span>
+      <UiMarqueeText class="ui-track__title" :text="displayTitle" />
       <span v-if="displayArtist" class="ui-track__artist">{{
         displayArtist
       }}</span>
@@ -78,10 +96,37 @@ const displayDuration = computed(() => props.duration ?? props.track?.duration);
   flex-direction: column;
 }
 
-.ui-track__title {
+.ui-track__thumb {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: calc(var(--ui-radius) - 2px);
+  background: var(--ui-surface-hover);
+  color: var(--ui-text);
+  font-weight: var(--ui-font-weight-strong);
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  text-transform: uppercase;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ui-track__thumb-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ui-track__thumb-fallback {
+  font-size: var(--ui-text-sm);
+}
+
+.ui-track__title {
+  color: inherit;
 }
 
 .ui-track__artist {
