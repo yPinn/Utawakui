@@ -15,7 +15,16 @@ import { isEditableTarget } from '../utils/dom.js';
 
 const VOLUME_STEP = 0.1;
 
-export function useKeyboardShortcuts() {
+// Matches AppSidebar.vue's nav order left-to-right — F-key position mirrors
+// tab position so the mapping stays obvious without a legend.
+const VIEW_SHORTCUTS = {
+  f1: 'import',
+  f2: 'setlist',
+  f3: 'lyrics',
+  f4: 'appearance',
+};
+
+export function useKeyboardShortcuts(activeView) {
   const { state, setVolume, toggleMute, toggleGuideVocal } = usePlayer();
 
   function adjustVolume(delta) {
@@ -29,9 +38,21 @@ export function useKeyboardShortcuts() {
 
   function handleKeydown(event) {
     if (event.ctrlKey || event.altKey || event.metaKey) return;
+
+    const key = event.key.toLowerCase();
+    // F1-F4 tab switching fires even while typing (e.g. the Setlist search
+    // box) — F-keys don't insert characters, and this is a global app-level
+    // shortcut a performer needs mid-stream regardless of focus. Every
+    // other shortcut below stays gated behind isEditableTarget.
+    if (key in VIEW_SHORTCUTS) {
+      event.preventDefault();
+      if (activeView) activeView.value = VIEW_SHORTCUTS[key];
+      return;
+    }
+
     if (isEditableTarget(event.target)) return;
 
-    switch (event.key.toLowerCase()) {
+    switch (key) {
       case 'm':
         toggleMute();
         break;

@@ -9,10 +9,10 @@ defineProps({
 const emit = defineEmits(['update:activeView']);
 
 const items = [
-  { key: 'setlist', label: 'Setlist', icon: ListMusic },
-  { key: 'appearance', label: 'Appearance', icon: Palette },
-  { key: 'lyrics', label: 'Lyrics', icon: Captions },
   { key: 'import', label: 'Import', icon: Download },
+  { key: 'setlist', label: 'Setlist', icon: ListMusic },
+  { key: 'lyrics', label: 'Lyrics', icon: Captions },
+  { key: 'appearance', label: 'Appearance', icon: Palette },
 ];
 </script>
 

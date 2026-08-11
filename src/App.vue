@@ -16,7 +16,6 @@ import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 useTaskbarControls();
 useWindowTitle();
 useMediaSession();
-useKeyboardShortcuts();
 
 // No router: 4 fixed sections, an Electron window has no address bar and
 // nothing here needs deep-linking. Revisit only if that changes.
@@ -28,6 +27,10 @@ const views = {
 };
 
 const activeView = ref('setlist');
+// F1-F4 tab switching lives in useKeyboardShortcuts.js alongside the other
+// global shortcuts — passed the ref itself, not a setter, so the
+// composable can both read and write it.
+useKeyboardShortcuts(activeView);
 </script>
 
 <template>

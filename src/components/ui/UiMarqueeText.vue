@@ -13,6 +13,12 @@ const props = defineProps({
   text: { type: [String, Number], default: '' },
 });
 
+// Trailing gap the scrolling text leaves before it reverses — the CSS
+// padding-right must equal this exactly for the marquee's travel distance
+// to look right, so it's set as a CSS custom property from here rather
+// than duplicated as a separate `1rem` literal in the stylesheet.
+const MARQUEE_BUFFER_PX = 16;
+
 const rootRef = ref(null);
 const textRef = ref(null);
 const isOverflowing = shallowRef(false);
@@ -26,6 +32,7 @@ const marqueeDuration = computed(() => {
 const marqueeStyle = computed(() => ({
   '--ui-marquee-distance': `${distance.value}px`,
   '--ui-marquee-duration': marqueeDuration.value,
+  '--ui-marquee-buffer': `${MARQUEE_BUFFER_PX}px`,
 }));
 
 let resizeObserver;
@@ -39,7 +46,7 @@ function measure() {
     if (!root || !text) return;
 
     const overflow = Math.ceil(text.scrollWidth - root.clientWidth);
-    distance.value = Math.max(0, overflow + 16);
+    distance.value = Math.max(0, overflow + MARQUEE_BUFFER_PX);
     isOverflowing.value = overflow > 1;
   });
 }
@@ -95,7 +102,7 @@ watch(displayText, async () => {
 
 .ui-marquee--overflow .ui-marquee__text {
   max-width: none;
-  padding-right: 1rem;
+  padding-right: var(--ui-marquee-buffer);
   will-change: transform;
   animation: ui-marquee-scroll var(--ui-marquee-duration) ease-in-out 0.8s
     infinite alternate;
