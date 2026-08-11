@@ -1,5 +1,7 @@
 const TIME_RE = /(?:(\d+):)?(\d{2}):(\d{2})(?:[.,](\d{1,3}))?/;
+const LRC_TIME_RE = /^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/;
 const SOURCE_KIND_YOUTUBE_CC = 'youtube-cc';
+const SOURCE_KIND_LRCLIB = 'lrclib';
 const MUSIC_NOTE_RE = /[♪♫♬♩🎵🎶]+/gu;
 const JAPANESE_KANA_RE = /[\u3040-\u30ff]/;
 const KOREAN_HANGUL_RE = /[\uac00-\ud7af]/;
@@ -316,6 +318,51 @@ export function parseVtt(text, options = {}) {
     .sort((a, b) => a.start - b.start);
 
   return dedupLyricCues(cues, options);
+}
+
+function parseLrcTimestamp(value) {
+  const match = LRC_TIME_RE.exec(String(value || '').trim());
+  if (!match) return null;
+  const minutes = Number(match[1]);
+  const seconds = Number(match[2]);
+  const fraction = match[3] || '';
+  const millis = fraction ? Number(fraction.padEnd(3, '0').slice(0, 3)) : 0;
+  return minutes * 60 + seconds + millis / 1000;
+}
+
+export function parseLrc(text) {
+  if (typeof text !== 'string' || text.trim().length === 0) return [];
+
+  const starts = text
+    .split(/\r?\n/)
+    .flatMap((line) => {
+      const matches = [...line.matchAll(/\[([^\]]+)\]/g)];
+      if (matches.length === 0) return [];
+      const lyricText = line.replace(/\[[^\]]+\]/g, '').trim();
+      if (!lyricText) return [];
+      return matches
+        .map((match) => parseLrcTimestamp(match[1]))
+        .filter((start) => start !== null)
+        .map((start) => ({ start, text: lyricText }));
+    })
+    .sort((a, b) => a.start - b.start);
+
+  return starts.map((line, index) => ({
+    ...line,
+    end: starts[index + 1]?.start ?? Number.POSITIVE_INFINITY,
+  }));
+}
+
+export function parseLyricsText(text, options = {}) {
+  const source = options?.source;
+  const filename = source?.filename || '';
+  if (sourceKindFromOptions(options) === SOURCE_KIND_LRCLIB) {
+    return parseLrc(text);
+  }
+  if (filename.toLocaleLowerCase().endsWith('.lrc')) {
+    return parseLrc(text);
+  }
+  return parseVtt(text, options);
 }
 
 export function formatLyricTime(seconds) {

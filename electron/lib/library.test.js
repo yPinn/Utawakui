@@ -13,13 +13,18 @@ import {
   resolveTrackAudioPath,
   resolveTrackAssetPath,
   resolveTrackLyricsPath,
-  resolveSeparatedDir,
-  resolveSeparatedFilePath,
+  resolveSeparationsDir,
+  resolveSeparationResultPath,
   hasSeparation,
+  hasSeparationResultFile,
+  loadSeparationManifest,
+  recordSeparationResult,
+  selectSeparationResult,
   listTracks,
   loadIndex,
   readTrackLyrics,
   saveIndexEntry,
+  saveTrackLyricsText,
   buildRangeResponse,
   runBackfillPass,
   deleteTrack,
@@ -71,6 +76,7 @@ describe('isLyricsSubtitleFilename', () => {
     expect(isLyricsSubtitleFilename('ja.vtt')).toBe(true);
     expect(isLyricsSubtitleFilename('zh-Hant.vtt')).toBe(true);
     expect(isLyricsSubtitleFilename('en.orig.vtt')).toBe(true);
+    expect(isLyricsSubtitleFilename('lrclib-42.lrc')).toBe(true);
   });
 
   it('rejects unsafe or unsupported lyrics filenames', () => {
@@ -150,7 +156,7 @@ describe('resolveTrackPath', () => {
   });
 });
 
-describe('resolveSeparatedDir', () => {
+describe('resolveSeparationsDir', () => {
   let dir;
 
   beforeEach(() => {
@@ -161,27 +167,27 @@ describe('resolveSeparatedDir', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('resolves to <dir>/tracks/<trackId>', () => {
-    expect(resolveSeparatedDir(dir, 'dQw4w9WgXcQ')).toBe(
-      path.join(path.resolve(dir), 'tracks', 'dQw4w9WgXcQ'),
+  it('resolves to <dir>/tracks/<trackId>/separations', () => {
+    expect(resolveSeparationsDir(dir, 'dQw4w9WgXcQ')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'dQw4w9WgXcQ', 'separations'),
     );
   });
 
   it('rejects ../ traversal via trackId', () => {
-    expect(resolveSeparatedDir(dir, '../evil')).toBe(null);
+    expect(resolveSeparationsDir(dir, '../evil')).toBe(null);
   });
 
   it('rejects an absolute trackId', () => {
-    expect(resolveSeparatedDir(dir, 'C:\\Windows')).toBe(null);
+    expect(resolveSeparationsDir(dir, 'C:\\Windows')).toBe(null);
   });
 
   it('rejects a Windows drive-relative trackId', () => {
-    expect(resolveSeparatedDir(dir, 'C:Windows')).toBe(null);
+    expect(resolveSeparationsDir(dir, 'C:Windows')).toBe(null);
   });
 
   it('rejects empty or non-string trackId', () => {
-    expect(resolveSeparatedDir(dir, '')).toBe(null);
-    expect(resolveSeparatedDir(dir, null)).toBe(null);
+    expect(resolveSeparationsDir(dir, '')).toBe(null);
+    expect(resolveSeparationsDir(dir, null)).toBe(null);
   });
 });
 
@@ -209,7 +215,7 @@ describe('resolveTrackDir', () => {
   });
 });
 
-describe('resolveSeparatedFilePath', () => {
+describe('resolveSeparationResultPath', () => {
   let dir;
 
   beforeEach(() => {
@@ -220,20 +226,42 @@ describe('resolveSeparatedFilePath', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('resolves an allowlisted variant filename', () => {
-    expect(resolveSeparatedFilePath(dir, 'abc', 'stems.wav')).toBe(
-      path.join(path.resolve(dir), 'tracks', 'abc', 'stems.wav'),
+  it('resolves a preset file that exists on disk', () => {
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
+    fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
+
+    expect(resolveSeparationResultPath(dir, 'abc', 'standard.wav')).toBe(
+      path.join(
+        path.resolve(dir),
+        'tracks',
+        'abc',
+        'separations',
+        'standard.wav',
+      ),
     );
   });
 
-  it('rejects a variant filename outside the fixed allowlist', () => {
-    expect(resolveSeparatedFilePath(dir, 'abc', 'stems.mp3')).toBe(null);
-    expect(resolveSeparatedFilePath(dir, 'abc', 'instrumental.wav')).toBe(null);
-    expect(resolveSeparatedFilePath(dir, 'abc', '../../secret')).toBe(null);
+  it('returns null when the file has not been produced yet', () => {
+    expect(resolveSeparationResultPath(dir, 'abc', 'standard.wav')).toBe(null);
   });
 
-  it('rejects a traversal attempt via trackId even with a valid variant name', () => {
-    expect(resolveSeparatedFilePath(dir, '../evil', 'stems.wav')).toBe(null);
+  it('rejects a filename outside the safe charset (path traversal, wrong extension)', () => {
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
+    fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
+
+    expect(resolveSeparationResultPath(dir, 'abc', '../../secret')).toBe(null);
+    expect(resolveSeparationResultPath(dir, 'abc', 'standard.mp3')).toBe(null);
+    expect(resolveSeparationResultPath(dir, 'abc', 'standard.wav/../x')).toBe(
+      null,
+    );
+  });
+
+  it('rejects a traversal attempt via trackId even with a valid preset filename', () => {
+    expect(resolveSeparationResultPath(dir, '../evil', 'standard.wav')).toBe(
+      null,
+    );
   });
 });
 
@@ -246,7 +274,6 @@ describe('resolveTrackAssetPath', () => {
     fs.mkdirSync(trackDir, { recursive: true });
     fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
     fs.writeFileSync(path.join(trackDir, 'thumbnail.jpg'), 'y');
-    fs.writeFileSync(path.join(trackDir, 'stems.wav'), 'z');
     fs.writeFileSync(path.join(trackDir, 'info.json'), '{}');
   });
 
@@ -254,7 +281,7 @@ describe('resolveTrackAssetPath', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('resolves structured audio, artwork, and stems assets', () => {
+  it('resolves structured audio and artwork assets', () => {
     expect(resolveTrackAudioPath(dir, 'abc')).toBe(
       path.join(path.resolve(dir), 'tracks', 'abc', 'audio.mp3'),
     );
@@ -264,13 +291,14 @@ describe('resolveTrackAssetPath', () => {
     expect(resolveTrackAssetPath(dir, 'abc', 'thumbnail.jpg')).toBe(
       path.join(path.resolve(dir), 'tracks', 'abc', 'thumbnail.jpg'),
     );
-    expect(resolveTrackAssetPath(dir, 'abc', 'stems.wav')).toBe(
-      path.join(path.resolve(dir), 'tracks', 'abc', 'stems.wav'),
-    );
   });
 
-  it('does not serve source metadata or traversal attempts', () => {
+  it('does not serve source metadata, separation results, or traversal attempts', () => {
     expect(resolveTrackAssetPath(dir, 'abc', 'info.json')).toBe(null);
+    // Separation results live under separations/<presetId>.wav and are
+    // served via resolveSeparationResultPath, not this resolver — a flat
+    // stems.wav is no longer a recognized asset filename here.
+    expect(resolveTrackAssetPath(dir, 'abc', 'stems.wav')).toBe(null);
     expect(resolveTrackAssetPath(dir, 'abc', '../audio.mp3')).toBe(null);
     expect(resolveTrackAssetPath(dir, '../abc', 'audio.mp3')).toBe(null);
   });
@@ -301,6 +329,32 @@ describe('resolveTrackLyricsPath', () => {
     });
   });
 
+  it('saves and reads LRCLIB LRC lyrics as an optional source', () => {
+    const trackDir = path.join(dir, 'tracks', 'abc');
+
+    expect(
+      saveTrackLyricsText(
+        trackDir,
+        { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+        '[00:01.00]Hello',
+      ),
+    ).toBe(true);
+
+    expect(readTrackLyrics(dir, 'abc', 'lrclib-42.lrc')).toEqual({
+      source: {
+        filename: 'lrclib-42.lrc',
+        language: 'und',
+        kind: 'lrclib',
+      },
+      text: '[00:01.00]Hello',
+    });
+
+    expect(listTracks(dir)[0].lyrics.sources).toEqual([
+      { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
+      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+    ]);
+  });
+
   it('rejects traversal and non-existent lyrics filenames', () => {
     expect(resolveTrackLyricsPath(dir, 'abc', '../ja.vtt')).toBe(null);
     expect(resolveTrackLyricsPath(dir, '../abc', 'ja.vtt')).toBe(null);
@@ -324,17 +378,234 @@ describe('hasSeparation', () => {
     expect(hasSeparation(dir, 'abc')).toBe(false);
   });
 
-  it('is false when the directory exists but stems.wav does not (interrupted separation)', () => {
-    const sepDir = path.join(dir, 'tracks', 'abc');
-    fs.mkdirSync(sepDir, { recursive: true });
+  it('is false when the separations dir exists but the manifest is empty (interrupted separation)', () => {
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
     expect(hasSeparation(dir, 'abc')).toBe(false);
   });
 
-  it('is true once stems.wav exists', () => {
-    const sepDir = path.join(dir, 'tracks', 'abc');
-    fs.mkdirSync(sepDir, { recursive: true });
-    fs.writeFileSync(path.join(sepDir, 'stems.wav'), 'x');
+  it('is true once the selected result exists on disk', () => {
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
+    fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
+    recordSeparationResult(separationsDir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
     expect(hasSeparation(dir, 'abc')).toBe(true);
+  });
+
+  it('is false when the manifest points at a result whose file is missing', () => {
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
+    recordSeparationResult(separationsDir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    // recordSeparationResult only writes the manifest — no standard.wav on
+    // disk, simulating a result deleted out-of-band.
+    expect(hasSeparation(dir, 'abc')).toBe(false);
+  });
+});
+
+describe('hasSeparationResultFile', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-hassepfile-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('is true only when <presetId>.wav exists in the given dir', () => {
+    fs.writeFileSync(path.join(dir, 'standard.wav'), 'x');
+    expect(hasSeparationResultFile(dir, 'standard')).toBe(true);
+    expect(hasSeparationResultFile(dir, 'inst-hq3')).toBe(false);
+  });
+});
+
+describe('loadSeparationManifest', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-sepmanifest-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns the empty default when manifest.json does not exist', () => {
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 1,
+      selectedPresetId: null,
+      results: {},
+    });
+  });
+
+  it('reads selectedPresetId and results from a valid manifest', () => {
+    fs.writeFileSync(
+      path.join(dir, 'manifest.json'),
+      JSON.stringify({
+        version: 1,
+        selectedPresetId: 'inst-hq3',
+        results: {
+          standard: {
+            modelId: 'kara2',
+            separatedAt: '2026-01-01T00:00:00.000Z',
+          },
+          'inst-hq3': {
+            modelId: 'inst-hq3',
+            separatedAt: '2026-01-02T00:00:00.000Z',
+          },
+        },
+      }),
+    );
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 1,
+      selectedPresetId: 'inst-hq3',
+      results: {
+        standard: { modelId: 'kara2', separatedAt: '2026-01-01T00:00:00.000Z' },
+        'inst-hq3': {
+          modelId: 'inst-hq3',
+          separatedAt: '2026-01-02T00:00:00.000Z',
+        },
+      },
+    });
+  });
+
+  it('returns the empty default for malformed JSON (hand-edited or corrupt file)', () => {
+    fs.writeFileSync(path.join(dir, 'manifest.json'), 'not json{');
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 1,
+      selectedPresetId: null,
+      results: {},
+    });
+  });
+
+  it('drops individual result entries missing a modelId rather than discarding the whole manifest', () => {
+    fs.writeFileSync(
+      path.join(dir, 'manifest.json'),
+      JSON.stringify({
+        version: 1,
+        selectedPresetId: 'standard',
+        results: { standard: { separatedAt: 'x' }, broken: null },
+      }),
+    );
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 1,
+      selectedPresetId: 'standard',
+      results: {},
+    });
+  });
+});
+
+describe('recordSeparationResult', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-sepresult-test-'));
+    fs.mkdirSync(dir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('adds a result and selects it', () => {
+    recordSeparationResult(dir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 1,
+      selectedPresetId: 'standard',
+      results: {
+        standard: { modelId: 'kara2', separatedAt: '2026-01-01T00:00:00.000Z' },
+      },
+    });
+  });
+
+  it('a second preset is added alongside the first, not overwriting it, and becomes selected', () => {
+    recordSeparationResult(dir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    recordSeparationResult(dir, {
+      presetId: 'inst-hq3',
+      modelId: 'inst-hq3',
+      separatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    const manifest = loadSeparationManifest(dir);
+    expect(manifest.selectedPresetId).toBe('inst-hq3');
+    expect(Object.keys(manifest.results).sort()).toEqual([
+      'inst-hq3',
+      'standard',
+    ]);
+  });
+
+  it('regenerating the same preset overwrites only that entry', () => {
+    recordSeparationResult(dir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    recordSeparationResult(dir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-03T00:00:00.000Z',
+    });
+    const manifest = loadSeparationManifest(dir);
+    expect(Object.keys(manifest.results)).toEqual(['standard']);
+    expect(manifest.results.standard.separatedAt).toBe(
+      '2026-01-03T00:00:00.000Z',
+    );
+  });
+});
+
+describe('selectSeparationResult', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-sepselect-test-'));
+    fs.mkdirSync(dir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('switches selectedPresetId when the target preset has a recorded result', () => {
+    recordSeparationResult(dir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    recordSeparationResult(dir, {
+      presetId: 'inst-hq3',
+      modelId: 'inst-hq3',
+      separatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    // recordSeparationResult's own most-recent-wins selects inst-hq3 —
+    // switch back to prove selectSeparationResult is a real pointer change.
+    expect(selectSeparationResult(dir, 'standard')).toBe(true);
+    expect(loadSeparationManifest(dir).selectedPresetId).toBe('standard');
+  });
+
+  it('refuses and leaves the manifest untouched for a preset with no result', () => {
+    recordSeparationResult(dir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    expect(selectSeparationResult(dir, 'inst-hq3')).toBe(false);
+    expect(loadSeparationManifest(dir).selectedPresetId).toBe('standard');
   });
 });
 
@@ -469,9 +740,61 @@ describe('listTracks', () => {
     const [track] = listTracks(dir);
     expect(track.hasSeparation).toBe(false);
     expect(track.stemsUrl).toBeUndefined();
+    expect(track.separation).toBeUndefined();
   });
 
-  it('reports hasSeparation true with stemsUrl once stems.wav exists, without the .separated dir leaking in as a fake track', () => {
+  it('migrates a legacy flat stems.wav + separation.json sidecar into the per-preset layout', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    const trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'stems.wav'), 'x');
+    fs.writeFileSync(
+      path.join(trackDir, 'separation.json'),
+      JSON.stringify({
+        version: 1,
+        modelId: 'inst-hq3',
+        presetId: 'inst-hq3',
+        separatedAt: '2026-01-01T00:00:00.000Z',
+      }),
+    );
+
+    const [track] = listTracks(dir);
+    expect(track.hasSeparation).toBe(true);
+    expect(track.stemsUrl).toBe(
+      'utawakui-media://track/abc/separations/inst-hq3.wav',
+    );
+    expect(track.separation).toEqual({
+      selectedPresetId: 'inst-hq3',
+      results: {
+        'inst-hq3': {
+          modelId: 'inst-hq3',
+          separatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      },
+    });
+    expect(fs.existsSync(path.join(trackDir, 'stems.wav'))).toBe(false);
+    expect(fs.existsSync(path.join(trackDir, 'separation.json'))).toBe(false);
+    expect(
+      fs.existsSync(path.join(trackDir, 'separations', 'inst-hq3.wav')),
+    ).toBe(true);
+  });
+
+  it('migrates a legacy stems.wav with no sidecar, falling back to the standard/kara2 guess', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    const trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'stems.wav'), 'x');
+
+    const [track] = listTracks(dir);
+    expect(track.hasSeparation).toBe(true);
+    expect(track.separation.selectedPresetId).toBe('standard');
+    expect(track.separation.results.standard.modelId).toBe('kara2');
+    expect(
+      fs.existsSync(path.join(trackDir, 'separations', 'standard.wav')),
+    ).toBe(true);
+  });
+
+  it('reports hasSeparation true with stemsUrl once a result exists, without the legacy .separated dir leaking in as a fake track', () => {
     fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
     const sepDir = path.join(dir, '.separated', 'abc');
     fs.mkdirSync(sepDir, { recursive: true });
@@ -481,10 +804,49 @@ describe('listTracks', () => {
     expect(tracks).toHaveLength(1);
     const [track] = tracks;
     expect(track.hasSeparation).toBe(true);
-    expect(track.stemsUrl).toBe('utawakui-media://track/abc/stems.wav');
-    expect(fs.existsSync(path.join(dir, 'tracks', 'abc', 'stems.wav'))).toBe(
-      true,
+    expect(track.stemsUrl).toBe(
+      'utawakui-media://track/abc/separations/standard.wav',
     );
+    expect(fs.existsSync(path.join(dir, 'tracks', 'abc', 'stems.wav'))).toBe(
+      false,
+    );
+    expect(
+      fs.existsSync(
+        path.join(dir, 'tracks', 'abc', 'separations', 'standard.wav'),
+      ),
+    ).toBe(true);
+  });
+
+  it('exposes multiple results and lets the selected one drive stemsUrl', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
+    fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
+    fs.writeFileSync(path.join(separationsDir, 'inst-hq3.wav'), 'y');
+    recordSeparationResult(separationsDir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+    recordSeparationResult(separationsDir, {
+      presetId: 'inst-hq3',
+      modelId: 'inst-hq3',
+      separatedAt: '2026-01-02T00:00:00.000Z',
+    });
+    // recordSeparationResult's most-recent-wins already selected inst-hq3
+    // — switch back to prove stemsUrl follows the pointer, not creation
+    // order.
+    selectSeparationResult(separationsDir, 'standard');
+
+    const [track] = listTracks(dir);
+    expect(track.stemsUrl).toBe(
+      'utawakui-media://track/abc/separations/standard.wav',
+    );
+    expect(Object.keys(track.separation.results).sort()).toEqual([
+      'inst-hq3',
+      'standard',
+    ]);
+    expect(track.separation.selectedPresetId).toBe('standard');
   });
 
   it('reports thumbnailUrl for structured track artwork', () => {
@@ -824,9 +1186,27 @@ describe('deleteTrack', () => {
     expect(fs.existsSync(path.join(dir, 'tracks', 'def', 'audio.mp3'))).toBe(
       true,
     );
-    expect(fs.existsSync(path.join(dir, 'tracks', 'def', 'stems.wav'))).toBe(
-      true,
-    );
+    expect(
+      fs.existsSync(
+        path.join(dir, 'tracks', 'def', 'separations', 'standard.wav'),
+      ),
+    ).toBe(true);
+  });
+
+  it('removes everything under separations/ (per-preset results + manifest) when deleting a track', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
+    fs.mkdirSync(separationsDir, { recursive: true });
+    fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
+    fs.writeFileSync(path.join(separationsDir, 'inst-hq3.wav'), 'y');
+    recordSeparationResult(separationsDir, {
+      presetId: 'standard',
+      modelId: 'kara2',
+      separatedAt: '2026-01-01T00:00:00.000Z',
+    });
+
+    expect(deleteTrack(dir, 'abc')).toBe(true);
+    expect(fs.existsSync(separationsDir)).toBe(false);
   });
 
   it('returns false and touches nothing when trackId has no matching file', () => {

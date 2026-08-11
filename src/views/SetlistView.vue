@@ -5,19 +5,15 @@ import {
   ListEnd,
   ListMinus,
   ListPlus,
-  Loader2,
   Music2,
-  MicVocal,
   Pencil,
   Play,
   Plus,
-  RefreshCw,
   Search,
   Trash2,
   X,
 } from '@lucide/vue';
 import { usePlayer } from '../composables/usePlayer.js';
-import { useSeparation } from '../composables/useSeparation.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import PlaylistSidebar from '../components/PlaylistSidebar.vue';
@@ -31,15 +27,6 @@ import { toPlayableTrack } from '../utils/playableTrack.js';
 import { getTrackInitial } from '../utils/trackDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
-// Owned at module scope (see useSeparation.js), not locally — this view
-// unmounts on every tab switch, and a run must keep showing progress after
-// the user navigates away and back.
-const {
-  state: separationState,
-  isSeparating,
-  describe,
-  separate,
-} = useSeparation();
 const {
   state: queueState,
   setQueue,
@@ -702,12 +689,6 @@ onUnmounted(() => {
                 <X :size="16" aria-hidden="true" />
               </button>
             </label>
-            <UiButton
-              :icon="RefreshCw"
-              aria-label="重新整理"
-              title="重新整理"
-              @click="refresh"
-            />
           </div>
         </section>
       </template>
@@ -734,33 +715,18 @@ onUnmounted(() => {
               <X :size="16" aria-hidden="true" />
             </button>
           </label>
-          <UiButton
-            :icon="RefreshCw"
-            aria-label="重新整理"
-            title="重新整理"
-            @click="refresh"
-          />
         </template>
       </UiPageHeader>
 
       <p v-if="isLoading" class="hint" role="status">載入中…</p>
 
       <p v-else-if="tracks.length === 0" class="hint">
-        還沒有任何曲目——前往「Import」下載歌曲後再回來重新整理。
+        還沒有任何曲目——前往「Import」下載歌曲。
       </p>
 
       <template v-else>
         <p v-if="pageError" class="hint hint--error" role="alert">
           {{ pageError }}
-        </p>
-
-        <p
-          v-for="[trackId, message] in separationState.errors"
-          :key="trackId"
-          class="hint hint--error"
-          role="alert"
-        >
-          {{ message }}
         </p>
 
         <template v-if="mode === 'all'">
@@ -780,40 +746,9 @@ onUnmounted(() => {
               <template #trail>
                 <div class="row-actions" @click.stop>
                   <UiButton
-                    :icon="ListPlus"
-                    aria-label="加入歌單"
-                    title="加入歌單"
-                    @click="openAddMenu(track, $event)"
-                  />
-                  <!-- Separate <template>s, not one UiButton with a
-                       conditionally-empty slot — $slots.default is
-                       compile-time-present even behind a false v-if, which
-                       would silently break the icon-only compact style. -->
-                  <template v-if="!track.hasSeparation">
-                    <UiButton
-                      v-if="isSeparating(track.id)"
-                      :icon="Loader2"
-                      class="row-actions__spin"
-                      disabled
-                      :title="describe(track.id)"
-                      role="status"
-                      @click="separate(track)"
-                    >
-                      {{ describe(track.id) }}
-                    </UiButton>
-                    <UiButton
-                      v-else
-                      :icon="MicVocal"
-                      aria-label="去人聲"
-                      title="去人聲(產生可調整導唱強弱的伴奏+人聲版本)"
-                      @click="separate(track)"
-                    />
-                  </template>
-                  <UiButton
                     :icon="Trash2"
                     aria-label="刪除曲目"
                     title="刪除曲目(同時刪除原始檔案與去人聲版本)"
-                    :disabled="isSeparating(track.id)"
                     @click="removeTrack(track)"
                   />
                 </div>
@@ -1106,7 +1041,7 @@ onUnmounted(() => {
   width: 36px;
   height: 36px;
   border: 0;
-  border-radius: 50%;
+  border-radius: var(--ui-radius-pill);
   background: var(--ui-accent);
   color: var(--ui-accent-contrast);
   cursor: pointer;
@@ -1223,10 +1158,6 @@ onUnmounted(() => {
   /* Never claims space from .ui-track__info's flex:1 — the title is what
      should shrink/truncate first, not the action buttons. */
   flex: 0 0 auto;
-}
-
-.row-actions__spin :deep(svg) {
-  animation: row-actions-spin 1s linear infinite;
 }
 
 .playlist-table {
@@ -1442,18 +1373,6 @@ onUnmounted(() => {
 .playlist-track--active .playlist-track__subtitle {
   color: inherit;
   opacity: 0.75;
-}
-
-@keyframes row-actions-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .row-actions__spin :deep(svg) {
-    animation: none;
-  }
 }
 
 .tracks {

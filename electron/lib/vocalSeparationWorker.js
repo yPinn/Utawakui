@@ -11,7 +11,7 @@ const { separateTrack } = require('./vocalSeparation');
 
 (async () => {
   try {
-    const { inputPath, outputDir, modelPath } = workerData;
+    const { inputPath, outputDir, modelPath, presetId } = workerData;
     const result = await separateTrack(
       inputPath,
       outputDir,
@@ -19,6 +19,7 @@ const { separateTrack } = require('./vocalSeparation');
       (progress) => {
         parentPort.postMessage({ type: 'progress', ...progress });
       },
+      presetId,
     );
     parentPort.postMessage({ type: 'done', result });
   } catch (err) {

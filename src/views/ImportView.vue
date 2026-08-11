@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted } from 'vue';
+import { computed, onMounted, useTemplateRef } from 'vue';
 import {
   Download,
   FolderOpen,
@@ -8,10 +8,20 @@ import {
   Search,
   X,
 } from '@lucide/vue';
+import ImportCandidateOption from '../components/import/ImportCandidateOption.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { useImportSession } from '../composables/useImportSession.js';
+import { useRovingRadioGroup } from '../composables/useRovingRadioGroup.js';
+import {
+  candidateId,
+  candidateSourceLabel,
+  identityArtistLabel,
+  identityStatusClass,
+  identityStatusLabel,
+  identityTitle,
+} from '../utils/importCandidateDisplay.js';
 
 const {
   state,
@@ -26,6 +36,7 @@ const {
   resolveSource,
   confirmImport,
   clearPreview,
+  selectImportCandidate,
   toggleSelectAll,
   selectMissingTracks,
   retryFailedTracks,
@@ -36,6 +47,69 @@ const {
   resetDownloadDir,
 } = useImportSession();
 
+const singleResolution = computed(() => state.singleResolution);
+const recommendedCandidate = computed(
+  () => singleResolution.value?.recommendedCandidate ?? null,
+);
+const recommendedCandidateId = computed(() =>
+  candidateId(recommendedCandidate.value),
+);
+const selectedCandidate = computed(() => {
+  const selectedId = state.selectedCandidateId;
+  return (
+    singleResolution.value?.candidates?.find(
+      (candidate) => candidateId(candidate) === selectedId,
+    ) ||
+    recommendedCandidate.value ||
+    null
+  );
+});
+const sourceCandidate = computed(() => singleResolution.value?.source ?? null);
+const candidateOptions = computed(
+  () => singleResolution.value?.candidates ?? [],
+);
+const sourceDiffersFromSelection = computed(() => {
+  const source = sourceCandidate.value;
+  const selected = selectedCandidate.value;
+  if (!source || !selected) return false;
+  return (
+    (source.playbackVideoId || source.id) !==
+    (selected.playbackVideoId || selected.id)
+  );
+});
+const singleFooterNote = computed(() => {
+  if (!state.singleTrack) return '';
+  if (state.singleTrack.alreadyDownloaded) return '此音源已在曲庫中。';
+  if (sourceDiffersFromSelection.value) {
+    return '會下載較適合播放的版本；你貼上的影片只用來比對歌曲。';
+  }
+  return '會下載目前顯示的版本。';
+});
+
+function isSelectedCandidate(candidate) {
+  return candidateId(candidate) === state.selectedCandidateId;
+}
+
+const candidateGroupRef = useTemplateRef('candidateGroup');
+const { tabindexFor, handleKeydown: handleCandidateGroupKeydown } =
+  useRovingRadioGroup(candidateGroupRef, selectImportCandidate);
+
+function trackIdentityFor(track) {
+  return track?.trackIdentity || null;
+}
+
+function displayTitleForTrack(track) {
+  return identityTitle(trackIdentityFor(track), track?.title);
+}
+
+function displayArtistForTrack(track) {
+  return identityArtistLabel(trackIdentityFor(track), track?.artist);
+}
+
+function identityClassForTrack(track) {
+  return `identity-chip--${identityStatusClass(trackIdentityFor(track))}`;
+}
+
 onMounted(() => {
   refreshConfig();
 });
@@ -43,119 +117,183 @@ onMounted(() => {
 
 <template>
   <div class="import-page">
-    <UiPageHeader title="Import" />
+    <UiPageHeader title="匯入" />
 
-    <section class="import-setup" aria-labelledby="import-source-title">
-      <div class="source-panel">
+    <section class="import-control" aria-labelledby="import-source-title">
+      <div class="import-control__top">
         <div class="section-heading">
           <h2 id="import-source-title" class="section-heading__title">
-            匯入來源
+            智慧匯入
           </h2>
-          <p class="section-heading__meta">先建立預覽，確認後才下載</p>
+          <p class="section-heading__meta">貼上連結後，自動比對可下載版本</p>
         </div>
 
-        <div class="source-row">
-          <input
-            v-model="state.input"
-            class="source-row__input"
-            aria-label="YouTube 單曲或播放清單 URL"
-            placeholder="貼上 YouTube 單曲或播放清單 URL"
-            :disabled="state.isResolving || state.isImporting"
-            @keydown.enter="resolveSource"
-          />
-          <UiButton
-            :icon="Search"
-            class="source-row__action"
-            variant="accent"
-            :disabled="state.isResolving || state.isImporting"
-            @click="resolveSource"
-          >
-            {{ state.isResolving ? '解析中' : '建立預覽' }}
-          </UiButton>
-        </div>
-
-        <p
-          v-if="state.status"
-          :class="`status status--${state.statusType}`"
-          role="status"
-        >
-          {{ state.status }}
-        </p>
-      </div>
-
-      <div class="download-location">
-        <div class="section-heading">
-          <h2 class="section-heading__title">下載位置</h2>
-          <p class="section-heading__meta">
-            {{ state.isDefaultDir ? '預設資料夾' : '自訂資料夾' }}
-          </p>
-        </div>
-        <p class="download-location__path" :title="state.downloadDir">
-          {{ state.downloadDir }}
-        </p>
-        <div class="download-location__actions">
+        <div class="download-inline" aria-label="下載位置">
+          <span class="download-inline__label">下載到</span>
+          <span class="download-inline__path" :title="state.downloadDir">
+            {{ state.downloadDir }}
+          </span>
+          <span class="download-inline__mode">
+            {{ state.isDefaultDir ? '預設' : '自訂' }}
+          </span>
           <UiButton
             :icon="FolderOpen"
-            class="download-location__button"
+            aria-label="選擇資料夾"
+            title="選擇資料夾"
             @click="chooseDownloadDir"
-          >
-            選擇資料夾
-          </UiButton>
+          />
           <UiButton
             :icon="RotateCcw"
-            class="download-location__button"
+            aria-label="改回預設資料夾"
+            title="改回預設資料夾"
             @click="resetDownloadDir"
-          >
-            回到預設
-          </UiButton>
+          />
         </div>
       </div>
+
+      <div class="source-row">
+        <input
+          v-model="state.input"
+          class="source-row__input"
+          aria-label="YouTube 或 YouTube Music 連結"
+          placeholder="貼上歌曲、MV 或播放清單連結"
+          :disabled="state.isResolving || state.isImporting"
+          @keydown.enter="resolveSource"
+        />
+        <UiButton
+          :icon="Search"
+          class="source-row__action"
+          variant="accent"
+          :disabled="state.isResolving || state.isImporting"
+          @click="resolveSource"
+        >
+          {{ state.isResolving ? '搜尋中' : '搜尋版本' }}
+        </UiButton>
+      </div>
+
+      <p
+        v-if="state.status"
+        :class="`status status--${state.statusType}`"
+        role="status"
+      >
+        {{ state.status }}
+      </p>
     </section>
 
     <section
       v-if="state.sourceKind === 'single'"
-      class="preview-panel"
+      class="preview-panel preview-panel--single"
       aria-labelledby="single-preview-title"
     >
       <div class="preview-panel__header">
         <div>
           <h2 id="single-preview-title" class="preview-panel__title">
-            單曲預覽
+            選擇下載版本
           </h2>
           <p class="preview-panel__meta">
-            目前只確認來源有效；按下確認匯入後才會下載音訊。
+            {{
+              sourceDiffersFromSelection
+                ? '會下載較適合播放的版本'
+                : '會下載你貼上的來源'
+            }}
           </p>
         </div>
         <UiButton
           :icon="X"
           :disabled="state.isImporting"
-          aria-label="清除預覽"
-          title="清除預覽"
+          aria-label="關閉預覽"
+          title="關閉預覽"
           @click="clearPreview"
         />
       </div>
 
-      <ul
-        v-if="state.singleTrack"
-        class="preview-tracks preview-tracks--single"
-      >
-        <UiTrackRow class="preview-track" :track="state.singleTrack">
-          <template #trail>
-            <span
-              class="track-status"
-              :class="`track-status--${getTrackStatusClass(state.singleTrack)}`"
-              :title="getTrackStatusLabel(state.singleTrack)"
+      <div v-if="state.singleTrack" class="single-source-stack">
+        <section class="source-summary" aria-labelledby="recommended-source">
+          <div class="source-summary__bar">
+            <h3 id="recommended-source" class="source-summary__title">
+              準備下載
+            </h3>
+            <div class="candidate-chips">
+              <span class="candidate-chip">
+                {{
+                  candidateSourceLabel(selectedCandidate || state.singleTrack)
+                }}
+              </span>
+            </div>
+          </div>
+
+          <ul class="preview-tracks preview-tracks--single">
+            <UiTrackRow
+              class="preview-track"
+              :track="state.singleTrack"
+              :title="displayTitleForTrack(state.singleTrack)"
+              :artist="displayArtistForTrack(state.singleTrack)"
             >
-              {{ getTrackStatusLabel(state.singleTrack) }}
-            </span>
-          </template>
-        </UiTrackRow>
-      </ul>
+              <template #trail>
+                <span
+                  v-if="trackIdentityFor(state.singleTrack)"
+                  class="identity-chip"
+                  :class="identityClassForTrack(state.singleTrack)"
+                >
+                  {{ identityStatusLabel(trackIdentityFor(state.singleTrack)) }}
+                </span>
+                <span
+                  class="track-status"
+                  :class="`track-status--${getTrackStatusClass(state.singleTrack)}`"
+                  :title="getTrackStatusLabel(state.singleTrack)"
+                >
+                  {{ getTrackStatusLabel(state.singleTrack) }}
+                </span>
+              </template>
+            </UiTrackRow>
+          </ul>
+
+          <p class="selected-source-note">
+            {{
+              sourceDiffersFromSelection
+                ? '系統已替你找到較接近音樂平台的版本。'
+                : '目前會下載你貼上的來源。'
+            }}
+          </p>
+        </section>
+
+        <section
+          v-if="candidateOptions.length > 1"
+          class="candidate-picker"
+          aria-labelledby="candidate-picker-title"
+        >
+          <div class="section-heading">
+            <h3 id="candidate-picker-title" class="source-summary__title">
+              可選版本
+            </h3>
+            <p class="section-heading__meta">已依適合播放程度排序</p>
+          </div>
+
+          <div
+            ref="candidateGroup"
+            class="candidate-options"
+            role="radiogroup"
+            aria-label="選擇下載版本"
+            @keydown="handleCandidateGroupKeydown"
+          >
+            <ImportCandidateOption
+              v-for="candidate in candidateOptions"
+              :key="candidateId(candidate)"
+              :candidate="candidate"
+              :disabled="state.isImporting"
+              :recommended="candidateId(candidate) === recommendedCandidateId"
+              :selected="isSelectedCandidate(candidate)"
+              :tabindex="
+                tabindexFor(candidateId(candidate), state.selectedCandidateId)
+              "
+              @select="selectImportCandidate"
+            />
+          </div>
+        </section>
+      </div>
 
       <div class="preview-footer">
-        <span class="preview-footer__note"
-          >此快照只保存在目前應用程式工作階段。</span
-        >
+        <span class="preview-footer__note">{{ singleFooterNote }}</span>
         <UiButton
           :icon="Download"
           variant="accent"
@@ -175,32 +313,32 @@ onMounted(() => {
       <div class="preview-panel__header">
         <div>
           <h2 id="playlist-preview-title" class="preview-panel__title">
-            播放清單預覽
+            {{ state.playlistTitle }}
           </h2>
           <p class="preview-panel__meta">
-            {{ playlistStats.total }} 首曲目，{{
+            {{ playlistStats.total }} 首，{{
               playlistStats.downloadableSelected
             }}
-            首會在確認後匯入。
+            首將下載
           </p>
         </div>
         <UiButton
           :icon="X"
           :disabled="state.isImporting"
-          aria-label="清除預覽"
-          title="清除預覽"
+          aria-label="關閉預覽"
+          title="關閉預覽"
           @click="clearPreview"
         />
       </div>
 
-      <div class="snapshot-summary" aria-label="預覽摘要">
+      <div class="snapshot-summary" aria-label="播放清單統計">
         <span>
           <strong>{{ playlistStats.total }}</strong>
           全部
         </span>
         <span>
           <strong>{{ playlistStats.downloadableSelected }}</strong>
-          待匯入
+          將下載
         </span>
         <span>
           <strong>{{ playlistStats.alreadyDownloaded }}</strong>
@@ -208,7 +346,7 @@ onMounted(() => {
         </span>
         <span v-if="playlistStats.done > 0">
           <strong>{{ playlistStats.done }}</strong>
-          本次完成
+          完成
         </span>
         <span v-if="playlistStats.error > 0" class="snapshot-summary__danger">
           <strong>{{ playlistStats.error }}</strong>
@@ -217,7 +355,7 @@ onMounted(() => {
       </div>
 
       <div class="preview-tools">
-        <div class="filter-tabs" aria-label="篩選預覽曲目">
+        <div class="filter-tabs" aria-label="預覽篩選">
           <button
             v-for="filter in filterOptions"
             :key="filter.key"
@@ -264,6 +402,8 @@ onMounted(() => {
               track.alreadyDownloaded || track.status === 'done',
           }"
           :track="track"
+          :title="displayTitleForTrack(track)"
+          :artist="displayArtistForTrack(track)"
         >
           <template #lead>
             <input
@@ -280,6 +420,13 @@ onMounted(() => {
           </template>
           <template #trail>
             <span
+              v-if="trackIdentityFor(track)"
+              class="identity-chip"
+              :class="identityClassForTrack(track)"
+            >
+              {{ identityStatusLabel(trackIdentityFor(track)) }}
+            </span>
+            <span
               class="track-status"
               :class="`track-status--${getTrackStatusClass(track)}`"
               :title="track.error || getTrackStatusLabel(track)"
@@ -291,12 +438,12 @@ onMounted(() => {
       </ul>
 
       <p v-if="visiblePlaylistTracks.length === 0" class="empty-state">
-        這個篩選沒有曲目
+        沒有符合目前篩選的曲目
       </p>
 
       <div class="preview-footer">
         <span class="preview-footer__note">
-          預覽不會寫入資料庫或下載資料夾；只有確認匯入才會建立本機音訊。
+          播放清單會逐首下載；之後會加入更精準的音源比對。
         </span>
         <UiButton
           :icon="Download"
@@ -309,87 +456,123 @@ onMounted(() => {
       </div>
     </section>
 
-    <section v-else class="empty-panel" aria-label="Import empty state">
-      <p>貼上來源後先建立預覽快照；切換頁面再回來，預覽仍會保留。</p>
+    <section v-else class="empty-panel" aria-label="匯入起始畫面">
+      <p>貼上連結後先預覽，確認無誤再下載。</p>
     </section>
   </div>
 </template>
 
 <style scoped>
 .import-page {
+  --import-border-width: calc(var(--ui-space-1) / 4);
   --import-control-height: calc(var(--ui-space-5) + var(--ui-space-4));
-  --import-top-panel-min-height: calc(
-    var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-5) +
-      var(--ui-space-4)
-  );
   --import-track-row-min-height: calc(
     var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2)
   );
+  --import-preview-list-max-height: calc(var(--ui-space-5) * 15);
+  --import-checkbox-size: var(--ui-space-4);
+  --import-status-min-width: calc(var(--ui-space-5) * 3);
+  --import-status-max-width: calc(var(--ui-space-5) * 6);
 
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-4);
+  gap: var(--ui-space-3);
 }
 
-.import-setup {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.8fr);
-  gap: var(--ui-space-4);
-  align-items: stretch;
-  padding-top: var(--ui-space-2);
-}
-
-.source-panel,
-.download-location,
+.import-control,
 .preview-panel,
 .empty-panel {
   min-width: 0;
   padding: var(--ui-space-3);
   background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
+  border: var(--import-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
 }
 
-.source-panel,
-.download-location {
-  display: flex;
-  flex-direction: column;
-  min-height: var(--import-top-panel-min-height);
+.import-control {
+  display: grid;
+  gap: var(--ui-space-2);
 }
 
+.import-control__top,
 .section-heading,
-.preview-panel__header {
+.preview-panel__header,
+.source-summary__bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--ui-space-3);
 }
 
+.import-control__top {
+  align-items: center;
+}
+
 .section-heading {
+  min-width: 0;
   align-items: baseline;
-  margin-bottom: var(--ui-space-2);
+}
+
+.section-heading__title,
+.preview-panel__title,
+.source-summary__title {
+  margin: 0;
+  color: var(--ui-text);
+  font-weight: var(--ui-font-weight-strong);
 }
 
 .section-heading__title,
 .preview-panel__title {
-  margin: 0;
   font-size: var(--ui-text-md);
-  font-weight: var(--ui-font-weight-strong);
-  color: var(--ui-text);
+}
+
+.source-summary__title {
+  flex: 0 0 auto;
+  font-size: var(--ui-text-sm);
 }
 
 .section-heading__meta,
 .preview-panel__meta,
 .preview-footer__note,
 .empty-panel,
-.status {
+.status,
+.download-inline,
+.candidate-chip {
   color: var(--ui-text-muted);
   font-size: var(--ui-text-sm);
 }
 
 .section-heading__meta {
   margin: 0;
-  text-align: right;
+}
+
+.download-inline {
+  display: grid;
+  grid-template-columns:
+    auto minmax(calc(var(--ui-space-5) * 6), 1fr)
+    auto auto auto;
+  align-items: center;
+  gap: var(--ui-space-2);
+  min-width: min(calc(var(--ui-space-5) * 22), 50%);
+}
+
+.download-inline__label,
+.download-inline__mode {
+  flex: 0 0 auto;
+}
+
+.download-inline__path {
+  min-width: 0;
+  color: var(--ui-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.download-inline__mode {
+  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg);
 }
 
 .source-row {
@@ -402,12 +585,12 @@ onMounted(() => {
 .source-row__input {
   box-sizing: border-box;
   flex: 1;
-  min-width: 180px;
+  min-width: calc(var(--ui-space-5) * 8);
   padding: var(--ui-space-2) var(--ui-space-3);
   min-height: var(--import-control-height);
   background: var(--ui-bg);
   color: var(--ui-text);
-  border: 1px solid var(--ui-border);
+  border: var(--import-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   font-family: var(--font-ui);
   font-size: var(--ui-text-sm);
@@ -426,14 +609,13 @@ onMounted(() => {
   opacity: 0.65;
 }
 
-.source-row__action,
-.download-location__button {
+.source-row__action {
   min-height: var(--import-control-height);
 }
 
 .status {
-  min-height: 1.3em;
-  margin: var(--ui-space-2) 0 0;
+  min-height: var(--ui-space-4);
+  margin: 0;
 }
 
 .status--success {
@@ -445,17 +627,35 @@ onMounted(() => {
   font-weight: var(--ui-font-weight-strong);
 }
 
-.download-location__path {
-  min-height: 1.4em;
-  margin: 0 0 auto;
-  color: var(--ui-text);
-  font-size: var(--ui-text-sm);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.preview-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
 }
 
-.download-location__actions,
+.preview-panel__meta {
+  margin: var(--ui-space-1) 0 0;
+}
+
+.single-source-stack {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.source-summary {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.candidate-picker {
+  display: grid;
+  gap: var(--ui-space-2);
+  padding-top: var(--ui-space-3);
+  border-top: var(--import-border-width) solid var(--ui-border);
+}
+
+.candidate-chips,
+.candidate-options,
 .preview-tools,
 .preview-tools__actions,
 .snapshot-summary,
@@ -465,18 +665,37 @@ onMounted(() => {
   flex-wrap: wrap;
 }
 
-.download-location__actions {
-  margin-top: var(--ui-space-2);
+.candidate-chips {
+  justify-content: flex-end;
+  gap: var(--ui-space-1);
 }
 
-.preview-panel {
-  display: flex;
+.candidate-options {
   flex-direction: column;
-  gap: var(--ui-space-3);
+  gap: var(--ui-space-1);
 }
 
-.preview-panel__meta {
-  margin: var(--ui-space-1) 0 0;
+.candidate-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ui-space-1);
+  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
+  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg);
+  color: var(--ui-text-muted);
+  white-space: nowrap;
+}
+
+.candidate-chip span {
+  color: var(--ui-text);
+}
+
+.selected-source-note {
+  margin: 0;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
 }
 
 .snapshot-summary {
@@ -512,7 +731,7 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-1);
-  min-height: 28px;
+  min-height: calc(var(--ui-space-5) + var(--ui-space-1));
   padding: 0 var(--ui-space-2);
   border: none;
   border-radius: var(--ui-radius);
@@ -552,7 +771,7 @@ onMounted(() => {
   list-style: none;
   margin: 0;
   padding: var(--ui-space-1) 0;
-  max-height: 360px;
+  max-height: var(--import-preview-list-max-height);
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -573,8 +792,8 @@ onMounted(() => {
 }
 
 .preview-track__checkbox {
-  width: 16px;
-  height: 16px;
+  width: var(--import-checkbox-size);
+  height: var(--import-checkbox-size);
   margin: 0;
   accent-color: var(--ui-accent);
 }
@@ -584,10 +803,10 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 5em;
-  max-width: 9em;
+  min-width: var(--import-status-min-width);
+  max-width: var(--import-status-max-width);
   min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: 2px var(--ui-space-2);
+  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
   border-radius: var(--ui-radius);
   color: var(--ui-text-muted);
   background: var(--ui-surface-hover);
@@ -596,6 +815,37 @@ onMounted(() => {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.identity-chip {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--import-status-min-width);
+  max-width: var(--import-status-max-width);
+  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
+  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
+  border-radius: var(--ui-radius);
+  color: var(--ui-text-muted);
+  background: var(--ui-bg);
+  font-size: var(--ui-text-sm);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.identity-chip--identified {
+  color: var(--ui-accent);
+}
+
+.identity-chip--review {
+  color: var(--ui-danger);
+}
+
+.identity-chip--pending {
+  color: var(--ui-text-muted);
 }
 
 .track-status--downloading {
@@ -629,7 +879,7 @@ onMounted(() => {
   justify-content: space-between;
   gap: var(--ui-space-3);
   padding-top: var(--ui-space-2);
-  border-top: 1px solid var(--ui-border);
+  border-top: var(--import-border-width) solid var(--ui-border);
 }
 
 .preview-footer__note {
@@ -637,24 +887,33 @@ onMounted(() => {
 }
 
 @media (max-width: 920px) {
-  .import-setup {
-    grid-template-columns: 1fr;
+  .import-control__top,
+  .preview-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .download-inline {
+    min-width: 0;
+    width: 100%;
   }
 }
 
 @media (max-width: 680px) {
   .source-row,
-  .preview-footer {
+  .preview-footer,
+  .source-summary__bar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .preview-tools {
-    align-items: stretch;
+  .preview-tools__actions,
+  .candidate-chips {
+    justify-content: flex-start;
   }
 
-  .preview-tools__actions {
-    justify-content: flex-start;
+  .download-inline {
+    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   }
 }
 </style>

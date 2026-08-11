@@ -17,21 +17,27 @@ const {
   downloadAudio,
   fetchMetadata,
   listPlaylist,
+  searchPlaybackCandidates,
 } = require('./lib/downloader');
 const { loadConfig, saveConfig } = require('./lib/config');
 const { extractVideoId, extractPlaylistId } = require('./lib/youtube');
+const { resolveYoutubeImportSource } = require('./lib/importResolver');
 const {
   buildRangeResponse,
   deleteTrack,
+  getTrackLyricsState,
   listTracks,
   readTrackLyrics,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
-  resolveSeparatedDir,
-  resolveSeparatedFilePath,
+  resolveTrackDir,
+  resolveSeparationsDir,
+  resolveSeparationResultPath,
   resolveTrackPath,
   runBackfillPass,
   saveIndexEntry,
+  saveTrackLyricsText,
+  selectSeparationResult,
 } = require('./lib/library');
 const {
   createPlaylist,
@@ -42,8 +48,15 @@ const {
   renamePlaylist,
   setPlaylistTracks,
 } = require('./lib/playlists');
+const { findLrclibSyncedLyrics } = require('./lib/lrclib');
+const { probeMusixmatchLyrics } = require('./lib/musixmatch');
 const { renderGlyphPng } = require('./lib/thumbar-icons');
-const { ensureModel } = require('./lib/vocalSeparation');
+const {
+  ensureModel,
+  SEPARATION_PRESETS,
+  DEFAULT_PRESET_ID,
+  resolvePreset,
+} = require('./lib/vocalSeparation');
 
 const isDev = process.argv.includes('--dev');
 const MEDIA_SCHEME = 'utawakui-media';
@@ -104,6 +117,34 @@ let mainWindow = null;
 function sendBackfillStatus(payload) {
   if (!mainWindow) return;
   mainWindow.webContents.send('library:backfill-status', payload);
+}
+
+async function backfillTrackInfoWithLyricsFallback(videoId, trackDir) {
+  const result = await backfillTrackInfo(videoId, trackDir);
+  if (!result) return null;
+
+  let saved = false;
+  try {
+    saved = await saveLrclibLyricsIfAbsent(result, trackDir);
+  } catch {
+    // The info/thumbnail backfill for this track already succeeded — a
+    // failed optional lyrics fallback shouldn't abort the rest of the
+    // backfill pass for every remaining track (mirrors the download
+    // handler's own saveLrclibLyricsIfAbsent guard below).
+  }
+  return saved ? { ...result, assetsUpdated: true } : result;
+}
+
+async function saveLrclibLyricsIfAbsent(track, trackDir) {
+  const lyricsState = getTrackLyricsState(trackDir);
+  if (lyricsState.sources.some((source) => source.kind === 'lrclib')) {
+    return false;
+  }
+
+  const lrclibResult = await findLrclibSyncedLyrics(track);
+  if (lrclibResult.status !== 'available') return false;
+
+  return saveTrackLyricsText(trackDir, lrclibResult.source, lrclibResult.text);
 }
 
 // Guards against overlapping separation:run calls — see the handler's own
@@ -268,26 +309,27 @@ if (!gotSingleInstanceLock) {
     // Serves local audio files to the sandboxed renderer (nodeIntegration:
     // false means it has no direct filesystem access). Dispatches on
     // hostname: 'local' is an original downloaded track (resolveTrackPath,
-    // existing behavior); 'separated' is a vocal-separation output variant
-    // (resolveSeparatedFilePath, pathname is `<trackId>/<variantFilename>`).
-    // Either way, never trust the requested path beyond what these
-    // resolvers allow.
+    // existing behavior); 'track' is either a 2-segment asset request
+    // (`<trackId>/<assetFilename>`, resolveTrackAssetPath) or a 3-segment
+    // separation-result request (`<trackId>/separations/<presetId>.wav`,
+    // resolveSeparationResultPath — one file per preset, see library.js's
+    // SEPARATIONS_DIRNAME comment). Either way, never trust the requested
+    // path beyond what these resolvers allow.
     protocol.handle(MEDIA_SCHEME, (request) => {
       const url = new URL(request.url);
       const dir = resolveDownloadDir(cachedConfig);
       let filePath;
       if (url.hostname === 'track') {
-        const [trackId, assetFilename] = url.pathname
+        const segments = url.pathname
           .split('/')
           .filter(Boolean)
           .map(decodeURIComponent);
-        filePath = resolveTrackAssetPath(dir, trackId, assetFilename);
-      } else if (url.hostname === 'separated') {
-        const [trackId, variantFilename] = url.pathname
-          .split('/')
-          .filter(Boolean)
-          .map(decodeURIComponent);
-        filePath = resolveSeparatedFilePath(dir, trackId, variantFilename);
+        if (segments.length === 3 && segments[1] === 'separations') {
+          filePath = resolveSeparationResultPath(dir, segments[0], segments[2]);
+        } else {
+          const [trackId, assetFilename] = segments;
+          filePath = resolveTrackAssetPath(dir, trackId, assetFilename);
+        }
       } else {
         const filename = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
         filePath = resolveTrackPath(dir, filename);
@@ -314,7 +356,12 @@ if (!gotSingleInstanceLock) {
       const tracks = listTracks(dir);
       // Fire-and-forget — don't make the renderer wait on a network-bound
       // metadata pass just to see the tracks it already has.
-      runBackfillPass(dir, tracks, backfillTrackInfo, sendBackfillStatus)
+      runBackfillPass(
+        dir,
+        tracks,
+        backfillTrackInfoWithLyricsFallback,
+        sendBackfillStatus,
+      )
         .then((updated) => {
           if (updated && mainWindow) {
             mainWindow.webContents.send('library:updated');
@@ -350,6 +397,21 @@ if (!gotSingleInstanceLock) {
       const result = readTrackLyrics(dir, trackId, filename);
       if (!result) return null;
       return result;
+    });
+
+    ipcMain.handle('lyrics:probe-musixmatch', async (event, trackId) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const track = listTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      if (!track) {
+        return {
+          provider: 'musixmatch',
+          status: 'unavailable',
+          reason: 'unknown-track',
+        };
+      }
+      return probeMusixmatchLyrics(track);
     });
 
     // Every mutation resolves to the full playlist array so the renderer
@@ -391,11 +453,14 @@ if (!gotSingleInstanceLock) {
       if (!playlistId) return null; // not a playlist URL — not an error
       const dir = resolveDownloadDir(cachedConfig);
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      const entries = await listPlaylist(playlistId);
-      return entries.map((entry) => ({
-        ...entry,
-        alreadyDownloaded: existingIds.has(entry.id),
-      }));
+      const { title, entries } = await listPlaylist(playlistId);
+      return {
+        title,
+        entries: entries.map((entry) => ({
+          ...entry,
+          alreadyDownloaded: existingIds.has(entry.id),
+        })),
+      };
     });
 
     ipcMain.handle('yt:fetch-metadata', async (event, input) => {
@@ -412,11 +477,23 @@ if (!gotSingleInstanceLock) {
       };
     });
 
+    ipcMain.handle('yt:resolve-import-source', async (event, input) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const existingIds = new Set(listTracks(dir).map((track) => track.id));
+      return resolveYoutubeImportSource(input, {
+        extractVideoId,
+        fetchMetadata,
+        searchPlaybackCandidates,
+        existingIds,
+      });
+    });
+
     ipcMain.handle('yt:download-audio', async (event, input) => {
       const videoId = extractVideoId(input);
       if (!videoId) throw new Error('invalid video id or YouTube URL');
       const destDir = resolveDownloadDir(cachedConfig);
       const result = await downloadAudio(videoId, destDir);
+      const trackDir = resolveTrackDir(destDir, videoId);
       if (result.title) {
         try {
           saveIndexEntry(destDir, videoId, {
@@ -431,18 +508,34 @@ if (!gotSingleInstanceLock) {
           // backfill pass will retry writing the title.
         }
       }
+      if (trackDir) {
+        try {
+          await saveLrclibLyricsIfAbsent(result, trackDir);
+        } catch {
+          // The audio download succeeded. A failed optional lyrics fallback
+          // should not turn that into a failed import.
+        }
+      }
       return result;
     });
 
-    ipcMain.handle('separation:run', async (event, trackId) => {
+    ipcMain.handle('separation:run', async (event, trackId, presetId) => {
       const dir = resolveDownloadDir(cachedConfig);
       const track = listTracks(dir).find((t) => t.id === trackId);
       if (!track) throw new Error(`unknown track id: ${trackId}`);
 
-      const outDir = resolveSeparatedDir(dir, trackId);
+      const outDir = resolveSeparationsDir(dir, trackId);
       if (!outDir) throw new Error('invalid track id');
       const inputPath = resolveTrackAudioPath(dir, track.id);
       if (!inputPath) throw new Error(`missing audio for track id: ${trackId}`);
+
+      // Fail loudly on an unrecognized preset id rather than silently
+      // falling back — a UI bug should surface immediately, not quietly
+      // always run "standard".
+      if (presetId != null && !SEPARATION_PRESETS[presetId]) {
+        throw new Error(`unknown separation preset: ${presetId}`);
+      }
+      const resolvedPresetId = presetId ?? DEFAULT_PRESET_ID;
 
       // Running two separations at once (same track racing writes, or
       // different tracks saturating ONNX's all-cores pool while the user
@@ -460,11 +553,19 @@ if (!gotSingleInstanceLock) {
             stage: 'downloading-model',
           });
         }
-        const modelPath = await ensureModel(app.getPath('userData'));
+        const { modelId } = resolvePreset(resolvedPresetId);
+        const modelPath = await ensureModel(app.getPath('userData'), modelId);
         await new Promise((resolve, reject) => {
           const worker = new Worker(
             path.join(__dirname, 'lib', 'vocalSeparationWorker.js'),
-            { workerData: { inputPath, outputDir: outDir, modelPath } },
+            {
+              workerData: {
+                inputPath,
+                outputDir: outDir,
+                modelPath,
+                presetId: resolvedPresetId,
+              },
+            },
           );
           worker.on('message', (msg) => {
             if (msg.type === 'progress') {
@@ -500,8 +601,28 @@ if (!gotSingleInstanceLock) {
       }
 
       return {
-        stemsUrl: `${MEDIA_SCHEME}://separated/${encodeURIComponent(trackId)}/stems.wav`,
+        stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedPresetId)}.wav`,
       };
+    });
+
+    // Switches which already-produced result plays, without running any
+    // DSP — a cheap metadata write, so unlike separation:run this is not
+    // gated by separationInProgress and stays usable while a different
+    // track is separating.
+    ipcMain.handle('separation:select', async (event, trackId, presetId) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const separationsDir = resolveSeparationsDir(dir, trackId);
+      if (!separationsDir) throw new Error('invalid track id');
+
+      const selected = selectSeparationResult(separationsDir, presetId);
+      if (!selected) {
+        throw new Error(
+          `no separation result for preset "${presetId}" on track ${trackId}`,
+        );
+      }
+
+      if (mainWindow) mainWindow.webContents.send('library:updated');
+      return { ok: true };
     });
 
     ipcMain.handle('config:get', async () => {

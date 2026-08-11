@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { toPlayableTrack } from '../utils/playableTrack.js';
 
 // Single shared instance (module scope, not Pinia) — SetlistView (picks a
 // track) and PlayerBar (persistent controls) both import the same state
@@ -202,6 +203,51 @@ function clearTrack(trackId = null) {
   return true;
 }
 
+// Self-heals staleness in the currently-loaded track's metadata — e.g. a
+// vocal-separation result finishing after playback already started, which
+// otherwise never reaches this module (playTrack() only ever runs again
+// when something explicitly re-selects the track). Always refreshes
+// state.track so PlayerBar's showGuideVocal (reads state.track?.stemsUrl)
+// and similar computeds stay current; only reloads the <audio> element
+// when the resolved playable URL actually changed, so an unrelated
+// library:updated (e.g. a different track finished downloading) is a
+// harmless no-op here. Every write below goes through an existing action
+// (seek()/play()) or an audio.* call whose own event updates state — no
+// new direct write to isPlaying/currentTime/duration/error.
+async function syncCurrentTrack() {
+  if (!state.track) return;
+  const tracks = await window.Utawakui.listTracks();
+  const updated = tracks.find((t) => t.id === state.track.id);
+  if (!updated) return;
+
+  const playable = toPlayableTrack(updated);
+  const urlChanged = playable.url !== state.track.url;
+  const resumeTime = state.currentTime;
+  const wasPlaying = state.isPlaying;
+  const guideLevel = state.guideVocalLevel;
+
+  state.track = playable;
+  if (!urlChanged) return;
+
+  audio.src = playable.url;
+  setGuideVocalLevel(guideLevel);
+  seek(resumeTime);
+  if (wasPlaying) {
+    try {
+      await audioCtx.resume();
+      await audio.play();
+    } catch (err) {
+      state.error = err.message;
+    }
+  }
+}
+
+let unsubscribeLibraryUpdated = null;
+if (typeof window !== 'undefined' && window.Utawakui) {
+  unsubscribeLibraryUpdated =
+    window.Utawakui.onLibraryUpdated(syncCurrentTrack);
+}
+
 function isRepeatOneLoopWrap(previousTime, nextTime) {
   return (
     state.playbackMode === PLAYBACK_MODES.repeatOne &&
@@ -256,6 +302,7 @@ function cleanupPlayerResources() {
   audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
   audio.removeEventListener('error', handleError);
   endedListeners.clear();
+  unsubscribeLibraryUpdated?.();
   audio.pause();
   audio.removeAttribute('src');
   audio.load();

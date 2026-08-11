@@ -1,9 +1,22 @@
 <script setup>
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
-import { Minus, Plus, RefreshCw, RotateCcw } from '@lucide/vue';
+import {
+  Captions,
+  Clock,
+  Loader2,
+  MicVocal,
+  Minus,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Type,
+} from '@lucide/vue';
 import UiButton from '../ui/UiButton.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { usePlaylists } from '../../composables/usePlaylists.js';
+import { useSeparation } from '../../composables/useSeparation.js';
+import { ICON_SIZE } from '../../constants/ui.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 
@@ -22,8 +35,74 @@ const {
   resetOffset,
   playFromLine,
 } = useLyrics();
+const {
+  state: playlistState,
+  selectedPlaylist,
+  select: selectPlaylistAction,
+} = usePlaylists();
+// Owned at module scope (see useSeparation.js) — separation may keep
+// running after the user switches away from this playlist/track.
+const {
+  state: separationState,
+  isSeparating,
+  describe,
+  separate,
+  selectResult,
+} = useSeparation();
 
 const lyricsPreview = useTemplateRef('lyricsPreview');
+// Local, but synced below from the selected track's persisted "which
+// result plays" pointer (electron/lib/vocalSeparation.js writes each
+// preset's result to its own file under tracks/<id>/separations/, never
+// overwriting a different preset's file; library.js surfaces the current
+// pointer + all produced results as track.separation). Labels are factual
+// (model/preset), not claims about how the result sounds — nothing here
+// has been verified by ear.
+const selectedPresetId = ref('standard');
+// Speed measured on a 123s track: high-quality and inst-hq3 both run
+// ~3x standard's time (denoise on for both; see CLAUDE.md) — inst-hq3
+// earns the same "較慢" note despite sharing standard's overlap value,
+// since its larger FFT costs as much as high-quality's higher overlap.
+const PRESET_LABELS = {
+  standard: '標準(卡拉OK模型)',
+  'high-quality': '高品質(卡拉OK模型・較慢)',
+  'inst-hq3': '人聲分離模型(Inst HQ 3・較慢)',
+};
+// Starts the dropdown from whichever result the track is actually set to
+// play, not "whatever preset last ran" — multiple results can coexist now.
+// Unseparated tracks (no separation field at all) leave the current
+// selection alone.
+watch(selectedTrack, (track) => {
+  const presetId = track?.separation?.selectedPresetId;
+  if (presetId && PRESET_LABELS[presetId]) {
+    selectedPresetId.value = presetId;
+  }
+});
+
+function hasSeparationResult(presetId) {
+  return Boolean(selectedTrack.value?.separation?.results?.[presetId]);
+}
+
+// A checkmark instead of "・已產生" text — more compact, and reads as a
+// status glyph rather than another clause to parse. Trailing, not truly
+// right-aligned: native <option> elements don't support per-run text
+// alignment (no flex/grid inside one option), so appending it at the end
+// of the label is the closest a plain <select> can get.
+function presetOptionLabel(presetId) {
+  return PRESET_LABELS[presetId] + (hasSeparationResult(presetId) ? ' ✓' : '');
+}
+
+// Picking an already-produced preset switches playback immediately (cheap
+// metadata write); picking one with no result yet just updates the local
+// selection — the generate button below is the explicit trigger for that,
+// so a dropdown change never silently starts a 30s+ DSP run.
+function handlePresetChange(event) {
+  const presetId = event.target.value;
+  const track = selectedTrack.value;
+  if (track && hasSeparationResult(presetId)) {
+    selectResult(track, presetId);
+  }
+}
 const lyricsFontSizeIndex = ref(1);
 const LYRICS_FONT_SIZE_CLASSES = [
   'lyrics-preview--font-compact',
@@ -66,13 +145,12 @@ const reloadStatusLabel = computed(() => {
     const total = state.backfillStatus.total;
     const completed = state.backfillStatus.completed;
     if (Number.isFinite(total) && total > 0) {
-      return `掃描字幕 ${completed}/${total}`;
+      return `掃描歌詞 ${completed}/${total}`;
     }
-    return '掃描字幕中';
+    return '掃描歌詞中';
   }
   return '';
 });
-
 function decreaseLyricsFontSize() {
   lyricsFontSizeIndex.value = Math.max(0, lyricsFontSizeIndex.value - 1);
 }
@@ -86,17 +164,44 @@ function increaseLyricsFontSize() {
 
 function lyricsStatusLabel(track) {
   const status = track.lyrics?.status;
-  if (status === 'available') return 'CC';
-  if (status === 'missing') return '無字幕';
-  return '待 reload';
+  if (status === 'available') return '有歌詞';
+  if (status === 'missing') return '無歌詞';
+  return '未掃描歌詞';
 }
 
 function lyricsStatusClass(track) {
   return `lyrics-status--${track.lyrics?.status || 'unchecked'}`;
 }
 
+function handlePlaylistChange(event) {
+  selectPlaylistAction(event.target.value || null);
+}
+
+function separationStatusClass(track) {
+  if (isSeparating(track.id)) return 'separation-status--active';
+  return track.hasSeparation
+    ? 'separation-status--done'
+    : 'separation-status--pending';
+}
+
+function separationStatusTitle(track) {
+  if (isSeparating(track.id)) return describe(track.id);
+  return track.hasSeparation ? '有伴奏' : '尚未產生伴奏';
+}
+
+const selectedSeparationError = computed(() => {
+  const track = selectedTrack.value;
+  return track ? (separationState.errors.get(track.id) ?? null) : null;
+});
+
+const SOURCE_KIND_LABELS = {
+  'youtube-cc': 'YouTube CC',
+  lrclib: 'LRCLIB',
+};
+
 function sourceLabel(source) {
-  return `${source.language.toUpperCase()} / ${source.kind === 'youtube-cc' ? 'YouTube CC' : source.kind}`;
+  const kindLabel = SOURCE_KIND_LABELS[source.kind] || source.kind;
+  return `${source.language.toUpperCase()} / ${kindLabel}`;
 }
 
 function handleSourceChange(event) {
@@ -143,11 +248,7 @@ watch(activeLineIndex, (index) => {
     <section class="lyrics-panel lyrics-panel--list" aria-label="Lyrics tracks">
       <header class="lyrics-panel__header">
         <div class="lyrics-panel__title-group">
-          <h2 class="lyrics-panel__title">曲目</h2>
-          <p class="lyrics-panel__meta">
-            {{ tracksWithLyricsCount }} CC /
-            {{ tracksMissingLyricsCount }} 無字幕
-          </p>
+          <h2 class="lyrics-panel__title">歌詞</h2>
           <p v-if="reloadStatusLabel" class="lyrics-panel__status">
             {{ reloadStatusLabel }}
           </p>
@@ -155,14 +256,40 @@ watch(activeLineIndex, (index) => {
         <UiButton
           :icon="RefreshCw"
           :active="isReloading"
-          title="重新載入"
-          aria-label="重新載入"
+          title="重新掃描"
+          aria-label="重新掃描"
           @click="refresh"
         />
       </header>
 
+      <div class="lyrics-panel__playlist">
+        <select
+          class="lyrics-panel__playlist-select"
+          :value="playlistState.selectedId || ''"
+          aria-label="選擇播放清單"
+          @change="handlePlaylistChange"
+        >
+          <option value="">選擇播放清單</option>
+          <option
+            v-for="playlist in playlistState.playlists"
+            :key="playlist.id"
+            :value="playlist.id"
+          >
+            {{ playlist.name || '(未命名歌單)' }}
+          </option>
+        </select>
+        <p v-if="selectedPlaylist" class="lyrics-panel__meta">
+          {{ tracksWithLyricsCount }} 有歌詞 /
+          {{ tracksMissingLyricsCount }} 無歌詞
+        </p>
+      </div>
+
       <p v-if="state.error" class="lyrics-error">{{ state.error }}</p>
       <p v-else-if="state.isLoading" class="lyrics-empty">載入中</p>
+      <p v-else-if="!selectedPlaylist" class="lyrics-empty">請先選擇播放清單</p>
+      <p v-else-if="state.tracks.length === 0" class="lyrics-empty">
+        這個播放清單還沒有曲目。
+      </p>
 
       <ul v-else class="lyrics-track-list">
         <UiTrackRow
@@ -171,12 +298,39 @@ watch(activeLineIndex, (index) => {
           :track="track"
           :active="track.id === state.selectedTrackId"
           interactive
+          hide-duration
           @click="selectTrack(track.id)"
         >
           <template #trail>
-            <span class="lyrics-status" :class="lyricsStatusClass(track)">
-              {{ lyricsStatusLabel(track) }}
-            </span>
+            <div class="lyrics-row-status">
+              <span
+                class="separation-status"
+                :class="separationStatusClass(track)"
+                :title="separationStatusTitle(track)"
+                :aria-label="separationStatusTitle(track)"
+              >
+                <Loader2
+                  v-if="isSeparating(track.id)"
+                  class="separation-status__spin"
+                  :size="ICON_SIZE"
+                  aria-hidden="true"
+                />
+                <MicVocal v-else :size="ICON_SIZE" aria-hidden="true" />
+              </span>
+              <span
+                class="lyrics-status-icon"
+                :class="lyricsStatusClass(track)"
+                :title="lyricsStatusLabel(track)"
+                :aria-label="lyricsStatusLabel(track)"
+              >
+                <Captions :size="ICON_SIZE" aria-hidden="true" />
+              </span>
+              <span class="lyrics-row-status__duration">{{
+                Number.isFinite(track.duration)
+                  ? formatDuration(track.duration)
+                  : ''
+              }}</span>
+            </div>
           </template>
         </UiTrackRow>
       </ul>
@@ -189,7 +343,7 @@ watch(activeLineIndex, (index) => {
       <header class="lyrics-detail">
         <div class="lyrics-detail__text">
           <h2 class="lyrics-detail__title">
-            {{ selectedTrack?.title || '未選取曲目' }}
+            {{ selectedTrack?.title || '未選取歌曲' }}
           </h2>
           <p v-if="selectedMeta" class="lyrics-detail__meta">
             {{ selectedMeta }}
@@ -205,8 +359,9 @@ watch(activeLineIndex, (index) => {
       </header>
 
       <div class="lyrics-toolbar">
-        <label class="lyrics-source">
-          <span class="lyrics-source__label">來源</span>
+        <label class="lyrics-source" title="歌詞來源">
+          <Captions :size="ICON_SIZE" aria-hidden="true" />
+          <span class="visually-hidden">歌詞來源</span>
           <select
             class="lyrics-source__select"
             :value="state.selectedSourceFilename || ''"
@@ -224,25 +379,12 @@ watch(activeLineIndex, (index) => {
           </select>
         </label>
 
-        <div class="lyrics-text-size" aria-label="歌詞字級">
-          <UiButton
-            :icon="Minus"
-            title="縮小歌詞"
-            aria-label="縮小歌詞"
-            :disabled="!canDecreaseLyricsFontSize"
-            @click="decreaseLyricsFontSize"
-          />
-          <span class="lyrics-text-size__value">字級</span>
-          <UiButton
-            :icon="Plus"
-            title="放大歌詞"
-            aria-label="放大歌詞"
-            :disabled="!canIncreaseLyricsFontSize"
-            @click="increaseLyricsFontSize"
-          />
-        </div>
-
-        <div class="lyrics-offset" aria-label="歌詞偏移">
+        <div
+          class="lyrics-offset"
+          aria-label="歌詞時間偏移"
+          title="歌詞時間偏移"
+        >
+          <Clock :size="ICON_SIZE" aria-hidden="true" />
           <UiButton
             :icon="Minus"
             title="歌詞提前 0.1 秒"
@@ -263,6 +405,77 @@ watch(activeLineIndex, (index) => {
             @click="resetOffset"
           />
         </div>
+
+        <div class="lyrics-text-size" aria-label="歌詞字級" title="歌詞字級">
+          <Type :size="ICON_SIZE" aria-hidden="true" />
+          <UiButton
+            :icon="Minus"
+            title="縮小歌詞"
+            aria-label="縮小歌詞"
+            :disabled="!canDecreaseLyricsFontSize"
+            @click="decreaseLyricsFontSize"
+          />
+          <UiButton
+            :icon="Plus"
+            title="放大歌詞"
+            aria-label="放大歌詞"
+            :disabled="!canIncreaseLyricsFontSize"
+            @click="increaseLyricsFontSize"
+          />
+        </div>
+
+        <div v-if="selectedTrack" class="lyrics-separation" aria-label="伴奏">
+          <select
+            v-model="selectedPresetId"
+            class="lyrics-separation__preset"
+            :disabled="isSeparating(selectedTrack.id)"
+            aria-label="伴奏分離設定"
+            title="標準/高品質皆為卡拉OK模型,設計上以移除主唱為主,和聲較可能留在伴奏;高品質是調整降噪等參數的最佳化版本,可與標準比較。人聲分離模型移除所有人聲。實際效果依曲目而異。選擇已產生的項目會立即切換播放。"
+            @change="handlePresetChange"
+          >
+            <option value="standard">
+              {{ presetOptionLabel('standard') }}
+            </option>
+            <option value="high-quality">
+              {{ presetOptionLabel('high-quality') }}
+            </option>
+            <option value="inst-hq3">
+              {{ presetOptionLabel('inst-hq3') }}
+            </option>
+          </select>
+          <UiButton
+            v-if="isSeparating(selectedTrack.id)"
+            :icon="Loader2"
+            class="lyrics-separation__spin"
+            disabled
+            :title="describe(selectedTrack.id)"
+            role="status"
+          >
+            {{ describe(selectedTrack.id) }}
+          </UiButton>
+          <UiButton
+            v-else
+            :icon="MicVocal"
+            :aria-label="
+              hasSeparationResult(selectedPresetId) ? '重新產生' : '產生'
+            "
+            :title="
+              hasSeparationResult(selectedPresetId)
+                ? '重新產生(用選定的設定重新產生這個結果)'
+                : '產生(產生可調整導唱強弱的伴奏版本)'
+            "
+            @click="separate(selectedTrack, selectedPresetId)"
+          />
+          <span
+            v-if="selectedTrack.hasSeparation"
+            class="lyrics-separation__done"
+          >
+            有伴奏
+          </span>
+          <span v-if="selectedSeparationError" class="lyrics-separation__error">
+            {{ selectedSeparationError }}
+          </span>
+        </div>
       </div>
 
       <div
@@ -272,19 +485,19 @@ watch(activeLineIndex, (index) => {
       >
         <p v-if="state.isLoadingLyrics" class="lyrics-empty">載入歌詞中</p>
         <p v-else-if="selectedLyrics.status === 'missing'" class="lyrics-empty">
-          這首目前沒有可用 CC 字幕
+          目前沒有可用歌詞
         </p>
         <p
           v-else-if="selectedLyrics.status === 'unchecked'"
           class="lyrics-empty"
         >
-          等待 reload 檢查 CC 字幕
+          請按 reload 掃描歌詞來源
         </p>
         <p
           v-else-if="selectedSource && lyricLines.length === 0"
           class="lyrics-empty"
         >
-          字幕檔無法解析
+          歌詞檔無可顯示內容
         </p>
         <ol v-else class="lyrics-lines">
           <li
@@ -315,9 +528,25 @@ watch(activeLineIndex, (index) => {
 </template>
 
 <style scoped>
+/* Toolbar groups now lead with an icon instead of visible text (see
+   .lyrics-source/.lyrics-offset/.lyrics-text-size below) — this keeps an
+   accessible name on the <label>-wrapped source select without showing
+   redundant text next to the icon + already-visible selected value. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .lyrics-workspace {
   display: grid;
-  grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+  grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
   gap: var(--ui-space-3);
   min-height: 0;
 }
@@ -381,6 +610,37 @@ watch(activeLineIndex, (index) => {
   font-size: var(--ui-text-sm);
 }
 
+.lyrics-panel__playlist {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-bottom: 1px solid var(--ui-border);
+}
+
+.lyrics-panel__playlist-select {
+  min-width: 0;
+  flex: 1 1 auto;
+  height: 30px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--font-ui);
+  font-size: var(--ui-text-sm);
+}
+
+.lyrics-panel__playlist-select:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 1px;
+}
+
+.lyrics-panel__playlist .lyrics-panel__meta {
+  flex: 0 0 auto;
+  margin-top: 0;
+  white-space: nowrap;
+}
+
 .lyrics-track-list,
 .lyrics-lines {
   list-style: none;
@@ -428,6 +688,73 @@ watch(activeLineIndex, (index) => {
   background: var(--ui-surface-hover);
 }
 
+.lyrics-row-status {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  flex: 0 0 auto;
+}
+
+.lyrics-row-status__duration {
+  min-width: 34px;
+  flex-shrink: 0;
+  color: var(--ui-text-muted);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.ui-track--active .lyrics-row-status__duration {
+  color: inherit;
+  opacity: 0.75;
+}
+
+.lyrics-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg);
+  color: var(--ui-text-muted);
+}
+
+.lyrics-status-icon.lyrics-status--available {
+  color: var(--ui-accent);
+}
+
+.lyrics-status-icon.lyrics-status--missing {
+  color: var(--ui-text-muted);
+}
+
+.lyrics-status-icon.lyrics-status--unchecked {
+  color: var(--ui-text);
+  background: var(--ui-surface-hover);
+}
+
+.separation-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-bg);
+  color: var(--ui-text-muted);
+}
+
+.separation-status--done {
+  color: var(--ui-accent);
+}
+
+.separation-status--active {
+  color: var(--ui-text);
+}
+
+.separation-status__spin {
+  animation: lyrics-spin 1s linear infinite;
+}
+
 .lyrics-status--large {
   padding: var(--ui-space-2) var(--ui-space-3);
 }
@@ -445,9 +772,11 @@ watch(activeLineIndex, (index) => {
   min-width: 0;
 }
 
-.lyrics-source__label {
+.lyrics-source > svg,
+.lyrics-offset > svg,
+.lyrics-text-size > svg {
+  flex-shrink: 0;
   color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
 }
 
 .lyrics-source__select {
@@ -472,15 +801,61 @@ watch(activeLineIndex, (index) => {
   display: flex;
   align-items: center;
   gap: var(--ui-space-1);
+  height: 30px;
+  padding: 0 var(--ui-space-2);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-bg);
 }
 
-.lyrics-text-size__value,
 .lyrics-offset__value {
   min-width: 52px;
   color: var(--ui-text);
   font-size: var(--ui-text-sm);
   text-align: center;
   font-variant-numeric: tabular-nums;
+}
+
+.lyrics-separation {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  /* Prep-only action (run once before a performance), distinct from the
+     three reading-experience adjustments to its left — pushed to the row's
+     far end with a divider so it doesn't read as "one more live control". */
+  margin-left: auto;
+  padding-left: var(--ui-space-3);
+  border-left: 1px solid var(--ui-border);
+}
+
+.lyrics-separation__preset {
+  min-width: 96px;
+  height: 30px;
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--font-ui);
+  font-size: var(--ui-text-sm);
+}
+
+.lyrics-separation__preset:focus-visible {
+  outline: 2px solid var(--ui-focus);
+  outline-offset: 1px;
+}
+
+.lyrics-separation__spin :deep(svg) {
+  animation: lyrics-spin 1s linear infinite;
+}
+
+.lyrics-separation__done {
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
+}
+
+.lyrics-separation__error {
+  color: var(--ui-danger);
+  font-size: var(--ui-text-sm);
 }
 
 .lyrics-preview {
@@ -562,6 +937,19 @@ watch(activeLineIndex, (index) => {
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: normal;
+}
+
+@keyframes lyrics-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .separation-status__spin,
+  .lyrics-separation__spin :deep(svg) {
+    animation: none;
+  }
 }
 
 @media (max-width: 900px) {

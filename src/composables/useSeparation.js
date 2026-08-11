@@ -58,7 +58,7 @@ function describe(trackId) {
   }
 }
 
-async function separate(track) {
+async function separate(track, presetId) {
   if (isSeparating(track.id)) return;
   state.errors.delete(track.id);
   // Seeds an entry immediately so isSeparating() is true (and the button
@@ -66,11 +66,24 @@ async function separate(track) {
   // waiting for the first IPC progress event to round-trip.
   state.inFlight.set(track.id, { stage: null });
   try {
-    await window.Utawakui.separateTrack(track.id);
+    await window.Utawakui.separateTrack(track.id, presetId);
   } catch (err) {
     state.errors.set(track.id, `${track.title} 分離失敗:${err.message}`);
   } finally {
     state.inFlight.delete(track.id);
+  }
+}
+
+// Switches which already-produced result plays — instant, no DSP, so no
+// inFlight/isSeparating bookkeeping needed. Still records a failure (e.g.
+// a preset that was produced then deleted out-of-band) the same way
+// separate() does, so the UI can surface it consistently.
+async function selectResult(track, presetId) {
+  try {
+    await window.Utawakui.selectSeparationResult(track.id, presetId);
+    state.errors.delete(track.id);
+  } catch (err) {
+    state.errors.set(track.id, `${track.title} 切換失敗:${err.message}`);
   }
 }
 
@@ -80,5 +93,6 @@ export function useSeparation() {
     isSeparating,
     describe,
     separate,
+    selectResult,
   };
 }

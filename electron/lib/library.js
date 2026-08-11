@@ -28,11 +28,12 @@ const AUDIO_EXTENSIONS = new Set(Object.keys(AUDIO_MIME_TYPES));
 const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
 
 // Vocal-separation output lives in its own subdirectory — listTracks()'s
-// isFile() filter already skips it, no enumeration change needed. A single
-// 4-channel stems.wav, not separate files: vocalSeparation.js writes
-// channels in a FIXED order (0/1 instrumental L/R, 2/3 vocals L/R) that
-// usePlayer.js's ChannelSplitter routing depends on — changing one side
-// without the other silently swaps instrumental and vocals.
+// isFile() filter already skips it, no enumeration change needed. Each
+// preset gets its own 4-channel <presetId>.wav (never one shared filename —
+// see SEPARATIONS_DIRNAME below for why), channels in a FIXED order (0/1
+// instrumental L/R, 2/3 vocals L/R) that usePlayer.js's ChannelSplitter
+// routing depends on — changing one side without the other silently swaps
+// instrumental and vocals.
 const TRACKS_DIRNAME = 'tracks';
 const DUPLICATES_DIRNAME = '.duplicates';
 const LEGACY_SEPARATED_DIRNAME = '.separated';
@@ -40,9 +41,19 @@ const STRUCTURED_AUDIO_BASENAME = 'audio';
 const ARTWORK_BASENAME = 'thumbnail';
 const LYRICS_DIRNAME = 'lyrics';
 const LYRICS_MANIFEST_FILENAME = 'lyrics.json';
-const LYRICS_MANIFEST_VERSION = 6;
-const SEPARATED_VARIANTS = new Set(['stems.wav']);
-const LYRICS_EXTENSIONS = new Set(['.vtt']);
+const LYRICS_MANIFEST_VERSION = 8;
+// Each preset's separation result is its own file (tracks/<id>/separations/
+// <presetId>.wav) — deliberately not one shared "stems.wav", so switching
+// presets never has to overwrite whichever file is currently open for
+// guide-vocal playback (that EPERM-on-rename was a real bug, not
+// hypothetical). manifest.json's shape: { version, selectedPresetId,
+// results: { [presetId]: { modelId, separatedAt } } } — selectedPresetId is
+// the "which result currently plays" pointer, read main-side only via
+// loadSeparationManifest, never servable over utawakui-media://.
+const SEPARATIONS_DIRNAME = 'separations';
+const SEPARATION_MANIFEST_FILENAME = 'manifest.json';
+const SEPARATION_MANIFEST_VERSION = 1;
+const LYRICS_EXTENSIONS = new Set(['.vtt', '.lrc']);
 const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);
 
 // Interim, text-only metadata store — deliberately not the future SQLite
@@ -352,6 +363,33 @@ function saveTrackLyricsManifest(trackDir, sources) {
   return normalizedSources;
 }
 
+function atomicWriteText(filePath, text) {
+  const tmpPath = `${filePath}.tmp`;
+  fs.writeFileSync(tmpPath, text, 'utf8');
+  fs.renameSync(tmpPath, filePath);
+}
+
+function saveTrackLyricsText(trackDir, source, text) {
+  if (
+    !source ||
+    !isLyricsSubtitleFilename(source.filename) ||
+    typeof text !== 'string' ||
+    text.trim().length === 0
+  ) {
+    return false;
+  }
+
+  const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+  fs.mkdirSync(lyricsDir, { recursive: true });
+  atomicWriteText(path.join(lyricsDir, source.filename), text);
+
+  const existingSources = listTrackLyricsSources(trackDir).sources.filter(
+    (candidate) => candidate.filename !== source.filename,
+  );
+  saveTrackLyricsManifest(trackDir, [...existingSources, source]);
+  return true;
+}
+
 function normalizeTrackLyricsSidecars(trackDir) {
   let entries;
   try {
@@ -496,10 +534,6 @@ function resolveTrackAssetPath(dir, trackId, assetFilename) {
       : null;
   }
 
-  if (SEPARATED_VARIANTS.has(assetFilename)) {
-    return path.join(trackDir, assetFilename);
-  }
-
   return null;
 }
 
@@ -548,27 +582,173 @@ function compareTracks(a, b) {
   );
 }
 
-// Backward-compatible name for callers that still think in "separation
-// output dir" terms. In the structured layout, stems.wav lives directly in
-// the track directory alongside audio/artwork/source metadata.
-function resolveSeparatedDir(dir, trackId) {
-  return resolveTrackDir(dir, trackId);
+function resolveSeparationsDir(dir, trackId) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  return trackDir ? path.join(trackDir, SEPARATIONS_DIRNAME) : null;
 }
 
-// For the protocol handler — variantFilename is checked against the fixed
-// SEPARATED_VARIANTS allowlist (not an extension check) before it ever
-// touches the filesystem.
-function resolveSeparatedFilePath(dir, trackId, variantFilename) {
-  if (!SEPARATED_VARIANTS.has(variantFilename)) return null;
-  return resolveTrackAssetPath(dir, trackId, variantFilename);
+// Missing or malformed manifest (never separated yet, or a hand-edited/
+// corrupted file) just means "no results" — returns the empty default
+// rather than throwing, same tolerant-read pattern as
+// loadTrackLyricsManifest.
+function loadSeparationManifest(separationsDir) {
+  const empty = {
+    version: SEPARATION_MANIFEST_VERSION,
+    selectedPresetId: null,
+    results: {},
+  };
+  try {
+    const raw = JSON.parse(
+      fs.readFileSync(
+        path.join(separationsDir, SEPARATION_MANIFEST_FILENAME),
+        'utf8',
+      ),
+    );
+    if (
+      typeof raw !== 'object' ||
+      raw === null ||
+      typeof raw.results !== 'object' ||
+      raw.results === null
+    ) {
+      return empty;
+    }
+    const results = {};
+    for (const [presetId, entry] of Object.entries(raw.results)) {
+      if (
+        entry &&
+        typeof entry === 'object' &&
+        typeof entry.modelId === 'string'
+      ) {
+        results[presetId] = {
+          modelId: entry.modelId,
+          separatedAt:
+            typeof entry.separatedAt === 'string'
+              ? entry.separatedAt
+              : undefined,
+        };
+      }
+    }
+    return {
+      version: SEPARATION_MANIFEST_VERSION,
+      selectedPresetId:
+        typeof raw.selectedPresetId === 'string' ? raw.selectedPresetId : null,
+      results,
+    };
+  } catch {
+    return empty;
+  }
+}
+
+// Called by vocalSeparation.js right after a preset's <presetId>.wav
+// rename succeeds — never before, so a crash mid-write can't leave the
+// manifest claiming a result that doesn't exist on disk. Producing a
+// result always selects it (it's what the caller just asked to run).
+function recordSeparationResult(
+  separationsDir,
+  { presetId, modelId, separatedAt },
+) {
+  const manifest = loadSeparationManifest(separationsDir);
+  manifest.results[presetId] = { modelId, separatedAt };
+  manifest.selectedPresetId = presetId;
+  atomicWriteJson(
+    path.join(separationsDir, SEPARATION_MANIFEST_FILENAME),
+    manifest,
+  );
+}
+
+// Switches which result plays, without touching any audio file — a cheap
+// metadata write, unlike generating a result. Refuses (returns false,
+// manifest untouched) if presetId has no recorded result, so callers can't
+// point playback at a file that was never produced (or was produced then
+// deleted out-of-band).
+function selectSeparationResult(separationsDir, presetId) {
+  const manifest = loadSeparationManifest(separationsDir);
+  if (!manifest.results[presetId]) return false;
+  manifest.selectedPresetId = presetId;
+  atomicWriteJson(
+    path.join(separationsDir, SEPARATION_MANIFEST_FILENAME),
+    manifest,
+  );
+  return true;
+}
+
+function hasSeparationResultFile(separationsDir, presetId) {
+  return fs.existsSync(path.join(separationsDir, `${presetId}.wav`));
 }
 
 function hasSeparation(dir, trackId) {
-  const separatedDir = resolveSeparatedDir(dir, trackId);
-  if (!separatedDir) return false;
-  return [...SEPARATED_VARIANTS].every((variant) =>
-    fs.existsSync(path.join(separatedDir, variant)),
+  const separationsDir = resolveSeparationsDir(dir, trackId);
+  if (!separationsDir) return false;
+  const manifest = loadSeparationManifest(separationsDir);
+  return Boolean(
+    manifest.selectedPresetId &&
+    hasSeparationResultFile(separationsDir, manifest.selectedPresetId),
   );
+}
+
+// For the protocol handler — presetFilename is checked against a strict
+// charset allowlist (not an extension check alone) before it ever touches
+// the filesystem, same pattern as resolveTrackAssetPath's other branches.
+function resolveSeparationResultPath(dir, trackId, presetFilename) {
+  if (
+    typeof presetFilename !== 'string' ||
+    !/^[a-z0-9-]+\.wav$/i.test(presetFilename)
+  ) {
+    return null;
+  }
+  const separationsDir = resolveSeparationsDir(dir, trackId);
+  if (!separationsDir) return null;
+  const filePath = path.join(separationsDir, presetFilename);
+  return fs.existsSync(filePath) ? filePath : null;
+}
+
+// Migrates a track separated under the flat tracks/<id>/stems.wav +
+// separation.json design (superseded — see SEPARATIONS_DIRNAME above) into
+// the per-preset layout. Tolerant of partial failure, same idiom as
+// migrateLegacySeparation: keeps the legacy file if migration can't
+// complete rather than losing it.
+function migrateLegacyFlatSeparation(trackDir) {
+  const legacyStemsPath = path.join(trackDir, 'stems.wav');
+  if (!fs.existsSync(legacyStemsPath)) return;
+
+  let presetId = 'standard';
+  let modelId = 'kara2';
+  let separatedAt = new Date().toISOString();
+  try {
+    const sidecar = JSON.parse(
+      fs.readFileSync(path.join(trackDir, 'separation.json'), 'utf8'),
+    );
+    if (typeof sidecar.presetId === 'string') presetId = sidecar.presetId;
+    if (typeof sidecar.modelId === 'string') modelId = sidecar.modelId;
+    if (typeof sidecar.separatedAt === 'string') {
+      separatedAt = sidecar.separatedAt;
+    }
+  } catch {
+    // No sidecar (or unreadable) — fall back to the standard/kara2 guess,
+    // the only preset that ever existed before per-preset provenance did.
+  }
+
+  const separationsDir = path.join(trackDir, SEPARATIONS_DIRNAME);
+  const targetPath = path.join(separationsDir, `${presetId}.wav`);
+
+  try {
+    fs.mkdirSync(separationsDir, { recursive: true });
+    if (!fs.existsSync(targetPath)) {
+      fs.renameSync(legacyStemsPath, targetPath);
+    }
+    const manifest = loadSeparationManifest(separationsDir);
+    if (!manifest.results[presetId]) {
+      manifest.results[presetId] = { modelId, separatedAt };
+    }
+    if (!manifest.selectedPresetId) manifest.selectedPresetId = presetId;
+    atomicWriteJson(
+      path.join(separationsDir, SEPARATION_MANIFEST_FILENAME),
+      manifest,
+    );
+    fs.rmSync(path.join(trackDir, 'separation.json'), { force: true });
+  } catch {
+    // Keep the legacy file if migration cannot complete.
+  }
 }
 
 function uniquePathForDuplicate(baseDir, filename) {
@@ -689,6 +869,7 @@ function listStructuredTracks(dir) {
     .map((entry) => {
       const trackDir = path.join(tracksRoot, entry.name);
       normalizeStructuredTrackSidecars(trackDir);
+      migrateLegacyFlatSeparation(trackDir);
       const audioFilename = findStructuredAudioFilename(trackDir);
       if (!audioFilename) return null;
       const artworkFilename = findArtworkFilename(trackDir);
@@ -755,7 +936,19 @@ function listTracks(dir) {
     .map((record) => {
       const id = record.id;
       const indexed = index.tracks[id];
-      const separated = hasSeparation(dir, id);
+      const separationsDir = resolveSeparationsDir(dir, id);
+      const separationManifest = separationsDir
+        ? loadSeparationManifest(separationsDir)
+        : { selectedPresetId: null, results: {} };
+      const resultCount = Object.keys(separationManifest.results).length;
+      const selectedResultExists = Boolean(
+        separationManifest.selectedPresetId &&
+        separationsDir &&
+        hasSeparationResultFile(
+          separationsDir,
+          separationManifest.selectedPresetId,
+        ),
+      );
       const metadataNeedsBackfill =
         !indexed?.title ||
         indexed?.artist === undefined ||
@@ -774,10 +967,17 @@ function listTracks(dir) {
         artist: indexed?.artist,
         duration: indexed?.duration,
         needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
-        hasSeparation: separated,
-        stemsUrl: separated
-          ? `utawakui-media://track/${encodeURIComponent(id)}/stems.wav`
+        hasSeparation: selectedResultExists,
+        stemsUrl: selectedResultExists
+          ? `utawakui-media://track/${encodeURIComponent(id)}/separations/${encodeURIComponent(separationManifest.selectedPresetId)}.wav`
           : undefined,
+        separation:
+          resultCount > 0
+            ? {
+                selectedPresetId: separationManifest.selectedPresetId,
+                results: separationManifest.results,
+              }
+            : undefined,
         thumbnailUrl: record.thumbnailUrl,
         lyrics: record.lyrics,
       };
@@ -977,6 +1177,7 @@ module.exports = {
   buildRangeResponse,
   deleteTrack,
   hasSeparation,
+  hasSeparationResultFile,
   INDEX_FILENAME,
   isArtworkFilename,
   isAutomaticLyricsLanguage,
@@ -985,13 +1186,16 @@ module.exports = {
   isServableFilename,
   isStructuredAudioFilename,
   LYRICS_MANIFEST_VERSION,
+  getTrackLyricsState,
   listTracks,
   loadIndex,
+  loadSeparationManifest,
   normalizeTrackLyricsSidecars,
   readTrackLyrics,
+  recordSeparationResult,
   resolveTrackLyricsPath,
-  resolveSeparatedDir,
-  resolveSeparatedFilePath,
+  resolveSeparationsDir,
+  resolveSeparationResultPath,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
   resolveTrackDir,
@@ -999,4 +1203,6 @@ module.exports = {
   runBackfillPass,
   saveIndexEntry,
   saveTrackLyricsManifest,
+  saveTrackLyricsText,
+  selectSeparationResult,
 };

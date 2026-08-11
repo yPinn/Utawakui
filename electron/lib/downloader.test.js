@@ -6,13 +6,17 @@ import {
   applySubtitleOptions,
   applyYoutubeRuntimeOptions,
   buildAudioDownloadOptionAttempts,
+  buildPlaybackCrossSearchQueries,
+  buildPlaybackSearchQueries,
   buildSubtitleOptions,
   extractMetadataFields,
   finalizeDownloadedTrackFiles,
   isForbiddenAudioDownloadError,
+  listPlaylist,
   readTrackInfoMetadata,
   readTrackSidecarState,
   runYoutubeDownloadAttempts,
+  searchPlaybackCandidates,
 } from './downloader.js';
 
 // downloadAudio/fetchMetadata themselves call the real yt-dlp/YouTube —
@@ -218,6 +222,631 @@ describe('runYoutubeDownloadAttempts', () => {
     ).rejects.toThrow('Private video');
 
     expect(runner).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('searchPlaybackCandidates', () => {
+  it('builds query variants from title, artist order, and collaborator names', () => {
+    expect(
+      buildPlaybackSearchQueries(
+        {
+          title: '\u964d\u843d\u5098',
+          artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
+        },
+        {
+          title:
+            'Sabrina \u80e1\u6062\u821e - \u964d\u843d\u5098 (\u5408\u4f5c\u6f14\u51fa\uff1a\u738b\u8b19Goatak)',
+        },
+      ),
+    ).toEqual([
+      'Sabrina \u80e1\u6062\u821e \u964d\u843d\u5098',
+      '\u964d\u843d\u5098 Sabrina \u80e1\u6062\u821e',
+      '\u738b\u8b19Goatak \u964d\u843d\u5098',
+      '\u964d\u843d\u5098',
+    ]);
+  });
+
+  it('builds query variants from TrackIdentity artists', () => {
+    expect(
+      buildPlaybackSearchQueries(
+        {
+          title: 'Parachute',
+          artists: ['Sabrina Hu', 'Goatak'],
+          duration: 211,
+          sourcePlatform: 'spotify',
+        },
+        {},
+      ),
+    ).toEqual([
+      'Sabrina Hu Parachute',
+      'Parachute Sabrina Hu',
+      'Goatak Parachute',
+      'Parachute',
+    ]);
+  });
+
+  it('does not dash-split track-provider titles into fake artist queries', () => {
+    expect(
+      buildPlaybackSearchQueries(
+        {
+          title: 'Seven - Clean Ver. (合作演出：Latto)',
+          artists: ['정국 (Jung Kook)', 'Latto'],
+          artist: '정국 (Jung Kook), Latto',
+          duration: 184,
+          sourcePlatform: 'yt-music',
+          sourceType: 'track',
+        },
+        {
+          title: 'Seven - Clean Ver. (合作演出：Latto)',
+          artist: '정국 (Jung Kook) 和 Latto',
+        },
+      ),
+    ).toEqual([
+      '정국 Seven - Clean Ver.',
+      'Seven - Clean Ver. 정국',
+      'Latto Seven - Clean Ver.',
+      'Seven - Clean Ver.',
+    ]);
+  });
+
+  it('builds second-pass queries from close-duration cross-language candidates', () => {
+    expect(
+      buildPlaybackCrossSearchQueries(
+        [
+          {
+            title: 'Parachute (feat. \u738b\u8b19Goatak)',
+            artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
+            duration: 210,
+          },
+          {
+            title: 'Paper Plane',
+            artist: 'Sabrina \u80e1\u6062\u821e',
+            duration: 310,
+          },
+        ],
+        { title: '\u964d\u843d\u5098', duration: 210 },
+      ),
+    ).toEqual([
+      'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak Parachute',
+      'Parachute Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
+    ]);
+  });
+
+  it('starts all metadata searches in parallel', async () => {
+    const pending = [];
+    const runner = vi.fn(() => {
+      let resolve;
+      const promise = new Promise((done) => {
+        resolve = done;
+      });
+      pending.push(resolve);
+      return promise;
+    });
+
+    const searchPromise = searchPlaybackCandidates(
+      {
+        title: 'Canonical Title',
+        artist: 'Actual Artist',
+      },
+      { title: 'Actual Artist - Canonical Title (Official Music Video)' },
+      { runner },
+    );
+
+    expect(runner).toHaveBeenCalledTimes(8);
+    pending.forEach((resolve) => resolve({ entries: [] }));
+    await expect(searchPromise).resolves.toEqual([]);
+  });
+
+  it('searches YouTube Music and YouTube without downloading media', async () => {
+    const runner = vi
+      .fn()
+      .mockResolvedValueOnce({
+        entries: [
+          {
+            id: 'music000001',
+            title: 'Canonical Title',
+            artist: 'Actual Artist',
+            duration: 211,
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        entries: [
+          {
+            id: 'audio000001',
+            title: 'Canonical Title (Official Audio)',
+            uploader: 'Actual Artist',
+            duration: 211,
+          },
+        ],
+      })
+      .mockResolvedValue({ entries: [] });
+
+    await expect(
+      searchPlaybackCandidates(
+        {
+          title: 'Canonical Title',
+          artist: 'Actual Artist',
+          duration: 211,
+        },
+        { title: 'Actual Artist - Canonical Title (Official Music Video)' },
+        { runner },
+      ),
+    ).resolves.toEqual([
+      {
+        id: 'music000001',
+        playbackVideoId: 'music000001',
+        title: 'Canonical Title',
+        artist: 'Actual Artist',
+        duration: 211,
+        playbackKind: 'yt-music-song',
+        searchProvider: 'yt-music',
+        availableProviders: ['yt-music'],
+        reason: 'yt-music-search',
+        thumbnailUrl: 'https://i.ytimg.com/vi/music000001/hqdefault.jpg',
+      },
+      {
+        id: 'audio000001',
+        playbackVideoId: 'audio000001',
+        title: 'Canonical Title (Official Audio)',
+        artist: 'Actual Artist',
+        duration: 211,
+        playbackKind: undefined,
+        searchProvider: 'youtube',
+        availableProviders: ['youtube'],
+        reason: 'youtube-search',
+        thumbnailUrl: 'https://i.ytimg.com/vi/audio000001/hqdefault.jpg',
+      },
+    ]);
+
+    expect(runner).toHaveBeenCalledWith(
+      'https://music.youtube.com/search?q=Actual+Artist+Canonical+Title#songs',
+      expect.objectContaining({
+        dumpSingleJson: true,
+        flatPlaylist: true,
+        playlistEnd: 5,
+        skipDownload: true,
+      }),
+    );
+    expect(runner).toHaveBeenCalledWith(
+      'ytsearch5:Actual Artist Canonical Title',
+      expect.objectContaining({
+        dumpSingleJson: true,
+        flatPlaylist: true,
+        playlistEnd: 5,
+        skipDownload: true,
+      }),
+    );
+  });
+
+  it('merges same-id YouTube Music and YouTube search results as a YT Music-capable audio candidate', async () => {
+    const runner = vi.fn(async (input) => {
+      if (input.startsWith('https://music.youtube.com/search')) {
+        return {
+          entries: [
+            {
+              id: 'nR-LSk3LfEA',
+              title: '紙飛機',
+              duration: 250,
+              resultType: 'song',
+            },
+          ],
+        };
+      }
+      if (input.startsWith('ytsearch5:')) {
+        return {
+          entries: [
+            {
+              id: 'nR-LSk3LfEA',
+              title: '紙飛機',
+              uploader: 'Goatak · Sabrina - Topic',
+              duration: 250,
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    await expect(
+      searchPlaybackCandidates(
+        {
+          title: '降落傘',
+          artists: ['Sabrina 胡恂舞', '王謙Goatak'],
+          duration: 250,
+        },
+        {
+          title: 'Sabrina 胡恂舞, 王謙Goatak - 降落傘',
+        },
+        { runner, sourcePlatform: 'youtube' },
+      ),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        playbackVideoId: 'nR-LSk3LfEA',
+        searchProvider: 'yt-music',
+        availableProviders: ['yt-music', 'youtube'],
+        playbackKind: 'yt-music-song',
+      }),
+    ]);
+  });
+
+  it('keeps YT Music search limited to song results and leaves videos to YouTube search', async () => {
+    const runner = vi.fn(async (input) => {
+      if (input.startsWith('https://music.youtube.com/search')) {
+        return {
+          entries: [
+            {
+              id: 'music000001',
+              title: 'Canonical Title',
+              artist: 'Actual Artist',
+              duration: 211,
+              resultType: 'song',
+            },
+            {
+              id: 'musicvideo1',
+              title: 'Canonical Title (Official Music Video)',
+              artist: 'Actual Artist',
+              duration: 240,
+              resultType: 'video',
+            },
+            {
+              id: 'musicvideo2',
+              title: 'Canonical Title Official MV',
+              artist: 'Actual Artist',
+              duration: 240,
+            },
+          ],
+        };
+      }
+      if (input.startsWith('ytsearch5:')) {
+        return {
+          entries: [
+            {
+              id: 'ytvideo0001',
+              title: 'Canonical Title (Official Music Video)',
+              uploader: 'Actual Artist',
+              duration: 240,
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    const candidates = await searchPlaybackCandidates(
+      {
+        title: 'Canonical Title',
+        artist: 'Actual Artist',
+        duration: 211,
+      },
+      { title: 'Actual Artist - Canonical Title (Official Music Video)' },
+      { runner },
+    );
+
+    expect(candidates).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          playbackVideoId: 'music000001',
+          playbackKind: 'yt-music-song',
+          searchProvider: 'yt-music',
+        }),
+        expect.objectContaining({
+          playbackVideoId: 'ytvideo0001',
+          playbackKind: undefined,
+          searchProvider: 'youtube',
+        }),
+      ]),
+    );
+    expect(
+      candidates.map((candidate) => candidate.playbackVideoId),
+    ).not.toEqual(expect.arrayContaining(['musicvideo1', 'musicvideo2']));
+  });
+
+  it('uses only YT Music song search for YT Music input sources', async () => {
+    const runner = vi.fn().mockResolvedValue({ entries: [] });
+
+    await searchPlaybackCandidates(
+      {
+        title: 'Canonical Title',
+        artist: 'Actual Artist',
+      },
+      { title: 'Actual Artist - Canonical Title' },
+      { runner, sourcePlatform: 'yt-music' },
+    );
+
+    expect(runner).toHaveBeenCalledTimes(4);
+    expect(runner.mock.calls.every(([input]) => input.includes('#songs'))).toBe(
+      true,
+    );
+    expect(
+      runner.mock.calls.some(([input]) => String(input).startsWith('ytsearch')),
+    ).toBe(false);
+  });
+
+  it('does not keep long video-like YT Music results as song candidates', async () => {
+    const runner = vi.fn(async (input) => {
+      if (input.startsWith('https://music.youtube.com/search')) {
+        return {
+          entries: [
+            {
+              id: 'music000001',
+              title: 'Canonical Title',
+              artist: 'Actual Artist',
+              duration: 211,
+            },
+            {
+              id: 'concert001',
+              title:
+                '2026.05.09 Sabrina胡恂舞 - 實踐大學 校園演唱會 / 全程【沒空想你】(4K)',
+              uploader: 'Some Channel',
+              duration: 1132,
+            },
+            {
+              id: 'medley00001',
+              title: '20260404胡恂舞Sabrina-台灣祭 全程 / BAD DAY / 降落傘',
+              uploader: 'ddbbaii',
+              duration: 2292,
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    const candidates = await searchPlaybackCandidates(
+      {
+        title: 'Canonical Title',
+        artist: 'Actual Artist',
+        duration: 211,
+      },
+      { title: 'Actual Artist - Canonical Title' },
+      { runner, sourcePlatform: 'yt-music' },
+    );
+
+    expect(candidates).toEqual([
+      expect.objectContaining({
+        playbackVideoId: 'music000001',
+        playbackKind: 'yt-music-song',
+      }),
+    ]);
+  });
+
+  it('rejects YT Music title-only matches when the candidate artist is different', async () => {
+    const runner = vi.fn(async (input) => {
+      if (input.startsWith('https://music.youtube.com/search')) {
+        return {
+          entries: [
+            {
+              id: 'music000001',
+              title: 'Parachute',
+              artist: 'Sabrina Hu',
+              duration: 211,
+              resultType: 'song',
+            },
+            {
+              id: 'wrongart001',
+              title: 'Sabrina Hu - Parachute campus singalong',
+              artist: 'Other Channel',
+              duration: 211,
+              resultType: 'song',
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    const candidates = await searchPlaybackCandidates(
+      {
+        title: 'Parachute',
+        artist: 'Sabrina Hu',
+        duration: 211,
+      },
+      { title: 'Sabrina Hu - Parachute' },
+      { runner, sourcePlatform: 'yt-music' },
+    );
+
+    expect(candidates).toEqual([
+      expect.objectContaining({
+        playbackVideoId: 'music000001',
+        artist: 'Sabrina Hu',
+      }),
+    ]);
+  });
+
+  it('keeps YT Music collaborations when the candidate artist contains the performer', async () => {
+    const runner = vi.fn(async (input) => {
+      if (input.startsWith('https://music.youtube.com/search')) {
+        return {
+          entries: [
+            {
+              id: 'music000001',
+              title: 'Parachute (feat. Goatak)',
+              artist: 'Sabrina Hu, Goatak',
+              duration: 211,
+              resultType: 'song',
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    await expect(
+      searchPlaybackCandidates(
+        {
+          title: 'Parachute',
+          artist: 'Sabrina Hu, Goatak',
+          duration: 211,
+        },
+        { title: 'Sabrina Hu - Parachute (feat. Goatak)' },
+        { runner, sourcePlatform: 'yt-music' },
+      ),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        playbackVideoId: 'music000001',
+        artist: 'Sabrina Hu, Goatak',
+      }),
+    ]);
+  });
+
+  it('does not let channel-like source artists satisfy YT Music artist matching', async () => {
+    const runner = vi.fn(async (input) => {
+      if (input.startsWith('https://music.youtube.com/search')) {
+        return {
+          entries: [
+            {
+              id: 'music000001',
+              title: 'Parachute',
+              artist: 'Sabrina Hu',
+              duration: 211,
+              resultType: 'song',
+            },
+            {
+              id: 'label000001',
+              title: 'Parachute',
+              artist: 'Example Music',
+              duration: 211,
+              resultType: 'song',
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    const candidates = await searchPlaybackCandidates(
+      {
+        title: 'Parachute',
+        artist: 'Sabrina Hu',
+        duration: 211,
+      },
+      {
+        title: 'Sabrina Hu - Parachute (Official Music Video)',
+        artist: 'Example Music',
+      },
+      { runner, sourcePlatform: 'yt-music' },
+    );
+
+    expect(candidates.map((candidate) => candidate.playbackVideoId)).toEqual([
+      'music000001',
+    ]);
+  });
+
+  it('uses close-duration music results to bridge a second YouTube search', async () => {
+    const runner = vi.fn(async (input) => {
+      if (
+        input.startsWith('https://music.youtube.com/search') &&
+        input.includes('%E9%99%8D%E8%90%BD%E5%82%98')
+      ) {
+        return {
+          entries: [
+            {
+              id: 'music000001',
+              title: 'Parachute (feat. \u738b\u8b19Goatak)',
+              artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
+              duration: 210,
+            },
+          ],
+        };
+      }
+      if (
+        input ===
+        'ytsearch5:Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak Parachute'
+      ) {
+        return {
+          entries: [
+            {
+              id: 'ytvideo0001',
+              title: 'Sabrina \u80e1\u6062\u821e - \u964d\u843d\u5098',
+              uploader: 'Sabrina \u80e1\u6062\u821e',
+              duration: 210,
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
+
+    await expect(
+      searchPlaybackCandidates(
+        {
+          title: '\u964d\u843d\u5098',
+          artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
+          duration: 210,
+        },
+        { title: '\u964d\u843d\u5098' },
+        { runner },
+      ),
+    ).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          playbackVideoId: 'music000001',
+          searchProvider: 'yt-music',
+          title: 'Parachute (feat. \u738b\u8b19Goatak)',
+        }),
+        expect.objectContaining({
+          playbackVideoId: 'ytvideo0001',
+          searchProvider: 'youtube',
+        }),
+      ]),
+    );
+  });
+
+  it('deduplicates repeated search results and ignores invalid ids', async () => {
+    const runner = vi.fn().mockResolvedValue({
+      entries: [
+        { id: 'same0000001', title: 'Song' },
+        { id: 'same0000001', title: 'Song duplicate' },
+        { id: 'too-short', title: 'Invalid' },
+      ],
+    });
+
+    await expect(
+      searchPlaybackCandidates({ title: 'Song' }, {}, { runner }),
+    ).resolves.toHaveLength(1);
+  });
+});
+
+describe('listPlaylist', () => {
+  it('keeps playlist entries fast while attaching track identity metadata', async () => {
+    const runner = vi.fn().mockResolvedValue({
+      title: 'Karaoke Favorites',
+      entries: [
+        {
+          id: 'mv123456789',
+          title: 'Sabrina Hu - Parachute (Official Music Video)',
+          uploader: 'Example Music',
+          duration: 240,
+        },
+      ],
+    });
+
+    await expect(listPlaylist('playlist123', { runner })).resolves.toEqual({
+      title: 'Karaoke Favorites',
+      entries: [
+        expect.objectContaining({
+          id: 'mv123456789',
+          title: 'Sabrina Hu - Parachute (Official Music Video)',
+          artist: 'Example Music',
+          duration: 240,
+          trackIdentity: expect.objectContaining({
+            title: 'Parachute',
+            artists: ['Sabrina Hu'],
+            sourcePlatform: 'youtube',
+            sourceType: 'playlist-entry',
+            sourceId: 'mv123456789',
+          }),
+        }),
+      ],
+    });
+    expect(runner).toHaveBeenCalledWith(
+      'https://www.youtube.com/playlist?list=playlist123',
+      expect.objectContaining({
+        flatPlaylist: true,
+        dumpSingleJson: true,
+      }),
+    );
   });
 });
 
@@ -500,7 +1129,7 @@ describe('finalizeDownloadedTrackFiles', () => {
     expect(
       JSON.parse(fs.readFileSync(path.join(lyricsDir, 'lyrics.json'))),
     ).toMatchObject({
-      version: 6,
+      version: 8,
       sources: [],
     });
   });

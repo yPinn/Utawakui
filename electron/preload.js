@@ -10,6 +10,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   // not an error, the renderer falls back to the single-video
   // downloadAudio flow.
   listPlaylist: (input) => ipcRenderer.invoke('yt:list-playlist', input),
+  resolveImportSource: (input) =>
+    ipcRenderer.invoke('yt:resolve-import-source', input),
   fetchVideoMetadata: (input) => ipcRenderer.invoke('yt:fetch-metadata', input),
   getConfig: () => ipcRenderer.invoke('config:get'),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
@@ -17,6 +19,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   listTracks: () => ipcRenderer.invoke('library:list'),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
+  probeMusixmatchLyrics: (trackId) =>
+    ipcRenderer.invoke('lyrics:probe-musixmatch', trackId),
   // Deletes the original audio file and its separation output together —
   // resolves to false if trackId no longer matches a real file. Also
   // cascades into any playlist that referenced it (see main.js's handler).
@@ -36,7 +40,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('playlists:set-tracks', id, trackIds),
   // Slow (tens of seconds). Rejects if another separation is already
   // running, not just when this track fails.
-  separateTrack: (trackId) => ipcRenderer.invoke('separation:run', trackId),
+  separateTrack: (trackId, presetId) =>
+    ipcRenderer.invoke('separation:run', trackId, presetId),
+  // Instant — switches which already-produced result plays, no DSP
+  // involved. Rejects if presetId has no recorded result yet.
+  selectSeparationResult: (trackId, presetId) =>
+    ipcRenderer.invoke('separation:select', trackId, presetId),
   // Zero or more fire per separateTrack() call, before its promise
   // settles — see main.js's separation:run handler for the stage sequence.
   onSeparationProgress: (callback) => {

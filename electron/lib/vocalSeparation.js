@@ -1,12 +1,11 @@
 'use strict';
 
 // DSP pipeline: ffmpeg decode -> chunked STFT -> onnxruntime-node inference
-// (UVR_MDXNET_KARA_2) -> overlap-add -> ISTFT -> a single 4-channel
-// stems.wav (instrumental L/R + vocals L/R). Pure Node, no Electron API
-// calls. Ported from nomadkaraoke/python-audio-separator's MDXSeparator
-// (architectures/mdx_separator.py + uvr_lib_v5/stft.py), with enable_denoise
-// on (see ENABLE_DENOISE below) — without it the instrumental stem had
-// noticeable vocal residue.
+// -> overlap-add -> ISTFT -> a single 4-channel <presetId>.wav (instrumental
+// L/R + vocals L/R) per preset. Pure Node, no Electron API calls (same as
+// library.js, which this requires only for its plain-fs manifest helpers).
+// Ported from nomadkaraoke/python-audio-separator's MDXSeparator
+// (architectures/mdx_separator.py + uvr_lib_v5/stft.py).
 //
 // CPU-bound and slow (tens of seconds per track) — callers MUST run this
 // off the Electron main thread (see vocalSeparationWorker.js) or the
@@ -18,26 +17,42 @@ const { spawn } = require('child_process');
 const ffmpegPath = require('ffmpeg-static');
 const ort = require('onnxruntime-node');
 const KissFFT = require('kissfft-js');
+const { recordSeparationResult } = require('./library');
 
-// ---- UVR_MDXNET_KARA_2 model config ----
-// Not guessed — this is the model's actual entry from
-// TRvlvr/application_data's mdx_model_data/model_data_new.json. Constants
-// for this one model, not a generic multi-model framework.
-const N_FFT = 5120;
+// ---- Model registry ----
+// Not guessed — each entry's nFft/dimF/dimT/compensate/primaryStem comes
+// from UVR's own model_data.json (see CLAUDE.md for the verification
+// method). kara2 is a karaoke model (removes only the lead vocal, leaving
+// harmonies in the instrumental); inst-hq3 is general-purpose with no such
+// preservation. Both are primaryStem: 'instrumental' — see separateTrack's
+// guard for why that matters.
 const HOP_LENGTH = 1024; // hard-coded in UVR itself, not a per-model value
-const DIM_F = 2048;
-const DIM_T = 256; // 2 ** mdx_dim_t_set(8)
-const SEGMENT_SIZE = 256; // == DIM_T -> upstream's pure-onnxruntime path applies
-const OVERLAP = 0.25; // upstream CLI default for MDX arch
-const COMPENSATE = 1.065;
+const SEGMENT_SIZE = 256; // == every current model's dimT -> upstream's pure-onnxruntime path applies
 const SAMPLE_RATE = 44100; // these models expect 44.1kHz; source is often 48kHz
 const CHANNELS = 2;
-const N_BINS = N_FFT / 2 + 1; // 2561
 
-const MODEL_FILENAME = 'UVR_MDXNET_KARA_2.onnx';
-const MODEL_DOWNLOAD_URL =
-  'https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR_MDXNET_KARA_2.onnx';
-const MODEL_EXPECTED_SIZE = 52786726;
+const MODELS = {
+  kara2: {
+    filename: 'UVR_MDXNET_KARA_2.onnx',
+    url: 'https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR_MDXNET_KARA_2.onnx',
+    expectedSize: 52786726,
+    nFft: 5120,
+    dimF: 2048,
+    dimT: 256, // 2 ** mdx_dim_t_set(8)
+    compensate: 1.065,
+    primaryStem: 'instrumental',
+  },
+  'inst-hq3': {
+    filename: 'UVR-MDX-NET-Inst_HQ_3.onnx',
+    url: 'https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_3.onnx',
+    expectedSize: 66759214,
+    nFft: 6144,
+    dimF: 3072,
+    dimT: 256,
+    compensate: 1.022,
+    primaryStem: 'instrumental',
+  },
+};
 
 // ---------------------------------------------------------------------------
 // Windows — two different Hann windows at two different layers; mixing them
@@ -77,24 +92,25 @@ function reflectPad(samples, pad) {
 }
 
 // STFT for one channel (mirrors uvr_lib_v5/stft.py, center=True torch.stft).
-// Always full N_BINS width — callers truncate to/zero-pad from DIM_F.
-function stftChannel(samples, window) {
-  const padded = reflectPad(samples, N_FFT / 2);
-  const numFrames = 1 + Math.floor((padded.length - N_FFT) / HOP_LENGTH);
+// Always full nBins width — callers truncate to/zero-pad from dimF.
+function stftChannel(samples, window, nFft) {
+  const nBins = nFft / 2 + 1;
+  const padded = reflectPad(samples, nFft / 2);
+  const numFrames = 1 + Math.floor((padded.length - nFft) / HOP_LENGTH);
   const real = new Array(numFrames);
   const imag = new Array(numFrames);
-  const fftr = new KissFFT.FFTR(N_FFT);
-  const frameBuf = new Float32Array(N_FFT);
+  const fftr = new KissFFT.FFTR(nFft);
+  const frameBuf = new Float32Array(nFft);
   try {
     for (let f = 0; f < numFrames; f++) {
       const start = f * HOP_LENGTH;
-      for (let i = 0; i < N_FFT; i++) {
+      for (let i = 0; i < nFft; i++) {
         frameBuf[i] = padded[start + i] * window[i];
       }
-      const spectrum = fftr.forward(frameBuf); // interleaved re/im, length N_FFT+2
-      const re = new Float32Array(N_BINS);
-      const im = new Float32Array(N_BINS);
-      for (let b = 0; b < N_BINS; b++) {
+      const spectrum = fftr.forward(frameBuf); // interleaved re/im, length nFft+2
+      const re = new Float32Array(nBins);
+      const im = new Float32Array(nBins);
+      for (let b = 0; b < nBins; b++) {
         re[b] = spectrum[2 * b];
         im[b] = spectrum[2 * b + 1];
       }
@@ -109,22 +125,23 @@ function stftChannel(samples, window) {
 
 // Window-normalized overlap-add reconstruction (the NOLA algorithm
 // torch.istft implements internally) + trims the reflect-padding back off.
-function istftChannel(real, imag, numFrames, window, outputLength) {
-  const paddedLength = outputLength + N_FFT;
+function istftChannel(real, imag, numFrames, window, outputLength, nFft) {
+  const nBins = nFft / 2 + 1;
+  const paddedLength = outputLength + nFft;
   const output = new Float64Array(paddedLength);
   const envelope = new Float64Array(paddedLength);
-  const fftr = new KissFFT.FFTR(N_FFT);
-  const spectrum = new Float32Array(N_FFT + 2);
+  const fftr = new KissFFT.FFTR(nFft);
+  const spectrum = new Float32Array(nFft + 2);
   try {
     for (let f = 0; f < numFrames; f++) {
-      for (let b = 0; b < N_BINS; b++) {
+      for (let b = 0; b < nBins; b++) {
         spectrum[2 * b] = real[f][b];
         spectrum[2 * b + 1] = imag[f][b];
       }
-      const frame = fftr.inverse(spectrum); // unscaled, length N_FFT
+      const frame = fftr.inverse(spectrum); // unscaled, length nFft
       const start = f * HOP_LENGTH;
-      for (let i = 0; i < N_FFT; i++) {
-        const sample = (frame[i] / N_FFT) * window[i];
+      for (let i = 0; i < nFft; i++) {
+        const sample = (frame[i] / nFft) * window[i];
         output[start + i] += sample;
         envelope[start + i] += window[i] * window[i];
       }
@@ -133,7 +150,7 @@ function istftChannel(real, imag, numFrames, window, outputLength) {
     fftr.dispose();
   }
   const trimmed = new Float32Array(outputLength);
-  const trim = N_FFT / 2;
+  const trim = nFft / 2;
   const EPS = 1e-8;
   for (let i = 0; i < outputLength; i++) {
     const idx = trim + i;
@@ -185,24 +202,41 @@ function decodeAudio(inputPath) {
   });
 }
 
-// Denoise (matches python-audio-separator's enable_denoise): run the model
-// twice per chunk — spectrum as-is, and its negation — combine as
-// (pos - neg) / 2. Suppresses residual artifacts (e.g. vocal bleed in the
-// instrumental). Doubles inference time; accepted for a non-real-time job.
-const ENABLE_DENOISE = true;
+// Preset table — each preset names a model plus DSP params for it.
+//   - overlap: higher = smoother chunk-boundary reconstruction, more compute
+//   - enableDenoise: runs the model twice (input + its negation, averaged)
+//     to suppress residual artifacts; roughly doubles separating time
+// standard mirrors the verified upstream default (both
+// nomadkaraoke/python-audio-separator and the UVR GUI itself ship
+// enableDenoise off — see CLAUDE.md). high-quality is a deliberately
+// tuned variant of the same model, kept for comparison/fallback.
+// compensate is not a preset knob — it only affects computeSecondary()
+// (the vocals/guide stem), so it lives on the model registry entry as a
+// per-model calibration value instead. SEGMENT_SIZE is structurally
+// pinned (see dimT/runModel), not adjustable here.
+const SEPARATION_PRESETS = {
+  standard: { modelId: 'kara2', overlap: 0.25, enableDenoise: false },
+  'high-quality': { modelId: 'kara2', overlap: 0.5, enableDenoise: true },
+  'inst-hq3': { modelId: 'inst-hq3', overlap: 0.25, enableDenoise: true },
+};
+const DEFAULT_PRESET_ID = 'standard';
 
-async function runInference(session, inputData) {
+function resolvePreset(presetId) {
+  return SEPARATION_PRESETS[presetId] || SEPARATION_PRESETS[DEFAULT_PRESET_ID];
+}
+
+async function runInference(session, inputData, model) {
   const inputTensor = new ort.Tensor('float32', inputData, [
     1,
     4,
-    DIM_F,
-    DIM_T,
+    model.dimF,
+    model.dimT,
   ]);
   const feeds = { [session.inputNames[0]]: inputTensor };
   const results = await session.run(feeds);
   const outputTensor = results[session.outputNames[0]];
 
-  const expectedDims = [1, 4, DIM_F, DIM_T];
+  const expectedDims = [1, 4, model.dimF, model.dimT];
   if (
     outputTensor.dims.length !== 4 ||
     !outputTensor.dims.every((d, i) => d === expectedDims[i])
@@ -217,24 +251,26 @@ async function runInference(session, inputData) {
 
 // Model inference for one chunk (mirrors MDXSeparator.run_model). Tensor
 // plane order: [L_re, L_im, R_re, R_im].
-async function runModel(session, window, chunkL, chunkR) {
-  const stftL = stftChannel(chunkL, window);
-  const stftR = stftChannel(chunkR, window);
-  const numFrames = stftL.numFrames; // == DIM_T by construction of chunkSize
+async function runModel(session, window, chunkL, chunkR, enableDenoise, model) {
+  const { nFft, dimF, dimT } = model;
+  const nBins = nFft / 2 + 1;
+  const stftL = stftChannel(chunkL, window, nFft);
+  const stftR = stftChannel(chunkR, window, nFft);
+  const numFrames = stftL.numFrames; // == dimT by construction of chunkSize
 
-  if (numFrames !== DIM_T) {
+  if (numFrames !== dimT) {
     throw new Error(
-      `Expected ${DIM_T} STFT frames per chunk, got ${numFrames} — chunk_size math is wrong.`,
+      `Expected ${dimT} STFT frames per chunk, got ${numFrames} — chunk_size math is wrong.`,
     );
   }
 
-  const planeSize = DIM_F * DIM_T;
+  const planeSize = dimF * dimT;
   const inputData = new Float32Array(4 * planeSize);
   const fillPlane = (planeIndex, arr) => {
     const offset = planeIndex * planeSize;
     for (let t = 0; t < numFrames; t++) {
-      for (let b = 0; b < DIM_F; b++) {
-        inputData[offset + b * DIM_T + t] = arr[t][b];
+      for (let b = 0; b < dimF; b++) {
+        inputData[offset + b * dimT + t] = arr[t][b];
       }
     }
   };
@@ -247,18 +283,18 @@ async function runModel(session, window, chunkL, chunkR) {
   for (let plane = 0; plane < 4; plane++) {
     for (let b = 0; b < 3; b++) {
       for (let t = 0; t < numFrames; t++) {
-        inputData[plane * planeSize + b * DIM_T + t] = 0;
+        inputData[plane * planeSize + b * dimT + t] = 0;
       }
     }
   }
 
-  const posOutput = await runInference(session, inputData);
+  const posOutput = await runInference(session, inputData, model);
 
   let spec;
-  if (ENABLE_DENOISE) {
+  if (enableDenoise) {
     const negInput = new Float32Array(inputData.length);
     for (let i = 0; i < inputData.length; i++) negInput[i] = -inputData[i];
-    const negOutput = await runInference(session, negInput);
+    const negOutput = await runInference(session, negInput, model);
     spec = new Float32Array(posOutput.length);
     for (let i = 0; i < spec.length; i++) {
       spec[i] = (posOutput[i] - negOutput[i]) * 0.5;
@@ -271,9 +307,9 @@ async function runModel(session, window, chunkL, chunkR) {
     const offset = planeIndex * planeSize;
     const arr = [];
     for (let t = 0; t < numFrames; t++) {
-      const row = new Float32Array(N_BINS); // bins >= DIM_F stay 0
-      for (let b = 0; b < DIM_F; b++) {
-        row[b] = spec[offset + b * DIM_T + t];
+      const row = new Float32Array(nBins); // bins >= dimF stay 0
+      for (let b = 0; b < dimF; b++) {
+        row[b] = spec[offset + b * dimT + t];
       }
       arr.push(row);
     }
@@ -285,17 +321,32 @@ async function runModel(session, window, chunkL, chunkR) {
   const rReal = unpack(2);
   const rImag = unpack(3);
 
-  const outL = istftChannel(lReal, lImag, numFrames, window, chunkL.length);
-  const outR = istftChannel(rReal, rImag, numFrames, window, chunkR.length);
+  const outL = istftChannel(
+    lReal,
+    lImag,
+    numFrames,
+    window,
+    chunkL.length,
+    nFft,
+  );
+  const outR = istftChannel(
+    rReal,
+    rImag,
+    numFrames,
+    window,
+    chunkR.length,
+    nFft,
+  );
   return [outL, outR];
 }
 
 // Full-track demix: padded overlapping chunks, model inference per chunk,
 // windowed overlap-add reassembly. Mirrors MDXSeparator.demix()'s
 // non-is_match_mix, non-checkpoint path.
-async function demixSong(session, mixL, mixR, onProgress) {
-  const window = hannWindowPeriodic(N_FFT);
-  const trim = N_FFT / 2;
+async function demixSong(session, mixL, mixR, onProgress, params) {
+  const { overlap, enableDenoise, model } = params;
+  const window = hannWindowPeriodic(model.nFft);
+  const trim = model.nFft / 2;
   const chunkSize = HOP_LENGTH * (SEGMENT_SIZE - 1); // 261120
   const genSize = chunkSize - 2 * trim;
   const n = mixL.length;
@@ -307,7 +358,7 @@ async function demixSong(session, mixL, mixR, onProgress) {
   padL.set(mixL, trim);
   padR.set(mixR, trim);
 
-  const step = Math.floor((1 - OVERLAP) * chunkSize);
+  const step = Math.floor((1 - overlap) * chunkSize);
   const resultL = new Float64Array(total);
   const resultR = new Float64Array(total);
   // L and R accumulate the same window weights by construction (both
@@ -338,9 +389,16 @@ async function demixSong(session, mixL, mixR, onProgress) {
     }
 
     // Sequential by design — inference chunks aren't fanned out in parallel.
-    const [outL, outR] = await runModel(session, window, chunkL, chunkR);
+    const [outL, outR] = await runModel(
+      session,
+      window,
+      chunkL,
+      chunkR,
+      enableDenoise,
+      model,
+    );
 
-    const chunkWin = OVERLAP !== 0 ? hannWindowSymmetric(chunkLenActual) : null;
+    const chunkWin = overlap !== 0 ? hannWindowSymmetric(chunkLenActual) : null;
     for (let k = 0; k < chunkLenActual; k++) {
       const w = chunkWin ? chunkWin[k] : 1;
       resultL[start + k] += outL[k] * w;
@@ -378,21 +436,22 @@ function normalizeWave(samples, maxPeak, currentPeak) {
   return out;
 }
 
-// Secondary stem (Vocals) = -(primary * compensate) + normalized mix.
-// Subtracts against the NORMALIZED mix, not raw input — that's upstream's
+// Secondary stem (Vocals, for every current instrumental-primary model) =
+// -(primary * compensate) + normalized mix. Subtracts against the
+// NORMALIZED mix, not raw input — that's upstream's
 // (invert_using_spec=False) behavior, not a bug in the port.
-function computeSecondary(primaryPeakScale, normalizedMix) {
+function computeSecondary(primaryPeakScale, normalizedMix, compensate) {
   const out = new Float32Array(primaryPeakScale.length);
   for (let i = 0; i < primaryPeakScale.length; i++) {
-    out[i] = -primaryPeakScale[i] * COMPENSATE + normalizedMix[i];
+    out[i] = -primaryPeakScale[i] * compensate + normalizedMix[i];
   }
   return out;
 }
 
 // Pure encode — no filesystem access, kept separate from writeWavAtomic so
 // it's directly unit-testable. `channels` is interleaved in the order
-// given — for stems.wav that's [instL, instR, vocL, vocR] (see
-// library.js's SEPARATED_VARIANTS comment for the player-side half of this
+// given — for a separation result that's [instL, instR, vocL, vocR] (see
+// library.js's SEPARATIONS_DIRNAME comment for the player-side half of this
 // fixed order).
 function encodeWav(channels, sampleRate) {
   const numChannels = channels.length;
@@ -434,20 +493,60 @@ function writeWavAtomic(filePath, channels, sampleRate) {
   const buffer = encodeWav(channels, sampleRate);
   const tmpPath = `${filePath}.tmp`;
   fs.writeFileSync(tmpPath, buffer);
-  fs.renameSync(tmpPath, filePath);
+  try {
+    fs.renameSync(tmpPath, filePath);
+  } catch (err) {
+    // Per-preset filenames avoid EPERM when switching presets, but not
+    // when regenerating the SAME preset that's open for playback.
+    if (err.code === 'EPERM') {
+      throw new Error('此結果正在播放中,請先停止播放再重新產生。', {
+        cause: err,
+      });
+    }
+    throw err;
+  }
 }
 
-// Writes a single 4-channel stems.wav (0/1 instrumental L/R, 2/3 vocals
-// L/R — see library.js's SEPARATED_VARIANTS comment) into outputDir. One
-// file, not two, so playback stays sample-accurate: two independently-
+// Writes a single 4-channel <presetId>.wav (0/1 instrumental L/R, 2/3
+// vocals L/R — see library.js's SEPARATIONS_DIRNAME comment) into
+// outputDir, one file per preset so switching presets never has to
+// overwrite whichever file is currently open for playback. One file per
+// result, not two, so playback stays sample-accurate: two independently-
 // decoded files drifting out of sync produces audible comb filtering.
 //
 // onProgress stages fire in pipeline order: loading-model (the ~50MB ONNX
 // session, built fresh every call — not ensureModel's one-time download,
 // which the caller reports separately) -> decoding -> separating
 // (per-chunk) -> writing.
-async function separateTrack(inputPath, outputDir, modelPath, onProgress) {
+async function separateTrack(
+  inputPath,
+  outputDir,
+  modelPath,
+  onProgress,
+  presetId = DEFAULT_PRESET_ID,
+) {
   fs.mkdirSync(outputDir, { recursive: true });
+  const preset = resolvePreset(presetId);
+  const model = MODELS[preset.modelId];
+
+  // Every current registry entry is instrumental-primary, which is the
+  // assumption the channel write below (0/1 instrumental, 2/3 vocals)
+  // hard-codes. A vocals-primary model would silently swap the two
+  // channels without this — fail loudly instead of shipping a corrupted
+  // stems.wav that usePlayer.js's guide-vocal graph can't detect.
+  if (model.primaryStem !== 'instrumental') {
+    throw new Error(
+      `Model "${preset.modelId}" has primaryStem "${model.primaryStem}" — ` +
+        'separateTrack only supports instrumental-primary models until the ' +
+        'channel-order mapping is extended.',
+    );
+  }
+
+  const params = {
+    overlap: preset.overlap,
+    enableDenoise: preset.enableDenoise,
+    model,
+  };
 
   onProgress?.({ stage: 'loading-model' });
   const session = await ort.InferenceSession.create(modelPath);
@@ -467,46 +566,60 @@ async function separateTrack(inputPath, outputDir, modelPath, onProgress) {
     normL,
     normR,
     onProgress,
+    params,
   );
   const primaryL = Float32Array.from(primaryNormL, (v) => v * peak);
   const primaryR = Float32Array.from(primaryNormR, (v) => v * peak);
 
-  const secondaryL = computeSecondary(primaryL, normL);
-  const secondaryR = computeSecondary(primaryR, normR);
+  const secondaryL = computeSecondary(primaryL, normL, model.compensate);
+  const secondaryR = computeSecondary(primaryR, normR, model.compensate);
 
   onProgress?.({ stage: 'writing' });
-  const stemsPath = path.join(outputDir, 'stems.wav');
+  const stemsPath = path.join(outputDir, `${presetId}.wav`);
   writeWavAtomic(
     stemsPath,
     [primaryL, primaryR, secondaryL, secondaryR],
     SAMPLE_RATE,
   );
 
+  // Manifest update — only after the rename above has succeeded, so a
+  // crash mid-write can't leave the manifest claiming a result that
+  // doesn't exist on disk. Selects this result (see library.js's
+  // recordSeparationResult) — it's what the caller just asked to run.
+  recordSeparationResult(outputDir, {
+    presetId,
+    modelId: preset.modelId,
+    separatedAt: new Date().toISOString(),
+  });
+
   return { stemsPath };
 }
 
-// Downloads the model on first use into <userDataDir>/models/. A download
+// Downloads a model on first use into <userDataDir>/models/. A download
 // interrupted mid-write must not leave a file at the final path — same
 // .tmp + rename reasoning as writeWavAtomic above.
-async function ensureModel(userDataDir) {
+async function ensureModel(userDataDir, modelId) {
+  const model = MODELS[modelId];
+  if (!model) throw new Error(`unknown separation model: ${modelId}`);
+
   const modelDir = path.join(userDataDir, 'models');
-  const modelPath = path.join(modelDir, MODEL_FILENAME);
+  const modelPath = path.join(modelDir, model.filename);
   if (fs.existsSync(modelPath)) return modelPath;
 
   fs.mkdirSync(modelDir, { recursive: true });
 
   // Not https.get — this URL 302-redirects to an Azure blob, and fetch()
   // follows redirects by default.
-  const response = await fetch(MODEL_DOWNLOAD_URL);
+  const response = await fetch(model.url);
   if (!response.ok) {
     throw new Error(
       `Failed to download vocal separation model: HTTP ${response.status}`,
     );
   }
   const buffer = Buffer.from(await response.arrayBuffer());
-  if (buffer.length !== MODEL_EXPECTED_SIZE) {
+  if (buffer.length !== model.expectedSize) {
     throw new Error(
-      `Downloaded model size ${buffer.length} doesn't match expected ${MODEL_EXPECTED_SIZE} — download may be incomplete.`,
+      `Downloaded model size ${buffer.length} doesn't match expected ${model.expectedSize} — download may be incomplete.`,
     );
   }
 
@@ -520,4 +633,8 @@ module.exports = {
   separateTrack,
   ensureModel,
   encodeWav,
+  MODELS,
+  SEPARATION_PRESETS,
+  DEFAULT_PRESET_ID,
+  resolvePreset,
 };

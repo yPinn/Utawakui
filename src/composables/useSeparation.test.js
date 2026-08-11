@@ -6,16 +6,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // module instance instead of leaking inFlight/errors state between tests.
 let progressCallback;
 let separateTrackMock;
+let selectSeparationResultMock;
 
 beforeEach(() => {
   vi.resetModules();
   separateTrackMock = vi.fn();
+  selectSeparationResultMock = vi.fn();
   vi.stubGlobal('window', {
     Utawakui: {
       onSeparationProgress: (callback) => {
         progressCallback = callback;
       },
       separateTrack: separateTrackMock,
+      selectSeparationResult: selectSeparationResultMock,
     },
   });
 });
@@ -106,6 +109,16 @@ describe('separate()', () => {
     expect(state.errors.get('t1')).toBe('Song 分離失敗:boom');
   });
 
+  it('forwards the preset id to window.Utawakui.separateTrack', async () => {
+    const { separate } = await loadSeparation();
+    separateTrackMock.mockResolvedValue({ stemsUrl: 'x' });
+    const track = { id: 't1', title: 'Song' };
+
+    await separate(track, 'high-quality');
+
+    expect(separateTrackMock).toHaveBeenCalledWith('t1', 'high-quality');
+  });
+
   it('clears a previous error for the track when retried', async () => {
     const { separate, state } = await loadSeparation();
     const track = { id: 't1', title: 'Song' };
@@ -116,6 +129,41 @@ describe('separate()', () => {
 
     separateTrackMock.mockResolvedValueOnce({ stemsUrl: 'x' });
     await separate(track);
+    expect(state.errors.has('t1')).toBe(false);
+  });
+});
+
+describe('selectResult()', () => {
+  it('forwards trackId/presetId to window.Utawakui.selectSeparationResult', async () => {
+    const { selectResult } = await loadSeparation();
+    selectSeparationResultMock.mockResolvedValue({ ok: true });
+    const track = { id: 't1', title: 'Song' };
+
+    await selectResult(track, 'inst-hq3');
+
+    expect(selectSeparationResultMock).toHaveBeenCalledWith('t1', 'inst-hq3');
+  });
+
+  it('records a message on failure, distinct from separate() failures', async () => {
+    const { selectResult, state } = await loadSeparation();
+    selectSeparationResultMock.mockRejectedValue(new Error('boom'));
+    const track = { id: 't1', title: 'Song' };
+
+    await selectResult(track, 'inst-hq3');
+
+    expect(state.errors.get('t1')).toBe('Song 切換失敗:boom');
+  });
+
+  it('clears a previous error for the track on success', async () => {
+    const { selectResult, state } = await loadSeparation();
+    const track = { id: 't1', title: 'Song' };
+
+    selectSeparationResultMock.mockRejectedValueOnce(new Error('first'));
+    await selectResult(track, 'inst-hq3');
+    expect(state.errors.has('t1')).toBe(true);
+
+    selectSeparationResultMock.mockResolvedValueOnce({ ok: true });
+    await selectResult(track, 'inst-hq3');
     expect(state.errors.has('t1')).toBe(false);
   });
 });

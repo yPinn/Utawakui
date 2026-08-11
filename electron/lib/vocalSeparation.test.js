@@ -1,5 +1,10 @@
 import { describe, it, expect } from 'vitest';
-import { encodeWav } from './vocalSeparation.js';
+import {
+  encodeWav,
+  resolvePreset,
+  SEPARATION_PRESETS,
+  MODELS,
+} from './vocalSeparation.js';
 
 // Only the pure, deterministic piece gets automated coverage — the
 // STFT/ONNX inference path stays untested here for the same reason
@@ -70,5 +75,49 @@ describe('encodeWav', () => {
     expected.forEach((value, i) => {
       expect(buf.readInt16LE(44 + i * 2)).toBe(Math.round(value * 32767));
     });
+  });
+});
+
+describe('resolvePreset', () => {
+  it('resolves known preset ids to their params', () => {
+    expect(resolvePreset('standard')).toEqual(SEPARATION_PRESETS.standard);
+    expect(resolvePreset('high-quality')).toEqual(
+      SEPARATION_PRESETS['high-quality'],
+    );
+  });
+
+  it('falls back to the standard preset for an unknown or missing id', () => {
+    expect(resolvePreset('does-not-exist')).toEqual(
+      SEPARATION_PRESETS.standard,
+    );
+    expect(resolvePreset(undefined)).toEqual(SEPARATION_PRESETS.standard);
+  });
+
+  // standard is meant to be the literal upstream-default preset (see
+  // CLAUDE.md) — guards against silently drifting back to denoise: true.
+  it('standard mirrors the verified upstream default params exactly', () => {
+    expect(SEPARATION_PRESETS.standard).toEqual({
+      modelId: 'kara2',
+      overlap: 0.25,
+      enableDenoise: false,
+    });
+  });
+});
+
+// Cheap consistency checks that would otherwise only surface as a runtime
+// crash mid-separation (unknown modelId) or a silently corrupted stems.wav
+// (a vocals-primary model shipped without updating the channel-order
+// mapping in separateTrack — see its primaryStem guard).
+describe('MODELS / SEPARATION_PRESETS consistency', () => {
+  it('every preset references a model that exists in the registry', () => {
+    for (const preset of Object.values(SEPARATION_PRESETS)) {
+      expect(MODELS[preset.modelId]).toBeDefined();
+    }
+  });
+
+  it('every registered model is instrumental-primary', () => {
+    for (const model of Object.values(MODELS)) {
+      expect(model.primaryStem).toBe('instrumental');
+    }
   });
 });

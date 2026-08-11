@@ -16,6 +16,9 @@ const props = defineProps({
   duration: { type: Number, default: undefined },
   active: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
+  // Lets a caller show its own duration inside #trail (e.g. after other
+  // trailing badges) instead of the default duration-then-trail order.
+  hideDuration: { type: Boolean, default: false },
 });
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
@@ -54,7 +57,7 @@ const displayInitial = computed(() =>
         displayArtist
       }}</span>
     </div>
-    <span v-if="displayDuration" class="ui-track__duration">{{
+    <span v-if="displayDuration && !hideDuration" class="ui-track__duration">{{
       formatDuration(displayDuration)
     }}</span>
     <slot name="trail" />

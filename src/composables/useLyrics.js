@@ -1,13 +1,21 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
-import { parseVtt, pickPreferredLyricsSource } from '../utils/lyrics.js';
+import { usePlaylists } from './usePlaylists.js';
+import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
 const EMPTY_LYRICS = { status: 'unchecked', sources: [] };
 
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
+const { selectedPlaylist } = usePlaylists();
+
+// The full library pool, kept only as an enrichment source (title/artist/
+// lyrics/hasSeparation lookups) — never shown directly. What the UI sees
+// (state.tracks) is always this pool joined against the selected
+// playlist's own trackIds, so switching playlists doesn't need a re-fetch.
+let libraryTracks = [];
 
 const state = reactive({
   tracks: [],
@@ -25,6 +33,12 @@ const state = reactive({
     currentTitle: null,
     error: null,
   },
+  musixmatchProbe: {
+    isLoading: false,
+    trackId: null,
+    result: null,
+    error: null,
+  },
   error: null,
   offsetSeconds: 0,
 });
@@ -32,6 +46,7 @@ const state = reactive({
 let unsubscribeLibraryUpdated = null;
 let unsubscribeLibraryBackfillStatus = null;
 let lyricsRequestId = 0;
+let musixmatchProbeRequestId = 0;
 
 const selectedTrack = computed(
   () =>
@@ -41,7 +56,7 @@ const selectedLyrics = computed(
   () => selectedTrack.value?.lyrics ?? EMPTY_LYRICS,
 );
 const lyricLines = computed(() =>
-  parseVtt(state.lyricsText, { source: selectedSource.value }),
+  parseLyricsText(state.lyricsText, { source: selectedSource.value }),
 );
 const isSelectedTrackPlaying = computed(
   () =>
@@ -74,18 +89,14 @@ function hasLyrics(track) {
   return track?.lyrics?.status === 'available';
 }
 
-function compareByLyricsAvailability(first, second) {
-  const firstHasLyrics = hasLyrics(first.track);
-  const secondHasLyrics = hasLyrics(second.track);
-  if (firstHasLyrics !== secondHasLyrics) return firstHasLyrics ? -1 : 1;
-  return first.index - second.index;
-}
-
-function orderTracksByLyricsAvailability(tracks) {
-  return tracks
-    .map((track, index) => ({ track, index }))
-    .sort(compareByLyricsAvailability)
-    .map(({ track }) => track);
+// Same "ghost trackId" join SetlistView.vue's playlistTracks computed
+// does — a track deleted outside the app just silently drops out. Order
+// follows the playlist's own trackIds, since that's the actual performance
+// order this page is meant to be scanned in, not a lyrics-readiness sort.
+function joinPlaylistTracks(pool, playlist) {
+  if (!playlist) return [];
+  const byId = new Map(pool.map((track) => [track.id, track]));
+  return playlist.trackIds.map((id) => byId.get(id)).filter(Boolean);
 }
 
 function pickSelectedTrackId(tracks) {
@@ -102,6 +113,14 @@ function pickSelectedTrackId(tracks) {
     return state.selectedTrackId;
   }
   return tracks.find(hasLyrics)?.id ?? tracks[0]?.id ?? null;
+}
+
+function clearMusixmatchProbe() {
+  musixmatchProbeRequestId += 1;
+  state.musixmatchProbe.isLoading = false;
+  state.musixmatchProbe.trackId = null;
+  state.musixmatchProbe.result = null;
+  state.musixmatchProbe.error = null;
 }
 
 async function loadSelectedLyrics() {
@@ -134,10 +153,15 @@ async function loadSelectedLyrics() {
   }
 }
 
-function applyTracks(tracks) {
+function applyScopedTracks() {
   const previousTrackId = state.selectedTrackId;
-  state.tracks = orderTracksByLyricsAvailability(tracks);
-  state.selectedTrackId = pickSelectedTrackId(tracks);
+  const scoped = joinPlaylistTracks(libraryTracks, selectedPlaylist.value);
+  state.tracks = scoped;
+  const nextTrackId = pickSelectedTrackId(scoped);
+  state.selectedTrackId = nextTrackId;
+  if (state.musixmatchProbe.trackId !== nextTrackId) {
+    clearMusixmatchProbe();
+  }
   const currentFilename =
     previousTrackId === state.selectedTrackId
       ? state.selectedSourceFilename
@@ -146,6 +170,11 @@ function applyTracks(tracks) {
     pickPreferredLyricsSource(selectedTrack.value, currentFilename)?.filename ??
     null;
   loadSelectedLyrics();
+}
+
+function applyTracks(tracks) {
+  libraryTracks = tracks;
+  applyScopedTracks();
 }
 
 async function refresh() {
@@ -169,6 +198,7 @@ function selectTrack(trackId) {
   state.selectedSourceFilename =
     pickPreferredLyricsSource(track)?.filename ?? null;
   state.offsetSeconds = 0;
+  clearMusixmatchProbe();
   loadSelectedLyrics();
 }
 
@@ -220,6 +250,42 @@ async function playFromLine(line) {
   await play();
 }
 
+async function probeMusixmatch() {
+  const track = selectedTrack.value;
+  if (!track) return null;
+
+  musixmatchProbeRequestId += 1;
+  const requestId = musixmatchProbeRequestId;
+
+  state.musixmatchProbe.isLoading = true;
+  state.musixmatchProbe.trackId = track.id;
+  state.musixmatchProbe.result = null;
+  state.musixmatchProbe.error = null;
+
+  if (typeof window.Utawakui?.probeMusixmatchLyrics !== 'function') {
+    state.musixmatchProbe.isLoading = false;
+    state.musixmatchProbe.error =
+      'Musixmatch 探測 API 尚未載入，請重啟 Electron app';
+    return null;
+  }
+
+  try {
+    const result = await window.Utawakui.probeMusixmatchLyrics(track.id);
+    if (requestId !== musixmatchProbeRequestId) return null;
+    state.musixmatchProbe.result = result;
+    return result;
+  } catch (err) {
+    if (requestId !== musixmatchProbeRequestId) return null;
+    state.musixmatchProbe.error =
+      err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    if (requestId === musixmatchProbeRequestId) {
+      state.musixmatchProbe.isLoading = false;
+    }
+  }
+}
+
 const stopPlayerSync = watch(
   () => playerState.track?.id,
   (trackId) => {
@@ -228,6 +294,10 @@ const stopPlayerSync = watch(
     }
   },
 );
+
+// Re-derive from the already-fetched pool on playlist switch — no need to
+// re-fetch over IPC just because the user picked a different playlist.
+const stopPlaylistSync = watch(selectedPlaylist, () => applyScopedTracks());
 
 if (typeof window !== 'undefined' && window.Utawakui) {
   refresh();
@@ -241,6 +311,7 @@ if (typeof window !== 'undefined' && window.Utawakui) {
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     stopPlayerSync();
+    stopPlaylistSync();
     unsubscribeLibraryUpdated?.();
     unsubscribeLibraryBackfillStatus?.();
   });
@@ -263,9 +334,6 @@ export function useLyrics() {
     adjustOffset,
     resetOffset,
     playFromLine,
+    probeMusixmatch,
   };
 }
-
-export const __testing = {
-  orderTracksByLyricsAvailability,
-};

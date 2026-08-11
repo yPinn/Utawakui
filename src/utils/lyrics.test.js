@@ -3,6 +3,8 @@ import {
   formatLyricTime,
   inferPreferredLyricsLanguagePrefixes,
   isNonLyricCue,
+  parseLrc,
+  parseLyricsText,
   parseVtt,
   pickPreferredLyricsSource,
 } from './lyrics.js';
@@ -176,6 +178,36 @@ Line two`,
         { source: { kind: 'youtube-cc', language: 'en' } },
       ),
     ).toEqual([{ start: 10, end: 13, text: 'Line one\nLine two' }]);
+  });
+});
+
+describe('parseLrc', () => {
+  it('parses LRCLIB synced LRC lines with next-line end times', () => {
+    expect(
+      parseLrc(`[ar:Artist]
+[00:01.00]First line
+[00:04.50][00:07.00]Repeat line`),
+    ).toEqual([
+      { start: 1, end: 4.5, text: 'First line' },
+      { start: 4.5, end: 7, text: 'Repeat line' },
+      {
+        start: 7,
+        end: Number.POSITIVE_INFINITY,
+        text: 'Repeat line',
+      },
+    ]);
+  });
+
+  it('routes LRCLIB sources through the LRC parser', () => {
+    expect(
+      parseLyricsText('[00:01.00]Hello', {
+        source: {
+          filename: 'lrclib-42.lrc',
+          language: 'und',
+          kind: 'lrclib',
+        },
+      }),
+    ).toEqual([{ start: 1, end: Number.POSITIVE_INFINITY, text: 'Hello' }]);
   });
 });
 

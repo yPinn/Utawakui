@@ -5,6 +5,9 @@ import {
   getPlaylistImportStats,
   hasImportableSelection,
 } from '../utils/importPlaylist.js';
+import { usePlaylists } from './usePlaylists.js';
+
+const { create: createPlaylist, setTracks: setPlaylistTracks } = usePlaylists();
 
 const state = reactive({
   input: '',
@@ -14,7 +17,11 @@ const state = reactive({
   isDefaultDir: true,
   sourceKind: 'idle', // 'idle' | 'playlist' | 'single'
   singleTrack: null,
+  singleResolution: null,
+  selectedCandidateId: null,
   playlistTracks: null,
+  playlistTitle: null,
+  createdPlaylistId: null,
   activeFilter: 'all',
   isResolving: false,
   isImporting: false,
@@ -46,7 +53,7 @@ const canConfirmImport = computed(() => {
   if (state.isResolving || state.isImporting) return false;
   if (state.sourceKind === 'single') {
     return Boolean(
-      Boolean(state.input.trim()) &&
+      state.input.trim() &&
       state.singleTrack &&
       !state.singleTrack.alreadyDownloaded &&
       state.singleTrack.status !== 'done',
@@ -71,14 +78,14 @@ const filterOptions = computed(() =>
 
 const confirmImportLabel = computed(() => {
   if (state.isImporting) {
-    return state.sourceKind === 'playlist' ? '停止在下一首前' : '下載中';
+    return state.sourceKind === 'playlist' ? '停止' : '下載中';
   }
   if (state.sourceKind === 'single') {
     if (state.singleTrack?.alreadyDownloaded) return '已存在';
-    return '確認匯入單曲';
+    return '下載這首';
   }
   const count = playlistStats.value.downloadableSelected;
-  return count > 0 ? `確認匯入 ${count} 首` : '沒有可匯入曲目';
+  return count > 0 ? `下載 ${count} 首` : '沒有可下載曲目';
 });
 
 const canUseConfirmButton = computed(() =>
@@ -93,7 +100,11 @@ function setStatus(message, type = 'idle') {
 function clearPreview() {
   state.sourceKind = 'idle';
   state.singleTrack = null;
+  state.singleResolution = null;
+  state.selectedCandidateId = null;
   state.playlistTracks = null;
+  state.playlistTitle = null;
+  state.createdPlaylistId = null;
   state.activeFilter = 'all';
   cancelRequested = false;
 }
@@ -107,24 +118,73 @@ function createPreviewTrack(entry) {
   };
 }
 
+function candidateId(candidate) {
+  return candidate?.playbackVideoId || candidate?.id || null;
+}
+
+function createSingleTrackFromResolution(resolution, selectedCandidate = null) {
+  const candidate =
+    selectedCandidate || resolution.recommendedCandidate || resolution.source;
+  return createPreviewTrack({
+    id: candidateId(candidate),
+    title: candidate.title || resolution.canonical?.title || resolution.input,
+    artist: candidate.artist || resolution.canonical?.artist,
+    duration: candidate.duration || resolution.canonical?.duration,
+    thumbnailUrl: candidate.thumbnailUrl || resolution.source?.thumbnailUrl,
+    alreadyDownloaded: candidate.alreadyDownloaded,
+    downloadInput: candidateId(candidate),
+    sourceVideoId: resolution.sourceVideoId,
+    playbackKind: candidate.playbackKind,
+    trackIdentity: resolution.trackIdentity || candidate.trackIdentity,
+    importResolution: resolution,
+  });
+}
+
+function selectImportCandidate(candidateIdValue) {
+  if (!state.singleResolution || state.isImporting) return;
+  const candidate = state.singleResolution.candidates?.find(
+    (entry) => candidateId(entry) === candidateIdValue,
+  );
+  if (!candidate) return;
+  state.selectedCandidateId = candidateIdValue;
+  state.singleTrack = createSingleTrackFromResolution(
+    state.singleResolution,
+    candidate,
+  );
+}
+
 async function resolveSource() {
   const input = state.input.trim();
   if (!input) {
-    setStatus('請輸入 YouTube 影片或播放清單 URL', 'error');
+    setStatus('請貼上 YouTube 或 YouTube Music 連結', 'error');
     return;
   }
 
   clearPreview();
-  setStatus('正在解析來源...', 'pending');
+  setStatus('檢查連結中...', 'pending');
   state.isResolving = true;
 
   try {
-    const entries = await window.Utawakui.listPlaylist(input);
+    const playlistResult = await window.Utawakui.listPlaylist(input);
+    const entries = playlistResult?.entries;
     if (entries && entries.length > 0) {
       state.sourceKind = 'playlist';
+      state.playlistTitle = playlistResult.title || '未命名播放清單';
       state.playlistTracks = entries.map(createPreviewTrack);
-      setStatus(`已建立 ${entries.length} 首曲目的預覽快照`, 'success');
+      setStatus(`已找到 ${entries.length} 首，請確認要下載的曲目`, 'success');
     } else {
+      if (typeof window.Utawakui.resolveImportSource === 'function') {
+        const resolution = await window.Utawakui.resolveImportSource(input);
+        state.sourceKind = 'single';
+        state.singleResolution = resolution;
+        state.selectedCandidateId = candidateId(
+          resolution.recommendedCandidate || resolution.source,
+        );
+        state.singleTrack = createSingleTrackFromResolution(resolution);
+        setStatus('已找到歌曲，確認後開始下載', 'success');
+        return;
+      }
+
       if (typeof window.Utawakui.fetchVideoMetadata !== 'function') {
         state.sourceKind = 'single';
         state.singleTrack = createPreviewTrack({
@@ -133,7 +193,7 @@ async function resolveSource() {
           alreadyDownloaded: false,
         });
         setStatus(
-          '單曲預覽需要重新啟動應用程式才能載入新版橋接 API；仍可確認匯入。',
+          '需要重新啟動應用程式才能使用新版單曲預覽；目前仍可下載。',
           'pending',
         );
         return;
@@ -142,11 +202,11 @@ async function resolveSource() {
       const metadata = await window.Utawakui.fetchVideoMetadata(input);
       state.sourceKind = 'single';
       state.singleTrack = createPreviewTrack(metadata);
-      setStatus('已辨識為單曲來源，確認後才會下載', 'success');
+      setStatus('已找到歌曲，確認後開始下載', 'success');
     }
   } catch (err) {
     clearPreview();
-    setStatus(`解析失敗：${err.message}`, 'error');
+    setStatus(`找不到來源：${err.message}`, 'error');
   } finally {
     state.isResolving = false;
   }
@@ -154,16 +214,20 @@ async function resolveSource() {
 
 async function importSingle() {
   const input = state.input.trim();
+  const downloadInput =
+    state.singleTrack?.downloadInput ||
+    state.singleTrack?.playbackVideoId ||
+    input;
   setStatus('下載中...', 'pending');
   state.isImporting = true;
 
   try {
-    const result = await window.Utawakui.downloadAudio(input);
+    const result = await window.Utawakui.downloadAudio(downloadInput);
     if (state.singleTrack) state.singleTrack.status = 'done';
-    setStatus(`已匯入：${result.title || result.filePath}`, 'success');
+    setStatus(`已下載：${result.title || result.filePath}`, 'success');
     state.sourceKind = 'idle';
   } catch (err) {
-    setStatus(`匯入失敗：${err.message}`, 'error');
+    setStatus(`下載失敗：${err.message}`, 'error');
   } finally {
     state.isImporting = false;
   }
@@ -207,6 +271,29 @@ async function downloadPlaylistTrack(track) {
   }
 }
 
+// Only creates the local playlist once per session (tracked via
+// state.createdPlaylistId) — a retry re-syncs the same playlist with the
+// current full success set instead of creating a duplicate. Runs
+// unconditionally after the download loop, including on cancel, so
+// whatever succeeded before a stop is still captured.
+async function syncImportedPlaylist() {
+  const trackIds = state.playlistTracks
+    .filter(
+      (track) =>
+        track.selected && (track.status === 'done' || track.alreadyDownloaded),
+    )
+    .map((track) => track.id);
+  if (trackIds.length === 0) return false;
+
+  if (!state.createdPlaylistId) {
+    const created = await createPlaylist(state.playlistTitle);
+    if (!created) return false;
+    state.createdPlaylistId = created.id;
+  }
+  await setPlaylistTracks(state.createdPlaylistId, trackIds);
+  return true;
+}
+
 async function importPlaylist() {
   if (!state.playlistTracks || !hasImportableSelection(state.playlistTracks)) {
     return;
@@ -214,7 +301,7 @@ async function importPlaylist() {
 
   cancelRequested = false;
   state.isImporting = true;
-  setStatus('批次匯入中...', 'pending');
+  setStatus('下載選取曲目中...', 'pending');
 
   try {
     for (const track of state.playlistTracks) {
@@ -229,13 +316,19 @@ async function importPlaylist() {
       await downloadPlaylistTrack(track);
     }
 
+    const playlistSynced = await syncImportedPlaylist();
     const stats = getPlaylistImportStats(state.playlistTracks);
     if (cancelRequested) {
-      setStatus('已停止，未開始的曲目保留待下載', 'pending');
+      setStatus('已停止，未完成的曲目仍留在預覽中', 'pending');
     } else if (stats.error > 0) {
-      setStatus(`批次完成，${stats.error} 首需要重試`, 'error');
+      setStatus(`下載完成，${stats.error} 首失敗`, 'error');
     } else {
-      setStatus('批次匯入完成', 'success');
+      setStatus(
+        playlistSynced
+          ? `已加入播放清單「${state.playlistTitle}」`
+          : '下載完成',
+        'success',
+      );
     }
   } finally {
     state.isImporting = false;
@@ -270,7 +363,7 @@ function getTrackStatusLabel(track) {
   if (track.alreadyDownloaded) return '已存在';
   if (track.status === 'downloading') return '下載中';
   if (track.status === 'error') return '失敗';
-  return '待確認';
+  return '待下載';
 }
 
 function getTrackStatusClass(track) {
@@ -310,6 +403,7 @@ export function useImportSession() {
     resolveSource,
     confirmImport,
     clearPreview,
+    selectImportCandidate,
     toggleSelectAll,
     selectMissingTracks,
     retryFailedTracks,
