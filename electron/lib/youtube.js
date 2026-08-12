@@ -69,4 +69,21 @@ function extractPlaylistId(input) {
   return listId;
 }
 
-module.exports = { VIDEO_ID_RE, extractVideoId, extractPlaylistId };
+// YT Music album browse IDs resolve to OLAK5uy_-prefixed playlist ids (see
+// CLAUDE.md's import-platform-scoping notes); every other list id (PL…,
+// user-made or someone else's playlist) is an ordinary playlist. This is a
+// naming-convention check, not a content inspection — it only classifies
+// the *source*, independent of the heuristic in albumClassifier.js that
+// classifies already-imported collections by their members' metadata.
+function classifyPlaylistKind(listId) {
+  return typeof listId === 'string' && listId.startsWith('OLAK5uy_')
+    ? 'album'
+    : 'playlist';
+}
+
+module.exports = {
+  VIDEO_ID_RE,
+  extractVideoId,
+  extractPlaylistId,
+  classifyPlaylistKind,
+};

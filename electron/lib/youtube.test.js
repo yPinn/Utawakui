@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest';
-import { extractVideoId, extractPlaylistId } from './youtube.js';
+import {
+  extractVideoId,
+  extractPlaylistId,
+  classifyPlaylistKind,
+} from './youtube.js';
 
 describe('extractVideoId', () => {
   it('accepts a bare 11-char id', () => {
@@ -92,5 +96,20 @@ describe('extractPlaylistId', () => {
         'https://www.youtube.com/watch?v=oIcAZw3-uI8&list=RDoIcAZw3-uI8&start_radio=1',
       ),
     ).toBe(null);
+  });
+});
+
+describe('classifyPlaylistKind', () => {
+  it('classifies an OLAK5uy_-prefixed id as an album', () => {
+    expect(classifyPlaylistKind('OLAK5uy_x')).toBe('album');
+  });
+
+  it('classifies a PL-prefixed id as an ordinary playlist', () => {
+    expect(classifyPlaylistKind('PLxxxxxxxx')).toBe('playlist');
+  });
+
+  it('classifies non-string input as a playlist rather than throwing', () => {
+    expect(classifyPlaylistKind(undefined)).toBe('playlist');
+    expect(classifyPlaylistKind(null)).toBe('playlist');
   });
 });

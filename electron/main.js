@@ -17,16 +17,22 @@ const {
   downloadAudio,
   fetchMetadata,
   listPlaylist,
+  readTrackInfoMetadata,
   searchPlaybackCandidates,
 } = require('./lib/downloader');
 const { loadConfig, saveConfig } = require('./lib/config');
-const { extractVideoId, extractPlaylistId } = require('./lib/youtube');
+const {
+  extractVideoId,
+  extractPlaylistId,
+  classifyPlaylistKind,
+} = require('./lib/youtube');
 const { resolveYoutubeImportSource } = require('./lib/importResolver');
 const {
   buildRangeResponse,
   deleteTrack,
   getTrackLyricsState,
   listTracks,
+  migrateTrackAlbumMetadata,
   readTrackLyrics,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
@@ -43,11 +49,15 @@ const {
   createPlaylist,
   deletePlaylist,
   loadPlaylists,
+  migratePlaylistKinds,
   reorderPlaylists,
   removeTrackFromAllPlaylists,
   renamePlaylist,
+  setPlaylistKind,
   setPlaylistTracks,
+  upsertAlbum,
 } = require('./lib/playlists');
+const { classifyCollectionKind } = require('./lib/albumClassifier');
 const { findLrclibSyncedLyrics } = require('./lib/lrclib');
 const { probeMusixmatchLyrics } = require('./lib/musixmatch');
 const { renderGlyphPng } = require('./lib/thumbar-icons');
@@ -444,8 +454,29 @@ if (!gotSingleInstanceLock) {
       },
     );
 
+    // Album collections are read-only (see docs/spec.md and playlists.js's
+    // PLAYLIST_KINDS comment) — this is the trust boundary that enforces
+    // it. playlists.js itself stays a mechanical store with no opinion on
+    // renderer intent, same role main.js already plays for
+    // extractVideoId()'s untrusted-input validation.
     ipcMain.handle('playlists:set-tracks', async (event, id, trackIds) => {
-      return setPlaylistTracks(resolveDownloadDir(cachedConfig), id, trackIds);
+      const dir = resolveDownloadDir(cachedConfig);
+      const playlists = loadPlaylists(dir);
+      const target = playlists.find((p) => p.id === id);
+      if (target?.kind === 'album') return playlists;
+      return setPlaylistTracks(dir, id, trackIds);
+    });
+
+    ipcMain.handle('playlists:upsert-album', async (event, payload) => {
+      return upsertAlbum(resolveDownloadDir(cachedConfig), {
+        name: payload?.name,
+        source: payload?.source,
+        trackIds: payload?.trackIds,
+      });
+    });
+
+    ipcMain.handle('playlists:set-kind', async (event, id, kind) => {
+      return setPlaylistKind(resolveDownloadDir(cachedConfig), id, kind);
     });
 
     ipcMain.handle('yt:list-playlist', async (event, input) => {
@@ -456,6 +487,8 @@ if (!gotSingleInstanceLock) {
       const { title, entries } = await listPlaylist(playlistId);
       return {
         title,
+        kind: classifyPlaylistKind(playlistId),
+        source: { platform: 'youtube', id: playlistId },
         entries: entries.map((entry) => ({
           ...entry,
           alreadyDownloaded: existingIds.has(entry.id),
@@ -675,6 +708,22 @@ if (!gotSingleInstanceLock) {
     });
 
     nativeTheme.on('updated', updateThumbar);
+
+    // One-time, offline schema migrations — must run before the window
+    // loads (not lazily on first library:list/playlists:list) because both
+    // are gated on the *raw on-disk* version, and any ordinary write
+    // (saveIndexEntry/writePlaylists) that happens first would stamp the
+    // current version and permanently skip them. Order matters: the
+    // playlist-kind heuristic reads each track's album field, so the
+    // track-metadata migration must land in library.json first.
+    {
+      const dir = resolveDownloadDir(cachedConfig);
+      migrateTrackAlbumMetadata(dir, readTrackInfoMetadata);
+      const tracksById = new Map(
+        listTracks(dir).map((track) => [track.id, track]),
+      );
+      migratePlaylistKinds(dir, tracksById, classifyCollectionKind);
+    }
 
     createWindow();
   });

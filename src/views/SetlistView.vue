@@ -25,6 +25,7 @@ import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatDuration } from '../utils/format.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { getTrackInitial } from '../utils/trackDisplay.js';
+import { deriveAlbumSummary } from '../utils/albumSummary.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
 const {
@@ -44,7 +45,9 @@ const {
   create: createPlaylistAction,
   rename: renamePlaylistAction,
   remove: removePlaylistAction,
+  setKind: setPlaylistKindAction,
   addTrack: addTrackToPlaylist,
+  addTracks: addTracksToPlaylist,
   removeTrack: removeTrackFromPlaylist,
   setTracks: setPlaylistTracksAction,
 } = usePlaylists();
@@ -73,9 +76,11 @@ const TRACK_MENU_ACTIONS = {
 
 const PLAYLIST_MENU_ACTIONS = {
   addToQueue: 'add-to-queue',
+  addToPlaylist: 'add-to-playlist',
   editDetails: 'edit-details',
   delete: 'delete',
   createPlaylist: 'create-playlist',
+  convertKind: 'convert-kind',
 };
 
 const PLAYLIST_SORT_KEYS = {
@@ -88,8 +93,12 @@ const tracksById = computed(() => new Map(tracks.value.map((t) => [t.id, t])));
 
 const mode = computed(() => {
   if (!selectedPlaylist.value) return 'all';
-  return 'playlist';
+  return selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist';
 });
+
+// Album track membership/order is read-only — see playlists.js's
+// PLAYLIST_KINDS comment. Rename/delete/play/sort still apply to both.
+const isAlbumSelected = computed(() => mode.value === 'album');
 
 // The join itself is the "ghost trackId" filter — a track deleted outside
 // the app just silently drops out, per library.js's orphan doctrine (see
@@ -198,16 +207,34 @@ const playlistTotalDuration = computed(() =>
     0,
   ),
 );
+// Not persisted — derived fresh from the album's own member tracks each
+// time, so it self-corrects as backfill fills in more album/artist data.
+// See src/utils/albumSummary.js for why this isn't stored a second time.
+const albumSummary = computed(() =>
+  isAlbumSelected.value
+    ? deriveAlbumSummary(playlistTracks.value)
+    : { artist: undefined, releaseYear: undefined },
+);
+
 const playlistMeta = computed(() => {
   const count = playlistTracks.value.length;
   const duration = formatLongDuration(playlistTotalDuration.value);
-  return duration ? `${count} 首曲目，${duration}` : `${count} 首曲目`;
+  const countLine = duration
+    ? `${count} 首曲目，${duration}`
+    : `${count} 首曲目`;
+  if (!isAlbumSelected.value) return countLine;
+
+  const { artist, releaseYear } = albumSummary.value;
+  const byline = [artist, releaseYear].filter(Boolean).join(' · ');
+  return byline ? `${byline} · ${countLine}` : countLine;
 });
 
 const isAddMenuOpen = computed(() => Boolean(addMenu.value));
 const addMenuX = computed(() => addMenu.value?.x ?? 0);
 const addMenuY = computed(() => addMenu.value?.y ?? 0);
-const canDragPlaylistRows = computed(() => playlistSort.value.key === null);
+const canDragPlaylistRows = computed(
+  () => playlistSort.value.key === null && !isAlbumSelected.value,
+);
 const addMenuItems = computed(() => {
   const track = addMenu.value?.track;
   const isAlreadyQueued = track
@@ -223,8 +250,11 @@ const addMenuItems = computed(() => {
     },
   ];
 
-  const availablePlaylists = playlistState.playlists.filter((playlist) =>
-    track?.id ? !playlist.trackIds.includes(track.id) : true,
+  // Album collections are read-only — never a valid "add to" target.
+  const availablePlaylists = playlistState.playlists.filter(
+    (playlist) =>
+      playlist.kind !== 'album' &&
+      (track?.id ? !playlist.trackIds.includes(track.id) : true),
   );
 
   if (availablePlaylists.length > 0) {
@@ -261,7 +291,11 @@ const addMenuItems = computed(() => {
     },
   ];
 
-  if (track && selectedPlaylist.value?.trackIds.includes(track.id)) {
+  if (
+    track &&
+    !isAlbumSelected.value &&
+    selectedPlaylist.value?.trackIds.includes(track.id)
+  ) {
     items.push({
       key: 'remove-from-playlist',
       label: '從此播放清單中移除',
@@ -304,6 +338,7 @@ function playRow(track) {
   const queueTracks = currentPlaybackQueueTracks() ?? [track];
   setQueue(queueTracks, track.id, {
     sourceName: selectedPlaylist.value ? pageTitle.value : '',
+    sourceId: selectedPlaylist.value?.id ?? null,
   });
   playTrack(toPlayableTrack(track));
 }
@@ -424,8 +459,12 @@ function cancelRename() {
 // first fear an operator will have about a "delete" on a track list page.
 function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
   if (!playlist) return;
+  const isAlbum = playlist.kind === 'album';
+  const name = playlist.name || '(未命名歌單)';
   const confirmed = window.confirm(
-    `確定要刪除歌單「${playlist.name || '(未命名歌單)'}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會刪除這個歌單,且無法復原。`,
+    isAlbum
+      ? `確定要移除專輯「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會移除這個專輯,且無法復原。`
+      : `確定要刪除歌單「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會刪除這個歌單,且無法復原。`,
   );
   if (!confirmed) return;
   removePlaylistAction(playlist.id);
@@ -445,7 +484,18 @@ function addPlaylistToQueue(playlistId) {
 
 async function handlePlaylistMenuAction(value) {
   if (value.action === PLAYLIST_MENU_ACTIONS.createPlaylist) {
-    await createPlaylistAction();
+    const created = await createPlaylistAction();
+    // sourcePlaylistId is only set when this came from the "新增至別的播放
+    // 清單" submenu's "建立新播放清單" entry — look the source's trackIds
+    // up fresh here rather than trusting anything serialized into the menu
+    // item's value, since the collection could have changed between the
+    // menu opening and this click.
+    if (created && value.sourcePlaylistId) {
+      const source = playlistState.playlists.find(
+        (item) => item.id === value.sourcePlaylistId,
+      );
+      if (source) addTracksToPlaylist(created.id, source.trackIds);
+    }
     return;
   }
 
@@ -456,10 +506,17 @@ async function handlePlaylistMenuAction(value) {
 
   if (value.action === PLAYLIST_MENU_ACTIONS.addToQueue) {
     addPlaylistToQueue(playlist.id);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.addToPlaylist) {
+    addTracksToPlaylist(value.targetPlaylistId, playlist.trackIds);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.editDetails) {
     startPlaylistRename(playlist.id);
   } else if (value.action === PLAYLIST_MENU_ACTIONS.delete) {
     confirmDeletePlaylist(playlist);
+  } else if (value.action === PLAYLIST_MENU_ACTIONS.convertKind) {
+    setPlaylistKindAction(
+      playlist.id,
+      playlist.kind === 'album' ? 'playlist' : 'album',
+    );
   }
 }
 
@@ -591,12 +648,16 @@ onUnmounted(() => {
   <div class="setlist">
     <PlaylistSidebar
       class="setlist__sidebar"
+      :tracks-by-id="tracksById"
       @playlist-action="handlePlaylistMenuAction"
     />
 
     <div class="setlist__main">
       <template v-if="selectedPlaylist">
-        <section class="playlist-hero" :aria-label="`播放清單 ${pageTitle}`">
+        <section
+          class="playlist-hero"
+          :aria-label="`${isAlbumSelected ? '專輯' : '播放清單'} ${pageTitle}`"
+        >
           <div class="playlist-cover" aria-hidden="true">
             <div
               v-for="track in playlistCoverTracks"
@@ -623,7 +684,9 @@ onUnmounted(() => {
           </div>
 
           <div class="playlist-hero__content">
-            <p class="playlist-hero__eyebrow">播放清單</p>
+            <p class="playlist-hero__eyebrow">
+              {{ isAlbumSelected ? '專輯' : '播放清單' }}
+            </p>
             <input
               v-if="isRenaming"
               v-model="renameValue"
@@ -916,8 +979,15 @@ onUnmounted(() => {
   display: grid;
   /* minmax(0, 1fr), not 1fr — a grid item's default min-width:auto would
      let a long untruncated title blow this column out and push the
-     sidebar off-screen, defeating UiTrackRow's own ellipsis. */
-  grid-template-columns: 160px minmax(0, 1fr);
+     sidebar off-screen, defeating UiTrackRow's own ellipsis. Widened from
+     160px to 220px so a title + kind subtitle two-line row
+     (PlaylistSidebar.vue) has room without wrapping, then to 16rem (was a
+     hardcoded 220px) once real playlist/album names showed how little
+     horizontal room the marquee text actually had to work with after
+     accounting for the thumb + padding + gaps eating into it — rem so it
+     scales with the user's OS/browser text-size setting rather than
+     staying pinned at a literal pixel count. */
+  grid-template-columns: 16rem minmax(0, 1fr);
   gap: var(--ui-space-3);
   align-items: start;
 }

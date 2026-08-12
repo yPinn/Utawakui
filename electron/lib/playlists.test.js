@@ -10,6 +10,9 @@ import {
   reorderPlaylists,
   setPlaylistTracks,
   removeTrackFromAllPlaylists,
+  upsertAlbum,
+  setPlaylistKind,
+  migratePlaylistKinds,
   PLAYLISTS_FILENAME,
 } from './playlists.js';
 
@@ -85,8 +88,82 @@ describe('loadPlaylists', () => {
     );
 
     expect(loadPlaylists(dir)).toEqual([
-      { id: 'a', name: 'Good', trackIds: ['t1'], addedAt: {} },
+      {
+        id: 'a',
+        name: 'Good',
+        kind: 'playlist',
+        trackIds: ['t1'],
+        addedAt: {},
+      },
     ]);
+  });
+
+  it('defaults kind to playlist when absent, and rejects an invalid kind', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        playlists: [
+          { id: 'a', name: 'No kind field', trackIds: [] },
+          {
+            id: 'b',
+            name: 'Bogus kind',
+            kind: 'not-a-real-kind',
+            trackIds: [],
+          },
+        ],
+      }),
+    );
+
+    const [a, b] = loadPlaylists(dir);
+    expect(a.kind).toBe('playlist');
+    expect(b.kind).toBe('playlist');
+  });
+
+  it('preserves a valid kind and source', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        playlists: [
+          {
+            id: 'a',
+            name: 'GOLDEN',
+            kind: 'album',
+            source: { platform: 'youtube', id: 'OLAK5uy_x' },
+            trackIds: [],
+          },
+        ],
+      }),
+    );
+
+    const [playlist] = loadPlaylists(dir);
+    expect(playlist.kind).toBe('album');
+    expect(playlist.source).toEqual({ platform: 'youtube', id: 'OLAK5uy_x' });
+  });
+
+  it('drops a malformed source instead of keeping a partial object', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        playlists: [
+          {
+            id: 'a',
+            name: 'X',
+            kind: 'album',
+            source: { platform: 'youtube' },
+            trackIds: [],
+          },
+        ],
+      }),
+    );
+
+    const [playlist] = loadPlaylists(dir);
+    expect(playlist.source).toBeUndefined();
   });
 
   it('sanitizes non-string trackIds instead of dropping the whole entry', () => {
@@ -446,5 +523,186 @@ describe('removeTrackFromAllPlaylists', () => {
 
     expect(result[0].trackIds).toEqual(['a', 'b']);
     expect(fs.statSync(filePath).mtimeMs).toBe(before);
+  });
+});
+
+describe('upsertAlbum', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('creates a new album collection when no matching source exists', () => {
+    const result = upsertAlbum(dir, {
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a', 'b'],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]).toMatchObject({
+      name: 'GOLDEN',
+      kind: 'album',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a', 'b'],
+    });
+  });
+
+  it('updates trackIds in place on a second call with the same source, without duplicating', () => {
+    upsertAlbum(dir, {
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a'],
+    });
+
+    const result = upsertAlbum(dir, {
+      name: 'GOLDEN (renamed by user, ignored here)',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a', 'b'],
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0].trackIds).toEqual(['a', 'b']);
+  });
+
+  it('does not overwrite a user-given name on update', () => {
+    upsertAlbum(dir, {
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a'],
+    });
+    renamePlaylist(dir, loadPlaylists(dir)[0].id, 'My Renamed Album');
+
+    const result = upsertAlbum(dir, {
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a', 'b'],
+    });
+
+    expect(result[0].name).toBe('My Renamed Album');
+  });
+
+  it('creates a separate album when the source id differs', () => {
+    upsertAlbum(dir, {
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a'],
+    });
+    const result = upsertAlbum(dir, {
+      name: 'Nine Track Mind',
+      source: { platform: 'youtube', id: 'OLAK5uy_y' },
+      trackIds: ['b'],
+    });
+
+    expect(result).toHaveLength(2);
+  });
+});
+
+describe('setPlaylistKind', () => {
+  let dir;
+  let id;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+    id = createPlaylist(dir, 'List')[0].id;
+    setPlaylistTracks(dir, id, ['a', 'b']);
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('converts a playlist to an album without touching trackIds/name', () => {
+    const result = setPlaylistKind(dir, id, 'album');
+    expect(result[0].kind).toBe('album');
+    expect(result[0].name).toBe('List');
+    expect(result[0].trackIds).toEqual(['a', 'b']);
+  });
+
+  it('rejects an invalid kind, leaving the playlist unchanged', () => {
+    const before = loadPlaylists(dir);
+    const result = setPlaylistKind(dir, id, 'not-a-kind');
+    expect(result).toEqual(before);
+  });
+
+  it('returns the list unchanged for an unknown id, without throwing', () => {
+    const before = loadPlaylists(dir);
+    const result = setPlaylistKind(dir, 'unknown-id', 'album');
+    expect(result).toEqual(before);
+  });
+});
+
+describe('migratePlaylistKinds', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  function classifyByFirstTrack(tracks) {
+    return tracks.length > 0 && tracks[0]?.isAlbum ? 'album' : 'playlist';
+  }
+
+  it('does nothing when there is no existing file', () => {
+    const changed = migratePlaylistKinds(dir, new Map(), classifyByFirstTrack);
+    expect(changed).toBe(false);
+    expect(fs.existsSync(path.join(dir, PLAYLISTS_FILENAME))).toBe(false);
+  });
+
+  it('stamps kind using the injected classifier and backs up the v1 file', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 1,
+        playlists: [
+          { id: 'a', name: 'GOLDEN', trackIds: ['t1', 't2'], addedAt: {} },
+          { id: 'b', name: 'Mixed', trackIds: ['t3'], addedAt: {} },
+        ],
+      }),
+    );
+    const tracksById = new Map([
+      ['t1', { isAlbum: true }],
+      ['t2', { isAlbum: true }],
+      ['t3', { isAlbum: false }],
+    ]);
+
+    const changed = migratePlaylistKinds(dir, tracksById, classifyByFirstTrack);
+
+    expect(changed).toBe(true);
+    const playlists = loadPlaylists(dir);
+    expect(playlists.find((p) => p.id === 'a').kind).toBe('album');
+    expect(playlists.find((p) => p.id === 'b').kind).toBe('playlist');
+    const backups = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith(`${PLAYLISTS_FILENAME}.backup-v1-`));
+    expect(backups).toHaveLength(1);
+  });
+
+  it('is a no-op once the file is already at the current version', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        playlists: [
+          { id: 'a', name: 'X', kind: 'playlist', trackIds: [], addedAt: {} },
+        ],
+      }),
+    );
+
+    const changed = migratePlaylistKinds(dir, new Map(), () => 'album');
+
+    expect(changed).toBe(false);
+    expect(loadPlaylists(dir)[0].kind).toBe('playlist');
   });
 });

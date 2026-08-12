@@ -36,8 +36,21 @@ contextBridge.exposeInMainWorld('Utawakui', {
   deletePlaylist: (id) => ipcRenderer.invoke('playlists:delete', id),
   reorderPlaylist: (draggedId, targetId, position) =>
     ipcRenderer.invoke('playlists:reorder', draggedId, targetId, position),
+  // Album collections are read-only from the renderer's side — main.js
+  // silently no-ops this against an album's id (returns the array
+  // unchanged) rather than throwing, same "trust boundary lives in main"
+  // pattern as extractVideoId().
   setPlaylistTracks: (id, trackIds) =>
     ipcRenderer.invoke('playlists:set-tracks', id, trackIds),
+  // Create-or-update path for album imports, keyed by source (not name) so
+  // re-importing the same album updates it in place instead of
+  // duplicating it.
+  upsertAlbum: (payload) =>
+    ipcRenderer.invoke('playlists:upsert-album', payload),
+  // Manual escape hatch for when the automatic album/playlist heuristic
+  // guesses wrong on an existing collection.
+  setPlaylistKind: (id, kind) =>
+    ipcRenderer.invoke('playlists:set-kind', id, kind),
   // Slow (tens of seconds). Rejects if another separation is already
   // running, not just when this track fails.
   separateTrack: (trackId, presetId) =>
