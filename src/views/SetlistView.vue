@@ -89,6 +89,18 @@ const PLAYLIST_SORT_KEYS = {
   duration: 'duration',
 };
 
+// Drives the sort-header row via v-for — align: 'end' is the one column
+// (duration) that needs both a right-justified header cell
+// (playlist-table__sort--duration) and a right-aligned body cell
+// (playlist-table__duration, shared with .playlist-track__duration); both
+// classes must come from this same entry or the header and body columns
+// drift out of alignment.
+const SORT_COLUMNS = [
+  { key: PLAYLIST_SORT_KEYS.title, label: '曲目' },
+  { key: PLAYLIST_SORT_KEYS.addedAt, label: '新增日期' },
+  { key: PLAYLIST_SORT_KEYS.duration, label: '時長', align: 'end' },
+];
+
 const tracksById = computed(() => new Map(tracks.value.map((t) => [t.id, t])));
 
 const mode = computed(() => {
@@ -832,57 +844,23 @@ onUnmounted(() => {
               <span class="playlist-table__drag"></span>
               <span class="playlist-table__index">#</span>
               <button
+                v-for="column in SORT_COLUMNS"
+                :key="column.key"
                 type="button"
                 class="playlist-table__sort"
                 :class="{
-                  'playlist-table__sort--active': isPlaylistSortActive('title'),
+                  'playlist-table__sort--duration': column.align === 'end',
+                  'playlist-table__duration': column.align === 'end',
+                  'playlist-table__sort--active': isPlaylistSortActive(
+                    column.key,
+                  ),
                 }"
-                :aria-label="playlistSortLabel('title', '曲目')"
-                @click="togglePlaylistSort('title')"
+                :aria-label="playlistSortLabel(column.key, column.label)"
+                @click="togglePlaylistSort(column.key)"
               >
-                <span>曲目</span>
+                <span>{{ column.label }}</span>
                 <span
-                  v-if="isPlaylistSortActive('title')"
-                  class="playlist-table__sort-indicator"
-                  :class="{
-                    'playlist-table__sort-indicator--desc':
-                      playlistSort.direction === 'desc',
-                  }"
-                ></span>
-              </button>
-              <button
-                type="button"
-                class="playlist-table__sort"
-                :class="{
-                  'playlist-table__sort--active':
-                    isPlaylistSortActive('addedAt'),
-                }"
-                :aria-label="playlistSortLabel('addedAt', '新增日期')"
-                @click="togglePlaylistSort('addedAt')"
-              >
-                <span>新增日期</span>
-                <span
-                  v-if="isPlaylistSortActive('addedAt')"
-                  class="playlist-table__sort-indicator"
-                  :class="{
-                    'playlist-table__sort-indicator--desc':
-                      playlistSort.direction === 'desc',
-                  }"
-                ></span>
-              </button>
-              <button
-                type="button"
-                class="playlist-table__sort playlist-table__sort--duration playlist-table__duration"
-                :class="{
-                  'playlist-table__sort--active':
-                    isPlaylistSortActive('duration'),
-                }"
-                :aria-label="playlistSortLabel('duration', '時長')"
-                @click="togglePlaylistSort('duration')"
-              >
-                <span>時長</span>
-                <span
-                  v-if="isPlaylistSortActive('duration')"
+                  v-if="isPlaylistSortActive(column.key)"
                   class="playlist-table__sort-indicator"
                   :class="{
                     'playlist-table__sort-indicator--desc':
@@ -1211,14 +1189,6 @@ onUnmounted(() => {
 .hint--error {
   color: var(--ui-danger);
   font-weight: var(--ui-font-weight-strong);
-}
-
-.row-index {
-  flex-shrink: 0;
-  width: 2ch;
-  text-align: right;
-  color: var(--ui-text-muted);
-  font-variant-numeric: tabular-nums;
 }
 
 .row-actions {

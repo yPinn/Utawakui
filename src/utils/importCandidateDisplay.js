@@ -56,11 +56,3 @@ export function identityStatusClass(identity) {
   if (!identity) return 'pending';
   return identity.confidence === 'low' ? 'review' : 'identified';
 }
-
-export function formatDuration(seconds) {
-  if (!Number.isFinite(seconds)) return '';
-  const rounded = Math.max(0, Math.round(seconds));
-  const minutes = Math.floor(rounded / 60);
-  const remainder = String(rounded % 60).padStart(2, '0');
-  return `${minutes}:${remainder}`;
-}

@@ -2,8 +2,28 @@ import { describe, expect, it } from 'vitest';
 import {
   buildTrackIdentity,
   identityArtistKeys,
+  normalizeIsrc,
   trackIdentityKey,
 } from './trackIdentity.js';
+
+describe('normalizeIsrc', () => {
+  it('uppercases and strips separators from a well-formed ISRC', () => {
+    expect(normalizeIsrc('us-um7-24-01994')).toBe('USUM72401994');
+  });
+
+  it('accepts an already-normalized ISRC unchanged', () => {
+    expect(normalizeIsrc('USUM72401994')).toBe('USUM72401994');
+  });
+
+  it('rejects a value that is not ISRC-shaped', () => {
+    expect(normalizeIsrc('not-an-isrc')).toBeUndefined();
+  });
+
+  it('rejects undefined and empty input', () => {
+    expect(normalizeIsrc(undefined)).toBeUndefined();
+    expect(normalizeIsrc('')).toBeUndefined();
+  });
+});
 
 describe('buildTrackIdentity', () => {
   it('normalizes high-confidence external track metadata', () => {

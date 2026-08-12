@@ -194,7 +194,6 @@ function buildLyricsMetadataProfiles(track, enrichments = [], options = {}) {
 
 module.exports = {
   buildLyricsMetadataProfiles,
-  normalizeIsrc,
   normalizeMetadataCandidate,
   parsePlatformLink,
 };

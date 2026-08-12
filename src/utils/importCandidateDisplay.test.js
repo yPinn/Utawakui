@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   candidateId,
   candidateSourceLabel,
-  formatDuration,
   identityArtistLabel,
   identityStatusClass,
   identityStatusLabel,
@@ -12,11 +11,9 @@ import {
 } from './importCandidateDisplay.js';
 
 describe('import candidate display helpers', () => {
-  it('formats candidate ids and durations for UI display', () => {
+  it('formats candidate ids for UI display', () => {
     expect(candidateId({ playbackVideoId: 'audio123456' })).toBe('audio123456');
     expect(candidateId({ id: 'source12345' })).toBe('source12345');
-    expect(formatDuration(211.4)).toBe('3:31');
-    expect(formatDuration(undefined)).toBe('');
   });
 
   it('maps technical candidate fields to user-facing labels', () => {

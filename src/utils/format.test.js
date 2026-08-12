@@ -38,6 +38,11 @@ describe('formatDuration', () => {
     expect(formatDuration(undefined)).toBe('--:--');
   });
 
+  it('uses a caller-supplied fallback instead of --:--', () => {
+    expect(formatDuration(undefined, '')).toBe('');
+    expect(formatDuration(NaN, '?')).toBe('?');
+  });
+
   // Not guarded: state.currentTime/state.duration only ever come from the
   // <audio> element, which the browser guarantees is non-negative. This
   // documents the actual (garbled) output rather than adding a guard for

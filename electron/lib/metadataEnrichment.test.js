@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildLyricsMetadataProfiles,
-  normalizeIsrc,
   normalizeMetadataCandidate,
   parsePlatformLink,
 } from './metadataEnrichment.js';
@@ -93,7 +92,9 @@ describe('normalizeMetadataCandidate', () => {
   });
 
   it('rejects invalid ISRC values without rejecting the whole profile', () => {
-    expect(normalizeIsrc('not-an-isrc')).toBeUndefined();
+    // normalizeIsrc itself is trackIdentity.js's — see its own tests there
+    // for format-validation coverage; this only checks the candidate as a
+    // whole still comes back usable when isrc is the one bad field.
     expect(
       normalizeMetadataCandidate({
         title: 'Song',

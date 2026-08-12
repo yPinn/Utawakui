@@ -5,8 +5,8 @@ import {
   candidateId,
   candidateSourceLabel,
   confidenceLabel,
-  formatDuration,
 } from '../../utils/importCandidateDisplay.js';
+import { formatDuration } from '../../utils/format.js';
 import { ICON_SIZE } from '../../constants/ui.js';
 
 const props = defineProps({
@@ -34,7 +34,11 @@ const props = defineProps({
 
 const emit = defineEmits(['select']);
 
-const durationLabel = computed(() => formatDuration(props.candidate.duration));
+// '' fallback (not the default '--:--') preserves this component's prior
+// behavior of hiding an unknown duration rather than showing a placeholder.
+const durationLabel = computed(() =>
+  formatDuration(props.candidate.duration, ''),
+);
 const isMusicPlatform = computed(
   () =>
     props.candidate.searchProvider === 'yt-music' ||

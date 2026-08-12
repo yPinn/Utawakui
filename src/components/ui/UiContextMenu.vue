@@ -14,13 +14,17 @@ const props = defineProps({
   open: { type: Boolean, default: false },
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
-  width: { type: Number, default: 220 },
-  title: { type: String, default: '' },
   emptyText: { type: String, default: '' },
   items: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['select', 'close']);
+
+// Fixed menu width — no caller has ever needed a different one, so this
+// isn't a prop (see the removed `width` prop in code review history).
+const MENU_WIDTH = 220;
+const ROW_HEIGHT = 34;
+const MAX_MENU_HEIGHT = 320; // must match the CSS `max-height` below
 
 const menuRef = useTemplateRef('menu');
 const position = ref({ x: props.x, y: props.y });
@@ -29,7 +33,7 @@ const activeSubmenuKey = ref(null);
 const menuStyle = computed(() => ({
   left: `${position.value.x}px`,
   top: `${position.value.y}px`,
-  width: `${props.width}px`,
+  width: `${MENU_WIDTH}px`,
 }));
 
 const activeSubmenuItem = computed(
@@ -45,14 +49,14 @@ const activeSubmenuIndex = computed(() =>
 );
 
 const activeSubmenuWidth = computed(
-  () => activeSubmenuItem.value?.submenuWidth ?? props.width,
+  () => activeSubmenuItem.value?.submenuWidth ?? MENU_WIDTH,
 );
 
 const submenuStyle = computed(() => {
   if (!activeSubmenuItem.value) return {};
   if (typeof window === 'undefined') {
     return {
-      left: `${position.value.x + props.width + 4}px`,
+      left: `${position.value.x + MENU_WIDTH + 4}px`,
       top: `${position.value.y}px`,
       width: `${activeSubmenuWidth.value}px`,
     };
@@ -60,11 +64,9 @@ const submenuStyle = computed(() => {
 
   const margin = 8;
   const gap = 4;
-  const titleHeight = props.title ? 32 : 0;
-  const rowOffset =
-    titleHeight + 4 + Math.max(0, activeSubmenuIndex.value) * 34;
+  const rowOffset = 4 + Math.max(0, activeSubmenuIndex.value) * ROW_HEIGHT;
   const submenuHeight = estimateSubmenuHeight(activeSubmenuItem.value);
-  const rightX = position.value.x + props.width + gap;
+  const rightX = position.value.x + MENU_WIDTH + gap;
   const leftX = position.value.x - activeSubmenuWidth.value - gap;
   const x =
     rightX + activeSubmenuWidth.value + margin <= window.innerWidth
@@ -84,13 +86,15 @@ function itemKey(item) {
 }
 
 function estimateMenuHeight() {
-  const titleHeight = props.title ? 32 : 0;
   const itemCount = Math.max(1, props.items.length);
-  return Math.min(320, titleHeight + 8 + itemCount * 34);
+  return Math.min(MAX_MENU_HEIGHT, 8 + itemCount * ROW_HEIGHT);
 }
 
 function estimateSubmenuHeight(item) {
-  return Math.min(320, 8 + Math.max(1, item.children?.length ?? 0) * 34);
+  return Math.min(
+    MAX_MENU_HEIGHT,
+    8 + Math.max(1, item.children?.length ?? 0) * ROW_HEIGHT,
+  );
 }
 
 function clampPosition() {
@@ -100,7 +104,7 @@ function clampPosition() {
   }
 
   const rect = menuRef.value?.getBoundingClientRect();
-  const menuWidth = rect?.width ?? props.width;
+  const menuWidth = rect?.width ?? MENU_WIDTH;
   const menuHeight = rect?.height ?? estimateMenuHeight();
   const margin = 8;
   const maxX = window.innerWidth - menuWidth - margin;
@@ -158,11 +162,9 @@ function showSubmenu(item) {
     !item.separator && item.children?.length ? itemKey(item) : null;
 }
 
-watch(
-  () => [props.open, props.x, props.y, props.width, props.items.length],
-  scheduleClamp,
-  { immediate: true },
-);
+watch(() => [props.open, props.x, props.y, props.items.length], scheduleClamp, {
+  immediate: true,
+});
 
 onMounted(() => {
   if (typeof window === 'undefined') return;
@@ -190,7 +192,6 @@ onUnmounted(() => {
       @click.stop
       @contextmenu.prevent
     >
-      <p v-if="title" class="ui-context-menu__title">{{ title }}</p>
       <p v-if="items.length === 0" class="ui-context-menu__empty">
         {{ emptyText }}
       </p>
@@ -231,9 +232,6 @@ onUnmounted(() => {
           </span>
           <span class="ui-context-menu__text">
             <span class="ui-context-menu__label">{{ item.label }}</span>
-            <span v-if="item.description" class="ui-context-menu__description">
-              {{ item.description }}
-            </span>
           </span>
           <span class="ui-context-menu__status">
             {{ item.status || '' }}
@@ -284,12 +282,6 @@ onUnmounted(() => {
             </span>
             <span class="ui-context-menu__text">
               <span class="ui-context-menu__label">{{ child.label }}</span>
-              <span
-                v-if="child.description"
-                class="ui-context-menu__description"
-              >
-                {{ child.description }}
-              </span>
             </span>
             <span class="ui-context-menu__status">
               {{ child.status || '' }}
@@ -307,6 +299,8 @@ onUnmounted(() => {
   position: fixed;
   z-index: var(--ui-z-context-menu);
   box-sizing: border-box;
+  /* 320px must match MAX_MENU_HEIGHT in the script block — CSS can't read
+     a JS constant, so keep the two in sync by hand if this changes. */
   max-height: min(320px, calc(100vh - 16px));
   overflow-y: auto;
   padding: var(--ui-space-1);
@@ -320,17 +314,11 @@ onUnmounted(() => {
   z-index: var(--ui-z-context-menu-submenu);
 }
 
-.ui-context-menu__title,
 .ui-context-menu__empty {
   margin: 0;
   padding: var(--ui-space-1) var(--ui-space-2);
   color: var(--ui-text-muted);
   font-size: var(--ui-text-sm);
-}
-
-.ui-context-menu__title {
-  font-weight: var(--ui-font-weight-strong);
-  text-transform: uppercase;
 }
 
 .ui-context-menu__item {
@@ -401,21 +389,16 @@ onUnmounted(() => {
   justify-content: center;
 }
 
-.ui-context-menu__label,
-.ui-context-menu__description {
+.ui-context-menu__label {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.ui-context-menu__description,
-.ui-context-menu__status {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
-}
-
 .ui-context-menu__status {
   justify-self: end;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
   white-space: nowrap;
 }
 </style>

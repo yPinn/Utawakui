@@ -13,7 +13,6 @@ const props = defineProps({
   track: { type: Object, default: null },
   title: { type: String, default: undefined },
   artist: { type: String, default: undefined },
-  duration: { type: Number, default: undefined },
   active: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
   // Lets a caller show its own duration inside #trail (e.g. after other
@@ -23,7 +22,7 @@ const props = defineProps({
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
-const displayDuration = computed(() => props.duration ?? props.track?.duration);
+const displayDuration = computed(() => props.track?.duration);
 const thumbnailUrl = computed(() => props.track?.thumbnailUrl);
 const displayInitial = computed(() =>
   getTrackInitial({ title: displayTitle.value, id: props.track?.id }),

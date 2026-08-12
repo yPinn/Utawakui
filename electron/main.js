@@ -60,7 +60,7 @@ const {
 const { classifyCollectionKind } = require('./lib/albumClassifier');
 const { findLrclibSyncedLyrics } = require('./lib/lrclib');
 const { probeMusixmatchLyrics } = require('./lib/musixmatch');
-const { renderGlyphPng } = require('./lib/thumbar-icons');
+const { renderGlyphPng } = require('./lib/thumbarIcons');
 const {
   ensureModel,
   SEPARATION_PRESETS,

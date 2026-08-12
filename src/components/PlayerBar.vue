@@ -71,21 +71,6 @@ const volume = computed({
   set: (value) => setVolume(Number(value)),
 });
 
-const transposeSlider = computed({
-  get: () => state.transposeSemitones,
-  set: (value) => setTransposeSemitones(Number(value)),
-});
-
-const pitchCentsSlider = computed({
-  get: () => state.pitchCents,
-  set: (value) => setPitchCents(Number(value)),
-});
-
-const tempoSlider = computed({
-  get: () => state.tempoRate,
-  set: (value) => setTempoRate(Number(value)),
-});
-
 const volumePercent = computed(() => Math.round(state.volume * 100));
 const canShuffle = computed(() => queueState.tracks.length > 1);
 const currentTrackInitial = computed(() => getTrackInitial(state.track));
@@ -148,6 +133,90 @@ function adjustTempo(delta) {
   // useKeyboardShortcuts.js.
   setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
 }
+
+// Drives the three pitch-tempo rows (Transpose/Pitch/Speed) via v-for —
+// they used to be ~135 lines of copy-pasted template for three
+// parameterizations of the same "label + value + reset / minus + range +
+// plus" row. A computed (not a plain array) so it re-evaluates whenever
+// `state` changes. Each row carries the current value plus a setter
+// callback rather than a `computed({ get, set })` ref (what a v-model
+// slider would normally use) — a ref nested inside a plain array element
+// doesn't auto-unwrap in the template the way a top-level one does, so
+// this sidesteps that instead of relying on every caller remembering to
+// write `row.slider.value`.
+const pitchTempoRows = computed(() => [
+  {
+    key: 'transpose',
+    label: 'Transpose',
+    value: transposeLabel.value,
+    secondaryValue: null,
+    resetDisabled: !state.track || state.transposeSemitones === 0,
+    resetTitle: '重設變調',
+    onReset: () => setTransposeSemitones(0),
+    minusDisabled:
+      !state.track || state.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.min,
+    minusLabel: '降半音',
+    minusTitle: '降半音 (Ctrl+↓)',
+    onMinus: () => adjustTranspose(-1),
+    sliderValue: state.transposeSemitones,
+    min: TRANSPOSE_SEMITONES_RANGE.min,
+    max: TRANSPOSE_SEMITONES_RANGE.max,
+    step: 1,
+    sliderLabel: '變調(半音)',
+    onSliderInput: (value) => setTransposeSemitones(Number(value)),
+    plusDisabled:
+      !state.track || state.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.max,
+    plusLabel: '升半音',
+    plusTitle: '升半音 (Ctrl+↑)',
+    onPlus: () => adjustTranspose(1),
+  },
+  {
+    key: 'pitch',
+    label: 'Pitch',
+    value: pitchCentsLabel.value,
+    secondaryValue: `· ${pitchReferenceHz.value} Hz`,
+    resetDisabled: !state.track || state.pitchCents === 0,
+    resetTitle: '重設音高微調',
+    onReset: () => setPitchCents(0),
+    minusDisabled: !state.track || state.pitchCents <= PITCH_CENTS_RANGE.min,
+    minusLabel: '音高微調降低',
+    minusTitle: '音高微調降低',
+    onMinus: () => adjustPitchCents(-1),
+    sliderValue: state.pitchCents,
+    min: PITCH_CENTS_RANGE.min,
+    max: PITCH_CENTS_RANGE.max,
+    step: 1,
+    sliderLabel: '音高(音分微調)',
+    onSliderInput: (value) => setPitchCents(Number(value)),
+    plusDisabled: !state.track || state.pitchCents >= PITCH_CENTS_RANGE.max,
+    plusLabel: '音高微調提高',
+    plusTitle: '音高微調提高',
+    onPlus: () => adjustPitchCents(1),
+  },
+  {
+    key: 'tempo',
+    label: 'Speed',
+    value: tempoLabel.value,
+    secondaryValue: null,
+    resetDisabled: !state.track || state.tempoRate === 1,
+    resetTitle: '重設變速',
+    onReset: () => setTempoRate(1),
+    minusDisabled: !state.track || state.tempoRate <= TEMPO_RATE_RANGE.min,
+    minusLabel: '放慢',
+    minusTitle: '放慢 (Ctrl+Shift+↓)',
+    onMinus: () => adjustTempo(-0.05),
+    sliderValue: state.tempoRate,
+    min: TEMPO_RATE_RANGE.min,
+    max: TEMPO_RATE_RANGE.max,
+    step: 0.05,
+    sliderLabel: '變速',
+    onSliderInput: (value) => setTempoRate(Number(value)),
+    plusDisabled: !state.track || state.tempoRate >= TEMPO_RATE_RANGE.max,
+    plusLabel: '加快',
+    plusTitle: '加快 (Ctrl+Shift+↑)',
+    onPlus: () => adjustTempo(0.05),
+  },
+]);
 
 function playQueuedTrack(track) {
   if (!track) return;
@@ -359,137 +428,54 @@ onUnmounted(() => {
         />
       </header>
 
-      <div class="pitch-tempo-panel__row">
+      <div
+        v-for="row in pitchTempoRows"
+        :key="row.key"
+        class="pitch-tempo-panel__row"
+      >
         <div class="pitch-tempo-panel__row-header">
-          <span class="pitch-tempo-panel__label">Transpose</span>
-          <span class="pitch-tempo-panel__value">{{ transposeLabel }}</span>
-          <UiButton
-            :icon="RotateCcw"
-            :disabled="!state.track || state.transposeSemitones === 0"
-            aria-label="重設變調"
-            title="重設變調"
-            @click="setTransposeSemitones(0)"
-          />
-        </div>
-        <div class="pitch-tempo-panel__control">
-          <UiButton
-            :icon="Minus"
-            :disabled="
-              !state.track ||
-              state.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.min
-            "
-            aria-label="降半音"
-            title="降半音 (Ctrl+↓)"
-            @click="adjustTranspose(-1)"
-          />
-          <input
-            v-model="transposeSlider"
-            type="range"
-            :min="TRANSPOSE_SEMITONES_RANGE.min"
-            :max="TRANSPOSE_SEMITONES_RANGE.max"
-            step="1"
-            :disabled="!state.track"
-            aria-label="變調(半音)"
-            :aria-valuetext="transposeLabel"
-          />
-          <UiButton
-            :icon="Plus"
-            :disabled="
-              !state.track ||
-              state.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.max
-            "
-            aria-label="升半音"
-            title="升半音 (Ctrl+↑)"
-            @click="adjustTranspose(1)"
-          />
-        </div>
-      </div>
-
-      <div class="pitch-tempo-panel__row">
-        <div class="pitch-tempo-panel__row-header">
-          <span class="pitch-tempo-panel__label">Pitch</span>
+          <span class="pitch-tempo-panel__label">{{ row.label }}</span>
           <span class="pitch-tempo-panel__value"
-            >{{ pitchCentsLabel
-            }}<span class="pitch-tempo-panel__value-secondary"
-              >· {{ pitchReferenceHz }} Hz</span
+            >{{ row.value
+            }}<span
+              v-if="row.secondaryValue"
+              class="pitch-tempo-panel__value-secondary"
+              >{{ row.secondaryValue }}</span
             ></span
           >
           <UiButton
             :icon="RotateCcw"
-            :disabled="!state.track || state.pitchCents === 0"
-            aria-label="重設音高微調"
-            title="重設音高微調"
-            @click="setPitchCents(0)"
+            :disabled="row.resetDisabled"
+            :aria-label="row.resetTitle"
+            :title="row.resetTitle"
+            @click="row.onReset"
           />
         </div>
         <div class="pitch-tempo-panel__control">
           <UiButton
             :icon="Minus"
-            :disabled="
-              !state.track || state.pitchCents <= PITCH_CENTS_RANGE.min
-            "
-            aria-label="音高微調降低"
-            title="音高微調降低"
-            @click="adjustPitchCents(-1)"
+            :disabled="row.minusDisabled"
+            :aria-label="row.minusLabel"
+            :title="row.minusTitle"
+            @click="row.onMinus"
           />
           <input
-            v-model="pitchCentsSlider"
             type="range"
-            :min="PITCH_CENTS_RANGE.min"
-            :max="PITCH_CENTS_RANGE.max"
-            step="1"
+            :value="row.sliderValue"
+            :min="row.min"
+            :max="row.max"
+            :step="row.step"
             :disabled="!state.track"
-            aria-label="音高(音分微調)"
-            :aria-valuetext="pitchCentsLabel"
+            :aria-label="row.sliderLabel"
+            :aria-valuetext="row.value"
+            @input="row.onSliderInput($event.target.value)"
           />
           <UiButton
             :icon="Plus"
-            :disabled="
-              !state.track || state.pitchCents >= PITCH_CENTS_RANGE.max
-            "
-            aria-label="音高微調提高"
-            title="音高微調提高"
-            @click="adjustPitchCents(1)"
-          />
-        </div>
-      </div>
-
-      <div class="pitch-tempo-panel__row">
-        <div class="pitch-tempo-panel__row-header">
-          <span class="pitch-tempo-panel__label">Speed</span>
-          <span class="pitch-tempo-panel__value">{{ tempoLabel }}</span>
-          <UiButton
-            :icon="RotateCcw"
-            :disabled="!state.track || state.tempoRate === 1"
-            aria-label="重設變速"
-            title="重設變速"
-            @click="setTempoRate(1)"
-          />
-        </div>
-        <div class="pitch-tempo-panel__control">
-          <UiButton
-            :icon="Minus"
-            :disabled="!state.track || state.tempoRate <= TEMPO_RATE_RANGE.min"
-            aria-label="放慢"
-            title="放慢 (Ctrl+Shift+↓)"
-            @click="adjustTempo(-0.05)"
-          />
-          <input
-            v-model="tempoSlider"
-            type="range"
-            :min="TEMPO_RATE_RANGE.min"
-            :max="TEMPO_RATE_RANGE.max"
-            step="0.05"
-            :disabled="!state.track"
-            aria-label="變速"
-            :aria-valuetext="tempoLabel"
-          />
-          <UiButton
-            :icon="Plus"
-            :disabled="!state.track || state.tempoRate >= TEMPO_RATE_RANGE.max"
-            aria-label="加快"
-            title="加快 (Ctrl+Shift+↑)"
-            @click="adjustTempo(0.05)"
+            :disabled="row.plusDisabled"
+            :aria-label="row.plusLabel"
+            :title="row.plusTitle"
+            @click="row.onPlus"
           />
         </div>
       </div>
