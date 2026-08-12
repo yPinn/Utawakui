@@ -52,6 +52,13 @@ useKeyboardShortcuts(activeView);
   grid-template-columns: 180px 1fr;
   grid-template-rows: 1fr auto;
   height: 100%;
+  /* The one grid container in the app with no responsive behavior of its
+     own (180px sidebar is fixed) — without this, a 1fr track's implicit
+     min-width:auto can force the grid wider than the viewport once
+     .shell__main's content wants more room than it has, which is why
+     individual views (e.g. SetlistView) have each had to add their own
+     min-width: 0 defensively. */
+  min-width: 0;
 }
 
 .shell__sidebar {

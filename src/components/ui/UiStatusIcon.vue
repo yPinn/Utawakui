@@ -69,7 +69,7 @@ defineProps({
 }
 
 .ui-status-icon__glyph--spin {
-  animation: ui-status-icon-spin 1s linear infinite;
+  animation: ui-status-icon-spin var(--ui-motion-spin) infinite;
 }
 
 @keyframes ui-status-icon-spin {

@@ -580,20 +580,25 @@ watch(activeLineIndex, (index) => {
 .lyrics-panel {
   min-height: 0;
   background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
 }
 
+/* 190px was a hand-computed "page header + player bar" reservation that
+   didn't reference --ui-player-bar-height at all; re-expressed as the
+   token plus the remaining ~122px (page padding/header, not itself a
+   repeated value elsewhere) so this and the player bar's actual height
+   can't silently drift apart again. */
 .lyrics-panel--list {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - 190px);
+  max-height: calc(100vh - var(--ui-player-bar-height) - 122px);
 }
 
 .lyrics-panel--preview {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  max-height: calc(100vh - 190px);
+  max-height: calc(100vh - var(--ui-player-bar-height) - 122px);
 }
 
 .lyrics-panel__header,
@@ -604,7 +609,7 @@ watch(activeLineIndex, (index) => {
   justify-content: space-between;
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
-  border-bottom: 1px solid var(--ui-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-border);
 }
 
 .lyrics-panel__title,
@@ -641,24 +646,24 @@ watch(activeLineIndex, (index) => {
   align-items: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-2) var(--ui-space-3);
-  border-bottom: 1px solid var(--ui-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-border);
 }
 
 .lyrics-panel__playlist-select {
   min-width: 0;
   flex: 1 1 auto;
-  height: 30px;
-  border: 1px solid var(--ui-border);
+  height: var(--ui-control-height);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
 }
 
 .lyrics-panel__playlist-select:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-panel__playlist .lyrics-panel__meta {
@@ -734,8 +739,7 @@ watch(activeLineIndex, (index) => {
 }
 
 .ui-track--active .lyrics-row-status__duration {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 
 .lyrics-status--large {
@@ -765,18 +769,18 @@ watch(activeLineIndex, (index) => {
 .lyrics-source__select {
   min-width: 180px;
   max-width: 280px;
-  height: 30px;
-  border: 1px solid var(--ui-border);
+  height: var(--ui-control-height);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
 }
 
 .lyrics-source__select:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-text-size,
@@ -784,9 +788,9 @@ watch(activeLineIndex, (index) => {
   display: flex;
   align-items: center;
   gap: var(--ui-space-1);
-  height: 30px;
+  height: var(--ui-control-height);
   padding: 0 var(--ui-space-2);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
 }
@@ -808,27 +812,27 @@ watch(activeLineIndex, (index) => {
      far end with a divider so it doesn't read as "one more live control". */
   margin-left: auto;
   padding-left: var(--ui-space-3);
-  border-left: 1px solid var(--ui-border);
+  border-left: var(--ui-border-width) solid var(--ui-border);
 }
 
 .lyrics-separation__preset {
   min-width: 96px;
-  height: 30px;
-  border: 1px solid var(--ui-border);
+  height: var(--ui-control-height);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
 }
 
 .lyrics-separation__preset:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-separation__spin :deep(svg) {
-  animation: lyrics-spin 1s linear infinite;
+  animation: lyrics-spin var(--ui-motion-spin) infinite;
 }
 
 .lyrics-separation__done {
@@ -878,7 +882,7 @@ watch(activeLineIndex, (index) => {
   border-radius: var(--ui-radius);
   background: transparent;
   color: inherit;
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-lg);
   line-height: 1.55;
   text-align: left;
@@ -891,13 +895,13 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-line__button:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: -2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .lyrics-line--past {
   color: var(--ui-text);
-  opacity: 0.72;
+  opacity: var(--ui-opacity-muted);
 }
 
 .lyrics-line--active {

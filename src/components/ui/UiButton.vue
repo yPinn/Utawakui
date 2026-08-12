@@ -35,7 +35,7 @@ defineProps({
   padding: var(--ui-space-1) var(--ui-space-2);
   border: none;
   border-radius: var(--ui-radius);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
   cursor: pointer;
 }
@@ -73,12 +73,12 @@ defineProps({
 
 .ui-btn:disabled,
 .ui-btn[aria-disabled='true'] {
-  opacity: 0.5;
+  opacity: var(--ui-opacity-disabled);
   cursor: default;
 }
 
 .ui-btn:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 </style>

@@ -488,9 +488,10 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--ui-space-4);
+  height: var(--ui-player-bar-height);
   padding: var(--ui-space-2) var(--ui-space-3);
   background: var(--ui-surface);
-  border-top: 1px solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-border);
   box-sizing: border-box;
   /* Otherwise dragging a slider triggers native text selection, which can
      swallow a click on a nearby button instead of registering it. */
@@ -588,8 +589,8 @@ onUnmounted(() => {
 }
 
 .player-bar__play:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .player-bar__progress {
@@ -654,12 +655,12 @@ onUnmounted(() => {
 .pitch-tempo-panel {
   position: fixed;
   right: var(--ui-space-3);
-  bottom: calc(72px + var(--ui-space-3));
+  bottom: calc(var(--ui-player-bar-height) + var(--ui-space-3));
   z-index: var(--ui-z-dropdown);
   box-sizing: border-box;
   width: min(280px, calc(100vw - var(--ui-space-5)));
   padding: var(--ui-space-4);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-surface);
   box-shadow: var(--ui-overlay-shadow);

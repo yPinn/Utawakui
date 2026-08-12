@@ -40,7 +40,7 @@ const items = [
   gap: var(--ui-space-1);
   padding: var(--ui-space-2);
   background: var(--ui-surface);
-  border-right: 1px solid var(--ui-border);
+  border-right: var(--ui-border-width) solid var(--ui-border);
   height: 100%;
   box-sizing: border-box;
 }
@@ -54,11 +54,11 @@ const items = [
   border-radius: var(--ui-radius);
   background: transparent;
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
   text-align: left;
   cursor: pointer;
-  transition: background-color 120ms ease-out;
+  transition: background-color var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
 .sidebar__item:hover {
@@ -66,8 +66,8 @@ const items = [
 }
 
 .sidebar__item:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: -2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .sidebar__item--active {

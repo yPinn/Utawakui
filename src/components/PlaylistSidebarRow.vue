@@ -104,7 +104,7 @@ const emit = defineEmits([
   border-radius: var(--ui-radius);
   background: transparent;
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
   text-align: left;
   cursor: pointer;
@@ -122,7 +122,7 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar__item--dragging {
-  opacity: 0.45;
+  opacity: var(--ui-opacity-dragging);
 }
 
 .playlist-sidebar__item--drop-before::before,
@@ -150,8 +150,8 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar__item:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: -2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .playlist-sidebar__item--active {
@@ -167,7 +167,7 @@ const emit = defineEmits([
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: calc(var(--ui-radius) - 2px);
+  border-radius: var(--ui-radius-sm);
   background: var(--ui-surface-hover);
   color: var(--ui-text-muted);
   font-size: var(--ui-text-sm);
@@ -176,8 +176,12 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
-  color: inherit;
-  opacity: 0.85;
+  /* Same anti-pattern as the .75-opacity sites B2 fixes elsewhere (opacity
+     blending toward whatever's behind the element) — the original scan
+     counted 7 sites at exactly 0.75, but this is the same pattern at a
+     different hand-picked ratio, found while reconciling the "6 other
+     opacity ratios" bucket below. */
+  color: var(--ui-accent-contrast-muted);
 }
 
 .playlist-sidebar__thumb-image {
@@ -229,7 +233,6 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__kind {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 </style>

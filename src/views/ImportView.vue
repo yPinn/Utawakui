@@ -487,7 +487,6 @@ onMounted(() => {
 
 <style scoped>
 .import-page {
-  --import-border-width: calc(var(--ui-space-1) / 4);
   --import-control-height: calc(var(--ui-space-5) + var(--ui-space-4));
   --import-track-row-min-height: calc(
     var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2)
@@ -506,7 +505,7 @@ onMounted(() => {
   min-width: 0;
   padding: var(--ui-space-3);
   background: var(--ui-surface);
-  border: var(--import-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
 }
 
@@ -610,9 +609,9 @@ onMounted(() => {
   min-height: var(--import-control-height);
   background: var(--ui-bg);
   color: var(--ui-text);
-  border: var(--import-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
 }
 
@@ -621,12 +620,12 @@ onMounted(() => {
 }
 
 .source-row__input:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .source-row__input:disabled {
-  opacity: 0.65;
+  opacity: var(--ui-opacity-disabled);
 }
 
 .source-row__action {
@@ -671,7 +670,7 @@ onMounted(() => {
   display: grid;
   gap: var(--ui-space-2);
   padding-top: var(--ui-space-3);
-  border-top: var(--import-border-width) solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-border);
 }
 
 .candidate-chips,
@@ -731,7 +730,7 @@ onMounted(() => {
   border-radius: var(--ui-radius);
   background: transparent;
   color: var(--ui-text-muted);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
   cursor: pointer;
 }
@@ -756,13 +755,13 @@ onMounted(() => {
 }
 
 .filter-tab:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .filter-tab__count {
   font-variant-numeric: tabular-nums;
-  opacity: 0.78;
+  opacity: var(--ui-opacity-muted);
 }
 
 .preview-tools__actions {
@@ -819,10 +818,14 @@ onMounted(() => {
   justify-content: flex-end;
   gap: var(--ui-space-3);
   padding-top: var(--ui-space-2);
-  border-top: var(--import-border-width) solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-border);
 }
 
-@media (max-width: 920px) {
+/* 900px is the "medium" breakpoint tier documented in tokens.css — this
+   was 920px, ~20px off the same tier used elsewhere (LyricsWorkspace.vue),
+   almost certainly unintentional drift rather than a deliberate third
+   value. */
+@media (max-width: 900px) {
   .import-control__top,
   .preview-tools {
     align-items: stretch;

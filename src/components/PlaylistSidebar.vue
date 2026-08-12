@@ -437,7 +437,7 @@ function clearDragState() {
 .playlist-sidebar__divider {
   margin: var(--ui-space-1) 0;
   border: none;
-  border-top: 1px solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-border);
 }
 
 /* Shared row styles (base .playlist-sidebar__item, __thumb, __play,
@@ -456,7 +456,7 @@ function clearDragState() {
   border-radius: var(--ui-radius);
   background: transparent;
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
   text-align: left;
   cursor: pointer;
@@ -467,8 +467,8 @@ function clearDragState() {
 }
 
 .playlist-sidebar__item:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: -2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .playlist-sidebar__item--active {
@@ -484,7 +484,7 @@ function clearDragState() {
   justify-content: center;
   width: 40px;
   height: 40px;
-  border-radius: calc(var(--ui-radius) - 2px);
+  border-radius: var(--ui-radius-sm);
   background: var(--ui-surface-hover);
   color: var(--ui-text-muted);
   font-size: var(--ui-text-sm);
@@ -493,8 +493,7 @@ function clearDragState() {
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
-  color: inherit;
-  opacity: 0.85;
+  color: var(--ui-accent-contrast-muted);
 }
 
 /* Distinguishes "全部曲目" from the "新增歌單" row directly above it now

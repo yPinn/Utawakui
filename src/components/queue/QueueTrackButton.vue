@@ -85,8 +85,14 @@ const emit = defineEmits([
 }
 
 .queue-track:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  /* Full-width row inside a list (queue-section__item li), same shape as
+     UiTrackRow — inset offset avoids the ring being clipped by the
+     adjacent row, per the B3 focus-ring convention. This was previously
+     1px (a standalone-control-style offset that didn't fit its actual
+     list-row layout); -2px is the correction, not a drift-preserving
+     merge like the other 1px sites in this pass. */
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .queue-track--current .queue-track__title {

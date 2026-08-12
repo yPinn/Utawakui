@@ -238,20 +238,25 @@ function clearSourceDragState() {
 
 <style scoped>
 .queue-panel {
-  --queue-panel-bottom-offset: 72px;
   --queue-panel-width: 360px;
-  --queue-panel-max-height-offset: 120px;
+  /* 120px was a hand-guessed "player bar + top margin" reservation that
+     didn't match --ui-player-bar-height's own derivation (see tokens.css);
+     re-expressed as the token plus the remaining ~48px of reserved margin
+     so the two stop drifting independently. Net effect is a ~4px taller
+     max-height (120px → 116px reserved), consistent with the token
+     correcting the player bar's guessed height from 72px to 68px. */
+  --queue-panel-max-height-offset: calc(var(--ui-player-bar-height) + 48px);
 
   position: fixed;
   right: var(--ui-space-3);
-  bottom: calc(var(--queue-panel-bottom-offset) + var(--ui-space-3));
+  bottom: calc(var(--ui-player-bar-height) + var(--ui-space-3));
   z-index: var(--ui-z-dropdown);
   box-sizing: border-box;
   width: min(var(--queue-panel-width), calc(100vw - var(--ui-space-5)));
   max-height: min(640px, calc(100vh - var(--queue-panel-max-height-offset)));
   overflow: auto;
   padding: var(--ui-space-4);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-surface);
   box-shadow: var(--ui-overlay-shadow);
@@ -293,8 +298,8 @@ function clearSourceDragState() {
 }
 
 .queue-panel__text-action:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
   border-radius: var(--ui-radius);
 }
 </style>

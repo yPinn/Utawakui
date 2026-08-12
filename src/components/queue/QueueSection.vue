@@ -111,7 +111,7 @@ const emit = defineEmits([
 }
 
 .queue-section__item--dragging {
-  opacity: 0.45;
+  opacity: var(--ui-opacity-dragging);
 }
 
 .queue-section__item--drop-before::before,

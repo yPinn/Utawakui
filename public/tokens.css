@@ -1,3 +1,12 @@
+/* A third CSS location exists outside this file: index.html's own <style>
+   block (not processed by Vite) sets body/#app sizing, the global
+   scrollbar-hiding rule, and input[type=range] color-scheme/accent-color
+   — a reset layer that has to live there because it applies before Vue
+   mounts anything. It reads var(--ui-font)/var(--ui-bg)/var(--ui-text)
+   from this file (loaded via <link rel="stylesheet">) but isn't itself
+   discoverable from a component author's editor. Not moved into the
+   bundle — that would change load ordering and the CSP assumptions
+   index.html's own comments document. */
 :root {
   /* control panel chrome only — not the OBS overlay, see CLAUDE.md */
   --ui-bg: #20222a;
@@ -15,7 +24,19 @@
      would go white, which would break every accent-filled control if this
      token didn't exist separately. */
   --ui-accent-contrast: #20222a;
-  --ui-focus: #6c8cff;
+  /* Same "text/icon on top of --ui-accent" role as --ui-accent-contrast,
+     for secondary/muted text on an accent-filled row — replaces the
+     `color: inherit; opacity: 0.75` anti-pattern (see CLAUDE.md: opacity
+     blends toward whatever's behind the element, which flips direction
+     between light and dark themes). color-mix() computes the actual
+     blended color so this reads identically to the old opacity result in
+     the current dark palette, instead of a hand-picked hex approximation. */
+  --ui-accent-contrast-muted: color-mix(
+    in srgb,
+    var(--ui-accent-contrast) 75%,
+    var(--ui-accent)
+  );
+  --ui-focus: var(--ui-accent);
   --ui-danger: #ff6b70;
 
   --ui-space-1: 0.25rem; /* 4px */
@@ -23,6 +44,9 @@
   --ui-space-3: 0.75rem; /* 12px */
   --ui-space-4: 1rem; /* 16px */
   --ui-space-5: 1.5rem; /* 24px */
+  --ui-space-6: 2rem; /* 32px */
+  --ui-space-7: 3rem; /* 48px */
+  --ui-space-8: 4rem; /* 64px */
 
   --ui-text-sm: 0.875rem; /* 14px */
   --ui-text-md: 1rem; /* 16px */
@@ -31,14 +55,54 @@
   --ui-text-2xl: 2.5rem; /* 40px */
   --ui-font-weight-strong: 600;
 
+  --ui-radius-xs: 2px;
+  --ui-radius-sm: 4px;
   --ui-radius: 6px;
+  --ui-radius-lg: 8px;
   --ui-radius-pill: 999px;
+
+  --ui-border-width: 1px;
+  --ui-control-height: 30px;
+  --ui-player-bar-height: 68px; /* content-driven height (52px artwork +
+    2× --ui-space-2 padding), named so floating panels above the player
+    bar (PlaybackQueuePanel, lyrics panel) can position off it instead of
+    each guessing the same number independently */
+
+  --ui-opacity-disabled: 0.5;
+  --ui-opacity-dragging: 0.45;
+  --ui-opacity-muted: 0.72; /* the one non-accent-row "dim this text a bit"
+    ratio left after --ui-accent-contrast-muted absorbed the accent-row
+    cases above; opacity is fine here because there's no themed background
+    behind it to blend toward */
+
+  /* 2px offset for standalone controls (buttons, inputs) that have room to
+     breathe; -2px for elements inset in a list/full-width row, where a
+     positive offset would get clipped by the adjacent row. Media queries
+     can't read a var(), so --ui-breakpoint-* below are comments, not
+     tokens — see the B5 section of the same name. */
+  --ui-focus-width: 2px;
+  --ui-focus-offset: 2px;
+  --ui-focus-offset-inset: -2px;
+
+  --ui-motion-fast: 120ms;
+  --ui-motion-ease: ease-out;
+  --ui-motion-spin: 1s linear;
 
   --ui-z-dropdown: 20;
   --ui-z-context-menu: 100;
   --ui-z-context-menu-submenu: 101;
 
-  --font-ui:
+  --ui-font:
     'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
     -apple-system, sans-serif;
 }
+
+/* Breakpoints (documented values, not custom properties — CSS media
+   queries cannot read var()). Two tiers used across the app; consolidated
+   from three near-duplicate values (680px / 900px / 920px) found during
+   the 2026-08-13 code-review pass, where 900 vs 920 was almost certainly
+   an unintentional 20px drift rather than a deliberate second tier.
+     narrow: 680px  — single-column / stacked layouts
+     medium: 900px  — sidebar/panel collapse
+   If you need one of these values in a media query, hardcode the number
+   and reference this comment; don't invent a third nearby value. */

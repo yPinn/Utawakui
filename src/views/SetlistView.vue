@@ -990,7 +990,7 @@ onUnmounted(() => {
   align-items: end;
   padding: var(--ui-space-5);
   background: var(--ui-surface);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
 }
 
@@ -1002,7 +1002,7 @@ onUnmounted(() => {
   overflow: hidden;
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   user-select: none;
   -webkit-user-drag: none;
 }
@@ -1100,13 +1100,13 @@ onUnmounted(() => {
 }
 
 .playlist-play:disabled {
-  opacity: 0.5;
+  opacity: var(--ui-opacity-disabled);
   cursor: default;
 }
 
 .playlist-play:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .rename-input {
@@ -1116,9 +1116,9 @@ onUnmounted(() => {
   padding: var(--ui-space-1) var(--ui-space-2);
   background: var(--ui-surface);
   color: var(--ui-text);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-lg);
   font-weight: var(--ui-font-weight-strong);
 }
@@ -1134,7 +1134,7 @@ onUnmounted(() => {
   gap: var(--ui-space-1);
   min-width: 180px;
   padding: var(--ui-space-1) var(--ui-space-2);
-  border: 1px solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-border);
   border-radius: var(--ui-radius);
   background: var(--ui-surface);
   color: var(--ui-text-muted);
@@ -1152,7 +1152,7 @@ onUnmounted(() => {
   padding: 0;
   background: transparent;
   color: var(--ui-text);
-  font-family: var(--font-ui);
+  font-family: var(--ui-font);
   font-size: var(--ui-text-sm);
 }
 
@@ -1177,8 +1177,8 @@ onUnmounted(() => {
 }
 
 .search-box:focus-within {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 1px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .hint {
@@ -1216,7 +1216,7 @@ onUnmounted(() => {
 
 .playlist-table__head {
   padding: 0 var(--ui-space-3) var(--ui-space-2);
-  border-bottom: 1px solid var(--ui-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-border);
   color: var(--ui-text-muted);
   font-size: var(--ui-text-sm);
 }
@@ -1242,8 +1242,8 @@ onUnmounted(() => {
 }
 
 .playlist-table__sort:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: 2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset);
   border-radius: var(--ui-radius);
 }
 
@@ -1297,7 +1297,7 @@ onUnmounted(() => {
 }
 
 .playlist-track--dragging {
-  opacity: 0.45;
+  opacity: var(--ui-opacity-dragging);
 }
 
 .playlist-track--drop-before::before,
@@ -1347,13 +1347,11 @@ onUnmounted(() => {
 .playlist-track--active .playlist-track__index,
 .playlist-track--active .playlist-track__added,
 .playlist-track--active .playlist-track__duration {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 
 .playlist-track--active .playlist-track__drag {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 
 .playlist-track__main {
@@ -1370,7 +1368,7 @@ onUnmounted(() => {
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: calc(var(--ui-radius) - 2px);
+  border-radius: var(--ui-radius-sm);
   background: var(--ui-surface-hover);
   color: var(--ui-text);
   font-size: var(--ui-text-sm);
@@ -1411,8 +1409,7 @@ onUnmounted(() => {
 }
 
 .playlist-track--active .playlist-track__subtitle {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 
 .tracks {

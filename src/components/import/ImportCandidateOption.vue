@@ -94,8 +94,6 @@ const metaParts = computed(() =>
 
 <style scoped>
 .candidate-option {
-  --candidate-border-width: calc(var(--ui-space-1) / 4);
-
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -103,7 +101,7 @@ const metaParts = computed(() =>
   width: 100%;
   min-height: calc(var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2));
   padding: var(--ui-space-2);
-  border: var(--candidate-border-width) solid transparent;
+  border: var(--ui-border-width) solid transparent;
   border-radius: var(--ui-radius);
   background: var(--ui-bg);
   color: var(--ui-text);
@@ -118,12 +116,17 @@ const metaParts = computed(() =>
 
 .candidate-option:disabled {
   cursor: default;
-  opacity: 0.65;
+  opacity: var(--ui-opacity-disabled);
 }
 
 .candidate-option:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: var(--candidate-border-width);
+  /* Offset deliberately matches the border width (not the shared
+     --ui-focus-offset/-inset pair) so the ring sits flush just outside
+     the option's own border regardless of whether that border is
+     transparent (unselected) or --ui-accent (selected) — a different,
+     intentional reason for a custom offset, not drift. */
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-border-width);
 }
 
 .candidate-option--selected {

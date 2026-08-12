@@ -87,8 +87,8 @@ const displayInitial = computed(() =>
 }
 
 .ui-track--interactive:focus-visible {
-  outline: 2px solid var(--ui-focus);
-  outline-offset: -2px;
+  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-track__info {
@@ -105,7 +105,7 @@ const displayInitial = computed(() =>
   justify-content: center;
   width: 44px;
   height: 44px;
-  border-radius: calc(var(--ui-radius) - 2px);
+  border-radius: var(--ui-radius-sm);
   background: var(--ui-surface-hover);
   color: var(--ui-text);
   font-weight: var(--ui-font-weight-strong);
@@ -136,8 +136,7 @@ const displayInitial = computed(() =>
 }
 
 .ui-track--active .ui-track__artist {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 
 .ui-track__duration {
@@ -147,7 +146,6 @@ const displayInitial = computed(() =>
 }
 
 .ui-track--active .ui-track__duration {
-  color: inherit;
-  opacity: 0.75;
+  color: var(--ui-accent-contrast-muted);
 }
 </style>
