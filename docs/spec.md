@@ -1,96 +1,280 @@
 # Utawakui 產品規格
 
-## 1. 定位
+> 本文件定義 Utawakui 的產品定位、功能分類、目前狀態、架構邊界與 roadmap。README 作為專案入口；本文件作為後續設計與實作判斷的主要依據。
 
-給直播主/VTuber 用的 OBS 疊加工具。核心差異化:**用 Spotify / YT Music 歌單快速匯入曲目**,搭配本機播放、變調變速與 OBS 歌詞/歌單疊加。不做音樂庫管理,不做多人協作,不做觀眾點歌互動,不做即時串流播放整合。
+## 1. 文件分工
 
-## 2. 核心決策
+| 文件            | 目的     | 內容範圍                                                |
+| --------------- | -------- | ------------------------------------------------------- |
+| `README.md`     | 對外入口 | 專案概覽、功能狀態、開發方式、文件連結。                |
+| `docs/spec.md`  | 產品規格 | 產品原則、功能分類、現況盤點、架構、資料模型、roadmap。 |
+| `tasks/todo.md` | 開發紀錄 | 單次任務的 checklist、驗證與 review。                   |
 
-| 議題             | 決策                                                                                                                                                                                                                                                          |
-| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 音訊來源         | Spotify/YT Music 僅作歌單匯入(讀取曲目清單/metadata),實際播放音訊由 yt-dlp 下載 YouTube 內容,本機播放。官方串流管道無法取得可處理的原始音訊(DRM),即時系統音訊擷取方案風險過高已捨棄                                                                           |
-| YouTube 音源解析 | 優先透過 YT Music 目錄解析對應的「Topic 頻道」官方音源影片 ID 交給 yt-dlp,而非文字模糊搜尋,降低歌詞時間對不準機率                                                                                                                                             |
-| Pitch/Tempo      | 本機檔案 + 分階段處理:試聽/調整階段即時 DSP,確定 Key 後背景預先渲染快取,實際演出時只播放快取檔,直播當下不跑即時運算                                                                                                                                           |
-| 帳號門檻         | Spotify 走官方 Web API 讀取歌單(免費帳號可用,不需 Premium);YT Music 走非官方管道讀取(不需付費,但無官方授權保證,需獨立列管風險)                                                                                                                                |
-| 歌詞比對         | 優先用曲目 ID/duration 過濾候選,找不到才退回曲名+歌手模糊搜尋;保留手動 reset offset 安全網                                                                                                                                                                    |
-| 資料模型         | 連續自動儲存為底 + 具名 preset 快照為選用附加層(歌單+主題+顯示設定可另存成具名組合、可切換)                                                                                                                                                                   |
-| Overlay          | 純 HTML/CSS/JS,無框架,OBS Browser Source                                                                                                                                                                                                                      |
-| 控制面板前端     | 原定純 HTML/CSS/JS 起步、視 CRUD 複雜度評估是否導框架——實作時複雜度提前出現,已評估並改採 Vite + Vue 3。刻意不用 vue-router/Pinia:分頁固定 4 個、Electron 視窗無網址列無深連結需求,單一共享 composable 就撐得住目前規模,兩者都是「真的需要再導入」而非預先鎖定 |
-| 技術棧           | Electron(Node.js)。生態/套件擴展性優先於資源占用;pitch/tempo 已由快取機制移出直播當下即時路徑,原生語言的效能優勢不再是必要條件;JS 生態的高擴展性、npm 套件量,以及未來若需局部效能優化仍可用 native addon(N-API)下沉,是決定性因素                              |
+文件撰寫原則：
 
-## 3. 功能規格
+- 只提及使用產品時必要知道的邊界。
+- 不主動展開使用者應自行掌握的外部背景。
+- 功能狀態要明確區分「已實作」「部分實作」「規劃中」「排除」。
+- 文字以產品語言為主，避免把規格寫成法律分析或平台評論。
 
-### 核心採納(MVP 下限)
+## 2. 產品定位
 
-- 獨立播放/暫停/停止/音量/進度控制
-- Per-track pitch/tempo 記憶 + reset
-- 待播/已唱佇列
-- 多來源歌詞搜尋(曲目 ID 優先,duration 過濾,模糊搜尋退路)
-- 手動歌詞偏移校正
-- 獨立可移動「歌詞視窗」(主播自看用,非 OBS 疊加)
-- JP/KR 羅馬拼音、簡繁轉換
-- OBS Browser Source 疊加,多主題可選,支援拖曳建立來源與複製 URL 兩種方式
-- 歌詞/歌單為獨立來源,可各自縮放裁切定位
-- 深度雙向即時同步(狀態變更即時推播疊加層)
-- OBS WebSocket 讀取實際開台時間,用於精準時間戳/YouTube 章節匯出
-- 崩潰復原快照(待播/已唱進度)
-- 緊急隱藏(只隱藏自家疊加元素)
-- 直播中系統對話框靜音
-- 狀態版本管理/損壞備份/自動遷移
+Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 輔助桌面工具。它協助使用者在本機整理、播放、處理與呈現自己選用的媒體素材。
 
-### 值得評估追加(排入 MVP 之後)
+核心原則：
 
-- BGM↔伴奏自動交接
-- 無伴奏演出項目
-- 練習模式(點擊歌詞跳轉伴奏至對應時間點)
-- 工作區大小模式(完整/精簡/迷你)
-- PIN 保護 + 讀寫權限分級
-- 首次使用導覽
-- 逐行時間軸編輯器
+1. **本機媒體優先**：預設工作流以使用者自行管理的音訊、metadata 與歌詞資料為基礎。
 
-### 明確排除
+2. **直播操作友善**：UI 應低干擾、易掃描、能在演出中快速操作。
 
-- Twitch 點歌/觀眾互動
-- Stream Deck HTTP API(延後至有明確需求)
-- 多人共演/跨網路協作
-- OBS 原生 Plugin(犧牲跨串流軟體通用性,僅列為 Phase 3+ 選用進階整合方向)
+3. **進階流程明確啟用**：Provider-backed acquisition、歌詞來源、Vocal separation、Pitch/Tempo 與 OBS output 等流程，應由使用者清楚啟用。
 
-## 4. 技術架構
+4. **Overlay 與控制台解耦**：OBS-facing Overlay 應透過本機 HTTP/WebSocket 提供，不與 Electron renderer 綁在同一條 delivery path。
+
+5. **狀態持久化與可復原**：曲庫、歌單、進度與設定應盡量可保存、可遷移、可從缺檔或損壞狀態中恢復。
+
+## 3. 功能分類
+
+### 3.1 預設核心功能
+
+這些功能構成 Utawakui 的主要使用體驗，可作為預設入口：
+
+| 功能                      | 角色                                       | 目前狀態 |
+| ------------------------- | ------------------------------------------ | -------- |
+| 本機曲庫                  | 保存與列出可播放曲目。                     | 已實作   |
+| 播放器                    | 控制播放、暫停、seek、音量與目前曲目。     | 已實作   |
+| 播放佇列                  | 管理待播、上一首/下一首、shuffle、repeat。 | 已實作   |
+| Playlist / Collection     | 建立使用者集合、保存排序與 track ids。     | 已實作   |
+| Metadata 顯示             | 顯示曲名、歌手、duration、縮圖等輔助資訊。 | 已實作   |
+| Windows shell integration | 顯示 now-playing 與 taskbar controls。     | 已實作   |
+
+### 3.2 情境功能
+
+這些功能本身是產品能力，但使用上依情境而定：
+
+| 功能                 | 角色                                             | 目前狀態           |
+| -------------------- | ------------------------------------------------ | ------------------ |
+| Lyrics Workspace     | 管理 synced lyrics、字幕或自用歌詞資料。         | 部分實作           |
+| Pitch / Tempo        | 讓使用者調整 key 與速度。                        | 已實作即時 preview |
+| Vocal Separation     | 產生分離後的 generated media，支援 guide vocal。 | 已實作             |
+| Performer Self-View  | 給表演者看的 lyrics、cue、key、下一首。          | 規劃中             |
+| OBS Overlay          | 給觀眾端或錄製畫面使用的 Browser Source。        | 規劃中             |
+| Recording / VOD mode | 區分 live-only 與 recording/VOD session。        | 規劃中             |
+
+### 3.3 進階來源功能
+
+這些功能應放在明確啟用的 provider flow 中，不作為預設主入口：
+
+| 功能                                 | 角色                                  | 目前狀態       |
+| ------------------------------------ | ------------------------------------- | -------------- |
+| YouTube/YT Music candidate import    | 協助從 provider source 建立候選曲目。 | 已實作核心路徑 |
+| `yt-dlp` download path               | 目前 provider flow 使用的下載工具鏈。 | 已實作核心路徑 |
+| Provider metadata / thumbnail / info | 保存 provider 回傳的輔助資料。        | 已實作部分路徑 |
+| Spotify official import              | 讀取 playlist metadata。              | 規劃中         |
+| Optional provider module             | 將進階來源能力拆成可控模組。          | 待評估         |
+
+### 3.4 明確排除或延後
+
+- 內建商用曲庫。
+- 授權代理或素材授權管理服務。
+- Twitch/YouTube chat song request automation。
+- 多使用者協作與雲端同步。
+- OBS native plugin。
+- 以繞行平台規則為目標的功能。
+
+## 4. 目前狀態盤點
+
+### 4.1 已實作
+
+- Electron + Vite + Vue 3 desktop shell。
+- Secure preload bridge 與固定 IPC surface。
+- `utawakui-media:` custom protocol，支援本機 media 讀取與 seek。
+- 結構化曲庫：`tracks/<trackId>/audio.<ext>`、縮圖、來源資訊、lyrics、generated separation files。
+- `library.json` scalar metadata index。
+- `playlists.json` collection storage。
+- 播放器、播放佇列、shuffle、repeat、previous/next。
+- Pitch / Tempo 即時 preview。
+- Vocal separation worker 與 guide vocal playback graph。
+- Import resolver 與 provider candidate selection。
+- `youtube-dl-exec` backed download path。
+- Lyrics/subtitle 相關基礎路徑。
+- Windows taskbar thumbar、SMTC metadata、window title。
+
+### 4.2 尚未完成但已納入規格
+
+- Feature notice modal。
+- Feature gate registry。
+- Local import first flow。
+- OBS Browser Source overlay server。
+- Overlay theme tokens。
+- Performer self-view。
+- Recording/VOD session mode。
+- Pitch/Tempo pre-render cache。
+- Preset export/import。
+- Packaging、installer、AUMID、signing。
+
+## 5. 架構邊界
 
 ```text
-Overlay(純 HTML/CSS/JS)→ OBS Browser Source 讀取,與殼技術棧解耦
-串流平台 API 用戶端 → Spotify Web API(讀取歌單)/ YT Music 目錄解析,OAuth 走系統瀏覽器彈出+本機回呼監聽
-音源下載 → yt-dlp 外部程序
-Pitch/Tempo DSP → AudioWorklet(比照 Elitesand Pro 已驗證方案),分階段即時處理+預渲染快取
-Overlay 伺服器 + 狀態廣播 → 本機 HTTP/WebSocket,單一權威狀態源
-控制面板 UI → Electron 渲染程序,Vite + Vue 3(無 vue-router/Pinia,固定分頁 + 單一共享 composable)
+Renderer Vue app
+  - Views, components, composables
+  - Playback UI and library UI
+  - Feature notices and gates
+  - IPC through preload only
+
+Electron main process
+  - BrowserWindow lifecycle
+  - IPC handlers
+  - utawakui-media: protocol
+  - Library/config/playlists modules
+  - Provider/downloader modules
+  - Worker-based audio processing
+
+Local library
+  - tracks/<trackId>/
+  - library.json
+  - playlists.json
+  - config-selected download root
+
+OBS overlay server (planned)
+  - Local HTTP static delivery
+  - WebSocket state updates
+  - Plain HTML/CSS/JS Browser Source
 ```
 
-殼:Electron(`electron/main.js`,`contextIsolation`/`sandbox`/`nodeIntegration:false`)。已超出最小骨架:自訂 `utawakui-media:` protocol 供本機音訊與縮圖資產播放/顯示(音訊含 HTTP Range/206 支援,供 seek 使用)、yt-dlp 下載管線與背景 metadata/info/thumbnail 回填、`config.json`/`library.json` 持久化。曲庫根目錄下的新下載採 `tracks/<trackId>/audio.<ext>`、`thumbnail.<ext>`、`info.json`、`stems.wav` 的結構化儲存。
+架構規則：
 
-## 5. 競品比較
+- Renderer 不直接存取 filesystem。
+- Renderer 不啟用 Node integration。
+- 所有 filesystem、provider、download、separation 行為都經 main process 或 worker 處理。
+- 本機媒體經 `utawakui-media:` allowlist 提供，不直接暴露 arbitrary file path。
+- Overlay 是獨立 delivery path，不嵌入 Electron renderer。
+- Overlay tokens 使用 `--ovl-*`，控制台 tokens 使用 `--ui-*`，兩者不共用。
 
-|                  | Utawakui                            | Elitesand Pro                | 歌回救星                    |
-| ---------------- | ----------------------------------- | ---------------------------- | --------------------------- |
-| 技術棧           | Node.js + Electron                  | Node.js + Electron           | Qt6(C++)+ QtWebEngine       |
-| 音訊來源         | Spotify/YT Music 匯入 → yt-dlp 下載 | 手動貼 YouTube 連結/本機檔案 | 手動選本機檔案/YouTube 伴奏 |
-| 串流平台歌單匯入 | 有(差異化賣點)                      | 無                           | 無                          |
-| Pitch/Tempo      | 有(分階段:即時試聽+快取播放)        | 有(AudioWorklet 即時)        | 有(per-track 記憶)          |
-| BGM↔伴奏自動交接 | 評估中                              | 無                           | 有(對方核心賣點)            |
-| 資料模型         | 連續自動儲存 + 具名 preset          | 連續自動儲存                 | 專案檔(.bgmsproj)           |
-| Twitch 點歌      | 無(明確排除)                        | 有                           | 無                          |
+## 6. 資料模型
 
-## 6. 路線圖
+### 6.1 Library Root
 
-- **Phase 0**:Electron 骨架(已完成)→ 控制面板 UI 殼 + yt-dlp 下載管線 + 本機播放(已完成:Vite+Vue 3 四分頁殼、下載/metadata 回填、本機音訊播放與 seek、去人聲/導唱混音)→ 本機伺服器 + overlay 路由 → Spotify/YT Music OAuth 流程 → pitch/tempo 分階段處理(即時試聽+預渲染快取)原型驗證
-- **Phase 1(MVP)**:第 3 節「核心採納」全項
-- **Phase 2**:「值得評估追加」項目依實際回饋排序導入
-- **Phase 3**:程式碼簽章投資評估、YT Music 官方 API 監控與降級方案、OBS Plugin 選用進階整合評估
+預設 library root 位於使用者 Music folder 下的 `Utawakui` 目錄，並可由設定改變。
 
-## 7. 開放問題
+```text
+Utawakui/
+  library.json
+  playlists.json
+  tracks/
+    <trackId>/
+      audio.<ext>
+      thumbnail.<ext>
+      info.json
+      lyrics/
+      separations/
+```
 
-1. YT Music 非官方存取的降級/因應計畫(端點失效時如何處理)
-2. 具名 preset 快照的 UX 細節(數量上限、匯出/分享格式)
-3. 試聽即時運算+演出前快取的快取管理策略(容量上限、清除時機)
-4. 未簽章安裝包的因應方式(是否投資程式碼簽章)
-5. BGM↔伴奏自動交接是否納入 MVP,或確認留待 Phase 2
+### 6.2 檔案角色
+
+| 檔案              | 用途                          | 備註                                     |
+| ----------------- | ----------------------------- | ---------------------------------------- |
+| `config.json`     | Machine-local settings。      | 不屬於可分享 preset。                    |
+| `library.json`    | Track scalar metadata。       | 不保存絕對 asset path。                  |
+| `playlists.json`  | Collection、排序、track ids。 | 跟著 library root 移動。                 |
+| `audio.<ext>`     | 實際播放音訊。                | 位於 track folder。                      |
+| `thumbnail.<ext>` | 曲目圖像輔助資料。            | 由 media protocol 提供。                 |
+| `info.json`       | Provider/source sidecar。     | 作為輔助資料，不作為 UI 唯一來源。       |
+| `lyrics/`         | 歌詞與字幕相關資料。          | 後續需與 self-view / overlay flow 對齊。 |
+| `separations/`    | Generated separation files。  | 依 preset 或模型設定保存。               |
+
+### 6.3 Preset 原則
+
+未來 preset export/import 可包含：
+
+- Playlist / setlist 結構。
+- Theme / display settings。
+- Overlay layout settings。
+- 可選的 track reference metadata。
+
+Preset 不應包含：
+
+- Machine-local paths。
+- `config.json`。
+- 第三方原始 media files。
+- 任何由 Utawakui 宣稱已驗證的外部狀態。
+
+## 7. Feature Notice 與 Gate
+
+Feature gate 的目的，是讓使用者在啟用進階流程前看見必要提示，並讓產品能保存啟用狀態。
+
+### 7.1 Gate 類型
+
+| Gate                  | 適用功能                                                                            |
+| --------------------- | ----------------------------------------------------------------------------------- |
+| Provider flow         | YouTube/YT Music candidate import、`yt-dlp` download path、provider metadata 保存。 |
+| Lyrics flow           | Lyrics provider、字幕保存、self-view、overlay lyrics。                              |
+| Audio processing flow | Vocal separation、Pitch/Tempo pre-render cache。                                    |
+| Public output flow    | OBS overlay、livestream session、recording/VOD session。                            |
+
+### 7.2 Confirmation Record
+
+```json
+{
+  "featureConfirmation": {
+    "featureId": "provider-flow",
+    "noticeVersion": "feature-notice-v1",
+    "confirmedAt": "2026-08-13T00:00:00.000Z",
+    "enabled": true
+  }
+}
+```
+
+紀錄只表示使用者已啟用該流程。它不應被設計成授權資料庫，也不應讓 UI 暗示 Utawakui 代替使用者完成外部確認。
+
+## 8. Roadmap
+
+### Phase 0：目前基礎
+
+- Desktop control panel。
+- 本機曲庫與播放。
+- Playlist / collection。
+- Pitch / Tempo preview。
+- Vocal separation / guide vocal。
+- Provider candidate import 與 download path。
+- Lyrics/subtitle 基礎路徑。
+- Windows shell integration。
+
+### Phase 0.5：產品邊界整理
+
+- Feature notice modal。
+- Feature gate registry。
+- Local import first flow。
+- Provider flow 從預設入口移到明確啟用。
+- README、spec、UI copy 用語統一。
+
+### Phase 1：OBS MVP
+
+- 本機 HTTP/WebSocket state server。
+- OBS Browser Source overlay。
+- Performer self-view。
+- Overlay theme tokens。
+- Now-playing、playlist、lyrics sync。
+
+### Phase 2：Live Operation Polish
+
+- Pitch/Tempo pre-render cache。
+- Recording/VOD session mode。
+- Preset export/import。
+- Library maintenance UI。
+- 錯誤復原、缺檔提示與狀態修復。
+
+### Phase 3：Distribution And Integrations
+
+- Windows installer、AUMID、signing。
+- 官方 metadata provider flows。
+- Optional provider modules。
+- OBS plugin 或 Stream Deck integration 評估。
+
+## 9. Open Questions
+
+1. Feature notice 要採 app-wide 一次確認，還是依 feature/source/session 分層確認？
+2. `yt-dlp` provider flow 是否應拆成 optional module？
+3. Lyrics self-view 與 OBS overlay lyrics 是否需要兩套獨立狀態？
+4. Recording/VOD mode 是否應在每次 session 開始前確認？
+5. Preset export 是否需要支援缺曲提示與 track remapping？
