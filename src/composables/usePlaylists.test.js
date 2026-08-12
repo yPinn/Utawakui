@@ -12,6 +12,8 @@ let renamePlaylistMock;
 let deletePlaylistMock;
 let reorderPlaylistMock;
 let setPlaylistTracksMock;
+let upsertAlbumMock;
+let setPlaylistKindMock;
 
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -35,6 +37,8 @@ beforeEach(() => {
   deletePlaylistMock = vi.fn();
   reorderPlaylistMock = vi.fn();
   setPlaylistTracksMock = vi.fn();
+  upsertAlbumMock = vi.fn();
+  setPlaylistKindMock = vi.fn();
   vi.stubGlobal('window', {
     Utawakui: {
       getPlaylists: getPlaylistsMock,
@@ -43,6 +47,8 @@ beforeEach(() => {
       deletePlaylist: deletePlaylistMock,
       reorderPlaylist: reorderPlaylistMock,
       setPlaylistTracks: setPlaylistTracksMock,
+      upsertAlbum: upsertAlbumMock,
+      setPlaylistKind: setPlaylistKindMock,
       onLibraryUpdated: (callback) => {
         libraryUpdatedCallback = callback;
       },
@@ -159,6 +165,52 @@ describe('addTrack', () => {
 
     expect(state.playlists[0].trackIds).toEqual(['t1']);
     expect(getPlaylistsMock).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe('addTracks', () => {
+  it('is a no-op (no IPC call) when every track is already a member', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
+    ]);
+    const { addTracks } = await loadPlaylists();
+
+    addTracks('p1', ['t1', 't2']);
+    await flushMicrotasks();
+
+    expect(setPlaylistTracksMock).not.toHaveBeenCalled();
+  });
+
+  it('appends only the missing tracks, in source order, after the existing ones', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1'] },
+    ]);
+    setPlaylistTracksMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1', 't2', 't3'] },
+    ]);
+    const { addTracks } = await loadPlaylists();
+
+    addTracks('p1', ['t2', 't1', 't3']);
+    await flushMicrotasks();
+
+    expect(setPlaylistTracksMock).toHaveBeenCalledWith('p1', [
+      't1',
+      't2',
+      't3',
+    ]);
+  });
+
+  it('de-dupes the incoming track ids', async () => {
+    getPlaylistsMock.mockResolvedValue([{ id: 'p1', name: 'A', trackIds: [] }]);
+    setPlaylistTracksMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1'] },
+    ]);
+    const { addTracks } = await loadPlaylists();
+
+    addTracks('p1', ['t1', 't1']);
+    await flushMicrotasks();
+
+    expect(setPlaylistTracksMock).toHaveBeenCalledWith('p1', ['t1']);
   });
 });
 
@@ -490,5 +542,76 @@ describe('create', () => {
       name: '播放清單 #2',
       trackIds: [],
     });
+  });
+});
+
+describe('setKind', () => {
+  it('calls the preload API and applies the returned array', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', kind: 'playlist', trackIds: [] },
+    ]);
+    setPlaylistKindMock.mockResolvedValueOnce([
+      { id: 'p1', name: 'A', kind: 'album', trackIds: [] },
+    ]);
+    const { setKind, state } = await loadPlaylists();
+
+    await setKind('p1', 'album');
+
+    expect(setPlaylistKindMock).toHaveBeenCalledWith('p1', 'album');
+    expect(state.playlists[0].kind).toBe('album');
+  });
+
+  it('records a user-visible error instead of throwing when it fails', async () => {
+    getPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', kind: 'playlist', trackIds: [] },
+    ]);
+    setPlaylistKindMock.mockRejectedValueOnce(new Error('disk full'));
+    const { setKind, state } = await loadPlaylists();
+
+    await setKind('p1', 'album');
+
+    expect(state.error).toBe('轉換歌單類型失敗: disk full');
+  });
+});
+
+describe('upsertAlbum', () => {
+  it('calls the preload API and returns the matching album from the response', async () => {
+    upsertAlbumMock.mockResolvedValueOnce([
+      {
+        id: 'p1',
+        name: 'GOLDEN',
+        kind: 'album',
+        source: { platform: 'youtube', id: 'OLAK5uy_x' },
+        trackIds: ['a', 'b'],
+      },
+    ]);
+    const { upsertAlbum } = await loadPlaylists();
+
+    const result = await upsertAlbum({
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a', 'b'],
+    });
+
+    expect(upsertAlbumMock).toHaveBeenCalledWith({
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a', 'b'],
+    });
+    expect(result?.id).toBe('p1');
+  });
+
+  it('records a user-visible error instead of throwing when it fails', async () => {
+    upsertAlbumMock.mockRejectedValueOnce(new Error('disk full'));
+    const { upsertAlbum, state } = await loadPlaylists();
+
+    const result = await upsertAlbum({
+      name: 'GOLDEN',
+      source: { platform: 'youtube', id: 'OLAK5uy_x' },
+      trackIds: ['a'],
+    });
+
+    expect(result).toBeNull();
+    expect(state.error).toBe('建立專輯歌單失敗: disk full');
   });
 });

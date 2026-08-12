@@ -113,6 +113,34 @@ async function remove(id) {
   await enqueue(() => window.Utawakui.deletePlaylist(id), '刪除歌單失敗');
 }
 
+// Manual escape hatch for when the automatic album/playlist heuristic
+// (main.js's startup migration) guesses wrong on an existing collection.
+async function setKind(id, kind) {
+  await enqueue(
+    () => window.Utawakui.setPlaylistKind(id, kind),
+    '轉換歌單類型失敗',
+  );
+}
+
+// Create-or-update path for album imports (see useImportSession.js's
+// syncImportedPlaylist) — keyed by source on the main-process side, so
+// re-importing the same album updates it in place instead of creating a
+// duplicate.
+async function upsertAlbum(payload) {
+  const playlists = await enqueue(
+    () => window.Utawakui.upsertAlbum(payload),
+    '建立專輯歌單失敗',
+  );
+  return (
+    playlists?.find(
+      (p) =>
+        p.kind === 'album' &&
+        p.source?.platform === payload?.source?.platform &&
+        p.source?.id === payload?.source?.id,
+    ) ?? null
+  );
+}
+
 function reorderPlaylist(draggedId, targetId, position = 'before') {
   if (!draggedId || !targetId || draggedId === targetId) return;
   if (typeof window.Utawakui.reorderPlaylist !== 'function') {
@@ -198,6 +226,22 @@ function addTrack(playlistId, trackId) {
   );
 }
 
+// Batch version of addTrack — for "add this whole playlist/album's tracks to
+// another playlist," a loop of N addTrack calls would chain N separate
+// setPlaylistTracks IPC calls through the pending queue instead of one.
+// De-dupes the incoming ids too: this is now a general bulk-add primitive,
+// not just a caller for already-unique playlist/album trackIds.
+function addTracks(playlistId, trackIds) {
+  mutateTracks(playlistId, (currentTrackIds) => {
+    const additions = [...new Set(trackIds)].filter(
+      (id) => !currentTrackIds.includes(id),
+    );
+    return additions.length > 0
+      ? [...currentTrackIds, ...additions]
+      : currentTrackIds;
+  });
+}
+
 function removeTrack(playlistId, trackId) {
   mutateTracks(playlistId, (trackIds) =>
     trackIds.includes(trackId)
@@ -243,8 +287,11 @@ export function usePlaylists() {
     create,
     rename,
     remove,
+    setKind,
+    upsertAlbum,
     reorderPlaylist,
     addTrack,
+    addTracks,
     removeTrack,
     setTracks,
     moveTrack,
