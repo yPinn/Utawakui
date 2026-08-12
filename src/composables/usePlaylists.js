@@ -1,11 +1,7 @@
 import { computed, reactive, readonly } from 'vue';
 
-// Module-scope singleton, same pattern as useSeparation.js — SetlistView
-// unmounts on every tab switch, so `selectedId` needs to live somewhere
-// that survives that. Deliberately does NOT import usePlayer.js: that
-// module calls new Audio()/new AudioContext() at load time, which would
-// make this file untestable under plain Node the same way usePlayer.js
-// itself is (see CLAUDE.md). Playback stays entirely in SetlistView.
+// Module-scope singleton preserves selection across tab unmounts.
+// Keep playback out so this stays testable under plain Node.
 
 const state = reactive({
   playlists: [],
@@ -14,21 +10,11 @@ const state = reactive({
   error: null,
 });
 
-// Serializes every playlist-array mutation through one chain. Without
-// this, two rapid clicks (e.g. double-tapping ↑) would both read the
-// pre-update array and race to write it back — the second click's effect
-// gets silently overwritten by the first's stale snapshot, which on a
-// live-ops tool reads as "the button is broken." Chaining through this
-// promise guarantees mutations apply in click order and that the last
-// server response is what state ends up reflecting.
+// Serialize mutations so rapid actions cannot overwrite each other.
 let pending = Promise.resolve();
 let unsubscribeLibraryUpdated = null;
 
-// Applied after every fetch AND every mutation response, not just
-// refresh() — a delete (of this playlist, or of the last track that made
-// it disappear elsewhere) can make the currently selected id vanish from
-// any of those response arrays, and the sidebar has no correct "active"
-// item to highlight if selectedId is left pointing at nothing.
+// Clear selection whenever the selected playlist disappears.
 function applyPlaylists(playlists) {
   state.playlists = playlists;
   if (

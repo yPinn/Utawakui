@@ -1,7 +1,7 @@
 <script setup>
 import { ref } from 'vue';
-import AppSidebar from './components/AppSidebar.vue';
-import PlayerBar from './components/PlayerBar.vue';
+import AppSidebar from './components/layout/AppSidebar.vue';
+import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
 import AppearanceView from './views/AppearanceView.vue';
 import LyricsView from './views/LyricsView.vue';
@@ -11,14 +11,12 @@ import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 
-// App.vue lives for the app's whole lifetime in production; each composable
-// still owns cleanup for dev HMR and test-like remounts.
+// Long-lived app hooks; each composable owns its cleanup.
 useTaskbarControls();
 useWindowTitle();
 useMediaSession();
 
-// No router: 4 fixed sections, an Electron window has no address bar and
-// nothing here needs deep-linking. Revisit only if that changes.
+// No router: the Electron shell has fixed sections and no deep links.
 const views = {
   setlist: SetlistView,
   appearance: AppearanceView,
@@ -27,9 +25,7 @@ const views = {
 };
 
 const activeView = ref('setlist');
-// F1-F4 tab switching lives in useKeyboardShortcuts.js alongside the other
-// global shortcuts — passed the ref itself, not a setter, so the
-// composable can both read and write it.
+// Pass the ref so global shortcuts can read and update the active view.
 useKeyboardShortcuts(activeView);
 </script>
 
@@ -52,12 +48,7 @@ useKeyboardShortcuts(activeView);
   grid-template-columns: 180px 1fr;
   grid-template-rows: 1fr auto;
   height: 100%;
-  /* The one grid container in the app with no responsive behavior of its
-     own (180px sidebar is fixed) — without this, a 1fr track's implicit
-     min-width:auto can force the grid wider than the viewport once
-     .shell__main's content wants more room than it has, which is why
-     individual views (e.g. SetlistView) have each had to add their own
-     min-width: 0 defensively. */
+  /* Prevent 1fr content from forcing the fixed shell wider than viewport. */
   min-width: 0;
 }
 

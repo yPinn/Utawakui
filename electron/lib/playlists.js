@@ -5,37 +5,22 @@ const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson } = require('./atomicWrite');
 
-// User-authored, unrecoverable data — NOT a key in library.json (that's
-// derived/rebuildable metadata, see its own file-level comment) and NOT in
-// config.json (machine-local settings only, never shareable data). Lives in
-// the download dir because trackIds are filename stems relative to it, so
-// playlists must travel with the tracks the same way library.json does.
-//
-// Ids are UUIDs, not array indices or names, specifically so a future named
-// preset (docs/spec.md §2: 歌單+主題+顯示設定) can reference a playlist by
-// stable id instead of embedding a copy of it.
+// User-authored data: not library metadata and not machine-local config.
+// Lives beside tracks; UUID ids stay stable for future preset references.
 const PLAYLISTS_FILENAME = 'playlists.json';
 const PLAYLISTS_VERSION = 2;
 
-// Guards against a runaway/garbage file, not a stated product limit —
-// docs/spec.md §7 Q2 (具名 preset 數量上限) is still an open question.
+// Sanity guard for corrupted files, not a product limit.
 const MAX_NAME_LENGTH = 200;
 const MAX_PLAYLISTS = 500;
 const MAX_TRACKS_PER_PLAYLIST = 5000;
 const DEFAULT_PLAYLIST_NAME_PREFIX = '播放清單 #';
 
-// 'album' collections are read-only (see upsertAlbum/setPlaylistKind below
-// and main.js's playlists:set-tracks guard) — track order/membership comes
-// from the source itself. Everything else (rename, delete, whole-playlist
-// reorder) still applies equally to both kinds.
+// Album membership/order is source-owned; other management actions still apply.
 const PLAYLIST_KINDS = new Set(['playlist', 'album']);
 const DEFAULT_PLAYLIST_KIND = 'playlist';
 
-// Renamed aside as `<path>.corrupted-<timestamp>` rather than silently
-// discarded — unlike library.json (rebuildable from the filesystem +
-// network backfill), a hand-curated playlist can't be regenerated, so this
-// follows config.js's corruption policy instead of its neighbour
-// library.js's silent-empty-on-corrupt one.
+// Preserve corrupted playlist data because it cannot be regenerated.
 function backupCorrupted(filePath) {
   const backupPath = `${filePath}.corrupted-${Date.now()}`;
   try {
@@ -299,15 +284,8 @@ function deletePlaylist(dir, id) {
   return next;
 }
 
-// Single write path for add/remove/reorder alike — the renderer computes
-// the full resulting array and sends it, since there's one window and one
-// writer. Deliberately does NOT filter trackIds against listTracks(dir):
-// listTracks returns [] on a transient readdir failure, and intersecting
-// against that would turn "external drive not mounted" into "playlist
-// silently wiped." A trackId with no matching file is harmless — the
-// renderer's own join simply won't render it, and because the renderer
-// always sends back the array it rendered, a stale id is dropped for free
-// on the next mutation. Same orphan doctrine as library.js.
+// Single write path. Preserve orphan ids so transient drive failures cannot
+// wipe playlists; missing tracks simply do not render until repaired.
 function reorderPlaylists(dir, draggedId, targetId, position = 'before') {
   const playlists = loadPlaylists(dir);
   if (!draggedId || !targetId || draggedId === targetId) return playlists;

@@ -1,0 +1,30 @@
+body {
+  margin: 0;
+  height: 100vh;
+  background: var(--ui-bg);
+  color: var(--ui-text);
+  font-family: var(--ui-font);
+  font-size: var(--ui-text-md);
+}
+
+#app {
+  height: 100%;
+}
+
+* {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+/* The current token set only defines one dark palette. This should follow
+   the active theme once light mode exists. */
+input[type='range'] {
+  color-scheme: dark;
+  accent-color: var(--ui-accent);
+}

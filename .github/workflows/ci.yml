@@ -11,7 +11,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # full history, not just the latest commit — gitleaks below scans all of it
+          fetch-depth: 0
 
       - name: Gitleaks secret scan
         uses: docker://ghcr.io/gitleaks/gitleaks:latest
@@ -25,8 +25,14 @@ jobs:
 
       - run: npm ci
 
-      # critical only — onnxruntime-node's adm-zip dependency has a known
-      # high-severity advisory with no non-breaking fix; not blocking CI on it
+      - name: Commitlint pull request
+        if: github.event_name == 'pull_request'
+        run: npx --no -- commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
+
+      - name: Commitlint push
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        run: npx --no -- commitlint --from "${{ github.event.before }}" --to "${{ github.sha }}" --verbose
+
       - run: npm audit --audit-level=critical
 
       - run: npm run lint
@@ -35,6 +41,14 @@ jobs:
 
       - run: npm run lint:md
 
-      - run: npm test
+      - run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: ignore
 
       - run: npm run build

@@ -1,16 +1,10 @@
 <script setup>
-// A small circular status badge: icon + colored tone + optional spin, for
-// row-trailing status indicators (ImportView.vue's identity/download-status
-// pair, LyricsWorkspace.vue's separation/lyrics-status pair). Extracted once
-// the same pattern was implemented independently in both places.
+// Small circular status badge for repeated row-trailing states.
 import { ICON_SIZE } from '../../constants/ui.js';
 
 defineProps({
   icon: { type: [Object, Function], required: true },
-  // Each tone maps to a state an existing call site already renders — not
-  // a speculative set. 'muted' (default) | 'accent' | 'danger' | 'text' |
-  // 'highlight' ('text' color + always-on --ui-surface-hover background,
-  // for a state that should stand out beyond what color alone conveys).
+  // Existing tones only: muted, accent, danger, text, highlight.
   tone: { type: String, default: 'muted' },
   spinning: { type: Boolean, default: false },
   label: { type: String, required: true },

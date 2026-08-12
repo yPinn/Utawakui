@@ -1,12 +1,12 @@
 <script setup>
 import { computed } from 'vue';
 import { X } from '@lucide/vue';
-import { useDragReorder } from '../composables/useDragReorder.js';
-import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import { usePlayer } from '../composables/usePlayer.js';
-import { toPlayableTrack } from '../utils/playableTrack.js';
-import QueueSection from './queue/QueueSection.vue';
-import UiButton from './ui/UiButton.vue';
+import { useDragReorder } from '../../composables/useDragReorder.js';
+import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { usePlayer } from '../../composables/usePlayer.js';
+import { toPlayableTrack } from '../../utils/playableTrack.js';
+import QueueSection from './QueueSection.vue';
+import UiButton from '../ui/UiButton.vue';
 
 defineProps({
   open: { type: Boolean, default: false },

@@ -1,13 +1,7 @@
 import { onUnmounted, watchEffect } from 'vue';
 import { usePlayer } from './usePlayer.js';
 
-// Standard Web Media Session API — confirmed working against Windows SMTC
-// with zero Chromium command-line flags needed.
-//
-// Deliberately not wired to hardware media keys: this app may run
-// alongside another player (e.g. Spotify for BGM) during a live stream,
-// and losing keyboard media-key control to whichever app grabbed it last
-// is a real risk mid-broadcast.
+// Mirrors playback to Windows SMTC. Hardware media keys stay unclaimed.
 export function useMediaSession() {
   if (typeof navigator === 'undefined' || !navigator.mediaSession) return;
 
@@ -19,8 +13,7 @@ export function useMediaSession() {
       ? new MediaMetadata({
           title: track.title,
           artist: track.artist || '',
-          // No per-track artwork exists yet — the app icon is an honest
-          // placeholder, not a claim of album art.
+          // App icon placeholder until per-track SMTC artwork is wired.
           artwork: [
             {
               src: '/assets/icons/app-icon.png',

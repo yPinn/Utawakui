@@ -4,9 +4,9 @@
 // is playlist-only, so those props/events simply go unused (default false)
 // for album rows instead of forking the template.
 import { Music2, Pause, Play } from '@lucide/vue';
-import { ICON_SIZE } from '../constants/ui.js';
-import { getTrackInitial } from '../utils/trackDisplay.js';
-import UiMarqueeText from './ui/UiMarqueeText.vue';
+import { ICON_SIZE } from '../../constants/ui.js';
+import { getTrackInitial } from '../../utils/trackDisplay.js';
+import UiMarqueeText from '../ui/UiMarqueeText.vue';
 
 defineProps({
   playlist: { type: Object, required: true },
@@ -176,11 +176,7 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
-  /* Same anti-pattern as the .75-opacity sites B2 fixes elsewhere (opacity
-     blending toward whatever's behind the element) — the original scan
-     counted 7 sites at exactly 0.75, but this is the same pattern at a
-     different hand-picked ratio, found while reconciling the "6 other
-     opacity ratios" bucket below. */
+  /* Use a tokenized accent contrast color instead of opacity blending. */
   color: var(--ui-accent-contrast-muted);
 }
 

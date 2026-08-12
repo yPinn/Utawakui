@@ -6,9 +6,7 @@ const { Readable } = require('stream');
 const { atomicWriteJson } = require('./atomicWrite');
 const { VIDEO_ID_RE } = require('./youtube');
 
-// Single source of truth for "what's a servable audio file" — also the
-// Content-Type used when serving it (see buildRangeResponse). Derived as
-// a Set below rather than duplicating the extension list separately.
+// MIME maps are the allowlist for servable media extensions.
 const AUDIO_MIME_TYPES = {
   '.webm': 'audio/webm',
   '.m4a': 'audio/mp4',
@@ -27,13 +25,8 @@ const MIME_TYPES = { ...AUDIO_MIME_TYPES, ...IMAGE_MIME_TYPES };
 const AUDIO_EXTENSIONS = new Set(Object.keys(AUDIO_MIME_TYPES));
 const IMAGE_EXTENSIONS = new Set(Object.keys(IMAGE_MIME_TYPES));
 
-// Vocal-separation output lives in its own subdirectory — listTracks()'s
-// isFile() filter already skips it, no enumeration change needed. Each
-// preset gets its own 4-channel <presetId>.wav (never one shared filename —
-// see SEPARATIONS_DIRNAME below for why), channels in a FIXED order (0/1
-// instrumental L/R, 2/3 vocals L/R) that usePlayer.js's ChannelSplitter
-// routing depends on — changing one side without the other silently swaps
-// instrumental and vocals.
+// Separation files are per-preset 4-channel WAVs:
+// 0/1 instrumental L/R, 2/3 vocals L/R. usePlayer.js depends on this order.
 const TRACKS_DIRNAME = 'tracks';
 const DUPLICATES_DIRNAME = '.duplicates';
 const LEGACY_SEPARATED_DIRNAME = '.separated';
@@ -42,30 +35,19 @@ const ARTWORK_BASENAME = 'thumbnail';
 const LYRICS_DIRNAME = 'lyrics';
 const LYRICS_MANIFEST_FILENAME = 'lyrics.json';
 const LYRICS_MANIFEST_VERSION = 8;
-// Each preset's separation result is its own file (tracks/<id>/separations/
-// <presetId>.wav) — deliberately not one shared "stems.wav", so switching
-// presets never has to overwrite whichever file is currently open for
-// guide-vocal playback (that EPERM-on-rename was a real bug, not
-// hypothetical). manifest.json's shape: { version, selectedPresetId,
-// results: { [presetId]: { modelId, separatedAt } } } — selectedPresetId is
-// the "which result currently plays" pointer, read main-side only via
-// loadSeparationManifest, never servable over utawakui-media://.
+// Per-preset files avoid overwriting audio that may be open for playback.
+// manifest.json stores selectedPresetId and result metadata; it is not served.
 const SEPARATIONS_DIRNAME = 'separations';
 const SEPARATION_MANIFEST_FILENAME = 'manifest.json';
 const SEPARATION_MANIFEST_VERSION = 1;
 const LYRICS_EXTENSIONS = new Set(['.vtt', '.lrc']);
 const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);
 
-// Interim, text-only metadata store — deliberately not the future SQLite
-// index (pitch/tempo, lyrics offset). Lives inside the download dir so it
-// travels with the tracks when the user changes download folder.
+// Interim text metadata; future playback/lyrics state belongs in SQLite.
 const INDEX_FILENAME = 'library.json';
 const INDEX_VERSION = 2;
 
-// The filesystem is the sole source of truth for which tracks exist — this
-// index is enrichment only, and tolerates a missing/corrupt file (degrades
-// to empty rather than throwing). Orphaned entries are harmless — never
-// looked up — so no cleanup pass is needed.
+// Filesystem is authoritative; this index only enriches discovered tracks.
 function loadIndex(dir) {
   const emptyIndex = { version: INDEX_VERSION, tracks: {} };
   let raw;
@@ -94,8 +76,7 @@ function loadIndex(dir) {
   return { version: INDEX_VERSION, tracks: data.tracks };
 }
 
-// Merges a single track's metadata into the index and writes atomically —
-// avoids a half-written index surviving a crash mid-download.
+// Atomic write avoids a half-written index after a crash.
 function saveIndexEntry(dir, id, entry) {
   const index = loadIndex(dir);
   index.tracks[id] = { ...index.tracks[id], ...entry };
@@ -103,15 +84,8 @@ function saveIndexEntry(dir, id, entry) {
   return index;
 }
 
-// One-time, offline backfill of album/releaseYear from each track's
-// already-downloaded info.json sidecar — no network involved, unlike
-// runBackfillPass. Gated on the file's *raw* on-disk version, not
-// loadIndex()'s return value (which always reports the current
-// INDEX_VERSION regardless of what's actually on disk) — reads the file
-// directly so this only ever runs once, on the first launch after the
-// album/releaseYear fields were introduced. readTrackInfo is injected
-// (downloader.js's readTrackInfoMetadata) so this module stays
-// yt-dlp-agnostic, same DI pattern as runBackfillPass's fetchMetadata.
+// One-time offline album/releaseYear migration from existing info.json files.
+// Reads the raw file version so loadIndex() cannot mask migration state.
 function migrateTrackAlbumMetadata(dir, readTrackInfo) {
   const filePath = path.join(dir, INDEX_FILENAME);
   let raw;
@@ -1019,12 +993,7 @@ function listTracks(dir) {
         title: indexed?.title || id,
         artist: indexed?.artist,
         duration: indexed?.duration,
-        // Deliberately excluded from metadataNeedsBackfill above: a real
-        // portion of the library has no album (plain YouTube uploads, not
-        // recognized-music sources — verified against real library data),
-        // and there's no fallback to reach for the way title falls back
-        // to id. Including it would put those tracks in a permanent,
-        // unfulfillable backfill loop on every launch.
+        // Album is optional; including it would create endless backfill loops.
         album: indexed?.album,
         releaseYear: indexed?.releaseYear,
         needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,

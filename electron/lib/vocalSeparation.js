@@ -1,15 +1,7 @@
 'use strict';
 
-// DSP pipeline: ffmpeg decode -> chunked STFT -> onnxruntime-node inference
-// -> overlap-add -> ISTFT -> a single 4-channel <presetId>.wav (instrumental
-// L/R + vocals L/R) per preset. Pure Node, no Electron API calls (same as
-// library.js, which this requires only for its plain-fs manifest helpers).
-// Ported from nomadkaraoke/python-audio-separator's MDXSeparator
-// (architectures/mdx_separator.py + uvr_lib_v5/stft.py).
-//
-// CPU-bound and slow (tens of seconds per track) — callers MUST run this
-// off the Electron main thread (see vocalSeparationWorker.js) or the
-// utawakui-media:// protocol handler will stall for the duration.
+// DSP pipeline: ffmpeg decode -> STFT -> ONNX inference -> ISTFT -> per-preset
+// 4-channel WAV. CPU-bound; run only in vocalSeparationWorker.js.
 
 const fs = require('fs');
 const path = require('path');
@@ -19,13 +11,7 @@ const ort = require('onnxruntime-node');
 const KissFFT = require('kissfft-js');
 const { recordSeparationResult } = require('./library');
 
-// ---- Model registry ----
-// Not guessed — each entry's nFft/dimF/dimT/compensate/primaryStem comes
-// from UVR's own model_data.json (see CLAUDE.md for the verification
-// method). kara2 is a karaoke model (removes only the lead vocal, leaving
-// harmonies in the instrumental); inst-hq3 is general-purpose with no such
-// preservation. Both are primaryStem: 'instrumental' — see separateTrack's
-// guard for why that matters.
+// Model values come from UVR model_data.json. primaryStem must be instrumental.
 const HOP_LENGTH = 1024; // hard-coded in UVR itself, not a per-model value
 const SEGMENT_SIZE = 256; // == every current model's dimT -> upstream's pure-onnxruntime path applies
 const SAMPLE_RATE = 44100; // these models expect 44.1kHz; source is often 48kHz
@@ -55,8 +41,7 @@ const MODELS = {
 };
 
 // ---------------------------------------------------------------------------
-// Windows — two different Hann windows at two different layers; mixing them
-// up produces subtly wrong results without crashing:
+// Two Hann variants are required at different DSP layers:
 //   - periodic (denominator N): torch.hann_window(..., periodic=True), used
 //     inside the STFT/ISTFT itself.
 //   - symmetric (denominator N-1): np.hanning(N), used one level up for
@@ -159,9 +144,7 @@ function istftChannel(real, imag, numFrames, window, outputLength, nFft) {
   return trimmed;
 }
 
-// ffmpeg decode -> raw interleaved float32 PCM. -ar/-ac pinned explicitly —
-// a 48kHz source decoded without resampling would come out pitch-shifted,
-// not just lower quality.
+// Decode to fixed 44.1kHz stereo float PCM; the model depends on it.
 function decodeAudio(inputPath) {
   return new Promise((resolve, reject) => {
     const args = [
@@ -202,18 +185,8 @@ function decodeAudio(inputPath) {
   });
 }
 
-// Preset table — each preset names a model plus DSP params for it.
-//   - overlap: higher = smoother chunk-boundary reconstruction, more compute
-//   - enableDenoise: runs the model twice (input + its negation, averaged)
-//     to suppress residual artifacts; roughly doubles separating time
-// standard mirrors the verified upstream default (both
-// nomadkaraoke/python-audio-separator and the UVR GUI itself ship
-// enableDenoise off — see CLAUDE.md). high-quality is a deliberately
-// tuned variant of the same model, kept for comparison/fallback.
-// compensate is not a preset knob — it only affects computeSecondary()
-// (the vocals/guide stem), so it lives on the model registry entry as a
-// per-model calibration value instead. SEGMENT_SIZE is structurally
-// pinned (see dimT/runModel), not adjustable here.
+// Presets choose model, overlap, and denoise. Tensor shape and compensation
+// stay model-level, not preset-level.
 const SEPARATION_PRESETS = {
   standard: { modelId: 'kara2', overlap: 0.25, enableDenoise: false },
   'high-quality': { modelId: 'kara2', overlap: 0.5, enableDenoise: true },

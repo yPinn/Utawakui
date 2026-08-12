@@ -7,35 +7,6 @@
       content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' https://i.ytimg.com utawakui-media:; media-src 'self' utawakui-media:"
     />
     <title>Utawakui</title>
-    <link rel="stylesheet" href="/tokens.css" />
-    <style>
-      body {
-        margin: 0;
-        height: 100vh;
-        background: var(--ui-bg);
-        color: var(--ui-text);
-        font-family: var(--ui-font);
-        font-size: var(--ui-text-md);
-      }
-      #app {
-        height: 100%;
-      }
-      * {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      *::-webkit-scrollbar {
-        width: 0;
-        height: 0;
-        display: none;
-      }
-      /* color-scheme hardcoded to dark for now — tokens.css only has one
-         palette yet; needs to follow the active theme once light exists. */
-      input[type='range'] {
-        color-scheme: dark;
-        accent-color: var(--ui-accent);
-      }
-    </style>
   </head>
   <body>
     <div id="app"></div>

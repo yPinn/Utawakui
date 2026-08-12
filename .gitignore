@@ -1,12 +1,10 @@
 node_modules/
 dist/
+coverage/
 *.log
 tasks/
 
-# Vocal-separation model cache (electron/lib/vocalSeparation.js's
-# ensureModel) — a ~50MB third-party asset downloaded on first use, not
-# committed. Repo-local path used by dev/manual runs; the production path
-# is <userData>/models/, outside the repo entirely.
+# Dev-only vocal-separation model cache; production uses <userData>/models/.
 .models/
 
 .agents/settings.local.json

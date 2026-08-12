@@ -6,7 +6,12 @@ const eslintConfigPrettier = require('eslint-config-prettier');
 const globals = require('globals');
 
 module.exports = [
-  { ignores: ['node_modules/**', 'dist/**'] },
+  { ignores: ['coverage/**', 'dist/**', 'node_modules/**'] },
+  {
+    linterOptions: {
+      reportUnusedDisableDirectives: 'warn',
+    },
+  },
   js.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
   {
@@ -17,10 +22,6 @@ module.exports = [
     },
   },
   {
-    // Vitest can only be imported via ESM `import`, not `require()` — test
-    // files still exercise the CJS source modules next to them (Vite/Vitest
-    // handles the CJS interop), so this only flips the parser's sourceType,
-    // not the Node globals the rest of electron/**/*.js gets.
     files: ['electron/**/*.test.js'],
     languageOptions: {
       sourceType: 'module',
@@ -28,7 +29,7 @@ module.exports = [
     },
   },
   {
-    files: ['src/**/*.{js,vue}', 'public/**/*.js'],
+    files: ['src/**/*.{js,vue}'],
     languageOptions: {
       sourceType: 'module',
       globals: globals.browser,

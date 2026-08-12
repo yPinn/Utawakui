@@ -101,6 +101,17 @@ This scaffold starts with a restrained, neutral product baseline: stable rem-bas
 - Structured enough for playlists, lyrics, queues, and processing states.
 - Flexible enough to support dark, light, desktop, responsive, and overlay-specific tokens.
 
+### Style File Taxonomy
+
+Global renderer CSS lives in `src/styles/` and is imported from `src/main.js`, so Vite can include it in the app bundle. Keep filenames short, lowercase, and purpose-based.
+
+- `tokens.css`: control-panel design tokens and documented breakpoint values.
+- `base.css`: document-level reset, `body`, `#app`, focus-adjacent element baselines, and native control defaults.
+
+Add new global CSS files only when the purpose is real and shared. Likely future names are `themes.css` for light/dark token overrides and `utilities.css` for a small set of cross-component utilities.
+
+Component-specific styling stays inside Vue SFC `<style scoped>` blocks unless it becomes a reusable primitive or global rule.
+
 ## Colors
 
 The current palette is a placeholder baseline, not the final brand identity. Treat these tokens as semantic slots to be replaced or refined.
@@ -174,6 +185,21 @@ Utawakui should be flat by default and layered by tone before shadow. Depth exis
 ## Components
 
 Components should use a single product vocabulary across library, import, lyrics, playlist, and player surfaces.
+
+### Folder Taxonomy
+
+Component folders are grouped by product role, not by current visual style. Existing UI may be temporary, but new or rebuilt components should land in the category that describes their responsibility.
+
+- `src/components/layout/`: app shell, global navigation, and long-lived frame components.
+- `src/components/playback/`: persistent playback controls, transport, pitch/tempo, and now-playing surfaces.
+- `src/components/library/`: track rows, artwork, metadata, album grouping, and media-library surfaces.
+- `src/components/playlists/`: playlist, album, setlist, and collection navigation components.
+- `src/components/queue/`: active queue, upcoming tracks, reorderable queue sections.
+- `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.
+- `src/components/lyrics/`: lyrics workspace, synced-line display, lyric editing and timing surfaces.
+- `src/components/ui/`: low-level primitives only, such as buttons, menus, text rows, status icons, and typography helpers.
+
+Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` only when it can be reused without knowing about tracks, playlists, providers, lyrics, playback, or OBS.
 
 ### Buttons
 

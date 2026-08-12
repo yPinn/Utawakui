@@ -3,9 +3,7 @@ import { SoundTouchNode } from '@soundtouchjs/audio-worklet';
 import pitchWorkletUrl from '@soundtouchjs/audio-worklet/processor?url';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
-// Single shared instance (module scope, not Pinia) — SetlistView (picks a
-// track) and PlayerBar (persistent controls) both import the same state
-// and <audio> element.
+// Module-scope singleton shared by views and the persistent player bar.
 
 const DEFAULT_VOLUME = 0.5;
 export const PLAYBACK_MODES = {
@@ -18,42 +16,26 @@ const PLAYBACK_MODE_ORDER = [
   PLAYBACK_MODES.repeatList,
   PLAYBACK_MODES.repeatOne,
 ];
-// AudioParam.setTargetAtTime ramp: an instant 0<->1 gain jump is audible as
-// a click; ~30ms is short enough to feel immediate but long enough not to.
+// Short gain ramps prevent audible clicks.
 const GAIN_RAMP_SECONDS = 0.03;
 const LOOP_WRAP_EDGE_SECONDS = 1;
 
 const DEFAULT_TRANSPOSE_SEMITONES = 0;
 const DEFAULT_PITCH_CENTS = 0;
 const DEFAULT_TEMPO_RATE = 1;
-// Exported so PlayerBar.vue and useKeyboardShortcuts.js can clamp/disable
-// without duplicating these bounds.
+// Shared by PlayerBar.vue and useKeyboardShortcuts.js.
 export const TRANSPOSE_SEMITONES_RANGE = { min: -12, max: 12 };
-// ±50 cents (half a semitone) — with integer transpose, covers any pitch
-// with no gap or overlap between the two controls.
+// ±50 cents completes integer semitone transpose with no overlap.
 export const PITCH_CENTS_RANGE = { min: -50, max: 50 };
 export const TEMPO_RATE_RANGE = { min: 0.5, max: 1.5 };
 
 const audio = new Audio();
-// Required or createMediaElementSource() below produces silence —
-// utawakui-media:// is cross-origin, and MediaElementAudioSourceNode
-// zeroes a cross-origin source unless the request is CORS-clean (paired
-// with main.js's scheme privileges). Must be set before the element ever
-// loads a resource.
+// Required before load; otherwise cross-origin Web Audio outputs silence.
 audio.crossOrigin = 'anonymous';
 
-// <audio> stays the sole timing/seek/decode source (see the state-write
-// discipline comment below) — this graph only splits its output into an
-// instrumental pair and a vocals pair so the vocals can be gain-controlled
-// independently. Once wired into a MediaElementAudioSourceNode, ALL of the
-// element's output (including plain tracks) flows through this graph —
-// that's why setVolume/toggleMute write to masterGain, not audio.volume.
-//
-// Channel layout is fixed, documented in library.js's SEPARATED_VARIANTS
-// comment: 0/1 = instrumental L/R, 2/3 = vocals L/R. A plain stereo track
-// only has channels 0/1 — ChannelSplitterNode's 'discrete' interpretation
-// zero-fills the rest, so the vocals path is simply silent; no
-// special-casing needed for "has stems" vs. not.
+// <audio> remains the sole timing/decode source. The graph splits fixed
+// channels 0/1 instrumental and 2/3 vocals so guide vocals can be mixed.
+// All output flows through masterGain; audio.volume is intentionally unused.
 const audioCtx = new AudioContext();
 const sourceNode = audioCtx.createMediaElementSource(audio);
 const splitter = audioCtx.createChannelSplitter(4);
@@ -67,8 +49,7 @@ splitter.connect(mergerVoc, 2, 0);
 splitter.connect(mergerVoc, 3, 1);
 
 const vocalGain = audioCtx.createGain();
-// Defaults off and resets per track. Guide vocal is a song-specific assist,
-// not a session-wide playback preference.
+// Guide vocal is per-track, default-off.
 vocalGain.gain.value = 0;
 mergerVoc.connect(vocalGain);
 
@@ -99,9 +80,7 @@ function setGuideVocalLevel(level) {
   rampGain(vocalGain.gain, level);
 }
 
-// Lazy: a performer who never touches transpose/pitch never pays the
-// AudioWorklet load cost. Once created it stays wired — bypass at default
-// goes through the dry/wet crossfade (updatePitchBypass), not disconnect.
+// Lazy-load the worklet; bypass via dry/wet crossfade instead of reconnecting.
 let pitchNode = null;
 let pitchNodeReady = null;
 

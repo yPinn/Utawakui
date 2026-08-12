@@ -10,15 +10,17 @@
     "start": "npm run build && electron .",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\"",
+    "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#dist\" \"#coverage\"",
+    "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "prepare": "husky"
   },
   "lint-staged": {
-    "*.{js,vue}": [
+    "*.{cjs,js,vue}": [
       "eslint --fix",
       "prettier --write"
     ],
@@ -35,6 +37,7 @@
     "@commitlint/config-conventional": "^21.2.0",
     "@eslint/js": "^10.0.1",
     "@vitejs/plugin-vue": "^6.0.8",
+    "@vitest/coverage-v8": "^4.1.10",
     "concurrently": "^10.0.4",
     "electron": "^43.1.1",
     "eslint": "^10.8.0",

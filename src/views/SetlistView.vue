@@ -17,7 +17,7 @@ import { useDragReorder } from '../composables/useDragReorder.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import PlaylistSidebar from '../components/PlaylistSidebar.vue';
+import PlaylistSidebar from '../components/playlists/PlaylistSidebar.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
@@ -35,10 +35,7 @@ const {
   enqueueTrack,
   removeTrack: removeTrackFromQueue,
 } = usePlaybackQueue();
-// Also module scope (see usePlaylists.js) — selectedId must survive tab
-// switches the same way. Renamed on destructure since this view already
-// has its own removeTrack (deletes the file) and a playlist-membership
-// remove would otherwise collide with it.
+// Rename playlist actions to avoid colliding with file deletion helpers.
 const {
   state: playlistState,
   selectedPlaylist,
@@ -55,9 +52,7 @@ const {
 
 const tracks = ref([]);
 const isLoading = ref(true);
-// Local, not part of the usePlaylists singleton — losing transient UI mode
-// on a tab switch is correct behaviour (there's nothing staged to lose,
-// every add/rename applies immediately), not a bug worth hoisting.
+// Transient UI mode stays local; mutations persist immediately.
 const isRenaming = ref(false);
 const renameValue = ref('');
 const deleteError = ref(null);
@@ -87,12 +82,7 @@ const PLAYLIST_SORT_KEYS = {
   duration: 'duration',
 };
 
-// Drives the sort-header row via v-for — align: 'end' is the one column
-// (duration) that needs both a right-justified header cell
-// (playlist-table__sort--duration) and a right-aligned body cell
-// (playlist-table__duration, shared with .playlist-track__duration); both
-// classes must come from this same entry or the header and body columns
-// drift out of alignment.
+// align: 'end' keeps duration header/body columns right-aligned together.
 const SORT_COLUMNS = [
   { key: PLAYLIST_SORT_KEYS.title, label: '曲目' },
   { key: PLAYLIST_SORT_KEYS.addedAt, label: '新增日期' },

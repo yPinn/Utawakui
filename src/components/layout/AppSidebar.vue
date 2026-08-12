@@ -1,6 +1,6 @@
 <script setup>
 import { Captions, Download, ListMusic, Palette } from '@lucide/vue';
-import { ICON_SIZE } from '../constants/ui.js';
+import { ICON_SIZE } from '../../constants/ui.js';
 
 defineProps({
   activeView: { type: String, required: true },

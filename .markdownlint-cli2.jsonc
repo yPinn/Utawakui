@@ -1,12 +1,9 @@
 {
   "config": {
     "default": true,
-    // CLAUDE.md/docs/spec.md are deliberately long-form prose, one point
-    // per line — not a line-length violation to fix.
+    // Long-form project docs are intentionally prose-heavy.
     "MD013": false,
-    // Claude Code skill files (.claude/skills/**/*.md) start with YAML
-    // frontmatter, not a top-level heading — that's the required format,
-    // not a violation.
+    // Skill docs may start with required YAML frontmatter.
     "MD041": false,
   },
 }

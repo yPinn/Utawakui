@@ -75,18 +75,11 @@ const APP_USER_MODEL_ID = 'com.utawakui.app';
 
 app.setName(APP_NAME);
 
-// Must run before app.whenReady() — Electron only accepts scheme privilege
-// registration at module load time. The one exception to "everything
-// Electron-API-related lives in the ready callback" in this file.
+// Electron requires scheme privileges before app.whenReady().
 protocol.registerSchemesAsPrivileged([
   {
     scheme: MEDIA_SCHEME,
-    // supportFetchAPI/corsEnabled are required for the guide-vocal mix:
-    // the shared <audio> element routes through createMediaElementSource(),
-    // and Web Audio silently zeroes every channel of a cross-origin source
-    // unless the request is CORS-clean. Without these flags, fetch() to
-    // this scheme fails outright and audio.crossOrigin='anonymous' gets
-    // rejected before it ever reaches our handler.
+    // Required by fetch() and CORS-clean Web Audio playback.
     privileges: {
       standard: true,
       stream: true,
@@ -137,10 +130,7 @@ async function backfillTrackInfoWithLyricsFallback(videoId, trackDir) {
   try {
     saved = await saveLrclibLyricsIfAbsent(result, trackDir);
   } catch {
-    // The info/thumbnail backfill for this track already succeeded — a
-    // failed optional lyrics fallback shouldn't abort the rest of the
-    // backfill pass for every remaining track (mirrors the download
-    // handler's own saveLrclibLyricsIfAbsent guard below).
+    // Lyrics fallback is optional; metadata/artwork backfill already worked.
   }
   return saved ? { ...result, assetsUpdated: true } : result;
 }
@@ -157,19 +147,13 @@ async function saveLrclibLyricsIfAbsent(track, trackDir) {
   return saveTrackLyricsText(trackDir, lrclibResult.source, lrclibResult.text);
 }
 
-// Guards against overlapping separation:run calls — see the handler's own
-// comment for why this can't just be left to the renderer's disabled state.
+// Main owns this guard because renderer disabled state is not authoritative.
 let separationInProgress = false;
 
-// Renderer-reported only — main never guesses playback state itself. The
-// <audio> element in usePlayer.js is the sole source of truth for
-// isPlaying (see CLAUDE.md); this just mirrors whatever it last reported so
-// the thumbar redraw stays a pure function of that report.
+// Renderer-reported mirror; usePlayer.js remains the playback source of truth.
 let playbackState = { isPlaying: false, hasTrack: false };
 
-// Must track the *system* taskbar theme, not the app's own —
-// shouldUseDarkColorsForSystemIntegratedUI distinguishes that, unlike plain
-// shouldUseDarkColors. A white icon on a light-mode taskbar is near-invisible.
+// Match the Windows taskbar theme, not the app theme.
 const THUMBAR_ICON_LIGHT = { r: 255, g: 255, b: 255 };
 const THUMBAR_ICON_DARK = { r: 32, g: 32, b: 32 };
 const thumbarIconCache = new Map();
@@ -194,9 +178,7 @@ function getThumbarIcon(glyph, systemIsDark) {
   return image;
 }
 
-// The renderer now owns playlist queue controls in PlayerBar.vue. The
-// Windows taskbar thumbar still exposes play/pause only until those
-// queue commands are bridged explicitly.
+// Queue commands are renderer-only for now; thumbar exposes play/pause.
 function updateThumbar() {
   if (process.platform !== 'win32' || !mainWindow) return;
 
@@ -233,8 +215,7 @@ function createWindow() {
     height: 850,
     minWidth: 960,
     minHeight: 650,
-    // must match --ui-bg in public/tokens.css — this can't read the CSS
-    // variable, keep the two literal values in sync by hand
+    // Keep in sync with --ui-bg in src/styles/tokens.css.
     backgroundColor: '#20222a',
     title: APP_NAME,
     icon: iconPath,
@@ -268,9 +249,7 @@ function createWindow() {
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
     if (isDev) mainWindow.webContents.openDevTools();
-    // Otherwise no thumbar buttons exist at all until the renderer's first
-    // player:state push — the taskbar thumbnail would show no controls on
-    // launch even though a track may already be loaded from a prior state.
+    // Show thumbar controls before the first renderer player:state event.
     updateThumbar();
   });
 
@@ -690,8 +669,7 @@ if (!gotSingleInstanceLock) {
       return resolveDownloadDir(cachedConfig);
     });
 
-    // Fire-and-forget notification from the renderer, not invoke/handle —
-    // the thumbar redraw has no return value the renderer needs to await.
+    // Fire-and-forget; thumbar redraw has no renderer-visible result.
     ipcMain.on('player:state', (event, state) => {
       const next = {
         isPlaying: Boolean(state && state.isPlaying),
@@ -709,13 +687,8 @@ if (!gotSingleInstanceLock) {
 
     nativeTheme.on('updated', updateThumbar);
 
-    // One-time, offline schema migrations — must run before the window
-    // loads (not lazily on first library:list/playlists:list) because both
-    // are gated on the *raw on-disk* version, and any ordinary write
-    // (saveIndexEntry/writePlaylists) that happens first would stamp the
-    // current version and permanently skip them. Order matters: the
-    // playlist-kind heuristic reads each track's album field, so the
-    // track-metadata migration must land in library.json first.
+    // Run version-gated migrations before ordinary writes stamp the files.
+    // Album metadata must exist before playlist-kind classification.
     {
       const dir = resolveDownloadDir(cachedConfig);
       migrateTrackAlbumMetadata(dir, readTrackInfoMetadata);

@@ -120,11 +120,7 @@ const metaParts = computed(() =>
 }
 
 .candidate-option:focus-visible {
-  /* Offset deliberately matches the border width (not the shared
-     --ui-focus-offset/-inset pair) so the ring sits flush just outside
-     the option's own border regardless of whether that border is
-     transparent (unselected) or --ui-accent (selected) — a different,
-     intentional reason for a custom offset, not drift. */
+  /* Match border width so selected/unselected rings align. */
   outline: var(--ui-focus-width) solid var(--ui-focus);
   outline-offset: var(--ui-border-width);
 }

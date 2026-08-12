@@ -1,12 +1,5 @@
 <script setup>
-// Deliberately not built from UiButton for the nav items themselves — same
-// reasoning CLAUDE.md gives for AppSidebar.vue's own nav: full-width,
-// left-aligned, --ui-text labels, an accent-filled active state. None of
-// that matches UiButton's ghost/accent action-button semantics. "新增歌單"
-// below is styled as one more row in the same list (thumb + label, Plus
-// icon standing in for a cover) rather than a standalone action button, so
-// it reads as a placeholder slot at the top of the list instead of a
-// disconnected toolbar button.
+// Nav rows are bespoke; UiButton semantics do not match this full-row list.
 import {
   Disc3,
   Download,
@@ -20,22 +13,19 @@ import {
   Trash2,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
-import { useDragReorder } from '../composables/useDragReorder.js';
-import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import { usePlayer } from '../composables/usePlayer.js';
-import { usePlaylists } from '../composables/usePlaylists.js';
-import { ICON_SIZE } from '../constants/ui.js';
-import { deriveAlbumSummary } from '../utils/albumSummary.js';
-import { orderPlaylistsForDisplay } from '../utils/playlistOrdering.js';
-import { toPlayableTrack } from '../utils/playableTrack.js';
+import { useDragReorder } from '../../composables/useDragReorder.js';
+import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { usePlayer } from '../../composables/usePlayer.js';
+import { usePlaylists } from '../../composables/usePlaylists.js';
+import { ICON_SIZE } from '../../constants/ui.js';
+import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
+import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
-import UiContextMenu from './ui/UiContextMenu.vue';
+import UiContextMenu from '../ui/UiContextMenu.vue';
 
 const props = defineProps({
-  // Keyed by track id — same shape as SetlistView.vue's own tracksById,
-  // passed down rather than fetched again here (this component has no
-  // other consumer, so a second listTracks()/onLibraryUpdated subscription
-  // would just duplicate what the parent already has).
+  // Passed from SetlistView to avoid a duplicate library subscription.
   tracksById: { type: Map, default: () => new Map() },
 });
 
@@ -45,10 +35,7 @@ const { state: queueState, setQueue } = usePlaybackQueue();
 
 const emit = defineEmits(['playlistAction']);
 
-// First member track's thumbnail stands in for the playlist's own cover —
-// same convention as the Setlist hero's playlist-cover cells. Returns
-// undefined for an empty playlist, which the template renders as the
-// generic Music2 fallback.
+// First member thumbnail stands in as the playlist cover.
 function coverTrackFor(playlist) {
   const firstTrackId = playlist.trackIds[0];
   return firstTrackId ? props.tracksById.get(firstTrackId) : undefined;
@@ -60,10 +47,7 @@ function memberTracksFor(playlist) {
     .filter(Boolean);
 }
 
-// sourceId (usePlaybackQueue.js) is the stable id of the playlist/album the
-// current queue was built from — compared against this row's own id, not
-// against sourceName (a display string two same-named playlists could
-// collide on).
+// Compare stable sourceId, not display name.
 function isActiveSource(playlist) {
   return queueState.sourceId === playlist.id;
 }
@@ -72,14 +56,7 @@ function isPlayingThis(playlist) {
   return isActiveSource(playlist) && playerState.isPlaying;
 }
 
-// Doesn't select/navigate the row — this button is play-only, so its click
-// handler stops the event before the row's own @click (selectPlaylist) can
-// fire. Resumes/pauses in place when this playlist is already the loaded
-// source (same "explicit play()/pause(), not toggle()" reasoning as the
-// SMTC integration in usePlayer.js); otherwise builds a fresh queue from
-// this playlist's own tracks and starts it — same shape as SetlistView.vue's
-// playRow()/playPlaylist(), just sourced from tracksById instead of the
-// currently-selected playlist.
+// Play-only control: stop row navigation, then resume/pause or load this list.
 function togglePlayback(playlist, event) {
   event.stopPropagation();
   if (isPlayingThis(playlist)) {
@@ -100,28 +77,15 @@ function togglePlayback(playlist, event) {
   playTrack(toPlayableTrack(first));
 }
 
-// Playlists render first, in whatever order state.playlists has them in
-// (i.e. whatever the user last dragged them to — see startDrag/dropPlaylist
-// below) — mixed-artist by nature, so an alphabetical rule wouldn't mean
-// much and manual ordering stays useful. Albums are fixed-ordered by their
-// derived artist instead (deliberately NOT draggable: a fixed sort rule
-// can't coexist with free manual reordering — a dropped position would
-// just get overridden back to sorted order on the next render, so drag
-// stays scoped to playlistItems only — see the button elements below, only
-// the playlist loop has draggable/@dragstart etc). Shared with
-// LyricsWorkspace.vue's playlist <select> via playlistOrdering.js so both
-// surfaces present playlists in the same order.
+// Playlists keep manual order; albums are sorted and not draggable.
+// Shared with LyricsWorkspace.vue through playlistOrdering.js.
 const orderedPlaylists = computed(() =>
   orderPlaylistsForDisplay(state.playlists, props.tracksById),
 );
 const playlistItems = computed(() => orderedPlaylists.value.playlistItems);
 const albumItems = computed(() => orderedPlaylists.value.albumItems);
 
-// Spotify's own library rows show "類型 • 建立者"; there's no owner concept
-// here (single-user, local app), so an album substitutes its own derived
-// artist (src/utils/albumSummary.js, same helper the Setlist hero uses) in
-// that slot instead. A playlist can span many artists, so it just shows
-// its kind alone.
+// Album subtitle uses derived artist; mixed playlists show kind only.
 function subtitleFor(playlist) {
   if (playlist.kind !== 'album') return '播放清單';
   const { artist } = deriveAlbumSummary(memberTracksFor(playlist));
@@ -133,12 +97,7 @@ const menuContext = ref(null);
 const isMenuOpen = computed(() => Boolean(menuContext.value));
 const menuX = computed(() => menuContext.value?.x ?? 0);
 const menuY = computed(() => menuContext.value?.y ?? 0);
-// Whole-collection version of SetlistView.vue's own single-track "新增至
-// 播放清單" submenu (addMenuItems/playlistChildren there) — same shape,
-// same reasoning: a fixed "建立新播放清單" entry first, then a divider,
-// then every other playlist. Albums are excluded as targets because their
-// membership is read-only (see setPlaylistTracks's album no-op in
-// electron/lib/playlists.js) — same rule the track-level version uses.
+// Albums are excluded because their membership is read-only.
 function addToPlaylistChildren(playlist) {
   const children = [
     {

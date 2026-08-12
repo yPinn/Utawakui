@@ -18,21 +18,21 @@ import {
   VolumeX,
   X,
 } from '@lucide/vue';
-import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
+import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import {
   PITCH_CENTS_RANGE,
   PLAYBACK_MODES,
   TEMPO_RATE_RANGE,
   TRANSPOSE_SEMITONES_RANGE,
   usePlayer,
-} from '../composables/usePlayer.js';
-import { formatDuration } from '../utils/format.js';
-import { toPlayableTrack } from '../utils/playableTrack.js';
-import { getTrackInitial } from '../utils/trackDisplay.js';
-import { ICON_SIZE } from '../constants/ui.js';
-import PlaybackQueuePanel from './PlaybackQueuePanel.vue';
-import UiButton from './ui/UiButton.vue';
-import UiMarqueeText from './ui/UiMarqueeText.vue';
+} from '../../composables/usePlayer.js';
+import { formatDuration } from '../../utils/format.js';
+import { toPlayableTrack } from '../../utils/playableTrack.js';
+import { getTrackInitial } from '../../utils/trackDisplay.js';
+import { ICON_SIZE } from '../../constants/ui.js';
+import PlaybackQueuePanel from '../queue/PlaybackQueuePanel.vue';
+import UiButton from '../ui/UiButton.vue';
+import UiMarqueeText from '../ui/UiMarqueeText.vue';
 
 const {
   state,
@@ -553,8 +553,7 @@ onUnmounted(() => {
   font-size: var(--ui-text-sm);
 }
 
-/* Capped width so the progress bar doesn't stretch absurdly on a wide
-   window. rem, matching public/tokens.css's --ui-space-* scale. */
+/* Cap progress width on wide windows. */
 .player-bar__center {
   flex: 2;
   max-width: 24rem;
@@ -604,8 +603,7 @@ onUnmounted(() => {
   flex: 1;
 }
 
-/* Fixed width, not min-width: elapsed time crossing e.g. 9:59 -> 10:00
-   would still push the slider and shift the row otherwise. */
+/* Fixed width prevents 9:59 -> 10:00 from shifting the slider. */
 .player-bar__time {
   flex-shrink: 0;
   width: 5ch;
@@ -618,10 +616,7 @@ onUnmounted(() => {
   text-align: right;
 }
 
-/* flex: 1 matches .player-bar__track's flex:1 on the left, keeping
-   .player-bar__center visually centered. min-width: 0 because flexbox
-   otherwise falls back to min-width: auto, floored at content's natural
-   width, which breaks that balance. */
+/* Mirror left flex sizing while allowing content to shrink. */
 .player-bar__extras {
   display: flex;
   align-items: center;
