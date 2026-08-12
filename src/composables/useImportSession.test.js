@@ -10,6 +10,7 @@ let resetDownloadDirMock;
 let getPlaylistsMock;
 let createPlaylistMock;
 let setPlaylistTracksMock;
+let upsertAlbumMock;
 
 // usePlaylists.js is a module-scope singleton that useImportSession.js now
 // imports transitively — it eagerly calls getPlaylists()/onLibraryUpdated()
@@ -55,6 +56,16 @@ beforeEach(() => {
     if (mockPlaylist?.id === id) mockPlaylist = { ...mockPlaylist, trackIds };
     return mockPlaylist ? [mockPlaylist] : [];
   });
+  upsertAlbumMock = vi.fn(async ({ source, trackIds } = {}) => {
+    mockPlaylist = {
+      id: 'album-1',
+      kind: 'album',
+      source,
+      trackIds,
+      addedAt: {},
+    };
+    return [mockPlaylist];
+  });
   vi.stubGlobal('window', {
     Utawakui: {
       listPlaylist: listPlaylistMock,
@@ -67,6 +78,7 @@ beforeEach(() => {
       getPlaylists: getPlaylistsMock,
       createPlaylist: createPlaylistMock,
       setPlaylistTracks: setPlaylistTracksMock,
+      upsertAlbum: upsertAlbumMock,
       onLibraryUpdated: () => () => {},
     },
   });
@@ -329,6 +341,76 @@ describe('useImportSession', () => {
       nextPlaylistId('My Setlist'),
       ['song-1', 'song-2'],
     );
+  });
+
+  it('sends a structurally cloneable payload to upsertAlbum for album sources', async () => {
+    // Regression test: state.collectionSource used to be assigned straight
+    // onto reactive() state, so reading it back for the upsertAlbum payload
+    // handed ipcRenderer.invoke a Vue reactive Proxy instead of a plain
+    // object. Proxies fail structured cloning — the real IPC boundary threw
+    // "An object could not be cloned." structuredClone() below exercises the
+    // same clone algorithm Electron's ipcRenderer.invoke uses, so this test
+    // fails the same way a mock-only assertion wouldn't.
+    listPlaylistMock.mockResolvedValueOnce({
+      title: 'My Album',
+      kind: 'album',
+      source: { platform: 'youtube', id: 'OLAK5uy_abc' },
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'ok' });
+    const session = await loadImportSession();
+
+    session.state.input = 'playlist-id';
+    await session.resolveSource();
+    await session.confirmImport();
+
+    expect(upsertAlbumMock).toHaveBeenCalledTimes(1);
+    const payload = upsertAlbumMock.mock.calls[0][0];
+    expect(() => structuredClone(payload)).not.toThrow();
+    expect(payload).toEqual({
+      name: 'My Album',
+      source: { platform: 'youtube', id: 'OLAK5uy_abc' },
+      trackIds: ['song-1'],
+    });
+    expect(session.state.status).toBe('已加入專輯「My Album」');
+  });
+
+  it('still syncs an album whose tracks are all already downloaded', async () => {
+    // Regression test: re-importing an album where every track already
+    // exists locally used to be a dead end — createPreviewTrack defaulted
+    // alreadyDownloaded tracks to unselected, the checkbox to select them
+    // was disabled, and hasImportableSelection required a downloadable
+    // selection to enable the confirm button at all. The album could never
+    // be (re-)created even though every track was already on disk.
+    listPlaylistMock.mockResolvedValueOnce({
+      title: 'Florskyn',
+      kind: 'album',
+      source: { platform: 'youtube', id: 'OLAK5uy_florskyn' },
+      entries: Array.from({ length: 10 }, (_, i) => ({
+        id: `song-${i + 1}`,
+        title: `Song ${i + 1}`,
+        alreadyDownloaded: true,
+      })),
+    });
+    const session = await loadImportSession();
+
+    session.state.input = 'playlist-id';
+    await session.resolveSource();
+
+    expect(session.state.playlistTracks.every((track) => track.selected)).toBe(
+      true,
+    );
+    expect(session.confirmImportLabel.value).toBe('加入 10 首');
+    expect(session.canUseConfirmButton.value).toBe(true);
+
+    await session.confirmImport();
+
+    expect(downloadAudioMock).not.toHaveBeenCalled();
+    expect(upsertAlbumMock).toHaveBeenCalledTimes(1);
+    expect(upsertAlbumMock.mock.calls[0][0].trackIds).toEqual(
+      Array.from({ length: 10 }, (_, i) => `song-${i + 1}`),
+    );
+    expect(session.state.status).toBe('已加入專輯「Florskyn」');
   });
 
   it('re-syncs the same local playlist on retry instead of creating a duplicate', async () => {

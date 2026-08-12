@@ -1,16 +1,27 @@
 <script setup>
 import { computed, onMounted, useTemplateRef } from 'vue';
 import {
+  ArrowDownToLine,
+  BadgeCheck,
+  Check,
+  CircleAlert,
+  CircleDashed,
+  CircleX,
   Download,
   FolderOpen,
+  Library,
+  ListChecks,
+  Loader2,
   RefreshCw,
   RotateCcw,
   Search,
+  SquareCheckBig,
   X,
 } from '@lucide/vue';
 import ImportCandidateOption from '../components/import/ImportCandidateOption.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
+import UiStatusIcon from '../components/ui/UiStatusIcon.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useRovingRadioGroup } from '../composables/useRovingRadioGroup.js';
@@ -22,6 +33,39 @@ import {
   identityStatusLabel,
   identityTitle,
 } from '../utils/importCandidateDisplay.js';
+
+// Icon + tone lookups for the row-level status badges (see #trail below).
+// Kept component-local rather than in
+// importCandidateDisplay.js/useImportSession.js — those are plain-Node-
+// testable modules, and importing @lucide/vue's Vue components into them
+// would pull a UI dependency into pure logic layers.
+const IDENTITY_STATUS_ICONS = {
+  identified: BadgeCheck,
+  review: CircleAlert,
+  pending: CircleDashed,
+};
+
+const IDENTITY_STATUS_TONES = {
+  identified: 'accent',
+  review: 'danger',
+  pending: 'muted',
+};
+
+const TRACK_STATUS_ICONS = {
+  pending: ArrowDownToLine,
+  downloading: Loader2,
+  done: Check,
+  downloaded: Library,
+  error: CircleX,
+};
+
+const TRACK_STATUS_TONES = {
+  pending: 'muted',
+  downloading: 'accent',
+  done: 'accent',
+  downloaded: 'muted',
+  error: 'danger',
+};
 
 const {
   state,
@@ -77,15 +121,6 @@ const sourceDiffersFromSelection = computed(() => {
     (selected.playbackVideoId || selected.id)
   );
 });
-const singleFooterNote = computed(() => {
-  if (!state.singleTrack) return '';
-  if (state.singleTrack.alreadyDownloaded) return '此音源已在曲庫中。';
-  if (sourceDiffersFromSelection.value) {
-    return '會下載較適合播放的版本；你貼上的影片只用來比對歌曲。';
-  }
-  return '會下載目前顯示的版本。';
-});
-
 function isSelectedCandidate(candidate) {
   return candidateId(candidate) === state.selectedCandidateId;
 }
@@ -106,8 +141,26 @@ function displayArtistForTrack(track) {
   return identityArtistLabel(trackIdentityFor(track), track?.artist);
 }
 
-function identityClassForTrack(track) {
-  return `identity-chip--${identityStatusClass(trackIdentityFor(track))}`;
+function identityIconFor(track) {
+  return (
+    IDENTITY_STATUS_ICONS[identityStatusClass(trackIdentityFor(track))] ||
+    CircleDashed
+  );
+}
+
+function identityToneFor(track) {
+  return (
+    IDENTITY_STATUS_TONES[identityStatusClass(trackIdentityFor(track))] ||
+    'muted'
+  );
+}
+
+function trackStatusIconFor(track) {
+  return TRACK_STATUS_ICONS[getTrackStatusClass(track)] || ArrowDownToLine;
+}
+
+function trackStatusToneFor(track) {
+  return TRACK_STATUS_TONES[getTrackStatusClass(track)] || 'muted';
 }
 
 onMounted(() => {
@@ -230,31 +283,25 @@ onMounted(() => {
               :artist="displayArtistForTrack(state.singleTrack)"
             >
               <template #trail>
-                <span
+                <UiStatusIcon
                   v-if="trackIdentityFor(state.singleTrack)"
-                  class="identity-chip"
-                  :class="identityClassForTrack(state.singleTrack)"
-                >
-                  {{ identityStatusLabel(trackIdentityFor(state.singleTrack)) }}
-                </span>
-                <span
-                  class="track-status"
-                  :class="`track-status--${getTrackStatusClass(state.singleTrack)}`"
-                  :title="getTrackStatusLabel(state.singleTrack)"
-                >
-                  {{ getTrackStatusLabel(state.singleTrack) }}
-                </span>
+                  :icon="identityIconFor(state.singleTrack)"
+                  :tone="identityToneFor(state.singleTrack)"
+                  :label="
+                    identityStatusLabel(trackIdentityFor(state.singleTrack))
+                  "
+                />
+                <UiStatusIcon
+                  :icon="trackStatusIconFor(state.singleTrack)"
+                  :tone="trackStatusToneFor(state.singleTrack)"
+                  :spinning="
+                    getTrackStatusClass(state.singleTrack) === 'downloading'
+                  "
+                  :label="getTrackStatusLabel(state.singleTrack)"
+                />
               </template>
             </UiTrackRow>
           </ul>
-
-          <p class="selected-source-note">
-            {{
-              sourceDiffersFromSelection
-                ? '系統已替你找到較接近音樂平台的版本。'
-                : '目前會下載你貼上的來源。'
-            }}
-          </p>
         </section>
 
         <section
@@ -293,7 +340,6 @@ onMounted(() => {
       </div>
 
       <div class="preview-footer">
-        <span class="preview-footer__note">{{ singleFooterNote }}</span>
         <UiButton
           :icon="Download"
           variant="accent"
@@ -316,10 +362,8 @@ onMounted(() => {
             {{ state.playlistTitle }}
           </h2>
           <p class="preview-panel__meta">
-            {{ playlistStats.total }} 首，{{
-              playlistStats.downloadableSelected
-            }}
-            首將下載
+            {{ state.collectionKind === 'album' ? '專輯' : '播放清單' }} ·
+            {{ playlistStats.total }} 首
           </p>
         </div>
         <UiButton
@@ -331,29 +375,6 @@ onMounted(() => {
         />
       </div>
 
-      <div class="snapshot-summary" aria-label="播放清單統計">
-        <span>
-          <strong>{{ playlistStats.total }}</strong>
-          全部
-        </span>
-        <span>
-          <strong>{{ playlistStats.downloadableSelected }}</strong>
-          將下載
-        </span>
-        <span>
-          <strong>{{ playlistStats.alreadyDownloaded }}</strong>
-          已存在
-        </span>
-        <span v-if="playlistStats.done > 0">
-          <strong>{{ playlistStats.done }}</strong>
-          完成
-        </span>
-        <span v-if="playlistStats.error > 0" class="snapshot-summary__danger">
-          <strong>{{ playlistStats.error }}</strong>
-          失敗
-        </span>
-      </div>
-
       <div class="preview-tools">
         <div class="filter-tabs" aria-label="預覽篩選">
           <button
@@ -361,7 +382,10 @@ onMounted(() => {
             :key="filter.key"
             type="button"
             class="filter-tab"
-            :class="{ 'filter-tab--active': state.activeFilter === filter.key }"
+            :class="{
+              'filter-tab--active': state.activeFilter === filter.key,
+              'filter-tab--danger': filter.key === 'failed' && filter.count > 0,
+            }"
             :aria-pressed="state.activeFilter === filter.key"
             @click="state.activeFilter = filter.key"
           >
@@ -371,18 +395,26 @@ onMounted(() => {
         </div>
 
         <div class="preview-tools__actions">
-          <UiButton :disabled="state.isImporting" @click="selectMissingTracks">
+          <UiButton
+            :icon="ListChecks"
+            :disabled="state.isImporting"
+            @click="selectMissingTracks"
+          >
             選取未下載
           </UiButton>
           <UiButton
+            :icon="SquareCheckBig"
+            :active="allSelected"
             :disabled="
               state.isImporting || selectablePlaylistTracks.length === 0
             "
+            :aria-pressed="allSelected"
             @click="toggleSelectAll"
           >
             {{ allSelected ? '取消全選' : '全選' }}
           </UiButton>
           <UiButton
+            v-if="playlistStats.error > 0"
             :icon="RefreshCw"
             :disabled="!canRetryFailed"
             @click="retryFailedTracks"
@@ -410,29 +442,23 @@ onMounted(() => {
               v-model="track.selected"
               class="preview-track__checkbox"
               type="checkbox"
-              :disabled="
-                state.isImporting ||
-                track.alreadyDownloaded ||
-                track.status === 'done'
-              "
+              :disabled="state.isImporting || track.status === 'done'"
               :aria-label="track.title"
             />
           </template>
           <template #trail>
-            <span
+            <UiStatusIcon
               v-if="trackIdentityFor(track)"
-              class="identity-chip"
-              :class="identityClassForTrack(track)"
-            >
-              {{ identityStatusLabel(trackIdentityFor(track)) }}
-            </span>
-            <span
-              class="track-status"
-              :class="`track-status--${getTrackStatusClass(track)}`"
-              :title="track.error || getTrackStatusLabel(track)"
-            >
-              {{ getTrackStatusLabel(track) }}
-            </span>
+              :icon="identityIconFor(track)"
+              :tone="identityToneFor(track)"
+              :label="identityStatusLabel(trackIdentityFor(track))"
+            />
+            <UiStatusIcon
+              :icon="trackStatusIconFor(track)"
+              :tone="trackStatusToneFor(track)"
+              :spinning="getTrackStatusClass(track) === 'downloading'"
+              :label="track.error || getTrackStatusLabel(track)"
+            />
           </template>
         </UiTrackRow>
       </ul>
@@ -442,9 +468,6 @@ onMounted(() => {
       </p>
 
       <div class="preview-footer">
-        <span class="preview-footer__note">
-          播放清單會逐首下載；之後會加入更精準的音源比對。
-        </span>
         <UiButton
           :icon="Download"
           variant="accent"
@@ -471,8 +494,6 @@ onMounted(() => {
   );
   --import-preview-list-max-height: calc(var(--ui-space-5) * 15);
   --import-checkbox-size: var(--ui-space-4);
-  --import-status-min-width: calc(var(--ui-space-5) * 3);
-  --import-status-max-width: calc(var(--ui-space-5) * 6);
 
   display: flex;
   flex-direction: column;
@@ -533,7 +554,6 @@ onMounted(() => {
 
 .section-heading__meta,
 .preview-panel__meta,
-.preview-footer__note,
 .empty-panel,
 .status,
 .download-inline,
@@ -658,7 +678,6 @@ onMounted(() => {
 .candidate-options,
 .preview-tools,
 .preview-tools__actions,
-.snapshot-summary,
 .filter-tabs {
   display: flex;
   gap: var(--ui-space-2);
@@ -690,31 +709,6 @@ onMounted(() => {
 
 .candidate-chip span {
   color: var(--ui-text);
-}
-
-.selected-source-note {
-  margin: 0;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
-}
-
-.snapshot-summary {
-  gap: var(--ui-space-3);
-}
-
-.snapshot-summary span {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
-}
-
-.snapshot-summary strong {
-  color: var(--ui-text);
-  font-weight: var(--ui-font-weight-strong);
-}
-
-.snapshot-summary__danger,
-.snapshot-summary__danger strong {
-  color: var(--ui-danger);
 }
 
 .preview-tools {
@@ -749,6 +743,15 @@ onMounted(() => {
 
 .filter-tab--active {
   background: var(--ui-accent);
+  color: var(--ui-accent-contrast);
+}
+
+.filter-tab--danger:not(.filter-tab--active) {
+  color: var(--ui-danger);
+}
+
+.filter-tab--active.filter-tab--danger {
+  background: var(--ui-danger);
   color: var(--ui-accent-contrast);
 }
 
@@ -798,69 +801,6 @@ onMounted(() => {
   accent-color: var(--ui-accent);
 }
 
-.track-status {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: var(--import-status-min-width);
-  max-width: var(--import-status-max-width);
-  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
-  border-radius: var(--ui-radius);
-  color: var(--ui-text-muted);
-  background: var(--ui-surface-hover);
-  font-size: var(--ui-text-sm);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.identity-chip {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: var(--import-status-min-width);
-  max-width: var(--import-status-max-width);
-  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
-  border-radius: var(--ui-radius);
-  color: var(--ui-text-muted);
-  background: var(--ui-bg);
-  font-size: var(--ui-text-sm);
-  text-align: center;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.identity-chip--identified {
-  color: var(--ui-accent);
-}
-
-.identity-chip--review {
-  color: var(--ui-danger);
-}
-
-.identity-chip--pending {
-  color: var(--ui-text-muted);
-}
-
-.track-status--downloading {
-  color: var(--ui-accent);
-}
-
-.track-status--done,
-.track-status--downloaded {
-  color: var(--ui-text);
-}
-
-.track-status--error {
-  color: var(--ui-danger);
-}
-
 .empty-state,
 .empty-panel p {
   margin: 0;
@@ -876,14 +816,10 @@ onMounted(() => {
 .preview-footer {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--ui-space-3);
   padding-top: var(--ui-space-2);
   border-top: var(--import-border-width) solid var(--ui-border);
-}
-
-.preview-footer__note {
-  min-width: 0;
 }
 
 @media (max-width: 920px) {

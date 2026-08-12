@@ -1,6 +1,10 @@
+// 'selected' isn't a filter tab — checkbox state is already visible per-row
+// in the list, and the toolbar's 選取未下載/全選/重試失敗 actions already
+// manipulate + auto-switch to the relevant status filter (see
+// useImportSession.js's selectMissingTracks/selectFailedTracks). A separate
+// tab for it would just duplicate what's below.
 export const IMPORT_FILTERS = Object.freeze([
   { key: 'all', label: '全部' },
-  { key: 'selected', label: '已選' },
   { key: 'missing', label: '未下載' },
   { key: 'downloaded', label: '已下載' },
   { key: 'failed', label: '失敗' },
@@ -86,8 +90,9 @@ export function filterPlaylistImportTracks(tracks, filter) {
   return source;
 }
 
+// Any selected track counts, not just ones that still need downloading — a
+// selected already-downloaded track still needs to end up in the synced
+// playlist/album's trackIds (see useImportSession.js's syncImportedPlaylist).
 export function hasImportableSelection(tracks) {
-  return (Array.isArray(tracks) ? tracks : []).some(
-    (track) => track.selected && isDownloadable(track),
-  );
+  return (Array.isArray(tracks) ? tracks : []).some((track) => track.selected);
 }

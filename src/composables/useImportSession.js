@@ -1,4 +1,4 @@
-import { computed, reactive } from 'vue';
+import { computed, markRaw, reactive } from 'vue';
 import {
   IMPORT_FILTERS,
   filterPlaylistImportTracks,
@@ -7,7 +7,11 @@ import {
 } from '../utils/importPlaylist.js';
 import { usePlaylists } from './usePlaylists.js';
 
-const { create: createPlaylist, setTracks: setPlaylistTracks } = usePlaylists();
+const {
+  create: createPlaylist,
+  setTracks: setPlaylistTracks,
+  upsertAlbum,
+} = usePlaylists();
 
 const state = reactive({
   input: '',
@@ -15,12 +19,17 @@ const state = reactive({
   statusType: 'idle', // 'idle' | 'pending' | 'success' | 'error'
   downloadDir: '',
   isDefaultDir: true,
-  sourceKind: 'idle', // 'idle' | 'playlist' | 'single'
+  sourceKind: 'idle', // 'idle' | 'playlist' | 'single' — input source shape
   singleTrack: null,
   singleResolution: null,
   selectedCandidateId: null,
   playlistTracks: null,
   playlistTitle: null,
+  // Only meaningful when sourceKind === 'playlist' — 'album' | 'playlist',
+  // from yt:list-playlist's classifyPlaylistKind. Drives which write path
+  // syncImportedPlaylist() below takes.
+  collectionKind: null,
+  collectionSource: null,
   createdPlaylistId: null,
   activeFilter: 'all',
   isResolving: false,
@@ -84,8 +93,12 @@ const confirmImportLabel = computed(() => {
     if (state.singleTrack?.alreadyDownloaded) return '已存在';
     return '下載這首';
   }
-  const count = playlistStats.value.downloadableSelected;
-  return count > 0 ? `下載 ${count} 首` : '沒有可下載曲目';
+  const { downloadableSelected, selected } = playlistStats.value;
+  if (downloadableSelected > 0) return `下載 ${downloadableSelected} 首`;
+  // Everything selected is already local — nothing to download, but
+  // confirming still syncs them into the playlist/album's trackIds.
+  if (selected > 0) return `加入 ${selected} 首`;
+  return '沒有選取的曲目';
 });
 
 const canUseConfirmButton = computed(() =>
@@ -104,6 +117,8 @@ function clearPreview() {
   state.selectedCandidateId = null;
   state.playlistTracks = null;
   state.playlistTitle = null;
+  state.collectionKind = null;
+  state.collectionSource = null;
   state.createdPlaylistId = null;
   state.activeFilter = 'all';
   cancelRequested = false;
@@ -112,7 +127,11 @@ function clearPreview() {
 function createPreviewTrack(entry) {
   return {
     ...entry,
-    selected: !entry.alreadyDownloaded,
+    // Always default-selected, including already-owned tracks: upsertAlbum
+    // fully replaces trackIds on every sync (see electron/lib/playlists.js),
+    // so a track this preview shows but the user doesn't select gets
+    // dropped from the resulting playlist/album, not just skipped.
+    selected: true,
     status: 'pending',
     error: null,
   };
@@ -170,6 +189,17 @@ async function resolveSource() {
     if (entries && entries.length > 0) {
       state.sourceKind = 'playlist';
       state.playlistTitle = playlistResult.title || '未命名播放清單';
+      state.collectionKind =
+        playlistResult.kind === 'album' ? 'album' : 'playlist';
+      // markRaw: this is only ever read back out whole (syncImportedPlaylist
+      // hands it straight to upsertAlbum's IPC payload) and never displayed
+      // field-by-field, so it doesn't need Vue's reactivity — and it must
+      // NOT get reactive()'s deep-proxy treatment, because ipcRenderer.invoke
+      // structured-clones its arguments, and a Proxy fails that clone with
+      // "An object could not be cloned."
+      state.collectionSource = playlistResult.source
+        ? markRaw(playlistResult.source)
+        : null;
       state.playlistTracks = entries.map(createPreviewTrack);
       setStatus(`已找到 ${entries.length} 首，請確認要下載的曲目`, 'success');
     } else {
@@ -242,8 +272,14 @@ function toggleSelectAll() {
 
 function selectMissingTracks() {
   if (!state.playlistTracks) return;
+  // Additive, not absolute: tracks default selected (see createPreviewTrack),
+  // and upsertAlbum replaces trackIds wholesale on sync — forcibly
+  // deselecting already-owned tracks here would drop them from the album on
+  // the next confirm instead of just skipping their (unneeded) download.
   for (const track of state.playlistTracks) {
-    track.selected = !track.alreadyDownloaded && track.status !== 'done';
+    if (!track.alreadyDownloaded && track.status !== 'done') {
+      track.selected = true;
+    }
   }
   state.activeFilter = 'missing';
 }
@@ -271,11 +307,18 @@ async function downloadPlaylistTrack(track) {
   }
 }
 
-// Only creates the local playlist once per session (tracked via
-// state.createdPlaylistId) — a retry re-syncs the same playlist with the
-// current full success set instead of creating a duplicate. Runs
-// unconditionally after the download loop, including on cancel, so
+// Runs unconditionally after the download loop, including on cancel, so
 // whatever succeeded before a stop is still captured.
+//
+// Album imports (state.collectionKind === 'album') go through upsertAlbum,
+// keyed by source on the main-process side — a retry or a later
+// re-import of the same album updates its track list in place, never
+// creates a duplicate, so no session-local id needs tracking.
+//
+// Ordinary playlist imports keep the original create-once-per-session
+// path: state.createdPlaylistId tracks the playlist across retries within
+// this session so a retry re-syncs the same playlist with the current
+// full success set instead of creating a duplicate.
 async function syncImportedPlaylist() {
   const trackIds = state.playlistTracks
     .filter(
@@ -284,6 +327,15 @@ async function syncImportedPlaylist() {
     )
     .map((track) => track.id);
   if (trackIds.length === 0) return false;
+
+  if (state.collectionKind === 'album') {
+    const upserted = await upsertAlbum({
+      name: state.playlistTitle,
+      source: state.collectionSource,
+      trackIds,
+    });
+    return Boolean(upserted);
+  }
 
   if (!state.createdPlaylistId) {
     const created = await createPlaylist(state.playlistTitle);
@@ -322,13 +374,15 @@ async function importPlaylist() {
       setStatus('已停止，未完成的曲目仍留在預覽中', 'pending');
     } else if (stats.error > 0) {
       setStatus(`下載完成，${stats.error} 首失敗`, 'error');
-    } else {
+    } else if (playlistSynced) {
       setStatus(
-        playlistSynced
-          ? `已加入播放清單「${state.playlistTitle}」`
-          : '下載完成',
+        state.collectionKind === 'album'
+          ? `已加入專輯「${state.playlistTitle}」`
+          : `已加入播放清單「${state.playlistTitle}」`,
         'success',
       );
+    } else {
+      setStatus('下載完成', 'success');
     }
   } finally {
     state.isImporting = false;

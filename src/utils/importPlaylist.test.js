@@ -118,8 +118,12 @@ describe('filterPlaylistImportTracks', () => {
 });
 
 describe('hasImportableSelection', () => {
-  it('requires a selected track that is not already downloaded or done', () => {
+  it('accepts a selected track regardless of download status', () => {
     expect(hasImportableSelection(tracks)).toBe(true);
+    // Already-downloaded/done tracks still count when selected — they need
+    // to end up in the synced playlist/album's trackIds even though there's
+    // nothing left to download (see useImportSession.js's syncImportedPlaylist
+    // and upsertAlbum's full-replace semantics in electron/lib/playlists.js).
     expect(
       hasImportableSelection([
         { id: 'already', alreadyDownloaded: true, selected: true },
@@ -130,6 +134,17 @@ describe('hasImportableSelection', () => {
           status: 'done',
         },
       ]),
+    ).toBe(true);
+  });
+
+  it('requires at least one selected track', () => {
+    expect(
+      hasImportableSelection([
+        { id: 'a', alreadyDownloaded: false, selected: false },
+        { id: 'b', alreadyDownloaded: true, selected: false },
+      ]),
     ).toBe(false);
+    expect(hasImportableSelection([])).toBe(false);
+    expect(hasImportableSelection(null)).toBe(false);
   });
 });
