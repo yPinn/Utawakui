@@ -13,6 +13,7 @@ import {
   Trash2,
   X,
 } from '@lucide/vue';
+import { useDragReorder } from '../composables/useDragReorder.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
@@ -62,9 +63,6 @@ const renameValue = ref('');
 const deleteError = ref(null);
 const searchQuery = ref('');
 const addMenu = ref(null);
-const draggingTrackId = ref(null);
-const dropTargetTrackId = ref(null);
-const dropPosition = ref(null);
 const playlistSort = ref({ key: null, direction: 'asc' });
 
 const TRACK_MENU_ACTIONS = {
@@ -567,51 +565,6 @@ function clearSearch() {
   searchQuery.value = '';
 }
 
-function startDrag(track, event) {
-  if (!selectedPlaylist.value || !canDragPlaylistRows.value) {
-    event.preventDefault();
-    return;
-  }
-  closeAddMenu();
-  draggingTrackId.value = track.id;
-  dropTargetTrackId.value = null;
-  dropPosition.value = null;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', track.id);
-  }
-}
-
-function updateDropTarget(track, event) {
-  if (!draggingTrackId.value || draggingTrackId.value === track.id) return;
-  event.preventDefault();
-  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-
-  const rect = event.currentTarget.getBoundingClientRect();
-  dropTargetTrackId.value = track.id;
-  dropPosition.value =
-    event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
-}
-
-function leaveDropTarget(track, event) {
-  if (
-    dropTargetTrackId.value === track.id &&
-    !event.currentTarget.contains(event.relatedTarget)
-  ) {
-    dropTargetTrackId.value = null;
-    dropPosition.value = null;
-  }
-}
-
-function dropTrack(targetTrack, event) {
-  event.preventDefault();
-  event.stopPropagation();
-  const draggedId =
-    draggingTrackId.value || event.dataTransfer?.getData('text/plain');
-  reorderTrack(draggedId, targetTrack.id, dropPosition.value || 'before');
-  clearDragState();
-}
-
 function reorderTrack(draggedId, targetId, position) {
   const playlist = selectedPlaylist.value;
   if (!playlist || !draggedId || draggedId === targetId) return;
@@ -630,10 +583,37 @@ function reorderTrack(draggedId, targetId, position) {
   setPlaylistTracksAction(playlist.id, next);
 }
 
-function clearDragState() {
-  draggingTrackId.value = null;
-  dropTargetTrackId.value = null;
-  dropPosition.value = null;
+function canDragThisPlaylistRow() {
+  return Boolean(selectedPlaylist.value) && canDragPlaylistRows.value;
+}
+
+const {
+  draggingId: draggingTrackId,
+  dropTargetId: dropTargetTrackId,
+  dropPosition,
+  startDrag: startDragReorder,
+  updateDropTarget,
+  leaveDropTarget,
+  drop: dropTrack,
+  clearDragState,
+} = useDragReorder({
+  onReorder: reorderTrack,
+  canDrag: canDragThisPlaylistRow,
+});
+
+// closeAddMenu() is a caller-side side effect (dismiss any open context
+// menu before a drag starts) — not part of the drag gesture itself, so it
+// stays here rather than inside the shared composable. Only fires when the
+// drag will actually proceed, matching the original guard-then-side-effect
+// order (closing the menu on a rejected drag start would be an observable
+// behavior change, not a pure refactor).
+function startDrag(track, event) {
+  if (!canDragThisPlaylistRow()) {
+    event.preventDefault();
+    return;
+  }
+  closeAddMenu();
+  startDragReorder(track, event);
 }
 
 let unsubscribe;

@@ -20,6 +20,7 @@ import {
   Trash2,
 } from '@lucide/vue';
 import { computed, ref } from 'vue';
+import { useDragReorder } from '../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
@@ -128,9 +129,6 @@ function subtitleFor(playlist) {
 }
 
 const menuContext = ref(null);
-const draggingPlaylistId = ref(null);
-const dropTargetPlaylistId = ref(null);
-const dropPosition = ref(null);
 
 const isMenuOpen = computed(() => Boolean(menuContext.value));
 const menuX = computed(() => menuContext.value?.x ?? 0);
@@ -279,59 +277,37 @@ function handleMenuSelect(value) {
   emit('playlistAction', value);
 }
 
+function canDragPlaylistItem() {
+  return playlistItems.value.length >= 2;
+}
+
+const {
+  draggingId: draggingPlaylistId,
+  dropTargetId: dropTargetPlaylistId,
+  dropPosition,
+  startDrag: startDragReorder,
+  updateDropTarget,
+  leaveDropTarget,
+  drop: dropPlaylist,
+  clearDragState,
+} = useDragReorder({
+  onReorder: reorderPlaylist,
+  canDrag: canDragPlaylistItem,
+});
+
+// closePlaylistMenu() is a caller-side side effect (dismiss any open
+// context menu before a drag starts) — not part of the drag gesture
+// itself, so it stays here rather than inside the shared composable. Only
+// fires when the drag will actually proceed, matching the original
+// guard-then-side-effect order (closing the menu on a rejected drag start
+// would be an observable behavior change, not a pure refactor).
 function startDrag(playlist, event) {
-  if (playlistItems.value.length < 2) {
+  if (!canDragPlaylistItem()) {
     event.preventDefault();
     return;
   }
-
   closePlaylistMenu();
-  draggingPlaylistId.value = playlist.id;
-  dropTargetPlaylistId.value = null;
-  dropPosition.value = null;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', playlist.id);
-  }
-}
-
-function updateDropTarget(playlist, event) {
-  if (!draggingPlaylistId.value || draggingPlaylistId.value === playlist.id) {
-    return;
-  }
-
-  event.preventDefault();
-  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-
-  const rect = event.currentTarget.getBoundingClientRect();
-  dropTargetPlaylistId.value = playlist.id;
-  dropPosition.value =
-    event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
-}
-
-function leaveDropTarget(playlist, event) {
-  if (
-    dropTargetPlaylistId.value === playlist.id &&
-    !event.currentTarget.contains(event.relatedTarget)
-  ) {
-    dropTargetPlaylistId.value = null;
-    dropPosition.value = null;
-  }
-}
-
-function dropPlaylist(targetPlaylist, event) {
-  event.preventDefault();
-  event.stopPropagation();
-  const draggedId =
-    draggingPlaylistId.value || event.dataTransfer?.getData('text/plain');
-  reorderPlaylist(draggedId, targetPlaylist.id, dropPosition.value || 'before');
-  clearDragState();
-}
-
-function clearDragState() {
-  draggingPlaylistId.value = null;
-  dropTargetPlaylistId.value = null;
-  dropPosition.value = null;
+  startDragReorder(playlist, event);
 }
 </script>
 

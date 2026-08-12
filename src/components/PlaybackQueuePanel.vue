@@ -1,6 +1,7 @@
 <script setup>
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { X } from '@lucide/vue';
+import { useDragReorder } from '../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
@@ -25,12 +26,6 @@ const {
   reorderSourceTrack,
 } = usePlaybackQueue();
 
-const draggingQueuedTrackId = ref(null);
-const dropTargetQueuedTrackId = ref(null);
-const queuedDropPosition = ref(null);
-const draggingSourceTrackId = ref(null);
-const dropTargetSourceTrackId = ref(null);
-const sourceDropPosition = ref(null);
 const currentTracks = computed(() =>
   currentTrack.value ? [currentTrack.value] : [],
 );
@@ -51,122 +46,37 @@ function playQueuedTrack(track, options = {}) {
   playTrack(toPlayableTrack(track));
 }
 
-function startDrag(track, event, options) {
-  if (options.tracks.value.length < 2) {
-    event.preventDefault();
-    return;
-  }
-
-  options.draggingTrackId.value = track.id;
-  options.dropTargetTrackId.value = null;
-  options.dropPosition.value = null;
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move';
-    event.dataTransfer.setData('text/plain', track.id);
-  }
-}
-
-function updateDropTarget(track, event, options) {
-  if (
-    !options.draggingTrackId.value ||
-    options.draggingTrackId.value === track.id
-  ) {
-    return;
-  }
-
-  event.preventDefault();
-  if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
-
-  const rect = event.currentTarget.getBoundingClientRect();
-  options.dropTargetTrackId.value = track.id;
-  options.dropPosition.value =
-    event.clientY < rect.top + rect.height / 2 ? 'before' : 'after';
-}
-
-function leaveDropTarget(track, event, options) {
-  if (
-    options.dropTargetTrackId.value === track.id &&
-    !event.currentTarget.contains(event.relatedTarget)
-  ) {
-    options.dropTargetTrackId.value = null;
-    options.dropPosition.value = null;
-  }
-}
-
-function dropTrack(targetTrack, event, options) {
-  event.preventDefault();
-  event.stopPropagation();
-  const draggedId =
-    options.draggingTrackId.value || event.dataTransfer?.getData('text/plain');
-  options.reorderTrack(
-    draggedId,
-    targetTrack.id,
-    options.dropPosition.value || 'before',
-  );
-  clearDragState(options);
-}
-
-function clearDragState(options) {
-  options.draggingTrackId.value = null;
-  options.dropTargetTrackId.value = null;
-  options.dropPosition.value = null;
-}
-
-const queuedDragOptions = {
-  tracks: queuedTracks,
-  draggingTrackId: draggingQueuedTrackId,
-  dropTargetTrackId: dropTargetQueuedTrackId,
+// Two independent instances — queued tracks and upcoming-source tracks are
+// two separate lists with two separate drag gestures, not one shared drag
+// state (see useDragReorder.js's own doc comment on why this composable is
+// a plain factory rather than a singleton).
+const {
+  draggingId: draggingQueuedTrackId,
+  dropTargetId: dropTargetQueuedTrackId,
   dropPosition: queuedDropPosition,
-  reorderTrack: reorderQueuedTrack,
-};
+  startDrag: startQueuedDrag,
+  updateDropTarget: updateQueuedDropTarget,
+  leaveDropTarget: leaveQueuedDropTarget,
+  drop: dropQueuedTrack,
+  clearDragState: clearQueuedDragState,
+} = useDragReorder({
+  onReorder: reorderQueuedTrack,
+  canDrag: () => queuedTracks.value.length >= 2,
+});
 
-const sourceDragOptions = {
-  tracks: sourceUpcomingTracks,
-  draggingTrackId: draggingSourceTrackId,
-  dropTargetTrackId: dropTargetSourceTrackId,
+const {
+  draggingId: draggingSourceTrackId,
+  dropTargetId: dropTargetSourceTrackId,
   dropPosition: sourceDropPosition,
-  reorderTrack: reorderSourceTrack,
-};
-
-function startQueuedDrag(track, event) {
-  startDrag(track, event, queuedDragOptions);
-}
-
-function updateQueuedDropTarget(track, event) {
-  updateDropTarget(track, event, queuedDragOptions);
-}
-
-function leaveQueuedDropTarget(track, event) {
-  leaveDropTarget(track, event, queuedDragOptions);
-}
-
-function dropQueuedTrack(track, event) {
-  dropTrack(track, event, queuedDragOptions);
-}
-
-function clearQueuedDragState() {
-  clearDragState(queuedDragOptions);
-}
-
-function startSourceDrag(track, event) {
-  startDrag(track, event, sourceDragOptions);
-}
-
-function updateSourceDropTarget(track, event) {
-  updateDropTarget(track, event, sourceDragOptions);
-}
-
-function leaveSourceDropTarget(track, event) {
-  leaveDropTarget(track, event, sourceDragOptions);
-}
-
-function dropSourceTrack(track, event) {
-  dropTrack(track, event, sourceDragOptions);
-}
-
-function clearSourceDragState() {
-  clearDragState(sourceDragOptions);
-}
+  startDrag: startSourceDrag,
+  updateDropTarget: updateSourceDropTarget,
+  leaveDropTarget: leaveSourceDropTarget,
+  drop: dropSourceTrack,
+  clearDragState: clearSourceDragState,
+} = useDragReorder({
+  onReorder: reorderSourceTrack,
+  canDrag: () => sourceUpcomingTracks.value.length >= 2,
+});
 </script>
 
 <template>
