@@ -23,6 +23,7 @@ import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
+import UiTrackThumb from '../components/ui/UiTrackThumb.vue';
 import { formatDuration } from '../utils/format.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { getTrackInitial } from '../utils/trackDisplay.js';
@@ -877,16 +878,11 @@ onUnmounted(() => {
                   visibleIndex + 1
                 }}</span>
                 <span class="playlist-track__main">
-                  <span class="playlist-track__thumb" aria-hidden="true">
-                    <img
-                      v-if="track.thumbnailUrl"
-                      class="playlist-track__thumb-image"
-                      :src="track.thumbnailUrl"
-                      alt=""
-                      draggable="false"
-                    />
-                    <span v-else>{{ getTrackInitial(track) }}</span>
-                  </span>
+                  <UiTrackThumb
+                    class="playlist-track__thumb"
+                    :track="track"
+                    :size="44"
+                  />
                   <span class="playlist-track__copy">
                     <UiMarqueeText
                       class="playlist-track__title"
@@ -1329,32 +1325,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-}
-
-.playlist-track__thumb {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-surface-hover);
-  color: var(--ui-text);
-  font-size: var(--ui-text-sm);
-  font-weight: var(--ui-font-weight-strong);
-  overflow: hidden;
-  text-transform: uppercase;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.playlist-track__thumb-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
 }
 
 .playlist-track__copy {

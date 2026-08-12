@@ -5,8 +5,8 @@
 // for album rows instead of forking the template.
 import { Music2, Pause, Play } from '@lucide/vue';
 import { ICON_SIZE } from '../../constants/ui.js';
-import { getTrackInitial } from '../../utils/trackDisplay.js';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 defineProps({
   playlist: { type: Object, required: true },
@@ -54,38 +54,41 @@ const emit = defineEmits([
     @drop="emit('drop', $event)"
     @dragend="emit('dragend')"
   >
-    <span class="playlist-sidebar__thumb">
-      <img
-        v-if="coverTrack?.thumbnailUrl"
-        class="playlist-sidebar__thumb-image"
-        :src="coverTrack.thumbnailUrl"
-        alt=""
-        aria-hidden="true"
-        draggable="false"
-      />
-      <span v-else-if="coverTrack" aria-hidden="true">{{
-        getTrackInitial(coverTrack)
-      }}</span>
-      <Music2 v-else :size="ICON_SIZE" aria-hidden="true" />
-      <button
-        type="button"
-        class="playlist-sidebar__play"
-        :class="{ 'playlist-sidebar__play--active': isActiveSource }"
-        :aria-label="
-          isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`
-        "
-        :title="isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
-        @click="emit('togglePlayback', $event)"
-      >
-        <Pause
-          v-if="isPlaying"
-          :size="ICON_SIZE"
-          fill="currentColor"
-          aria-hidden="true"
-        />
-        <Play v-else :size="ICON_SIZE" fill="currentColor" aria-hidden="true" />
-      </button>
-    </span>
+    <UiTrackThumb
+      class="playlist-sidebar__thumb"
+      :track="coverTrack"
+      :size="40"
+      color="var(--ui-text-muted)"
+      :uppercase="false"
+      :decorative="false"
+    >
+      <Music2 :size="ICON_SIZE" aria-hidden="true" />
+      <template #overlay>
+        <button
+          type="button"
+          class="playlist-sidebar__play"
+          :class="{ 'playlist-sidebar__play--active': isActiveSource }"
+          :aria-label="
+            isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`
+          "
+          :title="isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
+          @click="emit('togglePlayback', $event)"
+        >
+          <Pause
+            v-if="isPlaying"
+            :size="ICON_SIZE"
+            fill="currentColor"
+            aria-hidden="true"
+          />
+          <Play
+            v-else
+            :size="ICON_SIZE"
+            fill="currentColor"
+            aria-hidden="true"
+          />
+        </button>
+      </template>
+    </UiTrackThumb>
     <span class="playlist-sidebar__info">
       <UiMarqueeText :text="playlist.name || '(未命名歌單)'" />
       <span class="playlist-sidebar__kind">{{ subtitle }}</span>
@@ -159,31 +162,9 @@ const emit = defineEmits([
   color: var(--ui-accent-contrast);
 }
 
-.playlist-sidebar__thumb {
-  position: relative;
-  display: flex;
-  flex-shrink: 0;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-surface-hover);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
-  font-weight: var(--ui-font-weight-strong);
-  overflow: hidden;
-}
-
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
   /* Use a tokenized accent contrast color instead of opacity blending. */
   color: var(--ui-accent-contrast-muted);
-}
-
-.playlist-sidebar__thumb-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
 }
 
 /* Hidden by default, revealed on row hover/keyboard focus — same idea as

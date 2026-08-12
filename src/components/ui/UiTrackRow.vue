@@ -3,8 +3,8 @@
 // status label) without forking the CSS per caller.
 import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
-import { getTrackInitial } from '../../utils/trackDisplay.js';
 import UiMarqueeText from './UiMarqueeText.vue';
+import UiTrackThumb from './UiTrackThumb.vue';
 
 // Either pass a whole `track` object or the flat props individually — the
 // flat props win when both are given, so a caller can override one field
@@ -23,10 +23,13 @@ const props = defineProps({
 const displayTitle = computed(() => props.title ?? props.track?.title);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
 const displayDuration = computed(() => props.track?.duration);
-const thumbnailUrl = computed(() => props.track?.thumbnailUrl);
-const displayInitial = computed(() =>
-  getTrackInitial({ title: displayTitle.value, id: props.track?.id }),
-);
+// title/artist props can override the track's own fields, so the thumb
+// initial must derive from displayTitle, not track.title directly.
+const thumbTrack = computed(() => ({
+  id: props.track?.id,
+  title: displayTitle.value,
+  thumbnailUrl: props.track?.thumbnailUrl,
+}));
 </script>
 
 <template>
@@ -38,18 +41,7 @@ const displayInitial = computed(() =>
     }"
   >
     <slot name="lead" />
-    <span class="ui-track__thumb" aria-hidden="true">
-      <img
-        v-if="thumbnailUrl"
-        class="ui-track__thumb-image"
-        :src="thumbnailUrl"
-        alt=""
-        draggable="false"
-      />
-      <span v-else class="ui-track__thumb-fallback">
-        {{ displayInitial }}
-      </span>
-    </span>
+    <UiTrackThumb class="ui-track__thumb" :track="thumbTrack" :size="44" />
     <div class="ui-track__info">
       <UiMarqueeText class="ui-track__title" :text="displayTitle" />
       <span v-if="displayArtist" class="ui-track__artist">{{
@@ -96,35 +88,6 @@ const displayInitial = computed(() =>
   min-width: 0;
   display: flex;
   flex-direction: column;
-}
-
-.ui-track__thumb {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 44px;
-  height: 44px;
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-surface-hover);
-  color: var(--ui-text);
-  font-weight: var(--ui-font-weight-strong);
-  overflow: hidden;
-  text-transform: uppercase;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.ui-track__thumb-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.ui-track__thumb-fallback {
-  font-size: var(--ui-text-sm);
 }
 
 .ui-track__title {

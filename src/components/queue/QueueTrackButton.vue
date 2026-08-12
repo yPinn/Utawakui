@@ -1,6 +1,6 @@
 <script setup>
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
-import { getTrackInitial } from '../../utils/trackDisplay.js';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 defineProps({
   track: { type: Object, required: true },
@@ -31,17 +31,14 @@ const emit = defineEmits([
     @drop="emit('drop', $event)"
     @dragend="emit('dragend', $event)"
   >
-    <span class="queue-track__cover">
-      <img
-        v-if="track.thumbnailUrl"
-        class="queue-track__image"
-        :src="track.thumbnailUrl"
-        alt=""
-        aria-hidden="true"
-        draggable="false"
-      />
-      <span v-else>{{ getTrackInitial(track) }}</span>
-    </span>
+    <UiTrackThumb
+      class="queue-track__cover"
+      :track="track"
+      :size="48"
+      radius="var(--ui-radius)"
+      background="var(--ui-bg)"
+      font-size="var(--ui-text-lg)"
+    />
     <span class="queue-track__copy">
       <UiMarqueeText class="queue-track__title" :text="track.title" />
       <span v-if="track.artist" class="queue-track__artist">
@@ -97,31 +94,6 @@ const emit = defineEmits([
 
 .queue-track--current .queue-track__title {
   color: var(--ui-sort-indicator);
-}
-
-.queue-track__cover {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--queue-track-cover-size);
-  height: var(--queue-track-cover-size);
-  border-radius: var(--ui-radius);
-  background: var(--ui-bg);
-  color: var(--ui-text);
-  font-size: var(--ui-text-lg);
-  font-weight: var(--ui-font-weight-strong);
-  text-transform: uppercase;
-  overflow: hidden;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.queue-track__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
 }
 
 .queue-track__copy {
