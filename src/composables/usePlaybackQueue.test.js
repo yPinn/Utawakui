@@ -25,12 +25,23 @@ describe('usePlaybackQueue', () => {
     const { state, currentTrack, sourceUpcomingTracks, setQueue } =
       await loadQueue();
 
-    setQueue(tracks, 'b', { sourceName: 'playlist #1' });
+    setQueue(tracks, 'b', { sourceName: 'playlist #1', sourceId: 'p1' });
 
     expect(state.sourceName).toBe('playlist #1');
+    expect(state.sourceId).toBe('p1');
     expect(state.currentTrackId).toBe('b');
     expect(currentTrack.value).toEqual({ id: 'b', title: 'B' });
     expect(sourceUpcomingTracks.value.map((track) => track.id)).toEqual(['c']);
+  });
+
+  it('defaults sourceId to null when not given, and rejects a non-string value', async () => {
+    const { state, setQueue } = await loadQueue();
+
+    setQueue(tracks, 'a');
+    expect(state.sourceId).toBe(null);
+
+    setQueue(tracks, 'a', { sourceId: 42 });
+    expect(state.sourceId).toBe(null);
   });
 
   it('falls back to the first source track when the requested current track is absent', async () => {

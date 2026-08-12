@@ -9,6 +9,11 @@ const state = reactive({
   currentIsSource: false,
   lastSourceTrackId: null,
   sourceName: '',
+  // Stable id of the playlist/album the current queue was built from — a
+  // string when known, null otherwise. Distinct from sourceName (a display
+  // label): PlaylistSidebar.vue compares this against a playlist's own id
+  // to decide whether its hover play/pause button shows pause.
+  sourceId: null,
   isShuffle: false,
   orderIds: [],
 });
@@ -124,6 +129,8 @@ function setQueue(tracks, currentTrackId = null, options = {}) {
   state.historyEntries = [];
   state.sourceName =
     typeof options.sourceName === 'string' ? options.sourceName : '';
+  state.sourceId =
+    typeof options.sourceId === 'string' ? options.sourceId : null;
   state.orderIds = state.isShuffle
     ? shuffledIdsForTracks(normalized, currentTrackId)
     : ids;

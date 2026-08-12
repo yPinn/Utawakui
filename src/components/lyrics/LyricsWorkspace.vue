@@ -12,6 +12,7 @@ import {
   Type,
 } from '@lucide/vue';
 import UiButton from '../ui/UiButton.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
@@ -19,9 +20,11 @@ import { useSeparation } from '../../composables/useSeparation.js';
 import { ICON_SIZE } from '../../constants/ui.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
+import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 
 const {
   state,
+  tracksById,
   selectedTrack,
   selectedLyrics,
   selectedSource,
@@ -40,6 +43,12 @@ const {
   selectedPlaylist,
   select: selectPlaylistAction,
 } = usePlaylists();
+// Same order as PlaylistSidebar.vue's nav rows (see playlistOrdering.js) —
+// playlists first in their manual drag order, then albums grouped by
+// derived artist.
+const orderedPlaylists = computed(() =>
+  orderPlaylistsForDisplay(playlistState.playlists, tracksById.value),
+);
 // Owned at module scope (see useSeparation.js) — separation may keep
 // running after the user switches away from this playlist/track.
 const {
@@ -173,15 +182,29 @@ function lyricsStatusClass(track) {
   return `lyrics-status--${track.lyrics?.status || 'unchecked'}`;
 }
 
+// Tone for the row icon badge — distinct from lyricsStatusClass above,
+// which still drives the header's larger text pill (.lyrics-status--large).
+// 'unchecked' gets 'highlight' rather than 'muted': it's the one state that
+// still needs a manual scan, so it's meant to stand out among the badges,
+// not blend in like a merely-pending one.
+function lyricsStatusIconTone(track) {
+  const status = track.lyrics?.status;
+  if (status === 'available') return 'accent';
+  if (status === 'missing') return 'muted';
+  return 'highlight';
+}
+
 function handlePlaylistChange(event) {
   selectPlaylistAction(event.target.value || null);
 }
 
-function separationStatusClass(track) {
-  if (isSeparating(track.id)) return 'separation-status--active';
-  return track.hasSeparation
-    ? 'separation-status--done'
-    : 'separation-status--pending';
+function separationStatusIcon(track) {
+  return isSeparating(track.id) ? Loader2 : MicVocal;
+}
+
+function separationStatusTone(track) {
+  if (isSeparating(track.id)) return 'text';
+  return track.hasSeparation ? 'accent' : 'muted';
 }
 
 function separationStatusTitle(track) {
@@ -270,13 +293,27 @@ watch(activeLineIndex, (index) => {
           @change="handlePlaylistChange"
         >
           <option value="">選擇播放清單</option>
-          <option
-            v-for="playlist in playlistState.playlists"
-            :key="playlist.id"
-            :value="playlist.id"
+          <optgroup
+            v-if="orderedPlaylists.playlistItems.length > 0"
+            label="播放清單"
           >
-            {{ playlist.name || '(未命名歌單)' }}
-          </option>
+            <option
+              v-for="playlist in orderedPlaylists.playlistItems"
+              :key="playlist.id"
+              :value="playlist.id"
+            >
+              {{ playlist.name || '(未命名歌單)' }}
+            </option>
+          </optgroup>
+          <optgroup v-if="orderedPlaylists.albumItems.length > 0" label="專輯">
+            <option
+              v-for="playlist in orderedPlaylists.albumItems"
+              :key="playlist.id"
+              :value="playlist.id"
+            >
+              {{ playlist.name || '(未命名歌單)' }}
+            </option>
+          </optgroup>
         </select>
         <p v-if="selectedPlaylist" class="lyrics-panel__meta">
           {{ tracksWithLyricsCount }} 有歌詞 /
@@ -303,28 +340,17 @@ watch(activeLineIndex, (index) => {
         >
           <template #trail>
             <div class="lyrics-row-status">
-              <span
-                class="separation-status"
-                :class="separationStatusClass(track)"
-                :title="separationStatusTitle(track)"
-                :aria-label="separationStatusTitle(track)"
-              >
-                <Loader2
-                  v-if="isSeparating(track.id)"
-                  class="separation-status__spin"
-                  :size="ICON_SIZE"
-                  aria-hidden="true"
-                />
-                <MicVocal v-else :size="ICON_SIZE" aria-hidden="true" />
-              </span>
-              <span
-                class="lyrics-status-icon"
-                :class="lyricsStatusClass(track)"
-                :title="lyricsStatusLabel(track)"
-                :aria-label="lyricsStatusLabel(track)"
-              >
-                <Captions :size="ICON_SIZE" aria-hidden="true" />
-              </span>
+              <UiStatusIcon
+                :icon="separationStatusIcon(track)"
+                :tone="separationStatusTone(track)"
+                :spinning="isSeparating(track.id)"
+                :label="separationStatusTitle(track)"
+              />
+              <UiStatusIcon
+                :icon="Captions"
+                :tone="lyricsStatusIconTone(track)"
+                :label="lyricsStatusLabel(track)"
+              />
               <span class="lyrics-row-status__duration">{{
                 Number.isFinite(track.duration)
                   ? formatDuration(track.duration)
@@ -693,6 +719,10 @@ watch(activeLineIndex, (index) => {
   align-items: center;
   gap: var(--ui-space-1);
   flex: 0 0 auto;
+  /* This panel is --ui-surface, not the --ui-bg the shared UiStatusIcon
+     defaults to contrasting against — override so the badges stay visible
+     here instead of blending into the panel. */
+  --ui-status-icon-bg: var(--ui-bg);
 }
 
 .lyrics-row-status__duration {
@@ -706,53 +736,6 @@ watch(activeLineIndex, (index) => {
 .ui-track--active .lyrics-row-status__duration {
   color: inherit;
   opacity: 0.75;
-}
-
-.lyrics-status-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-bg);
-  color: var(--ui-text-muted);
-}
-
-.lyrics-status-icon.lyrics-status--available {
-  color: var(--ui-accent);
-}
-
-.lyrics-status-icon.lyrics-status--missing {
-  color: var(--ui-text-muted);
-}
-
-.lyrics-status-icon.lyrics-status--unchecked {
-  color: var(--ui-text);
-  background: var(--ui-surface-hover);
-}
-
-.separation-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-bg);
-  color: var(--ui-text-muted);
-}
-
-.separation-status--done {
-  color: var(--ui-accent);
-}
-
-.separation-status--active {
-  color: var(--ui-text);
-}
-
-.separation-status__spin {
-  animation: lyrics-spin 1s linear infinite;
 }
 
 .lyrics-status--large {
@@ -946,7 +929,6 @@ watch(activeLineIndex, (index) => {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .separation-status__spin,
   .lyrics-separation__spin :deep(svg) {
     animation: none;
   }

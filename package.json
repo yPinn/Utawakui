@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@lucide/vue": "^1.29.0",
+    "@soundtouchjs/audio-worklet": "^2.1.1",
     "ffmpeg-static": "^5.3.0",
     "kissfft-js": "^0.1.8",
     "onnxruntime-node": "^1.27.0",

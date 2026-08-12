@@ -10,10 +10,14 @@ import { isEditableTarget } from '../utils/dom.js';
 // without this cleanup each reload stacks another 'keydown' listener —
 // e.g. a single arrow-key press bumping volume by 30% instead of 10%
 // after two hot reloads.
-// Ignored while typing in an editable field, and whenever a modifier key
-// is held (reserves Ctrl/Alt/Cmd+<key> combos for future shortcuts).
+// Ignored while typing in an editable field. Alt/Cmd+<key> are still
+// reserved for future shortcuts; Ctrl+<key> now covers transpose/tempo
+// below. Pitch (cents) is mouse/panel-only — a fine-adjust control, not
+// core enough to claim more modifier space.
 
 const VOLUME_STEP = 0.1;
+// Matches PlayerBar.vue's stepper click increment.
+const TEMPO_STEP = 0.05;
 
 // Matches AppSidebar.vue's nav order left-to-right — F-key position mirrors
 // tab position so the mapping stays obvious without a legend.
@@ -25,7 +29,14 @@ const VIEW_SHORTCUTS = {
 };
 
 export function useKeyboardShortcuts(activeView) {
-  const { state, setVolume, toggleMute, toggleGuideVocal } = usePlayer();
+  const {
+    state,
+    setVolume,
+    toggleMute,
+    toggleGuideVocal,
+    setTransposeSemitones,
+    setTempoRate,
+  } = usePlayer();
 
   function adjustVolume(delta) {
     const next = Math.min(1, Math.max(0, state.volume + delta));
@@ -36,10 +47,36 @@ export function useKeyboardShortcuts(activeView) {
     setVolume(Math.round(next * 100) / 100);
   }
 
-  function handleKeydown(event) {
-    if (event.ctrlKey || event.altKey || event.metaKey) return;
+  function adjustTranspose(delta) {
+    setTransposeSemitones(state.transposeSemitones + delta);
+  }
 
+  function adjustTempo(delta) {
+    // Same float-drift snapping as adjustVolume, at tempo's 0.05 step.
+    setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
+  }
+
+  function handleKeydown(event) {
     const key = event.key.toLowerCase();
+
+    // Ctrl+↑/↓ = transpose, Ctrl+Shift+↑/↓ = tempo. Handled before the
+    // Alt/Meta guard below since Ctrl is no longer purely reserved.
+    if (event.ctrlKey && !event.altKey && !event.metaKey) {
+      if (isEditableTarget(event.target)) return;
+      if (key === 'arrowup' || key === 'arrowdown') {
+        event.preventDefault();
+        const direction = key === 'arrowup' ? 1 : -1;
+        if (event.shiftKey) {
+          adjustTempo(direction * TEMPO_STEP);
+        } else {
+          adjustTranspose(direction);
+        }
+      }
+      return;
+    }
+
+    if (event.altKey || event.metaKey) return;
+
     // F1-F4 tab switching fires even while typing (e.g. the Setlist search
     // box) — F-keys don't insert characters, and this is a global app-level
     // shortcut a performer needs mid-stream regardless of focus. Every

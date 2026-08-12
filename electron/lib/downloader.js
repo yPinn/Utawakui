@@ -202,11 +202,22 @@ function extractMetadataFields(info) {
   const duration =
     typeof info.duration === 'number' ? info.duration : undefined;
   const thumbnailUrl = extractThumbnailUrl(info);
+  // info.album/release_year are only present for recognized-music sources
+  // (same gate as info.artist above) — no fallback, an upload with no
+  // album metadata just omits the field rather than showing something
+  // wrong. album_artist/track_number were checked against real library
+  // data and are never populated by yt-dlp for this app's sources, so
+  // they're deliberately not extracted here.
+  const album = typeof info.album === 'string' ? info.album : undefined;
+  const releaseYear =
+    typeof info.release_year === 'number' ? info.release_year : undefined;
   return {
     title,
     artist,
     duration,
     ...(thumbnailUrl ? { thumbnailUrl } : {}),
+    ...(album ? { album } : {}),
+    ...(releaseYear ? { releaseYear } : {}),
   };
 }
 

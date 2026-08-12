@@ -1,4 +1,6 @@
 import { reactive, readonly } from 'vue';
+import { SoundTouchNode } from '@soundtouchjs/audio-worklet';
+import pitchWorkletUrl from '@soundtouchjs/audio-worklet/processor?url';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
 // Single shared instance (module scope, not Pinia) — SetlistView (picks a
@@ -20,6 +22,17 @@ const PLAYBACK_MODE_ORDER = [
 // a click; ~30ms is short enough to feel immediate but long enough not to.
 const GAIN_RAMP_SECONDS = 0.03;
 const LOOP_WRAP_EDGE_SECONDS = 1;
+
+const DEFAULT_TRANSPOSE_SEMITONES = 0;
+const DEFAULT_PITCH_CENTS = 0;
+const DEFAULT_TEMPO_RATE = 1;
+// Exported so PlayerBar.vue and useKeyboardShortcuts.js can clamp/disable
+// without duplicating these bounds.
+export const TRANSPOSE_SEMITONES_RANGE = { min: -12, max: 12 };
+// ±50 cents (half a semitone) — with integer transpose, covers any pitch
+// with no gap or overlap between the two controls.
+export const PITCH_CENTS_RANGE = { min: -50, max: 50 };
+export const TEMPO_RATE_RANGE = { min: 0.5, max: 1.5 };
 
 const audio = new Audio();
 // Required or createMediaElementSource() below produces silence —
@@ -63,7 +76,19 @@ const masterGain = audioCtx.createGain();
 masterGain.gain.value = DEFAULT_VOLUME;
 mergerInst.connect(masterGain);
 vocalGain.connect(masterGain);
-masterGain.connect(audioCtx.destination);
+
+// Pitch shifting is an optional insert effect after the final mix; tempo
+// uses audio.playbackRate instead (see setTempoRate), so no second node is
+// needed there. masterGain fans out to a dry path (straight through) and
+// a wet path (via the SoundTouch worklet); a gain crossfade switches
+// between them instead of connect()/disconnect(), which would click.
+const dryGain = audioCtx.createGain();
+const wetGain = audioCtx.createGain();
+dryGain.gain.value = 1;
+wetGain.gain.value = 0;
+masterGain.connect(dryGain);
+dryGain.connect(audioCtx.destination);
+wetGain.connect(audioCtx.destination);
 
 function rampGain(audioParam, target) {
   audioParam.setTargetAtTime(target, audioCtx.currentTime, GAIN_RAMP_SECONDS);
@@ -72,6 +97,92 @@ function rampGain(audioParam, target) {
 function setGuideVocalLevel(level) {
   state.guideVocalLevel = level;
   rampGain(vocalGain.gain, level);
+}
+
+// Lazy: a performer who never touches transpose/pitch never pays the
+// AudioWorklet load cost. Once created it stays wired — bypass at default
+// goes through the dry/wet crossfade (updatePitchBypass), not disconnect.
+let pitchNode = null;
+let pitchNodeReady = null;
+
+async function ensurePitchNode() {
+  if (pitchNode) return pitchNode;
+  if (!pitchNodeReady) {
+    pitchNodeReady = (async () => {
+      await SoundTouchNode.register(audioCtx, pitchWorkletUrl);
+      const node = new SoundTouchNode({
+        context: audioCtx,
+        outputChannelCount: 2,
+      });
+      masterGain.connect(node);
+      node.connect(wetGain);
+      pitchNode = node;
+      return node;
+    })();
+  }
+  return pitchNodeReady;
+}
+
+// Transpose and Pitch are independent AudioParams on the same node
+// (combined internally as `pitch * 2^(pitchSemitones/12) / playbackRate`),
+// so bypass only kicks in once BOTH are back at default.
+function updatePitchBypass() {
+  const active =
+    state.transposeSemitones !== DEFAULT_TRANSPOSE_SEMITONES ||
+    state.pitchCents !== DEFAULT_PITCH_CENTS;
+  rampGain(dryGain.gain, active ? 0 : 1);
+  rampGain(wetGain.gain, active ? 1 : 0);
+}
+
+async function setTransposeSemitones(semitones) {
+  const next = Math.min(
+    TRANSPOSE_SEMITONES_RANGE.max,
+    Math.max(TRANSPOSE_SEMITONES_RANGE.min, Math.round(semitones)),
+  );
+  state.transposeSemitones = next;
+  if (pitchNode) {
+    pitchNode.pitchSemitones.value = next;
+  } else if (next !== DEFAULT_TRANSPOSE_SEMITONES) {
+    (await ensurePitchNode()).pitchSemitones.value = next;
+  }
+  updatePitchBypass();
+}
+
+async function setPitchCents(cents) {
+  const next = Math.min(
+    PITCH_CENTS_RANGE.max,
+    Math.max(PITCH_CENTS_RANGE.min, Math.round(cents)),
+  );
+  state.pitchCents = next;
+  const ratio = 2 ** (next / 1200);
+  if (pitchNode) {
+    pitchNode.pitch.value = ratio;
+  } else if (next !== DEFAULT_PITCH_CENTS) {
+    (await ensurePitchNode()).pitch.value = ratio;
+  }
+  updatePitchBypass();
+}
+
+// defaultPlaybackRate matters, not just playbackRate: the media load
+// algorithm resets playbackRate to defaultPlaybackRate on every
+// `audio.src =`, so mirroring into both survives syncCurrentTrack()'s
+// src swap for free.
+function setTempoRate(rate) {
+  const next = Math.min(
+    TEMPO_RATE_RANGE.max,
+    Math.max(TEMPO_RATE_RANGE.min, rate),
+  );
+  state.tempoRate = next;
+  audio.defaultPlaybackRate = next;
+  audio.playbackRate = next;
+}
+
+// Not persisted (spec.md: slated for the future SQLite migration) — this
+// is just the per-track reset spec.md:26 asks for.
+function resetPitchTempo() {
+  setTempoRate(DEFAULT_TEMPO_RATE);
+  setTransposeSemitones(DEFAULT_TRANSPOSE_SEMITONES);
+  setPitchCents(DEFAULT_PITCH_CENTS);
 }
 // ----------------------------------------------------------------------
 
@@ -87,6 +198,11 @@ const state = reactive({
   error: null,
   // On/off only (0 or 1), reset to off whenever a new track is loaded.
   guideVocalLevel: 0,
+  // Integer semitones (Key change). Not persisted — resets per track.
+  transposeSemitones: DEFAULT_TRANSPOSE_SEMITONES,
+  // Continuous cents fine-tune, independent of transposeSemitones.
+  pitchCents: DEFAULT_PITCH_CENTS,
+  tempoRate: DEFAULT_TEMPO_RATE,
 });
 
 const endedListeners = new Set();
@@ -97,10 +213,11 @@ let lastObservedCurrentTime = 0;
 //   rejection, track finishing, decode errors) — written ONLY from the
 //   element's events below. Actions never assign them directly; that
 //   second write path is exactly how this would drift out of sync.
-// - volume/isMuted/playbackMode/guideVocalLevel mostly change via our own
-//   actions. The one event-owned guide-vocal write is native repeat-one
+// - volume/isMuted/playbackMode/guideVocalLevel/transposeSemitones/
+//   pitchCents/tempoRate mostly change via our own actions. The one
+//   event-owned reset (guide vocal + pitch/tempo) is native repeat-one
 //   wraparound: audio.loop restarts the same media without calling
-//   playTrack(), so the per-track default-off rule has to be enforced here.
+//   playTrack(), so the per-track default rule has to be enforced here too.
 function handlePlay() {
   state.isPlaying = true;
 }
@@ -118,6 +235,7 @@ function handleTimeUpdate() {
   const nextTime = audio.currentTime;
   if (isRepeatOneLoopWrap(lastObservedCurrentTime, nextTime)) {
     setGuideVocalLevel(0);
+    resetPitchTempo();
   }
   lastObservedCurrentTime = nextTime;
   state.currentTime = nextTime;
@@ -147,6 +265,7 @@ async function playTrack(track) {
   state.duration = 0;
   lastObservedCurrentTime = 0;
   setGuideVocalLevel(0);
+  resetPitchTempo();
   audio.src = track.url;
   try {
     // Graph output is silent while suspended (its initial state) — every
@@ -185,6 +304,7 @@ function seek(time) {
 function restartTrack() {
   if (!state.track) return;
   setGuideVocalLevel(0);
+  resetPitchTempo();
   seek(0);
 }
 
@@ -200,6 +320,7 @@ function clearTrack(trackId = null) {
   state.error = null;
   lastObservedCurrentTime = 0;
   setGuideVocalLevel(0);
+  resetPitchTempo();
   return true;
 }
 
@@ -312,6 +433,9 @@ function cleanupPlayerResources() {
   mergerVoc.disconnect();
   vocalGain.disconnect();
   masterGain.disconnect();
+  dryGain.disconnect();
+  wetGain.disconnect();
+  pitchNode?.disconnect();
   audioCtx.close();
 }
 
@@ -342,6 +466,10 @@ export function usePlayer() {
     cyclePlaybackMode,
     toggleRepeat,
     toggleGuideVocal,
+    setTransposeSemitones,
+    setPitchCents,
+    setTempoRate,
+    resetPitchTempo,
     onEnded,
   };
 }

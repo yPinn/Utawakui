@@ -60,7 +60,7 @@ const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);
 // index (pitch/tempo, lyrics offset). Lives inside the download dir so it
 // travels with the tracks when the user changes download folder.
 const INDEX_FILENAME = 'library.json';
-const INDEX_VERSION = 1;
+const INDEX_VERSION = 2;
 
 // The filesystem is the sole source of truth for which tracks exist — this
 // index is enrichment only, and tolerates a missing/corrupt file (degrades
@@ -101,6 +101,59 @@ function saveIndexEntry(dir, id, entry) {
   index.tracks[id] = { ...index.tracks[id], ...entry };
   atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
   return index;
+}
+
+// One-time, offline backfill of album/releaseYear from each track's
+// already-downloaded info.json sidecar — no network involved, unlike
+// runBackfillPass. Gated on the file's *raw* on-disk version, not
+// loadIndex()'s return value (which always reports the current
+// INDEX_VERSION regardless of what's actually on disk) — reads the file
+// directly so this only ever runs once, on the first launch after the
+// album/releaseYear fields were introduced. readTrackInfo is injected
+// (downloader.js's readTrackInfoMetadata) so this module stays
+// yt-dlp-agnostic, same DI pattern as runBackfillPass's fetchMetadata.
+function migrateTrackAlbumMetadata(dir, readTrackInfo) {
+  const filePath = path.join(dir, INDEX_FILENAME);
+  let raw;
+  try {
+    raw = fs.readFileSync(filePath, 'utf8');
+  } catch {
+    return false;
+  }
+
+  let data;
+  try {
+    data = JSON.parse(raw);
+  } catch {
+    return false;
+  }
+
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    typeof data.tracks !== 'object' ||
+    data.tracks === null ||
+    (typeof data.version === 'number' && data.version >= INDEX_VERSION)
+  ) {
+    return false;
+  }
+
+  let changed = false;
+  for (const [id, entry] of Object.entries(data.tracks)) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const trackDir = resolveTrackDir(dir, id);
+    if (!trackDir) continue;
+    const fields = readTrackInfo(trackDir) || {};
+    if (fields.album === undefined && fields.releaseYear === undefined) {
+      continue;
+    }
+    data.tracks[id] = { ...entry, ...fields };
+    changed = true;
+  }
+
+  data.version = INDEX_VERSION;
+  atomicWriteJson(filePath, data);
+  return changed;
 }
 
 // Shared gate for legacy root-level audio and structured `audio.<ext>` files.
@@ -966,6 +1019,14 @@ function listTracks(dir) {
         title: indexed?.title || id,
         artist: indexed?.artist,
         duration: indexed?.duration,
+        // Deliberately excluded from metadataNeedsBackfill above: a real
+        // portion of the library has no album (plain YouTube uploads, not
+        // recognized-music sources — verified against real library data),
+        // and there's no fallback to reach for the way title falls back
+        // to id. Including it would put those tracks in a permanent,
+        // unfulfillable backfill loop on every launch.
+        album: indexed?.album,
+        releaseYear: indexed?.releaseYear,
         needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
         hasSeparation: selectedResultExists,
         stemsUrl: selectedResultExists
@@ -1190,6 +1251,7 @@ module.exports = {
   listTracks,
   loadIndex,
   loadSeparationManifest,
+  migrateTrackAlbumMetadata,
   normalizeTrackLyricsSidecars,
   readTrackLyrics,
   recordSeparationResult,

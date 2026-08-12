@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, watch } from 'vue';
+import { computed, reactive, readonly, shallowRef, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylists } from './usePlaylists.js';
@@ -15,7 +15,9 @@ const { selectedPlaylist } = usePlaylists();
 // lyrics/hasSeparation lookups) — never shown directly. What the UI sees
 // (state.tracks) is always this pool joined against the selected
 // playlist's own trackIds, so switching playlists doesn't need a re-fetch.
-let libraryTracks = [];
+// A shallowRef (not a plain variable) so tracksById below stays correctly
+// reactive to refresh()/applyTracks() reassigning the whole array.
+const libraryTracks = shallowRef([]);
 
 const state = reactive({
   tracks: [],
@@ -51,6 +53,14 @@ let musixmatchProbeRequestId = 0;
 const selectedTrack = computed(
   () =>
     state.tracks.find((track) => track.id === state.selectedTrackId) ?? null,
+);
+// Full-library lookup, exposed so LyricsWorkspace.vue can order its
+// playlist <select> the same way PlaylistSidebar.vue orders its nav rows
+// (see src/utils/playlistOrdering.js) — deriving an album's artist needs
+// its member tracks, which aren't in state.tracks for any playlist other
+// than the one currently selected.
+const tracksById = computed(
+  () => new Map(libraryTracks.value.map((track) => [track.id, track])),
 );
 const selectedLyrics = computed(
   () => selectedTrack.value?.lyrics ?? EMPTY_LYRICS,
@@ -155,7 +165,10 @@ async function loadSelectedLyrics() {
 
 function applyScopedTracks() {
   const previousTrackId = state.selectedTrackId;
-  const scoped = joinPlaylistTracks(libraryTracks, selectedPlaylist.value);
+  const scoped = joinPlaylistTracks(
+    libraryTracks.value,
+    selectedPlaylist.value,
+  );
   state.tracks = scoped;
   const nextTrackId = pickSelectedTrackId(scoped);
   state.selectedTrackId = nextTrackId;
@@ -173,7 +186,7 @@ function applyScopedTracks() {
 }
 
 function applyTracks(tracks) {
-  libraryTracks = tracks;
+  libraryTracks.value = tracks;
   applyScopedTracks();
 }
 
@@ -243,7 +256,14 @@ async function playFromLine(line) {
   if (!line || !Number.isFinite(line.start) || !selectedTrack.value) return;
   const targetTime = Math.max(0, line.start - state.offsetSeconds);
   if (playerState.track?.id !== selectedTrack.value.id) {
-    setQueue([selectedTrack.value], selectedTrack.value.id);
+    // state.tracks is already scoped to the selected playlist (see the
+    // module comment above) — queue the whole thing, not just this track,
+    // so PlayerBar's next/previous controls and "source" label work the
+    // same way they do when playback starts from SetlistView.
+    setQueue(state.tracks, selectedTrack.value.id, {
+      sourceName: selectedPlaylist.value?.name || '',
+      sourceId: selectedPlaylist.value?.id ?? null,
+    });
     await playTrack(toPlayableTrack(selectedTrack.value));
   }
   seek(targetTime);
@@ -320,6 +340,7 @@ if (import.meta.hot) {
 export function useLyrics() {
   return {
     state: readonly(state),
+    tracksById,
     selectedTrack,
     selectedLyrics,
     selectedSource,

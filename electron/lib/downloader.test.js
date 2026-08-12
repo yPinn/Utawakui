@@ -102,6 +102,36 @@ describe('extractMetadataFields', () => {
       }).thumbnailUrl,
     ).toBeUndefined();
   });
+
+  it('extracts album and releaseYear for a recognized-music source', () => {
+    const fields = extractMetadataFields({
+      title: 'Track Name',
+      artist: 'Some Artist',
+      album: 'Some Album',
+      release_year: 2018,
+    });
+    expect(fields.album).toBe('Some Album');
+    expect(fields.releaseYear).toBe(2018);
+  });
+
+  it('omits album and releaseYear rather than defaulting when absent', () => {
+    const fields = extractMetadataFields({
+      title: 'Plain Upload',
+      uploader: 'Some Channel',
+    });
+    expect(fields.album).toBeUndefined();
+    expect(fields.releaseYear).toBeUndefined();
+  });
+
+  it('ignores wrong-typed album/release_year instead of coercing them', () => {
+    const fields = extractMetadataFields({
+      title: 'Track Name',
+      album: 123,
+      release_year: '2018',
+    });
+    expect(fields.album).toBeUndefined();
+    expect(fields.releaseYear).toBeUndefined();
+  });
 });
 
 describe('applyYoutubeRuntimeOptions', () => {

@@ -3,18 +3,29 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
   ListMusic,
   MicVocal,
+  Minus,
   Pause,
   Play,
+  Plus,
   Repeat,
   Repeat1,
+  RotateCcw,
   Shuffle,
   SkipBack,
   SkipForward,
+  SlidersHorizontal,
   Volume2,
   VolumeX,
+  X,
 } from '@lucide/vue';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
-import { PLAYBACK_MODES, usePlayer } from '../composables/usePlayer.js';
+import {
+  PITCH_CENTS_RANGE,
+  PLAYBACK_MODES,
+  TEMPO_RATE_RANGE,
+  TRANSPOSE_SEMITONES_RANGE,
+  usePlayer,
+} from '../composables/usePlayer.js';
 import { formatDuration } from '../utils/format.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { getTrackInitial } from '../utils/trackDisplay.js';
@@ -33,6 +44,9 @@ const {
   toggleMute,
   cyclePlaybackMode,
   toggleGuideVocal,
+  setTransposeSemitones,
+  setPitchCents,
+  setTempoRate,
   onEnded,
 } = usePlayer();
 const {
@@ -45,6 +59,7 @@ const {
 } = usePlaybackQueue();
 
 const isQueueOpen = ref(false);
+const isPitchTempoOpen = ref(false);
 
 const progress = computed({
   get: () => state.currentTime,
@@ -54,6 +69,21 @@ const progress = computed({
 const volume = computed({
   get: () => state.volume,
   set: (value) => setVolume(Number(value)),
+});
+
+const transposeSlider = computed({
+  get: () => state.transposeSemitones,
+  set: (value) => setTransposeSemitones(Number(value)),
+});
+
+const pitchCentsSlider = computed({
+  get: () => state.pitchCents,
+  set: (value) => setPitchCents(Number(value)),
+});
+
+const tempoSlider = computed({
+  get: () => state.tempoRate,
+  set: (value) => setTempoRate(Number(value)),
 });
 
 const volumePercent = computed(() => Math.round(state.volume * 100));
@@ -78,6 +108,46 @@ const playbackModeActive = computed(
 // SetlistView always plays a separated track's stems variant, so "has
 // separation" and "stems are playing" are the same check.
 const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
+
+const transposeLabel = computed(() =>
+  state.transposeSemitones > 0
+    ? `+${state.transposeSemitones}`
+    : `${state.transposeSemitones}`,
+);
+// Spelled out, not "¢" — reads unambiguously as a pitch unit, not
+// currency, and stays visually distinct from transposeLabel's integer.
+const pitchCentsLabel = computed(
+  () => `${state.pitchCents > 0 ? '+' : ''}${state.pitchCents} cents`,
+);
+// A4 (440Hz) shifted by the cents offset — the reference tuning musicians
+// actually tune to. Reflects pitchCents only; Transpose has its own row.
+const A4_REFERENCE_HZ = 440;
+const pitchReferenceHz = computed(() =>
+  (A4_REFERENCE_HZ * 2 ** (state.pitchCents / 1200)).toFixed(1),
+);
+const tempoLabel = computed(() => `${state.tempoRate.toFixed(2)}x`);
+const pitchTempoActive = computed(
+  () =>
+    isPitchTempoOpen.value ||
+    state.transposeSemitones !== 0 ||
+    state.pitchCents !== 0 ||
+    state.tempoRate !== 1,
+);
+
+function adjustTranspose(delta) {
+  setTransposeSemitones(state.transposeSemitones + delta);
+}
+
+function adjustPitchCents(delta) {
+  setPitchCents(state.pitchCents + delta);
+}
+
+function adjustTempo(delta) {
+  // Snap to the nearest 0.05 — repeated +/-0.05 float adds would otherwise
+  // drift, same reasoning as adjustVolume's 1% snap in
+  // useKeyboardShortcuts.js.
+  setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
+}
 
 function playQueuedTrack(track) {
   if (!track) return;
@@ -107,8 +177,16 @@ function playNextAfterEnded() {
   playQueuedTrack(next);
 }
 
+// Both panels float in the same spot (position: fixed below), so only one
+// can be open at a time.
 function toggleQueuePanel() {
   isQueueOpen.value = !isQueueOpen.value;
+  if (isQueueOpen.value) isPitchTempoOpen.value = false;
+}
+
+function togglePitchTempoPanel() {
+  isPitchTempoOpen.value = !isPitchTempoOpen.value;
+  if (isPitchTempoOpen.value) isQueueOpen.value = false;
 }
 
 let unsubscribeEnded;
@@ -226,6 +304,15 @@ onUnmounted(() => {
       />
 
       <UiButton
+        :icon="SlidersHorizontal"
+        :active="pitchTempoActive"
+        :aria-label="isPitchTempoOpen ? '關閉變調變速' : '開啟變調變速'"
+        :aria-pressed="isPitchTempoOpen"
+        title="Pitch & Tempo"
+        @click="togglePitchTempoPanel"
+      />
+
+      <UiButton
         :icon="ListMusic"
         :active="isQueueOpen"
         :aria-label="isQueueOpen ? '關閉播放佇列' : '開啟播放佇列'"
@@ -256,6 +343,157 @@ onUnmounted(() => {
     </div>
 
     <PlaybackQueuePanel :open="isQueueOpen" @close="isQueueOpen = false" />
+
+    <div
+      v-show="isPitchTempoOpen"
+      class="pitch-tempo-panel"
+      aria-label="變調、音高與變速"
+    >
+      <header class="pitch-tempo-panel__header">
+        <h2 class="pitch-tempo-panel__title">Pitch & Tempo</h2>
+        <UiButton
+          :icon="X"
+          aria-label="關閉變調變速面板"
+          title="關閉"
+          @click="isPitchTempoOpen = false"
+        />
+      </header>
+
+      <div class="pitch-tempo-panel__row">
+        <div class="pitch-tempo-panel__row-header">
+          <span class="pitch-tempo-panel__label">Transpose</span>
+          <span class="pitch-tempo-panel__value">{{ transposeLabel }}</span>
+          <UiButton
+            :icon="RotateCcw"
+            :disabled="!state.track || state.transposeSemitones === 0"
+            aria-label="重設變調"
+            title="重設變調"
+            @click="setTransposeSemitones(0)"
+          />
+        </div>
+        <div class="pitch-tempo-panel__control">
+          <UiButton
+            :icon="Minus"
+            :disabled="
+              !state.track ||
+              state.transposeSemitones <= TRANSPOSE_SEMITONES_RANGE.min
+            "
+            aria-label="降半音"
+            title="降半音 (Ctrl+↓)"
+            @click="adjustTranspose(-1)"
+          />
+          <input
+            v-model="transposeSlider"
+            type="range"
+            :min="TRANSPOSE_SEMITONES_RANGE.min"
+            :max="TRANSPOSE_SEMITONES_RANGE.max"
+            step="1"
+            :disabled="!state.track"
+            aria-label="變調(半音)"
+            :aria-valuetext="transposeLabel"
+          />
+          <UiButton
+            :icon="Plus"
+            :disabled="
+              !state.track ||
+              state.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.max
+            "
+            aria-label="升半音"
+            title="升半音 (Ctrl+↑)"
+            @click="adjustTranspose(1)"
+          />
+        </div>
+      </div>
+
+      <div class="pitch-tempo-panel__row">
+        <div class="pitch-tempo-panel__row-header">
+          <span class="pitch-tempo-panel__label">Pitch</span>
+          <span class="pitch-tempo-panel__value"
+            >{{ pitchCentsLabel
+            }}<span class="pitch-tempo-panel__value-secondary"
+              >· {{ pitchReferenceHz }} Hz</span
+            ></span
+          >
+          <UiButton
+            :icon="RotateCcw"
+            :disabled="!state.track || state.pitchCents === 0"
+            aria-label="重設音高微調"
+            title="重設音高微調"
+            @click="setPitchCents(0)"
+          />
+        </div>
+        <div class="pitch-tempo-panel__control">
+          <UiButton
+            :icon="Minus"
+            :disabled="
+              !state.track || state.pitchCents <= PITCH_CENTS_RANGE.min
+            "
+            aria-label="音高微調降低"
+            title="音高微調降低"
+            @click="adjustPitchCents(-1)"
+          />
+          <input
+            v-model="pitchCentsSlider"
+            type="range"
+            :min="PITCH_CENTS_RANGE.min"
+            :max="PITCH_CENTS_RANGE.max"
+            step="1"
+            :disabled="!state.track"
+            aria-label="音高(音分微調)"
+            :aria-valuetext="pitchCentsLabel"
+          />
+          <UiButton
+            :icon="Plus"
+            :disabled="
+              !state.track || state.pitchCents >= PITCH_CENTS_RANGE.max
+            "
+            aria-label="音高微調提高"
+            title="音高微調提高"
+            @click="adjustPitchCents(1)"
+          />
+        </div>
+      </div>
+
+      <div class="pitch-tempo-panel__row">
+        <div class="pitch-tempo-panel__row-header">
+          <span class="pitch-tempo-panel__label">Speed</span>
+          <span class="pitch-tempo-panel__value">{{ tempoLabel }}</span>
+          <UiButton
+            :icon="RotateCcw"
+            :disabled="!state.track || state.tempoRate === 1"
+            aria-label="重設變速"
+            title="重設變速"
+            @click="setTempoRate(1)"
+          />
+        </div>
+        <div class="pitch-tempo-panel__control">
+          <UiButton
+            :icon="Minus"
+            :disabled="!state.track || state.tempoRate <= TEMPO_RATE_RANGE.min"
+            aria-label="放慢"
+            title="放慢 (Ctrl+Shift+↓)"
+            @click="adjustTempo(-0.05)"
+          />
+          <input
+            v-model="tempoSlider"
+            type="range"
+            :min="TEMPO_RATE_RANGE.min"
+            :max="TEMPO_RATE_RANGE.max"
+            step="0.05"
+            :disabled="!state.track"
+            aria-label="變速"
+            :aria-valuetext="tempoLabel"
+          />
+          <UiButton
+            :icon="Plus"
+            :disabled="!state.track || state.tempoRate >= TEMPO_RATE_RANGE.max"
+            aria-label="加快"
+            title="加快 (Ctrl+Shift+↑)"
+            @click="adjustTempo(0.05)"
+          />
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -422,5 +660,86 @@ onUnmounted(() => {
   text-align: right;
   font-size: var(--ui-text-sm);
   font-variant-numeric: tabular-nums;
+}
+
+/* Same fixed bottom-right float as PlaybackQueuePanel's .queue-panel
+   (mutually exclusive, see togglePitchTempoPanel) — no shared component
+   since this has no drag/drop or list to justify one. */
+.pitch-tempo-panel {
+  position: fixed;
+  right: var(--ui-space-3);
+  bottom: calc(72px + var(--ui-space-3));
+  z-index: var(--ui-z-dropdown);
+  box-sizing: border-box;
+  width: min(280px, calc(100vw - var(--ui-space-5)));
+  padding: var(--ui-space-4);
+  border: 1px solid var(--ui-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-surface);
+  box-shadow: var(--ui-overlay-shadow);
+}
+
+.pitch-tempo-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+  margin-bottom: var(--ui-space-4);
+}
+
+.pitch-tempo-panel__title {
+  margin: 0;
+  color: var(--ui-text);
+  font-size: var(--ui-text-md);
+  font-weight: var(--ui-font-weight-strong);
+}
+
+/* Rows are two lines each (header, control) — tighter than the old
+   three/four-line stack, so the gap between rows can be tighter too. */
+.pitch-tempo-panel__row + .pitch-tempo-panel__row {
+  margin-top: var(--ui-space-3);
+}
+
+.pitch-tempo-panel__row-header {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  margin-bottom: var(--ui-space-1);
+}
+
+.pitch-tempo-panel__label {
+  flex: 1;
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
+}
+
+/* Inline with the label instead of a separate centered line. The reset
+   button stays always-rendered (disabled at default, not v-if'd) so it
+   doesn't pop in/out and shift the row. */
+.pitch-tempo-panel__value {
+  color: var(--ui-text);
+  font-size: var(--ui-text-md);
+  font-weight: var(--ui-font-weight-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Folded into Pitch's value line (see pitchReferenceHz) instead of its
+   own row — supplementary info gets muted/lighter weight, not a new row. */
+.pitch-tempo-panel__value-secondary {
+  margin-left: var(--ui-space-1);
+  color: var(--ui-text-muted);
+  font-size: var(--ui-text-sm);
+  font-weight: normal;
+  font-variant-numeric: tabular-nums;
+}
+
+.pitch-tempo-panel__control {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.pitch-tempo-panel__control input {
+  flex: 1;
 }
 </style>

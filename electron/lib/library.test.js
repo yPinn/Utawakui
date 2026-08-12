@@ -22,6 +22,7 @@ import {
   selectSeparationResult,
   listTracks,
   loadIndex,
+  migrateTrackAlbumMetadata,
   readTrackLyrics,
   saveIndexEntry,
   saveTrackLyricsText,
@@ -660,6 +661,36 @@ describe('listTracks', () => {
     expect(track.needsBackfill).toBe(false);
   });
 
+  it('merges album/releaseYear from the index but omits needsBackfill for missing album', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    saveIndexEntry(dir, 'abc', {
+      title: 'Track Name',
+      artist: 'Some Artist',
+      duration: 200,
+      album: 'Some Album',
+      releaseYear: 2018,
+    });
+
+    const [track] = listTracks(dir);
+    expect(track.album).toBe('Some Album');
+    expect(track.releaseYear).toBe(2018);
+    expect(track.needsBackfill).toBe(false);
+  });
+
+  it('leaves album/releaseYear undefined without forcing needsBackfill', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    saveIndexEntry(dir, 'abc', {
+      title: 'Track Name',
+      artist: 'Some Artist',
+      duration: 200,
+    });
+
+    const [track] = listTracks(dir);
+    expect(track.album).toBeUndefined();
+    expect(track.releaseYear).toBeUndefined();
+    expect(track.needsBackfill).toBe(false);
+  });
+
   it('sorts by artist first, then title, then filename fallback', () => {
     fs.writeFileSync(path.join(dir, 'zeta.mp3'), 'x');
     fs.writeFileSync(path.join(dir, 'alpha.mp3'), 'x');
@@ -1027,22 +1058,84 @@ describe('loadIndex', () => {
   });
 
   it('returns an empty index when the file is missing', () => {
-    expect(loadIndex(dir)).toEqual({ version: 1, tracks: {} });
+    expect(loadIndex(dir)).toEqual({ version: 2, tracks: {} });
   });
 
   it('returns an empty index for corrupted JSON', () => {
     fs.writeFileSync(path.join(dir, INDEX_FILENAME), '{not valid json');
-    expect(loadIndex(dir)).toEqual({ version: 1, tracks: {} });
+    expect(loadIndex(dir)).toEqual({ version: 2, tracks: {} });
   });
 
   it('returns an empty index when the top level is an array', () => {
     fs.writeFileSync(path.join(dir, INDEX_FILENAME), JSON.stringify([1, 2, 3]));
-    expect(loadIndex(dir)).toEqual({ version: 1, tracks: {} });
+    expect(loadIndex(dir)).toEqual({ version: 2, tracks: {} });
   });
 
   it('returns an empty index when the top level is null', () => {
     fs.writeFileSync(path.join(dir, INDEX_FILENAME), JSON.stringify(null));
-    expect(loadIndex(dir)).toEqual({ version: 1, tracks: {} });
+    expect(loadIndex(dir)).toEqual({ version: 2, tracks: {} });
+  });
+});
+
+describe('migrateTrackAlbumMetadata', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-migrate-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('does nothing when there is no existing index file', () => {
+    const changed = migrateTrackAlbumMetadata(dir, () => ({ album: 'X' }));
+    expect(changed).toBe(false);
+    expect(fs.existsSync(path.join(dir, INDEX_FILENAME))).toBe(false);
+  });
+
+  it('merges album/releaseYear from the injected reader into each entry', () => {
+    fs.writeFileSync(
+      path.join(dir, INDEX_FILENAME),
+      JSON.stringify({
+        version: 1,
+        tracks: {
+          a: { title: 'Track A', artist: 'Artist A', duration: 200 },
+          b: { title: 'Track B', artist: 'Artist B', duration: 210 },
+        },
+      }),
+    );
+
+    const changed = migrateTrackAlbumMetadata(dir, (trackDir) => {
+      const id = path.basename(trackDir);
+      return id === 'a' ? { album: 'Album A', releaseYear: 2020 } : {};
+    });
+
+    expect(changed).toBe(true);
+    const index = loadIndex(dir);
+    expect(index.version).toBe(2);
+    expect(index.tracks.a).toMatchObject({
+      album: 'Album A',
+      releaseYear: 2020,
+    });
+    expect(index.tracks.b.album).toBeUndefined();
+  });
+
+  it('is a no-op once the index is already at the current version', () => {
+    fs.writeFileSync(
+      path.join(dir, INDEX_FILENAME),
+      JSON.stringify({
+        version: 2,
+        tracks: { a: { title: 'Track A' } },
+      }),
+    );
+
+    const changed = migrateTrackAlbumMetadata(dir, () => ({
+      album: 'Should Not Apply',
+    }));
+
+    expect(changed).toBe(false);
+    expect(loadIndex(dir).tracks.a.album).toBeUndefined();
   });
 });
 

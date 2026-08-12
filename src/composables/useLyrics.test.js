@@ -211,8 +211,6 @@ describe('useLyrics', () => {
 
   it('starts following the selected lyrics after clicking a line to play that track', async () => {
     const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
-    const { usePlaybackQueue } = await import('./usePlaybackQueue.js');
-    const queue = usePlaybackQueue();
 
     lyrics.selectTrack(trackB.id);
     await flushPromises();
@@ -221,10 +219,40 @@ describe('useLyrics', () => {
 
     expect(playTrackMock).toHaveBeenCalledWith(trackB);
     expect(seekMock).toHaveBeenCalledWith(40);
-    expect(queue.state.tracks.map((track) => track.id)).toEqual([trackB.id]);
+    expect(lyrics.activeLineIndex.value).toBe(1);
+  });
+
+  it('queues the whole scoped playlist (not just the clicked track) when playback starts from a lyric line', async () => {
+    const threeTrackPlaylist = {
+      id: 'p1',
+      name: 'Setlist A',
+      trackIds: [trackA.id, trackB.id, trackMissingLyrics.id],
+    };
+    const lyrics = await loadLyrics({ playlists: [threeTrackPlaylist] });
+    const { usePlaybackQueue } = await import('./usePlaybackQueue.js');
+    const queue = usePlaybackQueue();
+
+    lyrics.selectTrack(trackB.id);
+    await flushPromises();
+
+    await lyrics.playFromLine(lyrics.lyricLines.value[1]);
+
+    // Regression test: this used to queue only [trackB], so PlayerBar's
+    // next/previous controls had nothing to advance to and the "source"
+    // label never reflected the playlist it was played from.
+    expect(queue.state.tracks.map((track) => track.id)).toEqual([
+      trackA.id,
+      trackB.id,
+      trackMissingLyrics.id,
+    ]);
     expect(queue.state.currentTrackId).toBe(trackB.id);
     expect(queue.currentTrack.value).toEqual(trackB);
-    expect(lyrics.activeLineIndex.value).toBe(1);
+    expect(queue.state.sourceId).toBe(threeTrackPlaylist.id);
+    expect(queue.state.sourceName).toBe(threeTrackPlaylist.name);
+    expect(queue.sourceUpcomingTracks.value.map((track) => track.id)).toEqual([
+      trackMissingLyrics.id,
+    ]);
+    expect(queue.canGoNext.value).toBe(true);
   });
 
   it('exposes library backfill status for reload progress', async () => {

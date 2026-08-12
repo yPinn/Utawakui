@@ -45,7 +45,14 @@ function measure() {
     const text = textRef.value;
     if (!root || !text) return;
 
-    const overflow = Math.ceil(text.scrollWidth - root.clientWidth);
+    // text.scrollWidth already includes the MARQUEE_BUFFER_PX padding-right
+    // that .ui-marquee--overflow applies once isOverflowing is true — back
+    // it out before recomputing, or a re-measure of an already-overflowing
+    // row (e.g. after a legitimate ancestor resize) double-counts the
+    // buffer into `distance` on top of the one added below.
+    const appliedBuffer = isOverflowing.value ? MARQUEE_BUFFER_PX : 0;
+    const naturalScrollWidth = text.scrollWidth - appliedBuffer;
+    const overflow = Math.ceil(naturalScrollWidth - root.clientWidth);
     distance.value = Math.max(0, overflow + MARQUEE_BUFFER_PX);
     isOverflowing.value = overflow > 1;
   });
@@ -54,10 +61,25 @@ function measure() {
 onMounted(() => {
   if (typeof ResizeObserver === 'function') {
     resizeObserver = new ResizeObserver(measure);
+    // Only the root, not the text span: text's own rendered size changes
+    // *as a result of* isOverflowing toggling (.ui-marquee--overflow flips
+    // its max-width/padding), so observing it too turns this into a
+    // feedback loop — measure() flips isOverflowing on, which resizes the
+    // text, which the observer reports back as a resize, which flips it
+    // off again, forever, faster than the animation's 0.8s start delay
+    // ever completes. The text's only two legitimate size inputs (content
+    // change, font swap) are already covered by the displayText watcher
+    // below and the document.fonts.ready hook.
     if (rootRef.value) resizeObserver.observe(rootRef.value);
-    if (textRef.value) resizeObserver.observe(textRef.value);
   }
   measure();
+  // A row that mounts before its font finishes loading measures against
+  // fallback-font metrics; scrollWidth changes once the real font swaps in,
+  // but nothing re-triggers ResizeObserver for a font-only change, so a
+  // borderline-overflowing CJK/Latin-mixed string can get stuck reporting
+  // "not overflowing" forever. document.fonts is unavailable under Vitest's
+  // plain-Node environment, hence the guard.
+  document.fonts?.ready?.then(measure);
 });
 
 onUnmounted(() => {
