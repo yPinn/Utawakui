@@ -20,6 +20,8 @@ import {
 } from '@lucide/vue';
 import ImportCandidateOption from '../components/import/ImportCandidateOption.vue';
 import UiButton from '../components/ui/UiButton.vue';
+import UiChip from '../components/ui/UiChip.vue';
+import UiHint from '../components/ui/UiHint.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiStatusIcon from '../components/ui/UiStatusIcon.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
@@ -91,6 +93,10 @@ const {
   resetDownloadDir,
 } = useImportSession();
 
+// Only success/error have a distinct tone; idle/pending render as the
+// default muted hint.
+const STATUS_TONES = { success: 'text', error: 'danger' };
+const statusTone = computed(() => STATUS_TONES[state.statusType] || 'muted');
 const singleResolution = computed(() => state.singleResolution);
 const recommendedCandidate = computed(
   () => singleResolution.value?.recommendedCandidate ?? null,
@@ -186,9 +192,9 @@ onMounted(() => {
           <span class="download-inline__path" :title="state.downloadDir">
             {{ state.downloadDir }}
           </span>
-          <span class="download-inline__mode">
+          <UiChip class="download-inline__mode">
             {{ state.isDefaultDir ? '預設' : '自訂' }}
-          </span>
+          </UiChip>
           <UiButton
             :icon="FolderOpen"
             aria-label="選擇資料夾"
@@ -224,13 +230,14 @@ onMounted(() => {
         </UiButton>
       </div>
 
-      <p
+      <UiHint
         v-if="state.status"
-        :class="`status status--${state.statusType}`"
+        :tone="statusTone"
         role="status"
+        style="min-height: var(--ui-space-4)"
       >
         {{ state.status }}
-      </p>
+      </UiHint>
     </section>
 
     <section
@@ -267,11 +274,11 @@ onMounted(() => {
               準備下載
             </h3>
             <div class="candidate-chips">
-              <span class="candidate-chip">
+              <UiChip>
                 {{
                   candidateSourceLabel(selectedCandidate || state.singleTrack)
                 }}
-              </span>
+              </UiChip>
             </div>
           </div>
 
@@ -463,9 +470,9 @@ onMounted(() => {
         </UiTrackRow>
       </ul>
 
-      <p v-if="visiblePlaylistTracks.length === 0" class="empty-state">
+      <UiHint v-if="visiblePlaylistTracks.length === 0" padded center>
         沒有符合目前篩選的曲目
-      </p>
+      </UiHint>
 
       <div class="preview-footer">
         <UiButton
@@ -554,9 +561,7 @@ onMounted(() => {
 .section-heading__meta,
 .preview-panel__meta,
 .empty-panel,
-.status,
-.download-inline,
-.candidate-chip {
+.download-inline {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
 }
@@ -586,12 +591,6 @@ onMounted(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.download-inline__mode {
-  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-canvas);
 }
 
 .source-row {
@@ -630,20 +629,6 @@ onMounted(() => {
 
 .source-row__action {
   min-height: var(--import-control-height);
-}
-
-.status {
-  min-height: var(--ui-space-4);
-  margin: 0;
-}
-
-.status--success {
-  color: var(--ui-color-text);
-}
-
-.status--error {
-  color: var(--ui-color-danger);
-  font-weight: var(--ui-font-weight-strong);
 }
 
 .preview-panel {
@@ -691,23 +676,6 @@ onMounted(() => {
 .candidate-options {
   flex-direction: column;
   gap: var(--ui-space-1);
-}
-
-.candidate-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-1);
-  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text-muted);
-  white-space: nowrap;
-}
-
-.candidate-chip span {
-  color: var(--ui-color-text);
 }
 
 .preview-tools {
@@ -800,16 +768,8 @@ onMounted(() => {
   accent-color: var(--ui-color-accent);
 }
 
-.empty-state,
 .empty-panel p {
   margin: 0;
-}
-
-.empty-state {
-  padding: var(--ui-space-4);
-  color: var(--ui-color-text-muted);
-  text-align: center;
-  font-size: var(--ui-font-size-sm);
 }
 
 .preview-footer {

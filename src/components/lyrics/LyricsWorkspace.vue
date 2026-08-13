@@ -12,6 +12,7 @@ import {
   Type,
 } from '@lucide/vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import { useLyrics } from '../../composables/useLyrics.js';
@@ -287,7 +288,7 @@ watch(activeLineIndex, (index) => {
 
       <div class="lyrics-panel__playlist">
         <select
-          class="lyrics-panel__playlist-select"
+          class="lyrics-select lyrics-panel__playlist-select"
           :value="playlistState.selectedId || ''"
           aria-label="選擇播放清單"
           @change="handlePlaylistChange"
@@ -321,12 +322,12 @@ watch(activeLineIndex, (index) => {
         </p>
       </div>
 
-      <p v-if="state.error" class="lyrics-error">{{ state.error }}</p>
-      <p v-else-if="state.isLoading" class="lyrics-empty">載入中</p>
-      <p v-else-if="!selectedPlaylist" class="lyrics-empty">請先選擇播放清單</p>
-      <p v-else-if="state.tracks.length === 0" class="lyrics-empty">
+      <UiHint v-if="state.error" tone="danger" padded>{{ state.error }}</UiHint>
+      <UiHint v-else-if="state.isLoading" padded>載入中</UiHint>
+      <UiHint v-else-if="!selectedPlaylist" padded>請先選擇播放清單</UiHint>
+      <UiHint v-else-if="state.tracks.length === 0" padded>
         這個播放清單還沒有曲目。
-      </p>
+      </UiHint>
 
       <ul v-else class="lyrics-track-list">
         <UiTrackRow
@@ -389,7 +390,7 @@ watch(activeLineIndex, (index) => {
           <Captions :size="ICON_SIZE" aria-hidden="true" />
           <span class="visually-hidden">歌詞來源</span>
           <select
-            class="lyrics-source__select"
+            class="lyrics-select lyrics-source__select"
             :value="state.selectedSourceFilename || ''"
             :disabled="selectedLyrics.sources.length === 0"
             @change="handleSourceChange"
@@ -453,7 +454,7 @@ watch(activeLineIndex, (index) => {
         <div v-if="selectedTrack" class="lyrics-separation" aria-label="伴奏">
           <select
             v-model="selectedPresetId"
-            class="lyrics-separation__preset"
+            class="lyrics-select lyrics-separation__preset"
             :disabled="isSeparating(selectedTrack.id)"
             aria-label="伴奏分離設定"
             title="標準/高品質皆為卡拉OK模型,設計上以移除主唱為主,和聲較可能留在伴奏;高品質是調整降噪等參數的最佳化版本,可與標準比較。人聲分離模型移除所有人聲。實際效果依曲目而異。選擇已產生的項目會立即切換播放。"
@@ -509,22 +510,16 @@ watch(activeLineIndex, (index) => {
         class="lyrics-preview"
         :class="lyricsFontSizeClass"
       >
-        <p v-if="state.isLoadingLyrics" class="lyrics-empty">載入歌詞中</p>
-        <p v-else-if="selectedLyrics.status === 'missing'" class="lyrics-empty">
+        <UiHint v-if="state.isLoadingLyrics" padded>載入歌詞中</UiHint>
+        <UiHint v-else-if="selectedLyrics.status === 'missing'" padded>
           目前沒有可用歌詞
-        </p>
-        <p
-          v-else-if="selectedLyrics.status === 'unchecked'"
-          class="lyrics-empty"
-        >
+        </UiHint>
+        <UiHint v-else-if="selectedLyrics.status === 'unchecked'" padded>
           請按 reload 掃描歌詞來源
-        </p>
-        <p
-          v-else-if="selectedSource && lyricLines.length === 0"
-          class="lyrics-empty"
-        >
+        </UiHint>
+        <UiHint v-else-if="selectedSource && lyricLines.length === 0" padded>
           歌詞檔無可顯示內容
-        </p>
+        </UiHint>
         <ol v-else class="lyrics-lines">
           <li
             v-for="(line, index) in lyricLines"
@@ -615,9 +610,7 @@ watch(activeLineIndex, (index) => {
 .lyrics-panel__title,
 .lyrics-detail__title,
 .lyrics-panel__meta,
-.lyrics-detail__meta,
-.lyrics-error,
-.lyrics-empty {
+.lyrics-detail__meta {
   margin: 0;
 }
 
@@ -649,9 +642,10 @@ watch(activeLineIndex, (index) => {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.lyrics-panel__playlist-select {
-  min-width: 0;
-  flex: 1 1 auto;
+/* Shared <select> chrome for this file's three dropdowns — playlist
+   picker, lyrics-source filter, separation preset. Each keeps its own
+   width constraint via its BEM class below. */
+.lyrics-select {
   height: var(--ui-control-height);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
@@ -661,9 +655,14 @@ watch(activeLineIndex, (index) => {
   font-size: var(--ui-font-size-sm);
 }
 
-.lyrics-panel__playlist-select:focus-visible {
+.lyrics-select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.lyrics-panel__playlist-select {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .lyrics-panel__playlist .lyrics-panel__meta {
@@ -682,17 +681,6 @@ watch(activeLineIndex, (index) => {
 .lyrics-track-list,
 .lyrics-preview {
   overflow: auto;
-}
-
-.lyrics-error,
-.lyrics-empty {
-  padding: var(--ui-space-4);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-error {
-  color: var(--ui-color-danger);
 }
 
 .lyrics-status {
@@ -767,18 +755,6 @@ watch(activeLineIndex, (index) => {
 .lyrics-source__select {
   min-width: 180px;
   max-width: 280px;
-  height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-source__select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-text-size,
@@ -815,18 +791,6 @@ watch(activeLineIndex, (index) => {
 
 .lyrics-separation__preset {
   min-width: 96px;
-  height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-separation__preset:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .lyrics-separation__spin :deep(svg) {

@@ -1,4 +1,5 @@
 <script setup>
+import UiHint from '../ui/UiHint.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
 
 defineProps({
@@ -29,9 +30,9 @@ const emit = defineEmits([
       <slot name="actions" />
     </header>
 
-    <p v-if="tracks.length === 0 && emptyText" class="queue-section__empty">
+    <UiHint v-if="tracks.length === 0 && emptyText">
       {{ emptyText }}
-    </p>
+    </UiHint>
     <ul v-else class="queue-section__list">
       <li
         v-for="track in tracks"
@@ -80,12 +81,6 @@ const emit = defineEmits([
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
-}
-
-.queue-section__empty {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
 }
 
 .queue-section__list {

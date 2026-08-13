@@ -20,6 +20,7 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import PlaylistSidebar from '../components/playlists/PlaylistSidebar.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
+import UiHint from '../components/ui/UiHint.vue';
 import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
@@ -764,21 +765,21 @@ onUnmounted(() => {
         </template>
       </UiPageHeader>
 
-      <p v-if="isLoading" class="hint" role="status">載入中…</p>
+      <UiHint v-if="isLoading" role="status">載入中…</UiHint>
 
-      <p v-else-if="tracks.length === 0" class="hint">
+      <UiHint v-else-if="tracks.length === 0">
         還沒有任何曲目——前往「Import」下載歌曲。
-      </p>
+      </UiHint>
 
       <template v-else>
-        <p v-if="pageError" class="hint hint--error" role="alert">
+        <UiHint v-if="pageError" tone="danger" role="alert">
           {{ pageError }}
-        </p>
+        </UiHint>
 
         <template v-if="mode === 'all'">
-          <p v-if="visibleTracks.length === 0" class="hint">
+          <UiHint v-if="visibleTracks.length === 0">
             找不到符合搜尋的曲目。
-          </p>
+          </UiHint>
           <ul v-else class="tracks">
             <UiTrackRow
               v-for="track in visibleTracks"
@@ -804,12 +805,12 @@ onUnmounted(() => {
         </template>
 
         <template v-else>
-          <p v-if="playlistTracks.length === 0" class="hint">
+          <UiHint v-if="playlistTracks.length === 0">
             這個歌單還沒有曲目。從任一曲目列右鍵加入。
-          </p>
-          <p v-else-if="visiblePlaylistEntries.length === 0" class="hint">
+          </UiHint>
+          <UiHint v-else-if="visiblePlaylistEntries.length === 0">
             找不到符合搜尋的曲目。
-          </p>
+          </UiHint>
           <div v-else class="playlist-table" aria-label="播放清單曲目">
             <div class="playlist-table__head">
               <span class="playlist-table__drag"></span>
@@ -1145,16 +1146,6 @@ onUnmounted(() => {
 .search-box:focus-within {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-}
-
-.hint {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
-.hint--error {
-  color: var(--ui-color-danger);
-  font-weight: var(--ui-font-weight-strong);
 }
 
 .row-actions {

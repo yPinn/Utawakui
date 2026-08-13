@@ -7,6 +7,7 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import QueueSection from './QueueSection.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 
 defineProps({
   open: { type: Boolean, default: false },
@@ -91,7 +92,7 @@ const {
       />
     </header>
 
-    <p v-if="!hasQueue" class="queue-panel__empty">尚未建立播放佇列</p>
+    <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
 
     <template v-else>
       <QueueSection
@@ -185,12 +186,6 @@ const {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-strong);
-}
-
-.queue-panel__empty {
-  margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
 }
 
 .queue-panel__text-action {

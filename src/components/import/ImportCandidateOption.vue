@@ -8,6 +8,7 @@ import {
 } from '../../utils/importCandidateDisplay.js';
 import { formatDuration } from '../../utils/format.js';
 import { ICON_SIZE } from '../../constants/ui.js';
+import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({
   candidate: {
@@ -63,15 +64,16 @@ const metaParts = computed(() =>
     role="radio"
     @click="emit('select', candidateId(candidate))"
   >
-    <span
+    <UiChip
       class="platform-badge"
-      :class="{ 'platform-badge--music': isMusicPlatform }"
+      background="var(--ui-color-surface)"
+      :color="isMusicPlatform ? 'var(--ui-color-accent)' : undefined"
     >
       <component :is="platformIcon" :size="ICON_SIZE" aria-hidden="true" />
       <span class="platform-badge__label">
         {{ candidateSourceLabel(candidate) }}
       </span>
-    </span>
+    </UiChip>
 
     <span class="candidate-option__main">
       <span class="candidate-option__title">{{ title }}</span>
@@ -81,13 +83,19 @@ const metaParts = computed(() =>
     </span>
 
     <span class="candidate-option__chips">
-      <span v-if="selected" class="candidate-chip candidate-chip--selected">
+      <UiChip
+        v-if="selected"
+        background="var(--ui-color-accent)"
+        color="var(--ui-color-accent-contrast)"
+      >
         已選
-      </span>
-      <span v-else-if="recommended" class="candidate-chip">建議</span>
-      <span class="candidate-chip">
+      </UiChip>
+      <UiChip v-else-if="recommended" background="var(--ui-color-surface)">
+        建議
+      </UiChip>
+      <UiChip background="var(--ui-color-surface)">
         {{ confidenceLabel(candidate.confidence) }}
-      </span>
+      </UiChip>
     </span>
   </button>
 </template>
@@ -129,27 +137,9 @@ const metaParts = computed(() =>
   border-color: var(--ui-color-accent);
 }
 
-.platform-badge,
-.candidate-chip,
 .candidate-option__meta {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-}
-
-.platform-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--ui-space-1);
-  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-surface);
-  white-space: nowrap;
-}
-
-.platform-badge--music {
-  color: var(--ui-color-accent);
 }
 
 .platform-badge__label {
@@ -185,23 +175,6 @@ const metaParts = computed(() =>
   justify-content: flex-end;
   gap: var(--ui-space-1);
   flex-wrap: wrap;
-}
-
-.candidate-chip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--ui-space-1);
-  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-surface);
-  white-space: nowrap;
-}
-
-.candidate-chip--selected {
-  color: var(--ui-color-accent-contrast);
-  background: var(--ui-color-accent);
 }
 
 @media (max-width: 680px) {
