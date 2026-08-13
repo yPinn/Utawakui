@@ -398,12 +398,12 @@ function startDrag(playlist, event) {
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-/* Shared row styles (base .playlist-sidebar__item, __thumb, __play,
-   __info, __kind) live in PlaylistSidebarRow.vue now — both dynamic loops
-   below render through that component. The rules kept here
-   (.playlist-sidebar__item, __thumb, __thumb--accent) are only for the two
-   static rows above ("新增歌單"/"全部曲目"), which aren't playlists/albums
-   and so aren't rendered through PlaylistSidebarRow. */
+/* PlaylistSidebarRow.vue owns its own block (.playlist-sidebar-row) for the
+   two dynamic loops below — this file's .playlist-sidebar__item/__thumb
+   rules are only for the two static rows above ("新增歌單"/"全部曲目"),
+   which aren't playlists/albums and so aren't rendered through
+   PlaylistSidebarRow. The two blocks look similar by design (same visual
+   row shape) but are intentionally independent, not a shared name. */
 .playlist-sidebar__item {
   position: relative;
   display: flex;

@@ -36,12 +36,12 @@ const emit = defineEmits([
 <template>
   <button
     type="button"
-    class="playlist-sidebar__item"
+    class="playlist-sidebar-row"
     :class="{
-      'playlist-sidebar__item--active': active,
-      'playlist-sidebar__item--dragging': dragging,
-      'playlist-sidebar__item--drop-before': dropBefore,
-      'playlist-sidebar__item--drop-after': dropAfter,
+      'playlist-sidebar-row--active': active,
+      'playlist-sidebar-row--dragging': dragging,
+      'playlist-sidebar-row--drop-before': dropBefore,
+      'playlist-sidebar-row--drop-after': dropAfter,
     }"
     :draggable="draggable"
     :aria-current="active ? 'page' : undefined"
@@ -55,7 +55,7 @@ const emit = defineEmits([
     @dragend="emit('dragend')"
   >
     <UiTrackThumb
-      class="playlist-sidebar__thumb"
+      class="playlist-sidebar-row__thumb"
       :track="coverTrack"
       :size="40"
       color="var(--ui-color-text-muted)"
@@ -66,8 +66,8 @@ const emit = defineEmits([
       <template #overlay>
         <button
           type="button"
-          class="playlist-sidebar__play"
-          :class="{ 'playlist-sidebar__play--active': isActiveSource }"
+          class="playlist-sidebar-row__play"
+          :class="{ 'playlist-sidebar-row__play--active': isActiveSource }"
           :aria-label="
             isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`
           "
@@ -89,15 +89,15 @@ const emit = defineEmits([
         </button>
       </template>
     </UiTrackThumb>
-    <span class="playlist-sidebar__info">
+    <span class="playlist-sidebar-row__info">
       <UiMarqueeText :text="playlist.name || '(未命名歌單)'" />
-      <span class="playlist-sidebar__kind">{{ subtitle }}</span>
+      <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
   </button>
 </template>
 
 <style scoped>
-.playlist-sidebar__item {
+.playlist-sidebar-row {
   position: relative;
   display: flex;
   align-items: center;
@@ -114,22 +114,22 @@ const emit = defineEmits([
   width: 100%;
 }
 
-.playlist-sidebar__item[draggable='true'] {
+.playlist-sidebar-row[draggable='true'] {
   cursor: grab;
   user-select: none;
   -webkit-user-select: none;
 }
 
-.playlist-sidebar__item[draggable='true']:active {
+.playlist-sidebar-row[draggable='true']:active {
   cursor: grabbing;
 }
 
-.playlist-sidebar__item--dragging {
+.playlist-sidebar-row--dragging {
   opacity: var(--ui-opacity-dragging);
 }
 
-.playlist-sidebar__item--drop-before::before,
-.playlist-sidebar__item--drop-after::after {
+.playlist-sidebar-row--drop-before::before,
+.playlist-sidebar-row--drop-after::after {
   content: '';
   position: absolute;
   left: var(--ui-space-2);
@@ -140,29 +140,29 @@ const emit = defineEmits([
   pointer-events: none;
 }
 
-.playlist-sidebar__item--drop-before::before {
+.playlist-sidebar-row--drop-before::before {
   top: -3px;
 }
 
-.playlist-sidebar__item--drop-after::after {
+.playlist-sidebar-row--drop-after::after {
   bottom: -3px;
 }
 
-.playlist-sidebar__item:hover {
+.playlist-sidebar-row:hover {
   background: var(--ui-color-surface-hover);
 }
 
-.playlist-sidebar__item:focus-visible {
+.playlist-sidebar-row:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
-.playlist-sidebar__item--active {
+.playlist-sidebar-row--active {
   background: var(--ui-color-accent);
   color: var(--ui-color-accent-contrast);
 }
 
-.playlist-sidebar__item--active .playlist-sidebar__thumb {
+.playlist-sidebar-row--active .playlist-sidebar-row__thumb {
   /* Use a tokenized accent contrast color instead of opacity blending. */
   color: var(--ui-color-accent-contrast-muted);
 }
@@ -173,7 +173,7 @@ const emit = defineEmits([
    playing/paused row is identifiable at a glance. Semi-transparent black
    works as an overlay over any thumbnail image regardless of the app's own
    light/dark theme, so it isn't themed off --ui-* tokens. */
-.playlist-sidebar__play {
+.playlist-sidebar-row__play {
   position: absolute;
   inset: 0;
   display: flex;
@@ -188,20 +188,20 @@ const emit = defineEmits([
   transition: opacity 0.1s ease-out;
 }
 
-.playlist-sidebar__item:hover .playlist-sidebar__play,
-.playlist-sidebar__item:focus-within .playlist-sidebar__play,
-.playlist-sidebar__play--active {
+.playlist-sidebar-row:hover .playlist-sidebar-row__play,
+.playlist-sidebar-row:focus-within .playlist-sidebar-row__play,
+.playlist-sidebar-row__play--active {
   opacity: 1;
 }
 
-.playlist-sidebar__info {
+.playlist-sidebar-row__info {
   flex: 1;
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.playlist-sidebar__kind {
+.playlist-sidebar-row__kind {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -209,7 +209,7 @@ const emit = defineEmits([
   font-size: var(--ui-font-size-sm);
 }
 
-.playlist-sidebar__item--active .playlist-sidebar__kind {
+.playlist-sidebar-row--active .playlist-sidebar-row__kind {
   color: var(--ui-color-accent-contrast-muted);
 }
 </style>

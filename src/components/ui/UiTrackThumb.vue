@@ -48,7 +48,7 @@ defineProps({
 .ui-track-thumb {
   /* Custom-property overrides (not direct color/background/etc.) so a
      caller-scope selector overriding the old class name (e.g.
-     .playlist-sidebar__item--active .playlist-sidebar__thumb) still wins
+     .playlist-sidebar-row--active .playlist-sidebar-row__thumb) still wins
      on normal cascade specificity instead of losing to an inline style. */
   position: relative;
   flex: 0 0 auto;

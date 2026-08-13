@@ -491,14 +491,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="setlist">
+  <div class="setlist-view">
     <PlaylistSidebar
-      class="setlist__sidebar"
+      class="setlist-view__sidebar"
       :tracks-by-id="tracksById"
       @playlist-action="handlePlaylistMenuAction"
     />
 
-    <div class="setlist__main">
+    <div class="setlist-view__main">
       <SetlistPlaylistHeader
         v-if="selectedPlaylist"
         v-model:rename-value="renameValue"
@@ -604,7 +604,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.setlist {
+.setlist-view {
   display: grid;
   /* minmax(0, 1fr), not 1fr — a grid item's default min-width:auto would
      let a long untruncated title blow this column out and push the
@@ -621,7 +621,7 @@ onMounted(() => {
   align-items: start;
 }
 
-.setlist__sidebar {
+.setlist-view__sidebar {
   /* .shell__main (App.vue) owns the page scroll — without sticky, the
      sidebar would scroll away with a long track list instead of staying
      put like a real nav column. */
@@ -630,7 +630,7 @@ onMounted(() => {
   align-self: start;
 }
 
-.setlist__main {
+.setlist-view__main {
   min-width: 0;
 }
 

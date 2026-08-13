@@ -178,7 +178,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="import-page">
+  <div class="import-view">
     <UiPageHeader title="匯入" />
 
     <section class="import-control" aria-labelledby="import-source-title">
@@ -498,7 +498,7 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.import-page {
+.import-view {
   --import-control-height: calc(var(--ui-space-5) + var(--ui-space-4));
   --import-track-row-min-height: calc(
     var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2)
