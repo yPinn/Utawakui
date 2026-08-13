@@ -9,9 +9,7 @@ import {
   Pencil,
   Play,
   Plus,
-  Search,
   Trash2,
-  X,
 } from '@lucide/vue';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { usePlayer } from '../composables/usePlayer.js';
@@ -23,6 +21,7 @@ import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
+import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import UiTrackThumb from '../components/ui/UiTrackThumb.vue';
 import {
@@ -475,10 +474,6 @@ async function handleTrackMenuSelect(value) {
   closeAddMenu();
 }
 
-function clearSearch() {
-  searchQuery.value = '';
-}
-
 function reorderTrack(draggedId, targetId, position) {
   const playlist = selectedPlaylist.value;
   if (!playlist || !draggedId || draggedId === targetId) return;
@@ -638,52 +633,14 @@ onUnmounted(() => {
           </div>
 
           <div class="playlist-toolbar__tools">
-            <label class="search-box" title="搜尋曲目">
-              <Search class="search-box__icon" :size="16" aria-hidden="true" />
-              <input
-                v-model="searchQuery"
-                class="search-box__input"
-                type="search"
-                placeholder="Search"
-                aria-label="搜尋曲目"
-              />
-              <button
-                v-if="searchQuery"
-                type="button"
-                class="search-box__clear"
-                aria-label="清除搜尋"
-                title="清除搜尋"
-                @click="clearSearch"
-              >
-                <X :size="16" aria-hidden="true" />
-              </button>
-            </label>
+            <UiSearchBox v-model="searchQuery" />
           </div>
         </section>
       </template>
 
       <UiPageHeader v-else :title="pageTitle">
         <template #actions>
-          <label class="search-box" title="搜尋曲目">
-            <Search class="search-box__icon" :size="16" aria-hidden="true" />
-            <input
-              v-model="searchQuery"
-              class="search-box__input"
-              type="search"
-              placeholder="Search"
-              aria-label="搜尋曲目"
-            />
-            <button
-              v-if="searchQuery"
-              type="button"
-              class="search-box__clear"
-              aria-label="清除搜尋"
-              title="清除搜尋"
-              @click="clearSearch"
-            >
-              <X :size="16" aria-hidden="true" />
-            </button>
-          </label>
+          <UiSearchBox v-model="searchQuery" />
         </template>
       </UiPageHeader>
 
@@ -1015,59 +972,6 @@ onUnmounted(() => {
 .rename-input--hero {
   max-width: min(520px, 100%);
   font-size: var(--ui-font-size-xl);
-}
-
-.search-box {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-  min-width: 180px;
-  padding: var(--ui-space-1) var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text-muted);
-}
-
-.search-box__icon {
-  flex: 0 0 auto;
-}
-
-.search-box__input {
-  min-width: 0;
-  width: 100%;
-  border: 0;
-  outline: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.search-box__input::placeholder {
-  color: var(--ui-color-text-muted);
-}
-
-.search-box__clear {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex: 0 0 auto;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-text-muted);
-  cursor: pointer;
-}
-
-.search-box__clear:hover {
-  color: var(--ui-color-text);
-}
-
-.search-box:focus-within {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .row-actions {
