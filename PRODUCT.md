@@ -6,9 +6,9 @@ product
 
 ## Platform
 
-desktop
+web
 
-Utawakui is an Electron desktop product with a Vue-rendered control panel. OBS-facing surfaces are delivered separately as Browser Source outputs.
+Utawakui is a web-rendered Vue control panel packaged as an Electron desktop app. OBS-facing surfaces are delivered separately as Browser Source outputs.
 
 ## Product Positioning
 

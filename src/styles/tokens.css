@@ -1,26 +1,44 @@
 /* Control-panel tokens. Component CSS stays in scoped SFC blocks;
    document baselines live in base.css. */
 :root {
-  /* Control panel only. OBS overlay tokens use --ovl-* in its own CSS entrypoint. */
-  --ui-color-canvas: #20222a;
-  --ui-color-surface: #2a2d38;
-  --ui-color-surface-hover: #3d4152;
-  --ui-color-text: #f4f4f5;
-  --ui-color-text-muted: #9a9ba5;
-  --ui-color-border: #3a3d4a;
+  /* Control panel only. OBS overlay tokens use --ovl-* in its own CSS entrypoint.
+     Dark is the default Electron control-panel theme. */
+  --ui-color-canvas: #1f2328;
+  --ui-color-surface: #292f35;
+  --ui-color-surface-raised: #30383e;
+  --ui-color-surface-hover: #344046;
+  --ui-color-surface-active: #3a464c;
+  --ui-color-surface-selected: #25474a;
+  --ui-color-surface-playing: #4a332e;
+  --ui-color-text: #f7f1e7;
+  --ui-color-text-muted: #aeb8b6;
+  --ui-color-border: #3c4749;
+  --ui-color-border-strong: #586568;
   --ui-shadow-overlay: 0 12px 30px rgb(0 0 0 / 28%);
-  --ui-color-accent: #6c8cff;
-  --ui-color-accent-hover: #7f9cff;
-  --ui-color-sort-indicator: #1ed760;
+
+  --ui-color-accent: #55a2a7;
+  --ui-color-accent-hover: #6ab4b8;
+  --ui-color-accent-soft: var(--ui-color-surface-selected);
   /* Accent-filled surfaces keep contrast tokens separate for light-theme safety. */
-  --ui-color-accent-contrast: #20222a;
+  --ui-color-accent-contrast: #102326;
   --ui-color-accent-contrast-muted: color-mix(
     in srgb,
     var(--ui-color-accent-contrast) 75%,
     var(--ui-color-accent)
   );
-  --ui-color-focus: var(--ui-color-accent);
-  --ui-color-danger: #ff6b70;
+  --ui-color-focus: #dd7a64;
+
+  --ui-color-current: #dd7a64;
+  --ui-color-current-soft: var(--ui-color-surface-playing);
+  --ui-color-info: #7fb8bd;
+  --ui-color-success: #7bbd8b;
+  --ui-color-warning: #d6a84f;
+  --ui-color-danger: #dd7078;
+  --ui-color-gated: #d6a84f;
+  --ui-color-gated-bg: #3a3226;
+  --ui-color-sort-indicator: var(--ui-color-current);
+
+  --ui-color-scheme: dark;
 
   --ui-space-1: 0.25rem; /* 4px */
   --ui-space-2: 0.5rem; /* 8px */
@@ -70,6 +88,41 @@
   --ui-z-dropdown: 20;
   --ui-z-context-menu: 100;
   --ui-z-context-menu-submenu: 101;
+  --ui-z-modal: 200;
+}
+
+:root[data-ui-theme='light'],
+.ui-theme-light {
+  --ui-color-canvas: #f7f1e7;
+  --ui-color-surface: #fffdfa;
+  --ui-color-surface-raised: #ffffff;
+  --ui-color-surface-hover: #edf2ef;
+  --ui-color-surface-active: #e4ece8;
+  --ui-color-surface-selected: #dceee9;
+  --ui-color-surface-playing: #f1d9cc;
+  --ui-color-text: #1f2328;
+  --ui-color-text-muted: #69747a;
+  --ui-color-border: #d8ded9;
+  --ui-color-border-strong: #b9c4c0;
+  --ui-shadow-overlay: 0 16px 38px rgb(31 35 40 / 16%);
+
+  --ui-color-accent: #327a7f;
+  --ui-color-accent-hover: #286a6e;
+  --ui-color-accent-soft: var(--ui-color-surface-selected);
+  --ui-color-accent-contrast: #fffdfa;
+  --ui-color-focus: #d26a45;
+
+  --ui-color-current: #d26a45;
+  --ui-color-current-soft: var(--ui-color-surface-playing);
+  --ui-color-info: #4d8793;
+  --ui-color-success: #5f9a72;
+  --ui-color-warning: #b78336;
+  --ui-color-danger: #bd5961;
+  --ui-color-gated: #9a6b45;
+  --ui-color-gated-bg: #f3eadc;
+  --ui-color-sort-indicator: var(--ui-color-current);
+
+  --ui-color-scheme: light;
 }
 
 /* Media-query breakpoints:

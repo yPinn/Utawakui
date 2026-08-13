@@ -22,10 +22,8 @@ body {
   display: none;
 }
 
-/* The current token set only defines one dark palette. This should follow
-   the active theme once light mode exists. */
 input[type='range'] {
-  color-scheme: dark;
+  color-scheme: var(--ui-color-scheme);
   accent-color: var(--ui-color-accent);
 }
 

@@ -93,7 +93,7 @@ const emit = defineEmits([
 }
 
 .queue-track--current .queue-track__title {
-  color: var(--ui-color-sort-indicator);
+  color: var(--ui-color-current);
 }
 
 .queue-track__copy {

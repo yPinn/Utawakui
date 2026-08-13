@@ -2,47 +2,47 @@
 name: Utawakui
 description: Baseline design-system scaffold for a local-first OBS singing-session control panel.
 colors:
-  canvas: '#111418'
-  surface: '#191D23'
-  surface-raised: '#222832'
-  surface-hover: '#2B3340'
-  text: '#F4F7FA'
-  text-muted: '#A8B0BA'
-  border: '#343C49'
-  accent: '#5B8CFF'
-  accent-hover: '#74A0FF'
-  accent-contrast: '#08111F'
-  success: '#35C77A'
-  warning: '#F0B84D'
-  danger: '#FF6670'
-  info: '#60B7FF'
+  canvas: '#1F2328'
+  surface: '#292F35'
+  surface-raised: '#30383E'
+  surface-hover: '#344046'
+  text: '#F7F1E7'
+  text-muted: '#AEB8B6'
+  border: '#3C4749'
+  accent: '#55A2A7'
+  accent-hover: '#6AB4B8'
+  accent-contrast: '#102326'
+  success: '#7BBD8B'
+  warning: '#D6A84F'
+  danger: '#DD7078'
+  info: '#7FB8BD'
 typography:
   display:
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei UI', sans-serif"
+    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
     fontSize: '2rem'
     fontWeight: 650
     lineHeight: 1.15
     letterSpacing: '0'
   headline:
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei UI', sans-serif"
+    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
     fontSize: '1.5rem'
     fontWeight: 650
     lineHeight: 1.2
     letterSpacing: '0'
   title:
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei UI', sans-serif"
+    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
     fontSize: '1.125rem'
     fontWeight: 600
     lineHeight: 1.3
     letterSpacing: '0'
   body:
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei UI', sans-serif"
+    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
     fontSize: '1rem'
     fontWeight: 400
     lineHeight: 1.5
     letterSpacing: '0'
   label:
-    fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft JhengHei UI', sans-serif"
+    fontFamily: "'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui, -apple-system, sans-serif"
     fontSize: '0.875rem'
     fontWeight: 600
     lineHeight: 1.25
@@ -68,12 +68,12 @@ components:
     backgroundColor: '{colors.accent}'
     textColor: '{colors.accent-contrast}'
     rounded: '{rounded.md}'
-    padding: '0.5rem 0.875rem'
+    padding: '0.25rem 0.5rem'
   button-ghost:
     backgroundColor: 'transparent'
     textColor: '{colors.text-muted}'
     rounded: '{rounded.md}'
-    padding: '0.5rem 0.75rem'
+    padding: '0.25rem 0.5rem'
   track-row:
     backgroundColor: 'transparent'
     textColor: '{colors.text}'
@@ -92,7 +92,7 @@ components:
 
 Utawakui is a product UI for live operation. The design system should support a calm desktop control panel first, then extend to responsive and OBS overlay surfaces without assuming that all surfaces share the same tokens.
 
-This scaffold starts with a restrained, neutral product baseline: stable rem-based scales, semantic states, predictable components, visible focus, and responsive constraints. It intentionally avoids a finished brand atmosphere until the next style-direction pass.
+This scaffold started with a restrained, neutral product baseline: stable rem-based scales, semantic states, predictable components, visible focus, and responsive constraints. The current visual direction now adds a more specific identity layer: a local-media card sleeve, a quiet cat-card presence, and a restrained graphite / teal / paper / coral palette.
 
 **Key Characteristics:**
 
@@ -100,6 +100,316 @@ This scaffold starts with a restrained, neutral product baseline: stable rem-bas
 - Quiet enough for live performance.
 - Structured enough for playlists, lyrics, queues, and processing states.
 - Flexible enough to support dark, light, desktop, responsive, and overlay-specific tokens.
+
+## Visual Direction
+
+Utawakui should feel like a quiet, trustworthy, slightly alive local karaoke control panel. It is not a streaming platform, music platform, or rights service; the default visual language should keep users grounded in organizing and operating their own local materials.
+
+### Reference Boundaries
+
+- **Spotify:** use as a reference for music-management density, playlist/collection mental models, persistent playback, sidebar structure, and fast scanning.
+- **macOS:** use as a reference for OS-like clarity, local object metaphors, comfortable control spacing, and window/sidebar hierarchy.
+- **Mosby's Files-style folder systems:** use as a reference for folder navigation, paper stacks, tabbed files, and local archive atmosphere.
+- **Color Lisa-style palettes:** use as a reference for restrained artistic color relationships and 60/30/10 color balance, not for copying a single palette.
+
+Avoid direct borrowing:
+
+- No Spotify green as a brand anchor.
+- No Apple system blue as the main identity.
+- No marketing-page hero styling for operational surfaces.
+- No heavy glass, glossy Aqua, heavy shadows, or decorative depth.
+- No full skeuomorphic file-cabinet scene for the whole app.
+- No red/blue reference-page palette as a direct theme.
+- No feature-gated flow should look like the default product entrypoint.
+
+## Brand Mark / App Icon
+
+### Core Metaphor
+
+The primary icon direction is:
+
+```text
+dark card sleeve / song-card container
+  + teal cat-shaped inner card
+  + paper / white voice line
+  + small coral accent
+  + sparse bottom audio bars
+```
+
+The mark should communicate:
+
+- Local library and material storage.
+- Singing, lyrics, or audio flow.
+- A small amount of friendly life, without becoming a full mascot.
+
+### Icon Rules
+
+- The outer shape is a clean dark rounded card sleeve; do not add lid seams, clasps, chest hardware, or obvious outline strokes.
+- The teal inner shape may imply cat ears or a tiny face, but should not become a full character.
+- Keep expression minimal: at most two small eyes. Do not include mouth, whiskers, tail, paws, arms, or legs in the primary icon.
+- The voice line is the main identifier. Prefer a paper/white main line with coral as a small offset or local accent.
+- Keep bottom audio bars sparse: 4-6 bars, quiet playback signal, not a full equalizer.
+- The primary icon should not use a visible border. Small taskbar/tray variants may use a low-contrast 1px edge highlight for separation.
+
+Rejected icon directions:
+
+- Top lid seams, clasp lines, treasure-chest cues, or box hardware.
+- Heavy shadow used to explain the sleeve or box.
+- Paw/claw action as the primary wave source.
+- Red dots, because they read as recording state.
+- Literal music notes, play triangles, microphones, and provider logos.
+
+### Icon Outputs
+
+| Version           | Use                        | Rule                                     |
+| ----------------- | -------------------------- | ---------------------------------------- |
+| Primary           | app icon, README           | Full sleeve, cat-card, and voice line.   |
+| Small             | taskbar, tray, 16/24/32px  | Simplify bars; optional edge highlight.  |
+| Monochrome / Mask | installer, system fallback | Keep sleeve contour and voice line only. |
+
+## Color Direction
+
+The brand should not be locked to folder blue. Use graphite, washed teal, paper, and coral as a restrained base.
+
+```text
+Graphite      #1f2328
+Washed Teal   #3f8f94
+Paper         #f7f1e7
+Coral         #d26a45
+Mist          #b8d8d2
+```
+
+Use a 60/30/10 ratio:
+
+- **60% base:** app chrome, sleeve, major backgrounds.
+- **30% secondary:** local-library surfaces, inner object areas, main voice line.
+- **10% accent:** singing energy, current playback, selected cue, focused or gated hints.
+
+Theme token targets should keep light and dark themes visually related, rather than treating light mode as a separate brand.
+
+### Light Theme
+
+Recommended future light theme values:
+
+```css
+--ui-color-canvas: #f7f1e7;
+--ui-color-surface: #fffdfa;
+--ui-color-surface-raised: #ffffff;
+--ui-color-surface-hover: #edf2ef;
+--ui-color-surface-active: #e4ece8;
+--ui-color-surface-selected: #dceee9;
+--ui-color-surface-playing: #f1d9cc;
+--ui-color-text: #1f2328;
+--ui-color-text-muted: #69747a;
+--ui-color-border: #d8ded9;
+--ui-color-border-strong: #b9c4c0;
+
+--ui-color-accent: #327a7f;
+--ui-color-accent-hover: #286a6e;
+--ui-color-accent-soft: #dceee9;
+--ui-color-accent-contrast: #fffdfa;
+--ui-color-focus: #d26a45;
+
+--ui-color-current: #d26a45;
+--ui-color-current-soft: #f1d9cc;
+--ui-color-info: #4d8793;
+--ui-color-success: #5f9a72;
+--ui-color-warning: #b78336;
+--ui-color-danger: #bd5961;
+--ui-color-gated: #9a6b45;
+--ui-color-gated-bg: #f3eadc;
+
+--ui-opacity-disabled: 0.5;
+```
+
+### Dark Theme
+
+Recommended future dark theme values:
+
+```css
+--ui-color-canvas: #1f2328;
+--ui-color-surface: #292f35;
+--ui-color-surface-raised: #30383e;
+--ui-color-surface-hover: #344046;
+--ui-color-surface-active: #3a464c;
+--ui-color-surface-selected: #25474a;
+--ui-color-surface-playing: #4a332e;
+--ui-color-text: #f7f1e7;
+--ui-color-text-muted: #aeb8b6;
+--ui-color-border: #3c4749;
+--ui-color-border-strong: #586568;
+
+--ui-color-accent: #55a2a7;
+--ui-color-accent-hover: #6ab4b8;
+--ui-color-accent-soft: #25474a;
+--ui-color-accent-contrast: #102326;
+--ui-color-focus: #dd7a64;
+
+--ui-color-current: #dd7a64;
+--ui-color-current-soft: #4a332e;
+--ui-color-info: #7fb8bd;
+--ui-color-success: #7bbd8b;
+--ui-color-warning: #d6a84f;
+--ui-color-danger: #dd7078;
+--ui-color-gated: #d6a84f;
+--ui-color-gated-bg: #3a3226;
+
+--ui-opacity-disabled: 0.5;
+```
+
+### Common States
+
+| State                 | Token / color role                          | Usage rule                                                        |
+| --------------------- | ------------------------------------------- | ----------------------------------------------------------------- |
+| Default               | `surface`, `text`, `border`                 | Neutral app chrome and ordinary controls.                         |
+| Hover                 | `surface-hover`                             | Row, button, menu, and sidebar hover.                             |
+| Pressed / active      | `surface-active`                            | Momentary button or row press; should be subtler than selected.   |
+| Selected              | `surface-selected`, `accent`, `accent-soft` | Sidebar item, active collection, selected playlist, chosen track. |
+| Currently playing     | `current`, `current-soft`                   | Playback identity, now-playing line, live transport cue.          |
+| Focus-visible         | `focus`                                     | Keyboard focus ring; do not reuse selected fill alone.            |
+| Loading / processing  | `info`, `accent`                            | Import, scan, separation progress, and neutral activity.          |
+| Completed / available | `success`                                   | Separation complete, local asset ready, synced lyric available.   |
+| Needs attention       | `warning`                                   | Recoverable metadata, missing optional data, user confirmation.   |
+| Error / destructive   | `danger`                                    | Failed operation, destructive action, nonrecoverable problem.     |
+| Disabled              | `text-muted` plus `--ui-opacity-disabled`   | Disabled controls; never communicate state by opacity alone.      |
+| Feature gated         | `gated`, `gated-bg`, optional coral edge    | Advanced/provider/overlay flows before user opt-in.               |
+| Drag target           | `accent` border or inset line               | Reorder targets; avoid full teal fills during drag.               |
+
+Selected and currently-playing states are intentionally separate. A row can be selected without being the active audio source, and the active audio source can continue to show a coral cue even when focus moves elsewhere.
+
+Feature-gated flows should not use danger red. A gate means "available behind an explicit decision," not "broken." Use warm muted gated colors, short copy, and secondary actions.
+
+### Palette Rules
+
+- Coral is not a large action-button color and must not be used as a recording dot.
+- Coral works best as a voice line, current-playback line, focus ring, or small gate edge.
+- Teal is the brand color, but should not fill every major UI surface.
+- Gold is reserved for possible future high-quality or special states; it is not part of the main palette.
+- Replace the current Spotify-green sort indicator with `accent` or `current` when implementation tokens are refreshed.
+
+## Product UI Direction
+
+The control panel should combine Spotify-like music workflow efficiency with macOS-like local tool clarity.
+
+### Layout
+
+- Preserve the app shell model: sidebar + main workspace + persistent player.
+- Use the sidebar for navigation, collections, and music-management context.
+- Keep track rows dense, aligned, and easy to scan.
+- Playlist and album headers can show cover and metadata, but should remain operational rather than heroic.
+- Do not use oversized marketing heroes or nested page cards.
+
+### Folder-Library Metaphor
+
+The folder reference should show up as a restrained local-library metaphor, not as a full novelty interface.
+
+Use folder / file cues for:
+
+- Playlist, album, and collection headers.
+- Import candidate groups and source previews.
+- Lyrics source lists, lyric versions, and synced-line workspaces.
+- Empty states that explain "put songs here" or "this collection is empty."
+- App icon and selected artwork treatments.
+
+Avoid folder cues for:
+
+- Transport controls.
+- Track rows themselves.
+- Dense queue rows.
+- Global buttons, menus, and form fields.
+- Error states and feature gates.
+
+Allowed visual devices:
+
+- A single folder tab or label notch on collection surfaces.
+- Slight paper-stack layering behind playlist or lyric-source panels.
+- Thin inset strokes and soft edge highlights.
+- Small file-label strips for metadata, not large decorative labels.
+- Folder-like cover placeholders when no custom cover exists.
+
+Limits:
+
+- Use at most one folder cue per major region.
+- Keep shadows shallow and functional; avoid dramatic skeuomorphic depth.
+- Do not turn every panel into a file folder.
+- Folder styling must never reduce list density or make repeated rows harder to scan.
+- The reference should inform organization and materiality, while Spotify still governs music-list efficiency.
+
+### Shape And Density
+
+Utawakui should split shape language by job:
+
+- **Use macOS-like shape for containers:** app chrome, modals, popovers, search fields, and local-object surfaces should feel calm, softly rectangular, and OS-native.
+- **Use Spotify-like shape for repeated music surfaces:** track rows, playlist rows, queue rows, and player controls should stay dense, scannable, and rhythmically aligned.
+- **Use folder-like shape for collection surfaces:** playlist, album, import, and lyrics-source areas can use tabs, paper layers, or cover placeholders when they represent stored material.
+- **Use the brand mark shape only for the app icon and selected artwork treatments:** the card-sleeve / cat-card shape should not leak into every control.
+
+Radius decisions:
+
+| Target                         | Radius          | Reference | Reason                                              |
+| ------------------------------ | --------------- | --------- | --------------------------------------------------- |
+| Hairlines, progress fills      | `2px`           | Spotify   | Keeps thin interactive marks crisp.                 |
+| Dense thumbnails and artwork   | `4px`           | Spotify   | Keeps album and track art compact.                  |
+| Rows, buttons, inputs, menus   | `6px`           | Shared    | Default operational radius: friendly, not pillowy.  |
+| Modals, popovers, major panels | `8px`           | macOS     | Softens system surfaces without card-heavy styling. |
+| Chips, transport toggles       | `999px`         | Spotify   | Pills are reserved for binary and status controls.  |
+| App icon                       | platform-native | macOS     | Follows OS icon masks, not component radii.         |
+
+Do not increase general UI cards beyond `8px`. If a surface wants more softness, use tone, spacing, or artwork rather than larger radius. The app icon and overlay graphics may use larger rounded silhouettes because they are brand/art surfaces, not control-panel components.
+
+Density decisions:
+
+| Surface                     | Direction | Rule                                                        |
+| --------------------------- | --------- | ----------------------------------------------------------- |
+| Sidebar navigation          | Spotify   | Compact rows, clear selected state, no large cards.         |
+| Track / queue rows          | Spotify   | Stable height, tight metadata stack, contextual actions.    |
+| Player bar                  | Spotify   | Persistent, compact, transport-forward.                     |
+| Search / modal / popover UI | macOS     | Calm fields, clear focus, restrained elevation.             |
+| Playlist / album header     | Hybrid    | Music metadata density with restrained folder cues.         |
+| Import / lyrics sources     | Folder    | Paper-stack or tab cue where it clarifies stored materials. |
+| Feature notices             | macOS     | System dialog clarity, short copy, no alarm-like styling.   |
+
+Spacing decisions:
+
+- Keep the 4px spacing base.
+- Use `8px` inside compact rows and toolbar groups.
+- Use `12px` for row horizontal padding and compact panel gutters.
+- Use `16px` for stable panel padding.
+- Use `24px` for page/header breathing room.
+- Reserve `32px+` for layout separation, not ordinary component padding.
+
+Primary control heights:
+
+| Control                    | Height target | Reason                                             |
+| -------------------------- | ------------- | -------------------------------------------------- |
+| Compact icon button        | `30px`        | Current desktop density; good for repeated tools.  |
+| Menu item / context action | `32px`        | Easier target without wasting vertical scan space. |
+| Track row                  | `52px`        | Enough for title + artist and 40px artwork.        |
+| Player bar                 | `68px`        | Preserves persistent transport plus 52px artwork.  |
+
+These numbers should be treated as implementation targets when refreshing tokens and components. If a future touch-first surface exists, it can introduce touch-specific component tokens instead of enlarging the desktop control panel.
+
+### Default vs Feature-Gated Visuals
+
+Default core services:
+
+- Local library.
+- Playback.
+- Queue.
+- Playlist / collection.
+- Metadata display.
+- Windows shell integration.
+
+These use the main UI palette, direct entrypoints, stable controls, and no warning-like badge treatment.
+
+Contextual or advanced flows:
+
+- Provider flow.
+- Lyrics flow.
+- Audio processing flow.
+- Public output flow.
+
+These should be visible but secondary. Use contextual panels, outline/secondary buttons, and clear feature notices. Coral may appear as a small edge or focus hint, but not as a full red warning surface. Gates record that a user enabled a flow; UI must not imply Utawakui completed external confirmation on the user's behalf.
 
 ### Style File Taxonomy
 
@@ -147,6 +457,25 @@ Control-panel token categories:
 
 Deprecated text-size aliases should not be reintroduced; current component CSS should use `--ui-font-size-*`.
 
+### Naming Conventions
+
+Use naming to separate design intent, implementation role, and runtime state.
+
+| Type                | Pattern                            | Example                             |
+| ------------------- | ---------------------------------- | ----------------------------------- |
+| Control-panel token | `--ui-{category}-{role}-{state}`   | `--ui-color-surface-selected`       |
+| Overlay token       | `--ovl-{category}-{role}`          | `--ovl-font-display-cjk`            |
+| Primitive component | `ui-{component}`                   | `ui-btn`, `ui-chip`, `ui-track-row` |
+| Component element   | `ui-{component}__{element}`        | `ui-context-menu__item`             |
+| Component variant   | `ui-{component}--{variant}`        | `ui-btn--accent`, `ui-chip--gated`  |
+| Local component     | `{feature}-{component}`            | `playlist-sidebar-row`              |
+| Local element       | `{feature}-{component}__{element}` | `playlist-sidebar-row__play`        |
+| Local variant       | `{feature}-{component}--{variant}` | `candidate-option--selected`        |
+| Runtime state       | `is-{state}` / `has-{state}`       | `is-selected`, `has-error`          |
+| Test id             | `kebab-case`                       | `track-row-play`                    |
+
+Current code may still use local BEM-style state variants such as `candidate-option--selected`. New shared primitives should prefer `is-*` / `has-*` state classes when state is independent of visual variant. Do not rename stable component classes just for aesthetics; migrate naming when touching the component for visual work.
+
 ## Colors
 
 The current palette is a placeholder baseline, not the final brand identity. Treat these tokens as semantic slots to be replaced or refined.
@@ -187,6 +516,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 - **Control Panel Font:** native system UI stack. Do not bundle brand fonts into the control panel by default.
 - **Overlay CJK Display Font:** `GenWanMin2 TW`, with CJK serif fallbacks.
 - **Overlay Latin Display Font:** `Playfair Display`, with practical serif fallbacks.
+- **Overlay Utility Font:** system sans.
 - **Label/Mono Font:** pending; only introduce mono if timestamps, technical metadata, or counters clearly benefit.
 
 **Character:** Product typography should be functional, internationalized, and calm. It must handle Japanese, Korean, Traditional Chinese, English, long song titles, artist metadata, and dense table labels without feeling cramped.
@@ -200,18 +530,39 @@ Control panel typography and OBS overlay typography serve different jobs.
 | Control Panel | Native/system sans stack.  | Stable, fast, dense, accessible, and familiar during live control. |
 | OBS Overlay   | Ornate display serif pair. | Public-facing, animated, more atmospheric, and brand expressive.   |
 
+The control-panel default is:
+
+```css
+--ui-font-family-base:
+  'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
+  -apple-system, sans-serif;
+```
+
+This matches the current `src/styles/tokens.css` direction. Keep this stack compatible and local-first; do not bundle brand fonts into the Electron control panel.
+
 The overlay default pairing is:
 
 ```css
 --ovl-font-display-cjk:
-  'GenWanMin2 TW', 'GenWanMin2 TC', 'GenWanMin2 PJP', 'Noto Serif TC',
-  'Noto Serif JP', 'Noto Serif KR', serif;
---ovl-font-display-latin: 'Playfair Display', 'Source Serif 4', Georgia, serif;
+  var(--ovl-font-display-cjk-custom, 'GenWanMin2 TW'), 'GenWanMin2 TC',
+  'GenWanMin2 PJP', 'Noto Serif TC', 'Noto Serif JP', 'Noto Serif KR', serif;
+--ovl-font-display-latin:
+  var(--ovl-font-display-latin-custom, 'Playfair Display'), 'Source Serif 4',
+  Georgia, serif;
 --ovl-font-ui:
   system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ```
 
 Do not add these `--ovl-*` tokens to `src/styles/tokens.css`. They belong in the future overlay CSS entrypoint, because OBS overlay and control panel are separate delivery paths.
+
+First-version bundled overlay fonts should stay small:
+
+- Bundle `GenWanMin2 TW` for CJK display.
+- Bundle `Playfair Display` for Latin display.
+- Let Korean and other CJK fallback through system / Noto-family fallbacks first.
+- Consider optional font packs or user-selected local fonts only after the overlay MVP exists.
+
+`GenWanMin2 TW` and `Playfair Display` are suitable for bundling under SIL Open Font License 1.1, but release artifacts must include license notices.
 
 ### Custom Overlay Fonts
 
