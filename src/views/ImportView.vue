@@ -79,6 +79,9 @@ const {
   filterOptions,
   confirmImportLabel,
   canUseConfirmButton,
+  setInput,
+  setActiveFilter,
+  setTrackSelected,
   resolveSource,
   confirmImport,
   clearPreview,
@@ -212,11 +215,12 @@ onMounted(() => {
 
       <div class="source-row">
         <input
-          v-model="state.input"
+          :value="state.input"
           class="source-row__input"
           aria-label="YouTube 或 YouTube Music 連結"
           placeholder="貼上歌曲、MV 或播放清單連結"
           :disabled="state.isResolving || state.isImporting"
+          @input="setInput($event.target.value)"
           @keydown.enter="resolveSource"
         />
         <UiButton
@@ -394,7 +398,7 @@ onMounted(() => {
               'filter-tab--danger': filter.key === 'failed' && filter.count > 0,
             }"
             :aria-pressed="state.activeFilter === filter.key"
-            @click="state.activeFilter = filter.key"
+            @click="setActiveFilter(filter.key)"
           >
             <span>{{ filter.label }}</span>
             <span class="filter-tab__count">{{ filter.count }}</span>
@@ -446,11 +450,12 @@ onMounted(() => {
         >
           <template #lead>
             <input
-              v-model="track.selected"
+              :checked="track.selected"
               class="preview-track__checkbox"
               type="checkbox"
               :disabled="state.isImporting || track.status === 'done'"
               :aria-label="track.title"
+              @change="setTrackSelected(track.id, $event.target.checked)"
             />
           </template>
           <template #trail>

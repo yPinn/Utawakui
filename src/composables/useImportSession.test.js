@@ -109,7 +109,7 @@ describe('useImportSession', () => {
     });
     const first = await loadImportSession();
 
-    first.state.input = 'https://youtube.com/playlist?list=abc';
+    first.setInput('https://youtube.com/playlist?list=abc');
     await first.resolveSource();
     const second = await loadImportSession();
 
@@ -171,7 +171,7 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValueOnce({ title: 'Single Song' });
     const session = await loadImportSession();
 
-    session.state.input = 'https://youtube.com/watch?v=abc12345678';
+    session.setInput('https://youtube.com/watch?v=abc12345678');
     await session.resolveSource();
 
     expect(downloadAudioMock).not.toHaveBeenCalled();
@@ -254,7 +254,7 @@ describe('useImportSession', () => {
     });
     const session = await loadImportSession();
 
-    session.state.input = 'https://youtube.com/watch?v=mv123456789';
+    session.setInput('https://youtube.com/watch?v=mv123456789');
     await session.resolveSource();
     session.selectImportCandidate('mv123456789');
     await session.confirmImport();
@@ -287,9 +287,9 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValue({ title: 'ok' });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
-    session.state.playlistTracks[1].selected = false;
+    session.setTrackSelected(session.state.playlistTracks[1].id, false);
     await session.confirmImport();
 
     expect(downloadAudioMock).toHaveBeenCalledTimes(1);
@@ -309,7 +309,7 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValue({ title: 'ok' });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
     await session.confirmImport();
 
@@ -332,9 +332,9 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValue({ title: 'ok' });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
-    session.state.playlistTracks[1].selected = true;
+    session.setTrackSelected(session.state.playlistTracks[1].id, true);
     await session.confirmImport();
 
     expect(setPlaylistTracksMock).toHaveBeenCalledWith(
@@ -360,7 +360,7 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValue({ title: 'ok' });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
     await session.confirmImport();
 
@@ -394,7 +394,7 @@ describe('useImportSession', () => {
     });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
 
     expect(session.state.playlistTracks.every((track) => track.selected)).toBe(
@@ -427,7 +427,7 @@ describe('useImportSession', () => {
     });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
     await session.confirmImport();
 
@@ -457,7 +457,7 @@ describe('useImportSession', () => {
     downloadAudioMock.mockRejectedValue(new Error('network error'));
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
     await session.confirmImport();
 
@@ -477,7 +477,7 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValueOnce({ title: 'Single Song' });
     const session = await loadImportSession();
 
-    session.state.input = 'https://youtube.com/watch?v=abc12345678';
+    session.setInput('https://youtube.com/watch?v=abc12345678');
     await session.resolveSource();
     await session.confirmImport();
 
@@ -496,7 +496,7 @@ describe('useImportSession', () => {
     downloadAudioMock.mockResolvedValueOnce({ title: 'Fallback Song' });
     const session = await loadImportSession();
 
-    session.state.input = 'https://youtube.com/watch?v=abc12345678';
+    session.setInput('https://youtube.com/watch?v=abc12345678');
     await session.resolveSource();
 
     expect(session.state.sourceKind).toBe('single');
@@ -524,7 +524,7 @@ describe('useImportSession', () => {
     });
     const session = await loadImportSession();
 
-    session.state.input = 'playlist-id';
+    session.setInput('playlist-id');
     await session.resolveSource();
     session.clearPreview();
 

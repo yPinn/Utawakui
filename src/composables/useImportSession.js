@@ -1,4 +1,4 @@
-import { computed, markRaw, reactive } from 'vue';
+import { computed, markRaw, reactive, readonly } from 'vue';
 import {
   IMPORT_FILTERS,
   filterPlaylistImportTracks,
@@ -108,6 +108,28 @@ const canUseConfirmButton = computed(() =>
 function setStatus(message, type = 'idle') {
   state.status = message;
   state.statusType = type;
+}
+
+// state is exposed readonly() — these three are the only fields ImportView
+// binds two-way (input/activeFilter directly, individual track.selected
+// checkboxes), so they're the only fields needing a setter.
+function setInput(value) {
+  state.input = value;
+}
+
+function setActiveFilter(key) {
+  state.activeFilter = key;
+}
+
+// trackId, not a track object reference — a track reached through the
+// readonly-wrapped state (e.g. in a test) is a *different*, deep-readonly
+// proxy than the one the template's un-wrapped visiblePlaylistTracks
+// exposes; mutating that reference directly no-ops silently instead of
+// throwing. Looking the track up by id inside this module always finds the
+// real, writable one.
+function setTrackSelected(trackId, selected) {
+  const track = state.playlistTracks?.find((t) => t.id === trackId);
+  if (track) track.selected = selected;
 }
 
 function clearPreview() {
@@ -444,7 +466,7 @@ async function resetDownloadDir() {
 
 export function useImportSession() {
   return {
-    state,
+    state: readonly(state),
     playlistStats,
     visiblePlaylistTracks,
     selectablePlaylistTracks,
@@ -454,6 +476,9 @@ export function useImportSession() {
     filterOptions,
     confirmImportLabel,
     canUseConfirmButton,
+    setInput,
+    setActiveFilter,
+    setTrackSelected,
     resolveSource,
     confirmImport,
     clearPreview,
