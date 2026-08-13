@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
-  GripVertical,
   ListEnd,
   ListMinus,
   ListPlus,
@@ -16,21 +15,15 @@ import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import PlaylistSidebar from '../components/playlists/PlaylistSidebar.vue';
+import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
-import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
-import UiTrackThumb from '../components/ui/UiTrackThumb.vue';
+import { formatLongDuration } from '../utils/format.js';
 import {
-  formatDuration,
-  formatLongDuration,
-  formatAddedDate,
-} from '../utils/format.js';
-import {
-  PLAYLIST_SORT_KEYS,
   sortPlaylistEntries,
   nextPlaylistSort,
 } from '../utils/playlistSort.js';
@@ -85,13 +78,6 @@ const PLAYLIST_MENU_ACTIONS = {
   createPlaylist: 'create-playlist',
   convertKind: 'convert-kind',
 };
-
-// align: 'end' keeps duration header/body columns right-aligned together.
-const SORT_COLUMNS = [
-  { key: PLAYLIST_SORT_KEYS.title, label: '曲目' },
-  { key: PLAYLIST_SORT_KEYS.addedAt, label: '新增日期' },
-  { key: PLAYLIST_SORT_KEYS.duration, label: '時長', align: 'end' },
-];
 
 const tracksById = computed(() => new Map(tracks.value.map((t) => [t.id, t])));
 
@@ -299,15 +285,6 @@ function playPlaylist() {
 function togglePlaylistSort(key) {
   playlistSort.value = nextPlaylistSort(playlistSort.value, key);
   clearDragState();
-}
-
-function isPlaylistSortActive(key) {
-  return playlistSort.value.key === key;
-}
-
-function playlistSortLabel(key, label) {
-  if (!isPlaylistSortActive(key)) return `${label}排序`;
-  return `${label}${playlistSort.value.direction === 'asc' ? '升冪' : '降冪'}排序`;
 }
 
 async function loadTracks() {
@@ -690,98 +667,24 @@ onUnmounted(() => {
           <UiHint v-else-if="visiblePlaylistEntries.length === 0">
             找不到符合搜尋的曲目。
           </UiHint>
-          <div v-else class="playlist-table" aria-label="播放清單曲目">
-            <div class="playlist-table__head">
-              <span class="playlist-table__drag"></span>
-              <span class="playlist-table__index">#</span>
-              <button
-                v-for="column in SORT_COLUMNS"
-                :key="column.key"
-                type="button"
-                class="playlist-table__sort"
-                :class="{
-                  'playlist-table__sort--duration': column.align === 'end',
-                  'playlist-table__duration': column.align === 'end',
-                  'playlist-table__sort--active': isPlaylistSortActive(
-                    column.key,
-                  ),
-                }"
-                :aria-label="playlistSortLabel(column.key, column.label)"
-                @click="togglePlaylistSort(column.key)"
-              >
-                <span>{{ column.label }}</span>
-                <span
-                  v-if="isPlaylistSortActive(column.key)"
-                  class="playlist-table__sort-indicator"
-                  :class="{
-                    'playlist-table__sort-indicator--desc':
-                      playlistSort.direction === 'desc',
-                  }"
-                ></span>
-              </button>
-            </div>
-            <ul class="playlist-table__body">
-              <li
-                v-for="{
-                  track,
-                  visibleIndex,
-                  addedAt,
-                } in visiblePlaylistEntries"
-                :key="track.id"
-                class="playlist-track"
-                :class="{
-                  'playlist-track--active': state.track?.id === track.id,
-                  'playlist-track--dragging': draggingTrackId === track.id,
-                  'playlist-track--drop-before':
-                    dropTargetTrackId === track.id && dropPosition === 'before',
-                  'playlist-track--drop-after':
-                    dropTargetTrackId === track.id && dropPosition === 'after',
-                  'playlist-track--drag-disabled': !canDragPlaylistRows,
-                }"
-                :draggable="canDragPlaylistRows"
-                @click="playRow(track)"
-                @contextmenu="openAddMenu(track, $event)"
-                @dragstart="startDrag(track, $event)"
-                @dragover="updateDropTarget(track, $event)"
-                @dragleave="leaveDropTarget(track, $event)"
-                @drop="dropTrack(track, $event)"
-                @dragend="clearDragState"
-              >
-                <span
-                  class="playlist-track__drag"
-                  title="拖曳排序"
-                  aria-hidden="true"
-                >
-                  <GripVertical :size="16" aria-hidden="true" />
-                </span>
-                <span class="playlist-track__index">{{
-                  visibleIndex + 1
-                }}</span>
-                <span class="playlist-track__main">
-                  <UiTrackThumb
-                    class="playlist-track__thumb"
-                    :track="track"
-                    :size="44"
-                  />
-                  <span class="playlist-track__copy">
-                    <UiMarqueeText
-                      class="playlist-track__title"
-                      :text="track.title"
-                    />
-                    <span v-if="track.artist" class="playlist-track__subtitle">
-                      {{ track.artist }}
-                    </span>
-                  </span>
-                </span>
-                <span class="playlist-track__added">
-                  {{ formatAddedDate(addedAt) }}
-                </span>
-                <span class="playlist-track__duration">
-                  {{ formatDuration(track.duration) }}
-                </span>
-              </li>
-            </ul>
-          </div>
+          <SetlistPlaylistTable
+            v-else
+            :entries="visiblePlaylistEntries"
+            :sort="playlistSort"
+            :can-drag="canDragPlaylistRows"
+            :active-track-id="state.track?.id"
+            :dragging-track-id="draggingTrackId"
+            :drop-target-track-id="dropTargetTrackId"
+            :drop-position="dropPosition"
+            @toggle-sort="togglePlaylistSort"
+            @select-track="playRow"
+            @open-menu="openAddMenu"
+            @track-drag-start="startDrag"
+            @track-drag-over="updateDropTarget"
+            @track-drag-leave="leaveDropTarget"
+            @track-drop="dropTrack"
+            @track-drag-end="clearDragState"
+          />
         </template>
       </template>
 
@@ -981,192 +884,6 @@ onUnmounted(() => {
   /* Never claims space from .ui-track__info's flex:1 — the title is what
      should shrink/truncate first, not the action buttons. */
   flex: 0 0 auto;
-}
-
-.playlist-table {
-  margin-top: var(--ui-space-2);
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.playlist-table__head,
-.playlist-track {
-  display: grid;
-  grid-template-columns: 24px 3ch minmax(0, 2fr) minmax(120px, 1fr) 64px;
-  gap: var(--ui-space-3);
-  align-items: center;
-}
-
-.playlist-table__head {
-  padding: 0 var(--ui-space-3) var(--ui-space-2);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
-.playlist-table__sort {
-  display: inline-flex;
-  align-items: center;
-  justify-self: start;
-  gap: var(--ui-space-1);
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  cursor: pointer;
-}
-
-.playlist-table__sort:hover,
-.playlist-table__sort--active {
-  color: var(--ui-color-text);
-}
-
-.playlist-table__sort:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-  border-radius: var(--ui-radius);
-}
-
-.playlist-table__sort--duration {
-  justify-self: end;
-}
-
-.playlist-table__sort-indicator {
-  width: 0;
-  height: 0;
-  border-left: 4px solid transparent;
-  border-right: 4px solid transparent;
-  border-top: 5px solid var(--ui-color-sort-indicator);
-}
-
-.playlist-table__sort-indicator--desc {
-  transform: rotate(180deg);
-}
-
-.playlist-table__duration,
-.playlist-track__duration {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.playlist-table__body {
-  list-style: none;
-  margin: 0;
-  padding: var(--ui-space-1) 0 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-1);
-}
-
-.playlist-track {
-  position: relative;
-  min-height: 52px;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border-radius: var(--ui-radius);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  cursor: grab;
-}
-
-.playlist-track:active {
-  cursor: grabbing;
-}
-
-.playlist-track--drag-disabled {
-  cursor: pointer;
-}
-
-.playlist-track--dragging {
-  opacity: var(--ui-opacity-dragging);
-}
-
-.playlist-track--drop-before::before,
-.playlist-track--drop-after::after {
-  content: '';
-  position: absolute;
-  left: var(--ui-space-3);
-  right: var(--ui-space-3);
-  height: 2px;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-accent);
-  pointer-events: none;
-}
-
-.playlist-track--drop-before::before {
-  top: -3px;
-}
-
-.playlist-track--drop-after::after {
-  bottom: -3px;
-}
-
-.playlist-track:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.playlist-track--active {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
-}
-
-.playlist-track__index,
-.playlist-track__added,
-.playlist-track__duration {
-  color: var(--ui-color-text-muted);
-}
-
-.playlist-track__drag {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  color: var(--ui-color-text-muted);
-}
-
-.playlist-track--active .playlist-track__index,
-.playlist-track--active .playlist-track__added,
-.playlist-track--active .playlist-track__duration {
-  color: var(--ui-color-accent-contrast-muted);
-}
-
-.playlist-track--active .playlist-track__drag {
-  color: var(--ui-color-accent-contrast-muted);
-}
-
-.playlist-track__main {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-}
-
-.playlist-track__copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-}
-
-.playlist-track__subtitle,
-.playlist-track__added {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.playlist-track__title {
-  font-weight: var(--ui-font-weight-strong);
-}
-
-.playlist-track__subtitle {
-  color: var(--ui-color-text-muted);
-}
-
-.playlist-track--active .playlist-track__subtitle {
-  color: var(--ui-color-accent-contrast-muted);
 }
 
 .tracks {
