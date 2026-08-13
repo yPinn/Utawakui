@@ -304,10 +304,10 @@ onUnmounted(() => {
   max-height: min(320px, calc(100vh - 16px));
   overflow-y: auto;
   padding: var(--ui-space-1);
-  background: var(--ui-surface);
-  border: var(--ui-border-width) solid var(--ui-border);
+  background: var(--ui-color-surface);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  box-shadow: var(--ui-overlay-shadow);
+  box-shadow: var(--ui-shadow-overlay);
 }
 
 .ui-context-menu--submenu {
@@ -317,8 +317,8 @@ onUnmounted(() => {
 .ui-context-menu__empty {
   margin: 0;
   padding: var(--ui-space-1) var(--ui-space-2);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .ui-context-menu__item {
@@ -332,9 +332,9 @@ onUnmounted(() => {
   border: 0;
   border-radius: var(--ui-radius);
   background: transparent;
-  color: var(--ui-text);
+  color: var(--ui-color-text);
   font: inherit;
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
   line-height: 1.35;
   text-align: left;
   cursor: pointer;
@@ -343,28 +343,28 @@ onUnmounted(() => {
 .ui-context-menu__item--active:not(:disabled),
 .ui-context-menu__item:hover:not(:disabled),
 .ui-context-menu__item:focus-visible {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
   outline: none;
 }
 
 .ui-context-menu__item:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-context-menu__item:disabled {
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
   cursor: default;
 }
 
 .ui-context-menu__item--danger:not(:disabled) {
-  color: var(--ui-danger);
+  color: var(--ui-color-danger);
 }
 
 .ui-context-menu__separator {
   height: 1px;
   margin: var(--ui-space-1) var(--ui-space-2);
-  background: var(--ui-border);
+  background: var(--ui-color-border);
 }
 
 .ui-context-menu__icon-slot,
@@ -397,8 +397,8 @@ onUnmounted(() => {
 
 .ui-context-menu__status {
   justify-self: end;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
   white-space: nowrap;
 }
 </style>

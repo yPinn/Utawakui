@@ -1,28 +1,26 @@
-/* Control-panel design tokens imported by src/main.js. Component-local CSS
-   belongs in Vue SFC <style scoped> blocks; app-wide reset and element
-   baselines belong in src/styles/base.css. */
+/* Control-panel tokens. Component CSS stays in scoped SFC blocks;
+   document baselines live in base.css. */
 :root {
-  /* control panel chrome only — not the OBS overlay, see CLAUDE.md */
-  --ui-bg: #20222a;
-  --ui-surface: #2a2d38;
-  --ui-surface-hover: #3d4152; /* ~15-20% lighter than --ui-surface, for legible hover contrast */
-  --ui-text: #f4f4f5;
-  --ui-text-muted: #9a9ba5;
-  --ui-border: #3a3d4a;
-  --ui-overlay-shadow: 0 12px 30px rgb(0 0 0 / 28%);
-  --ui-accent: #6c8cff;
-  --ui-accent-hover: #7f9cff;
-  --ui-sort-indicator: #1ed760;
-  /* Text/icon color on accent-filled surfaces. */
-  --ui-accent-contrast: #20222a;
-  /* Muted text on accent-filled surfaces; color-mix avoids opacity drift. */
-  --ui-accent-contrast-muted: color-mix(
+  /* Control panel only. OBS overlay tokens use --ovl-* in its own CSS entrypoint. */
+  --ui-color-canvas: #20222a;
+  --ui-color-surface: #2a2d38;
+  --ui-color-surface-hover: #3d4152;
+  --ui-color-text: #f4f4f5;
+  --ui-color-text-muted: #9a9ba5;
+  --ui-color-border: #3a3d4a;
+  --ui-shadow-overlay: 0 12px 30px rgb(0 0 0 / 28%);
+  --ui-color-accent: #6c8cff;
+  --ui-color-accent-hover: #7f9cff;
+  --ui-color-sort-indicator: #1ed760;
+  /* Accent-filled surfaces keep contrast tokens separate for light-theme safety. */
+  --ui-color-accent-contrast: #20222a;
+  --ui-color-accent-contrast-muted: color-mix(
     in srgb,
-    var(--ui-accent-contrast) 75%,
-    var(--ui-accent)
+    var(--ui-color-accent-contrast) 75%,
+    var(--ui-color-accent)
   );
-  --ui-focus: var(--ui-accent);
-  --ui-danger: #ff6b70;
+  --ui-color-focus: var(--ui-color-accent);
+  --ui-color-danger: #ff6b70;
 
   --ui-space-1: 0.25rem; /* 4px */
   --ui-space-2: 0.5rem; /* 8px */
@@ -33,12 +31,18 @@
   --ui-space-7: 3rem; /* 48px */
   --ui-space-8: 4rem; /* 64px */
 
-  --ui-text-sm: 0.875rem; /* 14px */
-  --ui-text-md: 1rem; /* 16px */
-  --ui-text-lg: 1.25rem; /* 20px */
-  --ui-text-xl: 2rem; /* 32px */
-  --ui-text-2xl: 2.5rem; /* 40px */
+  --ui-font-family-base:
+    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
+    -apple-system, sans-serif;
+  --ui-font-size-sm: 0.875rem; /* 14px */
+  --ui-font-size-md: 1rem; /* 16px */
+  --ui-font-size-lg: 1.25rem; /* 20px */
+  --ui-font-size-xl: 2rem; /* 32px */
+  --ui-font-size-2xl: 2.5rem; /* 40px */
+  --ui-font-weight-regular: 400;
   --ui-font-weight-strong: 600;
+  --ui-line-height-tight: 1.2;
+  --ui-line-height-body: 1.5;
 
   --ui-radius-xs: 2px;
   --ui-radius-sm: 4px;
@@ -54,7 +58,7 @@
   --ui-opacity-dragging: 0.45;
   --ui-opacity-muted: 0.72; /* non-accent muted text */
 
-  /* Positive offset for controls; inset offset for clipped row surfaces. */
+  /* Standard focus rings; inset offset is for clipped row surfaces. */
   --ui-focus-width: 2px;
   --ui-focus-offset: 2px;
   --ui-focus-offset-inset: -2px;
@@ -66,18 +70,9 @@
   --ui-z-dropdown: 20;
   --ui-z-context-menu: 100;
   --ui-z-context-menu-submenu: 101;
-
-  --ui-font:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
 }
 
-/* Breakpoints (documented values, not custom properties — CSS media
-   queries cannot read var()). Two tiers used across the app; consolidated
-   from three near-duplicate values (680px / 900px / 920px) found during
-   the 2026-08-13 code-review pass, where 900 vs 920 was almost certainly
-   an unintentional 20px drift rather than a deliberate second tier.
-     narrow: 680px  — single-column / stacked layouts
-     medium: 900px  — sidebar/panel collapse
-   If you need one of these values in a media query, hardcode the number
-   and reference this comment; don't invent a third nearby value. */
+/* Media-query breakpoints:
+   narrow 680px — stacked layouts
+   medium 900px — sidebar/panel collapse
+   Keep media queries hardcoded; CSS custom properties cannot be used there. */

@@ -166,10 +166,10 @@ const {
   max-height: min(640px, calc(100vh - var(--queue-panel-max-height-offset)));
   overflow: auto;
   padding: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  background: var(--ui-surface);
-  box-shadow: var(--ui-overlay-shadow);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-overlay);
 }
 
 .queue-panel__header {
@@ -182,33 +182,33 @@ const {
 
 .queue-panel__title {
   margin: 0;
-  color: var(--ui-text);
-  font-size: var(--ui-text-md);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-strong);
 }
 
 .queue-panel__empty {
   margin: 0;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .queue-panel__text-action {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
   font: inherit;
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
   cursor: pointer;
 }
 
 .queue-panel__text-action:hover {
-  color: var(--ui-text);
+  color: var(--ui-color-text);
 }
 
 .queue-panel__text-action:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
   border-radius: var(--ui-radius);
 }

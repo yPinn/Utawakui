@@ -35,8 +35,8 @@ defineProps({
   padding: var(--ui-space-1) var(--ui-space-2);
   border: none;
   border-radius: var(--ui-radius);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
   cursor: pointer;
 }
 
@@ -46,29 +46,29 @@ defineProps({
 
 .ui-btn--ghost {
   background: transparent;
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .ui-btn--ghost:not(:disabled):not([aria-disabled='true']):hover {
-  background: var(--ui-surface-hover);
-  color: var(--ui-text);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text);
 }
 
 /* Background fill, not just icon color — an active toggle (repeat, guide
    vocal) needs a non-color signal too, for users who can't rely on hue
    alone to tell it apart from the off state. */
 .ui-btn--ghost.ui-btn--active {
-  background: var(--ui-surface-hover);
-  color: var(--ui-accent);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-accent);
 }
 
 .ui-btn--accent {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
 .ui-btn--accent:not(:disabled):hover {
-  background: var(--ui-accent-hover);
+  background: var(--ui-color-accent-hover);
 }
 
 .ui-btn:disabled,
@@ -78,7 +78,7 @@ defineProps({
 }
 
 .ui-btn:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 </style>

@@ -504,8 +504,8 @@ onMounted(() => {
 .empty-panel {
   min-width: 0;
   padding: var(--ui-space-3);
-  background: var(--ui-surface);
-  border: var(--ui-border-width) solid var(--ui-border);
+  background: var(--ui-color-surface);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
 }
 
@@ -537,18 +537,18 @@ onMounted(() => {
 .preview-panel__title,
 .source-summary__title {
   margin: 0;
-  color: var(--ui-text);
+  color: var(--ui-color-text);
   font-weight: var(--ui-font-weight-strong);
 }
 
 .section-heading__title,
 .preview-panel__title {
-  font-size: var(--ui-text-md);
+  font-size: var(--ui-font-size-md);
 }
 
 .source-summary__title {
   flex: 0 0 auto;
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
 }
 
 .section-heading__meta,
@@ -557,8 +557,8 @@ onMounted(() => {
 .status,
 .download-inline,
 .candidate-chip {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .section-heading__meta {
@@ -582,7 +582,7 @@ onMounted(() => {
 
 .download-inline__path {
   min-width: 0;
-  color: var(--ui-text);
+  color: var(--ui-color-text);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -591,7 +591,7 @@ onMounted(() => {
 .download-inline__mode {
   padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-bg);
+  background: var(--ui-color-canvas);
 }
 
 .source-row {
@@ -607,20 +607,20 @@ onMounted(() => {
   min-width: calc(var(--ui-space-5) * 8);
   padding: var(--ui-space-2) var(--ui-space-3);
   min-height: var(--import-control-height);
-  background: var(--ui-bg);
-  color: var(--ui-text);
-  border: var(--ui-border-width) solid var(--ui-border);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
 }
 
 .source-row__input::placeholder {
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .source-row__input:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
@@ -638,11 +638,11 @@ onMounted(() => {
 }
 
 .status--success {
-  color: var(--ui-text);
+  color: var(--ui-color-text);
 }
 
 .status--error {
-  color: var(--ui-danger);
+  color: var(--ui-color-danger);
   font-weight: var(--ui-font-weight-strong);
 }
 
@@ -670,7 +670,7 @@ onMounted(() => {
   display: grid;
   gap: var(--ui-space-2);
   padding-top: var(--ui-space-3);
-  border-top: var(--ui-border-width) solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .candidate-chips,
@@ -701,13 +701,13 @@ onMounted(() => {
   min-height: calc(var(--ui-space-5) - var(--ui-space-1));
   padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-bg);
-  color: var(--ui-text-muted);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text-muted);
   white-space: nowrap;
 }
 
 .candidate-chip span {
-  color: var(--ui-text);
+  color: var(--ui-color-text);
 }
 
 .preview-tools {
@@ -729,33 +729,33 @@ onMounted(() => {
   border: none;
   border-radius: var(--ui-radius);
   background: transparent;
-  color: var(--ui-text-muted);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
   cursor: pointer;
 }
 
 .filter-tab:hover {
-  background: var(--ui-surface-hover);
-  color: var(--ui-text);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text);
 }
 
 .filter-tab--active {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
 .filter-tab--danger:not(.filter-tab--active) {
-  color: var(--ui-danger);
+  color: var(--ui-color-danger);
 }
 
 .filter-tab--active.filter-tab--danger {
-  background: var(--ui-danger);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-danger);
+  color: var(--ui-color-accent-contrast);
 }
 
 .filter-tab:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
@@ -786,18 +786,18 @@ onMounted(() => {
 
 .preview-track {
   min-height: var(--import-track-row-min-height);
-  background: var(--ui-bg);
+  background: var(--ui-color-canvas);
 }
 
 .preview-track--complete {
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .preview-track__checkbox {
   width: var(--import-checkbox-size);
   height: var(--import-checkbox-size);
   margin: 0;
-  accent-color: var(--ui-accent);
+  accent-color: var(--ui-color-accent);
 }
 
 .empty-state,
@@ -807,9 +807,9 @@ onMounted(() => {
 
 .empty-state {
   padding: var(--ui-space-4);
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
   text-align: center;
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
 }
 
 .preview-footer {
@@ -818,13 +818,10 @@ onMounted(() => {
   justify-content: flex-end;
   gap: var(--ui-space-3);
   padding-top: var(--ui-space-2);
-  border-top: var(--ui-border-width) solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-/* 900px is the "medium" breakpoint tier documented in tokens.css — this
-   was 920px, ~20px off the same tier used elsewhere (LyricsWorkspace.vue),
-   almost certainly unintentional drift rather than a deliberate third
-   value. */
+/* Medium breakpoint tier documented in tokens.css. */
 @media (max-width: 900px) {
   .import-control__top,
   .preview-tools {

@@ -62,7 +62,7 @@ const thumbTrack = computed(() => ({
   gap: var(--ui-space-3);
   padding: var(--ui-space-2) var(--ui-space-3);
   border-radius: var(--ui-radius);
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
 }
 
 .ui-track--interactive {
@@ -70,16 +70,16 @@ const thumbTrack = computed(() => ({
 }
 
 .ui-track--interactive:hover {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
 }
 
 .ui-track--active {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
 .ui-track--interactive:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
@@ -95,20 +95,20 @@ const thumbTrack = computed(() => ({
 }
 
 .ui-track__artist {
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .ui-track--active .ui-track__artist {
-  color: var(--ui-accent-contrast-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 
 .ui-track__duration {
   flex-shrink: 0;
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
 }
 
 .ui-track--active .ui-track__duration {
-  color: var(--ui-accent-contrast-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 </style>

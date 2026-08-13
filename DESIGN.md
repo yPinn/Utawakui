@@ -112,6 +112,41 @@ Add new global CSS files only when the purpose is real and shared. Likely future
 
 Component-specific styling stays inside Vue SFC `<style scoped>` blocks unless it becomes a reusable primitive or global rule.
 
+### Token Namespace Contract
+
+CSS token namespaces are surface-specific. Do not share one token namespace across the Electron control panel and OBS overlay.
+
+| Namespace | Surface                 | File timing                                             |
+| --------- | ----------------------- | ------------------------------------------------------- |
+| `--ui-*`  | Control panel renderer. | Lives in `src/styles/tokens.css` because the UI exists. |
+| `--ovl-*` | OBS Browser Source.     | Documented here for now; create only with overlay code. |
+
+Token names should describe role before value:
+
+- Use `--ui-font-family-base`, not a visual mood name.
+- Use `--ui-font-size-md` style names for typography sizes; avoid deprecated text-size aliases.
+- Use `--ui-line-height-body`, not hardcoded component values when shared.
+- Use `--ui-color-text-muted`, not `--ui-muted`.
+- Use the `--ui-shadow-*` namespace for shadows instead of mixing shadow roles into other names.
+- Use `--ovl-font-display-cjk`, not `--ovl-genwan`.
+
+Control-panel token categories:
+
+| Category    | Prefix               | Example                 |
+| ----------- | -------------------- | ----------------------- |
+| Color       | `--ui-color-*`       | `--ui-color-accent`     |
+| Typography  | `--ui-font-*`        | `--ui-font-size-md`     |
+| Line height | `--ui-line-height-*` | `--ui-line-height-body` |
+| Spacing     | `--ui-space-*`       | `--ui-space-4`          |
+| Radius      | `--ui-radius-*`      | `--ui-radius-lg`        |
+| Shadow      | `--ui-shadow-*`      | `--ui-shadow-overlay`   |
+| Opacity     | `--ui-opacity-*`     | `--ui-opacity-disabled` |
+| Motion      | `--ui-motion-*`      | `--ui-motion-fast`      |
+| Z-index     | `--ui-z-*`           | `--ui-z-dropdown`       |
+| Dimensions  | `--ui-*-height`      | `--ui-control-height`   |
+
+Deprecated text-size aliases should not be reintroduced; current component CSS should use `--ui-font-size-*`.
+
 ## Colors
 
 The current palette is a placeholder baseline, not the final brand identity. Treat these tokens as semantic slots to be replaced or refined.
@@ -149,11 +184,46 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 
 ## Typography
 
-- **Display Font:** system UI stack, pending final direction.
-- **Body Font:** system UI stack, pending final direction.
+- **Control Panel Font:** native system UI stack. Do not bundle brand fonts into the control panel by default.
+- **Overlay CJK Display Font:** `GenWanMin2 TW`, with CJK serif fallbacks.
+- **Overlay Latin Display Font:** `Playfair Display`, with practical serif fallbacks.
 - **Label/Mono Font:** pending; only introduce mono if timestamps, technical metadata, or counters clearly benefit.
 
 **Character:** Product typography should be functional, internationalized, and calm. It must handle Japanese, Korean, Traditional Chinese, English, long song titles, artist metadata, and dense table labels without feeling cramped.
+
+### Surface Strategy
+
+Control panel typography and OBS overlay typography serve different jobs.
+
+| Surface       | Typography direction       | Reason                                                             |
+| ------------- | -------------------------- | ------------------------------------------------------------------ |
+| Control Panel | Native/system sans stack.  | Stable, fast, dense, accessible, and familiar during live control. |
+| OBS Overlay   | Ornate display serif pair. | Public-facing, animated, more atmospheric, and brand expressive.   |
+
+The overlay default pairing is:
+
+```css
+--ovl-font-display-cjk:
+  'GenWanMin2 TW', 'GenWanMin2 TC', 'GenWanMin2 PJP', 'Noto Serif TC',
+  'Noto Serif JP', 'Noto Serif KR', serif;
+--ovl-font-display-latin: 'Playfair Display', 'Source Serif 4', Georgia, serif;
+--ovl-font-ui:
+  system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+```
+
+Do not add these `--ovl-*` tokens to `src/styles/tokens.css`. They belong in the future overlay CSS entrypoint, because OBS overlay and control panel are separate delivery paths.
+
+### Custom Overlay Fonts
+
+Overlay font customization should be local and overlay-scoped:
+
+- Allow custom CJK display font.
+- Allow custom Latin display font.
+- Provide reset-to-default.
+- Preserve license notices for bundled fonts.
+- Prompt users to confirm their custom font license for streaming, recording, VOD, clips, and commercial use.
+
+Custom font settings should not affect control panel UI. The control panel should continue using native/system typography even when overlay fonts are customized.
 
 ### Hierarchy
 

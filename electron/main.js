@@ -215,7 +215,7 @@ function createWindow() {
     height: 850,
     minWidth: 960,
     minHeight: 650,
-    // Keep in sync with --ui-bg in src/styles/tokens.css.
+    // Keep in sync with --ui-color-canvas in src/styles/tokens.css.
     backgroundColor: '#20222a',
     title: APP_NAME,
     icon: iconPath,

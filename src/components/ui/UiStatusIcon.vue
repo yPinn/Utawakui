@@ -41,25 +41,25 @@ defineProps({
      LyricsWorkspace.vue's .lyrics-row-status) when its own background
      differs from the default contrast target below. Custom properties
      inherit through the DOM, so the scoped-style boundary doesn't block it. */
-  background: var(--ui-status-icon-bg, var(--ui-surface-hover));
-  color: var(--ui-text-muted);
+  background: var(--ui-status-icon-bg, var(--ui-color-surface-hover));
+  color: var(--ui-color-text-muted);
 }
 
 .ui-status-icon--accent {
-  color: var(--ui-accent);
+  color: var(--ui-color-accent);
 }
 
 .ui-status-icon--danger {
-  color: var(--ui-danger);
+  color: var(--ui-color-danger);
 }
 
 .ui-status-icon--text {
-  color: var(--ui-text);
+  color: var(--ui-color-text);
 }
 
 .ui-status-icon--highlight {
-  color: var(--ui-text);
-  background: var(--ui-surface-hover);
+  color: var(--ui-color-text);
+  background: var(--ui-color-surface-hover);
 }
 
 .ui-status-icon__glyph--spin {

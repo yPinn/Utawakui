@@ -74,9 +74,9 @@ Do not merge these into one token file, even though it looks like duplication. R
 
 When adding a new token: only add it once a real piece of UI needs it. Don't pre-invent state colors (error/warning/success, etc.) for screens that don't exist yet.
 
-`--ui-accent-contrast` is a semantic token, not an alias for `--ui-bg` — it's what every accent-filled surface (selected nav item, active track row, accent button, play button) uses for its text/icon color. It reads the same as `--ui-bg` under the current dark palette, but a light theme's `--ui-bg` going white would break all four of those controls if this weren't its own token. `--ui-focus` backs every `:focus-visible` ring; `--ui-accent-hover` backs `.ui-btn--accent`'s hover state (not an `opacity` trick — opacity blends toward whatever's behind the element, which flips visual direction between light and dark).
+`--ui-color-accent-contrast` is a semantic token, not an alias for `--ui-color-canvas` — it's what every accent-filled surface (selected nav item, active track row, accent button, play button) uses for its text/icon color. It reads the same as `--ui-color-canvas` under the current dark palette, but a light theme's `--ui-color-canvas` going white would break all four of those controls if this weren't its own token. `--ui-color-focus` backs every `:focus-visible` ring; `--ui-color-accent-hover` backs `.ui-btn--accent`'s hover state (not an `opacity` trick — opacity blends toward whatever's behind the element, which flips visual direction between light and dark).
 
-`electron/main.js`'s `BrowserWindow` `backgroundColor` is a JS literal (can't reference a CSS variable) and must be kept in sync with `--ui-bg` by hand — it's commented at the call site.
+`electron/main.js`'s `BrowserWindow` `backgroundColor` is a JS literal (can't reference a CSS variable) and must be kept in sync with `--ui-color-canvas` by hand — it's commented at the call site.
 
 Icon sizing has the same hand-synced-literal problem, in the opposite direction: `@lucide/vue`'s `:size` is a Vue prop, not a CSS property, so a CSS custom property can't feed it. `src/constants/ui.js`'s `ICON_SIZE` (16px, desktop-density — not borrowed from iOS HIG, which sizes for touch targets, not mouse-driven desktop UI) is the single literal every icon usage imports, instead of each component hardcoding its own size.
 
@@ -99,7 +99,7 @@ Components are grouped by product role rather than current visual styling. Exist
 
 Two call sites are **deliberately not** using `UiButton`, not oversights:
 
-- **`AppSidebar.vue`'s nav items** stay bespoke — they're a full-width, left-aligned nav list with `--ui-text` (not muted) labels and an active state that fills with `--ui-accent`, none of which match `UiButton`'s ghost/accent action-button semantics. Forcing it in would mean `UiButton` growing `block`/`textColor`/`navActive` props for a single caller.
+- **`AppSidebar.vue`'s nav items** stay bespoke — they're a full-width, left-aligned nav list with `--ui-color-text` (not muted) labels and an active state that fills with `--ui-color-accent`, none of which match `UiButton`'s ghost/accent action-button semantics. Forcing it in would mean `UiButton` growing `block`/`textColor`/`navActive` props for a single caller.
 - **`PlayerBar.vue`'s play/pause button** stays a plain `<button class="player-bar__play">` — it's a fixed 32px accent-filled circle whose disabled state swaps background color rather than dropping opacity, unlike every other button in the app. A one-off visual contract like that belongs to its own class, not bent into a shared component via overrides.
 
 `UiButton`'s `icon` prop takes the lucide component itself (not a rendered `<Icon :size="ICON_SIZE" />`) specifically so `ICON_SIZE` only needs importing in `UiButton.vue` itself plus the two bespoke exceptions above — every other call site just passes the icon reference.
@@ -112,7 +112,7 @@ Streamers/VTubers running karaoke ("歌回") streams, operating this control pan
 
 ### Brand Personality
 
-Calm, deliberate, unobtrusive. Not a playful VTuber-branded skin, not a commerce/SaaS dashboard — closer to a professional live-production tool: fast to scan, low visual noise, nothing competing for the performer's attention. Product color identity is **not yet decided** — the current palette (`--ui-bg: #20222a`, `--ui-accent: #6c8cff`) is a bootstrap placeholder chosen early in scaffolding, not a deliberate brand decision. Don't treat it as final when critiquing color choices.
+Calm, deliberate, unobtrusive. Not a playful VTuber-branded skin, not a commerce/SaaS dashboard — closer to a professional live-production tool: fast to scan, low visual noise, nothing competing for the performer's attention. Product color identity is **not yet decided** — the current palette (`--ui-color-canvas: #20222a`, `--ui-color-accent: #6c8cff`) is a bootstrap placeholder chosen early in scaffolding, not a deliberate brand decision. Don't treat it as final when critiquing color choices.
 
 ### Aesthetic Direction
 

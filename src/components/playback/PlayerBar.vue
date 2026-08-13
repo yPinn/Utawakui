@@ -277,7 +277,7 @@ onUnmounted(() => {
         :track="state.track"
         :size="52"
         radius="var(--ui-radius)"
-        font-size="var(--ui-text-lg)"
+        font-size="var(--ui-font-size-lg)"
       />
       <div class="player-bar__track-copy">
         <template v-if="state.track">
@@ -487,8 +487,8 @@ onUnmounted(() => {
   gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
   padding: var(--ui-space-2) var(--ui-space-3);
-  background: var(--ui-surface);
-  border-top: var(--ui-border-width) solid var(--ui-border);
+  background: var(--ui-color-surface);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
   box-sizing: border-box;
   /* Otherwise dragging a slider triggers native text selection, which can
      swallow a click on a nearby button instead of registering it. */
@@ -510,18 +510,18 @@ onUnmounted(() => {
 }
 
 .player-bar__track-empty {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .player-bar__track-title {
-  color: var(--ui-text);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
 }
 
 .player-bar__track-artist {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 /* Cap progress width on wide windows. */
@@ -548,18 +548,18 @@ onUnmounted(() => {
   height: 32px;
   border: none;
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
   cursor: pointer;
 }
 
 .player-bar__play:disabled {
-  background: var(--ui-surface-hover);
-  color: var(--ui-text-muted);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text-muted);
 }
 
 .player-bar__play:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
@@ -578,8 +578,8 @@ onUnmounted(() => {
 .player-bar__time {
   flex-shrink: 0;
   width: 5ch;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -611,7 +611,7 @@ onUnmounted(() => {
   flex-shrink: 0;
   width: 4ch;
   text-align: right;
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -626,10 +626,10 @@ onUnmounted(() => {
   box-sizing: border-box;
   width: min(280px, calc(100vw - var(--ui-space-5)));
   padding: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  background: var(--ui-surface);
-  box-shadow: var(--ui-overlay-shadow);
+  background: var(--ui-color-surface);
+  box-shadow: var(--ui-shadow-overlay);
 }
 
 .pitch-tempo-panel__header {
@@ -642,8 +642,8 @@ onUnmounted(() => {
 
 .pitch-tempo-panel__title {
   margin: 0;
-  color: var(--ui-text);
-  font-size: var(--ui-text-md);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-strong);
 }
 
@@ -662,16 +662,16 @@ onUnmounted(() => {
 
 .pitch-tempo-panel__label {
   flex: 1;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 /* Inline with the label instead of a separate centered line. The reset
    button stays always-rendered (disabled at default, not v-if'd) so it
    doesn't pop in/out and shift the row. */
 .pitch-tempo-panel__value {
-  color: var(--ui-text);
-  font-size: var(--ui-text-md);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-strong);
   font-variant-numeric: tabular-nums;
 }
@@ -680,8 +680,8 @@ onUnmounted(() => {
    own row — supplementary info gets muted/lighter weight, not a new row. */
 .pitch-tempo-panel__value-secondary {
   margin-left: var(--ui-space-1);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
   font-weight: normal;
   font-variant-numeric: tabular-nums;
 }

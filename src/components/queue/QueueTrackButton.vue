@@ -36,8 +36,8 @@ const emit = defineEmits([
       :track="track"
       :size="48"
       radius="var(--ui-radius)"
-      background="var(--ui-bg)"
-      font-size="var(--ui-text-lg)"
+      background="var(--ui-color-canvas)"
+      font-size="var(--ui-font-size-lg)"
     />
     <span class="queue-track__copy">
       <UiMarqueeText class="queue-track__title" :text="track.title" />
@@ -63,14 +63,14 @@ const emit = defineEmits([
   border: 0;
   border-radius: var(--ui-radius);
   background: transparent;
-  color: var(--ui-text);
+  color: var(--ui-color-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .queue-track:hover {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
 }
 
 .queue-track[draggable='true'] {
@@ -88,12 +88,12 @@ const emit = defineEmits([
      1px (a standalone-control-style offset that didn't fit its actual
      list-row layout); -2px is the correction, not a drift-preserving
      merge like the other 1px sites in this pass. */
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .queue-track--current .queue-track__title {
-  color: var(--ui-sort-indicator);
+  color: var(--ui-color-sort-indicator);
 }
 
 .queue-track__copy {
@@ -109,13 +109,13 @@ const emit = defineEmits([
 }
 
 .queue-track__title {
-  color: var(--ui-text);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
 }
 
 .queue-track__artist {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 </style>

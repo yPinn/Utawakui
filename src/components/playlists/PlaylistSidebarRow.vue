@@ -58,7 +58,7 @@ const emit = defineEmits([
       class="playlist-sidebar__thumb"
       :track="coverTrack"
       :size="40"
-      color="var(--ui-text-muted)"
+      color="var(--ui-color-text-muted)"
       :uppercase="false"
       :decorative="false"
     >
@@ -106,9 +106,9 @@ const emit = defineEmits([
   border: none;
   border-radius: var(--ui-radius);
   background: transparent;
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
   text-align: left;
   cursor: pointer;
   width: 100%;
@@ -136,7 +136,7 @@ const emit = defineEmits([
   right: var(--ui-space-2);
   height: 2px;
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-accent);
+  background: var(--ui-color-accent);
   pointer-events: none;
 }
 
@@ -149,22 +149,22 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar__item:hover {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
 }
 
 .playlist-sidebar__item:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .playlist-sidebar__item--active {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
   /* Use a tokenized accent contrast color instead of opacity blending. */
-  color: var(--ui-accent-contrast-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 
 /* Hidden by default, revealed on row hover/keyboard focus — same idea as
@@ -205,11 +205,11 @@ const emit = defineEmits([
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__kind {
-  color: var(--ui-accent-contrast-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 </style>

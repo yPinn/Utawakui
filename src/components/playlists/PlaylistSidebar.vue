@@ -372,7 +372,7 @@ function startDrag(playlist, event) {
 .playlist-sidebar__divider {
   margin: var(--ui-space-1) 0;
   border: none;
-  border-top: var(--ui-border-width) solid var(--ui-border);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 /* Shared row styles (base .playlist-sidebar__item, __thumb, __play,
@@ -390,25 +390,25 @@ function startDrag(playlist, event) {
   border: none;
   border-radius: var(--ui-radius);
   background: transparent;
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
   text-align: left;
   cursor: pointer;
 }
 
 .playlist-sidebar__item:hover {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
 }
 
 .playlist-sidebar__item:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .playlist-sidebar__item--active {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
 .playlist-sidebar__thumb {
@@ -420,37 +420,28 @@ function startDrag(playlist, event) {
   width: 40px;
   height: 40px;
   border-radius: var(--ui-radius-sm);
-  background: var(--ui-surface-hover);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
   overflow: hidden;
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
-  color: var(--ui-accent-contrast-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 
-/* Distinguishes "全部曲目" from the "新增歌單" row directly above it now
-   that both sit at the top of the list with the same neutral thumb style
-   otherwise — filled with the theme accent color instead of the shared
-   --ui-surface-hover background every other thumb uses. */
+/* Accent cover distinguishes the All Tracks row from Create Playlist. */
 .playlist-sidebar__thumb--accent {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
-/* When this row is selected, .playlist-sidebar__item--active already fills
-   the whole row with --ui-accent — an accent-on-accent thumb would vanish
-   into it, so invert the fill instead of just dimming it like the generic
-   .playlist-sidebar__item--active .playlist-sidebar__thumb rule does. The
-   compound selector (thumb AND thumb--accent on the same element) beats
-   that rule's equal-specificity descendant selector regardless of
-   source order. */
+/* Selected accent rows invert the cover so it stays visible. */
 .playlist-sidebar__item--active
   .playlist-sidebar__thumb.playlist-sidebar__thumb--accent {
-  background: var(--ui-accent-contrast);
-  color: var(--ui-accent);
+  background: var(--ui-color-accent-contrast);
+  color: var(--ui-color-accent);
   opacity: 1;
 }
 

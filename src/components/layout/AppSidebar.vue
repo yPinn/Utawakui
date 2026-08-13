@@ -39,8 +39,8 @@ const items = [
   flex-direction: column;
   gap: var(--ui-space-1);
   padding: var(--ui-space-2);
-  background: var(--ui-surface);
-  border-right: var(--ui-border-width) solid var(--ui-border);
+  background: var(--ui-color-surface);
+  border-right: var(--ui-border-width) solid var(--ui-color-border);
   height: 100%;
   box-sizing: border-box;
 }
@@ -53,26 +53,26 @@ const items = [
   border: none;
   border-radius: var(--ui-radius);
   background: transparent;
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
   text-align: left;
   cursor: pointer;
   transition: background-color var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
 .sidebar__item:hover {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
 }
 
 .sidebar__item:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .sidebar__item--active {
-  background: var(--ui-accent);
-  color: var(--ui-accent-contrast);
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
 }
 
 @media (prefers-reduced-motion: reduce) {

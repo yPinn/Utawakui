@@ -579,8 +579,8 @@ watch(activeLineIndex, (index) => {
 
 .lyrics-panel {
   min-height: 0;
-  background: var(--ui-surface);
-  border: var(--ui-border-width) solid var(--ui-border);
+  background: var(--ui-color-surface);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
 }
 
@@ -609,7 +609,7 @@ watch(activeLineIndex, (index) => {
   justify-content: space-between;
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .lyrics-panel__title,
@@ -623,22 +623,22 @@ watch(activeLineIndex, (index) => {
 
 .lyrics-panel__title,
 .lyrics-detail__title {
-  font-size: var(--ui-text-lg);
+  font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-strong);
-  color: var(--ui-text);
+  color: var(--ui-color-text);
 }
 
 .lyrics-panel__meta,
 .lyrics-detail__meta {
   margin-top: var(--ui-space-1);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-panel__status {
   margin: var(--ui-space-1) 0 0;
-  color: var(--ui-accent);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-accent);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-panel__playlist {
@@ -646,23 +646,23 @@ watch(activeLineIndex, (index) => {
   align-items: center;
   gap: var(--ui-space-3);
   padding: var(--ui-space-2) var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .lyrics-panel__playlist-select {
   min-width: 0;
   flex: 1 1 auto;
   height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  background: var(--ui-bg);
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-panel__playlist-select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
@@ -687,36 +687,36 @@ watch(activeLineIndex, (index) => {
 .lyrics-error,
 .lyrics-empty {
   padding: var(--ui-space-4);
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-error {
-  color: var(--ui-danger);
+  color: var(--ui-color-danger);
 }
 
 .lyrics-status {
   flex: 0 0 auto;
   padding: var(--ui-space-1) var(--ui-space-2);
   border-radius: var(--ui-radius-pill);
-  color: var(--ui-text-muted);
-  background: var(--ui-bg);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  background: var(--ui-color-canvas);
+  font-size: var(--ui-font-size-sm);
   line-height: 1;
 }
 
 .lyrics-status--available {
-  color: var(--ui-accent);
-  background: var(--ui-bg);
+  color: var(--ui-color-accent);
+  background: var(--ui-color-canvas);
 }
 
 .lyrics-status--missing {
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .lyrics-status--unchecked {
-  color: var(--ui-text);
-  background: var(--ui-surface-hover);
+  color: var(--ui-color-text);
+  background: var(--ui-color-surface-hover);
 }
 
 .lyrics-row-status {
@@ -724,22 +724,20 @@ watch(activeLineIndex, (index) => {
   align-items: center;
   gap: var(--ui-space-1);
   flex: 0 0 auto;
-  /* This panel is --ui-surface, not the --ui-bg the shared UiStatusIcon
-     defaults to contrasting against — override so the badges stay visible
-     here instead of blending into the panel. */
-  --ui-status-icon-bg: var(--ui-bg);
+  /* Keep status badges visible on this surface-colored panel. */
+  --ui-status-icon-bg: var(--ui-color-canvas);
 }
 
 .lyrics-row-status__duration {
   min-width: 34px;
   flex-shrink: 0;
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: right;
 }
 
 .ui-track--active .lyrics-row-status__duration {
-  color: var(--ui-accent-contrast-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 
 .lyrics-status--large {
@@ -763,23 +761,23 @@ watch(activeLineIndex, (index) => {
 .lyrics-offset > svg,
 .lyrics-text-size > svg {
   flex-shrink: 0;
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .lyrics-source__select {
   min-width: 180px;
   max-width: 280px;
   height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  background: var(--ui-bg);
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-source__select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
@@ -790,15 +788,15 @@ watch(activeLineIndex, (index) => {
   gap: var(--ui-space-1);
   height: var(--ui-control-height);
   padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  background: var(--ui-bg);
+  background: var(--ui-color-canvas);
 }
 
 .lyrics-offset__value {
   min-width: 52px;
-  color: var(--ui-text);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
   text-align: center;
   font-variant-numeric: tabular-nums;
 }
@@ -812,22 +810,22 @@ watch(activeLineIndex, (index) => {
      far end with a divider so it doesn't read as "one more live control". */
   margin-left: auto;
   padding-left: var(--ui-space-3);
-  border-left: var(--ui-border-width) solid var(--ui-border);
+  border-left: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .lyrics-separation__preset {
   min-width: 96px;
   height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
-  background: var(--ui-bg);
-  color: var(--ui-text);
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-sm);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-separation__preset:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
@@ -836,13 +834,13 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-separation__done {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-separation__error {
-  color: var(--ui-danger);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-danger);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-preview {
@@ -850,15 +848,15 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-preview--font-compact .lyrics-line__button {
-  font-size: var(--ui-text-md);
+  font-size: var(--ui-font-size-md);
 }
 
 .lyrics-preview--font-default .lyrics-line__button {
-  font-size: var(--ui-text-lg);
+  font-size: var(--ui-font-size-lg);
 }
 
 .lyrics-preview--font-large .lyrics-line__button {
-  font-size: var(--ui-text-xl);
+  font-size: var(--ui-font-size-xl);
 }
 
 .lyrics-lines {
@@ -868,7 +866,7 @@ watch(activeLineIndex, (index) => {
 
 .lyrics-line {
   border-radius: var(--ui-radius);
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .lyrics-line__button {
@@ -882,39 +880,39 @@ watch(activeLineIndex, (index) => {
   border-radius: var(--ui-radius);
   background: transparent;
   color: inherit;
-  font-family: var(--ui-font);
-  font-size: var(--ui-text-lg);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-lg);
   line-height: 1.55;
   text-align: left;
   cursor: pointer;
 }
 
 .lyrics-line__button:hover {
-  background: var(--ui-surface-hover);
-  color: var(--ui-text);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text);
 }
 
 .lyrics-line__button:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
 
 .lyrics-line--past {
-  color: var(--ui-text);
+  color: var(--ui-color-text);
   opacity: var(--ui-opacity-muted);
 }
 
 .lyrics-line--active {
-  color: var(--ui-accent-contrast);
+  color: var(--ui-color-accent-contrast);
   opacity: 1;
 }
 
 .lyrics-line--active .lyrics-line__button {
-  background: var(--ui-accent);
+  background: var(--ui-color-accent);
 }
 
 .lyrics-line__time {
-  font-size: var(--ui-text-sm);
+  font-size: var(--ui-font-size-sm);
   line-height: inherit;
   font-variant-numeric: tabular-nums;
 }

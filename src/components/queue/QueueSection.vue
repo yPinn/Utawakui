@@ -77,15 +77,15 @@ const emit = defineEmits([
 
 .queue-section__title {
   margin: 0;
-  color: var(--ui-text);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
 }
 
 .queue-section__empty {
   margin: 0;
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .queue-section__list {
@@ -122,7 +122,7 @@ const emit = defineEmits([
   right: var(--ui-space-1);
   height: 2px;
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-accent);
+  background: var(--ui-color-accent);
   pointer-events: none;
 }
 

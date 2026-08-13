@@ -23,9 +23,9 @@ defineProps({
 
 .ui-page-header__title {
   margin: 0;
-  font-size: var(--ui-text-lg);
+  font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-strong);
-  color: var(--ui-text);
+  color: var(--ui-color-text);
 }
 
 .ui-page-header__actions {

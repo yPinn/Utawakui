@@ -103,15 +103,15 @@ const metaParts = computed(() =>
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid transparent;
   border-radius: var(--ui-radius);
-  background: var(--ui-bg);
-  color: var(--ui-text);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
   font: inherit;
   text-align: left;
   cursor: pointer;
 }
 
 .candidate-option:hover {
-  background: var(--ui-surface-hover);
+  background: var(--ui-color-surface-hover);
 }
 
 .candidate-option:disabled {
@@ -121,19 +121,19 @@ const metaParts = computed(() =>
 
 .candidate-option:focus-visible {
   /* Match border width so selected/unselected rings align. */
-  outline: var(--ui-focus-width) solid var(--ui-focus);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-border-width);
 }
 
 .candidate-option--selected {
-  border-color: var(--ui-accent);
+  border-color: var(--ui-color-accent);
 }
 
 .platform-badge,
 .candidate-chip,
 .candidate-option__meta {
-  color: var(--ui-text-muted);
-  font-size: var(--ui-text-sm);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
 }
 
 .platform-badge {
@@ -144,12 +144,12 @@ const metaParts = computed(() =>
   min-height: calc(var(--ui-space-5) - var(--ui-space-1));
   padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-surface);
+  background: var(--ui-color-surface);
   white-space: nowrap;
 }
 
 .platform-badge--music {
-  color: var(--ui-accent);
+  color: var(--ui-color-accent);
 }
 
 .platform-badge__label {
@@ -171,7 +171,7 @@ const metaParts = computed(() =>
 }
 
 .candidate-option__title {
-  color: var(--ui-text);
+  color: var(--ui-color-text);
   font-weight: var(--ui-font-weight-strong);
 }
 
@@ -195,13 +195,13 @@ const metaParts = computed(() =>
   min-height: calc(var(--ui-space-5) - var(--ui-space-1));
   padding: calc(var(--ui-space-1) / 2) var(--ui-space-2);
   border-radius: var(--ui-radius-pill);
-  background: var(--ui-surface);
+  background: var(--ui-color-surface);
   white-space: nowrap;
 }
 
 .candidate-chip--selected {
-  color: var(--ui-accent-contrast);
-  background: var(--ui-accent);
+  color: var(--ui-color-accent-contrast);
+  background: var(--ui-color-accent);
 }
 
 @media (max-width: 680px) {
