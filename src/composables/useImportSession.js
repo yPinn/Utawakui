@@ -26,7 +26,7 @@ const state = reactive({
   playlistTracks: null,
   playlistTitle: null,
   // Only meaningful when sourceKind === 'playlist' — 'album' | 'playlist',
-  // from yt:list-playlist's classifyPlaylistKind. Drives which write path
+  // from yt:fetch-playlist's classifyPlaylistKind. Drives which write path
   // syncImportedPlaylist() below takes.
   collectionKind: null,
   collectionSource: null,
@@ -206,7 +206,7 @@ async function resolveSource() {
   state.isResolving = true;
 
   try {
-    const playlistResult = await window.Utawakui.listPlaylist(input);
+    const playlistResult = await window.Utawakui.fetchYoutubePlaylist(input);
     const entries = playlistResult?.entries;
     if (entries && entries.length > 0) {
       state.sourceKind = 'playlist';

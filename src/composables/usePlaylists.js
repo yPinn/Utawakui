@@ -52,7 +52,7 @@ function enqueue(operation, errorPrefix, { clearErrorOnSuccess = true } = {}) {
 }
 
 function refresh() {
-  return enqueue(() => window.Utawakui.getPlaylists(), '讀取歌單失敗', {
+  return enqueue(() => window.Utawakui.listPlaylists(), '讀取歌單失敗', {
     clearErrorOnSuccess: false,
   });
 }

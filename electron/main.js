@@ -16,7 +16,7 @@ const {
   backfillTrackInfo,
   downloadAudio,
   fetchMetadata,
-  listPlaylist,
+  fetchPlaylist,
   readTrackInfoMetadata,
   searchPlaybackCandidates,
 } = require('./lib/downloader');
@@ -458,12 +458,12 @@ if (!gotSingleInstanceLock) {
       return setPlaylistKind(resolveDownloadDir(cachedConfig), id, kind);
     });
 
-    ipcMain.handle('yt:list-playlist', async (event, input) => {
+    ipcMain.handle('yt:fetch-playlist', async (event, input) => {
       const playlistId = extractPlaylistId(input);
       if (!playlistId) return null; // not a playlist URL — not an error
       const dir = resolveDownloadDir(cachedConfig);
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      const { title, entries } = await listPlaylist(playlistId);
+      const { title, entries } = await fetchPlaylist(playlistId);
       return {
         title,
         kind: classifyPlaylistKind(playlistId),

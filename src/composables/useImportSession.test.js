@@ -1,19 +1,19 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-let listPlaylistMock;
+let fetchYoutubePlaylistMock;
 let resolveImportSourceMock;
 let fetchVideoMetadataMock;
 let downloadAudioMock;
 let getConfigMock;
 let chooseDownloadDirMock;
 let resetDownloadDirMock;
-let getPlaylistsMock;
+let listPlaylistsMock;
 let createPlaylistMock;
 let setPlaylistTracksMock;
 let upsertAlbumMock;
 
 // usePlaylists.js is a module-scope singleton that useImportSession.js now
-// imports transitively — it eagerly calls getPlaylists()/onLibraryUpdated()
+// imports transitively — it eagerly calls listPlaylists()/onLibraryUpdated()
 // at module-load time (see usePlaylists.test.js), so window.Utawakui needs
 // all four of these stubbed or every test in this file fails on load, not
 // just the new ones.
@@ -32,7 +32,7 @@ let mockPlaylist;
 beforeEach(() => {
   vi.resetModules();
   mockPlaylist = null;
-  listPlaylistMock = vi.fn();
+  fetchYoutubePlaylistMock = vi.fn();
   resolveImportSourceMock = vi.fn();
   fetchVideoMetadataMock = vi.fn();
   downloadAudioMock = vi.fn();
@@ -42,7 +42,7 @@ beforeEach(() => {
   });
   chooseDownloadDirMock = vi.fn();
   resetDownloadDirMock = vi.fn();
-  getPlaylistsMock = vi.fn().mockResolvedValue([]);
+  listPlaylistsMock = vi.fn().mockResolvedValue([]);
   createPlaylistMock = vi.fn(async (name) => {
     mockPlaylist = {
       id: nextPlaylistId(name),
@@ -68,14 +68,14 @@ beforeEach(() => {
   });
   vi.stubGlobal('window', {
     Utawakui: {
-      listPlaylist: listPlaylistMock,
+      fetchYoutubePlaylist: fetchYoutubePlaylistMock,
       resolveImportSource: resolveImportSourceMock,
       fetchVideoMetadata: fetchVideoMetadataMock,
       downloadAudio: downloadAudioMock,
       getConfig: getConfigMock,
       chooseDownloadDir: chooseDownloadDirMock,
       resetDownloadDir: resetDownloadDirMock,
-      getPlaylists: getPlaylistsMock,
+      listPlaylists: listPlaylistsMock,
       createPlaylist: createPlaylistMock,
       setPlaylistTracks: setPlaylistTracksMock,
       upsertAlbum: upsertAlbumMock,
@@ -95,7 +95,7 @@ async function loadImportSession() {
 
 describe('useImportSession', () => {
   it('keeps a resolved playlist preview in the shared session without downloading', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [
         {
@@ -130,7 +130,7 @@ describe('useImportSession', () => {
   });
 
   it('treats non-playlist input as a confirmation-ready single source', async () => {
-    listPlaylistMock.mockResolvedValueOnce(null);
+    fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
     resolveImportSourceMock.mockResolvedValueOnce({
       input: 'https://youtube.com/watch?v=abc12345678',
       sourceVideoId: 'abc12345678',
@@ -205,7 +205,7 @@ describe('useImportSession', () => {
   });
 
   it('lets the selected single candidate decide the downloaded video id', async () => {
-    listPlaylistMock.mockResolvedValueOnce(null);
+    fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
     resolveImportSourceMock.mockResolvedValueOnce({
       input: 'https://youtube.com/watch?v=mv123456789',
       sourceVideoId: 'mv123456789',
@@ -264,7 +264,7 @@ describe('useImportSession', () => {
   });
 
   it('downloads only selected playlist tracks after confirmation', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [
         {
@@ -302,7 +302,7 @@ describe('useImportSession', () => {
   });
 
   it('creates a local playlist named after the source title once tracks finish downloading', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
     });
@@ -322,7 +322,7 @@ describe('useImportSession', () => {
   });
 
   it('includes already-downloaded-but-selected tracks in the synced playlist', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [
         { id: 'song-1', title: 'Song 1', alreadyDownloaded: false },
@@ -351,7 +351,7 @@ describe('useImportSession', () => {
     // "An object could not be cloned." structuredClone() below exercises the
     // same clone algorithm Electron's ipcRenderer.invoke uses, so this test
     // fails the same way a mock-only assertion wouldn't.
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Album',
       kind: 'album',
       source: { platform: 'youtube', id: 'OLAK5uy_abc' },
@@ -382,7 +382,7 @@ describe('useImportSession', () => {
     // was disabled, and hasImportableSelection required a downloadable
     // selection to enable the confirm button at all. The album could never
     // be (re-)created even though every track was already on disk.
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'Florskyn',
       kind: 'album',
       source: { platform: 'youtube', id: 'OLAK5uy_florskyn' },
@@ -414,7 +414,7 @@ describe('useImportSession', () => {
   });
 
   it('re-syncs the same local playlist on retry instead of creating a duplicate', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [
         { id: 'ok-song', title: 'OK Song', alreadyDownloaded: false },
@@ -450,7 +450,7 @@ describe('useImportSession', () => {
   });
 
   it('creates no playlist when nothing ends up selected and downloaded', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
     });
@@ -465,7 +465,7 @@ describe('useImportSession', () => {
   });
 
   it('falls back to metadata preview when the resolver preload API is stale', async () => {
-    listPlaylistMock.mockResolvedValueOnce(null);
+    fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
     delete window.Utawakui.resolveImportSource;
     fetchVideoMetadataMock.mockResolvedValueOnce({
       id: 'abc12345678',
@@ -490,7 +490,7 @@ describe('useImportSession', () => {
   });
 
   it('keeps single import usable when the metadata preload API is stale', async () => {
-    listPlaylistMock.mockResolvedValueOnce(null);
+    fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
     delete window.Utawakui.resolveImportSource;
     delete window.Utawakui.fetchVideoMetadata;
     downloadAudioMock.mockResolvedValueOnce({ title: 'Fallback Song' });
@@ -518,7 +518,7 @@ describe('useImportSession', () => {
   });
 
   it('clears preview state without clearing the typed source', async () => {
-    listPlaylistMock.mockResolvedValueOnce({
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [{ id: 'video-1', title: 'Song 1', alreadyDownloaded: false }],
     });

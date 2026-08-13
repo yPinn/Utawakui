@@ -10,9 +10,9 @@ import {
   buildPlaybackSearchQueries,
   buildSubtitleOptions,
   extractMetadataFields,
+  fetchPlaylist,
   finalizeDownloadedTrackFiles,
   isForbiddenAudioDownloadError,
-  listPlaylist,
   readTrackInfoMetadata,
   readTrackSidecarState,
   runYoutubeDownloadAttempts,
@@ -838,7 +838,7 @@ describe('searchPlaybackCandidates', () => {
   });
 });
 
-describe('listPlaylist', () => {
+describe('fetchPlaylist', () => {
   it('keeps playlist entries fast while attaching track identity metadata', async () => {
     const runner = vi.fn().mockResolvedValue({
       title: 'Karaoke Favorites',
@@ -852,7 +852,7 @@ describe('listPlaylist', () => {
       ],
     });
 
-    await expect(listPlaylist('playlist123', { runner })).resolves.toEqual({
+    await expect(fetchPlaylist('playlist123', { runner })).resolves.toEqual({
       title: 'Karaoke Favorites',
       entries: [
         expect.objectContaining({

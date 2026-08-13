@@ -6,7 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // test a fresh module instance instead of leaking playlists/selectedId
 // state between tests, same approach as useSeparation.test.js.
 let libraryUpdatedCallback;
-let getPlaylistsMock;
+let listPlaylistsMock;
 let createPlaylistMock;
 let renamePlaylistMock;
 let deletePlaylistMock;
@@ -31,7 +31,7 @@ function createDeferred() {
 
 beforeEach(() => {
   vi.resetModules();
-  getPlaylistsMock = vi.fn().mockResolvedValue([]);
+  listPlaylistsMock = vi.fn().mockResolvedValue([]);
   createPlaylistMock = vi.fn();
   renamePlaylistMock = vi.fn();
   deletePlaylistMock = vi.fn();
@@ -41,7 +41,7 @@ beforeEach(() => {
   setPlaylistKindMock = vi.fn();
   vi.stubGlobal('window', {
     Utawakui: {
-      getPlaylists: getPlaylistsMock,
+      listPlaylists: listPlaylistsMock,
       createPlaylist: createPlaylistMock,
       renamePlaylist: renamePlaylistMock,
       deletePlaylist: deletePlaylistMock,
@@ -67,8 +67,8 @@ async function loadPlaylists() {
 }
 
 describe('initial load', () => {
-  it('populates state.playlists from getPlaylists on module load', async () => {
-    getPlaylistsMock.mockResolvedValue([
+  it('populates state.playlists from listPlaylists on module load', async () => {
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'Encore', trackIds: [] },
     ]);
     const { state } = await loadPlaylists();
@@ -78,11 +78,11 @@ describe('initial load', () => {
   });
 
   it('refetches when the captured onLibraryUpdated callback fires', async () => {
-    getPlaylistsMock.mockResolvedValueOnce([]);
+    listPlaylistsMock.mockResolvedValueOnce([]);
     const { state } = await loadPlaylists();
     expect(state.playlists).toEqual([]);
 
-    getPlaylistsMock.mockResolvedValueOnce([
+    listPlaylistsMock.mockResolvedValueOnce([
       { id: 'p1', name: 'New', trackIds: [] },
     ]);
     libraryUpdatedCallback();
@@ -94,21 +94,23 @@ describe('initial load', () => {
 
 describe('selectedPlaylist', () => {
   it('is null when selectedId does not match any playlist', async () => {
-    getPlaylistsMock.mockResolvedValue([{ id: 'p1', name: 'A', trackIds: [] }]);
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
     const { selectedPlaylist, select } = await loadPlaylists();
     select('unknown');
     expect(selectedPlaylist.value).toBe(null);
   });
 
   it('is nulled out when a refresh drops the currently selected id', async () => {
-    getPlaylistsMock.mockResolvedValueOnce([
+    listPlaylistsMock.mockResolvedValueOnce([
       { id: 'p1', name: 'A', trackIds: [] },
     ]);
     const { state, select } = await loadPlaylists();
     select('p1');
     expect(state.selectedId).toBe('p1');
 
-    getPlaylistsMock.mockResolvedValueOnce([]);
+    listPlaylistsMock.mockResolvedValueOnce([]);
     libraryUpdatedCallback();
     await flushMicrotasks();
 
@@ -118,7 +120,7 @@ describe('selectedPlaylist', () => {
 
 describe('addTrack', () => {
   it('is a no-op (no IPC call) when the track is already a member', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1'] },
     ]);
     const { addTrack } = await loadPlaylists();
@@ -130,7 +132,9 @@ describe('addTrack', () => {
   });
 
   it('appends a new track and persists it', async () => {
-    getPlaylistsMock.mockResolvedValue([{ id: 'p1', name: 'A', trackIds: [] }]);
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
     setPlaylistTracksMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1'] },
     ]);
@@ -144,33 +148,35 @@ describe('addTrack', () => {
 
   it('keeps optimistic membership while a library refresh waits for a pending mutation', async () => {
     const save = createDeferred();
-    getPlaylistsMock.mockResolvedValue([{ id: 'p1', name: 'A', trackIds: [] }]);
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
     setPlaylistTracksMock.mockReturnValueOnce(save.promise);
     const { addTrack, state } = await loadPlaylists();
 
     addTrack('p1', 't1');
     expect(state.playlists[0].trackIds).toEqual(['t1']);
 
-    getPlaylistsMock.mockResolvedValueOnce([
+    listPlaylistsMock.mockResolvedValueOnce([
       { id: 'p1', name: 'A', trackIds: ['t1'] },
     ]);
     libraryUpdatedCallback();
     await flushMicrotasks();
 
     expect(state.playlists[0].trackIds).toEqual(['t1']);
-    expect(getPlaylistsMock).toHaveBeenCalledTimes(1);
+    expect(listPlaylistsMock).toHaveBeenCalledTimes(1);
 
     save.resolve([{ id: 'p1', name: 'A', trackIds: ['t1'] }]);
     await flushMicrotasks();
 
     expect(state.playlists[0].trackIds).toEqual(['t1']);
-    expect(getPlaylistsMock).toHaveBeenCalledTimes(2);
+    expect(listPlaylistsMock).toHaveBeenCalledTimes(2);
   });
 });
 
 describe('addTracks', () => {
   it('is a no-op (no IPC call) when every track is already a member', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     const { addTracks } = await loadPlaylists();
@@ -182,7 +188,7 @@ describe('addTracks', () => {
   });
 
   it('appends only the missing tracks, in source order, after the existing ones', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1'] },
     ]);
     setPlaylistTracksMock.mockResolvedValue([
@@ -201,7 +207,9 @@ describe('addTracks', () => {
   });
 
   it('de-dupes the incoming track ids', async () => {
-    getPlaylistsMock.mockResolvedValue([{ id: 'p1', name: 'A', trackIds: [] }]);
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
     setPlaylistTracksMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1'] },
     ]);
@@ -216,7 +224,7 @@ describe('addTracks', () => {
 
 describe('moveTrack', () => {
   it('is clamped at the first index (moving up is a no-op)', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     const { moveTrack } = await loadPlaylists();
@@ -228,7 +236,7 @@ describe('moveTrack', () => {
   });
 
   it('is clamped at the last index (moving down is a no-op)', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     const { moveTrack } = await loadPlaylists();
@@ -240,7 +248,7 @@ describe('moveTrack', () => {
   });
 
   it('two rapid moveTrack calls both take effect, the second reflecting the first', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2', 't3'] },
     ]);
     setPlaylistTracksMock
@@ -275,7 +283,7 @@ describe('moveTrack', () => {
 
 describe('setTracks', () => {
   it('is a no-op when the order is unchanged', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     const { setTracks } = await loadPlaylists();
@@ -287,7 +295,7 @@ describe('setTracks', () => {
   });
 
   it('persists a complete reordered track id array', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       {
         id: 'p1',
         name: 'A',
@@ -332,7 +340,7 @@ describe('setTracks', () => {
 
 describe('reorderPlaylist', () => {
   it('is a no-op when dragged and target ids match', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'First', trackIds: [] },
       { id: 'p2', name: 'Second', trackIds: [] },
     ]);
@@ -345,7 +353,7 @@ describe('reorderPlaylist', () => {
   });
 
   it('shows a restart hint instead of throwing when the preload API is stale', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'First', trackIds: [] },
       { id: 'p2', name: 'Second', trackIds: [] },
     ]);
@@ -365,7 +373,7 @@ describe('reorderPlaylist', () => {
   });
 
   it('optimistically reorders playlists and persists the new order', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'First', trackIds: [] },
       { id: 'p2', name: 'Second', trackIds: [] },
       { id: 'p3', name: 'Third', trackIds: [] },
@@ -395,7 +403,7 @@ describe('reorderPlaylist', () => {
   });
 
   it('records a readable error when playlist reorder persistence fails', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'First', trackIds: [] },
       { id: 'p2', name: 'Second', trackIds: [] },
     ]);
@@ -409,7 +417,7 @@ describe('reorderPlaylist', () => {
   });
 
   it('two rapid reorders both compute from the latest optimistic order', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'First', trackIds: [] },
       { id: 'p2', name: 'Second', trackIds: [] },
       { id: 'p3', name: 'Third', trackIds: [] },
@@ -449,7 +457,7 @@ describe('reorderPlaylist', () => {
 
 describe('mutation chain resilience', () => {
   it('a rejected mutation does not permanently break later mutations', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     setPlaylistTracksMock
@@ -466,7 +474,7 @@ describe('mutation chain resilience', () => {
   });
 
   it('records a user-visible error when a track mutation fails', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     setPlaylistTracksMock.mockRejectedValueOnce(new Error('disk full'));
@@ -479,7 +487,7 @@ describe('mutation chain resilience', () => {
   });
 
   it('clears a previous error after a later successful mutation', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
     ]);
     setPlaylistTracksMock
@@ -525,7 +533,7 @@ describe('create', () => {
   });
 
   it('selects the appended playlist when playlists already exist', async () => {
-    getPlaylistsMock.mockResolvedValueOnce([
+    listPlaylistsMock.mockResolvedValueOnce([
       { id: 'p1', name: 'Existing', trackIds: [] },
     ]);
     createPlaylistMock.mockResolvedValueOnce([
@@ -547,7 +555,7 @@ describe('create', () => {
 
 describe('setKind', () => {
   it('calls the preload API and applies the returned array', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', kind: 'playlist', trackIds: [] },
     ]);
     setPlaylistKindMock.mockResolvedValueOnce([
@@ -562,7 +570,7 @@ describe('setKind', () => {
   });
 
   it('records a user-visible error instead of throwing when it fails', async () => {
-    getPlaylistsMock.mockResolvedValue([
+    listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'A', kind: 'playlist', trackIds: [] },
     ]);
     setPlaylistKindMock.mockRejectedValueOnce(new Error('disk full'));

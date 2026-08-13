@@ -939,7 +939,7 @@ async function fetchMetadata(videoId) {
 // carries title/duration/uploader per entry (verified against a real
 // uploads playlist). Unlike fetchMetadata, failures throw — this is a
 // user-initiated action that should surface an error, not retry silently.
-async function listPlaylist(playlistId, options = {}) {
+async function fetchPlaylist(playlistId, options = {}) {
   const runner = options.runner || youtubedl;
   const info = await runner(
     `https://www.youtube.com/playlist?list=${playlistId}`,
@@ -991,5 +991,5 @@ module.exports = {
   readTrackSidecarState,
   runYoutubeDownloadAttempts,
   searchPlaybackCandidates,
-  listPlaylist,
+  fetchPlaylist,
 };

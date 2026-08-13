@@ -5,7 +5,7 @@ let playerState;
 let listTracksMock;
 let getTrackLyricsMock;
 let probeMusixmatchLyricsMock;
-let getPlaylistsMock;
+let listPlaylistsMock;
 let libraryBackfillStatusHandler;
 let libraryUpdatedHandler;
 let playTrackMock;
@@ -67,7 +67,7 @@ async function flushPromises() {
 // module-level refresh() runs, or the initial scope would resolve empty.
 async function loadLyrics({ playlists, selectedId = 'p1' } = {}) {
   if (playlists) {
-    getPlaylistsMock.mockResolvedValue(playlists);
+    listPlaylistsMock.mockResolvedValue(playlists);
     const { usePlaylists } = await import('./usePlaylists.js');
     await flushPromises();
     if (selectedId !== null) usePlaylists().select(selectedId);
@@ -106,7 +106,7 @@ beforeEach(() => {
     lineCount: 2,
     firstLineStart: 1,
   });
-  getPlaylistsMock = vi.fn().mockResolvedValue([DEFAULT_PLAYLIST]);
+  listPlaylistsMock = vi.fn().mockResolvedValue([DEFAULT_PLAYLIST]);
   playTrackMock = vi.fn(async (track) => {
     playerState.track = track;
   });
@@ -129,7 +129,7 @@ beforeEach(() => {
       listTracks: listTracksMock,
       getTrackLyrics: getTrackLyricsMock,
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
-      getPlaylists: getPlaylistsMock,
+      listPlaylists: listPlaylistsMock,
       onLibraryUpdated: vi.fn((handler) => {
         libraryUpdatedHandler = handler;
         return vi.fn();

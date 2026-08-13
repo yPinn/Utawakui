@@ -5,19 +5,19 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // re-stubbing window before each dynamic import gives every test a fresh
 // module instance instead of leaking inFlight/errors state between tests.
 let progressCallback;
-let separateTrackMock;
+let runSeparationMock;
 let selectSeparationResultMock;
 
 beforeEach(() => {
   vi.resetModules();
-  separateTrackMock = vi.fn();
+  runSeparationMock = vi.fn();
   selectSeparationResultMock = vi.fn();
   vi.stubGlobal('window', {
     Utawakui: {
       onSeparationProgress: (callback) => {
         progressCallback = callback;
       },
-      separateTrack: separateTrackMock,
+      runSeparation: runSeparationMock,
       selectSeparationResult: selectSeparationResultMock,
     },
   });
@@ -77,19 +77,19 @@ describe('isSeparating()', () => {
 describe('separate()', () => {
   it('is a no-op while the same track is already separating', async () => {
     const { separate, isSeparating } = await loadSeparation();
-    separateTrackMock.mockImplementation(() => new Promise(() => {}));
+    runSeparationMock.mockImplementation(() => new Promise(() => {}));
     const track = { id: 't1', title: 'Song' };
 
     separate(track);
     expect(isSeparating('t1')).toBe(true);
 
     separate(track);
-    expect(separateTrackMock).toHaveBeenCalledTimes(1);
+    expect(runSeparationMock).toHaveBeenCalledTimes(1);
   });
 
   it('clears the in-flight entry on success, with no error recorded', async () => {
     const { separate, isSeparating, state } = await loadSeparation();
-    separateTrackMock.mockResolvedValue({ stemsUrl: 'utawakui-media://x' });
+    runSeparationMock.mockResolvedValue({ stemsUrl: 'utawakui-media://x' });
     const track = { id: 't1', title: 'Song' };
 
     await separate(track);
@@ -100,7 +100,7 @@ describe('separate()', () => {
 
   it('clears the in-flight entry and records a message on failure', async () => {
     const { separate, isSeparating, state } = await loadSeparation();
-    separateTrackMock.mockRejectedValue(new Error('boom'));
+    runSeparationMock.mockRejectedValue(new Error('boom'));
     const track = { id: 't1', title: 'Song' };
 
     await separate(track);
@@ -109,25 +109,25 @@ describe('separate()', () => {
     expect(state.errors.get('t1')).toBe('Song 分離失敗:boom');
   });
 
-  it('forwards the preset id to window.Utawakui.separateTrack', async () => {
+  it('forwards the preset id to window.Utawakui.runSeparation', async () => {
     const { separate } = await loadSeparation();
-    separateTrackMock.mockResolvedValue({ stemsUrl: 'x' });
+    runSeparationMock.mockResolvedValue({ stemsUrl: 'x' });
     const track = { id: 't1', title: 'Song' };
 
     await separate(track, 'high-quality');
 
-    expect(separateTrackMock).toHaveBeenCalledWith('t1', 'high-quality');
+    expect(runSeparationMock).toHaveBeenCalledWith('t1', 'high-quality');
   });
 
   it('clears a previous error for the track when retried', async () => {
     const { separate, state } = await loadSeparation();
     const track = { id: 't1', title: 'Song' };
 
-    separateTrackMock.mockRejectedValueOnce(new Error('first failure'));
+    runSeparationMock.mockRejectedValueOnce(new Error('first failure'));
     await separate(track);
     expect(state.errors.has('t1')).toBe(true);
 
-    separateTrackMock.mockResolvedValueOnce({ stemsUrl: 'x' });
+    runSeparationMock.mockResolvedValueOnce({ stemsUrl: 'x' });
     await separate(track);
     expect(state.errors.has('t1')).toBe(false);
   });

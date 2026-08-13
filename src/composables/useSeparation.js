@@ -66,7 +66,7 @@ async function separate(track, presetId) {
   // waiting for the first IPC progress event to round-trip.
   state.inFlight.set(track.id, { stage: null });
   try {
-    await window.Utawakui.separateTrack(track.id, presetId);
+    await window.Utawakui.runSeparation(track.id, presetId);
   } catch (err) {
     state.errors.set(track.id, `${track.title} 分離失敗:${err.message}`);
   } finally {
