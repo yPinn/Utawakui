@@ -878,6 +878,28 @@ describe('fetchPlaylist', () => {
       }),
     );
   });
+
+  it("captures the playlist/album's own artwork, not any entry's", async () => {
+    const runner = vi.fn().mockResolvedValue({
+      title: 'GOLDEN',
+      thumbnail: 'https://i.ytimg.com/vi/playlist-art/hqdefault.jpg',
+      entries: [],
+    });
+
+    const result = await fetchPlaylist('playlist123', { runner });
+
+    expect(result.thumbnailUrl).toBe(
+      'https://i.ytimg.com/vi/playlist-art/hqdefault.jpg',
+    );
+  });
+
+  it('is undefined when the playlist info has no thumbnail data', async () => {
+    const runner = vi.fn().mockResolvedValue({ title: 'GOLDEN', entries: [] });
+
+    const result = await fetchPlaylist('playlist123', { runner });
+
+    expect(result.thumbnailUrl).toBeUndefined();
+  });
 });
 
 describe('isForbiddenAudioDownloadError', () => {

@@ -108,6 +108,24 @@ async function setKind(id, kind) {
   );
 }
 
+async function setDescription(id, description) {
+  await enqueue(
+    () => window.Utawakui.setPlaylistDescription(id, description),
+    '更新歌單說明失敗',
+  );
+}
+
+// Opens the native file picker (see main.js's playlists:choose-cover) — a
+// no-op resolves back to the unchanged array, so a cancel doesn't surface
+// as an error.
+async function setCover(id) {
+  await enqueue(() => window.Utawakui.choosePlaylistCover(id), '設定封面失敗');
+}
+
+async function clearCover(id) {
+  await enqueue(() => window.Utawakui.clearPlaylistCover(id), '移除封面失敗');
+}
+
 // Create-or-update path for album imports (see useImportSession.js's
 // syncImportedPlaylist) — keyed by source on the main-process side, so
 // re-importing the same album updates it in place instead of creating a
@@ -274,6 +292,9 @@ export function usePlaylists() {
     rename,
     remove,
     setKind,
+    setDescription,
+    setCover,
+    clearCover,
     upsertAlbum,
     reorderPlaylist,
     addTrack,

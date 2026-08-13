@@ -23,12 +23,17 @@ import {
   listTracks,
   loadIndex,
   migrateTrackAlbumMetadata,
+  refreshTrackMetadataFromSidecars,
   readTrackLyrics,
   saveIndexEntry,
   saveTrackLyricsText,
   buildRangeResponse,
   runBackfillPass,
   deleteTrack,
+  resolvePlaylistCoverPath,
+  writePlaylistCoverFile,
+  writePlaylistCoverFromUrl,
+  deletePlaylistCoverDir,
   INDEX_FILENAME,
 } from './library.js';
 
@@ -302,6 +307,235 @@ describe('resolveTrackAssetPath', () => {
     expect(resolveTrackAssetPath(dir, 'abc', 'stems.wav')).toBe(null);
     expect(resolveTrackAssetPath(dir, 'abc', '../audio.mp3')).toBe(null);
     expect(resolveTrackAssetPath(dir, '../abc', 'audio.mp3')).toBe(null);
+  });
+});
+
+describe('writePlaylistCoverFile / resolvePlaylistCoverPath / deletePlaylistCoverDir', () => {
+  let dir;
+  let sourceDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-cover-test-'));
+    sourceDir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-cover-src-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(sourceDir, { recursive: true, force: true });
+  });
+
+  it('copies a chosen image into playlist-covers/<id>/cover.<ext> and resolves it back', () => {
+    const sourcePath = path.join(sourceDir, 'picked.png');
+    fs.writeFileSync(sourcePath, 'image-bytes');
+
+    const filename = writePlaylistCoverFile(dir, 'playlist-1', sourcePath);
+    expect(filename).toBe('cover.png');
+    expect(
+      fs.readFileSync(
+        path.join(dir, 'playlist-covers', 'playlist-1', 'cover.png'),
+        'utf8',
+      ),
+    ).toBe('image-bytes');
+
+    expect(resolvePlaylistCoverPath(dir, 'playlist-1', 'cover.png')).toBe(
+      path.join(
+        path.resolve(dir),
+        'playlist-covers',
+        'playlist-1',
+        'cover.png',
+      ),
+    );
+  });
+
+  it('rejects a non-image source extension', () => {
+    const sourcePath = path.join(sourceDir, 'not-an-image.txt');
+    fs.writeFileSync(sourcePath, 'nope');
+
+    expect(writePlaylistCoverFile(dir, 'playlist-1', sourcePath)).toBe(null);
+  });
+
+  it('replaces a previous cover of a different extension instead of leaving both', () => {
+    fs.writeFileSync(path.join(sourceDir, 'first.png'), 'a');
+    fs.writeFileSync(path.join(sourceDir, 'second.jpg'), 'b');
+
+    writePlaylistCoverFile(
+      dir,
+      'playlist-1',
+      path.join(sourceDir, 'first.png'),
+    );
+    const filename = writePlaylistCoverFile(
+      dir,
+      'playlist-1',
+      path.join(sourceDir, 'second.jpg'),
+    );
+
+    expect(filename).toBe('cover.jpg');
+    const coverDir = path.join(dir, 'playlist-covers', 'playlist-1');
+    expect(fs.readdirSync(coverDir)).toEqual(['cover.jpg']);
+  });
+
+  it('rejects traversal attempts via playlistId or coverFilename', () => {
+    fs.writeFileSync(path.join(sourceDir, 'ok.png'), 'x');
+    writePlaylistCoverFile(dir, 'playlist-1', path.join(sourceDir, 'ok.png'));
+
+    expect(resolvePlaylistCoverPath(dir, '../evil', 'cover.png')).toBe(null);
+    expect(resolvePlaylistCoverPath(dir, 'playlist-1', '../cover.png')).toBe(
+      null,
+    );
+    expect(
+      writePlaylistCoverFile(dir, '../evil', path.join(sourceDir, 'ok.png')),
+    ).toBe(null);
+  });
+
+  it('returns null for a filename that does not match what is actually on disk', () => {
+    fs.writeFileSync(path.join(sourceDir, 'ok.png'), 'x');
+    writePlaylistCoverFile(dir, 'playlist-1', path.join(sourceDir, 'ok.png'));
+
+    expect(resolvePlaylistCoverPath(dir, 'playlist-1', 'cover.jpg')).toBe(null);
+  });
+
+  it('deletePlaylistCoverDir removes the whole cover directory', () => {
+    fs.writeFileSync(path.join(sourceDir, 'ok.png'), 'x');
+    writePlaylistCoverFile(dir, 'playlist-1', path.join(sourceDir, 'ok.png'));
+
+    deletePlaylistCoverDir(dir, 'playlist-1');
+
+    expect(fs.existsSync(path.join(dir, 'playlist-covers', 'playlist-1'))).toBe(
+      false,
+    );
+    expect(resolvePlaylistCoverPath(dir, 'playlist-1', 'cover.png')).toBe(null);
+  });
+});
+
+describe('writePlaylistCoverFromUrl', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-cover-url-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    vi.unstubAllGlobals();
+  });
+
+  function stubFetch(response) {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(response));
+  }
+
+  function fakeResponse({
+    ok = true,
+    status = 200,
+    contentType = 'image/jpeg',
+    body = 'image-bytes',
+  } = {}) {
+    return {
+      ok,
+      status,
+      headers: {
+        get: (name) => (name === 'content-type' ? contentType : null),
+      },
+      arrayBuffer: async () => new TextEncoder().encode(body).buffer,
+    };
+  }
+
+  it('downloads and writes the cover using the content-type extension', async () => {
+    stubFetch(fakeResponse({ contentType: 'image/png' }));
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+    );
+
+    expect(filename).toBe('cover.png');
+    expect(
+      fs.readFileSync(
+        path.join(dir, 'playlist-covers', 'album-1', 'cover.png'),
+        'utf8',
+      ),
+    ).toBe('image-bytes');
+  });
+
+  it('falls back to the URL extension when content-type is unrecognized', async () => {
+    stubFetch(fakeResponse({ contentType: 'application/octet-stream' }));
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+    );
+
+    expect(filename).toBe('cover.jpg');
+  });
+
+  it('returns null when neither content-type nor URL extension is a recognized image type', async () => {
+    stubFetch(fakeResponse({ contentType: 'application/octet-stream' }));
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://i.ytimg.com/vi/xyz/hqdefault',
+    );
+
+    expect(filename).toBe(null);
+  });
+
+  it('returns null on a non-ok response instead of throwing', async () => {
+    stubFetch(fakeResponse({ ok: false, status: 404 }));
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+    );
+
+    expect(filename).toBe(null);
+  });
+
+  it('returns null when fetch itself throws', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+    );
+
+    expect(filename).toBe(null);
+  });
+
+  it('rejects a traversal playlistId without calling fetch', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      '../evil',
+      'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+    );
+
+    expect(filename).toBe(null);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('replaces a previous cover of a different extension', async () => {
+    stubFetch(fakeResponse({ contentType: 'image/png' }));
+    await writePlaylistCoverFromUrl(dir, 'album-1', 'https://x/a.png');
+
+    stubFetch(fakeResponse({ contentType: 'image/jpeg' }));
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://x/a.jpg',
+    );
+
+    // image/jpeg maps to .jpeg here, not .jpg — IMAGE_MIME_TYPES has both
+    // extensions pointing at the same MIME type, and the reverse lookup
+    // keeps whichever is later in that map.
+    expect(filename).toBe('cover.jpeg');
+    const coverDir = path.join(dir, 'playlist-covers', 'album-1');
+    expect(fs.readdirSync(coverDir)).toEqual(['cover.jpeg']);
   });
 });
 
@@ -689,6 +923,29 @@ describe('listTracks', () => {
     expect(track.album).toBeUndefined();
     expect(track.releaseYear).toBeUndefined();
     expect(track.needsBackfill).toBe(false);
+  });
+
+  it('lists a legacy (unmigrated) track and dedupes same-stem duplicates when migration cannot move the file', () => {
+    fs.writeFileSync(path.join(dir, 'track.flac'), 'x');
+    fs.writeFileSync(path.join(dir, 'track.mp3'), 'y');
+    const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation(() => {
+      throw new Error('EPERM: file is locked');
+    });
+
+    let tracks;
+    try {
+      tracks = listTracks(dir);
+    } finally {
+      renameSpy.mockRestore();
+    }
+
+    expect(tracks).toHaveLength(1);
+    expect(tracks[0].id).toBe('track');
+    // compareFilenames sorts 'track.flac' before 'track.mp3'; the first
+    // sorted file becomes the surviving representative and the same-stem
+    // duplicate is deduped away rather than appearing as a second track.
+    expect(tracks[0].filename).toBe('track.flac');
+    expect(tracks[0].url).toBe('utawakui-media://local/track.flac');
   });
 
   it('sorts by artist first, then title, then filename fallback', () => {
@@ -1121,6 +1378,14 @@ describe('migrateTrackAlbumMetadata', () => {
     expect(index.tracks.b.album).toBeUndefined();
   });
 
+  it('does nothing and reports unchanged when the index file is corrupt JSON', () => {
+    fs.writeFileSync(path.join(dir, INDEX_FILENAME), '{ not valid json');
+
+    const changed = migrateTrackAlbumMetadata(dir, () => ({ album: 'X' }));
+
+    expect(changed).toBe(false);
+  });
+
   it('is a no-op once the index is already at the current version', () => {
     fs.writeFileSync(
       path.join(dir, INDEX_FILENAME),
@@ -1136,6 +1401,151 @@ describe('migrateTrackAlbumMetadata', () => {
 
     expect(changed).toBe(false);
     expect(loadIndex(dir).tracks.a.album).toBeUndefined();
+  });
+});
+
+describe('refreshTrackMetadataFromSidecars', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-refresh-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  function makeStructuredTrack(id) {
+    const trackDir = path.join(dir, 'tracks', id);
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    return trackDir;
+  }
+
+  it('fills in album/releaseYear from the injected reader, unlike the version-gated migration', () => {
+    makeStructuredTrack('a');
+    saveIndexEntry(dir, 'a', {
+      title: 'Track A',
+      artist: 'Artist A',
+      duration: 200,
+    });
+
+    const updated = refreshTrackMetadataFromSidecars(dir, () => ({
+      title: 'Track A',
+      artist: 'Artist A',
+      duration: 200,
+      album: 'Album A',
+      releaseYear: 2020,
+    }));
+
+    expect(updated).toBe(1);
+    expect(loadIndex(dir).tracks.a).toEqual({
+      title: 'Track A',
+      artist: 'Artist A',
+      duration: 200,
+      album: 'Album A',
+      releaseYear: 2020,
+    });
+  });
+
+  it('covers a track id that has no library.json entry at all yet', () => {
+    makeStructuredTrack('a');
+
+    const updated = refreshTrackMetadataFromSidecars(dir, () => ({
+      album: 'Album A',
+      releaseYear: 2020,
+    }));
+
+    expect(updated).toBe(1);
+    expect(loadIndex(dir).tracks.a).toEqual({
+      album: 'Album A',
+      releaseYear: 2020,
+    });
+  });
+
+  it('leaves title/artist/duration untouched even though the reader always returns those keys', () => {
+    makeStructuredTrack('a');
+    saveIndexEntry(dir, 'a', {
+      title: 'Real Title',
+      artist: 'Real Artist',
+      duration: 200,
+    });
+
+    // Simulates extractMetadataFields()'s real shape: title/artist/duration
+    // keys are always present (undefined here because this sidecar read
+    // didn't find them), only album/releaseYear are actually new info.
+    refreshTrackMetadataFromSidecars(dir, () => ({
+      title: undefined,
+      artist: undefined,
+      duration: undefined,
+      album: 'Album A',
+      releaseYear: 2020,
+    }));
+
+    expect(loadIndex(dir).tracks.a).toMatchObject({
+      title: 'Real Title',
+      artist: 'Real Artist',
+      duration: 200,
+    });
+  });
+
+  it('never writes thumbnailUrl into library.json', () => {
+    makeStructuredTrack('a');
+
+    refreshTrackMetadataFromSidecars(dir, () => ({
+      album: 'Album A',
+      releaseYear: 2020,
+      thumbnailUrl: 'https://example.com/thumb.jpg',
+    }));
+
+    expect(loadIndex(dir).tracks.a.thumbnailUrl).toBeUndefined();
+  });
+
+  it('skips a track whose sidecar has neither album nor releaseYear', () => {
+    makeStructuredTrack('a');
+    saveIndexEntry(dir, 'a', { title: 'Track A' });
+
+    const updated = refreshTrackMetadataFromSidecars(dir, () => ({
+      title: 'Track A',
+    }));
+
+    expect(updated).toBe(0);
+    expect(loadIndex(dir).tracks.a).toEqual({ title: 'Track A' });
+  });
+
+  it('is idempotent: a second run reports 0 and does not rewrite the file', () => {
+    makeStructuredTrack('a');
+    const reader = () => ({ album: 'Album A', releaseYear: 2020 });
+
+    expect(refreshTrackMetadataFromSidecars(dir, reader)).toBe(1);
+    const writtenAt = fs.statSync(path.join(dir, INDEX_FILENAME)).mtimeMs;
+
+    const second = refreshTrackMetadataFromSidecars(dir, reader);
+
+    expect(second).toBe(0);
+    expect(fs.statSync(path.join(dir, INDEX_FILENAME)).mtimeMs).toBe(writtenAt);
+  });
+
+  it('can run again after the index is already at the current version, unlike migrateTrackAlbumMetadata', () => {
+    makeStructuredTrack('a');
+    fs.writeFileSync(
+      path.join(dir, INDEX_FILENAME),
+      JSON.stringify({
+        version: 2,
+        tracks: { a: { title: 'Track A' } },
+      }),
+    );
+
+    const updated = refreshTrackMetadataFromSidecars(dir, () => ({
+      album: 'Album A',
+      releaseYear: 2020,
+    }));
+
+    expect(updated).toBe(1);
+    expect(loadIndex(dir).tracks.a).toMatchObject({
+      album: 'Album A',
+      releaseYear: 2020,
+    });
   });
 });
 
@@ -1249,6 +1659,23 @@ describe('deleteTrack', () => {
     expect(fs.existsSync(path.join(dir, 'tracks', 'abc'))).toBe(false);
   });
 
+  it('deletes a legacy (unmigrated) track by its flat file path when migration cannot move it', () => {
+    fs.writeFileSync(path.join(dir, 'legacy.mp3'), 'x');
+    const renameSpy = vi.spyOn(fs, 'renameSync').mockImplementation(() => {
+      throw new Error('EPERM: file is locked');
+    });
+
+    let deleted;
+    try {
+      deleted = deleteTrack(dir, 'legacy');
+    } finally {
+      renameSpy.mockRestore();
+    }
+
+    expect(deleted).toBe(true);
+    expect(fs.existsSync(path.join(dir, 'legacy.mp3'))).toBe(false);
+  });
+
   it('removes the matching .separated/<trackId> directory too', () => {
     fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
     const sepDir = path.join(dir, '.separated', 'abc');
@@ -1332,6 +1759,38 @@ describe('runBackfillPass', () => {
 
   afterEach(() => {
     fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('reports "already running" and skips a second concurrent pass', async () => {
+    fs.writeFileSync(path.join(dir, 'dQw4w9WgXcQ.mp3'), 'x');
+    let releaseFirst;
+    const fetchMetadata = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          releaseFirst = () =>
+            resolve({ title: 'Title', artist: 'Artist', duration: 100 });
+        }),
+    );
+    const onStatus = vi.fn();
+
+    const firstPass = runBackfillPass(dir, listTracks(dir), fetchMetadata);
+    // The first pass is now in flight (backfillInProgress === true).
+    const secondResult = await runBackfillPass(
+      dir,
+      listTracks(dir),
+      fetchMetadata,
+      onStatus,
+    );
+
+    expect(secondResult).toBe(false);
+    expect(onStatus).toHaveBeenCalledWith({
+      stage: 'running',
+      isRunning: true,
+    });
+    expect(fetchMetadata).toHaveBeenCalledTimes(1);
+
+    releaseFirst();
+    await firstPass;
   });
 
   it('only queries ids that look like real YouTube video ids', async () => {

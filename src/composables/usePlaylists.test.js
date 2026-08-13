@@ -14,6 +14,9 @@ let reorderPlaylistMock;
 let setPlaylistTracksMock;
 let upsertAlbumMock;
 let setPlaylistKindMock;
+let setPlaylistDescriptionMock;
+let choosePlaylistCoverMock;
+let clearPlaylistCoverMock;
 
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -39,6 +42,9 @@ beforeEach(() => {
   setPlaylistTracksMock = vi.fn();
   upsertAlbumMock = vi.fn();
   setPlaylistKindMock = vi.fn();
+  setPlaylistDescriptionMock = vi.fn();
+  choosePlaylistCoverMock = vi.fn();
+  clearPlaylistCoverMock = vi.fn();
   vi.stubGlobal('window', {
     Utawakui: {
       listPlaylists: listPlaylistsMock,
@@ -49,6 +55,9 @@ beforeEach(() => {
       setPlaylistTracks: setPlaylistTracksMock,
       upsertAlbum: upsertAlbumMock,
       setPlaylistKind: setPlaylistKindMock,
+      setPlaylistDescription: setPlaylistDescriptionMock,
+      choosePlaylistCover: choosePlaylistCoverMock,
+      clearPlaylistCover: clearPlaylistCoverMock,
       onLibraryUpdated: (callback) => {
         libraryUpdatedCallback = callback;
       },
@@ -352,6 +361,39 @@ describe('reorderPlaylist', () => {
     expect(reorderPlaylistMock).not.toHaveBeenCalled();
   });
 
+  it('is a no-op when the dragged or target id is not a known playlist', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+    ]);
+    const { reorderPlaylist, state } = await loadPlaylists();
+
+    reorderPlaylist('ghost', 'p1', 'before');
+    reorderPlaylist('p1', 'ghost', 'before');
+    await flushMicrotasks();
+
+    expect(reorderPlaylistMock).not.toHaveBeenCalled();
+    expect(state.playlists.map((playlist) => playlist.id)).toEqual([
+      'p1',
+      'p2',
+    ]);
+  });
+
+  it('is a no-op when the requested position leaves the order unchanged', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'First', trackIds: [] },
+      { id: 'p2', name: 'Second', trackIds: [] },
+    ]);
+    const { reorderPlaylist } = await loadPlaylists();
+
+    // 'p1' is already immediately before 'p2' — moving it "before p2" again
+    // produces the same order.
+    reorderPlaylist('p1', 'p2', 'before');
+    await flushMicrotasks();
+
+    expect(reorderPlaylistMock).not.toHaveBeenCalled();
+  });
+
   it('shows a restart hint instead of throwing when the preload API is stale', async () => {
     listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'First', trackIds: [] },
@@ -506,6 +548,104 @@ describe('mutation chain resilience', () => {
   });
 });
 
+describe('rename', () => {
+  it('calls the preload API and applies the returned array', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'Old Name', trackIds: [] },
+    ]);
+    renamePlaylistMock.mockResolvedValueOnce([
+      { id: 'p1', name: 'New Name', trackIds: [] },
+    ]);
+    const { rename, state } = await loadPlaylists();
+
+    await rename('p1', 'New Name');
+
+    expect(renamePlaylistMock).toHaveBeenCalledWith('p1', 'New Name');
+    expect(state.playlists[0].name).toBe('New Name');
+  });
+
+  it('records a user-visible error instead of throwing when it fails', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'Old Name', trackIds: [] },
+    ]);
+    renamePlaylistMock.mockRejectedValueOnce(new Error('disk full'));
+    const { rename, state } = await loadPlaylists();
+
+    await rename('p1', 'New Name');
+
+    expect(state.error).toBe('重新命名歌單失敗: disk full');
+  });
+});
+
+describe('remove', () => {
+  it('calls the preload API and applies the returned array', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    deletePlaylistMock.mockResolvedValueOnce([]);
+    const { remove, state } = await loadPlaylists();
+
+    await remove('p1');
+
+    expect(deletePlaylistMock).toHaveBeenCalledWith('p1');
+    expect(state.playlists).toEqual([]);
+  });
+
+  it('records a user-visible error instead of throwing when it fails', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    deletePlaylistMock.mockRejectedValueOnce(new Error('disk full'));
+    const { remove, state } = await loadPlaylists();
+
+    await remove('p1');
+
+    expect(state.error).toBe('刪除歌單失敗: disk full');
+  });
+});
+
+describe('removeTrack', () => {
+  it('is a no-op (no IPC call) when the track is not a member', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1'] },
+    ]);
+    const { removeTrack } = await loadPlaylists();
+
+    removeTrack('p1', 'ghost');
+    await flushMicrotasks();
+
+    expect(setPlaylistTracksMock).not.toHaveBeenCalled();
+  });
+
+  it('removes an existing track and persists it', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1', 't2'] },
+    ]);
+    setPlaylistTracksMock.mockResolvedValueOnce([
+      { id: 'p1', name: 'A', trackIds: ['t2'] },
+    ]);
+    const { removeTrack, state } = await loadPlaylists();
+
+    removeTrack('p1', 't1');
+    await flushMicrotasks();
+
+    expect(setPlaylistTracksMock).toHaveBeenCalledWith('p1', ['t2']);
+    expect(state.playlists[0].trackIds).toEqual(['t2']);
+  });
+});
+
+describe('actions are inert without the preload bridge', () => {
+  it('resolves without throwing and leaves state untouched when window.Utawakui is unavailable', async () => {
+    vi.stubGlobal('window', {});
+    const { rename, state } = await loadPlaylists();
+
+    await expect(rename('p1', 'New Name')).resolves.toBeUndefined();
+
+    expect(state.playlists).toEqual([]);
+    expect(state.error).toBe(null);
+  });
+});
+
 describe('create', () => {
   it('records a user-visible error instead of throwing when creation fails', async () => {
     createPlaylistMock.mockRejectedValueOnce(new Error('disk full'));
@@ -514,6 +654,15 @@ describe('create', () => {
     await expect(create('Encore')).resolves.toBeNull();
 
     expect(state.error).toBe('建立歌單失敗: disk full');
+  });
+
+  it('stringifies a non-Error rejection instead of crashing', async () => {
+    createPlaylistMock.mockRejectedValueOnce('a plain string rejection');
+    const { create, state } = await loadPlaylists();
+
+    await expect(create('Encore')).resolves.toBeNull();
+
+    expect(state.error).toBe('建立歌單失敗: a plain string rejection');
   });
 
   it('selects the newly created playlist', async () => {
@@ -579,6 +728,93 @@ describe('setKind', () => {
     await setKind('p1', 'album');
 
     expect(state.error).toBe('轉換歌單類型失敗: disk full');
+  });
+});
+
+describe('setDescription', () => {
+  it('calls the preload API and applies the returned array', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', description: '', trackIds: [] },
+    ]);
+    setPlaylistDescriptionMock.mockResolvedValueOnce([
+      { id: 'p1', name: 'A', description: '說明', trackIds: [] },
+    ]);
+    const { setDescription, state } = await loadPlaylists();
+
+    await setDescription('p1', '說明');
+
+    expect(setPlaylistDescriptionMock).toHaveBeenCalledWith('p1', '說明');
+    expect(state.playlists[0].description).toBe('說明');
+  });
+
+  it('records a user-visible error instead of throwing when it fails', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', description: '', trackIds: [] },
+    ]);
+    setPlaylistDescriptionMock.mockRejectedValueOnce(new Error('disk full'));
+    const { setDescription, state } = await loadPlaylists();
+
+    await setDescription('p1', '說明');
+
+    expect(state.error).toBe('更新歌單說明失敗: disk full');
+  });
+});
+
+describe('setCover / clearCover', () => {
+  it('setCover calls choosePlaylistCover and applies the returned array', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    choosePlaylistCoverMock.mockResolvedValueOnce([
+      {
+        id: 'p1',
+        name: 'A',
+        coverImage: 'cover.jpg',
+        coverUrl: 'utawakui-media://playlist-cover/p1/cover.jpg',
+        trackIds: [],
+      },
+    ]);
+    const { setCover, state } = await loadPlaylists();
+
+    await setCover('p1');
+
+    expect(choosePlaylistCoverMock).toHaveBeenCalledWith('p1');
+    expect(state.playlists[0].coverUrl).toBe(
+      'utawakui-media://playlist-cover/p1/cover.jpg',
+    );
+  });
+
+  it('clearCover calls clearPlaylistCover and applies the returned array', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      {
+        id: 'p1',
+        name: 'A',
+        coverImage: 'cover.jpg',
+        coverUrl: 'utawakui-media://playlist-cover/p1/cover.jpg',
+        trackIds: [],
+      },
+    ]);
+    clearPlaylistCoverMock.mockResolvedValueOnce([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    const { clearCover, state } = await loadPlaylists();
+
+    await clearCover('p1');
+
+    expect(clearPlaylistCoverMock).toHaveBeenCalledWith('p1');
+    expect(state.playlists[0].coverUrl).toBeUndefined();
+  });
+
+  it('setCover records a user-visible error instead of throwing when it fails', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: [] },
+    ]);
+    choosePlaylistCoverMock.mockRejectedValueOnce(new Error('disk full'));
+    const { setCover, state } = await loadPlaylists();
+
+    await setCover('p1');
+
+    expect(state.error).toBe('設定封面失敗: disk full');
   });
 });
 

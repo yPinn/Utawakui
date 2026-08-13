@@ -6,6 +6,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 // test a fresh module instance, same approach as usePlaylists.test.js.
 let libraryUpdatedCallback;
 let listTracksMock;
+let listPlaylistsMock;
+let refreshLibraryMetadataMock;
 
 function flushMicrotasks() {
   return new Promise((resolve) => setTimeout(resolve, 0));
@@ -14,9 +16,16 @@ function flushMicrotasks() {
 beforeEach(() => {
   vi.resetModules();
   listTracksMock = vi.fn().mockResolvedValue([]);
+  // useLibrary.js imports usePlaylists.js (for the album-cover-override
+  // enrichment below), which independently fetches on module load — stub it
+  // too so that fetch resolves instead of throwing on a missing mock.
+  listPlaylistsMock = vi.fn().mockResolvedValue([]);
+  refreshLibraryMetadataMock = vi.fn().mockResolvedValue({ updated: 0 });
   vi.stubGlobal('window', {
     Utawakui: {
       listTracks: listTracksMock,
+      listPlaylists: listPlaylistsMock,
+      refreshLibraryMetadata: refreshLibraryMetadataMock,
       onLibraryUpdated: (callback) => {
         libraryUpdatedCallback = callback;
         return vi.fn();
@@ -66,6 +75,91 @@ describe('initial load', () => {
 
     expect(state.error).toBe(null);
     expect(state.tracks).toEqual([{ id: 't1', title: 'Track 1' }]);
+  });
+});
+
+describe('album cover override', () => {
+  it('replaces a member track thumbnailUrl with the album cover', async () => {
+    listTracksMock.mockResolvedValue([
+      { id: 't1', title: 'Track 1', thumbnailUrl: 'own-thumb.jpg' },
+    ]);
+    listPlaylistsMock.mockResolvedValue([
+      {
+        id: 'album-1',
+        kind: 'album',
+        coverUrl: 'utawakui-media://playlist-cover/album-1/cover.jpg',
+        trackIds: ['t1'],
+      },
+    ]);
+    const { state } = await loadLibrary();
+    await flushMicrotasks();
+
+    expect(state.tracks[0].thumbnailUrl).toBe(
+      'utawakui-media://playlist-cover/album-1/cover.jpg',
+    );
+  });
+
+  it('leaves tracks alone when the containing collection is a playlist, not an album', async () => {
+    listTracksMock.mockResolvedValue([
+      { id: 't1', title: 'Track 1', thumbnailUrl: 'own-thumb.jpg' },
+    ]);
+    listPlaylistsMock.mockResolvedValue([
+      {
+        id: 'p1',
+        kind: 'playlist',
+        coverUrl: 'utawakui-media://playlist-cover/p1/cover.jpg',
+        trackIds: ['t1'],
+      },
+    ]);
+    const { state } = await loadLibrary();
+    await flushMicrotasks();
+
+    expect(state.tracks[0].thumbnailUrl).toBe('own-thumb.jpg');
+  });
+
+  it('leaves tracks alone when the album has no custom cover', async () => {
+    listTracksMock.mockResolvedValue([
+      { id: 't1', title: 'Track 1', thumbnailUrl: 'own-thumb.jpg' },
+    ]);
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'album-1', kind: 'album', trackIds: ['t1'] },
+    ]);
+    const { state } = await loadLibrary();
+    await flushMicrotasks();
+
+    expect(state.tracks[0].thumbnailUrl).toBe('own-thumb.jpg');
+  });
+
+  it('tracksById reflects the same enriched thumbnailUrl', async () => {
+    listTracksMock.mockResolvedValue([
+      { id: 't1', title: 'Track 1', thumbnailUrl: 'own-thumb.jpg' },
+    ]);
+    listPlaylistsMock.mockResolvedValue([
+      {
+        id: 'album-1',
+        kind: 'album',
+        coverUrl: 'utawakui-media://playlist-cover/album-1/cover.jpg',
+        trackIds: ['t1'],
+      },
+    ]);
+    const { tracksById } = await loadLibrary();
+    await flushMicrotasks();
+
+    expect(tracksById.value.get('t1').thumbnailUrl).toBe(
+      'utawakui-media://playlist-cover/album-1/cover.jpg',
+    );
+  });
+});
+
+describe('refreshMetadata', () => {
+  it('calls the refreshLibraryMetadata bridge and returns the updated count', async () => {
+    refreshLibraryMetadataMock.mockResolvedValue({ updated: 95 });
+    const { refreshMetadata } = await loadLibrary();
+
+    const updated = await refreshMetadata();
+
+    expect(refreshLibraryMetadataMock).toHaveBeenCalledTimes(1);
+    expect(updated).toBe(95);
   });
 });
 

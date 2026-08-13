@@ -3,14 +3,15 @@
 // row markup was identical between them before this extraction; drag/drop
 // is playlist-only, so those props/events simply go unused (default false)
 // for album rows instead of forking the template.
-import { Music2, Pause, Play } from '@lucide/vue';
+import { Pause, Play } from '@lucide/vue';
 import { ICON_SIZE } from '../../constants/ui.js';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 defineProps({
   playlist: { type: Object, required: true },
-  coverTrack: { type: Object, default: undefined },
+  coverUrl: { type: String, default: '' },
+  coverTracks: { type: Array, default: () => [] },
   subtitle: { type: String, required: true },
   active: { type: Boolean, default: false },
   isActiveSource: { type: Boolean, default: false },
@@ -54,15 +55,16 @@ const emit = defineEmits([
     @drop="emit('drop', $event)"
     @dragend="emit('dragEnd')"
   >
-    <UiTrackThumb
+    <UiCollageThumb
       class="playlist-sidebar-row__thumb"
-      :track="coverTrack"
+      :cover-url="coverUrl"
+      :tracks="coverTracks"
+      :allow-collage="playlist.kind !== 'album'"
       :size="40"
       color="var(--ui-color-text-muted)"
       :uppercase="false"
       :decorative="false"
     >
-      <Music2 :size="ICON_SIZE" aria-hidden="true" />
       <template #overlay>
         <button
           type="button"
@@ -88,7 +90,7 @@ const emit = defineEmits([
           />
         </button>
       </template>
-    </UiTrackThumb>
+    </UiCollageThumb>
     <span class="playlist-sidebar-row__info">
       <UiMarqueeText :text="playlist.name || '(未命名歌單)'" />
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
@@ -188,8 +190,13 @@ const emit = defineEmits([
   transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
-.playlist-sidebar-row:hover .playlist-sidebar-row__play,
-.playlist-sidebar-row:focus-within .playlist-sidebar-row__play,
+/* :focus-visible, not :focus-within — this row is itself a <button>, and
+   mouse-clicking it to select the playlist leaves it focused. :focus-within
+   would keep the play button visibly revealed after every such click even
+   though nothing is playing; :focus-visible only matches keyboard-driven
+   focus, which is the actual accessibility case this is for. */
+.playlist-sidebar-row__thumb:hover .playlist-sidebar-row__play,
+.playlist-sidebar-row:focus-visible .playlist-sidebar-row__play,
 .playlist-sidebar-row__play--active {
   opacity: 1;
 }

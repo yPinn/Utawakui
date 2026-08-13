@@ -12,6 +12,7 @@ const PLAYLISTS_VERSION = 2;
 
 // Sanity guard for corrupted files, not a product limit.
 const MAX_NAME_LENGTH = 200;
+const MAX_DESCRIPTION_LENGTH = 500;
 const MAX_PLAYLISTS = 500;
 const MAX_TRACKS_PER_PLAYLIST = 5000;
 const DEFAULT_PLAYLIST_NAME_PREFIX = '播放清單 #';
@@ -39,6 +40,20 @@ function sanitizePlaylist(entry) {
 
   const name =
     typeof entry.name === 'string' ? entry.name.slice(0, MAX_NAME_LENGTH) : '';
+
+  const description =
+    typeof entry.description === 'string'
+      ? entry.description.slice(0, MAX_DESCRIPTION_LENGTH)
+      : '';
+
+  // Bare filename (e.g. 'cover.jpg') written by library.js's
+  // writePlaylistCoverFile — never an absolute path, same "derive the URL at
+  // the boundary" rule as track thumbnails. Absent means "no custom cover,
+  // fall back to the derived track-thumbnail collage."
+  const coverImage =
+    typeof entry.coverImage === 'string' && entry.coverImage.length > 0
+      ? entry.coverImage
+      : undefined;
 
   const rawTrackIds = Array.isArray(entry.trackIds) ? entry.trackIds : [];
   const trackIds = [
@@ -82,6 +97,8 @@ function sanitizePlaylist(entry) {
     name,
     kind,
     ...(source ? { source } : {}),
+    ...(coverImage ? { coverImage } : {}),
+    description,
     trackIds,
     addedAt,
   };
@@ -275,6 +292,51 @@ function renamePlaylist(dir, id, name) {
   return next;
 }
 
+function setPlaylistDescription(dir, id, description) {
+  const playlists = loadPlaylists(dir);
+  const index = playlists.findIndex((p) => p.id === id);
+  if (index === -1) return playlists;
+
+  const next = [...playlists];
+  next[index] = {
+    ...next[index],
+    description:
+      typeof description === 'string'
+        ? description.slice(0, MAX_DESCRIPTION_LENGTH)
+        : '',
+  };
+  writePlaylists(dir, next);
+  return next;
+}
+
+// filename is a bare basename like 'cover.jpg' (see library.js's
+// writePlaylistCoverFile, the only writer of that directory), or null/falsy
+// to clear back to the derived track-thumbnail collage.
+function setPlaylistCover(dir, id, filename) {
+  const playlists = loadPlaylists(dir);
+  const index = playlists.findIndex((p) => p.id === id);
+  if (index === -1) return playlists;
+
+  const next = [...playlists];
+  const previous = next[index];
+  if (filename) {
+    next[index] = { ...previous, coverImage: filename };
+  } else {
+    const updated = { ...previous };
+    delete updated.coverImage;
+    next[index] = updated;
+  }
+  writePlaylists(dir, next);
+  return next;
+}
+
+// Pure string builder, no filesystem access — filename must already be a
+// validated bare basename (see library.js's resolvePlaylistCoverPath, the
+// read-side counterpart that re-checks it against what's actually on disk).
+function buildPlaylistCoverUrl(playlistId, filename) {
+  return `utawakui-media://playlist-cover/${encodeURIComponent(playlistId)}/${encodeURIComponent(filename)}`;
+}
+
 function deletePlaylist(dir, id) {
   const playlists = loadPlaylists(dir);
   if (!playlists.some((p) => p.id === id)) return playlists;
@@ -429,6 +491,7 @@ function migratePlaylistKinds(dir, tracksById, classify) {
 }
 
 module.exports = {
+  buildPlaylistCoverUrl,
   createPlaylist,
   deletePlaylist,
   loadPlaylists,
@@ -437,6 +500,8 @@ module.exports = {
   reorderPlaylists,
   removeTrackFromAllPlaylists,
   renamePlaylist,
+  setPlaylistCover,
+  setPlaylistDescription,
   setPlaylistKind,
   setPlaylistTracks,
   upsertAlbum,

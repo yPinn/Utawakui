@@ -12,6 +12,9 @@ import {
   removeTrackFromAllPlaylists,
   upsertAlbum,
   setPlaylistKind,
+  setPlaylistDescription,
+  setPlaylistCover,
+  buildPlaylistCoverUrl,
   migratePlaylistKinds,
   PLAYLISTS_FILENAME,
 } from './playlists.js';
@@ -92,6 +95,7 @@ describe('loadPlaylists', () => {
         id: 'a',
         name: 'Good',
         kind: 'playlist',
+        description: '',
         trackIds: ['t1'],
         addedAt: {},
       },
@@ -142,6 +146,47 @@ describe('loadPlaylists', () => {
     const [playlist] = loadPlaylists(dir);
     expect(playlist.kind).toBe('album');
     expect(playlist.source).toEqual({ platform: 'youtube', id: 'OLAK5uy_x' });
+  });
+
+  it('preserves a valid coverImage and description, capping description length', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        playlists: [
+          {
+            id: 'a',
+            name: 'X',
+            coverImage: 'cover.jpg',
+            description: 'x'.repeat(600),
+            trackIds: [],
+          },
+        ],
+      }),
+    );
+
+    const [playlist] = loadPlaylists(dir);
+    expect(playlist.coverImage).toBe('cover.jpg');
+    expect(playlist.description).toHaveLength(500);
+  });
+
+  it('drops a non-string or empty coverImage instead of keeping it', () => {
+    const filePath = path.join(dir, PLAYLISTS_FILENAME);
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify({
+        version: 2,
+        playlists: [
+          { id: 'a', name: 'A', coverImage: '', trackIds: [] },
+          { id: 'b', name: 'B', coverImage: 42, trackIds: [] },
+        ],
+      }),
+    );
+
+    const [a, b] = loadPlaylists(dir);
+    expect(a.coverImage).toBeUndefined();
+    expect(b.coverImage).toBeUndefined();
   });
 
   it('drops a malformed source instead of keeping a partial object', () => {
@@ -317,6 +362,84 @@ describe('renamePlaylist', () => {
     const before = loadPlaylists(dir);
     const result = renamePlaylist(dir, 'unknown-id', 'X');
     expect(result).toEqual(before);
+  });
+});
+
+describe('setPlaylistDescription', () => {
+  let dir;
+  let id;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+    id = createPlaylist(dir, 'Original')[0].id;
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('sets and persists a description', () => {
+    const result = setPlaylistDescription(dir, id, '這是說明文字');
+    expect(result[0].description).toBe('這是說明文字');
+    expect(loadPlaylists(dir)[0].description).toBe('這是說明文字');
+  });
+
+  it('trims a non-string description to empty instead of throwing', () => {
+    const result = setPlaylistDescription(dir, id, null);
+    expect(result[0].description).toBe('');
+  });
+
+  it('caps description length at 500 characters', () => {
+    const long = 'x'.repeat(600);
+    const result = setPlaylistDescription(dir, id, long);
+    expect(result[0].description).toHaveLength(500);
+  });
+
+  it('returns the list unchanged for an unknown id, without throwing', () => {
+    const before = loadPlaylists(dir);
+    const result = setPlaylistDescription(dir, 'unknown-id', 'X');
+    expect(result).toEqual(before);
+  });
+});
+
+describe('setPlaylistCover', () => {
+  let dir;
+  let id;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-playlists-test-'));
+    id = createPlaylist(dir, 'Original')[0].id;
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('sets a coverImage filename and persists it', () => {
+    const result = setPlaylistCover(dir, id, 'cover.jpg');
+    expect(result[0].coverImage).toBe('cover.jpg');
+    expect(loadPlaylists(dir)[0].coverImage).toBe('cover.jpg');
+  });
+
+  it('clears coverImage back to undefined when passed null', () => {
+    setPlaylistCover(dir, id, 'cover.jpg');
+    const result = setPlaylistCover(dir, id, null);
+    expect(result[0].coverImage).toBeUndefined();
+    expect(loadPlaylists(dir)[0].coverImage).toBeUndefined();
+  });
+
+  it('returns the list unchanged for an unknown id, without throwing', () => {
+    const before = loadPlaylists(dir);
+    const result = setPlaylistCover(dir, 'unknown-id', 'cover.jpg');
+    expect(result).toEqual(before);
+  });
+});
+
+describe('buildPlaylistCoverUrl', () => {
+  it('builds a utawakui-media:// URL with both segments encoded', () => {
+    expect(buildPlaylistCoverUrl('id with spaces', 'cover.jpg')).toBe(
+      'utawakui-media://playlist-cover/id%20with%20spaces/cover.jpg',
+    );
   });
 });
 

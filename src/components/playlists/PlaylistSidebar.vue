@@ -40,10 +40,15 @@ const { state: queueState, setQueue } = usePlaybackQueue();
 
 const emit = defineEmits(['playlistAction']);
 
-// First member thumbnail stands in as the playlist cover.
-function coverTrackFor(playlist) {
-  const firstTrackId = playlist.trackIds[0];
-  return firstTrackId ? props.tracksById.get(firstTrackId) : undefined;
+// A custom cover (album's own official artwork, or a playlist's manually
+// uploaded one — see SetlistPlaylistHeader.vue) always wins; otherwise the
+// first 4 member tracks tile into the same UiCollageThumb collage the hero
+// shows, so the two can never show a different image.
+function coverTracksFor(playlist) {
+  return playlist.trackIds
+    .slice(0, 4)
+    .map((id) => props.tracksById.get(id))
+    .filter(Boolean);
 }
 
 function memberTracksFor(playlist) {
@@ -332,7 +337,8 @@ function startDrag(playlist, event) {
       v-for="playlist in playlistItems"
       :key="playlist.id"
       :playlist="playlist"
-      :cover-track="coverTrackFor(playlist)"
+      :cover-url="playlist.coverUrl"
+      :cover-tracks="coverTracksFor(playlist)"
       :subtitle="subtitleFor(playlist)"
       :active="playlist.id === state.selectedId"
       :is-active-source="isActiveSource(playlist)"
@@ -364,7 +370,8 @@ function startDrag(playlist, event) {
       v-for="playlist in albumItems"
       :key="playlist.id"
       :playlist="playlist"
-      :cover-track="coverTrackFor(playlist)"
+      :cover-url="playlist.coverUrl"
+      :cover-tracks="coverTracksFor(playlist)"
       :subtitle="subtitleFor(playlist)"
       :active="playlist.id === state.selectedId"
       :is-active-source="isActiveSource(playlist)"

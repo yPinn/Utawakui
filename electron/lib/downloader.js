@@ -954,6 +954,12 @@ async function fetchPlaylist(playlistId, options = {}) {
   const entries = Array.isArray(info.entries) ? info.entries : [];
   return {
     title: typeof info.title === 'string' ? info.title : undefined,
+    // The playlist/album's own artwork, not any individual entry's —
+    // present even under flatPlaylist since it comes from the playlist
+    // page's own info, not from resolving each entry. extractThumbnailUrl's
+    // video-id fallback branch is inert here since a playlist id never
+    // matches VIDEO_ID_RE.
+    thumbnailUrl: extractThumbnailUrl(info),
     entries: entries
       .filter((entry) => typeof entry.id === 'string')
       .map((entry) => {

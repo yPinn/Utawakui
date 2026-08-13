@@ -29,11 +29,14 @@ const {
 const { resolveYoutubeImportSource } = require('./lib/importResolver');
 const {
   buildRangeResponse,
+  deletePlaylistCoverDir,
   deleteTrack,
   getTrackLyricsState,
   listTracks,
   migrateTrackAlbumMetadata,
   readTrackLyrics,
+  refreshTrackMetadataFromSidecars,
+  resolvePlaylistCoverPath,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
   resolveTrackDir,
@@ -44,8 +47,11 @@ const {
   saveIndexEntry,
   saveTrackLyricsText,
   selectSeparationResult,
+  writePlaylistCoverFile,
+  writePlaylistCoverFromUrl,
 } = require('./lib/library');
 const {
+  buildPlaylistCoverUrl,
   createPlaylist,
   deletePlaylist,
   loadPlaylists,
@@ -53,6 +59,8 @@ const {
   reorderPlaylists,
   removeTrackFromAllPlaylists,
   renamePlaylist,
+  setPlaylistCover,
+  setPlaylistDescription,
   setPlaylistKind,
   setPlaylistTracks,
   upsertAlbum,
@@ -102,6 +110,22 @@ function resolveDownloadDir(config) {
   // OS Music folder, not userData — userData is Chromium's internal engine
   // state; downloads are user content the user may want to browse directly.
   return config.downloadDir || path.join(app.getPath('music'), 'Utawakui');
+}
+
+// Every playlists:* IPC handler pipes its result through this before
+// returning — coverImage is a bare filename in playlists.json (see
+// playlists.js's sanitizePlaylist comment), and the full utawakui-media://
+// URL is derived here at the IPC boundary rather than persisted, same rule
+// listTracks() already follows for track thumbnails.
+function withCoverUrls(playlists) {
+  return playlists.map((playlist) =>
+    playlist.coverImage
+      ? {
+          ...playlist,
+          coverUrl: buildPlaylistCoverUrl(playlist.id, playlist.coverImage),
+        }
+      : playlist,
+  );
 }
 
 function quoteWindowsCommandArg(value) {
@@ -216,7 +240,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 650,
     // Keep in sync with --ui-color-canvas in src/styles/tokens.css.
-    backgroundColor: '#20222a',
+    backgroundColor: '#1f2328',
     title: APP_NAME,
     icon: iconPath,
     show: false,
@@ -319,6 +343,12 @@ if (!gotSingleInstanceLock) {
           const [trackId, assetFilename] = segments;
           filePath = resolveTrackAssetPath(dir, trackId, assetFilename);
         }
+      } else if (url.hostname === 'playlist-cover') {
+        const [playlistId, coverFilename] = url.pathname
+          .split('/')
+          .filter(Boolean)
+          .map(decodeURIComponent);
+        filePath = resolvePlaylistCoverPath(dir, playlistId, coverFilename);
       } else {
         const filename = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
         filePath = resolveTrackPath(dir, filename);
@@ -366,6 +396,25 @@ if (!gotSingleInstanceLock) {
       return tracks;
     });
 
+    // Manual counterpart to the automatic startup backfill above — that
+    // pass deliberately skips album/releaseYear to avoid retrying tracks
+    // with no such metadata on every launch forever (see library.js's
+    // refreshTrackMetadataFromSidecars comment). This is user-triggered,
+    // reads only sidecars already on disk (no network), and can be run
+    // again any time — e.g. after a track was downloaded through a
+    // yt:download-audio build that didn't yet persist these two fields.
+    ipcMain.handle('library:refresh-metadata', async () => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const updated = refreshTrackMetadataFromSidecars(
+        dir,
+        readTrackInfoMetadata,
+      );
+      if (updated > 0 && mainWindow) {
+        mainWindow.webContents.send('library:updated');
+      }
+      return { updated };
+    });
+
     ipcMain.handle('library:delete-track', async (event, trackId) => {
       const dir = resolveDownloadDir(cachedConfig);
       const deleted = deleteTrack(dir, trackId);
@@ -406,29 +455,37 @@ if (!gotSingleInstanceLock) {
     // Every mutation resolves to the full playlist array so the renderer
     // can replace its state directly instead of a separate refetch.
     ipcMain.handle('playlists:list', async () => {
-      return loadPlaylists(resolveDownloadDir(cachedConfig));
+      return withCoverUrls(loadPlaylists(resolveDownloadDir(cachedConfig)));
     });
 
     ipcMain.handle('playlists:create', async (event, name) => {
-      return createPlaylist(resolveDownloadDir(cachedConfig), name);
+      return withCoverUrls(
+        createPlaylist(resolveDownloadDir(cachedConfig), name),
+      );
     });
 
     ipcMain.handle('playlists:rename', async (event, id, name) => {
-      return renamePlaylist(resolveDownloadDir(cachedConfig), id, name);
+      return withCoverUrls(
+        renamePlaylist(resolveDownloadDir(cachedConfig), id, name),
+      );
     });
 
     ipcMain.handle('playlists:delete', async (event, id) => {
-      return deletePlaylist(resolveDownloadDir(cachedConfig), id);
+      const dir = resolveDownloadDir(cachedConfig);
+      deletePlaylistCoverDir(dir, id);
+      return withCoverUrls(deletePlaylist(dir, id));
     });
 
     ipcMain.handle(
       'playlists:reorder',
       async (event, draggedId, targetId, position) => {
-        return reorderPlaylists(
-          resolveDownloadDir(cachedConfig),
-          draggedId,
-          targetId,
-          position,
+        return withCoverUrls(
+          reorderPlaylists(
+            resolveDownloadDir(cachedConfig),
+            draggedId,
+            targetId,
+            position,
+          ),
         );
       },
     );
@@ -442,20 +499,85 @@ if (!gotSingleInstanceLock) {
       const dir = resolveDownloadDir(cachedConfig);
       const playlists = loadPlaylists(dir);
       const target = playlists.find((p) => p.id === id);
-      if (target?.kind === 'album') return playlists;
-      return setPlaylistTracks(dir, id, trackIds);
+      if (target?.kind === 'album') return withCoverUrls(playlists);
+      return withCoverUrls(setPlaylistTracks(dir, id, trackIds));
     });
 
     ipcMain.handle('playlists:upsert-album', async (event, payload) => {
-      return upsertAlbum(resolveDownloadDir(cachedConfig), {
+      const dir = resolveDownloadDir(cachedConfig);
+      const playlists = upsertAlbum(dir, {
         name: payload?.name,
         source: payload?.source,
         trackIds: payload?.trackIds,
       });
+
+      const album = playlists.find(
+        (p) =>
+          p.kind === 'album' &&
+          p.source?.platform === payload?.source?.platform &&
+          p.source?.id === payload?.source?.id,
+      );
+      // Read-only, automatic album cover from the source's own artwork (see
+      // fetchPlaylist's thumbnailUrl) — skipped once a cover is already
+      // recorded so re-syncing an already-imported album doesn't re-fetch
+      // its artwork on every retry.
+      if (album && !album.coverImage && payload?.thumbnailUrl) {
+        const filename = await writePlaylistCoverFromUrl(
+          dir,
+          album.id,
+          payload.thumbnailUrl,
+        );
+        if (filename) {
+          return withCoverUrls(setPlaylistCover(dir, album.id, filename));
+        }
+      }
+
+      return withCoverUrls(playlists);
     });
 
     ipcMain.handle('playlists:set-kind', async (event, id, kind) => {
-      return setPlaylistKind(resolveDownloadDir(cachedConfig), id, kind);
+      return withCoverUrls(
+        setPlaylistKind(resolveDownloadDir(cachedConfig), id, kind),
+      );
+    });
+
+    ipcMain.handle(
+      'playlists:set-description',
+      async (event, id, description) => {
+        return withCoverUrls(
+          setPlaylistDescription(
+            resolveDownloadDir(cachedConfig),
+            id,
+            description,
+          ),
+        );
+      },
+    );
+
+    // Native file picker — same pattern as config:choose-download-dir. The
+    // dialog itself is the image picker; no in-app cropper/uploader UI.
+    ipcMain.handle('playlists:choose-cover', async (event, id) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      const playlists = loadPlaylists(dir);
+      if (!playlists.some((p) => p.id === id)) return withCoverUrls(playlists);
+
+      const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile'],
+        filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
+      });
+      if (result.canceled || !result.filePaths[0]) {
+        return withCoverUrls(playlists);
+      }
+
+      const filename = writePlaylistCoverFile(dir, id, result.filePaths[0]);
+      if (!filename) return withCoverUrls(playlists);
+      return withCoverUrls(setPlaylistCover(dir, id, filename));
+    });
+
+    ipcMain.handle('playlists:clear-cover', async (event, id) => {
+      const dir = resolveDownloadDir(cachedConfig);
+      deletePlaylistCoverDir(dir, id);
+      return withCoverUrls(setPlaylistCover(dir, id, null));
     });
 
     ipcMain.handle('yt:fetch-playlist', async (event, input) => {
@@ -463,9 +585,10 @@ if (!gotSingleInstanceLock) {
       if (!playlistId) return null; // not a playlist URL — not an error
       const dir = resolveDownloadDir(cachedConfig);
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      const { title, entries } = await fetchPlaylist(playlistId);
+      const { title, thumbnailUrl, entries } = await fetchPlaylist(playlistId);
       return {
         title,
+        thumbnailUrl,
         kind: classifyPlaylistKind(playlistId),
         source: { platform: 'youtube', id: playlistId },
         entries: entries.map((entry) => ({
@@ -512,6 +635,8 @@ if (!gotSingleInstanceLock) {
             title: result.title,
             artist: result.artist,
             duration: result.duration,
+            album: result.album,
+            releaseYear: result.releaseYear,
           });
         } catch {
           // The download itself succeeded and the file is playable — a

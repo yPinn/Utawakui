@@ -22,6 +22,10 @@ const SORT_COLUMNS = [
 const props = defineProps({
   entries: { type: Array, default: () => [] },
   sort: { type: Object, required: true },
+  // Album track rows omit the thumbnail — every track on an album shares
+  // the same cover art (already shown once in the hero above), so a
+  // per-row thumbnail column would just repeat it 10+ times for nothing.
+  isAlbum: { type: Boolean, default: false },
   canDrag: { type: Boolean, default: false },
   activeTrackId: { type: String, default: null },
   draggingTrackId: { type: String, default: null },
@@ -101,12 +105,22 @@ function sortLabel(key, label) {
         @drop="emit('trackDrop', track, $event)"
         @dragend="emit('trackDragEnd')"
       >
-        <span class="playlist-track__drag" title="拖曳排序" aria-hidden="true">
-          <GripVertical :size="16" aria-hidden="true" />
+        <!-- Always rendered, even for albums — .playlist-table__head and
+             .playlist-track share one grid-template-columns rule (see the
+             comment at the top of this file), so removing this child
+             entirely would shift every column after it left by one. Only
+             the icon inside is conditional. -->
+        <span
+          class="playlist-track__drag"
+          :title="isAlbum ? undefined : '拖曳排序'"
+          aria-hidden="true"
+        >
+          <GripVertical v-if="!isAlbum" :size="16" aria-hidden="true" />
         </span>
         <span class="playlist-track__index">{{ visibleIndex + 1 }}</span>
         <span class="playlist-track__main">
           <UiTrackThumb
+            v-if="!isAlbum"
             class="playlist-track__thumb"
             :track="track"
             :size="44"
@@ -186,7 +200,7 @@ function sortLabel(key, label) {
   height: 0;
   border-left: 4px solid transparent;
   border-right: 4px solid transparent;
-  border-top: 5px solid var(--ui-color-sort-indicator);
+  border-top: 5px solid var(--ui-color-accent);
 }
 
 .playlist-table__sort-indicator--desc {

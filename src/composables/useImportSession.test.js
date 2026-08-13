@@ -180,6 +180,7 @@ describe('useImportSession', () => {
     );
     expect(fetchVideoMetadataMock).not.toHaveBeenCalled();
     expect(session.state.sourceKind).toBe('single');
+    expect(session.confirmImportLabel.value).toBe('下載這首');
     expect(session.state.selectedCandidateId).toBe('aud12345678');
     expect(session.state.singleTrack).toMatchObject({
       id: 'aud12345678',
@@ -371,8 +372,63 @@ describe('useImportSession', () => {
       name: 'My Album',
       source: { platform: 'youtube', id: 'OLAK5uy_abc' },
       trackIds: ['song-1'],
+      thumbnailUrl: null,
     });
     expect(session.state.status).toBe('已加入專輯「My Album」');
+  });
+
+  it('strips the "Album - " prefix yt-dlp puts on YT Music album titles', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Album - strobo',
+      kind: 'album',
+      source: { platform: 'youtube', id: 'OLAK5uy_abc' },
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'ok' });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+
+    expect(session.state.playlistTitle).toBe('strobo');
+
+    await session.confirmImport();
+
+    expect(upsertAlbumMock.mock.calls[0][0].name).toBe('strobo');
+  });
+
+  it('does not strip an "Album - " prefix on an ordinary (non-album) playlist title', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'Album - My Mix',
+      kind: 'playlist',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+
+    expect(session.state.playlistTitle).toBe('Album - My Mix');
+  });
+
+  it("forwards the playlist's thumbnailUrl into the upsertAlbum payload", async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Album',
+      kind: 'album',
+      source: { platform: 'youtube', id: 'OLAK5uy_abc' },
+      thumbnailUrl: 'https://i.ytimg.com/vi/album-art/hqdefault.jpg',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'ok' });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    await session.confirmImport();
+
+    expect(upsertAlbumMock.mock.calls[0][0].thumbnailUrl).toBe(
+      'https://i.ytimg.com/vi/album-art/hqdefault.jpg',
+    );
   });
 
   it('still syncs an album whose tracks are all already downloaded', async () => {
@@ -535,5 +591,341 @@ describe('useImportSession', () => {
     expect(session.state.playlistTitle).toBe(null);
     expect(session.state.createdPlaylistId).toBe(null);
     expect(session.state.activeFilter).toBe('all');
+  });
+
+  it('shows an error and does not query the backend when the input is blank', async () => {
+    const session = await loadImportSession();
+
+    session.setInput('   ');
+    await session.resolveSource();
+
+    expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
+    expect(session.state.status).toBe('請貼上 YouTube 或 YouTube Music 連結');
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it('clears the preview and surfaces the error message when resolving throws', async () => {
+    fetchYoutubePlaylistMock.mockRejectedValueOnce(new Error('network down'));
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.status).toBe('找不到來源：network down');
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it('surfaces a download error for a single-track import without throwing', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
+    resolveImportSourceMock.mockResolvedValueOnce({
+      input: 'abc12345678',
+      sourceVideoId: 'abc12345678',
+      source: { playbackVideoId: 'abc12345678', title: 'Song' },
+      recommendedCandidate: { playbackVideoId: 'abc12345678', title: 'Song' },
+      candidates: [{ playbackVideoId: 'abc12345678', title: 'Song' }],
+    });
+    downloadAudioMock.mockRejectedValueOnce(new Error('disk full'));
+    const session = await loadImportSession();
+
+    session.setInput('abc12345678');
+    await session.resolveSource();
+    await session.confirmImport();
+
+    expect(session.state.status).toBe('下載失敗：disk full');
+    expect(session.state.statusType).toBe('error');
+    expect(session.state.isImporting).toBe(false);
+  });
+
+  it('toggleSelectAll selects everything selectable, then deselects it all on a second call', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [
+        { id: 'song-1', title: 'Song 1', alreadyDownloaded: false },
+        { id: 'song-2', title: 'Song 2', alreadyDownloaded: false },
+        { id: 'song-3', title: 'Song 3', alreadyDownloaded: true },
+      ],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    session.setTrackSelected('song-1', false);
+    session.setTrackSelected('song-2', false);
+
+    expect(session.allSelected.value).toBe(false);
+
+    session.toggleSelectAll();
+    expect(
+      session.state.playlistTracks
+        .filter((t) => !t.alreadyDownloaded)
+        .every((t) => t.selected),
+    ).toBe(true);
+    expect(session.allSelected.value).toBe(true);
+
+    session.toggleSelectAll();
+    expect(
+      session.state.playlistTracks
+        .filter((t) => !t.alreadyDownloaded)
+        .every((t) => !t.selected),
+    ).toBe(true);
+  });
+
+  it('selectMissingTracks selects only downloadable tracks and switches to the missing filter', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [
+        { id: 'song-1', title: 'Song 1', alreadyDownloaded: false },
+        { id: 'song-2', title: 'Song 2', alreadyDownloaded: true },
+      ],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    session.setTrackSelected('song-1', false);
+    session.setActiveFilter('all');
+
+    session.selectMissingTracks();
+
+    expect(session.state.activeFilter).toBe('missing');
+    expect(
+      session.state.playlistTracks.find((t) => t.id === 'song-1').selected,
+    ).toBe(true);
+  });
+
+  it('does nothing when confirming a playlist import with no importable selection', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: true }],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    session.setTrackSelected('song-1', false); // nothing selected at all
+
+    await session.confirmImport();
+
+    expect(downloadAudioMock).not.toHaveBeenCalled();
+    expect(session.state.isImporting).toBe(false);
+  });
+
+  it('reports "download complete" when the sync step itself yields nothing to sync', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'ok' });
+    // Simulates createPlaylist resolving with an array that doesn't contain
+    // the new playlist (e.g. a save race) — usePlaylists.create() then
+    // returns null, so syncImportedPlaylist() can't proceed past that guard.
+    createPlaylistMock.mockResolvedValueOnce([]);
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    await session.confirmImport();
+
+    expect(session.state.status).toBe('下載完成');
+    expect(session.state.statusType).toBe('success');
+  });
+
+  it('stops an in-progress playlist import via confirmImport itself, leaving unfinished tracks in preview', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [
+        { id: 'song-1', title: 'Song 1', alreadyDownloaded: false },
+        { id: 'song-2', title: 'Song 2', alreadyDownloaded: false },
+      ],
+    });
+    let releaseFirstDownload;
+    downloadAudioMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseFirstDownload = () => resolve({ title: 'ok' });
+        }),
+    );
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    const importPromise = session.confirmImport(); // starts importing song-1
+
+    expect(session.state.isImporting).toBe(true);
+    // A second confirmImport() call while importing is the UI's "stop"
+    // button — it cancels rather than starting a second import.
+    await session.confirmImport();
+
+    releaseFirstDownload();
+    await importPromise;
+
+    expect(session.state.status).toBe('已停止，未完成的曲目仍留在預覽中');
+    expect(session.state.statusType).toBe('pending');
+  });
+
+  it('exposes the visible/selectable track lists and filter option counts', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [
+        { id: 'song-1', title: 'Song 1', alreadyDownloaded: false },
+        { id: 'song-2', title: 'Song 2', alreadyDownloaded: true },
+      ],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    session.setActiveFilter('all');
+
+    expect(session.visiblePlaylistTracks.value).toHaveLength(2);
+    expect(session.selectablePlaylistTracks.value.map((t) => t.id)).toEqual([
+      'song-1',
+    ]);
+    expect(session.filterOptions.value.find((f) => f.key === 'all').count).toBe(
+      2,
+    );
+  });
+
+  it('canConfirmImport is false and confirmImportLabel is a stop label mid-playlist-import', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    let releaseDownload;
+    downloadAudioMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          releaseDownload = () => resolve({ title: 'ok' });
+        }),
+    );
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    const importPromise = session.confirmImport();
+
+    expect(session.confirmImportLabel.value).toBe('停止');
+
+    releaseDownload();
+    await importPromise;
+  });
+
+  it('canConfirmImport is false before any source has been resolved', async () => {
+    const session = await loadImportSession();
+    expect(session.canConfirmImport.value).toBe(false);
+  });
+
+  it('confirmImportLabel reflects single-track already-downloaded vs. downloadable states', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
+    resolveImportSourceMock.mockResolvedValueOnce({
+      input: 'abc12345678',
+      sourceVideoId: 'abc12345678',
+      source: {
+        playbackVideoId: 'abc12345678',
+        title: 'Song',
+        alreadyDownloaded: true,
+      },
+      recommendedCandidate: {
+        playbackVideoId: 'abc12345678',
+        title: 'Song',
+        alreadyDownloaded: true,
+      },
+      candidates: [
+        {
+          playbackVideoId: 'abc12345678',
+          title: 'Song',
+          alreadyDownloaded: true,
+        },
+      ],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('abc12345678');
+    await session.resolveSource();
+
+    expect(session.confirmImportLabel.value).toBe('已存在');
+  });
+
+  it('confirmImportLabel shows "nothing selected" once every playlist track is deselected', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    session.setTrackSelected('song-1', false);
+
+    expect(session.confirmImportLabel.value).toBe('沒有選取的曲目');
+  });
+
+  it('getTrackStatusLabel/Class reflect each track state', async () => {
+    const session = await loadImportSession();
+
+    expect(session.getTrackStatusLabel({ status: 'done' })).toBe('完成');
+    expect(
+      session.getTrackStatusLabel({
+        status: 'pending',
+        alreadyDownloaded: true,
+      }),
+    ).toBe('已存在');
+    expect(session.getTrackStatusLabel({ status: 'downloading' })).toBe(
+      '下載中',
+    );
+    expect(session.getTrackStatusLabel({ status: 'error' })).toBe('失敗');
+    expect(session.getTrackStatusLabel({ status: 'pending' })).toBe('待下載');
+
+    expect(session.getTrackStatusClass({ status: 'done' })).toBe('done');
+    expect(
+      session.getTrackStatusClass({
+        status: 'pending',
+        alreadyDownloaded: true,
+      }),
+    ).toBe('downloaded');
+    expect(session.getTrackStatusClass({ status: 'error' })).toBe('error');
+    expect(session.getTrackStatusClass({ status: null })).toBe('pending');
+  });
+
+  describe('download directory config', () => {
+    it('refreshConfig loads the current download directory from the backend', async () => {
+      getConfigMock.mockResolvedValueOnce({
+        downloadDir: '/music/utawakui',
+        isDefault: false,
+      });
+      const session = await loadImportSession();
+
+      await session.refreshConfig();
+
+      expect(session.state.downloadDir).toBe('/music/utawakui');
+      expect(session.state.isDefaultDir).toBe(false);
+    });
+
+    it('chooseDownloadDir opens the picker and refreshes config afterward', async () => {
+      getConfigMock.mockResolvedValue({
+        downloadDir: '/chosen/path',
+        isDefault: false,
+      });
+      const session = await loadImportSession();
+
+      await session.chooseDownloadDir();
+
+      expect(chooseDownloadDirMock).toHaveBeenCalledTimes(1);
+      expect(session.state.downloadDir).toBe('/chosen/path');
+    });
+
+    it('resetDownloadDir resets and refreshes config afterward', async () => {
+      getConfigMock.mockResolvedValue({
+        downloadDir: null,
+        isDefault: true,
+      });
+      const session = await loadImportSession();
+
+      await session.resetDownloadDir();
+
+      expect(resetDownloadDirMock).toHaveBeenCalledTimes(1);
+      expect(session.state.isDefaultDir).toBe(true);
+    });
   });
 });

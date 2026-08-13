@@ -30,6 +30,7 @@ const state = reactive({
   // syncImportedPlaylist() below takes.
   collectionKind: null,
   collectionSource: null,
+  collectionThumbnailUrl: null,
   createdPlaylistId: null,
   activeFilter: 'all',
   isResolving: false,
@@ -141,6 +142,7 @@ function clearPreview() {
   state.playlistTitle = null;
   state.collectionKind = null;
   state.collectionSource = null;
+  state.collectionThumbnailUrl = null;
   state.createdPlaylistId = null;
   state.activeFilter = 'all';
   cancelRequested = false;
@@ -161,6 +163,18 @@ function createPreviewTrack(entry) {
 
 function candidateId(candidate) {
   return candidate?.playbackVideoId || candidate?.id || null;
+}
+
+// YT Music album playlists (OLAK5uy_-prefixed, see youtube.js's
+// classifyPlaylistKind) come back from yt-dlp with a literal "Album - "
+// prefix on the playlist title (e.g. "Album - strobo") — that's how
+// YouTube itself titles the album's playlist page, not part of the album
+// name. Only applied when the source already classified as 'album'; an
+// ordinary user playlist literally named "Album - My Mix" keeps its name.
+function stripAlbumTitlePrefix(title) {
+  return typeof title === 'string'
+    ? title.replace(/^album\s*-\s*/i, '')
+    : title;
 }
 
 function createSingleTrackFromResolution(resolution, selectedCandidate = null) {
@@ -210,9 +224,12 @@ async function resolveSource() {
     const entries = playlistResult?.entries;
     if (entries && entries.length > 0) {
       state.sourceKind = 'playlist';
-      state.playlistTitle = playlistResult.title || '未命名播放清單';
       state.collectionKind =
         playlistResult.kind === 'album' ? 'album' : 'playlist';
+      state.playlistTitle =
+        (state.collectionKind === 'album'
+          ? stripAlbumTitlePrefix(playlistResult.title)
+          : playlistResult.title) || '未命名播放清單';
       // markRaw: this is only ever read back out whole (syncImportedPlaylist
       // hands it straight to upsertAlbum's IPC payload) and never displayed
       // field-by-field, so it doesn't need Vue's reactivity — and it must
@@ -222,6 +239,7 @@ async function resolveSource() {
       state.collectionSource = playlistResult.source
         ? markRaw(playlistResult.source)
         : null;
+      state.collectionThumbnailUrl = playlistResult.thumbnailUrl || null;
       state.playlistTracks = entries.map(createPreviewTrack);
       setStatus(`已找到 ${entries.length} 首，請確認要下載的曲目`, 'success');
     } else {
@@ -355,6 +373,7 @@ async function syncImportedPlaylist() {
       name: state.playlistTitle,
       source: state.collectionSource,
       trackIds,
+      thumbnailUrl: state.collectionThumbnailUrl,
     });
     return Boolean(upserted);
   }

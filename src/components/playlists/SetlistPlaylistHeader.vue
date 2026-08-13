@@ -1,11 +1,12 @@
 <script setup>
-// Hero (cover + title/rename) and toolbar (play/rename/delete + search) are
-// one component, not two — isRenaming/renameValue are read and written by
-// both halves, so splitting them would push a rename boolean across two
-// sibling components for no benefit.
-import { Music2, Pencil, Play, Trash2 } from '@lucide/vue';
-import { getTrackInitial } from '../../utils/trackDisplay.js';
+// Hero (cover + title/description) and toolbar (play/edit/delete + search)
+// are one component, not two — matches the original layout split for no
+// benefit in separating further. All editing (name/description/cover) now
+// happens through PlaylistDetailsModal.vue, opened via openEditDetails —
+// this component is pure display plus the buttons that open that modal.
+import { Pencil, Play, Trash2 } from '@lucide/vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 
 defineProps({
@@ -13,20 +14,16 @@ defineProps({
   title: { type: String, required: true },
   meta: { type: String, default: '' },
   coverTracks: { type: Array, default: () => [] },
-  coverEmptySlots: { type: Number, default: 0 },
-  isRenaming: { type: Boolean, default: false },
-  renameValue: { type: String, default: '' },
+  coverUrl: { type: String, default: '' },
+  description: { type: String, default: '' },
   canPlay: { type: Boolean, default: false },
   searchQuery: { type: String, default: '' },
 });
 
 const emit = defineEmits([
   'play',
-  'startRename',
-  'commitRename',
-  'cancelRename',
+  'openEditDetails',
   'delete',
-  'update:renameValue',
   'update:searchQuery',
 ]);
 </script>
@@ -36,48 +33,38 @@ const emit = defineEmits([
     class="playlist-hero"
     :aria-label="`${isAlbum ? '專輯' : '播放清單'} ${title}`"
   >
-    <div class="playlist-cover" aria-hidden="true">
-      <div
-        v-for="track in coverTracks"
-        :key="track.id"
-        class="playlist-cover__cell"
+    <div class="playlist-cover">
+      <UiCollageThumb
+        :cover-url="coverUrl"
+        :tracks="coverTracks"
+        :allow-collage="!isAlbum"
+        :size="136"
+      />
+      <!-- Album covers are read-only, normalized from the source's own
+           metadata — only playlists (user-authored collections) get an
+           edit affordance here, opening the same modal as the toolbar
+           pencil below. -->
+      <button
+        v-if="!isAlbum"
+        type="button"
+        class="playlist-cover__edit"
+        aria-label="編輯詳細資料"
+        title="編輯詳細資料"
+        @click="emit('openEditDetails')"
       >
-        <img
-          v-if="track.thumbnailUrl"
-          class="playlist-cover__image"
-          :src="track.thumbnailUrl"
-          alt=""
-          aria-hidden="true"
-          draggable="false"
-        />
-        <span v-else>{{ getTrackInitial(track) }}</span>
-      </div>
-      <div
-        v-for="index in coverEmptySlots"
-        :key="index"
-        class="playlist-cover__cell playlist-cover__cell--empty"
-      >
-        <Music2 :size="24" aria-hidden="true" />
-      </div>
+        <Pencil :size="16" aria-hidden="true" />
+      </button>
     </div>
 
     <div class="playlist-hero__content">
       <p class="playlist-hero__eyebrow">{{ isAlbum ? '專輯' : '播放清單' }}</p>
-      <input
-        v-if="isRenaming"
-        :value="renameValue"
-        class="rename-input rename-input--hero"
-        autofocus
-        aria-label="重新命名播放清單"
-        @input="emit('update:renameValue', $event.target.value)"
-        @keydown.enter="emit('commitRename')"
-        @keydown.esc="emit('cancelRename')"
-        @blur="emit('cancelRename')"
-      />
-      <h1 v-else id="playlist-title" class="playlist-hero__title">
+      <h1 id="playlist-title" class="playlist-hero__title">
         {{ title }}
       </h1>
       <p class="playlist-hero__meta">{{ meta }}</p>
+      <p v-if="description" class="playlist-hero__description">
+        {{ description }}
+      </p>
     </div>
   </section>
 
@@ -94,14 +81,12 @@ const emit = defineEmits([
         <Play :size="18" fill="currentColor" aria-hidden="true" />
       </button>
       <UiButton
-        v-if="!isRenaming"
         :icon="Pencil"
-        aria-label="重新命名歌單"
-        title="重新命名歌單"
-        @click="emit('startRename')"
+        aria-label="編輯詳細資料"
+        title="編輯詳細資料"
+        @click="emit('openEditDetails')"
       />
       <UiButton
-        v-if="!isRenaming"
         :icon="Trash2"
         aria-label="刪除歌單"
         title="刪除歌單(不會刪除音檔)"
@@ -130,47 +115,49 @@ const emit = defineEmits([
   border-radius: var(--ui-radius);
 }
 
+/* Sizing/border/positioning wrapper only — the collage grid itself is
+   UiCollageThumb.vue's, shared with PlaylistSidebarRow.vue's nav thumb so
+   the two can never show a different image again. */
 .playlist-cover {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  position: relative;
   width: 136px;
   aspect-ratio: 1;
   overflow: hidden;
   border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  user-select: none;
-  -webkit-user-drag: none;
 }
 
-.playlist-cover__cell {
-  display: flex;
+/* Hover-reveal overlay control, same idiom as PlaylistSidebarRow.vue's
+   __play button — semi-transparent black works over any cover image
+   regardless of the app's own light/dark theme, so it isn't themed off
+   --ui-* tokens. */
+.playlist-cover__edit {
+  position: absolute;
+  right: var(--ui-space-2);
+  bottom: var(--ui-space-2);
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 0;
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
-  text-transform: uppercase;
+  border: none;
+  border-radius: var(--ui-radius-pill);
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  opacity: 0;
+  cursor: pointer;
+  transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
-.playlist-cover__cell:nth-child(2),
-.playlist-cover__cell:nth-child(3) {
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text-muted);
+.playlist-cover:hover .playlist-cover__edit,
+.playlist-cover:focus-within .playlist-cover__edit {
+  opacity: 1;
 }
 
-.playlist-cover__cell--empty {
-  color: var(--ui-color-text-muted);
-}
-
-.playlist-cover__image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  user-select: none;
-  -webkit-user-drag: none;
+.playlist-cover__edit:focus-visible {
+  opacity: 1;
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
 }
 
 .playlist-hero__content {
@@ -197,6 +184,14 @@ const emit = defineEmits([
   margin: var(--ui-space-2) 0 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+}
+
+.playlist-hero__description {
+  margin: var(--ui-space-2) 0 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 .playlist-toolbar {
@@ -243,24 +238,5 @@ const emit = defineEmits([
 .playlist-play:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-}
-
-.rename-input {
-  box-sizing: border-box;
-  width: 100%;
-  max-width: 320px;
-  padding: var(--ui-space-1) var(--ui-space-2);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
-}
-
-.rename-input--hero {
-  max-width: min(520px, 100%);
-  font-size: var(--ui-font-size-xl);
 }
 </style>

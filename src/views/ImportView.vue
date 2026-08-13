@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, useTemplateRef } from 'vue';
+import { computed, onMounted, ref, useTemplateRef } from 'vue';
 import {
   ArrowDownToLine,
   BadgeCheck,
@@ -26,6 +26,7 @@ import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiStatusIcon from '../components/ui/UiStatusIcon.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { useImportSession } from '../composables/useImportSession.js';
+import { useLibrary } from '../composables/useLibrary.js';
 import { useRovingRadioGroup } from '../composables/useRovingRadioGroup.js';
 import {
   candidateId,
@@ -95,6 +96,28 @@ const {
   chooseDownloadDir,
   resetDownloadDir,
 } = useImportSession();
+
+const { refreshMetadata: refreshLibraryMetadata } = useLibrary();
+
+// Local to this view, not useImportSession's state.status — that belongs
+// to the paste-a-link import flow and would get clobbered by it (or vice
+// versa) if this shared the same field.
+const isRefreshingMetadata = ref(false);
+const metadataRefreshMessage = ref('');
+
+async function refreshMetadata() {
+  isRefreshingMetadata.value = true;
+  metadataRefreshMessage.value = '';
+  try {
+    const updated = await refreshLibraryMetadata();
+    metadataRefreshMessage.value =
+      updated > 0 ? `已補齊 ${updated} 首曲目的專輯資訊` : '沒有需要補齊的資訊';
+  } catch (err) {
+    metadataRefreshMessage.value = `重新整理失敗：${err.message}`;
+  } finally {
+    isRefreshingMetadata.value = false;
+  }
+}
 
 // Only success/error have a distinct tone; idle/pending render as the
 // default muted hint.
@@ -179,7 +202,21 @@ onMounted(() => {
 
 <template>
   <div class="import-view">
-    <UiPageHeader title="匯入" />
+    <UiPageHeader title="匯入">
+      <template #actions>
+        <UiButton
+          :icon="RefreshCw"
+          :disabled="isRefreshingMetadata"
+          @click="refreshMetadata"
+        >
+          {{ isRefreshingMetadata ? '重新整理中...' : '重新整理曲目資訊' }}
+        </UiButton>
+      </template>
+    </UiPageHeader>
+
+    <UiHint v-if="metadataRefreshMessage" tone="text" role="status">
+      {{ metadataRefreshMessage }}
+    </UiHint>
 
     <section class="import-control" aria-labelledby="import-source-title">
       <div class="import-control__top">

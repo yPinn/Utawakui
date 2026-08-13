@@ -17,6 +17,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),
+  // Manual, repeatable metadata refresh — reads only already-downloaded
+  // info.json sidecars (no network), so it's fast and safe to call again.
+  // Resolves to { updated } with the number of tracks whose album/
+  // releaseYear got filled in.
+  refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   probeMusixmatchLyrics: (trackId) =>
@@ -49,6 +54,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
   // guesses wrong on an existing collection.
   setPlaylistKind: (id, kind) =>
     ipcRenderer.invoke('playlists:set-kind', id, kind),
+  setPlaylistDescription: (id, description) =>
+    ipcRenderer.invoke('playlists:set-description', id, description),
+  // Opens the native OS file picker directly — no in-app image
+  // cropper/uploader. Resolves to the unchanged array if the user cancels.
+  choosePlaylistCover: (id) => ipcRenderer.invoke('playlists:choose-cover', id),
+  clearPlaylistCover: (id) => ipcRenderer.invoke('playlists:clear-cover', id),
   // Slow (tens of seconds). Rejects if another separation is already
   // running, not just when this track fails. Named runSeparation (not
   // separateTrack) to stay distinct from vocalSeparation.js's own

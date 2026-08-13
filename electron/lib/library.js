@@ -32,6 +32,11 @@ const DUPLICATES_DIRNAME = '.duplicates';
 const LEGACY_SEPARATED_DIRNAME = '.separated';
 const STRUCTURED_AUDIO_BASENAME = 'audio';
 const ARTWORK_BASENAME = 'thumbnail';
+// User-chosen playlist/album cover images. Lives at the download-dir root
+// (sibling of tracks/), not inside tracks/<id>/, since a cover belongs to a
+// playlist id, not a track id.
+const PLAYLIST_COVERS_DIRNAME = 'playlist-covers';
+const PLAYLIST_COVER_BASENAME = 'cover';
 const LYRICS_DIRNAME = 'lyrics';
 const LYRICS_MANIFEST_FILENAME = 'lyrics.json';
 const LYRICS_MANIFEST_VERSION = 8;
@@ -128,6 +133,55 @@ function migrateTrackAlbumMetadata(dir, readTrackInfo) {
   data.version = INDEX_VERSION;
   atomicWriteJson(filePath, data);
   return changed;
+}
+
+// Manual, repeatable counterpart to migrateTrackAlbumMetadata above — not
+// version-gated, so it can run again any time a user asks (e.g. after
+// yt:download-audio wrote a track without album/releaseYear, a bug fixed
+// separately). Walks the filesystem-truth track list (listTrackRecords),
+// not just existing index entries, so it also covers ids library.json has
+// never seen. Never does a network refetch: readTrackInfo only reads the
+// info.json already on disk, so a track with no sidecar or a sidecar that
+// genuinely lacks album/year is left untouched.
+//
+// Only ever assigns the two fields it exists to fix, onto a copy of the
+// existing entry — never spreads readTrackInfo's whole return value. That
+// return value always carries title/artist/duration keys (undefined when
+// absent) plus an optional thumbnailUrl; a blind spread would blank out
+// already-good title/artist/duration whenever a sidecar happens to lack
+// them, and would write thumbnailUrl into library.json, which CLAUDE.md's
+// library.json section reserves for scalar text/number fields only.
+function refreshTrackMetadataFromSidecars(dir, readTrackInfo) {
+  const index = loadIndex(dir);
+  let updatedCount = 0;
+
+  for (const record of listTrackRecords(dir)) {
+    const trackDir = resolveTrackDir(dir, record.id);
+    if (!trackDir) continue;
+    const fields = readTrackInfo(trackDir) || {};
+    if (fields.album === undefined && fields.releaseYear === undefined) {
+      continue;
+    }
+
+    const existing = index.tracks[record.id] || {};
+    const next = { ...existing };
+    if (fields.album !== undefined) next.album = fields.album;
+    if (fields.releaseYear !== undefined) next.releaseYear = fields.releaseYear;
+    if (
+      next.album === existing.album &&
+      next.releaseYear === existing.releaseYear
+    ) {
+      continue;
+    }
+
+    index.tracks[record.id] = next;
+    updatedCount += 1;
+  }
+
+  if (updatedCount > 0) {
+    atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
+  }
+  return updatedCount;
 }
 
 // Shared gate for legacy root-level audio and structured `audio.<ext>` files.
@@ -562,6 +616,116 @@ function resolveTrackAssetPath(dir, trackId, assetFilename) {
   }
 
   return null;
+}
+
+function isPlaylistCoverFilename(filename) {
+  if (typeof filename !== 'string' || filename.length === 0) return false;
+  if (filename.includes('/') || filename.includes('\\')) return false;
+  if (
+    path.basename(filename, path.extname(filename)) !== PLAYLIST_COVER_BASENAME
+  ) {
+    return false;
+  }
+  return IMAGE_EXTENSIONS.has(path.extname(filename).toLowerCase());
+}
+
+// playlistId is always a crypto.randomUUID() from playlists.js, but validated
+// the same way as a trackId anyway — isSafeTrackId is a generic path-safety
+// check, not YouTube-id-specific.
+function resolvePlaylistCoverDir(dir, playlistId) {
+  if (!isSafeTrackId(playlistId)) return null;
+  const coversRoot = path.resolve(dir, PLAYLIST_COVERS_DIRNAME);
+  return resolveChildPath(coversRoot, playlistId);
+}
+
+function findPlaylistCoverFilename(coverDir) {
+  return findFirstFile(coverDir, isPlaylistCoverFilename);
+}
+
+// For the protocol handler — mirrors resolveTrackAssetPath's artwork branch:
+// the requested filename must match whatever cover file actually exists on
+// disk, not just look like a valid cover filename.
+function resolvePlaylistCoverPath(dir, playlistId, coverFilename) {
+  const coverDir = resolvePlaylistCoverDir(dir, playlistId);
+  if (!coverDir || !isPlaylistCoverFilename(coverFilename)) return null;
+  const actual = findPlaylistCoverFilename(coverDir);
+  return actual === coverFilename ? path.join(coverDir, actual) : null;
+}
+
+// Copies a user-picked image into playlist-covers/<id>/cover.<ext>, replacing
+// any previous cover file first — including one with a different extension,
+// since the user may switch from a .png to a .jpg. Returns the new cover's
+// bare filename (for playlists.js to persist), or null if sourcePath isn't a
+// recognized image extension.
+function writePlaylistCoverFile(dir, playlistId, sourcePath) {
+  if (!isSafeTrackId(playlistId)) return null;
+  const ext = path.extname(sourcePath).toLowerCase();
+  if (!IMAGE_EXTENSIONS.has(ext)) return null;
+
+  const coverDir = path.resolve(dir, PLAYLIST_COVERS_DIRNAME, playlistId);
+  fs.mkdirSync(coverDir, { recursive: true });
+
+  const existing = findPlaylistCoverFilename(coverDir);
+  const filename = `${PLAYLIST_COVER_BASENAME}${ext}`;
+  if (existing && existing !== filename) {
+    fs.rmSync(path.join(coverDir, existing), { force: true });
+  }
+  fs.copyFileSync(sourcePath, path.join(coverDir, filename));
+  return filename;
+}
+
+function deletePlaylistCoverDir(dir, playlistId) {
+  const coverDir = resolvePlaylistCoverDir(dir, playlistId);
+  if (!coverDir) return;
+  fs.rmSync(coverDir, { recursive: true, force: true });
+}
+
+const EXTENSION_BY_IMAGE_MIME_TYPE = Object.fromEntries(
+  Object.entries(IMAGE_MIME_TYPES).map(([ext, mimeType]) => [mimeType, ext]),
+);
+
+// Album covers are read-only, normalized from the source's own metadata
+// (see main.js's playlists:upsert-album handler) — this is the automated
+// counterpart to writePlaylistCoverFile's user-picker path. Best-effort:
+// any failure (network, non-2xx, unrecognized content type) just returns
+// null rather than throwing, so a flaky fetch never blocks the album import
+// itself, which is the part the user actually asked for.
+async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
+  if (!isSafeTrackId(playlistId)) return null;
+  if (typeof imageUrl !== 'string' || imageUrl.length === 0) return null;
+
+  try {
+    const response = await fetch(imageUrl);
+    if (!response.ok) return null;
+
+    const contentType = response.headers
+      .get('content-type')
+      ?.split(';')[0]
+      ?.trim();
+    const urlExt = path.extname(new URL(imageUrl).pathname).toLowerCase();
+    const ext =
+      EXTENSION_BY_IMAGE_MIME_TYPE[contentType] ||
+      (IMAGE_EXTENSIONS.has(urlExt) ? urlExt : null);
+    if (!ext) return null;
+
+    const buffer = Buffer.from(await response.arrayBuffer());
+
+    const coverDir = path.resolve(dir, PLAYLIST_COVERS_DIRNAME, playlistId);
+    fs.mkdirSync(coverDir, { recursive: true });
+
+    const existing = findPlaylistCoverFilename(coverDir);
+    const filename = `${PLAYLIST_COVER_BASENAME}${ext}`;
+    if (existing && existing !== filename) {
+      fs.rmSync(path.join(coverDir, existing), { force: true });
+    }
+    const targetPath = path.join(coverDir, filename);
+    const tmpPath = `${targetPath}.tmp`;
+    fs.writeFileSync(tmpPath, buffer);
+    fs.renameSync(tmpPath, targetPath);
+    return filename;
+  } catch {
+    return null;
+  }
 }
 
 function resolveTrackLyricsPath(dir, trackId, lyricsFilename) {
@@ -1224,6 +1388,11 @@ module.exports = {
   normalizeTrackLyricsSidecars,
   readTrackLyrics,
   recordSeparationResult,
+  deletePlaylistCoverDir,
+  refreshTrackMetadataFromSidecars,
+  resolvePlaylistCoverPath,
+  writePlaylistCoverFile,
+  writePlaylistCoverFromUrl,
   resolveTrackLyricsPath,
   resolveSeparationsDir,
   resolveSeparationResultPath,
