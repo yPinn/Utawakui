@@ -362,7 +362,7 @@ onUnmounted(() => {
 }
 
 .ui-context-menu__separator {
-  height: 1px;
+  height: var(--ui-border-width);
   margin: var(--ui-space-1) var(--ui-space-2);
   background: var(--ui-color-border);
 }

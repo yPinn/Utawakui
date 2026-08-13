@@ -68,6 +68,7 @@ const emit = defineEmits([
         :value="renameValue"
         class="rename-input rename-input--hero"
         autofocus
+        aria-label="重新命名播放清單"
         @input="emit('update:renameValue', $event.target.value)"
         @keydown.enter="emit('commitRename')"
         @keydown.esc="emit('cancelRename')"

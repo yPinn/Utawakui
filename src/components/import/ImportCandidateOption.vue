@@ -128,9 +128,11 @@ const metaParts = computed(() =>
 }
 
 .candidate-option:focus-visible {
-  /* Match border width so selected/unselected rings align. */
+  /* Inset, not outset — this is a v-for'd list row in a tightly-packed
+     column (.candidate-options), same rule as QueueTrackButton.vue's ring:
+     an outward offset gets clipped by the small gap to neighboring rows. */
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-border-width);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .candidate-option--selected {

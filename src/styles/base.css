@@ -28,3 +28,8 @@ input[type='range'] {
   color-scheme: dark;
   accent-color: var(--ui-color-accent);
 }
+
+input[type='range']:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}

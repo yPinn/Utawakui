@@ -185,7 +185,7 @@ const emit = defineEmits([
   color: #fff;
   opacity: 0;
   cursor: pointer;
-  transition: opacity 0.1s ease-out;
+  transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
 .playlist-sidebar-row:hover .playlist-sidebar-row__play,
