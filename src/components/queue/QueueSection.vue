@@ -52,11 +52,11 @@ const emit = defineEmits([
           :current="track.id === currentTrackId"
           :draggable="draggableItems"
           @select="emit('selectTrack', $event)"
-          @dragstart="emit('trackDragStart', track, $event)"
-          @dragover="emit('trackDragOver', track, $event)"
-          @dragleave="emit('trackDragLeave', track, $event)"
+          @drag-start="emit('trackDragStart', track, $event)"
+          @drag-over="emit('trackDragOver', track, $event)"
+          @drag-leave="emit('trackDragLeave', track, $event)"
           @drop="emit('trackDrop', track, $event)"
-          @dragend="emit('trackDragEnd')"
+          @drag-end="emit('trackDragEnd')"
         />
       </li>
     </ul>

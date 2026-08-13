@@ -348,11 +348,11 @@ function startDrag(playlist, event) {
       @select="selectPlaylist(playlist.id)"
       @contextmenu="openPlaylistMenu(playlist, $event)"
       @toggle-playback="togglePlayback(playlist, $event)"
-      @dragstart="startDrag(playlist, $event)"
-      @dragover="updateDropTarget(playlist, $event)"
-      @dragleave="leaveDropTarget(playlist, $event)"
+      @drag-start="startDrag(playlist, $event)"
+      @drag-over="updateDropTarget(playlist, $event)"
+      @drag-leave="leaveDropTarget(playlist, $event)"
       @drop="dropPlaylist(playlist, $event)"
-      @dragend="clearDragState"
+      @drag-end="clearDragState"
     />
 
     <hr

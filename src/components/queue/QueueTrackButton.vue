@@ -10,11 +10,11 @@ defineProps({
 
 const emit = defineEmits([
   'select',
-  'dragstart',
-  'dragover',
-  'dragleave',
+  'dragStart',
+  'dragOver',
+  'dragLeave',
   'drop',
-  'dragend',
+  'dragEnd',
 ]);
 </script>
 
@@ -25,11 +25,11 @@ const emit = defineEmits([
     :class="{ 'queue-track--current': current }"
     :draggable="draggable"
     @click="emit('select', track)"
-    @dragstart="emit('dragstart', $event)"
-    @dragover="emit('dragover', $event)"
-    @dragleave="emit('dragleave', $event)"
+    @dragstart="emit('dragStart', $event)"
+    @dragover="emit('dragOver', $event)"
+    @dragleave="emit('dragLeave', $event)"
     @drop="emit('drop', $event)"
-    @dragend="emit('dragend', $event)"
+    @dragend="emit('dragEnd', $event)"
   >
     <UiTrackThumb
       class="queue-track__cover"

@@ -25,11 +25,11 @@ const emit = defineEmits([
   'select',
   'contextmenu',
   'togglePlayback',
-  'dragstart',
-  'dragover',
-  'dragleave',
+  'dragStart',
+  'dragOver',
+  'dragLeave',
   'drop',
-  'dragend',
+  'dragEnd',
 ]);
 </script>
 
@@ -48,11 +48,11 @@ const emit = defineEmits([
     :title="playlist.name"
     @click="emit('select')"
     @contextmenu="emit('contextmenu', $event)"
-    @dragstart="emit('dragstart', $event)"
-    @dragover="emit('dragover', $event)"
-    @dragleave="emit('dragleave', $event)"
+    @dragstart="emit('dragStart', $event)"
+    @dragover="emit('dragOver', $event)"
+    @dragleave="emit('dragLeave', $event)"
     @drop="emit('drop', $event)"
-    @dragend="emit('dragend')"
+    @dragend="emit('dragEnd')"
   >
     <UiTrackThumb
       class="playlist-sidebar-row__thumb"
