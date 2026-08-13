@@ -1,7 +1,8 @@
-import { computed, reactive, readonly, shallowRef, watch } from 'vue';
+import { computed, reactive, readonly, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlaylists } from './usePlaylists.js';
+import { useLibrary } from './useLibrary.js';
 import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
@@ -10,14 +11,21 @@ const EMPTY_LYRICS = { status: 'unchecked', sources: [] };
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
 const { selectedPlaylist } = usePlaylists();
-
-// The full library pool, kept only as an enrichment source (title/artist/
-// lyrics/hasSeparation lookups) — never shown directly. What the UI sees
-// (state.tracks) is always this pool joined against the selected
+// The full library pool (title/artist/lyrics/hasSeparation lookups) is
+// shared with SetlistView.vue via this singleton — see useLibrary.js for
+// why the fetch + onLibraryUpdated subscription moved out of here. What the
+// UI sees (state.tracks) is always this pool joined against the selected
 // playlist's own trackIds, so switching playlists doesn't need a re-fetch.
-// A shallowRef (not a plain variable) so tracksById below stays correctly
-// reactive to refresh()/applyTracks() reassigning the whole array.
-const libraryTracks = shallowRef([]);
+// tracksById is re-exported as-is so LyricsWorkspace.vue can order its
+// playlist <select> the same way PlaylistSidebar.vue orders its nav rows
+// (see src/utils/playlistOrdering.js) — deriving an album's artist needs
+// its member tracks, which aren't in state.tracks for any playlist other
+// than the one currently selected.
+const {
+  state: libraryState,
+  tracksById,
+  refresh: refreshLibrary,
+} = useLibrary();
 
 const state = reactive({
   tracks: [],
@@ -25,7 +33,10 @@ const state = reactive({
   selectedSourceFilename: null,
   lyricsText: '',
   lyricSource: null,
-  isLoading: false,
+  // Auto-unwrapped by reactive() — libraryState.isLoading is the only
+  // writer, so this stays a live mirror rather than a value this module
+  // manages itself.
+  isLoading: computed(() => libraryState.isLoading),
   isLoadingLyrics: false,
   backfillStatus: {
     isRunning: false,
@@ -45,7 +56,6 @@ const state = reactive({
   offsetSeconds: 0,
 });
 
-let unsubscribeLibraryUpdated = null;
 let unsubscribeLibraryBackfillStatus = null;
 let lyricsRequestId = 0;
 let musixmatchProbeRequestId = 0;
@@ -53,14 +63,6 @@ let musixmatchProbeRequestId = 0;
 const selectedTrack = computed(
   () =>
     state.tracks.find((track) => track.id === state.selectedTrackId) ?? null,
-);
-// Full-library lookup, exposed so LyricsWorkspace.vue can order its
-// playlist <select> the same way PlaylistSidebar.vue orders its nav rows
-// (see src/utils/playlistOrdering.js) — deriving an album's artist needs
-// its member tracks, which aren't in state.tracks for any playlist other
-// than the one currently selected.
-const tracksById = computed(
-  () => new Map(libraryTracks.value.map((track) => [track.id, track])),
 );
 const selectedLyrics = computed(
   () => selectedTrack.value?.lyrics ?? EMPTY_LYRICS,
@@ -166,7 +168,7 @@ async function loadSelectedLyrics() {
 function applyScopedTracks() {
   const previousTrackId = state.selectedTrackId;
   const scoped = joinPlaylistTracks(
-    libraryTracks.value,
+    libraryState.tracks,
     selectedPlaylist.value,
   );
   state.tracks = scoped;
@@ -185,22 +187,13 @@ function applyScopedTracks() {
   loadSelectedLyrics();
 }
 
-function applyTracks(tracks) {
-  libraryTracks.value = tracks;
-  applyScopedTracks();
-}
-
+// The "重新掃描" (reload) button's handler — delegates the actual fetch to
+// the shared singleton (which also updates SetlistView.vue's copy).
+// applyScopedTracks() reruns on its own via the libraryState.tracks watch
+// below once the fetch resolves, and state.error mirrors libraryState.error
+// via its own watch below too, so this only needs to trigger the fetch.
 async function refresh() {
-  if (typeof window === 'undefined' || !window.Utawakui) return;
-  state.isLoading = true;
-  try {
-    applyTracks(await window.Utawakui.listTracks());
-    state.error = null;
-  } catch (err) {
-    state.error = err instanceof Error ? err.message : String(err);
-  } finally {
-    state.isLoading = false;
-  }
+  await refreshLibrary();
 }
 
 function selectTrack(trackId) {
@@ -319,9 +312,31 @@ const stopPlayerSync = watch(
 // re-fetch over IPC just because the user picked a different playlist.
 const stopPlaylistSync = watch(selectedPlaylist, () => applyScopedTracks());
 
+// Reruns whenever the shared library pool changes, whether from this
+// module's own refresh(), SetlistView.vue's, or the singleton's own
+// onLibraryUpdated subscription — immediate so it applies whatever's
+// already in libraryState.tracks (possibly already loaded by another
+// consumer) instead of waiting for the next change.
+const stopLibrarySync = watch(
+  () => libraryState.tracks,
+  () => applyScopedTracks(),
+  { immediate: true },
+);
+
+// Mirrors fetch errors from every path that can update the shared pool
+// (initial load, SetlistView.vue's onMounted re-fetch, the
+// onLibraryUpdated subscription, and this module's own refresh()) — not
+// just the last one, which unconditionally overwriting state.error also
+// clears a stale error on the next successful fetch.
+const stopLibraryErrorSync = watch(
+  () => libraryState.error,
+  (error) => {
+    state.error = error;
+  },
+  { immediate: true },
+);
+
 if (typeof window !== 'undefined' && window.Utawakui) {
-  refresh();
-  unsubscribeLibraryUpdated = window.Utawakui.onLibraryUpdated(refresh);
   if (typeof window.Utawakui.onLibraryBackfillStatus === 'function') {
     unsubscribeLibraryBackfillStatus =
       window.Utawakui.onLibraryBackfillStatus(applyBackfillStatus);
@@ -332,7 +347,8 @@ if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     stopPlayerSync();
     stopPlaylistSync();
-    unsubscribeLibraryUpdated?.();
+    stopLibrarySync();
+    stopLibraryErrorSync();
     unsubscribeLibraryBackfillStatus?.();
   });
 }

@@ -7,6 +7,7 @@ let getTrackLyricsMock;
 let probeMusixmatchLyricsMock;
 let getPlaylistsMock;
 let libraryBackfillStatusHandler;
+let libraryUpdatedHandler;
 let playTrackMock;
 let playMock;
 let seekMock;
@@ -85,6 +86,7 @@ const DEFAULT_PLAYLIST = {
 beforeEach(() => {
   vi.resetModules();
   libraryBackfillStatusHandler = null;
+  libraryUpdatedHandler = null;
   playerState = reactive({
     track: trackA,
     currentTime: 42,
@@ -129,7 +131,7 @@ beforeEach(() => {
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
       getPlaylists: getPlaylistsMock,
       onLibraryUpdated: vi.fn((handler) => {
-        void handler;
+        libraryUpdatedHandler = handler;
         return vi.fn();
       }),
       onLibraryBackfillStatus: vi.fn((handler) => {
@@ -342,5 +344,26 @@ describe('useLyrics', () => {
       result: null,
       error: 'Musixmatch 探測 API 尚未載入，請重啟 Electron app',
     });
+  });
+
+  // Regression test: the shared useLibrary.js singleton's own
+  // onLibraryUpdated subscription is what re-fetches here, not a
+  // useLyrics.js-owned one — a fetch error triggered that way (not through
+  // the manual refresh() button) must still surface in state.error.
+  it('surfaces a library fetch error triggered via onLibraryUpdated, not just via refresh()', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    expect(lyrics.state.error).toBe(null);
+
+    listTracksMock.mockRejectedValueOnce(new Error('disk read failed'));
+    libraryUpdatedHandler();
+    await flushPromises();
+
+    expect(lyrics.state.error).toBe('disk read failed');
+
+    listTracksMock.mockResolvedValue([trackA, trackB, trackMissingLyrics]);
+    libraryUpdatedHandler();
+    await flushPromises();
+
+    expect(lyrics.state.error).toBe(null);
   });
 });

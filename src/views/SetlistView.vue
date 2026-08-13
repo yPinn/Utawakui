@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { ListEnd, ListMinus, ListPlus, Plus, Trash2 } from '@lucide/vue';
 import { useDragReorder } from '../composables/useDragReorder.js';
+import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
@@ -29,6 +30,11 @@ import { deriveAlbumSummary } from '../utils/albumSummary.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
 const {
+  state: libraryState,
+  tracksById,
+  refresh: refreshLibrary,
+} = useLibrary();
+const {
   state: queueState,
   setQueue,
   enqueueTrack,
@@ -49,8 +55,6 @@ const {
   setTracks: setPlaylistTracksAction,
 } = usePlaylists();
 
-const tracks = ref([]);
-const isLoading = ref(true);
 // Transient UI mode stays local; mutations persist immediately.
 const isRenaming = ref(false);
 const renameValue = ref('');
@@ -65,8 +69,6 @@ const TRACK_MENU_ACTIONS = {
   createPlaylist: 'create-playlist',
   removeFromPlaylist: 'remove-from-playlist',
 };
-
-const tracksById = computed(() => new Map(tracks.value.map((t) => [t.id, t])));
 
 const mode = computed(() => {
   if (!selectedPlaylist.value) return 'all';
@@ -102,7 +104,7 @@ function matchesSearch(track) {
   );
 }
 
-const visibleTracks = computed(() => tracks.value.filter(matchesSearch));
+const visibleTracks = computed(() => libraryState.tracks.filter(matchesSearch));
 const visiblePlaylistEntries = computed(() => {
   const entries = playlistTracks.value
     .map((track, playlistIndex) => ({
@@ -269,17 +271,6 @@ function playPlaylist() {
 function togglePlaylistSort(key) {
   playlistSort.value = nextPlaylistSort(playlistSort.value, key);
   clearDragState();
-}
-
-async function loadTracks() {
-  tracks.value = await window.Utawakui.listTracks();
-}
-
-async function refresh() {
-  closeAddMenu();
-  isLoading.value = true;
-  await loadTracks();
-  isLoading.value = false;
 }
 
 // Deletes both the original file and its separation output (see
@@ -486,23 +477,16 @@ function startDrag(track, event) {
   startDragReorder(track, event);
 }
 
-let unsubscribe;
-
+// Fetching + the onLibraryUpdated subscription now live in useLibrary.js
+// (shared with useLyrics.js, not duplicated per view — see that module).
+// This re-fetch on every mount is still needed on top of that: listTracks()
+// enumerates the filesystem, which is how it picks up files the user
+// dropped into the library folder by hand — no library:updated event fires
+// for those, so without this, manually-added files wouldn't appear until
+// something else happened to trigger a refresh. refresh() doesn't reset
+// isLoading, so this doesn't flash "載入中" on every tab switch back here.
 onMounted(() => {
-  refresh();
-  // Background metadata backfill (electron/lib/library.js's runBackfillPass)
-  // pushes this after it changes something — silently re-fetch without
-  // toggling isLoading, so the list updates in place instead of flashing
-  // "載入中". usePlaylists.js has its own independent subscription to the
-  // same event for the playlist array.
-  unsubscribe = window.Utawakui.onLibraryUpdated(loadTracks);
-});
-
-onUnmounted(() => {
-  // This view gets unmounted on every tab switch (App.vue swaps views via
-  // <component :is>), so skipping this would stack a duplicate listener
-  // each time the user revisits Setlist.
-  unsubscribe?.();
+  refreshLibrary();
 });
 </script>
 
@@ -539,9 +523,9 @@ onUnmounted(() => {
         </template>
       </UiPageHeader>
 
-      <UiHint v-if="isLoading" role="status">載入中…</UiHint>
+      <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
 
-      <UiHint v-else-if="tracks.length === 0">
+      <UiHint v-else-if="libraryState.tracks.length === 0">
         還沒有任何曲目——前往「Import」下載歌曲。
       </UiHint>
 
