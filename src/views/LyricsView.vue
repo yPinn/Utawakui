@@ -5,7 +5,7 @@ import UiPageHeader from '../components/ui/UiPageHeader.vue';
 
 <template>
   <div class="lyrics-view">
-    <UiPageHeader title="Lyrics" />
+    <UiPageHeader title="歌詞" />
     <LyricsWorkspace />
   </div>
 </template>

@@ -226,7 +226,7 @@ function handleLoadedMetadata() {
 }
 
 function handleError() {
-  state.error = audio.error ? audio.error.message : 'playback error';
+  state.error = audio.error ? audio.error.message : '播放失敗';
   state.isPlaying = false;
 }
 

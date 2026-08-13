@@ -6,7 +6,7 @@ import { Search, X } from '@lucide/vue';
 
 defineProps({
   modelValue: { type: String, default: '' },
-  placeholder: { type: String, default: 'Search' },
+  placeholder: { type: String, default: '搜尋曲目' },
 });
 
 defineEmits(['update:modelValue']);

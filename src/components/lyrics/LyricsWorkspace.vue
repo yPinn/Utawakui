@@ -269,7 +269,7 @@ watch(activeLineIndex, (index) => {
 
 <template>
   <div class="lyrics-workspace">
-    <section class="lyrics-panel lyrics-panel--list" aria-label="Lyrics tracks">
+    <section class="lyrics-panel lyrics-panel--list" aria-label="歌詞曲目列表">
       <header class="lyrics-panel__header">
         <div class="lyrics-panel__title-group">
           <h2 class="lyrics-panel__title">歌詞</h2>
@@ -363,10 +363,7 @@ watch(activeLineIndex, (index) => {
       </ul>
     </section>
 
-    <section
-      class="lyrics-panel lyrics-panel--preview"
-      aria-label="Lyrics preview"
-    >
+    <section class="lyrics-panel lyrics-panel--preview" aria-label="歌詞預覽">
       <header class="lyrics-detail">
         <div class="lyrics-detail__text">
           <h2 class="lyrics-detail__title">

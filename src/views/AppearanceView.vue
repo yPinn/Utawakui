@@ -4,6 +4,6 @@ import UiPageHeader from '../components/ui/UiPageHeader.vue';
 
 <template>
   <div>
-    <UiPageHeader title="Appearance" />
+    <UiPageHeader title="外觀" />
   </div>
 </template>
