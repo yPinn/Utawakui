@@ -25,7 +25,16 @@ import UiMarqueeText from '../components/ui/UiMarqueeText.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import UiTrackThumb from '../components/ui/UiTrackThumb.vue';
-import { formatDuration } from '../utils/format.js';
+import {
+  formatDuration,
+  formatLongDuration,
+  formatAddedDate,
+} from '../utils/format.js';
+import {
+  PLAYLIST_SORT_KEYS,
+  sortPlaylistEntries,
+  nextPlaylistSort,
+} from '../utils/playlistSort.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { getTrackInitial } from '../utils/trackDisplay.js';
 import { deriveAlbumSummary } from '../utils/albumSummary.js';
@@ -78,12 +87,6 @@ const PLAYLIST_MENU_ACTIONS = {
   convertKind: 'convert-kind',
 };
 
-const PLAYLIST_SORT_KEYS = {
-  title: 'title',
-  addedAt: 'addedAt',
-  duration: 'duration',
-};
-
 // align: 'end' keeps duration header/body columns right-aligned together.
 const SORT_COLUMNS = [
   { key: PLAYLIST_SORT_KEYS.title, label: '曲目' },
@@ -127,63 +130,6 @@ function matchesSearch(track) {
   );
 }
 
-function compareText(a, b) {
-  return String(a ?? '').localeCompare(String(b ?? ''), undefined, {
-    sensitivity: 'base',
-  });
-}
-
-function compareOptionalValues(a, b, compare, direction) {
-  const hasA = a !== null && a !== undefined && a !== '';
-  const hasB = b !== null && b !== undefined && b !== '';
-  if (hasA && !hasB) return -1;
-  if (!hasA && hasB) return 1;
-  if (!hasA && !hasB) return 0;
-  const result = compare(a, b);
-  return direction === 'desc' ? -result : result;
-}
-
-function comparePlaylistEntries(a, b) {
-  const { key, direction } = playlistSort.value;
-  let result = 0;
-
-  if (!key) {
-    result = a.playlistIndex - b.playlistIndex;
-  } else if (key === PLAYLIST_SORT_KEYS.title) {
-    result =
-      compareText(a.track.title, b.track.title) ||
-      compareText(a.track.artist, b.track.artist);
-  } else if (key === PLAYLIST_SORT_KEYS.addedAt) {
-    result = compareOptionalValues(
-      a.addedAt,
-      b.addedAt,
-      (dateA, dateB) => new Date(dateA).getTime() - new Date(dateB).getTime(),
-      direction,
-    );
-  } else if (key === PLAYLIST_SORT_KEYS.duration) {
-    result = compareOptionalValues(
-      Number.isFinite(a.track.duration) ? a.track.duration : null,
-      Number.isFinite(b.track.duration) ? b.track.duration : null,
-      (durationA, durationB) => durationA - durationB,
-      direction,
-    );
-  }
-
-  if (
-    result !== 0 &&
-    key !== PLAYLIST_SORT_KEYS.addedAt &&
-    key !== PLAYLIST_SORT_KEYS.duration
-  ) {
-    return direction === 'desc' ? -result : result;
-  }
-  if (result !== 0) return result;
-  return a.playlistIndex - b.playlistIndex;
-}
-
-function sortPlaylistEntries(entries) {
-  return [...entries].sort(comparePlaylistEntries);
-}
-
 const visibleTracks = computed(() => tracks.value.filter(matchesSearch));
 const visiblePlaylistEntries = computed(() => {
   const entries = playlistTracks.value
@@ -194,7 +140,7 @@ const visiblePlaylistEntries = computed(() => {
     }))
     .filter(({ track }) => matchesSearch(track));
 
-  const sorted = sortPlaylistEntries(entries);
+  const sorted = sortPlaylistEntries(entries, playlistSort.value);
   return sorted.map((entry, visibleIndex) => ({ ...entry, visibleIndex }));
 });
 
@@ -351,32 +297,8 @@ function playPlaylist() {
   if (track) playRow(track);
 }
 
-function formatLongDuration(seconds) {
-  if (!Number.isFinite(seconds) || seconds <= 0) return '';
-  const totalMinutes = Math.max(1, Math.round(seconds / 60));
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-  if (hours && minutes) return `${hours} 小時 ${minutes} 分`;
-  if (hours) return `${hours} 小時`;
-  return `${minutes} 分`;
-}
-
-function formatAddedDate(value) {
-  if (!value) return '—';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '—';
-  return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
-}
-
 function togglePlaylistSort(key) {
-  const current = playlistSort.value;
-  if (current.key !== key) {
-    playlistSort.value = { key, direction: 'asc' };
-  } else if (current.direction === 'asc') {
-    playlistSort.value = { key, direction: 'desc' };
-  } else {
-    playlistSort.value = { key: null, direction: 'asc' };
-  }
+  playlistSort.value = nextPlaylistSort(playlistSort.value, key);
   clearDragState();
 }
 
