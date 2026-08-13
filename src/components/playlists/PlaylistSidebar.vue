@@ -19,6 +19,11 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { ICON_SIZE } from '../../constants/ui.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
+import {
+  PLAYLIST_MENU_ACTIONS,
+  playlistDisplayName,
+  addToPlaylistTargets,
+} from '../../utils/playlistMenu.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
@@ -104,21 +109,24 @@ function addToPlaylistChildren(playlist) {
       key: 'create-playlist',
       label: '建立新播放清單',
       icon: Plus,
-      value: { action: 'create-playlist', sourcePlaylistId: playlist.id },
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.createPlaylist,
+        sourcePlaylistId: playlist.id,
+      },
     },
   ];
-  const targets = state.playlists.filter(
-    (candidate) => candidate.kind !== 'album' && candidate.id !== playlist.id,
-  );
+  const targets = addToPlaylistTargets(state.playlists, {
+    excludeId: playlist.id,
+  });
   if (targets.length > 0) {
     children.push({ key: 'targets-divider', separator: true });
   }
   children.push(
     ...targets.map((target) => ({
       key: target.id,
-      label: target.name || '(未命名歌單)',
+      label: playlistDisplayName(target),
       value: {
-        action: 'add-to-playlist',
+        action: PLAYLIST_MENU_ACTIONS.addToPlaylist,
         playlistId: playlist.id,
         targetPlaylistId: target.id,
       },
@@ -138,7 +146,10 @@ const menuItems = computed(() => {
       label: '新增至佇列',
       icon: ListEnd,
       disabled: playlist.trackIds.length === 0,
-      value: { action: 'add-to-queue', playlistId: playlist.id },
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.addToQueue,
+        playlistId: playlist.id,
+      },
     },
   ];
 
@@ -162,13 +173,19 @@ const menuItems = computed(() => {
       key: 'edit-details',
       label: '編輯詳細資料',
       icon: Pencil,
-      value: { action: 'edit-details', playlistId: playlist.id },
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.editDetails,
+        playlistId: playlist.id,
+      },
     },
     {
       key: 'convert-kind',
       label: isAlbum ? '轉為播放清單' : '轉為專輯',
       icon: isAlbum ? ListMusic : Disc3,
-      value: { action: 'convert-kind', playlistId: playlist.id },
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.convertKind,
+        playlistId: playlist.id,
+      },
     },
     {
       key: 'delete',
@@ -178,7 +195,10 @@ const menuItems = computed(() => {
       label: isAlbum ? '移除' : '刪除',
       icon: Trash2,
       danger: true,
-      value: { action: 'delete', playlistId: playlist.id },
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.delete,
+        playlistId: playlist.id,
+      },
     },
     {
       key: 'download',
@@ -186,7 +206,10 @@ const menuItems = computed(() => {
       icon: Download,
       status: '尚未支援',
       disabled: true,
-      value: { action: 'download', playlistId: playlist.id },
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.download,
+        playlistId: playlist.id,
+      },
     },
   );
 
@@ -200,7 +223,7 @@ const menuItems = computed(() => {
         key: 'create-playlist',
         label: '建立播放清單',
         icon: ListPlus,
-        value: { action: 'create-playlist' },
+        value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
       },
       {
         key: 'create-folder',
@@ -208,7 +231,7 @@ const menuItems = computed(() => {
         icon: FolderPlus,
         status: '尚未支援',
         disabled: true,
-        value: { action: 'create-folder' },
+        value: { action: PLAYLIST_MENU_ACTIONS.createFolder },
       },
     );
   }

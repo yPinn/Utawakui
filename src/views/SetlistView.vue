@@ -16,6 +16,11 @@ import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatLongDuration } from '../utils/format.js';
 import {
+  PLAYLIST_MENU_ACTIONS,
+  playlistDisplayName,
+  addToPlaylistTargets,
+} from '../utils/playlistMenu.js';
+import {
   sortPlaylistEntries,
   nextPlaylistSort,
 } from '../utils/playlistSort.js';
@@ -59,15 +64,6 @@ const TRACK_MENU_ACTIONS = {
   addToPlaylist: 'add-to-playlist',
   createPlaylist: 'create-playlist',
   removeFromPlaylist: 'remove-from-playlist',
-};
-
-const PLAYLIST_MENU_ACTIONS = {
-  addToQueue: 'add-to-queue',
-  addToPlaylist: 'add-to-playlist',
-  editDetails: 'edit-details',
-  delete: 'delete',
-  createPlaylist: 'create-playlist',
-  convertKind: 'convert-kind',
 };
 
 const tracksById = computed(() => new Map(tracks.value.map((t) => [t.id, t])));
@@ -174,12 +170,9 @@ const addMenuItems = computed(() => {
     },
   ];
 
-  // Album collections are read-only — never a valid "add to" target.
-  const availablePlaylists = playlistState.playlists.filter(
-    (playlist) =>
-      playlist.kind !== 'album' &&
-      (track?.id ? !playlist.trackIds.includes(track.id) : true),
-  );
+  const availablePlaylists = addToPlaylistTargets(playlistState.playlists, {
+    excludeTrackId: track?.id,
+  });
 
   if (availablePlaylists.length > 0) {
     playlistChildren.push({ key: 'playlist-divider', separator: true });
@@ -188,7 +181,7 @@ const addMenuItems = computed(() => {
   playlistChildren.push(
     ...availablePlaylists.map((playlist) => ({
       key: playlist.id,
-      label: playlist.name || '(未命名歌單)',
+      label: playlistDisplayName(playlist),
       value: {
         action: TRACK_MENU_ACTIONS.addToPlaylist,
         playlistId: playlist.id,
@@ -234,10 +227,10 @@ const addMenuItems = computed(() => {
   return items;
 });
 
-const pageTitle = computed(
-  () =>
-    selectedPlaylist.value?.name ||
-    (selectedPlaylist.value ? '(未命名歌單)' : 'Setlist'),
+const pageTitle = computed(() =>
+  selectedPlaylist.value
+    ? playlistDisplayName(selectedPlaylist.value)
+    : 'Setlist',
 );
 
 const pageError = computed(() => playlistState.error || deleteError.value);
@@ -351,7 +344,7 @@ function cancelRename() {
 function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
   if (!playlist) return;
   const isAlbum = playlist.kind === 'album';
-  const name = playlist.name || '(未命名歌單)';
+  const name = playlistDisplayName(playlist);
   const confirmed = window.confirm(
     isAlbum
       ? `確定要移除專輯「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會移除這個專輯,且無法復原。`
