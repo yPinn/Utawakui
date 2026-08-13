@@ -7,6 +7,7 @@ import {
   parseLyricsText,
   parseVtt,
   pickPreferredLyricsSource,
+  preprocessLyricCueText,
 } from './lyrics.js';
 
 describe('parseVtt', () => {
@@ -223,6 +224,38 @@ describe('isNonLyricCue', () => {
   it('keeps real lyrics that contain cue-like words', () => {
     expect(isNonLyricCue('Music starts in my heart')).toBe(false);
     expect(isNonLyricCue('[Music] starts in my heart')).toBe(false);
+  });
+
+  it('for non-YouTube-CC sources, only treats blank text as a non-lyric cue', () => {
+    expect(isNonLyricCue('', { sourceKind: 'manual' })).toBe(true);
+    expect(isNonLyricCue('   ', { sourceKind: 'manual' })).toBe(true);
+    // [Music] is a real, meaningful bracketed line for a manually-authored
+    // or LRCLIB source — the YouTube-CC noise-cue heuristics don't apply.
+    expect(isNonLyricCue('[Music]', { sourceKind: 'manual' })).toBe(false);
+  });
+});
+
+describe('preprocessLyricCueText', () => {
+  it('trims and joins non-blank lines for non-YouTube-CC sources, without noise-cue filtering', () => {
+    expect(
+      preprocessLyricCueText(['  First line  ', '', '[Music]', 'Last line'], {
+        sourceKind: 'manual',
+      }),
+    ).toBe('First line\n[Music]\nLast line');
+  });
+
+  it('accepts a raw string and splits it into lines for non-YouTube-CC sources', () => {
+    expect(
+      preprocessLyricCueText('First line\n\nSecond line', {
+        sourceKind: 'manual',
+      }),
+    ).toBe('First line\nSecond line');
+  });
+
+  it('applies YouTube-CC noise-cue filtering by default', () => {
+    expect(preprocessLyricCueText(['[Music]', 'Real lyric line'])).toBe(
+      'Real lyric line',
+    );
   });
 });
 

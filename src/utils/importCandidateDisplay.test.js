@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   candidateId,
   candidateSourceLabel,
+  confidenceLabel,
   identityArtistLabel,
   identityStatusClass,
   identityStatusLabel,
@@ -14,12 +15,26 @@ describe('import candidate display helpers', () => {
   it('formats candidate ids for UI display', () => {
     expect(candidateId({ playbackVideoId: 'audio123456' })).toBe('audio123456');
     expect(candidateId({ id: 'source12345' })).toBe('source12345');
+    expect(candidateId({})).toBe('');
   });
 
   it('maps technical candidate fields to user-facing labels', () => {
     expect(playbackKindLabel('yt-music-song')).toBe('音樂版');
+    expect(playbackKindLabel('unknown-kind')).toBe('來源');
     expect(platformLabel({ searchProvider: 'yt-music' })).toBe('YT Music');
     expect(platformLabel({ isSource: true })).toBe('貼上的來源');
+    expect(platformLabel({ playbackKind: 'yt-music-source' })).toBe('YT Music');
+    expect(platformLabel({ playbackKind: 'youtube-official-mv' })).toBe(
+      'YouTube',
+    );
+    expect(platformLabel({})).toBe('YouTube');
+  });
+
+  it('labels match confidence levels, with a fallback for unknown values', () => {
+    expect(confidenceLabel('high')).toBe('吻合度高');
+    expect(confidenceLabel('medium')).toBe('吻合度中');
+    expect(confidenceLabel('low')).toBe('吻合度低');
+    expect(confidenceLabel(undefined)).toBe('一般吻合');
   });
 
   it('uses only the source name for candidate badges', () => {
@@ -70,5 +85,22 @@ describe('import candidate display helpers', () => {
     expect(identityArtistLabel(null, 'Raw Channel')).toBe('Raw Channel');
     expect(identityStatusLabel({ confidence: 'low' })).toBe('需確認');
     expect(identityStatusClass({ confidence: 'low' })).toBe('review');
+  });
+
+  it('falls all the way through to empty string when there is nothing to show', () => {
+    expect(identityTitle(null)).toBe('');
+    expect(identityArtistLabel({ artists: [] })).toBe('');
+    expect(identityArtistLabel({})).toBe('');
+  });
+
+  it('uses the singular artist field when the artists array is absent', () => {
+    expect(identityArtistLabel({ artist: 'Solo Artist' }, 'Raw Channel')).toBe(
+      'Solo Artist',
+    );
+  });
+
+  it('marks an unset identity as pending, distinct from a low-confidence one', () => {
+    expect(identityStatusLabel(undefined)).toBe('待辨識');
+    expect(identityStatusClass(undefined)).toBe('pending');
   });
 });

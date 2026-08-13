@@ -149,6 +149,40 @@ describe('comparePlaylistEntries — addedAt/duration missing-value sink', () =>
       }),
     ).toBeGreaterThan(0);
   });
+
+  it('addedAt: orders two present dates chronologically ascending', () => {
+    const earlier = entry({ id: 'a', addedAt: '2024-01-01', playlistIndex: 0 });
+    const later = entry({ id: 'b', addedAt: '2024-06-01', playlistIndex: 1 });
+    expect(
+      comparePlaylistEntries(earlier, later, {
+        key: PLAYLIST_SORT_KEYS.addedAt,
+        direction: 'asc',
+      }),
+    ).toBeLessThan(0);
+  });
+});
+
+describe('comparePlaylistEntries — tie-break on identical sort key', () => {
+  it('falls back to playlistIndex when both title and artist tie', () => {
+    const a = entry({
+      id: 'a',
+      title: 'Same',
+      artist: 'Same',
+      playlistIndex: 1,
+    });
+    const b = entry({
+      id: 'b',
+      title: 'Same',
+      artist: 'Same',
+      playlistIndex: 0,
+    });
+    expect(
+      comparePlaylistEntries(a, b, {
+        key: PLAYLIST_SORT_KEYS.title,
+        direction: 'asc',
+      }),
+    ).toBeGreaterThan(0);
+  });
 });
 
 describe('sortPlaylistEntries', () => {

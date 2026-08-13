@@ -27,4 +27,9 @@ describe('toPlayableTrack', () => {
 
     expect(toPlayableTrack(track)).toBe(track);
   });
+
+  it('returns null for a nullish track', () => {
+    expect(toPlayableTrack(null)).toBe(null);
+    expect(toPlayableTrack(undefined)).toBe(null);
+  });
 });

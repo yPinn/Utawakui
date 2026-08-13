@@ -223,6 +223,40 @@ describe('pickBestSyncedCandidate', () => {
     ).toBeUndefined();
   });
 
+  it('gives an unscored track a neutral duration score instead of rejecting it outright', () => {
+    const matches = rankSyncedCandidates(
+      { title: 'Espresso', artist: 'Sabrina Carpenter' }, // no duration field at all
+      [
+        {
+          id: 9,
+          trackName: 'Espresso',
+          artistName: 'Sabrina Carpenter',
+          duration: 175,
+          syncedLyrics: '[00:01.00]No track duration to compare against',
+        },
+      ],
+    );
+
+    expect(matches[0]).toMatchObject({
+      durationDelta: null,
+      durationScore: 0.35,
+    });
+  });
+
+  it('scores a wildly distant duration at zero, rejecting the candidate', () => {
+    expect(
+      pickBestSyncedCandidate(track, [
+        {
+          id: 10,
+          trackName: 'Espresso',
+          artistName: 'Sabrina Carpenter',
+          duration: 175 + 200,
+          syncedLyrics: '[00:01.00]Way too long',
+        },
+      ]),
+    ).toBeUndefined();
+  });
+
   it('keeps lower-confidence matches available for a future candidate list', () => {
     const matches = rankSyncedCandidates(track, [
       {
@@ -334,6 +368,105 @@ describe('findLrclibSyncedLyrics', () => {
         durationDelta: 38,
         querySource: 'title-derived',
       },
+    });
+  });
+
+  it('returns unavailable without fetching when the track has no usable title', async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      findLrclibSyncedLyrics({ artist: 'No Title Here' }, { fetch: fetchMock }),
+    ).resolves.toEqual({
+      provider: 'lrclib',
+      status: 'unavailable',
+      reason: 'missing-track-title',
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('returns unavailable when no fetch implementation is available', async () => {
+    vi.stubGlobal('fetch', undefined);
+
+    await expect(
+      findLrclibSyncedLyrics(
+        { title: 'Espresso', artist: 'Sabrina Carpenter' },
+        { fetch: null },
+      ),
+    ).resolves.toEqual({
+      provider: 'lrclib',
+      status: 'unavailable',
+      reason: 'fetch-unavailable',
+    });
+
+    vi.unstubAllGlobals();
+  });
+
+  it('returns a network-error result when fetch itself throws', async () => {
+    const fetchMock = vi.fn().mockRejectedValue(new TypeError('offline'));
+
+    await expect(
+      findLrclibSyncedLyrics(
+        { title: 'Espresso', artist: 'Sabrina Carpenter' },
+        { fetch: fetchMock },
+      ),
+    ).resolves.toMatchObject({
+      provider: 'lrclib',
+      status: 'error',
+      reason: 'network-error',
+    });
+  });
+
+  it('returns an http-error result for a non-404 failure response', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response('Server Error', { status: 500 }));
+
+    await expect(
+      findLrclibSyncedLyrics(
+        { title: 'Espresso', artist: 'Sabrina Carpenter' },
+        { fetch: fetchMock },
+      ),
+    ).resolves.toMatchObject({
+      provider: 'lrclib',
+      status: 'error',
+      reason: 'http-error',
+      httpStatus: 500,
+    });
+  });
+
+  it('treats a 404 as an empty result and keeps trying the remaining queries', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('Not Found', { status: 404 }))
+      .mockResolvedValue(new Response(JSON.stringify([])));
+
+    await expect(
+      findLrclibSyncedLyrics(
+        { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
+        { fetch: fetchMock },
+      ),
+    ).resolves.toMatchObject({
+      provider: 'lrclib',
+      status: 'unavailable',
+      reason: 'no-safe-synced-match',
+    });
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+  });
+
+  it('returns an invalid-json result when the response body is not an array', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({ not: 'an array' })));
+
+    await expect(
+      findLrclibSyncedLyrics(
+        { title: 'Espresso', artist: 'Sabrina Carpenter' },
+        { fetch: fetchMock },
+      ),
+    ).resolves.toMatchObject({
+      provider: 'lrclib',
+      status: 'error',
+      reason: 'invalid-json',
     });
   });
 

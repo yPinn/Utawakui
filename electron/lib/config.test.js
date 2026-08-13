@@ -44,6 +44,17 @@ describe('config', () => {
     expect(fs.existsSync(configPath)).toBe(false);
   });
 
+  it('valid JSON that is not an object falls back to defaults and backs up the original', () => {
+    fs.writeFileSync(configPath, JSON.stringify(null));
+    const config = loadConfig(configPath);
+    expect(config).toEqual({ version: 1, downloadDir: null });
+
+    const backups = fs
+      .readdirSync(dir)
+      .filter((f) => f.startsWith('config.json.corrupted-'));
+    expect(backups).toHaveLength(1);
+  });
+
   it('wrong-typed downloadDir falls back to the default for that field', () => {
     fs.writeFileSync(
       configPath,

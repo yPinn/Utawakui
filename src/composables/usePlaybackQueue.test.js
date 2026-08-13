@@ -214,6 +214,19 @@ describe('usePlaybackQueue', () => {
     ]);
   });
 
+  it('reports no change when a reorder would leave the interrupt queue in the same order', async () => {
+    const { state, setQueue, enqueueTrack, reorderQueuedTrack } =
+      await loadQueue();
+
+    setQueue(tracks, 'a');
+    enqueueTrack(interruptTracks[0]);
+    enqueueTrack(interruptTracks[1]);
+
+    // 'x' is already immediately before 'y' — "move x before y" is a no-op.
+    expect(reorderQueuedTrack('x', 'y', 'before')).toBe(false);
+    expect(state.queuedTracks.map((track) => track.id)).toEqual(['x', 'y']);
+  });
+
   it('ignores reorder requests outside the interrupt queue', async () => {
     const { state, setQueue, enqueueTrack, reorderQueuedTrack } =
       await loadQueue();
@@ -244,6 +257,17 @@ describe('usePlaybackQueue', () => {
     ]);
     expect(state.tracks.map((track) => track.id)).toEqual(['a', 'b', 'c']);
     expect(nextTrack()?.id).toBe('c');
+  });
+
+  it('refuses to reorder a source track that has already been played past', async () => {
+    const { setQueue, nextTrack, reorderSourceTrack } = await loadQueue();
+
+    setQueue(tracks, 'a');
+    nextTrack(); // current is now 'b'; 'a' has been played past
+
+    // Both 'a' and 'c' are valid source tracks and neither is current, but
+    // 'a' is behind the playback cursor and therefore not movable.
+    expect(reorderSourceTrack('a', 'c', 'before')).toBe(false);
   });
 
   it('does not reorder the current source track from the queue panel', async () => {
@@ -345,6 +369,60 @@ describe('usePlaybackQueue', () => {
     });
   });
 
+  it('setCurrentTrack: does nothing when the requested track cannot be found anywhere', async () => {
+    const { state, setQueue, setCurrentTrack } = await loadQueue();
+
+    setQueue(tracks, 'a');
+    setCurrentTrack('does-not-exist');
+
+    expect(state.currentTrackId).toBe('a');
+  });
+
+  it('setCurrentTrack: with source:true selects strictly from the source list, ignoring the interrupt queue', async () => {
+    const { state, setQueue, enqueueTrack, setCurrentTrack } =
+      await loadQueue();
+
+    setQueue(tracks, 'a');
+    enqueueTrack(interruptTracks[0]);
+
+    // Not in state.tracks at all, so the strict lookup must miss even
+    // though trackById() would have found it in the interrupt queue.
+    setCurrentTrack('x', { source: true });
+    expect(state.currentTrackId).toBe('a');
+
+    setCurrentTrack('c', { source: true });
+    expect(state.currentTrackId).toBe('c');
+    expect(state.currentIsSource).toBe(true);
+    // Selecting directly from the source list must not touch the
+    // interrupt queue.
+    expect(state.queuedTracks.map((track) => track.id)).toEqual(['x']);
+  });
+
+  it('setCurrentTrack: selecting a queued (interrupt) track consumes it out of the queue and is not treated as a source track', async () => {
+    const { state, setQueue, enqueueTrack, setCurrentTrack } =
+      await loadQueue();
+
+    setQueue(tracks, 'a');
+    enqueueTrack(interruptTracks[0]);
+    enqueueTrack(interruptTracks[1]);
+
+    setCurrentTrack('x');
+
+    expect(state.currentTrackId).toBe('x');
+    expect(state.currentIsSource).toBe(false);
+    expect(state.queuedTracks.map((track) => track.id)).toEqual(['y']);
+  });
+
+  it('setCurrentTrack: selecting a source-list track without source:true still counts as a source track when not queued', async () => {
+    const { state, setQueue, setCurrentTrack } = await loadQueue();
+
+    setQueue(tracks, 'a');
+    setCurrentTrack('c');
+
+    expect(state.currentTrackId).toBe('c');
+    expect(state.currentIsSource).toBe(true);
+  });
+
   it('removes a deleted track from source, interrupt queue, history, and current state', async () => {
     const { state, setQueue, enqueueTrack, nextTrack, removeTrack } =
       await loadQueue();
@@ -367,5 +445,9 @@ describe('usePlaybackQueue', () => {
     expect(state.tracks.map((track) => track.id)).toEqual(['b', 'c']);
     expect(state.queuedTracks.map((track) => track.id)).toEqual([]);
     expect(state.historyEntries).toEqual([]);
+
+    // Already gone from everywhere (source, queue, history, current) —
+    // removing it again is a clean no-op, not an error.
+    expect(removeTrack('x')).toBe(false);
   });
 });

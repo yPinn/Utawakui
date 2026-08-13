@@ -17,7 +17,16 @@ module.exports = defineConfig({
     include: ['electron/lib/**/*.test.js', 'src/**/*.test.js'],
     exclude: ['coverage/**', 'dist/**', 'node_modules/**'],
     coverage: {
-      provider: 'v8',
+      // v8 (the default) double-counts electron/lib CJS files that are both
+      // `import`-ed by their own test file and `require()`-d by another
+      // instrumented module (e.g. library.js requires youtube.js): the two
+      // separately-loaded instances get separate V8 script coverage
+      // records, and vitest's v8-to-istanbul merge keeps only one instead
+      // of unioning them — confirmed by reproducing with youtube.test.js +
+      // library.test.js (90.9%/100% funcs isolated -> 42.42%/0% funcs
+      // together). istanbul instruments source directly instead of
+      // sampling V8 runtime coverage, so it isn't affected.
+      provider: 'istanbul',
       reporter: ['text', 'html', 'lcov'],
       reportsDirectory: 'coverage',
       all: true,
