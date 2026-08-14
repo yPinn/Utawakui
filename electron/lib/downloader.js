@@ -31,8 +31,10 @@ const {
 const DEFAULT_YOUTUBE_JS_RUNTIME = 'node';
 const DEFAULT_AUDIO_FORMAT = 'bestaudio/best';
 const FALLBACK_AUDIO_FORMAT = 'bestaudio[ext=m4a]/bestaudio/best';
-const FALLBACK_YOUTUBE_EXTRACTOR_ARGS =
-  'youtube:player_client=default,-android_vr,-android_sdkless;player_js_version=actual';
+// Do not exclude android_vr here (previous versions did): without a PO
+// token, it's currently the one client YouTube still serves a real audio
+// URL to — excluding it degrades every fallback attempt to images-only.
+const FALLBACK_YOUTUBE_EXTRACTOR_ARGS = 'youtube:player_js_version=actual';
 const PLAYBACK_SEARCH_LIMIT_PER_SOURCE = 5;
 const MAX_PLAYBACK_SEARCH_CANDIDATES = 8;
 const MAX_PLAYBACK_SEARCH_QUERIES = 4;

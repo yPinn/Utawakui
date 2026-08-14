@@ -202,8 +202,7 @@ describe('buildAudioDownloadOptionAttempts', () => {
         noPlaylist: true,
         writeInfoJson: true,
         format: 'bestaudio[ext=m4a]/bestaudio/best',
-        extractorArgs:
-          'youtube:player_client=default,-android_vr,-android_sdkless;player_js_version=actual',
+        extractorArgs: 'youtube:player_js_version=actual',
       },
     ]);
   });
