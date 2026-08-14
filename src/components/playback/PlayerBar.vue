@@ -89,9 +89,7 @@ const playbackModeActive = computed(
   () => state.playbackMode !== PLAYBACK_MODES.sequence,
 );
 
-// SetlistView always plays a separated track's stems variant, so "has
-// separation" and "stems are playing" are the same check.
-const showGuideVocal = computed(() => Boolean(state.track?.stemsUrl));
+const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
 
 const transposeLabel = computed(() =>
   state.transposeSemitones > 0

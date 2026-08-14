@@ -14,6 +14,7 @@ describe('toPlayableTrack', () => {
     expect(toPlayableTrack(track)).toEqual({
       ...track,
       url: 'utawakui-media://track-1/stems.wav',
+      usesSeparatedAudio: true,
     });
   });
 

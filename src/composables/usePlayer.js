@@ -33,13 +33,13 @@ const audio = new Audio();
 // Required before load; otherwise cross-origin Web Audio outputs silence.
 audio.crossOrigin = 'anonymous';
 
-// <audio> remains the sole timing/decode source. The graph splits fixed
-// channels 0/1 instrumental and 2/3 vocals so guide vocals can be mixed.
+// <audio> remains the sole timing/decode source. Normal mono/stereo audio goes
+// directly to the master mix so the browser preserves its channel layout. Only
+// separated stems use the 4-channel splitter: 0/1 instrumental, 2/3 vocals.
 // All output flows through masterGain; audio.volume is intentionally unused.
 const audioCtx = new AudioContext();
 const sourceNode = audioCtx.createMediaElementSource(audio);
 const splitter = audioCtx.createChannelSplitter(4);
-sourceNode.connect(splitter);
 
 const mergerInst = audioCtx.createChannelMerger(2);
 const mergerVoc = audioCtx.createChannelMerger(2);
@@ -55,6 +55,7 @@ mergerVoc.connect(vocalGain);
 
 const masterGain = audioCtx.createGain();
 masterGain.gain.value = DEFAULT_VOLUME;
+sourceNode.connect(masterGain);
 mergerInst.connect(masterGain);
 vocalGain.connect(masterGain);
 
@@ -186,6 +187,7 @@ const state = reactive({
 
 const endedListeners = new Set();
 let lastObservedCurrentTime = 0;
+let isUsingSeparatedAudioGraph = false;
 
 // Two kinds of state, written two different ways:
 // - isPlaying/currentTime/duration/error can change on their own (autoplay
@@ -230,6 +232,14 @@ function handleError() {
   state.isPlaying = false;
 }
 
+function routeAudioGraph(usesSeparatedAudio) {
+  if (isUsingSeparatedAudioGraph === usesSeparatedAudio) return;
+
+  sourceNode.disconnect();
+  sourceNode.connect(usesSeparatedAudio ? splitter : masterGain);
+  isUsingSeparatedAudioGraph = usesSeparatedAudio;
+}
+
 audio.addEventListener('play', handlePlay);
 audio.addEventListener('pause', handlePause);
 audio.addEventListener('ended', handleEnded);
@@ -245,6 +255,7 @@ async function playTrack(track) {
   lastObservedCurrentTime = 0;
   setGuideVocalLevel(0);
   resetPitchTempo();
+  routeAudioGraph(Boolean(track.usesSeparatedAudio));
   audio.src = track.url;
   try {
     // Graph output is silent while suspended (its initial state) — every
@@ -329,6 +340,7 @@ async function syncCurrentTrack() {
   state.track = playable;
   if (!urlChanged) return;
 
+  routeAudioGraph(Boolean(playable.usesSeparatedAudio));
   audio.src = playable.url;
   setGuideVocalLevel(guideLevel);
   seek(resumeTime);
