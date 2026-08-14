@@ -108,6 +108,7 @@ Utawakui should feel like a quiet, trustworthy, slightly alive local karaoke con
 ### Reference Boundaries
 
 - **Spotify:** use as a reference for music-management density, playlist/collection mental models, persistent playback, sidebar structure, and fast scanning.
+- **iTunes / Music app:** use as a reference for narrow desktop toolbar chrome, centered playback/search/status slots, and quiet OS-integrated top hierarchy.
 - **macOS:** use as a reference for OS-like clarity, local object metaphors, comfortable control spacing, and window/sidebar hierarchy.
 - **Mosby's Files-style folder systems:** use as a reference for folder navigation, paper stacks, tabbed files, and local archive atmosphere.
 - **Color Lisa-style palettes:** use as a reference for restrained artistic color relationships and 60/30/10 color balance, not for copying a single palette.
@@ -116,6 +117,7 @@ Avoid direct borrowing:
 
 - No Spotify green as a brand anchor.
 - No Apple system blue as the main identity.
+- No literal iTunes toolbar clone, brushed-metal nostalgia, or forced center controls before those interactions exist.
 - No marketing-page hero styling for operational surfaces.
 - No heavy glass, glossy Aqua, heavy shadows, or decorative depth.
 - No full skeuomorphic file-cabinet scene for the whole app.
@@ -340,6 +342,7 @@ Limits:
 Utawakui should split shape language by job:
 
 - **Use macOS-like shape for containers:** app chrome, modals, popovers, search fields, and local-object surfaces should feel calm, softly rectangular, and OS-native.
+- **Use iTunes-like restraint for the custom titlebar:** keep it narrow, quiet, and structurally reserved until real navigation, search, or playback controls are wired.
 - **Use Spotify-like shape for repeated music surfaces:** track rows, playlist rows, queue rows, and player controls should stay dense, scannable, and rhythmically aligned.
 - **Use folder-like shape for collection surfaces:** playlist, album, import, and lyrics-source areas can use tabs, paper layers, or cover placeholders when they represent stored material.
 - **Use the brand mark shape only for the app icon and selected artwork treatments:** the card-sleeve / cat-card shape should not leak into every control.
@@ -388,6 +391,10 @@ Primary control heights:
 | Player bar                 | `68px`        | Preserves persistent transport plus 52px artwork.  |
 
 These numbers should be treated as implementation targets when refreshing tokens and components. If a future touch-first surface exists, it can introduce touch-specific component tokens instead of enlarging the desktop control panel.
+
+### Unit Rules
+
+Use `rem` for scalable dimensional tokens such as spacing, typography, control heights, player height, and titlebar height. Keep `px` for true device-pixel details: 1px borders, focus rings, hairline drag/drop indicators, image pixel slots, media-query breakpoints, and Electron API literals that require integer pixel values.
 
 ### Default vs Feature-Gated Visuals
 
@@ -464,6 +471,7 @@ Use naming to separate design intent, implementation role, and runtime state.
 | Type                | Pattern                            | Example                             |
 | ------------------- | ---------------------------------- | ----------------------------------- |
 | Control-panel token | `--ui-{category}-{role}-{state}`   | `--ui-color-surface-selected`       |
+| Component CSS var   | `--ui-{component}-{property}`      | `--ui-track-thumb-radius`           |
 | Overlay token       | `--ovl-{category}-{role}`          | `--ovl-font-display-cjk`            |
 | Primitive component | `ui-{component}`                   | `ui-btn`, `ui-chip`, `ui-track-row` |
 | Component element   | `ui-{component}__{element}`        | `ui-context-menu__item`             |
@@ -475,6 +483,19 @@ Use naming to separate design intent, implementation role, and runtime state.
 | Test id             | `kebab-case`                       | `track-row-play`                    |
 
 Current code may still use local BEM-style state variants such as `candidate-option--selected`. New shared primitives should prefer `is-*` / `has-*` state classes when state is independent of visual variant. Do not rename stable component classes just for aesthetics; migrate naming when touching the component for visual work.
+
+Component-scoped CSS custom properties are allowed when they are a public override API for a primitive, such as thumbnail radius or chip background. They should stay component-prefixed (`--ui-track-thumb-*`, `--ui-chip-*`) and should not become hidden global theme tokens.
+
+### Icon Usage
+
+Lucide is the current control-panel icon source, but app code should import icons through `src/icons/index.js` instead of importing from `@lucide/vue` directly. The registry is the project-owned boundary for future icon swaps, aliases, and shared sizing.
+
+Rules:
+
+- Components and views import icon components from `src/icons/index.js`.
+- Shared icon size is re-exported there as `ICON_SIZE`; the literal still lives in `src/constants/ui.js`.
+- Pure utilities and composables must not import Vue icon components.
+- Do not wrap every icon in a generic `<AppIcon>` component unless the app needs runtime icon lookup or theming behavior that named imports cannot express.
 
 ## Colors
 
