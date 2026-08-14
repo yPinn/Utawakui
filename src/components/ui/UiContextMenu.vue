@@ -7,8 +7,8 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
-import { ChevronRight } from '@lucide/vue';
-import { ICON_SIZE } from '../../constants/ui.js';
+import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
+import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -19,6 +19,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['select', 'close']);
+const { claim, release } = useContextMenuGate();
 
 // Fixed menu width — no caller has ever needed a different one, so this
 // isn't a prop (see the removed `width` prop in code review history).
@@ -133,6 +134,20 @@ function close() {
   emit('close');
 }
 
+// Keeps at most one UiContextMenu open app-wide (see useContextMenuGate.js).
+// Right-click doesn't fire 'click', so onWindowClick below never sees a
+// right-click elsewhere as a reason to close.
+watch(
+  () => props.open,
+  (isOpen) => {
+    if (isOpen) {
+      claim(close);
+    } else {
+      release(close);
+    }
+  },
+);
+
 function onWindowClick(event) {
   if (!props.open) return;
   if (menuRef.value?.contains(event.target)) return;
@@ -174,6 +189,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
+  release(close);
   if (typeof window === 'undefined') return;
   window.removeEventListener('click', onWindowClick);
   window.removeEventListener('keydown', onWindowKeydown);
