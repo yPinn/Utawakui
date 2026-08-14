@@ -102,9 +102,9 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 
 ### 4.2 尚未完成但已納入規格
 
-- Feature notice modal。
-- Feature gate registry。
-- Local import first flow。
+- Feature notice modal（provider-flow 已部分實作）。
+- Feature gate registry（provider-flow 已部分實作）。
+- Local import first flow（本機音訊檔匯入已部分實作）。
 - OBS Browser Source overlay server。
 - Overlay theme tokens。
 - Performer self-view。
@@ -183,7 +183,31 @@ Utawakui/
 | `lyrics/`         | 歌詞與字幕相關資料。          | 後續需與 self-view / overlay flow 對齊。 |
 | `separations/`    | Generated separation files。  | 依 preset 或模型設定保存。               |
 
-### 6.3 Preset 原則
+### 6.3 本機音訊入庫
+
+本機音訊匯入採 managed library：使用者選取的來源檔案會複製到 `tracks/<trackId>/audio.<ext>`，Utawakui 後續播放與衍生資料都以曲庫內檔案為準，不依賴原始來源路徑。
+
+本機匯入的最低必要資料，是系統可保證產生、足以播放、顯示與追蹤的 scalar metadata：
+
+- `id`：Utawakui 內部 track identity。
+- `title`：優先使用檔名去副檔名；不要求音訊 tag。
+- `sourceType`：目前本機匯入為 `local-file`。
+- `storageType`：目前預設為 `managed`。
+- `audioFilename`：例如 `audio.mp3`，不保存絕對路徑。
+- `originalFilename`：來源辨識線索，不作為播放依賴。
+- `importedAt`：入庫時間。
+- `fileSize`：來源檔案大小，作為基本追蹤線索。
+- `contentHash`：音訊內容的 SHA-256，用於批量匯入時辨識同內容重複檔案。
+
+`artist`、`album`、`duration`、`thumbnail`、lyrics、BPM/key/pitch 等資料皆為 optional enrichment，不是本機音訊入庫的必填條件。
+
+本機曲目的 `title` / `artist` 可由使用者手動編輯；這是 `library.json` 的 scalar metadata 更新，不重新命名或搬動實際音訊檔。
+
+批量匯入時，Utawakui 以 `contentHash` 判斷同內容重複：同一份音訊即使檔名或原始路徑不同，也只保留既有曲目並略過新副本；同檔名但音訊內容不同，仍以新的 track id 入庫。
+
+Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一般曲庫清單與本機清單分開排序與瀏覽。
+
+### 6.4 Preset 原則
 
 未來 preset export/import 可包含：
 
@@ -202,6 +226,10 @@ Preset 不應包含：
 ## 7. Feature Notice 與 Gate
 
 Feature gate 的目的，是讓使用者在啟用進階流程前看見必要提示，並讓產品能保存啟用狀態。
+
+目前第一版已落地 `provider-flow`：renderer 會在外部來源解析 / 下載前要求確認，main process 也會在 provider IPC handler 前檢查啟用狀態；其他 gate 仍保留在 registry 中，待對應流程實作時接上。
+
+Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，不需 feature gate；外部來源匯入維持在 provider flow 中，首次執行 provider action 時要求確認。
 
 ### 7.1 Gate 類型
 
@@ -244,7 +272,7 @@ Feature gate 的目的，是讓使用者在啟用進階流程前看見必要提�
 
 - Feature notice modal。
 - Feature gate registry。
-- Local import first flow。
+- Local import first flow（本機音訊檔匯入已部分實作）。
 - Provider flow 從預設入口移到明確啟用。
 - README、spec、UI copy 用語統一。
 
