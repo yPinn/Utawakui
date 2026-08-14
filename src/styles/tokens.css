@@ -69,6 +69,7 @@
   --ui-radius-pill: 999px;
 
   --ui-border-width: 1px;
+  --ui-titlebar-height: 2.5rem; /* 40px */
   --ui-control-height: 30px;
   --ui-player-bar-height: 68px; /* 52px artwork + vertical padding */
 

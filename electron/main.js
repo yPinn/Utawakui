@@ -1,6 +1,7 @@
 'use strict';
 
 const path = require('path');
+const fs = require('fs');
 const { Worker } = require('worker_threads');
 const {
   app,
@@ -79,7 +80,7 @@ const {
 const isDev = process.argv.includes('--dev');
 const MEDIA_SCHEME = 'utawakui-media';
 const APP_NAME = 'Utawakui';
-const APP_USER_MODEL_ID = 'com.utawakui.app';
+const BASE_APP_USER_MODEL_ID = 'com.utawakui.app';
 
 app.setName(APP_NAME);
 
@@ -105,6 +106,16 @@ const iconPath = path.join(
   'icons',
   'app-icon.ico',
 );
+
+function getAppUserModelId() {
+  if (!isDev) return BASE_APP_USER_MODEL_ID;
+  try {
+    const { mtimeMs, size } = fs.statSync(iconPath);
+    return `${BASE_APP_USER_MODEL_ID}.dev.${Math.round(mtimeMs)}.${size}`;
+  } catch {
+    return `${BASE_APP_USER_MODEL_ID}.dev`;
+  }
+}
 
 function resolveDownloadDir(config) {
   // OS Music folder, not userData — userData is Chromium's internal engine
@@ -241,6 +252,14 @@ function createWindow() {
     minHeight: 650,
     // Keep in sync with --ui-color-canvas in src/styles/tokens.css.
     backgroundColor: '#1f2328',
+    titleBarStyle: 'hidden',
+    // Keep in sync with --ui-titlebar-height, --ui-color-canvas,
+    // and --ui-color-text in src/styles/tokens.css.
+    titleBarOverlay: {
+      color: '#1f2328',
+      symbolColor: '#f7f1e7',
+      height: 40,
+    },
     title: APP_NAME,
     icon: iconPath,
     show: false,
@@ -256,7 +275,7 @@ function createWindow() {
 
   if (process.platform === 'win32') {
     mainWindow.setAppDetails({
-      appId: APP_USER_MODEL_ID,
+      appId: getAppUserModelId(),
       appIconPath: iconPath,
       appIconIndex: 0,
       relaunchCommand: buildRelaunchCommand(),
@@ -301,7 +320,8 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
-    if (process.platform === 'win32') app.setAppUserModelId(APP_USER_MODEL_ID);
+    if (process.platform === 'win32')
+      app.setAppUserModelId(getAppUserModelId());
     session.defaultSession.setPermissionRequestHandler(
       (webContents, permission, callback) => {
         callback(false);

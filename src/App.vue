@@ -1,6 +1,7 @@
 <script setup>
 import { ref } from 'vue';
 import AppSidebar from './components/layout/AppSidebar.vue';
+import AppTitleBar from './components/layout/AppTitleBar.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
 import AppearanceView from './views/AppearanceView.vue';
@@ -31,6 +32,7 @@ useKeyboardShortcuts(activeView);
 
 <template>
   <div class="shell">
+    <AppTitleBar class="shell__titlebar" />
     <AppSidebar v-model:active-view="activeView" class="shell__sidebar" />
     <main class="shell__main">
       <component :is="views[activeView]" />
@@ -43,13 +45,18 @@ useKeyboardShortcuts(activeView);
 .shell {
   display: grid;
   grid-template-areas:
+    'titlebar titlebar'
     'sidebar main'
     'player player';
   grid-template-columns: 180px 1fr;
-  grid-template-rows: 1fr auto;
+  grid-template-rows: var(--ui-titlebar-height) 1fr auto;
   height: 100%;
   /* Prevent 1fr content from forcing the fixed shell wider than viewport. */
   min-width: 0;
+}
+
+.shell__titlebar {
+  grid-area: titlebar;
 }
 
 .shell__sidebar {
