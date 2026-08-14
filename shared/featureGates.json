@@ -1,0 +1,54 @@
+{
+  "noticeVersion": "feature-notice-v1",
+  "features": [
+    {
+      "id": "provider-flow",
+      "title": "啟用外部來源匯入",
+      "category": "provider",
+      "confirmLabel": "啟用匯入",
+      "cancelLabel": "稍後",
+      "summary": "解析來源、預覽候選版本，並把你選定的媒體下載到本機曲庫。",
+      "body": [
+        "Utawakui 會連線到你貼上的來源與候選提供者，協助建立可播放的本機曲目。",
+        "Utawakui 不提供內建曲庫；請只匯入你自己選用並可使用的素材。",
+        "這個啟用狀態只保存在這台電腦，不會寫入曲庫、播放清單或未來的 preset。"
+      ]
+    },
+    {
+      "id": "lyrics-flow",
+      "title": "啟用歌詞來源",
+      "category": "lyrics",
+      "confirmLabel": "啟用歌詞",
+      "cancelLabel": "稍後",
+      "summary": "查找、保存並整理歌詞或字幕資料。",
+      "body": [
+        "Utawakui 會依曲目 metadata 查找可用歌詞來源，並把結果保存到本機曲庫。",
+        "歌詞啟用狀態只表示你已選擇使用這條流程。"
+      ]
+    },
+    {
+      "id": "audio-processing-flow",
+      "title": "啟用音訊處理",
+      "category": "audio-processing",
+      "confirmLabel": "啟用處理",
+      "cancelLabel": "稍後",
+      "summary": "產生 vocal separation 或未來的預先處理音訊。",
+      "body": [
+        "Utawakui 會在本機產生額外的 generated media，供播放和預覽使用。",
+        "大型模型或長曲目可能需要較長時間與較多系統資源。"
+      ]
+    },
+    {
+      "id": "public-output-flow",
+      "title": "啟用對外輸出",
+      "category": "public-output",
+      "confirmLabel": "啟用輸出",
+      "cancelLabel": "稍後",
+      "summary": "提供 OBS overlay、self-view 或 recording/VOD session 輸出。",
+      "body": [
+        "Utawakui 會把選定的顯示狀態提供給本機輸出端，例如 OBS Browser Source。",
+        "這個流程會讓目前曲目、佇列或歌詞狀態進入公開呈現路徑。"
+      ]
+    }
+  ]
+}

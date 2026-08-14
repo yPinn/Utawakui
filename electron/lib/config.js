@@ -2,9 +2,14 @@
 
 const fs = require('fs');
 const { atomicWriteJson } = require('./atomicWrite');
+const { normalizeFeatureConfirmations } = require('./featureGates');
 
 const CURRENT_VERSION = 1;
-const DEFAULTS = { version: CURRENT_VERSION, downloadDir: null };
+const DEFAULTS = {
+  version: CURRENT_VERSION,
+  downloadDir: null,
+  featureConfirmations: {},
+};
 
 function backupCorrupted(configPath) {
   const backupPath = `${configPath}.corrupted-${Date.now()}`;
@@ -45,6 +50,9 @@ function loadConfig(configPath) {
       typeof data.downloadDir === 'string'
         ? data.downloadDir
         : DEFAULTS.downloadDir,
+    featureConfirmations: normalizeFeatureConfirmations(
+      data.featureConfirmations,
+    ),
   };
 }
 

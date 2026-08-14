@@ -23,6 +23,12 @@ const {
 } = require('./lib/downloader');
 const { loadConfig, saveConfig } = require('./lib/config');
 const {
+  FEATURE_IDS,
+  buildFeatureConfirmation,
+  isFeatureGateEnabled,
+  normalizeFeatureConfirmations,
+} = require('./lib/featureGates');
+const {
   extractVideoId,
   extractPlaylistId,
   classifyPlaylistKind,
@@ -339,6 +345,11 @@ if (!gotSingleInstanceLock) {
     // config.json won't be picked up until next launch.
     let cachedConfig = loadConfig(configPath);
 
+    function requireFeatureGate(featureId) {
+      if (isFeatureGateEnabled(cachedConfig, featureId)) return;
+      throw new Error(`feature gate required: ${featureId}`);
+    }
+
     // Serves local audio files to the sandboxed renderer (nodeIntegration:
     // false means it has no direct filesystem access). Dispatches on
     // hostname: 'local' is an original downloaded track (resolveTrackPath,
@@ -395,24 +406,26 @@ if (!gotSingleInstanceLock) {
       const tracks = listTracks(dir);
       // Fire-and-forget — don't make the renderer wait on a network-bound
       // metadata pass just to see the tracks it already has.
-      runBackfillPass(
-        dir,
-        tracks,
-        backfillTrackInfoWithLyricsFallback,
-        sendBackfillStatus,
-      )
-        .then((updated) => {
-          if (updated && mainWindow) {
-            mainWindow.webContents.send('library:updated');
-          }
-        })
-        .catch((err) => {
-          sendBackfillStatus({
-            stage: 'error',
-            isRunning: false,
-            error: err instanceof Error ? err.message : String(err),
+      if (isFeatureGateEnabled(cachedConfig, FEATURE_IDS.PROVIDER_FLOW)) {
+        runBackfillPass(
+          dir,
+          tracks,
+          backfillTrackInfoWithLyricsFallback,
+          sendBackfillStatus,
+        )
+          .then((updated) => {
+            if (updated && mainWindow) {
+              mainWindow.webContents.send('library:updated');
+            }
+          })
+          .catch((err) => {
+            sendBackfillStatus({
+              stage: 'error',
+              isRunning: false,
+              error: err instanceof Error ? err.message : String(err),
+            });
           });
-        });
+      }
       return tracks;
     });
 
@@ -524,6 +537,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle('playlists:upsert-album', async (event, payload) => {
+      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
       const dir = resolveDownloadDir(cachedConfig);
       const playlists = upsertAlbum(dir, {
         name: payload?.name,
@@ -601,6 +615,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle('yt:fetch-playlist', async (event, input) => {
+      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
       const playlistId = extractPlaylistId(input);
       if (!playlistId) return null; // not a playlist URL — not an error
       const dir = resolveDownloadDir(cachedConfig);
@@ -619,6 +634,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle('yt:fetch-metadata', async (event, input) => {
+      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
       const videoId = extractVideoId(input);
       if (!videoId) throw new Error('invalid video id or YouTube URL');
       const metadata = await fetchMetadata(videoId);
@@ -633,6 +649,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle('yt:resolve-import-source', async (event, input) => {
+      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
       const dir = resolveDownloadDir(cachedConfig);
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
       return resolveYoutubeImportSource(input, {
@@ -644,6 +661,7 @@ if (!gotSingleInstanceLock) {
     });
 
     ipcMain.handle('yt:download-audio', async (event, input) => {
+      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
       const videoId = extractVideoId(input);
       if (!videoId) throw new Error('invalid video id or YouTube URL');
       const destDir = resolveDownloadDir(cachedConfig);
@@ -788,6 +806,27 @@ if (!gotSingleInstanceLock) {
         isDefault: !cachedConfig.downloadDir,
       };
     });
+
+    ipcMain.handle('feature-gates:list', async () => {
+      return normalizeFeatureConfirmations(cachedConfig.featureConfirmations);
+    });
+
+    ipcMain.handle(
+      'feature-gates:confirm',
+      async (event, featureId, noticeVersion) => {
+        const record = buildFeatureConfirmation(featureId);
+        if (noticeVersion !== record.noticeVersion) {
+          throw new Error(`stale feature notice: ${featureId}`);
+        }
+        cachedConfig = saveConfig(configPath, {
+          featureConfirmations: {
+            ...cachedConfig.featureConfirmations,
+            [featureId]: record,
+          },
+        });
+        return record;
+      },
+    );
 
     ipcMain.handle('config:choose-download-dir', async () => {
       const result = await dialog.showOpenDialog(mainWindow, {

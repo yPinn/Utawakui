@@ -1,6 +1,7 @@
 <script setup>
 import AppSidebar from './components/layout/AppSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
+import FeatureNoticeModal from './components/layout/FeatureNoticeModal.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
 import AppearanceView from './views/AppearanceView.vue';
@@ -39,6 +40,7 @@ useKeyboardShortcuts(activeView);
       <component :is="views[activeView]" />
     </main>
     <PlayerBar class="shell__player" />
+    <FeatureNoticeModal />
   </div>
 </template>
 

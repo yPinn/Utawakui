@@ -19,7 +19,11 @@ describe('config', () => {
 
   it('missing file falls back to defaults', () => {
     const config = loadConfig(configPath);
-    expect(config).toEqual({ version: 1, downloadDir: null });
+    expect(config).toEqual({
+      version: 1,
+      downloadDir: null,
+      featureConfirmations: {},
+    });
   });
 
   it('round-trips downloadDir through save/load', () => {
@@ -47,7 +51,11 @@ describe('config', () => {
   it('valid JSON that is not an object falls back to defaults and backs up the original', () => {
     fs.writeFileSync(configPath, JSON.stringify(null));
     const config = loadConfig(configPath);
-    expect(config).toEqual({ version: 1, downloadDir: null });
+    expect(config).toEqual({
+      version: 1,
+      downloadDir: null,
+      featureConfirmations: {},
+    });
 
     const backups = fs
       .readdirSync(dir)
@@ -63,9 +71,66 @@ describe('config', () => {
     expect(loadConfig(configPath).downloadDir).toBe(null);
   });
 
+  it('keeps only valid feature confirmation records', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        version: 1,
+        featureConfirmations: {
+          'provider-flow': {
+            noticeVersion: 'feature-notice-v1',
+            confirmedAt: '2026-08-13T00:00:00.000Z',
+            enabled: true,
+          },
+          'unknown-flow': {
+            noticeVersion: 'feature-notice-v1',
+            confirmedAt: '2026-08-13T00:00:00.000Z',
+            enabled: true,
+          },
+          'lyrics-flow': {
+            noticeVersion: 'old-notice',
+            confirmedAt: '2026-08-13T00:00:00.000Z',
+            enabled: true,
+          },
+        },
+      }),
+    );
+
+    expect(loadConfig(configPath).featureConfirmations).toEqual({
+      'provider-flow': {
+        featureId: 'provider-flow',
+        noticeVersion: 'feature-notice-v1',
+        confirmedAt: '2026-08-13T00:00:00.000Z',
+        enabled: true,
+      },
+    });
+  });
+
   it('an empty partial save preserves the existing downloadDir', () => {
     saveConfig(configPath, { downloadDir: '/first' });
     saveConfig(configPath, {});
     expect(loadConfig(configPath).downloadDir).toBe('/first');
+  });
+
+  it('round-trips feature confirmations through save/load', () => {
+    saveConfig(configPath, {
+      featureConfirmations: {
+        'provider-flow': {
+          featureId: 'provider-flow',
+          noticeVersion: 'feature-notice-v1',
+          confirmedAt: '2026-08-13T00:00:00.000Z',
+          enabled: true,
+        },
+      },
+    });
+
+    expect(
+      loadConfig(configPath).featureConfirmations['provider-flow'],
+    ).toEqual({
+      featureId: 'provider-flow',
+      noticeVersion: 'feature-notice-v1',
+      confirmedAt: '2026-08-13T00:00:00.000Z',
+      enabled: true,
+    });
   });
 });

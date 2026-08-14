@@ -5,6 +5,8 @@ let resolveImportSourceMock;
 let fetchVideoMetadataMock;
 let downloadAudioMock;
 let getConfigMock;
+let getFeatureConfirmationsMock;
+let confirmFeatureGateMock;
 let chooseDownloadDirMock;
 let resetDownloadDirMock;
 let listPlaylistsMock;
@@ -29,6 +31,13 @@ function nextPlaylistId(name) {
 // retry).
 let mockPlaylist;
 
+const confirmedProviderFlow = {
+  featureId: 'provider-flow',
+  noticeVersion: 'feature-notice-v1',
+  confirmedAt: '2026-08-13T00:00:00.000Z',
+  enabled: true,
+};
+
 beforeEach(() => {
   vi.resetModules();
   mockPlaylist = null;
@@ -40,6 +49,10 @@ beforeEach(() => {
     downloadDir: 'C:\\Music\\Utawakui',
     isDefault: true,
   });
+  getFeatureConfirmationsMock = vi.fn().mockResolvedValue({
+    'provider-flow': confirmedProviderFlow,
+  });
+  confirmFeatureGateMock = vi.fn().mockResolvedValue(confirmedProviderFlow);
   chooseDownloadDirMock = vi.fn();
   resetDownloadDirMock = vi.fn();
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
@@ -73,6 +86,8 @@ beforeEach(() => {
       fetchVideoMetadata: fetchVideoMetadataMock,
       downloadAudio: downloadAudioMock,
       getConfig: getConfigMock,
+      getFeatureConfirmations: getFeatureConfirmationsMock,
+      confirmFeatureGate: confirmFeatureGateMock,
       chooseDownloadDir: chooseDownloadDirMock,
       resetDownloadDir: resetDownloadDirMock,
       listPlaylists: listPlaylistsMock,
@@ -91,6 +106,11 @@ afterEach(() => {
 async function loadImportSession() {
   const { useImportSession } = await import('./useImportSession.js');
   return useImportSession();
+}
+
+async function flushPromises() {
+  await Promise.resolve();
+  await Promise.resolve();
 }
 
 describe('useImportSession', () => {
@@ -604,6 +624,56 @@ describe('useImportSession', () => {
     expect(session.state.statusType).toBe('error');
   });
 
+  it('waits for provider-flow confirmation before resolving a source', async () => {
+    getFeatureConfirmationsMock.mockResolvedValueOnce({});
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [{ id: 'video-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    const session = await loadImportSession();
+    const { useFeatureGates } = await import('./useFeatureGates.js');
+    const gates = useFeatureGates();
+
+    session.setInput('playlist-id');
+    const resolvePromise = session.resolveSource();
+    await flushPromises();
+
+    expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
+    await vi.waitFor(() => {
+      expect(gates.state.pendingFeatureId).toBe('provider-flow');
+    });
+
+    await gates.confirmPendingFeature();
+    await resolvePromise;
+
+    expect(confirmFeatureGateMock).toHaveBeenCalledWith(
+      'provider-flow',
+      'feature-notice-v1',
+    );
+    expect(fetchYoutubePlaylistMock).toHaveBeenCalledWith('playlist-id');
+    expect(session.state.sourceKind).toBe('playlist');
+  });
+
+  it('cancels source resolution when the provider-flow notice is dismissed', async () => {
+    getFeatureConfirmationsMock.mockResolvedValueOnce({});
+    const session = await loadImportSession();
+    const { useFeatureGates } = await import('./useFeatureGates.js');
+    const gates = useFeatureGates();
+
+    session.setInput('playlist-id');
+    const resolvePromise = session.resolveSource();
+    await flushPromises();
+    await vi.waitFor(() => {
+      expect(gates.state.pendingFeatureId).toBe('provider-flow');
+    });
+    gates.cancelPendingFeature();
+    await resolvePromise;
+
+    expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
+    expect(session.state.status).toBe('已取消啟用外部來源匯入');
+    expect(session.state.statusType).toBe('pending');
+  });
+
   it('clears the preview and surfaces the error message when resolving throws', async () => {
     fetchYoutubePlaylistMock.mockRejectedValueOnce(new Error('network down'));
     const session = await loadImportSession();
@@ -751,6 +821,7 @@ describe('useImportSession', () => {
     session.setInput('playlist-id');
     await session.resolveSource();
     const importPromise = session.confirmImport(); // starts importing song-1
+    await flushPromises();
 
     expect(session.state.isImporting).toBe(true);
     // A second confirmImport() call while importing is the UI's "stop"
@@ -804,6 +875,7 @@ describe('useImportSession', () => {
     session.setInput('playlist-id');
     await session.resolveSource();
     const importPromise = session.confirmImport();
+    await flushPromises();
 
     expect(session.confirmImportLabel.value).toBe('停止');
 

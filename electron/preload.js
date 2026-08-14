@@ -14,6 +14,9 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('yt:resolve-import-source', input),
   fetchVideoMetadata: (input) => ipcRenderer.invoke('yt:fetch-metadata', input),
   getConfig: () => ipcRenderer.invoke('config:get'),
+  getFeatureConfirmations: () => ipcRenderer.invoke('feature-gates:list'),
+  confirmFeatureGate: (featureId, noticeVersion) =>
+    ipcRenderer.invoke('feature-gates:confirm', featureId, noticeVersion),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),

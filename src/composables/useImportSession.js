@@ -5,6 +5,8 @@ import {
   getPlaylistImportStats,
   hasImportableSelection,
 } from '../utils/importPlaylist.js';
+import { FEATURE_IDS } from '../constants/featureGates.js';
+import { useFeatureGates } from './useFeatureGates.js';
 import { usePlaylists } from './usePlaylists.js';
 
 const {
@@ -12,6 +14,7 @@ const {
   setTracks: setPlaylistTracks,
   upsertAlbum,
 } = usePlaylists();
+const { ensureFeatureGate } = useFeatureGates();
 
 const state = reactive({
   input: '',
@@ -109,6 +112,14 @@ const canUseConfirmButton = computed(() =>
 function setStatus(message, type = 'idle') {
   state.status = message;
   state.statusType = type;
+}
+
+async function ensureProviderFlow() {
+  const enabled = await ensureFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
+  if (!enabled) {
+    setStatus('已取消啟用外部來源匯入', 'pending');
+  }
+  return enabled;
 }
 
 // state is exposed readonly() — these three are the only fields ImportView
@@ -214,6 +225,7 @@ async function resolveSource() {
     setStatus('請貼上 YouTube 或 YouTube Music 連結', 'error');
     return;
   }
+  if (!(await ensureProviderFlow())) return;
 
   clearPreview();
   setStatus('檢查連結中...', 'pending');
@@ -440,6 +452,7 @@ async function confirmImport() {
     return;
   }
   if (!canConfirmImport.value) return;
+  if (!(await ensureProviderFlow())) return;
   if (state.sourceKind === 'single') {
     await importSingle();
     return;
@@ -449,6 +462,7 @@ async function confirmImport() {
 
 async function retryFailedTracks() {
   if (!canRetryFailed.value) return;
+  if (!(await ensureProviderFlow())) return;
   selectFailedTracks();
   await importPlaylist();
 }
