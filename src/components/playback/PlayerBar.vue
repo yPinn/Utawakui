@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
-  ICON_SIZE,
   ListMusic,
   MicVocal,
   Minus,
@@ -31,6 +30,7 @@ import { formatDuration } from '../../utils/format.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlaybackQueuePanel from '../queue/PlaybackQueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
@@ -309,16 +309,16 @@ onUnmounted(() => {
           title="上一首"
           @click="playPrevious"
         />
-        <button
-          type="button"
+        <UiIconButton
+          :icon="state.isPlaying ? Pause : Play"
           :disabled="!state.track"
-          :aria-label="state.isPlaying ? '暫停' : '播放'"
+          :label="state.isPlaying ? '暫停' : '播放'"
           class="player-bar__play"
+          shape="circle"
+          size="lg"
+          variant="accent"
           @click="toggle"
-        >
-          <Pause v-if="state.isPlaying" :size="ICON_SIZE" />
-          <Play v-else :size="ICON_SIZE" />
-        </button>
+        />
         <UiButton
           :icon="SkipForward"
           :disabled="!canGoNext"
@@ -536,29 +536,6 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-}
-
-.player-bar__play {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  border: none;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
-  cursor: pointer;
-}
-
-.player-bar__play:disabled {
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text-muted);
-}
-
-.player-bar__play:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .player-bar__progress {

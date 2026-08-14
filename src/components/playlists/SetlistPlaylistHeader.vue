@@ -7,6 +7,7 @@
 import { Pencil, Play, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 
 defineProps({
@@ -44,16 +45,14 @@ const emit = defineEmits([
            metadata — only playlists (user-authored collections) get an
            edit affordance here, opening the same modal as the toolbar
            pencil below. -->
-      <button
+      <UiIconButton
         v-if="!isAlbum"
-        type="button"
+        :icon="Pencil"
         class="playlist-cover__edit"
-        aria-label="編輯詳細資料"
-        title="編輯詳細資料"
+        label="編輯詳細資料"
+        variant="overlay"
         @click="emit('openEditDetails')"
-      >
-        <Pencil :size="16" aria-hidden="true" />
-      </button>
+      />
     </div>
 
     <div class="playlist-hero__content">
@@ -70,16 +69,16 @@ const emit = defineEmits([
 
   <section class="playlist-toolbar" aria-label="播放清單操作">
     <div class="playlist-toolbar__actions">
-      <button
-        type="button"
+      <UiIconButton
+        :icon="Play"
         class="playlist-play"
         :disabled="!canPlay"
-        aria-label="播放此歌單"
-        title="播放此歌單"
+        label="播放此歌單"
+        size="lg"
+        variant="accent"
+        fill
         @click="emit('play')"
-      >
-        <Play :size="18" fill="currentColor" aria-hidden="true" />
-      </button>
+      />
       <UiButton
         :icon="Pencil"
         aria-label="編輯詳細資料"
@@ -124,40 +123,6 @@ const emit = defineEmits([
     0 1px 0 color-mix(in srgb, var(--ui-color-canvas) 80%, transparent);
 }
 
-.playlist-hero::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: var(--ui-space-5);
-  width: 104px;
-  height: var(--ui-space-3);
-  border-right: var(--ui-border-width) solid var(--ui-color-border);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: 0 0 var(--ui-radius-sm) var(--ui-radius-sm);
-  background: var(--ui-color-surface-raised);
-  pointer-events: none;
-}
-
-.playlist-hero::after {
-  content: '';
-  position: absolute;
-  right: var(--ui-space-4);
-  bottom: calc(var(--ui-space-2) * -1);
-  left: var(--ui-space-5);
-  z-index: -1;
-  height: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-top: 0;
-  border-radius: 0 0 var(--ui-radius-lg) var(--ui-radius-lg);
-  background: color-mix(
-    in srgb,
-    var(--ui-color-surface) 78%,
-    var(--ui-color-canvas)
-  );
-  opacity: 0.72;
-  pointer-events: none;
-}
-
 /* Sizing/border/positioning wrapper only — the collage grid itself is
    UiCollageThumb.vue's, shared with PlaylistSidebarRow.vue's nav thumb so
    the two can never show a different image again. */
@@ -178,17 +143,7 @@ const emit = defineEmits([
   position: absolute;
   right: var(--ui-space-2);
   bottom: var(--ui-space-2);
-  width: 32px;
-  height: 32px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: var(--ui-radius-pill);
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
   opacity: 0;
-  cursor: pointer;
   transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
@@ -199,8 +154,6 @@ const emit = defineEmits([
 
 .playlist-cover__edit:focus-visible {
   opacity: 1;
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .playlist-hero__content {
@@ -255,32 +208,5 @@ const emit = defineEmits([
 
 .playlist-toolbar__tools {
   min-width: 0;
-}
-
-.playlist-play {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: 0;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
-  cursor: pointer;
-}
-
-.playlist-play:not(:disabled):hover {
-  background: var(--ui-color-accent-hover);
-}
-
-.playlist-play:disabled {
-  opacity: var(--ui-opacity-disabled);
-  cursor: default;
-}
-
-.playlist-play:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 </style>

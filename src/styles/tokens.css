@@ -85,6 +85,9 @@
   --ui-border-width: 1px;
   --ui-titlebar-height: 2.5rem; /* 40px */
   --ui-control-height: 1.875rem; /* 30px */
+  --ui-icon-button-size-sm: 1.5rem; /* 24px */
+  --ui-icon-button-size-md: var(--ui-control-height);
+  --ui-icon-button-size-lg: 2.25rem; /* 36px */
   --ui-track-row-min-height: 3.25rem; /* 52px */
   --ui-track-row-thumb-size: 2.5rem; /* 40px */
   --ui-track-row-gap: var(--ui-space-2);

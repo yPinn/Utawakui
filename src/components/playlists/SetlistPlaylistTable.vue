@@ -6,7 +6,7 @@
 // reorder + a #-index column UiTrackRow has no slot for. Sort state stays
 // in the parent view (it doubles as playback queue order), so this
 // component only renders from props and emits intent.
-import { GripVertical } from '../../icons/index.js';
+import { GripVertical, ICON_SIZE } from '../../icons/index.js';
 import { formatDuration, formatAddedDate } from '../../utils/format.js';
 import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -121,7 +121,7 @@ function sortLabel(key, label) {
           :title="isAlbum ? undefined : '拖曳排序'"
           aria-hidden="true"
         >
-          <GripVertical v-if="!isAlbum" :size="16" aria-hidden="true" />
+          <GripVertical v-if="!isAlbum" :size="ICON_SIZE" aria-hidden="true" />
         </span>
         <span class="playlist-track__index">{{ visibleIndex + 1 }}</span>
         <span class="playlist-track__main">

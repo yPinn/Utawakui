@@ -3,8 +3,9 @@
 // row markup was identical between them before this extraction; drag/drop
 // is playlist-only, so those props/events simply go unused (default false)
 // for album rows instead of forking the template.
-import { ICON_SIZE, Pause, Play } from '../../icons/index.js';
+import { Pause, Play } from '../../icons/index.js';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 
 defineProps({
@@ -34,8 +35,7 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <button
-    type="button"
+  <div
     class="playlist-sidebar-row"
     :class="{
       'playlist-sidebar-row--active': active,
@@ -44,7 +44,6 @@ const emit = defineEmits([
       'playlist-sidebar-row--drop-after': dropAfter,
     }"
     :draggable="draggable"
-    :aria-current="active ? 'page' : undefined"
     :title="playlist.name"
     @click="emit('select')"
     @contextmenu="emit('contextmenu', $event)"
@@ -54,6 +53,14 @@ const emit = defineEmits([
     @drop="emit('drop', $event)"
     @dragend="emit('dragEnd')"
   >
+    <button
+      type="button"
+      class="playlist-sidebar-row__select"
+      :aria-current="active ? 'page' : undefined"
+      :aria-label="`選取 ${playlist.name || '未命名歌單'}`"
+      :title="playlist.name"
+      @click.stop="emit('select')"
+    />
     <UiCollageThumb
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
@@ -65,36 +72,24 @@ const emit = defineEmits([
       :decorative="false"
     >
       <template #overlay>
-        <button
-          type="button"
+        <UiIconButton
+          :icon="isPlaying ? Pause : Play"
           class="playlist-sidebar-row__play"
           :class="{ 'playlist-sidebar-row__play--active': isActiveSource }"
-          :aria-label="
-            isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`
-          "
+          :label="isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
           :title="isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
-          @click="emit('togglePlayback', $event)"
-        >
-          <Pause
-            v-if="isPlaying"
-            :size="ICON_SIZE"
-            fill="currentColor"
-            aria-hidden="true"
-          />
-          <Play
-            v-else
-            :size="ICON_SIZE"
-            fill="currentColor"
-            aria-hidden="true"
-          />
-        </button>
+          fill
+          shape="inherit"
+          variant="overlay"
+          @click.stop="emit('togglePlayback', $event)"
+        />
       </template>
     </UiCollageThumb>
     <span class="playlist-sidebar-row__info">
       <UiMarqueeText :text="playlist.name || '(未命名歌單)'" />
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
-  </button>
+  </div>
 </template>
 
 <style scoped>
@@ -113,6 +108,16 @@ const emit = defineEmits([
   text-align: left;
   cursor: pointer;
   width: 100%;
+}
+
+.playlist-sidebar-row__select {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: inherit;
 }
 
 .playlist-sidebar-row[draggable='true'] {
@@ -153,7 +158,7 @@ const emit = defineEmits([
   background: var(--ui-color-surface-hover);
 }
 
-.playlist-sidebar-row:focus-visible {
+.playlist-sidebar-row__select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
@@ -175,29 +180,29 @@ const emit = defineEmits([
    works as an overlay over any thumbnail image regardless of the app's own
    light/dark theme, so it isn't themed off --ui-* tokens. */
 .playlist-sidebar-row__play {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
   border-radius: inherit;
-  background: rgba(0, 0, 0, 0.55);
-  color: #fff;
   opacity: 0;
-  cursor: pointer;
   transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
-/* :focus-visible, not :focus-within — this row is itself a <button>, and
-   mouse-clicking it to select the playlist leaves it focused. :focus-within
-   would keep the play button visibly revealed after every such click even
-   though nothing is playing; :focus-visible only matches keyboard-driven
+/* :focus-visible, not :focus-within — the hidden select button can keep
+   focus after mouse selection. :focus-visible only matches keyboard-driven
    focus, which is the actual accessibility case this is for. */
 .playlist-sidebar-row__thumb:hover .playlist-sidebar-row__play,
-.playlist-sidebar-row:focus-visible .playlist-sidebar-row__play,
+.playlist-sidebar-row__select:focus-visible
+  ~ .playlist-sidebar-row__thumb
+  .playlist-sidebar-row__play,
 .playlist-sidebar-row__play--active {
   opacity: 1;
+}
+
+.playlist-sidebar-row__thumb,
+.playlist-sidebar-row__info {
+  position: relative;
+  z-index: 2;
 }
 
 .playlist-sidebar-row__info {

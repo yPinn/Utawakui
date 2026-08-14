@@ -22,7 +22,7 @@ defineProps({
       },
     ]"
   >
-    <component :is="icon" v-if="icon" :size="ICON_SIZE" />
+    <component :is="icon" v-if="icon" :size="ICON_SIZE" aria-hidden="true" />
     <span v-if="$slots.default"><slot /></span>
   </button>
 </template>
@@ -45,7 +45,11 @@ defineProps({
 }
 
 .ui-btn--icon-only {
-  padding: var(--ui-space-1);
+  width: var(--ui-icon-button-size-md);
+  height: var(--ui-icon-button-size-md);
+  flex: 0 0 var(--ui-icon-button-size-md);
+  justify-content: center;
+  padding: 0;
 }
 
 .ui-btn--ghost {

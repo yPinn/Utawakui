@@ -113,7 +113,9 @@ const singleIconSize = computed(() =>
         <Music2 :size="cellIconSize" aria-hidden="true" />
       </span>
     </template>
-    <slot name="overlay" />
+    <span v-if="$slots.overlay" class="ui-collage-thumb__overlay">
+      <slot name="overlay" />
+    </span>
   </span>
 </template>
 
@@ -149,19 +151,20 @@ const singleIconSize = computed(() =>
   box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
 }
 
-.ui-collage-thumb--folder::before {
-  content: '';
+.ui-collage-thumb__overlay {
   position: absolute;
-  top: 0;
-  left: 12%;
-  z-index: 1;
-  width: 38%;
-  height: 18%;
-  border-right: var(--ui-border-width) solid var(--ui-color-border);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: 0 0 var(--ui-radius-sm) 0;
-  background: var(--ui-color-surface-raised);
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: inherit;
   pointer-events: none;
+}
+
+.ui-collage-thumb__overlay :deep(*) {
+  pointer-events: auto;
 }
 
 .ui-collage-thumb__custom-image {

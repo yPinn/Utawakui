@@ -9,9 +9,10 @@
 // SetlistPlaylistHeader.vue's own comment for why (source-normalized
 // metadata, not user-authored).
 import { ref, watch } from 'vue';
-import { Pencil, X } from '../../icons/index.js';
+import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 
 const props = defineProps({
@@ -68,19 +69,18 @@ function save() {
             title="選擇相片"
             @click="emit('chooseCover')"
           >
-            <Pencil :size="20" aria-hidden="true" />
+            <Pencil :size="ICON_SIZE" aria-hidden="true" />
             <span>選擇相片</span>
           </button>
-          <button
+          <UiIconButton
             v-if="coverUrl"
-            type="button"
+            :icon="X"
             class="playlist-details__cover-clear"
-            aria-label="移除自訂封面"
-            title="移除自訂封面"
+            label="移除自訂封面"
+            size="sm"
+            variant="overlay"
             @click="emit('clearCover')"
-          >
-            <X :size="14" aria-hidden="true" />
-          </button>
+          />
         </template>
       </div>
 
@@ -150,14 +150,7 @@ function save() {
 .playlist-details__cover-edit,
 .playlist-details__cover-clear {
   position: absolute;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: rgb(0 0 0 / 55%);
-  color: #fff;
   opacity: 0;
-  cursor: pointer;
   transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
@@ -170,8 +163,15 @@ function save() {
 
 .playlist-details__cover-edit {
   inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-direction: column;
   gap: var(--ui-space-1);
+  border: none;
+  background: rgb(0 0 0 / 55%);
+  color: #fff;
+  cursor: pointer;
   font-size: var(--ui-font-size-sm);
 }
 
@@ -183,14 +183,6 @@ function save() {
 .playlist-details__cover-clear {
   right: var(--ui-space-2);
   top: var(--ui-space-2);
-  width: 24px;
-  height: 24px;
-  border-radius: var(--ui-radius-pill);
-}
-
-.playlist-details__cover-clear:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 /* height: 120px is the same literal as .playlist-details__cover's width/
