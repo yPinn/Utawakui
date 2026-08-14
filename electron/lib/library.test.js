@@ -1874,6 +1874,17 @@ describe('buildRangeResponse', () => {
     expect(Buffer.compare(body, content.subarray(1900, 2000))).toBe(0);
   });
 
+  it('serves the actual file tail for a suffix Range', async () => {
+    const res = buildRangeResponse(filePath, 'bytes=-128');
+    expect(res.status).toBe(206);
+    expect(res.headers.get('content-range')).toBe(
+      `bytes 1872-1999/${content.length}`,
+    );
+    expect(res.headers.get('content-length')).toBe('128');
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(Buffer.compare(body, content.subarray(1872, 2000))).toBe(0);
+  });
+
   it('clamps a range end beyond the file size', () => {
     const res = buildRangeResponse(filePath, 'bytes=1990-5000');
     expect(res.headers.get('content-range')).toBe(

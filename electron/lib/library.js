@@ -1526,8 +1526,13 @@ function buildRangeResponse(filePath, rangeHeader) {
   if (rangeHeader) {
     const match = /^bytes=(\d*)-(\d*)$/.exec(rangeHeader);
     if (match && (match[1] !== '' || match[2] !== '')) {
-      if (match[1] !== '') start = Number(match[1]);
-      if (match[2] !== '') end = Math.min(Number(match[2]), stat.size - 1);
+      if (match[1] === '') {
+        const suffixLength = Number(match[2]);
+        start = Math.max(stat.size - suffixLength, 0);
+      } else {
+        start = Number(match[1]);
+        if (match[2] !== '') end = Math.min(Number(match[2]), stat.size - 1);
+      }
       status = 206;
     }
   }
