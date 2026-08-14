@@ -4,6 +4,7 @@
 import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
+import UiTextButton from './UiTextButton.vue';
 import UiTrackThumb from './UiTrackThumb.vue';
 
 // Either pass a whole `track` object or the flat props individually — the
@@ -18,7 +19,13 @@ const props = defineProps({
   // Lets a caller show its own duration inside #trail (e.g. after other
   // trailing badges) instead of the default duration-then-trail order.
   hideDuration: { type: Boolean, default: false },
+  // Swaps the title from plain marquee text to its own click target (e.g.
+  // jump to source album — see useAlbumNavigation.js for caller-side logic).
+  titleClickable: { type: Boolean, default: false },
+  titleAriaLabel: { type: String, default: undefined },
 });
+
+const emit = defineEmits(['titleClick']);
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
@@ -43,7 +50,14 @@ const thumbTrack = computed(() => ({
     <slot name="lead" />
     <UiTrackThumb class="ui-track__thumb" :track="thumbTrack" :size="44" />
     <div class="ui-track__info">
-      <UiMarqueeText class="ui-track__title" :text="displayTitle" />
+      <UiTextButton
+        v-if="titleClickable"
+        class="ui-track__title"
+        :text="displayTitle"
+        :aria-label="titleAriaLabel"
+        @click="emit('titleClick')"
+      />
+      <UiMarqueeText v-else class="ui-track__title" :text="displayTitle" />
       <span v-if="displayArtist" class="ui-track__artist">{{
         displayArtist
       }}</span>

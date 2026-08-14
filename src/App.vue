@@ -1,5 +1,4 @@
 <script setup>
-import { ref } from 'vue';
 import AppSidebar from './components/layout/AppSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
@@ -7,6 +6,7 @@ import SetlistView from './views/SetlistView.vue';
 import AppearanceView from './views/AppearanceView.vue';
 import LyricsView from './views/LyricsView.vue';
 import ImportView from './views/ImportView.vue';
+import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
@@ -25,7 +25,8 @@ const views = {
   import: ImportView,
 };
 
-const activeView = ref('setlist');
+// Singleton (see useAppView.js) so deeper components can switch tabs too.
+const { activeView } = useAppView();
 // Pass the ref so global shortcuts can read and update the active view.
 useKeyboardShortcuts(activeView);
 </script>

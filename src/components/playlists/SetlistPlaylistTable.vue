@@ -6,10 +6,11 @@
 // reorder + a #-index column UiTrackRow has no slot for. Sort state stays
 // in the parent view (it doubles as playback queue order), so this
 // component only renders from props and emits intent.
-import { GripVertical } from '@lucide/vue';
+import { GripVertical } from '../../icons/index.js';
 import { formatDuration, formatAddedDate } from '../../utils/format.js';
 import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
+import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 // align: 'end' keeps duration header/body columns right-aligned together.
@@ -31,11 +32,16 @@ const props = defineProps({
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
   dropPosition: { type: String, default: null },
+  // Track ids whose title should jump to their source album (see
+  // useAlbumNavigation.js). Empty in album mode itself — no jumping to the
+  // album you're already viewing.
+  jumpableTrackIds: { type: Set, default: () => new Set() },
 });
 
 const emit = defineEmits([
   'toggleSort',
   'selectTrack',
+  'titleClick',
   'openMenu',
   'trackDragStart',
   'trackDragOver',
@@ -126,7 +132,18 @@ function sortLabel(key, label) {
             :size="44"
           />
           <span class="playlist-track__copy">
-            <UiMarqueeText class="playlist-track__title" :text="track.title" />
+            <UiTextButton
+              v-if="jumpableTrackIds.has(track.id)"
+              class="playlist-track__title"
+              :text="track.title"
+              :aria-label="`前往專輯：${track.title}`"
+              @click="emit('titleClick', track)"
+            />
+            <UiMarqueeText
+              v-else
+              class="playlist-track__title"
+              :text="track.title"
+            />
             <span v-if="track.artist" class="playlist-track__subtitle">
               {{ track.artist }}
             </span>

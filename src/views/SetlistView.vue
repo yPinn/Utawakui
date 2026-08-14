@@ -1,6 +1,14 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import { ListEnd, ListMinus, ListPlus, Plus, Trash2 } from '@lucide/vue';
+import {
+  Disc3,
+  ListEnd,
+  ListMinus,
+  ListPlus,
+  Plus,
+  Trash2,
+} from '../icons/index.js';
+import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
@@ -57,6 +65,7 @@ const {
   removeTrack: removeTrackFromPlaylist,
   setTracks: setPlaylistTracksAction,
 } = usePlaylists();
+const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 
 // Transient UI mode stays local; mutations persist immediately.
 // The playlist being edited is tracked independently of selectedPlaylist —
@@ -74,6 +83,7 @@ const TRACK_MENU_ACTIONS = {
   addToPlaylist: 'add-to-playlist',
   createPlaylist: 'create-playlist',
   removeFromPlaylist: 'remove-from-playlist',
+  goToAlbum: 'go-to-album',
 };
 
 const mode = computed(() => {
@@ -101,6 +111,16 @@ function resolvePlaylistTracks(playlist) {
 const playlistTracks = computed(() =>
   resolvePlaylistTracks(selectedPlaylist.value),
 );
+
+// Empty inside an album's own page — jumping to itself would be a no-op.
+const jumpableTrackIds = computed(() => {
+  if (isAlbumSelected.value) return new Set();
+  const ids = new Set();
+  for (const track of playlistTracks.value) {
+    if (albumForTrack(track)) ids.add(track.id);
+  }
+  return ids;
+});
 
 const normalizedSearchQuery = computed(() =>
   searchQuery.value.trim().toLocaleLowerCase(),
@@ -239,6 +259,19 @@ const addMenuItems = computed(() => {
         playlistId: selectedPlaylist.value.id,
       },
     });
+  }
+
+  // Same guard as jumpableTrackIds above.
+  if (track && !isAlbumSelected.value && albumForTrack(track)) {
+    items.push(
+      { key: 'album-divider', separator: true },
+      {
+        key: 'go-to-album',
+        label: '前往專輯',
+        icon: Disc3,
+        value: { action: TRACK_MENU_ACTIONS.goToAlbum },
+      },
+    );
   }
 
   return items;
@@ -478,6 +511,8 @@ async function handleTrackMenuSelect(value) {
     addTrackToPlaylist(value.playlistId, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromPlaylist) {
     removeTrackFromPlaylist(value.playlistId, track.id);
+  } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
+    jumpToAlbum(track);
   }
 
   closeAddMenu();
@@ -616,7 +651,10 @@ onMounted(() => {
               :track="track"
               :active="state.track?.id === track.id"
               interactive
+              :title-clickable="Boolean(albumForTrack(track))"
+              :title-aria-label="`前往專輯：${track.title}`"
               @click="playRow(track)"
+              @title-click="jumpToAlbum(track)"
               @contextmenu="openAddMenu(track, $event)"
             >
               <template #trail>
@@ -650,8 +688,10 @@ onMounted(() => {
             :dragging-track-id="draggingTrackId"
             :drop-target-track-id="dropTargetTrackId"
             :drop-position="dropPosition"
+            :jumpable-track-ids="jumpableTrackIds"
             @toggle-sort="togglePlaylistSort"
             @select-track="playRow"
+            @title-click="jumpToAlbum"
             @open-menu="openAddMenu"
             @track-drag-start="startDrag"
             @track-drag-over="updateDropTarget"

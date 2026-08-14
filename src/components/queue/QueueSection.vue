@@ -11,10 +11,13 @@ defineProps({
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
   dropPosition: { type: String, default: null },
+  // See QueueTrackButton.vue's `jumpable` prop / useAlbumNavigation.js.
+  jumpableTrackIds: { type: Set, default: () => new Set() },
 });
 
 const emit = defineEmits([
   'selectTrack',
+  'titleClick',
   'trackDragStart',
   'trackDragOver',
   'trackDragLeave',
@@ -51,7 +54,9 @@ const emit = defineEmits([
           :track="track"
           :current="track.id === currentTrackId"
           :draggable="draggableItems"
+          :jumpable="jumpableTrackIds.has(track.id)"
           @select="emit('selectTrack', $event)"
+          @title-click="emit('titleClick', $event)"
           @drag-start="emit('trackDragStart', track, $event)"
           @drag-over="emit('trackDragOver', track, $event)"
           @drag-leave="emit('trackDragLeave', track, $event)"

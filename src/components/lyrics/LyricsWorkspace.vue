@@ -3,6 +3,7 @@ import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import {
   Captions,
   Clock,
+  ICON_SIZE,
   Loader2,
   MicVocal,
   Minus,
@@ -10,15 +11,15 @@ import {
   RefreshCw,
   RotateCcw,
   Type,
-} from '@lucide/vue';
+} from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSeparation } from '../../composables/useSeparation.js';
-import { ICON_SIZE } from '../../constants/ui.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
@@ -44,6 +45,7 @@ const {
   selectedPlaylist,
   select: selectPlaylistAction,
 } = usePlaylists();
+const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 // Same order as PlaylistSidebar.vue's nav rows (see playlistOrdering.js) —
 // playlists first in their manual drag order, then albums grouped by
 // derived artist.
@@ -119,6 +121,16 @@ const LYRICS_FONT_SIZE_CLASSES = [
   'lyrics-preview--font-default',
   'lyrics-preview--font-large',
 ];
+
+// Disabled while viewing an album's own page.
+const jumpableTrackIds = computed(() => {
+  if (selectedPlaylist.value?.kind === 'album') return new Set();
+  const ids = new Set();
+  for (const track of state.tracks) {
+    if (albumForTrack(track)) ids.add(track.id);
+  }
+  return ids;
+});
 
 const tracksWithLyricsCount = computed(
   () =>
@@ -337,7 +349,10 @@ watch(activeLineIndex, (index) => {
           :active="track.id === state.selectedTrackId"
           interactive
           hide-duration
+          :title-clickable="jumpableTrackIds.has(track.id)"
+          :title-aria-label="`前往專輯：${track.title}`"
           @click="selectTrack(track.id)"
+          @title-click="jumpToAlbum(track)"
         >
           <template #trail>
             <div class="lyrics-row-status">

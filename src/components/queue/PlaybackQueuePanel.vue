@@ -1,10 +1,13 @@
 <script setup>
 import { computed } from 'vue';
-import { X } from '@lucide/vue';
+import { X } from '../../icons/index.js';
+import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { usePlayer } from '../../composables/usePlayer.js';
+import { albumPlaylistByTrackId } from '../../utils/albumMembership.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
+import { usePlaylists } from '../../composables/usePlaylists.js';
 import QueueSection from './QueueSection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
@@ -26,6 +29,8 @@ const {
   reorderQueuedTrack,
   reorderSourceTrack,
 } = usePlaybackQueue();
+const { state: playlistState } = usePlaylists();
+const { jumpToAlbum } = useAlbumNavigation();
 
 const currentTracks = computed(() =>
   currentTrack.value ? [currentTrack.value] : [],
@@ -38,6 +43,11 @@ const hasQueue = computed(
 );
 const upcomingSourceLabel = computed(() => state.sourceName || '目前佇列');
 
+// Shared by all three sections below (see useAlbumNavigation.js).
+const jumpableTrackIds = computed(
+  () => new Set(albumPlaylistByTrackId(playlistState.playlists).keys()),
+);
+
 function playCurrentTrack(track) {
   playTrack(toPlayableTrack(track));
 }
@@ -45,6 +55,12 @@ function playCurrentTrack(track) {
 function playQueuedTrack(track, options = {}) {
   setCurrentTrack(track.id, options);
   playTrack(toPlayableTrack(track));
+}
+
+// Also closes the panel — leaving it open over the Setlist view looks broken.
+function jumpFromQueue(track) {
+  jumpToAlbum(track);
+  emit('close');
 }
 
 // Two independent instances — queued tracks and upcoming-source tracks are
@@ -99,7 +115,9 @@ const {
         title="現正播放"
         :tracks="currentTracks"
         :current-track-id="state.currentTrackId"
+        :jumpable-track-ids="jumpableTrackIds"
         @select-track="playCurrentTrack"
+        @title-click="jumpFromQueue"
       />
 
       <QueueSection
@@ -110,7 +128,9 @@ const {
         :dragging-track-id="draggingQueuedTrackId"
         :drop-target-track-id="dropTargetQueuedTrackId"
         :drop-position="queuedDropPosition"
+        :jumpable-track-ids="jumpableTrackIds"
         @select-track="playQueuedTrack($event, { source: false })"
+        @title-click="jumpFromQueue"
         @track-drag-start="startQueuedDrag"
         @track-drag-over="updateQueuedDropTarget"
         @track-drag-leave="leaveQueuedDropTarget"
@@ -135,8 +155,10 @@ const {
         :dragging-track-id="draggingSourceTrackId"
         :drop-target-track-id="dropTargetSourceTrackId"
         :drop-position="sourceDropPosition"
+        :jumpable-track-ids="jumpableTrackIds"
         empty-text="沒有下一首"
         @select-track="playQueuedTrack($event, { source: true })"
+        @title-click="jumpFromQueue"
         @track-drag-start="startSourceDrag"
         @track-drag-over="updateSourceDropTarget"
         @track-drag-leave="leaveSourceDropTarget"
