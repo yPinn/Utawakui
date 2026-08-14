@@ -5,6 +5,7 @@ import {
   ListEnd,
   ListMinus,
   ListPlus,
+  Pencil,
   Plus,
   Trash2,
 } from '../icons/index.js';
@@ -14,6 +15,8 @@ import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
+import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
+import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
 import PlaylistDetailsModal from '../components/playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../components/playlists/PlaylistSidebar.vue';
 import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
@@ -36,6 +39,10 @@ import {
 } from '../utils/playlistSort.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../utils/albumSummary.js';
+import {
+  sortSetlistLibraryTracks,
+  sortSetlistLocalTracks,
+} from '../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
 const {
@@ -77,19 +84,25 @@ const deleteError = ref(null);
 const searchQuery = ref('');
 const addMenu = ref(null);
 const playlistSort = ref({ key: null, direction: 'asc' });
+const libraryView = ref('all');
 
 const TRACK_MENU_ACTIONS = {
   addToQueue: 'add-to-queue',
   addToPlaylist: 'add-to-playlist',
   createPlaylist: 'create-playlist',
+  editMetadata: 'edit-metadata',
   removeFromPlaylist: 'remove-from-playlist',
   goToAlbum: 'go-to-album',
 };
+const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
 
 const mode = computed(() => {
   if (!selectedPlaylist.value) return 'all';
   return selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist';
 });
+const isLocalLibraryView = computed(
+  () => !selectedPlaylist.value && libraryView.value === 'local',
+);
 
 // Album track membership/order is read-only — see playlists.js's
 // PLAYLIST_KINDS comment. Rename/delete/play/sort still apply to both.
@@ -136,7 +149,14 @@ function matchesSearch(track) {
   );
 }
 
-const visibleTracks = computed(() => libraryState.tracks.filter(matchesSearch));
+const libraryViewTracks = computed(() =>
+  isLocalLibraryView.value
+    ? sortSetlistLocalTracks(libraryState.tracks)
+    : sortSetlistLibraryTracks(libraryState.tracks),
+);
+const visibleTracks = computed(() =>
+  libraryViewTracks.value.filter(matchesSearch),
+);
 const visiblePlaylistEntries = computed(() => {
   const entries = playlistTracks.value
     .map((track, playlistIndex) => ({
@@ -245,6 +265,18 @@ const addMenuItems = computed(() => {
     },
   ];
 
+  if (track?.sourceType === 'local-file') {
+    items.push(
+      { key: 'edit-divider', separator: true },
+      {
+        key: 'edit-metadata',
+        label: '編輯資訊',
+        icon: Pencil,
+        value: { action: TRACK_MENU_ACTIONS.editMetadata },
+      },
+    );
+  }
+
   if (
     track &&
     !isAlbumSelected.value &&
@@ -280,10 +312,15 @@ const addMenuItems = computed(() => {
 const pageTitle = computed(() =>
   selectedPlaylist.value
     ? playlistDisplayName(selectedPlaylist.value)
-    : 'Setlist',
+    : isLocalLibraryView.value
+      ? '本機音訊'
+      : '全部曲目',
 );
 
 const pageError = computed(() => playlistState.error || deleteError.value);
+const visibleTracksEmptyText = computed(() =>
+  normalizedSearchQuery.value ? '找不到符合搜尋的曲目。' : '沒有曲目。',
+);
 
 // Independent of selectedPlaylist — see editDetailsPlaylistId's own comment.
 // Deriving `open` from this existing (rather than a separate boolean) also
@@ -495,6 +532,12 @@ function closeAddMenu() {
   addMenu.value = null;
 }
 
+function selectLibraryView(view) {
+  libraryView.value = view;
+  closeAddMenu();
+  clearDragState();
+}
+
 async function handleTrackMenuSelect(value) {
   const track = addMenu.value?.track;
   if (!track) {
@@ -509,6 +552,8 @@ async function handleTrackMenuSelect(value) {
     enqueueTrack(track);
   } else if (value.action === TRACK_MENU_ACTIONS.addToPlaylist) {
     addTrackToPlaylist(value.playlistId, track.id);
+  } else if (value.action === TRACK_MENU_ACTIONS.editMetadata) {
+    trackMetadataEditor.open(track);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromPlaylist) {
     removeTrackFromPlaylist(value.playlistId, track.id);
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
@@ -587,6 +632,8 @@ onMounted(() => {
     <PlaylistSidebar
       class="setlist-view__sidebar"
       :tracks-by-id="tracksById"
+      :library-view="libraryView"
+      @library-view-select="selectLibraryView"
       @playlist-action="handlePlaylistMenuAction"
     />
 
@@ -605,6 +652,18 @@ onMounted(() => {
       @save="saveEditDetails"
       @choose-cover="chooseCover"
       @clear-cover="clearCover"
+    />
+
+    <TrackMetadataModal
+      :open="trackMetadataEditor.isOpen.value"
+      :title="trackMetadataEditor.state.titleDraft"
+      :artist="trackMetadataEditor.state.artistDraft"
+      :is-saving="trackMetadataEditor.state.isSaving"
+      :error="trackMetadataEditor.state.error ?? ''"
+      @close="trackMetadataEditor.close"
+      @save="trackMetadataEditor.save"
+      @update-title="trackMetadataEditor.setTitleDraft"
+      @update-artist="trackMetadataEditor.setArtistDraft"
     />
 
     <div class="setlist-view__main">
@@ -642,7 +701,7 @@ onMounted(() => {
 
         <template v-if="mode === 'all'">
           <UiHint v-if="visibleTracks.length === 0">
-            找不到符合搜尋的曲目。
+            {{ visibleTracksEmptyText }}
           </UiHint>
           <ul v-else class="tracks">
             <UiTrackRow

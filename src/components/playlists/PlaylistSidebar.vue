@@ -8,6 +8,7 @@ import {
   ListEnd,
   ListMusic,
   ListPlus,
+  Music,
   Music2,
   Pencil,
   Plus,
@@ -32,13 +33,14 @@ import UiContextMenu from '../ui/UiContextMenu.vue';
 const props = defineProps({
   // Passed from SetlistView to avoid a duplicate library subscription.
   tracksById: { type: Map, default: () => new Map() },
+  libraryView: { type: String, default: 'all' },
 });
 
 const { state, select, create, reorderPlaylist } = usePlaylists();
 const { state: playerState, play, pause, playTrack } = usePlayer();
 const { state: queueState, setQueue } = usePlaybackQueue();
 
-const emit = defineEmits(['playlistAction']);
+const emit = defineEmits(['libraryViewSelect', 'playlistAction']);
 
 // A custom cover (album's own official artwork, or a playlist's manually
 // uploaded one — see SetlistPlaylistHeader.vue) always wins; otherwise the
@@ -259,6 +261,12 @@ function selectPlaylist(id) {
   select(id);
 }
 
+function selectLibraryView(view) {
+  closePlaylistMenu();
+  select(null);
+  emit('libraryViewSelect', view);
+}
+
 function handleMenuSelect(value) {
   closePlaylistMenu();
   emit('playlistAction', value);
@@ -318,9 +326,14 @@ function startDrag(playlist, event) {
     <button
       type="button"
       class="playlist-sidebar__item"
-      :class="{ 'playlist-sidebar__item--active': state.selectedId === null }"
-      :aria-current="state.selectedId === null ? 'page' : undefined"
-      @click="selectPlaylist(null)"
+      :class="{
+        'playlist-sidebar__item--active':
+          state.selectedId === null && libraryView === 'all',
+      }"
+      :aria-current="
+        state.selectedId === null && libraryView === 'all' ? 'page' : undefined
+      "
+      @click="selectLibraryView('all')"
     >
       <span
         class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
@@ -330,6 +343,31 @@ function startDrag(playlist, event) {
       </span>
       <span class="playlist-sidebar__info">
         <span class="playlist-sidebar__label">全部曲目</span>
+      </span>
+    </button>
+
+    <button
+      type="button"
+      class="playlist-sidebar__item"
+      :class="{
+        'playlist-sidebar__item--active':
+          state.selectedId === null && libraryView === 'local',
+      }"
+      :aria-current="
+        state.selectedId === null && libraryView === 'local'
+          ? 'page'
+          : undefined
+      "
+      @click="selectLibraryView('local')"
+    >
+      <span
+        class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
+        aria-hidden="true"
+      >
+        <Music :size="ICON_SIZE" aria-hidden="true" />
+      </span>
+      <span class="playlist-sidebar__info">
+        <span class="playlist-sidebar__label">本機音訊</span>
       </span>
     </button>
 

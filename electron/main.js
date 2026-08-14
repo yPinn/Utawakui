@@ -39,6 +39,7 @@ const {
   deletePlaylistCoverDir,
   deleteTrack,
   getTrackLyricsState,
+  importLocalAudioFiles,
   listTracks,
   migrateTrackAlbumMetadata,
   readTrackLyrics,
@@ -54,6 +55,7 @@ const {
   saveIndexEntry,
   saveTrackLyricsText,
   selectSeparationResult,
+  updateTrackMetadata,
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
 } = require('./lib/library');
@@ -448,6 +450,30 @@ if (!gotSingleInstanceLock) {
       return { updated };
     });
 
+    ipcMain.handle('library:import-audio-files', async () => {
+      const result = await dialog.showOpenDialog(mainWindow, {
+        properties: ['openFile', 'multiSelections'],
+        filters: [
+          {
+            name: '音訊檔',
+            extensions: ['webm', 'm4a', 'opus', 'mp3', 'wav', 'flac'],
+          },
+        ],
+      });
+      if (result.canceled || result.filePaths.length === 0) {
+        return { imported: [], skipped: [] };
+      }
+
+      const imported = importLocalAudioFiles(
+        resolveDownloadDir(cachedConfig),
+        result.filePaths,
+      );
+      if (imported.imported.length > 0 && mainWindow) {
+        mainWindow.webContents.send('library:updated');
+      }
+      return imported;
+    });
+
     ipcMain.handle('library:delete-track', async (event, trackId) => {
       const dir = resolveDownloadDir(cachedConfig);
       const deleted = deleteTrack(dir, trackId);
@@ -462,6 +488,18 @@ if (!gotSingleInstanceLock) {
       }
       return deleted;
     });
+
+    ipcMain.handle(
+      'library:update-track-metadata',
+      async (event, trackId, fields) => {
+        const dir = resolveDownloadDir(cachedConfig);
+        const updated = updateTrackMetadata(dir, trackId, fields);
+        if (updated && mainWindow) {
+          mainWindow.webContents.send('library:updated');
+        }
+        return updated;
+      },
+    );
 
     ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
       const dir = resolveDownloadDir(cachedConfig);

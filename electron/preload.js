@@ -20,6 +20,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),
+  importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
   // Manual, repeatable metadata refresh — reads only already-downloaded
   // info.json sidecars (no network), so it's fast and safe to call again.
   // Resolves to { updated } with the number of tracks whose album/
@@ -33,6 +34,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   // resolves to false if trackId no longer matches a real file. Also
   // cascades into any playlist that referenced it (see main.js's handler).
   deleteTrack: (trackId) => ipcRenderer.invoke('library:delete-track', trackId),
+  updateTrackMetadata: (trackId, fields) =>
+    ipcRenderer.invoke('library:update-track-metadata', trackId, fields),
   // Every mutation below resolves to the FULL updated playlist array, so
   // callers never need a separate refetch.
   listPlaylists: () => ipcRenderer.invoke('playlists:list'),

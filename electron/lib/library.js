@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { Readable } = require('stream');
 const { atomicWriteJson } = require('./atomicWrite');
 const { VIDEO_ID_RE } = require('./youtube');
@@ -47,6 +48,7 @@ const SEPARATION_MANIFEST_FILENAME = 'manifest.json';
 const SEPARATION_MANIFEST_VERSION = 1;
 const LYRICS_EXTENSIONS = new Set(['.vtt', '.lrc']);
 const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);
+const CONTENT_HASH_CHUNK_SIZE = 1024 * 1024;
 
 // Interim text metadata; future playback/lyrics state belongs in SQLite.
 const INDEX_FILENAME = 'library.json';
@@ -254,6 +256,41 @@ function resolveTrackDir(dir, trackId) {
   if (!isSafeTrackId(trackId)) return null;
   const tracksRoot = path.resolve(dir, TRACKS_DIRNAME);
   return resolveChildPath(tracksRoot, trackId);
+}
+
+function localTrackIdBaseFromFilePath(filePath) {
+  const stem = path.basename(filePath, path.extname(filePath)).trim();
+  return isSafeTrackId(stem) ? stem : 'track';
+}
+
+function uniqueLocalTrackId(dir, baseId) {
+  let candidate = baseId;
+  let suffix = 2;
+  while (resolveTrackAudioPath(dir, candidate)) {
+    candidate = `${baseId}-${suffix}`;
+    suffix += 1;
+  }
+  return candidate;
+}
+
+function isSha256Digest(value) {
+  return typeof value === 'string' && /^[a-f0-9]{64}$/i.test(value);
+}
+
+function computeFileContentHash(filePath) {
+  const hash = crypto.createHash('sha256');
+  const buffer = Buffer.allocUnsafe(CONTENT_HASH_CHUNK_SIZE);
+  const fd = fs.openSync(filePath, 'r');
+  try {
+    let bytesRead = 0;
+    do {
+      bytesRead = fs.readSync(fd, buffer, 0, buffer.length, null);
+      if (bytesRead > 0) hash.update(buffer.subarray(0, bytesRead));
+    } while (bytesRead > 0);
+  } finally {
+    fs.closeSync(fd);
+  }
+  return hash.digest('hex');
 }
 
 function findFirstFile(dir, predicate) {
@@ -591,6 +628,126 @@ function resolveTrackAudioPath(dir, trackId) {
   if (!trackDir) return null;
   const audioFilename = findStructuredAudioFilename(trackDir);
   return audioFilename ? path.join(trackDir, audioFilename) : null;
+}
+
+function buildContentHashTrackMap(dir) {
+  const index = loadIndex(dir);
+  const trackIdByContentHash = new Map();
+  let changed = false;
+
+  for (const record of listTrackRecords(dir)) {
+    const indexed = index.tracks[record.id];
+    let contentHash = indexed?.contentHash;
+    if (
+      !isSha256Digest(contentHash) &&
+      indexed?.sourceType === 'local-file' &&
+      indexed?.storageType === 'managed'
+    ) {
+      const audioPath = resolveTrackAudioPath(dir, record.id);
+      if (audioPath) {
+        try {
+          contentHash = computeFileContentHash(audioPath);
+          index.tracks[record.id] = { ...indexed, contentHash };
+          changed = true;
+        } catch {
+          contentHash = undefined;
+        }
+      }
+    }
+
+    if (isSha256Digest(contentHash) && !trackIdByContentHash.has(contentHash)) {
+      trackIdByContentHash.set(contentHash, record.id);
+    }
+  }
+
+  if (changed) atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
+  return trackIdByContentHash;
+}
+
+function importLocalAudioFiles(dir, filePaths) {
+  const result = { imported: [], skipped: [] };
+  if (!Array.isArray(filePaths)) return result;
+
+  const trackIdByContentHash = buildContentHashTrackMap(dir);
+
+  for (const sourcePath of filePaths) {
+    if (typeof sourcePath !== 'string' || sourcePath.length === 0) {
+      result.skipped.push({ path: sourcePath, reason: 'invalid-path' });
+      continue;
+    }
+
+    const ext = path.extname(sourcePath).toLowerCase();
+    if (!AUDIO_EXTENSIONS.has(ext)) {
+      result.skipped.push({
+        path: sourcePath,
+        reason: 'unsupported-extension',
+      });
+      continue;
+    }
+    if (!fs.existsSync(sourcePath)) {
+      result.skipped.push({ path: sourcePath, reason: 'missing-file' });
+      continue;
+    }
+
+    let sourceStats;
+    let contentHash;
+    try {
+      sourceStats = fs.statSync(sourcePath);
+      contentHash = computeFileContentHash(sourcePath);
+    } catch (err) {
+      result.skipped.push({
+        path: sourcePath,
+        reason: err instanceof Error ? err.message : String(err),
+      });
+      continue;
+    }
+
+    const existingTrackId = trackIdByContentHash.get(contentHash);
+    if (existingTrackId) {
+      result.skipped.push({
+        path: sourcePath,
+        reason: 'duplicate-content',
+        existingTrackId,
+      });
+      continue;
+    }
+
+    const title = path.basename(sourcePath, ext).trim() || '未命名曲目';
+    const trackId = uniqueLocalTrackId(
+      dir,
+      localTrackIdBaseFromFilePath(sourcePath),
+    );
+    const trackDir = resolveTrackDir(dir, trackId);
+    if (!trackDir) {
+      result.skipped.push({ path: sourcePath, reason: 'invalid-track-id' });
+      continue;
+    }
+
+    try {
+      const audioFilename = `${STRUCTURED_AUDIO_BASENAME}${ext}`;
+      fs.mkdirSync(trackDir, { recursive: true });
+      fs.copyFileSync(sourcePath, path.join(trackDir, audioFilename));
+      saveIndexEntry(dir, trackId, {
+        title,
+        sourceType: 'local-file',
+        storageType: 'managed',
+        audioFilename,
+        originalFilename: path.basename(sourcePath),
+        importedAt: new Date().toISOString(),
+        fileSize: sourceStats.size,
+        contentHash,
+      });
+      trackIdByContentHash.set(contentHash, trackId);
+      result.imported.push({ id: trackId, title });
+    } catch (err) {
+      result.skipped.push({
+        path: sourcePath,
+        reason: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+
+  return result;
 }
 
 function resolveTrackAssetPath(dir, trackId, assetFilename) {
@@ -1160,6 +1317,12 @@ function listTracks(dir) {
         // Album is optional; including it would create endless backfill loops.
         album: indexed?.album,
         releaseYear: indexed?.releaseYear,
+        sourceType: indexed?.sourceType,
+        storageType: indexed?.storageType,
+        originalFilename: indexed?.originalFilename,
+        importedAt: indexed?.importedAt,
+        fileSize: indexed?.fileSize,
+        contentHash: indexed?.contentHash,
         needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
         hasSeparation: selectedResultExists,
         stemsUrl: selectedResultExists
@@ -1181,6 +1344,21 @@ function listTracks(dir) {
 
 function findTrackRecord(dir, trackId) {
   return listTrackRecords(dir).find((track) => track.id === trackId) || null;
+}
+
+function updateTrackMetadata(dir, trackId, fields = {}) {
+  if (!findTrackRecord(dir, trackId)) return null;
+
+  const title = String(fields.title ?? '').trim();
+  if (!title) throw new Error('title is required');
+
+  const artist = String(fields.artist ?? '').trim();
+  saveIndexEntry(dir, trackId, {
+    title,
+    artist: artist || undefined,
+  });
+
+  return listTracks(dir).find((track) => track.id === trackId) || null;
 }
 
 // Deletes the original audio file, its vocal-separation output (if any),
@@ -1379,6 +1557,7 @@ module.exports = {
   isTranslatedLyricsLanguage,
   isServableFilename,
   isStructuredAudioFilename,
+  importLocalAudioFiles,
   LYRICS_MANIFEST_VERSION,
   getTrackLyricsState,
   listTracks,
@@ -1405,4 +1584,5 @@ module.exports = {
   saveTrackLyricsManifest,
   saveTrackLyricsText,
   selectSeparationResult,
+  updateTrackMetadata,
 };
