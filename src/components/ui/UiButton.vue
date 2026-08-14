@@ -1,7 +1,7 @@
 <script setup>
 // `disabled`/`aria-*`/`title`/`@click` reach the root <button> via Vue's
 // attribute fallthrough, so they aren't declared as props.
-import { ICON_SIZE } from '../../constants/ui.js';
+import { ICON_SIZE } from '../../icons/index.js';
 
 defineProps({
   icon: { type: [Object, Function], default: null },
@@ -32,12 +32,16 @@ defineProps({
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-1);
+  min-height: var(--ui-control-height);
   padding: var(--ui-space-1) var(--ui-space-2);
   border: none;
   border-radius: var(--ui-radius);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
   cursor: pointer;
+  transition:
+    background-color var(--ui-motion-fast) var(--ui-motion-ease),
+    color var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
 .ui-btn--icon-only {
@@ -58,7 +62,7 @@ defineProps({
    vocal) needs a non-color signal too, for users who can't rely on hue
    alone to tell it apart from the off state. */
 .ui-btn--ghost.ui-btn--active {
-  background: var(--ui-color-surface-hover);
+  background: var(--ui-color-surface-selected);
   color: var(--ui-color-accent);
 }
 

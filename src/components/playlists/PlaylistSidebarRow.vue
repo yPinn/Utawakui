@@ -3,8 +3,7 @@
 // row markup was identical between them before this extraction; drag/drop
 // is playlist-only, so those props/events simply go unused (default false)
 // for album rows instead of forking the template.
-import { Pause, Play } from '@lucide/vue';
-import { ICON_SIZE } from '../../constants/ui.js';
+import { ICON_SIZE, Pause, Play } from '../../icons/index.js';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 
@@ -160,13 +159,13 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar-row--active {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+  background: var(--ui-color-surface-selected);
+  color: var(--ui-color-text);
+  box-shadow: inset 3px 0 0 var(--ui-color-accent);
 }
 
 .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
-  /* Use a tokenized accent contrast color instead of opacity blending. */
-  color: var(--ui-color-accent-contrast-muted);
+  color: var(--ui-color-accent);
 }
 
 /* Hidden by default, revealed on row hover/keyboard focus — same idea as
@@ -214,9 +213,5 @@ const emit = defineEmits([
   white-space: nowrap;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-}
-
-.playlist-sidebar-row--active .playlist-sidebar-row__kind {
-  color: var(--ui-color-accent-contrast-muted);
 }
 </style>

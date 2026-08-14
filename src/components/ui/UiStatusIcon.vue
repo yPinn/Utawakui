@@ -1,10 +1,11 @@
 <script setup>
 // Small circular status badge for repeated row-trailing states.
-import { ICON_SIZE } from '../../constants/ui.js';
+import { ICON_SIZE } from '../../icons/index.js';
 
 defineProps({
   icon: { type: [Object, Function], required: true },
-  // Existing tones only: muted, accent, danger, text, highlight.
+  // Existing callers use muted/accent/danger/text/highlight; new states can
+  // use info/success/warning/current/gated as the visual language fills in.
   tone: { type: String, default: 'muted' },
   spinning: { type: Boolean, default: false },
   label: { type: String, required: true },
@@ -49,8 +50,30 @@ defineProps({
   color: var(--ui-color-accent);
 }
 
+.ui-status-icon--info {
+  color: var(--ui-color-info);
+}
+
+.ui-status-icon--success {
+  color: var(--ui-color-success);
+}
+
+.ui-status-icon--warning {
+  color: var(--ui-color-warning);
+}
+
 .ui-status-icon--danger {
   color: var(--ui-color-danger);
+}
+
+.ui-status-icon--current {
+  color: var(--ui-color-current);
+  background: var(--ui-color-current-soft);
+}
+
+.ui-status-icon--gated {
+  color: var(--ui-color-gated);
+  background: var(--ui-color-gated-bg);
 }
 
 .ui-status-icon--text {

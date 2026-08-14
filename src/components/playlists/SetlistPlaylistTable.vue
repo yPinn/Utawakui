@@ -129,7 +129,7 @@ function sortLabel(key, label) {
             v-if="!isAlbum"
             class="playlist-track__thumb"
             :track="track"
-            :size="44"
+            size="var(--ui-track-row-thumb-size)"
           />
           <span class="playlist-track__copy">
             <UiTextButton
@@ -171,12 +171,12 @@ function sortLabel(key, label) {
 .playlist-track {
   display: grid;
   grid-template-columns: 24px 3ch minmax(0, 2fr) minmax(120px, 1fr) 64px;
-  gap: var(--ui-space-3);
+  gap: var(--ui-track-row-gap);
   align-items: center;
 }
 
 .playlist-table__head {
-  padding: 0 var(--ui-space-3) var(--ui-space-2);
+  padding: 0 var(--ui-track-row-padding-inline) var(--ui-space-2);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
@@ -236,13 +236,14 @@ function sortLabel(key, label) {
   padding: var(--ui-space-1) 0 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-1);
+  gap: var(--ui-track-list-gap);
 }
 
 .playlist-track {
   position: relative;
-  min-height: 52px;
-  padding: var(--ui-space-2) var(--ui-space-3);
+  box-sizing: border-box;
+  min-height: var(--ui-track-row-min-height);
+  padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   border-radius: var(--ui-radius);
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
@@ -319,7 +320,7 @@ function sortLabel(key, label) {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: var(--ui-space-2);
+  gap: var(--ui-track-row-gap);
 }
 
 .playlist-track__copy {

@@ -17,7 +17,7 @@ import {
   Search,
   SquareCheckBig,
   X,
-} from '@lucide/vue';
+} from '../icons/index.js';
 import ImportCandidateOption from '../components/import/ImportCandidateOption.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiChip from '../components/ui/UiChip.vue';
@@ -40,8 +40,8 @@ import {
 // Icon + tone lookups for the row-level status badges (see #trail below).
 // Kept component-local rather than in
 // importCandidateDisplay.js/useImportSession.js — those are plain-Node-
-// testable modules, and importing @lucide/vue's Vue components into them
-// would pull a UI dependency into pure logic layers.
+// testable modules, and importing Vue icon components into them would pull a
+// UI dependency into pure logic layers.
 const IDENTITY_STATUS_ICONS = {
   identified: BadgeCheck,
   review: CircleAlert,
@@ -49,8 +49,8 @@ const IDENTITY_STATUS_ICONS = {
 };
 
 const IDENTITY_STATUS_TONES = {
-  identified: 'accent',
-  review: 'danger',
+  identified: 'success',
+  review: 'warning',
   pending: 'muted',
 };
 
@@ -64,8 +64,8 @@ const TRACK_STATUS_ICONS = {
 
 const TRACK_STATUS_TONES = {
   pending: 'muted',
-  downloading: 'accent',
-  done: 'accent',
+  downloading: 'info',
+  done: 'success',
   downloaded: 'muted',
   error: 'danger',
 };
@@ -121,7 +121,7 @@ async function refreshMetadata() {
 
 // Only success/error have a distinct tone; idle/pending render as the
 // default muted hint.
-const STATUS_TONES = { success: 'text', error: 'danger' };
+const STATUS_TONES = { success: 'success', error: 'danger' };
 const statusTone = computed(() => STATUS_TONES[state.statusType] || 'muted');
 const singleResolution = computed(() => state.singleResolution);
 const recommendedCandidate = computed(
@@ -537,9 +537,7 @@ onMounted(() => {
 <style scoped>
 .import-view {
   --import-control-height: calc(var(--ui-space-5) + var(--ui-space-4));
-  --import-track-row-min-height: calc(
-    var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2)
-  );
+  --import-track-row-min-height: var(--ui-track-row-min-height);
   --import-preview-list-max-height: calc(var(--ui-space-5) * 15);
   --import-checkbox-size: var(--ui-space-4);
 

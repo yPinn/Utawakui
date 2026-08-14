@@ -1,6 +1,11 @@
 <script setup>
-import { Captions, Download, ListMusic, Palette } from '@lucide/vue';
-import { ICON_SIZE } from '../../constants/ui.js';
+import {
+  Captions,
+  Download,
+  ICON_SIZE,
+  ListMusic,
+  Palette,
+} from '../../icons/index.js';
 
 defineProps({
   activeView: { type: String, required: true },
@@ -46,6 +51,7 @@ const items = [
 }
 
 .sidebar__item {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
@@ -71,8 +77,13 @@ const items = [
 }
 
 .sidebar__item--active {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+  background: var(--ui-color-surface-selected);
+  color: var(--ui-color-text);
+  box-shadow: inset 3px 0 0 var(--ui-color-accent);
+}
+
+.sidebar__item--active .sidebar__icon {
+  color: var(--ui-color-accent);
 }
 
 @media (prefers-reduced-motion: reduce) {

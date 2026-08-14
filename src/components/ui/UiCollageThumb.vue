@@ -9,7 +9,7 @@
 // their own version, which is exactly how they drifted apart before (hero
 // showed a 4-track collage, sidebar showed only the first track).
 import { computed } from 'vue';
-import { Music2 } from '@lucide/vue';
+import { Music2 } from '../../icons/index.js';
 import { getTrackInitial } from '../../utils/trackDisplay.js';
 
 const props = defineProps({
@@ -38,6 +38,12 @@ const emptySlotCount = computed(() =>
 const singleTrack = computed(() =>
   props.allowCollage ? null : props.tracks[0],
 );
+const hasArtwork = computed(
+  () =>
+    Boolean(props.coverUrl) ||
+    Boolean(singleTrack.value?.thumbnailUrl) ||
+    displayTracks.value.some((track) => track.thumbnailUrl),
+);
 // Scales with `size` so the same markup reads correctly at both the 136px
 // hero and the 40px sidebar row — a fixed pixel value only ever looked
 // right at one of the two sizes.
@@ -50,6 +56,7 @@ const singleIconSize = computed(() =>
 <template>
   <span
     class="ui-collage-thumb"
+    :class="{ 'ui-collage-thumb--folder': !hasArtwork }"
     :aria-hidden="decorative ? 'true' : undefined"
     :style="{
       width: `${size}px`,
@@ -131,6 +138,30 @@ const singleIconSize = computed(() =>
   color: var(--ui-collage-thumb-color, var(--ui-color-text));
   user-select: none;
   -webkit-user-drag: none;
+}
+
+.ui-collage-thumb--folder {
+  background: linear-gradient(
+    180deg,
+    var(--ui-color-surface-raised) 0%,
+    var(--ui-color-surface) 100%
+  );
+  box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
+}
+
+.ui-collage-thumb--folder::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 12%;
+  z-index: 1;
+  width: 38%;
+  height: 18%;
+  border-right: var(--ui-border-width) solid var(--ui-color-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 0 0 var(--ui-radius-sm) 0;
+  background: var(--ui-color-surface-raised);
+  pointer-events: none;
 }
 
 .ui-collage-thumb__custom-image {

@@ -5,7 +5,7 @@ import { getTrackInitial } from '../../utils/trackDisplay.js';
 
 defineProps({
   track: { type: Object, default: undefined },
-  size: { type: Number, required: true },
+  size: { type: [Number, String], required: true },
   radius: { type: String, default: undefined },
   background: { type: String, default: undefined },
   color: { type: String, default: undefined },
@@ -15,6 +15,10 @@ defineProps({
   // interactive overlay control.
   decorative: { type: Boolean, default: true },
 });
+
+function toCssLength(value) {
+  return typeof value === 'number' ? `${value}px` : value;
+}
 </script>
 
 <template>
@@ -22,8 +26,8 @@ defineProps({
     class="ui-track-thumb"
     :aria-hidden="decorative ? 'true' : undefined"
     :style="{
-      width: `${size}px`,
-      height: `${size}px`,
+      width: toCssLength(size),
+      height: toCssLength(size),
       '--ui-track-thumb-radius': radius,
       '--ui-track-thumb-bg': background,
       '--ui-track-thumb-color': color,

@@ -48,7 +48,11 @@ const thumbTrack = computed(() => ({
     }"
   >
     <slot name="lead" />
-    <UiTrackThumb class="ui-track__thumb" :track="thumbTrack" :size="44" />
+    <UiTrackThumb
+      class="ui-track__thumb"
+      :track="thumbTrack"
+      size="var(--ui-track-row-thumb-size)"
+    />
     <div class="ui-track__info">
       <UiTextButton
         v-if="titleClickable"
@@ -71,10 +75,12 @@ const thumbTrack = computed(() => ({
 
 <style scoped>
 .ui-track {
+  box-sizing: border-box;
   display: flex;
   align-items: center;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-2) var(--ui-space-3);
+  gap: var(--ui-track-row-gap);
+  min-height: var(--ui-track-row-min-height);
+  padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   border-radius: var(--ui-radius);
   font-size: var(--ui-font-size-sm);
 }
@@ -88,8 +94,9 @@ const thumbTrack = computed(() => ({
 }
 
 .ui-track--active {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+  background: var(--ui-color-surface-selected);
+  color: var(--ui-color-text);
+  box-shadow: inset 3px 0 0 var(--ui-color-accent);
 }
 
 .ui-track--interactive:focus-visible {
@@ -112,17 +119,9 @@ const thumbTrack = computed(() => ({
   color: var(--ui-color-text-muted);
 }
 
-.ui-track--active .ui-track__artist {
-  color: var(--ui-color-accent-contrast-muted);
-}
-
 .ui-track__duration {
   flex-shrink: 0;
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
-}
-
-.ui-track--active .ui-track__duration {
-  color: var(--ui-color-accent-contrast-muted);
 }
 </style>

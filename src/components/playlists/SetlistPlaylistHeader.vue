@@ -4,7 +4,7 @@
 // benefit in separating further. All editing (name/description/cover) now
 // happens through PlaylistDetailsModal.vue, opened via openEditDetails —
 // this component is pure display plus the buttons that open that modal.
-import { Pencil, Play, Trash2 } from '@lucide/vue';
+import { Pencil, Play, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
@@ -105,14 +105,57 @@ const emit = defineEmits([
 
 <style scoped>
 .playlist-hero {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: 136px minmax(0, 1fr);
   gap: var(--ui-space-5);
   align-items: end;
   padding: var(--ui-space-5);
-  background: var(--ui-color-surface);
+  background: linear-gradient(
+    180deg,
+    var(--ui-color-surface-raised) 0%,
+    var(--ui-color-surface) 100%
+  );
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-lg);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, var(--ui-color-text) 8%, transparent),
+    0 1px 0 color-mix(in srgb, var(--ui-color-canvas) 80%, transparent);
+}
+
+.playlist-hero::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--ui-space-5);
+  width: 104px;
+  height: var(--ui-space-3);
+  border-right: var(--ui-border-width) solid var(--ui-color-border);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 0 0 var(--ui-radius-sm) var(--ui-radius-sm);
+  background: var(--ui-color-surface-raised);
+  pointer-events: none;
+}
+
+.playlist-hero::after {
+  content: '';
+  position: absolute;
+  right: var(--ui-space-4);
+  bottom: calc(var(--ui-space-2) * -1);
+  left: var(--ui-space-5);
+  z-index: -1;
+  height: var(--ui-space-4);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-top: 0;
+  border-radius: 0 0 var(--ui-radius-lg) var(--ui-radius-lg);
+  background: color-mix(
+    in srgb,
+    var(--ui-color-surface) 78%,
+    var(--ui-color-canvas)
+  );
+  opacity: 0.72;
+  pointer-events: none;
 }
 
 /* Sizing/border/positioning wrapper only — the collage grid itself is
@@ -161,6 +204,7 @@ const emit = defineEmits([
 }
 
 .playlist-hero__content {
+  position: relative;
   min-width: 0;
 }
 

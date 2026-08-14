@@ -5,7 +5,8 @@
 // automatically (single-root component), so callers still pass
 // role="status"/"alert" directly.
 defineProps({
-  tone: { type: String, default: 'muted' }, // 'muted' | 'text' | 'danger'
+  // 'muted' | 'text' | 'info' | 'success' | 'warning' | 'danger' | 'gated'
+  tone: { type: String, default: 'muted' },
   padded: { type: Boolean, default: false },
   center: { type: Boolean, default: false },
 });
@@ -34,9 +35,25 @@ defineProps({
   color: var(--ui-color-text);
 }
 
+.ui-hint--info {
+  color: var(--ui-color-info);
+}
+
+.ui-hint--success {
+  color: var(--ui-color-success);
+}
+
+.ui-hint--warning {
+  color: var(--ui-color-warning);
+}
+
 .ui-hint--danger {
   color: var(--ui-color-danger);
   font-weight: var(--ui-font-weight-strong);
+}
+
+.ui-hint--gated {
+  color: var(--ui-color-gated);
 }
 
 .ui-hint--padded {

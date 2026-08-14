@@ -14,7 +14,7 @@
   --ui-color-text-muted: #aeb8b6;
   --ui-color-border: #3c4749;
   --ui-color-border-strong: #586568;
-  --ui-shadow-overlay: 0 12px 30px rgb(0 0 0 / 28%);
+  --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 28%);
 
   --ui-color-accent: #55a2a7;
   --ui-color-accent-hover: #6ab4b8;
@@ -32,11 +32,25 @@
   --ui-color-current-soft: var(--ui-color-surface-playing);
   --ui-color-info: #7fb8bd;
   --ui-color-success: #7bbd8b;
+  --ui-color-success-soft: color-mix(
+    in srgb,
+    var(--ui-color-success) 18%,
+    transparent
+  );
   --ui-color-warning: #d6a84f;
+  --ui-color-warning-soft: color-mix(
+    in srgb,
+    var(--ui-color-warning) 18%,
+    transparent
+  );
   --ui-color-danger: #dd7078;
+  --ui-color-danger-soft: color-mix(
+    in srgb,
+    var(--ui-color-danger) 18%,
+    transparent
+  );
   --ui-color-gated: #d6a84f;
   --ui-color-gated-bg: #3a3226;
-  --ui-color-sort-indicator: var(--ui-color-current);
 
   --ui-color-scheme: dark;
 
@@ -62,16 +76,22 @@
   --ui-line-height-tight: 1.2;
   --ui-line-height-body: 1.5;
 
-  --ui-radius-xs: 2px;
-  --ui-radius-sm: 4px;
-  --ui-radius: 6px;
-  --ui-radius-lg: 8px;
-  --ui-radius-pill: 999px;
+  --ui-radius-xs: 0.125rem; /* 2px */
+  --ui-radius-sm: 0.25rem; /* 4px */
+  --ui-radius: 0.375rem; /* 6px */
+  --ui-radius-lg: 0.5rem; /* 8px */
+  --ui-radius-pill: 999rem;
 
   --ui-border-width: 1px;
   --ui-titlebar-height: 2.5rem; /* 40px */
-  --ui-control-height: 30px;
-  --ui-player-bar-height: 68px; /* 52px artwork + vertical padding */
+  --ui-control-height: 1.875rem; /* 30px */
+  --ui-track-row-min-height: 3.25rem; /* 52px */
+  --ui-track-row-thumb-size: 2.5rem; /* 40px */
+  --ui-track-row-gap: var(--ui-space-2);
+  --ui-track-row-padding-block: var(--ui-space-1);
+  --ui-track-row-padding-inline: var(--ui-space-3);
+  --ui-track-list-gap: var(--ui-space-1);
+  --ui-player-bar-height: 4.25rem; /* 68px: 52px artwork + vertical padding */
 
   --ui-opacity-disabled: 0.5;
   --ui-opacity-dragging: 0.45;
@@ -105,7 +125,7 @@
   --ui-color-text-muted: #69747a;
   --ui-color-border: #d8ded9;
   --ui-color-border-strong: #b9c4c0;
-  --ui-shadow-overlay: 0 16px 38px rgb(31 35 40 / 16%);
+  --ui-shadow-overlay: 0 1rem 2.375rem rgb(31 35 40 / 16%);
 
   --ui-color-accent: #327a7f;
   --ui-color-accent-hover: #286a6e;
@@ -117,11 +137,25 @@
   --ui-color-current-soft: var(--ui-color-surface-playing);
   --ui-color-info: #4d8793;
   --ui-color-success: #5f9a72;
+  --ui-color-success-soft: color-mix(
+    in srgb,
+    var(--ui-color-success) 18%,
+    transparent
+  );
   --ui-color-warning: #b78336;
+  --ui-color-warning-soft: color-mix(
+    in srgb,
+    var(--ui-color-warning) 18%,
+    transparent
+  );
   --ui-color-danger: #bd5961;
+  --ui-color-danger-soft: color-mix(
+    in srgb,
+    var(--ui-color-danger) 18%,
+    transparent
+  );
   --ui-color-gated: #9a6b45;
   --ui-color-gated-bg: #f3eadc;
-  --ui-color-sort-indicator: var(--ui-color-current);
 
   --ui-color-scheme: light;
 }
