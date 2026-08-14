@@ -2,7 +2,7 @@
 // Track-search input — was duplicated once per SetlistView layout branch
 // (playlist toolbar vs. all-tracks page header). v-model owns clearing too,
 // so callers don't need a separate clear handler.
-import { Search, X } from '@lucide/vue';
+import { ICON_SIZE, Search, X } from '../../icons/index.js';
 
 defineProps({
   modelValue: { type: String, default: '' },
@@ -14,7 +14,7 @@ defineEmits(['update:modelValue']);
 
 <template>
   <label class="ui-search-box" title="搜尋曲目">
-    <Search class="ui-search-box__icon" :size="16" aria-hidden="true" />
+    <Search class="ui-search-box__icon" :size="ICON_SIZE" aria-hidden="true" />
     <input
       :value="modelValue"
       class="ui-search-box__input"
@@ -31,7 +31,7 @@ defineEmits(['update:modelValue']);
       title="清除搜尋"
       @click="$emit('update:modelValue', '')"
     >
-      <X :size="16" aria-hidden="true" />
+      <X :size="ICON_SIZE" aria-hidden="true" />
     </button>
   </label>
 </template>

@@ -1,13 +1,12 @@
 <script setup>
 import { computed } from 'vue';
-import { Music, Video } from '@lucide/vue';
+import { ICON_SIZE, Music, Video } from '../../icons/index.js';
 import {
   candidateId,
   candidateSourceLabel,
   confidenceLabel,
 } from '../../utils/importCandidateDisplay.js';
 import { formatDuration } from '../../utils/format.js';
-import { ICON_SIZE } from '../../constants/ui.js';
 import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({

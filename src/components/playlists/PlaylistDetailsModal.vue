@@ -9,7 +9,7 @@
 // SetlistPlaylistHeader.vue's own comment for why (source-normalized
 // metadata, not user-authored).
 import { ref, watch } from 'vue';
-import { Pencil, X } from '@lucide/vue';
+import { Pencil, X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiModal from '../ui/UiModal.vue';

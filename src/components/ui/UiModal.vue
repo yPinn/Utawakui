@@ -6,7 +6,7 @@
 // focus), mirroring UiContextMenu.vue's window-level Escape/outside-click
 // pattern since that's the only existing overlay precedent in this app.
 import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
-import { X } from '@lucide/vue';
+import { X } from '../../icons/index.js';
 import UiButton from './UiButton.vue';
 
 const props = defineProps({

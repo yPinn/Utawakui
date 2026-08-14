@@ -1,6 +1,7 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
+  ICON_SIZE,
   ListMusic,
   MicVocal,
   Minus,
@@ -17,7 +18,7 @@ import {
   Volume2,
   VolumeX,
   X,
-} from '@lucide/vue';
+} from '../../icons/index.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import {
   PITCH_CENTS_RANGE,
@@ -28,7 +29,6 @@ import {
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
-import { ICON_SIZE } from '../../constants/ui.js';
 import PlaybackQueuePanel from '../queue/PlaybackQueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';

@@ -4,6 +4,7 @@ import {
   Disc3,
   Download,
   FolderPlus,
+  ICON_SIZE,
   ListEnd,
   ListMusic,
   ListPlus,
@@ -11,13 +12,12 @@ import {
   Pencil,
   Plus,
   Trash2,
-} from '@lucide/vue';
+} from '../../icons/index.js';
 import { computed, ref } from 'vue';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { usePlayer } from '../../composables/usePlayer.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
-import { ICON_SIZE } from '../../constants/ui.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
 import {
   PLAYLIST_MENU_ACTIONS,
