@@ -10,6 +10,7 @@ const ffmpegPath = require('ffmpeg-static');
 const ort = require('onnxruntime-node');
 const KissFFT = require('kissfft-js');
 const { recordSeparationResult } = require('./library');
+const { atomicWriteBuffer } = require('./atomicWrite');
 
 // Model values come from UVR model_data.json. primaryStem must be instrumental.
 const HOP_LENGTH = 1024; // hard-coded in UVR itself, not a per-model value
@@ -169,7 +170,12 @@ function decodeAudio(inputPath) {
     proc.on('error', reject);
     proc.on('close', (code) => {
       if (code !== 0) {
-        reject(new Error(`ffmpeg exited with code ${code}: ${stderr}`));
+        // stderr may contain local file paths — log it for diagnosis but
+        // don't forward it through the worker/IPC round-trip to the renderer.
+        console.error(`ffmpeg exited with code ${code}:\n${stderr}`);
+        reject(
+          new Error(`audio decode failed (ffmpeg exited with code ${code})`),
+        );
         return;
       }
       const buf = Buffer.concat(chunks);
@@ -464,10 +470,8 @@ function encodeWav(channels, sampleRate) {
 // recovery UI. Same .tmp + rename discipline as atomicWrite.js.
 function writeWavAtomic(filePath, channels, sampleRate) {
   const buffer = encodeWav(channels, sampleRate);
-  const tmpPath = `${filePath}.tmp`;
-  fs.writeFileSync(tmpPath, buffer);
   try {
-    fs.renameSync(tmpPath, filePath);
+    atomicWriteBuffer(filePath, buffer);
   } catch (err) {
     // Per-preset filenames avoid EPERM when switching presets, but not
     // when regenerating the SAME preset that's open for playback.
@@ -596,9 +600,7 @@ async function ensureModel(userDataDir, modelId) {
     );
   }
 
-  const tmpPath = `${modelPath}.tmp`;
-  fs.writeFileSync(tmpPath, buffer);
-  fs.renameSync(tmpPath, modelPath);
+  atomicWriteBuffer(modelPath, buffer);
   return modelPath;
 }
 

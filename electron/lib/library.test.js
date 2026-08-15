@@ -2186,6 +2186,25 @@ describe('runBackfillPass', () => {
     expect(track.duration).toBe(213);
   });
 
+  it('does not clobber a title edited concurrently while the fetch was in flight', async () => {
+    fs.writeFileSync(path.join(dir, 'dQw4w9WgXcQ.mp3'), 'x');
+    const fetchMetadata = vi.fn(async () => {
+      saveIndexEntry(dir, 'dQw4w9WgXcQ', { title: 'User Edited Title' });
+      return {
+        title: 'Fetched Title',
+        artist: 'Fetched Artist',
+        duration: 213,
+      };
+    });
+
+    await runBackfillPass(dir, listTracks(dir), fetchMetadata);
+
+    const [track] = listTracks(dir);
+    expect(track.title).toBe('User Edited Title');
+    expect(track.artist).toBe('Fetched Artist');
+    expect(track.duration).toBe(213);
+  });
+
   it('does not retry an id that already failed this session', async () => {
     fs.writeFileSync(path.join(dir, 'aaaaaaaaaaa.mp3'), 'x');
     const fetchMetadata = vi.fn(async () => null);

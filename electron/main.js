@@ -919,7 +919,7 @@ if (!gotSingleInstanceLock) {
     ipcMain.handle('config:set-ui-theme', async (event, theme) => {
       // Untrusted renderer input — same trust-boundary role as
       // extractVideoId() for video ids.
-      if (!(theme in TITLEBAR_COLORS)) {
+      if (!Object.hasOwn(TITLEBAR_COLORS, theme)) {
         throw new Error(`invalid ui theme: ${theme}`);
       }
       cachedConfig = saveConfig(configPath, { uiTheme: theme });

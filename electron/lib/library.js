@@ -4,7 +4,11 @@ const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 const { Readable } = require('stream');
-const { atomicWriteJson } = require('./atomicWrite');
+const {
+  atomicWriteJson,
+  atomicWriteText,
+  atomicWriteBuffer,
+} = require('./atomicWrite');
 const { VIDEO_ID_RE } = require('./youtube');
 
 // MIME maps are the allowlist for servable media extensions.
@@ -481,12 +485,6 @@ function saveTrackLyricsManifest(trackDir, sources) {
   return normalizedSources;
 }
 
-function atomicWriteText(filePath, text) {
-  const tmpPath = `${filePath}.tmp`;
-  fs.writeFileSync(tmpPath, text, 'utf8');
-  fs.renameSync(tmpPath, filePath);
-}
-
 function saveTrackLyricsText(trackDir, source, text) {
   if (
     !source ||
@@ -852,6 +850,11 @@ async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
   if (typeof imageUrl !== 'string' || imageUrl.length === 0) return null;
 
   try {
+    const parsedUrl = new URL(imageUrl);
+    // imageUrl is renderer-supplied (playlists:upsert-album); restrict to
+    // https so this can't be pointed at an internal/loopback address.
+    if (parsedUrl.protocol !== 'https:') return null;
+
     const response = await fetch(imageUrl);
     if (!response.ok) return null;
 
@@ -859,7 +862,7 @@ async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
       .get('content-type')
       ?.split(';')[0]
       ?.trim();
-    const urlExt = path.extname(new URL(imageUrl).pathname).toLowerCase();
+    const urlExt = path.extname(parsedUrl.pathname).toLowerCase();
     const ext =
       EXTENSION_BY_IMAGE_MIME_TYPE[contentType] ||
       (IMAGE_EXTENSIONS.has(urlExt) ? urlExt : null);
@@ -876,9 +879,7 @@ async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
       fs.rmSync(path.join(coverDir, existing), { force: true });
     }
     const targetPath = path.join(coverDir, filename);
-    const tmpPath = `${targetPath}.tmp`;
-    fs.writeFileSync(tmpPath, buffer);
-    fs.renameSync(tmpPath, targetPath);
+    atomicWriteBuffer(targetPath, buffer);
     return filename;
   } catch {
     return null;
@@ -1464,7 +1465,15 @@ async function runBackfillPass(dir, tracks, fetchMetadata, onStatus = null) {
       delete metadata.assetsUpdated;
       try {
         if (metadata.title) {
-          saveIndexEntry(dir, track.id, metadata);
+          // Re-read fresh: a manual edit may have landed on this track
+          // while the fetch above was in flight — don't clobber it.
+          const currentEntry = loadIndex(dir).tracks[track.id];
+          const toWrite = { ...metadata };
+          if (currentEntry?.title) delete toWrite.title;
+          if (currentEntry?.artist) delete toWrite.artist;
+          if (Object.keys(toWrite).length > 0) {
+            saveIndexEntry(dir, track.id, toWrite);
+          }
         }
         updated = true;
       } catch {
