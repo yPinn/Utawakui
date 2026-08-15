@@ -604,6 +604,9 @@ Custom font settings should not affect control panel UI. The control panel shoul
 - **Title** (600, `1.125rem`, 1.3): Section headers, panel titles, and active item titles.
 - **Body** (400, `1rem`, 1.5): Standard UI copy and readable prose.
 - **Label** (600, `0.875rem`, 1.25): Buttons, tabs, metadata labels, compact controls.
+- **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14px control vs. a quiet 14px description).
+
+Naming here is this project's own semantic roles, not a literal port of any platform's type-style names. In particular, Apple's HIG `Headline` style (small, bold, body-adjacent emphasis) is not what this document's `Headline` means (a big view/modal title, closer to HIG's `Title 1`/`Title 2`) — don't assume HIG familiarity carries over to these names.
 
 ### Typography Rules
 
