@@ -7,6 +7,10 @@ const state = reactive({
   playlists: [],
   // null means "全部曲目" (no playlist selected, show the full library).
   selectedId: null,
+  // Which pseudo-view SetlistView shows when nothing is selected —
+  // 'all' | 'local'. Shared (not view-local) so the persistent
+  // AppPlaylistSidebar can drive it from any tab.
+  libraryView: 'all',
   error: null,
 });
 
@@ -76,6 +80,10 @@ if (import.meta.hot) {
 
 function select(id) {
   state.selectedId = id;
+}
+
+function setLibraryView(view) {
+  state.libraryView = view;
 }
 
 async function create(name) {
@@ -288,6 +296,7 @@ export function usePlaylists() {
     state: readonly(state),
     selectedPlaylist,
     select,
+    setLibraryView,
     create,
     rename,
     remove,

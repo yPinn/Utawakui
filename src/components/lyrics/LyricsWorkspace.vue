@@ -22,11 +22,9 @@ import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
-import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 
 const {
   state,
-  tracksById,
   selectedTrack,
   selectedLyrics,
   selectedSource,
@@ -40,18 +38,8 @@ const {
   resetOffset,
   playFromLine,
 } = useLyrics();
-const {
-  state: playlistState,
-  selectedPlaylist,
-  select: selectPlaylistAction,
-} = usePlaylists();
+const { selectedPlaylist } = usePlaylists();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
-// Same order as PlaylistSidebar.vue's nav rows (see playlistOrdering.js) —
-// playlists first in their manual drag order, then albums grouped by
-// derived artist.
-const orderedPlaylists = computed(() =>
-  orderPlaylistsForDisplay(playlistState.playlists, tracksById.value),
-);
 // Owned at module scope (see useSeparation.js) — separation may keep
 // running after the user switches away from this playlist/track.
 const {
@@ -207,10 +195,6 @@ function lyricsStatusIconTone(track) {
   return 'highlight';
 }
 
-function handlePlaylistChange(event) {
-  selectPlaylistAction(event.target.value || null);
-}
-
 function separationStatusIcon(track) {
   return isSeparating(track.id) ? Loader2 : MicVocal;
 }
@@ -298,45 +282,16 @@ watch(activeLineIndex, (index) => {
         />
       </header>
 
-      <div class="lyrics-panel__playlist">
-        <select
-          class="lyrics-select lyrics-panel__playlist-select"
-          :value="playlistState.selectedId || ''"
-          aria-label="選擇播放清單"
-          @change="handlePlaylistChange"
-        >
-          <option value="">選擇播放清單</option>
-          <optgroup
-            v-if="orderedPlaylists.playlistItems.length > 0"
-            label="播放清單"
-          >
-            <option
-              v-for="playlist in orderedPlaylists.playlistItems"
-              :key="playlist.id"
-              :value="playlist.id"
-            >
-              {{ playlist.name || '(未命名歌單)' }}
-            </option>
-          </optgroup>
-          <optgroup v-if="orderedPlaylists.albumItems.length > 0" label="專輯">
-            <option
-              v-for="playlist in orderedPlaylists.albumItems"
-              :key="playlist.id"
-              :value="playlist.id"
-            >
-              {{ playlist.name || '(未命名歌單)' }}
-            </option>
-          </optgroup>
-        </select>
-        <p v-if="selectedPlaylist" class="lyrics-panel__meta">
-          {{ tracksWithLyricsCount }} 有歌詞 /
-          {{ tracksMissingLyricsCount }} 無歌詞
-        </p>
-      </div>
+      <p v-if="selectedPlaylist" class="lyrics-panel__meta">
+        {{ tracksWithLyricsCount }} 有歌詞 /
+        {{ tracksMissingLyricsCount }} 無歌詞
+      </p>
 
       <UiHint v-if="state.error" tone="danger" padded>{{ state.error }}</UiHint>
       <UiHint v-else-if="state.isLoading" padded>載入中</UiHint>
-      <UiHint v-else-if="!selectedPlaylist" padded>請先選擇播放清單</UiHint>
+      <UiHint v-else-if="!selectedPlaylist" padded>
+        請從左側播放清單選取要編輯歌詞的播放清單
+      </UiHint>
       <UiHint v-else-if="state.tracks.length === 0" padded>
         這個播放清單還沒有曲目。
       </UiHint>
@@ -580,7 +535,17 @@ watch(activeLineIndex, (index) => {
 .lyrics-workspace {
   display: grid;
   grid-template-columns: minmax(320px, 400px) minmax(0, 1fr);
+  /* Explicit row, not the implicit auto default — auto sizes to content
+     and would leave the panels' height:100% below resolving against a
+     content-sized row instead of the actual available space. minmax(0, …)
+     still lets the row shrink below that content size so the panels clip/
+     scroll instead of growing past their share of the viewport. */
+  grid-template-rows: minmax(0, 1fr);
   gap: var(--ui-space-3);
+  /* Flex child of .lyrics-view — fills exactly the height left after
+     UiPageHeader, min-height:0 lets it shrink below the two panels'
+     natural content height so they clip/scroll instead of overflowing. */
+  flex: 1;
   min-height: 0;
 }
 
@@ -591,21 +556,16 @@ watch(activeLineIndex, (index) => {
   border-radius: var(--ui-radius);
 }
 
-/* 190px was a hand-computed "page header + player bar" reservation that
-   didn't reference --ui-player-bar-height at all; re-expressed as the
-   token plus the remaining ~122px (page padding/header, not itself a
-   repeated value elsewhere) so this and the player bar's actual height
-   can't silently drift apart again. */
 .lyrics-panel--list {
   display: flex;
   flex-direction: column;
-  max-height: calc(100vh - var(--ui-player-bar-height) - 122px);
+  height: 100%;
 }
 
 .lyrics-panel--preview {
   display: grid;
   grid-template-rows: auto auto minmax(0, 1fr);
-  max-height: calc(100vh - var(--ui-player-bar-height) - 122px);
+  height: 100%;
 }
 
 .lyrics-panel__header,
@@ -626,10 +586,12 @@ watch(activeLineIndex, (index) => {
   margin: 0;
 }
 
+/* Title tier — DESIGN.md names panel titles explicitly. */
 .lyrics-panel__title,
 .lyrics-detail__title {
   font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-title);
   color: var(--ui-color-text);
 }
 
@@ -638,6 +600,8 @@ watch(activeLineIndex, (index) => {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .lyrics-panel__status {
@@ -646,17 +610,10 @@ watch(activeLineIndex, (index) => {
   font-size: var(--ui-font-size-sm);
 }
 
-.lyrics-panel__playlist {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-/* Shared <select> chrome for this file's three dropdowns — playlist
-   picker, lyrics-source filter, separation preset. Each keeps its own
-   width constraint via its BEM class below. */
+/* Shared <select> chrome for this file's two remaining dropdowns —
+   lyrics-source filter, separation preset (the playlist picker itself
+   moved to the persistent AppPlaylistSidebar). Each keeps its own width
+   constraint via its BEM class where used. */
 .lyrics-select {
   height: var(--ui-control-height);
   border: var(--ui-border-width) solid var(--ui-color-border);
@@ -670,17 +627,6 @@ watch(activeLineIndex, (index) => {
 .lyrics-select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-}
-
-.lyrics-panel__playlist-select {
-  min-width: 0;
-  flex: 1 1 auto;
-}
-
-.lyrics-panel__playlist .lyrics-panel__meta {
-  flex: 0 0 auto;
-  margin-top: 0;
-  white-space: nowrap;
 }
 
 .lyrics-track-list,
@@ -812,6 +758,8 @@ watch(activeLineIndex, (index) => {
 .lyrics-separation__done {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .lyrics-separation__error {
@@ -913,13 +861,20 @@ watch(activeLineIndex, (index) => {
 }
 
 @media (max-width: 900px) {
+  /* Stacked layout: the two panels flow one after another and the page
+     itself scrolls (via AppInnerPage), instead of each panel clamping to
+     a share of the viewport and scrolling independently — undoing the
+     height-clamped chain above back to natural block flow. */
   .lyrics-workspace {
     grid-template-columns: 1fr;
+    grid-template-rows: auto;
+    flex: initial;
+    min-height: 0;
   }
 
   .lyrics-panel--list,
   .lyrics-panel--preview {
-    max-height: none;
+    height: auto;
   }
 
   .lyrics-toolbar {

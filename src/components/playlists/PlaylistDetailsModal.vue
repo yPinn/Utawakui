@@ -136,11 +136,12 @@ function save() {
   gap: var(--ui-space-4);
 }
 
+/* Artwork tier — DESIGN.md's "dense thumbnails and artwork" radius. */
 .playlist-details__cover {
   position: relative;
   width: 120px;
   height: 120px;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-sm);
   overflow: hidden;
 }
 
@@ -169,8 +170,8 @@ function save() {
   flex-direction: column;
   gap: var(--ui-space-1);
   border: none;
-  background: rgb(0 0 0 / 55%);
-  color: #fff;
+  background: var(--ui-color-overlay-scrim);
+  color: var(--ui-color-overlay-contrast);
   cursor: pointer;
   font-size: var(--ui-font-size-sm);
 }
@@ -221,7 +222,6 @@ function save() {
 
 .playlist-details__input,
 .playlist-details__textarea {
-  box-sizing: border-box;
   width: 100%;
   padding: var(--ui-space-2) var(--ui-space-3);
   /* One tier lighter than the modal's own --ui-color-surface (same token
@@ -238,10 +238,12 @@ function save() {
   font-size: var(--ui-font-size-sm);
 }
 
+/* Title tier — DESIGN.md names active item titles explicitly. */
 .playlist-details__input {
   flex: 0 0 auto;
   font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-title);
 }
 
 .playlist-details__textarea {
@@ -265,6 +267,8 @@ function save() {
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

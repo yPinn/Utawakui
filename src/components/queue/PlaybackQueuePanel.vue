@@ -184,13 +184,12 @@ const {
   right: var(--ui-space-3);
   bottom: calc(var(--ui-player-bar-height) + var(--ui-space-3));
   z-index: var(--ui-z-dropdown);
-  box-sizing: border-box;
   width: min(var(--queue-panel-width), calc(100vw - var(--ui-space-5)));
   max-height: min(640px, calc(100vh - var(--queue-panel-max-height-offset)));
   overflow: auto;
   padding: var(--ui-space-4);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface);
   box-shadow: var(--ui-shadow-overlay);
 }
@@ -206,8 +205,9 @@ const {
 .queue-panel__title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-title);
 }
 
 .queue-panel__text-action {
@@ -217,6 +217,8 @@ const {
   color: var(--ui-color-text-muted);
   font: inherit;
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
   cursor: pointer;
 }
 

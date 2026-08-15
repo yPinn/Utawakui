@@ -19,13 +19,13 @@ const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.
 const TEMPO_STEP = 0.05;
 
-// Matches AppSidebar.vue's nav order left-to-right — F-key position mirrors
-// tab position so the mapping stays obvious without a legend.
+// Matches AppTopTabs.vue's left-to-right order — F-key position mirrors tab
+// position so the mapping stays obvious without a legend.
 const VIEW_SHORTCUTS = {
-  f1: 'import',
-  f2: 'setlist',
+  f1: 'setlist',
+  f2: 'appearance',
   f3: 'lyrics',
-  f4: 'appearance',
+  f4: 'import',
 };
 
 export function useKeyboardShortcuts(activeView) {

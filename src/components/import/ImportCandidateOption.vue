@@ -141,6 +141,8 @@ const metaParts = computed(() =>
 .candidate-option__meta {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .platform-badge__label {

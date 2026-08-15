@@ -106,8 +106,8 @@ const titleText = computed(() => props.title ?? props.label);
 }
 
 .ui-icon-btn--overlay {
-  background: rgb(0 0 0 / 55%);
-  color: #fff;
+  background: var(--ui-color-overlay-scrim);
+  color: var(--ui-color-overlay-contrast);
 }
 
 .ui-icon-btn:disabled,

@@ -504,7 +504,8 @@ function trackStatusToneFor(track) {
 
 .section-heading__title,
 .preview-panel__title {
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-font-size-lg);
+  line-height: var(--ui-line-height-title);
 }
 
 .source-summary__title {
@@ -517,6 +518,8 @@ function trackStatusToneFor(track) {
 .provider-empty-panel {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .section-heading__meta {
@@ -531,7 +534,6 @@ function trackStatusToneFor(track) {
 }
 
 .source-row__input {
-  box-sizing: border-box;
   flex: 1;
   min-width: calc(var(--ui-space-5) * 8);
   padding: var(--ui-space-2) var(--ui-space-3);
@@ -635,6 +637,8 @@ function trackStatusToneFor(track) {
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
   cursor: pointer;
 }
 

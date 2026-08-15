@@ -5,10 +5,17 @@ const { atomicWriteJson } = require('./atomicWrite');
 const { normalizeFeatureConfirmations } = require('./featureGates');
 
 const CURRENT_VERSION = 1;
+const UI_THEMES = ['light', 'dark'];
+// Keep in sync with --ui-playlist-sidebar-width-min/-max in
+// src/styles/tokens.css — main process can't read CSS.
+const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
+const SIDEBAR_WIDTH_MAX = 392; // 24.5rem
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
   featureConfirmations: {},
+  uiTheme: 'dark',
+  sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width
 };
 
 function backupCorrupted(configPath) {
@@ -53,6 +60,13 @@ function loadConfig(configPath) {
     featureConfirmations: normalizeFeatureConfirmations(
       data.featureConfirmations,
     ),
+    uiTheme: UI_THEMES.includes(data.uiTheme) ? data.uiTheme : DEFAULTS.uiTheme,
+    sidebarWidth:
+      Number.isFinite(data.sidebarWidth) &&
+      data.sidebarWidth >= SIDEBAR_WIDTH_MIN &&
+      data.sidebarWidth <= SIDEBAR_WIDTH_MAX
+        ? data.sidebarWidth
+        : DEFAULTS.sidebarWidth,
   };
 }
 
@@ -66,4 +80,10 @@ function saveConfig(configPath, partial) {
   return merged;
 }
 
-module.exports = { loadConfig, saveConfig, DEFAULTS };
+module.exports = {
+  loadConfig,
+  saveConfig,
+  DEFAULTS,
+  SIDEBAR_WIDTH_MIN,
+  SIDEBAR_WIDTH_MAX,
+};

@@ -86,18 +86,17 @@ onUnmounted(() => {
   align-items: center;
   justify-content: center;
   padding: var(--ui-space-5);
-  background: rgb(0 0 0 / 55%);
+  background: var(--ui-color-overlay-scrim);
 }
 
 .ui-modal {
-  box-sizing: border-box;
   width: min(420px, 100%);
   max-height: calc(100vh - var(--ui-space-8));
   overflow-y: auto;
   padding: var(--ui-space-5);
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-overlay);
 }
 
@@ -109,10 +108,12 @@ onUnmounted(() => {
   margin-bottom: var(--ui-space-4);
 }
 
+/* Headline tier — DESIGN.md names modal titles explicitly. */
 .ui-modal__title {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-size: var(--ui-font-size-xl);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-headline);
 }
 </style>

@@ -21,10 +21,12 @@ defineProps({
   margin-bottom: var(--ui-space-4);
 }
 
+/* Headline tier — DESIGN.md names major view titles explicitly. */
 .ui-page-header__title {
   margin: 0;
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-size: var(--ui-font-size-xl);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-headline);
   color: var(--ui-color-text);
 }
 

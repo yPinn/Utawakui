@@ -434,7 +434,7 @@ function startDrag(playlist, event) {
 .playlist-sidebar {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-1);
+  gap: var(--ui-playlist-list-gap);
 }
 
 .playlist-sidebar__divider {
@@ -453,10 +453,12 @@ function startDrag(playlist, event) {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-2);
-  border: none;
-  border-radius: var(--ui-radius);
+  gap: var(--ui-playlist-row-gap);
+  min-height: var(--ui-playlist-row-min-height);
+  padding: var(--ui-playlist-row-padding-block)
+    var(--ui-playlist-row-padding-inline);
+  border: var(--ui-border-width) solid transparent;
+  border-radius: var(--ui-radius-sm);
   background: transparent;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
@@ -466,6 +468,7 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__item:hover {
+  border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
 }
 
@@ -475,8 +478,10 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__item--active {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+  border-color: var(--ui-color-border-strong);
+  background: var(--ui-color-surface-selected);
+  color: var(--ui-color-text);
+  box-shadow: var(--ui-row-active-shadow);
 }
 
 .playlist-sidebar__thumb {
@@ -488,7 +493,11 @@ function startDrag(playlist, event) {
   width: 40px;
   height: 40px;
   border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface-hover);
+  background: color-mix(
+    in srgb,
+    var(--ui-color-surface-hover) 88%,
+    var(--ui-color-text)
+  );
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
@@ -496,19 +505,20 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__item--active .playlist-sidebar__thumb {
-  color: var(--ui-color-accent-contrast-muted);
+  color: var(--ui-color-accent);
 }
 
 /* Accent cover distinguishes the All Tracks row from Create Playlist. */
 .playlist-sidebar__thumb--accent {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+  border: var(--ui-border-width) solid var(--ui-color-border-strong);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-accent);
 }
 
-/* Selected accent rows invert the cover so it stays visible. */
+/* Selected accent rows keep the cover visible without becoming a second tab. */
 .playlist-sidebar__item--active
   .playlist-sidebar__thumb.playlist-sidebar__thumb--accent {
-  background: var(--ui-color-accent-contrast);
+  background: var(--ui-color-surface-hover);
   color: var(--ui-color-accent);
   opacity: 1;
 }
@@ -528,5 +538,14 @@ function startDrag(playlist, event) {
   text-overflow: ellipsis;
   white-space: nowrap;
   min-width: 0;
+}
+
+/* Same compact-sidebar collapse as PlaylistSidebarRow.vue's own
+   .playlist-sidebar-row__info rule — see that file's comment for why the
+   threshold is a literal px value instead of a custom property. */
+@container (width < 256px) {
+  .playlist-sidebar__info {
+    display: none;
+  }
 }
 </style>

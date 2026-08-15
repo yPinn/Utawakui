@@ -2,7 +2,29 @@
 
 const { contextBridge, ipcRenderer } = require('electron');
 
+// Parsed from the `--ui-theme=` arg main.js passes via additionalArguments —
+// lets the renderer paint the persisted theme on first frame, no async wait.
+function readInitialUiTheme() {
+  const arg = process.argv.find((a) => a.startsWith('--ui-theme='));
+  const theme = arg ? arg.slice('--ui-theme='.length) : 'dark';
+  return theme === 'light' ? 'light' : 'dark';
+}
+
+// Same synchronous-first-paint reasoning as readInitialUiTheme above.
+function readInitialSidebarWidth() {
+  const arg = process.argv.find((a) => a.startsWith('--sidebar-width='));
+  const value = arg ? Number(arg.slice('--sidebar-width='.length)) : NaN;
+  return Number.isFinite(value) ? value : 256;
+}
+
 contextBridge.exposeInMainWorld('Utawakui', {
+  initialUiTheme: readInitialUiTheme(),
+  getUiTheme: () => ipcRenderer.invoke('config:get-ui-theme'),
+  setUiTheme: (theme) => ipcRenderer.invoke('config:set-ui-theme', theme),
+  initialSidebarWidth: readInitialSidebarWidth(),
+  getSidebarWidth: () => ipcRenderer.invoke('config:get-sidebar-width'),
+  setSidebarWidth: (width) =>
+    ipcRenderer.invoke('config:set-sidebar-width', width),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
   // YouTube playlist URL/ID resolution — unrelated to the user-named
   // playlists API below (listPlaylists/createPlaylist/etc.). Resolves to

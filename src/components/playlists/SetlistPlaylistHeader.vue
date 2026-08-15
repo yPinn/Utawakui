@@ -126,12 +126,13 @@ const emit = defineEmits([
 /* Sizing/border/positioning wrapper only — the collage grid itself is
    UiCollageThumb.vue's, shared with PlaylistSidebarRow.vue's nav thumb so
    the two can never show a different image again. */
+/* Artwork tier — DESIGN.md's "dense thumbnails and artwork" radius. */
 .playlist-cover {
   position: relative;
   width: 136px;
   aspect-ratio: 1;
   overflow: hidden;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-sm);
   border: var(--ui-border-width) solid var(--ui-color-border);
 }
 
@@ -166,14 +167,17 @@ const emit = defineEmits([
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
 }
 
+/* Display tier — DESIGN.md's "rare page-level heading" fits a playlist/
+   album hero title. */
 .playlist-hero__title {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-2xl);
-  line-height: 1.05;
-  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-display);
+  font-weight: var(--ui-font-weight-heavy);
   overflow-wrap: anywhere;
 }
 
@@ -181,12 +185,16 @@ const emit = defineEmits([
   margin: var(--ui-space-2) 0 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .playlist-hero__description {
   margin: var(--ui-space-2) 0 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }

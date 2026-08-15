@@ -274,7 +274,6 @@ onUnmounted(() => {
         class="player-bar__artwork"
         :track="state.track"
         :size="52"
-        radius="var(--ui-radius)"
         font-size="var(--ui-font-size-lg)"
       />
       <div class="player-bar__track-copy">
@@ -287,7 +286,6 @@ onUnmounted(() => {
             {{ state.track.artist }}
           </span>
         </template>
-        <span v-else class="player-bar__track-empty">尚未播放</span>
       </div>
     </div>
 
@@ -487,7 +485,6 @@ onUnmounted(() => {
   padding: var(--ui-space-2) var(--ui-space-3);
   background: var(--ui-color-surface);
   border-top: var(--ui-border-width) solid var(--ui-color-border);
-  box-sizing: border-box;
   /* Otherwise dragging a slider triggers native text selection, which can
      swallow a click on a nearby button instead of registering it. */
   user-select: none;
@@ -510,6 +507,8 @@ onUnmounted(() => {
 .player-bar__track-empty {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .player-bar__track-title {
@@ -520,6 +519,8 @@ onUnmounted(() => {
 .player-bar__track-artist {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 /* Cap progress width on wide windows. */
@@ -555,6 +556,8 @@ onUnmounted(() => {
   width: 5ch;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
   font-variant-numeric: tabular-nums;
 }
 
@@ -598,11 +601,10 @@ onUnmounted(() => {
   right: var(--ui-space-3);
   bottom: calc(var(--ui-player-bar-height) + var(--ui-space-3));
   z-index: var(--ui-z-dropdown);
-  box-sizing: border-box;
   width: min(280px, calc(100vw - var(--ui-space-5)));
   padding: var(--ui-space-4);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface);
   box-shadow: var(--ui-shadow-overlay);
 }
@@ -639,6 +641,8 @@ onUnmounted(() => {
   flex: 1;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
 }
 
 /* Inline with the label instead of a separate centered line. The reset

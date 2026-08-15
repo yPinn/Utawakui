@@ -66,10 +66,11 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
 .track-metadata__label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
 }
 
 .track-metadata__input {
-  box-sizing: border-box;
   width: 100%;
   padding: var(--ui-space-2) var(--ui-space-3);
   background: var(--ui-color-surface-hover);

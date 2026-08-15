@@ -12,7 +12,12 @@ import UiPageHeader from '../components/ui/UiPageHeader.vue';
 
 <style scoped>
 .lyrics-view {
-  display: grid;
+  /* height + flex, not the block default — lets LyricsWorkspace fill
+     exactly whatever's left after UiPageHeader (via flex: 1; min-height: 0
+     on its own root) instead of guessing that height with 100vh math. */
+  height: 100%;
+  display: flex;
+  flex-direction: column;
   gap: var(--ui-space-3);
 }
 </style>

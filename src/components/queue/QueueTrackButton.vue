@@ -48,7 +48,6 @@ const emit = defineEmits([
       class="queue-track__cover"
       :track="track"
       :size="48"
-      radius="var(--ui-radius)"
       background="var(--ui-color-canvas)"
       font-size="var(--ui-font-size-lg)"
     />
@@ -73,7 +72,6 @@ const emit = defineEmits([
   --queue-track-cover-size: 48px;
 
   position: relative;
-  box-sizing: border-box;
   display: grid;
   grid-template-columns: var(--queue-track-cover-size) minmax(0, 1fr);
   gap: var(--ui-space-2);
@@ -144,5 +142,7 @@ const emit = defineEmits([
 .queue-track__artist {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 </style>

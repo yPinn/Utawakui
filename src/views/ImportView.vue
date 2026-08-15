@@ -178,7 +178,8 @@ onMounted(() => {
 }
 
 .section-heading__title {
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-font-size-lg);
+  line-height: var(--ui-line-height-title);
 }
 
 .section-heading__meta,
@@ -186,6 +187,8 @@ onMounted(() => {
 .local-import-action__meta {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .section-heading__meta,

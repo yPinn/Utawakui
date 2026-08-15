@@ -23,6 +23,8 @@ describe('config', () => {
       version: 1,
       downloadDir: null,
       featureConfirmations: {},
+      uiTheme: 'dark',
+      sidebarWidth: 256,
     });
   });
 
@@ -55,6 +57,8 @@ describe('config', () => {
       version: 1,
       downloadDir: null,
       featureConfirmations: {},
+      uiTheme: 'dark',
+      sidebarWidth: 256,
     });
 
     const backups = fs
@@ -110,6 +114,40 @@ describe('config', () => {
     saveConfig(configPath, { downloadDir: '/first' });
     saveConfig(configPath, {});
     expect(loadConfig(configPath).downloadDir).toBe('/first');
+  });
+
+  it('round-trips uiTheme through save/load', () => {
+    saveConfig(configPath, { uiTheme: 'light' });
+    expect(loadConfig(configPath).uiTheme).toBe('light');
+  });
+
+  it('invalid uiTheme falls back to dark', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, uiTheme: 'sepia' }),
+    );
+    expect(loadConfig(configPath).uiTheme).toBe('dark');
+  });
+
+  it('round-trips sidebarWidth through save/load', () => {
+    saveConfig(configPath, { sidebarWidth: 320 });
+    expect(loadConfig(configPath).sidebarWidth).toBe(320);
+  });
+
+  it('out-of-range sidebarWidth falls back to the default', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, sidebarWidth: 9999 }),
+    );
+    expect(loadConfig(configPath).sidebarWidth).toBe(256);
+  });
+
+  it('non-numeric sidebarWidth falls back to the default', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, sidebarWidth: 'wide' }),
+    );
+    expect(loadConfig(configPath).sidebarWidth).toBe(256);
   });
 
   it('round-trips feature confirmations through save/load', () => {

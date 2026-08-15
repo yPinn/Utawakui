@@ -180,6 +180,8 @@ function sortLabel(key, label) {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
 }
 
 .playlist-table__sort {
@@ -241,7 +243,6 @@ function sortLabel(key, label) {
 
 .playlist-track {
   position: relative;
-  box-sizing: border-box;
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
   border-radius: var(--ui-radius);

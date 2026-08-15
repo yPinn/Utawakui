@@ -75,7 +75,6 @@ const thumbTrack = computed(() => ({
 
 <style scoped>
 .ui-track {
-  box-sizing: border-box;
   display: flex;
   align-items: center;
   gap: var(--ui-track-row-gap);
@@ -96,7 +95,7 @@ const thumbTrack = computed(() => ({
 .ui-track--active {
   background: var(--ui-color-surface-selected);
   color: var(--ui-color-text);
-  box-shadow: inset 3px 0 0 var(--ui-color-accent);
+  box-shadow: var(--ui-row-active-shadow);
 }
 
 .ui-track--interactive:focus-visible {

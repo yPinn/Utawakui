@@ -6,6 +6,7 @@ const { Worker } = require('worker_threads');
 const {
   app,
   BrowserWindow,
+  Menu,
   session,
   ipcMain,
   dialog,
@@ -21,7 +22,12 @@ const {
   readTrackInfoMetadata,
   searchPlaybackCandidates,
 } = require('./lib/downloader');
-const { loadConfig, saveConfig } = require('./lib/config');
+const {
+  loadConfig,
+  saveConfig,
+  SIDEBAR_WIDTH_MIN,
+  SIDEBAR_WIDTH_MAX,
+} = require('./lib/config');
 const {
   FEATURE_IDS,
   buildFeatureConfirmation,
@@ -92,6 +98,11 @@ const BASE_APP_USER_MODEL_ID = 'com.utawakui.app';
 
 app.setName(APP_NAME);
 
+// Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let
+// content zoom drift and desync the titlebar theme button from the
+// OS-drawn window controls. Guards against an accidental zoom mid-stream too.
+Menu.setApplicationMenu(null);
+
 // Electron requires scheme privileges before app.whenReady().
 protocol.registerSchemesAsPrivileged([
   {
@@ -105,6 +116,13 @@ protocol.registerSchemesAsPrivileged([
     },
   },
 ]);
+
+// Keep in sync with --ui-color-canvas / --ui-color-text in tokens.css —
+// these paint the native Windows overlay buttons, which useTheme.js can't reach.
+const TITLEBAR_COLORS = {
+  dark: { color: '#1f2328', symbolColor: '#f7f1e7' },
+  light: { color: '#f7f1e7', symbolColor: '#1f2328' },
+};
 
 const iconPath = path.join(
   __dirname,
@@ -252,32 +270,37 @@ function updateThumbar() {
   ]);
 }
 
-function createWindow() {
+function createWindow(initialTheme = 'dark', initialSidebarWidth = 256) {
+  const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.dark;
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 850,
     minWidth: 960,
     minHeight: 650,
-    // Keep in sync with --ui-color-canvas in src/styles/tokens.css.
-    backgroundColor: '#1f2328',
+    backgroundColor: titlebarColors.color,
     titleBarStyle: 'hidden',
-    // Keep in sync with --ui-titlebar-height, --ui-color-canvas,
-    // and --ui-color-text in src/styles/tokens.css.
+    // Keep in sync with --ui-titlebar-height in src/styles/tokens.css.
     titleBarOverlay: {
-      color: '#1f2328',
-      symbolColor: '#f7f1e7',
-      height: 40,
+      color: titlebarColors.color,
+      symbolColor: titlebarColors.symbolColor,
+      height: 38,
     },
     title: APP_NAME,
     icon: iconPath,
     show: false,
-    autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
       backgroundThrottling: false,
+      // Lets preload's initialUiTheme/initialSidebarWidth read these
+      // synchronously, so the first frame paints the right palette and
+      // sidebar width instead of flashing dark/the default width.
+      additionalArguments: [
+        `--ui-theme=${initialTheme}`,
+        `--sidebar-width=${initialSidebarWidth}`,
+      ],
     },
   });
 
@@ -891,6 +914,41 @@ if (!gotSingleInstanceLock) {
       return resolveDownloadDir(cachedConfig);
     });
 
+    ipcMain.handle('config:get-ui-theme', async () => cachedConfig.uiTheme);
+
+    ipcMain.handle('config:set-ui-theme', async (event, theme) => {
+      // Untrusted renderer input — same trust-boundary role as
+      // extractVideoId() for video ids.
+      if (!(theme in TITLEBAR_COLORS)) {
+        throw new Error(`invalid ui theme: ${theme}`);
+      }
+      cachedConfig = saveConfig(configPath, { uiTheme: theme });
+      if (mainWindow) {
+        mainWindow.setTitleBarOverlay(TITLEBAR_COLORS[theme]);
+        mainWindow.setBackgroundColor(TITLEBAR_COLORS[theme].color);
+      }
+      return cachedConfig.uiTheme;
+    });
+
+    ipcMain.handle(
+      'config:get-sidebar-width',
+      async () => cachedConfig.sidebarWidth,
+    );
+
+    ipcMain.handle('config:set-sidebar-width', async (event, width) => {
+      // Untrusted renderer input — same trust-boundary role as
+      // extractVideoId() for video ids.
+      if (
+        !Number.isFinite(width) ||
+        width < SIDEBAR_WIDTH_MIN ||
+        width > SIDEBAR_WIDTH_MAX
+      ) {
+        throw new Error(`invalid sidebar width: ${width}`);
+      }
+      cachedConfig = saveConfig(configPath, { sidebarWidth: width });
+      return cachedConfig.sidebarWidth;
+    });
+
     // Fire-and-forget; thumbar redraw has no renderer-visible result.
     ipcMain.on('player:state', (event, state) => {
       const next = {
@@ -920,7 +978,7 @@ if (!gotSingleInstanceLock) {
       migratePlaylistKinds(dir, tracksById, classifyCollectionKind);
     }
 
-    createWindow();
+    createWindow(cachedConfig.uiTheme, cachedConfig.sidebarWidth);
   });
 
   app.on('window-all-closed', () => {

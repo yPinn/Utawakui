@@ -97,10 +97,12 @@ const emit = defineEmits([
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-2);
-  border: none;
-  border-radius: var(--ui-radius);
+  gap: var(--ui-playlist-row-gap);
+  min-height: var(--ui-playlist-row-min-height);
+  padding: var(--ui-playlist-row-padding-block)
+    var(--ui-playlist-row-padding-inline);
+  border: var(--ui-border-width) solid transparent;
+  border-radius: var(--ui-radius-sm);
   background: transparent;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
@@ -155,6 +157,7 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar-row:hover {
+  border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
 }
 
@@ -164,9 +167,10 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar-row--active {
+  border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-selected);
   color: var(--ui-color-text);
-  box-shadow: inset 3px 0 0 var(--ui-color-accent);
+  box-shadow: var(--ui-row-active-shadow);
 }
 
 .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
@@ -218,5 +222,22 @@ const emit = defineEmits([
   white-space: nowrap;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
+}
+
+/* Compact sidebar (see AppPlaylistSidebar.vue's container-type: inline-size
+   and useSidebarResize.js's snap-to-min behavior) — collapses straight to
+   icon-only rather than letting the title/kind text get squeezed and
+   clipped. Literal px value, kept in sync by hand with
+   --ui-playlist-sidebar-compact-threshold in tokens.css since @container
+   conditions can't reference custom properties. Range syntax (strict `<`),
+   not max-width — the default width equals this threshold, and
+   max-width's inclusive `<=` would collapse it to icon-only on every
+   fresh launch. */
+@container (width < 256px) {
+  .playlist-sidebar-row__info {
+    display: none;
+  }
 }
 </style>

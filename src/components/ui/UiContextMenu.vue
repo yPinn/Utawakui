@@ -314,7 +314,6 @@ onUnmounted(() => {
 .ui-context-menu {
   position: fixed;
   z-index: var(--ui-z-context-menu);
-  box-sizing: border-box;
   /* 320px must match MAX_MENU_HEIGHT in the script block — CSS can't read
      a JS constant, so keep the two in sync by hand if this changes. */
   max-height: min(320px, calc(100vh - 16px));
@@ -335,6 +334,8 @@ onUnmounted(() => {
   padding: var(--ui-space-1) var(--ui-space-2);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .ui-context-menu__item {
@@ -351,7 +352,7 @@ onUnmounted(() => {
   color: var(--ui-color-text);
   font: inherit;
   font-size: var(--ui-font-size-sm);
-  line-height: 1.35;
+  line-height: var(--ui-line-height-label);
   text-align: left;
   cursor: pointer;
 }
@@ -415,6 +416,8 @@ onUnmounted(() => {
   justify-self: end;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
   white-space: nowrap;
 }
 </style>

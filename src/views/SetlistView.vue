@@ -13,12 +13,11 @@ import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
+import { usePlaylistActions } from '../composables/usePlaylistActions.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
-import PlaylistDetailsModal from '../components/playlists/PlaylistDetailsModal.vue';
-import PlaylistSidebar from '../components/playlists/PlaylistSidebar.vue';
 import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
 import UiButton from '../components/ui/UiButton.vue';
@@ -29,7 +28,6 @@ import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatLongDuration } from '../utils/format.js';
 import {
-  PLAYLIST_MENU_ACTIONS,
   playlistDisplayName,
   addToPlaylistTargets,
 } from '../utils/playlistMenu.js';
@@ -45,11 +43,7 @@ import {
 } from '../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
-const {
-  state: libraryState,
-  tracksById,
-  refresh: refreshLibrary,
-} = useLibrary();
+const { state: libraryState, refresh: refreshLibrary } = useLibrary();
 const {
   state: queueState,
   setQueue,
@@ -61,30 +55,19 @@ const {
   state: playlistState,
   selectedPlaylist,
   create: createPlaylistAction,
-  rename: renamePlaylistAction,
-  remove: removePlaylistAction,
-  setKind: setPlaylistKindAction,
-  setDescription: setPlaylistDescriptionAction,
-  setCover: setPlaylistCoverAction,
-  clearCover: clearPlaylistCoverAction,
   addTrack: addTrackToPlaylist,
-  addTracks: addTracksToPlaylist,
   removeTrack: removeTrackFromPlaylist,
   setTracks: setPlaylistTracksAction,
 } = usePlaylists();
+const { resolvePlaylistTracks, confirmDeletePlaylist, openEditDetails } =
+  usePlaylistActions();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 
 // Transient UI mode stays local; mutations persist immediately.
-// The playlist being edited is tracked independently of selectedPlaylist —
-// editing must not require first navigating into that playlist/album's own
-// page (right-clicking any sidebar row should open the modal for that row
-// without changing what the main content area is currently showing).
-const editDetailsPlaylistId = ref(null);
 const deleteError = ref(null);
 const searchQuery = ref('');
 const addMenu = ref(null);
 const playlistSort = ref({ key: null, direction: 'asc' });
-const libraryView = ref('all');
 
 const TRACK_MENU_ACTIONS = {
   addToQueue: 'add-to-queue',
@@ -101,25 +84,12 @@ const mode = computed(() => {
   return selectedPlaylist.value.kind === 'album' ? 'album' : 'playlist';
 });
 const isLocalLibraryView = computed(
-  () => !selectedPlaylist.value && libraryView.value === 'local',
+  () => !selectedPlaylist.value && playlistState.libraryView === 'local',
 );
 
 // Album track membership/order is read-only — see playlists.js's
 // PLAYLIST_KINDS comment. Rename/delete/play/sort still apply to both.
 const isAlbumSelected = computed(() => mode.value === 'album');
-
-// The join itself is the "ghost trackId" filter — a track deleted outside
-// the app just silently drops out, per library.js's orphan doctrine (see
-// electron/lib/playlists.js's own comment for why this isn't cleaned up
-// main-process-side instead). Shared by playlistTracks (selectedPlaylist)
-// and editDetailsCoverTracks (whichever playlist the modal targets, which
-// may not be the selected one) so both stay in sync with one join.
-function resolvePlaylistTracks(playlist) {
-  if (!playlist) return [];
-  return playlist.trackIds
-    .map((id) => tracksById.value.get(id))
-    .filter(Boolean);
-}
 
 const playlistTracks = computed(() =>
   resolvePlaylistTracks(selectedPlaylist.value),
@@ -322,35 +292,13 @@ const visibleTracksEmptyText = computed(() =>
   normalizedSearchQuery.value ? '找不到符合搜尋的曲目。' : '沒有曲目。',
 );
 
-// Independent of selectedPlaylist — see editDetailsPlaylistId's own comment.
-// Deriving `open` from this existing (rather than a separate boolean) also
-// means the modal self-closes if its target playlist is deleted elsewhere
-// while open.
-const editDetailsPlaylist = computed(() =>
-  editDetailsPlaylistId.value
-    ? (playlistState.playlists.find(
-        (item) => item.id === editDetailsPlaylistId.value,
-      ) ?? null)
-    : null,
-);
-const editDetailsIsAlbum = computed(
-  () => editDetailsPlaylist.value?.kind === 'album',
-);
-const editDetailsCoverTracks = computed(() =>
-  resolvePlaylistTracks(editDetailsPlaylist.value),
-);
-const editDetailsCoverUrl = computed(
-  () => editDetailsPlaylist.value?.coverUrl ?? '',
-);
-const editDetailsDescription = computed(
-  () => editDetailsPlaylist.value?.description ?? '',
-);
-
-// Selecting a different playlist (or none) only affects the search/add-menu/
-// drag state scoped to the main content area — it must not touch the
-// edit-details modal, which now tracks its own target independently.
+// Selecting a different playlist/library-view (both now live in the shared
+// usePlaylists() state, driven by the persistent AppPlaylistSidebar) only
+// affects the search/add-menu/drag state scoped to this view's main content
+// area — it must not touch the edit-details modal, which AppPlaylistSidebar
+// owns independently.
 watch(
-  () => selectedPlaylist.value?.id,
+  [() => selectedPlaylist.value?.id, () => playlistState.libraryView],
   () => {
     closeAddMenu();
     clearDragState();
@@ -408,120 +356,6 @@ async function removeTrack(track) {
   }
 }
 
-// Name/description are edited together in PlaylistDetailsModal.vue — an
-// explicit Save button, not Enter/blur, is what confirms them. Cover
-// changes (choose/clear) still commit immediately on click since that's
-// already an async IPC round-trip independent of the form's Save button.
-function openEditDetails() {
-  if (!selectedPlaylist.value) return;
-  editDetailsPlaylistId.value = selectedPlaylist.value.id;
-}
-
-// Context-menu entry point — the target row may not be the one currently
-// selected/viewed. Editing must not force navigation to it, so this only
-// sets the independent edit-details target, never selectPlaylistAction.
-function startPlaylistEditDetails(playlistId) {
-  const playlist = playlistState.playlists.find(
-    (item) => item.id === playlistId,
-  );
-  if (!playlist) return;
-  editDetailsPlaylistId.value = playlist.id;
-}
-
-function closeEditDetailsModal() {
-  editDetailsPlaylistId.value = null;
-}
-
-function saveEditDetails({ name, description }) {
-  const playlist = editDetailsPlaylist.value;
-  if (!playlist) return;
-  if (name && name !== playlist.name) {
-    renamePlaylistAction(playlist.id, name);
-  }
-  if (description !== playlist.description) {
-    setPlaylistDescriptionAction(playlist.id, description);
-  }
-  editDetailsPlaylistId.value = null;
-}
-
-function chooseCover() {
-  const playlist = editDetailsPlaylist.value;
-  if (!playlist) return;
-  setPlaylistCoverAction(playlist.id);
-}
-
-function clearCover() {
-  const playlist = editDetailsPlaylist.value;
-  if (!playlist) return;
-  clearPlaylistCoverAction(playlist.id);
-}
-
-// window.confirm (not prompt — Electron doesn't support prompt) states
-// explicitly that this doesn't touch the audio files, since that's the
-// first fear an operator will have about a "delete" on a track list page.
-function confirmDeletePlaylist(playlist = selectedPlaylist.value) {
-  if (!playlist) return;
-  const isAlbum = playlist.kind === 'album';
-  const name = playlistDisplayName(playlist);
-  const confirmed = window.confirm(
-    isAlbum
-      ? `確定要移除專輯「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會移除這個專輯,且無法復原。`
-      : `確定要刪除歌單「${name}」嗎?(共 ${playlist.trackIds.length} 首曲目)這不會刪除音檔本身,只會刪除這個歌單,且無法復原。`,
-  );
-  if (!confirmed) return;
-  removePlaylistAction(playlist.id);
-}
-
-function addPlaylistToQueue(playlistId) {
-  const playlist = playlistState.playlists.find(
-    (item) => item.id === playlistId,
-  );
-  if (!playlist) return;
-
-  for (const trackId of playlist.trackIds) {
-    const track = tracksById.value.get(trackId);
-    if (track) enqueueTrack(track);
-  }
-}
-
-async function handlePlaylistMenuAction(value) {
-  if (value.action === PLAYLIST_MENU_ACTIONS.createPlaylist) {
-    const created = await createPlaylistAction();
-    // sourcePlaylistId is only set when this came from the "新增至別的播放
-    // 清單" submenu's "建立新播放清單" entry — look the source's trackIds
-    // up fresh here rather than trusting anything serialized into the menu
-    // item's value, since the collection could have changed between the
-    // menu opening and this click.
-    if (created && value.sourcePlaylistId) {
-      const source = playlistState.playlists.find(
-        (item) => item.id === value.sourcePlaylistId,
-      );
-      if (source) addTracksToPlaylist(created.id, source.trackIds);
-    }
-    return;
-  }
-
-  const playlist = playlistState.playlists.find(
-    (item) => item.id === value.playlistId,
-  );
-  if (!playlist) return;
-
-  if (value.action === PLAYLIST_MENU_ACTIONS.addToQueue) {
-    addPlaylistToQueue(playlist.id);
-  } else if (value.action === PLAYLIST_MENU_ACTIONS.addToPlaylist) {
-    addTracksToPlaylist(value.targetPlaylistId, playlist.trackIds);
-  } else if (value.action === PLAYLIST_MENU_ACTIONS.editDetails) {
-    startPlaylistEditDetails(playlist.id);
-  } else if (value.action === PLAYLIST_MENU_ACTIONS.delete) {
-    confirmDeletePlaylist(playlist);
-  } else if (value.action === PLAYLIST_MENU_ACTIONS.convertKind) {
-    setPlaylistKindAction(
-      playlist.id,
-      playlist.kind === 'album' ? 'playlist' : 'album',
-    );
-  }
-}
-
 function openAddMenu(track, event) {
   event.preventDefault();
   event.stopPropagation();
@@ -530,12 +364,6 @@ function openAddMenu(track, event) {
 
 function closeAddMenu() {
   addMenu.value = null;
-}
-
-function selectLibraryView(view) {
-  libraryView.value = view;
-  closeAddMenu();
-  clearDragState();
 }
 
 async function handleTrackMenuSelect(value) {
@@ -629,31 +457,6 @@ onMounted(() => {
 
 <template>
   <div class="setlist-view">
-    <PlaylistSidebar
-      class="setlist-view__sidebar"
-      :tracks-by-id="tracksById"
-      :library-view="libraryView"
-      @library-view-select="selectLibraryView"
-      @playlist-action="handlePlaylistMenuAction"
-    />
-
-    <!-- Independent of which playlist/album is currently selected/viewed —
-         right-clicking any sidebar row opens this for that row without
-         navigating the main content area. UiModal teleports to <body>, so
-         its position here is purely logical, not visual. -->
-    <PlaylistDetailsModal
-      :open="Boolean(editDetailsPlaylist)"
-      :is-album="editDetailsIsAlbum"
-      :name="editDetailsPlaylist?.name ?? ''"
-      :description="editDetailsDescription"
-      :cover-url="editDetailsCoverUrl"
-      :cover-tracks="editDetailsCoverTracks"
-      @close="closeEditDetailsModal"
-      @save="saveEditDetails"
-      @choose-cover="chooseCover"
-      @clear-cover="clearCover"
-    />
-
     <TrackMetadataModal
       :open="trackMetadataEditor.isOpen.value"
       :title="trackMetadataEditor.state.titleDraft"
@@ -777,44 +580,6 @@ onMounted(() => {
 <style scoped>
 .setlist-view {
   display: grid;
-  /* minmax(0, 1fr), not 1fr — a grid item's default min-width:auto would
-     let a long untruncated title blow this column out and push the
-     sidebar off-screen, defeating UiTrackRow's own ellipsis. Widened from
-     160px to 220px so a title + kind subtitle two-line row
-     (PlaylistSidebar.vue) has room without wrapping, then to 16rem (was a
-     hardcoded 220px) once real playlist/album names showed how little
-     horizontal room the marquee text actually had to work with after
-     accounting for the thumb + padding + gaps eating into it — rem so it
-     scales with the user's OS/browser text-size setting rather than
-     staying pinned at a literal pixel count. */
-  grid-template-columns: 16rem minmax(0, 1fr);
-  gap: var(--ui-space-3);
-  align-items: start;
-}
-
-.setlist-view__sidebar {
-  /* .shell__main (App.vue) owns the page scroll — without sticky, the
-     sidebar would scroll away with a long track list instead of staying
-     put like a real nav column. max-height/overflow-y bound it to the same
-     vertical space .shell__main actually has (viewport minus the player
-     bar row minus .shell__main's own top/bottom padding) so a playlist/
-     album list longer than the viewport gets its own internal scroll
-     instead of growing past that height and dragging the whole page (and
-     the right-hand track list along with it) down when scrolled. */
-  position: sticky;
-  top: 0;
-  align-self: start;
-  max-height: calc(
-    100vh - var(--ui-player-bar-height) - (var(--ui-space-3) * 2)
-  );
-  overflow-y: auto;
-  /* Without this, scrolling the sidebar to its own top/bottom edge lets the
-     wheel input "chain" up to .shell__main once there's nowhere left to
-     scroll inside the sidebar itself — so a scroll gesture that starts
-     entirely over the sidebar ends up moving the right-hand track list too,
-     the moment the sidebar bottoms out. contain stops the scroll dead at
-     the sidebar's own boundary instead of handing it to the parent. */
-  overscroll-behavior: contain;
 }
 
 .setlist-view__main {
