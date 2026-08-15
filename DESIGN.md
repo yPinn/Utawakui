@@ -191,7 +191,7 @@ Theme token targets should keep light and dark themes visually related, rather t
 
 ### Light Theme
 
-Recommended future light theme values:
+Implemented in `src/styles/tokens.css` (`:root[data-ui-theme='light']`):
 
 ```css
 --ui-color-canvas: #f7f1e7;
@@ -226,7 +226,7 @@ Recommended future light theme values:
 
 ### Dark Theme
 
-Recommended future dark theme values:
+Implemented in `src/styles/tokens.css` (`:root`, the default):
 
 ```css
 --ui-color-canvas: #1f2328;
@@ -295,8 +295,8 @@ The control panel should combine Spotify-like music workflow efficiency with mac
 
 ### Layout
 
-- Preserve the app shell model: sidebar + main workspace + persistent player.
-- Use the sidebar for navigation, collections, and music-management context.
+- Preserve the app shell model: playlist sidebar + top section tabs + main workspace + persistent player.
+- Use the sidebar for collections and music-management context; primary section navigation (Setlist/Appearance/Lyrics/Import) lives in the top tabs above the workspace, not the sidebar.
 - Keep track rows dense, aligned, and easy to scan.
 - Playlist and album headers can show cover and metadata, but should remain operational rather than heroic.
 - Do not use oversized marketing heroes or nested page cards.
@@ -364,7 +364,7 @@ Density decisions:
 
 | Surface                     | Direction | Rule                                                        |
 | --------------------------- | --------- | ----------------------------------------------------------- |
-| Sidebar navigation          | Spotify   | Compact rows, clear selected state, no large cards.         |
+| Playlist sidebar            | Spotify   | Compact rows, clear selected state, no large cards.         |
 | Track / queue rows          | Spotify   | Stable height, tight metadata stack, contextual actions.    |
 | Player bar                  | Spotify   | Persistent, compact, transport-forward.                     |
 | Search / modal / popover UI | macOS     | Calm fields, clear focus, restrained elevation.             |
@@ -530,7 +530,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 
 ### Color Rules
 
-**The Placeholder Color Rule.** These colors are structural placeholders. Do not treat the current blue accent or dark neutral surface as final brand identity.
+**The Placeholder Color Rule.** These colors are structural placeholders. Do not treat the current teal accent or dark neutral surface as final brand identity.
 
 **The One Accent Rule.** A screen should have one primary accent role. Do not introduce competing highlight colors for decoration.
 

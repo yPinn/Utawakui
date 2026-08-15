@@ -65,7 +65,7 @@ npm run dev
 ```text
 electron/   Electron main process、preload bridge、IPC、protocol 與 pure lib modules
 src/        Vue renderer：views、components、composables、utils
-public/     Vite static assets、tokens、icons
+public/     Vite static assets（app icons）
 docs/       產品規格、範圍與 roadmap
 tasks/      開發任務紀錄
 ```
