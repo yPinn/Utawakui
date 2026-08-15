@@ -225,11 +225,18 @@ async function resolveSource() {
     setStatus('請貼上 YouTube 或 YouTube Music 連結', 'error');
     return;
   }
-  if (!(await ensureProviderFlow())) return;
+  // Set before the first await so a call arriving during ensureProviderFlow()
+  // can't start a second, racing resolution (matches useLocalImport's guard).
+  if (state.isResolving) return;
+  state.isResolving = true;
+
+  if (!(await ensureProviderFlow())) {
+    state.isResolving = false;
+    return;
+  }
 
   clearPreview();
   setStatus('檢查連結中...', 'pending');
-  state.isResolving = true;
 
   try {
     const playlistResult = await window.Utawakui.fetchYoutubePlaylist(input);

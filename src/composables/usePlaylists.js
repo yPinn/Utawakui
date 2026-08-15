@@ -155,7 +155,11 @@ async function upsertAlbum(payload) {
 
 function reorderPlaylist(draggedId, targetId, position = 'before') {
   if (!draggedId || !targetId || draggedId === targetId) return;
-  if (typeof window.Utawakui.reorderPlaylist !== 'function') {
+  if (
+    typeof window === 'undefined' ||
+    !window.Utawakui ||
+    typeof window.Utawakui.reorderPlaylist !== 'function'
+  ) {
     state.error = '播放清單排序需要重新啟動應用程式才能載入新版橋接 API。';
     return;
   }

@@ -98,7 +98,11 @@ async function ensurePitchNode() {
       node.connect(wetGain);
       pitchNode = node;
       return node;
-    })();
+    })().catch((err) => {
+      // Let a later call retry instead of replaying this rejection forever.
+      pitchNodeReady = null;
+      throw err;
+    });
   }
   return pitchNodeReady;
 }
@@ -123,7 +127,12 @@ async function setTransposeSemitones(semitones) {
   if (pitchNode) {
     pitchNode.pitchSemitones.value = next;
   } else if (next !== DEFAULT_TRANSPOSE_SEMITONES) {
-    (await ensurePitchNode()).pitchSemitones.value = next;
+    try {
+      (await ensurePitchNode()).pitchSemitones.value = next;
+    } catch (err) {
+      state.error = err.message;
+      return;
+    }
   }
   updatePitchBypass();
 }
@@ -138,7 +147,12 @@ async function setPitchCents(cents) {
   if (pitchNode) {
     pitchNode.pitch.value = ratio;
   } else if (next !== DEFAULT_PITCH_CENTS) {
-    (await ensurePitchNode()).pitch.value = ratio;
+    try {
+      (await ensurePitchNode()).pitch.value = ratio;
+    } catch (err) {
+      state.error = err.message;
+      return;
+    }
   }
   updatePitchBypass();
 }
