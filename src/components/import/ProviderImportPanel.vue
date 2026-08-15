@@ -556,6 +556,7 @@ function trackStatusToneFor(track) {
 }
 
 .source-row__input:disabled {
+  color: var(--ui-color-text-muted);
   opacity: var(--ui-opacity-disabled);
 }
 

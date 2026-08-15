@@ -75,6 +75,9 @@ const isSelectedTrackPlaying = computed(
     Boolean(state.selectedTrackId) &&
     playerState.track?.id === state.selectedTrackId,
 );
+// For the track list's own per-row "current" cue — independent of
+// selectedTrackId (which track's lyrics are open), not a duplicate of it.
+const currentTrackId = computed(() => playerState.track?.id ?? null);
 const activeLineIndex = computed(() => {
   if (!isSelectedTrackPlaying.value) return -1;
   const currentTime = playerState.currentTime + state.offsetSeconds;
@@ -364,6 +367,7 @@ export function useLyrics() {
     activeLine,
     activeLineIndex,
     isSelectedTrackPlaying,
+    currentTrackId,
     isReloading,
     refresh,
     selectTrack,

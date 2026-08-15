@@ -30,6 +30,7 @@ const {
   selectedSource,
   lyricLines,
   activeLineIndex,
+  currentTrackId,
   isReloading,
   refresh,
   selectTrack,
@@ -302,6 +303,7 @@ watch(activeLineIndex, (index) => {
           :key="track.id"
           :track="track"
           :active="track.id === state.selectedTrackId"
+          :current="track.id === currentTrackId"
           interactive
           hide-duration
           :title-clickable="jumpableTrackIds.has(track.id)"
@@ -443,9 +445,8 @@ watch(activeLineIndex, (index) => {
             class="lyrics-separation__spin"
             disabled
             :title="describe(selectedTrack.id)"
-            role="status"
           >
-            {{ describe(selectedTrack.id) }}
+            <span role="status">{{ describe(selectedTrack.id) }}</span>
           </UiButton>
           <UiButton
             v-else
@@ -641,14 +642,21 @@ watch(activeLineIndex, (index) => {
   overflow: auto;
 }
 
+/* Same pill technique as UiChip.vue: fixed min-height + line-height-label,
+   not line-height:1 — kept consistent across the app's two badge/pill
+   implementations. */
 .lyrics-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
+  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
   padding: var(--ui-space-1) var(--ui-space-2);
   border-radius: var(--ui-radius-pill);
   color: var(--ui-color-text-muted);
   background: var(--ui-color-canvas);
   font-size: var(--ui-font-size-sm);
-  line-height: 1;
+  line-height: var(--ui-line-height-label);
 }
 
 .lyrics-status--available {

@@ -4,7 +4,21 @@
 // badge on a canvas-colored panel" case; pass overrides for the surface
 // variant or a filled/selected state.
 defineProps({
-  tone: { type: String, default: 'muted' },
+  tone: {
+    type: String,
+    default: 'muted',
+    validator: (value) =>
+      [
+        'muted',
+        'accent',
+        'current',
+        'info',
+        'success',
+        'warning',
+        'danger',
+        'gated',
+      ].includes(value),
+  },
   background: { type: String, default: undefined },
   color: { type: String, default: undefined },
 });
@@ -38,6 +52,8 @@ defineProps({
     var(--ui-chip-tone-color, var(--ui-color-text-muted))
   );
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
   white-space: nowrap;
 }
 

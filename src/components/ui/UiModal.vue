@@ -24,8 +24,41 @@ function close() {
   emit('close');
 }
 
+function getFocusableElements() {
+  if (!dialogRef.value) return [];
+  return Array.from(
+    dialogRef.value.querySelectorAll(
+      'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
+    ),
+  );
+}
+
+function trapTabFocus(event) {
+  const focusable = getFocusableElements();
+  if (focusable.length === 0) return;
+  const first = focusable[0];
+  const last = focusable[focusable.length - 1];
+  const active = document.activeElement;
+  const isInsideDialog = dialogRef.value?.contains(active);
+
+  if (event.shiftKey) {
+    if (!isInsideDialog || active === first) {
+      event.preventDefault();
+      last.focus();
+    }
+  } else if (!isInsideDialog || active === last) {
+    event.preventDefault();
+    first.focus();
+  }
+}
+
 function onWindowKeydown(event) {
-  if (props.open && event.key === 'Escape') close();
+  if (!props.open) return;
+  if (event.key === 'Escape') {
+    close();
+  } else if (event.key === 'Tab') {
+    trapTabFocus(event);
+  }
 }
 
 // Autofocus the first focusable field on open — the caller's form fields

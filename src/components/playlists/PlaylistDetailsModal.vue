@@ -58,7 +58,7 @@ function save() {
         <UiCollageThumb
           :cover-url="coverUrl"
           :tracks="coverTracks"
-          :allow-collage="!isAlbum"
+          :can-collage="!isAlbum"
           :size="120"
         />
         <template v-if="!isAlbum">

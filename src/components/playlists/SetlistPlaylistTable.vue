@@ -28,7 +28,7 @@ const props = defineProps({
   // per-row thumbnail column would just repeat it 10+ times for nothing.
   isAlbum: { type: Boolean, default: false },
   canDrag: { type: Boolean, default: false },
-  activeTrackId: { type: String, default: null },
+  currentTrackId: { type: String, default: null },
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
   dropPosition: { type: String, default: null },
@@ -57,6 +57,16 @@ function isSortActive(key) {
 function sortLabel(key, label) {
   if (!isSortActive(key)) return `${label}排序`;
   return `${label}${props.sort.direction === 'asc' ? '升冪' : '降冪'}排序`;
+}
+
+// Rows are draggable <li>s, not <button>s, so Enter/Space needs a manual
+// synthesis of the 'selectTrack' click emit (see UiTrackRow.vue's twin).
+function handleRowKeydown(track, event) {
+  // Skip the nested titleClickable button so it doesn't double-fire this.
+  if (event.target !== event.currentTarget) return;
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  emit('selectTrack', track);
 }
 </script>
 
@@ -94,7 +104,7 @@ function sortLabel(key, label) {
         :key="track.id"
         class="playlist-track"
         :class="{
-          'playlist-track--active': activeTrackId === track.id,
+          'playlist-track--current': currentTrackId === track.id,
           'playlist-track--dragging': draggingTrackId === track.id,
           'playlist-track--drop-before':
             dropTargetTrackId === track.id && dropPosition === 'before',
@@ -103,7 +113,10 @@ function sortLabel(key, label) {
           'playlist-track--drag-disabled': !canDrag,
         }"
         :draggable="canDrag"
+        tabindex="0"
+        role="button"
         @click="emit('selectTrack', track)"
+        @keydown="handleRowKeydown(track, $event)"
         @contextmenu="emit('openMenu', track, $event)"
         @dragstart="emit('trackDragStart', track, $event)"
         @dragover="emit('trackDragOver', track, $event)"
@@ -248,6 +261,7 @@ function sortLabel(key, label) {
   border-radius: var(--ui-radius);
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
   cursor: grab;
 }
 
@@ -287,9 +301,9 @@ function sortLabel(key, label) {
   background: var(--ui-color-surface-hover);
 }
 
-.playlist-track--active {
-  background: var(--ui-color-accent);
-  color: var(--ui-color-accent-contrast);
+.playlist-track:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .playlist-track__index,
@@ -305,16 +319,6 @@ function sortLabel(key, label) {
   width: 24px;
   height: 24px;
   color: var(--ui-color-text-muted);
-}
-
-.playlist-track--active .playlist-track__index,
-.playlist-track--active .playlist-track__added,
-.playlist-track--active .playlist-track__duration {
-  color: var(--ui-color-accent-contrast-muted);
-}
-
-.playlist-track--active .playlist-track__drag {
-  color: var(--ui-color-accent-contrast-muted);
 }
 
 .playlist-track__main {
@@ -341,11 +345,16 @@ function sortLabel(key, label) {
   font-weight: var(--ui-font-weight-strong);
 }
 
-.playlist-track__subtitle {
-  color: var(--ui-color-text-muted);
+/* Currently playing — title-only coral cue, matching
+   QueueTrackButton.vue's .queue-track--current treatment. Deliberately not
+   the filled background Selected uses elsewhere (UiTrackRow's --active):
+   playing and selected are distinct states (DESIGN.md's Common States
+   table). */
+.playlist-track--current .playlist-track__title {
+  color: var(--ui-color-current);
 }
 
-.playlist-track--active .playlist-track__subtitle {
-  color: var(--ui-color-accent-contrast-muted);
+.playlist-track__subtitle {
+  color: var(--ui-color-text-muted);
 }
 </style>

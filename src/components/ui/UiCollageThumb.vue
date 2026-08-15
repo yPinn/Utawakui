@@ -1,7 +1,7 @@
 <script setup>
 // Collection cover: a set coverUrl always wins. Otherwise, playlists tile
 // up to 4 member tracks into a 2x2 collage — but albums never do (one
-// release, one cover; see allowCollage below), falling back to a single
+// release, one cover; see canCollage below), falling back to a single
 // full-size image of the first track instead. This is the single shared
 // source of truth for "what does this playlist/album look like" —
 // SetlistPlaylistHeader.vue (136px hero) and PlaylistSidebarRow.vue (40px
@@ -18,7 +18,7 @@ const props = defineProps({
   // false for albums: even the no-coverUrl fallback stays a single image
   // (tracks[0]), never a 4-tile grid — an album is one release with one
   // cover. true (the default) is the playlist behavior.
-  allowCollage: { type: Boolean, default: true },
+  canCollage: { type: Boolean, default: true },
   size: { type: Number, required: true },
   radius: { type: String, default: undefined },
   background: { type: String, default: undefined },
@@ -30,14 +30,12 @@ const props = defineProps({
 });
 
 const displayTracks = computed(() =>
-  props.allowCollage ? props.tracks.slice(0, 4) : [],
+  props.canCollage ? props.tracks.slice(0, 4) : [],
 );
 const emptySlotCount = computed(() =>
   Math.max(0, 4 - displayTracks.value.length),
 );
-const singleTrack = computed(() =>
-  props.allowCollage ? null : props.tracks[0],
-);
+const singleTrack = computed(() => (props.canCollage ? null : props.tracks[0]));
 const hasArtwork = computed(
   () =>
     Boolean(props.coverUrl) ||
@@ -75,7 +73,7 @@ const singleIconSize = computed(() =>
       alt=""
       draggable="false"
     />
-    <template v-else-if="!allowCollage">
+    <template v-else-if="!canCollage">
       <img
         v-if="singleTrack?.thumbnailUrl"
         class="ui-collage-thumb__custom-image"

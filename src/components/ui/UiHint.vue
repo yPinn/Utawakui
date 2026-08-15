@@ -5,8 +5,20 @@
 // automatically (single-root component), so callers still pass
 // role="status"/"alert" directly.
 defineProps({
-  // 'muted' | 'text' | 'info' | 'success' | 'warning' | 'danger' | 'gated'
-  tone: { type: String, default: 'muted' },
+  tone: {
+    type: String,
+    default: 'muted',
+    validator: (value) =>
+      [
+        'muted',
+        'text',
+        'info',
+        'success',
+        'warning',
+        'danger',
+        'gated',
+      ].includes(value),
+  },
   padded: { type: Boolean, default: false },
   center: { type: Boolean, default: false },
 });

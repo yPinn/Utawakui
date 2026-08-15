@@ -240,6 +240,9 @@ describe('useLyrics', () => {
     expect(lyrics.state.selectedTrackId).toBe(trackB.id);
     expect(lyrics.activeLineIndex.value).toBe(-1);
     expect(lyrics.activeLine.value).toBe(null);
+    // currentTrackId tracks playback, not selection — trackA stays "playing"
+    // even once trackB becomes the manually selected (lyrics-open) track.
+    expect(lyrics.currentTrackId.value).toBe(trackA.id);
   });
 
   it('does not attempt a lyrics fetch when the preload bridge is unavailable', async () => {

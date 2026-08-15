@@ -2,12 +2,13 @@
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
-import FeatureNoticeModal from './components/layout/FeatureNoticeModal.vue';
+import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
 import AppearanceView from './views/AppearanceView.vue';
 import LyricsView from './views/LyricsView.vue';
 import ImportView from './views/ImportView.vue';
+import DemoView from './views/DemoView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
@@ -27,11 +28,14 @@ useTheme();
 const { width: sidebarWidth } = useSidebarWidth();
 
 // No router: the Electron shell has fixed sections and no deep links.
+// 'demo' is intentionally absent from AppTopTabs.vue's visible tab list —
+// an internal design-system view reached only via the F9 shortcut below.
 const views = {
   setlist: SetlistView,
   appearance: AppearanceView,
   lyrics: LyricsView,
   import: ImportView,
+  demo: DemoView,
 };
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
@@ -53,7 +57,7 @@ useKeyboardShortcuts(activeView);
       </AppArchiveFrame>
     </main>
     <PlayerBar class="shell__player" />
-    <FeatureNoticeModal />
+    <AppFeatureNoticeModal />
   </div>
 </template>
 

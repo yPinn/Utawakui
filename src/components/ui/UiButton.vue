@@ -5,7 +5,11 @@ import { ICON_SIZE } from '../../icons/index.js';
 
 defineProps({
   icon: { type: [Object, Function], default: null },
-  variant: { type: String, default: 'ghost' }, // 'ghost' | 'accent'
+  variant: {
+    type: String,
+    default: 'ghost',
+    validator: (value) => ['ghost', 'accent'].includes(value),
+  },
   active: { type: Boolean, default: false }, // toggle state, e.g. repeat-on
 });
 </script>
@@ -38,6 +42,8 @@ defineProps({
   border-radius: var(--ui-radius);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
   cursor: pointer;
   transition:
     background-color var(--ui-motion-fast) var(--ui-motion-ease),
@@ -81,6 +87,7 @@ defineProps({
 
 .ui-btn:disabled,
 .ui-btn[aria-disabled='true'] {
+  color: var(--ui-color-text-muted);
   opacity: var(--ui-opacity-disabled);
   cursor: default;
 }

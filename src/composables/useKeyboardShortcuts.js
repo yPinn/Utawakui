@@ -19,13 +19,16 @@ const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.
 const TEMPO_STEP = 0.05;
 
-// Matches AppTopTabs.vue's left-to-right order — F-key position mirrors tab
-// position so the mapping stays obvious without a legend.
+// F1-F4 match AppTopTabs.vue's left-to-right order — F-key position mirrors
+// tab position so the mapping stays obvious without a legend. F9 is the one
+// exception: 'demo' has no visible tab (see App.vue's views map comment),
+// so it isn't part of that left-to-right sequence.
 const VIEW_SHORTCUTS = {
   f1: 'setlist',
   f2: 'appearance',
   f3: 'lyrics',
   f4: 'import',
+  f9: 'demo',
 };
 
 export function useKeyboardShortcuts(activeView) {

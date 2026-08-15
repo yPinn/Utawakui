@@ -15,6 +15,9 @@ const props = defineProps({
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
   emptyText: { type: String, default: '' },
+  // Item shape: { key?, label, value?, icon?, status?, danger?, disabled?,
+  // separator?, children? }. `separator` renders a divider (ignores every
+  // other field); `children` nests a submenu instead of emitting 'select'.
   items: { type: Array, default: () => [] },
 });
 
@@ -344,7 +347,7 @@ onUnmounted(() => {
   align-items: center;
   column-gap: var(--ui-space-2);
   width: 100%;
-  min-height: 32px;
+  min-height: var(--ui-menu-item-height);
   padding: var(--ui-space-1) var(--ui-space-2);
   border: 0;
   border-radius: var(--ui-radius);
@@ -352,6 +355,10 @@ onUnmounted(() => {
   color: var(--ui-color-text);
   font: inherit;
   font-size: var(--ui-font-size-sm);
+  /* Regular, not Label's usual strong — matches macOS context-menu
+     convention (native menu items aren't bold), a deliberate deviation
+     from the Label tier's default weight. */
+  font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-label);
   text-align: left;
   cursor: pointer;
@@ -371,6 +378,7 @@ onUnmounted(() => {
 
 .ui-context-menu__item:disabled {
   color: var(--ui-color-text-muted);
+  opacity: var(--ui-opacity-disabled);
   cursor: default;
 }
 

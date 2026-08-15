@@ -4,9 +4,25 @@ import { ICON_SIZE } from '../../icons/index.js';
 
 defineProps({
   icon: { type: [Object, Function], required: true },
-  // Existing callers use muted/accent/danger/text/highlight; new states can
-  // use info/success/warning/current/gated as the visual language fills in.
-  tone: { type: String, default: 'muted' },
+  // Existing callers use muted/accent/danger/text/highlight; the rest are
+  // already styled (see the tone rules below) for when new states need them.
+  tone: {
+    type: String,
+    default: 'muted',
+    validator: (value) =>
+      [
+        'muted',
+        'accent',
+        'info',
+        'success',
+        'warning',
+        'danger',
+        'current',
+        'gated',
+        'text',
+        'highlight',
+      ].includes(value),
+  },
   spinning: { type: Boolean, default: false },
   label: { type: String, required: true },
 });

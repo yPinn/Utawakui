@@ -6,9 +6,21 @@ const props = defineProps({
   icon: { type: [Object, Function], required: true },
   label: { type: String, required: true },
   title: { type: String, default: undefined },
-  variant: { type: String, default: 'ghost' }, // 'ghost' | 'accent' | 'overlay'
-  size: { type: String, default: 'md' }, // 'sm' | 'md' | 'lg'
-  shape: { type: String, default: 'square' }, // 'square' | 'circle' | 'inherit'
+  variant: {
+    type: String,
+    default: 'ghost',
+    validator: (value) => ['ghost', 'accent', 'overlay'].includes(value),
+  },
+  size: {
+    type: String,
+    default: 'md',
+    validator: (value) => ['sm', 'md', 'lg'].includes(value),
+  },
+  shape: {
+    type: String,
+    default: 'square',
+    validator: (value) => ['square', 'circle', 'inherit'].includes(value),
+  },
   active: { type: Boolean, default: false },
   fill: { type: Boolean, default: false },
 });
@@ -114,6 +126,16 @@ const titleText = computed(() => props.title ?? props.label);
 .ui-icon-btn[aria-disabled='true'] {
   opacity: var(--ui-opacity-disabled);
   cursor: default;
+}
+
+/* Not the overlay variant — its color is deliberately theme-independent
+   (see the scrim rationale in tokens.css) since it floats over arbitrary
+   artwork/video, not an app surface a muted theme color reads well on. */
+.ui-icon-btn--ghost:disabled,
+.ui-icon-btn--ghost[aria-disabled='true'],
+.ui-icon-btn--accent:disabled,
+.ui-icon-btn--accent[aria-disabled='true'] {
+  color: var(--ui-color-text-muted);
 }
 
 .ui-icon-btn:focus-visible {

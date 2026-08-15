@@ -149,14 +149,18 @@ const items = [
   outline-offset: var(--ui-focus-offset);
 }
 
-/* Label tier (DESIGN.md's hierarchy names tabs explicitly). Fixed Scale
-   Rule: no viewport-fluid size, narrow width uses layout, not shrinking. */
+/* Title tier, not DESIGN.md's literal Label-tier "tabs" wording — these
+   render as large, top-of-app section identity tabs (56-68px tall), not
+   compact controls, so they carry more weight than a plain control label
+   (section-header territory), one step below UiPageHeader's own in-page
+   Headline title. Fixed Scale Rule still applies: no viewport-fluid size,
+   narrow width uses layout, not shrinking. */
 .app-tabs__label {
   overflow: hidden;
   max-width: 100%;
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
+  line-height: var(--ui-line-height-title);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

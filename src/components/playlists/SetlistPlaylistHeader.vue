@@ -38,7 +38,7 @@ const emit = defineEmits([
       <UiCollageThumb
         :cover-url="coverUrl"
         :tracks="coverTracks"
-        :allow-collage="!isAlbum"
+        :can-collage="!isAlbum"
         :size="136"
       />
       <!-- Album covers are read-only, normalized from the source's own

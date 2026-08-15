@@ -6,7 +6,7 @@ defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, default: '' },
   artist: { type: String, default: '' },
-  isSaving: { type: Boolean, default: false },
+  saving: { type: Boolean, default: false },
   error: { type: String, default: '' },
 });
 
@@ -15,7 +15,7 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
 
 <template>
   <UiModal :open="open" title="編輯資訊" @close="emit('close')">
-    <form class="track-metadata" @submit.prevent="emit('save')">
+    <div class="track-metadata">
       <label class="track-metadata__field">
         <span class="track-metadata__label">歌名</span>
         <input
@@ -24,6 +24,7 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
           maxlength="200"
           required
           @input="emit('updateTitle', $event.target.value)"
+          @keydown.enter="emit('save')"
         />
       </label>
 
@@ -34,6 +35,7 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
           class="track-metadata__input"
           maxlength="200"
           @input="emit('updateArtist', $event.target.value)"
+          @keydown.enter="emit('save')"
         />
       </label>
 
@@ -42,11 +44,11 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
       </p>
 
       <div class="track-metadata__actions">
-        <UiButton variant="accent" :disabled="isSaving" @click="emit('save')">
+        <UiButton variant="accent" :disabled="saving" @click="emit('save')">
           儲存
         </UiButton>
       </div>
-    </form>
+    </div>
   </UiModal>
 </template>
 

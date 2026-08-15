@@ -14,8 +14,8 @@ defineProps({
   coverTracks: { type: Array, default: () => [] },
   subtitle: { type: String, required: true },
   active: { type: Boolean, default: false },
-  isActiveSource: { type: Boolean, default: false },
-  isPlaying: { type: Boolean, default: false },
+  activeSource: { type: Boolean, default: false },
+  playing: { type: Boolean, default: false },
   draggable: { type: Boolean, default: false },
   dragging: { type: Boolean, default: false },
   dropBefore: { type: Boolean, default: false },
@@ -39,6 +39,7 @@ const emit = defineEmits([
     class="playlist-sidebar-row"
     :class="{
       'playlist-sidebar-row--active': active,
+      'playlist-sidebar-row--current': activeSource,
       'playlist-sidebar-row--dragging': dragging,
       'playlist-sidebar-row--drop-before': dropBefore,
       'playlist-sidebar-row--drop-after': dropAfter,
@@ -65,7 +66,7 @@ const emit = defineEmits([
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
       :tracks="coverTracks"
-      :allow-collage="playlist.kind !== 'album'"
+      :can-collage="playlist.kind !== 'album'"
       :size="40"
       color="var(--ui-color-text-muted)"
       :uppercase="false"
@@ -73,11 +74,10 @@ const emit = defineEmits([
     >
       <template #overlay>
         <UiIconButton
-          :icon="isPlaying ? Pause : Play"
+          :icon="playing ? Pause : Play"
           class="playlist-sidebar-row__play"
-          :class="{ 'playlist-sidebar-row__play--active': isActiveSource }"
-          :label="isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
-          :title="isPlaying ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
+          :label="playing ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
+          :title="playing ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
           fill
           shape="inherit"
           variant="overlay"
@@ -86,7 +86,10 @@ const emit = defineEmits([
       </template>
     </UiCollageThumb>
     <span class="playlist-sidebar-row__info">
-      <UiMarqueeText :text="playlist.name || '(未命名歌單)'" />
+      <UiMarqueeText
+        class="playlist-sidebar-row__name"
+        :text="playlist.name || '(未命名歌單)'"
+      />
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
   </div>
@@ -177,10 +180,11 @@ const emit = defineEmits([
   color: var(--ui-color-accent);
 }
 
-/* Hidden by default, revealed on row hover/keyboard focus — same idea as
-   Spotify's cover-art hover play button. Stays visible without hovering
-   once this playlist/album is the loaded queue source, so the currently
-   playing/paused row is identifiable at a glance. Semi-transparent black
+/* Hidden by default, revealed on row hover/keyboard focus only — same idea
+   as Spotify's cover-art hover play button. No longer forced visible for
+   the active-playback-source row: --ui-color-current on
+   .playlist-sidebar-row__name now carries that "identifiable at a glance"
+   job, so the mask can stay a pure hover affordance. Semi-transparent black
    works as an overlay over any thumbnail image regardless of the app's own
    light/dark theme, so it isn't themed off --ui-* tokens. */
 .playlist-sidebar-row__play {
@@ -198,8 +202,7 @@ const emit = defineEmits([
 .playlist-sidebar-row__thumb:hover .playlist-sidebar-row__play,
 .playlist-sidebar-row__select:focus-visible
   ~ .playlist-sidebar-row__thumb
-  .playlist-sidebar-row__play,
-.playlist-sidebar-row__play--active {
+  .playlist-sidebar-row__play {
   opacity: 1;
 }
 
@@ -214,6 +217,17 @@ const emit = defineEmits([
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+.playlist-sidebar-row__name {
+  font-weight: var(--ui-font-weight-strong);
+}
+
+/* Same title-only coral cue as UiTrackRow/QueueTrackButton's --current —
+   this is the loaded playback source, independent of --active (selected
+   in the sidebar) and of play/pause (activeSource stays true either way). */
+.playlist-sidebar-row--current .playlist-sidebar-row__name {
+  color: var(--ui-color-current);
 }
 
 .playlist-sidebar-row__kind {

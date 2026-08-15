@@ -486,6 +486,10 @@ Current code may still use local BEM-style state variants such as `candidate-opt
 
 Component-scoped CSS custom properties are allowed when they are a public override API for a primitive, such as thumbnail radius or chip background. They should stay component-prefixed (`--ui-track-thumb-*`, `--ui-chip-*`) and should not become hidden global theme tokens.
 
+#### Boolean Prop Naming
+
+The table above covers CSS naming only. Vue `defineProps` boolean names follow a separate rule: state/quality props use a bare adjective or participle (`active`, `disabled`, `dragging`, `playing`, `saving`) — no `is`/`has` prefix, since these are naturally adjectival and read fine on their own (`:active="true"`). Kind/identity props keep the `is` prefix (`isAlbum`) when the underlying concept is a noun with no natural adjective form — `:album="true"` misreads as passing an album object, not answering "is this an album?" Plain JS predicate functions (`isActiveSource()`, `isPlayingThis()`) are a different, unrelated case and keep their idiomatic `is`/`has` prefix regardless of this rule; only the exported `defineProps` name is in scope here.
+
 ### Icon Usage
 
 Lucide is the current control-panel icon source, but app code should import icons through `src/icons/index.js` instead of importing from `@lucide/vue` directly. The registry is the project-owned boundary for future icon swaps, aliases, and shared sizing.

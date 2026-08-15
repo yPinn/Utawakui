@@ -13,8 +13,8 @@ const label = computed(() =>
 </script>
 
 <template>
-  <header class="app-titlebar">
-    <div class="app-titlebar__controls">
+  <header class="app-title-bar">
+    <div class="app-title-bar__controls">
       <UiIconButton
         :icon="isLight ? Moon : Sun"
         :label="label"
@@ -27,7 +27,7 @@ const label = computed(() =>
 </template>
 
 <style scoped>
-.app-titlebar {
+.app-title-bar {
   position: relative;
   height: var(--ui-titlebar-height);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
@@ -43,7 +43,7 @@ const label = computed(() =>
   -webkit-app-region: drag;
 }
 
-.app-titlebar__controls {
+.app-title-bar__controls {
   /* Shrink-to-fit (right set, no left/width) — a *sized* no-drag div
      here (tried first, via width: env(titlebar-area-width, 100%)) silently
      grows to the full bar on a bad env() read and kills window dragging.

@@ -122,6 +122,7 @@ const metaParts = computed(() =>
 }
 
 .candidate-option:disabled {
+  color: var(--ui-color-text-muted);
   cursor: default;
   opacity: var(--ui-opacity-disabled);
 }

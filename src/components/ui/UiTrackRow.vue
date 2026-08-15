@@ -1,7 +1,7 @@
 <script setup>
 // `lead`/`trail` slots cover what differs between callers (a checkbox, a
 // status label) without forking the CSS per caller.
-import { computed } from 'vue';
+import { computed, ref } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
 import UiTextButton from './UiTextButton.vue';
@@ -15,6 +15,10 @@ const props = defineProps({
   title: { type: String, default: undefined },
   artist: { type: String, default: undefined },
   active: { type: Boolean, default: false },
+  // Currently playing — deliberately separate from `active` (selected).
+  // Title-only coral cue, same treatment as QueueTrackButton.vue's
+  // .queue-track--current, not the filled surface-selected background.
+  current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
   // Lets a caller show its own duration inside #trail (e.g. after other
   // trailing badges) instead of the default duration-then-trail order.
@@ -37,15 +41,33 @@ const thumbTrack = computed(() => ({
   title: displayTitle.value,
   thumbnailUrl: props.track?.thumbnailUrl,
 }));
+
+const rootEl = ref(null);
+
+// `@click` is caller-bound attrs fallthrough, not a declared emit, so
+// replaying a real click is simpler than adding a parallel event contract.
+function handleKeydown(event) {
+  if (!props.interactive) return;
+  // Skip nested interactive children (titleClickable, lead/trail slots).
+  if (event.target !== rootEl.value) return;
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  event.preventDefault();
+  rootEl.value?.click();
+}
 </script>
 
 <template>
   <li
+    ref="rootEl"
     class="ui-track"
     :class="{
       'ui-track--active': active,
+      'ui-track--current': current,
       'ui-track--interactive': interactive,
     }"
+    :tabindex="interactive ? 0 : undefined"
+    :role="interactive ? 'button' : undefined"
+    @keydown="handleKeydown"
   >
     <slot name="lead" />
     <UiTrackThumb
@@ -112,6 +134,11 @@ const thumbTrack = computed(() => ({
 
 .ui-track__title {
   color: inherit;
+  font-weight: var(--ui-font-weight-strong);
+}
+
+.ui-track--current .ui-track__title {
+  color: var(--ui-color-current);
 }
 
 .ui-track__artist {

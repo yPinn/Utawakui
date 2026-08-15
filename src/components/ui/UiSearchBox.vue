@@ -63,6 +63,8 @@ defineEmits(['update:modelValue']);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-label);
 }
 
 .ui-search-box__input::placeholder {

@@ -28,7 +28,7 @@ import {
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
-import PlaybackQueuePanel from '../queue/PlaybackQueuePanel.vue';
+import QueuePanel from '../queue/QueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -404,7 +404,7 @@ onUnmounted(() => {
       </div>
     </div>
 
-    <PlaybackQueuePanel :open="isQueueOpen" @close="isQueueOpen = false" />
+    <QueuePanel :open="isQueueOpen" @close="isQueueOpen = false" />
 
     <div
       v-show="isPitchTempoOpen"
@@ -593,7 +593,7 @@ onUnmounted(() => {
   font-variant-numeric: tabular-nums;
 }
 
-/* Same fixed bottom-right float as PlaybackQueuePanel's .queue-panel
+/* Same fixed bottom-right float as QueuePanel's .queue-panel
    (mutually exclusive, see togglePitchTempoPanel) — no shared component
    since this has no drag/drop or list to justify one. */
 .pitch-tempo-panel {
