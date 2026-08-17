@@ -19,15 +19,17 @@ const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.
 const TEMPO_STEP = 0.05;
 
-// F1-F4 match AppTopTabs.vue's left-to-right order — F-key position mirrors
+// F1-F6 match AppTopTabs.vue's left-to-right order — F-key position mirrors
 // tab position so the mapping stays obvious without a legend. F9 is the one
 // exception: 'demo' has no visible tab (see App.vue's views map comment),
 // so it isn't part of that left-to-right sequence.
 const VIEW_SHORTCUTS = {
   f1: 'setlist',
-  f2: 'appearance',
-  f3: 'lyrics',
-  f4: 'import',
+  f2: 'lyrics',
+  f3: 'import',
+  f4: 'obsSetlist',
+  f5: 'obsLyrics',
+  f6: 'settings',
   f9: 'demo',
 };
 
@@ -80,7 +82,7 @@ export function useKeyboardShortcuts(activeView) {
 
     if (event.altKey || event.metaKey) return;
 
-    // F1-F4 tab switching fires even while typing (e.g. the Setlist search
+    // F1-F6 tab switching fires even while typing (e.g. the Setlist search
     // box) — F-keys don't insert characters, and this is a global app-level
     // shortcut a performer needs mid-stream regardless of focus. Every
     // other shortcut below stays gated behind isEditableTarget.

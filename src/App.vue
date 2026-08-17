@@ -5,9 +5,11 @@ import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
-import AppearanceView from './views/AppearanceView.vue';
+import ObsSetlistView from './views/ObsSetlistView.vue';
+import ObsLyricsView from './views/ObsLyricsView.vue';
 import LyricsView from './views/LyricsView.vue';
 import ImportView from './views/ImportView.vue';
+import SettingsView from './views/SettingsView.vue';
 import DemoView from './views/DemoView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
@@ -32,9 +34,11 @@ const { width: sidebarWidth } = useSidebarWidth();
 // an internal design-system view reached only via the F9 shortcut below.
 const views = {
   setlist: SetlistView,
-  appearance: AppearanceView,
+  obsSetlist: ObsSetlistView,
+  obsLyrics: ObsLyricsView,
   lyrics: LyricsView,
   import: ImportView,
+  settings: SettingsView,
   demo: DemoView,
 };
 

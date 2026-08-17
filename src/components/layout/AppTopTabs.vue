@@ -1,4 +1,6 @@
 <script setup>
+import { ICON_SIZE, Settings } from '../../icons/index.js';
+
 defineProps({
   activeView: { type: String, required: true },
 });
@@ -10,12 +12,15 @@ const emit = defineEmits(['update:activeView']);
 // per-tab hues read as competing accents on an operational tool meant to
 // stay calm and low-noise (CLAUDE.md's Design Principles), and this app's
 // color identity isn't decided yet besides.
-const items = [
+const workflowItems = [
   { key: 'setlist', label: 'Setlist' },
-  { key: 'appearance', label: 'Appearance' },
   { key: 'lyrics', label: 'Lyrics' },
   { key: 'import', label: 'Import' },
+  { key: 'obsSetlist', label: 'OBS Setlist' },
+  { key: 'obsLyrics', label: 'OBS Lyrics' },
 ];
+
+const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
 </script>
 
 <template>
@@ -33,18 +38,39 @@ const items = [
         </clipPath>
       </defs>
     </svg>
-    <div class="app-tabs__list">
-      <button
-        v-for="item in items"
-        :key="item.key"
-        type="button"
-        class="app-tabs__folder"
-        :class="{ 'app-tabs__folder--active': item.key === activeView }"
-        :aria-current="item.key === activeView ? 'page' : undefined"
-        @click="emit('update:activeView', item.key)"
-      >
-        <span class="app-tabs__label">{{ item.label }}</span>
-      </button>
+    <div class="app-tabs__row">
+      <div class="app-tabs__group app-tabs__group--workflow">
+        <button
+          v-for="item in workflowItems"
+          :key="item.key"
+          type="button"
+          class="app-tabs__folder"
+          :class="{ 'app-tabs__folder--active': item.key === activeView }"
+          :aria-current="item.key === activeView ? 'page' : undefined"
+          @click="emit('update:activeView', item.key)"
+        >
+          <span class="app-tabs__label">{{ item.label }}</span>
+        </button>
+      </div>
+      <div class="app-tabs__group app-tabs__group--utility">
+        <button
+          v-for="item in utilityItems"
+          :key="item.key"
+          type="button"
+          class="app-tabs__folder app-tabs__folder--utility"
+          :class="{ 'app-tabs__folder--active': item.key === activeView }"
+          :aria-current="item.key === activeView ? 'page' : undefined"
+          :aria-label="item.ariaLabel"
+          :title="item.ariaLabel"
+          @click="emit('update:activeView', item.key)"
+        >
+          <Settings
+            class="app-tabs__icon"
+            :size="ICON_SIZE"
+            aria-hidden="true"
+          />
+        </button>
+      </div>
     </div>
   </nav>
 </template>
@@ -60,22 +86,19 @@ const items = [
   background: transparent;
 }
 
-.app-tabs__list {
+.app-tabs__row {
   position: relative;
   z-index: 1;
   display: flex;
+  justify-content: space-between;
   align-items: end;
   gap: var(--ui-archive-tab-gap);
   min-width: 0;
-  /* fit-content, not the block default of filling available width — the
-     rail below is sized to this box, so a full-width list would let it
-     bleed past the last tab instead of ending where the tabs do. */
-  width: fit-content;
-  max-width: 100%;
+  width: 100%;
   overflow-x: auto;
 }
 
-.app-tabs__list::after {
+.app-tabs__row::after {
   content: '';
   position: absolute;
   /* z-index:auto would paint on top of the folder buttons — ::after is
@@ -89,6 +112,22 @@ const items = [
   height: var(--ui-archive-rail-size);
   background: var(--ui-color-accent);
   pointer-events: none;
+}
+
+.app-tabs__group {
+  display: flex;
+  align-items: end;
+  gap: var(--ui-archive-tab-gap);
+  min-width: 0;
+}
+
+.app-tabs__group--workflow {
+  flex: 0 1 auto;
+}
+
+.app-tabs__group--utility {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 /* One shape on one element via clip-path, not a multi-piece
@@ -117,16 +156,26 @@ const items = [
   animation: app-tabs-reveal var(--ui-motion-slow) var(--ui-motion-ease) both;
 }
 
-.app-tabs__folder:nth-child(2) {
+.app-tabs__folder--utility {
+  min-width: var(--ui-archive-tab-active-height);
+  padding: 0 var(--ui-space-4);
+}
+
+.app-tabs__group--workflow .app-tabs__folder:nth-child(2) {
   animation-delay: 40ms;
 }
 
-.app-tabs__folder:nth-child(3) {
+.app-tabs__group--workflow .app-tabs__folder:nth-child(3) {
   animation-delay: 80ms;
 }
 
-.app-tabs__folder:nth-child(4) {
+.app-tabs__group--workflow .app-tabs__folder:nth-child(4) {
   animation-delay: 120ms;
+}
+
+.app-tabs__group--workflow .app-tabs__folder:nth-child(5),
+.app-tabs__group--utility .app-tabs__folder {
+  animation-delay: 160ms;
 }
 
 @keyframes app-tabs-reveal {
@@ -165,6 +214,10 @@ const items = [
   white-space: nowrap;
 }
 
+.app-tabs__icon {
+  flex: 0 0 auto;
+}
+
 @media (max-width: 760px) {
   .app-tabs {
     padding: var(--ui-space-3) var(--ui-space-3) 0;
@@ -173,6 +226,15 @@ const items = [
   .app-tabs__folder {
     min-width: 6rem;
     padding: 0 var(--ui-space-3);
+  }
+
+  .app-tabs__folder--utility {
+    min-width: var(--ui-archive-tab-active-height);
+    padding: 0 var(--ui-space-3);
+  }
+
+  .app-tabs__group--utility {
+    margin-left: var(--ui-archive-tab-gap);
   }
 }
 

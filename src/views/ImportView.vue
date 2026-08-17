@@ -1,33 +1,13 @@
 <script setup>
-import { computed, onMounted, ref } from 'vue';
-import {
-  FolderOpen,
-  FolderPlus,
-  ICON_SIZE,
-  Music,
-  RefreshCw,
-  RotateCcw,
-} from '../icons/index.js';
+import { computed } from 'vue';
+import { FolderPlus, ICON_SIZE, Music } from '../icons/index.js';
 import ProviderImportPanel from '../components/import/ProviderImportPanel.vue';
 import UiButton from '../components/ui/UiButton.vue';
-import UiChip from '../components/ui/UiChip.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
-import { useImportSession } from '../composables/useImportSession.js';
-import { useLibrary } from '../composables/useLibrary.js';
 import { useLocalImport } from '../composables/useLocalImport.js';
 
-const {
-  state: importState,
-  refreshConfig,
-  chooseDownloadDir,
-  resetDownloadDir,
-} = useImportSession();
 const { state: localImportState, importFiles } = useLocalImport();
-const { refreshMetadata: refreshLibraryMetadata } = useLibrary();
-
-const isRefreshingMetadata = ref(false);
-const metadataRefreshMessage = ref('');
 
 const LOCAL_STATUS_TONES = {
   success: 'success',
@@ -36,43 +16,11 @@ const LOCAL_STATUS_TONES = {
 const localStatusTone = computed(
   () => LOCAL_STATUS_TONES[localImportState.statusType] || 'muted',
 );
-
-async function refreshMetadata() {
-  isRefreshingMetadata.value = true;
-  metadataRefreshMessage.value = '';
-  try {
-    const updated = await refreshLibraryMetadata();
-    metadataRefreshMessage.value =
-      updated > 0 ? `已補齊 ${updated} 首曲目的專輯資訊` : '沒有需要補齊的資訊';
-  } catch (err) {
-    metadataRefreshMessage.value = `重新整理失敗：${err.message}`;
-  } finally {
-    isRefreshingMetadata.value = false;
-  }
-}
-
-onMounted(() => {
-  refreshConfig();
-});
 </script>
 
 <template>
   <div class="import-view">
-    <UiPageHeader title="匯入">
-      <template #actions>
-        <UiButton
-          :icon="RefreshCw"
-          :disabled="isRefreshingMetadata"
-          @click="refreshMetadata"
-        >
-          {{ isRefreshingMetadata ? '重新整理中...' : '重新整理曲目資訊' }}
-        </UiButton>
-      </template>
-    </UiPageHeader>
-
-    <UiHint v-if="metadataRefreshMessage" tone="text" role="status">
-      {{ metadataRefreshMessage }}
-    </UiHint>
+    <UiPageHeader title="匯入" />
 
     <section class="local-import-panel" aria-labelledby="local-import-title">
       <div class="local-import-panel__top">
@@ -81,28 +29,6 @@ onMounted(() => {
             本機音訊
           </h2>
           <p class="section-heading__meta">複製到 Utawakui 曲庫</p>
-        </div>
-
-        <div class="download-inline" aria-label="曲庫位置">
-          <span class="download-inline__label">曲庫</span>
-          <span class="download-inline__path" :title="importState.downloadDir">
-            {{ importState.downloadDir }}
-          </span>
-          <UiChip class="download-inline__mode">
-            {{ importState.isDefaultDir ? '預設' : '自訂' }}
-          </UiChip>
-          <UiButton
-            :icon="FolderOpen"
-            aria-label="選擇資料夾"
-            title="選擇資料夾"
-            @click="chooseDownloadDir"
-          />
-          <UiButton
-            :icon="RotateCcw"
-            aria-label="改回預設資料夾"
-            title="改回預設資料夾"
-            @click="resetDownloadDir"
-          />
         </div>
       </div>
 
@@ -183,7 +109,6 @@ onMounted(() => {
 }
 
 .section-heading__meta,
-.download-inline,
 .local-import-action__meta {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
@@ -194,29 +119,6 @@ onMounted(() => {
 .section-heading__meta,
 .local-import-action__meta {
   margin: 0;
-}
-
-.download-inline {
-  display: grid;
-  grid-template-columns:
-    auto minmax(calc(var(--ui-space-5) * 6), 1fr)
-    auto auto auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  min-width: min(calc(var(--ui-space-5) * 22), 50%);
-}
-
-.download-inline__label,
-.download-inline__mode {
-  flex: 0 0 auto;
-}
-
-.download-inline__path {
-  min-width: 0;
-  color: var(--ui-color-text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .local-import-action {
@@ -246,6 +148,7 @@ onMounted(() => {
 
 .local-import-action__title {
   font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
 }
 
 @media (max-width: 900px) {
@@ -253,21 +156,12 @@ onMounted(() => {
     align-items: stretch;
     flex-direction: column;
   }
-
-  .download-inline {
-    min-width: 0;
-    width: 100%;
-  }
 }
 
 @media (max-width: 680px) {
   .local-import-action {
     align-items: stretch;
     flex-wrap: wrap;
-  }
-
-  .download-inline {
-    grid-template-columns: auto minmax(0, 1fr) auto auto auto;
   }
 }
 </style>
