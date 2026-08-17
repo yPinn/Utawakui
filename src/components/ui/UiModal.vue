@@ -12,6 +12,13 @@ import UiButton from './UiButton.vue';
 const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, required: true },
+  // 'wide' is for row-based/multi-column content that deforms at the
+  // 'default' short-form width.
+  size: {
+    type: String,
+    default: 'default',
+    validator: (value) => ['default', 'wide'].includes(value),
+  },
 });
 
 const emit = defineEmits(['close']);
@@ -96,6 +103,7 @@ onUnmounted(() => {
       <div
         ref="dialog"
         class="ui-modal"
+        :class="`ui-modal--${size}`"
         role="dialog"
         aria-modal="true"
         :aria-label="title"
@@ -131,6 +139,10 @@ onUnmounted(() => {
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-overlay);
+}
+
+.ui-modal--wide {
+  width: min(720px, 100%);
 }
 
 .ui-modal__header {

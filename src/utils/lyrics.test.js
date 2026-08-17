@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  formatLyricsSourceLabel,
   formatLyricTime,
   inferPreferredLyricsLanguagePrefixes,
   isNonLyricCue,
@@ -210,6 +211,40 @@ describe('parseLrc', () => {
       }),
     ).toEqual([{ start: 1, end: Number.POSITIVE_INFINITY, text: 'Hello' }]);
   });
+
+  it('falls back to untimed lines when an LRC/plain text source has no timestamps', () => {
+    const lines = parseLrc(`[ti:Song Title]
+
+First line
+
+[Verse]
+Second line`);
+
+    expect(lines).toHaveLength(3);
+    expect(Number.isNaN(lines[0].start)).toBe(true);
+    expect(Number.isNaN(lines[0].end)).toBe(true);
+    expect(lines.map((line) => line.text)).toEqual([
+      'First line',
+      '[Verse]',
+      'Second line',
+    ]);
+  });
+
+  it('renders manual plain-text imports through the LRC untimed fallback', () => {
+    const lines = parseLyricsText('First line\nSecond line', {
+      source: {
+        filename: 'manual.lrc',
+        language: 'und',
+        kind: 'manual',
+      },
+    });
+
+    expect(lines.map((line) => line.text)).toEqual([
+      'First line',
+      'Second line',
+    ]);
+    expect(Number.isNaN(lines[0].start)).toBe(true);
+  });
 });
 
 describe('isNonLyricCue', () => {
@@ -357,5 +392,47 @@ describe('pickPreferredLyricsSource', () => {
         lyrics: { status: 'available', sources },
       }),
     ).toEqual(sources[0]);
+  });
+});
+
+describe('formatLyricsSourceLabel', () => {
+  it('leads with the kind label, followed by a real language', () => {
+    expect(
+      formatLyricsSourceLabel({ language: 'ja', kind: 'youtube-cc' }),
+    ).toBe('YouTube CC / JA');
+  });
+
+  it('falls back to the raw kind string when unrecognized', () => {
+    expect(formatLyricsSourceLabel({ language: 'ja', kind: 'other' })).toBe(
+      'other / JA',
+    );
+  });
+
+  // lrclib's API has no language field — every lrclib source is stamped
+  // 'und', which carries no real information and must not be displayed.
+  it('omits the language segment entirely for "und"', () => {
+    expect(formatLyricsSourceLabel({ language: 'und', kind: 'lrclib' })).toBe(
+      'LRCLIB',
+    );
+  });
+
+  it('uses the label in place of an unreal language', () => {
+    expect(
+      formatLyricsSourceLabel({
+        language: 'und',
+        kind: 'lrclib',
+        label: 'Short n Sweet',
+      }),
+    ).toBe('LRCLIB / Short n Sweet');
+  });
+
+  it('shows both when a real language and a label are both present', () => {
+    expect(
+      formatLyricsSourceLabel({
+        language: 'ja',
+        kind: 'youtube-cc',
+        label: 'Live Version',
+      }),
+    ).toBe('YouTube CC / JA · Live Version');
   });
 });

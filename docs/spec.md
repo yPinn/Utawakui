@@ -102,8 +102,8 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 
 ### 4.2 尚未完成但已納入規格
 
-- Feature notice modal（provider-flow 已部分實作）。
-- Feature gate registry（provider-flow 已部分實作）。
+- Feature notice modal（provider-flow、lyrics-flow 已部分實作）。
+- Feature gate registry（provider-flow、lyrics-flow 已部分實作）。
 - Local import first flow（本機音訊檔匯入已部分實作）。
 - OBS Browser Source overlay server。
 - Overlay theme tokens。
@@ -203,11 +203,25 @@ Utawakui/
 
 本機曲目的 `title` / `artist` 可由使用者手動編輯；這是 `library.json` 的 scalar metadata 更新，不重新命名或搬動實際音訊檔。
 
+本機曲目的縮圖可由使用者手動選擇本機圖片，保存為 `tracks/<trackId>/thumbnail.<ext>`，與 provider 下載曲目的縮圖規格相同；`library.json` 不保存圖片路徑或 `thumbnailUrl`。
+
 批量匯入時，Utawakui 以 `contentHash` 判斷同內容重複：同一份音訊即使檔名或原始路徑不同，也只保留既有曲目並略過新副本；同檔名但音訊內容不同，仍以新的 track id 入庫。
 
 Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一般曲庫清單與本機清單分開排序與瀏覽。
 
-### 6.4 Preset 原則
+### 6.4 歌詞來源
+
+歌詞來源儲存在 `tracks/<trackId>/lyrics/`，並由 `lyrics.json` manifest 記錄來源列表與 scalar display metadata。來源檔本身仍是 filesystem truth；manifest 只保存 `filename`、`language`、`kind`、可選 `label` 等顯示/選擇需要的欄位，不保存外部 provider URL 或本機原始路徑。
+
+目前來源類型：
+
+- `youtube-cc`：由 provider/backfill 流程保存的字幕。
+- `lrclib`：由 LRCLIB 搜尋保存的 LRC。
+- `manual`：使用者貼上或選取本機 `.lrc` / `.vtt` / `.txt` 後保存的本機歌詞來源。
+
+手動匯入是本機 library edit，不需 feature gate；外部 lyrics provider 搜尋與保存屬於 `lyrics-flow`，首次執行時需確認。貼上的純文字或 `.txt` 檔會保存為 `manual*.lrc`，沒有 timestamp 時以 untimed lines 顯示，不支援點擊 seek。
+
+### 6.5 Preset 原則
 
 未來 preset export/import 可包含：
 
@@ -227,7 +241,7 @@ Preset 不應包含：
 
 Feature gate 的目的，是讓使用者在啟用進階流程前看見必要提示，並讓產品能保存啟用狀態。
 
-目前第一版已落地 `provider-flow`：renderer 會在外部來源解析 / 下載前要求確認，main process 也會在 provider IPC handler 前檢查啟用狀態；其他 gate 仍保留在 registry 中，待對應流程實作時接上。
+目前第一版已落地 `provider-flow`：renderer 會在外部來源解析 / 下載前要求確認，main process 也會在 provider IPC handler 前檢查啟用狀態。`lyrics-flow` 已接到 LRCLIB provider search / save / label backfill；手動貼上或本機歌詞檔匯入、來源標籤編輯、刪除來源則維持 ungated，因為它們只操作使用者已有的本機資料。
 
 Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，不需 feature gate；外部來源匯入維持在 provider flow 中，首次執行 provider action 時要求確認。
 

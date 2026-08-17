@@ -1,8 +1,10 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
-import { usePlaylists } from './usePlaylists.js';
 import { useLibrary } from './useLibrary.js';
+import { usePlaylists } from './usePlaylists.js';
+import { useFeatureGates } from './useFeatureGates.js';
+import { FEATURE_IDS } from '../constants/featureGates.js';
 import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
@@ -11,16 +13,12 @@ const EMPTY_LYRICS = { status: 'unchecked', sources: [] };
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
 const { selectedPlaylist } = usePlaylists();
+const { ensureFeatureGate } = useFeatureGates();
 // The full library pool (title/artist/lyrics/hasSeparation lookups) is
-// shared with SetlistView.vue via this singleton — see useLibrary.js for
-// why the fetch + onLibraryUpdated subscription moved out of here. What the
-// UI sees (state.tracks) is always this pool joined against the selected
-// playlist's own trackIds, so switching playlists doesn't need a re-fetch.
-// tracksById is re-exported as-is so LyricsWorkspace.vue can order its
-// playlist <select> the same way PlaylistSidebar.vue orders its nav rows
-// (see src/utils/playlistOrdering.js) — deriving an album's artist needs
-// its member tracks, which aren't in state.tracks for any playlist other
-// than the one currently selected.
+// shared with SetlistView.vue via this singleton — see useLibrary.js for why
+// the fetch + onLibraryUpdated subscription moved out of here. Lyrics owns
+// its own internal track scope/selection; the Setlist collection rail is only
+// consulted when the user explicitly chooses the "current playlist" scope.
 const {
   state: libraryState,
   tracksById,
@@ -29,6 +27,7 @@ const {
 
 const state = reactive({
   tracks: [],
+  trackScope: 'all',
   selectedTrackId: null,
   selectedSourceFilename: null,
   lyricsText: '',
@@ -52,6 +51,19 @@ const state = reactive({
     result: null,
     error: null,
   },
+  // Manual lrclib search — separate from the passive backfill above.
+  candidateSearch: {
+    isLoading: false,
+    trackId: null,
+    status: null, // 'ok' | 'unavailable' | 'error' | null
+    reason: null,
+    candidates: [],
+    error: null,
+  },
+  manualSave: {
+    isSaving: false,
+    error: null,
+  },
   error: null,
   offsetSeconds: 0,
 });
@@ -59,6 +71,7 @@ const state = reactive({
 let unsubscribeLibraryBackfillStatus = null;
 let lyricsRequestId = 0;
 let musixmatchProbeRequestId = 0;
+let candidateSearchRequestId = 0;
 
 const selectedTrack = computed(
   () =>
@@ -100,18 +113,30 @@ const selectedSource = computed(() => {
   );
 });
 
-function hasLyrics(track) {
-  return track?.lyrics?.status === 'available';
-}
-
-// Same "ghost trackId" join SetlistView.vue's playlistTracks computed
-// does — a track deleted outside the app just silently drops out. Order
-// follows the playlist's own trackIds, since that's the actual performance
-// order this page is meant to be scanned in, not a lyrics-readiness sort.
 function joinPlaylistTracks(pool, playlist) {
   if (!playlist) return [];
   const byId = new Map(pool.map((track) => [track.id, track]));
   return playlist.trackIds.map((id) => byId.get(id)).filter(Boolean);
+}
+
+function isMissingLyrics(track) {
+  return track?.lyrics?.status !== 'available';
+}
+
+function buildScopedTracks(pool) {
+  if (state.trackScope === 'current-playlist') {
+    return joinPlaylistTracks(pool, selectedPlaylist.value);
+  }
+  if (state.trackScope === 'local') {
+    return pool.filter((track) => track.sourceType === 'local-file');
+  }
+  if (state.trackScope === 'missing-lyrics') {
+    return pool.filter(isMissingLyrics);
+  }
+  if (state.trackScope === 'available-lyrics') {
+    return pool.filter((track) => track.lyrics?.status === 'available');
+  }
+  return pool;
 }
 
 function pickSelectedTrackId(tracks) {
@@ -127,7 +152,7 @@ function pickSelectedTrackId(tracks) {
   ) {
     return state.selectedTrackId;
   }
-  return tracks.find(hasLyrics)?.id ?? tracks[0]?.id ?? null;
+  return tracks[0]?.id ?? null;
 }
 
 function clearMusixmatchProbe() {
@@ -136,6 +161,22 @@ function clearMusixmatchProbe() {
   state.musixmatchProbe.trackId = null;
   state.musixmatchProbe.result = null;
   state.musixmatchProbe.error = null;
+}
+
+function clearCandidateSearch() {
+  candidateSearchRequestId += 1;
+  state.candidateSearch.isLoading = false;
+  state.candidateSearch.trackId = null;
+  state.candidateSearch.status = null;
+  state.candidateSearch.reason = null;
+  state.candidateSearch.candidates = [];
+  state.candidateSearch.error = null;
+}
+
+async function ensureLyricsFlow() {
+  const enabled = await ensureFeatureGate(FEATURE_IDS.LYRICS_FLOW);
+  if (!enabled) state.candidateSearch.error = '已取消啟用歌詞來源';
+  return enabled;
 }
 
 async function loadSelectedLyrics() {
@@ -168,17 +209,16 @@ async function loadSelectedLyrics() {
   }
 }
 
-function applyScopedTracks() {
+function applyLibraryTracks() {
   const previousTrackId = state.selectedTrackId;
-  const scoped = joinPlaylistTracks(
-    libraryState.tracks,
-    selectedPlaylist.value,
-  );
-  state.tracks = scoped;
-  const nextTrackId = pickSelectedTrackId(scoped);
+  state.tracks = buildScopedTracks(libraryState.tracks);
+  const nextTrackId = pickSelectedTrackId(state.tracks);
   state.selectedTrackId = nextTrackId;
   if (state.musixmatchProbe.trackId !== nextTrackId) {
     clearMusixmatchProbe();
+  }
+  if (state.candidateSearch.trackId !== nextTrackId) {
+    clearCandidateSearch();
   }
   const currentFilename =
     previousTrackId === state.selectedTrackId
@@ -190,9 +230,15 @@ function applyScopedTracks() {
   loadSelectedLyrics();
 }
 
+function setTrackScope(scope) {
+  if (state.trackScope === scope) return;
+  state.trackScope = scope;
+  applyLibraryTracks();
+}
+
 // The "重新掃描" (reload) button's handler — delegates the actual fetch to
 // the shared singleton (which also updates SetlistView.vue's copy).
-// applyScopedTracks() reruns on its own via the libraryState.tracks watch
+// applyLibraryTracks() reruns on its own via the libraryState.tracks watch
 // below once the fetch resolves, and state.error mirrors libraryState.error
 // via its own watch below too, so this only needs to trigger the fetch.
 async function refresh() {
@@ -208,6 +254,7 @@ function selectTrack(trackId) {
     pickPreferredLyricsSource(track)?.filename ?? null;
   state.offsetSeconds = 0;
   clearMusixmatchProbe();
+  clearCandidateSearch();
   loadSelectedLyrics();
 }
 
@@ -252,13 +299,12 @@ async function playFromLine(line) {
   if (!line || !Number.isFinite(line.start) || !selectedTrack.value) return;
   const targetTime = Math.max(0, line.start - state.offsetSeconds);
   if (playerState.track?.id !== selectedTrack.value.id) {
-    // state.tracks is already scoped to the selected playlist (see the
-    // module comment above) — queue the whole thing, not just this track,
-    // so PlayerBar's next/previous controls and "source" label work the
-    // same way they do when playback starts from SetlistView.
+    // Queue the Lyrics workspace's own track pool, not the Setlist sidebar's
+    // selection. Lyrics is an internal work surface; the persistent playlist
+    // rail should not become its hidden queue/source owner.
     setQueue(state.tracks, selectedTrack.value.id, {
-      sourceName: selectedPlaylist.value?.name || '',
-      sourceId: selectedPlaylist.value?.id ?? null,
+      sourceName: '歌詞',
+      sourceId: 'lyrics-workspace',
     });
     await playTrack(toPlayableTrack(selectedTrack.value));
   }
@@ -302,6 +348,209 @@ async function probeMusixmatch() {
   }
 }
 
+async function searchLyricsCandidates() {
+  const track = selectedTrack.value;
+  if (!track) return;
+  if (!(await ensureLyricsFlow())) return;
+
+  candidateSearchRequestId += 1;
+  const requestId = candidateSearchRequestId;
+
+  state.candidateSearch.isLoading = true;
+  state.candidateSearch.trackId = track.id;
+  state.candidateSearch.error = null;
+
+  if (typeof window.Utawakui?.searchLyricsCandidates !== 'function') {
+    state.candidateSearch.isLoading = false;
+    state.candidateSearch.error =
+      '歌詞搜尋需要重新啟動應用程式才能載入新版橋接 API。';
+    return;
+  }
+
+  try {
+    const result = await window.Utawakui.searchLyricsCandidates(track.id);
+    if (requestId !== candidateSearchRequestId) return;
+    state.candidateSearch.status = result?.status ?? null;
+    state.candidateSearch.reason = result?.reason ?? null;
+    state.candidateSearch.candidates = result?.candidates ?? [];
+  } catch (err) {
+    if (requestId !== candidateSearchRequestId) return;
+    state.candidateSearch.error =
+      err instanceof Error ? err.message : String(err);
+  } finally {
+    if (requestId === candidateSearchRequestId) {
+      state.candidateSearch.isLoading = false;
+    }
+  }
+}
+
+// main also broadcasts library:updated after a save, but that's fire-and-
+// forget — this explicit refresh is what lets selectSource() run only
+// once selectedLyrics.sources actually contains the new filename.
+async function saveLyricsCandidate(candidateId) {
+  const track = selectedTrack.value;
+  if (!track) return null;
+  if (!(await ensureLyricsFlow())) return null;
+
+  if (typeof window.Utawakui?.saveLyricsCandidate !== 'function') {
+    state.manualSave.error =
+      '歌詞儲存需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.manualSave.isSaving = true;
+  state.manualSave.error = null;
+  try {
+    const result = await window.Utawakui.saveLyricsCandidate(
+      track.id,
+      candidateId,
+    );
+    await refreshLibrary();
+    selectSource(result.source.filename);
+    return result;
+  } catch (err) {
+    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.manualSave.isSaving = false;
+  }
+}
+
+// One-time repair for lrclib sources saved before the label field existed.
+async function backfillSourceLabels() {
+  const track = selectedTrack.value;
+  if (!track) return null;
+  if (!(await ensureLyricsFlow())) return null;
+
+  if (typeof window.Utawakui?.backfillLyricsSourceLabels !== 'function') {
+    state.manualSave.error =
+      '標籤補齊需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.manualSave.isSaving = true;
+  state.manualSave.error = null;
+  try {
+    const result = await window.Utawakui.backfillLyricsSourceLabels(track.id);
+    await refreshLibrary();
+    return result;
+  } catch (err) {
+    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.manualSave.isSaving = false;
+  }
+}
+
+// A blank label clears it back to plain language/kind display.
+async function setSourceLabel(filename, label) {
+  const track = selectedTrack.value;
+  if (!track) return null;
+
+  if (typeof window.Utawakui?.setLyricsSourceLabel !== 'function') {
+    state.manualSave.error =
+      '標籤編輯需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.manualSave.isSaving = true;
+  state.manualSave.error = null;
+  try {
+    const result = await window.Utawakui.setLyricsSourceLabel(
+      track.id,
+      filename,
+      label,
+    );
+    await refreshLibrary();
+    return result;
+  } catch (err) {
+    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.manualSave.isSaving = false;
+  }
+}
+
+// Falls the active selection off the deleted filename so
+// loadSelectedLyrics() doesn't keep requesting a file that's now gone.
+async function deleteSource(filename) {
+  const track = selectedTrack.value;
+  if (!track) return null;
+
+  if (typeof window.Utawakui?.deleteLyricsSource !== 'function') {
+    state.manualSave.error =
+      '歌詞來源刪除需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.manualSave.isSaving = true;
+  state.manualSave.error = null;
+  try {
+    const result = await window.Utawakui.deleteLyricsSource(track.id, filename);
+    await refreshLibrary();
+    if (state.selectedSourceFilename === filename) {
+      selectSource(result.sources[0]?.filename ?? '');
+    }
+    return result;
+  } catch (err) {
+    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.manualSave.isSaving = false;
+  }
+}
+
+async function importManualLyricsText(payload) {
+  const track = selectedTrack.value;
+  if (!track) return null;
+
+  if (typeof window.Utawakui?.importLyricsText !== 'function') {
+    state.manualSave.error =
+      '手動匯入歌詞需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.manualSave.isSaving = true;
+  state.manualSave.error = null;
+  try {
+    const result = await window.Utawakui.importLyricsText(track.id, payload);
+    await refreshLibrary();
+    if (result?.source?.filename) selectSource(result.source.filename);
+    return result;
+  } catch (err) {
+    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.manualSave.isSaving = false;
+  }
+}
+
+async function importManualLyricsFile() {
+  const track = selectedTrack.value;
+  if (!track) return null;
+
+  if (typeof window.Utawakui?.importLyricsFile !== 'function') {
+    state.manualSave.error =
+      '歌詞檔匯入需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.manualSave.isSaving = true;
+  state.manualSave.error = null;
+  try {
+    const result = await window.Utawakui.importLyricsFile(track.id);
+    if (!result) return null;
+    await refreshLibrary();
+    if (result?.source?.filename) selectSource(result.source.filename);
+    return result;
+  } catch (err) {
+    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.manualSave.isSaving = false;
+  }
+}
+
 const stopPlayerSync = watch(
   () => playerState.track?.id,
   (trackId) => {
@@ -311,18 +560,23 @@ const stopPlayerSync = watch(
   },
 );
 
-// Re-derive from the already-fetched pool on playlist switch — no need to
-// re-fetch over IPC just because the user picked a different playlist.
-const stopPlaylistSync = watch(selectedPlaylist, () => applyScopedTracks());
-
 // Reruns whenever the shared library pool changes, whether from this
 // module's own refresh(), SetlistView.vue's, or the singleton's own
 // onLibraryUpdated subscription — immediate so it applies whatever's
 // already in libraryState.tracks (possibly already loaded by another
 // consumer) instead of waiting for the next change.
 const stopLibrarySync = watch(
-  () => libraryState.tracks,
-  () => applyScopedTracks(),
+  () => [
+    libraryState.tracks,
+    state.trackScope,
+    state.trackScope === 'current-playlist'
+      ? (selectedPlaylist.value?.id ?? null)
+      : null,
+    state.trackScope === 'current-playlist'
+      ? (selectedPlaylist.value?.trackIds.join('\0') ?? '')
+      : '',
+  ],
+  () => applyLibraryTracks(),
   { immediate: true },
 );
 
@@ -349,7 +603,6 @@ if (typeof window !== 'undefined' && window.Utawakui) {
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     stopPlayerSync();
-    stopPlaylistSync();
     stopLibrarySync();
     stopLibraryErrorSync();
     unsubscribeLibraryBackfillStatus?.();
@@ -370,11 +623,20 @@ export function useLyrics() {
     currentTrackId,
     isReloading,
     refresh,
+    setTrackScope,
     selectTrack,
     selectSource,
     adjustOffset,
     resetOffset,
     playFromLine,
     probeMusixmatch,
+    ensureLyricsFlow,
+    searchLyricsCandidates,
+    saveLyricsCandidate,
+    backfillSourceLabels,
+    setSourceLabel,
+    deleteSource,
+    importManualLyricsText,
+    importManualLyricsFile,
   };
 }

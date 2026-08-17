@@ -5,6 +5,9 @@ let playerState;
 let listTracksMock;
 let getTrackLyricsMock;
 let probeMusixmatchLyricsMock;
+let importLyricsTextMock;
+let importLyricsFileMock;
+let confirmFeatureGateMock;
 let listPlaylistsMock;
 let libraryBackfillStatusHandler;
 let libraryUpdatedHandler;
@@ -61,16 +64,9 @@ async function flushPromises() {
   await Promise.resolve();
 }
 
-// The Lyrics list is scoped to whichever playlist is selected (see
-// useLyrics.js's applyScopedTracks) — tests must pick a playlist through
-// the real usePlaylists.js singleton *before* useLyrics.js's own
-// module-level refresh() runs, or the initial scope would resolve empty.
-async function loadLyrics({ playlists, selectedId = 'p1' } = {}) {
+async function loadLyrics({ playlists } = {}) {
   if (playlists) {
     listPlaylistsMock.mockResolvedValue(playlists);
-    const { usePlaylists } = await import('./usePlaylists.js');
-    await flushPromises();
-    if (selectedId !== null) usePlaylists().select(selectedId);
   }
   const module = await import('./useLyrics.js');
   await flushPromises();
@@ -106,6 +102,39 @@ beforeEach(() => {
     lineCount: 2,
     firstLineStart: 1,
   });
+  importLyricsTextMock = vi.fn().mockResolvedValue({
+    source: {
+      filename: 'manual.lrc',
+      language: 'und',
+      kind: 'manual',
+      label: 'Pasted',
+    },
+    sources: [
+      {
+        filename: 'manual.lrc',
+        language: 'und',
+        kind: 'manual',
+        label: 'Pasted',
+      },
+    ],
+  });
+  importLyricsFileMock = vi.fn().mockResolvedValue({
+    source: {
+      filename: 'manual-2.lrc',
+      language: 'und',
+      kind: 'manual',
+      label: 'picked',
+    },
+    sources: [
+      {
+        filename: 'manual-2.lrc',
+        language: 'und',
+        kind: 'manual',
+        label: 'picked',
+      },
+    ],
+  });
+  confirmFeatureGateMock = vi.fn();
   listPlaylistsMock = vi.fn().mockResolvedValue([DEFAULT_PLAYLIST]);
   playTrackMock = vi.fn(async (track) => {
     playerState.track = track;
@@ -129,6 +158,9 @@ beforeEach(() => {
       listTracks: listTracksMock,
       getTrackLyrics: getTrackLyricsMock,
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
+      importLyricsText: importLyricsTextMock,
+      importLyricsFile: importLyricsFileMock,
+      confirmFeatureGate: confirmFeatureGateMock,
       listPlaylists: listPlaylistsMock,
       onLibraryUpdated: vi.fn((handler) => {
         libraryUpdatedHandler = handler;
@@ -148,7 +180,7 @@ afterEach(() => {
 });
 
 describe('useLyrics', () => {
-  it('scopes the track list to the selected playlist, preserving its order', async () => {
+  it('uses the full library list instead of the selected playlist order', async () => {
     const lyrics = await loadLyrics({
       playlists: [
         {
@@ -159,12 +191,12 @@ describe('useLyrics', () => {
       ],
     });
 
-    // Playlist order wins, not lyrics-readiness — and the ghost id (a
-    // track deleted outside the app) silently drops out.
+    // Lyrics is its own workspace now: Setlist's collection rail does not
+    // reorder or hide the lyrics track list.
     expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
-      trackMissingLyrics.id,
       trackA.id,
       trackB.id,
+      trackMissingLyrics.id,
     ]);
   });
 
@@ -177,17 +209,20 @@ describe('useLyrics', () => {
     expect(listTracksMock).toHaveBeenCalledTimes(2);
   });
 
-  it('shows no tracks when no playlist is selected', async () => {
+  it('still shows library tracks when no playlist is selected', async () => {
     const lyrics = await loadLyrics({
       playlists: [DEFAULT_PLAYLIST],
-      selectedId: null,
     });
 
-    expect(lyrics.state.tracks).toEqual([]);
-    expect(lyrics.state.selectedTrackId).toBe(null);
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
+      trackA.id,
+      trackB.id,
+      trackMissingLyrics.id,
+    ]);
+    expect(lyrics.state.selectedTrackId).toBe(trackA.id);
   });
 
-  it('re-derives tracks when the selected playlist changes, without re-fetching the library', async () => {
+  it('ignores Setlist playlist changes without re-fetching or re-scoping lyrics tracks', async () => {
     const lyrics = await loadLyrics({
       playlists: [
         { id: 'p1', name: 'Setlist A', trackIds: [trackA.id] },
@@ -195,18 +230,77 @@ describe('useLyrics', () => {
       ],
     });
 
-    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([trackA.id]);
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
+      trackA.id,
+      trackB.id,
+      trackMissingLyrics.id,
+    ]);
     expect(listTracksMock).toHaveBeenCalledTimes(1);
 
     const { usePlaylists } = await import('./usePlaylists.js');
     usePlaylists().select('p2');
     await flushPromises();
 
-    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([trackB.id]);
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
+      trackA.id,
+      trackB.id,
+      trackMissingLyrics.id,
+    ]);
     expect(listTracksMock).toHaveBeenCalledTimes(1);
   });
 
-  it('keeps the manually selected track when the playlist scope changes but still contains it', async () => {
+  it('scopes to the selected Setlist playlist only after choosing the current-playlist scope', async () => {
+    const lyrics = await loadLyrics({
+      playlists: [
+        {
+          id: 'p1',
+          name: 'Setlist A',
+          trackIds: [trackMissingLyrics.id, trackA.id, 'ghost-id'],
+        },
+        { id: 'p2', name: 'Setlist B', trackIds: [trackB.id] },
+      ],
+    });
+    const { usePlaylists } = await import('./usePlaylists.js');
+
+    usePlaylists().select('p1');
+    await flushPromises();
+    lyrics.setTrackScope('current-playlist');
+    await flushPromises();
+
+    expect(lyrics.state.trackScope).toBe('current-playlist');
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
+      trackMissingLyrics.id,
+      trackA.id,
+    ]);
+
+    usePlaylists().select('p2');
+    await flushPromises();
+
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([trackB.id]);
+  });
+
+  it('supports Lyrics-owned local and missing-lyrics scopes', async () => {
+    listTracksMock.mockResolvedValue([
+      trackA,
+      { ...trackB, sourceType: 'local-file' },
+      trackMissingLyrics,
+    ]);
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    lyrics.setTrackScope('local');
+    await flushPromises();
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([trackB.id]);
+    expect(lyrics.state.selectedTrackId).toBe(trackB.id);
+
+    lyrics.setTrackScope('missing-lyrics');
+    await flushPromises();
+    expect(lyrics.state.tracks.map((track) => track.id)).toEqual([
+      trackMissingLyrics.id,
+    ]);
+    expect(lyrics.state.selectedTrackId).toBe(trackMissingLyrics.id);
+  });
+
+  it('keeps the manually selected track when Setlist playlist selection changes', async () => {
     const lyrics = await loadLyrics({
       playlists: [
         { id: 'p1', name: 'Setlist A', trackIds: [trackA.id, trackB.id] },
@@ -218,9 +312,6 @@ describe('useLyrics', () => {
     await flushPromises();
     expect(lyrics.state.selectedTrackId).toBe(trackB.id);
 
-    // Re-scoping to a playlist that drops the playing track (trackA) but
-    // keeps the manually selected one (trackB) should retain trackB rather
-    // than falling through to "first track with lyrics".
     const { usePlaylists } = await import('./usePlaylists.js');
     usePlaylists().select('p2');
     await flushPromises();
@@ -363,7 +454,7 @@ describe('useLyrics', () => {
     expect(lyrics.activeLineIndex.value).toBe(1);
   });
 
-  it('queues the whole scoped playlist (not just the clicked track) when playback starts from a lyric line', async () => {
+  it('queues the Lyrics workspace track pool when playback starts from a lyric line', async () => {
     const threeTrackPlaylist = {
       id: 'p1',
       name: 'Setlist A',
@@ -378,9 +469,6 @@ describe('useLyrics', () => {
 
     await lyrics.playFromLine(lyrics.lyricLines.value[1]);
 
-    // Regression test: this used to queue only [trackB], so PlayerBar's
-    // next/previous controls had nothing to advance to and the "source"
-    // label never reflected the playlist it was played from.
     expect(queue.state.tracks.map((track) => track.id)).toEqual([
       trackA.id,
       trackB.id,
@@ -388,8 +476,8 @@ describe('useLyrics', () => {
     ]);
     expect(queue.state.currentTrackId).toBe(trackB.id);
     expect(queue.currentTrack.value).toEqual(trackB);
-    expect(queue.state.sourceId).toBe(threeTrackPlaylist.id);
-    expect(queue.state.sourceName).toBe(threeTrackPlaylist.name);
+    expect(queue.state.sourceId).toBe('lyrics-workspace');
+    expect(queue.state.sourceName).toBe('歌詞');
     expect(queue.sourceUpcomingTracks.value.map((track) => track.id)).toEqual([
       trackMissingLyrics.id,
     ]);
@@ -484,7 +572,7 @@ describe('useLyrics', () => {
     expect(playTrackMock).not.toHaveBeenCalled();
   });
 
-  it('leaves the selected track alone when the playing track stops matching any scoped track', async () => {
+  it('leaves the selected track alone when the playing track stops matching any lyrics track', async () => {
     const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
     const selectedBefore = lyrics.state.selectedTrackId;
 
@@ -610,6 +698,69 @@ describe('useLyrics', () => {
       trackId: trackA.id,
       result: null,
       error: 'Musixmatch 探測 API 尚未載入，請重啟 Electron app',
+    });
+  });
+
+  it('imports pasted manual lyrics without requesting the lyrics feature gate', async () => {
+    const trackWithManualLyrics = {
+      ...trackA,
+      lyrics: {
+        status: 'available',
+        sources: [
+          ...trackA.lyrics.sources,
+          {
+            filename: 'manual.lrc',
+            language: 'und',
+            kind: 'manual',
+            label: 'Pasted',
+          },
+        ],
+      },
+    };
+    listTracksMock
+      .mockResolvedValueOnce([trackA, trackB, trackMissingLyrics])
+      .mockResolvedValueOnce([
+        trackWithManualLyrics,
+        trackB,
+        trackMissingLyrics,
+      ]);
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    const result = await lyrics.importManualLyricsText({
+      text: 'First line\nSecond line',
+      label: 'Pasted',
+    });
+    await flushPromises();
+
+    expect(result.source.filename).toBe('manual.lrc');
+    expect(importLyricsTextMock).toHaveBeenCalledWith(trackA.id, {
+      text: 'First line\nSecond line',
+      label: 'Pasted',
+    });
+    expect(confirmFeatureGateMock).not.toHaveBeenCalled();
+    expect(lyrics.state.selectedSourceFilename).toBe('manual.lrc');
+  });
+
+  it('imports a manually picked lyrics file without requesting the lyrics feature gate', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await lyrics.importManualLyricsFile();
+
+    expect(importLyricsFileMock).toHaveBeenCalledWith(trackA.id);
+    expect(confirmFeatureGateMock).not.toHaveBeenCalled();
+  });
+
+  it('surfaces a restart hint when the manual lyrics import bridge is unavailable', async () => {
+    delete window.Utawakui.importLyricsText;
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(
+      lyrics.importManualLyricsText({ text: 'First line' }),
+    ).resolves.toBe(null);
+
+    expect(lyrics.state.manualSave).toMatchObject({
+      isSaving: false,
+      error: '手動匯入歌詞需要重新啟動應用程式才能載入新版橋接 API。',
     });
   });
 

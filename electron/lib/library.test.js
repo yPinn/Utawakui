@@ -4,6 +4,10 @@ import path from 'path';
 import crypto from 'crypto';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
+  allocateLyricsFilename,
+  backfillLyricsSourceLabels,
+  deleteLyricsSource,
+  setLyricsSourceLabel,
   isServableFilename,
   isArtworkFilename,
   isAutomaticLyricsLanguage,
@@ -19,6 +23,8 @@ import {
   hasSeparation,
   hasSeparationResultFile,
   loadSeparationManifest,
+  importManualLyricsFile,
+  importManualLyricsText,
   recordSeparationResult,
   selectSeparationResult,
   listTracks,
@@ -33,9 +39,11 @@ import {
   buildRangeResponse,
   runBackfillPass,
   deleteTrack,
+  deleteTrackArtworkFile,
   resolvePlaylistCoverPath,
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
+  writeTrackArtworkFile,
   deletePlaylistCoverDir,
   INDEX_FILENAME,
 } from './library.js';
@@ -471,6 +479,112 @@ describe('importLocalAudioFiles', () => {
   });
 });
 
+describe('writeTrackArtworkFile / deleteTrackArtworkFile', () => {
+  let dir;
+  let sourceDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-track-art-test-'));
+    sourceDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-track-art-src-'),
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(sourceDir, { recursive: true, force: true });
+  });
+
+  function importTrack() {
+    const sourcePath = path.join(sourceDir, 'Local Song.mp3');
+    fs.writeFileSync(sourcePath, 'audio');
+    return importLocalAudioFiles(dir, [sourcePath]).imported[0];
+  }
+
+  it('copies a chosen image into tracks/<id>/thumbnail.<ext> and exposes it through listTracks', () => {
+    const track = importTrack();
+    const imagePath = path.join(sourceDir, 'picked.png');
+    fs.writeFileSync(imagePath, 'image-bytes');
+
+    const filename = writeTrackArtworkFile(dir, track.id, imagePath);
+
+    expect(filename).toBe('thumbnail.png');
+    expect(
+      fs.readFileSync(
+        path.join(dir, 'tracks', track.id, 'thumbnail.png'),
+        'utf8',
+      ),
+    ).toBe('image-bytes');
+    expect(listTracks(dir)[0]).toMatchObject({
+      id: track.id,
+      thumbnailUrl: 'utawakui-media://track/Local%20Song/thumbnail.png',
+    });
+    expect(resolveTrackAssetPath(dir, track.id, 'thumbnail.png')).toBe(
+      path.join(path.resolve(dir), 'tracks', track.id, 'thumbnail.png'),
+    );
+    expect(loadIndex(dir).tracks[track.id].thumbnailUrl).toBeUndefined();
+  });
+
+  it('replaces a previous thumbnail of a different extension instead of leaving both', () => {
+    const track = importTrack();
+    fs.writeFileSync(path.join(sourceDir, 'first.png'), 'a');
+    fs.writeFileSync(path.join(sourceDir, 'second.jpg'), 'b');
+
+    writeTrackArtworkFile(dir, track.id, path.join(sourceDir, 'first.png'));
+    const filename = writeTrackArtworkFile(
+      dir,
+      track.id,
+      path.join(sourceDir, 'second.jpg'),
+    );
+
+    expect(filename).toBe('thumbnail.jpg');
+    expect(fs.readdirSync(path.join(dir, 'tracks', track.id)).sort()).toEqual([
+      'audio.mp3',
+      'thumbnail.jpg',
+    ]);
+  });
+
+  it('rejects non-image sources and unsafe track ids', () => {
+    const track = importTrack();
+    fs.writeFileSync(path.join(sourceDir, 'notes.txt'), 'nope');
+    fs.writeFileSync(path.join(sourceDir, 'ok.png'), 'image');
+
+    expect(
+      writeTrackArtworkFile(dir, track.id, path.join(sourceDir, 'notes.txt')),
+    ).toBe(null);
+    expect(
+      writeTrackArtworkFile(dir, '../evil', path.join(sourceDir, 'ok.png')),
+    ).toBe(null);
+    expect(
+      writeTrackArtworkFile(dir, 'missing', path.join(sourceDir, 'ok.png')),
+    ).toBe(null);
+  });
+
+  it('clears a track thumbnail while preserving the audio and metadata', () => {
+    const track = importTrack();
+    fs.writeFileSync(path.join(sourceDir, 'picked.webp'), 'image');
+    writeTrackArtworkFile(dir, track.id, path.join(sourceDir, 'picked.webp'));
+
+    expect(deleteTrackArtworkFile(dir, track.id)).toBe(true);
+
+    expect(fs.existsSync(path.join(dir, 'tracks', track.id, 'audio.mp3'))).toBe(
+      true,
+    );
+    expect(listTracks(dir)[0].thumbnailUrl).toBeUndefined();
+    expect(loadIndex(dir).tracks[track.id]).toMatchObject({
+      title: 'Local Song',
+      sourceType: 'local-file',
+      storageType: 'managed',
+    });
+  });
+
+  it('returns false when there is no thumbnail to clear', () => {
+    const track = importTrack();
+
+    expect(deleteTrackArtworkFile(dir, track.id)).toBe(false);
+  });
+});
+
 describe('writePlaylistCoverFile / resolvePlaylistCoverPath / deletePlaylistCoverDir', () => {
   let dir;
   let sourceDir;
@@ -756,6 +870,444 @@ describe('resolveTrackLyricsPath', () => {
     expect(resolveTrackLyricsPath(dir, '../abc', 'ja.vtt')).toBe(null);
     expect(resolveTrackLyricsPath(dir, 'abc', 'missing.vtt')).toBe(null);
     expect(readTrackLyrics(dir, 'abc', 'missing.vtt')).toBe(null);
+  });
+
+  it('persists an optional label so identically-tagged sources stay distinguishable', () => {
+    const trackDir = path.join(dir, 'tracks', 'abc');
+
+    saveTrackLyricsText(
+      trackDir,
+      {
+        filename: 'lrclib-42.lrc',
+        language: 'und',
+        kind: 'lrclib',
+        label: 'Short n Sweet',
+      },
+      '[00:01.00]Hello',
+    );
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-99.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]World',
+    );
+
+    const sources = listTracks(dir)[0].lyrics.sources;
+    expect(sources).toContainEqual({
+      filename: 'lrclib-42.lrc',
+      language: 'und',
+      kind: 'lrclib',
+      label: 'Short n Sweet',
+    });
+    // No label was ever set for this one — omitted entirely, not null/''.
+    expect(sources).toContainEqual({
+      filename: 'lrclib-99.lrc',
+      language: 'und',
+      kind: 'lrclib',
+    });
+  });
+
+  it('re-saving a second source does not drop an existing source label', () => {
+    const trackDir = path.join(dir, 'tracks', 'abc');
+
+    saveTrackLyricsText(
+      trackDir,
+      {
+        filename: 'lrclib-42.lrc',
+        language: 'und',
+        kind: 'lrclib',
+        label: 'Short n Sweet',
+      },
+      '[00:01.00]Hello',
+    );
+    // saveTrackLyricsText rewrites the WHOLE manifest each call, sourced
+    // from listTrackLyricsSources() — this is the regression this guards:
+    // a label only round-trips if that read path also carries it forward.
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-99.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]World',
+    );
+
+    expect(
+      listTracks(dir)[0].lyrics.sources.find(
+        (source) => source.filename === 'lrclib-42.lrc',
+      ),
+    ).toEqual({
+      filename: 'lrclib-42.lrc',
+      language: 'und',
+      kind: 'lrclib',
+      label: 'Short n Sweet',
+    });
+  });
+});
+
+describe('backfillLyricsSourceLabels', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-backfill-labels-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    // listTracks() enumerates real audio files — needed for the
+    // listTracks(dir)[0].lyrics.sources assertions below.
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('resolves a label for each unlabeled lrclib source by its candidate id', async () => {
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]Hello',
+    );
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-99.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]World',
+    );
+
+    const resolveLabel = vi.fn(async (candidateId) =>
+      candidateId === 42 ? 'Short n Sweet' : 'emails i cant send',
+    );
+    const sources = await backfillLyricsSourceLabels(trackDir, resolveLabel);
+
+    expect(resolveLabel).toHaveBeenCalledWith(42);
+    expect(resolveLabel).toHaveBeenCalledWith(99);
+    expect(sources).toContainEqual(
+      expect.objectContaining({
+        filename: 'lrclib-42.lrc',
+        label: 'Short n Sweet',
+      }),
+    );
+    expect(sources).toContainEqual(
+      expect.objectContaining({
+        filename: 'lrclib-99.lrc',
+        label: 'emails i cant send',
+      }),
+    );
+
+    // Persisted, not just returned.
+    expect(
+      listTracks(dir)[0].lyrics.sources.find(
+        (source) => source.filename === 'lrclib-42.lrc',
+      ).label,
+    ).toBe('Short n Sweet');
+  });
+
+  it('leaves an already-labeled source untouched and never calls the resolver for it', async () => {
+    saveTrackLyricsText(
+      trackDir,
+      {
+        filename: 'lrclib-42.lrc',
+        language: 'und',
+        kind: 'lrclib',
+        label: 'Already Labeled',
+      },
+      '[00:01.00]Hello',
+    );
+
+    const resolveLabel = vi.fn(async () => 'Should Not Be Used');
+    const sources = await backfillLyricsSourceLabels(trackDir, resolveLabel);
+
+    expect(resolveLabel).not.toHaveBeenCalled();
+    expect(sources).toContainEqual(
+      expect.objectContaining({ label: 'Already Labeled' }),
+    );
+  });
+
+  it('leaves the source unlabeled when the resolver fails or returns nothing', async () => {
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]Hello',
+    );
+
+    const sources = await backfillLyricsSourceLabels(trackDir, async () => {
+      throw new Error('network error');
+    });
+
+    expect(sources).toContainEqual(
+      expect.not.objectContaining({ label: expect.anything() }),
+    );
+    expect(sources.find((s) => s.filename === 'lrclib-42.lrc')).toEqual({
+      filename: 'lrclib-42.lrc',
+      language: 'und',
+      kind: 'lrclib',
+    });
+  });
+
+  it('ignores non-lrclib sources and filenames that do not parse as a candidate id', async () => {
+    const lyricsDir = path.join(trackDir, 'lyrics');
+    fs.mkdirSync(lyricsDir, { recursive: true });
+    fs.writeFileSync(path.join(lyricsDir, 'ja.vtt'), 'WEBVTT');
+
+    const resolveLabel = vi.fn(async () => 'should not be called');
+    const sources = await backfillLyricsSourceLabels(trackDir, resolveLabel);
+
+    expect(resolveLabel).not.toHaveBeenCalled();
+    expect(sources).toEqual([
+      { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
+    ]);
+  });
+});
+
+describe('allocateLyricsFilename', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-allocate-test-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('returns the bare stem when nothing exists yet', () => {
+    expect(allocateLyricsFilename(trackDir, 'manual', '.lrc')).toBe(
+      'manual.lrc',
+    );
+  });
+
+  it('never returns a filename that already exists, so a caller can never clobber an existing source', () => {
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'manual.lrc', language: 'und', kind: 'manual' },
+      '[00:01.00]Hello',
+    );
+
+    expect(allocateLyricsFilename(trackDir, 'manual', '.lrc')).toBe(
+      'manual-2.lrc',
+    );
+
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'manual-2.lrc', language: 'und', kind: 'manual' },
+      '[00:01.00]Hello',
+    );
+
+    expect(allocateLyricsFilename(trackDir, 'manual', '.lrc')).toBe(
+      'manual-3.lrc',
+    );
+  });
+
+  it('returns null for a baseStem that would produce an unsafe filename', () => {
+    expect(allocateLyricsFilename(trackDir, 'has space', '.lrc')).toBe(null);
+  });
+});
+
+describe('importManualLyricsText', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-manual-lyrics-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('saves pasted plain text as an ungated manual LRC source', () => {
+    const result = importManualLyricsText(trackDir, {
+      text: 'First line\nSecond line',
+      label: 'Pasted draft',
+    });
+
+    expect(result.source).toEqual({
+      filename: 'manual.lrc',
+      language: 'und',
+      kind: 'manual',
+      label: 'Pasted draft',
+    });
+    expect(readTrackLyrics(dir, 'abc', 'manual.lrc')).toEqual({
+      source: result.source,
+      text: 'First line\nSecond line',
+    });
+    expect(listTracks(dir)[0].lyrics.sources).toContainEqual(result.source);
+  });
+
+  it('allocates a new filename instead of overwriting an existing manual source', () => {
+    importManualLyricsText(trackDir, { text: 'First', label: 'First' });
+    const second = importManualLyricsText(trackDir, {
+      text: 'Second',
+      label: 'Second',
+    });
+
+    expect(second.source.filename).toBe('manual-2.lrc');
+    expect(readTrackLyrics(dir, 'abc', 'manual.lrc').text).toBe('First');
+    expect(readTrackLyrics(dir, 'abc', 'manual-2.lrc').text).toBe('Second');
+  });
+
+  it('preserves VTT text as a manual VTT source when requested', () => {
+    const result = importManualLyricsText(trackDir, {
+      text: 'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello',
+      filenameHint: 'captions.vtt',
+    });
+
+    expect(result.source).toMatchObject({
+      filename: 'manual.vtt',
+      language: 'und',
+      kind: 'manual',
+    });
+    expect(readTrackLyrics(dir, 'abc', 'manual.vtt').text).toContain('WEBVTT');
+  });
+
+  it('rejects blank manual lyrics text', () => {
+    expect(importManualLyricsText(trackDir, { text: '   ' })).toBe(null);
+  });
+});
+
+describe('importManualLyricsFile', () => {
+  let dir;
+  let trackDir;
+  let sourceDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-manual-file-'));
+    sourceDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-manual-file-src-'),
+    );
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+    fs.rmSync(sourceDir, { recursive: true, force: true });
+  });
+
+  it('imports a text file as a manual LRC source without storing its path', () => {
+    const sourcePath = path.join(sourceDir, 'my lyrics.txt');
+    fs.writeFileSync(sourcePath, 'Plain line');
+
+    const result = importManualLyricsFile(trackDir, sourcePath);
+
+    expect(result.source).toEqual({
+      filename: 'manual.lrc',
+      language: 'und',
+      kind: 'manual',
+      label: 'my lyrics',
+    });
+    expect(readTrackLyrics(dir, 'abc', 'manual.lrc').text).toBe('Plain line');
+    expect(JSON.stringify(listTracks(dir)[0].lyrics.sources)).not.toContain(
+      sourcePath,
+    );
+  });
+
+  it('rejects unsupported manual lyrics file extensions', () => {
+    const sourcePath = path.join(sourceDir, 'notes.docx');
+    fs.writeFileSync(sourcePath, 'nope');
+
+    expect(importManualLyricsFile(trackDir, sourcePath)).toBe(null);
+  });
+});
+
+describe('setLyricsSourceLabel', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-set-label-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]Hello',
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('sets a label on an existing source', () => {
+    setLyricsSourceLabel(trackDir, 'lrclib-42.lrc', 'My Label');
+    expect(
+      listTracks(dir)[0].lyrics.sources.find(
+        (s) => s.filename === 'lrclib-42.lrc',
+      ).label,
+    ).toBe('My Label');
+  });
+
+  it('truncates an overlong label the same way the auto-derived one does', () => {
+    setLyricsSourceLabel(trackDir, 'lrclib-42.lrc', 'x'.repeat(60));
+    const label = listTracks(dir)[0].lyrics.sources.find(
+      (s) => s.filename === 'lrclib-42.lrc',
+    ).label;
+    expect(label.length).toBe(32);
+    expect(label.endsWith('…')).toBe(true);
+  });
+
+  it('clears an existing label when given a blank string', () => {
+    setLyricsSourceLabel(trackDir, 'lrclib-42.lrc', 'My Label');
+    setLyricsSourceLabel(trackDir, 'lrclib-42.lrc', '   ');
+    expect(
+      listTracks(dir)[0].lyrics.sources.find(
+        (s) => s.filename === 'lrclib-42.lrc',
+      ),
+    ).toEqual({ filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' });
+  });
+
+  it('returns null for a filename that is not an existing source', () => {
+    expect(setLyricsSourceLabel(trackDir, 'missing.lrc', 'x')).toBe(null);
+  });
+});
+
+describe('deleteLyricsSource', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-delete-source-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]Hello',
+    );
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'manual.lrc', language: 'und', kind: 'manual' },
+      '[00:01.00]World',
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('removes the file and its manifest entry, leaving other sources intact', () => {
+    expect(deleteLyricsSource(trackDir, 'lrclib-42.lrc')).toBe(true);
+
+    expect(fs.existsSync(path.join(trackDir, 'lyrics', 'lrclib-42.lrc'))).toBe(
+      false,
+    );
+    const sources = listTracks(dir)[0].lyrics.sources;
+    expect(sources.map((s) => s.filename)).toEqual(['manual.lrc']);
+  });
+
+  it('returns false for a filename that does not exist', () => {
+    expect(deleteLyricsSource(trackDir, 'missing.lrc')).toBe(false);
+  });
+
+  it('rejects an unsafe filename without touching the filesystem', () => {
+    expect(deleteLyricsSource(trackDir, '../audio.mp3')).toBe(false);
+    expect(fs.existsSync(path.join(trackDir, 'audio.mp3'))).toBe(true);
   });
 });
 

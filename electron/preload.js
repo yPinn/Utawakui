@@ -52,12 +52,35 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   probeMusixmatchLyrics: (trackId) =>
     ipcRenderer.invoke('lyrics:probe-musixmatch', trackId),
+  // Manual counterpart to the passive lrclib backfill — full ranked
+  // candidate list, not just the one auto-confidence match.
+  // Search results already carry a short preview per candidate — no
+  // separate preview fetch needed.
+  searchLyricsCandidates: (trackId) =>
+    ipcRenderer.invoke('lyrics:search-candidates', trackId),
+  saveLyricsCandidate: (trackId, candidateId) =>
+    ipcRenderer.invoke('lyrics:save-candidate', trackId, candidateId),
+  // One-time repair for lrclib sources saved before the label field existed.
+  backfillLyricsSourceLabels: (trackId) =>
+    ipcRenderer.invoke('lyrics:backfill-source-labels', trackId),
+  setLyricsSourceLabel: (trackId, filename, label) =>
+    ipcRenderer.invoke('lyrics:set-source-label', trackId, filename, label),
+  deleteLyricsSource: (trackId, filename) =>
+    ipcRenderer.invoke('lyrics:delete-source', trackId, filename),
+  importLyricsText: (trackId, payload) =>
+    ipcRenderer.invoke('lyrics:import-text', trackId, payload),
+  importLyricsFile: (trackId) =>
+    ipcRenderer.invoke('lyrics:import-file', trackId),
   // Deletes the original audio file and its separation output together —
   // resolves to false if trackId no longer matches a real file. Also
   // cascades into any playlist that referenced it (see main.js's handler).
   deleteTrack: (trackId) => ipcRenderer.invoke('library:delete-track', trackId),
   updateTrackMetadata: (trackId, fields) =>
     ipcRenderer.invoke('library:update-track-metadata', trackId, fields),
+  chooseTrackArtwork: (trackId) =>
+    ipcRenderer.invoke('library:choose-track-artwork', trackId),
+  clearTrackArtwork: (trackId) =>
+    ipcRenderer.invoke('library:clear-track-artwork', trackId),
   // Every mutation below resolves to the FULL updated playlist array, so
   // callers never need a separate refetch.
   listPlaylists: () => ipcRenderer.invoke('playlists:list'),

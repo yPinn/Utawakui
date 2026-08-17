@@ -3,11 +3,14 @@ import {
   buildLrclibSearchQueries,
   buildLrclibUrl,
   buildSearchParams,
+  fetchLrclibRecord,
   findLrclibSyncedLyrics,
   looksLikeChannelArtist,
   parseLrcLines,
   pickBestSyncedCandidate,
   rankSyncedCandidates,
+  searchLrclibCandidates,
+  signedDurationDelta,
   stripTrackDecorations,
 } from './lrclib.js';
 
@@ -275,6 +278,25 @@ describe('pickBestSyncedCandidate', () => {
   });
 });
 
+describe('signedDurationDelta', () => {
+  it('is positive when the candidate runs longer than the track', () => {
+    expect(signedDurationDelta(175, 178)).toBe(3);
+  });
+
+  it('is negative when the candidate runs shorter than the track', () => {
+    expect(signedDurationDelta(175, 172)).toBe(-3);
+  });
+
+  it('is zero for an exact match', () => {
+    expect(signedDurationDelta(175, 175)).toBe(0);
+  });
+
+  it('is null when either duration is missing', () => {
+    expect(signedDurationDelta(null, 175)).toBe(null);
+    expect(signedDurationDelta(175, undefined)).toBe(null);
+  });
+});
+
 describe('findLrclibSyncedLyrics', () => {
   it('fetches search results and returns a storable LRCLIB source', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
@@ -500,6 +522,231 @@ describe('findLrclibSyncedLyrics', () => {
       provider: 'lrclib',
       status: 'unavailable',
       reason: 'no-safe-synced-match',
+    });
+  });
+});
+
+describe('searchLrclibCandidates', () => {
+  it('dedupes a candidate scored against multiple search queries', async () => {
+    // mockImplementation (not mockResolvedValue) — a Response body can only
+    // be read once, and this test issues more than one fetch call.
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 42,
+              trackName: 'Espresso',
+              artistName: 'Sabrina Carpenter',
+              albumName: 'Short n Sweet',
+              duration: 175,
+              instrumental: false,
+              syncedLyrics: '[00:01.00]Now he is thinkin bout me',
+            },
+          ]),
+        ),
+      ),
+    );
+
+    const result = await searchLrclibCandidates(
+      { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
+      { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
+    );
+
+    // Multiple queries score the same pooled candidate — without id-based
+    // dedup it would appear more than once.
+    expect(fetchMock.mock.calls.length).toBeGreaterThan(1);
+    expect(result.status).toBe('ok');
+    expect(result.candidates).toHaveLength(1);
+    expect(result.candidates[0]).toMatchObject({
+      id: 42,
+      trackName: 'Espresso',
+      confidence: 'auto',
+    });
+  });
+
+  it('reports a signed duration delta so the UI can tell longer from shorter', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 42,
+              trackName: 'Espresso',
+              artistName: 'Sabrina Carpenter',
+              duration: 178, // 3s longer than the track's 175s
+              instrumental: false,
+              syncedLyrics: '[00:01.00]Now he is thinkin bout me',
+            },
+          ]),
+        ),
+      ),
+    );
+
+    const result = await searchLrclibCandidates(
+      { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
+      { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
+    );
+
+    expect(result.candidates[0]).toMatchObject({
+      durationDelta: 3,
+      durationDeltaSigned: 3,
+    });
+  });
+
+  it('includes a short line-level preview, capped, so the renderer needs no extra fetch', async () => {
+    const manyLines = Array.from(
+      { length: 10 },
+      (_, i) => `[00:0${i}.00]Line ${i}`,
+    ).join('\n');
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 42,
+              trackName: 'Espresso',
+              artistName: 'Sabrina Carpenter',
+              duration: 175,
+              instrumental: false,
+              syncedLyrics: manyLines,
+            },
+          ]),
+        ),
+      ),
+    );
+
+    const result = await searchLrclibCandidates(
+      { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
+      { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
+    );
+
+    expect(result.candidates[0].lineCount).toBe(10);
+    expect(result.candidates[0].previewLines).toHaveLength(5);
+    expect(result.candidates[0].previewLines[0]).toEqual({
+      start: 0,
+      text: 'Line 0',
+    });
+  });
+
+  it('includes candidates scoreCandidate would hard-reject, tagged unscored', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 99,
+              trackName: 'Completely Different Song',
+              artistName: 'Someone Else',
+              duration: 9999,
+              instrumental: false,
+              syncedLyrics: '[00:01.00]Nope',
+            },
+          ]),
+        ),
+      ),
+    );
+
+    const result = await searchLrclibCandidates(
+      { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
+      { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
+    );
+
+    expect(result.status).toBe('ok');
+    expect(result.candidates).toEqual([
+      expect.objectContaining({
+        id: 99,
+        confidence: 'unscored',
+        score: null,
+        titleScore: null,
+        artistScore: null,
+      }),
+    ]);
+  });
+
+  it('excludes instrumental candidates and untimed (plainLyrics-only) candidates', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 1,
+              trackName: 'Espresso',
+              artistName: 'Sabrina Carpenter',
+              duration: 175,
+              instrumental: true,
+              syncedLyrics: '[00:01.00]x',
+            },
+            {
+              id: 2,
+              trackName: 'Espresso',
+              artistName: 'Sabrina Carpenter',
+              duration: 175,
+              instrumental: false,
+              plainLyrics: 'no timestamps here',
+            },
+          ]),
+        ),
+      ),
+    );
+
+    const result = await searchLrclibCandidates(
+      { title: 'Espresso', artist: 'Sabrina Carpenter', duration: 175 },
+      { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
+    );
+
+    expect(result.candidates).toEqual([]);
+  });
+
+  it('returns unavailable without fetching when the track has no usable title', async () => {
+    const fetchMock = vi.fn();
+
+    await expect(
+      searchLrclibCandidates({ title: '', artist: '' }, { fetch: fetchMock }),
+    ).resolves.toMatchObject({
+      status: 'unavailable',
+      reason: 'missing-track-title',
+      candidates: [],
+    });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+});
+
+describe('fetchLrclibRecord', () => {
+  it('fetches a single record by id', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify({ id: 42, syncedLyrics: '[00:01.00]Hello' }),
+        ),
+      );
+
+    const result = await fetchLrclibRecord(42, {
+      fetch: fetchMock,
+      baseUrl: 'https://lrclib.example.test',
+    });
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(url.pathname).toBe('/api/get/42');
+    expect(result).toEqual({
+      status: 'ok',
+      record: { id: 42, syncedLyrics: '[00:01.00]Hello' },
+    });
+  });
+
+  it('reports an http error', async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify({}), { status: 404 }));
+
+    await expect(
+      fetchLrclibRecord(42, { fetch: fetchMock }),
+    ).resolves.toMatchObject({
+      status: 'error',
+      reason: 'http-error',
+      httpStatus: 404,
     });
   });
 });

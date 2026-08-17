@@ -186,6 +186,17 @@ function durationDelta(trackDuration, candidateDuration) {
   return Math.abs(Math.round(trackDuration) - Math.round(candidateDuration));
 }
 
+// Signed counterpart, for display only — durationDelta() above is an
+// absolute magnitude (durationMatchScore only ever checks upper bounds, so
+// a negative value would silently always score in the top band). Positive
+// means the candidate runs longer than the track; negative, shorter.
+function signedDurationDelta(trackDuration, candidateDuration) {
+  if (!Number.isFinite(trackDuration) || !Number.isFinite(candidateDuration)) {
+    return null;
+  }
+  return Math.round(candidateDuration) - Math.round(trackDuration);
+}
+
 function durationMatchScore(delta) {
   if (delta === null) return 0.35;
   if (delta <= 4) return 1;
@@ -267,6 +278,10 @@ function scoreCandidate(track, candidate, query) {
     lineCount: syncedLineCount,
     score,
     durationDelta: delta,
+    durationDeltaSigned: signedDurationDelta(
+      track?.duration,
+      candidate?.duration,
+    ),
     durationScore,
     titleScore,
     artistScore,
@@ -423,15 +438,209 @@ async function findLrclibSyncedLyrics(track, options = {}) {
   return buildAvailableResult(best);
 }
 
+const MAX_MANUAL_CANDIDATES = 20;
+const PREVIEW_LINE_LIMIT = 5;
+
+function toCandidateSummary(scored) {
+  const candidate = scored.candidate;
+  return {
+    id: candidate.id,
+    trackName: candidate.trackName,
+    artistName: candidate.artistName,
+    albumName: candidate.albumName,
+    duration: candidate.duration,
+    lineCount: scored.lineCount,
+    // A short preview, not the full text — parseLrcLines() already ran
+    // once to compute lineCount above, so this is free (no extra fetch,
+    // no extra parse). The full text is only ever fetched again at save
+    // time, via fetchLrclibRecord().
+    previewLines: parseLrcLines(candidate.syncedLyrics).slice(
+      0,
+      PREVIEW_LINE_LIMIT,
+    ),
+    confidence: scored.confidence,
+    score: scored.score,
+    durationDelta: scored.durationDelta,
+    durationDeltaSigned: scored.durationDeltaSigned,
+    titleScore: scored.titleScore,
+    artistScore: scored.artistScore,
+    querySource: scored.query?.source ?? null,
+  };
+}
+
+// Manual counterpart to findLrclibSyncedLyrics() above — runs every query
+// instead of stopping at the first auto-confidence hit, and returns the
+// full ranked list instead of collapsing to one result. Synced-lyrics
+// candidates only; the full text is only fetched again at save time via
+// fetchLrclibRecord() — this response carries just a short preview.
+async function searchLrclibCandidates(track, options = {}) {
+  const queries = buildLrclibSearchQueries(track);
+  if (queries.length === 0) {
+    return {
+      provider: LRCLIB_PROVIDER,
+      status: 'unavailable',
+      reason: 'missing-track-title',
+      candidates: [],
+    };
+  }
+
+  const fetchFn = options.fetch || globalThis.fetch;
+  if (typeof fetchFn !== 'function') {
+    return {
+      provider: LRCLIB_PROVIDER,
+      status: 'unavailable',
+      reason: 'fetch-unavailable',
+      candidates: [],
+    };
+  }
+
+  const candidatesByKey = new Map();
+  for (const query of queries) {
+    const url = buildLrclibUrl('/api/search', query.params, options.baseUrl);
+    let response;
+    try {
+      response = await fetchFn(url, {
+        headers: { 'User-Agent': 'Utawakui/0.1' },
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+      });
+    } catch {
+      return {
+        provider: LRCLIB_PROVIDER,
+        status: 'error',
+        reason: 'network-error',
+        candidates: [],
+      };
+    }
+
+    const payload = await readJsonResponse(response);
+    if (!response.ok) {
+      if (response.status === 404) continue;
+      return {
+        provider: LRCLIB_PROVIDER,
+        status: 'error',
+        reason: 'http-error',
+        httpStatus: response.status,
+        candidates: [],
+      };
+    }
+    if (!Array.isArray(payload)) {
+      return {
+        provider: LRCLIB_PROVIDER,
+        status: 'error',
+        reason: 'invalid-json',
+        candidates: [],
+      };
+    }
+
+    payload.forEach((candidate, index) => {
+      const key =
+        candidate?.id ??
+        `${normalizeForCompare(candidate?.trackName)}|${normalizeForCompare(
+          candidate?.artistName,
+        )}|${candidate?.duration ?? ''}|${index}`;
+      if (!candidatesByKey.has(key)) candidatesByKey.set(key, candidate);
+    });
+  }
+
+  const pool = [...candidatesByKey.values()].filter(
+    (candidate) =>
+      !candidate?.instrumental &&
+      typeof candidate?.syncedLyrics === 'string' &&
+      candidate.syncedLyrics.trim().length > 0,
+  );
+
+  const ranked = rankSyncedCandidates(track, pool, queries);
+
+  // rankSyncedCandidates scores every (candidate, query) pair, so the same
+  // candidate can appear multiple times — dedupe by identity, first-wins
+  // (ranked is already sorted by score desc).
+  const seenKeys = new Set();
+  const scoredCandidateRefs = new Set();
+  const deduped = [];
+  for (const scored of ranked) {
+    scoredCandidateRefs.add(scored.candidate);
+    const dedupeKey = scored.candidate?.id ?? scored.candidate;
+    if (seenKeys.has(dedupeKey)) continue;
+    seenKeys.add(dedupeKey);
+    deduped.push(scored);
+  }
+
+  // scoreCandidate() hard-rejects (title/artist/duration too far off) never
+  // appear in `ranked` — surface them too, tagged distinctly.
+  const unscored = pool
+    .filter((candidate) => !scoredCandidateRefs.has(candidate))
+    .map((candidate) => ({
+      candidate,
+      confidence: 'unscored',
+      score: null,
+      lineCount: parseLrcLines(candidate.syncedLyrics).length,
+      durationDelta: durationDelta(track?.duration, candidate.duration),
+      durationDeltaSigned: signedDurationDelta(
+        track?.duration,
+        candidate.duration,
+      ),
+      titleScore: null,
+      artistScore: null,
+      query: null,
+    }));
+
+  const candidates = [...deduped, ...unscored]
+    .slice(0, MAX_MANUAL_CANDIDATES)
+    .map(toCandidateSummary);
+
+  return { provider: LRCLIB_PROVIDER, status: 'ok', candidates };
+}
+
+// Re-fetches by id rather than caching the search response, so a save
+// always persists whatever lrclib currently serves.
+async function fetchLrclibRecord(recordId, options = {}) {
+  const fetchFn = options.fetch || globalThis.fetch;
+  if (typeof fetchFn !== 'function') {
+    return { status: 'unavailable', reason: 'fetch-unavailable' };
+  }
+
+  const url = buildLrclibUrl(
+    `/api/get/${encodeURIComponent(recordId)}`,
+    {},
+    options.baseUrl,
+  );
+  let response;
+  try {
+    response = await fetchFn(url, {
+      headers: { 'User-Agent': 'Utawakui/0.1' },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch {
+    return { status: 'error', reason: 'network-error' };
+  }
+
+  const payload = await readJsonResponse(response);
+  if (!response.ok) {
+    return {
+      status: 'error',
+      reason: 'http-error',
+      httpStatus: response.status,
+    };
+  }
+  if (!payload || typeof payload !== 'object') {
+    return { status: 'error', reason: 'invalid-json' };
+  }
+  return { status: 'ok', record: payload };
+}
+
 module.exports = {
   buildLrclibSearchQueries,
   buildLrclibUrl,
   buildSearchParams,
+  durationDelta,
+  fetchLrclibRecord,
   findLrclibSyncedLyrics,
   looksLikeChannelArtist,
   parseLrcLines,
   pickBestSyncedCandidate,
   rankSyncedCandidates,
   readJsonResponse,
+  searchLrclibCandidates,
+  signedDurationDelta,
   stripTrackDecorations,
 };

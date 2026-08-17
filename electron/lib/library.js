@@ -51,6 +51,7 @@ const SEPARATIONS_DIRNAME = 'separations';
 const SEPARATION_MANIFEST_FILENAME = 'manifest.json';
 const SEPARATION_MANIFEST_VERSION = 1;
 const LYRICS_EXTENSIONS = new Set(['.vtt', '.lrc']);
+const MANUAL_LYRICS_SOURCE_EXTENSIONS = new Set(['.vtt', '.lrc', '.txt']);
 const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);
 const CONTENT_HASH_CHUNK_SIZE = 1024 * 1024;
 
@@ -320,6 +321,23 @@ function findArtworkFilename(trackDir) {
   return findFirstFile(trackDir, isArtworkFilename);
 }
 
+function deleteTrackArtworkFiles(trackDir) {
+  let entries;
+  try {
+    entries = fs.readdirSync(trackDir, { withFileTypes: true });
+  } catch {
+    return false;
+  }
+
+  let deleted = false;
+  for (const entry of entries) {
+    if (!entry.isFile() || !isArtworkFilename(entry.name)) continue;
+    fs.rmSync(path.join(trackDir, entry.name), { force: true });
+    deleted = true;
+  }
+  return deleted;
+}
+
 function inferLyricsLanguage(filename) {
   return path.basename(filename, path.extname(filename));
 }
@@ -425,6 +443,12 @@ function listTrackLyricsSources(trackDir) {
       filename,
       language: manifestSource?.language || inferLyricsLanguage(filename),
       kind: manifestSource?.kind || 'youtube-cc',
+      // Optional, display-only — omitted entirely (not null/'') when unset
+      // so existing shape-equality checks elsewhere are unaffected.
+      ...(typeof manifestSource?.label === 'string' &&
+      manifestSource.label.length > 0
+        ? { label: manifestSource.label }
+        : {}),
     };
   });
 
@@ -433,6 +457,18 @@ function listTrackLyricsSources(trackDir) {
     needsScan: manifest.needsScan,
     sources,
   };
+}
+
+// Short by design — appended into a <select> option next to language/kind
+// (see LyricsWorkspace.vue's sourceLabel()), not a description field.
+const MAX_LYRICS_SOURCE_LABEL_LENGTH = 32;
+
+function normalizeLyricsSourceLabel(label) {
+  if (typeof label !== 'string') return null;
+  const trimmed = label.trim();
+  if (trimmed.length === 0) return null;
+  if (trimmed.length <= MAX_LYRICS_SOURCE_LABEL_LENGTH) return trimmed;
+  return `${trimmed.slice(0, MAX_LYRICS_SOURCE_LABEL_LENGTH - 1)}…`;
 }
 
 function getTrackLyricsState(trackDir) {
@@ -471,6 +507,9 @@ function saveTrackLyricsManifest(trackDir, sources) {
         typeof source.kind === 'string' && source.kind.length > 0
           ? source.kind
           : 'youtube-cc',
+      ...(normalizeLyricsSourceLabel(source.label)
+        ? { label: normalizeLyricsSourceLabel(source.label) }
+        : {}),
     }))
     .sort((a, b) => compareFilenames(a.filename, b.filename));
 
@@ -483,6 +522,91 @@ function saveTrackLyricsManifest(trackDir, sources) {
     sources: normalizedSources,
   });
   return normalizedSources;
+}
+
+// Matches allocateLyricsFilename's own naming (`lrclib-<id>.lrc`,
+// `lrclib-<id>-2.lrc` on a collision) — the collision suffix doesn't change
+// which lrclib record the file came from.
+const LRCLIB_FILENAME_ID_RE = /^lrclib-(\d+)(?:-\d+)?\.lrc$/i;
+
+function lrclibCandidateIdFromFilename(filename) {
+  const match = LRCLIB_FILENAME_ID_RE.exec(filename);
+  return match ? Number(match[1]) : null;
+}
+
+// One-time backfill for lrclib sources saved before the label field
+// existed. resolveLabel(candidateId) is injected so this stays testable
+// without a real network call.
+async function backfillLyricsSourceLabels(trackDir, resolveLabel) {
+  const { sources } = listTrackLyricsSources(trackDir);
+  const targets = sources.filter(
+    (source) =>
+      source.kind === 'lrclib' &&
+      !source.label &&
+      lrclibCandidateIdFromFilename(source.filename) !== null,
+  );
+  if (targets.length === 0) return sources;
+
+  const labelByFilename = new Map();
+  for (const source of targets) {
+    const candidateId = lrclibCandidateIdFromFilename(source.filename);
+    let label;
+    try {
+      label = await resolveLabel(candidateId);
+    } catch {
+      // Leave unlabeled — a failed lookup for one source shouldn't stop
+      // the rest of the batch.
+    }
+    if (typeof label === 'string' && label.length > 0) {
+      labelByFilename.set(source.filename, label);
+    }
+  }
+  if (labelByFilename.size === 0) return sources;
+
+  const nextSources = sources.map((source) =>
+    labelByFilename.has(source.filename)
+      ? { ...source, label: labelByFilename.get(source.filename) }
+      : source,
+  );
+  return saveTrackLyricsManifest(trackDir, nextSources);
+}
+
+// A blank label clears it. Returns null when filename doesn't match a
+// real source (same "not found" convention as updateTrackMetadata).
+function setLyricsSourceLabel(trackDir, filename, label) {
+  const { sources } = listTrackLyricsSources(trackDir);
+  if (!sources.some((source) => source.filename === filename)) return null;
+
+  const normalized = normalizeLyricsSourceLabel(label);
+  const nextSources = sources.map((source) => {
+    if (source.filename !== filename) return source;
+    if (!normalized) {
+      const withoutLabel = { ...source };
+      delete withoutLabel.label;
+      return withoutLabel;
+    }
+    return { ...source, label: normalized };
+  });
+  return saveTrackLyricsManifest(trackDir, nextSources);
+}
+
+// Removes the file plus its manifest entry. TODO: also clean up reading
+// sidecars once the reading-aid feature adds tracks/<id>/lyrics/readings/.
+function deleteLyricsSource(trackDir, filename) {
+  if (!isLyricsSubtitleFilename(filename)) return false;
+
+  const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+  try {
+    fs.unlinkSync(path.join(lyricsDir, filename));
+  } catch {
+    return false;
+  }
+
+  const remaining = listTrackLyricsSources(trackDir).sources.filter(
+    (source) => source.filename !== filename,
+  );
+  saveTrackLyricsManifest(trackDir, remaining);
+  return true;
 }
 
 function saveTrackLyricsText(trackDir, source, text) {
@@ -504,6 +628,84 @@ function saveTrackLyricsText(trackDir, source, text) {
   );
   saveTrackLyricsManifest(trackDir, [...existingSources, source]);
   return true;
+}
+
+// Never returns a name that already exists, so a caller of
+// saveTrackLyricsText() never silently overwrites an existing source.
+// baseStem must already be filename-safe — callers pass fixed stems, never
+// raw user text.
+function allocateLyricsFilename(trackDir, baseStem, ext) {
+  const lyricsDir = getLyricsDirFromTrackDir(trackDir);
+  for (let suffix = 1; suffix <= 99; suffix += 1) {
+    const filename =
+      suffix === 1 ? `${baseStem}${ext}` : `${baseStem}-${suffix}${ext}`;
+    if (!isLyricsSubtitleFilename(filename)) return null;
+    if (!fs.existsSync(path.join(lyricsDir, filename))) return filename;
+  }
+  return null;
+}
+
+function manualLyricsStorageExtension(filenameHint) {
+  const ext = path.extname(String(filenameHint || '')).toLowerCase();
+  if (ext === '.vtt') return '.vtt';
+  if (ext === '.lrc' || ext === '.txt' || ext === '') return '.lrc';
+  return null;
+}
+
+function manualLyricsLabelFromHint(filenameHint) {
+  const basename = path.basename(
+    String(filenameHint || ''),
+    path.extname(String(filenameHint || '')),
+  );
+  return normalizeLyricsSourceLabel(basename);
+}
+
+function importManualLyricsText(trackDir, options = {}) {
+  const text = typeof options.text === 'string' ? options.text : '';
+  if (text.trim().length === 0) return null;
+
+  const ext = manualLyricsStorageExtension(options.filenameHint);
+  if (!ext) return null;
+
+  const filename = allocateLyricsFilename(trackDir, 'manual', ext);
+  if (!filename) return null;
+
+  const label =
+    normalizeLyricsSourceLabel(options.label) ||
+    manualLyricsLabelFromHint(options.filenameHint);
+  const source = {
+    filename,
+    language: 'und',
+    kind: 'manual',
+    ...(label ? { label } : {}),
+  };
+  if (!saveTrackLyricsText(trackDir, source, text)) return null;
+
+  const sources = getTrackLyricsState(trackDir).sources;
+  return {
+    source:
+      sources.find((candidate) => candidate.filename === filename) || source,
+    sources,
+  };
+}
+
+function importManualLyricsFile(trackDir, sourcePath) {
+  if (typeof sourcePath !== 'string' || sourcePath.length === 0) return null;
+  const ext = path.extname(sourcePath).toLowerCase();
+  if (!MANUAL_LYRICS_SOURCE_EXTENSIONS.has(ext)) return null;
+
+  let text;
+  try {
+    text = fs.readFileSync(sourcePath, 'utf8');
+  } catch {
+    return null;
+  }
+
+  return importManualLyricsText(trackDir, {
+    text,
+    filenameHint: path.basename(sourcePath),
+    label: manualLyricsLabelFromHint(sourcePath),
+  });
 }
 
 function normalizeTrackLyricsSidecars(trackDir) {
@@ -1362,6 +1564,37 @@ function updateTrackMetadata(dir, trackId, fields = {}) {
   return listTracks(dir).find((track) => track.id === trackId) || null;
 }
 
+function writeTrackArtworkFile(dir, trackId, sourcePath) {
+  if (!findTrackRecord(dir, trackId)) return null;
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir || !resolveTrackAudioPath(dir, trackId)) return null;
+
+  if (typeof sourcePath !== 'string' || sourcePath.length === 0) return null;
+  const ext = path.extname(sourcePath).toLowerCase();
+  if (!IMAGE_EXTENSIONS.has(ext)) return null;
+
+  fs.mkdirSync(trackDir, { recursive: true });
+  const filename = `${ARTWORK_BASENAME}${ext}`;
+  for (const entry of fs.readdirSync(trackDir, { withFileTypes: true })) {
+    if (
+      entry.isFile() &&
+      isArtworkFilename(entry.name) &&
+      entry.name !== filename
+    ) {
+      fs.rmSync(path.join(trackDir, entry.name), { force: true });
+    }
+  }
+  fs.copyFileSync(sourcePath, path.join(trackDir, filename));
+  return filename;
+}
+
+function deleteTrackArtworkFile(dir, trackId) {
+  if (!findTrackRecord(dir, trackId)) return false;
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir || !resolveTrackAudioPath(dir, trackId)) return false;
+  return deleteTrackArtworkFiles(trackDir);
+}
+
 // Deletes the original audio file, its vocal-separation output (if any),
 // and its library.json entry. Returns false without touching anything if
 // trackId doesn't resolve to a real file — the filesystem enumeration is
@@ -1560,8 +1793,12 @@ function buildRangeResponse(filePath, rangeHeader) {
 }
 
 module.exports = {
+  allocateLyricsFilename,
+  backfillLyricsSourceLabels,
   buildRangeResponse,
+  deleteLyricsSource,
   deleteTrack,
+  deleteTrackArtworkFile,
   hasSeparation,
   hasSeparationResultFile,
   INDEX_FILENAME,
@@ -1571,6 +1808,8 @@ module.exports = {
   isTranslatedLyricsLanguage,
   isServableFilename,
   isStructuredAudioFilename,
+  importManualLyricsFile,
+  importManualLyricsText,
   importLocalAudioFiles,
   LYRICS_MANIFEST_VERSION,
   getTrackLyricsState,
@@ -1586,6 +1825,7 @@ module.exports = {
   resolvePlaylistCoverPath,
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
+  writeTrackArtworkFile,
   resolveTrackLyricsPath,
   resolveSeparationsDir,
   resolveSeparationResultPath,
@@ -1598,5 +1838,6 @@ module.exports = {
   saveTrackLyricsManifest,
   saveTrackLyricsText,
   selectSeparationResult,
+  setLyricsSourceLabel,
   updateTrackMetadata,
 };

@@ -9,6 +9,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     titleDraft: '',
     artistDraft: '',
     isSaving: false,
+    isArtworkSaving: false,
     error: null,
   });
 
@@ -18,6 +19,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.track = null;
     state.titleDraft = '';
     state.artistDraft = '';
+    state.isArtworkSaving = false;
     state.error = null;
   }
 
@@ -29,7 +31,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function close() {
-    if (state.isSaving) return;
+    if (state.isSaving || state.isArtworkSaving) return;
     reset();
   }
 
@@ -84,12 +86,72 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     }
   }
 
+  function updateOpenTrackArtwork(updated) {
+    if (!state.track || !updated || updated.id !== state.track.id) return;
+    state.track = {
+      ...state.track,
+      thumbnailUrl: updated.thumbnailUrl,
+    };
+  }
+
+  async function chooseThumbnail() {
+    if (!state.track) return null;
+    if (
+      typeof window === 'undefined' ||
+      typeof window.Utawakui?.chooseTrackArtwork !== 'function'
+    ) {
+      state.error = RESTART_REQUIRED_MESSAGE;
+      return null;
+    }
+
+    state.isArtworkSaving = true;
+    state.error = null;
+    try {
+      const updated = await window.Utawakui.chooseTrackArtwork(state.track.id);
+      updateOpenTrackArtwork(updated);
+      await refresh?.();
+      return updated;
+    } catch (err) {
+      state.error = err instanceof Error ? err.message : String(err);
+      return null;
+    } finally {
+      state.isArtworkSaving = false;
+    }
+  }
+
+  async function clearThumbnail() {
+    if (!state.track) return null;
+    if (
+      typeof window === 'undefined' ||
+      typeof window.Utawakui?.clearTrackArtwork !== 'function'
+    ) {
+      state.error = RESTART_REQUIRED_MESSAGE;
+      return null;
+    }
+
+    state.isArtworkSaving = true;
+    state.error = null;
+    try {
+      const updated = await window.Utawakui.clearTrackArtwork(state.track.id);
+      updateOpenTrackArtwork(updated);
+      await refresh?.();
+      return updated;
+    } catch (err) {
+      state.error = err instanceof Error ? err.message : String(err);
+      return null;
+    } finally {
+      state.isArtworkSaving = false;
+    }
+  }
+
   return {
     state: readonly(state),
     isOpen,
     open,
     close,
     save,
+    chooseThumbnail,
+    clearThumbnail,
     setTitleDraft,
     setArtistDraft,
   };

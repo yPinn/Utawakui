@@ -1,5 +1,6 @@
 const TIME_RE = /(?:(\d+):)?(\d{2}):(\d{2})(?:[.,](\d{1,3}))?/;
 const LRC_TIME_RE = /^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/;
+const LRC_METADATA_RE = /^\[(?:ar|ti|al|by|offset|length|re|ve):[^\]]*\]$/i;
 const SOURCE_KIND_YOUTUBE_CC = 'youtube-cc';
 const SOURCE_KIND_LRCLIB = 'lrclib';
 const MUSIC_NOTE_RE = /[♪♫♬♩🎵🎶]+/gu;
@@ -333,8 +334,8 @@ function parseLrcTimestamp(value) {
 export function parseLrc(text) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];
 
-  const starts = text
-    .split(/\r?\n/)
+  const rawLines = text.split(/\r?\n/);
+  const starts = rawLines
     .flatMap((line) => {
       const matches = [...line.matchAll(/\[([^\]]+)\]/g)];
       if (matches.length === 0) return [];
@@ -346,6 +347,17 @@ export function parseLrc(text) {
         .map((start) => ({ start, text: lyricText }));
     })
     .sort((a, b) => a.start - b.start);
+
+  if (starts.length === 0) {
+    return rawLines
+      .map((line) => line.trim())
+      .filter((line) => line && !LRC_METADATA_RE.test(line))
+      .map((line) => ({
+        start: Number.NaN,
+        end: Number.NaN,
+        text: line,
+      }));
+  }
 
   return starts.map((line, index) => ({
     ...line,
@@ -422,4 +434,27 @@ export function pickPreferredLyricsSource(track, currentFilename = null) {
 
   const preferredPrefixes = inferPreferredLyricsLanguagePrefixes(track);
   return pickSourceByLanguage(sources, preferredPrefixes) ?? sources[0];
+}
+
+const LYRICS_SOURCE_KIND_LABELS = {
+  'youtube-cc': 'YouTube CC',
+  lrclib: 'LRCLIB',
+  manual: '手動匯入',
+};
+
+// Shared by LyricsWorkspace.vue's source <select> and
+// LyricsSourceManagerModal.vue's current-sources list — same display
+// string in both places. Kind leads (always meaningful); language only
+// follows when it's a real value — lrclib's API has no language field at
+// all, so every lrclib source is stamped 'und' and showing that would just
+// be noise. label (see saveTrackLyricsManifest) fills the same slot when
+// language isn't real.
+export function formatLyricsSourceLabel(source) {
+  const kindLabel = LYRICS_SOURCE_KIND_LABELS[source.kind] || source.kind;
+  const languagePart =
+    source.language && source.language !== 'und'
+      ? source.language.toUpperCase()
+      : null;
+  const descriptor = [languagePart, source.label].filter(Boolean).join(' · ');
+  return descriptor ? `${kindLabel} / ${descriptor}` : kindLabel;
 }

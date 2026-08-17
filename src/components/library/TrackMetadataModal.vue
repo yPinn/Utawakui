@@ -1,21 +1,77 @@
 <script setup>
+import { computed } from 'vue';
+import { ImagePlus, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
-defineProps({
+const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, default: '' },
   artist: { type: String, default: '' },
+  thumbnailUrl: { type: String, default: '' },
   saving: { type: Boolean, default: false },
+  artworkSaving: { type: Boolean, default: false },
   error: { type: String, default: '' },
 });
 
-const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
+const emit = defineEmits([
+  'close',
+  'save',
+  'chooseThumbnail',
+  'clearThumbnail',
+  'updateTitle',
+  'updateArtist',
+]);
+
+const previewTrack = computed(() => ({
+  title: props.title,
+  artist: props.artist,
+  thumbnailUrl: props.thumbnailUrl,
+}));
 </script>
 
 <template>
   <UiModal :open="open" title="編輯資訊" @close="emit('close')">
     <div class="track-metadata">
+      <section class="track-metadata__artwork" aria-labelledby="track-artwork">
+        <UiTrackThumb
+          class="track-metadata__thumb"
+          :track="previewTrack"
+          size="var(--ui-space-8)"
+          :decorative="false"
+          aria-label="目前封面"
+        />
+        <div class="track-metadata__artwork-body">
+          <div>
+            <h3 id="track-artwork" class="track-metadata__artwork-title">
+              封面
+            </h3>
+          </div>
+          <div class="track-metadata__artwork-actions">
+            <UiButton
+              :icon="ImagePlus"
+              :disabled="saving || artworkSaving"
+              aria-label="選擇封面圖片"
+              title="選擇封面圖片"
+              @click="emit('chooseThumbnail')"
+            >
+              選擇圖片
+            </UiButton>
+            <UiButton
+              v-if="thumbnailUrl"
+              :icon="Trash2"
+              :disabled="saving || artworkSaving"
+              aria-label="移除封面圖片"
+              title="移除封面圖片"
+              @click="emit('clearThumbnail')"
+            >
+              移除
+            </UiButton>
+          </div>
+        </div>
+      </section>
+
       <label class="track-metadata__field">
         <span class="track-metadata__label">歌名</span>
         <input
@@ -44,7 +100,11 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
       </p>
 
       <div class="track-metadata__actions">
-        <UiButton variant="accent" :disabled="saving" @click="emit('save')">
+        <UiButton
+          variant="accent"
+          :disabled="saving || artworkSaving"
+          @click="emit('save')"
+        >
           儲存
         </UiButton>
       </div>
@@ -63,6 +123,47 @@ const emit = defineEmits(['close', 'save', 'updateTitle', 'updateArtist']);
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-1);
+}
+
+.track-metadata__artwork {
+  display: grid;
+  grid-template-columns: var(--ui-space-8) minmax(0, 1fr);
+  gap: var(--ui-space-3);
+  align-items: start;
+  padding-bottom: var(--ui-space-3);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.track-metadata__thumb {
+  border: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.track-metadata__artwork-body {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--ui-space-2);
+}
+
+.track-metadata__artwork-title {
+  margin: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-md);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-label);
+}
+
+.track-metadata__hint {
+  margin: var(--ui-space-1) 0 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-body);
+}
+
+.track-metadata__artwork-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
 }
 
 .track-metadata__label {
