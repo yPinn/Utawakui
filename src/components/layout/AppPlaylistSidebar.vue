@@ -1,5 +1,6 @@
 <script setup>
 import { useLibrary } from '../../composables/useLibrary.js';
+import { useAppView } from '../../composables/useAppView.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSidebarResize } from '../../composables/useSidebarResize.js';
@@ -8,6 +9,7 @@ import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
+const { setActiveView } = useAppView();
 const {
   editDetailsPlaylist,
   editDetailsIsAlbum,
@@ -21,6 +23,10 @@ const {
   handlePlaylistMenuAction,
 } = usePlaylistActions();
 const { isResizing, startResize } = useSidebarResize();
+
+function activateSetlistView() {
+  setActiveView('setlist');
+}
 </script>
 
 <template>
@@ -34,6 +40,7 @@ const { isResizing, startResize } = useSidebarResize();
         :tracks-by-id="tracksById"
         :library-view="playlistState.libraryView"
         @library-view-select="setLibraryView"
+        @activate-setlist="activateSetlistView"
         @playlist-action="handlePlaylistMenuAction"
       />
     </div>
@@ -85,7 +92,8 @@ const { isResizing, startResize } = useSidebarResize();
   box-sizing: border-box;
   height: 100%;
   overflow-y: auto;
-  padding: var(--ui-space-2);
+  padding: var(--ui-playlist-sidebar-padding-block)
+    var(--ui-playlist-sidebar-padding-inline);
 }
 
 .app-playlist-sidebar__handle {

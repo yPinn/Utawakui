@@ -3,12 +3,14 @@
 // row markup was identical between them before this extraction; drag/drop
 // is playlist-only, so those props/events simply go unused (default false)
 // for album rows instead of forking the template.
+import { computed } from 'vue';
 import { Pause, Play } from '../../icons/index.js';
+import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 
-defineProps({
+const props = defineProps({
   playlist: { type: Object, required: true },
   coverUrl: { type: String, default: '' },
   coverTracks: { type: Array, default: () => [] },
@@ -32,6 +34,12 @@ const emit = defineEmits([
   'drop',
   'dragEnd',
 ]);
+
+const playlistDisplayName = computed(() => props.playlist.name || '未命名歌單');
+const selectLabel = computed(() => `選取 ${playlistDisplayName.value}`);
+const playbackLabel = computed(
+  () => `${props.playing ? '暫停' : '播放'} ${playlistDisplayName.value}`,
+);
 </script>
 
 <template>
@@ -45,7 +53,7 @@ const emit = defineEmits([
       'playlist-sidebar-row--drop-after': dropAfter,
     }"
     :draggable="draggable"
-    :title="playlist.name"
+    :title="playlistDisplayName"
     @click="emit('select')"
     @contextmenu="emit('contextmenu', $event)"
     @dragstart="emit('dragStart', $event)"
@@ -58,8 +66,8 @@ const emit = defineEmits([
       type="button"
       class="playlist-sidebar-row__select"
       :aria-current="active ? 'page' : undefined"
-      :aria-label="`選取 ${playlist.name || '未命名歌單'}`"
-      :title="playlist.name"
+      :aria-label="selectLabel"
+      :title="playlistDisplayName"
       @click.stop="emit('select')"
     />
     <UiCollageThumb
@@ -67,7 +75,7 @@ const emit = defineEmits([
       :cover-url="coverUrl"
       :tracks="coverTracks"
       :can-collage="playlist.kind !== 'album'"
-      :size="40"
+      :size="PLAYLIST_ROW_THUMB_SIZE"
       color="var(--ui-color-text-muted)"
       :uppercase="false"
       :decorative="false"
@@ -76,8 +84,8 @@ const emit = defineEmits([
         <UiIconButton
           :icon="playing ? Pause : Play"
           class="playlist-sidebar-row__play"
-          :label="playing ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
-          :title="playing ? `暫停 ${playlist.name}` : `播放 ${playlist.name}`"
+          :label="playbackLabel"
+          :title="playbackLabel"
           fill
           shape="inherit"
           variant="overlay"
@@ -101,6 +109,7 @@ const emit = defineEmits([
   display: flex;
   align-items: center;
   gap: var(--ui-playlist-row-gap);
+  block-size: var(--ui-playlist-row-min-height);
   min-height: var(--ui-playlist-row-min-height);
   padding: var(--ui-playlist-row-padding-block)
     var(--ui-playlist-row-padding-inline);
@@ -113,6 +122,8 @@ const emit = defineEmits([
   text-align: left;
   cursor: pointer;
   width: 100%;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .playlist-sidebar-row__select {
@@ -127,8 +138,6 @@ const emit = defineEmits([
 
 .playlist-sidebar-row[draggable='true'] {
   cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
 }
 
 .playlist-sidebar-row[draggable='true']:active {
@@ -170,10 +179,9 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar-row--active {
-  border-color: var(--ui-color-border-strong);
-  background: var(--ui-color-surface-selected);
+  border-color: transparent;
+  background: var(--ui-playlist-row-selected-background);
   color: var(--ui-color-text);
-  box-shadow: var(--ui-row-active-shadow);
 }
 
 .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
@@ -220,7 +228,9 @@ const emit = defineEmits([
 }
 
 .playlist-sidebar-row__name {
+  color: var(--ui-color-text);
   font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
 }
 
 /* Same title-only coral cue as UiTrackRow/QueueTrackButton's --current —
@@ -250,8 +260,46 @@ const emit = defineEmits([
    max-width's inclusive `<=` would collapse it to icon-only on every
    fresh launch. */
 @container (width < 256px) {
+  .playlist-sidebar-row {
+    align-self: center;
+    justify-content: center;
+    gap: 0;
+    inline-size: var(--ui-playlist-row-compact-hit-size);
+    block-size: var(--ui-playlist-row-compact-hit-size);
+    min-height: var(--ui-playlist-row-compact-hit-size);
+    padding: var(--ui-playlist-row-padding-block);
+  }
+
   .playlist-sidebar-row__info {
     display: none;
+  }
+
+  .playlist-sidebar-row__play {
+    display: none;
+  }
+
+  /* Compact rail selection sits on the artwork itself. A left-edge row
+     indicator has no useful text column to anchor to here. */
+  .playlist-sidebar-row--active {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
+    box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent);
+  }
+
+  .playlist-sidebar-row--current .playlist-sidebar-row__thumb::after {
+    content: '';
+    position: absolute;
+    right: var(--ui-space-1);
+    top: var(--ui-space-1);
+    width: var(--ui-space-2);
+    height: var(--ui-space-2);
+    border-radius: var(--ui-radius-pill);
+    background: var(--ui-color-current);
+    box-shadow: 0 0 0 var(--ui-border-width) var(--ui-color-surface);
   }
 }
 </style>

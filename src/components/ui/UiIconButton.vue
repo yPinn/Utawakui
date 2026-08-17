@@ -132,10 +132,16 @@ const titleText = computed(() => props.title ?? props.label);
    (see the scrim rationale in tokens.css) since it floats over arbitrary
    artwork/video, not an app surface a muted theme color reads well on. */
 .ui-icon-btn--ghost:disabled,
-.ui-icon-btn--ghost[aria-disabled='true'],
+.ui-icon-btn--ghost[aria-disabled='true'] {
+  color: var(--ui-color-text-muted);
+}
+
+/* accent-contrast-muted, not text-muted — this variant keeps its accent
+   fill at rest, and text-muted is calibrated for canvas/surface text, not
+   text on that teal background (reads as barely-legible gray-on-teal). */
 .ui-icon-btn--accent:disabled,
 .ui-icon-btn--accent[aria-disabled='true'] {
-  color: var(--ui-color-text-muted);
+  color: var(--ui-color-accent-contrast-muted);
 }
 
 .ui-icon-btn:focus-visible {

@@ -87,9 +87,22 @@ defineProps({
 
 .ui-btn:disabled,
 .ui-btn[aria-disabled='true'] {
-  color: var(--ui-color-text-muted);
   opacity: var(--ui-opacity-disabled);
   cursor: default;
+}
+
+.ui-btn--ghost:disabled,
+.ui-btn--ghost[aria-disabled='true'] {
+  color: var(--ui-color-text-muted);
+}
+
+/* --ui-color-text-muted is calibrated for text on canvas/surface, not on
+   the accent fill this variant keeps at rest — using it here read as
+   barely-legible gray-on-teal. accent-contrast-muted is the token built
+   for muted text on an accent-colored surface. */
+.ui-btn--accent:disabled,
+.ui-btn--accent[aria-disabled='true'] {
+  color: var(--ui-color-accent-contrast-muted);
 }
 
 .ui-btn:focus-visible {

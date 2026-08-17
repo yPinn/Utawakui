@@ -2,19 +2,19 @@
 // Nav rows are bespoke; UiButton semantics do not match this full-row list.
 import {
   Disc3,
-  Download,
+  FolderOpen,
   FolderPlus,
   ICON_SIZE,
+  Library,
   ListEnd,
   ListMusic,
   ListPlus,
-  Music,
-  Music2,
   Pencil,
   Plus,
+  Search,
   Trash2,
 } from '../../icons/index.js';
-import { computed, ref } from 'vue';
+import { computed, ref, shallowRef } from 'vue';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { usePlayer } from '../../composables/usePlayer.js';
@@ -40,7 +40,11 @@ const { state, select, create, reorderPlaylist } = usePlaylists();
 const { state: playerState, play, pause, playTrack } = usePlayer();
 const { state: queueState, setQueue } = usePlaybackQueue();
 
-const emit = defineEmits(['libraryViewSelect', 'playlistAction']);
+const emit = defineEmits([
+  'activateSetlist',
+  'libraryViewSelect',
+  'playlistAction',
+]);
 
 // A custom cover (album's own official artwork, or a playlist's manually
 // uploaded one — see SetlistPlaylistHeader.vue) always wins; otherwise the
@@ -96,6 +100,11 @@ const orderedPlaylists = computed(() =>
 );
 const playlistItems = computed(() => orderedPlaylists.value.playlistItems);
 const albumItems = computed(() => orderedPlaylists.value.albumItems);
+const searchQuery = shallowRef('');
+const normalizedSearchQuery = computed(() =>
+  searchQuery.value.trim().toLocaleLowerCase(),
+);
+const hasSearchQuery = computed(() => normalizedSearchQuery.value.length > 0);
 
 // Album subtitle uses derived artist; mixed playlists show kind only.
 function subtitleFor(playlist) {
@@ -103,6 +112,37 @@ function subtitleFor(playlist) {
   const { artist } = deriveAlbumSummary(memberTracksFor(playlist));
   return artist ? `專輯・${artist}` : '專輯';
 }
+
+function searchableText(value) {
+  return String(value ?? '').toLocaleLowerCase();
+}
+
+function playlistMatchesSearch(playlist) {
+  if (!hasSearchQuery.value) return true;
+  const query = normalizedSearchQuery.value;
+  if (
+    searchableText(playlist.name).includes(query) ||
+    searchableText(subtitleFor(playlist)).includes(query)
+  ) {
+    return true;
+  }
+  return memberTracksFor(playlist).some((track) =>
+    [track.title, track.artist, track.album, track.filename, track.id].some(
+      (field) => searchableText(field).includes(query),
+    ),
+  );
+}
+
+const visiblePlaylistItems = computed(() =>
+  playlistItems.value.filter(playlistMatchesSearch),
+);
+const visibleAlbumItems = computed(() =>
+  albumItems.value.filter(playlistMatchesSearch),
+);
+const hasVisibleCollectionItems = computed(
+  () =>
+    visiblePlaylistItems.value.length > 0 || visibleAlbumItems.value.length > 0,
+);
 
 const menuContext = ref(null);
 
@@ -207,17 +247,6 @@ const menuItems = computed(() => {
         playlistId: playlist.id,
       },
     },
-    {
-      key: 'download',
-      label: '下載',
-      icon: Download,
-      status: '尚未支援',
-      disabled: true,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.download,
-        playlistId: playlist.id,
-      },
-    },
   );
 
   // Global "create a new one" actions, unrelated to the specific row being
@@ -259,12 +288,20 @@ function closePlaylistMenu() {
 function selectPlaylist(id) {
   closePlaylistMenu();
   select(id);
+  emit('activateSetlist');
 }
 
 function selectLibraryView(view) {
   closePlaylistMenu();
   select(null);
   emit('libraryViewSelect', view);
+  emit('activateSetlist');
+}
+
+function createPlaylist() {
+  closePlaylistMenu();
+  emit('activateSetlist');
+  create();
 }
 
 function handleMenuSelect(value) {
@@ -273,7 +310,7 @@ function handleMenuSelect(value) {
 }
 
 function canDragPlaylistItem() {
-  return playlistItems.value.length >= 2;
+  return !hasSearchQuery.value && playlistItems.value.length >= 2;
 }
 
 const {
@@ -307,25 +344,35 @@ function startDrag(playlist, event) {
 </script>
 
 <template>
-  <nav class="playlist-sidebar">
-    <button
-      type="button"
-      class="playlist-sidebar__item playlist-sidebar__add"
-      aria-label="新增歌單"
-      title="新增歌單"
-      @click="create()"
-    >
-      <span class="playlist-sidebar__thumb" aria-hidden="true">
+  <nav class="playlist-sidebar" aria-label="播放清單篩選與集合">
+    <div class="playlist-sidebar__toolbar">
+      <div class="playlist-sidebar__search" title="搜尋歌單、專輯或曲目">
+        <span class="playlist-sidebar__search-icon-slot" aria-hidden="true">
+          <Search class="playlist-sidebar__search-icon" :size="ICON_SIZE" />
+        </span>
+        <input
+          v-model="searchQuery"
+          class="playlist-sidebar__search-input"
+          type="search"
+          aria-label="搜尋歌單、專輯或曲目"
+          placeholder="搜尋"
+        />
+      </div>
+      <button
+        type="button"
+        class="playlist-sidebar__toolbar-action"
+        aria-label="新增歌單"
+        title="新增歌單"
+        @click="createPlaylist"
+      >
         <Plus :size="ICON_SIZE" aria-hidden="true" />
-      </span>
-      <span class="playlist-sidebar__info">
-        <span class="playlist-sidebar__label">新增歌單</span>
-      </span>
-    </button>
+      </button>
+    </div>
 
     <button
       type="button"
       class="playlist-sidebar__item"
+      aria-label="全部曲目"
       :class="{
         'playlist-sidebar__item--active':
           state.selectedId === null && libraryView === 'all',
@@ -333,13 +380,14 @@ function startDrag(playlist, event) {
       :aria-current="
         state.selectedId === null && libraryView === 'all' ? 'page' : undefined
       "
+      title="全部曲目"
       @click="selectLibraryView('all')"
     >
       <span
         class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
         aria-hidden="true"
       >
-        <Music2 :size="ICON_SIZE" aria-hidden="true" />
+        <Library :size="ICON_SIZE" aria-hidden="true" />
       </span>
       <span class="playlist-sidebar__info">
         <span class="playlist-sidebar__label">全部曲目</span>
@@ -349,6 +397,7 @@ function startDrag(playlist, event) {
     <button
       type="button"
       class="playlist-sidebar__item"
+      aria-label="本機音訊"
       :class="{
         'playlist-sidebar__item--active':
           state.selectedId === null && libraryView === 'local',
@@ -358,21 +407,28 @@ function startDrag(playlist, event) {
           ? 'page'
           : undefined
       "
+      title="本機音訊"
       @click="selectLibraryView('local')"
     >
       <span
         class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
         aria-hidden="true"
       >
-        <Music :size="ICON_SIZE" aria-hidden="true" />
+        <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
       </span>
       <span class="playlist-sidebar__info">
         <span class="playlist-sidebar__label">本機音訊</span>
       </span>
     </button>
 
+    <hr
+      v-if="hasVisibleCollectionItems"
+      class="playlist-sidebar__divider"
+      aria-hidden="true"
+    />
+
     <PlaylistSidebarRow
-      v-for="playlist in playlistItems"
+      v-for="playlist in visiblePlaylistItems"
       :key="playlist.id"
       :playlist="playlist"
       :cover-url="playlist.coverUrl"
@@ -381,7 +437,7 @@ function startDrag(playlist, event) {
       :active="playlist.id === state.selectedId"
       :active-source="isActiveSource(playlist)"
       :playing="isPlayingThis(playlist)"
-      :draggable="playlistItems.length > 1"
+      :draggable="canDragPlaylistItem()"
       :dragging="draggingPlaylistId === playlist.id"
       :drop-before="
         dropTargetPlaylistId === playlist.id && dropPosition === 'before'
@@ -400,12 +456,12 @@ function startDrag(playlist, event) {
     />
 
     <hr
-      v-if="playlistItems.length > 0 && albumItems.length > 0"
+      v-if="visiblePlaylistItems.length > 0 && visibleAlbumItems.length > 0"
       class="playlist-sidebar__divider"
     />
 
     <PlaylistSidebarRow
-      v-for="playlist in albumItems"
+      v-for="playlist in visibleAlbumItems"
       :key="playlist.id"
       :playlist="playlist"
       :cover-url="playlist.coverUrl"
@@ -418,6 +474,13 @@ function startDrag(playlist, event) {
       @contextmenu="openPlaylistMenu(playlist, $event)"
       @toggle-playback="togglePlayback(playlist, $event)"
     />
+
+    <p
+      v-if="hasSearchQuery && !hasVisibleCollectionItems"
+      class="playlist-sidebar__empty"
+    >
+      沒有符合的集合
+    </p>
 
     <UiContextMenu
       :open="isMenuOpen"
@@ -438,15 +501,15 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__divider {
-  margin: var(--ui-space-1) 0;
+  margin: var(--ui-playlist-section-gap) 0;
   border: none;
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 /* PlaylistSidebarRow.vue owns its own block (.playlist-sidebar-row) for the
    two dynamic loops below — this file's .playlist-sidebar__item/__thumb
-   rules are only for the two static rows above ("新增歌單"/"全部曲目"),
-   which aren't playlists/albums and so aren't rendered through
+   rules are only for the default library rows above, which aren't
+   playlists/albums and so aren't rendered through
    PlaylistSidebarRow. The two blocks look similar by design (same visual
    row shape) but are intentionally independent, not a shared name. */
 .playlist-sidebar__item {
@@ -454,6 +517,7 @@ function startDrag(playlist, event) {
   display: flex;
   align-items: center;
   gap: var(--ui-playlist-row-gap);
+  block-size: var(--ui-playlist-row-min-height);
   min-height: var(--ui-playlist-row-min-height);
   padding: var(--ui-playlist-row-padding-block)
     var(--ui-playlist-row-padding-inline);
@@ -465,6 +529,8 @@ function startDrag(playlist, event) {
   font-size: var(--ui-font-size-sm);
   text-align: left;
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .playlist-sidebar__item:hover {
@@ -478,10 +544,117 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__item--active {
-  border-color: var(--ui-color-border-strong);
-  background: var(--ui-color-surface-selected);
+  border-color: transparent;
+  background: var(--ui-playlist-row-selected-background);
   color: var(--ui-color-text);
-  box-shadow: var(--ui-row-active-shadow);
+}
+
+.playlist-sidebar__toolbar {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-playlist-toolbar-gap);
+  block-size: var(--ui-playlist-toolbar-height);
+  min-height: var(--ui-playlist-toolbar-height);
+  padding: var(--ui-playlist-toolbar-padding-block)
+    var(--ui-playlist-toolbar-padding-inline);
+}
+
+.playlist-sidebar__search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: var(--ui-playlist-toolbar-gap);
+  min-width: 0;
+  block-size: var(--ui-playlist-toolbar-control-size);
+  min-height: var(--ui-playlist-toolbar-control-size);
+  padding: var(--ui-playlist-search-padding-block)
+    var(--ui-playlist-search-padding-inline);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text-muted);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
+}
+
+.playlist-sidebar__search:focus-within {
+  border-color: var(--ui-color-accent);
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+}
+
+.playlist-sidebar__search-icon {
+  flex-shrink: 0;
+}
+
+.playlist-sidebar__search-icon-slot {
+  position: relative;
+  display: flex;
+  flex: 0 0 var(--ui-playlist-search-icon-slot-size);
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--ui-playlist-search-icon-slot-size);
+  block-size: 100%;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.playlist-sidebar__search-icon-slot::after {
+  content: '';
+  position: absolute;
+  inset-block: var(--ui-playlist-search-separator-inset-block);
+  inset-inline-end: 0;
+  width: var(--ui-border-width);
+  background: var(--ui-color-border);
+}
+
+.playlist-sidebar__search-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0 var(--ui-playlist-search-input-padding-inline-end) 0 0;
+  border: none;
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  outline: none;
+}
+
+.playlist-sidebar__search-input::placeholder {
+  color: var(--ui-color-text-muted);
+}
+
+.playlist-sidebar__toolbar-action {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: var(--ui-playlist-toolbar-control-size);
+  height: var(--ui-playlist-toolbar-control-size);
+  padding: 0;
+  border: var(--ui-border-width) solid transparent;
+  border-radius: var(--ui-radius-sm);
+  background: color-mix(
+    in srgb,
+    var(--ui-color-surface-hover) 88%,
+    var(--ui-color-text)
+  );
+  color: var(--ui-color-text-muted);
+  line-height: var(--ui-line-height-label);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.playlist-sidebar__toolbar-action:hover {
+  border-color: var(--ui-color-border);
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text);
+}
+
+.playlist-sidebar__toolbar-action:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .playlist-sidebar__thumb {
@@ -490,8 +663,8 @@ function startDrag(playlist, event) {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: var(--ui-playlist-row-thumb-size);
+  height: var(--ui-playlist-row-thumb-size);
   border-radius: var(--ui-radius-sm);
   background: color-mix(
     in srgb,
@@ -508,18 +681,23 @@ function startDrag(playlist, event) {
   color: var(--ui-color-accent);
 }
 
-/* Accent cover distinguishes the All Tracks row from Create Playlist. */
+/* Default library entries act like generated covers, not outline buttons. */
 .playlist-sidebar__thumb--accent {
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-accent);
+  border: var(--ui-border-width) solid transparent;
+  background: var(--ui-color-accent);
+  color: var(--ui-color-accent-contrast);
+}
+
+.playlist-sidebar__item:hover .playlist-sidebar__thumb--accent {
+  background: var(--ui-color-accent-hover);
+  color: var(--ui-color-accent-contrast);
 }
 
 /* Selected accent rows keep the cover visible without becoming a second tab. */
 .playlist-sidebar__item--active
   .playlist-sidebar__thumb.playlist-sidebar__thumb--accent {
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-accent);
+  background: var(--ui-color-accent-hover);
+  color: var(--ui-color-accent-contrast);
   opacity: 1;
 }
 
@@ -530,7 +708,7 @@ function startDrag(playlist, event) {
   min-width: 0;
 }
 
-/* Only for the plain-text rows ("新增歌單"/"全部曲目") — the two dynamic
+/* Only for the plain-text default rows — the two dynamic
    name rows render through PlaylistSidebarRow, which uses UiMarqueeText
    and owns its own overflow/text-overflow/animation internally. */
 .playlist-sidebar__label {
@@ -540,12 +718,57 @@ function startDrag(playlist, event) {
   min-width: 0;
 }
 
+.playlist-sidebar__empty {
+  margin: var(--ui-space-1) var(--ui-playlist-row-padding-inline);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-body);
+}
+
 /* Same compact-sidebar collapse as PlaylistSidebarRow.vue's own
    .playlist-sidebar-row__info rule — see that file's comment for why the
    threshold is a literal px value instead of a custom property. */
 @container (width < 256px) {
+  .playlist-sidebar__item {
+    align-self: center;
+    justify-content: center;
+    gap: 0;
+    inline-size: var(--ui-playlist-row-compact-hit-size);
+    block-size: var(--ui-playlist-row-compact-hit-size);
+    min-height: var(--ui-playlist-row-compact-hit-size);
+    padding: var(--ui-playlist-row-padding-block);
+  }
+
   .playlist-sidebar__info {
     display: none;
+  }
+
+  .playlist-sidebar__empty {
+    display: none;
+  }
+
+  .playlist-sidebar__toolbar {
+    align-self: center;
+    justify-content: center;
+    gap: 0;
+    inline-size: var(--ui-playlist-row-min-height);
+    block-size: var(--ui-playlist-toolbar-height);
+    min-height: var(--ui-playlist-toolbar-height);
+    padding: var(--ui-playlist-row-padding-block);
+  }
+
+  .playlist-sidebar__search {
+    display: none;
+  }
+
+  .playlist-sidebar__item--active {
+    border-color: transparent;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .playlist-sidebar__item--active .playlist-sidebar__thumb {
+    box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent);
   }
 }
 </style>

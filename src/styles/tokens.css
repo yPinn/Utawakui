@@ -135,6 +135,8 @@
   /* --- Sizing: playlist sidebar & rows --- */
   --ui-playlist-sidebar-width: 16rem; /* default/CSS fallback — App.vue overrides live via useSidebarWidth.js */
   --ui-playlist-sidebar-width-min: 4.5rem; /* drag-to-bottom = compact (icon-only) width */
+  --ui-playlist-sidebar-padding-block: var(--ui-space-2);
+  --ui-playlist-sidebar-padding-inline: var(--ui-space-2);
   /* Fixed rem, not viewport-relative, so the cap stays the same regardless
      of window size — only vw would make it grow with the window. */
   --ui-playlist-sidebar-width-max: 24.5rem;
@@ -146,11 +148,51 @@
      with no continuously-resizable zone in between (useSidebarResize.js
      adds a drag-resistance deadzone at this value first). */
   --ui-playlist-sidebar-compact-threshold: 16rem;
-  --ui-playlist-row-min-height: var(--ui-track-row-min-height);
+  --ui-playlist-row-artwork-centerline: 2.25rem; /* 36px: center of the compact sidebar rail */
   --ui-playlist-row-gap: var(--ui-space-2);
   --ui-playlist-row-padding-block: var(--ui-space-1);
-  --ui-playlist-row-padding-inline: var(--ui-space-3);
+  --ui-playlist-row-padding-inline: calc(
+    var(--ui-playlist-row-artwork-centerline) -
+      var(--ui-playlist-sidebar-padding-inline) - var(--ui-border-width) -
+      1.375rem
+  ); /* 5px: border-aware inset keeps expanded and compact thumbs on the 36px rail axis */
+  --ui-playlist-row-thumb-size: 2.75rem; /* 44px: Spotify-like collection artwork size; keep in sync with PLAYLIST_ROW_THUMB_SIZE */
+  --ui-playlist-row-compact-hit-size: calc(
+    var(--ui-playlist-row-thumb-size) + var(--ui-space-2) +
+      var(--ui-border-width) + var(--ui-border-width)
+  ); /* 54px: 44px thumb + 4px inset on each side + 1px border */
+  --ui-playlist-row-selected-background: var(
+    --ui-color-surface-active
+  ); /* neutral selected row, distinct from accent-tinted page selection */
+  --ui-playlist-row-min-height: var(
+    --ui-playlist-row-compact-hit-size
+  ); /* 54px: expanded and compact rows reserve the same block size */
+  --ui-playlist-toolbar-gap: var(--ui-space-2);
+  --ui-playlist-toolbar-height: var(--ui-playlist-row-min-height);
+  --ui-playlist-toolbar-padding-block: 0;
+  --ui-playlist-toolbar-padding-inline: var(--ui-playlist-row-padding-inline);
+  --ui-playlist-toolbar-control-size: var(
+    --ui-playlist-row-thumb-size
+  ); /* 44px: visible search field and create tile inside the stable toolbar row */
+  --ui-playlist-search-padding-block: 0;
+  --ui-playlist-search-padding-inline: 0;
+  --ui-playlist-search-icon-slot-size: var(
+    --ui-playlist-toolbar-control-size
+  ); /* aligns search text start to row labels: icon slot + toolbar gap */
+  --ui-playlist-search-separator-inset-block: var(--ui-space-2);
+  --ui-playlist-search-input-padding-inline-end: var(--ui-space-2);
+  --ui-playlist-section-gap: var(--ui-space-2);
   --ui-playlist-list-gap: var(--ui-space-1); /* gap between rows */
+
+  /* --- Sizing: settings --- */
+  --ui-settings-row-icon-size: var(
+    --ui-playlist-row-thumb-size
+  ); /* 44px: align settings icon tiles to playlist-sidebar thumbnails through a settings-specific role token */
+  --ui-settings-row-min-height: var(
+    --ui-playlist-row-min-height
+  ); /* 54px: settings rows share the playlist rail's stable row rhythm */
+  --ui-settings-row-padding-block: var(--ui-playlist-row-padding-block);
+  --ui-settings-row-padding-inline: var(--ui-space-2);
 
   /* --- Sizing: track rows & player bar --- */
   --ui-track-row-min-height: 3.25rem; /* 52px */
@@ -159,7 +201,29 @@
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
   --ui-track-list-gap: var(--ui-space-1); /* gap between rows */
-  --ui-player-bar-height: 4.25rem; /* 68px: 52px artwork + 2x space-2 padding, matches DESIGN.md */
+  --ui-player-bar-padding-block: var(--ui-space-3);
+  --ui-player-bar-padding-inline: calc(
+    var(--ui-playlist-row-artwork-centerline) - 1.625rem
+  ); /* 10px: 52px artwork centered on the 36px rail axis */
+  --ui-player-bar-artwork-size: var(
+    --ui-track-row-min-height
+  ); /* 52px: keep in sync with PLAYER_BAR_ARTWORK_SIZE */
+  --ui-player-bar-center-max-width: 32rem; /* 512px: stable scrubber width at common desktop sizes */
+  --ui-player-bar-volume-slider-width: 5rem; /* 80px: compact desktop volume control */
+  --ui-player-bar-height: calc(
+    var(--ui-player-bar-artwork-size) + var(--ui-player-bar-padding-block) +
+      var(--ui-player-bar-padding-block)
+  ); /* 76px: 52px artwork + 2x space-3 padding for transport/progress breathing room */
+  --ui-player-bar-panel-edge-offset: var(--ui-space-3);
+  --ui-player-bar-panel-padding: var(--ui-space-4);
+  --ui-player-bar-panel-width: 22.5rem; /* 360px: between playlist sidebar default and max */
+  --ui-player-bar-panel-max-height: 40rem; /* 640px */
+  --ui-player-bar-panel-viewport-offset: calc(
+    var(--ui-player-bar-height) + var(--ui-space-7)
+  );
+  --ui-player-tools-meter-control-height: 3.5rem; /* 56px: prominent but still compact */
+  --ui-player-tools-beat-height: var(--ui-space-1);
+  --ui-queue-track-thumb-size: 3rem; /* 48px: queue panel row artwork, keep in sync with QUEUE_TRACK_THUMB_SIZE */
 
   /* --- Shadow: row indicator --- */
   /* Selected-row indicator shared by UiTrackRow and the playlist sidebars. */
