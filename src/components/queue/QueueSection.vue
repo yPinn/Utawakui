@@ -98,6 +98,10 @@ const emit = defineEmits([
 }
 
 .queue-section__item {
+  --queue-section-drop-indicator-offset: calc(
+    -1 * (var(--ui-focus-width) + var(--ui-border-width))
+  );
+
   position: relative;
 }
 
@@ -120,17 +124,17 @@ const emit = defineEmits([
   position: absolute;
   left: var(--ui-space-1);
   right: var(--ui-space-1);
-  height: 2px;
+  height: var(--ui-focus-width);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-accent);
   pointer-events: none;
 }
 
 .queue-section__item--drop-before::before {
-  top: -3px;
+  top: var(--queue-section-drop-indicator-offset);
 }
 
 .queue-section__item--drop-after::after {
-  bottom: -3px;
+  bottom: var(--queue-section-drop-indicator-offset);
 }
 </style>

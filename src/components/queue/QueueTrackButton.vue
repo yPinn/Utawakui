@@ -1,4 +1,5 @@
 <script setup>
+import { QUEUE_TRACK_THUMB_SIZE } from '../../constants/ui.js';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
@@ -47,7 +48,7 @@ const emit = defineEmits([
     <UiTrackThumb
       class="queue-track__cover"
       :track="track"
-      :size="48"
+      :size="QUEUE_TRACK_THUMB_SIZE"
       background="var(--ui-color-canvas)"
       font-size="var(--ui-font-size-lg)"
     />
@@ -69,7 +70,7 @@ const emit = defineEmits([
 
 <style scoped>
 .queue-track {
-  --queue-track-cover-size: 48px;
+  --queue-track-cover-size: var(--ui-queue-track-thumb-size);
 
   position: relative;
   display: grid;

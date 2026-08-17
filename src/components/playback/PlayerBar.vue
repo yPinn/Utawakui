@@ -3,22 +3,21 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
   ListMusic,
   MicVocal,
-  Minus,
   Pause,
   Play,
-  Plus,
   Repeat,
   Repeat1,
-  RotateCcw,
   Shuffle,
   SkipBack,
   SkipForward,
   SlidersHorizontal,
   Volume2,
   VolumeX,
-  X,
 } from '../../icons/index.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
+import { useMetronome } from '../../composables/useMetronome.js';
+import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import {
   PITCH_CENTS_RANGE,
   PLAYBACK_MODES,
@@ -28,6 +27,7 @@ import {
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
+import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import QueuePanel from '../queue/QueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -57,9 +57,12 @@ const {
   restartSourceQueue,
   toggleShuffle,
 } = usePlaybackQueue();
+const { state: metronomeState } = useMetronome();
+const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 
 const isQueueOpen = ref(false);
-const isPitchTempoOpen = ref(false);
+const isPlayerToolsOpen = ref(false);
+const activeToolTab = ref('adjust');
 
 const progress = computed({
   get: () => state.currentTime,
@@ -88,6 +91,13 @@ const playbackModeActionLabel = computed(() => {
 const playbackModeActive = computed(
   () => state.playbackMode !== PLAYBACK_MODES.sequence,
 );
+const currentTrackAlbum = computed(() => albumForTrack(state.track));
+const currentTrackAlbumCtaLabel = computed(() => {
+  if (!currentTrackAlbum.value) return '';
+  return `${state.track?.title || '目前歌曲'}，前往專輯：${
+    currentTrackAlbum.value.name || '未命名專輯'
+  }`;
+});
 
 const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
 
@@ -108,12 +118,14 @@ const pitchReferenceHz = computed(() =>
   (A4_REFERENCE_HZ * 2 ** (state.pitchCents / 1200)).toFixed(1),
 );
 const tempoLabel = computed(() => `${state.tempoRate.toFixed(2)}x`);
-const pitchTempoActive = computed(
+const playerToolsActive = computed(
   () =>
-    isPitchTempoOpen.value ||
+    isPlayerToolsOpen.value ||
     state.transposeSemitones !== 0 ||
     state.pitchCents !== 0 ||
-    state.tempoRate !== 1,
+    state.tempoRate !== 1 ||
+    state.guideVocalLevel > 0 ||
+    metronomeState.isRunning,
 );
 
 function adjustTranspose(delta) {
@@ -220,6 +232,11 @@ function playQueuedTrack(track) {
   playTrack(toPlayableTrack(track));
 }
 
+function jumpToCurrentTrackAlbum() {
+  if (!currentTrackAlbum.value) return;
+  jumpToAlbum(state.track);
+}
+
 function playPrevious() {
   const previous = previousTrack();
   if (previous) {
@@ -247,12 +264,12 @@ function playNextAfterEnded() {
 // can be open at a time.
 function toggleQueuePanel() {
   isQueueOpen.value = !isQueueOpen.value;
-  if (isQueueOpen.value) isPitchTempoOpen.value = false;
+  if (isQueueOpen.value) isPlayerToolsOpen.value = false;
 }
 
-function togglePitchTempoPanel() {
-  isPitchTempoOpen.value = !isPitchTempoOpen.value;
-  if (isPitchTempoOpen.value) isQueueOpen.value = false;
+function togglePlayerToolsPanel() {
+  isPlayerToolsOpen.value = !isPlayerToolsOpen.value;
+  if (isPlayerToolsOpen.value) isQueueOpen.value = false;
 }
 
 let unsubscribeEnded;
@@ -273,12 +290,26 @@ onUnmounted(() => {
         v-if="state.track"
         class="player-bar__artwork"
         :track="state.track"
-        :size="52"
+        :size="PLAYER_BAR_ARTWORK_SIZE"
         font-size="var(--ui-font-size-lg)"
       />
       <div class="player-bar__track-copy">
         <template v-if="state.track">
+          <button
+            v-if="currentTrackAlbum"
+            type="button"
+            class="player-bar__track-title player-bar__track-title-button"
+            :aria-label="currentTrackAlbumCtaLabel"
+            :title="currentTrackAlbumCtaLabel"
+            @click="jumpToCurrentTrackAlbum"
+          >
+            <UiMarqueeText
+              class="player-bar__track-title-marquee"
+              :text="state.track.title"
+            />
+          </button>
           <UiMarqueeText
+            v-else
             class="player-bar__track-title"
             :text="state.track.title"
           />
@@ -367,11 +398,11 @@ onUnmounted(() => {
 
       <UiButton
         :icon="SlidersHorizontal"
-        :active="pitchTempoActive"
-        :aria-label="isPitchTempoOpen ? '關閉變調變速' : '開啟變調變速'"
-        :aria-pressed="isPitchTempoOpen"
-        title="Pitch & Tempo"
-        @click="togglePitchTempoPanel"
+        :active="playerToolsActive"
+        :aria-label="isPlayerToolsOpen ? '關閉演出工具' : '開啟演出工具'"
+        :aria-pressed="isPlayerToolsOpen"
+        title="演出工具"
+        @click="togglePlayerToolsPanel"
       />
 
       <UiButton
@@ -406,73 +437,16 @@ onUnmounted(() => {
 
     <QueuePanel :open="isQueueOpen" @close="isQueueOpen = false" />
 
-    <div
-      v-show="isPitchTempoOpen"
-      class="pitch-tempo-panel"
-      aria-label="變調、音高與變速"
-    >
-      <header class="pitch-tempo-panel__header">
-        <h2 class="pitch-tempo-panel__title">Pitch & Tempo</h2>
-        <UiButton
-          :icon="X"
-          aria-label="關閉變調變速面板"
-          title="關閉"
-          @click="isPitchTempoOpen = false"
-        />
-      </header>
-
-      <div
-        v-for="row in pitchTempoRows"
-        :key="row.key"
-        class="pitch-tempo-panel__row"
-      >
-        <div class="pitch-tempo-panel__row-header">
-          <span class="pitch-tempo-panel__label">{{ row.label }}</span>
-          <span class="pitch-tempo-panel__value"
-            >{{ row.value
-            }}<span
-              v-if="row.secondaryValue"
-              class="pitch-tempo-panel__value-secondary"
-              >{{ row.secondaryValue }}</span
-            ></span
-          >
-          <UiButton
-            :icon="RotateCcw"
-            :disabled="row.resetDisabled"
-            :aria-label="row.resetTitle"
-            :title="row.resetTitle"
-            @click="row.onReset"
-          />
-        </div>
-        <div class="pitch-tempo-panel__control">
-          <UiButton
-            :icon="Minus"
-            :disabled="row.minusDisabled"
-            :aria-label="row.minusLabel"
-            :title="row.minusTitle"
-            @click="row.onMinus"
-          />
-          <input
-            type="range"
-            :value="row.sliderValue"
-            :min="row.min"
-            :max="row.max"
-            :step="row.step"
-            :disabled="!state.track"
-            :aria-label="row.sliderLabel"
-            :aria-valuetext="row.value"
-            @input="row.onSliderInput($event.target.value)"
-          />
-          <UiButton
-            :icon="Plus"
-            :disabled="row.plusDisabled"
-            :aria-label="row.plusLabel"
-            :title="row.plusTitle"
-            @click="row.onPlus"
-          />
-        </div>
-      </div>
-    </div>
+    <PlayerToolsPanel
+      v-model:active-tab="activeToolTab"
+      :open="isPlayerToolsOpen"
+      :has-track="Boolean(state.track)"
+      :guide-vocal-visible="showGuideVocal"
+      :guide-vocal-active="state.guideVocalLevel > 0"
+      :pitch-tempo-rows="pitchTempoRows"
+      @close="isPlayerToolsOpen = false"
+      @toggle-guide-vocal="toggleGuideVocal"
+    />
   </div>
 </template>
 
@@ -482,7 +456,8 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
-  padding: var(--ui-space-2) var(--ui-space-3);
+  padding: var(--ui-player-bar-padding-block)
+    var(--ui-player-bar-padding-inline);
   background: var(--ui-color-surface);
   border-top: var(--ui-border-width) solid var(--ui-color-border);
   /* Otherwise dragging a slider triggers native text selection, which can
@@ -514,6 +489,53 @@ onUnmounted(() => {
 .player-bar__track-title {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
+  text-decoration: none;
+}
+
+.player-bar__track-title-button {
+  display: block;
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ui-color-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.player-bar__track-title-button:hover {
+  color: var(--ui-color-text);
+}
+
+.player-bar__track-title-button :deep(.ui-marquee__text) {
+  text-decoration-line: none;
+  text-decoration-color: currentColor;
+}
+
+.player-bar__track-title-button:hover :deep(.ui-marquee__text),
+.player-bar__track-title-button:focus-visible :deep(.ui-marquee__text) {
+  text-decoration-line: underline;
+  text-decoration-thickness: var(--ui-border-width);
+  text-underline-offset: 0.12em;
+}
+
+.player-bar__track-title-button:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+  border-radius: var(--ui-radius-xs);
+}
+
+.player-bar__track-title-marquee {
+  color: inherit;
+  font-size: var(--ui-font-size-sm);
+  font-weight: inherit;
+  line-height: inherit;
 }
 
 .player-bar__track-artist {
@@ -526,7 +548,8 @@ onUnmounted(() => {
 /* Cap progress width on wide windows. */
 .player-bar__center {
   flex: 2;
-  max-width: 24rem;
+  min-width: 0;
+  max-width: var(--ui-player-bar-center-max-width);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -582,7 +605,7 @@ onUnmounted(() => {
 }
 
 .player-bar__volume input {
-  width: 5rem; /* rem, not px: see .player-bar__center's max-width above */
+  width: var(--ui-player-bar-volume-slider-width);
 }
 
 .player-bar__volume-value {
@@ -591,87 +614,5 @@ onUnmounted(() => {
   text-align: right;
   font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
-}
-
-/* Same fixed bottom-right float as QueuePanel's .queue-panel
-   (mutually exclusive, see togglePitchTempoPanel) — no shared component
-   since this has no drag/drop or list to justify one. */
-.pitch-tempo-panel {
-  position: fixed;
-  right: var(--ui-space-3);
-  bottom: calc(var(--ui-player-bar-height) + var(--ui-space-3));
-  z-index: var(--ui-z-dropdown);
-  width: min(280px, calc(100vw - var(--ui-space-5)));
-  padding: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
-  box-shadow: var(--ui-shadow-overlay);
-}
-
-.pitch-tempo-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-  margin-bottom: var(--ui-space-4);
-}
-
-.pitch-tempo-panel__title {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
-}
-
-/* Rows are two lines each (header, control) — tighter than the old
-   three/four-line stack, so the gap between rows can be tighter too. */
-.pitch-tempo-panel__row + .pitch-tempo-panel__row {
-  margin-top: var(--ui-space-3);
-}
-
-.pitch-tempo-panel__row-header {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  margin-bottom: var(--ui-space-1);
-}
-
-.pitch-tempo-panel__label {
-  flex: 1;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-}
-
-/* Inline with the label instead of a separate centered line. The reset
-   button stays always-rendered (disabled at default, not v-if'd) so it
-   doesn't pop in/out and shift the row. */
-.pitch-tempo-panel__value {
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
-  font-variant-numeric: tabular-nums;
-}
-
-/* Folded into Pitch's value line (see pitchReferenceHz) instead of its
-   own row — supplementary info gets muted/lighter weight, not a new row. */
-.pitch-tempo-panel__value-secondary {
-  margin-left: var(--ui-space-1);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: normal;
-  font-variant-numeric: tabular-nums;
-}
-
-.pitch-tempo-panel__control {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-}
-
-.pitch-tempo-panel__control input {
-  flex: 1;
 }
 </style>

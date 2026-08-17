@@ -1,6 +1,5 @@
 <script setup>
 import { computed } from 'vue';
-import { X } from '../../icons/index.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
@@ -8,8 +7,8 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import { albumPlaylistByTrackId } from '../../utils/albumMembership.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
+import PlayerBarPanel from '../playback/PlayerBarPanel.vue';
 import QueueSection from './QueueSection.vue';
-import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 
 defineProps({
@@ -97,17 +96,13 @@ const {
 </script>
 
 <template>
-  <aside v-show="open" class="queue-panel" aria-label="播放佇列">
-    <header class="queue-panel__header">
-      <h2 class="queue-panel__title">佇列</h2>
-      <UiButton
-        :icon="X"
-        aria-label="關閉佇列"
-        title="關閉佇列"
-        @click="emit('close')"
-      />
-    </header>
-
+  <PlayerBarPanel
+    :open="open"
+    title="佇列"
+    aria-label="播放佇列"
+    close-label="關閉佇列"
+    @close="emit('close')"
+  >
     <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
 
     <template v-else>
@@ -166,50 +161,10 @@ const {
         @track-drag-end="clearSourceDragState"
       />
     </template>
-  </aside>
+  </PlayerBarPanel>
 </template>
 
 <style scoped>
-.queue-panel {
-  --queue-panel-width: 360px;
-  /* 120px was a hand-guessed "player bar + top margin" reservation that
-     didn't match --ui-player-bar-height's own derivation (see tokens.css);
-     re-expressed as the token plus the remaining ~48px of reserved margin
-     so the two stop drifting independently. Net effect is a ~4px taller
-     max-height (120px → 116px reserved), consistent with the token
-     correcting the player bar's guessed height from 72px to 68px. */
-  --queue-panel-max-height-offset: calc(var(--ui-player-bar-height) + 48px);
-
-  position: fixed;
-  right: var(--ui-space-3);
-  bottom: calc(var(--ui-player-bar-height) + var(--ui-space-3));
-  z-index: var(--ui-z-dropdown);
-  width: min(var(--queue-panel-width), calc(100vw - var(--ui-space-5)));
-  max-height: min(640px, calc(100vh - var(--queue-panel-max-height-offset)));
-  overflow: auto;
-  padding: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
-  box-shadow: var(--ui-shadow-overlay);
-}
-
-.queue-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-  margin-bottom: var(--ui-space-5);
-}
-
-.queue-panel__title {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-title);
-}
-
 .queue-panel__text-action {
   padding: 0;
   border: 0;
