@@ -1,7 +1,9 @@
 'use strict';
 
 // DSP pipeline: ffmpeg decode -> STFT -> ONNX inference -> ISTFT -> per-preset
-// 4-channel WAV. CPU-bound; run only in vocalSeparationWorker.js.
+// 4-channel WAV. separateTrack() is CPU-bound and runs only inside
+// vocalSeparationWorker.js; ensureModel() below runs on the main process
+// (see main.js).
 
 const fs = require('fs');
 const path = require('path');
@@ -430,8 +432,8 @@ function computeSecondary(primaryPeakScale, normalizedMix, compensate) {
 // Pure encode — no filesystem access, kept separate from writeWavAtomic so
 // it's directly unit-testable. `channels` is interleaved in the order
 // given — for a separation result that's [instL, instR, vocL, vocR] (see
-// library.js's SEPARATIONS_DIRNAME comment for the player-side half of this
-// fixed order).
+// electron/lib/library/constants.js's SEPARATIONS_DIRNAME comment for the
+// player-side half of this fixed order).
 function encodeWav(channels, sampleRate) {
   const numChannels = channels.length;
   const numSamples = channels[0].length;
@@ -485,7 +487,8 @@ function writeWavAtomic(filePath, channels, sampleRate) {
 }
 
 // Writes a single 4-channel <presetId>.wav (0/1 instrumental L/R, 2/3
-// vocals L/R — see library.js's SEPARATIONS_DIRNAME comment) into
+// vocals L/R — see electron/lib/library/constants.js's SEPARATIONS_DIRNAME
+// comment) into
 // outputDir, one file per preset so switching presets never has to
 // overwrite whichever file is currently open for playback. One file per
 // result, not two, so playback stays sample-accurate: two independently-
@@ -510,7 +513,7 @@ async function separateTrack(
   // assumption the channel write below (0/1 instrumental, 2/3 vocals)
   // hard-codes. A vocals-primary model would silently swap the two
   // channels without this — fail loudly instead of shipping a corrupted
-  // stems.wav that usePlayer.js's guide-vocal graph can't detect.
+  // <presetId>.wav that usePlayer.js's guide-vocal graph can't detect.
   if (model.primaryStem !== 'instrumental') {
     throw new Error(
       `Model "${preset.modelId}" has primaryStem "${model.primaryStem}" — ` +
@@ -561,8 +564,9 @@ async function separateTrack(
 
   // Manifest update — only after the rename above has succeeded, so a
   // crash mid-write can't leave the manifest claiming a result that
-  // doesn't exist on disk. Selects this result (see library.js's
-  // recordSeparationResult) — it's what the caller just asked to run.
+  // doesn't exist on disk. Selects this result (see
+  // electron/lib/library/separationManifest.js's recordSeparationResult) —
+  // it's what the caller just asked to run.
   recordSeparationResult(outputDir, {
     presetId,
     modelId: preset.modelId,

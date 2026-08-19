@@ -33,7 +33,7 @@ const { enqueueTrack } = usePlaybackQueue();
 const editDetailsPlaylistId = ref(null);
 
 // The join itself is the "ghost trackId" filter — a track deleted outside
-// the app just silently drops out, per library.js's orphan doctrine. Shared
+// the app just silently drops out, per tracks.js's orphan doctrine. Shared
 // by SetlistView's own playlistTracks and editDetailsCoverTracks below
 // (whichever playlist the modal targets, which may not be the selected
 // one) so both stay in sync with one join.

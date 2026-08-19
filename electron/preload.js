@@ -26,10 +26,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   setSidebarWidth: (width) =>
     ipcRenderer.invoke('config:set-sidebar-width', width),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
-  // YouTube playlist URL/ID resolution — unrelated to the user-named
-  // playlists API below (listPlaylists/createPlaylist/etc.). Resolves to
-  // null when the input isn't a playlist URL — not an error, the renderer
-  // falls back to the single-video downloadAudio flow.
+  // YouTube playlist URL/ID resolution — distinct from the user-named
+  // playlists API below (listPlaylists/createPlaylist/etc.).
   fetchYoutubePlaylist: (input) =>
     ipcRenderer.invoke('yt:fetch-playlist', input),
   resolveImportSource: (input) =>
@@ -43,24 +41,17 @@ contextBridge.exposeInMainWorld('Utawakui', {
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
-  // Manual, repeatable metadata refresh — reads only already-downloaded
-  // info.json sidecars (no network), so it's fast and safe to call again.
-  // Resolves to { updated } with the number of tracks whose album/
-  // releaseYear got filled in.
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
+  getYtdlpStatus: () => ipcRenderer.invoke('ytdlp:get-status'),
+  checkYtdlpUpdate: () => ipcRenderer.invoke('ytdlp:check-update'),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   probeMusixmatchLyrics: (trackId) =>
     ipcRenderer.invoke('lyrics:probe-musixmatch', trackId),
-  // Manual counterpart to the passive lrclib backfill — full ranked
-  // candidate list, not just the one auto-confidence match.
-  // Search results already carry a short preview per candidate — no
-  // separate preview fetch needed.
   searchLyricsCandidates: (trackId) =>
     ipcRenderer.invoke('lyrics:search-candidates', trackId),
   saveLyricsCandidate: (trackId, candidateId) =>
     ipcRenderer.invoke('lyrics:save-candidate', trackId, candidateId),
-  // One-time repair for lrclib sources saved before the label field existed.
   backfillLyricsSourceLabels: (trackId) =>
     ipcRenderer.invoke('lyrics:backfill-source-labels', trackId),
   setLyricsSourceLabel: (trackId, filename, label) =>
@@ -71,9 +62,6 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:import-text', trackId, payload),
   importLyricsFile: (trackId) =>
     ipcRenderer.invoke('lyrics:import-file', trackId),
-  // Deletes the original audio file and its separation output together —
-  // resolves to false if trackId no longer matches a real file. Also
-  // cascades into any playlist that referenced it (see main.js's handler).
   deleteTrack: (trackId) => ipcRenderer.invoke('library:delete-track', trackId),
   updateTrackMetadata: (trackId, fields) =>
     ipcRenderer.invoke('library:update-track-metadata', trackId, fields),
@@ -90,47 +78,31 @@ contextBridge.exposeInMainWorld('Utawakui', {
   deletePlaylist: (id) => ipcRenderer.invoke('playlists:delete', id),
   reorderPlaylist: (draggedId, targetId, position) =>
     ipcRenderer.invoke('playlists:reorder', draggedId, targetId, position),
-  // Album collections are read-only from the renderer's side — main.js
-  // silently no-ops this against an album's id (returns the array
-  // unchanged) rather than throwing, same "trust boundary lives in main"
-  // pattern as extractVideoId().
   setPlaylistTracks: (id, trackIds) =>
     ipcRenderer.invoke('playlists:set-tracks', id, trackIds),
-  // Create-or-update path for album imports, keyed by source (not name) so
-  // re-importing the same album updates it in place instead of
-  // duplicating it.
   upsertAlbum: (payload) =>
     ipcRenderer.invoke('playlists:upsert-album', payload),
-  // Manual escape hatch for when the automatic album/playlist heuristic
-  // guesses wrong on an existing collection.
   setPlaylistKind: (id, kind) =>
     ipcRenderer.invoke('playlists:set-kind', id, kind),
   setPlaylistDescription: (id, description) =>
     ipcRenderer.invoke('playlists:set-description', id, description),
-  // Opens the native OS file picker directly — no in-app image
-  // cropper/uploader. Resolves to the unchanged array if the user cancels.
   choosePlaylistCover: (id) => ipcRenderer.invoke('playlists:choose-cover', id),
   clearPlaylistCover: (id) => ipcRenderer.invoke('playlists:clear-cover', id),
-  // Slow (tens of seconds). Rejects if another separation is already
-  // running, not just when this track fails. Named runSeparation (not
-  // separateTrack) to stay distinct from vocalSeparation.js's own
-  // separateTrack() function that this eventually calls into.
+  // Named runSeparation, not separateTrack, to stay distinct from
+  // vocalSeparation.js's own separateTrack() that this eventually calls.
   runSeparation: (trackId, presetId) =>
     ipcRenderer.invoke('separation:run', trackId, presetId),
-  // Instant — switches which already-produced result plays, no DSP
-  // involved. Rejects if presetId has no recorded result yet.
   selectSeparationResult: (trackId, presetId) =>
     ipcRenderer.invoke('separation:select', trackId, presetId),
-  // Zero or more fire per runSeparation() call, before its promise
-  // settles — see main.js's separation:run handler for the stage sequence.
+  // Fires zero or more times before runSeparation()'s promise settles.
+  // These `on*` methods return an unsubscribe function so callers can clean
+  // up on unmount instead of reaching for raw ipcRenderer (kept out of the
+  // renderer entirely under contextIsolation).
   onSeparationProgress: (callback) => {
     const listener = (event, payload) => callback(payload);
     ipcRenderer.on('separation:progress', listener);
     return () => ipcRenderer.removeListener('separation:progress', listener);
   },
-  // Returns an unsubscribe function so callers can clean up on unmount
-  // instead of reaching for raw ipcRenderer (kept out of the renderer
-  // entirely under contextIsolation).
   onLibraryUpdated: (callback) => {
     const listener = () => callback();
     ipcRenderer.on('library:updated', listener);
@@ -142,12 +114,9 @@ contextBridge.exposeInMainWorld('Utawakui', {
     return () =>
       ipcRenderer.removeListener('library:backfill-status', listener);
   },
-  // One-way notification (send, not invoke) — main has nothing to return,
-  // it just redraws the Windows taskbar thumbar to match.
   setPlaybackState: (state) => ipcRenderer.send('player:state', state),
-  // Fires when a taskbar thumbar button is clicked; main never touches
-  // playback itself, it only relays the request back to the renderer,
-  // which is the sole owner of the <audio> element (see usePlayer.js).
+  // Relays a thumbar click; the renderer stays the sole owner of the
+  // <audio> element (see usePlayer.js), main never touches playback itself.
   onPlayerCommand: (callback) => {
     const listener = (event, command) => callback(command);
     ipcRenderer.on('player:command', listener);

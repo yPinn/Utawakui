@@ -85,7 +85,7 @@ async function refreshMetadata() {
 
 if (typeof window !== 'undefined' && window.Utawakui) {
   refresh();
-  // Background metadata backfill (electron/lib/library.js's
+  // Background metadata backfill (electron/lib/library/backfill.js's
   // runBackfillPass) pushes this after it changes something, and track
   // deletion/import elsewhere in the app does too.
   unsubscribeLibraryUpdated = window.Utawakui.onLibraryUpdated(refresh);

@@ -331,7 +331,7 @@ function togglePlaylistSort(key) {
 }
 
 // Deletes both the original file and its separation output (see
-// electron/lib/library.js's deleteTrack), and cascades into every
+// electron/lib/library/tracks.js's deleteTrack), and cascades into every
 // playlist that referenced it (main.js composes that cascade) — the
 // confirm dialog says so explicitly since there's no undo. The list
 // refreshes itself via the existing library:updated subscription, not a

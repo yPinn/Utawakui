@@ -10,10 +10,9 @@ const CHANNEL_ARTIST_PATTERN = [
 ].join('|');
 
 const CHANNEL_ARTIST_RE = new RegExp(CHANNEL_ARTIST_PATTERN, 'iu');
-// Shared by downloader.js (filters YT Music search results) and
-// importResolver.js (scores every candidate) — kept in one place after the
-// two definitions drifted apart (only one of them matched bare "official
-// video" without "music"/"mv").
+// Used by importResolver.js to score candidates — kept in one place after
+// two separate definitions drifted apart (only one of them matched bare
+// "official video" without "music"/"mv").
 const OFFICIAL_MV_TITLE_RE =
   /\b(?:official\s+)?(?:music\s+video|mv)\b|\bofficial\s+video\b/iu;
 const BRACKET_PAIRS = [

@@ -2,7 +2,7 @@
 
 // Heuristic-only: classifies an already-imported collection as an 'album'
 // or a 'playlist' from its member tracks' album metadata (indexed via
-// library.js's listTracks()/album field). Independent of youtube.js's
+// electron/lib/library/tracks.js's listTracks()/album field). Independent of youtube.js's
 // classifyPlaylistKind, which classifies by *source* list id at import
 // time — this one is for the one-time migration of existing collections
 // that predate the kind field, and for the manual "convert" action's
