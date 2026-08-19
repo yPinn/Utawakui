@@ -8,16 +8,12 @@ const {
   stripTrackDecorations,
 } = require('./musicTitle.js');
 const { buildTrackIdentity } = require('./trackIdentity.js');
+const { durationDelta } = require('./lrclib.js');
 
-// Deliberately prioritizes audio-native sources over official MVs — an MV
-// gambles on whether it happens to have usable CC lyrics, while a YT Music
-// song / Topic-channel upload / "Official Audio" upload is a far more
-// reliable lyrics source. This table is the finalized ranking mechanism,
-// not a placeholder for a "prove this is the same song" feature — that
-// turned out to be unprovable anonymously (see downloader.js's
-// buildPlaybackSearchSources comment), so ranking-by-score plus letting the
-// user pick from the full candidate list (see ImportView.vue) is the
-// intended long-term design, not a stopgap.
+// Prioritizes audio-native sources over MVs for lyrics reliability.
+// `yt-music-song` is unreachable via search now (candidate search stays
+// same-platform, see buildPlaybackSearchSources in playbackSearch.js), but
+// stays here for the pasted-YT-Music-source path and this file's tests.
 const AUDIO_KIND_SCORES = {
   'yt-music-song': 95,
   'youtube-topic-audio': 88,
@@ -33,11 +29,6 @@ const OFFICIAL_AUDIO_RE = /\bofficial\s+audio\b|\baudio\s+only\b/iu;
 const LIVE_VERSION_RE =
   /\b(?:live|session|concert|tour|showcase|performance)\b/iu;
 const TOPIC_ARTIST_RE = /\btopic\b/iu;
-
-function durationDelta(first, second) {
-  if (!Number.isFinite(first) || !Number.isFinite(second)) return null;
-  return Math.abs(Math.round(first) - Math.round(second));
-}
 
 function durationScore(delta) {
   if (delta === null) return 0;

@@ -324,6 +324,49 @@ async function readJsonResponse(response) {
   }
 }
 
+// Shared by findLrclibSyncedLyrics() and searchLrclibCandidates() below —
+// runs one /api/search request and normalizes its outcome so both callers
+// merge results the same way (findLrclibSyncedLyrics loops sequentially so
+// it can short-circuit on the first auto-confidence hit; searchLrclibCandidates
+// has no such dependency and runs every query in parallel).
+async function fetchLrclibQueryCandidates(query, fetchFn, baseUrl) {
+  const url = buildLrclibUrl('/api/search', query.params, baseUrl);
+  let response;
+  try {
+    response = await fetchFn(url, {
+      headers: { 'User-Agent': 'Utawakui/0.1' },
+      signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+    });
+  } catch {
+    return { status: 'error', reason: 'network-error' };
+  }
+
+  const payload = await readJsonResponse(response);
+  if (!response.ok) {
+    if (response.status === 404) return { status: 'ok', candidates: [] };
+    return {
+      status: 'error',
+      reason: 'http-error',
+      httpStatus: response.status,
+    };
+  }
+  if (!Array.isArray(payload)) {
+    return { status: 'error', reason: 'invalid-json' };
+  }
+  return { status: 'ok', candidates: payload };
+}
+
+function mergeLrclibCandidatesByKey(map, candidates) {
+  candidates.forEach((candidate, index) => {
+    const key =
+      candidate?.id ??
+      `${normalizeForCompare(candidate?.trackName)}|${normalizeForCompare(
+        candidate?.artistName,
+      )}|${candidate?.duration ?? ''}|${index}`;
+    if (!map.has(key)) map.set(key, candidate);
+  });
+}
+
 function buildAvailableResult(best) {
   return {
     provider: LRCLIB_PROVIDER,
@@ -372,47 +415,20 @@ async function findLrclibSyncedLyrics(track, options = {}) {
 
   const candidatesByKey = new Map();
   for (const query of queries) {
-    const url = buildLrclibUrl('/api/search', query.params, options.baseUrl);
-    let response;
-    try {
-      response = await fetchFn(url, {
-        headers: { 'User-Agent': 'Utawakui/0.1' },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
-    } catch {
+    const page = await fetchLrclibQueryCandidates(
+      query,
+      fetchFn,
+      options.baseUrl,
+    );
+    if (page.status === 'error') {
       return {
         provider: LRCLIB_PROVIDER,
         status: 'error',
-        reason: 'network-error',
+        reason: page.reason,
+        ...(page.httpStatus ? { httpStatus: page.httpStatus } : {}),
       };
     }
-
-    const payload = await readJsonResponse(response);
-    if (!response.ok) {
-      if (response.status === 404) continue;
-      return {
-        provider: LRCLIB_PROVIDER,
-        status: 'error',
-        reason: 'http-error',
-        httpStatus: response.status,
-      };
-    }
-    if (!Array.isArray(payload)) {
-      return {
-        provider: LRCLIB_PROVIDER,
-        status: 'error',
-        reason: 'invalid-json',
-      };
-    }
-
-    payload.forEach((candidate, index) => {
-      const key =
-        candidate?.id ??
-        `${normalizeForCompare(candidate?.trackName)}|${normalizeForCompare(
-          candidate?.artistName,
-        )}|${candidate?.duration ?? ''}|${index}`;
-      if (!candidatesByKey.has(key)) candidatesByKey.set(key, candidate);
-    });
+    mergeLrclibCandidatesByKey(candidatesByKey, page.candidates);
 
     const bestSoFar = pickBestSyncedCandidate(
       track,
@@ -494,53 +510,28 @@ async function searchLrclibCandidates(track, options = {}) {
     };
   }
 
-  const candidatesByKey = new Map();
-  for (const query of queries) {
-    const url = buildLrclibUrl('/api/search', query.params, options.baseUrl);
-    let response;
-    try {
-      response = await fetchFn(url, {
-        headers: { 'User-Agent': 'Utawakui/0.1' },
-        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-      });
-    } catch {
-      return {
-        provider: LRCLIB_PROVIDER,
-        status: 'error',
-        reason: 'network-error',
-        candidates: [],
-      };
-    }
-
-    const payload = await readJsonResponse(response);
-    if (!response.ok) {
-      if (response.status === 404) continue;
-      return {
-        provider: LRCLIB_PROVIDER,
-        status: 'error',
-        reason: 'http-error',
-        httpStatus: response.status,
-        candidates: [],
-      };
-    }
-    if (!Array.isArray(payload)) {
-      return {
-        provider: LRCLIB_PROVIDER,
-        status: 'error',
-        reason: 'invalid-json',
-        candidates: [],
-      };
-    }
-
-    payload.forEach((candidate, index) => {
-      const key =
-        candidate?.id ??
-        `${normalizeForCompare(candidate?.trackName)}|${normalizeForCompare(
-          candidate?.artistName,
-        )}|${candidate?.duration ?? ''}|${index}`;
-      if (!candidatesByKey.has(key)) candidatesByKey.set(key, candidate);
-    });
+  // Runs concurrently — see fetchLrclibQueryCandidates's comment above for
+  // why this differs from findLrclibSyncedLyrics.
+  const pages = await Promise.all(
+    queries.map((query) =>
+      fetchLrclibQueryCandidates(query, fetchFn, options.baseUrl),
+    ),
+  );
+  const firstError = pages.find((page) => page.status === 'error');
+  if (firstError) {
+    return {
+      provider: LRCLIB_PROVIDER,
+      status: 'error',
+      reason: firstError.reason,
+      ...(firstError.httpStatus ? { httpStatus: firstError.httpStatus } : {}),
+      candidates: [],
+    };
   }
+
+  const candidatesByKey = new Map();
+  pages.forEach((page) =>
+    mergeLrclibCandidatesByKey(candidatesByKey, page.candidates),
+  );
 
   const pool = [...candidatesByKey.values()].filter(
     (candidate) =>

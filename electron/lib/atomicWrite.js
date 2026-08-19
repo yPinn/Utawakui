@@ -10,8 +10,8 @@ function atomicWriteBuffer(filePath, buffer) {
   fs.renameSync(tmpPath, filePath);
 }
 
-// Shared by config.js and library.js — both persist small JSON files that
-// must never be left half-written if the process dies mid-save.
+// Shared by callers that persist small JSON files which must never be left
+// half-written if the process dies mid-save.
 function atomicWriteJson(filePath, data) {
   atomicWriteBuffer(filePath, JSON.stringify(data, null, 2));
 }
@@ -20,4 +20,21 @@ function atomicWriteText(filePath, text) {
   atomicWriteBuffer(filePath, Buffer.from(text, 'utf8'));
 }
 
-module.exports = { atomicWriteJson, atomicWriteText, atomicWriteBuffer };
+// Shared by callers that preserve unreadable/corrupted data files (which
+// can't be regenerated) by renaming them aside, best-effort, rather than
+// silently overwriting them with defaults on the next save.
+function backupCorrupted(filePath) {
+  const backupPath = `${filePath}.corrupted-${Date.now()}`;
+  try {
+    fs.renameSync(filePath, backupPath);
+  } catch {
+    // best-effort — if even the rename fails, just fall through to defaults
+  }
+}
+
+module.exports = {
+  atomicWriteJson,
+  atomicWriteText,
+  atomicWriteBuffer,
+  backupCorrupted,
+};

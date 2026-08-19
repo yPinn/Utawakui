@@ -3,7 +3,7 @@
 const crypto = require('crypto');
 const fs = require('fs');
 const path = require('path');
-const { atomicWriteJson } = require('./atomicWrite');
+const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 
 // User-authored data: not library metadata and not machine-local config.
 // Lives beside tracks; UUID ids stay stable for future preset references.
@@ -21,16 +21,6 @@ const DEFAULT_PLAYLIST_NAME_PREFIX = '播放清單 #';
 const PLAYLIST_KINDS = new Set(['playlist', 'album']);
 const DEFAULT_PLAYLIST_KIND = 'playlist';
 
-// Preserve corrupted playlist data because it cannot be regenerated.
-function backupCorrupted(filePath) {
-  const backupPath = `${filePath}.corrupted-${Date.now()}`;
-  try {
-    fs.renameSync(filePath, backupPath);
-  } catch {
-    // best-effort — if even the rename fails, just fall through to empty
-  }
-}
-
 // Coerces one raw entry into a well-formed playlist or drops it entirely —
 // keeps a single bad entry from taking down the whole file the way a
 // top-level shape mismatch does.
@@ -46,8 +36,9 @@ function sanitizePlaylist(entry) {
       ? entry.description.slice(0, MAX_DESCRIPTION_LENGTH)
       : '';
 
-  // Bare filename (e.g. 'cover.jpg') written by library.js's
-  // writePlaylistCoverFile — never an absolute path, same "derive the URL at
+  // Bare filename (e.g. 'cover.jpg') written by
+  // electron/lib/library/playlistCovers.js's writePlaylistCoverFile — never
+  // an absolute path, same "derive the URL at
   // the boundary" rule as track thumbnails. Absent means "no custom cover,
   // fall back to the derived track-thumbnail collage."
   const coverImage =
@@ -137,7 +128,7 @@ function loadPlaylists(dir) {
     .slice(0, MAX_PLAYLISTS);
 }
 
-// mkdirSync first — unlike saveIndexEntry (library.js), which only ever
+// mkdirSync first — unlike saveIndexEntry (electron/lib/library/metadataIndex.js), which only ever
 // runs after a successful download has already created the dir, this can
 // be the very first write to a fresh download dir (e.g. creating a
 // playlist before downloading anything), and atomicWriteJson itself does
@@ -309,8 +300,9 @@ function setPlaylistDescription(dir, id, description) {
   return next;
 }
 
-// filename is a bare basename like 'cover.jpg' (see library.js's
-// writePlaylistCoverFile, the only writer of that directory), or null/falsy
+// filename is a bare basename like 'cover.jpg' (see
+// electron/lib/library/playlistCovers.js's writePlaylistCoverFile, the only
+// writer of that directory), or null/falsy
 // to clear back to the derived track-thumbnail collage.
 function setPlaylistCover(dir, id, filename) {
   const playlists = loadPlaylists(dir);
@@ -331,8 +323,9 @@ function setPlaylistCover(dir, id, filename) {
 }
 
 // Pure string builder, no filesystem access — filename must already be a
-// validated bare basename (see library.js's resolvePlaylistCoverPath, the
-// read-side counterpart that re-checks it against what's actually on disk).
+// validated bare basename (see electron/lib/library/playlistCovers.js's
+// resolvePlaylistCoverPath, the read-side counterpart that re-checks it
+// against what's actually on disk).
 function buildPlaylistCoverUrl(playlistId, filename) {
   return `utawakui-media://playlist-cover/${encodeURIComponent(playlistId)}/${encodeURIComponent(filename)}`;
 }
@@ -436,7 +429,7 @@ function removeTrackFromAllPlaylists(dir, trackId) {
 // (electron/lib/albumClassifier.js) and stamps kind: 'album' | 'playlist'
 // accordingly. Gated on the raw on-disk version — loadPlaylists doesn't
 // track version at all, so this reads the file directly, same pattern as
-// library.js's migrateTrackAlbumMetadata. Backs up the pre-migration file
+// electron/lib/library/metadataIndex.js's migrateTrackAlbumMetadata. Backs up the pre-migration file
 // first: not corruption, but a schema change to unrecoverable user data
 // deserves the same safety net as backupCorrupted. classify is injected
 // (classifyCollectionKind) so this module stays free of any

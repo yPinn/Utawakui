@@ -6,6 +6,7 @@ const {
   normalizeIsrc,
   secondsFromDuration,
 } = require('./trackIdentity.js');
+const { VIDEO_ID_RE: YOUTUBE_VIDEO_ID_RE } = require('./youtube.js');
 
 const PLATFORM_HOSTS = [
   ['spotify', /(^|\.)spotify\.com$/iu],
@@ -32,7 +33,6 @@ const PLATFORM_PATH_PATTERNS = {
   tidal: [/\/(?:browse\/)?track\/(\d+)/u],
 };
 const SPOTIFY_TRACK_URI_RE = /^spotify:track:([A-Za-z0-9]+)$/u;
-const YOUTUBE_VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/u;
 
 function identifyPlatform(hostname) {
   const host = normalizeText(hostname).toLocaleLowerCase();
