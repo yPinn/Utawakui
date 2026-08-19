@@ -95,6 +95,16 @@ const emit = defineEmits([
   gap: var(--ui-space-1);
   margin: 0;
   padding: 0;
+  /* This box holds only rows (no heading inside it), so rounding its own
+     height down to a row unit always lands exactly on a row boundary —
+     unlike rounding the whole panel, which has header/heading content above
+     the rows throwing the alignment off. */
+  max-height: round(
+    down,
+    var(--ui-queue-panel-max-height),
+    var(--ui-queue-panel-row-unit)
+  );
+  overflow-y: auto;
 }
 
 .queue-section__item {

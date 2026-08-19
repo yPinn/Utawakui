@@ -592,7 +592,7 @@ onUnmounted(() => {
 .player-bar__extras {
   display: flex;
   align-items: center;
-  gap: var(--ui-space-3);
+  gap: var(--ui-space-1);
   flex: 1;
   min-width: 0;
   justify-content: flex-end;

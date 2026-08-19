@@ -208,7 +208,7 @@
   --ui-player-bar-artwork-size: var(
     --ui-track-row-min-height
   ); /* 52px: keep in sync with PLAYER_BAR_ARTWORK_SIZE */
-  --ui-player-bar-center-max-width: 32rem; /* 512px: stable scrubber width at common desktop sizes */
+  --ui-player-bar-center-max-width: 22rem; /* 352px: stable scrubber width at common desktop sizes */
   --ui-player-bar-volume-slider-width: 5rem; /* 80px: compact desktop volume control */
   --ui-player-bar-height: calc(
     var(--ui-player-bar-artwork-size) + var(--ui-player-bar-padding-block) +
@@ -217,6 +217,11 @@
   --ui-player-bar-panel-edge-offset: var(--ui-space-3);
   --ui-player-bar-panel-padding: var(--ui-space-4);
   --ui-player-bar-panel-width: 22.5rem; /* 360px: between playlist sidebar default and max */
+  /* Generic viewport-safety ceiling shared by every player-bar panel. Panels
+     size to their own content by default — this only stops one from running
+     off the top of a short window, so it's deliberately generous rather than
+     tuned to any one panel's content (e.g. queue rows; see
+     --ui-queue-panel-max-height for that section's own, tighter sizing). */
   --ui-player-bar-panel-max-height: 40rem; /* 640px */
   --ui-player-bar-panel-viewport-offset: calc(
     var(--ui-player-bar-height) + var(--ui-space-7)
@@ -224,6 +229,15 @@
   --ui-player-tools-meter-control-height: 3.5rem; /* 56px: prominent but still compact */
   --ui-player-tools-beat-height: var(--ui-space-1);
   --ui-queue-track-thumb-size: 3rem; /* 48px: queue panel row artwork, keep in sync with QUEUE_TRACK_THUMB_SIZE */
+  /* Per-section row-list cap (QueueSection.vue's <ul>), not the whole panel —
+     that box holds only rows with no heading inside it, so rounding it down
+     to a row unit always lands on a row boundary. Rounding the whole panel
+     instead doesn't work: the heading/other sections above the list throw
+     the alignment off by a non-row-multiple amount. */
+  --ui-queue-panel-max-height: 28rem; /* 448px: comfortably shows several rows without reaching for the full viewport; each section list still scrolls internally beyond that */
+  --ui-queue-panel-row-unit: calc(
+    var(--ui-queue-track-thumb-size) + 3 * var(--ui-space-1)
+  ); /* 60px: queue row height (thumb + row padding) + list gap */
 
   /* --- Shadow: row indicator --- */
   /* Selected-row indicator shared by UiTrackRow and the playlist sidebars. */
