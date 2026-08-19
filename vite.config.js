@@ -19,8 +19,10 @@ module.exports = defineConfig({
     coverage: {
       // v8 (the default) double-counts electron/lib CJS files that are both
       // `import`-ed by their own test file and `require()`-d by another
-      // instrumented module (e.g. library.js requires youtube.js): the two
-      // separately-loaded instances get separate V8 script coverage
+      // instrumented module (e.g. electron/lib/library/tracks.js requires
+      // youtube.js — and many test files separately require
+      // electron/lib/library/paths.js, the same multi-require scenario):
+      // the two separately-loaded instances get separate V8 script coverage
       // records, and vitest's v8-to-istanbul merge keeps only one instead
       // of unioning them — confirmed by reproducing with youtube.test.js +
       // library.test.js (90.9%/100% funcs isolated -> 42.42%/0% funcs
@@ -33,7 +35,7 @@ module.exports = defineConfig({
       clean: true,
       skipFull: true,
       include: [
-        'electron/lib/*.js',
+        'electron/lib/**/*.js',
         'src/utils/*.js',
         'src/composables/useDragReorder.js',
         'src/composables/useImportSession.js',
