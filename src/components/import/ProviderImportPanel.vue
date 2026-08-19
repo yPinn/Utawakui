@@ -191,15 +191,26 @@ function trackStatusIconLabel(track) {
     </div>
 
     <div class="source-row">
-      <input
-        :value="state.input"
-        class="source-row__input"
-        aria-label="YouTube 或 YouTube Music 連結"
-        placeholder="貼上歌曲、MV 或播放清單連結"
-        :disabled="state.isResolving || state.isImporting"
-        @input="setInput($event.target.value)"
-        @keydown.enter="resolveSource"
-      />
+      <div class="source-row__input-wrap">
+        <input
+          :value="state.input"
+          class="source-row__input"
+          aria-label="YouTube 或 YouTube Music 連結"
+          placeholder="貼上歌曲、MV 或播放清單連結"
+          :disabled="state.isResolving || state.isImporting"
+          @input="setInput($event.target.value)"
+          @keydown.enter="resolveSource"
+        />
+        <UiButton
+          v-if="state.input"
+          :icon="X"
+          class="source-row__clear"
+          aria-label="清除輸入內容"
+          title="清除輸入內容"
+          :disabled="state.isResolving || state.isImporting"
+          @click="setInput('')"
+        />
+      </div>
       <UiButton
         :icon="Search"
         class="source-row__action"
@@ -558,10 +569,16 @@ function trackStatusIconLabel(track) {
   min-height: var(--import-control-height);
 }
 
-.source-row__input {
+.source-row__input-wrap {
+  position: relative;
   flex: 1;
   min-width: calc(var(--ui-space-5) * 8);
+}
+
+.source-row__input {
+  width: 100%;
   padding: var(--ui-space-2) var(--ui-space-3);
+  padding-right: calc(var(--ui-icon-button-size-md) + var(--ui-space-2));
   min-height: var(--import-control-height);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
@@ -583,6 +600,13 @@ function trackStatusIconLabel(track) {
 .source-row__input:disabled {
   color: var(--ui-color-text-muted);
   opacity: var(--ui-opacity-disabled);
+}
+
+.source-row__clear {
+  position: absolute;
+  top: 50%;
+  right: var(--ui-space-1);
+  transform: translateY(-50%);
 }
 
 .source-row__action {
