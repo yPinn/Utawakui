@@ -5,6 +5,11 @@ import {
   getPlaylistImportStats,
   hasImportableSelection,
 } from '../utils/importPlaylist.js';
+import {
+  describeDownloadFailure,
+  downloadFailureHint,
+  downloadFailureLabel,
+} from '../utils/downloadFailureDisplay.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useFeatureGates } from './useFeatureGates.js';
 import { usePlaylists } from './usePlaylists.js';
@@ -20,6 +25,7 @@ const state = reactive({
   input: '',
   status: '',
   statusType: 'idle', // 'idle' | 'pending' | 'success' | 'error'
+  failureHint: '',
   downloadDir: '',
   isDefaultDir: true,
   sourceKind: 'idle', // 'idle' | 'playlist' | 'single' — input source shape
@@ -45,6 +51,25 @@ let cancelRequested = false;
 const playlistStats = computed(() =>
   getPlaylistImportStats(state.playlistTracks),
 );
+
+// A batch's failures are almost always the same underlying cause — one
+// aggregated hint beats repeating it per track.
+const dominantFailureCode = computed(() => {
+  const counts = new Map();
+  for (const track of state.playlistTracks ?? []) {
+    if (track.status !== 'error' || !track.errorCode) continue;
+    counts.set(track.errorCode, (counts.get(track.errorCode) || 0) + 1);
+  }
+  let best = null;
+  let bestCount = 0;
+  for (const [code, count] of counts) {
+    if (count > bestCount) {
+      best = code;
+      bestCount = count;
+    }
+  }
+  return best;
+});
 
 const visiblePlaylistTracks = computed(() =>
   filterPlaylistImportTracks(state.playlistTracks, state.activeFilter),
@@ -112,6 +137,9 @@ const canUseConfirmButton = computed(() =>
 function setStatus(message, type = 'idle') {
   state.status = message;
   state.statusType = type;
+  // Failure sites set this back right after calling setStatus — resetting
+  // it here keeps a stale hint from a previous error surviving a new status.
+  state.failureHint = '';
 }
 
 async function ensureProviderFlow() {
@@ -168,7 +196,7 @@ function createPreviewTrack(entry) {
     // dropped from the resulting playlist/album, not just skipped.
     selected: true,
     status: 'pending',
-    error: null,
+    errorCode: null,
   };
 }
 
@@ -295,7 +323,9 @@ async function resolveSource() {
     }
   } catch (err) {
     clearPreview();
-    setStatus(`找不到來源：${err.message}`, 'error');
+    const failure = describeDownloadFailure(err);
+    setStatus(`找不到來源：${failure.label}`, 'error');
+    state.failureHint = failure.hint;
   } finally {
     state.isResolving = false;
   }
@@ -316,7 +346,9 @@ async function importSingle() {
     setStatus(`已下載：${result.title || result.filePath}`, 'success');
     state.sourceKind = 'idle';
   } catch (err) {
-    setStatus(`下載失敗：${err.message}`, 'error');
+    const failure = describeDownloadFailure(err);
+    setStatus(`下載失敗：${failure.label}`, 'error');
+    state.failureHint = failure.hint;
   } finally {
     state.isImporting = false;
   }
@@ -355,14 +387,14 @@ async function downloadPlaylistTrack(track) {
   if (track.alreadyDownloaded || track.status === 'done') return;
 
   track.status = 'downloading';
-  track.error = null;
+  track.errorCode = null;
 
   try {
     await window.Utawakui.downloadAudio(track.id);
     track.status = 'done';
   } catch (err) {
     track.status = 'error';
-    track.error = err.message;
+    track.errorCode = describeDownloadFailure(err).code;
   }
 }
 
@@ -433,7 +465,14 @@ async function importPlaylist() {
     if (cancelRequested) {
       setStatus('已停止，未完成的曲目仍留在預覽中', 'pending');
     } else if (stats.error > 0) {
-      setStatus(`下載完成，${stats.error} 首失敗`, 'error');
+      const dominant = dominantFailureCode.value;
+      setStatus(
+        dominant
+          ? `下載完成，${stats.error} 首失敗（${downloadFailureLabel(dominant)}）`
+          : `下載完成，${stats.error} 首失敗`,
+        'error',
+      );
+      if (dominant) state.failureHint = downloadFailureHint(dominant);
     } else if (playlistSynced) {
       setStatus(
         state.collectionKind === 'album'
@@ -508,6 +547,7 @@ export function useImportSession() {
   return {
     state: readonly(state),
     playlistStats,
+    dominantFailureCode,
     visiblePlaylistTracks,
     selectablePlaylistTracks,
     allSelected,

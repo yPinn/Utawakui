@@ -144,7 +144,7 @@ describe('useImportSession', () => {
         alreadyDownloaded: false,
         selected: true,
         status: 'pending',
-        error: null,
+        errorCode: null,
       },
     ]);
   });
@@ -214,7 +214,7 @@ describe('useImportSession', () => {
       playbackKind: 'yt-music-song',
       selected: true,
       status: 'pending',
-      error: null,
+      errorCode: null,
     });
     expect(session.canConfirmImport.value).toBe(true);
 
@@ -582,7 +582,7 @@ describe('useImportSession', () => {
       alreadyDownloaded: false,
       selected: true,
       status: 'pending',
-      error: null,
+      errorCode: null,
     });
     expect(session.canConfirmImport.value).toBe(true);
 
@@ -674,19 +674,33 @@ describe('useImportSession', () => {
     expect(session.state.statusType).toBe('pending');
   });
 
-  it('clears the preview and surfaces the error message when resolving throws', async () => {
-    fetchYoutubePlaylistMock.mockRejectedValueOnce(new Error('network down'));
+  it('clears the preview and surfaces a classified error message when resolving throws', async () => {
+    fetchYoutubePlaylistMock.mockRejectedValueOnce(
+      new Error('utawakui-download-failed:network-error'),
+    );
     const session = await loadImportSession();
 
     session.setInput('playlist-id');
     await session.resolveSource();
 
     expect(session.state.sourceKind).toBe('idle');
-    expect(session.state.status).toBe('找不到來源：network down');
+    expect(session.state.status).toBe('找不到來源：網路連線失敗');
+    expect(session.state.statusType).toBe('error');
+    expect(session.state.failureHint).toBe('請確認網路連線後再重試。');
+  });
+
+  it('falls back to the unknown label for an unclassified resolve error', async () => {
+    fetchYoutubePlaylistMock.mockRejectedValueOnce(new Error('network down'));
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+
+    expect(session.state.status).toBe('找不到來源：下載失敗');
     expect(session.state.statusType).toBe('error');
   });
 
-  it('surfaces a download error for a single-track import without throwing', async () => {
+  it('surfaces a classified download error for a single-track import without throwing', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce(null);
     resolveImportSourceMock.mockResolvedValueOnce({
       input: 'abc12345678',
@@ -695,14 +709,16 @@ describe('useImportSession', () => {
       recommendedCandidate: { playbackVideoId: 'abc12345678', title: 'Song' },
       candidates: [{ playbackVideoId: 'abc12345678', title: 'Song' }],
     });
-    downloadAudioMock.mockRejectedValueOnce(new Error('disk full'));
+    downloadAudioMock.mockRejectedValueOnce(
+      new Error('utawakui-download-failed:disk-full'),
+    );
     const session = await loadImportSession();
 
     session.setInput('abc12345678');
     await session.resolveSource();
     await session.confirmImport();
 
-    expect(session.state.status).toBe('下載失敗：disk full');
+    expect(session.state.status).toBe('下載失敗：儲存空間不足');
     expect(session.state.statusType).toBe('error');
     expect(session.state.isImporting).toBe(false);
   });

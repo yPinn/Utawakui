@@ -26,6 +26,11 @@ import {
   identityStatusLabel,
   identityTitle,
 } from '../../utils/importCandidateDisplay.js';
+import {
+  downloadFailureHint,
+  downloadFailureLabel,
+  downloadFailureTone,
+} from '../../utils/downloadFailureDisplay.js';
 import ImportCandidateOption from './ImportCandidateOption.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -64,6 +69,7 @@ const TRACK_STATUS_TONES = {
 const {
   state,
   playlistStats,
+  dominantFailureCode,
   visiblePlaylistTracks,
   selectablePlaylistTracks,
   allSelected,
@@ -159,6 +165,15 @@ function trackStatusIconFor(track) {
 function trackStatusToneFor(track) {
   return TRACK_STATUS_TONES[getTrackStatusClass(track)] || 'muted';
 }
+
+// Combines the classified label + hint for the tooltip; raw stderr never
+// reaches the renderer (see electron/main.js's classifyingFailures).
+function trackStatusIconLabel(track) {
+  if (track.status === 'error' && track.errorCode) {
+    return `${downloadFailureLabel(track.errorCode)}｜${downloadFailureHint(track.errorCode)}`;
+  }
+  return getTrackStatusLabel(track);
+}
 </script>
 
 <template>
@@ -203,6 +218,9 @@ function trackStatusToneFor(track) {
       style="min-height: var(--ui-space-4)"
     >
       {{ state.status }}
+    </UiHint>
+    <UiHint v-if="state.failureHint" tone="muted" role="status">
+      {{ state.failureHint }}
     </UiHint>
 
     <section
@@ -430,7 +448,7 @@ function trackStatusToneFor(track) {
               :icon="trackStatusIconFor(track)"
               :tone="trackStatusToneFor(track)"
               :spinning="getTrackStatusClass(track) === 'downloading'"
-              :label="track.error || getTrackStatusLabel(track)"
+              :label="trackStatusIconLabel(track)"
             />
           </template>
         </UiTrackRow>
@@ -438,6 +456,13 @@ function trackStatusToneFor(track) {
 
       <UiHint v-if="visiblePlaylistTracks.length === 0" padded center>
         沒有符合目前篩選的曲目
+      </UiHint>
+      <UiHint
+        v-else-if="dominantFailureCode"
+        :tone="downloadFailureTone(dominantFailureCode)"
+        role="status"
+      >
+        {{ downloadFailureHint(dominantFailureCode) }}
       </UiHint>
 
       <div class="preview-footer">

@@ -25,6 +25,7 @@ describe('config', () => {
       featureConfirmations: {},
       uiTheme: 'dark',
       sidebarWidth: 256,
+      ytdlpStatus: {},
     });
   });
 
@@ -59,6 +60,7 @@ describe('config', () => {
       featureConfirmations: {},
       uiTheme: 'dark',
       sidebarWidth: 256,
+      ytdlpStatus: {},
     });
 
     const backups = fs
@@ -170,5 +172,29 @@ describe('config', () => {
       confirmedAt: '2026-08-13T00:00:00.000Z',
       enabled: true,
     });
+  });
+
+  it('round-trips ytdlpStatus through save/load', () => {
+    saveConfig(configPath, {
+      ytdlpStatus: {
+        lastCheckedAt: '2026-08-19T00:00:00.000Z',
+        lastKnownVersion: '2026.07.04',
+        lastCheckResult: 'up-to-date',
+      },
+    });
+
+    expect(loadConfig(configPath).ytdlpStatus).toEqual({
+      lastCheckedAt: '2026-08-19T00:00:00.000Z',
+      lastKnownVersion: '2026.07.04',
+      lastCheckResult: 'up-to-date',
+    });
+  });
+
+  it('wrong-typed ytdlpStatus falls back to an empty object', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, ytdlpStatus: 'not an object' }),
+    );
+    expect(loadConfig(configPath).ytdlpStatus).toEqual({});
   });
 });

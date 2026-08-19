@@ -3,6 +3,7 @@ import { computed, onMounted, shallowRef } from 'vue';
 import {
   CircleAlert,
   Check,
+  Download,
   FolderOpen,
   Library,
   ListChecks,
@@ -19,6 +20,7 @@ import { FEATURE_GATES } from '../constants/featureGates.js';
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useLibrary } from '../composables/useLibrary.js';
+import { useYtdlpStatus } from '../composables/useYtdlpStatus.js';
 
 const {
   state: importState,
@@ -33,11 +35,25 @@ const {
   refreshConfirmations,
   ensureFeatureGate,
 } = useFeatureGates();
+const {
+  state: ytdlpState,
+  refreshStatus: refreshYtdlpStatus,
+  checkForUpdate: checkYtdlpUpdate,
+} = useYtdlpStatus();
 
 const isRefreshingMetadata = shallowRef(false);
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
 const enablingFeatureId = shallowRef(null);
+const ytdlpMessage = shallowRef('');
+const ytdlpMessageTone = shallowRef('muted');
+
+const ytdlpCheckResultLabel = computed(() => {
+  if (ytdlpState.lastCheckResult === 'up-to-date') return '已是最新';
+  if (ytdlpState.lastCheckResult === 'updated') return '已更新';
+  if (ytdlpState.lastCheckResult === 'error') return '檢查失敗';
+  return '';
+});
 
 const basicFeatureRows = [
   {
@@ -170,6 +186,23 @@ async function refreshSettingsState() {
     maintenanceTone.value = 'danger';
   }
   refreshConfirmations();
+  refreshYtdlpStatus();
+}
+
+async function checkForYtdlpUpdate() {
+  ytdlpMessage.value = '';
+  ytdlpMessageTone.value = 'muted';
+  await checkYtdlpUpdate();
+  if (ytdlpState.error || ytdlpState.lastCheckResult === 'error') {
+    ytdlpMessage.value = ytdlpState.error || '檢查更新失敗，請確認網路連線';
+    ytdlpMessageTone.value = 'danger';
+    return;
+  }
+  ytdlpMessage.value =
+    ytdlpState.lastCheckResult === 'updated'
+      ? `已更新至 ${ytdlpState.version}`
+      : '已是最新版本';
+  ytdlpMessageTone.value = 'success';
 }
 
 async function enableFeature(featureId) {
@@ -334,6 +367,42 @@ onMounted(refreshSettingsState);
             :role="maintenanceTone === 'danger' ? 'alert' : 'status'"
           >
             {{ maintenanceMessage }}
+          </UiHint>
+        </SettingsBlock>
+
+        <SettingsBlock
+          title="下載引擎"
+          :status="ytdlpState.binaryFound ? '正常' : '找不到執行檔'"
+          :status-tone="ytdlpState.binaryFound ? 'success' : 'danger'"
+        >
+          <SettingsActionRow
+            :icon="Download"
+            title="yt-dlp 版本"
+            :value="
+              ytdlpState.version || (ytdlpState.isLoading ? '讀取中' : '未知')
+            "
+            :status="ytdlpCheckResultLabel"
+            status-tone="muted"
+            tooltip="此更新只影響目前安裝，重新執行 npm install 會被還原。"
+            scale="prominent"
+          >
+            <template #actions>
+              <UiButton
+                :icon="RefreshCw"
+                :disabled="ytdlpState.isChecking"
+                aria-label="檢查並更新 yt-dlp"
+                title="檢查並更新 yt-dlp"
+                @click="checkForYtdlpUpdate"
+              />
+            </template>
+          </SettingsActionRow>
+
+          <UiHint
+            v-if="ytdlpMessage"
+            :tone="ytdlpMessageTone"
+            :role="ytdlpMessageTone === 'danger' ? 'alert' : 'status'"
+          >
+            {{ ytdlpMessage }}
           </UiHint>
         </SettingsBlock>
 

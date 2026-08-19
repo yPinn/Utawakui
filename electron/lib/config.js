@@ -1,8 +1,9 @@
 'use strict';
 
 const fs = require('fs');
-const { atomicWriteJson } = require('./atomicWrite');
+const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const { normalizeFeatureConfirmations } = require('./featureGates');
+const { normalizeYtdlpStatusCache } = require('./ytdlpStatus');
 
 const CURRENT_VERSION = 1;
 const UI_THEMES = ['light', 'dark'];
@@ -16,16 +17,8 @@ const DEFAULTS = {
   featureConfirmations: {},
   uiTheme: 'dark',
   sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width
+  ytdlpStatus: {},
 };
-
-function backupCorrupted(configPath) {
-  const backupPath = `${configPath}.corrupted-${Date.now()}`;
-  try {
-    fs.renameSync(configPath, backupPath);
-  } catch {
-    // best-effort — if even the rename fails, just fall through to defaults
-  }
-}
 
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
 // degrade to defaults rather than throwing — this is machine-local settings
@@ -67,6 +60,7 @@ function loadConfig(configPath) {
       data.sidebarWidth <= SIDEBAR_WIDTH_MAX
         ? data.sidebarWidth
         : DEFAULTS.sidebarWidth,
+    ytdlpStatus: normalizeYtdlpStatusCache(data.ytdlpStatus),
   };
 }
 

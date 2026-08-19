@@ -20,14 +20,20 @@ const {
   fetchMetadata,
   fetchPlaylist,
   readTrackInfoMetadata,
-  searchPlaybackCandidates,
 } = require('./lib/downloader');
+const { searchPlaybackCandidates } = require('./lib/playbackSearch');
 const {
   loadConfig,
   saveConfig,
   SIDEBAR_WIDTH_MIN,
   SIDEBAR_WIDTH_MAX,
 } = require('./lib/config');
+const {
+  checkForUpdate: checkYtdlpUpdate,
+  getStatus: getYtdlpStatus,
+} = require('./lib/ytdlpStatus');
+const { downloadErrorText } = require('./lib/youtubeAttempts');
+const { toClassifiedDownloadError } = require('./lib/downloadFailure');
 const {
   FEATURE_IDS,
   buildFeatureConfirmation,
@@ -387,15 +393,28 @@ if (!gotSingleInstanceLock) {
       throw new Error(`feature gate required: ${featureId}`);
     }
 
+    // error.stderr never survives ipcMain.handle's serialization, so
+    // classification has to happen here. Only the sentinel code crosses the
+    // boundary — the raw text may contain local file paths, so it's logged
+    // here and never forwarded (same discipline as vocalSeparation.js).
+    async function classifyingFailures(run) {
+      try {
+        return await run();
+      } catch (err) {
+        console.error('[yt] request failed:', downloadErrorText(err));
+        throw toClassifiedDownloadError(err);
+      }
+    }
+
     // Serves local audio files to the sandboxed renderer (nodeIntegration:
     // false means it has no direct filesystem access). Dispatches on
-    // hostname: 'local' is an original downloaded track (resolveTrackPath,
-    // existing behavior); 'track' is either a 2-segment asset request
+    // hostname: 'track' is either a 2-segment asset request
     // (`<trackId>/<assetFilename>`, resolveTrackAssetPath) or a 3-segment
     // separation-result request (`<trackId>/separations/<presetId>.wav`,
-    // resolveSeparationResultPath — one file per preset, see library.js's
-    // SEPARATIONS_DIRNAME comment). Either way, never trust the requested
-    // path beyond what these resolvers allow.
+    // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
+    // cover image (resolvePlaylistCoverPath); anything else falls back to
+    // resolveTrackPath for legacy pre-migration local audio. Never trust the
+    // requested path beyond what these resolvers allow.
     protocol.handle(MEDIA_SCHEME, (request) => {
       const url = new URL(request.url);
       const dir = resolveDownloadDir(cachedConfig);
@@ -468,8 +487,9 @@ if (!gotSingleInstanceLock) {
 
     // Manual counterpart to the automatic startup backfill above — that
     // pass deliberately skips album/releaseYear to avoid retrying tracks
-    // with no such metadata on every launch forever (see library.js's
-    // refreshTrackMetadataFromSidecars comment). This is user-triggered,
+    // with no such metadata on every launch forever (see
+    // electron/lib/library/tracks.js's refreshTrackMetadataFromSidecars
+    // comment). This is user-triggered,
     // reads only sidecars already on disk (no network), and can be run
     // again any time — e.g. after a track was downloaded through a
     // yt:download-audio build that didn't yet persist these two fields.
@@ -899,82 +919,91 @@ if (!gotSingleInstanceLock) {
 
     ipcMain.handle('yt:fetch-playlist', async (event, input) => {
       requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      const playlistId = extractPlaylistId(input);
-      if (!playlistId) return null; // not a playlist URL — not an error
-      const dir = resolveDownloadDir(cachedConfig);
-      const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      const { title, thumbnailUrl, entries } = await fetchPlaylist(playlistId);
-      return {
-        title,
-        thumbnailUrl,
-        kind: classifyPlaylistKind(playlistId),
-        source: { platform: 'youtube', id: playlistId },
-        entries: entries.map((entry) => ({
-          ...entry,
-          alreadyDownloaded: existingIds.has(entry.id),
-        })),
-      };
+      return classifyingFailures(async () => {
+        const playlistId = extractPlaylistId(input);
+        if (!playlistId) return null; // not a playlist URL — not an error
+        const dir = resolveDownloadDir(cachedConfig);
+        const existingIds = new Set(listTracks(dir).map((track) => track.id));
+        const { title, thumbnailUrl, entries } =
+          await fetchPlaylist(playlistId);
+        return {
+          title,
+          thumbnailUrl,
+          kind: classifyPlaylistKind(playlistId),
+          source: { platform: 'youtube', id: playlistId },
+          entries: entries.map((entry) => ({
+            ...entry,
+            alreadyDownloaded: existingIds.has(entry.id),
+          })),
+        };
+      });
     });
 
     ipcMain.handle('yt:fetch-metadata', async (event, input) => {
       requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      const videoId = extractVideoId(input);
-      if (!videoId) throw new Error('invalid video id or YouTube URL');
-      const metadata = await fetchMetadata(videoId);
-      if (!metadata) throw new Error('unable to fetch video metadata');
-      const dir = resolveDownloadDir(cachedConfig);
-      const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      return {
-        id: videoId,
-        ...metadata,
-        alreadyDownloaded: existingIds.has(videoId),
-      };
+      return classifyingFailures(async () => {
+        const videoId = extractVideoId(input);
+        if (!videoId) throw new Error('invalid video id or YouTube URL');
+        const metadata = await fetchMetadata(videoId);
+        if (!metadata) throw new Error('unable to fetch video metadata');
+        const dir = resolveDownloadDir(cachedConfig);
+        const existingIds = new Set(listTracks(dir).map((track) => track.id));
+        return {
+          id: videoId,
+          ...metadata,
+          alreadyDownloaded: existingIds.has(videoId),
+        };
+      });
     });
 
     ipcMain.handle('yt:resolve-import-source', async (event, input) => {
       requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      const dir = resolveDownloadDir(cachedConfig);
-      const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      return resolveYoutubeImportSource(input, {
-        extractVideoId,
-        fetchMetadata,
-        searchPlaybackCandidates,
-        existingIds,
+      return classifyingFailures(async () => {
+        const dir = resolveDownloadDir(cachedConfig);
+        const existingIds = new Set(listTracks(dir).map((track) => track.id));
+        return resolveYoutubeImportSource(input, {
+          extractVideoId,
+          fetchMetadata,
+          searchPlaybackCandidates,
+          existingIds,
+        });
       });
     });
 
     ipcMain.handle('yt:download-audio', async (event, input) => {
       requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      const videoId = extractVideoId(input);
-      if (!videoId) throw new Error('invalid video id or YouTube URL');
-      const destDir = resolveDownloadDir(cachedConfig);
-      const result = await downloadAudio(videoId, destDir);
-      const trackDir = resolveTrackDir(destDir, videoId);
-      if (result.title) {
-        try {
-          saveIndexEntry(destDir, videoId, {
-            title: result.title,
-            artist: result.artist,
-            duration: result.duration,
-            album: result.album,
-            releaseYear: result.releaseYear,
-          });
-        } catch {
-          // The download itself succeeded and the file is playable — a
-          // failed index write (e.g. disk full) shouldn't be reported to
-          // the renderer as a failed download. The next background
-          // backfill pass will retry writing the title.
+      return classifyingFailures(async () => {
+        const videoId = extractVideoId(input);
+        if (!videoId) throw new Error('invalid video id or YouTube URL');
+        const destDir = resolveDownloadDir(cachedConfig);
+        const result = await downloadAudio(videoId, destDir);
+        const trackDir = resolveTrackDir(destDir, videoId);
+        if (result.title) {
+          try {
+            saveIndexEntry(destDir, videoId, {
+              title: result.title,
+              artist: result.artist,
+              duration: result.duration,
+              album: result.album,
+              releaseYear: result.releaseYear,
+            });
+          } catch {
+            // The download itself succeeded and the file is playable — a
+            // failed index write (e.g. disk full) shouldn't be reported to
+            // the renderer as a failed download. The next background
+            // backfill pass will retry writing the title.
+          }
         }
-      }
-      if (trackDir) {
-        try {
-          await saveLrclibLyricsIfAbsent(result, trackDir);
-        } catch {
-          // The audio download succeeded. A failed optional lyrics fallback
-          // should not turn that into a failed import.
+        if (trackDir) {
+          try {
+            await saveLrclibLyricsIfAbsent(result, trackDir);
+          } catch {
+            // The audio download succeeded. A failed optional lyrics fallback
+            // should not turn that into a failed import.
+          }
         }
-      }
-      return result;
+        return result;
+      });
     });
 
     ipcMain.handle('separation:run', async (event, trackId, presetId) => {
@@ -1169,6 +1198,25 @@ if (!gotSingleInstanceLock) {
       }
       cachedConfig = saveConfig(configPath, { sidebarWidth: width });
       return cachedConfig.sidebarWidth;
+    });
+
+    ipcMain.handle('ytdlp:get-status', async () => ({
+      ...(await getYtdlpStatus()),
+      ...cachedConfig.ytdlpStatus,
+    }));
+
+    // Runs yt-dlp's own -U (check + apply in one step); not gated behind
+    // provider-flow, same as library:refresh-metadata's maintenance action.
+    ipcMain.handle('ytdlp:check-update', async () => {
+      const result = await checkYtdlpUpdate();
+      cachedConfig = saveConfig(configPath, {
+        ytdlpStatus: {
+          lastCheckedAt: new Date().toISOString(),
+          lastKnownVersion: result.version,
+          lastCheckResult: result.outcome,
+        },
+      });
+      return { ...(await getYtdlpStatus()), ...cachedConfig.ytdlpStatus };
     });
 
     // Fire-and-forget; thumbar redraw has no renderer-visible result.
