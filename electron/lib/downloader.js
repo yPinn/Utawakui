@@ -13,42 +13,32 @@ const {
   resolveTrackDir,
   saveTrackLyricsManifest,
 } = require('./library');
+const { buildTrackIdentity } = require('./trackIdentity');
 const {
-  buildTrackIdentity,
-  identityArtistKeys,
-  splitArtistNames,
-} = require('./trackIdentity');
-const {
-  extractTitleDerivedSearchParts,
-  looksLikeChannelArtist,
-  normalizeForCompare,
-  normalizeText,
-  OFFICIAL_MV_TITLE_RE,
-  stripParenthesizedDecorations,
-  stripTrackDecorations,
-} = require('./musicTitle');
+  ANONYMOUS_YOUTUBE_PHASES,
+  AUTHENTICATED_YOUTUBE_PHASES,
+  CLIENT_FALLBACK_YOUTUBE_PHASES,
+  applyYoutubeRuntimeOptions,
+  buildPhaseAttempts,
+  isAudioFormatUnavailableError,
+  isForbiddenAudioDownloadError,
+  isRetryableMetadataError,
+  runPhasedYoutubeAttempts,
+  shouldRetryForPhase,
+  watchUrl,
+} = require('./youtubeAttempts');
+const { extractMetadataFields, extractThumbnailUrl } = require('./ytdlpInfo');
 
-const DEFAULT_YOUTUBE_JS_RUNTIME = 'node';
 const DEFAULT_AUDIO_FORMAT = 'bestaudio/best';
 const FALLBACK_AUDIO_FORMAT = 'bestaudio[ext=m4a]/bestaudio/best';
-// Do not exclude android_vr here (previous versions did): without a PO
-// token, it's currently the one client YouTube still serves a real audio
-// URL to — excluding it degrades every fallback attempt to images-only.
-const FALLBACK_YOUTUBE_EXTRACTOR_ARGS = 'youtube:player_js_version=actual';
-const PLAYBACK_SEARCH_LIMIT_PER_SOURCE = 5;
-const MAX_PLAYBACK_SEARCH_CANDIDATES = 8;
-const MAX_PLAYBACK_SEARCH_QUERIES = 4;
-const MAX_CROSS_SEARCH_QUERIES = 2;
-const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
-const YT_MUSIC_VIDEO_RESULT_RE =
-  /\b(?:music[-_\s]*)?videos?\b|\bmvs?\b|\bofficial[-_\s]*videos?\b/iu;
-const YT_MUSIC_SONG_RESULT_RE = /\b(?:songs?|tracks?)\b/iu;
-const YT_MUSIC_VIDEO_CONTEXT_TITLE_RE =
-  /(?:\b4k\b|\bfull\s+(?:show|concert|performance)\b|校唱|校園演唱|演唱會|全程|完整(?:版|場)|合集|串燒)/iu;
-// Applies even to explicitly-tagged "song" results, not just inferred ones
-// (checked before the isExplicitSong branch below) — no legitimate karaoke
-// song runs this long, so the cap is intentionally universal.
-const MAX_YT_MUSIC_SONG_DURATION = 12 * 60;
+// Some player clients (e.g. web_safari's HLS-only formats) let yt-dlp exit 0
+// without ever writing a recognized audio file — this has to be checked per
+// phase, not once after the whole ladder, or a bogus "success" stops retries.
+const MISSING_AUDIO_OUTPUT_MESSAGE =
+  'yt-dlp reported success but no audio output file found';
+// Once escalating past the first phase, downloading at all beats sounding
+// marginally better.
+const PREFERRED_FORMAT_PHASE_IDS = new Set(['baseline']);
 const JAPANESE_KANA_RE = /[\u3040-\u30ff]/;
 const KOREAN_HANGUL_RE = /[\uac00-\ud7af]/;
 const CJK_RE = /[\u3400-\u9fff]/;
@@ -59,14 +49,6 @@ const SUBTITLE_LANGUAGE_PREFERENCES = {
   ko: ['ko'],
   en: ['en'],
 };
-
-function applyYoutubeRuntimeOptions(options) {
-  return {
-    jsRuntimes:
-      process.env.UTAWAKUI_YTDLP_JS_RUNTIME || DEFAULT_YOUTUBE_JS_RUNTIME,
-    ...options,
-  };
-}
 
 function subtitleLanguageTags(subtitles) {
   if (!subtitles || typeof subtitles !== 'object') return [];
@@ -162,478 +144,6 @@ function buildSubtitleOptions(info = null) {
   return noSubtitleOptions();
 }
 
-function isHttpsUrl(value) {
-  if (typeof value !== 'string') return false;
-  try {
-    return new URL(value).protocol === 'https:';
-  } catch {
-    return false;
-  }
-}
-
-function extractThumbnailUrl(info) {
-  if (isHttpsUrl(info.thumbnail)) return info.thumbnail;
-  if (Array.isArray(info.thumbnails)) {
-    const thumbnailUrl = [...info.thumbnails]
-      .reverse()
-      .map((thumbnail) => thumbnail?.url)
-      .find(isHttpsUrl);
-    if (thumbnailUrl) return thumbnailUrl;
-  }
-
-  if (typeof info.id === 'string' && VIDEO_ID_RE.test(info.id)) {
-    return `https://i.ytimg.com/vi/${info.id}/hqdefault.jpg`;
-  }
-  return undefined;
-}
-
-// Shared by downloadAudio (reads a yt-dlp .info.json sidecar) and
-// fetchMetadata (reads yt-dlp's --dump-single-json object directly) — same
-// yt-dlp info shape either way, so the field-extraction rules must match.
-function extractMetadataFields(info) {
-  const title = typeof info.title === 'string' ? info.title : undefined;
-  // info.artist only exists for videos yt-dlp recognized as music (e.g.
-  // YT Music sources) — a plain YouTube upload falls back to the channel
-  // name, which beats showing nothing.
-  const artist =
-    typeof info.artist === 'string'
-      ? info.artist
-      : typeof info.uploader === 'string'
-        ? info.uploader
-        : undefined;
-  const duration =
-    typeof info.duration === 'number' ? info.duration : undefined;
-  const thumbnailUrl = extractThumbnailUrl(info);
-  // Album fields are optional music metadata; do not invent fallbacks.
-  const album = typeof info.album === 'string' ? info.album : undefined;
-  const releaseYear =
-    typeof info.release_year === 'number' ? info.release_year : undefined;
-  return {
-    title,
-    artist,
-    duration,
-    ...(thumbnailUrl ? { thumbnailUrl } : {}),
-    ...(album ? { album } : {}),
-    ...(releaseYear ? { releaseYear } : {}),
-  };
-}
-
-function normalizeSearchQuery(value) {
-  return stripParenthesizedDecorations(stripTrackDecorations(value))
-    .replace(/["'`]+/gu, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-function pushUnique(values, value) {
-  const normalized = normalizeSearchQuery(value);
-  const key = normalizeForCompare(normalized);
-  if (!key || values.some((existing) => existing.key === key)) return;
-  values.push({ key, value: normalized });
-}
-
-function pushUniqueArtistKey(keys, value) {
-  const key = normalizeForCompare(value);
-  if (!key || key.length < 2 || keys.includes(key)) return;
-  keys.push(key);
-}
-
-function pushSplitArtistKeys(keys, value) {
-  for (const artistName of splitArtistNames(value)) {
-    pushUniqueArtistKey(keys, artistName);
-  }
-  pushUniqueArtistKey(keys, value);
-}
-
-function shouldUseSourceTitleParts(canonical = {}) {
-  return (
-    canonical.sourcePlatform !== 'yt-music' && canonical.sourceType !== 'track'
-  );
-}
-
-function titlePartsFor(canonical, sourceMetadata) {
-  return shouldUseSourceTitleParts(canonical)
-    ? extractTitleDerivedSearchParts(sourceMetadata.title)
-    : [];
-}
-
-function buildExpectedArtistKeys(
-  canonical = {},
-  sourceMetadata = {},
-  titleParts = titlePartsFor(canonical, sourceMetadata),
-) {
-  const keys = [...new Set(identityArtistKeys(canonical))];
-  if (!looksLikeChannelArtist(canonical.artist)) {
-    pushSplitArtistKeys(keys, canonical.artist);
-  }
-
-  for (const part of titleParts) {
-    for (const artistName of part.artistNames || []) {
-      pushSplitArtistKeys(keys, artistName);
-    }
-  }
-
-  if (!looksLikeChannelArtist(sourceMetadata.artist)) {
-    pushSplitArtistKeys(keys, sourceMetadata.artist);
-  }
-
-  return keys;
-}
-
-function buildCandidateArtistKeys(entry) {
-  const keys = [];
-  pushSplitArtistKeys(keys, entry?.artist);
-  if (Array.isArray(entry?.artists)) {
-    for (const artistName of entry.artists) {
-      pushSplitArtistKeys(keys, artistName);
-    }
-  }
-  return keys;
-}
-
-function candidateArtistMatchesExpected(entry, expectedArtistKeys = []) {
-  if (expectedArtistKeys.length === 0) return true;
-  const candidateKeys = buildCandidateArtistKeys(entry);
-  if (candidateKeys.length === 0) return false;
-  return candidateKeys.some((candidateKey) =>
-    expectedArtistKeys.some(
-      (expectedKey) =>
-        candidateKey === expectedKey ||
-        candidateKey.includes(expectedKey) ||
-        expectedKey.includes(candidateKey),
-    ),
-  );
-}
-
-function buildSearchParts(
-  canonical = {},
-  sourceMetadata = {},
-  titleParts = titlePartsFor(canonical, sourceMetadata),
-) {
-  const titles = [];
-  const artists = [];
-
-  pushUnique(titles, canonical.title);
-  pushUnique(titles, sourceMetadata.track);
-  pushUnique(titles, sourceMetadata.title);
-  for (const part of titleParts) {
-    pushUnique(titles, part.trackName);
-  }
-
-  pushUnique(artists, canonical.artist);
-  for (const artistName of canonical.artists || []) {
-    pushUnique(artists, artistName);
-  }
-  pushUnique(artists, sourceMetadata.artist);
-  for (const part of titleParts) {
-    for (const artistName of part.artistNames || []) {
-      pushUnique(artists, artistName);
-    }
-  }
-
-  const expandedArtists = [];
-  for (const artist of artists) {
-    for (const splitArtist of splitArtistNames(artist.value)) {
-      pushUnique(expandedArtists, splitArtist);
-    }
-    pushUnique(expandedArtists, artist.value);
-  }
-
-  return {
-    titles: titles.map((entry) => entry.value),
-    artists: expandedArtists.map((entry) => entry.value),
-  };
-}
-
-function buildPlaybackSearchQueries(
-  canonical = {},
-  sourceMetadata = {},
-  titleParts = titlePartsFor(canonical, sourceMetadata),
-) {
-  const queries = [];
-  const { titles, artists } = buildSearchParts(
-    canonical,
-    sourceMetadata,
-    titleParts,
-  );
-  const primaryTitle = titles[0];
-  const primaryArtist = artists[0];
-
-  if (primaryTitle && primaryArtist) {
-    pushUnique(queries, `${primaryArtist} ${primaryTitle}`);
-    pushUnique(queries, `${primaryTitle} ${primaryArtist}`);
-  }
-  if (artists[1] && primaryTitle) {
-    pushUnique(queries, `${artists[1]} ${primaryTitle}`);
-  }
-  pushUnique(queries, primaryTitle);
-  for (const artist of artists.slice(2)) {
-    if (primaryTitle) pushUnique(queries, `${artist} ${primaryTitle}`);
-  }
-  for (const title of titles.slice(1)) {
-    pushUnique(queries, title);
-    if (primaryArtist) pushUnique(queries, `${primaryArtist} ${title}`);
-  }
-
-  return queries
-    .slice(0, MAX_PLAYBACK_SEARCH_QUERIES)
-    .map((entry) => entry.value);
-}
-
-function isCloseDuration(first, second) {
-  if (!Number.isFinite(first) || !Number.isFinite(second)) return false;
-  return Math.abs(Math.round(first) - Math.round(second)) <= 15;
-}
-
-function buildPlaybackCrossSearchQueries(candidates, canonical = {}) {
-  const queries = [];
-  for (const candidate of candidates) {
-    if (!isCloseDuration(candidate.duration, canonical.duration)) continue;
-    const title = normalizeSearchQuery(candidate.title);
-    const artist = normalizeSearchQuery(candidate.artist);
-    if (!title || !artist) continue;
-    pushUnique(queries, `${artist} ${title}`);
-    pushUnique(queries, `${title} ${artist}`);
-    if (queries.length >= MAX_CROSS_SEARCH_QUERIES) break;
-  }
-
-  return queries.slice(0, MAX_CROSS_SEARCH_QUERIES).map((entry) => entry.value);
-}
-
-function buildYoutubeMusicSearchUrl(query) {
-  const url = new URL('https://music.youtube.com/search');
-  url.searchParams.set('q', query);
-  return `${url.toString()}#songs`;
-}
-
-function extractSearchEntries(info) {
-  if (Array.isArray(info?.entries)) return info.entries;
-  return [];
-}
-
-function youtubeMusicResultTypeText(entry) {
-  return [
-    entry?.resultType,
-    entry?.result_type,
-    entry?.itemType,
-    entry?.item_type,
-    entry?.musicType,
-    entry?.music_type,
-    entry?.category,
-    entry?.type,
-  ]
-    .map(normalizeText)
-    .filter(Boolean)
-    .join(' ');
-}
-
-function isYoutubeMusicSongSearchCandidate(entry, context = {}) {
-  const typeText = youtubeMusicResultTypeText(entry);
-  const isExplicitSong = YT_MUSIC_SONG_RESULT_RE.test(typeText);
-  if (YT_MUSIC_VIDEO_RESULT_RE.test(typeText)) return false;
-  const title = normalizeText(entry?.title);
-  if (OFFICIAL_MV_TITLE_RE.test(title)) return false;
-  if (YT_MUSIC_VIDEO_CONTEXT_TITLE_RE.test(title)) return false;
-  if (
-    Number.isFinite(entry?.duration) &&
-    entry.duration > MAX_YT_MUSIC_SONG_DURATION
-  ) {
-    return false;
-  }
-  if (isExplicitSong && buildCandidateArtistKeys(entry).length === 0) {
-    return true;
-  }
-  // Past this point every video/live/oversized/mismatched-title case has
-  // already been rejected above — an ambiguous (neither explicitly a song
-  // nor explicitly a video) result is accepted rather than rejected.
-  if (!candidateArtistMatchesExpected(entry, context.expectedArtistKeys)) {
-    return false;
-  }
-  return true;
-}
-
-function normalizePlaybackSearchCandidate(entry, provider, context = {}) {
-  if (!entry || typeof entry.id !== 'string' || !VIDEO_ID_RE.test(entry.id)) {
-    return null;
-  }
-  if (
-    provider === 'yt-music' &&
-    !isYoutubeMusicSongSearchCandidate(entry, context)
-  ) {
-    return null;
-  }
-
-  const fields = extractMetadataFields(entry);
-  return {
-    id: entry.id,
-    playbackVideoId: entry.id,
-    ...fields,
-    playbackKind: provider === 'yt-music' ? 'yt-music-song' : undefined,
-    searchProvider: provider,
-    availableProviders: [provider],
-    reason: provider === 'yt-music' ? 'yt-music-search' : 'youtube-search',
-  };
-}
-
-async function fetchPlaybackSearchEntries(input, runner = youtubedl) {
-  const info = await runner(
-    input,
-    applyYoutubeRuntimeOptions({
-      flatPlaylist: true,
-      skipDownload: true,
-      dumpSingleJson: true,
-      quiet: true,
-      noWarnings: true,
-      playlistEnd: PLAYBACK_SEARCH_LIMIT_PER_SOURCE,
-    }),
-  );
-  return extractSearchEntries(info);
-}
-
-// Gated by the *platform of the user's input URL*, not an attempt to prove
-// the resulting candidates are the same song as the source — cross-platform
-// identity between a plain YouTube video and a YT Music track can't be
-// proven (confirmed by probing YT Music's internal "counterpart" API
-// anonymously against several major-label songs and getting no hits). A
-// YT Music source is trusted as-is (no further search); a plain YouTube
-// source has no such platform-level guarantee, so search widens to also
-// look for a more lyrics-reliable audio-native match. See
-// importResolver.js's AUDIO_KIND_SCORES for how those candidates get
-// ranked once found.
-function buildPlaybackSearchSources(queries, { sourcePlatform } = {}) {
-  return queries.flatMap((query) => {
-    const musicSource = {
-      provider: 'yt-music',
-      input: buildYoutubeMusicSearchUrl(query),
-    };
-    if (sourcePlatform === 'yt-music') return [musicSource];
-    return [
-      musicSource,
-      {
-        provider: 'youtube',
-        input: `ytsearch${PLAYBACK_SEARCH_LIMIT_PER_SOURCE}:${query}`,
-      },
-    ];
-  });
-}
-
-async function fetchSettledPlaybackSearches(searchSources, runner) {
-  const settled = await Promise.allSettled(
-    searchSources.map(async (source) => ({
-      provider: source.provider,
-      entries: await fetchPlaybackSearchEntries(source.input, runner),
-    })),
-  );
-
-  return settled.filter((result) => result.status === 'fulfilled');
-}
-
-function mergeSearchCandidates(existing, incoming) {
-  const providers = [
-    ...(existing.availableProviders || [existing.searchProvider]),
-    ...(incoming.availableProviders || [incoming.searchProvider]),
-  ].filter(Boolean);
-  const availableProviders = [...new Set(providers)];
-  const preferIncoming =
-    incoming.searchProvider === 'yt-music' ||
-    (existing.searchProvider !== 'yt-music' &&
-      !existing.artist &&
-      Boolean(incoming.artist));
-  const primary = preferIncoming ? incoming : existing;
-  const secondary = preferIncoming ? existing : incoming;
-
-  return {
-    ...secondary,
-    ...primary,
-    title: primary.title || secondary.title,
-    artist: primary.artist || secondary.artist,
-    duration: primary.duration || secondary.duration,
-    thumbnailUrl: primary.thumbnailUrl || secondary.thumbnailUrl,
-    playbackKind:
-      primary.playbackKind ||
-      (availableProviders.includes('yt-music') ? 'yt-music-song' : undefined) ||
-      secondary.playbackKind,
-    searchProvider: availableProviders.includes('yt-music')
-      ? 'yt-music'
-      : primary.searchProvider,
-    availableProviders,
-    reason: availableProviders.includes('yt-music')
-      ? 'yt-music-search'
-      : primary.reason || secondary.reason,
-  };
-}
-
-function addSearchResults(candidatesById, settledResults, context = {}) {
-  for (const result of settledResults) {
-    for (const entry of result.value.entries) {
-      const candidate = normalizePlaybackSearchCandidate(
-        entry,
-        result.value.provider,
-        context,
-      );
-      if (!candidate) continue;
-      const existing = candidatesById.get(candidate.id);
-      if (existing) {
-        candidatesById.set(
-          candidate.id,
-          mergeSearchCandidates(existing, candidate),
-        );
-        continue;
-      }
-      candidatesById.set(candidate.id, candidate);
-    }
-  }
-}
-
-async function searchPlaybackCandidates(
-  canonical,
-  sourceMetadata,
-  options = {},
-) {
-  const runner = options.runner || youtubedl;
-  const titleParts = titlePartsFor(canonical, sourceMetadata);
-  const queries = buildPlaybackSearchQueries(
-    canonical,
-    sourceMetadata,
-    titleParts,
-  );
-  const candidatesById = new Map();
-  const searchContext = {
-    expectedArtistKeys: buildExpectedArtistKeys(
-      canonical,
-      sourceMetadata,
-      titleParts,
-    ),
-  };
-  const searchSources = buildPlaybackSearchSources(queries, {
-    sourcePlatform: options.sourcePlatform,
-  });
-  const searchedInputs = new Set(searchSources.map((source) => source.input));
-
-  addSearchResults(
-    candidatesById,
-    await fetchSettledPlaybackSearches(searchSources, runner),
-    searchContext,
-  );
-
-  const crossQueries = buildPlaybackCrossSearchQueries(
-    [...candidatesById.values()],
-    canonical,
-  );
-  const crossSources = buildPlaybackSearchSources(crossQueries, {
-    sourcePlatform: options.sourcePlatform,
-  }).filter((source) => !searchedInputs.has(source.input));
-  if (crossSources.length > 0) {
-    addSearchResults(
-      candidatesById,
-      await fetchSettledPlaybackSearches(crossSources, runner),
-      searchContext,
-    );
-  }
-
-  return [...candidatesById.values()].slice(0, MAX_PLAYBACK_SEARCH_CANDIDATES);
-}
-
 function replaceFile(sourcePath, targetPath) {
   if (sourcePath === targetPath) return;
   try {
@@ -678,6 +188,16 @@ function clearExistingLyrics(trackDir) {
   }
 }
 
+function hasStructuredAudioFile(trackDir) {
+  return fs
+    .readdirSync(trackDir, { withFileTypes: true })
+    .some((entry) => entry.isFile() && isStructuredAudioFilename(entry.name));
+}
+
+function isMissingAudioOutputError(error) {
+  return error?.message === MISSING_AUDIO_OUTPUT_MESSAGE;
+}
+
 function finalizeDownloadedTrackFiles(trackDir, { resetLyrics = false } = {}) {
   const filenames = fs
     .readdirSync(trackDir, { withFileTypes: true })
@@ -687,7 +207,7 @@ function finalizeDownloadedTrackFiles(trackDir, { resetLyrics = false } = {}) {
 
   const audioFilename = filenames.find(isStructuredAudioFilename);
   if (!audioFilename) {
-    throw new Error('yt-dlp reported success but no audio output file found');
+    throw new Error(MISSING_AUDIO_OUTPUT_MESSAGE);
   }
 
   let infoFilename;
@@ -776,21 +296,19 @@ function applySubtitleOptions(options, info = null) {
   };
 }
 
+// Kept separate from buildAudioDownloadAttempts below — this is the
+// regression guard for the whole ladder, so its plain-array shape must stay
+// stable.
 function buildAudioDownloadOptionAttempts(baseOptions, info = null) {
-  const attempts = [
-    { format: DEFAULT_AUDIO_FORMAT },
-    {
-      format: FALLBACK_AUDIO_FORMAT,
-      extractorArgs: FALLBACK_YOUTUBE_EXTRACTOR_ARGS,
-    },
-  ];
-
-  return attempts.map((attempt) =>
+  return AUTHENTICATED_YOUTUBE_PHASES.map((phase) =>
     applyYoutubeRuntimeOptions(
       applySubtitleOptions(
         {
           ...baseOptions,
-          ...attempt,
+          format: PREFERRED_FORMAT_PHASE_IDS.has(phase.id)
+            ? DEFAULT_AUDIO_FORMAT
+            : FALLBACK_AUDIO_FORMAT,
+          ...phase.options,
         },
         info,
       ),
@@ -798,44 +316,40 @@ function buildAudioDownloadOptionAttempts(baseOptions, info = null) {
   );
 }
 
-function isForbiddenAudioDownloadError(error) {
-  const text = `${error?.stderr || ''}\n${error?.message || ''}`;
-  return (
-    /HTTP Error 403: Forbidden/i.test(text) &&
-    /unable to download video data/i.test(text)
-  );
+function buildAudioDownloadAttempts(baseOptions, info = null) {
+  const optionsList = buildAudioDownloadOptionAttempts(baseOptions, info);
+  return AUTHENTICATED_YOUTUBE_PHASES.map((phase, index) => ({
+    id: phase.id,
+    options: optionsList[index],
+    shouldRetry: shouldRetryForPhase(
+      phase,
+      (err) =>
+        isForbiddenAudioDownloadError(err) ||
+        isAudioFormatUnavailableError(err) ||
+        isMissingAudioOutputError(err),
+    ),
+  }));
 }
 
-async function runYoutubeDownloadAttempts(
-  url,
-  optionAttempts,
-  runner = youtubedl,
+async function fetchVideoInfo(
+  videoId,
+  { runner = youtubedl, phases = ANONYMOUS_YOUTUBE_PHASES } = {},
 ) {
-  let lastError;
-  for (let index = 0; index < optionAttempts.length; index += 1) {
-    try {
-      return await runner(url, optionAttempts[index]);
-    } catch (err) {
-      lastError = err;
-      const canRetry =
-        index < optionAttempts.length - 1 && isForbiddenAudioDownloadError(err);
-      if (!canRetry) throw err;
-    }
-  }
-  throw lastError;
-}
-
-async function fetchVideoInfo(videoId) {
   try {
-    const info = await youtubedl(
-      `https://www.youtube.com/watch?v=${videoId}`,
-      applyYoutubeRuntimeOptions({
-        skipDownload: true,
-        dumpSingleJson: true,
-        quiet: true,
-        noWarnings: true,
-        noPlaylist: true,
-      }),
+    const info = await runPhasedYoutubeAttempts(
+      watchUrl(videoId),
+      buildPhaseAttempts(
+        phases,
+        {
+          skipDownload: true,
+          dumpSingleJson: true,
+          quiet: true,
+          noWarnings: true,
+          noPlaylist: true,
+        },
+        isRetryableMetadataError,
+      ),
+      runner,
     );
     return typeof info === 'object' && info !== null ? info : null;
   } catch {
@@ -862,12 +376,26 @@ async function downloadAudio(videoId, destDir) {
   fs.mkdirSync(trackDir, { recursive: true });
 
   const outputTemplate = path.join(trackDir, 'audio.%(ext)s');
-  const info = await fetchVideoInfo(videoId);
+  // Same cookie database the download attempts below will read anyway — a
+  // transient failure here used to permanently record "no lyrics found".
+  const info = await fetchVideoInfo(videoId, {
+    phases: AUTHENTICATED_YOUTUBE_PHASES,
+  });
   const resetLyrics = lyricsManifestNeedsRescan(trackDir);
 
-  await runYoutubeDownloadAttempts(
-    `https://www.youtube.com/watch?v=${videoId}`,
-    buildAudioDownloadOptionAttempts(
+  // Verified per attempt, not once after the whole ladder — some clients let
+  // yt-dlp exit 0 without writing a usable file, which must not stop retries.
+  async function runAndVerifyAudioOutput(url, options) {
+    const result = await youtubedl(url, options);
+    if (!hasStructuredAudioFile(trackDir)) {
+      throw new Error(MISSING_AUDIO_OUTPUT_MESSAGE);
+    }
+    return result;
+  }
+
+  await runPhasedYoutubeAttempts(
+    watchUrl(videoId),
+    buildAudioDownloadAttempts(
       {
         output: outputTemplate,
         noPlaylist: true,
@@ -876,6 +404,7 @@ async function downloadAudio(videoId, destDir) {
       },
       info,
     ),
+    runAndVerifyAudioOutput,
   );
 
   const { audioFilename } = finalizeDownloadedTrackFiles(trackDir, {
@@ -897,22 +426,28 @@ async function backfillTrackInfo(videoId, trackDir) {
   const resetLyrics = lyricsManifestNeedsRescan(trackDir);
   try {
     fs.mkdirSync(trackDir, { recursive: true });
-    await youtubedl(
-      `https://www.youtube.com/watch?v=${videoId}`,
-      applyYoutubeRuntimeOptions(
-        applySubtitleOptions(
-          {
-            skipDownload: true,
-            output: path.join(trackDir, 'audio.%(ext)s'),
-            noPlaylist: true,
-            writeInfoJson: true,
-            writeThumbnail: true,
-            quiet: true,
-            noWarnings: true,
-          },
-          info,
+    // Only the yt-dlp call is retried, not finalizeDownloadedTrackFiles.
+    await runPhasedYoutubeAttempts(
+      watchUrl(videoId),
+      ANONYMOUS_YOUTUBE_PHASES.map((phase) => ({
+        id: phase.id,
+        options: applyYoutubeRuntimeOptions(
+          applySubtitleOptions(
+            {
+              skipDownload: true,
+              output: path.join(trackDir, 'audio.%(ext)s'),
+              noPlaylist: true,
+              writeInfoJson: true,
+              writeThumbnail: true,
+              quiet: true,
+              noWarnings: true,
+              ...phase.options,
+            },
+            info,
+          ),
         ),
-      ),
+        shouldRetry: shouldRetryForPhase(phase, isRetryableMetadataError),
+      })),
     );
     finalizeDownloadedTrackFiles(trackDir, { resetLyrics });
   } catch {
@@ -927,7 +462,7 @@ async function backfillTrackInfo(videoId, trackDir) {
   return fields.title || assetsUpdated ? { ...fields, assetsUpdated } : null;
 }
 
-// Metadata-only lookup for library.js's runBackfillPass. Returns null on
+// Metadata-only lookup for electron/lib/library/backfill.js's runBackfillPass. Returns null on
 // any failure — callers treat that as "couldn't backfill this time", not
 // an exceptional error.
 async function fetchMetadata(videoId) {
@@ -943,14 +478,19 @@ async function fetchMetadata(videoId) {
 // user-initiated action that should surface an error, not retry silently.
 async function fetchPlaylist(playlistId, options = {}) {
   const runner = options.runner || youtubedl;
-  const info = await runner(
+  const info = await runPhasedYoutubeAttempts(
     `https://www.youtube.com/playlist?list=${playlistId}`,
-    applyYoutubeRuntimeOptions({
-      flatPlaylist: true,
-      dumpSingleJson: true,
-      quiet: true,
-      noWarnings: true,
-    }),
+    buildPhaseAttempts(
+      CLIENT_FALLBACK_YOUTUBE_PHASES,
+      {
+        flatPlaylist: true,
+        dumpSingleJson: true,
+        quiet: true,
+        noWarnings: true,
+      },
+      isRetryableMetadataError,
+    ),
+    runner,
   );
 
   const entries = Array.isArray(info.entries) ? info.entries : [];
@@ -983,21 +523,16 @@ async function fetchPlaylist(playlistId, options = {}) {
 }
 
 module.exports = {
-  applyYoutubeRuntimeOptions,
   applySubtitleOptions,
   backfillTrackInfo,
   buildAudioDownloadOptionAttempts,
-  buildPlaybackCrossSearchQueries,
-  buildPlaybackSearchQueries,
   buildSubtitleOptions,
   downloadAudio,
   fetchMetadata,
-  extractMetadataFields,
   finalizeDownloadedTrackFiles,
-  isForbiddenAudioDownloadError,
+  hasStructuredAudioFile,
+  isMissingAudioOutputError,
   readTrackInfoMetadata,
   readTrackSidecarState,
-  runYoutubeDownloadAttempts,
-  searchPlaybackCandidates,
   fetchPlaylist,
 };

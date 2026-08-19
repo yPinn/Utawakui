@@ -4,150 +4,15 @@ import path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   applySubtitleOptions,
-  applyYoutubeRuntimeOptions,
   buildAudioDownloadOptionAttempts,
-  buildPlaybackCrossSearchQueries,
-  buildPlaybackSearchQueries,
   buildSubtitleOptions,
-  extractMetadataFields,
   fetchPlaylist,
   finalizeDownloadedTrackFiles,
-  isForbiddenAudioDownloadError,
+  hasStructuredAudioFile,
+  isMissingAudioOutputError,
   readTrackInfoMetadata,
   readTrackSidecarState,
-  runYoutubeDownloadAttempts,
-  searchPlaybackCandidates,
 } from './downloader.js';
-
-// downloadAudio/fetchMetadata themselves call the real yt-dlp/YouTube —
-// deliberately not covered here (slow, network-dependent, not suitable for
-// CI). extractMetadataFields is the pure field-extraction logic they share.
-describe('extractMetadataFields', () => {
-  it('extracts a full YT Music info object', () => {
-    expect(
-      extractMetadataFields({
-        title: '夜に駆ける',
-        artist: 'YOASOBI',
-        uploader: 'YOASOBI Official Channel',
-        duration: 261,
-      }),
-    ).toEqual({ title: '夜に駆ける', artist: 'YOASOBI', duration: 261 });
-  });
-
-  it('falls back to uploader for artist on a plain YouTube upload', () => {
-    expect(
-      extractMetadataFields({
-        title: 'Some Video',
-        uploader: 'Some Channel',
-        duration: 120.5,
-      }),
-    ).toEqual({ title: 'Some Video', artist: 'Some Channel', duration: 120.5 });
-  });
-
-  it('leaves artist undefined when neither artist nor uploader is present', () => {
-    expect(extractMetadataFields({ title: 'Untitled', duration: 10 })).toEqual({
-      title: 'Untitled',
-      artist: undefined,
-      duration: 10,
-    });
-  });
-
-  it('leaves everything undefined for an empty info object', () => {
-    expect(extractMetadataFields({})).toEqual({
-      title: undefined,
-      artist: undefined,
-      duration: undefined,
-    });
-  });
-
-  it('ignores wrong-typed fields instead of coercing them', () => {
-    expect(
-      extractMetadataFields({ title: 123, artist: null, duration: '261' }),
-    ).toEqual({ title: undefined, artist: undefined, duration: undefined });
-  });
-
-  it('extracts a direct HTTPS thumbnail URL for preview-only rendering', () => {
-    expect(
-      extractMetadataFields({
-        title: 'Preview Song',
-        thumbnail: 'https://i.ytimg.com/vi/id/hqdefault.jpg',
-      }).thumbnailUrl,
-    ).toBe('https://i.ytimg.com/vi/id/hqdefault.jpg');
-  });
-
-  it('uses the largest thumbnail array entry when no direct thumbnail exists', () => {
-    expect(
-      extractMetadataFields({
-        thumbnails: [
-          { url: 'https://i.ytimg.com/vi/id/default.jpg' },
-          { url: 'https://i.ytimg.com/vi/id/maxresdefault.jpg' },
-        ],
-      }).thumbnailUrl,
-    ).toBe('https://i.ytimg.com/vi/id/maxresdefault.jpg');
-  });
-
-  it('falls back to the standard YouTube thumbnail URL for video ids', () => {
-    expect(
-      extractMetadataFields({
-        id: '0D28qd--kRE',
-      }).thumbnailUrl,
-    ).toBe('https://i.ytimg.com/vi/0D28qd--kRE/hqdefault.jpg');
-  });
-
-  it('ignores non-HTTPS thumbnail URLs', () => {
-    expect(
-      extractMetadataFields({
-        thumbnail: 'file:///C:/secret.jpg',
-        thumbnails: [{ url: 'http://example.test/insecure.jpg' }],
-      }).thumbnailUrl,
-    ).toBeUndefined();
-  });
-
-  it('extracts album and releaseYear for a recognized-music source', () => {
-    const fields = extractMetadataFields({
-      title: 'Track Name',
-      artist: 'Some Artist',
-      album: 'Some Album',
-      release_year: 2018,
-    });
-    expect(fields.album).toBe('Some Album');
-    expect(fields.releaseYear).toBe(2018);
-  });
-
-  it('omits album and releaseYear rather than defaulting when absent', () => {
-    const fields = extractMetadataFields({
-      title: 'Plain Upload',
-      uploader: 'Some Channel',
-    });
-    expect(fields.album).toBeUndefined();
-    expect(fields.releaseYear).toBeUndefined();
-  });
-
-  it('ignores wrong-typed album/release_year instead of coercing them', () => {
-    const fields = extractMetadataFields({
-      title: 'Track Name',
-      album: 123,
-      release_year: '2018',
-    });
-    expect(fields.album).toBeUndefined();
-    expect(fields.releaseYear).toBeUndefined();
-  });
-});
-
-describe('applyYoutubeRuntimeOptions', () => {
-  it('adds the yt-dlp JavaScript runtime required for YouTube extraction', () => {
-    expect(applyYoutubeRuntimeOptions({ format: 'bestaudio' })).toEqual({
-      format: 'bestaudio',
-      jsRuntimes: 'node',
-    });
-  });
-
-  it('lets a caller-provided runtime override the default', () => {
-    expect(
-      applyYoutubeRuntimeOptions({ jsRuntimes: 'deno:C:\\Tools\\deno.exe' }),
-    ).toEqual({ jsRuntimes: 'deno:C:\\Tools\\deno.exe' });
-  });
-});
 
 describe('applySubtitleOptions', () => {
   it('does not fall back to automatic captions', () => {
@@ -167,7 +32,7 @@ describe('applySubtitleOptions', () => {
 });
 
 describe('buildAudioDownloadOptionAttempts', () => {
-  it('builds a default attempt and a YouTube 403 fallback attempt', () => {
+  it('builds default and progressively stronger YouTube 403 fallback attempts (client rotation, cookies, impersonate)', () => {
     expect(
       buildAudioDownloadOptionAttempts(
         {
@@ -204,636 +69,97 @@ describe('buildAudioDownloadOptionAttempts', () => {
         format: 'bestaudio[ext=m4a]/bestaudio/best',
         extractorArgs: 'youtube:player_js_version=actual',
       },
-    ]);
-  });
-});
-
-describe('runYoutubeDownloadAttempts', () => {
-  it('retries with the next attempt when YouTube returns audio-data 403', async () => {
-    const forbidden = Object.assign(
-      new Error(
-        'ERROR: unable to download video data: HTTP Error 403: Forbidden',
-      ),
       {
-        stderr:
-          'ERROR: unable to download video data: HTTP Error 403: Forbidden',
-      },
-    );
-    const runner = vi
-      .fn()
-      .mockRejectedValueOnce(forbidden)
-      .mockResolvedValueOnce('ok');
-
-    await expect(
-      runYoutubeDownloadAttempts(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        [{ format: 'bestaudio/best' }, { format: 'bestaudio[ext=m4a]' }],
-        runner,
-      ),
-    ).resolves.toBe('ok');
-
-    expect(runner).toHaveBeenCalledTimes(2);
-    expect(runner).toHaveBeenLastCalledWith(
-      'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-      { format: 'bestaudio[ext=m4a]' },
-    );
-  });
-
-  it('does not retry unrelated yt-dlp failures', async () => {
-    const runner = vi.fn().mockRejectedValue(new Error('Private video'));
-
-    await expect(
-      runYoutubeDownloadAttempts(
-        'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-        [{ format: 'bestaudio/best' }, { format: 'bestaudio[ext=m4a]' }],
-        runner,
-      ),
-    ).rejects.toThrow('Private video');
-
-    expect(runner).toHaveBeenCalledTimes(1);
-  });
-});
-
-describe('searchPlaybackCandidates', () => {
-  it('builds query variants from title, artist order, and collaborator names', () => {
-    expect(
-      buildPlaybackSearchQueries(
-        {
-          title: '\u964d\u843d\u5098',
-          artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
-        },
-        {
-          title:
-            'Sabrina \u80e1\u6062\u821e - \u964d\u843d\u5098 (\u5408\u4f5c\u6f14\u51fa\uff1a\u738b\u8b19Goatak)',
-        },
-      ),
-    ).toEqual([
-      'Sabrina \u80e1\u6062\u821e \u964d\u843d\u5098',
-      '\u964d\u843d\u5098 Sabrina \u80e1\u6062\u821e',
-      '\u738b\u8b19Goatak \u964d\u843d\u5098',
-      '\u964d\u843d\u5098',
-    ]);
-  });
-
-  it('builds query variants from TrackIdentity artists', () => {
-    expect(
-      buildPlaybackSearchQueries(
-        {
-          title: 'Parachute',
-          artists: ['Sabrina Hu', 'Goatak'],
-          duration: 211,
-          sourcePlatform: 'spotify',
-        },
-        {},
-      ),
-    ).toEqual([
-      'Sabrina Hu Parachute',
-      'Parachute Sabrina Hu',
-      'Goatak Parachute',
-      'Parachute',
-    ]);
-  });
-
-  it('does not dash-split track-provider titles into fake artist queries', () => {
-    expect(
-      buildPlaybackSearchQueries(
-        {
-          title: 'Seven - Clean Ver. (合作演出：Latto)',
-          artists: ['정국 (Jung Kook)', 'Latto'],
-          artist: '정국 (Jung Kook), Latto',
-          duration: 184,
-          sourcePlatform: 'yt-music',
-          sourceType: 'track',
-        },
-        {
-          title: 'Seven - Clean Ver. (合作演出：Latto)',
-          artist: '정국 (Jung Kook) 和 Latto',
-        },
-      ),
-    ).toEqual([
-      '정국 Seven - Clean Ver.',
-      'Seven - Clean Ver. 정국',
-      'Latto Seven - Clean Ver.',
-      'Seven - Clean Ver.',
-    ]);
-  });
-
-  it('builds second-pass queries from close-duration cross-language candidates', () => {
-    expect(
-      buildPlaybackCrossSearchQueries(
-        [
-          {
-            title: 'Parachute (feat. \u738b\u8b19Goatak)',
-            artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
-            duration: 210,
-          },
-          {
-            title: 'Paper Plane',
-            artist: 'Sabrina \u80e1\u6062\u821e',
-            duration: 310,
-          },
-        ],
-        { title: '\u964d\u843d\u5098', duration: 210 },
-      ),
-    ).toEqual([
-      'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak Parachute',
-      'Parachute Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
-    ]);
-  });
-
-  it('starts all metadata searches in parallel', async () => {
-    const pending = [];
-    const runner = vi.fn(() => {
-      let resolve;
-      const promise = new Promise((done) => {
-        resolve = done;
-      });
-      pending.push(resolve);
-      return promise;
-    });
-
-    const searchPromise = searchPlaybackCandidates(
-      {
-        title: 'Canonical Title',
-        artist: 'Actual Artist',
-      },
-      { title: 'Actual Artist - Canonical Title (Official Music Video)' },
-      { runner },
-    );
-
-    expect(runner).toHaveBeenCalledTimes(8);
-    pending.forEach((resolve) => resolve({ entries: [] }));
-    await expect(searchPromise).resolves.toEqual([]);
-  });
-
-  it('searches YouTube Music and YouTube without downloading media', async () => {
-    const runner = vi
-      .fn()
-      .mockResolvedValueOnce({
-        entries: [
-          {
-            id: 'music000001',
-            title: 'Canonical Title',
-            artist: 'Actual Artist',
-            duration: 211,
-          },
-        ],
-      })
-      .mockResolvedValueOnce({
-        entries: [
-          {
-            id: 'audio000001',
-            title: 'Canonical Title (Official Audio)',
-            uploader: 'Actual Artist',
-            duration: 211,
-          },
-        ],
-      })
-      .mockResolvedValue({ entries: [] });
-
-    await expect(
-      searchPlaybackCandidates(
-        {
-          title: 'Canonical Title',
-          artist: 'Actual Artist',
-          duration: 211,
-        },
-        { title: 'Actual Artist - Canonical Title (Official Music Video)' },
-        { runner },
-      ),
-    ).resolves.toEqual([
-      {
-        id: 'music000001',
-        playbackVideoId: 'music000001',
-        title: 'Canonical Title',
-        artist: 'Actual Artist',
-        duration: 211,
-        playbackKind: 'yt-music-song',
-        searchProvider: 'yt-music',
-        availableProviders: ['yt-music'],
-        reason: 'yt-music-search',
-        thumbnailUrl: 'https://i.ytimg.com/vi/music000001/hqdefault.jpg',
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs:
+          'youtube:player_client=tv_simply;player_js_version=actual',
       },
       {
-        id: 'audio000001',
-        playbackVideoId: 'audio000001',
-        title: 'Canonical Title (Official Audio)',
-        artist: 'Actual Artist',
-        duration: 211,
-        playbackKind: undefined,
-        searchProvider: 'youtube',
-        availableProviders: ['youtube'],
-        reason: 'youtube-search',
-        thumbnailUrl: 'https://i.ytimg.com/vi/audio000001/hqdefault.jpg',
-      },
-    ]);
-
-    expect(runner).toHaveBeenCalledWith(
-      'https://music.youtube.com/search?q=Actual+Artist+Canonical+Title#songs',
-      expect.objectContaining({
-        dumpSingleJson: true,
-        flatPlaylist: true,
-        playlistEnd: 5,
-        skipDownload: true,
-      }),
-    );
-    expect(runner).toHaveBeenCalledWith(
-      'ytsearch5:Actual Artist Canonical Title',
-      expect.objectContaining({
-        dumpSingleJson: true,
-        flatPlaylist: true,
-        playlistEnd: 5,
-        skipDownload: true,
-      }),
-    );
-  });
-
-  it('merges same-id YouTube Music and YouTube search results as a YT Music-capable audio candidate', async () => {
-    const runner = vi.fn(async (input) => {
-      if (input.startsWith('https://music.youtube.com/search')) {
-        return {
-          entries: [
-            {
-              id: 'nR-LSk3LfEA',
-              title: '紙飛機',
-              duration: 250,
-              resultType: 'song',
-            },
-          ],
-        };
-      }
-      if (input.startsWith('ytsearch5:')) {
-        return {
-          entries: [
-            {
-              id: 'nR-LSk3LfEA',
-              title: '紙飛機',
-              uploader: 'Goatak · Sabrina - Topic',
-              duration: 250,
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    await expect(
-      searchPlaybackCandidates(
-        {
-          title: '降落傘',
-          artists: ['Sabrina 胡恂舞', '王謙Goatak'],
-          duration: 250,
-        },
-        {
-          title: 'Sabrina 胡恂舞, 王謙Goatak - 降落傘',
-        },
-        { runner, sourcePlatform: 'youtube' },
-      ),
-    ).resolves.toEqual([
-      expect.objectContaining({
-        playbackVideoId: 'nR-LSk3LfEA',
-        searchProvider: 'yt-music',
-        availableProviders: ['yt-music', 'youtube'],
-        playbackKind: 'yt-music-song',
-      }),
-    ]);
-  });
-
-  it('keeps YT Music search limited to song results and leaves videos to YouTube search', async () => {
-    const runner = vi.fn(async (input) => {
-      if (input.startsWith('https://music.youtube.com/search')) {
-        return {
-          entries: [
-            {
-              id: 'music000001',
-              title: 'Canonical Title',
-              artist: 'Actual Artist',
-              duration: 211,
-              resultType: 'song',
-            },
-            {
-              id: 'musicvideo1',
-              title: 'Canonical Title (Official Music Video)',
-              artist: 'Actual Artist',
-              duration: 240,
-              resultType: 'video',
-            },
-            {
-              id: 'musicvideo2',
-              title: 'Canonical Title Official MV',
-              artist: 'Actual Artist',
-              duration: 240,
-            },
-          ],
-        };
-      }
-      if (input.startsWith('ytsearch5:')) {
-        return {
-          entries: [
-            {
-              id: 'ytvideo0001',
-              title: 'Canonical Title (Official Music Video)',
-              uploader: 'Actual Artist',
-              duration: 240,
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    const candidates = await searchPlaybackCandidates(
-      {
-        title: 'Canonical Title',
-        artist: 'Actual Artist',
-        duration: 211,
-      },
-      { title: 'Actual Artist - Canonical Title (Official Music Video)' },
-      { runner },
-    );
-
-    expect(candidates).toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          playbackVideoId: 'music000001',
-          playbackKind: 'yt-music-song',
-          searchProvider: 'yt-music',
-        }),
-        expect.objectContaining({
-          playbackVideoId: 'ytvideo0001',
-          playbackKind: undefined,
-          searchProvider: 'youtube',
-        }),
-      ]),
-    );
-    expect(
-      candidates.map((candidate) => candidate.playbackVideoId),
-    ).not.toEqual(expect.arrayContaining(['musicvideo1', 'musicvideo2']));
-  });
-
-  it('uses only YT Music song search for YT Music input sources', async () => {
-    const runner = vi.fn().mockResolvedValue({ entries: [] });
-
-    await searchPlaybackCandidates(
-      {
-        title: 'Canonical Title',
-        artist: 'Actual Artist',
-      },
-      { title: 'Actual Artist - Canonical Title' },
-      { runner, sourcePlatform: 'yt-music' },
-    );
-
-    expect(runner).toHaveBeenCalledTimes(4);
-    expect(runner.mock.calls.every(([input]) => input.includes('#songs'))).toBe(
-      true,
-    );
-    expect(
-      runner.mock.calls.some(([input]) => String(input).startsWith('ytsearch')),
-    ).toBe(false);
-  });
-
-  it('does not keep long video-like YT Music results as song candidates', async () => {
-    const runner = vi.fn(async (input) => {
-      if (input.startsWith('https://music.youtube.com/search')) {
-        return {
-          entries: [
-            {
-              id: 'music000001',
-              title: 'Canonical Title',
-              artist: 'Actual Artist',
-              duration: 211,
-            },
-            {
-              id: 'concert001',
-              title:
-                '2026.05.09 Sabrina胡恂舞 - 實踐大學 校園演唱會 / 全程【沒空想你】(4K)',
-              uploader: 'Some Channel',
-              duration: 1132,
-            },
-            {
-              id: 'medley00001',
-              title: '20260404胡恂舞Sabrina-台灣祭 全程 / BAD DAY / 降落傘',
-              uploader: 'ddbbaii',
-              duration: 2292,
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    const candidates = await searchPlaybackCandidates(
-      {
-        title: 'Canonical Title',
-        artist: 'Actual Artist',
-        duration: 211,
-      },
-      { title: 'Actual Artist - Canonical Title' },
-      { runner, sourcePlatform: 'yt-music' },
-    );
-
-    expect(candidates).toEqual([
-      expect.objectContaining({
-        playbackVideoId: 'music000001',
-        playbackKind: 'yt-music-song',
-      }),
-    ]);
-  });
-
-  it('rejects YT Music title-only matches when the candidate artist is different', async () => {
-    const runner = vi.fn(async (input) => {
-      if (input.startsWith('https://music.youtube.com/search')) {
-        return {
-          entries: [
-            {
-              id: 'music000001',
-              title: 'Parachute',
-              artist: 'Sabrina Hu',
-              duration: 211,
-              resultType: 'song',
-            },
-            {
-              id: 'wrongart001',
-              title: 'Sabrina Hu - Parachute campus singalong',
-              artist: 'Other Channel',
-              duration: 211,
-              resultType: 'song',
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    const candidates = await searchPlaybackCandidates(
-      {
-        title: 'Parachute',
-        artist: 'Sabrina Hu',
-        duration: 211,
-      },
-      { title: 'Sabrina Hu - Parachute' },
-      { runner, sourcePlatform: 'yt-music' },
-    );
-
-    expect(candidates).toEqual([
-      expect.objectContaining({
-        playbackVideoId: 'music000001',
-        artist: 'Sabrina Hu',
-      }),
-    ]);
-  });
-
-  it('keeps YT Music collaborations when the candidate artist contains the performer', async () => {
-    const runner = vi.fn(async (input) => {
-      if (input.startsWith('https://music.youtube.com/search')) {
-        return {
-          entries: [
-            {
-              id: 'music000001',
-              title: 'Parachute (feat. Goatak)',
-              artist: 'Sabrina Hu, Goatak',
-              duration: 211,
-              resultType: 'song',
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    await expect(
-      searchPlaybackCandidates(
-        {
-          title: 'Parachute',
-          artist: 'Sabrina Hu, Goatak',
-          duration: 211,
-        },
-        { title: 'Sabrina Hu - Parachute (feat. Goatak)' },
-        { runner, sourcePlatform: 'yt-music' },
-      ),
-    ).resolves.toEqual([
-      expect.objectContaining({
-        playbackVideoId: 'music000001',
-        artist: 'Sabrina Hu, Goatak',
-      }),
-    ]);
-  });
-
-  it('does not let channel-like source artists satisfy YT Music artist matching', async () => {
-    const runner = vi.fn(async (input) => {
-      if (input.startsWith('https://music.youtube.com/search')) {
-        return {
-          entries: [
-            {
-              id: 'music000001',
-              title: 'Parachute',
-              artist: 'Sabrina Hu',
-              duration: 211,
-              resultType: 'song',
-            },
-            {
-              id: 'label000001',
-              title: 'Parachute',
-              artist: 'Example Music',
-              duration: 211,
-              resultType: 'song',
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    const candidates = await searchPlaybackCandidates(
-      {
-        title: 'Parachute',
-        artist: 'Sabrina Hu',
-        duration: 211,
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs:
+          'youtube:player_client=web_safari;player_js_version=actual',
       },
       {
-        title: 'Sabrina Hu - Parachute (Official Music Video)',
-        artist: 'Example Music',
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs: 'youtube:player_client=mweb;player_js_version=actual',
       },
-      { runner, sourcePlatform: 'yt-music' },
-    );
-
-    expect(candidates.map((candidate) => candidate.playbackVideoId)).toEqual([
-      'music000001',
+      {
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs: 'youtube:player_js_version=actual',
+        cookiesFromBrowser: 'chrome',
+      },
+      {
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs: 'youtube:player_js_version=actual',
+        cookiesFromBrowser: 'edge',
+      },
+      {
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs: 'youtube:player_js_version=actual',
+        cookiesFromBrowser: 'firefox',
+      },
+      {
+        jsRuntimes: 'node',
+        writeSubs: true,
+        writeAutoSubs: false,
+        subLangs: 'ja',
+        subFormat: 'vtt',
+        output: 'audio.%(ext)s',
+        noPlaylist: true,
+        writeInfoJson: true,
+        format: 'bestaudio[ext=m4a]/bestaudio/best',
+        extractorArgs: 'youtube:player_js_version=actual',
+        impersonate: 'chrome',
+      },
     ]);
-  });
-
-  it('uses close-duration music results to bridge a second YouTube search', async () => {
-    const runner = vi.fn(async (input) => {
-      if (
-        input.startsWith('https://music.youtube.com/search') &&
-        input.includes('%E9%99%8D%E8%90%BD%E5%82%98')
-      ) {
-        return {
-          entries: [
-            {
-              id: 'music000001',
-              title: 'Parachute (feat. \u738b\u8b19Goatak)',
-              artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
-              duration: 210,
-            },
-          ],
-        };
-      }
-      if (
-        input ===
-        'ytsearch5:Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak Parachute'
-      ) {
-        return {
-          entries: [
-            {
-              id: 'ytvideo0001',
-              title: 'Sabrina \u80e1\u6062\u821e - \u964d\u843d\u5098',
-              uploader: 'Sabrina \u80e1\u6062\u821e',
-              duration: 210,
-            },
-          ],
-        };
-      }
-      return { entries: [] };
-    });
-
-    await expect(
-      searchPlaybackCandidates(
-        {
-          title: '\u964d\u843d\u5098',
-          artist: 'Sabrina \u80e1\u6062\u821e, \u738b\u8b19Goatak',
-          duration: 210,
-        },
-        { title: '\u964d\u843d\u5098' },
-        { runner },
-      ),
-    ).resolves.toEqual(
-      expect.arrayContaining([
-        expect.objectContaining({
-          playbackVideoId: 'music000001',
-          searchProvider: 'yt-music',
-          title: 'Parachute (feat. \u738b\u8b19Goatak)',
-        }),
-        expect.objectContaining({
-          playbackVideoId: 'ytvideo0001',
-          searchProvider: 'youtube',
-        }),
-      ]),
-    );
-  });
-
-  it('deduplicates repeated search results and ignores invalid ids', async () => {
-    const runner = vi.fn().mockResolvedValue({
-      entries: [
-        { id: 'same0000001', title: 'Song' },
-        { id: 'same0000001', title: 'Song duplicate' },
-        { id: 'too-short', title: 'Invalid' },
-      ],
-    });
-
-    await expect(
-      searchPlaybackCandidates({ title: 'Song' }, {}, { runner }),
-    ).resolves.toHaveLength(1);
   });
 });
 
@@ -898,25 +224,6 @@ describe('fetchPlaylist', () => {
     const result = await fetchPlaylist('playlist123', { runner });
 
     expect(result.thumbnailUrl).toBeUndefined();
-  });
-});
-
-describe('isForbiddenAudioDownloadError', () => {
-  it('detects yt-dlp HTTP 403 video-data download failures', () => {
-    expect(
-      isForbiddenAudioDownloadError({
-        stderr:
-          'ERROR: unable to download video data: HTTP Error 403: Forbidden',
-      }),
-    ).toBe(true);
-  });
-
-  it('ignores other 403 failures', () => {
-    expect(
-      isForbiddenAudioDownloadError({
-        stderr: 'ERROR: HTTP Error 403: Forbidden',
-      }),
-    ).toBe(false);
   });
 });
 
@@ -1189,5 +496,46 @@ describe('finalizeDownloadedTrackFiles', () => {
     expect(() => finalizeDownloadedTrackFiles(dir)).toThrow(
       'yt-dlp reported success but no audio output file found',
     );
+  });
+});
+
+describe('hasStructuredAudioFile', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-download-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('is false when the directory has no structured audio file', () => {
+    expect(hasStructuredAudioFile(dir)).toBe(false);
+  });
+
+  it('is false for a non-audio extension yt-dlp might leave behind (e.g. HLS-only output)', () => {
+    fs.writeFileSync(path.join(dir, 'audio.ts'), 'segment');
+    expect(hasStructuredAudioFile(dir)).toBe(false);
+  });
+
+  it('is true once a recognized structured audio file exists', () => {
+    fs.writeFileSync(path.join(dir, 'audio.m4a'), 'audio');
+    expect(hasStructuredAudioFile(dir)).toBe(true);
+  });
+});
+
+describe('isMissingAudioOutputError', () => {
+  it('matches the exact message finalizeDownloadedTrackFiles throws', () => {
+    expect(
+      isMissingAudioOutputError(
+        new Error('yt-dlp reported success but no audio output file found'),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not match unrelated errors', () => {
+    expect(isMissingAudioOutputError(new Error('HTTP Error 403'))).toBe(false);
+    expect(isMissingAudioOutputError(undefined)).toBe(false);
   });
 });
