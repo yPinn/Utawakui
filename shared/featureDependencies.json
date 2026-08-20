@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "dependencies": [
+    {
+      "id": "ffmpeg-gyan-essentials",
+      "featureId": "audio-processing-flow",
+      "kind": "binary",
+      "platform": "win32",
+      "arch": "x64",
+      "name": "FFmpeg essentials build",
+      "version": "9.0",
+      "license": "GPL-3.0",
+      "licenseUrl": "https://ffmpeg.org/legal.html",
+      "sourceUrl": "https://www.gyan.dev/ffmpeg/builds/",
+      "downloadUrl": "https://www.gyan.dev/ffmpeg/builds/packages/ffmpeg-9.0-essentials_build.zip",
+      "sha256": "e6b54767a6065919048f1a098eb27211ca4e12b4348a05d88777a5855d0b6e71",
+      "archiveRoot": "ffmpeg-9.0-essentials_build",
+      "executableRelativePath": "bin/ffmpeg.exe"
+    },
+    {
+      "id": "uvr-mdxnet-kara-2",
+      "featureId": "audio-processing-flow",
+      "kind": "model",
+      "platform": "win32",
+      "arch": "x64",
+      "modelId": "kara2",
+      "name": "人聲分離模型（標準）",
+      "version": "UVR_MDXNET_KARA_2",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+      "sourceUrl": "https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models",
+      "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR_MDXNET_KARA_2.onnx",
+      "sha256": "bf32e15105a09c0f7dddd2b67346146334d6f3ecb399ed7638eba2ab07cbf5f4",
+      "expectedSize": 52786726,
+      "fileRelativePath": "UVR_MDXNET_KARA_2.onnx"
+    },
+    {
+      "id": "uvr-mdxnet-inst-hq-3",
+      "featureId": "audio-processing-flow",
+      "kind": "model",
+      "platform": "win32",
+      "arch": "x64",
+      "modelId": "inst-hq3",
+      "name": "人聲分離模型（高品質）",
+      "version": "UVR-MDX-NET-Inst_HQ_3",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+      "sourceUrl": "https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models",
+      "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_3.onnx",
+      "sha256": "317554b07fe1ea5279a77f2b1520a41ea4b93432560c4ffd08792c30fddf9adc",
+      "expectedSize": 66759214,
+      "fileRelativePath": "UVR-MDX-NET-Inst_HQ_3.onnx"
+    }
+  ]
+}

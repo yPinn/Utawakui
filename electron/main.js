@@ -70,6 +70,9 @@ const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
 const { registerSeparationHandlers } = require('./main/separationHandlers');
+const {
+  registerFeatureDependencyHandlers,
+} = require('./main/featureDependencyHandlers');
 const { runStartupMigrations } = require('./main/startupMigrations');
 const { MEDIA_SCHEME } = require('./main/mediaScheme');
 
@@ -171,6 +174,12 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+    });
+
+    registerFeatureDependencyHandlers({
+      ipcMain,
+      requireFeatureGate,
+      getMainWindow: windowState.getMainWindow,
     });
 
     registerConfigHandlers({

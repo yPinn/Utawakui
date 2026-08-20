@@ -84,12 +84,12 @@ describe('config', () => {
         version: 1,
         featureConfirmations: {
           'provider-flow': {
-            noticeVersion: 'feature-notice-v1',
+            noticeVersion: 'feature-notice-v2',
             confirmedAt: '2026-08-13T00:00:00.000Z',
             enabled: true,
           },
           'unknown-flow': {
-            noticeVersion: 'feature-notice-v1',
+            noticeVersion: 'feature-notice-v2',
             confirmedAt: '2026-08-13T00:00:00.000Z',
             enabled: true,
           },
@@ -105,7 +105,7 @@ describe('config', () => {
     expect(loadConfig(configPath).featureConfirmations).toEqual({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'feature-notice-v1',
+        noticeVersion: 'feature-notice-v2',
         confirmedAt: '2026-08-13T00:00:00.000Z',
         enabled: true,
       },
@@ -157,7 +157,7 @@ describe('config', () => {
       featureConfirmations: {
         'provider-flow': {
           featureId: 'provider-flow',
-          noticeVersion: 'feature-notice-v1',
+          noticeVersion: 'feature-notice-v2',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
@@ -168,7 +168,7 @@ describe('config', () => {
       loadConfig(configPath).featureConfirmations['provider-flow'],
     ).toEqual({
       featureId: 'provider-flow',
-      noticeVersion: 'feature-notice-v1',
+      noticeVersion: 'feature-notice-v2',
       confirmedAt: '2026-08-13T00:00:00.000Z',
       enabled: true,
     });

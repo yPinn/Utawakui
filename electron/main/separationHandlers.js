@@ -10,11 +10,14 @@ const {
   listTracks,
 } = require('../lib/library');
 const {
-  ensureModel,
   SEPARATION_PRESETS,
   DEFAULT_PRESET_ID,
   resolvePreset,
 } = require('../lib/vocalSeparation');
+const {
+  getPreparedFfmpegPath,
+  getPreparedSeparationModelPath,
+} = require('../lib/featureDependencies');
 const { MEDIA_SCHEME } = require('./mediaScheme');
 
 // Main owns this guard because renderer disabled state is not authoritative.
@@ -57,17 +60,13 @@ function registerSeparationHandlers({
     }
     separationInProgress = true;
     try {
-      // The one stage that doesn't happen in the worker — the model
-      // download runs on this thread, before the worker exists.
-      const win = getMainWindow();
-      if (win) {
-        win.webContents.send('separation:progress', {
-          trackId,
-          stage: 'downloading-model',
-        });
-      }
+      // Dependency/model preparation is a Settings action. A separation run
+      // only verifies paths here so livestream work never starts with a hidden
+      // download. CPU-heavy decode/inference stays inside the worker.
       const { modelId } = resolvePreset(resolvedPresetId);
-      const modelPath = await ensureModel(app.getPath('userData'), modelId);
+      const userDataDir = app.getPath('userData');
+      const ffmpegPath = getPreparedFfmpegPath(userDataDir);
+      const modelPath = getPreparedSeparationModelPath(userDataDir, modelId);
       await new Promise((resolve, reject) => {
         const worker = new Worker(
           path.join(__dirname, '..', 'lib', 'vocalSeparationWorker.js'),
@@ -76,6 +75,7 @@ function registerSeparationHandlers({
               inputPath,
               outputDir: outDir,
               modelPath,
+              ffmpegPath,
               presetId: resolvedPresetId,
             },
           },

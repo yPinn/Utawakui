@@ -33,7 +33,7 @@ let mockPlaylist;
 
 const confirmedProviderFlow = {
   featureId: 'provider-flow',
-  noticeVersion: 'feature-notice-v1',
+  noticeVersion: 'feature-notice-v2',
   confirmedAt: '2026-08-13T00:00:00.000Z',
   enabled: true,
 };
@@ -648,7 +648,7 @@ describe('useImportSession', () => {
 
     expect(confirmFeatureGateMock).toHaveBeenCalledWith(
       'provider-flow',
-      'feature-notice-v1',
+      'feature-notice-v2',
     );
     expect(fetchYoutubePlaylistMock).toHaveBeenCalledWith('playlist-id');
     expect(session.state.sourceKind).toBe('playlist');

@@ -1,5 +1,5 @@
 {
-  "noticeVersion": "feature-notice-v1",
+  "noticeVersion": "feature-notice-v2",
   "features": [
     {
       "id": "provider-flow",
@@ -35,7 +35,8 @@
       "summary": "產生 vocal separation 或未來的預先處理音訊。",
       "body": [
         "Utawakui 會在本機產生額外的 generated media，供播放和預覽使用。",
-        "大型模型或長曲目可能需要較長時間與較多系統資源。"
+        "啟用後，你可以在設定頁準備 Utawakui 管理的 FFmpeg Gyan essentials build（GPL-3.0）與人聲分離模型，只供 Utawakui 使用。",
+        "模型下載、長曲目處理與高品質模式可能需要較長時間、較多系統資源與額外下載空間。"
       ]
     },
     {

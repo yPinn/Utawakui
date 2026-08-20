@@ -1,10 +1,13 @@
 import { reactive, readonly } from 'vue';
+import { FEATURE_IDS } from '../constants/featureGates.js';
+import { useFeatureGates } from './useFeatureGates.js';
 
 // Single shared instance (module scope, not per-component), same as
 // usePlayer.js: SetlistView unmounts on every tab switch, so state that
 // lived in its own refs used to vanish from the UI mid-run even though the
 // worker kept going. Owning the in-flight promise and progress map here
 // fixes that.
+const { ensureFeatureGate } = useFeatureGates();
 
 const state = reactive({
   // trackId -> { stage, percent? }, only for tracks currently separating.
@@ -43,8 +46,6 @@ function describe(trackId) {
   const progress = state.inFlight.get(trackId);
   if (!progress) return '準備中';
   switch (progress.stage) {
-    case 'downloading-model':
-      return '下載模型中';
     case 'loading-model':
       return '載入模型中';
     case 'decoding':
@@ -61,6 +62,12 @@ function describe(trackId) {
 async function separate(track, presetId) {
   if (isSeparating(track.id)) return;
   state.errors.delete(track.id);
+  const enabled = await ensureFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW);
+  if (!enabled) {
+    state.errors.set(track.id, '已取消啟用音訊處理');
+    return;
+  }
+
   // Seeds an entry immediately so isSeparating() is true (and the button
   // shows "準備中") from the very first render after the click, instead of
   // waiting for the first IPC progress event to round-trip.

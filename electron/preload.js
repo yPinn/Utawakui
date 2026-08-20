@@ -37,6 +37,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getFeatureConfirmations: () => ipcRenderer.invoke('feature-gates:list'),
   confirmFeatureGate: (featureId, noticeVersion) =>
     ipcRenderer.invoke('feature-gates:confirm', featureId, noticeVersion),
+  listFeatureDependencies: () =>
+    ipcRenderer.invoke('feature-dependencies:list'),
+  prepareFeatureDependency: (dependencyId) =>
+    ipcRenderer.invoke('feature-dependencies:prepare', dependencyId),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),
@@ -113,6 +117,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('library:backfill-status', listener);
     return () =>
       ipcRenderer.removeListener('library:backfill-status', listener);
+  },
+  onFeatureDependenciesUpdated: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('feature-dependencies:updated', listener);
+    return () =>
+      ipcRenderer.removeListener('feature-dependencies:updated', listener);
   },
   setPlaybackState: (state) => ipcRenderer.send('player:state', state),
   // Relays a thumbar click; the renderer stays the sole owner of the

@@ -7,13 +7,26 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 let progressCallback;
 let runSeparationMock;
 let selectSeparationResultMock;
+let getFeatureConfirmationsMock;
+
+const confirmedAudioProcessingFlow = {
+  featureId: 'audio-processing-flow',
+  noticeVersion: 'feature-notice-v2',
+  confirmedAt: '2026-08-20T00:00:00.000Z',
+  enabled: true,
+};
 
 beforeEach(() => {
   vi.resetModules();
   runSeparationMock = vi.fn();
   selectSeparationResultMock = vi.fn();
+  getFeatureConfirmationsMock = vi.fn().mockResolvedValue({
+    'audio-processing-flow': confirmedAudioProcessingFlow,
+  });
   vi.stubGlobal('window', {
     Utawakui: {
+      getFeatureConfirmations: getFeatureConfirmationsMock,
+      confirmFeatureGate: vi.fn(),
       onSeparationProgress: (callback) => {
         progressCallback = callback;
       },
@@ -26,6 +39,12 @@ beforeEach(() => {
 afterEach(() => {
   vi.unstubAllGlobals();
 });
+
+async function flushPromises() {
+  for (let i = 0; i < 5; i += 1) {
+    await Promise.resolve();
+  }
+}
 
 async function loadSeparation() {
   const { useSeparation } = await import('./useSeparation.js');
@@ -40,14 +59,20 @@ describe('describe()', () => {
 
   it('maps each known stage to its label', async () => {
     const { describe: describeStage } = await loadSeparation();
-    progressCallback({ trackId: 't1', stage: 'downloading-model' });
-    expect(describeStage('t1')).toBe('下載模型中');
     progressCallback({ trackId: 't1', stage: 'loading-model' });
     expect(describeStage('t1')).toBe('載入模型中');
     progressCallback({ trackId: 't1', stage: 'decoding' });
     expect(describeStage('t1')).toBe('解碼中');
     progressCallback({ trackId: 't1', stage: 'writing' });
     expect(describeStage('t1')).toBe('寫入中');
+  });
+
+  it('does not present dependency downloads as separation run stages', async () => {
+    const { describe: describeStage } = await loadSeparation();
+    progressCallback({ trackId: 't1', stage: 'downloading-ffmpeg' });
+    expect(describeStage('t1')).toBe('準備中');
+    progressCallback({ trackId: 't1', stage: 'downloading-model' });
+    expect(describeStage('t1')).toBe('準備中');
   });
 
   it('includes the percent for the separating stage, defaulting to 0', async () => {
@@ -77,10 +102,13 @@ describe('isSeparating()', () => {
 describe('separate()', () => {
   it('is a no-op while the same track is already separating', async () => {
     const { separate, isSeparating } = await loadSeparation();
+    const { useFeatureGates } = await import('./useFeatureGates.js');
+    await useFeatureGates().refreshConfirmations();
     runSeparationMock.mockImplementation(() => new Promise(() => {}));
     const track = { id: 't1', title: 'Song' };
 
     separate(track);
+    await flushPromises();
     expect(isSeparating('t1')).toBe(true);
 
     separate(track);
@@ -130,6 +158,26 @@ describe('separate()', () => {
     runSeparationMock.mockResolvedValueOnce({ stemsUrl: 'x' });
     await separate(track);
     expect(state.errors.has('t1')).toBe(false);
+  });
+
+  it('does not start separation when audio-processing-flow is not enabled', async () => {
+    getFeatureConfirmationsMock.mockResolvedValue({});
+    const { separate, isSeparating, state } = await loadSeparation();
+    const track = { id: 't1', title: 'Song' };
+
+    const pending = separate(track);
+    await Promise.resolve();
+
+    expect(isSeparating('t1')).toBe(false);
+    expect(runSeparationMock).not.toHaveBeenCalled();
+    expect(state.errors.has('t1')).toBe(false);
+
+    const { useFeatureGates } = await import('./useFeatureGates.js');
+    useFeatureGates().cancelPendingFeature();
+    await pending;
+
+    expect(runSeparationMock).not.toHaveBeenCalled();
+    expect(state.errors.get('t1')).toBe('已取消啟用音訊處理');
   });
 });
 

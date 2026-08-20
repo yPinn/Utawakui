@@ -275,16 +275,17 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 直接依賴的授權重點如下。實際 release 仍應以 lockfile、安裝後 package metadata 與
 打包內容為準。
 
-| Package / tool                                | License          | 用途                                      | 注意事項                                                                     |
-| --------------------------------------------- | ---------------- | ----------------------------------------- | ---------------------------------------------------------------------------- |
-| Vue、Electron、Vite、Vitest、ESLint、Prettier | MIT              | App shell、build、test、lint/format。     | 寬鬆授權；散布時保留 notice。                                                |
-| @lucide/vue                                   | ISC              | UI icon components。                      | 寬鬆授權；保留 notice。                                                      |
-| kissfft-js                                    | MIT              | DSP / audio analysis dependency。         | 寬鬆授權；保留 notice。                                                      |
-| onnxruntime-node                              | MIT              | Vocal separation runtime dependency。     | Runtime 授權不等於模型授權；模型檔需另行確認來源與 license。                 |
-| @soundtouchjs/audio-worklet                   | MPL-2.0          | Pitch/tempo preview 的 AudioWorklet。     | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                   |
-| youtube-dl-exec                               | MIT              | 呼叫外部 downloader 的 Node.js wrapper。  | Wrapper 授權不授權任何下載內容，也不免除平台條款。                           |
-| yt-dlp                                        | Unlicense        | Provider download/search 工具鏈。         | 程式碼授權與媒體授權無關；不同 release artifact 可能有不同 bundled license。 |
-| ffmpeg-static                                 | GPL-3.0-or-later | 目前為 dependency，發布前需確認是否保留。 | 若 packaged release 內含 binary，需處理 GPL 散布義務。                       |
+| Package / tool                                | License   | 用途                                                      | 注意事項                                                                                      |
+| --------------------------------------------- | --------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Vue、Electron、Vite、Vitest、ESLint、Prettier | MIT       | App shell、build、test、lint/format。                     | 寬鬆授權；散布時保留 notice。                                                                 |
+| @lucide/vue                                   | ISC       | UI icon components。                                      | 寬鬆授權；保留 notice。                                                                       |
+| kissfft-js                                    | MIT       | DSP / audio analysis dependency。                         | 寬鬆授權；保留 notice。                                                                       |
+| onnxruntime-node                              | MIT       | Vocal separation runtime dependency。                     | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                  |
+| @soundtouchjs/audio-worklet                   | MPL-2.0   | Pitch/tempo preview 的 AudioWorklet。                     | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                    |
+| youtube-dl-exec                               | MIT       | 呼叫外部 downloader 的 Node.js wrapper。                  | Wrapper 授權不授權任何下載內容，也不免除平台條款。                                            |
+| yt-dlp                                        | Unlicense | Provider download/search 工具鏈。                         | 程式碼授權與媒體授權無關；不同 release artifact 可能有不同 bundled license。                  |
+| FFmpeg Gyan essentials build                  | GPL-3.0   | `audio-processing-flow` 啟用後下載的 app-managed binary。 | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                  |
+| UVR MDX-Net ONNX models                       | MIT       | `audio-processing-flow` 啟用後下載的 app-managed models。 | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。 |
 
 補充：
 
@@ -292,36 +293,40 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
   實際 bundled/downloaded 的工具版本、來源與 hash。
 - `yt-dlp` 本體採 Unlicense，但其官方 README 也提醒部分 release 檔案包含其他專案
   程式碼；PyInstaller bundled executables 可能形成 GPLv3+ combined work。
-- FFmpeg 官方說明指出，FFmpeg 依建置選項可能落在 LGPL 或 GPL；但本專案目前依賴的
-  `ffmpeg-static` package metadata 為 `GPL-3.0-or-later`，因此 release 前應把它當成
-  高優先級 license 決策點。
+- FFmpeg 官方說明指出，FFmpeg 依建置選項可能落在 LGPL 或 GPL；本專案目前不再把
+  `ffmpeg-static` 放入 packaged runtime，改由 `audio-processing-flow` 啟用後下載
+  Gyan essentials build。該 build 仍應以 GPL-3.0 處理，並在下載前顯示授權與來源。
+- UVR MDX-Net 模型由 app-managed provisioning 下載，不放入 installer。模型 registry
+  目前指向 TRvlvr/model_repo 的 `all_public_uvr_models` release，並依 UVR 授權說明與
+  備援模型卡標示為 MIT + credit；正式發布前仍需重新確認上游授權與 attribution 文案。
 
 ### 8.3 功能接入與授權邊界
 
 功能接入可以分成「技術授權」與「內容/平台授權」兩層。開源元件只處理前者；
 使用者拿該功能處理什麼內容，仍回到歌曲、歌詞、錄音與平台條款。
 
-| Feature / 接入點               | 開源或技術側狀態                              | 內容/平台側邊界                                           | 產品處理方式                                     |
-| ------------------------------ | --------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------ |
-| Local library / local playback | Electron/Vue 本機 app；依賴多為寬鬆授權。     | 本機檔案來源由使用者自行確認。                            | 預設入口；只提示匯入自有或已授權檔案。           |
-| OBS Browser Source overlay     | OBS 為 GPLv2；Browser Source 屬一般使用情境。 | 畫面若含歌詞、封面、MV、譜面，仍需素材顯示/傳輸授權。     | 純 UI overlay 低風險；lyrics/artwork 分開 gate。 |
-| Provider metadata import       | 只保存必要 metadata；不直接提供音樂授權。     | Provider API policy 可能限制保存、展示與再利用方式。      | 文案使用「metadata / candidate」，不稱合法來源。 |
-| Provider candidate search      | 透過工具鏈查找候選曲目。                      | 候選結果不代表取得音訊、歌詞、封面或平台授權。            | 結果標示為候選；下載前另行確認。                 |
-| Provider download path         | `youtube-dl-exec` + `yt-dlp` 工具鏈。         | 可能涉及平台條款、重製、來源合法性與技術保護措施。        | 非預設；明確 feature gate；不得提供規避流程。    |
-| Thumbnail / info sidecars      | 作為本機 track sidecar 保存。                 | 圖像/metadata 仍可能受 provider policy 或權利人條款限制。 | 僅本機保存；公開顯示另設 gate。                  |
-| Lyrics import / lyrics overlay | 技術上只是文字資料讀取與顯示。                | 歌詞是獨立文字內容；公開顯示通常需確認權利。              | 預設關閉；OBS 輸出前提示。                       |
-| Pitch / tempo preview          | 依賴 MPL-2.0 SoundTouchJS worklet。           | 處理後版本公開使用仍需確認授權；cache 可能形成副本。      | 本機預覽為主；公開輸出前提示。                   |
-| Vocal separation / stems       | `onnxruntime-node` 等 runtime；模型需另查。   | Stems 是由既有音源產生的媒體副本，不應暗示可公開散布。    | 本機工作流；不提供 stems 散布功能。              |
-| Recording / VOD workflow       | OBS/本機錄製流程本身不是授權服務。            | 錄影、VOD、clips、精華可能需要不同授權。                  | Session 前提示；與 live 分開確認。               |
+| Feature / 接入點               | 開源或技術側狀態                                                          | 內容/平台側邊界                                           | 產品處理方式                                     |
+| ------------------------------ | ------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------ |
+| Local library / local playback | Electron/Vue 本機 app；依賴多為寬鬆授權。                                 | 本機檔案來源由使用者自行確認。                            | 預設入口；只提示匯入自有或已授權檔案。           |
+| OBS Browser Source overlay     | OBS 為 GPLv2；Browser Source 屬一般使用情境。                             | 畫面若含歌詞、封面、MV、譜面，仍需素材顯示/傳輸授權。     | 純 UI overlay 低風險；lyrics/artwork 分開 gate。 |
+| Provider metadata import       | 只保存必要 metadata；不直接提供音樂授權。                                 | Provider API policy 可能限制保存、展示與再利用方式。      | 文案使用「metadata / candidate」，不稱合法來源。 |
+| Provider candidate search      | 透過工具鏈查找候選曲目。                                                  | 候選結果不代表取得音訊、歌詞、封面或平台授權。            | 結果標示為候選；下載前另行確認。                 |
+| Provider download path         | `youtube-dl-exec` + `yt-dlp` 工具鏈。                                     | 可能涉及平台條款、重製、來源合法性與技術保護措施。        | 非預設；明確 feature gate；不得提供規避流程。    |
+| Thumbnail / info sidecars      | 作為本機 track sidecar 保存。                                             | 圖像/metadata 仍可能受 provider policy 或權利人條款限制。 | 僅本機保存；公開顯示另設 gate。                  |
+| Lyrics import / lyrics overlay | 技術上只是文字資料讀取與顯示。                                            | 歌詞是獨立文字內容；公開顯示通常需確認權利。              | 預設關閉；OBS 輸出前提示。                       |
+| Pitch / tempo preview          | 依賴 MPL-2.0 SoundTouchJS worklet。                                       | 處理後版本公開使用仍需確認授權；cache 可能形成副本。      | 本機預覽為主；公開輸出前提示。                   |
+| Vocal separation / stems       | `onnxruntime-node` runtime；UVR 模型由設定頁下載並記錄來源/license/hash。 | Stems 是由既有音源產生的媒體副本，不應暗示可公開散布。    | 本機工作流；不提供 stems 散布功能。              |
+| Recording / VOD workflow       | OBS/本機錄製流程本身不是授權服務。                                        | 錄影、VOD、clips、精華可能需要不同授權。                  | Session 前提示；與 live 分開確認。               |
 
 ### 8.4 對外散布檢查
 
 正式開源或打包發布前，建議至少確認：
 
 - Utawakui 自身 license、README 授權說明、第三方 notices 已一致。
-- Packaged app 實際包含哪些 binary：`yt-dlp`、FFmpeg、ONNX Runtime native binaries、
-  model files。
-- `ffmpeg-static` 若未實際使用，評估移除；若保留或打包，先完成 GPL compliance 判斷。
+- Packaged app 實際包含哪些 binary：`yt-dlp`、ONNX Runtime native binaries，以及
+  哪些項目改由 app-managed provisioning 下載。
+- FFmpeg 與 UVR models 若由 app-managed provisioning 下載，確認 manifest 來源、hash、
+  license notice 與使用者同意流程。
 - 若未來加入 model weights、sample media、demo lyrics、themes with artwork，逐一確認
   license 與可散布範圍。
 - CI 或 release script 產生 dependency license report，並保存 release artifact 對應版本。
@@ -513,7 +518,7 @@ OBS 畫面輸出：
       gates。
 - [ ] 確認 app 不附帶受著作權保護的 sample media。
 - [ ] 產生並隨附第三方 license notices。
-- [ ] 檢視 `ffmpeg-static` 散布義務。
+- [ ] 檢視 app-managed FFmpeg / UVR model 下載來源、hash、授權顯示與 notice 保存。
 - [ ] 另行處理 `onnxruntime-node` audit remediation。
 - [ ] 若加入官方 provider API，確認 privacy/data handling。
 - [ ] 確認 packaging 不暗示與 YouTube、Spotify、OBS 或其他 provider 有 affiliation。
@@ -575,5 +580,11 @@ OBS 畫面輸出：
   <https://github.com/yt-dlp/yt-dlp/blob/master/README.md#licensing>
 - FFmpeg license and legal considerations：
   <https://www.ffmpeg.org/legal.html>
+- UVR model release archive：
+  <https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models>
+- UVR license statement：
+  <https://github.com/Anjok07/ultimatevocalremovergui#license>
+- UVR5 MDX-Net model card / license mirror：
+  <https://huggingface.co/notabilia/uvr5-models/commit/d2940fdfa8d6347ca9b864b0ebae69aa3db906d7>
 - Mozilla Public License 2.0 FAQ：
   <https://www.mozilla.org/en-US/MPL/2.0/FAQ/>

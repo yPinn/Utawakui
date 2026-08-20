@@ -15,7 +15,7 @@ describe('featureGates', () => {
       }),
     ).toEqual({
       featureId: 'provider-flow',
-      noticeVersion: 'feature-notice-v1',
+      noticeVersion: 'feature-notice-v2',
       confirmedAt: '2026-08-13T00:00:00.000Z',
       enabled: true,
     });
@@ -32,7 +32,7 @@ describe('featureGates', () => {
     expect(
       normalizeFeatureConfirmations({
         'provider-flow': {
-          noticeVersion: 'feature-notice-v1',
+          noticeVersion: 'feature-notice-v2',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
@@ -42,12 +42,12 @@ describe('featureGates', () => {
           enabled: true,
         },
         'audio-processing-flow': {
-          noticeVersion: 'feature-notice-v1',
+          noticeVersion: 'feature-notice-v2',
           confirmedAt: 'not-a-date',
           enabled: true,
         },
         'public-output-flow': {
-          noticeVersion: 'feature-notice-v1',
+          noticeVersion: 'feature-notice-v2',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: false,
         },
@@ -55,7 +55,7 @@ describe('featureGates', () => {
     ).toEqual({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'feature-notice-v1',
+        noticeVersion: 'feature-notice-v2',
         confirmedAt: '2026-08-13T00:00:00.000Z',
         enabled: true,
       },
@@ -67,7 +67,7 @@ describe('featureGates', () => {
       featureConfirmations: {
         'provider-flow': {
           featureId: 'provider-flow',
-          noticeVersion: 'feature-notice-v1',
+          noticeVersion: 'feature-notice-v2',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },

@@ -2,14 +2,12 @@
 
 // DSP pipeline: ffmpeg decode -> STFT -> ONNX inference -> ISTFT -> per-preset
 // 4-channel WAV. separateTrack() is CPU-bound and runs only inside
-// vocalSeparationWorker.js; ensureModel() below runs on the main process
-// (see main.js).
+// vocalSeparationWorker.js. Model download/verification lives in
+// featureDependencies.js so Settings can prepare it before a run starts.
 
 const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
-const ffmpegPath = require('ffmpeg-static');
-const ort = require('onnxruntime-node');
 const KissFFT = require('kissfft-js');
 const { recordSeparationResult } = require('./library');
 const { atomicWriteBuffer } = require('./atomicWrite');
@@ -23,8 +21,6 @@ const CHANNELS = 2;
 const MODELS = {
   kara2: {
     filename: 'UVR_MDXNET_KARA_2.onnx',
-    url: 'https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR_MDXNET_KARA_2.onnx',
-    expectedSize: 52786726,
     nFft: 5120,
     dimF: 2048,
     dimT: 256, // 2 ** mdx_dim_t_set(8)
@@ -33,8 +29,6 @@ const MODELS = {
   },
   'inst-hq3': {
     filename: 'UVR-MDX-NET-Inst_HQ_3.onnx',
-    url: 'https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_3.onnx',
-    expectedSize: 66759214,
     nFft: 6144,
     dimF: 3072,
     dimT: 256,
@@ -148,8 +142,12 @@ function istftChannel(real, imag, numFrames, window, outputLength, nFft) {
 }
 
 // Decode to fixed 44.1kHz stereo float PCM; the model depends on it.
-function decodeAudio(inputPath) {
+function decodeAudio(inputPath, ffmpegPath) {
   return new Promise((resolve, reject) => {
+    if (!ffmpegPath) {
+      reject(new Error('missing FFmpeg executable path'));
+      return;
+    }
     const args = [
       '-y',
       '-i',
@@ -207,6 +205,9 @@ function resolvePreset(presetId) {
 }
 
 async function runInference(session, inputData, model) {
+  // Lazy require — this file also loads in the main process, which must
+  // never load onnxruntime-node/DirectML. See ADR 0002.
+  const ort = require('onnxruntime-node');
   const inputTensor = new ort.Tensor('float32', inputData, [
     1,
     4,
@@ -495,13 +496,13 @@ function writeWavAtomic(filePath, channels, sampleRate) {
 // decoded files drifting out of sync produces audible comb filtering.
 //
 // onProgress stages fire in pipeline order: loading-model (the ~50MB ONNX
-// session, built fresh every call — not ensureModel's one-time download,
-// which the caller reports separately) -> decoding -> separating
-// (per-chunk) -> writing.
+// session, built fresh every call from the Settings-prepared model file) ->
+// decoding -> separating (per-chunk) -> writing.
 async function separateTrack(
   inputPath,
   outputDir,
   modelPath,
+  ffmpegPath,
   onProgress,
   presetId = DEFAULT_PRESET_ID,
 ) {
@@ -529,10 +530,12 @@ async function separateTrack(
   };
 
   onProgress?.({ stage: 'loading-model' });
+  // Lazy require — see runInference's require above.
+  const ort = require('onnxruntime-node');
   const session = await ort.InferenceSession.create(modelPath);
 
   onProgress?.({ stage: 'decoding' });
-  const { left, right } = await decodeAudio(inputPath);
+  const { left, right } = await decodeAudio(inputPath, ffmpegPath);
 
   let peak = 0;
   for (let i = 0; i < left.length; i++) {
@@ -576,41 +579,8 @@ async function separateTrack(
   return { stemsPath };
 }
 
-// Downloads a model on first use into <userDataDir>/models/. A download
-// interrupted mid-write must not leave a file at the final path — same
-// .tmp + rename reasoning as writeWavAtomic above.
-async function ensureModel(userDataDir, modelId) {
-  const model = MODELS[modelId];
-  if (!model) throw new Error(`unknown separation model: ${modelId}`);
-
-  const modelDir = path.join(userDataDir, 'models');
-  const modelPath = path.join(modelDir, model.filename);
-  if (fs.existsSync(modelPath)) return modelPath;
-
-  fs.mkdirSync(modelDir, { recursive: true });
-
-  // Not https.get — this URL 302-redirects to an Azure blob, and fetch()
-  // follows redirects by default.
-  const response = await fetch(model.url);
-  if (!response.ok) {
-    throw new Error(
-      `Failed to download vocal separation model: HTTP ${response.status}`,
-    );
-  }
-  const buffer = Buffer.from(await response.arrayBuffer());
-  if (buffer.length !== model.expectedSize) {
-    throw new Error(
-      `Downloaded model size ${buffer.length} doesn't match expected ${model.expectedSize} — download may be incomplete.`,
-    );
-  }
-
-  atomicWriteBuffer(modelPath, buffer);
-  return modelPath;
-}
-
 module.exports = {
   separateTrack,
-  ensureModel,
   encodeWav,
   MODELS,
   SEPARATION_PRESETS,

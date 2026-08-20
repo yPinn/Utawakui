@@ -2,25 +2,27 @@
 import { computed, onMounted, shallowRef } from 'vue';
 import {
   CircleAlert,
-  Check,
   Download,
   FolderOpen,
-  Library,
   ListChecks,
-  ListMusic,
   RefreshCw,
   RotateCcw,
   Settings,
+  Video,
 } from '../icons/index.js';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
+import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
+import { getFeatureDependencies } from '../constants/featureDependencies.js';
 import { FEATURE_GATES } from '../constants/featureGates.js';
+import { useFeatureDependencies } from '../composables/useFeatureDependencies.js';
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { useYtdlpStatus } from '../composables/useYtdlpStatus.js';
+import packageJson from '../../package.json';
 
 const {
   state: importState,
@@ -36,6 +38,11 @@ const {
   ensureFeatureGate,
 } = useFeatureGates();
 const {
+  state: featureDependencyState,
+  refreshDependencies,
+  prepareDependency,
+} = useFeatureDependencies();
+const {
   state: ytdlpState,
   refreshStatus: refreshYtdlpStatus,
   checkForUpdate: checkYtdlpUpdate,
@@ -46,7 +53,6 @@ const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
 const enablingFeatureId = shallowRef(null);
 const ytdlpMessage = shallowRef('');
-const ytdlpMessageTone = shallowRef('muted');
 
 const ytdlpCheckResultLabel = computed(() => {
   if (ytdlpState.lastCheckResult === 'up-to-date') return '已是最新';
@@ -54,36 +60,6 @@ const ytdlpCheckResultLabel = computed(() => {
   if (ytdlpState.lastCheckResult === 'error') return '檢查失敗';
   return '';
 });
-
-const basicFeatureRows = [
-  {
-    id: 'local-library',
-    icon: Library,
-    title: '本機曲庫',
-    value: '曲目 / 封面 / 曲目資訊',
-    status: '已啟用',
-    tone: 'success',
-    description: '本機曲目與素材整理是預設核心功能。',
-  },
-  {
-    id: 'setlist-player',
-    icon: ListMusic,
-    title: '歌單與播放',
-    value: '歌單 / 佇列 / 播放列',
-    status: '已啟用',
-    tone: 'success',
-    description: '歌單、播放佇列與底部播放列屬於預設操作面。',
-  },
-  {
-    id: 'local-settings',
-    icon: Settings,
-    title: '本機設定',
-    value: '路徑 / 主題 / 視窗狀態',
-    status: '已啟用',
-    tone: 'success',
-    description: '只保存在這台電腦，不寫入歌單或未來 preset。',
-  },
-];
 
 const FEATURE_GATE_LABELS = {
   'provider-flow': '外部來源',
@@ -93,15 +69,126 @@ const FEATURE_GATE_LABELS = {
 };
 
 const FEATURE_GATE_VALUE_LABELS = {
-  'provider-flow': '匯入 / 候選版本',
-  'lyrics-flow': '搜尋 / 保存歌詞',
-  'audio-processing-flow': '分離 / 產生音訊',
-  'public-output-flow': 'OBS / 公開呈現',
+  'provider-flow': '匯入線上來源',
+  'lyrics-flow': '搜尋與保存歌詞',
+  'audio-processing-flow': '人聲分離與音訊處理',
+  'public-output-flow': 'OBS 畫面與公開輸出',
 };
+
+const WORKFLOW_ITEM_GROUP_LABELS = {
+  'provider-flow': '下載工具',
+  'audio-processing-flow': '需要準備的項目',
+  'public-output-flow': '輸出設定',
+};
+
+function dependencyWorkflowItem(dependency) {
+  const current = featureDependencyState.byId[dependency.id] ?? dependency;
+  const isFfmpeg = dependency.id === 'ffmpeg-gyan-essentials';
+  const isModel = dependency.kind === 'model';
+  const preparing = featureDependencyState.preparingIds.has(dependency.id);
+  const installed = Boolean(current.installed);
+  const title = isFfmpeg
+    ? '音訊轉換工具'
+    : isModel
+      ? dependency.name
+      : dependency.name;
+  const status = installed
+    ? '已準備'
+    : preparing
+      ? '準備中'
+      : current.canMigrate
+        ? '可整理'
+        : '尚未準備';
+  return {
+    ...dependency,
+    title,
+    description: isFfmpeg
+      ? '讓 Utawakui 讀取不同音訊格式，供人聲分離與音訊處理使用。'
+      : isModel
+        ? '下載後即可在產生人聲分離結果時使用。'
+        : '此功能需要先下載的工具或資料。',
+    value: dependency.license
+      ? `${dependency.version} / ${dependency.license}`
+      : dependency.version,
+    status,
+    statusTone: installed ? 'success' : preparing ? 'info' : 'warning',
+    icon: Download,
+    actionIcon: Download,
+    actionDisabled: installed || preparing,
+    actionLabel: installed
+      ? `${title}已準備`
+      : preparing
+        ? `準備${title}中`
+        : `準備${title}`,
+  };
+}
+
+function getProviderWorkflowItems() {
+  const hasCheckError =
+    ytdlpState.lastCheckResult === 'error' || Boolean(ytdlpState.error);
+  return [
+    {
+      id: 'provider-ytdlp-engine',
+      kind: 'tool',
+      icon: Download,
+      title: '線上來源下載工具',
+      description:
+        ytdlpMessage.value || '用來把你選定的外部來源保存到本機曲庫。',
+      value:
+        ytdlpState.version ||
+        (ytdlpState.isLoading ? '讀取中' : '尚未讀取版本'),
+      status:
+        ytdlpCheckResultLabel.value ||
+        (ytdlpState.binaryFound ? '可使用' : '找不到工具'),
+      statusTone:
+        hasCheckError || !ytdlpState.binaryFound ? 'danger' : 'success',
+      actionIcon: RefreshCw,
+      actionDisabled: ytdlpState.isChecking,
+      actionLabel: ytdlpState.isChecking
+        ? '檢查下載引擎中'
+        : '檢查並更新下載引擎',
+    },
+  ];
+}
+
+function getPublicOutputWorkflowItems() {
+  return [
+    {
+      id: 'public-output-defaults',
+      kind: 'planned-setting',
+      icon: Video,
+      title: 'OBS 輸出預設',
+      description: '設定未來 OBS 畫面來源與場次輸出偏好。',
+      value: '尚未提供',
+      status: '稍後提供',
+      statusTone: 'gated',
+      actionIcon: Settings,
+      actionDisabled: true,
+      actionLabel: 'OBS 輸出設定稍後提供',
+    },
+  ];
+}
+
+function getFeatureWorkflowItems(featureId) {
+  const dependencyItems = getFeatureDependencies(featureId).map(
+    dependencyWorkflowItem,
+  );
+  if (featureId === 'provider-flow') {
+    return [...getProviderWorkflowItems(), ...dependencyItems];
+  }
+  if (featureId === 'public-output-flow') {
+    return [...getPublicOutputWorkflowItems(), ...dependencyItems];
+  }
+  return dependencyItems;
+}
 
 const featureGateRows = computed(() =>
   Object.values(FEATURE_GATES).map((gate) => {
     const enabled = isFeatureEnabled(gate.id);
+    const items = getFeatureWorkflowItems(gate.id);
+    const isBusy =
+      featureGateState.pendingFeatureId === gate.id ||
+      enablingFeatureId.value === gate.id;
     return {
       id: gate.id,
       title: FEATURE_GATE_LABELS[gate.id] ?? gate.title,
@@ -109,8 +196,15 @@ const featureGateRows = computed(() =>
       value: FEATURE_GATE_VALUE_LABELS[gate.id] ?? gate.category,
       status: enabled ? '已啟用' : '未啟用',
       tone: enabled ? 'success' : 'gated',
-      icon: enabled ? Check : CircleAlert,
+      icon: enabled ? ListChecks : CircleAlert,
       enabled,
+      isBusy,
+      items,
+      itemGroupLabel: WORKFLOW_ITEM_GROUP_LABELS[gate.id] ?? '準備項目',
+      itemsHint:
+        items.length > 0
+          ? '建議在直播前先準備這些項目，避免使用時臨時等待下載或設定。'
+          : '',
     };
   }),
 );
@@ -123,41 +217,32 @@ const diagnosticsRows = [
   {
     id: 'runtime-log',
     icon: ListChecks,
-    title: '應用程式記錄',
-    description: '收集主行程、渲染端、音訊處理與匯入流程的診斷紀錄。',
-    value: '記錄保存 / 保留期限',
-    status: '規劃中',
+    title: '使用記錄',
+    description: '保留近期操作與錯誤狀態，協助排查播放、匯入或音訊處理問題。',
+    value: '尚未提供',
+    status: '稍後提供',
     tone: 'warning',
   },
   {
     id: 'error-report-bundle',
     icon: CircleAlert,
-    title: '錯誤回報包',
-    description: '打包錯誤訊息、環境摘要與必要設定快照；不包含媒體檔案。',
-    value: '隱私邊界 / IPC',
-    status: '待接線',
+    title: '回報資料包',
+    description: '整理必要的錯誤資訊與環境摘要；不包含你的音樂檔案。',
+    value: '不含媒體檔案',
+    status: '稍後提供',
     tone: 'gated',
   },
 ];
 
-const preferenceRows = [
+const appUpdateRows = [
   {
-    id: 'theme',
-    icon: Settings,
-    title: '控制台主題',
-    description: '使用頂部按鈕切換亮暗主題；不提供使用者自定義控制台主題。',
-    value: '亮 / 暗',
-    status: '已實作',
-    tone: 'success',
-  },
-  {
-    id: 'output-defaults',
-    icon: Settings,
-    title: 'OBS 輸出預設',
-    description: '未來保存 OBS Browser Source、場次模式與公開輸出偏好。',
-    value: 'Browser Source / 場次模式',
-    status: '規劃中',
-    tone: 'gated',
+    id: 'app-version',
+    icon: RefreshCw,
+    title: 'Utawakui 版本',
+    description: '檢查是否有新版安裝程式可用。',
+    value: packageJson.version ? `v${packageJson.version}` : '目前版本',
+    status: '稍後提供',
+    tone: 'warning',
   },
 ];
 
@@ -186,23 +271,21 @@ async function refreshSettingsState() {
     maintenanceTone.value = 'danger';
   }
   refreshConfirmations();
+  refreshDependencies();
   refreshYtdlpStatus();
 }
 
 async function checkForYtdlpUpdate() {
   ytdlpMessage.value = '';
-  ytdlpMessageTone.value = 'muted';
   await checkYtdlpUpdate();
   if (ytdlpState.error || ytdlpState.lastCheckResult === 'error') {
     ytdlpMessage.value = ytdlpState.error || '檢查更新失敗，請確認網路連線';
-    ytdlpMessageTone.value = 'danger';
     return;
   }
   ytdlpMessage.value =
     ytdlpState.lastCheckResult === 'updated'
       ? `已更新至 ${ytdlpState.version}`
       : '已是最新版本';
-  ytdlpMessageTone.value = 'success';
 }
 
 async function enableFeature(featureId) {
@@ -224,6 +307,25 @@ function gateActionLabel(gate) {
   return '啟用';
 }
 
+function isGateActionDisabled(gate) {
+  return (
+    gate.enabled ||
+    Boolean(enablingFeatureId.value) ||
+    Boolean(featureGateState.pendingFeatureId) ||
+    featureGateState.isSaving
+  );
+}
+
+function handleWorkflowItemAction(itemId) {
+  if (itemId === 'provider-ytdlp-engine') {
+    checkForYtdlpUpdate();
+    return;
+  }
+  if (featureDependencyState.byId[itemId]) {
+    prepareDependency(itemId);
+  }
+}
+
 onMounted(refreshSettingsState);
 </script>
 
@@ -232,86 +334,15 @@ onMounted(refreshSettingsState);
     <div class="settings-view__grid">
       <section
         class="settings-view__column"
-        aria-labelledby="settings-status-title"
-      >
-        <header class="settings-view__column-header">
-          <h2 id="settings-status-title" class="settings-view__column-title">
-            功能狀態
-          </h2>
-          <p class="settings-view__column-summary">基本功能與進階功能門檻</p>
-        </header>
-
-        <SettingsBlock title="基本功能" status="核心" status-tone="success">
-          <SettingsActionRow
-            v-for="row in basicFeatureRows"
-            :key="row.id"
-            :icon="row.icon"
-            :title="row.title"
-            :value="row.value"
-            :status="row.status"
-            :status-tone="row.tone"
-            :tooltip="row.description"
-            scale="compact"
-          />
-        </SettingsBlock>
-
-        <SettingsBlock
-          title="功能門檻"
-          :status="`${enabledGateCount} / ${featureGateRows.length}`"
-          status-tone="gated"
-        >
-          <template #actions>
-            <UiButton
-              :icon="RefreshCw"
-              :disabled="featureGateState.isLoading"
-              aria-label="重新讀取功能門檻狀態"
-              title="重新讀取功能門檻狀態"
-              @click="refreshConfirmations"
-            />
-          </template>
-
-          <SettingsActionRow
-            v-for="gate in featureGateRows"
-            :key="gate.id"
-            :icon="gate.icon"
-            :title="gate.title"
-            :value="gate.value"
-            :status="gate.status"
-            :status-tone="gate.tone"
-            :tooltip="gate.description"
-            scale="compact"
-          >
-            <template #actions>
-              <UiButton
-                :icon="Check"
-                :disabled="
-                  gate.enabled ||
-                  Boolean(enablingFeatureId) ||
-                  Boolean(featureGateState.pendingFeatureId) ||
-                  featureGateState.isSaving
-                "
-                :aria-label="`${gateActionLabel(gate)}${gate.title}`"
-                :title="`${gateActionLabel(gate)}${gate.title}`"
-                @click="enableFeature(gate.id)"
-              />
-            </template>
-          </SettingsActionRow>
-
-          <UiHint v-if="featureGateState.error" tone="danger" role="alert">
-            {{ featureGateState.error }}
-          </UiHint>
-        </SettingsBlock>
-      </section>
-
-      <section
-        class="settings-view__column"
         aria-labelledby="settings-content-title"
       >
         <header class="settings-view__column-header">
           <h2 id="settings-content-title" class="settings-view__column-title">
-            設定內容
+            本機內容與診斷
           </h2>
-          <p class="settings-view__column-summary">本機路徑、預設值與診斷</p>
+          <p class="settings-view__column-summary">
+            曲庫位置、更新檢查與維護工具
+          </p>
         </header>
 
         <SettingsBlock title="本機曲庫" status="本機" status-tone="success">
@@ -344,10 +375,10 @@ onMounted(refreshSettingsState);
           <SettingsActionRow
             :icon="RefreshCw"
             title="曲目資訊整理"
-            value="本機 info.json"
+            value="已保存的來源資訊"
             :status="isRefreshingMetadata ? '執行中' : '可執行'"
             :status-tone="isRefreshingMetadata ? 'info' : 'success'"
-            tooltip="從已下載的本機 info.json 資訊檔補齊專輯與年份等曲目資訊。"
+            tooltip="從已保存的來源資訊補齊專輯與年份等曲目資訊。"
             scale="prominent"
           >
             <template #actions>
@@ -371,44 +402,12 @@ onMounted(refreshSettingsState);
         </SettingsBlock>
 
         <SettingsBlock
-          title="下載引擎"
-          :status="ytdlpState.binaryFound ? '正常' : '找不到執行檔'"
-          :status-tone="ytdlpState.binaryFound ? 'success' : 'danger'"
+          title="應用程式更新"
+          status="稍後提供"
+          status-tone="warning"
         >
           <SettingsActionRow
-            :icon="Download"
-            title="yt-dlp 版本"
-            :value="
-              ytdlpState.version || (ytdlpState.isLoading ? '讀取中' : '未知')
-            "
-            :status="ytdlpCheckResultLabel"
-            status-tone="muted"
-            tooltip="此更新只影響目前安裝，重新執行 npm install 會被還原。"
-            scale="prominent"
-          >
-            <template #actions>
-              <UiButton
-                :icon="RefreshCw"
-                :disabled="ytdlpState.isChecking"
-                aria-label="檢查並更新 yt-dlp"
-                title="檢查並更新 yt-dlp"
-                @click="checkForYtdlpUpdate"
-              />
-            </template>
-          </SettingsActionRow>
-
-          <UiHint
-            v-if="ytdlpMessage"
-            :tone="ytdlpMessageTone"
-            :role="ytdlpMessageTone === 'danger' ? 'alert' : 'status'"
-          >
-            {{ ytdlpMessage }}
-          </UiHint>
-        </SettingsBlock>
-
-        <SettingsBlock title="介面與輸出">
-          <SettingsActionRow
-            v-for="row in preferenceRows"
+            v-for="row in appUpdateRows"
             :key="row.id"
             :icon="row.icon"
             :title="row.title"
@@ -416,10 +415,24 @@ onMounted(refreshSettingsState);
             :status="row.status"
             :status-tone="row.tone"
             :tooltip="row.description"
-          />
+          >
+            <template #actions>
+              <UiButton
+                :icon="RefreshCw"
+                disabled
+                aria-disabled="true"
+                aria-label="檢查更新稍後提供"
+                title="檢查更新稍後提供"
+              />
+            </template>
+          </SettingsActionRow>
         </SettingsBlock>
 
-        <SettingsBlock title="診斷與回報" status="規劃中" status-tone="warning">
+        <SettingsBlock
+          title="診斷與回報"
+          status="稍後提供"
+          status-tone="warning"
+        >
           <SettingsActionRow
             v-for="row in diagnosticsRows"
             :key="row.id"
@@ -435,11 +448,66 @@ onMounted(refreshSettingsState);
                 :icon="CircleAlert"
                 disabled
                 aria-disabled="true"
-                aria-label="尚未接線"
-                title="尚未接線"
+                aria-label="稍後提供"
+                title="稍後提供"
               />
             </template>
           </SettingsActionRow>
+        </SettingsBlock>
+      </section>
+
+      <section
+        class="settings-view__column"
+        aria-labelledby="settings-status-title"
+      >
+        <header class="settings-view__column-header">
+          <h2 id="settings-status-title" class="settings-view__column-title">
+            進階功能準備
+          </h2>
+          <p class="settings-view__column-summary">
+            啟用你需要的進階功能，並在直播前準備需要下載的項目
+          </p>
+        </header>
+
+        <SettingsBlock
+          title="進階功能"
+          summary="啟用後才會使用線上來源、音訊處理或 OBS 輸出；需要下載的項目會顯示在功能下方。"
+          :status="`${enabledGateCount} / ${featureGateRows.length}`"
+          status-tone="gated"
+        >
+          <template #actions>
+            <UiButton
+              :icon="RefreshCw"
+              :disabled="featureGateState.isLoading"
+              aria-label="重新讀取功能狀態"
+              title="重新讀取功能狀態"
+              @click="refreshConfirmations"
+            />
+          </template>
+
+          <SettingsFeatureGateRow
+            v-for="gate in featureGateRows"
+            :key="gate.id"
+            :gate="gate"
+            :items="gate.items"
+            :item-group-label="gate.itemGroupLabel"
+            :action-label="gateActionLabel(gate)"
+            :disable-enable-action="isGateActionDisabled(gate)"
+            @enable="enableFeature"
+            @item-action="handleWorkflowItemAction"
+          />
+
+          <UiHint v-if="featureGateState.error" tone="danger" role="alert">
+            {{ featureGateState.error }}
+          </UiHint>
+
+          <UiHint
+            v-if="featureDependencyState.error"
+            tone="danger"
+            role="alert"
+          >
+            {{ featureDependencyState.error }}
+          </UiHint>
         </SettingsBlock>
       </section>
     </div>
