@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
   ListMusic,
   MicVocal,
@@ -17,7 +17,14 @@ import {
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { useMetronome } from '../../composables/useMetronome.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { useSeparation } from '../../composables/useSeparation.js';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
+import {
+  DEFAULT_SEPARATION_PRESET_ID,
+  SEPARATION_PRESET_OPTIONS,
+  SEPARATION_PRESET_SELECT_TITLE,
+  hasSeparationPreset,
+} from '../../constants/separationPresets.js';
 import {
   PITCH_CENTS_RANGE,
   PLAYBACK_MODES,
@@ -59,10 +66,18 @@ const {
 } = usePlaybackQueue();
 const { state: metronomeState } = useMetronome();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const {
+  state: separationState,
+  isSeparating,
+  describe: describeSeparation,
+  separate,
+  selectResult,
+} = useSeparation();
 
 const isQueueOpen = ref(false);
 const isPlayerToolsOpen = ref(false);
 const activeToolTab = ref('adjust');
+const selectedSeparationPresetId = ref(DEFAULT_SEPARATION_PRESET_ID);
 
 const progress = computed({
   get: () => state.currentTime,
@@ -118,6 +133,28 @@ const pitchReferenceHz = computed(() =>
   (A4_REFERENCE_HZ * 2 ** (state.pitchCents / 1200)).toFixed(1),
 );
 const tempoLabel = computed(() => `${state.tempoRate.toFixed(2)}x`);
+const currentSeparationTrack = computed(() => state.track || null);
+const currentSeparationResults = computed(
+  () => currentSeparationTrack.value?.separation?.results || {},
+);
+const isCurrentTrackSeparating = computed(() =>
+  currentSeparationTrack.value
+    ? isSeparating(currentSeparationTrack.value.id)
+    : false,
+);
+const currentSeparationStatus = computed(() =>
+  currentSeparationTrack.value
+    ? describeSeparation(currentSeparationTrack.value.id)
+    : '',
+);
+const currentSeparationError = computed(() =>
+  currentSeparationTrack.value
+    ? (separationState.errors.get(currentSeparationTrack.value.id) ?? '')
+    : '',
+);
+const selectedSeparationHasResult = computed(() =>
+  Boolean(currentSeparationResults.value[selectedSeparationPresetId.value]),
+);
 const playerToolsActive = computed(
   () =>
     isPlayerToolsOpen.value ||
@@ -125,7 +162,19 @@ const playerToolsActive = computed(
     state.pitchCents !== 0 ||
     state.tempoRate !== 1 ||
     state.guideVocalLevel > 0 ||
+    isCurrentTrackSeparating.value ||
     metronomeState.isRunning,
+);
+
+watch(
+  () => state.track,
+  (track) => {
+    const presetId = track?.separation?.selectedPresetId;
+    selectedSeparationPresetId.value = hasSeparationPreset(presetId)
+      ? presetId
+      : DEFAULT_SEPARATION_PRESET_ID;
+  },
+  { immediate: true },
 );
 
 function adjustTranspose(delta) {
@@ -258,6 +307,18 @@ function playNextAfterEnded() {
       ? restartSourceQueue()
       : null);
   playQueuedTrack(next);
+}
+
+function selectSeparationPreset(presetId) {
+  const track = currentSeparationTrack.value;
+  if (!track || !currentSeparationResults.value[presetId]) return;
+  selectResult(track, presetId);
+}
+
+function generateSeparation() {
+  const track = currentSeparationTrack.value;
+  if (!track) return;
+  separate(track, selectedSeparationPresetId.value);
 }
 
 // Both panels float in the same spot (position: fixed below), so only one
@@ -439,12 +500,22 @@ onUnmounted(() => {
 
     <PlayerToolsPanel
       v-model:active-tab="activeToolTab"
+      v-model:selected-separation-preset-id="selectedSeparationPresetId"
       :open="isPlayerToolsOpen"
       :has-track="Boolean(state.track)"
       :guide-vocal-visible="showGuideVocal"
       :guide-vocal-active="state.guideVocalLevel > 0"
       :pitch-tempo-rows="pitchTempoRows"
+      :current-track="currentSeparationTrack"
+      :separation-preset-options="SEPARATION_PRESET_OPTIONS"
+      :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
+      :separation-in-flight="isCurrentTrackSeparating"
+      :separation-status="currentSeparationStatus"
+      :separation-error="currentSeparationError"
+      :separation-has-result="selectedSeparationHasResult"
       @close="isPlayerToolsOpen = false"
+      @generate-separation="generateSeparation"
+      @select-separation-preset="selectSeparationPreset"
       @toggle-guide-vocal="toggleGuideVocal"
     />
   </div>

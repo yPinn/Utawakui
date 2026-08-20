@@ -4,6 +4,7 @@ import {
   CircleAlert,
   Clock,
   ICON_SIZE,
+  Loader2,
   MicVocal,
   Minus,
   Pause,
@@ -27,9 +28,24 @@ const props = defineProps({
   guideVocalVisible: { type: Boolean, default: false },
   guideVocalActive: { type: Boolean, default: false },
   pitchTempoRows: { type: Array, default: () => [] },
+  currentTrack: { type: Object, default: null },
+  separationPresetOptions: { type: Array, default: () => [] },
+  selectedSeparationPresetId: { type: String, default: '' },
+  separationPresetTitle: { type: String, default: '' },
+  separationInFlight: { type: Boolean, default: false },
+  separationStatus: { type: String, default: '' },
+  separationError: { type: String, default: '' },
+  separationHasResult: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['close', 'toggleGuideVocal', 'update:activeTab']);
+const emit = defineEmits([
+  'close',
+  'generateSeparation',
+  'selectSeparationPreset',
+  'toggleGuideVocal',
+  'update:activeTab',
+  'update:selectedSeparationPresetId',
+]);
 
 const {
   state: metronome,
@@ -61,9 +77,29 @@ const panelStatus = computed(() => {
   if (props.activeTab === 'process') return '音訊處理流程';
   return metronomeSummary.value;
 });
+const separationDisabled = computed(
+  () => !props.currentTrack || props.separationInFlight,
+);
+const separationActionLabel = computed(() => {
+  if (props.separationInFlight) return props.separationStatus || '準備中';
+  return props.separationHasResult ? '重新產生' : '產生';
+});
+const separationActionTitle = computed(() => {
+  if (!props.currentTrack) return '請先載入歌曲';
+  if (props.separationInFlight) return props.separationStatus || '處理中';
+  return props.separationHasResult
+    ? '用選定的設定重新產生這個結果'
+    : '產生可調整導唱強弱的伴奏版本';
+});
 
 function setActiveTab(key) {
   emit('update:activeTab', key);
+}
+
+function handleSeparationPresetChange(event) {
+  const presetId = event.target.value;
+  emit('update:selectedSeparationPresetId', presetId);
+  emit('selectSeparationPreset', presetId);
 }
 </script>
 
@@ -292,23 +328,68 @@ function setActiveTab(key) {
       class="player-tools__section"
       aria-label="音訊處理"
     >
-      <div class="player-tools__process-row">
+      <div class="player-tools__process-card">
+        <div class="player-tools__row-header">
+          <span class="player-tools__label">
+            <MicVocal :size="ICON_SIZE" aria-hidden="true" />
+            Vocal Separation
+          </span>
+          <UiChip tone="gated">Gate</UiChip>
+        </div>
+
+        <p class="player-tools__description player-tools__process-track">
+          {{ currentTrack ? currentTrack.title : '請先載入歌曲' }}
+        </p>
+
+        <div class="player-tools__process-controls">
+          <label class="player-tools__process-select-label">
+            <span class="visually-hidden">人聲分離設定</span>
+            <select
+              class="player-tools__process-select"
+              :value="selectedSeparationPresetId"
+              :disabled="separationDisabled"
+              aria-label="人聲分離設定"
+              :title="separationPresetTitle"
+              @change="handleSeparationPresetChange"
+            >
+              <option
+                v-for="preset in separationPresetOptions"
+                :key="preset.id"
+                :value="preset.id"
+              >
+                {{ preset.label }}
+              </option>
+            </select>
+          </label>
+          <UiButton
+            :icon="separationInFlight ? Loader2 : MicVocal"
+            variant="accent"
+            :class="{ 'player-tools__process-spin': separationInFlight }"
+            :disabled="separationDisabled"
+            :aria-label="separationActionLabel"
+            :title="separationActionTitle"
+            @click="emit('generateSeparation')"
+          >
+            {{ separationActionLabel }}
+          </UiButton>
+        </div>
+
+        <p v-if="separationError" class="player-tools__error" role="alert">
+          {{ separationError }}
+        </p>
+      </div>
+
+      <div
+        class="player-tools__process-row player-tools__process-row--disabled"
+      >
         <div class="player-tools__process-copy">
           <span class="player-tools__label">
             <CircleAlert :size="ICON_SIZE" aria-hidden="true" />
-            Vocal Separation
+            Render Cache
           </span>
-          <span class="player-tools__description">音訊處理流程</span>
-        </div>
-        <UiChip tone="gated">Gate</UiChip>
-      </div>
-
-      <div class="player-tools__process-row">
-        <div class="player-tools__process-copy">
-          <span class="player-tools__label">Render Cache</span>
           <span class="player-tools__description">Pitch / Tempo 預先算製</span>
         </div>
-        <UiChip tone="gated">Gate</UiChip>
+        <UiChip tone="muted">待實作</UiChip>
       </div>
     </section>
   </PlayerBarPanel>
@@ -323,6 +404,18 @@ function setActiveTab(key) {
   margin-bottom: var(--ui-space-4);
   border-radius: var(--ui-radius);
   background: var(--ui-color-canvas);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .player-tools__tab {
@@ -541,16 +634,95 @@ function setActiveTab(key) {
   flex: 1;
 }
 
-.player-tools__process-row {
-  justify-content: space-between;
+.player-tools__process-row,
+.player-tools__process-card {
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
   background: var(--ui-color-canvas);
 }
 
+.player-tools__process-card {
+  display: grid;
+  gap: var(--ui-space-2);
+}
+
+.player-tools__process-row {
+  justify-content: space-between;
+}
+
+.player-tools__process-card .player-tools__row-header {
+  margin-bottom: 0;
+}
+
 .player-tools__process-copy {
+  flex: 1;
   min-width: 0;
+}
+
+.player-tools__process-row--disabled {
+  opacity: var(--ui-opacity-muted);
+  background: transparent;
+}
+
+.player-tools__process-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  align-items: center;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-1);
+}
+
+.player-tools__process-select-label {
+  min-width: 0;
+}
+
+.player-tools__process-track {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ui-color-text);
+  font-weight: var(--ui-font-weight-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-tools__process-select {
+  width: 100%;
+  height: var(--ui-control-height);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
+}
+
+.player-tools__process-controls :deep(.ui-btn) {
+  white-space: nowrap;
+}
+
+.player-tools__process-select:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
+.player-tools__process-spin :deep(svg) {
+  animation: player-tools-spin var(--ui-motion-spin) infinite;
+}
+
+.player-tools__error {
+  margin: 0;
+  color: var(--ui-color-danger);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
+  overflow-wrap: anywhere;
+}
+
+@keyframes player-tools-spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes player-tools-pulse {
@@ -564,7 +736,8 @@ function setActiveTab(key) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .player-tools__metro-toggle {
+  .player-tools__metro-toggle,
+  .player-tools__process-spin :deep(svg) {
     animation: none;
   }
 }

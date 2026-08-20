@@ -10,11 +10,16 @@ import {
   Minus,
   Plus,
   RefreshCw,
-  RotateCcw,
   Type,
 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useSeparation } from '../../composables/useSeparation.js';
+import {
+  DEFAULT_SEPARATION_PRESET_ID,
+  SEPARATION_PRESET_OPTIONS,
+  SEPARATION_PRESET_SELECT_TITLE,
+  hasSeparationPreset,
+} from '../../constants/separationPresets.js';
 import { formatDuration } from '../../utils/format.js';
 import {
   formatLyricsSourceLabel,
@@ -49,16 +54,10 @@ const {
 } = useSeparation();
 
 const lyricsPreview = useTemplateRef('lyricsPreview');
-const selectedPresetId = ref('standard');
+const selectedPresetId = ref(DEFAULT_SEPARATION_PRESET_ID);
 const lyricsFontSizeIndex = ref(1);
 const isSourceManagerOpen = ref(false);
 const isTrackPickerOpen = ref(false);
-
-const PRESET_LABELS = {
-  standard: '標準(卡拉OK模型)',
-  'high-quality': '高品質(卡拉OK模型・較慢)',
-  'inst-hq3': '人聲分離模型(Inst HQ 3・較慢)',
-};
 
 const LYRICS_FONT_SIZE_CLASSES = [
   'lyrics-preview--font-compact',
@@ -76,7 +75,7 @@ const TRACK_SCOPE_LABELS = {
 
 watch(selectedTrack, (track) => {
   const presetId = track?.separation?.selectedPresetId;
-  if (presetId && PRESET_LABELS[presetId]) {
+  if (hasSeparationPreset(presetId)) {
     selectedPresetId.value = presetId;
   }
 });
@@ -141,10 +140,6 @@ function lyricsStatusClass(track) {
 
 function hasSeparationResult(presetId) {
   return Boolean(selectedTrack.value?.separation?.results?.[presetId]);
-}
-
-function presetOptionLabel(presetId) {
-  return PRESET_LABELS[presetId] + (hasSeparationResult(presetId) ? ' ✓' : '');
 }
 
 function handlePresetChange(event) {
@@ -332,17 +327,15 @@ watch(activeLineIndex, (index) => {
             class="lyrics-select lyrics-separation__preset"
             :disabled="isSeparating(selectedTrack.id)"
             aria-label="伴奏分離設定"
-            title="標準/高品質皆為卡拉OK模型,設計上以移除主唱為主,和聲較可能留在伴奏;高品質是調整降噪等參數的最佳化版本,可與標準比較。人聲分離模型移除所有人聲。實際效果依曲目而異。選擇已產生的項目會立即切換播放。"
+            :title="SEPARATION_PRESET_SELECT_TITLE"
             @change="handlePresetChange"
           >
-            <option value="standard">
-              {{ presetOptionLabel('standard') }}
-            </option>
-            <option value="high-quality">
-              {{ presetOptionLabel('high-quality') }}
-            </option>
-            <option value="inst-hq3">
-              {{ presetOptionLabel('inst-hq3') }}
+            <option
+              v-for="preset in SEPARATION_PRESET_OPTIONS"
+              :key="preset.id"
+              :value="preset.id"
+            >
+              {{ preset.label }}
             </option>
           </select>
           <UiButton
@@ -367,12 +360,6 @@ watch(activeLineIndex, (index) => {
             "
             @click="separate(selectedTrack, selectedPresetId)"
           />
-          <span
-            v-if="selectedTrack.hasSeparation"
-            class="lyrics-separation__done"
-          >
-            有伴奏
-          </span>
           <span v-if="selectedSeparationError" class="lyrics-separation__error">
             {{ selectedSeparationError }}
           </span>
@@ -603,12 +590,6 @@ watch(activeLineIndex, (index) => {
 
 .lyrics-separation__spin :deep(svg) {
   animation: lyrics-spin var(--ui-motion-spin) infinite;
-}
-
-.lyrics-separation__done {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
 }
 
 .lyrics-separation__error {
