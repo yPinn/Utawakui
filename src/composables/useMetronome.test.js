@@ -94,4 +94,46 @@ describe('useMetronome', () => {
     expect(state.beatsPerBar).toBe(4);
     expect(state.currentBeat).toBe(1);
   });
+
+  it('tracks tap count and caps it at the tap window size', async () => {
+    const { state, tapTempo } = await loadMetronome();
+
+    tapTempo(0);
+    expect(state.tapCount).toBe(1);
+
+    tapTempo(500);
+    tapTempo(1000);
+    tapTempo(1500);
+    tapTempo(2000);
+    expect(state.tapCount).toBe(5);
+
+    tapTempo(2500);
+    expect(state.tapCount).toBe(5);
+  });
+
+  it('resetTaps clears the tap count without touching bpm or beats', async () => {
+    const { state, tapTempo, resetTaps } = await loadMetronome();
+
+    tapTempo(0);
+    tapTempo(500);
+    expect(state.bpm).toBe(120);
+    expect(state.tapCount).toBe(2);
+
+    resetTaps();
+
+    expect(state.tapCount).toBe(0);
+    expect(state.bpm).toBe(120);
+    expect(state.beatsPerBar).toBe(4);
+  });
+
+  it('clears the tap count after the idle timeout even without another tap', async () => {
+    const { state, tapTempo } = await loadMetronome();
+
+    tapTempo(Date.now());
+    expect(state.tapCount).toBe(1);
+
+    await vi.advanceTimersByTimeAsync(2000);
+
+    expect(state.tapCount).toBe(0);
+  });
 });

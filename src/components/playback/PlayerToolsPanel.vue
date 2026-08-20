@@ -39,6 +39,7 @@ const {
   adjustBpm,
   adjustBeatsPerBar,
   tapTempo,
+  resetTaps,
 } = useMetronome();
 
 const tabItems = [
@@ -49,6 +50,9 @@ const tabItems = [
 
 const metronomeSummary = computed(
   () => `${metronome.bpm} BPM / ${metronome.beatsPerBar}/4`,
+);
+const tapStatusLabel = computed(() =>
+  metronome.tapCount > 0 ? `已點擊 ${metronome.tapCount} 次` : '依節奏點擊',
 );
 const panelStatus = computed(() => {
   if (props.activeTab === 'adjust') {
@@ -101,6 +105,12 @@ function setActiveTab(key) {
           <UiChip :tone="metronome.isRunning ? 'accent' : 'muted'">
             {{ metronome.isRunning ? 'On' : 'Off' }}
           </UiChip>
+          <UiButton
+            :icon="RotateCcw"
+            aria-label="重設節拍器"
+            title="重設節拍器"
+            @click="reset"
+          />
         </div>
 
         <button
@@ -177,9 +187,27 @@ function setActiveTab(key) {
           </div>
         </div>
 
-        <div class="player-tools__metro-actions">
-          <UiButton title="Tap tempo" @click="tapTempo()">Tap Tempo</UiButton>
-          <UiButton title="重設節拍器" @click="reset">重設</UiButton>
+        <div class="player-tools__tap-row">
+          <div class="player-tools__row-header">
+            <span class="player-tools__label">Tap Tempo</span>
+            <span class="player-tools__value">{{ tapStatusLabel }}</span>
+            <UiButton
+              :icon="RotateCcw"
+              :disabled="metronome.tapCount === 0"
+              aria-label="清除點擊記錄"
+              title="清除點擊記錄"
+              @click="resetTaps"
+            />
+          </div>
+          <UiButton
+            variant="accent"
+            class="player-tools__tap-button"
+            title="跟著節奏點擊"
+            @click="tapTempo()"
+          >
+            Tap
+          </UiButton>
+          <p class="player-tools__description">跟著節奏連續點擊 2 次以上</p>
         </div>
       </div>
     </section>
@@ -379,7 +407,7 @@ function setActiveTab(key) {
   line-height: var(--ui-line-height-title);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  animation: player-tools-pulse var(--ui-motion-normal) var(--ui-motion-ease);
+  animation: player-tools-pulse var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
 .player-tools__metro-toggle--active {
@@ -456,11 +484,27 @@ function setActiveTab(key) {
   font-variant-numeric: tabular-nums;
 }
 
-.player-tools__metro-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
+.player-tools__tap-row {
   margin-top: var(--ui-space-3);
+  padding-top: var(--ui-space-3);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.player-tools__tap-button {
+  width: 100%;
+  justify-content: center;
+  min-height: var(--ui-player-tools-meter-control-height);
+  font-size: var(--ui-font-size-md);
+  transition: transform var(--ui-motion-fast) var(--ui-motion-ease);
+}
+
+.player-tools__tap-button:active {
+  transform: scale(0.98);
+}
+
+.player-tools__tap-row .player-tools__description {
+  margin: var(--ui-space-2) 0 0;
+  text-align: center;
 }
 
 .player-tools__inline-action {

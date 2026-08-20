@@ -15,10 +15,12 @@ const state = reactive({
   currentBeat: 1,
   pulseId: 0,
   lastTickAt: null,
+  tapCount: 0,
 });
 
 let timerId = null;
 let tapTimes = [];
+let tapIdleTimerId = null;
 
 const intervalMs = computed(() => Math.round(60000 / state.bpm));
 const currentBeatLabel = computed(
@@ -99,13 +101,25 @@ function adjustBeatsPerBar(delta) {
   setBeatsPerBar(state.beatsPerBar + delta);
 }
 
+function clearTapIdleTimer() {
+  if (tapIdleTimerId === null) return;
+  clearTimeout(tapIdleTimerId);
+  tapIdleTimerId = null;
+}
+
+function clearTaps() {
+  clearTapIdleTimer();
+  tapTimes = [];
+  state.tapCount = 0;
+}
+
 function reset() {
   stop();
   state.bpm = DEFAULT_BPM;
   state.beatsPerBar = DEFAULT_BEATS_PER_BAR;
   state.currentBeat = 1;
   state.lastTickAt = null;
-  tapTimes = [];
+  clearTaps();
 }
 
 function tapTempo(timestamp = Date.now()) {
@@ -118,9 +132,16 @@ function tapTempo(timestamp = Date.now()) {
 
   tapTimes.push(timestamp);
   tapTimes = tapTimes.slice(-TAP_WINDOW);
+  state.tapCount = tapTimes.length;
   state.currentBeat = 1;
   state.pulseId += 1;
   state.lastTickAt = timestamp;
+
+  clearTapIdleTimer();
+  tapIdleTimerId = setTimeout(() => {
+    tapIdleTimerId = null;
+    clearTaps();
+  }, TAP_RESET_MS);
 
   if (tapTimes.length < 2) return state.bpm;
 
@@ -151,5 +172,6 @@ export function useMetronome() {
     setBeatsPerBar,
     adjustBeatsPerBar,
     tapTempo,
+    resetTaps: clearTaps,
   };
 }
