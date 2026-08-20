@@ -2,7 +2,6 @@
 
 const path = require('path');
 const fs = require('fs');
-const { Worker } = require('worker_threads');
 const {
   app,
   BrowserWindow,
@@ -11,110 +10,68 @@ const {
   ipcMain,
   dialog,
   protocol,
-  nativeImage,
   nativeTheme,
 } = require('electron');
-const {
-  backfillTrackInfo,
-  downloadAudio,
-  fetchMetadata,
-  fetchPlaylist,
-  readTrackInfoMetadata,
-} = require('./lib/downloader');
-const { searchPlaybackCandidates } = require('./lib/playbackSearch');
-const {
-  loadConfig,
-  saveConfig,
-  SIDEBAR_WIDTH_MIN,
-  SIDEBAR_WIDTH_MAX,
-} = require('./lib/config');
-const {
-  checkForUpdate: checkYtdlpUpdate,
-  getStatus: getYtdlpStatus,
-} = require('./lib/ytdlpStatus');
-const { downloadErrorText } = require('./lib/youtubeAttempts');
-const { toClassifiedDownloadError } = require('./lib/downloadFailure');
-const {
-  FEATURE_IDS,
-  buildFeatureConfirmation,
-  isFeatureGateEnabled,
-  normalizeFeatureConfirmations,
-} = require('./lib/featureGates');
-const {
-  extractVideoId,
-  extractPlaylistId,
-  classifyPlaylistKind,
-} = require('./lib/youtube');
-const { resolveYoutubeImportSource } = require('./lib/importResolver');
-const {
-  allocateLyricsFilename,
-  backfillLyricsSourceLabels,
-  buildRangeResponse,
-  deleteLyricsSource,
-  deletePlaylistCoverDir,
-  deleteTrack,
-  deleteTrackArtworkFile,
-  getTrackLyricsState,
-  importManualLyricsFile,
-  importManualLyricsText,
-  importLocalAudioFiles,
-  listTracks,
-  migrateTrackAlbumMetadata,
-  readTrackLyrics,
-  refreshTrackMetadataFromSidecars,
-  resolvePlaylistCoverPath,
-  resolveTrackAssetPath,
-  resolveTrackAudioPath,
-  resolveTrackDir,
-  resolveSeparationsDir,
-  resolveSeparationResultPath,
-  resolveTrackPath,
-  runBackfillPass,
-  saveIndexEntry,
-  saveTrackLyricsText,
-  selectSeparationResult,
-  setLyricsSourceLabel,
-  updateTrackMetadata,
-  writePlaylistCoverFile,
-  writePlaylistCoverFromUrl,
-  writeTrackArtworkFile,
-} = require('./lib/library');
-const {
-  buildPlaylistCoverUrl,
-  createPlaylist,
-  deletePlaylist,
-  loadPlaylists,
-  migratePlaylistKinds,
-  reorderPlaylists,
-  removeTrackFromAllPlaylists,
-  renamePlaylist,
-  setPlaylistCover,
-  setPlaylistDescription,
-  setPlaylistKind,
-  setPlaylistTracks,
-  upsertAlbum,
-} = require('./lib/playlists');
-const { classifyCollectionKind } = require('./lib/albumClassifier');
-const {
-  fetchLrclibRecord,
-  findLrclibSyncedLyrics,
-  searchLrclibCandidates,
-} = require('./lib/lrclib');
-const { probeMusixmatchLyrics } = require('./lib/musixmatch');
-const { renderGlyphPng } = require('./lib/thumbarIcons');
-const {
-  ensureModel,
-  SEPARATION_PRESETS,
-  DEFAULT_PRESET_ID,
-  resolvePreset,
-} = require('./lib/vocalSeparation');
 
-const isDev = process.argv.includes('--dev');
-const MEDIA_SCHEME = 'utawakui-media';
 const APP_NAME = 'Utawakui';
-const BASE_APP_USER_MODEL_ID = 'com.utawakui.app';
-
+// Must run before app.getPath('userData') is read below (and before any
+// require of a lib that reads it), or userData resolves to Electron's
+// default app name instead of ours.
 app.setName(APP_NAME);
+
+// youtube-dl-exec's yt-dlp.exe path is computed once, at first require of
+// its constants module, from the YOUTUBE_DL_DIR env var — so packaged-mode
+// setup has to happen before the lib requires below pull it in transitively
+// (downloader.js, ytdlpStatus.js, youtubeAttempts.js all require it).
+if (app.isPackaged) {
+  // The bundled yt-dlp.exe (asarUnpack'd — see electron-builder.yml) sits
+  // read-only under Program Files in a per-machine install. yt-dlp's own -U
+  // (ytdlp:check-update below) overwrites its own exe in place, so the
+  // working copy has to live somewhere always-writable: userData.
+  const bundledYtdlpPath = path.join(
+    process.resourcesPath,
+    'app.asar.unpacked',
+    'node_modules',
+    'youtube-dl-exec',
+    'bin',
+    'yt-dlp.exe',
+  );
+  const ytdlpDir = path.join(app.getPath('userData'), 'bin');
+  const ytdlpPath = path.join(ytdlpDir, 'yt-dlp.exe');
+  try {
+    if (!fs.existsSync(ytdlpPath) && fs.existsSync(bundledYtdlpPath)) {
+      fs.mkdirSync(ytdlpDir, { recursive: true });
+      fs.copyFileSync(bundledYtdlpPath, ytdlpPath);
+    }
+  } catch {
+    // Fall through — ytdlpStatus.js already treats "binary not found" as a
+    // reportable status rather than a crash; a packaged install that can't
+    // even copy into its own userData dir surfaces the same way.
+  }
+  process.env.YOUTUBE_DL_DIR = ytdlpDir;
+
+  // A packaged app can't assume Node.js is on the end user's PATH, which
+  // youtubeAttempts.js's jsRuntimes option otherwise requires. Point yt-dlp
+  // at this Electron binary running in Node mode instead — inherited by
+  // yt-dlp's child process the same way YOUTUBE_DL_DIR's effect is, via
+  // tinyspawn's default env passthrough (see youtube-dl-exec/src/index.js).
+  process.env.UTAWAKUI_YTDLP_JS_RUNTIME = `node:${process.execPath}`;
+  process.env.ELECTRON_RUN_AS_NODE = '1';
+}
+
+const { FEATURE_IDS } = require('./lib/featureGates');
+const windowState = require('./main/windowState');
+const configState = require('./main/configState');
+const { registerYtdlpHandlers } = require('./main/ytdlpHandlers');
+const { registerConfigHandlers } = require('./main/configHandlers');
+const { registerLyricsHandlers } = require('./main/lyricsHandlers');
+const { registerLibraryHandlers } = require('./main/libraryHandlers');
+const { registerMediaProtocol } = require('./main/mediaProtocol');
+const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
+const { registerImportHandlers } = require('./main/importHandlers');
+const { registerSeparationHandlers } = require('./main/separationHandlers');
+const { runStartupMigrations } = require('./main/startupMigrations');
+const { MEDIA_SCHEME } = require('./main/mediaScheme');
 
 // Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let
 // content zoom drift and desync the titlebar theme button from the
@@ -135,233 +92,13 @@ protocol.registerSchemesAsPrivileged([
   },
 ]);
 
-// Keep in sync with --ui-color-canvas / --ui-color-text in tokens.css —
-// these paint the native Windows overlay buttons, which useTheme.js can't reach.
-const TITLEBAR_COLORS = {
-  dark: { color: '#1f2328', symbolColor: '#f7f1e7' },
-  light: { color: '#f7f1e7', symbolColor: '#1f2328' },
-};
-
-const iconPath = path.join(
-  __dirname,
-  '..',
-  'public',
-  'assets',
-  'icons',
-  'app-icon.ico',
-);
-
-function getAppUserModelId() {
-  if (!isDev) return BASE_APP_USER_MODEL_ID;
-  try {
-    const { mtimeMs, size } = fs.statSync(iconPath);
-    return `${BASE_APP_USER_MODEL_ID}.dev.${Math.round(mtimeMs)}.${size}`;
-  } catch {
-    return `${BASE_APP_USER_MODEL_ID}.dev`;
-  }
-}
-
-function resolveDownloadDir(config) {
-  // OS Music folder, not userData — userData is Chromium's internal engine
-  // state; downloads are user content the user may want to browse directly.
-  return config.downloadDir || path.join(app.getPath('music'), 'Utawakui');
-}
-
-// Every playlists:* IPC handler pipes its result through this before
-// returning — coverImage is a bare filename in playlists.json (see
-// playlists.js's sanitizePlaylist comment), and the full utawakui-media://
-// URL is derived here at the IPC boundary rather than persisted, same rule
-// listTracks() already follows for track thumbnails.
-function withCoverUrls(playlists) {
-  return playlists.map((playlist) =>
-    playlist.coverImage
-      ? {
-          ...playlist,
-          coverUrl: buildPlaylistCoverUrl(playlist.id, playlist.coverImage),
-        }
-      : playlist,
-  );
-}
-
-function quoteWindowsCommandArg(value) {
-  return `"${String(value).replaceAll('"', '\\"')}"`;
-}
-
-function buildRelaunchCommand() {
-  const args = process.defaultApp
-    ? [app.getAppPath(), ...(isDev ? ['--dev'] : [])]
-    : process.argv.slice(1);
-  return [process.execPath, ...args].map(quoteWindowsCommandArg).join(' ');
-}
-
-let mainWindow = null;
-
-function sendBackfillStatus(payload) {
-  if (!mainWindow) return;
-  mainWindow.webContents.send('library:backfill-status', payload);
-}
-
-async function backfillTrackInfoWithLyricsFallback(videoId, trackDir) {
-  const result = await backfillTrackInfo(videoId, trackDir);
-  if (!result) return null;
-
-  let saved = false;
-  try {
-    saved = await saveLrclibLyricsIfAbsent(result, trackDir);
-  } catch {
-    // Lyrics fallback is optional; metadata/artwork backfill already worked.
-  }
-  return saved ? { ...result, assetsUpdated: true } : result;
-}
-
-async function saveLrclibLyricsIfAbsent(track, trackDir) {
-  const lyricsState = getTrackLyricsState(trackDir);
-  if (lyricsState.sources.some((source) => source.kind === 'lrclib')) {
-    return false;
-  }
-
-  const lrclibResult = await findLrclibSyncedLyrics(track);
-  if (lrclibResult.status !== 'available') return false;
-
-  return saveTrackLyricsText(trackDir, lrclibResult.source, lrclibResult.text);
-}
-
-// Main owns this guard because renderer disabled state is not authoritative.
-let separationInProgress = false;
-
-// Renderer-reported mirror; usePlayer.js remains the playback source of truth.
-let playbackState = { isPlaying: false, hasTrack: false };
-
-// Match the Windows taskbar theme, not the app theme.
-const THUMBAR_ICON_LIGHT = { r: 255, g: 255, b: 255 };
-const THUMBAR_ICON_DARK = { r: 32, g: 32, b: 32 };
-const thumbarIconCache = new Map();
-
-function getThumbarIcon(glyph, systemIsDark) {
-  const key = `${glyph}:${systemIsDark}`;
-  const cached = thumbarIconCache.get(key);
-  if (cached) return cached;
-
-  const color = systemIsDark ? THUMBAR_ICON_LIGHT : THUMBAR_ICON_DARK;
-  // setThumbarButtons has no per-button update — a changed play/pause icon
-  // means recomputing and resending the whole button array, so these are
-  // cached per (glyph, theme) pair rather than re-rasterized on every call.
-  const image = nativeImage.createFromBuffer(
-    renderGlyphPng(glyph, { size: 16, color }),
-  );
-  image.addRepresentation({
-    scaleFactor: 2,
-    buffer: renderGlyphPng(glyph, { size: 32, color }),
-  });
-  thumbarIconCache.set(key, image);
-  return image;
-}
-
-// Queue commands are renderer-only for now; thumbar exposes play/pause.
-function updateThumbar() {
-  if (process.platform !== 'win32' || !mainWindow) return;
-
-  const systemIsDark = nativeTheme.shouldUseDarkColorsForSystemIntegratedUI;
-  const playGlyph = playbackState.isPlaying ? 'pause' : 'play';
-
-  mainWindow.setThumbarButtons([
-    {
-      tooltip: '上一首',
-      icon: getThumbarIcon('prev', systemIsDark),
-      flags: ['disabled'],
-      click: () => {},
-    },
-    {
-      tooltip: playbackState.isPlaying ? '暫停' : '播放',
-      icon: getThumbarIcon(playGlyph, systemIsDark),
-      flags: playbackState.hasTrack ? [] : ['disabled'],
-      click: () => {
-        if (mainWindow) mainWindow.webContents.send('player:command', 'toggle');
-      },
-    },
-    {
-      tooltip: '下一首',
-      icon: getThumbarIcon('next', systemIsDark),
-      flags: ['disabled'],
-      click: () => {},
-    },
-  ]);
-}
-
-function createWindow(initialTheme = 'dark', initialSidebarWidth = 256) {
-  const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.dark;
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 850,
-    minWidth: 960,
-    minHeight: 650,
-    backgroundColor: titlebarColors.color,
-    titleBarStyle: 'hidden',
-    // Keep in sync with --ui-titlebar-height in src/styles/tokens.css.
-    titleBarOverlay: {
-      color: titlebarColors.color,
-      symbolColor: titlebarColors.symbolColor,
-      height: 38,
-    },
-    title: APP_NAME,
-    icon: iconPath,
-    show: false,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      backgroundThrottling: false,
-      // Lets preload's initialUiTheme/initialSidebarWidth read these
-      // synchronously, so the first frame paints the right palette and
-      // sidebar width instead of flashing dark/the default width.
-      additionalArguments: [
-        `--ui-theme=${initialTheme}`,
-        `--sidebar-width=${initialSidebarWidth}`,
-      ],
-    },
-  });
-
-  if (process.platform === 'win32') {
-    mainWindow.setAppDetails({
-      appId: getAppUserModelId(),
-      appIconPath: iconPath,
-      appIconIndex: 0,
-      relaunchCommand: buildRelaunchCommand(),
-      relaunchDisplayName: APP_NAME,
-    });
-  }
-
-  if (isDev) {
-    mainWindow.loadURL('http://localhost:5173');
-  } else {
-    mainWindow.loadFile(path.join(__dirname, '..', 'dist', 'index.html'));
-  }
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-    if (isDev) mainWindow.webContents.openDevTools();
-    // Show thumbar controls before the first renderer player:state event.
-    updateThumbar();
-  });
-
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (url !== mainWindow.webContents.getURL()) event.preventDefault();
-  });
-
-  mainWindow.on('closed', () => {
-    mainWindow = null;
-  });
-}
-
 const gotSingleInstanceLock = app.requestSingleInstanceLock();
 
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
+    const mainWindow = windowState.getMainWindow();
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
       mainWindow.focus();
@@ -370,885 +107,101 @@ if (!gotSingleInstanceLock) {
 
   app.whenReady().then(() => {
     if (process.platform === 'win32')
-      app.setAppUserModelId(getAppUserModelId());
+      app.setAppUserModelId(windowState.getAppUserModelId());
     session.defaultSession.setPermissionRequestHandler(
       (webContents, permission, callback) => {
         callback(false);
       },
     );
 
-    // Machine-local settings only (download path, later OBS connection info,
-    // etc.) — never exported/shared. See CLAUDE.md's config.json convention:
-    // the future named-preset (shareable) format is a separate layer that
-    // excludes these keys.
-    const configPath = path.join(app.getPath('userData'), 'config.json');
-    // Cached, not re-read per call — the protocol handler below runs this
-    // on every byte-range request while a track streams/seeks. Kept in
-    // sync by reassigning wherever saveConfig runs. Gap: a hand-edited
-    // config.json won't be picked up until next launch.
-    let cachedConfig = loadConfig(configPath);
+    configState.loadInitialConfig();
+    const { requireFeatureGate } = configState;
 
-    function requireFeatureGate(featureId) {
-      if (isFeatureGateEnabled(cachedConfig, featureId)) return;
-      throw new Error(`feature gate required: ${featureId}`);
-    }
-
-    // error.stderr never survives ipcMain.handle's serialization, so
-    // classification has to happen here. Only the sentinel code crosses the
-    // boundary — the raw text may contain local file paths, so it's logged
-    // here and never forwarded (same discipline as vocalSeparation.js).
-    async function classifyingFailures(run) {
-      try {
-        return await run();
-      } catch (err) {
-        console.error('[yt] request failed:', downloadErrorText(err));
-        throw toClassifiedDownloadError(err);
-      }
-    }
-
-    // Serves local audio files to the sandboxed renderer (nodeIntegration:
-    // false means it has no direct filesystem access). Dispatches on
-    // hostname: 'track' is either a 2-segment asset request
-    // (`<trackId>/<assetFilename>`, resolveTrackAssetPath) or a 3-segment
-    // separation-result request (`<trackId>/separations/<presetId>.wav`,
-    // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
-    // cover image (resolvePlaylistCoverPath); anything else falls back to
-    // resolveTrackPath for legacy pre-migration local audio. Never trust the
-    // requested path beyond what these resolvers allow.
-    protocol.handle(MEDIA_SCHEME, (request) => {
-      const url = new URL(request.url);
-      const dir = resolveDownloadDir(cachedConfig);
-      let filePath;
-      if (url.hostname === 'track') {
-        const segments = url.pathname
-          .split('/')
-          .filter(Boolean)
-          .map(decodeURIComponent);
-        if (segments.length === 3 && segments[1] === 'separations') {
-          filePath = resolveSeparationResultPath(dir, segments[0], segments[2]);
-        } else {
-          const [trackId, assetFilename] = segments;
-          filePath = resolveTrackAssetPath(dir, trackId, assetFilename);
-        }
-      } else if (url.hostname === 'playlist-cover') {
-        const [playlistId, coverFilename] = url.pathname
-          .split('/')
-          .filter(Boolean)
-          .map(decodeURIComponent);
-        filePath = resolvePlaylistCoverPath(dir, playlistId, coverFilename);
-      } else {
-        const filename = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
-        filePath = resolveTrackPath(dir, filename);
-      }
-      if (!filePath) {
-        return new Response('Not found', { status: 404 });
-      }
-      try {
-        // Real 206 Partial Content support — see buildRangeResponse's own
-        // comment for why net.fetch(pathToFileURL(...)) doesn't actually
-        // provide this despite looking like it should.
-        return buildRangeResponse(filePath, request.headers.get('range'));
-      } catch {
-        // Most likely the file was deleted between resolveTrackPath (which
-        // only checks the path is safe, not that the file exists) and here
-        // — same response as "never existed" rather than letting fs
-        // errors escape the handler.
-        return new Response('Not found', { status: 404 });
-      }
+    registerMediaProtocol({
+      protocol,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
     });
 
-    ipcMain.handle('library:list', async () => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const tracks = listTracks(dir);
-      // Fire-and-forget — don't make the renderer wait on a network-bound
-      // metadata pass just to see the tracks it already has.
-      if (isFeatureGateEnabled(cachedConfig, FEATURE_IDS.PROVIDER_FLOW)) {
-        runBackfillPass(
-          dir,
-          tracks,
-          backfillTrackInfoWithLyricsFallback,
-          sendBackfillStatus,
-        )
-          .then((updated) => {
-            if (updated && mainWindow) {
-              mainWindow.webContents.send('library:updated');
-            }
-          })
-          .catch((err) => {
-            sendBackfillStatus({
-              stage: 'error',
-              isRunning: false,
-              error: err instanceof Error ? err.message : String(err),
-            });
-          });
-      }
-      return tracks;
+    registerLibraryHandlers({
+      ipcMain,
+      dialog,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      sendBackfillStatus: windowState.sendBackfillStatus,
+      featureIds: FEATURE_IDS,
     });
 
-    // Manual counterpart to the automatic startup backfill above — that
-    // pass deliberately skips album/releaseYear to avoid retrying tracks
-    // with no such metadata on every launch forever (see
-    // electron/lib/library/tracks.js's refreshTrackMetadataFromSidecars
-    // comment). This is user-triggered,
-    // reads only sidecars already on disk (no network), and can be run
-    // again any time — e.g. after a track was downloaded through a
-    // yt:download-audio build that didn't yet persist these two fields.
-    ipcMain.handle('library:refresh-metadata', async () => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const updated = refreshTrackMetadataFromSidecars(
-        dir,
-        readTrackInfoMetadata,
-      );
-      if (updated > 0 && mainWindow) {
-        mainWindow.webContents.send('library:updated');
-      }
-      return { updated };
+    registerLyricsHandlers({
+      ipcMain,
+      dialog,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
     });
 
-    ipcMain.handle('library:import-audio-files', async () => {
-      const result = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openFile', 'multiSelections'],
-        filters: [
-          {
-            name: '音訊檔',
-            extensions: ['webm', 'm4a', 'opus', 'mp3', 'wav', 'flac'],
-          },
-        ],
-      });
-      if (result.canceled || result.filePaths.length === 0) {
-        return { imported: [], skipped: [] };
-      }
-
-      const imported = importLocalAudioFiles(
-        resolveDownloadDir(cachedConfig),
-        result.filePaths,
-      );
-      if (imported.imported.length > 0 && mainWindow) {
-        mainWindow.webContents.send('library:updated');
-      }
-      return imported;
+    registerPlaylistsHandlers({
+      ipcMain,
+      dialog,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
     });
 
-    ipcMain.handle('library:delete-track', async (event, trackId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const deleted = deleteTrack(dir, trackId);
-      if (deleted) {
-        // Cascades into any playlist that referenced this track — a
-        // playlist can otherwise end up pointing at a trackId that no
-        // longer has a file, which is harmless (see setPlaylistTracks's
-        // own comment) but pointless to leave behind when we already know
-        // exactly which id just disappeared.
-        removeTrackFromAllPlaylists(dir, trackId);
-        if (mainWindow) mainWindow.webContents.send('library:updated');
-      }
-      return deleted;
+    registerImportHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
     });
 
-    ipcMain.handle(
-      'library:update-track-metadata',
-      async (event, trackId, fields) => {
-        const dir = resolveDownloadDir(cachedConfig);
-        const updated = updateTrackMetadata(dir, trackId, fields);
-        if (updated && mainWindow) {
-          mainWindow.webContents.send('library:updated');
-        }
-        return updated;
-      },
+    registerSeparationHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
+    });
+
+    registerConfigHandlers({
+      ipcMain,
+      dialog,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      titlebarColors: windowState.TITLEBAR_COLORS,
+    });
+
+    registerYtdlpHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+    });
+
+    windowState.registerPlayerStateHandler(ipcMain);
+
+    nativeTheme.on('updated', windowState.updateThumbar);
+
+    runStartupMigrations(
+      configState.resolveDownloadDir(configState.getConfig()),
     );
 
-    ipcMain.handle('library:choose-track-artwork', async (event, trackId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      if (!track || track.sourceType !== 'local-file') return track ?? null;
-
-      const result = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openFile'],
-        filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
-      });
-      if (result.canceled || !result.filePaths[0]) return track;
-
-      const filename = writeTrackArtworkFile(dir, trackId, result.filePaths[0]);
-      const updated =
-        filename &&
-        listTracks(dir).find((candidate) => candidate.id === trackId);
-      if (updated && mainWindow) {
-        mainWindow.webContents.send('library:updated');
-      }
-      return updated || track;
-    });
-
-    ipcMain.handle('library:clear-track-artwork', async (event, trackId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      if (!track || track.sourceType !== 'local-file') return track ?? null;
-
-      const deleted = deleteTrackArtworkFile(dir, trackId);
-      const updated = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      if (deleted && mainWindow) {
-        mainWindow.webContents.send('library:updated');
-      }
-      return updated || track;
-    });
-
-    ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const result = readTrackLyrics(dir, trackId, filename);
-      if (!result) return null;
-      return result;
-    });
-
-    ipcMain.handle('lyrics:probe-musixmatch', async (event, trackId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      if (!track) {
-        return {
-          provider: 'musixmatch',
-          status: 'unavailable',
-          reason: 'unknown-track',
-        };
-      }
-      return probeMusixmatchLyrics(track);
-    });
-
-    // Manual counterpart to the passive lrclib backfill above
-    // (saveLrclibLyricsIfAbsent) — returns the full ranked candidate list
-    // instead of collapsing to one match. Doesn't persist anything.
-    ipcMain.handle('lyrics:search-candidates', async (event, trackId) => {
-      requireFeatureGate(FEATURE_IDS.LYRICS_FLOW);
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const result = await searchLrclibCandidates(track);
-      const existingFilenames = new Set(
-        getTrackLyricsState(trackDir).sources.map((source) => source.filename),
-      );
-      return {
-        ...result,
-        // Computed here, not in the renderer — main owns the
-        // lrclib-<id>.lrc naming convention lyrics:save-candidate uses.
-        candidates: result.candidates.map((candidate) => ({
-          ...candidate,
-          alreadySaved: existingFilenames.has(`lrclib-${candidate.id}.lrc`),
-        })),
-      };
-    });
-
-    // Always allocates a NEW, non-colliding filename — never overwrites an
-    // existing source.
-    ipcMain.handle(
-      'lyrics:save-candidate',
-      async (event, trackId, candidateId) => {
-        requireFeatureGate(FEATURE_IDS.LYRICS_FLOW);
-        const dir = resolveDownloadDir(cachedConfig);
-        const trackDir = resolveTrackDir(dir, trackId);
-        if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-        const fetched = await fetchLrclibRecord(candidateId);
-        if (fetched.status !== 'ok') {
-          throw new Error(`lrclib record unavailable: ${fetched.reason}`);
-        }
-        const text = fetched.record?.syncedLyrics;
-        if (typeof text !== 'string' || text.trim().length === 0) {
-          throw new Error('lrclib record has no synced lyrics');
-        }
-
-        const filename = allocateLyricsFilename(
-          trackDir,
-          `lrclib-${candidateId}`,
-          '.lrc',
-        );
-        if (!filename) {
-          throw new Error('unable to allocate a lyrics filename');
-        }
-
-        // language: 'und' matches the passive backfill's own lrclib
-        // sources. label disambiguates multiple saved candidates in the
-        // source picker (album is usually the real difference between two
-        // lrclib records for the same song; artist is the fallback).
-        const label = fetched.record?.albumName || fetched.record?.artistName;
-        const source = {
-          filename,
-          language: 'und',
-          kind: 'lrclib',
-          ...(label ? { label } : {}),
-        };
-        if (!saveTrackLyricsText(trackDir, source, text)) {
-          throw new Error('failed to write lyrics file');
-        }
-
-        if (mainWindow) mainWindow.webContents.send('library:updated');
-        return { source, sources: getTrackLyricsState(trackDir).sources };
-      },
+    windowState.createMainWindow(
+      configState.getConfig().uiTheme,
+      configState.getConfig().sidebarWidth,
     );
-
-    // One-time repair for lrclib sources saved before the label field
-    // existed.
-    ipcMain.handle('lyrics:backfill-source-labels', async (event, trackId) => {
-      requireFeatureGate(FEATURE_IDS.LYRICS_FLOW);
-      const dir = resolveDownloadDir(cachedConfig);
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const sources = await backfillLyricsSourceLabels(
-        trackDir,
-        async (candidateId) => {
-          const fetched = await fetchLrclibRecord(candidateId);
-          if (fetched.status !== 'ok') return null;
-          return (
-            fetched.record?.albumName || fetched.record?.artistName || null
-          );
-        },
-      );
-
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return { sources };
-    });
-
-    // Deliberately ungated — a pure local edit, not an acquisition step.
-    ipcMain.handle(
-      'lyrics:set-source-label',
-      async (event, trackId, filename, label) => {
-        const dir = resolveDownloadDir(cachedConfig);
-        const trackDir = resolveTrackDir(dir, trackId);
-        if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-        const sources = setLyricsSourceLabel(trackDir, filename, label);
-        if (!sources) throw new Error(`unknown lyrics source: ${filename}`);
-
-        if (mainWindow) mainWindow.webContents.send('library:updated');
-        return { sources };
-      },
-    );
-
-    // Also ungated, same reasoning.
-    ipcMain.handle('lyrics:delete-source', async (event, trackId, filename) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      if (!deleteLyricsSource(trackDir, filename)) {
-        throw new Error(`unable to delete lyrics source: ${filename}`);
-      }
-
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return { sources: getTrackLyricsState(trackDir).sources };
-    });
-
-    // Ungated: the user is importing lyrics text/file they already have
-    // locally. Only provider lookup/acquisition belongs behind lyrics-flow.
-    ipcMain.handle('lyrics:import-text', async (event, trackId, payload) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const result = importManualLyricsText(trackDir, payload);
-      if (!result) throw new Error('unable to import manual lyrics');
-
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return result;
-    });
-
-    ipcMain.handle('lyrics:import-file', async (event, trackId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find(
-        (candidate) => candidate.id === trackId,
-      );
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const picked = await dialog.showOpenDialog(mainWindow ?? undefined, {
-        title: '匯入歌詞檔',
-        properties: ['openFile'],
-        filters: [
-          { name: 'Lyrics', extensions: ['lrc', 'vtt', 'txt'] },
-          { name: 'All Files', extensions: ['*'] },
-        ],
-      });
-      if (picked.canceled || picked.filePaths.length === 0) return null;
-
-      const result = importManualLyricsFile(trackDir, picked.filePaths[0]);
-      if (!result) throw new Error('unable to import manual lyrics file');
-
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return result;
-    });
-
-    // Every mutation resolves to the full playlist array so the renderer
-    // can replace its state directly instead of a separate refetch.
-    ipcMain.handle('playlists:list', async () => {
-      return withCoverUrls(loadPlaylists(resolveDownloadDir(cachedConfig)));
-    });
-
-    ipcMain.handle('playlists:create', async (event, name) => {
-      return withCoverUrls(
-        createPlaylist(resolveDownloadDir(cachedConfig), name),
-      );
-    });
-
-    ipcMain.handle('playlists:rename', async (event, id, name) => {
-      return withCoverUrls(
-        renamePlaylist(resolveDownloadDir(cachedConfig), id, name),
-      );
-    });
-
-    ipcMain.handle('playlists:delete', async (event, id) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      deletePlaylistCoverDir(dir, id);
-      return withCoverUrls(deletePlaylist(dir, id));
-    });
-
-    ipcMain.handle(
-      'playlists:reorder',
-      async (event, draggedId, targetId, position) => {
-        return withCoverUrls(
-          reorderPlaylists(
-            resolveDownloadDir(cachedConfig),
-            draggedId,
-            targetId,
-            position,
-          ),
-        );
-      },
-    );
-
-    // Album collections are read-only (see docs/spec.md and playlists.js's
-    // PLAYLIST_KINDS comment) — this is the trust boundary that enforces
-    // it. playlists.js itself stays a mechanical store with no opinion on
-    // renderer intent, same role main.js already plays for
-    // extractVideoId()'s untrusted-input validation.
-    ipcMain.handle('playlists:set-tracks', async (event, id, trackIds) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const playlists = loadPlaylists(dir);
-      const target = playlists.find((p) => p.id === id);
-      if (target?.kind === 'album') return withCoverUrls(playlists);
-      return withCoverUrls(setPlaylistTracks(dir, id, trackIds));
-    });
-
-    ipcMain.handle('playlists:upsert-album', async (event, payload) => {
-      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      const dir = resolveDownloadDir(cachedConfig);
-      const playlists = upsertAlbum(dir, {
-        name: payload?.name,
-        source: payload?.source,
-        trackIds: payload?.trackIds,
-      });
-
-      const album = playlists.find(
-        (p) =>
-          p.kind === 'album' &&
-          p.source?.platform === payload?.source?.platform &&
-          p.source?.id === payload?.source?.id,
-      );
-      // Read-only, automatic album cover from the source's own artwork (see
-      // fetchPlaylist's thumbnailUrl) — skipped once a cover is already
-      // recorded so re-syncing an already-imported album doesn't re-fetch
-      // its artwork on every retry.
-      if (album && !album.coverImage && payload?.thumbnailUrl) {
-        const filename = await writePlaylistCoverFromUrl(
-          dir,
-          album.id,
-          payload.thumbnailUrl,
-        );
-        if (filename) {
-          return withCoverUrls(setPlaylistCover(dir, album.id, filename));
-        }
-      }
-
-      return withCoverUrls(playlists);
-    });
-
-    ipcMain.handle('playlists:set-kind', async (event, id, kind) => {
-      return withCoverUrls(
-        setPlaylistKind(resolveDownloadDir(cachedConfig), id, kind),
-      );
-    });
-
-    ipcMain.handle(
-      'playlists:set-description',
-      async (event, id, description) => {
-        return withCoverUrls(
-          setPlaylistDescription(
-            resolveDownloadDir(cachedConfig),
-            id,
-            description,
-          ),
-        );
-      },
-    );
-
-    // Native file picker — same pattern as config:choose-download-dir. The
-    // dialog itself is the image picker; no in-app cropper/uploader UI.
-    ipcMain.handle('playlists:choose-cover', async (event, id) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const playlists = loadPlaylists(dir);
-      if (!playlists.some((p) => p.id === id)) return withCoverUrls(playlists);
-
-      const result = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openFile'],
-        filters: [{ name: '圖片', extensions: ['jpg', 'jpeg', 'png', 'webp'] }],
-      });
-      if (result.canceled || !result.filePaths[0]) {
-        return withCoverUrls(playlists);
-      }
-
-      const filename = writePlaylistCoverFile(dir, id, result.filePaths[0]);
-      if (!filename) return withCoverUrls(playlists);
-      return withCoverUrls(setPlaylistCover(dir, id, filename));
-    });
-
-    ipcMain.handle('playlists:clear-cover', async (event, id) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      deletePlaylistCoverDir(dir, id);
-      return withCoverUrls(setPlaylistCover(dir, id, null));
-    });
-
-    ipcMain.handle('yt:fetch-playlist', async (event, input) => {
-      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      return classifyingFailures(async () => {
-        const playlistId = extractPlaylistId(input);
-        if (!playlistId) return null; // not a playlist URL — not an error
-        const dir = resolveDownloadDir(cachedConfig);
-        const existingIds = new Set(listTracks(dir).map((track) => track.id));
-        const { title, thumbnailUrl, entries } =
-          await fetchPlaylist(playlistId);
-        return {
-          title,
-          thumbnailUrl,
-          kind: classifyPlaylistKind(playlistId),
-          source: { platform: 'youtube', id: playlistId },
-          entries: entries.map((entry) => ({
-            ...entry,
-            alreadyDownloaded: existingIds.has(entry.id),
-          })),
-        };
-      });
-    });
-
-    ipcMain.handle('yt:fetch-metadata', async (event, input) => {
-      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      return classifyingFailures(async () => {
-        const videoId = extractVideoId(input);
-        if (!videoId) throw new Error('invalid video id or YouTube URL');
-        const metadata = await fetchMetadata(videoId);
-        if (!metadata) throw new Error('unable to fetch video metadata');
-        const dir = resolveDownloadDir(cachedConfig);
-        const existingIds = new Set(listTracks(dir).map((track) => track.id));
-        return {
-          id: videoId,
-          ...metadata,
-          alreadyDownloaded: existingIds.has(videoId),
-        };
-      });
-    });
-
-    ipcMain.handle('yt:resolve-import-source', async (event, input) => {
-      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      return classifyingFailures(async () => {
-        const dir = resolveDownloadDir(cachedConfig);
-        const existingIds = new Set(listTracks(dir).map((track) => track.id));
-        return resolveYoutubeImportSource(input, {
-          extractVideoId,
-          fetchMetadata,
-          searchPlaybackCandidates,
-          existingIds,
-        });
-      });
-    });
-
-    ipcMain.handle('yt:download-audio', async (event, input) => {
-      requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
-      return classifyingFailures(async () => {
-        const videoId = extractVideoId(input);
-        if (!videoId) throw new Error('invalid video id or YouTube URL');
-        const destDir = resolveDownloadDir(cachedConfig);
-        const result = await downloadAudio(videoId, destDir);
-        const trackDir = resolveTrackDir(destDir, videoId);
-        if (result.title) {
-          try {
-            saveIndexEntry(destDir, videoId, {
-              title: result.title,
-              artist: result.artist,
-              duration: result.duration,
-              album: result.album,
-              releaseYear: result.releaseYear,
-            });
-          } catch {
-            // The download itself succeeded and the file is playable — a
-            // failed index write (e.g. disk full) shouldn't be reported to
-            // the renderer as a failed download. The next background
-            // backfill pass will retry writing the title.
-          }
-        }
-        if (trackDir) {
-          try {
-            await saveLrclibLyricsIfAbsent(result, trackDir);
-          } catch {
-            // The audio download succeeded. A failed optional lyrics fallback
-            // should not turn that into a failed import.
-          }
-        }
-        return result;
-      });
-    });
-
-    ipcMain.handle('separation:run', async (event, trackId, presetId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const track = listTracks(dir).find((t) => t.id === trackId);
-      if (!track) throw new Error(`unknown track id: ${trackId}`);
-
-      const outDir = resolveSeparationsDir(dir, trackId);
-      if (!outDir) throw new Error('invalid track id');
-      const inputPath = resolveTrackAudioPath(dir, track.id);
-      if (!inputPath) throw new Error(`missing audio for track id: ${trackId}`);
-
-      // Fail loudly on an unrecognized preset id rather than silently
-      // falling back — a UI bug should surface immediately, not quietly
-      // always run "standard".
-      if (presetId != null && !SEPARATION_PRESETS[presetId]) {
-        throw new Error(`unknown separation preset: ${presetId}`);
-      }
-      const resolvedPresetId = presetId ?? DEFAULT_PRESET_ID;
-
-      // Running two separations at once (same track racing writes, or
-      // different tracks saturating ONNX's all-cores pool while the user
-      // might be live) is worse than rejecting the second call.
-      if (separationInProgress) {
-        throw new Error('已經有一首曲目在分離中,請等它完成後再試一次。');
-      }
-      separationInProgress = true;
-      try {
-        // The one stage that doesn't happen in the worker — the model
-        // download runs on this thread, before the worker exists.
-        if (mainWindow) {
-          mainWindow.webContents.send('separation:progress', {
-            trackId,
-            stage: 'downloading-model',
-          });
-        }
-        const { modelId } = resolvePreset(resolvedPresetId);
-        const modelPath = await ensureModel(app.getPath('userData'), modelId);
-        await new Promise((resolve, reject) => {
-          const worker = new Worker(
-            path.join(__dirname, 'lib', 'vocalSeparationWorker.js'),
-            {
-              workerData: {
-                inputPath,
-                outputDir: outDir,
-                modelPath,
-                presetId: resolvedPresetId,
-              },
-            },
-          );
-          worker.on('message', (msg) => {
-            if (msg.type === 'progress') {
-              if (mainWindow) {
-                mainWindow.webContents.send('separation:progress', {
-                  trackId,
-                  stage: msg.stage,
-                  percent: msg.percent,
-                });
-              }
-            } else if (msg.type === 'done') {
-              resolve(msg.result);
-            } else {
-              reject(new Error(msg.error));
-            }
-          });
-          worker.on('error', reject);
-          // Without this, a worker that dies before posting any message
-          // (OOM, native crash) leaves the promise unsettled forever, and
-          // separationInProgress stuck true until the app is relaunched.
-          worker.on('exit', (code) => {
-            if (code !== 0) {
-              reject(new Error(`separation worker exited with code ${code}`));
-            }
-          });
-        });
-        // Lets any subscriber pick up hasSeparation/stemsUrl even if the
-        // triggering component has since unmounted — reuses the same
-        // channel runBackfillPass already pushes on.
-        if (mainWindow) mainWindow.webContents.send('library:updated');
-      } finally {
-        separationInProgress = false;
-      }
-
-      return {
-        stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedPresetId)}.wav`,
-      };
-    });
-
-    // Switches which already-produced result plays, without running any
-    // DSP — a cheap metadata write, so unlike separation:run this is not
-    // gated by separationInProgress and stays usable while a different
-    // track is separating.
-    ipcMain.handle('separation:select', async (event, trackId, presetId) => {
-      const dir = resolveDownloadDir(cachedConfig);
-      const separationsDir = resolveSeparationsDir(dir, trackId);
-      if (!separationsDir) throw new Error('invalid track id');
-
-      const selected = selectSeparationResult(separationsDir, presetId);
-      if (!selected) {
-        throw new Error(
-          `no separation result for preset "${presetId}" on track ${trackId}`,
-        );
-      }
-
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return { ok: true };
-    });
-
-    ipcMain.handle('config:get', async () => {
-      return {
-        downloadDir: resolveDownloadDir(cachedConfig),
-        isDefault: !cachedConfig.downloadDir,
-      };
-    });
-
-    ipcMain.handle('feature-gates:list', async () => {
-      return normalizeFeatureConfirmations(cachedConfig.featureConfirmations);
-    });
-
-    ipcMain.handle(
-      'feature-gates:confirm',
-      async (event, featureId, noticeVersion) => {
-        const record = buildFeatureConfirmation(featureId);
-        if (noticeVersion !== record.noticeVersion) {
-          throw new Error(`stale feature notice: ${featureId}`);
-        }
-        cachedConfig = saveConfig(configPath, {
-          featureConfirmations: {
-            ...cachedConfig.featureConfirmations,
-            [featureId]: record,
-          },
-        });
-        return record;
-      },
-    );
-
-    ipcMain.handle('config:choose-download-dir', async () => {
-      const result = await dialog.showOpenDialog(mainWindow, {
-        properties: ['openDirectory', 'createDirectory'],
-      });
-      if (result.canceled || !result.filePaths[0]) {
-        return resolveDownloadDir(cachedConfig);
-      }
-      cachedConfig = saveConfig(configPath, {
-        downloadDir: result.filePaths[0],
-      });
-      // Invalidates both the renderer's track list AND usePlaylists.js's
-      // module-scope playlist cache — that composable survives Setlist tab
-      // switches, so without this push it would keep the old dir's
-      // playlists and silently write them (with stale trackIds) into the
-      // new dir on the next mutation.
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return result.filePaths[0];
-    });
-
-    ipcMain.handle('config:reset-download-dir', async () => {
-      cachedConfig = saveConfig(configPath, { downloadDir: null });
-      if (mainWindow) mainWindow.webContents.send('library:updated');
-      return resolveDownloadDir(cachedConfig);
-    });
-
-    ipcMain.handle('config:get-ui-theme', async () => cachedConfig.uiTheme);
-
-    ipcMain.handle('config:set-ui-theme', async (event, theme) => {
-      // Untrusted renderer input — same trust-boundary role as
-      // extractVideoId() for video ids.
-      if (!Object.hasOwn(TITLEBAR_COLORS, theme)) {
-        throw new Error(`invalid ui theme: ${theme}`);
-      }
-      cachedConfig = saveConfig(configPath, { uiTheme: theme });
-      if (mainWindow) {
-        mainWindow.setTitleBarOverlay(TITLEBAR_COLORS[theme]);
-        mainWindow.setBackgroundColor(TITLEBAR_COLORS[theme].color);
-      }
-      return cachedConfig.uiTheme;
-    });
-
-    ipcMain.handle(
-      'config:get-sidebar-width',
-      async () => cachedConfig.sidebarWidth,
-    );
-
-    ipcMain.handle('config:set-sidebar-width', async (event, width) => {
-      // Untrusted renderer input — same trust-boundary role as
-      // extractVideoId() for video ids.
-      if (
-        !Number.isFinite(width) ||
-        width < SIDEBAR_WIDTH_MIN ||
-        width > SIDEBAR_WIDTH_MAX
-      ) {
-        throw new Error(`invalid sidebar width: ${width}`);
-      }
-      cachedConfig = saveConfig(configPath, { sidebarWidth: width });
-      return cachedConfig.sidebarWidth;
-    });
-
-    ipcMain.handle('ytdlp:get-status', async () => ({
-      ...(await getYtdlpStatus()),
-      ...cachedConfig.ytdlpStatus,
-    }));
-
-    // Runs yt-dlp's own -U (check + apply in one step); not gated behind
-    // provider-flow, same as library:refresh-metadata's maintenance action.
-    ipcMain.handle('ytdlp:check-update', async () => {
-      const result = await checkYtdlpUpdate();
-      cachedConfig = saveConfig(configPath, {
-        ytdlpStatus: {
-          lastCheckedAt: new Date().toISOString(),
-          lastKnownVersion: result.version,
-          lastCheckResult: result.outcome,
-        },
-      });
-      return { ...(await getYtdlpStatus()), ...cachedConfig.ytdlpStatus };
-    });
-
-    // Fire-and-forget; thumbar redraw has no renderer-visible result.
-    ipcMain.on('player:state', (event, state) => {
-      const next = {
-        isPlaying: Boolean(state && state.isPlaying),
-        hasTrack: Boolean(state && state.hasTrack),
-      };
-      if (
-        next.isPlaying === playbackState.isPlaying &&
-        next.hasTrack === playbackState.hasTrack
-      ) {
-        return;
-      }
-      playbackState = next;
-      updateThumbar();
-    });
-
-    nativeTheme.on('updated', updateThumbar);
-
-    // Run version-gated migrations before ordinary writes stamp the files.
-    // Album metadata must exist before playlist-kind classification.
-    {
-      const dir = resolveDownloadDir(cachedConfig);
-      migrateTrackAlbumMetadata(dir, readTrackInfoMetadata);
-      const tracksById = new Map(
-        listTracks(dir).map((track) => [track.id, track]),
-      );
-      migratePlaylistKinds(dir, tracksById, classifyCollectionKind);
-    }
-
-    createWindow(cachedConfig.uiTheme, cachedConfig.sidebarWidth);
   });
 
   app.on('window-all-closed', () => {
@@ -1256,6 +209,7 @@ if (!gotSingleInstanceLock) {
   });
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow();
+    if (BrowserWindow.getAllWindows().length === 0)
+      windowState.createMainWindow();
   });
 }
