@@ -1,0 +1,91 @@
+# electron-builder config for Windows packaging.
+#
+# YAML, not electron-builder.config.js — electron/**/*.js in this repo is
+# CommonJS and src/**/*.js is ESM (see CLAUDE.md's Module system note); YAML
+# sidesteps the question of which convention a root-level *.config.js should
+# follow.
+
+appId: com.utawakui.app
+# Must equal BASE_APP_USER_MODEL_ID in electron/main.js, or the Start Menu
+# shortcut's AUMID won't match the running app's, and the SMTC card keeps
+# showing "未知的應用程式" even after installing.
+productName: Utawakui
+# Must equal APP_NAME / app.setName() in electron/main.js — this is the
+# folder name under app.getPath('userData'). A mismatch here silently moves
+# config.json and the downloaded .onnx models out from under an existing
+# install.
+
+directories:
+  output: release
+  # Not "dist" — that's Vite's build output, which electron/main.js's
+  # loadFile() reads directly.
+
+files:
+  - dist/**/*
+  - electron/**/*
+  - '!electron/**/*.test.js'
+  - public/assets/icons/**/*
+  - shared/**/*
+  - package.json
+  # onnxruntime-node ships native binaries for every platform in one
+  # tarball; only win32/x64 is used here (thumbar/SMTC/DirectML are all
+  # Windows-only features per CLAUDE.md), so the rest is dead weight in the
+  # installer.
+  - '!node_modules/onnxruntime-node/bin/napi-v6/darwin/**/*'
+  - '!node_modules/onnxruntime-node/bin/napi-v6/linux/**/*'
+  - '!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*'
+
+asarUnpack:
+  # spawn()'d as a binary (youtube-dl-exec / electron/lib/downloader.js and
+  # friends) — same constraint.
+  - node_modules/youtube-dl-exec/bin/**/*
+  # Native N-API module — onnxruntime.dll/DirectML.dll must land in the same
+  # unpacked directory as the .node binding, so the whole bin/ tree is
+  # unpacked rather than just **/*.node.
+  - node_modules/onnxruntime-node/bin/**/*
+  # separationHandlers.js's `new Worker(...)` entry path isn't asar-patched
+  # like require() is, so vocalSeparationWorker.js's require graph needs
+  # to resolve unpacked too — electron/lib is small, so unpack it whole.
+  - electron/lib/**/*
+  # Read directly by Windows shell APIs (setAppDetails's appIconPath in
+  # electron/main.js), not through Electron/Node's own fs layer.
+  - public/assets/icons/app-icon.ico
+
+win:
+  target:
+    - target: nsis
+      arch:
+        - x64
+    - target: dir
+      arch:
+        - x64
+  icon: public/assets/icons/app-icon.ico
+  # Keep as "electron" — renaming it FATALs once onnxruntime-node/DirectML
+  # is bundled. See docs/adr/0002-packaged-exe-kept-as-electron-exe.md.
+  executableName: electron
+  # No code-signing certificate is configured (out of scope for this round —
+  # see the plan), so skip signtool.exe rather than have electron-builder
+  # attempt and silently no-op it on every build. Does NOT skip icon/
+  # version-info resource editing (that's signAndEditExecutable, a separate
+  # flag).
+  signExecutable: false
+
+nsis:
+  # Optional uninstaller checkboxes for app data cleanup — opt-in, not
+  # deleteAppDataOnUninstall, since the local music library is user content.
+  include: build/installer.nsh
+  # Assisted (wizard) installer, not oneClick — oneClick has no real finish
+  # page to carry a "Launch Utawakui" checkbox.
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  # Per-user install is always writable, so yt-dlp auto-update works
+  # without elevation — see electron/main.js's packaged-mode relocation.
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  # This is the concrete fix for the SMTC "未知的應用程式" label: Windows
+  # resolves the now-playing app name from the AUMID registered on this
+  # Start Menu shortcut.
+  # runAfterFinish left at its default (true) — assisted mode's finish page
+  # shows a real "Run Utawakui" checkbox now, and launching is confirmed
+  # working (see win.executableName above).

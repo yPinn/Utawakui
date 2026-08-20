@@ -111,7 +111,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
 - Preset export/import。
-- Packaging、installer、AUMID、signing。
+- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；code signing 與自動更新仍未開始。
 
 ## 5. 架構邊界
 
@@ -308,7 +308,7 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 ### Phase 3：Distribution And Integrations
 
-- Windows installer、AUMID、signing。
+- Windows installer、AUMID（electron-builder + NSIS 已建立，見 §4.2）；signing、自動更新與 release CI 尚未開始。
 - 官方 metadata provider flows。
 - Optional provider modules。
 - OBS plugin 或 Stream Deck integration 評估。

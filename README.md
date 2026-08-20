@@ -46,19 +46,21 @@ npm run dev
 
 ## Scripts
 
-| 指令                    | 說明                                           |
-| ----------------------- | ---------------------------------------------- |
-| `npm run dev`           | 同時啟動 Vite dev server 與 Electron。         |
-| `npm run build`         | 建立 production build 到 `dist/`。             |
-| `npm start`             | Build 後以 production-like 模式啟動 Electron。 |
-| `npm run lint`          | 執行 ESLint。                                  |
-| `npm run lint:fix`      | 執行 ESLint 並套用可自動修復項目。             |
-| `npm run format`        | 使用 Prettier 格式化專案。                     |
-| `npm run format:check`  | 檢查 Prettier 格式。                           |
-| `npm run lint:md`       | 檢查 Markdown。                                |
-| `npm test`              | 執行 Vitest。                                  |
-| `npm run test:coverage` | 執行 Vitest 並產生 coverage 報表。             |
-| `npm run test:watch`    | 以 watch mode 執行 Vitest。                    |
+| 指令                    | 說明                                                               |
+| ----------------------- | ------------------------------------------------------------------ |
+| `npm run dev`           | 同時啟動 Vite dev server 與 Electron。                             |
+| `npm run build`         | 建立 production build 到 `dist/`。                                 |
+| `npm start`             | Build 後以 production-like 模式啟動 Electron。                     |
+| `npm run dist:dir`      | 打包成未壓縮的 `release/win-unpacked/`（快速驗證用，不建立捷徑）。 |
+| `npm run dist`          | 打包成 Windows NSIS 安裝檔（`release/*.exe`）。                    |
+| `npm run lint`          | 執行 ESLint。                                                      |
+| `npm run lint:fix`      | 執行 ESLint 並套用可自動修復項目。                                 |
+| `npm run format`        | 使用 Prettier 格式化專案。                                         |
+| `npm run format:check`  | 檢查 Prettier 格式。                                               |
+| `npm run lint:md`       | 檢查 Markdown。                                                    |
+| `npm test`              | 執行 Vitest。                                                      |
+| `npm run test:coverage` | 執行 Vitest 並產生 coverage 報表。                                 |
+| `npm run test:watch`    | 以 watch mode 執行 Vitest。                                        |
 
 ## 專案結構
 
@@ -71,3 +73,5 @@ tasks/      開發任務紀錄
 ```
 
 完整產品邊界、功能分類與 roadmap 請見 [docs/spec.md](docs/spec.md)。
+打包內容、feature gate 與 runtime dependency 對照請見
+[docs/release-inventory.md](docs/release-inventory.md)。
