@@ -25,6 +25,21 @@ function emitFeatureDependencyStatuses(getMainWindow, userDataDir) {
   );
 }
 
+function emitFeatureDependencyProgress(getMainWindow, dependencyId, payload) {
+  getMainWindow()?.webContents.send('feature-dependencies:progress', {
+    dependencyId,
+    ...payload,
+  });
+}
+
+function buildPrepareOptions(getMainWindow, dependencyId) {
+  return {
+    ...(app.isPackaged ? { resourcesPath: process.resourcesPath } : {}),
+    onProgress: (payload) =>
+      emitFeatureDependencyProgress(getMainWindow, dependencyId, payload),
+  };
+}
+
 function registerFeatureDependencyHandlers({
   ipcMain,
   requireFeatureGate,
@@ -47,7 +62,7 @@ function registerFeatureDependencyHandlers({
       const prepared = await prepareFeatureDependency(
         userDataDir,
         dependencyId,
-        app.isPackaged ? { resourcesPath: process.resourcesPath } : {},
+        buildPrepareOptions(getMainWindow, dependencyId),
       );
       emitFeatureDependencyStatuses(getMainWindow, userDataDir);
       return prepared;
@@ -72,7 +87,7 @@ function registerFeatureDependencyHandlers({
     const repaired = await repairFeatureDependency(
       userDataDir,
       dependencyId,
-      app.isPackaged ? { resourcesPath: process.resourcesPath } : {},
+      buildPrepareOptions(getMainWindow, dependencyId),
     );
     emitFeatureDependencyStatuses(getMainWindow, userDataDir);
     return repaired;

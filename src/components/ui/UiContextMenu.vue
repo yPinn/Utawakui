@@ -14,6 +14,12 @@ const props = defineProps({
   open: { type: Boolean, default: false },
   x: { type: Number, default: 0 },
   y: { type: Number, default: 0 },
+  width: { type: Number, default: 220 },
+  alignX: {
+    type: String,
+    default: 'left',
+    validator: (value) => ['left', 'right'].includes(value),
+  },
   emptyText: { type: String, default: '' },
   // Item shape: { key?, label, value?, icon?, status?, danger?, disabled?,
   // separator?, children? }. `separator` renders a divider (ignores every
@@ -24,20 +30,18 @@ const props = defineProps({
 const emit = defineEmits(['select', 'close']);
 const { claim, release } = useContextMenuGate();
 
-// Fixed menu width — no caller has ever needed a different one, so this
-// isn't a prop (see the removed `width` prop in code review history).
-const MENU_WIDTH = 220;
 const ROW_HEIGHT = 34;
 const MAX_MENU_HEIGHT = 320; // must match the CSS `max-height` below
 
 const menuRef = useTemplateRef('menu');
 const position = ref({ x: props.x, y: props.y });
 const activeSubmenuKey = ref(null);
+const menuWidth = computed(() => props.width);
 
 const menuStyle = computed(() => ({
   left: `${position.value.x}px`,
   top: `${position.value.y}px`,
-  width: `${MENU_WIDTH}px`,
+  width: `${menuWidth.value}px`,
 }));
 
 const activeSubmenuItem = computed(
@@ -53,14 +57,14 @@ const activeSubmenuIndex = computed(() =>
 );
 
 const activeSubmenuWidth = computed(
-  () => activeSubmenuItem.value?.submenuWidth ?? MENU_WIDTH,
+  () => activeSubmenuItem.value?.submenuWidth ?? menuWidth.value,
 );
 
 const submenuStyle = computed(() => {
   if (!activeSubmenuItem.value) return {};
   if (typeof window === 'undefined') {
     return {
-      left: `${position.value.x + MENU_WIDTH + 4}px`,
+      left: `${position.value.x + menuWidth.value + 4}px`,
       top: `${position.value.y}px`,
       width: `${activeSubmenuWidth.value}px`,
     };
@@ -70,7 +74,7 @@ const submenuStyle = computed(() => {
   const gap = 4;
   const rowOffset = 4 + Math.max(0, activeSubmenuIndex.value) * ROW_HEIGHT;
   const submenuHeight = estimateSubmenuHeight(activeSubmenuItem.value);
-  const rightX = position.value.x + MENU_WIDTH + gap;
+  const rightX = position.value.x + menuWidth.value + gap;
   const leftX = position.value.x - activeSubmenuWidth.value - gap;
   const x =
     rightX + activeSubmenuWidth.value + margin <= window.innerWidth
@@ -101,28 +105,33 @@ function estimateSubmenuHeight(item) {
   );
 }
 
+function preferredX(width) {
+  return props.alignX === 'right' ? props.x - width : props.x;
+}
+
 function clampPosition() {
   if (typeof window === 'undefined') {
-    position.value = { x: props.x, y: props.y };
+    position.value = { x: preferredX(menuWidth.value), y: props.y };
     return;
   }
 
   const rect = menuRef.value?.getBoundingClientRect();
-  const menuWidth = rect?.width ?? MENU_WIDTH;
+  const width = rect?.width ?? menuWidth.value;
   const menuHeight = rect?.height ?? estimateMenuHeight();
   const margin = 8;
-  const maxX = window.innerWidth - menuWidth - margin;
+  const maxX = window.innerWidth - width - margin;
   const maxY = window.innerHeight - menuHeight - margin;
+  const x = preferredX(width);
 
   position.value = {
-    x: Math.max(margin, Math.min(props.x, maxX)),
+    x: Math.max(margin, Math.min(x, maxX)),
     y: Math.max(margin, Math.min(props.y, maxY)),
   };
 }
 
 function scheduleClamp() {
   activeSubmenuKey.value = null;
-  position.value = { x: props.x, y: props.y };
+  position.value = { x: preferredX(menuWidth.value), y: props.y };
   if (!props.open) return;
 
   if (typeof window === 'undefined') {
@@ -180,9 +189,20 @@ function showSubmenu(item) {
     !item.separator && item.children?.length ? itemKey(item) : null;
 }
 
-watch(() => [props.open, props.x, props.y, props.items.length], scheduleClamp, {
-  immediate: true,
-});
+watch(
+  () => [
+    props.open,
+    props.x,
+    props.y,
+    props.width,
+    props.alignX,
+    props.items.length,
+  ],
+  scheduleClamp,
+  {
+    immediate: true,
+  },
+);
 
 onMounted(() => {
   if (typeof window === 'undefined') return;

@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import { EventEmitter } from 'events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ensureFfmpegDependency,
@@ -100,6 +101,136 @@ function makeModelDependency(modelBuffer) {
 }
 
 describe('ensureFfmpegDependency', () => {
+  it('passes archive and destination paths to PowerShell through named script parameters', async () => {
+    const userDataDir = makeTempDir();
+    const archive = Buffer.from('fake zip bytes');
+    const dependency = makeDependency(archive);
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
+    });
+    const spawnCalls = [];
+    const spawnImpl = vi.fn((_command, args) => {
+      spawnCalls.push(args);
+      const proc = new EventEmitter();
+      proc.stderr = new EventEmitter();
+      queueMicrotask(() => {
+        const archivePath = args.at(-2);
+        const destinationDir = args.at(-1);
+        expect(fs.readFileSync(archivePath)).toEqual(archive);
+        const exeDir = path.join(
+          destinationDir,
+          dependency.archiveRoot,
+          path.dirname(dependency.executableRelativePath),
+        );
+        fs.mkdirSync(exeDir, { recursive: true });
+        fs.writeFileSync(path.join(exeDir, 'ffmpeg.exe'), 'exe');
+        proc.emit('close', 0);
+      });
+      return proc;
+    });
+
+    await ensureFfmpegDependency(userDataDir, {
+      allowNonWindows: true,
+      dependency,
+      fetchImpl,
+      spawnImpl,
+      now: () => new Date('2026-08-21T01:00:00.000Z'),
+    });
+
+    const args = spawnCalls[0];
+    expect(args).toContain('-Command');
+    const command = args[args.indexOf('-Command') + 1];
+    expect(command).toContain('param([string]$ArchivePath');
+    expect(command).toContain('Expand-Archive');
+    expect(command).not.toContain('$args');
+    expect(args.at(-2)).toMatch(/ffmpeg\.zip$/);
+    expect(args.at(-1)).toContain('.ffmpeg-');
+  });
+
+  it('reuses a verified FFmpeg archive cache after extraction fails', async () => {
+    const userDataDir = makeTempDir();
+    const archive = Buffer.from('fake zip bytes');
+    const dependency = makeDependency(archive);
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
+    });
+    const extractArchive = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('extract failed'))
+      .mockImplementationOnce(async (archivePath, destinationDir, dep) => {
+        expect(fs.readFileSync(archivePath)).toEqual(archive);
+        const exeDir = path.join(
+          destinationDir,
+          dep.archiveRoot,
+          path.dirname(dep.executableRelativePath),
+        );
+        fs.mkdirSync(exeDir, { recursive: true });
+        fs.writeFileSync(path.join(exeDir, 'ffmpeg.exe'), 'exe');
+      });
+
+    await expect(
+      ensureFfmpegDependency(userDataDir, {
+        allowNonWindows: true,
+        dependency,
+        fetchImpl,
+        extractArchive,
+      }),
+    ).rejects.toThrow('extract failed');
+
+    await expect(
+      ensureFfmpegDependency(userDataDir, {
+        allowNonWindows: true,
+        dependency,
+        fetchImpl,
+        extractArchive,
+      }),
+    ).resolves.toBe(getFfmpegPaths(userDataDir, dependency).executablePath);
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(extractArchive).toHaveBeenCalledTimes(2);
+  });
+
+  it('reports FFmpeg download, verification, and install progress', async () => {
+    const userDataDir = makeTempDir();
+    const archive = Buffer.from('fake zip bytes');
+    const dependency = makeDependency(archive);
+    const progressEvents = [];
+    const fetchImpl = vi.fn().mockResolvedValue(
+      new Response(archive, {
+        headers: {
+          'content-length': String(archive.length),
+        },
+      }),
+    );
+    const extractArchive = vi.fn(async (archivePath, destinationDir, dep) => {
+      const exeDir = path.join(
+        destinationDir,
+        dep.archiveRoot,
+        path.dirname(dep.executableRelativePath),
+      );
+      fs.mkdirSync(exeDir, { recursive: true });
+      fs.writeFileSync(path.join(exeDir, 'ffmpeg.exe'), 'exe');
+    });
+
+    await ensureFfmpegDependency(userDataDir, {
+      allowNonWindows: true,
+      dependency,
+      fetchImpl,
+      extractArchive,
+      onProgress: (event) => progressEvents.push(event),
+    });
+
+    expect(progressEvents).toEqual(
+      expect.arrayContaining([
+        { stage: 'downloading', percent: 100 },
+        { stage: 'verifying' },
+        { stage: 'installing' },
+        { stage: 'ready', percent: 100 },
+      ]),
+    );
+  });
+
   it('downloads, verifies, extracts, and records an app-managed FFmpeg binary', async () => {
     const userDataDir = makeTempDir();
     const archive = Buffer.from('fake zip bytes');
@@ -147,6 +278,85 @@ describe('ensureFfmpegDependency', () => {
     ).toContain(dependency.sourceUrl);
     expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl);
     expect(extractArchive).toHaveBeenCalledTimes(1);
+  });
+
+  it('resolves the current Gyan release version and checksum before installing FFmpeg', async () => {
+    const userDataDir = makeTempDir();
+    const archive = Buffer.from('fake release zip bytes');
+    const archiveSha = sha256(archive);
+    const dependency = {
+      ...makeDependency(Buffer.from('unused')),
+      version: 'release',
+      displayVersion: 'latest release',
+      downloadUrl:
+        'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip',
+      versionUrl:
+        'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.ver',
+      sha256Url:
+        'https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip.sha256',
+      sha256: undefined,
+      archiveRoot: 'ffmpeg-{version}-essentials_build',
+    };
+    const fetchImpl = vi.fn(async (url) => {
+      if (url === dependency.versionUrl) {
+        return {
+          ok: true,
+          text: () => Promise.resolve('9.0.1\n'),
+        };
+      }
+      if (url === dependency.sha256Url) {
+        return {
+          ok: true,
+          text: () => Promise.resolve(`${archiveSha}\n`),
+        };
+      }
+      if (url === dependency.downloadUrl) {
+        return {
+          ok: true,
+          arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
+        };
+      }
+      throw new Error(`unexpected fetch: ${url}`);
+    });
+    const extractArchive = vi.fn(async (archivePath, destinationDir, dep) => {
+      expect(dep.version).toBe('9.0.1');
+      expect(dep.archiveRoot).toBe('ffmpeg-9.0.1-essentials_build');
+      expect(dep.sha256).toBe(archiveSha);
+      expect(fs.readFileSync(archivePath)).toEqual(archive);
+      const exeDir = path.join(
+        destinationDir,
+        dep.archiveRoot,
+        path.dirname(dep.executableRelativePath),
+      );
+      fs.mkdirSync(exeDir, { recursive: true });
+      fs.writeFileSync(path.join(exeDir, 'ffmpeg.exe'), 'exe');
+    });
+
+    const exePath = await ensureFfmpegDependency(userDataDir, {
+      allowNonWindows: true,
+      dependency,
+      fetchImpl,
+      extractArchive,
+      now: () => new Date('2026-08-21T00:00:00.000Z'),
+    });
+
+    const paths = getFfmpegPaths(userDataDir, dependency);
+    expect(exePath).toBe(paths.executablePath);
+    expect(JSON.parse(fs.readFileSync(paths.manifestPath, 'utf8'))).toEqual({
+      id: dependency.id,
+      featureId: dependency.featureId,
+      name: dependency.name,
+      version: '9.0.1',
+      license: dependency.license,
+      sourceUrl: dependency.sourceUrl,
+      downloadUrl: dependency.downloadUrl,
+      sha256: archiveSha,
+      installedAt: '2026-08-21T00:00:00.000Z',
+      executableRelativePath: dependency.executableRelativePath,
+    });
+    expect(fetchImpl).toHaveBeenNthCalledWith(1, dependency.versionUrl);
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, dependency.sha256Url);
+    expect(fetchImpl).toHaveBeenNthCalledWith(3, dependency.downloadUrl);
   });
 
   it('returns an existing managed binary without downloading again', async () => {
@@ -288,6 +498,31 @@ describe('yt-dlp feature dependency', () => {
 });
 
 describe('model feature dependencies', () => {
+  it('reports model download progress when preparing a managed model', async () => {
+    const userDataDir = makeTempDir();
+    const modelBuffer = Buffer.from('fake model bytes');
+    const dependency = makeModelDependency(modelBuffer);
+    const progressEvents = [];
+
+    await ensureModelDependency(userDataDir, 'unused', {
+      dependency,
+      fetchImpl: vi.fn().mockResolvedValue(
+        new Response(modelBuffer, {
+          headers: {
+            'content-length': String(modelBuffer.length),
+          },
+        }),
+      ),
+      onProgress: (event) => progressEvents.push(event),
+    });
+
+    expect(progressEvents).toContainEqual({
+      stage: 'downloading',
+      percent: 100,
+    });
+    expect(progressEvents).toContainEqual({ stage: 'ready', percent: 100 });
+  });
+
   it('downloads, verifies, and records a managed model file', async () => {
     const userDataDir = makeTempDir();
     const modelBuffer = Buffer.from('fake model bytes');

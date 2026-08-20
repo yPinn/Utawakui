@@ -62,11 +62,12 @@ function sha256(buffer) {
 }
 
 function getFfmpegPaths(userDataDir, dependency = getFfmpegDependency()) {
+  const installVersion = dependency.installVersion || dependency.version;
   const installDir = path.join(
     userDataDir,
     FEATURE_DEPENDENCIES_DIRNAME,
     'ffmpeg',
-    dependency.version,
+    installVersion,
   );
   return {
     installDir,
@@ -139,14 +140,109 @@ function getManagedDependencyInstallDir(userDataDir, dependency) {
   throw new Error(`unsupported feature dependency: ${dependency.id}`);
 }
 
-async function downloadBuffer(url, fetchImpl = fetch) {
+function emitProgress(options, payload) {
+  options.onProgress?.(payload);
+}
+
+function readContentLength(response) {
+  const value = response.headers?.get?.('content-length');
+  const total = Number(value);
+  return Number.isFinite(total) && total > 0 ? total : null;
+}
+
+async function readResponseBuffer(response, options = {}) {
+  if (!response.body?.getReader) {
+    const buffer = Buffer.from(await response.arrayBuffer());
+    emitProgress(options, { stage: 'downloading', percent: 100 });
+    return buffer;
+  }
+
+  const total = readContentLength(response);
+  const reader = response.body.getReader();
+  const chunks = [];
+  let received = 0;
+  let lastPercent = -1;
+
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    const chunk = Buffer.from(value);
+    chunks.push(chunk);
+    received += chunk.length;
+
+    if (total) {
+      const percent = Math.min(100, Math.floor((received / total) * 100));
+      if (percent !== lastPercent) {
+        lastPercent = percent;
+        emitProgress(options, { stage: 'downloading', percent });
+      }
+    } else {
+      emitProgress(options, { stage: 'downloading' });
+    }
+  }
+
+  if (total && lastPercent < 100) {
+    emitProgress(options, { stage: 'downloading', percent: 100 });
+  }
+  return Buffer.concat(chunks);
+}
+
+async function downloadBuffer(url, fetchImpl = fetch, options = {}) {
   const response = await fetchImpl(url);
   if (!response.ok) {
     throw new Error(
       `Failed to download feature dependency: HTTP ${response.status}`,
     );
   }
-  return Buffer.from(await response.arrayBuffer());
+  return readResponseBuffer(response, options);
+}
+
+async function downloadText(url, fetchImpl = fetch) {
+  const response = await fetchImpl(url);
+  if (!response.ok) {
+    throw new Error(
+      `Failed to download feature dependency metadata: HTTP ${response.status}`,
+    );
+  }
+  return (await response.text()).trim();
+}
+
+function parseSha256Text(text) {
+  const match = String(text).match(/\b[a-fA-F0-9]{64}\b/);
+  if (!match) {
+    throw new Error('FFmpeg checksum metadata did not contain a SHA-256 hash');
+  }
+  return match[0].toLowerCase();
+}
+
+function replaceVersionTemplate(value, version) {
+  if (typeof value !== 'string') return value;
+  return value.replaceAll('{version}', version);
+}
+
+async function resolveFfmpegDependency(dependency, options = {}) {
+  const fetchImpl = options.fetchImpl;
+  const resolvedVersion = dependency.versionUrl
+    ? await downloadText(dependency.versionUrl, fetchImpl)
+    : dependency.version;
+  const resolvedSha = dependency.sha256Url
+    ? parseSha256Text(await downloadText(dependency.sha256Url, fetchImpl))
+    : dependency.sha256;
+
+  if (!resolvedSha) {
+    throw new Error(`missing FFmpeg checksum for ${dependency.id}`);
+  }
+
+  return {
+    ...dependency,
+    version: resolvedVersion,
+    installVersion: dependency.installVersion || dependency.version,
+    sha256: resolvedSha,
+    archiveRoot: replaceVersionTemplate(
+      dependency.archiveRoot,
+      resolvedVersion,
+    ),
+  };
 }
 
 function resolvePowerShellPath() {
@@ -163,14 +259,25 @@ function resolvePowerShellPath() {
     : 'powershell.exe';
 }
 
-function expandZipArchive(archivePath, destinationDir) {
+function expandZipArchive(
+  archivePath,
+  destinationDir,
+  _dependency,
+  options = {},
+) {
   return new Promise((resolve, reject) => {
-    const proc = spawn(resolvePowerShellPath(), [
+    const spawnImpl = options.spawnImpl || spawn;
+    const proc = spawnImpl(resolvePowerShellPath(), [
       '-NoProfile',
       '-ExecutionPolicy',
       'Bypass',
       '-Command',
-      'Expand-Archive -LiteralPath $args[0] -DestinationPath $args[1] -Force',
+      [
+        '& {',
+        'param([string]$ArchivePath, [string]$DestinationPath)',
+        'Expand-Archive -LiteralPath $ArchivePath -DestinationPath $DestinationPath -Force',
+        '}',
+      ].join(' '),
       archivePath,
       destinationDir,
     ]);
@@ -191,6 +298,78 @@ function expandZipArchive(archivePath, destinationDir) {
       resolve();
     });
   });
+}
+
+function getFfmpegArchiveCachePath(userDataDir, dependency) {
+  const { installDir } = getFfmpegPaths(userDataDir, dependency);
+  const cacheDir = path.join(path.dirname(installDir), '_archives');
+  return {
+    cacheDir,
+    archivePath: path.join(cacheDir, `${dependency.sha256}.zip`),
+  };
+}
+
+function readCachedArchive(cachePath, expectedSha) {
+  try {
+    if (!fs.existsSync(cachePath)) return null;
+    const archive = fs.readFileSync(cachePath);
+    if (sha256(archive) === expectedSha) return archive;
+    fs.rmSync(cachePath, { force: true });
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function pruneFfmpegArchiveCache(cacheDir, keepPath) {
+  try {
+    if (!fs.existsSync(cacheDir)) return;
+    for (const entry of fs.readdirSync(cacheDir)) {
+      const entryPath = path.join(cacheDir, entry);
+      if (entryPath !== keepPath) {
+        fs.rmSync(entryPath, { recursive: true, force: true });
+      }
+    }
+  } catch {
+    // A stale cache only affects retry speed, never correctness.
+  }
+}
+
+async function getVerifiedFfmpegArchive(
+  userDataDir,
+  resolvedDependency,
+  options = {},
+) {
+  const { cacheDir, archivePath } = getFfmpegArchiveCachePath(
+    userDataDir,
+    resolvedDependency,
+  );
+  const cachedArchive = readCachedArchive(
+    archivePath,
+    resolvedDependency.sha256,
+  );
+  if (cachedArchive) {
+    emitProgress(options, { stage: 'verifying' });
+    return { archive: cachedArchive, cachePath: archivePath };
+  }
+
+  const archive = await downloadBuffer(
+    resolvedDependency.downloadUrl,
+    options.fetchImpl,
+    options,
+  );
+  emitProgress(options, { stage: 'verifying' });
+  const actualSha = sha256(archive);
+  if (actualSha !== resolvedDependency.sha256) {
+    throw new Error(
+      `Downloaded FFmpeg checksum ${actualSha} does not match expected ${resolvedDependency.sha256}`,
+    );
+  }
+
+  fs.mkdirSync(cacheDir, { recursive: true });
+  atomicWriteBuffer(archivePath, archive);
+  pruneFfmpegArchiveCache(cacheDir, archivePath);
+  return { archive, cachePath: archivePath };
 }
 
 function writeDependencyNotices(installDir, dependency) {
@@ -253,15 +432,24 @@ function writeDependencyManifest(manifestPath, dependency, options = {}) {
   });
 }
 
-function readInstalledAt(manifestPath) {
+function readDependencyManifest(manifestPath) {
   try {
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-    return typeof manifest.installedAt === 'string'
-      ? manifest.installedAt
-      : null;
+    return JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
   } catch {
     return null;
   }
+}
+
+function readInstalledAt(manifestPath) {
+  const manifest = readDependencyManifest(manifestPath);
+  return typeof manifest?.installedAt === 'string'
+    ? manifest.installedAt
+    : null;
+}
+
+function readInstalledVersion(manifestPath) {
+  const manifest = readDependencyManifest(manifestPath);
+  return typeof manifest?.version === 'string' ? manifest.version : null;
 }
 
 function isModelFileValid(filePath, dependency, options = {}) {
@@ -282,6 +470,9 @@ function buildDependencyStatus(userDataDir, dependency) {
       ...dependency,
       installed,
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
+      installedVersion: installed
+        ? readInstalledVersion(paths.manifestPath)
+        : null,
     };
   }
 
@@ -292,6 +483,9 @@ function buildDependencyStatus(userDataDir, dependency) {
       ...dependency,
       installed,
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
+      installedVersion: installed
+        ? readInstalledVersion(paths.manifestPath)
+        : null,
     };
   }
 
@@ -307,6 +501,9 @@ function buildDependencyStatus(userDataDir, dependency) {
       ...dependency,
       installed,
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
+      installedVersion: installed
+        ? readInstalledVersion(paths.manifestPath)
+        : null,
       canMigrate: legacyAvailable,
     };
   }
@@ -375,9 +572,11 @@ async function ensureYtdlpDependency(userDataDir, options = {}) {
   }
 
   fs.mkdirSync(installDir, { recursive: true });
+  emitProgress(options, { stage: 'installing' });
   fs.copyFileSync(bundledPath, executablePath);
   writeDependencyNotices(installDir, dependency);
   writeDependencyManifest(manifestPath, dependency, options);
+  emitProgress(options, { stage: 'ready', percent: 100 });
   return executablePath;
 }
 
@@ -425,45 +624,48 @@ async function ensureFfmpegDependency(userDataDir, options = {}) {
     `.ffmpeg-${dependency.version}-${process.pid}-${Date.now()}.tmp`,
   );
   const archivePath = path.join(tmpRoot, 'ffmpeg.zip');
-  const extractedRoot = path.join(tmpRoot, dependency.archiveRoot);
 
   try {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
     fs.mkdirSync(tmpRoot, { recursive: true });
 
-    const archive = await downloadBuffer(
-      dependency.downloadUrl,
-      options.fetchImpl,
+    const resolvedDependency = await resolveFfmpegDependency(
+      dependency,
+      options,
     );
-    const actualSha = sha256(archive);
-    if (actualSha !== dependency.sha256) {
-      throw new Error(
-        `Downloaded FFmpeg checksum ${actualSha} does not match expected ${dependency.sha256}`,
-      );
-    }
+    const extractedRoot = path.join(tmpRoot, resolvedDependency.archiveRoot);
+    const { archive, cachePath } = await getVerifiedFfmpegArchive(
+      userDataDir,
+      resolvedDependency,
+      options,
+    );
 
     atomicWriteBuffer(archivePath, archive);
+    emitProgress(options, { stage: 'installing' });
     await (options.extractArchive || expandZipArchive)(
       archivePath,
       tmpRoot,
-      dependency,
+      resolvedDependency,
+      options,
     );
 
     const extractedExecutable = path.join(
       extractedRoot,
-      dependency.executableRelativePath,
+      resolvedDependency.executableRelativePath,
     );
     if (!fs.existsSync(extractedExecutable)) {
       throw new Error(
-        `FFmpeg archive did not contain ${dependency.executableRelativePath}`,
+        `FFmpeg archive did not contain ${resolvedDependency.executableRelativePath}`,
       );
     }
 
     fs.rmSync(installDir, { recursive: true, force: true });
     fs.mkdirSync(path.dirname(installDir), { recursive: true });
     fs.renameSync(extractedRoot, installDir);
-    writeDependencyNotices(installDir, dependency);
-    writeDependencyManifest(manifestPath, dependency, options);
+    writeDependencyNotices(installDir, resolvedDependency);
+    writeDependencyManifest(manifestPath, resolvedDependency, options);
+    fs.rmSync(cachePath, { force: true });
+    emitProgress(options, { stage: 'ready', percent: 100 });
     return executablePath;
   } finally {
     fs.rmSync(tmpRoot, { recursive: true, force: true });
@@ -494,6 +696,7 @@ function validateDownloadedModel(buffer, dependency) {
 }
 
 function installModelBuffer(userDataDir, dependency, buffer, options = {}) {
+  emitProgress(options, { stage: 'verifying' });
   validateDownloadedModel(buffer, dependency);
   const { installDir, manifestPath, filePath } = getModelDependencyPaths(
     userDataDir,
@@ -503,6 +706,7 @@ function installModelBuffer(userDataDir, dependency, buffer, options = {}) {
   atomicWriteBuffer(filePath, buffer);
   writeDependencyNotices(installDir, dependency);
   writeDependencyManifest(manifestPath, dependency, options);
+  emitProgress(options, { stage: 'ready', percent: 100 });
   return filePath;
 }
 
@@ -537,6 +741,7 @@ async function ensureModelDependency(userDataDir, modelId, options = {}) {
   const buffer = await downloadBuffer(
     dependency.downloadUrl,
     options.fetchImpl,
+    options,
   );
   return installModelBuffer(userDataDir, dependency, buffer, options);
 }

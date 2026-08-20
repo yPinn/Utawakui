@@ -27,11 +27,12 @@ const menuItems = computed(() =>
 
 const hasMenuItems = computed(() => menuItems.value.length > 0);
 const primaryIcon = computed(() => props.item.actionIcon || Download);
+const menuLabel = computed(() => `${props.item.title || props.item.name}選項`);
 
 function openMenu(event) {
   event.stopPropagation();
   const rect = event.currentTarget.getBoundingClientRect();
-  menuX.value = rect.left;
+  menuX.value = rect.right;
   menuY.value = rect.bottom + 4;
   isMenuOpen.value = true;
 }
@@ -64,8 +65,8 @@ function handleMenuSelect(actionId) {
     <UiButton
       v-if="hasMenuItems"
       :icon="Ellipsis"
-      :aria-label="`更多${item.title || item.name}選項`"
-      :title="`更多${item.title || item.name}選項`"
+      :aria-label="menuLabel"
+      :title="menuLabel"
       aria-haspopup="menu"
       :aria-expanded="isMenuOpen ? 'true' : 'false'"
       @click="openMenu"
@@ -75,6 +76,8 @@ function handleMenuSelect(actionId) {
       :open="isMenuOpen"
       :x="menuX"
       :y="menuY"
+      :width="184"
+      align-x="right"
       :items="menuItems"
       empty-text="沒有可用的進階操作"
       @select="handleMenuSelect"

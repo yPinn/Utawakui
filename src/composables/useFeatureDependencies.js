@@ -8,10 +8,12 @@ const state = reactive({
   isLoading: false,
   preparingIds: new Set(),
   actionIds: new Set(),
+  progressById: {},
   error: null,
 });
 
 let unsubscribeUpdates = null;
+let unsubscribeProgress = null;
 
 function hasBridge() {
   return (
@@ -29,6 +31,21 @@ function applyDependencies(dependencies = []) {
   state.byId = Object.fromEntries(
     dependencies.map((dependency) => [dependency.id, dependency]),
   );
+}
+
+function applyDependencyProgress(payload = {}) {
+  if (!payload.dependencyId) return;
+  state.progressById = {
+    ...state.progressById,
+    [payload.dependencyId]: payload,
+  };
+}
+
+function clearDependencyProgress(dependencyId) {
+  if (!state.progressById[dependencyId]) return;
+  const next = { ...state.progressById };
+  delete next[dependencyId];
+  state.progressById = next;
 }
 
 async function refreshDependencies() {
@@ -64,6 +81,7 @@ async function prepareDependency(dependencyId) {
   if (!hasBridge() || state.preparingIds.has(dependencyId)) return;
 
   state.preparingIds.add(dependencyId);
+  applyDependencyProgress({ dependencyId, stage: 'starting' });
   try {
     const dependency =
       await window.Utawakui.prepareFeatureDependency(dependencyId);
@@ -83,6 +101,7 @@ async function prepareDependency(dependencyId) {
     });
   } finally {
     state.preparingIds.delete(dependencyId);
+    clearDependencyProgress(dependencyId);
   }
 }
 
@@ -128,6 +147,7 @@ async function runDependencyAction({
     });
   } finally {
     state.actionIds.delete(actionKey);
+    clearDependencyProgress(dependencyId);
   }
 }
 
@@ -161,9 +181,19 @@ if (
     window.Utawakui.onFeatureDependenciesUpdated(applyDependencies);
 }
 
+if (
+  typeof window !== 'undefined' &&
+  typeof window.Utawakui?.onFeatureDependencyProgress === 'function'
+) {
+  unsubscribeProgress = window.Utawakui.onFeatureDependencyProgress(
+    applyDependencyProgress,
+  );
+}
+
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unsubscribeUpdates?.();
+    unsubscribeProgress?.();
   });
 }
 
