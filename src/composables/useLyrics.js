@@ -3,7 +3,7 @@ import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
-import { useFeatureGates } from './useFeatureGates.js';
+import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
@@ -13,7 +13,7 @@ const EMPTY_LYRICS = { status: 'unchecked', sources: [] };
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
 const { selectedPlaylist } = usePlaylists();
-const { ensureFeatureGate } = useFeatureGates();
+const { requireFeatureGate } = useFeatureGateAccess();
 // The full library pool (title/artist/lyrics/hasSeparation lookups) is
 // shared with SetlistView.vue via this singleton — see useLibrary.js for why
 // the fetch + onLibraryUpdated subscription moved out of here. Lyrics owns
@@ -174,9 +174,13 @@ function clearCandidateSearch() {
 }
 
 async function ensureLyricsFlow(options = {}) {
-  const enabled = await ensureFeatureGate(FEATURE_IDS.LYRICS_FLOW);
+  const enabled = await requireFeatureGate(FEATURE_IDS.LYRICS_FLOW, {
+    source: 'lyrics',
+    operation: options.operation || 'external-source',
+    message: '請先到設定啟用歌詞來源，才能搜尋、保存或整理線上歌詞。',
+  });
   if (!enabled) {
-    const message = '已取消啟用歌詞來源';
+    const message = '請先到設定啟用歌詞來源';
     if (options.errorTarget === 'musixmatchProbe') {
       state.musixmatchProbe.error = message;
     } else if (options.errorTarget === 'manualSave') {

@@ -2,6 +2,20 @@
   "schemaVersion": 1,
   "dependencies": [
     {
+      "id": "yt-dlp-provider-tool",
+      "featureId": "provider-flow",
+      "kind": "tool",
+      "platform": "win32",
+      "arch": "x64",
+      "name": "線上來源下載工具",
+      "version": "managed",
+      "license": "GPL-3.0-or-later bundled executable",
+      "licenseUrl": "https://github.com/yt-dlp/yt-dlp#licensing",
+      "sourceUrl": "https://github.com/yt-dlp/yt-dlp",
+      "bundledRelativePath": "node_modules/youtube-dl-exec/bin/yt-dlp.exe",
+      "executableRelativePath": "yt-dlp.exe"
+    },
+    {
       "id": "ffmpeg-gyan-essentials",
       "featureId": "audio-processing-flow",
       "kind": "binary",

@@ -41,6 +41,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('feature-dependencies:list'),
   prepareFeatureDependency: (dependencyId) =>
     ipcRenderer.invoke('feature-dependencies:prepare', dependencyId),
+  removeFeatureDependency: (dependencyId) =>
+    ipcRenderer.invoke('feature-dependencies:remove', dependencyId),
+  repairFeatureDependency: (dependencyId) =>
+    ipcRenderer.invoke('feature-dependencies:repair', dependencyId),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),

@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_ERROR_PREFIX } from '../utils/appErrors.js';
 
 let fetchYoutubePlaylistMock;
 let resolveImportSourceMock;
@@ -417,6 +418,30 @@ describe('useImportSession', () => {
     expect(upsertAlbumMock.mock.calls[0][0].name).toBe('strobo');
   });
 
+  it('keeps a backend-resolved YT Music album metadata title intact', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: '海螺記',
+      kind: 'album',
+      source: {
+        platform: 'youtube',
+        id: 'OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo',
+      },
+      entries: [
+        { id: 'qog79Ke0IvQ', title: '門縫後的光', alreadyDownloaded: true },
+      ],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+
+    expect(session.state.playlistTitle).toBe('海螺記');
+
+    await session.confirmImport();
+
+    expect(upsertAlbumMock.mock.calls[0][0].name).toBe('海螺記');
+  });
+
   it('does not strip an "Album - " prefix on an ordinary (non-album) playlist title', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'Album - My Mix',
@@ -624,53 +649,28 @@ describe('useImportSession', () => {
     expect(session.state.statusType).toBe('error');
   });
 
-  it('waits for provider-flow confirmation before resolving a source', async () => {
+  it('routes provider-flow setup to Settings before resolving a source', async () => {
     getFeatureConfirmationsMock.mockResolvedValueOnce({});
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [{ id: 'video-1', title: 'Song 1', alreadyDownloaded: false }],
     });
     const session = await loadImportSession();
-    const { useFeatureGates } = await import('./useFeatureGates.js');
-    const gates = useFeatureGates();
+    const { useAppView } = await import('./useAppView.js');
+    const { useFeatureGateAccess } = await import('./useFeatureGateAccess.js');
 
     session.setInput('playlist-id');
-    const resolvePromise = session.resolveSource();
-    await flushPromises();
+    await session.resolveSource();
 
     expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
-    await vi.waitFor(() => {
-      expect(gates.state.pendingFeatureId).toBe('provider-flow');
+    expect(confirmFeatureGateMock).not.toHaveBeenCalled();
+    expect(useAppView().activeView.value).toBe('settings');
+    expect(useFeatureGateAccess().state.request).toMatchObject({
+      featureId: 'provider-flow',
+      source: 'import',
+      operation: 'resolve-source',
     });
-
-    await gates.confirmPendingFeature();
-    await resolvePromise;
-
-    expect(confirmFeatureGateMock).toHaveBeenCalledWith(
-      'provider-flow',
-      'feature-notice-v2',
-    );
-    expect(fetchYoutubePlaylistMock).toHaveBeenCalledWith('playlist-id');
-    expect(session.state.sourceKind).toBe('playlist');
-  });
-
-  it('cancels source resolution when the provider-flow notice is dismissed', async () => {
-    getFeatureConfirmationsMock.mockResolvedValueOnce({});
-    const session = await loadImportSession();
-    const { useFeatureGates } = await import('./useFeatureGates.js');
-    const gates = useFeatureGates();
-
-    session.setInput('playlist-id');
-    const resolvePromise = session.resolveSource();
-    await flushPromises();
-    await vi.waitFor(() => {
-      expect(gates.state.pendingFeatureId).toBe('provider-flow');
-    });
-    gates.cancelPendingFeature();
-    await resolvePromise;
-
-    expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
-    expect(session.state.status).toBe('已取消啟用外部來源匯入');
+    expect(session.state.status).toBe('請先到設定啟用外部來源');
     expect(session.state.statusType).toBe('pending');
   });
 
@@ -687,6 +687,38 @@ describe('useImportSession', () => {
     expect(session.state.status).toBe('找不到來源：網路連線失敗');
     expect(session.state.statusType).toBe('error');
     expect(session.state.failureHint).toBe('請確認網路連線後再重試。');
+  });
+
+  it('routes missing provider tools back to Settings instead of download-failure copy', async () => {
+    fetchYoutubePlaylistMock.mockRejectedValueOnce(
+      new Error(
+        `${APP_ERROR_PREFIX}${JSON.stringify({
+          code: 'FEATURE_DEPENDENCY_MISSING',
+          severity: 'warning',
+          title: '需要先準備外部來源工具',
+          message: '請先到設定頁準備「線上來源下載工具」，再使用外部來源。',
+          actionLabel: '前往設定',
+          context: {
+            featureId: 'provider-flow',
+            dependencyId: 'yt-dlp-provider-tool',
+          },
+        })}`,
+      ),
+    );
+    const session = await loadImportSession();
+    const { useAppView } = await import('./useAppView.js');
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+
+    expect(useAppView().activeView.value).toBe('settings');
+    expect(session.state.status).toBe(
+      '請先到設定頁準備「線上來源下載工具」，再使用外部來源。',
+    );
+    expect(session.state.statusType).toBe('pending');
+    expect(session.state.failureHint).toBe(
+      '請在設定的「進階功能」中準備外部來源工具。',
+    );
   });
 
   it('falls back to the unknown label for an unclassified resolve error', async () => {

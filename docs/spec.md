@@ -316,7 +316,8 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 ## 9. Open Questions
 
 1. Feature notice 要採 app-wide 一次確認，還是依 feature/source/session 分層確認？
-2. `yt-dlp` provider flow 是否應拆成 optional module？
+2. `yt-dlp` provider flow 不拆成 installer optional module；改作
+   `provider-flow` 啟用後由 Settings 準備的 app-managed tool。
 3. Lyrics self-view 與 OBS overlay lyrics 是否需要兩套獨立狀態？
 4. Recording/VOD mode 是否應在每次 session 開始前確認？
 5. Preset export 是否需要支援缺曲提示與 track remapping？

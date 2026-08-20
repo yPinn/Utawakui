@@ -5,6 +5,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const registry = require('../../shared/featureDependencies.json');
+const { createAppError } = require('./appError');
 const { FEATURE_IDS } = require('./featureGates');
 const {
   atomicWriteBuffer,
@@ -14,6 +15,7 @@ const {
 
 const FEATURE_DEPENDENCIES_DIRNAME = 'dependencies';
 const FFMPEG_DEPENDENCY_ID = 'ffmpeg-gyan-essentials';
+const YTDLP_DEPENDENCY_ID = 'yt-dlp-provider-tool';
 const SEPARATION_MODEL_DEPENDENCY_IDS = Object.freeze({
   kara2: 'uvr-mdxnet-kara-2',
   'inst-hq3': 'uvr-mdxnet-inst-hq-3',
@@ -36,6 +38,13 @@ function getFfmpegDependency() {
   const dependency = getFeatureDependency(FFMPEG_DEPENDENCY_ID);
   if (!dependency)
     throw new Error(`missing feature dependency: ${FFMPEG_DEPENDENCY_ID}`);
+  return dependency;
+}
+
+function getYtdlpDependency() {
+  const dependency = getFeatureDependency(YTDLP_DEPENDENCY_ID);
+  if (!dependency)
+    throw new Error(`missing feature dependency: ${YTDLP_DEPENDENCY_ID}`);
   return dependency;
 }
 
@@ -66,6 +75,38 @@ function getFfmpegPaths(userDataDir, dependency = getFfmpegDependency()) {
   };
 }
 
+function getYtdlpPaths(userDataDir, dependency = getYtdlpDependency()) {
+  const installDir = path.join(
+    userDataDir,
+    FEATURE_DEPENDENCIES_DIRNAME,
+    'ytdlp',
+    'current',
+  );
+  return {
+    installDir,
+    manifestPath: path.join(installDir, 'manifest.json'),
+    executablePath: path.join(installDir, dependency.executableRelativePath),
+  };
+}
+
+function getBundledYtdlpPath(options = {}) {
+  if (options.bundledPath) return options.bundledPath;
+  const dependency = options.dependency || getYtdlpDependency();
+  if (options.resourcesPath) {
+    return path.join(
+      options.resourcesPath,
+      'app.asar.unpacked',
+      dependency.bundledRelativePath,
+    );
+  }
+  return path.join(__dirname, '..', '..', dependency.bundledRelativePath);
+}
+
+function setupYtdlpRuntimeEnvironment(userDataDir) {
+  const { installDir } = getYtdlpPaths(userDataDir);
+  process.env.YOUTUBE_DL_DIR = installDir;
+}
+
 function getModelDependencyPaths(userDataDir, dependency) {
   const installDir = path.join(
     userDataDir,
@@ -80,6 +121,22 @@ function getModelDependencyPaths(userDataDir, dependency) {
     filePath: path.join(installDir, dependency.fileRelativePath),
     legacyPath: path.join(userDataDir, 'models', dependency.fileRelativePath),
   };
+}
+
+function getManagedDependencyInstallDir(userDataDir, dependency) {
+  if (dependency.id === YTDLP_DEPENDENCY_ID) {
+    return getYtdlpPaths(userDataDir, dependency).installDir;
+  }
+
+  if (dependency.id === FFMPEG_DEPENDENCY_ID) {
+    return getFfmpegPaths(userDataDir, dependency).installDir;
+  }
+
+  if (dependency.kind === 'model') {
+    return getModelDependencyPaths(userDataDir, dependency).installDir;
+  }
+
+  throw new Error(`unsupported feature dependency: ${dependency.id}`);
 }
 
 async function downloadBuffer(url, fetchImpl = fetch) {
@@ -137,16 +194,23 @@ function expandZipArchive(archivePath, destinationDir) {
 }
 
 function writeDependencyNotices(installDir, dependency) {
-  const dependencyRole =
-    dependency.kind === 'model'
-      ? 'This model is managed by Utawakui for the audio-processing-flow feature.'
-      : 'This FFmpeg binary is managed by Utawakui for the audio-processing-flow feature.';
+  const dependencyRole = (() => {
+    if (dependency.id === YTDLP_DEPENDENCY_ID) {
+      return 'This yt-dlp executable is managed by Utawakui for the provider-flow feature.';
+    }
+    if (dependency.kind === 'model') {
+      return 'This model is managed by Utawakui for the audio-processing-flow feature.';
+    }
+    return 'This FFmpeg binary is managed by Utawakui for the audio-processing-flow feature.';
+  })();
   atomicWriteText(
     path.join(installDir, 'SOURCE.txt'),
     [
       `${dependency.name} ${dependency.version}`,
       `Source: ${dependency.sourceUrl}`,
-      `Download: ${dependency.downloadUrl}`,
+      dependency.downloadUrl
+        ? `Download: ${dependency.downloadUrl}`
+        : `Bundled source: ${dependency.bundledRelativePath}`,
       `License: ${dependency.license}`,
       `License info: ${dependency.licenseUrl}`,
       '',
@@ -173,7 +237,10 @@ function writeDependencyManifest(manifestPath, dependency, options = {}) {
     version: dependency.version,
     license: dependency.license,
     sourceUrl: dependency.sourceUrl,
-    downloadUrl: dependency.downloadUrl,
+    ...(dependency.downloadUrl ? { downloadUrl: dependency.downloadUrl } : {}),
+    ...(dependency.bundledRelativePath
+      ? { bundledRelativePath: dependency.bundledRelativePath }
+      : {}),
     sha256: dependency.sha256,
     installedAt: (options.now || (() => new Date()))().toISOString(),
     ...(dependency.executableRelativePath
@@ -208,6 +275,16 @@ function isModelFileValid(filePath, dependency, options = {}) {
 }
 
 function buildDependencyStatus(userDataDir, dependency) {
+  if (dependency.id === YTDLP_DEPENDENCY_ID) {
+    const paths = getYtdlpPaths(userDataDir, dependency);
+    const installed = fs.existsSync(paths.executablePath);
+    return {
+      ...dependency,
+      installed,
+      installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
+    };
+  }
+
   if (dependency.id === FFMPEG_DEPENDENCY_ID) {
     const paths = getFfmpegPaths(userDataDir, dependency);
     const installed = fs.existsSync(paths.executablePath);
@@ -251,12 +328,66 @@ function listFeatureDependencyStatuses(
 }
 
 function createMissingDependencyError(dependency) {
-  const err = new Error(
-    `請先到設定頁準備「${dependency.name}」，再執行這項音訊處理。`,
+  const isProviderTool = dependency.featureId === FEATURE_IDS.PROVIDER_FLOW;
+  return createAppError({
+    code: 'FEATURE_DEPENDENCY_MISSING',
+    severity: 'warning',
+    title: isProviderTool ? '需要先準備外部來源工具' : '需要先準備音訊處理項目',
+    message: isProviderTool
+      ? `請先到設定頁準備「${dependency.name}」，再使用外部來源。`
+      : `請先到設定頁準備「${dependency.name}」，再執行這項音訊處理。`,
+    actionLabel: '前往設定',
+    context: {
+      featureId: dependency.featureId,
+      dependencyId: dependency.id,
+    },
+  });
+}
+
+async function ensureYtdlpDependency(userDataDir, options = {}) {
+  const dependency = options.dependency || getYtdlpDependency();
+  if (
+    dependency.featureId !== FEATURE_IDS.PROVIDER_FLOW ||
+    dependency.platform !== 'win32'
+  ) {
+    throw new Error(`unsupported yt-dlp dependency manifest: ${dependency.id}`);
+  }
+
+  const { installDir, manifestPath, executablePath } = getYtdlpPaths(
+    userDataDir,
+    dependency,
   );
-  err.code = 'FEATURE_DEPENDENCY_MISSING';
-  err.dependencyId = dependency.id;
-  return err;
+  if (fs.existsSync(executablePath)) {
+    writeDependencyNotices(installDir, dependency);
+    if (!fs.existsSync(manifestPath)) {
+      writeDependencyManifest(manifestPath, dependency, options);
+    }
+    return executablePath;
+  }
+
+  const bundledPath = getBundledYtdlpPath({
+    dependency,
+    resourcesPath: options.resourcesPath,
+    bundledPath: options.bundledPath,
+  });
+  if (!fs.existsSync(bundledPath)) {
+    throw new Error(`bundled yt-dlp executable not found: ${bundledPath}`);
+  }
+
+  fs.mkdirSync(installDir, { recursive: true });
+  fs.copyFileSync(bundledPath, executablePath);
+  writeDependencyNotices(installDir, dependency);
+  writeDependencyManifest(manifestPath, dependency, options);
+  return executablePath;
+}
+
+function getPreparedYtdlpPath(userDataDir) {
+  const dependency = getYtdlpDependency();
+  const { executablePath } = getYtdlpPaths(userDataDir, dependency);
+  if (!fs.existsSync(executablePath)) {
+    throw createMissingDependencyError(dependency);
+  }
+  return executablePath;
 }
 
 async function ensureFfmpegDependency(userDataDir, options = {}) {
@@ -436,6 +567,11 @@ async function prepareFeatureDependency(
     return buildDependencyStatus(userDataDir, dependency);
   }
 
+  if (dependency.id === YTDLP_DEPENDENCY_ID) {
+    await ensureYtdlpDependency(userDataDir, options);
+    return buildDependencyStatus(userDataDir, dependency);
+  }
+
   if (dependency.kind === 'model') {
     await ensureModelDependency(userDataDir, dependency.modelId, {
       ...options,
@@ -447,20 +583,52 @@ async function prepareFeatureDependency(
   throw new Error(`unsupported feature dependency: ${dependency.id}`);
 }
 
+function removeFeatureDependency(userDataDir, dependencyId, options = {}) {
+  const dependency = getFeatureDependency(
+    dependencyId,
+    options.registryDependencies,
+  );
+  if (!dependency)
+    throw new Error(`unknown feature dependency: ${dependencyId}`);
+
+  const installDir = getManagedDependencyInstallDir(userDataDir, dependency);
+  fs.rmSync(installDir, { recursive: true, force: true });
+  return buildDependencyStatus(userDataDir, dependency);
+}
+
+async function repairFeatureDependency(
+  userDataDir,
+  dependencyId,
+  options = {},
+) {
+  removeFeatureDependency(userDataDir, dependencyId, options);
+  return prepareFeatureDependency(userDataDir, dependencyId, options);
+}
+
 module.exports = {
   FFMPEG_DEPENDENCY_ID,
+  YTDLP_DEPENDENCY_ID,
   SEPARATION_MODEL_DEPENDENCY_IDS,
   getFeatureDependency,
   getFeatureDependencies,
   getFfmpegDependency,
+  getYtdlpDependency,
   getSeparationModelDependency,
   getFfmpegPaths,
+  getYtdlpPaths,
+  getBundledYtdlpPath,
   getModelDependencyPaths,
+  getManagedDependencyInstallDir,
+  setupYtdlpRuntimeEnvironment,
   listFeatureDependencyStatuses,
+  ensureYtdlpDependency,
   ensureFfmpegDependency,
   ensureModelDependency,
+  getPreparedYtdlpPath,
   getPreparedFfmpegPath,
   getPreparedSeparationModelPath,
   prepareFeatureDependency,
+  removeFeatureDependency,
+  repairFeatureDependency,
   sha256,
 };

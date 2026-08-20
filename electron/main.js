@@ -1,7 +1,5 @@
 'use strict';
 
-const path = require('path');
-const fs = require('fs');
 const {
   app,
   BrowserWindow,
@@ -20,36 +18,15 @@ const APP_NAME = 'Utawakui';
 app.setName(APP_NAME);
 
 // youtube-dl-exec's yt-dlp.exe path is computed once, at first require of
-// its constants module, from the YOUTUBE_DL_DIR env var — so packaged-mode
-// setup has to happen before the lib requires below pull it in transitively
-// (downloader.js, ytdlpStatus.js, youtubeAttempts.js all require it).
-if (app.isPackaged) {
-  // The bundled yt-dlp.exe (asarUnpack'd — see electron-builder.yml) sits
-  // read-only under Program Files in a per-machine install. yt-dlp's own -U
-  // (ytdlp:check-update below) overwrites its own exe in place, so the
-  // working copy has to live somewhere always-writable: userData.
-  const bundledYtdlpPath = path.join(
-    process.resourcesPath,
-    'app.asar.unpacked',
-    'node_modules',
-    'youtube-dl-exec',
-    'bin',
-    'yt-dlp.exe',
-  );
-  const ytdlpDir = path.join(app.getPath('userData'), 'bin');
-  const ytdlpPath = path.join(ytdlpDir, 'yt-dlp.exe');
-  try {
-    if (!fs.existsSync(ytdlpPath) && fs.existsSync(bundledYtdlpPath)) {
-      fs.mkdirSync(ytdlpDir, { recursive: true });
-      fs.copyFileSync(bundledYtdlpPath, ytdlpPath);
-    }
-  } catch {
-    // Fall through — ytdlpStatus.js already treats "binary not found" as a
-    // reportable status rather than a crash; a packaged install that can't
-    // even copy into its own userData dir surfaces the same way.
-  }
-  process.env.YOUTUBE_DL_DIR = ytdlpDir;
+// its constants module, from the YOUTUBE_DL_DIR env var — so this managed
+// feature-dependency path must be set before the lib requires below pull it
+// in transitively (downloader.js, ytdlpStatus.js, youtubeAttempts.js all
+// require it). The binary is copied into that dir only when provider-flow's
+// Settings row prepares the tool.
+const { setupYtdlpRuntimeEnvironment } = require('./lib/featureDependencies');
+setupYtdlpRuntimeEnvironment(app.getPath('userData'));
 
+if (app.isPackaged) {
   // A packaged app can't assume Node.js is on the end user's PATH, which
   // youtubeAttempts.js's jsRuntimes option otherwise requires. Point yt-dlp
   // at this Electron binary running in Node mode instead — inherited by
@@ -161,6 +138,7 @@ if (!gotSingleInstanceLock) {
     registerImportHandlers({
       ipcMain,
       getConfig: configState.getConfig,
+      userDataDir: app.getPath('userData'),
       resolveDownloadDir: configState.resolveDownloadDir,
       requireFeatureGate,
       featureIds: FEATURE_IDS,

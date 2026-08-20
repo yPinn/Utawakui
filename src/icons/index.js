@@ -15,6 +15,7 @@ export {
   Clock,
   Disc3,
   Download,
+  Ellipsis,
   FolderOpen,
   FolderPlus,
   GripVertical,

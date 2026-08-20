@@ -4,14 +4,22 @@ import path from 'path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ensureFfmpegDependency,
+  ensureYtdlpDependency,
   ensureModelDependency,
   getPreparedSeparationModelPath,
+  getPreparedYtdlpPath,
   getFfmpegPaths,
+  getManagedDependencyInstallDir,
+  getYtdlpPaths,
   getModelDependencyPaths,
   listFeatureDependencyStatuses,
   prepareFeatureDependency,
+  removeFeatureDependency,
+  repairFeatureDependency,
+  setupYtdlpRuntimeEnvironment,
   sha256,
 } from './featureDependencies.js';
+import { APP_ERROR_PREFIX } from './appError.js';
 
 let tmpDirs = [];
 
@@ -51,6 +59,23 @@ function makeDependency(archive) {
     sha256: sha256(archive),
     archiveRoot: 'ffmpeg-test',
     executableRelativePath: 'bin/ffmpeg.exe',
+  };
+}
+
+function makeYtdlpDependency() {
+  return {
+    id: 'yt-dlp-provider-tool',
+    featureId: 'provider-flow',
+    kind: 'tool',
+    platform: 'win32',
+    arch: 'x64',
+    name: 'yt-dlp test',
+    version: 'managed',
+    license: 'GPL-3.0-or-later bundled executable',
+    licenseUrl: 'https://example.test/license',
+    sourceUrl: 'https://example.test/source',
+    bundledRelativePath: 'node_modules/youtube-dl-exec/bin/yt-dlp.exe',
+    executableRelativePath: 'yt-dlp.exe',
   };
 }
 
@@ -161,6 +186,104 @@ describe('ensureFfmpegDependency', () => {
         extractArchive: vi.fn(),
       }),
     ).rejects.toThrow(/checksum/);
+  });
+});
+
+describe('yt-dlp feature dependency', () => {
+  it('copies a bundled yt-dlp executable into the managed dependency folder', async () => {
+    const userDataDir = makeTempDir();
+    const bundledDir = makeTempDir();
+    const bundledPath = path.join(bundledDir, 'yt-dlp.exe');
+    const dependency = makeYtdlpDependency();
+    fs.writeFileSync(bundledPath, 'exe');
+
+    const exePath = await ensureYtdlpDependency(userDataDir, {
+      dependency,
+      bundledPath,
+      now: () => new Date('2026-08-20T00:00:00.000Z'),
+    });
+
+    const paths = getYtdlpPaths(userDataDir, dependency);
+    expect(exePath).toBe(paths.executablePath);
+    expect(fs.readFileSync(paths.executablePath, 'utf8')).toBe('exe');
+    expect(JSON.parse(fs.readFileSync(paths.manifestPath, 'utf8'))).toEqual({
+      id: dependency.id,
+      featureId: dependency.featureId,
+      name: dependency.name,
+      version: dependency.version,
+      license: dependency.license,
+      sourceUrl: dependency.sourceUrl,
+      bundledRelativePath: dependency.bundledRelativePath,
+      installedAt: '2026-08-20T00:00:00.000Z',
+      executableRelativePath: dependency.executableRelativePath,
+    });
+  });
+
+  it('reports yt-dlp as installed when the managed executable exists', async () => {
+    const userDataDir = makeTempDir();
+    const bundledDir = makeTempDir();
+    const bundledPath = path.join(bundledDir, 'yt-dlp.exe');
+    const dependency = makeYtdlpDependency();
+    fs.writeFileSync(bundledPath, 'exe');
+    await ensureYtdlpDependency(userDataDir, { dependency, bundledPath });
+
+    expect(
+      listFeatureDependencyStatuses(userDataDir, [dependency])[0],
+    ).toMatchObject({
+      id: dependency.id,
+      installed: true,
+    });
+  });
+
+  it('throws a provider setup prompt when the prepared yt-dlp tool is missing', () => {
+    const userDataDir = makeTempDir();
+
+    try {
+      getPreparedYtdlpPath(userDataDir);
+      throw new Error('expected missing dependency to throw');
+    } catch (err) {
+      expect(err.message).toContain(APP_ERROR_PREFIX);
+      expect(err.message).toContain('請先到設定頁準備');
+      expect(err.message).toContain('外部來源');
+      expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
+    }
+  });
+
+  it('sets youtube-dl-exec to the managed yt-dlp directory before require time', () => {
+    const userDataDir = makeTempDir();
+    const previous = process.env.YOUTUBE_DL_DIR;
+
+    setupYtdlpRuntimeEnvironment(userDataDir);
+
+    expect(process.env.YOUTUBE_DL_DIR).toBe(
+      getYtdlpPaths(userDataDir).installDir,
+    );
+    if (previous === undefined) {
+      delete process.env.YOUTUBE_DL_DIR;
+    } else {
+      process.env.YOUTUBE_DL_DIR = previous;
+    }
+  });
+
+  it('removes only the managed yt-dlp dependency folder', async () => {
+    const userDataDir = makeTempDir();
+    const bundledDir = makeTempDir();
+    const bundledPath = path.join(bundledDir, 'yt-dlp.exe');
+    const dependency = makeYtdlpDependency();
+    fs.writeFileSync(bundledPath, 'exe');
+    await ensureYtdlpDependency(userDataDir, { dependency, bundledPath });
+    const installDir = getManagedDependencyInstallDir(userDataDir, dependency);
+
+    const status = removeFeatureDependency(userDataDir, dependency.id, {
+      registryDependencies: [dependency],
+    });
+
+    expect(fs.existsSync(installDir)).toBe(false);
+    expect(fs.existsSync(bundledPath)).toBe(true);
+    expect(status).toMatchObject({
+      id: dependency.id,
+      installed: false,
+    });
   });
 });
 
@@ -286,9 +409,14 @@ describe('model feature dependencies', () => {
   it('throws a user-facing setup prompt when a prepared model is missing', () => {
     const userDataDir = makeTempDir();
 
-    expect(() => getPreparedSeparationModelPath(userDataDir, 'kara2')).toThrow(
-      /請先到設定頁準備/,
-    );
+    try {
+      getPreparedSeparationModelPath(userDataDir, 'kara2');
+      throw new Error('expected missing dependency to throw');
+    } catch (err) {
+      expect(err.message).toContain(APP_ERROR_PREFIX);
+      expect(err.message).toContain('請先到設定頁準備');
+      expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
+    }
   });
 
   it('prepares a registry dependency by id', async () => {
@@ -304,6 +432,37 @@ describe('model feature dependencies', () => {
       }),
     });
 
+    expect(status).toMatchObject({
+      id: dependency.id,
+      installed: true,
+    });
+  });
+
+  it('repairs a managed model by reinstalling through the normal prepare path', async () => {
+    const userDataDir = makeTempDir();
+    const modelBuffer = Buffer.from('repair model bytes');
+    const dependency = makeModelDependency(modelBuffer);
+    const paths = getModelDependencyPaths(userDataDir, dependency);
+    await ensureModelDependency(userDataDir, 'unused', {
+      dependency,
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(arrayBufferFrom(modelBuffer)),
+      }),
+    });
+    fs.writeFileSync(paths.filePath, 'corrupted');
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      arrayBuffer: () => Promise.resolve(arrayBufferFrom(modelBuffer)),
+    });
+
+    const status = await repairFeatureDependency(userDataDir, dependency.id, {
+      registryDependencies: [dependency],
+      fetchImpl,
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl);
+    expect(fs.readFileSync(paths.filePath)).toEqual(modelBuffer);
     expect(status).toMatchObject({
       id: dependency.id,
       installed: true,

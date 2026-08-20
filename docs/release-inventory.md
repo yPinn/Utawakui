@@ -20,7 +20,12 @@ Windows packaging is configured in `electron-builder.yml`.
   unpacked through `asarUnpack`.
 - Uninstaller data cleanup: optional NSIS checkboxes from `build/installer.nsh`
   clean `%APPDATA%\Utawakui` and the legacy `%APPDATA%\Electron` folder.
-  They do not touch the user's music library under `<Music>\Utawakui`.
+  Cleanup uses `RMDir /r /REBOOTOK`, so locked app-data folders may finish
+  deleting after a reboot. These options do not touch the user's music library
+  under `<Music>\Utawakui`.
+- Installer copy discloses that the core install creates Start Menu / desktop
+  shortcuts, while advanced features are enabled and prepared from Settings.
+  The uninstaller welcome page explains that app data cleanup is opt-in.
 
 The `electron.exe` filename is intentional. See
 `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`.
@@ -36,12 +41,17 @@ This is intentionally not a selectable "Basic vs Ext" component split yet:
   payload as one app section; its supported hooks are better suited to extra
   pages or post-install work than to surgically splitting `app.asar` and
   unpacked native modules into optional component payloads.
-- Current extension-like dependencies are not all installer payloads. FFmpeg is
-  app-managed and downloaded only after `audio-processing-flow` is enabled;
-  model files are also prepared from Settings before use.
+- Current extension-like dependencies are not all installer payloads. `yt-dlp`
+  is shipped as a packaged seed but copied to managed user data only after
+  `provider-flow` is enabled and prepared; FFmpeg is app-managed and downloaded
+  only after `audio-processing-flow` is enabled; model files are also prepared
+  from Settings before use.
 - A checkbox in the installer would therefore over-promise a real packaging
   distinction and move license/source disclosure away from the feature gate that
   actually triggers the download.
+- electron-builder's assisted installer does not provide a built-in desktop
+  shortcut checkbox on the finish page; the current build discloses shortcut
+  creation in the welcome page instead of adding a fragile custom shortcut page.
 
 Use this naming until a release truly ships separate artifacts:
 
@@ -64,8 +74,8 @@ cleanup, and license notices end to end.
 | Local import                | Ungated core                               | `useLocalImport`, Import view                             | `library:import-audio-files`                                                                                        | None beyond Node built-ins                                              | Copies user-picked audio into managed track folders.                                                                                                                  |
 | Playback / queue            | Ungated core                               | `usePlayer`, `usePlaybackQueue`, `PlayerBar`              | media protocol only                                                                                                 | Renderer bundle; `@soundtouchjs/audio-worklet` is build-time only       | Pitch preview worklet is emitted into `dist/assets/` by Vite; it should not be packaged as runtime `node_modules`.                                                    |
 | Windows shell integration   | Ungated core                               | `useTaskbarControls`, `useMediaSession`, `useWindowTitle` | `windowState`, `thumbarIcons`                                                                                       | Electron runtime only                                                   | App icon is packaged in both `dist/assets/` and `public/assets/icons/app-icon.ico`; ICO is unpacked for shell APIs.                                                   |
-| Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | `youtube-dl-exec` plus bundled `yt-dlp.exe`                             | `yt-dlp.exe` is unpacked and copied to writable `userData/bin` in packaged mode.                                                                                      |
-| Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | `youtube-dl-exec` plus bundled `yt-dlp.exe`                             | Backfill runs only after provider-flow is enabled.                                                                                                                    |
+| Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | `youtube-dl-exec`; app-managed `yt-dlp.exe`                             | `yt-dlp.exe` is packaged as a seed, then copied to `%APPDATA%\Utawakui\dependencies\ytdlp\current` from Settings before provider actions use it.                      |
+| Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | `youtube-dl-exec`; app-managed `yt-dlp.exe`                             | Backfill runs only after provider-flow is enabled and uses the managed yt-dlp path.                                                                                   |
 | Lyrics provider search/save | `lyrics-flow`                              | `useLyrics`, LRCLIB search panel                          | `lyrics:search-candidates`, `lyrics:save-candidate`, `lyrics:backfill-source-labels`, `lyrics:probe-musixmatch`     | No packaged native dependency                                           | Manual lyrics import/edit/delete stays ungated because it only edits local user data.                                                                                 |
 | Vocal separation            | `audio-processing-flow`                    | `useSeparation`, Lyrics workspace separation controls     | `separation:run`, `vocalSeparationWorker.js`                                                                        | `kissfft-js`, `onnxruntime-node`; FFmpeg and UVR models are app-managed | FFmpeg and UVR ONNX models download to `userData/dependencies` from Settings after gate enablement; ONNX Runtime `.dll`/`.node` and `electron/lib/**/*` are unpacked. |
 | Separation result selection | Existing generated media                   | Lyrics workspace preset select                            | `separation:select`                                                                                                 | None beyond library modules                                             | Metadata-only selection of already-created results; no DSP run.                                                                                                       |
@@ -80,7 +90,8 @@ or spawned binaries after the Vite build has already produced `dist/`.
 | Class               | Packages                                                                             | Reason                                                                                                             |
 | ------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
 | Packaged runtime    | `kissfft-js`, `onnxruntime-node`, `youtube-dl-exec`                                  | Used by main/worker code at runtime.                                                                               |
-| App-managed runtime | FFmpeg Gyan essentials build; UVR ONNX separation models                             | Downloaded to `userData` only after `audio-processing-flow` is enabled and the user prepares the item in Settings. |
+| Packaged seed       | `node_modules/youtube-dl-exec/bin/yt-dlp.exe`                                        | Bundled so provider-flow can prepare a writable managed copy without first downloading a tool from the network.    |
+| App-managed runtime | `yt-dlp.exe`; FFmpeg Gyan essentials build; UVR ONNX separation models               | Prepared to `userData` only after the matching feature gate is enabled and the user prepares the item in Settings. |
 | Renderer build-time | `vue`, `@lucide/vue`, `@soundtouchjs/audio-worklet`                                  | Imported by renderer source and bundled into `dist/` by Vite.                                                      |
 | Tooling build-time  | Electron, electron-builder, Vite, Vitest, ESLint, Prettier, commitlint, markdownlint | Needed to develop, test, build, and package; not app runtime dependencies.                                         |
 
@@ -104,6 +115,7 @@ When adding a dependency, classify it before installing:
 | `release/win-unpacked/resources/app.asar.unpacked/node_modules/youtube-dl-exec/bin/yt-dlp.exe`         | Bundled provider-flow downloader binary.                                                 |
 | `release/win-unpacked/resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64` | ONNX Runtime / DirectML native files for vocal separation.                               |
 | `release/win-unpacked/resources/app.asar.unpacked/public/assets/icons/app-icon.ico`                    | Shell-facing icon path used by Windows app details.                                      |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\yt-dlp.exe`                                             | Writable provider-flow yt-dlp copy prepared from Settings; yt-dlp self-update runs here. |
 | `%APPDATA%\Utawakui\dependencies\ffmpeg\<version>\bin\ffmpeg.exe`                                      | App-managed FFmpeg binary downloaded after audio-processing-flow is enabled.             |
 | `%APPDATA%\Utawakui\dependencies\models\<dependencyId>\<version>\*.onnx`                               | App-managed UVR model files downloaded after audio-processing-flow is enabled.           |
 
@@ -122,11 +134,14 @@ After changing gates or dependencies:
 - Launch the packaged `release/win-unpacked/electron.exe`.
 - Confirm provider, lyrics, and audio-processing gates prompt before their
   first external or generated-media action.
-- Confirm `yt-dlp.exe` is copied to writable `userData/bin` in packaged mode.
+- Confirm provider-flow can prepare the packaged yt-dlp seed into
+  `%APPDATA%\Utawakui\dependencies\ytdlp\current`, then run update/status
+  checks against that writable path.
 - Confirm audio-processing-flow can prepare/download/verify FFmpeg and UVR
   models from Settings, then load the prepared model and spawn its worker.
 - For installer verification, use `npm run dist`; `dist:dir` does not create
   Start Menu shortcuts, so it cannot verify installed AUMID / SMTC app name.
 - For uninstaller verification, run the installed uninstaller interactively and
   confirm the component page offers optional cleanup for `%APPDATA%\Utawakui`
-  and legacy `%APPDATA%\Electron`.
+  and legacy `%APPDATA%\Electron`. When cleanup is selected, verify the
+  app-data folder is removed or scheduled for removal if Windows has it locked.

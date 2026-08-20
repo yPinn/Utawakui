@@ -10,8 +10,10 @@ import {
   downloadFailureHint,
   downloadFailureLabel,
 } from '../utils/downloadFailureDisplay.js';
+import { normalizeAppError } from '../utils/appErrors.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
-import { useFeatureGates } from './useFeatureGates.js';
+import { useAppView } from './useAppView.js';
+import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { usePlaylists } from './usePlaylists.js';
 
 const {
@@ -19,7 +21,8 @@ const {
   setTracks: setPlaylistTracks,
   upsertAlbum,
 } = usePlaylists();
-const { ensureFeatureGate } = useFeatureGates();
+const { requireFeatureGate } = useFeatureGateAccess();
+const { setActiveView } = useAppView();
 
 const state = reactive({
   input: '',
@@ -142,10 +145,26 @@ function setStatus(message, type = 'idle') {
   state.failureHint = '';
 }
 
+function handleProviderSetupError(err) {
+  const appError = normalizeAppError(err, {
+    source: 'import',
+    operation: 'provider-tool',
+  });
+  if (appError.code !== 'FEATURE_DEPENDENCY_MISSING') return false;
+  setActiveView('settings');
+  setStatus(appError.message, 'pending');
+  state.failureHint = '請在設定的「進階功能」中準備外部來源工具。';
+  return true;
+}
+
 async function ensureProviderFlow() {
-  const enabled = await ensureFeatureGate(FEATURE_IDS.PROVIDER_FLOW);
+  const enabled = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
+    source: 'import',
+    operation: 'resolve-source',
+    message: '請先到設定啟用外部來源，才能解析或下載線上歌曲。',
+  });
   if (!enabled) {
-    setStatus('已取消啟用外部來源匯入', 'pending');
+    setStatus('請先到設定啟用外部來源', 'pending');
   }
   return enabled;
 }
@@ -323,6 +342,7 @@ async function resolveSource() {
     }
   } catch (err) {
     clearPreview();
+    if (handleProviderSetupError(err)) return;
     const failure = describeDownloadFailure(err);
     setStatus(`找不到來源：${failure.label}`, 'error');
     state.failureHint = failure.hint;
@@ -346,6 +366,7 @@ async function importSingle() {
     setStatus(`已下載：${result.title || result.filePath}`, 'success');
     state.sourceKind = 'idle';
   } catch (err) {
+    if (handleProviderSetupError(err)) return;
     const failure = describeDownloadFailure(err);
     setStatus(`下載失敗：${failure.label}`, 'error');
     state.failureHint = failure.hint;

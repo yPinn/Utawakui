@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import { SquareCheckBig } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
@@ -14,7 +15,12 @@ const body = computed(() => pendingFeature.value?.body || []);
 </script>
 
 <template>
-  <UiModal :open="isOpen" :title="title" @close="cancelPendingFeature">
+  <UiModal
+    :open="isOpen"
+    :title="title"
+    size="notice"
+    @close="cancelPendingFeature"
+  >
     <div v-if="pendingFeature" class="feature-notice">
       <p class="feature-notice__summary">
         {{ pendingFeature.summary }}
@@ -35,6 +41,7 @@ const body = computed(() => pendingFeature.value?.body || []);
           {{ pendingFeature.cancelLabel }}
         </UiButton>
         <UiButton
+          :icon="SquareCheckBig"
           variant="accent"
           :disabled="state.isSaving"
           @click="confirmPendingFeature"

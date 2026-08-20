@@ -275,24 +275,26 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 直接依賴的授權重點如下。實際 release 仍應以 lockfile、安裝後 package metadata 與
 打包內容為準。
 
-| Package / tool                                | License   | 用途                                                      | 注意事項                                                                                      |
-| --------------------------------------------- | --------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Vue、Electron、Vite、Vitest、ESLint、Prettier | MIT       | App shell、build、test、lint/format。                     | 寬鬆授權；散布時保留 notice。                                                                 |
-| @lucide/vue                                   | ISC       | UI icon components。                                      | 寬鬆授權；保留 notice。                                                                       |
-| kissfft-js                                    | MIT       | DSP / audio analysis dependency。                         | 寬鬆授權；保留 notice。                                                                       |
-| onnxruntime-node                              | MIT       | Vocal separation runtime dependency。                     | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                  |
-| @soundtouchjs/audio-worklet                   | MPL-2.0   | Pitch/tempo preview 的 AudioWorklet。                     | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                    |
-| youtube-dl-exec                               | MIT       | 呼叫外部 downloader 的 Node.js wrapper。                  | Wrapper 授權不授權任何下載內容，也不免除平台條款。                                            |
-| yt-dlp                                        | Unlicense | Provider download/search 工具鏈。                         | 程式碼授權與媒體授權無關；不同 release artifact 可能有不同 bundled license。                  |
-| FFmpeg Gyan essentials build                  | GPL-3.0   | `audio-processing-flow` 啟用後下載的 app-managed binary。 | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                  |
-| UVR MDX-Net ONNX models                       | MIT       | `audio-processing-flow` 啟用後下載的 app-managed models。 | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。 |
+| Package / tool                                | License | 用途                                                      | 注意事項                                                                                      |
+| --------------------------------------------- | ------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| Vue、Electron、Vite、Vitest、ESLint、Prettier | MIT     | App shell、build、test、lint/format。                     | 寬鬆授權；散布時保留 notice。                                                                 |
+| @lucide/vue                                   | ISC     | UI icon components。                                      | 寬鬆授權；保留 notice。                                                                       |
+| kissfft-js                                    | MIT     | DSP / audio analysis dependency。                         | 寬鬆授權；保留 notice。                                                                       |
+| onnxruntime-node                              | MIT     | Vocal separation runtime dependency。                     | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                  |
+| @soundtouchjs/audio-worklet                   | MPL-2.0 | Pitch/tempo preview 的 AudioWorklet。                     | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                    |
+| youtube-dl-exec                               | MIT     | 呼叫外部 downloader 的 Node.js wrapper。                  | Wrapper 授權不授權任何下載內容，也不免除平台條款。                                            |
+| yt-dlp executable                             | GPLv3+  | `provider-flow` 啟用後準備的 app-managed downloader。     | 官方 PyInstaller bundled executable 形成 GPLv3+ combined work；程式碼授權與媒體授權無關。     |
+| FFmpeg Gyan essentials build                  | GPL-3.0 | `audio-processing-flow` 啟用後下載的 app-managed binary。 | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                  |
+| UVR MDX-Net ONNX models                       | MIT     | `audio-processing-flow` 啟用後下載的 app-managed models。 | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。 |
 
 補充：
 
-- `youtube-dl-exec` 可能在 install/postinstall 階段準備 `yt-dlp` 工具鏈。發布版應記錄
-  實際 bundled/downloaded 的工具版本、來源與 hash。
-- `yt-dlp` 本體採 Unlicense，但其官方 README 也提醒部分 release 檔案包含其他專案
-  程式碼；PyInstaller bundled executables 可能形成 GPLv3+ combined work。
+- `youtube-dl-exec` 仍作為 MIT wrapper 隨 app 打包；`yt-dlp.exe` 由 Settings
+  在 `provider-flow` 啟用後從 packaged seed 複製到 userData managed dependency
+  位置。發布版應記錄實際 bundled/prepared 的工具版本、來源與 hash。
+- `yt-dlp` 原始碼採 Unlicense，但官方 README licensing notes 指出
+  PyInstaller bundled executables 包含 GPLv3+ licensed code，因此該 release
+  artifact 應以 GPLv3+ combined work 看待。
 - FFmpeg 官方說明指出，FFmpeg 依建置選項可能落在 LGPL 或 GPL；本專案目前不再把
   `ffmpeg-static` 放入 packaged runtime，改由 `audio-processing-flow` 啟用後下載
   Gyan essentials build。該 build 仍應以 GPL-3.0 處理，並在下載前顯示授權與來源。

@@ -616,6 +616,25 @@ describe('useLyrics', () => {
     });
   });
 
+  it('routes lyrics-flow setup to Settings before probing online lyrics', async () => {
+    getFeatureConfirmationsMock.mockResolvedValueOnce({});
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    const { useAppView } = await import('./useAppView.js');
+    const { useFeatureGateAccess } = await import('./useFeatureGateAccess.js');
+
+    await expect(lyrics.probeMusixmatch()).resolves.toBe(null);
+
+    expect(probeMusixmatchLyricsMock).not.toHaveBeenCalled();
+    expect(confirmFeatureGateMock).not.toHaveBeenCalled();
+    expect(useAppView().activeView.value).toBe('settings');
+    expect(useFeatureGateAccess().state.request).toMatchObject({
+      featureId: 'lyrics-flow',
+      source: 'lyrics',
+      operation: 'external-source',
+    });
+    expect(lyrics.state.musixmatchProbe.error).toBe('請先到設定啟用歌詞來源');
+  });
+
   it('surfaces a Musixmatch probe error', async () => {
     const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
     probeMusixmatchLyricsMock.mockRejectedValueOnce(

@@ -17,7 +17,7 @@ const props = defineProps({
   size: {
     type: String,
     default: 'default',
-    validator: (value) => ['default', 'wide'].includes(value),
+    validator: (value) => ['default', 'notice', 'wide'].includes(value),
   },
 });
 
@@ -131,7 +131,7 @@ onUnmounted(() => {
 }
 
 .ui-modal {
-  width: min(420px, 100%);
+  width: min(var(--ui-modal-width-default), 100%);
   max-height: calc(100vh - var(--ui-space-8));
   overflow-y: auto;
   padding: var(--ui-space-5);
@@ -141,8 +141,12 @@ onUnmounted(() => {
   box-shadow: var(--ui-shadow-overlay);
 }
 
+.ui-modal--notice {
+  width: min(var(--ui-modal-width-notice), 100%);
+}
+
 .ui-modal--wide {
-  width: min(720px, 100%);
+  width: min(var(--ui-modal-width-wide), 100%);
 }
 
 .ui-modal__header {

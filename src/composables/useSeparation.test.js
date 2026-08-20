@@ -16,6 +16,10 @@ const confirmedAudioProcessingFlow = {
   enabled: true,
 };
 
+function createStructuredAppError(payload) {
+  return new Error(`UTAWAKUI_APP_ERROR:${JSON.stringify(payload)}`);
+}
+
 beforeEach(() => {
   vi.resetModules();
   runSeparationMock = vi.fn();
@@ -160,24 +164,65 @@ describe('separate()', () => {
     expect(state.errors.has('t1')).toBe(false);
   });
 
+  it('routes missing audio-processing dependencies to Settings with a short track error', async () => {
+    const { separate, isSeparating, state } = await loadSeparation();
+    const { useAppView } = await import('./useAppView.js');
+    const { useFeatureGateAccess } = await import('./useFeatureGateAccess.js');
+    runSeparationMock.mockRejectedValue(
+      createStructuredAppError({
+        code: 'FEATURE_DEPENDENCY_MISSING',
+        severity: 'warning',
+        title: '需要先準備音訊處理項目',
+        message:
+          '請先到設定頁準備「FFmpeg essentials build」，再執行這項音訊處理。',
+        actionLabel: '前往設定',
+        context: {
+          featureId: 'audio-processing-flow',
+          dependencyId: 'ffmpeg-gyan-essentials',
+        },
+      }),
+    );
+    const track = { id: 't1', title: '輕輕對你說' };
+
+    await separate(track, 'standard');
+
+    expect(isSeparating('t1')).toBe(false);
+    expect(useAppView().activeView.value).toBe('settings');
+    expect(useFeatureGateAccess().state.request).toMatchObject({
+      featureId: 'audio-processing-flow',
+      kind: 'setup',
+      title: '需要準備音訊處理項目',
+      message: '請先到設定準備音訊處理項目',
+      actionLabel: '查看準備項目',
+      source: 'separation',
+      operation: 'run',
+      context: {
+        trackId: 't1',
+        presetId: 'standard',
+        dependencyId: 'ffmpeg-gyan-essentials',
+      },
+    });
+    expect(state.errors.get('t1')).toBe('請先到設定準備音訊處理項目');
+  });
+
   it('does not start separation when audio-processing-flow is not enabled', async () => {
     getFeatureConfirmationsMock.mockResolvedValue({});
     const { separate, isSeparating, state } = await loadSeparation();
+    const { useAppView } = await import('./useAppView.js');
+    const { useFeatureGateAccess } = await import('./useFeatureGateAccess.js');
     const track = { id: 't1', title: 'Song' };
 
-    const pending = separate(track);
-    await Promise.resolve();
+    await separate(track);
 
     expect(isSeparating('t1')).toBe(false);
     expect(runSeparationMock).not.toHaveBeenCalled();
-    expect(state.errors.has('t1')).toBe(false);
-
-    const { useFeatureGates } = await import('./useFeatureGates.js');
-    useFeatureGates().cancelPendingFeature();
-    await pending;
-
-    expect(runSeparationMock).not.toHaveBeenCalled();
-    expect(state.errors.get('t1')).toBe('已取消啟用音訊處理');
+    expect(useAppView().activeView.value).toBe('settings');
+    expect(useFeatureGateAccess().state.request).toMatchObject({
+      featureId: 'audio-processing-flow',
+      source: 'separation',
+      operation: 'run',
+    });
+    expect(state.errors.get('t1')).toBe('請先到設定啟用音訊處理');
   });
 });
 

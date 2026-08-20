@@ -7,11 +7,12 @@
       "category": "provider",
       "confirmLabel": "啟用匯入",
       "cancelLabel": "稍後",
-      "summary": "解析來源、預覽候選版本，並把你選定的媒體下載到本機曲庫。",
+      "summary": "解析候選來源，並可將你選定的媒體保存到本機曲庫。",
       "body": [
-        "Utawakui 會連線到你貼上的來源與候選提供者，協助建立可播放的本機曲目。",
-        "Utawakui 不提供內建曲庫；請只匯入你自己選用並可使用的素材。",
-        "這個啟用狀態只保存在這台電腦，不會寫入曲庫、播放清單或未來的 preset。"
+        "候選來源不代表已取得音樂、錄音、封面或平台授權。",
+        "請確認來源平台允許本次下載、快取或保存。",
+        "此功能不得用於規避存取控制或複製限制。",
+        "啟用紀錄只保存在本機，不代表 Utawakui 已確認授權。"
       ]
     },
     {
@@ -20,10 +21,12 @@
       "category": "lyrics",
       "confirmLabel": "啟用歌詞",
       "cancelLabel": "稍後",
-      "summary": "查找、保存並整理歌詞或字幕資料。",
+      "summary": "查找並保存歌詞或字幕資料。",
       "body": [
-        "Utawakui 會依曲目 metadata 查找可用歌詞來源，並把結果保存到本機曲庫。",
-        "歌詞啟用狀態只表示你已選擇使用這條流程。"
+        "歌詞與字幕是獨立內容，查找到來源不代表可公開顯示。",
+        "請確認本次使用、直播、錄影或 OBS 顯示所需的權利。",
+        "手動匯入本機歌詞仍只作為本機曲庫資料。",
+        "啟用紀錄只保存在本機，不代表 Utawakui 已確認授權。"
       ]
     },
     {
@@ -32,11 +35,12 @@
       "category": "audio-processing",
       "confirmLabel": "啟用處理",
       "cancelLabel": "稍後",
-      "summary": "產生 vocal separation 或未來的預先處理音訊。",
+      "summary": "在本機產生人聲分離音訊。",
       "body": [
-        "Utawakui 會在本機產生額外的 generated media，供播放和預覽使用。",
-        "啟用後，你可以在設定頁準備 Utawakui 管理的 FFmpeg Gyan essentials build（GPL-3.0）與人聲分離模型，只供 Utawakui 使用。",
-        "模型下載、長曲目處理與高品質模式可能需要較長時間、較多系統資源與額外下載空間。"
+        "人聲分離、pitch/tempo 或預先處理可能產生新的本機音訊副本。",
+        "公開使用處理後素材前，請確認原音源與加工用途已被允許。",
+        "需要的 FFmpeg（GPLv3）與模型會在設定頁由你手動準備。",
+        "啟用紀錄只保存在本機，不代表 Utawakui 已確認授權。"
       ]
     },
     {
@@ -45,10 +49,12 @@
       "category": "public-output",
       "confirmLabel": "啟用輸出",
       "cancelLabel": "稍後",
-      "summary": "提供 OBS overlay、self-view 或 recording/VOD session 輸出。",
+      "summary": "把曲目、佇列或歌詞狀態提供給對外顯示。",
       "body": [
-        "Utawakui 會把選定的顯示狀態提供給本機輸出端，例如 OBS Browser Source。",
-        "這個流程會讓目前曲目、佇列或歌詞狀態進入公開呈現路徑。"
+        "OBS、直播、錄影或 VOD 可能讓音樂、歌詞、封面與佇列公開呈現。",
+        "請確認本次輸出所需的公開演出、公開傳輸、展示或錄製授權。",
+        "平台檢查通過或未被靜音，不代表已取得授權。",
+        "啟用紀錄只保存在本機，不代表 Utawakui 已確認授權。"
       ]
     }
   ]

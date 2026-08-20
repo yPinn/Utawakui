@@ -125,6 +125,11 @@
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: 2.25rem; /* 36px */
 
+  /* --- Sizing: overlays --- */
+  --ui-modal-width-default: 26.25rem; /* 420px: short forms */
+  --ui-modal-width-notice: 32rem; /* 512px: confirmation copy with bullets */
+  --ui-modal-width-wide: 45rem; /* 720px: row lists and multi-column content */
+
   /* --- Sizing: archive tabs --- */
   --ui-archive-rail-size: var(--ui-space-2);
   --ui-archive-tab-min-width: 8.5rem;
