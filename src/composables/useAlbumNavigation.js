@@ -26,5 +26,14 @@ export function useAlbumNavigation() {
     setActiveView('setlist');
   }
 
-  return { albumForTrack, jumpToAlbum };
+  // For a caller that already has the target playlist/album id directly
+  // (e.g. QueuePanel.vue's "下一首來自" section, via usePlaybackQueue's
+  // sourceId) instead of deriving it from a track's album membership.
+  function jumpToPlaylist(id) {
+    if (!id) return;
+    select(id);
+    setActiveView('setlist');
+  }
+
+  return { albumForTrack, jumpToAlbum, jumpToPlaylist };
 }

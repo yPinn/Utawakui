@@ -13,11 +13,20 @@ defineProps({
   dropPosition: { type: String, default: null },
   // See QueueTrackButton.vue's `jumpable` prop / useAlbumNavigation.js.
   jumpableTrackIds: { type: Set, default: () => new Set() },
+  // Whether the section's own heading (not a track row) should jump to a
+  // playlist/album — distinct from a per-track jump, so this section
+  // represents a single known source rather than a per-row lookup.
+  titleJumpable: { type: Boolean, default: false },
+  // Overrides the default "前往：<title>" aria-label — title here is often a
+  // compound string (e.g. "下一首來自：海螺記"), so the caller can supply a
+  // cleaner label naming just the destination.
+  titleLinkAriaLabel: { type: String, default: '' },
 });
 
 const emit = defineEmits([
   'selectTrack',
   'titleClick',
+  'sectionTitleClick',
   'trackDragStart',
   'trackDragOver',
   'trackDragLeave',
@@ -29,7 +38,18 @@ const emit = defineEmits([
 <template>
   <section class="queue-section" :aria-label="title">
     <header class="queue-section__header">
-      <h3 class="queue-section__title">{{ title }}</h3>
+      <h3 class="queue-section__title">
+        <button
+          v-if="titleJumpable"
+          type="button"
+          class="queue-section__title-link"
+          :aria-label="titleLinkAriaLabel || `前往：${title}`"
+          @click="emit('sectionTitleClick')"
+        >
+          {{ title }}
+        </button>
+        <template v-else>{{ title }}</template>
+      </h3>
       <slot name="actions" />
     </header>
 
@@ -83,9 +103,34 @@ const emit = defineEmits([
 
 .queue-section__title {
   margin: 0;
+  min-width: 0;
+  overflow: hidden;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.queue-section__title-link {
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+.queue-section__title-link:hover,
+.queue-section__title-link:focus-visible {
+  text-decoration: underline;
+}
+
+.queue-section__title-link:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+  border-radius: var(--ui-radius);
 }
 
 .queue-section__list {
@@ -95,16 +140,6 @@ const emit = defineEmits([
   gap: var(--ui-space-1);
   margin: 0;
   padding: 0;
-  /* This box holds only rows (no heading inside it), so rounding its own
-     height down to a row unit always lands exactly on a row boundary —
-     unlike rounding the whole panel, which has header/heading content above
-     the rows throwing the alignment off. */
-  max-height: round(
-    down,
-    var(--ui-queue-panel-max-height),
-    var(--ui-queue-panel-row-unit)
-  );
-  overflow-y: auto;
 }
 
 .queue-section__item {

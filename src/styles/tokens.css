@@ -221,7 +221,7 @@
      size to their own content by default — this only stops one from running
      off the top of a short window, so it's deliberately generous rather than
      tuned to any one panel's content (e.g. queue rows; see
-     --ui-queue-panel-max-height for that section's own, tighter sizing). */
+     --ui-queue-panel-max-height for that panel's own, tighter budget). */
   --ui-player-bar-panel-max-height: 40rem; /* 640px */
   --ui-player-bar-panel-viewport-offset: calc(
     var(--ui-player-bar-height) + var(--ui-space-7)
@@ -229,15 +229,17 @@
   --ui-player-tools-meter-control-height: 3.5rem; /* 56px: prominent but still compact */
   --ui-player-tools-beat-height: var(--ui-space-1);
   --ui-queue-track-thumb-size: 3rem; /* 48px: queue panel row artwork, keep in sync with QUEUE_TRACK_THUMB_SIZE */
-  /* Per-section row-list cap (QueueSection.vue's <ul>), not the whole panel —
-     that box holds only rows with no heading inside it, so rounding it down
-     to a row unit always lands on a row boundary. Rounding the whole panel
-     instead doesn't work: the heading/other sections above the list throw
-     the alignment off by a non-row-multiple amount. */
-  --ui-queue-panel-max-height: 28rem; /* 448px: comfortably shows several rows without reaching for the full viewport; each section list still scrolls internally beyond that */
-  --ui-queue-panel-row-unit: calc(
-    var(--ui-queue-track-thumb-size) + 3 * var(--ui-space-1)
-  ); /* 60px: queue row height (thumb + row padding) + list gap */
+  /* Height budget for all three queue sections combined (QueuePanel.vue's
+     .queue-panel__sections), not per section — no individual section list
+     has its own cap, so one busy section can't crowd out the others; the
+     whole set scrolls together once this budget is exceeded. Tuned for 6
+     full rows (60px each = 360px) when all three section headers ("現正
+     播放"/"佇列中下一首"/"下一首來自", ~29.5px each incl. margin) plus their
+     two inter-section gaps (--ui-space-5 = 24px each) are present:
+     360px + 3*29.5px + 2*24px = ~497px. Approximate, not pixel-exact (no
+     JS measurement — see the row-height discussion this replaced), so a
+     header rendering a hair taller/shorter can still land mid-row. */
+  --ui-queue-panel-max-height: 31rem; /* 496px */
 
   /* --- Shadow: row indicator --- */
   /* Selected-row indicator shared by UiTrackRow and the playlist sidebars. */

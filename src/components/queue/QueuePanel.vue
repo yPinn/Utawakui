@@ -29,7 +29,7 @@ const {
   reorderSourceTrack,
 } = usePlaybackQueue();
 const { state: playlistState } = usePlaylists();
-const { jumpToAlbum } = useAlbumNavigation();
+const { jumpToAlbum, jumpToPlaylist } = useAlbumNavigation();
 
 const currentTracks = computed(() =>
   currentTrack.value ? [currentTrack.value] : [],
@@ -41,6 +41,22 @@ const hasQueue = computed(
     sourceUpcomingTracks.value.length > 0,
 );
 const upcomingSourceLabel = computed(() => state.sourceName || '目前佇列');
+// null for a non-playlist source (e.g. useLyrics.js's 'lyrics-workspace'
+// marker, or no source at all) — only a real, still-existing playlist/album
+// entry is worth making the section title jump to.
+const upcomingSourcePlaylist = computed(() => {
+  if (!state.sourceId) return null;
+  return (
+    playlistState.playlists.find(
+      (playlist) => playlist.id === state.sourceId,
+    ) ?? null
+  );
+});
+const upcomingSourceLinkLabel = computed(() => {
+  const kindLabel =
+    upcomingSourcePlaylist.value?.kind === 'album' ? '專輯' : '歌單';
+  return `前往${kindLabel}：${upcomingSourceLabel.value}`;
+});
 
 // Shared by all three sections below (see useAlbumNavigation.js).
 const jumpableTrackIds = computed(
@@ -59,6 +75,12 @@ function playQueuedTrack(track, options = {}) {
 // Also closes the panel — leaving it open over the Setlist view looks broken.
 function jumpFromQueue(track) {
   jumpToAlbum(track);
+  emit('close');
+}
+
+function jumpToUpcomingSource() {
+  if (!upcomingSourcePlaylist.value) return;
+  jumpToPlaylist(upcomingSourcePlaylist.value.id);
   emit('close');
 }
 
@@ -105,7 +127,7 @@ const {
   >
     <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
 
-    <template v-else>
+    <div v-else class="queue-panel__sections">
       <QueueSection
         title="現正播放"
         :tracks="currentTracks"
@@ -151,20 +173,33 @@ const {
         :drop-target-track-id="dropTargetSourceTrackId"
         :drop-position="sourceDropPosition"
         :jumpable-track-ids="jumpableTrackIds"
+        :title-jumpable="Boolean(upcomingSourcePlaylist)"
+        :title-link-aria-label="upcomingSourceLinkLabel"
         empty-text="沒有下一首"
         @select-track="playQueuedTrack($event, { source: true })"
         @title-click="jumpFromQueue"
+        @section-title-click="jumpToUpcomingSource"
         @track-drag-start="startSourceDrag"
         @track-drag-over="updateSourceDropTarget"
         @track-drag-leave="leaveSourceDropTarget"
         @track-drop="dropSourceTrack"
         @track-drag-end="clearSourceDragState"
       />
-    </template>
+    </div>
   </PlayerBarPanel>
 </template>
 
 <style scoped>
+/* Caps the combined height of all three sections together (not each one
+   individually), so the panel shows roughly --ui-queue-panel-max-height's
+   worth of rows total across whichever mix of "現正播放"/"佇列中下一首"/
+   "下一首來自" happen to be populated, then scrolls the whole set together
+   beyond that. */
+.queue-panel__sections {
+  max-height: var(--ui-queue-panel-max-height);
+  overflow-y: auto;
+}
+
 .queue-panel__text-action {
   padding: 0;
   border: 0;
