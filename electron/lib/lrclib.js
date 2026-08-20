@@ -368,6 +368,11 @@ function mergeLrclibCandidatesByKey(map, candidates) {
 }
 
 function buildAvailableResult(best) {
+  // Matches the manual save path's label precedence (lyricsHandlers.js) so
+  // sources saved by the passive/import-time backfill come in already
+  // labeled — otherwise every freshly imported track needed the "one-time"
+  // label-backfill repair, not just tracks saved before the field existed.
+  const label = best.candidate.albumName || best.candidate.artistName;
   return {
     provider: LRCLIB_PROVIDER,
     status: 'available',
@@ -375,6 +380,7 @@ function buildAvailableResult(best) {
       filename: `lrclib-${best.candidate.id}.lrc`,
       language: 'und',
       kind: LRCLIB_PROVIDER,
+      ...(label ? { label } : {}),
     },
     text: best.candidate.syncedLyrics,
     lineCount: best.lineCount,

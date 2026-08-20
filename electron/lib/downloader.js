@@ -28,6 +28,7 @@ const {
   watchUrl,
 } = require('./youtubeAttempts');
 const { extractMetadataFields, extractThumbnailUrl } = require('./ytdlpInfo');
+const { classifyPlaylistKind } = require('./youtube');
 
 const DEFAULT_AUDIO_FORMAT = 'bestaudio/best';
 const FALLBACK_AUDIO_FORMAT = 'bestaudio[ext=m4a]/bestaudio/best';
@@ -368,6 +369,33 @@ function readTrackInfoMetadata(trackDir) {
   }
 }
 
+function cleanMetadataString(value) {
+  return typeof value === 'string' && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
+async function inferAlbumTitleFromFirstEntry(entries, { runner } = {}) {
+  const rawEntries = Array.isArray(entries) ? entries : [];
+  const albumFromFlatEntry = rawEntries
+    .map((entry) => cleanMetadataString(entry?.album))
+    .find(Boolean);
+  if (albumFromFlatEntry) return albumFromFlatEntry;
+
+  const firstEntry = rawEntries.find((entry) => typeof entry?.id === 'string');
+  if (!firstEntry) return undefined;
+
+  try {
+    const info = await fetchVideoInfo(firstEntry.id, {
+      runner,
+      phases: CLIENT_FALLBACK_YOUTUBE_PHASES,
+    });
+    return cleanMetadataString(info?.album);
+  } catch {
+    return undefined;
+  }
+}
+
 async function downloadAudio(videoId, destDir) {
   fs.mkdirSync(destDir, { recursive: true });
 
@@ -494,8 +522,12 @@ async function fetchPlaylist(playlistId, options = {}) {
   );
 
   const entries = Array.isArray(info.entries) ? info.entries : [];
+  const albumTitle =
+    classifyPlaylistKind(playlistId) === 'album'
+      ? await inferAlbumTitleFromFirstEntry(entries, { runner })
+      : undefined;
   return {
-    title: typeof info.title === 'string' ? info.title : undefined,
+    title: albumTitle || cleanMetadataString(info.title),
     // The playlist/album's own artwork, not any individual entry's —
     // present even under flatPlaylist since it comes from the playlist
     // page's own info, not from resolving each entry. extractThumbnailUrl's

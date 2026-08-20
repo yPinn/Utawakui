@@ -225,6 +225,68 @@ describe('fetchPlaylist', () => {
 
     expect(result.thumbnailUrl).toBeUndefined();
   });
+
+  it("uses the first track's album metadata for YT Music album playlist names", async () => {
+    const runner = vi
+      .fn()
+      .mockResolvedValueOnce({
+        title: 'Album - 163braces',
+        entries: [
+          {
+            id: 'qog79Ke0IvQ',
+            title: '門縫後的光',
+            uploader: '163braces - Topic',
+          },
+        ],
+      })
+      .mockResolvedValueOnce({
+        id: 'qog79Ke0IvQ',
+        title: '門縫後的光',
+        artist: '163braces',
+        album: '海螺記',
+      });
+
+    await expect(
+      fetchPlaylist('OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo', { runner }),
+    ).resolves.toMatchObject({
+      title: '海螺記',
+      entries: [
+        expect.objectContaining({
+          id: 'qog79Ke0IvQ',
+          title: '門縫後的光',
+        }),
+      ],
+    });
+
+    expect(runner).toHaveBeenNthCalledWith(
+      2,
+      'https://www.youtube.com/watch?v=qog79Ke0IvQ',
+      expect.objectContaining({
+        dumpSingleJson: true,
+        noPlaylist: true,
+        skipDownload: true,
+      }),
+    );
+  });
+
+  it('keeps the playlist-level title when YT Music album metadata is unavailable', async () => {
+    const runner = vi
+      .fn()
+      .mockResolvedValueOnce({
+        title: 'Album - Unknown Artist',
+        entries: [{ id: 'qog79Ke0IvQ', title: 'Song' }],
+      })
+      .mockResolvedValueOnce({
+        id: 'qog79Ke0IvQ',
+        title: 'Song',
+      });
+
+    await expect(
+      fetchPlaylist('OLAK5uy_nBWL9lmnXFFbywEUiSJAHvuCyoA62FZAo', { runner }),
+    ).resolves.toMatchObject({
+      title: 'Album - Unknown Artist',
+    });
+  });
 });
 
 describe('buildSubtitleOptions', () => {
