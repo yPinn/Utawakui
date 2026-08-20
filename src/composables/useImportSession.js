@@ -564,6 +564,10 @@ async function resetDownloadDir() {
   await refreshConfig();
 }
 
+function openDownloadDir() {
+  return window.Utawakui.openDownloadDir();
+}
+
 export function useImportSession() {
   return {
     state: readonly(state),
@@ -592,5 +596,6 @@ export function useImportSession() {
     refreshConfig,
     chooseDownloadDir,
     resetDownloadDir,
+    openDownloadDir,
   };
 }

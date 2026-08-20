@@ -10,18 +10,12 @@ defineProps({
   status: { type: String, default: '' },
   statusTone: { type: String, default: 'muted' },
   tooltip: { type: String, default: '' },
-  scale: {
-    type: String,
-    default: 'normal',
-    validator: (value) => ['compact', 'normal', 'prominent'].includes(value),
-  },
 });
 </script>
 
 <template>
   <div
     class="settings-action-row"
-    :class="`settings-action-row--${scale}`"
     :title="tooltip || description || value || title"
   >
     <div v-if="icon" class="settings-action-row__icon" aria-hidden="true">
@@ -66,16 +60,6 @@ defineProps({
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
   background: var(--ui-color-canvas);
-}
-
-.settings-action-row--compact {
-  --settings-action-row-title-size: var(--ui-font-size-sm);
-  --settings-action-row-value-size: var(--ui-font-size-sm);
-}
-
-.settings-action-row--prominent {
-  --settings-action-row-title-size: var(--ui-font-size-sm);
-  --settings-action-row-value-size: var(--ui-font-size-sm);
 }
 
 .settings-action-row__icon {

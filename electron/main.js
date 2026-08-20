@@ -9,6 +9,7 @@ const {
   dialog,
   protocol,
   nativeTheme,
+  shell,
 } = require('electron');
 
 const APP_NAME = 'Utawakui';
@@ -163,6 +164,7 @@ if (!gotSingleInstanceLock) {
     registerConfigHandlers({
       ipcMain,
       dialog,
+      shell,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,

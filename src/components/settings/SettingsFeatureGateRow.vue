@@ -1,11 +1,12 @@
 <script setup>
-import { computed } from 'vue';
-import { Loader2, Plus } from '../../icons/index.js';
+import { computed, shallowRef } from 'vue';
+import { Info, Loader2, Plus } from '../../icons/index.js';
 import SettingsActionRow from './SettingsActionRow.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
-import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiModal from '../ui/UiModal.vue';
 
 const props = defineProps({
   gate: { type: Object, required: true },
@@ -20,27 +21,14 @@ const emit = defineEmits(['enable', 'itemAction', 'itemAdvancedAction']);
 const hasItems = computed(() => props.items.length > 0);
 const shouldShowItems = computed(() => props.gate.enabled && hasItems.value);
 
-function itemStatus(item) {
-  if (item.status) return item.status;
-  return item.kind === 'binary' ? '未準備' : '待開放';
-}
-
-function itemStatusTone(item) {
-  if (item.statusTone) return item.statusTone;
-  return item.kind === 'binary' ? 'warning' : 'gated';
-}
-
-function itemValue(item) {
-  if (item.value) return item.value;
-  const parts = [];
-  if (item.version) parts.push(item.version);
-  if (item.license) parts.push(item.license);
-  return parts.join(' / ') || item.kind;
-}
-
-function itemTooltip(item) {
-  return item.tooltip || `${item.title || item.name} ${item.version || ''}`;
-}
+// Available whether the gate is enabled or not — the declaration is what
+// enabling it means, which is exactly what someone deciding whether to
+// enable (or reconsidering an already-enabled gate) needs to re-read.
+// AppFeatureNoticeModal.vue only ever shows this once, at the moment of
+// enabling.
+const isNoticeOpen = shallowRef(false);
+const hasNotice = computed(() => props.gate.body?.length > 0);
+const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
 </script>
 
 <template>
@@ -52,14 +40,21 @@ function itemTooltip(item) {
       :icon="gate.icon"
       :title="gate.title"
       :description="gate.description"
-      :value="gate.value"
       :status="gate.status"
       :status-tone="gate.tone"
-      :tooltip="gate.description"
-      scale="compact"
     >
-      <template v-if="!gate.enabled" #actions>
+      <template #actions>
+        <UiIconButton
+          v-if="hasNotice"
+          :icon="Info"
+          :active="isNoticeOpen"
+          :aria-expanded="isNoticeOpen ? 'true' : 'false'"
+          :aria-label="noticeLabel"
+          :title="noticeLabel"
+          @click="isNoticeOpen = !isNoticeOpen"
+        />
         <UiButton
+          v-if="!gate.enabled"
           :icon="gate.isBusy ? Loader2 : Plus"
           variant="accent"
           :disabled="disableEnableAction"
@@ -72,24 +67,44 @@ function itemTooltip(item) {
       </template>
     </SettingsActionRow>
 
+    <UiModal
+      v-if="hasNotice"
+      :open="isNoticeOpen"
+      :title="gate.title"
+      size="notice"
+      @close="isNoticeOpen = false"
+    >
+      <div class="settings-feature-gate-row__notice">
+        <p
+          v-if="gate.description"
+          class="settings-feature-gate-row__notice-summary"
+        >
+          {{ gate.description }}
+        </p>
+        <ul class="settings-feature-gate-row__notice-list">
+          <li v-for="line in gate.body" :key="line">{{ line }}</li>
+        </ul>
+      </div>
+    </UiModal>
+
     <div v-if="shouldShowItems" class="settings-feature-gate-row__items">
       <div
         v-for="item in items"
         :key="item.id"
         class="settings-feature-gate-row__item"
-        :title="itemTooltip(item)"
+        :title="item.description"
       >
         <div class="settings-feature-gate-row__item-copy">
           <div class="settings-feature-gate-row__item-heading">
             <span class="settings-feature-gate-row__item-title">
               {{ item.title || item.name }}
             </span>
-            <UiChip :tone="itemStatusTone(item)">
-              {{ itemStatus(item) }}
+            <UiChip :tone="item.statusTone">
+              {{ item.status }}
             </UiChip>
           </div>
-          <p class="settings-feature-gate-row__item-value">
-            {{ itemValue(item) }}
+          <p class="settings-feature-gate-row__item-value" :title="item.value">
+            {{ item.value }}
           </p>
         </div>
 
@@ -99,10 +114,6 @@ function itemTooltip(item) {
           @advanced-action="emit('itemAdvancedAction', $event)"
         />
       </div>
-
-      <UiHint v-if="gate.itemsHint" tone="muted">
-        {{ gate.itemsHint }}
-      </UiHint>
     </div>
   </div>
 </template>
@@ -121,6 +132,36 @@ function itemTooltip(item) {
 .settings-feature-gate-row--highlighted {
   background: var(--ui-color-warning-soft);
   box-shadow: 0 0 0 1px var(--ui-color-warning);
+}
+
+/* Mirrors AppFeatureNoticeModal.vue's .feature-notice* treatment — same
+   declaration text, same modal shell, just reachable after enabling too. */
+.settings-feature-gate-row__notice {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.settings-feature-gate-row__notice-summary {
+  margin: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-body);
+}
+
+.settings-feature-gate-row__notice-list {
+  display: grid;
+  gap: var(--ui-space-2);
+  margin: 0;
+  padding-left: var(--ui-space-4);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-body);
+}
+
+.settings-feature-gate-row__notice-list li {
+  padding-left: var(--ui-space-1);
 }
 
 .settings-feature-gate-row__items {

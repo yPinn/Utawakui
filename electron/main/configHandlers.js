@@ -9,6 +9,7 @@ const {
 function registerConfigHandlers({
   ipcMain,
   dialog,
+  shell,
   getConfig,
   updateConfig,
   resolveDownloadDir,
@@ -67,6 +68,15 @@ function registerConfigHandlers({
     updateConfig({ downloadDir: null });
     notifyLibraryUpdated();
     return resolveDownloadDir(getConfig());
+  });
+
+  // shell.openPath resolves (never rejects) with an empty string on
+  // success or an OS error string on failure — surfacing that as a thrown
+  // error keeps this handler's failure shape consistent with every other
+  // handler in this file.
+  ipcMain.handle('config:open-download-dir', async () => {
+    const error = await shell.openPath(resolveDownloadDir(getConfig()));
+    if (error) throw new Error(error);
   });
 
   ipcMain.handle('config:get-ui-theme', async () => getConfig().uiTheme);

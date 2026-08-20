@@ -2,19 +2,17 @@
 import { computed, onMounted, shallowRef } from 'vue';
 import {
   CircleAlert,
-  Download,
+  Ellipsis,
   FolderOpen,
   ListChecks,
   RefreshCw,
   RotateCcw,
-  Settings,
-  Trash2,
-  Video,
 } from '../icons/index.js';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
 import UiButton from '../components/ui/UiButton.vue';
+import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
 import {
@@ -22,9 +20,9 @@ import {
   getFeatureDependencies,
   isKnownFeatureDependency,
 } from '../constants/featureDependencies.js';
-import { FEATURE_GATES } from '../constants/featureGates.js';
 import { useFeatureDependencies } from '../composables/useFeatureDependencies.js';
 import { useFeatureGateAccess } from '../composables/useFeatureGateAccess.js';
+import { useFeatureGatePresentation } from '../composables/useFeatureGatePresentation.js';
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
@@ -37,6 +35,7 @@ const {
   refreshConfig,
   chooseDownloadDir,
   resetDownloadDir,
+  openDownloadDir,
 } = useImportSession();
 const { state: diagnosticsState } = useAppDiagnostics();
 const { refreshMetadata: refreshLibraryMetadata } = useLibrary();
@@ -44,7 +43,6 @@ const {
   state: featureGateState,
   isFeatureEnabled,
   refreshConfirmations,
-  ensureFeatureGate,
 } = useFeatureGates();
 const { state: featureGateAccessState, clearFeatureGateRequest } =
   useFeatureGateAccess();
@@ -64,39 +62,52 @@ const {
 const isRefreshingMetadata = shallowRef(false);
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
-const enablingFeatureId = shallowRef(null);
 const ytdlpMessage = shallowRef('');
 
-const ytdlpCheckResultLabel = computed(() => {
-  if (ytdlpState.lastCheckResult === 'up-to-date') return '最新';
-  if (ytdlpState.lastCheckResult === 'updated') return '已更新';
-  if (ytdlpState.lastCheckResult === 'error') return '失敗';
-  return '';
-});
+// Overflow menu for the less-frequent 曲庫位置 actions — same
+// open/position/select shape as SettingsDependencyActions.vue's menu,
+// inlined here since this is the only settings row (so far) that needs a
+// menu but isn't a dependency workflow item.
+const isDownloadDirMenuOpen = shallowRef(false);
+const downloadDirMenuX = shallowRef(0);
+const downloadDirMenuY = shallowRef(0);
+const downloadDirMenuItems = computed(() => [
+  { id: 'choose', icon: FolderOpen, label: '選擇其他資料夾', value: 'choose' },
+  {
+    id: 'reset',
+    icon: RotateCcw,
+    label: '還原預設資料夾',
+    value: 'reset',
+    disabled: importState.isDefaultDir,
+  },
+]);
 
-const FEATURE_GATE_LABELS = {
-  'provider-flow': '外部來源',
-  'lyrics-flow': '歌詞來源',
-  'audio-processing-flow': '音訊處理',
-  'public-output-flow': '對外輸出',
-};
-
-const FEATURE_GATE_VALUE_LABELS = {
-  'provider-flow': '匯入線上來源',
-  'lyrics-flow': '搜尋與保存歌詞',
-  'audio-processing-flow': '人聲分離與音訊處理',
-  'public-output-flow': 'OBS 畫面與公開輸出',
-};
-
-const DEPENDENCY_ADVANCED_ACTIONS = Object.freeze({
-  REFRESH: 'refresh',
-  REPAIR: 'repair',
-  REMOVE: 'remove',
-});
-
-function isDependencyActionRunning(dependencyId, action) {
-  return featureDependencyState.actionIds.has(`${action}:${dependencyId}`);
+function openDownloadDirMenu(event) {
+  event.stopPropagation();
+  const rect = event.currentTarget.getBoundingClientRect();
+  downloadDirMenuX.value = rect.right;
+  downloadDirMenuY.value = rect.bottom + 4;
+  isDownloadDirMenuOpen.value = true;
 }
+
+function closeDownloadDirMenu() {
+  isDownloadDirMenuOpen.value = false;
+}
+
+function handleDownloadDirMenuSelect(actionId) {
+  closeDownloadDirMenu();
+  if (actionId === 'choose') chooseDownloadDir();
+  else if (actionId === 'reset') resetDownloadDir();
+}
+
+const {
+  featureGateRows,
+  enabledGateCount,
+  enableFeature,
+  gateActionLabel,
+  isGateActionDisabled,
+  DEPENDENCY_ADVANCED_ACTIONS,
+} = useFeatureGatePresentation({ ytdlpMessage });
 
 function isDependencyInstalled(dependencyId) {
   return Boolean(featureDependencyState.byId[dependencyId]?.installed);
@@ -120,243 +131,6 @@ function clearResolvedSetupRequest() {
     clearFeatureGateRequest(request.featureId);
   }
 }
-
-function dependencyLicenseLabel(license) {
-  if (license === 'GPL-3.0-or-later bundled executable') return 'GPLv3+';
-  if (license === 'GPL-3.0') return 'GPLv3';
-  return license || '授權資訊';
-}
-
-function dependencySourceLabel(dependency) {
-  if (dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL) {
-    return 'yt-dlp';
-  }
-  if (dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS) {
-    return 'Gyan FFmpeg';
-  }
-  if (dependency.kind === 'model') return 'UVR 模型';
-  return dependency.name;
-}
-
-function dependencyVersionLabel(dependency, isYtdlp) {
-  if (isYtdlp && ytdlpState.version) return ytdlpState.version;
-  if (dependency.version === 'managed') return '隨附';
-  return dependency.version ? `v${dependency.version}` : '';
-}
-
-function dependencyDisclosureValue(dependency) {
-  return [
-    dependencySourceLabel(dependency),
-    dependencyLicenseLabel(dependency.license),
-    dependencyVersionLabel(
-      dependency,
-      dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL,
-    ),
-  ].join(' / ');
-}
-
-function dependencyDisclosureTooltip(dependency, { isYtdlp = false } = {}) {
-  const version = dependencyVersionLabel(dependency, isYtdlp);
-  return [
-    `來源：${dependencySourceLabel(dependency)}`,
-    `授權：${dependencyLicenseLabel(dependency.license)}`,
-    version ? `版本：${version}` : '',
-    dependency.downloadUrl ? '需要下載到本機' : '由 Utawakui 準備到本機',
-  ]
-    .filter(Boolean)
-    .join('；');
-}
-
-function dependencyAdvancedActions({ dependency, installed, preparing }) {
-  const isRemoving = isDependencyActionRunning(
-    dependency.id,
-    DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
-  );
-  const isRepairing = isDependencyActionRunning(
-    dependency.id,
-    DEPENDENCY_ADVANCED_ACTIONS.REPAIR,
-  );
-  const isBusy = preparing || isRemoving || isRepairing;
-  const systemLabel =
-    dependency.kind === 'model' ? '使用既有模型檔' : '使用系統已安裝版本';
-
-  return [
-    {
-      id: DEPENDENCY_ADVANCED_ACTIONS.REFRESH,
-      icon: RefreshCw,
-      label: '重新檢查',
-      disabled: featureDependencyState.isLoading || isBusy,
-    },
-    {
-      id: DEPENDENCY_ADVANCED_ACTIONS.REPAIR,
-      icon: RotateCcw,
-      label: isRepairing ? '修復中' : '修復或重新安裝',
-      disabled: !installed || isBusy,
-    },
-    {
-      id: DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
-      icon: Trash2,
-      label: isRemoving ? '移除中' : '移除本機項目',
-      danger: true,
-      disabled: !installed || isBusy,
-    },
-    { separator: true },
-    {
-      id: 'manual-file',
-      icon: Download,
-      label: '從本機檔案安裝',
-      status: '待開放',
-      disabled: true,
-    },
-    {
-      id: 'system-tool',
-      icon: Settings,
-      label: systemLabel,
-      status: '待開放',
-      disabled: true,
-    },
-    {
-      id: 'source-details',
-      icon: Settings,
-      label: '來源與授權',
-      status: dependencyLicenseLabel(dependency.license),
-      disabled: true,
-    },
-  ];
-}
-
-function dependencyWorkflowItem(dependency) {
-  const current = featureDependencyState.byId[dependency.id] ?? dependency;
-  const isFfmpeg = dependency.id === 'ffmpeg-gyan-essentials';
-  const isYtdlp = dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL;
-  const isModel = dependency.kind === 'model';
-  const preparing = featureDependencyState.preparingIds.has(dependency.id);
-  const installed = Boolean(current.installed);
-  const isRemoving = isDependencyActionRunning(
-    dependency.id,
-    DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
-  );
-  const isRepairing = isDependencyActionRunning(
-    dependency.id,
-    DEPENDENCY_ADVANCED_ACTIONS.REPAIR,
-  );
-  const isBusy = preparing || isRemoving || isRepairing;
-  const title = isFfmpeg
-    ? '音訊轉換工具'
-    : isYtdlp
-      ? '線上來源下載工具'
-      : isModel
-        ? dependency.name
-        : dependency.name;
-  const status = installed
-    ? isYtdlp
-      ? ytdlpCheckResultLabel.value || '可使用'
-      : '已準備'
-    : preparing
-      ? '準備中'
-      : current.canMigrate
-        ? '待整理'
-        : '未準備';
-  return {
-    ...dependency,
-    title,
-    description: isFfmpeg
-      ? '讓 Utawakui 讀取不同音訊格式，供人聲分離與音訊處理使用。'
-      : isYtdlp
-        ? ytdlpMessage.value || '用來把你選定的外部來源保存到本機曲庫。'
-        : isModel
-          ? '下載後即可在產生人聲分離結果時使用。'
-          : '此功能需要先下載的工具或資料。',
-    value: dependencyDisclosureValue(dependency),
-    tooltip: dependencyDisclosureTooltip(dependency, { isYtdlp }),
-    status,
-    statusTone:
-      isYtdlp && (ytdlpState.lastCheckResult === 'error' || ytdlpState.error)
-        ? 'danger'
-        : installed
-          ? 'success'
-          : preparing
-            ? 'info'
-            : 'warning',
-    icon: Download,
-    actionIcon:
-      installed && !isYtdlp
-        ? null
-        : isYtdlp && installed
-          ? RefreshCw
-          : Download,
-    actionDisabled: isBusy || (isYtdlp && installed && ytdlpState.isChecking),
-    actionLabel: installed
-      ? isYtdlp
-        ? ytdlpState.isChecking
-          ? '檢查下載工具中'
-          : '檢查並更新下載工具'
-        : `${title}已準備`
-      : preparing
-        ? `準備${title}中`
-        : `準備${title}`,
-    advancedActions: dependencyAdvancedActions({
-      dependency,
-      installed,
-      preparing,
-    }),
-  };
-}
-
-function getPublicOutputWorkflowItems() {
-  return [
-    {
-      id: 'public-output-defaults',
-      kind: 'planned-setting',
-      icon: Video,
-      title: 'OBS 輸出預設',
-      description: '設定未來 OBS 畫面來源與場次輸出偏好。',
-      value: '尚未提供',
-      status: '待開放',
-      statusTone: 'gated',
-      actionIcon: Settings,
-      actionDisabled: true,
-      actionLabel: 'OBS 輸出設定稍後提供',
-    },
-  ];
-}
-
-function getFeatureWorkflowItems(featureId) {
-  const dependencyItems = getFeatureDependencies(featureId).map(
-    dependencyWorkflowItem,
-  );
-  if (featureId === 'public-output-flow') {
-    return [...getPublicOutputWorkflowItems(), ...dependencyItems];
-  }
-  return dependencyItems;
-}
-
-const featureGateRows = computed(() =>
-  Object.values(FEATURE_GATES).map((gate) => {
-    const enabled = isFeatureEnabled(gate.id);
-    const items = getFeatureWorkflowItems(gate.id);
-    const isBusy =
-      featureGateState.pendingFeatureId === gate.id ||
-      enablingFeatureId.value === gate.id;
-    return {
-      id: gate.id,
-      title: FEATURE_GATE_LABELS[gate.id] ?? gate.title,
-      description: gate.summary,
-      value: FEATURE_GATE_VALUE_LABELS[gate.id] ?? gate.category,
-      status: enabled ? '已啟用' : '未啟用',
-      tone: enabled ? 'success' : 'gated',
-      icon: enabled ? ListChecks : CircleAlert,
-      enabled,
-      isBusy,
-      items,
-      itemsHint: items.length > 0 ? '直播前準備，避免臨時下載。' : '',
-    };
-  }),
-);
-
-const enabledGateCount = computed(
-  () => featureGateRows.value.filter((row) => row.enabled).length,
-);
 
 const featureGateRequestNotice = computed(() => {
   const request = featureGateAccessState.request;
@@ -460,35 +234,6 @@ async function checkForYtdlpUpdate() {
       : '已是最新版本';
 }
 
-async function enableFeature(featureId) {
-  if (isFeatureEnabled(featureId) || enablingFeatureId.value) return;
-  enablingFeatureId.value = featureId;
-  try {
-    const enabled = await ensureFeatureGate(featureId);
-    if (enabled) clearFeatureGateRequest(featureId);
-  } finally {
-    enablingFeatureId.value = null;
-  }
-}
-
-function gateActionLabel(gate) {
-  if (gate.enabled) return '已啟用';
-  if (featureGateState.pendingFeatureId === gate.id) return '等待確認';
-  if (enablingFeatureId.value === gate.id || featureGateState.isSaving) {
-    return '處理中';
-  }
-  return '啟用';
-}
-
-function isGateActionDisabled(gate) {
-  return (
-    gate.enabled ||
-    Boolean(enablingFeatureId.value) ||
-    Boolean(featureGateState.pendingFeatureId) ||
-    featureGateState.isSaving
-  );
-}
-
 async function handleWorkflowItemAction(itemId) {
   if (
     itemId === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL &&
@@ -581,21 +326,32 @@ onMounted(refreshSettingsState);
             :status="importState.isDefaultDir ? '預設' : '自訂'"
             :status-tone="importState.isDefaultDir ? 'muted' : 'accent'"
             tooltip="下載與本機匯入的曲目都會整理到這個資料夾。"
-            scale="prominent"
           >
             <template #actions>
               <UiButton
                 :icon="FolderOpen"
-                aria-label="選擇曲庫資料夾"
-                title="選擇曲庫資料夾"
-                @click="chooseDownloadDir"
+                aria-label="開啟曲庫資料夾"
+                title="開啟曲庫資料夾"
+                @click="openDownloadDir"
               />
               <UiButton
-                :icon="RotateCcw"
-                :disabled="importState.isDefaultDir"
-                aria-label="還原預設曲庫資料夾"
-                title="還原預設曲庫資料夾"
-                @click="resetDownloadDir"
+                :icon="Ellipsis"
+                aria-label="曲庫位置其他操作"
+                title="曲庫位置其他操作"
+                aria-haspopup="menu"
+                :aria-expanded="isDownloadDirMenuOpen ? 'true' : 'false'"
+                @click="openDownloadDirMenu"
+              />
+              <UiContextMenu
+                :open="isDownloadDirMenuOpen"
+                :x="downloadDirMenuX"
+                :y="downloadDirMenuY"
+                :width="184"
+                align-x="right"
+                :items="downloadDirMenuItems"
+                empty-text="沒有可用的操作"
+                @select="handleDownloadDirMenuSelect"
+                @close="closeDownloadDirMenu"
               />
             </template>
           </SettingsActionRow>
@@ -607,7 +363,6 @@ onMounted(refreshSettingsState);
             :status="isRefreshingMetadata ? '執行中' : '可用'"
             :status-tone="isRefreshingMetadata ? 'info' : 'success'"
             tooltip="從已保存的來源資訊補齊專輯與年份等曲目資訊。"
-            scale="prominent"
           >
             <template #actions>
               <UiButton
@@ -767,7 +522,7 @@ onMounted(refreshSettingsState);
   min-height: 100%;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
-  gap: var(--ui-space-4);
+  gap: var(--ui-space-5);
   align-content: start;
 }
 
@@ -782,6 +537,11 @@ onMounted(refreshSettingsState);
   min-width: 0;
   display: grid;
   gap: var(--ui-space-1);
+  /* On top of the column's own space-3 gap, so the header reads as this
+     column's heading — grouped tightly with its own summary line, then set
+     apart from the SettingsBlocks below — rather than sitting at the same
+     distance as the blocks are from each other. */
+  margin-bottom: var(--ui-space-2);
 }
 
 .settings-view__column-title,

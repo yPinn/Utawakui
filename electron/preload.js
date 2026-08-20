@@ -47,6 +47,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('feature-dependencies:repair', dependencyId),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
+  openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: () => ipcRenderer.invoke('library:list'),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
@@ -127,6 +128,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('feature-dependencies:updated', listener);
     return () =>
       ipcRenderer.removeListener('feature-dependencies:updated', listener);
+  },
+  onFeatureDependencyProgress: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('feature-dependencies:progress', listener);
+    return () =>
+      ipcRenderer.removeListener('feature-dependencies:progress', listener);
   },
   setPlaybackState: (state) => ipcRenderer.send('player:state', state),
   // Relays a thumbar click; the renderer stays the sole owner of the
