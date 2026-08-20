@@ -26,6 +26,7 @@ import {
   formatLyricTime,
 } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
+import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
@@ -134,8 +135,16 @@ function lyricsStatusLabel(track) {
   return '未掃描歌詞';
 }
 
-function lyricsStatusClass(track) {
-  return `lyrics-status--${track.lyrics?.status || 'unchecked'}`;
+function lyricsStatusTone(track) {
+  return track.lyrics?.status === 'available' ? 'accent' : 'muted';
+}
+
+function lyricsStatusOverrides(track) {
+  if (track.lyrics?.status) return {};
+  return {
+    background: 'var(--ui-color-surface-hover)',
+    color: 'var(--ui-color-text)',
+  };
 }
 
 function hasSeparationResult(presetId) {
@@ -222,13 +231,14 @@ watch(activeLineIndex, (index) => {
         </div>
 
         <div class="lyrics-stage__actions">
-          <span
+          <UiChip
             v-if="selectedTrack"
-            class="lyrics-status lyrics-status--large"
-            :class="lyricsStatusClass(selectedTrack)"
+            class="lyrics-status-badge"
+            :tone="lyricsStatusTone(selectedTrack)"
+            v-bind="lyricsStatusOverrides(selectedTrack)"
           >
             {{ lyricsStatusLabel(selectedTrack) }}
-          </span>
+          </UiChip>
           <UiButton
             :icon="ListMusic"
             title="選擇歌詞曲目"
@@ -691,35 +701,8 @@ watch(activeLineIndex, (index) => {
   word-break: normal;
 }
 
-.lyrics-status {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+.lyrics-status-badge {
   flex: 0 0 auto;
-  min-height: calc(var(--ui-space-5) - var(--ui-space-1));
-  padding: var(--ui-space-1) var(--ui-space-2);
-  border-radius: var(--ui-radius-pill);
-  color: var(--ui-color-text-muted);
-  background: var(--ui-color-canvas);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
-}
-
-.lyrics-status--available {
-  color: var(--ui-color-accent);
-  background: var(--ui-color-canvas);
-}
-
-.lyrics-status--missing {
-  color: var(--ui-color-text-muted);
-}
-
-.lyrics-status--unchecked {
-  color: var(--ui-color-text);
-  background: var(--ui-color-surface-hover);
-}
-
-.lyrics-status--large {
   padding: var(--ui-space-2) var(--ui-space-3);
 }
 

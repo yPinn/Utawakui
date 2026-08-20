@@ -1,9 +1,14 @@
 <script setup>
 import UiHint from '../ui/UiHint.vue';
+import UiTextButton from '../ui/UiTextButton.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
 
 defineProps({
   title: { type: String, required: true },
+  // Static, non-interactive text rendered before title — e.g. "下一首來自："
+  // — so that when titleJumpable is true, only the actual destination name
+  // in `title` becomes the clickable/underlined CTA, not the whole phrase.
+  titlePrefix: { type: String, default: '' },
   tracks: { type: Array, default: () => [] },
   emptyText: { type: String, default: '' },
   currentTrackId: { type: String, default: null },
@@ -36,19 +41,24 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <section class="queue-section" :aria-label="title">
+  <section
+    class="queue-section"
+    :aria-label="titlePrefix ? `${titlePrefix}${title}` : title"
+  >
     <header class="queue-section__header">
       <h3 class="queue-section__title">
-        <button
-          v-if="titleJumpable"
-          type="button"
-          class="queue-section__title-link"
-          :aria-label="titleLinkAriaLabel || `前往：${title}`"
-          @click="emit('sectionTitleClick')"
-        >
-          {{ title }}
-        </button>
-        <template v-else>{{ title }}</template>
+        <span v-if="titlePrefix" class="queue-section__title-prefix">{{
+          titlePrefix
+        }}</span>
+        <span class="queue-section__title-text">
+          <UiTextButton
+            v-if="titleJumpable"
+            :text="title"
+            :aria-label="titleLinkAriaLabel || `前往：${title}`"
+            @click="emit('sectionTitleClick')"
+          />
+          <template v-else>{{ title }}</template>
+        </span>
       </h3>
       <slot name="actions" />
     </header>
@@ -102,35 +112,28 @@ const emit = defineEmits([
 }
 
 .queue-section__title {
+  display: flex;
+  align-items: center;
   margin: 0;
   min-width: 0;
-  overflow: hidden;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
-  text-overflow: ellipsis;
+}
+
+/* Static label, not part of the CTA — must not shrink/truncate before the
+   actual destination name (.queue-section__title-text) does. */
+.queue-section__title-prefix {
+  flex-shrink: 0;
   white-space: nowrap;
 }
 
-.queue-section__title-link {
-  max-width: 100%;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-}
-
-.queue-section__title-link:hover,
-.queue-section__title-link:focus-visible {
-  text-decoration: underline;
-}
-
-.queue-section__title-link:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-  border-radius: var(--ui-radius);
+.queue-section__title-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .queue-section__list {

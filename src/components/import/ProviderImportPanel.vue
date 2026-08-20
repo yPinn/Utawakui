@@ -708,7 +708,7 @@ function trackStatusIconLabel(track) {
 
 .filter-tab--active.filter-tab--danger {
   background: var(--ui-color-danger);
-  color: var(--ui-color-accent-contrast);
+  color: var(--ui-color-danger-contrast);
 }
 
 .filter-tab:focus-visible {

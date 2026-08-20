@@ -403,7 +403,6 @@ onUnmounted(() => {
           :icon="state.isPlaying ? Pause : Play"
           :disabled="!state.track"
           :label="state.isPlaying ? '暫停' : '播放'"
-          class="player-bar__play"
           shape="circle"
           size="lg"
           variant="accent"

@@ -531,7 +531,7 @@ function handleSeparationPresetChange(event) {
   height: var(--ui-player-tools-beat-height);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-border);
-  opacity: 0.7;
+  opacity: var(--ui-opacity-muted);
 }
 
 .player-tools__beat--active {

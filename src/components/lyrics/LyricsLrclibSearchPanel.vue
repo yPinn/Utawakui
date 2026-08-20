@@ -1,6 +1,6 @@
 <script setup>
 import { computed, ref } from 'vue';
-import { Check, ChevronRight, ICON_SIZE, Tag } from '../../icons/index.js';
+import { Check, ChevronRight, Tag } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
@@ -114,23 +114,18 @@ function candidateSummaryLine(candidate) {
     aria-labelledby="lyrics-lrclib-search-title"
   >
     <div class="lyrics-lrclib-search-panel__header">
-      <button
+      <UiButton
         id="lyrics-lrclib-search-title"
-        type="button"
+        :icon="ChevronRight"
         class="lyrics-lrclib-search-panel__toggle"
+        :class="{
+          'lyrics-lrclib-search-panel__toggle--open': isSearchOpen,
+        }"
         :aria-expanded="isSearchOpen"
         @click="toggleSearch"
       >
-        <ChevronRight
-          :size="ICON_SIZE"
-          class="lyrics-lrclib-search-panel__toggle-icon"
-          :class="{
-            'lyrics-lrclib-search-panel__toggle-icon--open': isSearchOpen,
-          }"
-          aria-hidden="true"
-        />
         搜尋 LRCLIB 候選
-      </button>
+      </UiButton>
 
       <UiButton
         v-if="hasUnlabeledLrclibSources"
@@ -251,31 +246,13 @@ function candidateSummaryLine(candidate) {
   gap: var(--ui-space-3);
 }
 
-.lyrics-lrclib-search-panel__toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-body);
-  cursor: pointer;
-}
-
-.lyrics-lrclib-search-panel__toggle:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.lyrics-lrclib-search-panel__toggle-icon {
+/* UiButton itself provides the reset/chrome/focus-ring; only the
+   expand/collapse chevron rotation is specific to this caller. */
+.lyrics-lrclib-search-panel__toggle :deep(svg) {
   transition: transform var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
-.lyrics-lrclib-search-panel__toggle-icon--open {
+.lyrics-lrclib-search-panel__toggle--open :deep(svg) {
   transform: rotate(90deg);
 }
 

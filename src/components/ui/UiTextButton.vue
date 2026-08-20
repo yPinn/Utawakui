@@ -25,7 +25,16 @@ const emit = defineEmits(['click']);
 <style scoped>
 .ui-text-btn {
   display: block;
-  width: 100%;
+  /* fit-content (not 100%) so the clickable hit-box hugs the actual text,
+     not the full available width — several callers stack this over a
+     larger row-level click target (e.g. QueueTrackButton's play button),
+     and a full-width invisible click box past a short title would steal
+     clicks meant for that underlying target. max-width still caps it to
+     the available space so UiMarqueeText's own overflow measurement
+     (against its clientWidth) is unaffected — when the title is long
+     enough to actually need truncation/marquee, this still fills it. */
+  width: fit-content;
+  max-width: 100%;
   min-width: 0;
   padding: 0;
   border: 0;

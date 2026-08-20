@@ -66,6 +66,9 @@
     var(--ui-color-danger) 18%,
     transparent
   );
+  /* Text/icon color on danger-filled surfaces — own token, not borrowed
+     from --ui-color-accent-contrast, since the two hues diverge. */
+  --ui-color-danger-contrast: #2a0f11;
   --ui-color-gated: #d6a84f;
   --ui-color-gated-bg: #3a3226;
 
@@ -330,6 +333,7 @@
     var(--ui-color-danger) 18%,
     transparent
   );
+  --ui-color-danger-contrast: #fffdfa;
   --ui-color-gated: #9a6b45;
   --ui-color-gated-bg: #f3eadc;
 

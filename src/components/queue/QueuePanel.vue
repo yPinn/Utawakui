@@ -9,6 +9,7 @@ import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import PlayerBarPanel from '../playback/PlayerBarPanel.vue';
 import QueueSection from './QueueSection.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 
 defineProps({
@@ -155,18 +156,13 @@ const {
         @track-drag-end="clearQueuedDragState"
       >
         <template #actions>
-          <button
-            type="button"
-            class="queue-panel__text-action"
-            @click="clearQueuedTracks"
-          >
-            清除佇列
-          </button>
+          <UiButton @click="clearQueuedTracks">清除佇列</UiButton>
         </template>
       </QueueSection>
 
       <QueueSection
-        :title="`下一首來自：${upcomingSourceLabel}`"
+        title-prefix="下一首來自："
+        :title="upcomingSourceLabel"
         :tracks="sourceUpcomingTracks"
         :draggable-items="sourceUpcomingTracks.length > 1"
         :dragging-track-id="draggingSourceTrackId"
@@ -198,27 +194,5 @@ const {
 .queue-panel__sections {
   max-height: var(--ui-queue-panel-max-height);
   overflow-y: auto;
-}
-
-.queue-panel__text-action {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-text-muted);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-  cursor: pointer;
-}
-
-.queue-panel__text-action:hover {
-  color: var(--ui-color-text);
-}
-
-.queue-panel__text-action:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-  border-radius: var(--ui-radius);
 }
 </style>
