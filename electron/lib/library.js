@@ -62,6 +62,7 @@ const {
 } = require('./library/metadataIndex');
 const {
   refreshTrackMetadataFromSidecars,
+  findTrackRecord,
   listTracks,
   updateTrackMetadata,
   deleteTrack,
@@ -84,6 +85,7 @@ module.exports = {
   deleteLyricsSource,
   deleteTrack,
   deleteTrackArtworkFile,
+  findTrackRecord,
   hasSeparation,
   hasSeparationResultFile,
   INDEX_FILENAME,

@@ -204,6 +204,20 @@ describe('writePlaylistCoverFromUrl', () => {
     expect(filename).toBe(null);
   });
 
+  it('rejects a non-allowlisted host without calling fetch', async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal('fetch', fetchMock);
+
+    const filename = await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://evil.example.com/a.png',
+    );
+
+    expect(filename).toBe(null);
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('rejects a traversal playlistId without calling fetch', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
@@ -220,13 +234,17 @@ describe('writePlaylistCoverFromUrl', () => {
 
   it('replaces a previous cover of a different extension', async () => {
     stubFetch(fakeResponse({ contentType: 'image/png' }));
-    await writePlaylistCoverFromUrl(dir, 'album-1', 'https://x/a.png');
+    await writePlaylistCoverFromUrl(
+      dir,
+      'album-1',
+      'https://i.ytimg.com/vi/xyz/a.png',
+    );
 
     stubFetch(fakeResponse({ contentType: 'image/jpeg' }));
     const filename = await writePlaylistCoverFromUrl(
       dir,
       'album-1',
-      'https://x/a.jpg',
+      'https://i.ytimg.com/vi/xyz/a.jpg',
     );
 
     // image/jpeg maps to .jpeg here, not .jpg — IMAGE_MIME_TYPES has both

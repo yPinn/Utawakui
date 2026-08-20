@@ -72,4 +72,16 @@ describe('buildRangeResponse', () => {
   it('falls back to a full 200 response for a malformed Range header', () => {
     expect(buildRangeResponse(filePath, 'not-a-range').status).toBe(200);
   });
+
+  it('returns 416 for a start offset entirely past EOF', () => {
+    const res = buildRangeResponse(filePath, 'bytes=5000-6000');
+    expect(res.status).toBe(416);
+    expect(res.headers.get('content-range')).toBe(`bytes */${content.length}`);
+  });
+
+  it('returns 416 for an inverted range (start > end)', () => {
+    const res = buildRangeResponse(filePath, 'bytes=200-100');
+    expect(res.status).toBe(416);
+    expect(res.headers.get('content-range')).toBe(`bytes */${content.length}`);
+  });
 });

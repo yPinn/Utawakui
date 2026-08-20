@@ -22,6 +22,7 @@ const FUNCTION_EXPORTS = [
   'deleteLyricsSource',
   'deleteTrack',
   'deleteTrackArtworkFile',
+  'findTrackRecord',
   'hasSeparation',
   'hasSeparationResultFile',
   'isArtworkFilename',
@@ -66,7 +67,7 @@ const FUNCTION_EXPORTS = [
 const CONSTANT_EXPORTS = ['INDEX_FILENAME', 'LYRICS_MANIFEST_VERSION'];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 47 names main.js/downloader.js/vocalSeparation.js/consumers expect', () => {
+  it('re-exports exactly the 48 names main.js/downloader.js/vocalSeparation.js/consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

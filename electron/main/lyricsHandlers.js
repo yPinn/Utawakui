@@ -4,6 +4,7 @@ const {
   allocateLyricsFilename,
   backfillLyricsSourceLabels,
   deleteLyricsSource,
+  findTrackRecord,
   getTrackLyricsState,
   importManualLyricsFile,
   importManualLyricsText,
@@ -196,7 +197,7 @@ function registerLyricsHandlers({
   // locally. Only provider lookup/acquisition belongs behind lyrics-flow.
   ipcMain.handle('lyrics:import-text', async (event, trackId, payload) => {
     const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((candidate) => candidate.id === trackId);
+    const track = findTrackRecord(dir, trackId);
     const trackDir = resolveTrackDir(dir, trackId);
     if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 
@@ -209,7 +210,7 @@ function registerLyricsHandlers({
 
   ipcMain.handle('lyrics:import-file', async (event, trackId) => {
     const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((candidate) => candidate.id === trackId);
+    const track = findTrackRecord(dir, trackId);
     const trackDir = resolveTrackDir(dir, trackId);
     if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 

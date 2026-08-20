@@ -7,7 +7,7 @@ const {
   resolveSeparationsDir,
   resolveTrackAudioPath,
   selectSeparationResult,
-  listTracks,
+  findTrackRecord,
 } = require('../lib/library');
 const {
   SEPARATION_PRESETS,
@@ -36,7 +36,7 @@ function registerSeparationHandlers({
     requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
 
     const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((t) => t.id === trackId);
+    const track = findTrackRecord(dir, trackId);
     if (!track) throw new Error(`unknown track id: ${trackId}`);
 
     const outDir = resolveSeparationsDir(dir, trackId);

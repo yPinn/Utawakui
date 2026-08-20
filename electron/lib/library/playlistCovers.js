@@ -11,6 +11,19 @@ const {
 } = require('./constants');
 const { isSafeTrackId, resolveChildPath, findFirstFile } = require('./paths');
 
+// writePlaylistCoverFromUrl's imageUrl is renderer-supplied — restricting
+// to https (below) keeps it off file:/loopback addresses, but a renderer
+// compromise could still point the main process at an arbitrary HTTPS host.
+// The only legitimate caller is playlists:upsert-album with a thumbnailUrl
+// yt-dlp/fetchPlaylist just returned from YouTube's own playlist metadata,
+// so restrict to the hosts YouTube actually serves thumbnails from.
+const ALLOWED_THUMBNAIL_HOSTS = new Set([
+  'i.ytimg.com',
+  'i9.ytimg.com',
+  'yt3.ggpht.com',
+  'yt3.googleusercontent.com',
+]);
+
 function isPlaylistCoverFilename(filename) {
   if (typeof filename !== 'string' || filename.length === 0) return false;
   if (filename.includes('/') || filename.includes('\\')) return false;
@@ -86,8 +99,11 @@ async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
   try {
     const parsedUrl = new URL(imageUrl);
     // imageUrl is renderer-supplied (playlists:upsert-album); restrict to
-    // https so this can't be pointed at an internal/loopback address.
+    // https so this can't be pointed at an internal/loopback address, and
+    // to a known YouTube thumbnail host so it can't be pointed at an
+    // arbitrary HTTPS host — see ALLOWED_THUMBNAIL_HOSTS above.
     if (parsedUrl.protocol !== 'https:') return null;
+    if (!ALLOWED_THUMBNAIL_HOSTS.has(parsedUrl.hostname)) return null;
 
     const response = await fetch(imageUrl);
     if (!response.ok) return null;

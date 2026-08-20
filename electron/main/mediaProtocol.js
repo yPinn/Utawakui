@@ -52,11 +52,14 @@ function registerMediaProtocol({ protocol, getConfig, resolveDownloadDir }) {
       // comment for why net.fetch(pathToFileURL(...)) doesn't actually
       // provide this despite looking like it should.
       return buildRangeResponse(filePath, request.headers.get('range'));
-    } catch {
+    } catch (error) {
       // Most likely the file was deleted between resolveTrackPath (which
       // only checks the path is safe, not that the file exists) and here
       // — same response as "never existed" rather than letting fs
-      // errors escape the handler.
+      // errors escape the handler. Logged so a genuine bug here (as
+      // opposed to the expected deleted-file race) is still visible
+      // instead of silently degrading to "track won't play".
+      console.error(`utawakui-media: failed to serve ${filePath}:`, error);
       return new Response('Not found', { status: 404 });
     }
   });

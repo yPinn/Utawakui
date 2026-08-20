@@ -31,6 +31,20 @@ function buildRangeResponse(filePath, rangeHeader) {
     }
   }
 
+  // start > end covers both a malformed range (bytes=5-3) and a range
+  // entirely past EOF (start clamped past stat.size - 1 while end stays at
+  // stat.size - 1) — createReadStream throws ERR_OUT_OF_RANGE for either,
+  // which the caller's catch collapses into an indistinguishable 404. A
+  // spec-correct 416 lets the client (or a stale/racing seek right after a
+  // file-size-changing separation swap) recover instead of reading "file
+  // doesn't exist".
+  if (status === 206 && (start > end || start >= stat.size)) {
+    return new Response(null, {
+      status: 416,
+      headers: { 'Content-Range': `bytes */${stat.size}` },
+    });
+  }
+
   const stream = fs.createReadStream(filePath, { start, end });
   const headers = {
     'Content-Type': MIME_TYPES[path.extname(filePath).toLowerCase()],
