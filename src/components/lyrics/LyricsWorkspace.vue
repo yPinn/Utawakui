@@ -284,22 +284,24 @@ watch(activeLineIndex, (index) => {
           <Clock :size="ICON_SIZE" aria-hidden="true" />
           <UiButton
             :icon="Minus"
-            title="歌詞提前 0.1 秒"
-            aria-label="歌詞提前 0.1 秒"
+            title="延後歌詞 0.1 秒"
+            aria-label="延後歌詞 0.1 秒"
             @click="adjustOffset(-0.1)"
           />
-          <span class="lyrics-offset__value">{{ offsetLabel }}</span>
+          <UiButton
+            class="lyrics-offset__value"
+            :disabled="state.offsetSeconds === 0"
+            title="重設歌詞時間偏移"
+            aria-label="重設歌詞時間偏移"
+            @click="resetOffset"
+          >
+            {{ offsetLabel }}
+          </UiButton>
           <UiButton
             :icon="Plus"
-            title="歌詞延後 0.1 秒"
-            aria-label="歌詞延後 0.1 秒"
+            title="提前歌詞 0.1 秒"
+            aria-label="提前歌詞 0.1 秒"
             @click="adjustOffset(0.1)"
-          />
-          <UiButton
-            :icon="RotateCcw"
-            title="重設偏移"
-            aria-label="重設偏移"
-            @click="resetOffset"
           />
         </div>
 
@@ -570,11 +572,14 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-offset__value {
+  justify-content: center;
   min-width: 52px;
+  padding: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
   text-align: center;
   font-variant-numeric: tabular-nums;
+  user-select: none;
 }
 
 .lyrics-separation {
