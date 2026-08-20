@@ -173,9 +173,18 @@ function clearCandidateSearch() {
   state.candidateSearch.error = null;
 }
 
-async function ensureLyricsFlow() {
+async function ensureLyricsFlow(options = {}) {
   const enabled = await ensureFeatureGate(FEATURE_IDS.LYRICS_FLOW);
-  if (!enabled) state.candidateSearch.error = '已取消啟用歌詞來源';
+  if (!enabled) {
+    const message = '已取消啟用歌詞來源';
+    if (options.errorTarget === 'musixmatchProbe') {
+      state.musixmatchProbe.error = message;
+    } else if (options.errorTarget === 'manualSave') {
+      state.manualSave.error = message;
+    } else {
+      state.candidateSearch.error = message;
+    }
+  }
   return enabled;
 }
 
@@ -315,6 +324,9 @@ async function playFromLine(line) {
 async function probeMusixmatch() {
   const track = selectedTrack.value;
   if (!track) return null;
+  if (!(await ensureLyricsFlow({ errorTarget: 'musixmatchProbe' }))) {
+    return null;
+  }
 
   musixmatchProbeRequestId += 1;
   const requestId = musixmatchProbeRequestId;

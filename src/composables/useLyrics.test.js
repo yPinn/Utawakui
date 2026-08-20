@@ -7,6 +7,7 @@ let getTrackLyricsMock;
 let probeMusixmatchLyricsMock;
 let importLyricsTextMock;
 let importLyricsFileMock;
+let getFeatureConfirmationsMock;
 let confirmFeatureGateMock;
 let listPlaylistsMock;
 let libraryBackfillStatusHandler;
@@ -58,6 +59,13 @@ Opening
 
 00:00:40.000 --> 00:00:50.000
 Middle`;
+
+const confirmedLyricsFlow = {
+  featureId: 'lyrics-flow',
+  noticeVersion: 'feature-notice-v2',
+  confirmedAt: '2026-08-20T00:00:00.000Z',
+  enabled: true,
+};
 
 async function flushPromises() {
   await Promise.resolve();
@@ -134,6 +142,9 @@ beforeEach(() => {
       },
     ],
   });
+  getFeatureConfirmationsMock = vi.fn().mockResolvedValue({
+    'lyrics-flow': confirmedLyricsFlow,
+  });
   confirmFeatureGateMock = vi.fn();
   listPlaylistsMock = vi.fn().mockResolvedValue([DEFAULT_PLAYLIST]);
   playTrackMock = vi.fn(async (track) => {
@@ -160,6 +171,7 @@ beforeEach(() => {
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
       importLyricsText: importLyricsTextMock,
       importLyricsFile: importLyricsFileMock,
+      getFeatureConfirmations: getFeatureConfirmationsMock,
       confirmFeatureGate: confirmFeatureGateMock,
       listPlaylists: listPlaylistsMock,
       onLibraryUpdated: vi.fn((handler) => {
