@@ -2,6 +2,7 @@
 import { computed } from 'vue';
 import { ImagePlus, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
@@ -95,9 +96,9 @@ const previewTrack = computed(() => ({
         />
       </label>
 
-      <p v-if="error" class="track-metadata__error" role="alert">
+      <UiHint v-if="error" tone="danger" role="alert">
         {{ error }}
-      </p>
+      </UiHint>
 
       <div class="track-metadata__actions">
         <UiButton
@@ -153,13 +154,6 @@ const previewTrack = computed(() => ({
   line-height: var(--ui-line-height-label);
 }
 
-.track-metadata__hint {
-  margin: var(--ui-space-1) 0 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-body);
-}
-
 .track-metadata__artwork-actions {
   display: flex;
   flex-wrap: wrap;
@@ -187,12 +181,6 @@ const previewTrack = computed(() => ({
 .track-metadata__input:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-}
-
-.track-metadata__error {
-  margin: 0;
-  color: var(--ui-color-danger);
-  font-size: var(--ui-font-size-sm);
 }
 
 .track-metadata__actions {
