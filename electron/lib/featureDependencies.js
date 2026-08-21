@@ -23,6 +23,7 @@ const {
 const FEATURE_DEPENDENCIES_DIRNAME = 'dependencies';
 const FFMPEG_DEPENDENCY_ID = 'ffmpeg-gyan-essentials';
 const YTDLP_DEPENDENCY_ID = 'yt-dlp-provider-tool';
+const DEFAULT_MAX_FEATURE_DEPENDENCY_DOWNLOAD_BYTES = 512 * 1024 * 1024;
 const SEPARATION_MODEL_DEPENDENCY_IDS = Object.freeze({
   kara2: 'uvr-mdxnet-kara-2',
   'inst-hq3': 'uvr-mdxnet-inst-hq-3',
@@ -132,14 +133,127 @@ function readContentLength(response) {
   return Number.isFinite(total) && total > 0 ? total : null;
 }
 
-async function readResponseBuffer(response, options = {}) {
+function downloadSizeLimit(dependency) {
+  const expectedSize = Number(dependency?.expectedSize);
+  return Number.isSafeInteger(expectedSize) && expectedSize > 0
+    ? expectedSize
+    : DEFAULT_MAX_FEATURE_DEPENDENCY_DOWNLOAD_BYTES;
+}
+
+function dependencyDownloadLabel(dependency) {
+  return dependency?.role || dependency?.id || dependency?.name || 'dependency';
+}
+
+function assertDownloadSizeWithinLimit(size, dependency) {
+  const limit = downloadSizeLimit(dependency);
+  if (size > limit) {
+    throw new Error(
+      `Downloaded ${dependencyDownloadLabel(dependency)} exceeds allowed size (${size} > ${limit})`,
+    );
+  }
+}
+
+function zipEntrySegments(entryName) {
+  return String(entryName).replaceAll('\\', '/').split('/').filter(Boolean);
+}
+
+function validateZipEntryName(entryName, destinationDir, dependency) {
+  const normalizedName = String(entryName || '');
+  const label = dependencyDownloadLabel(dependency);
+  if (
+    normalizedName.length === 0 ||
+    path.isAbsolute(normalizedName) ||
+    path.win32.isAbsolute(normalizedName) ||
+    zipEntrySegments(normalizedName).includes('..')
+  ) {
+    throw new Error(
+      `Archive entry extracts outside the destination for ${label}: ${normalizedName}`,
+    );
+  }
+
+  const resolvedDestination = path.resolve(destinationDir);
+  const resolvedEntry = path.resolve(resolvedDestination, normalizedName);
+  const relative = path.relative(resolvedDestination, resolvedEntry);
+  if (relative.startsWith('..') || path.isAbsolute(relative)) {
+    throw new Error(
+      `Archive entry extracts outside the destination for ${label}: ${normalizedName}`,
+    );
+  }
+}
+
+function findZipEndOfCentralDirectory(buffer) {
+  const minOffset = Math.max(0, buffer.length - 0xffff - 22);
+  for (let offset = buffer.length - 22; offset >= minOffset; offset -= 1) {
+    if (buffer.readUInt32LE(offset) === 0x06054b50) return offset;
+  }
+  return -1;
+}
+
+function validateZipArchiveBuffer(buffer, destinationDir, dependency) {
+  const eocdOffset = findZipEndOfCentralDirectory(buffer);
+  if (eocdOffset === -1) {
+    throw new Error(
+      `Invalid feature dependency archive for ${dependencyDownloadLabel(dependency)}`,
+    );
+  }
+
+  const entryCount = buffer.readUInt16LE(eocdOffset + 10);
+  const centralDirectorySize = buffer.readUInt32LE(eocdOffset + 12);
+  const centralDirectoryOffset = buffer.readUInt32LE(eocdOffset + 16);
+  const centralDirectoryEnd = centralDirectoryOffset + centralDirectorySize;
+  if (
+    centralDirectoryOffset < 0 ||
+    centralDirectoryEnd > eocdOffset ||
+    centralDirectoryEnd > buffer.length
+  ) {
+    throw new Error(
+      `Invalid feature dependency archive for ${dependencyDownloadLabel(dependency)}`,
+    );
+  }
+
+  let offset = centralDirectoryOffset;
+  for (let index = 0; index < entryCount; index += 1) {
+    if (offset + 46 > centralDirectoryEnd) {
+      throw new Error(
+        `Invalid feature dependency archive for ${dependencyDownloadLabel(dependency)}`,
+      );
+    }
+    if (buffer.readUInt32LE(offset) !== 0x02014b50) {
+      throw new Error(
+        `Invalid feature dependency archive for ${dependencyDownloadLabel(dependency)}`,
+      );
+    }
+
+    const filenameLength = buffer.readUInt16LE(offset + 28);
+    const extraLength = buffer.readUInt16LE(offset + 30);
+    const commentLength = buffer.readUInt16LE(offset + 32);
+    const filenameStart = offset + 46;
+    const filenameEnd = filenameStart + filenameLength;
+    if (filenameEnd > centralDirectoryEnd) {
+      throw new Error(
+        `Invalid feature dependency archive for ${dependencyDownloadLabel(dependency)}`,
+      );
+    }
+    validateZipEntryName(
+      buffer.toString('utf8', filenameStart, filenameEnd),
+      destinationDir,
+      dependency,
+    );
+    offset = filenameEnd + extraLength + commentLength;
+  }
+}
+
+async function readResponseBuffer(response, options = {}, dependency = null) {
+  const total = readContentLength(response);
+  if (total) assertDownloadSizeWithinLimit(total, dependency);
+
   if (!response.body?.getReader) {
     const buffer = Buffer.from(await response.arrayBuffer());
+    assertDownloadSizeWithinLimit(buffer.length, dependency);
     emitProgress(options, { stage: 'downloading', percent: 100 });
     return buffer;
   }
 
-  const total = readContentLength(response);
   const reader = response.body.getReader();
   const chunks = [];
   let received = 0;
@@ -151,6 +265,7 @@ async function readResponseBuffer(response, options = {}) {
     const chunk = Buffer.from(value);
     chunks.push(chunk);
     received += chunk.length;
+    assertDownloadSizeWithinLimit(received, dependency);
 
     if (total) {
       const percent = Math.min(100, Math.floor((received / total) * 100));
@@ -169,14 +284,19 @@ async function readResponseBuffer(response, options = {}) {
   return Buffer.concat(chunks);
 }
 
-async function downloadBuffer(url, fetchImpl = fetch, options = {}) {
+async function downloadBuffer(
+  url,
+  fetchImpl = fetch,
+  options = {},
+  dependency = null,
+) {
   const response = await fetchImpl(url);
   if (!response.ok) {
     throw new Error(
       `Failed to download feature dependency: HTTP ${response.status}`,
     );
   }
-  return readResponseBuffer(response, options);
+  return readResponseBuffer(response, options, dependency);
 }
 
 async function downloadText(url, fetchImpl = fetch) {
@@ -257,6 +377,22 @@ function expandZipArchive(
       [
         '& {',
         'param([string]$ArchivePath, [string]$DestinationPath)',
+        'Add-Type -AssemblyName System.IO.Compression.FileSystem',
+        '$root = [System.IO.Path]::GetFullPath($DestinationPath)',
+        'if (-not $root.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {',
+        '$root = $root + [System.IO.Path]::DirectorySeparatorChar',
+        '}',
+        '$archive = [System.IO.Compression.ZipFile]::OpenRead($ArchivePath)',
+        'try {',
+        'foreach ($entry in $archive.Entries) {',
+        '$target = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($DestinationPath, $entry.FullName));',
+        'if (-not $target.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {',
+        'throw "Archive entry extracts outside the destination: $($entry.FullName)"',
+        '}',
+        '}',
+        '} finally {',
+        '$archive.Dispose()',
+        '}',
         'Expand-Archive -LiteralPath $ArchivePath -DestinationPath $DestinationPath -Force',
         '}',
       ].join(' '),
@@ -339,6 +475,7 @@ async function getVerifiedFfmpegArchive(
     resolvedDependency.downloadUrl,
     options.fetchImpl,
     options,
+    resolvedDependency,
   );
   emitProgress(options, { stage: 'verifying' });
   const actualSha = sha256(archive);
@@ -367,6 +504,7 @@ async function downloadVerifiedArtifact(artifact, options = {}) {
     artifact.downloadUrl,
     options.fetchImpl,
     options,
+    artifact,
   );
   emitProgress(options, { stage: 'verifying' });
   const actualSha = sha256(buffer);
@@ -384,15 +522,15 @@ async function extractZipBuffer(
   artifact,
   options = {},
 ) {
+  const extractArchive = options.extractArchive || expandZipArchive;
+  if (extractArchive === expandZipArchive) {
+    validateZipArchiveBuffer(buffer, destinationDir, artifact);
+  }
+
   const archivePath = path.join(destinationDir, `${artifact.role}.zip`);
   atomicWriteBuffer(archivePath, buffer);
   try {
-    await (options.extractArchive || expandZipArchive)(
-      archivePath,
-      destinationDir,
-      artifact,
-      options,
-    );
+    await extractArchive(archivePath, destinationDir, artifact, options);
   } finally {
     fs.rmSync(archivePath, { force: true });
   }
@@ -757,14 +895,14 @@ async function ensureFfmpegDependency(userDataDir, options = {}) {
       options,
     );
 
+    const extractArchive = options.extractArchive || expandZipArchive;
+    if (extractArchive === expandZipArchive) {
+      validateZipArchiveBuffer(archive, tmpRoot, resolvedDependency);
+    }
+
     atomicWriteBuffer(archivePath, archive);
     emitProgress(options, { stage: 'installing' });
-    await (options.extractArchive || expandZipArchive)(
-      archivePath,
-      tmpRoot,
-      resolvedDependency,
-      options,
-    );
+    await extractArchive(archivePath, tmpRoot, resolvedDependency, options);
 
     const extractedExecutable = path.join(
       extractedRoot,
@@ -875,6 +1013,7 @@ async function ensureModelDependency(userDataDir, modelId, options = {}) {
     dependency.downloadUrl,
     options.fetchImpl,
     options,
+    dependency,
   );
   return installModelBuffer(userDataDir, dependency, buffer, options);
 }

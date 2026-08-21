@@ -46,6 +46,58 @@ function arrayBufferFrom(buffer) {
   );
 }
 
+function crc32(buffer) {
+  let crc = 0xffffffff;
+  for (const byte of buffer) {
+    crc ^= byte;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = crc & 1 ? (crc >>> 1) ^ 0xedb88320 : crc >>> 1;
+    }
+  }
+  return (crc ^ 0xffffffff) >>> 0;
+}
+
+function createStoredZip(entries) {
+  const localParts = [];
+  const centralParts = [];
+  let offset = 0;
+
+  for (const entry of entries) {
+    const name = Buffer.from(entry.name, 'utf8');
+    const data = Buffer.from(entry.data);
+    const checksum = crc32(data);
+    const localHeader = Buffer.alloc(30);
+    localHeader.writeUInt32LE(0x04034b50, 0);
+    localHeader.writeUInt16LE(20, 4);
+    localHeader.writeUInt32LE(checksum, 14);
+    localHeader.writeUInt32LE(data.length, 18);
+    localHeader.writeUInt32LE(data.length, 22);
+    localHeader.writeUInt16LE(name.length, 26);
+    localParts.push(localHeader, name, data);
+
+    const centralHeader = Buffer.alloc(46);
+    centralHeader.writeUInt32LE(0x02014b50, 0);
+    centralHeader.writeUInt16LE(20, 4);
+    centralHeader.writeUInt16LE(20, 6);
+    centralHeader.writeUInt32LE(checksum, 16);
+    centralHeader.writeUInt32LE(data.length, 20);
+    centralHeader.writeUInt32LE(data.length, 24);
+    centralHeader.writeUInt16LE(name.length, 28);
+    centralHeader.writeUInt32LE(offset, 42);
+    centralParts.push(centralHeader, name);
+    offset += localHeader.length + name.length + data.length;
+  }
+
+  const centralSize = centralParts.reduce((sum, part) => sum + part.length, 0);
+  const end = Buffer.alloc(22);
+  end.writeUInt32LE(0x06054b50, 0);
+  end.writeUInt16LE(entries.length, 8);
+  end.writeUInt16LE(entries.length, 10);
+  end.writeUInt32LE(centralSize, 12);
+  end.writeUInt32LE(offset, 16);
+  return Buffer.concat([...localParts, ...centralParts, end]);
+}
+
 function makeDependency(archive) {
   return {
     id: 'ffmpeg-test',
@@ -138,7 +190,12 @@ function makeModelDependency(modelBuffer) {
 describe('ensureFfmpegDependency', () => {
   it('passes archive and destination paths to PowerShell through named script parameters', async () => {
     const userDataDir = makeTempDir();
-    const archive = Buffer.from('fake zip bytes');
+    const archive = createStoredZip([
+      {
+        name: 'ffmpeg-test/bin/ffmpeg.exe',
+        data: Buffer.from('exe'),
+      },
+    ]);
     const dependency = makeDependency(archive);
     const fetchImpl = vi.fn().mockResolvedValue({
       ok: true,
@@ -181,6 +238,27 @@ describe('ensureFfmpegDependency', () => {
     expect(command).not.toContain('$args');
     expect(args.at(-2)).toMatch(/ffmpeg\.zip$/);
     expect(args.at(-1)).toContain('.ffmpeg-');
+  });
+
+  it('rejects archive entries that would extract outside the destination', async () => {
+    const userDataDir = makeTempDir();
+    const archive = createStoredZip([
+      { name: '../escape.txt', data: Buffer.from('escaped') },
+    ]);
+    const dependency = makeDependency(archive);
+    const escapePath = path.join(userDataDir, 'dependencies', 'escape.txt');
+
+    await expect(
+      ensureFfmpegDependency(userDataDir, {
+        allowNonWindows: true,
+        dependency,
+        fetchImpl: vi.fn().mockResolvedValue({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
+        }),
+      }),
+    ).rejects.toThrow(/outside the destination/);
+    expect(fs.existsSync(escapePath)).toBe(false);
   });
 
   it('reuses a verified FFmpeg archive cache after extraction fails', async () => {
@@ -431,6 +509,27 @@ describe('ensureFfmpegDependency', () => {
         extractArchive: vi.fn(),
       }),
     ).rejects.toThrow(/checksum/);
+  });
+
+  it('rejects an archive download larger than its declared expected size', async () => {
+    const userDataDir = makeTempDir();
+    const archive = Buffer.from('larger than expected');
+    const dependency = {
+      ...makeDependency(archive),
+      expectedSize: 4,
+    };
+
+    await expect(
+      ensureFfmpegDependency(userDataDir, {
+        allowNonWindows: true,
+        dependency,
+        fetchImpl: vi.fn().mockResolvedValue({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
+        }),
+        extractArchive: vi.fn(),
+      }),
+    ).rejects.toThrow(/exceeds allowed size/);
   });
 });
 
@@ -827,6 +926,25 @@ describe('model feature dependencies', () => {
         }),
       }),
     ).rejects.toThrow(/checksum/);
+  });
+
+  it('rejects a model download that exceeds the declared expected size', async () => {
+    const userDataDir = makeTempDir();
+    const modelBuffer = Buffer.from('oversized model bytes');
+    const dependency = {
+      ...makeModelDependency(modelBuffer),
+      expectedSize: 4,
+    };
+
+    await expect(
+      ensureModelDependency(userDataDir, 'unused', {
+        dependency,
+        fetchImpl: vi.fn().mockResolvedValue({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(arrayBufferFrom(modelBuffer)),
+        }),
+      }),
+    ).rejects.toThrow(/exceeds allowed size/);
   });
 
   it('reports installed and legacy-available status for registry dependencies', async () => {
