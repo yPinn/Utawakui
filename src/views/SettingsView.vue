@@ -1,7 +1,6 @@
 <script setup>
 import { computed, onMounted, shallowRef } from 'vue';
 import {
-  CircleAlert,
   Ellipsis,
   FolderOpen,
   Headphones,
@@ -32,7 +31,6 @@ import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
-import { useYtdlpStatus } from '../composables/useYtdlpStatus.js';
 import packageJson from '../../package.json';
 
 const {
@@ -58,16 +56,10 @@ const {
   removeDependency,
   repairDependency,
 } = useFeatureDependencies();
-const {
-  state: ytdlpState,
-  refreshStatus: refreshYtdlpStatus,
-  checkForUpdate: checkYtdlpUpdate,
-} = useYtdlpStatus();
 
 const isRefreshingMetadata = shallowRef(false);
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
-const ytdlpMessage = shallowRef('');
 
 // Overflow menu for the less-frequent 曲庫位置 actions — same
 // open/position/select shape as SettingsDependencyActions.vue's menu,
@@ -144,7 +136,7 @@ const {
   gateActionLabel,
   isGateActionDisabled,
   DEPENDENCY_ADVANCED_ACTIONS,
-} = useFeatureGatePresentation({ ytdlpMessage, systemFfmpegDetection });
+} = useFeatureGatePresentation({ systemFfmpegDetection });
 
 function isDependencyInstalled(dependencyId) {
   return Boolean(featureDependencyState.byId[dependencyId]?.installed);
@@ -197,15 +189,6 @@ const diagnosticsRows = computed(() => {
       status: recordCount > 0 ? '已記錄' : '待命',
       tone: recordCount > 0 ? 'warning' : 'muted',
     },
-    {
-      id: 'error-report-bundle',
-      icon: CircleAlert,
-      title: '回報資料包',
-      description: '整理必要的錯誤資訊與環境摘要；不包含你的音樂檔案。',
-      value: '不含媒體檔案',
-      status: '待開放',
-      tone: 'gated',
-    },
   ];
 });
 
@@ -214,10 +197,10 @@ const appUpdateRows = [
     id: 'app-version',
     icon: RefreshCw,
     title: 'Utawakui 版本',
-    description: '檢查是否有新版安裝程式可用。',
+    description: '目前安裝的版本。',
     value: packageJson.version ? `v${packageJson.version}` : '目前版本',
-    status: '待開放',
-    tone: 'warning',
+    status: '目前',
+    tone: 'muted',
   },
 ];
 
@@ -263,28 +246,11 @@ async function refreshSettingsState() {
   }
   refreshConfirmations();
   refreshDependencies();
-  refreshYtdlpStatus();
 }
 
-async function refreshDependencyStatus(itemId) {
+async function refreshDependencyStatus() {
   await refreshDependencies();
-  if (itemId === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL) {
-    await refreshYtdlpStatus();
-  }
   clearResolvedSetupRequest();
-}
-
-async function checkForYtdlpUpdate() {
-  ytdlpMessage.value = '';
-  await checkYtdlpUpdate();
-  if (ytdlpState.error || ytdlpState.lastCheckResult === 'error') {
-    ytdlpMessage.value = ytdlpState.error || '檢查更新失敗，請確認網路連線';
-    return;
-  }
-  ytdlpMessage.value =
-    ytdlpState.lastCheckResult === 'updated'
-      ? `已更新至 ${ytdlpState.version}`
-      : '已是最新版本';
 }
 
 async function handleWorkflowItemAction(itemId) {
@@ -296,14 +262,12 @@ async function handleWorkflowItemAction(itemId) {
     itemId === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL &&
     featureDependencyState.byId[itemId]?.installed
   ) {
-    await checkForYtdlpUpdate();
+    await repairDependency(itemId);
+    await refreshDependencyStatus();
     return;
   }
   if (isKnownFeatureDependency(itemId)) {
     await prepareDependency(itemId);
-    if (itemId === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL) {
-      await refreshYtdlpStatus();
-    }
     clearResolvedSetupRequest();
   }
 }
@@ -312,13 +276,13 @@ async function handleWorkflowItemAdvancedAction({ item, action }) {
   if (!isKnownFeatureDependency(item.id)) return;
 
   if (action === DEPENDENCY_ADVANCED_ACTIONS.REFRESH) {
-    await refreshDependencyStatus(item.id);
+    await refreshDependencyStatus();
     return;
   }
 
   if (action === DEPENDENCY_ADVANCED_ACTIONS.REPAIR) {
     await repairDependency(item.id);
-    await refreshDependencyStatus(item.id);
+    await refreshDependencyStatus();
     clearResolvedSetupRequest();
     return;
   }
@@ -332,7 +296,7 @@ async function handleWorkflowItemAdvancedAction({ item, action }) {
       );
     if (!confirmed) return;
     await removeDependency(item.id);
-    await refreshDependencyStatus(item.id);
+    await refreshDependencyStatus();
   }
 }
 
@@ -368,11 +332,9 @@ onMounted(refreshSettingsState);
       >
         <header class="settings-view__column-header">
           <h2 id="settings-content-title" class="settings-view__column-title">
-            本機內容與診斷
+            本機設定
           </h2>
-          <p class="settings-view__column-summary">
-            曲庫位置、更新檢查與維護工具
-          </p>
+          <p class="settings-view__column-summary">曲庫、音訊輸出與維護</p>
         </header>
 
         <SettingsBlock title="本機曲庫" status="本機" status-tone="success">
@@ -480,34 +442,7 @@ onMounted(refreshSettingsState);
           @close="isFfmpegSourceModalOpen = false"
         />
 
-        <SettingsBlock
-          title="應用程式更新"
-          status="待開放"
-          status-tone="warning"
-        >
-          <SettingsActionRow
-            v-for="row in appUpdateRows"
-            :key="row.id"
-            :icon="row.icon"
-            :title="row.title"
-            :value="row.value"
-            :status="row.status"
-            :status-tone="row.tone"
-            :tooltip="row.description"
-          >
-            <template #actions>
-              <UiButton
-                :icon="RefreshCw"
-                disabled
-                aria-disabled="true"
-                aria-label="檢查更新稍後提供"
-                title="檢查更新稍後提供"
-              />
-            </template>
-          </SettingsActionRow>
-        </SettingsBlock>
-
-        <SettingsBlock title="診斷與回報" status="待開放" status-tone="warning">
+        <SettingsBlock title="維護" status="本機" status-tone="muted">
           <SettingsActionRow
             v-for="row in diagnosticsRows"
             :key="row.id"
@@ -517,17 +452,18 @@ onMounted(refreshSettingsState);
             :status="row.status"
             :status-tone="row.tone"
             :tooltip="row.description"
-          >
-            <template #actions>
-              <UiButton
-                :icon="CircleAlert"
-                disabled
-                aria-disabled="true"
-                aria-label="稍後提供"
-                title="稍後提供"
-              />
-            </template>
-          </SettingsActionRow>
+          />
+
+          <SettingsActionRow
+            v-for="row in appUpdateRows"
+            :key="row.id"
+            :icon="row.icon"
+            :title="row.title"
+            :value="row.value"
+            :status="row.status"
+            :status-tone="row.tone"
+            :tooltip="row.description"
+          />
         </SettingsBlock>
       </section>
 
@@ -626,18 +562,13 @@ onMounted(refreshSettingsState);
   min-width: 0;
   display: grid;
   align-content: start;
-  gap: var(--ui-space-3);
+  gap: var(--ui-settings-column-gap);
 }
 
 .settings-view__column-header {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-1);
-  /* On top of the column's own space-3 gap, so the header reads as this
-     column's heading — grouped tightly with its own summary line, then set
-     apart from the SettingsBlocks below — rather than sitting at the same
-     distance as the blocks are from each other. */
-  margin-bottom: var(--ui-space-2);
+  gap: var(--ui-settings-column-header-gap);
 }
 
 .settings-view__column-title,
@@ -647,9 +578,10 @@ onMounted(refreshSettingsState);
 
 .settings-view__column-title {
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-title);
+  font-size: var(--ui-font-size-xl);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-headline);
+  text-wrap: balance;
 }
 
 .settings-view__column-summary {

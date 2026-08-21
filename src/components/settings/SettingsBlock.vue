@@ -38,8 +38,8 @@ const headingId = computed(
 .settings-block {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
+  gap: var(--ui-settings-block-gap);
+  padding: var(--ui-settings-block-padding);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
   background: var(--ui-color-surface);
@@ -88,7 +88,7 @@ const headingId = computed(
 .settings-block__body {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-2);
+  gap: var(--ui-settings-block-body-gap);
 }
 
 @media (max-width: 680px) {

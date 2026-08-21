@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FEATURE_GATES,
   FEATURE_IDS,
   buildFeatureConfirmation,
   getFeatureGate,
@@ -15,7 +16,7 @@ describe('featureGates', () => {
       }),
     ).toEqual({
       featureId: 'provider-flow',
-      noticeVersion: 'feature-notice-v2',
+      noticeVersion: 'feature-notice-v3',
       confirmedAt: '2026-08-13T00:00:00.000Z',
       enabled: true,
     });
@@ -32,22 +33,22 @@ describe('featureGates', () => {
     expect(
       normalizeFeatureConfirmations({
         'provider-flow': {
-          noticeVersion: 'feature-notice-v2',
+          noticeVersion: 'feature-notice-v3',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
         'lyrics-flow': {
-          noticeVersion: 'old-notice',
+          noticeVersion: 'feature-notice-v2',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
         'audio-processing-flow': {
-          noticeVersion: 'feature-notice-v2',
+          noticeVersion: 'feature-notice-v3',
           confirmedAt: 'not-a-date',
           enabled: true,
         },
         'public-output-flow': {
-          noticeVersion: 'feature-notice-v2',
+          noticeVersion: 'feature-notice-v3',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: false,
         },
@@ -55,7 +56,7 @@ describe('featureGates', () => {
     ).toEqual({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'feature-notice-v2',
+        noticeVersion: 'feature-notice-v3',
         confirmedAt: '2026-08-13T00:00:00.000Z',
         enabled: true,
       },
@@ -67,7 +68,7 @@ describe('featureGates', () => {
       featureConfirmations: {
         'provider-flow': {
           featureId: 'provider-flow',
-          noticeVersion: 'feature-notice-v2',
+          noticeVersion: 'feature-notice-v3',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
@@ -76,5 +77,36 @@ describe('featureGates', () => {
 
     expect(isFeatureGateEnabled(config, FEATURE_IDS.PROVIDER_FLOW)).toBe(true);
     expect(isFeatureGateEnabled(config, FEATURE_IDS.LYRICS_FLOW)).toBe(false);
+  });
+
+  it('keeps declaration copy concise and consistent across every gate', () => {
+    const gates = Object.values(FEATURE_GATES);
+
+    expect(gates).toHaveLength(4);
+    for (const gate of gates) {
+      expect(gate.noticeVersion).toBe('feature-notice-v3');
+      expect(gate.cancelLabel).toBe('取消');
+      expect(gate.summary.length).toBeLessThanOrEqual(40);
+      expect(gate.summary.endsWith('。')).toBe(true);
+      expect(gate.body.length).toBeGreaterThanOrEqual(3);
+      expect(gate.body.length).toBeLessThanOrEqual(4);
+      expect(gate.body.every((line) => line.endsWith('。'))).toBe(true);
+      expect(gate.body.at(-1)).toBe(
+        'Utawakui 不會驗證素材授權；啟用紀錄僅保存在本機。',
+      );
+    }
+
+    expect(getFeatureGate(FEATURE_IDS.PROVIDER_FLOW).body.join('')).toContain(
+      '來源平台',
+    );
+    expect(getFeatureGate(FEATURE_IDS.LYRICS_FLOW).body.join('')).toContain(
+      '公開顯示',
+    );
+    expect(
+      getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
+    ).toContain('FFmpeg（GPLv3）');
+    expect(
+      getFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW).body.join(''),
+    ).toContain('直播、錄影或 VOD');
   });
 });

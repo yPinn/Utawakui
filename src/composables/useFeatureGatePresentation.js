@@ -6,9 +6,7 @@ import {
   ListChecks,
   RefreshCw,
   Settings,
-  SlidersHorizontal,
   Trash2,
-  Video,
   Wrench,
 } from '../icons/index.js';
 import {
@@ -19,26 +17,21 @@ import { FEATURE_GATES } from '../constants/featureGates.js';
 import { useFeatureDependencies } from './useFeatureDependencies.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
-import { useYtdlpStatus } from './useYtdlpStatus.js';
 
 // Feature-gate/dependency row presentation for SettingsView.vue — pure
 // data-shaping (labels, status/tone, workflow-item assembly) that has no
 // template ref or lifecycle dependency, split out of the view so the view
 // stays interaction/template glue. A per-call factory, not a module-scope
-// singleton like useFeatureDependencies.js/useYtdlpStatus.js — those own IPC
-// subscriptions that must survive view unmount, this is per-view UI state
-// and SettingsView unmounts on every tab switch (see CLAUDE.md's App shell
-// section), so a singleton here would be the wrong lifetime.
+// singleton like useFeatureDependencies.js — those own IPC subscriptions
+// that must survive view unmount, this is per-view UI state and SettingsView
+// unmounts on every tab switch (see CLAUDE.md's App shell section), so a
+// singleton here would be the wrong lifetime.
 // systemFfmpegDetection is a caller-supplied ref holding the last result of
 // window.Utawakui.detectSystemFfmpeg() (SettingsView.vue runs one probe on
-// mount) — same injection shape as ytdlpMessage above. It only feeds the
-// compact row's "可用系統版本" hint; the full detection detail (path,
-// smoke-test failure reason, a manual re-detect) lives in
-// FfmpegSourceModal.vue's own local state, not here.
-export function useFeatureGatePresentation({
-  ytdlpMessage,
-  systemFfmpegDetection,
-} = {}) {
+// mount). It only feeds the compact row's "可用系統版本" hint; the full
+// detection detail (path, smoke-test failure reason, a manual re-detect)
+// lives in FfmpegSourceModal.vue's own local state, not here.
+export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
   const {
     state: featureGateState,
     isFeatureEnabled,
@@ -46,16 +39,8 @@ export function useFeatureGatePresentation({
   } = useFeatureGates();
   const { clearFeatureGateRequest } = useFeatureGateAccess();
   const { state: featureDependencyState } = useFeatureDependencies();
-  const { state: ytdlpState } = useYtdlpStatus();
 
   const enablingFeatureId = shallowRef(null);
-
-  const ytdlpCheckResultLabel = computed(() => {
-    if (ytdlpState.lastCheckResult === 'up-to-date') return '最新';
-    if (ytdlpState.lastCheckResult === 'updated') return '已更新';
-    if (ytdlpState.lastCheckResult === 'error') return '失敗';
-    return '';
-  });
 
   const FEATURE_GATE_LABELS = {
     'provider-flow': '外部來源',
@@ -82,54 +67,21 @@ export function useFeatureGatePresentation({
     return featureDependencyState.actionIds.has(`${action}:${dependencyId}`);
   }
 
-  function dependencyLicenseLabel(license) {
-    if (license === 'GPL-3.0-or-later bundled executable') return 'GPLv3+';
-    if (license === 'GPL-3.0') return 'GPLv3';
-    return license || '授權資訊';
-  }
-
-  function dependencySourceLabel(dependency) {
-    if (dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL) {
-      return 'yt-dlp';
-    }
-    if (dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS) {
-      return 'Gyan FFmpeg';
-    }
-    if (dependency.kind === 'model') return 'UVR 模型';
-    return dependency.name;
-  }
-
-  function dependencyVersionLabel(dependency, isYtdlp) {
-    if (isYtdlp && ytdlpState.version) return ytdlpState.version;
-    if (dependency.installedVersion) return `v${dependency.installedVersion}`;
-    if (dependency.displayVersion) return dependency.displayVersion;
-    if (dependency.version === 'managed') return '隨附';
-    // Models have no user-facing version — dependency.version is the raw
-    // ONNX filename stem (e.g. "UVR_MDXNET_KARA_2"), an internal id, not
-    // something to show as a version number. The model's name already
-    // identifies it.
-    if (dependency.kind === 'model') return '';
-    return dependency.version ? `v${dependency.version}` : '';
-  }
-
-  function dependencyDisclosureValue(dependency, isYtdlp) {
-    // A system-installed FFmpeg has no app-tracked license/version to
-    // disclose here (that detail lives in FfmpegSourceModal.vue) — showing
-    // the managed build's GPLv3/version fields would misattribute them to
-    // a binary Utawakui never downloaded.
+  function dependencyValueLabel(dependency) {
     if (
       dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS &&
       dependency.source === 'system'
     ) {
-      return '系統安裝的 FFmpeg';
+      return '使用系統安裝版本';
     }
-    return [
-      dependencySourceLabel(dependency),
-      dependencyLicenseLabel(dependency.license),
-      dependencyVersionLabel(dependency, isYtdlp),
-    ]
-      .filter(Boolean)
-      .join(' / ');
+    if (dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL) {
+      return '保存外部來源到本機曲庫';
+    }
+    if (dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS) {
+      return '支援音訊轉換與格式讀取';
+    }
+    if (dependency.kind === 'model') return '產生人聲分離結果時使用';
+    return dependency.name || '';
   }
 
   function dependencyAdvancedActions({ dependency, installed, preparing }) {
@@ -212,7 +164,7 @@ export function useFeatureGatePresentation({
       ? dependencyProgressLabel(progress)
       : installed
         ? isYtdlp
-          ? ytdlpCheckResultLabel.value || '可使用'
+          ? '可使用'
           : usingSystemFfmpeg
             ? '使用系統版本'
             : '已準備'
@@ -229,24 +181,21 @@ export function useFeatureGatePresentation({
       description: isFfmpeg
         ? '讓 Utawakui 讀取不同音訊格式，供人聲分離與音訊處理使用。'
         : isYtdlp
-          ? ytdlpMessage?.value || '用來把你選定的外部來源保存到本機曲庫。'
+          ? '用來把你選定的外部來源保存到本機曲庫。'
           : isModel
             ? '下載後即可在產生人聲分離結果時使用。'
             : '此功能需要先下載的工具或資料。',
-      value: dependencyDisclosureValue(current, isYtdlp),
+      value: dependencyValueLabel(current),
       status,
       statusTone: progress
         ? 'info'
-        : isYtdlp &&
-            (ytdlpState.lastCheckResult === 'error' || ytdlpState.error)
-          ? 'danger'
-          : installed
-            ? 'success'
-            : preparing
+        : installed
+          ? 'success'
+          : preparing
+            ? 'info'
+            : systemFfmpegAvailable
               ? 'info'
-              : systemFfmpegAvailable
-                ? 'info'
-                : 'warning',
+              : 'warning',
       icon: isFfmpeg ? Wrench : isModel ? Cpu : Download,
       // ffmpeg's primary action always opens FfmpegSourceModal.vue (see
       // SettingsView.vue's handleWorkflowItemAction) rather than downloading
@@ -256,18 +205,16 @@ export function useFeatureGatePresentation({
         : installed && !isYtdlp
           ? null
           : isYtdlp && installed
-            ? RefreshCw
+            ? Wrench
             : Download,
-      actionDisabled: isBusy || (isYtdlp && installed && ytdlpState.isChecking),
+      actionDisabled: isBusy,
       actionLabel: isFfmpeg
         ? installed
           ? 'FFmpeg 來源設定'
           : `準備${title}`
         : installed
           ? isYtdlp
-            ? ytdlpState.isChecking
-              ? '檢查下載工具中'
-              : '檢查並更新下載工具'
+            ? '重新準備下載工具'
             : `${title}已準備`
           : preparing
             ? `準備${title}中`
@@ -280,32 +227,18 @@ export function useFeatureGatePresentation({
     };
   }
 
-  function getPublicOutputWorkflowItems() {
-    return [
-      {
-        id: 'public-output-defaults',
-        kind: 'planned-setting',
-        icon: Video,
-        title: 'OBS 輸出預設',
-        description: '設定未來 OBS 畫面來源與場次輸出偏好。',
-        value: '尚未提供',
-        status: '待開放',
-        statusTone: 'gated',
-        actionIcon: SlidersHorizontal,
-        actionDisabled: true,
-        actionLabel: 'OBS 輸出設定稍後提供',
-      },
-    ];
+  function workflowItemSortRank(item) {
+    if (item.statusTone === 'info') return 0;
+    if (['未準備', '待整理', '可用系統版本'].includes(item.status)) return 1;
+    if (item.statusTone === 'warning' || item.statusTone === 'gated') return 2;
+    if (item.statusTone === 'success') return 4;
+    return 3;
   }
 
   function getFeatureWorkflowItems(featureId) {
-    const dependencyItems = getFeatureDependencies(featureId).map(
-      dependencyWorkflowItem,
-    );
-    if (featureId === 'public-output-flow') {
-      return [...getPublicOutputWorkflowItems(), ...dependencyItems];
-    }
-    return dependencyItems;
+    return getFeatureDependencies(featureId)
+      .map(dependencyWorkflowItem)
+      .sort((a, b) => workflowItemSortRank(a) - workflowItemSortRank(b));
   }
 
   const featureGateRows = computed(() =>
@@ -318,12 +251,10 @@ export function useFeatureGatePresentation({
       return {
         id: gate.id,
         title: FEATURE_GATE_LABELS[gate.id] ?? gate.title,
-        // No separate "value" line here — unlike a real dependency's
-        // source/license/version (genuinely new information, and legally
-        // required to stay visible), a gate's value would just be a second,
-        // slightly longer restatement of `title` (e.g. "音訊處理" / "人聲分離與
-        // 音訊處理"). description already carries the one sentence that adds
-        // real information.
+        // No separate "value" line here — a gate's value would just be a
+        // second, slightly longer restatement of `title` (e.g. "音訊處理" /
+        // "人聲分離與音訊處理"). description already carries the one sentence
+        // that adds real information.
         description: gate.summary,
         status: enabled ? '已啟用' : '未啟用',
         tone: enabled ? 'success' : 'gated',

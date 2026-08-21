@@ -87,6 +87,38 @@ const managedProgressLabel = computed(() => {
   }
   return '準備中…';
 });
+const systemSourceCaption = computed(() => {
+  if (isDetecting.value) return '正在檢查本機可用版本';
+  if (detection.value?.ok) return '已找到可用版本';
+  if (detection.value) {
+    return detection.value.reason
+      ? `未找到可用版本：${detection.value.reason}`
+      : '未找到可用版本';
+  }
+  return '尚未檢查';
+});
+const systemSourceDetail = computed(() => {
+  if (!detection.value) return '尚未檢查系統 FFmpeg';
+  if (!detection.value.ok) return detection.value.reason || '未找到可用版本';
+  return [
+    detection.value.path,
+    detection.value.version && `v${detection.value.version}`,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+});
+const managedSourceCaption = computed(
+  () => managedProgressLabel.value || '由 Utawakui 下載並保存於本機',
+);
+const managedSourceDetail = computed(() =>
+  [
+    managedDependency?.name,
+    managedDependency?.license,
+    managedDependency?.displayVersion,
+  ]
+    .filter(Boolean)
+    .join(' · '),
+);
 
 const isSystemSelectable = computed(() => Boolean(detection.value?.ok));
 const isBusy = computed(
@@ -140,6 +172,7 @@ async function chooseManaged() {
               'ffmpeg-source-modal__row--active': currentSource === 'system',
             }"
             :disabled="!isSystemSelectable || isBusy"
+            :title="systemSourceDetail"
             @click="chooseSystem"
           >
             <Settings :size="ICON_SIZE" aria-hidden="true" />
@@ -148,14 +181,7 @@ async function chooseManaged() {
                 >使用系統安裝的 FFmpeg</span
               >
               <span class="ffmpeg-source-modal__caption">
-                <template v-if="isDetecting">偵測中…</template>
-                <template v-else-if="detection?.ok"
-                  >{{ detection.path }} · v{{ detection.version }}</template
-                >
-                <template v-else-if="detection">{{
-                  detection.reason
-                }}</template>
-                <template v-else>尚未偵測</template>
+                {{ systemSourceCaption }}
               </span>
             </span>
             <UiStatusIcon
@@ -187,21 +213,16 @@ async function chooseManaged() {
               'ffmpeg-source-modal__row--active': currentSource === 'managed',
             }"
             :disabled="isBusy"
+            :title="managedSourceDetail"
             @click="chooseManaged"
           >
             <Download :size="ICON_SIZE" aria-hidden="true" />
             <span class="ffmpeg-source-modal__label-group">
               <span class="ffmpeg-source-modal__label"
-                >下載內建管理版本({{ managedDependency?.name }})</span
+                >使用 Utawakui 管理的版本</span
               >
               <span class="ffmpeg-source-modal__caption">
-                <template v-if="managedProgressLabel">{{
-                  managedProgressLabel
-                }}</template>
-                <template v-else
-                  >{{ managedDependency?.license }} ·
-                  {{ managedDependency?.displayVersion }}</template
-                >
+                {{ managedSourceCaption }}
               </span>
             </span>
             <UiStatusIcon
@@ -234,10 +255,11 @@ async function chooseManaged() {
 }
 
 .ffmpeg-source-modal__description {
+  max-width: 65ch;
   margin: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-md);
+  line-height: var(--ui-line-height-body);
 }
 
 .ffmpeg-source-modal__list {
@@ -285,14 +307,15 @@ async function chooseManaged() {
 
 .ffmpeg-source-modal__label-group {
   display: grid;
-  gap: 2px;
+  gap: var(--ui-settings-row-copy-gap);
   min-width: 0;
   flex: 1;
 }
 
 .ffmpeg-source-modal__label {
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
 }
 
 .ffmpeg-source-modal__caption {

@@ -4,7 +4,6 @@ import { Info, Loader2, Plus } from '../../icons/index.js';
 import SettingsActionRow from './SettingsActionRow.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
 
@@ -42,6 +41,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
       :description="gate.description"
       :status="gate.status"
       :status-tone="gate.tone"
+      variant="feature"
     >
       <template #actions>
         <UiIconButton
@@ -88,32 +88,25 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
     </UiModal>
 
     <div v-if="shouldShowItems" class="settings-feature-gate-row__items">
-      <div
+      <SettingsActionRow
         v-for="item in items"
         :key="item.id"
-        class="settings-feature-gate-row__item"
-        :title="item.description"
+        :icon="item.icon"
+        :title="item.title || item.name"
+        :value="item.value"
+        :status="item.status"
+        :status-tone="item.statusTone"
+        :tooltip="item.description"
+        variant="subtle"
       >
-        <div class="settings-feature-gate-row__item-copy">
-          <div class="settings-feature-gate-row__item-heading">
-            <span class="settings-feature-gate-row__item-title">
-              {{ item.title || item.name }}
-            </span>
-            <UiChip :tone="item.statusTone">
-              {{ item.status }}
-            </UiChip>
-          </div>
-          <p class="settings-feature-gate-row__item-value" :title="item.value">
-            {{ item.value }}
-          </p>
-        </div>
-
-        <SettingsDependencyActions
-          :item="item"
-          @primary-action="emit('itemAction', $event)"
-          @advanced-action="emit('itemAdvancedAction', $event)"
-        />
-      </div>
+        <template #actions>
+          <SettingsDependencyActions
+            :item="item"
+            @primary-action="emit('itemAction', $event)"
+            @advanced-action="emit('itemAdvancedAction', $event)"
+          />
+        </template>
+      </SettingsActionRow>
     </div>
   </div>
 </template>
@@ -139,12 +132,13 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
 .settings-feature-gate-row__notice {
   display: grid;
   gap: var(--ui-space-3);
+  max-width: 65ch;
 }
 
 .settings-feature-gate-row__notice-summary {
   margin: 0;
   color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-body);
 }
@@ -155,7 +149,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
   margin: 0;
   padding-left: var(--ui-space-4);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-font-size-md);
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-body);
 }
@@ -168,68 +162,16 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
   min-width: 0;
   display: grid;
   gap: var(--ui-space-1);
-  padding-inline-start: calc(
-    var(--ui-settings-row-icon-size) + var(--ui-space-2)
-  );
-}
-
-.settings-feature-gate-row__item {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-}
-
-.settings-feature-gate-row__item-copy {
-  min-width: 0;
-  display: grid;
-  gap: calc(var(--ui-space-1) / 2);
-}
-
-.settings-feature-gate-row__item-heading {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  flex-wrap: wrap;
-}
-
-.settings-feature-gate-row__item-title,
-.settings-feature-gate-row__item-value {
-  margin: 0;
-}
-
-.settings-feature-gate-row__item-title {
-  min-width: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-}
-
-.settings-feature-gate-row__item-value {
-  min-width: 0;
-  overflow: hidden;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  padding-block: var(--ui-space-1);
+  padding-inline-start: var(--ui-space-2);
+  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 @media (max-width: 680px) {
   .settings-feature-gate-row__items {
+    padding-block: 0;
     padding-inline-start: 0;
-  }
-
-  .settings-feature-gate-row__item {
-    grid-template-columns: minmax(0, 1fr);
+    border-inline-start: none;
   }
 }
 </style>

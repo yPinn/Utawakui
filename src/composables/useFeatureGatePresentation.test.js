@@ -19,8 +19,6 @@ beforeEach(() => {
       },
       getFeatureConfirmations: vi.fn().mockResolvedValue({}),
       confirmFeatureGate: vi.fn(),
-      getYtdlpStatus: vi.fn().mockResolvedValue({}),
-      checkYtdlpUpdate: vi.fn().mockRejectedValue(new Error('offline')),
     },
   });
 });
@@ -46,24 +44,24 @@ function findItem(presentation, gateId, dependencyId) {
 }
 
 describe('useFeatureGatePresentation', () => {
-  it('renders the disclosure value for each of the four registry dependencies', async () => {
+  it('renders concise user-facing purpose text for each registry dependency', async () => {
     const presentation = await loadPresentation();
 
     expect(
       findItem(presentation, 'provider-flow', 'yt-dlp-provider-tool').value,
-    ).toBe('yt-dlp / GPLv3+ / 隨附');
+    ).toBe('保存外部來源到本機曲庫');
     expect(
       findItem(presentation, 'audio-processing-flow', 'ffmpeg-gyan-essentials')
         .value,
-    ).toBe('Gyan FFmpeg / GPLv3 / latest release');
+    ).toBe('支援音訊轉換與格式讀取');
     expect(
       findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-kara-2')
         .value,
-    ).toBe('UVR 模型 / MIT');
+    ).toBe('產生人聲分離結果時使用');
     expect(
       findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-inst-hq-3')
         .value,
-    ).toBe('UVR 模型 / MIT');
+    ).toBe('產生人聲分離結果時使用');
   });
 
   it('defaults to a warning tone with only the refresh advanced action when nothing is installed', async () => {
@@ -127,17 +125,41 @@ describe('useFeatureGatePresentation', () => {
     expect(item.status).toBe('下載 42%');
   });
 
-  it('surfaces the caller-supplied ytdlpMessage ref as the yt-dlp item description', async () => {
-    const { shallowRef } = await import('vue');
-    const ytdlpMessage = shallowRef('已更新至 2024.01.01');
-    const presentation = await loadPresentation({ ytdlpMessage });
+  it('keeps provider runtime implementation details out of the primary row', async () => {
+    const presentation = await loadPresentation();
 
     const item = findItem(
       presentation,
       'provider-flow',
       'yt-dlp-provider-tool',
     );
-    expect(item.description).toBe('已更新至 2024.01.01');
+    expect(item.value).not.toMatch(/yt-dlp|GPL|Unlicense|PSF|2026|bgutil/i);
+    expect(item.description).toBe('用來把你選定的外部來源保存到本機曲庫。');
+  });
+
+  it('uses repair language for an installed app-managed provider runtime', async () => {
+    const presentation = await loadPresentation();
+
+    updatedCallback([
+      {
+        id: 'yt-dlp-provider-tool',
+        featureId: 'provider-flow',
+        kind: 'runtime',
+        name: '線上來源下載工具',
+        license:
+          'Python Software Foundation License + Unlicense + GPL-3.0-or-later provider',
+        displayVersion: 'yt-dlp 2026.08.19 + bgutil 0.8.1',
+        installed: true,
+      },
+    ]);
+
+    const item = findItem(
+      presentation,
+      'provider-flow',
+      'yt-dlp-provider-tool',
+    );
+    expect(item.actionLabel).toBe('重新準備下載工具');
+    expect(item.status).toBe('可使用');
   });
 
   it('carries each gate registry entry’s declaration body onto its row', async () => {
@@ -199,7 +221,7 @@ describe('useFeatureGatePresentation', () => {
       'audio-processing-flow',
       'ffmpeg-gyan-essentials',
     );
-    expect(item.value).toBe('系統安裝的 FFmpeg');
+    expect(item.value).toBe('使用系統安裝版本');
     expect(item.status).toBe('使用系統版本');
     expect(item.statusTone).toBe('success');
   });
