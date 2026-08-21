@@ -16,12 +16,12 @@ describe('output template routes', () => {
   it('keeps the OBS URL stable and adds demo state only to the workbench URL', () => {
     expect(
       buildOutputTemplateUrls(
-        { running: true, httpUrl: 'http://127.0.0.1:17404' },
+        { running: true, httpUrl: 'http://127.0.0.1:8700' },
         'focus-line',
       ),
     ).toEqual({
-      obsUrl: 'http://127.0.0.1:17404/overlay/lyrics',
-      previewUrl: 'http://127.0.0.1:17404/overlay/lyrics?preview=1',
+      obsUrl: 'http://127.0.0.1:8700/overlay/lyrics',
+      previewUrl: 'http://127.0.0.1:8700/overlay/lyrics?preview=1',
     });
     expect(
       buildOutputTemplateUrls({ running: false, httpUrl: null }, 'focus-line'),

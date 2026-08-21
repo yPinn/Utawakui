@@ -48,14 +48,19 @@ in the Electron main process only; overlay pages use the browser's native
 `electron/lib/outputServer.js` is a pure Node module with
 `start()`/`stop()`/`getStatus()`/`publish()` methods. The main-process singleton
 is owned by `electron/main/outputRuntime.js`; it closes before Electron quits.
-Phase 1D will inject that singleton into output IPC handlers instead of creating
-another server.
+Phase 1D injects that singleton into output IPC handlers instead of creating
+another server. Machine-local lifecycle settings live in `config.json` under
+`outputRuntime`; portable overlay profiles remain in `overlays.json`.
 
 Runtime boundary:
 
 - Bind only to `127.0.0.1`; never bind all interfaces.
-- Use stable default port `17404`; allow an injected/configured port, with `0`
-  reserved for tests.
+- Use stable default port `8700`, persisted only after an explicit user change;
+  allow an injected/configured port, with `0` reserved for tests.
+- When `public-output-flow` is enabled and `outputRuntime.autoStart` is true,
+  start the service with the app. A bind conflict remains visible and never
+  silently changes the persisted URL; the settings page offers probed candidates
+  from `8701` through `8709` for explicit confirmation.
 - Allow only `GET /health`, `GET /api/v1/state`, WebSocket upgrade `/ws`, and
   the explicit `/overlay/{lyrics,now-playing,setlist}` HTML/CSS/JS asset map.
   There is no generic URL-to-filesystem static handler.

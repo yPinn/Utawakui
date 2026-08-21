@@ -9,9 +9,11 @@ const {
   createEmptyOutputSnapshot,
   parseOutputSnapshot,
 } = require('../../shared/outputContract');
+const {
+  host: OUTPUT_HOST,
+  defaultPort: DEFAULT_OUTPUT_PORT,
+} = require('../../shared/outputRuntimeValues.json');
 
-const OUTPUT_HOST = '127.0.0.1';
-const DEFAULT_OUTPUT_PORT = 17404;
 const OUTPUT_WS_PATH = '/ws';
 const OUTPUT_MAX_INBOUND_PAYLOAD_BYTES = 4096;
 const OUTPUT_MAX_INBOUND_PARTS = 16;

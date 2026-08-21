@@ -20,13 +20,17 @@ describe('config', () => {
   it('missing file falls back to defaults', () => {
     const config = loadConfig(configPath);
     expect(config).toEqual({
-      version: 1,
+      version: 2,
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'dark',
       sidebarWidth: 256,
       captureDeviceId: null,
       systemFfmpegPath: null,
+      outputRuntime: {
+        autoStart: true,
+        port: 8700,
+      },
     });
   });
 
@@ -56,13 +60,17 @@ describe('config', () => {
     fs.writeFileSync(configPath, JSON.stringify(null));
     const config = loadConfig(configPath);
     expect(config).toEqual({
-      version: 1,
+      version: 2,
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'dark',
       sidebarWidth: 256,
       captureDeviceId: null,
       systemFfmpegPath: null,
+      outputRuntime: {
+        autoStart: true,
+        port: 8700,
+      },
     });
 
     const backups = fs
@@ -180,6 +188,51 @@ describe('config', () => {
       JSON.stringify({ version: 1, systemFfmpegPath: 42 }),
     );
     expect(loadConfig(configPath).systemFfmpegPath).toBe(null);
+  });
+
+  it('migrates an existing config to the default output runtime settings', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, downloadDir: '/existing-library' }),
+    );
+
+    expect(loadConfig(configPath)).toMatchObject({
+      version: 2,
+      downloadDir: '/existing-library',
+      outputRuntime: {
+        autoStart: true,
+        port: 8700,
+      },
+    });
+  });
+
+  it('round-trips valid output runtime settings', () => {
+    saveConfig(configPath, {
+      outputRuntime: { autoStart: false, port: 8702 },
+    });
+
+    expect(loadConfig(configPath).outputRuntime).toEqual({
+      autoStart: false,
+      port: 8702,
+    });
+  });
+
+  it.each([
+    [{ autoStart: 'yes', port: 8702 }],
+    [{ autoStart: false, port: 80 }],
+    [{ autoStart: false, port: 49152 }],
+    [{ autoStart: false, port: 8700.5 }],
+    [null],
+  ])('falls back when output runtime settings are invalid: %j', (value) => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 2, outputRuntime: value }),
+    );
+
+    expect(loadConfig(configPath).outputRuntime).toEqual({
+      autoStart: true,
+      port: 8700,
+    });
   });
 
   it('round-trips feature confirmations through save/load', () => {

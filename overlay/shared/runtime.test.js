@@ -39,8 +39,8 @@ function snapshot(revision) {
 describe('overlay WebSocket runtime', () => {
   it('builds same-host ws and wss URLs', () => {
     expect(
-      buildWebSocketUrl({ protocol: 'http:', host: '127.0.0.1:17404' }),
-    ).toBe('ws://127.0.0.1:17404/ws');
+      buildWebSocketUrl({ protocol: 'http:', host: '127.0.0.1:8700' }),
+    ).toBe('ws://127.0.0.1:8700/ws');
     expect(buildWebSocketUrl({ protocol: 'https:', host: 'localhost' })).toBe(
       'wss://localhost/ws',
     );
@@ -66,7 +66,7 @@ describe('overlay WebSocket runtime', () => {
     const snapshots = [];
     const statuses = [];
     const connection = createOverlayConnection({
-      location: { protocol: 'http:', host: '127.0.0.1:17404' },
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
       WebSocketImpl: FakeWebSocket,
       onSnapshot: (value) => snapshots.push(value.revision),
       onStatus: (value) => statuses.push(value),
@@ -79,7 +79,7 @@ describe('overlay WebSocket runtime', () => {
 
     connection.start();
     const first = FakeWebSocket.instances[0];
-    expect(first.url).toBe('ws://127.0.0.1:17404/ws');
+    expect(first.url).toBe('ws://127.0.0.1:8700/ws');
     first.emit('open');
     first.emit('message', {
       data: JSON.stringify({ type: 'state.snapshot', snapshot: snapshot(3) }),

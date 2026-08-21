@@ -34,7 +34,7 @@ const {
 const { runStartupMigrations } = require('./main/startupMigrations');
 const { MEDIA_SCHEME } = require('./main/mediaScheme');
 const {
-  outputServer,
+  createOutputRuntime,
   registerOutputRuntimeLifecycle,
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
@@ -64,8 +64,6 @@ const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
-  registerOutputRuntimeLifecycle({ app });
-
   app.on('second-instance', () => {
     const mainWindow = windowState.getMainWindow();
     if (mainWindow) {
@@ -74,7 +72,7 @@ if (!gotSingleInstanceLock) {
     }
   });
 
-  app.whenReady().then(() => {
+  app.whenReady().then(async () => {
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
     // Narrow exception for the capture-device output picker (see
@@ -104,6 +102,12 @@ if (!gotSingleInstanceLock) {
 
     configState.loadInitialConfig();
     const { requireFeatureGate } = configState;
+    const outputRuntime = createOutputRuntime({
+      getConfig: configState.getConfig,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+    });
+    registerOutputRuntimeLifecycle({ app, server: outputRuntime });
     const providerRunnerManager = createProviderRunnerManager({
       app,
       userDataDir: app.getPath('userData'),
@@ -117,10 +121,11 @@ if (!gotSingleInstanceLock) {
 
     registerOutputHandlers({
       ipcMain,
-      server: outputServer,
+      server: outputRuntime,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
     });
 
@@ -203,6 +208,12 @@ if (!gotSingleInstanceLock) {
     runStartupMigrations(
       configState.resolveDownloadDir(configState.getConfig()),
     );
+
+    try {
+      await outputRuntime.startConfigured();
+    } catch (error) {
+      console.warn('[output] Automatic startup failed', error.message);
+    }
 
     windowState.createMainWindow(
       configState.getConfig().uiTheme,

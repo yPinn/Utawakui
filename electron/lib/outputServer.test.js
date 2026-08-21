@@ -56,8 +56,7 @@ afterEach(async () => {
 
 describe('outputServer', () => {
   it('uses a stable production port and an immutable loopback host', () => {
-    expect(DEFAULT_OUTPUT_PORT).toBeGreaterThan(1024);
-    expect(DEFAULT_OUTPUT_PORT).toBeLessThan(65536);
+    expect(DEFAULT_OUTPUT_PORT).toBe(8700);
     expect(OUTPUT_HOST).toBe('127.0.0.1');
     expect(createOutputServer().getStatus()).toMatchObject({
       running: false,

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onBeforeUnmount, shallowRef } from 'vue';
-import { Copy, Play, Square } from '../../icons/index.js';
+import { Copy } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 
@@ -9,16 +9,24 @@ const props = defineProps({
   outputStatus: { type: Object, default: () => ({ running: false }) },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
-  supported: { type: Boolean, default: false },
-  busy: { type: Boolean, default: false },
   error: { type: String, default: '' },
 });
 
-const emit = defineEmits(['start', 'stop']);
 const copyState = shallowRef('idle');
 let copyResetTimer = null;
 
 const isRunning = computed(() => props.outputStatus.running === true);
+const hasClients = computed(() => (props.outputStatus.clients ?? 0) > 0);
+const statusLabel = computed(() => {
+  if (hasClients.value) return 'OBS 已連線';
+  if (isRunning.value) return '服務可用';
+  return '服務已停止';
+});
+const statusTone = computed(() => {
+  if (hasClients.value) return 'success';
+  if (isRunning.value) return 'accent';
+  return 'muted';
+});
 const hasRuntimeTemplate = computed(() => Boolean(props.previewUrl));
 
 async function copyObsUrl() {
@@ -64,21 +72,12 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
     </div>
 
     <div class="obs-overlay-preview__toolbar">
-      <UiChip :tone="isRunning ? 'accent' : 'muted'">
-        {{ isRunning ? '輸出中' : '未啟用' }}
+      <UiChip :tone="statusTone">
+        {{ statusLabel }}
       </UiChip>
-      <UiButton
-        v-if="!isRunning"
-        :icon="Play"
-        variant="accent"
-        :disabled="busy || !supported"
-        @click="emit('start')"
-      >
-        啟用預覽
-      </UiButton>
-      <UiButton v-else :icon="Square" :disabled="busy" @click="emit('stop')">
-        停止輸出
-      </UiButton>
+      <span v-if="hasClients" class="obs-overlay-preview__client-count">
+        {{ outputStatus.clients }} 個來源
+      </span>
     </div>
 
     <div v-if="obsUrl" class="obs-overlay-preview__url-row">
@@ -119,13 +118,15 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
 }
 
 .obs-overlay-preview {
+  inline-size: min(100%, var(--ui-output-workbench-stage-max-width));
+  min-inline-size: 0;
   display: grid;
   gap: var(--ui-space-2);
-  min-width: 0;
+  justify-self: center;
 }
 
 .obs-overlay-preview__frame {
-  inline-size: min(100%, var(--ui-output-gallery-preview-max-width));
+  inline-size: 100%;
   aspect-ratio: 16 / 9;
   min-width: 0;
   overflow: hidden;
@@ -187,6 +188,12 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
   justify-content: space-between;
   gap: var(--ui-space-2);
   min-width: 0;
+}
+
+.obs-overlay-preview__client-count {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
 }
 
 .obs-overlay-preview__url-row {

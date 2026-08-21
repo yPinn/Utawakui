@@ -17,6 +17,7 @@ describe('OutputView', () => {
 
     expect(html).toContain('模板庫');
     expect(html).toContain('工作台');
+    expect(html).toContain('輸出設定');
     expect(html).toContain('模板縮圖');
     expect(html).toContain('模板展示預覽');
     expect(html).toContain('Now Playing');

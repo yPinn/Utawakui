@@ -2,7 +2,8 @@ import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
 import outputRuntimeModule from './outputRuntime.js';
 
-const { registerOutputRuntimeLifecycle } = outputRuntimeModule;
+const { createOutputRuntime, registerOutputRuntimeLifecycle } =
+  outputRuntimeModule;
 
 function deferred() {
   let resolve;
@@ -57,5 +58,147 @@ describe('outputRuntime lifecycle', () => {
       error,
     );
     expect(app.quit).toHaveBeenCalledOnce();
+  });
+});
+
+describe('outputRuntime controller', () => {
+  function createServerFactory() {
+    const servers = [];
+    const factory = vi.fn(({ port }) => {
+      let running = false;
+      const server = {
+        port,
+        getStatus: vi.fn(() => ({
+          running,
+          host: '127.0.0.1',
+          port,
+          revision: 0,
+          httpUrl: running ? `http://127.0.0.1:${port}` : null,
+          wsUrl: running ? `ws://127.0.0.1:${port}/ws` : null,
+          clients: 0,
+        })),
+        start: vi.fn(async () => {
+          running = true;
+          return server.getStatus();
+        }),
+        stop: vi.fn(async () => {
+          running = false;
+        }),
+        publish: vi.fn(() => true),
+      };
+      servers.push(server);
+      return server;
+    });
+    return { factory, servers };
+  }
+
+  it('reports the configured port before creating the server', () => {
+    const { factory } = createServerFactory();
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+    });
+
+    expect(runtime.getStatus()).toMatchObject({
+      running: false,
+      host: '127.0.0.1',
+      port: 8700,
+    });
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it('starts automatically only when configured and gate-authorized', async () => {
+    const { factory, servers } = createServerFactory();
+    let config = { outputRuntime: { autoStart: false, port: 8700 } };
+    const requireFeatureGate = vi.fn();
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => config,
+      requireFeatureGate,
+      featureId: 'public-output-flow',
+    });
+
+    await expect(runtime.startConfigured()).resolves.toMatchObject({
+      running: false,
+    });
+    expect(requireFeatureGate).not.toHaveBeenCalled();
+
+    config = { outputRuntime: { autoStart: true, port: 8700 } };
+    await expect(runtime.startConfigured()).resolves.toMatchObject({
+      running: true,
+      port: 8700,
+    });
+    expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
+    expect(servers[0].start).toHaveBeenCalledOnce();
+  });
+
+  it('leaves the service stopped when automatic start is not gate-authorized', async () => {
+    const { factory } = createServerFactory();
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(() => {
+        throw new Error('feature gate required: public-output-flow');
+      }),
+    });
+
+    await expect(runtime.startConfigured()).resolves.toMatchObject({
+      running: false,
+      port: 8700,
+    });
+    expect(factory).not.toHaveBeenCalled();
+  });
+
+  it('recreates a running server when the persisted port changes', async () => {
+    const { factory, servers } = createServerFactory();
+    let config = { outputRuntime: { autoStart: true, port: 8700 } };
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => config,
+      requireFeatureGate: vi.fn(),
+    });
+    await runtime.start();
+
+    config = { outputRuntime: { autoStart: true, port: 8702 } };
+    await expect(runtime.reconfigure()).resolves.toMatchObject({
+      running: true,
+      port: 8702,
+    });
+    expect(servers[0].stop).toHaveBeenCalledOnce();
+    expect(servers[1].start).toHaveBeenCalledOnce();
+  });
+
+  it('retains a startup error in status for renderer diagnostics', async () => {
+    const failure = Object.assign(new Error('listen EADDRINUSE'), {
+      code: 'EADDRINUSE',
+    });
+    const serverFactory = vi.fn(({ port }) => ({
+      getStatus: () => ({ running: false, port }),
+      start: vi.fn().mockRejectedValue(failure),
+      stop: vi.fn(),
+      publish: vi.fn(),
+    }));
+    const runtime = createOutputRuntime({
+      serverFactory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+    });
+
+    await expect(runtime.startConfigured()).rejects.toBe(failure);
+    expect(runtime.getStatus()).toMatchObject({
+      running: false,
+      port: 8700,
+      error: {
+        code: 'EADDRINUSE',
+        message: 'listen EADDRINUSE',
+      },
+    });
   });
 });

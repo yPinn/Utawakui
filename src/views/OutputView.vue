@@ -1,5 +1,5 @@
 <script setup>
-import ObsDisplayWorkbench from '../components/output/ObsDisplayWorkbench.vue';
+import ObsOutputWorkspace from '../components/output/ObsOutputWorkspace.vue';
 import { getOutputWorkbenchData } from '../constants/outputTemplates.js';
 
 const { templates, templateGroups, styleSets, configs } =
@@ -7,7 +7,7 @@ const { templates, templateGroups, styleSets, configs } =
 </script>
 
 <template>
-  <ObsDisplayWorkbench
+  <ObsOutputWorkspace
     :presets="templates"
     :template-groups="templateGroups"
     :style-sets="styleSets"

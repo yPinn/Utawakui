@@ -1,5 +1,5 @@
-/* --ui-* control-panel tokens only. --ovl-* overlay tokens are a separate,
-   not-yet-created file — see CLAUDE.md's CSS tokens section. */
+/* --ui-* control-panel tokens only. Public overlay tokens live separately in
+   overlay/shared/tokens.css and never inherit this theme. */
 :root {
   /* Dark is default; light overrides are in the [data-ui-theme='light']
      block below — only --ui-color-* tokens differ by theme. */
@@ -193,17 +193,25 @@
   --ui-playlist-list-gap: var(--ui-space-1); /* gap between rows */
 
   /* --- Sizing: output gallery --- */
-  --ui-output-gallery-column-min: 18rem; /* 288px: keeps the thumbnail rail useful beside the demo column */
-  --ui-output-gallery-detail-width-min: 20rem; /* 320px: stable preview column at normal desktop widths */
-  --ui-output-gallery-detail-width-max: 22.5rem; /* 360px: compact cap; the right column is preview/support, not the main canvas */
+  --ui-output-gallery-column-min: 22rem; /* 352px: room for multiple compact template tiles before stacking */
+  --ui-output-gallery-detail-width-min: 18rem; /* 288px: stable support column without competing with the gallery */
+  --ui-output-gallery-detail-width-max: 21rem; /* 336px: preview/support cap, independent of sidebar width */
   --ui-output-gallery-detail-width: clamp(
     var(--ui-output-gallery-detail-width-min),
-    25vw,
+    22vw,
     var(--ui-output-gallery-detail-width-max)
   ); /* tracks window width, not the resizable sidebar/content column, so sidebar drags do not resize the preview */
-  --ui-output-gallery-preview-max-width: 20.875rem; /* 334px: leaves room for the detail panel's padding at its wide cap */
-  --ui-output-template-thumb-preview-width: 5.75rem; /* 92px: compact 16:9 thumbnail width */
-  --ui-output-template-thumb-preview-width-compact: 5rem; /* 80px: stacked/narrow gallery thumbnail width */
+  --ui-output-gallery-preview-max-width: 19.5rem; /* 312px: medium template demo, not the editing canvas */
+  --ui-output-gallery-tile-min-width: 10rem; /* 160px: dense media-browser tile while preserving readable names */
+  --ui-output-workbench-inspector-width: clamp(
+    18rem,
+    22vw,
+    21rem
+  ); /* stable information rail; sidebar drags only change the stage's flexible column */
+  --ui-output-workbench-stage-max-width: 64rem; /* 1024px: large 16:9 preview without upscaling indefinitely */
+  --ui-output-settings-max-width: 48rem; /* 768px: readable service settings line length */
+  --ui-output-settings-row-min-height: 4.5rem; /* 72px: stable two-line setting row */
+  --ui-output-port-input-width: 7rem; /* 112px: accommodates the full validated user-port range */
   --ui-output-template-thumb-min-height: 4.5rem; /* 72px: stable row target around a small 16:9 preview */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* 12px: thumbnail-only label, not a global typography tier */
   --ui-output-setting-label-width-min: 4rem; /* 64px: compact setting label column */

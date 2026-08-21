@@ -270,7 +270,7 @@ process 收到 renderer payload 時仍必須重新 parse，不信任 renderer �
 
 Phase 1B 的 runtime 由 Electron main process 持有，但核心實作維持純 Node module。
 它使用 Node `http` 與直接 production dependency `ws`，固定 bind
-`127.0.0.1`，預設 port `17404`；不對 LAN 或所有網路介面開放。套件選型與
+`127.0.0.1`，預設 port `8700`；不對 LAN 或所有網路介面開放。套件選型與
 替代方案見 [ADR 0006](adr/0006-loopback-output-websocket-runtime.md)。
 
 Runtime API allowlist 包含 `GET /health`、唯讀 `GET /api/v1/state` 與 `/ws`
@@ -310,15 +310,24 @@ Renderer 的 `useOutputRuntime` 是 App 層長生命週期 singleton。它從既
 序列化 IPC 並合併尚未送出的中間狀態；切換頁面不會停止 OBS 更新。Main 回報目前
 revision，renderer reload 後會接續遞增，不會讓仍存活的 server 拒絕新狀態。
 
-Gallery 右欄在 runtime 運行時載入真實 served iframe。Workbench preview URL 只在
-同一模板 URL 加上 `?preview=1`，讓 idle 狀態使用 demo fallback 與深色檢視底；複製給
-OBS 的 URL 不含該參數，因此不會發布假狀態，且頁面背景保持透明。右欄寬度使用
-rem 上下限與 viewport-relative 中間值，不依賴可折疊／可拖曳的 playlist sidebar
-內容寬度。
+Output 內分為模板庫、工作台與輸出設定。Gallery 的縮圖與右欄共用控制台內的
+`ObsTemplateMockup`，只呈現固定 16:9 的標準化模板示意，不依賴 runtime 或 iframe，
+避免實際 overlay 在小尺寸下因原始字級、定位與動畫基準縮放失真。Workbench 才載入
+真實 served iframe，preview URL 在同一模板 URL 加上 `?preview=1`，讓 idle 狀態使用
+demo fallback 與深色檢視底；複製給 OBS 的 URL 不含該參數，因此不會發布假狀態，且
+頁面背景保持透明。
 
-`overlays.json` 保存 selected profile、template id、style-set ids 與 scalar settings。
-模板選擇仍由 Workbench parent 擁有，showcase 與 preview child 只接收 props/發出
-events。Renderer ESM projector 與 main CommonJS validator 共用
+Gallery 右欄與 Workbench inspector 都使用 rem 上下限與 viewport-relative 中間值，
+不依賴可折疊／可拖曳的 playlist sidebar 內容寬度；Workbench 的 iframe stage 使用
+16:9 與 rem 最大寬度，在 inspector 之外盡量填滿可用空間。輸出設定集中管理
+`autoStart`、port、服務啟停、可用 port 建議與目前 OBS URL。Host 固定為
+`127.0.0.1`，port 衝突不會靜默改號。
+
+`config.json` 保存 machine-local `outputRuntime.autoStart` / `port`；`overlays.json`
+保存 selected profile、template id、style-set ids 與 scalar settings。模板瀏覽不會
+立即保存，只有明確套用才更新 profile。頁面編排由 `ObsOutputWorkspace` 負責，Gallery、
+Workbench 與輸出設定元件只接收 props／發出 events，side effects 留在
+`useOutputRuntime`。Renderer ESM projector 與 main CommonJS validator 共用
 `outputContractValues.json` 的 version/collection limits；只有 main validator 是 IPC
 trust boundary。
 

@@ -1,20 +1,23 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
+import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import { projectOutputSnapshot } from '../utils/outputSnapshot.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { useFeatureGates } from './useFeatureGates.js';
 import { useLyrics } from './useLyrics.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
 
 const EMPTY_STATUS = Object.freeze({
   running: false,
-  host: '127.0.0.1',
-  port: 17404,
+  host: OUTPUT_RUNTIME_VALUES.host,
+  port: OUTPUT_RUNTIME_VALUES.defaultPort,
   revision: 0,
   httpUrl: null,
   wsUrl: null,
   clients: 0,
+  error: null,
 });
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
@@ -28,9 +31,15 @@ const {
   activeLineIndex,
 } = useLyrics();
 const { requireFeatureGate } = useFeatureGateAccess();
+const { isFeatureEnabled } = useFeatureGates();
 
 const state = reactive({
   status: { ...EMPTY_STATUS },
+  settings: {
+    autoStart: true,
+    port: OUTPUT_RUNTIME_VALUES.defaultPort,
+  },
+  suggestedPorts: [],
   profiles: [],
   selectedProfileId: null,
   profilesLoaded: false,
@@ -38,6 +47,8 @@ const state = reactive({
   isStopping: false,
   isLoadingProfiles: false,
   isSavingProfile: false,
+  isLoadingSettings: false,
+  isSavingSettings: false,
   error: '',
 });
 
@@ -135,12 +146,67 @@ const selectedProfile = computed(
 
 async function refreshStatus() {
   try {
-    applyStatus(await bridgeMethod('getOutputStatus')());
-    state.error = '';
+    const status = await bridgeMethod('getOutputStatus')();
+    applyStatus(status);
+    state.error = status.error?.message
+      ? `輸出服務啟動失敗：${status.error.message}`
+      : '';
     return state.status;
   } catch (error) {
     state.error = errorMessage(error);
     return state.status;
+  }
+}
+
+async function refreshSettings() {
+  state.isLoadingSettings = true;
+  try {
+    const settings = await bridgeMethod('getOutputSettings')();
+    state.settings = {
+      autoStart: settings.autoStart === true,
+      port: Number.isSafeInteger(settings.port)
+        ? settings.port
+        : OUTPUT_RUNTIME_VALUES.defaultPort,
+    };
+    state.error = '';
+    return state.settings;
+  } catch (error) {
+    state.error = `讀取輸出設定失敗：${errorMessage(error)}`;
+    return state.settings;
+  } finally {
+    state.isLoadingSettings = false;
+  }
+}
+
+async function suggestPorts() {
+  try {
+    const ports = await bridgeMethod('suggestOutputPorts')();
+    state.suggestedPorts = Array.isArray(ports) ? ports : [];
+    return state.suggestedPorts;
+  } catch {
+    state.suggestedPorts = [];
+    return state.suggestedPorts;
+  }
+}
+
+async function updateSettings(settings) {
+  state.isSavingSettings = true;
+  try {
+    const result = await bridgeMethod('updateOutputSettings')({
+      autoStart: settings.autoStart === true,
+      port: Number(settings.port),
+    });
+    state.settings = { ...result.settings };
+    applyStatus(result.status);
+    state.suggestedPorts = [];
+    state.error = '';
+    return true;
+  } catch (error) {
+    state.error = `保存輸出設定失敗：${errorMessage(error)}`;
+    await suggestPorts();
+    return false;
+  } finally {
+    state.isSavingSettings = false;
   }
 }
 
@@ -229,11 +295,20 @@ async function saveTemplateSelection(templateId, seedProfile = null) {
   }
 }
 
-function initialize() {
+async function initialize() {
   if (initialized) return;
   initialized = true;
-  refreshStatus();
+  await Promise.all([refreshStatus(), refreshSettings()]);
 }
+
+watch(
+  () => isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW),
+  async (enabled) => {
+    if (!enabled) return;
+    await refreshSettings();
+    if (state.settings.autoStart && !state.status.running) await start();
+  },
+);
 
 export function useOutputRuntime() {
   return {
@@ -241,6 +316,9 @@ export function useOutputRuntime() {
     selectedProfile,
     initialize,
     refreshStatus,
+    refreshSettings,
+    suggestPorts,
+    updateSettings,
     start,
     stop,
     loadProfiles,

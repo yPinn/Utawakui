@@ -29,8 +29,8 @@ describe('output handlers', () => {
     const ipcMain = createIpcMain();
     const requireFeatureGate = vi.fn();
     const server = {
-      getStatus: vi.fn(() => ({ running: false, port: 17404 })),
-      start: vi.fn(async () => ({ running: true, port: 17404 })),
+      getStatus: vi.fn(() => ({ running: false, port: 8700 })),
+      start: vi.fn(async () => ({ running: true, port: 8700 })),
       stop: vi.fn(async () => undefined),
       publish: vi.fn(() => true),
     };
@@ -45,11 +45,11 @@ describe('output handlers', () => {
 
     await expect(ipcMain.handlers.get('output:get-status')()).resolves.toEqual({
       running: false,
-      port: 17404,
+      port: 8700,
     });
     await expect(ipcMain.handlers.get('output:start')()).resolves.toEqual({
       running: true,
-      port: 17404,
+      port: 8700,
     });
     expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
 
@@ -58,7 +58,7 @@ describe('output handlers', () => {
     ).resolves.toBe(false);
     expect(server.publish).not.toHaveBeenCalled();
 
-    server.getStatus.mockReturnValue({ running: true, port: 17404 });
+    server.getStatus.mockReturnValue({ running: true, port: 8700 });
     await expect(
       ipcMain.handlers.get('output:publish')(null, { revision: 1 }),
     ).resolves.toBe(true);
@@ -67,7 +67,7 @@ describe('output handlers', () => {
 
     await expect(ipcMain.handlers.get('output:stop')()).resolves.toEqual({
       running: true,
-      port: 17404,
+      port: 8700,
     });
     expect(server.stop).toHaveBeenCalledOnce();
   });
@@ -115,5 +115,145 @@ describe('output handlers', () => {
       'main-output',
     );
     expect(selected.selectedProfileId).toBe('main-output');
+  });
+
+  it('reads and updates validated machine-local runtime settings', async () => {
+    const ipcMain = createIpcMain();
+    let config = {
+      outputRuntime: { autoStart: true, port: 8700 },
+    };
+    const server = {
+      getStatus: vi.fn(() => ({
+        running: true,
+        port: config.outputRuntime.port,
+      })),
+      start: vi.fn(),
+      stop: vi.fn(),
+      publish: vi.fn(),
+      reconfigure: vi.fn(async () => ({
+        running: true,
+        port: config.outputRuntime.port,
+      })),
+    };
+    const updateConfig = vi.fn((patch) => {
+      config = { ...config, ...patch };
+      return config;
+    });
+    registerOutputHandlers({
+      ipcMain,
+      server,
+      requireFeatureGate: vi.fn(),
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => config,
+      updateConfig,
+      resolveDownloadDir: () => dir,
+      isPortAvailable: vi.fn(async () => true),
+      findAvailablePorts: vi.fn(async () => [8701, 8702]),
+    });
+
+    await expect(
+      ipcMain.handlers.get('output:get-settings')(),
+    ).resolves.toEqual({
+      autoStart: true,
+      port: 8700,
+    });
+    await expect(
+      ipcMain.handlers.get('output:update-settings')(null, {
+        autoStart: false,
+        port: 8702,
+      }),
+    ).resolves.toEqual({
+      settings: { autoStart: false, port: 8702 },
+      status: { running: true, port: 8702 },
+    });
+    expect(updateConfig).toHaveBeenCalledWith({
+      outputRuntime: { autoStart: false, port: 8702 },
+    });
+    expect(server.reconfigure).toHaveBeenCalledOnce();
+  });
+
+  it('rejects invalid or occupied ports without changing the persisted setting', async () => {
+    const ipcMain = createIpcMain();
+    const config = { outputRuntime: { autoStart: true, port: 8700 } };
+    const updateConfig = vi.fn();
+    registerOutputHandlers({
+      ipcMain,
+      server: {
+        getStatus: () => ({ running: true, port: 8700 }),
+        start: vi.fn(),
+        stop: vi.fn(),
+        publish: vi.fn(),
+        reconfigure: vi.fn(),
+      },
+      requireFeatureGate: vi.fn(),
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => config,
+      updateConfig,
+      resolveDownloadDir: () => dir,
+      isPortAvailable: vi.fn(async () => false),
+      findAvailablePorts: vi.fn(async () => [8701, 8702]),
+    });
+
+    await expect(
+      ipcMain.handlers.get('output:update-settings')(null, {
+        autoStart: true,
+        port: 80,
+      }),
+    ).rejects.toThrow('invalid output runtime settings');
+    await expect(
+      ipcMain.handlers.get('output:update-settings')(null, {
+        autoStart: true,
+        port: 8701,
+      }),
+    ).rejects.toThrow('output port is already in use: 8701');
+    expect(updateConfig).not.toHaveBeenCalled();
+    await expect(
+      ipcMain.handlers.get('output:suggest-ports')(),
+    ).resolves.toEqual([8701, 8702]);
+  });
+
+  it('restores the previous running service when a restart loses a port race', async () => {
+    const ipcMain = createIpcMain();
+    let config = { outputRuntime: { autoStart: true, port: 8700 } };
+    const restartFailure = Object.assign(new Error('listen EADDRINUSE'), {
+      code: 'EADDRINUSE',
+    });
+    const server = {
+      getStatus: vi.fn(() => ({
+        running: true,
+        port: config.outputRuntime.port,
+      })),
+      start: vi.fn(async () => ({ running: true, port: 8700 })),
+      stop: vi.fn(),
+      publish: vi.fn(),
+      reconfigure: vi
+        .fn()
+        .mockRejectedValueOnce(restartFailure)
+        .mockResolvedValueOnce({ running: false, port: 8700 }),
+    };
+    const updateConfig = vi.fn((patch) => {
+      config = { ...config, ...patch };
+      return config;
+    });
+    registerOutputHandlers({
+      ipcMain,
+      server,
+      requireFeatureGate: vi.fn(),
+      featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+      getConfig: () => config,
+      updateConfig,
+      resolveDownloadDir: () => dir,
+      isPortAvailable: vi.fn(async () => true),
+    });
+
+    await expect(
+      ipcMain.handlers.get('output:update-settings')(null, {
+        autoStart: true,
+        port: 8702,
+      }),
+    ).rejects.toBe(restartFailure);
+    expect(config.outputRuntime).toEqual({ autoStart: true, port: 8700 });
+    expect(server.reconfigure).toHaveBeenCalledTimes(2);
+    expect(server.start).toHaveBeenCalledOnce();
   });
 });

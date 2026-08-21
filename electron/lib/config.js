@@ -3,8 +3,13 @@
 const fs = require('fs');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const { normalizeFeatureConfirmations } = require('./featureGates');
+const {
+  defaultPort: DEFAULT_OUTPUT_PORT,
+  minPort: OUTPUT_PORT_MIN,
+  maxPort: OUTPUT_PORT_MAX,
+} = require('../../shared/outputRuntimeValues.json');
 
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 const UI_THEMES = ['light', 'dark'];
 // Keep in sync with --ui-playlist-sidebar-width-min/-max in
 // src/styles/tokens.css — main process can't read CSS.
@@ -29,7 +34,33 @@ const DEFAULTS = {
   // the path — the renderer never supplies a path directly, same
   // untrusted-input posture as captureDeviceId's id-not-path role above.
   systemFfmpegPath: null,
+  outputRuntime: Object.freeze({
+    autoStart: true,
+    port: DEFAULT_OUTPUT_PORT,
+  }),
 };
+
+function isValidOutputRuntime(value) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof value.autoStart === 'boolean' &&
+    Number.isSafeInteger(value.port) &&
+    value.port >= OUTPUT_PORT_MIN &&
+    value.port <= OUTPUT_PORT_MAX,
+  );
+}
+
+function normalizeOutputRuntime(value) {
+  if (!isValidOutputRuntime(value)) {
+    return { ...DEFAULTS.outputRuntime };
+  }
+  return {
+    autoStart: value.autoStart,
+    port: value.port,
+  };
+}
 
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
 // degrade to defaults rather than throwing — this is machine-local settings
@@ -79,6 +110,7 @@ function loadConfig(configPath) {
       typeof data.systemFfmpegPath === 'string'
         ? data.systemFfmpegPath
         : DEFAULTS.systemFfmpegPath,
+    outputRuntime: normalizeOutputRuntime(data.outputRuntime),
   };
 }
 
@@ -98,4 +130,8 @@ module.exports = {
   DEFAULTS,
   SIDEBAR_WIDTH_MIN,
   SIDEBAR_WIDTH_MAX,
+  OUTPUT_PORT_MIN,
+  OUTPUT_PORT_MAX,
+  isValidOutputRuntime,
+  normalizeOutputRuntime,
 };
