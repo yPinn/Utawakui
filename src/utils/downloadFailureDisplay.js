@@ -1,5 +1,5 @@
-// Mirrors electron/lib/downloadFailure.js's code list — kept in sync by
-// hand, same as ytdlpStatus.js's outcome enum vs SettingsView.vue's mapping.
+// Mirrors electron/lib/downloadFailure.js's code list — kept in sync by hand
+// so IPC never exposes raw yt-dlp stderr to the renderer.
 const DOWNLOAD_FAILURE_PREFIX = 'utawakui-download-failed:';
 const DOWNLOAD_FAILURE_CODES = [
   'invalid-input',

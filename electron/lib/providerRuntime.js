@@ -1,0 +1,105 @@
+'use strict';
+
+const fs = require('fs');
+const path = require('path');
+
+const FEATURE_DEPENDENCIES_DIRNAME = 'dependencies';
+const PROVIDER_RUNTIME_DIRNAME = 'ytdlp';
+const PROVIDER_RUNTIME_VERSION_DIRNAME = 'current';
+const PYTHON_DIRNAME = 'python';
+const SITE_PACKAGES_RELATIVE_PATH = path.join('Lib', 'site-packages');
+const BGUTIL_PLUGIN_DIRNAME = 'bgutil-ytdlp-pot-provider-rs';
+
+function buildProviderRuntimePaths(installDir) {
+  const pythonDir = path.join(installDir, PYTHON_DIRNAME);
+  const sitePackagesDir = path.join(pythonDir, SITE_PACKAGES_RELATIVE_PATH);
+  const pluginParentDir = path.join(installDir, 'plugins');
+  return {
+    installDir,
+    manifestPath: path.join(installDir, 'manifest.json'),
+    pythonDir,
+    pythonPath: path.join(pythonDir, 'python.exe'),
+    sitePackagesDir,
+    pluginParentDir,
+    pluginPackageDir: path.join(pluginParentDir, BGUTIL_PLUGIN_DIRNAME),
+    bgutilProviderPath: path.join(installDir, 'bgutil', 'bgutil-pot.exe'),
+    cacheDir: path.join(installDir, 'cache'),
+  };
+}
+
+function getProviderRuntimePaths(userDataDir) {
+  return buildProviderRuntimePaths(
+    path.join(
+      userDataDir,
+      FEATURE_DEPENDENCIES_DIRNAME,
+      PROVIDER_RUNTIME_DIRNAME,
+      PROVIDER_RUNTIME_VERSION_DIRNAME,
+    ),
+  );
+}
+
+function findPythonPathFile(paths) {
+  try {
+    return fs
+      .readdirSync(paths.pythonDir)
+      .find((name) => /^python\d+._pth$/i.test(name));
+  } catch {
+    return null;
+  }
+}
+
+function writePythonPathConfig(paths) {
+  const filename = findPythonPathFile(paths);
+  if (!filename) return false;
+  const filePath = path.join(paths.pythonDir, filename);
+  const raw = fs.readFileSync(filePath, 'utf8');
+  const lines = raw.split(/\r?\n/).filter((line, index, list) => {
+    return line.length > 0 || index < list.length - 1;
+  });
+  const normalizedSitePackages = SITE_PACKAGES_RELATIVE_PATH.replaceAll(
+    path.sep,
+    '/',
+  );
+
+  if (!lines.includes(normalizedSitePackages)) {
+    const importSiteIndex = lines.findIndex((line) => line === '#import site');
+    const insertIndex = importSiteIndex === -1 ? lines.length : importSiteIndex;
+    lines.splice(insertIndex, 0, normalizedSitePackages);
+  }
+
+  fs.writeFileSync(filePath, `${lines.join('\n')}\n`);
+  return true;
+}
+
+function isProviderRuntimeInstalled(paths) {
+  return (
+    fs.existsSync(paths.pythonPath) &&
+    fs.existsSync(path.join(paths.sitePackagesDir, 'yt_dlp')) &&
+    fs.existsSync(path.join(paths.pluginPackageDir, 'yt_dlp_plugins')) &&
+    fs.existsSync(paths.bgutilProviderPath) &&
+    fs.existsSync(paths.manifestPath)
+  );
+}
+
+function ensureBgutilPluginPackageMarkers(paths) {
+  const packageDir = path.join(paths.pluginPackageDir, 'yt_dlp_plugins');
+  const extractorDir = path.join(packageDir, 'extractor');
+  fs.mkdirSync(extractorDir, { recursive: true });
+  for (const markerPath of [
+    path.join(packageDir, '__init__.py'),
+    path.join(extractorDir, '__init__.py'),
+  ]) {
+    if (!fs.existsSync(markerPath)) {
+      fs.writeFileSync(markerPath, '');
+    }
+  }
+}
+
+module.exports = {
+  BGUTIL_PLUGIN_DIRNAME,
+  buildProviderRuntimePaths,
+  ensureBgutilPluginPackageMarkers,
+  getProviderRuntimePaths,
+  isProviderRuntimeInstalled,
+  writePythonPathConfig,
+};

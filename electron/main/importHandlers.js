@@ -19,7 +19,6 @@ const {
   resolveTrackDir,
   saveIndexEntry,
 } = require('../lib/library');
-const { getPreparedYtdlpPath } = require('../lib/featureDependencies');
 const { saveLrclibLyricsIfAbsent } = require('./lyricsHandlers');
 
 // error.stderr never survives ipcMain.handle's serialization, so
@@ -38,24 +37,22 @@ async function classifyingFailures(run) {
 function registerImportHandlers({
   ipcMain,
   getConfig,
-  userDataDir,
   resolveDownloadDir,
   requireFeatureGate,
   featureIds,
+  getProviderRunner,
 }) {
-  function requireProviderTool() {
-    getPreparedYtdlpPath(userDataDir);
-  }
-
   ipcMain.handle('yt:fetch-playlist', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    requireProviderTool();
     return classifyingFailures(async () => {
+      const runner = await getProviderRunner();
       const playlistId = extractPlaylistId(input);
       if (!playlistId) return null; // not a playlist URL — not an error
       const dir = resolveDownloadDir(getConfig());
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
-      const { title, thumbnailUrl, entries } = await fetchPlaylist(playlistId);
+      const { title, thumbnailUrl, entries } = await fetchPlaylist(playlistId, {
+        runner,
+      });
       return {
         title,
         thumbnailUrl,
@@ -71,11 +68,11 @@ function registerImportHandlers({
 
   ipcMain.handle('yt:fetch-metadata', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    requireProviderTool();
     return classifyingFailures(async () => {
+      const runner = await getProviderRunner();
       const videoId = extractVideoId(input);
       if (!videoId) throw new Error('invalid video id or YouTube URL');
-      const metadata = await fetchMetadata(videoId);
+      const metadata = await fetchMetadata(videoId, { runner });
       if (!metadata) throw new Error('unable to fetch video metadata');
       const dir = resolveDownloadDir(getConfig());
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
@@ -89,14 +86,18 @@ function registerImportHandlers({
 
   ipcMain.handle('yt:resolve-import-source', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    requireProviderTool();
     return classifyingFailures(async () => {
+      const runner = await getProviderRunner();
       const dir = resolveDownloadDir(getConfig());
       const existingIds = new Set(listTracks(dir).map((track) => track.id));
       return resolveYoutubeImportSource(input, {
         extractVideoId,
-        fetchMetadata,
-        searchPlaybackCandidates,
+        fetchMetadata: (videoId) => fetchMetadata(videoId, { runner }),
+        searchPlaybackCandidates: (canonical, sourceMetadata, options = {}) =>
+          searchPlaybackCandidates(canonical, sourceMetadata, {
+            ...options,
+            runner,
+          }),
         existingIds,
       });
     });
@@ -104,12 +105,12 @@ function registerImportHandlers({
 
   ipcMain.handle('yt:download-audio', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    requireProviderTool();
     return classifyingFailures(async () => {
+      const runner = await getProviderRunner();
       const videoId = extractVideoId(input);
       if (!videoId) throw new Error('invalid video id or YouTube URL');
       const destDir = resolveDownloadDir(getConfig());
-      const result = await downloadAudio(videoId, destDir);
+      const result = await downloadAudio(videoId, destDir, { runner });
       const trackDir = resolveTrackDir(destDir, videoId);
       if (result.title) {
         try {

@@ -32,6 +32,22 @@ describe('applySubtitleOptions', () => {
 });
 
 describe('buildAudioDownloadOptionAttempts', () => {
+  const originalPoToken = process.env.UTAWAKUI_YTDLP_PO_TOKEN;
+  const originalVisitorData = process.env.UTAWAKUI_YTDLP_VISITOR_DATA;
+
+  afterEach(() => {
+    if (originalPoToken === undefined) {
+      delete process.env.UTAWAKUI_YTDLP_PO_TOKEN;
+    } else {
+      process.env.UTAWAKUI_YTDLP_PO_TOKEN = originalPoToken;
+    }
+    if (originalVisitorData === undefined) {
+      delete process.env.UTAWAKUI_YTDLP_VISITOR_DATA;
+    } else {
+      process.env.UTAWAKUI_YTDLP_VISITOR_DATA = originalVisitorData;
+    }
+  });
+
   it('builds default and progressively stronger YouTube 403 fallback attempts (client rotation, cookies, impersonate)', () => {
     expect(
       buildAudioDownloadOptionAttempts(
@@ -160,6 +176,24 @@ describe('buildAudioDownloadOptionAttempts', () => {
         impersonate: 'chrome',
       },
     ]);
+  });
+
+  it('includes a manual PO-token attempt when the local runtime env provides one', () => {
+    process.env.UTAWAKUI_YTDLP_PO_TOKEN = 'TOKEN_VALUE';
+    process.env.UTAWAKUI_YTDLP_VISITOR_DATA = 'VISITOR_DATA';
+
+    const attempts = buildAudioDownloadOptionAttempts({
+      output: 'audio.%(ext)s',
+      noPlaylist: true,
+      writeInfoJson: true,
+    });
+
+    expect(attempts).toContainEqual(
+      expect.objectContaining({
+        extractorArgs:
+          'youtube:player_client=mweb;po_token=mweb.gvs+TOKEN_VALUE;visitor_data=VISITOR_DATA;player_js_version=actual',
+      }),
+    );
   });
 });
 

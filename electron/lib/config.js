@@ -3,7 +3,6 @@
 const fs = require('fs');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const { normalizeFeatureConfirmations } = require('./featureGates');
-const { normalizeYtdlpStatusCache } = require('./ytdlpStatus');
 
 const CURRENT_VERSION = 1;
 const UI_THEMES = ['light', 'dark'];
@@ -17,7 +16,6 @@ const DEFAULTS = {
   featureConfirmations: {},
   uiTheme: 'dark',
   sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width
-  ytdlpStatus: {},
   // Audio output device id for the capture (OBS-facing) mix — see
   // usePlayer.js's capture chain. null means the feature is off; the
   // device is looked up by id at runtime via enumerateDevices(), so an id
@@ -73,7 +71,6 @@ function loadConfig(configPath) {
       data.sidebarWidth <= SIDEBAR_WIDTH_MAX
         ? data.sidebarWidth
         : DEFAULTS.sidebarWidth,
-    ytdlpStatus: normalizeYtdlpStatusCache(data.ytdlpStatus),
     captureDeviceId:
       typeof data.captureDeviceId === 'string'
         ? data.captureDeviceId

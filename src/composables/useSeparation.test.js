@@ -11,7 +11,7 @@ let getFeatureConfirmationsMock;
 
 const confirmedAudioProcessingFlow = {
   featureId: 'audio-processing-flow',
-  noticeVersion: 'feature-notice-v2',
+  noticeVersion: 'feature-notice-v3',
   confirmedAt: '2026-08-20T00:00:00.000Z',
   enabled: true,
 };

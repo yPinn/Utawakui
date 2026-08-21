@@ -34,7 +34,7 @@ let mockPlaylist;
 
 const confirmedProviderFlow = {
   featureId: 'provider-flow',
-  noticeVersion: 'feature-notice-v2',
+  noticeVersion: 'feature-notice-v3',
   confirmedAt: '2026-08-13T00:00:00.000Z',
   enabled: true,
 };

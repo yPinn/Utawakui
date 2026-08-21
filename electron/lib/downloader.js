@@ -2,7 +2,6 @@
 
 const fs = require('fs');
 const path = require('path');
-const youtubedl = require('youtube-dl-exec');
 const {
   isArtworkFilename,
   isLyricsSubtitleFilename,
@@ -16,13 +15,14 @@ const {
 const { buildTrackIdentity } = require('./trackIdentity');
 const {
   ANONYMOUS_YOUTUBE_PHASES,
-  AUTHENTICATED_YOUTUBE_PHASES,
   CLIENT_FALLBACK_YOUTUBE_PHASES,
   applyYoutubeRuntimeOptions,
   buildPhaseAttempts,
+  getAuthenticatedYoutubePhases,
   isAudioFormatUnavailableError,
   isForbiddenAudioDownloadError,
   isRetryableMetadataError,
+  requireYoutubeRunner,
   runPhasedYoutubeAttempts,
   shouldRetryForPhase,
   watchUrl,
@@ -300,8 +300,12 @@ function applySubtitleOptions(options, info = null) {
 // Kept separate from buildAudioDownloadAttempts below — this is the
 // regression guard for the whole ladder, so its plain-array shape must stay
 // stable.
-function buildAudioDownloadOptionAttempts(baseOptions, info = null) {
-  return AUTHENTICATED_YOUTUBE_PHASES.map((phase) =>
+function buildAudioDownloadOptionAttempts(
+  baseOptions,
+  info = null,
+  phases = getAuthenticatedYoutubePhases(),
+) {
+  return phases.map((phase) =>
     applyYoutubeRuntimeOptions(
       applySubtitleOptions(
         {
@@ -318,8 +322,13 @@ function buildAudioDownloadOptionAttempts(baseOptions, info = null) {
 }
 
 function buildAudioDownloadAttempts(baseOptions, info = null) {
-  const optionsList = buildAudioDownloadOptionAttempts(baseOptions, info);
-  return AUTHENTICATED_YOUTUBE_PHASES.map((phase, index) => ({
+  const phases = getAuthenticatedYoutubePhases();
+  const optionsList = buildAudioDownloadOptionAttempts(
+    baseOptions,
+    info,
+    phases,
+  );
+  return phases.map((phase, index) => ({
     id: phase.id,
     options: optionsList[index],
     shouldRetry: shouldRetryForPhase(
@@ -334,8 +343,9 @@ function buildAudioDownloadAttempts(baseOptions, info = null) {
 
 async function fetchVideoInfo(
   videoId,
-  { runner = youtubedl, phases = ANONYMOUS_YOUTUBE_PHASES } = {},
+  { runner, phases = ANONYMOUS_YOUTUBE_PHASES } = {},
 ) {
+  const run = requireYoutubeRunner(runner);
   try {
     const info = await runPhasedYoutubeAttempts(
       watchUrl(videoId),
@@ -350,7 +360,7 @@ async function fetchVideoInfo(
         },
         isRetryableMetadataError,
       ),
-      runner,
+      run,
     );
     return typeof info === 'object' && info !== null ? info : null;
   } catch {
@@ -396,7 +406,8 @@ async function inferAlbumTitleFromFirstEntry(entries, { runner } = {}) {
   }
 }
 
-async function downloadAudio(videoId, destDir) {
+async function downloadAudio(videoId, destDir, options = {}) {
+  const runner = requireYoutubeRunner(options.runner);
   fs.mkdirSync(destDir, { recursive: true });
 
   const trackDir = resolveTrackDir(destDir, videoId);
@@ -407,14 +418,15 @@ async function downloadAudio(videoId, destDir) {
   // Same cookie database the download attempts below will read anyway — a
   // transient failure here used to permanently record "no lyrics found".
   const info = await fetchVideoInfo(videoId, {
-    phases: AUTHENTICATED_YOUTUBE_PHASES,
+    phases: getAuthenticatedYoutubePhases(),
+    runner,
   });
   const resetLyrics = lyricsManifestNeedsRescan(trackDir);
 
   // Verified per attempt, not once after the whole ladder — some clients let
   // yt-dlp exit 0 without writing a usable file, which must not stop retries.
   async function runAndVerifyAudioOutput(url, options) {
-    const result = await youtubedl(url, options);
+    const result = await runner(url, options);
     if (!hasStructuredAudioFile(trackDir)) {
       throw new Error(MISSING_AUDIO_OUTPUT_MESSAGE);
     }
@@ -448,9 +460,10 @@ async function downloadAudio(videoId, destDir) {
 // Backfill existing structured tracks with yt-dlp sidecars only. The audio
 // file already exists, so reload uses skipDownload and only refreshes
 // info.json/thumbnail.* into the track directory.
-async function backfillTrackInfo(videoId, trackDir) {
+async function backfillTrackInfo(videoId, trackDir, options = {}) {
+  const runner = requireYoutubeRunner(options.runner);
   const before = readTrackSidecarState(trackDir);
-  const info = await fetchVideoInfo(videoId);
+  const info = await fetchVideoInfo(videoId, { runner });
   const resetLyrics = lyricsManifestNeedsRescan(trackDir);
   try {
     fs.mkdirSync(trackDir, { recursive: true });
@@ -476,6 +489,7 @@ async function backfillTrackInfo(videoId, trackDir) {
         ),
         shouldRetry: shouldRetryForPhase(phase, isRetryableMetadataError),
       })),
+      runner,
     );
     finalizeDownloadedTrackFiles(trackDir, { resetLyrics });
   } catch {
@@ -493,8 +507,10 @@ async function backfillTrackInfo(videoId, trackDir) {
 // Metadata-only lookup for electron/lib/library/backfill.js's runBackfillPass. Returns null on
 // any failure — callers treat that as "couldn't backfill this time", not
 // an exceptional error.
-async function fetchMetadata(videoId) {
-  const info = await fetchVideoInfo(videoId);
+async function fetchMetadata(videoId, options = {}) {
+  const info = await fetchVideoInfo(videoId, {
+    runner: requireYoutubeRunner(options.runner),
+  });
 
   if (typeof info !== 'object' || info === null) return null;
   return extractMetadataFields(info);
@@ -505,7 +521,7 @@ async function fetchMetadata(videoId) {
 // uploads playlist). Unlike fetchMetadata, failures throw — this is a
 // user-initiated action that should surface an error, not retry silently.
 async function fetchPlaylist(playlistId, options = {}) {
-  const runner = options.runner || youtubedl;
+  const runner = requireYoutubeRunner(options.runner);
   const info = await runPhasedYoutubeAttempts(
     `https://www.youtube.com/playlist?list=${playlistId}`,
     buildPhaseAttempts(

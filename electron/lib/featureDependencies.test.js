@@ -13,13 +13,13 @@ import {
   getPreparedYtdlpPath,
   getFfmpegPaths,
   getManagedDependencyInstallDir,
+  getYtdlpDependency,
   getYtdlpPaths,
   getModelDependencyPaths,
   listFeatureDependencyStatuses,
   prepareFeatureDependency,
   removeFeatureDependency,
   repairFeatureDependency,
-  setupYtdlpRuntimeEnvironment,
   sha256,
 } from './featureDependencies.js';
 import { APP_ERROR_PREFIX } from './appError.js';
@@ -65,20 +65,53 @@ function makeDependency(archive) {
   };
 }
 
-function makeYtdlpDependency() {
+function makeProviderRuntimeDependency(buffers) {
   return {
     id: 'yt-dlp-provider-tool',
     featureId: 'provider-flow',
-    kind: 'tool',
+    kind: 'runtime',
     platform: 'win32',
     arch: 'x64',
-    name: 'yt-dlp test',
-    version: 'managed',
-    license: 'GPL-3.0-or-later bundled executable',
+    name: 'Provider runtime test',
+    version: 'python-test',
+    license: 'test',
     licenseUrl: 'https://example.test/license',
     sourceUrl: 'https://example.test/source',
-    bundledRelativePath: 'node_modules/youtube-dl-exec/bin/yt-dlp.exe',
-    executableRelativePath: 'yt-dlp.exe',
+    executableRelativePath: 'python/python.exe',
+    artifacts: [
+      {
+        role: 'python-embed',
+        name: 'Python',
+        version: 'test',
+        sourceUrl: 'https://example.test/python',
+        downloadUrl: 'https://example.test/python.zip',
+        sha256: sha256(buffers.python),
+      },
+      {
+        role: 'yt-dlp-wheel',
+        name: 'yt-dlp',
+        version: 'test',
+        sourceUrl: 'https://example.test/ytdlp',
+        downloadUrl: 'https://example.test/yt-dlp.whl',
+        sha256: sha256(buffers.ytdlp),
+      },
+      {
+        role: 'bgutil-provider-exe',
+        name: 'bgutil exe',
+        version: 'test',
+        sourceUrl: 'https://example.test/bgutil',
+        downloadUrl: 'https://example.test/bgutil.exe',
+        sha256: sha256(buffers.provider),
+      },
+      {
+        role: 'bgutil-plugin',
+        name: 'bgutil plugin',
+        version: 'test',
+        sourceUrl: 'https://example.test/plugin',
+        downloadUrl: 'https://example.test/plugin.zip',
+        sha256: sha256(buffers.plugin),
+      },
+    ],
   };
 }
 
@@ -509,51 +542,6 @@ describe('buildDependencyStatus / listFeatureDependencyStatuses for FFmpeg sourc
 });
 
 describe('yt-dlp feature dependency', () => {
-  it('copies a bundled yt-dlp executable into the managed dependency folder', async () => {
-    const userDataDir = makeTempDir();
-    const bundledDir = makeTempDir();
-    const bundledPath = path.join(bundledDir, 'yt-dlp.exe');
-    const dependency = makeYtdlpDependency();
-    fs.writeFileSync(bundledPath, 'exe');
-
-    const exePath = await ensureYtdlpDependency(userDataDir, {
-      dependency,
-      bundledPath,
-      now: () => new Date('2026-08-20T00:00:00.000Z'),
-    });
-
-    const paths = getYtdlpPaths(userDataDir, dependency);
-    expect(exePath).toBe(paths.executablePath);
-    expect(fs.readFileSync(paths.executablePath, 'utf8')).toBe('exe');
-    expect(JSON.parse(fs.readFileSync(paths.manifestPath, 'utf8'))).toEqual({
-      id: dependency.id,
-      featureId: dependency.featureId,
-      name: dependency.name,
-      version: dependency.version,
-      license: dependency.license,
-      sourceUrl: dependency.sourceUrl,
-      bundledRelativePath: dependency.bundledRelativePath,
-      installedAt: '2026-08-20T00:00:00.000Z',
-      executableRelativePath: dependency.executableRelativePath,
-    });
-  });
-
-  it('reports yt-dlp as installed when the managed executable exists', async () => {
-    const userDataDir = makeTempDir();
-    const bundledDir = makeTempDir();
-    const bundledPath = path.join(bundledDir, 'yt-dlp.exe');
-    const dependency = makeYtdlpDependency();
-    fs.writeFileSync(bundledPath, 'exe');
-    await ensureYtdlpDependency(userDataDir, { dependency, bundledPath });
-
-    expect(
-      listFeatureDependencyStatuses(userDataDir, [dependency])[0],
-    ).toMatchObject({
-      id: dependency.id,
-      installed: true,
-    });
-  });
-
   it('throws a provider setup prompt when the prepared yt-dlp tool is missing', () => {
     const userDataDir = makeTempDir();
 
@@ -568,29 +556,155 @@ describe('yt-dlp feature dependency', () => {
     }
   });
 
-  it('sets youtube-dl-exec to the managed yt-dlp directory before require time', () => {
+  it('downloads, verifies, extracts, and records the Python provider runtime', async () => {
     const userDataDir = makeTempDir();
-    const previous = process.env.YOUTUBE_DL_DIR;
-
-    setupYtdlpRuntimeEnvironment(userDataDir);
-
-    expect(process.env.YOUTUBE_DL_DIR).toBe(
-      getYtdlpPaths(userDataDir).installDir,
+    const buffers = {
+      python: Buffer.from('python zip'),
+      ytdlp: Buffer.from('yt-dlp wheel'),
+      provider: Buffer.from('provider exe'),
+      plugin: Buffer.from('plugin zip'),
+    };
+    const dependency = makeProviderRuntimeDependency(buffers);
+    const fetchImpl = vi.fn(async (url) => {
+      const artifact = dependency.artifacts.find(
+        (item) => item.downloadUrl === url,
+      );
+      if (!artifact) throw new Error(`unexpected url: ${url}`);
+      const key =
+        artifact.role === 'python-embed'
+          ? 'python'
+          : artifact.role === 'yt-dlp-wheel'
+            ? 'ytdlp'
+            : artifact.role === 'bgutil-provider-exe'
+              ? 'provider'
+              : 'plugin';
+      return {
+        ok: true,
+        arrayBuffer: () => Promise.resolve(arrayBufferFrom(buffers[key])),
+      };
+    });
+    const extractArchive = vi.fn(
+      async (_archivePath, destinationDir, artifact) => {
+        if (artifact.role === 'python-embed') {
+          fs.writeFileSync(path.join(destinationDir, 'python.exe'), 'python');
+          fs.writeFileSync(
+            path.join(destinationDir, 'python314._pth'),
+            ['python314.zip', '.', '#import site', ''].join('\n'),
+          );
+        }
+        if (artifact.role === 'yt-dlp-wheel') {
+          fs.mkdirSync(path.join(destinationDir, 'yt_dlp'), {
+            recursive: true,
+          });
+        }
+        if (artifact.role === 'bgutil-plugin') {
+          fs.mkdirSync(
+            path.join(destinationDir, 'yt_dlp_plugins', 'extractor'),
+            {
+              recursive: true,
+            },
+          );
+        }
+      },
     );
-    if (previous === undefined) {
-      delete process.env.YOUTUBE_DL_DIR;
-    } else {
-      process.env.YOUTUBE_DL_DIR = previous;
-    }
+
+    const paths = await ensureYtdlpDependency(userDataDir, {
+      dependency,
+      fetchImpl,
+      extractArchive,
+      now: () => new Date('2026-08-22T00:00:00.000Z'),
+    });
+
+    expect(paths.pythonPath).toBe(
+      getYtdlpPaths(userDataDir, dependency).pythonPath,
+    );
+    expect(fs.existsSync(paths.pythonPath)).toBe(true);
+    expect(fs.existsSync(path.join(paths.sitePackagesDir, 'yt_dlp'))).toBe(
+      true,
+    );
+    expect(fs.existsSync(paths.bgutilProviderPath)).toBe(true);
+    expect(
+      fs.existsSync(
+        path.join(
+          paths.pluginPackageDir,
+          'yt_dlp_plugins',
+          'extractor',
+          '__init__.py',
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      fs.readFileSync(path.join(paths.pythonDir, 'python314._pth'), 'utf8'),
+    ).toContain('Lib/site-packages');
+    expect(
+      JSON.parse(fs.readFileSync(paths.manifestPath, 'utf8')),
+    ).toMatchObject({
+      id: dependency.id,
+      version: dependency.version,
+      artifacts: dependency.artifacts.map((artifact) =>
+        expect.objectContaining({
+          role: artifact.role,
+          sha256: artifact.sha256,
+        }),
+      ),
+    });
   });
 
-  it('removes only the managed yt-dlp dependency folder', async () => {
+  it('removes only the managed Python provider runtime folder', async () => {
     const userDataDir = makeTempDir();
-    const bundledDir = makeTempDir();
-    const bundledPath = path.join(bundledDir, 'yt-dlp.exe');
-    const dependency = makeYtdlpDependency();
-    fs.writeFileSync(bundledPath, 'exe');
-    await ensureYtdlpDependency(userDataDir, { dependency, bundledPath });
+    const buffers = {
+      python: Buffer.from('python zip'),
+      ytdlp: Buffer.from('yt-dlp wheel'),
+      provider: Buffer.from('provider exe'),
+      plugin: Buffer.from('plugin zip'),
+    };
+    const dependency = makeProviderRuntimeDependency(buffers);
+    const fetchImpl = vi.fn(async (url) => {
+      const artifact = dependency.artifacts.find(
+        (item) => item.downloadUrl === url,
+      );
+      if (!artifact) throw new Error(`unexpected url: ${url}`);
+      const buffer =
+        artifact.role === 'python-embed'
+          ? buffers.python
+          : artifact.role === 'yt-dlp-wheel'
+            ? buffers.ytdlp
+            : artifact.role === 'bgutil-provider-exe'
+              ? buffers.provider
+              : buffers.plugin;
+      return {
+        ok: true,
+        arrayBuffer: () => Promise.resolve(arrayBufferFrom(buffer)),
+      };
+    });
+    const extractArchive = vi.fn(
+      async (_archivePath, destinationDir, artifact) => {
+        if (artifact.role === 'python-embed') {
+          fs.writeFileSync(path.join(destinationDir, 'python.exe'), 'python');
+          fs.writeFileSync(
+            path.join(destinationDir, 'python314._pth'),
+            ['python314.zip', '.', '#import site', ''].join('\n'),
+          );
+        }
+        if (artifact.role === 'yt-dlp-wheel') {
+          fs.mkdirSync(path.join(destinationDir, 'yt_dlp'), {
+            recursive: true,
+          });
+        }
+        if (artifact.role === 'bgutil-plugin') {
+          fs.mkdirSync(
+            path.join(destinationDir, 'yt_dlp_plugins', 'extractor'),
+            { recursive: true },
+          );
+        }
+      },
+    );
+
+    await ensureYtdlpDependency(userDataDir, {
+      dependency,
+      fetchImpl,
+      extractArchive,
+    });
     const installDir = getManagedDependencyInstallDir(userDataDir, dependency);
 
     const status = removeFeatureDependency(userDataDir, dependency.id, {
@@ -598,9 +712,20 @@ describe('yt-dlp feature dependency', () => {
     });
 
     expect(fs.existsSync(installDir)).toBe(false);
-    expect(fs.existsSync(bundledPath)).toBe(true);
     expect(status).toMatchObject({
       id: dependency.id,
+      installed: false,
+    });
+  });
+
+  it('reports the registry provider runtime as installed only when every runtime artifact exists', () => {
+    const userDataDir = makeTempDir();
+
+    expect(
+      listFeatureDependencyStatuses(userDataDir, [getYtdlpDependency()])[0],
+    ).toMatchObject({
+      id: 'yt-dlp-provider-tool',
+      kind: 'runtime',
       installed: false,
     });
   });

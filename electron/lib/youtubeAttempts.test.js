@@ -6,6 +6,7 @@ import {
   YOUTUBE_FALLBACK_PLAYER_CLIENTS,
   applyYoutubeRuntimeOptions,
   buildPhaseAttempts,
+  getAuthenticatedYoutubePhases,
   isAudioFormatUnavailableError,
   isForbiddenAudioDownloadError,
   isRetryableMetadataError,
@@ -180,6 +181,17 @@ describe('youtubeExtractorArgs', () => {
   it('falls back to the plain compat args when no client is given', () => {
     expect(youtubeExtractorArgs()).toBe('youtube:player_js_version=actual');
   });
+
+  it('combines a manual PO token with its required client/context prefix', () => {
+    expect(
+      youtubeExtractorArgs('mweb', {
+        poToken: 'mweb.gvs+TOKEN_VALUE',
+        visitorData: 'VISITOR_DATA',
+      }),
+    ).toBe(
+      'youtube:player_client=mweb;po_token=mweb.gvs+TOKEN_VALUE;visitor_data=VISITOR_DATA;player_js_version=actual',
+    );
+  });
 });
 
 describe('CLIENT_FALLBACK_YOUTUBE_PHASES', () => {
@@ -196,6 +208,57 @@ describe('CLIENT_FALLBACK_YOUTUBE_PHASES', () => {
     const cookieIndex = ids.indexOf('cookies-chrome');
     expect(ids.slice(0, cookieIndex)).toEqual(
       CLIENT_FALLBACK_YOUTUBE_PHASES.map((phase) => phase.id),
+    );
+  });
+});
+
+describe('getAuthenticatedYoutubePhases', () => {
+  it('matches the default authenticated phases when no PO token env is configured', () => {
+    expect(getAuthenticatedYoutubePhases({}).map((phase) => phase.id)).toEqual(
+      AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id),
+    );
+  });
+
+  it('adds one redacted manual PO-token phase before browser-cookie phases', () => {
+    const phases = getAuthenticatedYoutubePhases({
+      UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN_VALUE',
+      UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
+    });
+    const ids = phases.map((phase) => phase.id);
+    const poTokenIndex = ids.indexOf('po-token-mweb-gvs');
+
+    expect(poTokenIndex).toBeGreaterThan(ids.indexOf('client-mweb'));
+    expect(poTokenIndex).toBeLessThan(ids.indexOf('cookies-chrome'));
+    expect(ids).not.toContain('TOKEN_VALUE');
+    expect(phases[poTokenIndex].options.extractorArgs).toBe(
+      'youtube:player_client=mweb;po_token=mweb.gvs+TOKEN_VALUE;visitor_data=VISITOR_DATA;player_js_version=actual',
+    );
+  });
+
+  it('accepts a fully-prefixed manual PO token without adding another prefix', () => {
+    const phases = getAuthenticatedYoutubePhases({
+      UTAWAKUI_YTDLP_PO_TOKEN: 'web.gvs+TOKEN_VALUE',
+      UTAWAKUI_YTDLP_PO_TOKEN_CLIENT: 'web',
+    });
+
+    expect(
+      phases.find((phase) => phase.id === 'po-token-web-gvs'),
+    ).toMatchObject({
+      options: {
+        extractorArgs:
+          'youtube:player_client=web;po_token=web.gvs+TOKEN_VALUE;player_js_version=actual',
+      },
+    });
+  });
+
+  it('ignores unsafe PO-token env values instead of injecting malformed extractor args', () => {
+    const phases = getAuthenticatedYoutubePhases({
+      UTAWAKUI_YTDLP_PO_TOKEN: 'TOKEN;player_client=all',
+      UTAWAKUI_YTDLP_VISITOR_DATA: 'VISITOR_DATA',
+    });
+
+    expect(phases.map((phase) => phase.id)).toEqual(
+      AUTHENTICATED_YOUTUBE_PHASES.map((phase) => phase.id),
     );
   });
 });

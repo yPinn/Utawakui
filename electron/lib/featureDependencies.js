@@ -12,6 +12,13 @@ const {
   atomicWriteText,
   atomicWriteJson,
 } = require('./atomicWrite');
+const {
+  buildProviderRuntimePaths,
+  ensureBgutilPluginPackageMarkers,
+  getProviderRuntimePaths,
+  isProviderRuntimeInstalled,
+  writePythonPathConfig,
+} = require('./providerRuntime');
 
 const FEATURE_DEPENDENCIES_DIRNAME = 'dependencies';
 const FFMPEG_DEPENDENCY_ID = 'ffmpeg-gyan-essentials';
@@ -77,35 +84,10 @@ function getFfmpegPaths(userDataDir, dependency = getFfmpegDependency()) {
 }
 
 function getYtdlpPaths(userDataDir, dependency = getYtdlpDependency()) {
-  const installDir = path.join(
-    userDataDir,
-    FEATURE_DEPENDENCIES_DIRNAME,
-    'ytdlp',
-    'current',
-  );
-  return {
-    installDir,
-    manifestPath: path.join(installDir, 'manifest.json'),
-    executablePath: path.join(installDir, dependency.executableRelativePath),
-  };
-}
-
-function getBundledYtdlpPath(options = {}) {
-  if (options.bundledPath) return options.bundledPath;
-  const dependency = options.dependency || getYtdlpDependency();
-  if (options.resourcesPath) {
-    return path.join(
-      options.resourcesPath,
-      'app.asar.unpacked',
-      dependency.bundledRelativePath,
-    );
+  if (dependency.kind !== 'runtime') {
+    throw new Error(`unsupported yt-dlp dependency manifest: ${dependency.id}`);
   }
-  return path.join(__dirname, '..', '..', dependency.bundledRelativePath);
-}
-
-function setupYtdlpRuntimeEnvironment(userDataDir) {
-  const { installDir } = getYtdlpPaths(userDataDir);
-  process.env.YOUTUBE_DL_DIR = installDir;
+  return getProviderRuntimePaths(userDataDir);
 }
 
 function getModelDependencyPaths(userDataDir, dependency) {
@@ -290,7 +272,7 @@ function expandZipArchive(
       if (code !== 0) {
         reject(
           new Error(
-            `failed to extract FFmpeg archive (code ${code}): ${stderr}`,
+            `failed to extract feature dependency archive (code ${code}): ${stderr}`,
           ),
         );
         return;
@@ -372,10 +354,106 @@ async function getVerifiedFfmpegArchive(
   return { archive, cachePath: archivePath };
 }
 
+function requireDependencyArtifact(dependency, role) {
+  const artifact = dependency.artifacts?.find((item) => item.role === role);
+  if (!artifact) {
+    throw new Error(`missing provider runtime artifact: ${role}`);
+  }
+  return artifact;
+}
+
+async function downloadVerifiedArtifact(artifact, options = {}) {
+  const buffer = await downloadBuffer(
+    artifact.downloadUrl,
+    options.fetchImpl,
+    options,
+  );
+  emitProgress(options, { stage: 'verifying' });
+  const actualSha = sha256(buffer);
+  if (actualSha !== artifact.sha256) {
+    throw new Error(
+      `Downloaded ${artifact.role} checksum ${actualSha} does not match expected ${artifact.sha256}`,
+    );
+  }
+  return buffer;
+}
+
+async function extractZipBuffer(
+  buffer,
+  destinationDir,
+  artifact,
+  options = {},
+) {
+  const archivePath = path.join(destinationDir, `${artifact.role}.zip`);
+  atomicWriteBuffer(archivePath, buffer);
+  try {
+    await (options.extractArchive || expandZipArchive)(
+      archivePath,
+      destinationDir,
+      artifact,
+      options,
+    );
+  } finally {
+    fs.rmSync(archivePath, { force: true });
+  }
+}
+
+async function installProviderRuntimeArtifacts(
+  paths,
+  dependency,
+  options = {},
+) {
+  const pythonArtifact = requireDependencyArtifact(dependency, 'python-embed');
+  const ytDlpArtifact = requireDependencyArtifact(dependency, 'yt-dlp-wheel');
+  const providerArtifact = requireDependencyArtifact(
+    dependency,
+    'bgutil-provider-exe',
+  );
+  const pluginArtifact = requireDependencyArtifact(dependency, 'bgutil-plugin');
+
+  fs.mkdirSync(paths.pythonDir, { recursive: true });
+  fs.mkdirSync(paths.sitePackagesDir, { recursive: true });
+  fs.mkdirSync(paths.pluginPackageDir, { recursive: true });
+  fs.mkdirSync(path.dirname(paths.bgutilProviderPath), { recursive: true });
+  fs.mkdirSync(paths.cacheDir, { recursive: true });
+
+  emitProgress(options, { stage: 'downloading' });
+  const pythonArchive = await downloadVerifiedArtifact(pythonArtifact, options);
+  emitProgress(options, { stage: 'installing' });
+  await extractZipBuffer(
+    pythonArchive,
+    paths.pythonDir,
+    pythonArtifact,
+    options,
+  );
+  writePythonPathConfig(paths);
+
+  emitProgress(options, { stage: 'downloading' });
+  const ytDlpWheel = await downloadVerifiedArtifact(ytDlpArtifact, options);
+  emitProgress(options, { stage: 'installing' });
+  await extractZipBuffer(ytDlpWheel, paths.sitePackagesDir, ytDlpArtifact, {
+    ...options,
+    extractArchive: options.extractWheel || options.extractArchive,
+  });
+
+  emitProgress(options, { stage: 'downloading' });
+  const providerExe = await downloadVerifiedArtifact(providerArtifact, options);
+  atomicWriteBuffer(paths.bgutilProviderPath, providerExe);
+
+  emitProgress(options, { stage: 'downloading' });
+  const pluginZip = await downloadVerifiedArtifact(pluginArtifact, options);
+  emitProgress(options, { stage: 'installing' });
+  await extractZipBuffer(pluginZip, paths.pluginPackageDir, pluginArtifact, {
+    ...options,
+    extractArchive: options.extractPlugin || options.extractArchive,
+  });
+  ensureBgutilPluginPackageMarkers(paths);
+}
+
 function writeDependencyNotices(installDir, dependency) {
   const dependencyRole = (() => {
     if (dependency.id === YTDLP_DEPENDENCY_ID) {
-      return 'This yt-dlp executable is managed by Utawakui for the provider-flow feature.';
+      return 'This provider runtime is managed by Utawakui for the provider-flow feature.';
     }
     if (dependency.kind === 'model') {
       return 'This model is managed by Utawakui for the audio-processing-flow feature.';
@@ -417,6 +495,18 @@ function writeDependencyManifest(manifestPath, dependency, options = {}) {
     license: dependency.license,
     sourceUrl: dependency.sourceUrl,
     ...(dependency.downloadUrl ? { downloadUrl: dependency.downloadUrl } : {}),
+    ...(Array.isArray(dependency.artifacts)
+      ? {
+          artifacts: dependency.artifacts.map((artifact) => ({
+            role: artifact.role,
+            name: artifact.name,
+            version: artifact.version,
+            sourceUrl: artifact.sourceUrl,
+            downloadUrl: artifact.downloadUrl,
+            sha256: artifact.sha256,
+          })),
+        }
+      : {}),
     ...(dependency.bundledRelativePath
       ? { bundledRelativePath: dependency.bundledRelativePath }
       : {}),
@@ -465,7 +555,7 @@ function isModelFileValid(filePath, dependency, options = {}) {
 function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
   if (dependency.id === YTDLP_DEPENDENCY_ID) {
     const paths = getYtdlpPaths(userDataDir, dependency);
-    const installed = fs.existsSync(paths.executablePath);
+    const installed = isProviderRuntimeInstalled(paths);
     return {
       ...dependency,
       installed,
@@ -561,48 +651,59 @@ async function ensureYtdlpDependency(userDataDir, options = {}) {
   const dependency = options.dependency || getYtdlpDependency();
   if (
     dependency.featureId !== FEATURE_IDS.PROVIDER_FLOW ||
-    dependency.platform !== 'win32'
+    dependency.platform !== 'win32' ||
+    dependency.kind !== 'runtime'
   ) {
     throw new Error(`unsupported yt-dlp dependency manifest: ${dependency.id}`);
   }
 
-  const { installDir, manifestPath, executablePath } = getYtdlpPaths(
-    userDataDir,
-    dependency,
-  );
-  if (fs.existsSync(executablePath)) {
-    writeDependencyNotices(installDir, dependency);
-    if (!fs.existsSync(manifestPath)) {
-      writeDependencyManifest(manifestPath, dependency, options);
+  return ensureProviderRuntimeDependency(userDataDir, dependency, options);
+}
+
+async function ensureProviderRuntimeDependency(
+  userDataDir,
+  dependency,
+  options,
+) {
+  const paths = getProviderRuntimePaths(userDataDir);
+  if (isProviderRuntimeInstalled(paths)) {
+    writeDependencyNotices(paths.installDir, dependency);
+    if (!fs.existsSync(paths.manifestPath)) {
+      writeDependencyManifest(paths.manifestPath, dependency, options);
     }
-    return executablePath;
+    return paths;
   }
 
-  const bundledPath = getBundledYtdlpPath({
-    dependency,
-    resourcesPath: options.resourcesPath,
-    bundledPath: options.bundledPath,
-  });
-  if (!fs.existsSync(bundledPath)) {
-    throw new Error(`bundled yt-dlp executable not found: ${bundledPath}`);
-  }
+  const dependenciesRoot = path.dirname(paths.installDir);
+  fs.mkdirSync(dependenciesRoot, { recursive: true });
+  const tmpInstallDir = path.join(
+    dependenciesRoot,
+    `.ytdlp-${process.pid}-${Date.now()}.tmp`,
+  );
+  const tmpPaths = buildProviderRuntimePaths(tmpInstallDir);
 
-  fs.mkdirSync(installDir, { recursive: true });
-  emitProgress(options, { stage: 'installing' });
-  fs.copyFileSync(bundledPath, executablePath);
-  writeDependencyNotices(installDir, dependency);
-  writeDependencyManifest(manifestPath, dependency, options);
-  emitProgress(options, { stage: 'ready', percent: 100 });
-  return executablePath;
+  try {
+    fs.rmSync(tmpInstallDir, { recursive: true, force: true });
+    fs.mkdirSync(tmpInstallDir, { recursive: true });
+    await installProviderRuntimeArtifacts(tmpPaths, dependency, options);
+    writeDependencyNotices(tmpPaths.installDir, dependency);
+    writeDependencyManifest(tmpPaths.manifestPath, dependency, options);
+    fs.rmSync(paths.installDir, { recursive: true, force: true });
+    fs.renameSync(tmpInstallDir, paths.installDir);
+    emitProgress(options, { stage: 'ready', percent: 100 });
+    return paths;
+  } finally {
+    fs.rmSync(tmpInstallDir, { recursive: true, force: true });
+  }
 }
 
 function getPreparedYtdlpPath(userDataDir) {
   const dependency = getYtdlpDependency();
-  const { executablePath } = getYtdlpPaths(userDataDir, dependency);
-  if (!fs.existsSync(executablePath)) {
+  const paths = getYtdlpPaths(userDataDir, dependency);
+  if (!isProviderRuntimeInstalled(paths)) {
     throw createMissingDependencyError(dependency);
   }
-  return executablePath;
+  return paths;
 }
 
 async function ensureFfmpegDependency(userDataDir, options = {}) {
@@ -853,10 +954,8 @@ module.exports = {
   getSeparationModelDependency,
   getFfmpegPaths,
   getYtdlpPaths,
-  getBundledYtdlpPath,
   getModelDependencyPaths,
   getManagedDependencyInstallDir,
-  setupYtdlpRuntimeEnvironment,
   listFeatureDependencyStatuses,
   ensureYtdlpDependency,
   ensureFfmpegDependency,

@@ -18,8 +18,14 @@ const { removeTrackFromAllPlaylists } = require('../lib/playlists');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
 const { saveLrclibLyricsIfAbsent } = require('./lyricsHandlers');
 
-async function backfillTrackInfoWithLyricsFallback(videoId, trackDir) {
-  const result = await backfillTrackInfo(videoId, trackDir);
+async function backfillTrackInfoWithLyricsFallback(
+  videoId,
+  trackDir,
+  options = {},
+) {
+  const result = await backfillTrackInfo(videoId, trackDir, {
+    runner: options.runner,
+  });
   if (!result) return null;
 
   let saved = false;
@@ -31,6 +37,13 @@ async function backfillTrackInfoWithLyricsFallback(videoId, trackDir) {
   return saved ? { ...result, assetsUpdated: true } : result;
 }
 
+function createProviderBackfillTrackInfo(getProviderRunner) {
+  return async (videoId, trackDir) =>
+    backfillTrackInfoWithLyricsFallback(videoId, trackDir, {
+      runner: await getProviderRunner(),
+    });
+}
+
 function registerLibraryHandlers({
   ipcMain,
   dialog,
@@ -40,19 +53,18 @@ function registerLibraryHandlers({
   notifyLibraryUpdated,
   sendBackfillStatus,
   featureIds,
+  getProviderRunner,
 }) {
+  const fetchBackfillTrackInfo =
+    createProviderBackfillTrackInfo(getProviderRunner);
+
   ipcMain.handle('library:list', async () => {
     const dir = resolveDownloadDir(getConfig());
     const tracks = listTracks(dir);
     // Fire-and-forget — don't make the renderer wait on a network-bound
     // metadata pass just to see the tracks it already has.
     if (isFeatureGateEnabled(getConfig(), featureIds.PROVIDER_FLOW)) {
-      runBackfillPass(
-        dir,
-        tracks,
-        backfillTrackInfoWithLyricsFallback,
-        sendBackfillStatus,
-      )
+      runBackfillPass(dir, tracks, fetchBackfillTrackInfo, sendBackfillStatus)
         .then((updated) => {
           if (updated) notifyLibraryUpdated();
         })
@@ -165,4 +177,5 @@ function registerLibraryHandlers({
 module.exports = {
   registerLibraryHandlers,
   backfillTrackInfoWithLyricsFallback,
+  createProviderBackfillTrackInfo,
 };

@@ -25,7 +25,6 @@ describe('config', () => {
       featureConfirmations: {},
       uiTheme: 'dark',
       sidebarWidth: 256,
-      ytdlpStatus: {},
       captureDeviceId: null,
       systemFfmpegPath: null,
     });
@@ -62,7 +61,6 @@ describe('config', () => {
       featureConfirmations: {},
       uiTheme: 'dark',
       sidebarWidth: 256,
-      ytdlpStatus: {},
       captureDeviceId: null,
       systemFfmpegPath: null,
     });
@@ -88,17 +86,17 @@ describe('config', () => {
         version: 1,
         featureConfirmations: {
           'provider-flow': {
-            noticeVersion: 'feature-notice-v2',
+            noticeVersion: 'feature-notice-v3',
             confirmedAt: '2026-08-13T00:00:00.000Z',
             enabled: true,
           },
           'unknown-flow': {
-            noticeVersion: 'feature-notice-v2',
+            noticeVersion: 'feature-notice-v3',
             confirmedAt: '2026-08-13T00:00:00.000Z',
             enabled: true,
           },
           'lyrics-flow': {
-            noticeVersion: 'old-notice',
+            noticeVersion: 'feature-notice-v2',
             confirmedAt: '2026-08-13T00:00:00.000Z',
             enabled: true,
           },
@@ -109,7 +107,7 @@ describe('config', () => {
     expect(loadConfig(configPath).featureConfirmations).toEqual({
       'provider-flow': {
         featureId: 'provider-flow',
-        noticeVersion: 'feature-notice-v2',
+        noticeVersion: 'feature-notice-v3',
         confirmedAt: '2026-08-13T00:00:00.000Z',
         enabled: true,
       },
@@ -189,7 +187,7 @@ describe('config', () => {
       featureConfirmations: {
         'provider-flow': {
           featureId: 'provider-flow',
-          noticeVersion: 'feature-notice-v2',
+          noticeVersion: 'feature-notice-v3',
           confirmedAt: '2026-08-13T00:00:00.000Z',
           enabled: true,
         },
@@ -200,33 +198,9 @@ describe('config', () => {
       loadConfig(configPath).featureConfirmations['provider-flow'],
     ).toEqual({
       featureId: 'provider-flow',
-      noticeVersion: 'feature-notice-v2',
+      noticeVersion: 'feature-notice-v3',
       confirmedAt: '2026-08-13T00:00:00.000Z',
       enabled: true,
     });
-  });
-
-  it('round-trips ytdlpStatus through save/load', () => {
-    saveConfig(configPath, {
-      ytdlpStatus: {
-        lastCheckedAt: '2026-08-19T00:00:00.000Z',
-        lastKnownVersion: '2026.07.04',
-        lastCheckResult: 'up-to-date',
-      },
-    });
-
-    expect(loadConfig(configPath).ytdlpStatus).toEqual({
-      lastCheckedAt: '2026-08-19T00:00:00.000Z',
-      lastKnownVersion: '2026.07.04',
-      lastCheckResult: 'up-to-date',
-    });
-  });
-
-  it('wrong-typed ytdlpStatus falls back to an empty object', () => {
-    fs.writeFileSync(
-      configPath,
-      JSON.stringify({ version: 1, ytdlpStatus: 'not an object' }),
-    );
-    expect(loadConfig(configPath).ytdlpStatus).toEqual({});
   });
 });

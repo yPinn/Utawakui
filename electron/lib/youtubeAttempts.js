@@ -1,11 +1,15 @@
 'use strict';
 
-const youtubedl = require('youtube-dl-exec');
-
 const DEFAULT_YOUTUBE_JS_RUNTIME = 'node';
 // Do not exclude android_vr — without a PO token it's the one client that
 // still serves real audio, not just images.
 const FALLBACK_YOUTUBE_EXTRACTOR_ARGS = 'youtube:player_js_version=actual';
+const YTDLP_PO_TOKEN_ENV = 'UTAWAKUI_YTDLP_PO_TOKEN';
+const YTDLP_PO_TOKEN_CLIENT_ENV = 'UTAWAKUI_YTDLP_PO_TOKEN_CLIENT';
+const YTDLP_PO_TOKEN_CONTEXT_ENV = 'UTAWAKUI_YTDLP_PO_TOKEN_CONTEXT';
+const YTDLP_VISITOR_DATA_ENV = 'UTAWAKUI_YTDLP_VISITOR_DATA';
+const DEFAULT_PO_TOKEN_CLIENT = 'mweb';
+const DEFAULT_PO_TOKEN_CONTEXT = 'gvs';
 // firefox last: Chrome 127+ and current Edge both use App-Bound Encryption,
 // which makes their cookies structurally undecryptable by any external tool
 // on Windows (confirmed via yt-dlp's own DPAPI failure) — firefox isn't
@@ -80,10 +84,13 @@ const YOUTUBE_FALLBACK_PLAYER_CLIENTS = ['tv_simply', 'web_safari', 'mweb'];
 
 // player_js_version is inert for clients that skip the JS player, so it's
 // safe to carry through every client phase rather than branching per client.
-function youtubeExtractorArgs(playerClient) {
-  return playerClient
-    ? `youtube:player_client=${playerClient};player_js_version=actual`
-    : FALLBACK_YOUTUBE_EXTRACTOR_ARGS;
+function youtubeExtractorArgs(playerClient, options = {}) {
+  const args = [];
+  if (playerClient) args.push(`player_client=${playerClient}`);
+  if (options.poToken) args.push(`po_token=${options.poToken}`);
+  if (options.visitorData) args.push(`visitor_data=${options.visitorData}`);
+  args.push('player_js_version=actual');
+  return `youtube:${args.join(';')}`;
 }
 
 const PLAYER_CLIENT_YOUTUBE_PHASES = YOUTUBE_FALLBACK_PLAYER_CLIENTS.map(
@@ -121,6 +128,63 @@ const AUTHENTICATED_YOUTUBE_PHASES = [
   },
 ];
 
+function hasExtractorArgUnsafeCharacters(value) {
+  return /[;\s]/.test(String(value || ''));
+}
+
+function readSafeEnvValue(env, name) {
+  const value = String(env?.[name] || '').trim();
+  if (!value || hasExtractorArgUnsafeCharacters(value)) return null;
+  return value;
+}
+
+function readYoutubePoTokenConfig(env = process.env) {
+  const rawPoToken = readSafeEnvValue(env, YTDLP_PO_TOKEN_ENV);
+  if (!rawPoToken) return null;
+
+  const client =
+    readSafeEnvValue(env, YTDLP_PO_TOKEN_CLIENT_ENV) || DEFAULT_PO_TOKEN_CLIENT;
+  const context =
+    readSafeEnvValue(env, YTDLP_PO_TOKEN_CONTEXT_ENV) ||
+    DEFAULT_PO_TOKEN_CONTEXT;
+  const visitorData = readSafeEnvValue(env, YTDLP_VISITOR_DATA_ENV);
+  const poToken = rawPoToken.includes('+')
+    ? rawPoToken
+    : `${client}.${context}+${rawPoToken}`;
+
+  return { client, context, poToken, visitorData };
+}
+
+function buildManualPoTokenPhase(env = process.env) {
+  const config = readYoutubePoTokenConfig(env);
+  if (!config) return null;
+  return {
+    id: `po-token-${config.client}-${config.context}`,
+    options: {
+      extractorArgs: youtubeExtractorArgs(config.client, {
+        poToken: config.poToken,
+        visitorData: config.visitorData,
+      }),
+    },
+  };
+}
+
+function getAuthenticatedYoutubePhases(env = process.env) {
+  const poTokenPhase = buildManualPoTokenPhase(env);
+  const cookieIndex = AUTHENTICATED_YOUTUBE_PHASES.findIndex((phase) =>
+    phase.id.startsWith('cookies-'),
+  );
+  if (!poTokenPhase || cookieIndex === -1) {
+    return AUTHENTICATED_YOUTUBE_PHASES.slice();
+  }
+
+  return [
+    ...AUTHENTICATED_YOUTUBE_PHASES.slice(0, cookieIndex),
+    poTokenPhase,
+    ...AUTHENTICATED_YOUTUBE_PHASES.slice(cookieIndex),
+  ];
+}
+
 // Splits "worth escalating" (caller-supplied) from "did this phase's own
 // mechanism fail" (phase-supplied) — no reverse-engineering a phase's
 // identity from its option shape.
@@ -137,11 +201,19 @@ function buildPhaseAttempts(phases, baseOptions, isRetryableError) {
   }));
 }
 
-async function runPhasedYoutubeAttempts(url, attempts, runner = youtubedl) {
+function requireYoutubeRunner(runner) {
+  if (typeof runner !== 'function') {
+    throw new Error('yt-dlp runner is required');
+  }
+  return runner;
+}
+
+async function runPhasedYoutubeAttempts(url, attempts, runner) {
+  const run = requireYoutubeRunner(runner);
   let lastError;
   for (let index = 0; index < attempts.length; index += 1) {
     try {
-      return await runner(url, attempts[index].options);
+      return await run(url, attempts[index].options);
     } catch (err) {
       lastError = err;
       const canRetry =
@@ -161,10 +233,12 @@ module.exports = {
   applyYoutubeRuntimeOptions,
   buildPhaseAttempts,
   downloadErrorText,
+  getAuthenticatedYoutubePhases,
   isAudioFormatUnavailableError,
   isForbiddenAudioDownloadError,
   isRetryableMetadataError,
   isUnavailableBrowserCookieError,
+  requireYoutubeRunner,
   runPhasedYoutubeAttempts,
   shouldRetryForPhase,
   watchUrl,

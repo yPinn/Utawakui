@@ -1,6 +1,5 @@
 'use strict';
 
-const youtubedl = require('youtube-dl-exec');
 const { identityArtistKeys, splitArtistNames } = require('./trackIdentity');
 const {
   extractTitleDerivedSearchParts,
@@ -10,7 +9,10 @@ const {
   stripParenthesizedDecorations,
   stripTrackDecorations,
 } = require('./musicTitle');
-const { applyYoutubeRuntimeOptions } = require('./youtubeAttempts');
+const {
+  applyYoutubeRuntimeOptions,
+  requireYoutubeRunner,
+} = require('./youtubeAttempts');
 const { VIDEO_ID_RE } = require('./youtube');
 const { extractMetadataFields } = require('./ytdlpInfo');
 
@@ -258,7 +260,7 @@ function normalizePlaybackSearchCandidate(entry, context = {}) {
   };
 }
 
-async function fetchPlaybackSearchEntries(input, runner = youtubedl) {
+async function fetchPlaybackSearchEntries(input, runner) {
   const info = await runner(
     input,
     applyYoutubeRuntimeOptions({
@@ -346,7 +348,7 @@ async function searchPlaybackCandidates(
   // nothing to search for.
   if (options.sourcePlatform === 'yt-music') return [];
 
-  const runner = options.runner || youtubedl;
+  const runner = requireYoutubeRunner(options.runner);
   const titleParts = titlePartsFor(canonical, sourceMetadata);
   const queries = buildPlaybackSearchQueries(
     canonical,
