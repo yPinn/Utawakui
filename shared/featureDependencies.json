@@ -22,7 +22,8 @@
           "sourceUrl": "https://www.python.org/downloads/release/python-3147/",
           "downloadUrl": "https://www.python.org/ftp/python/3.14.7/python-3.14.7-embed-amd64.zip",
           "sha256": "d297e5ff019966817ad8502465176139f2d3d840fa4ed84b13bed399a6ab1f15",
-          "expectedSize": 12100000
+          "expectedSize": 12673227,
+          "maxDownloadSize": 16777216
         },
         {
           "role": "yt-dlp-wheel",
@@ -31,7 +32,8 @@
           "sourceUrl": "https://pypi.org/project/yt-dlp/2026.8.19/",
           "downloadUrl": "https://files.pythonhosted.org/packages/69/b2/8cd1613f56eed7ceb64fbd4df3f1c01246bfb098e6f398228bafda22b80b/yt_dlp-2026.8.19-py3-none-any.whl",
           "sha256": "1d57897e94c6665a0a6f9bc54b34e584284e32c034ffab3a7df25d8f7b24eedf",
-          "expectedSize": 3185533
+          "expectedSize": 3185533,
+          "maxDownloadSize": 8388608
         },
         {
           "role": "bgutil-provider-exe",
@@ -40,7 +42,8 @@
           "sourceUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs",
           "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-pot-windows-x86_64.exe",
           "sha256": "25d6b05c79176aa792454c3d1727922ca47e56cf11cb1e866615d751819b14a0",
-          "expectedSize": 45795328
+          "expectedSize": 45795328,
+          "maxDownloadSize": 67108864
         },
         {
           "role": "bgutil-plugin",
@@ -49,7 +52,8 @@
           "sourceUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs",
           "downloadUrl": "https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs/releases/latest/download/bgutil-ytdlp-pot-provider-rs.zip",
           "sha256": "99fd83b98fa93b193d6a3b69dc74410d76e7a2b889868c54d16121cac9060344",
-          "expectedSize": 6253
+          "expectedSize": 6253,
+          "maxDownloadSize": 1048576
         }
       ]
     },

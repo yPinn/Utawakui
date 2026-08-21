@@ -134,6 +134,11 @@ function readContentLength(response) {
 }
 
 function downloadSizeLimit(dependency) {
+  const maxDownloadSize = Number(dependency?.maxDownloadSize);
+  if (Number.isSafeInteger(maxDownloadSize) && maxDownloadSize > 0) {
+    return maxDownloadSize;
+  }
+
   const expectedSize = Number(dependency?.expectedSize);
   return Number.isSafeInteger(expectedSize) && expectedSize > 0
     ? expectedSize

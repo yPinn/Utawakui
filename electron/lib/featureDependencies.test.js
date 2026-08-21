@@ -531,6 +531,41 @@ describe('ensureFfmpegDependency', () => {
       }),
     ).rejects.toThrow(/exceeds allowed size/);
   });
+
+  it('uses the declared max download size as the hard cap when present', async () => {
+    const userDataDir = makeTempDir();
+    const archive = createStoredZip([
+      {
+        name: 'ffmpeg-test/bin/ffmpeg.exe',
+        data: Buffer.from('exe'),
+      },
+    ]);
+    const dependency = {
+      ...makeDependency(archive),
+      expectedSize: 4,
+      maxDownloadSize: archive.length,
+    };
+
+    await expect(
+      ensureFfmpegDependency(userDataDir, {
+        allowNonWindows: true,
+        dependency,
+        fetchImpl: vi.fn().mockResolvedValue({
+          ok: true,
+          arrayBuffer: () => Promise.resolve(arrayBufferFrom(archive)),
+        }),
+        extractArchive: vi.fn(async (_archivePath, destinationDir, dep) => {
+          const exeDir = path.join(
+            destinationDir,
+            dep.archiveRoot,
+            path.dirname(dep.executableRelativePath),
+          );
+          fs.mkdirSync(exeDir, { recursive: true });
+          fs.writeFileSync(path.join(exeDir, 'ffmpeg.exe'), 'exe');
+        }),
+      }),
+    ).resolves.toBe(getFfmpegPaths(userDataDir, dependency).executablePath);
+  });
 });
 
 describe('getPreparedFfmpegPath', () => {
