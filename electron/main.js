@@ -178,6 +178,8 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       requireFeatureGate,
       getMainWindow: windowState.getMainWindow,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
     });
 
     registerConfigHandlers({

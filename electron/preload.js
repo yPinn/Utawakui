@@ -60,6 +60,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('feature-dependencies:remove', dependencyId),
   repairFeatureDependency: (dependencyId) =>
     ipcRenderer.invoke('feature-dependencies:repair', dependencyId),
+  detectSystemFfmpeg: () =>
+    ipcRenderer.invoke('feature-dependencies:detect-system-ffmpeg'),
+  setFfmpegSource: (useSystem) =>
+    ipcRenderer.invoke('feature-dependencies:set-ffmpeg-source', useSystem),
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),

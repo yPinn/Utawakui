@@ -462,7 +462,7 @@ function isModelFileValid(filePath, dependency, options = {}) {
   return true;
 }
 
-function buildDependencyStatus(userDataDir, dependency) {
+function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
   if (dependency.id === YTDLP_DEPENDENCY_ID) {
     const paths = getYtdlpPaths(userDataDir, dependency);
     const installed = fs.existsSync(paths.executablePath);
@@ -477,11 +477,26 @@ function buildDependencyStatus(userDataDir, dependency) {
   }
 
   if (dependency.id === FFMPEG_DEPENDENCY_ID) {
+    // A live systemFfmpegPath always wins over the managed install's own
+    // presence — separationHandlers.js resolves the same way (see
+    // getPreparedFfmpegPath above), so the Settings row must agree with
+    // what a separation run would actually use.
+    if (systemFfmpegPath && fs.existsSync(systemFfmpegPath)) {
+      return {
+        ...dependency,
+        installed: true,
+        source: 'system',
+        installedAt: null,
+        installedVersion: null,
+      };
+    }
+
     const paths = getFfmpegPaths(userDataDir, dependency);
     const installed = fs.existsSync(paths.executablePath);
     return {
       ...dependency,
       installed,
+      source: 'managed',
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
       installedVersion: installed
         ? readInstalledVersion(paths.manifestPath)
@@ -518,9 +533,10 @@ function buildDependencyStatus(userDataDir, dependency) {
 function listFeatureDependencyStatuses(
   userDataDir,
   dependencies = getFeatureDependencies(),
+  systemFfmpegPath = null,
 ) {
   return dependencies.map((dependency) =>
-    buildDependencyStatus(userDataDir, dependency),
+    buildDependencyStatus(userDataDir, dependency, systemFfmpegPath),
   );
 }
 
@@ -672,7 +688,23 @@ async function ensureFfmpegDependency(userDataDir, options = {}) {
   }
 }
 
-function getPreparedFfmpegPath(userDataDir) {
+// systemFfmpegPath is config.json's opt-in path (see systemFfmpeg.js's
+// detectSystemFfmpeg()) — main only ever writes it after re-detecting and
+// smoke-testing it itself, so a non-null value here is trusted, but the
+// file can still have vanished since (uninstalled, PATH changed) without
+// the app restarting, so existence is still checked at call time exactly
+// like the managed path below.
+function getPreparedFfmpegPath(userDataDir, systemFfmpegPath = null) {
+  if (systemFfmpegPath) {
+    if (!fs.existsSync(systemFfmpegPath)) {
+      throw createMissingDependencyError({
+        ...getFfmpegDependency(),
+        name: '系統 FFmpeg',
+      });
+    }
+    return systemFfmpegPath;
+  }
+
   const dependency = getFfmpegDependency();
   const { executablePath } = getFfmpegPaths(userDataDir, dependency);
   if (!fs.existsSync(executablePath)) {

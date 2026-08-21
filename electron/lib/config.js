@@ -24,6 +24,13 @@ const DEFAULTS = {
   // for a device that's since been unplugged just fails to apply (see
   // useAudioOutput.js), not a validation concern here.
   captureDeviceId: null,
+  // Absolute path to a system-installed FFmpeg the user opted into via
+  // Settings (see electron/lib/systemFfmpeg.js's detectSystemFfmpeg()).
+  // null means the app-managed Gyan download is used (the default). Only
+  // ever written by main after it has itself re-detected and smoke-tested
+  // the path — the renderer never supplies a path directly, same
+  // untrusted-input posture as captureDeviceId's id-not-path role above.
+  systemFfmpegPath: null,
 };
 
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
@@ -71,6 +78,10 @@ function loadConfig(configPath) {
       typeof data.captureDeviceId === 'string'
         ? data.captureDeviceId
         : DEFAULTS.captureDeviceId,
+    systemFfmpegPath:
+      typeof data.systemFfmpegPath === 'string'
+        ? data.systemFfmpegPath
+        : DEFAULTS.systemFfmpegPath,
   };
 }
 

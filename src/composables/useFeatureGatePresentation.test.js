@@ -148,4 +148,78 @@ describe('useFeatureGatePresentation', () => {
     expect(row.body.length).toBeGreaterThan(0);
     expect(row.body.every((line) => typeof line === 'string')).toBe(true);
   });
+
+  it("always routes the ffmpeg row's primary action through the source modal", async () => {
+    const presentation = await loadPresentation();
+    const item = findItem(
+      presentation,
+      'audio-processing-flow',
+      'ffmpeg-gyan-essentials',
+    );
+
+    expect(item.actionLabel).toBe('準備音訊轉換工具');
+
+    updatedCallback([
+      {
+        id: 'ffmpeg-gyan-essentials',
+        featureId: 'audio-processing-flow',
+        kind: 'binary',
+        name: 'FFmpeg essentials build',
+        license: 'GPL-3.0',
+        installed: true,
+        source: 'managed',
+      },
+    ]);
+
+    const installedItem = findItem(
+      presentation,
+      'audio-processing-flow',
+      'ffmpeg-gyan-essentials',
+    );
+    expect(installedItem.actionLabel).toBe('FFmpeg 來源設定');
+  });
+
+  it('reports source: "system" as a distinct value and status once active', async () => {
+    const presentation = await loadPresentation();
+
+    updatedCallback([
+      {
+        id: 'ffmpeg-gyan-essentials',
+        featureId: 'audio-processing-flow',
+        kind: 'binary',
+        name: 'FFmpeg essentials build',
+        license: 'GPL-3.0',
+        installed: true,
+        source: 'system',
+      },
+    ]);
+
+    const item = findItem(
+      presentation,
+      'audio-processing-flow',
+      'ffmpeg-gyan-essentials',
+    );
+    expect(item.value).toBe('系統安裝的 FFmpeg');
+    expect(item.status).toBe('使用系統版本');
+    expect(item.statusTone).toBe('success');
+  });
+
+  it('hints "可用系統版本" when not installed but a system FFmpeg was detected', async () => {
+    const { shallowRef } = await import('vue');
+    const systemFfmpegDetection = shallowRef({
+      available: true,
+      ok: true,
+      path: 'C:\\ffmpeg\\bin\\ffmpeg.exe',
+      version: '7.1-full_build-www.gyan.dev',
+    });
+    const presentation = await loadPresentation({ systemFfmpegDetection });
+
+    const item = findItem(
+      presentation,
+      'audio-processing-flow',
+      'ffmpeg-gyan-essentials',
+    );
+    expect(item.status).toBe('可用系統版本');
+    expect(item.statusTone).toBe('info');
+  });
 });

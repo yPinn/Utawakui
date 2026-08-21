@@ -65,7 +65,10 @@ function registerSeparationHandlers({
       // download. CPU-heavy decode/inference stays inside the worker.
       const { modelId } = resolvePreset(resolvedPresetId);
       const userDataDir = app.getPath('userData');
-      const ffmpegPath = getPreparedFfmpegPath(userDataDir);
+      const ffmpegPath = getPreparedFfmpegPath(
+        userDataDir,
+        getConfig().systemFfmpegPath,
+      );
       const modelPath = getPreparedSeparationModelPath(userDataDir, modelId);
       await new Promise((resolve, reject) => {
         const worker = new Worker(

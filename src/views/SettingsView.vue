@@ -10,6 +10,7 @@ import {
   RotateCcw,
 } from '../icons/index.js';
 import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
+import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
@@ -129,6 +130,13 @@ const captureDeviceLabel = computed(() => {
   return device?.label || '裝置名稱無法讀取';
 });
 
+// One-shot mount-time probe (see refreshSettingsState below) shared by the
+// compact ffmpeg row's "可用系統版本" hint and FfmpegSourceModal.vue's
+// initial content — a manual re-detect inside the modal has its own local
+// state and doesn't write back here.
+const systemFfmpegDetection = shallowRef(null);
+const isFfmpegSourceModalOpen = shallowRef(false);
+
 const {
   featureGateRows,
   enabledGateCount,
@@ -136,7 +144,7 @@ const {
   gateActionLabel,
   isGateActionDisabled,
   DEPENDENCY_ADVANCED_ACTIONS,
-} = useFeatureGatePresentation({ ytdlpMessage });
+} = useFeatureGatePresentation({ ytdlpMessage, systemFfmpegDetection });
 
 function isDependencyInstalled(dependencyId) {
   return Boolean(featureDependencyState.byId[dependencyId]?.installed);
@@ -230,7 +238,23 @@ async function refreshMetadata() {
   }
 }
 
+async function detectSystemFfmpeg() {
+  if (
+    typeof window === 'undefined' ||
+    typeof window.Utawakui?.detectSystemFfmpeg !== 'function'
+  ) {
+    return;
+  }
+  try {
+    systemFfmpegDetection.value = await window.Utawakui.detectSystemFfmpeg();
+  } catch {
+    // Best-effort hint only — a failed probe just means the row/modal
+    // stay in their "尚未偵測" state, not a user-facing error.
+  }
+}
+
 async function refreshSettingsState() {
+  detectSystemFfmpeg();
   try {
     await refreshConfig();
   } catch (err) {
@@ -264,6 +288,10 @@ async function checkForYtdlpUpdate() {
 }
 
 async function handleWorkflowItemAction(itemId) {
+  if (itemId === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS) {
+    isFfmpegSourceModalOpen.value = true;
+    return;
+  }
   if (
     itemId === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL &&
     featureDependencyState.byId[itemId]?.installed
@@ -444,6 +472,12 @@ onMounted(refreshSettingsState);
         <CaptureDeviceModal
           :open="isCaptureDeviceModalOpen"
           @close="isCaptureDeviceModalOpen = false"
+        />
+
+        <FfmpegSourceModal
+          :open="isFfmpegSourceModalOpen"
+          :initial-detection="systemFfmpegDetection"
+          @close="isFfmpegSourceModalOpen = false"
         />
 
         <SettingsBlock

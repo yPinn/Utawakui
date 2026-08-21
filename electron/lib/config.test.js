@@ -27,6 +27,7 @@ describe('config', () => {
       sidebarWidth: 256,
       ytdlpStatus: {},
       captureDeviceId: null,
+      systemFfmpegPath: null,
     });
   });
 
@@ -63,6 +64,7 @@ describe('config', () => {
       sidebarWidth: 256,
       ytdlpStatus: {},
       captureDeviceId: null,
+      systemFfmpegPath: null,
     });
 
     const backups = fs
@@ -165,6 +167,21 @@ describe('config', () => {
       JSON.stringify({ version: 1, captureDeviceId: 42 }),
     );
     expect(loadConfig(configPath).captureDeviceId).toBe(null);
+  });
+
+  it('round-trips systemFfmpegPath through save/load', () => {
+    saveConfig(configPath, { systemFfmpegPath: 'C:\\ffmpeg\\bin\\ffmpeg.exe' });
+    expect(loadConfig(configPath).systemFfmpegPath).toBe(
+      'C:\\ffmpeg\\bin\\ffmpeg.exe',
+    );
+  });
+
+  it('wrong-typed systemFfmpegPath falls back to null', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, systemFfmpegPath: 42 }),
+    );
+    expect(loadConfig(configPath).systemFfmpegPath).toBe(null);
   });
 
   it('round-trips feature confirmations through save/load', () => {

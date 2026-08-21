@@ -7,6 +7,8 @@ import {
   ensureFfmpegDependency,
   ensureYtdlpDependency,
   ensureModelDependency,
+  getFfmpegDependency,
+  getPreparedFfmpegPath,
   getPreparedSeparationModelPath,
   getPreparedYtdlpPath,
   getFfmpegPaths,
@@ -396,6 +398,113 @@ describe('ensureFfmpegDependency', () => {
         extractArchive: vi.fn(),
       }),
     ).rejects.toThrow(/checksum/);
+  });
+});
+
+describe('getPreparedFfmpegPath', () => {
+  it('returns the managed executable path when no system path is provided', () => {
+    const userDataDir = makeTempDir();
+    const { executablePath } = getFfmpegPaths(userDataDir);
+    fs.mkdirSync(path.dirname(executablePath), { recursive: true });
+    fs.writeFileSync(executablePath, 'exe');
+
+    expect(getPreparedFfmpegPath(userDataDir, null)).toBe(executablePath);
+  });
+
+  it('throws a setup prompt when neither a managed nor a system executable exists', () => {
+    const userDataDir = makeTempDir();
+
+    try {
+      getPreparedFfmpegPath(userDataDir, null);
+      throw new Error('expected missing dependency to throw');
+    } catch (err) {
+      expect(err.message).toContain(APP_ERROR_PREFIX);
+      expect(err.message).toContain('請先到設定頁準備');
+      expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
+    }
+  });
+
+  it('returns the system path when it exists on disk, without checking the managed install', () => {
+    const userDataDir = makeTempDir();
+    const systemDir = makeTempDir();
+    const systemPath = path.join(systemDir, 'ffmpeg.exe');
+    fs.writeFileSync(systemPath, 'exe');
+
+    expect(getPreparedFfmpegPath(userDataDir, systemPath)).toBe(systemPath);
+  });
+
+  it('throws a setup prompt naming the system FFmpeg when the configured path no longer exists', () => {
+    const userDataDir = makeTempDir();
+    const missingSystemPath = path.join(
+      userDataDir,
+      'does-not-exist',
+      'ffmpeg.exe',
+    );
+
+    try {
+      getPreparedFfmpegPath(userDataDir, missingSystemPath);
+      throw new Error('expected missing dependency to throw');
+    } catch (err) {
+      expect(err.message).toContain(APP_ERROR_PREFIX);
+      expect(err.message).toContain('系統 FFmpeg');
+      expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
+    }
+  });
+});
+
+describe('buildDependencyStatus / listFeatureDependencyStatuses for FFmpeg source', () => {
+  it('reports source: "system" and installed:true when a live systemFfmpegPath exists', () => {
+    const userDataDir = makeTempDir();
+    const systemDir = makeTempDir();
+    const systemPath = path.join(systemDir, 'ffmpeg.exe');
+    fs.writeFileSync(systemPath, 'exe');
+
+    const statuses = listFeatureDependencyStatuses(
+      userDataDir,
+      [getFfmpegDependency()],
+      systemPath,
+    );
+
+    expect(statuses[0]).toMatchObject({
+      installed: true,
+      source: 'system',
+      installedVersion: null,
+    });
+  });
+
+  it('falls back to the managed install status when the configured systemFfmpegPath no longer exists', () => {
+    const userDataDir = makeTempDir();
+    const missingSystemPath = path.join(
+      userDataDir,
+      'does-not-exist',
+      'ffmpeg.exe',
+    );
+
+    const statuses = listFeatureDependencyStatuses(
+      userDataDir,
+      [getFfmpegDependency()],
+      missingSystemPath,
+    );
+
+    expect(statuses[0]).toMatchObject({
+      installed: false,
+      source: 'managed',
+    });
+  });
+
+  it('reports source: "managed" when no systemFfmpegPath is configured', () => {
+    const userDataDir = makeTempDir();
+
+    const statuses = listFeatureDependencyStatuses(
+      userDataDir,
+      [getFfmpegDependency()],
+      null,
+    );
+
+    expect(statuses[0]).toMatchObject({
+      installed: false,
+      source: 'managed',
+    });
   });
 });
 

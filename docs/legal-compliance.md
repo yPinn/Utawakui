@@ -298,6 +298,11 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 - FFmpeg 官方說明指出，FFmpeg 依建置選項可能落在 LGPL 或 GPL；本專案目前不再把
   `ffmpeg-static` 放入 packaged runtime，改由 `audio-processing-flow` 啟用後下載
   Gyan essentials build。該 build 仍應以 GPL-3.0 處理，並在下載前顯示授權與來源。
+- Settings 另提供一個 opt-in：改用使用者自行安裝、已在系統 PATH 上的 FFmpeg
+  (`electron/lib/systemFfmpeg.js`)。這個路徑下 Utawakui 不下載、不散布、也不管理
+  該執行檔——只讀取路徑並執行版本/解碼驗證，因此上一段對 Gyan essentials build 的
+  下載前授權揭露與下載後 hash/notice 保存要求不適用於它；該執行檔的授權責任在於
+  使用者自己的安裝來源。啟用 managed 下載路徑時的既有合規流程不受此 opt-in 影響。
 - UVR MDX-Net 模型由 app-managed provisioning 下載，不放入 installer。模型 registry
   目前指向 TRvlvr/model_repo 的 `all_public_uvr_models` release，並依 UVR 授權說明與
   備援模型卡標示為 MIT + credit；正式發布前仍需重新確認上游授權與 attribution 文案。
@@ -329,6 +334,8 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
   哪些項目改由 app-managed provisioning 下載。
 - FFmpeg 與 UVR models 若由 app-managed provisioning 下載，確認 manifest 來源、hash、
   license notice 與使用者同意流程。
+- 確認系統 FFmpeg opt-in(§8.2 補充)未被誤植入 packaged installer 或 release
+  artifact——它應只存在於使用者本機 `config.json` 的 `systemFfmpegPath`。
 - 若未來加入 model weights、sample media、demo lyrics、themes with artwork，逐一確認
   license 與可散布範圍。
 - CI 或 release script 產生 dependency license report，並保存 release artifact 對應版本。

@@ -5,6 +5,7 @@ import {
   Download,
   ListChecks,
   RefreshCw,
+  Settings,
   SlidersHorizontal,
   Trash2,
   Video,
@@ -28,7 +29,16 @@ import { useYtdlpStatus } from './useYtdlpStatus.js';
 // subscriptions that must survive view unmount, this is per-view UI state
 // and SettingsView unmounts on every tab switch (see CLAUDE.md's App shell
 // section), so a singleton here would be the wrong lifetime.
-export function useFeatureGatePresentation({ ytdlpMessage } = {}) {
+// systemFfmpegDetection is a caller-supplied ref holding the last result of
+// window.Utawakui.detectSystemFfmpeg() (SettingsView.vue runs one probe on
+// mount) — same injection shape as ytdlpMessage above. It only feeds the
+// compact row's "可用系統版本" hint; the full detection detail (path,
+// smoke-test failure reason, a manual re-detect) lives in
+// FfmpegSourceModal.vue's own local state, not here.
+export function useFeatureGatePresentation({
+  ytdlpMessage,
+  systemFfmpegDetection,
+} = {}) {
   const {
     state: featureGateState,
     isFeatureEnabled,
@@ -103,6 +113,16 @@ export function useFeatureGatePresentation({ ytdlpMessage } = {}) {
   }
 
   function dependencyDisclosureValue(dependency, isYtdlp) {
+    // A system-installed FFmpeg has no app-tracked license/version to
+    // disclose here (that detail lives in FfmpegSourceModal.vue) — showing
+    // the managed build's GPLv3/version fields would misattribute them to
+    // a binary Utawakui never downloaded.
+    if (
+      dependency.id === FEATURE_DEPENDENCY_IDS.FFMPEG_GYAN_ESSENTIALS &&
+      dependency.source === 'system'
+    ) {
+      return '系統安裝的 FFmpeg';
+    }
     return [
       dependencySourceLabel(dependency),
       dependencyLicenseLabel(dependency.license),
@@ -167,6 +187,13 @@ export function useFeatureGatePresentation({ ytdlpMessage } = {}) {
     const isModel = dependency.kind === 'model';
     const preparing = featureDependencyState.preparingIds.has(dependency.id);
     const installed = Boolean(current.installed);
+    const usingSystemFfmpeg = isFfmpeg && current.source === 'system';
+    // Only worth flagging while the opt-in hasn't been taken yet — once
+    // it's active the row already says so via usingSystemFfmpeg above.
+    const systemFfmpegAvailable =
+      isFfmpeg &&
+      !usingSystemFfmpeg &&
+      Boolean(systemFfmpegDetection?.value?.ok);
     const isRemoving = isDependencyActionRunning(
       dependency.id,
       DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
@@ -186,12 +213,16 @@ export function useFeatureGatePresentation({ ytdlpMessage } = {}) {
       : installed
         ? isYtdlp
           ? ytdlpCheckResultLabel.value || '可使用'
-          : '已準備'
+          : usingSystemFfmpeg
+            ? '使用系統版本'
+            : '已準備'
         : preparing
           ? '準備中'
-          : current.canMigrate
-            ? '待整理'
-            : '未準備';
+          : systemFfmpegAvailable
+            ? '可用系統版本'
+            : current.canMigrate
+              ? '待整理'
+              : '未準備';
     return {
       ...dependency,
       title,
@@ -213,24 +244,34 @@ export function useFeatureGatePresentation({ ytdlpMessage } = {}) {
             ? 'success'
             : preparing
               ? 'info'
-              : 'warning',
+              : systemFfmpegAvailable
+                ? 'info'
+                : 'warning',
       icon: isFfmpeg ? Wrench : isModel ? Cpu : Download,
-      actionIcon:
-        installed && !isYtdlp
+      // ffmpeg's primary action always opens FfmpegSourceModal.vue (see
+      // SettingsView.vue's handleWorkflowItemAction) rather than downloading
+      // directly — the modal is where the system-vs-managed choice happens.
+      actionIcon: isFfmpeg
+        ? Settings
+        : installed && !isYtdlp
           ? null
           : isYtdlp && installed
             ? RefreshCw
             : Download,
       actionDisabled: isBusy || (isYtdlp && installed && ytdlpState.isChecking),
-      actionLabel: installed
-        ? isYtdlp
-          ? ytdlpState.isChecking
-            ? '檢查下載工具中'
-            : '檢查並更新下載工具'
-          : `${title}已準備`
-        : preparing
-          ? `準備${title}中`
-          : `準備${title}`,
+      actionLabel: isFfmpeg
+        ? installed
+          ? 'FFmpeg 來源設定'
+          : `準備${title}`
+        : installed
+          ? isYtdlp
+            ? ytdlpState.isChecking
+              ? '檢查下載工具中'
+              : '檢查並更新下載工具'
+            : `${title}已準備`
+          : preparing
+            ? `準備${title}中`
+            : `準備${title}`,
       advancedActions: dependencyAdvancedActions({
         dependency,
         installed,
