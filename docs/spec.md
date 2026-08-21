@@ -109,7 +109,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
 - Preset export/import。
-- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；code signing 與自動更新仍未開始。
+- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；執行版本已改由 main process 提供，code signing、自動更新 runtime 與 release CI 尚未實作，契約見 ADR 0007。
 
 ## 5. 架構邊界
 
@@ -148,6 +148,10 @@ OBS overlay runtime
 - 本機媒體經 `utawakui-media:` allowlist 提供，不直接暴露 arbitrary file path。
 - Overlay 是獨立 delivery path，不嵌入 Electron renderer。
 - Overlay tokens 使用 `--ovl-*`，控制台 tokens 使用 `--ui-*`，兩者不共用。
+- App 版本由 main process 的 `app.getVersion()` 提供；renderer 不直接把
+  `package.json` 當成 packaged runtime 狀態。
+- App update service 只存在 main process。Renderer 只能經 preload 發出固定的
+  check/download/install intent，不能指定 feed URL、檔案路徑或 updater options。
 
 ## 6. 資料模型
 
@@ -406,7 +410,11 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 ### Phase 3：Distribution And Integrations
 
-- Windows installer、AUMID（electron-builder + NSIS 已建立，見 §4.2）；signing、自動更新與 release CI 尚未開始。
+- Windows installer、AUMID 與執行版本 IPC 已建立；signed public-release update
+  契約已由 ADR 0007 固定，剩 Authenticode signing、update runtime、公開 release
+  repo、release CI 與兩版本 packaged verification。
+- 公開 release repo 的 GitHub Pages 產品展示／下載入口（後期 promotion；Pages
+  與 updater feed 分離，初期維持純靜態且不加入 analytics）。
 - 官方 metadata provider flows。
 - Optional provider modules。
 - OBS plugin 或 Stream Deck integration 評估。

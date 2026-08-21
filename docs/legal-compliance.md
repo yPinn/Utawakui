@@ -560,7 +560,14 @@ OBS 畫面輸出：
 - [ ] 檢視 app-managed FFmpeg / UVR model 下載來源、hash、授權顯示與 notice 保存。
 - [ ] 另行處理 `onnxruntime-node` audit remediation。
 - [ ] 若加入官方 provider API，確認 privacy/data handling。
-- [ ] 確認 packaging 不暗示與 YouTube、Spotify、OBS 或其他 provider 有 affiliation。
+- [ ] 確認 packaging 與公開產品頁不暗示與 YouTube、Spotify、OBS、權利人或其他
+      provider 有 affiliation，也不把 provider flow 表述為已授權曲庫服務。
+- [ ] 確認 app update 使用公開 release endpoint，client 不含 repository token；installer
+      與 executable 具有效簽章，update metadata/hash 與同次 build artifact 一致。
+- [ ] 對自動更新檢查的必要 GitHub 網路連線做適當揭露，並確認不傳送曲庫、播放、歌詞、
+      provider 或 OBS 狀態。
+- [ ] GitHub Pages 初期維持純靜態；加入 analytics、表單、嵌入服務或自訂網域前，另行
+      檢查 privacy、cookie、資料流與必要揭露。
 - [ ] 確認合規來源重新涵蓋台灣、日本、韓國、美國與中國大陸著作權/技術措施重點。
 - [ ] 接近 release date 時重新確認法律與平台條款。
 

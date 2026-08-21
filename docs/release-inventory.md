@@ -33,6 +33,56 @@ Windows packaging is configured in `electron-builder.yml`.
 The `electron.exe` filename is intentional. See
 `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`.
 
+## Application Update Boundary
+
+ADR 0007 defines the planned app-update channel. It is separate from Settings
+updates for app-managed provider, FFmpeg, and model dependencies.
+
+- `package.json.version` is the release version source; packaged UI reads the
+  running version from main-process `app.getVersion()` over preload IPC.
+- Private source remains in `yPinn/Utawakui`; public update artifacts are
+  planned for `yPinn/Utawakui-Releases`, which must be created and confirmed
+  before updater implementation is enabled.
+- Stable clients use only published `latest` releases. Draft/prerelease assets
+  are not update candidates.
+- The public release repo receives only the signed installer, blockmap,
+  `latest.yml`, release notes, and minimal release-repository content. No source
+  repository or client credential is copied into the app.
+- `electron-updater` will be a packaged main-process runtime dependency after
+  implementation. Renderer gets bounded status plus fixed
+  check/download/install intents only.
+- Update discovery may check automatically in packaged mode, but download and
+  restart remain explicit user actions. Development builds never contact the
+  release feed.
+- App-data, app-managed workflow dependencies, and the selected media library
+  remain outside the installer payload and survive updates.
+- Local `npm run dist` and `dist:dir` never publish. Only the protected release
+  workflow may sign and publish artifacts.
+
+The public repository may later host a GitHub Pages product site. It is a
+curated human-facing surface, not an update server: downloads link to the signed
+stable GitHub Release asset, while `latest.yml`, installer, and blockmap remain
+canonical Release assets. Use a separate least-privilege Pages workflow and
+`github-pages` environment so site deployment cannot publish or mutate an app
+release. Initial Pages scope is static product identity, screenshots, system
+requirements, release/legal/privacy links, and download navigation; accounts,
+forms, user uploads, third-party embeds, and analytics remain out of scope until
+separately reviewed.
+
+Planned stable release assets:
+
+| Artifact                                | Purpose                                                                     |
+| --------------------------------------- | --------------------------------------------------------------------------- |
+| `Utawakui-Setup-<version>.exe`          | Authenticode-signed assisted NSIS installer/update payload.                 |
+| `Utawakui-Setup-<version>.exe.blockmap` | Differential-download map; full installer is the fallback.                  |
+| `latest.yml`                            | Stable update version, URL, size, and SHA-512 metadata.                     |
+| GitHub Release notes                    | Human-reviewed release summary; remote HTML is not rendered in app.         |
+| GitHub Pages artifact (future)          | Curated static product site; contains no updater payload or private source. |
+
+Current blocker: `win.signExecutable` is still `false`. Do not expose a public
+automatic update channel until executable/installer signing and updater
+signature verification pass in a two-version installed test.
+
 ## Installer Profile Boundary
 
 The installer names the shipped payload as **核心安裝** and describes
@@ -102,6 +152,7 @@ specific source, platform, and use permissions. See
 | Local import                | Ungated core                               | `useLocalImport`, Import view                             | `library:import-audio-files`                                                                                        | None beyond Node built-ins                                              | Copies user-picked audio into managed track folders.                                                                                                                  |
 | Playback / queue            | Ungated core                               | `usePlayer`, `usePlaybackQueue`, `PlayerBar`              | media protocol only                                                                                                 | Renderer bundle; `@soundtouchjs/audio-worklet` is build-time only       | Pitch preview worklet is emitted into `dist/assets/` by Vite; it should not be packaged as runtime `node_modules`.                                                    |
 | Windows shell integration   | Ungated core                               | `useTaskbarControls`, `useMediaSession`, `useWindowTitle` | `windowState`, `thumbarIcons`                                                                                       | Electron runtime only                                                   | App icon is packaged in both `dist/assets/` and `public/assets/icons/app-icon.ico`; ICO is unpacked for shell APIs.                                                   |
+| App version / update        | Ungated maintenance                        | `useAppInfo`; future `useAppUpdate`                       | `app:get-version`; planned main-only updater handlers                                                               | Electron runtime; `electron-updater` planned                            | Runtime version IPC exists. Network check, download, install, signing, and release publishing remain pending under ADR 0007.                                          |
 | Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | App-managed Python `yt-dlp`; Rust bgutil provider sidecar               | Settings prepares Python embed, yt-dlp wheel, bgutil provider exe/plugin, and an EJS cache under `%APPDATA%\Utawakui\dependencies\ytdlp\current`.                     |
 | Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | App-managed Python `yt-dlp`; Rust bgutil provider sidecar               | Backfill runs only after provider-flow is enabled and uses the same prepared provider runtime as user-initiated import.                                               |
 | Lyrics provider search/save | `lyrics-flow`                              | `useLyrics`, LRCLIB search panel                          | `lyrics:search-candidates`, `lyrics:save-candidate`, `lyrics:backfill-source-labels`, `lyrics:probe-musixmatch`     | No packaged native dependency                                           | Manual lyrics import/edit/delete stays ungated because it only edits local user data.                                                                                 |
@@ -184,6 +235,8 @@ After changing gates or dependencies:
   `node_modules` after moving them to `devDependencies`.
 - Confirm `THIRD_PARTY_NOTICES.md` is present in `app.asar`, and rerun
   `npm run license:inventory` after dependency changes.
+- Confirm `app.getVersion()` matches `package.json`, installer metadata, and the
+  release tag; never publish a reused or mismatched version.
 - Confirm `app.asar.unpacked` contains `electron/lib`, ONNX Runtime native
   files, `kuromoji`, `wanakana`, `koroman`, and the shell-facing ICO.
 - Launch the packaged `release/win-unpacked/electron.exe`.
@@ -202,7 +255,12 @@ After changing gates or dependencies:
   output without loading missing modules or dictionary files from inside ASAR.
 - For installer verification, use `npm run dist`; `dist:dir` does not create
   Start Menu shortcuts, so it cannot verify installed AUMID / SMTC app name.
+- Before enabling app updates, verify Authenticode signatures, `latest.yml`,
+  blockmap/full-download fallback, explicit restart, and app-data/library
+  preservation across two installed versions.
 - For uninstaller verification, run the installed uninstaller interactively and
-  confirm the component page offers optional cleanup for `%APPDATA%\Utawakui`
-  and legacy `%APPDATA%\Electron`. When cleanup is selected, verify the
-  app-data folder is removed or scheduled for removal if Windows has it locked.
+  confirm the component page separately offers optional cleanup for app-managed
+  dependencies, `%APPDATA%\Utawakui`, and the selected library when its recorded
+  path is valid. All three options must default to unchecked; when selected,
+  verify only the expected target is removed or scheduled for removal if
+  Windows has it locked.

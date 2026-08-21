@@ -28,6 +28,7 @@ function readInitialCaptureDeviceId() {
 }
 
 contextBridge.exposeInMainWorld('Utawakui', {
+  getAppVersion: () => ipcRenderer.invoke('app:get-version'),
   initialUiTheme: readInitialUiTheme(),
   getUiTheme: () => ipcRenderer.invoke('config:get-ui-theme'),
   setUiTheme: (theme) => ipcRenderer.invoke('config:set-ui-theme', theme),

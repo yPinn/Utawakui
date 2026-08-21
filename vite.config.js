@@ -44,6 +44,7 @@ module.exports = defineConfig({
         'overlay/shared/*.mjs',
         'src/utils/*.js',
         'src/composables/useDragReorder.js',
+        'src/composables/useAppInfo.js',
         'src/composables/useImportSession.js',
         'src/composables/useLyrics.js',
         'src/composables/usePlaybackQueue.js',

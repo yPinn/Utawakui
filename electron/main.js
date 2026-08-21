@@ -22,6 +22,7 @@ const { FEATURE_IDS } = require('./lib/featureGates');
 const windowState = require('./main/windowState');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
+const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
@@ -111,6 +112,11 @@ if (!gotSingleInstanceLock) {
     const providerRunnerManager = createProviderRunnerManager({
       app,
       userDataDir: app.getPath('userData'),
+    });
+
+    registerAppInfoHandlers({
+      ipcMain,
+      getVersion: () => app.getVersion(),
     });
 
     registerMediaProtocol({

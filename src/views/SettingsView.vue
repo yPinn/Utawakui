@@ -28,10 +28,10 @@ import { useFeatureGatePresentation } from '../composables/useFeatureGatePresent
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
+import { useAppInfo } from '../composables/useAppInfo.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
-import packageJson from '../../package.json';
 
 const {
   state: importState,
@@ -41,6 +41,7 @@ const {
   openDownloadDir,
 } = useImportSession();
 const { state: diagnosticsState } = useAppDiagnostics();
+const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const { refreshMetadata: refreshLibraryMetadata } = useLibrary();
 const {
   state: featureGateState,
@@ -192,17 +193,21 @@ const diagnosticsRows = computed(() => {
   ];
 });
 
-const appUpdateRows = [
+const appUpdateRows = computed(() => [
   {
     id: 'app-version',
     icon: RefreshCw,
     title: 'Utawakui 版本',
-    description: '目前安裝的版本。',
-    value: packageJson.version ? `v${packageJson.version}` : '目前版本',
-    status: '目前',
-    tone: 'muted',
+    description: appInfoState.error || '目前安裝的版本。',
+    value: appInfoState.currentVersion
+      ? `v${appInfoState.currentVersion}`
+      : appInfoState.isLoading
+        ? '讀取中'
+        : '版本資訊無法取得',
+    status: appInfoState.error ? '無法讀取' : '目前',
+    tone: appInfoState.error ? 'warning' : 'muted',
   },
-];
+]);
 
 async function refreshMetadata() {
   isRefreshingMetadata.value = true;
@@ -238,6 +243,7 @@ async function detectSystemFfmpeg() {
 
 async function refreshSettingsState() {
   detectSystemFfmpeg();
+  refreshAppInfo();
   try {
     await refreshConfig();
   } catch (err) {

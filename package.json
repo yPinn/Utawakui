@@ -1,7 +1,7 @@
 {
   "name": "utawakui",
   "version": "0.1.0",
-  "description": "OBS singing-stream control tool with Spotify/YT Music playlist import",
+  "description": "Local-first desktop media and OBS companion",
   "author": "llazyPilot Studio",
   "private": true,
   "main": "electron/main.js",
