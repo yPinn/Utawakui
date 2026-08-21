@@ -18,29 +18,9 @@ const APP_NAME = 'Utawakui';
 // default app name instead of ours.
 app.setName(APP_NAME);
 
-// youtube-dl-exec's yt-dlp.exe path is computed once, at first require of
-// its constants module, from the YOUTUBE_DL_DIR env var — so this managed
-// feature-dependency path must be set before the lib requires below pull it
-// in transitively (downloader.js, ytdlpStatus.js, youtubeAttempts.js all
-// require it). The binary is copied into that dir only when provider-flow's
-// Settings row prepares the tool.
-const { setupYtdlpRuntimeEnvironment } = require('./lib/featureDependencies');
-setupYtdlpRuntimeEnvironment(app.getPath('userData'));
-
-if (app.isPackaged) {
-  // A packaged app can't assume Node.js is on the end user's PATH, which
-  // youtubeAttempts.js's jsRuntimes option otherwise requires. Point yt-dlp
-  // at this Electron binary running in Node mode instead — inherited by
-  // yt-dlp's child process the same way YOUTUBE_DL_DIR's effect is, via
-  // tinyspawn's default env passthrough (see youtube-dl-exec/src/index.js).
-  process.env.UTAWAKUI_YTDLP_JS_RUNTIME = `node:${process.execPath}`;
-  process.env.ELECTRON_RUN_AS_NODE = '1';
-}
-
 const { FEATURE_IDS } = require('./lib/featureGates');
 const windowState = require('./main/windowState');
 const configState = require('./main/configState');
-const { registerYtdlpHandlers } = require('./main/ytdlpHandlers');
 const { registerConfigHandlers } = require('./main/configHandlers');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
@@ -53,6 +33,12 @@ const {
 } = require('./main/featureDependencyHandlers');
 const { runStartupMigrations } = require('./main/startupMigrations');
 const { MEDIA_SCHEME } = require('./main/mediaScheme');
+const {
+  outputServer,
+  registerOutputRuntimeLifecycle,
+} = require('./main/outputRuntime');
+const { registerOutputHandlers } = require('./main/outputHandlers');
+const { createProviderRunnerManager } = require('./main/providerRunner');
 
 // Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let
 // content zoom drift and desync the titlebar theme button from the
@@ -78,6 +64,8 @@ const gotSingleInstanceLock = app.requestSingleInstanceLock();
 if (!gotSingleInstanceLock) {
   app.quit();
 } else {
+  registerOutputRuntimeLifecycle({ app });
+
   app.on('second-instance', () => {
     const mainWindow = windowState.getMainWindow();
     if (mainWindow) {
@@ -116,9 +104,22 @@ if (!gotSingleInstanceLock) {
 
     configState.loadInitialConfig();
     const { requireFeatureGate } = configState;
+    const providerRunnerManager = createProviderRunnerManager({
+      app,
+      userDataDir: app.getPath('userData'),
+    });
 
     registerMediaProtocol({
       protocol,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+    });
+
+    registerOutputHandlers({
+      ipcMain,
+      server: outputServer,
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
     });
@@ -132,6 +133,7 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       sendBackfillStatus: windowState.sendBackfillStatus,
       featureIds: FEATURE_IDS,
+      getProviderRunner: providerRunnerManager.getRunner,
     });
 
     registerLyricsHandlers({
@@ -158,10 +160,10 @@ if (!gotSingleInstanceLock) {
     registerImportHandlers({
       ipcMain,
       getConfig: configState.getConfig,
-      userDataDir: app.getPath('userData'),
       resolveDownloadDir: configState.resolveDownloadDir,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      getProviderRunner: providerRunnerManager.getRunner,
     });
 
     registerSeparationHandlers({
@@ -192,12 +194,6 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       titlebarColors: windowState.TITLEBAR_COLORS,
-    });
-
-    registerYtdlpHandlers({
-      ipcMain,
-      getConfig: configState.getConfig,
-      updateConfig: configState.updateConfig,
     });
 
     windowState.registerPlayerStateHandler(ipcMain);

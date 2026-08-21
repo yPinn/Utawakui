@@ -1,15 +1,26 @@
 <script setup>
 import { computed } from 'vue';
 import { Check, ICON_SIZE } from '../../icons/index.js';
+import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
   selectedPresetId: { type: String, default: null },
+  outputStatus: { type: Object, default: () => ({ running: false }) },
+  outputBusy: { type: Boolean, default: false },
+  outputError: { type: String, default: '' },
+  previewUrl: { type: String, default: null },
+  obsUrl: { type: String, default: null },
+  outputSupported: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:selectedPresetId']);
+const emit = defineEmits([
+  'update:selectedPresetId',
+  'startOutput',
+  'stopOutput',
+]);
 
 const selectedPreset = computed(
   () =>
@@ -84,23 +95,17 @@ function selectPreset(id) {
         class="obs-preset-showcase__detail"
         aria-label="模板展示預覽"
       >
-        <div
-          class="obs-preset-showcase__preview"
-          :data-tone="selectedPreset.tone"
-        >
-          <div class="obs-preset-showcase__stage">
-            <span class="obs-preset-showcase__stage-title">
-              {{ selectedPreset.preview.title }}
-            </span>
-            <span
-              v-for="line in selectedPreset.preview.lines"
-              :key="line"
-              class="obs-preset-showcase__line"
-            >
-              {{ line }}
-            </span>
-          </div>
-        </div>
+        <ObsOverlayPreview
+          :preset="selectedPreset"
+          :output-status="outputStatus"
+          :preview-url="previewUrl"
+          :obs-url="obsUrl"
+          :supported="outputSupported"
+          :busy="outputBusy"
+          :error="outputError"
+          @start="emit('startOutput')"
+          @stop="emit('stopOutput')"
+        />
 
         <div class="obs-preset-showcase__detail-copy">
           <span class="obs-preset-showcase__detail-index">
@@ -176,10 +181,9 @@ function selectPreset(id) {
 }
 
 .obs-preset-showcase__availability {
-  padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-canvas);
+  padding-inline-start: var(--ui-space-2);
+  border-inline-start: var(--ui-border-width) solid
+    var(--ui-color-border-strong);
 }
 
 .obs-preset-showcase__groups {
@@ -263,8 +267,7 @@ function selectPreset(id) {
     var(--ui-color-canvas);
 }
 
-.obs-template-thumb__preview[data-tone='stage'],
-.obs-preset-showcase__preview[data-tone='stage'] {
+.obs-template-thumb__preview[data-tone='stage'] {
   background:
     linear-gradient(
       135deg,
@@ -274,8 +277,7 @@ function selectPreset(id) {
     var(--ui-color-canvas);
 }
 
-.obs-template-thumb__preview[data-tone='lyrics'],
-.obs-preset-showcase__preview[data-tone='lyrics'] {
+.obs-template-thumb__preview[data-tone='lyrics'] {
   background:
     linear-gradient(
       180deg,
@@ -285,8 +287,7 @@ function selectPreset(id) {
     var(--ui-color-canvas);
 }
 
-.obs-template-thumb__preview[data-tone='minimal'],
-.obs-preset-showcase__preview[data-tone='minimal'] {
+.obs-template-thumb__preview[data-tone='minimal'] {
   background: var(--ui-color-canvas);
 }
 
@@ -323,53 +324,6 @@ function selectPreset(id) {
   white-space: nowrap;
 }
 
-.obs-preset-showcase__preview {
-  inline-size: min(100%, var(--ui-output-gallery-preview-max-width));
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  display: grid;
-  justify-self: center;
-  align-items: end;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-4);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--ui-color-canvas) 86%, transparent),
-      color-mix(in srgb, var(--ui-color-accent-soft) 70%, transparent)
-    ),
-    var(--ui-color-canvas);
-}
-
-.obs-preset-showcase__stage {
-  display: grid;
-  gap: var(--ui-space-2);
-  min-width: 0;
-}
-
-.obs-preset-showcase__stage-title {
-  color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-title);
-}
-
-.obs-preset-showcase__line {
-  min-width: 0;
-  overflow: hidden;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-overlay-scrim);
-  color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .obs-preset-showcase__tags {
   display: flex;
   flex-wrap: wrap;
@@ -384,10 +338,8 @@ function selectPreset(id) {
   grid-template-rows: auto auto minmax(0, 1fr);
   align-content: start;
   gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface);
+  padding-inline-start: var(--ui-space-4);
+  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .obs-preset-showcase__detail-copy {
@@ -439,6 +391,13 @@ function selectPreset(id) {
 
   .obs-preset-showcase__groups {
     overflow: visible;
+  }
+
+  .obs-preset-showcase__detail {
+    padding-block-start: var(--ui-space-4);
+    padding-inline-start: 0;
+    border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+    border-inline-start: 0;
   }
 
   .obs-template-thumb__preview {

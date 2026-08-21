@@ -1,0 +1,92 @@
+.setlist-overlay {
+  --ovl-template-setlist-width: 30rem;
+  --ovl-template-setlist-row-height: 3.25rem;
+
+  position: fixed;
+  inset-inline-end: var(--ovl-safe-inline);
+  inset-block-start: var(--ovl-safe-block);
+  inline-size: min(
+    calc(100% - 2 * var(--ovl-safe-inline)),
+    var(--ovl-template-setlist-width)
+  );
+  padding: var(--ovl-primitive-space-4);
+  border: 1px solid var(--ovl-color-outline);
+  border-radius: var(--ovl-primitive-radius-md);
+  background: var(--ovl-color-surface);
+}
+
+.setlist-overlay__title {
+  margin: 0 0 var(--ovl-primitive-space-3);
+  overflow: hidden;
+  font-family: var(--ovl-font-display-cjk);
+  font-size: 1.5rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setlist-overlay__rows {
+  display: grid;
+  gap: var(--ovl-primitive-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: setlist;
+}
+
+.setlist-overlay__row {
+  min-block-size: var(--ovl-template-setlist-row-height);
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ovl-primitive-space-3);
+  padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
+  border-radius: var(--ovl-primitive-radius-sm);
+  background: var(--ovl-color-surface-soft);
+  counter-increment: setlist;
+}
+
+.setlist-overlay__row::before {
+  content: counter(setlist, decimal-leading-zero);
+  color: var(--ovl-color-text-secondary);
+  font-size: 0.875rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.setlist-overlay__row.is-current {
+  color: var(--ovl-color-text-primary);
+  background: rgb(85 162 167 / 42%);
+}
+
+.setlist-overlay__row.is-played {
+  opacity: 0.54;
+}
+
+.setlist-overlay__track {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setlist-overlay__artist {
+  color: var(--ovl-color-text-secondary);
+}
+
+@media (max-height: 36rem) {
+  .setlist-overlay {
+    --ovl-template-setlist-width: 22rem;
+    --ovl-template-setlist-row-height: 2rem;
+
+    padding: var(--ovl-primitive-space-3);
+  }
+
+  .setlist-overlay__title {
+    margin-block-end: var(--ovl-primitive-space-2);
+    font-size: 1rem;
+  }
+
+  .setlist-overlay__rows {
+    gap: var(--ovl-primitive-space-1);
+  }
+}

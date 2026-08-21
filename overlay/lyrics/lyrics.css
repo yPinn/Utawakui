@@ -1,0 +1,59 @@
+.lyrics-overlay {
+  /* Template layer: override these per profile/style set later. */
+  --ovl-template-lyrics-current-size: 3.5rem;
+  --ovl-template-lyrics-next-size: 1.75rem;
+  --ovl-template-lyrics-max-width: 32ch;
+  --ovl-template-lyrics-bottom: 9%;
+
+  position: fixed;
+  inset-inline: var(--ovl-safe-inline);
+  inset-block-end: max(
+    var(--ovl-safe-block),
+    var(--ovl-template-lyrics-bottom)
+  );
+  display: grid;
+  justify-items: center;
+  gap: var(--ovl-primitive-space-3);
+  pointer-events: none;
+  text-align: center;
+}
+
+.lyrics-overlay__current,
+.lyrics-overlay__next {
+  max-inline-size: min(100%, var(--ovl-template-lyrics-max-width));
+  margin: 0;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.lyrics-overlay__current {
+  color: var(--ovl-color-text-primary);
+  font-family: var(--ovl-font-display-cjk);
+  font-size: var(--ovl-template-lyrics-current-size);
+  font-weight: 700;
+  line-height: 1.22;
+  text-shadow: var(--ovl-text-shadow);
+  -webkit-text-stroke: 0.035em rgb(17 20 23 / 88%);
+  paint-order: stroke fill;
+}
+
+.lyrics-overlay__next {
+  color: var(--ovl-color-text-secondary);
+  font-family: var(--ovl-font-display-cjk);
+  font-size: var(--ovl-template-lyrics-next-size);
+  font-weight: 600;
+  line-height: 1.3;
+  text-shadow: var(--ovl-text-shadow);
+  -webkit-text-stroke: 0.025em rgb(17 20 23 / 78%);
+  paint-order: stroke fill;
+}
+
+@media (max-height: 36rem) {
+  .lyrics-overlay {
+    --ovl-template-lyrics-current-size: 2rem;
+    --ovl-template-lyrics-next-size: 1rem;
+    --ovl-template-lyrics-bottom: 6%;
+
+    gap: var(--ovl-primitive-space-2);
+  }
+}

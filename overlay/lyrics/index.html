@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Utawakui Lyrics Overlay</title>
+    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
+    <link rel="stylesheet" href="/overlay/shared/base.css" />
+    <link rel="stylesheet" href="/overlay/lyrics/lyrics.css" />
+    <script type="module" src="/overlay/lyrics/lyrics.mjs"></script>
+  </head>
+  <body>
+    <main
+      id="lyrics-overlay"
+      class="lyrics-overlay"
+      aria-live="polite"
+      aria-atomic="true"
+      hidden
+    >
+      <p id="lyrics-current" class="lyrics-overlay__current"></p>
+      <p id="lyrics-next" class="lyrics-overlay__next"></p>
+    </main>
+  </body>
+</html>

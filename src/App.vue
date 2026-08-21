@@ -1,4 +1,5 @@
 <script setup>
+import { provide } from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
@@ -18,6 +19,8 @@ import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useTheme } from './composables/useTheme.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
+import { useOutputRuntime } from './composables/useOutputRuntime.js';
+import { OUTPUT_RUNTIME_KEY } from './composables/outputRuntimeContext.js';
 
 // Long-lived app hooks; each composable owns its cleanup.
 useTaskbarControls();
@@ -28,6 +31,9 @@ useTheme();
 // before any track can play — same "kick off the module-load side effect
 // once" reasoning as useTheme() above.
 useAudioOutput().restoreInitialDevice();
+const outputRuntime = useOutputRuntime();
+outputRuntime.initialize();
+provide(OUTPUT_RUNTIME_KEY, outputRuntime);
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).

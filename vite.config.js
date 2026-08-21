@@ -14,7 +14,12 @@ module.exports = defineConfig({
   },
   test: {
     environment: 'node',
-    include: ['electron/lib/**/*.test.js', 'src/**/*.test.js'],
+    include: [
+      'electron/lib/**/*.test.js',
+      'electron/main/**/*.test.js',
+      'overlay/**/*.test.js',
+      'src/**/*.test.js',
+    ],
     exclude: ['coverage/**', 'dist/**', 'node_modules/**'],
     coverage: {
       // v8 (the default) double-counts electron/lib CJS files that are both
@@ -36,6 +41,7 @@ module.exports = defineConfig({
       skipFull: true,
       include: [
         'electron/lib/**/*.js',
+        'overlay/shared/*.mjs',
         'src/utils/*.js',
         'src/composables/useDragReorder.js',
         'src/composables/useImportSession.js',

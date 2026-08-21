@@ -10,6 +10,10 @@ const tokenSource = readFileSync(
   fileURLToPath(new URL('../../styles/tokens.css', import.meta.url)),
   'utf8',
 );
+const previewSource = readFileSync(
+  fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
+  'utf8',
+);
 
 function compactWhitespace(source) {
   return source.replace(/\s+/g, ' ');
@@ -23,9 +27,11 @@ describe('ObsPresetShowcase layout contract', () => {
     expect(tokenSource).toContain('--ui-output-gallery-detail-width-max');
     expect(tokenSource).toContain('--ui-output-gallery-preview-max-width');
     expect(tokenSource).toContain(
-      '--ui-output-gallery-preview-max-width: 22.5rem',
+      '--ui-output-gallery-preview-max-width: 20.875rem',
     );
     expect(tokenSource).toContain('--ui-output-template-thumb-title-font-size');
+    expect(tokenSource).toContain('25vw');
+    expect(tokenSource).not.toContain('34cqi');
     expect(tokenSource).toContain('--ui-output-setting-label-width-max');
     expect(componentSource).not.toContain('--ui-font-size-xs');
     expect(componentSource).toContain('container-type: inline-size');
@@ -38,7 +44,7 @@ describe('ObsPresetShowcase layout contract', () => {
     expect(compactComponentSource).not.toMatch(
       /minmax\(\s*var\(--ui-output-gallery-detail-width-min\),\s*var\(--ui-output-gallery-detail-width-max\)\s*\)/,
     );
-    expect(componentSource).toContain(
+    expect(previewSource).toContain(
       'inline-size: min(100%, var(--ui-output-gallery-preview-max-width))',
     );
     expect(componentSource).toContain(
@@ -46,5 +52,16 @@ describe('ObsPresetShowcase layout contract', () => {
     );
     expect(componentSource).toContain('aspect-ratio: 16 / 9');
     expect(componentSource).toContain('@container (width < 48rem)');
+  });
+
+  it('uses a real fixed-ratio iframe without allowing it to resize the detail column', () => {
+    expect(previewSource).toContain('<iframe');
+    expect(previewSource).not.toContain('srcdoc');
+    expect(previewSource).toContain('aspect-ratio: 16 / 9');
+    expect(previewSource).toContain(':src="previewUrl"');
+    expect(previewSource).toContain(
+      'sandbox="allow-scripts allow-same-origin"',
+    );
+    expect(tokenSource).toContain('--ui-output-gallery-detail-width: clamp(');
   });
 });

@@ -1,5 +1,10 @@
 <script setup>
-import { computed, shallowRef, watch } from 'vue';
+import { computed, onMounted, shallowRef, watch } from 'vue';
+import { useOutputRuntimeContext } from '../../composables/outputRuntimeContext.js';
+import {
+  buildOutputTemplateUrls,
+  outputPathForTemplate,
+} from '../../utils/outputRoutes.js';
 import ObsPresetShowcase from './ObsPresetShowcase.vue';
 import ObsSavedConfigList from './ObsSavedConfigList.vue';
 import ObsSelectedPresetPanel from './ObsSelectedPresetPanel.vue';
@@ -30,6 +35,14 @@ function orderPresets(presets) {
 const activePage = shallowRef('gallery');
 const orderedPresets = computed(() => orderPresets(props.presets));
 const selectedPresetId = shallowRef(orderedPresets.value[0]?.id ?? null);
+const {
+  state: outputState,
+  selectedProfile,
+  start: startOutput,
+  stop: stopOutput,
+  loadProfiles,
+  saveTemplateSelection,
+} = useOutputRuntimeContext();
 const selectedPreset = computed(
   () =>
     orderedPresets.value.find(
@@ -38,6 +51,43 @@ const selectedPreset = computed(
     orderedPresets.value[0] ??
     null,
 );
+const seedProfile = computed(() => {
+  const profile =
+    props.configs.find((candidate) => candidate.active) ?? props.configs[0];
+  if (!profile) return null;
+  return {
+    id: profile.id,
+    name: profile.name,
+    templateId: profile.templateId,
+    styleSetIds: profile.styleSetIds ?? [],
+    settings: profile.settings ?? {},
+  };
+});
+const outputUrls = computed(() =>
+  buildOutputTemplateUrls(outputState.status, selectedPreset.value?.id),
+);
+const outputBusy = computed(
+  () => outputState.isStarting || outputState.isStopping,
+);
+const outputSupported = computed(() =>
+  Boolean(outputPathForTemplate(selectedPreset.value?.id)),
+);
+const displayedConfigs = computed(() => {
+  if (!outputState.profilesLoaded) return props.configs;
+  return outputState.profiles.map((profile) => {
+    const template = orderedPresets.value.find(
+      (preset) => preset.id === profile.templateId,
+    );
+    return {
+      ...profile,
+      summary: template?.summary ?? '已保存的輸出配置。',
+      source: template?.name ?? profile.templateId,
+      updatedAt: '已保存',
+      status: '已保存',
+      active: profile.id === outputState.selectedProfileId,
+    };
+  });
+});
 
 watch(orderedPresets, (presets) => {
   if (!presets.some((preset) => preset.id === selectedPresetId.value)) {
@@ -48,6 +98,21 @@ watch(orderedPresets, (presets) => {
 function selectPage(page) {
   activePage.value = page;
 }
+
+function selectPreset(id) {
+  selectedPresetId.value = id;
+  saveTemplateSelection(id, seedProfile.value);
+}
+
+onMounted(async () => {
+  await loadProfiles(seedProfile.value);
+  const persistedTemplateId = selectedProfile.value?.templateId;
+  if (
+    orderedPresets.value.some((preset) => preset.id === persistedTemplateId)
+  ) {
+    selectedPresetId.value = persistedTemplateId;
+  }
+});
 </script>
 
 <template>
@@ -93,7 +158,7 @@ function selectPage(page) {
         />
         <ObsStyleSetPanel :sets="styleSets" />
       </main>
-      <ObsSavedConfigList :configs="configs" />
+      <ObsSavedConfigList :configs="displayedConfigs" />
     </section>
 
     <section
@@ -108,7 +173,15 @@ function selectPage(page) {
           :presets="orderedPresets"
           :template-groups="templateGroups"
           :selected-preset-id="selectedPreset?.id ?? null"
-          @update:selected-preset-id="selectedPresetId = $event"
+          :output-status="outputState.status"
+          :output-busy="outputBusy"
+          :output-error="outputState.error"
+          :output-supported="outputSupported"
+          :preview-url="outputUrls.previewUrl"
+          :obs-url="outputUrls.obsUrl"
+          @update:selected-preset-id="selectPreset"
+          @start-output="startOutput"
+          @stop-output="stopOutput"
         />
       </div>
     </section>

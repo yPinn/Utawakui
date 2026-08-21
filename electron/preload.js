@@ -52,6 +52,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getFeatureConfirmations: () => ipcRenderer.invoke('feature-gates:list'),
   confirmFeatureGate: (featureId, noticeVersion) =>
     ipcRenderer.invoke('feature-gates:confirm', featureId, noticeVersion),
+  getOutputStatus: () => ipcRenderer.invoke('output:get-status'),
+  startOutput: () => ipcRenderer.invoke('output:start'),
+  stopOutput: () => ipcRenderer.invoke('output:stop'),
+  publishOutputSnapshot: (snapshot) =>
+    ipcRenderer.invoke('output:publish', snapshot),
+  listOutputProfiles: () => ipcRenderer.invoke('output-profiles:list'),
+  upsertOutputProfile: (profile) =>
+    ipcRenderer.invoke('output-profiles:upsert', profile),
+  selectOutputProfile: (profileId) =>
+    ipcRenderer.invoke('output-profiles:select', profileId),
   listFeatureDependencies: () =>
     ipcRenderer.invoke('feature-dependencies:list'),
   prepareFeatureDependency: (dependencyId) =>
@@ -70,8 +80,6 @@ contextBridge.exposeInMainWorld('Utawakui', {
   listTracks: () => ipcRenderer.invoke('library:list'),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
-  getYtdlpStatus: () => ipcRenderer.invoke('ytdlp:get-status'),
-  checkYtdlpUpdate: () => ipcRenderer.invoke('ytdlp:check-update'),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   probeMusixmatchLyrics: (trackId) =>
@@ -92,12 +100,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:import-file', trackId),
   getLyricsReading: (trackId, sourceFilename) =>
     ipcRenderer.invoke('lyrics:get-reading', trackId, sourceFilename),
-  generateLyricsReading: (trackId, sourceFilename, lines) =>
+  generateLyricsReading: (trackId, sourceFilename, lines, script) =>
     ipcRenderer.invoke(
       'lyrics:generate-reading',
       trackId,
       sourceFilename,
       lines,
+      script,
     ),
   setLyricsReadingLine: (trackId, sourceFilename, lineIndex, readingKana) =>
     ipcRenderer.invoke(

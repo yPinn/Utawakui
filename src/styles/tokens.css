@@ -130,7 +130,7 @@
 
   /* --- Sizing: overlays --- */
   --ui-modal-width-default: 26.25rem; /* 420px: short forms */
-  --ui-modal-width-notice: 32rem; /* 512px: confirmation copy with bullets */
+  --ui-modal-width-notice: 40rem; /* 640px: confirmation copy with bullets */
   --ui-modal-width-wide: 45rem; /* 720px: row lists and multi-column content */
 
   /* --- Sizing: archive tabs --- */
@@ -194,14 +194,14 @@
 
   /* --- Sizing: output gallery --- */
   --ui-output-gallery-column-min: 18rem; /* 288px: keeps the thumbnail rail useful beside the demo column */
-  --ui-output-gallery-detail-width-min: 20rem; /* 320px: compact preview column when the playlist sidebar is expanded */
-  --ui-output-gallery-detail-width-max: 26rem; /* 416px: modal-like cap; the right column is preview/support, not the main canvas */
+  --ui-output-gallery-detail-width-min: 20rem; /* 320px: stable preview column at normal desktop widths */
+  --ui-output-gallery-detail-width-max: 22.5rem; /* 360px: compact cap; the right column is preview/support, not the main canvas */
   --ui-output-gallery-detail-width: clamp(
     var(--ui-output-gallery-detail-width-min),
-    34cqi,
+    25vw,
     var(--ui-output-gallery-detail-width-max)
-  ); /* grows with the Output container, while remaining independent of left-gallery content width */
-  --ui-output-gallery-preview-max-width: 22.5rem; /* 360px: player-panel-sized 16:9 style preview, enough for animation checks */
+  ); /* tracks window width, not the resizable sidebar/content column, so sidebar drags do not resize the preview */
+  --ui-output-gallery-preview-max-width: 20.875rem; /* 334px: leaves room for the detail panel's padding at its wide cap */
   --ui-output-template-thumb-preview-width: 5.75rem; /* 92px: compact 16:9 thumbnail width */
   --ui-output-template-thumb-preview-width-compact: 5rem; /* 80px: stacked/narrow gallery thumbnail width */
   --ui-output-template-thumb-min-height: 4.5rem; /* 72px: stable row target around a small 16:9 preview */
@@ -227,6 +227,12 @@
   ); /* 54px: settings rows share the playlist rail's stable row rhythm */
   --ui-settings-row-padding-block: var(--ui-playlist-row-padding-block);
   --ui-settings-row-padding-inline: var(--ui-space-2);
+  --ui-settings-row-copy-gap: var(--ui-space-1);
+  --ui-settings-block-padding: var(--ui-space-3);
+  --ui-settings-block-gap: var(--ui-space-3);
+  --ui-settings-block-body-gap: var(--ui-space-2);
+  --ui-settings-column-gap: var(--ui-space-4);
+  --ui-settings-column-header-gap: var(--ui-space-1);
 
   /* --- Sizing: track rows & player bar --- */
   --ui-track-row-min-height: 3.25rem; /* 52px */
