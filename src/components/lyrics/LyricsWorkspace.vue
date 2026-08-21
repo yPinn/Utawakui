@@ -69,7 +69,7 @@ const LYRICS_FONT_SIZE_CLASSES = [
 const TRACK_SCOPE_LABELS = {
   all: '全部曲目',
   'current-playlist': '目前歌單',
-  local: '本機音訊',
+  local: '本機曲目',
   'missing-lyrics': '缺歌詞',
   'available-lyrics': '有歌詞',
 };

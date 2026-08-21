@@ -192,8 +192,12 @@ const playerToolsActive = computed(
     state.transposeSemitones !== 0 ||
     state.pitchCents !== 0 ||
     state.tempoRate !== 1 ||
-    state.guideVocalOn ||
-    state.captureGuideVocalOn ||
+    // guideVocalOn defaults to true (see usePlayer.js) so a performer hears
+    // it by default once it applies — gated on showGuideVocal so this
+    // doesn't light up for every track/on every launch, only when the
+    // current track actually has separated audio to mix.
+    (showGuideVocal.value &&
+      (state.guideVocalOn || state.captureGuideVocalOn)) ||
     isCurrentTrackSeparating.value ||
     metronomeState.isRunning,
 );

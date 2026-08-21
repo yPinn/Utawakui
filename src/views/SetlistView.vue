@@ -283,7 +283,7 @@ const pageTitle = computed(() =>
   selectedPlaylist.value
     ? playlistDisplayName(selectedPlaylist.value)
     : isLocalLibraryView.value
-      ? '本機音訊'
+      ? '本機曲目'
       : '全部曲目',
 );
 
@@ -498,7 +498,7 @@ onMounted(() => {
       <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
 
       <UiHint v-else-if="libraryState.tracks.length === 0">
-        還沒有任何曲目——前往「Import」下載歌曲。
+        還沒有任何曲目——前往「Import」匯入曲目。
       </UiHint>
 
       <template v-else>

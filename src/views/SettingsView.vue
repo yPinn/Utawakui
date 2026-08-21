@@ -112,12 +112,17 @@ function handleDownloadDirMenuSelect(actionId) {
 // ellipsis-truncating them into indistinguishable labels, and picking the
 // wrong one silently breaks capture.
 const { state: playerState } = usePlayer();
-const { devices: captureOutputDevices } = useAudioOutput();
+const { devices: captureOutputDevices, monitorDeviceLabel } = useAudioOutput();
 
 const isCaptureDeviceModalOpen = shallowRef(false);
 
+// Falls back to the real current monitor device (same source
+// CaptureDeviceModal.vue's own "off" option uses), not a generic "耳機"
+// guess — the actual default device may not even be headphones.
 const captureDeviceLabel = computed(() => {
-  if (!playerState.captureDeviceId) return '未選擇(僅耳機播放)';
+  if (!playerState.captureDeviceId) {
+    return `未選擇(僅透過 ${monitorDeviceLabel.value} 播放)`;
+  }
   const device = captureOutputDevices.value.find(
     (d) => d.deviceId === playerState.captureDeviceId,
   );

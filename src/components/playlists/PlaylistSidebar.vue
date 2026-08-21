@@ -397,7 +397,7 @@ function startDrag(playlist, event) {
     <button
       type="button"
       class="playlist-sidebar__item"
-      aria-label="本機音訊"
+      aria-label="本機曲目"
       :class="{
         'playlist-sidebar__item--active':
           state.selectedId === null && libraryView === 'local',
@@ -407,7 +407,7 @@ function startDrag(playlist, event) {
           ? 'page'
           : undefined
       "
-      title="本機音訊"
+      title="本機曲目"
       @click="selectLibraryView('local')"
     >
       <span
@@ -417,7 +417,7 @@ function startDrag(playlist, event) {
         <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
       </span>
       <span class="playlist-sidebar__info">
-        <span class="playlist-sidebar__label">本機音訊</span>
+        <span class="playlist-sidebar__label">本機曲目</span>
       </span>
     </button>
 

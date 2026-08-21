@@ -46,7 +46,7 @@ const scopeOptions = computed(() => [
   },
   {
     value: 'local',
-    label: '本機音訊',
+    label: '本機曲目',
     icon: Music,
   },
   {
