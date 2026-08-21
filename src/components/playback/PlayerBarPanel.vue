@@ -68,7 +68,7 @@ const emit = defineEmits(['close']);
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--ui-space-3);
-  margin-bottom: var(--ui-space-4);
+  margin-bottom: var(--ui-space-3);
 }
 
 .player-bar-panel__heading {

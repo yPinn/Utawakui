@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import {
+  Check,
   CircleAlert,
   Clock,
   ICON_SIZE,
@@ -26,7 +27,7 @@ const props = defineProps({
   },
   hasTrack: { type: Boolean, default: false },
   guideVocalVisible: { type: Boolean, default: false },
-  guideVocalActive: { type: Boolean, default: false },
+  guideVocalRows: { type: Array, default: () => [] },
   pitchTempoRows: { type: Array, default: () => [] },
   currentTrack: { type: Object, default: null },
   separationPresetOptions: { type: Array, default: () => [] },
@@ -42,7 +43,6 @@ const emit = defineEmits([
   'close',
   'generateSeparation',
   'selectSeparationPreset',
-  'toggleGuideVocal',
   'update:activeTab',
   'update:selectedSeparationPresetId',
 ]);
@@ -77,18 +77,33 @@ const panelStatus = computed(() => {
   if (props.activeTab === 'process') return '音訊處理流程';
   return metronomeSummary.value;
 });
-const separationDisabled = computed(
+// The select itself only cares about having a track to act on and not
+// racing an in-flight run — switching presets while one has a result is
+// exactly how the user reaches a preset that doesn't, so hasResult must
+// never disable it (that's the action button's job, below).
+const separationSelectDisabled = computed(
   () => !props.currentTrack || props.separationInFlight,
+);
+// Presets are deterministic tiers (standard -> high-quality -> inst-hq3),
+// not variations worth re-rolling — a preset that already has a result
+// never has a "regenerate" action, only a disabled "already have" state.
+// Producing a different result means switching the dropdown to a preset
+// that doesn't have one yet.
+const separationActionDisabled = computed(
+  () =>
+    !props.currentTrack ||
+    props.separationInFlight ||
+    props.separationHasResult,
 );
 const separationActionLabel = computed(() => {
   if (props.separationInFlight) return props.separationStatus || '準備中';
-  return props.separationHasResult ? '重新產生' : '產生';
+  return props.separationHasResult ? '已產生' : '產生';
 });
 const separationActionTitle = computed(() => {
   if (!props.currentTrack) return '請先載入歌曲';
   if (props.separationInFlight) return props.separationStatus || '處理中';
   return props.separationHasResult
-    ? '用選定的設定重新產生這個結果'
+    ? '這個設定已經產生過，切換到其他設定即可產生新結果'
     : '產生可調整導唱強弱的伴奏版本';
 });
 
@@ -253,23 +268,6 @@ function handleSeparationPresetChange(event) {
       class="player-tools__section"
       aria-label="播放調整"
     >
-      <div v-if="guideVocalVisible" class="player-tools__inline-action">
-        <span class="player-tools__label">
-          <MicVocal :size="ICON_SIZE" aria-hidden="true" />
-          Guide Vocal
-        </span>
-        <UiButton
-          :icon="MicVocal"
-          :active="guideVocalActive"
-          :aria-label="
-            guideVocalActive ? '關閉 Guide Vocal' : '開啟 Guide Vocal'
-          "
-          :aria-pressed="guideVocalActive"
-          title="Guide Vocal"
-          @click="emit('toggleGuideVocal')"
-        />
-      </div>
-
       <div
         v-for="row in pitchTempoRows"
         :key="row.key"
@@ -321,6 +319,59 @@ function handleSeparationPresetChange(event) {
           />
         </div>
       </div>
+
+      <template v-if="guideVocalVisible">
+        <hr class="player-tools__section-divider" />
+        <div
+          v-for="row in guideVocalRows"
+          :key="row.key"
+          class="player-tools__adjust-row"
+        >
+          <div class="player-tools__row-header">
+            <span class="player-tools__label" :title="row.deviceName">
+              <component :is="row.icon" :size="ICON_SIZE" aria-hidden="true" />
+              {{ row.label }}
+            </span>
+            <span class="player-tools__value">{{ row.value }}</span>
+            <UiButton
+              :icon="row.onIcon"
+              :active="row.on"
+              :aria-label="row.onLabel"
+              :aria-pressed="row.on"
+              :title="row.onLabel"
+              @click="row.onToggle"
+            />
+          </div>
+          <div
+            class="player-tools__stop-row"
+            role="group"
+            :aria-label="row.label"
+          >
+            <UiButton
+              v-for="stop in row.stops"
+              :key="stop.value"
+              :active="stop.active"
+              :disabled="stop.disabled"
+              @click="stop.onSelect"
+            >
+              {{ stop.label }}
+            </UiButton>
+          </div>
+          <div class="player-tools__control">
+            <input
+              type="range"
+              :value="row.sliderValue"
+              :min="row.min"
+              :max="row.max"
+              :step="row.step"
+              :disabled="!hasTrack"
+              :aria-label="row.sliderLabel"
+              :aria-valuetext="row.value"
+              @input="row.onSliderInput($event.target.value)"
+            />
+          </div>
+        </div>
+      </template>
     </section>
 
     <section
@@ -347,7 +398,7 @@ function handleSeparationPresetChange(event) {
             <select
               class="player-tools__process-select"
               :value="selectedSeparationPresetId"
-              :disabled="separationDisabled"
+              :disabled="separationSelectDisabled"
               aria-label="人聲分離設定"
               :title="separationPresetTitle"
               @change="handleSeparationPresetChange"
@@ -362,10 +413,16 @@ function handleSeparationPresetChange(event) {
             </select>
           </label>
           <UiButton
-            :icon="separationInFlight ? Loader2 : MicVocal"
+            :icon="
+              separationInFlight
+                ? Loader2
+                : separationHasResult
+                  ? Check
+                  : MicVocal
+            "
             variant="accent"
             :class="{ 'player-tools__process-spin': separationInFlight }"
-            :disabled="separationDisabled"
+            :disabled="separationActionDisabled"
             :aria-label="separationActionLabel"
             :title="separationActionTitle"
             @click="emit('generateSeparation')"
@@ -401,7 +458,7 @@ function handleSeparationPresetChange(event) {
   grid-template-columns: repeat(3, 1fr);
   gap: var(--ui-space-1);
   padding: var(--ui-space-1);
-  margin-bottom: var(--ui-space-4);
+  margin-bottom: var(--ui-space-3);
   border-radius: var(--ui-radius);
   background: var(--ui-color-canvas);
 }
@@ -459,7 +516,6 @@ function handleSeparationPresetChange(event) {
 }
 
 .player-tools__row-header,
-.player-tools__inline-action,
 .player-tools__process-row {
   display: flex;
   align-items: center;
@@ -480,6 +536,19 @@ function handleSeparationPresetChange(event) {
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
   line-height: var(--ui-line-height-label);
+}
+
+/* Separates the adjust tab's two distinct row categories (guide-vocal
+   blend vs. pitch/tempo) without a fourth tab (a tab just for 1-2 rows
+   would cost more clicks than it buys clarity for a performer adjusting
+   mid-song) or a text caption (the row content underneath is already
+   self-explanatory — a label here would just repeat what the icons and
+   row labels already say). Same border-token/spacing-token divider
+   pattern as PlaylistSidebar.vue's .playlist-sidebar__divider. */
+.player-tools__section-divider {
+  margin: var(--ui-space-3) 0;
+  border: none;
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .player-tools__metro-toggle {
@@ -600,11 +669,6 @@ function handleSeparationPresetChange(event) {
   text-align: center;
 }
 
-.player-tools__inline-action {
-  padding-bottom: var(--ui-space-2);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
 .player-tools__adjust-row + .player-tools__adjust-row {
   padding-top: var(--ui-space-1);
 }
@@ -632,6 +696,23 @@ function handleSeparationPresetChange(event) {
 
 .player-tools__control input {
   flex: 1;
+}
+
+/* Five fixed guide-vocal stops (see PlayerBar.vue's GUIDE_VOCAL_STOPS) —
+   equal-width buttons, same grid approach as .player-tools__tabs above.
+   margin-bottom matches .player-tools__row-header's, so the slider below
+   sits the same distance from the stops as the stops do from the header —
+   without it, only the header→stops gap exists and the row reads
+   unevenly cramped between stops and slider. */
+.player-tools__stop-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: var(--ui-space-1);
+  margin-bottom: var(--ui-space-2);
+}
+
+.player-tools__stop-row :deep(.ui-btn) {
+  justify-content: center;
 }
 
 .player-tools__process-row,

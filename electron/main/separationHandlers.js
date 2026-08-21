@@ -86,6 +86,7 @@ function registerSeparationHandlers({
             if (progressWin) {
               progressWin.webContents.send('separation:progress', {
                 trackId,
+                presetId: resolvedPresetId,
                 stage: msg.stage,
                 percent: msg.percent,
               });

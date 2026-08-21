@@ -27,8 +27,8 @@ let unsubscribeProgress = null;
 // Subscribed once at module load, same lifetime as App.vue's composables.
 if (typeof window !== 'undefined' && window.Utawakui) {
   unsubscribeProgress = window.Utawakui.onSeparationProgress(
-    ({ trackId, stage, percent }) => {
-      state.inFlight.set(trackId, { stage, percent });
+    ({ trackId, presetId, stage, percent }) => {
+      state.inFlight.set(trackId, { stage, percent, presetId });
     },
   );
 }
@@ -41,6 +41,14 @@ if (import.meta.hot) {
 
 function isSeparating(trackId) {
   return state.inFlight.has(trackId);
+}
+
+// Which preset is actively generating for a track, so UI that only shows a
+// single preset selector (PlayerBar's dropdown) can stay pinned to it
+// instead of falling back to the manifest's last-selected preset whenever
+// state.track gets replaced by an unrelated library:updated refresh.
+function inFlightPresetId(trackId) {
+  return state.inFlight.get(trackId)?.presetId ?? null;
 }
 
 // Human-readable label for the button — "準備中" covers the gap between
@@ -87,7 +95,7 @@ async function separate(track, presetId) {
   // Seeds an entry immediately so isSeparating() is true (and the button
   // shows "準備中") from the very first render after the click, instead of
   // waiting for the first IPC progress event to round-trip.
-  state.inFlight.set(track.id, { stage: null });
+  state.inFlight.set(track.id, { stage: null, presetId });
   try {
     await window.Utawakui.runSeparation(track.id, presetId);
   } catch (err) {
@@ -144,6 +152,7 @@ export function useSeparation() {
   return {
     state: readonly(state),
     isSeparating,
+    inFlightPresetId,
     describe,
     separate,
     selectResult,

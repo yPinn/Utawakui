@@ -153,7 +153,11 @@ function registerPlayerStateHandler(ipcMain) {
   });
 }
 
-function createMainWindow(initialTheme = 'dark', initialSidebarWidth = 256) {
+function createMainWindow(
+  initialTheme = 'dark',
+  initialSidebarWidth = 256,
+  initialCaptureDeviceId = null,
+) {
   const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.dark;
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -177,12 +181,14 @@ function createMainWindow(initialTheme = 'dark', initialSidebarWidth = 256) {
       nodeIntegration: false,
       sandbox: true,
       backgroundThrottling: false,
-      // Lets preload's initialUiTheme/initialSidebarWidth read these
-      // synchronously, so the first frame paints the right palette and
-      // sidebar width instead of flashing dark/the default width.
+      // Lets preload's initialUiTheme/initialSidebarWidth/
+      // initialCaptureDeviceId read these synchronously, so the first frame
+      // paints the right palette/sidebar width and useAudioOutput.js can
+      // apply the persisted capture device without an async round trip.
       additionalArguments: [
         `--ui-theme=${initialTheme}`,
         `--sidebar-width=${initialSidebarWidth}`,
+        `--capture-device-id=${initialCaptureDeviceId ?? ''}`,
       ],
     },
   });

@@ -18,6 +18,12 @@ const DEFAULTS = {
   uiTheme: 'dark',
   sidebarWidth: 256, // 16rem, matches --ui-playlist-sidebar-width
   ytdlpStatus: {},
+  // Audio output device id for the capture (OBS-facing) mix — see
+  // usePlayer.js's capture chain. null means the feature is off; the
+  // device is looked up by id at runtime via enumerateDevices(), so an id
+  // for a device that's since been unplugged just fails to apply (see
+  // useAudioOutput.js), not a validation concern here.
+  captureDeviceId: null,
 };
 
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
@@ -61,6 +67,10 @@ function loadConfig(configPath) {
         ? data.sidebarWidth
         : DEFAULTS.sidebarWidth,
     ytdlpStatus: normalizeYtdlpStatusCache(data.ytdlpStatus),
+    captureDeviceId:
+      typeof data.captureDeviceId === 'string'
+        ? data.captureDeviceId
+        : DEFAULTS.captureDeviceId,
   };
 }
 

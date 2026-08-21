@@ -16,8 +16,7 @@ const workflowItems = [
   { key: 'setlist', label: 'Setlist' },
   { key: 'lyrics', label: 'Lyrics' },
   { key: 'import', label: 'Import' },
-  { key: 'obsSetlist', label: 'OBS Setlist' },
-  { key: 'obsLyrics', label: 'OBS Lyrics' },
+  { key: 'output', label: 'Output' },
 ];
 
 const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
@@ -173,9 +172,8 @@ const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
   animation-delay: 120ms;
 }
 
-.app-tabs__group--workflow .app-tabs__folder:nth-child(5),
 .app-tabs__group--utility .app-tabs__folder {
-  animation-delay: 160ms;
+  animation-delay: 120ms;
 }
 
 @keyframes app-tabs-reveal {

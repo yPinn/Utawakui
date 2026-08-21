@@ -89,10 +89,29 @@ if (!gotSingleInstanceLock) {
   app.whenReady().then(() => {
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
+    // Narrow exception for the capture-device output picker (see
+    // usePlayer.js's capture chain / useAudioOutput.js): 'media' with
+    // mediaType 'audio' unlocks labeled enumerateDevices() results (Chromium
+    // returns blank labels for audiooutput devices without it), and
+    // 'speaker-selection' is what setSinkId() itself checks for a
+    // non-default device. Neither grants microphone *capture* — no
+    // getUserMedia call is ever made, so no mic indicator lights up.
+    // Everything else stays denied.
     session.defaultSession.setPermissionRequestHandler(
-      (webContents, permission, callback) => {
+      (webContents, permission, callback, details) => {
+        if (permission === 'speaker-selection') return callback(true);
+        if (permission === 'media' && details?.mediaType === 'audio') {
+          return callback(true);
+        }
         callback(false);
       },
+    );
+    // setPermissionCheckHandler is the synchronous counterpart
+    // enumerateDevices() itself consults for device labels — without this,
+    // the request handler above only covers explicit getUserMedia() calls,
+    // which this app never makes.
+    session.defaultSession.setPermissionCheckHandler(
+      (webContents, permission) => permission === 'media',
     );
 
     configState.loadInitialConfig();
@@ -190,6 +209,7 @@ if (!gotSingleInstanceLock) {
     windowState.createMainWindow(
       configState.getConfig().uiTheme,
       configState.getConfig().sidebarWidth,
+      configState.getConfig().captureDeviceId,
     );
   });
 

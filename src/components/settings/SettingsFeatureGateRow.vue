@@ -49,7 +49,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
           :icon="Info"
           :active="isNoticeOpen"
           :aria-expanded="isNoticeOpen ? 'true' : 'false'"
-          :aria-label="noticeLabel"
+          :label="noticeLabel"
           :title="noticeLabel"
           @click="isNoticeOpen = !isNoticeOpen"
         />

@@ -4,10 +4,12 @@ import {
   CircleAlert,
   Ellipsis,
   FolderOpen,
+  Headphones,
   ListChecks,
   RefreshCw,
   RotateCcw,
 } from '../icons/index.js';
+import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
@@ -26,7 +28,9 @@ import { useFeatureGatePresentation } from '../composables/useFeatureGatePresent
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
+import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibrary } from '../composables/useLibrary.js';
+import { usePlayer } from '../composables/usePlayer.js';
 import { useYtdlpStatus } from '../composables/useYtdlpStatus.js';
 import packageJson from '../../package.json';
 
@@ -99,6 +103,26 @@ function handleDownloadDirMenuSelect(actionId) {
   if (actionId === 'choose') chooseDownloadDir();
   else if (actionId === 'reset') resetDownloadDir();
 }
+
+// Capture (OBS-facing) output device — see usePlayer.js's capture chain.
+// state.captureDeviceId/captureError live on usePlayer() (the audio graph
+// owns them); device enumeration/persistence lives on useAudioOutput().
+// The picker itself is a modal (CaptureDeviceModal.vue), not a context
+// menu — real device names run too long for a menu's width without
+// ellipsis-truncating them into indistinguishable labels, and picking the
+// wrong one silently breaks capture.
+const { state: playerState } = usePlayer();
+const { devices: captureOutputDevices } = useAudioOutput();
+
+const isCaptureDeviceModalOpen = shallowRef(false);
+
+const captureDeviceLabel = computed(() => {
+  if (!playerState.captureDeviceId) return '未選擇(僅耳機播放)';
+  const device = captureOutputDevices.value.find(
+    (d) => d.deviceId === playerState.captureDeviceId,
+  );
+  return device?.label || '裝置名稱無法讀取';
+});
 
 const {
   featureGateRows,
@@ -383,6 +407,39 @@ onMounted(refreshSettingsState);
             {{ maintenanceMessage }}
           </UiHint>
         </SettingsBlock>
+
+        <SettingsBlock
+          title="音訊輸出"
+          summary="讓 OBS 擷取到獨立於耳機的伴奏混音。"
+          :status="playerState.captureDeviceId ? '已啟用' : '未啟用'"
+          :status-tone="playerState.captureDeviceId ? 'success' : 'muted'"
+        >
+          <SettingsActionRow
+            :icon="Headphones"
+            title="擷取輸出裝置"
+            :value="captureDeviceLabel"
+            tooltip="選擇一個虛擬音效裝置,OBS 加一個獨立的音訊來源指向它即可擷取。"
+          >
+            <template #actions>
+              <UiButton
+                :icon="Headphones"
+                aria-haspopup="dialog"
+                @click="isCaptureDeviceModalOpen = true"
+              >
+                選擇裝置
+              </UiButton>
+            </template>
+          </SettingsActionRow>
+
+          <UiHint v-if="playerState.captureError" tone="danger" role="alert">
+            {{ playerState.captureError }}
+          </UiHint>
+        </SettingsBlock>
+
+        <CaptureDeviceModal
+          :open="isCaptureDeviceModalOpen"
+          @close="isCaptureDeviceModalOpen = false"
+        />
 
         <SettingsBlock
           title="應用程式更新"

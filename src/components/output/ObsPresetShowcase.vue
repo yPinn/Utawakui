@@ -5,6 +5,7 @@ import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
+  templateGroups: { type: Array, default: () => [] },
   selectedPresetId: { type: String, default: null },
 });
 
@@ -19,6 +20,11 @@ const selectedPreset = computed(
 const selectedIndex = computed(() =>
   props.presets.findIndex((preset) => preset.id === selectedPreset.value?.id),
 );
+const visibleGroups = computed(() =>
+  props.templateGroups.length
+    ? props.templateGroups
+    : [{ kind: 'all', label: '模板', templates: props.presets }],
+);
 
 function selectPreset(id) {
   emit('update:selectedPresetId', id);
@@ -28,58 +34,74 @@ function selectPreset(id) {
 <template>
   <section class="obs-preset-showcase" aria-label="預設集展示">
     <div class="obs-preset-showcase__layout">
-      <div class="obs-preset-showcase__grid" aria-label="可用模板">
-        <button
-          v-for="preset in presets"
-          :key="preset.id"
-          type="button"
-          class="obs-preset-card"
-          :class="{
-            'obs-preset-card--active': preset.id === selectedPreset?.id,
-          }"
-          :aria-pressed="preset.id === selectedPreset?.id"
-          @click="selectPreset(preset.id)"
+      <div class="obs-preset-showcase__groups" aria-label="模板縮圖">
+        <section
+          v-for="group in visibleGroups"
+          :key="group.kind"
+          class="obs-preset-showcase__group"
         >
-          <div class="obs-preset-card__preview" :data-tone="preset.tone">
-            <div class="obs-preset-card__stage">
-              <span class="obs-preset-card__stage-title">
-                {{ preset.preview.title }}
-              </span>
-              <span
-                v-for="line in preset.preview.lines"
-                :key="line"
-                class="obs-preset-card__line"
-              >
-                {{ line }}
-              </span>
-            </div>
+          <h3 class="obs-preset-showcase__group-title">{{ group.label }}</h3>
+          <div class="obs-preset-showcase__grid">
+            <button
+              v-for="preset in group.templates"
+              :key="preset.id"
+              type="button"
+              class="obs-template-thumb"
+              :class="{
+                'obs-template-thumb--active': preset.id === selectedPreset?.id,
+              }"
+              :aria-pressed="preset.id === selectedPreset?.id"
+              @click="selectPreset(preset.id)"
+            >
+              <div class="obs-template-thumb__preview" :data-tone="preset.tone">
+                <div class="obs-template-thumb__stage">
+                  <span class="obs-template-thumb__stage-title">
+                    {{ preset.preview.title }}
+                  </span>
+                </div>
+              </div>
+              <div class="obs-template-thumb__body">
+                <span class="obs-template-thumb__name">{{ preset.name }}</span>
+                <UiChip
+                  v-if="preset.availability"
+                  :tone="preset.availability.tone ?? 'muted'"
+                >
+                  {{ preset.availability.label }}
+                </UiChip>
+                <Check
+                  v-if="preset.id === selectedPreset?.id"
+                  :size="ICON_SIZE"
+                  aria-hidden="true"
+                />
+              </div>
+            </button>
           </div>
-          <div class="obs-preset-card__body">
-            <div class="obs-preset-card__heading">
-              <span class="obs-preset-card__name">{{ preset.name }}</span>
-              <UiChip
-                v-if="preset.availability"
-                :tone="preset.availability.tone ?? 'muted'"
-              >
-                {{ preset.availability.label }}
-              </UiChip>
-              <Check
-                v-if="preset.id === selectedPreset?.id"
-                :size="ICON_SIZE"
-                aria-hidden="true"
-              />
-            </div>
-            <p class="obs-preset-card__summary">{{ preset.summary }}</p>
-            <div class="obs-preset-card__tags" aria-label="模板特性">
-              <UiChip v-for="tag in preset.tags" :key="tag" tone="muted">
-                {{ tag }}
-              </UiChip>
-            </div>
-          </div>
-        </button>
+        </section>
       </div>
 
-      <aside v-if="selectedPreset" class="obs-preset-showcase__detail">
+      <aside
+        v-if="selectedPreset"
+        class="obs-preset-showcase__detail"
+        aria-label="模板展示預覽"
+      >
+        <div
+          class="obs-preset-showcase__preview"
+          :data-tone="selectedPreset.tone"
+        >
+          <div class="obs-preset-showcase__stage">
+            <span class="obs-preset-showcase__stage-title">
+              {{ selectedPreset.preview.title }}
+            </span>
+            <span
+              v-for="line in selectedPreset.preview.lines"
+              :key="line"
+              class="obs-preset-showcase__line"
+            >
+              {{ line }}
+            </span>
+          </div>
+        </div>
+
         <div class="obs-preset-showcase__detail-copy">
           <span class="obs-preset-showcase__detail-index">
             {{ selectedIndex + 1 }} / {{ presets.length }}
@@ -96,6 +118,11 @@ function selectPreset(id) {
           >
             {{ selectedPreset.availability.summary }}
           </p>
+          <div class="obs-preset-showcase__tags" aria-label="模板特性">
+            <UiChip v-for="tag in selectedPreset.tags" :key="tag" tone="muted">
+              {{ tag }}
+            </UiChip>
+          </div>
         </div>
         <dl class="obs-preset-showcase__settings">
           <div
@@ -117,19 +144,17 @@ function selectPreset(id) {
   height: 100%;
   min-height: 0;
   min-width: 0;
+  container-type: inline-size;
 }
 
 .obs-preset-showcase__layout {
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 24rem);
+  grid-template-columns:
+    minmax(var(--ui-output-gallery-column-min), 1fr)
+    var(--ui-output-gallery-detail-width);
   gap: var(--ui-space-4);
-}
-
-.obs-preset-card__heading {
-  display: flex;
-  align-items: center;
 }
 
 .obs-preset-showcase__detail-title {
@@ -143,7 +168,6 @@ function selectPreset(id) {
 .obs-preset-showcase__detail-index,
 .obs-preset-showcase__detail-summary,
 .obs-preset-showcase__availability,
-.obs-preset-card__summary,
 .obs-preset-showcase__setting dd {
   margin: 0;
   color: var(--ui-color-text-muted);
@@ -158,23 +182,46 @@ function selectPreset(id) {
   background: var(--ui-color-canvas);
 }
 
-.obs-preset-showcase__grid {
+.obs-preset-showcase__groups {
   min-height: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
   align-content: start;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-4);
   min-width: 0;
   overflow: auto;
 }
 
-.obs-preset-card {
+.obs-preset-showcase__group {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-2);
+}
+
+.obs-preset-showcase__group-title {
+  margin: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
+}
+
+.obs-preset-showcase__grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  align-content: start;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.obs-template-thumb {
+  min-width: 0;
+  min-height: var(--ui-output-template-thumb-min-height);
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface);
   color: var(--ui-color-text);
   font: inherit;
@@ -182,27 +229,29 @@ function selectPreset(id) {
   cursor: pointer;
 }
 
-.obs-preset-card:hover {
+.obs-template-thumb:hover {
   border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-hover);
 }
 
-.obs-preset-card:focus-visible {
+.obs-template-thumb:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
-.obs-preset-card--active {
+.obs-template-thumb--active {
   border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-selected);
 }
 
-.obs-preset-card__preview {
+.obs-template-thumb__preview {
+  flex: 0 0 var(--ui-output-template-thumb-preview-width);
+  width: var(--ui-output-template-thumb-preview-width);
   aspect-ratio: 16 / 9;
   overflow: hidden;
   display: grid;
   align-items: end;
-  padding: var(--ui-space-2);
+  padding: var(--ui-space-1);
   border-radius: var(--ui-radius-sm);
   border: var(--ui-border-width) solid var(--ui-color-border);
   background:
@@ -214,7 +263,8 @@ function selectPreset(id) {
     var(--ui-color-canvas);
 }
 
-.obs-preset-card__preview[data-tone='stage'] {
+.obs-template-thumb__preview[data-tone='stage'],
+.obs-preset-showcase__preview[data-tone='stage'] {
   background:
     linear-gradient(
       135deg,
@@ -224,7 +274,8 @@ function selectPreset(id) {
     var(--ui-color-canvas);
 }
 
-.obs-preset-card__preview[data-tone='lyrics'] {
+.obs-template-thumb__preview[data-tone='lyrics'],
+.obs-preset-showcase__preview[data-tone='lyrics'] {
   background:
     linear-gradient(
       180deg,
@@ -234,48 +285,33 @@ function selectPreset(id) {
     var(--ui-color-canvas);
 }
 
-.obs-preset-card__preview[data-tone='minimal'] {
+.obs-template-thumb__preview[data-tone='minimal'],
+.obs-preset-showcase__preview[data-tone='minimal'] {
   background: var(--ui-color-canvas);
 }
 
-.obs-preset-card__stage {
+.obs-template-thumb__stage {
   display: grid;
   gap: var(--ui-space-1);
   min-width: 0;
 }
 
-.obs-preset-card__stage-title {
+.obs-template-thumb__stage-title {
   color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-output-template-thumb-title-font-size);
   font-weight: var(--ui-font-weight-heavy);
   line-height: var(--ui-line-height-title);
 }
 
-.obs-preset-card__line {
-  min-width: 0;
-  overflow: hidden;
-  padding: var(--ui-space-1) var(--ui-space-2);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-overlay-scrim);
-  color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.obs-preset-card__body {
-  display: grid;
-  gap: var(--ui-space-1);
-  min-width: 0;
-}
-
-.obs-preset-card__heading {
+.obs-template-thumb__body {
+  flex: 1;
+  display: flex;
+  align-items: center;
   gap: var(--ui-space-2);
+  min-width: 0;
 }
 
-.obs-preset-card__name {
+.obs-template-thumb__name {
   flex: 1;
   min-width: 0;
   overflow: hidden;
@@ -287,16 +323,65 @@ function selectPreset(id) {
   white-space: nowrap;
 }
 
-.obs-preset-card__tags {
+.obs-preset-showcase__preview {
+  inline-size: min(100%, var(--ui-output-gallery-preview-max-width));
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  display: grid;
+  justify-self: center;
+  align-items: end;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-4);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background:
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--ui-color-canvas) 86%, transparent),
+      color-mix(in srgb, var(--ui-color-accent-soft) 70%, transparent)
+    ),
+    var(--ui-color-canvas);
+}
+
+.obs-preset-showcase__stage {
+  display: grid;
+  gap: var(--ui-space-2);
+  min-width: 0;
+}
+
+.obs-preset-showcase__stage-title {
+  color: var(--ui-color-overlay-contrast);
+  font-size: var(--ui-font-size-lg);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-title);
+}
+
+.obs-preset-showcase__line {
+  min-width: 0;
+  overflow: hidden;
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius-sm);
+  background: var(--ui-color-overlay-scrim);
+  color: var(--ui-color-overlay-contrast);
+  font-size: var(--ui-font-size-md);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-label);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-preset-showcase__tags {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ui-space-1);
 }
 
 .obs-preset-showcase__detail {
+  inline-size: 100%;
   min-height: 0;
+  min-width: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto auto minmax(0, 1fr);
   align-content: start;
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
@@ -323,7 +408,12 @@ function selectPreset(id) {
 
 .obs-preset-showcase__setting {
   display: grid;
-  grid-template-columns: minmax(4rem, 7rem) minmax(0, 1fr);
+  grid-template-columns:
+    minmax(
+      var(--ui-output-setting-label-width-min),
+      var(--ui-output-setting-label-width-max)
+    )
+    minmax(0, 1fr);
   gap: var(--ui-space-2);
   padding-bottom: var(--ui-space-2);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
@@ -341,18 +431,23 @@ function selectPreset(id) {
   line-height: var(--ui-line-height-label);
 }
 
-@media (max-width: 900px) {
+@container (width < 48rem) {
   .obs-preset-showcase__layout {
     grid-template-columns: 1fr;
     overflow: auto;
   }
 
-  .obs-preset-showcase__grid {
+  .obs-preset-showcase__groups {
     overflow: visible;
+  }
+
+  .obs-template-thumb__preview {
+    flex-basis: var(--ui-output-template-thumb-preview-width-compact);
+    width: var(--ui-output-template-thumb-preview-width-compact);
   }
 }
 
-@media (max-width: 680px) {
+@container (width < 40rem) {
   .obs-preset-showcase__setting {
     grid-template-columns: 1fr;
     gap: var(--ui-space-1);

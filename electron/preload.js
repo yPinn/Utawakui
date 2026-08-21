@@ -17,6 +17,16 @@ function readInitialSidebarWidth() {
   return Number.isFinite(value) ? value : 256;
 }
 
+// Same synchronous-first-paint reasoning as readInitialUiTheme above — lets
+// useAudioOutput.js apply the persisted capture device before the first
+// track ever plays instead of waiting on an async getCaptureDevice() round
+// trip. Empty string (no arg / cleared) reads back as null, not ''.
+function readInitialCaptureDeviceId() {
+  const arg = process.argv.find((a) => a.startsWith('--capture-device-id='));
+  const value = arg ? arg.slice('--capture-device-id='.length) : '';
+  return value.length > 0 ? value : null;
+}
+
 contextBridge.exposeInMainWorld('Utawakui', {
   initialUiTheme: readInitialUiTheme(),
   getUiTheme: () => ipcRenderer.invoke('config:get-ui-theme'),
@@ -25,6 +35,11 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getSidebarWidth: () => ipcRenderer.invoke('config:get-sidebar-width'),
   setSidebarWidth: (width) =>
     ipcRenderer.invoke('config:set-sidebar-width', width),
+  initialCaptureDeviceId: readInitialCaptureDeviceId(),
+  getCaptureDevice: () => ipcRenderer.invoke('config:get-capture-device'),
+  setCaptureDevice: (deviceId) =>
+    ipcRenderer.invoke('config:set-capture-device', deviceId),
+  openExternalUrl: (url) => ipcRenderer.invoke('shell:open-external', url),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
   // YouTube playlist URL/ID resolution — distinct from the user-named
   // playlists API below (listPlaylists/createPlaylist/etc.).

@@ -103,6 +103,47 @@ describe('isSeparating()', () => {
   });
 });
 
+describe('inFlightPresetId()', () => {
+  it('is null for a track with no in-flight entry', async () => {
+    const { inFlightPresetId } = await loadSeparation();
+    expect(inFlightPresetId('t1')).toBeNull();
+  });
+
+  it('reports the preset seeded by separate() before any progress event arrives', async () => {
+    const { separate, inFlightPresetId } = await loadSeparation();
+    const { useFeatureGates } = await import('./useFeatureGates.js');
+    await useFeatureGates().refreshConfirmations();
+    runSeparationMock.mockImplementation(() => new Promise(() => {}));
+    const track = { id: 't1', title: 'Song' };
+
+    separate(track, 'inst-hq3');
+    await flushPromises();
+
+    expect(inFlightPresetId('t1')).toBe('inst-hq3');
+  });
+
+  it('tracks the preset id carried by progress events', async () => {
+    const { inFlightPresetId } = await loadSeparation();
+    progressCallback({
+      trackId: 't1',
+      presetId: 'inst-hq3',
+      stage: 'separating',
+      percent: 10,
+    });
+    expect(inFlightPresetId('t1')).toBe('inst-hq3');
+  });
+
+  it('clears once the run finishes', async () => {
+    const { separate, inFlightPresetId } = await loadSeparation();
+    runSeparationMock.mockResolvedValue({ stemsUrl: 'x' });
+    const track = { id: 't1', title: 'Song' };
+
+    await separate(track, 'inst-hq3');
+
+    expect(inFlightPresetId('t1')).toBeNull();
+  });
+});
+
 describe('separate()', () => {
   it('is a no-op while the same track is already separating', async () => {
     const { separate, isSeparating } = await loadSeparation();

@@ -5,8 +5,7 @@ import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
-import ObsSetlistView from './views/ObsSetlistView.vue';
-import ObsLyricsView from './views/ObsLyricsView.vue';
+import OutputView from './views/OutputView.vue';
 import LyricsView from './views/LyricsView.vue';
 import ImportView from './views/ImportView.vue';
 import SettingsView from './views/SettingsView.vue';
@@ -18,12 +17,17 @@ import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useTheme } from './composables/useTheme.js';
+import { useAudioOutput } from './composables/useAudioOutput.js';
 
 // Long-lived app hooks; each composable owns its cleanup.
 useTaskbarControls();
 useWindowTitle();
 useMediaSession();
 useTheme();
+// Restores the persisted capture device (see usePlayer.js's capture chain)
+// before any track can play — same "kick off the module-load side effect
+// once" reasoning as useTheme() above.
+useAudioOutput().restoreInitialDevice();
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).
@@ -34,8 +38,7 @@ const { width: sidebarWidth } = useSidebarWidth();
 // an internal design-system view reached only via the F9 shortcut below.
 const views = {
   setlist: SetlistView,
-  obsSetlist: ObsSetlistView,
-  obsLyrics: ObsLyricsView,
+  output: OutputView,
   lyrics: LyricsView,
   import: ImportView,
   settings: SettingsView,

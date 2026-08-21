@@ -113,6 +113,46 @@ function registerConfigHandlers({
     updateConfig({ sidebarWidth: width });
     return getConfig().sidebarWidth;
   });
+
+  ipcMain.handle(
+    'config:get-capture-device',
+    async () => getConfig().captureDeviceId,
+  );
+
+  // Same untrusted-input trust boundary as config:set-ui-theme above. `null`
+  // clears the setting (feature off); anything else must be a device id
+  // string — device *existence* is not verifiable from main (device list is
+  // a renderer-only Web API), so that's left to useAudioOutput.js at apply
+  // time, same as an unplugged device failing later rather than up front.
+  ipcMain.handle('config:set-capture-device', async (event, deviceId) => {
+    if (deviceId !== null && typeof deviceId !== 'string') {
+      throw new Error(`invalid capture device id: ${deviceId}`);
+    }
+    updateConfig({ captureDeviceId: deviceId });
+    return getConfig().captureDeviceId;
+  });
+
+  // shell.openExternal launches the OS default browser — a plain <a href>
+  // in the renderer is inert here (main.js's setWindowOpenHandler denies
+  // all new windows, and will-navigate blocks any non-same-document URL),
+  // so this is the only way a Vue component can send someone to a vendor
+  // download page (see VirtualCableGuideModal.vue's only caller). https-only
+  // is deliberate, same untrusted-input posture as the setters above: this
+  // channel only ever receives hardcoded vendor URLs today, but validating
+  // the scheme rather than trusting it costs nothing and rules out
+  // javascript:/file:/custom schemes outright.
+  ipcMain.handle('shell:open-external', async (event, url) => {
+    let parsed;
+    try {
+      parsed = new URL(url);
+    } catch {
+      throw new Error(`invalid url: ${url}`);
+    }
+    if (parsed.protocol !== 'https:') {
+      throw new Error(`unsupported url scheme: ${parsed.protocol}`);
+    }
+    await shell.openExternal(url);
+  });
 }
 
 module.exports = { registerConfigHandlers };

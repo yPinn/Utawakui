@@ -8,6 +8,7 @@ import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
+  templateGroups: { type: Array, default: () => [] },
   styleSets: { type: Array, default: () => [] },
   configs: { type: Array, default: () => [] },
 });
@@ -105,6 +106,7 @@ function selectPage(page) {
       <div class="obs-display-workbench__gallery">
         <ObsPresetShowcase
           :presets="orderedPresets"
+          :template-groups="templateGroups"
           :selected-preset-id="selectedPreset?.id ?? null"
           @update:selected-preset-id="selectedPresetId = $event"
         />

@@ -26,6 +26,7 @@ describe('config', () => {
       uiTheme: 'dark',
       sidebarWidth: 256,
       ytdlpStatus: {},
+      captureDeviceId: null,
     });
   });
 
@@ -61,6 +62,7 @@ describe('config', () => {
       uiTheme: 'dark',
       sidebarWidth: 256,
       ytdlpStatus: {},
+      captureDeviceId: null,
     });
 
     const backups = fs
@@ -150,6 +152,19 @@ describe('config', () => {
       JSON.stringify({ version: 1, sidebarWidth: 'wide' }),
     );
     expect(loadConfig(configPath).sidebarWidth).toBe(256);
+  });
+
+  it('round-trips captureDeviceId through save/load', () => {
+    saveConfig(configPath, { captureDeviceId: 'device-abc' });
+    expect(loadConfig(configPath).captureDeviceId).toBe('device-abc');
+  });
+
+  it('wrong-typed captureDeviceId falls back to null', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 1, captureDeviceId: 42 }),
+    );
+    expect(loadConfig(configPath).captureDeviceId).toBe(null);
   });
 
   it('round-trips feature confirmations through save/load', () => {
