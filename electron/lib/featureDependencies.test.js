@@ -863,6 +863,43 @@ describe('yt-dlp feature dependency', () => {
       installed: false,
     });
   });
+
+  it('reports an installed provider runtime as updateable when its manifest version is older', () => {
+    const userDataDir = makeTempDir();
+    const dependency = {
+      ...makeProviderRuntimeDependency({
+        python: Buffer.from('python zip'),
+        ytdlp: Buffer.from('yt-dlp wheel'),
+        provider: Buffer.from('provider exe'),
+        plugin: Buffer.from('plugin zip'),
+      }),
+      version: 'provider-current',
+    };
+    const paths = getYtdlpPaths(userDataDir, dependency);
+    fs.mkdirSync(path.dirname(paths.pythonPath), { recursive: true });
+    fs.mkdirSync(path.join(paths.sitePackagesDir, 'yt_dlp'), {
+      recursive: true,
+    });
+    fs.mkdirSync(path.join(paths.pluginPackageDir, 'yt_dlp_plugins'), {
+      recursive: true,
+    });
+    fs.mkdirSync(path.dirname(paths.bgutilProviderPath), { recursive: true });
+    fs.writeFileSync(paths.pythonPath, 'python');
+    fs.writeFileSync(paths.bgutilProviderPath, 'provider');
+    fs.writeFileSync(
+      paths.manifestPath,
+      JSON.stringify({ version: 'provider-previous' }),
+    );
+
+    expect(
+      listFeatureDependencyStatuses(userDataDir, [dependency])[0],
+    ).toMatchObject({
+      id: dependency.id,
+      installed: true,
+      installedVersion: 'provider-previous',
+      updateAvailable: true,
+    });
+  });
 });
 
 describe('model feature dependencies', () => {

@@ -162,6 +162,34 @@ describe('useFeatureGatePresentation', () => {
     expect(item.status).toBe('可使用');
   });
 
+  it('uses update language for an installed provider runtime with an older manifest version', async () => {
+    const presentation = await loadPresentation();
+
+    updatedCallback([
+      {
+        id: 'yt-dlp-provider-tool',
+        featureId: 'provider-flow',
+        kind: 'runtime',
+        name: '線上來源下載工具',
+        license:
+          'Python Software Foundation License + Unlicense + GPL-3.0-or-later provider',
+        displayVersion: 'yt-dlp 2026.08.19 + bgutil 0.8.1',
+        installed: true,
+        installedVersion: 'python-previous',
+        updateAvailable: true,
+      },
+    ]);
+
+    const item = findItem(
+      presentation,
+      'provider-flow',
+      'yt-dlp-provider-tool',
+    );
+    expect(item.status).toBe('可更新');
+    expect(item.statusTone).toBe('warning');
+    expect(item.actionLabel).toBe('更新下載工具');
+  });
+
   it('carries each gate registry entry’s declaration body onto its row', async () => {
     const presentation = await loadPresentation();
 

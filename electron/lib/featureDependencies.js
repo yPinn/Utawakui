@@ -685,6 +685,21 @@ function readInstalledVersion(manifestPath) {
   return typeof manifest?.version === 'string' ? manifest.version : null;
 }
 
+function isDependencyUpdateAvailable(dependency, installedVersion) {
+  if (!installedVersion || typeof dependency?.version !== 'string') {
+    return false;
+  }
+
+  if (
+    dependency.id === FFMPEG_DEPENDENCY_ID &&
+    dependency.version === 'release'
+  ) {
+    return false;
+  }
+
+  return installedVersion !== dependency.version;
+}
+
 function isModelFileValid(filePath, dependency, options = {}) {
   if (!fs.existsSync(filePath)) return false;
   const stat = fs.statSync(filePath);
@@ -699,13 +714,18 @@ function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
   if (dependency.id === YTDLP_DEPENDENCY_ID) {
     const paths = getYtdlpPaths(userDataDir, dependency);
     const installed = isProviderRuntimeInstalled(paths);
+    const installedVersion = installed
+      ? readInstalledVersion(paths.manifestPath)
+      : null;
     return {
       ...dependency,
       installed,
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
-      installedVersion: installed
-        ? readInstalledVersion(paths.manifestPath)
-        : null,
+      installedVersion,
+      updateAvailable: isDependencyUpdateAvailable(
+        dependency,
+        installedVersion,
+      ),
     };
   }
 
@@ -721,19 +741,25 @@ function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
         source: 'system',
         installedAt: null,
         installedVersion: null,
+        updateAvailable: false,
       };
     }
 
     const paths = getFfmpegPaths(userDataDir, dependency);
     const installed = fs.existsSync(paths.executablePath);
+    const installedVersion = installed
+      ? readInstalledVersion(paths.manifestPath)
+      : null;
     return {
       ...dependency,
       installed,
       source: 'managed',
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
-      installedVersion: installed
-        ? readInstalledVersion(paths.manifestPath)
-        : null,
+      installedVersion,
+      updateAvailable: isDependencyUpdateAvailable(
+        dependency,
+        installedVersion,
+      ),
     };
   }
 
@@ -745,13 +771,18 @@ function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
     const legacyAvailable =
       !installed &&
       isModelFileValid(paths.legacyPath, dependency, { verifySha: true });
+    const installedVersion = installed
+      ? readInstalledVersion(paths.manifestPath)
+      : null;
     return {
       ...dependency,
       installed,
       installedAt: installed ? readInstalledAt(paths.manifestPath) : null,
-      installedVersion: installed
-        ? readInstalledVersion(paths.manifestPath)
-        : null,
+      installedVersion,
+      updateAvailable: isDependencyUpdateAvailable(
+        dependency,
+        installedVersion,
+      ),
       canMigrate: legacyAvailable,
     };
   }
@@ -760,6 +791,7 @@ function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
     ...dependency,
     installed: false,
     installedAt: null,
+    updateAvailable: false,
   };
 }
 

@@ -139,6 +139,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
     const isModel = dependency.kind === 'model';
     const preparing = featureDependencyState.preparingIds.has(dependency.id);
     const installed = Boolean(current.installed);
+    const updateAvailable = installed && Boolean(current.updateAvailable);
     const usingSystemFfmpeg = isFfmpeg && current.source === 'system';
     // Only worth flagging while the opt-in hasn't been taken yet — once
     // it's active the row already says so via usingSystemFfmpeg above.
@@ -162,19 +163,21 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
         : dependency.name;
     const status = progress
       ? dependencyProgressLabel(progress)
-      : installed
-        ? isYtdlp
-          ? '可使用'
-          : usingSystemFfmpeg
-            ? '使用系統版本'
-            : '已準備'
-        : preparing
-          ? '準備中'
-          : systemFfmpegAvailable
-            ? '可用系統版本'
-            : current.canMigrate
-              ? '待整理'
-              : '未準備';
+      : updateAvailable
+        ? '可更新'
+        : installed
+          ? isYtdlp
+            ? '可使用'
+            : usingSystemFfmpeg
+              ? '使用系統版本'
+              : '已準備'
+          : preparing
+            ? '準備中'
+            : systemFfmpegAvailable
+              ? '可用系統版本'
+              : current.canMigrate
+                ? '待整理'
+                : '未準備';
     return {
       ...dependency,
       title,
@@ -189,36 +192,44 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
       status,
       statusTone: progress
         ? 'info'
-        : installed
-          ? 'success'
-          : preparing
-            ? 'info'
-            : systemFfmpegAvailable
+        : updateAvailable
+          ? 'warning'
+          : installed
+            ? 'success'
+            : preparing
               ? 'info'
-              : 'warning',
+              : systemFfmpegAvailable
+                ? 'info'
+                : 'warning',
       icon: isFfmpeg ? Wrench : isModel ? Cpu : Download,
       // ffmpeg's primary action always opens FfmpegSourceModal.vue (see
       // SettingsView.vue's handleWorkflowItemAction) rather than downloading
       // directly — the modal is where the system-vs-managed choice happens.
       actionIcon: isFfmpeg
         ? Settings
-        : installed && !isYtdlp
-          ? null
-          : isYtdlp && installed
-            ? Wrench
-            : Download,
+        : updateAvailable
+          ? RefreshCw
+          : installed && !isYtdlp
+            ? null
+            : isYtdlp && installed
+              ? Wrench
+              : Download,
       actionDisabled: isBusy,
       actionLabel: isFfmpeg
         ? installed
           ? 'FFmpeg 來源設定'
           : `準備${title}`
-        : installed
+        : updateAvailable
           ? isYtdlp
-            ? '重新準備下載工具'
-            : `${title}已準備`
-          : preparing
-            ? `準備${title}中`
-            : `準備${title}`,
+            ? '更新下載工具'
+            : `更新${title}`
+          : installed
+            ? isYtdlp
+              ? '重新準備下載工具'
+              : `${title}已準備`
+            : preparing
+              ? `準備${title}中`
+              : `準備${title}`,
       advancedActions: dependencyAdvancedActions({
         dependency,
         installed,
