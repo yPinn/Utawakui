@@ -5,6 +5,7 @@
 // reassignment sites used to close over directly. loadInitialConfig() must
 // run once, early in whenReady, before anything else here is called.
 
+const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 const { loadConfig, saveConfig } = require('../lib/config');
@@ -12,12 +13,35 @@ const { isFeatureGateEnabled } = require('../lib/featureGates');
 
 let configPath = null;
 let cachedConfig = null;
+let lastWrittenLibraryPath = null;
+
+// Sidecar for the NSIS uninstaller (build/installer.nsh), which can't parse
+// JSON — UTF-16LE with no BOM/trailing newline is what NSIS's
+// FileReadUTF16LE reads directly, and survives CJK paths regardless of the
+// installer machine's ANSI codepage. Same machine-local, never-in-a-preset
+// status as config.json itself (see CLAUDE.md).
+function writeLibraryPathSidecar(config) {
+  const libraryDir = resolveDownloadDir(config);
+  if (libraryDir === lastWrittenLibraryPath) return;
+  try {
+    fs.writeFileSync(
+      path.join(app.getPath('userData'), 'library-path.txt'),
+      libraryDir,
+      'utf16le',
+    );
+    lastWrittenLibraryPath = libraryDir;
+  } catch {
+    // Best-effort hint file only — a failed write just costs the
+    // uninstaller one checkbox, not a reason to fail app startup.
+  }
+}
 
 function loadInitialConfig() {
   // Machine-local settings only, never exported/shared — see CLAUDE.md's
   // config.json convention.
   configPath = path.join(app.getPath('userData'), 'config.json');
   cachedConfig = loadConfig(configPath);
+  writeLibraryPathSidecar(cachedConfig);
   return cachedConfig;
 }
 
@@ -31,6 +55,7 @@ function getConfig() {
 
 function updateConfig(patch) {
   cachedConfig = saveConfig(configPath, patch);
+  writeLibraryPathSidecar(cachedConfig);
   return cachedConfig;
 }
 

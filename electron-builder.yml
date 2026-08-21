@@ -79,8 +79,13 @@ nsis:
   oneClick: false
   allowToChangeInstallationDirectory: true
   perMachine: false
-  # Per-user install is always writable, so yt-dlp auto-update works
-  # without elevation — see electron/main.js's packaged-mode relocation.
+  # oneClick: false + perMachine: false shows the install-mode page (assisted
+  # installer, and the assistedInstaller.nsh template only inserts
+  # PAGE_INSTALL_MODE when INSTALL_MODE_PER_ALL_USERS isn't forced), letting
+  # the user pick per-machine instead. That's safe to leave available: what
+  # actually keeps yt-dlp writable without elevation either way is that it
+  # installs under app.getPath('userData') (electron/main.js's packaged-mode
+  # relocation), which has nothing to do with install mode.
   createDesktopShortcut: true
   createStartMenuShortcut: true
   # This is the concrete fix for the SMTC "未知的應用程式" label: Windows
@@ -89,3 +94,15 @@ nsis:
   # runAfterFinish left at its default (true) — assisted mode's finish page
   # shows a real "Run Utawakui" checkbox now, and launching is confirmed
   # working (see win.executableName above).
+  # zh_TW first: OS-language detection falls back to the first entry when
+  # neither matches, and every custom string in installer.nsh is bilingual
+  # zh_TW/en_US, so there's no third language to fall further back to.
+  installerLanguages:
+    - zh_TW
+    - en_US
+  # Lets the user override the OS-language guess. Not "recommended" by
+  # upstream docs for the general case, but that guidance assumes OS
+  # language is good enough — here it's deliberately overridable.
+  displayLanguageSelector: true
+  # Default artifact name has spaces ("Utawakui Setup 0.1.0.exe").
+  artifactName: '${productName}-Setup-${version}.${ext}'
