@@ -352,6 +352,15 @@ describe('detectLyricsScript', () => {
     expect(detectLyricsScript('사랑해')).toBe('ko');
   });
 
+  it('decides ja/ko by character-count majority, not which script appears first', () => {
+    // A handful of Korean characters inside an otherwise-Japanese lyric
+    // (or vice versa) must not flip the whole thing's reading-aid mode —
+    // Korean songs commonly code-switch into English, and Japanese songs
+    // occasionally borrow a Korean word or two.
+    expect(detectLyricsScript('こんにちは 안녕')).toBe('ja');
+    expect(detectLyricsScript('오늘 날씨가 정말 좋네요 ね')).toBe('ko');
+  });
+
   it('detects latin-only text', () => {
     expect(detectLyricsScript('Enemy')).toBe('latin');
   });

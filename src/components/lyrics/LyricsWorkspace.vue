@@ -147,14 +147,27 @@ const selectedSeparationError = computed(() => {
   return track ? (separationState.errors.get(track.id) ?? null) : null;
 });
 
-// Only Japanese lyrics get a reading-aid toolbar at all — showing a
+// Only Japanese/Korean lyrics get a reading-aid toolbar at all — showing a
 // permanently-disabled control for every other language is pure noise
 // (matches the plan's "not disabled — hidden" call).
-const showsReadingAid = computed(
-  () =>
-    detectLyricsScript(lyricLines.value.map((line) => line.text).join('')) ===
-    'ja',
+const lyricsScript = computed(() =>
+  detectLyricsScript(lyricLines.value.map((line) => line.text).join('')),
 );
+const showsReadingAid = computed(() =>
+  ['ja', 'ko'].includes(lyricsScript.value),
+);
+
+// Korean lyrics never produce furigana (see reading.js's
+// buildRomanizationDoc — Korean has no ruby step at all), so the variant
+// select hides that option for them. `readingVariant` lives in
+// useLyricsReading.js's module scope and survives switching tracks, so
+// without this a furigana selection made on a Japanese track would leave
+// a Korean track's select showing a value with no matching <option>.
+watch(lyricsScript, (script) => {
+  if (script === 'ko' && readingVariant.value === 'furigana') {
+    readingVariant.value = 'romaji';
+  }
+});
 
 const selectedReadingDoc = computed(() => {
   const track = selectedTrack.value;
@@ -242,18 +255,26 @@ function generateReadingForSelected() {
     track.id,
     source.filename,
     lyricLines.value.map((line) => line.text),
+    lyricsScript.value,
   );
 }
 
-// Seeds the draft from whatever reading already exists for this line
-// (segment reading where present, the segment's own text otherwise — kana
-// segments' text already is the reading), so correcting one wrong kanji
-// doesn't mean retyping the whole line.
+// Seeds the draft from whatever reading already exists for this line.
+// Japanese: segment reading where present, the segment's own text
+// otherwise (kana segments' text already is the reading), so correcting
+// one wrong kanji doesn't mean retyping the whole line. Korean: there are
+// no per-segment readings to reassemble (buildRomanizationDoc never
+// produces a `segment.r`) — the thing being edited IS the line's romaji
+// string, so seed from that directly.
 function startEditReadingLine(index) {
   const current = readingLines.value[index];
-  readingLineDraft.value = current?.segments
-    ? current.segments.map((segment) => segment.r ?? segment.t).join('')
-    : '';
+  if (lyricsScript.value === 'ko') {
+    readingLineDraft.value = current?.romaji ?? '';
+  } else {
+    readingLineDraft.value = current?.segments
+      ? current.segments.map((segment) => segment.r ?? segment.t).join('')
+      : '';
+  }
   editingReadingLineIndex.value = index;
 }
 
@@ -408,7 +429,9 @@ watch(activeLineIndex, (index) => {
             @change="setReadingVariant"
           >
             <option value="off">不顯示</option>
-            <option value="furigana">假名標音</option>
+            <option v-if="lyricsScript === 'ja'" value="furigana">
+              假名標音
+            </option>
             <option value="romaji">羅馬拼音</option>
           </select>
           <UiButton
@@ -579,7 +602,11 @@ watch(activeLineIndex, (index) => {
                   v-model="readingLineDraft"
                   type="text"
                   class="lyrics-line__edit-input"
-                  placeholder="輸入這行的假名讀音"
+                  :placeholder="
+                    lyricsScript === 'ko'
+                      ? '輸入這行的羅馬拼音'
+                      : '輸入這行的假名讀音'
+                  "
                   @keydown.enter="commitReadingLineEdit(index)"
                   @keydown.esc="cancelReadingLineEdit"
                 />

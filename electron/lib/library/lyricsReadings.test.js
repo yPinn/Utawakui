@@ -35,6 +35,18 @@ const sampleDoc = {
   ],
 };
 
+const sampleKoreanDoc = {
+  analyzer: { id: 'fake-koroman', version: '0' },
+  lines: [
+    {
+      text: '한글',
+      segments: [{ t: '한글' }],
+      romaji: 'hangeul',
+      edited: false,
+    },
+  ],
+};
+
 describe('readingSidecarPath', () => {
   it('rejects filenames with path separators or an unsupported extension', () => {
     expect(readingSidecarPath(trackDir, '../evil.lrc')).toBeNull();
@@ -170,5 +182,32 @@ describe('setReadingLine', () => {
 
     expect(updated.lines[0].segments).toEqual([{ t: '歌う声' }]);
     expect(updated.lines[0].edited).toBe(true);
+  });
+
+  describe('non-Japanese scripts (Stage 5c: Korean)', () => {
+    it('treats the supplied value as the final romaji directly, no re-alignment', () => {
+      saveTrackReading(trackDir, 'ko.vtt', 'ko', sampleKoreanDoc);
+
+      const updated = setReadingLine(trackDir, 'ko.vtt', 0, 'han-geul');
+
+      expect(updated.lines[0]).toEqual({
+        text: '한글',
+        // Always the single plain segment buildRomanizationDoc produces —
+        // Korean never has a kana-to-ruby step to redo.
+        segments: [{ t: '한글' }],
+        romaji: 'han-geul',
+        edited: true,
+      });
+    });
+
+    it('ignores kanaToRomaji for a non-ja doc even if supplied', () => {
+      saveTrackReading(trackDir, 'ko.vtt', 'ko', sampleKoreanDoc);
+
+      const updated = setReadingLine(trackDir, 'ko.vtt', 0, 'hangeul', {
+        kanaToRomaji: () => 'should-not-be-called',
+      });
+
+      expect(updated.lines[0].romaji).toBe('hangeul');
+    });
   });
 });

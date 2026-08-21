@@ -92,6 +92,20 @@ describe('generateReading', () => {
     expect(reading.errorFor('t1', 'ja.vtt')).toBeNull();
   });
 
+  it('forwards the script argument through to the IPC call unchanged', async () => {
+    generateLyricsReadingMock.mockResolvedValue(doc);
+    const reading = await loadReading();
+
+    await reading.generateReading('t1', 'ko.vtt', ['한글'], 'ko');
+
+    expect(generateLyricsReadingMock).toHaveBeenCalledWith(
+      't1',
+      'ko.vtt',
+      ['한글'],
+      'ko',
+    );
+  });
+
   it('records an error message and clears inFlight on failure', async () => {
     generateLyricsReadingMock.mockRejectedValue(new Error('boom'));
     const reading = await loadReading();

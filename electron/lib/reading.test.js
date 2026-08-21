@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   alignOkurigana,
   buildReadingDoc,
+  buildRomanizationDoc,
   katakanaToHiragana,
 } from './reading.js';
 
@@ -232,5 +233,70 @@ describe('buildReadingDoc', () => {
         { t: '回', r: 'かい' },
       ]);
     });
+  });
+});
+
+describe('buildRomanizationDoc', () => {
+  it('requires a romanize function', () => {
+    expect(() => buildRomanizationDoc(['a'], {})).toThrow(
+      'buildRomanizationDoc requires a romanize function',
+    );
+  });
+
+  it('skips romanizing lines with no hangul at all', () => {
+    const romanize = vi.fn((text) => text);
+    const doc = buildRomanizationDoc(['hello', ''], { romanize });
+
+    expect(romanize).not.toHaveBeenCalled();
+    expect(doc.lines).toEqual([
+      { text: 'hello', segments: [{ t: 'hello' }], romaji: '', edited: false },
+      { text: '', segments: [], romaji: '', edited: false },
+    ]);
+  });
+
+  it('romanizes hangul lines with a single plain segment, no ruby', () => {
+    const romanize = vi.fn().mockReturnValue('hoeui jaryo');
+    const doc = buildRomanizationDoc(['회의 자료'], { romanize });
+
+    expect(romanize).toHaveBeenCalledWith('회의 자료');
+    expect(doc.lines[0]).toEqual({
+      text: '회의 자료',
+      segments: [{ t: '회의 자료' }],
+      romaji: 'hoeui jaryo',
+      edited: false,
+    });
+  });
+
+  it('reports per-line progress with index/total', () => {
+    const onProgress = vi.fn();
+    buildRomanizationDoc(['한글', '문서'], {
+      romanize: (text) => text,
+      onProgress,
+    });
+
+    expect(onProgress).toHaveBeenCalledWith({
+      stage: 'line',
+      index: 0,
+      total: 2,
+    });
+    expect(onProgress).toHaveBeenCalledWith({
+      stage: 'line',
+      index: 1,
+      total: 2,
+    });
+  });
+
+  it('marks every generated line as not edited, and carries the analyzer through', () => {
+    const doc = buildRomanizationDoc(['한글'], {
+      romanize: (text) => text,
+      analyzer: { id: 'fake-ko', version: '0' },
+    });
+    expect(doc.analyzer).toEqual({ id: 'fake-ko', version: '0' });
+    expect(doc.lines[0].edited).toBe(false);
+  });
+
+  it('treats a non-array lines argument as empty', () => {
+    const doc = buildRomanizationDoc(null, { romanize: (text) => text });
+    expect(doc.lines).toEqual([]);
   });
 });

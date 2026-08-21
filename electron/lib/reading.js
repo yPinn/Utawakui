@@ -9,6 +9,10 @@
 
 const KANJI_CHAR_RE = /[一-龯㐀-䶿]/;
 const RUN_SPLIT_RE = /([一-龯㐀-䶿]+)|([^一-龯㐀-䶿]+)/g;
+// Same combined-syllable range koroman itself romanizes (0xAC00-0xD7A3) —
+// jamo-only characters (ㅋㅋㅋ) fall outside it and are correctly left as
+// plain text by both this check and koroman's own non-hangul passthrough.
+const HANGUL_SYLLABLE_RE = /[가-힣]/;
 
 function katakanaToHiragana(text) {
   return String(text || '').replace(/[ァ-ヶ]/g, (char) =>
@@ -115,6 +119,13 @@ function startsWithKanji(text) {
   return containsKanji(value[0] || '');
 }
 
+// Same role as containsKanji above, for Korean lines — skips romanizing
+// lines that are plainly not Korean at all (an all-English hook line, a
+// stray sound-effect line), not a script detector.
+function containsHangul(text) {
+  return HANGUL_SYLLABLE_RE.test(String(text || ''));
+}
+
 // Builds a reading doc for a set of lyric lines. `tokenize(text)` must
 // return an array of `{ surface_form, reading }` (kuromoji's own token
 // shape — the fake analyzer used in tests/Stage 5a mirrors it so Stage 5b
@@ -187,8 +198,50 @@ function buildReadingDoc(lines, options = {}) {
   return { analyzer, lines: resultLines };
 }
 
+// Korean counterpart to buildReadingDoc above, deliberately kept as its
+// own function rather than a branch inside buildReadingDoc: Korean needs
+// none of that function's machinery (tokenizing, okurigana alignment,
+// kanji word-gap insertion) — 한글 is already phonetic and already
+// space-separated (띄어쓰기), so there's no ruby to build. `romanize(text)`
+// is expected to return the whole line's romanization already, applying
+// its own pronunciation-assimilation rules (see docs/adr/0004) — this
+// function's only job is the same per-line skip/shape bookkeeping
+// buildReadingDoc does. `segments` is always a single plain `{ t: text }`
+// (never a `r` reading), so the existing <ruby> rendering path in
+// LyricsWorkspace.vue naturally renders Korean lines as plain text.
+function buildRomanizationDoc(lines, options = {}) {
+  const { romanize, analyzer = null, onProgress } = options;
+  if (typeof romanize !== 'function') {
+    throw new Error('buildRomanizationDoc requires a romanize function');
+  }
+
+  const sourceLines = Array.isArray(lines) ? lines : [];
+  const resultLines = sourceLines.map((rawText, index) => {
+    onProgress?.({ stage: 'line', index, total: sourceLines.length });
+    const text = typeof rawText === 'string' ? rawText : '';
+    if (!text || !containsHangul(text)) {
+      return {
+        text,
+        segments: text ? [{ t: text }] : [],
+        romaji: '',
+        edited: false,
+      };
+    }
+
+    return {
+      text,
+      segments: [{ t: text }],
+      romaji: romanize(text),
+      edited: false,
+    };
+  });
+
+  return { analyzer, lines: resultLines };
+}
+
 module.exports = {
   katakanaToHiragana,
   alignOkurigana,
   buildReadingDoc,
+  buildRomanizationDoc,
 };

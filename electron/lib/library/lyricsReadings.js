@@ -82,18 +82,25 @@ function deleteTrackReading(trackDir, sourceFilename) {
   }
 }
 
-// Manual per-line correction. `readingKana` is a whole-line kana string
-// (not per-segment) — re-running alignOkurigana against the line's own
-// text generalizes correctly to multi-kanji-run lines (see reading.js's
-// right-to-left matching), so there's only one segment-construction path
-// for both automatic generation and manual correction. Returns the
-// updated doc, or null if there's no existing doc / the line index is out
-// of range.
+// Manual per-line correction. Branches on the doc's own stored `script`:
+//
+// - 'ja': `readingValue` is a whole-line kana string (not per-segment) —
+//   re-running alignOkurigana against the line's own text generalizes
+//   correctly to multi-kanji-run lines (see reading.js's right-to-left
+//   matching), so there's only one segment-construction path for both
+//   automatic generation and manual correction.
+// - anything else (Korean, per Stage 5c): there's no kana-to-ruby step to
+//   redo — 한글 lyrics never produce ruby segments — so `readingValue` IS
+//   the corrected romaji string directly, and segments stay the same
+//   single plain `{ t: line.text }` buildRomanizationDoc always produces.
+//
+// Returns the updated doc, or null if there's no existing doc / the line
+// index is out of range.
 function setReadingLine(
   trackDir,
   sourceFilename,
   lineIndex,
-  readingKana,
+  readingValue,
   options = {},
 ) {
   const doc = getTrackReading(trackDir, sourceFilename);
@@ -101,12 +108,19 @@ function setReadingLine(
   const line = doc.lines[lineIndex];
   if (!line) return null;
 
-  const kana = typeof readingKana === 'string' ? readingKana : '';
-  const segments = kana ? alignOkurigana(line.text, kana) : [{ t: line.text }];
-  const romaji =
-    typeof options.kanaToRomaji === 'function'
-      ? options.kanaToRomaji(katakanaToHiragana(kana))
-      : line.romaji;
+  const value = typeof readingValue === 'string' ? readingValue : '';
+  let segments;
+  let romaji;
+  if (doc.script === 'ja') {
+    segments = value ? alignOkurigana(line.text, value) : [{ t: line.text }];
+    romaji =
+      typeof options.kanaToRomaji === 'function'
+        ? options.kanaToRomaji(katakanaToHiragana(value))
+        : line.romaji;
+  } else {
+    segments = [{ t: line.text }];
+    romaji = value;
+  }
 
   const nextLines = doc.lines.slice();
   nextLines[lineIndex] = { ...line, segments, romaji, edited: true };

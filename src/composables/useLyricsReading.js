@@ -71,7 +71,7 @@ async function loadReading(trackId, sourceFilename) {
   }
 }
 
-async function generateReading(trackId, sourceFilename, lines) {
+async function generateReading(trackId, sourceFilename, lines, script) {
   const key = docKey(trackId, sourceFilename);
   if (state.inFlight.has(key)) return;
   state.errors.delete(key);
@@ -81,6 +81,7 @@ async function generateReading(trackId, sourceFilename, lines) {
       trackId,
       sourceFilename,
       lines,
+      script,
     );
     state.docs.set(key, doc);
   } catch (err) {

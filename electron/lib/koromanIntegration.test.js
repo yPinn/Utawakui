@@ -1,0 +1,64 @@
+import { describe, expect, it } from 'vitest';
+import { romanize } from 'koroman';
+import { buildRomanizationDoc } from './reading.js';
+
+// Exercises the real adapter shape readingWorker.js uses (koroman.romanize
+// fed straight into buildRomanizationDoc) against the actual package — the
+// one test in this repo that would catch a koroman version bump silently
+// changing its pronunciation-rule output. No network dependency (koroman
+// has zero runtime deps and does everything in-process), so this isn't
+// flaky. Generic vocabulary only, never real song lyrics — see CLAUDE.md.
+describe('koroman integration', () => {
+  it('applies real assimilation rules, not a naive per-syllable transliteration', () => {
+    const doc = buildRomanizationDoc(['신라', '학문', '좋아요'], {
+      romanize: (text) => romanize(text, { usePronunciationRules: true }),
+    });
+
+    // Lateralization (유음화): ㄴ+ㄹ -> ll, not the naive "sinla".
+    expect(doc.lines[0]).toEqual({
+      text: '신라',
+      segments: [{ t: '신라' }],
+      romaji: 'silla',
+      edited: false,
+    });
+    // Nasal assimilation (비음화).
+    expect(doc.lines[1]).toEqual({
+      text: '학문',
+      segments: [{ t: '학문' }],
+      romaji: 'hangmun',
+      edited: false,
+    });
+    // Liaison (연음화): the batchim carries into the next syllable's onset.
+    expect(doc.lines[2]).toEqual({
+      text: '좋아요',
+      segments: [{ t: '좋아요' }],
+      romaji: 'joayo',
+      edited: false,
+    });
+  });
+
+  it('leaves Latin text untouched across a Korean/English code-switch, no gap or mangling', () => {
+    const doc = buildRomanizationDoc(['너의 baby'], {
+      romanize: (text) => romanize(text, { usePronunciationRules: true }),
+    });
+
+    expect(doc.lines[0].text).toBe('너의 baby');
+    // Single plain segment, same as every other buildRomanizationDoc line —
+    // Korean lines never produce ruby, mixed-script or not.
+    expect(doc.lines[0].segments).toEqual([{ t: '너의 baby' }]);
+    expect(doc.lines[0].romaji).toBe('neoui baby');
+  });
+
+  it('skips romanizing an all-Latin line entirely, leaving romaji empty', () => {
+    const doc = buildRomanizationDoc(['hello world'], {
+      romanize: (text) => romanize(text, { usePronunciationRules: true }),
+    });
+
+    expect(doc.lines[0]).toEqual({
+      text: 'hello world',
+      segments: [{ t: 'hello world' }],
+      romaji: '',
+      edited: false,
+    });
+  });
+});

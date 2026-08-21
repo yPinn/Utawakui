@@ -6,6 +6,10 @@ const SOURCE_KIND_LRCLIB = 'lrclib';
 const MUSIC_NOTE_RE = /[♪♫♬♩🎵🎶]+/gu;
 const JAPANESE_KANA_RE = /[\u3040-\u30ff]/;
 const KOREAN_HANGUL_RE = /[\uac00-\ud7af]/;
+// Same ranges as above, /g so detectLyricsScript can count occurrences
+// instead of just testing presence \u2014 see its comment for why.
+const JAPANESE_KANA_RE_G = /[\u3040-\u30ff]/g;
+const KOREAN_HANGUL_RE_G = /[\uac00-\ud7af]/g;
 const CJK_RE = /[\u3400-\u9fff]/;
 const LATIN_RE = /[A-Za-z]/;
 const LANGUAGE_SOURCE_PREFERENCES = {
@@ -399,14 +403,22 @@ function languageMatchesPreference(source, preference) {
 }
 
 // Whether the reading-aid toolbar (LyricsWorkspace.vue) should offer
-// itself at all. Only 'ja' triggers anything today (Stage 5a/5b); other
-// values are returned so callers/tests can be explicit about "no reading
-// aid for this script" vs. "not checked yet". Requires actual kana, not
-// just kanji — kanji alone can't be told apart from Chinese lyrics.
+// itself at all. 'ja'/'ko' both trigger a reading-aid variant as of Stage
+// 5c; other values are returned so callers/tests can be explicit about "no
+// reading aid for this script" vs. "not checked yet". Requires actual
+// kana, not just kanji — kanji alone can't be told apart from Chinese
+// lyrics.
 export function detectLyricsScript(text) {
   const value = String(text || '');
-  if (KOREAN_HANGUL_RE.test(value)) return 'ko';
-  if (JAPANESE_KANA_RE.test(value)) return 'ja';
+  // ja/ko are decided by character-count majority, not first-match: a
+  // Korean song can carry a whole English hook mid-line, and a Japanese
+  // song can borrow a Korean word or two — first-match would flip the
+  // *entire* lyric's reading-aid mode off one stray character. Latin
+  // letters count toward neither side, so Korean/English code-switching
+  // doesn't skew this comparison.
+  const hangul = (value.match(KOREAN_HANGUL_RE_G) || []).length;
+  const kana = (value.match(JAPANESE_KANA_RE_G) || []).length;
+  if (hangul || kana) return hangul > kana ? 'ko' : 'ja';
   if (CJK_RE.test(value)) return 'zh';
   if (LATIN_RE.test(value)) return 'latin';
   return 'unknown';
