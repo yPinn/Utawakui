@@ -33,11 +33,12 @@ const {
 // generating readings for one track has no reason to block another.
 const readingInProgress = new Set();
 
-// Only Japanese generation exists (Stage 5a/5b); the renderer only offers
-// the reading-aid toolbar when detectLyricsScript() (src/utils/lyrics.js)
-// says 'ja', so there is nothing to branch on here yet. Stage 5c (Korean)
-// adds a script/variant argument to this handler when it lands.
-const READING_SCRIPT = 'ja';
+// Stage 5c: ja/ko are the only scripts the reading-aid toolbar ever offers
+// (detectLyricsScript() in src/utils/lyrics.js), and the renderer always
+// sends its own detected script rather than main re-deriving it — fail
+// loudly on anything else instead of silently falling back, same
+// trust-boundary posture as extractVideoId()'s re-validation.
+const READING_SCRIPTS = new Set(['ja', 'ko']);
 
 // Used both by the passive startup backfill (electron/main/libraryHandlers.js's
 // backfillTrackInfoWithLyricsFallback) and by electron/main/importHandlers.js's
@@ -251,8 +252,9 @@ function registerLyricsHandlers({
 
   // Reading-aid handlers. Ungated like import/label/delete above — this is
   // local text analysis over lyrics already on disk, not an acquisition
-  // step (Stage 5b's kuromoji/wanakana are bundled at build time, not
-  // downloaded at runtime; see docs/adr/0003).
+  // step (Stage 5b's kuromoji/wanakana and Stage 5c's koroman are all
+  // bundled at build time, not downloaded at runtime; see docs/adr/0003
+  // and docs/adr/0004).
   ipcMain.handle(
     'lyrics:get-reading',
     async (event, trackId, sourceFilename) => {
@@ -270,7 +272,11 @@ function registerLyricsHandlers({
   // boundary FFmpeg's opt-in path guards against.
   ipcMain.handle(
     'lyrics:generate-reading',
-    async (event, trackId, sourceFilename, lines) => {
+    async (event, trackId, sourceFilename, lines, script) => {
+      if (!READING_SCRIPTS.has(script)) {
+        throw new Error(`unsupported reading script: ${script}`);
+      }
+
       const dir = resolveDownloadDir(getConfig());
       const trackDir = resolveTrackDir(dir, trackId);
       if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
@@ -291,7 +297,12 @@ function registerLyricsHandlers({
         const readingDoc = await new Promise((resolve, reject) => {
           const worker = new Worker(
             path.join(__dirname, '..', 'lib', 'readingWorker.js'),
-            { workerData: { lines: Array.isArray(lines) ? lines : [] } },
+            {
+              workerData: {
+                lines: Array.isArray(lines) ? lines : [],
+                script,
+              },
+            },
           );
           worker.on('message', (msg) => {
             if (msg.type === 'progress') {
@@ -325,7 +336,7 @@ function registerLyricsHandlers({
         const saved = saveTrackReading(
           trackDir,
           sourceFilename,
-          READING_SCRIPT,
+          script,
           readingDoc,
         );
         if (!saved) throw new Error('unable to save reading doc');
@@ -339,8 +350,10 @@ function registerLyricsHandlers({
   );
 
   // Manual per-line correction — a synchronous local edit, not a worker
-  // job. `readingKana` is the whole line's kana reading; setReadingLine
-  // re-derives ruby segments from it (see lyricsReadings.js).
+  // job. No `script` argument here: setReadingLine reads the existing
+  // doc's own stored `script` and branches there (ja re-derives ruby
+  // segments from `readingKana`; ko treats it as the final romaji string
+  // directly — see lyricsReadings.js).
   ipcMain.handle(
     'lyrics:set-reading-line',
     async (event, trackId, sourceFilename, lineIndex, readingKana) => {
