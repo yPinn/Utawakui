@@ -6,6 +6,7 @@ import {
   atomicWriteJson,
   atomicWriteText,
   atomicWriteBuffer,
+  backupCorrupted,
 } from './atomicWrite.js';
 
 describe('atomicWriteJson', () => {
@@ -79,5 +80,39 @@ describe('atomicWriteBuffer', () => {
     atomicWriteBuffer(filePath, buffer);
     expect(fs.readFileSync(filePath)).toEqual(buffer);
     expect(fs.existsSync(`${filePath}.tmp`)).toBe(false);
+  });
+});
+
+describe('backupCorrupted', () => {
+  let dir;
+  let filePath;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    filePath = path.join(dir, 'data.json');
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('renames the corrupted file aside with a timestamp suffix', () => {
+    fs.writeFileSync(filePath, '{ broken');
+
+    backupCorrupted(filePath);
+
+    expect(fs.existsSync(filePath)).toBe(false);
+    const backups = fs
+      .readdirSync(dir)
+      .filter((name) => name.startsWith('data.json.corrupted-'));
+    expect(backups).toHaveLength(1);
+    expect(fs.readFileSync(path.join(dir, backups[0]), 'utf8')).toBe(
+      '{ broken',
+    );
+  });
+
+  it('ignores missing files', () => {
+    expect(() => backupCorrupted(filePath)).not.toThrow();
+    expect(fs.readdirSync(dir)).toEqual([]);
   });
 });

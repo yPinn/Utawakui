@@ -1,17 +1,6 @@
-// WAI-ARIA APG "Radio Group" keyboard pattern: exactly one radio in the
-// group is a tab stop (roving tabindex), and arrow keys move focus *and*
-// selection together — Tab should move out of the group entirely, not
-// step through each radio.
-//
-// DOM-query based rather than a template-ref array, so it works with
-// whatever renders each `role="radio"` (component or plain element) —
-// the caller only needs to give it a container ref and an onSelect
-// callback, nothing about how items are rendered. Each radio element must
-// carry `data-radio-id` (its selection id) for onSelect to read.
-//
-// Browser-bound (document.activeElement/focus/querySelectorAll) like
-// usePlayer.js and friends — not testable under this repo's plain-Node
-// Vitest environment (see CLAUDE.md).
+// WAI-ARIA APG radio-group pattern: one tab stop; arrow keys move focus
+// and selection together. Uses DOM queries so callers can render each
+// `role="radio"` however they want, as long as it has `data-radio-id`.
 const RADIO_SELECTOR = '[role="radio"]:not(:disabled)';
 const NEXT_KEYS = new Set(['ArrowDown', 'ArrowRight']);
 const PREV_KEYS = new Set(['ArrowUp', 'ArrowLeft']);
