@@ -65,7 +65,9 @@
   },
   "dependencies": {
     "kissfft-js": "^0.1.8",
+    "kuromoji": "^0.1.2",
     "onnxruntime-node": "^1.27.0",
+    "wanakana": "^5.3.1",
     "youtube-dl-exec": "^3.1.11"
   }
 }

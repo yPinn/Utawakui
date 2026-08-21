@@ -167,6 +167,7 @@ Utawakui/
       thumbnail.<ext>
       info.json
       lyrics/
+        readings/
       separations/
 ```
 
@@ -220,6 +221,15 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 - `manual`：使用者貼上或選取本機 `.lrc` / `.vtt` / `.txt` 後保存的本機歌詞來源。
 
 手動匯入是本機 library edit，不需 feature gate；外部 lyrics provider 搜尋與保存屬於 `lyrics-flow`，首次執行時需確認。貼上的純文字或 `.txt` 檔會保存為 `manual*.lrc`，沒有 timestamp 時以 untimed lines 顯示，不支援點擊 seek。
+
+**讀音輔助（furigana/羅馬拼音）**：每個歌詞來源可對應一份讀音資料，保存於
+`tracks/<trackId>/lyrics/readings/<sourceFilename>.json`（用完整來源檔名，而非去
+副檔名的 stem，避免 `manual.lrc` 與 `manual.vtt` 互相覆蓋）。內容為逐行的 ruby 段落
+（`{ text, segments: [{ t, r? }], romaji, edited }`），與歌詞原文以文字比對方式對齊
+——來源文字被取代後，讀音資料視為過期，個別行會停止顯示而不是顯示錯誤的讀音。目前
+只支援日文（假名標音、羅馬拼音），分析器實作與相依套件選型見
+[ADR 0003](adr/0003-japanese-reading-analyzer-stack.md)；產生/修正動作是純本地文字
+運算，不需 feature gate。刪除歌詞來源時，對應的讀音資料一併刪除。
 
 ### 6.5 Preset 原則
 

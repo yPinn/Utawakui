@@ -1,18 +1,24 @@
 'use strict';
 
+const path = require('path');
+const { Worker } = require('worker_threads');
 const {
   allocateLyricsFilename,
   backfillLyricsSourceLabels,
   deleteLyricsSource,
+  deleteTrackReading,
   findTrackRecord,
   getTrackLyricsState,
+  getTrackReading,
   importManualLyricsFile,
   importManualLyricsText,
   listTracks,
   readTrackLyrics,
   resolveTrackDir,
   saveTrackLyricsText,
+  saveTrackReading,
   setLyricsSourceLabel,
+  setReadingLine,
 } = require('../lib/library');
 const { probeMusixmatchLyrics } = require('../lib/musixmatch');
 const {
@@ -20,6 +26,18 @@ const {
   findLrclibSyncedLyrics,
   searchLrclibCandidates,
 } = require('../lib/lrclib');
+
+// Main-owned per-target guard (trackId::sourceFilename), same reasoning as
+// separationHandlers.js's separationInProgress — renderer disabled state
+// isn't authoritative. Keyed per target (not a single global flag) because
+// generating readings for one track has no reason to block another.
+const readingInProgress = new Set();
+
+// Only Japanese generation exists (Stage 5a/5b); the renderer only offers
+// the reading-aid toolbar when detectLyricsScript() (src/utils/lyrics.js)
+// says 'ja', so there is nothing to branch on here yet. Stage 5c (Korean)
+// adds a script/variant argument to this handler when it lands.
+const READING_SCRIPT = 'ja';
 
 // Used both by the passive startup backfill (electron/main/libraryHandlers.js's
 // backfillTrackInfoWithLyricsFallback) and by electron/main/importHandlers.js's
@@ -230,6 +248,131 @@ function registerLyricsHandlers({
     notifyLibraryUpdated();
     return result;
   });
+
+  // Reading-aid handlers. Ungated like import/label/delete above — this is
+  // local text analysis over lyrics already on disk, not an acquisition
+  // step (Stage 5b's kuromoji/wanakana are bundled at build time, not
+  // downloaded at runtime; see docs/adr/0003).
+  ipcMain.handle(
+    'lyrics:get-reading',
+    async (event, trackId, sourceFilename) => {
+      const dir = resolveDownloadDir(getConfig());
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
+      return getTrackReading(trackDir, sourceFilename);
+    },
+  );
+
+  // `lines` is the already-parsed lyric line text array (renderer owns
+  // parseLyricsText's youtube-cc dedup/cleanup logic; main only receives
+  // its output here, never raw cue text) — not a filesystem path, so
+  // accepting it from the renderer doesn't reopen the kind of trust
+  // boundary FFmpeg's opt-in path guards against.
+  ipcMain.handle(
+    'lyrics:generate-reading',
+    async (event, trackId, sourceFilename, lines) => {
+      const dir = resolveDownloadDir(getConfig());
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      const { sources } = getTrackLyricsState(trackDir);
+      if (!sources.some((source) => source.filename === sourceFilename)) {
+        throw new Error(`unknown lyrics source: ${sourceFilename}`);
+      }
+
+      // Keyed per target, not a single global flag like separation's —
+      // generating readings for one track has no reason to block another.
+      const key = `${trackId}::${sourceFilename}`;
+      if (readingInProgress.has(key)) {
+        throw new Error('已經在為這份歌詞產生讀音,請稍候。');
+      }
+      readingInProgress.add(key);
+      try {
+        const readingDoc = await new Promise((resolve, reject) => {
+          const worker = new Worker(
+            path.join(__dirname, '..', 'lib', 'readingWorker.js'),
+            { workerData: { lines: Array.isArray(lines) ? lines : [] } },
+          );
+          worker.on('message', (msg) => {
+            if (msg.type === 'progress') {
+              const progressWin = getMainWindow();
+              if (progressWin) {
+                progressWin.webContents.send('lyrics:reading-progress', {
+                  trackId,
+                  sourceFilename,
+                  stage: msg.stage,
+                  index: msg.index,
+                  total: msg.total,
+                });
+              }
+            } else if (msg.type === 'done') {
+              resolve(msg.result);
+            } else {
+              reject(new Error(msg.error));
+            }
+          });
+          worker.on('error', reject);
+          // Without this, a worker that dies before posting any message
+          // leaves the promise unsettled forever and this target stuck
+          // "in progress" until the app is relaunched.
+          worker.on('exit', (code) => {
+            if (code !== 0) {
+              reject(new Error(`reading worker exited with code ${code}`));
+            }
+          });
+        });
+
+        const saved = saveTrackReading(
+          trackDir,
+          sourceFilename,
+          READING_SCRIPT,
+          readingDoc,
+        );
+        if (!saved) throw new Error('unable to save reading doc');
+
+        notifyLibraryUpdated();
+        return saved;
+      } finally {
+        readingInProgress.delete(key);
+      }
+    },
+  );
+
+  // Manual per-line correction — a synchronous local edit, not a worker
+  // job. `readingKana` is the whole line's kana reading; setReadingLine
+  // re-derives ruby segments from it (see lyricsReadings.js).
+  ipcMain.handle(
+    'lyrics:set-reading-line',
+    async (event, trackId, sourceFilename, lineIndex, readingKana) => {
+      const dir = resolveDownloadDir(getConfig());
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      const updated = setReadingLine(
+        trackDir,
+        sourceFilename,
+        lineIndex,
+        readingKana,
+      );
+      if (!updated) throw new Error('unable to update reading line');
+
+      notifyLibraryUpdated();
+      return updated;
+    },
+  );
+
+  ipcMain.handle(
+    'lyrics:delete-reading',
+    async (event, trackId, sourceFilename) => {
+      const dir = resolveDownloadDir(getConfig());
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      deleteTrackReading(trackDir, sourceFilename);
+      notifyLibraryUpdated();
+      return { ok: true };
+    },
+  );
 }
 
 module.exports = { registerLyricsHandlers, saveLrclibLyricsIfAbsent };

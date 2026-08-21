@@ -398,6 +398,38 @@ function languageMatchesPreference(source, preference) {
   );
 }
 
+// Whether the reading-aid toolbar (LyricsWorkspace.vue) should offer
+// itself at all. Only 'ja' triggers anything today (Stage 5a/5b); other
+// values are returned so callers/tests can be explicit about "no reading
+// aid for this script" vs. "not checked yet". Requires actual kana, not
+// just kanji — kanji alone can't be told apart from Chinese lyrics.
+export function detectLyricsScript(text) {
+  const value = String(text || '');
+  if (KOREAN_HANGUL_RE.test(value)) return 'ko';
+  if (JAPANESE_KANA_RE.test(value)) return 'ja';
+  if (CJK_RE.test(value)) return 'zh';
+  if (LATIN_RE.test(value)) return 'latin';
+  return 'unknown';
+}
+
+// Zips parsed lyricLines (parseLyricsText's output) with a saved reading
+// doc by line index, validating each pair's text still matches. A stale
+// doc (lyrics source text changed since generation, or the doc simply has
+// no entry for that index) yields null for that line rather than a
+// mismatched reading — callers show "no reading for this line" instead of
+// silently wrong ruby.
+export function alignReadings(lyricLines, readingDoc) {
+  const lines = Array.isArray(lyricLines) ? lyricLines : [];
+  const readingLines = readingDoc?.lines;
+  if (!Array.isArray(readingLines)) return lines.map(() => null);
+
+  return lines.map((line, index) => {
+    const readingLine = readingLines[index];
+    if (!readingLine || readingLine.text !== line.text) return null;
+    return readingLine;
+  });
+}
+
 export function inferPreferredLyricsLanguagePrefixes(track) {
   const text = `${track?.title || ''} ${track?.artist || ''}`;
   if (KOREAN_HANGUL_RE.test(text)) return preferredLanguagesFor('ko');

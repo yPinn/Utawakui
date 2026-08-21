@@ -17,6 +17,7 @@ const {
   compareFilenames,
   resolveTrackDir,
 } = require('./paths');
+const { deleteTrackReading } = require('./lyricsReadings');
 
 function inferLyricsLanguage(filename) {
   return path.basename(filename, path.extname(filename));
@@ -262,8 +263,7 @@ function setLyricsSourceLabel(trackDir, filename, label) {
   return saveTrackLyricsManifest(trackDir, nextSources);
 }
 
-// Removes the file plus its manifest entry. TODO: also clean up reading
-// sidecars once the reading-aid feature adds tracks/<id>/lyrics/readings/.
+// Removes the file, its manifest entry, and any reading-aid sidecar.
 function deleteLyricsSource(trackDir, filename) {
   if (!isLyricsSubtitleFilename(filename)) return false;
 
@@ -273,6 +273,8 @@ function deleteLyricsSource(trackDir, filename) {
   } catch {
     return false;
   }
+
+  deleteTrackReading(trackDir, filename);
 
   const remaining = listTrackLyricsSources(trackDir).sources.filter(
     (source) => source.filename !== filename,

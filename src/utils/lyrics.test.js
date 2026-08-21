@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  alignReadings,
+  detectLyricsScript,
   formatLyricsSourceLabel,
   formatLyricTime,
   inferPreferredLyricsLanguagePrefixes,
@@ -336,6 +338,70 @@ describe('inferPreferredLyricsLanguagePrefixes', () => {
         artist: 'Imagine Dragons',
       }),
     ).toEqual(['en']);
+  });
+});
+
+describe('detectLyricsScript', () => {
+  it('requires actual kana to call something Japanese, not just kanji', () => {
+    expect(detectLyricsScript('アイドル')).toBe('ja');
+    expect(detectLyricsScript('恋におちて')).toBe('ja');
+    expect(detectLyricsScript('你到底在選擇什麼')).toBe('zh');
+  });
+
+  it('detects Korean via hangul', () => {
+    expect(detectLyricsScript('사랑해')).toBe('ko');
+  });
+
+  it('detects latin-only text', () => {
+    expect(detectLyricsScript('Enemy')).toBe('latin');
+  });
+
+  it('falls back to unknown for empty or symbol-only text', () => {
+    expect(detectLyricsScript('')).toBe('unknown');
+    expect(detectLyricsScript('♪♪♪')).toBe('unknown');
+    expect(detectLyricsScript(null)).toBe('unknown');
+  });
+});
+
+describe('alignReadings', () => {
+  const lyricLines = [
+    { start: 0, end: 2, text: '歌う声' },
+    { start: 2, end: 4, text: 'です' },
+  ];
+
+  it('zips matching lines by index+text', () => {
+    const readingDoc = {
+      lines: [
+        { text: '歌う声', segments: [{ t: '歌', r: 'うた' }], romaji: 'utau' },
+        { text: 'です', segments: [{ t: 'です' }], romaji: 'desu' },
+      ],
+    };
+
+    expect(alignReadings(lyricLines, readingDoc)).toEqual(readingDoc.lines);
+  });
+
+  it('returns null for a line whose text no longer matches the saved doc', () => {
+    const readingDoc = {
+      lines: [
+        { text: '歌う声（変更後）', segments: [], romaji: '' },
+        { text: 'です', segments: [{ t: 'です' }], romaji: 'desu' },
+      ],
+    };
+
+    const result = alignReadings(lyricLines, readingDoc);
+    expect(result[0]).toBeNull();
+    expect(result[1]).toEqual(readingDoc.lines[1]);
+  });
+
+  it('returns an all-null array when there is no reading doc', () => {
+    expect(alignReadings(lyricLines, null)).toEqual([null, null]);
+  });
+
+  it('returns null for indexes past the end of a shorter reading doc', () => {
+    const readingDoc = {
+      lines: [{ text: '歌う声', segments: [], romaji: '' }],
+    };
+    expect(alignReadings(lyricLines, readingDoc)[1]).toBeNull();
   });
 });
 

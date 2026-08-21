@@ -2,17 +2,22 @@
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import {
   Captions,
+  Check,
   Clock,
   ICON_SIZE,
+  Languages,
   ListMusic,
   Loader2,
   MicVocal,
   Minus,
+  Pencil,
   Plus,
   RefreshCw,
   Type,
+  X,
 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import {
   DEFAULT_SEPARATION_PRESET_ID,
@@ -22,6 +27,8 @@ import {
 } from '../../constants/separationPresets.js';
 import { formatDuration } from '../../utils/format.js';
 import {
+  alignReadings,
+  detectLyricsScript,
   formatLyricsSourceLabel,
   formatLyricTime,
 } from '../../utils/lyrics.js';
@@ -54,11 +61,23 @@ const {
   selectResult,
 } = useSeparation();
 
+const {
+  variant: readingVariant,
+  getDoc: getReadingDoc,
+  isGenerating: isGeneratingReadingFor,
+  errorFor: readingErrorFor,
+  loadReading,
+  generateReading,
+  setReadingLine,
+} = useLyricsReading();
+
 const lyricsPreview = useTemplateRef('lyricsPreview');
 const selectedPresetId = ref(DEFAULT_SEPARATION_PRESET_ID);
 const lyricsFontSizeIndex = ref(1);
 const isSourceManagerOpen = ref(false);
 const isTrackPickerOpen = ref(false);
+const editingReadingLineIndex = ref(null);
+const readingLineDraft = ref('');
 
 const LYRICS_FONT_SIZE_CLASSES = [
   'lyrics-preview--font-compact',
@@ -128,6 +147,50 @@ const selectedSeparationError = computed(() => {
   return track ? (separationState.errors.get(track.id) ?? null) : null;
 });
 
+// Only Japanese lyrics get a reading-aid toolbar at all — showing a
+// permanently-disabled control for every other language is pure noise
+// (matches the plan's "not disabled — hidden" call).
+const showsReadingAid = computed(
+  () =>
+    detectLyricsScript(lyricLines.value.map((line) => line.text).join('')) ===
+    'ja',
+);
+
+const selectedReadingDoc = computed(() => {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  return track && source ? getReadingDoc(track.id, source.filename) : null;
+});
+
+// Aligned 1:1 with lyricLines — entry is the matching reading line or null
+// when there's no doc yet, or the doc is stale against the current text.
+const readingLines = computed(() =>
+  alignReadings(lyricLines.value, selectedReadingDoc.value),
+);
+
+const isGeneratingReading = computed(() => {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  return track && source
+    ? isGeneratingReadingFor(track.id, source.filename)
+    : false;
+});
+
+const readingError = computed(() => {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  return track && source ? readingErrorFor(track.id, source.filename) : null;
+});
+
+watch(
+  () => [selectedTrack.value?.id, selectedSource.value?.filename],
+  ([trackId, filename]) => {
+    editingReadingLineIndex.value = null;
+    if (trackId && filename) loadReading(trackId, filename);
+  },
+  { immediate: true },
+);
+
 function lyricsStatusLabel(track) {
   const status = track.lyrics?.status;
   if (status === 'available') return '有歌詞';
@@ -165,6 +228,51 @@ function handleSourceChange(event) {
 
 function canSeekLine(line) {
   return Number.isFinite(line?.start);
+}
+
+function setReadingVariant(event) {
+  readingVariant.value = event.target.value;
+}
+
+function generateReadingForSelected() {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  if (!track || !source) return;
+  generateReading(
+    track.id,
+    source.filename,
+    lyricLines.value.map((line) => line.text),
+  );
+}
+
+// Seeds the draft from whatever reading already exists for this line
+// (segment reading where present, the segment's own text otherwise — kana
+// segments' text already is the reading), so correcting one wrong kanji
+// doesn't mean retyping the whole line.
+function startEditReadingLine(index) {
+  const current = readingLines.value[index];
+  readingLineDraft.value = current?.segments
+    ? current.segments.map((segment) => segment.r ?? segment.t).join('')
+    : '';
+  editingReadingLineIndex.value = index;
+}
+
+function cancelReadingLineEdit() {
+  editingReadingLineIndex.value = null;
+  readingLineDraft.value = '';
+}
+
+async function commitReadingLineEdit(index) {
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  if (!track || !source) return;
+  await setReadingLine(
+    track.id,
+    source.filename,
+    index,
+    readingLineDraft.value,
+  );
+  cancelReadingLineEdit();
 }
 
 function decreaseLyricsFontSize() {
@@ -284,6 +392,44 @@ watch(activeLineIndex, (index) => {
             aria-label="管理歌詞來源"
             @click="isSourceManagerOpen = true"
           />
+        </div>
+
+        <div
+          v-if="showsReadingAid"
+          class="lyrics-reading"
+          aria-label="讀音輔助"
+          title="讀音輔助"
+        >
+          <Languages :size="ICON_SIZE" aria-hidden="true" />
+          <select
+            class="lyrics-select lyrics-reading__variant"
+            :value="readingVariant"
+            aria-label="讀音顯示"
+            @change="setReadingVariant"
+          >
+            <option value="off">不顯示</option>
+            <option value="furigana">假名標音</option>
+            <option value="romaji">羅馬拼音</option>
+          </select>
+          <UiButton
+            v-if="isGeneratingReading"
+            :icon="Loader2"
+            class="lyrics-reading__spin"
+            disabled
+            title="產生讀音中"
+          >
+            <span role="status">產生中</span>
+          </UiButton>
+          <UiButton
+            v-else
+            :icon="Languages"
+            :aria-label="selectedReadingDoc ? '重新產生讀音' : '產生讀音'"
+            :title="selectedReadingDoc ? '重新產生讀音' : '產生讀音'"
+            @click="generateReadingForSelected"
+          />
+          <span v-if="readingError" class="lyrics-reading__error">{{
+            readingError
+          }}</span>
         </div>
 
         <div
@@ -411,22 +557,105 @@ watch(activeLineIndex, (index) => {
               'lyrics-line--past': index < activeLineIndex,
             }"
           >
-            <button
-              type="button"
-              class="lyrics-line__button"
-              :disabled="!canSeekLine(line)"
-              :aria-label="
-                canSeekLine(line)
-                  ? `從 ${formatLyricTime(line.start)} 播放`
-                  : '未同步歌詞'
-              "
-              @click="playFromLine(line)"
+            <!-- Editing never replaces the line's own display — it stays
+                 rendered in its normal furigana/romaji style directly
+                 below, so the user can see the actual result while
+                 correcting it. No separate text label here either — that
+                 line right underneath already shows it.
+                 __edit-field mirrors __button's own grid (52px spacer +
+                 text column) and padding exactly, so the input starts at
+                 the same x-position as the lyric text does; __edit-row
+                 mirrors __row's flex shape so the trailing action buttons
+                 land where the pencil button sits below — both by
+                 structural analogy, not by copying pixel values that would
+                 drift out of sync if either one changes. -->
+            <div
+              v-if="editingReadingLineIndex === index"
+              class="lyrics-line__edit-row"
             >
-              <span class="lyrics-line__time">{{
-                formatLyricTime(line.start)
-              }}</span>
-              <span class="lyrics-line__text">{{ line.text }}</span>
-            </button>
+              <span class="lyrics-line__edit-field">
+                <span class="lyrics-line__edit-spacer" aria-hidden="true" />
+                <input
+                  v-model="readingLineDraft"
+                  type="text"
+                  class="lyrics-line__edit-input"
+                  placeholder="輸入這行的假名讀音"
+                  @keydown.enter="commitReadingLineEdit(index)"
+                  @keydown.esc="cancelReadingLineEdit"
+                />
+              </span>
+              <UiButton
+                :icon="Check"
+                title="儲存"
+                aria-label="儲存"
+                @click="commitReadingLineEdit(index)"
+              />
+              <UiButton
+                :icon="X"
+                title="取消"
+                aria-label="取消"
+                @click="cancelReadingLineEdit"
+              />
+            </div>
+            <div class="lyrics-line__row">
+              <button
+                type="button"
+                class="lyrics-line__button"
+                :disabled="!canSeekLine(line)"
+                :aria-label="
+                  canSeekLine(line)
+                    ? `從 ${formatLyricTime(line.start)} 播放`
+                    : '未同步歌詞'
+                "
+                @click="playFromLine(line)"
+              >
+                <span class="lyrics-line__time">{{
+                  formatLyricTime(line.start)
+                }}</span>
+                <span class="lyrics-line__text-group">
+                  <span class="lyrics-line__text">
+                    <template
+                      v-if="
+                        showsReadingAid &&
+                        readingVariant === 'furigana' &&
+                        readingLines[index]?.segments?.length
+                      "
+                    >
+                      <template
+                        v-for="(segment, segmentIndex) in readingLines[index]
+                          .segments"
+                        :key="segmentIndex"
+                      >
+                        <ruby v-if="segment.r"
+                          >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
+                        >
+                        <template v-else>{{ segment.t }}</template>
+                      </template>
+                    </template>
+                    <template v-else>{{ line.text }}</template>
+                  </span>
+                  <!-- Rendered for every line while this variant is active,
+                       even ones with no matched romaji — a fallback space
+                       keeps every row in romaji mode the same height, so a
+                       stale/unmatched line doesn't sit shorter than its
+                       neighbors. -->
+                  <span
+                    v-if="showsReadingAid && readingVariant === 'romaji'"
+                    class="lyrics-line__romaji"
+                  >
+                    {{ readingLines[index]?.romaji || '\u00A0' }}
+                  </span>
+                </span>
+              </button>
+              <UiButton
+                v-if="showsReadingAid && selectedReadingDoc"
+                class="lyrics-line__edit"
+                :icon="Pencil"
+                title="修正這行讀音"
+                aria-label="修正這行讀音"
+                @click="startEditReadingLine(index)"
+              />
+            </div>
           </li>
         </ol>
       </div>
@@ -530,8 +759,11 @@ watch(activeLineIndex, (index) => {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-3) var(--ui-space-4);
+  /* Looser than any single control cluster's own internal gap (space-2) —
+     the beat between distinct clusters should read as separation, not a
+     continuation of the same tight grouping. */
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-4);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
@@ -559,9 +791,34 @@ watch(activeLineIndex, (index) => {
 
 .lyrics-source > svg,
 .lyrics-offset > svg,
-.lyrics-text-size > svg {
+.lyrics-text-size > svg,
+.lyrics-reading > svg {
   flex-shrink: 0;
   color: var(--ui-color-text-muted);
+}
+
+.lyrics-reading {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+  height: var(--ui-control-height);
+  padding: 0 var(--ui-space-2);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-canvas);
+}
+
+.lyrics-reading__variant {
+  min-width: 96px;
+}
+
+.lyrics-reading__spin :deep(svg) {
+  animation: lyrics-spin var(--ui-motion-spin) infinite;
+}
+
+.lyrics-reading__error {
+  color: var(--ui-color-danger);
+  font-size: var(--ui-font-size-sm);
 }
 
 .lyrics-source__select {
@@ -618,19 +875,22 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-preview--font-compact .lyrics-line__button {
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-lyrics-font-size-compact);
 }
 
 .lyrics-preview--font-default .lyrics-line__button {
-  font-size: var(--ui-font-size-lg);
+  font-size: var(--ui-lyrics-font-size-default);
 }
 
 .lyrics-preview--font-large .lyrics-line__button {
-  font-size: var(--ui-font-size-xl);
+  font-size: var(--ui-lyrics-font-size-large);
 }
 
 .lyrics-lines {
   display: grid;
+  /* Lyrics read as a dense block, not a spaced-out list — row legibility
+     comes from the larger --ui-lyrics-font-size-* default, not from
+     padding/gap, so the gap stays at the scale's own tightest step. */
   gap: var(--ui-space-1);
   margin: 0;
   padding: var(--ui-space-4);
@@ -638,19 +898,36 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-line {
+  /* Column, not row: an active edit-row stacks above the line's own
+     display instead of replacing it, so the styled result stays visible
+     the whole time it's being corrected. */
+  display: grid;
+  gap: var(--ui-space-1);
   border-radius: var(--ui-radius);
   color: var(--ui-color-text-muted);
 }
 
+/* Owns the padding/radius/background that used to live on __button alone
+   — the pencil (__edit) button is a flex sibling of __button inside this
+   row, so if only __button carried the active/hover fill, the pencil sat
+   outside it, visually detached from the highlighted row. Background
+   painted here instead covers both, including the gap between them. */
+.lyrics-line__row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-radius: var(--ui-radius);
+}
+
 .lyrics-line__button {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: 52px minmax(0, 1fr);
   gap: var(--ui-space-3);
   align-items: baseline;
-  width: 100%;
-  padding: var(--ui-space-2) var(--ui-space-3);
   border: 0;
-  border-radius: var(--ui-radius);
   background: transparent;
   color: inherit;
   font-family: var(--ui-font-family-base);
@@ -660,11 +937,64 @@ watch(activeLineIndex, (index) => {
   cursor: pointer;
 }
 
+.lyrics-line__edit {
+  flex: 0 0 auto;
+  opacity: 0;
+}
+
+.lyrics-line:hover .lyrics-line__edit,
+.lyrics-line:focus-within .lyrics-line__edit {
+  opacity: 1;
+}
+
+/* Mirrors .lyrics-line__row's own flex shape exactly (same display/gap, no
+   extra padding of its own) so its trailing action buttons land in the
+   same slot the pencil button occupies in the row below. */
+.lyrics-line__edit-row {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+}
+
+/* Mirrors .lyrics-line__button's own grid+padding exactly (same
+   grid-template-columns/gap/padding) so the input starts at the same
+   x-position the lyric text does — the spacer fills the 52px time column
+   as an empty first grid cell. */
+.lyrics-line__edit-field {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: var(--ui-space-3);
+  align-items: center;
+  padding: var(--ui-space-2) var(--ui-space-3);
+}
+
+.lyrics-line__edit-input {
+  min-width: 0;
+  height: var(--ui-control-height);
+  padding: 0 var(--ui-space-2);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
+}
+
+.lyrics-line__edit-input:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
 .lyrics-line__button:disabled {
   cursor: default;
 }
 
-.lyrics-line__button:not(:disabled):hover {
+/* :has() gates the hover fill on the seek button itself being enabled
+   (untimed lines stay unhighlighted on hover), while still painting the
+   whole row — including the pencil button's area — not just the button. */
+.lyrics-line__row:has(.lyrics-line__button:not(:disabled)):hover {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
@@ -684,7 +1014,7 @@ watch(activeLineIndex, (index) => {
   opacity: 1;
 }
 
-.lyrics-line--active .lyrics-line__button {
+.lyrics-line--active .lyrics-line__row {
   background: var(--ui-color-accent);
 }
 
@@ -694,11 +1024,68 @@ watch(activeLineIndex, (index) => {
   font-variant-numeric: tabular-nums;
 }
 
+.lyrics-line__text-group {
+  display: grid;
+  /* Smallest step on the spacing scale — tighter than would read as its
+     own row, since the romaji line is a caption of the line above it, not
+     a sibling of equal weight. */
+  gap: var(--ui-space-1);
+  min-width: 0;
+}
+
 .lyrics-line__text {
   min-width: 0;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   word-break: normal;
+}
+
+.lyrics-line__text rt {
+  /* Relative to the line's own font-size so ruby scales with the
+     compact/default/large lyrics-preview font-size toggle instead of
+     needing its own token. kuromoji tokenizes most multi-kanji compounds
+     into one <ruby> per character (何十回 -> 何/十/回, each its own
+     token+reading) — real per-character correspondence, not per-word. At
+     that granularity, each ruby's box is sized to whichever is wider, its
+     1-character base or its (often 2-character) reading; verified directly
+     (headless Electron measurement, real font stack) that ruby-align has
+     zero effect on that box width for single-character bases — the only
+     lever that actually shrinks it is the reading's own font-size. 0.5em
+     is the standard ruby:base ratio (most browsers' UA stylesheet default,
+     smaller than the 0.55em this used before) — for a 2-kana reading over
+     1 kanji it's close to matching the base width, keeping adjacent
+     kanji+reading pairs visually paired instead of bleeding into a
+     continuous strip. A 3-kana reading (e.g. 十→じゅう) still overflows its
+     single-character base somewhat — that's inherent to native browser
+     ruby rendering (and to printed furigana) when the reading genuinely
+     needs more width than its base, not something CSS can fully undo
+     without shrinking the text into illegibility. */
+  font-size: 0.5em;
+  color: var(--ui-color-text-muted);
+  user-select: none;
+}
+
+.lyrics-line--active .lyrics-line__text rt {
+  color: inherit;
+  opacity: var(--ui-opacity-muted);
+}
+
+.lyrics-line__romaji {
+  color: var(--ui-color-text-muted);
+  font-size: 0.7em;
+  line-height: var(--ui-line-height-caption);
+}
+
+/* visibility, not display:none — the box still needs to occupy its row
+   height in every variant (off/furigana), or switching to/from romaji
+   changes row height and the whole list jumps. */
+.lyrics-line__romaji--hidden {
+  visibility: hidden;
+}
+
+.lyrics-line--active .lyrics-line__romaji {
+  color: inherit;
+  opacity: var(--ui-opacity-muted);
 }
 
 .lyrics-status-badge {
@@ -727,6 +1114,7 @@ watch(activeLineIndex, (index) => {
 
   .lyrics-stage__actions,
   .lyrics-source,
+  .lyrics-reading,
   .lyrics-offset,
   .lyrics-text-size,
   .lyrics-separation {

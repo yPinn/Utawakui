@@ -25,6 +25,7 @@ export {
   Headphones,
   ImagePlus,
   Info,
+  Languages,
   Library,
   ListChecks,
   ListEnd,

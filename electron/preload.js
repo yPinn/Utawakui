@@ -90,6 +90,31 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:import-text', trackId, payload),
   importLyricsFile: (trackId) =>
     ipcRenderer.invoke('lyrics:import-file', trackId),
+  getLyricsReading: (trackId, sourceFilename) =>
+    ipcRenderer.invoke('lyrics:get-reading', trackId, sourceFilename),
+  generateLyricsReading: (trackId, sourceFilename, lines) =>
+    ipcRenderer.invoke(
+      'lyrics:generate-reading',
+      trackId,
+      sourceFilename,
+      lines,
+    ),
+  setLyricsReadingLine: (trackId, sourceFilename, lineIndex, readingKana) =>
+    ipcRenderer.invoke(
+      'lyrics:set-reading-line',
+      trackId,
+      sourceFilename,
+      lineIndex,
+      readingKana,
+    ),
+  deleteLyricsReading: (trackId, sourceFilename) =>
+    ipcRenderer.invoke('lyrics:delete-reading', trackId, sourceFilename),
+  onLyricsReadingProgress: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('lyrics:reading-progress', listener);
+    return () =>
+      ipcRenderer.removeListener('lyrics:reading-progress', listener);
+  },
   deleteTrack: (trackId) => ipcRenderer.invoke('library:delete-track', trackId),
   updateTrackMetadata: (trackId, fields) =>
     ipcRenderer.invoke('library:update-track-metadata', trackId, fields),

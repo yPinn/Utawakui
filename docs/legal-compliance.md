@@ -275,17 +275,20 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 直接依賴的授權重點如下。實際 release 仍應以 lockfile、安裝後 package metadata 與
 打包內容為準。
 
-| Package / tool                                | License | 用途                                                      | 注意事項                                                                                      |
-| --------------------------------------------- | ------- | --------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| Vue、Electron、Vite、Vitest、ESLint、Prettier | MIT     | App shell、build、test、lint/format。                     | 寬鬆授權；散布時保留 notice。                                                                 |
-| @lucide/vue                                   | ISC     | UI icon components。                                      | 寬鬆授權；保留 notice。                                                                       |
-| kissfft-js                                    | MIT     | DSP / audio analysis dependency。                         | 寬鬆授權；保留 notice。                                                                       |
-| onnxruntime-node                              | MIT     | Vocal separation runtime dependency。                     | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                  |
-| @soundtouchjs/audio-worklet                   | MPL-2.0 | Pitch/tempo preview 的 AudioWorklet。                     | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                    |
-| youtube-dl-exec                               | MIT     | 呼叫外部 downloader 的 Node.js wrapper。                  | Wrapper 授權不授權任何下載內容，也不免除平台條款。                                            |
-| yt-dlp executable                             | GPLv3+  | `provider-flow` 啟用後準備的 app-managed downloader。     | 官方 PyInstaller bundled executable 形成 GPLv3+ combined work；程式碼授權與媒體授權無關。     |
-| FFmpeg Gyan essentials build                  | GPL-3.0 | `audio-processing-flow` 啟用後下載的 app-managed binary。 | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                  |
-| UVR MDX-Net ONNX models                       | MIT     | `audio-processing-flow` 啟用後下載的 app-managed models。 | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。 |
+| Package / tool                                   | License                                             | 用途                                                               | 注意事項                                                                                                     |
+| ------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| Vue、Electron、Vite、Vitest、ESLint、Prettier    | MIT                                                 | App shell、build、test、lint/format。                              | 寬鬆授權；散布時保留 notice。                                                                                |
+| @lucide/vue                                      | ISC                                                 | UI icon components。                                               | 寬鬆授權；保留 notice。                                                                                      |
+| kissfft-js                                       | MIT                                                 | DSP / audio analysis dependency。                                  | 寬鬆授權；保留 notice。                                                                                      |
+| onnxruntime-node                                 | MIT                                                 | Vocal separation runtime dependency。                              | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                                 |
+| kuromoji                                         | Apache-2.0                                          | 歌詞讀音輔助（假名標音/羅馬拼音）的日文形態素分析器。              | Runtime 授權不等於內建字典授權；字典另列下一行。見 [ADR 0003](adr/0003-japanese-reading-analyzer-stack.md)。 |
+| kuromoji 內建字典（mecab-ipadic-2.7.0-20070801） | NAIST/ICOT 無償再散布授權（附免責聲明，無其他限制） | 假名標音所需的日文詞典資料，隨 kuromoji 套件打包散布，不另行下載。 | 允許原樣或修改後自由再散布，唯一條件是保留免責聲明；全文見文末參考連結。                                     |
+| wanakana                                         | MIT                                                 | 假名/羅馬拼音互轉，供羅馬拼音顯示變體使用。                        | 寬鬆授權；保留 notice。                                                                                      |
+| @soundtouchjs/audio-worklet                      | MPL-2.0                                             | Pitch/tempo preview 的 AudioWorklet。                              | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                                   |
+| youtube-dl-exec                                  | MIT                                                 | 呼叫外部 downloader 的 Node.js wrapper。                           | Wrapper 授權不授權任何下載內容，也不免除平台條款。                                                           |
+| yt-dlp executable                                | GPLv3+                                              | `provider-flow` 啟用後準備的 app-managed downloader。              | 官方 PyInstaller bundled executable 形成 GPLv3+ combined work；程式碼授權與媒體授權無關。                    |
+| FFmpeg Gyan essentials build                     | GPL-3.0                                             | `audio-processing-flow` 啟用後下載的 app-managed binary。          | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                                 |
+| UVR MDX-Net ONNX models                          | MIT                                                 | `audio-processing-flow` 啟用後下載的 app-managed models。          | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。                |
 
 補充：
 
@@ -597,3 +600,9 @@ OBS 畫面輸出：
   <https://huggingface.co/notabilia/uvr5-models/commit/d2940fdfa8d6347ca9b864b0ebae69aa3db906d7>
 - Mozilla Public License 2.0 FAQ：
   <https://www.mozilla.org/en-US/MPL/2.0/FAQ/>
+- kuromoji license：
+  <https://github.com/takuyaa/kuromoji.js/blob/master/package.json>
+- kuromoji 內建字典（mecab-ipadic-2.7.0-20070801）授權全文（NAIST/ICOT 免責聲明）：
+  <https://github.com/atilika/kuromoji/blob/master/kuromoji-ipadic/NOTICE.md>
+- wanakana license：
+  <https://github.com/WaniKani/WanaKana/blob/master/LICENSE>

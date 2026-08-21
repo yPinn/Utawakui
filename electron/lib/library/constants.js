@@ -35,6 +35,10 @@ const PLAYLIST_COVER_BASENAME = 'cover';
 const LYRICS_DIRNAME = 'lyrics';
 const LYRICS_MANIFEST_FILENAME = 'lyrics.json';
 const LYRICS_MANIFEST_VERSION = 8;
+// Sidecar filenames are the FULL source filename + .json (not the stem) —
+// manual.lrc and manual.vtt would otherwise collide on one reading doc.
+const LYRICS_READINGS_DIRNAME = 'readings';
+const READING_DOC_VERSION = 1;
 // Per-preset files avoid overwriting audio that may be open for playback.
 // manifest.json stores selectedPresetId and result metadata; it is not
 // served. Separation files are per-preset 4-channel WAVs: 0/1 instrumental
@@ -68,6 +72,8 @@ module.exports = {
   LYRICS_DIRNAME,
   LYRICS_MANIFEST_FILENAME,
   LYRICS_MANIFEST_VERSION,
+  LYRICS_READINGS_DIRNAME,
+  READING_DOC_VERSION,
   SEPARATIONS_DIRNAME,
   SEPARATION_MANIFEST_FILENAME,
   SEPARATION_MANIFEST_VERSION,

@@ -22,6 +22,7 @@ const FUNCTION_EXPORTS = [
   'deleteLyricsSource',
   'deleteTrack',
   'deleteTrackArtworkFile',
+  'deleteTrackReading',
   'findTrackRecord',
   'hasSeparation',
   'hasSeparationResultFile',
@@ -35,6 +36,7 @@ const FUNCTION_EXPORTS = [
   'importManualLyricsText',
   'importLocalAudioFiles',
   'getTrackLyricsState',
+  'getTrackReading',
   'listTracks',
   'loadIndex',
   'loadSeparationManifest',
@@ -59,15 +61,17 @@ const FUNCTION_EXPORTS = [
   'saveIndexEntry',
   'saveTrackLyricsManifest',
   'saveTrackLyricsText',
+  'saveTrackReading',
   'selectSeparationResult',
   'setLyricsSourceLabel',
+  'setReadingLine',
   'updateTrackMetadata',
 ];
 
 const CONSTANT_EXPORTS = ['INDEX_FILENAME', 'LYRICS_MANIFEST_VERSION'];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 48 names main.js/downloader.js/vocalSeparation.js/consumers expect', () => {
+  it('re-exports exactly the 52 names main.js/downloader.js/vocalSeparation.js/consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

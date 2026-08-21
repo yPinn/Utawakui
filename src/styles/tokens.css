@@ -209,6 +209,15 @@
   --ui-output-setting-label-width-min: 4rem; /* 64px: compact setting label column */
   --ui-output-setting-label-width-max: 7rem; /* 112px: prevents settings labels from crowding values */
 
+  /* --- Sizing: lyrics workspace --- */
+  /* Own scale, not an alias of --ui-font-size-lg/xl: those are UI-chrome
+     sizes (buttons, labels), while lyric lines are the page's primary
+     reading content — performers read them at a glance mid-performance, so
+     the default tier is deliberately larger than a chrome "lg" text size. */
+  --ui-lyrics-font-size-compact: 1.125rem; /* 18px */
+  --ui-lyrics-font-size-default: 1.375rem; /* 22px */
+  --ui-lyrics-font-size-large: 1.75rem; /* 28px */
+
   /* --- Sizing: settings --- */
   --ui-settings-row-icon-size: var(
     --ui-playlist-row-thumb-size

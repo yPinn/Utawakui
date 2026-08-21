@@ -41,6 +41,12 @@ const {
   readTrackLyrics,
 } = require('./library/lyrics');
 const {
+  getTrackReading,
+  deleteTrackReading,
+  saveTrackReading,
+  setReadingLine,
+} = require('./library/lyricsReadings');
+const {
   resolvePlaylistCoverPath,
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
@@ -85,6 +91,7 @@ module.exports = {
   deleteLyricsSource,
   deleteTrack,
   deleteTrackArtworkFile,
+  deleteTrackReading,
   findTrackRecord,
   hasSeparation,
   hasSeparationResultFile,
@@ -100,6 +107,7 @@ module.exports = {
   importLocalAudioFiles,
   LYRICS_MANIFEST_VERSION,
   getTrackLyricsState,
+  getTrackReading,
   listTracks,
   loadIndex,
   loadSeparationManifest,
@@ -124,7 +132,9 @@ module.exports = {
   saveIndexEntry,
   saveTrackLyricsManifest,
   saveTrackLyricsText,
+  saveTrackReading,
   selectSeparationResult,
   setLyricsSourceLabel,
+  setReadingLine,
   updateTrackMetadata,
 };

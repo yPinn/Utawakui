@@ -34,6 +34,13 @@ files:
   - '!node_modules/onnxruntime-node/bin/napi-v6/darwin/**/*'
   - '!node_modules/onnxruntime-node/bin/napi-v6/linux/**/*'
   - '!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*'
+  # kuromoji's npm package has no "files" field, so its whole repo content
+  # ships — test/ alone is 22MB, unzipped, and none of these four are ever
+  # read at runtime (main is src/kuromoji.js, not build/).
+  - '!node_modules/kuromoji/test/**/*'
+  - '!node_modules/kuromoji/demo/**/*'
+  - '!node_modules/kuromoji/example/**/*'
+  - '!node_modules/kuromoji/build/**/*'
 
 asarUnpack:
   # spawn()'d as a binary (youtube-dl-exec / electron/lib/downloader.js and
@@ -50,6 +57,15 @@ asarUnpack:
   # Read directly by Windows shell APIs (setAppDetails's appIconPath in
   # electron/main.js), not through Electron/Node's own fs layer.
   - public/assets/icons/app-icon.ico
+  # readingWorker.js (unpacked above via electron/lib/**/*) requires these
+  # inside the worker thread, which has its own Node context without
+  # Electron's asar fs patch — same reasoning as onnxruntime-node's bin/
+  # above, but here the whole package (not just a native binary) is what a
+  # worker-thread require()/fs.readFile() needs resolvable on real disk:
+  # kuromoji's dictionary is read via fs.readFile, and wanakana is
+  # require()'d directly.
+  - node_modules/kuromoji/**/*
+  - node_modules/wanakana/**/*
 
 win:
   target:
