@@ -97,7 +97,9 @@ const lock = readJson(path.join(rootDir, 'package-lock.json'));
 const lockPackages = lock.packages || {};
 
 const productionRows = Object.entries(lockPackages)
-  .filter(([lockPath, meta]) => lockPath.startsWith('node_modules/') && !meta.dev)
+  .filter(
+    ([lockPath, meta]) => lockPath.startsWith('node_modules/') && !meta.dev,
+  )
   .map(([lockPath, meta]) => buildRow(lockPath, meta))
   .sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 
@@ -114,7 +116,9 @@ const rootPackage = lockPackages[''] || {};
 
 console.log('# License Inventory Report');
 console.log('');
-console.log(`Generated from package-lock ${lock.lockfileVersion || 'unknown'} in ${rootDir}.`);
+console.log(
+  `Generated from package-lock ${lock.lockfileVersion || 'unknown'} in ${rootDir}.`,
+);
 console.log('');
 console.log('## Project License');
 console.log('');
@@ -126,7 +130,10 @@ console.log('## Production Dependency License Counts');
 console.log('');
 printTable(
   ['License', 'Count'],
-  countByLicense(productionRows).map(([license, count]) => [license, String(count)]),
+  countByLicense(productionRows).map(([license, count]) => [
+    license,
+    String(count),
+  ]),
 );
 console.log('');
 console.log('## Production Dependency Closure');
