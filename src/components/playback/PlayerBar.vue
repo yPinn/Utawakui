@@ -1,6 +1,9 @@
 <script setup>
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 import {
+  Cable,
+  Captions,
+  Headphones,
   ListMusic,
   MicVocal,
   Pause,
@@ -14,9 +17,11 @@ import {
   Volume2,
   VolumeX,
 } from '../../icons/index.js';
+import { useAppView } from '../../composables/useAppView.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { useMetronome } from '../../composables/useMetronome.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
+import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import {
@@ -33,6 +38,7 @@ import {
   usePlayer,
 } from '../../composables/usePlayer.js';
 import { formatDuration } from '../../utils/format.js';
+import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import QueuePanel from '../queue/QueuePanel.vue';
@@ -50,7 +56,10 @@ const {
   setVolume,
   toggleMute,
   cyclePlaybackMode,
-  toggleGuideVocal,
+  toggleCaptureGuideVocal,
+  setGuideVocalValue,
+  setCaptureGuideVocalValue,
+  setGuideVocalOn,
   setTransposeSemitones,
   setPitchCents,
   setTempoRate,
@@ -65,10 +74,13 @@ const {
   toggleShuffle,
 } = usePlaybackQueue();
 const { state: metronomeState } = useMetronome();
+const { setActiveView } = useAppView();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
 const {
   state: separationState,
   isSeparating,
+  inFlightPresetId,
   describe: describeSeparation,
   separate,
   selectResult,
@@ -115,6 +127,25 @@ const currentTrackAlbumCtaLabel = computed(() => {
 });
 
 const showGuideVocal = computed(() => Boolean(state.track?.usesSeparatedAudio));
+// Kept mounted (visibility:hidden, not v-if) — .player-bar__extras is a
+// fixed-width column now, so this appearing/disappearing would shift the
+// centered transport column. See its CSS.
+const canQuickToggleCaptureGuideVocal = computed(
+  () => showGuideVocal.value && Boolean(state.captureDeviceId),
+);
+
+// Real device name for the capture guide-vocal row below, not a fixed
+// "擷取" label — the capture chain follows whatever the user picked in
+// CaptureDeviceModal.vue. monitorDeviceLabel (the other row's device name)
+// now lives in useAudioOutput.js, shared with CaptureDeviceModal.vue's
+// "off" option copy.
+const captureDeviceLabel = computed(() => {
+  if (!state.captureDeviceId) return '';
+  const device = audioOutputDevices.value.find(
+    (d) => d.deviceId === state.captureDeviceId,
+  );
+  return shortenDeviceLabel(device?.label) || '擷取裝置';
+});
 
 const transposeLabel = computed(() =>
   state.transposeSemitones > 0
@@ -161,14 +192,29 @@ const playerToolsActive = computed(
     state.transposeSemitones !== 0 ||
     state.pitchCents !== 0 ||
     state.tempoRate !== 1 ||
-    state.guideVocalLevel > 0 ||
+    state.guideVocalOn ||
+    state.captureGuideVocalOn ||
     isCurrentTrackSeparating.value ||
     metronomeState.isRunning,
 );
 
+// Keyed on track id, not the state.track object itself: usePlayer.js's
+// syncCurrentTrack() replaces state.track with a fresh object on every
+// library:updated event, including ones unrelated to this track (another
+// track's separation finishing, a backfill pass, etc.). Watching the object
+// reference reset this dropdown back to the manifest's last-selected preset
+// mid-generation, discarding the user's in-progress pick. If a separation is
+// actively running for this track, its preset wins over the manifest so
+// reopening the panel mid-run still shows what's actually generating.
 watch(
-  () => state.track,
-  (track) => {
+  () => state.track?.id,
+  () => {
+    const track = state.track;
+    const activePresetId = track ? inFlightPresetId(track.id) : null;
+    if (activePresetId) {
+      selectedSeparationPresetId.value = activePresetId;
+      return;
+    }
     const presetId = track?.separation?.selectedPresetId;
     selectedSeparationPresetId.value = hasSeparationPreset(presetId)
       ? presetId
@@ -192,16 +238,129 @@ function adjustTempo(delta) {
   setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
 }
 
-// Drives the three pitch-tempo rows (Transpose/Pitch/Speed) via v-for —
-// they used to be ~135 lines of copy-pasted template for three
-// parameterizations of the same "label + value + reset / minus + range +
-// plus" row. A computed (not a plain array) so it re-evaluates whenever
-// `state` changes. Each row carries the current value plus a setter
-// callback rather than a `computed({ get, set })` ref (what a v-model
-// slider would normally use) — a ref nested inside a plain array element
-// doesn't auto-unwrap in the template the way a top-level one does, so
-// this sidesteps that instead of relying on every caller remembering to
-// write `row.slider.value`.
+// Five quick-jump stops plus a fine-grained slider below them — the stops
+// alone can't cover it: the "right" level is a mix/hardware-dependent
+// judgment call (too loud/too quiet at an exact stop is a real, expected
+// case), so fine adjustment still needs to exist. The stops stay coarser
+// (25%) than the slider's own step (5%) — they're for fast
+// jump-to-known-position, not for replacing the drag. Plain percentages,
+// no named-scenario copy (抓Key/對唱/背景音樂 etc.) — the number is
+// self-explanatory for a mix control and doesn't need a tooltip to justify
+// it.
+const GUIDE_VOCAL_STOPS = [
+  { value: 0, label: '0%' },
+  { value: 0.25, label: '25%' },
+  { value: 0.5, label: '50%' },
+  { value: 0.75, label: '75%' },
+  { value: 1, label: '100%' },
+];
+const GUIDE_VOCAL_STEP = 0.05;
+
+// All five stops (0% included) are plain value picks — on/off is its own
+// dedicated control (the row's speaker icon, see guideVocalRows below),
+// not something a value of 0 secretly triggers. A single click is never
+// fast enough to restart the ramp before it settles, so there's no
+// zipper-noise risk to guard against here regardless of value.
+function selectMonitorGuideVocalStop(value) {
+  setGuideVocalValue(value);
+}
+
+function selectCaptureGuideVocalStop(value) {
+  setCaptureGuideVocalValue(value);
+}
+
+// A slider drag fires far more 'input' events than the audio thread can
+// usefully act on — each one restarts vocalGain's exponential ramp (see
+// usePlayer.js's rampGain), and restarting it faster than the previous
+// ramp can settle produces an audible crackle ("zipper noise"), not a
+// smooth glide. Coalescing to one call per animation frame keeps the drag
+// feeling responsive while never issuing automation faster than the audio
+// thread can render between calls.
+function throttleToAnimationFrame(fn) {
+  let frameId = null;
+  let latestArgs = null;
+  return (...args) => {
+    latestArgs = args;
+    if (frameId !== null) return;
+    frameId = requestAnimationFrame(() => {
+      frameId = null;
+      fn(...latestArgs);
+    });
+  };
+}
+
+const throttledSetGuideVocalLevel = throttleToAnimationFrame((value) =>
+  setGuideVocalValue(Number(value)),
+);
+const throttledSetCaptureGuideVocalLevel = throttleToAnimationFrame((value) =>
+  setCaptureGuideVocalValue(Number(value)),
+);
+
+// Independent rows for the two output chains (see usePlayer.js's capture
+// chain comment) — the capture row only appears once a capture device is
+// selected, since there's nothing to preview otherwise (see
+// useAudioOutput.js).
+const guideVocalRows = computed(() => {
+  const rows = [
+    {
+      key: 'guide-vocal-monitor',
+      // Short and fixed — the section label above already says "導唱混音",
+      // so the row only needs to say *which* output. The icon carries that
+      // distinction; the real device name lives in deviceName (row title
+      // tooltip) instead of being crammed into the visible label.
+      icon: Headphones,
+      label: '監聽',
+      deviceName: monitorDeviceLabel.value,
+      // Always the calibrated value, regardless of on/off — on/off has its
+      // own dedicated speaker icon (onIcon/onToggle below) now, so the
+      // number doesn't also need to encode it by dropping to 0 while off.
+      value: `${Math.round(state.guideVocalValue * 100)}%`,
+      on: state.guideVocalOn,
+      onIcon: state.guideVocalOn ? Volume2 : VolumeX,
+      onLabel: state.guideVocalOn ? '關閉導唱(監聽)' : '開啟導唱(監聽)',
+      onToggle: () => setGuideVocalOn(!state.guideVocalOn),
+      stops: GUIDE_VOCAL_STOPS.map((stop) => ({
+        ...stop,
+        active: state.guideVocalValue === stop.value,
+        disabled: !state.track,
+        onSelect: () => selectMonitorGuideVocalStop(stop.value),
+      })),
+      sliderValue: state.guideVocalValue,
+      min: 0,
+      max: 1,
+      step: GUIDE_VOCAL_STEP,
+      sliderLabel: '導唱比例(監聽)',
+      onSliderInput: throttledSetGuideVocalLevel,
+    },
+  ];
+  if (state.captureDeviceId) {
+    rows.push({
+      key: 'guide-vocal-capture',
+      icon: Cable,
+      label: '擷取',
+      deviceName: captureDeviceLabel.value,
+      value: `${Math.round(state.captureGuideVocalValue * 100)}%`,
+      on: state.captureGuideVocalOn,
+      onIcon: state.captureGuideVocalOn ? Volume2 : VolumeX,
+      onLabel: state.captureGuideVocalOn ? '關閉導唱(擷取)' : '開啟導唱(擷取)',
+      onToggle: toggleCaptureGuideVocal,
+      stops: GUIDE_VOCAL_STOPS.map((stop) => ({
+        ...stop,
+        active: state.captureGuideVocalValue === stop.value,
+        disabled: !state.track,
+        onSelect: () => selectCaptureGuideVocalStop(stop.value),
+      })),
+      sliderValue: state.captureGuideVocalValue,
+      min: 0,
+      max: 1,
+      step: GUIDE_VOCAL_STEP,
+      sliderLabel: '導唱比例(擷取)',
+      onSliderInput: throttledSetCaptureGuideVocalLevel,
+    });
+  }
+  return rows;
+});
+
 const pitchTempoRows = computed(() => [
   {
     key: 'transpose',
@@ -298,6 +457,12 @@ function playPrevious() {
 
 function playNext() {
   playQueuedTrack(nextTrack());
+}
+
+// useLyrics.js already syncs to whatever's playing, so switching tabs is
+// enough — no track needs to be passed through.
+function showCurrentTrackLyrics() {
+  setActiveView('lyrics');
 }
 
 function playNextAfterEnded() {
@@ -447,13 +612,19 @@ onUnmounted(() => {
 
     <div class="player-bar__extras">
       <UiButton
-        v-if="showGuideVocal"
         :icon="MicVocal"
-        :active="state.guideVocalLevel > 0"
-        :aria-label="state.guideVocalLevel > 0 ? '關閉導唱' : '開啟導唱'"
-        :aria-pressed="state.guideVocalLevel > 0"
-        title="開關導唱(分離後) (G)"
-        @click="toggleGuideVocal"
+        :active="state.captureGuideVocalOn"
+        :disabled="!canQuickToggleCaptureGuideVocal"
+        :class="{
+          'player-bar__extras-slot--hidden': !canQuickToggleCaptureGuideVocal,
+        }"
+        :aria-hidden="!canQuickToggleCaptureGuideVocal"
+        :aria-label="
+          state.captureGuideVocalOn ? '關閉導唱(擷取)' : '開啟導唱(擷取)'
+        "
+        :aria-pressed="state.captureGuideVocalOn"
+        title="快速開關導唱(擷取) (G)"
+        @click="toggleCaptureGuideVocal"
       />
 
       <UiButton
@@ -463,6 +634,14 @@ onUnmounted(() => {
         :aria-pressed="isPlayerToolsOpen"
         title="演出工具"
         @click="togglePlayerToolsPanel"
+      />
+
+      <UiButton
+        :icon="Captions"
+        :disabled="!state.track"
+        aria-label="查看目前曲目歌詞"
+        title="歌詞"
+        @click="showCurrentTrackLyrics"
       />
 
       <UiButton
@@ -503,7 +682,7 @@ onUnmounted(() => {
       :open="isPlayerToolsOpen"
       :has-track="Boolean(state.track)"
       :guide-vocal-visible="showGuideVocal"
-      :guide-vocal-active="state.guideVocalLevel > 0"
+      :guide-vocal-rows="guideVocalRows"
       :pitch-tempo-rows="pitchTempoRows"
       :current-track="currentSeparationTrack"
       :separation-preset-options="SEPARATION_PRESET_OPTIONS"
@@ -515,7 +694,6 @@ onUnmounted(() => {
       @close="isPlayerToolsOpen = false"
       @generate-separation="generateSeparation"
       @select-separation-preset="selectSeparationPreset"
-      @toggle-guide-vocal="toggleGuideVocal"
     />
   </div>
 </template>
@@ -524,6 +702,10 @@ onUnmounted(() => {
 .player-bar {
   display: flex;
   align-items: center;
+  /* Track/extras are fixed-width; on wide windows they can sum to less
+     than the bar's full width. space-between keeps them flush against the
+     edges instead of stranding leftover space after the last column. */
+  justify-content: space-between;
   gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
   padding: var(--ui-player-bar-padding-block)
@@ -536,7 +718,22 @@ onUnmounted(() => {
 }
 
 .player-bar__track {
-  flex: 1;
+  /* Width matches a sidebar row's actual box — column width minus
+     --ui-playlist-sidebar-padding-inline x2, since rows are inset by that
+     padding, not by this file's own --ui-player-bar-padding-inline (that
+     one's calibrated for the artwork/compact-rail alignment below).
+     Fixed, not flexible: .player-bar__center absorbs resize pressure
+     instead; min-width:0 still lets the title truncate via UiMarqueeText
+     when this is narrower than the content wants. */
+  flex: 0 0
+    calc(
+      clamp(
+          var(--ui-playlist-sidebar-width-min),
+          var(--ui-playlist-sidebar-width),
+          var(--ui-playlist-sidebar-width-max)
+        ) -
+        (var(--ui-playlist-sidebar-padding-inline) * 2)
+    );
   min-width: 0;
   display: flex;
   align-items: center;
@@ -615,9 +812,10 @@ onUnmounted(() => {
   line-height: var(--ui-line-height-caption);
 }
 
-/* Cap progress width on wide windows. */
+/* The only column that flexes — both side columns are fixed-width now,
+   so all resize pressure lands here, capped by max-width on wide windows. */
 .player-bar__center {
-  flex: 2;
+  flex: 1 1 auto;
   min-width: 0;
   max-width: var(--ui-player-bar-center-max-width);
   display: flex;
@@ -636,17 +834,20 @@ onUnmounted(() => {
   width: 100%;
   display: flex;
   align-items: center;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-1);
 }
 
 .player-bar__progress input {
   flex: 1;
 }
 
-/* Fixed width prevents 9:59 -> 10:00 from shifting the slider. */
+/* Fixed width prevents 9:59 -> 10:00 from shifting the slider. Right-align
+   (not the default left) so slack space lands away from the slider, not
+   stacked on top of the row gap next to it. */
 .player-bar__time {
   flex-shrink: 0;
   width: 5ch;
+  text-align: right;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
@@ -654,18 +855,28 @@ onUnmounted(() => {
   font-variant-numeric: tabular-nums;
 }
 
+/* Mirrors the base rule: slack goes to the outer edge instead of pooling
+   next to the slider on this side too. */
 .player-bar__time--end {
-  text-align: right;
+  text-align: left;
 }
 
-/* Mirror left flex sizing while allowing content to shrink. */
 .player-bar__extras {
   display: flex;
   align-items: center;
   gap: var(--ui-space-1);
-  flex: 1;
-  min-width: 0;
+  /* Fixed to its own content width, like .player-bar__track — icon
+     buttons and a volume slider have nothing to truncate, so this side
+     must never be squeezed narrower than it needs. */
+  flex: 0 0 auto;
   justify-content: flex-end;
+}
+
+/* visibility:hidden, not display:none — keeps the slot's layout box so
+   .player-bar__extras's width (and the centered column beside it) never
+   changes when canQuickToggleCaptureGuideVocal flips. */
+.player-bar__extras-slot--hidden {
+  visibility: hidden;
 }
 
 .player-bar__volume {

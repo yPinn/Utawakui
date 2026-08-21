@@ -233,7 +233,7 @@
   --ui-player-bar-artwork-size: var(
     --ui-track-row-min-height
   ); /* 52px: keep in sync with PLAYER_BAR_ARTWORK_SIZE */
-  --ui-player-bar-center-max-width: 22rem; /* 352px: stable scrubber width at common desktop sizes */
+  --ui-player-bar-center-max-width: 28rem; /* 448px: stable scrubber width at common desktop sizes */
   --ui-player-bar-volume-slider-width: 5rem; /* 80px: compact desktop volume control */
   --ui-player-bar-height: calc(
     var(--ui-player-bar-artwork-size) + var(--ui-player-bar-padding-block) +
