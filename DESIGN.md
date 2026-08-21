@@ -534,7 +534,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 
 **The One Accent Rule.** A screen should have one primary accent role. Do not introduce competing highlight colors for decoration.
 
-**The Overlay Separation Rule.** Control-panel `--ui-*` colors and future overlay `--ovl-*` colors must be designed separately.
+**The Overlay Separation Rule.** Control-panel `--ui-*` colors and overlay `--ovl-*` colors are designed separately.
 
 ## Typography
 
@@ -578,7 +578,7 @@ The overlay default pairing is:
   system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 ```
 
-Do not add these `--ovl-*` tokens to `src/styles/tokens.css`. They belong in the future overlay CSS entrypoint, because OBS overlay and control panel are separate delivery paths.
+Do not add these `--ovl-*` tokens to `src/styles/tokens.css`. They belong in `overlay/shared/tokens.css`, because OBS overlay and control panel are separate delivery paths.
 
 First-version bundled overlay fonts should stay small:
 
@@ -698,7 +698,7 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 - **Do** define dark and light theme token values before declaring a visual direction complete.
 - **Do** keep component states explicit: default, hover, focus, active, selected, disabled, loading, processing, error.
 - **Do** use iOS `44pt` and Android `48dp` touch-target guidance when designing narrow or touch-capable surfaces.
-- **Do** separate control-panel tokens from future OBS overlay tokens.
+- **Do** separate control-panel tokens from OBS overlay tokens.
 - **Do** design safe-area and keyboard-inset behavior for responsive or mobile-like surfaces.
 - **Do** verify contrast and text fit with Japanese, Korean, Traditional Chinese, and English metadata.
 
@@ -709,5 +709,5 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 - **Don't** use nested cards as page structure.
 - **Don't** create hover-only controls that fail on touch.
 - **Don't** use viewport-fluid heading scales for dense product UI.
-- **Don't** merge future `--ovl-*` overlay tokens with control-panel `--ui-*` tokens.
+- **Don't** merge `--ovl-*` overlay tokens with control-panel `--ui-*` tokens.
 - **Don't** reinvent iOS or Android native conventions if a future native surface is created.

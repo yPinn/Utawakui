@@ -185,7 +185,7 @@ OBS Studio 是 GPLv2 開源軟體。將 Browser Source overlay 載入 OBS 屬於
 Browser Source 本身導入 GPL linking 問題。若未來開發 native plugin，需另行檢視
 GPL 義務。
 
-## 6. 台日韓美法規摘要
+## 6. 台日韓美中法規摘要
 
 本節只保留本專案最需要知道的方向。完整判斷仍需看歌曲來源、使用方式、平台與
 授權文件。
@@ -222,6 +222,27 @@ GPL 義務。
 17 U.S.C. 106 涵蓋重製、改作、散布、公開演出、公開展示，以及錄音著作的數位音訊
 傳輸。Fair use 是因素分析，不是固定答案。DMCA anti-circumvention 也可能獨立於
 一般侵權問題存在。
+
+### 6.5 中國大陸（歌曲來源）
+
+中國大陸著作權法對 Utawakui 最相關的是音樂作品、表演、錄音錄像製品、信息網絡
+傳播權與技術措施。若歌曲、伴奏、歌詞、字幕、封面或 MV 來源是中國大陸平台、
+唱片公司、詞曲作者、表演者或錄音錄像製作者，不能只用「中文歌」或「華語歌」
+概括風險；仍需拆成詞曲、歌詞文字、表演、錄音錄像製品、視覺素材與平台授權逐項確認。
+
+補充：
+
+- 中國大陸著作權法列有複製權、發行權、展覽權、表演權、放映權、廣播權、信息網絡
+  傳播權、改編權、翻譯權、彙編權等；線上提供作品通常會觸及信息網絡傳播權。
+- 使用他人作品演出、製作錄音錄像，通常需取得著作權人許可並支付報酬；使用錄有
+  表演的錄音錄像或錄音錄像製作者成果，還會牽涉表演者與錄音錄像製作者權利。
+- 未經許可複製、發行、表演、放映、廣播、彙編或通過信息網絡向公眾傳播作品，
+  可能形成侵權；錄音錄像製品與表演也有獨立保護。
+- 中國大陸法規同樣限制故意避開或破壞技術措施，以及提供主要用於避開或破壞技術
+  措施的裝置、部件或技術服務。
+- 對 Utawakui 產品而言，中國大陸歌曲來源應被視為「高權利鏈複雜度」來源之一：
+  provider download、歌詞/字幕保存、封面/MV/縮圖公開顯示、vocal separation/stems、
+  串流與 VOD 都應維持既有 gate 與 rights-neutral 文案。
 
 ## 7. 灰色地帶與實務控管
 
@@ -275,29 +296,31 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 直接依賴的授權重點如下。實際 release 仍應以 lockfile、安裝後 package metadata 與
 打包內容為準。
 
-| Package / tool                                   | License                                             | 用途                                                               | 注意事項                                                                                                     |
-| ------------------------------------------------ | --------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------ |
-| Vue、Electron、Vite、Vitest、ESLint、Prettier    | MIT                                                 | App shell、build、test、lint/format。                              | 寬鬆授權；散布時保留 notice。                                                                                |
-| @lucide/vue                                      | ISC                                                 | UI icon components。                                               | 寬鬆授權；保留 notice。                                                                                      |
-| kissfft-js                                       | MIT                                                 | DSP / audio analysis dependency。                                  | 寬鬆授權；保留 notice。                                                                                      |
-| onnxruntime-node                                 | MIT                                                 | Vocal separation runtime dependency。                              | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                                 |
-| kuromoji                                         | Apache-2.0                                          | 歌詞讀音輔助（假名標音/羅馬拼音）的日文形態素分析器。              | Runtime 授權不等於內建字典授權；字典另列下一行。見 [ADR 0003](adr/0003-japanese-reading-analyzer-stack.md)。 |
-| kuromoji 內建字典（mecab-ipadic-2.7.0-20070801） | NAIST/ICOT 無償再散布授權（附免責聲明，無其他限制） | 假名標音所需的日文詞典資料，隨 kuromoji 套件打包散布，不另行下載。 | 允許原樣或修改後自由再散布，唯一條件是保留免責聲明；全文見文末參考連結。                                     |
-| wanakana                                         | MIT                                                 | 假名/羅馬拼音互轉，供羅馬拼音顯示變體使用。                        | 寬鬆授權；保留 notice。                                                                                      |
-| @soundtouchjs/audio-worklet                      | MPL-2.0                                             | Pitch/tempo preview 的 AudioWorklet。                              | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                                   |
-| youtube-dl-exec                                  | MIT                                                 | 呼叫外部 downloader 的 Node.js wrapper。                           | Wrapper 授權不授權任何下載內容，也不免除平台條款。                                                           |
-| yt-dlp executable                                | GPLv3+                                              | `provider-flow` 啟用後準備的 app-managed downloader。              | 官方 PyInstaller bundled executable 形成 GPLv3+ combined work；程式碼授權與媒體授權無關。                    |
-| FFmpeg Gyan essentials build                     | GPL-3.0                                             | `audio-processing-flow` 啟用後下載的 app-managed binary。          | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                                 |
-| UVR MDX-Net ONNX models                          | MIT                                                 | `audio-processing-flow` 啟用後下載的 app-managed models。          | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。                |
+| Package / tool                                   | License                                               | 用途                                                                | 注意事項                                                                                                        |
+| ------------------------------------------------ | ----------------------------------------------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Vue、Electron、Vite、Vitest、ESLint、Prettier    | MIT                                                   | App shell、build、test、lint/format。                               | 寬鬆授權；散布時保留 notice。                                                                                   |
+| @lucide/vue                                      | ISC                                                   | UI icon components。                                                | 寬鬆授權；保留 notice。                                                                                         |
+| kissfft-js                                       | MIT                                                   | DSP / audio analysis dependency。                                   | 寬鬆授權；保留 notice。                                                                                         |
+| onnxruntime-node                                 | MIT                                                   | Vocal separation runtime dependency。                               | Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。                                                    |
+| kuromoji                                         | Apache-2.0                                            | 歌詞讀音輔助（假名標音/羅馬拼音）的日文形態素分析器。               | Runtime 授權不等於內建字典授權；字典另列下一行。見 [ADR 0003](adr/0003-japanese-reading-analyzer-stack.md)。    |
+| kuromoji 內建字典（mecab-ipadic-2.7.0-20070801） | NAIST/ICOT 無償再散布授權（附免責聲明，無其他限制）   | 假名標音所需的日文詞典資料，隨 kuromoji 套件打包散布，不另行下載。  | 允許原樣或修改後自由再散布，唯一條件是保留免責聲明；全文見文末參考連結。                                        |
+| wanakana                                         | MIT                                                   | 假名/羅馬拼音互轉，供羅馬拼音顯示變體使用。                         | 寬鬆授權；保留 notice。                                                                                         |
+| ws                                               | MIT                                                   | OBS output loopback WebSocket server。                              | 純 JavaScript main-process runtime；保留 notice。見 [ADR 0006](adr/0006-loopback-output-websocket-runtime.md)。 |
+| @soundtouchjs/audio-worklet                      | MPL-2.0                                               | Pitch/tempo preview 的 AudioWorklet。                               | File-level copyleft；若修改 MPL 檔案後散布需提供對應源碼。                                                      |
+| Python Windows embeddable runtime                | Python Software Foundation License                    | `provider-flow` 啟用後準備的 app-managed private Python runtime。   | 不要求使用者安裝 Python；下載後保存 hash/source/notice。                                                        |
+| yt-dlp Python wheel                              | Unlicense                                             | `provider-flow` 的 app-managed downloader package。                 | PyPI wheel/source distribution 為 Unlicense；程式碼授權與媒體授權無關。                                         |
+| bgutil-ytdlp-pot-provider-rs                     | GPL-3.0-or-later / project-published GPL-family terms | `provider-flow` 的本機 PO-token provider sidecar 與 yt-dlp plugin。 | 只綁定 `127.0.0.1`；下載後保存 hash/source/notice；不將 PO token 暴露到 renderer 或設定檔。                     |
+| FFmpeg Gyan essentials build                     | GPL-3.0                                               | `audio-processing-flow` 啟用後下載的 app-managed binary。           | 不放入 installer；下載前顯示 license/source，下載後保存 hash/source/notice。                                    |
+| UVR MDX-Net ONNX models                          | MIT                                                   | `audio-processing-flow` 啟用後下載的 app-managed models。           | 不放入 installer；下載前顯示 source/license，下載後保存 hash/source/notice；保留 UVR credit。                   |
 
 補充：
 
-- `youtube-dl-exec` 仍作為 MIT wrapper 隨 app 打包；`yt-dlp.exe` 由 Settings
-  在 `provider-flow` 啟用後從 packaged seed 複製到 userData managed dependency
-  位置。發布版應記錄實際 bundled/prepared 的工具版本、來源與 hash。
-- `yt-dlp` 原始碼採 Unlicense，但官方 README licensing notes 指出
-  PyInstaller bundled executables 包含 GPLv3+ licensed code，因此該 release
-  artifact 應以 GPLv3+ combined work 看待。
+- `yt-dlp` 原始碼與 PyPI wheel 採 Unlicense；官方 README licensing notes 指出
+  PyInstaller bundled executables 另含 GPLv3+ licensed code，但本專案新的
+  provider runtime 不使用該 standalone executable。
+- `bgutil-ytdlp-pot-provider-rs` 以 Rust sidecar + yt-dlp plugin pair 形式下載並
+  version-pinned；它處理的是 YouTube PO-token provider protocol，不改變使用者下載或
+  快取媒體時仍需自行確認平台條款與素材權利的責任。
 - FFmpeg 官方說明指出，FFmpeg 依建置選項可能落在 LGPL 或 GPL；本專案目前不再把
   `ffmpeg-static` 放入 packaged runtime，改由 `audio-processing-flow` 啟用後下載
   Gyan essentials build。該 build 仍應以 GPL-3.0 處理，並在下載前顯示授權與來源。
@@ -315,28 +338,28 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 功能接入可以分成「技術授權」與「內容/平台授權」兩層。開源元件只處理前者；
 使用者拿該功能處理什麼內容，仍回到歌曲、歌詞、錄音與平台條款。
 
-| Feature / 接入點               | 開源或技術側狀態                                                          | 內容/平台側邊界                                           | 產品處理方式                                     |
-| ------------------------------ | ------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------ |
-| Local library / local playback | Electron/Vue 本機 app；依賴多為寬鬆授權。                                 | 本機檔案來源由使用者自行確認。                            | 預設入口；只提示匯入自有或已授權檔案。           |
-| OBS Browser Source overlay     | OBS 為 GPLv2；Browser Source 屬一般使用情境。                             | 畫面若含歌詞、封面、MV、譜面，仍需素材顯示/傳輸授權。     | 純 UI overlay 低風險；lyrics/artwork 分開 gate。 |
-| Provider metadata import       | 只保存必要 metadata；不直接提供音樂授權。                                 | Provider API policy 可能限制保存、展示與再利用方式。      | 文案使用「metadata / candidate」，不稱合法來源。 |
-| Provider candidate search      | 透過工具鏈查找候選曲目。                                                  | 候選結果不代表取得音訊、歌詞、封面或平台授權。            | 結果標示為候選；下載前另行確認。                 |
-| Provider download path         | `youtube-dl-exec` + `yt-dlp` 工具鏈。                                     | 可能涉及平台條款、重製、來源合法性與技術保護措施。        | 非預設；明確 feature gate；不得提供規避流程。    |
-| Thumbnail / info sidecars      | 作為本機 track sidecar 保存。                                             | 圖像/metadata 仍可能受 provider policy 或權利人條款限制。 | 僅本機保存；公開顯示另設 gate。                  |
-| Lyrics import / lyrics overlay | 技術上只是文字資料讀取與顯示。                                            | 歌詞是獨立文字內容；公開顯示通常需確認權利。              | 預設關閉；OBS 輸出前提示。                       |
-| Pitch / tempo preview          | 依賴 MPL-2.0 SoundTouchJS worklet。                                       | 處理後版本公開使用仍需確認授權；cache 可能形成副本。      | 本機預覽為主；公開輸出前提示。                   |
-| Vocal separation / stems       | `onnxruntime-node` runtime；UVR 模型由設定頁下載並記錄來源/license/hash。 | Stems 是由既有音源產生的媒體副本，不應暗示可公開散布。    | 本機工作流；不提供 stems 散布功能。              |
-| Recording / VOD workflow       | OBS/本機錄製流程本身不是授權服務。                                        | 錄影、VOD、clips、精華可能需要不同授權。                  | Session 前提示；與 live 分開確認。               |
+| Feature / 接入點               | 開源或技術側狀態                                                          | 內容/平台側邊界                                           | 產品處理方式                                               |
+| ------------------------------ | ------------------------------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------- |
+| Local library / local playback | Electron/Vue 本機 app；依賴多為寬鬆授權。                                 | 本機檔案來源由使用者自行確認。                            | 預設入口；只提示匯入自有或已授權檔案。                     |
+| OBS Browser Source overlay     | OBS 為 GPLv2；Browser Source 屬一般使用情境。                             | 畫面若含歌詞、封面、MV、譜面，仍需素材顯示/傳輸授權。     | 純 UI overlay 低風險；lyrics/artwork 分開 gate。           |
+| Provider metadata import       | 只保存必要 metadata；不直接提供音樂授權。                                 | Provider API policy 可能限制保存、展示與再利用方式。      | 文案使用「metadata / candidate」，不稱合法來源。           |
+| Provider candidate search      | 透過工具鏈查找候選曲目。                                                  | 候選結果不代表取得音訊、歌詞、封面或平台授權。            | 結果標示為候選；下載前另行確認。                           |
+| Provider download path         | App-managed Python `yt-dlp` + bgutil PO-token provider 工具鏈。           | 可能涉及平台條款、重製、來源合法性與技術保護措施。        | 非預設；明確 feature gate；不得提供 DRM/登入限制規避流程。 |
+| Thumbnail / info sidecars      | 作為本機 track sidecar 保存。                                             | 圖像/metadata 仍可能受 provider policy 或權利人條款限制。 | 僅本機保存；公開顯示另設 gate。                            |
+| Lyrics import / lyrics overlay | 技術上只是文字資料讀取與顯示。                                            | 歌詞是獨立文字內容；公開顯示通常需確認權利。              | 預設關閉；OBS 輸出前提示。                                 |
+| Pitch / tempo preview          | 依賴 MPL-2.0 SoundTouchJS worklet。                                       | 處理後版本公開使用仍需確認授權；cache 可能形成副本。      | 本機預覽為主；公開輸出前提示。                             |
+| Vocal separation / stems       | `onnxruntime-node` runtime；UVR 模型由設定頁下載並記錄來源/license/hash。 | Stems 是由既有音源產生的媒體副本，不應暗示可公開散布。    | 本機工作流；不提供 stems 散布功能。                        |
+| Recording / VOD workflow       | OBS/本機錄製流程本身不是授權服務。                                        | 錄影、VOD、clips、精華可能需要不同授權。                  | Session 前提示；與 live 分開確認。                         |
 
 ### 8.4 對外散布檢查
 
 正式開源或打包發布前，建議至少確認：
 
 - Utawakui 自身 license、README 授權說明、第三方 notices 已一致。
-- Packaged app 實際包含哪些 binary：`yt-dlp`、ONNX Runtime native binaries，以及
-  哪些項目改由 app-managed provisioning 下載。
-- FFmpeg 與 UVR models 若由 app-managed provisioning 下載，確認 manifest 來源、hash、
-  license notice 與使用者同意流程。
+- Packaged app 實際包含哪些 binary：ONNX Runtime native binaries，以及哪些項目改由
+  app-managed provisioning 下載。
+- Provider runtime、FFmpeg 與 UVR models 若由 app-managed provisioning 下載，確認
+  manifest 來源、hash、license notice 與使用者同意流程。
 - 確認系統 FFmpeg opt-in(§8.2 補充)未被誤植入 packaged installer 或 release
   artifact——它應只存在於使用者本機 `config.json` 的 `systemFfmpegPath`。
 - 若未來加入 model weights、sample media、demo lyrics、themes with artwork，逐一確認
@@ -481,6 +504,8 @@ Utawakui 的功能會碰到公開音樂使用實務中的灰色地帶。產品�
   對應授權。
 - 來源平台條款是否允許下載、快取、離線播放或保存 sidecar metadata。
 - 若使用第三方授權曲庫，授權是否涵蓋本次平台、地區、商業化與保存方式。
+- 若素材來自中國大陸歌曲、平台或權利人，是否已分別確認詞曲/歌詞、表演、錄音
+  錄像製品、封面/MV/縮圖、信息網絡傳播與本次直播/VOD 用途。
 
 本機處理：
 
@@ -519,6 +544,8 @@ OBS 畫面輸出：
 - 未取得授權即直播完整商業歌曲。
 - 未確認 VOD 授權即保存 karaoke session。
 - 未取得歌詞權利即在 OBS overlay 顯示完整歌詞。
+- 未確認中國大陸歌曲來源的詞曲、錄音錄像、表演、歌詞或平台條款，即下載、保存、
+  加工、公開顯示或用於串流/VOD。
 - 使用 cookies、帳號存取、DRM bypass 或 geo-bypass 取得媒體。
 
 ## 11. Release Checklist
@@ -529,17 +556,18 @@ OBS 畫面輸出：
 - [ ] 確認 provider、lyrics、audio processing、public-output workflows 具備 feature
       gates。
 - [ ] 確認 app 不附帶受著作權保護的 sample media。
-- [ ] 產生並隨附第三方 license notices。
+- [ ] 執行 `npm run license:inventory`，核對並隨附 `THIRD_PARTY_NOTICES.md`。
 - [ ] 檢視 app-managed FFmpeg / UVR model 下載來源、hash、授權顯示與 notice 保存。
 - [ ] 另行處理 `onnxruntime-node` audit remediation。
 - [ ] 若加入官方 provider API，確認 privacy/data handling。
 - [ ] 確認 packaging 不暗示與 YouTube、Spotify、OBS 或其他 provider 有 affiliation。
+- [ ] 確認合規來源重新涵蓋台灣、日本、韓國、美國與中國大陸著作權/技術措施重點。
 - [ ] 接近 release date 時重新確認法律與平台條款。
 
 ## 12. 參考來源
 
 - 台灣著作權法，經濟部/TIPO：
-  <https://law.moea.gov.tw/EngLawContent.aspx?id=10294&lan=E>
+  <https://law.moea.gov.tw/EngLawContent.aspx?id=10504&lan=E>
 - 台灣著作權法第 80-2 條，TIPO：
   <https://www.tipo.gov.tw/tw/copyright/694-17503.html>
 - MÜST 中華音樂著作權協會授權說明：
@@ -564,6 +592,12 @@ OBS 畫面輸出：
   <https://uscode.house.gov/view.xhtml?edition=prelim&req=granuleid:USC-prelim-title17-section106>
 - 17 U.S.C. 1201，美國法典：
   <https://uscode.house.gov/view.xhtml?edition=prelim&path=/prelim@title17/chapter12>
+- 中華人民共和國著作權法，中國人大網：
+  <https://www.npc.gov.cn/c2/c30834/202011/t20201119_308796.html>
+- Copyright Law of the People's Republic of China，國家版權局英文站：
+  <https://en.ncac.gov.cn/legislations/laws/201704/t20170420_57056.html>
+- 信息網絡傳播權保護條例，國家版權局英文站：
+  <https://en.ncac.gov.cn/legislations/administrativelawsandregulations/201706/t20170627_57058.html>
 - YouTube API Services Developer Policies：
   <https://developers.google.com/youtube/terms/developer-policies>
 - YouTube live stream copyright issues：
@@ -590,6 +624,12 @@ OBS 畫面輸出：
   <https://github.com/yt-dlp/yt-dlp/blob/master/LICENSE>
 - yt-dlp README licensing notes：
   <https://github.com/yt-dlp/yt-dlp/blob/master/README.md#licensing>
+- Python 3.14.7 Windows release：
+  <https://www.python.org/downloads/release/python-3147/>
+- Python Windows embeddable package：
+  <https://docs.python.org/3/using/windows.html#the-embeddable-package>
+- bgutil-ytdlp-pot-provider-rs：
+  <https://github.com/jim60105/bgutil-ytdlp-pot-provider-rs>
 - FFmpeg license and legal considerations：
   <https://www.ffmpeg.org/legal.html>
 - UVR model release archive：
@@ -606,3 +646,5 @@ OBS 畫面輸出：
   <https://github.com/atilika/kuromoji/blob/master/kuromoji-ipadic/NOTICE.md>
 - wanakana license：
   <https://github.com/WaniKani/WanaKana/blob/master/LICENSE>
+- ws license：
+  <https://github.com/websockets/ws/blob/master/LICENSE>

@@ -58,7 +58,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 | Pitch / Tempo        | 讓使用者調整 key 與速度。                        | 已實作即時 preview |
 | Vocal Separation     | 產生分離後的 generated media，支援 guide vocal。 | 已實作             |
 | Performer Self-View  | 給表演者看的 lyrics、cue、key、下一首。          | 規劃中             |
-| OBS Overlay          | 給觀眾端或錄製畫面使用的 Browser Source。        | 規劃中             |
+| OBS Overlay          | 給觀眾端或錄製畫面使用的 Browser Source。        | 基本 MVP 已實作    |
 | Recording / VOD mode | 區分 live-only 與 recording/VOD session。        | 規劃中             |
 
 ### 3.3 進階來源功能
@@ -68,7 +68,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 | 功能                                 | 角色                                  | 目前狀態       |
 | ------------------------------------ | ------------------------------------- | -------------- |
 | YouTube/YT Music candidate import    | 協助從 provider source 建立候選曲目。 | 已實作核心路徑 |
-| `yt-dlp` download path               | 目前 provider flow 使用的下載工具鏈。 | 已實作核心路徑 |
+| App-managed Python `yt-dlp` runtime  | Provider import / backfill 工具鏈。   | 已實作核心路徑 |
 | Provider metadata / thumbnail / info | 保存 provider 回傳的輔助資料。        | 已實作部分路徑 |
 | Spotify official import              | 讀取 playlist metadata。              | 規劃中         |
 | Optional provider module             | 將進階來源能力拆成可控模組。          | 待評估         |
@@ -96,17 +96,15 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Pitch / Tempo 即時 preview。
 - Vocal separation worker 與 guide vocal playback graph。
 - Import resolver 與 provider candidate selection。
-- `youtube-dl-exec` backed download path。
+- App-managed Python `yt-dlp` provider runtime，用於 provider import 與 metadata backfill。
 - Lyrics/subtitle 相關基礎路徑。
 - Windows taskbar thumbar、SMTC metadata、window title。
+- Feature notice modal 與共用 feature gate registry；provider、lyrics、audio processing、public output 已有 renderer/main 雙層 enforcement。
+- Local-import-first Import flow；本機音訊為預設入口，provider flow 需明確啟用。
 
 ### 4.2 尚未完成但已納入規格
 
-- Feature notice modal（provider-flow、lyrics-flow 已部分實作）。
-- Feature gate registry（provider-flow、lyrics-flow 已部分實作）。
-- Local import first flow（本機音訊檔匯入已部分實作）。
-- OBS Browser Source overlay server。
-- Overlay theme tokens。
+- Overlay profile/style set 編輯與進階模板。
 - Performer self-view。
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
@@ -136,10 +134,10 @@ Local library
   - playlists.json
   - config-selected download root
 
-OBS overlay server (planned)
-  - Local HTTP static delivery
-  - WebSocket state updates
-  - Plain HTML/CSS/JS Browser Source
+OBS overlay runtime
+  - Loopback HTTP/WebSocket state runtime (implemented)
+  - Local HTTP static overlay delivery (implemented)
+  - Plain HTML/CSS/JS Browser Source (implemented foundation)
 ```
 
 架構規則：
@@ -161,6 +159,7 @@ OBS overlay server (planned)
 Utawakui/
   library.json
   playlists.json
+  overlays.json
   tracks/
     <trackId>/
       audio.<ext>
@@ -178,6 +177,7 @@ Utawakui/
 | `config.json`     | Machine-local settings。      | 不屬於可分享 preset。                    |
 | `library.json`    | Track scalar metadata。       | 不保存絕對 asset path。                  |
 | `playlists.json`  | Collection、排序、track ids。 | 跟著 library root 移動。                 |
+| `overlays.json`   | Overlay profiles 與樣式設定。 | 只保存可攜式 ids 與 scalar settings。    |
 | `audio.<ext>`     | 實際播放音訊。                | 位於 track folder。                      |
 | `thumbnail.<ext>` | 曲目圖像輔助資料。            | 由 media protocol 提供。                 |
 | `info.json`       | Provider/source sidecar。     | 作為輔助資料，不作為 UI 唯一來源。       |
@@ -233,6 +233,12 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 ### 6.5 Preset 原則
 
+第一版 `overlays.json` 是 versioned profile document，包含多個 profile、目前選取
+profile、`templateId`、`styleSetIds` 與 scalar settings。讀取時逐筆清洗，損壞文件
+會保留備份，寫入採 atomic temp-file rename；較新且不支援的 schema version 會拒絕
+載入，避免舊版覆寫新資料。它不保存 live playback state、絕對路徑、media URL、
+provider id 或素材內容。
+
 未來 preset export/import 可包含：
 
 - Playlist / setlist 結構。
@@ -247,6 +253,75 @@ Preset 不應包含：
 - 第三方原始 media files。
 - 任何由 Utawakui 宣稱已驗證的外部狀態。
 
+### 6.6 Output State Contract
+
+Phase 1 使用 versioned snapshot 在 renderer 與 main-process output server
+之間傳遞 now-playing、queue 與 lyrics。Renderer 內既有的 player、playback queue
+與 lyrics composables 維持唯一 source of truth；snapshot 只是投影，不建立第二套
+播放狀態。
+
+Snapshot 只包含 overlay 顯示所需的 scalar data：revision、canonical timestamp、
+播放狀態與時間、曲目的 id/title/artist、queue item state，以及純文字歌詞行與
+毫秒 timing。共享 parser 會建立 canonical copy，剝除 renderer-only media URL、
+filesystem path、provider metadata、歌詞 filename 與其他額外欄位；未來 main
+process 收到 renderer payload 時仍必須重新 parse，不信任 renderer 已完成清洗。
+
+### 6.7 Loopback Output Runtime
+
+Phase 1B 的 runtime 由 Electron main process 持有，但核心實作維持純 Node module。
+它使用 Node `http` 與直接 production dependency `ws`，固定 bind
+`127.0.0.1`，預設 port `17404`；不對 LAN 或所有網路介面開放。套件選型與
+替代方案見 [ADR 0006](adr/0006-loopback-output-websocket-runtime.md)。
+
+Runtime API allowlist 包含 `GET /health`、唯讀 `GET /api/v1/state` 與 `/ws`
+upgrade；另外提供 P1C 定義的固定 static overlay routes。WebSocket 只接受相同
+loopback HTTP origin，關閉 compression，限制 inbound
+payload/fragment/buffer，且不接受 client command。連線建立時先送
+`state.snapshot`，之後只送 revision 遞增的 `state.changed`；兩者都包含經共享
+contract 再解析的完整 canonical snapshot，因此 OBS scene reload 不依賴遺失前的
+增量事件。P1C 已加入明確 allowlist 的 static overlay routes；P1D 已接上
+feature gate、preload IPC 與 renderer publish。
+
+### 6.8 Independent Overlay Delivery
+
+Phase 1C 的 Browser Source 檔案位於 root-level `overlay/`，不進 Vite renderer
+bundle，也不 import Vue 或 control-panel `--ui-*` tokens。Server 只用固定 route map
+提供 `/overlay/lyrics`、`/overlay/now-playing`、`/overlay/setlist` 與其明確列出的
+CSS/ES module assets；URL 不會直接解析成 filesystem path。
+
+共用 `runtime.mjs` 使用 CEF/瀏覽器原生 WebSocket，收到完整 `state.snapshot` 後
+渲染，忽略過期的 `state.changed`，斷線則以 500ms 起始、最高 8s 的 backoff
+重連。歌詞基本模板顯示目前行與下一個非空白行，背景完全透明，長行可安全換行，
+並在 `prefers-reduced-motion` 下停用行切換 motion。所有 track/lyrics/queue 文字只透過
+`textContent` 或新建 text element 寫入，不使用 `innerHTML`。
+
+Overlay CSS 分為 `--ovl-primitive-*`、semantic `--ovl-color/font/motion-*` 與
+各模板 `--ovl-template-*` 三層。這讓未來 style set 覆寫 semantic/template roles，
+而不需要複製整份 CSS，也不會把公開輸出樣式耦合到控制台 theme。
+
+### 6.9 Output Workbench Connection
+
+Phase 1D 由 main process 的 `outputHandlers` 提供 start/stop/status/publish 與
+portable profile IPC。Start 與 publish 都會重新檢查 `public-output-flow`；stop 與
+status 維持 ungated，讓使用者在 gate/config 狀態異常時仍可停止輸出或診斷狀態。
+
+Renderer 的 `useOutputRuntime` 是 App 層長生命週期 singleton。它從既有
+`usePlayer`、`usePlaybackQueue` 與 playing-track `useLyrics` 投影公開 snapshot，
+序列化 IPC 並合併尚未送出的中間狀態；切換頁面不會停止 OBS 更新。Main 回報目前
+revision，renderer reload 後會接續遞增，不會讓仍存活的 server 拒絕新狀態。
+
+Gallery 右欄在 runtime 運行時載入真實 served iframe。Workbench preview URL 只在
+同一模板 URL 加上 `?preview=1`，讓 idle 狀態使用 demo fallback 與深色檢視底；複製給
+OBS 的 URL 不含該參數，因此不會發布假狀態，且頁面背景保持透明。右欄寬度使用
+rem 上下限與 viewport-relative 中間值，不依賴可折疊／可拖曳的 playlist sidebar
+內容寬度。
+
+`overlays.json` 保存 selected profile、template id、style-set ids 與 scalar settings。
+模板選擇仍由 Workbench parent 擁有，showcase 與 preview child 只接收 props/發出
+events。Renderer ESM projector 與 main CommonJS validator 共用
+`outputContractValues.json` 的 version/collection limits；只有 main validator 是 IPC
+trust boundary。
+
 ## 7. Feature Notice 與 Gate
 
 Feature gate 的目的，是讓使用者在啟用進階流程前看見必要提示，並讓產品能保存啟用狀態。
@@ -257,12 +332,12 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 ### 7.1 Gate 類型
 
-| Gate                  | 適用功能                                                                            |
-| --------------------- | ----------------------------------------------------------------------------------- |
-| Provider flow         | YouTube/YT Music candidate import、`yt-dlp` download path、provider metadata 保存。 |
-| Lyrics flow           | Lyrics provider、字幕保存、self-view、overlay lyrics。                              |
-| Audio processing flow | Vocal separation、Pitch/Tempo pre-render cache。                                    |
-| Public output flow    | OBS overlay、livestream session、recording/VOD session。                            |
+| Gate                  | 適用功能                                                                             |
+| --------------------- | ------------------------------------------------------------------------------------ |
+| Provider flow         | YouTube/YT Music candidate import、Python `yt-dlp` runtime、provider metadata 保存。 |
+| Lyrics flow           | Lyrics provider、字幕保存、self-view、overlay lyrics。                               |
+| Audio processing flow | Vocal separation、Pitch/Tempo pre-render cache。                                     |
+| Public output flow    | OBS overlay、livestream session、recording/VOD session。                             |
 
 ### 7.2 Confirmation Record
 
@@ -270,7 +345,7 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 {
   "featureConfirmation": {
     "featureId": "provider-flow",
-    "noticeVersion": "feature-notice-v1",
+    "noticeVersion": "feature-notice-v3",
     "confirmedAt": "2026-08-13T00:00:00.000Z",
     "enabled": true
   }
@@ -292,21 +367,25 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 - Lyrics/subtitle 基礎路徑。
 - Windows shell integration。
 
-### Phase 0.5：產品邊界整理
+### Phase 0.5：產品邊界整理（已完成自動化驗收）
 
 - Feature notice modal。
 - Feature gate registry。
-- Local import first flow（本機音訊檔匯入已部分實作）。
+- Local import first flow。
 - Provider flow 從預設入口移到明確啟用。
 - README、spec、UI copy 用語統一。
 
+2026-08-22 已完成 build、lint、format、完整 Vitest coverage 與 Electron
+啟動驗證；真實 provider network、Settings 與歌詞讀音等 GUI walkthrough
+仍依 `tasks/todo.md` 個別追蹤，不阻擋 Phase 1 開始。
+
 ### Phase 1：OBS MVP
 
-- 本機 HTTP/WebSocket state server。
-- OBS Browser Source overlay。
+- 本機 HTTP/WebSocket state server（P1B runtime、P1D gate/IPC/publish 已完成）。
+- OBS Browser Source overlay（P1C 基本模板、P1D Workbench 真實預覽已完成）。
 - Performer self-view。
-- Overlay theme tokens。
-- Now-playing、playlist、lyrics sync。
+- Overlay token foundation 已完成；profile/style set 編輯仍未完成。
+- Now-playing、playlist、lyrics sync（P1D 基本 snapshot sync 已完成）。
 
 ### Phase 2：Live Operation Polish
 
@@ -326,8 +405,6 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 ## 9. Open Questions
 
 1. Feature notice 要採 app-wide 一次確認，還是依 feature/source/session 分層確認？
-2. `yt-dlp` provider flow 不拆成 installer optional module；改作
-   `provider-flow` 啟用後由 Settings 準備的 app-managed tool。
-3. Lyrics self-view 與 OBS overlay lyrics 是否需要兩套獨立狀態？
-4. Recording/VOD mode 是否應在每次 session 開始前確認？
-5. Preset export 是否需要支援缺曲提示與 track remapping？
+2. Lyrics self-view 與 OBS overlay lyrics 是否需要兩套獨立狀態？
+3. Recording/VOD mode 是否應在每次 session 開始前確認？
+4. Preset export 是否需要支援缺曲提示與 track remapping？

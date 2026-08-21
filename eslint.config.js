@@ -15,14 +15,40 @@ module.exports = [
   js.configs.recommended,
   ...pluginVue.configs['flat/recommended'],
   {
-    files: ['electron/**/*.js', 'scripts/**/*.{js,cjs}', '*.config.js'],
+    files: [
+      'electron/**/*.js',
+      'shared/**/*.js',
+      'scripts/**/*.{js,cjs}',
+      '*.config.js',
+    ],
     languageOptions: {
       sourceType: 'commonjs',
       globals: globals.node,
     },
   },
   {
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.node,
+    },
+  },
+  {
     files: ['electron/**/*.test.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.node,
+    },
+  },
+  {
+    files: ['overlay/**/*.mjs'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.browser,
+    },
+  },
+  {
+    files: ['overlay/**/*.test.js'],
     languageOptions: {
       sourceType: 'module',
       globals: globals.node,

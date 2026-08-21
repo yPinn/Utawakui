@@ -2,7 +2,7 @@
 
 > 面向 OBS 歌回與翻唱工作流的本機控制台。
 
-Utawakui 是一個以 Electron、Vite 與 Vue 3 建構的桌面工具，提供曲庫整理、播放控制、歌詞工作區、音訊處理與未來的 OBS Browser Source Overlay。產品設計以**使用者自備媒體**為預設前提，進階來源與公開輸出流程則以明確啟用的方式管理。
+Utawakui 是一個以 Electron、Vite 與 Vue 3 建構的桌面工具，提供曲庫整理、播放控制、歌詞工作區、音訊處理與 OBS Browser Source Overlay 基礎。產品設計以**使用者自備媒體**為預設前提，進階來源與公開輸出流程則以明確啟用的方式管理。
 
 ## 專案概覽
 
@@ -16,18 +16,18 @@ Utawakui 主要服務直播主、VTuber 與歌回企劃者，讓演出前準備�
 
 ## 功能狀態
 
-| 類別                       | 狀態           | 說明                                                                                         |
-| -------------------------- | -------------- | -------------------------------------------------------------------------------------------- |
-| 桌面控制台                 | 已實作         | Electron shell、Vue renderer、固定 views 與共用 composables。                                |
-| 本機曲庫                   | 已實作         | 以 track folder 保存音訊、metadata、縮圖、歌詞與 generated files。                           |
-| 播放與佇列                 | 已實作         | 播放、暫停、seek、音量、shuffle、repeat、previous/next。                                     |
-| Playlist / Collection      | 已實作         | 使用 `playlists.json` 保存集合、排序與 track ids。                                           |
-| Pitch / Tempo              | 已實作         | 即時 preview 已可用；背景 pre-render cache 尚未完成。                                        |
-| Vocal Separation           | 已實作         | Worker-based separation，播放時可混合 guide vocal。                                          |
-| Lyrics Workspace           | 部分實作       | 歌詞資料讀取、保存與同步歌詞基礎已存在，仍需整理完整使用流程。                               |
-| 進階 Provider Flow         | 已實作核心路徑 | YouTube/YT Music candidate import 與 `yt-dlp` download path 已存在，產品上應走明確啟用流程。 |
-| OBS Browser Source Overlay | 規劃中         | 架構方向已定義，HTTP/WebSocket delivery 尚未實作。                                           |
-| Feature Notice / Gate      | 規劃中         | 用於進階 provider、歌詞、音訊處理與公開輸出流程。                                            |
+| 類別                       | 狀態            | 說明                                                                                         |
+| -------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
+| 桌面控制台                 | 已實作          | Electron shell、Vue renderer、固定 views 與共用 composables。                                |
+| 本機曲庫                   | 已實作          | 以 track folder 保存音訊、metadata、縮圖、歌詞與 generated files。                           |
+| 播放與佇列                 | 已實作          | 播放、暫停、seek、音量、shuffle、repeat、previous/next。                                     |
+| Playlist / Collection      | 已實作          | 使用 `playlists.json` 保存集合、排序與 track ids。                                           |
+| Pitch / Tempo              | 已實作          | 即時 preview 已可用；背景 pre-render cache 尚未完成。                                        |
+| Vocal Separation           | 已實作          | Worker-based separation，播放時可混合 guide vocal。                                          |
+| Lyrics Workspace           | 部分實作        | 歌詞資料讀取、保存與同步歌詞基礎已存在，仍需整理完整使用流程。                               |
+| 進階 Provider Flow         | 已實作核心路徑  | YouTube/YT Music candidate import 與 `yt-dlp` download path 已存在，產品上應走明確啟用流程。 |
+| OBS Browser Source Overlay | 基本 MVP 已實作 | 本機 HTTP/WebSocket runtime、Browser Source routes、Workbench preview 與 URL copy 已存在。   |
+| Feature Notice / Gate      | 已實作基礎      | Provider、lyrics、audio processing 與 public output workflows 已有 gate 基礎。               |
 
 ## 使用前提
 
@@ -42,7 +42,9 @@ npm install
 npm run dev
 ```
 
-`npm install` 會安裝 JavaScript dependencies，並透過 `youtube-dl-exec` 準備 provider flow 目前使用的工具鏈。
+`npm install` 會安裝 JavaScript dependencies。Provider flow 使用的 Python `yt-dlp`
+runtime、FFmpeg 與分離模型屬於 app-managed workflow dependencies，會在對應功能啟用後
+由 Settings 準備，不作為預設開發安裝步驟。
 
 ## Scripts
 

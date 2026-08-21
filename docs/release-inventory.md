@@ -18,14 +18,17 @@ Windows packaging is configured in `electron-builder.yml`.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
 - Worker/runtime JS that must resolve outside asar: `electron/lib/**/*`,
   unpacked through `asarUnpack`.
+- Installer shortcuts: Start Menu is always created because it carries the
+  AUMID / SMTC app identity; the desktop shortcut is shown as a checked
+  optional installer checkbox in `build/installer.nsh`.
 - Uninstaller data cleanup: optional NSIS checkboxes from `build/installer.nsh`
-  clean `%APPDATA%\Utawakui` and the legacy `%APPDATA%\Electron` folder.
-  Cleanup uses `RMDir /r /REBOOTOK`, so locked app-data folders may finish
-  deleting after a reboot. These options do not touch the user's music library
-  under `<Music>\Utawakui`.
-- Installer copy discloses that the core install creates Start Menu / desktop
-  shortcuts, while advanced features are enabled and prepared from Settings.
-  The uninstaller welcome page explains that app data cleanup is opt-in.
+  can clean app-managed dependencies under `%APPDATA%\Utawakui\dependencies`,
+  app settings under `%APPDATA%\Utawakui`, and the selected library root only
+  when `library-path.txt` points to an existing folder. All cleanup checkboxes
+  default to unchecked. Cleanup uses `RMDir /r /REBOOTOK`, so locked folders may
+  finish deleting after a reboot.
+- Installer copy discloses that advanced features are enabled and prepared from
+  Settings. The uninstaller welcome page explains that data cleanup is opt-in.
 
 The `electron.exe` filename is intentional. See
 `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`.
@@ -41,30 +44,55 @@ This is intentionally not a selectable "Basic vs Ext" component split yet:
   payload as one app section; its supported hooks are better suited to extra
   pages or post-install work than to surgically splitting `app.asar` and
   unpacked native modules into optional component payloads.
-- Current extension-like dependencies are not all installer payloads. `yt-dlp`
-  is shipped as a packaged seed but copied to managed user data only after
-  `provider-flow` is enabled and prepared; FFmpeg is app-managed and downloaded
-  only after `audio-processing-flow` is enabled; model files are also prepared
-  from Settings before use.
-- A checkbox in the installer would therefore over-promise a real packaging
-  distinction and move license/source disclosure away from the feature gate that
-  actually triggers the download.
-- electron-builder's assisted installer does not provide a built-in desktop
-  shortcut checkbox on the finish page; the current build discloses shortcut
-  creation in the welcome page instead of adding a fragile custom shortcut page.
+- Current extension-like dependencies are not all installer payloads. The
+  provider runtime (Python embed, yt-dlp wheel, and bgutil PO-token provider) is
+  app-managed and downloaded only after `provider-flow` is enabled and prepared;
+  FFmpeg is app-managed and downloaded only after `audio-processing-flow` is
+  enabled; model files are also prepared from Settings before use.
+- A component/payload checkbox in the installer would therefore over-promise a
+  real packaging distinction and move license/source disclosure away from the
+  feature gate that actually triggers the download.
+- Shortcut selection is intentionally narrow: Start Menu stays mandatory for
+  Windows identity/AUMID behavior, while the custom NSIS page only lets users
+  opt out of the desktop shortcut.
 
 Use this naming until a release truly ships separate artifacts:
 
 - **核心安裝**: the Electron app, local library/playback/import surfaces,
   Settings, feature gate UI, and packaged runtime needed for the app to start.
 - **工作流程擴充**: provider/network flows, lyrics sources, audio processing, and
-  future public-output workflows that are enabled from inside the app and may
-  download, connect to, or generate additional data after confirmation.
+  public-output workflows that are enabled from inside the app and may download,
+  connect to, or generate additional data after confirmation.
 
 If a future installer really needs selectable payloads, split the release into
 separate artifacts or replace the generated NSIS template with a maintained
 component-aware template, then re-verify AUMID, update behavior, uninstall data
 cleanup, and license notices end to end.
+
+## Compliance Boundary
+
+Feature gates follow the operation being enabled, not only whether code is
+present in the installer. This distinction matters because some local-only
+capabilities need packaged runtime code to work offline, while higher-risk
+sources, generated media, and public output still require explicit user
+confirmation before use.
+
+| Boundary                           | Legal/compliance driver                                                                   | Gate / packaging decision                                                                                         |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Local library and playback         | User-selected local files; app does not provide music, lyrics, artwork, or licenses.      | Ungated core; media stays outside the app under the user-selected library root.                                   |
+| Provider-backed acquisition        | Platform terms, reproduction/cache/offline playback, source legitimacy, technical rules.  | `provider-flow`; provider runtime is app-managed under user data, not bundled as an installer payload.            |
+| External lyrics/subtitle sources   | Lyrics/subtitles are separate protected text; public display may require permission.      | `lyrics-flow` for external search/save; manual local lyrics editing stays ungated.                                |
+| Reading aids                       | Local text analysis/romanization of existing lyrics; no external source is contacted.     | Ungated local processing; `kuromoji`, `wanakana`, and `koroman` are packaged and unpacked for worker-thread use.  |
+| Pitch/tempo and vocal separation   | Processing can create transformed previews, stems, cache files, or other local copies.    | `audio-processing-flow`; ONNX Runtime is packaged, while FFmpeg and UVR model files are app-managed after opt-in. |
+| OBS Browser Source and public view | Lyrics, artwork, metadata, and state may enter a livestream, recording, VOD, or clip.     | `public-output-flow` gates start/publish; `ws` and overlay templates ship as core output infrastructure.          |
+| Recording / VOD session            | Recording, archived live, clips, and later reposts add reproduction/synchronization risk. | Planned separate gate/session confirmation; no packaged dependency today.                                         |
+
+China-source songs are not a separate technical module. They are a source-risk
+classification handled by the same gates above: provider download, lyrics or
+subtitle save/display, artwork/MV/thumbnail output, audio processing, and
+recording/VOD all remain rights-neutral and require the user to confirm the
+specific source, platform, and use permissions. See
+`docs/legal-compliance.md`.
 
 ## Feature Inventory
 
@@ -74,12 +102,13 @@ cleanup, and license notices end to end.
 | Local import                | Ungated core                               | `useLocalImport`, Import view                             | `library:import-audio-files`                                                                                        | None beyond Node built-ins                                              | Copies user-picked audio into managed track folders.                                                                                                                  |
 | Playback / queue            | Ungated core                               | `usePlayer`, `usePlaybackQueue`, `PlayerBar`              | media protocol only                                                                                                 | Renderer bundle; `@soundtouchjs/audio-worklet` is build-time only       | Pitch preview worklet is emitted into `dist/assets/` by Vite; it should not be packaged as runtime `node_modules`.                                                    |
 | Windows shell integration   | Ungated core                               | `useTaskbarControls`, `useMediaSession`, `useWindowTitle` | `windowState`, `thumbarIcons`                                                                                       | Electron runtime only                                                   | App icon is packaged in both `dist/assets/` and `public/assets/icons/app-icon.ico`; ICO is unpacked for shell APIs.                                                   |
-| Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | `youtube-dl-exec`; app-managed `yt-dlp.exe`                             | `yt-dlp.exe` is packaged as a seed, then copied to `%APPDATA%\Utawakui\dependencies\ytdlp\current` from Settings before provider actions use it.                      |
-| Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | `youtube-dl-exec`; app-managed `yt-dlp.exe`                             | Backfill runs only after provider-flow is enabled and uses the managed yt-dlp path.                                                                                   |
+| Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | App-managed Python `yt-dlp`; Rust bgutil provider sidecar               | Settings prepares Python embed, yt-dlp wheel, bgutil provider exe/plugin, and an EJS cache under `%APPDATA%\Utawakui\dependencies\ytdlp\current`.                     |
+| Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | App-managed Python `yt-dlp`; Rust bgutil provider sidecar               | Backfill runs only after provider-flow is enabled and uses the same prepared provider runtime as user-initiated import.                                               |
 | Lyrics provider search/save | `lyrics-flow`                              | `useLyrics`, LRCLIB search panel                          | `lyrics:search-candidates`, `lyrics:save-candidate`, `lyrics:backfill-source-labels`, `lyrics:probe-musixmatch`     | No packaged native dependency                                           | Manual lyrics import/edit/delete stays ungated because it only edits local user data.                                                                                 |
+| Lyrics reading aids         | Ungated local processing                   | `useLyricsReading`, Lyrics workspace reading controls     | `lyrics:generate-reading`, `readingWorker.js`                                                                       | `kuromoji`, `wanakana`, `koroman`                                       | Local Japanese/Korean text analysis only; packages are in `dependencies` and unpacked because worker threads and dictionary reads need real filesystem paths.         |
 | Vocal separation            | `audio-processing-flow`                    | `useSeparation`, Lyrics workspace separation controls     | `separation:run`, `vocalSeparationWorker.js`                                                                        | `kissfft-js`, `onnxruntime-node`; FFmpeg and UVR models are app-managed | FFmpeg and UVR ONNX models download to `userData/dependencies` from Settings after gate enablement; ONNX Runtime `.dll`/`.node` and `electron/lib/**/*` are unpacked. |
 | Separation result selection | Existing generated media                   | Lyrics workspace preset select                            | `separation:select`                                                                                                 | None beyond library modules                                             | Metadata-only selection of already-created results; no DSP run.                                                                                                       |
-| Public output / OBS         | `public-output-flow` planned               | OBS Setlist/Lyrics scaffold views                         | Not implemented                                                                                                     | None yet                                                                | No local HTTP/WebSocket overlay server is packaged yet.                                                                                                               |
+| Public output / OBS         | `public-output-flow` on start and publish  | `useOutputRuntime`; real Gallery iframe; URL copy         | `outputHandlers`; `outputProfiles`; `outputServer`; `outputRuntime`; root-level plain overlay package               | `ws`; browser-native WebSocket and Web Animations                       | Versioned snapshots, loopback runtime, lyrics/now-playing/setlist routes, portable profile selection, and the real Workbench preview are packaged.                    |
 | Recording / VOD mode        | Planned                                    | None                                                      | None                                                                                                                | None                                                                    | No release dependency today.                                                                                                                                          |
 
 ## Dependency Classes
@@ -89,11 +118,22 @@ or spawned binaries after the Vite build has already produced `dist/`.
 
 | Class               | Packages                                                                             | Reason                                                                                                             |
 | ------------------- | ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
-| Packaged runtime    | `kissfft-js`, `onnxruntime-node`, `youtube-dl-exec`                                  | Used by main/worker code at runtime.                                                                               |
-| Packaged seed       | `node_modules/youtube-dl-exec/bin/yt-dlp.exe`                                        | Bundled so provider-flow can prepare a writable managed copy without first downloading a tool from the network.    |
-| App-managed runtime | `yt-dlp.exe`; FFmpeg Gyan essentials build; UVR ONNX separation models               | Prepared to `userData` only after the matching feature gate is enabled and the user prepares the item in Settings. |
+| Packaged runtime    | `kissfft-js`, `onnxruntime-node`, `ws`, `kuromoji`, `wanakana`, `koroman`            | Used by main/worker code at runtime after packaging.                                                               |
+| Packaged seed       | None for provider import                                                             | Provider import now prepares verified downloads instead of copying a packaged `yt-dlp.exe` seed.                   |
+| App-managed runtime | Python provider runtime; FFmpeg Gyan essentials build; UVR ONNX separation models    | Prepared to `userData` only after the matching feature gate is enabled and the user prepares the item in Settings. |
 | Renderer build-time | `vue`, `@lucide/vue`, `@soundtouchjs/audio-worklet`                                  | Imported by renderer source and bundled into `dist/` by Vite.                                                      |
 | Tooling build-time  | Electron, electron-builder, Vite, Vitest, ESLint, Prettier, commitlint, markdownlint | Needed to develop, test, build, and package; not app runtime dependencies.                                         |
+
+Notable transitive production dependencies can still appear in packaged
+`node_modules` when required by a packaged runtime dependency. Current example:
+`adm-zip` is pulled in by `onnxruntime-node`; keep it in the security/dependency
+follow-up until the ONNX Runtime dependency choice or upstream dependency tree
+changes.
+
+Third-party license inventory is maintained in `THIRD_PARTY_NOTICES.md` and can
+be regenerated for review with `npm run license:inventory`. Keep that file in
+the package so renderer-bundled dependencies, app-managed workflow tools, and
+packages without bundled license files remain visible in release artifacts.
 
 When adding a dependency, classify it before installing:
 
@@ -103,21 +143,32 @@ When adding a dependency, classify it before installing:
   `devDependencies`.
 - If it is spawned as an executable or loaded as a native module, add or confirm
   an `asarUnpack` rule.
+- If it is loaded from a worker thread or reads data files with `fs`, verify it
+  from a real packaged build; worker threads cannot rely on every Electron ASAR
+  patch that normal `require()` paths get.
 - If it is only for tests/lint/build scripts, put it in `devDependencies`.
 
 ## Packaging Locations
 
-| Artifact                                                                                               | Contents                                                                                 |
-| ------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| `release/win-unpacked/electron.exe`                                                                    | Electron host executable. Kept with this filename due ADR 0002.                          |
-| `release/win-unpacked/resources/app.asar`                                                              | `dist`, `electron`, `shared`, root `package.json`, and production JS dependency closure. |
-| `release/win-unpacked/resources/app.asar.unpacked/electron/lib`                                        | Worker and runtime JS needed outside asar.                                               |
-| `release/win-unpacked/resources/app.asar.unpacked/node_modules/youtube-dl-exec/bin/yt-dlp.exe`         | Bundled provider-flow downloader binary.                                                 |
-| `release/win-unpacked/resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64` | ONNX Runtime / DirectML native files for vocal separation.                               |
-| `release/win-unpacked/resources/app.asar.unpacked/public/assets/icons/app-icon.ico`                    | Shell-facing icon path used by Windows app details.                                      |
-| `%APPDATA%\Utawakui\dependencies\ytdlp\current\yt-dlp.exe`                                             | Writable provider-flow yt-dlp copy prepared from Settings; yt-dlp self-update runs here. |
-| `%APPDATA%\Utawakui\dependencies\ffmpeg\<version>\bin\ffmpeg.exe`                                      | App-managed FFmpeg binary downloaded after audio-processing-flow is enabled.             |
-| `%APPDATA%\Utawakui\dependencies\models\<dependencyId>\<version>\*.onnx`                               | App-managed UVR model files downloaded after audio-processing-flow is enabled.           |
+| Artifact                                                                                               | Contents                                                                                                           |
+| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------ |
+| `release/win-unpacked/electron.exe`                                                                    | Electron host executable. Kept with this filename due ADR 0002.                                                    |
+| `release/win-unpacked/resources/app.asar`                                                              | `dist`, `electron`, `shared`, root `package.json`, `THIRD_PARTY_NOTICES.md`, and production JS dependency closure. |
+| `release/win-unpacked/resources/app.asar/THIRD_PARTY_NOTICES.md`                                       | Release third-party license and notice inventory.                                                                  |
+| `release/win-unpacked/resources/app.asar/node_modules/ws`                                              | Pure JavaScript WebSocket server used by the loopback output runtime.                                              |
+| `release/win-unpacked/resources/app.asar/overlay`                                                      | Plain HTML/CSS/JS Browser Source pages and shared `--ovl-*` tokens/runtime.                                        |
+| `release/win-unpacked/resources/app.asar.unpacked/electron/lib`                                        | Worker and runtime JS needed outside asar.                                                                         |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64` | ONNX Runtime / DirectML native files for vocal separation.                                                         |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/kuromoji`                               | Japanese tokenizer and dictionary files used by reading workers.                                                   |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/wanakana`                               | Kana/romaji conversion package used by reading workers.                                                            |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/koroman`                                | Korean romanization package used by reading workers.                                                               |
+| `release/win-unpacked/resources/app.asar.unpacked/public/assets/icons/app-icon.ico`                    | Shell-facing icon path used by Windows app details.                                                                |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\python.exe`                                      | Private Python runtime used only for provider import.                                                              |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\Lib\site-packages\yt_dlp`                        | App-managed yt-dlp Python package.                                                                                 |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\bgutil\bgutil-pot.exe`                                  | Rust bgutil PO-token provider sidecar.                                                                             |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\plugins\bgutil-ytdlp-pot-provider-rs`                   | yt-dlp plugin package loaded through `--plugin-dirs`.                                                              |
+| `%APPDATA%\Utawakui\dependencies\ffmpeg\<version>\bin\ffmpeg.exe`                                      | App-managed FFmpeg binary downloaded after audio-processing-flow is enabled.                                       |
+| `%APPDATA%\Utawakui\dependencies\models\<dependencyId>\<version>\*.onnx`                               | App-managed UVR model files downloaded after audio-processing-flow is enabled.                                     |
 
 ## Verification Checklist
 
@@ -131,14 +182,24 @@ After changing gates or dependencies:
   - `release/win-unpacked/resources/app.asar.unpacked`
 - Confirm `app.asar` no longer contains renderer-only packages as runtime
   `node_modules` after moving them to `devDependencies`.
+- Confirm `THIRD_PARTY_NOTICES.md` is present in `app.asar`, and rerun
+  `npm run license:inventory` after dependency changes.
+- Confirm `app.asar.unpacked` contains `electron/lib`, ONNX Runtime native
+  files, `kuromoji`, `wanakana`, `koroman`, and the shell-facing ICO.
 - Launch the packaged `release/win-unpacked/electron.exe`.
 - Confirm provider, lyrics, and audio-processing gates prompt before their
   first external or generated-media action.
-- Confirm provider-flow can prepare the packaged yt-dlp seed into
-  `%APPDATA%\Utawakui\dependencies\ytdlp\current`, then run update/status
-  checks against that writable path.
+- Confirm public-output start and publish remain gated, while status/stop remain
+  available for recovery.
+- Confirm provider-flow can prepare the Python provider runtime into
+  `%APPDATA%\Utawakui\dependencies\ytdlp\current`, run
+  `python.exe -m yt_dlp --version`, confirm the bgutil provider sidecar answers
+  `/ping`, and smoke-test a PO-token-blocked YouTube video with Electron-as-Node
+  EJS enabled.
 - Confirm audio-processing-flow can prepare/download/verify FFmpeg and UVR
   models from Settings, then load the prepared model and spawn its worker.
+- Confirm packaged reading-aid workers can generate Japanese and Korean reading
+  output without loading missing modules or dictionary files from inside ASAR.
 - For installer verification, use `npm run dist`; `dist:dir` does not create
   Start Menu shortcuts, so it cannot verify installed AUMID / SMTC app name.
 - For uninstaller verification, run the installed uninstaller interactively and

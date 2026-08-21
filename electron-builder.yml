@@ -25,7 +25,10 @@ files:
   - electron/**/*
   - '!electron/**/*.test.js'
   - public/assets/icons/**/*
+  - overlay/**/*
+  - '!overlay/**/*.test.js'
   - shared/**/*
+  - THIRD_PARTY_NOTICES.md
   - package.json
   # onnxruntime-node ships native binaries for every platform in one
   # tarball; only win32/x64 is used here (thumbar/SMTC/DirectML are all
@@ -43,9 +46,6 @@ files:
   - '!node_modules/kuromoji/build/**/*'
 
 asarUnpack:
-  # spawn()'d as a binary (youtube-dl-exec / electron/lib/downloader.js and
-  # friends) — same constraint.
-  - node_modules/youtube-dl-exec/bin/**/*
   # Native N-API module — onnxruntime.dll/DirectML.dll must land in the same
   # unpacked directory as the .node binding, so the whole bin/ tree is
   # unpacked rather than just **/*.node.
@@ -66,6 +66,10 @@ asarUnpack:
   # require()'d directly.
   - node_modules/kuromoji/**/*
   - node_modules/wanakana/**/*
+  # Same worker-thread require() reasoning as kuromoji/wanakana above —
+  # koroman (Stage 5c, Korean romanization) is tiny (~40KB, zero deps) but
+  # still needs to resolve from real disk, not just inside asar.
+  - node_modules/koroman/**/*
 
 win:
   target:
@@ -99,9 +103,13 @@ nsis:
   # installer, and the assistedInstaller.nsh template only inserts
   # PAGE_INSTALL_MODE when INSTALL_MODE_PER_ALL_USERS isn't forced), letting
   # the user pick per-machine instead. That's safe to leave available: what
-  # actually keeps yt-dlp writable without elevation either way is that it
-  # installs under app.getPath('userData') (electron/main.js's packaged-mode
-  # relocation), which has nothing to do with install mode.
+  # actually keeps app-managed workflow dependencies writable without elevation
+  # either way is that they install under app.getPath('userData'), which has
+  # nothing to do with install mode.
+  allowElevation: true
+  # Keep createDesktopShortcut enabled so electron-builder leaves the standard
+  # desktop shortcut machinery available; build/installer.nsh toggles
+  # $isNoDesktopShortcut from a custom checked-by-default page.
   createDesktopShortcut: true
   createStartMenuShortcut: true
   # This is the concrete fix for the SMTC "未知的應用程式" label: Windows

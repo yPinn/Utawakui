@@ -90,13 +90,13 @@ Utawakui 的產品結構以媒體工作流階段切分：
 
 OBS 輸出是獨立產品面，不能和控制台 UI 混為一談。純 UI overlay 與含第三方素材 overlay 應分開設計。
 
-| Feature                   | Product role                          | Gate expectation                   | Status  |
-| ------------------------- | ------------------------------------- | ---------------------------------- | ------- |
-| OBS Browser Source Server | 以本機 HTTP/WebSocket 提供 overlay。  | 啟用 OBS 輸出前 gate。             | Planned |
-| Queue Overlay             | 顯示目前曲目、下一首與 setlist 狀態。 | 低風險，仍需 session output 提示。 | Planned |
-| Lyrics Overlay            | 在 OBS 場景顯示歌詞或字幕。           | Lyrics display gate。              | Planned |
-| Artwork Overlay           | 在 OBS 場景顯示封面、縮圖或素材圖。   | Artwork display gate。             | Planned |
-| Overlay Themes            | 為 OBS 畫面提供可選主題。             | 不得與 control panel tokens 耦合。 | Planned |
+| Feature                   | Product role                          | Gate expectation                   | Status           |
+| ------------------------- | ------------------------------------- | ---------------------------------- | ---------------- |
+| OBS Browser Source Server | 以本機 HTTP/WebSocket 提供 overlay。  | 啟用 OBS 輸出前 gate。             | Built MVP        |
+| Queue Overlay             | 顯示目前曲目、下一首與 setlist 狀態。 | 低風險，仍需 session output 提示。 | Built MVP        |
+| Lyrics Overlay            | 在 OBS 場景顯示歌詞或字幕。           | Lyrics display gate。              | Built MVP        |
+| Artwork Overlay           | 在 OBS 場景顯示封面、縮圖或素材圖。   | Artwork display gate。             | Planned          |
+| Overlay Themes            | 為 OBS 畫面提供可選主題。             | 不得與 control panel tokens 耦合。 | Token foundation |
 
 ### Session Output
 
