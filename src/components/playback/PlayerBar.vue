@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
+import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
   Cable,
   Captions,
@@ -25,10 +25,8 @@ import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import {
-  DEFAULT_SEPARATION_PRESET_ID,
   SEPARATION_PRESET_OPTIONS,
   SEPARATION_PRESET_SELECT_TITLE,
-  hasSeparationPreset,
 } from '../../constants/separationPresets.js';
 import {
   PITCH_CENTS_RANGE,
@@ -80,16 +78,15 @@ const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
 const {
   state: separationState,
   isSeparating,
-  inFlightPresetId,
-  describe: describeSeparation,
+  presetIdFor,
+  progressPercent: separationProgressPercentFor,
   separate,
-  selectResult,
+  selectPreset,
 } = useSeparation();
 
 const isQueueOpen = ref(false);
 const isPlayerToolsOpen = ref(false);
 const activeToolTab = ref('adjust');
-const selectedSeparationPresetId = ref(DEFAULT_SEPARATION_PRESET_ID);
 
 const progress = computed({
   get: () => state.currentTime,
@@ -165,6 +162,9 @@ const pitchReferenceHz = computed(() =>
 );
 const tempoLabel = computed(() => `${state.tempoRate.toFixed(2)}x`);
 const currentSeparationTrack = computed(() => state.track || null);
+const selectedSeparationPresetId = computed(() =>
+  presetIdFor(currentSeparationTrack.value),
+);
 const currentSeparationResults = computed(
   () => currentSeparationTrack.value?.separation?.results || {},
 );
@@ -173,10 +173,10 @@ const isCurrentTrackSeparating = computed(() =>
     ? isSeparating(currentSeparationTrack.value.id)
     : false,
 );
-const currentSeparationStatus = computed(() =>
+const currentSeparationProgressPercent = computed(() =>
   currentSeparationTrack.value
-    ? describeSeparation(currentSeparationTrack.value.id)
-    : '',
+    ? separationProgressPercentFor(currentSeparationTrack.value.id)
+    : 0,
 );
 const currentSeparationError = computed(() =>
   currentSeparationTrack.value
@@ -200,31 +200,6 @@ const playerToolsActive = computed(
       (state.guideVocalOn || state.captureGuideVocalOn)) ||
     isCurrentTrackSeparating.value ||
     metronomeState.isRunning,
-);
-
-// Keyed on track id, not the state.track object itself: usePlayer.js's
-// syncCurrentTrack() replaces state.track with a fresh object on every
-// library:updated event, including ones unrelated to this track (another
-// track's separation finishing, a backfill pass, etc.). Watching the object
-// reference reset this dropdown back to the manifest's last-selected preset
-// mid-generation, discarding the user's in-progress pick. If a separation is
-// actively running for this track, its preset wins over the manifest so
-// reopening the panel mid-run still shows what's actually generating.
-watch(
-  () => state.track?.id,
-  () => {
-    const track = state.track;
-    const activePresetId = track ? inFlightPresetId(track.id) : null;
-    if (activePresetId) {
-      selectedSeparationPresetId.value = activePresetId;
-      return;
-    }
-    const presetId = track?.separation?.selectedPresetId;
-    selectedSeparationPresetId.value = hasSeparationPreset(presetId)
-      ? presetId
-      : DEFAULT_SEPARATION_PRESET_ID;
-  },
-  { immediate: true },
 );
 
 function adjustTranspose(delta) {
@@ -480,8 +455,8 @@ function playNextAfterEnded() {
 
 function selectSeparationPreset(presetId) {
   const track = currentSeparationTrack.value;
-  if (!track || !currentSeparationResults.value[presetId]) return;
-  selectResult(track, presetId);
+  if (!track) return;
+  selectPreset(track, presetId);
 }
 
 function generateSeparation() {
@@ -682,7 +657,7 @@ onUnmounted(() => {
 
     <PlayerToolsPanel
       v-model:active-tab="activeToolTab"
-      v-model:selected-separation-preset-id="selectedSeparationPresetId"
+      :selected-separation-preset-id="selectedSeparationPresetId"
       :open="isPlayerToolsOpen"
       :has-track="Boolean(state.track)"
       :guide-vocal-visible="showGuideVocal"
@@ -692,7 +667,7 @@ onUnmounted(() => {
       :separation-preset-options="SEPARATION_PRESET_OPTIONS"
       :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
       :separation-in-flight="isCurrentTrackSeparating"
-      :separation-status="currentSeparationStatus"
+      :separation-progress-percent="currentSeparationProgressPercent"
       :separation-error="currentSeparationError"
       :separation-has-result="selectedSeparationHasResult"
       @close="isPlayerToolsOpen = false"

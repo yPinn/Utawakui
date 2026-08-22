@@ -1,11 +1,9 @@
 <script setup>
 import { computed } from 'vue';
 import {
-  Check,
   CircleAlert,
   Clock,
   ICON_SIZE,
-  Loader2,
   MicVocal,
   Minus,
   Pause,
@@ -14,6 +12,7 @@ import {
   RotateCcw,
 } from '../../icons/index.js';
 import { useMetronome } from '../../composables/useMetronome.js';
+import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import PlayerBarPanel from './PlayerBarPanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -34,7 +33,7 @@ const props = defineProps({
   selectedSeparationPresetId: { type: String, default: '' },
   separationPresetTitle: { type: String, default: '' },
   separationInFlight: { type: Boolean, default: false },
-  separationStatus: { type: String, default: '' },
+  separationProgressPercent: { type: Number, default: 0 },
   separationError: { type: String, default: '' },
   separationHasResult: { type: Boolean, default: false },
 });
@@ -77,42 +76,11 @@ const panelStatus = computed(() => {
   if (props.activeTab === 'process') return '音訊處理流程';
   return metronomeSummary.value;
 });
-// The select itself only cares about having a track to act on and not
-// racing an in-flight run — switching presets while one has a result is
-// exactly how the user reaches a preset that doesn't, so hasResult must
-// never disable it (that's the action button's job, below).
-const separationSelectDisabled = computed(
-  () => !props.currentTrack || props.separationInFlight,
-);
-// Presets are deterministic tiers (standard -> high-quality -> inst-hq3),
-// not variations worth re-rolling — a preset that already has a result
-// never has a "regenerate" action, only a disabled "already have" state.
-// Producing a different result means switching the dropdown to a preset
-// that doesn't have one yet.
-const separationActionDisabled = computed(
-  () =>
-    !props.currentTrack ||
-    props.separationInFlight ||
-    props.separationHasResult,
-);
-const separationActionLabel = computed(() => {
-  if (props.separationInFlight) return props.separationStatus || '準備中';
-  return props.separationHasResult ? '已產生' : '產生';
-});
-const separationActionTitle = computed(() => {
-  if (!props.currentTrack) return '請先載入歌曲';
-  if (props.separationInFlight) return props.separationStatus || '處理中';
-  return props.separationHasResult
-    ? '這個設定已經產生過，切換到其他設定即可產生新結果'
-    : '產生可調整導唱強弱的伴奏版本';
-});
-
 function setActiveTab(key) {
   emit('update:activeTab', key);
 }
 
-function handleSeparationPresetChange(event) {
-  const presetId = event.target.value;
+function handleSeparationPresetChange(presetId) {
   emit('update:selectedSeparationPresetId', presetId);
   emit('selectSeparationPreset', presetId);
 }
@@ -383,7 +351,7 @@ function handleSeparationPresetChange(event) {
         <div class="player-tools__row-header">
           <span class="player-tools__label">
             <MicVocal :size="ICON_SIZE" aria-hidden="true" />
-            Vocal Separation
+            伴奏分離
           </span>
           <UiChip tone="gated">Gate</UiChip>
         </div>
@@ -392,48 +360,18 @@ function handleSeparationPresetChange(event) {
           {{ currentTrack ? currentTrack.title : '請先載入歌曲' }}
         </p>
 
-        <div class="player-tools__process-controls">
-          <label class="player-tools__process-select-label">
-            <span class="visually-hidden">人聲分離設定</span>
-            <select
-              class="player-tools__process-select"
-              :value="selectedSeparationPresetId"
-              :disabled="separationSelectDisabled"
-              aria-label="人聲分離設定"
-              :title="separationPresetTitle"
-              @change="handleSeparationPresetChange"
-            >
-              <option
-                v-for="preset in separationPresetOptions"
-                :key="preset.id"
-                :value="preset.id"
-              >
-                {{ preset.label }}
-              </option>
-            </select>
-          </label>
-          <UiButton
-            :icon="
-              separationInFlight
-                ? Loader2
-                : separationHasResult
-                  ? Check
-                  : MicVocal
-            "
-            variant="accent"
-            :class="{ 'player-tools__process-spin': separationInFlight }"
-            :disabled="separationActionDisabled"
-            :aria-label="separationActionLabel"
-            :title="separationActionTitle"
-            @click="emit('generateSeparation')"
-          >
-            {{ separationActionLabel }}
-          </UiButton>
-        </div>
-
-        <p v-if="separationError" class="player-tools__error" role="alert">
-          {{ separationError }}
-        </p>
+        <SeparationPresetControl
+          :has-track="Boolean(currentTrack)"
+          :preset-options="separationPresetOptions"
+          :selected-preset-id="selectedSeparationPresetId"
+          :preset-title="separationPresetTitle"
+          :in-flight="separationInFlight"
+          :progress-percent="separationProgressPercent"
+          :has-result="separationHasResult"
+          :error="separationError"
+          @preset-change="handleSeparationPresetChange"
+          @generate="emit('generateSeparation')"
+        />
       </div>
 
       <div
@@ -728,6 +666,14 @@ function handleSeparationPresetChange(event) {
   gap: var(--ui-space-2);
 }
 
+.player-tools__process-card :deep(.separation-preset-control) {
+  flex-wrap: wrap;
+}
+
+.player-tools__process-card :deep(.separation-preset-control__label) {
+  flex: 1 1 calc(100% - var(--ui-icon-button-size-sm) - var(--ui-space-2));
+}
+
 .player-tools__process-row {
   justify-content: space-between;
 }
@@ -746,18 +692,6 @@ function handleSeparationPresetChange(event) {
   background: transparent;
 }
 
-.player-tools__process-controls {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) max-content;
-  align-items: center;
-  gap: var(--ui-space-2);
-  margin-top: var(--ui-space-1);
-}
-
-.player-tools__process-select-label {
-  min-width: 0;
-}
-
 .player-tools__process-track {
   min-width: 0;
   margin: 0;
@@ -766,44 +700,6 @@ function handleSeparationPresetChange(event) {
   font-weight: var(--ui-font-weight-strong);
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.player-tools__process-select {
-  width: 100%;
-  height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.player-tools__process-controls :deep(.ui-btn) {
-  white-space: nowrap;
-}
-
-.player-tools__process-select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.player-tools__process-spin :deep(svg) {
-  animation: player-tools-spin var(--ui-motion-spin) infinite;
-}
-
-.player-tools__error {
-  margin: 0;
-  color: var(--ui-color-danger);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  overflow-wrap: anywhere;
-}
-
-@keyframes player-tools-spin {
-  to {
-    transform: rotate(360deg);
-  }
 }
 
 @keyframes player-tools-pulse {
@@ -817,8 +713,7 @@ function handleSeparationPresetChange(event) {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .player-tools__metro-toggle,
-  .player-tools__process-spin :deep(svg) {
+  .player-tools__metro-toggle {
     animation: none;
   }
 }

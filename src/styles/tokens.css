@@ -127,6 +127,12 @@
   --ui-icon-button-size-sm: 1.5rem; /* 24px */
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: 2.25rem; /* 36px */
+  --ui-separation-preset-width: 11rem; /* full longest localized preset label */
+  --ui-separation-action-width: 3.75rem; /* stable generate/progress/done slot */
+  --ui-lyrics-live-control-height: 2.75rem; /* 44px urgent live action target */
+  --ui-lyrics-live-action-width: 4.5rem;
+  --ui-lyrics-live-display-width: 4.75rem;
+  --ui-lyrics-live-safe-area: 4.75rem; /* floating control + reader breathing room */
 
   /* --- Sizing: overlays --- */
   --ui-modal-width-default: 26.25rem; /* 420px: short forms */

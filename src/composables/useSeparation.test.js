@@ -79,12 +79,12 @@ describe('describe()', () => {
     expect(describeStage('t1')).toBe('準備中');
   });
 
-  it('includes the percent for the separating stage, defaulting to 0', async () => {
+  it('includes the percent for the separating stage and preserves the latest value', async () => {
     const { describe: describeStage } = await loadSeparation();
     progressCallback({ trackId: 't1', stage: 'separating', percent: 42 });
     expect(describeStage('t1')).toBe('分離中 42%');
     progressCallback({ trackId: 't1', stage: 'separating' });
-    expect(describeStage('t1')).toBe('分離中 0%');
+    expect(describeStage('t1')).toBe('分離中 42%');
   });
 
   it('falls back to 準備中 for an unrecognized stage', async () => {
@@ -141,6 +141,78 @@ describe('inFlightPresetId()', () => {
     await separate(track, 'inst-hq3');
 
     expect(inFlightPresetId('t1')).toBeNull();
+  });
+});
+
+describe('shared preset selection', () => {
+  it('falls back to the track manifest and then the default preset', async () => {
+    const { presetIdFor } = await loadSeparation();
+
+    expect(
+      presetIdFor({
+        id: 't1',
+        separation: { selectedPresetId: 'inst-hq3' },
+      }),
+    ).toBe('inst-hq3');
+    expect(presetIdFor({ id: 't2' })).toBe('standard');
+  });
+
+  it('shares a pending preset choice across composable consumers per track', async () => {
+    const first = await loadSeparation();
+    const second = await loadSeparation();
+    const track = { id: 't1', title: 'Song', separation: { results: {} } };
+
+    await first.selectPreset(track, 'high-quality');
+
+    expect(second.presetIdFor(track)).toBe('high-quality');
+    expect(selectSeparationResultMock).not.toHaveBeenCalled();
+    expect(second.presetIdFor({ id: 't2' })).toBe('standard');
+  });
+
+  it('selects an existing result while retaining the shared choice', async () => {
+    const { presetIdFor, selectPreset } = await loadSeparation();
+    const track = {
+      id: 't1',
+      title: 'Song',
+      separation: { results: { 'high-quality': { modelId: 'kara2' } } },
+    };
+
+    await selectPreset(track, 'high-quality');
+
+    expect(presetIdFor(track)).toBe('high-quality');
+    expect(selectSeparationResultMock).toHaveBeenCalledWith(
+      't1',
+      'high-quality',
+    );
+  });
+
+  it('keeps the previous shared choice when switching an existing result fails', async () => {
+    const { presetIdFor, selectPreset } = await loadSeparation();
+    const track = {
+      id: 't1',
+      title: 'Song',
+      separation: {
+        selectedPresetId: 'standard',
+        results: { 'high-quality': { modelId: 'kara2' } },
+      },
+    };
+    selectSeparationResultMock.mockRejectedValue(new Error('boom'));
+
+    await selectPreset(track, 'high-quality');
+
+    expect(presetIdFor(track)).toBe('standard');
+  });
+});
+
+describe('progressPercent()', () => {
+  it('reports a stable numeric percentage across non-numeric progress stages', async () => {
+    const { progressPercent } = await loadSeparation();
+
+    progressCallback({ trackId: 't1', stage: 'separating', percent: 42 });
+    expect(progressPercent('t1')).toBe(42);
+
+    progressCallback({ trackId: 't1', stage: 'writing' });
+    expect(progressPercent('t1')).toBe(42);
   });
 });
 

@@ -1,5 +1,9 @@
 import { reactive, readonly } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
+import {
+  DEFAULT_SEPARATION_PRESET_ID,
+  hasSeparationPreset,
+} from '../constants/separationPresets.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 
@@ -20,6 +24,10 @@ const state = reactive({
   inFlight: new Map(),
   // Keyed by trackId so one track's error can't clobber another's.
   errors: new Map(),
+  // Track-scoped transient selection shared by Lyrics and PlayerBar. A pending
+  // preset choice must not diverge merely because the two surfaces mount at
+  // different times.
+  selectedPresets: new Map(),
 });
 
 let unsubscribeProgress = null;
@@ -28,7 +36,15 @@ let unsubscribeProgress = null;
 if (typeof window !== 'undefined' && window.Utawakui) {
   unsubscribeProgress = window.Utawakui.onSeparationProgress(
     ({ trackId, presetId, stage, percent }) => {
-      state.inFlight.set(trackId, { stage, percent, presetId });
+      const previous = state.inFlight.get(trackId);
+      state.inFlight.set(trackId, {
+        stage,
+        percent: Number.isFinite(percent) ? percent : (previous?.percent ?? 0),
+        presetId: presetId ?? previous?.presetId,
+      });
+      if (hasSeparationPreset(presetId)) {
+        state.selectedPresets.set(trackId, presetId);
+      }
     },
   );
 }
@@ -49,6 +65,25 @@ function isSeparating(trackId) {
 // state.track gets replaced by an unrelated library:updated refresh.
 function inFlightPresetId(trackId) {
   return state.inFlight.get(trackId)?.presetId ?? null;
+}
+
+function presetIdFor(track) {
+  const inFlightPreset = track?.id ? inFlightPresetId(track.id) : null;
+  if (hasSeparationPreset(inFlightPreset)) return inFlightPreset;
+
+  const selectedPreset = track?.id ? state.selectedPresets.get(track.id) : null;
+  if (hasSeparationPreset(selectedPreset)) return selectedPreset;
+
+  const manifestPreset = track?.separation?.selectedPresetId;
+  return hasSeparationPreset(manifestPreset)
+    ? manifestPreset
+    : DEFAULT_SEPARATION_PRESET_ID;
+}
+
+function progressPercent(trackId) {
+  const percent = state.inFlight.get(trackId)?.percent;
+  if (!Number.isFinite(percent)) return 0;
+  return Math.min(100, Math.max(0, Math.round(percent)));
 }
 
 // Human-readable label for the button — "準備中" covers the gap between
@@ -73,6 +108,9 @@ function describe(trackId) {
 
 async function separate(track, presetId) {
   if (isSeparating(track.id)) return;
+  if (hasSeparationPreset(presetId)) {
+    state.selectedPresets.set(track.id, presetId);
+  }
   state.errors.delete(track.id);
   const enabled = await requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
     source: 'separation',
@@ -95,7 +133,7 @@ async function separate(track, presetId) {
   // Seeds an entry immediately so isSeparating() is true (and the button
   // shows "準備中") from the very first render after the click, instead of
   // waiting for the first IPC progress event to round-trip.
-  state.inFlight.set(track.id, { stage: null, presetId });
+  state.inFlight.set(track.id, { stage: null, percent: 0, presetId });
   try {
     await window.Utawakui.runSeparation(track.id, presetId);
   } catch (err) {
@@ -136,7 +174,11 @@ async function separate(track, presetId) {
 async function selectResult(track, presetId) {
   try {
     await window.Utawakui.selectSeparationResult(track.id, presetId);
+    if (hasSeparationPreset(presetId)) {
+      state.selectedPresets.set(track.id, presetId);
+    }
     state.errors.delete(track.id);
+    return true;
   } catch (err) {
     const appError = recordError(err, {
       title: `${track.title} 切換失敗`,
@@ -145,7 +187,17 @@ async function selectResult(track, presetId) {
       context: { trackId: track.id, presetId },
     });
     state.errors.set(track.id, `${track.title} 切換失敗:${appError.message}`);
+    return false;
   }
+}
+
+async function selectPreset(track, presetId) {
+  if (!track || !hasSeparationPreset(presetId)) return;
+  if (track.separation?.results?.[presetId]) {
+    await selectResult(track, presetId);
+    return;
+  }
+  state.selectedPresets.set(track.id, presetId);
 }
 
 export function useSeparation() {
@@ -153,8 +205,11 @@ export function useSeparation() {
     state: readonly(state),
     isSeparating,
     inFlightPresetId,
+    presetIdFor,
+    progressPercent,
     describe,
     separate,
+    selectPreset,
     selectResult,
   };
 }

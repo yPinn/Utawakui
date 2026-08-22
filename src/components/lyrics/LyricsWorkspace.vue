@@ -1,42 +1,26 @@
 <script setup>
 import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
-import {
-  Captions,
-  Check,
-  Clock,
-  ICON_SIZE,
-  Languages,
-  ListMusic,
-  Loader2,
-  MicVocal,
-  Minus,
-  Pencil,
-  Plus,
-  RefreshCw,
-  Type,
-  X,
-} from '../../icons/index.js';
+import { Check, Pencil, X } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import {
-  DEFAULT_SEPARATION_PRESET_ID,
   SEPARATION_PRESET_OPTIONS,
   SEPARATION_PRESET_SELECT_TITLE,
-  hasSeparationPreset,
 } from '../../constants/separationPresets.js';
 import { formatDuration } from '../../utils/format.js';
 import {
   alignReadings,
   detectLyricsScript,
-  formatLyricsSourceLabel,
   formatLyricTime,
 } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import LyricsLiveControls from './LyricsLiveControls.vue';
+import LyricsPreparationBar from './LyricsPreparationBar.vue';
 import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
+import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 
 const {
   state,
@@ -56,9 +40,10 @@ const {
 const {
   state: separationState,
   isSeparating,
-  describe,
+  presetIdFor,
+  progressPercent,
   separate,
-  selectResult,
+  selectPreset,
 } = useSeparation();
 
 const {
@@ -72,7 +57,6 @@ const {
 } = useLyricsReading();
 
 const lyricsPreview = useTemplateRef('lyricsPreview');
-const selectedPresetId = ref(DEFAULT_SEPARATION_PRESET_ID);
 const lyricsFontSizeIndex = ref(1);
 const isSourceManagerOpen = ref(false);
 const isTrackPickerOpen = ref(false);
@@ -84,21 +68,6 @@ const LYRICS_FONT_SIZE_CLASSES = [
   'lyrics-preview--font-default',
   'lyrics-preview--font-large',
 ];
-
-const TRACK_SCOPE_LABELS = {
-  all: '全部曲目',
-  'current-playlist': '目前歌單',
-  local: '本機曲目',
-  'missing-lyrics': '缺歌詞',
-  'available-lyrics': '有歌詞',
-};
-
-watch(selectedTrack, (track) => {
-  const presetId = track?.separation?.selectedPresetId;
-  if (hasSeparationPreset(presetId)) {
-    selectedPresetId.value = presetId;
-  }
-});
 
 const offsetLabel = computed(() => {
   if (state.offsetSeconds === 0) return '0.0s';
@@ -114,11 +83,6 @@ const selectedMeta = computed(() => {
       : null,
   ].filter(Boolean);
   return parts.join(' / ');
-});
-
-const trackScopeSummary = computed(() => {
-  const label = TRACK_SCOPE_LABELS[state.trackScope] ?? '全部曲目';
-  return `${label} / ${state.tracks.length} 首`;
 });
 
 const lyricsFontSizeClass = computed(
@@ -146,6 +110,19 @@ const selectedSeparationError = computed(() => {
   const track = selectedTrack.value;
   return track ? (separationState.errors.get(track.id) ?? null) : null;
 });
+
+const selectedPresetId = computed(() => presetIdFor(selectedTrack.value));
+const selectedSeparationInFlight = computed(() => {
+  const track = selectedTrack.value;
+  return track ? isSeparating(track.id) : false;
+});
+const selectedSeparationProgressPercent = computed(() => {
+  const track = selectedTrack.value;
+  return track ? progressPercent(track.id) : 0;
+});
+const selectedSeparationHasResult = computed(() =>
+  Boolean(selectedTrack.value?.separation?.results?.[selectedPresetId.value]),
+);
 
 // Only Japanese/Korean lyrics get a reading-aid toolbar at all — showing a
 // permanently-disabled control for every other language is pure noise
@@ -204,47 +181,23 @@ watch(
   { immediate: true },
 );
 
-function lyricsStatusLabel(track) {
-  const status = track.lyrics?.status;
-  if (status === 'available') return '有歌詞';
-  if (status === 'missing') return '無歌詞';
-  return '未掃描歌詞';
-}
-
-function lyricsStatusTone(track) {
-  return track.lyrics?.status === 'available' ? 'accent' : 'muted';
-}
-
-function lyricsStatusOverrides(track) {
-  if (track.lyrics?.status) return {};
-  return {
-    background: 'var(--ui-color-surface-hover)',
-    color: 'var(--ui-color-text)',
-  };
-}
-
-function hasSeparationResult(presetId) {
-  return Boolean(selectedTrack.value?.separation?.results?.[presetId]);
-}
-
-function handlePresetChange(event) {
-  const presetId = event.target.value;
+function handlePresetChange(presetId) {
   const track = selectedTrack.value;
-  if (track && hasSeparationResult(presetId)) {
-    selectResult(track, presetId);
-  }
+  if (track) selectPreset(track, presetId);
 }
 
-function handleSourceChange(event) {
-  selectSource(event.target.value);
+function generateSeparation() {
+  const track = selectedTrack.value;
+  if (!track || selectedSeparationHasResult.value) return;
+  separate(track, selectedPresetId.value);
 }
 
 function canSeekLine(line) {
   return Number.isFinite(line?.start);
 }
 
-function setReadingVariant(event) {
-  readingVariant.value = event.target.value;
+function setReadingVariant(variant) {
+  readingVariant.value = variant;
 }
 
 function generateReadingForSelected() {
@@ -344,213 +297,52 @@ watch(activeLineIndex, (index) => {
 
 <template>
   <div class="lyrics-workspace">
-    <section class="lyrics-stage" aria-label="歌詞預覽">
-      <header class="lyrics-stage__header">
-        <div class="lyrics-stage__text">
-          <p class="lyrics-stage__scope">{{ trackScopeSummary }}</p>
-          <h2 class="lyrics-stage__title">
-            {{ selectedTrack?.title || '未選取歌曲' }}
-          </h2>
-          <p v-if="selectedMeta" class="lyrics-stage__meta">
-            {{ selectedMeta }}
-          </p>
-          <p v-if="reloadStatusLabel" class="lyrics-stage__status">
-            {{ reloadStatusLabel }}
-          </p>
-        </div>
+    <section class="lyrics-stage" aria-label="歌詞工作區">
+      <LyricsWorkspaceHeader
+        :track="selectedTrack"
+        :track-meta="selectedMeta"
+        :reload-status="reloadStatusLabel"
+        :is-reloading="isReloading"
+        :separation-preset-options="SEPARATION_PRESET_OPTIONS"
+        :selected-separation-preset-id="selectedPresetId"
+        :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
+        :separation-in-flight="selectedSeparationInFlight"
+        :separation-progress-percent="selectedSeparationProgressPercent"
+        :separation-has-result="selectedSeparationHasResult"
+        :separation-error="selectedSeparationError || ''"
+        @select-track="isTrackPickerOpen = true"
+        @refresh="refresh"
+        @separation-preset-change="handlePresetChange"
+        @generate-separation="generateSeparation"
+      />
 
-        <div class="lyrics-stage__actions">
-          <UiChip
-            v-if="selectedTrack"
-            class="lyrics-status-badge"
-            :tone="lyricsStatusTone(selectedTrack)"
-            v-bind="lyricsStatusOverrides(selectedTrack)"
-          >
-            {{ lyricsStatusLabel(selectedTrack) }}
-          </UiChip>
-          <UiButton
-            :icon="ListMusic"
-            title="選擇歌詞曲目"
-            @click="isTrackPickerOpen = true"
-          >
-            選曲
-          </UiButton>
-          <UiButton
-            :icon="RefreshCw"
-            :active="isReloading"
-            title="重新掃描"
-            aria-label="重新掃描"
-            @click="refresh"
-          />
-        </div>
-      </header>
-
-      <div class="lyrics-toolbar">
-        <div class="lyrics-source" title="歌詞來源">
-          <Captions :size="ICON_SIZE" aria-hidden="true" />
-          <label>
-            <span class="visually-hidden">歌詞來源</span>
-            <select
-              class="lyrics-select lyrics-source__select"
-              :value="state.selectedSourceFilename || ''"
-              :disabled="selectedLyrics.sources.length === 0"
-              @change="handleSourceChange"
-            >
-              <option value="">無</option>
-              <option
-                v-for="source in selectedLyrics.sources"
-                :key="source.filename"
-                :value="source.filename"
-              >
-                {{ formatLyricsSourceLabel(source) }}
-              </option>
-            </select>
-          </label>
-          <UiButton
-            v-if="selectedTrack"
-            :icon="ListMusic"
-            title="管理歌詞來源"
-            aria-label="管理歌詞來源"
-            @click="isSourceManagerOpen = true"
-          />
-        </div>
-
-        <div
-          v-if="showsReadingAid"
-          class="lyrics-reading"
-          aria-label="讀音輔助"
-          title="讀音輔助"
-        >
-          <Languages :size="ICON_SIZE" aria-hidden="true" />
-          <select
-            class="lyrics-select lyrics-reading__variant"
-            :value="readingVariant"
-            aria-label="讀音顯示"
-            @change="setReadingVariant"
-          >
-            <option value="off">不顯示</option>
-            <option v-if="lyricsScript === 'ja'" value="furigana">
-              假名標音
-            </option>
-            <option value="romaji">羅馬拼音</option>
-          </select>
-          <UiButton
-            v-if="isGeneratingReading"
-            :icon="Loader2"
-            class="lyrics-reading__spin"
-            disabled
-            title="產生讀音中"
-          >
-            <span role="status">產生中</span>
-          </UiButton>
-          <UiButton
-            v-else
-            :icon="Languages"
-            :aria-label="selectedReadingDoc ? '重新產生讀音' : '產生讀音'"
-            :title="selectedReadingDoc ? '重新產生讀音' : '產生讀音'"
-            @click="generateReadingForSelected"
-          />
-          <span v-if="readingError" class="lyrics-reading__error">{{
-            readingError
-          }}</span>
-        </div>
-
-        <div
-          class="lyrics-offset"
-          aria-label="歌詞時間偏移"
-          title="歌詞時間偏移"
-        >
-          <Clock :size="ICON_SIZE" aria-hidden="true" />
-          <UiButton
-            :icon="Minus"
-            title="延後歌詞 0.1 秒"
-            aria-label="延後歌詞 0.1 秒"
-            @click="adjustOffset(-0.1)"
-          />
-          <UiButton
-            class="lyrics-offset__value"
-            :disabled="state.offsetSeconds === 0"
-            title="重設歌詞時間偏移"
-            aria-label="重設歌詞時間偏移"
-            @click="resetOffset"
-          >
-            {{ offsetLabel }}
-          </UiButton>
-          <UiButton
-            :icon="Plus"
-            title="提前歌詞 0.1 秒"
-            aria-label="提前歌詞 0.1 秒"
-            @click="adjustOffset(0.1)"
-          />
-        </div>
-
-        <div class="lyrics-text-size" aria-label="歌詞字級" title="歌詞字級">
-          <Type :size="ICON_SIZE" aria-hidden="true" />
-          <UiButton
-            :icon="Minus"
-            title="縮小歌詞"
-            aria-label="縮小歌詞"
-            :disabled="!canDecreaseLyricsFontSize"
-            @click="decreaseLyricsFontSize"
-          />
-          <UiButton
-            :icon="Plus"
-            title="放大歌詞"
-            aria-label="放大歌詞"
-            :disabled="!canIncreaseLyricsFontSize"
-            @click="increaseLyricsFontSize"
-          />
-        </div>
-
-        <div v-if="selectedTrack" class="lyrics-separation" aria-label="伴奏">
-          <select
-            v-model="selectedPresetId"
-            class="lyrics-select lyrics-separation__preset"
-            :disabled="isSeparating(selectedTrack.id)"
-            aria-label="伴奏分離設定"
-            :title="SEPARATION_PRESET_SELECT_TITLE"
-            @change="handlePresetChange"
-          >
-            <option
-              v-for="preset in SEPARATION_PRESET_OPTIONS"
-              :key="preset.id"
-              :value="preset.id"
-            >
-              {{ preset.label }}
-            </option>
-          </select>
-          <UiButton
-            v-if="isSeparating(selectedTrack.id)"
-            :icon="Loader2"
-            class="lyrics-separation__spin"
-            disabled
-            :title="describe(selectedTrack.id)"
-          >
-            <span role="status">{{ describe(selectedTrack.id) }}</span>
-          </UiButton>
-          <UiButton
-            v-else
-            :icon="MicVocal"
-            :aria-label="
-              hasSeparationResult(selectedPresetId) ? '重新產生' : '產生'
-            "
-            :title="
-              hasSeparationResult(selectedPresetId)
-                ? '重新產生(用選定的設定重新產生這個結果)'
-                : '產生(產生可調整導唱強弱的伴奏版本)'
-            "
-            @click="separate(selectedTrack, selectedPresetId)"
-          />
-          <span v-if="selectedSeparationError" class="lyrics-separation__error">
-            {{ selectedSeparationError }}
-          </span>
-        </div>
-      </div>
+      <LyricsPreparationBar
+        :sources="selectedLyrics.sources"
+        :selected-source-filename="state.selectedSourceFilename || ''"
+        :has-selected-track="Boolean(selectedTrack)"
+        :shows-reading-aid="showsReadingAid"
+        :lyrics-script="lyricsScript"
+        :reading-variant="readingVariant"
+        :is-generating-reading="isGeneratingReading"
+        :has-reading-document="Boolean(selectedReadingDoc)"
+        :reading-error="readingError || ''"
+        :can-decrease-font-size="canDecreaseLyricsFontSize"
+        :can-increase-font-size="canIncreaseLyricsFontSize"
+        @source-change="selectSource"
+        @manage-sources="isSourceManagerOpen = true"
+        @reading-variant-change="setReadingVariant"
+        @generate-reading="generateReadingForSelected"
+        @decrease-font-size="decreaseLyricsFontSize"
+        @increase-font-size="increaseLyricsFontSize"
+      />
 
       <div
         ref="lyricsPreview"
         class="lyrics-preview"
         :class="lyricsFontSizeClass"
+        role="region"
+        aria-label="歌詞內容"
+        tabindex="0"
       >
         <UiHint v-if="state.error" tone="danger" padded>{{
           state.error
@@ -686,6 +478,13 @@ watch(activeLineIndex, (index) => {
           </li>
         </ol>
       </div>
+
+      <LyricsLiveControls
+        :offset-label="offsetLabel"
+        :can-reset="state.offsetSeconds !== 0"
+        @adjust-offset="adjustOffset"
+        @reset-offset="resetOffset"
+      />
     </section>
 
     <LyricsTrackPickerModal
@@ -700,18 +499,6 @@ watch(activeLineIndex, (index) => {
 </template>
 
 <style scoped>
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .lyrics-workspace {
   display: flex;
   flex: 1;
@@ -719,7 +506,9 @@ watch(activeLineIndex, (index) => {
 }
 
 .lyrics-stage {
+  position: relative;
   display: grid;
+  container-type: inline-size;
   grid-template-rows: auto auto minmax(0, 1fr);
   width: 100%;
   min-width: 0;
@@ -729,175 +518,9 @@ watch(activeLineIndex, (index) => {
   background: var(--ui-color-surface);
 }
 
-.lyrics-stage__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--ui-space-4);
-  padding: var(--ui-space-4);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.lyrics-stage__text {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.lyrics-stage__scope,
-.lyrics-stage__title,
-.lyrics-stage__meta,
-.lyrics-stage__status {
-  margin: 0;
-}
-
-.lyrics-stage__scope,
-.lyrics-stage__meta {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
-.lyrics-stage__title {
-  overflow: hidden;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.lyrics-stage__status {
-  color: var(--ui-color-accent);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
-.lyrics-stage__actions {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: flex-end;
-  gap: var(--ui-space-2);
-}
-
-.lyrics-toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  /* Looser than any single control cluster's own internal gap (space-2) —
-     the beat between distinct clusters should read as separation, not a
-     continuation of the same tight grouping. */
-  gap: var(--ui-space-4);
-  padding: var(--ui-space-4);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.lyrics-select {
-  height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.lyrics-source {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  min-width: 0;
-}
-
-.lyrics-source > svg,
-.lyrics-offset > svg,
-.lyrics-text-size > svg,
-.lyrics-reading > svg {
-  flex-shrink: 0;
-  color: var(--ui-color-text-muted);
-}
-
-.lyrics-reading {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-}
-
-.lyrics-reading__variant {
-  min-width: 96px;
-}
-
-.lyrics-reading__spin :deep(svg) {
-  animation: lyrics-spin var(--ui-motion-spin) infinite;
-}
-
-.lyrics-reading__error {
-  color: var(--ui-color-danger);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-source__select {
-  min-width: 180px;
-  max-width: 320px;
-}
-
-.lyrics-text-size,
-.lyrics-offset {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-}
-
-.lyrics-offset__value {
-  justify-content: center;
-  min-width: 52px;
-  padding: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  text-align: center;
-  font-variant-numeric: tabular-nums;
-  user-select: none;
-}
-
-.lyrics-separation {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  margin-left: auto;
-}
-
-.lyrics-separation__preset {
-  min-width: 96px;
-}
-
-.lyrics-separation__spin :deep(svg) {
-  animation: lyrics-spin var(--ui-motion-spin) infinite;
-}
-
-.lyrics-separation__error {
-  color: var(--ui-color-danger);
-  font-size: var(--ui-font-size-sm);
-}
-
 .lyrics-preview {
   min-height: 0;
+  padding-bottom: var(--ui-lyrics-live-safe-area);
   overflow: auto;
 }
 
@@ -1113,43 +736,5 @@ watch(activeLineIndex, (index) => {
 .lyrics-line--active .lyrics-line__romaji {
   color: inherit;
   opacity: var(--ui-opacity-muted);
-}
-
-.lyrics-status-badge {
-  flex: 0 0 auto;
-  padding: var(--ui-space-2) var(--ui-space-3);
-}
-
-@keyframes lyrics-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lyrics-separation__spin :deep(svg) {
-    animation: none;
-  }
-}
-
-@media (max-width: 900px) {
-  .lyrics-stage__header,
-  .lyrics-toolbar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .lyrics-stage__actions,
-  .lyrics-source,
-  .lyrics-reading,
-  .lyrics-offset,
-  .lyrics-text-size,
-  .lyrics-separation {
-    flex-wrap: wrap;
-  }
-
-  .lyrics-separation {
-    margin-left: 0;
-  }
 }
 </style>
