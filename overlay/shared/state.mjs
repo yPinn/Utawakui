@@ -21,7 +21,7 @@ function playbackRate(snapshot) {
   return Number.isFinite(rate) && rate > 0 ? rate : 1;
 }
 
-function playbackPositionMs(snapshot, nowMs) {
+export function playbackPositionMs(snapshot, nowMs) {
   const playback = snapshot?.playback;
   const basePosition = Number.isFinite(playback?.positionMs)
     ? Math.max(0, playback.positionMs)
@@ -42,7 +42,7 @@ function playbackPositionMs(snapshot, nowMs) {
     : projectedPosition;
 }
 
-function activeLyricIndex(snapshot, lines, nowMs) {
+export function activeLyricIndex(snapshot, lines, nowMs) {
   const lyrics = snapshot?.lyrics;
   if (lyrics?.synced === true) {
     const offsetMs = Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0;

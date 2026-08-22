@@ -1,6 +1,7 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const path = require('node:path');
 
 const {
   app,
@@ -47,6 +48,10 @@ const {
 const { registerOutputHandlers } = require('./main/outputHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
+const { createPerformerWindowManager } = require('./main/performerWindow');
+const {
+  registerPerformerViewHandlers,
+} = require('./main/performerViewHandlers');
 const { createProviderRunnerManager } = require('./main/providerRunner');
 const {
   runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
@@ -58,6 +63,19 @@ const diagnosticsService = createDiagnosticsService({
   sessionId: crypto.randomUUID(),
   process: 'main',
 });
+
+let performerWindowManager = null;
+
+function createConfiguredMainWindow() {
+  const config = configState.getConfig();
+  const mainWindow = windowState.createMainWindow(
+    config.uiTheme,
+    config.sidebarWidth,
+    config.captureDeviceId,
+  );
+  performerWindowManager?.attachMainWindow(mainWindow);
+  return mainWindow;
+}
 registerDiagnosticsLifecycle({
   app,
   processTarget: process,
@@ -176,6 +194,25 @@ if (!gotSingleInstanceLock) {
       resolveDownloadDir: configState.resolveDownloadDir,
     });
 
+    performerWindowManager = createPerformerWindowManager({
+      BrowserWindow,
+      isDev: windowState.isDev,
+      devUrl: 'http://localhost:5173/performer-view.html',
+      pagePath: path.join(__dirname, '..', 'dist', 'performer-view.html'),
+      preloadPath: path.join(__dirname, 'performerPreload.js'),
+      getUiTheme: () => configState.getConfig().uiTheme,
+      publishStatus: (status) => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow?.isDestroyed()) {
+          mainWindow.webContents.send('performer-view:status', status);
+        }
+      },
+    });
+    registerPerformerViewHandlers({
+      ipcMain,
+      manager: performerWindowManager,
+    });
+
     registerLibraryHandlers({
       ipcMain,
       dialog,
@@ -262,11 +299,7 @@ if (!gotSingleInstanceLock) {
       console.warn('[output] Automatic startup failed', error.message);
     }
 
-    windowState.createMainWindow(
-      configState.getConfig().uiTheme,
-      configState.getConfig().sidebarWidth,
-      configState.getConfig().captureDeviceId,
-    );
+    createConfiguredMainWindow();
     appUpdateService.scheduleStartupCheck(APP_UPDATE_STARTUP_DELAY_MS);
   });
 
@@ -276,6 +309,6 @@ if (!gotSingleInstanceLock) {
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0)
-      windowState.createMainWindow();
+      createConfiguredMainWindow();
   });
 }

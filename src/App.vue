@@ -20,6 +20,7 @@ import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useTheme } from './composables/useTheme.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
+import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/outputRuntimeContext.js';
 
 // Long-lived app hooks; each composable owns its cleanup.
@@ -34,6 +35,7 @@ useAudioOutput().restoreInitialDevice();
 const outputRuntime = useOutputRuntime();
 outputRuntime.initialize();
 provide(OUTPUT_RUNTIME_KEY, outputRuntime);
+usePerformerSelfView().initialize();
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).

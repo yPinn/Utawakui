@@ -57,7 +57,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 | Lyrics Workspace     | 管理 synced lyrics、字幕或自用歌詞資料。         | 部分實作           |
 | Pitch / Tempo        | 讓使用者調整 key 與速度。                        | 已實作即時 preview |
 | Vocal Separation     | 產生分離後的 generated media，支援 guide vocal。 | 已實作             |
-| Performer Self-View  | 給表演者看的 lyrics、cue、key、下一首。          | 規劃中             |
+| Performer Self-View  | 給表演者看的 lyrics、cue、key、下一首。          | 基本 MVP 已實作    |
 | OBS Overlay          | 給觀眾端或錄製畫面使用的 Browser Source。        | 基本 MVP 已實作    |
 | Recording / VOD mode | 區分 live-only 與 recording/VOD session。        | 規劃中             |
 
@@ -103,10 +103,10 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Local-import-first Import flow；本機音訊為預設入口，provider flow 需明確啟用。
 - Loopback HTTP/WebSocket output runtime、四條固定 Browser Source routes 與 canonical snapshot projection。
 - 四類獨立 overlay slots、分類 Gallery、真實 iframe Workbench 與 allowlisted appearance settings。
+- 獨立 Performer Self-View 視窗、唯讀 IPC projection、目前／下一句讀音、key/tempo 與下一首提示。
 
 ### 4.2 尚未完成但已納入規格
 
-- Performer self-view。
 - 進階 overlay 模板與完整 style-set catalog；現有四類 slot、基礎模板與 appearance editing 已完成。
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
@@ -121,6 +121,11 @@ Renderer Vue app
   - Playback UI and library UI
   - Feature notices and gates
   - IPC through preload only
+
+Performer Self-View renderer
+  - Independent local BrowserWindow and dedicated read-only preload
+  - Receives sanitized player/queue/lyrics/reading projections
+  - Owns presentation timing and window controls, never playback state
 
 Electron main process
   - BrowserWindow lifecycle
@@ -149,6 +154,7 @@ OBS overlay runtime
 - 所有 filesystem、provider、download、separation 行為都經 main process 或 worker 處理。
 - 本機媒體經 `utawakui-media:` allowlist 提供，不直接暴露 arbitrary file path。
 - Overlay 是獨立 delivery path，不嵌入 Electron renderer。
+- Performer Self-View 是本機獨立 renderer，不經公開 HTTP/WebSocket runtime；主 renderer 仍是 player、queue 與 lyrics 的唯一 source of truth。
 - Overlay tokens 使用 `--ovl-*`，控制台 tokens 使用 `--ui-*`，兩者不共用。
 - App 版本由 main process 的 `app.getVersion()` 提供；renderer 不直接把
   `package.json` 當成 packaged runtime 狀態。
@@ -426,7 +432,7 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 - 本機 HTTP/WebSocket state server（P1B runtime、P1D gate/IPC/publish 已完成）。
 - OBS Browser Source overlay（P1C 基本模板、P1D Workbench 真實預覽已完成）。
-- Performer self-view 與 integration boundary（P1E，下一個實作 phase）。
+- Performer self-view 與 integration boundary（P1E 自動化 MVP 已完成；OBS／installer 人工驗收依 `tasks/todo.md` 追蹤）。
 - Overlay token foundation、四類獨立 slot persistence、template selection 與基礎 appearance editing 已完成；進階模板 catalog 不阻擋 Phase 1 closeout。
 - Now-playing、playlist、lyrics sync（P1D 基本 snapshot sync 已完成）。
 

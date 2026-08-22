@@ -225,6 +225,8 @@ function createMainWindow(
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
+
+  return mainWindow;
 }
 
 module.exports = {

@@ -3,6 +3,7 @@
 // Use vitest/config so the test field is recognized.
 const { defineConfig } = require('vitest/config');
 const vue = require('@vitejs/plugin-vue');
+const path = require('node:path');
 
 module.exports = defineConfig({
   plugins: [vue()],
@@ -11,6 +12,14 @@ module.exports = defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+  },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+        performer: path.resolve(__dirname, 'performer-view.html'),
+      },
+    },
   },
   test: {
     environment: 'node',

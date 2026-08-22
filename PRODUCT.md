@@ -83,7 +83,7 @@ Utawakui 的產品結構以媒體工作流階段切分：
 | Lyrics Workspace    | 管理 synced lyrics、字幕與自用歌詞資料。   | OBS 顯示前 gate。                 | Partially built |
 | Pitch / Tempo       | 調整 key 與速度，支援練習與演出。          | 公開輸出或 render cache 前 gate。 | Built preview   |
 | Vocal Separation    | 產生 generated media，支援 guide vocal。   | 產生/公開使用前 gate。            | Built           |
-| Performer Self-View | 給操作者看的 lyrics、cue、key、下一首。    | 低風險，除非內容進入公開輸出。    | Planned         |
+| Performer Self-View | 給操作者看的 lyrics、cue、key、下一首。    | 低風險，除非內容進入公開輸出。    | Built MVP       |
 | Pre-rendered Assets | 產生可重播的 pitch/tempo processed files。 | Generated media gate。            | Planned         |
 
 ### OBS Output

@@ -1,20 +1,35 @@
 <script setup>
 import { computed } from 'vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import { Moon, Sun } from '../../icons/index.js';
+import { MonitorUp, Moon, Sun } from '../../icons/index.js';
+import { usePerformerSelfView } from '../../composables/usePerformerSelfView.js';
 import { useTheme } from '../../composables/useTheme.js';
 
 const { theme, toggleTheme } = useTheme();
+const { state: performerState, open: openPerformerView } =
+  usePerformerSelfView();
 
 const isLight = computed(() => theme.value === 'light');
 const label = computed(() =>
   isLight.value ? '切換為深色主題' : '切換為淺色主題',
+);
+const performerLabel = computed(() =>
+  performerState.open ? '切換到表演者畫面' : '開啟表演者畫面',
 );
 </script>
 
 <template>
   <header class="app-title-bar">
     <div class="app-title-bar__controls">
+      <UiIconButton
+        :icon="MonitorUp"
+        :label="performerLabel"
+        variant="overlay"
+        size="md"
+        :active="performerState.open"
+        :disabled="performerState.isOpening"
+        @click="openPerformerView"
+      />
       <UiIconButton
         :icon="isLight ? Moon : Sun"
         :label="label"

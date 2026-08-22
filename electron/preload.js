@@ -77,6 +77,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
   stopOutput: () => ipcRenderer.invoke('output:stop'),
   publishOutputSnapshot: (snapshot) =>
     ipcRenderer.invoke('output:publish', snapshot),
+  openPerformerView: (snapshot) =>
+    ipcRenderer.invoke('performer-view:open', snapshot),
+  publishPerformerSnapshot: (snapshot) =>
+    ipcRenderer.invoke('performer-view:publish', snapshot),
+  getPerformerViewStatus: () => ipcRenderer.invoke('performer-view:get-status'),
+  onPerformerViewStatus: (callback) => {
+    const listener = (event, status) => callback(status);
+    ipcRenderer.on('performer-view:status', listener);
+    return () => ipcRenderer.removeListener('performer-view:status', listener);
+  },
   listOutputSlots: () => ipcRenderer.invoke('output-slots:list'),
   upsertOutputSlot: (kind, slot) =>
     ipcRenderer.invoke('output-slots:upsert', kind, slot),
