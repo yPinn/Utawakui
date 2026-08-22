@@ -123,9 +123,13 @@ describe('hasSeparation', () => {
     fs.mkdirSync(separationsDir, { recursive: true });
     fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
     recordSeparationResult(separationsDir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'standard',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      modelIds: ['kara2'],
+      artifactFilename: 'standard.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     expect(hasSeparation(dir, 'abc')).toBe(true);
   });
@@ -134,9 +138,13 @@ describe('hasSeparation', () => {
     const separationsDir = path.join(dir, 'tracks', 'abc', 'separations');
     fs.mkdirSync(separationsDir, { recursive: true });
     recordSeparationResult(separationsDir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'standard',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      modelIds: ['kara2'],
+      artifactFilename: 'standard.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     // recordSeparationResult only writes the manifest — no standard.wav on
     // disk, simulating a result deleted out-of-band.
@@ -155,10 +163,10 @@ describe('hasSeparationResultFile', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('is true only when <presetId>.wav exists in the given dir', () => {
+  it('is true only when the manifest artifact filename exists in the given dir', () => {
     fs.writeFileSync(path.join(dir, 'standard.wav'), 'x');
-    expect(hasSeparationResultFile(dir, 'standard')).toBe(true);
-    expect(hasSeparationResultFile(dir, 'inst-hq3')).toBe(false);
+    expect(hasSeparationResultFile(dir, 'standard.wav')).toBe(true);
+    expect(hasSeparationResultFile(dir, 'clean.wav')).toBe(false);
   });
 });
 
@@ -175,13 +183,55 @@ describe('loadSeparationManifest', () => {
 
   it('returns the empty default when manifest.json does not exist', () => {
     expect(loadSeparationManifest(dir)).toEqual({
-      version: 1,
-      selectedPresetId: null,
+      version: 2,
+      selectedRecipeId: null,
       results: {},
     });
   });
 
-  it('reads selectedPresetId and results from a valid manifest', () => {
+  it('canonicalizes old v2 product ids without renaming their artifacts', () => {
+    fs.writeFileSync(
+      path.join(dir, 'manifest.json'),
+      JSON.stringify({
+        version: 2,
+        selectedRecipeId: 'clean',
+        results: {
+          standard: {
+            recipeVersion: 1,
+            engineId: 'onnx-mdx',
+            modelIds: ['kara2'],
+            artifactFilename: 'standard.wav',
+            completedAt: '2026-01-01T00:00:00.000Z',
+            outputLayout: 'accompaniment-guide-4ch',
+          },
+          clean: {
+            recipeVersion: 1,
+            engineId: 'onnx-mdx',
+            modelIds: ['inst-hq3'],
+            artifactFilename: 'clean.wav',
+            completedAt: '2026-01-02T00:00:00.000Z',
+            outputLayout: 'accompaniment-guide-4ch',
+          },
+        },
+      }),
+    );
+
+    expect(loadSeparationManifest(dir)).toMatchObject({
+      selectedRecipeId: 'general',
+      results: {
+        quick: {
+          profileId: 'mdx-kara2-v1',
+          artifactFilename: 'standard.wav',
+        },
+        general: {
+          profileId: 'mdx-inst-hq3-v1',
+          artifactFilename: 'clean.wav',
+        },
+      },
+    });
+  });
+
+  it('normalizes a v1 manifest to canonical product recipes without renaming artifacts', () => {
     fs.writeFileSync(
       path.join(dir, 'manifest.json'),
       JSON.stringify({
@@ -200,13 +250,124 @@ describe('loadSeparationManifest', () => {
       }),
     );
     expect(loadSeparationManifest(dir)).toEqual({
-      version: 1,
-      selectedPresetId: 'inst-hq3',
+      version: 2,
+      selectedRecipeId: 'general',
       results: {
-        standard: { modelId: 'kara2', separatedAt: '2026-01-01T00:00:00.000Z' },
-        'inst-hq3': {
-          modelId: 'inst-hq3',
-          separatedAt: '2026-01-02T00:00:00.000Z',
+        quick: {
+          recipeVersion: 1,
+          engineId: 'onnx-mdx',
+          profileId: 'mdx-kara2-v1',
+          modelIds: ['kara2'],
+          artifactFilename: 'standard.wav',
+          completedAt: '2026-01-01T00:00:00.000Z',
+          outputLayout: 'accompaniment-guide-4ch',
+        },
+        general: {
+          recipeVersion: 1,
+          engineId: 'onnx-mdx',
+          profileId: 'mdx-inst-hq3-v1',
+          modelIds: ['inst-hq3'],
+          artifactFilename: 'inst-hq3.wav',
+          completedAt: '2026-01-02T00:00:00.000Z',
+          outputLayout: 'accompaniment-guide-4ch',
+        },
+      },
+    });
+  });
+
+  it('keeps an existing high-quality result as a selectable legacy result', () => {
+    fs.writeFileSync(
+      path.join(dir, 'manifest.json'),
+      JSON.stringify({
+        version: 1,
+        selectedPresetId: 'high-quality',
+        results: {
+          'high-quality': {
+            modelId: 'kara2',
+            separatedAt: '2026-01-03T00:00:00.000Z',
+          },
+        },
+      }),
+    );
+
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 2,
+      selectedRecipeId: 'high-quality',
+      results: {
+        'high-quality': {
+          recipeVersion: 1,
+          engineId: 'onnx-mdx',
+          profileId: 'mdx-kara2-denoise-v1',
+          modelIds: ['kara2'],
+          artifactFilename: 'high-quality.wav',
+          completedAt: '2026-01-03T00:00:00.000Z',
+          outputLayout: 'accompaniment-guide-4ch',
+          legacy: true,
+        },
+      },
+    });
+  });
+
+  it('keeps an unknown well-formed v1 result for recovery without making it runnable', () => {
+    fs.writeFileSync(
+      path.join(dir, 'manifest.json'),
+      JSON.stringify({
+        version: 1,
+        selectedPresetId: 'old-experiment',
+        results: {
+          'old-experiment': {
+            modelId: 'unknown-model',
+            separatedAt: '2026-01-03T00:00:00.000Z',
+          },
+        },
+      }),
+    );
+
+    expect(loadSeparationManifest(dir)).toMatchObject({
+      selectedRecipeId: 'old-experiment',
+      results: {
+        'old-experiment': {
+          artifactFilename: 'old-experiment.wav',
+          legacy: true,
+        },
+      },
+    });
+  });
+
+  it('reads a valid v2 manifest without exposing unknown result fields', () => {
+    fs.writeFileSync(
+      path.join(dir, 'manifest.json'),
+      JSON.stringify({
+        version: 2,
+        selectedRecipeId: 'clean',
+        results: {
+          clean: {
+            recipeVersion: 1,
+            engineId: 'onnx-mdx',
+            modelIds: ['inst-hq3'],
+            artifactFilename: 'clean.wav',
+            completedAt: '2026-01-04T00:00:00.000Z',
+            outputLayout: 'accompaniment-guide-4ch',
+            backingVocalPolicy: 'mixed-into-accompaniment',
+            ignored: 'private implementation detail',
+          },
+        },
+      }),
+    );
+
+    expect(loadSeparationManifest(dir)).toEqual({
+      version: 2,
+      selectedRecipeId: 'general',
+      results: {
+        general: {
+          recipeVersion: 1,
+          engineId: 'onnx-mdx',
+          profileId: 'mdx-inst-hq3-v1',
+          modelIds: ['inst-hq3'],
+          artifactFilename: 'clean.wav',
+          completedAt: '2026-01-04T00:00:00.000Z',
+          outputLayout: 'accompaniment-guide-4ch',
+          backingVocalPolicy: 'mixed-into-accompaniment',
         },
       },
     });
@@ -215,8 +376,8 @@ describe('loadSeparationManifest', () => {
   it('returns the empty default for malformed JSON (hand-edited or corrupt file)', () => {
     fs.writeFileSync(path.join(dir, 'manifest.json'), 'not json{');
     expect(loadSeparationManifest(dir)).toEqual({
-      version: 1,
-      selectedPresetId: null,
+      version: 2,
+      selectedRecipeId: null,
       results: {},
     });
   });
@@ -231,8 +392,8 @@ describe('loadSeparationManifest', () => {
       }),
     );
     expect(loadSeparationManifest(dir)).toEqual({
-      version: 1,
-      selectedPresetId: 'standard',
+      version: 2,
+      selectedRecipeId: null,
       results: {},
     });
   });
@@ -252,54 +413,82 @@ describe('recordSeparationResult', () => {
 
   it('adds a result and selects it', () => {
     recordSeparationResult(dir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'quick',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-kara2-v1',
+      modelIds: ['kara2'],
+      artifactFilename: 'quick.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     expect(loadSeparationManifest(dir)).toEqual({
-      version: 1,
-      selectedPresetId: 'standard',
+      version: 2,
+      selectedRecipeId: 'quick',
       results: {
-        standard: { modelId: 'kara2', separatedAt: '2026-01-01T00:00:00.000Z' },
+        quick: {
+          recipeVersion: 1,
+          engineId: 'onnx-mdx',
+          profileId: 'mdx-kara2-v1',
+          modelIds: ['kara2'],
+          artifactFilename: 'quick.wav',
+          completedAt: '2026-01-01T00:00:00.000Z',
+          outputLayout: 'accompaniment-guide-4ch',
+        },
       },
     });
   });
 
   it('a second preset is added alongside the first, not overwriting it, and becomes selected', () => {
     recordSeparationResult(dir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'quick',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-kara2-v1',
+      modelIds: ['kara2'],
+      artifactFilename: 'quick.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     recordSeparationResult(dir, {
-      presetId: 'inst-hq3',
-      modelId: 'inst-hq3',
-      separatedAt: '2026-01-02T00:00:00.000Z',
+      recipeId: 'general',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-inst-hq3-v1',
+      modelIds: ['inst-hq3'],
+      artifactFilename: 'general.wav',
+      completedAt: '2026-01-02T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     const manifest = loadSeparationManifest(dir);
-    expect(manifest.selectedPresetId).toBe('inst-hq3');
-    expect(Object.keys(manifest.results).sort()).toEqual([
-      'inst-hq3',
-      'standard',
-    ]);
+    expect(manifest.selectedRecipeId).toBe('general');
+    expect(Object.keys(manifest.results).sort()).toEqual(['general', 'quick']);
   });
 
   it('regenerating the same preset overwrites only that entry', () => {
     recordSeparationResult(dir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'quick',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-kara2-v1',
+      modelIds: ['kara2'],
+      artifactFilename: 'quick.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     recordSeparationResult(dir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-03T00:00:00.000Z',
+      recipeId: 'quick',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-kara2-v1',
+      modelIds: ['kara2'],
+      artifactFilename: 'quick.wav',
+      completedAt: '2026-01-03T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     const manifest = loadSeparationManifest(dir);
-    expect(Object.keys(manifest.results)).toEqual(['standard']);
-    expect(manifest.results.standard.separatedAt).toBe(
-      '2026-01-03T00:00:00.000Z',
-    );
+    expect(Object.keys(manifest.results)).toEqual(['quick']);
+    expect(manifest.results.quick.completedAt).toBe('2026-01-03T00:00:00.000Z');
   });
 });
 
@@ -315,30 +504,46 @@ describe('selectSeparationResult', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('switches selectedPresetId when the target preset has a recorded result', () => {
+  it('switches selectedRecipeId when the target recipe has a recorded result', () => {
     recordSeparationResult(dir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'quick',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-kara2-v1',
+      modelIds: ['kara2'],
+      artifactFilename: 'quick.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     recordSeparationResult(dir, {
-      presetId: 'inst-hq3',
-      modelId: 'inst-hq3',
-      separatedAt: '2026-01-02T00:00:00.000Z',
+      recipeId: 'general',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-inst-hq3-v1',
+      modelIds: ['inst-hq3'],
+      artifactFilename: 'general.wav',
+      completedAt: '2026-01-02T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
-    // recordSeparationResult's own most-recent-wins selects inst-hq3 —
-    // switch back to prove selectSeparationResult is a real pointer change.
+    // recordSeparationResult's own most-recent-wins selects general. Selecting
+    // through the released `standard` alias proves compatibility and a real
+    // pointer change without restoring the alias as a runnable recipe.
     expect(selectSeparationResult(dir, 'standard')).toBe(true);
-    expect(loadSeparationManifest(dir).selectedPresetId).toBe('standard');
+    expect(loadSeparationManifest(dir).selectedRecipeId).toBe('quick');
   });
 
   it('refuses and leaves the manifest untouched for a preset with no result', () => {
     recordSeparationResult(dir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'quick',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      profileId: 'mdx-kara2-v1',
+      modelIds: ['kara2'],
+      artifactFilename: 'quick.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
-    expect(selectSeparationResult(dir, 'inst-hq3')).toBe(false);
-    expect(loadSeparationManifest(dir).selectedPresetId).toBe('standard');
+    expect(selectSeparationResult(dir, 'clean')).toBe(false);
+    expect(loadSeparationManifest(dir).selectedRecipeId).toBe('quick');
   });
 });

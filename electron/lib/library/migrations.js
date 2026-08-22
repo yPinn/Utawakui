@@ -122,10 +122,37 @@ function migrateLegacyFlatSeparation(trackDir) {
       fs.renameSync(legacyStemsPath, targetPath);
     }
     const manifest = loadSeparationManifest(separationsDir);
-    if (!manifest.results[presetId]) {
-      manifest.results[presetId] = { modelId, separatedAt };
+    const recipeId =
+      presetId === 'standard'
+        ? 'quick'
+        : presetId === 'inst-hq3' || presetId === 'clean'
+          ? 'general'
+          : presetId === 'recording-enhanced'
+            ? 'refined'
+            : presetId;
+    if (!manifest.results[recipeId]) {
+      const profileId =
+        recipeId === 'quick' && modelId === 'kara2'
+          ? 'mdx-kara2-v1'
+          : recipeId === 'general' && modelId === 'inst-hq3'
+            ? 'mdx-inst-hq3-v1'
+            : recipeId === 'high-quality' && modelId === 'kara2'
+              ? 'mdx-kara2-denoise-v1'
+              : null;
+      manifest.results[recipeId] = {
+        recipeVersion: 1,
+        engineId: 'onnx-mdx',
+        ...(profileId ? { profileId } : {}),
+        modelIds: [modelId],
+        artifactFilename: `${presetId}.wav`,
+        completedAt: separatedAt,
+        outputLayout: 'accompaniment-guide-4ch',
+        ...(presetId !== 'standard' && presetId !== 'inst-hq3'
+          ? { legacy: true }
+          : {}),
+      };
     }
-    if (!manifest.selectedPresetId) manifest.selectedPresetId = presetId;
+    if (!manifest.selectedRecipeId) manifest.selectedRecipeId = recipeId;
     atomicWriteJson(
       path.join(separationsDir, SEPARATION_MANIFEST_FILENAME),
       manifest,

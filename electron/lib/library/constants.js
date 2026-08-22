@@ -39,13 +39,13 @@ const LYRICS_MANIFEST_VERSION = 8;
 // manual.lrc and manual.vtt would otherwise collide on one reading doc.
 const LYRICS_READINGS_DIRNAME = 'readings';
 const READING_DOC_VERSION = 1;
-// Per-preset files avoid overwriting audio that may be open for playback.
-// manifest.json stores selectedPresetId and result metadata; it is not
-// served. Separation files are per-preset 4-channel WAVs: 0/1 instrumental
+// Per-recipe files avoid overwriting audio that may be open for playback.
+// manifest.json stores selectedRecipeId and result provenance; it is not
+// served. Separation files are per-result 4-channel WAVs: 0/1 accompaniment
 // L/R, 2/3 vocals L/R. usePlayer.js depends on this order.
 const SEPARATIONS_DIRNAME = 'separations';
 const SEPARATION_MANIFEST_FILENAME = 'manifest.json';
-const SEPARATION_MANIFEST_VERSION = 1;
+const SEPARATION_MANIFEST_VERSION = 2;
 const LYRICS_EXTENSIONS = new Set(['.vtt', '.lrc']);
 const MANUAL_LYRICS_SOURCE_EXTENSIONS = new Set(['.vtt', '.lrc', '.txt']);
 const TRANSLATED_SUBTITLE_TARGET_SUBTAGS = new Set(['en', 'ja', 'ko', 'zh']);

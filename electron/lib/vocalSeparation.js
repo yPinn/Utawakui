@@ -35,6 +35,18 @@ const MODELS = {
     compensate: 1.022,
     primaryStem: 'instrumental',
   },
+  // Benchmark candidate only. This model is deliberately absent from the
+  // product dependency catalog and public recipe registry until it beats HQ3
+  // on the local challenge corpus. Values are keyed by UVR's last-10,240,000
+  // byte MD5 0f2a6bc5b49d87d64728ee40e23bceb1.
+  'inst-hq4': {
+    filename: 'UVR-MDX-NET-Inst_HQ_4.onnx',
+    nFft: 5120,
+    dimF: 2560,
+    dimT: 256,
+    compensate: 1.019,
+    primaryStem: 'instrumental',
+  },
 };
 
 // ---------------------------------------------------------------------------
@@ -194,14 +206,64 @@ function decodeAudio(inputPath, ffmpegPath) {
 // Presets choose model, overlap, and denoise. Tensor shape and compensation
 // stay model-level, not preset-level.
 const SEPARATION_PRESETS = {
-  standard: { modelId: 'kara2', overlap: 0.25, enableDenoise: false },
-  'high-quality': { modelId: 'kara2', overlap: 0.5, enableDenoise: true },
-  'inst-hq3': { modelId: 'inst-hq3', overlap: 0.25, enableDenoise: true },
+  quick: {
+    profileId: 'mdx-kara2-v1',
+    modelId: 'kara2',
+    overlap: 0.25,
+    enableDenoise: false,
+  },
+  general: {
+    profileId: 'mdx-inst-hq3-v1',
+    modelId: 'inst-hq3',
+    overlap: 0.25,
+    enableDenoise: true,
+  },
+  // Internal benchmark route, unreachable from the product recipe trust
+  // boundary. Keep it here so the same worker/DSP code compares HQ3 and HQ4.
+  'benchmark-hq4': {
+    profileId: 'mdx-inst-hq4-candidate-v1',
+    modelId: 'inst-hq4',
+    overlap: 0.25,
+    enableDenoise: true,
+  },
+  // Legacy execution aliases remain for direct compatibility tests and old
+  // artifacts. Main's recipe trust boundary does not allow new runs for them.
+  'high-quality': {
+    profileId: 'mdx-kara2-denoise-v1',
+    modelId: 'kara2',
+    overlap: 0.5,
+    enableDenoise: true,
+  },
 };
-const DEFAULT_PRESET_ID = 'standard';
+const LEGACY_PRESET_ALIASES = Object.freeze({
+  standard: 'quick',
+  clean: 'general',
+  'inst-hq3': 'general',
+});
+const DEFAULT_PRESET_ID = 'general';
 
 function resolvePreset(presetId) {
-  return SEPARATION_PRESETS[presetId] || SEPARATION_PRESETS[DEFAULT_PRESET_ID];
+  const canonicalId = LEGACY_PRESET_ALIASES[presetId] || presetId;
+  return (
+    SEPARATION_PRESETS[canonicalId] || SEPARATION_PRESETS[DEFAULT_PRESET_ID]
+  );
+}
+
+function resolveExecutionPreset(presetId, expectedProfileId, expectedModelId) {
+  const preset = resolvePreset(presetId);
+  if (expectedProfileId && preset.profileId !== expectedProfileId) {
+    throw new Error(
+      `Separation profile mismatch for recipe "${presetId}": ` +
+        `expected "${expectedProfileId}", resolved "${preset.profileId}"`,
+    );
+  }
+  if (expectedModelId && preset.modelId !== expectedModelId) {
+    throw new Error(
+      `Separation model mismatch for recipe "${presetId}": ` +
+        `expected "${expectedModelId}", resolved "${preset.modelId}"`,
+    );
+  }
+  return preset;
 }
 
 async function runInference(session, inputData, model) {
@@ -487,7 +549,7 @@ function writeWavAtomic(filePath, channels, sampleRate) {
   }
 }
 
-// Writes a single 4-channel <presetId>.wav (0/1 instrumental L/R, 2/3
+// Writes a single 4-channel <recipeId>.wav (0/1 accompaniment L/R, 2/3
 // vocals L/R — see electron/lib/library/constants.js's SEPARATIONS_DIRNAME
 // comment) into
 // outputDir, one file per preset so switching presets never has to
@@ -505,16 +567,22 @@ async function separateTrack(
   ffmpegPath,
   onProgress,
   presetId = DEFAULT_PRESET_ID,
+  expectedProfileId,
+  expectedModelId,
 ) {
   fs.mkdirSync(outputDir, { recursive: true });
-  const preset = resolvePreset(presetId);
+  const preset = resolveExecutionPreset(
+    presetId,
+    expectedProfileId,
+    expectedModelId,
+  );
   const model = MODELS[preset.modelId];
 
   // Every current registry entry is instrumental-primary, which is the
   // assumption the channel write below (0/1 instrumental, 2/3 vocals)
   // hard-codes. A vocals-primary model would silently swap the two
   // channels without this — fail loudly instead of shipping a corrupted
-  // <presetId>.wav that usePlayer.js's guide-vocal graph can't detect.
+  // result that usePlayer.js's guide-vocal graph can't detect.
   if (model.primaryStem !== 'instrumental') {
     throw new Error(
       `Model "${preset.modelId}" has primaryStem "${model.primaryStem}" — ` +
@@ -571,9 +639,15 @@ async function separateTrack(
   // electron/lib/library/separationManifest.js's recordSeparationResult) —
   // it's what the caller just asked to run.
   recordSeparationResult(outputDir, {
-    presetId,
-    modelId: preset.modelId,
-    separatedAt: new Date().toISOString(),
+    recipeId: presetId,
+    recipeVersion: 1,
+    engineId: 'onnx-mdx',
+    profileId: preset.profileId,
+    modelIds: [preset.modelId],
+    artifactFilename: `${presetId}.wav`,
+    completedAt: new Date().toISOString(),
+    outputLayout: 'accompaniment-guide-4ch',
+    ...(presetId === 'high-quality' ? { legacy: true } : {}),
   });
 
   return { stemsPath };
@@ -586,4 +660,5 @@ module.exports = {
   SEPARATION_PRESETS,
   DEFAULT_PRESET_ID,
   resolvePreset,
+  resolveExecutionPreset,
 };

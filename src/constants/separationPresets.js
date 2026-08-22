@@ -1,23 +1,49 @@
-export const SEPARATION_PRESET_OPTIONS = Object.freeze([
-  {
-    id: 'standard',
-    label: '和聲保留（快速）',
-  },
-  {
-    id: 'high-quality',
-    label: '和聲保留+（較慢）',
-  },
-  {
-    id: 'inst-hq3',
-    label: '純伴奏（較慢）',
-  },
-]);
+import recipeCatalog from '../../shared/audioProcessingRecipes.json';
 
-export const DEFAULT_SEPARATION_PRESET_ID = 'standard';
+export const SEPARATION_PRESET_OPTIONS = Object.freeze(
+  recipeCatalog.recipes
+    .filter(({ implemented }) => implemented)
+    .map(({ id, label, description, availability }) =>
+      Object.freeze({ id, label, description, availability }),
+    ),
+);
+
+export const LEGACY_SEPARATION_RESULT_OPTIONS = Object.freeze(
+  recipeCatalog.legacyResults.map(({ id, label, artifactFilename }) =>
+    Object.freeze({ id, label, artifactFilename, legacy: true }),
+  ),
+);
+
+export const DEFAULT_SEPARATION_PRESET_ID = recipeCatalog.defaultRecipeId;
 
 export const SEPARATION_PRESET_SELECT_TITLE =
-  '和聲保留會盡量保留和聲與伴唱感；和聲保留+是同方向的精細處理；純伴奏會更積極移除人聲。括號內表示處理速度，已產生的項目會直接切換播放。';
+  '推薦分離適合多數歌曲；快速分離以速度優先，結果會依音源而異。已產生的舊版結果仍可切換播放，但不再提供再次處理。';
 
-export function hasSeparationPreset(presetId) {
-  return SEPARATION_PRESET_OPTIONS.some((preset) => preset.id === presetId);
+export function isRunnableSeparationRecipe(recipeId) {
+  return SEPARATION_PRESET_OPTIONS.some(({ id }) => id === recipeId);
+}
+
+export function hasSeparationPreset(recipeId) {
+  return (
+    isRunnableSeparationRecipe(recipeId) ||
+    LEGACY_SEPARATION_RESULT_OPTIONS.some(({ id }) => id === recipeId)
+  );
+}
+
+export function separationPresetOptionsFor(track) {
+  const legacyOptions = LEGACY_SEPARATION_RESULT_OPTIONS.filter(
+    ({ id }) => track?.separation?.results?.[id],
+  );
+  const knownIds = new Set([
+    ...SEPARATION_PRESET_OPTIONS.map(({ id }) => id),
+    ...legacyOptions.map(({ id }) => id),
+  ]);
+  const recoveryOptions = Object.entries(
+    track?.separation?.results || {},
+  ).flatMap(([id, result]) =>
+    result?.legacy && !knownIds.has(id)
+      ? [{ id, label: `舊版結果：${id}`, legacy: true }]
+      : [],
+  );
+  return [...SEPARATION_PRESET_OPTIONS, ...legacyOptions, ...recoveryOptions];
 }

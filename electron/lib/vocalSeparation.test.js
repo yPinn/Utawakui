@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   encodeWav,
+  resolveExecutionPreset,
   resolvePreset,
   SEPARATION_PRESETS,
   MODELS,
@@ -79,28 +80,80 @@ describe('encodeWav', () => {
 });
 
 describe('resolvePreset', () => {
+  it('resolves canonical recipes through versioned processing profiles', () => {
+    expect(resolvePreset('quick')).toMatchObject({
+      profileId: 'mdx-kara2-v1',
+      modelId: 'kara2',
+    });
+    expect(resolvePreset('general')).toMatchObject({
+      profileId: 'mdx-inst-hq3-v1',
+      modelId: 'inst-hq3',
+    });
+    expect(resolvePreset(undefined)).toEqual(SEPARATION_PRESETS.general);
+  });
+
   it('resolves known preset ids to their params', () => {
-    expect(resolvePreset('standard')).toEqual(SEPARATION_PRESETS.standard);
+    expect(resolvePreset('quick')).toEqual(SEPARATION_PRESETS.quick);
+    expect(resolvePreset('general')).toEqual(SEPARATION_PRESETS.general);
     expect(resolvePreset('high-quality')).toEqual(
       SEPARATION_PRESETS['high-quality'],
     );
   });
 
-  it('falls back to the standard preset for an unknown or missing id', () => {
-    expect(resolvePreset('does-not-exist')).toEqual(
-      SEPARATION_PRESETS.standard,
-    );
-    expect(resolvePreset(undefined)).toEqual(SEPARATION_PRESETS.standard);
+  it('keeps old direct worker ids as execution aliases', () => {
+    expect(resolvePreset('standard')).toEqual(SEPARATION_PRESETS.quick);
+    expect(resolvePreset('clean')).toEqual(SEPARATION_PRESETS.general);
+    expect(resolvePreset('inst-hq3')).toEqual(SEPARATION_PRESETS.general);
   });
 
-  // standard is meant to be the literal upstream-default preset (see
-  // CLAUDE.md) — guards against silently drifting back to denoise: true.
-  it('standard mirrors the verified upstream default params exactly', () => {
-    expect(SEPARATION_PRESETS.standard).toEqual({
+  it('falls back to the general preset for an unknown or missing id', () => {
+    expect(resolvePreset('does-not-exist')).toEqual(SEPARATION_PRESETS.general);
+    expect(resolvePreset(undefined)).toEqual(SEPARATION_PRESETS.general);
+  });
+
+  // quick is meant to be the literal upstream-default KARA2 profile — guards
+  // against silently drifting back to denoise: true.
+  it('quick mirrors the verified upstream default params exactly', () => {
+    expect(SEPARATION_PRESETS.quick).toEqual({
+      profileId: 'mdx-kara2-v1',
       modelId: 'kara2',
       overlap: 0.25,
       enableDenoise: false,
     });
+  });
+
+  it('exposes the pinned Inst HQ4 candidate only through a benchmark profile', () => {
+    expect(MODELS['inst-hq4']).toEqual({
+      filename: 'UVR-MDX-NET-Inst_HQ_4.onnx',
+      nFft: 5120,
+      dimF: 2560,
+      dimT: 256,
+      compensate: 1.019,
+      primaryStem: 'instrumental',
+    });
+    expect(SEPARATION_PRESETS['benchmark-hq4']).toEqual({
+      profileId: 'mdx-inst-hq4-candidate-v1',
+      modelId: 'inst-hq4',
+      overlap: 0.25,
+      enableDenoise: true,
+    });
+  });
+});
+
+describe('resolveExecutionPreset', () => {
+  it('accepts a recipe only when its resolved profile and model agree', () => {
+    expect(
+      resolveExecutionPreset('general', 'mdx-inst-hq3-v1', 'inst-hq3'),
+    ).toEqual(SEPARATION_PRESETS.general);
+  });
+
+  it('fails before inference when recipe provenance drifts', () => {
+    expect(() =>
+      resolveExecutionPreset('general', 'mdx-kara2-v1', 'inst-hq3'),
+    ).toThrow(/profile/i);
+    expect(() =>
+      resolveExecutionPreset('general', 'mdx-inst-hq3-v1', 'kara2'),
+    ).toThrow(/model/i);
   });
 });
 

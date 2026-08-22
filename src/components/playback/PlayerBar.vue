@@ -25,8 +25,8 @@ import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import {
-  SEPARATION_PRESET_OPTIONS,
   SEPARATION_PRESET_SELECT_TITLE,
+  separationPresetOptionsFor,
 } from '../../constants/separationPresets.js';
 import {
   PITCH_CENTS_RANGE,
@@ -167,6 +167,9 @@ const selectedSeparationPresetId = computed(() =>
 );
 const currentSeparationResults = computed(
   () => currentSeparationTrack.value?.separation?.results || {},
+);
+const currentSeparationPresetOptions = computed(() =>
+  separationPresetOptionsFor(currentSeparationTrack.value),
 );
 const isCurrentTrackSeparating = computed(() =>
   currentSeparationTrack.value
@@ -664,7 +667,7 @@ onUnmounted(() => {
       :guide-vocal-rows="guideVocalRows"
       :pitch-tempo-rows="pitchTempoRows"
       :current-track="currentSeparationTrack"
-      :separation-preset-options="SEPARATION_PRESET_OPTIONS"
+      :separation-preset-options="currentSeparationPresetOptions"
       :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
       :separation-in-flight="isCurrentTrackSeparating"
       :separation-progress-percent="currentSeparationProgressPercent"

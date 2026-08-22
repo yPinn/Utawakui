@@ -5,8 +5,8 @@ import { useLyrics } from '../../composables/useLyrics.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import {
-  SEPARATION_PRESET_OPTIONS,
   SEPARATION_PRESET_SELECT_TITLE,
+  separationPresetOptionsFor,
 } from '../../constants/separationPresets.js';
 import { formatDuration } from '../../utils/format.js';
 import {
@@ -112,6 +112,9 @@ const selectedSeparationError = computed(() => {
 });
 
 const selectedPresetId = computed(() => presetIdFor(selectedTrack.value));
+const separationPresetOptions = computed(() =>
+  separationPresetOptionsFor(selectedTrack.value),
+);
 const selectedSeparationInFlight = computed(() => {
   const track = selectedTrack.value;
   return track ? isSeparating(track.id) : false;
@@ -303,7 +306,7 @@ watch(activeLineIndex, (index) => {
         :track-meta="selectedMeta"
         :reload-status="reloadStatusLabel"
         :is-reloading="isReloading"
-        :separation-preset-options="SEPARATION_PRESET_OPTIONS"
+        :separation-preset-options="separationPresetOptions"
         :selected-separation-preset-id="selectedPresetId"
         :separation-preset-title="SEPARATION_PRESET_SELECT_TITLE"
         :separation-in-flight="selectedSeparationInFlight"

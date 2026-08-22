@@ -3,6 +3,7 @@ import { FEATURE_IDS } from '../constants/featureGates.js';
 import {
   DEFAULT_SEPARATION_PRESET_ID,
   hasSeparationPreset,
+  isRunnableSeparationRecipe,
 } from '../constants/separationPresets.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
@@ -35,15 +36,16 @@ let unsubscribeProgress = null;
 // Subscribed once at module load, same lifetime as App.vue's composables.
 if (typeof window !== 'undefined' && window.Utawakui) {
   unsubscribeProgress = window.Utawakui.onSeparationProgress(
-    ({ trackId, presetId, stage, percent }) => {
+    ({ trackId, recipeId, presetId, stage, percent }) => {
+      const resolvedRecipeId = recipeId ?? presetId;
       const previous = state.inFlight.get(trackId);
       state.inFlight.set(trackId, {
         stage,
         percent: Number.isFinite(percent) ? percent : (previous?.percent ?? 0),
-        presetId: presetId ?? previous?.presetId,
+        presetId: resolvedRecipeId ?? previous?.presetId,
       });
-      if (hasSeparationPreset(presetId)) {
-        state.selectedPresets.set(trackId, presetId);
+      if (hasSeparationPreset(resolvedRecipeId)) {
+        state.selectedPresets.set(trackId, resolvedRecipeId);
       }
     },
   );
@@ -67,6 +69,13 @@ function inFlightPresetId(trackId) {
   return state.inFlight.get(trackId)?.presetId ?? null;
 }
 
+function isSelectablePresetForTrack(track, presetId) {
+  return (
+    hasSeparationPreset(presetId) ||
+    Boolean(track?.separation?.results?.[presetId]?.legacy)
+  );
+}
+
 function presetIdFor(track) {
   const inFlightPreset = track?.id ? inFlightPresetId(track.id) : null;
   if (hasSeparationPreset(inFlightPreset)) return inFlightPreset;
@@ -74,8 +83,9 @@ function presetIdFor(track) {
   const selectedPreset = track?.id ? state.selectedPresets.get(track.id) : null;
   if (hasSeparationPreset(selectedPreset)) return selectedPreset;
 
-  const manifestPreset = track?.separation?.selectedPresetId;
-  return hasSeparationPreset(manifestPreset)
+  const manifestPreset =
+    track?.separation?.selectedRecipeId ?? track?.separation?.selectedPresetId;
+  return isSelectablePresetForTrack(track, manifestPreset)
     ? manifestPreset
     : DEFAULT_SEPARATION_PRESET_ID;
 }
@@ -106,11 +116,10 @@ function describe(trackId) {
   }
 }
 
-async function separate(track, presetId) {
+async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
   if (isSeparating(track.id)) return;
-  if (hasSeparationPreset(presetId)) {
-    state.selectedPresets.set(track.id, presetId);
-  }
+  if (!isRunnableSeparationRecipe(presetId)) return;
+  state.selectedPresets.set(track.id, presetId);
   state.errors.delete(track.id);
   const enabled = await requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
     source: 'separation',
@@ -174,7 +183,7 @@ async function separate(track, presetId) {
 async function selectResult(track, presetId) {
   try {
     await window.Utawakui.selectSeparationResult(track.id, presetId);
-    if (hasSeparationPreset(presetId)) {
+    if (isSelectablePresetForTrack(track, presetId)) {
       state.selectedPresets.set(track.id, presetId);
     }
     state.errors.delete(track.id);
@@ -192,11 +201,12 @@ async function selectResult(track, presetId) {
 }
 
 async function selectPreset(track, presetId) {
-  if (!track || !hasSeparationPreset(presetId)) return;
+  if (!track || !isSelectablePresetForTrack(track, presetId)) return;
   if (track.separation?.results?.[presetId]) {
     await selectResult(track, presetId);
     return;
   }
+  if (!isRunnableSeparationRecipe(presetId)) return;
   state.selectedPresets.set(track.id, presetId);
 }
 

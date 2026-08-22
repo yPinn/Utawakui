@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 2,
+  "defaultRecipeId": "general",
+  "recipes": [
+    {
+      "id": "quick",
+      "label": "快速分離",
+      "description": "速度優先，結果會依編曲、唱法與錄音方式而異。",
+      "availability": "builtin",
+      "implemented": true
+    },
+    {
+      "id": "general",
+      "label": "推薦分離",
+      "description": "適合多數直播與錄製情境，較完整地移除人聲。",
+      "availability": "builtin",
+      "implemented": true
+    },
+    {
+      "id": "refined",
+      "label": "精修分離",
+      "description": "供半正式錄製使用的選配品質提升路徑。",
+      "availability": "optional",
+      "implemented": false
+    },
+    {
+      "id": "backing-vocals",
+      "label": "保留和聲",
+      "description": "以二階段處理保留和聲，並將主唱作為 guide vocal。",
+      "availability": "optional",
+      "implemented": false
+    }
+  ],
+  "resultAliases": {
+    "standard": "quick",
+    "clean": "general",
+    "inst-hq3": "general",
+    "recording-enhanced": "refined"
+  },
+  "legacyResults": [
+    {
+      "id": "high-quality",
+      "label": "舊版：和聲保留+",
+      "artifactFilename": "high-quality.wav"
+    }
+  ]
+}

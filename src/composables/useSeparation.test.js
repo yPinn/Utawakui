@@ -116,21 +116,21 @@ describe('inFlightPresetId()', () => {
     runSeparationMock.mockImplementation(() => new Promise(() => {}));
     const track = { id: 't1', title: 'Song' };
 
-    separate(track, 'inst-hq3');
+    separate(track, 'general');
     await flushPromises();
 
-    expect(inFlightPresetId('t1')).toBe('inst-hq3');
+    expect(inFlightPresetId('t1')).toBe('general');
   });
 
   it('tracks the preset id carried by progress events', async () => {
     const { inFlightPresetId } = await loadSeparation();
     progressCallback({
       trackId: 't1',
-      presetId: 'inst-hq3',
+      recipeId: 'general',
       stage: 'separating',
       percent: 10,
     });
-    expect(inFlightPresetId('t1')).toBe('inst-hq3');
+    expect(inFlightPresetId('t1')).toBe('general');
   });
 
   it('clears once the run finishes', async () => {
@@ -138,7 +138,7 @@ describe('inFlightPresetId()', () => {
     runSeparationMock.mockResolvedValue({ stemsUrl: 'x' });
     const track = { id: 't1', title: 'Song' };
 
-    await separate(track, 'inst-hq3');
+    await separate(track, 'general');
 
     expect(inFlightPresetId('t1')).toBeNull();
   });
@@ -151,10 +151,10 @@ describe('shared preset selection', () => {
     expect(
       presetIdFor({
         id: 't1',
-        separation: { selectedPresetId: 'inst-hq3' },
+        separation: { selectedRecipeId: 'general' },
       }),
-    ).toBe('inst-hq3');
-    expect(presetIdFor({ id: 't2' })).toBe('standard');
+    ).toBe('general');
+    expect(presetIdFor({ id: 't2' })).toBe('general');
   });
 
   it('shares a pending preset choice across composable consumers per track', async () => {
@@ -162,11 +162,11 @@ describe('shared preset selection', () => {
     const second = await loadSeparation();
     const track = { id: 't1', title: 'Song', separation: { results: {} } };
 
-    await first.selectPreset(track, 'high-quality');
+    await first.selectPreset(track, 'quick');
 
-    expect(second.presetIdFor(track)).toBe('high-quality');
+    expect(second.presetIdFor(track)).toBe('quick');
     expect(selectSeparationResultMock).not.toHaveBeenCalled();
-    expect(second.presetIdFor({ id: 't2' })).toBe('standard');
+    expect(second.presetIdFor({ id: 't2' })).toBe('general');
   });
 
   it('selects an existing result while retaining the shared choice', async () => {
@@ -174,7 +174,9 @@ describe('shared preset selection', () => {
     const track = {
       id: 't1',
       title: 'Song',
-      separation: { results: { 'high-quality': { modelId: 'kara2' } } },
+      separation: {
+        results: { 'high-quality': { modelIds: ['kara2'], legacy: true } },
+      },
     };
 
     await selectPreset(track, 'high-quality');
@@ -186,21 +188,45 @@ describe('shared preset selection', () => {
     );
   });
 
+  it('allows an unknown legacy result to be selected for recovery but not generated', async () => {
+    const { presetIdFor, selectPreset, separate } = await loadSeparation();
+    const track = {
+      id: 't1',
+      title: 'Song',
+      separation: {
+        selectedRecipeId: 'old-experiment',
+        results: { 'old-experiment': { legacy: true } },
+      },
+    };
+
+    expect(presetIdFor(track)).toBe('old-experiment');
+    await selectPreset(track, 'old-experiment');
+    await separate(track, 'old-experiment');
+
+    expect(selectSeparationResultMock).toHaveBeenCalledWith(
+      't1',
+      'old-experiment',
+    );
+    expect(runSeparationMock).not.toHaveBeenCalled();
+  });
+
   it('keeps the previous shared choice when switching an existing result fails', async () => {
     const { presetIdFor, selectPreset } = await loadSeparation();
     const track = {
       id: 't1',
       title: 'Song',
       separation: {
-        selectedPresetId: 'standard',
-        results: { 'high-quality': { modelId: 'kara2' } },
+        selectedRecipeId: 'quick',
+        results: {
+          'high-quality': { modelIds: ['kara2'], legacy: true },
+        },
       },
     };
     selectSeparationResultMock.mockRejectedValue(new Error('boom'));
 
     await selectPreset(track, 'high-quality');
 
-    expect(presetIdFor(track)).toBe('standard');
+    expect(presetIdFor(track)).toBe('quick');
   });
 });
 
@@ -254,14 +280,23 @@ describe('separate()', () => {
     expect(state.errors.get('t1')).toBe('Song 分離失敗:boom');
   });
 
-  it('forwards the preset id to window.Utawakui.runSeparation', async () => {
+  it('forwards the recipe id to window.Utawakui.runSeparation', async () => {
     const { separate } = await loadSeparation();
     runSeparationMock.mockResolvedValue({ stemsUrl: 'x' });
     const track = { id: 't1', title: 'Song' };
 
+    await separate(track, 'general');
+
+    expect(runSeparationMock).toHaveBeenCalledWith('t1', 'general');
+  });
+
+  it('does not regenerate a legacy high-quality result', async () => {
+    const { separate } = await loadSeparation();
+    const track = { id: 't1', title: 'Song' };
+
     await separate(track, 'high-quality');
 
-    expect(runSeparationMock).toHaveBeenCalledWith('t1', 'high-quality');
+    expect(runSeparationMock).not.toHaveBeenCalled();
   });
 
   it('clears a previous error for the track when retried', async () => {
@@ -297,7 +332,7 @@ describe('separate()', () => {
     );
     const track = { id: 't1', title: '輕輕對你說' };
 
-    await separate(track, 'standard');
+    await separate(track, 'quick');
 
     expect(isSeparating('t1')).toBe(false);
     expect(useAppView().activeView.value).toBe('settings');
@@ -311,7 +346,7 @@ describe('separate()', () => {
       operation: 'run',
       context: {
         trackId: 't1',
-        presetId: 'standard',
+        presetId: 'quick',
         dependencyId: 'ffmpeg-gyan-essentials',
       },
     });

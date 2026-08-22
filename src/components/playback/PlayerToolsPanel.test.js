@@ -52,9 +52,9 @@ describe('PlayerToolsPanel process tab', () => {
 
     expect(html).toContain('伴奏分離');
     expect(html).toContain('Song A');
-    expect(html).toContain('和聲保留（快速）');
-    expect(html).toContain('和聲保留+（較慢）');
-    expect(html).toContain('純伴奏（較慢）');
+    expect(html).toContain('快速分離');
+    expect(html).toContain('推薦分離');
+    expect(html).not.toContain('和聲保留+');
     expect(html).toContain('產生');
   });
 

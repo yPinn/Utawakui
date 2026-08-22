@@ -178,12 +178,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('playlists:set-description', id, description),
   choosePlaylistCover: (id) => ipcRenderer.invoke('playlists:choose-cover', id),
   clearPlaylistCover: (id) => ipcRenderer.invoke('playlists:clear-cover', id),
-  // Named runSeparation, not separateTrack, to stay distinct from
-  // vocalSeparation.js's own separateTrack() that this eventually calls.
-  runSeparation: (trackId, presetId) =>
-    ipcRenderer.invoke('separation:run', trackId, presetId),
-  selectSeparationResult: (trackId, presetId) =>
-    ipcRenderer.invoke('separation:select', trackId, presetId),
+  // Renderer sends product recipe intent only; main owns engine/model details.
+  runSeparation: (trackId, recipeId) =>
+    ipcRenderer.invoke('separation:run', trackId, recipeId),
+  cancelSeparation: () => ipcRenderer.invoke('separation:cancel'),
+  selectSeparationResult: (trackId, recipeId) =>
+    ipcRenderer.invoke('separation:select', trackId, recipeId),
   // Fires zero or more times before runSeparation()'s promise settles.
   // These `on*` methods return an unsubscribe function so callers can clean
   // up on unmount instead of reaching for raw ipcRenderer (kept out of the

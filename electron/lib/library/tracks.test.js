@@ -224,11 +224,16 @@ describe('listTracks', () => {
       'utawakui-media://track/abc/separations/inst-hq3.wav',
     );
     expect(track.separation).toEqual({
-      selectedPresetId: 'inst-hq3',
+      selectedRecipeId: 'general',
       results: {
-        'inst-hq3': {
-          modelId: 'inst-hq3',
-          separatedAt: '2026-01-01T00:00:00.000Z',
+        general: {
+          recipeVersion: 1,
+          engineId: 'onnx-mdx',
+          profileId: 'mdx-inst-hq3-v1',
+          modelIds: ['inst-hq3'],
+          artifactFilename: 'inst-hq3.wav',
+          completedAt: '2026-01-01T00:00:00.000Z',
+          outputLayout: 'accompaniment-guide-4ch',
         },
       },
     });
@@ -247,8 +252,8 @@ describe('listTracks', () => {
 
     const [track] = listTracks(dir);
     expect(track.hasSeparation).toBe(true);
-    expect(track.separation.selectedPresetId).toBe('standard');
-    expect(track.separation.results.standard.modelId).toBe('kara2');
+    expect(track.separation.selectedRecipeId).toBe('quick');
+    expect(track.separation.results.quick.modelIds).toEqual(['kara2']);
     expect(
       fs.existsSync(path.join(trackDir, 'separations', 'standard.wav')),
     ).toBe(true);
@@ -284,14 +289,22 @@ describe('listTracks', () => {
     fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
     fs.writeFileSync(path.join(separationsDir, 'inst-hq3.wav'), 'y');
     recordSeparationResult(separationsDir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'standard',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      modelIds: ['kara2'],
+      artifactFilename: 'standard.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     recordSeparationResult(separationsDir, {
-      presetId: 'inst-hq3',
-      modelId: 'inst-hq3',
-      separatedAt: '2026-01-02T00:00:00.000Z',
+      recipeId: 'clean',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      modelIds: ['inst-hq3'],
+      artifactFilename: 'clean.wav',
+      completedAt: '2026-01-02T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
     // recordSeparationResult's most-recent-wins already selected inst-hq3
     // — switch back to prove stemsUrl follows the pointer, not creation
@@ -303,10 +316,10 @@ describe('listTracks', () => {
       'utawakui-media://track/abc/separations/standard.wav',
     );
     expect(Object.keys(track.separation.results).sort()).toEqual([
-      'inst-hq3',
-      'standard',
+      'general',
+      'quick',
     ]);
-    expect(track.separation.selectedPresetId).toBe('standard');
+    expect(track.separation.selectedRecipeId).toBe('quick');
   });
 
   it('reports thumbnailUrl for structured track artwork', () => {
@@ -783,9 +796,13 @@ describe('deleteTrack', () => {
     fs.writeFileSync(path.join(separationsDir, 'standard.wav'), 'x');
     fs.writeFileSync(path.join(separationsDir, 'inst-hq3.wav'), 'y');
     recordSeparationResult(separationsDir, {
-      presetId: 'standard',
-      modelId: 'kara2',
-      separatedAt: '2026-01-01T00:00:00.000Z',
+      recipeId: 'standard',
+      recipeVersion: 1,
+      engineId: 'onnx-mdx',
+      modelIds: ['kara2'],
+      artifactFilename: 'standard.wav',
+      completedAt: '2026-01-01T00:00:00.000Z',
+      outputLayout: 'accompaniment-guide-4ch',
     });
 
     expect(deleteTrack(dir, 'abc')).toBe(true);

@@ -200,8 +200,8 @@ describe('Lyrics workspace control contracts', () => {
     const header = mount(LyricsWorkspaceHeader, {
       track: { title: 'Euphoria', lyrics: { status: 'available' } },
       trackMeta: 'BTS / 3:49',
-      separationPresetOptions: [{ id: 'standard', label: '和聲保留（快速）' }],
-      selectedSeparationPresetId: 'standard',
+      separationPresetOptions: [{ id: 'quick', label: '快速分離' }],
+      selectedSeparationPresetId: 'quick',
       onSeparationPresetChange: preset,
       onGenerateSeparation: generateSeparation,
       onSelectTrack: selectTrack,
@@ -217,7 +217,7 @@ describe('Lyrics workspace control contracts', () => {
     findByProp(header.root, 'title', '選擇歌詞曲目').props.onClick();
     findByProp(header.root, 'title', '重新掃描歌詞').props.onClick();
     findByProp(header.root, 'aria-label', '伴奏分離設定').props.onChange({
-      target: { value: 'standard' },
+      target: { value: 'quick' },
     });
     findByProp(header.root, 'aria-label', '產生伴奏').props.onClick();
     findByProp(live.root, 'aria-label', '延後 0.1 秒').props.onClick();
@@ -226,7 +226,7 @@ describe('Lyrics workspace control contracts', () => {
 
     expect(selectTrack).toHaveBeenCalledOnce();
     expect(refresh).toHaveBeenCalledOnce();
-    expect(preset).toHaveBeenCalledWith('standard');
+    expect(preset).toHaveBeenCalledWith('quick');
     expect(generateSeparation).toHaveBeenCalledOnce();
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
@@ -241,7 +241,11 @@ describe('LyricsWorkspace event wiring', () => {
       artist: 'BTS',
       duration: 229,
       lyrics: { status: 'available' },
-      separation: { results: { 'high-quality': { modelId: 'kara2' } } },
+      separation: {
+        results: {
+          'high-quality': { modelIds: ['kara2'], legacy: true },
+        },
+      },
     };
     const source = { filename: 'main.lrc', kind: 'manual' };
     const lyricsState = reactive({
@@ -260,7 +264,7 @@ describe('LyricsWorkspace event wiring', () => {
     const generateReading = vi.fn();
     const separate = vi.fn();
     const selectPreset = vi.fn();
-    const selectedPreset = ref('standard');
+    const selectedPreset = ref('quick');
     const readingVariant = ref('off');
 
     vi.doMock('../../composables/useLyrics.js', () => ({
@@ -344,7 +348,7 @@ describe('LyricsWorkspace event wiring', () => {
     expect(separate).not.toHaveBeenCalled();
     expect(findByProp(root, 'aria-label', '此模型已產生')).toBeTruthy();
     findByProp(root, 'aria-label', '伴奏分離設定').props.onChange({
-      target: { value: 'standard' },
+      target: { value: 'quick' },
     });
     await nextTick();
     findByProp(root, 'aria-label', '產生伴奏').props.onClick();
@@ -364,9 +368,9 @@ describe('LyricsWorkspace event wiring', () => {
     expect(generateReading).toHaveBeenCalledOnce();
     expect(selectPreset.mock.calls).toEqual([
       [track, 'high-quality'],
-      [track, 'standard'],
+      [track, 'quick'],
     ]);
-    expect(separate).toHaveBeenCalledWith(track, 'standard');
+    expect(separate).toHaveBeenCalledWith(track, 'quick');
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
   });

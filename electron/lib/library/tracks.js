@@ -181,7 +181,7 @@ function listTracks(dir) {
       const separationsDir = resolveSeparationsDir(dir, id);
       const separationManifest = separationsDir
         ? loadSeparationManifest(separationsDir)
-        : { selectedPresetId: null, results: {} };
+        : { selectedRecipeId: null, results: {} };
       const resultCount = Object.keys(separationManifest.results).length;
       const selectedResultExists = manifestHasSelectedResult(
         separationsDir,
@@ -216,12 +216,15 @@ function listTracks(dir) {
         needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,
         hasSeparation: selectedResultExists,
         stemsUrl: selectedResultExists
-          ? `utawakui-media://track/${encodeURIComponent(id)}/separations/${encodeURIComponent(separationManifest.selectedPresetId)}.wav`
+          ? `utawakui-media://track/${encodeURIComponent(id)}/separations/${encodeURIComponent(
+              separationManifest.results[separationManifest.selectedRecipeId]
+                .artifactFilename,
+            )}`
           : undefined,
         separation:
           resultCount > 0
             ? {
-                selectedPresetId: separationManifest.selectedPresetId,
+                selectedRecipeId: separationManifest.selectedRecipeId,
                 results: separationManifest.results,
               }
             : undefined,
