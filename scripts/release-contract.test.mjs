@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { gunzipSync, gzipSync } from 'node:zlib';
 
 import yaml from 'js-yaml';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -36,7 +37,19 @@ function createArtifactFixture(version = '0.2.0') {
   const directory = createTemporaryDirectory();
   const installerName = `Utawakui-Setup-${version}.exe`;
   const installer = Buffer.from('signed-installer-fixture');
-  const blockmap = Buffer.from('blockmap-fixture');
+  const blockmap = gzipSync(
+    JSON.stringify({
+      version: '2',
+      files: [
+        {
+          name: 'file',
+          offset: 0,
+          checksums: ['fixture-checksum'],
+          sizes: [installer.length],
+        },
+      ],
+    }),
+  );
   const sha512 = createHash('sha512').update(installer).digest('base64');
 
   fs.writeFileSync(path.join(directory, installerName), installer);
@@ -49,7 +62,6 @@ function createArtifactFixture(version = '0.2.0') {
       `  - url: ${installerName}`,
       `    sha512: ${sha512}`,
       `    size: ${installer.length}`,
-      `    blockMapSize: ${blockmap.length}`,
       `path: ${installerName}`,
       `sha512: ${sha512}`,
       'releaseDate: 2026-08-22T00:00:00.000Z',
@@ -162,11 +174,6 @@ describe('verifyArtifactContract', () => {
       /installer size/i,
     ],
     [
-      'blockmap size',
-      (metadata) => (metadata.files[0].blockMapSize += 1),
-      /blockmap size/i,
-    ],
-    [
       'top-level SHA-512',
       (metadata) => (metadata.sha512 = 'invalid'),
       /top-level SHA-512/i,
@@ -181,6 +188,52 @@ describe('verifyArtifactContract', () => {
         version: '0.2.0',
       }),
     ).toThrow(error);
+  });
+
+  it('checks an optional latest.yml blockmap size', () => {
+    const fixture = createArtifactFixture();
+    mutateMetadata(
+      fixture,
+      (metadata) => (metadata.files[0].blockMapSize = fixture.blockmap.length),
+    );
+
+    expect(() =>
+      verifyArtifactContract({
+        directory: fixture.directory,
+        version: '0.2.0',
+      }),
+    ).not.toThrow();
+
+    mutateMetadata(
+      fixture,
+      (metadata) => (metadata.files[0].blockMapSize += 1),
+    );
+    expect(() =>
+      verifyArtifactContract({
+        directory: fixture.directory,
+        version: '0.2.0',
+      }),
+    ).toThrow(/blockmap size/i);
+  });
+
+  it('rejects a blockmap that does not cover the installer', () => {
+    const fixture = createArtifactFixture();
+    const blockmapPath = path.join(
+      fixture.directory,
+      `${fixture.installerName}.blockmap`,
+    );
+    const blockmap = JSON.parse(
+      gunzipSync(fs.readFileSync(blockmapPath)).toString(),
+    );
+    blockmap.files[0].sizes[0] -= 1;
+    fs.writeFileSync(blockmapPath, gzipSync(JSON.stringify(blockmap)));
+
+    expect(() =>
+      verifyArtifactContract({
+        directory: fixture.directory,
+        version: '0.2.0',
+      }),
+    ).toThrow(/cover the installer size/i);
   });
 
   it('rejects malformed or non-object update metadata', () => {

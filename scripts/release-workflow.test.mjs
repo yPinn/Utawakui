@@ -54,7 +54,11 @@ describe('release workflow', () => {
   });
 
   it('uses Node 24 actions and project runtime in CI and release jobs', () => {
-    for (const filename of ['ci.yml', 'release.yml']) {
+    for (const filename of [
+      'ci.yml',
+      'public-test-release.yml',
+      'release.yml',
+    ]) {
       const workflowText = fs.readFileSync(
         path.join(rootDirectory, '.github/workflows', filename),
         'utf8',
@@ -98,12 +102,34 @@ describe('release workflow', () => {
     expect(packageCommands).not.toContain('--publish always');
   });
 
-  it('accepts only a tag source and validates before the Windows package job', () => {
-    const workflow = readWorkflow();
+  it('keeps signed releases manual and routes tags to unsigned test builds', () => {
+    const signedWorkflow = readWorkflow();
+    const testWorkflow = readWorkflow('public-test-release.yml');
 
-    expect(workflow.on.push.tags).toEqual(['v*.*.*']);
-    expect(workflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
+    expect(signedWorkflow.on).not.toHaveProperty('push');
+    expect(signedWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
+    expect(testWorkflow.on.push.tags).toEqual(['v*.*.*']);
+    expect(testWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
+    expect(testWorkflow.jobs.package.needs).toBe('validate');
+    expect(testWorkflow.jobs.validate.outputs.version).toContain(
+      'release-version',
+    );
+  });
+
+  it('keeps unsigned test artifacts private and excludes updater metadata', () => {
+    const workflow = readWorkflow('public-test-release.yml');
+    const packageSteps = workflow.jobs.package.steps;
+    const packageCommands = JSON.stringify(packageSteps);
+    const uploadStep = packageSteps.find(
+      (step) => step.name === 'Upload unsigned test bundle',
+    );
+
     expect(workflow.jobs.package.needs).toBe('validate');
-    expect(workflow.jobs.validate.outputs.version).toContain('release-version');
+    expect(workflow.jobs.package).not.toHaveProperty('environment');
+    expect(packageCommands).not.toContain('secrets.');
+    expect(packageCommands).not.toContain('gh release');
+    expect(uploadStep.with.path).toContain('SHA256SUMS.txt');
+    expect(uploadStep.with.path).not.toContain('latest.yml');
+    expect(uploadStep.with.path).not.toContain('.blockmap');
   });
 });

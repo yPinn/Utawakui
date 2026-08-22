@@ -4,10 +4,10 @@
 
 Accepted and partially implemented (2026-08-22). The runtime version boundary,
 main-process update service, fixed IPC intents, Settings status/actions, public
-feed configuration, release-only public repository, and signed draft-release
-workflow foundation and proprietary product license are implemented. The
-runtime release gate remains disabled until signing credentials and
-two-version packaged verification are complete.
+feed configuration, release-only public repository, unsigned test-build path,
+signed draft-release workflow foundation, and proprietary product license are
+implemented. The runtime release gate remains disabled until signing
+credentials and two-version packaged verification are complete.
 
 ## Context
 
@@ -15,13 +15,13 @@ Utawakui's source repository is private. A packaged Windows app still needs a
 stable, unauthenticated endpoint from which it can discover and download public
 releases without embedding a repository credential on user machines.
 
-The current package version is `0.1.0`. It was shared for limited testing but
-was not published as an official GitHub Release. The first formal candidate is
-therefore `0.1.1`, followed by `0.1.2` for the two-version update matrix.
-`package.json` and `package-lock.json` agree, and no Git release tag exists yet.
-The Settings version row reads the running application version from Electron
-main through `app.getVersion()` and a minimal preload IPC method instead of
-importing `package.json` into the renderer.
+Version `0.1.0` was shared for limited testing without an official GitHub
+Release. Version `0.1.1` establishes the public test path, but its unsigned
+installer is not an updater baseline. The first updater-enabled baseline and
+the following two-version test target will be chosen when trusted signing is
+adopted. The Settings version row reads the running application version from
+Electron main through `app.getVersion()` and a minimal preload IPC method
+instead of importing `package.json` into the renderer.
 
 The existing Windows target is assisted NSIS x64. electron-builder can produce
 the installer, blockmap, and `latest.yml` required by `electron-updater`. The
@@ -38,9 +38,9 @@ acceptable production update channel.
 - While the product remains below `1.0.0`, patch versions are fixes and minor
   versions are feature milestones. A breaking pre-1.0 change must still be
   called out in release notes and migrations.
-- The first implementation ships only the stable `latest` channel.
-  Prerelease/beta channels remain deferred until there is a concrete testing
-  audience and separate channel verification.
+- The production updater will use only the stable `latest` channel. GitHub may
+  label unsigned public test downloads as prereleases, but they are not an
+  updater channel and do not publish updater metadata.
 - Published versions are immutable and never reused. A broken release is fixed
   forward with a higher version; the updater does not allow downgrades.
 
@@ -147,11 +147,15 @@ stay aligned with the current stable electron-builder 26 toolchain.
 
 ### Release workflow
 
-Normal `npm run dist`, `dist:dir`, and the release build explicitly pass
-`--publish never`. A separate workflow publishes only after the build has been
-signed and verified:
+Normal `npm run dist`, `dist:dir`, and both release builds explicitly pass
+`--publish never`. Stable version tags currently run an unsigned public test
+workflow that validates and packages the installer as a private CI artifact.
+It publishes no updater metadata and has no public-repository credential.
 
-1. Trigger from a stable `v<semver>` tag in the private source repository.
+The signed workflow is kept manual-only until signing is adopted. It publishes
+only after the build has been signed and verified:
+
+1. Rebuild an existing stable `v<semver>` tag in the private source repository.
 2. Verify the tag, `package.json`, lockfile root version, and versioned release
    notes are present and consistent.
 3. Run secret scan, dependency audit, license inventory, lint, format,

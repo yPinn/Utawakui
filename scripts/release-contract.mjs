@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
+import { gunzipSync } from 'node:zlib';
 
 import yaml from 'js-yaml';
 import semver from 'semver';
@@ -31,6 +32,60 @@ function sha512(filePath) {
 
 function isPlainObject(value) {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value));
+}
+
+function verifyBlockmap(blockmapPath, installerSize) {
+  let blockmap;
+  try {
+    blockmap = JSON.parse(gunzipSync(fs.readFileSync(blockmapPath)).toString());
+  } catch (error) {
+    throw new Error(`[release] Invalid blockmap: ${error.message}`, {
+      cause: error,
+    });
+  }
+
+  assertContract(isPlainObject(blockmap), 'blockmap must contain an object');
+  assertContract(
+    blockmap.version === '1' || blockmap.version === '2',
+    'blockmap version is unsupported',
+  );
+  assertContract(
+    Array.isArray(blockmap.files) && blockmap.files.length === 1,
+    'blockmap must describe exactly one installer file',
+  );
+
+  const [installerEntry] = blockmap.files;
+  assertContract(
+    isPlainObject(installerEntry) &&
+      installerEntry.name === 'file' &&
+      installerEntry.offset === 0,
+    'blockmap installer entry is invalid',
+  );
+  assertContract(
+    Array.isArray(installerEntry.checksums) &&
+      Array.isArray(installerEntry.sizes) &&
+      installerEntry.checksums.length > 0 &&
+      installerEntry.checksums.length === installerEntry.sizes.length,
+    'blockmap chunks are invalid',
+  );
+  assertContract(
+    installerEntry.checksums.every(
+      (checksum) => typeof checksum === 'string' && checksum.length > 0,
+    ) &&
+      installerEntry.sizes.every(
+        (size) => Number.isSafeInteger(size) && size > 0,
+      ),
+    'blockmap chunk values are invalid',
+  );
+
+  const coveredSize = installerEntry.sizes.reduce(
+    (total, size) => total + size,
+    0,
+  );
+  assertContract(
+    coveredSize === installerSize,
+    'blockmap does not cover the installer size',
+  );
 }
 
 export function verifyVersionContract({ tag, packageJson, packageLock }) {
@@ -76,6 +131,7 @@ export function verifyArtifactContract({ directory, version }) {
   const metadataPath = path.join(directory, 'latest.yml');
   const installerSize = fileSize(installerPath, 'installer');
   const blockmapSize = fileSize(blockmapPath, 'blockmap');
+  verifyBlockmap(blockmapPath, installerSize);
   fileSize(metadataPath, 'update metadata');
 
   let metadata;
@@ -102,10 +158,12 @@ export function verifyArtifactContract({ directory, version }) {
     installerEntry.size === installerSize,
     'latest.yml installer size mismatch',
   );
-  assertContract(
-    installerEntry.blockMapSize === blockmapSize,
-    'latest.yml blockmap size mismatch',
-  );
+  if (installerEntry.blockMapSize != null) {
+    assertContract(
+      installerEntry.blockMapSize === blockmapSize,
+      'latest.yml blockmap size mismatch',
+    );
+  }
 
   const installerSha512 = sha512(installerPath);
   assertContract(

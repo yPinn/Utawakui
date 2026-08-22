@@ -461,9 +461,9 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 ### Phase 3：Distribution And Integrations
 
 - Windows installer、AUMID、執行版本 IPC 與 main-owned update runtime 已建立；
-  signed public-release update 契約已由 ADR 0007 固定。Runtime release gate
-  維持停用，剩 Authenticode signing、公開 release repo、release CI 與兩版本
-  packaged verification。
+  public test 與 signed public-release update 契約已由 ADR 0007 固定。未簽章
+  公開測試採手動安裝與更新；runtime release gate 維持停用，待日後完成
+  Authenticode signing 與兩個連續簽章版本的 packaged verification。
 - 公開 release repo 的 GitHub Pages 產品展示／下載入口（後期 promotion；Pages
   與 updater feed 分離，初期維持純靜態且不加入 analytics）。
 - 官方 metadata provider flows。

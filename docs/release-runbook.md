@@ -1,21 +1,28 @@
 # Release Runbook
 
-This runbook covers signed Windows releases from the private source repository
-to `yPinn/Utawakui-Releases`. Normal local packaging never publishes.
+This runbook covers unsigned public test builds and future signed Windows
+releases from the private source repository. Normal local packaging never
+publishes.
 
 ## Unsigned Test Builds
 
-Until a trusted Authenticode certificate is available, `npm run dist` may be
-used for limited testing through a controlled delivery channel. Record the
-installer SHA-256, tell testers that Windows will show an unknown publisher,
-and do not present the file as an official public release. Self-signed builds
-are not a substitute for a publicly trusted certificate.
+Until a trusted Authenticode certificate is available, stable version tags run
+the `Public Test Build` workflow. It repeats release checks, builds an unsigned
+installer, verifies that the files remain unsigned, and uploads a private CI
+artifact containing the installer, release notes, and `SHA256SUMS.txt`.
 
-Unsigned builds do not use the release workflow and must not enable the
-production updater. The first formal candidate is `0.1.1`; `0.1.2` is reserved
-for the required two-version packaged update test.
+After an installed-package smoke test, download that CI artifact and manually
+create a prerelease in `yPinn/Utawakui-Releases` using the authenticated local
+GitHub CLI. Publish only the installer and `SHA256SUMS.txt`; use the versioned
+release note as the GitHub Release description. Do not publish `latest.yml` or
+the blockmap for an unsigned test build.
 
-## One-Time Setup
+Unsigned releases must keep the production updater disabled. Windows may show
+an unknown publisher, so the release note must direct users to the official
+Releases page and disclose manual installation and updates. Self-signing is not
+a substitute for a publicly trusted certificate.
+
+## Signed Release Setup
 
 Create a GitHub Actions environment named `release` in the private source
 repository. Configure these values there:
@@ -41,12 +48,24 @@ still creates only a draft release; environment approval does not publish it.
 2. Add user-facing notes at `docs/releases/v<version>.md`.
 3. Complete the normal `main` CI checks and installer-specific manual checks.
 4. Create and push the exact tag `v<version>` from a commit reachable from
-   `main`.
+   `main`. This automatically starts the unsigned public test workflow.
 
-The release workflow can also be started manually with an existing tag. Manual
-dispatch rebuilds that tag; it does not release an arbitrary branch or version.
+Both workflows can rebuild an existing tag by manual dispatch. The signed
+workflow remains manual-only until signing credentials and the installed update
+matrix are ready.
 
-## Workflow Result
+## Unsigned Workflow Result
+
+The public test workflow:
+
+1. Repeats the complete CI checks on the tagged source.
+2. Requires exact tag, package, lockfile, and release-note agreement.
+3. Builds the assisted Windows installer without a signing credential.
+4. Verifies unsigned status, packaged version, notices, and generated metadata.
+5. Creates the installer SHA-256 and uploads a private CI artifact for review.
+6. Does not contact or modify the public release repository.
+
+## Signed Workflow Result
 
 The workflow:
 
@@ -69,5 +88,6 @@ public repository. Verify shortcuts, installation modes, uninstall retention,
 application data, local library data, and update metadata.
 
 Keep the in-app updater disabled until two consecutive signed versions complete
-the packaged update matrix in ADR 0007. Publishing one successful installer is
-not sufficient to enable automatic update checks.
+the packaged update matrix in ADR 0007. The first signed version becomes the
+update baseline; the following signed version proves the update path. Their
+version numbers are chosen when signing is adopted, not reserved in advance.

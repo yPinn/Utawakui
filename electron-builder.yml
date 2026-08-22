@@ -139,5 +139,5 @@ nsis:
   # upstream docs for the general case, but that guidance assumes OS
   # language is good enough — here it's deliberately overridable.
   displayLanguageSelector: true
-  # Default artifact name has spaces ("Utawakui Setup 0.1.0.exe").
+  # Default artifact names contain spaces; keep the release filename stable.
   artifactName: '${productName}-Setup-${version}.${ext}'

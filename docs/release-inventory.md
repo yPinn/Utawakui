@@ -40,24 +40,26 @@ updates for app-managed provider, FFmpeg, and model dependencies.
 
 - `package.json.version` is the release version source; packaged UI reads the
   running version from main-process `app.getVersion()` over preload IPC.
-- Private source remains in `yPinn/Utawakui`; public update artifacts are
-  planned for `yPinn/Utawakui-Releases`, which must be created and confirmed
-  before updater implementation is enabled.
+- Private source remains in `yPinn/Utawakui`; public downloads use the separate
+  `yPinn/Utawakui-Releases` repository.
 - Stable clients use only published `latest` releases. Draft/prerelease assets
   are not update candidates.
-- The public release repo receives only the signed installer, blockmap,
-  `latest.yml`, release notes, and minimal release-repository content. No source
-  repository or client credential is copied into the app.
-- `electron-updater` will be a packaged main-process runtime dependency after
-  implementation. Renderer gets bounded status plus fixed
+- Unsigned public test releases contain only the installer, SHA-256 checksum,
+  release notes, and minimal release-repository content. They do not publish
+  `latest.yml` or a blockmap and are not update candidates.
+- Future signed releases add the signed installer, blockmap, and `latest.yml`.
+  No source repository or client credential is copied into the app.
+- `electron-updater` is a packaged main-process runtime dependency, but its
+  release gate remains disabled. Renderer gets bounded status plus fixed
   check/download/install intents only.
 - Update discovery may check automatically in packaged mode, but download and
   restart remain explicit user actions. Development builds never contact the
   release feed.
 - App-data, app-managed workflow dependencies, and the selected media library
   remain outside the installer payload and survive updates.
-- Local `npm run dist` and `dist:dir` never publish. Only the protected release
-  workflow may sign and publish artifacts.
+- Local `npm run dist` and `dist:dir` never publish. The unsigned tag workflow
+  uploads only a private CI artifact; public test publishing is a separate,
+  reviewed manual action. The signed workflow remains protected and manual.
 
 The public repository may later host a GitHub Pages product site. It is a
 curated human-facing surface, not an update server: downloads link to the signed
@@ -79,9 +81,9 @@ Planned stable release assets:
 | GitHub Release notes                    | Human-reviewed release summary; remote HTML is not rendered in app.         |
 | GitHub Pages artifact (future)          | Curated static product site; contains no updater payload or private source. |
 
-Current blocker: `win.signExecutable` is still `false`. Do not expose a public
-automatic update channel until executable/installer signing and updater
-signature verification pass in a two-version installed test.
+Automatic updates remain blocked while `win.signExecutable` is `false`. Do not
+expose a public automatic update channel until executable/installer signing and
+updater signature verification pass in a two-version installed test.
 
 ## Installer Profile Boundary
 
