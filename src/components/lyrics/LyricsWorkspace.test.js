@@ -91,4 +91,9 @@ describe('LyricsWorkspace information hierarchy', () => {
     expect(workspaceSource).toContain('aria-label="歌詞內容"');
     expect(workspaceSource).toContain('tabindex="0"');
   });
+
+  it('keys repeated lyric rows by canonical line identity', () => {
+    expect(workspaceSource).toContain(':key="line.lineId"');
+    expect(workspaceSource).not.toContain(':key="`${line.start}-${index}`"');
+  });
 });

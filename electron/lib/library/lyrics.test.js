@@ -64,10 +64,16 @@ describe('resolveTrackLyricsPath', () => {
     expect(resolveTrackLyricsPath(dir, 'abc', 'ja.vtt')).toBe(
       path.join(path.resolve(dir), 'tracks', 'abc', 'lyrics', 'ja.vtt'),
     );
-    expect(readTrackLyrics(dir, 'abc', 'ja.vtt')).toEqual({
+    const result = readTrackLyrics(dir, 'abc', 'ja.vtt');
+    expect(result).toMatchObject({
       source: { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
       text: 'WEBVTT',
+      timing: {
+        status: 'missing',
+        normalizerProfileId: 'lyrics-source-v1',
+      },
     });
+    expect(result.timing.sourceFingerprint).toMatch(/^[a-f0-9]{64}$/);
   });
 
   it('saves and reads LRCLIB LRC lyrics as an optional source', () => {
@@ -81,13 +87,17 @@ describe('resolveTrackLyricsPath', () => {
       ),
     ).toBe(true);
 
-    expect(readTrackLyrics(dir, 'abc', 'lrclib-42.lrc')).toEqual({
+    expect(readTrackLyrics(dir, 'abc', 'lrclib-42.lrc')).toMatchObject({
       source: {
         filename: 'lrclib-42.lrc',
         language: 'und',
         kind: 'lrclib',
       },
       text: '[00:01.00]Hello',
+      timing: {
+        status: 'missing',
+        normalizerProfileId: 'lyrics-source-v1',
+      },
     });
 
     expect(listTracks(dir)[0].lyrics.sources).toEqual([
@@ -360,9 +370,10 @@ describe('importManualLyricsText', () => {
       kind: 'manual',
       label: 'Pasted draft',
     });
-    expect(readTrackLyrics(dir, 'abc', 'manual.lrc')).toEqual({
+    expect(readTrackLyrics(dir, 'abc', 'manual.lrc')).toMatchObject({
       source: result.source,
       text: 'First line\nSecond line',
+      timing: { status: 'missing' },
     });
     expect(listTracks(dir)[0].lyrics.sources).toContainEqual(result.source);
   });
@@ -523,6 +534,23 @@ describe('deleteLyricsSource', () => {
   });
 
   it('removes the file and its manifest entry, leaving other sources intact', () => {
+    const timingPath = path.join(
+      trackDir,
+      'lyrics',
+      'timing',
+      'lrclib-42.lrc.json',
+    );
+    const readingPath = path.join(
+      trackDir,
+      'lyrics',
+      'readings',
+      'lrclib-42.lrc.json',
+    );
+    fs.mkdirSync(path.dirname(timingPath), { recursive: true });
+    fs.mkdirSync(path.dirname(readingPath), { recursive: true });
+    fs.writeFileSync(timingPath, '{}');
+    fs.writeFileSync(readingPath, '{}');
+
     expect(deleteLyricsSource(trackDir, 'lrclib-42.lrc')).toBe(true);
 
     expect(fs.existsSync(path.join(trackDir, 'lyrics', 'lrclib-42.lrc'))).toBe(
@@ -530,6 +558,8 @@ describe('deleteLyricsSource', () => {
     );
     const sources = listTracks(dir)[0].lyrics.sources;
     expect(sources.map((s) => s.filename)).toEqual(['manual.lrc']);
+    expect(fs.existsSync(timingPath)).toBe(false);
+    expect(fs.existsSync(readingPath)).toBe(false);
   });
 
   it('returns false for a filename that does not exist', () => {

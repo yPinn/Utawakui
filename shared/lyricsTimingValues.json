@@ -1,0 +1,11 @@
+{
+  "schemaVersion": 1,
+  "normalizerProfileId": "lyrics-source-v1",
+  "maxDocumentBytes": 2097152,
+  "maxLines": 5000,
+  "maxSegmentsPerLine": 1000,
+  "maxTotalSegments": 20000,
+  "maxTextLength": 2000,
+  "maxIdLength": 128,
+  "maxTimeMs": 604800000
+}

@@ -2,10 +2,12 @@
 
 ## Status and scope
 
-Draft planning contract, 2026-08-23. It describes the target data boundary from
-[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md);
-current production lyrics remain line-timed and this document is not yet an
-implemented file format.
+Version 1 foundation, implemented 2026-08-23. It defines the data boundary from
+[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md).
+Canonical T0/T1 normalization, stable ids, bounded sidecar validation, source
+fingerprints, stale/corrupt status, and additive load/save IPC are implemented.
+The visible T2 importer/editor, reading-id migration, and Output v3 projection
+remain later batches.
 
 Implementation must also satisfy ADR 0012's minimum pre-Lyrics gate: initial full
 source handshake, `bootId`/`sourceEpoch`, explicit unavailable behavior, and a
@@ -13,8 +15,9 @@ startup plan that does not add lyrics/pack work to the first-window critical pat
 
 The contract normalizes untimed and line-timed sources and adds reusable segment
 timing without requiring templates to parse LRC, VTT, or provider-specific data.
-It does not define a complete lyrics editor, automatic alignment engine, beat
-analysis, or song-specific choreography.
+It does not define a complete lyrics editor, automatic alignment engine,
+M1/M2 music analysis, or song-specific choreography. Those cues are an accepted
+later endpoint, but remain a separate derived document and optional capability.
 
 ## Granularity model
 
@@ -25,12 +28,17 @@ Text timing and musical cues are separate axes:
 - `T2`: timed segments within lines;
 - `T3`: timed graphemes or syllables, reserved;
 - `M0`: no music cues;
-- `M1`: beat grid, reserved;
-- `M2`: sections or authored cues, reserved; and
+- `M1`: BPM plus beat/downbeat grid and bar position, planned after T2;
+- `M2`: section intervals or authored cues, planned after M1; and
 - `M3`: song-specific choreography, deferred.
 
 The first implementation target accepts T0 and T1 and persists T2. Unsupported
 levels must not be silently downgraded and overwritten.
+
+T2 segment timing and M1/M2 music cues are independent. Segment timing may be
+imported or manually authored with no analyzer installed. Music cues live in the
+separate [Music Analysis Contract](music-analysis-contract.md) and do not infer
+word boundaries or silently trigger vocal separation.
 
 ## Storage and identity
 
@@ -52,24 +60,20 @@ corrections refer to these ids.
 
 ## Illustrative T2 document
 
-The field names below are a planning example. Implementation must first add an
-executable JSON Schema and fixture tests rather than treating this prose as the
-only validator.
+The field names below match the persisted version 1 shape. The authoritative
+executable validator and fixture tests live in
+`electron/lib/library/lyricsTiming.js` and its co-located test; this prose is not
+used as the trust boundary.
 
 ```json
 {
   "schemaVersion": 1,
   "documentId": "lyr_01J...",
+  "normalizerProfileId": "lyrics-source-v1",
   "granularity": "T2",
   "source": {
     "filename": "main.ja.lrc",
-    "sha256": "<lowercase hex digest>",
-    "format": "lrc"
-  },
-  "provenance": {
-    "kind": "imported",
-    "tool": "utawakui",
-    "manuallyEdited": true
+    "sha256": "<lowercase hex digest>"
   },
   "lines": [
     {
@@ -96,13 +100,21 @@ only validator.
 }
 ```
 
-Optional future metadata may include `lane` or semantic `role`. It must not change
-timing meaning or become a template-specific CSS class.
+Provenance/manual-edit metadata, `lane`, and semantic `role` remain optional
+future schema additions. They must not change timing meaning or become
+template-specific CSS classes.
 
 ## Validation invariants
 
-- Times are finite integer milliseconds and never negative.
-- `startMs <= endMs`; timed lines and segments are ordered monotonically.
+- Persisted finite times are integer milliseconds and never negative; JSON never
+  contains `NaN` or `Infinity`.
+- A T0 line has `startMs: null` and `endMs: null`. A timed line has a finite
+  `startMs`; `endMs` may be `null` only for an open final interval resolved from
+  the next boundary, parent interval, or playable duration at runtime.
+- A segment has a finite `startMs`; its `endMs` follows the same bounded open-end
+  rule. Unresolved finite progress falls back to active/inactive presentation.
+- Where both ends are finite, `startMs <= endMs`; timed lines and segments are
+  ordered monotonically.
 - A T2 segment stays within its parent line's time interval.
 - Segment ids are unique within a document and line ids are document-unique.
 - Concatenated segment text preserves the authored line text. Normalization may
@@ -110,7 +122,13 @@ timing meaning or become a template-specific CSS class.
 - Unknown schema versions fail closed and are not rewritten by older apps.
 - Size, line-count, segment-count, and text-length limits are shared between the
   main-process parser and renderer projection.
-- Provenance is descriptive only; it never grants trust or code execution.
+- Any future provenance is descriptive only; it never grants trust or code
+  execution.
+
+A document may be partially authored. Missing/empty `segments` means that line
+uses its T0/T1 fallback; non-empty segments must satisfy all T2 invariants.
+Document granularity reports the highest validated detail present rather than
+claiming every line has the same completion level.
 
 ## Source changes and stale state
 
@@ -159,11 +177,14 @@ must stop during paused, buffering, seeking, ended, or disconnected phases.
 - automatic alignment provider and confidence representation;
 - T3 language-specific semantics;
 - duet and multi-lane editing behavior;
-- M1/M2 detection and storage; and
+- M1/M2 analyzer implementation and authoring UX; and
 - compatibility-window length for version 2 Output clients.
 
 ## Related decisions
 
 - [ADR 0010: Lyrics Timing Granularity](adr/0010-lyrics-timing-granularity-and-output-content-split.md)
 - [ADR 0012: State Convergence and Startup Phases](adr/0012-state-convergence-and-startup-phases.md)
+- [ADR 0014: Audio Python Runtime Family](adr/0014-audio-python-runtime-family.md)
+- [Music Analysis Contract](music-analysis-contract.md)
+- [T2 implementation plan](lyrics-t2-implementation-plan.md)
 - [Output Runtime Hardening Contract](output-runtime-hardening.md)

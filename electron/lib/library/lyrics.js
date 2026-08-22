@@ -18,6 +18,10 @@ const {
   resolveTrackDir,
 } = require('./paths');
 const { deleteTrackReading } = require('./lyricsReadings');
+const {
+  deleteTrackLyricsTiming,
+  loadTrackLyricsTiming,
+} = require('./lyricsTiming');
 
 function inferLyricsLanguage(filename) {
   return path.basename(filename, path.extname(filename));
@@ -263,7 +267,7 @@ function setLyricsSourceLabel(trackDir, filename, label) {
   return saveTrackLyricsManifest(trackDir, nextSources);
 }
 
-// Removes the file, its manifest entry, and any reading-aid sidecar.
+// Removes the file, its manifest entry, and source-derived sidecars.
 function deleteLyricsSource(trackDir, filename) {
   if (!isLyricsSubtitleFilename(filename)) return false;
 
@@ -275,6 +279,7 @@ function deleteLyricsSource(trackDir, filename) {
   }
 
   deleteTrackReading(trackDir, filename);
+  deleteTrackLyricsTiming(trackDir, filename);
 
   const remaining = listTrackLyricsSources(trackDir).sources.filter(
     (source) => source.filename !== filename,
@@ -470,6 +475,7 @@ function readTrackLyrics(dir, trackId, lyricsFilename = null) {
   return {
     source,
     text: fs.readFileSync(lyricsPath, 'utf8'),
+    timing: loadTrackLyricsTiming(trackDir, source.filename),
   };
 }
 

@@ -368,7 +368,7 @@ watch(activeLineIndex, (index) => {
         <ol v-else class="lyrics-lines">
           <li
             v-for="(line, index) in lyricLines"
-            :key="`${line.start}-${index}`"
+            :key="line.lineId"
             class="lyrics-line"
             :class="{
               'lyrics-line--active': index === activeLineIndex,

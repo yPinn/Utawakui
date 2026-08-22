@@ -59,6 +59,7 @@ Opening
 
 00:00:40.000 --> 00:00:50.000
 Middle`;
+const lyricsSourceFingerprint = 'a'.repeat(64);
 
 const confirmedLyricsFlow = {
   featureId: 'lyrics-flow',
@@ -103,6 +104,11 @@ beforeEach(() => {
   getTrackLyricsMock = vi.fn().mockResolvedValue({
     source: { filename: 'en.vtt', language: 'en', kind: 'youtube-cc' },
     text: lyricsText,
+    timing: {
+      status: 'missing',
+      sourceFingerprint: lyricsSourceFingerprint,
+      normalizerProfileId: 'lyrics-source-v1',
+    },
   });
   probeMusixmatchLyricsMock = vi.fn().mockResolvedValue({
     provider: 'musixmatch',
@@ -346,6 +352,29 @@ describe('useLyrics', () => {
     // currentTrackId tracks playback, not selection — trackA stays "playing"
     // even once trackB becomes the manually selected (lyrics-open) track.
     expect(lyrics.currentTrackId.value).toBe(trackA.id);
+  });
+
+  it('owns one canonical document and derives the active stable line id', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    expect(lyrics.lyricsDocument.value).toMatchObject({
+      schemaVersion: 1,
+      source: {
+        filename: 'en.vtt',
+        sha256: lyricsSourceFingerprint,
+      },
+      granularity: 'T1',
+      lines: [
+        { text: 'Opening', startMs: 1000, endMs: 10000 },
+        { text: 'Middle', startMs: 40000, endMs: 50000 },
+      ],
+    });
+    expect(lyrics.lyricLines.value[0].lineId).toBe(
+      lyrics.lyricsDocument.value.lines[0].lineId,
+    );
+    expect(lyrics.activeLineId.value).toBe(
+      lyrics.lyricsDocument.value.lines[1].lineId,
+    );
   });
 
   it('does not attempt a lyrics fetch when the preload bridge is unavailable', async () => {

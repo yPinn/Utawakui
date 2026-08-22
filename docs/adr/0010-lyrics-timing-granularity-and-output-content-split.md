@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted for planning on 2026-08-23. Implementation has not started.
+Accepted on 2026-08-23. Batch 1 canonical T0/T1 normalization and the bounded T2
+sidecar foundation are implemented. Segment import/editor UX, reading v2, and the
+Output content/state split remain planned.
 
 ## Context
 
@@ -28,23 +30,44 @@ Text timing has four levels:
 | ----- | ------------------------------------------------------- | ----------------------------------------- |
 | T0    | Untimed document                                        | Supported by normalization                |
 | T1    | Line timing                                             | Current baseline                          |
-| T2    | Segment timing, where a segment may be a word or phrase | Next implementation target                |
+| T2    | Segment timing, where a segment may be a word or phrase | Storage validates; import/editor is next  |
 | T3    | Grapheme or syllable timing                             | Schema-ready; editor and effects deferred |
 
 Musical cues have four separate levels:
 
-| Level | Meaning                    | Product status   |
-| ----- | -------------------------- | ---------------- |
-| M0    | No music cues              | Current baseline |
-| M1    | Beat grid                  | Deferred         |
-| M2    | Sections and authored cues | Deferred         |
-| M3    | Song-specific choreography | Deferred         |
+| Level | Meaning                                      | Product status             |
+| ----- | -------------------------------------------- | -------------------------- |
+| M0    | No music cues                                | Current baseline           |
+| M1    | BPM, beat/downbeat grid, and bar position    | Planned after T2           |
+| M2    | Section intervals and optional authored cues | Accepted endpoint after M1 |
+| M3    | Song-specific choreography                   | Deferred                   |
 
 The next lyrics milestone is T0/T1 normalization plus the T2 storage, import,
-validation, and editing contract. It does not include T3, beat detection,
-multi-lane duet editing, or song-specific choreography. The schema may reserve
-optional `lane` and `role` metadata so these additions do not require replacing
-stable line and segment identities.
+validation, and editing contract. It does not include T3, automatic M1/M2
+analysis, multi-lane duet editing, or song-specific choreography. The accepted
+product endpoint nevertheless includes optional M1 rhythm and M2 section cues so
+reusable Lyrics presentations can change bounded style variants on beats and
+verse/chorus-like sections. T2 works without those cues through imported or
+manual timing. The schema may reserve optional `lane` and `role` metadata so
+these additions do not require replacing stable line and segment identities.
+
+### Keep music structure separate from lyric alignment
+
+M1/M2 analysis produces source BPM, beat/downbeat timestamps, bar position,
+section intervals, confidence, and analyzer provenance. It does not create T2
+word timing. Imported timing, manual/tap authoring, and a future separately
+approved alignment provider remain independent ways to produce T2.
+
+All-In-One Infer is the first full M1/M2 candidate because it can cover the
+accepted rhythm and section endpoint through one optional local capability. It
+remains gated by packaged Windows inference, accuracy, confidence/fallback,
+capacity, offline model loading, and model-license acceptance. It runs through
+ADR 0014's `analysis-structure` or validated `combined-ml` environment and never
+turns its four-stem Demucs intermediate into the Refined product default.
+
+The versioned field, persistence, fallback, and rollout boundary lives in the
+[Music Analysis Contract](../music-analysis-contract.md). Automatic analysis is
+not a prerequisite for T2 implementation or normal playback.
 
 ### Keep timing as a derived sidecar
 
@@ -55,18 +78,19 @@ timing is stored under:
 tracks/<trackId>/lyrics/timing/<sourceFilename>.json
 ```
 
-The sidecar records a stable document id, granularity, source fingerprint,
-provenance, stable line and segment ids, and whether timing was manually edited.
-If the source fingerprint changes, the sidecar is retained but marked stale; it
-is not silently applied to different text.
+The version 1 foundation records a stable document id, normalizer profile,
+granularity, source fingerprint, and stable line/segment ids. Provenance and
+manual-edit metadata arrive with the authoring workflow. If the source
+fingerprint changes, the sidecar is retained but marked stale; it is not silently
+applied to different text.
 
 Reading aids remain separate derived data. They align through stable line and
 segment ids rather than being embedded into timing records. This prevents a
 romanization or furigana refresh from rewriting timing work.
 
 The evolving field contract and validation rules live in
-[`docs/lyrics-timing-contract.md`](../lyrics-timing-contract.md). An executable
-JSON Schema will be added with the implementation.
+[`docs/lyrics-timing-contract.md`](../lyrics-timing-contract.md). The main-process
+validator and co-located fixtures are the executable trust boundary.
 
 ### Split immutable lyric content from the playback clock at T2
 
@@ -99,6 +123,10 @@ The dependency order is:
 4. introduce the content/state Output protocol split;
 5. design reusable segment-aware templates and effects.
 
+M1/M2 begins only after T2 is stable and at least one accepted presentation
+consumes the signal with an M0 fallback. Runtime-family implementation and
+analysis package preparation remain a later, independently gated batch.
+
 ## Rejected options
 
 - **Keep line timing and infer words inside each template.** Inference would be
@@ -127,6 +155,9 @@ The dependency order is:
 ## References
 
 - [Lyrics timing contract](../lyrics-timing-contract.md)
+- [T2 implementation plan](../lyrics-t2-implementation-plan.md)
+- [Music analysis contract](../music-analysis-contract.md)
 - [ADR 0006: Loopback Output WebSocket Runtime](0006-loopback-output-websocket-runtime.md)
 - [ADR 0012: State Convergence and Startup Phases](0012-state-convergence-and-startup-phases.md)
+- [ADR 0014: Audio Python Runtime Family](0014-audio-python-runtime-family.md)
 - [Product specification](../spec.md)

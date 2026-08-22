@@ -1,14 +1,22 @@
-import { computed, reactive, readonly, watch } from 'vue';
+import { computed, reactive, readonly, shallowRef, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
-import { parseLyricsText, pickPreferredLyricsSource } from '../utils/lyrics.js';
+import { pickPreferredLyricsSource } from '../utils/lyrics.js';
+import {
+  normalizeLyricsDocument,
+  projectLegacyLyricLines,
+} from '../utils/lyricsDocument.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
 const EMPTY_LYRICS = { status: 'unchecked', sources: [] };
+const EMPTY_TIMING = Object.freeze({
+  status: 'missing',
+  sourceFingerprint: null,
+});
 
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
@@ -67,6 +75,10 @@ const state = reactive({
   error: null,
   offsetSeconds: 0,
 });
+// Timing documents can grow to thousands of lines/segments and are immutable
+// snapshots. Replacing one shallow ref avoids recursively proxying the document
+// while keeping useLyrics as the sole renderer owner.
+const lyricsTiming = shallowRef(EMPTY_TIMING);
 
 let unsubscribeLibraryBackfillStatus = null;
 let lyricsRequestId = 0;
@@ -80,8 +92,25 @@ const selectedTrack = computed(
 const selectedLyrics = computed(
   () => selectedTrack.value?.lyrics ?? EMPTY_LYRICS,
 );
+const selectedSource = computed(() => {
+  if (!state.selectedSourceFilename) return null;
+  return (
+    selectedLyrics.value.sources.find(
+      (source) => source.filename === state.selectedSourceFilename,
+    ) ?? null
+  );
+});
+const lyricsDocument = computed(() =>
+  normalizeLyricsDocument({
+    text: state.lyricsText,
+    source: selectedSource.value,
+    sourceFingerprint: lyricsTiming.value.sourceFingerprint,
+    normalizerProfileId: lyricsTiming.value.normalizerProfileId,
+    timing: lyricsTiming.value,
+  }),
+);
 const lyricLines = computed(() =>
-  parseLyricsText(state.lyricsText, { source: selectedSource.value }),
+  projectLegacyLyricLines(lyricsDocument.value),
 );
 const isSelectedTrackPlaying = computed(
   () =>
@@ -101,17 +130,10 @@ const activeLineIndex = computed(() => {
 const activeLine = computed(() =>
   activeLineIndex.value >= 0 ? lyricLines.value[activeLineIndex.value] : null,
 );
+const activeLineId = computed(() => activeLine.value?.lineId ?? null);
 const isReloading = computed(
   () => state.isLoading || state.backfillStatus.isRunning,
 );
-const selectedSource = computed(() => {
-  if (!state.selectedSourceFilename) return null;
-  return (
-    selectedLyrics.value.sources.find(
-      (source) => source.filename === state.selectedSourceFilename,
-    ) ?? null
-  );
-});
 
 function joinPlaylistTracks(pool, playlist) {
   if (!playlist) return [];
@@ -200,6 +222,7 @@ async function loadSelectedLyrics() {
 
   state.lyricsText = '';
   state.lyricSource = null;
+  lyricsTiming.value = EMPTY_TIMING;
   if (!track || !filename) return;
 
   if (typeof window.Utawakui?.getTrackLyrics !== 'function') {
@@ -213,6 +236,7 @@ async function loadSelectedLyrics() {
     if (requestId !== lyricsRequestId) return;
     state.lyricsText = result?.text ?? '';
     state.lyricSource = result?.source ?? null;
+    lyricsTiming.value = result?.timing ?? EMPTY_TIMING;
     state.error = null;
   } catch (err) {
     if (requestId !== lyricsRequestId) return;
@@ -632,9 +656,12 @@ export function useLyrics() {
     selectedTrack,
     selectedLyrics,
     selectedSource,
+    lyricsTiming: readonly(lyricsTiming),
+    lyricsDocument,
     lyricLines,
     activeLine,
     activeLineIndex,
+    activeLineId,
     isSelectedTrackPlaying,
     currentTrackId,
     isReloading,

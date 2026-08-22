@@ -16,6 +16,7 @@ const {
   readTrackLyrics,
   resolveTrackDir,
   saveTrackLyricsText,
+  saveTrackLyricsTiming,
   saveTrackReading,
   setLyricsSourceLabel,
   setReadingLine,
@@ -72,6 +73,34 @@ function registerLyricsHandlers({
     if (!result) return null;
     return result;
   });
+
+  // Ungated local edit. Main resolves every path, verifies that the source
+  // still has the renderer-observed fingerprint, and validates all document
+  // bounds before writing the derivative sidecar.
+  ipcMain.handle(
+    'lyrics:save-timing',
+    async (
+      event,
+      trackId,
+      sourceFilename,
+      expectedSourceFingerprint,
+      document,
+    ) => {
+      const dir = resolveDownloadDir(getConfig());
+      const track = findTrackRecord(dir, trackId);
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      const saved = saveTrackLyricsTiming(
+        trackDir,
+        sourceFilename,
+        expectedSourceFingerprint,
+        document,
+      );
+      notifyLibraryUpdated();
+      return saved;
+    },
+  );
 
   ipcMain.handle('lyrics:probe-musixmatch', async (event, trackId) => {
     requireFeatureGate(featureIds.LYRICS_FLOW);

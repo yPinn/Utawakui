@@ -112,9 +112,10 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - 進階 overlay 模板、Official Presentation Pack、User Variant 與完整
   style-set catalog；現有四類 slot、基礎模板與 appearance editing 已完成，
   後續會遷移為可擴充 Output Instance 並保留既有 URL alias，見 ADR 0011。
-- Lyrics T0/T1 normalization、T2 segment timing sidecar 與對應的 Output
-  content/state protocol split；目前 runtime 仍是 T1 line timing 與 snapshot v2，
-  見 ADR 0010。
+- Lyrics T0/T1 canonical normalization、穩定 line id、T2 timing sidecar
+  validator、來源 fingerprint 與 additive load/save IPC 已完成；可見的 segment
+  import/editor、reading v2 與 Output content/state protocol split 尚未完成。目前
+  Output runtime 仍是 T1 line timing 與 snapshot v2，見 ADR 0010。
 - Output state convergence 與 startup hardening：`bootId`／`sourceEpoch`、完整
   initial handshake、分離的 liveness/readiness、backpressure、啟動 phase DAG 與
   measured regression budgets，見 ADR 0012。
@@ -288,18 +289,29 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 手動匯入是本機 library edit，不需 feature gate；外部 lyrics provider 搜尋與保存屬於 `lyrics-flow`，首次執行時需確認。貼上的純文字或 `.txt` 檔會保存為 `manual*.lrc`，沒有 timestamp 時以 untimed lines 顯示，不支援點擊 seek。
 
-目前播放與 Output 的時間顆粒度為 T1 line timing。下一階段依
-[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) 先落實
-T0/T1 normalization 與 T2 segment timing，再回到 segment-aware 顯示設計；T3
+目前播放與 Output 的可見時間顆粒度仍為 T1 line timing。依
+[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md)，Batch 1
+已把 T0/T1 正規化成 canonical document，並完成可驗證的 T2 segment timing
+sidecar 基礎；下一階段才加入 segment import/editor 與 segment-aware 顯示。T3
 grapheme/syllable timing、beat grid、多 lane 與逐曲編舞都不屬於第一批。T2 保存為
 `tracks/<trackId>/lyrics/timing/<sourceFilename>.json` derived sidecar，透過來源
-fingerprint 判斷是否過期，不覆寫原始 LRC/VTT。穩定 line/segment id 供讀音資料對齊，
-完整草案見 [Lyrics Timing Contract](lyrics-timing-contract.md)。
+fingerprint 判斷是否過期，不覆寫原始 LRC/VTT。穩定 line/segment id 供後續讀音資料
+對齊，完整契約見 [Lyrics Timing Contract](lyrics-timing-contract.md)。
 
-M1 beat grid 排在 T2 穩定之後；屆時才以固定音訊 fixture 比較離線 BPM／beat
-analysis 套件的準確度、confidence、worker isolation、Windows/Electron 打包、容量、
-授權與維護狀態。BPM estimate、beat/downbeat timestamps 與播放器 tempo rate 是不同
-資料；尚未選定套件，且分析不可成為 T2 編輯或正常播放的必要依賴。
+逐字／詞組進度顯示（T2）加上能依節奏與主副歌等段落切換 reusable style
+variant（M1/M2）是 Lyrics presentation 的產品下限。落實順序仍是 T2 先行：
+匯入與手動／tap authoring 不依賴分析套件；之後才加入 optional、可移除的
+Music Analysis capability。BPM estimate、beat/downbeat timestamps、bar position、
+section intervals 與播放器 tempo rate 是不同資料，需保存 confidence、來源
+fingerprint、analyzer/profile provenance 與使用者 override。
+
+All-In-One Infer 是第一個完整 M1/M2 候選，因為同一分析路線可提供 BPM、
+beat/downbeat 與 section evidence；它不產生 T2 逐字對齊，也不能讓 Lyrics
+偷偷啟動 vocal separation。啟用前需通過固定 fixture、Windows packaged CPU、
+offline model path、取消／清理、容量、授權與實際 visual consumer 門檻，並依
+[Music Analysis Contract](music-analysis-contract.md) 與
+[ADR 0014](adr/0014-audio-python-runtime-family.md) 執行。All-In-One 的 Demucs
+stems 只是分析 job intermediate，不取代 refined RoFormer 路線。
 
 **讀音輔助（furigana/羅馬拼音）**：每個歌詞來源可對應一份讀音資料，保存於
 `tracks/<trackId>/lyrics/readings/<sourceFilename>.json`（用完整來源檔名，而非去
@@ -481,7 +493,8 @@ machine-local 固定補償：正值延後整份 overlay state，負值在播放�
 snapshot。先前 loopback 量測未顯示 transport bottleneck，因此不先拆成 content snapshot
 與 clock correction 兩套 protocol。ADR 0010 已將 T2 segment timing 定為下一次重開
 此決策的明確觸發條件：屆時 immutable `lyrics.document` 與 dynamic `state.snapshot`
-分流，避免每次播放更新都重送完整 segments；在 T2 實作前仍維持現有 v2 行為。
+分流，避免每次播放更新都重送完整 segments；在 T2 authoring 與 Output v3 批次完成前
+仍維持現有 v2 行為。
 
 ### 6.11 External Integration Planes
 
