@@ -15,6 +15,7 @@ const {
 const {
   buildProviderRuntimePaths,
   ensureBgutilPluginPackageMarkers,
+  getMissingProviderRuntimeArtifacts,
   getProviderRuntimePaths,
   isProviderRuntimeInstalled,
   writePythonPathConfig,
@@ -382,6 +383,7 @@ function expandZipArchive(
       [
         '& {',
         'param([string]$ArchivePath, [string]$DestinationPath)',
+        "$ErrorActionPreference = 'Stop'",
         'Add-Type -AssemblyName System.IO.Compression.FileSystem',
         '$root = [System.IO.Path]::GetFullPath($DestinationPath)',
         'if (-not $root.EndsWith([System.IO.Path]::DirectorySeparatorChar)) {',
@@ -394,13 +396,31 @@ function expandZipArchive(
         'if (-not $target.StartsWith($root, [System.StringComparison]::OrdinalIgnoreCase)) {',
         'throw "Archive entry extracts outside the destination: $($entry.FullName)"',
         '}',
+        'if ($entry.FullName.EndsWith("/") -or $entry.FullName.EndsWith("\\")) {',
+        '[System.IO.Directory]::CreateDirectory($target) | Out-Null',
+        'continue',
+        '}',
+        '$parent = [System.IO.Path]::GetDirectoryName($target)',
+        'if ($parent) {',
+        '[System.IO.Directory]::CreateDirectory($parent) | Out-Null',
+        '}',
+        '$inputStream = $entry.Open()',
+        'try {',
+        '$outputStream = [System.IO.File]::Open($target, [System.IO.FileMode]::Create, [System.IO.FileAccess]::Write, [System.IO.FileShare]::None)',
+        'try {',
+        '$inputStream.CopyTo($outputStream)',
+        '} finally {',
+        '$outputStream.Dispose()',
+        '}',
+        '} finally {',
+        '$inputStream.Dispose()',
+        '}',
         '}',
         '} finally {',
         '$archive.Dispose()',
         '}',
-        'Expand-Archive -LiteralPath $ArchivePath -DestinationPath $DestinationPath -Force',
         '}',
-      ].join(' '),
+      ].join('\n'),
       archivePath,
       destinationDir,
     ]);
@@ -861,6 +881,14 @@ async function ensureProviderRuntimeDependency(
     fs.rmSync(tmpInstallDir, { recursive: true, force: true });
     fs.mkdirSync(tmpInstallDir, { recursive: true });
     await installProviderRuntimeArtifacts(tmpPaths, dependency, options);
+    const missingArtifacts = getMissingProviderRuntimeArtifacts(tmpPaths, {
+      requireManifest: false,
+    });
+    if (missingArtifacts.length > 0) {
+      throw new Error(
+        `provider runtime install did not produce required artifacts: ${missingArtifacts.join(', ')}`,
+      );
+    }
     writeDependencyNotices(tmpPaths.installDir, dependency);
     writeDependencyManifest(tmpPaths.manifestPath, dependency, options);
     fs.rmSync(paths.installDir, { recursive: true, force: true });

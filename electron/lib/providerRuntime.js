@@ -79,14 +79,26 @@ function writePythonPathConfig(paths) {
   return true;
 }
 
+function getMissingProviderRuntimeArtifacts(paths, options = {}) {
+  const requireManifest = options.requireManifest !== false;
+  const checks = [
+    ['python executable', paths.pythonPath],
+    ['yt-dlp package', path.join(paths.sitePackagesDir, 'yt_dlp')],
+    [
+      'bgutil plugin package',
+      path.join(paths.pluginPackageDir, 'yt_dlp_plugins'),
+    ],
+    ['bgutil provider executable', paths.bgutilProviderPath],
+    ...(requireManifest ? [['manifest', paths.manifestPath]] : []),
+  ];
+
+  return checks
+    .filter(([, artifactPath]) => !fs.existsSync(artifactPath))
+    .map(([label]) => label);
+}
+
 function isProviderRuntimeInstalled(paths) {
-  return (
-    fs.existsSync(paths.pythonPath) &&
-    fs.existsSync(path.join(paths.sitePackagesDir, 'yt_dlp')) &&
-    fs.existsSync(path.join(paths.pluginPackageDir, 'yt_dlp_plugins')) &&
-    fs.existsSync(paths.bgutilProviderPath) &&
-    fs.existsSync(paths.manifestPath)
-  );
+  return getMissingProviderRuntimeArtifacts(paths).length === 0;
 }
 
 function ensureBgutilPluginPackageMarkers(paths) {
@@ -107,6 +119,7 @@ module.exports = {
   BGUTIL_PLUGIN_DIRNAME,
   buildProviderRuntimePaths,
   ensureBgutilPluginPackageMarkers,
+  getMissingProviderRuntimeArtifacts,
   getProviderRuntimePaths,
   isProviderRuntimeInstalled,
   writePythonPathConfig,

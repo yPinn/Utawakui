@@ -234,7 +234,9 @@ describe('ensureFfmpegDependency', () => {
     expect(args).toContain('-Command');
     const command = args[args.indexOf('-Command') + 1];
     expect(command).toContain('param([string]$ArchivePath');
-    expect(command).toContain('Expand-Archive');
+    expect(command).toContain("$ErrorActionPreference = 'Stop'\nAdd-Type");
+    expect(command).toContain('ZipFile]::OpenRead');
+    expect(command).toContain('$inputStream.CopyTo($outputStream)');
     expect(command).not.toContain('$args');
     expect(args.at(-2)).toMatch(/ffmpeg\.zip$/);
     expect(args.at(-1)).toContain('.ffmpeg-');
@@ -782,6 +784,48 @@ describe('yt-dlp feature dependency', () => {
         }),
       ),
     });
+  });
+
+  it('rejects a provider runtime install when extraction does not produce required artifacts', async () => {
+    const userDataDir = makeTempDir();
+    const buffers = {
+      python: Buffer.from('python zip'),
+      ytdlp: Buffer.from('yt-dlp wheel'),
+      provider: Buffer.from('provider exe'),
+      plugin: Buffer.from('plugin zip'),
+    };
+    const dependency = makeProviderRuntimeDependency(buffers);
+    const fetchImpl = vi.fn(async (url) => {
+      const artifact = dependency.artifacts.find(
+        (item) => item.downloadUrl === url,
+      );
+      if (!artifact) throw new Error(`unexpected url: ${url}`);
+      const buffer =
+        artifact.role === 'python-embed'
+          ? buffers.python
+          : artifact.role === 'yt-dlp-wheel'
+            ? buffers.ytdlp
+            : artifact.role === 'bgutil-provider-exe'
+              ? buffers.provider
+              : buffers.plugin;
+      return {
+        ok: true,
+        arrayBuffer: () => Promise.resolve(arrayBufferFrom(buffer)),
+      };
+    });
+    const extractArchive = vi.fn(async () => {});
+    const paths = getYtdlpPaths(userDataDir, dependency);
+
+    await expect(
+      ensureYtdlpDependency(userDataDir, {
+        dependency,
+        fetchImpl,
+        extractArchive,
+      }),
+    ).rejects.toThrow(/provider runtime install did not produce/i);
+
+    expect(fs.existsSync(paths.installDir)).toBe(false);
+    expect(fs.existsSync(paths.manifestPath)).toBe(false);
   });
 
   it('removes only the managed Python provider runtime folder', async () => {
