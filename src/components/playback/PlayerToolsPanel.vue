@@ -347,7 +347,7 @@ function handleSeparationPresetChange(presetId) {
       class="player-tools__section"
       aria-label="音訊處理"
     >
-      <div class="player-tools__process-card">
+      <div class="player-tools__process-item player-tools__process-card">
         <div class="player-tools__row-header">
           <span class="player-tools__label">
             <MicVocal :size="ICON_SIZE" aria-hidden="true" />
@@ -361,6 +361,7 @@ function handleSeparationPresetChange(presetId) {
         </p>
 
         <SeparationPresetControl
+          class="player-tools__separation-control"
           :has-track="Boolean(currentTrack)"
           :preset-options="separationPresetOptions"
           :selected-preset-id="selectedSeparationPresetId"
@@ -375,7 +376,7 @@ function handleSeparationPresetChange(presetId) {
       </div>
 
       <div
-        class="player-tools__process-row player-tools__process-row--disabled"
+        class="player-tools__process-item player-tools__process-row player-tools__process-row--disabled"
       >
         <div class="player-tools__process-copy">
           <span class="player-tools__label">
@@ -653,8 +654,7 @@ function handleSeparationPresetChange(presetId) {
   justify-content: center;
 }
 
-.player-tools__process-row,
-.player-tools__process-card {
+.player-tools__process-item {
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius);
@@ -663,15 +663,11 @@ function handleSeparationPresetChange(presetId) {
 
 .player-tools__process-card {
   display: grid;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-1);
 }
 
-.player-tools__process-card :deep(.separation-preset-control) {
-  flex-wrap: wrap;
-}
-
-.player-tools__process-card :deep(.separation-preset-control__label) {
-  flex: 1 1 calc(100% - var(--ui-icon-button-size-sm) - var(--ui-space-2));
+.player-tools__separation-control {
+  margin-top: var(--ui-space-2);
 }
 
 .player-tools__process-row {
@@ -685,6 +681,8 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__process-copy {
   flex: 1;
   min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
 }
 
 .player-tools__process-row--disabled {

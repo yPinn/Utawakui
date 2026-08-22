@@ -17,7 +17,7 @@ export const LEGACY_SEPARATION_RESULT_OPTIONS = Object.freeze(
 export const DEFAULT_SEPARATION_PRESET_ID = recipeCatalog.defaultRecipeId;
 
 export const SEPARATION_PRESET_SELECT_TITLE =
-  '推薦分離適合多數歌曲；快速分離以速度優先，結果會依音源而異。已產生的舊版結果仍可切換播放，但不再提供再次處理。';
+  '品質優先適合多數歌曲；速度優先可縮短等待時間。已產生的舊版結果仍可切換播放，但不再提供再次處理。';
 
 export function isRunnableSeparationRecipe(recipeId) {
   return SEPARATION_PRESET_OPTIONS.some(({ id }) => id === recipeId);

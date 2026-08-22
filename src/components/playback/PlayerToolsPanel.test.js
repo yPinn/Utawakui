@@ -37,12 +37,24 @@ describe('PlayerToolsPanel process tab', () => {
     );
   });
 
-  it('wraps the leading error slot and label above the uncompressed control row inside the narrow panel', () => {
-    expect(componentSource).toContain(
+  it('keeps the compact shared control free of panel-specific sizing hacks', () => {
+    expect(componentSource).not.toContain(
       ':deep(.separation-preset-control__label)',
     );
-    expect(componentSource).toMatch(/flex:\s*1\s+1\s+calc\(/s);
-    expect(componentSource).toContain('--ui-icon-button-size-sm');
+    expect(componentSource).not.toContain(':deep(.separation-preset-control)');
+    expect(componentSource).not.toMatch(/flex:\s*1\s+1\s+calc\(/s);
+  });
+
+  it('uses the same framed process-item foundation for active and future operations', () => {
+    expect(componentSource.match(/player-tools__process-item/g)).toHaveLength(
+      3,
+    );
+    expect(componentSource).toMatch(
+      /\.player-tools__process-item\s*\{[^}]*padding:\s*var\(--ui-space-3\)[^}]*border:\s*var\(--ui-border-width\)\s+solid\s+var\(--ui-color-border\)/s,
+    );
+    expect(componentSource).toMatch(
+      /\.player-tools__process-copy\s*\{[^}]*display:\s*grid[^}]*gap:\s*var\(--ui-space-1\)/s,
+    );
   });
 
   it('renders vocal separation controls for the current track', async () => {
@@ -52,8 +64,9 @@ describe('PlayerToolsPanel process tab', () => {
 
     expect(html).toContain('伴奏分離');
     expect(html).toContain('Song A');
-    expect(html).toContain('快速分離');
-    expect(html).toContain('推薦分離');
+    expect(html).toContain('處理模式');
+    expect(html).toContain('速度優先');
+    expect(html).toContain('品質優先');
     expect(html).not.toContain('和聲保留+');
     expect(html).toContain('產生');
   });
@@ -76,7 +89,7 @@ describe('PlayerToolsPanel process tab', () => {
       separationHasResult: true,
     });
 
-    expect(html).toContain('aria-label="此模型已產生"');
+    expect(html).toContain('aria-label="此模式已產生"');
     expect(html).not.toMatch(/>已產生<\/span>/);
     expect(html).not.toContain('重新產生');
     // The <select> stays enabled so the user can switch to a preset that

@@ -4,15 +4,15 @@
   "recipes": [
     {
       "id": "quick",
-      "label": "快速分離",
-      "description": "速度優先，結果會依編曲、唱法與錄音方式而異。",
+      "label": "速度優先",
+      "description": "縮短等待時間，結果會依歌曲內容而異。",
       "availability": "builtin",
       "implemented": true
     },
     {
       "id": "general",
-      "label": "推薦分離",
-      "description": "適合多數直播與錄製情境，較完整地移除人聲。",
+      "label": "品質優先",
+      "description": "適合多數直播與錄製情境，會使用較多處理時間。",
       "availability": "builtin",
       "implemented": true
     },

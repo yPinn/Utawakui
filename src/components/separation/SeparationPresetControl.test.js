@@ -56,18 +56,20 @@ describe('SeparationPresetControl', () => {
     });
   });
 
-  it('keeps a visible model label, every full option, and a clear generate action', async () => {
+  it('names the field and runnable choices by the user-facing decision', async () => {
     const html = await renderControl();
 
-    expect(html).toContain('伴奏模型');
-    expect(html).toContain('快速分離');
-    expect(html).toContain('推薦分離');
+    expect(html).toContain('處理模式');
+    expect(html).toContain('速度優先');
+    expect(html).toContain('品質優先');
+    expect(html).not.toContain('伴奏模型');
+    expect(html).not.toContain('推薦分離');
     expect(html).not.toContain('和聲保留+');
     expect(html).toMatch(/<button[^>]*aria-label="產生伴奏"[^>]*>/);
     expect(html).toMatch(/>\s*<!--\[-->\s*產生\s*<!--\]-->\s*<\/span>/);
   });
 
-  it('shows only a fixed-width percentage while processing', async () => {
+  it('shows only a compact percentage while processing', async () => {
     const html = await renderControl({ inFlight: true, progressPercent: 42 });
 
     expect(html).toMatch(/>42%\s*<\/span>/);
@@ -78,7 +80,7 @@ describe('SeparationPresetControl', () => {
   it('uses an icon-only checked state after generation', async () => {
     const html = await renderControl({ hasResult: true });
 
-    expect(html).toContain('aria-label="此模型已產生"');
+    expect(html).toContain('aria-label="此模式已產生"');
     expect(html).not.toMatch(/>已產生<\/span>/);
     expect(html).not.toContain('aria-label="產生伴奏"');
   });
@@ -94,13 +96,24 @@ describe('SeparationPresetControl', () => {
     expect(componentSource).not.toContain('data-message');
   });
 
-  it('reserves fixed select and action widths so state changes cannot shift layout', () => {
-    expect(componentSource).toContain('--ui-separation-preset-width');
-    expect(componentSource).toContain('--ui-separation-action-width');
+  it('lets the select and action size to their content while keeping status states deliberate', () => {
+    expect(componentSource).not.toContain('--ui-separation-preset-width');
+    expect(componentSource).not.toContain('--ui-separation-action-width');
     expect(componentSource).toContain('font-variant-numeric: tabular-nums');
-    expect(componentSource).toContain('flex: 0 0');
     expect(componentSource).toMatch(
-      /\.separation-preset-control__action\s*\{[^}]*justify-content:\s*center/s,
+      /\.separation-preset-control__row\s*\{[^}]*grid-template-columns:[^;]*minmax\(\s*var\(--ui-separation-mode-min-width\),\s*1fr\s*\)/s,
+    );
+    expect(componentSource).toMatch(
+      /\.separation-preset-control__select\s*\{[^}]*padding-inline:\s*var\(--ui-space-2\)\s+var\(--ui-space-5\)/s,
+    );
+    expect(componentSource).toMatch(
+      /\.separation-preset-control__action\s*\{[^}]*width:\s*max-content/s,
+    );
+    expect(componentSource).toMatch(
+      /\.separation-preset-control__state--progress\s*\{[^}]*padding-inline:\s*var\(--ui-space-2\)/s,
+    );
+    expect(componentSource).toMatch(
+      /\.separation-preset-control__state--complete\s*\{[^}]*width:\s*var\(--ui-control-height\)/s,
     );
   });
 });
