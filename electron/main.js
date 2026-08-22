@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('node:crypto');
+
 const {
   app,
   BrowserWindow,
@@ -17,8 +19,10 @@ const APP_NAME = 'Utawakui';
 // require of a lib that reads it), or userData resolves to Electron's
 // default app name instead of ours.
 app.setName(APP_NAME);
+app.setAppLogsPath();
 
 const { FEATURE_IDS } = require('./lib/featureGates');
+const { createDiagnosticsService } = require('./lib/diagnostics');
 const windowState = require('./main/windowState');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
@@ -41,11 +45,24 @@ const {
   registerOutputRuntimeLifecycle,
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
+const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
+const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
 const { createProviderRunnerManager } = require('./main/providerRunner');
 const {
   runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
   startupCheckDelayMs: APP_UPDATE_STARTUP_DELAY_MS,
 } = require('../shared/appUpdateValues.json');
+
+const diagnosticsService = createDiagnosticsService({
+  logsDir: app.getPath('logs'),
+  sessionId: crypto.randomUUID(),
+  process: 'main',
+});
+registerDiagnosticsLifecycle({
+  app,
+  processTarget: process,
+  service: diagnosticsService,
+});
 
 // Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let
 // content zoom drift and desync the titlebar theme button from the
@@ -135,6 +152,11 @@ if (!gotSingleInstanceLock) {
     registerAppInfoHandlers({
       ipcMain,
       getVersion: () => app.getVersion(),
+    });
+    registerDiagnosticsHandlers({
+      ipcMain,
+      service: diagnosticsService,
+      openLogsDirectory: () => shell.openPath(app.getPath('logs')),
     });
     registerAppUpdateHandlers({ ipcMain, service: appUpdateService });
 

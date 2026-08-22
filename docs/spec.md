@@ -406,7 +406,9 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 - Recording/VOD session mode。
 - Preset export/import。
 - Library maintenance UI。
-- 錯誤復原、缺檔提示與狀態修復。
+- 錯誤復原、缺檔提示與狀態修復；diagnostics foundation 已完成，Settings、
+  export 與 domain wrapper 依
+  [local diagnostics rollout route](diagnostics-rollout.md) 隨本 phase 推進。
 
 ### Phase 3：Distribution And Integrations
 

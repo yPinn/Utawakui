@@ -28,6 +28,12 @@ function readInitialCaptureDeviceId() {
 }
 
 contextBridge.exposeInMainWorld('Utawakui', {
+  recordDiagnostic: (event) =>
+    ipcRenderer.invoke('diagnostics:record-renderer', event),
+  listRecentDiagnostics: (limit) =>
+    ipcRenderer.invoke('diagnostics:list-recent', limit),
+  clearDiagnostics: () => ipcRenderer.invoke('diagnostics:clear'),
+  openDiagnosticsFolder: () => ipcRenderer.invoke('diagnostics:open-folder'),
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
   getAppUpdateStatus: () => ipcRenderer.invoke('app-update:get-status'),
   checkForAppUpdate: () => ipcRenderer.invoke('app-update:check'),
