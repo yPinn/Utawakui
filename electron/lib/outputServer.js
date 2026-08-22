@@ -188,6 +188,15 @@ function createOutputServer(options = {}) {
   const resolveArtworkAsset = options.resolveArtworkAsset ?? (() => null);
 
   let snapshot = createEmptyOutputSnapshot();
+  let sourceIdentity = {
+    bootId: null,
+    sourceEpoch: null,
+    sourceSynchronization: 'ready',
+    unavailableReason: null,
+  };
+  if (options.initialProjection) {
+    setProjectionState(options.initialProjection, { broadcast: false });
+  }
   let overlaySlots = { ...(options.overlaySlots ?? {}) };
   let overlayConfigRevision = 0;
   let httpServer = null;
@@ -216,6 +225,16 @@ function createOutputServer(options = {}) {
 
   function getSnapshot() {
     return parseOutputSnapshot(snapshot);
+  }
+
+  function projectionMessageFields() {
+    if (!sourceIdentity.bootId) return {};
+    return {
+      bootId: sourceIdentity.bootId,
+      sourceEpoch: sourceIdentity.sourceEpoch,
+      sourceStatus: sourceIdentity.sourceSynchronization,
+      unavailableReason: sourceIdentity.unavailableReason,
+    };
   }
 
   function getOverlayConfig() {
@@ -315,6 +334,7 @@ function createOutputServer(options = {}) {
     client.send(
       JSON.stringify({
         type: 'state.snapshot',
+        ...projectionMessageFields(),
         snapshot: getSnapshot(),
         overlayConfig: getOverlayConfig(),
       }),
@@ -431,6 +451,7 @@ function createOutputServer(options = {}) {
 
     const message = JSON.stringify({
       type: 'state.changed',
+      ...projectionMessageFields(),
       revision: snapshot.revision,
       snapshot,
     });
@@ -438,6 +459,48 @@ function createOutputServer(options = {}) {
       if (client.readyState === WebSocket.OPEN) client.send(message);
     }
     return true;
+  }
+
+  function setProjectionState(value, options = {}) {
+    if (!value || typeof value !== 'object') {
+      throw new TypeError('Output projection state must be an object');
+    }
+    if (typeof value.bootId !== 'string' || value.bootId.length === 0) {
+      throw new TypeError('Output projection state requires bootId');
+    }
+    if (
+      value.sourceEpoch !== null &&
+      (typeof value.sourceEpoch !== 'string' || value.sourceEpoch.length === 0)
+    ) {
+      throw new TypeError('Output projection state has invalid sourceEpoch');
+    }
+    if (
+      !['unavailable', 'syncing', 'ready'].includes(value.sourceSynchronization)
+    ) {
+      throw new TypeError('Output projection state has invalid readiness');
+    }
+
+    snapshot = parseOutputSnapshot(value.snapshot);
+    sourceIdentity = {
+      bootId: value.bootId,
+      sourceEpoch: value.sourceEpoch,
+      sourceSynchronization: value.sourceSynchronization,
+      unavailableReason:
+        typeof value.unavailableReason === 'string'
+          ? value.unavailableReason
+          : null,
+    };
+    if (options.broadcast === false) return;
+
+    const message = JSON.stringify({
+      type: 'state.changed',
+      ...projectionMessageFields(),
+      revision: snapshot.revision,
+      snapshot,
+    });
+    for (const client of webSocketServer?.clients ?? []) {
+      if (client.readyState === WebSocket.OPEN) client.send(message);
+    }
   }
 
   function setOverlaySlots(value) {
@@ -488,6 +551,7 @@ function createOutputServer(options = {}) {
     getSnapshot,
     getStatus,
     publish,
+    setProjectionState,
     setOverlaySlots,
     start,
     stop,

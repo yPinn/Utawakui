@@ -529,6 +529,9 @@ const state = reactive({
   track: null, // { id, filename, url, stemsUrl? } | null
   isPlaying: false,
   playbackPhase: 'idle',
+  // Renderer-issued Output source identity advances from the audio element's
+  // own discontinuity events; it is not a second playback clock.
+  continuityRevision: 0,
   currentTime: 0,
   duration: 0,
   volume: DEFAULT_VOLUME,
@@ -601,6 +604,7 @@ function handleBuffering() {
 
 function handleSeeking() {
   if (!state.track) return;
+  state.continuityRevision += 1;
   state.currentTime = audio.currentTime || 0;
   state.playbackPhase = 'seeking';
 }

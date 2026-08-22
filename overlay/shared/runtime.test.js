@@ -148,6 +148,98 @@ describe('overlay WebSocket runtime', () => {
     expect(second.close).toHaveBeenCalledOnce();
   });
 
+  it('accepts lower revisions only after a new boot or source epoch', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (value) => received.push(value.revision),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        snapshot: snapshot(8),
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        snapshot: snapshot(2),
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-2',
+        sourceStatus: 'ready',
+        snapshot: snapshot(1),
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        bootId: 'boot-2',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        snapshot: snapshot(0),
+      }),
+    });
+
+    expect(received).toEqual([8, 1, 0]);
+    connection.stop();
+  });
+
+  it('delivers the safe empty snapshot when the source becomes unavailable', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (value) => received.push(value.revision),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        snapshot: snapshot(8),
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        bootId: 'boot-1',
+        sourceEpoch: null,
+        sourceStatus: 'unavailable',
+        snapshot: snapshot(0),
+      }),
+    });
+
+    expect(received).toEqual([8, 0]);
+    connection.stop();
+  });
+
   it('delays snapshot delivery from generatedAt and clears queued state when compensation changes', () => {
     FakeWebSocket.instances = [];
     let nowMs = Date.parse('2026-08-22T00:00:00.100Z');

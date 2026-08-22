@@ -69,6 +69,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   confirmFeatureGate: (featureId, noticeVersion) =>
     ipcRenderer.invoke('feature-gates:confirm', featureId, noticeVersion),
   getOutputStatus: () => ipcRenderer.invoke('output:get-status'),
+  connectOutputSource: () => ipcRenderer.invoke('output:connect-source'),
   getOutputSettings: () => ipcRenderer.invoke('output:get-settings'),
   updateOutputSettings: (settings) =>
     ipcRenderer.invoke('output:update-settings', settings),

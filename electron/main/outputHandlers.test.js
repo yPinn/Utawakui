@@ -25,7 +25,7 @@ describe('output handlers', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
-  it('gates start and publish while leaving status and stop recoverable', async () => {
+  it('gates start and publish while source connect, status, and stop stay recoverable', async () => {
     const ipcMain = createIpcMain();
     const requireFeatureGate = vi.fn();
     const server = {
@@ -33,6 +33,11 @@ describe('output handlers', () => {
       start: vi.fn(async () => ({ running: true, port: 8700 })),
       stop: vi.fn(async () => undefined),
       publish: vi.fn(() => true),
+      connectSource: vi.fn(() => ({
+        running: false,
+        bootId: 'boot-1',
+        observed: { sourceSynchronization: 'syncing' },
+      })),
     };
     registerOutputHandlers({
       ipcMain,
@@ -53,20 +58,21 @@ describe('output handlers', () => {
     });
     expect(requireFeatureGate).toHaveBeenCalledWith('public-output-flow');
 
+    const sender = { id: 5 };
     await expect(
-      ipcMain.handlers.get('output:publish')(null, { revision: 1 }),
-    ).resolves.toBe(false);
-    expect(server.publish).not.toHaveBeenCalled();
+      ipcMain.handlers.get('output:connect-source')({ sender }),
+    ).resolves.toMatchObject({ bootId: 'boot-1' });
+    expect(server.connectSource).toHaveBeenCalledWith(sender);
 
-    server.getStatus.mockReturnValue({ running: true, port: 8700 });
+    const envelope = { contractVersion: 3, revision: 1 };
     await expect(
-      ipcMain.handlers.get('output:publish')(null, { revision: 1 }),
+      ipcMain.handlers.get('output:publish')({ sender }, envelope),
     ).resolves.toBe(true);
-    expect(requireFeatureGate).toHaveBeenCalledTimes(3);
-    expect(server.publish).toHaveBeenCalledWith({ revision: 1 });
+    expect(requireFeatureGate).toHaveBeenCalledTimes(2);
+    expect(server.publish).toHaveBeenCalledWith(envelope, sender);
 
     await expect(ipcMain.handlers.get('output:stop')()).resolves.toEqual({
-      running: true,
+      running: false,
       port: 8700,
     });
     expect(server.stop).toHaveBeenCalledOnce();
@@ -143,8 +149,8 @@ describe('output handlers', () => {
       start: vi.fn(),
       stop: vi.fn(),
       publish: vi.fn(),
-      reconfigure: vi.fn(async () => ({
-        running: true,
+      reconcileConfigured: vi.fn(async () => ({
+        running: config.outputRuntime.autoStart,
         port: config.outputRuntime.port,
       })),
     };
@@ -179,12 +185,14 @@ describe('output handlers', () => {
       }),
     ).resolves.toEqual({
       settings: { autoStart: false, port: 8702, displayDelayMs: 280 },
-      status: { running: true, port: 8702 },
+      status: { running: false, port: 8702 },
     });
     expect(updateConfig).toHaveBeenCalledWith({
       outputRuntime: { autoStart: false, port: 8702, displayDelayMs: 280 },
     });
-    expect(server.reconfigure).toHaveBeenCalledOnce();
+    expect(server.reconcileConfigured).toHaveBeenCalledWith({
+      forceRestart: true,
+    });
 
     await expect(
       ipcMain.handlers.get('output:update-settings')(null, {
@@ -195,7 +203,10 @@ describe('output handlers', () => {
     ).resolves.toMatchObject({
       settings: { autoStart: false, port: 8702, displayDelayMs: 420 },
     });
-    expect(server.reconfigure).toHaveBeenCalledOnce();
+    expect(server.reconcileConfigured).toHaveBeenLastCalledWith({
+      forceRestart: false,
+    });
+    expect(server.reconcileConfigured).toHaveBeenCalledTimes(2);
   });
 
   it('rejects invalid or occupied ports without changing the persisted setting', async () => {
@@ -211,7 +222,7 @@ describe('output handlers', () => {
         start: vi.fn(),
         stop: vi.fn(),
         publish: vi.fn(),
-        reconfigure: vi.fn(),
+        reconcileConfigured: vi.fn(),
       },
       requireFeatureGate: vi.fn(),
       featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
@@ -258,10 +269,10 @@ describe('output handlers', () => {
       start: vi.fn(async () => ({ running: true, port: 8700 })),
       stop: vi.fn(),
       publish: vi.fn(),
-      reconfigure: vi
+      reconcileConfigured: vi
         .fn()
         .mockRejectedValueOnce(restartFailure)
-        .mockResolvedValueOnce({ running: false, port: 8700 }),
+        .mockResolvedValueOnce({ running: true, port: 8700 }),
     };
     const updateConfig = vi.fn((patch) => {
       config = { ...config, ...patch };
@@ -290,7 +301,13 @@ describe('output handlers', () => {
       port: 8700,
       displayDelayMs: 0,
     });
-    expect(server.reconfigure).toHaveBeenCalledTimes(2);
-    expect(server.start).toHaveBeenCalledOnce();
+    expect(server.reconcileConfigured).toHaveBeenCalledTimes(2);
+    expect(server.reconcileConfigured).toHaveBeenNthCalledWith(1, {
+      forceRestart: true,
+    });
+    expect(server.reconcileConfigured).toHaveBeenNthCalledWith(2, {
+      forceRestart: true,
+    });
+    expect(server.start).not.toHaveBeenCalled();
   });
 });

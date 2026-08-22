@@ -35,6 +35,10 @@ function registerOutputHandlers({
 
   ipcMain.handle('output:get-status', async () => server.getStatus());
 
+  ipcMain.handle('output:connect-source', async (event) =>
+    server.connectSource(event.sender),
+  );
+
   ipcMain.handle('output:get-settings', async () => ({
     ...getConfig().outputRuntime,
   }));
@@ -58,33 +62,25 @@ function registerOutputHandlers({
       displayDelayMs: value.displayDelayMs,
     };
     const portChanged = next.port !== previous.port;
-    const wasRunning = server.getStatus().running === true;
     if (portChanged && !(await isPortAvailable(next.port))) {
       throw new Error(`output port is already in use: ${next.port}`);
     }
 
     updateConfig({ outputRuntime: next });
     try {
-      let status = portChanged
-        ? await server.reconfigure()
-        : server.getStatus();
-      if (next.autoStart && !previous.autoStart && !status.running) {
-        requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
-        status = await server.start();
-      }
+      const status = await server.reconcileConfigured({
+        forceRestart: portChanged,
+      });
       return { settings: next, status };
     } catch (error) {
       updateConfig({ outputRuntime: previous });
-      if (portChanged) {
-        try {
-          await server.reconfigure();
-          if (wasRunning) await server.start();
-        } catch (rollbackError) {
-          logger.error?.(
-            '[output] Failed to restore output runtime after port change',
-            rollbackError,
-          );
-        }
+      try {
+        await server.reconcileConfigured({ forceRestart: portChanged });
+      } catch (rollbackError) {
+        logger.error?.(
+          '[output] Failed to restore previous output settings',
+          rollbackError,
+        );
       }
       throw error;
     }
@@ -102,8 +98,7 @@ function registerOutputHandlers({
 
   ipcMain.handle('output:publish', async (event, snapshot) => {
     requireFeatureGate(featureIds.PUBLIC_OUTPUT_FLOW);
-    if (!server.getStatus().running) return false;
-    return server.publish(snapshot);
+    return server.publish(snapshot, event.sender);
   });
 
   ipcMain.handle('output-slots:list', async () => {

@@ -43,7 +43,11 @@ import {
 } from '../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
-const { state: libraryState, refresh: refreshLibrary } = useLibrary();
+const {
+  state: libraryState,
+  initialize: initializeLibrary,
+  refresh: refreshLibrary,
+} = useLibrary();
 const {
   state: queueState,
   setQueue,
@@ -450,8 +454,10 @@ function startDrag(track, event) {
 // for those, so without this, manually-added files wouldn't appear until
 // something else happened to trigger a refresh. refresh() doesn't reset
 // isLoading, so this doesn't flash "載入中" on every tab switch back here.
-onMounted(() => {
-  refreshLibrary();
+onMounted(async () => {
+  const wasInitialized = libraryState.isInitialized;
+  await initializeLibrary();
+  if (wasInitialized) await refreshLibrary();
 });
 </script>
 

@@ -13,7 +13,8 @@ import { usePlaylists } from './usePlaylists.js';
 // because `state.tracks` is now a computed, not a plain writable array.
 const rawTracks = ref([]);
 
-const { state: playlistState } = usePlaylists();
+const { state: playlistState, initialize: initializePlaylists } =
+  usePlaylists();
 
 // Once an album has a custom cover, every member track should show it
 // instead of its own individually-downloaded thumbnailUrl — an album cover
@@ -51,17 +52,22 @@ const enrichedTracks = computed(() =>
 const state = reactive({
   tracks: enrichedTracks,
   isLoading: true,
+  isInitialized: false,
   error: null,
 });
 
 let unsubscribeLibraryUpdated = null;
+let initializationPromise = null;
 
 const tracksById = computed(
   () => new Map(state.tracks.map((track) => [track.id, track])),
 );
 
 async function refresh() {
-  if (typeof window === 'undefined' || !window.Utawakui) return;
+  if (typeof window === 'undefined' || !window.Utawakui) {
+    state.isLoading = false;
+    return;
+  }
   try {
     rawTracks.value = await window.Utawakui.listTracks();
     state.error = null;
@@ -70,6 +76,19 @@ async function refresh() {
   } finally {
     state.isLoading = false;
   }
+}
+
+function initialize() {
+  if (initializationPromise) return initializationPromise;
+  initializationPromise = (async () => {
+    const playlistInitialization = initializePlaylists();
+    if (typeof window !== 'undefined' && window.Utawakui) {
+      unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
+    }
+    await Promise.all([refresh(), playlistInitialization]);
+    state.isInitialized = true;
+  })();
+  return initializationPromise;
 }
 
 // Manual metadata refresh (album/releaseYear from already-downloaded
@@ -83,14 +102,6 @@ async function refreshMetadata() {
   return updated;
 }
 
-if (typeof window !== 'undefined' && window.Utawakui) {
-  refresh();
-  // Background metadata backfill (electron/lib/library/backfill.js's
-  // runBackfillPass) pushes this after it changes something, and track
-  // deletion/import elsewhere in the app does too.
-  unsubscribeLibraryUpdated = window.Utawakui.onLibraryUpdated(refresh);
-}
-
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
     unsubscribeLibraryUpdated?.();
@@ -101,6 +112,7 @@ export function useLibrary() {
   return {
     state: readonly(state),
     tracksById,
+    initialize,
     refresh,
     refreshMetadata,
   };

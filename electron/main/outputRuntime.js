@@ -1,6 +1,8 @@
 'use strict';
 
+const crypto = require('node:crypto');
 const { createOutputServer } = require('../lib/outputServer');
+const { createOutputProjectionHub } = require('../lib/outputProjection');
 const {
   host: OUTPUT_HOST,
   defaultPort: DEFAULT_OUTPUT_PORT,
@@ -19,7 +21,14 @@ function createIdleStatus(port) {
   };
 }
 
+function rendererId(value) {
+  const id = value?.id;
+  if (typeof id !== 'string' && !Number.isSafeInteger(id)) return null;
+  return String(id);
+}
+
 function createOutputRuntime({
+  bootId = crypto.randomUUID(),
   serverFactory = createOutputServer,
   getConfig = () => ({
     outputRuntime: {
@@ -36,6 +45,14 @@ function createOutputRuntime({
   let serverPort = null;
   let lastError = null;
   let overlaySlots = {};
+  let serviceLifecycle = 'stopped';
+  let lifecycleQueue = Promise.resolve();
+  let rendererWebContents = null;
+  let detachRendererListeners = null;
+  const projectionHub = createOutputProjectionHub({
+    bootId,
+    onChange: (projection) => server?.setProjectionState?.(projection),
+  });
 
   function serializeError(error) {
     if (!error) return null;
@@ -64,52 +81,169 @@ function createOutputRuntime({
     if (server?.getStatus().running) {
       throw new Error('output runtime must stop before changing port');
     }
-    server = serverFactory({ port, overlaySlots, resolveArtworkAsset });
+    server = serverFactory({
+      port,
+      overlaySlots,
+      resolveArtworkAsset,
+      initialProjection: projectionHub.getProjection(),
+    });
     serverPort = port;
+    server.setProjectionState?.(projectionHub.getProjection());
     return server;
   }
 
   function getStatus() {
+    const settings = getSettings();
+    const base = server?.getStatus() ?? createIdleStatus(settings.port);
+    const projection = projectionHub.getStatus();
     return {
-      ...(server?.getStatus() ?? createIdleStatus(getSettings().port)),
+      ...base,
+      revision: projection.revision,
       error: lastError,
+      bootId,
+      sourceEpoch: projection.sourceEpoch,
+      desired: {
+        running: settings.autoStart,
+        port: settings.port,
+        displayDelayMs: settings.displayDelayMs,
+      },
+      observed: {
+        serviceLifecycle,
+        sourceSynchronization: projection.sourceSynchronization,
+        unavailableReason: projection.unavailableReason,
+        clients: base.clients ?? 0,
+      },
+      effective: {
+        host: base.running ? base.host : null,
+        port: base.running ? base.port : null,
+        sourceEpoch:
+          projection.sourceSynchronization === 'ready'
+            ? projection.sourceEpoch
+            : null,
+      },
     };
   }
 
+  function enqueueLifecycle(operation) {
+    const task = lifecycleQueue.then(operation, operation);
+    lifecycleQueue = task.catch(() => undefined);
+    return task;
+  }
+
   async function startServer() {
+    serviceLifecycle = 'starting';
     try {
-      const status = await ensureServer().start();
+      await ensureServer().start();
+      serviceLifecycle = 'listening';
       lastError = null;
-      return { ...status, error: null };
+      return getStatus();
     } catch (error) {
+      serviceLifecycle = 'error';
       lastError = serializeError(error);
       throw error;
     }
   }
 
-  async function start() {
-    requireFeatureGate(featureId);
-    return startServer();
+  async function stopServer() {
+    if (!server) {
+      serviceLifecycle = 'stopped';
+      return getStatus();
+    }
+    serviceLifecycle = 'stopping';
+    await server.stop();
+    serviceLifecycle = 'stopped';
+    return getStatus();
   }
 
-  async function startConfigured() {
-    if (!getSettings().autoStart) return getStatus();
+  function start() {
+    requireFeatureGate(featureId);
+    return enqueueLifecycle(startServer);
+  }
+
+  function startConfigured() {
+    if (!getSettings().autoStart) return Promise.resolve(getStatus());
     try {
       requireFeatureGate(featureId);
     } catch {
+      return Promise.resolve(getStatus());
+    }
+    return enqueueLifecycle(() => reconcileConfiguredState());
+  }
+
+  function stop() {
+    return enqueueLifecycle(stopServer);
+  }
+
+  async function reconcileConfiguredState({ forceRestart = false } = {}) {
+    const settings = getSettings();
+    const running = Boolean(server?.getStatus().running);
+    const portChanged = server !== null && serverPort !== settings.port;
+
+    if (!settings.autoStart) {
+      if (running) await stopServer();
+      if (portChanged) {
+        server = null;
+        serverPort = null;
+      }
       return getStatus();
+    }
+
+    requireFeatureGate(featureId);
+    if (running && !forceRestart && !portChanged) return getStatus();
+    if (running) await stopServer();
+    if (forceRestart || portChanged) {
+      server = null;
+      serverPort = null;
     }
     return startServer();
   }
 
-  async function stop() {
-    if (!server) return;
-    await server.stop();
+  function reconcileConfigured(options) {
+    return enqueueLifecycle(() => reconcileConfiguredState(options));
   }
 
-  function publish(snapshot) {
-    if (!server?.getStatus().running) return false;
-    return server.publish(snapshot);
+  function reconfigure() {
+    return reconcileConfigured({ forceRestart: true });
+  }
+
+  function connectSource(source) {
+    if (rendererWebContents && source !== rendererWebContents) {
+      return getStatus();
+    }
+    if (!rendererWebContents) rendererWebContents = source;
+    const sourceId = rendererId(source);
+    if (!sourceId) return getStatus();
+    projectionHub.connectSource(sourceId);
+    return getStatus();
+  }
+
+  function publish(envelope, source) {
+    const sourceId = rendererId(source);
+    if (!sourceId) return false;
+    return projectionHub.publish(envelope, sourceId);
+  }
+
+  function attachRenderer(webContents) {
+    detachRendererListeners?.();
+    rendererWebContents = webContents;
+    const listeners = [
+      [
+        'did-start-loading',
+        () => projectionHub.markUnavailable('renderer_loading'),
+      ],
+      [
+        'render-process-gone',
+        () => projectionHub.markUnavailable('renderer_crashed'),
+      ],
+      ['destroyed', () => projectionHub.markUnavailable('renderer_destroyed')],
+    ];
+    for (const [event, listener] of listeners) webContents.on(event, listener);
+    detachRendererListeners = () => {
+      for (const [event, listener] of listeners) {
+        webContents.removeListener(event, listener);
+      }
+    };
+    return detachRendererListeners;
   }
 
   function setOverlaySlots(slots) {
@@ -117,19 +251,13 @@ function createOutputRuntime({
     server?.setOverlaySlots?.(overlaySlots);
   }
 
-  async function reconfigure() {
-    const wasRunning = Boolean(server?.getStatus().running);
-    if (server) await server.stop();
-    server = null;
-    serverPort = null;
-    if (wasRunning) return start();
-    return getStatus();
-  }
-
   return {
+    attachRenderer,
+    connectSource,
     getSettings,
     getStatus,
     publish,
+    reconcileConfigured,
     reconfigure,
     setOverlaySlots,
     start,

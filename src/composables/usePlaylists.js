@@ -17,6 +17,7 @@ const state = reactive({
 // Serialize mutations so rapid actions cannot overwrite each other.
 let pending = Promise.resolve();
 let unsubscribeLibraryUpdated = null;
+let initializationPromise = null;
 
 // Clear selection whenever the selected playlist disappears.
 function applyPlaylists(playlists) {
@@ -61,15 +62,20 @@ function refresh() {
   });
 }
 
-if (typeof window !== 'undefined' && window.Utawakui) {
-  refresh();
-  // Covers two cases with one subscription: (1) another part of the app
-  // changed playlists.json indirectly (track deletion cascades — see
-  // main.js's library:delete-track handler), and (2) the download
-  // directory changed, which main.js now also pushes this event for
-  // specifically so this singleton doesn't keep serving a stale
-  // directory's playlists (and worse, write them back into the new one).
-  unsubscribeLibraryUpdated = window.Utawakui.onLibraryUpdated(refresh);
+function initialize() {
+  if (initializationPromise) return initializationPromise;
+  initializationPromise = (async () => {
+    if (typeof window === 'undefined' || !window.Utawakui) return;
+    // Covers two cases with one subscription: (1) another part of the app
+    // changed playlists.json indirectly (track deletion cascades — see
+    // main.js's library:delete-track handler), and (2) the download
+    // directory changed, which main.js now also pushes this event for
+    // specifically so this singleton doesn't keep serving a stale
+    // directory's playlists (and worse, write them back into the new one).
+    unsubscribeLibraryUpdated ??= window.Utawakui.onLibraryUpdated(refresh);
+    await refresh();
+  })();
+  return initializationPromise;
 }
 
 if (import.meta.hot) {
@@ -298,6 +304,7 @@ const selectedPlaylist = computed(
 export function usePlaylists() {
   return {
     state: readonly(state),
+    initialize,
     selectedPlaylist,
     select,
     setLibraryView,

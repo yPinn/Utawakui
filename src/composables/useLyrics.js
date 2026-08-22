@@ -1,4 +1,4 @@
-import { computed, reactive, readonly, shallowRef, watch } from 'vue';
+import { computed, nextTick, reactive, readonly, shallowRef, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { useLibrary } from './useLibrary.js';
@@ -21,7 +21,7 @@ const EMPTY_TIMING = Object.freeze({
 
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
-const { selectedPlaylist } = usePlaylists();
+const { selectedPlaylist, initialize: initializePlaylists } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
 // The full library pool (title/artist/lyrics/hasSeparation lookups) is
 // shared with SetlistView.vue via this singleton — see useLibrary.js for why
@@ -31,6 +31,7 @@ const { requireFeatureGate } = useFeatureGateAccess();
 const {
   state: libraryState,
   tracksById,
+  initialize: initializeLibrary,
   refresh: refreshLibrary,
 } = useLibrary();
 
@@ -89,6 +90,8 @@ let unsubscribeLibraryBackfillStatus = null;
 let lyricsRequestId = 0;
 let musixmatchProbeRequestId = 0;
 let candidateSearchRequestId = 0;
+let initializationPromise = null;
+let selectedLyricsLoad = Promise.resolve();
 
 const selectedTrack = computed(
   () =>
@@ -276,7 +279,7 @@ function applyLibraryTracks() {
   state.selectedSourceFilename =
     pickPreferredLyricsSource(selectedTrack.value, currentFilename)?.filename ??
     null;
-  loadSelectedLyrics();
+  selectedLyricsLoad = loadSelectedLyrics();
 }
 
 function setTrackScope(scope) {
@@ -292,6 +295,16 @@ function setTrackScope(scope) {
 // via its own watch below too, so this only needs to trigger the fetch.
 async function refresh() {
   await refreshLibrary();
+}
+
+function initialize() {
+  if (initializationPromise) return initializationPromise;
+  initializationPromise = (async () => {
+    await Promise.all([initializeLibrary(), initializePlaylists()]);
+    await nextTick();
+    await selectedLyricsLoad;
+  })();
+  return initializationPromise;
 }
 
 function selectTrack(trackId) {
@@ -719,6 +732,7 @@ export function useLyrics() {
     currentTrackId,
     currentLyricsPositionMs,
     isReloading,
+    initialize,
     refresh,
     setTrackScope,
     selectTrack,

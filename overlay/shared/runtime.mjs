@@ -23,7 +23,28 @@ export function parseOutputMessage(raw) {
         return null;
       }
       const overlayConfig = parseOverlayConfig(message.overlayConfig);
-      return { type: message.type, snapshot: message.snapshot, overlayConfig };
+      const bootId =
+        typeof message.bootId === 'string' && message.bootId.length > 0
+          ? message.bootId
+          : null;
+      const sourceEpoch =
+        typeof message.sourceEpoch === 'string' &&
+        message.sourceEpoch.length > 0
+          ? message.sourceEpoch
+          : null;
+      const sourceStatus = ['unavailable', 'syncing', 'ready'].includes(
+        message.sourceStatus,
+      )
+        ? message.sourceStatus
+        : null;
+      return {
+        type: message.type,
+        snapshot: message.snapshot,
+        overlayConfig,
+        bootId,
+        sourceEpoch,
+        sourceStatus,
+      };
     }
 
     if (message.type !== 'overlay.config.changed') return null;
@@ -75,6 +96,7 @@ export function createOverlayConnection(options = {}) {
   let lastReceivedRevision = -1;
   let lastDeliveredRevision = -1;
   let lastConfigRevision = -1;
+  let activeProjectionIdentity = null;
   let activeDisplayDelayMs = null;
   const snapshotTimers = new Set();
   let stopped = true;
@@ -135,6 +157,22 @@ export function createOverlayConnection(options = {}) {
       const message = parseOutputMessage(event.data);
       if (!message) return;
       if (message.snapshot) {
+        const nextIdentity = message.bootId
+          ? message.sourceEpoch
+            ? `${message.bootId}\0${message.sourceEpoch}`
+            : message.sourceStatus
+              ? `${message.bootId}\0${message.sourceStatus}`
+              : null
+          : null;
+        if (
+          nextIdentity !== null &&
+          nextIdentity !== activeProjectionIdentity
+        ) {
+          clearSnapshotTimers();
+          lastReceivedRevision = -1;
+          lastDeliveredRevision = -1;
+          activeProjectionIdentity = nextIdentity;
+        }
         if (
           message.type === 'state.changed' &&
           message.snapshot.revision <= lastReceivedRevision

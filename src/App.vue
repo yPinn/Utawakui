@@ -1,5 +1,5 @@
 <script setup>
-import { provide } from 'vue';
+import { onMounted, provide } from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
@@ -33,8 +33,8 @@ useTheme();
 // once" reasoning as useTheme() above.
 useAudioOutput().restoreInitialDevice();
 const outputRuntime = useOutputRuntime();
-outputRuntime.initialize();
 provide(OUTPUT_RUNTIME_KEY, outputRuntime);
+onMounted(() => outputRuntime.initialize());
 usePerformerSelfView().initialize();
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js

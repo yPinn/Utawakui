@@ -775,6 +775,19 @@ describe('migratePlaylistKinds', () => {
     return tracks.length > 0 && tracks[0]?.isAlbum ? 'album' : 'playlist';
   }
 
+  it('does not resolve the track map when the on-disk version is current', () => {
+    fs.writeFileSync(
+      path.join(dir, PLAYLISTS_FILENAME),
+      JSON.stringify({ version: 2, playlists: [] }),
+    );
+    const getTracksById = vi.fn(() => new Map());
+
+    expect(migratePlaylistKinds(dir, getTracksById, classifyByFirstTrack)).toBe(
+      false,
+    );
+    expect(getTracksById).not.toHaveBeenCalled();
+  });
+
   it('does nothing when there is no existing file', () => {
     const changed = migratePlaylistKinds(dir, new Map(), classifyByFirstTrack);
     expect(changed).toBe(false);

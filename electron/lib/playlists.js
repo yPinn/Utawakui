@@ -459,6 +459,10 @@ function migratePlaylistKinds(dir, tracksById, classify) {
     return false;
   }
 
+  const resolvedTracksById =
+    typeof tracksById === 'function' ? tracksById() : tracksById;
+  if (!(resolvedTracksById instanceof Map)) return false;
+
   try {
     fs.copyFileSync(filePath, `${filePath}.backup-v1-${Date.now()}`);
   } catch {
@@ -474,7 +478,7 @@ function migratePlaylistKinds(dir, tracksById, classify) {
     // trust it over the heuristic rather than second-guessing it).
     if (playlist.source) return playlist;
     const memberTracks = playlist.trackIds
-      .map((id) => tracksById.get(id))
+      .map((id) => resolvedTracksById.get(id))
       .filter(Boolean);
     return { ...playlist, kind: classify(memberTracks) };
   });

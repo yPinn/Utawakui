@@ -42,6 +42,7 @@ const {
   registerFeatureDependencyHandlers,
 } = require('./main/featureDependencyHandlers');
 const { runStartupMigrations } = require('./main/startupMigrations');
+const { startInteractiveRuntime } = require('./main/startupCoordinator');
 const { MEDIA_SCHEME } = require('./main/mediaScheme');
 const {
   createOutputRuntime,
@@ -67,6 +68,7 @@ const diagnosticsService = createDiagnosticsService({
 });
 
 let performerWindowManager = null;
+let outputRuntimeController = null;
 
 function createConfiguredMainWindow() {
   const config = configState.getConfig();
@@ -116,7 +118,7 @@ if (!gotSingleInstanceLock) {
     }
   });
 
-  app.whenReady().then(async () => {
+  app.whenReady().then(() => {
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
     // Narrow exception for the capture-device output picker (see
@@ -146,7 +148,7 @@ if (!gotSingleInstanceLock) {
 
     configState.loadInitialConfig();
     const { requireFeatureGate } = configState;
-    const outputRuntime = createOutputRuntime({
+    outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
       resolveArtworkAsset: (trackId) =>
@@ -156,7 +158,7 @@ if (!gotSingleInstanceLock) {
         ),
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
     });
-    registerOutputRuntimeLifecycle({ app, server: outputRuntime });
+    registerOutputRuntimeLifecycle({ app, server: outputRuntimeController });
     const providerRunnerManager = createProviderRunnerManager({
       app,
       userDataDir: app.getPath('userData'),
@@ -193,7 +195,7 @@ if (!gotSingleInstanceLock) {
 
     registerOutputHandlers({
       ipcMain,
-      server: outputRuntime,
+      server: outputRuntimeController,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       getConfig: configState.getConfig,
@@ -303,17 +305,16 @@ if (!gotSingleInstanceLock) {
 
     nativeTheme.on('updated', windowState.updateThumbar);
 
-    runStartupMigrations(
-      configState.resolveDownloadDir(configState.getConfig()),
-    );
-
-    try {
-      await outputRuntime.startConfigured();
-    } catch (error) {
-      console.warn('[output] Automatic startup failed', error.message);
-    }
-
-    createConfiguredMainWindow();
+    startInteractiveRuntime({
+      createWindow: createConfiguredMainWindow,
+      attachRenderer: (webContents) =>
+        outputRuntimeController.attachRenderer(webContents),
+      startOutput: () => outputRuntimeController.startConfigured(),
+      runMigrations: () =>
+        runStartupMigrations(
+          configState.resolveDownloadDir(configState.getConfig()),
+        ),
+    });
     appUpdateService.scheduleStartupCheck(APP_UPDATE_STARTUP_DELAY_MS);
   });
 
@@ -322,7 +323,9 @@ if (!gotSingleInstanceLock) {
   });
 
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0)
-      createConfiguredMainWindow();
+    if (BrowserWindow.getAllWindows().length === 0) {
+      const mainWindow = createConfiguredMainWindow();
+      outputRuntimeController?.attachRenderer(mainWindow.webContents);
+    }
   });
 }

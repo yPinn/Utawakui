@@ -1,5 +1,6 @@
 import { computed, reactive, readonly, watch } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
+import OUTPUT_CONTRACT_VALUES from '../../shared/outputContractValues.json';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
@@ -7,9 +8,11 @@ import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
 import { projectOutputSnapshot } from '../utils/outputSnapshot.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
+import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
+import { usePlaylists } from './usePlaylists.js';
 
 const EMPTY_STATUS = Object.freeze({
   running: false,
@@ -19,18 +22,35 @@ const EMPTY_STATUS = Object.freeze({
   httpUrl: null,
   wsUrl: null,
   clients: 0,
+  bootId: null,
+  sourceEpoch: null,
+  desired: {
+    running: false,
+    port: OUTPUT_RUNTIME_VALUES.defaultPort,
+    displayDelayMs: OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
+  },
+  observed: {
+    serviceLifecycle: 'stopped',
+    sourceSynchronization: 'unavailable',
+    unavailableReason: 'renderer_not_connected',
+    clients: 0,
+  },
+  effective: { host: null, port: null, sourceEpoch: null },
   error: null,
 });
 const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 const { state: playerState } = usePlayer();
 const { state: queueState, upcomingTracks } = usePlaybackQueue();
+const { initialize: initializeLibrary } = useLibrary();
+const { initialize: initializePlaylists } = usePlaylists();
 const {
   state: lyricsState,
   selectedTrack: lyricsTrack,
   selectedSource: lyricsSource,
   lyricLines,
   activeLineIndex,
+  initialize: initializeLyrics,
 } = useLyrics();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { isFeatureEnabled } = useFeatureGates();
@@ -54,8 +74,19 @@ const state = reactive({
   error: '',
 });
 
-let initialized = false;
+let initializationPromise = null;
+let sourceEpoch = createSourceEpoch();
 let nextRevision = 0;
+let handshakeComplete = false;
+let sourcesSettled = false;
+let fullPublishQueue = Promise.resolve();
+
+function createSourceEpoch() {
+  return (
+    globalThis.crypto?.randomUUID?.() ??
+    `epoch-${Date.now()}-${Math.random().toString(16).slice(2)}`
+  );
+}
 
 function bridgeMethod(name) {
   const method =
@@ -74,11 +105,11 @@ function applyStatus(value = {}) {
   state.status = {
     ...EMPTY_STATUS,
     ...value,
+    desired: { ...EMPTY_STATUS.desired, ...value.desired },
+    observed: { ...EMPTY_STATUS.observed, ...value.observed },
+    effective: { ...EMPTY_STATUS.effective, ...value.effective },
     running: value.running === true,
   };
-  if (Number.isSafeInteger(state.status.revision)) {
-    nextRevision = Math.max(nextRevision, state.status.revision);
-  }
 }
 
 function applySlots(document = {}) {
@@ -118,17 +149,40 @@ const projectedState = computed(() =>
   }),
 );
 
+const continuityKey = computed(
+  () =>
+    `${playerState.track?.id ?? ''}\0${playerState.track?.url ?? ''}\0${
+      playerState.continuityRevision ?? 0
+    }`,
+);
+
+function createEnvelope(kind, baseSnapshot) {
+  nextRevision += 1;
+  const payload = {
+    ...baseSnapshot,
+    revision: nextRevision,
+    generatedAt: new Date().toISOString(),
+  };
+  return {
+    contractVersion: OUTPUT_CONTRACT_VALUES.projectionEnvelopeVersion,
+    bootId: state.status.bootId,
+    sourceEpoch,
+    kind,
+    revision: nextRevision,
+    payload,
+  };
+}
+
+async function sendEnvelope(kind, snapshot) {
+  const accepted = await bridgeMethod('publishOutputSnapshot')(
+    createEnvelope(kind, snapshot),
+  );
+  if (!accepted) await refreshStatus();
+  return accepted;
+}
+
 const publisher = createLatestAsyncPublisher(
-  async (baseSnapshot) => {
-    if (!state.status.running) return false;
-    nextRevision += 1;
-    const accepted = await bridgeMethod('publishOutputSnapshot')({
-      ...baseSnapshot,
-      revision: nextRevision,
-    });
-    if (!accepted && state.status.running) await refreshStatus();
-    return accepted;
-  },
+  async (snapshot) => sendEnvelope('update', snapshot),
   {
     onError: (error) => {
       state.error = `輸出狀態更新失敗：${errorMessage(error)}`;
@@ -136,16 +190,35 @@ const publisher = createLatestAsyncPublisher(
   },
 );
 
-function requestSnapshotPublish(snapshot) {
-  publisher.request({
-    ...snapshot,
-    generatedAt: new Date().toISOString(),
+function publishFull(snapshot, { newEpoch = false } = {}) {
+  const task = fullPublishQueue.then(async () => {
+    handshakeComplete = false;
+    await publisher.whenIdle();
+    if (newEpoch) sourceEpoch = createSourceEpoch();
+    nextRevision = 0;
+    const accepted = await sendEnvelope('full', snapshot);
+    handshakeComplete = accepted;
+    return accepted;
   });
+  fullPublishQueue = task.catch(() => undefined);
+  return task;
 }
 
-watch(projectedState, (snapshot) => {
-  if (state.status.running) requestSnapshotPublish(snapshot);
-});
+watch(
+  [continuityKey, projectedState],
+  ([nextContinuity, snapshot], [previousContinuity]) => {
+    if (!sourcesSettled || !isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
+      return;
+    }
+    if (nextContinuity !== previousContinuity) {
+      publishFull(snapshot, { newEpoch: true }).catch((error) => {
+        state.error = `輸出狀態更新失敗：${errorMessage(error)}`;
+      });
+      return;
+    }
+    if (handshakeComplete) publisher.request(snapshot);
+  },
+);
 
 async function refreshStatus() {
   try {
@@ -234,7 +307,7 @@ async function start() {
     applyStatus(await bridgeMethod('startOutput')());
     state.error = '';
     state.suggestedPorts = [];
-    requestSnapshotPublish(projectedState.value);
+    if (!handshakeComplete) await publishFull(projectedState.value);
     return true;
   } catch (error) {
     const message = errorMessage(error);
@@ -310,21 +383,30 @@ function saveSlotSettings(kind, settings, seedSlot = null) {
   return saveOutputSlot(kind, { settings }, seedSlot);
 }
 
-async function initialize() {
-  if (initialized) return;
-  initialized = true;
-  await refreshSettings();
-  await refreshStatus();
+function initialize() {
+  if (initializationPromise) return initializationPromise;
+  initializationPromise = (async () => {
+    try {
+      await refreshSettings();
+      applyStatus(await bridgeMethod('connectOutputSource')());
+      await Promise.all([
+        initializeLibrary(),
+        initializePlaylists(),
+        initializeLyrics(),
+      ]);
+      sourcesSettled = true;
+      if (isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
+        await publishFull(projectedState.value);
+      }
+      return true;
+    } catch (error) {
+      sourcesSettled = false;
+      state.error = `輸出初始化失敗：${errorMessage(error)}`;
+      return false;
+    }
+  })();
+  return initializationPromise;
 }
-
-watch(
-  () => isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW),
-  async (enabled) => {
-    if (!enabled) return;
-    await refreshSettings();
-    if (state.settings.autoStart && !state.status.running) await start();
-  },
-);
 
 export function useOutputRuntime() {
   return {

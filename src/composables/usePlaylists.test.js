@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // usePlaylists.js is a module-scope singleton that fetches once and
-// subscribes to window.Utawakui.onLibraryUpdated at import time —
+// subscribes to window.Utawakui.onLibraryUpdated when explicitly initialized —
 // resetModules + re-stubbing window before each dynamic import gives every
 // test a fresh module instance instead of leaking playlists/selectedId
 // state between tests, same approach as useSeparation.test.js.
@@ -34,6 +34,7 @@ function createDeferred() {
 
 beforeEach(() => {
   vi.resetModules();
+  libraryUpdatedCallback = undefined;
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
   createPlaylistMock = vi.fn();
   renamePlaylistMock = vi.fn();
@@ -70,20 +71,38 @@ afterEach(() => {
 });
 
 async function loadPlaylists() {
+  const playlists = await importPlaylists();
+  await playlists.initialize();
+  return playlists;
+}
+
+async function importPlaylists() {
   const { usePlaylists } = await import('./usePlaylists.js');
-  await flushMicrotasks();
   return usePlaylists();
 }
 
 describe('initial load', () => {
-  it('populates state.playlists from listPlaylists on module load', async () => {
+  it('does not fetch or subscribe at module import time', async () => {
+    const { state } = await importPlaylists();
+
+    expect(listPlaylistsMock).not.toHaveBeenCalled();
+    expect(libraryUpdatedCallback).toBeUndefined();
+    expect(state.playlists).toEqual([]);
+  });
+
+  it('populates playlists once through idempotent initialization', async () => {
     listPlaylistsMock.mockResolvedValue([
       { id: 'p1', name: 'Encore', trackIds: [] },
     ]);
-    const { state } = await loadPlaylists();
+    const { state, initialize } = await importPlaylists();
+
+    await Promise.all([initialize(), initialize()]);
+
     expect(state.playlists).toEqual([
       { id: 'p1', name: 'Encore', trackIds: [] },
     ]);
+    expect(listPlaylistsMock).toHaveBeenCalledOnce();
+    expect(libraryUpdatedCallback).toBeTypeOf('function');
   });
 
   it('refetches when the captured onLibraryUpdated callback fires', async () => {

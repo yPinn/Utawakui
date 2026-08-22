@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 // useLibrary.js is a module-scope singleton that fetches once and
-// subscribes to window.Utawakui.onLibraryUpdated at import time —
+// subscribes to window.Utawakui.onLibraryUpdated when explicitly initialized —
 // resetModules + re-stubbing window before each dynamic import gives every
 // test a fresh module instance, same approach as usePlaylists.test.js.
 let libraryUpdatedCallback;
@@ -15,6 +15,7 @@ function flushMicrotasks() {
 
 beforeEach(() => {
   vi.resetModules();
+  libraryUpdatedCallback = undefined;
   listTracksMock = vi.fn().mockResolvedValue([]);
   // useLibrary.js imports usePlaylists.js (for the album-cover-override
   // enrichment below), which independently fetches on module load — stub it
@@ -39,17 +40,35 @@ afterEach(() => {
 });
 
 async function loadLibrary() {
+  const library = await importLibrary();
+  await library.initialize();
+  return library;
+}
+
+async function importLibrary() {
   const { useLibrary } = await import('./useLibrary.js');
-  await flushMicrotasks();
   return useLibrary();
 }
 
 describe('initial load', () => {
-  it('populates state.tracks from listTracks on module load', async () => {
+  it('does not fetch or subscribe at module import time', async () => {
+    const { state } = await importLibrary();
+
+    expect(listTracksMock).not.toHaveBeenCalled();
+    expect(libraryUpdatedCallback).toBeUndefined();
+    expect(state.isLoading).toBe(true);
+  });
+
+  it('populates tracks once through idempotent initialization', async () => {
     listTracksMock.mockResolvedValue([{ id: 't1', title: 'Track 1' }]);
-    const { state } = await loadLibrary();
+    const { state, initialize } = await importLibrary();
+
+    await Promise.all([initialize(), initialize()]);
+
     expect(state.tracks).toEqual([{ id: 't1', title: 'Track 1' }]);
     expect(state.isLoading).toBe(false);
+    expect(listTracksMock).toHaveBeenCalledOnce();
+    expect(libraryUpdatedCallback).toBeTypeOf('function');
   });
 
   it('refetches when the captured onLibraryUpdated callback fires', async () => {

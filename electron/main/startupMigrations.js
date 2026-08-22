@@ -7,12 +7,27 @@ const { classifyCollectionKind } = require('../lib/albumClassifier');
 
 // Run version-gated migrations before ordinary writes stamp the files.
 // Album metadata must exist before playlist-kind classification.
-function runStartupMigrations(downloadDir) {
-  migrateTrackAlbumMetadata(downloadDir, readTrackInfoMetadata);
-  const tracksById = new Map(
-    listTracks(downloadDir).map((track) => [track.id, track]),
+function runStartupMigrations(downloadDir, overrides = {}) {
+  const dependencies = {
+    classifyCollectionKind,
+    listTracks,
+    migratePlaylistKinds,
+    migrateTrackAlbumMetadata,
+    readTrackInfoMetadata,
+    ...overrides,
+  };
+  dependencies.migrateTrackAlbumMetadata(
+    downloadDir,
+    dependencies.readTrackInfoMetadata,
   );
-  migratePlaylistKinds(downloadDir, tracksById, classifyCollectionKind);
+  dependencies.migratePlaylistKinds(
+    downloadDir,
+    () =>
+      new Map(
+        dependencies.listTracks(downloadDir).map((track) => [track.id, track]),
+      ),
+    dependencies.classifyCollectionKind,
+  );
 }
 
 module.exports = { runStartupMigrations };

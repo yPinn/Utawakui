@@ -218,6 +218,62 @@ describe('outputServer', () => {
     socket.close();
   });
 
+  it('publishes typed source readiness and resets revisions for a new identity', async () => {
+    const server = createServer({
+      initialProjection: {
+        bootId: 'boot-1',
+        sourceEpoch: null,
+        sourceSynchronization: 'unavailable',
+        unavailableReason: 'renderer_not_connected',
+        snapshot: createEmptyOutputSnapshot({ revision: 0 }),
+      },
+    });
+    const status = await server.start();
+    const socket = connect(status);
+    const initialMessage = waitForMessage(socket);
+    await waitForOpen(socket);
+
+    expect(await initialMessage).toMatchObject({
+      type: 'state.snapshot',
+      bootId: 'boot-1',
+      sourceEpoch: null,
+      sourceStatus: 'unavailable',
+      unavailableReason: 'renderer_not_connected',
+      snapshot: { version: 2, revision: 0 },
+    });
+
+    const readyMessage = waitForMessage(socket);
+    server.setProjectionState({
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceSynchronization: 'ready',
+      unavailableReason: null,
+      snapshot: createEmptyOutputSnapshot({ revision: 4 }),
+    });
+    expect(await readyMessage).toMatchObject({
+      type: 'state.changed',
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceStatus: 'ready',
+      snapshot: { version: 2, revision: 4 },
+    });
+
+    const nextBootMessage = waitForMessage(socket);
+    server.setProjectionState({
+      bootId: 'boot-2',
+      sourceEpoch: 'epoch-1',
+      sourceSynchronization: 'ready',
+      unavailableReason: null,
+      snapshot: createEmptyOutputSnapshot({ revision: 1 }),
+    });
+    expect(await nextBootMessage).toMatchObject({
+      bootId: 'boot-2',
+      sourceStatus: 'ready',
+      snapshot: { version: 2, revision: 1 },
+    });
+    socket.close();
+  });
+
   it('pushes independent overlay slot changes without changing playback state', async () => {
     const server = createServer({
       overlaySlots: { lyrics: { templateId: 'focus-line' } },

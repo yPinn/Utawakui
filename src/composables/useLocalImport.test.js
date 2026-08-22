@@ -53,7 +53,7 @@ describe('useLocalImport', () => {
     await localImport.importFiles();
 
     expect(importLocalAudioFilesMock).toHaveBeenCalledTimes(1);
-    expect(listTracksMock).toHaveBeenCalledTimes(2);
+    expect(listTracksMock).toHaveBeenCalledOnce();
     expect(localImport.state.statusType).toBe('success');
     expect(localImport.state.imported).toEqual([
       { id: 'song-a', title: 'Song A' },

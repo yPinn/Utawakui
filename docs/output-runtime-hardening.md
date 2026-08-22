@@ -206,6 +206,90 @@ Also record idle CPU, main/renderer/OBS memory, WebSocket backlog, first-templat
 GPU memory, and aggregate cost with all default instances active. Performance
 budgets are fixed only after this baseline and then enforced as regression gates.
 
+## Implementation sequence and compatibility boundary
+
+The current-code audit on 2026-08-23 found four concrete gaps rather than only
+future scaling concerns:
+
+- `electron/main.js` synchronously runs `runStartupMigrations()`, including an
+  unconditional filesystem-truth `listTracks()` pass, and then awaits Output
+  auto-start before it creates the main window;
+- `useLibrary.js` and `usePlaylists.js` start IPC hydration as module-load side
+  effects, before the Vue shell has mounted;
+- `useOutputRuntime.js` does not publish a complete snapshot when initialization
+  discovers that main already started the listener, and its feature-gate watcher
+  is a second auto-start controller; and
+- the renderer-side IPC publisher coalesces pending state, but `outputServer.js`
+  still calls `send()` for every open WebSocket client without a per-client
+  backlog policy.
+
+Implementation is divided into three independently reviewable batches. H1 is the
+next batch and the direct prerequisite for further Output work. H2 and H3 remain
+separate so initial convergence does not silently become a complete Output v3
+rewrite.
+
+### H1: source convergence and interactive startup
+
+- Keep the existing snapshot-v2 payload and four compatibility URLs. Add a
+  validated projection envelope with `contractVersion`, main-issued `bootId`,
+  renderer-issued `sourceEpoch`, projection kind (`full` or `update`), monotonic
+  revision, and the complete v2 payload. This envelope is the forward-compatible
+  seam for Output v3; it does not make the v2 snapshot itself authoritative.
+- Main owns projection readiness independently of whether the HTTP listener is
+  already running. A listener starts with a typed unavailable source and an empty
+  display-safe snapshot. Only a valid full envelope for the current boot enters
+  `ready`; an update for an unknown epoch fails closed.
+- Main marks the source unavailable when the renderer starts loading again,
+  exits, or crashes. The next renderer lifetime uses a new source epoch and must
+  complete another full handshake. Browser Source revision comparison resets on
+  a new boot id while legacy snapshot-v2 parsing remains supported.
+- Expose additive desired, observed, and effective facets in runtime status.
+  Main serializes start, stop, and port reconfiguration. Remove the renderer
+  feature-gate auto-start watcher; UI actions remain intents and never infer that
+  a listening socket means the source is ready.
+- Replace renderer module-load library and playlist fetches with idempotent
+  initialization started after the shell mounts. The initial Output full publish
+  waits for the relevant player, queue, library, playlist, and selected-lyrics
+  hydration to settle, without moving their authority into main.
+- Make startup migration checks version-first. Do not enumerate tracks unless a
+  pending migration actually needs the track map. Create the BrowserWindow
+  without awaiting Output listener startup, and run listener convergence and
+  deferred hydration independently of first paint.
+
+H1 tests must prove: disabled and enabled startup, listener-before-renderer and
+renderer-before-listener ordering, exactly one accepted initial full handshake,
+update-before-full rejection, stale boot/epoch rejection, renderer reload/crash
+unavailability, lower revisions accepted after a new boot, no unconditional
+startup `listTracks()`, no module-import fetch, and unchanged snapshot-v2 OBS
+rendering.
+
+Implementation status (2026-08-23): H1 is complete. Main now owns the projection
+hub and serialized lifecycle reconciliation; renderer hydration begins after App
+mount and completes one full handshake; and first-window creation no longer waits
+for listener startup or unconditional track enumeration. The compatibility and
+ordering cases above are covered by automated tests. H2 and H3 remain separate
+follow-up batches.
+
+### H2: transport and content delivery hardening
+
+- Add per-client latest-wins state delivery using bounded queued bytes, replace
+  pending clock corrections before semantic state, and disconnect persistently
+  unhealthy clients.
+- Separate content and dynamic-state revisions, serialize immutable documents
+  once per revision, and add digest-addressed immutable asset caching while
+  runtime HTML and active manifests continue to revalidate.
+- Prove slow-client, multiple-client, reconnect, delay-change, and content
+  revision behavior without logging projected content.
+
+### H3: measured startup and runtime budgets
+
+- Add correlated main, renderer, Output, and first-frame milestones without
+  putting tracing on the production hot path by default.
+- Capture the documented cold/warm packaged matrix and record CPU, memory,
+  backlog, and GPU baselines.
+- Set p50/p95 regression budgets only from those measurements; do not claim an
+  absolute startup target from development-mode timing.
+
 ## Pre-Lyrics implementation gate
 
 Before Lyrics T2 code begins, the team must agree which hardening work is a direct

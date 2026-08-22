@@ -79,8 +79,10 @@ async function loadLyrics({ playlists } = {}) {
     listPlaylistsMock.mockResolvedValue(playlists);
   }
   const module = await import('./useLyrics.js');
+  const lyrics = module.useLyrics();
+  await lyrics.initialize();
   await flushPromises();
-  return module.useLyrics();
+  return lyrics;
 }
 
 const DEFAULT_PLAYLIST = {

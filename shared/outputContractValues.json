@@ -1,4 +1,5 @@
 {
+  "projectionEnvelopeVersion": 3,
   "stateVersion": 2,
   "maxQueueItems": 100,
   "maxLyricLines": 1000
