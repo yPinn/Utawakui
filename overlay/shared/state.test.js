@@ -166,6 +166,7 @@ describe('overlay state selectors', () => {
     expect(selectNowPlayingFrame(snapshot())).toEqual({
       revision: 8,
       visible: true,
+      trackId: 'track-1',
       title: '海螺記',
       artist: '163braces',
       nextTitle: 'Next Song',
@@ -181,5 +182,23 @@ describe('overlay state selectors', () => {
         { state: 'queued', title: 'Next Song', artist: 'Singer' },
       ],
     });
+  });
+
+  it('caps the public setlist frame at eight readable rows', () => {
+    const value = snapshot({
+      queue: {
+        sourceName: 'Tonight',
+        items: Array.from({ length: 12 }, (_, index) => ({
+          state: index === 0 ? 'current' : 'queued',
+          track: {
+            id: `track-${index}`,
+            title: `Track ${index + 1}`,
+            artist: 'Singer',
+          },
+        })),
+      },
+    });
+
+    expect(selectSetlistFrame(value).rows).toHaveLength(8);
   });
 });

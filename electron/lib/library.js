@@ -21,6 +21,7 @@ const {
   isStructuredAudioFilename,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
+  resolveTrackArtworkPath,
   resolveTrackDir,
   resolveTrackPath,
 } = require('./library/paths');
@@ -126,6 +127,7 @@ module.exports = {
   resolveSeparationResultPath,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
+  resolveTrackArtworkPath,
   resolveTrackDir,
   resolveTrackPath,
   runBackfillPass,

@@ -29,6 +29,7 @@ function createOutputRuntime({
     },
   }),
   requireFeatureGate = () => undefined,
+  resolveArtworkAsset = () => null,
   featureId = 'public-output-flow',
 } = {}) {
   let server = null;
@@ -63,7 +64,7 @@ function createOutputRuntime({
     if (server?.getStatus().running) {
       throw new Error('output runtime must stop before changing port');
     }
-    server = serverFactory({ port, overlaySlots });
+    server = serverFactory({ port, overlaySlots, resolveArtworkAsset });
     serverPort = port;
     return server;
   }

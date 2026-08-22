@@ -5,8 +5,39 @@ const {
   parsePerformerSnapshot,
 } = require('../lib/performerSnapshot');
 
-const DEFAULT_BOUNDS = Object.freeze({ width: 960, height: 540 });
-const MIN_BOUNDS = Object.freeze({ width: 640, height: 360 });
+const DEFAULT_BOUNDS = Object.freeze({ width: 960, height: 460 });
+const MIN_BOUNDS = Object.freeze({ width: 800, height: 360 });
+const WORK_AREA_MARGIN = 32;
+
+function fitInitialBounds(workArea) {
+  if (
+    !workArea ||
+    !Number.isFinite(workArea.x) ||
+    !Number.isFinite(workArea.y) ||
+    !Number.isFinite(workArea.width) ||
+    !Number.isFinite(workArea.height) ||
+    workArea.width <= 0 ||
+    workArea.height <= 0
+  ) {
+    return DEFAULT_BOUNDS;
+  }
+
+  const width = Math.max(
+    MIN_BOUNDS.width,
+    Math.min(DEFAULT_BOUNDS.width, workArea.width - WORK_AREA_MARGIN * 2),
+  );
+  const height = Math.max(
+    MIN_BOUNDS.height,
+    Math.min(DEFAULT_BOUNDS.height, workArea.height - WORK_AREA_MARGIN * 2),
+  );
+
+  return {
+    x: workArea.x + Math.max(0, Math.floor((workArea.width - width) / 2)),
+    y: workArea.y + Math.max(0, Math.floor((workArea.height - height) / 2)),
+    width,
+    height,
+  };
+}
 
 function createPerformerWindowManager(options) {
   const {
@@ -15,6 +46,7 @@ function createPerformerWindowManager(options) {
     devUrl,
     pagePath,
     preloadPath,
+    getDisplayWorkArea = () => null,
     getUiTheme = () => 'dark',
     publishStatus = () => {},
   } = options;
@@ -64,7 +96,7 @@ function createPerformerWindowManager(options) {
 
   function createWindow() {
     const initialTheme = getUiTheme() === 'light' ? 'light' : 'dark';
-    const bounds = lastBounds ?? DEFAULT_BOUNDS;
+    const bounds = lastBounds ?? fitInitialBounds(getDisplayWorkArea());
     const window = new BrowserWindow({
       ...bounds,
       minWidth: MIN_BOUNDS.width,

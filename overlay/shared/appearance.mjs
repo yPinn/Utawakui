@@ -10,7 +10,7 @@ export const OVERLAY_APPEARANCE_DEFAULTS = Object.freeze({
   fontFamily: 'sans',
   fontScale: 'medium',
   fontWeight: 'semibold',
-  alignment: 'center',
+  alignment: 'left',
   surface: 'transparent',
 });
 

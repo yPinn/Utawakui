@@ -39,7 +39,7 @@
         "fontFamily": "serif",
         "fontScale": "medium",
         "fontWeight": "bold",
-        "alignment": "center",
+        "alignment": "left",
         "surface": "transparent"
       }
     },
@@ -97,7 +97,7 @@
     "fontFamily": "sans",
     "fontScale": "medium",
     "fontWeight": "semibold",
-    "alignment": "center",
+    "alignment": "left",
     "surface": "transparent"
   }
 }

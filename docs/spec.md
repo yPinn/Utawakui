@@ -126,6 +126,9 @@ Performer Self-View renderer
   - Independent local BrowserWindow and dedicated read-only preload
   - Receives sanitized player/queue/lyrics/reading projections
   - Owns presentation timing and window controls, never playback state
+  - First-open bounds are a wide, compact 960×460 utility window centered on the
+    main display; small work areas may constrain it to the 800×360 minimum, while
+    later opens in the same session reuse user-resized bounds
 
 Electron main process
   - BrowserWindow lifecycle
@@ -314,6 +317,13 @@ filesystem path。
 並在 `prefers-reduced-motion` 下停用行切換 motion。所有 track/lyrics/queue 文字只透過
 `textContent` 或新建 text element 寫入，不使用 `innerHTML`。
 
+Artwork 使用同源 `GET /media/artwork/<encoded trackId>` 讀取本機 structured
+track 的 `thumbnail.{jpg,jpeg,png,webp}`。Browser Source 只提供 canonical
+snapshot 已公開的 track id，不傳入 filename、absolute path 或
+`utawakui-media:` URL；main-owned resolver 重新驗證 track id 並只回傳既有
+thumbnail allowlist。圖片缺失、404 或解碼失敗時，Artwork template 保留曲名
+首字 fallback，不顯示破圖。
+
 Overlay CSS 分為 `--ovl-primitive-*`、semantic `--ovl-color/font/motion-*` 與
 各模板 `--ovl-template-*` 三層。工作台只保存 allowlist option id；overlay runtime
 再將 font family、scale、weight、alignment 與 surface id 映射到 CSS data attributes
@@ -335,10 +345,12 @@ Output 內分為工作台、模板庫與輸出設定，並以工作台作為預�
 縮圖與右欄共用控制台內的 `ObsTemplateMockup`，只呈現固定 16:9 的標準化模板示意，
 不依賴 runtime 或 iframe，避免實際 overlay 在小尺寸下因原始字級、定位與動畫基準
 縮放失真。Workbench 才載入目前類型的真實 served iframe，並以 inspector 編輯該
-slot 的文字與背景設定，不改動其他類型。Preview URL 在固定路徑加上 `?preview=1`，
-讓 idle 狀態使用 demo fallback 與深色檢視底；複製給 OBS 的 URL 不含該參數，因此
-不會發布假狀態，且頁面背景保持透明。Browser Source URL 複製屬於 Workbench 的
-目前類型操作，不放在本機服務設定中。
+slot 的文字與背景設定，不改動其他類型。預覽以固定 1280×720 reference canvas
+等比縮入 stage，避免面板寬度觸發與 OBS 不同的 responsive layout。Workbench
+可在真實 capture URL 附加 allowlisted `backdrop=checker|dark|light` 檢視參數；
+此參數只切換透明畫布的本機辨識底，不注入 demo state，也不保存到 slot。複製給
+OBS 的 URL 不含 query，因此不會發布假狀態，且頁面背景保持透明。Browser Source
+URL 複製屬於 Workbench 的目前類型操作，不放在本機服務設定中。
 
 Gallery 右欄與 Workbench inspector 都使用 rem 上下限與 viewport-relative 中間值，
 不依賴可折疊／可拖曳的 playlist sidebar 內容寬度；Workbench 的 iframe stage 使用

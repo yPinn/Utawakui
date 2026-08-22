@@ -44,7 +44,7 @@ function boot() {
 
   const previewMode = isPreviewMode(window.location);
   applyOverlayAppearance(document, null);
-  applyPreviewCanvas(document, previewMode);
+  applyPreviewCanvas(document, { previewMode, location: window.location });
   if (previewMode) {
     root.hidden = false;
     title.textContent = PREVIEW_FRAME.sourceName;

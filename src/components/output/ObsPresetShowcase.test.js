@@ -30,6 +30,10 @@ const workbenchSource = readFileSync(
   fileURLToPath(new URL('./ObsSlotWorkbench.vue', import.meta.url)),
   'utf8',
 );
+const appearanceControlRowSource = readFileSync(
+  fileURLToPath(new URL('./ObsAppearanceControlRow.vue', import.meta.url)),
+  'utf8',
+);
 const settingsSource = readFileSync(
   fileURLToPath(new URL('./ObsOutputSettings.vue', import.meta.url)),
   'utf8',
@@ -57,7 +61,7 @@ describe('OBS output workspace layout contract', () => {
     expect(tokenSource).toContain('--ui-output-template-thumb-title-font-size');
     expect(tokenSource).toContain('22vw');
     expect(tokenSource).not.toContain('34cqi');
-    expect(tokenSource).toContain('--ui-output-setting-label-width-max');
+    expect(tokenSource).toContain('--ui-output-setting-label-width-min');
     expect(componentSource).not.toContain('--ui-font-size-xs');
     expect(componentSource).toContain('container-type: inline-size');
     expect(compactComponentSource).toContain(
@@ -76,6 +80,8 @@ describe('OBS output workspace layout contract', () => {
       'max-inline-size: var(--ui-output-gallery-preview-max-width)',
     );
     expect(mockupSource).toContain('aspect-ratio: 16 / 9');
+    expect(mockupSource).not.toContain('text-align: center');
+    expect(mockupSource).not.toContain('justify-items: center');
     expect(componentSource).toContain('@container (width < 48rem)');
     expect(componentSource).toContain("emit('applyPreset'");
     expect(componentSource).not.toContain('startOutput');
@@ -92,7 +98,7 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('<iframe');
     expect(previewSource).not.toContain('srcdoc');
     expect(previewSource).toContain('aspect-ratio: 16 / 9');
-    expect(previewSource).toContain(':src="previewUrl"');
+    expect(previewSource).toContain(':src="inspectionUrl"');
     expect(previewSource).toContain(
       'sandbox="allow-scripts allow-same-origin"',
     );
@@ -101,7 +107,50 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain(
       'inline-size: min(100%, var(--ui-output-workbench-stage-max-width))',
     );
+    expect(previewSource).toContain('const PREVIEW_CANVAS_WIDTH = 1280');
+    expect(previewSource).toContain('const PREVIEW_CANVAS_HEIGHT = 720');
+    expect(previewSource).toContain('ref="previewFrame"');
+    expect(previewSource).toContain('new ResizeObserver(measurePreview)');
+    expect(previewSource).toContain(':style="previewCanvasStyle"');
+    expect(previewSource).toContain('transform-origin: left top');
+    expect(previewSource).toContain("id: 'checker'");
+    expect(previewSource).toContain("id: 'dark'");
+    expect(previewSource).toContain("id: 'light'");
+    expect(previewSource).toContain(':data-backdrop="previewBackdrop"');
+    expect(previewSource).toContain('aria-label="預覽背景"');
+    expect(previewSource).toContain('UiIconButton');
+    expect(previewSource).not.toContain("emit('save");
+    expect(previewSource).toContain("searchParams.set('backdrop'");
+    expect(previewSource).not.toContain("searchParams.set('preview'");
+    expect(previewSource).toContain('gap: var(--ui-space-1)');
+    expect(previewSource).toContain('var(--ui-color-surface)');
+    expect(previewSource).toContain('var(--ui-color-canvas)');
+    expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
     expect(tokenSource).toContain('--ui-output-gallery-detail-width: clamp(');
+  });
+
+  it('keeps inspector fields inset and replaceable without owning their data', () => {
+    const compactSplitLayoutSource = compactWhitespace(splitLayoutSource);
+    const compactAppearanceControlRowSource = compactWhitespace(
+      appearanceControlRowSource,
+    );
+
+    expect(compactSplitLayoutSource).toContain(
+      'padding-inline: var(--ui-space-4) var(--ui-space-3)',
+    );
+    expect(workbenchSource).toContain('ObsAppearanceControlRow');
+    expect(workbenchSource).toContain(
+      ':control-id="`output-appearance-${control.key}`"',
+    );
+    expect(workbenchSource).toContain('class="obs-slot-workbench__select"');
+    expect(appearanceControlRowSource).toContain('<slot />');
+    expect(compactAppearanceControlRowSource).toMatch(
+      /grid-template-columns:\s*var\(--ui-output-setting-label-width-min\)\s*minmax\(\s*0,\s*1fr\s*\)/,
+    );
+    expect(appearanceControlRowSource).toContain(
+      'border-block-start: var(--ui-border-width) solid var(--ui-color-border)',
+    );
+    expect(appearanceControlRowSource).not.toContain('v-model');
   });
 
   it('separates workbench preview and URL copy from runtime settings', () => {

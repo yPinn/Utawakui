@@ -1,6 +1,6 @@
 .setlist-overlay {
-  --ovl-template-setlist-width: 30rem;
-  --ovl-template-setlist-row-height: 3.25rem;
+  --ovl-template-setlist-width: 31rem;
+  --ovl-template-setlist-row-height: 2.75rem;
 
   position: fixed;
   inset-inline-end: var(--ovl-safe-inline);
@@ -9,6 +9,9 @@
     calc(100% - 2 * var(--ovl-safe-inline)),
     var(--ovl-template-setlist-width)
   );
+  max-block-size: calc(100% - 2 * var(--ovl-safe-block));
+  display: flex;
+  flex-direction: column;
   padding: var(--ovl-primitive-space-4);
   border: 1px solid var(--ovl-user-outline);
   border-radius: var(--ovl-primitive-radius-md);
@@ -19,18 +22,23 @@
 }
 
 .setlist-overlay__title {
-  margin: 0 0 var(--ovl-primitive-space-3);
+  flex: 0 0 auto;
+  margin: 0;
+  padding-block-end: var(--ovl-primitive-space-3);
+  border-block-end: 1px solid var(--ovl-color-divider);
   overflow: hidden;
-  font-size: 1.5em;
+  font-size: 1.75em;
   font-weight: var(--ovl-user-font-weight);
-  line-height: 1.2;
+  line-height: 1.15;
   text-overflow: ellipsis;
+  text-wrap: balance;
   white-space: nowrap;
 }
 
 .setlist-overlay__rows {
   display: grid;
-  gap: var(--ovl-primitive-space-2);
+  min-block-size: 0;
+  overflow: hidden;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -44,9 +52,13 @@
   align-items: center;
   gap: var(--ovl-primitive-space-3);
   padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
-  border-radius: var(--ovl-primitive-radius-sm);
-  background: var(--ovl-color-surface-soft);
+  border-block-end: 1px solid var(--ovl-color-divider);
+  background: transparent;
   counter-increment: setlist;
+}
+
+.setlist-overlay__row:last-child {
+  border-block-end: 0;
 }
 
 .setlist-overlay__row::before {
@@ -58,7 +70,11 @@
 
 .setlist-overlay__row.is-current {
   color: var(--ovl-color-text-primary);
-  background: rgb(85 162 167 / 42%);
+  background: var(--ovl-color-current-surface);
+}
+
+.setlist-overlay__row.is-current::before {
+  color: var(--ovl-color-text-primary);
 }
 
 .setlist-overlay__row.is-played {
@@ -77,6 +93,18 @@
   color: var(--ovl-color-text-secondary);
 }
 
+@media (max-width: 42rem) {
+  .setlist-overlay {
+    --ovl-template-setlist-row-height: 2.5rem;
+
+    padding: var(--ovl-primitive-space-3);
+  }
+
+  .setlist-overlay__title {
+    font-size: 1.25em;
+  }
+}
+
 @media (max-height: 36rem) {
   .setlist-overlay {
     --ovl-template-setlist-width: 22rem;
@@ -86,11 +114,12 @@
   }
 
   .setlist-overlay__title {
-    margin-block-end: var(--ovl-primitive-space-2);
+    padding-block-end: var(--ovl-primitive-space-2);
     font-size: 1rem;
   }
 
-  .setlist-overlay__rows {
-    gap: var(--ovl-primitive-space-1);
+  .setlist-overlay__row {
+    gap: var(--ovl-primitive-space-2);
+    padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
   }
 }

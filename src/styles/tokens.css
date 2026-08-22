@@ -220,7 +220,11 @@
   --ui-output-template-thumb-min-height: 4.5rem; /* 72px: stable row target around a small 16:9 preview */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* 12px: thumbnail-only label, not a global typography tier */
   --ui-output-setting-label-width-min: 4rem; /* 64px: compact setting label column */
-  --ui-output-setting-label-width-max: 7rem; /* 112px: prevents settings labels from crowding values */
+
+  /* --- Sizing: performer view --- */
+  --ui-performer-lyrics-max-width: 72rem;
+  --ui-performer-lyric-current-font-size: 2.5rem; /* 40px: active performance line */
+  --ui-performer-ruby-font-size: 55%;
 
   /* --- Sizing: lyrics workspace --- */
   /* Own scale, not an alias of --ui-font-size-lg/xl: those are UI-chrome

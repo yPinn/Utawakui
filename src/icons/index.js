@@ -23,6 +23,7 @@ export {
   FolderOpen,
   FolderPlus,
   GripVertical,
+  Grid2X2,
   Headphones,
   ImagePlus,
   Info,

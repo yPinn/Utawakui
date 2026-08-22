@@ -98,7 +98,7 @@ function boot() {
   ).matches;
   const previewMode = isPreviewMode(window.location);
   applyOverlayAppearance(document, null);
-  applyPreviewCanvas(document, previewMode);
+  applyPreviewCanvas(document, { previewMode, location: window.location });
   if (previewMode) {
     renderLyricsFrame(elements, PREVIEW_FRAME, { reducedMotion: true });
   }

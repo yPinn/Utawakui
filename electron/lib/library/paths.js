@@ -117,6 +117,13 @@ function resolveTrackAudioPath(dir, trackId) {
   return audioFilename ? path.join(trackDir, audioFilename) : null;
 }
 
+function resolveTrackArtworkPath(dir, trackId) {
+  const trackDir = resolveTrackDir(dir, trackId);
+  if (!trackDir) return null;
+  const artworkFilename = findArtworkFilename(trackDir);
+  return artworkFilename ? path.join(trackDir, artworkFilename) : null;
+}
+
 function resolveTrackAssetPath(dir, trackId, assetFilename) {
   const trackDir = resolveTrackDir(dir, trackId);
   if (!trackDir) return null;
@@ -172,6 +179,7 @@ module.exports = {
   findArtworkFilename,
   hasTrackInfo,
   resolveTrackAudioPath,
+  resolveTrackArtworkPath,
   resolveTrackAssetPath,
   resolveTrackPath,
 };

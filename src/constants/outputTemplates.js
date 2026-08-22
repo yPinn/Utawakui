@@ -57,7 +57,7 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     settings: [
       { label: '顯示', value: '已唱、待播、目前曲目' },
       { label: '密度', value: 'Readable' },
-      { label: '行數', value: '5 - 12 rows' },
+      { label: '行數', value: '最多 8 列' },
     ],
   },
   {
@@ -143,10 +143,10 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       label: '可用',
       tone: 'muted',
       summary:
-        '目前使用曲名首字與 metadata 構成節目卡，封面素材接入後可原位擴充。',
+        '優先使用本機曲目封面；缺圖或載入失敗時以曲名首字維持可辨識內容。',
     },
-    summary: '以曲目 metadata 與識別圖塊構成獨立節目卡。',
-    detail: '適合需要比角落歌名更明確的曲目識別畫面。',
+    summary: '以本機封面與曲目 metadata 構成獨立節目卡。',
+    detail: '適合需要比角落歌名更明確的曲目識別畫面，缺圖時仍可閱讀。',
     preview: {
       title: 'Cover / Title',
       lines: ['Artist: 星街すいせい', 'Metadata card'],
@@ -209,7 +209,7 @@ export const OUTPUT_STYLE_SETS = Object.freeze([
     summary: '文字型模板的間距、行數與資訊密度。',
     tokens: [
       { label: '間距', value: 'compact' },
-      { label: '行數', value: '5 - 12' },
+      { label: '行數', value: '最多 8 列' },
       { label: '比例', value: '16:9 / 1:1' },
     ],
   },

@@ -18,10 +18,33 @@ html[data-overlay-preview='true'] body {
   background: var(--ovl-primitive-color-ink);
 }
 
+html[data-overlay-backdrop='checker'],
+html[data-overlay-backdrop='checker'] body {
+  background: conic-gradient(
+      var(--ovl-color-surface) 25%,
+      var(--ovl-color-surface-soft) 0 50%,
+      var(--ovl-color-surface) 0 75%,
+      var(--ovl-color-surface-soft) 0
+    )
+    0 0 / var(--ovl-primitive-space-6) var(--ovl-primitive-space-6);
+}
+
+html[data-overlay-backdrop='dark'],
+html[data-overlay-backdrop='dark'] body {
+  background: var(--ovl-primitive-color-ink);
+}
+
+html[data-overlay-backdrop='light'],
+html[data-overlay-backdrop='light'] body {
+  background: var(--ovl-primitive-color-paper);
+}
+
 body {
   color: var(--ovl-color-text-primary);
   font-family: var(--ovl-font-ui);
   letter-spacing: 0;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 [hidden] {

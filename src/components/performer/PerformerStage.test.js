@@ -1,7 +1,25 @@
+import { readFileSync } from 'node:fs';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import PerformerStage from './PerformerStage.vue';
+
+const stageSource = readFileSync(
+  new URL('./PerformerStage.vue', import.meta.url),
+  'utf8',
+);
+const cueSource = readFileSync(
+  new URL('./PerformerLyricCue.vue', import.meta.url),
+  'utf8',
+);
+const tokenSource = readFileSync(
+  new URL('../../styles/tokens.css', import.meta.url),
+  'utf8',
+);
+const toolbarSource = readFileSync(
+  new URL('./PerformerWindowToolbar.vue', import.meta.url),
+  'utf8',
+);
 
 function render(frame) {
   return renderToString(
@@ -31,6 +49,29 @@ function frame(overrides = {}) {
 }
 
 describe('PerformerStage', () => {
+  it('uses performer reading roles and the shared control rhythm', () => {
+    expect(tokenSource).toContain('--ui-performer-lyrics-max-width');
+    expect(tokenSource).toContain('--ui-performer-lyric-current-font-size');
+    expect(tokenSource).toContain('--ui-performer-ruby-font-size');
+    expect(stageSource).toContain('min-height: var(--ui-control-height)');
+    expect(stageSource).toContain('padding-inline: var(--ui-space-3)');
+    expect(stageSource).toContain('gap: var(--ui-space-2)');
+    expect(stageSource).toContain('padding: var(--ui-space-6)');
+    expect(stageSource).toContain('var(--ui-performer-lyrics-max-width)');
+    expect(toolbarSource).toContain('gap: var(--ui-space-1)');
+    expect(toolbarSource).toContain('width: var(--ui-space-2)');
+    expect(toolbarSource).toContain('height: var(--ui-space-2)');
+    expect(cueSource).toContain('font-size: var(--ui-font-size-lg)');
+    expect(cueSource).toContain('font-size: var(--ui-font-size-md)');
+    expect(cueSource).toContain('font-size: var(--ui-font-size-xl)');
+    expect(cueSource).toMatch(
+      /@media \(max-height: 400px\)[\s\S]*?performer-lyric-cue--current[\s\S]*?font-size: var\(--ui-font-size-2xl\)/,
+    );
+    expect(cueSource).not.toContain('@media (max-height: 520px)');
+    expect(cueSource).not.toContain('font-weight: 600');
+    expect(cueSource).not.toContain('font-weight: 650');
+  });
+
   it('renders current/next cues, reading aid, adjustments, and next track', async () => {
     const html = await render(frame());
     expect(html).toContain('<ruby');

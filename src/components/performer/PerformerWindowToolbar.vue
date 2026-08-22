@@ -75,14 +75,15 @@ defineEmits([
 }
 
 .performer-toolbar__mark {
-  width: 0.55rem;
-  height: 0.55rem;
+  width: var(--ui-space-2);
+  height: var(--ui-space-2);
   border-radius: var(--ui-radius-xs);
   background: var(--ui-color-accent);
 }
 
 .performer-toolbar__controls {
   height: 100%;
+  gap: var(--ui-space-1);
   padding-right: var(--ui-space-1);
   app-region: no-drag;
   -webkit-app-region: no-drag;

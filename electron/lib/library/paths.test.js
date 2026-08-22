@@ -9,6 +9,7 @@ import {
   resolveTrackPath,
   resolveTrackDir,
   resolveTrackAudioPath,
+  resolveTrackArtworkPath,
   resolveTrackAssetPath,
 } from './paths.js';
 
@@ -159,6 +160,9 @@ describe('resolveTrackAssetPath', () => {
     expect(resolveTrackAssetPath(dir, 'abc', 'thumbnail.jpg')).toBe(
       path.join(path.resolve(dir), 'tracks', 'abc', 'thumbnail.jpg'),
     );
+    expect(resolveTrackArtworkPath(dir, 'abc')).toBe(
+      path.join(path.resolve(dir), 'tracks', 'abc', 'thumbnail.jpg'),
+    );
   });
 
   it('does not serve source metadata, separation results, or traversal attempts', () => {
@@ -169,5 +173,6 @@ describe('resolveTrackAssetPath', () => {
     expect(resolveTrackAssetPath(dir, 'abc', 'stems.wav')).toBe(null);
     expect(resolveTrackAssetPath(dir, 'abc', '../audio.mp3')).toBe(null);
     expect(resolveTrackAssetPath(dir, '../abc', 'audio.mp3')).toBe(null);
+    expect(resolveTrackArtworkPath(dir, '../abc')).toBe(null);
   });
 });

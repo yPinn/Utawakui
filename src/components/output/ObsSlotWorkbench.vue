@@ -1,6 +1,7 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
 import { Check, Palette } from '../../icons/index.js';
+import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
@@ -145,22 +146,28 @@ function saveSettings() {
 
       <section class="obs-slot-workbench__section">
         <h3 class="obs-slot-workbench__section-title">文字與背景</h3>
-        <label
-          v-for="control in controls"
-          :key="control.key"
-          class="obs-slot-workbench__control"
-        >
-          <span>{{ control.label }}</span>
-          <select v-model="draft[control.key]">
-            <option
-              v-for="option in control.options"
-              :key="option.id"
-              :value="option.id"
+        <div class="obs-slot-workbench__fields">
+          <ObsAppearanceControlRow
+            v-for="control in controls"
+            :key="control.key"
+            :control-id="`output-appearance-${control.key}`"
+            :label="control.label"
+          >
+            <select
+              :id="`output-appearance-${control.key}`"
+              v-model="draft[control.key]"
+              class="obs-slot-workbench__select"
             >
-              {{ option.label }}
-            </option>
-          </select>
-        </label>
+              <option
+                v-for="option in control.options"
+                :key="option.id"
+                :value="option.id"
+              >
+                {{ option.label }}
+              </option>
+            </select>
+          </ObsAppearanceControlRow>
+        </div>
       </section>
 
       <section v-if="preset" class="obs-slot-workbench__section">
@@ -199,7 +206,7 @@ function saveSettings() {
   justify-content: space-between;
 }
 
-.obs-slot-workbench__control select:focus-visible {
+.obs-slot-workbench__select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
@@ -225,7 +232,7 @@ function saveSettings() {
 .obs-slot-workbench__section {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-1);
 }
 
 .obs-slot-workbench__section:last-child {
@@ -265,21 +272,13 @@ function saveSettings() {
   line-height: var(--ui-line-height-caption);
 }
 
-.obs-slot-workbench__control {
+.obs-slot-workbench__fields {
   min-width: 0;
   display: grid;
-  grid-template-columns:
-    minmax(var(--ui-output-setting-label-width-min), 1fr)
-    minmax(0, var(--ui-output-setting-label-width-max));
-  align-items: center;
-  gap: var(--ui-space-2);
-  min-height: var(--ui-control-height);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
 }
 
-.obs-slot-workbench__control select {
+.obs-slot-workbench__select {
+  width: 100%;
   min-width: 0;
   height: var(--ui-control-height);
   padding-inline: var(--ui-space-2);
@@ -287,7 +286,9 @@ function saveSettings() {
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
-  font: inherit;
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
   cursor: pointer;
 }
 

@@ -75,7 +75,7 @@ defineProps({
 
 .obs-output-split-layout__side {
   display: grid;
-  padding-inline-start: var(--ui-space-4);
+  padding-inline: var(--ui-space-4) var(--ui-space-3);
   border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
   overflow: auto;
 }
@@ -99,7 +99,7 @@ defineProps({
 
   .obs-output-split-layout__side {
     padding-block-start: var(--ui-space-4);
-    padding-inline-start: 0;
+    padding-inline: 0;
     border-block-start: var(--ui-border-width) solid var(--ui-color-border);
     border-inline-start: 0;
     overflow: visible;

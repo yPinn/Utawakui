@@ -34,7 +34,7 @@ function boot() {
 
   const previewMode = isPreviewMode(window.location);
   applyOverlayAppearance(document, null);
-  applyPreviewCanvas(document, previewMode);
+  applyPreviewCanvas(document, { previewMode, location: window.location });
   if (previewMode) renderFrame(elements, PREVIEW_FRAME);
 
   const connection = createOverlayConnection({

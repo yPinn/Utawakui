@@ -115,6 +115,7 @@ const previewLines = computed(() => props.preset?.preview?.lines ?? []);
   display: grid;
   gap: var(--ui-space-1);
   padding: var(--ui-space-3);
+  text-align: left;
 }
 
 .obs-template-mockup__content--now-playing {
@@ -122,18 +123,17 @@ const previewLines = computed(() => props.preset?.preview?.lines ?? []);
 }
 
 .obs-template-mockup__content--lyrics {
-  align-content: center;
-  justify-items: center;
-  text-align: center;
+  align-content: end;
 }
 
 .obs-template-mockup__content--setlist {
-  align-content: center;
+  align-content: start;
 }
 
 .obs-template-mockup__content--artwork {
   grid-template-columns: minmax(0, 0.4fr) minmax(0, 0.6fr);
-  align-items: end;
+  align-content: end;
+  align-items: center;
 }
 
 .obs-template-mockup__artwork {

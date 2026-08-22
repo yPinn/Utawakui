@@ -1,4 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import WebSocket from 'ws';
 import outputContract from '../../shared/outputContract.js';
 import outputServerModule from './outputServer.js';
@@ -147,6 +150,41 @@ describe('outputServer', () => {
       `${status.httpUrl}/overlay/lyrics/lyrics.test.js`,
     );
     expect(unlistedFile.status).toBe(404);
+  });
+
+  it('serves validated track artwork without accepting filesystem input', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-output-art-'));
+    const imagePath = path.join(dir, 'thumbnail.png');
+    fs.writeFileSync(imagePath, Buffer.from([0x89, 0x50, 0x4e, 0x47]));
+    const resolvedIds = [];
+    const server = createServer({
+      resolveArtworkAsset: (trackId) => {
+        resolvedIds.push(trackId);
+        return trackId === 'track one' ? imagePath : null;
+      },
+    });
+
+    try {
+      const status = await server.start();
+      const artwork = await fetch(
+        `${status.httpUrl}/media/artwork/${encodeURIComponent('track one')}`,
+      );
+      expect(artwork.status).toBe(200);
+      expect(artwork.headers.get('content-type')).toBe('image/png');
+      expect(Buffer.from(await artwork.arrayBuffer())).toEqual(
+        Buffer.from([0x89, 0x50, 0x4e, 0x47]),
+      );
+
+      const missing = await fetch(`${status.httpUrl}/media/artwork/missing`);
+      expect(missing.status).toBe(404);
+      const traversal = await fetch(
+        `${status.httpUrl}/media/artwork/${encodeURIComponent('../secret')}`,
+      );
+      expect(traversal.status).toBe(404);
+      expect(resolvedIds).toEqual(['track one', 'missing', '../secret']);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 
   it('sends a full snapshot on connect and semantic updates afterward', async () => {

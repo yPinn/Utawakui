@@ -63,7 +63,7 @@ const modeMessages = {
   height: 100%;
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  padding: var(--ui-space-5) var(--ui-space-6);
+  padding: var(--ui-space-6);
   background:
     linear-gradient(
       180deg,
@@ -103,11 +103,15 @@ const modeMessages = {
 .performer-stage__track-copy strong {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-title);
 }
 
 .performer-stage__track-copy span,
 .performer-stage__next small {
   color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-md);
+  line-height: var(--ui-line-height-caption);
 }
 
 .performer-stage__adjustments {
@@ -117,11 +121,15 @@ const modeMessages = {
 }
 
 .performer-stage__adjustments span {
-  padding: var(--ui-space-1) var(--ui-space-2);
+  min-height: var(--ui-control-height);
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border-strong);
   border-radius: var(--ui-radius-sm);
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
   font-variant-numeric: tabular-nums;
 }
 
@@ -132,7 +140,7 @@ const modeMessages = {
   display: grid;
   justify-items: center;
   gap: var(--ui-space-5);
-  width: min(100%, 72rem);
+  width: min(100%, var(--ui-performer-lyrics-max-width));
   margin: 0 auto;
 }
 
@@ -160,7 +168,7 @@ const modeMessages = {
   flex: 0 0 auto;
   color: var(--ui-color-accent);
   font-size: var(--ui-font-size-sm);
-  font-weight: 600;
+  font-weight: var(--ui-font-weight-strong);
 }
 
 .performer-stage__next strong {

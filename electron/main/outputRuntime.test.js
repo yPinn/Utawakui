@@ -64,7 +64,7 @@ describe('outputRuntime lifecycle', () => {
 describe('outputRuntime controller', () => {
   function createServerFactory() {
     const servers = [];
-    const factory = vi.fn(({ port, overlaySlots }) => {
+    const factory = vi.fn(({ port, overlaySlots, resolveArtworkAsset }) => {
       let running = false;
       const server = {
         port,
@@ -87,6 +87,7 @@ describe('outputRuntime controller', () => {
         publish: vi.fn(() => true),
         setOverlaySlots: vi.fn(),
         initialOverlaySlots: overlaySlots,
+        resolveArtworkAsset,
       };
       servers.push(server);
       return server;
@@ -206,6 +207,22 @@ describe('outputRuntime controller', () => {
       lyrics: { templateId: 'focus-line' },
       setlist: { templateId: 'queue-board' },
     });
+  });
+
+  it('passes the artwork resolver through every server creation', async () => {
+    const { factory, servers } = createServerFactory();
+    const resolveArtworkAsset = vi.fn();
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+      resolveArtworkAsset,
+    });
+
+    await runtime.start();
+    expect(servers[0].resolveArtworkAsset).toBe(resolveArtworkAsset);
   });
 
   it('retains a startup error in status for renderer diagnostics', async () => {

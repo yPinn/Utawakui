@@ -37,7 +37,7 @@ describe('overlay appearance', () => {
       fontFamily: 'sans',
       fontScale: 'large',
       fontWeight: 'semibold',
-      alignment: 'center',
+      alignment: 'left',
       surface: 'transparent',
     });
   });

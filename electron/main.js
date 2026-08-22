@@ -12,6 +12,7 @@ const {
   dialog,
   protocol,
   nativeTheme,
+  screen,
   shell,
 } = require('electron');
 
@@ -23,6 +24,7 @@ app.setName(APP_NAME);
 app.setAppLogsPath();
 
 const { FEATURE_IDS } = require('./lib/featureGates');
+const { resolveTrackArtworkPath } = require('./lib/library');
 const { createDiagnosticsService } = require('./lib/diagnostics');
 const windowState = require('./main/windowState');
 const configState = require('./main/configState');
@@ -147,6 +149,11 @@ if (!gotSingleInstanceLock) {
     const outputRuntime = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
+      resolveArtworkAsset: (trackId) =>
+        resolveTrackArtworkPath(
+          configState.resolveDownloadDir(configState.getConfig()),
+          trackId,
+        ),
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
     });
     registerOutputRuntimeLifecycle({ app, server: outputRuntime });
@@ -200,6 +207,13 @@ if (!gotSingleInstanceLock) {
       devUrl: 'http://localhost:5173/performer-view.html',
       pagePath: path.join(__dirname, '..', 'dist', 'performer-view.html'),
       preloadPath: path.join(__dirname, 'performerPreload.js'),
+      getDisplayWorkArea: () => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow?.isDestroyed()) {
+          return screen.getDisplayMatching(mainWindow.getBounds()).workArea;
+        }
+        return screen.getPrimaryDisplay().workArea;
+      },
       getUiTheme: () => configState.getConfig().uiTheme,
       publishStatus: (status) => {
         const mainWindow = windowState.getMainWindow();

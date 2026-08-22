@@ -25,9 +25,7 @@ export function buildOutputSlotUrls(status, kind) {
   if (!status.running || !status.httpUrl) {
     return { obsUrl, previewUrl: null };
   }
-  const previewUrl = new URL(obsUrl);
-  previewUrl.searchParams.set('preview', '1');
-  return { obsUrl, previewUrl: previewUrl.toString() };
+  return { obsUrl, previewUrl: obsUrl };
 }
 
 export function buildAllOutputSlotUrls(status) {

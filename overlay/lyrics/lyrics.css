@@ -2,17 +2,22 @@
   /* Template layer: override these per profile/style set later. */
   --ovl-template-lyrics-current-size: 3.5em;
   --ovl-template-lyrics-next-size: 1.75em;
-  --ovl-template-lyrics-max-width: 32ch;
+  --ovl-template-lyrics-line-width: 28ch;
+  --ovl-template-lyrics-panel-width: 64rem;
   --ovl-template-lyrics-bottom: 9%;
 
   position: fixed;
-  inset-inline: var(--ovl-safe-inline);
+  inset-inline-start: 50%;
   inset-block-end: max(
     var(--ovl-safe-block),
     var(--ovl-template-lyrics-bottom)
   );
+  inline-size: min(
+    calc(100% - 2 * var(--ovl-safe-inline)),
+    var(--ovl-template-lyrics-panel-width)
+  );
   display: grid;
-  justify-items: center;
+  transform: translateX(-50%);
   gap: var(--ovl-primitive-space-3);
   padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
   border: 1px solid var(--ovl-user-outline);
@@ -26,7 +31,7 @@
 
 .lyrics-overlay__current,
 .lyrics-overlay__next {
-  max-inline-size: min(100%, var(--ovl-template-lyrics-max-width));
+  max-inline-size: min(100%, var(--ovl-template-lyrics-line-width));
   margin: 0;
   overflow-wrap: anywhere;
   text-wrap: balance;
@@ -39,7 +44,7 @@
   font-weight: var(--ovl-user-font-weight);
   line-height: 1.22;
   text-shadow: var(--ovl-text-shadow);
-  -webkit-text-stroke: 0.035em rgb(17 20 23 / 88%);
+  -webkit-text-stroke: 0.035em var(--ovl-color-stroke-strong);
   paint-order: stroke fill;
 }
 
@@ -50,18 +55,26 @@
   font-weight: var(--ovl-user-font-weight);
   line-height: 1.3;
   text-shadow: var(--ovl-text-shadow);
-  -webkit-text-stroke: 0.025em rgb(17 20 23 / 78%);
+  -webkit-text-stroke: 0.025em var(--ovl-color-stroke-soft);
   paint-order: stroke fill;
 }
 
 :root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
-  --ovl-template-lyrics-max-width: 38ch;
+  --ovl-template-lyrics-line-width: 34ch;
   --ovl-template-lyrics-bottom: 6%;
 }
 
 :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current,
 :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
   inline-size: 100%;
+}
+
+@media (max-width: 42rem) {
+  .lyrics-overlay {
+    --ovl-template-lyrics-current-size: 2.25em;
+    --ovl-template-lyrics-next-size: 1.25em;
+    --ovl-template-lyrics-line-width: 22ch;
+  }
 }
 
 @media (max-height: 36rem) {

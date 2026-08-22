@@ -14,7 +14,7 @@ describe('output template routes', () => {
     expect(outputPathForKind('composite')).toBeNull();
   });
 
-  it('keeps the OBS URL stable and adds demo state only to the workbench URL', () => {
+  it('uses the capture route in workbench without injecting demo state', () => {
     expect(
       buildOutputSlotUrls(
         { running: true, httpUrl: 'http://127.0.0.1:8700' },
@@ -22,7 +22,7 @@ describe('output template routes', () => {
       ),
     ).toEqual({
       obsUrl: 'http://127.0.0.1:8700/overlay/lyrics',
-      previewUrl: 'http://127.0.0.1:8700/overlay/lyrics?preview=1',
+      previewUrl: 'http://127.0.0.1:8700/overlay/lyrics',
     });
     expect(
       buildOutputSlotUrls(

@@ -110,4 +110,27 @@ describe('performer window manager', () => {
       height: 720,
     });
   });
+
+  it('keeps the initial utility window compact and centers it in the work area', () => {
+    FakeWindow.instances = [];
+    const manager = createPerformerWindowManager({
+      BrowserWindow: FakeWindow,
+      isDev: false,
+      devUrl: '',
+      pagePath: 'dist/performer-view.html',
+      preloadPath: 'performerPreload.js',
+      getDisplayWorkArea: () => ({ x: 100, y: 40, width: 1280, height: 800 }),
+    });
+
+    manager.open();
+
+    expect(FakeWindow.instances[0].options).toMatchObject({
+      x: 260,
+      y: 210,
+      width: 960,
+      height: 460,
+      minWidth: 800,
+      minHeight: 360,
+    });
+  });
 });

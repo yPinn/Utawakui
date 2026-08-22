@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyPreviewCanvas,
+  inspectionBackdrop,
   isPreviewMode,
   withPreviewFallback,
 } from './preview.mjs';
@@ -12,10 +13,22 @@ describe('overlay preview fallback', () => {
     expect(isPreviewMode({ search: '' })).toBe(false);
   });
 
-  it('marks only the workbench document with a preview canvas', () => {
+  it('marks demo and inspection canvases independently', () => {
     const document = { documentElement: { dataset: {} } };
-    applyPreviewCanvas(document, true);
+    applyPreviewCanvas(document, {
+      previewMode: true,
+      location: { search: '?preview=1&backdrop=checker' },
+    });
     expect(document.documentElement.dataset.overlayPreview).toBe('true');
+    expect(document.documentElement.dataset.overlayBackdrop).toBe('checker');
+  });
+
+  it('allows only local inspection backdrop ids', () => {
+    expect(inspectionBackdrop({ search: '?backdrop=checker' })).toBe('checker');
+    expect(inspectionBackdrop({ search: '?backdrop=dark' })).toBe('dark');
+    expect(inspectionBackdrop({ search: '?backdrop=light' })).toBe('light');
+    expect(inspectionBackdrop({ search: '?backdrop=provider-value' })).toBe('');
+    expect(inspectionBackdrop({ search: '' })).toBe('');
   });
 
   it('uses demo content only when preview mode receives an empty live frame', () => {

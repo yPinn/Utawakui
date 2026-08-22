@@ -136,6 +136,7 @@ export function selectNowPlayingFrame(snapshot) {
   return {
     revision: revision(snapshot),
     visible: Boolean(track && title),
+    trackId: text(track?.id),
     title,
     artist: text(track?.artist),
     nextTitle: text(nextItem?.track?.title),

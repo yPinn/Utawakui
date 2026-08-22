@@ -57,6 +57,9 @@ describe('output template registry', () => {
     for (const slot of data.slotDefinitions) {
       expect(templateIds.has(data.slotDefaults[slot.id].templateId)).toBe(true);
     }
+    expect(
+      Object.values(data.slotDefaults).map((slot) => slot.settings.alignment),
+    ).toEqual(['left', 'left', 'left', 'left']);
     expect(data.appearanceOptions.fontFamily).toHaveLength(3);
     expect(data.styleSets.length).toBeGreaterThan(0);
   });

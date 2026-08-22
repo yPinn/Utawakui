@@ -51,8 +51,8 @@ const hasRuby = computed(() =>
 
 .performer-lyric-cue__text {
   font-size: var(--ui-font-size-xl);
-  font-weight: 600;
-  line-height: 1.5;
+  font-weight: var(--ui-font-weight-strong);
+  line-height: var(--ui-line-height-body);
 }
 
 .performer-lyric-cue--current {
@@ -60,9 +60,9 @@ const hasRuby = computed(() =>
 }
 
 .performer-lyric-cue--current .performer-lyric-cue__text {
-  font-size: 2.5rem;
-  font-weight: 650;
-  line-height: 1.55;
+  font-size: var(--ui-performer-lyric-current-font-size);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-body);
 }
 
 .performer-lyric-cue__reading {
@@ -72,32 +72,34 @@ const hasRuby = computed(() =>
   line-height: var(--ui-line-height-body);
 }
 
-.performer-lyric-cue rt {
-  color: var(--ui-color-accent);
-  font-size: 0.5em;
-  font-weight: 500;
+.performer-lyric-cue--current .performer-lyric-cue__reading {
+  font-size: var(--ui-font-size-lg);
 }
 
-@media (max-height: 520px) {
-  .performer-lyric-cue--current .performer-lyric-cue__text {
-    font-size: 2rem;
-  }
+.performer-lyric-cue rt {
+  color: var(--ui-color-accent);
+  font-size: var(--ui-performer-ruby-font-size);
+  font-weight: var(--ui-font-weight-regular);
 }
 
 @media (max-height: 400px) {
   .performer-lyric-cue__text {
     font-size: var(--ui-font-size-md);
-    line-height: 1.35;
+    line-height: var(--ui-line-height-title);
   }
 
   .performer-lyric-cue--current .performer-lyric-cue__text {
-    font-size: 1.75rem;
-    line-height: 1.4;
+    font-size: var(--ui-font-size-2xl);
+    line-height: var(--ui-line-height-caption);
   }
 
   .performer-lyric-cue__reading {
     margin-top: var(--ui-space-1);
     font-size: var(--ui-font-size-sm);
+  }
+
+  .performer-lyric-cue--current .performer-lyric-cue__reading {
+    font-size: var(--ui-font-size-md);
   }
 }
 </style>

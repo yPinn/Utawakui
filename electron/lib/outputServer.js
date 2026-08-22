@@ -17,6 +17,7 @@ const {
 const OUTPUT_WS_PATH = '/ws';
 const OUTPUT_MAX_INBOUND_PAYLOAD_BYTES = 4096;
 const OUTPUT_MAX_INBOUND_PARTS = 16;
+const OUTPUT_ARTWORK_PATH_PREFIX = '/media/artwork/';
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 30000;
 const CLIENT_CLOSE_GRACE_MS = 500;
 const DEFAULT_OVERLAY_ROOT = path.resolve(__dirname, '../../overlay');
@@ -59,6 +60,12 @@ const OVERLAY_MIME_TYPES = Object.freeze({
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
+});
+const ARTWORK_MIME_TYPES = Object.freeze({
+  '.jpg': 'image/jpeg',
+  '.jpeg': 'image/jpeg',
+  '.png': 'image/png',
+  '.webp': 'image/webp',
 });
 
 function validatePort(value) {
@@ -104,6 +111,29 @@ function writeStatic(response, body, contentType) {
     'Cross-Origin-Resource-Policy': 'same-origin',
   });
   response.end(body);
+}
+
+function writeArtwork(response, body, contentType) {
+  response.writeHead(200, {
+    'Content-Type': contentType,
+    'Content-Length': body.byteLength,
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    'Cross-Origin-Resource-Policy': 'same-origin',
+  });
+  response.end(body);
+}
+
+function artworkTrackId(pathname) {
+  if (!pathname.startsWith(OUTPUT_ARTWORK_PATH_PREFIX)) return null;
+  const encoded = pathname.slice(OUTPUT_ARTWORK_PATH_PREFIX.length);
+  if (!encoded || encoded.includes('/')) return null;
+  try {
+    return decodeURIComponent(encoded);
+  } catch {
+    return null;
+  }
 }
 
 function rejectUpgrade(socket, statusCode, reason) {
@@ -155,6 +185,7 @@ function createOutputServer(options = {}) {
   );
   const logger = options.logger ?? console;
   const overlayRoot = options.overlayRoot ?? DEFAULT_OVERLAY_ROOT;
+  const resolveArtworkAsset = options.resolveArtworkAsset ?? (() => null);
 
   let snapshot = createEmptyOutputSnapshot();
   let overlaySlots = { ...(options.overlaySlots ?? {}) };
@@ -226,6 +257,28 @@ function createOutputServer(options = {}) {
 
     if (pathname === '/api/v1/state') {
       writeJson(response, 200, snapshot);
+      return;
+    }
+
+    if (pathname.startsWith(OUTPUT_ARTWORK_PATH_PREFIX)) {
+      const trackId = artworkTrackId(pathname);
+      const filePath = trackId ? await resolveArtworkAsset(trackId) : null;
+      const contentType =
+        typeof filePath === 'string'
+          ? ARTWORK_MIME_TYPES[path.extname(filePath).toLowerCase()]
+          : null;
+      if (!filePath || !contentType) {
+        writeJson(response, 404, { error: 'not_found' });
+        return;
+      }
+      try {
+        writeArtwork(response, await fs.readFile(filePath), contentType);
+      } catch (error) {
+        if (error.code !== 'ENOENT') {
+          logger.error?.('[output] Failed to read artwork asset', error);
+        }
+        writeJson(response, 404, { error: 'not_found' });
+      }
       return;
     }
 

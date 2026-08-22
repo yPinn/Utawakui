@@ -10,22 +10,48 @@ import { selectNowPlayingFrame } from '../shared/state.mjs';
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
   visible: true,
+  trackId: 'preview-track',
   title: 'Stellar Stellar',
   artist: '星街すいせい',
 });
 
-function renderFrame(elements, frame) {
+function setArtworkSource(elements, trackId) {
+  const normalizedTrackId = typeof trackId === 'string' ? trackId.trim() : '';
+  if (elements.image.dataset.trackId === normalizedTrackId) return;
+
+  elements.image.dataset.trackId = normalizedTrackId;
+  elements.image.hidden = true;
+  elements.fallback.hidden = false;
+  elements.image.onload = null;
+  elements.image.onerror = null;
+  elements.image.removeAttribute('src');
+  if (!normalizedTrackId) return;
+
+  elements.image.onload = () => {
+    elements.image.hidden = false;
+    elements.fallback.hidden = true;
+  };
+  elements.image.onerror = () => {
+    elements.image.hidden = true;
+    elements.fallback.hidden = false;
+  };
+  elements.image.src = `/media/artwork/${encodeURIComponent(normalizedTrackId)}`;
+}
+
+export function renderArtworkFrame(elements, frame) {
   elements.root.hidden = !frame.visible;
   elements.root.dataset.revision = String(frame.revision);
   elements.title.textContent = frame.title;
   elements.artist.textContent = frame.artist;
-  elements.mark.textContent = frame.title.trim().slice(0, 1).toUpperCase();
+  elements.fallback.textContent = frame.title.trim().slice(0, 1).toUpperCase();
+  setArtworkSource(elements, frame.trackId);
 }
 
 function boot() {
   const elements = {
     root: document.querySelector('#artwork-overlay'),
-    mark: document.querySelector('#artwork-mark'),
+    image: document.querySelector('#artwork-image'),
+    fallback: document.querySelector('#artwork-fallback'),
     title: document.querySelector('#artwork-title'),
     artist: document.querySelector('#artwork-artist'),
   };
@@ -33,8 +59,8 @@ function boot() {
 
   const previewMode = isPreviewMode(window.location);
   applyOverlayAppearance(document, null);
-  applyPreviewCanvas(document, previewMode);
-  if (previewMode) renderFrame(elements, PREVIEW_FRAME);
+  applyPreviewCanvas(document, { previewMode, location: window.location });
+  if (previewMode) renderArtworkFrame(elements, PREVIEW_FRAME);
 
   const connection = createOverlayConnection({
     kind: 'artwork',
@@ -45,7 +71,7 @@ function boot() {
         PREVIEW_FRAME,
         previewMode,
       );
-      renderFrame(elements, frame);
+      renderArtworkFrame(elements, frame);
     },
   });
   connection.start();

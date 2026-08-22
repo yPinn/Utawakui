@@ -69,6 +69,7 @@ const performerLabel = computed(() =>
   height: 100%;
   display: flex;
   align-items: center;
+  gap: var(--ui-space-2);
   padding-right: var(--ui-space-2);
   app-region: no-drag;
   -webkit-app-region: no-drag;
