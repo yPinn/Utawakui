@@ -97,6 +97,12 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - KARA2／Inst HQ4 vocal separation worker 與 guide vocal playback graph；
   使用情境式 recipe、可替換 service boundary 與選配錄製品質包依 ADR 0009
   分階段導入。
+- Refined runtime foundation：目前已依 ADR 0014 完成 Audio Python Runtime
+  Family layout、immutable activation generation／lease、main-owned scheduler、
+  受限 JSONL process transport、host probe，以及獨立的 fail-closed Refined
+  policy worker／fake probe。base package 尚未內含或提供 Python、PyTorch、
+  environment lock、`audio-separator`、catalog、config 或模型下載，`refined`
+  仍不可執行。
 - Import resolver 與 provider candidate selection。
 - App-managed Python `yt-dlp` provider runtime，用於 provider import 與 metadata backfill。
 - Lyrics/subtitle 相關基礎路徑。
@@ -250,6 +256,15 @@ processing profile。
 隨基本安裝程式預設下載。CPU 是正式完成路徑；CUDA 若未來導入，必須是另行
 評估、硬體偵測後明確下載的獨立 pack。完整決策見
 [ADR 0009](adr/0009-tiered-audio-processing-runtime.md)。
+
+目前 base package 僅攜帶 stdlib host probe 與獨立 Refined policy worker；
+fake wrapper／fixture 不進 package。兩個 worker 都不攜帶 Python、PyTorch、
+`audio-separator`、catalog、config 或任何 RoFormer 權重，也不因此開放
+`refined`。真正 runtime/model 必須先完成固定
+來源、版本、checksum、容量與 CPU benchmark。Refined 與未來 Music Analysis
+共用 [ADR 0014](adr/0014-audio-python-runtime-family.md) 的 runtime family、
+FFmpeg decode、process transport、scheduler 與 immutable artifact lifecycle；
+worker、完整 lock、模型、readiness、結果與移除轉換維持 capability-specific。
 
 ### 6.4 本機音訊入庫
 

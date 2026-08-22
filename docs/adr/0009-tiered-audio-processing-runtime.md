@@ -151,7 +151,7 @@ AudioProcessingService
   |     |-- quick   -> mdx-kara2-v1
   |     `-- general -> mdx-inst-hq4-v1
   |
-  `-- community-python adapter (optional)
+  `-- AudioPythonRuntimeHost adapter (optional)
         |-- refined        -> one accepted BS-RoFormer
         `-- backing-vocals -> BS-RoFormer then BVE
 ```
@@ -171,17 +171,54 @@ hardware compatibility. A CUDA PyTorch environment can add gigabytes even when
 the model itself is only hundreds of megabytes. GPU acceleration is therefore
 an optional runtime decision, not another recipe.
 
-The community quality pack, if accepted, uses an independent versioned,
-app-managed Python runtime. It must not reuse or modify the yt-dlp Python
-environment: provider download and audio inference have unrelated Python,
-update, repair, licensing, and failure requirements.
+The community quality pack, if accepted, uses the app-managed Audio Python
+Runtime Family from [ADR 0014](0014-audio-python-runtime-family.md). It must not
+reuse or modify the yt-dlp Python environment: provider download and audio
+inference have unrelated Python, update, repair, licensing, and failure
+requirements. Refined may reuse runtime-family infrastructure with Music
+Analysis, but it retains its own worker, complete lock, models, readiness,
+results, and product lifecycle.
 
-Optional layers remain separately removable:
+The implemented runtime-host foundation now follows ADR 0014 before choosing or
+downloading a runtime build:
 
-1. community CPU runtime;
+- `%APPDATA%/Utawakui/dependencies/audio-python` owns content-addressed runtime
+  artifacts, three allowlisted immutable environment families, activation
+  generations, capability-specific model roots, and capability job directories;
+- activation generation files are immutable. A low-level main-only publication
+  primitive atomically replaces only `activations/current.json`; jobs acquire an
+  in-memory generation lease and record their generation and environment hash;
+- main derives executable, worker, environment, model, and job paths. Renderer
+  input can never supply a path, command, Python argument, model, or lock id;
+- the generic process transport starts one hidden subprocess with `shell: false`,
+  sends one bounded JSON-lines request, accepts only normalized progress and one
+  terminal result/error, owns cancellation, and never exposes stderr to renderer
+  errors;
+- the main-owned heavy-job scheduler queues CPU-heavy work at concurrency one and
+  owns queued/active cancellation and shutdown;
+- the base package contains only
+  `resources/audio-processing/audio_python_worker.py`. Its host-only probe reports
+  Python/isolated-path facts without importing `audio-separator` or claiming any
+  capability readiness.
+
+This foundation contains no downloader, environment archive, compatibility lock,
+model manifest, capability worker, or garbage collector. Publishing a generation
+is therefore an internal post-verification primitive, not proof that its artifacts
+are ready. `refined` remains non-runnable and there is no installed runtime to
+migrate.
+
+Optional product capabilities remain separately removable through ADR 0014's
+capability-aware activation transition:
+
+1. Refined CPU capability and its selected environment mapping;
 2. one selected BS-RoFormer model;
 3. one selected BVE model;
 4. a future hardware-specific GPU runtime.
+
+If Refined shares `combined-ml` with Music Analysis, removing either capability
+may first require preparing and atomically activating the standalone environment
+needed by the remaining capability. Separate lifecycle does not permit deleting
+shared physical files while they are still leased.
 
 The UI shows expected download and installed capacity before preparation. No
 separation job performs a hidden download. Every managed runtime and model
@@ -277,7 +314,8 @@ are never part of this dependency-cache cleanup.
 
 The `refined` pack must additionally prove:
 
-- reproducible installation in the independent managed runtime;
+- reproducible installation in `separation-cpu` and, when offered,
+  `combined-ml`, without modifying an active environment;
 - packaged Windows CPU inference, progress, cancellation, and cleanup;
 - output length, sample rate, channel mapping, alignment, and atomic publish;
 - runtime/model download, installed size, update overlap, RAM, and temp peaks;
@@ -301,16 +339,31 @@ base installation:
    gates. New `general` jobs use `mdx-inst-hq4-v1`; HQ3 remains readable in old
    manifests and benchmark-only for controlled comparisons. The managed HQ4
    dependency supersedes HQ3 only after successful checksum verification.
-3. **Refined CPU spike — pending:** construct a contained, independently
-   versioned `python-audio-separator` CPU runtime with one pinned BS-RoFormer.
-   The spike may write only to benchmark storage and must not become a hidden
-   first-use download.
-4. **Optional-pack productization — gated:** add dependency preparation,
+3. **Audio Python Runtime Host foundation — implemented:** use ADR 0014's family
+   paths, immutable activation schema and atomic pointer, generation leases,
+   capability workspaces, concurrency-one heavy scheduler, bounded subprocess
+   transport, and host-only packaged probe. No Python runtime, PyTorch package,
+   environment lock, capability worker, or model is bundled or downloadable;
+   `refined` remains non-runnable.
+4. **Refined CPU lock spike — research patch built, activation blocked:** Windows x64
+   CPython 3.12 and 3.13 wheel graphs resolve for `audio-separator==0.44.5`, but
+   its Windows graph directly includes CC BY-NC `diffq-fixed`, the selected
+   checkpoint has no established product-use/redistribution license, and the
+   CPython 3.13 cross-target report omitted its target-only `audioop-lts` marker.
+   No maintained upstream RoFormer-only/strict-offline release was found. An exact
+   benchmark-only metadata rebuild now removes five reviewed non-RoFormer
+   requirements reproducibly while retaining byte-identical package source, but
+   it is explicitly non-activatable and cannot itself deny downloads or legacy
+   fallback. Strict runtime/environment/model manifest validation is implemented,
+   but no complete release lock, runtime, model, capability worker, or activation
+   is published. See
+   [the lock spike](../audio-python-separation-cpu-spike-2026-08-23.md).
+5. **Optional-pack productization — gated:** add dependency preparation,
    repair/removal, capacity presentation, packaged execution, cancellation,
    and manifest publication only after the refined candidate passes all gates.
-5. **Backing vocals — deferred:** add BVE only after the one-pass refined path
+6. **Backing vocals — deferred:** add BVE only after the one-pass refined path
    is stable and its mix semantics pass listening tests.
-6. **GPU acceleration — separate decision:** benchmark CUDA or another provider
+7. **GPU acceleration — separate decision:** benchmark CUDA or another provider
    only after the CPU product path is accepted. GPU support never changes the
    stable recipe id or saved-result contract.
 
@@ -369,6 +422,7 @@ model replacement or additional feature recipe ships.
 
 - [Local ONNX CPU baseline](../audio-processing-baseline-2026-08-22.md)
 - [Current community model review](../audio-processing-model-review-2026-08-23.md)
+- [ADR 0014: Audio Python Runtime Family](0014-audio-python-runtime-family.md)
 - [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)
 - [python-audio-separator maintained model scores](https://raw.githubusercontent.com/nomadkaraoke/python-audio-separator/main/audio_separator/models-scores.json)
 - [MVSEP synthetic leaderboard](https://mvsep.com/quality_checker/synth_leaderboard)

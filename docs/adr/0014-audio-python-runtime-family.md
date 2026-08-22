@@ -6,9 +6,18 @@ Accepted on 2026-08-23. The `AudioPythonRuntimeHost` contract foundation is
 implemented: family paths, allowlisted environment/model identities, immutable
 activation generation validation and atomic pointer publication, generation
 leases, capability job manifests, concurrency-one scheduling, bounded process
-transport, and a host-only packaged probe. Runtime/model installation, complete
-locks, compatibility validation, capability workers/readiness, repair, rollback,
-garbage collection, and ML execution are not implemented or downloadable yet.
+transport, a host-only packaged probe, and strict artifact/environment/model
+manifest validation with separate activation-eligibility checks. Initial
+`separation-cpu` resolution found no maintained upstream RoFormer-only or
+strict-offline release. A reproducible benchmark-only metadata rebuild avoids the
+Windows `diffq-fixed` dependency in its research graph, but remains ineligible for
+activation because it cannot enforce offline/new-loader-only execution and the
+checkpoint terms remain unresolved. A separate stdlib Refined policy worker and
+fake-wrapper probe now prove fixed main-owned intent, pre-import SHA-256 checks,
+network/legacy/forbidden-import rejection, bounded errors, cancellation, and
+job-owned caches without installing ML. Runtime/model installation, complete
+release locks, real capability-package readiness, repair, rollback, garbage
+collection, and ML execution are not implemented or downloadable yet.
 
 ## Context
 
@@ -195,6 +204,30 @@ CC-BY-NC-SA-4.0. Analysis therefore remains gated and on-demand until model
 distribution, attribution, non-commercial restrictions, and product-use terms
 are accepted.
 
+### Keep the Refined policy worker separate and non-activating
+
+The base package carries a Refined-specific stdlib worker beside the generic
+host probe. `refinedPythonWorkerProbe.js` resolves the fixed
+`refined`/`bs-roformer-viperx-1297` intent from `AudioPythonRuntimeHost` paths,
+validates the benchmark model manifest, expected hashes, local presence, and model
+file sizes, creates only a capability-scoped probe workspace, and never publishes
+an activation generation. Main deliberately does not synchronously load and hash
+the approximately 639 MB checkpoint. The worker hashes the pinned catalog, config,
+and checkpoint in bounded chunks before the first `audio_separator` import. It
+then installs network and forbidden-import guards,
+rejects unowned child processes, replaces the v0.44.5 legacy RoFormer method with
+a fail-closed sentinel, redirects common package caches into the job, and strips
+user-site import paths.
+
+A stdlib fake wrapper exercises success, missing/corrupt artifacts, network,
+legacy fallback, Demucs/DiffQ/Julius/ONNX-conversion/TorchVision imports,
+`SystemExit`, bounded failure, and process termination. The fixture stays outside
+Electron Builder's allowlist. This proves the app-owned policy and transport
+contract only: it does not prove that the real package imports, that native Torch
+obeys the Python-level network guard, or that real inference is correct. Those
+claims still require a complete lock plus a packaged cold smoke with network
+access unavailable at the OS/test-environment boundary.
+
 ### Preserve the Refined product and model route
 
 This ADR changes Refined infrastructure, not ADR 0009's product route:
@@ -242,6 +275,22 @@ Passing dependency resolution without these packaged smokes is not readiness.
 Readiness is computed separately per capability even when both map to one
 combined environment.
 
+The first `separation-cpu` resolution also proved that resolver success is not
+release eligibility. `audio-separator==0.44.5` resolves Windows wheels but pulls
+CC BY-NC `diffq-fixed`; the selected Viperx-1297 checkpoint has no established
+weight redistribution/product-use grant; and cross-target pip resolution omitted
+CPython 3.13's `audioop-lts` marker. These inputs remain research evidence and
+must not be published or activated. See the
+[Refined lock spike](../audio-python-separation-cpu-spike-2026-08-23.md).
+
+The follow-up upstream survey found no accepted RoFormer-only dependency extra,
+strict-offline flag, or no-fallback release. The exact 0.44.5 wheel can be rebuilt
+reproducibly with only reviewed dependency metadata and RECORD changes; the
+generated sidecar is permanently `benchmark-only` and has
+`activationEligible: false`. This artifact may be an input to a future resolved
+`separation-cpu` research lock, but never bypasses this ADR's complete-lock,
+capability-worker, license, offline, and atomic-activation gates.
+
 ## Rejected options
 
 - Reuse the yt-dlp Python runtime: provider acquisition and ML have unrelated
@@ -269,8 +318,10 @@ The implemented foundation deliberately stops before artifact preparation. Its
 atomic publisher accepts an already validated generation; the future preparation
 service must still download to staging, verify manifests/checksums, run
 capability-specific packaged and offline smokes, publish immutable artifacts, and
-only then call that primitive. No Python, PyTorch, All-In-One,
-`audio-separator`, environment lock, or model weight is installed today.
+only then call that primitive. The two packaged Python files are app-owned stdlib
+workers, not a runtime or capability. No Python, PyTorch, All-In-One,
+`audio-separator`, environment lock, catalog, config, or model weight is installed
+today.
 
 ## References
 
@@ -281,3 +332,4 @@ only then call that primitive. No Python, PyTorch, All-In-One,
 - [All-In-One Infer project metadata](https://raw.githubusercontent.com/openmirlab/all-in-one-infer/main/pyproject.toml)
 - [All-In-One checkpoint manifest](https://raw.githubusercontent.com/openmirlab/all-in-one-infer/main/src/allin1_infer/config/checkpoints.toml)
 - [Python embeddable package](https://docs.python.org/3/using/windows.html#the-embeddable-package)
+- [Refined separation-cpu lock spike](../audio-python-separation-cpu-spike-2026-08-23.md)
