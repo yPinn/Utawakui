@@ -11,6 +11,46 @@ const {
 } = require('./constants');
 const { isLyricsSubtitleFilename } = require('./paths');
 
+const LEGACY_READING_DOC_VERSION = 1;
+const SHA256_RE = /^[a-f0-9]{64}$/;
+
+function normalizeCanonicalIdentity(identity, readingLines) {
+  if (
+    !identity ||
+    typeof identity.documentId !== 'string' ||
+    identity.documentId.length === 0 ||
+    identity.documentId.length > 200 ||
+    !SHA256_RE.test(identity.sourceFingerprint) ||
+    !Array.isArray(identity.lines) ||
+    identity.lines.length !== readingLines.length
+  ) {
+    return null;
+  }
+
+  const seen = new Set();
+  const lines = identity.lines.map((line, index) => {
+    const lineId = line?.lineId;
+    if (
+      typeof lineId !== 'string' ||
+      lineId.length === 0 ||
+      lineId.length > 200 ||
+      seen.has(lineId) ||
+      line?.text !== readingLines[index]?.text
+    ) {
+      return null;
+    }
+    seen.add(lineId);
+    return { lineId, text: line.text };
+  });
+  if (lines.some((line) => line === null)) return null;
+  return {
+    documentId: identity.documentId,
+    sourceFingerprint: identity.sourceFingerprint,
+    lines,
+    targetLineId: identity.targetLineId,
+  };
+}
+
 function getReadingsDirFromTrackDir(trackDir) {
   return path.join(trackDir, LYRICS_DIRNAME, LYRICS_READINGS_DIRNAME);
 }
@@ -35,9 +75,17 @@ function getTrackReading(trackDir, sourceFilename) {
     if (
       typeof doc !== 'object' ||
       doc === null ||
-      doc.version !== READING_DOC_VERSION ||
+      ![LEGACY_READING_DOC_VERSION, READING_DOC_VERSION].includes(
+        doc.version,
+      ) ||
       doc.sourceFilename !== sourceFilename ||
       !Array.isArray(doc.lines)
+    ) {
+      return null;
+    }
+    if (
+      doc.version === READING_DOC_VERSION &&
+      !normalizeCanonicalIdentity(doc, doc.lines)
     ) {
       return null;
     }
@@ -52,21 +100,38 @@ function getTrackReading(trackDir, sourceFilename) {
 // source wholesale (readingDoc is always the result of a fresh generation
 // at this call site, never a partial update — setReadingLine below is the
 // partial-update path).
-function saveTrackReading(trackDir, sourceFilename, script, readingDoc) {
+function saveTrackReading(
+  trackDir,
+  sourceFilename,
+  script,
+  readingDoc,
+  identity = null,
+) {
   const sidecarPath = readingSidecarPath(trackDir, sourceFilename);
   if (!sidecarPath || !readingDoc || !Array.isArray(readingDoc.lines)) {
     return null;
   }
 
   fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+  const canonical = normalizeCanonicalIdentity(identity, readingDoc.lines);
+  if (identity !== null && !canonical) return null;
   const doc = {
-    version: READING_DOC_VERSION,
+    version: canonical ? READING_DOC_VERSION : LEGACY_READING_DOC_VERSION,
     sourceFilename,
     script,
     generatedAt: new Date().toISOString(),
     analyzer: readingDoc.analyzer ?? null,
-    lines: readingDoc.lines,
+    lines: canonical
+      ? readingDoc.lines.map((line, index) => ({
+          ...line,
+          lineId: canonical.lines[index].lineId,
+        }))
+      : readingDoc.lines,
   };
+  if (canonical) {
+    doc.documentId = canonical.documentId;
+    doc.sourceFingerprint = canonical.sourceFingerprint;
+  }
   atomicWriteJson(sidecarPath, doc);
   return doc;
 }
@@ -99,12 +164,19 @@ function deleteTrackReading(trackDir, sourceFilename) {
 function setReadingLine(
   trackDir,
   sourceFilename,
-  lineIndex,
+  lineReference,
   readingValue,
   options = {},
 ) {
   const doc = getTrackReading(trackDir, sourceFilename);
   if (!doc) return null;
+  const canonical = normalizeCanonicalIdentity(lineReference, doc.lines);
+  const lineIndex = canonical
+    ? canonical.lines.findIndex(
+        (line) => line.lineId === canonical.targetLineId,
+      )
+    : lineReference;
+  if (!Number.isSafeInteger(lineIndex) || lineIndex < 0) return null;
   const line = doc.lines[lineIndex];
   if (!line) return null;
 
@@ -122,11 +194,29 @@ function setReadingLine(
     romaji = value;
   }
 
-  const nextLines = doc.lines.slice();
-  nextLines[lineIndex] = { ...line, segments, romaji, edited: true };
+  const nextLines = canonical
+    ? doc.lines.map((candidate, index) => ({
+        ...candidate,
+        lineId: canonical.lines[index].lineId,
+      }))
+    : doc.lines.slice();
+  nextLines[lineIndex] = {
+    ...nextLines[lineIndex],
+    segments,
+    romaji,
+    edited: true,
+  };
 
   const sidecarPath = readingSidecarPath(trackDir, sourceFilename);
-  const nextDoc = { ...doc, lines: nextLines };
+  const nextDoc = canonical
+    ? {
+        ...doc,
+        version: READING_DOC_VERSION,
+        documentId: canonical.documentId,
+        sourceFingerprint: canonical.sourceFingerprint,
+        lines: nextLines,
+      }
+    : { ...doc, lines: nextLines };
   atomicWriteJson(sidecarPath, nextDoc);
   return nextDoc;
 }

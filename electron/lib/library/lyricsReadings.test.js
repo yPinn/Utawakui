@@ -47,6 +47,15 @@ const sampleKoreanDoc = {
   ],
 };
 
+const canonicalIdentity = {
+  documentId: 'lyr_document',
+  sourceFingerprint: 'a'.repeat(64),
+  lines: [
+    { lineId: 'line_1', text: '歌う声' },
+    { lineId: 'line_2', text: 'です' },
+  ],
+};
+
 describe('readingSidecarPath', () => {
   it('rejects filenames with path separators or an unsupported extension', () => {
     expect(readingSidecarPath(trackDir, '../evil.lrc')).toBeNull();
@@ -90,6 +99,16 @@ describe('getTrackReading', () => {
 
     fs.writeFileSync(
       sidecarPath,
+      JSON.stringify({
+        version: 2,
+        sourceFilename: 'ja.vtt',
+        lines: [{ lineId: 'line_1', text: '歌う声' }],
+      }),
+    );
+    expect(getTrackReading(trackDir, 'ja.vtt')).toBeNull();
+
+    fs.writeFileSync(
+      sidecarPath,
       JSON.stringify({ version: 1, sourceFilename: 'other.vtt', lines: [] }),
     );
     expect(getTrackReading(trackDir, 'ja.vtt')).toBeNull();
@@ -119,10 +138,37 @@ describe('saveTrackReading / getTrackReading round trip', () => {
     expect(getTrackReading(trackDir, 'ja.vtt').lines).toHaveLength(1);
   });
 
+  it('writes v2 stable document and line identity when canonical identity is supplied', () => {
+    const saved = saveTrackReading(
+      trackDir,
+      'ja.vtt',
+      'ja',
+      sampleDoc,
+      canonicalIdentity,
+    );
+
+    expect(saved).toMatchObject({
+      version: 2,
+      documentId: 'lyr_document',
+      sourceFingerprint: 'a'.repeat(64),
+    });
+    expect(saved.lines.map((line) => line.lineId)).toEqual([
+      'line_1',
+      'line_2',
+    ]);
+    expect(getTrackReading(trackDir, 'ja.vtt')).toEqual(saved);
+  });
+
   it('returns null for an invalid source filename or a malformed doc', () => {
     expect(saveTrackReading(trackDir, 'a/b.lrc', 'ja', sampleDoc)).toBeNull();
     expect(saveTrackReading(trackDir, 'ja.vtt', 'ja', {})).toBeNull();
     expect(saveTrackReading(trackDir, 'ja.vtt', 'ja', null)).toBeNull();
+    expect(
+      saveTrackReading(trackDir, 'ja.vtt', 'ja', sampleDoc, {
+        ...canonicalIdentity,
+        lines: [{ lineId: 'wrong', text: 'different' }],
+      }),
+    ).toBeNull();
   });
 });
 
@@ -164,6 +210,28 @@ describe('setReadingLine', () => {
     // The other line is untouched.
     expect(updated.lines[1]).toEqual(sampleDoc.lines[1]);
     expect(getTrackReading(trackDir, 'ja.vtt')).toEqual(updated);
+  });
+
+  it('upgrades a legacy v1 document on explicit stable-id editing', () => {
+    saveTrackReading(trackDir, 'ja.vtt', 'ja', sampleDoc);
+
+    const updated = setReadingLine(
+      trackDir,
+      'ja.vtt',
+      {
+        ...canonicalIdentity,
+        targetLineId: 'line_2',
+      },
+      'デス',
+    );
+
+    expect(updated.version).toBe(2);
+    expect(updated.documentId).toBe('lyr_document');
+    expect(updated.lines.map((line) => line.lineId)).toEqual([
+      'line_1',
+      'line_2',
+    ]);
+    expect(updated.lines[1]).toMatchObject({ lineId: 'line_2', edited: true });
   });
 
   it('falls back to one atomic segment when the supplied kana does not align', () => {

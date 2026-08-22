@@ -6,6 +6,7 @@ import {
   formatLyricTime,
   inferPreferredLyricsLanguagePrefixes,
   isNonLyricCue,
+  parseEnhancedLrc,
   parseLrc,
   parseLyricsText,
   parseVtt,
@@ -202,6 +203,60 @@ describe('parseLrc', () => {
     ]);
   });
 
+  it('parses A2 Enhanced LRC segments and an optional trailing end boundary', () => {
+    expect(
+      parseEnhancedLrc(`[00:01.00]<00:01.00>Hello <00:01.500>world<00:02.00>
+[00:03.00]Plain fallback`),
+    ).toEqual([
+      {
+        start: 1,
+        end: 3,
+        text: 'Hello world',
+        segments: [
+          { text: 'Hello ', start: 1, end: 1.5 },
+          { text: 'world', start: 1.5, end: 2 },
+        ],
+      },
+      {
+        start: 3,
+        end: Number.POSITIVE_INFINITY,
+        text: 'Plain fallback',
+      },
+    ]);
+  });
+
+  it('preserves exact segment text and falls back to T1 for malformed timing', () => {
+    expect(
+      parseEnhancedLrc(`[00:01.00]<00:01.00>Hello, <00:01.50> world!
+[00:03.00]<00:04.00>Late <00:03.50>boundary`),
+    ).toEqual([
+      {
+        start: 1,
+        end: 3,
+        text: 'Hello,  world!',
+        segments: [
+          { text: 'Hello, ', start: 1, end: 1.5 },
+          { text: ' world!', start: 1.5, end: 3 },
+        ],
+      },
+      {
+        start: 3,
+        end: Number.POSITIVE_INFINITY,
+        text: 'Late boundary',
+      },
+    ]);
+  });
+
+  it('falls back to T1 when a content segment starts at the next line boundary', () => {
+    expect(
+      parseEnhancedLrc(`[00:01.00]<00:03.00>Late
+[00:03.00]Next`),
+    ).toEqual([
+      { start: 1, end: 3, text: 'Late' },
+      { start: 3, end: Number.POSITIVE_INFINITY, text: 'Next' },
+    ]);
+  });
+
   it('routes LRCLIB sources through the LRC parser', () => {
     expect(
       parseLyricsText('[00:01.00]Hello', {
@@ -373,6 +428,24 @@ describe('detectLyricsScript', () => {
 });
 
 describe('alignReadings', () => {
+  it('aligns reading v2 by stable line id even when line order changes', () => {
+    const lyricLines = [
+      { lineId: 'line_2', text: 'Second' },
+      { lineId: 'line_1', text: 'First' },
+    ];
+    const readingDoc = {
+      version: 2,
+      lines: [
+        { lineId: 'line_1', text: 'First', romaji: 'first' },
+        { lineId: 'line_2', text: 'Second', romaji: 'second' },
+      ],
+    };
+
+    expect(
+      alignReadings(lyricLines, readingDoc).map((line) => line.romaji),
+    ).toEqual(['second', 'first']);
+  });
+
   const lyricLines = [
     { start: 0, end: 2, text: '歌う声' },
     { start: 2, end: 4, text: 'です' },

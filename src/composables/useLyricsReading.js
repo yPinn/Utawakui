@@ -71,7 +71,19 @@ async function loadReading(trackId, sourceFilename) {
   }
 }
 
-async function generateReading(trackId, sourceFilename, lines, script) {
+function canonicalIdentity(document, targetLineId = null) {
+  return {
+    documentId: document?.documentId,
+    sourceFingerprint: document?.source?.sha256,
+    lines: (document?.lines ?? []).map((line) => ({
+      lineId: line.lineId,
+      text: line.text,
+    })),
+    ...(targetLineId ? { targetLineId } : {}),
+  };
+}
+
+async function generateReading(trackId, sourceFilename, document, script) {
   const key = docKey(trackId, sourceFilename);
   if (state.inFlight.has(key)) return;
   state.errors.delete(key);
@@ -80,7 +92,7 @@ async function generateReading(trackId, sourceFilename, lines, script) {
     const doc = await window.Utawakui.generateLyricsReading(
       trackId,
       sourceFilename,
-      lines,
+      canonicalIdentity(document),
       script,
     );
     state.docs.set(key, doc);
@@ -97,13 +109,19 @@ async function generateReading(trackId, sourceFilename, lines, script) {
   }
 }
 
-async function setReadingLine(trackId, sourceFilename, lineIndex, readingKana) {
+async function setReadingLine(
+  trackId,
+  sourceFilename,
+  document,
+  lineId,
+  readingKana,
+) {
   const key = docKey(trackId, sourceFilename);
   try {
     const doc = await window.Utawakui.setLyricsReadingLine(
       trackId,
       sourceFilename,
-      lineIndex,
+      canonicalIdentity(document, lineId),
       readingKana,
     );
     state.docs.set(key, doc);
@@ -113,7 +131,7 @@ async function setReadingLine(trackId, sourceFilename, lineIndex, readingKana) {
       title: '修改讀音失敗',
       source: 'lyrics-reading',
       operation: 'set-line',
-      context: { trackId, sourceFilename, lineIndex },
+      context: { trackId, sourceFilename, lineId },
     });
     state.errors.set(key, appError.message);
   }

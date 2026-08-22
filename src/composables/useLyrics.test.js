@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 let playerState;
 let listTracksMock;
 let getTrackLyricsMock;
+let saveLyricsTimingMock;
 let probeMusixmatchLyricsMock;
 let importLyricsTextMock;
 let importLyricsFileMock;
@@ -110,6 +111,14 @@ beforeEach(() => {
       normalizerProfileId: 'lyrics-source-v1',
     },
   });
+  saveLyricsTimingMock = vi.fn(
+    async (_trackId, _filename, fingerprint, document) => ({
+      status: 'current',
+      sourceFingerprint: fingerprint,
+      normalizerProfileId: document.normalizerProfileId,
+      document,
+    }),
+  );
   probeMusixmatchLyricsMock = vi.fn().mockResolvedValue({
     provider: 'musixmatch',
     status: 'available',
@@ -174,6 +183,7 @@ beforeEach(() => {
     Utawakui: {
       listTracks: listTracksMock,
       getTrackLyrics: getTrackLyricsMock,
+      saveLyricsTiming: saveLyricsTimingMock,
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
       importLyricsText: importLyricsTextMock,
       importLyricsFile: importLyricsFileMock,
@@ -375,6 +385,104 @@ describe('useLyrics', () => {
     expect(lyrics.activeLineId.value).toBe(
       lyrics.lyricsDocument.value.lines[1].lineId,
     );
+  });
+
+  it('derives active segment identity from the same player clock', async () => {
+    playerState.currentTime = 1.25;
+    const segmentedDocument = {
+      schemaVersion: 1,
+      documentId: 'lyr_saved',
+      normalizerProfileId: 'lyrics-source-v1',
+      source: { filename: 'en.vtt', sha256: lyricsSourceFingerprint },
+      granularity: 'T2',
+      lines: [
+        {
+          lineId: 'line_1',
+          text: 'Opening',
+          startMs: 1000,
+          endMs: 2000,
+          segments: [
+            {
+              segmentId: 'segment_1',
+              text: 'Opening',
+              startMs: 1000,
+              endMs: 1500,
+            },
+          ],
+        },
+      ],
+    };
+    getTrackLyricsMock.mockResolvedValueOnce({
+      source: { filename: 'en.vtt', language: 'en', kind: 'youtube-cc' },
+      text: lyricsText,
+      timing: {
+        status: 'current',
+        sourceFingerprint: lyricsSourceFingerprint,
+        normalizerProfileId: 'lyrics-source-v1',
+        document: segmentedDocument,
+      },
+    });
+
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    expect(lyrics.activeLineId.value).toBe('line_1');
+    expect(lyrics.activeSegmentId.value).toBe('segment_1');
+    expect(lyrics.playbackState.value.activeSegmentProgress).toBe(0.5);
+    expect(lyrics.currentLyricsPositionMs.value).toBe(1250);
+  });
+
+  it('persists a timing document only when explicitly requested', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    const document = {
+      ...lyrics.lyricsDocument.value,
+      granularity: 'T2',
+      lines: lyrics.lyricsDocument.value.lines.map((line, index) =>
+        index === 0
+          ? {
+              ...line,
+              segments: [
+                {
+                  segmentId: `${line.lineId}_s_0`,
+                  text: line.text,
+                  startMs: line.startMs,
+                  endMs: line.endMs,
+                },
+              ],
+            }
+          : line,
+      ),
+    };
+
+    expect(saveLyricsTimingMock).not.toHaveBeenCalled();
+    await expect(lyrics.saveTimingDocument(document)).resolves.toEqual(
+      document,
+    );
+    expect(saveLyricsTimingMock).toHaveBeenCalledWith(
+      trackA.id,
+      'en.vtt',
+      lyricsSourceFingerprint,
+      document,
+    );
+    expect(lyrics.lyricsTiming.value).toMatchObject({
+      status: 'current',
+      document,
+    });
+  });
+
+  it('keeps the current document and surfaces a timing save failure', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    const original = lyrics.lyricsDocument.value;
+    saveLyricsTimingMock.mockRejectedValueOnce(new Error('source changed'));
+
+    await expect(lyrics.saveTimingDocument({ ...original })).resolves.toBe(
+      null,
+    );
+
+    expect(lyrics.lyricsDocument.value).toBe(original);
+    expect(lyrics.state.timingSave).toMatchObject({
+      isSaving: false,
+      error: 'source changed',
+    });
   });
 
   it('does not attempt a lyrics fetch when the preload bridge is unavailable', async () => {

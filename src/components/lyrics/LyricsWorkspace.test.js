@@ -5,6 +5,10 @@ const workspaceSource = fs.readFileSync(
   new URL('./LyricsWorkspace.vue', import.meta.url),
   'utf8',
 );
+const documentPanelSource = fs.readFileSync(
+  new URL('./LyricsDocumentPanel.vue', import.meta.url),
+  'utf8',
+);
 
 function readComponent(filename) {
   const url = new URL(filename, import.meta.url);
@@ -15,7 +19,7 @@ describe('LyricsWorkspace information hierarchy', () => {
   it('orders preparation above the reader and overlays live controls after it', () => {
     const headerIndex = workspaceSource.indexOf('<LyricsWorkspaceHeader');
     const preparationIndex = workspaceSource.indexOf('<LyricsPreparationBar');
-    const readerIndex = workspaceSource.indexOf('class="lyrics-preview"');
+    const readerIndex = workspaceSource.indexOf('<LyricsDocumentPanel');
     const liveControlsIndex = workspaceSource.indexOf('<LyricsLiveControls');
 
     expect(headerIndex).toBeGreaterThan(-1);
@@ -71,7 +75,7 @@ describe('LyricsWorkspace information hierarchy', () => {
     expect(liveControlsSource).not.toContain('播放中微調歌詞時間');
     expect(liveControlsSource).toContain('position: absolute');
     expect(liveControlsSource).toContain('--ui-lyrics-live-control-height');
-    expect(workspaceSource).toContain('--ui-lyrics-live-safe-area');
+    expect(documentPanelSource).toContain('--ui-lyrics-live-safe-area');
   });
 
   it('keeps a visible track picker and moves the shared model control into the header', () => {
@@ -88,12 +92,14 @@ describe('LyricsWorkspace information hierarchy', () => {
   });
 
   it('exposes the scrolling lyrics reader as a keyboard-focusable region', () => {
-    expect(workspaceSource).toContain('aria-label="歌詞內容"');
-    expect(workspaceSource).toContain('tabindex="0"');
+    expect(documentPanelSource).toContain('aria-label="歌詞內容"');
+    expect(documentPanelSource).toContain('tabindex="0"');
   });
 
   it('keys repeated lyric rows by canonical line identity', () => {
-    expect(workspaceSource).toContain(':key="line.lineId"');
-    expect(workspaceSource).not.toContain(':key="`${line.start}-${index}`"');
+    expect(documentPanelSource).toContain(':key="line.lineId"');
+    expect(documentPanelSource).not.toContain(
+      ':key="`${line.start}-${index}`"',
+    );
   });
 });

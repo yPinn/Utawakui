@@ -4,11 +4,15 @@ import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import LyricsLiveControls from './LyricsLiveControls.vue';
+import LyricsDocumentPanel from './LyricsDocumentPanel.vue';
 import LyricsPreparationBar from './LyricsPreparationBar.vue';
+import LyricsSegmentEditor from './LyricsSegmentEditor.vue';
+import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
 import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiHint from '../ui/UiHint.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
 
@@ -25,7 +29,10 @@ function attachClientRender(component, filename) {
 }
 
 attachClientRender(LyricsLiveControls, './LyricsLiveControls.vue');
+attachClientRender(LyricsDocumentPanel, './LyricsDocumentPanel.vue');
 attachClientRender(LyricsPreparationBar, './LyricsPreparationBar.vue');
+attachClientRender(LyricsSegmentEditor, './LyricsSegmentEditor.vue');
+attachClientRender(LyricsTimingToolbar, './LyricsTimingToolbar.vue');
 attachClientRender(LyricsWorkspaceHeader, './LyricsWorkspaceHeader.vue');
 attachClientRender(
   SeparationPresetControl,
@@ -33,6 +40,7 @@ attachClientRender(
 );
 attachClientRender(UiButton, '../ui/UiButton.vue');
 attachClientRender(UiChip, '../ui/UiChip.vue');
+attachClientRender(UiHint, '../ui/UiHint.vue');
 
 function hostNode(type, text = '') {
   return { type, text, props: {}, children: [], parent: null };
@@ -115,6 +123,103 @@ function findByType(root, type) {
 }
 
 describe('Lyrics workspace control contracts', () => {
+  it('keeps document display events semantic and keyed by stable line id', () => {
+    const seekLine = vi.fn();
+    const editTiming = vi.fn();
+    const panel = mount(LyricsDocumentPanel, {
+      lines: [{ lineId: 'line_1', start: 1, text: 'Hello world' }],
+      trackCount: 1,
+      hasSelectedTrack: true,
+      lyricsStatus: 'available',
+      hasSelectedSource: true,
+      activeLineIndex: 0,
+      canEditTiming: true,
+      onSeekLine: seekLine,
+      onEditTiming: editTiming,
+    });
+
+    findByProp(panel.root, 'aria-label', '從 0:01 播放').props.onClick();
+    findByProp(
+      panel.root,
+      'aria-label',
+      '編輯逐字時間：Hello world',
+    ).props.onClick();
+
+    expect(seekLine).toHaveBeenCalledWith(
+      expect.objectContaining({ lineId: 'line_1' }),
+    );
+    expect(editTiming).toHaveBeenCalledWith('line_1');
+  });
+
+  it('emits timing commands without owning the player clock or document save', () => {
+    const tap = vi.fn();
+    const undo = vi.fn();
+    const save = vi.fn();
+    const cancel = vi.fn();
+    const toolbar = mount(LyricsTimingToolbar, {
+      granularity: 'T2',
+      hasDraft: true,
+      canTap: true,
+      canUndo: true,
+      canSave: true,
+      onTap: tap,
+      onUndo: undo,
+      onSave: save,
+      onCancel: cancel,
+    });
+
+    findByProp(toolbar.root, 'aria-label', '記錄目前播放位置').props.onClick();
+    findByProp(toolbar.root, 'aria-label', '復原逐字時間').props.onClick();
+    findByProp(toolbar.root, 'aria-label', '儲存逐字時間').props.onClick();
+    findByProp(toolbar.root, 'aria-label', '取消逐字編輯').props.onClick();
+
+    expect(tap).toHaveBeenCalledOnce();
+    expect(undo).toHaveBeenCalledOnce();
+    expect(save).toHaveBeenCalledOnce();
+    expect(cancel).toHaveBeenCalledOnce();
+  });
+
+  it('emits boundary nudges by boundary index and delta', () => {
+    const nudge = vi.fn();
+    const editor = mount(LyricsSegmentEditor, {
+      draft: {
+        lineId: 'line_1',
+        text: 'Hello world',
+        segments: [
+          {
+            segmentId: 's_1',
+            text: 'Hello ',
+            startMs: 1000,
+            endMs: 1500,
+          },
+          {
+            segmentId: 's_2',
+            text: 'world',
+            startMs: 1500,
+            endMs: 2000,
+          },
+        ],
+      },
+      onNudgeBoundary: nudge,
+    });
+
+    findByProp(
+      editor.root,
+      'aria-label',
+      '將第 2 段提前 0.1 秒',
+    ).props.onClick();
+    findByProp(
+      editor.root,
+      'aria-label',
+      '將第 2 段延後 0.1 秒',
+    ).props.onClick();
+
+    expect(nudge.mock.calls).toEqual([
+      [1, -100],
+      [1, 100],
+    ]);
+  });
+
   it('reserves the reading error slot before and after an error appears', () => {
     const empty = mount(LyricsPreparationBar, {
       showsReadingAid: true,
@@ -255,6 +360,7 @@ describe('LyricsWorkspace event wiring', () => {
       error: '',
       isLoading: false,
       isLoadingLyrics: false,
+      timingSave: { isSaving: false, error: null },
       backfillStatus: { error: '', isRunning: false },
     });
     const selectSource = vi.fn();
@@ -273,14 +379,29 @@ describe('LyricsWorkspace event wiring', () => {
         selectedTrack: ref(track),
         selectedLyrics: ref({ status: 'available', sources: [source] }),
         selectedSource: ref(source),
-        lyricLines: ref([{ start: 0, text: '너는 내 삶에 다시 뜬 햇빛' }]),
+        lyricsDocument: ref({
+          granularity: 'T1',
+          lines: [
+            {
+              lineId: 'line_1',
+              text: '너는 내 삶에 다시 뜬 햇빛',
+              startMs: 0,
+              endMs: null,
+            },
+          ],
+        }),
+        lyricLines: ref([
+          { lineId: 'line_1', start: 0, text: '너는 내 삶에 다시 뜬 햇빛' },
+        ]),
         activeLineIndex: ref(-1),
+        currentLyricsPositionMs: ref(0),
         isReloading: ref(false),
         refresh,
         selectSource,
         adjustOffset,
         resetOffset,
         playFromLine: vi.fn(),
+        saveTimingDocument: vi.fn(),
       }),
     }));
     vi.doMock('../../composables/useLyricsReading.js', () => ({

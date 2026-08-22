@@ -2,8 +2,8 @@
 
 ## Status and objective
 
-Implementation baseline, 2026-08-23. Batch 1 is complete; Batch 2 and later work
-remain planned. This document converts ADR 0010 and the Lyrics Timing Contract
+Implementation baseline, 2026-08-23. Batches 1 and 2 are complete; Batch 3 and
+later work remain planned. This document converts ADR 0010 and the Lyrics Timing Contract
 into ordered, testable work without pulling M1/M2 analysis, automatic alignment,
 Presentation Packs, or Output contract v3 into the first batch.
 
@@ -22,22 +22,25 @@ The first usable endpoint is line-focused T2 authoring and import:
 - `electron/lib/library/lyrics.js` owns source listing, raw-text persistence,
   selection-safe path resolution, and source deletion. The focused
   `lyricsTiming.js` module owns its timing derivative and source fingerprint.
-- `src/utils/lyrics.js` parses LRC/VTT into `{ start, end, text }` using seconds.
-  Untimed lines use `NaN`; the last timed LRC line uses `Infinity`.
+- `src/utils/lyrics.js` parses VTT, LRC, and the supported A2 Enhanced LRC subset.
+  The legacy projection still uses seconds, `NaN`, and `Infinity`; canonical
+  documents contain nullable integer milliseconds and optional T2 segments.
 - `useLyrics.js` owns selected track/source, raw text, timing status, the canonical
   document, the transient offset, and player-aware active-line identity. It is
   the long-lived singleton consumed by Lyrics and Output.
-- `LyricsWorkspace.vue` combines orchestration, separation, readings, source
-  management, live controls, line display, and reading edits. It is already too
-  broad to absorb a timing editor responsibly.
+- `LyricsWorkspace.vue` composes focused document, timing-toolbar, and segment
+  editor components. `useLyricsTimingEditor.js` owns only the unsaved line draft;
+  `useLyrics.js` remains the sole canonical document/player projection owner.
 - Lyrics rows use stable canonical `lineId` identity.
-- reading sidecar v1 and manual reading correction align by line index and exact
-  text, not `documentId`/`lineId`.
+- reading sidecar v1 remains readable by index plus exact text. Explicit new
+  generation/edit writes v2 `documentId`/`lineId` identity after main verifies
+  the current source fingerprint.
 - Output contract v2 republishes every line in every dynamic snapshot and has no
   document, line, or segment identity.
 
-The visible segment importer/editor, active segment/progress derivation, and
-reading v2 identity are not implemented yet.
+The visible line-focused segment editor, active segment/progress derivation,
+Enhanced LRC import, and reading v2 identity are implemented. Output contract v3,
+automatic alignment, and M1/M2 remain separate later work.
 
 ## Canonical document rules
 
@@ -136,9 +139,9 @@ migration.
 `useLyrics.js` remains the single long-lived owner of selected track/source,
 canonical lyrics document, timing status, and transient offset. It currently
 derives active line identity from `usePlayer`'s existing authoritative clock;
-segment/progress derivation and the composable-level editor save action land with
-Batch 2. Output continues consuming this same owner; no editor or template creates
-a second playback clock.
+segment/progress derivation and explicit timing save now use that same clock and
+owner. Output continues consuming this same owner; no editor or template creates a
+second playback clock.
 
 Editor draft state may live in a focused `useLyricsTimingEditor.js`, but it owns
 only an unsaved draft keyed by track/source/document identity. It cannot replace
@@ -148,13 +151,16 @@ main accepts it.
 
 Recommended component map:
 
-| Component                 | Single responsibility                                       | Input / output                                            |
-| ------------------------- | ----------------------------------------------------------- | --------------------------------------------------------- |
-| `LyricsWorkspace.vue`     | Compose workspace surfaces and modals                       | Reads composables; no segment mutation logic              |
-| `LyricsDocumentPanel.vue` | Render canonical lines/readings/segments and active state   | Document/readings/status props; select/seek/edit events   |
-| `LyricsTimingToolbar.vue` | Enter authoring mode and expose save/stale/error status     | Status/capability props; mode/review/import events        |
-| `LyricsSegmentEditor.vue` | Edit one line's exact text slices and segment boundaries    | Immutable line/draft props; boundary/commit/cancel events |
-| `LyricsTapController.vue` | Keyboard/button capture for the next boundary while playing | Draft/clock props; tap/undo/finish events                 |
+| Component                 | Single responsibility                                     | Input / output                                            |
+| ------------------------- | --------------------------------------------------------- | --------------------------------------------------------- |
+| `LyricsWorkspace.vue`     | Compose workspace surfaces and modals                     | Reads composables; no segment mutation logic              |
+| `LyricsDocumentPanel.vue` | Render canonical lines/readings/segments and active state | Document/readings/status props; select/seek/edit events   |
+| `LyricsTimingToolbar.vue` | Enter authoring mode and expose save/stale/error status   | Status/capability props; mode/review/import events        |
+| `LyricsSegmentEditor.vue` | Edit one line's exact text slices and segment boundaries  | Immutable line/draft props; boundary/commit/cancel events |
+
+The first batch keeps tap/undo/save controls in `LyricsTimingToolbar.vue`; a
+separate `LyricsTapController.vue` is unnecessary until a full-song or dedicated
+keyboard-capture workflow exists.
 
 Props are read-only and mutations travel upward as explicit events. Text renders
 through Vue interpolation, never `v-html`. Stable `lineId` and `segmentId` are
@@ -166,7 +172,7 @@ Use a line-focused authoring workflow before building a DAW-like full-song
 timeline:
 
 1. select a timed line;
-2. accept or adjust suggested exact text slices;
+2. accept the first whitespace-aware exact text slices;
 3. start playback from the line;
 4. press Space or the visible tap action to commit the next segment boundary;
 5. undo/nudge a boundary or finish the line; and
@@ -184,7 +190,8 @@ interval.
 
 The first rich source import target is enhanced LRC with inline word/phrase
 timestamps, added without changing the existing `.lrc` source allowlist. Import
-normalizes inline timing into the same sidecar and preserves the original LRC.
+normalizes inline timing into the canonical document, persists it only on an
+explicit save, and preserves the original LRC.
 WebVTT inline karaoke timestamps and new formats such as TTML/KRC remain separate
 follow-ups; the current VTT parser strips tags and must not pretend that lost tags
 were imported timing.
@@ -231,13 +238,16 @@ compatibility, latest-wins backpressure, and real OBS verification.
 This batch is complete only when existing T0/T1 behavior is unchanged to the
 user and stable ids survive reloads.
 
-### Batch 2: minimal T2 import and authoring
+### Batch 2: minimal T2 import and authoring (complete)
 
-- Import enhanced LRC segment timestamps into a validated timing sidecar.
-- Add partial-T2 segment display and active segment/progress derivation.
-- Split the Lyrics document panel out of the existing workspace.
-- Add line-focused split/tap/undo/nudge/commit editing with immediate atomic save.
-- Introduce reading v2 identity while preserving legacy reads.
+- [x] Import the supported Enhanced LRC segment timestamps into the canonical
+      validated document; persist only through an explicit sidecar save.
+- [x] Add partial-T2 segment display and active segment/progress derivation.
+- [x] Split the Lyrics document panel, timing toolbar, and segment editor out of
+      the existing workspace.
+- [x] Add line-focused exact splitting, tap, undo, nudge, cancel, and explicit
+      atomic save.
+- [x] Introduce reading v2 identity while preserving legacy v1 reads.
 
 ### Batch 3: Output document/state split
 
@@ -297,10 +307,10 @@ user and stable ids survive reloads.
 - no raw path, source markup, invalid number, or segment object crosses an older
   contract.
 
-## Decisions required before Batch 2 implementation
+## Accepted Batch 2 decisions
 
 The architecture recommends these defaults but keeps them explicit for product
-confirmation:
+implementation:
 
 1. line-focused tap editor before a whole-song timeline;
 2. enhanced LRC as the first T2 import format;

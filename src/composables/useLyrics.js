@@ -7,6 +7,7 @@ import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
+  deriveLyricsPlaybackState,
   normalizeLyricsDocument,
   projectLegacyLyricLines,
 } from '../utils/lyricsDocument.js';
@@ -72,6 +73,10 @@ const state = reactive({
     isSaving: false,
     error: null,
   },
+  timingSave: {
+    isSaving: false,
+    error: null,
+  },
   error: null,
   offsetSeconds: 0,
 });
@@ -120,17 +125,24 @@ const isSelectedTrackPlaying = computed(
 // For the track list's own per-row "current" cue — independent of
 // selectedTrackId (which track's lyrics are open), not a duplicate of it.
 const currentTrackId = computed(() => playerState.track?.id ?? null);
-const activeLineIndex = computed(() => {
-  if (!isSelectedTrackPlaying.value) return -1;
-  const currentTime = playerState.currentTime + state.offsetSeconds;
-  return lyricLines.value.findIndex(
-    (line) => currentTime >= line.start && currentTime < line.end,
-  );
-});
+const currentLyricsPositionMs = computed(() =>
+  isSelectedTrackPlaying.value
+    ? (playerState.currentTime + state.offsetSeconds) * 1000
+    : null,
+);
+const playbackState = computed(() =>
+  deriveLyricsPlaybackState(
+    lyricsDocument.value,
+    currentLyricsPositionMs.value ?? Number.NaN,
+    Number.isFinite(playerState.duration) ? playerState.duration * 1000 : null,
+  ),
+);
+const activeLineIndex = computed(() => playbackState.value.activeLineIndex);
 const activeLine = computed(() =>
   activeLineIndex.value >= 0 ? lyricLines.value[activeLineIndex.value] : null,
 );
-const activeLineId = computed(() => activeLine.value?.lineId ?? null);
+const activeLineId = computed(() => playbackState.value.activeLineId);
+const activeSegmentId = computed(() => playbackState.value.activeSegmentId);
 const isReloading = computed(
   () => state.isLoading || state.backfillStatus.isRunning,
 );
@@ -309,6 +321,45 @@ function adjustOffset(deltaSeconds) {
 
 function resetOffset() {
   state.offsetSeconds = 0;
+}
+
+async function saveTimingDocument(document) {
+  const trackId = state.selectedTrackId;
+  const sourceFilename = state.selectedSourceFilename;
+  const sourceFingerprint = lyricsTiming.value.sourceFingerprint;
+  if (!trackId || !sourceFilename || !sourceFingerprint) {
+    state.timingSave.error = '目前歌詞來源缺少可驗證的版本資訊。';
+    return null;
+  }
+  if (typeof window.Utawakui?.saveLyricsTiming !== 'function') {
+    state.timingSave.error =
+      '歌詞時間儲存需要重新啟動應用程式才能載入新版橋接 API。';
+    return null;
+  }
+
+  state.timingSave.isSaving = true;
+  state.timingSave.error = null;
+  try {
+    const timing = await window.Utawakui.saveLyricsTiming(
+      trackId,
+      sourceFilename,
+      sourceFingerprint,
+      document,
+    );
+    if (
+      state.selectedTrackId === trackId &&
+      state.selectedSourceFilename === sourceFilename &&
+      lyricsTiming.value.sourceFingerprint === sourceFingerprint
+    ) {
+      lyricsTiming.value = timing;
+    }
+    return timing?.document ?? document;
+  } catch (err) {
+    state.timingSave.error = err instanceof Error ? err.message : String(err);
+    return null;
+  } finally {
+    state.timingSave.isSaving = false;
+  }
 }
 
 function applyBackfillStatus(payload = {}) {
@@ -662,8 +713,11 @@ export function useLyrics() {
     activeLine,
     activeLineIndex,
     activeLineId,
+    activeSegmentId,
+    playbackState,
     isSelectedTrackPlaying,
     currentTrackId,
+    currentLyricsPositionMs,
     isReloading,
     refresh,
     setTrackScope,
@@ -671,6 +725,7 @@ export function useLyrics() {
     selectSource,
     adjustOffset,
     resetOffset,
+    saveTimingDocument,
     playFromLine,
     probeMusixmatch,
     ensureLyricsFlow,

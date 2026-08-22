@@ -111,4 +111,41 @@ describe('lyrics timing IPC', () => {
     ).rejects.toThrow(/changed/i);
     expect(notifyLibraryUpdated).not.toHaveBeenCalled();
   });
+
+  it('rejects stale, duplicate, and unknown-target reading identities before work', async () => {
+    const loaded = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    const setLine = ipcMain.handlers.get('lyrics:set-reading-line');
+    const identity = {
+      documentId: 'lyr_document_01',
+      sourceFingerprint: loaded.timing.sourceFingerprint,
+      targetLineId: 'line_01',
+      lines: [{ lineId: 'line_01', text: 'Hello' }],
+    };
+
+    await expect(
+      setLine(null, 'track-a', 'main.lrc', {
+        ...identity,
+        sourceFingerprint: 'a'.repeat(64),
+      }),
+    ).rejects.toThrow(/stale or invalid/);
+    await expect(
+      setLine(null, 'track-a', 'main.lrc', {
+        ...identity,
+        lines: [
+          { lineId: 'line_01', text: 'Hello' },
+          { lineId: 'line_01', text: 'Again' },
+        ],
+      }),
+    ).rejects.toThrow(/lines are invalid/);
+    await expect(
+      setLine(null, 'track-a', 'main.lrc', {
+        ...identity,
+        targetLineId: 'missing_line',
+      }),
+    ).rejects.toThrow(/target line is invalid/);
+  });
 });

@@ -40,6 +40,43 @@ const readingInProgress = new Set();
 // loudly on anything else instead of silently falling back, same
 // trust-boundary posture as extractVideoId()'s re-validation.
 const READING_SCRIPTS = new Set(['ja', 'ko']);
+const READING_SHA256_RE = /^[a-f0-9]{64}$/;
+const MAX_READING_LINES = 10_000;
+
+function validateReadingIdentity(currentLyrics, identity) {
+  if (
+    !identity ||
+    typeof identity.documentId !== 'string' ||
+    identity.documentId.length === 0 ||
+    identity.documentId.length > 200 ||
+    !READING_SHA256_RE.test(identity.sourceFingerprint) ||
+    identity.sourceFingerprint !== currentLyrics?.timing?.sourceFingerprint ||
+    !Array.isArray(identity.lines) ||
+    identity.lines.length > MAX_READING_LINES
+  ) {
+    throw new Error('lyrics reading identity is stale or invalid');
+  }
+  const lineIds = new Set();
+  for (const line of identity.lines) {
+    if (
+      typeof line?.lineId !== 'string' ||
+      line.lineId.length === 0 ||
+      line.lineId.length > 200 ||
+      lineIds.has(line.lineId) ||
+      typeof line.text !== 'string' ||
+      line.text.length > 10_000
+    ) {
+      throw new Error('lyrics reading lines are invalid');
+    }
+    lineIds.add(line.lineId);
+  }
+  if (
+    identity.targetLineId !== undefined &&
+    !lineIds.has(identity.targetLineId)
+  ) {
+    throw new Error('lyrics reading target line is invalid');
+  }
+}
 
 // Used both by the passive startup backfill (electron/main/libraryHandlers.js's
 // backfillTrackInfoWithLyricsFallback) and by electron/main/importHandlers.js's
@@ -294,14 +331,12 @@ function registerLyricsHandlers({
     },
   );
 
-  // `lines` is the already-parsed lyric line text array (renderer owns
-  // parseLyricsText's youtube-cc dedup/cleanup logic; main only receives
-  // its output here, never raw cue text) — not a filesystem path, so
-  // accepting it from the renderer doesn't reopen the kind of trust
-  // boundary FFmpeg's opt-in path guards against.
+  // The renderer projects its canonical document into stable ids plus cleaned
+  // line text. Main verifies the current source fingerprint and bounds before
+  // the worker sees any text; it never accepts a path or raw source markup.
   ipcMain.handle(
     'lyrics:generate-reading',
-    async (event, trackId, sourceFilename, lines, script) => {
+    async (event, trackId, sourceFilename, identity, script) => {
       if (!READING_SCRIPTS.has(script)) {
         throw new Error(`unsupported reading script: ${script}`);
       }
@@ -314,6 +349,10 @@ function registerLyricsHandlers({
       if (!sources.some((source) => source.filename === sourceFilename)) {
         throw new Error(`unknown lyrics source: ${sourceFilename}`);
       }
+      validateReadingIdentity(
+        readTrackLyrics(dir, trackId, sourceFilename),
+        identity,
+      );
 
       // Keyed per target, not a single global flag like separation's —
       // generating readings for one track has no reason to block another.
@@ -328,7 +367,9 @@ function registerLyricsHandlers({
             path.join(__dirname, '..', 'lib', 'readingWorker.js'),
             {
               workerData: {
-                lines: Array.isArray(lines) ? lines : [],
+                lines: Array.isArray(identity?.lines)
+                  ? identity.lines.map((line) => line?.text)
+                  : [],
                 script,
               },
             },
@@ -362,11 +403,18 @@ function registerLyricsHandlers({
           });
         });
 
+        // A manual source replacement can happen while the worker is active.
+        // Re-check immediately before publication so a stale job never wins.
+        validateReadingIdentity(
+          readTrackLyrics(dir, trackId, sourceFilename),
+          identity,
+        );
         const saved = saveTrackReading(
           trackDir,
           sourceFilename,
           script,
           readingDoc,
+          identity,
         );
         if (!saved) throw new Error('unable to save reading doc');
 
@@ -385,15 +433,19 @@ function registerLyricsHandlers({
   // directly — see lyricsReadings.js).
   ipcMain.handle(
     'lyrics:set-reading-line',
-    async (event, trackId, sourceFilename, lineIndex, readingKana) => {
+    async (event, trackId, sourceFilename, identity, readingKana) => {
       const dir = resolveDownloadDir(getConfig());
       const trackDir = resolveTrackDir(dir, trackId);
       if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
+      validateReadingIdentity(
+        readTrackLyrics(dir, trackId, sourceFilename),
+        identity,
+      );
 
       const updated = setReadingLine(
         trackDir,
         sourceFilename,
-        lineIndex,
+        identity,
         readingKana,
       );
       if (!updated) throw new Error('unable to update reading line');

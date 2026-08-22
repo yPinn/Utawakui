@@ -37,6 +37,11 @@ async function loadReading() {
 const doc = {
   lines: [{ text: 'です', segments: [{ t: 'です' }], romaji: 'desu' }],
 };
+const lyricsDocument = {
+  documentId: 'lyr_document',
+  source: { sha256: 'a'.repeat(64) },
+  lines: [{ lineId: 'line_1', text: 'です' }],
+};
 
 describe('loadReading', () => {
   it('caches a fetched doc under getDoc', async () => {
@@ -73,11 +78,11 @@ describe('generateReading', () => {
     const reading = await loadReading();
     generateLyricsReadingMock.mockImplementation(() => new Promise(() => {}));
 
-    reading.generateReading('t1', 'ja.vtt', ['です']);
+    reading.generateReading('t1', 'ja.vtt', lyricsDocument);
     await Promise.resolve();
     expect(reading.isGenerating('t1', 'ja.vtt')).toBe(true);
 
-    reading.generateReading('t1', 'ja.vtt', ['です']);
+    reading.generateReading('t1', 'ja.vtt', lyricsDocument);
     expect(generateLyricsReadingMock).toHaveBeenCalledTimes(1);
   });
 
@@ -85,7 +90,7 @@ describe('generateReading', () => {
     generateLyricsReadingMock.mockResolvedValue(doc);
     const reading = await loadReading();
 
-    await reading.generateReading('t1', 'ja.vtt', ['です']);
+    await reading.generateReading('t1', 'ja.vtt', lyricsDocument);
 
     expect(reading.isGenerating('t1', 'ja.vtt')).toBe(false);
     expect(reading.getDoc('t1', 'ja.vtt')).toEqual(doc);
@@ -96,12 +101,20 @@ describe('generateReading', () => {
     generateLyricsReadingMock.mockResolvedValue(doc);
     const reading = await loadReading();
 
-    await reading.generateReading('t1', 'ko.vtt', ['한글'], 'ko');
+    const koreanDocument = {
+      ...lyricsDocument,
+      lines: [{ lineId: 'line_ko', text: '한글' }],
+    };
+    await reading.generateReading('t1', 'ko.vtt', koreanDocument, 'ko');
 
     expect(generateLyricsReadingMock).toHaveBeenCalledWith(
       't1',
       'ko.vtt',
-      ['한글'],
+      {
+        documentId: 'lyr_document',
+        sourceFingerprint: 'a'.repeat(64),
+        lines: [{ lineId: 'line_ko', text: '한글' }],
+      },
       'ko',
     );
   });
@@ -110,7 +123,7 @@ describe('generateReading', () => {
     generateLyricsReadingMock.mockRejectedValue(new Error('boom'));
     const reading = await loadReading();
 
-    await reading.generateReading('t1', 'ja.vtt', ['です']);
+    await reading.generateReading('t1', 'ja.vtt', lyricsDocument);
 
     expect(reading.isGenerating('t1', 'ja.vtt')).toBe(false);
     expect(reading.errorFor('t1', 'ja.vtt')).toBe('boom');
@@ -120,9 +133,9 @@ describe('generateReading', () => {
     const reading = await loadReading();
     generateLyricsReadingMock.mockImplementation(() => new Promise(() => {}));
 
-    reading.generateReading('t1', 'ja.vtt', ['です']);
+    reading.generateReading('t1', 'ja.vtt', lyricsDocument);
     await Promise.resolve();
-    reading.generateReading('t2', 'ja.vtt', ['です']);
+    reading.generateReading('t2', 'ja.vtt', lyricsDocument);
     await Promise.resolve();
 
     expect(generateLyricsReadingMock).toHaveBeenCalledTimes(2);
@@ -134,12 +147,23 @@ describe('setReadingLine', () => {
     setLyricsReadingLineMock.mockResolvedValue(doc);
     const reading = await loadReading();
 
-    await reading.setReadingLine('t1', 'ja.vtt', 0, 'です');
+    await reading.setReadingLine(
+      't1',
+      'ja.vtt',
+      lyricsDocument,
+      'line_1',
+      'です',
+    );
 
     expect(setLyricsReadingLineMock).toHaveBeenCalledWith(
       't1',
       'ja.vtt',
-      0,
+      {
+        documentId: 'lyr_document',
+        sourceFingerprint: 'a'.repeat(64),
+        lines: [{ lineId: 'line_1', text: 'です' }],
+        targetLineId: 'line_1',
+      },
       'です',
     );
     expect(reading.getDoc('t1', 'ja.vtt')).toEqual(doc);
@@ -149,7 +173,13 @@ describe('setReadingLine', () => {
     setLyricsReadingLineMock.mockRejectedValue(new Error('boom'));
     const reading = await loadReading();
 
-    await reading.setReadingLine('t1', 'ja.vtt', 0, 'です');
+    await reading.setReadingLine(
+      't1',
+      'ja.vtt',
+      lyricsDocument,
+      'line_1',
+      'です',
+    );
 
     expect(reading.errorFor('t1', 'ja.vtt')).toBe('boom');
   });

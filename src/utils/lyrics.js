@@ -336,6 +336,59 @@ function parseLrcTimestamp(value) {
 }
 
 export function parseLrc(text) {
+  return parseEnhancedLrc(text);
+}
+
+function parseEnhancedSegments(sourceText, lineStart, lineEnd) {
+  const matches = [...sourceText.matchAll(/<([^>]+)>/g)];
+  if (matches.length === 0) return null;
+
+  const timestamps = matches.map((match) => parseLrcTimestamp(match[1]));
+  if (timestamps.some((timestamp) => timestamp === null)) return null;
+  if (
+    timestamps.some(
+      (timestamp, index) =>
+        timestamp < lineStart ||
+        timestamp > lineEnd ||
+        (index > 0 && timestamp <= timestamps[index - 1]),
+    )
+  ) {
+    return null;
+  }
+
+  const chunks = matches.map((match, index) => ({
+    text: sourceText.slice(
+      match.index + match[0].length,
+      matches[index + 1]?.index ?? sourceText.length,
+    ),
+    start: timestamps[index],
+  }));
+  if (sourceText.slice(0, matches[0].index).trim()) return null;
+
+  const hasTrailingBoundary = chunks.at(-1)?.text.length === 0;
+  const contentChunks = hasTrailingBoundary ? chunks.slice(0, -1) : chunks;
+  if (
+    contentChunks.length === 0 ||
+    contentChunks.some((chunk) => chunk.text.length === 0)
+  ) {
+    return null;
+  }
+
+  contentChunks[0].text = contentChunks[0].text.trimStart();
+  contentChunks.at(-1).text = contentChunks.at(-1).text.trimEnd();
+  if (contentChunks.some((chunk) => chunk.text.length === 0)) return null;
+
+  const segments = contentChunks.map((chunk, index) => ({
+    text: chunk.text,
+    start: chunk.start,
+    end: chunks[index + 1]?.start ?? lineEnd,
+  }));
+  return segments.some((segment) => segment.end <= segment.start)
+    ? null
+    : segments;
+}
+
+export function parseEnhancedLrc(text) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];
 
   const rawLines = text.split(/\r?\n/);
@@ -343,12 +396,13 @@ export function parseLrc(text) {
     .flatMap((line) => {
       const matches = [...line.matchAll(/\[([^\]]+)\]/g)];
       if (matches.length === 0) return [];
-      const lyricText = line.replace(/\[[^\]]+\]/g, '').trim();
+      const sourceText = line.replace(/\[[^\]]+\]/g, '').trim();
+      const lyricText = sourceText.replace(/<[^>]+>/g, '').trim();
       if (!lyricText) return [];
       return matches
         .map((match) => parseLrcTimestamp(match[1]))
         .filter((start) => start !== null)
-        .map((start) => ({ start, text: lyricText }));
+        .map((start) => ({ start, text: lyricText, sourceText }));
     })
     .sort((a, b) => a.start - b.start);
 
@@ -363,10 +417,13 @@ export function parseLrc(text) {
       }));
   }
 
-  return starts.map((line, index) => ({
-    ...line,
-    end: starts[index + 1]?.start ?? Number.POSITIVE_INFINITY,
-  }));
+  return starts.map((line, index) => {
+    const end = starts[index + 1]?.start ?? Number.POSITIVE_INFINITY;
+    const segments = parseEnhancedSegments(line.sourceText, line.start, end);
+    const parsed = { start: line.start, end, text: line.text };
+    if (segments) parsed.segments = segments;
+    return parsed;
+  });
 }
 
 export function parseLyricsText(text, options = {}) {
@@ -434,6 +491,14 @@ export function alignReadings(lyricLines, readingDoc) {
   const lines = Array.isArray(lyricLines) ? lyricLines : [];
   const readingLines = readingDoc?.lines;
   if (!Array.isArray(readingLines)) return lines.map(() => null);
+
+  if (readingDoc.version === 2) {
+    const byId = new Map(readingLines.map((line) => [line.lineId, line]));
+    return lines.map((line) => {
+      const readingLine = byId.get(line.lineId);
+      return readingLine?.text === line.text ? readingLine : null;
+    });
+  }
 
   return lines.map((line, index) => {
     const readingLine = readingLines[index];

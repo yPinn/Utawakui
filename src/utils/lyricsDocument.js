@@ -57,12 +57,22 @@ export function normalizeLyricsDocument({
   const lines = parsedLines.map((line, index) => {
     const startMs = toMilliseconds(line.start);
     const endMs = toMilliseconds(line.end);
-    return {
-      lineId: `${documentId}_l_${index.toString(36)}`,
+    const lineId = `${documentId}_l_${index.toString(36)}`;
+    const normalized = {
+      lineId,
       text: line.text,
       startMs,
       endMs,
     };
+    if (Array.isArray(line.segments) && line.segments.length > 0) {
+      normalized.segments = line.segments.map((segment, segmentIndex) => ({
+        segmentId: `${lineId}_s_${segmentIndex.toString(36)}`,
+        text: segment.text,
+        startMs: toMilliseconds(segment.start),
+        endMs: toMilliseconds(segment.end),
+      }));
+    }
+    return normalized;
   });
 
   return {
@@ -73,8 +83,92 @@ export function normalizeLyricsDocument({
       filename: source?.filename || '',
       sha256: SHA256_RE.test(sourceFingerprint) ? sourceFingerprint : null,
     },
-    granularity: lines.some((line) => line.startMs !== null) ? 'T1' : 'T0',
+    granularity: lines.some((line) => line.segments)
+      ? 'T2'
+      : lines.some((line) => line.startMs !== null)
+        ? 'T1'
+        : 'T0',
     lines,
+  };
+}
+
+function boundedProgress(positionMs, startMs, endMs) {
+  if (
+    !Number.isFinite(startMs) ||
+    !Number.isFinite(endMs) ||
+    endMs <= startMs
+  ) {
+    return null;
+  }
+  return Math.min(1, Math.max(0, (positionMs - startMs) / (endMs - startMs)));
+}
+
+function emptyPlaybackState() {
+  return {
+    activeLineId: null,
+    activeLineIndex: -1,
+    activeLineProgress: null,
+    activeSegmentId: null,
+    activeSegmentIndex: -1,
+    activeSegmentProgress: null,
+  };
+}
+
+export function deriveLyricsPlaybackState(
+  document,
+  positionMs,
+  durationMs = null,
+) {
+  const lines = document?.lines ?? [];
+  if (!Number.isFinite(positionMs)) return emptyPlaybackState();
+
+  const lineIndex = lines.findLastIndex((line, index) => {
+    if (!Number.isFinite(line.startMs) || positionMs < line.startMs)
+      return false;
+    const endMs =
+      line.endMs ??
+      lines[index + 1]?.startMs ??
+      durationMs ??
+      Number.POSITIVE_INFINITY;
+    return positionMs < endMs;
+  });
+  if (lineIndex === -1) return emptyPlaybackState();
+
+  const line = lines[lineIndex];
+  const lineEndMs =
+    line.endMs ??
+    lines[lineIndex + 1]?.startMs ??
+    durationMs ??
+    Number.POSITIVE_INFINITY;
+  const state = {
+    ...emptyPlaybackState(),
+    activeLineId: line.lineId,
+    activeLineIndex: lineIndex,
+    activeLineProgress: boundedProgress(positionMs, line.startMs, lineEndMs),
+  };
+
+  const segments = line.segments ?? [];
+  const segmentIndex = segments.findLastIndex((segment, index) => {
+    if (!Number.isFinite(segment.startMs) || positionMs < segment.startMs) {
+      return false;
+    }
+    const endMs = segment.endMs ?? segments[index + 1]?.startMs ?? lineEndMs;
+    return positionMs < endMs;
+  });
+  if (segmentIndex === -1) return state;
+
+  const segment = segments[segmentIndex];
+  const segmentEndMs =
+    segment.endMs ?? segments[segmentIndex + 1]?.startMs ?? lineEndMs;
+  return {
+    ...state,
+    activeSegmentId: segment.segmentId,
+    activeSegmentIndex: segmentIndex,
+    activeSegmentProgress: boundedProgress(
+      positionMs,
+      segment.startMs,
+      segmentEndMs,
+    ),
   };
 }
 
