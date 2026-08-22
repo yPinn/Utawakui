@@ -1,5 +1,13 @@
 # Local ONNX CPU Baseline — 2026-08-22
 
+Historical baseline: these measurements preserve the then-current HQ3
+implementation of `general`. HQ4 replaced it after the 2026-08-23 K-pop
+operational and blind-listening gate; the figures below are not rewritten.
+
+Historical baseline: these measurements preserve the then-current HQ3
+implementation of `general`. HQ4 replaced it after the 2026-08-23 K-pop
+operational and blind-listening gate; the figures below are not rewritten.
+
 ## Purpose
 
 This benchmark checks whether Utawakui's two lightweight product recipes are

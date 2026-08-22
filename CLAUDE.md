@@ -1,10 +1,13 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides historical guidance to Claude Code (claude.ai/code). `AGENTS.md`
+and `docs/spec.md` are authoritative when details below conflict; in particular,
+the current audio-processing service uses stable `quick`/`general` recipes with
+Inst HQ4 behind `general`, while HQ3 is legacy/benchmark-only.
 
 ## Project
 
-Utawakui — an Electron desktop control panel for streamers/VTubers doing karaoke ("歌回") or cover-song workflows with OBS. The product is local-media-first: it manages a structured local library, playback, playlists/collections, pitch/tempo preview, lyrics workspace foundations, vocal separation/guide-vocal mixing, and Windows shell integration. Provider-backed acquisition exists in the current codebase as an advanced flow, not the default product assumption. OBS Browser Source overlays (lyrics/queue) driven by a local HTTP/WebSocket state server are roadmap items, not yet implemented — see docs/spec.md for what's built vs. planned.
+Utawakui — an Electron desktop control panel for streamers/VTubers doing karaoke ("歌回") or cover-song workflows with OBS. The product is local-media-first: it manages a structured local library, playback, playlists/collections, pitch/tempo preview, lyrics workspace foundations, vocal separation/guide-vocal mixing, Windows shell integration, and OBS Browser Source overlays driven by a local HTTP/WebSocket state server. Provider-backed acquisition exists in the current codebase as an advanced flow, not the default product assumption — see docs/spec.md for what's built vs. planned.
 
 Full product spec, scope decisions, feature classification, and roadmap: [docs/spec.md](docs/spec.md). Read it before making architectural decisions — it documents what's explicitly in scope, deferred, advanced/gated, and excluded (e.g. no built-in commercial song library, no Twitch chat song requests, no OBS native plugin, no multi-user collaboration).
 

@@ -1,8 +1,9 @@
 # Inst HQ3 vs Inst HQ4 K-pop benchmark (2026-08-23)
 
-Status: operational benchmark complete; blind listening pending. Inst HQ3 remains
-the `general` production profile. Inst HQ4 remains a benchmark-only candidate and
-is absent from the public recipe and managed-dependency catalogs.
+Status: accepted. Inst HQ4 is the active versioned implementation behind the
+stable `general` product recipe. HQ3 remains compatible with existing results
+and available only for controlled benchmark/legacy execution, not as another UI
+tier.
 
 ## Question and controls
 
@@ -72,12 +73,12 @@ The six unique compressed sources total about 21.11 MiB, so one retained result
 set is about 20.98 times the source size; retaining both candidates doubles that
 benchmark cost.
 
-The active ignored benchmark workspace is 1,048.22 MiB: 885.99 MiB full run
+The ignored benchmark workspace occupied 1,048.23 MiB: 885.99 MiB full run
 artifacts/manifests, 105.87 MiB lossless blind excerpts, and 56.34 MiB for the HQ4
 candidate. These figures are evaluation storage, not the intended steady-state
-product cost. After listening is recorded, retain the accepted per-track product
-result only and delete reproducible benchmark WAV/FLAC/model artifacts under the
-exact verified task directory.
+product cost. After this decision was recorded, the reproducible benchmark
+WAV/FLAC/model artifacts were deleted from the exact verified task directory;
+production-library sources were never in that directory.
 
 ## Quality gate and current decision
 
@@ -85,12 +86,26 @@ The maintained `python-audio-separator`
 [score catalog](https://raw.githubusercontent.com/nomadkaraoke/python-audio-separator/main/audio_separator/models-scores.json)
 reports only a small median lead for HQ4 (instrumental SDR 15.5122 vs 15.421 for
 HQ3), which cannot establish product quality by itself. The operational half of
-the replacement gate has passed: HQ4 is smaller, faster on every challenge song,
-and uses less peak memory. The audible non-regression half remains open.
+the replacement gate passed: HQ4 is smaller, faster on every challenge song,
+and uses less peak memory.
 
 Six balanced, anonymous 45-second A/B cases were generated in ignored local task
 storage. The promotion rule was frozen before listening: keep HQ3 on one severe
 HQ4 regression or repeatable regressions in two challenge cases; allow HQ4 to
 replace the versioned `general` profile only when it has no material regression
-and the overall instrumental/guide assessment is tied or better. No new product
-tier is created either way.
+and the overall instrumental/guide assessment is tied or better.
+
+The blind review found HQ3 generally a little cleaner, but the difference was
+minor enough that the two were effectively tied in the practical PR85 judgment
+and required deliberate comparison to distinguish. No severe or repeatable HQ4
+regression was identified. The audible non-regression gate therefore passed;
+HQ4's measured 18.09% wall-time gain, 11.81% mean peak-RSS reduction, and 11.51%
+smaller weight decide the replacement. This is an operational profile upgrade,
+not a claim that HQ4 sounds better. Material quality uplift remains assigned to
+the future optional `refined` path. No new product tier is created.
+
+The dependency transition downloads and checksum-verifies HQ4 before deleting
+the deprecated managed HQ3 cache. Peak model overlap is 125,833,556 bytes
+(about 120.0 MiB); steady state is 7,684,872 bytes smaller than HQ3 alone. A
+failed HQ4 verification preserves HQ3, and existing HQ3-generated WAV results
+are never deleted by model-cache cleanup.

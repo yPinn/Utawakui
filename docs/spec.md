@@ -94,7 +94,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - `playlists.json` collection storage。
 - 播放器、播放佇列、shuffle、repeat、previous/next。
 - Pitch / Tempo 即時 preview。
-- KARA2／Inst HQ3 vocal separation worker 與 guide vocal playback graph；
+- KARA2／Inst HQ4 vocal separation worker 與 guide vocal playback graph；
   使用情境式 recipe、可替換 service boundary 與選配錄製品質包依 ADR 0009
   分階段導入。
 - Import resolver 與 provider candidate selection。
@@ -228,8 +228,8 @@ Utawakui/
 
 - `quick`／「快速分離」：KARA2 輕量 ONNX，以速度優先，結果會依錄製與編曲
   而異。
-- `general`／「推薦分離」：目前使用 Inst HQ3 輕量 ONNX，是一般直播與錄製
-  的預設；Inst HQ4 僅是待本機盲聽的同 runtime 替換候選。
+- `general`／「推薦分離」：使用 Inst HQ4 輕量 ONNX，是一般直播與錄製的
+  預設；HQ3 既有結果保持相容，但不再是新工作的產品選項。
 - `refined`／「精修分離」：單一 BS-RoFormer 選配品質包，需先
   通過 Windows CPU、來源、授權、容量、packaged execution 與盲聽門檻。
 - `backing-vocals`／「保留和聲」：BS-RoFormer 後接 BVE 的二階段選配；
@@ -575,7 +575,7 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 - Pitch/Tempo pre-render cache。
 - Recording/VOD session mode。
 - 分級 audio-processing service、manifest v2 與 legacy result 相容；基礎
-  KARA2／Inst HQ3 維持輕量，BS-RoFormer／BVE 僅在 benchmark gate 通過後
+  KARA2／Inst HQ4 維持輕量，BS-RoFormer／BVE 僅在 benchmark gate 通過後
   成為按需下載的錄製品質包。
 - Preset export/import。
 - Library maintenance UI。

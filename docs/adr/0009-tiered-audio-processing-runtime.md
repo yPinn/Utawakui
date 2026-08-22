@@ -4,8 +4,9 @@
 
 Accepted for implementation (2026-08-22). Product naming, default selection,
 and model candidates were revised after local listening feedback and community
-model review on 2026-08-23. Optional runtimes and model artifacts remain
-benchmark-gated and are not selected for release.
+model review on 2026-08-23. Inst HQ4 was accepted later that day as the new
+versioned implementation behind `general`; optional community runtimes and
+model artifacts remain benchmark-gated and are not selected for release.
 
 ## Context
 
@@ -14,13 +15,14 @@ and is not intended to expose a studio source-separation workstation. The main
 product cases are livestreams, ordinary recordings, and an optional
 semi-formal recording path.
 
-The existing local engine runs two UVR-family MDX models through
+The local engine runs two UVR-family MDX product profiles through
 `onnxruntime-node`:
 
 - KARA2 is fast and intentionally karaoke-oriented, but its result varies with
   recording style, backing vocals, rap, sparse arrangements, and a cappella;
-- Inst HQ3 is slower and usually gives the more dependable full vocal-removal
-  result on the current listening corpus.
+- Inst HQ4 now supplies the dependable full vocal-removal path. Inst HQ3 was
+  the previous implementation and remains provenance-compatible for existing
+  results and controlled comparisons.
 
 The original preset ids (`standard`, `clean`, `inst-hq3`, and
 `recording-enhanced`) mixed user intent, relative quality claims, and model
@@ -50,7 +52,7 @@ execution provider, or arbitrary engine parameters.
 | Recipe           | Product label | Current or planned profile | Availability       |
 | ---------------- | ------------- | -------------------------- | ------------------ |
 | `quick`          | 快速分離      | `mdx-kara2-v1`             | Built in           |
-| `general`        | 推薦分離      | `mdx-inst-hq3-v1`          | Built in, default  |
+| `general`        | 推薦分離      | `mdx-inst-hq4-v1`          | Built in, default  |
 | `refined`        | 精修分離      | One accepted BS-RoFormer   | Optional, gated    |
 | `backing-vocals` | 保留和聲      | Base separator then BVE    | Optional, deferred |
 
@@ -67,7 +69,7 @@ never cross from renderer.
 ### Versioned processing profiles
 
 An exact processing profile owns the reproducible implementation identity.
-For example, `mdx-inst-hq3-v1` identifies Inst HQ3 plus its FFT dimensions,
+For example, `mdx-inst-hq4-v1` identifies Inst HQ4 plus its FFT dimensions,
 overlap, compensation, denoise policy, runtime adapter, and output mapping.
 Replacing the `general` model creates a new profile id; it does not rename the
 recipe.
@@ -78,16 +80,15 @@ UI intent or pretending an older artifact used the new model.
 
 ### Current UVR model selection
 
-The two current models are useful together, but they are not both final
-quality winners:
+The two product models are useful together, but serve different priorities:
 
 - retain KARA2 as `quick`; its speed and karaoke bias are a distinct feature;
-- retain Inst HQ3 as the current `general` implementation until a challenger
-  passes the local listening and operational gates;
-- benchmark Inst HQ4 against Inst HQ3 first because it uses the same light
-  MDX/ONNX runtime, is smaller, and has only a marginally higher maintained
-  reference score; the small score difference is not enough to replace HQ3
-  without product-corpus listening;
+- use Inst HQ4 for new `general` jobs. In the six-song blind review, HQ3 was
+  usually slightly cleaner, but the practical difference was small enough to
+  require deliberate comparison and the overall result was effectively tied;
+- accept HQ4 on that audible non-regression plus its repeatable operational
+  gain: 18.09% less total CPU wall time, 11.81% lower mean peak RSS, and an
+  11.51% smaller pinned model than HQ3;
 - use one BS-RoFormer as the first `refined` spike because its model family has
   a materially higher quality ceiling and therefore justifies a separate
   optional tier;
@@ -148,7 +149,7 @@ AudioProcessingService
   |
   +-- onnx-mdx adapter
   |     |-- quick   -> mdx-kara2-v1
-  |     `-- general -> mdx-inst-hq3-v1
+  |     `-- general -> mdx-inst-hq4-v1
   |
   `-- community-python adapter (optional)
         |-- refined        -> one accepted BS-RoFormer
@@ -160,8 +161,9 @@ required by accepted product recipes.
 
 ### Runtime and dependency policy
 
-The lightweight ONNX path remains built in. It is CPU-completable and can use
-the same runtime for KARA2, Inst HQ3, and the Inst HQ4 challenger.
+The lightweight ONNX path remains built in. It is CPU-completable and uses the
+same runtime for KARA2 and Inst HQ4; HQ3 remains available only for legacy
+provenance and controlled benchmark execution.
 
 CPU and GPU do not normally change a model's weight file or saved-result size.
 They mainly change inference speed, runtime installation size, peak memory, and
@@ -222,9 +224,9 @@ New results use canonical recipe ids and exact provenance:
     "general": {
       "recipeVersion": 1,
       "engineId": "onnx-mdx",
-      "profileId": "mdx-inst-hq3-v1",
-      "modelIds": ["inst-hq3"],
-      "artifactFilename": "inst-hq3.wav",
+      "profileId": "mdx-inst-hq4-v1",
+      "modelIds": ["inst-hq4"],
+      "artifactFilename": "general.wav",
       "completedAt": "2026-08-23T00:00:00.000Z",
       "outputLayout": "accompaniment-guide-4ch"
     }
@@ -249,9 +251,9 @@ never exposes an absolute path.
 
 ### Benchmark and release gates
 
-Inst HQ4 may replace the `general` profile only after the same local corpus and
-challenge set show no meaningful regression and at least one practical gain in
-quality, speed, RAM, or installed size. The comparison must use identical
+An ONNX model may replace the `general` profile only after the same local corpus
+and challenge set show no meaningful regression and at least one practical gain
+in quality, speed, RAM, or installed size. The comparison must use identical
 source excerpts and blind labels.
 
 The 2026-08-23 K-pop challenge completed the operational half of this gate on
@@ -260,9 +262,18 @@ time from 1,001.14 to 820.06 seconds (18.09%) and mean peak RSS from 3,701.70
 to 3,264.47 MiB (11.81%). Its pinned weight is also 7,684,872 bytes (11.51%)
 smaller. Both profiles produced the same 443 MiB for the corpus because saved
 size follows the fixed four-channel PCM contract, not model size. All output
-format checks passed. Blind listening remains open, so these operational gains
-do not yet authorize changing `mdx-inst-hq3-v1`. See
+format checks passed. Blind listening found HQ3 generally a little cleaner but
+the overall practical result effectively tied and difficult to distinguish
+without focused comparison. No material regression was found, so HQ4 passed
+the replacement gate and `general` moved to `mdx-inst-hq4-v1`. See
 [the K-pop benchmark report](../audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md).
+
+The managed dependency update downloads and verifies the 59,074,342-byte HQ4
+weight before removing the deprecated 66,759,214-byte HQ3 managed cache. This
+creates a bounded temporary overlap of 125,833,556 bytes (about 120.0 MiB),
+then leaves steady-state model storage 7,684,872 bytes smaller. Verification
+failure keeps HQ3 intact. Existing separation WAV files are library media and
+are never part of this dependency-cache cleanup.
 
 The `refined` pack must additionally prove:
 
@@ -285,11 +296,11 @@ base installation:
 1. **Canonical product contract — implemented:** expose `quick` and `general`,
    make `general` the default, persist manifest v2 provenance, retain legacy
    result aliases, and validate recipe/profile/model agreement before inference.
-2. **Lightweight challenger — operational pass, listening pending:** Inst HQ4 is
-   pinned in benchmark-only storage and has completed the six-song K-pop CPU,
-   RAM, capacity, provenance, and output-contract comparison. Anonymous A/B
-   review is still required. This stage has not changed the dependency registry
-   or default profile.
+2. **Lightweight challenger — implemented:** Inst HQ4 passed the six-song K-pop
+   CPU, RAM, capacity, provenance, output-contract, and blind non-regression
+   gates. New `general` jobs use `mdx-inst-hq4-v1`; HQ3 remains readable in old
+   manifests and benchmark-only for controlled comparisons. The managed HQ4
+   dependency supersedes HQ3 only after successful checksum verification.
 3. **Refined CPU spike — pending:** construct a contained, independently
    versioned `python-audio-separator` CPU runtime with one pinned BS-RoFormer.
    The spike may write only to benchmark storage and must not become a hidden
@@ -303,9 +314,10 @@ base installation:
    only after the CPU product path is accepted. GPU support never changes the
    stable recipe id or saved-result contract.
 
-Inst HQ4, BS-RoFormer, BVE, and CUDA are therefore documented candidates, not
-currently installed product dependencies. Their presence in the catalog or
-ADR must never make the app download them.
+BS-RoFormer, BVE, and CUDA are documented candidates, not currently installed
+product dependencies. HQ4 is the active on-demand `general` dependency; its
+presence in the registry still does not permit a hidden separation-time
+download because preparation remains explicit in Settings.
 
 ### Benchmark artifact retention and cleanup
 
@@ -325,8 +337,9 @@ directory so stale artifacts cannot be mistaken for output from a new profile.
 
 - Keep `high-quality` as KARA tier two: more work with the same model is not a
   distinct product outcome.
-- Promote Inst HQ4 from leaderboard values alone: the reference delta over HQ3
-  is too small to establish a user-visible improvement.
+- Promote a replacement from leaderboard values alone: the HQ3/HQ4 reference
+  delta was too small, so HQ4 was accepted only after local operational and
+  blind-listening gates passed.
 - Replace the normal path with Python/PyTorch: it adds a much larger runtime
   without benefiting the current ONNX recipes.
 - Reuse the yt-dlp Python environment: unrelated dependencies and release
@@ -344,8 +357,9 @@ directory so stale artifacts cannot be mistaken for output from a new profile.
 
 The ordinary product has two understandable built-in choices and one default:
 `quick` for time-sensitive preparation and `general` for dependable everyday
-use. Semi-formal quality can improve without bloating the base installer or
-changing product ids. Existing results remain usable.
+use. HQ4 improves repeatable preparation cost without claiming an audible
+quality upgrade over HQ3. Semi-formal quality remains the responsibility of the
+future `refined` pack. Existing results remain usable.
 
 The cost is permanent manifest compatibility, versioned profile discipline,
 optional-runtime lifecycle work, and real-audio acceptance tests before any

@@ -2,15 +2,15 @@
 
 ## Product question
 
-Are Utawakui's current KARA2 and Inst HQ3 models the best product combination,
+Are Utawakui's KARA2 and Inst HQ4 models the best product combination,
 and which additional model capabilities are worth maintaining?
 
 The answer is conditional:
 
 - KARA2 remains a strong `quick` choice because it creates a distinct fast,
   karaoke-oriented outcome;
-- Inst HQ3 is a sound current `general` baseline, but Inst HQ4 is a credible
-  same-runtime replacement candidate;
+- Inst HQ4 is the accepted `general` implementation after a same-runtime
+  operational benchmark and blind non-regression review against HQ3;
 - one BS-RoFormer is the only near-term addition with enough expected quality
   separation to justify a `refined` optional pack;
 - backing-vocal extraction is a later feature recipe, not another normal model
@@ -48,22 +48,24 @@ but does not identify the final shipping checkpoint for Utawakui.
 
 ### Built-in lightweight path
 
-| Candidate                   | Keep or test              | Why                                                                               | Main risk                                              |
-| --------------------------- | ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| KARA2                       | Keep as `quick`           | Fastest measured current path; useful when preparation time matters               | Arrangement-dependent leakage or unwanted preservation |
-| Inst HQ3                    | Keep as current `general` | Existing integration, provenance, and local listening are understood              | Roughly 2.9× KARA2 time on the measured CPU            |
-| Inst HQ4                    | Operational pass; listen  | Same MDX/ONNX path; 18.09% less total CPU wall time and 11.81% less mean peak RSS | Audible result may still be song-dependent             |
-| Other Inst HQ/Main variants | Do not expose             | They do not establish a separate product outcome                                  | Model-zoo maintenance and confusing choices            |
-| Spleeter 2-stem             | Reject for this slot      | Mature and fast, but the current MDX path already meets CPU speed needs           | Quality ceiling does not justify migration             |
-| VR architecture models      | Reject for normal path    | Useful for specialized targets in UVR                                             | Another runtime path without a current product need    |
+| Candidate                   | Keep or test              | Why                                                                               | Main risk                                               |
+| --------------------------- | ------------------------- | --------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| KARA2                       | Keep as `quick`           | Fastest measured current path; useful when preparation time matters               | Arrangement-dependent leakage or unwanted preservation  |
+| Inst HQ3                    | Legacy/benchmark baseline | Usually a little cleaner in the blind review; existing results retain provenance  | Slower, larger, and no longer used for new product jobs |
+| Inst HQ4                    | Keep as current `general` | Same MDX/ONNX path; 18.09% less total CPU wall time and 11.81% less mean peak RSS | Audible result remains song-dependent                   |
+| Other Inst HQ/Main variants | Do not expose             | They do not establish a separate product outcome                                  | Model-zoo maintenance and confusing choices             |
+| Spleeter 2-stem             | Reject for this slot      | Mature and fast, but the current MDX path already meets CPU speed needs           | Quality ceiling does not justify migration              |
+| VR architecture models      | Reject for normal path    | Useful for specialized targets in UVR                                             | Another runtime path without a current product need     |
 
 Inst HQ4 received the first benchmark slot. The completed challenge round used
 three NewJeans and three BTS tracks spanning layered female vocals, rap, sparse
 arrangements, dense choruses, sustained male vocals, and reverb tails. HQ4 was
 faster on every track, used less peak RAM, and its pinned model is 11.51%
-smaller. The operational gate therefore passes, but HQ4 still replaces HQ3 only
-when the generated blind material shows no meaningful regression. Detailed
-measurements and the pre-committed listening rule are in the
+smaller. Blind review then found HQ3 generally a little cleaner but the practical
+difference effectively tied and difficult to distinguish without focused
+comparison. With no material HQ4 regression, the replacement gate passed and
+HQ4 now supplies `general`; this is a speed/capacity decision, not an audible
+quality claim. Detailed measurements and the pre-committed listening rule are in the
 [K-pop benchmark report](audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md).
 
 ### Optional refined path
@@ -120,9 +122,9 @@ kept by default; alternates are explicit, removable cache.
 
 ## Ordered investment plan
 
-1. Ship the stable `quick` and `general` product ids with KARA2 and Inst HQ3.
-2. Complete blind review of the operationally qualified Inst HQ4 challenger;
-   keep HQ3 as the default profile until that review passes.
+1. Ship the stable `quick` and `general` product ids with KARA2 and Inst HQ4.
+2. Keep HQ3 result/provenance compatibility and benchmark execution without
+   exposing it as another product choice.
 3. Add a contained CPU-only `python-audio-separator` spike with one pinned
    BS-RoFormer checkpoint.
 4. Compare `general` and `refined` on the expanded blind-listening corpus and
