@@ -30,6 +30,7 @@ describe('config', () => {
       outputRuntime: {
         autoStart: true,
         port: 8700,
+        displayDelayMs: 0,
       },
     });
   });
@@ -70,6 +71,7 @@ describe('config', () => {
       outputRuntime: {
         autoStart: true,
         port: 8700,
+        displayDelayMs: 0,
       },
     });
 
@@ -202,26 +204,29 @@ describe('config', () => {
       outputRuntime: {
         autoStart: true,
         port: 8700,
+        displayDelayMs: 0,
       },
     });
   });
 
   it('round-trips valid output runtime settings', () => {
     saveConfig(configPath, {
-      outputRuntime: { autoStart: false, port: 8702 },
+      outputRuntime: { autoStart: false, port: 8702, displayDelayMs: 320 },
     });
 
     expect(loadConfig(configPath).outputRuntime).toEqual({
       autoStart: false,
       port: 8702,
+      displayDelayMs: 320,
     });
   });
 
   it.each([
-    [{ autoStart: 'yes', port: 8702 }],
-    [{ autoStart: false, port: 80 }],
-    [{ autoStart: false, port: 49152 }],
-    [{ autoStart: false, port: 8700.5 }],
+    [{ autoStart: 'yes', port: 8702, displayDelayMs: 0 }],
+    [{ autoStart: false, port: 80, displayDelayMs: 0 }],
+    [{ autoStart: false, port: 49152, displayDelayMs: 0 }],
+    [{ autoStart: false, port: 8700.5, displayDelayMs: 0 }],
+    [{ autoStart: false, port: 8700, displayDelayMs: 5001 }],
     [null],
   ])('falls back when output runtime settings are invalid: %j', (value) => {
     fs.writeFileSync(
@@ -232,6 +237,23 @@ describe('config', () => {
     expect(loadConfig(configPath).outputRuntime).toEqual({
       autoStart: true,
       port: 8700,
+      displayDelayMs: 0,
+    });
+  });
+
+  it('adds the default display delay without discarding legacy runtime settings', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        version: 2,
+        outputRuntime: { autoStart: false, port: 8702 },
+      }),
+    );
+
+    expect(loadConfig(configPath).outputRuntime).toEqual({
+      autoStart: false,
+      port: 8702,
+      displayDelayMs: 0,
     });
   });
 

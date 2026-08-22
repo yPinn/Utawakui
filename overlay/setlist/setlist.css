@@ -10,16 +10,19 @@
     var(--ovl-template-setlist-width)
   );
   padding: var(--ovl-primitive-space-4);
-  border: 1px solid var(--ovl-color-outline);
+  border: 1px solid var(--ovl-user-outline);
   border-radius: var(--ovl-primitive-radius-md);
-  background: var(--ovl-color-surface);
+  background: var(--ovl-user-surface);
+  font-size: var(--ovl-user-font-scale);
+  font-family: var(--ovl-user-font-family);
+  text-align: var(--ovl-user-text-align);
 }
 
 .setlist-overlay__title {
   margin: 0 0 var(--ovl-primitive-space-3);
   overflow: hidden;
-  font-family: var(--ovl-font-display-cjk);
-  font-size: 1.5rem;
+  font-size: 1.5em;
+  font-weight: var(--ovl-user-font-weight);
   line-height: 1.2;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -67,6 +70,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  font-weight: var(--ovl-user-font-weight);
 }
 
 .setlist-overlay__artist {

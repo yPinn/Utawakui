@@ -647,7 +647,10 @@ onMounted(refreshSettingsState);
 .settings-view__grid {
   min-height: 100%;
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  grid-template-columns: repeat(
+    auto-fit,
+    minmax(min(100%, var(--ui-settings-column-min-width)), 1fr)
+  );
   gap: var(--ui-space-5);
   align-content: start;
 }

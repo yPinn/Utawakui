@@ -2,15 +2,21 @@
 import ObsOutputWorkspace from '../components/output/ObsOutputWorkspace.vue';
 import { getOutputWorkbenchData } from '../constants/outputTemplates.js';
 
-const { templates, templateGroups, styleSets, configs } =
-  getOutputWorkbenchData();
+const {
+  templates,
+  templateGroups,
+  slotDefinitions,
+  slotDefaults,
+  appearanceOptions,
+} = getOutputWorkbenchData();
 </script>
 
 <template>
   <ObsOutputWorkspace
     :presets="templates"
     :template-groups="templateGroups"
-    :style-sets="styleSets"
-    :configs="configs"
+    :slot-definitions="slotDefinitions"
+    :slot-defaults="slotDefaults"
+    :appearance-options="appearanceOptions"
   />
 </template>

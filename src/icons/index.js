@@ -44,6 +44,7 @@ export {
   Pencil,
   Play,
   Plus,
+  Power,
   RefreshCw,
   Repeat,
   Repeat1,

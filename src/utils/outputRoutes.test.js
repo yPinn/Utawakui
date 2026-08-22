@@ -1,30 +1,56 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildOutputTemplateUrls,
-  outputPathForTemplate,
+  buildAllOutputSlotUrls,
+  buildOutputSlotUrls,
+  outputPathForKind,
 } from './outputRoutes.js';
 
 describe('output template routes', () => {
-  it('maps implemented presets to stable shared template routes', () => {
-    expect(outputPathForTemplate('now-next')).toBe('/overlay/now-playing');
-    expect(outputPathForTemplate('queue-board')).toBe('/overlay/setlist');
-    expect(outputPathForTemplate('focus-line')).toBe('/overlay/lyrics');
-    expect(outputPathForTemplate('karaoke-stack')).toBe('/overlay/lyrics');
-    expect(outputPathForTemplate('reading-aid')).toBeNull();
+  it('maps four independent kinds to stable routes', () => {
+    expect(outputPathForKind('now-playing')).toBe('/overlay/now-playing');
+    expect(outputPathForKind('setlist')).toBe('/overlay/setlist');
+    expect(outputPathForKind('lyrics')).toBe('/overlay/lyrics');
+    expect(outputPathForKind('artwork')).toBe('/overlay/artwork');
+    expect(outputPathForKind('composite')).toBeNull();
   });
 
   it('keeps the OBS URL stable and adds demo state only to the workbench URL', () => {
     expect(
-      buildOutputTemplateUrls(
+      buildOutputSlotUrls(
         { running: true, httpUrl: 'http://127.0.0.1:8700' },
-        'focus-line',
+        'lyrics',
       ),
     ).toEqual({
       obsUrl: 'http://127.0.0.1:8700/overlay/lyrics',
       previewUrl: 'http://127.0.0.1:8700/overlay/lyrics?preview=1',
     });
     expect(
-      buildOutputTemplateUrls({ running: false, httpUrl: null }, 'focus-line'),
-    ).toEqual({ obsUrl: null, previewUrl: null });
+      buildOutputSlotUrls(
+        {
+          running: false,
+          httpUrl: null,
+          host: '127.0.0.1',
+          port: 8700,
+        },
+        'lyrics',
+      ),
+    ).toEqual({
+      obsUrl: 'http://127.0.0.1:8700/overlay/lyrics',
+      previewUrl: null,
+    });
+  });
+
+  it('builds a copy target for every output kind without selecting one', () => {
+    const urls = buildAllOutputSlotUrls({
+      running: true,
+      httpUrl: 'http://127.0.0.1:8700',
+    });
+    expect(Object.keys(urls)).toEqual([
+      'now-playing',
+      'setlist',
+      'lyrics',
+      'artwork',
+    ]);
+    expect(urls.artwork.obsUrl).toBe('http://127.0.0.1:8700/overlay/artwork');
   });
 });

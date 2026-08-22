@@ -1,4 +1,4 @@
-import { computed, inject } from 'vue';
+import { inject } from 'vue';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 
 export const OUTPUT_RUNTIME_KEY = Symbol('output-runtime');
@@ -17,15 +17,15 @@ const unavailableState = Object.freeze({
   settings: Object.freeze({
     autoStart: true,
     port: OUTPUT_RUNTIME_VALUES.defaultPort,
+    displayDelayMs: OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
   }),
   suggestedPorts: Object.freeze([]),
-  profiles: Object.freeze([]),
-  selectedProfileId: null,
-  profilesLoaded: false,
+  slots: Object.freeze({}),
+  slotsLoaded: false,
   isStarting: false,
   isStopping: false,
-  isLoadingProfiles: false,
-  isSavingProfile: false,
+  isLoadingSlots: false,
+  isSavingSlot: false,
   isLoadingSettings: false,
   isSavingSettings: false,
   error: '',
@@ -33,13 +33,13 @@ const unavailableState = Object.freeze({
 
 const unavailableRuntime = Object.freeze({
   state: unavailableState,
-  selectedProfile: computed(() => null),
   start: async () => false,
   stop: async () => false,
   refreshSettings: async () => false,
-  suggestPorts: async () => [],
   updateSettings: async () => false,
-  loadProfiles: async () => false,
+  loadSlots: async () => false,
+  saveOutputSlot: async () => false,
+  saveSlotSettings: async () => false,
   saveTemplateSelection: async () => false,
 });
 

@@ -1,10 +1,6 @@
 'use strict';
 
-const {
-  loadOutputProfiles,
-  selectOutputProfile,
-  upsertOutputProfile,
-} = require('../lib/outputProfiles');
+const { loadOutputSlots, upsertOutputSlot } = require('../lib/outputSlots');
 const { isValidOutputRuntime } = require('../lib/config');
 const {
   findAvailableOutputPorts,
@@ -30,6 +26,13 @@ function registerOutputHandlers({
     return resolveDownloadDir(getConfig());
   }
 
+  function syncOutputSlots(document = loadOutputSlots(outputDir())) {
+    server.setOverlaySlots?.(document.slots);
+    return document;
+  }
+
+  syncOutputSlots();
+
   ipcMain.handle('output:get-status', async () => server.getStatus());
 
   ipcMain.handle('output:get-settings', async () => ({
@@ -49,7 +52,11 @@ function registerOutputHandlers({
     }
 
     const previous = { ...getConfig().outputRuntime };
-    const next = { autoStart: value.autoStart, port: value.port };
+    const next = {
+      autoStart: value.autoStart,
+      port: value.port,
+      displayDelayMs: value.displayDelayMs,
+    };
     const portChanged = next.port !== previous.port;
     const wasRunning = server.getStatus().running === true;
     if (portChanged && !(await isPortAvailable(next.port))) {
@@ -99,16 +106,12 @@ function registerOutputHandlers({
     return server.publish(snapshot);
   });
 
-  ipcMain.handle('output-profiles:list', async () => {
-    return loadOutputProfiles(outputDir());
+  ipcMain.handle('output-slots:list', async () => {
+    return syncOutputSlots();
   });
 
-  ipcMain.handle('output-profiles:upsert', async (event, profile) => {
-    return upsertOutputProfile(outputDir(), profile);
-  });
-
-  ipcMain.handle('output-profiles:select', async (event, profileId) => {
-    return selectOutputProfile(outputDir(), profileId);
+  ipcMain.handle('output-slots:upsert', async (event, kind, slot) => {
+    return syncOutputSlots(upsertOutputSlot(outputDir(), kind, slot));
   });
 }
 

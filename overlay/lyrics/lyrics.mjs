@@ -1,10 +1,14 @@
 import { createOverlayConnection } from '../shared/runtime.mjs';
+import { applyOverlayAppearance } from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
   withPreviewFallback,
 } from '../shared/preview.mjs';
-import { selectLyricsFrame } from '../shared/state.mjs';
+import {
+  nextLyricsBoundaryDelayMs,
+  selectLyricsFrame,
+} from '../shared/state.mjs';
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
@@ -38,6 +42,49 @@ export function renderLyricsFrame(elements, frame, options = {}) {
   }
 }
 
+export function createLyricsFrameScheduler(options = {}) {
+  const now = options.now ?? Date.now;
+  const onFrame = options.onFrame ?? (() => {});
+  const schedule = options.schedule ?? window.setTimeout.bind(window);
+  const cancelSchedule =
+    options.cancelSchedule ?? window.clearTimeout.bind(window);
+  let latestSnapshot = null;
+  let timer = null;
+  let stopped = false;
+
+  function clearTimer() {
+    if (timer !== null) cancelSchedule(timer);
+    timer = null;
+  }
+
+  function renderLatest() {
+    if (stopped || !latestSnapshot) return;
+    const nowMs = now();
+    onFrame(selectLyricsFrame(latestSnapshot, { nowMs }));
+    const delay = nextLyricsBoundaryDelayMs(latestSnapshot, { nowMs });
+    if (delay === null) return;
+    timer = schedule(() => {
+      timer = null;
+      renderLatest();
+    }, delay);
+  }
+
+  function update(snapshot) {
+    if (stopped) return;
+    latestSnapshot = snapshot;
+    clearTimer();
+    renderLatest();
+  }
+
+  function stop() {
+    stopped = true;
+    clearTimer();
+    latestSnapshot = null;
+  }
+
+  return { stop, update };
+}
+
 function boot() {
   const elements = {
     root: document.querySelector('#lyrics-overlay'),
@@ -50,22 +97,35 @@ function boot() {
     '(prefers-reduced-motion: reduce)',
   ).matches;
   const previewMode = isPreviewMode(window.location);
+  applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, previewMode);
   if (previewMode) {
     renderLyricsFrame(elements, PREVIEW_FRAME, { reducedMotion: true });
   }
-  const connection = createOverlayConnection({
-    onSnapshot: (snapshot) => {
-      const frame = withPreviewFallback(
-        selectLyricsFrame(snapshot),
+  const frameScheduler = createLyricsFrameScheduler({
+    onFrame: (frame) => {
+      const visibleFrame = withPreviewFallback(
+        frame,
         PREVIEW_FRAME,
         previewMode,
       );
-      renderLyricsFrame(elements, frame, { reducedMotion });
+      renderLyricsFrame(elements, visibleFrame, { reducedMotion });
     },
   });
+  const connection = createOverlayConnection({
+    kind: 'lyrics',
+    onConfig: (slot) => applyOverlayAppearance(document, slot),
+    onSnapshot: (snapshot) => frameScheduler.update(snapshot),
+  });
   connection.start();
-  window.addEventListener('pagehide', () => connection.stop(), { once: true });
+  window.addEventListener(
+    'pagehide',
+    () => {
+      frameScheduler.stop();
+      connection.stop();
+    },
+    { once: true },
+  );
 }
 
 if (typeof document !== 'undefined') boot();

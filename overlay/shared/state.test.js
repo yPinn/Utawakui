@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  nextLyricsBoundaryDelayMs,
   selectLyricsFrame,
   selectNowPlayingFrame,
   selectSetlistFrame,
@@ -7,8 +8,10 @@ import {
 
 function snapshot(overrides = {}) {
   return {
-    version: 1,
+    version: 2,
     revision: 8,
+    generatedAt: '2026-08-22T00:00:00.000Z',
+    displayDelayMs: 0,
     playback: {
       status: 'playing',
       positionMs: 12000,
@@ -52,7 +55,10 @@ function snapshot(overrides = {}) {
 
 describe('overlay state selectors', () => {
   it('selects the current and next non-empty lyric lines', () => {
-    expect(selectLyricsFrame(snapshot())).toEqual({
+    const value = snapshot();
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
+    ).toEqual({
       revision: 8,
       visible: true,
       currentText: '潮聲沿著夜色靠岸',
@@ -71,6 +77,89 @@ describe('overlay state selectors', () => {
       currentText: '',
       nextText: '',
     });
+  });
+
+  it('projects the active lyric from snapshot time instead of waiting for the next update', () => {
+    const value = snapshot({
+      playback: {
+        ...snapshot().playback,
+        positionMs: 12000,
+      },
+      lyrics: {
+        ...snapshot().lyrics,
+        offsetMs: 500,
+      },
+    });
+
+    expect(
+      selectLyricsFrame(value, {
+        nowMs: Date.parse(value.generatedAt) + 3500,
+      }),
+    ).toMatchObject({
+      currentText: '下一句仍在遠方',
+      nextText: '',
+    });
+  });
+
+  it('schedules the next lyric boundary using playback rate and lyrics offset', () => {
+    const value = snapshot({
+      playback: {
+        ...snapshot().playback,
+        positionMs: 12000,
+        rate: 2,
+      },
+      lyrics: {
+        ...snapshot().lyrics,
+        offsetMs: 500,
+      },
+    });
+
+    expect(
+      nextLyricsBoundaryDelayMs(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }),
+    ).toBe(1250);
+    expect(
+      nextLyricsBoundaryDelayMs(
+        {
+          ...value,
+          playback: { ...value.playback, status: 'paused' },
+        },
+        { nowMs: Date.parse(value.generatedAt) },
+      ),
+    ).toBeNull();
+  });
+
+  it('freezes the projected clock while buffering or seeking', () => {
+    for (const status of ['buffering', 'seeking']) {
+      const value = snapshot({
+        playback: { ...snapshot().playback, status, positionMs: 12000 },
+      });
+      expect(
+        selectLyricsFrame(value, {
+          nowMs: Date.parse(value.generatedAt) + 10000,
+        }),
+      ).toMatchObject({ currentText: '潮聲沿著夜色靠岸' });
+      expect(nextLyricsBoundaryDelayMs(value)).toBeNull();
+    }
+  });
+
+  it('projects a negative display compensation ahead while playing', () => {
+    const value = snapshot({
+      displayDelayMs: -1000,
+      playback: { ...snapshot().playback, positionMs: 1000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [
+          { text: 'first', startMs: 0, endMs: 2000 },
+          { text: 'second', startMs: 2000, endMs: 4000 },
+        ],
+      },
+    });
+
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
+    ).toMatchObject({ currentText: 'second' });
   });
 
   it('selects now-playing and queue frames without media fields', () => {

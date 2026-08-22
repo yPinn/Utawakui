@@ -1,0 +1,59 @@
+.artwork-overlay {
+  position: fixed;
+  inset-inline-start: var(--ovl-safe-inline);
+  inset-block-end: var(--ovl-safe-block);
+  inline-size: min(calc(100% - 2 * var(--ovl-safe-inline)), 34rem);
+  display: grid;
+  grid-template-columns: 8rem minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ovl-primitive-space-4);
+  padding: var(--ovl-primitive-space-4);
+  border: 1px solid var(--ovl-user-outline);
+  border-radius: var(--ovl-primitive-radius-md);
+  background: var(--ovl-user-surface);
+  font-size: var(--ovl-user-font-scale);
+  font-family: var(--ovl-user-font-family);
+  text-align: var(--ovl-user-text-align);
+}
+
+.artwork-overlay__mark {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: var(--ovl-primitive-radius-sm);
+  background: var(--ovl-color-surface-soft);
+  color: var(--ovl-color-text-primary);
+  font-size: 3em;
+  font-weight: var(--ovl-user-font-weight);
+}
+
+.artwork-overlay__copy {
+  min-width: 0;
+}
+
+.artwork-overlay__title,
+.artwork-overlay__artist {
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.artwork-overlay__title {
+  font-size: 2em;
+  font-weight: var(--ovl-user-font-weight);
+  line-height: 1.2;
+}
+
+.artwork-overlay__artist {
+  margin-block-start: var(--ovl-primitive-space-2);
+  color: var(--ovl-color-text-secondary);
+  font-size: 1em;
+  line-height: 1.35;
+}
+
+@media (max-height: 36rem) {
+  .artwork-overlay {
+    grid-template-columns: 5rem minmax(0, 1fr);
+  }
+}

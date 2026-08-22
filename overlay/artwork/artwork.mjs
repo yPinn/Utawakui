@@ -1,18 +1,17 @@
-import { createOverlayConnection } from '../shared/runtime.mjs';
 import { applyOverlayAppearance } from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
   withPreviewFallback,
 } from '../shared/preview.mjs';
+import { createOverlayConnection } from '../shared/runtime.mjs';
 import { selectNowPlayingFrame } from '../shared/state.mjs';
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
   visible: true,
-  title: '夜に駆ける',
-  artist: 'YOASOBI',
-  nextTitle: 'Stellar Stellar',
+  title: 'Stellar Stellar',
+  artist: '星街すいせい',
 });
 
 function renderFrame(elements, frame) {
@@ -20,15 +19,15 @@ function renderFrame(elements, frame) {
   elements.root.dataset.revision = String(frame.revision);
   elements.title.textContent = frame.title;
   elements.artist.textContent = frame.artist;
-  elements.next.textContent = frame.nextTitle ? `Next: ${frame.nextTitle}` : '';
+  elements.mark.textContent = frame.title.trim().slice(0, 1).toUpperCase();
 }
 
 function boot() {
   const elements = {
-    root: document.querySelector('#now-playing-overlay'),
-    title: document.querySelector('#now-playing-title'),
-    artist: document.querySelector('#now-playing-artist'),
-    next: document.querySelector('#now-playing-next'),
+    root: document.querySelector('#artwork-overlay'),
+    mark: document.querySelector('#artwork-mark'),
+    title: document.querySelector('#artwork-title'),
+    artist: document.querySelector('#artwork-artist'),
   };
   if (Object.values(elements).some((element) => !element)) return;
 
@@ -38,7 +37,7 @@ function boot() {
   if (previewMode) renderFrame(elements, PREVIEW_FRAME);
 
   const connection = createOverlayConnection({
-    kind: 'now-playing',
+    kind: 'artwork',
     onConfig: (slot) => applyOverlayAppearance(document, slot),
     onSnapshot: (snapshot) => {
       const frame = withPreviewFallback(

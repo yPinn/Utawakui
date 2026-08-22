@@ -44,6 +44,11 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/setlist/': ['setlist', 'index.html'],
   '/overlay/setlist/setlist.css': ['setlist', 'setlist.css'],
   '/overlay/setlist/setlist.mjs': ['setlist', 'setlist.mjs'],
+  '/overlay/artwork': ['artwork', 'index.html'],
+  '/overlay/artwork/': ['artwork', 'index.html'],
+  '/overlay/artwork/artwork.css': ['artwork', 'artwork.css'],
+  '/overlay/artwork/artwork.mjs': ['artwork', 'artwork.mjs'],
+  '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
   '/overlay/shared/preview.mjs': ['shared', 'preview.mjs'],
   '/overlay/shared/runtime.mjs': ['shared', 'runtime.mjs'],
@@ -152,6 +157,8 @@ function createOutputServer(options = {}) {
   const overlayRoot = options.overlayRoot ?? DEFAULT_OVERLAY_ROOT;
 
   let snapshot = createEmptyOutputSnapshot();
+  let overlaySlots = { ...(options.overlaySlots ?? {}) };
+  let overlayConfigRevision = 0;
   let httpServer = null;
   let webSocketServer = null;
   let heartbeatTimer = null;
@@ -178,6 +185,14 @@ function createOutputServer(options = {}) {
 
   function getSnapshot() {
     return parseOutputSnapshot(snapshot);
+  }
+
+  function getOverlayConfig() {
+    return {
+      version: 2,
+      revision: overlayConfigRevision,
+      slots: structuredClone(overlaySlots),
+    };
   }
 
   async function handleRequest(request, response) {
@@ -245,7 +260,11 @@ function createOutputServer(options = {}) {
       client.close(1008, 'read-only channel');
     });
     client.send(
-      JSON.stringify({ type: 'state.snapshot', snapshot: getSnapshot() }),
+      JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: getSnapshot(),
+        overlayConfig: getOverlayConfig(),
+      }),
     );
   }
 
@@ -368,6 +387,18 @@ function createOutputServer(options = {}) {
     return true;
   }
 
+  function setOverlaySlots(value) {
+    overlaySlots = structuredClone(value ?? {});
+    overlayConfigRevision += 1;
+    const message = JSON.stringify({
+      type: 'overlay.config.changed',
+      overlayConfig: getOverlayConfig(),
+    });
+    for (const client of webSocketServer?.clients ?? []) {
+      if (client.readyState === WebSocket.OPEN) client.send(message);
+    }
+  }
+
   async function stop() {
     if (startingPromise) {
       try {
@@ -399,7 +430,15 @@ function createOutputServer(options = {}) {
     }
   }
 
-  return { getSnapshot, getStatus, publish, start, stop };
+  return {
+    getOverlayConfig,
+    getSnapshot,
+    getStatus,
+    publish,
+    setOverlaySlots,
+    start,
+    stop,
+  };
 }
 
 module.exports = {

@@ -3,5 +3,8 @@
   "defaultPort": 8700,
   "minPort": 1024,
   "maxPort": 49151,
+  "defaultDisplayDelayMs": 0,
+  "minDisplayDelayMs": -2000,
+  "maxDisplayDelayMs": 5000,
   "suggestedPorts": [8700, 8701, 8702, 8703, 8704, 8705, 8706, 8707, 8708, 8709]
 }

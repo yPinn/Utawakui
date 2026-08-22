@@ -101,11 +101,13 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Windows taskbar thumbar、SMTC metadata、window title。
 - Feature notice modal 與共用 feature gate registry；provider、lyrics、audio processing、public output 已有 renderer/main 雙層 enforcement。
 - Local-import-first Import flow；本機音訊為預設入口，provider flow 需明確啟用。
+- Loopback HTTP/WebSocket output runtime、四條固定 Browser Source routes 與 canonical snapshot projection。
+- 四類獨立 overlay slots、分類 Gallery、真實 iframe Workbench 與 allowlisted appearance settings。
 
 ### 4.2 尚未完成但已納入規格
 
-- Overlay profile/style set 編輯與進階模板。
 - Performer self-view。
+- 進階 overlay 模板與完整 style-set catalog；現有四類 slot、基礎模板與 appearance editing 已完成。
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
 - Preset export/import。
@@ -237,11 +239,13 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 ### 6.5 Preset 原則
 
-第一版 `overlays.json` 是 versioned profile document，包含多個 profile、目前選取
-profile、`templateId`、`styleSetIds` 與 scalar settings。讀取時逐筆清洗，損壞文件
-會保留備份，寫入採 atomic temp-file rename；較新且不支援的 schema version 會拒絕
-載入，避免舊版覆寫新資料。它不保存 live playback state、絕對路徑、media URL、
-provider id 或素材內容。
+`overlays.json` 是 versioned slot document，分別保存 `now-playing`、`setlist`、
+`lyrics` 與 `artwork` 四類輸出。每個 slot 各自持有 `templateId`、`styleSetIds` 與
+scalar appearance settings，彼此可同時使用，不存在全域互斥的「目前 profile」。
+讀取時逐類清洗，version 1 profile document 會遷移到對應 slot；損壞文件會保留備份，
+寫入採 atomic temp-file rename。較新且不支援的 schema version 會拒絕載入，避免舊版
+覆寫新資料。它不保存 live playback state、絕對路徑、media URL、provider id 或
+素材內容。
 
 未來 preset export/import 可包含：
 
@@ -265,8 +269,11 @@ Phase 1 使用 versioned snapshot 在 renderer 與 main-process output server
 播放狀態。
 
 Snapshot 只包含 overlay 顯示所需的 scalar data：revision、canonical timestamp、
-播放狀態與時間、曲目的 id/title/artist、queue item state，以及純文字歌詞行與
-毫秒 timing。共享 parser 會建立 canonical copy，剝除 renderer-only media URL、
+顯示同步補償、播放 phase 與時間、曲目的 id/title/artist、queue item state，以及
+純文字歌詞行與毫秒 timing。播放 phase 由 `<audio>` 的 `play` / `playing` /
+`waiting` / `stalled` / `seeking` / `seeked` / `pause` / `ended` / `error` 事件投影；
+`buffering` 與 `seeking` 不推進 overlay clock。共享 parser 會建立 canonical copy，
+剝除 renderer-only media URL、
 filesystem path、provider metadata、歌詞 filename 與其他額外欄位；未來 main
 process 收到 renderer payload 時仍必須重新 parse，不信任 renderer 已完成清洗。
 
@@ -290,50 +297,73 @@ feature gate、preload IPC 與 renderer publish。
 
 Phase 1C 的 Browser Source 檔案位於 root-level `overlay/`，不進 Vite renderer
 bundle，也不 import Vue 或 control-panel `--ui-*` tokens。Server 只用固定 route map
-提供 `/overlay/lyrics`、`/overlay/now-playing`、`/overlay/setlist` 與其明確列出的
-CSS/ES module assets；URL 不會直接解析成 filesystem path。
+提供 `/overlay/lyrics`、`/overlay/now-playing`、`/overlay/setlist`、
+`/overlay/artwork` 與其明確列出的 CSS/ES module assets；URL 不會直接解析成
+filesystem path。
 
 共用 `runtime.mjs` 使用 CEF/瀏覽器原生 WebSocket，收到完整 `state.snapshot` 後
-渲染，忽略過期的 `state.changed`，斷線則以 500ms 起始、最高 8s 的 backoff
-重連。歌詞基本模板顯示目前行與下一個非空白行，背景完全透明，長行可安全換行，
+依 canonical timestamp 與 machine-local display delay 排程渲染，忽略過期的
+`state.changed`；補償變更或斷線時會取消尚未套用的舊狀態。斷線以 500ms 起始、
+最高 8s 的 backoff 重連。歌詞基本模板顯示目前行與下一個非空白行，背景完全透明，長行可安全換行，
 並在 `prefers-reduced-motion` 下停用行切換 motion。所有 track/lyrics/queue 文字只透過
 `textContent` 或新建 text element 寫入，不使用 `innerHTML`。
 
 Overlay CSS 分為 `--ovl-primitive-*`、semantic `--ovl-color/font/motion-*` 與
-各模板 `--ovl-template-*` 三層。這讓未來 style set 覆寫 semantic/template roles，
-而不需要複製整份 CSS，也不會把公開輸出樣式耦合到控制台 theme。
+各模板 `--ovl-template-*` 三層。工作台只保存 allowlist option id；overlay runtime
+再將 font family、scale、weight、alignment 與 surface id 映射到 CSS data attributes
+與 role variables。這讓未來 style set 覆寫 semantic/template roles，而不需要複製
+整份 CSS，也不會把公開輸出樣式耦合到控制台 theme 或接受任意 CSS 字串。
 
 ### 6.9 Output Workbench Connection
 
 Phase 1D 由 main process 的 `outputHandlers` 提供 start/stop/status/publish 與
-portable profile IPC。Start 與 publish 都會重新檢查 `public-output-flow`；stop 與
-status 維持 ungated，讓使用者在 gate/config 狀態異常時仍可停止輸出或診斷狀態。
+portable overlay-slot IPC。Start 與 publish 都會重新檢查 `public-output-flow`；stop
+與 status 維持 ungated，讓使用者在 gate/config 狀態異常時仍可停止輸出或診斷狀態。
 
 Renderer 的 `useOutputRuntime` 是 App 層長生命週期 singleton。它從既有
 `usePlayer`、`usePlaybackQueue` 與 playing-track `useLyrics` 投影公開 snapshot，
 序列化 IPC 並合併尚未送出的中間狀態；切換頁面不會停止 OBS 更新。Main 回報目前
 revision，renderer reload 後會接續遞增，不會讓仍存活的 server 拒絕新狀態。
 
-Output 內分為模板庫、工作台與輸出設定。Gallery 的縮圖與右欄共用控制台內的
-`ObsTemplateMockup`，只呈現固定 16:9 的標準化模板示意，不依賴 runtime 或 iframe，
-避免實際 overlay 在小尺寸下因原始字級、定位與動畫基準縮放失真。Workbench 才載入
-真實 served iframe，preview URL 在同一模板 URL 加上 `?preview=1`，讓 idle 狀態使用
-demo fallback 與深色檢視底；複製給 OBS 的 URL 不含該參數，因此不會發布假狀態，且
-頁面背景保持透明。
+Output 內分為工作台、模板庫與輸出設定，並以工作台作為預設頁。Gallery 先以輸出類型 tabs 限定單一分類，
+縮圖與右欄共用控制台內的 `ObsTemplateMockup`，只呈現固定 16:9 的標準化模板示意，
+不依賴 runtime 或 iframe，避免實際 overlay 在小尺寸下因原始字級、定位與動畫基準
+縮放失真。Workbench 才載入目前類型的真實 served iframe，並以 inspector 編輯該
+slot 的文字與背景設定，不改動其他類型。Preview URL 在固定路徑加上 `?preview=1`，
+讓 idle 狀態使用 demo fallback 與深色檢視底；複製給 OBS 的 URL 不含該參數，因此
+不會發布假狀態，且頁面背景保持透明。Browser Source URL 複製屬於 Workbench 的
+目前類型操作，不放在本機服務設定中。
 
 Gallery 右欄與 Workbench inspector 都使用 rem 上下限與 viewport-relative 中間值，
 不依賴可折疊／可拖曳的 playlist sidebar 內容寬度；Workbench 的 iframe stage 使用
 16:9 與 rem 最大寬度，在 inspector 之外盡量填滿可用空間。輸出設定集中管理
-`autoStart`、port、服務啟停、可用 port 建議與目前 OBS URL。Host 固定為
-`127.0.0.1`，port 衝突不會靜默改號。
+`autoStart`、port、服務啟停與可用 port 建議。四種輸出採固定路徑，URL 是低頻操作，
+不讓長網址占用主要資訊層級。服務連線狀態只表示有 Browser Source client 連入，不
+推論一定是 OBS 本體。Host 固定為 `127.0.0.1`，port 衝突不會靜默改號。
 
-`config.json` 保存 machine-local `outputRuntime.autoStart` / `port`；`overlays.json`
-保存 selected profile、template id、style-set ids 與 scalar settings。模板瀏覽不會
-立即保存，只有明確套用才更新 profile。頁面編排由 `ObsOutputWorkspace` 負責，Gallery、
-Workbench 與輸出設定元件只接收 props／發出 events，side effects 留在
-`useOutputRuntime`。Renderer ESM projector 與 main CommonJS validator 共用
-`outputContractValues.json` 的 version/collection limits；只有 main validator 是 IPC
-trust boundary。
+`config.json` 保存 machine-local `outputRuntime.autoStart` / `port` /
+`displayDelayMs`；`overlays.json`
+保存四個 slot 各自的 template id、style-set ids 與 scalar settings。模板瀏覽不會
+立即保存，只有明確套用才更新目前類型；appearance settings 也只寫回目前 slot。
+頁面編排由 `ObsOutputWorkspace` 負責，Gallery、Workbench 與輸出設定元件只接收
+props／發出 events，side effects 留在 `useOutputRuntime`。Renderer ESM projector 與
+main CommonJS validator 共用 `outputContractValues.json` 的 version/collection limits；
+只有 main validator 是 IPC trust boundary。
+
+正常播放同步不是使用者可調的網路延遲設定。Renderer 在 publish request 建立時寫入
+`generatedAt`；lyrics overlay 以該時間、`positionMs`、`rate` 與 lyrics offset 推算
+目前播放位置，並在下一個歌詞時間邊界自行重繪。`displayDelayMs` 是另一個
+machine-local 固定補償：正值延後整份 overlay state，負值在播放中向前投影，範圍為
+-2000 至 5000ms；它不改動歌詞檔的 offset，也不重啟 output server。WebSocket 的
+500ms 起始等待只用於斷線重連，不可混入 Port、heartbeat 或 display compensation。
+目前 publish 維持 serial latest-wins，Browser Source 端只在正補償期間保留有界的待顯示
+snapshot。先前 loopback 量測未顯示 transport bottleneck，因此不先拆成 content snapshot
+與 clock correction 兩套 protocol；只有 payload size、更新頻率或 OBS 記憶體量測成為
+實際問題時才重開此決策。
+目前 publish 維持 serial latest-wins，Browser Source 端只在正補償期間保留有界的待顯示
+snapshot。先前 loopback 量測未顯示 transport bottleneck，因此不先拆成 content snapshot
+與 clock correction 兩套 protocol；只有 payload size、更新頻率或 OBS 記憶體量測成為
+實際問題時才重開此決策。
 
 ## 7. Feature Notice 與 Gate
 
@@ -396,8 +426,8 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 - 本機 HTTP/WebSocket state server（P1B runtime、P1D gate/IPC/publish 已完成）。
 - OBS Browser Source overlay（P1C 基本模板、P1D Workbench 真實預覽已完成）。
-- Performer self-view。
-- Overlay token foundation 已完成；profile/style set 編輯仍未完成。
+- Performer self-view 與 integration boundary（P1E，下一個實作 phase）。
+- Overlay token foundation、四類獨立 slot persistence、template selection 與基礎 appearance editing 已完成；進階模板 catalog 不阻擋 Phase 1 closeout。
 - Now-playing、playlist、lyrics sync（P1D 基本 snapshot sync 已完成）。
 
 ### Phase 2：Live Operation Polish

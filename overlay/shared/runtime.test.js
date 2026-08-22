@@ -26,13 +26,16 @@ class FakeWebSocket {
   }
 }
 
-function snapshot(revision) {
+function snapshot(revision, overrides = {}) {
   return {
-    version: 1,
+    version: 2,
     revision,
+    generatedAt: '2026-08-22T00:00:00.000Z',
+    displayDelayMs: 0,
     playback: { track: null },
     queue: { items: [] },
     lyrics: { lines: [], activeLineIndex: -1 },
+    ...overrides,
   };
 }
 
@@ -58,17 +61,35 @@ describe('overlay WebSocket runtime', () => {
         JSON.stringify({ type: 'command', snapshot: snapshot(1) }),
       ),
     ).toBeNull();
+    expect(
+      parseOutputMessage(
+        JSON.stringify({
+          type: 'overlay.config.changed',
+          overlayConfig: {
+            version: 2,
+            revision: 3,
+            slots: { lyrics: { templateId: 'focus-line' } },
+          },
+        }),
+      ),
+    ).toMatchObject({
+      type: 'overlay.config.changed',
+      overlayConfig: { revision: 3 },
+    });
   });
 
   it('accepts resnapshots, ignores stale updates, and reconnects', () => {
     FakeWebSocket.instances = [];
     const scheduled = [];
     const snapshots = [];
+    const configs = [];
     const statuses = [];
     const connection = createOverlayConnection({
       location: { protocol: 'http:', host: '127.0.0.1:8700' },
       WebSocketImpl: FakeWebSocket,
       onSnapshot: (value) => snapshots.push(value.revision),
+      kind: 'lyrics',
+      onConfig: (value) => configs.push(value?.templateId ?? null),
       onStatus: (value) => statuses.push(value),
       schedule: (callback, delay) => {
         scheduled.push({ callback, delay });
@@ -82,7 +103,15 @@ describe('overlay WebSocket runtime', () => {
     expect(first.url).toBe('ws://127.0.0.1:8700/ws');
     first.emit('open');
     first.emit('message', {
-      data: JSON.stringify({ type: 'state.snapshot', snapshot: snapshot(3) }),
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(3),
+        overlayConfig: {
+          version: 2,
+          revision: 1,
+          slots: { lyrics: { templateId: 'focus-line' } },
+        },
+      }),
     });
     first.emit('message', {
       data: JSON.stringify({ type: 'state.changed', snapshot: snapshot(2) }),
@@ -90,7 +119,18 @@ describe('overlay WebSocket runtime', () => {
     first.emit('message', {
       data: JSON.stringify({ type: 'state.changed', snapshot: snapshot(4) }),
     });
+    first.emit('message', {
+      data: JSON.stringify({
+        type: 'overlay.config.changed',
+        overlayConfig: {
+          version: 2,
+          revision: 2,
+          slots: { lyrics: { templateId: 'karaoke-stack' } },
+        },
+      }),
+    });
     expect(snapshots).toEqual([3, 4]);
+    expect(configs).toEqual(['focus-line', 'karaoke-stack']);
 
     first.emit('close');
     expect(scheduled[0].delay).toBe(500);
@@ -106,5 +146,57 @@ describe('overlay WebSocket runtime', () => {
 
     connection.stop();
     expect(second.close).toHaveBeenCalledOnce();
+  });
+
+  it('delays snapshot delivery from generatedAt and clears queued state when compensation changes', () => {
+    FakeWebSocket.instances = [];
+    let nowMs = Date.parse('2026-08-22T00:00:00.100Z');
+    const scheduled = new Map();
+    const cancelled = [];
+    const received = [];
+    let nextTimerId = 0;
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      now: () => nowMs,
+      onSnapshot: (value) => received.push(value.revision),
+      schedule: (callback, delay) => {
+        nextTimerId += 1;
+        scheduled.set(nextTimerId, { callback, delay });
+        return nextTimerId;
+      },
+      cancelSchedule: (timerId) => {
+        cancelled.push(timerId);
+        scheduled.delete(timerId);
+      },
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(1, {
+          displayDelayMs: 500,
+          generatedAt: '2026-08-22T00:00:00.000Z',
+        }),
+      }),
+    });
+    expect(received).toEqual([]);
+    expect([...scheduled.values()][0].delay).toBe(400);
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        snapshot: snapshot(2, {
+          displayDelayMs: 0,
+          generatedAt: '2026-08-22T00:00:00.100Z',
+        }),
+      }),
+    });
+    expect(cancelled).toContain(1);
+    expect(received).toEqual([2]);
+
+    connection.stop();
   });
 });

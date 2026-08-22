@@ -15,8 +15,8 @@ const emit = defineEmits(['update:activeView']);
 const workflowItems = [
   { key: 'setlist', label: 'Setlist' },
   { key: 'lyrics', label: 'Lyrics' },
-  { key: 'import', label: 'Import' },
   { key: 'output', label: 'Output' },
+  { key: 'import', label: 'Import' },
 ];
 
 const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];

@@ -1,5 +1,5 @@
 {
-  "stateVersion": 1,
+  "stateVersion": 2,
   "maxQueueItems": 100,
   "maxLyricLines": 1000
 }

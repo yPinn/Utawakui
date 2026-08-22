@@ -7,6 +7,9 @@ const {
   defaultPort: DEFAULT_OUTPUT_PORT,
   minPort: OUTPUT_PORT_MIN,
   maxPort: OUTPUT_PORT_MAX,
+  defaultDisplayDelayMs: DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
+  minDisplayDelayMs: OUTPUT_DISPLAY_DELAY_MIN,
+  maxDisplayDelayMs: OUTPUT_DISPLAY_DELAY_MAX,
 } = require('../../shared/outputRuntimeValues.json');
 
 const CURRENT_VERSION = 2;
@@ -37,6 +40,7 @@ const DEFAULTS = {
   outputRuntime: Object.freeze({
     autoStart: true,
     port: DEFAULT_OUTPUT_PORT,
+    displayDelayMs: DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
   }),
 };
 
@@ -48,17 +52,38 @@ function isValidOutputRuntime(value) {
     typeof value.autoStart === 'boolean' &&
     Number.isSafeInteger(value.port) &&
     value.port >= OUTPUT_PORT_MIN &&
-    value.port <= OUTPUT_PORT_MAX,
+    value.port <= OUTPUT_PORT_MAX &&
+    Number.isSafeInteger(value.displayDelayMs) &&
+    value.displayDelayMs >= OUTPUT_DISPLAY_DELAY_MIN &&
+    value.displayDelayMs <= OUTPUT_DISPLAY_DELAY_MAX,
   );
 }
 
 function normalizeOutputRuntime(value) {
+  const isLegacyRuntime = Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof value.autoStart === 'boolean' &&
+    Number.isSafeInteger(value.port) &&
+    value.port >= OUTPUT_PORT_MIN &&
+    value.port <= OUTPUT_PORT_MAX &&
+    value.displayDelayMs === undefined,
+  );
+  if (isLegacyRuntime) {
+    return {
+      autoStart: value.autoStart,
+      port: value.port,
+      displayDelayMs: DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
+    };
+  }
   if (!isValidOutputRuntime(value)) {
     return { ...DEFAULTS.outputRuntime };
   }
   return {
     autoStart: value.autoStart,
     port: value.port,
+    displayDelayMs: value.displayDelayMs,
   };
 }
 

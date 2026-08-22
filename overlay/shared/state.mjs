@@ -16,11 +16,91 @@ function hiddenLyricsFrame(snapshot) {
   };
 }
 
-export function selectLyricsFrame(snapshot) {
+function playbackRate(snapshot) {
+  const rate = snapshot?.playback?.rate;
+  return Number.isFinite(rate) && rate > 0 ? rate : 1;
+}
+
+function playbackPositionMs(snapshot, nowMs) {
+  const playback = snapshot?.playback;
+  const basePosition = Number.isFinite(playback?.positionMs)
+    ? Math.max(0, playback.positionMs)
+    : 0;
+  if (playback?.status !== 'playing') return basePosition;
+
+  const generatedAtMs = Date.parse(snapshot?.generatedAt ?? '');
+  const displayDelayMs = Number.isSafeInteger(snapshot?.displayDelayMs)
+    ? snapshot.displayDelayMs
+    : 0;
+  const elapsedMs = Number.isFinite(generatedAtMs)
+    ? Math.max(0, nowMs - generatedAtMs - displayDelayMs)
+    : 0;
+  const projectedPosition = basePosition + elapsedMs * playbackRate(snapshot);
+  const durationMs = playback?.durationMs;
+  return Number.isFinite(durationMs)
+    ? Math.min(projectedPosition, Math.max(0, durationMs))
+    : projectedPosition;
+}
+
+function activeLyricIndex(snapshot, lines, nowMs) {
+  const lyrics = snapshot?.lyrics;
+  if (lyrics?.synced === true) {
+    const offsetMs = Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0;
+    const lyricPositionMs = playbackPositionMs(snapshot, nowMs) + offsetMs;
+    return lines.findIndex((line, index) => {
+      if (!Number.isFinite(line?.startMs)) return false;
+      const nextStartMs = lines
+        .slice(index + 1)
+        .find((nextLine) => Number.isFinite(nextLine?.startMs))?.startMs;
+      const endMs = Number.isFinite(line.endMs)
+        ? line.endMs
+        : (nextStartMs ?? Infinity);
+      return lyricPositionMs >= line.startMs && lyricPositionMs < endMs;
+    });
+  }
+  return Number.isSafeInteger(lyrics?.activeLineIndex)
+    ? lyrics.activeLineIndex
+    : -1;
+}
+
+export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
+  const trackId = snapshot?.playback?.track?.id;
+  const lyrics = snapshot?.lyrics;
+  if (
+    snapshot?.playback?.status !== 'playing' ||
+    !trackId ||
+    lyrics?.trackId !== trackId ||
+    lyrics?.synced !== true
+  ) {
+    return null;
+  }
+
+  const nowMs = options.nowMs ?? Date.now();
+  const offsetMs = Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0;
+  const lyricPositionMs = playbackPositionMs(snapshot, nowMs) + offsetMs;
+  const boundaries = (Array.isArray(lyrics.lines) ? lyrics.lines : [])
+    .flatMap((line) => [line?.startMs, line?.endMs])
+    .filter(
+      (boundary) => Number.isFinite(boundary) && boundary > lyricPositionMs,
+    );
+  if (boundaries.length === 0) return null;
+
+  const nextBoundaryMs = Math.min(...boundaries);
+  return Math.max(
+    1,
+    Math.ceil((nextBoundaryMs - lyricPositionMs) / playbackRate(snapshot)),
+  );
+}
+
+export function selectLyricsFrame(snapshot, options = {}) {
   const trackId = snapshot?.playback?.track?.id;
   const lyrics = snapshot?.lyrics;
   const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
-  const activeIndex = lyrics?.activeLineIndex;
+  const activeIndex = activeLyricIndex(
+    snapshot,
+    lines,
+    options.nowMs ?? Date.now(),
+  );
   if (
     !trackId ||
     lyrics?.trackId !== trackId ||

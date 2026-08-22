@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   OUTPUT_TEMPLATE_KINDS,
-  getDefaultOutputProfile,
   getOutputWorkbenchData,
   groupOutputTemplatesByKind,
   orderOutputTemplates,
@@ -39,9 +38,8 @@ describe('output template registry', () => {
     });
   });
 
-  it('keeps default profile and workbench data internally consistent', () => {
+  it('keeps four independent slot defaults internally consistent', () => {
     const data = getOutputWorkbenchData();
-    const profile = getDefaultOutputProfile();
     const templateIds = new Set(data.templates.map((template) => template.id));
 
     expect(OUTPUT_TEMPLATE_KINDS.map((kind) => kind.id)).toEqual([
@@ -49,10 +47,17 @@ describe('output template registry', () => {
       'setlist',
       'lyrics',
       'artwork',
-      'composite',
     ]);
-    expect(templateIds.has(profile.templateId)).toBe(true);
-    expect(data.configs.some((config) => config.active)).toBe(true);
+    expect(Object.keys(data.slotDefaults)).toEqual([
+      'now-playing',
+      'setlist',
+      'lyrics',
+      'artwork',
+    ]);
+    for (const slot of data.slotDefinitions) {
+      expect(templateIds.has(data.slotDefaults[slot.id].templateId)).toBe(true);
+    }
+    expect(data.appearanceOptions.fontFamily).toHaveLength(3);
     expect(data.styleSets.length).toBeGreaterThan(0);
   });
 });

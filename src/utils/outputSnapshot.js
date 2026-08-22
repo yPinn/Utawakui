@@ -1,4 +1,5 @@
 import contractValues from '../../shared/outputContractValues.json';
+import runtimeValues from '../../shared/outputRuntimeValues.json';
 
 const {
   maxLyricLines: MAX_OUTPUT_LYRIC_LINES,
@@ -35,7 +36,23 @@ function publicTrack(track) {
 function playbackStatus(player) {
   if (!publicTrack(player?.track)) return 'idle';
   if (player?.error) return 'error';
+  if (
+    ['buffering', 'playing', 'seeking', 'paused', 'ended'].includes(
+      player?.playbackPhase,
+    )
+  ) {
+    return player.playbackPhase;
+  }
   return player?.isPlaying ? 'playing' : 'paused';
+}
+
+function displayDelayMs(output = {}) {
+  const value = output.displayDelayMs;
+  return Number.isSafeInteger(value) &&
+    value >= runtimeValues.minDisplayDelayMs &&
+    value <= runtimeValues.maxDisplayDelayMs
+    ? value
+    : runtimeValues.defaultDisplayDelayMs;
 }
 
 function queueItem(state, track) {
@@ -143,6 +160,7 @@ export function projectOutputSnapshot(input = {}, options = {}) {
         ? options.revision
         : 0,
     generatedAt: options.generatedAt ?? new Date().toISOString(),
+    displayDelayMs: displayDelayMs(input.output),
     playback: {
       status: playbackStatus(player),
       positionMs: milliseconds(player.currentTime),

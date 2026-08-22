@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="zh-Hant">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Utawakui Artwork Overlay</title>
+    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
+    <link rel="stylesheet" href="/overlay/shared/base.css" />
+    <link rel="stylesheet" href="/overlay/artwork/artwork.css" />
+    <script type="module" src="/overlay/artwork/artwork.mjs"></script>
+  </head>
+  <body>
+    <main id="artwork-overlay" class="artwork-overlay" hidden>
+      <div
+        id="artwork-mark"
+        class="artwork-overlay__mark"
+        aria-hidden="true"
+      ></div>
+      <div class="artwork-overlay__copy">
+        <h1 id="artwork-title" class="artwork-overlay__title"></h1>
+        <p id="artwork-artist" class="artwork-overlay__artist"></p>
+      </div>
+    </main>
+  </body>
+</html>

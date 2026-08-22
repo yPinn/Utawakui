@@ -12,7 +12,24 @@ function renderOutputView() {
 }
 
 describe('OutputView', () => {
-  it('renders one gallery containing setlist and lyrics template families', async () => {
+  it('opens the workbench first and keeps the gallery second', async () => {
+    const html = await renderOutputView();
+    const workbenchTab = html.indexOf('id="obs-output-workbench-tab"');
+    const galleryTab = html.indexOf('id="obs-output-gallery-tab"');
+    const settingsTab = html.indexOf('id="obs-output-settings-tab"');
+
+    expect(workbenchTab).toBeGreaterThan(-1);
+    expect(workbenchTab).toBeLessThan(galleryTab);
+    expect(galleryTab).toBeLessThan(settingsTab);
+    expect(html).toMatch(
+      /id="obs-output-workbench-tab"[^>]*aria-selected="true"/,
+    );
+    expect(html).toMatch(
+      /id="obs-output-gallery-tab"[^>]*aria-selected="false"/,
+    );
+  });
+
+  it('renders four output categories while keeping one template grid active', async () => {
     const html = await renderOutputView();
 
     expect(html).toContain('模板庫');
@@ -23,7 +40,8 @@ describe('OutputView', () => {
     expect(html).toContain('Now Playing');
     expect(html).toContain('Setlist');
     expect(html).toContain('Lyrics');
+    expect(html).toContain('Artwork');
     expect(html).toContain('Now / Next');
-    expect(html).toContain('Focus Line');
+    expect(html).not.toContain('Focus Line');
   });
 });

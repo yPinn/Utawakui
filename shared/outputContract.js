@@ -1,11 +1,14 @@
 'use strict';
 
 const contractValues = require('./outputContractValues.json');
+const runtimeValues = require('./outputRuntimeValues.json');
 
 const OUTPUT_STATE_VERSION = contractValues.stateVersion;
 const OUTPUT_PLAYBACK_STATUSES = Object.freeze([
   'idle',
+  'buffering',
   'playing',
+  'seeking',
   'paused',
   'ended',
   'error',
@@ -242,6 +245,15 @@ function parseOutputSnapshot(value) {
       min: 0,
     }),
     generatedAt,
+    displayDelayMs: requireFiniteNumber(
+      snapshot.displayDelayMs,
+      'displayDelayMs',
+      {
+        integer: true,
+        min: runtimeValues.minDisplayDelayMs,
+        max: runtimeValues.maxDisplayDelayMs,
+      },
+    ),
     playback: parsePlayback(snapshot.playback),
     queue: parseQueue(snapshot.queue),
     lyrics: parseLyrics(snapshot.lyrics),
@@ -253,6 +265,7 @@ function createEmptyOutputSnapshot(options = {}) {
     version: OUTPUT_STATE_VERSION,
     revision: options.revision ?? 0,
     generatedAt: options.generatedAt ?? new Date().toISOString(),
+    displayDelayMs: runtimeValues.defaultDisplayDelayMs,
     playback: {
       status: 'idle',
       positionMs: 0,

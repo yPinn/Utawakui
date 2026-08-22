@@ -209,9 +209,8 @@
     21rem
   ); /* stable information rail; sidebar drags only change the stage's flexible column */
   --ui-output-workbench-stage-max-width: 64rem; /* 1024px: large 16:9 preview without upscaling indefinitely */
-  --ui-output-settings-max-width: 48rem; /* 768px: readable service settings line length */
-  --ui-output-settings-row-min-height: 4.5rem; /* 72px: stable two-line setting row */
-  --ui-output-port-input-width: 7rem; /* 112px: accommodates the full validated user-port range */
+  --ui-output-port-input-width: 4.75rem; /* 76px: five port digits plus compact padding */
+  --ui-output-settings-command-button-width: 4.5rem; /* 72px: stable icon+verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* 72px: stable row target around a small 16:9 preview */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* 12px: thumbnail-only label, not a global typography tier */
   --ui-output-setting-label-width-min: 4rem; /* 64px: compact setting label column */
@@ -239,8 +238,10 @@
   --ui-settings-block-padding: var(--ui-space-3);
   --ui-settings-block-gap: var(--ui-space-3);
   --ui-settings-block-body-gap: var(--ui-space-2);
+  --ui-settings-column-min-width: 22rem;
   --ui-settings-column-gap: var(--ui-space-4);
   --ui-settings-column-header-gap: var(--ui-space-1);
+  --ui-settings-checkbox-size: var(--ui-space-4);
 
   /* --- Sizing: track rows & player bar --- */
   --ui-track-row-min-height: 3.25rem; /* 52px */

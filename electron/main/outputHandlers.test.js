@@ -72,8 +72,9 @@ describe('output handlers', () => {
     expect(server.stop).toHaveBeenCalledOnce();
   });
 
-  it('loads, upserts, and selects portable output profiles', async () => {
+  it('loads and independently upserts portable output slots', async () => {
     const ipcMain = createIpcMain();
+    const setOverlaySlots = vi.fn();
     registerOutputHandlers({
       ipcMain,
       server: {
@@ -81,6 +82,7 @@ describe('output handlers', () => {
         start: vi.fn(),
         stop: vi.fn(),
         publish: vi.fn(),
+        setOverlaySlots,
       },
       requireFeatureGate: vi.fn(),
       featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
@@ -88,39 +90,50 @@ describe('output handlers', () => {
       resolveDownloadDir: () => dir,
     });
 
-    expect(await ipcMain.handlers.get('output-profiles:list')()).toEqual({
-      version: 1,
-      selectedProfileId: null,
-      profiles: [],
+    expect(await ipcMain.handlers.get('output-slots:list')()).toMatchObject({
+      version: 2,
+      slots: {
+        'now-playing': { templateId: 'now-next' },
+        setlist: { templateId: 'queue-board' },
+        lyrics: { templateId: 'focus-line' },
+        artwork: { templateId: 'art-card' },
+      },
     });
 
-    const saved = await ipcMain.handlers.get('output-profiles:upsert')(null, {
-      id: 'main-output',
-      name: '主要輸出',
+    await ipcMain.handlers.get('output-slots:upsert')(null, 'lyrics', {
       templateId: 'focus-line',
       styleSetIds: ['lyrics-type'],
       settings: { alignment: 'center' },
       machinePath: 'C:\\secret.css',
     });
-    expect(saved.profiles[0]).toEqual({
-      id: 'main-output',
-      name: '主要輸出',
-      templateId: 'focus-line',
-      styleSetIds: ['lyrics-type'],
-      settings: { alignment: 'center' },
-    });
-
-    const selected = await ipcMain.handlers.get('output-profiles:select')(
+    const saved = await ipcMain.handlers.get('output-slots:upsert')(
       null,
-      'main-output',
+      'now-playing',
+      {
+        templateId: 'now-next',
+        settings: { alignment: 'left' },
+      },
     );
-    expect(selected.selectedProfileId).toBe('main-output');
+
+    expect(saved.slots).toMatchObject({
+      'now-playing': {
+        templateId: 'now-next',
+        styleSetIds: [],
+        settings: { alignment: 'left' },
+      },
+      lyrics: {
+        templateId: 'focus-line',
+        styleSetIds: ['lyrics-type'],
+        settings: { alignment: 'center' },
+      },
+    });
+    expect(setOverlaySlots).toHaveBeenLastCalledWith(saved.slots);
   });
 
   it('reads and updates validated machine-local runtime settings', async () => {
     const ipcMain = createIpcMain();
     let config = {
-      outputRuntime: { autoStart: true, port: 8700 },
+      outputRuntime: { autoStart: true, port: 8700, displayDelayMs: 0 },
     };
     const server = {
       getStatus: vi.fn(() => ({
@@ -156,25 +169,40 @@ describe('output handlers', () => {
     ).resolves.toEqual({
       autoStart: true,
       port: 8700,
+      displayDelayMs: 0,
     });
     await expect(
       ipcMain.handlers.get('output:update-settings')(null, {
         autoStart: false,
         port: 8702,
+        displayDelayMs: 280,
       }),
     ).resolves.toEqual({
-      settings: { autoStart: false, port: 8702 },
+      settings: { autoStart: false, port: 8702, displayDelayMs: 280 },
       status: { running: true, port: 8702 },
     });
     expect(updateConfig).toHaveBeenCalledWith({
-      outputRuntime: { autoStart: false, port: 8702 },
+      outputRuntime: { autoStart: false, port: 8702, displayDelayMs: 280 },
+    });
+    expect(server.reconfigure).toHaveBeenCalledOnce();
+
+    await expect(
+      ipcMain.handlers.get('output:update-settings')(null, {
+        autoStart: false,
+        port: 8702,
+        displayDelayMs: 420,
+      }),
+    ).resolves.toMatchObject({
+      settings: { autoStart: false, port: 8702, displayDelayMs: 420 },
     });
     expect(server.reconfigure).toHaveBeenCalledOnce();
   });
 
   it('rejects invalid or occupied ports without changing the persisted setting', async () => {
     const ipcMain = createIpcMain();
-    const config = { outputRuntime: { autoStart: true, port: 8700 } };
+    const config = {
+      outputRuntime: { autoStart: true, port: 8700, displayDelayMs: 0 },
+    };
     const updateConfig = vi.fn();
     registerOutputHandlers({
       ipcMain,
@@ -198,12 +226,14 @@ describe('output handlers', () => {
       ipcMain.handlers.get('output:update-settings')(null, {
         autoStart: true,
         port: 80,
+        displayDelayMs: 0,
       }),
     ).rejects.toThrow('invalid output runtime settings');
     await expect(
       ipcMain.handlers.get('output:update-settings')(null, {
         autoStart: true,
         port: 8701,
+        displayDelayMs: 0,
       }),
     ).rejects.toThrow('output port is already in use: 8701');
     expect(updateConfig).not.toHaveBeenCalled();
@@ -214,7 +244,9 @@ describe('output handlers', () => {
 
   it('restores the previous running service when a restart loses a port race', async () => {
     const ipcMain = createIpcMain();
-    let config = { outputRuntime: { autoStart: true, port: 8700 } };
+    let config = {
+      outputRuntime: { autoStart: true, port: 8700, displayDelayMs: 0 },
+    };
     const restartFailure = Object.assign(new Error('listen EADDRINUSE'), {
       code: 'EADDRINUSE',
     });
@@ -250,9 +282,14 @@ describe('output handlers', () => {
       ipcMain.handlers.get('output:update-settings')(null, {
         autoStart: true,
         port: 8702,
+        displayDelayMs: 0,
       }),
     ).rejects.toBe(restartFailure);
-    expect(config.outputRuntime).toEqual({ autoStart: true, port: 8700 });
+    expect(config.outputRuntime).toEqual({
+      autoStart: true,
+      port: 8700,
+      displayDelayMs: 0,
+    });
     expect(server.reconfigure).toHaveBeenCalledTimes(2);
     expect(server.start).toHaveBeenCalledOnce();
   });

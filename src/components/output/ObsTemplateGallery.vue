@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import { Check, ICON_SIZE } from '../../icons/index.js';
+import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
+import ObsOutputTabs from './ObsOutputTabs.vue';
 import ObsTemplateMockup from './ObsTemplateMockup.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
@@ -8,13 +10,14 @@ import UiChip from '../ui/UiChip.vue';
 const props = defineProps({
   presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
+  activeKind: { type: String, default: null },
   selectedPresetId: { type: String, default: null },
-  appliedPresetId: { type: String, default: null },
-  outputSupported: { type: Boolean, default: false },
+  appliedPresetIds: { type: Object, default: () => ({}) },
   isApplying: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
+  'update:activeKind',
   'update:selectedPresetId',
   'applyPreset',
   'openWorkbench',
@@ -26,75 +29,122 @@ const selectedPreset = computed(
     props.presets[0] ??
     null,
 );
+const hasSelectedPreset = computed(() => Boolean(selectedPreset.value));
 const selectedIndex = computed(() =>
-  props.presets.findIndex((preset) => preset.id === selectedPreset.value?.id),
+  activeGroup.value?.templates.findIndex(
+    (preset) => preset.id === selectedPreset.value?.id,
+  ),
 );
 const isApplied = computed(
-  () => selectedPreset.value?.id === props.appliedPresetId,
+  () =>
+    selectedPreset.value?.id ===
+    props.appliedPresetIds[selectedPreset.value?.kind],
 );
 const visibleGroups = computed(() =>
-  props.templateGroups.length
-    ? props.templateGroups
-    : [{ kind: 'all', label: '模板', templates: props.presets }],
+  props.templateGroups.filter((group) => group.templates.length),
+);
+const categoryTabs = computed(() =>
+  visibleGroups.value.map((group) => ({
+    id: group.kind,
+    label: group.label,
+    count: group.templates.length,
+  })),
+);
+const activeGroup = computed(
+  () =>
+    visibleGroups.value.find((group) => group.kind === props.activeKind) ??
+    visibleGroups.value[0] ??
+    null,
 );
 
 function selectPreset(id) {
   emit('update:selectedPresetId', id);
 }
+
+function selectKind(kind) {
+  emit('update:activeKind', kind);
+  const group = visibleGroups.value.find(
+    (candidate) => candidate.kind === kind,
+  );
+  if (
+    !group?.templates.some((preset) => preset.id === props.selectedPresetId)
+  ) {
+    emit('update:selectedPresetId', group?.templates[0]?.id ?? null);
+  }
+}
 </script>
 
 <template>
   <section class="obs-template-gallery" aria-label="模板庫">
-    <div class="obs-template-gallery__layout">
-      <div class="obs-template-gallery__groups" aria-label="模板縮圖">
-        <section
-          v-for="group in visibleGroups"
-          :key="group.kind"
-          class="obs-template-gallery__group"
-        >
-          <h3 class="obs-template-gallery__group-title">{{ group.label }}</h3>
-          <div class="obs-template-gallery__grid">
-            <button
-              v-for="preset in group.templates"
-              :key="preset.id"
-              type="button"
-              class="obs-template-thumb"
-              :class="{
-                'obs-template-thumb--active': preset.id === selectedPreset?.id,
-              }"
-              :aria-pressed="preset.id === selectedPreset?.id"
-              @click="selectPreset(preset.id)"
-            >
-              <ObsTemplateMockup :preset="preset" size="thumbnail" />
-              <div class="obs-template-thumb__body">
-                <span class="obs-template-thumb__name">{{ preset.name }}</span>
-                <UiChip
-                  v-if="preset.availability"
-                  :tone="preset.availability.tone ?? 'muted'"
-                >
-                  {{ preset.availability.label }}
-                </UiChip>
-                <Check
-                  v-if="preset.id === appliedPresetId"
-                  :size="ICON_SIZE"
-                  aria-label="已套用"
-                />
-              </div>
-            </button>
-          </div>
-        </section>
-      </div>
+    <ObsOutputSplitLayout
+      aria-label="模板庫"
+      main-variant="gallery"
+      side-label="模板展示預覽"
+      side-variant="detail"
+      :side-visible="hasSelectedPreset"
+    >
+      <template #main>
+        <div class="obs-template-gallery__catalog" aria-label="模板縮圖">
+          <ObsOutputTabs
+            :items="categoryTabs"
+            :active-id="activeGroup?.kind ?? null"
+            aria-label="Overlay 類型"
+            tab-id-prefix="output-kind"
+            panel-id-prefix="output-kind"
+            variant="panel"
+            @update:active-id="selectKind"
+          />
 
-      <aside
-        v-if="selectedPreset"
-        class="obs-template-gallery__detail"
-        aria-label="模板展示預覽"
-      >
+          <section
+            v-if="activeGroup"
+            :id="`output-kind-${activeGroup.kind}-panel`"
+            :key="activeGroup.kind"
+            class="obs-template-gallery__group"
+            role="tabpanel"
+            :aria-labelledby="`output-kind-${activeGroup.kind}-tab`"
+          >
+            <div class="obs-template-gallery__grid">
+              <button
+                v-for="preset in activeGroup.templates"
+                :key="preset.id"
+                type="button"
+                class="obs-template-thumb"
+                :class="{
+                  'obs-template-thumb--active':
+                    preset.id === selectedPreset?.id,
+                }"
+                :aria-pressed="preset.id === selectedPreset?.id"
+                @click="selectPreset(preset.id)"
+              >
+                <ObsTemplateMockup :preset="preset" size="thumbnail" />
+                <div class="obs-template-thumb__body">
+                  <span class="obs-template-thumb__name">
+                    {{ preset.name }}
+                  </span>
+                  <UiChip
+                    v-if="preset.availability"
+                    :tone="preset.availability.tone ?? 'muted'"
+                  >
+                    {{ preset.availability.label }}
+                  </UiChip>
+                  <Check
+                    v-if="preset.id === appliedPresetIds[preset.kind]"
+                    :size="ICON_SIZE"
+                    aria-label="已套用"
+                  />
+                </div>
+              </button>
+            </div>
+          </section>
+        </div>
+      </template>
+
+      <template #side>
         <ObsTemplateMockup :preset="selectedPreset" size="detail" />
 
         <div class="obs-template-gallery__detail-copy">
           <span class="obs-template-gallery__detail-index">
-            {{ selectedIndex + 1 }} / {{ presets.length }}
+            {{ selectedIndex + 1 }} / {{ activeGroup?.templates.length ?? 0 }}
           </span>
           <div class="obs-template-gallery__heading">
             <h2 class="obs-template-gallery__detail-title">
@@ -122,14 +172,14 @@ function selectPreset(id) {
           <UiButton @click="emit('openWorkbench')">前往工作台</UiButton>
           <UiButton
             variant="accent"
-            :disabled="isApplying || !outputSupported || isApplied"
+            :disabled="isApplying || isApplied"
             @click="emit('applyPreset', selectedPreset.id)"
           >
             {{ isApplied ? '已套用' : '套用模板' }}
           </UiButton>
         </div>
-      </aside>
-    </div>
+      </template>
+    </ObsOutputSplitLayout>
   </section>
 </template>
 
@@ -141,37 +191,19 @@ function selectPreset(id) {
   container-type: inline-size;
 }
 
-.obs-template-gallery__layout {
-  height: 100%;
-  min-height: 0;
-  display: grid;
-  grid-template-columns:
-    minmax(var(--ui-output-gallery-column-min), 1fr)
-    var(--ui-output-gallery-detail-width);
-  gap: var(--ui-space-4);
-}
-
-.obs-template-gallery__groups {
+.obs-template-gallery__catalog {
   min-height: 0;
   min-width: 0;
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   align-content: start;
-  gap: var(--ui-space-4);
-  overflow: auto;
+  gap: var(--ui-space-3);
 }
 
 .obs-template-gallery__group {
+  min-height: 0;
   min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-}
-
-.obs-template-gallery__group-title {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
+  overflow: auto;
 }
 
 .obs-template-gallery__grid {
@@ -243,18 +275,6 @@ function selectPreset(id) {
   white-space: nowrap;
 }
 
-.obs-template-gallery__detail {
-  min-height: 0;
-  min-width: 0;
-  display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  align-content: start;
-  gap: var(--ui-space-3);
-  padding-inline-start: var(--ui-space-4);
-  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
-  overflow: auto;
-}
-
 .obs-template-gallery__detail-copy {
   min-width: 0;
   display: grid;
@@ -301,20 +321,7 @@ function selectPreset(id) {
 }
 
 @container (width < 48rem) {
-  .obs-template-gallery__layout {
-    grid-template-columns: 1fr;
-    overflow: auto;
-  }
-
-  .obs-template-gallery__groups {
-    overflow: visible;
-  }
-
-  .obs-template-gallery__detail {
-    padding-block-start: var(--ui-space-4);
-    padding-inline-start: 0;
-    border-block-start: var(--ui-border-width) solid var(--ui-color-border);
-    border-inline-start: 0;
+  .obs-template-gallery__catalog {
     overflow: visible;
   }
 }

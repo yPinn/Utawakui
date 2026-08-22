@@ -469,6 +469,7 @@ function resetPitchTempo() {
 const state = reactive({
   track: null, // { id, filename, url, stemsUrl? } | null
   isPlaying: false,
+  playbackPhase: 'idle',
   currentTime: 0,
   duration: 0,
   volume: DEFAULT_VOLUME,
@@ -501,10 +502,10 @@ let lastObservedCurrentTime = 0;
 let isUsingSeparatedAudioGraph = false;
 
 // Two kinds of state, written two different ways:
-// - isPlaying/currentTime/duration/error can change on their own (autoplay
-//   rejection, track finishing, decode errors) — written ONLY from the
-//   element's events below. Actions never assign them directly; that
-//   second write path is exactly how this would drift out of sync.
+// - isPlaying/playbackPhase/currentTime/duration/error can change on their
+//   own (autoplay rejection, track finishing, decode errors) — written ONLY
+//   from the element's events below. Actions never assign them directly;
+//   that second write path is exactly how this would drift out of sync.
 // - volume/isMuted/playbackMode/guideVocalOn/transposeSemitones/
 //   pitchCents/tempoRate mostly change via our own actions. The one
 //   event-owned reset (guide vocal on/off + pitch/tempo) is native
@@ -513,19 +514,49 @@ let isUsingSeparatedAudioGraph = false;
 //   here too.
 function handlePlay() {
   state.isPlaying = true;
+  state.currentTime = audio.currentTime || 0;
+  state.playbackPhase = 'buffering';
 }
 
 function handlePause() {
   state.isPlaying = false;
+  state.currentTime = audio.currentTime || 0;
+  state.playbackPhase = state.track ? 'paused' : 'idle';
 }
 
 function handleEnded() {
   state.isPlaying = false;
+  state.currentTime = audio.currentTime || state.currentTime;
+  state.playbackPhase = 'ended';
   endedListeners.forEach((listener) => listener());
+}
+
+function handlePlaying() {
+  state.currentTime = audio.currentTime || 0;
+  state.playbackPhase = 'playing';
+}
+
+function handleBuffering() {
+  if (!state.track) return;
+  state.currentTime = audio.currentTime || 0;
+  state.playbackPhase = 'buffering';
+}
+
+function handleSeeking() {
+  if (!state.track) return;
+  state.currentTime = audio.currentTime || 0;
+  state.playbackPhase = 'seeking';
+}
+
+function handleSeeked() {
+  if (!state.track) return;
+  state.currentTime = audio.currentTime || 0;
+  state.playbackPhase = state.isPlaying ? 'buffering' : 'paused';
 }
 
 function handleTimeUpdate() {
   const nextTime = audio.currentTime;
+  const didAdvance = nextTime !== lastObservedCurrentTime;
   if (isRepeatOneLoopWrap(lastObservedCurrentTime, nextTime)) {
     setGuideVocalOn(true);
     setCaptureGuideVocalOn(false);
@@ -533,16 +564,21 @@ function handleTimeUpdate() {
   }
   lastObservedCurrentTime = nextTime;
   state.currentTime = nextTime;
+  if (state.isPlaying && didAdvance && state.playbackPhase !== 'seeking') {
+    state.playbackPhase = 'playing';
+  }
 }
 
 function handleLoadedMetadata() {
   state.duration = audio.duration;
+  state.currentTime = audio.currentTime || 0;
   lastObservedCurrentTime = audio.currentTime || 0;
 }
 
 function handleError() {
   state.error = audio.error ? audio.error.message : '播放失敗';
   state.isPlaying = false;
+  state.playbackPhase = 'error';
 }
 
 function routeAudioGraph(usesSeparatedAudio) {
@@ -562,8 +598,13 @@ function routeAudioGraph(usesSeparatedAudio) {
 }
 
 audio.addEventListener('play', handlePlay);
+audio.addEventListener('playing', handlePlaying);
 audio.addEventListener('pause', handlePause);
 audio.addEventListener('ended', handleEnded);
+audio.addEventListener('waiting', handleBuffering);
+audio.addEventListener('stalled', handleBuffering);
+audio.addEventListener('seeking', handleSeeking);
+audio.addEventListener('seeked', handleSeeked);
 audio.addEventListener('timeupdate', handleTimeUpdate);
 audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 audio.addEventListener('error', handleError);
@@ -628,6 +669,7 @@ function clearTrack(trackId = null) {
   audio.removeAttribute('src');
   audio.load();
   state.track = null;
+  state.playbackPhase = 'idle';
   state.currentTime = 0;
   state.duration = 0;
   state.error = null;
@@ -739,8 +781,13 @@ function onEnded(listener) {
 
 function cleanupPlayerResources() {
   audio.removeEventListener('play', handlePlay);
+  audio.removeEventListener('playing', handlePlaying);
   audio.removeEventListener('pause', handlePause);
   audio.removeEventListener('ended', handleEnded);
+  audio.removeEventListener('waiting', handleBuffering);
+  audio.removeEventListener('stalled', handleBuffering);
+  audio.removeEventListener('seeking', handleSeeking);
+  audio.removeEventListener('seeked', handleSeeked);
   audio.removeEventListener('timeupdate', handleTimeUpdate);
   audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
   audio.removeEventListener('error', handleError);

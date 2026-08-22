@@ -64,7 +64,7 @@ describe('outputRuntime lifecycle', () => {
 describe('outputRuntime controller', () => {
   function createServerFactory() {
     const servers = [];
-    const factory = vi.fn(({ port }) => {
+    const factory = vi.fn(({ port, overlaySlots }) => {
       let running = false;
       const server = {
         port,
@@ -85,6 +85,8 @@ describe('outputRuntime controller', () => {
           running = false;
         }),
         publish: vi.fn(() => true),
+        setOverlaySlots: vi.fn(),
+        initialOverlaySlots: overlaySlots,
       };
       servers.push(server);
       return server;
@@ -97,7 +99,7 @@ describe('outputRuntime controller', () => {
     const runtime = createOutputRuntime({
       serverFactory: factory,
       getConfig: () => ({
-        outputRuntime: { autoStart: true, port: 8700 },
+        outputRuntime: { autoStart: true, port: 8700, displayDelayMs: 350 },
       }),
       requireFeatureGate: vi.fn(),
     });
@@ -106,6 +108,11 @@ describe('outputRuntime controller', () => {
       running: false,
       host: '127.0.0.1',
       port: 8700,
+    });
+    expect(runtime.getSettings()).toEqual({
+      autoStart: true,
+      port: 8700,
+      displayDelayMs: 350,
     });
     expect(factory).not.toHaveBeenCalled();
   });
@@ -171,6 +178,34 @@ describe('outputRuntime controller', () => {
     });
     expect(servers[0].stop).toHaveBeenCalledOnce();
     expect(servers[1].start).toHaveBeenCalledOnce();
+  });
+
+  it('keeps overlay slots across lazy creation and port changes', async () => {
+    const { factory, servers } = createServerFactory();
+    let config = { outputRuntime: { autoStart: true, port: 8700 } };
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => config,
+      requireFeatureGate: vi.fn(),
+    });
+    const slots = { lyrics: { templateId: 'focus-line' } };
+
+    runtime.setOverlaySlots(slots);
+    await runtime.start();
+    expect(servers[0].initialOverlaySlots).toEqual(slots);
+
+    runtime.setOverlaySlots({
+      ...slots,
+      setlist: { templateId: 'queue-board' },
+    });
+    expect(servers[0].setOverlaySlots).toHaveBeenCalledOnce();
+
+    config = { outputRuntime: { autoStart: true, port: 8702 } };
+    await runtime.reconfigure();
+    expect(servers[1].initialOverlaySlots).toMatchObject({
+      lyrics: { templateId: 'focus-line' },
+      setlist: { templateId: 'queue-board' },
+    });
   });
 
   it('retains a startup error in status for renderer diagnostics', async () => {

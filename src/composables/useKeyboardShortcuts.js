@@ -26,8 +26,8 @@ const TEMPO_STEP = 0.05;
 const VIEW_SHORTCUTS = {
   f1: 'setlist',
   f2: 'lyrics',
-  f3: 'import',
-  f4: 'output',
+  f3: 'output',
+  f4: 'import',
   f5: 'settings',
   f9: 'demo',
 };

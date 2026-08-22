@@ -1,10 +1,11 @@
-export const OUTPUT_TEMPLATE_KINDS = Object.freeze([
-  { id: 'now-playing', label: 'Now Playing' },
-  { id: 'setlist', label: 'Setlist' },
-  { id: 'lyrics', label: 'Lyrics' },
-  { id: 'artwork', label: 'Artwork' },
-  { id: 'composite', label: 'Composite' },
-]);
+import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+
+export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
+  OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
+    id: slot.id,
+    label: slot.label,
+  })),
+);
 
 const OUTPUT_KIND_ORDER = new Map(
   OUTPUT_TEMPLATE_KINDS.map((kind, index) => [kind.id, index]),
@@ -139,16 +140,16 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     name: 'Artwork Card',
     tone: 'lyrics',
     availability: {
-      label: '受限',
-      tone: 'warning',
+      label: '可用',
+      tone: 'muted',
       summary:
-        '目前對外輸出路徑先限制 artwork 顯示；此模板保留為後續開放項，因此排在後方。',
+        '目前使用曲名首字與 metadata 構成節目卡，封面素材接入後可原位擴充。',
     },
-    summary: '以封面與曲目 metadata 作為主要視覺，需等待 artwork 顯示開放。',
-    detail: '適合封面素材完整的曲庫；目前先作為後續支援的版型參考。',
+    summary: '以曲目 metadata 與識別圖塊構成獨立節目卡。',
+    detail: '適合需要比角落歌名更明確的曲目識別畫面。',
     preview: {
       title: 'Cover / Title',
-      lines: ['Artist: 星街すいせい', 'Artwork pending'],
+      lines: ['Artist: 星街すいせい', 'Metadata card'],
     },
     tags: ['封面', 'Metadata', '節目卡'],
     settings: [
@@ -214,38 +215,34 @@ export const OUTPUT_STYLE_SETS = Object.freeze([
   },
 ]);
 
-export const OUTPUT_PROFILES = Object.freeze([
-  {
-    id: 'default-now-next',
-    name: '直播角落歌名',
-    summary: '目前曲目與下一首，半透明深色底。',
-    source: 'Now / Next',
-    templateId: 'now-next',
-    updatedAt: '剛剛',
-    status: '草稿',
-    active: true,
-  },
-  {
-    id: 'waiting-board',
-    name: '等待畫面歌單板',
-    summary: '顯示 8 首待播歌曲與已唱紀錄。',
-    source: 'Queue Board',
-    templateId: 'queue-board',
-    updatedAt: '尚未保存',
-    status: '未保存',
-    active: false,
-  },
-  {
-    id: 'default-focus',
-    name: '置中即時歌詞',
-    summary: '目前行置中，保留柔和描邊與淡入淡出。',
-    source: 'Focus Line',
-    templateId: 'focus-line',
-    updatedAt: '尚未保存',
-    status: '草稿',
-    active: false,
-  },
-]);
+export const OUTPUT_SLOT_DEFINITIONS = Object.freeze(
+  OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
+    id: slot.id,
+    label: slot.label,
+    path: slot.path,
+  })),
+);
+
+export const OUTPUT_SLOT_DEFAULTS = Object.freeze(
+  Object.fromEntries(
+    OUTPUT_TEMPLATE_VALUES.slots.map((slot) => [
+      slot.id,
+      {
+        templateId: slot.defaultTemplateId,
+        styleSetIds: [...slot.defaultStyleSetIds],
+        settings: { ...slot.defaultSettings },
+      },
+    ]),
+  ),
+);
+
+export const OUTPUT_APPEARANCE_OPTIONS = Object.freeze(
+  Object.fromEntries(
+    Object.entries(OUTPUT_TEMPLATE_VALUES.appearanceOptions).map(
+      ([key, options]) => [key, options.map((option) => ({ ...option }))],
+    ),
+  ),
+);
 
 function normalizeOrder(value) {
   return Number.isFinite(value) ? value : 100;
@@ -295,17 +292,13 @@ export function groupOutputTemplatesByKind(templates = OUTPUT_TEMPLATES) {
   }));
 }
 
-export function getDefaultOutputProfile() {
-  return (
-    OUTPUT_PROFILES.find((profile) => profile.active) ?? OUTPUT_PROFILES[0]
-  );
-}
-
 export function getOutputWorkbenchData() {
   return {
     templates: orderOutputTemplates(OUTPUT_TEMPLATES),
     templateGroups: groupOutputTemplatesByKind(OUTPUT_TEMPLATES),
     styleSets: [...OUTPUT_STYLE_SETS],
-    configs: [...OUTPUT_PROFILES],
+    slotDefinitions: [...OUTPUT_SLOT_DEFINITIONS],
+    slotDefaults: structuredClone(OUTPUT_SLOT_DEFAULTS),
+    appearanceOptions: structuredClone(OUTPUT_APPEARANCE_OPTIONS),
   };
 }

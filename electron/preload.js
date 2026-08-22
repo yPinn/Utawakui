@@ -77,11 +77,9 @@ contextBridge.exposeInMainWorld('Utawakui', {
   stopOutput: () => ipcRenderer.invoke('output:stop'),
   publishOutputSnapshot: (snapshot) =>
     ipcRenderer.invoke('output:publish', snapshot),
-  listOutputProfiles: () => ipcRenderer.invoke('output-profiles:list'),
-  upsertOutputProfile: (profile) =>
-    ipcRenderer.invoke('output-profiles:upsert', profile),
-  selectOutputProfile: (profileId) =>
-    ipcRenderer.invoke('output-profiles:select', profileId),
+  listOutputSlots: () => ipcRenderer.invoke('output-slots:list'),
+  upsertOutputSlot: (kind, slot) =>
+    ipcRenderer.invoke('output-slots:upsert', kind, slot),
   listFeatureDependencies: () =>
     ipcRenderer.invoke('feature-dependencies:list'),
   prepareFeatureDependency: (dependencyId) =>

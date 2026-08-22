@@ -4,6 +4,7 @@ const { createOutputServer } = require('../lib/outputServer');
 const {
   host: OUTPUT_HOST,
   defaultPort: DEFAULT_OUTPUT_PORT,
+  defaultDisplayDelayMs: DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
 } = require('../../shared/outputRuntimeValues.json');
 
 function createIdleStatus(port) {
@@ -21,7 +22,11 @@ function createIdleStatus(port) {
 function createOutputRuntime({
   serverFactory = createOutputServer,
   getConfig = () => ({
-    outputRuntime: { autoStart: true, port: DEFAULT_OUTPUT_PORT },
+    outputRuntime: {
+      autoStart: true,
+      port: DEFAULT_OUTPUT_PORT,
+      displayDelayMs: DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
+    },
   }),
   requireFeatureGate = () => undefined,
   featureId = 'public-output-flow',
@@ -29,6 +34,7 @@ function createOutputRuntime({
   let server = null;
   let serverPort = null;
   let lastError = null;
+  let overlaySlots = {};
 
   function serializeError(error) {
     if (!error) return null;
@@ -45,6 +51,9 @@ function createOutputRuntime({
       port: Number.isSafeInteger(settings?.port)
         ? settings.port
         : DEFAULT_OUTPUT_PORT,
+      displayDelayMs: Number.isSafeInteger(settings?.displayDelayMs)
+        ? settings.displayDelayMs
+        : DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
     };
   }
 
@@ -54,7 +63,7 @@ function createOutputRuntime({
     if (server?.getStatus().running) {
       throw new Error('output runtime must stop before changing port');
     }
-    server = serverFactory({ port });
+    server = serverFactory({ port, overlaySlots });
     serverPort = port;
     return server;
   }
@@ -102,6 +111,11 @@ function createOutputRuntime({
     return server.publish(snapshot);
   }
 
+  function setOverlaySlots(slots) {
+    overlaySlots = { ...(slots ?? {}) };
+    server?.setOverlaySlots?.(overlaySlots);
+  }
+
   async function reconfigure() {
     const wasRunning = Boolean(server?.getStatus().running);
     if (server) await server.stop();
@@ -116,6 +130,7 @@ function createOutputRuntime({
     getStatus,
     publish,
     reconfigure,
+    setOverlaySlots,
     start,
     startConfigured,
     stop,

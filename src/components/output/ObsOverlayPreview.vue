@@ -18,7 +18,7 @@ let copyResetTimer = null;
 const isRunning = computed(() => props.outputStatus.running === true);
 const hasClients = computed(() => (props.outputStatus.clients ?? 0) > 0);
 const statusLabel = computed(() => {
-  if (hasClients.value) return 'OBS 已連線';
+  if (hasClients.value) return 'Browser Source 已連線';
   if (isRunning.value) return '服務可用';
   return '服務已停止';
 });
@@ -53,7 +53,7 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
         v-if="hasRuntimeTemplate"
         class="obs-overlay-preview__iframe"
         :src="previewUrl"
-        title="OBS Overlay 即時預覽"
+        title="Browser Source 即時預覽"
         sandbox="allow-scripts allow-same-origin"
         referrerpolicy="no-referrer"
       />
@@ -72,32 +72,32 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
     </div>
 
     <div class="obs-overlay-preview__toolbar">
-      <UiChip :tone="statusTone">
-        {{ statusLabel }}
-      </UiChip>
-      <span v-if="hasClients" class="obs-overlay-preview__client-count">
-        {{ outputStatus.clients }} 個來源
-      </span>
-    </div>
-
-    <div v-if="obsUrl" class="obs-overlay-preview__url-row">
-      <label class="visually-hidden" for="obs-overlay-url">OBS URL</label>
-      <input
-        id="obs-overlay-url"
-        class="obs-overlay-preview__url"
-        type="text"
-        :value="obsUrl"
-        readonly
-      />
+      <div class="obs-overlay-preview__status">
+        <UiChip :tone="statusTone">
+          {{ statusLabel }}
+        </UiChip>
+        <span v-if="hasClients" class="obs-overlay-preview__client-count">
+          {{ outputStatus.clients }} 個來源
+        </span>
+      </div>
       <UiButton
+        v-if="obsUrl"
         :icon="Copy"
-        title="複製 OBS URL"
-        aria-label="複製 OBS URL"
+        title="複製目前類型的 Browser Source URL"
+        aria-label="複製目前類型的 Browser Source URL"
         @click="copyObsUrl"
       />
     </div>
-    <p class="obs-overlay-preview__feedback" aria-live="polite">
-      <template v-if="copyState === 'copied'">已複製 OBS URL</template>
+
+    <p
+      v-if="copyState !== 'idle' || error"
+      class="obs-overlay-preview__feedback"
+      :role="copyState === 'error' || error ? 'alert' : 'status'"
+      aria-live="polite"
+    >
+      <template v-if="copyState === 'copied'">
+        已複製 Browser Source URL
+      </template>
       <template v-else-if="copyState === 'error'">無法複製 URL</template>
       <template v-else-if="error">{{ error }}</template>
     </p>
@@ -105,18 +105,6 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
 </template>
 
 <style scoped>
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 .obs-overlay-preview {
   inline-size: min(100%, var(--ui-output-workbench-stage-max-width));
   min-inline-size: 0;
@@ -190,38 +178,20 @@ onBeforeUnmount(() => clearTimeout(copyResetTimer));
   min-width: 0;
 }
 
+.obs-overlay-preview__status {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
 .obs-overlay-preview__client-count {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
 }
 
-.obs-overlay-preview__url-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: var(--ui-space-1);
-  min-width: 0;
-}
-
-.obs-overlay-preview__url {
-  min-width: 0;
-  height: var(--ui-control-height);
-  padding: var(--ui-space-1) var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text-muted);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
-}
-
-.obs-overlay-preview__url:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
 .obs-overlay-preview__feedback {
-  min-height: 1.25rem;
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);

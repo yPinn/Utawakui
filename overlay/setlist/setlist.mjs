@@ -1,4 +1,5 @@
 import { createOverlayConnection } from '../shared/runtime.mjs';
+import { applyOverlayAppearance } from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
@@ -42,6 +43,7 @@ function boot() {
   if (!root || !title || !rows) return;
 
   const previewMode = isPreviewMode(window.location);
+  applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, previewMode);
   if (previewMode) {
     root.hidden = false;
@@ -50,6 +52,8 @@ function boot() {
   }
 
   const connection = createOverlayConnection({
+    kind: 'setlist',
+    onConfig: (slot) => applyOverlayAppearance(document, slot),
     onSnapshot: (snapshot) => {
       const frame = withPreviewFallback(
         selectSetlistFrame(snapshot),

@@ -1,7 +1,7 @@
 .lyrics-overlay {
   /* Template layer: override these per profile/style set later. */
-  --ovl-template-lyrics-current-size: 3.5rem;
-  --ovl-template-lyrics-next-size: 1.75rem;
+  --ovl-template-lyrics-current-size: 3.5em;
+  --ovl-template-lyrics-next-size: 1.75em;
   --ovl-template-lyrics-max-width: 32ch;
   --ovl-template-lyrics-bottom: 9%;
 
@@ -14,8 +14,14 @@
   display: grid;
   justify-items: center;
   gap: var(--ovl-primitive-space-3);
+  padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
+  border: 1px solid var(--ovl-user-outline);
+  border-radius: var(--ovl-primitive-radius-md);
+  background: var(--ovl-user-surface);
+  font-size: var(--ovl-user-font-scale);
   pointer-events: none;
-  text-align: center;
+  text-align: var(--ovl-user-text-align);
+  justify-items: var(--ovl-user-justify);
 }
 
 .lyrics-overlay__current,
@@ -28,9 +34,9 @@
 
 .lyrics-overlay__current {
   color: var(--ovl-color-text-primary);
-  font-family: var(--ovl-font-display-cjk);
+  font-family: var(--ovl-user-font-family);
   font-size: var(--ovl-template-lyrics-current-size);
-  font-weight: 700;
+  font-weight: var(--ovl-user-font-weight);
   line-height: 1.22;
   text-shadow: var(--ovl-text-shadow);
   -webkit-text-stroke: 0.035em rgb(17 20 23 / 88%);
@@ -39,19 +45,29 @@
 
 .lyrics-overlay__next {
   color: var(--ovl-color-text-secondary);
-  font-family: var(--ovl-font-display-cjk);
+  font-family: var(--ovl-user-font-family);
   font-size: var(--ovl-template-lyrics-next-size);
-  font-weight: 600;
+  font-weight: var(--ovl-user-font-weight);
   line-height: 1.3;
   text-shadow: var(--ovl-text-shadow);
   -webkit-text-stroke: 0.025em rgb(17 20 23 / 78%);
   paint-order: stroke fill;
 }
 
+:root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
+  --ovl-template-lyrics-max-width: 38ch;
+  --ovl-template-lyrics-bottom: 6%;
+}
+
+:root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current,
+:root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
+  inline-size: 100%;
+}
+
 @media (max-height: 36rem) {
   .lyrics-overlay {
-    --ovl-template-lyrics-current-size: 2rem;
-    --ovl-template-lyrics-next-size: 1rem;
+    --ovl-template-lyrics-current-size: 2em;
+    --ovl-template-lyrics-next-size: 1em;
     --ovl-template-lyrics-bottom: 6%;
 
     gap: var(--ovl-primitive-space-2);

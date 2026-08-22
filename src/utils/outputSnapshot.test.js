@@ -20,6 +20,7 @@ describe('output snapshot contract', () => {
       version: OUTPUT_STATE_VERSION,
       revision: 4,
       generatedAt: '2026-08-22T00:00:00.000Z',
+      displayDelayMs: 0,
       playback: {
         status: 'idle',
         positionMs: 0,
@@ -44,7 +45,7 @@ describe('output snapshot contract', () => {
       generatedAt: '2026-08-22T00:00:00.000Z',
     });
 
-    expect(() => parseOutputSnapshot({ ...base, version: 2 })).toThrow(
+    expect(() => parseOutputSnapshot({ ...base, version: 999 })).toThrow(
       /version/i,
     );
     expect(() => parseOutputSnapshot({ ...base, generatedAt: '2026' })).toThrow(
@@ -56,6 +57,9 @@ describe('output snapshot contract', () => {
         lyrics: { ...base.lyrics, activeLineIndex: 1 },
       }),
     ).toThrow(/activeLineIndex/);
+    expect(() =>
+      parseOutputSnapshot({ ...base, displayDelayMs: 5001 }),
+    ).toThrow(/displayDelayMs/);
     expect(isOutputSnapshot({ ...base, revision: -1 })).toBe(false);
   });
 
@@ -103,11 +107,13 @@ describe('projectOutputSnapshot', () => {
         player: {
           track,
           isPlaying: true,
+          playbackPhase: 'buffering',
           currentTime: 12.345,
           duration: 95.6,
           tempoRate: 1.05,
           error: null,
         },
+        output: { displayDelayMs: 240 },
         queue: {
           sourceName: 'Tonight',
           historyEntries: [
@@ -141,11 +147,12 @@ describe('projectOutputSnapshot', () => {
     );
 
     expect(snapshot).toMatchObject({
-      version: 1,
+      version: 2,
       revision: 8,
       generatedAt: '2026-08-22T01:02:03.000Z',
+      displayDelayMs: 240,
       playback: {
-        status: 'playing',
+        status: 'buffering',
         positionMs: 12345,
         durationMs: 95600,
         rate: 1.05,

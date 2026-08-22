@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { renderLyricsFrame } from './lyrics.mjs';
+import { describe, expect, it, vi } from 'vitest';
+import { createLyricsFrameScheduler, renderLyricsFrame } from './lyrics.mjs';
 
 function element() {
   return {
@@ -54,5 +54,53 @@ describe('lyrics overlay renderer', () => {
     expect(elements.root.hidden).toBe(true);
     expect(elements.current.textContent).toBe('');
     expect(elements.next.textContent).toBe('');
+  });
+
+  it('renders again at the next timed lyric boundary without a new snapshot', () => {
+    let nowMs = Date.parse('2026-08-22T00:00:00.000Z');
+    const scheduled = [];
+    const frames = [];
+    const scheduler = createLyricsFrameScheduler({
+      now: () => nowMs,
+      onFrame: (frame) => frames.push(frame),
+      schedule: (callback, delay) => {
+        scheduled.push({ callback, delay });
+        return scheduled.length;
+      },
+      cancelSchedule: vi.fn(),
+    });
+    const value = {
+      version: 2,
+      revision: 2,
+      generatedAt: '2026-08-22T00:00:00.000Z',
+      displayDelayMs: 0,
+      playback: {
+        status: 'playing',
+        positionMs: 1000,
+        durationMs: 10000,
+        rate: 1,
+        track: { id: 'track-1', title: 'Song' },
+      },
+      lyrics: {
+        trackId: 'track-1',
+        source: { language: 'ja' },
+        synced: true,
+        offsetMs: 0,
+        activeLineIndex: 0,
+        lines: [
+          { text: 'first', startMs: 0, endMs: 2000 },
+          { text: 'second', startMs: 2000, endMs: 4000 },
+        ],
+      },
+    };
+
+    scheduler.update(value);
+    expect(frames.at(-1).currentText).toBe('first');
+    expect(scheduled.at(-1).delay).toBe(1000);
+
+    nowMs += 1000;
+    scheduled.at(-1).callback();
+    expect(frames.at(-1).currentText).toBe('second');
+    scheduler.stop();
   });
 });

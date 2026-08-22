@@ -76,7 +76,7 @@ describe('outputServer', () => {
     expect(health.headers.get('x-content-type-options')).toBe('nosniff');
     expect(await health.json()).toEqual({
       status: 'ok',
-      stateVersion: 1,
+      stateVersion: 2,
       revision: 0,
       clients: 0,
     });
@@ -84,7 +84,7 @@ describe('outputServer', () => {
     const state = await fetch(`${status.httpUrl}/api/v1/state`);
     expect(state.status).toBe(200);
     expect(state.headers.get('access-control-allow-origin')).toBeNull();
-    expect(await state.json()).toMatchObject({ version: 1, revision: 0 });
+    expect(await state.json()).toMatchObject({ version: 2, revision: 0 });
 
     const missing = await fetch(`${status.httpUrl}/not-allowed`);
     expect(missing.status).toBe(404);
@@ -109,6 +109,7 @@ describe('outputServer', () => {
       '/overlay/lyrics',
       '/overlay/now-playing',
       '/overlay/setlist',
+      '/overlay/artwork',
     ]) {
       const response = await fetch(`${status.httpUrl}${route}`);
       expect(response.status).toBe(200);
@@ -132,6 +133,11 @@ describe('outputServer', () => {
     expect(preview.status).toBe(200);
     expect(preview.headers.get('content-type')).toContain('text/javascript');
 
+    const appearance = await fetch(
+      `${status.httpUrl}/overlay/shared/appearance.mjs`,
+    );
+    expect(appearance.status).toBe(200);
+
     const encodedTraversal = await fetch(
       `${status.httpUrl}/overlay/%2e%2e%2fpackage.json`,
     );
@@ -152,7 +158,8 @@ describe('outputServer', () => {
 
     expect(await initialMessage).toMatchObject({
       type: 'state.snapshot',
-      snapshot: { version: 1, revision: 0 },
+      snapshot: { version: 2, revision: 0 },
+      overlayConfig: { version: 2, revision: 0, slots: {} },
     });
 
     const updateMessage = waitForMessage(socket);
@@ -173,6 +180,40 @@ describe('outputServer', () => {
     socket.close();
   });
 
+  it('pushes independent overlay slot changes without changing playback state', async () => {
+    const server = createServer({
+      overlaySlots: { lyrics: { templateId: 'focus-line' } },
+    });
+    const status = await server.start();
+    const socket = connect(status);
+    const initialMessage = waitForMessage(socket);
+    await waitForOpen(socket);
+    expect(await initialMessage).toMatchObject({
+      overlayConfig: {
+        revision: 0,
+        slots: { lyrics: { templateId: 'focus-line' } },
+      },
+    });
+
+    const configMessage = waitForMessage(socket);
+    server.setOverlaySlots({
+      lyrics: { templateId: 'karaoke-stack' },
+      setlist: { templateId: 'queue-board' },
+    });
+    expect(await configMessage).toMatchObject({
+      type: 'overlay.config.changed',
+      overlayConfig: {
+        revision: 1,
+        slots: {
+          lyrics: { templateId: 'karaoke-stack' },
+          setlist: { templateId: 'queue-board' },
+        },
+      },
+    });
+    expect(server.getSnapshot().revision).toBe(0);
+    socket.close();
+  });
+
   it('canonicalizes published state and rejects malformed snapshots', async () => {
     const server = createServer();
     await server.start();
@@ -186,7 +227,7 @@ describe('outputServer', () => {
 
     expect(server.publish(snapshot)).toBe(true);
     expect(server.getSnapshot()).not.toHaveProperty('privatePath');
-    expect(() => server.publish({ version: 1 })).toThrow(TypeError);
+    expect(() => server.publish({ version: 2 })).toThrow(TypeError);
   });
 
   it('rejects cross-origin WebSocket upgrades', async () => {

@@ -2,6 +2,8 @@ import { computed, reactive, readonly, watch } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
+import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
+import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
 import { projectOutputSnapshot } from '../utils/outputSnapshot.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
@@ -38,15 +40,15 @@ const state = reactive({
   settings: {
     autoStart: true,
     port: OUTPUT_RUNTIME_VALUES.defaultPort,
+    displayDelayMs: OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
   },
   suggestedPorts: [],
-  profiles: [],
-  selectedProfileId: null,
-  profilesLoaded: false,
+  slots: {},
+  slotsLoaded: false,
   isStarting: false,
   isStopping: false,
-  isLoadingProfiles: false,
-  isSavingProfile: false,
+  isLoadingSlots: false,
+  isSavingSlot: false,
   isLoadingSettings: false,
   isSavingSettings: false,
   error: '',
@@ -79,13 +81,12 @@ function applyStatus(value = {}) {
   }
 }
 
-function applyProfiles(document = {}) {
-  state.profiles = Array.isArray(document.profiles) ? document.profiles : [];
-  state.selectedProfileId =
-    typeof document.selectedProfileId === 'string'
-      ? document.selectedProfileId
-      : null;
-  state.profilesLoaded = true;
+function applySlots(document = {}) {
+  state.slots =
+    typeof document.slots === 'object' && document.slots !== null
+      ? { ...document.slots }
+      : {};
+  state.slotsLoaded = true;
 }
 
 function projectionInput() {
@@ -104,6 +105,9 @@ function projectionInput() {
       activeLineIndex: activeLineIndex.value,
       offsetSeconds: lyricsState.offsetSeconds,
     },
+    output: {
+      displayDelayMs: state.settings.displayDelayMs,
+    },
   };
 }
 
@@ -121,7 +125,6 @@ const publisher = createLatestAsyncPublisher(
     const accepted = await bridgeMethod('publishOutputSnapshot')({
       ...baseSnapshot,
       revision: nextRevision,
-      generatedAt: new Date().toISOString(),
     });
     if (!accepted && state.status.running) await refreshStatus();
     return accepted;
@@ -133,27 +136,29 @@ const publisher = createLatestAsyncPublisher(
   },
 );
 
-watch(projectedState, (snapshot) => {
-  if (state.status.running) publisher.request(snapshot);
-});
+function requestSnapshotPublish(snapshot) {
+  publisher.request({
+    ...snapshot,
+    generatedAt: new Date().toISOString(),
+  });
+}
 
-const selectedProfile = computed(
-  () =>
-    state.profiles.find((profile) => profile.id === state.selectedProfileId) ??
-    state.profiles[0] ??
-    null,
-);
+watch(projectedState, (snapshot) => {
+  if (state.status.running) requestSnapshotPublish(snapshot);
+});
 
 async function refreshStatus() {
   try {
     const status = await bridgeMethod('getOutputStatus')();
     applyStatus(status);
-    state.error = status.error?.message
-      ? `輸出服務啟動失敗：${status.error.message}`
-      : '';
+    const statusError = status.error?.message ?? '';
+    state.error = statusError ? `輸出服務啟動失敗：${statusError}` : '';
+    if (isOutputPortConflict(statusError)) await suggestPorts();
+    else state.suggestedPorts = [];
     return state.status;
   } catch (error) {
     state.error = errorMessage(error);
+    state.suggestedPorts = [];
     return state.status;
   }
 }
@@ -167,6 +172,9 @@ async function refreshSettings() {
       port: Number.isSafeInteger(settings.port)
         ? settings.port
         : OUTPUT_RUNTIME_VALUES.defaultPort,
+      displayDelayMs: Number.isSafeInteger(settings.displayDelayMs)
+        ? settings.displayDelayMs
+        : OUTPUT_RUNTIME_VALUES.defaultDisplayDelayMs,
     };
     state.error = '';
     return state.settings;
@@ -195,6 +203,7 @@ async function updateSettings(settings) {
     const result = await bridgeMethod('updateOutputSettings')({
       autoStart: settings.autoStart === true,
       port: Number(settings.port),
+      displayDelayMs: Number(settings.displayDelayMs),
     });
     state.settings = { ...result.settings };
     applyStatus(result.status);
@@ -202,8 +211,10 @@ async function updateSettings(settings) {
     state.error = '';
     return true;
   } catch (error) {
-    state.error = `保存輸出設定失敗：${errorMessage(error)}`;
-    await suggestPorts();
+    const message = errorMessage(error);
+    state.error = `保存輸出設定失敗：${message}`;
+    if (isOutputPortConflict(message)) await suggestPorts();
+    else state.suggestedPorts = [];
     return false;
   } finally {
     state.isSavingSettings = false;
@@ -222,10 +233,14 @@ async function start() {
   try {
     applyStatus(await bridgeMethod('startOutput')());
     state.error = '';
-    publisher.request(projectedState.value);
+    state.suggestedPorts = [];
+    requestSnapshotPublish(projectedState.value);
     return true;
   } catch (error) {
-    state.error = `啟動輸出失敗：${errorMessage(error)}`;
+    const message = errorMessage(error);
+    state.error = `啟動輸出失敗：${message}`;
+    if (isOutputPortConflict(message)) await suggestPorts();
+    else state.suggestedPorts = [];
     return false;
   } finally {
     state.isStarting = false;
@@ -237,6 +252,7 @@ async function stop() {
   try {
     applyStatus(await bridgeMethod('stopOutput')());
     state.error = '';
+    state.suggestedPorts = [];
     return true;
   } catch (error) {
     state.error = `停止輸出失敗：${errorMessage(error)}`;
@@ -246,59 +262,59 @@ async function stop() {
   }
 }
 
-async function loadProfiles(seedProfile = null) {
-  if (state.isLoadingProfiles) return;
-  state.isLoadingProfiles = true;
+async function loadSlots(seedSlots = {}) {
+  if (state.isLoadingSlots) return;
+  state.isLoadingSlots = true;
   try {
-    let document = await bridgeMethod('listOutputProfiles')();
-    if (document.profiles?.length === 0 && seedProfile) {
-      document = await bridgeMethod('upsertOutputProfile')(seedProfile);
-      document = await bridgeMethod('selectOutputProfile')(seedProfile.id);
-    } else if (!document.selectedProfileId && document.profiles?.[0]) {
-      document = await bridgeMethod('selectOutputProfile')(
-        document.profiles[0].id,
-      );
+    let document = await bridgeMethod('listOutputSlots')();
+    for (const [kind, seedSlot] of Object.entries(seedSlots)) {
+      if (document.slots?.[kind]) continue;
+      const payload = buildOutputSlotPayload(seedSlot);
+      if (payload) {
+        document = await bridgeMethod('upsertOutputSlot')(kind, payload);
+      }
     }
-    applyProfiles(document);
+    applySlots(document);
     state.error = '';
   } catch (error) {
-    state.error = `讀取輸出配置失敗：${errorMessage(error)}`;
+    state.error = `讀取輸出設定失敗：${errorMessage(error)}`;
   } finally {
-    state.isLoadingProfiles = false;
+    state.isLoadingSlots = false;
   }
 }
 
-async function saveTemplateSelection(templateId, seedProfile = null) {
-  const profile = selectedProfile.value ?? seedProfile;
-  if (!profile || typeof templateId !== 'string') return false;
+async function saveOutputSlot(kind, changes, seedSlot = null) {
+  const slot = state.slots[kind] ?? seedSlot;
+  const payload = buildOutputSlotPayload(slot, changes);
+  if (!payload) return false;
 
-  state.isSavingProfile = true;
+  state.isSavingSlot = true;
   try {
-    let document = await bridgeMethod('upsertOutputProfile')({
-      id: profile.id,
-      name: profile.name,
-      templateId,
-      styleSetIds: profile.styleSetIds ?? [],
-      settings: profile.settings ?? {},
-    });
-    if (document.selectedProfileId !== profile.id) {
-      document = await bridgeMethod('selectOutputProfile')(profile.id);
-    }
-    applyProfiles(document);
+    const document = await bridgeMethod('upsertOutputSlot')(kind, payload);
+    applySlots(document);
     state.error = '';
     return true;
   } catch (error) {
-    state.error = `保存輸出配置失敗：${errorMessage(error)}`;
+    state.error = `保存 ${kind} 輸出設定失敗：${errorMessage(error)}`;
     return false;
   } finally {
-    state.isSavingProfile = false;
+    state.isSavingSlot = false;
   }
+}
+
+function saveTemplateSelection(kind, templateId, seedSlot = null) {
+  return saveOutputSlot(kind, { templateId }, seedSlot);
+}
+
+function saveSlotSettings(kind, settings, seedSlot = null) {
+  return saveOutputSlot(kind, { settings }, seedSlot);
 }
 
 async function initialize() {
   if (initialized) return;
   initialized = true;
-  await Promise.all([refreshStatus(), refreshSettings()]);
+  await refreshSettings();
+  await refreshStatus();
 }
 
 watch(
@@ -313,15 +329,15 @@ watch(
 export function useOutputRuntime() {
   return {
     state: readonly(state),
-    selectedProfile,
     initialize,
     refreshStatus,
     refreshSettings,
-    suggestPorts,
     updateSettings,
     start,
     stop,
-    loadProfiles,
+    loadSlots,
+    saveOutputSlot,
+    saveSlotSettings,
     saveTemplateSelection,
   };
 }

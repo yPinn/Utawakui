@@ -1,25 +1,23 @@
 <script setup>
-import { computed, onMounted, shallowRef, watch } from 'vue';
+import { computed, onMounted, reactive, shallowRef, watch } from 'vue';
 import { useOutputRuntimeContext } from '../../composables/outputRuntimeContext.js';
-import {
-  buildOutputTemplateUrls,
-  outputPathForTemplate,
-} from '../../utils/outputRoutes.js';
+import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputSettings from './ObsOutputSettings.vue';
+import ObsOutputTabs from './ObsOutputTabs.vue';
 import ObsTemplateGallery from './ObsTemplateGallery.vue';
-import ObsWorkbenchPanel from './ObsWorkbenchPanel.vue';
-import UiChip from '../ui/UiChip.vue';
+import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
-  styleSets: { type: Array, default: () => [] },
-  configs: { type: Array, default: () => [] },
+  slotDefinitions: { type: Array, default: () => [] },
+  slotDefaults: { type: Object, default: () => ({}) },
+  appearanceOptions: { type: Object, default: () => ({}) },
 });
 
 const pages = [
-  { id: 'gallery', label: '模板庫' },
   { id: 'workbench', label: '工作台' },
+  { id: 'gallery', label: '模板庫' },
   { id: 'settings', label: '輸出設定' },
 ];
 
@@ -30,64 +28,79 @@ function orderPresets(presets) {
   });
 }
 
-const activePage = shallowRef('gallery');
+const activePage = shallowRef('workbench');
 const orderedPresets = computed(() => orderPresets(props.presets));
-const browsedPresetId = shallowRef(orderedPresets.value[0]?.id ?? null);
+const activeKind = shallowRef(
+  props.templateGroups[0]?.kind ?? props.slotDefinitions[0]?.id ?? null,
+);
+const browsedPresetIds = reactive(
+  Object.fromEntries(
+    props.templateGroups.map((group) => [
+      group.kind,
+      group.templates[0]?.id ?? null,
+    ]),
+  ),
+);
 const {
   state: outputState,
-  selectedProfile,
   start: startOutput,
   stop: stopOutput,
-  loadProfiles,
+  loadSlots,
+  saveSlotSettings,
   saveTemplateSelection,
-  suggestPorts,
   updateSettings,
 } = useOutputRuntimeContext();
 
-const seedProfile = computed(() => {
-  const profile =
-    props.configs.find((candidate) => candidate.active) ?? props.configs[0];
-  if (!profile) return null;
-  return {
-    id: profile.id,
-    name: profile.name,
-    templateId: profile.templateId,
-    styleSetIds: profile.styleSetIds ?? [],
-    settings: profile.settings ?? {},
-  };
-});
 const browsedPreset = computed(
   () =>
     orderedPresets.value.find(
-      (preset) => preset.id === browsedPresetId.value,
+      (preset) => preset.id === browsedPresetIds[activeKind.value],
     ) ??
-    orderedPresets.value[0] ??
+    orderedPresets.value.find((preset) => preset.kind === activeKind.value) ??
+    null,
+);
+const activeSlot = computed(
+  () =>
+    outputState.slots[activeKind.value] ??
+    props.slotDefaults[activeKind.value] ??
     null,
 );
 const appliedPreset = computed(
   () =>
     orderedPresets.value.find(
-      (preset) => preset.id === selectedProfile.value?.templateId,
-    ) ??
-    orderedPresets.value[0] ??
-    null,
+      (preset) => preset.id === activeSlot.value?.templateId,
+    ) ?? null,
 );
-const workbenchUrls = computed(() =>
-  buildOutputTemplateUrls(outputState.status, appliedPreset.value?.id),
+const appliedPresetIds = computed(() =>
+  Object.fromEntries(
+    props.slotDefinitions.map((slot) => [
+      slot.id,
+      outputState.slots[slot.id]?.templateId ??
+        props.slotDefaults[slot.id]?.templateId ??
+        null,
+    ]),
+  ),
 );
-const browsedPresetSupported = computed(() =>
-  Boolean(outputPathForTemplate(browsedPreset.value?.id)),
-);
+const outputUrls = computed(() => buildAllOutputSlotUrls(outputState.status));
+const workbenchUrls = computed(() => outputUrls.value[activeKind.value] ?? {});
 const runtimeBusy = computed(
   () =>
     outputState.isStarting ||
     outputState.isStopping ||
-    outputState.isSavingSettings,
+    outputState.isSavingSettings ||
+    outputState.isSavingSlot,
 );
 
-watch(orderedPresets, (presets) => {
-  if (!presets.some((preset) => preset.id === browsedPresetId.value)) {
-    browsedPresetId.value = presets[0]?.id ?? null;
+watch([orderedPresets, () => outputState.slots], ([presets]) => {
+  for (const definition of props.slotDefinitions) {
+    const currentId = browsedPresetIds[definition.id];
+    if (!presets.some((preset) => preset.id === currentId)) {
+      browsedPresetIds[definition.id] =
+        outputState.slots[definition.id]?.templateId ??
+        props.slotDefaults[definition.id]?.templateId ??
+        presets.find((preset) => preset.kind === definition.id)?.id ??
+        null;
+    }
   }
 });
 
@@ -96,12 +109,34 @@ function selectPage(page) {
 }
 
 function selectPreset(id) {
-  browsedPresetId.value = id;
+  const preset = orderedPresets.value.find((candidate) => candidate.id === id);
+  if (!preset) return;
+  activeKind.value = preset.kind;
+  browsedPresetIds[preset.kind] = id;
+}
+
+function selectKind(kind) {
+  if (!props.slotDefinitions.some((slot) => slot.id === kind)) return;
+  activeKind.value = kind;
 }
 
 async function applyPreset(id) {
-  const saved = await saveTemplateSelection(id, seedProfile.value);
-  if (saved) browsedPresetId.value = id;
+  const preset = orderedPresets.value.find((candidate) => candidate.id === id);
+  if (!preset) return;
+  const saved = await saveTemplateSelection(
+    preset.kind,
+    preset.id,
+    props.slotDefaults[preset.kind],
+  );
+  if (saved) browsedPresetIds[preset.kind] = id;
+}
+
+async function saveAppearance(settings) {
+  await saveSlotSettings(
+    activeKind.value,
+    settings,
+    props.slotDefaults[activeKind.value],
+  );
 }
 
 async function saveRuntimeSettings(settings) {
@@ -109,9 +144,10 @@ async function saveRuntimeSettings(settings) {
 }
 
 onMounted(async () => {
-  await loadProfiles(seedProfile.value);
-  if (selectedProfile.value?.templateId) {
-    browsedPresetId.value = selectedProfile.value.templateId;
+  await loadSlots(props.slotDefaults);
+  for (const definition of props.slotDefinitions) {
+    const templateId = outputState.slots[definition.id]?.templateId;
+    if (templateId) browsedPresetIds[definition.id] = templateId;
   }
 });
 </script>
@@ -119,30 +155,15 @@ onMounted(async () => {
 <template>
   <div class="obs-output-workspace">
     <header class="obs-output-workspace__modebar">
-      <div
-        class="obs-output-workspace__tabs"
-        role="tablist"
+      <ObsOutputTabs
+        :items="pages"
+        :active-id="activePage"
         aria-label="OBS 輸出頁面"
-      >
-        <button
-          v-for="page in pages"
-          :id="`obs-output-${page.id}-tab`"
-          :key="page.id"
-          type="button"
-          class="obs-output-workspace__tab"
-          :class="{
-            'obs-output-workspace__tab--active': activePage === page.id,
-          }"
-          role="tab"
-          :aria-selected="activePage === page.id"
-          :aria-controls="`obs-output-${page.id}-panel`"
-          :tabindex="activePage === page.id ? 0 : -1"
-          @click="selectPage(page.id)"
-        >
-          {{ page.label }}
-        </button>
-      </div>
-      <UiChip tone="gated">對外輸出 Gate</UiChip>
+        tab-id-prefix="obs-output"
+        panel-id-prefix="obs-output"
+        variant="panel"
+        @update:active-id="selectPage"
+      />
     </header>
 
     <section
@@ -155,10 +176,11 @@ onMounted(async () => {
       <ObsTemplateGallery
         :presets="orderedPresets"
         :template-groups="templateGroups"
+        :active-kind="activeKind"
         :selected-preset-id="browsedPreset?.id ?? null"
-        :applied-preset-id="appliedPreset?.id ?? null"
-        :output-supported="browsedPresetSupported"
-        :is-applying="outputState.isSavingProfile"
+        :applied-preset-ids="appliedPresetIds"
+        :is-applying="outputState.isSavingSlot"
+        @update:active-kind="selectKind"
         @update:selected-preset-id="selectPreset"
         @apply-preset="applyPreset"
         @open-workbench="selectPage('workbench')"
@@ -172,14 +194,19 @@ onMounted(async () => {
       role="tabpanel"
       aria-labelledby="obs-output-workbench-tab"
     >
-      <ObsWorkbenchPanel
+      <ObsSlotWorkbench
         :preset="appliedPreset"
-        :profile="selectedProfile"
-        :style-sets="styleSets"
+        :output-slot="activeSlot"
+        :active-kind="activeKind"
+        :slot-definitions="slotDefinitions"
+        :appearance-options="appearanceOptions"
         :output-status="outputState.status"
         :preview-url="workbenchUrls.previewUrl"
         :obs-url="workbenchUrls.obsUrl"
         :output-error="outputState.error"
+        :is-saving="outputState.isSavingSlot"
+        @update:active-kind="selectKind"
+        @save-settings="saveAppearance"
         @open-gallery="selectPage('gallery')"
       />
     </section>
@@ -195,13 +222,11 @@ onMounted(async () => {
         :status="outputState.status"
         :settings="outputState.settings"
         :suggested-ports="outputState.suggestedPorts"
-        :obs-url="workbenchUrls.obsUrl"
         :busy="runtimeBusy"
         :error="outputState.error"
         @save="saveRuntimeSettings"
         @start="startOutput"
         @stop="stopOutput"
-        @suggest-ports="suggestPorts"
       />
     </section>
   </div>
@@ -224,44 +249,6 @@ onMounted(async () => {
   gap: var(--ui-space-2);
 }
 
-.obs-output-workspace__tabs {
-  display: inline-flex;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-}
-
-.obs-output-workspace__tab {
-  min-height: var(--ui-control-height);
-  padding: var(--ui-space-1) var(--ui-space-3);
-  border: 0;
-  border-radius: var(--ui-radius-sm);
-  background: transparent;
-  color: var(--ui-color-text-muted);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-  cursor: pointer;
-}
-
-.obs-output-workspace__tab:hover {
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-}
-
-.obs-output-workspace__tab:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.obs-output-workspace__tab--active {
-  background: var(--ui-color-surface-selected);
-  color: var(--ui-color-accent);
-}
-
 .obs-output-workspace__panel {
   min-height: 0;
   min-width: 0;
@@ -273,9 +260,8 @@ onMounted(async () => {
     flex-direction: column;
   }
 
-  .obs-output-workspace__tabs {
+  :deep(.obs-output-tabs) {
     max-width: 100%;
-    overflow-x: auto;
   }
 }
 </style>
