@@ -8,6 +8,8 @@ import {
   ensureYtdlpDependency,
   ensureModelDependency,
   getFfmpegDependency,
+  getFeatureDependencies,
+  getFeatureDependency,
   getPreparedFfmpegPath,
   getPreparedSeparationModelPath,
   getPreparedYtdlpPath,
@@ -16,6 +18,7 @@ import {
   getYtdlpDependency,
   getYtdlpPaths,
   getModelDependencyPaths,
+  getSeparationModelDependency,
   listFeatureDependencyStatuses,
   prepareFeatureDependency,
   removeFeatureDependency,
@@ -947,6 +950,96 @@ describe('yt-dlp feature dependency', () => {
 });
 
 describe('model feature dependencies', () => {
+  it('pins HQ4 as the active general dependency and hides superseded HQ3', () => {
+    expect(getSeparationModelDependency('inst-hq4')).toMatchObject({
+      id: 'uvr-mdxnet-inst-hq-4',
+      version: 'UVR-MDX-NET-Inst_HQ_4',
+      sha256:
+        '3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8',
+      expectedSize: 59074342,
+      supersedes: ['uvr-mdxnet-inst-hq-3'],
+    });
+    expect(getFeatureDependencies().map(({ id }) => id)).not.toContain(
+      'uvr-mdxnet-inst-hq-3',
+    );
+    expect(getFeatureDependency('uvr-mdxnet-inst-hq-3')).toMatchObject({
+      deprecated: true,
+      modelId: 'inst-hq3',
+    });
+  });
+
+  it('removes a superseded managed model only after the replacement verifies', async () => {
+    const userDataDir = makeTempDir();
+    const oldBuffer = Buffer.from('old model bytes');
+    const newBuffer = Buffer.from('new model bytes');
+    const oldDependency = {
+      ...makeModelDependency(oldBuffer),
+      id: 'old-model',
+      modelId: 'old-model-id',
+      deprecated: true,
+    };
+    const newDependency = {
+      ...makeModelDependency(newBuffer),
+      id: 'new-model',
+      modelId: 'new-model-id',
+      supersedes: [oldDependency.id],
+    };
+    const oldPaths = getModelDependencyPaths(userDataDir, oldDependency);
+    fs.mkdirSync(path.dirname(oldPaths.filePath), { recursive: true });
+    fs.writeFileSync(oldPaths.filePath, oldBuffer);
+
+    await ensureModelDependency(userDataDir, newDependency.modelId, {
+      dependency: newDependency,
+      registryDependencies: [oldDependency, newDependency],
+      fetchImpl: vi.fn().mockResolvedValue({
+        ok: true,
+        arrayBuffer: () => Promise.resolve(arrayBufferFrom(newBuffer)),
+      }),
+    });
+
+    expect(fs.existsSync(oldPaths.installDir)).toBe(false);
+    expect(
+      fs.existsSync(
+        getModelDependencyPaths(userDataDir, newDependency).filePath,
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps the superseded model when replacement verification fails', async () => {
+    const userDataDir = makeTempDir();
+    const oldBuffer = Buffer.from('old model bytes');
+    const expectedNewBuffer = Buffer.from('expected new model bytes');
+    const oldDependency = {
+      ...makeModelDependency(oldBuffer),
+      id: 'old-model',
+      modelId: 'old-model-id',
+      deprecated: true,
+    };
+    const newDependency = {
+      ...makeModelDependency(expectedNewBuffer),
+      id: 'new-model',
+      modelId: 'new-model-id',
+      supersedes: [oldDependency.id],
+    };
+    const oldPaths = getModelDependencyPaths(userDataDir, oldDependency);
+    fs.mkdirSync(path.dirname(oldPaths.filePath), { recursive: true });
+    fs.writeFileSync(oldPaths.filePath, oldBuffer);
+
+    await expect(
+      ensureModelDependency(userDataDir, newDependency.modelId, {
+        dependency: newDependency,
+        registryDependencies: [oldDependency, newDependency],
+        fetchImpl: vi.fn().mockResolvedValue({
+          ok: true,
+          arrayBuffer: () =>
+            Promise.resolve(arrayBufferFrom(Buffer.from('corrupt'))),
+        }),
+      }),
+    ).rejects.toThrow(/size|checksum/i);
+
+    expect(fs.existsSync(oldPaths.filePath)).toBe(true);
+  });
+
   it('reports model download progress when preparing a managed model', async () => {
     const userDataDir = makeTempDir();
     const modelBuffer = Buffer.from('fake model bytes');

@@ -27,7 +27,7 @@ const YTDLP_DEPENDENCY_ID = 'yt-dlp-provider-tool';
 const DEFAULT_MAX_FEATURE_DEPENDENCY_DOWNLOAD_BYTES = 512 * 1024 * 1024;
 const SEPARATION_MODEL_DEPENDENCY_IDS = Object.freeze({
   kara2: 'uvr-mdxnet-kara-2',
-  'inst-hq3': 'uvr-mdxnet-inst-hq-3',
+  'inst-hq4': 'uvr-mdxnet-inst-hq-4',
 });
 
 function getFeatureDependency(
@@ -40,7 +40,7 @@ function getFeatureDependency(
 }
 
 function getFeatureDependencies(dependencies = registry.dependencies) {
-  return dependencies.slice();
+  return dependencies.filter((dependency) => dependency.deprecated !== true);
 }
 
 function getFfmpegDependency() {
@@ -1042,6 +1042,36 @@ function installModelBuffer(userDataDir, dependency, buffer, options = {}) {
   atomicWriteBuffer(filePath, buffer);
   writeDependencyNotices(installDir, dependency);
   writeDependencyManifest(manifestPath, dependency, options);
+  return filePath;
+}
+
+function removeSupersededModelDependencies(
+  userDataDir,
+  dependency,
+  dependencies = registry.dependencies,
+) {
+  for (const dependencyId of dependency.supersedes || []) {
+    const superseded = getFeatureDependency(dependencyId, dependencies);
+    if (
+      !superseded ||
+      superseded.kind !== 'model' ||
+      superseded.deprecated !== true
+    ) {
+      throw new Error(`invalid superseded model dependency: ${dependencyId}`);
+    }
+    fs.rmSync(getModelDependencyPaths(userDataDir, superseded).installDir, {
+      recursive: true,
+      force: true,
+    });
+  }
+}
+
+function finishModelDependency(userDataDir, dependency, filePath, options) {
+  removeSupersededModelDependencies(
+    userDataDir,
+    dependency,
+    options.registryDependencies,
+  );
   emitProgress(options, { stage: 'ready', percent: 100 });
   return filePath;
 }
@@ -1062,14 +1092,24 @@ async function ensureModelDependency(userDataDir, modelId, options = {}) {
     if (!fs.existsSync(paths.manifestPath)) {
       writeDependencyManifest(paths.manifestPath, dependency, options);
     }
-    return paths.filePath;
+    return finishModelDependency(
+      userDataDir,
+      dependency,
+      paths.filePath,
+      options,
+    );
   }
 
   if (isModelFileValid(paths.legacyPath, dependency, { verifySha: true })) {
-    return installModelBuffer(
+    return finishModelDependency(
       userDataDir,
       dependency,
-      fs.readFileSync(paths.legacyPath),
+      installModelBuffer(
+        userDataDir,
+        dependency,
+        fs.readFileSync(paths.legacyPath),
+        options,
+      ),
       options,
     );
   }
@@ -1080,7 +1120,12 @@ async function ensureModelDependency(userDataDir, modelId, options = {}) {
     options,
     dependency,
   );
-  return installModelBuffer(userDataDir, dependency, buffer, options);
+  return finishModelDependency(
+    userDataDir,
+    dependency,
+    installModelBuffer(userDataDir, dependency, buffer, options),
+    options,
+  );
 }
 
 function getPreparedSeparationModelPath(userDataDir, modelId) {

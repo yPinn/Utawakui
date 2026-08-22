@@ -93,13 +93,31 @@
       "fileRelativePath": "UVR_MDXNET_KARA_2.onnx"
     },
     {
+      "id": "uvr-mdxnet-inst-hq-4",
+      "featureId": "audio-processing-flow",
+      "kind": "model",
+      "platform": "win32",
+      "arch": "x64",
+      "modelId": "inst-hq4",
+      "name": "人聲分離模型（推薦）",
+      "version": "UVR-MDX-NET-Inst_HQ_4",
+      "license": "MIT",
+      "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
+      "sourceUrl": "https://github.com/TRvlvr/model_repo/releases/tag/all_public_uvr_models",
+      "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_4.onnx",
+      "sha256": "3c4b5b9b05090fdf238f38ba5046813982d50e2a652e9cb3324ea79720c3c9c8",
+      "expectedSize": 59074342,
+      "fileRelativePath": "UVR-MDX-NET-Inst_HQ_4.onnx",
+      "supersedes": ["uvr-mdxnet-inst-hq-3"]
+    },
+    {
       "id": "uvr-mdxnet-inst-hq-3",
       "featureId": "audio-processing-flow",
       "kind": "model",
       "platform": "win32",
       "arch": "x64",
       "modelId": "inst-hq3",
-      "name": "人聲分離模型（推薦）",
+      "name": "人聲分離模型（舊版）",
       "version": "UVR-MDX-NET-Inst_HQ_3",
       "license": "MIT",
       "licenseUrl": "https://github.com/Anjok07/ultimatevocalremovergui#license",
@@ -107,7 +125,8 @@
       "downloadUrl": "https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_3.onnx",
       "sha256": "317554b07fe1ea5279a77f2b1520a41ea4b93432560c4ffd08792c30fddf9adc",
       "expectedSize": 66759214,
-      "fileRelativePath": "UVR-MDX-NET-Inst_HQ_3.onnx"
+      "fileRelativePath": "UVR-MDX-NET-Inst_HQ_3.onnx",
+      "deprecated": true
     }
   ]
 }

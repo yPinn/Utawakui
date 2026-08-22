@@ -24,13 +24,13 @@ describe('audio-processing recipes', () => {
     });
     expect(resolveRecipe('general')).toMatchObject({
       id: 'general',
-      profileId: 'mdx-inst-hq3-v1',
-      modelIds: ['inst-hq3'],
+      profileId: 'mdx-inst-hq4-v1',
+      modelIds: ['inst-hq4'],
     });
     expect(isRunnableRecipe('standard')).toBe(false);
     expect(isRunnableRecipe('clean')).toBe(false);
-    expect(isRunnableRecipe('benchmark-hq4')).toBe(false);
-    expect(() => resolveRecipe('benchmark-hq4')).toThrow(/unknown/i);
+    expect(isRunnableRecipe('benchmark-hq3')).toBe(false);
+    expect(() => resolveRecipe('benchmark-hq3')).toThrow(/unknown/i);
   });
 
   it('publishes a safe, unique product catalog with general as the default', () => {
@@ -72,8 +72,8 @@ describe('audio-processing recipes', () => {
     expect(resolveRecipe('general')).toMatchObject({
       id: 'general',
       engineId: 'onnx-mdx',
-      profileId: 'mdx-inst-hq3-v1',
-      modelIds: ['inst-hq3'],
+      profileId: 'mdx-inst-hq4-v1',
+      modelIds: ['inst-hq4'],
     });
     expect(isRunnableRecipe('quick')).toBe(true);
     expect(isRunnableRecipe('general')).toBe(true);

@@ -86,8 +86,8 @@ describe('resolvePreset', () => {
       modelId: 'kara2',
     });
     expect(resolvePreset('general')).toMatchObject({
-      profileId: 'mdx-inst-hq3-v1',
-      modelId: 'inst-hq3',
+      profileId: 'mdx-inst-hq4-v1',
+      modelId: 'inst-hq4',
     });
     expect(resolvePreset(undefined)).toEqual(SEPARATION_PRESETS.general);
   });
@@ -103,7 +103,9 @@ describe('resolvePreset', () => {
   it('keeps old direct worker ids as execution aliases', () => {
     expect(resolvePreset('standard')).toEqual(SEPARATION_PRESETS.quick);
     expect(resolvePreset('clean')).toEqual(SEPARATION_PRESETS.general);
-    expect(resolvePreset('inst-hq3')).toEqual(SEPARATION_PRESETS.general);
+    expect(resolvePreset('inst-hq3')).toEqual(
+      SEPARATION_PRESETS['benchmark-hq3'],
+    );
   });
 
   it('falls back to the general preset for an unknown or missing id', () => {
@@ -122,7 +124,7 @@ describe('resolvePreset', () => {
     });
   });
 
-  it('exposes the pinned Inst HQ4 candidate only through a benchmark profile', () => {
+  it('promotes pinned Inst HQ4 to general and keeps HQ3 benchmark-only', () => {
     expect(MODELS['inst-hq4']).toEqual({
       filename: 'UVR-MDX-NET-Inst_HQ_4.onnx',
       nFft: 5120,
@@ -131,9 +133,15 @@ describe('resolvePreset', () => {
       compensate: 1.019,
       primaryStem: 'instrumental',
     });
-    expect(SEPARATION_PRESETS['benchmark-hq4']).toEqual({
-      profileId: 'mdx-inst-hq4-candidate-v1',
+    expect(SEPARATION_PRESETS.general).toEqual({
+      profileId: 'mdx-inst-hq4-v1',
       modelId: 'inst-hq4',
+      overlap: 0.25,
+      enableDenoise: true,
+    });
+    expect(SEPARATION_PRESETS['benchmark-hq3']).toEqual({
+      profileId: 'mdx-inst-hq3-v1',
+      modelId: 'inst-hq3',
       overlap: 0.25,
       enableDenoise: true,
     });
@@ -143,16 +151,16 @@ describe('resolvePreset', () => {
 describe('resolveExecutionPreset', () => {
   it('accepts a recipe only when its resolved profile and model agree', () => {
     expect(
-      resolveExecutionPreset('general', 'mdx-inst-hq3-v1', 'inst-hq3'),
+      resolveExecutionPreset('general', 'mdx-inst-hq4-v1', 'inst-hq4'),
     ).toEqual(SEPARATION_PRESETS.general);
   });
 
   it('fails before inference when recipe provenance drifts', () => {
     expect(() =>
-      resolveExecutionPreset('general', 'mdx-kara2-v1', 'inst-hq3'),
+      resolveExecutionPreset('general', 'mdx-kara2-v1', 'inst-hq4'),
     ).toThrow(/profile/i);
     expect(() =>
-      resolveExecutionPreset('general', 'mdx-inst-hq3-v1', 'kara2'),
+      resolveExecutionPreset('general', 'mdx-inst-hq4-v1', 'kara2'),
     ).toThrow(/model/i);
   });
 });

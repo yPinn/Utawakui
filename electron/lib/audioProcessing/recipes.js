@@ -23,8 +23,8 @@ const ENGINE_RECIPE_DEFINITIONS = Object.freeze({
   general: Object.freeze({
     id: 'general',
     engineId: 'onnx-mdx',
-    profileId: 'mdx-inst-hq3-v1',
-    modelIds: Object.freeze(['inst-hq3']),
+    profileId: 'mdx-inst-hq4-v1',
+    modelIds: Object.freeze(['inst-hq4']),
     engineRecipeId: 'general',
   }),
 });

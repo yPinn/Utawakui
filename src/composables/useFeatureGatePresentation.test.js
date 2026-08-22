@@ -59,7 +59,7 @@ describe('useFeatureGatePresentation', () => {
         .value,
     ).toBe('產生人聲分離結果時使用');
     expect(
-      findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-inst-hq-3')
+      findItem(presentation, 'audio-processing-flow', 'uvr-mdxnet-inst-hq-4')
         .value,
     ).toBe('產生人聲分離結果時使用');
   });

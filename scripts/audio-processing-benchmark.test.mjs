@@ -29,7 +29,7 @@ describe('audio-processing benchmark helpers', () => {
     });
   });
 
-  it('accepts isolated product baselines and the benchmark-only HQ4 candidate', () => {
+  it('accepts the HQ4 product profile and benchmark-only HQ3 baseline', () => {
     const root = path.resolve('tasks', 'audio-benchmark');
     const valid = {
       outputRoot: root,
@@ -58,13 +58,13 @@ describe('audio-processing benchmark helpers', () => {
         jobs: [
           {
             ...valid.jobs[0],
-            outputDir: path.join(root, 'track-1', 'benchmark-hq4'),
-            recipeId: 'benchmark-hq4',
-            modelPath: path.resolve('models', 'inst-hq4.onnx'),
+            outputDir: path.join(root, 'track-1', 'benchmark-hq3'),
+            recipeId: 'benchmark-hq3',
+            modelPath: path.resolve('models', 'inst-hq3.onnx'),
           },
         ],
       }),
-    ).toMatchObject({ jobs: [{ recipeId: 'benchmark-hq4' }] });
+    ).toMatchObject({ jobs: [{ recipeId: 'benchmark-hq3' }] });
     expect(() =>
       validateBenchmarkConfig({
         ...valid,

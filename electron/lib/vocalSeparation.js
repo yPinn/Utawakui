@@ -35,10 +35,9 @@ const MODELS = {
     compensate: 1.022,
     primaryStem: 'instrumental',
   },
-  // Benchmark candidate only. This model is deliberately absent from the
-  // product dependency catalog and public recipe registry until it beats HQ3
-  // on the local challenge corpus. Values are keyed by UVR's last-10,240,000
-  // byte MD5 0f2a6bc5b49d87d64728ee40e23bceb1.
+  // Active `general` model since the 2026-08-23 local benchmark/listening
+  // decision. Values are keyed by UVR's last-10,240,000-byte MD5
+  // 0f2a6bc5b49d87d64728ee40e23bceb1.
   'inst-hq4': {
     filename: 'UVR-MDX-NET-Inst_HQ_4.onnx',
     nFft: 5120,
@@ -213,16 +212,17 @@ const SEPARATION_PRESETS = {
     enableDenoise: false,
   },
   general: {
-    profileId: 'mdx-inst-hq3-v1',
-    modelId: 'inst-hq3',
+    profileId: 'mdx-inst-hq4-v1',
+    modelId: 'inst-hq4',
     overlap: 0.25,
     enableDenoise: true,
   },
-  // Internal benchmark route, unreachable from the product recipe trust
-  // boundary. Keep it here so the same worker/DSP code compares HQ3 and HQ4.
-  'benchmark-hq4': {
-    profileId: 'mdx-inst-hq4-candidate-v1',
-    modelId: 'inst-hq4',
+  // Internal benchmark/legacy route, unreachable from the product recipe
+  // trust boundary. It preserves exact HQ3 execution provenance after HQ4
+  // becomes the model behind the stable `general` product recipe.
+  'benchmark-hq3': {
+    profileId: 'mdx-inst-hq3-v1',
+    modelId: 'inst-hq3',
     overlap: 0.25,
     enableDenoise: true,
   },
@@ -238,7 +238,7 @@ const SEPARATION_PRESETS = {
 const LEGACY_PRESET_ALIASES = Object.freeze({
   standard: 'quick',
   clean: 'general',
-  'inst-hq3': 'general',
+  'inst-hq3': 'benchmark-hq3',
 });
 const DEFAULT_PRESET_ID = 'general';
 

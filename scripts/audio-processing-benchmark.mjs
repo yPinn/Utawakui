@@ -21,12 +21,12 @@ const WORKER_PATH = path.join(
 const BENCHMARK_RECIPE_DEFINITIONS = Object.freeze({
   quick: Object.freeze({ profileId: 'mdx-kara2-v1', modelId: 'kara2' }),
   general: Object.freeze({
+    profileId: 'mdx-inst-hq4-v1',
+    modelId: 'inst-hq4',
+  }),
+  'benchmark-hq3': Object.freeze({
     profileId: 'mdx-inst-hq3-v1',
     modelId: 'inst-hq3',
-  }),
-  'benchmark-hq4': Object.freeze({
-    profileId: 'mdx-inst-hq4-candidate-v1',
-    modelId: 'inst-hq4',
   }),
 });
 const RESULT_PREFIX = 'UTAWAKUI_BENCHMARK_RESULT:';

@@ -1,11 +1,13 @@
 import registry from '../../shared/featureDependencies.json';
 
 export const FEATURE_DEPENDENCIES = Object.freeze(
-  registry.dependencies.map((dependency) =>
-    Object.freeze({
-      ...dependency,
-    }),
-  ),
+  registry.dependencies
+    .filter((dependency) => dependency.deprecated !== true)
+    .map((dependency) =>
+      Object.freeze({
+        ...dependency,
+      }),
+    ),
 );
 
 export const FEATURE_DEPENDENCY_IDS = Object.freeze({
