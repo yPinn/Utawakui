@@ -1,4 +1,4 @@
-import { reactive } from 'vue';
+import { reactive, shallowRef } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 function deferred() {
@@ -16,6 +16,11 @@ function flushMicrotasks() {
 let playerState;
 let queueState;
 let lyricsState;
+let selectedLyricsTrack;
+let selectedLyricsSource;
+let lyricsDocument;
+let activeLineId;
+let activeSegmentId;
 let initializeLibrary;
 let initializePlaylists;
 let initializeLyrics;
@@ -42,6 +47,15 @@ beforeEach(() => {
     sourceName: '',
   });
   lyricsState = reactive({ offsetSeconds: 0 });
+  selectedLyricsTrack = shallowRef(null);
+  selectedLyricsSource = shallowRef(null);
+  lyricsDocument = shallowRef({
+    documentId: 'lyrics-empty',
+    granularity: 'T0',
+    lines: [],
+  });
+  activeLineId = shallowRef(null);
+  activeSegmentId = shallowRef(null);
   libraryHydration = deferred();
   playlistHydration = deferred();
   lyricsHydration = deferred();
@@ -126,10 +140,13 @@ beforeEach(() => {
   vi.doMock('./useLyrics.js', () => ({
     useLyrics: () => ({
       state: lyricsState,
-      selectedTrack: { value: null },
-      selectedSource: { value: null },
+      selectedTrack: selectedLyricsTrack,
+      selectedSource: selectedLyricsSource,
+      lyricsDocument,
       lyricLines: { value: [] },
       activeLineIndex: { value: -1 },
+      activeLineId,
+      activeSegmentId,
       initialize: initializeLyrics,
     }),
   }));
@@ -170,7 +187,7 @@ describe('output source handshake', () => {
     expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
   });
 
-  it('publishes exactly one full v2 snapshot after all sources settle', async () => {
+  it('publishes one ordered split handshake after all sources settle', async () => {
     const runtime = await loadRuntime();
     const first = runtime.initialize();
     const repeated = runtime.initialize();
@@ -187,17 +204,36 @@ describe('output source handshake', () => {
     expect(initializeLibrary).toHaveBeenCalledOnce();
     expect(initializePlaylists).toHaveBeenCalledOnce();
     expect(initializeLyrics).toHaveBeenCalledOnce();
-    expect(bridge.publishOutputSnapshot).toHaveBeenCalledOnce();
-    expect(bridge.publishOutputSnapshot).toHaveBeenCalledWith(
-      expect.objectContaining({
-        contractVersion: 3,
-        bootId: 'boot-main',
-        sourceEpoch: expect.any(String),
-        kind: 'full',
-        revision: 1,
-        payload: expect.objectContaining({ version: 2, revision: 1 }),
-      }),
-    );
+    expect(bridge.publishOutputSnapshot).toHaveBeenCalledTimes(2);
+    expect(bridge.publishOutputSnapshot.mock.calls[0][0]).toMatchObject({
+      contractVersion: 3,
+      bootId: 'boot-main',
+      sourceEpoch: expect.any(String),
+      stream: 'queue.document',
+      kind: 'full',
+      revision: 1,
+      payload: {
+        document: { documentId: 'queue-current', items: [] },
+      },
+    });
+    expect(bridge.publishOutputSnapshot.mock.calls[1][0]).toMatchObject({
+      contractVersion: 3,
+      bootId: 'boot-main',
+      sourceEpoch: expect.any(String),
+      stream: 'state.snapshot',
+      kind: 'full',
+      revision: 1,
+      payload: {
+        lyrics: { documentId: null, documentRevision: 0 },
+        queue: { documentId: 'queue-current', documentRevision: 1 },
+      },
+    });
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.filter(
+        ([message]) =>
+          message.stream === 'state.snapshot' && message.kind === 'full',
+      ),
+    ).toHaveLength(1);
   });
 
   it('does not run a renderer-owned auto-start loop', async () => {
@@ -241,26 +277,148 @@ describe('output source handshake', () => {
     playlistHydration.resolve();
     lyricsHydration.resolve();
     await initialization;
-    const firstEnvelope = bridge.publishOutputSnapshot.mock.calls[0][0];
+    const firstEnvelope = bridge.publishOutputSnapshot.mock.calls.at(-1)[0];
 
     playerState.currentTime = 2;
     await flushMicrotasks();
     expect(bridge.publishOutputSnapshot.mock.calls.at(-1)[0]).toMatchObject({
       sourceEpoch: firstEnvelope.sourceEpoch,
+      stream: 'state.snapshot',
       kind: 'update',
       revision: 2,
-      payload: { version: 2, revision: 2 },
+      payload: { playback: { positionMs: 2000 } },
     });
 
     playerState.continuityRevision += 1;
     await flushMicrotasks();
     const nextEnvelope = bridge.publishOutputSnapshot.mock.calls.at(-1)[0];
     expect(nextEnvelope).toMatchObject({
+      stream: 'state.snapshot',
       kind: 'full',
       revision: 1,
-      payload: { version: 2, revision: 1 },
     });
     expect(nextEnvelope.sourceEpoch).not.toBe(firstEnvelope.sourceEpoch);
+  });
+
+  it('publishes changed lyrics content once before state and not on clock ticks', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    selectedLyricsSource.value = { language: 'ja', filename: 'main.ja.lrc' };
+    lyricsDocument.value = {
+      documentId: 'lyrics-1',
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: 'First',
+          startMs: 0,
+          endMs: 1000,
+        },
+      ],
+    };
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(
+        ([message]) => message.stream,
+      ),
+    ).toEqual(['lyrics.document', 'queue.document', 'state.snapshot']);
+
+    playerState.currentTime = 0.5;
+    await flushMicrotasks();
+    expect(bridge.publishOutputSnapshot.mock.calls.at(-1)[0].stream).toBe(
+      'state.snapshot',
+    );
+    const contentCountAfterClock =
+      bridge.publishOutputSnapshot.mock.calls.filter(
+        ([message]) => message.stream === 'lyrics.document',
+      ).length;
+
+    lyricsDocument.value = {
+      ...lyricsDocument.value,
+      lines: [
+        ...lyricsDocument.value.lines,
+        {
+          lineId: 'line-2',
+          text: 'Second',
+          startMs: 1000,
+          endMs: 2000,
+        },
+      ],
+    };
+    await flushMicrotasks();
+    const lastTwo = bridge.publishOutputSnapshot.mock.calls
+      .slice(-2)
+      .map(([message]) => message.stream);
+    expect(lastTwo).toEqual(['lyrics.document', 'state.snapshot']);
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.filter(
+        ([message]) => message.stream === 'lyrics.document',
+      ),
+    ).toHaveLength(contentCountAfterClock + 1);
+
+    const previousEpoch =
+      bridge.publishOutputSnapshot.mock.calls.at(-1)[0].sourceEpoch;
+    playerState.continuityRevision += 1;
+    lyricsDocument.value = {
+      ...lyricsDocument.value,
+      lines: lyricsDocument.value.lines.map((line) => ({
+        ...line,
+        text: `${line.text}!`,
+      })),
+    };
+    await flushMicrotasks();
+    const continuityMessages = bridge.publishOutputSnapshot.mock.calls
+      .slice(-2)
+      .map(([message]) => message);
+    expect(continuityMessages.map((message) => message.stream)).toEqual([
+      'lyrics.document',
+      'state.snapshot',
+    ]);
+    expect(continuityMessages[0].kind).toBe('full');
+    expect(continuityMessages[1].kind).toBe('full');
+    expect(continuityMessages[1].sourceEpoch).not.toBe(previousEpoch);
+  });
+
+  it('starts a lyrics stream with a full document when lyrics arrive later', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    selectedLyricsSource.value = { language: 'ja' };
+    lyricsDocument.value = {
+      documentId: 'lyrics-late',
+      granularity: 'T0',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: 'Late',
+          startMs: null,
+          endMs: null,
+        },
+      ],
+    };
+    await flushMicrotasks();
+
+    const messages = bridge.publishOutputSnapshot.mock.calls
+      .slice(-2)
+      .map(([message]) => message);
+    expect(messages.map((message) => message.stream)).toEqual([
+      'lyrics.document',
+      'state.snapshot',
+    ]);
+    expect(messages[0].kind).toBe('full');
+    expect(messages[1].kind).toBe('update');
   });
 });
 

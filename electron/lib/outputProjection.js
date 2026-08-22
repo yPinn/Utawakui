@@ -5,6 +5,10 @@ const {
   createEmptyOutputSnapshot,
   parseOutputSnapshot,
 } = require('../../shared/outputContract');
+const {
+  assembleOutputSnapshotV2,
+  parseOutputStreamEnvelope,
+} = require('../../shared/outputStreamContract');
 
 const OUTPUT_PROJECTION_CONTRACT_VERSION =
   contractValues.projectionEnvelopeVersion;
@@ -67,7 +71,11 @@ function parseOutputProjectionEnvelope(value, expectedBootId) {
 function createOutputProjectionHub({ bootId, onChange = () => {} }) {
   requireId(bootId, 'bootId');
   const seenEpochs = new Set();
+  const contentRevisionsByEpoch = new Map();
+  const lyricsDocuments = new Map();
+  const queueDocuments = new Map();
   let activeSourceId = null;
+  let compatibilityRevision = 0;
   let projection = {
     bootId,
     sourceEpoch: null,
@@ -75,6 +83,7 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
     unavailableReason: 'renderer_not_connected',
     revision: 0,
     snapshot: createEmptyOutputSnapshot({ revision: 0 }),
+    streams: null,
   };
 
   function getProjection() {
@@ -89,6 +98,7 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
   function getStatus() {
     const status = { ...projection };
     delete status.snapshot;
+    delete status.streams;
     return status;
   }
 
@@ -107,6 +117,7 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
       unavailableReason: null,
       revision: 0,
       snapshot: createEmptyOutputSnapshot({ revision: 0 }),
+      streams: null,
     });
     return getStatus();
   }
@@ -120,12 +131,12 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
       unavailableReason: reason,
       revision: 0,
       snapshot: createEmptyOutputSnapshot({ revision: 0 }),
+      streams: null,
     });
     return true;
   }
 
-  function publish(value, sourceId) {
-    if (sourceId !== activeSourceId) return false;
+  function publishLegacy(value) {
     const envelope = parseOutputProjectionEnvelope(value, bootId);
     const isCurrentEpoch = envelope.sourceEpoch === projection.sourceEpoch;
 
@@ -140,14 +151,121 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
       return false;
     }
 
+    compatibilityRevision = envelope.revision;
     updateProjection({
       sourceEpoch: envelope.sourceEpoch,
       sourceSynchronization: 'ready',
       unavailableReason: null,
       revision: envelope.revision,
       snapshot: envelope.payload,
+      streams: null,
     });
     return true;
+  }
+
+  function contentRevisionState(sourceEpoch) {
+    let state = contentRevisionsByEpoch.get(sourceEpoch);
+    if (!state) {
+      state = { lyrics: -1, queue: -1 };
+      contentRevisionsByEpoch.set(sourceEpoch, state);
+    }
+    return state;
+  }
+
+  function publishContent(envelope) {
+    if (
+      seenEpochs.has(envelope.sourceEpoch) &&
+      envelope.sourceEpoch !== projection.sourceEpoch
+    ) {
+      return false;
+    }
+    const kind = envelope.stream === 'lyrics.document' ? 'lyrics' : 'queue';
+    const revisions = contentRevisionState(envelope.sourceEpoch);
+    if (
+      envelope.revision <= revisions[kind] ||
+      (envelope.kind === 'update' && revisions[kind] < 0)
+    ) {
+      return false;
+    }
+    const document = envelope.payload.document;
+    const cache = kind === 'lyrics' ? lyricsDocuments : queueDocuments;
+    cache.clear();
+    if (document) {
+      cache.set(document.documentId, {
+        revision: envelope.revision,
+        document,
+      });
+    }
+    revisions[kind] = envelope.revision;
+    return true;
+  }
+
+  function resolveDocument(reference, cache) {
+    if (reference.documentId === null) return null;
+    const entry = cache.get(reference.documentId);
+    return entry?.revision === reference.documentRevision ? entry : null;
+  }
+
+  function publishState(envelope) {
+    const isCurrentEpoch = envelope.sourceEpoch === projection.sourceEpoch;
+    const currentStateRevision = projection.streams?.state?.revision ?? -1;
+    if (envelope.kind === 'full') {
+      if (seenEpochs.has(envelope.sourceEpoch)) return false;
+    } else if (
+      projection.sourceSynchronization !== 'ready' ||
+      !isCurrentEpoch ||
+      envelope.revision <= currentStateRevision
+    ) {
+      return false;
+    }
+
+    const lyrics = resolveDocument(envelope.payload.lyrics, lyricsDocuments);
+    const queue = resolveDocument(envelope.payload.queue, queueDocuments);
+    if ((envelope.payload.lyrics.documentId !== null && !lyrics) || !queue) {
+      return false;
+    }
+
+    const contentRevisions = contentRevisionState(envelope.sourceEpoch);
+    contentRevisions.lyrics = Math.max(
+      contentRevisions.lyrics,
+      envelope.payload.lyrics.documentRevision,
+    );
+    contentRevisions.queue = Math.max(
+      contentRevisions.queue,
+      envelope.payload.queue.documentRevision,
+    );
+    if (envelope.kind === 'full') seenEpochs.add(envelope.sourceEpoch);
+    compatibilityRevision += 1;
+    const snapshot = assembleOutputSnapshotV2({
+      revision: compatibilityRevision,
+      dynamic: envelope.payload,
+      lyricsDocument: lyrics?.document ?? null,
+      queueDocument: queue.document,
+    });
+    updateProjection({
+      sourceEpoch: envelope.sourceEpoch,
+      sourceSynchronization: 'ready',
+      unavailableReason: null,
+      revision: compatibilityRevision,
+      snapshot,
+      streams: {
+        lyrics,
+        queue,
+        state: { revision: envelope.revision, payload: envelope.payload },
+      },
+    });
+    return true;
+  }
+
+  function publish(value, sourceId) {
+    if (sourceId !== activeSourceId) return false;
+    if (value?.stream) {
+      const envelope = parseOutputStreamEnvelope(value, bootId);
+      return envelope.stream === 'state.snapshot'
+        ? publishState(envelope)
+        : publishContent(envelope);
+    }
+    return publishLegacy(value);
   }
 
   return {

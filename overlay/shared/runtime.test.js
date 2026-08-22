@@ -8,8 +8,9 @@ import {
 class FakeWebSocket {
   static instances = [];
 
-  constructor(url) {
+  constructor(url, protocols) {
     this.url = url;
+    this.protocols = protocols;
     this.listeners = new Map();
     this.close = vi.fn();
     FakeWebSocket.instances.push(this);
@@ -101,6 +102,7 @@ describe('overlay WebSocket runtime', () => {
     connection.start();
     const first = FakeWebSocket.instances[0];
     expect(first.url).toBe('ws://127.0.0.1:8700/ws');
+    expect(first.protocols).toBe('utawakui.output.v3');
     first.emit('open');
     first.emit('message', {
       data: JSON.stringify({
@@ -146,6 +148,145 @@ describe('overlay WebSocket runtime', () => {
 
     connection.stop();
     expect(second.close).toHaveBeenCalledOnce();
+  });
+
+  it('assembles split content and state only after all references resolve', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const configs = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      kind: 'lyrics',
+      onSnapshot: (value) => received.push(value),
+      onConfig: (value) => configs.push(value?.templateId ?? null),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'overlay.config.snapshot',
+        overlayConfig: {
+          version: 2,
+          revision: 4,
+          slots: { lyrics: { templateId: 'karaoke-stack' } },
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        revision: 7,
+        state: {
+          generatedAt: '2026-08-23T00:00:00.000Z',
+          displayDelayMs: 0,
+          playback: {
+            status: 'playing',
+            positionMs: 1200,
+            durationMs: 90000,
+            rate: 1,
+            track: { id: 'track-1', title: 'Song' },
+          },
+          lyrics: {
+            documentId: 'lyrics-1',
+            documentRevision: 2,
+            offsetMs: 100,
+            activeLineId: 'line-2',
+            activeSegmentId: null,
+          },
+          queue: { documentId: 'queue-current', documentRevision: 3 },
+        },
+      }),
+    });
+    expect(received).toEqual([]);
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'lyrics.document',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        revision: 2,
+        document: {
+          documentId: 'lyrics-1',
+          trackId: 'track-1',
+          granularity: 'T1',
+          source: { language: 'ja' },
+          lines: [
+            { lineId: 'line-1', text: 'first', startMs: 0, endMs: 1000 },
+            { lineId: 'line-2', text: 'second', startMs: 1000, endMs: null },
+          ],
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'queue.document',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        revision: 3,
+        document: {
+          documentId: 'queue-current',
+          sourceName: 'Setlist',
+          items: [
+            {
+              state: 'current',
+              track: { id: 'track-1', title: 'Song' },
+            },
+          ],
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        bootId: 'boot-1',
+        sourceEpoch: 'epoch-1',
+        sourceStatus: 'ready',
+        revision: 8,
+        state: {
+          generatedAt: '2026-08-23T00:00:00.000Z',
+          displayDelayMs: 0,
+          playback: {
+            status: 'playing',
+            positionMs: 1300,
+            durationMs: 90000,
+            rate: 1,
+            track: { id: 'track-1', title: 'Song' },
+          },
+          lyrics: {
+            documentId: 'lyrics-1',
+            documentRevision: 2,
+            offsetMs: 100,
+            activeLineId: 'line-2',
+            activeSegmentId: null,
+          },
+          queue: { documentId: 'queue-current', documentRevision: 3 },
+        },
+      }),
+    });
+
+    expect(configs).toEqual(['karaoke-stack']);
+    expect(received).toHaveLength(1);
+    expect(received[0]).toMatchObject({
+      version: 2,
+      revision: 8,
+      playback: { positionMs: 1300 },
+      queue: { sourceName: 'Setlist' },
+      lyrics: {
+        activeLineIndex: 1,
+        lines: [{ text: 'first' }, { text: 'second' }],
+      },
+    });
+    connection.stop();
   });
 
   it('accepts lower revisions only after a new boot or source epoch', () => {
@@ -203,6 +344,38 @@ describe('overlay WebSocket runtime', () => {
     connection.stop();
   });
 
+  it('accepts a fresh initial snapshot after an explicit stop and restart', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (value) => received.push(value.revision),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    FakeWebSocket.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(3),
+      }),
+    });
+    connection.stop();
+    connection.start();
+    FakeWebSocket.instances[1].emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(3),
+      }),
+    });
+
+    expect(received).toEqual([3, 3]);
+    connection.stop();
+  });
+
   it('delivers the safe empty snapshot when the source becomes unavailable', () => {
     FakeWebSocket.instances = [];
     const received = [];
@@ -237,6 +410,37 @@ describe('overlay WebSocket runtime', () => {
     });
 
     expect(received).toEqual([8, 0]);
+    connection.stop();
+  });
+
+  it('clears stale output while a split source is syncing', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (value) => received.push(value),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    FakeWebSocket.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'source.status',
+        bootId: 'boot-1',
+        sourceEpoch: null,
+        sourceStatus: 'syncing',
+      }),
+    });
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toMatchObject({
+      version: 2,
+      revision: 0,
+      playback: { status: 'idle', track: null },
+    });
     connection.stop();
   });
 

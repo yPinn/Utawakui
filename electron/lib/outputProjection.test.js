@@ -1,8 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 import outputContract from '../../shared/outputContract.js';
+import outputStreamContract from '../../shared/outputStreamContract.js';
 import outputProjectionModule from './outputProjection.js';
 
 const { createEmptyOutputSnapshot } = outputContract;
+const { parseOutputStreamEnvelope } = outputStreamContract;
 const {
   OUTPUT_PROJECTION_CONTRACT_VERSION,
   createOutputProjectionHub,
@@ -24,6 +26,71 @@ function envelope(overrides = {}) {
       revision,
       generatedAt: '2026-08-23T00:00:00.000Z',
     }),
+    ...overrides,
+  };
+}
+
+function streamEnvelope(stream, revision, payload, overrides = {}) {
+  return {
+    contractVersion: OUTPUT_PROJECTION_CONTRACT_VERSION,
+    bootId: BOOT_ID,
+    sourceEpoch: 'epoch-stream-1',
+    stream,
+    kind: 'full',
+    revision,
+    payload,
+    ...overrides,
+  };
+}
+
+const queuePayload = {
+  document: {
+    documentId: 'queue-current',
+    sourceName: 'Set',
+    items: [
+      {
+        state: 'current',
+        track: { id: 'track-1', title: 'Song' },
+      },
+    ],
+  },
+};
+const lyricsPayload = {
+  document: {
+    documentId: 'lyrics-1',
+    trackId: 'track-1',
+    granularity: 'T1',
+    source: { language: 'ja' },
+    lines: [
+      {
+        lineId: 'line-1',
+        text: '歌詞',
+        startMs: 1000,
+        endMs: 2000,
+      },
+    ],
+  },
+};
+
+function dynamicPayload(overrides = {}) {
+  return {
+    generatedAt: '2026-08-23T00:00:00.000Z',
+    displayDelayMs: 0,
+    playback: {
+      status: 'playing',
+      positionMs: 1200,
+      durationMs: 180000,
+      rate: 1,
+      track: { id: 'track-1', title: 'Song' },
+    },
+    lyrics: {
+      documentId: 'lyrics-1',
+      documentRevision: 1,
+      offsetMs: 0,
+      activeLineId: 'line-1',
+      activeSegmentId: null,
+    },
+    queue: { documentId: 'queue-current', documentRevision: 1 },
     ...overrides,
   };
 }
@@ -70,6 +137,11 @@ describe('output projection envelope', () => {
         BOOT_ID,
       ),
     ).toThrow(TypeError);
+  });
+
+  it('validates stream envelopes through the split contract', () => {
+    const value = streamEnvelope('state.snapshot', 1, dynamicPayload());
+    expect(parseOutputStreamEnvelope(value, BOOT_ID)).toEqual(value);
   });
 });
 
@@ -160,5 +232,173 @@ describe('output projection hub', () => {
       hub.publish(envelope({ sourceEpoch: 'epoch-2', revision: 0 }), SOURCE_ID),
     ).toBe(true);
     expect(hub.markUnavailable('stale_renderer', 'renderer-stale')).toBe(false);
+  });
+
+  it('requires referenced content before a split state can enter ready', () => {
+    const hub = createOutputProjectionHub({ bootId: BOOT_ID });
+    hub.connectSource(SOURCE_ID);
+
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 1, dynamicPayload()),
+        SOURCE_ID,
+      ),
+    ).toBe(false);
+    expect(hub.getStatus().sourceSynchronization).toBe('syncing');
+
+    expect(
+      hub.publish(
+        streamEnvelope('lyrics.document', 1, lyricsPayload),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.publish(streamEnvelope('queue.document', 1, queuePayload), SOURCE_ID),
+    ).toBe(true);
+    expect(hub.getStatus().sourceSynchronization).toBe('syncing');
+
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 1, dynamicPayload()),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(hub.getStatus()).toMatchObject({
+      sourceSynchronization: 'ready',
+      sourceEpoch: 'epoch-stream-1',
+      revision: 1,
+    });
+    expect(hub.getProjection()).toMatchObject({
+      snapshot: {
+        version: 2,
+        revision: 1,
+        lyrics: { lines: [{ text: '歌詞' }] },
+      },
+      streams: {
+        lyrics: { revision: 1, document: { documentId: 'lyrics-1' } },
+        queue: { revision: 1, document: { documentId: 'queue-current' } },
+        state: { revision: 1, payload: { playback: { positionMs: 1200 } } },
+      },
+    });
+  });
+
+  it('tracks content and dynamic revisions independently', () => {
+    const hub = createOutputProjectionHub({ bootId: BOOT_ID });
+    hub.connectSource(SOURCE_ID);
+    hub.publish(streamEnvelope('lyrics.document', 1, lyricsPayload), SOURCE_ID);
+    hub.publish(streamEnvelope('queue.document', 1, queuePayload), SOURCE_ID);
+    hub.publish(
+      streamEnvelope('state.snapshot', 1, dynamicPayload()),
+      SOURCE_ID,
+    );
+
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 2, dynamicPayload(), {
+          kind: 'update',
+        }),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.publish(
+        streamEnvelope('queue.document', 1, queuePayload, { kind: 'update' }),
+        SOURCE_ID,
+      ),
+    ).toBe(false);
+
+    const nextQueue = {
+      document: {
+        ...queuePayload.document,
+        items: [
+          ...queuePayload.document.items,
+          { state: 'queued', track: { id: 'track-2', title: 'Next' } },
+        ],
+      },
+    };
+    expect(
+      hub.publish(
+        streamEnvelope('queue.document', 2, nextQueue, { kind: 'update' }),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.publish(
+        streamEnvelope(
+          'state.snapshot',
+          3,
+          dynamicPayload({
+            queue: { documentId: 'queue-current', documentRevision: 2 },
+          }),
+          { kind: 'update' },
+        ),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(hub.getProjection().snapshot.queue.items).toHaveLength(2);
+  });
+
+  it('allows a new epoch full state to reuse cached immutable content', () => {
+    const hub = createOutputProjectionHub({ bootId: BOOT_ID });
+    hub.connectSource(SOURCE_ID);
+    hub.publish(streamEnvelope('lyrics.document', 1, lyricsPayload), SOURCE_ID);
+    hub.publish(streamEnvelope('queue.document', 1, queuePayload), SOURCE_ID);
+    hub.publish(
+      streamEnvelope('state.snapshot', 1, dynamicPayload()),
+      SOURCE_ID,
+    );
+
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 0, dynamicPayload(), {
+          sourceEpoch: 'epoch-stream-2',
+        }),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(hub.getStatus()).toMatchObject({
+      sourceEpoch: 'epoch-stream-2',
+      revision: 2,
+    });
+    expect(hub.getProjection().streams.state.revision).toBe(0);
+
+    const updatedLyrics = {
+      document: {
+        ...lyricsPayload.document,
+        lines: [
+          {
+            ...lyricsPayload.document.lines[0],
+            text: '更新',
+          },
+        ],
+      },
+    };
+    expect(
+      hub.publish(
+        streamEnvelope('lyrics.document', 2, updatedLyrics, {
+          sourceEpoch: 'epoch-stream-2',
+          kind: 'update',
+        }),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.publish(
+        streamEnvelope(
+          'state.snapshot',
+          1,
+          dynamicPayload({
+            lyrics: {
+              ...dynamicPayload().lyrics,
+              documentId: 'lyrics-1',
+              documentRevision: 2,
+            },
+          }),
+          { sourceEpoch: 'epoch-stream-2', kind: 'update' },
+        ),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(hub.getProjection().streams.lyrics.revision).toBe(2);
   });
 });

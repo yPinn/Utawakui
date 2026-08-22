@@ -5,7 +5,11 @@ import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
 import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
-import { projectOutputSnapshot } from '../utils/outputSnapshot.js';
+import {
+  projectDynamicOutputState,
+  projectLyricsOutputDocument,
+  projectQueueOutputDocument,
+} from '../utils/outputStreamProjection.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
 import { useLibrary } from './useLibrary.js';
@@ -48,8 +52,9 @@ const {
   state: lyricsState,
   selectedTrack: lyricsTrack,
   selectedSource: lyricsSource,
-  lyricLines,
-  activeLineIndex,
+  lyricsDocument,
+  activeLineId,
+  activeSegmentId,
   initialize: initializeLyrics,
 } = useLyrics();
 const { requireFeatureGate } = useFeatureGateAccess();
@@ -76,10 +81,16 @@ const state = reactive({
 
 let initializationPromise = null;
 let sourceEpoch = createSourceEpoch();
-let nextRevision = 0;
+let nextStateRevision = 0;
+let nextLyricsRevision = 0;
+let nextQueueRevision = 0;
 let handshakeComplete = false;
 let sourcesSettled = false;
-let fullPublishQueue = Promise.resolve();
+let lastContinuity = null;
+let lastLyricsDocument;
+let lastQueueDocument;
+let lyricsReference = null;
+let queueReference = null;
 
 function createSourceEpoch() {
   return (
@@ -120,33 +131,46 @@ function applySlots(document = {}) {
   state.slotsLoaded = true;
 }
 
-function projectionInput() {
+function queueInput() {
   return {
-    player: playerState,
-    queue: {
-      historyEntries: queueState.historyEntries,
-      currentTrack: queueState.currentTrack,
-      upcomingTracks: upcomingTracks.value,
-      sourceName: queueState.sourceName,
-    },
-    lyrics: {
-      trackId: lyricsTrack.value?.id ?? null,
-      source: lyricsSource.value,
-      lines: lyricLines.value,
-      activeLineIndex: activeLineIndex.value,
-      offsetSeconds: lyricsState.offsetSeconds,
-    },
-    output: {
-      displayDelayMs: state.settings.displayDelayMs,
-    },
+    historyEntries: queueState.historyEntries,
+    currentTrack: queueState.currentTrack,
+    upcomingTracks: upcomingTracks.value,
+    sourceName: queueState.sourceName,
   };
 }
 
-const projectedState = computed(() =>
-  projectOutputSnapshot(projectionInput(), {
-    revision: 0,
-    generatedAt: PROJECTION_TIMESTAMP,
-  }),
+const projectedLyricsDocument = computed(() => {
+  const trackId = playerState.track?.id ?? null;
+  if (!trackId || lyricsTrack.value?.id !== trackId) return null;
+  return projectLyricsOutputDocument({
+    trackId,
+    source: lyricsSource.value,
+    document: lyricsDocument.value,
+  });
+});
+
+const projectedQueueDocument = computed(() =>
+  projectQueueOutputDocument(queueInput()),
+);
+
+const projectedDynamicState = computed(() =>
+  projectDynamicOutputState(
+    {
+      player: playerState,
+      output: { displayDelayMs: state.settings.displayDelayMs },
+      lyrics: {
+        offsetSeconds: lyricsState.offsetSeconds,
+        activeLineId: activeLineId.value,
+        activeSegmentId: activeSegmentId.value,
+        reference: null,
+      },
+      queue: { reference: null },
+    },
+    {
+      generatedAt: PROJECTION_TIMESTAMP,
+    },
+  ),
 );
 
 const continuityKey = computed(
@@ -156,67 +180,121 @@ const continuityKey = computed(
     }`,
 );
 
-function createEnvelope(kind, baseSnapshot) {
-  nextRevision += 1;
-  const payload = {
-    ...baseSnapshot,
-    revision: nextRevision,
-    generatedAt: new Date().toISOString(),
-  };
+function createEnvelope(stream, kind, revision, payload) {
   return {
     contractVersion: OUTPUT_CONTRACT_VALUES.projectionEnvelopeVersion,
     bootId: state.status.bootId,
     sourceEpoch,
+    stream,
     kind,
-    revision: nextRevision,
+    revision,
     payload,
   };
 }
 
-async function sendEnvelope(kind, snapshot) {
+async function sendEnvelope(stream, kind, revision, payload) {
   const accepted = await bridgeMethod('publishOutputSnapshot')(
-    createEnvelope(kind, snapshot),
+    createEnvelope(stream, kind, revision, payload),
   );
   if (!accepted) await refreshStatus();
   return accepted;
 }
 
-const publisher = createLatestAsyncPublisher(
-  async (snapshot) => sendEnvelope('update', snapshot),
-  {
-    onError: (error) => {
-      state.error = `輸出狀態更新失敗：${errorMessage(error)}`;
-    },
-  },
-);
-
-function publishFull(snapshot, { newEpoch = false } = {}) {
-  const task = fullPublishQueue.then(async () => {
-    handshakeComplete = false;
-    await publisher.whenIdle();
-    if (newEpoch) sourceEpoch = createSourceEpoch();
-    nextRevision = 0;
-    const accepted = await sendEnvelope('full', snapshot);
-    handshakeComplete = accepted;
-    return accepted;
-  });
-  fullPublishQueue = task.catch(() => undefined);
-  return task;
+function currentProjection() {
+  return {
+    continuity: continuityKey.value,
+    lyricsDocument: projectedLyricsDocument.value,
+    queueDocument: projectedQueueDocument.value,
+    dynamicState: projectedDynamicState.value,
+  };
 }
 
+async function publishProjection(projection) {
+  const continuityChanged =
+    lastContinuity !== null && projection.continuity !== lastContinuity;
+  if (continuityChanged) {
+    handshakeComplete = false;
+    sourceEpoch = createSourceEpoch();
+    nextStateRevision = 0;
+  }
+
+  if (projection.lyricsDocument !== lastLyricsDocument) {
+    if (projection.lyricsDocument) {
+      nextLyricsRevision += 1;
+      const accepted = await sendEnvelope(
+        'lyrics.document',
+        continuityChanged || !lyricsReference ? 'full' : 'update',
+        nextLyricsRevision,
+        { document: projection.lyricsDocument },
+      );
+      if (!accepted) return false;
+      lyricsReference = {
+        documentId: projection.lyricsDocument.documentId,
+        documentRevision: nextLyricsRevision,
+      };
+    } else {
+      lyricsReference = null;
+    }
+    lastLyricsDocument = projection.lyricsDocument;
+  }
+
+  if (projection.queueDocument !== lastQueueDocument) {
+    nextQueueRevision += 1;
+    const accepted = await sendEnvelope(
+      'queue.document',
+      continuityChanged || !queueReference ? 'full' : 'update',
+      nextQueueRevision,
+      { document: projection.queueDocument },
+    );
+    if (!accepted) return false;
+    queueReference = {
+      documentId: projection.queueDocument.documentId,
+      documentRevision: nextQueueRevision,
+    };
+    lastQueueDocument = projection.queueDocument;
+  }
+
+  if (!queueReference) return false;
+  nextStateRevision += 1;
+  const dynamic = {
+    ...projection.dynamicState,
+    generatedAt: new Date().toISOString(),
+    lyrics: {
+      ...projection.dynamicState.lyrics,
+      documentId: lyricsReference?.documentId ?? null,
+      documentRevision: lyricsReference?.documentRevision ?? 0,
+    },
+    queue: queueReference,
+  };
+  const accepted = await sendEnvelope(
+    'state.snapshot',
+    handshakeComplete ? 'update' : 'full',
+    nextStateRevision,
+    dynamic,
+  );
+  handshakeComplete = accepted;
+  if (accepted) lastContinuity = projection.continuity;
+  return accepted;
+}
+
+const publisher = createLatestAsyncPublisher(publishProjection, {
+  onError: (error) => {
+    state.error = `輸出狀態更新失敗：${errorMessage(error)}`;
+  },
+});
+
 watch(
-  [continuityKey, projectedState],
-  ([nextContinuity, snapshot], [previousContinuity]) => {
+  [
+    continuityKey,
+    projectedLyricsDocument,
+    projectedQueueDocument,
+    projectedDynamicState,
+  ],
+  () => {
     if (!sourcesSettled || !isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
       return;
     }
-    if (nextContinuity !== previousContinuity) {
-      publishFull(snapshot, { newEpoch: true }).catch((error) => {
-        state.error = `輸出狀態更新失敗：${errorMessage(error)}`;
-      });
-      return;
-    }
-    if (handshakeComplete) publisher.request(snapshot);
+    publisher.request(currentProjection());
   },
 );
 
@@ -307,7 +385,10 @@ async function start() {
     applyStatus(await bridgeMethod('startOutput')());
     state.error = '';
     state.suggestedPorts = [];
-    if (!handshakeComplete) await publishFull(projectedState.value);
+    if (!handshakeComplete) {
+      publisher.request(currentProjection());
+      await publisher.whenIdle();
+    }
     return true;
   } catch (error) {
     const message = errorMessage(error);
@@ -396,7 +477,8 @@ function initialize() {
       ]);
       sourcesSettled = true;
       if (isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
-        await publishFull(projectedState.value);
+        publisher.request(currentProjection());
+        await publisher.whenIdle();
       }
       return true;
     } catch (error) {

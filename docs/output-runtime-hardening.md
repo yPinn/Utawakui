@@ -281,6 +281,53 @@ follow-up batches.
 - Prove slow-client, multiple-client, reconnect, delay-change, and content
   revision behavior without logging projected content.
 
+H2 keeps the four current OBS URLs and defines an explicit migration window for
+snapshot-v2 clients:
+
+- bundled overlays request the `utawakui.output.v3` WebSocket subprotocol;
+- a client that requests no subprotocol continues to receive the existing
+  `state.snapshot` / `state.changed` messages with complete snapshot-v2 payloads;
+- `/api/v1/state` remains the canonical snapshot-v2 compatibility endpoint; and
+- an unknown requested subprotocol is rejected rather than silently downgraded.
+
+The negotiated v3 stream sends `lyrics.document` and `queue.document` content
+only when their validated canonical value changes. Dynamic `state.snapshot`
+messages carry playback clock/phase, display delay, track scalars, content
+references, and source identity. On connection the server sends configuration,
+referenced content, then state. A state referencing unknown content fails closed;
+the overlay never requests content over the read-only socket. Main continues to
+assemble a current snapshot-v2 view for compatibility consumers, so the split
+does not create another playback authority.
+
+Each client has one in-flight send and bounded pending slots. Clock corrections
+are replaceable latest-wins data. A newer semantic state replaces any older clock
+correction, while referenced content/configuration is ordered ahead of the state
+that uses it. Limits derive from the validated maximum document size plus bounded
+protocol overhead. A send timeout or a backlog that remains over the high-water
+deadline terminates only that client. Diagnostics record aggregate delivered,
+replaced, dropped, and disconnected counts and byte totals, never titles, lyrics,
+ids, or serialized payloads.
+
+HTTP cache behavior is route-class-specific:
+
+- health/state APIs remain `no-store`;
+- allowlisted runtime HTML, JavaScript, CSS, and active pointers use strong ETags
+  with `no-cache` revalidation and lazy bounded reads;
+- the track-id artwork pointer revalidates and redirects to a server-computed
+  SHA-256 route; and
+- the digest-addressed artwork route streams the validated resolver result with a
+  one-year immutable policy. Neither route accepts a filename or filesystem path,
+  and a stale/mismatched digest returns not-found.
+
+Implementation status (2026-08-23): H2 is complete. Bundled overlays negotiate
+the split v3 stream while no-subprotocol WebSocket clients and `/api/v1/state`
+retain snapshot v2. Main validates and assembles independent lyrics, queue, and
+dynamic revisions; per-client delivery is bounded and latest-wins; and HTTP
+assets now follow the route-specific ETag, pointer, and immutable-digest policies
+above. Focused runtime coverage exceeds the 80% branch gate, and the repository-
+wide suite passes. No H2 test, lint, build, security, or scoped diff failure
+remains. H3 is the next batch.
+
 ### H3: measured startup and runtime budgets
 
 - Add correlated main, renderer, Output, and first-frame milestones without

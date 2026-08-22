@@ -1,4 +1,5 @@
 const STATE_MESSAGE_TYPES = new Set(['state.snapshot', 'state.changed']);
+const OUTPUT_V3_SUBPROTOCOL = 'utawakui.output.v3';
 const INITIAL_RECONNECT_DELAY_MS = 500;
 const MAX_RECONNECT_DELAY_MS = 8000;
 const OUTPUT_STATE_VERSION = 2;
@@ -13,7 +14,7 @@ export function parseOutputMessage(raw) {
     const message = JSON.parse(raw);
     if (!message || typeof message !== 'object') return null;
 
-    if (STATE_MESSAGE_TYPES.has(message.type)) {
+    if (STATE_MESSAGE_TYPES.has(message.type) && message.snapshot) {
       if (
         message.snapshot?.version !== OUTPUT_STATE_VERSION ||
         !Number.isSafeInteger(message.snapshot?.revision) ||
@@ -47,13 +48,83 @@ export function parseOutputMessage(raw) {
       };
     }
 
-    if (message.type !== 'overlay.config.changed') return null;
-    const overlayConfig = parseOverlayConfig(message.overlayConfig);
-    if (!overlayConfig) return null;
-    return { type: message.type, overlayConfig };
+    if (
+      message.type === 'overlay.config.changed' ||
+      message.type === 'overlay.config.snapshot'
+    ) {
+      const overlayConfig = parseOverlayConfig(message.overlayConfig);
+      if (!overlayConfig) return null;
+      return { type: message.type, overlayConfig };
+    }
+
+    if (
+      ['lyrics.document', 'queue.document'].includes(message.type) &&
+      validSplitIdentity(message) &&
+      Number.isSafeInteger(message.revision) &&
+      message.revision >= 0 &&
+      (message.document === null ||
+        (message.document && typeof message.document === 'object'))
+    ) {
+      return message;
+    }
+
+    if (
+      message.type === 'state.snapshot' &&
+      !message.snapshot &&
+      validSplitIdentity(message) &&
+      Number.isSafeInteger(message.revision) &&
+      message.revision >= 0 &&
+      validDynamicState(message.state)
+    ) {
+      return message;
+    }
+
+    if (
+      message.type === 'source.status' &&
+      typeof message.bootId === 'string' &&
+      ['unavailable', 'syncing'].includes(message.sourceStatus)
+    ) {
+      return message;
+    }
+
+    return null;
   } catch {
     return null;
   }
+}
+
+function validSplitIdentity(message) {
+  return (
+    typeof message.bootId === 'string' &&
+    message.bootId.length > 0 &&
+    typeof message.sourceEpoch === 'string' &&
+    message.sourceEpoch.length > 0 &&
+    message.sourceStatus === 'ready'
+  );
+}
+
+function validReference(reference, nullable = false) {
+  return (
+    reference &&
+    typeof reference === 'object' &&
+    ((nullable && reference.documentId === null) ||
+      typeof reference.documentId === 'string') &&
+    Number.isSafeInteger(reference.documentRevision) &&
+    reference.documentRevision >= 0
+  );
+}
+
+function validDynamicState(state) {
+  return (
+    state &&
+    typeof state === 'object' &&
+    typeof state.generatedAt === 'string' &&
+    Number.isSafeInteger(state.displayDelayMs) &&
+    state.playback &&
+    typeof state.playback === 'object' &&
+    validReference(state.lyrics, true) &&
+    validReference(state.queue)
+  );
 }
 
 function parseOverlayConfig(value) {
@@ -79,6 +150,95 @@ function slotFromConfig(config, kind) {
   if (!slot || typeof slot !== 'object' || Array.isArray(slot)) return null;
   return slot;
 }
+
+function contentMatches(reference, entry) {
+  return (
+    entry &&
+    entry.revision === reference.documentRevision &&
+    entry.document?.documentId === reference.documentId
+  );
+}
+
+function assembleSplitSnapshot(message, lyricsEntry, queueEntry) {
+  const state = message.state;
+  const lyricsReference = state.lyrics;
+  const lyricsDocument =
+    lyricsReference.documentId === null
+      ? null
+      : contentMatches(lyricsReference, lyricsEntry)
+        ? lyricsEntry.document
+        : undefined;
+  if (
+    lyricsDocument === undefined ||
+    !contentMatches(state.queue, queueEntry)
+  ) {
+    return null;
+  }
+  const lines = (lyricsDocument?.lines ?? []).map((line) => ({
+    text: line.text,
+    startMs: line.startMs,
+    endMs: line.endMs,
+    ...(Array.isArray(line.segments) ? { segments: line.segments } : {}),
+  }));
+  return {
+    version: OUTPUT_STATE_VERSION,
+    revision: message.revision,
+    generatedAt: state.generatedAt,
+    displayDelayMs: state.displayDelayMs,
+    playback: state.playback,
+    queue: {
+      sourceName: queueEntry.document.sourceName,
+      items: queueEntry.document.items,
+    },
+    lyrics: lyricsDocument
+      ? {
+          trackId: lyricsDocument.trackId,
+          source: lyricsDocument.source,
+          synced: lines.some((line) => Number.isFinite(line.startMs)),
+          offsetMs: state.lyrics.offsetMs,
+          activeLineIndex: lyricsDocument.lines.findIndex(
+            (line) => line.lineId === state.lyrics.activeLineId,
+          ),
+          activeSegmentId: state.lyrics.activeSegmentId,
+          lines,
+        }
+      : {
+          trackId: null,
+          source: null,
+          synced: false,
+          offsetMs: state.lyrics.offsetMs,
+          activeLineIndex: -1,
+          activeSegmentId: null,
+          lines: [],
+        },
+  };
+}
+
+function emptyUnavailableSnapshot(now) {
+  return {
+    version: OUTPUT_STATE_VERSION,
+    revision: 0,
+    generatedAt: new Date(now()).toISOString(),
+    displayDelayMs: 0,
+    playback: {
+      status: 'idle',
+      positionMs: 0,
+      durationMs: null,
+      rate: 1,
+      track: null,
+    },
+    queue: { sourceName: '', items: [] },
+    lyrics: {
+      trackId: null,
+      source: null,
+      synced: false,
+      offsetMs: 0,
+      activeLineIndex: -1,
+      activeSegmentId: null,
+      lines: [],
+    },
+  };
+}
 export function createOverlayConnection(options = {}) {
   const location = options.location ?? window.location;
   const WebSocketImpl = options.WebSocketImpl ?? window.WebSocket;
@@ -98,6 +258,8 @@ export function createOverlayConnection(options = {}) {
   let lastConfigRevision = -1;
   let activeProjectionIdentity = null;
   let activeDisplayDelayMs = null;
+  let lyricsEntry = null;
+  let queueEntry = null;
   const snapshotTimers = new Set();
   let stopped = true;
 
@@ -147,7 +309,10 @@ export function createOverlayConnection(options = {}) {
   function connect() {
     if (stopped) return;
     onStatus(reconnectAttempt === 0 ? 'connecting' : 'reconnecting');
-    socket = new WebSocketImpl(buildWebSocketUrl(location));
+    socket = new WebSocketImpl(
+      buildWebSocketUrl(location),
+      OUTPUT_V3_SUBPROTOCOL,
+    );
 
     socket.addEventListener('open', () => {
       reconnectAttempt = 0;
@@ -156,6 +321,50 @@ export function createOverlayConnection(options = {}) {
     socket.addEventListener('message', (event) => {
       const message = parseOutputMessage(event.data);
       if (!message) return;
+      if (message.type === 'overlay.config.snapshot') {
+        lastConfigRevision = message.overlayConfig.revision;
+        onConfig(slotFromConfig(message.overlayConfig, options.kind));
+        return;
+      }
+      if (message.type === 'lyrics.document') {
+        updateSplitIdentity(message);
+        lyricsEntry = {
+          revision: message.revision,
+          document: message.document,
+        };
+        return;
+      }
+      if (message.type === 'queue.document') {
+        updateSplitIdentity(message);
+        queueEntry = {
+          revision: message.revision,
+          document: message.document,
+        };
+        return;
+      }
+      if (message.type === 'source.status') {
+        const nextIdentity = `${message.bootId}\0${message.sourceStatus}`;
+        if (nextIdentity !== activeProjectionIdentity) {
+          resetProjection(nextIdentity);
+        }
+        if (['unavailable', 'syncing'].includes(message.sourceStatus)) {
+          scheduleSnapshot(emptyUnavailableSnapshot(now), true);
+        }
+        return;
+      }
+      if (message.state) {
+        updateSplitIdentity(message);
+        if (message.revision <= lastReceivedRevision) return;
+        const assembled = assembleSplitSnapshot(
+          message,
+          lyricsEntry,
+          queueEntry,
+        );
+        if (!assembled) return;
+        lastReceivedRevision = message.revision;
+        scheduleSnapshot(assembled);
+        return;
+      }
       if (message.snapshot) {
         const nextIdentity = message.bootId
           ? message.sourceEpoch
@@ -196,6 +405,8 @@ export function createOverlayConnection(options = {}) {
     socket.addEventListener('close', () => {
       if (stopped) return;
       clearSnapshotTimers();
+      lastReceivedRevision = -1;
+      lastDeliveredRevision = -1;
       reconnectAttempt += 1;
       onStatus('reconnecting');
       const delay = Math.min(
@@ -204,6 +415,21 @@ export function createOverlayConnection(options = {}) {
       );
       reconnectTimer = schedule(connect, delay);
     });
+  }
+
+  function resetProjection(nextIdentity) {
+    clearSnapshotTimers();
+    lastReceivedRevision = -1;
+    lastDeliveredRevision = -1;
+    activeProjectionIdentity = nextIdentity;
+    lyricsEntry = null;
+    queueEntry = null;
+  }
+
+  function updateSplitIdentity(message) {
+    const nextIdentity = `${message.bootId}\0${message.sourceEpoch}`;
+    if (nextIdentity !== activeProjectionIdentity)
+      resetProjection(nextIdentity);
   }
 
   function start() {
@@ -218,7 +444,9 @@ export function createOverlayConnection(options = {}) {
     stopped = true;
     if (reconnectTimer !== null) cancelSchedule(reconnectTimer);
     reconnectTimer = null;
-    clearSnapshotTimers();
+    resetProjection(null);
+    lastConfigRevision = -1;
+    activeDisplayDelayMs = null;
     socket?.close();
     socket = null;
     onStatus('stopped');

@@ -4,9 +4,11 @@ import os from 'node:os';
 import path from 'node:path';
 import WebSocket from 'ws';
 import outputContract from '../../shared/outputContract.js';
+import outputStreamContract from '../../shared/outputStreamContract.js';
 import outputServerModule from './outputServer.js';
 
 const { createEmptyOutputSnapshot } = outputContract;
+const { OUTPUT_V3_SUBPROTOCOL } = outputStreamContract;
 const {
   DEFAULT_OUTPUT_PORT,
   OUTPUT_HOST,
@@ -50,6 +52,94 @@ function connect(status, options = {}) {
     perMessageDeflate: false,
     ...options,
   });
+}
+
+function connectV3(status, options = {}) {
+  return new WebSocket(status.wsUrl, OUTPUT_V3_SUBPROTOCOL, {
+    origin: status.httpUrl,
+    perMessageDeflate: false,
+    ...options,
+  });
+}
+
+function waitForMessages(socket, count) {
+  return new Promise((resolve, reject) => {
+    const messages = [];
+    socket.on('message', (data) => {
+      messages.push(JSON.parse(data.toString()));
+      if (messages.length === count) resolve(messages);
+    });
+    socket.once('error', reject);
+  });
+}
+
+function splitProjection(overrides = {}) {
+  const dynamic = {
+    generatedAt: '2026-08-23T00:00:00.000Z',
+    displayDelayMs: 0,
+    playback: {
+      status: 'playing',
+      positionMs: 1200,
+      durationMs: 180000,
+      rate: 1,
+      track: { id: 'track-1', title: 'Song' },
+    },
+    lyrics: {
+      documentId: 'lyrics-1',
+      documentRevision: 1,
+      offsetMs: 0,
+      activeLineId: 'line-1',
+      activeSegmentId: null,
+    },
+    queue: { documentId: 'queue-current', documentRevision: 1 },
+  };
+  return {
+    bootId: 'boot-split',
+    sourceEpoch: 'epoch-split-1',
+    sourceSynchronization: 'ready',
+    unavailableReason: null,
+    snapshot: {
+      ...createEmptyOutputSnapshot({
+        revision: 1,
+        generatedAt: dynamic.generatedAt,
+      }),
+      playback: dynamic.playback,
+    },
+    streams: {
+      lyrics: {
+        revision: 1,
+        document: {
+          documentId: 'lyrics-1',
+          trackId: 'track-1',
+          granularity: 'T1',
+          source: { language: 'ja' },
+          lines: [
+            {
+              lineId: 'line-1',
+              text: '歌詞',
+              startMs: 1000,
+              endMs: 2000,
+            },
+          ],
+        },
+      },
+      queue: {
+        revision: 1,
+        document: {
+          documentId: 'queue-current',
+          sourceName: 'Set',
+          items: [
+            {
+              state: 'current',
+              track: { id: 'track-1', title: 'Song' },
+            },
+          ],
+        },
+      },
+      state: { revision: 1, payload: dynamic },
+    },
+    ...overrides,
+  };
 }
 
 afterEach(async () => {
@@ -126,7 +216,15 @@ describe('outputServer', () => {
     const tokens = await fetch(`${status.httpUrl}/overlay/shared/tokens.css`);
     expect(tokens.status).toBe(200);
     expect(tokens.headers.get('content-type')).toContain('text/css');
+    expect(tokens.headers.get('cache-control')).toBe('no-cache');
+    expect(tokens.headers.get('etag')).toMatch(/^"[a-f0-9]{64}"$/);
     expect(await tokens.text()).toContain('--ovl-primitive-color-ink');
+    const unchangedTokens = await fetch(
+      `${status.httpUrl}/overlay/shared/tokens.css`,
+      { headers: { 'If-None-Match': tokens.headers.get('etag') } },
+    );
+    expect(unchangedTokens.status).toBe(304);
+    expect(await unchangedTokens.text()).toBe('');
 
     const runtime = await fetch(`${status.httpUrl}/overlay/shared/runtime.mjs`);
     expect(runtime.status).toBe(200);
@@ -152,6 +250,35 @@ describe('outputServer', () => {
     expect(unlistedFile.status).toBe(404);
   });
 
+  it('revalidates a changed allowlisted static asset instead of serving stale cache data', async () => {
+    const dir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'utawakui-output-static-'),
+    );
+    const sharedDir = path.join(dir, 'shared');
+    const tokensPath = path.join(sharedDir, 'tokens.css');
+    fs.mkdirSync(sharedDir, { recursive: true });
+    fs.writeFileSync(tokensPath, ':root { --version: 1; }');
+    const server = createServer({ overlayRoot: dir });
+
+    try {
+      const status = await server.start();
+      const first = await fetch(`${status.httpUrl}/overlay/shared/tokens.css`);
+      const firstEtag = first.headers.get('etag');
+      expect(await first.text()).toContain('--version: 1');
+
+      fs.writeFileSync(tokensPath, ':root { --version: 200; }');
+      const changed = await fetch(
+        `${status.httpUrl}/overlay/shared/tokens.css`,
+        { headers: { 'If-None-Match': firstEtag } },
+      );
+      expect(changed.status).toBe(200);
+      expect(changed.headers.get('etag')).not.toBe(firstEtag);
+      expect(await changed.text()).toContain('--version: 200');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('serves validated track artwork without accepting filesystem input', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-output-art-'));
     const imagePath = path.join(dir, 'thumbnail.png');
@@ -166,14 +293,39 @@ describe('outputServer', () => {
 
     try {
       const status = await server.start();
-      const artwork = await fetch(
+      const pointer = await fetch(
         `${status.httpUrl}/media/artwork/${encodeURIComponent('track one')}`,
+        { redirect: 'manual' },
+      );
+      expect(pointer.status).toBe(302);
+      expect(pointer.headers.get('cache-control')).toBe('no-cache');
+      expect(pointer.headers.get('location')).toMatch(
+        /^\/media\/artwork\/track%20one\/[a-f0-9]{64}$/,
+      );
+      const unchangedPointer = await fetch(
+        `${status.httpUrl}/media/artwork/${encodeURIComponent('track one')}`,
+        {
+          redirect: 'manual',
+          headers: { 'If-None-Match': pointer.headers.get('etag') },
+        },
+      );
+      expect(unchangedPointer.status).toBe(304);
+      const artwork = await fetch(
+        `${status.httpUrl}${pointer.headers.get('location')}`,
       );
       expect(artwork.status).toBe(200);
       expect(artwork.headers.get('content-type')).toBe('image/png');
+      expect(artwork.headers.get('cache-control')).toBe(
+        'public, max-age=31536000, immutable',
+      );
       expect(Buffer.from(await artwork.arrayBuffer())).toEqual(
         Buffer.from([0x89, 0x50, 0x4e, 0x47]),
       );
+      const unchangedArtwork = await fetch(
+        `${status.httpUrl}${pointer.headers.get('location')}`,
+        { headers: { 'If-None-Match': artwork.headers.get('etag') } },
+      );
+      expect(unchangedArtwork.status).toBe(304);
 
       const missing = await fetch(`${status.httpUrl}/media/artwork/missing`);
       expect(missing.status).toBe(404);
@@ -181,7 +333,13 @@ describe('outputServer', () => {
         `${status.httpUrl}/media/artwork/${encodeURIComponent('../secret')}`,
       );
       expect(traversal.status).toBe(404);
-      expect(resolvedIds).toEqual(['track one', 'missing', '../secret']);
+      const staleDigest = await fetch(
+        `${status.httpUrl}/media/artwork/track%20one/${'0'.repeat(64)}`,
+      );
+      expect(staleDigest.status).toBe(404);
+      expect(resolvedIds).toContain('track one');
+      expect(resolvedIds).toContain('missing');
+      expect(resolvedIds).toContain('../secret');
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
@@ -216,6 +374,137 @@ describe('outputServer', () => {
     const current = await fetch(`${status.httpUrl}/api/v1/state`);
     expect((await current.json()).revision).toBe(1);
     socket.close();
+  });
+
+  it('reports aggregate delivery counts without exposing message content', async () => {
+    const server = createServer();
+    const status = await server.start();
+    const socket = connect(status);
+    const initialMessage = waitForMessage(socket);
+    await waitForOpen(socket);
+    await initialMessage;
+
+    const live = server.getStatus().delivery;
+    expect(live.deliveredMessages).toBeGreaterThanOrEqual(1);
+    expect(live.deliveredBytes).toBeGreaterThan(0);
+    expect(live).not.toHaveProperty('messages');
+    expect(live).not.toHaveProperty('payload');
+
+    const closed = waitForClose(socket);
+    socket.close();
+    await closed;
+    expect(
+      server.getStatus().delivery.deliveredMessages,
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  it('negotiates split delivery without changing legacy snapshot-v2 clients', async () => {
+    const projection = splitProjection();
+    const server = createServer({ initialProjection: projection });
+    const status = await server.start();
+    const split = connectV3(status);
+    const splitMessages = waitForMessages(split, 4);
+    await waitForOpen(split);
+
+    expect(split.protocol).toBe(OUTPUT_V3_SUBPROTOCOL);
+    expect((await splitMessages).map((message) => message.type)).toEqual([
+      'overlay.config.snapshot',
+      'lyrics.document',
+      'queue.document',
+      'state.snapshot',
+    ]);
+
+    const legacy = connect(status);
+    const legacyMessage = waitForMessage(legacy);
+    await waitForOpen(legacy);
+    expect(await legacyMessage).toMatchObject({
+      type: 'state.snapshot',
+      snapshot: { version: 2, revision: 1 },
+    });
+    split.close();
+    legacy.close();
+  });
+
+  it('sends only dynamic state when referenced content is unchanged', async () => {
+    const server = createServer({ initialProjection: splitProjection() });
+    const status = await server.start();
+    const socket = connectV3(status);
+    const initialMessages = waitForMessages(socket, 4);
+    await waitForOpen(socket);
+    await initialMessages;
+
+    const nextMessage = waitForMessage(socket);
+    const current = splitProjection();
+    server.setProjectionState({
+      ...current,
+      snapshot: { ...current.snapshot, revision: 2 },
+      streams: {
+        ...current.streams,
+        state: {
+          revision: 2,
+          payload: {
+            ...current.streams.state.payload,
+            playback: {
+              ...current.streams.state.payload.playback,
+              positionMs: 2400,
+            },
+          },
+        },
+      },
+    });
+
+    expect(await nextMessage).toMatchObject({
+      type: 'state.snapshot',
+      revision: 2,
+      state: { playback: { positionMs: 2400 } },
+    });
+    socket.close();
+  });
+
+  it('replays referenced content before state when the source epoch changes', async () => {
+    const current = splitProjection();
+    const server = createServer({ initialProjection: current });
+    const status = await server.start();
+    const socket = connectV3(status);
+    const initialMessages = waitForMessages(socket, 4);
+    await waitForOpen(socket);
+    await initialMessages;
+
+    const nextMessages = waitForMessages(socket, 3);
+    server.setProjectionState({
+      ...current,
+      sourceEpoch: 'epoch-split-2',
+      snapshot: { ...current.snapshot, revision: 2 },
+      streams: {
+        ...current.streams,
+        state: { ...current.streams.state, revision: 0 },
+      },
+    });
+    expect((await nextMessages).map((message) => message.type)).toEqual([
+      'lyrics.document',
+      'queue.document',
+      'state.snapshot',
+    ]);
+    socket.close();
+  });
+
+  it('rejects unknown requested WebSocket subprotocols', async () => {
+    const server = createServer();
+    const status = await server.start();
+    const socket = new WebSocket(status.wsUrl, 'vendor.output.v9', {
+      origin: status.httpUrl,
+      perMessageDeflate: false,
+    });
+
+    const responseStatus = await new Promise((resolve, reject) => {
+      socket.once('unexpected-response', (_request, response) => {
+        resolve(response.statusCode);
+        response.resume();
+      });
+      socket.once('error', reject);
+    });
+    expect(responseStatus).toBe(400);
+    socket.terminate();
   });
 
   it('publishes typed source readiness and resets revisions for a new identity', async () => {

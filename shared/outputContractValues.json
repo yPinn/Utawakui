@@ -1,5 +1,6 @@
 {
   "projectionEnvelopeVersion": 3,
+  "webSocketSubprotocol": "utawakui.output.v3",
   "stateVersion": 2,
   "maxQueueItems": 100,
   "maxLyricLines": 1000
