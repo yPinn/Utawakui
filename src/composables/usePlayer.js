@@ -32,13 +32,10 @@ export const TEMPO_RATE_RANGE = { min: 0.5, max: 1.5 };
 // (e.g. playing the untouched track as background music), not just headroom
 // to guard against.
 export const GUIDE_VOCAL_LEVEL_RANGE = { min: 0, max: 1 };
-// Per-track reset target for the monitor chain only — the performer is
-// expected to want some guide vocal audible by default. The capture chain
-// resets to a literal 0 at every one of these same call sites instead:
-// leaking guide vocal into the recording must never be the default, only
-// something the performer opts into per track (see the capture chain
-// comment further down for why the two chains are independent at all).
-const DEFAULT_GUIDE_VOCAL_LEVEL = 0.5;
+// Initial guide-vocal levels: the performer starts with a moderate monitor
+// blend, while the OBS-facing capture chain starts at literal zero.
+const DEFAULT_MONITOR_GUIDE_VOCAL_LEVEL = 0.5;
+const DEFAULT_CAPTURE_GUIDE_VOCAL_LEVEL = 0;
 
 const audio = new Audio();
 // Required before load; otherwise cross-origin Web Audio outputs silence.
@@ -60,8 +57,8 @@ splitter.connect(mergerVoc, 2, 0);
 splitter.connect(mergerVoc, 3, 1);
 
 const vocalGain = audioCtx.createGain();
-// Guide vocal is per-track, default-off.
-vocalGain.gain.value = 0;
+// Seeded to the monitor default; track load/reset calls below keep it in sync.
+vocalGain.gain.value = DEFAULT_MONITOR_GUIDE_VOCAL_LEVEL;
 mergerVoc.connect(vocalGain);
 
 const masterGain = audioCtx.createGain();
@@ -204,14 +201,9 @@ function clampGuideVocalLevel(level) {
 // Guide vocal is modeled as two independent pieces of state per chain, not
 // one number — `on` (whether it's currently audible) and `value` (the
 // calibrated blend ratio to use once it is). The gain actually applied is
-// always `on ? value : 0`. This split exists because the two reset
-// differently: `on` resets every track (see playTrack/restartTrack/
-// clearTrack/the repeat-one wrap below — monitor resets to on, capture to
-// off, same policy as before), but `value` never auto-resets — it's a
-// mix/hardware calibration ("how loud does guide vocal need to be for this
-// setup"), not a per-song decision, so re-dialing it in every track would
-// be pure tedium. A performer picks a blend once per session and just
-// toggles it on/off per song from there.
+// always `on ? value : 0`. This split exists because only `on` resets per
+// track; `value` is a session-long calibration and starts at different
+// initial defaults per chain.
 function applyMonitorGuideVocalGain() {
   rampGain(
     audioCtx,
@@ -283,17 +275,53 @@ function restoreCaptureGuideVocalState(on, value) {
 }
 
 // Lazy-load the worklet; bypass via dry/wet crossfade instead of
-// reconnecting. The registration promise is shared so the AudioWorklet
-// module is only ever added once, but the monitor and capture chains each
-// get their own SoundTouchNode instance — they carry different signals
-// (different guide-vocal ratios mixed in), so one processor can't serve
-// both.
-let workletRegistered = null;
-function ensureWorkletRegistered() {
-  if (!workletRegistered) {
-    workletRegistered = SoundTouchNode.register(audioCtx, pitchWorkletUrl);
+// reconnecting. AudioWorklet modules are registered per AudioContext, so
+// monitor and capture each need one registration promise even though they
+// use the same processor URL. A WeakMap keeps those lifetimes tied to their
+// contexts and lets a failed registration retry later.
+const workletRegistrations = new WeakMap();
+let pitchProcessingError = null;
+let capturePitchProcessingError = null;
+
+function ensureWorkletRegistered(context) {
+  let registration = workletRegistrations.get(context);
+  if (!registration) {
+    registration = SoundTouchNode.register(context, pitchWorkletUrl).catch(
+      (err) => {
+        workletRegistrations.delete(context);
+        throw err;
+      },
+    );
+    workletRegistrations.set(context, registration);
   }
-  return workletRegistered;
+  return registration;
+}
+
+function reportPitchProcessingError(err) {
+  pitchProcessingError = err.message;
+  state.error = pitchProcessingError;
+}
+
+function clearPitchProcessingError() {
+  if (pitchProcessingError && state.error === pitchProcessingError) {
+    state.error = null;
+  }
+  pitchProcessingError = null;
+}
+
+function reportCapturePitchProcessingError(err) {
+  capturePitchProcessingError = err.message;
+  state.captureError = capturePitchProcessingError;
+}
+
+function clearCapturePitchProcessingError() {
+  if (
+    capturePitchProcessingError &&
+    state.captureError === capturePitchProcessingError
+  ) {
+    state.captureError = null;
+  }
+  capturePitchProcessingError = null;
 }
 
 let pitchNode = null;
@@ -303,7 +331,7 @@ async function ensurePitchNode() {
   if (pitchNode) return pitchNode;
   if (!pitchNodeReady) {
     pitchNodeReady = (async () => {
-      await ensureWorkletRegistered();
+      await ensureWorkletRegistered(audioCtx);
       const node = new SoundTouchNode({
         context: audioCtx,
         outputChannelCount: 2,
@@ -332,7 +360,7 @@ async function ensureCapturePitchNode() {
   if (capturePitchNode) return capturePitchNode;
   if (!capturePitchNodeReady) {
     capturePitchNodeReady = (async () => {
-      await ensureWorkletRegistered();
+      await ensureWorkletRegistered(captureAudioCtx);
       const node = new SoundTouchNode({
         context: captureAudioCtx,
         outputChannelCount: 2,
@@ -362,9 +390,17 @@ function updatePitchBypass() {
   rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
   rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
   if (captureAudioCtx) {
-    rampGain(captureAudioCtx, captureDry.gain, active ? 0 : 1);
-    rampGain(captureAudioCtx, captureWet.gain, active ? 1 : 0);
+    // If capture-node creation fails, keep that chain audible on dry while
+    // the independently valid monitor transpose stays on wet.
+    const captureActive = active && Boolean(capturePitchNode);
+    rampGain(captureAudioCtx, captureDry.gain, captureActive ? 0 : 1);
+    rampGain(captureAudioCtx, captureWet.gain, captureActive ? 1 : 0);
   }
+}
+
+function syncPitchNodeToCurrentState(node) {
+  node.pitchSemitones.value = state.transposeSemitones;
+  node.pitch.value = 2 ** (state.pitchCents / 1200);
 }
 
 // Catches up the capture chain's pitch node when a capture device is
@@ -378,10 +414,36 @@ async function syncCaptureChainToCurrentState() {
     state.pitchCents !== DEFAULT_PITCH_CENTS;
   if (!needsPitch) return;
   const node = await ensureCapturePitchNode();
-  node.pitchSemitones.value = state.transposeSemitones;
-  node.pitch.value = 2 ** (state.pitchCents / 1200);
+  syncPitchNodeToCurrentState(node);
   rampGain(captureAudioCtx, captureDry.gain, 0);
   rampGain(captureAudioCtx, captureWet.gain, 1);
+}
+
+async function applyToCapturePitchNode(apply) {
+  if (capturePitchNode) {
+    apply(capturePitchNode);
+    clearCapturePitchProcessingError();
+    return;
+  }
+  if (!captureAudioCtx) return;
+
+  const needsPitch =
+    state.transposeSemitones !== DEFAULT_TRANSPOSE_SEMITONES ||
+    state.pitchCents !== DEFAULT_PITCH_CENTS;
+  if (!needsPitch) {
+    clearCapturePitchProcessingError();
+    return;
+  }
+
+  try {
+    const node = await ensureCapturePitchNode();
+    // A prior failure may have left the other pitch dimension pending, so a
+    // newly-created capture node always hydrates the complete current state.
+    syncPitchNodeToCurrentState(node);
+    clearCapturePitchProcessingError();
+  } catch (err) {
+    reportCapturePitchProcessingError(err);
+  }
 }
 
 async function setTransposeSemitones(semitones) {
@@ -396,20 +458,20 @@ async function setTransposeSemitones(semitones) {
     try {
       (await ensurePitchNode()).pitchSemitones.value = next;
     } catch (err) {
-      state.error = err.message;
+      // The wet path never became available, so do not leave a requested
+      // value in state that the performer cannot actually hear. Guard the
+      // rollback so an intervening newer request keeps ownership of state.
+      if (state.transposeSemitones === next) {
+        state.transposeSemitones = DEFAULT_TRANSPOSE_SEMITONES;
+      }
+      reportPitchProcessingError(err);
       return;
     }
   }
-  if (capturePitchNode) {
-    capturePitchNode.pitchSemitones.value = next;
-  } else if (captureAudioCtx && next !== DEFAULT_TRANSPOSE_SEMITONES) {
-    try {
-      (await ensureCapturePitchNode()).pitchSemitones.value = next;
-    } catch (err) {
-      state.captureError = err.message;
-      return;
-    }
-  }
+  clearPitchProcessingError();
+  await applyToCapturePitchNode((node) => {
+    node.pitchSemitones.value = next;
+  });
   updatePitchBypass();
 }
 
@@ -426,20 +488,17 @@ async function setPitchCents(cents) {
     try {
       (await ensurePitchNode()).pitch.value = ratio;
     } catch (err) {
-      state.error = err.message;
+      if (state.pitchCents === next) {
+        state.pitchCents = DEFAULT_PITCH_CENTS;
+      }
+      reportPitchProcessingError(err);
       return;
     }
   }
-  if (capturePitchNode) {
-    capturePitchNode.pitch.value = ratio;
-  } else if (captureAudioCtx && next !== DEFAULT_PITCH_CENTS) {
-    try {
-      (await ensureCapturePitchNode()).pitch.value = ratio;
-    } catch (err) {
-      state.captureError = err.message;
-      return;
-    }
-  }
+  clearPitchProcessingError();
+  await applyToCapturePitchNode((node) => {
+    node.pitch.value = ratio;
+  });
   updatePitchBypass();
 }
 
@@ -477,14 +536,12 @@ const state = reactive({
   playbackMode: PLAYBACK_MODES.sequence,
   isLooping: false,
   error: null,
-  // See applyMonitorGuideVocalGain's comment above: `on` resets every
-  // track (monitor defaults to on, capture to off — deliberately
-  // different per-chain policy), `value` is a session-long calibration
-  // that never auto-resets.
+  // Initial values are monitor on/50%, capture off/0%; per-track reset only
+  // restores on/off, preserving the user's calibrated values.
   guideVocalOn: true,
-  guideVocalValue: DEFAULT_GUIDE_VOCAL_LEVEL,
+  guideVocalValue: DEFAULT_MONITOR_GUIDE_VOCAL_LEVEL,
   captureGuideVocalOn: false,
-  captureGuideVocalValue: DEFAULT_GUIDE_VOCAL_LEVEL,
+  captureGuideVocalValue: DEFAULT_CAPTURE_GUIDE_VOCAL_LEVEL,
   // Integer semitones (Key change). Not persisted — resets per track.
   transposeSemitones: DEFAULT_TRANSPOSE_SEMITONES,
   // Continuous cents fine-tune, independent of transposeSemitones.
