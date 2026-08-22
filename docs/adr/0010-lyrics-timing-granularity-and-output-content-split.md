@@ -1,0 +1,132 @@
+# ADR 0010: Lyrics Timing Granularity and Output Content Split
+
+## Status
+
+Accepted for planning on 2026-08-23. Implementation has not started.
+
+## Context
+
+The current lyrics model is line-timed: each line has `text`, `startMs`, and
+`endMs`, and Output republishes the complete line list as part of each dynamic
+snapshot. This is sufficient for a focus-line overlay, but not for reusable
+word- or phrase-progress effects. Designing those effects before improving the
+timing model would make template code compensate for missing data and would
+couple visual design to one temporary representation.
+
+Timing detail and musical choreography are related but independent. A lyric can
+have segment timing without beat data, and a template can use a beat grid without
+per-word lyrics. The architecture therefore needs two explicit axes rather than
+one overloaded “lyrics level”.
+
+## Decision
+
+### Use two independent granularity axes
+
+Text timing has four levels:
+
+| Level | Meaning                                                 | Product status                            |
+| ----- | ------------------------------------------------------- | ----------------------------------------- |
+| T0    | Untimed document                                        | Supported by normalization                |
+| T1    | Line timing                                             | Current baseline                          |
+| T2    | Segment timing, where a segment may be a word or phrase | Next implementation target                |
+| T3    | Grapheme or syllable timing                             | Schema-ready; editor and effects deferred |
+
+Musical cues have four separate levels:
+
+| Level | Meaning                    | Product status   |
+| ----- | -------------------------- | ---------------- |
+| M0    | No music cues              | Current baseline |
+| M1    | Beat grid                  | Deferred         |
+| M2    | Sections and authored cues | Deferred         |
+| M3    | Song-specific choreography | Deferred         |
+
+The next lyrics milestone is T0/T1 normalization plus the T2 storage, import,
+validation, and editing contract. It does not include T3, beat detection,
+multi-lane duet editing, or song-specific choreography. The schema may reserve
+optional `lane` and `role` metadata so these additions do not require replacing
+stable line and segment identities.
+
+### Keep timing as a derived sidecar
+
+The imported LRC, VTT, or other source file remains the source artifact. Rich
+timing is stored under:
+
+```text
+tracks/<trackId>/lyrics/timing/<sourceFilename>.json
+```
+
+The sidecar records a stable document id, granularity, source fingerprint,
+provenance, stable line and segment ids, and whether timing was manually edited.
+If the source fingerprint changes, the sidecar is retained but marked stale; it
+is not silently applied to different text.
+
+Reading aids remain separate derived data. They align through stable line and
+segment ids rather than being embedded into timing records. This prevents a
+romanization or furigana refresh from rewriting timing work.
+
+The evolving field contract and validation rules live in
+[`docs/lyrics-timing-contract.md`](../lyrics-timing-contract.md). An executable
+JSON Schema will be added with the implementation.
+
+### Split immutable lyric content from the playback clock at T2
+
+Output contract version 2 remains the current runtime contract. Introducing T2
+is the trigger for a versioned contract change because repeatedly sending every
+segment on playback ticks wastes bandwidth and creates unnecessary allocations
+inside OBS Browser Sources.
+
+The future contract sends:
+
+- an immutable `lyrics.document` message on connection and whenever the active
+  lyric source or document revision changes; and
+- a dynamic `state.snapshot` containing the canonical playback position, phase,
+  rate, display compensation, and `documentId`.
+
+The WebSocket remains read-only. The playback clock is authoritative; a template
+may interpolate locally between corrections but may not create a second playback
+source of truth. Existing version 2 clients and routes remain supported during a
+defined migration window. Contract v3 uses ADR 0012's `bootId`, `sourceEpoch`,
+stream-specific revisions, initial full handshake, and source-unavailable state;
+Lyrics does not invent a parallel synchronization identity.
+
+### Implement data foundations before visual templates
+
+The dependency order is:
+
+1. normalize T0 and T1 into stable document identities;
+2. implement and test the T2 sidecar contract;
+3. expose a minimal T2 editor and importer workflow;
+4. introduce the content/state Output protocol split;
+5. design reusable segment-aware templates and effects.
+
+## Rejected options
+
+- **Keep line timing and infer words inside each template.** Inference would be
+  inconsistent across templates and cannot recover reliable timing.
+- **Jump directly to syllable timing.** It expands language, editor, and import
+  complexity before segment effects prove the need.
+- **Rewrite the original lyrics file.** Not every source format can preserve the
+  richer model, and user-provided source artifacts should remain recoverable.
+- **Embed reading aids in timing data.** Their lifecycle and provenance differ.
+- **Continue sending full lyrics on every tick after T2.** The immutable content
+  is needlessly duplicated and increases combined OBS resource usage.
+- **Bundle song-specific choreography into the base timing schema.** That is a
+  separate M3 authoring problem and is outside the reusable-template goal.
+
+## Consequences
+
+- Template work gains a predictable, language-neutral segment model.
+- The sidecar needs stale-data UX, provenance display, and atomic persistence.
+- Output must support a versioned migration and reconnect ordering for document
+  and state messages.
+- Multi-lane, beat, and syllable features remain possible without being promised
+  by the first implementation.
+- Current T1 overlays continue to work until the new contract and adapters are
+  verified in real OBS Browser Sources.
+
+## References
+
+- [Lyrics timing contract](../lyrics-timing-contract.md)
+- [ADR 0006: Loopback Output WebSocket Runtime](0006-loopback-output-websocket-runtime.md)
+- [ADR 0012: State Convergence and Startup Phases](0012-state-convergence-and-startup-phases.md)
+- [Product specification](../spec.md)

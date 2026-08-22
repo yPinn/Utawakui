@@ -52,14 +52,14 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 
 這些功能本身是產品能力，但使用上依情境而定：
 
-| 功能                 | 角色                                             | 目前狀態           |
-| -------------------- | ------------------------------------------------ | ------------------ |
-| Lyrics Workspace     | 管理 synced lyrics、字幕或自用歌詞資料。         | 部分實作           |
-| Pitch / Tempo        | 讓使用者調整 key 與速度。                        | 已實作即時 preview |
-| Vocal Separation     | 產生分離後的 generated media，支援 guide vocal。 | 已實作             |
-| Performer Self-View  | 給表演者看的 lyrics、cue、key、下一首。          | 基本 MVP 已實作    |
-| OBS Overlay          | 給觀眾端或錄製畫面使用的 Browser Source。        | 基本 MVP 已實作    |
-| Recording / VOD mode | 區分 live-only 與 recording/VOD session。        | 規劃中             |
+| 功能                 | 角色                                      | 目前狀態           |
+| -------------------- | ----------------------------------------- | ------------------ |
+| Lyrics Workspace     | 管理 synced lyrics、字幕或自用歌詞資料。  | 部分實作           |
+| Pitch / Tempo        | 讓使用者調整 key 與速度。                 | 已實作即時 preview |
+| Vocal Separation     | 依直播／錄製用途產生伴奏與 guide vocal。  | 輕量路徑已實作     |
+| Performer Self-View  | 給表演者看的 lyrics、cue、key、下一首。   | 基本 MVP 已實作    |
+| OBS Overlay          | 給觀眾端或錄製畫面使用的 Browser Source。 | 基本 MVP 已實作    |
+| Recording / VOD mode | 區分 live-only 與 recording/VOD session。 | 規劃中             |
 
 ### 3.3 進階來源功能
 
@@ -94,7 +94,9 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - `playlists.json` collection storage。
 - 播放器、播放佇列、shuffle、repeat、previous/next。
 - Pitch / Tempo 即時 preview。
-- Vocal separation worker 與 guide vocal playback graph。
+- KARA2／Inst HQ3 vocal separation worker 與 guide vocal playback graph；
+  使用情境式 recipe、可替換 service boundary 與選配錄製品質包依 ADR 0009
+  分階段導入。
 - Import resolver 與 provider candidate selection。
 - App-managed Python `yt-dlp` provider runtime，用於 provider import 與 metadata backfill。
 - Lyrics/subtitle 相關基礎路徑。
@@ -107,7 +109,18 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 
 ### 4.2 尚未完成但已納入規格
 
-- 進階 overlay 模板與完整 style-set catalog；現有四類 slot、基礎模板與 appearance editing 已完成。
+- 進階 overlay 模板、Official Presentation Pack、User Variant 與完整
+  style-set catalog；現有四類 slot、基礎模板與 appearance editing 已完成，
+  後續會遷移為可擴充 Output Instance 並保留既有 URL alias，見 ADR 0011。
+- Lyrics T0/T1 normalization、T2 segment timing sidecar 與對應的 Output
+  content/state protocol split；目前 runtime 仍是 T1 line timing 與 snapshot v2，
+  見 ADR 0010。
+- Output state convergence 與 startup hardening：`bootId`／`sourceEpoch`、完整
+  initial handshake、分離的 liveness/readiness、backpressure、啟動 phase DAG 與
+  measured regression budgets，見 ADR 0012。
+- 外部整合 planes 與 adapters：OBS WebSocket／VTube Studio 是候選首批 automation
+  adapters；VBridger 採共存，Shoost 預設由 OBS 平行合成，Spout2/VMC 延後並依需求
+  gate，見 ADR 0013。
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
 - Preset export/import。
@@ -136,7 +149,8 @@ Electron main process
   - utawakui-media: protocol
   - Library/config/playlists modules
   - Provider/downloader modules
-  - Worker-based audio processing
+  - Recipe-oriented audio-processing service
+  - Replaceable worker/process engine adapters
 
 Local library
   - tracks/<trackId>/
@@ -155,8 +169,15 @@ OBS overlay runtime
 - Renderer 不直接存取 filesystem。
 - Renderer 不啟用 Node integration。
 - 所有 filesystem、provider、download、separation 行為都經 main process 或 worker 處理。
+- Renderer 只傳遞 allowlisted audio-processing recipe intent；模型、runtime、
+  dependency、路徑與執行參數由 main process 解析。
 - 本機媒體經 `utawakui-media:` allowlist 提供，不直接暴露 arbitrary file path。
 - Overlay 是獨立 delivery path，不嵌入 Electron renderer。
+- Browser Source 是 read-only presentation plane；automation、tracking 與 native
+  video 各自使用 main-owned adapter 與獨立 trust boundary。
+- Renderer 仍是 player／queue／lyrics source of truth；main-owned Projection Hub
+  只保存經驗證的 display-safe projections，並以 desired／observed／effective state
+  收斂 Output 與 adapter lifecycle。
 - Performer Self-View 是本機獨立 renderer，不經公開 HTTP/WebSocket runtime；主 renderer 仍是 player、queue 與 lyrics 的唯一 source of truth。
 - Overlay tokens 使用 `--ovl-*`，控制台 tokens 使用 `--ui-*`，兩者不共用。
 - App 版本由 main process 的 `app.getVersion()` 提供；renderer 不直接把
@@ -182,24 +203,54 @@ Utawakui/
       info.json
       lyrics/
         readings/
+        timing/
       separations/
 ```
 
 ### 6.2 檔案角色
 
-| 檔案              | 用途                          | 備註                                     |
-| ----------------- | ----------------------------- | ---------------------------------------- |
-| `config.json`     | Machine-local settings。      | 不屬於可分享 preset。                    |
-| `library.json`    | Track scalar metadata。       | 不保存絕對 asset path。                  |
-| `playlists.json`  | Collection、排序、track ids。 | 跟著 library root 移動。                 |
-| `overlays.json`   | Overlay profiles 與樣式設定。 | 只保存可攜式 ids 與 scalar settings。    |
-| `audio.<ext>`     | 實際播放音訊。                | 位於 track folder。                      |
-| `thumbnail.<ext>` | 曲目圖像輔助資料。            | 由 media protocol 提供。                 |
-| `info.json`       | Provider/source sidecar。     | 作為輔助資料，不作為 UI 唯一來源。       |
-| `lyrics/`         | 歌詞與字幕相關資料。          | 後續需與 self-view / overlay flow 對齊。 |
-| `separations/`    | Generated separation files。  | 依 preset 或模型設定保存。               |
+| 檔案              | 用途                          | 備註                                    |
+| ----------------- | ----------------------------- | --------------------------------------- |
+| `config.json`     | Machine-local settings。      | 不屬於可分享 preset。                   |
+| `library.json`    | Track scalar metadata。       | 不保存絕對 asset path。                 |
+| `playlists.json`  | Collection、排序、track ids。 | 跟著 library root 移動。                |
+| `overlays.json`   | Overlay profiles 與樣式設定。 | 只保存可攜式 ids 與 scalar settings。   |
+| `audio.<ext>`     | 實際播放音訊。                | 位於 track folder。                     |
+| `thumbnail.<ext>` | 曲目圖像輔助資料。            | 由 media protocol 提供。                |
+| `info.json`       | Provider/source sidecar。     | 作為輔助資料，不作為 UI 唯一來源。      |
+| `lyrics/`         | 歌詞、讀音與 timing sidecar。 | 原始來源與 derived data 分離。          |
+| `separations/`    | Generated separation files。  | 依產品 recipe 保存，manifest 記錄來源。 |
 
-### 6.3 本機音訊入庫
+### 6.3 分級音訊處理結果
+
+音訊處理以直播與一般錄製為主要情境，不提供錄音室級任意模型、ensemble 或
+多樂器分軌介面。產品 recipe 固定為：
+
+- `quick`／「快速分離」：KARA2 輕量 ONNX，以速度優先，結果會依錄製與編曲
+  而異。
+- `general`／「推薦分離」：目前使用 Inst HQ3 輕量 ONNX，是一般直播與錄製
+  的預設；Inst HQ4 僅是待本機盲聽的同 runtime 替換候選。
+- `refined`／「精修分離」：單一 BS-RoFormer 選配品質包，需先
+  通過 Windows CPU、來源、授權、容量、packaged execution 與盲聽門檻。
+- `backing-vocals`／「保留和聲」：BS-RoFormer 後接 BVE 的二階段選配；
+  伴奏合入和聲，guide pair 保存主唱。
+
+每個完成結果維持一個 44.1 kHz／16-bit 四聲道播放檔：0/1 是伴奏 L/R，
+2/3 是 guide／主唱 L/R。多階段中間 stems 只存在於 job temp，成功原子發布或
+失敗／取消後即清除。現有 `high-quality` KARA2 調參結果是唯讀 legacy 相容項：
+不再提供新產生入口，但既有檔案與 manifest 紀錄不刪除、不重新命名。
+`standard`、`clean`、`inst-hq3`、`recording-enhanced` 僅作既有結果的讀取／
+選擇 alias；新工作一律使用穩定產品 recipe id，實際模型則記在 versioned
+processing profile。
+此格式每分鐘約 21.17 MB（20.19 MiB），五分鐘每個 recipe 約 100.94 MiB；
+不得為了更細分軌而預設保存多份 stem，選配 recipe 準備前需顯示預估容量。
+
+選配 community Python runtime 與 yt-dlp provider runtime 完全隔離，且不得
+隨基本安裝程式預設下載。CPU 是正式完成路徑；CUDA 若未來導入，必須是另行
+評估、硬體偵測後明確下載的獨立 pack。完整決策見
+[ADR 0009](adr/0009-tiered-audio-processing-runtime.md)。
+
+### 6.4 本機音訊入庫
 
 本機音訊匯入採 managed library：使用者選取的來源檔案會複製到 `tracks/<trackId>/audio.<ext>`，Utawakui 後續播放與衍生資料都以曲庫內檔案為準，不依賴原始來源路徑。
 
@@ -225,7 +276,7 @@ Utawakui/
 
 Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一般曲庫清單與本機清單分開排序與瀏覽。
 
-### 6.4 歌詞來源
+### 6.5 歌詞來源
 
 歌詞來源儲存在 `tracks/<trackId>/lyrics/`，並由 `lyrics.json` manifest 記錄來源列表與 scalar display metadata。來源檔本身仍是 filesystem truth；manifest 只保存 `filename`、`language`、`kind`、可選 `label` 等顯示/選擇需要的欄位，不保存外部 provider URL 或本機原始路徑。
 
@@ -237,6 +288,19 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 手動匯入是本機 library edit，不需 feature gate；外部 lyrics provider 搜尋與保存屬於 `lyrics-flow`，首次執行時需確認。貼上的純文字或 `.txt` 檔會保存為 `manual*.lrc`，沒有 timestamp 時以 untimed lines 顯示，不支援點擊 seek。
 
+目前播放與 Output 的時間顆粒度為 T1 line timing。下一階段依
+[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) 先落實
+T0/T1 normalization 與 T2 segment timing，再回到 segment-aware 顯示設計；T3
+grapheme/syllable timing、beat grid、多 lane 與逐曲編舞都不屬於第一批。T2 保存為
+`tracks/<trackId>/lyrics/timing/<sourceFilename>.json` derived sidecar，透過來源
+fingerprint 判斷是否過期，不覆寫原始 LRC/VTT。穩定 line/segment id 供讀音資料對齊，
+完整草案見 [Lyrics Timing Contract](lyrics-timing-contract.md)。
+
+M1 beat grid 排在 T2 穩定之後；屆時才以固定音訊 fixture 比較離線 BPM／beat
+analysis 套件的準確度、confidence、worker isolation、Windows/Electron 打包、容量、
+授權與維護狀態。BPM estimate、beat/downbeat timestamps 與播放器 tempo rate 是不同
+資料；尚未選定套件，且分析不可成為 T2 編輯或正常播放的必要依賴。
+
 **讀音輔助（furigana/羅馬拼音）**：每個歌詞來源可對應一份讀音資料，保存於
 `tracks/<trackId>/lyrics/readings/<sourceFilename>.json`（用完整來源檔名，而非去
 副檔名的 stem，避免 `manual.lrc` 與 `manual.vtt` 互相覆蓋）。內容為逐行的 ruby 段落
@@ -246,15 +310,30 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 [ADR 0003](adr/0003-japanese-reading-analyzer-stack.md)；產生/修正動作是純本地文字
 運算，不需 feature gate。刪除歌詞來源時，對應的讀音資料一併刪除。
 
-### 6.5 Preset 原則
+### 6.6 Preset 原則
 
-`overlays.json` 是 versioned slot document，分別保存 `now-playing`、`setlist`、
+目前 `overlays.json` v2 是 versioned slot document，分別保存 `now-playing`、`setlist`、
 `lyrics` 與 `artwork` 四類輸出。每個 slot 各自持有 `templateId`、`styleSetIds` 與
 scalar appearance settings，彼此可同時使用，不存在全域互斥的「目前 profile」。
 讀取時逐類清洗，version 1 profile document 會遷移到對應 slot；損壞文件會保留備份，
 寫入採 atomic temp-file rename。較新且不支援的 schema version 會拒絕載入，避免舊版
 覆寫新資料。它不保存 live playback state、絕對路徑、media URL、provider id 或
 素材內容。
+
+目標模型會將 **Output Instance**（獨立 OBS endpoint）、**Template**（layout / motion /
+renderer）、**Template Category**（Gallery filter）與 **Data Requirements** 分離。
+Now Playing 與 Artwork 歸入可重用的 Track template family，但仍保有兩個可同時使用的
+default instance；Lyrics 與 Setlist 也保留 default instance。未來 canonical URL 為
+`/overlay/slot/<instanceId>`，目前四條固定路徑會成為 default instance alias，不破壞
+既有 OBS scene。完整遷移、Presentation Pack 與 User Variant 邊界見
+[ADR 0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)。
+
+Official Style Set A/B/C 位於經驗證、可獨立熱更新的 declarative Presentation Pack；
+使用者的 A-prime 是引用 A 的 allowlisted override diff，保存於 pack 之外，可匯出為
+`.utawakui-style` 或等價 share code。可執行 template、GSAP recipe、renderer adapter 與
+shader 仍隨 app release；初期 pack 不接受任意 JS/CSS/HTML。儲存、版本、回退與回饋
+資料契約見 [Overlay Pack Contract](overlay-pack-contract.md)，素材安全政策見
+[Overlay Asset Security Policy](overlay-asset-security.md)。
 
 未來 preset export/import 可包含：
 
@@ -270,7 +349,7 @@ Preset 不應包含：
 - 第三方原始 media files。
 - 任何由 Utawakui 宣稱已驗證的外部狀態。
 
-### 6.6 Output State Contract
+### 6.7 Output State Contract
 
 Phase 1 使用 versioned snapshot 在 renderer 與 main-process output server
 之間傳遞 now-playing、queue 與 lyrics。Renderer 內既有的 player、playback queue
@@ -286,7 +365,13 @@ Snapshot 只包含 overlay 顯示所需的 scalar data：revision、canonical ti
 filesystem path、provider metadata、歌詞 filename 與其他額外欄位；未來 main
 process 收到 renderer payload 時仍必須重新 parse，不信任 renderer 已完成清洗。
 
-### 6.7 Loopback Output Runtime
+大規模改版前，Output contract 依 ADR 0012 增加 `bootId`、`sourceEpoch` 與
+stream-specific revision。Main 啟動 listener 不代表 source ready；只有 renderer 在
+完成 player／queue／active lyrics hydration 後送出同一 boot/epoch 的完整 initial
+projection，才可進入 source-ready。Renderer reload／crash 會切回 unavailable 並讓
+overlay 隱藏 live content，不重播上次執行留下的 snapshot。
+
+### 6.8 Loopback Output Runtime
 
 Phase 1B 的 runtime 由 Electron main process 持有，但核心實作維持純 Node module。
 它使用 Node `http` 與直接 production dependency `ws`，固定 bind
@@ -302,7 +387,14 @@ contract 再解析的完整 canonical snapshot，因此 OBS scene reload 不依�
 增量事件。P1C 已加入明確 allowlist 的 static overlay routes；P1D 已接上
 feature gate、preload IPC 與 renderer publish。
 
-### 6.8 Independent Overlay Delivery
+`/health` 的 listening/liveness、canonical source readiness、每個 instance 的
+template/assets readiness，以及外部 adapter readiness 是不同 facets。WebSocket client
+count 仍只表示 transport client；未來 template ready/error telemetry 是受限且
+non-authoritative 的 diagnostics path，不可用來發送 playback command。Dynamic state
+採 per-client latest-wins 與 backlog high-water policy；hash-addressed verified assets
+才使用 immutable cache，runtime HTML／manifest／active pointer 維持 revalidation。
+
+### 6.9 Independent Overlay Delivery
 
 Phase 1C 的 Browser Source 檔案位於 root-level `overlay/`，不進 Vite renderer
 bundle，也不 import Vue 或 control-panel `--ui-*` tokens。Server 只用固定 route map
@@ -330,7 +422,16 @@ Overlay CSS 分為 `--ovl-primitive-*`、semantic `--ovl-color/font/motion-*` �
 與 role variables。這讓未來 style set 覆寫 semantic/template roles，而不需要複製
 整份 CSS，也不會把公開輸出樣式耦合到控制台 theme 或接受任意 CSS 字串。
 
-### 6.9 Output Workbench Connection
+Token semantic hierarchy 與 CSS cascade/source ownership 是兩個維度：共用 core CSS
+只持有 reset、accessibility、containment、layout invariant 與 fallback；Official Style
+Set 提供 primitive palette、typography、decoration reference 與有界 recipe parameters；
+template role 消費 semantic roles；User Variant 最後覆寫明確開放的 setting，再由
+accessibility/performance constraint 做強制收斂。Overlay 動畫以 GSAP 作 choreography
+與 playhead 核心，簡單非同步效果才使用 CSS/WAAPI；Motion 不進 Overlay bundle。
+DOM/CSS/SVG 是預設 renderer，PixiJS 僅作可選 2D GPU adapter，Three.js 是唯一規劃的
+3D adapter，且所有歌曲同步 renderer 都由 canonical playback clock 驅動。
+
+### 6.10 Output Workbench Connection
 
 Phase 1D 由 main process 的 `outputHandlers` 提供 start/stop/status/publish 與
 portable overlay-slot IPC。Start 與 publish 都會重新檢查 `public-output-flow`；stop
@@ -355,9 +456,11 @@ URL 複製屬於 Workbench 的目前類型操作，不放在本機服務設定�
 Gallery 右欄與 Workbench inspector 都使用 rem 上下限與 viewport-relative 中間值，
 不依賴可折疊／可拖曳的 playlist sidebar 內容寬度；Workbench 的 iframe stage 使用
 16:9 與 rem 最大寬度，在 inspector 之外盡量填滿可用空間。輸出設定集中管理
-`autoStart`、port、服務啟停與可用 port 建議。四種輸出採固定路徑，URL 是低頻操作，
+`autoStart`、port、服務啟停與可用 port 建議。目前四種輸出採固定路徑，URL 是低頻操作，
 不讓長網址占用主要資訊層級。服務連線狀態只表示有 Browser Source client 連入，不
 推論一定是 OBS 本體。Host 固定為 `127.0.0.1`，port 衝突不會靜默改號。
+Instance model 落地後，既有固定路徑仍作 default instance alias；新增 instance 才使用
+`/overlay/slot/<instanceId>`。Performer Self-View 不是公開 instance。
 
 `config.json` 保存 machine-local `outputRuntime.autoStart` / `port` /
 `displayDelayMs`；`overlays.json`
@@ -376,12 +479,31 @@ machine-local 固定補償：正值延後整份 overlay state，負值在播放�
 500ms 起始等待只用於斷線重連，不可混入 Port、heartbeat 或 display compensation。
 目前 publish 維持 serial latest-wins，Browser Source 端只在正補償期間保留有界的待顯示
 snapshot。先前 loopback 量測未顯示 transport bottleneck，因此不先拆成 content snapshot
-與 clock correction 兩套 protocol；只有 payload size、更新頻率或 OBS 記憶體量測成為
-實際問題時才重開此決策。
-目前 publish 維持 serial latest-wins，Browser Source 端只在正補償期間保留有界的待顯示
-snapshot。先前 loopback 量測未顯示 transport bottleneck，因此不先拆成 content snapshot
-與 clock correction 兩套 protocol；只有 payload size、更新頻率或 OBS 記憶體量測成為
-實際問題時才重開此決策。
+與 clock correction 兩套 protocol。ADR 0010 已將 T2 segment timing 定為下一次重開
+此決策的明確觸發條件：屆時 immutable `lyrics.document` 與 dynamic `state.snapshot`
+分流，避免每次播放更新都重送完整 segments；在 T2 實作前仍維持現有 v2 行為。
+
+### 6.11 External Integration Planes
+
+外部整合依 [ADR 0013](adr/0013-external-integration-planes.md) 分為四個 plane：
+
+- Presentation：目前 read-only Browser Source HTTP/WebSocket。
+- Automation：經 authentication、capability、schema 與 rate limit 的 command/event。
+- Tracking：選配 VTube Studio event 或 VMC/OSC observer，不承載 lyrics/playback contract。
+- Native video：選配 Spout2 等 platform-specific alpha texture/video transport。
+
+OBS Browser Source 保持預設且不要求額外 plugin。OBS WebSocket 5 與 VTube Studio
+Public API 是候選首批 main-owned adapter，只有啟用時才 lazy-load SDK；所有 command
+都轉為 allowlisted product intent，回到 authoritative renderer action，並由後續
+projection 區分 accepted 與 applied。密碼/token 不進 renderer、preset、pack、log 或
+Browser Source URL。
+
+VBridger 已透過 VTube Studio API／VMC 傳遞 tracking，因此初期不做直接 adapter，
+Utawakui 以獨立 VTS plugin identity 共存且不預設注入 tracking parameter。Shoost
+初期採 `VTS/VBridger -> Shoost -> OBS` 與 `Utawakui Browser Source -> OBS` 平行合成；
+只有具體需求證明 Browser Source／透明 capture 無法滿足，才評估 Windows Spout2
+native helper、GPU/color/alpha/package/license gate，且需先驗證目標接收端相容性。
+VMC 不是歌詞或播放共用協議。
 
 ## 7. Feature Notice 與 Gate
 
@@ -452,6 +574,9 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 - Pitch/Tempo pre-render cache。
 - Recording/VOD session mode。
+- 分級 audio-processing service、manifest v2 與 legacy result 相容；基礎
+  KARA2／Inst HQ3 維持輕量，BS-RoFormer／BVE 僅在 benchmark gate 通過後
+  成為按需下載的錄製品質包。
 - Preset export/import。
 - Library maintenance UI。
 - 錯誤復原、缺檔提示與狀態修復；diagnostics foundation 已完成，Settings、
