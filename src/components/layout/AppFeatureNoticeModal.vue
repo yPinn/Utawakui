@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 import { SquareCheckBig } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
-import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import { useFeatureGates } from '../../composables/useFeatureGates.js';
 
 const { state, pendingFeature, confirmPendingFeature, cancelPendingFeature } =
@@ -32,9 +32,13 @@ const body = computed(() => pendingFeature.value?.body || []);
         </li>
       </ul>
 
-      <UiHint v-if="state.error" tone="danger" role="status">
-        {{ state.error }}
-      </UiHint>
+      <UiNotice
+        v-if="state.error"
+        tone="danger"
+        title="功能未啟用"
+        :message="state.error"
+        compact
+      />
 
       <div class="feature-notice__actions">
         <UiButton :disabled="state.isSaving" @click="cancelPendingFeature">

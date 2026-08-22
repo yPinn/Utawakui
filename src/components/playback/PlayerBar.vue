@@ -43,6 +43,7 @@ import QueuePanel from '../queue/QueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const {
@@ -493,6 +494,16 @@ onUnmounted(() => {
 
 <template>
   <div class="player-bar" role="region" aria-label="播放控制列">
+    <UiNotice
+      v-if="state.error"
+      class="player-bar__notice"
+      tone="danger"
+      title="播放未完成"
+      :message="state.error"
+      action-label="重試"
+      compact
+      @action="toggle"
+    />
     <div class="player-bar__track">
       <UiTrackThumb
         v-if="state.track"
@@ -682,6 +693,7 @@ onUnmounted(() => {
 
 <style scoped>
 .player-bar {
+  position: relative;
   display: flex;
   align-items: center;
   /* Track/extras are fixed-width; on wide windows they can sum to less
@@ -697,6 +709,14 @@ onUnmounted(() => {
   /* Otherwise dragging a slider triggers native text selection, which can
      swallow a click on a nearby button instead of registering it. */
   user-select: none;
+}
+
+.player-bar__notice {
+  position: absolute;
+  right: var(--ui-space-3);
+  bottom: calc(100% + var(--ui-space-2));
+  z-index: var(--ui-z-dropdown);
+  max-width: min(28rem, calc(100vw - 2 * var(--ui-space-3)));
 }
 
 .player-bar__track {

@@ -4,6 +4,7 @@ import { FolderPlus, ICON_SIZE, Music } from '../icons/index.js';
 import ProviderImportPanel from '../components/import/ProviderImportPanel.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
+import UiNotice from '../components/ui/UiNotice.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import { useLocalImport } from '../composables/useLocalImport.js';
 
@@ -52,8 +53,19 @@ const localStatusTone = computed(
         </UiButton>
       </div>
 
+      <UiNotice
+        v-if="
+          localImportState.message && localImportState.statusType === 'error'
+        "
+        tone="danger"
+        title="本機匯入未完成"
+        :message="localImportState.message"
+        action-label="重試"
+        compact
+        @action="importFiles"
+      />
       <UiHint
-        v-if="localImportState.message"
+        v-else-if="localImportState.message"
         :tone="localStatusTone"
         role="status"
       >

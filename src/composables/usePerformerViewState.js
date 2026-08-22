@@ -1,6 +1,7 @@
 import { computed, onMounted, onUnmounted, reactive, shallowRef } from 'vue';
 import { nextLyricsBoundaryDelayMs } from '../../overlay/shared/state.mjs';
 import { selectPerformerFrame } from '../utils/performerView.js';
+import { normalizeAppError } from '../utils/appErrors.js';
 
 export function usePerformerViewState() {
   const snapshot = shallowRef(null);
@@ -26,6 +27,33 @@ export function usePerformerViewState() {
       throw new Error('表演者畫面橋接 API 尚未載入。');
     }
     return method;
+  }
+
+  function reportError(cause, operation, message) {
+    const notice = normalizeAppError(cause, {
+      code: `PERFORMER_WINDOW_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+      title: '表演者畫面操作未完成',
+      message,
+      source: 'performer-window',
+      operation,
+      context: { retryable: true },
+    });
+    try {
+      Promise.resolve(
+        window.UtawakuiPerformer?.recordDiagnostic?.({
+          level: 'error',
+          source: 'performer-window',
+          operation,
+          code: notice.code,
+          message: 'Performer window operation failed',
+          correlationId: notice.id,
+          context: { retryable: true },
+        }),
+      ).catch(() => {});
+    } catch {
+      // Diagnostics must never interrupt the performer window.
+    }
+    return notice.message;
   }
 
   function applyWindowState(value = {}) {
@@ -68,7 +96,11 @@ export function usePerformerViewState() {
       applyWindowState(await bridgeMethod(name)());
       error.value = '';
     } catch (cause) {
-      error.value = cause instanceof Error ? cause.message : String(cause);
+      error.value = reportError(
+        cause,
+        name,
+        '目前無法完成視窗操作，請再試一次。',
+      );
     }
   }
 
@@ -79,7 +111,11 @@ export function usePerformerViewState() {
       applySnapshot(await bridgeMethod('getSnapshot')());
       applyWindowState(await bridgeMethod('getWindowState')());
     } catch (cause) {
-      error.value = cause instanceof Error ? cause.message : String(cause);
+      error.value = reportError(
+        cause,
+        'initialize',
+        '表演者畫面初始化未完成，請重新開啟。',
+      );
     }
   });
 

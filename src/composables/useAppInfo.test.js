@@ -47,7 +47,7 @@ describe('useAppInfo', () => {
     await appInfo.refreshAppInfo();
 
     expect(appInfo.state.currentVersion).toBe('');
-    expect(appInfo.state.error).toBe('IPC failed');
+    expect(appInfo.state.error).toBe('目前無法讀取版本資訊，請稍後再試。');
     expect(appInfo.state.isLoading).toBe(false);
   });
 
@@ -62,6 +62,6 @@ describe('useAppInfo', () => {
     await appInfo.refreshAppInfo();
 
     expect(appInfo.state.currentVersion).toBe('');
-    expect(appInfo.state.error).toBe('版本資訊格式不正確');
+    expect(appInfo.state.error).toBe('目前無法讀取版本資訊，請稍後再試。');
   });
 });

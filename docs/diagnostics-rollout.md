@@ -2,8 +2,9 @@
 
 ## Status
 
-Deferred after foundation Batch 2 on 2026-08-22. Resume as part of Phase 2
-error recovery or when a packaged-release/support trigger below is met.
+Renderer recovery and Settings controls resumed on 2026-08-23. Packaged smoke,
+explicit export, and main domain-handler wrappers remain deferred to their
+release/support triggers below.
 
 The pause is intentional, not a technical blocker. ADR 0008 remains the
 architecture and privacy contract; this document records the implementation
@@ -11,7 +12,7 @@ route so later work does not need another repository-wide audit.
 
 ## Decision
 
-Do not expand diagnostics into Settings, export, or every domain handler now.
+Do not expand diagnostics into export or every main domain handler now.
 The existing foundation already provides restart-persistent evidence for
 uncaught renderer errors and Electron/process lifecycle failures. The remaining
 work changes user journeys and public error semantics across many domains, so it
@@ -39,8 +40,8 @@ Reasons to pause:
 | Electron lifecycle      | `electron/main/diagnosticsLifecycle.js`                          | Fatal monitor, process gone, load/preload failure, unresponsive            |
 | Renderer global capture | `src/utils/rendererDiagnostics.js`                               | Vue, browser `error`, and `unhandledrejection`                             |
 | IPC boundary            | `electron/main/diagnosticsHandlers.js` and `electron/preload.js` | Record, recent read, clear, open folder; renderer writes are rate-limited  |
-| In-memory public errors | `src/composables/useAppDiagnostics.js`                           | Feature dependency, separation, and lyrics-reading records only            |
-| Settings                | `src/views/SettingsView.vue`                                     | Shows only the in-memory record count                                      |
+| In-memory public errors | `src/composables/useAppDiagnostics.js`                           | Shared bounded public projection; never uses plain caught error text       |
+| Settings                | `src/views/SettingsView.vue`                                     | Persistent count plus clear/open-folder controls; no raw event list        |
 | Domain handlers         | Existing `electron/main/*Handlers.js` files                      | No shared diagnostics wrapper yet                                          |
 | Export                  | Not implemented                                                  | Must remain explicit, redacted, and user-selected                          |
 
@@ -49,9 +50,9 @@ The two record surfaces are deliberately still separate:
 - Persistent diagnostics are private operational evidence owned by main.
 - `useAppDiagnostics` contains user-safe, renderer-memory presentation records.
 
-Do not merge them by returning private stacks or sessions to renderer. A future
-Settings list reads only the existing public projection from
-`diagnostics:list-recent`.
+Do not merge them by returning private stacks or sessions to renderer. Settings
+reduces `diagnostics:list-recent` to a count and never stores the returned event
+bodies in reactive View state.
 
 ## Resume triggers
 
@@ -107,15 +108,16 @@ Perform this before adding more diagnostics features:
 Record the package/version and observed directory category, but do not commit a
 developer's absolute profile path.
 
-### Batch 4: Settings inspection and controls
+### Batch 4: Settings controls and public error projection — implemented
 
 Files expected to change:
 
 - Add `src/composables/usePersistentDiagnostics.js` for loading, clearing, and
   opening the folder through the existing preload methods.
 - Add co-located composable tests with a stubbed `window.Utawakui` bridge.
-- Update `src/views/SettingsView.vue` from count-only presentation to a bounded
-  list with loading, empty, failure, and clear-confirmation states.
+- Update `src/views/SettingsView.vue` with loading, failure,
+  clear-confirmation, and open-folder states while keeping the ordinary UI
+  count-only for non-technical users.
 - Add or extend Settings view tests for keyboard access, safe fields, clear,
   and open-folder failure.
 
@@ -123,9 +125,11 @@ Keep `useAppDiagnostics.js` in place for transient user-facing errors during
 this batch. Naming the persistent composable separately prevents an accidental
 private/public merge.
 
-The ordinary list may show only time, severity, process, source, operation,
-code, safe message, and allowlisted context. It must not show stack, session id,
-absolute path, URL, command line, provider output, track title, or lyrics.
+The ordinary UI must not show stack, session id, absolute path, URL, command
+line, provider output, track title, lyrics, or caught `Error.message` text.
+Renderer Views use explicit concise Traditional Chinese messages through
+`UiNotice`; structured application errors remain the only IPC-provided public
+message source.
 
 ### Batch 5: Explicit redacted export
 

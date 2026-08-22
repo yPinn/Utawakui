@@ -35,6 +35,7 @@ import ImportCandidateOption from './ImportCandidateOption.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
@@ -222,8 +223,15 @@ function trackStatusIconLabel(track) {
       </UiButton>
     </div>
 
+    <UiNotice
+      v-if="state.status && state.statusType === 'error'"
+      tone="danger"
+      title="外部來源操作未完成"
+      :message="state.status"
+      compact
+    />
     <UiHint
-      v-if="state.status"
+      v-else-if="state.status"
       :tone="statusTone"
       role="status"
       style="min-height: var(--ui-space-4)"

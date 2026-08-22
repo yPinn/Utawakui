@@ -13,6 +13,7 @@ import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
 
@@ -41,6 +42,7 @@ attachClientRender(
 attachClientRender(UiButton, '../ui/UiButton.vue');
 attachClientRender(UiChip, '../ui/UiChip.vue');
 attachClientRender(UiHint, '../ui/UiHint.vue');
+attachClientRender(UiNotice, '../ui/UiNotice.vue');
 
 function hostNode(type, text = '') {
   return { type, text, props: {}, children: [], parent: null };
@@ -220,7 +222,7 @@ describe('Lyrics workspace control contracts', () => {
     ]);
   });
 
-  it('reserves the reading error slot before and after an error appears', () => {
+  it('shows reading failures through the shared notice component', () => {
     const empty = mount(LyricsPreparationBar, {
       showsReadingAid: true,
       lyricsScript: 'ja',
@@ -231,23 +233,11 @@ describe('Lyrics workspace control contracts', () => {
       readingError: '讀音產生失敗',
     });
 
+    expect(findByProp(empty.root, 'role', 'alert')).toBeUndefined();
+    expect(findByProp(failed.root, 'role', 'alert')).toBeTruthy();
     expect(
-      findAll(empty.root, (node) =>
-        String(node.props?.class || '').includes(
-          'lyrics-preparation__error-slot',
-        ),
-      ),
+      findAll(failed.root, (node) => node.text === '讀音產生失敗'),
     ).toHaveLength(1);
-    expect(
-      findAll(failed.root, (node) =>
-        String(node.props?.class || '').includes(
-          'lyrics-preparation__error-slot',
-        ),
-      ),
-    ).toHaveLength(1);
-    expect(findByProp(failed.root, 'role', 'alert').props['aria-label']).toBe(
-      '讀音產生失敗',
-    );
   });
 
   it('emits preparation selections and commands with semantic payloads', () => {

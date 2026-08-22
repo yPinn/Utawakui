@@ -118,6 +118,17 @@ function normalizeContext(context, error) {
   return normalized;
 }
 
+function authoritativeContext(defaults) {
+  return {
+    ...(typeof defaults.appVersion === 'string'
+      ? { appVersion: defaults.appVersion }
+      : {}),
+    ...(typeof defaults.electronVersion === 'string'
+      ? { electronVersion: defaults.electronVersion }
+      : {}),
+  };
+}
+
 function normalizeTimestamp(now) {
   const value = typeof now === 'function' ? now() : new Date();
   const date = value instanceof Date ? value : new Date(value);
@@ -166,7 +177,10 @@ function normalizeDiagnosticEvent(input = {}, defaults = {}) {
     message: redactText(rawMessage) || 'Diagnostic event',
     sessionId,
     correlationId,
-    context: normalizeContext(event.context, error),
+    context: normalizeContext(
+      { ...(event.context || {}), ...authoritativeContext(defaults) },
+      error,
+    ),
   };
 
   if (typeof error?.stack === 'string') {

@@ -19,6 +19,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import VirtualCableGuideModal from './VirtualCableGuideModal.vue';
 
@@ -35,7 +36,8 @@ defineProps({
 const emit = defineEmits(['close']);
 
 const { state: playerState } = usePlayer();
-const { devices, monitorDeviceLabel, selectDevice } = useAudioOutput();
+const { devices, monitorDeviceLabel, captureErrorNotice, selectDevice } =
+  useAudioOutput();
 
 // "Off" doesn't mean silence — the monitor chain (see usePlayer.js) always
 // plays through the OS's current default device regardless of any capture
@@ -190,9 +192,13 @@ function choose(deviceId) {
         找不到可用的輸出裝置——需先在系統安裝一套虛擬音效裝置才會出現在這裡,可以參考上方的選擇建議。
       </UiHint>
 
-      <UiHint v-if="playerState.captureError" tone="danger" role="alert">
-        {{ playerState.captureError }}
-      </UiHint>
+      <UiNotice
+        v-if="captureErrorNotice"
+        tone="danger"
+        :title="captureErrorNotice.title"
+        :message="captureErrorNotice.message"
+        compact
+      />
     </div>
 
     <VirtualCableGuideModal :open="isGuideOpen" @close="isGuideOpen = false" />

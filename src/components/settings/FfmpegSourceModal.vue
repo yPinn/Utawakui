@@ -17,9 +17,10 @@ import {
 } from '../../icons/index.js';
 import { FEATURE_DEPENDENCIES } from '../../constants/featureDependencies.js';
 import { useFeatureDependencies } from '../../composables/useFeatureDependencies.js';
+import { useAppDiagnostics } from '../../composables/useAppDiagnostics.js';
 import UiButton from '../ui/UiButton.vue';
-import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 
 const FFMPEG_DEPENDENCY_ID = 'ffmpeg-gyan-essentials';
@@ -37,6 +38,7 @@ const emit = defineEmits(['close']);
 
 const { state: featureDependencyState, prepareDependency } =
   useFeatureDependencies();
+const { recordError } = useAppDiagnostics();
 
 const detection = shallowRef(props.initialDetection);
 const isDetecting = shallowRef(false);
@@ -90,16 +92,12 @@ const managedProgressLabel = computed(() => {
 const systemSourceCaption = computed(() => {
   if (isDetecting.value) return '正在檢查本機可用版本';
   if (detection.value?.ok) return '已找到可用版本';
-  if (detection.value) {
-    return detection.value.reason
-      ? `未找到可用版本：${detection.value.reason}`
-      : '未找到可用版本';
-  }
+  if (detection.value) return '未找到可用版本';
   return '尚未檢查';
 });
 const systemSourceDetail = computed(() => {
   if (!detection.value) return '尚未檢查系統 FFmpeg';
-  if (!detection.value.ok) return detection.value.reason || '未找到可用版本';
+  if (!detection.value.ok) return '未找到可用版本';
   return [
     detection.value.path,
     detection.value.version && `v${detection.value.version}`,
@@ -132,7 +130,14 @@ async function chooseSystem() {
   try {
     await window.Utawakui.setFfmpegSource(true);
   } catch (err) {
-    switchError.value = err?.message || '切換系統 FFmpeg 失敗';
+    switchError.value = recordError(err, {
+      code: 'FFMPEG_SOURCE_SWITCH_FAILED',
+      title: 'FFmpeg 來源未切換',
+      message: '目前無法切換版本，請再試一次。',
+      source: 'settings',
+      operation: 'set-ffmpeg-source',
+      context: { retryable: true },
+    }).message;
   } finally {
     isSwitching.value = false;
   }
@@ -149,7 +154,14 @@ async function chooseManaged() {
     await window.Utawakui.setFfmpegSource(false);
     await prepareDependency(FFMPEG_DEPENDENCY_ID);
   } catch (err) {
-    switchError.value = err?.message || '切換內建版本失敗';
+    switchError.value = recordError(err, {
+      code: 'FFMPEG_SOURCE_SWITCH_FAILED',
+      title: 'FFmpeg 來源未切換',
+      message: '目前無法切換版本，請再試一次。',
+      source: 'settings',
+      operation: 'set-ffmpeg-source',
+      context: { retryable: true },
+    }).message;
   } finally {
     isSwitching.value = false;
   }
@@ -241,9 +253,13 @@ async function chooseManaged() {
         </UiButton>
       </div>
 
-      <UiHint v-if="switchError" tone="danger" role="alert">
-        {{ switchError }}
-      </UiHint>
+      <UiNotice
+        v-if="switchError"
+        tone="danger"
+        title="FFmpeg 來源未切換"
+        :message="switchError"
+        compact
+      />
     </div>
   </UiModal>
 </template>

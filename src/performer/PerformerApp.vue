@@ -1,6 +1,7 @@
 <script setup>
 import PerformerStage from '../components/performer/PerformerStage.vue';
 import PerformerWindowToolbar from '../components/performer/PerformerWindowToolbar.vue';
+import UiNotice from '../components/ui/UiNotice.vue';
 import { usePerformerViewState } from '../composables/usePerformerViewState.js';
 
 const {
@@ -25,7 +26,14 @@ const {
       @toggle-full-screen="toggleFullScreen"
     />
     <PerformerStage :frame="frame" />
-    <p v-if="error" class="performer-app__error" role="alert">{{ error }}</p>
+    <UiNotice
+      v-if="error"
+      class="performer-app__error"
+      tone="danger"
+      title="表演者畫面操作未完成"
+      :message="error"
+      compact
+    />
   </div>
 </template>
 
@@ -45,12 +53,5 @@ const {
   right: var(--ui-space-4);
   bottom: var(--ui-space-4);
   max-width: min(32rem, calc(100% - 2 * var(--ui-space-4)));
-  margin: 0;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-danger);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
 }
 </style>

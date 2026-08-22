@@ -1,4 +1,5 @@
 import { computed, reactive, readonly } from 'vue';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 // Module-scope singleton preserves selection across tab unmounts.
 // Keep playback out so this stays testable under plain Node.
@@ -12,6 +13,21 @@ const state = reactive({
   // AppPlaylistSidebar can drive it from any tab.
   libraryView: 'all',
   error: null,
+});
+const { recordError } = useAppDiagnostics();
+
+const ERROR_PRESENTATION = Object.freeze({
+  讀取歌單失敗: ['list', '目前無法讀取播放清單，請再試一次。'],
+  建立歌單失敗: ['create', '無法建立播放清單，請再試一次。'],
+  重新命名歌單失敗: ['rename', '變更未儲存，請再試一次。'],
+  刪除歌單失敗: ['delete', '無法刪除播放清單，請再試一次。'],
+  轉換歌單類型失敗: ['set-kind', '變更未儲存，請再試一次。'],
+  更新歌單說明失敗: ['set-description', '變更未儲存，請再試一次。'],
+  設定封面失敗: ['set-cover', '封面未更新，請再試一次。'],
+  移除封面失敗: ['clear-cover', '封面未更新，請再試一次。'],
+  建立專輯歌單失敗: ['upsert-album', '專輯未儲存，請再試一次。'],
+  歌單排序儲存失敗: ['reorder', '排序未儲存，請再試一次。'],
+  歌單儲存失敗: ['set-tracks', '變更未儲存，請再試一次。'],
 });
 
 // Serialize mutations so rapid actions cannot overwrite each other.
@@ -31,8 +47,18 @@ function applyPlaylists(playlists) {
 }
 
 function formatError(prefix, err) {
-  const message = err instanceof Error ? err.message : String(err);
-  return `${prefix}: ${message}`;
+  const [operation, message] = ERROR_PRESENTATION[prefix] ?? [
+    'unknown',
+    '操作未完成，請再試一次。',
+  ];
+  return recordError(err, {
+    code: `PLAYLIST_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+    title: prefix,
+    message,
+    source: 'playlists',
+    operation,
+    context: { retryable: true },
+  }).message;
 }
 
 function enqueue(operation, errorPrefix, { clearErrorOnSuccess = true } = {}) {
@@ -166,7 +192,7 @@ function reorderPlaylist(draggedId, targetId, position = 'before') {
     !window.Utawakui ||
     typeof window.Utawakui.reorderPlaylist !== 'function'
   ) {
-    state.error = '播放清單排序需要重新啟動應用程式才能載入新版橋接 API。';
+    state.error = '請重新啟動應用程式後再調整播放清單順序。';
     return;
   }
 
@@ -218,10 +244,10 @@ function findPlaylist(id) {
 // no-op instead of a wasted round trip.
 function mutateTracks(playlistId, computeNext) {
   const playlist = findPlaylist(playlistId);
-  if (!playlist) return;
+  if (!playlist) return Promise.resolve(false);
 
   const next = computeNext(playlist.trackIds);
-  if (next === playlist.trackIds) return;
+  if (next === playlist.trackIds) return Promise.resolve(true);
   const previousTrackIds = playlist.trackIds;
   const previousAddedAt = playlist.addedAt ?? {};
   const now = new Date().toISOString();
@@ -236,14 +262,14 @@ function mutateTracks(playlistId, computeNext) {
   playlist.trackIds = next;
   playlist.addedAt = nextAddedAt;
 
-  enqueue(
+  return enqueue(
     () => window.Utawakui.setPlaylistTracks(playlistId, next),
     '歌單儲存失敗',
-  );
+  ).then(Boolean);
 }
 
 function addTrack(playlistId, trackId) {
-  mutateTracks(playlistId, (trackIds) =>
+  return mutateTracks(playlistId, (trackIds) =>
     trackIds.includes(trackId) ? trackIds : [...trackIds, trackId],
   );
 }
@@ -254,7 +280,7 @@ function addTrack(playlistId, trackId) {
 // De-dupes the incoming ids too: this is now a general bulk-add primitive,
 // not just a caller for already-unique playlist/album trackIds.
 function addTracks(playlistId, trackIds) {
-  mutateTracks(playlistId, (currentTrackIds) => {
+  return mutateTracks(playlistId, (currentTrackIds) => {
     const additions = [...new Set(trackIds)].filter(
       (id) => !currentTrackIds.includes(id),
     );
@@ -265,7 +291,7 @@ function addTracks(playlistId, trackIds) {
 }
 
 function removeTrack(playlistId, trackId) {
-  mutateTracks(playlistId, (trackIds) =>
+  return mutateTracks(playlistId, (trackIds) =>
     trackIds.includes(trackId)
       ? trackIds.filter((id) => id !== trackId)
       : trackIds,
@@ -273,7 +299,7 @@ function removeTrack(playlistId, trackId) {
 }
 
 function setTracks(playlistId, trackIds) {
-  mutateTracks(playlistId, (currentTrackIds) =>
+  return mutateTracks(playlistId, (currentTrackIds) =>
     Array.isArray(trackIds) &&
     trackIds.join('\0') !== currentTrackIds.join('\0')
       ? trackIds
@@ -285,7 +311,7 @@ function setTracks(playlistId, trackIds) {
 // action buttons) is expected to disable ↑/↓ at the boundaries rather than
 // rely on this silently no-op'ing, but it's safe either way.
 function moveTrack(playlistId, trackId, delta) {
-  mutateTracks(playlistId, (trackIds) => {
+  return mutateTracks(playlistId, (trackIds) => {
     const index = trackIds.indexOf(trackId);
     const target = index + delta;
     if (index === -1 || target < 0 || target >= trackIds.length) {

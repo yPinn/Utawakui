@@ -12,11 +12,10 @@ import {
   Settings,
 } from '../../icons/index.js';
 import OUTPUT_RUNTIME_VALUES from '../../../shared/outputRuntimeValues.json';
-import { isOutputPortConflict } from '../../utils/outputRuntimeError.js';
 import SettingsActionRow from '../settings/SettingsActionRow.vue';
 import SettingsBlock from '../settings/SettingsBlock.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
   status: { type: Object, default: () => ({ running: false }) },
@@ -73,7 +72,7 @@ const displayDelayLabel = computed(() => {
   if (value === 0) return '0 毫秒';
   return `${value > 0 ? '+' : ''}${value} 毫秒`;
 });
-const hasPortConflict = computed(() => isOutputPortConflict(props.error));
+const hasPortConflict = computed(() => props.suggestedPorts.length > 0);
 const statusLabel = computed(() => {
   if (hasPortConflict.value) return 'Port 被占用';
   if ((props.status.clients ?? 0) > 0) return 'Browser Source 已連線';
@@ -260,15 +259,14 @@ function chooseSuggestedPort(port) {
       </SettingsBlock>
     </div>
 
-    <UiHint
+    <UiNotice
       v-if="error"
       class="obs-output-settings__feedback"
       tone="danger"
-      role="alert"
-      aria-live="polite"
-    >
-      {{ error }}
-    </UiHint>
+      title="輸出操作未完成"
+      :message="error"
+      compact
+    />
   </section>
 </template>
 

@@ -133,6 +133,7 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
       title: '需要啟用音訊處理',
       source: 'separation',
       operation: 'run',
+      message: '請先到設定啟用音訊處理。',
       context: { trackId: track.id, presetId },
     });
     state.errors.set(track.id, appError.message);
@@ -148,6 +149,7 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
   } catch (err) {
     const appError = recordError(err, {
       title: `${track.title} 分離失敗`,
+      message: '人聲分離未完成，請再試一次。',
       source: 'separation',
       operation: 'run',
       context: { trackId: track.id, presetId },
@@ -170,7 +172,7 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
       state.errors.set(track.id, SETUP_REQUIRED_MESSAGE);
       return;
     }
-    state.errors.set(track.id, `${track.title} 分離失敗:${appError.message}`);
+    state.errors.set(track.id, appError.message);
   } finally {
     state.inFlight.delete(track.id);
   }
@@ -191,11 +193,12 @@ async function selectResult(track, presetId) {
   } catch (err) {
     const appError = recordError(err, {
       title: `${track.title} 切換失敗`,
+      message: '分離版本未切換，請再試一次。',
       source: 'separation',
       operation: 'select-result',
       context: { trackId: track.id, presetId },
     });
-    state.errors.set(track.id, `${track.title} 切換失敗:${appError.message}`);
+    state.errors.set(track.id, appError.message);
     return false;
   }
 }

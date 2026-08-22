@@ -83,20 +83,15 @@ describe('SeparationPresetControl', () => {
     expect(html).not.toContain('aria-label="產生伴奏"');
   });
 
-  it('keeps one error-status slot whether or not an error is present', async () => {
+  it('shows failures through the shared notice component', async () => {
     const empty = await renderControl();
     const failed = await renderControl({ error: '伴奏產生失敗' });
 
-    expect(empty.match(/separation-preset-control__error-slot/g)).toHaveLength(
-      1,
-    );
-    expect(failed.match(/separation-preset-control__error-slot/g)).toHaveLength(
-      1,
-    );
-    expect(failed).toContain('aria-label="伴奏產生失敗"');
-    expect(
-      componentSource.indexOf('separation-preset-control__error-slot'),
-    ).toBeLessThan(componentSource.indexOf('separation-preset-control__label'));
+    expect(empty).not.toContain('role="alert"');
+    expect(failed).toContain('role="alert"');
+    expect(failed).toContain('伴奏產生失敗');
+    expect(componentSource).toContain('<UiNotice');
+    expect(componentSource).not.toContain('data-message');
   });
 
   it('reserves fixed select and action widths so state changes cannot shift layout', () => {

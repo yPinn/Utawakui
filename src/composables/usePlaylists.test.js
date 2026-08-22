@@ -364,6 +364,22 @@ describe('setTracks', () => {
       t3: '2026-08-10T01:04:03.000Z',
     });
   });
+
+  it('returns the awaited persistence result and never exposes the raw failure', async () => {
+    listPlaylistsMock.mockResolvedValue([
+      { id: 'p1', name: 'A', trackIds: ['t1'] },
+    ]);
+    setPlaylistTracksMock.mockRejectedValueOnce(
+      new Error('ENOSPC C:\\Users\\Singer\\Music\\playlists.json'),
+    );
+    const { setTracks, state } = await loadPlaylists();
+
+    await expect(setTracks('p1', ['t1', 't2'])).resolves.toBe(false);
+
+    expect(state.error).toBe('變更未儲存，請再試一次。');
+    expect(state.error).not.toContain('ENOSPC');
+    expect(state.error).not.toContain('Singer');
+  });
 });
 
 describe('reorderPlaylist', () => {
@@ -428,9 +444,7 @@ describe('reorderPlaylist', () => {
       'p1',
       'p2',
     ]);
-    expect(state.error).toBe(
-      '播放清單排序需要重新啟動應用程式才能載入新版橋接 API。',
-    );
+    expect(state.error).toBe('請重新啟動應用程式後再調整播放清單順序。');
   });
 
   it('optimistically reorders playlists and persists the new order', async () => {
@@ -474,7 +488,7 @@ describe('reorderPlaylist', () => {
     reorderPlaylist('p2', 'p1', 'before');
     await flushMicrotasks();
 
-    expect(state.error).toBe('歌單排序儲存失敗: disk full');
+    expect(state.error).toBe('排序未儲存，請再試一次。');
   });
 
   it('two rapid reorders both compute from the latest optimistic order', async () => {
@@ -544,7 +558,7 @@ describe('mutation chain resilience', () => {
     moveTrack('p1', 't1', 1);
     await flushMicrotasks();
 
-    expect(state.error).toBe('歌單儲存失敗: disk full');
+    expect(state.error).toBe('變更未儲存，請再試一次。');
   });
 
   it('clears a previous error after a later successful mutation', async () => {
@@ -558,7 +572,7 @@ describe('mutation chain resilience', () => {
 
     moveTrack('p1', 't1', 1);
     await flushMicrotasks();
-    expect(state.error).toBe('歌單儲存失敗: disk full');
+    expect(state.error).toBe('變更未儲存，請再試一次。');
 
     moveTrack('p1', 't1', -1);
     await flushMicrotasks();
@@ -592,7 +606,7 @@ describe('rename', () => {
 
     await rename('p1', 'New Name');
 
-    expect(state.error).toBe('重新命名歌單失敗: disk full');
+    expect(state.error).toBe('變更未儲存，請再試一次。');
   });
 });
 
@@ -619,7 +633,7 @@ describe('remove', () => {
 
     await remove('p1');
 
-    expect(state.error).toBe('刪除歌單失敗: disk full');
+    expect(state.error).toBe('無法刪除播放清單，請再試一次。');
   });
 });
 
@@ -672,7 +686,7 @@ describe('create', () => {
 
     await expect(create('Encore')).resolves.toBeNull();
 
-    expect(state.error).toBe('建立歌單失敗: disk full');
+    expect(state.error).toBe('無法建立播放清單，請再試一次。');
   });
 
   it('stringifies a non-Error rejection instead of crashing', async () => {
@@ -681,7 +695,7 @@ describe('create', () => {
 
     await expect(create('Encore')).resolves.toBeNull();
 
-    expect(state.error).toBe('建立歌單失敗: a plain string rejection');
+    expect(state.error).toBe('無法建立播放清單，請再試一次。');
   });
 
   it('selects the newly created playlist', async () => {
@@ -746,7 +760,7 @@ describe('setKind', () => {
 
     await setKind('p1', 'album');
 
-    expect(state.error).toBe('轉換歌單類型失敗: disk full');
+    expect(state.error).toBe('變更未儲存，請再試一次。');
   });
 });
 
@@ -775,7 +789,7 @@ describe('setDescription', () => {
 
     await setDescription('p1', '說明');
 
-    expect(state.error).toBe('更新歌單說明失敗: disk full');
+    expect(state.error).toBe('變更未儲存，請再試一次。');
   });
 });
 
@@ -833,7 +847,7 @@ describe('setCover / clearCover', () => {
 
     await setCover('p1');
 
-    expect(state.error).toBe('設定封面失敗: disk full');
+    expect(state.error).toBe('封面未更新，請再試一次。');
   });
 });
 
@@ -875,6 +889,6 @@ describe('upsertAlbum', () => {
     });
 
     expect(result).toBeNull();
-    expect(state.error).toBe('建立專輯歌單失敗: disk full');
+    expect(state.error).toBe('專輯未儲存，請再試一次。');
   });
 });

@@ -2,6 +2,7 @@ import { reactive, readonly } from 'vue';
 import { SoundTouchNode } from '@soundtouchjs/audio-worklet';
 import pitchWorkletUrl from '@soundtouchjs/audio-worklet/processor?url';
 import { toPlayableTrack } from '../utils/playableTrack.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 // Module-scope singleton shared by views and the persistent player bar.
 
@@ -19,6 +20,18 @@ const PLAYBACK_MODE_ORDER = [
 // Short gain ramps prevent audible clicks.
 const GAIN_RAMP_SECONDS = 0.03;
 const LOOP_WRAP_EDGE_SECONDS = 1;
+const { recordError } = useAppDiagnostics();
+
+function reportPlayerError(error, operation, message) {
+  return recordError(error, {
+    code: `PLAYER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+    title: '播放操作未完成',
+    message,
+    source: 'player',
+    operation,
+    context: { retryable: true },
+  }).message;
+}
 
 const DEFAULT_TRANSPOSE_SEMITONES = 0;
 const DEFAULT_PITCH_CENTS = 0;
@@ -153,7 +166,7 @@ function handleCaptureSinkChange() {
   const currentSinkId =
     typeof captureAudioCtx.sinkId === 'string' ? captureAudioCtx.sinkId : null;
   if (state.captureDeviceId && currentSinkId !== state.captureDeviceId) {
-    state.captureError = '擷取裝置已中斷連線';
+    state.captureError = '選擇的輸出裝置已中斷連線。';
     state.captureDeviceId = null;
   }
 }
@@ -298,7 +311,11 @@ function ensureWorkletRegistered(context) {
 }
 
 function reportPitchProcessingError(err) {
-  pitchProcessingError = err.message;
+  pitchProcessingError = reportPlayerError(
+    err,
+    'pitch-processing',
+    '音高調整暫時無法使用。',
+  );
   state.error = pitchProcessingError;
 }
 
@@ -309,8 +326,8 @@ function clearPitchProcessingError() {
   pitchProcessingError = null;
 }
 
-function reportCapturePitchProcessingError(err) {
-  capturePitchProcessingError = err.message;
+function reportCapturePitchProcessingError() {
+  capturePitchProcessingError = '擷取輸出的音高調整暫時無法使用。';
   state.captureError = capturePitchProcessingError;
 }
 
@@ -637,7 +654,11 @@ function handleLoadedMetadata() {
 }
 
 function handleError() {
-  state.error = audio.error ? audio.error.message : '播放失敗';
+  state.error = reportPlayerError(
+    audio.error,
+    'media',
+    '目前無法播放這首曲目，請再試一次。',
+  );
   state.isPlaying = false;
   state.playbackPhase = 'error';
 }
@@ -687,7 +708,11 @@ async function playTrack(track) {
     await audioCtx.resume();
     await audio.play();
   } catch (err) {
-    state.error = err.message;
+    state.error = reportPlayerError(
+      err,
+      'play-track',
+      '目前無法播放這首曲目，請再試一次。',
+    );
   }
 }
 
@@ -697,7 +722,11 @@ async function play() {
     await audioCtx.resume();
     await audio.play();
   } catch (err) {
-    state.error = err.message;
+    state.error = reportPlayerError(
+      err,
+      'resume',
+      '目前無法繼續播放，請再試一次。',
+    );
   }
 }
 
@@ -783,7 +812,11 @@ async function syncCurrentTrack() {
       await audioCtx.resume();
       await audio.play();
     } catch (err) {
-      state.error = err.message;
+      state.error = reportPlayerError(
+        err,
+        'reload',
+        '播放版本已更新，請重新播放。',
+      );
     }
   }
 }
@@ -920,10 +953,10 @@ async function applyCaptureDevice(deviceId) {
     await ctx.resume();
     await syncCaptureChainToCurrentState();
     state.captureDeviceId = deviceId;
-  } catch (err) {
+  } catch {
     await captureAudioCtx?.suspend();
     state.captureDeviceId = null;
-    state.captureError = err.message;
+    state.captureError = '擷取輸出裝置無法使用。';
   }
 }
 

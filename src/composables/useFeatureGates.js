@@ -1,5 +1,8 @@
 import { computed, reactive, readonly } from 'vue';
 import { getFeatureGate } from '../constants/featureGates.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
+
+const { recordError } = useAppDiagnostics();
 
 const state = reactive({
   confirmations: {},
@@ -64,7 +67,14 @@ async function refreshConfirmations() {
         return state.confirmations;
       })
       .catch((err) => {
-        state.error = `讀取功能啟用狀態失敗：${err.message}`;
+        state.error = recordError(err, {
+          code: 'FEATURE_GATE_LIST_FAILED',
+          title: '功能狀態讀取失敗',
+          message: '目前無法讀取功能狀態，請再試一次。',
+          source: 'feature-gates',
+          operation: 'list',
+          context: { retryable: true },
+        }).message;
         return state.confirmations;
       })
       .finally(() => {
@@ -122,7 +132,14 @@ async function confirmPendingFeature() {
     settlePending(true);
     return true;
   } catch (err) {
-    state.error = `啟用功能失敗：${err.message}`;
+    state.error = recordError(err, {
+      code: 'FEATURE_GATE_CONFIRM_FAILED',
+      title: '功能未啟用',
+      message: '目前無法啟用這項功能，請再試一次。',
+      source: 'feature-gates',
+      operation: 'confirm',
+      context: { featureId, retryable: true },
+    }).message;
     return false;
   } finally {
     state.isSaving = false;

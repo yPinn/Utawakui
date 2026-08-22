@@ -244,7 +244,7 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).toContain('Port 被占用');
     expect(settingsSource).toContain('SettingsBlock');
     expect(settingsSource).toContain('SettingsActionRow');
-    expect(settingsSource).toContain('UiHint');
+    expect(settingsSource).toContain('UiNotice');
     expect(settingsSource).not.toContain('obs-output-settings__row');
     expect(settingsSource).toContain('var(--ui-settings-column-min-width)');
     expect(settingsViewSource).toContain('var(--ui-settings-column-min-width)');

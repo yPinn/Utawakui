@@ -4,6 +4,7 @@ import { FolderOpen } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const emit = defineEmits(['cancel', 'saved']);
 
@@ -63,9 +64,13 @@ async function handleFileImport() {
     </div>
 
     <UiHint v-if="!selectedTrack" padded>請先選擇曲目。</UiHint>
-    <UiHint v-if="state.manualSave.error" tone="danger" role="alert">
-      {{ state.manualSave.error }}
-    </UiHint>
+    <UiNotice
+      v-if="state.manualSave.error"
+      tone="danger"
+      title="歌詞變更未完成"
+      :message="state.manualSave.error"
+      compact
+    />
 
     <label class="lyrics-manual-import-panel__field">
       <span class="lyrics-manual-import-panel__label">標籤</span>

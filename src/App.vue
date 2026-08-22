@@ -4,6 +4,7 @@ import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
+import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
 import OutputView from './views/OutputView.vue';
@@ -35,7 +36,8 @@ useAudioOutput().restoreInitialDevice();
 const outputRuntime = useOutputRuntime();
 provide(OUTPUT_RUNTIME_KEY, outputRuntime);
 onMounted(() => outputRuntime.initialize());
-usePerformerSelfView().initialize();
+const performerView = usePerformerSelfView();
+performerView.initialize();
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).
@@ -72,6 +74,16 @@ useKeyboardShortcuts(activeView);
       </AppArchiveFrame>
     </main>
     <PlayerBar class="shell__player" />
+    <UiNotice
+      v-if="performerView.state.error"
+      class="shell__notice"
+      tone="danger"
+      title="表演者畫面操作未完成"
+      :message="performerView.state.error"
+      action-label="重試"
+      compact
+      @action="performerView.open"
+    />
     <AppFeatureNoticeModal />
   </div>
 </template>
@@ -128,5 +140,13 @@ useKeyboardShortcuts(activeView);
 
 .shell__player {
   grid-area: player;
+}
+
+.shell__notice {
+  position: fixed;
+  z-index: var(--ui-z-context-menu);
+  right: var(--ui-space-4);
+  bottom: calc(var(--ui-player-bar-height) + var(--ui-space-4));
+  max-width: min(30rem, calc(100vw - 2 * var(--ui-space-4)));
 }
 </style>

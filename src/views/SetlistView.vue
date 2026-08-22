@@ -10,6 +10,7 @@ import {
   Trash2,
 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
+import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
@@ -23,6 +24,7 @@ import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.v
 import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
+import UiNotice from '../components/ui/UiNotice.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
@@ -43,6 +45,7 @@ import {
 } from '../utils/trackSourceDisplay.js';
 
 const { state, playTrack, clearTrack } = usePlayer();
+const { recordError } = useAppDiagnostics();
 const {
   state: libraryState,
   initialize: initializeLibrary,
@@ -350,13 +353,19 @@ async function removeTrack(track) {
   try {
     const deleted = await window.Utawakui.deleteTrack(track.id);
     if (!deleted) {
-      deleteError.value = `刪除曲目失敗:找不到「${track.title}」`;
+      deleteError.value = '找不到這首曲目，曲庫可能已更新。';
       return;
     }
     removeTrackFromQueue(track.id);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    deleteError.value = `刪除曲目失敗:${message}`;
+    deleteError.value = recordError(err, {
+      code: 'LIBRARY_DELETE_FAILED',
+      title: '無法刪除曲目',
+      message: '目前無法刪除曲目，請再試一次。',
+      source: 'library',
+      operation: 'delete',
+      context: { retryable: true },
+    }).message;
   }
 }
 
@@ -503,14 +512,25 @@ onMounted(async () => {
 
       <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
 
+      <UiNotice
+        v-else-if="libraryState.error"
+        :notice="libraryState.error"
+        compact
+        @action="refreshLibrary"
+      />
+
       <UiHint v-else-if="libraryState.tracks.length === 0">
         還沒有任何曲目——前往「Import」匯入曲目。
       </UiHint>
 
       <template v-else>
-        <UiHint v-if="pageError" tone="danger" role="alert">
-          {{ pageError }}
-        </UiHint>
+        <UiNotice
+          v-if="pageError"
+          tone="danger"
+          title="播放清單操作未完成"
+          :message="pageError"
+          compact
+        />
 
         <template v-if="mode === 'all'">
           <UiHint v-if="visibleTracks.length === 0">

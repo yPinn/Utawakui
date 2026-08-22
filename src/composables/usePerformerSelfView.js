@@ -2,6 +2,7 @@ import { computed, reactive, readonly, watch } from 'vue';
 import { alignReadings } from '../utils/lyrics.js';
 import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import { projectPerformerSnapshot } from '../utils/performerSnapshot.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLyrics } from './useLyrics.js';
 import { useLyricsReading } from './useLyricsReading.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
@@ -19,6 +20,7 @@ const {
   activeLineIndex,
 } = useLyrics();
 const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
+const { recordError } = useAppDiagnostics();
 
 const state = reactive({
   open: false,
@@ -43,8 +45,15 @@ function bridgeMethod(name) {
   return method;
 }
 
-function errorMessage(error) {
-  return error instanceof Error ? error.message : String(error);
+function reportPerformerError(error, operation, message) {
+  return recordError(error, {
+    code: `PERFORMER_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+    title: '表演者畫面未完成',
+    message,
+    source: 'performer',
+    operation,
+    context: { retryable: true },
+  }).message;
 }
 
 function applyStatus(status = {}) {
@@ -106,7 +115,11 @@ const publisher = createLatestAsyncPublisher(
   (snapshot) => bridgeMethod('publishPerformerSnapshot')(snapshot),
   {
     onError: (error) => {
-      state.error = `表演者畫面更新失敗：${errorMessage(error)}`;
+      state.error = reportPerformerError(
+        error,
+        'publish',
+        '表演者畫面未更新，請再試一次。',
+      );
     },
   },
 );
@@ -116,7 +129,11 @@ async function refreshStatus() {
     applyStatus(await bridgeMethod('getPerformerViewStatus')());
     return state.open;
   } catch (error) {
-    state.error = errorMessage(error);
+    state.error = reportPerformerError(
+      error,
+      'status',
+      '目前無法讀取表演者畫面狀態。',
+    );
     return false;
   }
 }
@@ -128,7 +145,11 @@ async function open() {
     state.error = '';
     return true;
   } catch (error) {
-    state.error = `無法開啟表演者畫面：${errorMessage(error)}`;
+    state.error = reportPerformerError(
+      error,
+      'open',
+      '目前無法開啟表演者畫面，請再試一次。',
+    );
     return false;
   } finally {
     state.isOpening = false;

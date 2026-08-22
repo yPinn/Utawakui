@@ -1,4 +1,5 @@
 import { computed, reactive, readonly, ref } from 'vue';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlaylists } from './usePlaylists.js';
 
 // Module-scope singleton — SetlistView.vue and useLyrics.js (for
@@ -15,6 +16,7 @@ const rawTracks = ref([]);
 
 const { state: playlistState, initialize: initializePlaylists } =
   usePlaylists();
+const { recordError } = useAppDiagnostics();
 
 // Once an album has a custom cover, every member track should show it
 // instead of its own individually-downloaded thumbnailUrl — an album cover
@@ -72,7 +74,15 @@ async function refresh() {
     rawTracks.value = await window.Utawakui.listTracks();
     state.error = null;
   } catch (err) {
-    state.error = err instanceof Error ? err.message : String(err);
+    state.error = recordError(err, {
+      code: 'LIBRARY_LIST_FAILED',
+      title: '曲庫讀取失敗',
+      message: '目前無法讀取曲庫，請再試一次。',
+      actionLabel: '重試',
+      source: 'library',
+      operation: 'list',
+      context: { retryable: true },
+    });
   } finally {
     state.isLoading = false;
   }

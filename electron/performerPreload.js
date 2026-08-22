@@ -8,6 +8,8 @@ function readInitialUiTheme() {
 }
 
 contextBridge.exposeInMainWorld('UtawakuiPerformer', {
+  recordDiagnostic: (event) =>
+    ipcRenderer.invoke('diagnostics:record-renderer', event),
   initialUiTheme: readInitialUiTheme(),
   getSnapshot: () => ipcRenderer.invoke('performer-view:get-snapshot'),
   getWindowState: () => ipcRenderer.invoke('performer-view:get-status'),

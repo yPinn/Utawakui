@@ -48,14 +48,10 @@ describe('LyricsWorkspace information hierarchy', () => {
     expect(preparationSource).toContain('flex-wrap: nowrap');
     expect(preparationSource).toContain('.lyrics-preparation__group--source {');
     expect(preparationSource).toContain('min-width: 0');
-    expect(preparationSource).toContain('tabindex="0"');
-    expect(preparationSource).toContain(':data-message="readingError"');
-    expect(preparationSource).toContain(
-      '.lyrics-preparation__error:focus-visible::after',
-    );
-    expect(
-      preparationSource.indexOf('lyrics-preparation__error-slot'),
-    ).toBeLessThan(preparationSource.indexOf('>讀音<'));
+    expect(preparationSource).toContain('<UiNotice');
+    expect(preparationSource).toContain(':message="readingError"');
+    expect(preparationSource).toContain('tone="danger"');
+    expect(preparationSource).not.toContain('data-message');
   });
 
   it('uses a floating timer-like control for urgent playback-time adjustment', () => {

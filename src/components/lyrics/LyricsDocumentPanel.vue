@@ -4,6 +4,7 @@ import { Check, Clock, Pencil, X } from '../../icons/index.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
   error: { type: String, default: '' },
@@ -81,7 +82,13 @@ watch(
     aria-label="歌詞內容"
     tabindex="0"
   >
-    <UiHint v-if="error" tone="danger" padded>{{ error }}</UiHint>
+    <UiNotice
+      v-if="error"
+      tone="danger"
+      title="歌詞讀取未完成"
+      :message="error"
+      compact
+    />
     <UiHint v-else-if="isLoading" padded>載入中</UiHint>
     <UiHint v-else-if="trackCount === 0" padded>
       曲庫還沒有任何曲目。請先到 Import 匯入本機音訊。

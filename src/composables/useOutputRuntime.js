@@ -12,6 +12,7 @@ import {
 } from '../utils/outputStreamProjection.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
@@ -59,6 +60,7 @@ const {
 } = useLyrics();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { isFeatureEnabled } = useFeatureGates();
+const { recordError } = useAppDiagnostics();
 
 const state = reactive({
   status: { ...EMPTY_STATUS },
@@ -108,8 +110,19 @@ function bridgeMethod(name) {
   return method;
 }
 
-function errorMessage(error) {
+function technicalErrorMessage(error) {
   return error instanceof Error ? error.message : String(error);
+}
+
+function reportOutputError(error, operation, message) {
+  return recordError(error, {
+    code: `OUTPUT_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+    title: '輸出操作未完成',
+    message,
+    source: 'output',
+    operation,
+    context: { retryable: true },
+  }).message;
 }
 
 function applyStatus(value = {}) {
@@ -279,7 +292,11 @@ async function publishProjection(projection) {
 
 const publisher = createLatestAsyncPublisher(publishProjection, {
   onError: (error) => {
-    state.error = `輸出狀態更新失敗：${errorMessage(error)}`;
+    state.error = reportOutputError(
+      error,
+      'publish',
+      '輸出畫面未更新，請再試一次。',
+    );
   },
 });
 
@@ -303,12 +320,22 @@ async function refreshStatus() {
     const status = await bridgeMethod('getOutputStatus')();
     applyStatus(status);
     const statusError = status.error?.message ?? '';
-    state.error = statusError ? `輸出服務啟動失敗：${statusError}` : '';
+    state.error = statusError
+      ? reportOutputError(
+          new Error(statusError),
+          'status',
+          '輸出服務未啟動，請檢查連接埠後再試一次。',
+        )
+      : '';
     if (isOutputPortConflict(statusError)) await suggestPorts();
     else state.suggestedPorts = [];
     return state.status;
   } catch (error) {
-    state.error = errorMessage(error);
+    state.error = reportOutputError(
+      error,
+      'status',
+      '目前無法讀取輸出狀態，請再試一次。',
+    );
     state.suggestedPorts = [];
     return state.status;
   }
@@ -330,7 +357,11 @@ async function refreshSettings() {
     state.error = '';
     return state.settings;
   } catch (error) {
-    state.error = `讀取輸出設定失敗：${errorMessage(error)}`;
+    state.error = reportOutputError(
+      error,
+      'load-settings',
+      '目前無法讀取輸出設定，請再試一次。',
+    );
     return state.settings;
   } finally {
     state.isLoadingSettings = false;
@@ -362,9 +393,13 @@ async function updateSettings(settings) {
     state.error = '';
     return true;
   } catch (error) {
-    const message = errorMessage(error);
-    state.error = `保存輸出設定失敗：${message}`;
-    if (isOutputPortConflict(message)) await suggestPorts();
+    const technicalMessage = technicalErrorMessage(error);
+    state.error = reportOutputError(
+      error,
+      'save-settings',
+      '輸出設定未儲存，請再試一次。',
+    );
+    if (isOutputPortConflict(technicalMessage)) await suggestPorts();
     else state.suggestedPorts = [];
     return false;
   } finally {
@@ -391,9 +426,13 @@ async function start() {
     }
     return true;
   } catch (error) {
-    const message = errorMessage(error);
-    state.error = `啟動輸出失敗：${message}`;
-    if (isOutputPortConflict(message)) await suggestPorts();
+    const technicalMessage = technicalErrorMessage(error);
+    state.error = reportOutputError(
+      error,
+      'start',
+      '輸出服務未啟動，請再試一次。',
+    );
+    if (isOutputPortConflict(technicalMessage)) await suggestPorts();
     else state.suggestedPorts = [];
     return false;
   } finally {
@@ -409,7 +448,11 @@ async function stop() {
     state.suggestedPorts = [];
     return true;
   } catch (error) {
-    state.error = `停止輸出失敗：${errorMessage(error)}`;
+    state.error = reportOutputError(
+      error,
+      'stop',
+      '輸出服務未停止，請再試一次。',
+    );
     return false;
   } finally {
     state.isStopping = false;
@@ -431,7 +474,11 @@ async function loadSlots(seedSlots = {}) {
     applySlots(document);
     state.error = '';
   } catch (error) {
-    state.error = `讀取輸出設定失敗：${errorMessage(error)}`;
+    state.error = reportOutputError(
+      error,
+      'load-slots',
+      '目前無法讀取輸出設定，請再試一次。',
+    );
   } finally {
     state.isLoadingSlots = false;
   }
@@ -449,7 +496,11 @@ async function saveOutputSlot(kind, changes, seedSlot = null) {
     state.error = '';
     return true;
   } catch (error) {
-    state.error = `保存 ${kind} 輸出設定失敗：${errorMessage(error)}`;
+    state.error = reportOutputError(
+      error,
+      'save-slot',
+      '輸出樣式未儲存，請再試一次。',
+    );
     return false;
   } finally {
     state.isSavingSlot = false;
@@ -483,7 +534,11 @@ function initialize() {
       return true;
     } catch (error) {
       sourcesSettled = false;
-      state.error = `輸出初始化失敗：${errorMessage(error)}`;
+      state.error = reportOutputError(
+        error,
+        'initialize',
+        '輸出初始化未完成，請再試一次。',
+      );
       return false;
     }
   })();

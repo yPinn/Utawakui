@@ -7,7 +7,7 @@ import {
 } from './appErrors.js';
 
 describe('normalizeAppError', () => {
-  it('normalizes a plain Error into a user-facing record', () => {
+  it('does not expose a plain Error message in a user-facing record', () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-08-20T00:00:00.000Z'));
 
@@ -22,7 +22,7 @@ describe('normalizeAppError', () => {
       code: 'UNKNOWN_ERROR',
       severity: 'error',
       title: '發生錯誤',
-      message: 'boom',
+      message: '操作未完成，請稍後再試。',
       actionLabel: '',
       source: 'settings',
       operation: 'prepare',
@@ -31,6 +31,36 @@ describe('normalizeAppError', () => {
     });
 
     vi.useRealTimers();
+  });
+
+  it('uses concise explicit copy without carrying raw technical context', () => {
+    const normalized = normalizeAppError(
+      new Error('ENOENT: C:\\Users\\Singer\\Music\\secret.wav'),
+      {
+        id: 'fixed-id',
+        source: 'library',
+        operation: 'list',
+        title: '曲庫讀取失敗',
+        message: '目前無法讀取曲庫，請再試一次。',
+        actionLabel: '重試',
+        context: {
+          retryable: true,
+          trackId: 'private-track-id',
+          technicalMessage: 'private-message',
+        },
+        createdAt: '2026-08-20T00:00:00.000Z',
+      },
+    );
+
+    expect(normalized).toMatchObject({
+      title: '曲庫讀取失敗',
+      message: '目前無法讀取曲庫，請再試一次。',
+      actionLabel: '重試',
+      context: { retryable: true },
+    });
+    expect(JSON.stringify(normalized)).not.toContain('secret.wav');
+    expect(JSON.stringify(normalized)).not.toContain('private-track-id');
+    expect(JSON.stringify(normalized)).not.toContain('private-message');
   });
 
   it('parses a structured app error embedded in an IPC message', () => {
@@ -74,6 +104,8 @@ describe('appError helpers', () => {
   });
 
   it('returns the cleaned user message', () => {
-    expect(appErrorMessage(new Error('plain'))).toBe('plain');
+    expect(appErrorMessage(new Error('plain'))).toBe(
+      '操作未完成，請稍後再試。',
+    );
   });
 });

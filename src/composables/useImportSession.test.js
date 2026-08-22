@@ -712,9 +712,7 @@ describe('useImportSession', () => {
     await session.resolveSource();
 
     expect(useAppView().activeView.value).toBe('settings');
-    expect(session.state.status).toBe(
-      '請先到設定頁準備「線上來源下載工具」，再使用外部來源。',
-    );
+    expect(session.state.status).toBe('請到設定完成外部來源準備。');
     expect(session.state.statusType).toBe('pending');
     expect(session.state.failureHint).toBe(
       '請在設定的「進階功能」中準備外部來源工具。',
@@ -829,7 +827,7 @@ describe('useImportSession', () => {
     expect(session.state.isImporting).toBe(false);
   });
 
-  it('reports "download complete" when the sync step itself yields nothing to sync', async () => {
+  it('does not report success when playlist persistence yields no saved playlist', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
       entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
@@ -845,8 +843,32 @@ describe('useImportSession', () => {
     await session.resolveSource();
     await session.confirmImport();
 
-    expect(session.state.status).toBe('下載完成');
-    expect(session.state.statusType).toBe('success');
+    expect(session.state.status).toBe(
+      '曲目已下載，但播放清單未儲存。請再試一次。',
+    );
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it('waits for playlist persistence and reports a safe failure when it rejects', async () => {
+    fetchYoutubePlaylistMock.mockResolvedValueOnce({
+      title: 'My Setlist',
+      entries: [{ id: 'song-1', title: 'Song 1', alreadyDownloaded: false }],
+    });
+    downloadAudioMock.mockResolvedValue({ title: 'ok' });
+    setPlaylistTracksMock.mockRejectedValueOnce(
+      new Error('ENOSPC C:\\Users\\Singer\\Music\\playlists.json'),
+    );
+    const session = await loadImportSession();
+
+    session.setInput('playlist-id');
+    await session.resolveSource();
+    await session.confirmImport();
+
+    expect(session.state.status).toBe(
+      '曲目已下載，但播放清單未儲存。請再試一次。',
+    );
+    expect(session.state.statusType).toBe('error');
+    expect(session.state.status).not.toContain('ENOSPC');
   });
 
   it('stops an in-progress playlist import via confirmImport itself, leaving unfinished tracks in preview', async () => {

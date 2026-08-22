@@ -117,13 +117,16 @@ describe('useLocalImport', () => {
   });
 
   it('surfaces bridge errors without throwing', async () => {
-    importLocalAudioFilesMock.mockRejectedValueOnce(new Error('disk full'));
+    importLocalAudioFilesMock.mockRejectedValueOnce(
+      new Error('ENOSPC C:\\Users\\Singer\\Music\\private.wav'),
+    );
     const localImport = await loadLocalImport();
 
     await localImport.importFiles();
 
     expect(localImport.state.statusType).toBe('error');
-    expect(localImport.state.message).toBe('本機匯入失敗：disk full');
+    expect(localImport.state.message).toBe('目前無法匯入音訊檔，請再試一次。');
+    expect(localImport.state.message).not.toContain('ENOSPC');
     expect(localImport.state.isImporting).toBe(false);
   });
 

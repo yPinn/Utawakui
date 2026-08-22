@@ -63,6 +63,7 @@ async function loadReading(trackId, sourceFilename) {
   } catch (err) {
     recordError(err, {
       title: '讀取讀音資料失敗',
+      message: '目前無法讀取讀音資料，請再試一次。',
       source: 'lyrics-reading',
       operation: 'get',
       context: { trackId, sourceFilename },
@@ -99,6 +100,7 @@ async function generateReading(trackId, sourceFilename, document, script) {
   } catch (err) {
     const appError = recordError(err, {
       title: '產生讀音失敗',
+      message: '讀音未產生，請再試一次。',
       source: 'lyrics-reading',
       operation: 'generate',
       context: { trackId, sourceFilename },
@@ -129,6 +131,7 @@ async function setReadingLine(
   } catch (err) {
     const appError = recordError(err, {
       title: '修改讀音失敗',
+      message: '讀音未儲存，請再試一次。',
       source: 'lyrics-reading',
       operation: 'set-line',
       context: { trackId, sourceFilename, lineId },
@@ -146,6 +149,7 @@ async function deleteReading(trackId, sourceFilename) {
   } catch (err) {
     recordError(err, {
       title: '刪除讀音失敗',
+      message: '目前無法刪除讀音，請再試一次。',
       source: 'lyrics-reading',
       operation: 'delete',
       context: { trackId, sourceFilename },

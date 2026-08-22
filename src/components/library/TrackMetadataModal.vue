@@ -2,8 +2,8 @@
 import { computed } from 'vue';
 import { ImagePlus, Trash2 } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
-import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
@@ -96,9 +96,13 @@ const previewTrack = computed(() => ({
         />
       </label>
 
-      <UiHint v-if="error" tone="danger" role="alert">
-        {{ error }}
-      </UiHint>
+      <UiNotice
+        v-if="error"
+        tone="danger"
+        title="曲目資訊未更新"
+        :message="error"
+        compact
+      />
 
       <div class="track-metadata__actions">
         <UiButton

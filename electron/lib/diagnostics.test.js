@@ -142,6 +142,28 @@ describe('normalizeDiagnosticEvent', () => {
     expect(event.message.length).toBeLessThanOrEqual(500);
     expect(event.context.stage.length).toBeLessThanOrEqual(200);
   });
+
+  it('adds authoritative runtime versions that renderer input cannot replace', () => {
+    const event = normalizeDiagnosticEvent(
+      {
+        source: 'renderer',
+        operation: 'save',
+        context: {
+          appVersion: 'forged-app',
+          electronVersion: 'forged-electron',
+        },
+      },
+      deterministicDefaults({
+        appVersion: '0.1.1',
+        electronVersion: '43.1.1',
+      }),
+    );
+
+    expect(event.context).toMatchObject({
+      appVersion: '0.1.1',
+      electronVersion: '43.1.1',
+    });
+  });
 });
 
 describe('diagnostic JSONL', () => {

@@ -1,5 +1,7 @@
 import { reactive, readonly } from 'vue';
-import { appErrorMessage } from '../utils/appErrors.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
+
+const { recordError } = useAppDiagnostics();
 
 const PHASES = new Set([
   'disabled',
@@ -44,7 +46,10 @@ function applyStatus(status) {
   state.progress = Number.isFinite(status.progress) ? status.progress : null;
   state.releaseDate =
     typeof status.releaseDate === 'string' ? status.releaseDate : null;
-  state.error = typeof status.error === 'string' ? status.error : null;
+  state.error =
+    typeof status.error === 'string' && status.error
+      ? '目前無法完成更新操作，請稍後再試。'
+      : null;
 }
 
 function ensureSubscription() {
@@ -61,7 +66,13 @@ async function invoke(method) {
   try {
     applyStatus(await window.Utawakui[method]());
   } catch (error) {
-    state.error = appErrorMessage(error);
+    state.error = recordError(error, {
+      code: 'APP_UPDATE_ACTION_FAILED',
+      title: '更新操作失敗',
+      message: '目前無法完成更新操作，請稍後再試。',
+      source: 'app-update',
+      operation: method,
+    }).message;
   }
 }
 

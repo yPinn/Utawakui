@@ -1,4 +1,5 @@
 import { reactive, readonly } from 'vue';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLibrary } from './useLibrary.js';
 
 const state = reactive({
@@ -10,6 +11,7 @@ const state = reactive({
 });
 
 const { refresh: refreshLibrary } = useLibrary();
+const { recordError } = useAppDiagnostics();
 
 function duplicateSkipCount(skipped) {
   return skipped.filter((item) => item?.reason === 'duplicate-content').length;
@@ -78,7 +80,14 @@ async function importFiles() {
     if (state.imported.length > 0) await refreshLibrary();
   } catch (err) {
     state.statusType = 'error';
-    state.message = `本機匯入失敗：${err.message}`;
+    state.message = recordError(err, {
+      code: 'LOCAL_IMPORT_FAILED',
+      title: '本機匯入失敗',
+      message: '目前無法匯入音訊檔，請再試一次。',
+      source: 'local-import',
+      operation: 'import',
+      context: { retryable: true },
+    }).message;
   } finally {
     state.isImporting = false;
   }

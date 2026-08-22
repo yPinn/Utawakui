@@ -483,7 +483,7 @@ describe('useLyrics', () => {
     expect(lyrics.lyricsDocument.value).toBe(original);
     expect(lyrics.state.timingSave).toMatchObject({
       isSaving: false,
-      error: 'source changed',
+      error: '歌詞時間未儲存，請再試一次。',
     });
   });
 
@@ -506,7 +506,7 @@ describe('useLyrics', () => {
     lyrics.selectTrack(trackB.id);
     await flushPromises();
 
-    expect(lyrics.state.error).toBe('lyrics fetch failed');
+    expect(lyrics.state.error).toBe('目前無法讀取歌詞，請再試一次。');
   });
 
   it('ignores a stale successful lyrics response superseded by a newer selection', async () => {
@@ -683,12 +683,12 @@ describe('useLyrics', () => {
       completed: 2,
       error: 'disk read failed',
     });
-    expect(lyrics.state.backfillStatus.error).toBe('disk read failed');
+    expect(lyrics.state.backfillStatus.error).toBe('部分曲目資訊未更新。');
     expect(lyrics.state.backfillStatus.total).toBe(5);
 
     // Error stage with no explicit error message falls back to a default.
     libraryBackfillStatusHandler({ stage: 'error', isRunning: false });
-    expect(lyrics.state.backfillStatus.error).toBe('Reload failed');
+    expect(lyrics.state.backfillStatus.error).toBe('部分曲目資訊未更新。');
     // total/completed omitted from this payload — previous values persist.
     expect(lyrics.state.backfillStatus.total).toBe(5);
     expect(lyrics.state.backfillStatus.completed).toBe(2);
@@ -782,7 +782,9 @@ describe('useLyrics', () => {
 
     await lyrics.probeMusixmatch();
 
-    expect(lyrics.state.musixmatchProbe.error).toBe('musixmatch down');
+    expect(lyrics.state.musixmatchProbe.error).toBe(
+      '目前無法檢查歌詞來源，請再試一次。',
+    );
     expect(lyrics.state.musixmatchProbe.isLoading).toBe(false);
   });
 
@@ -867,7 +869,7 @@ describe('useLyrics', () => {
       isLoading: false,
       trackId: trackA.id,
       result: null,
-      error: 'Musixmatch 探測 API 尚未載入，請重啟 Electron app',
+      error: '請重新啟動應用程式後再檢查歌詞來源。',
     });
   });
 
@@ -930,7 +932,7 @@ describe('useLyrics', () => {
 
     expect(lyrics.state.manualSave).toMatchObject({
       isSaving: false,
-      error: '手動匯入歌詞需要重新啟動應用程式才能載入新版橋接 API。',
+      error: '請重新啟動應用程式後再匯入歌詞。',
     });
   });
 
@@ -946,7 +948,7 @@ describe('useLyrics', () => {
     libraryUpdatedHandler();
     await flushPromises();
 
-    expect(lyrics.state.error).toBe('disk read failed');
+    expect(lyrics.state.error).toBe('目前無法讀取曲庫，請再試一次。');
 
     listTracksMock.mockResolvedValue([trackA, trackB, trackMissingLyrics]);
     libraryUpdatedHandler();

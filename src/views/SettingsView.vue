@@ -1,22 +1,17 @@
 <script setup>
 import { computed, onMounted, shallowRef } from 'vue';
-import {
-  Ellipsis,
-  Download,
-  FolderOpen,
-  Headphones,
-  ListChecks,
-  RefreshCw,
-  RotateCcw,
-} from '../icons/index.js';
+import { Ellipsis, FolderOpen, RefreshCw, RotateCcw } from '../icons/index.js';
+import AppUpdateSettingsRow from '../components/settings/AppUpdateSettingsRow.vue';
+import AudioOutputSettingsBlock from '../components/settings/AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
+import DiagnosticsSettingsBlock from '../components/settings/DiagnosticsSettingsBlock.vue';
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
-import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
+import UiIconButton from '../components/ui/UiIconButton.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
 import {
   FEATURE_DEPENDENCY_IDS,
@@ -28,11 +23,12 @@ import { useFeatureGateAccess } from '../composables/useFeatureGateAccess.js';
 import { useFeatureGatePresentation } from '../composables/useFeatureGatePresentation.js';
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
-import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppInfo } from '../composables/useAppInfo.js';
+import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibrary } from '../composables/useLibrary.js';
+import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
 import { usePlayer } from '../composables/usePlayer.js';
 
 const {
@@ -42,7 +38,13 @@ const {
   resetDownloadDir,
   openDownloadDir,
 } = useImportSession();
-const { state: diagnosticsState } = useAppDiagnostics();
+const {
+  state: persistentDiagnosticsState,
+  refresh: refreshDiagnostics,
+  clear: clearDiagnostics,
+  openFolder: openDiagnosticsFolder,
+} = usePersistentDiagnostics();
+const { recordError } = useAppDiagnostics();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
   state: appUpdateState,
@@ -115,17 +117,12 @@ function handleDownloadDirMenuSelect(actionId) {
 // ellipsis-truncating them into indistinguishable labels, and picking the
 // wrong one silently breaks capture.
 const { state: playerState } = usePlayer();
-const { devices: captureOutputDevices, monitorDeviceLabel } = useAudioOutput();
+const { devices: captureOutputDevices, captureErrorNotice } = useAudioOutput();
 
 const isCaptureDeviceModalOpen = shallowRef(false);
 
-// Falls back to the real current monitor device (same source
-// CaptureDeviceModal.vue's own "off" option uses), not a generic "耳機"
-// guess — the actual default device may not even be headphones.
 const captureDeviceLabel = computed(() => {
-  if (!playerState.captureDeviceId) {
-    return `未選擇(僅透過 ${monitorDeviceLabel.value} 播放)`;
-  }
+  if (!playerState.captureDeviceId) return '未選擇';
   const device = captureOutputDevices.value.find(
     (d) => d.deviceId === playerState.captureDeviceId,
   );
@@ -187,101 +184,6 @@ const featureGateRequestNotice = computed(() => {
   };
 });
 
-const diagnosticsRows = computed(() => {
-  const recordCount = diagnosticsState.records.length;
-  return [
-    {
-      id: 'runtime-log',
-      icon: ListChecks,
-      title: '使用記錄',
-      description: '保留近期操作與錯誤狀態，協助排查播放、匯入或音訊處理問題。',
-      value: recordCount > 0 ? `${recordCount} 筆近期記錄` : '尚無近期記錄',
-      status: recordCount > 0 ? '已記錄' : '待命',
-      tone: recordCount > 0 ? 'warning' : 'muted',
-    },
-  ];
-});
-
-const appUpdatePresentation = computed(() => {
-  const version = appUpdateState.availableVersion;
-  switch (appUpdateState.phase) {
-    case 'idle':
-      return { value: '可檢查是否有新版本', status: '待命', tone: 'muted' };
-    case 'checking':
-      return { value: '正在檢查公開發行版本', status: '檢查中', tone: 'info' };
-    case 'available':
-      return { value: `可下載 v${version}`, status: '有更新', tone: 'warning' };
-    case 'not-available':
-      return { value: '目前已是最新版本', status: '最新', tone: 'success' };
-    case 'downloading':
-      return {
-        value:
-          appUpdateState.progress === null
-            ? '正在下載更新'
-            : `正在下載 ${appUpdateState.progress}%`,
-        status: '下載中',
-        tone: 'info',
-      };
-    case 'downloaded':
-      return {
-        value: `v${version} 已準備完成`,
-        status: '待重新啟動',
-        tone: 'success',
-      };
-    case 'error':
-      return {
-        value: appUpdateState.error || '更新操作未完成',
-        status: '需重試',
-        tone: 'warning',
-      };
-    default:
-      return {
-        value: '正式更新通道尚未啟用',
-        status: '未啟用',
-        tone: 'muted',
-      };
-  }
-});
-
-const appVersionPresentation = computed(() => {
-  const currentVersion =
-    appInfoState.currentVersion || appUpdateState.currentVersion;
-  if (!currentVersion) {
-    return {
-      value: appInfoState.error ? '版本資訊無法取得' : '讀取中',
-      status: appInfoState.error ? '無法讀取' : '讀取中',
-      tone: appInfoState.error ? 'warning' : 'muted',
-      tooltip:
-        appInfoState.error || '顯示目前安裝版本與公開發行版本的更新狀態。',
-    };
-  }
-
-  const update = appUpdatePresentation.value;
-  return {
-    value: `v${currentVersion} · ${update.value}`,
-    status: update.status,
-    tone: update.tone,
-    tooltip: appInfoState.error || '顯示目前安裝版本與公開發行版本的更新狀態。',
-  };
-});
-
-const appUpdateAction = computed(() => {
-  if (!appUpdateState.enabled) return null;
-  if (appUpdateState.phase === 'available') return 'download';
-  if (appUpdateState.phase === 'error' && appUpdateState.availableVersion) {
-    return 'download';
-  }
-  if (appUpdateState.phase === 'downloaded') return 'install';
-  if (['checking', 'downloading'].includes(appUpdateState.phase)) return null;
-  return 'check';
-});
-
-function handleAppUpdateAction() {
-  if (appUpdateAction.value === 'download') return downloadAppUpdate();
-  if (appUpdateAction.value === 'install') return installAppUpdate();
-  return checkForAppUpdate();
-}
-
 async function refreshMetadata() {
   isRefreshingMetadata.value = true;
   maintenanceMessage.value = '';
@@ -292,7 +194,14 @@ async function refreshMetadata() {
       updated > 0 ? `已補齊 ${updated} 首曲目的專輯資訊` : '沒有需要補齊的資訊';
     maintenanceTone.value = 'success';
   } catch (err) {
-    maintenanceMessage.value = `重新整理失敗：${err.message}`;
+    maintenanceMessage.value = recordError(err, {
+      code: 'LIBRARY_METADATA_REFRESH_FAILED',
+      title: '曲目資訊整理未完成',
+      message: '目前無法整理曲目資訊，請再試一次。',
+      source: 'settings',
+      operation: 'refresh-library-metadata',
+      context: { retryable: true },
+    }).message;
     maintenanceTone.value = 'danger';
   } finally {
     isRefreshingMetadata.value = false;
@@ -321,11 +230,38 @@ async function refreshSettingsState() {
   try {
     await refreshConfig();
   } catch (err) {
-    maintenanceMessage.value = `讀取設定失敗：${err.message}`;
+    maintenanceMessage.value = recordError(err, {
+      code: 'SETTINGS_LOAD_FAILED',
+      title: '設定讀取失敗',
+      message: '目前無法讀取設定，請再試一次。',
+      source: 'settings',
+      operation: 'load',
+      context: { retryable: true },
+    }).message;
     maintenanceTone.value = 'danger';
   }
   refreshConfirmations();
   refreshDependencies();
+  refreshDiagnostics();
+}
+
+async function handleClearDiagnostics() {
+  const confirmed =
+    typeof window === 'undefined' ||
+    window.confirm('清除這台電腦上的使用記錄？');
+  if (confirmed) await clearDiagnostics();
+}
+
+function handleDiagnosticsNoticeAction(operation) {
+  if (operation === 'open-folder') {
+    openDiagnosticsFolder();
+    return;
+  }
+  if (operation === 'clear') {
+    handleClearDiagnostics();
+    return;
+  }
+  refreshDiagnostics();
 }
 
 async function refreshDependencyStatus() {
@@ -414,10 +350,9 @@ onMounted(refreshSettingsState);
           <h2 id="settings-content-title" class="settings-view__column-title">
             本機設定
           </h2>
-          <p class="settings-view__column-summary">曲庫、音訊輸出與維護</p>
         </header>
 
-        <SettingsBlock title="本機曲庫" status="本機" status-tone="success">
+        <SettingsBlock title="本機曲庫">
           <SettingsActionRow
             :icon="FolderOpen"
             title="曲庫位置"
@@ -427,16 +362,14 @@ onMounted(refreshSettingsState);
             tooltip="下載與本機匯入的曲目都會整理到這個資料夾。"
           >
             <template #actions>
-              <UiButton
+              <UiIconButton
                 :icon="FolderOpen"
-                aria-label="開啟曲庫資料夾"
-                title="開啟曲庫資料夾"
+                label="開啟曲庫資料夾"
                 @click="openDownloadDir"
               />
-              <UiButton
+              <UiIconButton
                 :icon="Ellipsis"
-                aria-label="曲庫位置其他操作"
-                title="曲庫位置其他操作"
+                label="曲庫位置其他操作"
                 aria-haspopup="menu"
                 :aria-expanded="isDownloadDirMenuOpen ? 'true' : 'false'"
                 @click="openDownloadDirMenu"
@@ -458,58 +391,43 @@ onMounted(refreshSettingsState);
           <SettingsActionRow
             :icon="RefreshCw"
             title="曲目資訊整理"
-            value="已保存的來源資訊"
+            value="補齊專輯與年份"
             :status="isRefreshingMetadata ? '執行中' : '可用'"
             :status-tone="isRefreshingMetadata ? 'info' : 'success'"
             tooltip="從已保存的來源資訊補齊專輯與年份等曲目資訊。"
           >
             <template #actions>
-              <UiButton
+              <UiIconButton
                 :icon="RefreshCw"
                 :disabled="isRefreshingMetadata"
-                aria-label="重新整理曲目資訊"
-                title="重新整理曲目資訊"
+                label="重新整理曲目資訊"
                 @click="refreshMetadata"
               />
             </template>
           </SettingsActionRow>
 
+          <UiNotice
+            v-if="maintenanceMessage && maintenanceTone === 'danger'"
+            tone="danger"
+            title="維護操作未完成"
+            :message="maintenanceMessage"
+            compact
+          />
           <UiHint
-            v-if="maintenanceMessage"
+            v-else-if="maintenanceMessage"
             :tone="maintenanceTone"
-            :role="maintenanceTone === 'danger' ? 'alert' : 'status'"
+            role="status"
           >
             {{ maintenanceMessage }}
           </UiHint>
         </SettingsBlock>
 
-        <SettingsBlock
-          title="音訊輸出"
-          summary="讓 OBS 擷取到獨立於耳機的伴奏混音。"
-          :status="playerState.captureDeviceId ? '已啟用' : '未啟用'"
-          :status-tone="playerState.captureDeviceId ? 'success' : 'muted'"
-        >
-          <SettingsActionRow
-            :icon="Headphones"
-            title="擷取輸出裝置"
-            :value="captureDeviceLabel"
-            tooltip="選擇一個虛擬音效裝置,OBS 加一個獨立的音訊來源指向它即可擷取。"
-          >
-            <template #actions>
-              <UiButton
-                :icon="Headphones"
-                aria-haspopup="dialog"
-                @click="isCaptureDeviceModalOpen = true"
-              >
-                選擇裝置
-              </UiButton>
-            </template>
-          </SettingsActionRow>
-
-          <UiHint v-if="playerState.captureError" tone="danger" role="alert">
-            {{ playerState.captureError }}
-          </UiHint>
-        </SettingsBlock>
+        <AudioOutputSettingsBlock
+          :enabled="Boolean(playerState.captureDeviceId)"
+          :device-label="captureDeviceLabel"
+          :error-notice="captureErrorNotice"
+          @select-device="isCaptureDeviceModalOpen = true"
+        />
 
         <CaptureDeviceModal
           :open="isCaptureDeviceModalOpen"
@@ -522,42 +440,31 @@ onMounted(refreshSettingsState);
           @close="isFfmpegSourceModalOpen = false"
         />
 
-        <SettingsBlock title="維護" status="本機" status-tone="muted">
-          <SettingsActionRow
-            v-for="row in diagnosticsRows"
-            :key="row.id"
-            :icon="row.icon"
-            :title="row.title"
-            :value="row.value"
-            :status="row.status"
-            :status-tone="row.tone"
-            :tooltip="row.description"
+        <SettingsBlock title="維護">
+          <DiagnosticsSettingsBlock
+            :record-count="persistentDiagnosticsState.recordCount"
+            :is-loading="persistentDiagnosticsState.isLoading"
+            :notice="persistentDiagnosticsState.notice"
+            @refresh="refreshDiagnostics"
+            @open-folder="openDiagnosticsFolder"
+            @clear="handleClearDiagnostics"
+            @notice-action="handleDiagnosticsNoticeAction"
           />
 
-          <SettingsActionRow
-            :icon="RefreshCw"
-            title="Utawakui 版本"
-            :value="appVersionPresentation.value"
-            :status="appVersionPresentation.status"
-            :status-tone="appVersionPresentation.tone"
-            :tooltip="appVersionPresentation.tooltip"
-          >
-            <template v-if="appUpdateAction" #actions>
-              <UiButton
-                :icon="appUpdateAction === 'download' ? Download : RefreshCw"
-                :variant="appUpdateAction === 'install' ? 'accent' : 'ghost'"
-                @click="handleAppUpdateAction"
-              >
-                {{
-                  appUpdateAction === 'download'
-                    ? '下載'
-                    : appUpdateAction === 'install'
-                      ? '重新啟動並安裝'
-                      : '檢查更新'
-                }}
-              </UiButton>
-            </template>
-          </SettingsActionRow>
+          <AppUpdateSettingsRow
+            :current-version="
+              appInfoState.currentVersion || appUpdateState.currentVersion
+            "
+            :enabled="appUpdateState.enabled"
+            :phase="appUpdateState.phase"
+            :available-version="appUpdateState.availableVersion"
+            :progress="appUpdateState.progress"
+            :error="appUpdateState.error"
+            :info-error="appInfoState.error"
+            @check="checkForAppUpdate"
+            @download="downloadAppUpdate"
+            @install="installAppUpdate"
+          />
         </SettingsBlock>
       </section>
 
@@ -581,11 +488,10 @@ onMounted(refreshSettingsState);
           status-tone="gated"
         >
           <template #actions>
-            <UiButton
+            <UiIconButton
               :icon="RefreshCw"
               :disabled="featureGateState.isLoading"
-              aria-label="重新讀取功能狀態"
-              title="重新讀取功能狀態"
+              label="重新讀取功能狀態"
               @click="refreshConfirmations"
             />
           </template>

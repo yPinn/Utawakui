@@ -85,9 +85,16 @@ describe('initial load', () => {
   });
 
   it('records a fetch error and clears it on the next successful fetch', async () => {
-    listTracksMock.mockRejectedValueOnce(new Error('disk read failed'));
+    listTracksMock.mockRejectedValueOnce(
+      new Error('EACCES C:\\Users\\Singer\\Music\\private'),
+    );
     const { state, refresh } = await loadLibrary();
-    expect(state.error).toBe('disk read failed');
+    expect(state.error).toMatchObject({
+      title: '曲庫讀取失敗',
+      message: '目前無法讀取曲庫，請再試一次。',
+      actionLabel: '重試',
+    });
+    expect(JSON.stringify(state.error)).not.toContain('Singer');
 
     listTracksMock.mockResolvedValue([{ id: 't1', title: 'Track 1' }]);
     await refresh();

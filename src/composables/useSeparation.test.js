@@ -277,7 +277,7 @@ describe('separate()', () => {
     await separate(track);
 
     expect(isSeparating('t1')).toBe(false);
-    expect(state.errors.get('t1')).toBe('Song 分離失敗:boom');
+    expect(state.errors.get('t1')).toBe('人聲分離未完成，請再試一次。');
   });
 
   it('forwards the recipe id to window.Utawakui.runSeparation', async () => {
@@ -370,7 +370,7 @@ describe('separate()', () => {
       source: 'separation',
       operation: 'run',
     });
-    expect(state.errors.get('t1')).toBe('請先到設定啟用音訊處理');
+    expect(state.errors.get('t1')).toBe('請先到設定啟用音訊處理。');
   });
 });
 
@@ -392,7 +392,7 @@ describe('selectResult()', () => {
 
     await selectResult(track, 'inst-hq3');
 
-    expect(state.errors.get('t1')).toBe('Song 切換失敗:boom');
+    expect(state.errors.get('t1')).toBe('分離版本未切換，請再試一次。');
   });
 
   it('clears a previous error for the track on success', async () => {

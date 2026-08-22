@@ -7,6 +7,7 @@ import { formatLyricTime } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const {
   state,
@@ -139,22 +140,26 @@ function candidateSummaryLine(candidate) {
     </div>
 
     <div v-if="isSearchOpen" class="lyrics-lrclib-search-panel__body">
-      <UiHint v-if="state.candidateSearch.error" tone="danger" role="alert">
-        {{ state.candidateSearch.error }}
-      </UiHint>
+      <UiNotice
+        v-if="state.candidateSearch.error"
+        tone="danger"
+        title="歌詞搜尋未完成"
+        :message="state.candidateSearch.error"
+        compact
+      />
       <UiHint v-else-if="state.candidateSearch.isLoading" padded>
         搜尋中
       </UiHint>
       <UiHint v-else-if="state.candidateSearch.status === 'unavailable'" padded>
         找不到符合的歌詞：{{ state.candidateSearch.reason }}
       </UiHint>
-      <UiHint
+      <UiNotice
         v-else-if="state.candidateSearch.status === 'error'"
         tone="danger"
-        padded
-      >
-        搜尋失敗：{{ state.candidateSearch.reason }}
-      </UiHint>
+        title="歌詞搜尋未完成"
+        :message="state.candidateSearch.reason"
+        compact
+      />
       <UiHint v-else-if="state.candidateSearch.candidates.length === 0" padded>
         沒有找到候選歌詞。
       </UiHint>

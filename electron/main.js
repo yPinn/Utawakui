@@ -65,6 +65,8 @@ const diagnosticsService = createDiagnosticsService({
   logsDir: app.getPath('logs'),
   sessionId: crypto.randomUUID(),
   process: 'main',
+  appVersion: app.getVersion(),
+  electronVersion: process.versions.electron,
 });
 
 let performerWindowManager = null;
@@ -173,6 +175,17 @@ if (!gotSingleInstanceLock) {
         if (!mainWindow?.isDestroyed()) {
           mainWindow.webContents.send('app-update:status', status);
         }
+      },
+      logger: {
+        error: (_message, error) =>
+          diagnosticsService.record({
+            level: 'error',
+            source: 'app-update',
+            operation: 'service',
+            code: 'APP_UPDATE_SERVICE_FAILED',
+            message: 'App update operation failed',
+            error,
+          }),
       },
     });
 

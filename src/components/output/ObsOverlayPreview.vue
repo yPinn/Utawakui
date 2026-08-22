@@ -10,6 +10,7 @@ import { Copy, Grid2X2, Moon, Sun } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -162,17 +163,23 @@ onBeforeUnmount(() => {
       </div>
     </div>
 
+    <UiNotice
+      v-if="error"
+      tone="danger"
+      title="輸出預覽未更新"
+      :message="error"
+      compact
+    />
     <p
-      v-if="copyState !== 'idle' || error"
+      v-else-if="copyState !== 'idle'"
       class="obs-overlay-preview__feedback"
-      :role="copyState === 'error' || error ? 'alert' : 'status'"
+      :role="copyState === 'error' ? 'alert' : 'status'"
       aria-live="polite"
     >
       <template v-if="copyState === 'copied'">
         已複製 Browser Source URL
       </template>
       <template v-else-if="copyState === 'error'">無法複製 URL</template>
-      <template v-else-if="error">{{ error }}</template>
     </p>
   </section>
 </template>

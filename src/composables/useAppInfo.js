@@ -1,5 +1,7 @@
 import { reactive, readonly } from 'vue';
-import { appErrorMessage } from '../utils/appErrors.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
+
+const { recordError } = useAppDiagnostics();
 
 const state = reactive({
   currentVersion: '',
@@ -29,7 +31,13 @@ async function refreshAppInfo() {
     state.currentVersion = version;
     state.error = null;
   } catch (error) {
-    state.error = appErrorMessage(error);
+    state.error = recordError(error, {
+      code: 'APP_INFO_READ_FAILED',
+      title: '版本資訊讀取失敗',
+      message: '目前無法讀取版本資訊，請稍後再試。',
+      source: 'app-info',
+      operation: 'refresh',
+    }).message;
   } finally {
     state.isLoading = false;
   }

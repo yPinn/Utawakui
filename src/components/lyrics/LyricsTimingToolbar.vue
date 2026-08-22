@@ -1,6 +1,7 @@
 <script setup>
 import { Check, Clock, RotateCcw, X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 defineProps({
   granularity: { type: String, default: 'T0' },
@@ -52,9 +53,13 @@ defineEmits(['tap', 'undo', 'save', 'cancel']);
         @click="$emit('cancel')"
       />
     </div>
-    <span v-if="error" class="lyrics-timing__error" role="alert">{{
-      error
-    }}</span>
+    <UiNotice
+      v-if="error"
+      class="lyrics-timing__error"
+      tone="danger"
+      :message="error"
+      compact
+    />
   </div>
 </template>
 
@@ -82,7 +87,6 @@ defineEmits(['tap', 'undo', 'save', 'cancel']);
 }
 
 .lyrics-timing__error {
-  color: var(--ui-color-danger);
-  font-size: var(--ui-font-size-xs);
+  flex: 1 1 240px;
 }
 </style>

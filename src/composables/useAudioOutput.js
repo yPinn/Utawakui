@@ -1,4 +1,5 @@
-import { computed, ref } from 'vue';
+import { computed, shallowRef, watch } from 'vue';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { usePlayer } from './usePlayer.js';
 import { shortenDeviceLabel } from '../utils/audioDeviceLabel.js';
 
@@ -9,8 +10,41 @@ import { shortenDeviceLabel } from '../utils/audioDeviceLabel.js';
 // MediaDevices/settings concerns.
 
 const { state: playerState, applyCaptureDevice } = usePlayer();
+const { recordError } = useAppDiagnostics();
 
-const devices = ref([]);
+const devices = shallowRef([]);
+const captureErrorNotice = shallowRef(null);
+
+watch(
+  () => playerState.captureError,
+  (error) => {
+    if (!error) {
+      captureErrorNotice.value = null;
+      return;
+    }
+
+    const technicalError =
+      error instanceof Error ? error : new Error(String(error));
+    const selectionWasCleared = !playerState.captureDeviceId;
+    captureErrorNotice.value = recordError(technicalError, {
+      code: selectionWasCleared
+        ? 'AUDIO_OUTPUT_DEVICE_UNAVAILABLE'
+        : 'AUDIO_OUTPUT_PROCESSING_FAILED',
+      severity: 'error',
+      title: selectionWasCleared
+        ? '擷取輸出裝置無法使用'
+        : '擷取輸出暫時無法使用',
+      message: selectionWasCleared
+        ? '先前的擷取輸出裝置已無法使用，已關閉擷取輸出。'
+        : '擷取輸出暫時無法使用，請重新選擇裝置。',
+      actionLabel: '重新選擇裝置',
+      source: 'audio-output',
+      operation: 'apply-capture-device',
+      context: { retryable: true },
+    });
+  },
+  { immediate: true },
+);
 
 // The monitor (headphone) chain in usePlayer.js never calls setSinkId() —
 // it always plays through whatever the OS's current default output device
@@ -26,8 +60,20 @@ const monitorDeviceLabel = computed(() => {
 
 async function refreshDevices() {
   if (!navigator.mediaDevices?.enumerateDevices) return;
-  const all = await navigator.mediaDevices.enumerateDevices();
-  devices.value = all.filter((d) => d.kind === 'audiooutput');
+  try {
+    const all = await navigator.mediaDevices.enumerateDevices();
+    devices.value = all.filter((d) => d.kind === 'audiooutput');
+  } catch (error) {
+    captureErrorNotice.value = recordError(error, {
+      code: 'AUDIO_OUTPUT_LIST_FAILED',
+      title: '輸出裝置讀取失敗',
+      message: '目前無法讀取輸出裝置，請再試一次。',
+      actionLabel: '重試',
+      source: 'audio-output',
+      operation: 'list-devices',
+      context: { retryable: true },
+    });
+  }
 }
 
 if (navigator.mediaDevices) {
@@ -43,8 +89,22 @@ if (navigator.mediaDevices) {
 // A rejected persist surfaces as an unhandled rejection while the graph
 // stays on the new device, same tradeoff useTheme.js already accepts.
 async function selectDevice(deviceId) {
-  await applyCaptureDevice(deviceId);
-  await window.Utawakui?.setCaptureDevice(playerState.captureDeviceId);
+  try {
+    await applyCaptureDevice(deviceId);
+    await window.Utawakui?.setCaptureDevice(playerState.captureDeviceId);
+    return Boolean(playerState.captureDeviceId === deviceId || !deviceId);
+  } catch (error) {
+    captureErrorNotice.value = recordError(error, {
+      code: 'AUDIO_OUTPUT_SAVE_FAILED',
+      title: '輸出裝置未儲存',
+      message: '輸出裝置未儲存，請重新選擇。',
+      actionLabel: '重新選擇裝置',
+      source: 'audio-output',
+      operation: 'save-device',
+      context: { retryable: true },
+    });
+    return false;
+  }
 }
 
 // Restores the persisted device on startup. Called once from App.vue,
@@ -53,9 +113,31 @@ async function selectDevice(deviceId) {
 // something has to explicitly kick off the initial applyCaptureDevice().
 async function restoreInitialDevice() {
   const deviceId = window.Utawakui?.initialCaptureDeviceId ?? null;
-  if (deviceId) await applyCaptureDevice(deviceId);
+  if (!deviceId) return;
+  try {
+    await applyCaptureDevice(deviceId);
+    if (!playerState.captureDeviceId) {
+      await window.Utawakui?.setCaptureDevice(null);
+    }
+  } catch (error) {
+    captureErrorNotice.value = recordError(error, {
+      code: 'AUDIO_OUTPUT_RESTORE_FAILED',
+      title: '輸出裝置未恢復',
+      message: '先前的輸出裝置無法使用，請重新選擇。',
+      actionLabel: '重新選擇裝置',
+      source: 'audio-output',
+      operation: 'restore-device',
+      context: { retryable: true },
+    });
+  }
 }
 
 export function useAudioOutput() {
-  return { devices, monitorDeviceLabel, selectDevice, restoreInitialDevice };
+  return {
+    devices,
+    monitorDeviceLabel,
+    captureErrorNotice,
+    selectDevice,
+    restoreInitialDevice,
+  };
 }

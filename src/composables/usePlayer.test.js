@@ -230,7 +230,7 @@ describe('transpose AudioWorklet routing', () => {
 
     expect(player.state.transposeSemitones).toBe(0);
     expect(pitchCrossfade(monitorContext)).toEqual({ dry: 1, wet: 0 });
-    expect(player.state.error).toBe('worklet registration failed');
+    expect(player.state.error).toBe('音高調整暫時無法使用。');
 
     monitorContext.failWorkletRegistration = false;
     await player.setTransposeSemitones(2);
@@ -290,7 +290,7 @@ describe('transpose AudioWorklet routing', () => {
     expect(player.state.transposeSemitones).toBe(4);
     expect(pitchCrossfade(monitorContext)).toEqual({ dry: 0, wet: 1 });
     expect(pitchCrossfade(captureContext)).toEqual({ dry: 1, wet: 0 });
-    expect(player.state.captureError).toBe('worklet registration failed');
+    expect(player.state.captureError).toBe('擷取輸出的音高調整暫時無法使用。');
 
     await player.setTransposeSemitones(0);
 

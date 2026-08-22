@@ -1,7 +1,20 @@
 import { computed, reactive, readonly } from 'vue';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 const REQUIRED_TITLE_MESSAGE = '歌名必填';
 const RESTART_REQUIRED_MESSAGE = '需要重新啟動應用程式';
+const { recordError } = useAppDiagnostics();
+
+function reportMetadataError(error, operation, message) {
+  return recordError(error, {
+    code: `TRACK_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+    title: '曲目資訊未更新',
+    message,
+    source: 'track-metadata',
+    operation,
+    context: { retryable: true },
+  }).message;
+}
 
 export function useTrackMetadataEditor({ refresh = null } = {}) {
   const state = reactive({
@@ -79,7 +92,11 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       reset();
       return updated;
     } catch (err) {
-      state.error = err instanceof Error ? err.message : String(err);
+      state.error = reportMetadataError(
+        err,
+        'save',
+        '曲目資訊未儲存，請再試一次。',
+      );
       return null;
     } finally {
       state.isSaving = false;
@@ -112,7 +129,11 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       await refresh?.();
       return updated;
     } catch (err) {
-      state.error = err instanceof Error ? err.message : String(err);
+      state.error = reportMetadataError(
+        err,
+        'set-artwork',
+        '封面未更新，請再試一次。',
+      );
       return null;
     } finally {
       state.isArtworkSaving = false;
@@ -137,7 +158,11 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
       await refresh?.();
       return updated;
     } catch (err) {
-      state.error = err instanceof Error ? err.message : String(err);
+      state.error = reportMetadataError(
+        err,
+        'clear-artwork',
+        '封面未更新，請再試一次。',
+      );
       return null;
     } finally {
       state.isArtworkSaving = false;

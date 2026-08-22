@@ -1,7 +1,8 @@
 <script setup>
-import { CircleAlert, ICON_SIZE, Loader2 } from '../../icons/index.js';
+import { Loader2 } from '../../icons/index.js';
 import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 defineProps({
   sources: { type: Array, default: () => [] },
@@ -37,123 +38,126 @@ function handleReadingVariantChange(event) {
 
 <template>
   <section class="lyrics-preparation" aria-label="閱讀與預先設定">
-    <div
-      class="lyrics-preparation__group lyrics-preparation__group--source"
-      title="歌詞來源"
-    >
-      <span class="lyrics-preparation__label">來源</span>
-      <select
-        class="lyrics-preparation__select lyrics-preparation__source-select"
-        :value="selectedSourceFilename"
-        :disabled="sources.length === 0"
-        aria-label="歌詞來源"
-        @change="handleSourceChange"
-      >
-        <option value="">無</option>
-        <option
-          v-for="source in sources"
-          :key="source.filename"
-          :value="source.filename"
-        >
-          {{ formatLyricsSourceLabel(source) }}
-        </option>
-      </select>
-      <UiButton
-        v-if="hasSelectedTrack"
-        class="lyrics-preparation__command"
-        title="管理歌詞來源"
-        aria-label="管理歌詞來源"
-        @click="emit('manageSources')"
-      >
-        管理
-      </UiButton>
-    </div>
-
-    <div
-      v-if="showsReadingAid"
-      class="lyrics-preparation__group"
-      title="讀音顯示"
-    >
-      <span class="lyrics-preparation__error-slot">
-        <span
-          v-if="readingError"
-          class="lyrics-preparation__error"
-          role="alert"
-          tabindex="0"
-          :aria-label="readingError"
-          :data-message="readingError"
-        >
-          <CircleAlert :size="ICON_SIZE" aria-hidden="true" />
-        </span>
-      </span>
-      <span class="lyrics-preparation__label">讀音</span>
-      <select
-        class="lyrics-preparation__select lyrics-preparation__reading-select"
-        :value="readingVariant"
-        aria-label="讀音顯示"
-        @change="handleReadingVariantChange"
-      >
-        <option value="off">不顯示</option>
-        <option v-if="lyricsScript === 'ja'" value="furigana">假名標音</option>
-        <option value="romaji">羅馬拼音</option>
-      </select>
-      <UiButton
-        v-if="isGeneratingReading"
-        :icon="Loader2"
-        class="lyrics-preparation__command lyrics-preparation__spin"
-        disabled
-        title="產生讀音中"
-      >
-        <span role="status">產生中</span>
-      </UiButton>
-      <UiButton
-        v-else
-        class="lyrics-preparation__command"
-        :aria-label="hasReadingDocument ? '重新產生讀音' : '產生讀音'"
-        :title="hasReadingDocument ? '重新產生讀音' : '產生讀音'"
-        @click="emit('generateReading')"
-      >
-        {{ hasReadingDocument ? '更新' : '產生' }}
-      </UiButton>
-    </div>
-
-    <div class="lyrics-preparation__group" title="歌詞字級">
-      <span class="lyrics-preparation__label">字級</span>
+    <div class="lyrics-preparation__row">
       <div
-        class="lyrics-preparation__stepper"
-        role="group"
-        aria-label="歌詞字級"
+        class="lyrics-preparation__group lyrics-preparation__group--source"
+        title="歌詞來源"
       >
-        <UiButton
-          title="縮小歌詞"
-          aria-label="縮小歌詞"
-          :disabled="!canDecreaseFontSize"
-          @click="emit('decreaseFontSize')"
+        <span class="lyrics-preparation__label">來源</span>
+        <select
+          class="lyrics-preparation__select lyrics-preparation__source-select"
+          :value="selectedSourceFilename"
+          :disabled="sources.length === 0"
+          aria-label="歌詞來源"
+          @change="handleSourceChange"
         >
-          A−
-        </UiButton>
+          <option value="">無</option>
+          <option
+            v-for="source in sources"
+            :key="source.filename"
+            :value="source.filename"
+          >
+            {{ formatLyricsSourceLabel(source) }}
+          </option>
+        </select>
         <UiButton
-          title="放大歌詞"
-          aria-label="放大歌詞"
-          :disabled="!canIncreaseFontSize"
-          @click="emit('increaseFontSize')"
+          v-if="hasSelectedTrack"
+          class="lyrics-preparation__command"
+          title="管理歌詞來源"
+          aria-label="管理歌詞來源"
+          @click="emit('manageSources')"
         >
-          A+
+          管理
         </UiButton>
       </div>
+
+      <div
+        v-if="showsReadingAid"
+        class="lyrics-preparation__group"
+        title="讀音顯示"
+      >
+        <span class="lyrics-preparation__label">讀音</span>
+        <select
+          class="lyrics-preparation__select lyrics-preparation__reading-select"
+          :value="readingVariant"
+          aria-label="讀音顯示"
+          @change="handleReadingVariantChange"
+        >
+          <option value="off">不顯示</option>
+          <option v-if="lyricsScript === 'ja'" value="furigana">
+            假名標音
+          </option>
+          <option value="romaji">羅馬拼音</option>
+        </select>
+        <UiButton
+          v-if="isGeneratingReading"
+          :icon="Loader2"
+          class="lyrics-preparation__command lyrics-preparation__spin"
+          disabled
+          title="產生讀音中"
+        >
+          <span role="status">產生中</span>
+        </UiButton>
+        <UiButton
+          v-else
+          class="lyrics-preparation__command"
+          :aria-label="hasReadingDocument ? '重新產生讀音' : '產生讀音'"
+          :title="hasReadingDocument ? '重新產生讀音' : '產生讀音'"
+          @click="emit('generateReading')"
+        >
+          {{ hasReadingDocument ? '更新' : '產生' }}
+        </UiButton>
+      </div>
+
+      <div class="lyrics-preparation__group" title="歌詞字級">
+        <span class="lyrics-preparation__label">字級</span>
+        <div
+          class="lyrics-preparation__stepper"
+          role="group"
+          aria-label="歌詞字級"
+        >
+          <UiButton
+            title="縮小歌詞"
+            aria-label="縮小歌詞"
+            :disabled="!canDecreaseFontSize"
+            @click="emit('decreaseFontSize')"
+          >
+            A−
+          </UiButton>
+          <UiButton
+            title="放大歌詞"
+            aria-label="放大歌詞"
+            :disabled="!canIncreaseFontSize"
+            @click="emit('increaseFontSize')"
+          >
+            A+
+          </UiButton>
+        </div>
+      </div>
     </div>
+    <UiNotice
+      v-if="readingError"
+      tone="danger"
+      :message="readingError"
+      compact
+    />
   </section>
 </template>
 
 <style scoped>
 .lyrics-preparation {
+  display: grid;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2) var(--ui-space-4);
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+  background: var(--ui-color-surface-raised);
+}
+
+.lyrics-preparation__row {
   display: flex;
   align-items: center;
   flex-wrap: nowrap;
   gap: var(--ui-space-3);
-  padding: var(--ui-space-2) var(--ui-space-4);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  background: var(--ui-color-surface-raised);
 }
 
 .lyrics-preparation__group {
@@ -233,54 +237,6 @@ function handleReadingVariantChange(event) {
 
 .lyrics-preparation__spin :deep(svg) {
   animation: lyrics-preparation-spin var(--ui-motion-spin) infinite;
-}
-
-.lyrics-preparation__error-slot {
-  display: inline-flex;
-  width: var(--ui-icon-button-size-sm);
-  min-width: var(--ui-icon-button-size-sm);
-  flex: 0 0 var(--ui-icon-button-size-sm);
-  align-items: center;
-  justify-content: center;
-}
-
-.lyrics-preparation__error {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  color: var(--ui-color-danger);
-}
-
-.lyrics-preparation__error:focus-visible {
-  border-radius: var(--ui-radius-sm);
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.lyrics-preparation__error::after {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + var(--ui-space-2));
-  z-index: var(--ui-z-dropdown);
-  width: max-content;
-  max-width: 240px;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-  box-shadow: var(--ui-shadow-overlay);
-  color: var(--ui-color-text);
-  content: attr(data-message);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  opacity: 0;
-  pointer-events: none;
-  white-space: normal;
-}
-
-.lyrics-preparation__error:hover::after,
-.lyrics-preparation__error:focus-visible::after {
-  opacity: 1;
 }
 
 @keyframes lyrics-preparation-spin {

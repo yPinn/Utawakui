@@ -56,6 +56,7 @@ async function refreshDependencies() {
       title: '需要重新啟動',
       source: 'feature-dependencies',
       operation: 'refresh',
+      message: '請重新啟動應用程式後再試。',
     });
     return;
   }
@@ -71,6 +72,7 @@ async function refreshDependencies() {
       source: 'feature-dependencies',
       operation: 'refresh',
       actionLabel: '重新讀取',
+      message: '目前無法讀取功能準備狀態，請再試一次。',
     });
   } finally {
     state.isLoading = false;
@@ -98,6 +100,7 @@ async function prepareDependency(dependencyId) {
       operation: 'prepare',
       actionLabel: '重試',
       context: { dependencyId },
+      message: '準備項目未完成，請再試一次。',
     });
   } finally {
     state.preparingIds.delete(dependencyId);
@@ -120,6 +123,7 @@ async function runDependencyAction({
       title: '需要重新啟動',
       source: 'feature-dependencies',
       operation,
+      message: '請重新啟動應用程式後再試。',
     });
     return;
   }
@@ -144,6 +148,7 @@ async function runDependencyAction({
       operation,
       actionLabel,
       context: { dependencyId },
+      message: '維護操作未完成，請再試一次。',
     });
   } finally {
     state.actionIds.delete(actionKey);

@@ -14,6 +14,23 @@ const DEFAULT_TITLES = Object.freeze({
   error: '發生錯誤',
 });
 
+const DEFAULT_PUBLIC_MESSAGE = '操作未完成，請稍後再試。';
+const PUBLIC_CONTEXT_KEYS = new Set([
+  'count',
+  'dependencyId',
+  'featureId',
+  'httpStatus',
+  'presetId',
+  'retryable',
+  'stage',
+  'status',
+]);
+const PUBLIC_TEXT_LIMITS = Object.freeze({
+  title: 32,
+  message: 120,
+  actionLabel: 16,
+});
+
 function normalizeSeverity(severity, fallback = 'error') {
   return APP_ERROR_SEVERITIES.includes(severity) ? severity : fallback;
 }
@@ -39,10 +56,25 @@ function rawMessage(error) {
   return String(error);
 }
 
-function cleanMessage(message) {
-  const parsed = parseStructuredMessage(message);
-  if (parsed?.message) return parsed.message;
-  return message || '請稍後再試一次。';
+function boundedPublicText(value, maxLength, fallback = '') {
+  if (typeof value !== 'string') return fallback;
+  const text = value.replace(/\s+/g, ' ').trim();
+  return text ? text.slice(0, maxLength) : fallback;
+}
+
+function safePublicContext(context) {
+  if (!context || typeof context !== 'object' || Array.isArray(context)) {
+    return {};
+  }
+  return Object.fromEntries(
+    Object.entries(context).filter(
+      ([key, value]) =>
+        PUBLIC_CONTEXT_KEYS.has(key) &&
+        (typeof value === 'boolean' ||
+          (typeof value === 'number' && Number.isFinite(value)) ||
+          (typeof value === 'string' && value.length <= 80)),
+    ),
+  );
 }
 
 function createRecordId(source = 'app') {
@@ -60,9 +92,16 @@ export function normalizeAppError(error, options = {}) {
     options.severity || parsed?.severity || error?.severity,
   );
   const code = options.code || parsed?.code || error?.code || 'UNKNOWN_ERROR';
-  const message = options.message || cleanMessage(rawMessage(error));
-  const title =
-    options.title || parsed?.title || DEFAULT_TITLES[severity] || '發生錯誤';
+  const message = boundedPublicText(
+    options.message || parsed?.message,
+    PUBLIC_TEXT_LIMITS.message,
+    DEFAULT_PUBLIC_MESSAGE,
+  );
+  const title = boundedPublicText(
+    options.title || parsed?.title,
+    PUBLIC_TEXT_LIMITS.title,
+    DEFAULT_TITLES[severity] || '發生錯誤',
+  );
 
   return {
     id: options.id || createRecordId(source),
@@ -70,13 +109,16 @@ export function normalizeAppError(error, options = {}) {
     severity,
     title,
     message,
-    actionLabel: options.actionLabel || parsed?.actionLabel || '',
+    actionLabel: boundedPublicText(
+      options.actionLabel || parsed?.actionLabel,
+      PUBLIC_TEXT_LIMITS.actionLabel,
+    ),
     source,
     operation: options.operation || parsed?.operation || '',
-    context: {
+    context: safePublicContext({
       ...(parsed?.context || {}),
       ...(options.context || {}),
-    },
+    }),
     createdAt: options.createdAt || new Date().toISOString(),
   };
 }

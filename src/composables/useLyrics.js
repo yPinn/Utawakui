@@ -4,6 +4,7 @@ import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
@@ -23,6 +24,18 @@ const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
 const { selectedPlaylist, initialize: initializePlaylists } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
+const { recordError } = useAppDiagnostics();
+
+function reportLyricsError(error, operation, message) {
+  return recordError(error, {
+    code: `LYRICS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
+    title: '歌詞操作未完成',
+    message,
+    source: 'lyrics',
+    operation,
+    context: { retryable: true },
+  }).message;
+}
 // The full library pool (title/artist/lyrics/hasSeparation lookups) is
 // shared with SetlistView.vue via this singleton — see useLibrary.js for why
 // the fetch + onLibraryUpdated subscription moved out of here. Lyrics owns
@@ -241,7 +254,7 @@ async function loadSelectedLyrics() {
   if (!track || !filename) return;
 
   if (typeof window.Utawakui?.getTrackLyrics !== 'function') {
-    state.error = '歌詞讀取需要重新啟動應用程式才能載入新版橋接 API。';
+    state.error = '請重新啟動應用程式後再讀取歌詞。';
     return;
   }
 
@@ -255,7 +268,11 @@ async function loadSelectedLyrics() {
     state.error = null;
   } catch (err) {
     if (requestId !== lyricsRequestId) return;
-    state.error = err instanceof Error ? err.message : String(err);
+    state.error = reportLyricsError(
+      err,
+      'load',
+      '目前無法讀取歌詞，請再試一次。',
+    );
   } finally {
     if (requestId === lyricsRequestId) state.isLoadingLyrics = false;
   }
@@ -345,8 +362,7 @@ async function saveTimingDocument(document) {
     return null;
   }
   if (typeof window.Utawakui?.saveLyricsTiming !== 'function') {
-    state.timingSave.error =
-      '歌詞時間儲存需要重新啟動應用程式才能載入新版橋接 API。';
+    state.timingSave.error = '請重新啟動應用程式後再儲存歌詞時間。';
     return null;
   }
 
@@ -368,7 +384,11 @@ async function saveTimingDocument(document) {
     }
     return timing?.document ?? document;
   } catch (err) {
-    state.timingSave.error = err instanceof Error ? err.message : String(err);
+    state.timingSave.error = reportLyricsError(
+      err,
+      'save-timing',
+      '歌詞時間未儲存，請再試一次。',
+    );
     return null;
   } finally {
     state.timingSave.isSaving = false;
@@ -386,7 +406,7 @@ function applyBackfillStatus(payload = {}) {
   state.backfillStatus.currentTrackId = payload.trackId ?? null;
   state.backfillStatus.currentTitle = payload.title ?? null;
   state.backfillStatus.error =
-    payload.stage === 'error' ? payload.error || 'Reload failed' : null;
+    payload.stage === 'error' ? '部分曲目資訊未更新。' : null;
 
   if (payload.stage === 'idle') {
     state.backfillStatus.total = 0;
@@ -430,8 +450,7 @@ async function probeMusixmatch() {
 
   if (typeof window.Utawakui?.probeMusixmatchLyrics !== 'function') {
     state.musixmatchProbe.isLoading = false;
-    state.musixmatchProbe.error =
-      'Musixmatch 探測 API 尚未載入，請重啟 Electron app';
+    state.musixmatchProbe.error = '請重新啟動應用程式後再檢查歌詞來源。';
     return null;
   }
 
@@ -442,8 +461,11 @@ async function probeMusixmatch() {
     return result;
   } catch (err) {
     if (requestId !== musixmatchProbeRequestId) return null;
-    state.musixmatchProbe.error =
-      err instanceof Error ? err.message : String(err);
+    state.musixmatchProbe.error = reportLyricsError(
+      err,
+      'probe-source',
+      '目前無法檢查歌詞來源，請再試一次。',
+    );
     return null;
   } finally {
     if (requestId === musixmatchProbeRequestId) {
@@ -466,8 +488,7 @@ async function searchLyricsCandidates() {
 
   if (typeof window.Utawakui?.searchLyricsCandidates !== 'function') {
     state.candidateSearch.isLoading = false;
-    state.candidateSearch.error =
-      '歌詞搜尋需要重新啟動應用程式才能載入新版橋接 API。';
+    state.candidateSearch.error = '請重新啟動應用程式後再搜尋歌詞。';
     return;
   }
 
@@ -475,12 +496,20 @@ async function searchLyricsCandidates() {
     const result = await window.Utawakui.searchLyricsCandidates(track.id);
     if (requestId !== candidateSearchRequestId) return;
     state.candidateSearch.status = result?.status ?? null;
-    state.candidateSearch.reason = result?.reason ?? null;
+    state.candidateSearch.reason =
+      result?.status === 'error'
+        ? '請稍後再試一次。'
+        : result?.status === 'unavailable'
+          ? '目前沒有合適的候選歌詞。'
+          : null;
     state.candidateSearch.candidates = result?.candidates ?? [];
   } catch (err) {
     if (requestId !== candidateSearchRequestId) return;
-    state.candidateSearch.error =
-      err instanceof Error ? err.message : String(err);
+    state.candidateSearch.error = reportLyricsError(
+      err,
+      'search',
+      '目前無法搜尋歌詞，請再試一次。',
+    );
   } finally {
     if (requestId === candidateSearchRequestId) {
       state.candidateSearch.isLoading = false;
@@ -497,8 +526,7 @@ async function saveLyricsCandidate(candidateId) {
   if (!(await ensureLyricsFlow())) return null;
 
   if (typeof window.Utawakui?.saveLyricsCandidate !== 'function') {
-    state.manualSave.error =
-      '歌詞儲存需要重新啟動應用程式才能載入新版橋接 API。';
+    state.manualSave.error = '請重新啟動應用程式後再儲存歌詞。';
     return null;
   }
 
@@ -513,7 +541,11 @@ async function saveLyricsCandidate(candidateId) {
     selectSource(result.source.filename);
     return result;
   } catch (err) {
-    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    state.manualSave.error = reportLyricsError(
+      err,
+      'save-candidate',
+      '歌詞未儲存，請再試一次。',
+    );
     return null;
   } finally {
     state.manualSave.isSaving = false;
@@ -527,8 +559,7 @@ async function backfillSourceLabels() {
   if (!(await ensureLyricsFlow())) return null;
 
   if (typeof window.Utawakui?.backfillLyricsSourceLabels !== 'function') {
-    state.manualSave.error =
-      '標籤補齊需要重新啟動應用程式才能載入新版橋接 API。';
+    state.manualSave.error = '請重新啟動應用程式後再更新標籤。';
     return null;
   }
 
@@ -539,7 +570,11 @@ async function backfillSourceLabels() {
     await refreshLibrary();
     return result;
   } catch (err) {
-    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    state.manualSave.error = reportLyricsError(
+      err,
+      'backfill-labels',
+      '標籤未更新，請再試一次。',
+    );
     return null;
   } finally {
     state.manualSave.isSaving = false;
@@ -552,8 +587,7 @@ async function setSourceLabel(filename, label) {
   if (!track) return null;
 
   if (typeof window.Utawakui?.setLyricsSourceLabel !== 'function') {
-    state.manualSave.error =
-      '標籤編輯需要重新啟動應用程式才能載入新版橋接 API。';
+    state.manualSave.error = '請重新啟動應用程式後再編輯標籤。';
     return null;
   }
 
@@ -568,7 +602,11 @@ async function setSourceLabel(filename, label) {
     await refreshLibrary();
     return result;
   } catch (err) {
-    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    state.manualSave.error = reportLyricsError(
+      err,
+      'set-label',
+      '標籤未更新，請再試一次。',
+    );
     return null;
   } finally {
     state.manualSave.isSaving = false;
@@ -582,8 +620,7 @@ async function deleteSource(filename) {
   if (!track) return null;
 
   if (typeof window.Utawakui?.deleteLyricsSource !== 'function') {
-    state.manualSave.error =
-      '歌詞來源刪除需要重新啟動應用程式才能載入新版橋接 API。';
+    state.manualSave.error = '請重新啟動應用程式後再刪除歌詞來源。';
     return null;
   }
 
@@ -597,7 +634,11 @@ async function deleteSource(filename) {
     }
     return result;
   } catch (err) {
-    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    state.manualSave.error = reportLyricsError(
+      err,
+      'delete-source',
+      '無法刪除歌詞來源，請再試一次。',
+    );
     return null;
   } finally {
     state.manualSave.isSaving = false;
@@ -609,8 +650,7 @@ async function importManualLyricsText(payload) {
   if (!track) return null;
 
   if (typeof window.Utawakui?.importLyricsText !== 'function') {
-    state.manualSave.error =
-      '手動匯入歌詞需要重新啟動應用程式才能載入新版橋接 API。';
+    state.manualSave.error = '請重新啟動應用程式後再匯入歌詞。';
     return null;
   }
 
@@ -622,7 +662,11 @@ async function importManualLyricsText(payload) {
     if (result?.source?.filename) selectSource(result.source.filename);
     return result;
   } catch (err) {
-    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    state.manualSave.error = reportLyricsError(
+      err,
+      'import-text',
+      '歌詞未匯入，請再試一次。',
+    );
     return null;
   } finally {
     state.manualSave.isSaving = false;
@@ -634,8 +678,7 @@ async function importManualLyricsFile() {
   if (!track) return null;
 
   if (typeof window.Utawakui?.importLyricsFile !== 'function') {
-    state.manualSave.error =
-      '歌詞檔匯入需要重新啟動應用程式才能載入新版橋接 API。';
+    state.manualSave.error = '請重新啟動應用程式後再匯入歌詞檔。';
     return null;
   }
 
@@ -648,7 +691,11 @@ async function importManualLyricsFile() {
     if (result?.source?.filename) selectSource(result.source.filename);
     return result;
   } catch (err) {
-    state.manualSave.error = err instanceof Error ? err.message : String(err);
+    state.manualSave.error = reportLyricsError(
+      err,
+      'import-file',
+      '歌詞未匯入，請再試一次。',
+    );
     return null;
   } finally {
     state.manualSave.isSaving = false;
@@ -692,7 +739,7 @@ const stopLibrarySync = watch(
 const stopLibraryErrorSync = watch(
   () => libraryState.error,
   (error) => {
-    state.error = error;
+    state.error = error?.message ?? error;
   },
   { immediate: true },
 );

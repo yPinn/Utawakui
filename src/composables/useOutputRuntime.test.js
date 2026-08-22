@@ -265,7 +265,7 @@ describe('output source handshake', () => {
 
     await expect(runtime.initialize()).resolves.toBe(false);
 
-    expect(runtime.state.error).toContain('輸出初始化失敗');
+    expect(runtime.state.error).toBe('輸出初始化未完成，請再試一次。');
     expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
     expect(initializeLibrary).not.toHaveBeenCalled();
   });
@@ -503,7 +503,7 @@ describe('output runtime actions', () => {
         displayDelayMs: 0,
       }),
     ).resolves.toBe(false);
-    expect(runtime.state.error).toContain('保存輸出設定失敗');
+    expect(runtime.state.error).toBe('輸出設定未儲存，請再試一次。');
 
     bridge.startOutput.mockRejectedValueOnce(new Error('start failed'));
     await expect(runtime.start()).resolves.toBe(false);
@@ -511,6 +511,6 @@ describe('output runtime actions', () => {
     await expect(runtime.stop()).resolves.toBe(false);
     bridge.listOutputSlots.mockRejectedValueOnce(new Error('slots failed'));
     await expect(runtime.loadSlots()).resolves.toBeUndefined();
-    expect(runtime.state.error).toContain('讀取輸出設定失敗');
+    expect(runtime.state.error).toBe('目前無法讀取輸出設定，請再試一次。');
   });
 });

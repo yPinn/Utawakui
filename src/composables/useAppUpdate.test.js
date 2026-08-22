@@ -125,6 +125,6 @@ describe('useAppUpdate', () => {
 
     await appUpdate.checkForAppUpdate();
 
-    expect(appUpdate.state.error).toBe('IPC failed');
+    expect(appUpdate.state.error).toBe('目前無法完成更新操作，請稍後再試。');
   });
 });

@@ -2,12 +2,14 @@
 
 ## Status
 
-Accepted and partially implemented (2026-08-22). The current error surface has
-been audited. The dependency-free main-owned core now implements event
+Accepted and partially implemented (updated 2026-08-23). The current renderer
+error surface has been audited and migrated to a shared public-message boundary.
+The dependency-free main-owned core implements event
 normalization, redaction, JSONL persistence/recovery, rotation, recent reads,
 managed-file clearing, and fail-open results. Main startup, Electron lifecycle,
-bounded preload/IPC intents, and Vue/renderer global capture are wired. Settings,
-explicit export, and domain-handler integration remain incremental work.
+bounded preload/IPC intents, Vue/renderer global capture, and Settings
+count/open/clear controls are wired. Explicit export and main domain-handler
+wrappers remain incremental work.
 
 ## Context
 
@@ -19,12 +21,12 @@ one durable diagnostic pipeline.
   output stays in main and only a classified sentinel reaches renderer.
 - `electron/lib/appError.js` and `src/utils/appErrors.js` define an
   IPC-compatible structured application-error format.
-- `useAppDiagnostics.js` keeps at most 100 normalized records in renderer
-  memory. Only feature dependencies, vocal separation, and lyrics reading
-  currently record there. Settings shows the record count but not the records.
-- Other renderer domains generally store a local `state.error` string. These
-  errors disappear on restart and do not share codes, operation metadata, or a
-  public/private message boundary.
+- `useAppDiagnostics.js` keeps at most 100 normalized public records in renderer
+  memory and submits a separate bounded diagnostic intent to main. Renderer
+  domains use it for concise recovery messages rather than caught exception
+  text.
+- Settings shows only the persistent record count plus clear/open-folder
+  controls. It does not render diagnostic event bodies or raw errors.
 - Separation and reading workers correctly report explicit error and exit
   paths, and main releases their in-progress locks in `finally`, but worker
   stacks and stage details are not retained.
@@ -67,6 +69,19 @@ The OBS overlay WebSocket remains read-only. Overlay pages do not gain a
 diagnostic command channel. Main may record server-side connection, rejection,
 asset-serving, and heartbeat failures; client-side reconnect remains local to
 the overlay runtime.
+
+### Public message projection
+
+Every caught renderer exception is developer input, not interface copy.
+`normalizeAppError` accepts public text only from an explicit call-site message
+or the structured `UTAWAKUI_APP_ERROR` projection. Plain `Error.message`, string
+rejections, stacks, paths, URLs, IPC details, device ids, provider output, and
+worker details never become View text.
+
+Public messages use concise Traditional Chinese: identify the unfinished task
+and, when useful, give one next action. Titles, messages, and action labels are
+bounded. Views use the shared `UiNotice` component for error presentation;
+dense toolbars do not hide the message behind an icon-only tooltip.
 
 ### Event model
 
@@ -196,15 +211,17 @@ Recommended rollout order:
 
 ### Settings surface
 
-The existing count-only `使用記錄` row becomes a local diagnostics surface:
+The `使用記錄` row is a deliberately non-technical local diagnostics surface:
 
-- bounded recent event list using public/safe fields only;
-- severity, time, source, operation, code, and safe message;
-- clear records, open logs folder, and explicit redacted export;
+- persistent record count only in the ordinary UI;
+- clear records and open logs folder;
 - an explanation that records stay on this device unless the user exports
   them;
 - no raw stack, path, stderr, lyrics, media metadata, or arbitrary context in
   the ordinary UI.
+
+A future explicit redacted export may expose bounded support fields, but it
+must not turn Settings into a developer log viewer.
 
 ### Testing and acceptance
 

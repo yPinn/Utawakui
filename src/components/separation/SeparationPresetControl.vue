@@ -1,6 +1,7 @@
 <script setup>
-import { BadgeCheck, CircleAlert, ICON_SIZE } from '../../icons/index.js';
+import { BadgeCheck, ICON_SIZE } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
 
 defineProps({
   hasTrack: { type: Boolean, default: false },
@@ -23,18 +24,6 @@ function handlePresetChange(event) {
 
 <template>
   <div class="separation-preset-control" role="group" :aria-label="label">
-    <span class="separation-preset-control__error-slot">
-      <span
-        v-if="error"
-        class="separation-preset-control__error"
-        role="alert"
-        tabindex="0"
-        :aria-label="error"
-        :data-message="error"
-      >
-        <CircleAlert :size="ICON_SIZE" aria-hidden="true" />
-      </span>
-    </span>
     <span class="separation-preset-control__label">{{ label }}</span>
     <select
       class="separation-preset-control__select"
@@ -81,12 +70,20 @@ function handlePresetChange(event) {
     >
       產生
     </UiButton>
+    <UiNotice
+      v-if="error"
+      class="separation-preset-control__notice"
+      tone="danger"
+      :message="error"
+      compact
+    />
   </div>
 </template>
 
 <style scoped>
 .separation-preset-control {
   display: flex;
+  flex-wrap: wrap;
   min-width: 0;
   align-items: center;
   gap: var(--ui-space-2);
@@ -113,8 +110,7 @@ function handlePresetChange(event) {
   font-size: var(--ui-font-size-sm);
 }
 
-.separation-preset-control__select:focus-visible,
-.separation-preset-control__error:focus-visible {
+.separation-preset-control__select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
@@ -152,46 +148,7 @@ function handlePresetChange(event) {
   color: var(--ui-color-accent);
 }
 
-.separation-preset-control__error-slot {
-  display: inline-flex;
-  width: var(--ui-icon-button-size-sm);
-  min-width: var(--ui-icon-button-size-sm);
-  flex: 0 0 var(--ui-icon-button-size-sm);
-  align-items: center;
-  justify-content: center;
-}
-
-.separation-preset-control__error {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  border-radius: var(--ui-radius-sm);
-  color: var(--ui-color-danger);
-}
-
-.separation-preset-control__error::after {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + var(--ui-space-2));
-  z-index: var(--ui-z-dropdown);
-  width: max-content;
-  max-width: 240px;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-canvas);
-  box-shadow: var(--ui-shadow-overlay);
-  color: var(--ui-color-text);
-  content: attr(data-message);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  opacity: 0;
-  pointer-events: none;
-  white-space: normal;
-}
-
-.separation-preset-control__error:hover::after,
-.separation-preset-control__error:focus-visible::after {
-  opacity: 1;
+.separation-preset-control__notice {
+  flex: 0 0 100%;
 }
 </style>

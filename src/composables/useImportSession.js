@@ -13,6 +13,7 @@ import {
 import { normalizeAppError } from '../utils/appErrors.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useAppView } from './useAppView.js';
+import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { usePlaylists } from './usePlaylists.js';
 
@@ -23,6 +24,7 @@ const {
 } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { setActiveView } = useAppView();
+const { recordError } = useAppDiagnostics();
 
 const state = reactive({
   input: '',
@@ -145,14 +147,29 @@ function setStatus(message, type = 'idle') {
   state.failureHint = '';
 }
 
+function reportImportError(error, operation, message) {
+  return recordError(error, {
+    title: '匯入操作未完成',
+    message,
+    source: 'import',
+    operation,
+  });
+}
+
 function handleProviderSetupError(err) {
   const appError = normalizeAppError(err, {
     source: 'import',
     operation: 'provider-tool',
   });
   if (appError.code !== 'FEATURE_DEPENDENCY_MISSING') return false;
+  const notice = recordError(err, {
+    title: '外部來源尚未準備完成',
+    message: '請到設定完成外部來源準備。',
+    source: 'import',
+    operation: 'provider-tool',
+  });
   setActiveView('settings');
-  setStatus(appError.message, 'pending');
+  setStatus(notice.message, 'pending');
   state.failureHint = '請在設定的「進階功能」中準備外部來源工具。';
   return true;
 }
@@ -344,6 +361,7 @@ async function resolveSource() {
     clearPreview();
     if (handleProviderSetupError(err)) return;
     const failure = describeDownloadFailure(err);
+    reportImportError(err, 'resolve-source', '目前無法檢查這個來源。');
     setStatus(`找不到來源：${failure.label}`, 'error');
     state.failureHint = failure.hint;
   } finally {
@@ -363,11 +381,15 @@ async function importSingle() {
   try {
     const result = await window.Utawakui.downloadAudio(downloadInput);
     if (state.singleTrack) state.singleTrack.status = 'done';
-    setStatus(`已下載：${result.title || result.filePath}`, 'success');
+    setStatus(
+      result.title ? `已下載：${result.title}` : '歌曲已下載',
+      'success',
+    );
     state.sourceKind = 'idle';
   } catch (err) {
     if (handleProviderSetupError(err)) return;
     const failure = describeDownloadFailure(err);
+    reportImportError(err, 'download-track', '下載未完成，請再試一次。');
     setStatus(`下載失敗：${failure.label}`, 'error');
     state.failureHint = failure.hint;
   } finally {
@@ -416,6 +438,7 @@ async function downloadPlaylistTrack(track) {
   } catch (err) {
     track.status = 'error';
     track.errorCode = describeDownloadFailure(err).code;
+    reportImportError(err, 'download-track', '部分曲目未下載。');
   }
 }
 
@@ -438,7 +461,7 @@ async function syncImportedPlaylist() {
         track.selected && (track.status === 'done' || track.alreadyDownloaded),
     )
     .map((track) => track.id);
-  if (trackIds.length === 0) return false;
+  if (trackIds.length === 0) return null;
 
   if (state.collectionKind === 'album') {
     const upserted = await upsertAlbum({
@@ -455,8 +478,7 @@ async function syncImportedPlaylist() {
     if (!created) return false;
     state.createdPlaylistId = created.id;
   }
-  await setPlaylistTracks(state.createdPlaylistId, trackIds);
-  return true;
+  return setPlaylistTracks(state.createdPlaylistId, trackIds);
 }
 
 async function importPlaylist() {
@@ -494,13 +516,15 @@ async function importPlaylist() {
         'error',
       );
       if (dominant) state.failureHint = downloadFailureHint(dominant);
-    } else if (playlistSynced) {
+    } else if (playlistSynced === true) {
       setStatus(
         state.collectionKind === 'album'
           ? `已加入專輯「${state.playlistTitle}」`
           : `已加入播放清單「${state.playlistTitle}」`,
         'success',
       );
+    } else if (playlistSynced === false) {
+      setStatus('曲目已下載，但播放清單未儲存。請再試一次。', 'error');
     } else {
       setStatus('下載完成', 'success');
     }
@@ -549,23 +573,49 @@ function getTrackStatusClass(track) {
 }
 
 async function refreshConfig() {
-  const config = await window.Utawakui.getConfig();
-  state.downloadDir = config.downloadDir;
-  state.isDefaultDir = config.isDefault;
+  try {
+    const config = await window.Utawakui.getConfig();
+    state.downloadDir = config.downloadDir;
+    state.isDefaultDir = config.isDefault;
+    return true;
+  } catch (error) {
+    reportImportError(error, 'read-settings', '目前無法讀取匯入設定。');
+    setStatus('目前無法讀取匯入設定，請再試一次。', 'error');
+    return false;
+  }
 }
 
 async function chooseDownloadDir() {
-  await window.Utawakui.chooseDownloadDir();
-  await refreshConfig();
+  try {
+    await window.Utawakui.chooseDownloadDir();
+    return refreshConfig();
+  } catch (error) {
+    reportImportError(error, 'choose-folder', '下載資料夾未變更。');
+    setStatus('下載資料夾未變更，請再試一次。', 'error');
+    return false;
+  }
 }
 
 async function resetDownloadDir() {
-  await window.Utawakui.resetDownloadDir();
-  await refreshConfig();
+  try {
+    await window.Utawakui.resetDownloadDir();
+    return refreshConfig();
+  } catch (error) {
+    reportImportError(error, 'reset-folder', '下載資料夾未重設。');
+    setStatus('下載資料夾未重設，請再試一次。', 'error');
+    return false;
+  }
 }
 
-function openDownloadDir() {
-  return window.Utawakui.openDownloadDir();
+async function openDownloadDir() {
+  try {
+    await window.Utawakui.openDownloadDir();
+    return true;
+  } catch (error) {
+    reportImportError(error, 'open-folder', '目前無法開啟下載資料夾。');
+    setStatus('目前無法開啟下載資料夾，請再試一次。', 'error');
+    return false;
+  }
 }
 
 export function useImportSession() {

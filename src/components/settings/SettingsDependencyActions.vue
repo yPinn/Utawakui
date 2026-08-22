@@ -1,8 +1,8 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { Download, Ellipsis } from '../../icons/index.js';
-import UiButton from '../ui/UiButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 
 const props = defineProps({
   item: { type: Object, required: true },
@@ -52,21 +52,19 @@ function handleMenuSelect(actionId) {
 
 <template>
   <div class="settings-dependency-actions">
-    <UiButton
+    <UiIconButton
       v-if="item.actionIcon"
       :icon="primaryIcon"
+      :label="item.actionLabel"
       :disabled="item.actionDisabled"
       :aria-disabled="item.actionDisabled ? 'true' : undefined"
-      :aria-label="item.actionLabel"
-      :title="item.actionLabel"
       @click="emit('primaryAction', item.id)"
     />
 
-    <UiButton
+    <UiIconButton
       v-if="hasMenuItems"
       :icon="Ellipsis"
-      :aria-label="menuLabel"
-      :title="menuLabel"
+      :label="menuLabel"
       aria-haspopup="menu"
       :aria-expanded="isMenuOpen ? 'true' : 'false'"
       @click="openMenu"

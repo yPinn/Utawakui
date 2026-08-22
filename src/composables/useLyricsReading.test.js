@@ -126,7 +126,7 @@ describe('generateReading', () => {
     await reading.generateReading('t1', 'ja.vtt', lyricsDocument);
 
     expect(reading.isGenerating('t1', 'ja.vtt')).toBe(false);
-    expect(reading.errorFor('t1', 'ja.vtt')).toBe('boom');
+    expect(reading.errorFor('t1', 'ja.vtt')).toBe('讀音未產生，請再試一次。');
   });
 
   it('does not let one target in flight block a different target', async () => {
@@ -181,7 +181,7 @@ describe('setReadingLine', () => {
       'です',
     );
 
-    expect(reading.errorFor('t1', 'ja.vtt')).toBe('boom');
+    expect(reading.errorFor('t1', 'ja.vtt')).toBe('讀音未儲存，請再試一次。');
   });
 });
 
