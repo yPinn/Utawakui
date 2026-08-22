@@ -48,6 +48,18 @@ describe('getProviderRuntimePaths', () => {
       'C:\\Users\\User\\AppData\\Roaming\\Utawakui\\dependencies\\ytdlp\\current\\cache',
     );
   });
+
+  it('keeps POSIX artifacts under one root regardless of the test host', () => {
+    const paths = getProviderRuntimePaths('/tmp/utawakui');
+
+    expect(paths.installDir).toBe('/tmp/utawakui/dependencies/ytdlp/current');
+    expect(paths.pythonPath).toBe(
+      '/tmp/utawakui/dependencies/ytdlp/current/python/python.exe',
+    );
+    expect(paths.pluginPackageDir).toBe(
+      '/tmp/utawakui/dependencies/ytdlp/current/plugins/bgutil-ytdlp-pot-provider-rs',
+    );
+  });
 });
 
 describe('writePythonPathConfig', () => {

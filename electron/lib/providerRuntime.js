@@ -10,8 +10,14 @@ const PYTHON_DIRNAME = 'python';
 const SITE_PACKAGES_RELATIVE_PATH = path.join('Lib', 'site-packages');
 const BGUTIL_PLUGIN_DIRNAME = 'bgutil-ytdlp-pot-provider-rs';
 
+function getPathApi(filePath) {
+  if (path.posix.isAbsolute(filePath)) return path.posix;
+  if (path.win32.isAbsolute(filePath)) return path.win32;
+  return path;
+}
+
 function buildProviderRuntimePaths(installDir) {
-  const pathApi = path.win32.isAbsolute(installDir) ? path.win32 : path;
+  const pathApi = getPathApi(installDir);
   const pythonDir = pathApi.join(installDir, PYTHON_DIRNAME);
   const sitePackagesDir = pathApi.join(pythonDir, 'Lib', 'site-packages');
   const pluginParentDir = pathApi.join(installDir, 'plugins');
@@ -29,7 +35,7 @@ function buildProviderRuntimePaths(installDir) {
 }
 
 function getProviderRuntimePaths(userDataDir) {
-  const pathApi = path.win32.isAbsolute(userDataDir) ? path.win32 : path;
+  const pathApi = getPathApi(userDataDir);
   return buildProviderRuntimePaths(
     pathApi.join(
       userDataDir,
