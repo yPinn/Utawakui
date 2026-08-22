@@ -6,9 +6,10 @@
 
 ## Project License Status
 
-Utawakui itself does not currently declare a project license in `package.json`
-and there is no root `LICENSE` file in the repository. Choose and document the
-project license before any public source release or external binary release.
+Utawakui is proprietary software distributed under the terms in `LICENSE.md`.
+`package.json` remains private and uses `UNLICENSED` to prevent the application
+source from being treated as an open-source or publishable npm package. This
+does not change the licenses of the third-party components listed below.
 
 ## Packaged Runtime Dependencies
 
@@ -96,7 +97,8 @@ record of source URL, download URL, checksum, version, and license metadata.
 Before publishing a binary release:
 
 - Run `npm run license:inventory` and compare the report with this file.
-- Confirm Utawakui's own project license is declared if the release is public.
+- Confirm `LICENSE.md` and `THIRD_PARTY_NOTICES.md` are included in the
+  packaged app.
 - Confirm `THIRD_PARTY_NOTICES.md` is included in the packaged app.
 - Preserve `kuromoji`'s Apache-2.0 license and `NOTICE.md`, including the
   `mecab-ipadic-2.7.0-20070801` notice.

@@ -180,10 +180,11 @@ jobs:
           }
           $listing = node node_modules/@electron/asar/bin/asar.js list $asarPath
           if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect packaged app.asar' }
-          $notice = $listing | Where-Object {
-            $_ -match '[/\\]THIRD_PARTY_NOTICES\.md$'
+          foreach ($requiredNotice in @('LICENSE.md', 'THIRD_PARTY_NOTICES.md')) {
+            $escapedName = [regex]::Escape($requiredNotice)
+            $notice = $listing | Where-Object { $_ -match "[/\\]$escapedName$" }
+            if (-not $notice) { throw "$requiredNotice is not packaged" }
           }
-          if (-not $notice) { throw 'THIRD_PARTY_NOTICES.md is not packaged' }
 
       - name: Verify update artifacts
         run: npm run release:verify-artifacts -- --version ${{ env.RELEASE_VERSION }}

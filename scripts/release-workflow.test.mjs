@@ -93,6 +93,8 @@ describe('release workflow', () => {
     expect(packageCommands).toContain(
       'Refusing to modify an already published release',
     );
+    expect(packageCommands).toContain('LICENSE.md');
+    expect(packageCommands).toContain('THIRD_PARTY_NOTICES.md');
     expect(packageCommands).not.toContain('--publish always');
   });
 

@@ -6,9 +6,9 @@
 
 ## 1. 快速結論
 
-Utawakui 可以定位成「本機桌面工具」，但不能把「工具開源」理解成「所有歌曲使用
-都合法」。開源只處理程式碼授權，不處理歌曲、歌詞、封面、錄音、直播或 VOD 的
-使用權。
+Utawakui 可以定位成「本機桌面工具」，但不能把「取得軟體使用權」理解成「所有
+歌曲使用都合法」。軟體授權只處理 Utawakui 本身，不處理歌曲、歌詞、封面、錄音、
+直播或 VOD 的使用權。
 
 專案建議採取以下合規姿態：
 
@@ -261,35 +261,21 @@ GPL 義務。
 Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合法」或「可規避偵測」。
 較合適的說法是：「降低特定平台或權利類型的操作風險」。
 
-## 8. 開源授權與散布
+## 8. 軟體授權與散布
 
 本節處理的是程式碼與工具鏈授權，不處理歌曲、歌詞、封面、錄音、伴奏或 VOD 的
 使用權。這兩者應在文件與 UI 中維持清楚分界。
 
-### 8.1 專案本身的開源授權
+### 8.1 專案本身的專有授權
 
-目前專案 `package.json` 為 `private: true`，且 repository root 尚未包含 `LICENSE`
-檔案。因此，Utawakui 目前尚未完成「對外開源散布」所需的專案授權設定。
+Utawakui 原始碼維持私有；`package.json` 保留 `private: true`，並以 `UNLICENSED`
+明確避免被視為可發布的開源 npm package。使用者依 root `LICENSE.md` 取得有限的
+應用程式使用權：可免費用於個人、內容創作，以及營利直播與錄製，但不得重新散布、
+轉售、修改、反向工程或冒充官方版本，適用法律明確允許的行為除外。
 
-若要正式公開原始碼，建議在 release 前完成：
-
-- 選定 Utawakui 自身 license，並加入 root `LICENSE`。
-- 在 `package.json` 補上對應 `license` 欄位；若仍不發布 npm package，可保留
-  `private: true`。
-- 加入第三方授權清單或產生 `NOTICE` / `THIRD_PARTY_NOTICES`。
-- 在 README 明確寫：「本專案 license 只授權 Utawakui 程式碼，不授權任何第三方
-  媒體內容。」
-
-授權選擇建議：
-
-| 方向                         | 適合情境                               | 注意事項                                               |
-| ---------------------------- | -------------------------------------- | ------------------------------------------------------ |
-| MIT / Apache-2.0             | 希望社群容易 fork、整合與商用。        | 需保留 notice；Apache-2.0 另含 patent grant 條款。     |
-| GPL family                   | 希望衍生作品維持相同開源義務。         | 與 Electron app、第三方 binary、商業整合需更仔細設計。 |
-| Source-available/custom EULA | 想公開程式碼但保留更多產品或商業限制。 | 不一定是 OSI open source；社群接受度與用詞需更保守。   |
-
-若專案定位為社群開源工具，較自然的起點是 MIT 或 Apache-2.0；若 release artifact
-仍包含 GPL binary，仍需另行處理該 binary 的散布義務。
+這項專有授權只適用 Utawakui 本身，不授予歌曲、歌詞、封面、錄音、影片、伴奏或
+其他第三方內容的權利。第三方程式元件仍依各自授權散布，並由
+`THIRD_PARTY_NOTICES.md` 與 app-managed dependency notices 保存來源及條款。
 
 ### 8.2 第三方開源元件
 
@@ -353,9 +339,10 @@ Utawakui 的文件與 UI 應避免把上述做法描述成「安全」、「合�
 
 ### 8.4 對外散布檢查
 
-正式開源或打包發布前，建議至少確認：
+正式打包發布前，建議至少確認：
 
-- Utawakui 自身 license、README 授權說明、第三方 notices 已一致。
+- Utawakui 自身 `LICENSE.md`、README 授權說明、第三方 notices 已一致並包含於
+  packaged app。
 - Packaged app 實際包含哪些 binary：ONNX Runtime native binaries，以及哪些項目改由
   app-managed provisioning 下載。
 - Provider runtime、FFmpeg 與 UVR models 若由 app-managed provisioning 下載，確認

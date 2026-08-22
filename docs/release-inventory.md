@@ -181,10 +181,11 @@ Notable transitive production dependencies can still appear in packaged
 follow-up until the ONNX Runtime dependency choice or upstream dependency tree
 changes.
 
-Third-party license inventory is maintained in `THIRD_PARTY_NOTICES.md` and can
-be regenerated for review with `npm run license:inventory`. Keep that file in
-the package so renderer-bundled dependencies, app-managed workflow tools, and
-packages without bundled license files remain visible in release artifacts.
+The Utawakui product license is maintained in `LICENSE.md`. Third-party license
+inventory is maintained in `THIRD_PARTY_NOTICES.md` and can be regenerated for
+review with `npm run license:inventory`. Keep both files in the package so the
+application terms and the licenses for bundled or app-managed dependencies
+remain visible in release artifacts.
 
 When adding a dependency, classify it before installing:
 
@@ -201,26 +202,27 @@ When adding a dependency, classify it before installing:
 
 ## Packaging Locations
 
-| Artifact                                                                                               | Contents                                                                                                                        |
-| ------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| `release/win-unpacked/electron.exe`                                                                    | Electron host executable. Kept with this filename due ADR 0002.                                                                 |
-| `release/win-unpacked/resources/app.asar`                                                              | `dist`, `electron`, `shared`, root `package.json`, `THIRD_PARTY_NOTICES.md`, and production JS dependency closure.              |
-| `release/win-unpacked/resources/app-update.yml`                                                        | Public GitHub feed identity generated for an NSIS build; no token or signing credential. `dist:dir` alone does not generate it. |
-| `release/win-unpacked/resources/app.asar/THIRD_PARTY_NOTICES.md`                                       | Release third-party license and notice inventory.                                                                               |
-| `release/win-unpacked/resources/app.asar/node_modules/ws`                                              | Pure JavaScript WebSocket server used by the loopback output runtime.                                                           |
-| `release/win-unpacked/resources/app.asar/overlay`                                                      | Plain HTML/CSS/JS Browser Source pages and shared `--ovl-*` tokens/runtime.                                                     |
-| `release/win-unpacked/resources/app.asar.unpacked/electron/lib`                                        | Worker and runtime JS needed outside asar.                                                                                      |
-| `release/win-unpacked/resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64` | ONNX Runtime / DirectML native files for vocal separation.                                                                      |
-| `release/win-unpacked/resources/app.asar.unpacked/node_modules/kuromoji`                               | Japanese tokenizer and dictionary files used by reading workers.                                                                |
-| `release/win-unpacked/resources/app.asar.unpacked/node_modules/wanakana`                               | Kana/romaji conversion package used by reading workers.                                                                         |
-| `release/win-unpacked/resources/app.asar.unpacked/node_modules/koroman`                                | Korean romanization package used by reading workers.                                                                            |
-| `release/win-unpacked/resources/app.asar.unpacked/public/assets/icons/app-icon.ico`                    | Shell-facing icon path used by Windows app details.                                                                             |
-| `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\python.exe`                                      | Private Python runtime used only for provider import.                                                                           |
-| `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\Lib\site-packages\yt_dlp`                        | App-managed yt-dlp Python package.                                                                                              |
-| `%APPDATA%\Utawakui\dependencies\ytdlp\current\bgutil\bgutil-pot.exe`                                  | Rust bgutil PO-token provider sidecar.                                                                                          |
-| `%APPDATA%\Utawakui\dependencies\ytdlp\current\plugins\bgutil-ytdlp-pot-provider-rs`                   | yt-dlp plugin package loaded through `--plugin-dirs`.                                                                           |
-| `%APPDATA%\Utawakui\dependencies\ffmpeg\<version>\bin\ffmpeg.exe`                                      | App-managed FFmpeg binary downloaded after audio-processing-flow is enabled.                                                    |
-| `%APPDATA%\Utawakui\dependencies\models\<dependencyId>\<version>\*.onnx`                               | App-managed UVR model files downloaded after audio-processing-flow is enabled.                                                  |
+| Artifact                                                                                               | Contents                                                                                                                         |
+| ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `release/win-unpacked/electron.exe`                                                                    | Electron host executable. Kept with this filename due ADR 0002.                                                                  |
+| `release/win-unpacked/resources/app.asar`                                                              | `dist`, `electron`, `shared`, root `package.json`, `LICENSE.md`, `THIRD_PARTY_NOTICES.md`, and production JS dependency closure. |
+| `release/win-unpacked/resources/app-update.yml`                                                        | Public GitHub feed identity generated for an NSIS build; no token or signing credential. `dist:dir` alone does not generate it.  |
+| `release/win-unpacked/resources/app.asar/THIRD_PARTY_NOTICES.md`                                       | Release third-party license and notice inventory.                                                                                |
+| `release/win-unpacked/resources/app.asar/LICENSE.md`                                                   | Utawakui proprietary software use terms.                                                                                         |
+| `release/win-unpacked/resources/app.asar/node_modules/ws`                                              | Pure JavaScript WebSocket server used by the loopback output runtime.                                                            |
+| `release/win-unpacked/resources/app.asar/overlay`                                                      | Plain HTML/CSS/JS Browser Source pages and shared `--ovl-*` tokens/runtime.                                                      |
+| `release/win-unpacked/resources/app.asar.unpacked/electron/lib`                                        | Worker and runtime JS needed outside asar.                                                                                       |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64` | ONNX Runtime / DirectML native files for vocal separation.                                                                       |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/kuromoji`                               | Japanese tokenizer and dictionary files used by reading workers.                                                                 |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/wanakana`                               | Kana/romaji conversion package used by reading workers.                                                                          |
+| `release/win-unpacked/resources/app.asar.unpacked/node_modules/koroman`                                | Korean romanization package used by reading workers.                                                                             |
+| `release/win-unpacked/resources/app.asar.unpacked/public/assets/icons/app-icon.ico`                    | Shell-facing icon path used by Windows app details.                                                                              |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\python.exe`                                      | Private Python runtime used only for provider import.                                                                            |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\Lib\site-packages\yt_dlp`                        | App-managed yt-dlp Python package.                                                                                               |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\bgutil\bgutil-pot.exe`                                  | Rust bgutil PO-token provider sidecar.                                                                                           |
+| `%APPDATA%\Utawakui\dependencies\ytdlp\current\plugins\bgutil-ytdlp-pot-provider-rs`                   | yt-dlp plugin package loaded through `--plugin-dirs`.                                                                            |
+| `%APPDATA%\Utawakui\dependencies\ffmpeg\<version>\bin\ffmpeg.exe`                                      | App-managed FFmpeg binary downloaded after audio-processing-flow is enabled.                                                     |
+| `%APPDATA%\Utawakui\dependencies\models\<dependencyId>\<version>\*.onnx`                               | App-managed UVR model files downloaded after audio-processing-flow is enabled.                                                   |
 
 ## Verification Checklist
 
@@ -234,7 +236,7 @@ After changing gates or dependencies:
   - `release/win-unpacked/resources/app.asar.unpacked`
 - Confirm `app.asar` no longer contains renderer-only packages as runtime
   `node_modules` after moving them to `devDependencies`.
-- Confirm `THIRD_PARTY_NOTICES.md` is present in `app.asar`, and rerun
+- Confirm `LICENSE.md` and `THIRD_PARTY_NOTICES.md` are present in `app.asar`, and rerun
   `npm run license:inventory` after dependency changes.
 - Confirm `app.getVersion()` matches `package.json`, installer metadata, and the
   release tag; never publish a reused or mismatched version.

@@ -3,6 +3,18 @@
 This runbook covers signed Windows releases from the private source repository
 to `yPinn/Utawakui-Releases`. Normal local packaging never publishes.
 
+## Unsigned Test Builds
+
+Until a trusted Authenticode certificate is available, `npm run dist` may be
+used for limited testing through a controlled delivery channel. Record the
+installer SHA-256, tell testers that Windows will show an unknown publisher,
+and do not present the file as an official public release. Self-signed builds
+are not a substitute for a publicly trusted certificate.
+
+Unsigned builds do not use the release workflow and must not enable the
+production updater. The first formal candidate is `0.1.1`; `0.1.2` is reserved
+for the required two-version packaged update test.
+
 ## One-Time Setup
 
 Create a GitHub Actions environment named `release` in the private source

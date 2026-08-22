@@ -5,9 +5,9 @@
 Accepted and partially implemented (2026-08-22). The runtime version boundary,
 main-process update service, fixed IPC intents, Settings status/actions, public
 feed configuration, release-only public repository, and signed draft-release
-workflow foundation are implemented. The runtime release gate remains disabled
-until the project license, signing credentials, and two-version packaged
-verification are complete.
+workflow foundation and proprietary product license are implemented. The
+runtime release gate remains disabled until signing credentials and
+two-version packaged verification are complete.
 
 ## Context
 
@@ -15,11 +15,13 @@ Utawakui's source repository is private. A packaged Windows app still needs a
 stable, unauthenticated endpoint from which it can discover and download public
 releases without embedding a repository credential on user machines.
 
-The current package version is `0.1.0`. `package.json` and `package-lock.json`
-agree, and no Git release tag exists yet. The Settings version row now reads the
-running application version from Electron main through `app.getVersion()` and a
-minimal preload IPC method instead of importing `package.json` into the
-renderer.
+The current package version is `0.1.0`. It was shared for limited testing but
+was not published as an official GitHub Release. The first formal candidate is
+therefore `0.1.1`, followed by `0.1.2` for the two-version update matrix.
+`package.json` and `package-lock.json` agree, and no Git release tag exists yet.
+The Settings version row reads the running application version from Electron
+main through `app.getVersion()` and a minimal preload IPC method instead of
+importing `package.json` into the renderer.
 
 The existing Windows target is assisted NSIS x64. electron-builder can produce
 the installer, blockmap, and `latest.yml` required by `electron-updater`. The

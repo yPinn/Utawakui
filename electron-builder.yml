@@ -39,6 +39,7 @@ files:
   - overlay/**/*
   - '!overlay/**/*.test.js'
   - shared/**/*
+  - LICENSE.md
   - THIRD_PARTY_NOTICES.md
   - package.json
   # onnxruntime-node ships native binaries for every platform in one
