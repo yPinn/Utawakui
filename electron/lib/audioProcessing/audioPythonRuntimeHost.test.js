@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import {
   AUDIO_PYTHON_ENVIRONMENT_IDS,
   AUDIO_PYTHON_PROTOCOL_VERSION,
+  AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH,
   AUDIO_PYTHON_WORKER_RELATIVE_PATH,
   createAudioPythonRuntimeHost,
 } from './audioPythonRuntimeHost.js';
@@ -225,7 +226,7 @@ describe('AudioPythonRuntimeHost', () => {
     expect(fs.existsSync(path.join(host.paths.jobsDir, 'refined'))).toBe(true);
   });
 
-  it('resolves and packages the generic host worker', () => {
+  it('resolves and packages separate generic-host and Refined workers', () => {
     const appPath = path.resolve('.');
     const host = createAudioPythonRuntimeHost({
       userDataDir: makeTempDir(),
@@ -235,10 +236,24 @@ describe('AudioPythonRuntimeHost', () => {
     expect(host.resolveWorkerPath()).toBe(
       path.join(appPath, 'resources', AUDIO_PYTHON_WORKER_RELATIVE_PATH),
     );
+    expect(host.resolveCapabilityWorkerPath('refined')).toBe(
+      path.join(
+        appPath,
+        'resources',
+        AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH,
+      ),
+    );
+    expect(() =>
+      host.resolveCapabilityWorkerPath('structure-analysis'),
+    ).toThrow(/worker is not available/i);
     const config = yaml.load(fs.readFileSync('electron-builder.yml', 'utf8'));
     expect(config.extraResources).toContainEqual({
       from: 'resources/audio-processing/audio_python_worker.py',
       to: AUDIO_PYTHON_WORKER_RELATIVE_PATH.replaceAll('\\', '/'),
+    });
+    expect(config.extraResources).toContainEqual({
+      from: 'resources/audio-processing/refined_worker.py',
+      to: AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH.replaceAll('\\', '/'),
     });
     expect(JSON.stringify(config.extraResources)).not.toMatch(
       /fixture|python\.exe|site-packages|\.onnx|\.ckpt|\.pth/i,

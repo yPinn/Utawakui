@@ -83,12 +83,14 @@ asarUnpack:
   # still needs to resolve from real disk, not just inside asar.
   - node_modules/koroman/**/*
 
-# App-owned host probe only. The independent Python/PyTorch runtime and every
-# model remain explicit, removable downloads under userData; none is bundled
-# into the base installer.
+# App-owned host and Refined policy workers only. The independent Python/PyTorch
+# runtime and every model remain explicit, removable downloads under userData;
+# none is bundled into the base installer.
 extraResources:
   - from: resources/audio-processing/audio_python_worker.py
     to: audio-processing/audio_python_worker.py
+  - from: resources/audio-processing/refined_worker.py
+    to: audio-processing/refined_worker.py
 
 win:
   target:
