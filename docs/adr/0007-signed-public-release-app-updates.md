@@ -3,10 +3,11 @@
 ## Status
 
 Accepted and partially implemented (2026-08-22). The runtime version boundary,
-main-process update service, fixed IPC intents, Settings status/actions, and
-public feed configuration are implemented. The runtime release gate remains
-disabled until signing, the public release repository, release CI, and
-two-version packaged verification are complete.
+main-process update service, fixed IPC intents, Settings status/actions, public
+feed configuration, release-only public repository, and signed draft-release
+workflow foundation are implemented. The runtime release gate remains disabled
+until the project license, signing credentials, and two-version packaged
+verification are complete.
 
 ## Context
 
@@ -44,9 +45,8 @@ acceptable production update channel.
 ### Repository boundary
 
 - Private source and CI remain in `yPinn/Utawakui`.
-- Public update artifacts are planned for `yPinn/Utawakui-Releases`. The exact
-  repository must be created and confirmed before the first updater-enabled
-  package because its identity is embedded in `app-update.yml`.
+- Public update artifacts use `yPinn/Utawakui-Releases`. Its identity is fixed
+  in the builder configuration and embedded in packaged `app-update.yml`.
 - The public repository contains only minimal release-repository content,
   release tags, release notes, and binary assets. GitHub automatically exposes
   source archives for its own tagged commit, so private application source must
@@ -145,24 +145,26 @@ stay aligned with the current stable electron-builder 26 toolchain.
 
 ### Release workflow
 
-Normal `npm run dist` and `dist:dir` explicitly pass `--publish never` and must
-never publish. A separate Windows release workflow performs these steps:
+Normal `npm run dist`, `dist:dir`, and the release build explicitly pass
+`--publish never`. A separate workflow publishes only after the build has been
+signed and verified:
 
 1. Trigger from a stable `v<semver>` tag in the private source repository.
-2. Verify the tag, `package.json`, and lockfile root version are identical.
+2. Verify the tag, `package.json`, lockfile root version, and versioned release
+   notes are present and consistent.
 3. Run secret scan, dependency audit, license inventory, lint, format,
    markdownlint, tests with coverage, and Vite build.
 4. Build and Authenticode-sign the NSIS x64 installer on a Windows runner.
-5. Verify executable/installer signature, packaged version, expected AUMID,
-   required notices, and generated update metadata.
+5. Verify executable/installer signature, expected publisher, timestamp,
+   packaged version, required notices, and generated update metadata.
 6. Upload a draft release to the public release repository containing
    `Utawakui-Setup-<version>.exe`, its blockmap, `latest.yml`, and release notes.
 7. Publish only after an installed-package smoke test. Stable clients must not
    observe draft or prerelease artifacts.
 
-Publishing must be explicit (`--publish always` in the release job only) and
-the GitHub provider must specify the public owner/repository instead of relying
-on private source-repository auto-detection.
+Cross-repository upload is an explicit GitHub CLI step after verification. It
+uses a credential scoped only to the public release repository and creates or
+updates a draft. It refuses to modify an already published release.
 
 ### Bootstrap, migration, and recovery
 

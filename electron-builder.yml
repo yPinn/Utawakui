@@ -21,9 +21,10 @@ directories:
   # loadFile() reads directly.
 
 # This only writes the public feed identity into packaged update metadata.
-# Local dist commands do not publish; the release workflow must opt in with
-# --publish after signing and verification. Runtime checks remain disabled by
-# shared/appUpdateValues.json until that release gate is complete.
+# Local dist commands and the release build both use --publish never. The
+# release workflow uploads only the signed, verified artifacts to a public
+# draft release. Runtime checks remain disabled by shared/appUpdateValues.json
+# until that release gate is complete.
 publish:
   provider: github
   owner: yPinn
@@ -93,11 +94,10 @@ win:
   # Keep as "electron" — renaming it FATALs once onnxruntime-node/DirectML
   # is bundled. See docs/adr/0002-packaged-exe-kept-as-electron-exe.md.
   executableName: electron
-  # No code-signing certificate is configured (out of scope for this round —
-  # see the plan), so skip signtool.exe rather than have electron-builder
-  # attempt and silently no-op it on every build. Does NOT skip icon/
-  # version-info resource editing (that's signAndEditExecutable, a separate
-  # flag).
+  # Normal local builds remain unsigned. The release-only command overrides
+  # this to true and fails unless CI provides the signing certificate. This
+  # does not skip icon/version-info resource editing (signAndEditExecutable is
+  # a separate flag).
   signExecutable: false
 
 nsis:

@@ -1,0 +1,237 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable tag to rebuild
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+env:
+  RELEASE_REPOSITORY: yPinn/Utawakui-Releases
+  RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.release-version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
+
+      - name: Require tag commit on main
+        run: |
+          git fetch origin main
+          git merge-base --is-ancestor HEAD origin/main
+
+      - name: Gitleaks secret scan
+        uses: docker://ghcr.io/gitleaks/gitleaks:latest
+        with:
+          args: detect --source . --verbose --redact
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Verify release version and notes
+        id: release-version
+        run: |
+          version="$(npm run --silent release:verify-version -- \
+            --tag "$RELEASE_TAG" \
+            --notes "docs/releases/$RELEASE_TAG.md")"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Dependency audit
+        run: npm audit --audit-level=critical
+
+      - name: License inventory
+        run: npm run license:inventory
+
+      - run: npm run commitlint
+      - run: npm run lint
+      - run: npm run format:check
+      - run: npm run lint:md
+      - run: npm run test:coverage
+      - run: npm run build
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-coverage-${{ env.RELEASE_TAG }}
+          path: coverage/
+          if-no-files-found: ignore
+
+  package:
+    needs: validate
+    runs-on: windows-latest
+    environment: release
+    env:
+      CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
+      EXPECTED_SIGNING_SUBJECT: ${{ vars.WINDOWS_SIGNING_SUBJECT }}
+      GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
+      RELEASE_VERSION: ${{ needs.validate.outputs.version }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ env.RELEASE_TAG }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Require release credentials
+        shell: pwsh
+        run: |
+          $required = @{
+            CSC_LINK = $env:CSC_LINK
+            CSC_KEY_PASSWORD = $env:CSC_KEY_PASSWORD
+            EXPECTED_SIGNING_SUBJECT = $env:EXPECTED_SIGNING_SUBJECT
+            GH_TOKEN = $env:GH_TOKEN
+          }
+          foreach ($entry in $required.GetEnumerator()) {
+            if ([string]::IsNullOrWhiteSpace($entry.Value)) {
+              throw "Missing release credential or variable: $($entry.Key)"
+            }
+          }
+
+      - name: Verify public release access
+        shell: pwsh
+        run: |
+          gh api "repos/$env:RELEASE_REPOSITORY" --silent
+          if ($LASTEXITCODE -ne 0) {
+            throw 'PUBLIC_RELEASE_TOKEN cannot access the release repository'
+          }
+
+      - run: npm ci
+
+      - name: Recheck release contract
+        shell: pwsh
+        run: |
+          $version = npm run --silent release:verify-version -- `
+            --tag $env:RELEASE_TAG `
+            --notes "docs/releases/$env:RELEASE_TAG.md"
+          if ($version.Trim() -ne $env:RELEASE_VERSION) {
+            throw 'Release version changed between validation and packaging'
+          }
+
+      - name: Build signed installer
+        run: npm run dist:release
+
+      - name: Verify signatures and packaged version
+        shell: pwsh
+        run: |
+          $installer = Join-Path $PWD "release/Utawakui-Setup-$env:RELEASE_VERSION.exe"
+          $executable = Join-Path $PWD 'release/win-unpacked/electron.exe'
+          foreach ($file in @($installer, $executable)) {
+            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
+              throw "Missing signed file: $file"
+            }
+            $signature = Get-AuthenticodeSignature -LiteralPath $file
+            if ($signature.Status -ne 'Valid') {
+              throw "Invalid Authenticode signature for $file: $($signature.Status)"
+            }
+            if ($signature.SignerCertificate.Subject -ne $env:EXPECTED_SIGNING_SUBJECT) {
+              throw "Unexpected Authenticode publisher for $file"
+            }
+            if (-not $signature.TimeStamperCertificate) {
+              throw "Missing Authenticode timestamp for $file"
+            }
+          }
+
+          $productVersion = (Get-Item -LiteralPath $executable).VersionInfo.ProductVersion
+          $acceptedVersions = @($env:RELEASE_VERSION, "$env:RELEASE_VERSION.0")
+          if ($productVersion -notin $acceptedVersions) {
+            throw "Packaged version mismatch: $productVersion"
+          }
+
+      - name: Verify packaged notices
+        shell: pwsh
+        run: |
+          $asarPath = 'release/win-unpacked/resources/app.asar'
+          if (-not (Test-Path -LiteralPath $asarPath -PathType Leaf)) {
+            throw 'Missing packaged app.asar'
+          }
+          $listing = node node_modules/@electron/asar/bin/asar.js list $asarPath
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect packaged app.asar' }
+          $notice = $listing | Where-Object {
+            $_ -match '[/\\]THIRD_PARTY_NOTICES\.md$'
+          }
+          if (-not $notice) { throw 'THIRD_PARTY_NOTICES.md is not packaged' }
+
+      - name: Verify update artifacts
+        run: npm run release:verify-artifacts -- --version ${{ env.RELEASE_VERSION }}
+
+      - name: Upload signed release bundle
+        uses: actions/upload-artifact@v4
+        with:
+          name: utawakui-${{ env.RELEASE_VERSION }}-signed
+          path: |
+            release/Utawakui-Setup-${{ env.RELEASE_VERSION }}.exe
+            release/Utawakui-Setup-${{ env.RELEASE_VERSION }}.exe.blockmap
+            release/latest.yml
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Create or update public draft release
+        shell: pwsh
+        run: |
+          $installer = "release/Utawakui-Setup-$env:RELEASE_VERSION.exe"
+          $blockmap = "$installer.blockmap"
+          $metadata = 'release/latest.yml'
+          $notes = "docs/releases/$env:RELEASE_TAG.md"
+          $title = "Utawakui $env:RELEASE_VERSION"
+
+          $releaseJson = gh release view $env:RELEASE_TAG `
+            --repo $env:RELEASE_REPOSITORY `
+            --json isDraft,isPrerelease 2>$null
+
+          if ($LASTEXITCODE -eq 0) {
+            $release = $releaseJson | ConvertFrom-Json
+            if (-not $release.isDraft) {
+              throw 'Refusing to modify an already published release'
+            }
+            if ($release.isPrerelease) {
+              throw 'Stable workflow cannot update a prerelease'
+            }
+            gh release edit $env:RELEASE_TAG `
+              --repo $env:RELEASE_REPOSITORY `
+              --draft `
+              --title $title `
+              --notes-file $notes
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to update draft release' }
+            gh release upload $env:RELEASE_TAG `
+              $installer $blockmap $metadata `
+              --repo $env:RELEASE_REPOSITORY `
+              --clobber
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to upload release assets' }
+          } else {
+            gh release create $env:RELEASE_TAG `
+              $installer $blockmap $metadata `
+              --repo $env:RELEASE_REPOSITORY `
+              --target main `
+              --draft `
+              --title $title `
+              --notes-file $notes
+            if ($LASTEXITCODE -ne 0) { throw 'Failed to create draft release' }
+          }
