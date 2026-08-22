@@ -28,7 +28,7 @@ jobs:
     outputs:
       version: ${{ steps.release-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.RELEASE_TAG }}
@@ -43,9 +43,9 @@ jobs:
         with:
           args: detect --source . --verbose --redact
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - run: npm ci
@@ -73,7 +73,7 @@ jobs:
 
       - name: Upload coverage report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: release-coverage-${{ env.RELEASE_TAG }}
           path: coverage/
@@ -84,24 +84,25 @@ jobs:
     runs-on: windows-latest
     environment: release
     env:
-      CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-      CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
       EXPECTED_SIGNING_SUBJECT: ${{ vars.WINDOWS_SIGNING_SUBJECT }}
-      GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
 
       - name: Require release credentials
         shell: pwsh
+        env:
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
           $required = @{
             CSC_LINK = $env:CSC_LINK
@@ -117,6 +118,8 @@ jobs:
 
       - name: Verify public release access
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
           gh api "repos/$env:RELEASE_REPOSITORY" --silent
           if ($LASTEXITCODE -ne 0) {
@@ -136,6 +139,9 @@ jobs:
           }
 
       - name: Build signed installer
+        env:
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+          CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
         run: npm run dist:release
 
       - name: Verify signatures and packaged version
@@ -183,7 +189,7 @@ jobs:
         run: npm run release:verify-artifacts -- --version ${{ env.RELEASE_VERSION }}
 
       - name: Upload signed release bundle
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: utawakui-${{ env.RELEASE_VERSION }}-signed
           path: |
@@ -195,6 +201,8 @@ jobs:
 
       - name: Create or update public draft release
         shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
           $installer = "release/Utawakui-Setup-$env:RELEASE_VERSION.exe"
           $blockmap = "$installer.blockmap"
