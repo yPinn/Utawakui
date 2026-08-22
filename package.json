@@ -49,6 +49,7 @@
     "@vitejs/plugin-vue": "^6.0.8",
     "@vitest/coverage-istanbul": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
+    "adm-zip": "0.5.18",
     "concurrently": "^10.0.4",
     "electron": "^43.1.1",
     "electron-builder": "^26.15.3",
