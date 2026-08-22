@@ -152,7 +152,7 @@ jobs:
             }
             $signature = Get-AuthenticodeSignature -LiteralPath $file
             if ($signature.Status -ne 'Valid') {
-              throw "Invalid Authenticode signature for $file: $($signature.Status)"
+              throw "Invalid Authenticode signature for ${file}: $($signature.Status)"
             }
             if ($signature.SignerCertificate.Subject -ne $env:EXPECTED_SIGNING_SUBJECT) {
               throw "Unexpected Authenticode publisher for $file"

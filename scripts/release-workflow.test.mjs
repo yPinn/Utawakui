@@ -81,6 +81,19 @@ describe('release workflow', () => {
     }
   });
 
+  it('avoids ambiguous PowerShell variable interpolation before colons', () => {
+    for (const filename of ['public-test-release.yml', 'release.yml']) {
+      const workflowText = fs.readFileSync(
+        path.join(rootDirectory, '.github/workflows', filename),
+        'utf8',
+      );
+
+      expect(workflowText).not.toMatch(
+        /\$(?!(?:env|global|script|local|private|using):)[A-Za-z_][A-Za-z0-9_]*:/,
+      );
+    }
+  });
+
   it('builds without builder publishing and only creates a public draft', () => {
     const workflow = readWorkflow();
     const packageCommands = JSON.stringify(workflow.jobs.package.steps);

@@ -120,7 +120,7 @@ jobs:
             }
             $signature = Get-AuthenticodeSignature -LiteralPath $file
             if ($signature.Status -ne 'NotSigned') {
-              throw "Unexpected Authenticode status for $file: $($signature.Status)"
+              throw "Unexpected Authenticode status for ${file}: $($signature.Status)"
             }
           }
 
