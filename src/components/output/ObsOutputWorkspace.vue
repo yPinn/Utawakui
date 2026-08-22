@@ -10,6 +10,7 @@ import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 const props = defineProps({
   presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
+  previewScene: { type: Object, default: () => ({}) },
   slotDefinitions: { type: Array, default: () => [] },
   slotDefaults: { type: Object, default: () => ({}) },
   appearanceOptions: { type: Object, default: () => ({}) },
@@ -176,6 +177,7 @@ onMounted(async () => {
       <ObsTemplateGallery
         :presets="orderedPresets"
         :template-groups="templateGroups"
+        :preview-scene="previewScene"
         :active-kind="activeKind"
         :selected-preset-id="browsedPreset?.id ?? null"
         :applied-preset-ids="appliedPresetIds"

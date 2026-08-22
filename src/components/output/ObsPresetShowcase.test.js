@@ -26,6 +26,10 @@ const mockupSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateMockup.vue', import.meta.url)),
   'utf8',
 );
+const previewStageSource = readFileSync(
+  fileURLToPath(new URL('./ObsTemplatePreviewStage.vue', import.meta.url)),
+  'utf8',
+);
 const workbenchSource = readFileSync(
   fileURLToPath(new URL('./ObsSlotWorkbench.vue', import.meta.url)),
   'utf8',
@@ -79,13 +83,26 @@ describe('OBS output workspace layout contract', () => {
     expect(mockupSource).toContain(
       'max-inline-size: var(--ui-output-gallery-preview-max-width)',
     );
-    expect(mockupSource).toContain('aspect-ratio: 16 / 9');
-    expect(mockupSource).not.toContain('text-align: center');
-    expect(mockupSource).not.toContain('justify-items: center');
+    expect(tokenSource).toContain('--ui-output-preview-aspect-ratio: 16 / 9');
+    expect(mockupSource).toContain(
+      'aspect-ratio: var(--ui-output-preview-aspect-ratio)',
+    );
+    expect(mockupSource).toContain("[data-size='thumbnail']");
+    expect(mockupSource).toContain('place-content: center');
+    expect(mockupSource).toContain('justify-items: center');
+    expect(mockupSource).toContain('text-align: center');
+    expect(mockupSource).toContain(
+      'width: var(--ui-output-template-thumb-content-width)',
+    );
+    expect(mockupSource).not.toContain('calc(var(--ui-space-1) / 2)');
     expect(componentSource).toContain('@container (width < 48rem)');
     expect(componentSource).toContain("emit('applyPreset'");
+    expect(componentSource).toContain('@dblclick="applyPreset(preset)"');
+    expect(componentSource).not.toContain('雙擊套用');
+    expect(componentSource).toContain('整套風格');
     expect(componentSource).not.toContain('startOutput');
     expect(componentSource).toContain('ObsTemplateMockup');
+    expect(componentSource).toContain('ObsTemplatePreviewStage');
     expect(componentSource).not.toContain('ObsOverlayPreview');
     expect(componentSource).not.toContain('previewUrl');
     expect(tabsSource).toContain('role="tablist"');
@@ -94,10 +111,54 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).not.toContain('v-for="preset in group.templates"');
   });
 
+  it('keeps thumbnails static and animates only the selected detail preview', () => {
+    expect(componentSource).toContain(':scene="previewScene"');
+    expect(componentSource).toContain(':animated="false"');
+    expect(previewStageSource).toContain('<ObsTemplateMockup');
+    expect(previewStageSource).toContain(':animated="isMotionPlaying"');
+    expect(previewStageSource).toContain('暫停動態預覽');
+    expect(previewStageSource).toContain('播放動態預覽');
+    expect(previewStageSource).toContain('固定示例');
+    expect(mockupSource).toContain(
+      'animated: { type: Boolean, default: false }',
+    );
+    expect(mockupSource).toContain("animated ? 'playing' : 'paused'");
+    expect(mockupSource).toContain("preset?.id ?? 'generic'");
+    expect(mockupSource).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(mockupSource).toContain('@keyframes obs-preview-line-cycle');
+  });
+
+  it('reuses shared preview tokens instead of hard-coded component values', () => {
+    expect(tokenSource).toContain('--ui-output-preview-canvas:');
+    expect(tokenSource).toContain('--ui-output-preview-surface:');
+    expect(tokenSource).toContain('--ui-output-preview-text:');
+    expect(tokenSource).toContain('--ui-output-preview-text-muted:');
+    expect(tokenSource).toContain('--ui-output-preview-accent:');
+    expect(tokenSource).toContain('--ui-output-preview-cycle-duration:');
+    expect(tokenSource).toContain('--ui-output-preview-cycle-ease:');
+    expect(tokenSource).toContain(
+      '--ui-output-template-thumb-caption-font-size:',
+    );
+    expect(tokenSource).toContain('--ui-output-template-thumb-artwork-size:');
+    expect(tokenSource).toContain('--ui-output-template-thumb-content-width:');
+    expect(mockupSource).toContain('var(--ui-output-preview-canvas)');
+    expect(mockupSource).toContain('var(--ui-output-preview-cycle-duration)');
+    expect(mockupSource).toContain('var(--ui-output-preview-cycle-ease)');
+    expect(mockupSource).toContain(
+      'var(--ui-output-template-thumb-caption-font-size)',
+    );
+    expect(mockupSource).not.toMatch(/#[0-9a-f]{3,8}/i);
+    expect(mockupSource).not.toContain('0.625rem');
+    expect(mockupSource).not.toContain('0.7em');
+    expect(mockupSource).not.toContain('4.8s');
+  });
+
   it('keeps the real iframe in the workbench preview only', () => {
     expect(previewSource).toContain('<iframe');
     expect(previewSource).not.toContain('srcdoc');
-    expect(previewSource).toContain('aspect-ratio: 16 / 9');
+    expect(previewSource).toContain(
+      'aspect-ratio: var(--ui-output-preview-aspect-ratio)',
+    );
     expect(previewSource).toContain(':src="inspectionUrl"');
     expect(previewSource).toContain(
       'sandbox="allow-scripts allow-same-origin"',

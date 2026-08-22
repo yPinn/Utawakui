@@ -189,7 +189,7 @@ onBeforeUnmount(() => {
 .obs-overlay-preview__frame {
   position: relative;
   inline-size: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--ui-output-preview-aspect-ratio);
   min-width: 0;
   overflow: hidden;
   display: grid;

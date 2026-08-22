@@ -219,7 +219,31 @@
   --ui-output-settings-command-button-width: 4.5rem; /* 72px: stable icon+verb command width */
   --ui-output-template-thumb-min-height: 4.5rem; /* 72px: stable row target around a small 16:9 preview */
   --ui-output-template-thumb-title-font-size: 0.75rem; /* 12px: thumbnail-only label, not a global typography tier */
+  --ui-output-template-thumb-caption-font-size: 0.625rem; /* 10px: secondary preview cue inside a compact thumbnail */
+  --ui-output-template-thumb-content-width: 86%; /* bounded comparison composition, optically centered inside the canvas */
+  --ui-output-template-thumb-artwork-size: 2.5rem; /* 40px: keeps the artwork swatch balanced at the 160px tile minimum */
+  --ui-output-template-thumb-content-padding: var(--ui-space-2);
+  --ui-output-template-thumb-tight-gap: var(--ui-space-1);
+  --ui-output-template-thumb-group-gap: var(--ui-space-2);
   --ui-output-setting-label-width-min: 4rem; /* 64px: compact setting label column */
+  /* Template mockups represent an output canvas, so these colors stay
+     theme-independent while remaining centralized and reusable. */
+  --ui-output-preview-canvas: #14191d;
+  --ui-output-preview-stage-canvas: #19252a;
+  --ui-output-preview-lyrics-canvas: #162426;
+  --ui-output-preview-reading-canvas: #22201d;
+  --ui-output-preview-surface: rgb(8 11 13 / 74%);
+  --ui-output-preview-lyrics-surface: rgb(7 18 19 / 72%);
+  --ui-output-preview-surface-muted: rgb(255 255 255 / 18%);
+  --ui-output-preview-text: #fffdfa;
+  --ui-output-preview-text-muted: rgb(255 253 250 / 68%);
+  --ui-output-preview-accent: #72bec1;
+  --ui-output-preview-stage-accent: #78c9cb;
+  --ui-output-preview-reading-accent: #f0b49d;
+  --ui-output-preview-accent-contrast: #102326;
+  --ui-output-preview-aspect-ratio: 16 / 9;
+  --ui-output-preview-cycle-duration: 4.8s;
+  --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);
 
   /* --- Sizing: performer view --- */
   --ui-performer-lyrics-max-width: 72rem;

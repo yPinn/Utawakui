@@ -11,6 +11,32 @@ const OUTPUT_KIND_ORDER = new Map(
   OUTPUT_TEMPLATE_KINDS.map((kind, index) => [kind.id, index]),
 );
 
+export const OUTPUT_PREVIEW_SCENE = Object.freeze({
+  label: '固定示例 · 中文',
+  track: Object.freeze({
+    title: '如果可以',
+    artist: '韋禮安',
+  }),
+  nextTrack: Object.freeze({
+    title: '小幸運',
+    artist: '田馥甄',
+  }),
+  queue: Object.freeze([
+    Object.freeze({ number: '01', title: '如果可以', state: 'current' }),
+    Object.freeze({ number: '02', title: '小幸運', state: 'upcoming' }),
+    Object.freeze({
+      number: '03',
+      title: '刻在我心底的名字',
+      state: 'upcoming',
+    }),
+  ]),
+  lyrics: Object.freeze({
+    current: '目前歌詞',
+    next: '下一句',
+    reading: '歌詞讀音',
+  }),
+});
+
 export const OUTPUT_TEMPLATES = Object.freeze([
   {
     id: 'now-next',
@@ -26,8 +52,8 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     summary: '直播中最常用的目前曲目與下一首資訊。',
     detail: '適合小面積放在角落，保留歌名、歌手與下一首提示。',
     preview: {
-      title: 'Now Singing',
-      lines: ['夜に駆ける / YOASOBI', 'Next: Stellar Stellar'],
+      layoutLabel: '角落資訊',
+      motionLabel: '滑入',
     },
     tags: ['低干擾', '角落顯示', '基本資訊'],
     settings: [
@@ -50,8 +76,8 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     summary: '給觀眾查看待播與已唱曲目的歌單板。',
     detail: '適合等待畫面或幕間，強調隊列順序與歌單狀態。',
     preview: {
-      title: 'Setlist',
-      lines: ['01  Stellar Stellar', '02  怪物', '03  群青'],
+      layoutLabel: '清單板',
+      motionLabel: '逐列更新',
     },
     tags: ['待播清單', '已唱紀錄', '幕間'],
     settings: [
@@ -74,8 +100,8 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     summary: '目前歌詞行置中，前後行降低存在感。',
     detail: '適合多數歌回場景，讓觀眾視線集中在當前演唱行。',
     preview: {
-      title: 'Lyrics',
-      lines: ['一つずつ こぼした音が', '重なって歌になる'],
+      layoutLabel: '焦點單行',
+      motionLabel: '淡入',
     },
     tags: ['當前行', '前後行', '高可讀'],
     settings: [
@@ -98,8 +124,8 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     summary: '雙行歌詞與進度提示，保留下一句預告。',
     detail: '適合有 synced lyrics 的曲目，讓換句節奏更清楚。',
     preview: {
-      title: 'Now',
-      lines: ['走り出した melody', 'Next: まだ見ぬ明日へ'],
+      layoutLabel: '卡拉 OK 雙行',
+      motionLabel: '行進度',
     },
     tags: ['雙行', 'Next line', '同步'],
     settings: [
@@ -123,8 +149,8 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     summary: '保留讀音輔助行，支援未來 furigana / romaji 顯示。',
     detail: '適合日文、韓文或跨語言歌詞練唱與觀眾跟唱。',
     preview: {
-      title: 'Reading',
-      lines: ['星が降る夜に', 'hoshi ga furu yoru ni'],
+      layoutLabel: '歌詞＋讀音',
+      motionLabel: '逐行切換',
     },
     tags: ['讀音輔助', '多語', '練唱'],
     settings: [
@@ -148,8 +174,8 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     summary: '以本機封面與曲目 metadata 構成獨立節目卡。',
     detail: '適合需要比角落歌名更明確的曲目識別畫面，缺圖時仍可閱讀。',
     preview: {
-      title: 'Cover / Title',
-      lines: ['Artist: 星街すいせい', 'Metadata card'],
+      layoutLabel: '封面節目卡',
+      motionLabel: '揭示',
     },
     tags: ['封面', 'Metadata', '節目卡'],
     settings: [
@@ -296,6 +322,7 @@ export function getOutputWorkbenchData() {
   return {
     templates: orderOutputTemplates(OUTPUT_TEMPLATES),
     templateGroups: groupOutputTemplatesByKind(OUTPUT_TEMPLATES),
+    previewScene: structuredClone(OUTPUT_PREVIEW_SCENE),
     styleSets: [...OUTPUT_STYLE_SETS],
     slotDefinitions: [...OUTPUT_SLOT_DEFINITIONS],
     slotDefaults: structuredClone(OUTPUT_SLOT_DEFAULTS),

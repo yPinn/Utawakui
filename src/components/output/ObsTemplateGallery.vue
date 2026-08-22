@@ -4,12 +4,14 @@ import { Check, ICON_SIZE } from '../../icons/index.js';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
 import ObsTemplateMockup from './ObsTemplateMockup.vue';
+import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
   templateGroups: { type: Array, default: () => [] },
+  previewScene: { type: Object, default: () => ({}) },
   activeKind: { type: String, default: null },
   selectedPresetId: { type: String, default: null },
   appliedPresetIds: { type: Object, default: () => ({}) },
@@ -72,6 +74,17 @@ function selectKind(kind) {
     emit('update:selectedPresetId', group?.templates[0]?.id ?? null);
   }
 }
+
+function applyPreset(preset) {
+  if (
+    !preset?.id ||
+    props.isApplying ||
+    preset.id === props.appliedPresetIds[preset.kind]
+  ) {
+    return;
+  }
+  emit('applyPreset', preset.id);
+}
 </script>
 
 <template>
@@ -114,9 +127,16 @@ function selectKind(kind) {
                     preset.id === selectedPreset?.id,
                 }"
                 :aria-pressed="preset.id === selectedPreset?.id"
+                title="查看模板預覽"
                 @click="selectPreset(preset.id)"
+                @dblclick="applyPreset(preset)"
               >
-                <ObsTemplateMockup :preset="preset" size="thumbnail" />
+                <ObsTemplateMockup
+                  :preset="preset"
+                  :scene="previewScene"
+                  size="thumbnail"
+                  :animated="false"
+                />
                 <div class="obs-template-thumb__body">
                   <span class="obs-template-thumb__name">
                     {{ preset.name }}
@@ -133,6 +153,11 @@ function selectKind(kind) {
                     aria-label="已套用"
                   />
                 </div>
+                <div class="obs-template-thumb__meta">
+                  <span>{{ preset.preview.layoutLabel }}</span>
+                  <span aria-hidden="true">·</span>
+                  <span>{{ preset.preview.motionLabel }}</span>
+                </div>
               </button>
             </div>
           </section>
@@ -140,7 +165,10 @@ function selectKind(kind) {
       </template>
 
       <template #side>
-        <ObsTemplateMockup :preset="selectedPreset" size="detail" />
+        <ObsTemplatePreviewStage
+          :preset="selectedPreset"
+          :scene="previewScene"
+        />
 
         <div class="obs-template-gallery__detail-copy">
           <span class="obs-template-gallery__detail-index">
@@ -162,6 +190,7 @@ function selectKind(kind) {
             {{ selectedPreset.availability.summary }}
           </p>
           <div class="obs-template-gallery__tags" aria-label="模板特性">
+            <UiChip tone="accent">整套風格</UiChip>
             <UiChip v-for="tag in selectedPreset.tags" :key="tag" tone="muted">
               {{ tag }}
             </UiChip>
@@ -173,7 +202,7 @@ function selectKind(kind) {
           <UiButton
             variant="accent"
             :disabled="isApplying || isApplied"
-            @click="emit('applyPreset', selectedPreset.id)"
+            @click="applyPreset(selectedPreset)"
           >
             {{ isApplied ? '已套用' : '套用模板' }}
           </UiButton>
@@ -221,7 +250,7 @@ function selectKind(kind) {
   min-width: 0;
   min-height: var(--ui-output-template-thumb-min-height);
   display: grid;
-  grid-template-rows: auto minmax(var(--ui-control-height), auto);
+  grid-template-rows: auto minmax(var(--ui-control-height), auto) auto;
   align-content: start;
   gap: var(--ui-space-2);
   padding: var(--ui-space-2);
@@ -250,6 +279,7 @@ function selectKind(kind) {
 }
 
 .obs-template-thumb__body,
+.obs-template-thumb__meta,
 .obs-template-gallery__heading,
 .obs-template-gallery__tags,
 .obs-template-gallery__actions {
@@ -261,6 +291,20 @@ function selectKind(kind) {
   flex: 1;
   gap: var(--ui-space-2);
   min-width: 0;
+}
+
+.obs-template-thumb__meta {
+  gap: var(--ui-space-1);
+  min-width: 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-output-template-thumb-title-font-size);
+  line-height: var(--ui-line-height-label);
+  white-space: nowrap;
+}
+
+.obs-template-thumb__meta > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .obs-template-thumb__name {

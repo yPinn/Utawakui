@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  OUTPUT_PREVIEW_SCENE,
   OUTPUT_TEMPLATE_KINDS,
   getOutputWorkbenchData,
   groupOutputTemplatesByKind,
@@ -62,5 +63,33 @@ describe('output template registry', () => {
     ).toEqual(['left', 'left', 'left', 'left']);
     expect(data.appearanceOptions.fontFamily).toHaveLength(3);
     expect(data.styleSets.length).toBeGreaterThan(0);
+  });
+
+  it('uses one fixed Chinese preview scene for every template comparison', () => {
+    const data = getOutputWorkbenchData();
+
+    expect(OUTPUT_PREVIEW_SCENE.track).toEqual({
+      title: '如果可以',
+      artist: '韋禮安',
+    });
+    expect(OUTPUT_PREVIEW_SCENE.lyrics).toEqual({
+      current: '目前歌詞',
+      next: '下一句',
+      reading: '歌詞讀音',
+    });
+    expect(OUTPUT_PREVIEW_SCENE.label).toBe('固定示例 · 中文');
+    expect(data.previewScene).toEqual(OUTPUT_PREVIEW_SCENE);
+    expect(
+      data.templates.every(
+        (template) =>
+          template.preview?.layoutLabel &&
+          template.preview?.motionLabel &&
+          !('title' in template.preview) &&
+          !('lines' in template.preview),
+      ),
+    ).toBe(true);
+
+    data.previewScene.track.title = 'changed';
+    expect(OUTPUT_PREVIEW_SCENE.track.title).toBe('如果可以');
   });
 });

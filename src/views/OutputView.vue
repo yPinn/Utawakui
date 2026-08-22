@@ -5,6 +5,7 @@ import { getOutputWorkbenchData } from '../constants/outputTemplates.js';
 const {
   templates,
   templateGroups,
+  previewScene,
   slotDefinitions,
   slotDefaults,
   appearanceOptions,
@@ -15,6 +16,7 @@ const {
   <ObsOutputWorkspace
     :presets="templates"
     :template-groups="templateGroups"
+    :preview-scene="previewScene"
     :slot-definitions="slotDefinitions"
     :slot-defaults="slotDefaults"
     :appearance-options="appearanceOptions"
