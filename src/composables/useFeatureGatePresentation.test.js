@@ -137,7 +137,7 @@ describe('useFeatureGatePresentation', () => {
     expect(item.description).toBe('用來把你選定的外部來源保存到本機曲庫。');
   });
 
-  it('uses repair language for an installed app-managed provider runtime', async () => {
+  it('keeps provider runtime reinstall in the advanced menu once installed', async () => {
     const presentation = await loadPresentation();
 
     updatedCallback([
@@ -158,8 +158,17 @@ describe('useFeatureGatePresentation', () => {
       'provider-flow',
       'yt-dlp-provider-tool',
     );
-    expect(item.actionLabel).toBe('重新準備下載工具');
     expect(item.status).toBe('可使用');
+    expect(item.actionIcon).toBeNull();
+    expect(item.actionLabel).toBe('下載工具已可使用');
+    expect(item.advancedActions).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'repair',
+          label: '重新下載',
+        }),
+      ]),
+    );
   });
 
   it('uses update language for an installed provider runtime with an older manifest version', async () => {

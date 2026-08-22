@@ -85,6 +85,8 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
   }
 
   function dependencyAdvancedActions({ dependency, installed, preparing }) {
+    const isYtdlp =
+      dependency.id === FEATURE_DEPENDENCY_IDS.YTDLP_PROVIDER_TOOL;
     const isRemoving = isDependencyActionRunning(
       dependency.id,
       DEPENDENCY_ADVANCED_ACTIONS.REMOVE,
@@ -106,8 +108,14 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
         ? [
             {
               id: DEPENDENCY_ADVANCED_ACTIONS.REPAIR,
-              icon: Wrench,
-              label: isRepairing ? '修復中' : '修復',
+              icon: isYtdlp ? Download : Wrench,
+              label: isRepairing
+                ? isYtdlp
+                  ? '重新下載中'
+                  : '修復中'
+                : isYtdlp
+                  ? '重新下載'
+                  : '修復',
               disabled: isBusy,
             },
             {
@@ -212,7 +220,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
           : installed && !isYtdlp
             ? null
             : isYtdlp && installed
-              ? Wrench
+              ? null
               : Download,
       actionDisabled: isBusy,
       actionLabel: isFfmpeg
@@ -225,7 +233,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
             : `更新${title}`
           : installed
             ? isYtdlp
-              ? '重新準備下載工具'
+              ? '下載工具已可使用'
               : `${title}已準備`
             : preparing
               ? `準備${title}中`
