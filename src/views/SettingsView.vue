@@ -202,22 +202,6 @@ const diagnosticsRows = computed(() => {
   ];
 });
 
-const appUpdateRows = computed(() => [
-  {
-    id: 'app-version',
-    icon: RefreshCw,
-    title: 'Utawakui 版本',
-    description: appInfoState.error || '目前安裝的版本。',
-    value: appInfoState.currentVersion
-      ? `v${appInfoState.currentVersion}`
-      : appInfoState.isLoading
-        ? '讀取中'
-        : '版本資訊無法取得',
-    status: appInfoState.error ? '無法讀取' : '目前',
-    tone: appInfoState.error ? 'warning' : 'muted',
-  },
-]);
-
 const appUpdatePresentation = computed(() => {
   const version = appUpdateState.availableVersion;
   switch (appUpdateState.phase) {
@@ -257,6 +241,28 @@ const appUpdatePresentation = computed(() => {
         tone: 'muted',
       };
   }
+});
+
+const appVersionPresentation = computed(() => {
+  const currentVersion =
+    appInfoState.currentVersion || appUpdateState.currentVersion;
+  if (!currentVersion) {
+    return {
+      value: appInfoState.error ? '版本資訊無法取得' : '讀取中',
+      status: appInfoState.error ? '無法讀取' : '讀取中',
+      tone: appInfoState.error ? 'warning' : 'muted',
+      tooltip:
+        appInfoState.error || '顯示目前安裝版本與公開發行版本的更新狀態。',
+    };
+  }
+
+  const update = appUpdatePresentation.value;
+  return {
+    value: `v${currentVersion} · ${update.value}`,
+    status: update.status,
+    tone: update.tone,
+    tooltip: appInfoState.error || '顯示目前安裝版本與公開發行版本的更新狀態。',
+  };
 });
 
 const appUpdateAction = computed(() => {
@@ -529,23 +535,12 @@ onMounted(refreshSettingsState);
           />
 
           <SettingsActionRow
-            v-for="row in appUpdateRows"
-            :key="row.id"
-            :icon="row.icon"
-            :title="row.title"
-            :value="row.value"
-            :status="row.status"
-            :status-tone="row.tone"
-            :tooltip="row.description"
-          />
-
-          <SettingsActionRow
-            :icon="Download"
-            title="應用程式更新"
-            :value="appUpdatePresentation.value"
-            :status="appUpdatePresentation.status"
-            :status-tone="appUpdatePresentation.tone"
-            tooltip="只檢查公開發行版本；下載與重新啟動安裝均由你確認。"
+            :icon="RefreshCw"
+            title="Utawakui 版本"
+            :value="appVersionPresentation.value"
+            :status="appVersionPresentation.status"
+            :status-tone="appVersionPresentation.tone"
+            :tooltip="appVersionPresentation.tooltip"
           >
             <template v-if="appUpdateAction" #actions>
               <UiButton
