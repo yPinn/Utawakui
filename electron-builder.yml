@@ -20,6 +20,16 @@ directories:
   # Not "dist" — that's Vite's build output, which electron/main.js's
   # loadFile() reads directly.
 
+# This only writes the public feed identity into packaged update metadata.
+# Local dist commands do not publish; the release workflow must opt in with
+# --publish after signing and verification. Runtime checks remain disabled by
+# shared/appUpdateValues.json until that release gate is complete.
+publish:
+  provider: github
+  owner: yPinn
+  repo: Utawakui-Releases
+  releaseType: release
+
 files:
   - dist/**/*
   - electron/**/*

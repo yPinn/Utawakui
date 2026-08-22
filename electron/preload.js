@@ -29,6 +29,15 @@ function readInitialCaptureDeviceId() {
 
 contextBridge.exposeInMainWorld('Utawakui', {
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+  getAppUpdateStatus: () => ipcRenderer.invoke('app-update:get-status'),
+  checkForAppUpdate: () => ipcRenderer.invoke('app-update:check'),
+  downloadAppUpdate: () => ipcRenderer.invoke('app-update:download'),
+  installAppUpdate: () => ipcRenderer.invoke('app-update:install'),
+  onAppUpdateStatus: (callback) => {
+    const listener = (event, status) => callback(status);
+    ipcRenderer.on('app-update:status', listener);
+    return () => ipcRenderer.removeListener('app-update:status', listener);
+  },
   initialUiTheme: readInitialUiTheme(),
   getUiTheme: () => ipcRenderer.invoke('config:get-ui-theme'),
   setUiTheme: (theme) => ipcRenderer.invoke('config:set-ui-theme', theme),

@@ -2,6 +2,7 @@
 import { computed, onMounted, shallowRef } from 'vue';
 import {
   Ellipsis,
+  Download,
   FolderOpen,
   Headphones,
   ListChecks,
@@ -29,6 +30,7 @@ import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppInfo } from '../composables/useAppInfo.js';
+import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
@@ -42,6 +44,13 @@ const {
 } = useImportSession();
 const { state: diagnosticsState } = useAppDiagnostics();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
+const {
+  state: appUpdateState,
+  refreshAppUpdateStatus,
+  checkForAppUpdate,
+  downloadAppUpdate,
+  installAppUpdate,
+} = useAppUpdate();
 const { refreshMetadata: refreshLibraryMetadata } = useLibrary();
 const {
   state: featureGateState,
@@ -209,6 +218,64 @@ const appUpdateRows = computed(() => [
   },
 ]);
 
+const appUpdatePresentation = computed(() => {
+  const version = appUpdateState.availableVersion;
+  switch (appUpdateState.phase) {
+    case 'idle':
+      return { value: '可檢查是否有新版本', status: '待命', tone: 'muted' };
+    case 'checking':
+      return { value: '正在檢查公開發行版本', status: '檢查中', tone: 'info' };
+    case 'available':
+      return { value: `可下載 v${version}`, status: '有更新', tone: 'warning' };
+    case 'not-available':
+      return { value: '目前已是最新版本', status: '最新', tone: 'success' };
+    case 'downloading':
+      return {
+        value:
+          appUpdateState.progress === null
+            ? '正在下載更新'
+            : `正在下載 ${appUpdateState.progress}%`,
+        status: '下載中',
+        tone: 'info',
+      };
+    case 'downloaded':
+      return {
+        value: `v${version} 已準備完成`,
+        status: '待重新啟動',
+        tone: 'success',
+      };
+    case 'error':
+      return {
+        value: appUpdateState.error || '更新操作未完成',
+        status: '需重試',
+        tone: 'warning',
+      };
+    default:
+      return {
+        value: '正式更新通道尚未啟用',
+        status: '未啟用',
+        tone: 'muted',
+      };
+  }
+});
+
+const appUpdateAction = computed(() => {
+  if (!appUpdateState.enabled) return null;
+  if (appUpdateState.phase === 'available') return 'download';
+  if (appUpdateState.phase === 'error' && appUpdateState.availableVersion) {
+    return 'download';
+  }
+  if (appUpdateState.phase === 'downloaded') return 'install';
+  if (['checking', 'downloading'].includes(appUpdateState.phase)) return null;
+  return 'check';
+});
+
+function handleAppUpdateAction() {
+  if (appUpdateAction.value === 'download') return downloadAppUpdate();
+  if (appUpdateAction.value === 'install') return installAppUpdate();
+  return checkForAppUpdate();
+}
+
 async function refreshMetadata() {
   isRefreshingMetadata.value = true;
   maintenanceMessage.value = '';
@@ -244,6 +311,7 @@ async function detectSystemFfmpeg() {
 async function refreshSettingsState() {
   detectSystemFfmpeg();
   refreshAppInfo();
+  refreshAppUpdateStatus();
   try {
     await refreshConfig();
   } catch (err) {
@@ -470,6 +538,31 @@ onMounted(refreshSettingsState);
             :status-tone="row.tone"
             :tooltip="row.description"
           />
+
+          <SettingsActionRow
+            :icon="Download"
+            title="應用程式更新"
+            :value="appUpdatePresentation.value"
+            :status="appUpdatePresentation.status"
+            :status-tone="appUpdatePresentation.tone"
+            tooltip="只檢查公開發行版本；下載與重新啟動安裝均由你確認。"
+          >
+            <template v-if="appUpdateAction" #actions>
+              <UiButton
+                :icon="appUpdateAction === 'download' ? Download : RefreshCw"
+                :variant="appUpdateAction === 'install' ? 'accent' : 'ghost'"
+                @click="handleAppUpdateAction"
+              >
+                {{
+                  appUpdateAction === 'download'
+                    ? '下載'
+                    : appUpdateAction === 'install'
+                      ? '重新啟動並安裝'
+                      : '檢查更新'
+                }}
+              </UiButton>
+            </template>
+          </SettingsActionRow>
         </SettingsBlock>
       </section>
 

@@ -2,9 +2,11 @@
 
 ## Status
 
-Accepted for implementation (2026-08-22). The runtime version boundary is
-implemented; signing, update runtime, release repository, and release CI remain
-pending.
+Accepted and partially implemented (2026-08-22). The runtime version boundary,
+main-process update service, fixed IPC intents, Settings status/actions, and
+public feed configuration are implemented. The runtime release gate remains
+disabled until signing, the public release repository, release CI, and
+two-version packaged verification are complete.
 
 ## Context
 
@@ -98,6 +100,12 @@ idle -> checking -> available -> downloading -> downloaded
                  -> error
 ```
 
+The implementation also reports `disabled` when the build is not a packaged
+Windows release or when `shared/appUpdateValues.json` keeps the release gate
+closed. In that state it does not load `electron-updater`, schedule a timer, or
+contact GitHub. The dependency is pinned to stable `electron-updater@6.8.9` to
+stay aligned with the current stable electron-builder 26 toolchain.
+
 - Update support runs only in a packaged Windows build. Development mode
   returns an explicit unsupported state and never contacts the release server.
 - A packaged app performs at most one delayed startup check and also exposes a
@@ -137,8 +145,8 @@ idle -> checking -> available -> downloading -> downloaded
 
 ### Release workflow
 
-Normal `npm run dist` and `dist:dir` remain local build commands and must never
-publish. A separate Windows release workflow performs these steps:
+Normal `npm run dist` and `dist:dir` explicitly pass `--publish never` and must
+never publish. A separate Windows release workflow performs these steps:
 
 1. Trigger from a stable `v<semver>` tag in the private source repository.
 2. Verify the tag, `package.json`, and lockfile root version are identical.

@@ -109,7 +109,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
 - Preset export/import。
-- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；執行版本已改由 main process 提供，code signing、自動更新 runtime 與 release CI 尚未實作，契約見 ADR 0007。
+- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；執行版本與 main-owned 更新 runtime 已建立，但 release gate 維持停用；code signing、公開 release repo、release CI 與兩版本驗證仍未完成，契約見 ADR 0007。
 
 ## 5. 架構邊界
 
@@ -410,9 +410,10 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 
 ### Phase 3：Distribution And Integrations
 
-- Windows installer、AUMID 與執行版本 IPC 已建立；signed public-release update
-  契約已由 ADR 0007 固定，剩 Authenticode signing、update runtime、公開 release
-  repo、release CI 與兩版本 packaged verification。
+- Windows installer、AUMID、執行版本 IPC 與 main-owned update runtime 已建立；
+  signed public-release update 契約已由 ADR 0007 固定。Runtime release gate
+  維持停用，剩 Authenticode signing、公開 release repo、release CI 與兩版本
+  packaged verification。
 - 公開 release repo 的 GitHub Pages 產品展示／下載入口（後期 promotion；Pages
   與 updater feed 分離，初期維持純靜態且不加入 analytics）。
 - 官方 metadata provider flows。

@@ -41,8 +41,10 @@ module.exports = defineConfig({
       skipFull: true,
       include: [
         'electron/lib/**/*.js',
+        'electron/main/appUpdateService.js',
         'overlay/shared/*.mjs',
         'src/utils/*.js',
+        'src/composables/useAppUpdate.js',
         'src/composables/useDragReorder.js',
         'src/composables/useAppInfo.js',
         'src/composables/useImportSession.js',

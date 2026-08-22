@@ -23,6 +23,8 @@ const windowState = require('./main/windowState');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
 const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
+const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
+const { createAppUpdateService } = require('./main/appUpdateService');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
@@ -40,6 +42,10 @@ const {
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
 const { createProviderRunnerManager } = require('./main/providerRunner');
+const {
+  runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
+  startupCheckDelayMs: APP_UPDATE_STARTUP_DELAY_MS,
+} = require('../shared/appUpdateValues.json');
 
 // Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let
 // content zoom drift and desync the titlebar theme button from the
@@ -113,11 +119,24 @@ if (!gotSingleInstanceLock) {
       app,
       userDataDir: app.getPath('userData'),
     });
+    const appUpdateService = createAppUpdateService({
+      currentVersion: app.getVersion(),
+      isPackaged: app.isPackaged,
+      isWindows: process.platform === 'win32',
+      runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
+      publishStatus: (status) => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow?.isDestroyed()) {
+          mainWindow.webContents.send('app-update:status', status);
+        }
+      },
+    });
 
     registerAppInfoHandlers({
       ipcMain,
       getVersion: () => app.getVersion(),
     });
+    registerAppUpdateHandlers({ ipcMain, service: appUpdateService });
 
     registerMediaProtocol({
       protocol,
@@ -226,6 +245,7 @@ if (!gotSingleInstanceLock) {
       configState.getConfig().sidebarWidth,
       configState.getConfig().captureDeviceId,
     );
+    appUpdateService.scheduleStartupCheck(APP_UPDATE_STARTUP_DELAY_MS);
   });
 
   app.on('window-all-closed', () => {

@@ -20,16 +20,19 @@ Summary from `node scripts/license-inventory.mjs`:
 
 | License        | Count |
 | -------------- | ----: |
-| MIT            |    57 |
-| ISC            |     4 |
+| MIT            |    67 |
+| ISC            |     6 |
 | Apache-2.0     |     3 |
+| BlueOak-1.0.0  |     1 |
 | BSD-3-Clause   |     1 |
 | MIT OR CC0-1.0 |     2 |
+| Python-2.0     |     1 |
 
 Direct runtime dependencies:
 
 | Package            | Version | License    | Release note                                                                                                                                                          |
 | ------------------ | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `electron-updater` | 6.8.9   | MIT        | Main-process Windows update client; runtime network access remains release-gated until signing and update-channel verification are complete.                          |
 | `kissfft-js`       | 0.1.8   | MIT        | Packaged runtime dependency for DSP/audio analysis paths.                                                                                                             |
 | `koroman`          | 1.0.16  | MIT        | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                          |
 | `kuromoji`         | 0.1.2   | Apache-2.0 | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                      |
@@ -42,8 +45,10 @@ Notable transitive runtime dependencies:
 | Package         | Version         | License        | Reason to track                                                      |
 | --------------- | --------------- | -------------- | -------------------------------------------------------------------- |
 | `adm-zip`       | 0.5.18          | MIT            | Pulled by `onnxruntime-node`; keep in dependency/security follow-up. |
+| `argparse`      | 2.0.1           | Python-2.0     | Transitive parser dependency used by the update runtime closure.     |
 | `global-agent`  | 4.1.3           | BSD-3-Clause   | Transitive dependency in the production closure.                     |
 | `human-signals` | 5.0.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
+| `sax`           | 1.6.1           | BlueOak-1.0.0  | Transitive XML parser used by the update runtime closure.            |
 | `web-worker`    | 1.5.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
 | `type-fest`     | 0.20.2 / 4.41.0 | MIT OR CC0-1.0 | Dual-licensed transitive dependency.                                 |
 
