@@ -11,25 +11,27 @@ const SITE_PACKAGES_RELATIVE_PATH = path.join('Lib', 'site-packages');
 const BGUTIL_PLUGIN_DIRNAME = 'bgutil-ytdlp-pot-provider-rs';
 
 function buildProviderRuntimePaths(installDir) {
-  const pythonDir = path.join(installDir, PYTHON_DIRNAME);
-  const sitePackagesDir = path.join(pythonDir, SITE_PACKAGES_RELATIVE_PATH);
-  const pluginParentDir = path.join(installDir, 'plugins');
+  const pathApi = path.win32.isAbsolute(installDir) ? path.win32 : path;
+  const pythonDir = pathApi.join(installDir, PYTHON_DIRNAME);
+  const sitePackagesDir = pathApi.join(pythonDir, 'Lib', 'site-packages');
+  const pluginParentDir = pathApi.join(installDir, 'plugins');
   return {
     installDir,
-    manifestPath: path.join(installDir, 'manifest.json'),
+    manifestPath: pathApi.join(installDir, 'manifest.json'),
     pythonDir,
-    pythonPath: path.join(pythonDir, 'python.exe'),
+    pythonPath: pathApi.join(pythonDir, 'python.exe'),
     sitePackagesDir,
     pluginParentDir,
-    pluginPackageDir: path.join(pluginParentDir, BGUTIL_PLUGIN_DIRNAME),
-    bgutilProviderPath: path.join(installDir, 'bgutil', 'bgutil-pot.exe'),
-    cacheDir: path.join(installDir, 'cache'),
+    pluginPackageDir: pathApi.join(pluginParentDir, BGUTIL_PLUGIN_DIRNAME),
+    bgutilProviderPath: pathApi.join(installDir, 'bgutil', 'bgutil-pot.exe'),
+    cacheDir: pathApi.join(installDir, 'cache'),
   };
 }
 
 function getProviderRuntimePaths(userDataDir) {
+  const pathApi = path.win32.isAbsolute(userDataDir) ? path.win32 : path;
   return buildProviderRuntimePaths(
-    path.join(
+    pathApi.join(
       userDataDir,
       FEATURE_DEPENDENCIES_DIRNAME,
       PROVIDER_RUNTIME_DIRNAME,

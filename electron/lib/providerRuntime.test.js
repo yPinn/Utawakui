@@ -24,7 +24,7 @@ function makeTempDir() {
 }
 
 describe('getProviderRuntimePaths', () => {
-  it('keeps all Python provider artifacts under one managed runtime root', () => {
+  it('keeps Windows artifacts under one root regardless of the test host', () => {
     const paths = getProviderRuntimePaths(
       'C:\\Users\\User\\AppData\\Roaming\\Utawakui',
     );
