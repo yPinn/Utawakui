@@ -231,10 +231,12 @@ Utawakui/
 
 YouTube 與 YouTube Music 共用同一個 provider metadata normalization boundary。
 `info.json` 永遠保留 yt-dlp 原始資料；`library.json` 的 `title` / `artist` 則是
-bounded display projection：優先使用結構化 `track` 與複數 `artists`，只有在
-auto-generated description 明確把 artist-list 成員標成非表演工作人員，且
-uploader/channel 能佐證主要表演者時，才移除被明確確認為純工作人員的成員；
-主要表演者、明確表演者與尚未分類的合作名字都會保留。沒有結構化音樂欄位
+bounded display projection：優先使用結構化 `track` 與複數 `artists`。對
+auto-generated 正式歌曲，當 uploader/channel 能精確佐證 artist-list 中的
+主要演出者時，投影只保留該主要演出者、description 明確標示的
+performer/vocalist，以及 `track` / `title` 中 `feat.` / `ft.` 點名且存在於
+artist-list 的合作者；未分類名字不會顯示成演出者。如果不能佐證主要
+演出者，則保守保留 provider artist-list，不擅自收斂。沒有結構化音樂欄位
 的普通 YouTube 影片，只有在 uploader 本身像 label/channel 或標題中的歌手能與
 uploader 對上時才採用 `Artist - Title`/bracket title 解析；否則保留原標題並以
 uploader/channel 作 fallback。這個 projection 不改寫 sidecar，也不得用人數或
@@ -246,6 +248,8 @@ projection。`title` / `artist` 只有在沒有 manual-origin 標記，且欄位
 sidecar 整理都會寫入 provider-origin，手動儲存（包含清空歌手）則會記錄
 manual-origin，整理與自動 backfill 都不得覆蓋。舊版索引中「缺少 artist
 且沒有 origin」的資料無法區分尚未取得與使用者曾清空，因此保守保留空值。
+provider-origin 欄位可直接升級到新 projection；對尚未有 origin 的第一階段
+projection，只有現值精確等於相容的舊 projection 時才允許升級。
 `duration` 只補缺失或非法值，`album` /
 `releaseYear` 維持 sidecar-authoritative 補齊。縮圖仍由 filesystem/backfill 流程
 管理；整理完成後的 library refresh 也會明確禁止 provider backfill，因此整個
@@ -330,7 +334,7 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 LRCLIB 來源另保存完整、版本化的 provider artifact；現有 Workspace 仍讀取相容 `.lrc`，而通過驗證且完整的逐字 timing 會直接投影到既有 timing sidecar。main process 只建立一個 LRCLIB acquisition service，供 Lyrics、Import 與 Library backfill handler 注入共用；該 service 統一持有 client、節流排程與 `lyrics-flow` gate，handler 之間不互相 import。
 
-Lyrics 的 LRCLIB 候選搜尋使用來源管理視窗內的單一寬版 modal 工作區，不疊加第二個 dialog。曲名與歌手會從所選曲目預填為 modal-local 可編輯欄位，只有 Enter 或明確按下搜尋才送出 structured query；沒有 exact 結果時才顯示一次性的擴大搜尋。候選依最佳符合／相近結果分組，直接顯示 identity、專輯、長度差、T0/T1/T2、可靠語言與 bounded preview，provider id、符合依據、行／segment 數及既有來源保存時間則收在 accessible details。main 只在本機比較已存 artifact 與搜尋候選的 fingerprint，renderer 僅收到 `current`／`update-available`／`unsaved` 狀態而不接觸 hash；更新候選仍會在保存前重新抓取，內容若又有變更就必須在該列再次確認。typed provider failure 進入共用 sanitized diagnostics，modal 關閉、切歌或後發請求都會使舊搜尋失效。
+Lyrics 的 LRCLIB 候選搜尋使用來源管理視窗內的單一寬版 modal 工作區，不疊加第二個 dialog。曲名與歌手會從所選曲目預填為 modal-local 可編輯欄位，進入工作區時自動送出一次初始查詢；使用者修改欄位後，只有 Enter 或明確按下搜尋才會重查。查詢規劃保留完整曲名＋歌手，並只在可靠辨識跨文字系統的主／副標題或可信 metadata 歌手別名時建立有限聯集；一般搜尋不以 album 作硬限制，album 只用於 exact fast-path 與候選排序。只有 artist-constrained 聯集找不到最佳符合時才執行 bounded title-only recovery，該結果仍列為相近結果且不會自動保存。候選先依最佳符合／相近結果守住歌曲 identity，再於同一關聯群內以逐字同步、逐行同步、純文字歌詞的能力順序排列；一般畫面只呈現曲名、歌手／專輯、時長、使用者語言的同步程度、必要警告、bounded preview 與保存動作，不顯示 T0/T1/T2、raw score、provider id 或 hash。provider duration 若短於自身歌詞時間軸，視為不可靠輔助資訊，不得單獨否決同歌曲的高品質 timing。main 只在本機比較已存 artifact 與搜尋候選的 fingerprint，renderer 僅收到 `current`／`update-available`／`unsaved` 狀態而不接觸 hash；更新候選仍會在保存前重新抓取，內容若又有變更就必須在該列再次確認。typed provider failure 進入共用 sanitized diagnostics，modal 關閉、切歌或後發請求都會使舊搜尋失效。
 
 Lyrics Workspace 的即時同步 offset 依 track 與歌詞來源分開保存：非零值以整數毫秒寫入該 track 的 `lyrics/lyrics.json` source entry，切換來源或重新啟動時恢復，未保存或重設的來源使用 0。此偏好不改寫原始 `.lrc` / `.vtt`，因此不會使 timing fingerprint、逐字校時 sidecar 或讀音資料失效。
 

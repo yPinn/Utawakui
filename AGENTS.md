@@ -121,7 +121,7 @@ One call site is **deliberately not** using `UiButton` (or `UiIconButton`), not 
 `organizeTrackMetadataFromSidecars()` is Settings' repeatable offline organizer.
 It reuses each saved `info.json`, updates `title` / `artist` only when no
 manual-origin marker exists and the value is missing or still equal to the
-previous provider projection, fills only an invalid/missing `duration`, and
+one of the explicitly compatible previous provider projections, fills only an invalid/missing `duration`, and
 refreshes `album` / `releaseYear`. Manual metadata saves stamp
 `titleOrigin`/`artistOrigin: 'manual'`, including an explicitly cleared artist;
 provider imports, backfill, and first-time sidecar organization stamp
@@ -132,6 +132,16 @@ sets `allowProviderBackfill: false` all the way through the follow-up
 `library:list`, so the action remains offline. It returns per-track
 normalized/enriched/skipped counts, never rewrites sidecars, and does not touch
 thumbnails, source identity, or unsupported credit fields.
+
+For a provider `artists` list, the current projection is stricter than the
+original confirmed-staff-only pass documented in the historical IPC overview:
+when an auto-generated description and uploader/channel exactly corroborate a
+primary artist, retain only that primary, description-confirmed performers, and
+artist-list members explicitly named by a `feat.` / `ft.` title marker. If the
+primary cannot be corroborated, preserve the full provider list. Maintenance
+emits both the raw pre-normalization projection and the prior confirmed-staff
+projection as compatible predecessors, so originless first-phase values can be
+upgraded only on an exact match; provider-origin values may advance directly.
 
 ## Design Context
 
