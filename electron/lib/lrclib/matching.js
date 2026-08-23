@@ -179,4 +179,5 @@ module.exports = {
   scoreCandidate,
   signedDurationDelta,
   textMatchScore,
+  versionMismatchPenalty,
 };

@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  analyzeLrclibRecord,
+  buildLrclibQueryPlan,
   buildLrclibUserAgent,
   createLrclibClient,
   normalizeLrclibRecord,
@@ -10,6 +12,8 @@ import {
 describe('lrclib compatibility barrel', () => {
   it('keeps legacy and refactored named CJS exports statically discoverable', () => {
     expect(buildLrclibUserAgent).toBeTypeOf('function');
+    expect(buildLrclibQueryPlan).toBeTypeOf('function');
+    expect(analyzeLrclibRecord).toBeTypeOf('function');
     expect(createLrclibClient).toBeTypeOf('function');
     expect(normalizeLrclibRecord).toBeTypeOf('function');
     expect(parseLyricsfile).toBeTypeOf('function');

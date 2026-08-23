@@ -6,6 +6,10 @@ const {
   searchLrclibCandidates,
 } = require('./lrclib/acquisition.js');
 const {
+  analyzeLrclibRecord,
+  rankLrclibCandidateMatches,
+} = require('./lrclib/candidate.js');
+const {
   buildLrclibUserAgent,
   createLrclibClient,
 } = require('./lrclib/client.js');
@@ -21,6 +25,7 @@ const {
   signedDurationDelta,
 } = require('./lrclib/matching.js');
 const {
+  buildLrclibQueryPlan,
   buildLrclibSearchQueries,
   buildLrclibUrl,
   buildSearchParams,
@@ -40,6 +45,8 @@ const {
 // callers rely on cjs-module-lexer discovering these named CJS exports.
 module.exports = {
   LYRICSFILE_LIMITS,
+  analyzeLrclibRecord,
+  buildLrclibQueryPlan,
   buildLrclibSearchQueries,
   buildLrclibUrl,
   buildLrclibUserAgent,
@@ -55,6 +62,7 @@ module.exports = {
   parseLyricsfile,
   pickBestSyncedCandidate,
   rankSyncedCandidates,
+  rankLrclibCandidateMatches,
   readJsonResponse,
   searchLrclibCandidates,
   sharedLrclibRequestScheduler,

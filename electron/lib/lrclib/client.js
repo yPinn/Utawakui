@@ -208,6 +208,13 @@ function createLrclibClient(options = {}) {
       return { status: 'error', reason: 'invalid-request' };
     }
     const result = await request('/api/get', structuredParams(query));
+    if (
+      result.status === 'error' &&
+      result.reason === 'http-error' &&
+      result.httpStatus === 404
+    ) {
+      return { status: 'unavailable', reason: 'not-found' };
+    }
     if (result.status === 'error') return result;
     return normalizeLrclibRecord(result.value);
   }
@@ -228,7 +235,16 @@ function createLrclibClient(options = {}) {
     return normalizeSearchRecords(result.value);
   }
 
-  return { getById, getExact, search };
+  async function searchBroad(query) {
+    if (!query || typeof query.q !== 'string' || query.q.trim().length === 0) {
+      return { status: 'error', reason: 'invalid-request' };
+    }
+    const result = await request('/api/search', { q: query.q });
+    if (result.status === 'error') return result;
+    return normalizeSearchRecords(result.value);
+  }
+
+  return { getById, getExact, search, searchBroad };
 }
 
 module.exports = {

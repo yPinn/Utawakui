@@ -302,20 +302,22 @@ describe('signedDurationDelta', () => {
 
 describe('findLrclibSyncedLyrics', () => {
   it('fetches search results and returns a storable LRCLIB source', async () => {
-    const fetchMock = vi.fn().mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          {
-            id: 42,
-            trackName: 'Espresso',
-            artistName: 'Sabrina Carpenter',
-            albumName: 'Short n Sweet',
-            duration: 175,
-            instrumental: false,
-            plainLyrics: 'Now he is thinkin bout me',
-            syncedLyrics: '[00:01.00]Now he is thinkin bout me',
-          },
-        ]),
+    const fetchMock = vi.fn().mockImplementation(() =>
+      Promise.resolve(
+        new Response(
+          JSON.stringify([
+            {
+              id: 42,
+              trackName: 'Espresso',
+              artistName: 'Sabrina Carpenter',
+              albumName: 'Short n Sweet',
+              duration: 175,
+              instrumental: false,
+              plainLyrics: 'Now he is thinkin bout me',
+              syncedLyrics: '[00:01.00]Now he is thinkin bout me',
+            },
+          ]),
+        ),
       ),
     );
 
@@ -331,8 +333,11 @@ describe('findLrclibSyncedLyrics', () => {
       },
     );
 
-    expect(fetchMock).toHaveBeenCalledTimes(1);
-    const url = new URL(String(fetchMock.mock.calls[0][0]));
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(new URL(String(fetchMock.mock.calls[0][0])).pathname).toBe(
+      '/api/get',
+    );
+    const url = new URL(String(fetchMock.mock.calls[1][0]));
     expect(url.pathname).toBe('/api/search');
     expect(url.searchParams.get('track_name')).toBe('Espresso');
     expect(url.searchParams.get('artist_name')).toBe('Sabrina Carpenter');
@@ -389,9 +394,9 @@ describe('findLrclibSyncedLyrics', () => {
       status: 'available',
       source: { filename: 'lrclib-42.lrc' },
       match: {
-        confidence: 'auto',
+        confidence: 'candidate',
+        band: 'strong',
         durationDelta: 38,
-        querySource: 'title-derived',
       },
     });
   });
@@ -564,7 +569,7 @@ describe('searchLrclibCandidates', () => {
     expect(result.candidates[0]).toMatchObject({
       id: 42,
       trackName: 'Espresso',
-      confidence: 'auto',
+      matchBand: 'exact',
     });
   });
 
@@ -632,7 +637,7 @@ describe('searchLrclibCandidates', () => {
     });
   });
 
-  it('includes candidates scoreCandidate would hard-reject, tagged unscored', async () => {
+  it('includes distant candidates as non-automatic related results', async () => {
     const fetchMock = vi.fn().mockImplementation(() =>
       Promise.resolve(
         new Response(
@@ -659,15 +664,12 @@ describe('searchLrclibCandidates', () => {
     expect(result.candidates).toEqual([
       expect.objectContaining({
         id: 99,
-        confidence: 'unscored',
-        score: null,
-        titleScore: null,
-        artistScore: null,
+        matchBand: 'related',
       }),
     ]);
   });
 
-  it('excludes instrumental candidates and untimed (plainLyrics-only) candidates', async () => {
+  it('keeps instrumental and plain-only candidates visible with capabilities', async () => {
     const fetchMock = vi.fn().mockImplementation(() =>
       Promise.resolve(
         new Response(
@@ -698,7 +700,17 @@ describe('searchLrclibCandidates', () => {
       { fetch: fetchMock, baseUrl: 'https://lrclib.example.test' },
     );
 
-    expect(result.candidates).toEqual([]);
+    expect(result.candidates).toEqual([
+      expect.objectContaining({
+        id: 2,
+        capability: { level: 'T0', partial: false },
+      }),
+      expect.objectContaining({
+        id: 1,
+        capability: { level: 'instrumental', partial: false },
+        warnings: expect.arrayContaining(['instrumental-record']),
+      }),
+    ]);
   });
 
   it('returns unavailable without fetching when the track has no usable title', async () => {

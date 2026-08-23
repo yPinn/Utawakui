@@ -272,6 +272,44 @@ describe('createLrclibClient', () => {
     });
   });
 
+  it('uses q only for an explicit broadened search and validates it', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response(JSON.stringify([completeRecord()])));
+    const client = createLrclibClient({
+      fetch,
+      scheduler: immediateScheduler(),
+      baseUrl: 'https://lrclib.example.test',
+    });
+
+    await expect(
+      client.searchBroad({ q: 'Song Artist' }),
+    ).resolves.toMatchObject({
+      status: 'ok',
+      records: [expect.objectContaining({ id: 42 })],
+    });
+    expect(
+      Object.fromEntries(new URL(String(fetch.mock.calls[0][0])).searchParams),
+    ).toEqual({
+      q: 'Song Artist',
+    });
+    await expect(client.searchBroad({ q: '  ' })).resolves.toEqual({
+      status: 'error',
+      reason: 'invalid-request',
+    });
+  });
+
+  it('maps an exact 404 to a non-fatal not-found result', async () => {
+    const client = createLrclibClient({
+      fetch: vi.fn().mockResolvedValue(new Response('', { status: 404 })),
+      scheduler: immediateScheduler(),
+    });
+
+    await expect(
+      client.getExact({ trackName: 'Song', artistName: 'Artist' }),
+    ).resolves.toEqual({ status: 'unavailable', reason: 'not-found' });
+  });
+
   it.each([
     [new TypeError('offline'), 'offline'],
     [

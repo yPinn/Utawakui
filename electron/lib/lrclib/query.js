@@ -118,8 +118,104 @@ function buildSearchParams(track) {
   );
 }
 
+function validProviderDuration(value) {
+  return Number.isFinite(value) && value >= 1 && value <= 3600;
+}
+
+function buildLrclibQueryPlan(track, edits = {}) {
+  const hasManualTitle = Object.prototype.hasOwnProperty.call(edits, 'title');
+  const hasManualArtist = Object.prototype.hasOwnProperty.call(edits, 'artist');
+  const manual = hasManualTitle || hasManualArtist;
+  const profiles = buildLyricsMetadataProfiles(track, [], {
+    includeTrackFallback: true,
+  });
+  const plannedQueries = buildLrclibSearchQueries(track);
+  const highConfidenceQueries = plannedQueries.filter(
+    (candidate) =>
+      candidate.artistConfidence === 'high' && candidate.params.artist_name,
+  );
+  const preferredQuery =
+    highConfidenceQueries.find(
+      (candidate) => !/[()[\]]/u.test(candidate.params.artist_name),
+    ) ||
+    highConfidenceQueries[0] ||
+    plannedQueries.find(
+      (candidate) =>
+        candidate.params.artist_name && candidate.artistConfidence !== 'low',
+    );
+  const matchedProfile = profiles.find(
+    (candidate) =>
+      normalizeForCompare(candidate.title) ===
+        normalizeForCompare(preferredQuery?.params.track_name) &&
+      normalizeForCompare(candidate.artist) ===
+        normalizeForCompare(preferredQuery?.params.artist_name),
+  );
+  const profile =
+    (preferredQuery
+      ? {
+          ...matchedProfile,
+          title: preferredQuery.params.track_name,
+          artist: preferredQuery.params.artist_name,
+          album: matchedProfile?.album || track?.album,
+          duration: matchedProfile?.duration ?? track?.duration,
+          source: preferredQuery.source,
+        }
+      : null) ||
+    profiles.find(
+      (candidate) =>
+        normalizeText(candidate.title) && normalizeText(candidate.artist),
+    );
+
+  const trackName = normalizeText(
+    hasManualTitle
+      ? edits.title
+      : profile?.title || stripTrackDecorations(track?.title),
+  );
+  const artistName = normalizeText(
+    hasManualArtist ? edits.artist : profile?.artist || track?.artist,
+  );
+  const albumName = normalizeText(profile?.album || track?.album) || null;
+  const rawDuration = manual
+    ? track?.duration
+    : (profile?.duration ?? track?.duration);
+  const duration = validProviderDuration(rawDuration) ? rawDuration : null;
+  const identity = {
+    trackName,
+    artistName,
+    albumName,
+    duration,
+    source: manual ? 'manual' : profile?.source || 'track-metadata',
+  };
+
+  const exact =
+    trackName && artistName
+      ? {
+          trackName,
+          artistName,
+          ...(albumName ? { albumName } : {}),
+          ...(duration !== null ? { duration } : {}),
+        }
+      : null;
+  const structured = trackName
+    ? {
+        trackName,
+        ...(artistName ? { artistName } : {}),
+        ...(albumName ? { albumName } : {}),
+      }
+    : null;
+  const broadenText = normalizeText(`${trackName} ${artistName}`);
+
+  return {
+    identity,
+    exact,
+    structured,
+    broaden: broadenText ? { q: broadenText } : null,
+  };
+}
+
 module.exports = {
   artistConfidenceFor,
+  buildLrclibQueryPlan,
   buildLrclibSearchQueries,
   buildLrclibUrl,
   buildSearchParams,

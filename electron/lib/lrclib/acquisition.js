@@ -1,15 +1,8 @@
 'use strict';
 
-const { normalizeForCompare } = require('../musicTitle.js');
+const { rankLrclibCandidateMatches } = require('./candidate.js');
 const { createLrclibClient } = require('./client.js');
-const { parseLrcLines } = require('./lrc.js');
-const {
-  durationDelta,
-  pickBestSyncedCandidate,
-  rankSyncedCandidates,
-  signedDurationDelta,
-} = require('./matching.js');
-const { buildLrclibSearchQueries } = require('./query.js');
+const { buildLrclibQueryPlan } = require('./query.js');
 const { createLrclibRequestScheduler } = require('./scheduler.js');
 
 const LRCLIB_PROVIDER = 'lrclib';
@@ -18,9 +11,7 @@ const PREVIEW_LINE_LIMIT = 5;
 
 function clientForOptions(options) {
   if (options.client) return options.client;
-  const clientOptions = {
-    baseUrl: options.baseUrl,
-  };
+  const clientOptions = { baseUrl: options.baseUrl };
   if (Object.prototype.hasOwnProperty.call(options, 'fetch')) {
     clientOptions.fetch = options.fetch;
     clientOptions.scheduler =
@@ -29,49 +20,6 @@ function clientForOptions(options) {
     clientOptions.scheduler = options.scheduler;
   }
   return createLrclibClient(clientOptions);
-}
-
-async function fetchLrclibQueryCandidates(query, client) {
-  const result = await client.search({
-    trackName: query.params.track_name,
-    artistName: query.params.artist_name,
-  });
-  if (result.status === 'error') return result;
-  return { status: 'ok', candidates: result.records };
-}
-
-function mergeLrclibCandidatesByKey(map, candidates) {
-  candidates.forEach((candidate, index) => {
-    const key =
-      candidate?.id ??
-      `${normalizeForCompare(candidate?.trackName)}|${normalizeForCompare(
-        candidate?.artistName,
-      )}|${candidate?.duration ?? ''}|${index}`;
-    if (!map.has(key)) map.set(key, candidate);
-  });
-}
-
-function buildAvailableResult(best) {
-  const label = best.candidate.albumName || best.candidate.artistName;
-  return {
-    provider: LRCLIB_PROVIDER,
-    status: 'available',
-    source: {
-      filename: `lrclib-${best.candidate.id}.lrc`,
-      language: 'und',
-      kind: LRCLIB_PROVIDER,
-      ...(label ? { label } : {}),
-    },
-    text: best.candidate.syncedLyrics,
-    lineCount: best.lineCount,
-    match: {
-      confidence: best.confidence,
-      score: best.score,
-      durationDelta: best.durationDelta,
-      querySource: best.query?.source,
-    },
-    record: best.candidate,
-  };
 }
 
 function providerFailure(result, extra = {}) {
@@ -92,130 +40,166 @@ function providerFailure(result, extra = {}) {
   };
 }
 
-async function findLrclibSyncedLyrics(track, options = {}) {
-  const queries = buildLrclibSearchQueries(track);
-  if (queries.length === 0) {
-    return {
-      provider: LRCLIB_PROVIDER,
-      status: 'unavailable',
-      reason: 'missing-track-title',
-    };
-  }
-
-  const client = clientForOptions(options);
-  const candidatesByKey = new Map();
-  for (const query of queries) {
-    const page = await fetchLrclibQueryCandidates(query, client);
-    if (page.status === 'error') return providerFailure(page);
-    mergeLrclibCandidatesByKey(candidatesByKey, page.candidates);
-
-    const bestSoFar = pickBestSyncedCandidate(
-      track,
-      [...candidatesByKey.values()],
-      queries,
-    );
-    if (bestSoFar) return buildAvailableResult(bestSoFar);
-  }
-
-  const best = pickBestSyncedCandidate(
-    track,
-    [...candidatesByKey.values()],
-    queries,
-  );
-  if (!best) {
-    return {
-      provider: LRCLIB_PROVIDER,
-      status: 'unavailable',
-      reason: 'no-safe-synced-match',
-    };
-  }
-  return buildAvailableResult(best);
-}
-
-function toCandidateSummary(scored) {
-  const candidate = scored.candidate;
+function unavailable(reason, extra = {}) {
   return {
-    id: candidate.id,
-    trackName: candidate.trackName,
-    artistName: candidate.artistName,
-    albumName: candidate.albumName,
-    duration: candidate.duration,
-    lineCount: scored.lineCount,
-    previewLines: parseLrcLines(candidate.syncedLyrics).slice(
-      0,
-      PREVIEW_LINE_LIMIT,
-    ),
-    confidence: scored.confidence,
-    score: scored.score,
-    durationDelta: scored.durationDelta,
-    durationDeltaSigned: scored.durationDeltaSigned,
-    titleScore: scored.titleScore,
-    artistScore: scored.artistScore,
-    querySource: scored.query?.source ?? null,
+    provider: LRCLIB_PROVIDER,
+    status: 'unavailable',
+    reason,
+    ...extra,
   };
 }
 
-async function searchLrclibCandidates(track, options = {}) {
-  const queries = buildLrclibSearchQueries(track);
-  if (queries.length === 0) {
-    return {
-      provider: LRCLIB_PROVIDER,
-      status: 'unavailable',
-      reason: 'missing-track-title',
-      candidates: [],
-    };
-  }
-
-  const client = clientForOptions(options);
-  const pages = await Promise.all(
-    queries.map((query) => fetchLrclibQueryCandidates(query, client)),
+function canContinueAfterExact(result) {
+  return (
+    result.status === 'unavailable' ||
+    (result.status === 'error' && result.reason === 'invalid-record')
   );
-  const firstError = pages.find((page) => page.status === 'error');
-  if (firstError) return providerFailure(firstError, { candidates: [] });
+}
 
-  const candidatesByKey = new Map();
-  pages.forEach((page) =>
-    mergeLrclibCandidatesByKey(candidatesByKey, page.candidates),
-  );
-  const pool = [...candidatesByKey.values()].filter(
-    (candidate) =>
-      !candidate.instrumental &&
-      typeof candidate.syncedLyrics === 'string' &&
-      candidate.syncedLyrics.trim().length > 0,
-  );
-  const ranked = rankSyncedCandidates(track, pool, queries);
-  const seenKeys = new Set();
-  const scoredCandidateRefs = new Set();
-  const deduped = [];
-  for (const scored of ranked) {
-    scoredCandidateRefs.add(scored.candidate);
-    const dedupeKey = scored.candidate.id ?? scored.candidate;
-    if (seenKeys.has(dedupeKey)) continue;
-    seenKeys.add(dedupeKey);
-    deduped.push(scored);
-  }
+function buildAvailableResult(match) {
+  const record = match.record;
+  const label = record.albumName || record.artistName;
+  return {
+    provider: LRCLIB_PROVIDER,
+    status: 'available',
+    source: {
+      filename: `lrclib-${record.id}.lrc`,
+      language: 'und',
+      kind: LRCLIB_PROVIDER,
+      ...(label ? { label } : {}),
+    },
+    text: record.syncedLyrics,
+    lineCount: match.lineCount,
+    match: {
+      confidence: match.band === 'exact' ? 'auto' : 'candidate',
+      band: match.band,
+      durationDelta: match.durationDelta,
+      reasons: match.matchReasons,
+    },
+    record,
+  };
+}
 
-  const unscored = pool
-    .filter((candidate) => !scoredCandidateRefs.has(candidate))
-    .map((candidate) => ({
-      candidate,
-      confidence: 'unscored',
-      score: null,
-      lineCount: parseLrcLines(candidate.syncedLyrics).length,
-      durationDelta: durationDelta(track?.duration, candidate.duration),
-      durationDeltaSigned: signedDurationDelta(
-        track?.duration,
-        candidate.duration,
+function isCurrentAutoSaveCompatible(match) {
+  return (
+    match.autoUsable &&
+    typeof match.record.syncedLyrics === 'string' &&
+    match.record.syncedLyrics.trim().length > 0
+  );
+}
+
+function candidateSummary(match) {
+  const record = match.record;
+  return {
+    id: record.id,
+    trackName: record.trackName,
+    artistName: record.artistName,
+    albumName: record.albumName,
+    duration: record.duration,
+    instrumental: record.instrumental,
+    lineCount: match.lineCount,
+    segmentCount: match.segmentCount,
+    previewLines: match.previewLines.slice(0, PREVIEW_LINE_LIMIT),
+    capability: match.capability,
+    compatibility: match.compatibility,
+    warnings: match.warnings,
+    matchBand: match.band,
+    matchReasons: match.matchReasons,
+    durationDelta: match.durationDelta,
+    durationDeltaSigned: match.durationDeltaSigned,
+  };
+}
+
+function buildCandidateResult(identity, records, invalidRecordCount = 0) {
+  const matches = rankLrclibCandidateMatches(identity, records).slice(
+    0,
+    MAX_MANUAL_CANDIDATES,
+  );
+  const candidates = matches.map(candidateSummary);
+  return {
+    provider: LRCLIB_PROVIDER,
+    status: 'ok',
+    candidates,
+    groups: {
+      best: candidates.filter((candidate) => candidate.matchBand !== 'related'),
+      related: candidates.filter(
+        (candidate) => candidate.matchBand === 'related',
       ),
-      titleScore: null,
-      artistScore: null,
-      query: null,
-    }));
+    },
+    invalidRecordCount,
+  };
+}
 
-  const candidates = [...deduped, ...unscored]
-    .slice(0, MAX_MANUAL_CANDIDATES)
-    .map(toCandidateSummary);
-  return { provider: LRCLIB_PROVIDER, status: 'ok', candidates };
+async function findLrclibSyncedLyrics(track, options = {}) {
+  const plan = buildLrclibQueryPlan(track, options.query);
+  if (!plan.structured) return unavailable('missing-track-title');
+  const client = clientForOptions(options);
+
+  if (plan.exact) {
+    const exact = await client.getExact(plan.exact);
+    if (exact.status === 'ok') {
+      const [match] = rankLrclibCandidateMatches(plan.identity, [exact.record]);
+      if (match && isCurrentAutoSaveCompatible(match)) {
+        return buildAvailableResult(match);
+      }
+    } else if (!canContinueAfterExact(exact)) {
+      return providerFailure(exact);
+    }
+  }
+
+  const page = await client.search(plan.structured);
+  if (page.status === 'error') return providerFailure(page);
+  const best = rankLrclibCandidateMatches(plan.identity, page.records).find(
+    isCurrentAutoSaveCompatible,
+  );
+  return best
+    ? buildAvailableResult(best)
+    : unavailable('no-safe-synced-match');
+}
+
+async function searchLrclibCandidates(track, options = {}) {
+  const plan = buildLrclibQueryPlan(track, options.query);
+  if (!plan.structured) {
+    return unavailable('missing-track-title', { candidates: [], groups: null });
+  }
+  const client = clientForOptions(options);
+
+  if (options.mode === 'broaden') {
+    if (!plan.broaden) {
+      return unavailable('missing-track-title', {
+        candidates: [],
+        groups: null,
+      });
+    }
+    const broadened = await client.searchBroad(plan.broaden);
+    if (broadened.status === 'error') {
+      return providerFailure(broadened, { candidates: [], groups: null });
+    }
+    return buildCandidateResult(
+      plan.identity,
+      broadened.records,
+      broadened.invalidRecordCount,
+    );
+  }
+
+  const records = [];
+  let invalidRecordCount = 0;
+  if (plan.exact) {
+    const exact = await client.getExact(plan.exact);
+    if (exact.status === 'ok') records.push(exact.record);
+    else if (exact.reason === 'invalid-record') invalidRecordCount += 1;
+    else if (!canContinueAfterExact(exact)) {
+      return providerFailure(exact, { candidates: [], groups: null });
+    }
+  }
+
+  const structured = await client.search(plan.structured);
+  if (structured.status === 'error') {
+    return providerFailure(structured, { candidates: [], groups: null });
+  }
+  records.push(...structured.records);
+  invalidRecordCount += structured.invalidRecordCount;
+  return buildCandidateResult(plan.identity, records, invalidRecordCount);
 }
 
 async function fetchLrclibRecord(recordId, options = {}) {
