@@ -21,6 +21,7 @@ let selectedLyricsSource;
 let lyricsDocument;
 let activeLineId;
 let activeSegmentId;
+let musicStructureSignals;
 let initializeLibrary;
 let initializePlaylists;
 let initializeLyrics;
@@ -59,6 +60,7 @@ beforeEach(() => {
   });
   activeLineId = shallowRef(null);
   activeSegmentId = shallowRef(null);
+  musicStructureSignals = shallowRef(null);
   libraryHydration = deferred();
   playlistHydration = deferred();
   lyricsHydration = deferred();
@@ -162,6 +164,9 @@ beforeEach(() => {
   }));
   vi.doMock('./useLibrary.js', () => ({
     useLibrary: () => ({ initialize: initializeLibrary }),
+  }));
+  vi.doMock('./useMusicStructureSignals.js', () => ({
+    useMusicStructureSignals: () => ({ current: musicStructureSignals }),
   }));
   vi.doMock('./usePlaylists.js', () => ({
     usePlaylists: () => ({ initialize: initializePlaylists }),
@@ -482,6 +487,66 @@ describe('output source handshake', () => {
     ]);
     expect(messages[0].kind).toBe('full');
     expect(messages[1].kind).toBe('update');
+  });
+
+  it('publishes current music cues once and references them on clock ticks', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    musicStructureSignals.value = {
+      trackId: 'track-1',
+      sourceRevision: 'a'.repeat(64),
+      sourceDurationMs: 180000,
+      signals: {
+        level: 'M2',
+        reason: 'current',
+        tempo: { bpm: 120, confidence: 0.8 },
+        beats: [{ timeMs: 500, downbeat: true, confidence: 0.9 }],
+        sections: [
+          {
+            sectionId: 'section_1',
+            startMs: 0,
+            endMs: 10000,
+            role: 'chorus',
+            confidence: 0.8,
+          },
+        ],
+      },
+    };
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+
+    const initialMessages = bridge.publishOutputSnapshot.mock.calls.map(
+      ([message]) => message,
+    );
+    expect(initialMessages.map((message) => message.stream)).toEqual([
+      'music-structure.document',
+      'queue.document',
+      'state.snapshot',
+    ]);
+    expect(initialMessages.at(-1).payload.musicStructure).toEqual({
+      documentId: `music-structure-${'a'.repeat(64)}`,
+      documentRevision: 1,
+    });
+
+    playerState.currentTime = 1;
+    await flushMicrotasks();
+    expect(bridge.publishOutputSnapshot.mock.calls.at(-1)[0]).toMatchObject({
+      stream: 'state.snapshot',
+      payload: {
+        musicStructure: {
+          documentId: `music-structure-${'a'.repeat(64)}`,
+          documentRevision: 1,
+        },
+      },
+    });
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.filter(
+        ([message]) => message.stream === 'music-structure.document',
+      ),
+    ).toHaveLength(1);
   });
 });
 

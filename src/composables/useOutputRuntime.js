@@ -8,6 +8,7 @@ import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
 import {
   projectDynamicOutputState,
   projectLyricsOutputDocument,
+  projectMusicStructureOutputDocument,
   projectQueueOutputDocument,
 } from '../utils/outputStreamProjection.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
@@ -15,6 +16,7 @@ import { useFeatureGates } from './useFeatureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
+import { useMusicStructureSignals } from './useMusicStructureSignals.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { usePlayer } from './usePlayer.js';
 import { usePlaylists } from './usePlaylists.js';
@@ -65,6 +67,7 @@ const {
   refreshConfirmations,
 } = useFeatureGates();
 const { recordError } = useAppDiagnostics();
+const { current: musicStructureSignals } = useMusicStructureSignals();
 
 const state = reactive({
   status: { ...EMPTY_STATUS },
@@ -89,13 +92,16 @@ let initializationPromise = null;
 let sourceEpoch = createSourceEpoch();
 let nextStateRevision = 0;
 let nextLyricsRevision = 0;
+let nextMusicStructureRevision = 0;
 let nextQueueRevision = 0;
 let handshakeComplete = false;
 let sourcesSettled = false;
 let lastContinuity = null;
 let lastLyricsDocument;
+let lastMusicStructureDocument;
 let lastQueueDocument;
 let lyricsReference = null;
+let musicStructureReference = null;
 let queueReference = null;
 
 function createSourceEpoch() {
@@ -188,6 +194,13 @@ const projectedQueueDocument = computed(() =>
   projectQueueOutputDocument(queueInput()),
 );
 
+const projectedMusicStructureDocument = computed(() => {
+  const trackId = playerState.track?.id ?? null;
+  const current = musicStructureSignals.value;
+  if (!trackId || current?.trackId !== trackId) return null;
+  return projectMusicStructureOutputDocument(current);
+});
+
 const projectedDynamicState = computed(() =>
   projectDynamicOutputState(
     {
@@ -200,6 +213,7 @@ const projectedDynamicState = computed(() =>
         reference: null,
       },
       queue: { reference: null },
+      musicStructure: { reference: null },
     },
     {
       generatedAt: PROJECTION_TIMESTAMP,
@@ -238,6 +252,7 @@ function currentProjection() {
   return {
     continuity: continuityKey.value,
     lyricsDocument: projectedLyricsDocument.value,
+    musicStructureDocument: projectedMusicStructureDocument.value,
     queueDocument: projectedQueueDocument.value,
     dynamicState: projectedDynamicState.value,
   };
@@ -272,6 +287,26 @@ async function publishProjection(projection) {
     lastLyricsDocument = projection.lyricsDocument;
   }
 
+  if (projection.musicStructureDocument !== lastMusicStructureDocument) {
+    if (projection.musicStructureDocument) {
+      nextMusicStructureRevision += 1;
+      const accepted = await sendEnvelope(
+        'music-structure.document',
+        continuityChanged || !musicStructureReference ? 'full' : 'update',
+        nextMusicStructureRevision,
+        { document: projection.musicStructureDocument },
+      );
+      if (!accepted) return false;
+      musicStructureReference = {
+        documentId: projection.musicStructureDocument.documentId,
+        documentRevision: nextMusicStructureRevision,
+      };
+    } else {
+      musicStructureReference = null;
+    }
+    lastMusicStructureDocument = projection.musicStructureDocument;
+  }
+
   if (projection.queueDocument !== lastQueueDocument) {
     nextQueueRevision += 1;
     const accepted = await sendEnvelope(
@@ -299,6 +334,10 @@ async function publishProjection(projection) {
       documentRevision: lyricsReference?.documentRevision ?? 0,
     },
     queue: queueReference,
+    musicStructure: {
+      documentId: musicStructureReference?.documentId ?? null,
+      documentRevision: musicStructureReference?.documentRevision ?? 0,
+    },
   };
   const accepted = await sendEnvelope(
     'state.snapshot',
@@ -325,6 +364,7 @@ watch(
   [
     continuityKey,
     projectedLyricsDocument,
+    projectedMusicStructureDocument,
     projectedQueueDocument,
     projectedDynamicState,
   ],

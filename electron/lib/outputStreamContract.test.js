@@ -73,6 +73,41 @@ function queueEnvelope(overrides = {}) {
   };
 }
 
+function musicStructureEnvelope(overrides = {}) {
+  return {
+    ...identity,
+    stream: 'music-structure.document',
+    payload: {
+      document: {
+        documentId: `music-structure-${'a'.repeat(64)}`,
+        trackId: 'track-1',
+        sourceRevision: 'a'.repeat(64),
+        sourceDurationMs: 180000,
+        level: 'M2',
+        tempo: { bpm: 120, confidence: 0.82 },
+        beats: [
+          {
+            timeMs: 500,
+            positionInBar: 1,
+            downbeat: true,
+            confidence: 0.9,
+          },
+        ],
+        sections: [
+          {
+            sectionId: 'section_1',
+            startMs: 0,
+            endMs: 10000,
+            role: 'chorus',
+            confidence: 0.76,
+          },
+        ],
+      },
+    },
+    ...overrides,
+  };
+}
+
 function stateEnvelope(overrides = {}) {
   return {
     ...identity,
@@ -95,6 +130,10 @@ function stateEnvelope(overrides = {}) {
         activeSegmentId: 'segment-1',
       },
       queue: { documentId: 'queue-current', documentRevision: 1 },
+      musicStructure: {
+        documentId: `music-structure-${'a'.repeat(64)}`,
+        documentRevision: 1,
+      },
     },
     ...overrides,
   };
@@ -140,8 +179,18 @@ describe('output stream contract', () => {
       payload: {
         lyrics: { documentId: 'lyrics-1', documentRevision: 1 },
         queue: { documentId: 'queue-current', documentRevision: 1 },
+        musicStructure: {
+          documentId: `music-structure-${'a'.repeat(64)}`,
+          documentRevision: 1,
+        },
       },
     });
+  });
+
+  it('canonicalizes bounded immutable music-structure cues', () => {
+    expect(
+      parseOutputStreamEnvelope(musicStructureEnvelope(), 'boot-1'),
+    ).toEqual(musicStructureEnvelope());
   });
 
   it.each([
@@ -149,6 +198,44 @@ describe('output stream contract', () => {
     ['stale boot', stateEnvelope({ bootId: 'boot-old' })],
     ['missing epoch', stateEnvelope({ sourceEpoch: '' })],
     ['invalid revision', stateEnvelope({ revision: -1 })],
+    [
+      'invalid source revision',
+      musicStructureEnvelope({
+        payload: {
+          document: {
+            ...musicStructureEnvelope().payload.document,
+            sourceRevision: '../audio.wav',
+          },
+        },
+      }),
+    ],
+    [
+      'document id from another source revision',
+      musicStructureEnvelope({
+        payload: {
+          document: {
+            ...musicStructureEnvelope().payload.document,
+            documentId: `music-structure-${'b'.repeat(64)}`,
+          },
+        },
+      }),
+    ],
+    [
+      'low-confidence role with an executable field',
+      musicStructureEnvelope({
+        payload: {
+          document: {
+            ...musicStructureEnvelope().payload.document,
+            sections: [
+              {
+                ...musicStructureEnvelope().payload.document.sections[0],
+                selector: 'body > script',
+              },
+            ],
+          },
+        },
+      }),
+    ],
     [
       'segment text mismatch',
       lyricsEnvelope({

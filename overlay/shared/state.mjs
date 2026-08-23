@@ -2,6 +2,18 @@ function text(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+const CANONICAL_SECTION_ROLES = new Set([
+  'intro',
+  'verse',
+  'pre-chorus',
+  'chorus',
+  'bridge',
+  'instrumental',
+  'outro',
+  'unknown',
+]);
+const MIN_PRESENTATION_CONFIDENCE = 0.5;
+
 function revision(snapshot) {
   return Number.isSafeInteger(snapshot?.revision) ? snapshot.revision : 0;
 }
@@ -172,6 +184,135 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
   );
 }
 
+function confidence(value) {
+  return Number.isFinite(value) && value >= 0 && value <= 1 ? value : null;
+}
+
+function musicStructureDocument(snapshot) {
+  const document = snapshot?.musicStructure;
+  const trackId = snapshot?.playback?.track?.id;
+  if (
+    !document ||
+    !trackId ||
+    document.trackId !== trackId ||
+    !['M1', 'M2'].includes(document.level) ||
+    typeof document.documentId !== 'string'
+  ) {
+    return null;
+  }
+  return document;
+}
+
+export function selectMusicStructureFrame(snapshot, options = {}) {
+  const document = musicStructureDocument(snapshot);
+  if (!document) return null;
+
+  const positionMs = playbackPositionMs(snapshot, options.nowMs ?? Date.now());
+  const sections = Array.isArray(document.sections) ? document.sections : [];
+  const section = sections.find(
+    (candidate) =>
+      Number.isFinite(candidate?.startMs) &&
+      Number.isFinite(candidate?.endMs) &&
+      candidate.startMs <= positionMs &&
+      positionMs < candidate.endMs &&
+      CANONICAL_SECTION_ROLES.has(candidate.role),
+  );
+  const activeSection = section
+    ? {
+        sectionId: section.sectionId,
+        role: section.role,
+        confidence: confidence(section.confidence),
+      }
+    : null;
+
+  const beats = Array.isArray(document.beats) ? document.beats : [];
+  let currentBeatIndex = -1;
+  let currentBeatTimeMs = -Infinity;
+  for (let index = 0; index < beats.length; index += 1) {
+    const timeMs = beats[index]?.timeMs;
+    if (
+      Number.isFinite(timeMs) &&
+      timeMs <= positionMs &&
+      timeMs >= currentBeatTimeMs
+    ) {
+      currentBeatIndex = index;
+      currentBeatTimeMs = timeMs;
+    }
+  }
+  const beat = currentBeatIndex >= 0 ? beats[currentBeatIndex] : null;
+  const currentBeat = beat
+    ? {
+        beatIndex: currentBeatIndex,
+        timeMs: beat.timeMs,
+        elapsedMs: Math.max(0, positionMs - beat.timeMs),
+        positionInBar:
+          Number.isSafeInteger(beat.positionInBar) && beat.positionInBar > 0
+            ? beat.positionInBar
+            : null,
+        downbeat: beat.downbeat === true,
+        confidence: confidence(beat.confidence),
+      }
+    : null;
+
+  return {
+    documentId: document.documentId,
+    level: document.level,
+    activeSection,
+    currentBeat,
+  };
+}
+
+function isConfident(value) {
+  return confidence(value) !== null && value >= MIN_PRESENTATION_CONFIDENCE;
+}
+
+export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
+  if (snapshot?.playback?.status !== 'playing') return null;
+
+  const nowMs = options.nowMs ?? Date.now();
+  const rate = playbackRate(snapshot);
+  const delays = [];
+  const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, { nowMs });
+  if (lyricsDelay !== null) delays.push(lyricsDelay);
+
+  const document = musicStructureDocument(snapshot);
+  if (document) {
+    const positionMs = playbackPositionMs(snapshot, nowMs);
+    let nextMusicBoundaryMs = Infinity;
+    const considerBoundary = (boundary) => {
+      if (
+        Number.isFinite(boundary) &&
+        boundary > positionMs &&
+        boundary < nextMusicBoundaryMs
+      ) {
+        nextMusicBoundaryMs = boundary;
+      }
+    };
+    for (const beat of Array.isArray(document.beats) ? document.beats : []) {
+      if (isConfident(beat?.confidence)) considerBoundary(beat.timeMs);
+    }
+    for (const section of Array.isArray(document.sections)
+      ? document.sections
+      : []) {
+      if (
+        isConfident(section?.confidence) &&
+        CANONICAL_SECTION_ROLES.has(section?.role) &&
+        section.role !== 'unknown'
+      ) {
+        considerBoundary(section.startMs);
+        considerBoundary(section.endMs);
+      }
+    }
+    if (Number.isFinite(nextMusicBoundaryMs)) {
+      delays.push(
+        Math.max(1, Math.ceil((nextMusicBoundaryMs - positionMs) / rate)),
+      );
+    }
+  }
+
+  return delays.length > 0 ? Math.min(...delays) : null;
+}
+
 export function selectLyricsFrame(snapshot, options = {}) {
   const trackId = snapshot?.playback?.track?.id;
   const lyrics = snapshot?.lyrics;
@@ -204,6 +345,7 @@ export function selectLyricsFrame(snapshot, options = {}) {
     activeIndex,
     options.nowMs ?? Date.now(),
   );
+  const musicStructure = selectMusicStructureFrame(snapshot, options);
   return {
     revision: revision(snapshot),
     visible: Boolean(currentText || nextText),
@@ -211,6 +353,7 @@ export function selectLyricsFrame(snapshot, options = {}) {
     nextText,
     language: text(lyrics?.source?.language),
     ...(currentSegments ? { currentSegments } : {}),
+    ...(musicStructure ? { musicStructure } : {}),
   };
 }
 

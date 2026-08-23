@@ -77,6 +77,72 @@ describe('overlay WebSocket runtime', () => {
       type: 'overlay.config.changed',
       overlayConfig: { revision: 3 },
     });
+    expect(
+      parseOutputMessage(
+        JSON.stringify({
+          type: 'music-structure.document',
+          bootId: 'boot-1',
+          sourceEpoch: 'epoch-1',
+          sourceStatus: 'ready',
+          revision: 2,
+          document: {
+            documentId: 'music-1',
+            trackId: 'track-1',
+            sourceRevision: 'source-1',
+            sourceDurationMs: 90000,
+            level: 'M1',
+            tempo: { bpm: 120, confidence: 0.8 },
+            beats: [],
+            sections: [],
+          },
+        }),
+      ),
+    ).toMatchObject({
+      type: 'music-structure.document',
+      revision: 2,
+      document: { documentId: 'music-1', level: 'M1' },
+    });
+
+    const splitStateMessage = (overrides = {}) => ({
+      type: 'state.snapshot',
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceStatus: 'ready',
+      revision: 1,
+      state: {
+        generatedAt: '2026-08-23T00:00:00.000Z',
+        displayDelayMs: 0,
+        playback: {},
+        lyrics: {
+          documentId: null,
+          documentRevision: 0,
+          offsetMs: 0,
+          activeLineId: null,
+          activeSegmentId: null,
+        },
+        queue: { documentId: 'queue-1', documentRevision: 1 },
+        musicStructure: { documentId: null, documentRevision: 0 },
+        ...overrides,
+      },
+    });
+    expect(
+      parseOutputMessage(
+        JSON.stringify(
+          splitStateMessage({
+            musicStructure: { documentId: null, documentRevision: 7 },
+          }),
+        ),
+      ),
+    ).toBeNull();
+    expect(
+      parseOutputMessage(
+        JSON.stringify(
+          splitStateMessage({
+            queue: { documentId: '', documentRevision: 1 },
+          }),
+        ),
+      ),
+    ).toBeNull();
   });
 
   it('accepts resnapshots, ignores stale updates, and reconnects', () => {
@@ -286,6 +352,252 @@ describe('overlay WebSocket runtime', () => {
         lines: [{ text: 'first' }, { text: 'second' }],
       },
     });
+    connection.stop();
+  });
+
+  it('requires the referenced music-structure revision and preserves optional confidence', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (value) => received.push(value),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    const identity = {
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceStatus: 'ready',
+    };
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'lyrics.document',
+        ...identity,
+        revision: 1,
+        document: {
+          documentId: 'lyrics-1',
+          trackId: 'track-1',
+          source: { language: 'en' },
+          lines: [],
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'queue.document',
+        ...identity,
+        revision: 1,
+        document: { documentId: 'queue-1', sourceName: '', items: [] },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'music-structure.document',
+        ...identity,
+        revision: 3,
+        document: {
+          documentId: 'music-1',
+          trackId: 'track-1',
+          sourceRevision: 'source-1',
+          sourceDurationMs: 90000,
+          level: 'M2',
+          tempo: { bpm: 120, confidence: 0.72 },
+          beats: [
+            {
+              timeMs: 1000,
+              positionInBar: 1,
+              downbeat: true,
+              confidence: 0.81,
+            },
+          ],
+          sections: [
+            {
+              sectionId: 'section-1',
+              startMs: 0,
+              endMs: 90000,
+              role: 'chorus',
+              confidence: 0.64,
+            },
+          ],
+        },
+      }),
+    });
+
+    const dynamicState = {
+      generatedAt: '2026-08-23T00:00:00.000Z',
+      displayDelayMs: 0,
+      playback: {
+        status: 'playing',
+        positionMs: 1000,
+        durationMs: 90000,
+        rate: 1,
+        track: { id: 'track-1', title: 'Song' },
+      },
+      lyrics: {
+        documentId: 'lyrics-1',
+        documentRevision: 1,
+        offsetMs: 0,
+        activeLineId: null,
+        activeSegmentId: null,
+      },
+      queue: { documentId: 'queue-1', documentRevision: 1 },
+      musicStructure: { documentId: 'music-1', documentRevision: 2 },
+    };
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        ...identity,
+        revision: 1,
+        state: dynamicState,
+      }),
+    });
+    expect(received).toEqual([]);
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        ...identity,
+        revision: 2,
+        state: {
+          ...dynamicState,
+          musicStructure: { documentId: 'music-1', documentRevision: 3 },
+        },
+      }),
+    });
+    expect(received).toHaveLength(1);
+    expect(received[0].musicStructure).toMatchObject({
+      documentId: 'music-1',
+      sourceDurationMs: 90000,
+      tempo: { confidence: 0.72 },
+      beats: [{ confidence: 0.81 }],
+      sections: [{ role: 'chorus', confidence: 0.64 }],
+    });
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        ...identity,
+        revision: 3,
+        state: {
+          ...dynamicState,
+          musicStructure: { documentId: null, documentRevision: 0 },
+        },
+      }),
+    });
+    expect(received.at(-1).musicStructure).toBeNull();
+    connection.stop();
+  });
+
+  it('drops cached music structure on reconnect even when the epoch is unchanged', () => {
+    FakeWebSocket.instances = [];
+    const reconnects = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: { protocol: 'http:', host: '127.0.0.1:8700' },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (value) => received.push(value),
+      schedule: (callback, delay) => {
+        reconnects.push({ callback, delay });
+        return reconnects.length;
+      },
+      cancelSchedule: vi.fn(),
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+    const identity = {
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceStatus: 'ready',
+    };
+    const sendDocuments = (socket, includeMusic = true) => {
+      socket.emit('message', {
+        data: JSON.stringify({
+          type: 'lyrics.document',
+          ...identity,
+          revision: 1,
+          document: {
+            documentId: 'lyrics-1',
+            trackId: 'track-1',
+            source: null,
+            lines: [],
+          },
+        }),
+      });
+      socket.emit('message', {
+        data: JSON.stringify({
+          type: 'queue.document',
+          ...identity,
+          revision: 1,
+          document: { documentId: 'queue-1', sourceName: '', items: [] },
+        }),
+      });
+      if (includeMusic) {
+        socket.emit('message', {
+          data: JSON.stringify({
+            type: 'music-structure.document',
+            ...identity,
+            revision: 1,
+            document: {
+              documentId: 'music-1',
+              trackId: 'track-1',
+              sourceRevision: 'source-1',
+              sourceDurationMs: 10000,
+              level: 'M1',
+              tempo: null,
+              beats: [],
+              sections: [],
+            },
+          }),
+        });
+      }
+    };
+    const sendState = (socket, revision) =>
+      socket.emit('message', {
+        data: JSON.stringify({
+          type: 'state.snapshot',
+          ...identity,
+          revision,
+          state: {
+            generatedAt: '2026-08-23T00:00:00.000Z',
+            displayDelayMs: 0,
+            playback: {
+              status: 'paused',
+              positionMs: 0,
+              durationMs: 10000,
+              rate: 1,
+              track: { id: 'track-1', title: 'Song' },
+            },
+            lyrics: {
+              documentId: 'lyrics-1',
+              documentRevision: 1,
+              offsetMs: 0,
+              activeLineId: null,
+              activeSegmentId: null,
+            },
+            queue: { documentId: 'queue-1', documentRevision: 1 },
+            musicStructure: {
+              documentId: 'music-1',
+              documentRevision: 1,
+            },
+          },
+        }),
+      });
+
+    connection.start();
+    sendDocuments(FakeWebSocket.instances[0]);
+    sendState(FakeWebSocket.instances[0], 1);
+    expect(received).toHaveLength(1);
+    FakeWebSocket.instances[0].emit('close');
+    reconnects[0].callback();
+
+    const second = FakeWebSocket.instances[1];
+    sendDocuments(second, false);
+    sendState(second, 1);
+    expect(received).toHaveLength(1);
     connection.stop();
   });
 

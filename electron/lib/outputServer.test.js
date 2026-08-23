@@ -73,6 +73,14 @@ function waitForMessages(socket, count) {
   });
 }
 
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
+    return value;
+  }
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return Object.freeze(value);
+}
+
 function splitProjection(overrides = {}) {
   const dynamic = {
     generatedAt: '2026-08-23T00:00:00.000Z',
@@ -92,6 +100,10 @@ function splitProjection(overrides = {}) {
       activeSegmentId: null,
     },
     queue: { documentId: 'queue-current', documentRevision: 1 },
+    musicStructure: {
+      documentId: `music-structure-${'a'.repeat(64)}`,
+      documentRevision: 1,
+    },
   };
   return {
     bootId: 'boot-split',
@@ -119,6 +131,27 @@ function splitProjection(overrides = {}) {
               text: '歌詞',
               startMs: 1000,
               endMs: 2000,
+            },
+          ],
+        },
+      },
+      musicStructure: {
+        revision: 1,
+        document: {
+          documentId: `music-structure-${'a'.repeat(64)}`,
+          trackId: 'track-1',
+          sourceRevision: 'a'.repeat(64),
+          sourceDurationMs: 180000,
+          level: 'M2',
+          tempo: { bpm: 120, confidence: 0.8 },
+          beats: [{ timeMs: 1000, downbeat: true, confidence: 0.9 }],
+          sections: [
+            {
+              sectionId: 'section_1',
+              startMs: 0,
+              endMs: 10000,
+              role: 'chorus',
+              confidence: 0.8,
             },
           ],
         },
@@ -466,13 +499,14 @@ describe('outputServer', () => {
     const server = createServer({ initialProjection: projection });
     const status = await server.start();
     const split = connectV3(status);
-    const splitMessages = waitForMessages(split, 4);
+    const splitMessages = waitForMessages(split, 5);
     await waitForOpen(split);
 
     expect(split.protocol).toBe(OUTPUT_V3_SUBPROTOCOL);
     expect((await splitMessages).map((message) => message.type)).toEqual([
       'overlay.config.snapshot',
       'lyrics.document',
+      'music-structure.document',
       'queue.document',
       'state.snapshot',
     ]);
@@ -488,11 +522,33 @@ describe('outputServer', () => {
     legacy.close();
   });
 
+  it('reuses an immutable stream tree across clock-only projection updates', () => {
+    const current = splitProjection();
+    const immutableStreams = new Proxy(deepFreeze(current.streams), {});
+    let server;
+
+    expect(() => {
+      server = createServer({
+        initialProjection: { ...current, streams: immutableStreams },
+      });
+    }).not.toThrow();
+    expect(() =>
+      server.setProjectionState(
+        {
+          ...current,
+          snapshot: { ...current.snapshot, revision: 2 },
+          streams: immutableStreams,
+        },
+        { broadcast: false },
+      ),
+    ).not.toThrow();
+  });
+
   it('sends only dynamic state when referenced content is unchanged', async () => {
     const server = createServer({ initialProjection: splitProjection() });
     const status = await server.start();
     const socket = connectV3(status);
-    const initialMessages = waitForMessages(socket, 4);
+    const initialMessages = waitForMessages(socket, 5);
     await waitForOpen(socket);
     await initialMessages;
 
@@ -529,11 +585,11 @@ describe('outputServer', () => {
     const server = createServer({ initialProjection: current });
     const status = await server.start();
     const socket = connectV3(status);
-    const initialMessages = waitForMessages(socket, 4);
+    const initialMessages = waitForMessages(socket, 5);
     await waitForOpen(socket);
     await initialMessages;
 
-    const nextMessages = waitForMessages(socket, 3);
+    const nextMessages = waitForMessages(socket, 4);
     server.setProjectionState({
       ...current,
       sourceEpoch: 'epoch-split-2',
@@ -545,6 +601,7 @@ describe('outputServer', () => {
     });
     expect((await nextMessages).map((message) => message.type)).toEqual([
       'lyrics.document',
+      'music-structure.document',
       'queue.document',
       'state.snapshot',
     ]);

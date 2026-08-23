@@ -37,6 +37,14 @@ function requireId(value, path) {
   return value;
 }
 
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
+    return value;
+  }
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return Object.freeze(value);
+}
+
 function parseOutputProjectionEnvelope(value, expectedBootId) {
   const envelope = requireRecord(value, 'root');
   if (envelope.contractVersion !== OUTPUT_PROJECTION_CONTRACT_VERSION) {
@@ -73,10 +81,11 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
   const seenEpochs = new Set();
   const contentRevisionsByEpoch = new Map();
   const lyricsDocuments = new Map();
+  const musicStructureDocuments = new Map();
   const queueDocuments = new Map();
   let activeSourceId = null;
   let compatibilityRevision = 0;
-  let projection = {
+  let projection = deepFreeze({
     bootId,
     sourceEpoch: null,
     sourceSynchronization: 'unavailable',
@@ -84,14 +93,17 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
     revision: 0,
     snapshot: createEmptyOutputSnapshot({ revision: 0 }),
     streams: null,
-  };
+  });
 
   function getProjection() {
-    return structuredClone(projection);
+    // Nested values are recursively frozen at the validation boundary. Return
+    // a fresh root so callers cannot replace hub state while immutable content
+    // keeps the same identity across high-frequency clock updates.
+    return { ...projection };
   }
 
   function updateProjection(changes) {
-    projection = { ...projection, ...changes };
+    projection = deepFreeze({ ...projection, ...changes });
     onChange(getProjection());
   }
 
@@ -166,7 +178,7 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
   function contentRevisionState(sourceEpoch) {
     let state = contentRevisionsByEpoch.get(sourceEpoch);
     if (!state) {
-      state = { lyrics: -1, queue: -1 };
+      state = { lyrics: -1, musicStructure: -1, queue: -1 };
       contentRevisionsByEpoch.set(sourceEpoch, state);
     }
     return state;
@@ -179,7 +191,12 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
     ) {
       return false;
     }
-    const kind = envelope.stream === 'lyrics.document' ? 'lyrics' : 'queue';
+    const kind =
+      envelope.stream === 'lyrics.document'
+        ? 'lyrics'
+        : envelope.stream === 'music-structure.document'
+          ? 'musicStructure'
+          : 'queue';
     const revisions = contentRevisionState(envelope.sourceEpoch);
     if (
       envelope.revision <= revisions[kind] ||
@@ -188,13 +205,21 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
       return false;
     }
     const document = envelope.payload.document;
-    const cache = kind === 'lyrics' ? lyricsDocuments : queueDocuments;
+    const cache =
+      kind === 'lyrics'
+        ? lyricsDocuments
+        : kind === 'musicStructure'
+          ? musicStructureDocuments
+          : queueDocuments;
     cache.clear();
     if (document) {
-      cache.set(document.documentId, {
-        revision: envelope.revision,
-        document,
-      });
+      cache.set(
+        document.documentId,
+        deepFreeze({
+          revision: envelope.revision,
+          document: deepFreeze(document),
+        }),
+      );
     }
     revisions[kind] = envelope.revision;
     return true;
@@ -220,8 +245,23 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
     }
 
     const lyrics = resolveDocument(envelope.payload.lyrics, lyricsDocuments);
+    const musicStructure = resolveDocument(
+      envelope.payload.musicStructure,
+      musicStructureDocuments,
+    );
     const queue = resolveDocument(envelope.payload.queue, queueDocuments);
-    if ((envelope.payload.lyrics.documentId !== null && !lyrics) || !queue) {
+    if (
+      (envelope.payload.lyrics.documentId !== null && !lyrics) ||
+      (envelope.payload.musicStructure.documentId !== null &&
+        !musicStructure) ||
+      !queue
+    ) {
+      return false;
+    }
+    if (
+      musicStructure &&
+      envelope.payload.playback.track?.id !== musicStructure.document.trackId
+    ) {
       return false;
     }
 
@@ -233,6 +273,10 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
     contentRevisions.queue = Math.max(
       contentRevisions.queue,
       envelope.payload.queue.documentRevision,
+    );
+    contentRevisions.musicStructure = Math.max(
+      contentRevisions.musicStructure,
+      envelope.payload.musicStructure.documentRevision,
     );
     if (envelope.kind === 'full') seenEpochs.add(envelope.sourceEpoch);
     compatibilityRevision += 1;
@@ -250,6 +294,7 @@ function createOutputProjectionHub({ bootId, onChange = () => {} }) {
       snapshot,
       streams: {
         lyrics,
+        musicStructure,
         queue,
         state: { revision: envelope.revision, payload: envelope.payload },
       },

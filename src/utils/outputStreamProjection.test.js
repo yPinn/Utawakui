@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   projectDynamicOutputState,
   projectLyricsOutputDocument,
+  projectMusicStructureOutputDocument,
   projectQueueOutputDocument,
 } from './outputStreamProjection.js';
 
@@ -80,6 +81,81 @@ describe('output stream projection', () => {
     });
   });
 
+  it('projects only current M1/M2 cues under the audio source revision', () => {
+    const document = projectMusicStructureOutputDocument({
+      trackId: 'track-1',
+      sourceRevision: 'a'.repeat(64),
+      sourceDurationMs: 180000,
+      signals: {
+        level: 'M2',
+        reason: 'current',
+        tempo: { bpm: 120, confidence: 0.82, privateModel: 'hidden' },
+        beats: [
+          {
+            timeMs: 500,
+            positionInBar: 1,
+            downbeat: true,
+            confidence: 0.9,
+            privateLabel: 'hidden',
+          },
+        ],
+        sections: [
+          {
+            sectionId: 'section_1',
+            startMs: 0,
+            endMs: 10000,
+            role: 'chorus',
+            confidence: 0.76,
+            rawLabel: 'Chorus A',
+          },
+        ],
+      },
+    });
+
+    expect(document).toEqual({
+      documentId: `music-structure-${'a'.repeat(64)}`,
+      trackId: 'track-1',
+      sourceRevision: 'a'.repeat(64),
+      sourceDurationMs: 180000,
+      level: 'M2',
+      tempo: { bpm: 120, confidence: 0.82 },
+      beats: [
+        {
+          timeMs: 500,
+          positionInBar: 1,
+          downbeat: true,
+          confidence: 0.9,
+        },
+      ],
+      sections: [
+        {
+          sectionId: 'section_1',
+          startMs: 0,
+          endMs: 10000,
+          role: 'chorus',
+          confidence: 0.76,
+        },
+      ],
+    });
+    expect(JSON.stringify(document)).not.toContain('private');
+    expect(JSON.stringify(document)).not.toContain('rawLabel');
+  });
+
+  it.each([
+    ['missing signals', null],
+    ['stale signals', { level: 'M2', reason: 'stale' }],
+    ['M0 fallback', { level: 'M0', reason: 'no-signal' }],
+  ])('keeps %s out of Output cue transport', (_label, signals) => {
+    expect(
+      projectMusicStructureOutputDocument({
+        trackId: 'track-1',
+        sourceRevision: 'a'.repeat(64),
+        sourceDurationMs: 180000,
+        signals,
+      }),
+    ).toBeNull();
+  });
+
   it('keeps dynamic clock state small and references immutable documents', () => {
     const state = projectDynamicOutputState(
       {
@@ -100,6 +176,12 @@ describe('output stream projection', () => {
         queue: {
           reference: { documentId: 'queue-current', documentRevision: 7 },
         },
+        musicStructure: {
+          reference: {
+            documentId: `music-structure-${'a'.repeat(64)}`,
+            documentRevision: 2,
+          },
+        },
       },
       { generatedAt: '2026-08-23T00:00:00.000Z' },
     );
@@ -116,6 +198,10 @@ describe('output stream projection', () => {
         activeSegmentId: 'segment-1',
       },
       queue: { documentId: 'queue-current', documentRevision: 7 },
+      musicStructure: {
+        documentId: `music-structure-${'a'.repeat(64)}`,
+        documentRevision: 2,
+      },
     });
     expect(state).not.toHaveProperty('lyrics.lines');
     expect(state).not.toHaveProperty('queue.items');
@@ -131,5 +217,14 @@ describe('output stream projection', () => {
         },
       }).lyrics,
     ).toMatchObject({ documentId: null, documentRevision: 0 });
+  });
+
+  it('uses a null music-structure reference for the M0 fallback', () => {
+    expect(
+      projectDynamicOutputState({
+        player: {},
+        musicStructure: { reference: null },
+      }).musicStructure,
+    ).toEqual({ documentId: null, documentRevision: 0 });
   });
 });

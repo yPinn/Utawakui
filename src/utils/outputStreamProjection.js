@@ -1,6 +1,7 @@
 import { projectOutputSnapshot } from './outputSnapshot.js';
 
 const QUEUE_DOCUMENT_ID = 'queue-current';
+const SHA256_RE = /^[a-f0-9]{64}$/;
 
 function publicLyricsSource(source) {
   if (!source || typeof source !== 'object') return null;
@@ -67,6 +68,62 @@ export function projectQueueOutputDocument(queue = {}) {
   };
 }
 
+function optionalConfidence(value) {
+  return Number.isFinite(value) ? { confidence: value } : {};
+}
+
+export function projectMusicStructureOutputDocument({
+  trackId,
+  sourceRevision,
+  sourceDurationMs,
+  signals,
+} = {}) {
+  if (
+    typeof trackId !== 'string' ||
+    trackId.length === 0 ||
+    !SHA256_RE.test(sourceRevision ?? '') ||
+    !Number.isSafeInteger(sourceDurationMs) ||
+    sourceDurationMs < 0 ||
+    signals?.reason !== 'current' ||
+    !['M1', 'M2'].includes(signals.level)
+  ) {
+    return null;
+  }
+
+  return {
+    documentId: `music-structure-${sourceRevision}`,
+    trackId,
+    sourceRevision,
+    sourceDurationMs,
+    level: signals.level,
+    tempo: signals.tempo
+      ? {
+          bpm: signals.tempo.bpm,
+          ...optionalConfidence(signals.tempo.confidence),
+        }
+      : null,
+    beats: (Array.isArray(signals.beats) ? signals.beats : []).map((beat) => ({
+      timeMs: beat.timeMs,
+      ...(Number.isSafeInteger(beat.positionInBar)
+        ? { positionInBar: beat.positionInBar }
+        : {}),
+      ...(typeof beat.downbeat === 'boolean'
+        ? { downbeat: beat.downbeat }
+        : {}),
+      ...optionalConfidence(beat.confidence),
+    })),
+    sections: (Array.isArray(signals.sections) ? signals.sections : []).map(
+      (section) => ({
+        sectionId: section.sectionId,
+        startMs: section.startMs,
+        endMs: section.endMs,
+        role: section.role,
+        ...optionalConfidence(section.confidence),
+      }),
+    ),
+  };
+}
+
 function lyricsReference(lyrics = {}) {
   const reference = lyrics.reference;
   return {
@@ -84,6 +141,17 @@ function lyricsReference(lyrics = {}) {
       typeof lyrics.activeSegmentId === 'string'
         ? lyrics.activeSegmentId
         : null,
+  };
+}
+
+function nullableReference(value) {
+  const reference = value?.reference;
+  return {
+    documentId:
+      typeof reference?.documentId === 'string' ? reference.documentId : null,
+    documentRevision: Number.isSafeInteger(reference?.documentRevision)
+      ? reference.documentRevision
+      : 0,
   };
 }
 
@@ -110,6 +178,7 @@ export function projectDynamicOutputState(input = {}, options = {}) {
         ? input.queue.reference.documentRevision
         : 0,
     },
+    musicStructure: nullableReference(input.musicStructure),
   };
 }
 

@@ -53,6 +53,7 @@
     text-shadow: var(--ovl-text-shadow);
     -webkit-text-stroke: 0.035em var(--ovl-color-stroke-strong);
     paint-order: stroke fill;
+    transition: filter 180ms ease-out;
   }
 
   .lyrics-overlay__current[data-segmented='true'] {
@@ -105,6 +106,18 @@
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current,
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
     inline-size: 100%;
+  }
+
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay[data-music-section='chorus']
+    .lyrics-overlay__current {
+    filter: drop-shadow(0 0 0.16em var(--ovl-color-current));
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .lyrics-overlay__current {
+      transition: none;
+    }
   }
 
   @media (max-width: 42rem) {

@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
+  nextPresentationBoundaryDelayMs,
   nextLyricsBoundaryDelayMs,
+  selectMusicStructureFrame,
   selectLyricsFrame,
   selectNowPlayingFrame,
   selectSetlistFrame,
@@ -335,6 +337,184 @@ describe('overlay state selectors', () => {
       ).toMatchObject({ currentText: '潮聲沿著夜色靠岸' });
       expect(nextLyricsBoundaryDelayMs(value)).toBeNull();
     }
+  });
+
+  it('projects the active section and beat from playback time without lyrics offset', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 12000 },
+      lyrics: { ...snapshot().lyrics, offsetMs: 3000 },
+      musicStructure: {
+        documentId: 'music-1',
+        trackId: 'track-1',
+        sourceRevision: 'source-1',
+        sourceDurationMs: 180000,
+        level: 'M2',
+        tempo: { bpm: 120, confidence: 0.8 },
+        beats: [
+          { timeMs: 11500, positionInBar: 4, confidence: 0.9 },
+          {
+            timeMs: 12000,
+            positionInBar: 1,
+            downbeat: true,
+            confidence: 0.82,
+          },
+          { timeMs: 12500, positionInBar: 2, confidence: 0.78 },
+        ],
+        sections: [
+          {
+            sectionId: 'section-verse',
+            startMs: 0,
+            endMs: 12000,
+            role: 'verse',
+            confidence: 0.91,
+          },
+          {
+            sectionId: 'section-chorus',
+            startMs: 12000,
+            endMs: 24000,
+            role: 'chorus',
+            confidence: 0.73,
+          },
+        ],
+      },
+    });
+
+    expect(
+      selectMusicStructureFrame(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }),
+    ).toEqual({
+      documentId: 'music-1',
+      level: 'M2',
+      activeSection: {
+        sectionId: 'section-chorus',
+        role: 'chorus',
+        confidence: 0.73,
+      },
+      currentBeat: {
+        beatIndex: 1,
+        timeMs: 12000,
+        elapsedMs: 0,
+        positionInBar: 1,
+        downbeat: true,
+        confidence: 0.82,
+      },
+    });
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
+    ).toMatchObject({
+      musicStructure: {
+        activeSection: { role: 'chorus' },
+        currentBeat: { timeMs: 12000, downbeat: true },
+      },
+    });
+  });
+
+  it('falls back to M0 when music structure does not belong to the playing track', () => {
+    const value = snapshot({
+      musicStructure: {
+        documentId: 'music-1',
+        trackId: 'another-track',
+        sourceRevision: 'source-1',
+        sourceDurationMs: 180000,
+        level: 'M2',
+        tempo: null,
+        beats: [],
+        sections: [],
+      },
+    });
+
+    expect(selectMusicStructureFrame(value)).toBeNull();
+    expect(selectLyricsFrame(value)).not.toHaveProperty('musicStructure');
+  });
+
+  it('schedules the next confident lyric, beat, or section boundary and freezes non-playing states', () => {
+    const value = snapshot({
+      playback: {
+        ...snapshot().playback,
+        positionMs: 12000,
+        rate: 2,
+      },
+      lyrics: {
+        ...snapshot().lyrics,
+        offsetMs: 1000,
+        lines: [
+          { text: 'current', startMs: 9000, endMs: 15000 },
+          { text: 'next', startMs: 15000, endMs: 20000 },
+        ],
+      },
+      musicStructure: {
+        documentId: 'music-1',
+        trackId: 'track-1',
+        sourceRevision: 'source-1',
+        sourceDurationMs: 180000,
+        level: 'M2',
+        tempo: null,
+        beats: [
+          { timeMs: 12200, confidence: 0.2 },
+          { timeMs: 12500, confidence: 0.8 },
+        ],
+        sections: [
+          {
+            sectionId: 'section-1',
+            startMs: 0,
+            endMs: 13000,
+            role: 'verse',
+            confidence: 0.9,
+          },
+          {
+            sectionId: 'section-2',
+            startMs: 13000,
+            endMs: 180000,
+            role: 'unknown',
+            confidence: 0.9,
+          },
+        ],
+      },
+    });
+    const nowMs = Date.parse(value.generatedAt);
+
+    expect(nextPresentationBoundaryDelayMs(value, { nowMs })).toBe(250);
+    for (const status of [
+      'paused',
+      'buffering',
+      'seeking',
+      'ended',
+      'disconnected',
+    ]) {
+      expect(
+        nextPresentationBoundaryDelayMs(
+          { ...value, playback: { ...value.playback, status } },
+          { nowMs },
+        ),
+      ).toBeNull();
+    }
+  });
+
+  it('schedules within contract limits without spreading a large beat grid', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 0 },
+      lyrics: { ...snapshot().lyrics, trackId: 'another-track' },
+      musicStructure: {
+        documentId: 'music-large',
+        trackId: 'track-1',
+        sourceRevision: 'source-1',
+        sourceDurationMs: 180000,
+        level: 'M1',
+        tempo: null,
+        beats: Array.from({ length: 130000 }, (_, index) => ({
+          timeMs: index + 1,
+          confidence: 0.9,
+        })),
+        sections: [],
+      },
+    });
+
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }),
+    ).toBe(1);
   });
 
   it('projects a negative display compensation ahead while playing', () => {

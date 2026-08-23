@@ -357,6 +357,13 @@ Music Analysis capability。BPM estimate、beat/downbeat timestamps、bar positi
 section intervals 與播放器 tempo rate 是不同資料，需保存 confidence、來源
 fingerprint、analyzer/profile provenance 與使用者 override。
 
+Output v3 已加入以來源 SHA revision 為 identity 的 immutable
+`music-structure.document` 與動態 reference；beat grid／section list 不會隨每次
+playback tick 重送。Lyrics `karaoke-stack` 已能依 canonical clock 消費可信的
+beat/downbeat 與 section role，缺少、無效、過期、低信心或不同曲目的資料維持 M0
+原樣，reduced motion 不執行 beat 動畫。這一層的自動測試已完成，Workbench／OBS
+人工視覺驗收仍待執行；分析 sidecar 的實際載入、產生與 optional runtime 尚未開始。
+
 All-In-One Infer 是第一個完整 M1/M2 候選，因為同一分析路線可提供 BPM、
 beat/downbeat 與 section evidence；它不產生 T2 逐字對齊，也不能讓 Lyrics
 偷偷啟動 vocal separation。啟用前需通過固定 fixture、Windows packaged CPU、

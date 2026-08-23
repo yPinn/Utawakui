@@ -334,6 +334,36 @@ describe('outputRuntime controller', () => {
     expect(runtime.publish({}, other)).toBe(false);
   });
 
+  it('accepts an IPC sender wrapper for the attached renderer id', () => {
+    const runtime = createOutputRuntime({
+      bootId: 'boot-source-wrapper',
+      getConfig: () => ({
+        outputRuntime: { autoStart: false, port: 8700 },
+      }),
+    });
+    const attached = new EventEmitter();
+    attached.id = 14;
+    const ipcSender = { id: 14 };
+    runtime.attachRenderer(attached);
+
+    expect(runtime.connectSource(ipcSender)).toMatchObject({
+      observed: { sourceSynchronization: 'syncing' },
+    });
+    expect(
+      runtime.publish(
+        {
+          contractVersion: 3,
+          bootId: 'boot-source-wrapper',
+          sourceEpoch: 'epoch-wrapper',
+          kind: 'full',
+          revision: 1,
+          payload: createEmptyOutputSnapshot({ revision: 1 }),
+        },
+        ipcSender,
+      ),
+    ).toBe(true);
+  });
+
   it('starts automatically only when configured and gate-authorized', async () => {
     const { factory, servers } = createServerFactory();
     let config = { outputRuntime: { autoStart: false, port: 8700 } };

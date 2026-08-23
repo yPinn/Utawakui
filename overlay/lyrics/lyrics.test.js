@@ -306,4 +306,228 @@ describe('lyrics overlay renderer', () => {
     expect(frames.at(-1).currentSegments[1].state).toBe('active');
     scheduler.stop();
   });
+
+  it('applies confident music cues only to karaoke-stack and pulses a new downbeat', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 7,
+      visible: true,
+      currentText: 'chorus line',
+      nextText: 'next line',
+      language: 'en',
+      musicStructure: {
+        documentId: 'music-1',
+        level: 'M2',
+        activeSection: {
+          sectionId: 'section-1',
+          role: 'chorus',
+          confidence: 0.8,
+        },
+        currentBeat: {
+          beatIndex: 4,
+          timeMs: 12000,
+          elapsedMs: 0,
+          positionInBar: 1,
+          downbeat: true,
+          confidence: 0.75,
+        },
+      },
+    };
+
+    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+
+    expect(elements.root.dataset).toMatchObject({
+      musicLevel: 'M2',
+      musicSection: 'chorus',
+      musicDownbeat: 'true',
+    });
+    expect(elements.current.animate).toHaveBeenCalledWith(
+      [
+        { filter: 'brightness(1)' },
+        { filter: 'brightness(1.12)' },
+        { filter: 'brightness(1)' },
+      ],
+      { duration: 180, easing: 'ease-out' },
+    );
+
+    elements.current.animate.mockClear();
+    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+    expect(elements.current.animate).not.toHaveBeenCalledWith(
+      expect.arrayContaining([{ filter: 'brightness(1)' }]),
+      expect.anything(),
+    );
+  });
+
+  it('keeps low-confidence, unknown, reduced-motion, and other templates static', () => {
+    const frame = {
+      revision: 8,
+      visible: true,
+      currentText: 'line',
+      nextText: '',
+      language: 'en',
+      musicStructure: {
+        documentId: 'music-1',
+        level: 'M2',
+        activeSection: {
+          sectionId: 'section-unknown',
+          role: 'unknown',
+          confidence: 0.9,
+        },
+        currentBeat: {
+          beatIndex: 0,
+          timeMs: 1000,
+          elapsedMs: 0,
+          positionInBar: 1,
+          downbeat: true,
+          confidence: 0.49,
+        },
+      },
+    };
+    for (const options of [
+      { templateId: 'karaoke-stack' },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+      { templateId: 'focus-line' },
+    ]) {
+      const elements = domElements();
+      renderLyricsFrame(elements, frame, options);
+      expect(elements.root.dataset).not.toHaveProperty('musicSection');
+      expect(elements.root.dataset).not.toHaveProperty('musicDownbeat');
+      expect(elements.current.animate).not.toHaveBeenCalledWith(
+        expect.arrayContaining([{ filter: 'brightness(1)' }]),
+        expect.anything(),
+      );
+    }
+  });
+
+  it('does not pulse a stale downbeat from an initial mid-beat snapshot', () => {
+    const elements = domElements();
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 10,
+        visible: true,
+        currentText: 'line',
+        nextText: '',
+        language: 'en',
+        musicStructure: {
+          documentId: 'music-1',
+          level: 'M1',
+          activeSection: null,
+          currentBeat: {
+            beatIndex: 0,
+            timeMs: 1000,
+            elapsedMs: 400,
+            positionInBar: 1,
+            downbeat: true,
+            confidence: 0.9,
+          },
+        },
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.root.dataset.musicDownbeat).toBe('true');
+    expect(elements.current.animate).not.toHaveBeenCalledWith(
+      expect.arrayContaining([{ filter: 'brightness(1)' }]),
+      expect.anything(),
+    );
+  });
+
+  it('removes music attributes when presentation returns to M0', () => {
+    const elements = domElements();
+    elements.root.dataset.musicLevel = 'M2';
+    elements.root.dataset.musicSection = 'chorus';
+    elements.root.dataset.musicDownbeat = 'true';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 9,
+        visible: true,
+        currentText: 'unchanged line',
+        nextText: '',
+        language: 'en',
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.root.dataset).not.toHaveProperty('musicLevel');
+    expect(elements.root.dataset).not.toHaveProperty('musicSection');
+    expect(elements.root.dataset).not.toHaveProperty('musicDownbeat');
+    expect(elements.current.textContent).toBe('unchanged line');
+  });
+
+  it('cancels local boundary timers while the runtime is disconnected', () => {
+    const scheduled = [];
+    const cancelSchedule = vi.fn();
+    const scheduler = createLyricsFrameScheduler({
+      now: () => Date.parse('2026-08-22T00:00:00.000Z'),
+      schedule: (callback, delay) => {
+        scheduled.push({ callback, delay });
+        return scheduled.length;
+      },
+      cancelSchedule,
+    });
+    scheduler.update({
+      version: 2,
+      revision: 1,
+      generatedAt: '2026-08-22T00:00:00.000Z',
+      displayDelayMs: 0,
+      playback: {
+        status: 'playing',
+        positionMs: 1000,
+        durationMs: 10000,
+        rate: 1,
+        track: { id: 'track-1', title: 'Song' },
+      },
+      lyrics: {
+        trackId: 'track-1',
+        source: { language: 'en' },
+        synced: true,
+        offsetMs: 0,
+        activeLineIndex: 0,
+        lines: [{ text: 'first', startMs: 0, endMs: 2000 }],
+      },
+    });
+
+    scheduler.suspend();
+    expect(cancelSchedule).toHaveBeenCalledWith(1);
+    scheduled[0].callback();
+    expect(scheduled).toHaveLength(1);
+  });
+
+  it('can refresh the current frame after a template change', () => {
+    const frames = [];
+    const scheduler = createLyricsFrameScheduler({
+      now: () => Date.parse('2026-08-22T00:00:00.000Z'),
+      onFrame: (frame) => frames.push(frame),
+      schedule: vi.fn(),
+      cancelSchedule: vi.fn(),
+    });
+    scheduler.update({
+      version: 2,
+      revision: 1,
+      generatedAt: '2026-08-22T00:00:00.000Z',
+      displayDelayMs: 0,
+      playback: {
+        status: 'paused',
+        positionMs: 1000,
+        durationMs: 10000,
+        rate: 1,
+        track: { id: 'track-1', title: 'Song' },
+      },
+      lyrics: {
+        trackId: 'track-1',
+        source: { language: 'en' },
+        synced: true,
+        offsetMs: 0,
+        activeLineIndex: 0,
+        lines: [{ text: 'first', startMs: 0, endMs: 2000 }],
+      },
+    });
+
+    scheduler.refresh();
+    expect(frames).toHaveLength(2);
+    scheduler.stop();
+  });
 });

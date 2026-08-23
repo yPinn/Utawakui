@@ -5,9 +5,9 @@
 Executable contract v1, implemented 2026-08-24. The bounded values live in
 `shared/musicStructureContractValues.json`; the main-process trust boundary is
 the pure validator in `electron/lib/musicStructureContract.js`, exercised by
-fixed JSON fixtures. Analyzer installation, sidecar persistence, authored UI,
-Output cue transport, presentation recipes, and model selection remain
-unimplemented.
+fixed JSON fixtures. Additive Output v3 cue transport and the first bounded
+`karaoke-stack` consumer are implemented; analyzer installation, sidecar
+persistence/loading, authored UI, and model selection remain unimplemented.
 
 The accepted product endpoint is:
 
@@ -202,18 +202,34 @@ Lyrics owns the user's timing and correction workflow. Music Analysis supplies
 optional cues through an app-owned interface. Presentation packs declare which
 signals they can consume and always provide M0/T2 fallbacks.
 
-The future Output document may project a bounded immutable cue document keyed by
-source revision. Dynamic snapshots continue to carry only canonical playback
-state and references; they do not resend the complete beat grid or section list
-on every tick. Templates interpolate against the canonical clock and stop during
-pause, buffering, seek, end, unavailable, or disconnect states.
+Output v3 projects current M1/M2 signals as an additive immutable
+`music-structure.document` stream. Its document id is keyed by the validated
+audio SHA-256 revision and contains only public source identity, duration, tempo,
+beat/downbeat cues, canonical section intervals, and bounded confidence. Raw
+labels, analyzer provenance, paths, and executable fields do not cross into the
+Browser Source contract.
+
+Dynamic snapshots carry only a nullable `{ documentId, documentRevision }`
+reference; they do not resend the complete beat grid or section list on every
+clock tick. Missing, invalid, stale, M0, or track-mismatched signals publish the
+null reference and preserve the existing presentation. Templates interpolate
+against the canonical clock and stop during pause, buffering, seek, end,
+unavailable, or disconnect states.
+
+The first consumer is intentionally bounded to the Lyrics `karaoke-stack`
+template. Current beat and section state is derived locally from the canonical
+playback clock. Only canonical cues with confidence at or above `0.5` may select
+the section variant or downbeat pulse; missing/low confidence, `unknown`, reduced
+motion, and M0 retain the normal static presentation. T2 word progress remains a
+separate layer and is neither created nor shifted by these cues.
 
 ## Rollout order
 
 1. Implement and verify T0/T1 normalization plus T2 import/manual editing.
 2. Accept the executable music-analysis schema and fixed fixtures.
 3. Add immutable cue transport and one segment-aware visual recipe with an M0
-   fallback.
+   fallback — implementation and automated verification complete; human
+   Workbench/OBS visual acceptance pending.
 4. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
    provisional community environment.
 5. Resolve and package-smoke `analysis-structure`; resolve `combined-ml` only
@@ -230,7 +246,7 @@ pause, buffering, seek, end, unavailable, or disconnect states.
 - automatic word/syllable alignment provider and confidence UX;
 - manual correction UI;
 - meter changes and hierarchical or overlapping song sections;
-- compatibility window and message name for Output cue documents;
+- longer-term compatibility window beyond the additive Output v3 cue stream;
 - whether decoded-audio cache reuse justifies retained disk space; and
 - GPU acceleration, which remains separate from the CPU-completable product
   path.

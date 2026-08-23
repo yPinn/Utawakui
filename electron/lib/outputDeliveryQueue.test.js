@@ -1,7 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import lyricsTimingValues from '../../shared/lyricsTimingValues.json';
+import musicStructureValues from '../../shared/musicStructureContractValues.json';
 import outputDeliveryModule from './outputDeliveryQueue.js';
 
-const { createOutputClientDelivery } = outputDeliveryModule;
+const { DEFAULT_MAX_PENDING_BYTES, createOutputClientDelivery } =
+  outputDeliveryModule;
 
 function createClient() {
   const sends = [];
@@ -19,6 +22,35 @@ afterEach(() => {
 });
 
 describe('output client delivery queue', () => {
+  it('fits the largest legal split-content handshake behind one in-flight message', () => {
+    const client = createClient();
+    const delivery = createOutputClientDelivery({ client });
+
+    expect(delivery.enqueue({ kind: 'config', data: 'in-flight' })).toBe(true);
+    expect(
+      delivery.enqueue({
+        kind: 'content',
+        data: 'l'.repeat(lyricsTimingValues.maxDocumentBytes),
+      }),
+    ).toBe(true);
+    expect(
+      delivery.enqueue({
+        kind: 'content',
+        data: 'm'.repeat(musicStructureValues.maxDocumentBytes),
+      }),
+    ).toBe(true);
+    expect(
+      delivery.enqueue({
+        kind: 'semantic',
+        data: 's'.repeat(256 * 1024),
+      }),
+    ).toBe(true);
+    expect(client.terminate).not.toHaveBeenCalled();
+    expect(DEFAULT_MAX_PENDING_BYTES).toBeGreaterThanOrEqual(
+      delivery.getStats().queuedBytes,
+    );
+  });
+
   it('keeps one send in flight and replaces pending clock corrections', () => {
     const client = createClient();
     const delivery = createOutputClientDelivery({ client });

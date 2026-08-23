@@ -6,7 +6,7 @@ import {
   withPreviewFallback,
 } from '../shared/preview.mjs';
 import {
-  nextLyricsBoundaryDelayMs,
+  nextPresentationBoundaryDelayMs,
   selectLyricsFrame,
 } from '../shared/state.mjs';
 
@@ -17,6 +17,17 @@ const PREVIEW_FRAME = Object.freeze({
   nextText: '重なって歌になる',
   language: 'ja',
 });
+const MIN_PRESENTATION_CONFIDENCE = 0.5;
+const PRESENTATION_SECTION_ROLES = new Set([
+  'intro',
+  'verse',
+  'pre-chorus',
+  'chorus',
+  'bridge',
+  'instrumental',
+  'outro',
+]);
+const lastRenderedBeatKeys = new WeakMap();
 
 function progressPercentage(value) {
   if (!Number.isFinite(value)) return 0;
@@ -71,6 +82,79 @@ function renderCurrentLyrics(element, frame, options) {
   }
 }
 
+function activeTemplateId(elements, options) {
+  if (typeof options.templateId === 'string') return options.templateId;
+  return (
+    elements.root.ownerDocument?.documentElement?.dataset?.ovlTemplate ?? ''
+  );
+}
+
+function confidentCue(cue) {
+  return (
+    cue &&
+    Number.isFinite(cue.confidence) &&
+    cue.confidence >= MIN_PRESENTATION_CONFIDENCE &&
+    cue.confidence <= 1
+  );
+}
+
+function clearMusicPresentation(root) {
+  delete root.dataset.musicLevel;
+  delete root.dataset.musicSection;
+  delete root.dataset.musicDownbeat;
+}
+
+function applyMusicStructurePresentation(elements, frame, options) {
+  clearMusicPresentation(elements.root);
+  const music = frame.musicStructure;
+  if (
+    activeTemplateId(elements, options) !== 'karaoke-stack' ||
+    !music ||
+    !['M1', 'M2'].includes(music.level)
+  ) {
+    lastRenderedBeatKeys.delete(elements.root);
+    return;
+  }
+
+  elements.root.dataset.musicLevel = music.level;
+  const section = music.activeSection;
+  if (confidentCue(section) && PRESENTATION_SECTION_ROLES.has(section.role)) {
+    elements.root.dataset.musicSection = section.role;
+  }
+
+  const beat = music.currentBeat;
+  const beatKey =
+    confidentCue(beat) && Number.isFinite(beat.timeMs)
+      ? `${music.documentId}\0${beat.timeMs}`
+      : null;
+  const previousBeatKey = lastRenderedBeatKeys.get(elements.root) ?? null;
+  if (beatKey === null) {
+    lastRenderedBeatKeys.delete(elements.root);
+    return;
+  }
+  lastRenderedBeatKeys.set(elements.root, beatKey);
+  if (beat.downbeat !== true) return;
+
+  elements.root.dataset.musicDownbeat = 'true';
+  if (
+    beatKey !== previousBeatKey &&
+    Number.isFinite(beat.elapsedMs) &&
+    beat.elapsedMs <= 250 &&
+    frame.visible &&
+    options.reducedMotion !== true &&
+    typeof elements.current.animate === 'function'
+  ) {
+    elements.current.animate(
+      [
+        { filter: 'brightness(1)' },
+        { filter: 'brightness(1.12)' },
+        { filter: 'brightness(1)' },
+      ],
+      { duration: 180, easing: 'ease-out' },
+    );
+  }
+}
+
 export function renderLyricsFrame(elements, frame, options = {}) {
   const previousText =
     elements.current.dataset.currentText ?? elements.current.textContent;
@@ -80,6 +164,7 @@ export function renderLyricsFrame(elements, frame, options = {}) {
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
   elements.root.dataset.revision = String(frame.revision);
+  applyMusicStructurePresentation(elements, frame, options);
 
   const shouldAnimate =
     frame.visible &&
@@ -116,7 +201,7 @@ export function createLyricsFrameScheduler(options = {}) {
     if (stopped || !latestSnapshot) return;
     const nowMs = now();
     onFrame(selectLyricsFrame(latestSnapshot, { nowMs }));
-    const delay = nextLyricsBoundaryDelayMs(latestSnapshot, { nowMs });
+    const delay = nextPresentationBoundaryDelayMs(latestSnapshot, { nowMs });
     if (delay === null) return;
     timer = schedule(() => {
       timer = null;
@@ -137,7 +222,17 @@ export function createLyricsFrameScheduler(options = {}) {
     latestSnapshot = null;
   }
 
-  return { stop, update };
+  function suspend() {
+    clearTimer();
+    latestSnapshot = null;
+  }
+
+  function refresh() {
+    clearTimer();
+    renderLatest();
+  }
+
+  return { refresh, stop, suspend, update };
 }
 
 function boot() {
@@ -169,8 +264,14 @@ function boot() {
   });
   const connection = createOverlayConnection({
     kind: 'lyrics',
-    onConfig: (slot) => applyOverlayAppearance(document, slot),
+    onConfig: (slot) => {
+      applyOverlayAppearance(document, slot);
+      frameScheduler.refresh();
+    },
     onSnapshot: (snapshot) => frameScheduler.update(snapshot),
+    onStatus: (status) => {
+      if (status !== 'connected') frameScheduler.suspend();
+    },
   });
   connection.start();
   window.addEventListener(

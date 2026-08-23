@@ -83,6 +83,19 @@ const ARTWORK_MIME_TYPES = Object.freeze({
   '.webp': 'image/webp',
 });
 
+function deepFreeze(value) {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) {
+    return value;
+  }
+  for (const nested of Object.values(value)) deepFreeze(nested);
+  return Object.freeze(value);
+}
+
+function immutableStreams(value) {
+  if (Object.isFrozen(value)) return value;
+  return deepFreeze(structuredClone(value));
+}
+
 function validatePort(value) {
   if (!Number.isSafeInteger(value) || value < 0 || value > 65535) {
     throw new TypeError(
@@ -441,6 +454,7 @@ function createOutputServer(options = {}) {
         positionMs: 0,
       },
       lyrics: state.lyrics,
+      musicStructure: state.musicStructure,
       queue: state.queue,
     });
   }
@@ -471,6 +485,9 @@ function createOutputServer(options = {}) {
     const lyricsChanged =
       identityChanged ||
       contentChanged(previousStreams, streamProjection, 'lyrics');
+    const musicStructureChanged =
+      identityChanged ||
+      contentChanged(previousStreams, streamProjection, 'musicStructure');
     const queueChanged =
       identityChanged ||
       contentChanged(previousStreams, streamProjection, 'queue');
@@ -479,6 +496,16 @@ function createOutputServer(options = {}) {
         client,
         'content',
         splitContentMessage('lyrics.document', streamProjection.lyrics),
+      );
+    }
+    if (musicStructureChanged && streamProjection.musicStructure) {
+      enqueueClient(
+        client,
+        'content',
+        splitContentMessage(
+          'music-structure.document',
+          streamProjection.musicStructure,
+        ),
       );
     }
     if (queueChanged && streamProjection.queue) {
@@ -491,6 +518,7 @@ function createOutputServer(options = {}) {
     const semantic =
       identityChanged ||
       lyricsChanged ||
+      musicStructureChanged ||
       queueChanged ||
       semanticStateKey(previousStreams) !== semanticStateKey(streamProjection);
     enqueueClient(client, semantic ? 'semantic' : 'clock', splitStateMessage());
@@ -842,7 +870,9 @@ function createOutputServer(options = {}) {
     const previousIdentity = { ...sourceIdentity };
     const previousStreams = streamProjection;
     snapshot = parseOutputSnapshot(value.snapshot);
-    streamProjection = value.streams ? structuredClone(value.streams) : null;
+    // ProjectionHub validates and freezes content once. Reuse that tree on
+    // clock-only updates; standalone callers are defensively cloned once.
+    streamProjection = value.streams ? immutableStreams(value.streams) : null;
     sourceIdentity = {
       bootId: value.bootId,
       sourceEpoch: value.sourceEpoch,

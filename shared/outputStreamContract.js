@@ -3,11 +3,13 @@
 const outputValues = require('./outputContractValues.json');
 const runtimeValues = require('./outputRuntimeValues.json');
 const timingValues = require('./lyricsTimingValues.json');
+const musicValues = require('./musicStructureContractValues.json');
 const { parseOutputSnapshot } = require('./outputContract');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
 const OUTPUT_STREAMS = new Set([
   'lyrics.document',
+  'music-structure.document',
   'queue.document',
   'state.snapshot',
 ]);
@@ -24,6 +26,9 @@ const PLAYBACK_STATUSES = new Set([
 const QUEUE_ITEM_STATES = new Set(['played', 'current', 'queued']);
 const MAX_ID_LENGTH = 200;
 const MAX_LABEL_LENGTH = 300;
+const SHA256_RE = /^[a-f0-9]{64}$/;
+const MUSIC_LEVELS = new Set(['M1', 'M2']);
+const MUSIC_SECTION_ROLES = new Set(musicValues.canonicalSectionRoles);
 
 function invalid(path, reason) {
   throw new TypeError(`Invalid output stream ${path}: ${reason}`);
@@ -34,6 +39,11 @@ function record(value, path) {
     invalid(path, 'expected an object');
   }
   return value;
+}
+
+function strictKeys(value, path, allowed) {
+  const unexpected = Object.keys(value).find((key) => !allowed.has(key));
+  if (unexpected) invalid(`${path}.${unexpected}`, 'unexpected field');
 }
 
 function string(value, path, maxLength, allowEmpty = true) {
@@ -263,6 +273,175 @@ function parseQueueDocument(value) {
   };
 }
 
+function optionalConfidence(value, path) {
+  if (value === undefined) return {};
+  return {
+    confidence: finite(value, path, {
+      min: musicValues.minConfidence,
+      max: musicValues.maxConfidence,
+    }),
+  };
+}
+
+function parseMusicStructureDocument(value) {
+  const path = 'payload.document';
+  const document = record(value, path);
+  strictKeys(
+    document,
+    path,
+    new Set([
+      'documentId',
+      'trackId',
+      'sourceRevision',
+      'sourceDurationMs',
+      'level',
+      'tempo',
+      'beats',
+      'sections',
+    ]),
+  );
+  if (
+    Buffer.byteLength(JSON.stringify(document), 'utf8') >
+    musicValues.maxDocumentBytes
+  ) {
+    invalid(path, 'document is too large');
+  }
+  if (!SHA256_RE.test(document.sourceRevision)) {
+    invalid(`${path}.sourceRevision`, 'expected a lowercase SHA-256 digest');
+  }
+  const documentId = id(document.documentId, `${path}.documentId`);
+  if (documentId !== `music-structure-${document.sourceRevision}`) {
+    invalid(`${path}.documentId`, 'must be keyed by source revision');
+  }
+  const sourceDurationMs = integer(
+    document.sourceDurationMs,
+    `${path}.sourceDurationMs`,
+    { max: musicValues.maxDurationMs },
+  );
+  if (!MUSIC_LEVELS.has(document.level)) {
+    invalid(`${path}.level`, 'expected M1 or M2');
+  }
+
+  let tempo = null;
+  if (document.tempo !== null) {
+    const rawTempo = record(document.tempo, `${path}.tempo`);
+    strictKeys(rawTempo, `${path}.tempo`, new Set(['bpm', 'confidence']));
+    tempo = {
+      bpm: finite(rawTempo.bpm, `${path}.tempo.bpm`, {
+        min: musicValues.minBpm,
+        max: musicValues.maxBpm,
+      }),
+      ...optionalConfidence(rawTempo.confidence, `${path}.tempo.confidence`),
+    };
+  }
+
+  if (
+    !Array.isArray(document.beats) ||
+    document.beats.length > musicValues.maxBeats
+  ) {
+    invalid(`${path}.beats`, 'expected a bounded array');
+  }
+  let previousBeatMs = -1;
+  const maxCueTimeMs = Math.min(
+    musicValues.maxDurationMs,
+    sourceDurationMs + musicValues.durationToleranceMs,
+  );
+  const beats = document.beats.map((value, index) => {
+    const beatPath = `${path}.beats[${index}]`;
+    const beat = record(value, beatPath);
+    strictKeys(
+      beat,
+      beatPath,
+      new Set(['timeMs', 'positionInBar', 'downbeat', 'confidence']),
+    );
+    const timeMs = integer(beat.timeMs, `${beatPath}.timeMs`, {
+      max: maxCueTimeMs,
+    });
+    if (timeMs <= previousBeatMs) {
+      invalid(`${beatPath}.timeMs`, 'beats must be strictly monotonic');
+    }
+    previousBeatMs = timeMs;
+    if (beat.downbeat !== undefined && typeof beat.downbeat !== 'boolean') {
+      invalid(`${beatPath}.downbeat`, 'expected a boolean');
+    }
+    return {
+      timeMs,
+      ...(beat.positionInBar === undefined
+        ? {}
+        : {
+            positionInBar: integer(
+              beat.positionInBar,
+              `${beatPath}.positionInBar`,
+              { min: 1, max: musicValues.maxBeatsPerBar },
+            ),
+          }),
+      ...(beat.downbeat === undefined ? {} : { downbeat: beat.downbeat }),
+      ...optionalConfidence(beat.confidence, `${beatPath}.confidence`),
+    };
+  });
+
+  if (
+    !Array.isArray(document.sections) ||
+    document.sections.length > musicValues.maxSections
+  ) {
+    invalid(`${path}.sections`, 'expected a bounded array');
+  }
+  let previousSectionEndMs = 0;
+  const sectionIds = new Set();
+  const sections = document.sections.map((value, index) => {
+    const sectionPath = `${path}.sections[${index}]`;
+    const section = record(value, sectionPath);
+    strictKeys(
+      section,
+      sectionPath,
+      new Set(['sectionId', 'startMs', 'endMs', 'role', 'confidence']),
+    );
+    const sectionId = id(section.sectionId, `${sectionPath}.sectionId`);
+    if (sectionIds.has(sectionId)) {
+      invalid(`${sectionPath}.sectionId`, 'duplicate id');
+    }
+    sectionIds.add(sectionId);
+    const startMs = integer(section.startMs, `${sectionPath}.startMs`, {
+      max: maxCueTimeMs,
+    });
+    const endMs = integer(section.endMs, `${sectionPath}.endMs`, {
+      max: maxCueTimeMs,
+    });
+    if (endMs <= startMs || startMs < previousSectionEndMs) {
+      invalid(sectionPath, 'sections must be positive and non-overlapping');
+    }
+    previousSectionEndMs = endMs;
+    if (!MUSIC_SECTION_ROLES.has(section.role)) {
+      invalid(`${sectionPath}.role`, 'unsupported role');
+    }
+    return {
+      sectionId,
+      startMs,
+      endMs,
+      role: section.role,
+      ...optionalConfidence(section.confidence, `${sectionPath}.confidence`),
+    };
+  });
+
+  const expectedLevel = sections.length > 0 ? 'M2' : 'M1';
+  if (
+    document.level !== expectedLevel ||
+    (expectedLevel === 'M1' && tempo === null && beats.length === 0)
+  ) {
+    invalid(`${path}.level`, `expected ${expectedLevel} with usable signals`);
+  }
+  return {
+    documentId,
+    trackId: id(document.trackId, `${path}.trackId`),
+    sourceRevision: document.sourceRevision,
+    sourceDurationMs,
+    level: expectedLevel,
+    tempo,
+    beats,
+    sections,
+  };
+}
+
 function parsePlayback(value) {
   const playback = record(value, 'payload.playback');
   if (!PLAYBACK_STATUSES.has(playback.status)) {
@@ -332,6 +511,11 @@ function parseDynamicState(value) {
     lyrics.activeSegmentId,
     'payload.lyrics.activeSegmentId',
   );
+  const musicStructure = parseReference(
+    state.musicStructure ?? { documentId: null, documentRevision: 0 },
+    'payload.musicStructure',
+    { nullable: true },
+  );
   if (
     lyricsReference.documentId === null &&
     (activeLineId !== null || activeSegmentId !== null)
@@ -355,6 +539,7 @@ function parseDynamicState(value) {
       activeSegmentId,
     },
     queue: parseReference(state.queue, 'payload.queue'),
+    musicStructure,
   };
 }
 
@@ -378,6 +563,10 @@ function parseOutputStreamEnvelope(value, expectedBootId) {
   let parsedPayload;
   if (envelope.stream === 'lyrics.document') {
     parsedPayload = { document: parseLyricsDocument(payload.document) };
+  } else if (envelope.stream === 'music-structure.document') {
+    parsedPayload = {
+      document: parseMusicStructureDocument(payload.document),
+    };
   } else if (envelope.stream === 'queue.document') {
     parsedPayload = { document: parseQueueDocument(payload.document) };
   } else {

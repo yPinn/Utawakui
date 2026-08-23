@@ -71,6 +71,26 @@ const lyricsPayload = {
     ],
   },
 };
+const musicStructurePayload = {
+  document: {
+    documentId: `music-structure-${'a'.repeat(64)}`,
+    trackId: 'track-1',
+    sourceRevision: 'a'.repeat(64),
+    sourceDurationMs: 180000,
+    level: 'M2',
+    tempo: { bpm: 120, confidence: 0.82 },
+    beats: [{ timeMs: 1000, downbeat: true, confidence: 0.9 }],
+    sections: [
+      {
+        sectionId: 'section_1',
+        startMs: 0,
+        endMs: 10000,
+        role: 'chorus',
+        confidence: 0.8,
+      },
+    ],
+  },
+};
 
 function dynamicPayload(overrides = {}) {
   return {
@@ -91,6 +111,7 @@ function dynamicPayload(overrides = {}) {
       activeSegmentId: null,
     },
     queue: { documentId: 'queue-current', documentRevision: 1 },
+    musicStructure: { documentId: null, documentRevision: 0 },
     ...overrides,
   };
 }
@@ -336,6 +357,67 @@ describe('output projection hub', () => {
       ),
     ).toBe(true);
     expect(hub.getProjection().snapshot.queue.items).toHaveLength(2);
+  });
+
+  it('requires and caches a referenced music-structure revision', () => {
+    const hub = createOutputProjectionHub({ bootId: BOOT_ID });
+    hub.connectSource(SOURCE_ID);
+    hub.publish(streamEnvelope('lyrics.document', 1, lyricsPayload), SOURCE_ID);
+    hub.publish(streamEnvelope('queue.document', 1, queuePayload), SOURCE_ID);
+    const dynamic = dynamicPayload({
+      musicStructure: {
+        documentId: musicStructurePayload.document.documentId,
+        documentRevision: 1,
+      },
+    });
+
+    expect(
+      hub.publish(streamEnvelope('state.snapshot', 1, dynamic), SOURCE_ID),
+    ).toBe(false);
+    expect(
+      hub.publish(
+        streamEnvelope('music-structure.document', 1, musicStructurePayload),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 1, {
+          ...dynamic,
+          playback: {
+            ...dynamic.playback,
+            track: { id: 'track-2', title: 'Another song' },
+          },
+        }),
+        SOURCE_ID,
+      ),
+    ).toBe(false);
+    expect(
+      hub.publish(streamEnvelope('state.snapshot', 1, dynamic), SOURCE_ID),
+    ).toBe(true);
+    expect(hub.getProjection().streams.musicStructure).toMatchObject({
+      revision: 1,
+      document: {
+        documentId: musicStructurePayload.document.documentId,
+        level: 'M2',
+      },
+    });
+    const firstProjection = hub.getProjection();
+    expect(Object.isFrozen(firstProjection.streams)).toBe(true);
+    expect(
+      Object.isFrozen(firstProjection.streams.musicStructure.document),
+    ).toBe(true);
+
+    expect(
+      hub.publish(
+        streamEnvelope('state.snapshot', 2, dynamic, { kind: 'update' }),
+        SOURCE_ID,
+      ),
+    ).toBe(true);
+    const nextProjection = hub.getProjection();
+    expect(nextProjection.streams.musicStructure.document).toBe(
+      firstProjection.streams.musicStructure.document,
+    );
   });
 
   it('allows a new epoch full state to reuse cached immutable content', () => {

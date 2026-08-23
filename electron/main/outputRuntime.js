@@ -218,12 +218,12 @@ function createOutputRuntime({
   }
 
   function connectSource(source) {
-    if (rendererWebContents && source !== rendererWebContents) {
+    const sourceId = rendererId(source);
+    if (!sourceId) return getStatus();
+    if (rendererWebContents && sourceId !== rendererId(rendererWebContents)) {
       return getStatus();
     }
     if (!rendererWebContents) rendererWebContents = source;
-    const sourceId = rendererId(source);
-    if (!sourceId) return getStatus();
     projectionHub.connectSource(sourceId);
     return getStatus();
   }

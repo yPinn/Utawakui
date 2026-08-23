@@ -58,7 +58,11 @@ export function parseOutputMessage(raw) {
     }
 
     if (
-      ['lyrics.document', 'queue.document'].includes(message.type) &&
+      [
+        'lyrics.document',
+        'queue.document',
+        'music-structure.document',
+      ].includes(message.type) &&
       validSplitIdentity(message) &&
       Number.isSafeInteger(message.revision) &&
       message.revision >= 0 &&
@@ -104,13 +108,19 @@ function validSplitIdentity(message) {
 }
 
 function validReference(reference, nullable = false) {
+  if (
+    !reference ||
+    typeof reference !== 'object' ||
+    !Number.isSafeInteger(reference.documentRevision) ||
+    reference.documentRevision < 0
+  ) {
+    return false;
+  }
+  if (reference.documentId === null) {
+    return nullable && reference.documentRevision === 0;
+  }
   return (
-    reference &&
-    typeof reference === 'object' &&
-    ((nullable && reference.documentId === null) ||
-      typeof reference.documentId === 'string') &&
-    Number.isSafeInteger(reference.documentRevision) &&
-    reference.documentRevision >= 0
+    typeof reference.documentId === 'string' && reference.documentId.length > 0
   );
 }
 
@@ -123,7 +133,10 @@ function validDynamicState(state) {
     state.playback &&
     typeof state.playback === 'object' &&
     validReference(state.lyrics, true) &&
-    validReference(state.queue)
+    validReference(state.queue) &&
+    (!Object.hasOwn(state, 'musicStructure') ||
+      state.musicStructure === null ||
+      validReference(state.musicStructure, true))
   );
 }
 
@@ -159,7 +172,12 @@ function contentMatches(reference, entry) {
   );
 }
 
-function assembleSplitSnapshot(message, lyricsEntry, queueEntry) {
+function assembleSplitSnapshot(
+  message,
+  lyricsEntry,
+  queueEntry,
+  musicStructureEntry,
+) {
   const state = message.state;
   const lyricsReference = state.lyrics;
   const lyricsDocument =
@@ -170,7 +188,11 @@ function assembleSplitSnapshot(message, lyricsEntry, queueEntry) {
         : undefined;
   if (
     lyricsDocument === undefined ||
-    !contentMatches(state.queue, queueEntry)
+    !contentMatches(state.queue, queueEntry) ||
+    (state.musicStructure !== undefined &&
+      state.musicStructure !== null &&
+      state.musicStructure.documentId !== null &&
+      !contentMatches(state.musicStructure, musicStructureEntry))
   ) {
     return null;
   }
@@ -211,6 +233,12 @@ function assembleSplitSnapshot(message, lyricsEntry, queueEntry) {
           activeSegmentId: null,
           lines: [],
         },
+    musicStructure:
+      state.musicStructure === undefined ||
+      state.musicStructure === null ||
+      state.musicStructure.documentId === null
+        ? null
+        : musicStructureEntry.document,
   };
 }
 
@@ -237,6 +265,7 @@ function emptyUnavailableSnapshot(now) {
       activeSegmentId: null,
       lines: [],
     },
+    musicStructure: null,
   };
 }
 
@@ -303,6 +332,7 @@ export function createOverlayConnection(options = {}) {
   let activeDisplayDelayMs = null;
   let lyricsEntry = null;
   let queueEntry = null;
+  let musicStructureEntry = null;
   const snapshotTimers = new Set();
   let stopped = true;
 
@@ -386,6 +416,14 @@ export function createOverlayConnection(options = {}) {
         };
         return;
       }
+      if (message.type === 'music-structure.document') {
+        updateSplitIdentity(message);
+        musicStructureEntry = {
+          revision: message.revision,
+          document: message.document,
+        };
+        return;
+      }
       if (message.type === 'source.status') {
         const nextIdentity = `${message.bootId}\0${message.sourceStatus}`;
         if (nextIdentity !== activeProjectionIdentity) {
@@ -403,6 +441,7 @@ export function createOverlayConnection(options = {}) {
           message,
           lyricsEntry,
           queueEntry,
+          musicStructureEntry,
         );
         if (!assembled) return;
         lastReceivedRevision = message.revision;
@@ -448,9 +487,7 @@ export function createOverlayConnection(options = {}) {
     });
     socket.addEventListener('close', () => {
       if (stopped) return;
-      clearSnapshotTimers();
-      lastReceivedRevision = -1;
-      lastDeliveredRevision = -1;
+      resetProjection(null);
       reconnectAttempt += 1;
       onStatus('reconnecting');
       const delay = Math.min(
@@ -468,6 +505,7 @@ export function createOverlayConnection(options = {}) {
     activeProjectionIdentity = nextIdentity;
     lyricsEntry = null;
     queueEntry = null;
+    musicStructureEntry = null;
   }
 
   function updateSplitIdentity(message) {
