@@ -124,6 +124,10 @@ function findByType(root, type) {
   return findAll(root, (node) => node.type === type)[0];
 }
 
+function nodeText(node) {
+  return [node.text, ...(node.children ?? []).map(nodeText)].join('');
+}
+
 describe('Lyrics workspace control contracts', () => {
   it('keeps document display events semantic and keyed by stable line id', () => {
     const seekLine = vi.fn();
@@ -153,36 +157,38 @@ describe('Lyrics workspace control contracts', () => {
     expect(editTiming).toHaveBeenCalledWith('line_1');
   });
 
-  it('emits timing commands without owning the player clock or document save', () => {
-    const tap = vi.fn();
+  it('emits global timing commands and reports compact draft progress', () => {
     const undo = vi.fn();
     const save = vi.fn();
     const cancel = vi.fn();
     const toolbar = mount(LyricsTimingToolbar, {
-      granularity: 'T2',
-      hasDraft: true,
       canTap: true,
       canUndo: true,
       canSave: true,
-      onTap: tap,
+      completedBoundaries: 1,
+      totalBoundaries: 2,
       onUndo: undo,
       onSave: save,
       onCancel: cancel,
     });
 
-    findByProp(toolbar.root, 'aria-label', '記錄目前播放位置').props.onClick();
     findByProp(toolbar.root, 'aria-label', '復原逐字時間').props.onClick();
     findByProp(toolbar.root, 'aria-label', '儲存逐字時間').props.onClick();
     findByProp(toolbar.root, 'aria-label', '取消逐字編輯').props.onClick();
 
-    expect(tap).toHaveBeenCalledOnce();
+    expect(nodeText(toolbar.root)).toContain('逐字校時');
+    expect(nodeText(toolbar.root)).toContain('已記錄 1 / 2');
+    expect(nodeText(toolbar.root)).toContain('復原');
+    expect(nodeText(toolbar.root)).toContain('儲存');
+    expect(nodeText(toolbar.root)).toContain('取消');
     expect(undo).toHaveBeenCalledOnce();
     expect(save).toHaveBeenCalledOnce();
     expect(cancel).toHaveBeenCalledOnce();
   });
 
-  it('emits boundary nudges by boundary index and delta', () => {
+  it('shows one next tap target and nudges only the selected recorded boundary', async () => {
     const nudge = vi.fn();
+    const tap = vi.fn();
     const editor = mount(LyricsSegmentEditor, {
       draft: {
         lineId: 'line_1',
@@ -200,26 +206,63 @@ describe('Lyrics workspace control contracts', () => {
             startMs: 1500,
             endMs: 2000,
           },
+          {
+            segmentId: 's_3',
+            text: ' again',
+            startMs: null,
+            endMs: 2500,
+          },
         ],
       },
+      canTap: true,
       onNudgeBoundary: nudge,
+      onTap: tap,
     });
+
+    expect(nodeText(editor.root)).toContain('下一個起點：「again」');
+    findByProp(editor.root, 'aria-label', '記錄「again」起點').props.onClick();
+    expect(tap).toHaveBeenCalledOnce();
 
     findByProp(
       editor.root,
       'aria-label',
-      '將第 2 段提前 0.1 秒',
+      '選取「world」的起點 1.50 秒',
+    ).props.onClick();
+    await nextTick();
+    findByProp(
+      editor.root,
+      'aria-label',
+      '將「world」提前 0.1 秒',
     ).props.onClick();
     findByProp(
       editor.root,
       'aria-label',
-      '將第 2 段延後 0.1 秒',
+      '將「world」延後 0.1 秒',
     ).props.onClick();
 
     expect(nudge.mock.calls).toEqual([
       [1, -100],
       [1, 100],
     ]);
+  });
+
+  it('shows completion without a record action when every boundary is set', () => {
+    const editor = mount(LyricsSegmentEditor, {
+      draft: {
+        lineId: 'line_1',
+        text: 'Hello world',
+        segments: [
+          { segmentId: 's_1', text: 'Hello ', startMs: 1000, endMs: 1500 },
+          { segmentId: 's_2', text: 'world', startMs: 1500, endMs: 2000 },
+        ],
+      },
+      canTap: false,
+    });
+
+    expect(nodeText(editor.root)).toContain('起點已全部記錄');
+    expect(findByProp(editor.root, 'aria-label', '記錄「world」起點')).toBe(
+      undefined,
+    );
   });
 
   it('shows reading failures through the shared notice component', () => {
@@ -240,12 +283,11 @@ describe('Lyrics workspace control contracts', () => {
     ).toHaveLength(1);
   });
 
-  it('emits preparation selections and commands with semantic payloads', () => {
+  it('applies reading selection on change without adjacent status or commands', () => {
     const handlers = {
       source: vi.fn(),
       manage: vi.fn(),
       reading: vi.fn(),
-      generate: vi.fn(),
       decrease: vi.fn(),
       increase: vi.fn(),
     };
@@ -255,13 +297,12 @@ describe('Lyrics workspace control contracts', () => {
       hasSelectedTrack: true,
       showsReadingAid: true,
       lyricsScript: 'ja',
-      readingVariant: 'off',
+      readingVariant: 'furigana',
       canDecreaseFontSize: true,
       canIncreaseFontSize: true,
       onSourceChange: handlers.source,
       onManageSources: handlers.manage,
       onReadingVariantChange: handlers.reading,
-      onGenerateReading: handlers.generate,
       onDecreaseFontSize: handlers.decrease,
       onIncreaseFontSize: handlers.increase,
     });
@@ -273,14 +314,15 @@ describe('Lyrics workspace control contracts', () => {
     findByProp(root, 'aria-label', '讀音顯示').props.onChange({
       target: { value: 'furigana' },
     });
-    findByProp(root, 'title', '產生讀音').props.onClick();
+    expect(nodeText(root)).not.toContain('已自動套用');
+    expect(findByProp(root, 'title', '重新建立讀音資料')).toBeUndefined();
+    expect(findByProp(root, 'title', '重試建立讀音資料')).toBeUndefined();
     findByProp(root, 'title', '縮小歌詞').props.onClick();
     findByProp(root, 'title', '放大歌詞').props.onClick();
 
     expect(handlers.source).toHaveBeenCalledWith('main.lrc');
     expect(handlers.manage).toHaveBeenCalledOnce();
     expect(handlers.reading).toHaveBeenCalledWith('furigana');
-    expect(handlers.generate).toHaveBeenCalledOnce();
     expect(handlers.decrease).toHaveBeenCalledOnce();
     expect(handlers.increase).toHaveBeenCalledOnce();
   });
@@ -326,6 +368,24 @@ describe('Lyrics workspace control contracts', () => {
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
   });
+
+  it('offers an explicit retry when offset persistence fails', () => {
+    const retry = vi.fn();
+    const live = mount(LyricsLiveControls, {
+      offsetLabel: '+0.2s',
+      canReset: true,
+      error: '同步調整未儲存，請再試一次。',
+      onRetryOffset: retry,
+    });
+    const retryButton = findAll(
+      live.root,
+      (node) => node.type === 'button' && nodeText(node).includes('重試'),
+    )[0];
+
+    expect(findByProp(live.root, 'role', 'alert')).toBeTruthy();
+    retryButton.props.onClick();
+    expect(retry).toHaveBeenCalledOnce();
+  });
 });
 
 describe('LyricsWorkspace event wiring', () => {
@@ -351,6 +411,7 @@ describe('LyricsWorkspace event wiring', () => {
       isLoading: false,
       isLoadingLyrics: false,
       timingSave: { isSaving: false, error: null },
+      offsetSave: { isSaving: false, error: null },
       backfillStatus: { error: '', isRunning: false },
     });
     const selectSource = vi.fn();
@@ -358,6 +419,7 @@ describe('LyricsWorkspace event wiring', () => {
     const resetOffset = vi.fn();
     const refresh = vi.fn();
     const generateReading = vi.fn();
+    const readingDoc = ref(null);
     const separate = vi.fn();
     const selectPreset = vi.fn();
     const selectedPreset = ref('quick');
@@ -390,6 +452,7 @@ describe('LyricsWorkspace event wiring', () => {
         selectSource,
         adjustOffset,
         resetOffset,
+        retryOffsetSave: vi.fn(),
         playFromLine: vi.fn(),
         saveTimingDocument: vi.fn(),
       }),
@@ -397,7 +460,7 @@ describe('LyricsWorkspace event wiring', () => {
     vi.doMock('../../composables/useLyricsReading.js', () => ({
       useLyricsReading: () => ({
         variant: readingVariant,
-        getDoc: () => null,
+        getDoc: () => readingDoc.value,
         isGenerating: () => false,
         errorFor: () => null,
         loadReading: vi.fn(),
@@ -444,7 +507,15 @@ describe('LyricsWorkspace event wiring', () => {
     findByProp(root, 'aria-label', '讀音顯示').props.onChange({
       target: { value: 'romaji' },
     });
-    findByProp(root, 'title', '產生讀音').props.onClick();
+    await nextTick();
+    expect(generateReading).toHaveBeenCalledOnce();
+    readingDoc.value = { lines: [] };
+    findByProp(root, 'aria-label', '讀音顯示').props.onChange({
+      target: { value: 'off' },
+    });
+    findByProp(root, 'aria-label', '讀音顯示').props.onChange({
+      target: { value: 'furigana' },
+    });
     findByProp(root, 'title', '縮小歌詞').props.onClick();
     await nextTick();
     expect(findByProp(root, 'title', '縮小歌詞').props.disabled).toBe(true);
@@ -475,7 +546,7 @@ describe('LyricsWorkspace event wiring', () => {
     );
     expect(refresh).toHaveBeenCalledOnce();
     expect(selectSource).toHaveBeenCalledWith('main.lrc');
-    expect(readingVariant.value).toBe('romaji');
+    expect(readingVariant.value).toBe('furigana');
     expect(generateReading).toHaveBeenCalledOnce();
     expect(selectPreset.mock.calls).toEqual([
       [track, 'high-quality'],

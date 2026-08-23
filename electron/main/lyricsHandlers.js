@@ -19,6 +19,7 @@ const {
   saveTrackLyricsTiming,
   saveTrackReading,
   setLyricsSourceLabel,
+  setLyricsSourceOffset,
   setReadingLine,
 } = require('../lib/library');
 const { probeMusixmatchLyrics } = require('../lib/musixmatch');
@@ -261,6 +262,27 @@ function registerLyricsHandlers({
 
       notifyLibraryUpdated();
       return { sources };
+    },
+  );
+
+  // Deliberately ungated machine-local presentation metadata. Keeping the
+  // value in lyrics.json avoids rewriting the authored LRC/VTT bytes and
+  // invalidating timing/reading fingerprints.
+  ipcMain.handle(
+    'lyrics:set-source-offset',
+    async (event, trackId, filename, offsetMs) => {
+      const dir = resolveDownloadDir(getConfig());
+      const track = findTrackRecord(dir, trackId);
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      const sources = setLyricsSourceOffset(trackDir, filename, offsetMs);
+      const source = sources?.find(
+        (candidate) => candidate.filename === filename,
+      );
+      if (!source) throw new Error(`invalid lyrics source offset: ${filename}`);
+
+      return { source };
     },
   );
 

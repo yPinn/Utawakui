@@ -1,5 +1,4 @@
 <script setup>
-import { Loader2 } from '../../icons/index.js';
 import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
@@ -11,8 +10,6 @@ defineProps({
   showsReadingAid: { type: Boolean, default: false },
   lyricsScript: { type: String, default: '' },
   readingVariant: { type: String, default: 'off' },
-  isGeneratingReading: { type: Boolean, default: false },
-  hasReadingDocument: { type: Boolean, default: false },
   readingError: { type: String, default: '' },
   canDecreaseFontSize: { type: Boolean, default: false },
   canIncreaseFontSize: { type: Boolean, default: false },
@@ -22,7 +19,6 @@ const emit = defineEmits([
   'sourceChange',
   'manageSources',
   'readingVariantChange',
-  'generateReading',
   'decreaseFontSize',
   'increaseFontSize',
 ]);
@@ -89,24 +85,6 @@ function handleReadingVariantChange(event) {
           </option>
           <option value="romaji">羅馬拼音</option>
         </select>
-        <UiButton
-          v-if="isGeneratingReading"
-          :icon="Loader2"
-          class="lyrics-preparation__command lyrics-preparation__spin"
-          disabled
-          title="產生讀音中"
-        >
-          <span role="status">產生中</span>
-        </UiButton>
-        <UiButton
-          v-else
-          class="lyrics-preparation__command"
-          :aria-label="hasReadingDocument ? '重新產生讀音' : '產生讀音'"
-          :title="hasReadingDocument ? '重新產生讀音' : '產生讀音'"
-          @click="emit('generateReading')"
-        >
-          {{ hasReadingDocument ? '更新' : '產生' }}
-        </UiButton>
       </div>
 
       <div class="lyrics-preparation__group" title="歌詞字級">
@@ -235,19 +213,18 @@ function handleReadingVariantChange(event) {
   border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.lyrics-preparation__spin :deep(svg) {
-  animation: lyrics-preparation-spin var(--ui-motion-spin) infinite;
-}
-
-@keyframes lyrics-preparation-spin {
-  to {
-    transform: rotate(360deg);
+@container (max-width: 46rem) {
+  .lyrics-preparation__row {
+    flex-wrap: wrap;
   }
-}
 
-@media (prefers-reduced-motion: reduce) {
-  .lyrics-preparation__spin :deep(svg) {
-    animation: none;
+  .lyrics-preparation__group--source {
+    flex-basis: 100%;
+  }
+
+  .lyrics-preparation__group:nth-child(2) {
+    padding-inline-start: 0;
+    border-inline-start: 0;
   }
 }
 </style>

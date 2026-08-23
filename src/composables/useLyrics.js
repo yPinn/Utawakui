@@ -91,6 +91,10 @@ const state = reactive({
     isSaving: false,
     error: null,
   },
+  offsetSave: {
+    isSaving: false,
+    error: null,
+  },
   error: null,
   offsetSeconds: 0,
 });
@@ -101,6 +105,7 @@ const lyricsTiming = shallowRef(EMPTY_TIMING);
 
 let unsubscribeLibraryBackfillStatus = null;
 let lyricsRequestId = 0;
+let offsetSaveRequestId = 0;
 let musixmatchProbeRequestId = 0;
 let candidateSearchRequestId = 0;
 let initializationPromise = null;
@@ -247,9 +252,13 @@ async function loadSelectedLyrics() {
   const filename = state.selectedSourceFilename;
   lyricsRequestId += 1;
   const requestId = lyricsRequestId;
+  offsetSaveRequestId += 1;
 
   state.lyricsText = '';
   state.lyricSource = null;
+  state.offsetSeconds = 0;
+  state.offsetSave.isSaving = false;
+  state.offsetSave.error = null;
   lyricsTiming.value = EMPTY_TIMING;
   if (!track || !filename) return;
 
@@ -264,6 +273,9 @@ async function loadSelectedLyrics() {
     if (requestId !== lyricsRequestId) return;
     state.lyricsText = result?.text ?? '';
     state.lyricSource = result?.source ?? null;
+    state.offsetSeconds = Number.isInteger(result?.source?.offsetMs)
+      ? result.source.offsetMs / 1000
+      : 0;
     lyricsTiming.value = result?.timing ?? EMPTY_TIMING;
     state.error = null;
   } catch (err) {
@@ -344,13 +356,48 @@ function selectSource(filename) {
   loadSelectedLyrics();
 }
 
+async function persistSelectedOffset() {
+  const trackId = state.selectedTrackId;
+  const sourceFilename = state.selectedSourceFilename;
+  const offsetMs = Math.round(state.offsetSeconds * 1000);
+  if (!trackId || !sourceFilename) return null;
+
+  offsetSaveRequestId += 1;
+  const requestId = offsetSaveRequestId;
+  state.offsetSave.isSaving = true;
+  state.offsetSave.error = null;
+  try {
+    if (typeof window.Utawakui?.setLyricsSourceOffset !== 'function') {
+      throw new Error('lyrics offset bridge unavailable');
+    }
+    return await window.Utawakui.setLyricsSourceOffset(
+      trackId,
+      sourceFilename,
+      offsetMs,
+    );
+  } catch (err) {
+    if (requestId === offsetSaveRequestId) {
+      state.offsetSave.error = reportLyricsError(
+        err,
+        'offset-save',
+        '同步調整未儲存，請再試一次。',
+      );
+    }
+    return null;
+  } finally {
+    if (requestId === offsetSaveRequestId) state.offsetSave.isSaving = false;
+  }
+}
+
 function adjustOffset(deltaSeconds) {
   state.offsetSeconds =
     Math.round((state.offsetSeconds + deltaSeconds) * 10) / 10;
+  persistSelectedOffset();
 }
 
 function resetOffset() {
   state.offsetSeconds = 0;
+  persistSelectedOffset();
 }
 
 async function saveTimingDocument(document) {
@@ -786,6 +833,7 @@ export function useLyrics() {
     selectSource,
     adjustOffset,
     resetOffset,
+    retryOffsetSave: persistSelectedOffset,
     saveTimingDocument,
     playFromLine,
     probeMusixmatch,

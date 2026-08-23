@@ -33,6 +33,7 @@ const {
   selectSource,
   adjustOffset,
   resetOffset,
+  retryOffsetSave,
   playFromLine,
   saveTimingDocument,
 } = useLyrics();
@@ -208,6 +209,13 @@ function generateSeparation() {
 
 function setReadingVariant(variant) {
   readingVariant.value = variant;
+  if (
+    variant !== 'off' &&
+    !selectedReadingDoc.value &&
+    !isGeneratingReading.value
+  ) {
+    generateReadingForSelected();
+  }
 }
 
 function generateReadingForSelected() {
@@ -277,6 +285,15 @@ const canEditTiming = computed(() =>
 const canTapTiming = computed(
   () => timingDraft.value !== null && !canCommitTiming.value,
 );
+const totalTimingBoundaries = computed(() =>
+  Math.max(0, (timingDraft.value?.segments.length ?? 1) - 1),
+);
+const completedTimingBoundaries = computed(
+  () =>
+    timingDraft.value?.segments.filter(
+      (segment, index) => index > 0 && Number.isFinite(segment.startMs),
+    ).length ?? 0,
+);
 
 watch(
   () => lyricsDocument.value.documentId,
@@ -330,36 +347,33 @@ async function commitTimingDocument() {
         :shows-reading-aid="showsReadingAid"
         :lyrics-script="lyricsScript"
         :reading-variant="readingVariant"
-        :is-generating-reading="isGeneratingReading"
-        :has-reading-document="Boolean(selectedReadingDoc)"
         :reading-error="readingError || ''"
         :can-decrease-font-size="canDecreaseLyricsFontSize"
         :can-increase-font-size="canIncreaseLyricsFontSize"
         @source-change="selectSource"
         @manage-sources="isSourceManagerOpen = true"
         @reading-variant-change="setReadingVariant"
-        @generate-reading="generateReadingForSelected"
         @decrease-font-size="decreaseLyricsFontSize"
         @increase-font-size="increaseLyricsFontSize"
       />
 
-      <div class="lyrics-timing-stack">
+      <div v-if="timingDraft" class="lyrics-timing-stack">
         <LyricsTimingToolbar
-          :granularity="lyricsDocument.granularity"
-          :has-draft="Boolean(timingDraft)"
-          :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
           :can-undo="canUndoTiming"
           :can-save="canCommitTiming"
+          :completed-boundaries="completedTimingBoundaries"
+          :total-boundaries="totalTimingBoundaries"
           :is-saving="state.timingSave.isSaving"
           :error="state.timingSave.error || ''"
-          @tap="recordTimingBoundary"
           @undo="undoTiming"
           @save="commitTimingDocument"
           @cancel="cancelTiming"
         />
         <LyricsSegmentEditor
-          v-if="timingDraft"
           :draft="timingDraft"
+          :can-tap="canTapTiming && Number.isFinite(currentLyricsPositionMs)"
+          :is-saving="state.timingSave.isSaving"
+          @tap="recordTimingBoundary"
           @nudge-boundary="nudgeBoundary"
         />
       </div>
@@ -393,8 +407,10 @@ async function commitTimingDocument() {
       <LyricsLiveControls
         :offset-label="offsetLabel"
         :can-reset="state.offsetSeconds !== 0"
+        :error="state.offsetSave.error || ''"
         @adjust-offset="adjustOffset"
         @reset-offset="resetOffset"
+        @retry-offset="retryOffsetSave"
       />
     </section>
 
@@ -431,5 +447,7 @@ async function commitTimingDocument() {
 
 .lyrics-timing-stack {
   min-width: 0;
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+  background: var(--ui-color-surface-raised);
 }
 </style>

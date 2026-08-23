@@ -142,6 +142,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:backfill-source-labels', trackId),
   setLyricsSourceLabel: (trackId, filename, label) =>
     ipcRenderer.invoke('lyrics:set-source-label', trackId, filename, label),
+  setLyricsSourceOffset: (trackId, filename, offsetMs) =>
+    ipcRenderer.invoke('lyrics:set-source-offset', trackId, filename, offsetMs),
   deleteLyricsSource: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:delete-source', trackId, filename),
   importLyricsText: (trackId, payload) =>

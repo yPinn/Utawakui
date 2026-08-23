@@ -63,6 +63,18 @@ function getLyricsDirFromTrackDir(trackDir) {
   return path.join(trackDir, LYRICS_DIRNAME);
 }
 
+const MAX_LYRICS_SOURCE_OFFSET_MS = 3_600_000;
+
+function normalizeLyricsSourceOffsetMs(value) {
+  if (
+    !Number.isInteger(value) ||
+    Math.abs(value) > MAX_LYRICS_SOURCE_OFFSET_MS
+  ) {
+    return null;
+  }
+  return value;
+}
+
 function loadTrackLyricsManifest(trackDir) {
   try {
     const manifest = JSON.parse(
@@ -117,6 +129,7 @@ function listTrackLyricsSources(trackDir) {
   );
   const sources = filenames.map((filename) => {
     const manifestSource = manifestByFilename.get(filename);
+    const offsetMs = normalizeLyricsSourceOffsetMs(manifestSource?.offsetMs);
     return {
       filename,
       language: manifestSource?.language || inferLyricsLanguage(filename),
@@ -127,6 +140,7 @@ function listTrackLyricsSources(trackDir) {
       manifestSource.label.length > 0
         ? { label: manifestSource.label }
         : {}),
+      ...(offsetMs !== null && offsetMs !== 0 ? { offsetMs } : {}),
     };
   });
 
@@ -175,6 +189,7 @@ function saveTrackLyricsManifest(trackDir, sources) {
     })
     .map((source) => {
       const label = normalizeLyricsSourceLabel(source.label);
+      const offsetMs = normalizeLyricsSourceOffsetMs(source.offsetMs);
       return {
         filename: source.filename,
         language:
@@ -186,6 +201,7 @@ function saveTrackLyricsManifest(trackDir, sources) {
             ? source.kind
             : 'youtube-cc',
         ...(label ? { label } : {}),
+        ...(offsetMs !== null && offsetMs !== 0 ? { offsetMs } : {}),
       };
     })
     .sort((a, b) => compareFilenames(a.filename, b.filename));
@@ -263,6 +279,25 @@ function setLyricsSourceLabel(trackDir, filename, label) {
       return withoutLabel;
     }
     return { ...source, label: normalized };
+  });
+  return saveTrackLyricsManifest(trackDir, nextSources);
+}
+
+function setLyricsSourceOffset(trackDir, filename, offsetMs) {
+  const normalized = normalizeLyricsSourceOffsetMs(offsetMs);
+  if (normalized === null) return null;
+
+  const { sources } = listTrackLyricsSources(trackDir);
+  if (!sources.some((source) => source.filename === filename)) return null;
+
+  const nextSources = sources.map((source) => {
+    if (source.filename !== filename) return source;
+    if (normalized === 0) {
+      const withoutOffset = { ...source };
+      delete withoutOffset.offsetMs;
+      return withoutOffset;
+    }
+    return { ...source, offsetMs: normalized };
   });
   return saveTrackLyricsManifest(trackDir, nextSources);
 }
@@ -488,6 +523,7 @@ module.exports = {
   saveTrackLyricsManifest,
   backfillLyricsSourceLabels,
   setLyricsSourceLabel,
+  setLyricsSourceOffset,
   deleteLyricsSource,
   allocateLyricsFilename,
   saveTrackLyricsText,

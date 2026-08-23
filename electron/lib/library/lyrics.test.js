@@ -5,12 +5,14 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
   isTranslatedLyricsLanguage,
   isAutomaticLyricsLanguage,
+  extractYtDlpSubtitleLanguage,
   resolveTrackLyricsPath,
   backfillLyricsSourceLabels,
   allocateLyricsFilename,
   importManualLyricsText,
   importManualLyricsFile,
   setLyricsSourceLabel,
+  setLyricsSourceOffset,
   deleteLyricsSource,
   readTrackLyrics,
   saveTrackLyricsText,
@@ -24,6 +26,8 @@ describe('isTranslatedLyricsLanguage', () => {
   });
 
   it('allows normal BCP-47 variants and original automatic tags', () => {
+    expect(isTranslatedLyricsLanguage(null)).toBe(false);
+    expect(isTranslatedLyricsLanguage('')).toBe(false);
     expect(isTranslatedLyricsLanguage('zh-Hant')).toBe(false);
     expect(isTranslatedLyricsLanguage('zh-TW')).toBe(false);
     expect(isTranslatedLyricsLanguage('en-US')).toBe(false);
@@ -42,6 +46,21 @@ describe('isAutomaticLyricsLanguage', () => {
     expect(isAutomaticLyricsLanguage('zh-Hant')).toBe(false);
     expect(isAutomaticLyricsLanguage('zh-TW')).toBe(false);
     expect(isAutomaticLyricsLanguage('en-US')).toBe(false);
+  });
+});
+
+describe('extractYtDlpSubtitleLanguage', () => {
+  it('accepts only safe structured subtitle sidecar names', () => {
+    expect(extractYtDlpSubtitleLanguage('audio.ja.vtt')).toBe('ja');
+    expect(extractYtDlpSubtitleLanguage(undefined)).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('audio/ja.vtt')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('audio\\ja.vtt')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('audio.ja.txt')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('captions.ja.vtt')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('audio.ja-orig.vtt')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('audio.ja-zh-TW.vtt')).toBe(null);
+    expect(extractYtDlpSubtitleLanguage('audio...vtt')).toBe(null);
   });
 });
 
@@ -179,6 +198,96 @@ describe('resolveTrackLyricsPath', () => {
       kind: 'lrclib',
       label: 'Short n Sweet',
     });
+  });
+});
+
+describe('setLyricsSourceOffset', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-offset-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveTrackLyricsText(
+      trackDir,
+      {
+        filename: 'main.lrc',
+        language: 'ja',
+        kind: 'manual',
+        label: 'Main',
+      },
+      '[00:01.00]Hello',
+    );
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'alternate.vtt', language: 'ja', kind: 'manual' },
+      'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello',
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('persists independent millisecond offsets without rewriting source bytes', () => {
+    const originalLyrics = fs.readFileSync(
+      path.join(trackDir, 'lyrics', 'main.lrc'),
+      'utf8',
+    );
+
+    expect(setLyricsSourceOffset(trackDir, 'main.lrc', 1300)).toContainEqual({
+      filename: 'main.lrc',
+      language: 'ja',
+      kind: 'manual',
+      label: 'Main',
+      offsetMs: 1300,
+    });
+    setLyricsSourceOffset(trackDir, 'alternate.vtt', -400);
+
+    expect(readTrackLyrics(dir, 'abc', 'main.lrc').source).toMatchObject({
+      filename: 'main.lrc',
+      label: 'Main',
+      offsetMs: 1300,
+    });
+    expect(readTrackLyrics(dir, 'abc', 'alternate.vtt').source).toMatchObject({
+      filename: 'alternate.vtt',
+      offsetMs: -400,
+    });
+    expect(
+      fs.readFileSync(path.join(trackDir, 'lyrics', 'main.lrc'), 'utf8'),
+    ).toBe(originalLyrics);
+  });
+
+  it('treats zero as the default while preserving sibling offsets and labels', () => {
+    setLyricsSourceOffset(trackDir, 'main.lrc', 1300);
+    setLyricsSourceOffset(trackDir, 'alternate.vtt', -400);
+    const sources = setLyricsSourceOffset(trackDir, 'main.lrc', 0);
+
+    expect(sources).toContainEqual({
+      filename: 'main.lrc',
+      language: 'ja',
+      kind: 'manual',
+      label: 'Main',
+    });
+    expect(sources).toContainEqual({
+      filename: 'alternate.vtt',
+      language: 'ja',
+      kind: 'manual',
+      offsetMs: -400,
+    });
+  });
+
+  it('rejects unknown sources, fractions, and unbounded values', () => {
+    expect(setLyricsSourceOffset(trackDir, 'missing.lrc', 100)).toBe(null);
+    expect(setLyricsSourceOffset(trackDir, 'main.lrc', 100.5)).toBe(null);
+    expect(
+      setLyricsSourceOffset(trackDir, 'main.lrc', Number.MAX_SAFE_INTEGER),
+    ).toBe(null);
+    expect(
+      readTrackLyrics(dir, 'abc', 'main.lrc').source.offsetMs,
+    ).toBeUndefined();
   });
 });
 

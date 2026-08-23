@@ -112,6 +112,36 @@ describe('lyrics timing IPC', () => {
     expect(notifyLibraryUpdated).not.toHaveBeenCalled();
   });
 
+  it('persists a bounded offset for the selected lyrics source', async () => {
+    const saveOffset = ipcMain.handlers.get('lyrics:set-source-offset');
+
+    await expect(
+      saveOffset(null, 'track-a', 'main.lrc', -1300),
+    ).resolves.toMatchObject({
+      source: { filename: 'main.lrc', offsetMs: -1300 },
+    });
+    await expect(
+      ipcMain.handlers.get('lyrics:get-track')(null, 'track-a', 'main.lrc'),
+    ).resolves.toMatchObject({
+      source: { filename: 'main.lrc', offsetMs: -1300 },
+    });
+    expect(notifyLibraryUpdated).not.toHaveBeenCalled();
+  });
+
+  it('rejects unsafe or invalid lyrics offset writes', async () => {
+    const saveOffset = ipcMain.handlers.get('lyrics:set-source-offset');
+
+    await expect(
+      saveOffset(null, 'track-a', '../main.lrc', 100),
+    ).rejects.toThrow();
+    await expect(
+      saveOffset(null, 'track-a', 'main.lrc', 100.5),
+    ).rejects.toThrow();
+    await expect(saveOffset(null, 'missing', 'main.lrc', 100)).rejects.toThrow(
+      /unknown track/i,
+    );
+  });
+
   it('rejects stale, duplicate, and unknown-target reading identities before work', async () => {
     const loaded = await ipcMain.handlers.get('lyrics:get-track')(
       null,

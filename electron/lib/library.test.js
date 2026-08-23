@@ -69,6 +69,7 @@ const FUNCTION_EXPORTS = [
   'saveTrackReading',
   'selectSeparationResult',
   'setLyricsSourceLabel',
+  'setLyricsSourceOffset',
   'setReadingLine',
   'timingSidecarPath',
   'updateTrackMetadata',
@@ -83,7 +84,7 @@ const CONSTANT_EXPORTS = [
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 61 names its consumers expect', () => {
+  it('re-exports exactly the 62 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

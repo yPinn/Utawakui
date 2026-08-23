@@ -5,6 +5,7 @@ let playerState;
 let listTracksMock;
 let getTrackLyricsMock;
 let saveLyricsTimingMock;
+let setLyricsSourceOffsetMock;
 let probeMusixmatchLyricsMock;
 let importLyricsTextMock;
 let importLyricsFileMock;
@@ -121,6 +122,9 @@ beforeEach(() => {
       document,
     }),
   );
+  setLyricsSourceOffsetMock = vi.fn().mockResolvedValue({
+    source: { filename: 'en.vtt' },
+  });
   probeMusixmatchLyricsMock = vi.fn().mockResolvedValue({
     provider: 'musixmatch',
     status: 'available',
@@ -186,6 +190,7 @@ beforeEach(() => {
       listTracks: listTracksMock,
       getTrackLyrics: getTrackLyricsMock,
       saveLyricsTiming: saveLyricsTimingMock,
+      setLyricsSourceOffset: setLyricsSourceOffsetMock,
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
       importLyricsText: importLyricsTextMock,
       importLyricsFile: importLyricsFileMock,
@@ -555,7 +560,7 @@ describe('useLyrics', () => {
     expect(lyrics.state.error).toBe(null);
   });
 
-  it('switches lyrics source, resetting offset, and no-ops when reselecting the same source', async () => {
+  it('restores and persists an independent offset for each lyrics source', async () => {
     const trackWithTwoSources = {
       ...trackA,
       lyrics: {
@@ -571,25 +576,104 @@ describe('useLyrics', () => {
       trackB,
       trackMissingLyrics,
     ]);
+    const offsets = new Map([
+      ['en.vtt', 2500],
+      ['ja.vtt', -1300],
+    ]);
+    getTrackLyricsMock.mockImplementation(async (_trackId, filename) => ({
+      source: {
+        filename,
+        language: filename === 'ja.vtt' ? 'ja' : 'en',
+        kind: filename === 'ja.vtt' ? 'manual' : 'youtube-cc',
+        ...(offsets.get(filename) ? { offsetMs: offsets.get(filename) } : {}),
+      },
+      text: lyricsText,
+      timing: {
+        status: 'missing',
+        sourceFingerprint: lyricsSourceFingerprint,
+        normalizerProfileId: 'lyrics-source-v1',
+      },
+    }));
+    setLyricsSourceOffsetMock.mockImplementation(
+      async (_trackId, filename, offsetMs) => {
+        offsets.set(filename, offsetMs);
+        return { source: { filename, ...(offsetMs ? { offsetMs } : {}) } };
+      },
+    );
     const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
     const initialFilename = lyrics.state.selectedSourceFilename;
     const otherFilename = initialFilename === 'en.vtt' ? 'ja.vtt' : 'en.vtt';
 
-    lyrics.adjustOffset(2.5);
     expect(lyrics.state.offsetSeconds).toBe(2.5);
+    lyrics.adjustOffset(0.1);
+    await flushPromises();
+    expect(lyrics.state.offsetSeconds).toBe(2.6);
+    expect(setLyricsSourceOffsetMock).toHaveBeenLastCalledWith(
+      trackA.id,
+      initialFilename,
+      2600,
+    );
 
     lyrics.selectSource(initialFilename); // same filename: no-op
-    expect(lyrics.state.offsetSeconds).toBe(2.5);
+    expect(lyrics.state.offsetSeconds).toBe(2.6);
     expect(lyrics.state.selectedSourceFilename).toBe(initialFilename);
 
     lyrics.selectSource(otherFilename);
     await flushPromises();
     expect(lyrics.state.selectedSourceFilename).toBe(otherFilename);
-    expect(lyrics.state.offsetSeconds).toBe(0);
+    expect(lyrics.state.offsetSeconds).toBe(-1.3);
 
-    lyrics.adjustOffset(-1.25);
     lyrics.resetOffset();
+    await flushPromises();
     expect(lyrics.state.offsetSeconds).toBe(0);
+    expect(setLyricsSourceOffsetMock).toHaveBeenLastCalledWith(
+      trackA.id,
+      otherFilename,
+      0,
+    );
+
+    lyrics.selectSource(initialFilename);
+    await flushPromises();
+    expect(lyrics.state.offsetSeconds).toBe(2.6);
+  });
+
+  it('keeps the live adjustment and reports a bounded offset persistence failure', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    setLyricsSourceOffsetMock.mockRejectedValueOnce(
+      new Error('disk path leaked'),
+    );
+
+    lyrics.adjustOffset(0.1);
+    await flushPromises();
+
+    expect(lyrics.state.offsetSeconds).toBe(0.1);
+    expect(lyrics.state.offsetSave).toMatchObject({
+      isSaving: false,
+      error: '同步調整未儲存，請再試一次。',
+    });
+  });
+
+  it('ignores an offset save failure after the user switches tracks', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    let rejectStaleSave;
+    setLyricsSourceOffsetMock.mockImplementationOnce(
+      () =>
+        new Promise((_resolve, reject) => {
+          rejectStaleSave = reject;
+        }),
+    );
+
+    lyrics.adjustOffset(0.1);
+    lyrics.selectTrack(trackB.id);
+    await flushPromises();
+    rejectStaleSave(new Error('stale disk failure'));
+    await flushPromises();
+
+    expect(lyrics.state.selectedTrackId).toBe(trackB.id);
+    expect(lyrics.state.offsetSave).toMatchObject({
+      isSaving: false,
+      error: null,
+    });
   });
 
   it('starts following the selected lyrics after clicking a line to play that track', async () => {
