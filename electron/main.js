@@ -268,6 +268,7 @@ if (!gotSingleInstanceLock) {
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: FEATURE_IDS.LYRICS_FLOW,
+      logger: runtimeDiagnosticsLogger,
     });
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,

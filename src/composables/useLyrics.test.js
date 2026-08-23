@@ -14,6 +14,7 @@ let saveLyricsCandidateMock;
 let getFeatureConfirmationsMock;
 let confirmFeatureGateMock;
 let listPlaylistsMock;
+let recordDiagnosticMock;
 let libraryBackfillStatusHandler;
 let libraryUpdatedHandler;
 let playTrackMock;
@@ -178,6 +179,7 @@ beforeEach(() => {
   });
   confirmFeatureGateMock = vi.fn();
   listPlaylistsMock = vi.fn().mockResolvedValue([DEFAULT_PLAYLIST]);
+  recordDiagnosticMock = vi.fn().mockResolvedValue({ ok: true });
   playTrackMock = vi.fn(async (track) => {
     playerState.track = track;
   });
@@ -209,6 +211,7 @@ beforeEach(() => {
       getFeatureConfirmations: getFeatureConfirmationsMock,
       confirmFeatureGate: confirmFeatureGateMock,
       listPlaylists: listPlaylistsMock,
+      recordDiagnostic: recordDiagnosticMock,
       onLibraryUpdated: vi.fn((handler) => {
         libraryUpdatedHandler = handler;
         return vi.fn();
@@ -328,7 +331,7 @@ describe('useLyrics', () => {
     expect(lyrics.state.candidateSearch.isLoading).toBe(false);
   });
 
-  it('maps typed LRCLIB failures to bounded user copy and shared diagnostics', async () => {
+  it('maps typed LRCLIB failures to bounded user copy without persisting a duplicate renderer event', async () => {
     searchLyricsCandidatesMock.mockResolvedValue({
       provider: 'lrclib',
       status: 'error',
@@ -348,6 +351,8 @@ describe('useLyrics', () => {
       error: 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
       groups: { best: [], related: [] },
     });
+    await flushPromises();
+    expect(recordDiagnosticMock).not.toHaveBeenCalled();
   });
 
   it('keeps a changed record pending until confirmation, then regroups it', async () => {
@@ -451,6 +456,36 @@ describe('useLyrics', () => {
 
     expect(lyrics.state.selectedTrackId).toBe(trackB.id);
     expect(lyrics.state.selectedSourceFilename).toBe('en.vtt');
+  });
+
+  it('projects a reactive manual query into a structured-cloneable IPC payload', async () => {
+    const candidate = {
+      id: 42,
+      trackName: 'I AM',
+      matchBand: 'exact',
+      previewFingerprint: 'a'.repeat(64),
+    };
+    const query = reactive({ title: 'I AM', artist: 'IVE' });
+    let receivedOptions;
+    saveLyricsCandidateMock.mockImplementation(
+      async (_trackId, _candidateId, _fingerprint, options) => {
+        receivedOptions = options;
+        structuredClone(options);
+        return {
+          provider: 'lrclib',
+          status: 'saved',
+          source: { filename: 'lrclib-42.lrc' },
+        };
+      },
+    );
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(
+      lyrics.saveLyricsCandidate(candidate, trackA.id, query),
+    ).resolves.toMatchObject({ status: 'saved' });
+    expect(receivedOptions).toEqual({
+      query: { title: 'I AM', artist: 'IVE' },
+    });
   });
 
   it('uses the full library list instead of the selected playlist order', async () => {

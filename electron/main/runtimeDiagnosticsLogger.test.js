@@ -31,6 +31,35 @@ describe('runtime diagnostics logger', () => {
     });
   });
 
+  it('maps LRCLIB failures with bounded typed context', () => {
+    const failure = new Error('LRCLIB search failed: http-error');
+    const service = { record: vi.fn(() => ({ ok: true })) };
+    const consoleTarget = { warn: vi.fn(), error: vi.fn() };
+    const logger = createRuntimeDiagnosticsLogger({ service, consoleTarget });
+
+    logger.warn('[lyrics] LRCLIB search failed', failure, {
+      reason: 'http-error',
+      httpStatus: 503,
+      retryable: true,
+      query: 'must-not-pass-through',
+    });
+
+    expect(consoleTarget.warn).toHaveBeenCalledWith(
+      '[lyrics] LRCLIB search failed',
+      failure,
+    );
+    expect(service.record).toHaveBeenCalledWith({
+      process: 'main',
+      level: 'warning',
+      source: 'lyrics',
+      operation: 'lrclib-search',
+      code: 'LYRICS_LRCLIB_SEARCH_FAILED',
+      message: 'LRCLIB search failed',
+      error: failure,
+      context: { reason: 'http-error', httpStatus: 503, retryable: true },
+    });
+  });
+
   it.each([
     [
       'error',

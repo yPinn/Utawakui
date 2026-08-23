@@ -82,10 +82,12 @@ describe('createLyricsAcquisitionService', () => {
           }),
       ),
     });
+    const logger = { warn: vi.fn(), error: vi.fn() };
     const service = createLyricsAcquisitionService({
       requireFeatureGate: vi.fn(),
       featureId: 'lyrics-flow',
       client: provider,
+      logger,
     });
 
     const first = service.searchCandidates(track);
@@ -99,6 +101,102 @@ describe('createLyricsAcquisitionService', () => {
 
     resolveExact({ status: 'ok', record: record() });
     await first;
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('logs typed provider failures once without exposing track metadata', async () => {
+    const provider = client({
+      getExact: vi.fn().mockResolvedValue({
+        status: 'error',
+        reason: 'http-error',
+        httpStatus: 503,
+      }),
+    });
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      logger,
+    });
+
+    await expect(service.searchCandidates(track)).resolves.toMatchObject({
+      status: 'error',
+      reason: 'http-error',
+      httpStatus: 503,
+    });
+
+    expect(logger.warn).toHaveBeenCalledOnce();
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[lyrics] LRCLIB search failed',
+      expect.any(Error),
+      { reason: 'http-error', httpStatus: 503, retryable: true },
+    );
+    expect(logger.error).not.toHaveBeenCalled();
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toContain('Song');
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toContain('Artist');
+  });
+
+  it('logs unexpected provider exceptions once and rethrows them', async () => {
+    const failure = new Error('socket closed');
+    const provider = client({
+      getExact: vi.fn().mockRejectedValue(failure),
+    });
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      logger,
+    });
+
+    await expect(service.searchCandidates(track)).rejects.toBe(failure);
+    expect(logger.error).toHaveBeenCalledOnce();
+    expect(logger.error).toHaveBeenCalledWith(
+      '[lyrics] LRCLIB search failed',
+      expect.objectContaining({
+        message: 'LRCLIB search failed: exception',
+      }),
+      { reason: 'exception', retryable: true },
+    );
+    expect(JSON.stringify(logger.error.mock.calls)).not.toContain(
+      failure.message,
+    );
+    expect(logger.warn).not.toHaveBeenCalled();
+  });
+
+  it('logs save-time provider failures at the main acquisition boundary', async () => {
+    const provider = client({
+      getById: vi.fn().mockResolvedValue({
+        status: 'error',
+        reason: 'service-unavailable',
+      }),
+    });
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      logger,
+    });
+
+    await expect(
+      service.saveCandidate({
+        track,
+        trackDir,
+        candidateId: 42,
+        expectedFingerprint: fingerprintLrclibRecord(record()),
+      }),
+    ).resolves.toMatchObject({
+      status: 'error',
+      reason: 'service-unavailable',
+    });
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[lyrics] LRCLIB save failed',
+      expect.any(Error),
+      { reason: 'service-unavailable', retryable: true },
+    );
   });
 
   it('issues zero requests when the lyrics gate is closed', async () => {
@@ -183,14 +281,18 @@ describe('createLyricsAcquisitionService', () => {
         .fn()
         .mockResolvedValue({ status: 'unavailable', reason: 'not-found' }),
     });
+    const logger = { warn: vi.fn(), error: vi.fn() };
     const service = createLyricsAcquisitionService({
       requireFeatureGate: vi.fn(),
       featureId: 'lyrics-flow',
       client: provider,
+      logger,
     });
 
     await expect(service.saveIfAbsent(track, trackDir)).resolves.toBe(false);
     expect(provider.search).toHaveBeenCalledOnce();
+    expect(logger.warn).not.toHaveBeenCalled();
+    expect(logger.error).not.toHaveBeenCalled();
   });
 
   it('reuses the same gated client for save re-fetch', async () => {

@@ -26,7 +26,7 @@ const { selectedPlaylist, initialize: initializePlaylists } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
 
-function reportLyricsError(error, operation, message) {
+function reportLyricsError(error, operation, message, options = {}) {
   return recordError(error, {
     code: `LYRICS_${operation.toUpperCase().replaceAll('-', '_')}_FAILED`,
     title: '歌詞操作未完成',
@@ -34,6 +34,7 @@ function reportLyricsError(error, operation, message) {
     source: 'lyrics',
     operation,
     context: { retryable: true },
+    ...options,
   }).message;
 }
 // The full library pool (title/artist/lyrics/hasSeparation lookups) is
@@ -261,6 +262,15 @@ function candidateGroups(result) {
       (candidate) => candidate.matchBand === 'related',
     ),
   };
+}
+
+function candidateSaveOptions(query) {
+  if (!query) return undefined;
+  const plainQuery = {};
+  for (const field of ['title', 'artist']) {
+    if (typeof query[field] === 'string') plainQuery[field] = query[field];
+  }
+  return { query: plainQuery };
 }
 
 function replaceCandidate(candidate) {
@@ -608,6 +618,7 @@ async function searchLyricsCandidates(
         'search',
         LRCLIB_FAILURE_MESSAGES[result.reason] ||
           '目前無法搜尋歌詞，請稍後再試。',
+        { persist: false },
       );
     }
     return result;
@@ -617,6 +628,7 @@ async function searchLyricsCandidates(
       err,
       'search',
       '目前無法搜尋歌詞，請再試一次。',
+      { persist: false },
     );
   } finally {
     if (requestId === candidateSearchRequestId) {
@@ -649,7 +661,7 @@ async function saveLyricsCandidate(
       track.id,
       candidate.id,
       candidate.previewFingerprint,
-      query ? { query } : undefined,
+      candidateSaveOptions(query),
     );
     if (result?.status === 'record-changed') {
       return result;
@@ -675,6 +687,7 @@ async function saveLyricsCandidate(
       err,
       'save-candidate',
       '歌詞未儲存，請再試一次。',
+      { persist: false },
     );
     return null;
   } finally {

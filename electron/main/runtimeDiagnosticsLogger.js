@@ -84,6 +84,42 @@ const EVENT_DEFINITIONS = new Map([
       message: 'Output runtime operation failed',
     },
   ],
+  [
+    '[lyrics] LRCLIB search failed',
+    {
+      source: 'lyrics',
+      operation: 'lrclib-search',
+      code: 'LYRICS_LRCLIB_SEARCH_FAILED',
+      message: 'LRCLIB search failed',
+    },
+  ],
+  [
+    '[lyrics] LRCLIB save failed',
+    {
+      source: 'lyrics',
+      operation: 'lrclib-save',
+      code: 'LYRICS_LRCLIB_SAVE_FAILED',
+      message: 'LRCLIB save failed',
+    },
+  ],
+  [
+    '[lyrics] LRCLIB fetch failed',
+    {
+      source: 'lyrics',
+      operation: 'lrclib-fetch',
+      code: 'LYRICS_LRCLIB_FETCH_FAILED',
+      message: 'LRCLIB fetch failed',
+    },
+  ],
+  [
+    '[lyrics] LRCLIB automatic acquisition failed',
+    {
+      source: 'lyrics',
+      operation: 'lrclib-automatic-acquisition',
+      code: 'LYRICS_LRCLIB_AUTOMATIC_ACQUISITION_FAILED',
+      message: 'LRCLIB automatic acquisition failed',
+    },
+  ],
 ]);
 
 const FALLBACK_DEFINITION = Object.freeze({
@@ -99,6 +135,19 @@ function normalizeError(value) {
   return new Error(String(value));
 }
 
+function normalizeRuntimeContext(value) {
+  const context =
+    value && typeof value === 'object' && !Array.isArray(value) ? value : {};
+  return {
+    ...(typeof context.reason === 'string' ? { reason: context.reason } : {}),
+    ...(Number.isInteger(context.httpStatus)
+      ? { httpStatus: context.httpStatus }
+      : {}),
+    retryable:
+      typeof context.retryable === 'boolean' ? context.retryable : true,
+  };
+}
+
 function createRuntimeDiagnosticsLogger({
   service,
   consoleTarget = console,
@@ -107,7 +156,7 @@ function createRuntimeDiagnosticsLogger({
 } = {}) {
   const lastRecordedAt = new Map();
 
-  function log(level, message, error) {
+  function log(level, message, error, context) {
     consoleTarget?.[level]?.(message, error);
     if (typeof service?.record !== 'function') return;
 
@@ -133,7 +182,7 @@ function createRuntimeDiagnosticsLogger({
         code: definition.code,
         message: definition.message,
         error: normalizeError(error),
-        context: { retryable: true },
+        context: normalizeRuntimeContext(context),
       });
     } catch {
       // Diagnostics must never become a second runtime failure.
@@ -141,8 +190,8 @@ function createRuntimeDiagnosticsLogger({
   }
 
   return {
-    error: (message, error) => log('error', message, error),
-    warn: (message, error) => log('warn', message, error),
+    error: (message, error, context) => log('error', message, error, context),
+    warn: (message, error, context) => log('warn', message, error, context),
   };
 }
 
