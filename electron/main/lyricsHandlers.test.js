@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { saveLrclibRecord } from '../lib/lrclib.js';
 import lyricsHandlersModule from './lyricsHandlers.js';
 
 const { normalizeLrclibSearchOptions, registerLyricsHandlers } =
@@ -20,6 +21,7 @@ describe('lyrics timing IPC', () => {
   let trackDir;
   let ipcMain;
   let notifyLibraryUpdated;
+  let lyricsAcquisitionService;
 
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-ipc-'));
@@ -33,6 +35,11 @@ describe('lyrics timing IPC', () => {
 
     ipcMain = createIpcMain();
     notifyLibraryUpdated = vi.fn();
+    lyricsAcquisitionService = {
+      searchCandidates: vi.fn(),
+      saveCandidate: vi.fn(),
+      fetchRecord: vi.fn(),
+    };
     registerLyricsHandlers({
       ipcMain,
       dialog: { showOpenDialog: vi.fn() },
@@ -42,6 +49,7 @@ describe('lyrics timing IPC', () => {
       notifyLibraryUpdated,
       requireFeatureGate: vi.fn(),
       featureIds: { LYRICS_FLOW: 'lyrics-flow' },
+      lyricsAcquisitionService,
     });
   });
 
@@ -178,6 +186,159 @@ describe('lyrics timing IPC', () => {
         targetLineId: 'missing_line',
       }),
     ).rejects.toThrow(/target line is invalid/);
+  });
+
+  it('returns bounded best and related LRCLIB summaries for an editable query', async () => {
+    const best = {
+      id: 42,
+      trackName: 'Manual title',
+      artistName: 'Manual artist',
+      matchBand: 'strong',
+      language: 'ja',
+    };
+    const related = {
+      id: 43,
+      trackName: 'Related title',
+      artistName: 'Other artist',
+      matchBand: 'related',
+    };
+    lyricsAcquisitionService.searchCandidates.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'ok',
+      candidates: [best, related],
+      groups: { best: [best], related: [related] },
+      invalidRecordCount: 1,
+    });
+
+    const result = await ipcMain.handlers.get('lyrics:search-candidates')(
+      null,
+      'track-a',
+      { query: { title: 'Manual title', artist: 'Manual artist' } },
+    );
+
+    expect(lyricsAcquisitionService.searchCandidates).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'track-a' }),
+      { query: { title: 'Manual title', artist: 'Manual artist' } },
+    );
+    expect(result).toMatchObject({
+      status: 'ok',
+      invalidRecordCount: 1,
+      groups: {
+        best: [{ ...best, saveState: 'unsaved', alreadySaved: false }],
+        related: [{ ...related, saveState: 'unsaved', alreadySaved: false }],
+      },
+    });
+  });
+
+  it('distinguishes a current stored LRCLIB record from an available update', async () => {
+    const saved = saveLrclibRecord(
+      trackDir,
+      {
+        id: 42,
+        name: 'Song - Artist',
+        trackName: 'Song',
+        artistName: 'Artist',
+        albumName: 'Album',
+        duration: 120,
+        instrumental: false,
+        plainLyrics: 'Saved lyrics',
+        syncedLyrics: '[00:01.000]Saved lyrics',
+        lyricsfile: null,
+      },
+      { retrievedAt: '2026-08-23T10:00:00.000Z' },
+    );
+    const candidate = {
+      id: 42,
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      previewFingerprint: saved.recordFingerprint,
+    };
+    lyricsAcquisitionService.searchCandidates.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'ok',
+      candidates: [candidate],
+      groups: { best: [candidate], related: [] },
+      invalidRecordCount: 0,
+    });
+    const search = ipcMain.handlers.get('lyrics:search-candidates');
+
+    await expect(search(null, 'track-a')).resolves.toMatchObject({
+      candidates: [
+        {
+          id: 42,
+          saveState: 'current',
+          alreadySaved: true,
+          retrievedAt: '2026-08-23T10:00:00.000Z',
+        },
+      ],
+    });
+
+    candidate.previewFingerprint = 'f'.repeat(64);
+    await expect(search(null, 'track-a')).resolves.toMatchObject({
+      candidates: [
+        {
+          id: 42,
+          saveState: 'update-available',
+          alreadySaved: false,
+          retrievedAt: '2026-08-23T10:00:00.000Z',
+        },
+      ],
+    });
+
+    const artifactPath = path.join(
+      trackDir,
+      'lyrics',
+      'providers',
+      'lrclib-42.json',
+    );
+    const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    artifact.hashes.record = '0'.repeat(64);
+    fs.writeFileSync(artifactPath, JSON.stringify(artifact));
+    candidate.previewFingerprint = saved.recordFingerprint;
+    await expect(search(null, 'track-a')).resolves.toMatchObject({
+      candidates: [
+        {
+          id: 42,
+          saveState: 'update-available',
+          alreadySaved: false,
+        },
+      ],
+    });
+  });
+
+  it('passes the bounded editable query into save-time revalidation', async () => {
+    lyricsAcquisitionService.saveCandidate.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'record-changed',
+      candidate: { id: 42 },
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:save-candidate')(
+        null,
+        'track-a',
+        42,
+        'a'.repeat(64),
+        { query: { title: 'Manual title', artist: 'Manual artist' } },
+      ),
+    ).resolves.toMatchObject({ status: 'record-changed' });
+    expect(lyricsAcquisitionService.saveCandidate).toHaveBeenCalledWith({
+      track: expect.objectContaining({ id: 'track-a' }),
+      trackDir,
+      candidateId: 42,
+      expectedFingerprint: 'a'.repeat(64),
+      query: { title: 'Manual title', artist: 'Manual artist' },
+    });
+    await expect(
+      ipcMain.handlers.get('lyrics:save-candidate')(
+        null,
+        'track-a',
+        42,
+        'a'.repeat(64),
+        { mode: 'broaden' },
+      ),
+    ).rejects.toThrow(/unsupported mode/i);
   });
 });
 

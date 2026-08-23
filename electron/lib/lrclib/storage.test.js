@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   deleteStoredLrclibSource,
   fingerprintLrclibRecord,
+  loadStoredLrclibArtifactSummary,
   saveLrclibRecord,
 } from './storage.js';
 import { loadTrackLyricsTiming } from '../library/lyricsTiming.js';
@@ -271,6 +272,81 @@ metadata:
       ),
     ).toBe(true);
     expect(listTrackLyricsSources(trackDir).sources).toEqual([]);
+  });
+
+  it('keeps an untrusted language value in the artifact but not the manifest', () => {
+    const language = 'x'.repeat(80);
+    const fetched = record({
+      lyricsfile: `version: '1.0'
+metadata: { title: Song, artist: Artist, language: ${language} }
+lines:
+  - text: Hello world
+    start_ms: 1000
+`,
+    });
+
+    const saved = saveLrclibRecord(trackDir, fetched);
+    const artifact = JSON.parse(
+      fs.readFileSync(
+        path.join(trackDir, 'lyrics', 'providers', 'lrclib-42.json'),
+        'utf8',
+      ),
+    );
+
+    expect(saved.source.language).toBe('und');
+    expect(artifact.record.lyricsfile).toContain(`language: ${language}`);
+  });
+
+  it('projects only a validated fingerprint and retrieval time from a stored artifact', () => {
+    const saved = saveLrclibRecord(trackDir, record(), {
+      retrievedAt: '2026-08-23T10:00:00.000Z',
+    });
+
+    expect(
+      loadStoredLrclibArtifactSummary(trackDir, {
+        name: 'lrclib',
+        recordId: 42,
+        artifactFilename: 'lrclib-42.json',
+      }),
+    ).toEqual({
+      recordFingerprint: saved.recordFingerprint,
+      retrievedAt: '2026-08-23T10:00:00.000Z',
+    });
+    expect(
+      loadStoredLrclibArtifactSummary(trackDir, {
+        name: 'lrclib',
+        recordId: 42,
+        artifactFilename: '../lrclib-42.json',
+      }),
+    ).toBe(null);
+
+    const artifactPath = path.join(
+      trackDir,
+      'lyrics',
+      'providers',
+      'lrclib-42.json',
+    );
+    const artifact = JSON.parse(fs.readFileSync(artifactPath, 'utf8'));
+    artifact.hashes.record = 'f'.repeat(64);
+    fs.writeFileSync(artifactPath, JSON.stringify(artifact));
+    expect(
+      loadStoredLrclibArtifactSummary(trackDir, {
+        name: 'lrclib',
+        recordId: 42,
+        artifactFilename: 'lrclib-42.json',
+      }),
+    ).toBe(null);
+
+    artifact.record.id = 43;
+    artifact.hashes.record = fingerprintLrclibRecord(artifact.record);
+    fs.writeFileSync(artifactPath, JSON.stringify(artifact));
+    expect(
+      loadStoredLrclibArtifactSummary(trackDir, {
+        name: 'lrclib',
+        recordId: 42,
+        artifactFilename: 'lrclib-42.json',
+      }),
+    ).toBe(null);
   });
 
   it('rejects invalid records and retrieval timestamps before publication', () => {

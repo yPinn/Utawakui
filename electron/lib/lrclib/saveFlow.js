@@ -20,8 +20,8 @@ function providerFailure(result) {
   };
 }
 
-function refreshedCandidateSummary(track, record) {
-  const plan = buildLrclibQueryPlan(track);
+function refreshedCandidateSummary(track, record, query) {
+  const plan = buildLrclibQueryPlan(track, query);
   const [match] = rankLrclibCandidateMatches(plan.identity, [record]);
   return match ? summarizeLrclibCandidate(match) : null;
 }
@@ -31,6 +31,7 @@ async function saveLrclibCandidate({
   trackDir,
   candidateId,
   expectedFingerprint,
+  query,
   fetchRecord = fetchLrclibRecord,
   persistRecord = saveLrclibRecord,
 }) {
@@ -49,7 +50,7 @@ async function saveLrclibCandidate({
     return {
       provider: 'lrclib',
       status: 'record-changed',
-      candidate: refreshedCandidateSummary(track, fetched.record),
+      candidate: refreshedCandidateSummary(track, fetched.record, query),
     };
   }
 

@@ -9,6 +9,8 @@ let setLyricsSourceOffsetMock;
 let probeMusixmatchLyricsMock;
 let importLyricsTextMock;
 let importLyricsFileMock;
+let searchLyricsCandidatesMock;
+let saveLyricsCandidateMock;
 let getFeatureConfirmationsMock;
 let confirmFeatureGateMock;
 let listPlaylistsMock;
@@ -163,6 +165,14 @@ beforeEach(() => {
       },
     ],
   });
+  searchLyricsCandidatesMock = vi.fn().mockResolvedValue({
+    provider: 'lrclib',
+    status: 'ok',
+    candidates: [],
+    groups: { best: [], related: [] },
+    invalidRecordCount: 0,
+  });
+  saveLyricsCandidateMock = vi.fn();
   getFeatureConfirmationsMock = vi.fn().mockResolvedValue({
     'lyrics-flow': confirmedLyricsFlow,
   });
@@ -194,6 +204,8 @@ beforeEach(() => {
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
       importLyricsText: importLyricsTextMock,
       importLyricsFile: importLyricsFileMock,
+      searchLyricsCandidates: searchLyricsCandidatesMock,
+      saveLyricsCandidate: saveLyricsCandidateMock,
       getFeatureConfirmations: getFeatureConfirmationsMock,
       confirmFeatureGate: confirmFeatureGateMock,
       listPlaylists: listPlaylistsMock,
@@ -215,6 +227,232 @@ afterEach(() => {
 });
 
 describe('useLyrics', () => {
+  it('submits an explicit editable LRCLIB query and preserves grouped diagnostics', async () => {
+    const candidate = {
+      id: 42,
+      trackName: 'Manual title',
+      artistName: 'Manual artist',
+      matchBand: 'strong',
+      previewFingerprint: 'b'.repeat(64),
+    };
+    searchLyricsCandidatesMock.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'ok',
+      candidates: [candidate],
+      groups: { best: [candidate], related: [] },
+      invalidRecordCount: 2,
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    const result = await lyrics.searchLyricsCandidates({
+      query: { title: 'Manual title', artist: 'Manual artist' },
+    });
+
+    expect(searchLyricsCandidatesMock).toHaveBeenCalledWith(trackA.id, {
+      query: { title: 'Manual title', artist: 'Manual artist' },
+    });
+    expect(result).toMatchObject({ status: 'ok' });
+    expect(lyrics.state.candidateSearch).toMatchObject({
+      isLoading: false,
+      trackId: trackA.id,
+      status: 'ok',
+      reason: null,
+      invalidRecordCount: 2,
+      groups: { best: [candidate], related: [] },
+    });
+  });
+
+  it('keeps a newer LRCLIB result when an older request resolves late', async () => {
+    let resolveFirst;
+    searchLyricsCandidatesMock
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveFirst = resolve;
+          }),
+      )
+      .mockResolvedValueOnce({
+        provider: 'lrclib',
+        status: 'ok',
+        candidates: [{ id: 2, matchBand: 'exact' }],
+        groups: { best: [{ id: 2, matchBand: 'exact' }], related: [] },
+        invalidRecordCount: 0,
+      });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    const first = lyrics.searchLyricsCandidates({
+      query: { title: 'First', artist: 'Artist' },
+    });
+    await vi.waitFor(() => {
+      expect(searchLyricsCandidatesMock).toHaveBeenCalledTimes(1);
+    });
+    const second = lyrics.searchLyricsCandidates({
+      query: { title: 'Second', artist: 'Artist' },
+    });
+    await second;
+    resolveFirst({
+      provider: 'lrclib',
+      status: 'ok',
+      candidates: [{ id: 1, matchBand: 'exact' }],
+      groups: { best: [{ id: 1, matchBand: 'exact' }], related: [] },
+      invalidRecordCount: 0,
+    });
+    await first;
+
+    expect(lyrics.state.candidateSearch.candidates).toEqual([
+      { id: 2, matchBand: 'exact' },
+    ]);
+  });
+
+  it('does not start a search after the pending feature gate flow is cancelled', async () => {
+    let resolveGate;
+    getFeatureConfirmationsMock.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveGate = resolve;
+        }),
+    );
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    const pendingSearch = lyrics.searchLyricsCandidates({
+      query: { title: 'Song', artist: 'Artist' },
+    });
+    await vi.waitFor(() =>
+      expect(getFeatureConfirmationsMock).toHaveBeenCalledOnce(),
+    );
+    lyrics.clearCandidateSearch();
+    resolveGate({ 'lyrics-flow': confirmedLyricsFlow });
+    await pendingSearch;
+
+    expect(searchLyricsCandidatesMock).not.toHaveBeenCalled();
+    expect(lyrics.state.candidateSearch.isLoading).toBe(false);
+  });
+
+  it('maps typed LRCLIB failures to bounded user copy and shared diagnostics', async () => {
+    searchLyricsCandidatesMock.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'error',
+      reason: 'rate-limited',
+      candidates: [],
+      groups: null,
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await lyrics.searchLyricsCandidates({
+      query: { title: 'Song', artist: 'Artist' },
+    });
+
+    expect(lyrics.state.candidateSearch).toMatchObject({
+      status: 'error',
+      reason: 'rate-limited',
+      error: 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
+      groups: { best: [], related: [] },
+    });
+  });
+
+  it('keeps a changed record pending until confirmation, then regroups it', async () => {
+    const original = {
+      id: 42,
+      trackName: 'Song',
+      matchBand: 'exact',
+      previewFingerprint: 'a'.repeat(64),
+    };
+    const changed = {
+      ...original,
+      trackName: 'Song (updated)',
+      matchBand: 'related',
+      previewFingerprint: 'b'.repeat(64),
+    };
+    searchLyricsCandidatesMock.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'ok',
+      candidates: [original],
+      groups: { best: [original], related: [] },
+      invalidRecordCount: 0,
+    });
+    saveLyricsCandidateMock
+      .mockResolvedValueOnce({
+        provider: 'lrclib',
+        status: 'record-changed',
+        candidate: changed,
+      })
+      .mockResolvedValueOnce({
+        provider: 'lrclib',
+        status: 'saved',
+        source: { filename: 'lrclib-42.lrc' },
+        retrievedAt: '2026-08-23T12:00:00.000Z',
+      });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    await lyrics.searchLyricsCandidates();
+
+    const result = await lyrics.saveLyricsCandidate(original);
+
+    expect(result).toMatchObject({ status: 'record-changed' });
+    expect(lyrics.state.candidateSearch.candidates[0]).toEqual(original);
+    expect(lyrics.state.candidateSearch.groups.best[0]).toEqual(original);
+
+    await lyrics.saveLyricsCandidate(changed);
+    expect(lyrics.state.candidateSearch.groups).toEqual({
+      best: [],
+      related: [
+        {
+          ...changed,
+          alreadySaved: true,
+          saveState: 'current',
+          retrievedAt: '2026-08-23T12:00:00.000Z',
+        },
+      ],
+    });
+  });
+
+  it('pins search and save work to the track that opened the candidate view', async () => {
+    let resolveSave;
+    const candidate = {
+      id: 42,
+      trackName: 'Song',
+      matchBand: 'exact',
+      previewFingerprint: 'a'.repeat(64),
+    };
+    saveLyricsCandidateMock.mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveSave = resolve;
+        }),
+    );
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    lyrics.selectTrack(trackB.id);
+    await lyrics.searchLyricsCandidates(
+      { query: { title: 'Track A', artist: 'Artist A' } },
+      trackA.id,
+    );
+    expect(searchLyricsCandidatesMock).toHaveBeenCalledWith(
+      trackA.id,
+      expect.any(Object),
+    );
+
+    lyrics.selectTrack(trackA.id);
+    const pendingSave = lyrics.saveLyricsCandidate(candidate, trackA.id);
+    await vi.waitFor(() =>
+      expect(saveLyricsCandidateMock).toHaveBeenCalledWith(
+        trackA.id,
+        candidate.id,
+        candidate.previewFingerprint,
+        undefined,
+      ),
+    );
+    lyrics.selectTrack(trackB.id);
+    resolveSave({
+      provider: 'lrclib',
+      status: 'saved',
+      source: { filename: 'lrclib-42.lrc' },
+    });
+    await pendingSave;
+
+    expect(lyrics.state.selectedTrackId).toBe(trackB.id);
+    expect(lyrics.state.selectedSourceFilename).toBe('en.vtt');
+  });
+
   it('uses the full library list instead of the selected playlist order', async () => {
     const lyrics = await loadLyrics({
       playlists: [

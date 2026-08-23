@@ -21,7 +21,10 @@ const {
   setReadingLine,
 } = require('../lib/library');
 const { probeMusixmatchLyrics } = require('../lib/musixmatch');
-const { deleteStoredLrclibSource } = require('../lib/lrclib');
+const {
+  deleteStoredLrclibSource,
+  loadStoredLrclibArtifactSummary,
+} = require('../lib/lrclib');
 
 // Main-owned per-target guard (trackId::sourceFilename), same reasoning as
 // separationHandlers.js's separationInProgress — renderer disabled state
@@ -204,20 +207,36 @@ function registerLyricsHandlers({
         normalizeLrclibSearchOptions(options),
       );
       const manifestSources = loadTrackLyricsManifest(trackDir).sources;
-      const existingProviderIds = new Set(
+      const providerSources = new Map(
         manifestSources
           .filter((source) => source.provider?.name === 'lrclib')
-          .map((source) => source.provider.recordId),
+          .map((source) => [source.provider.recordId, source]),
       );
       const existingFilenames = new Set(
         getTrackLyricsState(trackDir).sources.map((source) => source.filename),
       );
-      const mapCandidate = (candidate) => ({
-        ...candidate,
-        alreadySaved:
-          existingProviderIds.has(candidate.id) ||
-          existingFilenames.has(`lrclib-${candidate.id}.lrc`),
-      });
+      const mapCandidate = (candidate) => {
+        const existingSource = providerSources.get(candidate.id);
+        const stored = existingSource
+          ? loadStoredLrclibArtifactSummary(trackDir, existingSource.provider)
+          : null;
+        const legacySaved = existingFilenames.has(`lrclib-${candidate.id}.lrc`);
+        const saveState = stored
+          ? stored.recordFingerprint === candidate.previewFingerprint
+            ? 'current'
+            : 'update-available'
+          : existingSource
+            ? 'update-available'
+            : legacySaved
+              ? 'current'
+              : 'unsaved';
+        return {
+          ...candidate,
+          saveState,
+          alreadySaved: saveState === 'current',
+          ...(stored ? { retrievedAt: stored.retrievedAt } : {}),
+        };
+      };
       const candidates = result.candidates.map(mapCandidate);
       return {
         ...result,
@@ -238,17 +257,22 @@ function registerLyricsHandlers({
 
   ipcMain.handle(
     'lyrics:save-candidate',
-    async (event, trackId, candidateId, expectedFingerprint) => {
+    async (event, trackId, candidateId, expectedFingerprint, options) => {
       const dir = resolveDownloadDir(getConfig());
       const track = findTrackRecord(dir, trackId);
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
+      const normalizedOptions = normalizeLrclibSearchOptions(options);
+      if (normalizedOptions.mode) {
+        throw new Error('lrclib save options contain an unsupported mode');
+      }
 
       const result = await lyricsAcquisitionService.saveCandidate({
         track,
         trackDir,
         candidateId,
         expectedFingerprint,
+        ...(normalizedOptions.query ? { query: normalizedOptions.query } : {}),
       });
       if (result.status !== 'saved') return result;
 

@@ -136,12 +136,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:probe-musixmatch', trackId),
   searchLyricsCandidates: (trackId, options) =>
     ipcRenderer.invoke('lyrics:search-candidates', trackId, options),
-  saveLyricsCandidate: (trackId, candidateId, expectedFingerprint) =>
+  saveLyricsCandidate: (trackId, candidateId, expectedFingerprint, options) =>
     ipcRenderer.invoke(
       'lyrics:save-candidate',
       trackId,
       candidateId,
       expectedFingerprint,
+      options,
     ),
   backfillLyricsSourceLabels: (trackId) =>
     ipcRenderer.invoke('lyrics:backfill-source-labels', trackId),

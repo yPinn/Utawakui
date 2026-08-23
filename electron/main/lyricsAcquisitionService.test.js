@@ -72,6 +72,35 @@ describe('createLyricsAcquisitionService', () => {
     expect(provider.getById).toHaveBeenCalledOnce();
   });
 
+  it('rejects concurrent manual searches before they grow the provider queue', async () => {
+    let resolveExact;
+    const provider = client({
+      getExact: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveExact = resolve;
+          }),
+      ),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+    });
+
+    const first = service.searchCandidates(track);
+    await vi.waitFor(() => expect(provider.getExact).toHaveBeenCalledOnce());
+    await expect(service.searchCandidates(track)).resolves.toMatchObject({
+      status: 'error',
+      reason: 'busy',
+      candidates: [],
+    });
+    expect(provider.getExact).toHaveBeenCalledOnce();
+
+    resolveExact({ status: 'ok', record: record() });
+    await first;
+  });
+
   it('issues zero requests when the lyrics gate is closed', async () => {
     const provider = client();
     const service = createLyricsAcquisitionService({
@@ -186,5 +215,39 @@ describe('createLyricsAcquisitionService', () => {
     });
     expect(requireFeatureGate).toHaveBeenCalledWith('lyrics-flow');
     expect(provider.getById).toHaveBeenCalledOnce();
+  });
+
+  it('rejects concurrent candidate saves before a second provider fetch', async () => {
+    let resolveRecord;
+    const provider = client({
+      getById: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveRecord = resolve;
+          }),
+      ),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+    });
+    const options = {
+      track,
+      trackDir,
+      candidateId: 42,
+      expectedFingerprint: fingerprintLrclibRecord(record()),
+    };
+
+    const first = service.saveCandidate(options);
+    await vi.waitFor(() => expect(provider.getById).toHaveBeenCalledOnce());
+    await expect(service.saveCandidate(options)).resolves.toMatchObject({
+      status: 'error',
+      reason: 'busy',
+    });
+    expect(provider.getById).toHaveBeenCalledOnce();
+
+    resolveRecord({ status: 'ok', record: record() });
+    await expect(first).resolves.toMatchObject({ status: 'saved' });
   });
 });

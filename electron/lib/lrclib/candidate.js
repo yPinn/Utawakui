@@ -18,6 +18,36 @@ const CAPABILITY_ORDER = Object.freeze({
   instrumental: 1,
   unsupported: 0,
 });
+const SUMMARY_TEXT_LIMIT = 256;
+const PREVIEW_LINE_TEXT_LIMIT = 240;
+const PREVIEW_TOTAL_TEXT_LIMIT = 800;
+const LANGUAGE_TAG_RE = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
+
+function boundedSummaryText(value, maxLength) {
+  if (typeof value !== 'string') return value;
+  if (value.length <= maxLength) return value;
+  return `${value.slice(0, maxLength - 1)}…`;
+}
+
+function normalizedLanguage(value) {
+  if (typeof value !== 'string' || value.length > 35) return null;
+  return LANGUAGE_TAG_RE.test(value) ? value : null;
+}
+
+function boundedPreviewLines(lines, lineLimit) {
+  let remaining = PREVIEW_TOTAL_TEXT_LIMIT;
+  const result = [];
+  for (const line of lines.slice(0, lineLimit)) {
+    if (remaining <= 0) break;
+    const text = boundedSummaryText(
+      line.text,
+      Math.min(PREVIEW_LINE_TEXT_LIMIT, remaining),
+    );
+    result.push({ start: line.start, text });
+    remaining -= text.length;
+  }
+  return result;
+}
 
 function legacyAnalysis(record) {
   const syncedLines = parseLrcLines(record.syncedLyrics);
@@ -32,6 +62,7 @@ function legacyAnalysis(record) {
         ? 'T0'
         : 'unsupported';
   return {
+    language: null,
     capability: { level, partial: false },
     compatibility: {
       t0: !record.instrumental && hasPlain,
@@ -59,6 +90,7 @@ function analyzeLrclibRecord(record) {
   const parsed = parseLyricsfile(record.lyricsfile);
   if (parsed.status === 'unsupported') {
     return {
+      language: null,
       capability: { level: 'unsupported', partial: false },
       compatibility: { t0: false, t1: false, t2: false },
       warnings: ['unsupported-lyricsfile-version'],
@@ -70,6 +102,7 @@ function analyzeLrclibRecord(record) {
   }
   if (parsed.status === 'error') {
     return {
+      language: null,
       capability: { level: 'unsupported', partial: false },
       compatibility: { t0: false, t1: false, t2: false },
       warnings: ['invalid-lyricsfile'],
@@ -85,6 +118,7 @@ function analyzeLrclibRecord(record) {
     0,
   );
   return {
+    language: normalizedLanguage(parsed.document.metadata.language),
     capability: parsed.capability,
     compatibility: parsed.compatibility,
     warnings: parsed.warnings,
@@ -187,14 +221,15 @@ function summarizeLrclibCandidate(match, previewLineLimit = 5) {
   const record = match.record;
   return {
     id: record.id,
-    trackName: record.trackName,
-    artistName: record.artistName,
-    albumName: record.albumName,
+    trackName: boundedSummaryText(record.trackName, SUMMARY_TEXT_LIMIT),
+    artistName: boundedSummaryText(record.artistName, SUMMARY_TEXT_LIMIT),
+    albumName: boundedSummaryText(record.albumName, SUMMARY_TEXT_LIMIT),
     duration: record.duration,
     instrumental: record.instrumental,
+    ...(match.language ? { language: match.language } : {}),
     lineCount: match.lineCount,
     segmentCount: match.segmentCount,
-    previewLines: match.previewLines.slice(0, previewLineLimit),
+    previewLines: boundedPreviewLines(match.previewLines, previewLineLimit),
     capability: match.capability,
     compatibility: match.compatibility,
     warnings: match.warnings,

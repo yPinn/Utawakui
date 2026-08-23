@@ -137,10 +137,13 @@ preserved as an artifact but cannot publish a falsely compatible source.
 
 Candidate summaries carry an opaque `previewFingerprint` through the
 main/preload flow. Before saving, `/api/get/:id` is normalized and fingerprinted
-again. If the
-content changed since preview, main returns `record-changed` plus a refreshed
-bounded summary and requires explicit confirmation; it never silently saves the
-new body.
+again using the same bounded modal-local title/artist identity for refreshed
+matching. If the content changed since preview, main returns `record-changed`
+plus a refreshed bounded summary and requires explicit confirmation; it never
+silently saves the new body. Renderer keeps that summary as a pending proposal:
+cancel discards it without changing the candidate list, while a successful
+confirmation replaces and re-groups the candidate and records the new retrieval
+time.
 
 ## Renderer contract
 
@@ -151,6 +154,13 @@ capability and coverage, bounded preview, match reasons/warnings, and saved or
 update state. Provider id and detailed counts live behind an accessible details
 disclosure. Scores, hashes, YAML terms, paths, and raw exceptions are not normal
 UI.
+
+For an existing provider source, main reads only a bounded, validated summary of
+the local artifact and compares its stored record fingerprint to the candidate
+fingerprint. Renderer receives `saveState: current | update-available | unsaved`
+and the normalized retrieval time, never either fingerprint. Legacy LRCLIB files
+without a valid artifact remain conservatively `current` until provenance repair
+is explicitly requested.
 
 All asynchronous renderer requests have an id or generation. Late responses are
 discarded, saving is single-flight per modal, and every typed provider failure is

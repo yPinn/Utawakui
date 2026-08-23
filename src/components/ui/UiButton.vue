@@ -5,6 +5,11 @@ import { ICON_SIZE } from '../../icons/index.js';
 
 defineProps({
   icon: { type: [Object, Function], default: null },
+  type: {
+    type: String,
+    default: 'button',
+    validator: (value) => ['button', 'submit', 'reset'].includes(value),
+  },
   variant: {
     type: String,
     default: 'ghost',
@@ -16,7 +21,7 @@ defineProps({
 
 <template>
   <button
-    type="button"
+    :type="type"
     class="ui-btn"
     :class="[
       `ui-btn--${variant}`,

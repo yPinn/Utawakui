@@ -43,6 +43,7 @@ const {
 const { saveLrclibCandidate } = require('./lrclib/saveFlow.js');
 const {
   deleteStoredLrclibSource,
+  loadStoredLrclibArtifactSummary,
   saveLrclibRecord,
 } = require('./lrclib/storage.js');
 const {
@@ -68,6 +69,7 @@ module.exports = {
   findLrclibSyncedLyrics,
   fingerprintLrclibRecord,
   looksLikeChannelArtist,
+  loadStoredLrclibArtifactSummary,
   normalizeLrclibRecord,
   parseLrcLines,
   parseLyricsfile,

@@ -5,7 +5,7 @@
 // component owns only the overlay mechanics (teleport, backdrop, Escape,
 // focus), mirroring UiContextMenu.vue's window-level Escape/outside-click
 // pattern since that's the only existing overlay precedent in this app.
-import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
+import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
 import UiButton from './UiButton.vue';
 
@@ -26,6 +26,7 @@ const emit = defineEmits(['close']);
 // Teleport moves the element elsewhere in the DOM, not out of this
 // component's own template-ref tracking, so this still resolves correctly.
 const dialogRef = useTemplateRef('dialog');
+let previouslyFocused = null;
 
 function close() {
   emit('close');
@@ -79,9 +80,19 @@ function onWindowKeydown(event) {
 watch(
   () => props.open,
   (isOpen) => {
-    if (!isOpen || typeof window === 'undefined') return;
-    window.requestAnimationFrame(() => {
-      dialogRef.value?.querySelector('input, textarea, select')?.focus();
+    if (typeof window === 'undefined') return;
+    if (isOpen) {
+      previouslyFocused = document.activeElement;
+      window.requestAnimationFrame(() => {
+        const field = dialogRef.value?.querySelector('input, textarea, select');
+        (field || dialogRef.value)?.focus();
+      });
+      return;
+    }
+    const focusTarget = previouslyFocused;
+    previouslyFocused = null;
+    nextTick(() => {
+      if (focusTarget?.isConnected) focusTarget.focus();
     });
   },
 );
@@ -105,6 +116,7 @@ onUnmounted(() => {
         class="ui-modal"
         :class="`ui-modal--${size}`"
         role="dialog"
+        tabindex="-1"
         aria-modal="true"
         :aria-label="title"
       >

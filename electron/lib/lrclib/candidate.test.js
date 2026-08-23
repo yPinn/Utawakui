@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   analyzeLrclibRecord,
   rankLrclibCandidateMatches,
+  summarizeLrclibCandidate,
 } from './candidate.js';
 
 function record(overrides = {}) {
@@ -50,6 +51,50 @@ lines:
       lineCount: 1,
       segmentCount: 2,
     });
+  });
+
+  it('keeps reliable Lyricsfile language in the bounded candidate summary', () => {
+    const [match] = rankLrclibCandidateMatches(identity, [
+      record({
+        lyricsfile: `version: '1.0'
+metadata: { title: Song, artist: Artist, language: ja }
+lines:
+  - text: 歌詞
+    start_ms: 1000
+`,
+      }),
+    ]);
+
+    expect(summarizeLrclibCandidate(match)).toMatchObject({
+      language: 'ja',
+      capability: { level: 'T1' },
+    });
+  });
+
+  it('bounds provider-controlled candidate text while preserving the raw record', () => {
+    const longText = '長'.repeat(600);
+    const [match] = rankLrclibCandidateMatches(identity, [
+      record({
+        trackName: longText,
+        artistName: longText,
+        albumName: longText,
+        lyricsfile: `version: '1.0'
+metadata: { title: Song, artist: Artist, language: ${'x'.repeat(80)} }
+lines:
+  - text: ${longText}
+    start_ms: 1000
+`,
+      }),
+    ]);
+
+    const summary = summarizeLrclibCandidate(match);
+
+    expect(summary.trackName.length).toBeLessThanOrEqual(256);
+    expect(summary.artistName.length).toBeLessThanOrEqual(256);
+    expect(summary.albumName.length).toBeLessThanOrEqual(256);
+    expect(summary.previewLines[0].text.length).toBeLessThanOrEqual(240);
+    expect(summary).not.toHaveProperty('language');
+    expect(match.record.trackName).toBe(longText);
   });
 
   it('keeps invalid or unknown Lyricsfile visible but non-automatic', () => {

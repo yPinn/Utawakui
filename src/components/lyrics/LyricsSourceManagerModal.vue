@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue';
+import { computed, nextTick, ref, watch } from 'vue';
 import { Pencil, Plus, Trash2 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import { formatLyricsSourceLabel } from '../../utils/lyrics.js';
@@ -8,18 +8,46 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
 import LyricsLrclibSearchPanel from './LyricsLrclibSearchPanel.vue';
+import LyricsLrclibSearchWorkspace from './LyricsLrclibSearchWorkspace.vue';
 import LyricsManualImportPanel from './LyricsManualImportPanel.vue';
 
-defineProps({
+const props = defineProps({
   open: { type: Boolean, default: false },
 });
 const emit = defineEmits(['close']);
 
 const { state, selectedLyrics, setSourceLabel, deleteSource } = useLyrics();
 
+const activeView = ref('sources');
+const lrclibPanelRef = ref(null);
 const isManualImportOpen = ref(false);
 const editingFilename = ref(null);
 const labelDraft = ref('');
+const modalTitle = computed(() =>
+  activeView.value === 'lrclib' ? '搜尋 LRCLIB 歌詞' : '管理歌詞來源',
+);
+
+watch(
+  () => props.open,
+  (open) => {
+    if (!open) activeView.value = 'sources';
+  },
+);
+
+function openLrclibSearch() {
+  activeView.value = 'lrclib';
+}
+
+async function returnToSources() {
+  activeView.value = 'sources';
+  await nextTick();
+  lrclibPanelRef.value?.focusSearchTrigger();
+}
+
+function handleModalClose() {
+  activeView.value = 'sources';
+  emit('close');
+}
 
 function startEdit(source) {
   editingFilename.value = source.filename;
@@ -45,8 +73,17 @@ async function handleDelete(source) {
 </script>
 
 <template>
-  <UiModal :open="open" title="管理歌詞來源" size="wide" @close="emit('close')">
-    <div class="lyrics-source-manager">
+  <UiModal
+    :open="open"
+    :title="modalTitle"
+    size="wide"
+    @close="handleModalClose"
+  >
+    <LyricsLrclibSearchWorkspace
+      v-if="activeView === 'lrclib'"
+      @back="returnToSources"
+    />
+    <div v-else class="lyrics-source-manager">
       <section aria-labelledby="lyrics-source-manager-current-title">
         <div class="lyrics-source-manager__section-header">
           <h3 id="lyrics-source-manager-current-title">目前的來源</h3>
@@ -120,7 +157,10 @@ async function handleDelete(source) {
         </div>
       </section>
 
-      <LyricsLrclibSearchPanel />
+      <LyricsLrclibSearchPanel
+        ref="lrclibPanelRef"
+        @open-search="openLrclibSearch"
+      />
     </div>
   </UiModal>
 </template>

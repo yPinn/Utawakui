@@ -54,10 +54,11 @@ describe('saveLrclibCandidate', () => {
 
     await expect(
       saveLrclibCandidate({
-        track,
+        track: { title: 'Library title', artist: 'Different artist' },
         trackDir: 'track-dir',
         candidateId: 42,
         expectedFingerprint: fingerprintLrclibRecord(record()),
+        query: { title: 'Song', artist: 'Artist' },
         fetchRecord: vi.fn().mockResolvedValue({
           status: 'ok',
           record: changed,
@@ -69,6 +70,7 @@ describe('saveLrclibCandidate', () => {
       candidate: {
         id: 42,
         trackName: 'Song',
+        matchBand: 'exact',
         previewFingerprint: fingerprintLrclibRecord(changed),
       },
     });

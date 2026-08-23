@@ -81,6 +81,8 @@ const state = reactive({
     status: null, // 'ok' | 'unavailable' | 'error' | null
     reason: null,
     candidates: [],
+    groups: { best: [], related: [] },
+    invalidRecordCount: 0,
     error: null,
   },
   manualSave: {
@@ -225,7 +227,48 @@ function clearCandidateSearch() {
   state.candidateSearch.status = null;
   state.candidateSearch.reason = null;
   state.candidateSearch.candidates = [];
+  state.candidateSearch.groups = { best: [], related: [] };
+  state.candidateSearch.invalidRecordCount = 0;
   state.candidateSearch.error = null;
+  state.manualSave.error = null;
+}
+
+const LRCLIB_FAILURE_MESSAGES = Object.freeze({
+  'rate-limited': 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
+  offline: '目前無法連線至 LRCLIB，請檢查網路後再試。',
+  'fetch-unavailable': '目前無法連線至 LRCLIB，請稍後再試。',
+  timeout: 'LRCLIB 回應逾時，請稍後再試。',
+  'service-unavailable': 'LRCLIB 服務暫時無法使用，請稍後再試。',
+  'invalid-json': 'LRCLIB 回傳了無法讀取的資料，請稍後再試。',
+  'invalid-record': 'LRCLIB 回傳的候選資料不完整，請調整條件後再試。',
+  'response-too-large': 'LRCLIB 回傳資料超出安全限制，請縮小搜尋範圍。',
+  busy: '已有一筆 LRCLIB 搜尋正在進行，請稍候。',
+});
+
+function candidateGroups(result) {
+  if (result?.groups) {
+    return {
+      best: Array.isArray(result.groups.best) ? result.groups.best : [],
+      related: Array.isArray(result.groups.related)
+        ? result.groups.related
+        : [],
+    };
+  }
+  const candidates = Array.isArray(result?.candidates) ? result.candidates : [];
+  return {
+    best: candidates.filter((candidate) => candidate.matchBand !== 'related'),
+    related: candidates.filter(
+      (candidate) => candidate.matchBand === 'related',
+    ),
+  };
+}
+
+function replaceCandidate(candidate) {
+  const candidates = state.candidateSearch.candidates.map((item) =>
+    item.id === candidate.id ? candidate : item,
+  );
+  state.candidateSearch.candidates = candidates;
+  state.candidateSearch.groups = candidateGroups({ candidates });
 }
 
 async function ensureLyricsFlow(options = {}) {
@@ -521,13 +564,16 @@ async function probeMusixmatch() {
   }
 }
 
-async function searchLyricsCandidates(options) {
-  const track = selectedTrack.value;
+async function searchLyricsCandidates(
+  options,
+  trackId = state.selectedTrackId,
+) {
+  const track = state.tracks.find((candidate) => candidate.id === trackId);
   if (!track) return;
-  if (!(await ensureLyricsFlow())) return;
-
   candidateSearchRequestId += 1;
   const requestId = candidateSearchRequestId;
+  if (!(await ensureLyricsFlow())) return;
+  if (requestId !== candidateSearchRequestId) return;
 
   state.candidateSearch.isLoading = true;
   state.candidateSearch.trackId = track.id;
@@ -546,13 +592,25 @@ async function searchLyricsCandidates(options) {
     );
     if (requestId !== candidateSearchRequestId) return;
     state.candidateSearch.status = result?.status ?? null;
-    state.candidateSearch.reason =
-      result?.status === 'error'
-        ? '請稍後再試一次。'
-        : result?.status === 'unavailable'
-          ? '目前沒有合適的候選歌詞。'
-          : null;
-    state.candidateSearch.candidates = result?.candidates ?? [];
+    state.candidateSearch.reason = result?.reason ?? null;
+    state.candidateSearch.candidates = Array.isArray(result?.candidates)
+      ? result.candidates
+      : [];
+    state.candidateSearch.groups = candidateGroups(result);
+    state.candidateSearch.invalidRecordCount = Number.isSafeInteger(
+      result?.invalidRecordCount,
+    )
+      ? result.invalidRecordCount
+      : 0;
+    if (result?.status === 'error') {
+      state.candidateSearch.error = reportLyricsError(
+        new Error(`lrclib search failed: ${result.reason || 'unknown'}`),
+        'search',
+        LRCLIB_FAILURE_MESSAGES[result.reason] ||
+          '目前無法搜尋歌詞，請稍後再試。',
+      );
+    }
+    return result;
   } catch (err) {
     if (requestId !== candidateSearchRequestId) return;
     state.candidateSearch.error = reportLyricsError(
@@ -570,8 +628,12 @@ async function searchLyricsCandidates(options) {
 // main also broadcasts library:updated after a save, but that's fire-and-
 // forget — this explicit refresh is what lets selectSource() run only
 // once selectedLyrics.sources actually contains the new filename.
-async function saveLyricsCandidate(candidate) {
-  const track = selectedTrack.value;
+async function saveLyricsCandidate(
+  candidate,
+  trackId = state.selectedTrackId,
+  query = undefined,
+) {
+  const track = state.tracks.find((item) => item.id === trackId);
   if (!track) return null;
   if (!(await ensureLyricsFlow())) return null;
 
@@ -587,14 +649,9 @@ async function saveLyricsCandidate(candidate) {
       track.id,
       candidate.id,
       candidate.previewFingerprint,
+      query ? { query } : undefined,
     );
     if (result?.status === 'record-changed') {
-      const index = state.candidateSearch.candidates.findIndex(
-        (item) => item.id === candidate.id,
-      );
-      if (index >= 0 && result.candidate) {
-        state.candidateSearch.candidates[index] = result.candidate;
-      }
       return result;
     }
     if (result?.status !== 'saved' || !result.source) {
@@ -603,7 +660,15 @@ async function saveLyricsCandidate(candidate) {
       );
     }
     await refreshLibrary();
-    selectSource(result.source.filename);
+    replaceCandidate({
+      ...candidate,
+      alreadySaved: true,
+      saveState: 'current',
+      ...(result.retrievedAt ? { retrievedAt: result.retrievedAt } : {}),
+    });
+    if (state.selectedTrackId === track.id) {
+      selectSource(result.source.filename);
+    }
     return result;
   } catch (err) {
     state.manualSave.error = reportLyricsError(
@@ -856,6 +921,7 @@ export function useLyrics() {
     playFromLine,
     probeMusixmatch,
     ensureLyricsFlow,
+    clearCandidateSearch,
     searchLyricsCandidates,
     saveLyricsCandidate,
     backfillSourceLabels,

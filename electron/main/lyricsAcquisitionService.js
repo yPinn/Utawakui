@@ -15,13 +15,33 @@ function createLyricsAcquisitionService({
   featureId,
   client = createLrclibClient(),
 }) {
+  let candidateSearchInFlight = null;
+  let candidateSaveInFlight = null;
+
   function requireLyricsFlow() {
     requireFeatureGate(featureId);
   }
 
   async function searchCandidates(track, options = {}) {
     requireLyricsFlow();
-    return searchLrclibCandidates(track, { ...options, client });
+    if (candidateSearchInFlight) {
+      return {
+        provider: 'lrclib',
+        status: 'error',
+        reason: 'busy',
+        candidates: [],
+        groups: null,
+      };
+    }
+    const operation = searchLrclibCandidates(track, { ...options, client });
+    candidateSearchInFlight = operation;
+    try {
+      return await operation;
+    } finally {
+      if (candidateSearchInFlight === operation) {
+        candidateSearchInFlight = null;
+      }
+    }
   }
 
   async function fetchRecord(recordId) {
@@ -31,10 +51,19 @@ function createLyricsAcquisitionService({
 
   async function saveCandidate(options) {
     requireLyricsFlow();
-    return saveLrclibCandidate({
+    if (candidateSaveInFlight) {
+      return { provider: 'lrclib', status: 'error', reason: 'busy' };
+    }
+    const operation = saveLrclibCandidate({
       ...options,
       fetchRecord: (recordId) => fetchLrclibRecord(recordId, { client }),
     });
+    candidateSaveInFlight = operation;
+    try {
+      return await operation;
+    } finally {
+      if (candidateSaveInFlight === operation) candidateSaveInFlight = null;
+    }
   }
 
   async function saveIfAbsent(track, trackDir) {

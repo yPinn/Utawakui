@@ -307,6 +307,8 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 LRCLIB 來源另保存完整、版本化的 provider artifact；現有 Workspace 仍讀取相容 `.lrc`，而通過驗證且完整的逐字 timing 會直接投影到既有 timing sidecar。main process 只建立一個 LRCLIB acquisition service，供 Lyrics、Import 與 Library backfill handler 注入共用；該 service 統一持有 client、節流排程與 `lyrics-flow` gate，handler 之間不互相 import。
 
+Lyrics 的 LRCLIB 候選搜尋使用來源管理視窗內的單一寬版 modal 工作區，不疊加第二個 dialog。曲名與歌手會從所選曲目預填為 modal-local 可編輯欄位，只有 Enter 或明確按下搜尋才送出 structured query；沒有 exact 結果時才顯示一次性的擴大搜尋。候選依最佳符合／相近結果分組，直接顯示 identity、專輯、長度差、T0/T1/T2、可靠語言與 bounded preview，provider id、符合依據、行／segment 數及既有來源保存時間則收在 accessible details。main 只在本機比較已存 artifact 與搜尋候選的 fingerprint，renderer 僅收到 `current`／`update-available`／`unsaved` 狀態而不接觸 hash；更新候選仍會在保存前重新抓取，內容若又有變更就必須在該列再次確認。typed provider failure 進入共用 sanitized diagnostics，modal 關閉、切歌或後發請求都會使舊搜尋失效。
+
 Lyrics Workspace 的即時同步 offset 依 track 與歌詞來源分開保存：非零值以整數毫秒寫入該 track 的 `lyrics/lyrics.json` source entry，切換來源或重新啟動時恢復，未保存或重設的來源使用 0。此偏好不改寫原始 `.lrc` / `.vtt`，因此不會使 timing fingerprint、逐字校時 sidecar 或讀音資料失效。
 
 Lyrics Workspace 的歌詞同步操作保留為閱讀區右下角的 compact −0.1／reset／+0.1 控制，閱讀器預留底部 safe area，不另外顯示來源或保存狀態等常駐說明。讀音選項變更即為套用動作，因此工具列只保留讀音選單，不顯示套用狀態或重試／重建按鈕；失敗仍透過共用 notice 呈現。讀音選項是跨歌曲保留的顯示意圖，不因切歌 reset。切換歌曲／來源，或同一播放曲目回到開頭（重播、restart、seek-to-start、repeat-one wrap）時，若選項關閉只檢查既有文件而不生成；若已啟用則先讀取對應文件，確認不存在後才自動生成目前語系的讀音。歌詞載入期間的 `unknown` script 是暫態，不得送入生成 IPC；待內容可辨識為 `ja` 或 `ko` 後，再以相同選項自動重試。讀取失敗不視為文件不存在，等待期間若 selection 已改變也不會替舊曲目啟動生成。同一 track/source 的並行讀取採 latest-response-wins，避免舊 IPC 回應覆寫較新的讀音。`T0` / `T1` / `T2` 是文件能力而非使用者設定，因此不在 idle 介面顯示；只有開始編輯一行時才呈現逐字校時面板。該面板以 recorded／current／pending 詞序呈現下一個待記錄起點，只有選取已記錄詞語後才顯示一組提前／延後微調，undo／save／cancel 則維持全域 draft 操作。
