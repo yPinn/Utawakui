@@ -10,6 +10,7 @@ import {
   finalizeDownloadedTrackFiles,
   hasStructuredAudioFile,
   isMissingAudioOutputError,
+  readTrackInfoMaintenanceFields,
   readTrackInfoMetadata,
   readTrackSidecarState,
 } from './downloader.js';
@@ -198,7 +199,7 @@ describe('buildAudioDownloadOptionAttempts', () => {
 });
 
 describe('fetchPlaylist', () => {
-  it('keeps playlist entries fast while attaching track identity metadata', async () => {
+  it('keeps playlist entries fast while normalizing display and identity metadata', async () => {
     const runner = vi.fn().mockResolvedValue({
       title: 'Karaoke Favorites',
       entries: [
@@ -211,13 +212,15 @@ describe('fetchPlaylist', () => {
       ],
     });
 
-    await expect(fetchPlaylist('playlist123', { runner })).resolves.toEqual({
+    await expect(
+      fetchPlaylist('playlist123', { runner }),
+    ).resolves.toMatchObject({
       title: 'Karaoke Favorites',
       entries: [
         expect.objectContaining({
           id: 'mv123456789',
-          title: 'Sabrina Hu - Parachute (Official Music Video)',
-          artist: 'Example Music',
+          title: 'Parachute',
+          artist: 'Sabrina Hu',
           duration: 240,
           trackIdentity: expect.objectContaining({
             title: 'Parachute',
@@ -520,6 +523,17 @@ describe('finalizeDownloadedTrackFiles', () => {
       title: 'Never Gonna Give You Up',
       artist: 'Rick Astley',
       duration: 213,
+    });
+    expect(readTrackInfoMaintenanceFields(dir)).toEqual({
+      normalized: {
+        title: 'Never Gonna Give You Up',
+        artist: 'Rick Astley',
+        duration: 213,
+      },
+      previousProjection: {
+        title: 'Never Gonna Give You Up',
+        artist: 'Rick Astley',
+      },
     });
     expect(fs.existsSync(path.join(dir, 'audio.mp3'))).toBe(true);
     expect(fs.existsSync(path.join(dir, 'thumbnail.webp'))).toBe(true);

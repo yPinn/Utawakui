@@ -27,7 +27,11 @@ const {
   shouldRetryForPhase,
   watchUrl,
 } = require('./youtubeAttempts');
-const { extractMetadataFields, extractThumbnailUrl } = require('./ytdlpInfo');
+const {
+  extractMetadataFields,
+  extractMetadataMaintenanceFields,
+  extractThumbnailUrl,
+} = require('./ytdlpInfo');
 const { classifyPlaylistKind } = require('./youtube');
 
 const DEFAULT_AUDIO_FORMAT = 'bestaudio/best';
@@ -368,15 +372,24 @@ async function fetchVideoInfo(
   }
 }
 
-function readTrackInfoMetadata(trackDir) {
+function readTrackInfoJson(trackDir) {
   try {
-    const info = JSON.parse(
+    return JSON.parse(
       fs.readFileSync(path.join(trackDir, 'info.json'), 'utf8'),
     );
-    return extractMetadataFields(info);
   } catch {
-    return {};
+    return null;
   }
+}
+
+function readTrackInfoMetadata(trackDir) {
+  const info = readTrackInfoJson(trackDir);
+  return info ? extractMetadataFields(info) : {};
+}
+
+function readTrackInfoMaintenanceFields(trackDir) {
+  const info = readTrackInfoJson(trackDir);
+  return info ? extractMetadataMaintenanceFields(info) : null;
 }
 
 function cleanMetadataString(value) {
@@ -580,6 +593,7 @@ module.exports = {
   finalizeDownloadedTrackFiles,
   hasStructuredAudioFile,
   isMissingAudioOutputError,
+  readTrackInfoMaintenanceFields,
   readTrackInfoMetadata,
   readTrackSidecarState,
   fetchPlaylist,

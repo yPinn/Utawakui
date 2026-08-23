@@ -83,9 +83,22 @@ async function runBackfillPass(dir, tracks, fetchMetadata, onStatus = null) {
           // Re-read fresh: a manual edit may have landed on this track
           // while the fetch above was in flight — don't clobber it.
           const currentEntry = loadIndex(dir).tracks[track.id];
-          const toWrite = { ...metadata };
-          if (currentEntry?.title) delete toWrite.title;
-          if (currentEntry?.artist) delete toWrite.artist;
+          const toWrite = {
+            ...metadata,
+            titleOrigin: 'provider',
+            artistOrigin: 'provider',
+          };
+          if (currentEntry?.title || currentEntry?.titleOrigin === 'manual') {
+            delete toWrite.title;
+            delete toWrite.titleOrigin;
+          }
+          if (
+            currentEntry?.artist ||
+            (currentEntry && currentEntry.artistOrigin !== 'provider')
+          ) {
+            delete toWrite.artist;
+            delete toWrite.artistOrigin;
+          }
           if (Object.keys(toWrite).length > 0) {
             saveIndexEntry(dir, track.id, toWrite);
           }

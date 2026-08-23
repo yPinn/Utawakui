@@ -65,13 +65,15 @@ const tracksById = computed(
   () => new Map(state.tracks.map((track) => [track.id, track])),
 );
 
-async function refresh() {
+async function refresh(options) {
   if (typeof window === 'undefined' || !window.Utawakui) {
     state.isLoading = false;
     return;
   }
   try {
-    rawTracks.value = await window.Utawakui.listTracks();
+    rawTracks.value = options
+      ? await window.Utawakui.listTracks(options)
+      : await window.Utawakui.listTracks();
     state.error = null;
   } catch (err) {
     state.error = recordError(err, {
@@ -101,15 +103,17 @@ function initialize() {
   return initializationPromise;
 }
 
-// Manual metadata refresh (album/releaseYear from already-downloaded
-// info.json sidecars — see main.js's library:refresh-metadata handler).
-// Returns the updated count so the caller can report it; no need to also
+// Manual metadata maintenance from already-downloaded info.json sidecars —
+// see libraryHandlers.js's library:refresh-metadata handler. Returns a bounded
+// summary so the caller can distinguish normalization, enrichment, and skipped
+// manual edits; no need to also
 // call refresh() here, main pushes library:updated on any real change and
 // the subscription below already re-fetches on that.
 async function refreshMetadata() {
-  if (typeof window === 'undefined' || !window.Utawakui) return 0;
-  const { updated } = await window.Utawakui.refreshLibraryMetadata();
-  return updated;
+  if (typeof window === 'undefined' || !window.Utawakui) {
+    return { updated: 0, normalized: 0, enriched: 0, skipped: 0 };
+  }
+  return window.Utawakui.refreshLibraryMetadata();
 }
 
 if (import.meta.hot) {

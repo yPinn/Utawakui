@@ -3,7 +3,7 @@ import os from 'os';
 import path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { runBackfillPass } from './backfill.js';
-import { listTracks } from './tracks.js';
+import { listTracks, updateTrackMetadata } from './tracks.js';
 import { loadIndex, saveIndexEntry } from './metadataIndex.js';
 
 describe('runBackfillPass', () => {
@@ -189,7 +189,11 @@ describe('runBackfillPass', () => {
   it('does not clobber a title edited concurrently while the fetch was in flight', async () => {
     fs.writeFileSync(path.join(dir, 'dQw4w9WgXcQ.mp3'), 'x');
     const fetchMetadata = vi.fn(async () => {
-      saveIndexEntry(dir, 'dQw4w9WgXcQ', { title: 'User Edited Title' });
+      saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+        title: 'User Edited Title',
+        titleOrigin: 'manual',
+        artistOrigin: 'provider',
+      });
       return {
         title: 'Fetched Title',
         artist: 'Fetched Artist',
@@ -203,6 +207,86 @@ describe('runBackfillPass', () => {
     expect(track.title).toBe('User Edited Title');
     expect(track.artist).toBe('Fetched Artist');
     expect(track.duration).toBe(213);
+  });
+
+  it('does not repopulate an artist that was manually cleared', async () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Manual Title',
+      artist: 'Old Artist',
+      duration: 213,
+    });
+    updateTrackMetadata(dir, 'dQw4w9WgXcQ', {
+      title: 'Manual Title',
+      artist: '',
+    });
+
+    await runBackfillPass(
+      dir,
+      listTracks(dir),
+      vi.fn(async () => ({
+        title: 'Provider Title',
+        artist: 'Provider Artist',
+        duration: 213,
+        assetsUpdated: true,
+      })),
+    );
+
+    expect(loadIndex(dir).tracks.dQw4w9WgXcQ).toMatchObject({
+      title: 'Manual Title',
+      titleOrigin: 'manual',
+      artistOrigin: 'manual',
+    });
+    expect(loadIndex(dir).tracks.dQw4w9WgXcQ.artist).toBeUndefined();
+  });
+
+  it('does not repopulate a legacy missing artist without an origin marker', async () => {
+    const trackDir = path.join(dir, 'tracks', 'dQw4w9WgXcQ');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveIndexEntry(dir, 'dQw4w9WgXcQ', {
+      title: 'Legacy Title',
+      duration: 180,
+    });
+
+    await runBackfillPass(
+      dir,
+      [{ ...listTracks(dir)[0], needsBackfill: true }],
+      vi.fn(async () => ({
+        title: 'Provider Title',
+        artist: 'Provider Artist',
+        duration: 181,
+        assetsUpdated: true,
+      })),
+    );
+
+    expect(loadIndex(dir).tracks.dQw4w9WgXcQ).toEqual({
+      title: 'Legacy Title',
+      duration: 181,
+    });
+  });
+
+  it('marks a missing artist as provider-owned for a brand-new index entry', async () => {
+    fs.writeFileSync(path.join(dir, 'dQw4w9WgXcQ.mp3'), 'x');
+
+    await runBackfillPass(
+      dir,
+      listTracks(dir),
+      vi.fn(async () => ({
+        title: 'Provider Title',
+        artist: undefined,
+        duration: 181,
+      })),
+    );
+
+    expect(loadIndex(dir).tracks.dQw4w9WgXcQ).toEqual({
+      title: 'Provider Title',
+      titleOrigin: 'provider',
+      artistOrigin: 'provider',
+      duration: 181,
+    });
   });
 
   it('does not retry an id that already failed this session', async () => {

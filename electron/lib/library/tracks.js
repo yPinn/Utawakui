@@ -79,6 +79,122 @@ function refreshTrackMetadataFromSidecars(dir, readTrackInfo) {
   return updatedCount;
 }
 
+function isPresentText(value) {
+  return typeof value === 'string' && value.trim().length > 0;
+}
+
+function isValidDuration(value) {
+  return Number.isFinite(value) && value > 0;
+}
+
+// Settings' repeatable, offline maintenance pass. Title/artist are rewritten
+// only when missing or when the current scalar still equals the provider's
+// previous projection; this lets newer normalization repair old imports without
+// trampling manual edits. Duration is fill-only, while album/year keep the
+// existing sidecar-authoritative refresh behavior. Artwork remains filesystem
+// state and network repair stays with runBackfillPass.
+function organizeTrackMetadataFromSidecars(dir, readTrackInfo) {
+  const index = loadIndex(dir);
+  const updatedTrackIds = new Set();
+  const normalizedTrackIds = new Set();
+  const enrichedTrackIds = new Set();
+  const skippedTrackIds = new Set();
+
+  for (const record of listTrackRecords(dir)) {
+    const trackDir = resolveTrackDir(dir, record.id);
+    if (!trackDir) continue;
+    const maintenance = readTrackInfo(trackDir);
+    if (!maintenance?.normalized) continue;
+
+    const fields = maintenance.normalized;
+    const previous = maintenance.previousProjection || {};
+    const hasExistingEntry = Object.prototype.hasOwnProperty.call(
+      index.tracks,
+      record.id,
+    );
+    const existing = index.tracks[record.id] || {};
+    const next = { ...existing };
+    if (!hasExistingEntry) {
+      next.titleOrigin = 'provider';
+      next.artistOrigin = 'provider';
+    }
+    let normalizedChanged = false;
+    let enrichedChanged = false;
+    let skipped = false;
+
+    for (const field of ['title', 'artist']) {
+      const proposed = fields[field];
+      if (!isPresentText(proposed) || proposed === existing[field]) continue;
+
+      if (existing[`${field}Origin`] === 'manual') {
+        skipped = true;
+        continue;
+      }
+      // Pre-origin indexes cannot distinguish "never had an artist" from a
+      // user who intentionally cleared it. Preserve that ambiguous legacy
+      // absence; new manual edits carry artistOrigin and brand-new tracks
+      // without any index entry are still handled by provider backfill.
+      if (
+        field === 'artist' &&
+        hasExistingEntry &&
+        !isPresentText(existing.artist) &&
+        existing.artistOrigin === undefined
+      ) {
+        skipped = true;
+        continue;
+      }
+      if (
+        !isPresentText(existing[field]) ||
+        (isPresentText(previous[field]) && existing[field] === previous[field])
+      ) {
+        next[field] = proposed;
+        next[`${field}Origin`] = 'provider';
+        normalizedChanged = true;
+      } else {
+        skipped = true;
+      }
+    }
+
+    if (
+      !isValidDuration(existing.duration) &&
+      isValidDuration(fields.duration)
+    ) {
+      next.duration = fields.duration;
+      enrichedChanged = true;
+    }
+    if (isPresentText(fields.album) && fields.album !== existing.album) {
+      next.album = fields.album;
+      enrichedChanged = true;
+    }
+    if (
+      Number.isInteger(fields.releaseYear) &&
+      fields.releaseYear !== existing.releaseYear
+    ) {
+      next.releaseYear = fields.releaseYear;
+      enrichedChanged = true;
+    }
+
+    if (normalizedChanged || enrichedChanged) {
+      index.tracks[record.id] = next;
+      updatedTrackIds.add(record.id);
+    }
+    if (normalizedChanged) normalizedTrackIds.add(record.id);
+    if (enrichedChanged) enrichedTrackIds.add(record.id);
+    if (skipped) skippedTrackIds.add(record.id);
+  }
+
+  if (updatedTrackIds.size > 0) {
+    atomicWriteJson(path.join(dir, INDEX_FILENAME), index);
+  }
+
+  return {
+    updated: updatedTrackIds.size,
+    normalized: normalizedTrackIds.size,
+    enriched: enrichedTrackIds.size,
+    skipped: skippedTrackIds.size,
+  };
+}
+
 function compareOptionalStrings(a, b) {
   const hasA = typeof a === 'string' && a.length > 0;
   const hasB = typeof b === 'string' && b.length > 0;
@@ -189,7 +305,8 @@ function listTracks(dir) {
       );
       const metadataNeedsBackfill =
         !indexed?.title ||
-        indexed?.artist === undefined ||
+        (indexed?.artist === undefined &&
+          indexed?.artistOrigin === 'provider') ||
         indexed?.duration === undefined;
       const assetNeedsBackfill =
         VIDEO_ID_RE.test(id) &&
@@ -249,6 +366,8 @@ function updateTrackMetadata(dir, trackId, fields = {}) {
   saveIndexEntry(dir, trackId, {
     title,
     artist: artist || undefined,
+    titleOrigin: 'manual',
+    artistOrigin: 'manual',
   });
 
   return listTracks(dir).find((track) => track.id === trackId) || null;
@@ -282,6 +401,7 @@ function deleteTrack(dir, trackId) {
 }
 
 module.exports = {
+  organizeTrackMetadataFromSidecars,
   refreshTrackMetadataFromSidecars,
   compareTracks,
   listTrackRecords,

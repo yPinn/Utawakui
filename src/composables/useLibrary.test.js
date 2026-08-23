@@ -71,16 +71,19 @@ describe('initial load', () => {
     expect(libraryUpdatedCallback).toBeTypeOf('function');
   });
 
-  it('refetches when the captured onLibraryUpdated callback fires', async () => {
+  it('refetches with the backfill policy from the library-updated event', async () => {
     listTracksMock.mockResolvedValue([{ id: 't1', title: 'Track 1' }]);
     const { state } = await loadLibrary();
     expect(listTracksMock).toHaveBeenCalledTimes(1);
 
     listTracksMock.mockResolvedValue([{ id: 't2', title: 'Track 2' }]);
-    libraryUpdatedCallback();
+    libraryUpdatedCallback({ allowProviderBackfill: false });
     await flushMicrotasks();
 
     expect(listTracksMock).toHaveBeenCalledTimes(2);
+    expect(listTracksMock).toHaveBeenLastCalledWith({
+      allowProviderBackfill: false,
+    });
     expect(state.tracks).toEqual([{ id: 't2', title: 'Track 2' }]);
   });
 
@@ -178,14 +181,20 @@ describe('album cover override', () => {
 });
 
 describe('refreshMetadata', () => {
-  it('calls the refreshLibraryMetadata bridge and returns the updated count', async () => {
-    refreshLibraryMetadataMock.mockResolvedValue({ updated: 95 });
+  it('calls the refreshLibraryMetadata bridge and returns the maintenance summary', async () => {
+    const summary = {
+      updated: 95,
+      normalized: 12,
+      enriched: 90,
+      skipped: 3,
+    };
+    refreshLibraryMetadataMock.mockResolvedValue(summary);
     const { refreshMetadata } = await loadLibrary();
 
-    const updated = await refreshMetadata();
+    const result = await refreshMetadata();
 
     expect(refreshLibraryMetadataMock).toHaveBeenCalledTimes(1);
-    expect(updated).toBe(95);
+    expect(result).toEqual(summary);
   });
 });
 

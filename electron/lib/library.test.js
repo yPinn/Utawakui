@@ -49,6 +49,7 @@ const FUNCTION_EXPORTS = [
   'readTrackLyrics',
   'recordSeparationResult',
   'deletePlaylistCoverDir',
+  'organizeTrackMetadataFromSidecars',
   'refreshTrackMetadataFromSidecars',
   'resolvePlaylistCoverPath',
   'writePlaylistCoverFile',

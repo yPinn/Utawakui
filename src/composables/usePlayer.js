@@ -781,9 +781,11 @@ function clearTrack(trackId = null) {
 // harmless no-op here. Every write below goes through an existing action
 // (seek()/play()) or an audio.* call whose own event updates state — no
 // new direct write to isPlaying/currentTime/duration/error.
-async function syncCurrentTrack() {
+async function syncCurrentTrack(options) {
   if (!state.track) return;
-  const tracks = await window.Utawakui.listTracks();
+  const tracks = options
+    ? await window.Utawakui.listTracks(options)
+    : await window.Utawakui.listTracks();
   const updated = tracks.find((t) => t.id === state.track.id);
   if (!updated) return;
 

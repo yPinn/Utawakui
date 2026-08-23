@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
+  organizeTrackMetadataFromSidecars,
   refreshTrackMetadataFromSidecars,
   listTracks,
   updateTrackMetadata,
@@ -633,6 +634,217 @@ describe('refreshTrackMetadataFromSidecars', () => {
   });
 });
 
+describe('organizeTrackMetadataFromSidecars', () => {
+  let dir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-organize-test-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  function makeStructuredTrack(id) {
+    const trackDir = path.join(dir, 'tracks', id);
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+  }
+
+  it('normalizes a previous provider projection and fills safe supplemental fields', () => {
+    makeStructuredTrack('blue-blood');
+    saveIndexEntry(dir, 'blue-blood', {
+      title: 'IVE - Blue Blood (Audio)',
+      artist: 'IVE, Nick Hahn',
+    });
+    const reader = () => ({
+      normalized: {
+        title: 'Blue Blood',
+        artist: 'IVE',
+        duration: 167,
+        album: "I've IVE",
+        releaseYear: 2023,
+      },
+      previousProjection: {
+        title: 'IVE - Blue Blood (Audio)',
+        artist: 'IVE, Nick Hahn',
+      },
+    });
+
+    expect(organizeTrackMetadataFromSidecars(dir, reader)).toEqual({
+      updated: 1,
+      normalized: 1,
+      enriched: 1,
+      skipped: 0,
+    });
+    expect(loadIndex(dir).tracks['blue-blood']).toEqual({
+      title: 'Blue Blood',
+      titleOrigin: 'provider',
+      artist: 'IVE',
+      artistOrigin: 'provider',
+      duration: 167,
+      album: "I've IVE",
+      releaseYear: 2023,
+    });
+    expect(organizeTrackMetadataFromSidecars(dir, reader)).toEqual({
+      updated: 0,
+      normalized: 0,
+      enriched: 0,
+      skipped: 0,
+    });
+  });
+
+  it('treats a sidecar-backed track with no index entry as provider-owned', () => {
+    makeStructuredTrack('new-provider-track');
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: {
+          title: 'Provider Title',
+          artist: 'Provider Artist',
+          duration: 180,
+        },
+        previousProjection: {
+          title: 'Provider Title',
+          artist: 'Provider Artist',
+        },
+      })),
+    ).toEqual({
+      updated: 1,
+      normalized: 1,
+      enriched: 1,
+      skipped: 0,
+    });
+    expect(loadIndex(dir).tracks['new-provider-track']).toEqual({
+      title: 'Provider Title',
+      titleOrigin: 'provider',
+      artist: 'Provider Artist',
+      artistOrigin: 'provider',
+      duration: 180,
+    });
+  });
+
+  it('records provider artist provenance for a new sidecar with no artist', () => {
+    makeStructuredTrack('new-missing-artist');
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: {
+          title: 'Provider Title',
+          artist: undefined,
+          duration: 180,
+        },
+        previousProjection: {
+          title: 'Provider Title',
+          artist: undefined,
+        },
+      })),
+    ).toEqual({
+      updated: 1,
+      normalized: 1,
+      enriched: 1,
+      skipped: 0,
+    });
+    expect(loadIndex(dir).tracks['new-missing-artist']).toEqual({
+      title: 'Provider Title',
+      titleOrigin: 'provider',
+      artistOrigin: 'provider',
+      duration: 180,
+    });
+    expect(listTracks(dir)[0]).toMatchObject({
+      artist: undefined,
+      needsBackfill: true,
+    });
+  });
+
+  it('preserves manual title and artist edits while reporting one skipped track', () => {
+    makeStructuredTrack('manual');
+    saveIndexEntry(dir, 'manual', {
+      title: '我的歌名',
+      artist: '我的歌手',
+      duration: 180,
+    });
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: {
+          title: 'Provider Title',
+          artist: 'Provider Artist',
+          duration: 181,
+        },
+        previousProjection: {
+          title: 'Old Provider Title',
+          artist: 'Old Provider Artist',
+        },
+      })),
+    ).toEqual({
+      updated: 0,
+      normalized: 0,
+      enriched: 0,
+      skipped: 1,
+    });
+    expect(loadIndex(dir).tracks.manual).toEqual({
+      title: '我的歌名',
+      artist: '我的歌手',
+      duration: 180,
+    });
+  });
+
+  it('preserves a legacy missing artist because it may be a pre-origin manual clear', () => {
+    makeStructuredTrack('legacy-cleared');
+    saveIndexEntry(dir, 'legacy-cleared', {
+      title: 'Legacy Title',
+      duration: 180,
+    });
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: {
+          title: 'Legacy Title',
+          artist: 'Provider Artist',
+          duration: 180,
+        },
+        previousProjection: {
+          title: 'Legacy Title',
+          artist: 'Provider Artist',
+        },
+      })),
+    ).toEqual({
+      updated: 0,
+      normalized: 0,
+      enriched: 0,
+      skipped: 1,
+    });
+    expect(loadIndex(dir).tracks['legacy-cleared']).toEqual({
+      title: 'Legacy Title',
+      duration: 180,
+    });
+    expect(listTracks(dir)[0]).toMatchObject({
+      artist: undefined,
+      needsBackfill: false,
+    });
+  });
+
+  it('leaves a track without a readable sidecar untouched', () => {
+    makeStructuredTrack('local-only');
+    saveIndexEntry(dir, 'local-only', {
+      title: 'Local Title',
+      artist: 'Local Artist',
+    });
+
+    expect(organizeTrackMetadataFromSidecars(dir, () => null)).toEqual({
+      updated: 0,
+      normalized: 0,
+      enriched: 0,
+      skipped: 0,
+    });
+    expect(loadIndex(dir).tracks['local-only']).toEqual({
+      title: 'Local Title',
+      artist: 'Local Artist',
+    });
+  });
+});
+
 describe('updateTrackMetadata', () => {
   let dir;
 
@@ -682,6 +894,7 @@ describe('updateTrackMetadata', () => {
     saveIndexEntry(dir, 'abc', {
       title: 'Old Title',
       artist: 'Old Artist',
+      duration: 180,
     });
 
     updateTrackMetadata(dir, 'abc', {
@@ -689,12 +902,29 @@ describe('updateTrackMetadata', () => {
       artist: '   ',
     });
 
-    expect(loadIndex(dir).tracks.abc).toEqual({ title: 'New Title' });
+    expect(loadIndex(dir).tracks.abc).toEqual({
+      title: 'New Title',
+      duration: 180,
+      titleOrigin: 'manual',
+      artistOrigin: 'manual',
+    });
     expect(listTracks(dir)[0]).toMatchObject({
       id: 'abc',
       title: 'New Title',
       artist: undefined,
+      needsBackfill: false,
     });
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: { title: 'Provider Title', artist: 'Provider Artist' },
+        previousProjection: {
+          title: 'Old Title',
+          artist: 'Old Artist',
+        },
+      })),
+    ).toEqual({ updated: 0, normalized: 0, enriched: 0, skipped: 1 });
+    expect(loadIndex(dir).tracks.abc.artist).toBeUndefined();
   });
 
   it('rejects a blank title', () => {

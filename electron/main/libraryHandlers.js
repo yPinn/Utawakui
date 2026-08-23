@@ -2,14 +2,14 @@
 
 const {
   backfillTrackInfo,
-  readTrackInfoMetadata,
+  readTrackInfoMaintenanceFields,
 } = require('../lib/downloader');
 const {
   deleteTrack,
   deleteTrackArtworkFile,
   importLocalAudioFiles,
   listTracks,
-  refreshTrackMetadataFromSidecars,
+  organizeTrackMetadataFromSidecars,
   runBackfillPass,
   updateTrackMetadata,
   writeTrackArtworkFile,
@@ -62,19 +62,30 @@ function registerLibraryHandlers({
   featureIds,
   getProviderRunner,
   lyricsAcquisitionService,
+  listLibraryTracks = listTracks,
+  runLibraryBackfill = runBackfillPass,
+  organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
 }) {
   const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
     getProviderRunner,
     lyricsAcquisitionService,
   );
 
-  ipcMain.handle('library:list', async () => {
+  ipcMain.handle('library:list', async (event, options = {}) => {
     const dir = resolveDownloadDir(getConfig());
-    const tracks = listTracks(dir);
+    const tracks = listLibraryTracks(dir);
     // Fire-and-forget — don't make the renderer wait on a network-bound
     // metadata pass just to see the tracks it already has.
-    if (isFeatureGateEnabled(getConfig(), featureIds.PROVIDER_FLOW)) {
-      runBackfillPass(dir, tracks, fetchBackfillTrackInfo, sendBackfillStatus)
+    if (
+      options?.allowProviderBackfill !== false &&
+      isFeatureGateEnabled(getConfig(), featureIds.PROVIDER_FLOW)
+    ) {
+      runLibraryBackfill(
+        dir,
+        tracks,
+        fetchBackfillTrackInfo,
+        sendBackfillStatus,
+      )
         .then((updated) => {
           if (updated) notifyLibraryUpdated();
         })
@@ -89,20 +100,18 @@ function registerLibraryHandlers({
     return tracks;
   });
 
-  // Manual, user-triggered counterpart to the automatic startup backfill
-  // above — that pass deliberately skips album/releaseYear to avoid
-  // retrying tracks with no such metadata on every launch forever (see
-  // tracks.js's refreshTrackMetadataFromSidecars comment). This reads only
-  // sidecars already on disk (no network) and can be re-run any time, e.g.
-  // after a yt:download-audio build that didn't yet persist those fields.
+  // Manual, user-triggered offline maintenance. It re-projects saved provider
+  // sidecars through the current normalization rules, preserves title/artist
+  // values that no longer match the previous provider projection, fills only a
+  // missing/invalid duration, and refreshes album/year. It never fetches or
+  // rewrites info.json; network-bound artwork/sidecar repair stays above.
   ipcMain.handle('library:refresh-metadata', async () => {
     const dir = resolveDownloadDir(getConfig());
-    const updated = refreshTrackMetadataFromSidecars(
-      dir,
-      readTrackInfoMetadata,
-    );
-    if (updated > 0) notifyLibraryUpdated();
-    return { updated };
+    const result = organizeLibraryMetadata(dir, readTrackInfoMaintenanceFields);
+    if (result.updated > 0) {
+      notifyLibraryUpdated({ allowProviderBackfill: false });
+    }
+    return result;
   });
 
   ipcMain.handle('library:import-audio-files', async () => {

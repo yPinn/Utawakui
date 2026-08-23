@@ -4,6 +4,7 @@ import {
   classifyPlaybackKind,
   resolveYoutubeImportSource,
 } from './importResolver.js';
+import { extractMetadataFields } from './ytdlpInfo.js';
 
 describe('classifyPlaybackKind', () => {
   it('classifies common YouTube music source shapes', () => {
@@ -233,6 +234,49 @@ describe('buildImportResolution', () => {
 });
 
 describe('resolveYoutubeImportSource', () => {
+  it.each([
+    ['https://youtube.com/watch?v=mv000000000', 'youtube', 'video'],
+    ['https://music.youtube.com/watch?v=mv000000000', 'yt-music', 'track'],
+  ])(
+    'uses normalized metadata for %s without changing its source identity',
+    async (input, sourcePlatform, sourceType) => {
+      const sourceMetadata = extractMetadataFields({
+        title: '劉若英 René Liu【後來 Later】Official Music Video',
+        uploader: '滾石唱片 ROCK RECORDS',
+        duration: 341,
+      });
+      const searchPlaybackCandidates = vi.fn().mockResolvedValue([]);
+
+      const resolution = await resolveYoutubeImportSource(input, {
+        extractVideoId: () => 'mv000000000',
+        fetchMetadata: vi.fn().mockResolvedValue(sourceMetadata),
+        searchPlaybackCandidates,
+        existingIds: new Set(),
+      });
+
+      expect(resolution).toMatchObject({
+        sourceVideoId: 'mv000000000',
+        canonical: { title: '後來 Later', artist: '劉若英 René Liu' },
+        trackIdentity: {
+          title: '後來 Later',
+          artist: '劉若英 René Liu',
+          sourcePlatform,
+          sourceType,
+        },
+      });
+      expect(searchPlaybackCandidates).toHaveBeenCalledWith(
+        expect.objectContaining({
+          title: '後來 Later',
+          artist: '劉若英 René Liu',
+          sourcePlatform,
+          sourceType,
+        }),
+        sourceMetadata,
+        { sourcePlatform },
+      );
+    },
+  );
+
   it('uses injected metadata and search providers to resolve a recommended playback id', async () => {
     const fetchMetadata = vi.fn().mockResolvedValue({
       title: 'Actual Artist - Canonical Title (Official Music Video)',

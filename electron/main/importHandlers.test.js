@@ -1,7 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 import importHandlersModule from './importHandlers.js';
 
-const { saveOptionalLyricsAfterImport } = importHandlersModule;
+const { buildProviderIndexEntry, saveOptionalLyricsAfterImport } =
+  importHandlersModule;
+
+describe('buildProviderIndexEntry', () => {
+  it('records provider provenance even when the provider has no artist', () => {
+    expect(
+      buildProviderIndexEntry({
+        title: 'Song',
+        artist: undefined,
+        duration: 180,
+        album: 'Album',
+        releaseYear: 2026,
+      }),
+    ).toEqual({
+      title: 'Song',
+      titleOrigin: 'provider',
+      artist: undefined,
+      artistOrigin: 'provider',
+      duration: 180,
+      album: 'Album',
+      releaseYear: 2026,
+    });
+  });
+});
 
 describe('saveOptionalLyricsAfterImport', () => {
   it('never turns a successful audio import into a lyrics failure', async () => {

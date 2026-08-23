@@ -62,6 +62,7 @@ module.exports = defineConfig({
         'src/composables/useAppInfo.js',
         'src/composables/useImportSession.js',
         'src/composables/useLyrics.js',
+        'src/composables/useLibraryMetadataMaintenance.js',
         'src/composables/usePlaybackQueue.js',
         'src/composables/usePlaylists.js',
         'src/composables/useRovingRadioGroup.js',

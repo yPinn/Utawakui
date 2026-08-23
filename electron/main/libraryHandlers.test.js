@@ -1,7 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
+import { buildFeatureConfirmation, FEATURE_IDS } from '../lib/featureGates.js';
 import libraryHandlersModule from './libraryHandlers.js';
 
-const { backfillTrackInfoWithLyricsFallback } = libraryHandlersModule;
+const { backfillTrackInfoWithLyricsFallback, registerLibraryHandlers } =
+  libraryHandlersModule;
 
 describe('backfillTrackInfoWithLyricsFallback', () => {
   it('keeps a successful metadata backfill when optional lyrics fail', async () => {
@@ -31,5 +33,57 @@ describe('backfillTrackInfoWithLyricsFallback', () => {
         lyricsAcquisitionService,
       }),
     ).resolves.toMatchObject({ title: 'Song', assetsUpdated: true });
+  });
+});
+
+describe('library metadata maintenance handlers', () => {
+  it('refreshes renderers without allowing the follow-up list to start provider backfill', async () => {
+    const handlers = new Map();
+    const ipcMain = {
+      handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+    };
+    const config = {
+      featureConfirmations: {
+        [FEATURE_IDS.PROVIDER_FLOW]: buildFeatureConfirmation(
+          FEATURE_IDS.PROVIDER_FLOW,
+        ),
+      },
+    };
+    const listLibraryTracks = vi.fn().mockReturnValue([]);
+    const runLibraryBackfill = vi.fn().mockResolvedValue(0);
+    const organizeLibraryMetadata = vi.fn().mockReturnValue({
+      updated: 1,
+      normalized: 1,
+      enriched: 0,
+      skipped: 0,
+    });
+    const notifyLibraryUpdated = vi.fn();
+
+    registerLibraryHandlers({
+      ipcMain,
+      dialog: {},
+      getConfig: () => config,
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: vi.fn(),
+      notifyLibraryUpdated,
+      sendBackfillStatus: vi.fn(),
+      featureIds: FEATURE_IDS,
+      getProviderRunner: vi.fn(),
+      lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
+      listLibraryTracks,
+      runLibraryBackfill,
+      organizeLibraryMetadata,
+    });
+
+    await handlers.get('library:refresh-metadata')();
+    expect(notifyLibraryUpdated).toHaveBeenCalledWith({
+      allowProviderBackfill: false,
+    });
+
+    await handlers.get('library:list')(null, {
+      allowProviderBackfill: false,
+    });
+    expect(listLibraryTracks).toHaveBeenCalledWith('library-dir');
+    expect(runLibraryBackfill).not.toHaveBeenCalled();
   });
 });

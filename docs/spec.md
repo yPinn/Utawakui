@@ -229,6 +229,29 @@ Utawakui/
 | `lyrics/`         | 歌詞、讀音與 timing sidecar。 | 原始來源與 derived data 分離。          |
 | `separations/`    | Generated separation files。  | 依產品 recipe 保存，manifest 記錄來源。 |
 
+YouTube 與 YouTube Music 共用同一個 provider metadata normalization boundary。
+`info.json` 永遠保留 yt-dlp 原始資料；`library.json` 的 `title` / `artist` 則是
+bounded display projection：優先使用結構化 `track` 與複數 `artists`，只有在
+auto-generated description 明確把 artist-list 成員標成非表演工作人員，且
+uploader/channel 能佐證主要表演者時，才移除被明確確認為純工作人員的成員；
+主要表演者、明確表演者與尚未分類的合作名字都會保留。沒有結構化音樂欄位
+的普通 YouTube 影片，只有在 uploader 本身像 label/channel 或標題中的歌手能與
+uploader 對上時才採用 `Artist - Title`/bracket title 解析；否則保留原標題並以
+uploader/channel 作 fallback。這個 projection 不改寫 sidecar，也不得用人數或
+逗號截斷真正的合作演出。
+
+Settings 的「曲目資訊整理」會離線重新讀取既有 `info.json` 並套用同一個
+projection。`title` / `artist` 只有在沒有 manual-origin 標記，且欄位缺值或目前
+仍等於舊 provider projection 時才自動更新；provider 匯入、backfill 與首次
+sidecar 整理都會寫入 provider-origin，手動儲存（包含清空歌手）則會記錄
+manual-origin，整理與自動 backfill 都不得覆蓋。舊版索引中「缺少 artist
+且沒有 origin」的資料無法區分尚未取得與使用者曾清空，因此保守保留空值。
+`duration` 只補缺失或非法值，`album` /
+`releaseYear` 維持 sidecar-authoritative 補齊。縮圖仍由 filesystem/backfill 流程
+管理；整理完成後的 library refresh 也會明確禁止 provider backfill，因此整個
+操作不發出網路請求。這個流程不新增目前沒有產品 consumer 的 genre、composer、
+track number 或 album artist 欄位。
+
 ### 6.3 分級音訊處理結果
 
 音訊處理以直播與一般錄製為主要情境，不提供錄音室級任意模型、ensemble 或

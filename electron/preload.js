@@ -114,7 +114,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   chooseDownloadDir: () => ipcRenderer.invoke('config:choose-download-dir'),
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
-  listTracks: () => ipcRenderer.invoke('library:list'),
+  listTracks: (options) => ipcRenderer.invoke('library:list', options),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
   getTrackLyrics: (trackId, filename) =>
@@ -224,7 +224,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     return () => ipcRenderer.removeListener('separation:progress', listener);
   },
   onLibraryUpdated: (callback) => {
-    const listener = () => callback();
+    const listener = (event, options) => callback(options);
     ipcRenderer.on('library:updated', listener);
     return () => ipcRenderer.removeListener('library:updated', listener);
   },

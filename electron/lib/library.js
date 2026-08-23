@@ -80,6 +80,7 @@ const {
   migrateTrackAlbumMetadata,
 } = require('./library/metadataIndex');
 const {
+  organizeTrackMetadataFromSidecars,
   refreshTrackMetadataFromSidecars,
   findTrackRecord,
   listTracks,
@@ -131,6 +132,7 @@ module.exports = {
   loadTrackLyricsTiming,
   migrateTrackAlbumMetadata,
   normalizeTrackLyricsSidecars,
+  organizeTrackMetadataFromSidecars,
   readTrackLyrics,
   recordSeparationResult,
   deletePlaylistCoverDir,

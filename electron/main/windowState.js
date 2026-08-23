@@ -71,9 +71,9 @@ function sendBackfillStatus(payload) {
 // The `if (mainWindow) mainWindow.webContents.send('library:updated')` idiom
 // repeated across nearly every domain handler — library, lyrics, playlists,
 // separation, and config mutations all end with this.
-function notifyLibraryUpdated() {
+function notifyLibraryUpdated(options) {
   if (!mainWindow) return;
-  mainWindow.webContents.send('library:updated');
+  mainWindow.webContents.send('library:updated', options);
 }
 
 // Renderer-reported mirror; usePlayer.js remains the playback source of truth.

@@ -6,6 +6,7 @@ import AudioOutputSettingsBlock from '../components/settings/AudioOutputSettings
 import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
 import DiagnosticsSettingsBlock from '../components/settings/DiagnosticsSettingsBlock.vue';
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
+import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
@@ -27,7 +28,7 @@ import { useAppInfo } from '../composables/useAppInfo.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
-import { useLibrary } from '../composables/useLibrary.js';
+import { useLibraryMetadataMaintenance } from '../composables/useLibraryMetadataMaintenance.js';
 import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
 import { usePlayer } from '../composables/usePlayer.js';
 
@@ -53,7 +54,11 @@ const {
   downloadAppUpdate,
   installAppUpdate,
 } = useAppUpdate();
-const { refreshMetadata: refreshLibraryMetadata } = useLibrary();
+const {
+  state: libraryMetadataMaintenanceState,
+  message: libraryMetadataMaintenanceMessage,
+  run: runLibraryMetadataMaintenance,
+} = useLibraryMetadataMaintenance();
 const {
   state: featureGateState,
   isFeatureEnabled,
@@ -69,7 +74,6 @@ const {
   repairDependency,
 } = useFeatureDependencies();
 
-const isRefreshingMetadata = shallowRef(false);
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
 
@@ -183,30 +187,6 @@ const featureGateRequestNotice = computed(() => {
     kind: request.kind,
   };
 });
-
-async function refreshMetadata() {
-  isRefreshingMetadata.value = true;
-  maintenanceMessage.value = '';
-  maintenanceTone.value = 'muted';
-  try {
-    const updated = await refreshLibraryMetadata();
-    maintenanceMessage.value =
-      updated > 0 ? `已補齊 ${updated} 首曲目的專輯資訊` : '沒有需要補齊的資訊';
-    maintenanceTone.value = 'success';
-  } catch (err) {
-    maintenanceMessage.value = recordError(err, {
-      code: 'LIBRARY_METADATA_REFRESH_FAILED',
-      title: '曲目資訊整理未完成',
-      message: '目前無法整理曲目資訊，請再試一次。',
-      source: 'settings',
-      operation: 'refresh-library-metadata',
-      context: { retryable: true },
-    }).message;
-    maintenanceTone.value = 'danger';
-  } finally {
-    isRefreshingMetadata.value = false;
-  }
-}
 
 async function detectSystemFfmpeg() {
   if (
@@ -388,23 +368,12 @@ onMounted(refreshSettingsState);
             </template>
           </SettingsActionRow>
 
-          <SettingsActionRow
-            :icon="RefreshCw"
-            title="曲目資訊整理"
-            value="補齊專輯與年份"
-            :status="isRefreshingMetadata ? '執行中' : '可用'"
-            :status-tone="isRefreshingMetadata ? 'info' : 'success'"
-            tooltip="從已保存的來源資訊補齊專輯與年份等曲目資訊。"
-          >
-            <template #actions>
-              <UiIconButton
-                :icon="RefreshCw"
-                :disabled="isRefreshingMetadata"
-                label="重新整理曲目資訊"
-                @click="refreshMetadata"
-              />
-            </template>
-          </SettingsActionRow>
+          <LibraryMetadataSettingsRow
+            :is-running="libraryMetadataMaintenanceState.isRunning"
+            :message="libraryMetadataMaintenanceMessage"
+            :error="libraryMetadataMaintenanceState.error"
+            @run="runLibraryMetadataMaintenance"
+          />
 
           <UiNotice
             v-if="maintenanceMessage && maintenanceTone === 'danger'"

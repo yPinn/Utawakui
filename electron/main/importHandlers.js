@@ -49,6 +49,18 @@ async function saveOptionalLyricsAfterImport(
   }
 }
 
+function buildProviderIndexEntry(result) {
+  return {
+    title: result.title,
+    titleOrigin: 'provider',
+    artist: result.artist,
+    artistOrigin: 'provider',
+    duration: result.duration,
+    album: result.album,
+    releaseYear: result.releaseYear,
+  };
+}
+
 function registerImportHandlers({
   ipcMain,
   getConfig,
@@ -130,13 +142,7 @@ function registerImportHandlers({
       const trackDir = resolveTrackDir(destDir, videoId);
       if (result.title) {
         try {
-          saveIndexEntry(destDir, videoId, {
-            title: result.title,
-            artist: result.artist,
-            duration: result.duration,
-            album: result.album,
-            releaseYear: result.releaseYear,
-          });
+          saveIndexEntry(destDir, videoId, buildProviderIndexEntry(result));
         } catch {
           // The download itself succeeded and the file is playable — a
           // failed index write (e.g. disk full) shouldn't be reported to
@@ -156,4 +162,8 @@ function registerImportHandlers({
   });
 }
 
-module.exports = { registerImportHandlers, saveOptionalLyricsAfterImport };
+module.exports = {
+  buildProviderIndexEntry,
+  registerImportHandlers,
+  saveOptionalLyricsAfterImport,
+};
