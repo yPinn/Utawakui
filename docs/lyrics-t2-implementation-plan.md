@@ -2,10 +2,13 @@
 
 ## Status and objective
 
-Implementation baseline, 2026-08-23. Batches 1 and 2 are complete; Batch 3 and
-later work remain planned. This document converts ADR 0010 and the Lyrics Timing Contract
-into ordered, testable work without pulling M1/M2 analysis, automatic alignment,
-Presentation Packs, or Output contract v3 into the first batch.
+Implementation baseline, 2026-08-23. Batches 1 and 2, the Output transport
+prerequisite, and the Batch 3 segment-aware overlay implementation are complete.
+Human visual acceptance in Workbench and OBS remains before the presentation is
+treated as release-approved; later analysis work remains independently gated.
+This document converts ADR 0010 and the Lyrics Timing Contract into ordered,
+testable work without pulling M1/M2 analysis, automatic alignment, or
+Presentation Packs into the base T2 path.
 
 The first usable endpoint is line-focused T2 authoring and import:
 
@@ -35,12 +38,15 @@ The first usable endpoint is line-focused T2 authoring and import:
 - reading sidecar v1 remains readable by index plus exact text. Explicit new
   generation/edit writes v2 `documentId`/`lineId` identity after main verifies
   the current source fingerprint.
-- Output contract v2 republishes every line in every dynamic snapshot and has no
-  document, line, or segment identity.
+- Bundled overlays negotiate Output v3: immutable `lyrics.document` and
+  `queue.document` streams are referenced by dynamic `state.snapshot`; legacy
+  no-subprotocol clients and `/api/v1/state` retain snapshot v2.
 
 The visible line-focused segment editor, active segment/progress derivation,
-Enhanced LRC import, and reading v2 identity are implemented. Output contract v3,
-automatic alignment, and M1/M2 remain separate later work.
+Enhanced LRC import, reading v2 identity, and Output v3 content/state transport
+are implemented. The real Lyrics overlay now consumes segment timing from that
+contract with a T1 fallback and local boundary scheduling. Automatic alignment and
+M1/M2 remain separate later work.
 
 ## Canonical document rules
 
@@ -249,12 +255,22 @@ user and stable ids survive reloads.
       atomic save.
 - [x] Introduce reading v2 identity while preserving legacy v1 reads.
 
-### Batch 3: Output document/state split
+### Batch 3: segment-aware Output presentation (implemented; visual acceptance pending)
 
-- Add the versioned immutable Lyrics document message and dynamic state reference.
-- Keep Output v2 during the migration window.
-- Update the real lyrics overlay to segment-aware rendering with a T1 fallback.
-- Verify reconnect, seek, pause, rate, offset, source change, and OBS behavior.
+- [x] Add the versioned immutable Lyrics document message and dynamic state
+      reference.
+- [x] Keep Output v2 during the migration window.
+- [x] Update the real Lyrics overlay to segment-aware rendering with a T1
+      fallback.
+- [x] Derive active segment, fractional progress, and the next segment boundary
+      from the canonical playback clock without waiting for another snapshot.
+- [x] Verify reconnect, seek, pause, rate, offset, source change, reduced motion,
+      malicious literal text, snapshot-v2 compatibility, and runtime startup with
+      automated tests and an Electron dev launch.
+- [x] Ship an explicit app-bundled fallback cascade on all four fixed routes and
+      keep segment glyphs visible while progress uses a non-text-clipping indicator.
+- [ ] Complete human visual acceptance for wrapping, progress animation, seek/pause,
+      reduced motion, and reconnection in Workbench and a real OBS Browser Source.
 
 ### Later independent batches
 

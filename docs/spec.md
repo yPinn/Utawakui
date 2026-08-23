@@ -119,9 +119,10 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
   style-set catalog；現有四類 slot、基礎模板與 appearance editing 已完成，
   後續會遷移為可擴充 Output Instance 並保留既有 URL alias，見 ADR 0011。
 - Lyrics T0/T1 canonical normalization、穩定 line id、T2 timing sidecar
-  validator、來源 fingerprint 與 additive load/save IPC 已完成；可見的 segment
-  import/editor、reading v2 與 Output content/state protocol split 尚未完成。目前
-  Output runtime 仍是 T1 line timing 與 snapshot v2，見 ADR 0010。
+  validator、來源 fingerprint、additive load/save IPC、Enhanced LRC segment
+  import、line-focused authoring、reading v2、Output content/state protocol split，
+  以及真實 Lyrics Overlay 的 segment-aware progress 與 T1 fallback 均已完成；
+  Workbench／OBS 人工視覺驗收仍待執行，見 ADR 0010。
 - Output state convergence 與 startup hardening：`bootId`／`sourceEpoch`、完整
   initial handshake、分離的 liveness/readiness、backpressure、啟動 phase DAG 與
   measured regression budgets，見 ADR 0012。
@@ -304,11 +305,16 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 手動匯入是本機 library edit，不需 feature gate；外部 lyrics provider 搜尋與保存屬於 `lyrics-flow`，首次執行時需確認。貼上的純文字或 `.txt` 檔會保存為 `manual*.lrc`，沒有 timestamp 時以 untimed lines 顯示，不支援點擊 seek。
 
-目前播放與 Output 的可見時間顆粒度仍為 T1 line timing。依
-[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md)，Batch 1
-已把 T0/T1 正規化成 canonical document，並完成可驗證的 T2 segment timing
-sidecar 基礎；下一階段才加入 segment import/editor 與 segment-aware 顯示。T3
-grapheme/syllable timing、beat grid、多 lane 與逐曲編舞都不屬於第一批。T2 保存為
+Lyrics Workspace 的即時同步 offset 依 track 與歌詞來源分開保存：非零值以整數毫秒寫入該 track 的 `lyrics/lyrics.json` source entry，切換來源或重新啟動時恢復，未保存或重設的來源使用 0。此偏好不改寫原始 `.lrc` / `.vtt`，因此不會使 timing fingerprint、逐字校時 sidecar 或讀音資料失效。
+
+Lyrics Workspace 的歌詞同步操作保留為閱讀區右下角的 compact −0.1／reset／+0.1 控制，閱讀器預留底部 safe area，不另外顯示來源或保存狀態等常駐說明。讀音選項變更即為套用動作，因此工具列只保留讀音選單，不顯示套用狀態或重試／重建按鈕；失敗仍透過共用 notice 呈現。`T0` / `T1` / `T2` 是文件能力而非使用者設定，因此不在 idle 介面顯示；只有開始編輯一行時才呈現逐字校時面板。該面板以 recorded／current／pending 詞序呈現下一個待記錄起點，只有選取已記錄詞語後才顯示一組提前／延後微調，undo／save／cancel 則維持全域 draft 操作。
+
+目前 Lyrics Workspace 已能匯入、編輯與保存 T2 segment timing，Output v3 也已
+將 immutable `lyrics.document` 與 dynamic `state.snapshot` 分流。依
+[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md)，真實
+Lyrics Overlay 已能消費 segment timing、依既有 playback clock 推進高亮，並保留
+T1 line fallback；Workbench／OBS 人工視覺驗收仍待執行。T3
+grapheme/syllable timing、beat grid、多 lane 與逐曲編舞都不屬於此批。T2 保存為
 `tracks/<trackId>/lyrics/timing/<sourceFilename>.json` derived sidecar，透過來源
 fingerprint 判斷是否過期，不覆寫原始 LRC/VTT。穩定 line/segment id 供後續讀音資料
 對齊，完整契約見 [Lyrics Timing Contract](lyrics-timing-contract.md)。
@@ -346,6 +352,12 @@ scalar appearance settings，彼此可同時使用，不存在全域互斥的「
 寫入採 atomic temp-file rename。較新且不支援的 schema version 會拒絕載入，避免舊版
 覆寫新資料。它不保存 live playback state、絕對路徑、media URL、provider id 或
 素材內容。
+
+四條固定 route 目前共同載入 app-bundled fallback CSS cascade：reset／constraints、
+fallback primitives、semantic／allowlisted appearance，以及各 route 的 template layer。
+因此未來 Presentation Pack 尚未安裝或不可用時，固定 route 仍有 release-bundled 的
+恢復基線；這不代表 placeholder `styleSetIds` 已成為可解析的 Pack。Lyrics segment
+progress 使用實色文字與獨立底線進度，不以 transparent glyph 或任意 Pack CSS 維持可見性。
 
 目標模型會將 **Output Instance**（獨立 OBS endpoint）、**Template**（layout / motion /
 renderer）、**Template Category**（Gallery filter）與 **Data Requirements** 分離。
@@ -504,12 +516,11 @@ main CommonJS validator 共用 `outputContractValues.json` 的 version/collectio
 machine-local 固定補償：正值延後整份 overlay state，負值在播放中向前投影，範圍為
 -2000 至 5000ms；它不改動歌詞檔的 offset，也不重啟 output server。WebSocket 的
 500ms 起始等待只用於斷線重連，不可混入 Port、heartbeat 或 display compensation。
-目前 publish 維持 serial latest-wins，Browser Source 端只在正補償期間保留有界的待顯示
-snapshot。先前 loopback 量測未顯示 transport bottleneck，因此不先拆成 content snapshot
-與 clock correction 兩套 protocol。ADR 0010 已將 T2 segment timing 定為下一次重開
-此決策的明確觸發條件：屆時 immutable `lyrics.document` 與 dynamic `state.snapshot`
-分流，避免每次播放更新都重送完整 segments；在 T2 authoring 與 Output v3 批次完成前
-仍維持現有 v2 行為。
+目前 publish 與每 client delivery 均維持有界 latest-wins。Bundled Browser
+Source 會協商 v3，先接收 immutable `lyrics.document`／`queue.document`，再套用
+dynamic `state.snapshot`；clock 更新不再重送完整 segments。無 subprotocol client
+與 `/api/v1/state` 仍保留 snapshot v2 相容路徑。Lyrics Overlay 依 canonical clock
+在本機推進 line／segment boundary，seek、pause、rate、offset 或新 snapshot 會重新校正。
 
 ### 6.11 External Integration Planes
 

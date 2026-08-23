@@ -2,18 +2,21 @@
 
 ## Status
 
-Accepted on 2026-08-23. Batch 1 canonical T0/T1 normalization and the bounded T2
-sidecar foundation are implemented. Segment import/editor UX, reading v2, and the
-Output content/state split remain planned.
+Accepted and implemented through Batch 3 on 2026-08-23. Batch 1 canonical T0/T1
+normalization and bounded T2 sidecars, Batch 2 segment import/authoring plus
+reading v2, the negotiated Output content/state split, segment-aware rendering,
+and a no-Pack bundled fallback cascade for the real Lyrics overlay are complete.
+Human Workbench/OBS visual acceptance is still required; M1/M2 analysis and
+reusable presentation recipes remain later work.
 
 ## Context
 
-The current lyrics model is line-timed: each line has `text`, `startMs`, and
-`endMs`, and Output republishes the complete line list as part of each dynamic
-snapshot. This is sufficient for a focus-line overlay, but not for reusable
-word- or phrase-progress effects. Designing those effects before improving the
-timing model would make template code compensate for missing data and would
-couple visual design to one temporary representation.
+The original lyrics model was line-timed: each line had `text`, `startMs`, and
+`endMs`, and Output republished the complete line list as part of each dynamic
+snapshot. That was sufficient for a focus-line overlay, but not for reusable
+word- or phrase-progress effects. The completed foundations now provide stable
+segments and split immutable content from the clock. The real presentation now
+consumes that contract without duplicating timing state.
 
 Timing detail and musical choreography are related but independent. A lyric can
 have segment timing without beat data, and a template can use a beat grid without
@@ -26,12 +29,12 @@ one overloaded “lyrics level”.
 
 Text timing has four levels:
 
-| Level | Meaning                                                 | Product status                            |
-| ----- | ------------------------------------------------------- | ----------------------------------------- |
-| T0    | Untimed document                                        | Supported by normalization                |
-| T1    | Line timing                                             | Current baseline                          |
-| T2    | Segment timing, where a segment may be a word or phrase | Storage validates; import/editor is next  |
-| T3    | Grapheme or syllable timing                             | Schema-ready; editor and effects deferred |
+| Level | Meaning                                                 | Product status                                             |
+| ----- | ------------------------------------------------------- | ---------------------------------------------------------- |
+| T0    | Untimed document                                        | Supported by normalization                                 |
+| T1    | Line timing                                             | Supported presentation fallback                            |
+| T2    | Segment timing, where a segment may be a word or phrase | Import, authoring, transport, and presentation implemented |
+| T3    | Grapheme or syllable timing                             | Schema-ready; editor and effects deferred                  |
 
 Musical cues have four separate levels:
 
@@ -42,14 +45,15 @@ Musical cues have four separate levels:
 | M2    | Section intervals and optional authored cues | Accepted endpoint after M1 |
 | M3    | Song-specific choreography                   | Deferred                   |
 
-The next lyrics milestone is T0/T1 normalization plus the T2 storage, import,
-validation, and editing contract. It does not include T3, automatic M1/M2
-analysis, multi-lane duet editing, or song-specific choreography. The accepted
-product endpoint nevertheless includes optional M1 rhythm and M2 section cues so
-reusable Lyrics presentations can change bounded style variants on beats and
-verse/chorus-like sections. T2 works without those cues through imported or
-manual timing. The schema may reserve optional `lane` and `role` metadata so
-these additions do not require replacing stable line and segment identities.
+The completed Batch 3 milestone is segment-aware presentation using the implemented
+T2 storage, import, validation, editing, and Output transport contracts. It does
+not include T3, automatic M1/M2 analysis, multi-lane duet editing, or
+song-specific choreography. The accepted product endpoint nevertheless includes
+optional M1 rhythm and M2 section cues so reusable Lyrics presentations can
+change bounded style variants on beats and verse/chorus-like sections. T2 works
+without those cues through imported or manual timing. The schema may reserve
+optional `lane` and `role` metadata so these additions do not require replacing
+stable line and segment identities.
 
 ### Keep music structure separate from lyric alignment
 
@@ -78,11 +82,10 @@ timing is stored under:
 tracks/<trackId>/lyrics/timing/<sourceFilename>.json
 ```
 
-The version 1 foundation records a stable document id, normalizer profile,
-granularity, source fingerprint, and stable line/segment ids. Provenance and
-manual-edit metadata arrive with the authoring workflow. If the source
-fingerprint changes, the sidecar is retained but marked stale; it is not silently
-applied to different text.
+The version 1 sidecar records a stable document id, normalizer profile,
+granularity, source fingerprint, stable line/segment ids, and authoring
+provenance. If the source fingerprint changes, the sidecar is retained but
+marked stale; it is not silently applied to different text.
 
 Reading aids remain separate derived data. They align through stable line and
 segment ids rather than being embedded into timing records. This prevents a
@@ -94,12 +97,12 @@ validator and co-located fixtures are the executable trust boundary.
 
 ### Split immutable lyric content from the playback clock at T2
 
-Output contract version 2 remains the current runtime contract. Introducing T2
-is the trigger for a versioned contract change because repeatedly sending every
-segment on playback ticks wastes bandwidth and creates unnecessary allocations
-inside OBS Browser Sources.
+Bundled overlays now negotiate Output contract version 3 because repeatedly
+sending every segment on playback ticks wastes bandwidth and creates unnecessary
+allocations inside OBS Browser Sources. Version 2 remains the compatibility
+contract for the four existing routes' legacy clients and `/api/v1/state`.
 
-The future contract sends:
+The negotiated contract sends:
 
 - an immutable `lyrics.document` message on connection and whenever the active
   lyric source or document revision changes; and
@@ -117,11 +120,12 @@ Lyrics does not invent a parallel synchronization identity.
 
 The dependency order is:
 
-1. normalize T0 and T1 into stable document identities;
-2. implement and test the T2 sidecar contract;
-3. expose a minimal T2 editor and importer workflow;
-4. introduce the content/state Output protocol split;
-5. design reusable segment-aware templates and effects.
+1. normalize T0 and T1 into stable document identities — complete;
+2. implement and test the T2 sidecar contract — complete;
+3. expose a minimal T2 editor and importer workflow — complete;
+4. introduce the content/state Output protocol split — complete; and
+5. make the real Lyrics presentation segment-aware — implementation complete;
+   human Workbench/OBS visual acceptance pending.
 
 M1/M2 begins only after T2 is stable and at least one accepted presentation
 consumes the signal with an M0 fallback. Runtime-family implementation and
@@ -145,12 +149,12 @@ analysis package preparation remain a later, independently gated batch.
 
 - Template work gains a predictable, language-neutral segment model.
 - The sidecar needs stale-data UX, provenance display, and atomic persistence.
-- Output must support a versioned migration and reconnect ordering for document
-  and state messages.
+- Output supports a versioned migration and reconnect ordering for document and
+  state messages while preserving snapshot-v2 compatibility.
 - Multi-lane, beat, and syllable features remain possible without being promised
   by the first implementation.
-- Current T1 overlays continue to work until the new contract and adapters are
-  verified in real OBS Browser Sources.
+- T1 overlays remain the fallback while segment-aware rendering is verified in
+  the real Workbench and OBS Browser Sources.
 
 ## References
 

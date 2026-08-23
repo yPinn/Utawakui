@@ -2,10 +2,11 @@
 
 ## Status and scope
 
-Draft planning contract, 2026-08-23. It turns
+Implemented hardening contract, 2026-08-23. It turns
 [ADR 0012](adr/0012-state-convergence-and-startup-phases.md) into checkable
-requirements. It does not describe current completed behavior and does not start
-the Lyrics T2 implementation.
+requirements and records the completed H1-H3 behavior. Lyrics T2 data and
+authoring batches are complete; the current follow-up is the segment-aware
+presentation consumer described by ADR 0010.
 
 ## Authority and ownership
 
@@ -350,7 +351,7 @@ in [startup-performance-baseline.md](startup-performance-baseline.md). Regressio
 budgets remain intentionally unset until the open hardware, storage, library,
 OBS-process, GPU-memory, and multi-instance rows have representative evidence.
 
-## Pre-Lyrics implementation gate
+## Pre-Lyrics implementation gate (complete)
 
 Before Lyrics T2 code begins, the team must agree which hardening work is a direct
 prerequisite. At minimum, the contract requires an implementation plan and tests
@@ -358,3 +359,7 @@ for initial full publish, boot/epoch identity, source-unavailable behavior, and
 removal of unconditional library enumeration from the first-window critical path.
 Content/state split implementation may proceed together with T2 as already defined
 by ADR 0010.
+
+Implementation status (2026-08-23): H1-H3 and the negotiated content/state split
+satisfy this gate. Batch 3 Lyrics presentation work may consume the existing
+transport without reopening lifecycle ownership or startup ordering.

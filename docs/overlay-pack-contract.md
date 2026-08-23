@@ -4,8 +4,10 @@
 
 Draft planning contract, 2026-08-23. It elaborates
 [ADR 0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md).
-The current app still implements four fixed slots and placeholder `styleSetIds`;
-no remote Presentation Pack updater or User Variant import exists yet.
+The current app implements four fixed slots, placeholder `styleSetIds`, and an
+app-bundled fallback CSS cascade that keeps those routes independent from future
+pack installation. No remote Presentation Pack updater or User Variant import
+exists yet.
 
 This contract deliberately separates executable template runtime from declarative
 appearance content. Examples are illustrative until backed by JSON Schema
@@ -71,6 +73,19 @@ are reorganized later:
 CSS cascade layers may enforce that order, but token hierarchy is still a
 separate semantic model. Pack data is converted to validated custom-property
 values by the host; a pack never injects a stylesheet or arbitrary property name.
+
+The implemented fixed-route baseline uses explicit layers in this order:
+
+- `base.css`: `ovl-reset` plus final `ovl-constraints`;
+- `fallback.css`: app-bundled `ovl-fallback` primitive values;
+- `tokens.css`: shared `ovl-semantic` roles and current allowlisted
+  `ovl-appearance` settings; and
+- each route's CSS: app-owned `ovl-template` layout and presentation rules.
+
+All four HTML routes load those assets in the same order. The fallback is a
+release-bundled recovery baseline, not an Official Style Set. Future validated
+pack values resolve into the appearance layer and must not replace reset,
+template behavior, or mandatory constraints.
 
 Every exposed setting has one product-owned definition, type, default, bounds,
 compatible template list, and user-facing label. Adjustment is classified as:

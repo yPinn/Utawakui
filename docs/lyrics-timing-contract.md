@@ -2,12 +2,13 @@
 
 ## Status and scope
 
-Version 1 foundation, implemented 2026-08-23. It defines the data boundary from
+Version 1 contract, implemented 2026-08-23. It defines the data boundary from
 [ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md).
 Canonical T0/T1 normalization, stable ids, bounded sidecar validation, source
-fingerprints, stale/corrupt status, and additive load/save IPC are implemented.
-The visible T2 importer/editor, reading-id migration, and Output v3 projection
-remain later batches.
+fingerprints, stale/corrupt status, additive load/save IPC, the visible T2
+importer/editor, reading v2 identity, negotiated Output v3 projection, and
+segment-aware rendering in the real Lyrics overlay are implemented. Human
+Workbench/OBS visual acceptance remains a release check, not a contract gap.
 
 Implementation must also satisfy ADR 0012's minimum pre-Lyrics gate: initial full
 source handshake, `bootId`/`sourceEpoch`, explicit unavailable behavior, and a

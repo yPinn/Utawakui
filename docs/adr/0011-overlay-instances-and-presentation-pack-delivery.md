@@ -2,9 +2,9 @@
 
 ## Status
 
-Accepted for planning on 2026-08-23. The existing four-slot runtime remains the
-implemented baseline; the instance and pack model described here is not yet
-implemented.
+Accepted for planning on 2026-08-23. The existing four-slot runtime and explicit
+app-bundled fallback cascade are the implemented baseline; the instance and pack
+model described here is not yet implemented.
 
 ## Context
 
@@ -101,6 +101,13 @@ fallbacks. It must not impose a visual identity. A Presentation Pack supplies th
 palette, typography, decoration references, and bounded recipe parameters. User
 overrides are applied last, followed by mandatory accessibility and performance
 constraints.
+
+The current fixed routes implement that ownership boundary through ordered
+`ovl-reset`, `ovl-fallback`, `ovl-semantic`, `ovl-template`, `ovl-appearance`, and
+`ovl-constraints` cascade layers. `fallback.css` ships inside the application and
+is served from the explicit loopback allowlist, so missing future pack content
+cannot make a route depend on an unavailable stylesheet. This is fallback
+delivery only; it does not make placeholder `styleSetIds` resolvable packs.
 
 ### Deliver official packs through a separate verified updater
 
