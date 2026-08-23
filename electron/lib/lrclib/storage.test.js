@@ -274,6 +274,47 @@ metadata:
     expect(listTrackLyricsSources(trackDir).sources).toEqual([]);
   });
 
+  it('publishes the best safe legacy projection when Lyricsfile cannot be used', () => {
+    const synced = saveLrclibRecord(
+      trackDir,
+      record({
+        id: 12,
+        lyricsfile: `version: "2.0"
+metadata: { title: Song, artist: Artist }
+`,
+      }),
+    );
+    const plain = saveLrclibRecord(
+      trackDir,
+      record({
+        id: 13,
+        syncedLyrics: null,
+        plainLyrics: 'Fallback plain line',
+        lyricsfile: 'not: [valid',
+      }),
+    );
+
+    expect(synced).toMatchObject({
+      status: 'saved',
+      capability: { level: 'T1' },
+      warnings: ['unsupported-lyricsfile-version-fallback'],
+    });
+    expect(
+      fs.readFileSync(path.join(trackDir, 'lyrics', 'lrclib-12.lrc'), 'utf8'),
+    ).toBe('[00:01.000]Hello world\n[00:03.000]Again');
+    expect(synced.timing.status).toBe('missing');
+
+    expect(plain).toMatchObject({
+      status: 'saved',
+      capability: { level: 'T0' },
+      warnings: ['invalid-lyricsfile-fallback'],
+    });
+    expect(
+      fs.readFileSync(path.join(trackDir, 'lyrics', 'lrclib-13.lrc'), 'utf8'),
+    ).toBe('Fallback plain line');
+    expect(plain.timing.status).toBe('missing');
+  });
+
   it('keeps an untrusted language value in the artifact but not the manifest', () => {
     const language = 'x'.repeat(80);
     const fetched = record({

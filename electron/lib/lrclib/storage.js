@@ -57,7 +57,7 @@ function formatLrcTimestamp(milliseconds) {
 function lyricsfileProjection(record) {
   if (typeof record.lyricsfile !== 'string') return null;
   const parsed = parseLyricsfile(record.lyricsfile);
-  if (parsed.status !== 'ok') return { parsed, text: null, timing: null };
+  if (parsed.status !== 'ok') return null;
 
   const lines = parsed.document.lines;
   const text =
@@ -267,7 +267,10 @@ function saveLrclibRecord(trackDir, rawRecord, options = {}) {
   const record = normalized.record;
   const analysis = analyzeLrclibRecord(record);
   const lyricsfile = lyricsfileProjection(record);
-  const sourceText = lyricsfile ? lyricsfile.text : legacyProjection(record);
+  const sourceText =
+    typeof lyricsfile?.text === 'string' && lyricsfile.text.trim().length > 0
+      ? lyricsfile.text
+      : legacyProjection(record);
   const artifactFilename = `lrclib-${record.id}.json`;
   const artifactPath = providerArtifactPath(trackDir, artifactFilename);
   const artifact = {
