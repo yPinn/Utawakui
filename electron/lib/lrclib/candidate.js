@@ -21,6 +21,7 @@ const CAPABILITY_ORDER = Object.freeze({
 const SUMMARY_TEXT_LIMIT = 256;
 const PREVIEW_LINE_TEXT_LIMIT = 240;
 const PREVIEW_TOTAL_TEXT_LIMIT = 800;
+const PROVIDER_DURATION_CONFLICT_TOLERANCE_SECONDS = 15;
 const LANGUAGE_TAG_RE = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
 
 function boundedSummaryText(value, maxLength) {
@@ -49,11 +50,20 @@ function boundedPreviewLines(lines, lineLimit) {
   return result;
 }
 
-function legacyAnalysis(record) {
+function plainLyricsLines(value) {
+  if (typeof value !== 'string') return [];
+  return value
+    .split(/\r?\n/u)
+    .map((text) => text.trim())
+    .filter(Boolean)
+    .map((text) => ({ start: null, text }));
+}
+
+function legacyAnalysis(record, warnings = ['lyricsfile-missing']) {
   const syncedLines = parseLrcLines(record.syncedLyrics);
+  const plainLines = plainLyricsLines(record.plainLyrics);
   const hasSynced = syncedLines.length > 0;
-  const hasPlain =
-    typeof record.plainLyrics === 'string' && record.plainLyrics.length > 0;
+  const hasPlain = plainLines.length > 0;
   const level = record.instrumental
     ? 'instrumental'
     : hasSynced
@@ -61,6 +71,11 @@ function legacyAnalysis(record) {
       : hasPlain
         ? 'T0'
         : 'unsupported';
+  const previewLines = record.instrumental
+    ? []
+    : hasSynced
+      ? syncedLines
+      : plainLines;
   return {
     language: null,
     capability: { level, partial: false },
@@ -70,13 +85,39 @@ function legacyAnalysis(record) {
       t2: false,
     },
     warnings: record.instrumental
-      ? ['lyricsfile-missing', 'instrumental-record']
-      : ['lyricsfile-missing'],
-    lineCount: syncedLines.length,
+      ? [...warnings, 'instrumental-record']
+      : warnings,
+    lineCount: previewLines.length,
     segmentCount: 0,
-    previewLines: syncedLines,
+    timingEnd: hasSynced ? (syncedLines.at(-1)?.start ?? null) : null,
+    previewLines,
     autoUsable: !record.instrumental && hasSynced,
   };
+}
+
+function unsupportedAnalysis(warning) {
+  return {
+    language: null,
+    capability: { level: 'unsupported', partial: false },
+    compatibility: { t0: false, t1: false, t2: false },
+    warnings: [warning],
+    lineCount: 0,
+    segmentCount: 0,
+    timingEnd: null,
+    previewLines: [],
+    autoUsable: false,
+  };
+}
+
+function lyricsfileFallbackAnalysis(record, warning) {
+  const fallback = legacyAnalysis(record, []);
+  if (fallback.capability.level === 'unsupported') {
+    return unsupportedAnalysis(warning);
+  }
+  if (fallback.capability.level === 'instrumental') {
+    return { ...fallback, warnings: [warning, 'instrumental-record'] };
+  }
+  return { ...fallback, warnings: [`${warning}-fallback`] };
 }
 
 function analyzeLrclibRecord(record) {
@@ -89,30 +130,19 @@ function analyzeLrclibRecord(record) {
 
   const parsed = parseLyricsfile(record.lyricsfile);
   if (parsed.status === 'unsupported') {
-    return {
-      language: null,
-      capability: { level: 'unsupported', partial: false },
-      compatibility: { t0: false, t1: false, t2: false },
-      warnings: ['unsupported-lyricsfile-version'],
-      lineCount: 0,
-      segmentCount: 0,
-      previewLines: [],
-      autoUsable: false,
-    };
+    return lyricsfileFallbackAnalysis(record, 'unsupported-lyricsfile-version');
   }
   if (parsed.status === 'error') {
-    return {
-      language: null,
-      capability: { level: 'unsupported', partial: false },
-      compatibility: { t0: false, t1: false, t2: false },
-      warnings: ['invalid-lyricsfile'],
-      lineCount: 0,
-      segmentCount: 0,
-      previewLines: [],
-      autoUsable: false,
-    };
+    return lyricsfileFallbackAnalysis(record, 'invalid-lyricsfile');
   }
 
+  const timedPreviewLines = parsed.document.lines.map((line) => ({
+    start: line.startMs / 1000,
+    text: line.text,
+  }));
+  const plainPreviewLines = plainLyricsLines(parsed.document.plain);
+  const previewLines =
+    timedPreviewLines.length > 0 ? timedPreviewLines : plainPreviewLines;
   const segmentCount = parsed.document.lines.reduce(
     (count, line) => count + line.words.length,
     0,
@@ -122,16 +152,45 @@ function analyzeLrclibRecord(record) {
     capability: parsed.capability,
     compatibility: parsed.compatibility,
     warnings: parsed.warnings,
-    lineCount: parsed.document.lines.length,
+    lineCount: previewLines.length,
     segmentCount,
-    previewLines: parsed.document.lines.map((line) => ({
-      start: line.startMs / 1000,
-      text: line.text,
-    })),
+    timingEnd:
+      parsed.document.lines.reduce(
+        (latest, line) => Math.max(latest, line.endMs ?? line.startMs),
+        0,
+      ) / 1000 || null,
+    previewLines,
     autoUsable:
       !record.instrumental &&
       (parsed.compatibility.t2 || parsed.compatibility.t1),
   };
+}
+
+function durationEvidence(identity, record, timingEnd) {
+  const providerDelta = durationDelta(identity.duration, record.duration);
+  const providerDurationInconsistent =
+    Number.isFinite(record.duration) &&
+    Number.isFinite(timingEnd) &&
+    timingEnd > record.duration + PROVIDER_DURATION_CONFLICT_TOLERANCE_SECONDS;
+  const effectiveDurationDelta = providerDurationInconsistent
+    ? durationDelta(identity.duration, timingEnd)
+    : providerDelta;
+  return {
+    providerDelta,
+    effectiveDurationDelta,
+    providerDurationInconsistent,
+  };
+}
+
+function titleMatchScore(identity, record) {
+  return Math.max(
+    textMatchScore(identity.trackName, record.trackName),
+    ...(Array.isArray(identity.titleAliases)
+      ? identity.titleAliases.map((alias) =>
+          textMatchScore(alias, record.trackName),
+        )
+      : []),
+  );
 }
 
 function buildMatchReasons(identity, record, scores) {
@@ -154,13 +213,20 @@ function buildMatchReasons(identity, record, scores) {
 }
 
 function evaluateLrclibCandidate(identity, record) {
-  const titleScore = textMatchScore(identity.trackName, record.trackName);
+  const titleScore = titleMatchScore(identity, record);
   const artistScore = textMatchScore(identity.artistName, record.artistName);
-  const delta = durationDelta(identity.duration, record.duration);
+  const albumScore = textMatchScore(identity.albumName, record.albumName);
+  const analysis = analyzeLrclibRecord(record);
+  const duration = durationEvidence(identity, record, analysis.timingEnd);
+  const delta = duration.providerDelta;
   const versionMismatch =
     versionMismatchPenalty(identity.trackName, record) > 0;
-  const exactDuration = delta === null || delta <= 4;
-  const strongDuration = delta === null || delta <= 45;
+  const exactDuration =
+    duration.effectiveDurationDelta === null ||
+    duration.effectiveDurationDelta <= 4;
+  const strongDuration =
+    duration.effectiveDurationDelta === null ||
+    duration.effectiveDurationDelta <= 45;
   const band =
     titleScore === 1 && artistScore === 1 && exactDuration && !versionMismatch
       ? 'exact'
@@ -170,10 +236,13 @@ function evaluateLrclibCandidate(identity, record) {
           !versionMismatch
         ? 'strong'
         : 'related';
-  const analysis = analyzeLrclibRecord(record);
-  const warnings = versionMismatch
-    ? [...analysis.warnings, 'version-mismatch']
-    : analysis.warnings;
+  const warnings = [
+    ...analysis.warnings,
+    ...(duration.providerDurationInconsistent
+      ? ['provider-duration-inconsistent']
+      : []),
+    ...(versionMismatch ? ['version-mismatch'] : []),
+  ];
 
   return {
     record,
@@ -185,7 +254,10 @@ function evaluateLrclibCandidate(identity, record) {
     }),
     titleScore,
     artistScore,
+    albumScore,
+    versionMismatch,
     durationDelta: delta,
+    effectiveDurationDelta: duration.effectiveDurationDelta,
     durationDeltaSigned: signedDurationDelta(
       identity.duration,
       record.duration,
@@ -196,6 +268,43 @@ function evaluateLrclibCandidate(identity, record) {
   };
 }
 
+function capabilityOrder(match) {
+  return CAPABILITY_ORDER[match.capability.level] ?? 0;
+}
+
+function identityScore(match) {
+  return match.titleScore + match.artistScore;
+}
+
+function compareCandidateMatches(first, second) {
+  const firstRelated = first.band === 'related' ? 1 : 0;
+  const secondRelated = second.band === 'related' ? 1 : 0;
+  const groupOrder = firstRelated - secondRelated;
+  if (groupOrder !== 0) return groupOrder;
+
+  if (!firstRelated) {
+    return (
+      capabilityOrder(second) - capabilityOrder(first) ||
+      BAND_ORDER[first.band] - BAND_ORDER[second.band] ||
+      identityScore(second) - identityScore(first) ||
+      (first.effectiveDurationDelta ?? Number.MAX_SAFE_INTEGER) -
+        (second.effectiveDurationDelta ?? Number.MAX_SAFE_INTEGER) ||
+      first.record.id - second.record.id
+    );
+  }
+
+  return (
+    second.titleScore - first.titleScore ||
+    Number(first.versionMismatch) - Number(second.versionMismatch) ||
+    second.artistScore - first.artistScore ||
+    second.albumScore - first.albumScore ||
+    (first.effectiveDurationDelta ?? Number.MAX_SAFE_INTEGER) -
+      (second.effectiveDurationDelta ?? Number.MAX_SAFE_INTEGER) ||
+    capabilityOrder(second) - capabilityOrder(first) ||
+    first.record.id - second.record.id
+  );
+}
+
 function rankLrclibCandidateMatches(identity, records) {
   const byId = new Map();
   for (const record of Array.isArray(records) ? records : []) {
@@ -203,18 +312,7 @@ function rankLrclibCandidateMatches(identity, records) {
   }
   return [...byId.values()]
     .map((record) => evaluateLrclibCandidate(identity, record))
-    .sort(
-      (first, second) =>
-        BAND_ORDER[first.band] - BAND_ORDER[second.band] ||
-        second.titleScore +
-          second.artistScore -
-          (first.titleScore + first.artistScore) ||
-        (first.durationDelta ?? Number.MAX_SAFE_INTEGER) -
-          (second.durationDelta ?? Number.MAX_SAFE_INTEGER) ||
-        (CAPABILITY_ORDER[second.capability.level] ?? 0) -
-          (CAPABILITY_ORDER[first.capability.level] ?? 0) ||
-        first.record.id - second.record.id,
-    );
+    .sort(compareCandidateMatches);
 }
 
 function summarizeLrclibCandidate(match, previewLineLimit = 5) {

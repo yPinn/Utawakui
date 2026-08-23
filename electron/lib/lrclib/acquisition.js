@@ -132,9 +132,13 @@ async function findLrclibSyncedLyrics(track, options = {}) {
     }
   }
 
-  const page = await client.search(plan.structured);
-  if (page.status === 'error') return providerFailure(page);
-  const best = rankLrclibCandidateMatches(plan.identity, page.records).find(
+  const records = [];
+  for (const query of plan.structuredQueries || [plan.structured]) {
+    const page = await client.search(query);
+    if (page.status === 'error') return providerFailure(page);
+    records.push(...page.records);
+  }
+  const best = rankLrclibCandidateMatches(plan.identity, records).find(
     isCurrentAutoSaveCompatible,
   );
   return best
@@ -178,12 +182,30 @@ async function searchLrclibCandidates(track, options = {}) {
     }
   }
 
-  const structured = await client.search(plan.structured);
-  if (structured.status === 'error') {
-    return providerFailure(structured, { candidates: [], groups: null });
+  for (const query of plan.structuredQueries || [plan.structured]) {
+    const structured = await client.search(query);
+    if (structured.status === 'error') {
+      return providerFailure(structured, { candidates: [], groups: null });
+    }
+    records.push(...structured.records);
+    invalidRecordCount += structured.invalidRecordCount;
   }
-  records.push(...structured.records);
-  invalidRecordCount += structured.invalidRecordCount;
+
+  const constrained = buildCandidateResult(
+    plan.identity,
+    records,
+    invalidRecordCount,
+  );
+  if (constrained.groups.best.length === 0) {
+    for (const query of plan.recoveryQueries || []) {
+      const recovered = await client.search(query);
+      if (recovered.status === 'error') {
+        return providerFailure(recovered, { candidates: [], groups: null });
+      }
+      records.push(...recovered.records);
+      invalidRecordCount += recovered.invalidRecordCount;
+    }
+  }
   return buildCandidateResult(plan.identity, records, invalidRecordCount);
 }
 

@@ -12,6 +12,9 @@ const { buildLyricsMetadataProfiles } = require('../metadataEnrichment.js');
 const { LRCLIB_API_BASE_URL } = require('./client.js');
 
 const MAX_SEARCH_QUERIES = 6;
+const EAST_ASIAN_SCRIPT_RE =
+  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
+const LATIN_SCRIPT_RE = /\p{Script=Latin}/u;
 
 function buildLrclibUrl(endpoint, params, baseUrl = LRCLIB_API_BASE_URL) {
   const url = new URL(`${String(baseUrl).replace(/\/+$/u, '')}${endpoint}`);
@@ -122,6 +125,103 @@ function validProviderDuration(value) {
   return Number.isFinite(value) && value >= 1 && value <= 3600;
 }
 
+function hasCrossScriptIdentity(first, second) {
+  const firstHasEastAsian = EAST_ASIAN_SCRIPT_RE.test(first);
+  const secondHasEastAsian = EAST_ASIAN_SCRIPT_RE.test(second);
+  const firstHasLatin = LATIN_SCRIPT_RE.test(first);
+  const secondHasLatin = LATIN_SCRIPT_RE.test(second);
+  return (
+    (firstHasEastAsian && secondHasLatin && !secondHasEastAsian) ||
+    (secondHasEastAsian && firstHasLatin && !firstHasEastAsian)
+  );
+}
+
+function addUniqueText(values, value) {
+  const text = normalizeText(value);
+  const key = normalizeForCompare(text);
+  if (
+    !key ||
+    values.some((existing) => normalizeForCompare(existing) === key)
+  ) {
+    return;
+  }
+  values.push(text);
+}
+
+function crossScriptTitleVariants(value) {
+  const title = normalizeText(value);
+  const variants = [];
+  const dashMatch = /^(.+?)\s[-\u2013\u2014]\s(.+)$/u.exec(title);
+  if (dashMatch && hasCrossScriptIdentity(dashMatch[1], dashMatch[2])) {
+    addUniqueText(variants, dashMatch[1]);
+    addUniqueText(variants, dashMatch[2]);
+  }
+
+  const parentheticalMatch =
+    /^(.+?)\s*[(\uFF08]([^()\uFF08\uFF09]+)[)\uFF09]\s*$/u.exec(title);
+  if (
+    parentheticalMatch &&
+    hasCrossScriptIdentity(parentheticalMatch[1], parentheticalMatch[2])
+  ) {
+    addUniqueText(variants, parentheticalMatch[1]);
+    addUniqueText(variants, parentheticalMatch[2]);
+  }
+  return variants;
+}
+
+function pushStructuredQuery(queries, trackName, artistName) {
+  const normalizedTrackName = normalizeText(trackName);
+  const normalizedArtistName = normalizeText(artistName);
+  if (!normalizedTrackName) return;
+  const key = `${normalizeForCompare(normalizedTrackName)}|${normalizeForCompare(normalizedArtistName)}`;
+  if (queries.some((query) => query.key === key)) return;
+  queries.push({
+    key,
+    value: {
+      trackName: normalizedTrackName,
+      ...(normalizedArtistName ? { artistName: normalizedArtistName } : {}),
+    },
+  });
+}
+
+function buildStructuredQueries(trackName, artistName, profiles) {
+  const titleVariants = crossScriptTitleVariants(trackName);
+  const queries = [];
+  pushStructuredQuery(queries, trackName, artistName);
+  titleVariants.forEach((title) =>
+    pushStructuredQuery(queries, title, artistName),
+  );
+
+  if (artistName) {
+    for (const profile of profiles) {
+      if (
+        !normalizeText(profile.artist) ||
+        normalizeForCompare(profile.artist) === normalizeForCompare(artistName)
+      ) {
+        continue;
+      }
+      const profileTitleKey = normalizeForCompare(profile.title);
+      const matchesKnownTitle = [trackName, ...titleVariants].some(
+        (title) => normalizeForCompare(title) === profileTitleKey,
+      );
+      if (!matchesKnownTitle) continue;
+      pushStructuredQuery(queries, profile.title, profile.artist);
+    }
+  }
+
+  return queries.slice(0, MAX_SEARCH_QUERIES).map((query) => query.value);
+}
+
+function buildRecoveryQueries(trackName, structuredQueryCount) {
+  const remaining = Math.max(0, MAX_SEARCH_QUERIES - structuredQueryCount);
+  const titles = [];
+  addUniqueText(titles, trackName);
+  crossScriptTitleVariants(trackName).forEach((title) =>
+    addUniqueText(titles, title),
+  );
+  return titles.slice(0, remaining).map((title) => ({ trackName: title }));
+}
+
 function buildLrclibQueryPlan(track, edits = {}) {
   const hasManualTitle = Object.prototype.hasOwnProperty.call(edits, 'title');
   const hasManualArtist = Object.prototype.hasOwnProperty.call(edits, 'artist');
@@ -134,7 +234,26 @@ function buildLrclibQueryPlan(track, edits = {}) {
     (candidate) =>
       candidate.artistConfidence === 'high' && candidate.params.artist_name,
   );
+  const trustedMetadataQuery = highConfidenceQueries.find(
+    (candidate) => candidate.source !== 'title-derived',
+  );
+  const trackMetadataArtist = normalizeText(track?.artist);
+  const crossScriptMetadataQuery =
+    crossScriptTitleVariants(stripTrackDecorations(track?.title)).length > 0 &&
+    trackMetadataArtist &&
+    !looksLikeChannelArtist(trackMetadataArtist)
+      ? {
+          params: {
+            track_name: stripTrackDecorations(track.title),
+            artist_name: trackMetadataArtist,
+          },
+          source: 'track-metadata',
+          artistConfidence: 'medium',
+        }
+      : null;
   const preferredQuery =
+    trustedMetadataQuery ||
+    crossScriptMetadataQuery ||
     highConfidenceQueries.find(
       (candidate) => !/[()[\]]/u.test(candidate.params.artist_name),
     ) ||
@@ -179,12 +298,14 @@ function buildLrclibQueryPlan(track, edits = {}) {
     ? track?.duration
     : (profile?.duration ?? track?.duration);
   const duration = validProviderDuration(rawDuration) ? rawDuration : null;
+  const titleAliases = crossScriptTitleVariants(trackName);
   const identity = {
     trackName,
     artistName,
     albumName,
     duration,
     source: manual ? 'manual' : profile?.source || 'track-metadata',
+    ...(titleAliases.length > 0 ? { titleAliases } : {}),
   };
 
   const exact =
@@ -196,19 +317,23 @@ function buildLrclibQueryPlan(track, edits = {}) {
           ...(duration !== null ? { duration } : {}),
         }
       : null;
-  const structured = trackName
-    ? {
-        trackName,
-        ...(artistName ? { artistName } : {}),
-        ...(albumName ? { albumName } : {}),
-      }
-    : null;
+  const structuredQueries = buildStructuredQueries(
+    trackName,
+    artistName,
+    profiles,
+  );
+  const structured = structuredQueries[0] || null;
+  const recoveryQueries = artistName
+    ? buildRecoveryQueries(trackName, structuredQueries.length)
+    : [];
   const broadenText = normalizeText(`${trackName} ${artistName}`);
 
   return {
     identity,
     exact,
     structured,
+    structuredQueries,
+    recoveryQueries,
     broaden: broadenText ? { q: broadenText } : null,
   };
 }

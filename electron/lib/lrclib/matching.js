@@ -10,7 +10,7 @@ const {
 
 const AUTO_CONFIDENCE_THRESHOLD = 0.82;
 const VERSION_MISMATCH_PENALTY = 0.18;
-const VERSION_WORD_PATTERN = String.raw`\b(?:live|remix|acoustic|cover|karaoke|instrumental|sped|slowed|demo|edit|version|session)\b`;
+const VERSION_WORD_PATTERN = String.raw`\b(?:live|remix|acoustic|cover|karaoke|instrumental|sped|slowed|demo|edit|version|session|first\s+take)\b`;
 
 function tokenSet(value) {
   return new Set(normalizeForCompare(value).split(/\s+/u).filter(Boolean));

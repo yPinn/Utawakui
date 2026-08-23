@@ -57,6 +57,10 @@ describe('structured LRCLIB acquisition flow', () => {
 
     expect(provider.getExact).toHaveBeenCalledOnce();
     expect(provider.search).toHaveBeenCalledOnce();
+    expect(provider.search).toHaveBeenCalledWith({
+      trackName: 'Song',
+      artistName: 'Artist',
+    });
     expect(provider.searchBroad).not.toHaveBeenCalled();
     expect(result).toMatchObject({
       status: 'ok',
@@ -65,6 +69,109 @@ describe('structured LRCLIB acquisition flow', () => {
         related: [expect.objectContaining({ id: 99, matchBand: 'related' })],
       },
     });
+  });
+
+  it('unions bilingual structured searches and prefers richer timing within the best group', async () => {
+    const plain = record({
+      id: 1,
+      trackName: '月面着陸計画 - Moon Landing Plan',
+      artistName: 'tuki.',
+      albumName: '15',
+      duration: 243,
+      plainLyrics: 'Plain lyrics',
+      syncedLyrics: null,
+    });
+    const synced = record({
+      id: 2,
+      trackName: '月面着陸計画',
+      artistName: 'tuki.',
+      albumName: '15',
+      duration: 243,
+      plainLyrics: 'Synced lyrics',
+      syncedLyrics: '[00:10.00]Synced lyrics',
+    });
+    const provider = client({
+      search: vi.fn().mockImplementation(async (query) => {
+        if (query.trackName === '月面着陸計画 - Moon Landing Plan') {
+          return { status: 'ok', records: [plain], invalidRecordCount: 0 };
+        }
+        return { status: 'ok', records: [synced], invalidRecordCount: 0 };
+      }),
+    });
+
+    const result = await searchLrclibCandidates(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        album: '15',
+        duration: 243,
+      },
+      {
+        client: provider,
+        query: {
+          title: '月面着陸計画 - Moon Landing Plan',
+          artist: 'tuki.',
+        },
+      },
+    );
+
+    expect(provider.search).toHaveBeenCalledTimes(3);
+    expect(provider.search.mock.calls.map(([query]) => query)).toEqual([
+      {
+        trackName: '月面着陸計画 - Moon Landing Plan',
+        artistName: 'tuki.',
+      },
+      { trackName: '月面着陸計画', artistName: 'tuki.' },
+      { trackName: 'Moon Landing Plan', artistName: 'tuki.' },
+    ]);
+    expect(result.groups.best.map((candidate) => candidate.id)).toEqual([2, 1]);
+    expect(result.candidates).toHaveLength(2);
+  });
+
+  it('uses one title-only recovery lookup when artist-constrained results have no best match', async () => {
+    const firstTake = record({
+      id: 1,
+      trackName: 'Kakurenbo - From THE FIRST TAKE',
+      artistName: 'Yuuri',
+      albumName: 'Kakurenbo - From THE FIRST TAKE',
+      duration: 296,
+    });
+    const nativeArtist = record({
+      id: 2,
+      trackName: 'Kakurenbo',
+      artistName: '優里',
+      albumName: 'Ichi',
+      duration: 271,
+    });
+    const provider = client({
+      search: vi.fn().mockImplementation(async (query) => ({
+        status: 'ok',
+        records: query.artistName ? [firstTake] : [nativeArtist],
+        invalidRecordCount: 0,
+      })),
+    });
+
+    const result = await searchLrclibCandidates(
+      {
+        title: 'Kakurenbo',
+        artist: 'Yuuri',
+        album: 'Ichi',
+        duration: 271,
+      },
+      {
+        client: provider,
+        query: { title: 'Kakurenbo', artist: 'Yuuri' },
+      },
+    );
+
+    expect(provider.search.mock.calls.map(([query]) => query)).toEqual([
+      { trackName: 'Kakurenbo', artistName: 'Yuuri' },
+      { trackName: 'Kakurenbo' },
+    ]);
+    expect(result.groups.best).toEqual([]);
+    expect(result.groups.related.map((candidate) => candidate.id)).toEqual([
+      2, 1,
+    ]);
   });
 
   it('runs only the explicit q lookup for broaden mode', async () => {
@@ -95,6 +202,50 @@ describe('structured LRCLIB acquisition flow', () => {
       record: { id: 42 },
     });
     expect(provider.search).not.toHaveBeenCalled();
+  });
+
+  it('uses artist-constrained cross-script queries for automatic acquisition without recovery', async () => {
+    const provider = client({
+      search: vi.fn().mockImplementation(async (query) => ({
+        status: 'ok',
+        records:
+          query.trackName === '月面着陸計画'
+            ? [
+                record({
+                  id: 2,
+                  trackName: '月面着陸計画',
+                  artistName: 'tuki.',
+                  albumName: '15',
+                  duration: 243,
+                }),
+              ]
+            : [],
+        invalidRecordCount: 0,
+      })),
+    });
+
+    const result = await findLrclibSyncedLyrics(
+      {
+        title: '月面着陸計画 - Moon Landing Plan',
+        artist: 'tuki.',
+        album: '15',
+        duration: 243,
+      },
+      { client: provider },
+    );
+
+    expect(result).toMatchObject({ status: 'available', record: { id: 2 } });
+    expect(provider.search.mock.calls.map(([query]) => query)).toEqual([
+      {
+        trackName: '月面着陸計画 - Moon Landing Plan',
+        artistName: 'tuki.',
+      },
+      { trackName: '月面着陸計画', artistName: 'tuki.' },
+      { trackName: 'Moon Landing Plan', artistName: 'tuki.' },
+    ]);
+    expect(
+      provider.search.mock.calls.every(([query]) => query.artistName),
+    ).toBe(true);
   });
 
   it('auto-uses a validated Lyricsfile T2 record without requiring legacy syncedLyrics', async () => {
