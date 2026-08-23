@@ -35,7 +35,7 @@ The `electron.exe` filename is intentional. See
 
 ## Application Update Boundary
 
-ADR 0007 defines the planned app-update channel. It is separate from Settings
+ADR 0007 defines the app-update channel. It is separate from Settings
 updates for app-managed provider, FFmpeg, and model dependencies.
 
 - `package.json.version` is the release version source; packaged UI reads the
@@ -44,25 +44,23 @@ updates for app-managed provider, FFmpeg, and model dependencies.
   `yPinn/Utawakui-Releases` repository.
 - Stable clients use only published `latest` releases. Draft/prerelease assets
   are not update candidates.
-- Unsigned public test releases contain only the installer, SHA-256 checksum,
-  release notes, and minimal release-repository content. They do not publish
-  `latest.yml` or a blockmap and are not update candidates.
-- Future signed releases add the signed installer, blockmap, and `latest.yml`.
-  No source repository or client credential is copied into the app.
-- `electron-updater` is a packaged main-process runtime dependency, but its
-  release gate remains disabled. Renderer gets bounded status plus fixed
-  check/download/install intents only.
+- Stable unsigned releases publish the installer, blockmap, `latest.yml`,
+  SHA-256 checksum, release notes, and minimal release-repository content from
+  one verified CI run. No source repository or client credential is copied into
+  the app.
+- `electron-updater` is enabled only in packaged Windows builds. Renderer gets
+  bounded status plus fixed check/download/install intents only.
 - Update discovery may check automatically in packaged mode, but download and
   restart remain explicit user actions. Development builds never contact the
   release feed.
 - App-data, app-managed workflow dependencies, and the selected media library
   remain outside the installer payload and survive updates.
 - Local `npm run dist` and `dist:dir` never publish. The unsigned tag workflow
-  uploads only a private CI artifact; public test publishing is a separate,
-  reviewed manual action. The signed workflow remains protected and manual.
+  uploads a complete private review artifact; the protected manual release
+  workflow creates a public draft that still requires human publication.
 
 The public repository may later host a GitHub Pages product site. It is a
-curated human-facing surface, not an update server: downloads link to the signed
+curated human-facing surface, not an update server: downloads link to the
 stable GitHub Release asset, while `latest.yml`, installer, and blockmap remain
 canonical Release assets. Use a separate least-privilege Pages workflow and
 `github-pages` environment so site deployment cannot publish or mutate an app
@@ -75,15 +73,17 @@ Planned stable release assets:
 
 | Artifact                                | Purpose                                                                     |
 | --------------------------------------- | --------------------------------------------------------------------------- |
-| `Utawakui-Setup-<version>.exe`          | Authenticode-signed assisted NSIS installer/update payload.                 |
+| `Utawakui-Setup-<version>.exe`          | Unsigned assisted NSIS installer/update payload.                            |
 | `Utawakui-Setup-<version>.exe.blockmap` | Differential-download map; full installer is the fallback.                  |
 | `latest.yml`                            | Stable update version, URL, size, and SHA-512 metadata.                     |
 | GitHub Release notes                    | Human-reviewed release summary; remote HTML is not rendered in app.         |
 | GitHub Pages artifact (future)          | Curated static product site; contains no updater payload or private source. |
 
-Automatic updates remain blocked while `win.signExecutable` is `false`. Do not
-expose a public automatic update channel until executable/installer signing and
-updater signature verification pass in a two-version installed test.
+The current channel deliberately sets `win.verifyUpdateCodeSignature: false`.
+`latest.yml` SHA-512 verification detects mismatched/corrupt payloads but does
+not authenticate the publisher if release access is compromised. Do not claim
+publisher verification; preserve the fixed feed, stable-only policy, protected
+draft workflow, and explicit download/restart actions.
 
 ## Installer Profile Boundary
 
@@ -148,21 +148,21 @@ specific source, platform, and use permissions. See
 
 ## Feature Inventory
 
-| Feature area                | Gate                                       | Renderer entry                                            | Main / worker entry                                                                                                 | Runtime packages                                                        | Packaging notes                                                                                                                                                                                 |
-| --------------------------- | ------------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local library               | Ungated core                               | `useLibrary`, Setlist/Lyrics track pools                  | `library:*`, `utawakui-media:`                                                                                      | None beyond Electron/Node built-ins                                     | Local media stays outside the app under the selected library root.                                                                                                                              |
-| Local import                | Ungated core                               | `useLocalImport`, Import view                             | `library:import-audio-files`                                                                                        | None beyond Node built-ins                                              | Copies user-picked audio into managed track folders.                                                                                                                                            |
-| Playback / queue            | Ungated core                               | `usePlayer`, `usePlaybackQueue`, `PlayerBar`              | media protocol only                                                                                                 | Renderer bundle; `@soundtouchjs/audio-worklet` is build-time only       | Pitch preview worklet is emitted into `dist/assets/` by Vite; it should not be packaged as runtime `node_modules`.                                                                              |
-| Windows shell integration   | Ungated core                               | `useTaskbarControls`, `useMediaSession`, `useWindowTitle` | `windowState`, `thumbarIcons`                                                                                       | Electron runtime only                                                   | App icon is packaged in both `dist/assets/` and `public/assets/icons/app-icon.ico`; ICO is unpacked for shell APIs.                                                                             |
-| App version / update        | Release gate; packaged Windows only        | `useAppInfo`, `useAppUpdate`                              | `app:get-version`, `app-update:*`, `appUpdateService`                                                               | Electron runtime; `electron-updater@6.8.9`                              | Main-owned check/download/install state exists, but `shared/appUpdateValues.json` keeps network access disabled until signing, public repo, release CI, and packaged verification are complete. |
-| Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | App-managed Python `yt-dlp`; Rust bgutil provider sidecar               | Settings prepares Python embed, yt-dlp wheel, bgutil provider exe/plugin, and an EJS cache under `%APPDATA%\Utawakui\dependencies\ytdlp\current`.                                               |
-| Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | App-managed Python `yt-dlp`; Rust bgutil provider sidecar               | Backfill runs only after provider-flow is enabled and uses the same prepared provider runtime as user-initiated import.                                                                         |
-| Lyrics provider search/save | `lyrics-flow`                              | `useLyrics`, LRCLIB search panel                          | `lyrics:search-candidates`, `lyrics:save-candidate`, `lyrics:backfill-source-labels`, `lyrics:probe-musixmatch`     | No packaged native dependency                                           | Manual lyrics import/edit/delete stays ungated because it only edits local user data.                                                                                                           |
-| Lyrics reading aids         | Ungated local processing                   | `useLyricsReading`, Lyrics workspace reading controls     | `lyrics:generate-reading`, `readingWorker.js`                                                                       | `kuromoji`, `wanakana`, `koroman`                                       | Local Japanese/Korean text analysis only; packages are in `dependencies` and unpacked because worker threads and dictionary reads need real filesystem paths.                                   |
-| Vocal separation            | `audio-processing-flow`                    | `useSeparation`, Lyrics workspace separation controls     | `separation:run`, `vocalSeparationWorker.js`                                                                        | `kissfft-js`, `onnxruntime-node`; FFmpeg and UVR models are app-managed | FFmpeg and UVR ONNX models download to `userData/dependencies` from Settings after gate enablement; ONNX Runtime `.dll`/`.node` and `electron/lib/**/*` are unpacked.                           |
-| Separation result selection | Existing generated media                   | Lyrics workspace preset select                            | `separation:select`                                                                                                 | None beyond library modules                                             | Metadata-only selection of already-created results; no DSP run.                                                                                                                                 |
-| Public output / OBS         | `public-output-flow` on start and publish  | `useOutputRuntime`; Gallery mockups; Workbench iframe     | `outputHandlers`; `outputSlots`; `outputServer`; `outputRuntime`; root-level plain overlay package                  | `ws`; browser-native WebSocket and Web Animations                       | Versioned snapshots, four fixed overlay routes, independent portable slot settings, allowlisted appearance controls, URL copy, and the real Workbench preview are packaged.                     |
-| Recording / VOD mode        | Planned                                    | None                                                      | None                                                                                                                | None                                                                    | No release dependency today.                                                                                                                                                                    |
+| Feature area                | Gate                                       | Renderer entry                                            | Main / worker entry                                                                                                 | Runtime packages                                                             | Packaging notes                                                                                                                                                                                                                                                                          |
+| --------------------------- | ------------------------------------------ | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local library               | Ungated core                               | `useLibrary`, Setlist/Lyrics track pools                  | `library:*`, `utawakui-media:`                                                                                      | None beyond Electron/Node built-ins                                          | Local media stays outside the app under the selected library root.                                                                                                                                                                                                                       |
+| Local import                | Ungated core                               | `useLocalImport`, Import view                             | `library:import-audio-files`                                                                                        | None beyond Node built-ins                                                   | Copies user-picked audio into managed track folders.                                                                                                                                                                                                                                     |
+| Playback / queue            | Ungated core                               | `usePlayer`, `usePlaybackQueue`, `PlayerBar`              | media protocol only                                                                                                 | Renderer bundle; `@soundtouchjs/audio-worklet` is build-time only            | Pitch preview worklet is emitted into `dist/assets/` by Vite; it should not be packaged as runtime `node_modules`.                                                                                                                                                                       |
+| Windows shell integration   | Ungated core                               | `useTaskbarControls`, `useMediaSession`, `useWindowTitle` | `windowState`, `thumbarIcons`                                                                                       | Electron runtime only                                                        | App icon is packaged in both `dist/assets/` and `public/assets/icons/app-icon.ico`; ICO is unpacked for shell APIs.                                                                                                                                                                      |
+| App version / update        | Packaged Windows only                      | `useAppInfo`, `useAppUpdate`                              | `app:get-version`, `app-update:*`, `appUpdateService`                                                               | Electron runtime; `electron-updater@6.8.9`                                   | Main-owned stable-feed check/download/install is enabled; SHA-512 metadata stays mandatory while Authenticode publisher verification is explicitly disabled.                                                                                                                             |
+| Provider import             | `provider-flow`                            | `useImportSession`                                        | `yt:fetch-playlist`, `yt:fetch-metadata`, `yt:resolve-import-source`, `yt:download-audio`, `playlists:upsert-album` | App-managed Python `yt-dlp`; Rust bgutil provider sidecar                    | Settings prepares Python embed, yt-dlp wheel, bgutil provider exe/plugin, and an EJS cache under `%APPDATA%\Utawakui\dependencies\ytdlp\current`.                                                                                                                                        |
+| Provider metadata backfill  | `provider-flow` for automatic network pass | `useLibrary`, `useLyrics` backfill status                 | `library:list` conditionally starts `runBackfillPass`                                                               | App-managed Python `yt-dlp`; Rust bgutil provider sidecar                    | Backfill runs only after provider-flow is enabled and uses the same prepared provider runtime as user-initiated import.                                                                                                                                                                  |
+| Lyrics provider search/save | `lyrics-flow`                              | `useLyrics`, LRCLIB search panel                          | `lyrics:search-candidates`, `lyrics:save-candidate`, `lyrics:backfill-source-labels`, `lyrics:probe-musixmatch`     | No packaged native dependency                                                | Manual lyrics import/edit/delete stays ungated because it only edits local user data.                                                                                                                                                                                                    |
+| Lyrics reading aids         | Ungated local processing                   | `useLyricsReading`, Lyrics workspace reading controls     | `lyrics:generate-reading`, `readingWorker.js`                                                                       | `kuromoji`, `wanakana`, `koroman`                                            | Local Japanese/Korean text analysis only; packages are in `dependencies` and unpacked because worker threads and dictionary reads need real filesystem paths.                                                                                                                            |
+| Vocal separation            | `audio-processing-flow`                    | `useSeparation`, Lyrics workspace separation controls     | `separation:run`, `vocalSeparationWorker.js`                                                                        | `kissfft-js`, `onnxruntime-node`; FFmpeg and UVR ONNX models are app-managed | FFmpeg and UVR ONNX models download to `userData/dependencies` from Settings after gate enablement; ONNX Runtime `.dll`/`.node` and `electron/lib/**/*` are unpacked. Refined's Audio Python host is probe-only: its first lock is license-blocked and no runtime/model is downloadable. |
+| Separation result selection | Existing generated media                   | Lyrics workspace preset select                            | `separation:select`                                                                                                 | None beyond library modules                                                  | Metadata-only selection of already-created results; no DSP run.                                                                                                                                                                                                                          |
+| Public output / OBS         | `public-output-flow` on start and publish  | `useOutputRuntime`; Gallery mockups; Workbench iframe     | `outputHandlers`; `outputSlots`; `outputServer`; `outputRuntime`; root-level plain overlay package                  | `ws`; browser-native WebSocket and Web Animations                            | Versioned snapshots, four fixed overlay routes, independent portable slot settings, allowlisted appearance controls, URL copy, and the real Workbench preview are packaged.                                                                                                              |
+| Recording / VOD mode        | Planned                                    | None                                                      | None                                                                                                                | None                                                                         | No release dependency today.                                                                                                                                                                                                                                                             |
 
 ## Dependency Classes
 
@@ -219,6 +219,7 @@ When adding a dependency, classify it before installing:
 | `release/win-unpacked/resources/app.asar.unpacked/node_modules/wanakana`                               | Kana/romaji conversion package used by reading workers.                                                                          |
 | `release/win-unpacked/resources/app.asar.unpacked/node_modules/koroman`                                | Korean romanization package used by reading workers.                                                                             |
 | `release/win-unpacked/resources/app.asar.unpacked/public/assets/icons/app-icon.ico`                    | Shell-facing icon path used by Windows app details.                                                                              |
+| `release/win-unpacked/resources/audio-processing/audio_python_worker.py`                               | App-owned shared runtime-host protocol/probe bootstrap; contains no Python runtime, capability package, or model.                |
 | `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\python.exe`                                      | Private Python runtime used only for provider import.                                                                            |
 | `%APPDATA%\Utawakui\dependencies\ytdlp\current\python\Lib\site-packages\yt_dlp`                        | App-managed yt-dlp Python package.                                                                                               |
 | `%APPDATA%\Utawakui\dependencies\ytdlp\current\bgutil\bgutil-pot.exe`                                  | Rust bgutil PO-token provider sidecar.                                                                                           |
@@ -244,6 +245,10 @@ After changing gates or dependencies:
   release tag; never publish a reused or mismatched version.
 - Confirm `app.asar.unpacked` contains `electron/lib`, ONNX Runtime native
   files, `kuromoji`, `wanakana`, `koroman`, and the shell-facing ICO.
+- Confirm `resources/audio-processing/audio_python_worker.py` exists outside
+  ASAR, answers the host-only versioned probe under a test Python runtime, and
+  that the package contains no Audio Python `python.exe`, `site-packages`,
+  PyTorch, environment archive, or model weight.
 - Launch the packaged `release/win-unpacked/electron.exe`.
 - Confirm provider, lyrics, and audio-processing gates prompt before their
   first external or generated-media action.
@@ -260,9 +265,10 @@ After changing gates or dependencies:
   output without loading missing modules or dictionary files from inside ASAR.
 - For installer verification, use `npm run dist`; `dist:dir` does not create
   Start Menu shortcuts, so it cannot verify installed AUMID / SMTC app name.
-- Before enabling app updates, verify Authenticode signatures, `latest.yml`,
-  blockmap/full-download fallback, explicit restart, and app-data/library
-  preservation across two installed versions.
+- Before publishing the first updater-enabled baseline, verify `latest.yml`
+  SHA-512 rejection, blockmap/full-download fallback, explicit restart, and
+  app-data/library preservation across two installed versions. Record that
+  publisher identity is not verified.
 - Verify `app-update.yml` from a full NSIS build, not `dist:dir`; electron-builder
   does not generate updater metadata for the unpacked-directory-only target.
 - For uninstaller verification, run the installed uninstaller interactively and
