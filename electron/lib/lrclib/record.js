@@ -1,5 +1,7 @@
 'use strict';
 
+const crypto = require('crypto');
+
 const LRCLIB_RECORD_LIMITS = Object.freeze({
   metadataChars: 2048,
   lyricsChars: 1_000_000,
@@ -121,4 +123,19 @@ function normalizeLrclibRecord(value) {
   };
 }
 
-module.exports = { LRCLIB_RECORD_LIMITS, normalizeLrclibRecord };
+function fingerprintLrclibRecord(value) {
+  const normalized = normalizeLrclibRecord(value);
+  if (normalized.status !== 'ok') {
+    throw new Error('cannot fingerprint an invalid lrclib record');
+  }
+  return crypto
+    .createHash('sha256')
+    .update(JSON.stringify(normalized.record))
+    .digest('hex');
+}
+
+module.exports = {
+  LRCLIB_RECORD_LIMITS,
+  fingerprintLrclibRecord,
+  normalizeLrclibRecord,
+};

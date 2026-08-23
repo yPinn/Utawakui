@@ -3,19 +3,17 @@
 const path = require('path');
 const { Worker } = require('worker_threads');
 const {
-  allocateLyricsFilename,
   backfillLyricsSourceLabels,
-  deleteLyricsSource,
   deleteTrackReading,
   findTrackRecord,
   getTrackLyricsState,
+  loadTrackLyricsManifest,
   getTrackReading,
   importManualLyricsFile,
   importManualLyricsText,
   listTracks,
   readTrackLyrics,
   resolveTrackDir,
-  saveTrackLyricsText,
   saveTrackLyricsTiming,
   saveTrackReading,
   setLyricsSourceLabel,
@@ -24,8 +22,11 @@ const {
 } = require('../lib/library');
 const { probeMusixmatchLyrics } = require('../lib/musixmatch');
 const {
+  deleteStoredLrclibSource,
   fetchLrclibRecord,
   findLrclibSyncedLyrics,
+  saveLrclibCandidate,
+  saveLrclibRecord,
   searchLrclibCandidates,
 } = require('../lib/lrclib');
 
@@ -43,6 +44,58 @@ const readingInProgress = new Set();
 const READING_SCRIPTS = new Set(['ja', 'ko']);
 const READING_SHA256_RE = /^[a-f0-9]{64}$/;
 const MAX_READING_LINES = 10_000;
+const MAX_LRCLIB_QUERY_CHARS = 256;
+
+function containsControlCharacter(value) {
+  for (const character of value) {
+    const codePoint = character.codePointAt(0);
+    if (codePoint <= 31 || codePoint === 127) return true;
+  }
+  return false;
+}
+
+function normalizeLrclibSearchOptions(value) {
+  if (value === undefined || value === null) return {};
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new Error('lrclib search options are invalid');
+  }
+  if (Object.keys(value).some((key) => !['query', 'mode'].includes(key))) {
+    throw new Error('lrclib search options contain an unsupported field');
+  }
+  if (value.mode !== undefined && value.mode !== 'broaden') {
+    throw new Error('lrclib search mode is invalid');
+  }
+
+  let query;
+  if (value.query !== undefined) {
+    if (
+      !value.query ||
+      typeof value.query !== 'object' ||
+      Array.isArray(value.query) ||
+      Object.keys(value.query).some((key) => !['title', 'artist'].includes(key))
+    ) {
+      throw new Error('lrclib search query is invalid');
+    }
+    query = {};
+    for (const field of ['title', 'artist']) {
+      const fieldValue = value.query[field];
+      if (fieldValue === undefined) continue;
+      if (
+        typeof fieldValue !== 'string' ||
+        fieldValue.length > MAX_LRCLIB_QUERY_CHARS ||
+        containsControlCharacter(fieldValue)
+      ) {
+        throw new Error(`lrclib search query ${field} is invalid`);
+      }
+      query[field] = fieldValue;
+    }
+  }
+
+  return {
+    ...(query ? { query } : {}),
+    ...(value.mode ? { mode: value.mode } : {}),
+  };
+}
 
 function validateReadingIdentity(currentLyrics, identity) {
   if (
@@ -92,7 +145,7 @@ async function saveLrclibLyricsIfAbsent(track, trackDir) {
   const lrclibResult = await findLrclibSyncedLyrics(track);
   if (lrclibResult.status !== 'available') return false;
 
-  return saveTrackLyricsText(trackDir, lrclibResult.source, lrclibResult.text);
+  return saveLrclibRecord(trackDir, lrclibResult.record).status === 'saved';
 }
 
 function registerLyricsHandlers({
@@ -158,73 +211,73 @@ function registerLyricsHandlers({
   // Manual counterpart to the passive lrclib backfill above
   // (saveLrclibLyricsIfAbsent) — returns the full ranked candidate list
   // instead of collapsing to one match. Doesn't persist anything.
-  ipcMain.handle('lyrics:search-candidates', async (event, trackId) => {
-    requireFeatureGate(featureIds.LYRICS_FLOW);
-    const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((candidate) => candidate.id === trackId);
-    const trackDir = resolveTrackDir(dir, trackId);
-    if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-    const result = await searchLrclibCandidates(track);
-    const existingFilenames = new Set(
-      getTrackLyricsState(trackDir).sources.map((source) => source.filename),
-    );
-    return {
-      ...result,
-      // Computed here, not in the renderer — main owns the
-      // lrclib-<id>.lrc naming convention lyrics:save-candidate uses.
-      candidates: result.candidates.map((candidate) => ({
-        ...candidate,
-        alreadySaved: existingFilenames.has(`lrclib-${candidate.id}.lrc`),
-      })),
-    };
-  });
-
-  // Always allocates a NEW, non-colliding filename — never overwrites an
-  // existing source.
   ipcMain.handle(
-    'lyrics:save-candidate',
-    async (event, trackId, candidateId) => {
+    'lyrics:search-candidates',
+    async (event, trackId, options) => {
       requireFeatureGate(featureIds.LYRICS_FLOW);
       const dir = resolveDownloadDir(getConfig());
-      const trackDir = resolveTrackDir(dir, trackId);
-      if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
-
-      const fetched = await fetchLrclibRecord(candidateId);
-      if (fetched.status !== 'ok') {
-        throw new Error(`lrclib record unavailable: ${fetched.reason}`);
-      }
-      const text = fetched.record?.syncedLyrics;
-      if (typeof text !== 'string' || text.trim().length === 0) {
-        throw new Error('lrclib record has no synced lyrics');
-      }
-
-      const filename = allocateLyricsFilename(
-        trackDir,
-        `lrclib-${candidateId}`,
-        '.lrc',
+      const track = listTracks(dir).find(
+        (candidate) => candidate.id === trackId,
       );
-      if (!filename) {
-        throw new Error('unable to allocate a lyrics filename');
-      }
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 
-      // language: 'und' matches the passive backfill's own lrclib
-      // sources. label disambiguates multiple saved candidates in the
-      // source picker (album is usually the real difference between two
-      // lrclib records for the same song; artist is the fallback).
-      const label = fetched.record?.albumName || fetched.record?.artistName;
-      const source = {
-        filename,
-        language: 'und',
-        kind: 'lrclib',
-        ...(label ? { label } : {}),
+      const result = await searchLrclibCandidates(
+        track,
+        normalizeLrclibSearchOptions(options),
+      );
+      const manifestSources = loadTrackLyricsManifest(trackDir).sources;
+      const existingProviderIds = new Set(
+        manifestSources
+          .filter((source) => source.provider?.name === 'lrclib')
+          .map((source) => source.provider.recordId),
+      );
+      const existingFilenames = new Set(
+        getTrackLyricsState(trackDir).sources.map((source) => source.filename),
+      );
+      const mapCandidate = (candidate) => ({
+        ...candidate,
+        alreadySaved:
+          existingProviderIds.has(candidate.id) ||
+          existingFilenames.has(`lrclib-${candidate.id}.lrc`),
+      });
+      const candidates = result.candidates.map(mapCandidate);
+      return {
+        ...result,
+        candidates,
+        groups: result.groups
+          ? {
+              best: candidates.filter(
+                (candidate) => candidate.matchBand !== 'related',
+              ),
+              related: candidates.filter(
+                (candidate) => candidate.matchBand === 'related',
+              ),
+            }
+          : null,
       };
-      if (!saveTrackLyricsText(trackDir, source, text)) {
-        throw new Error('failed to write lyrics file');
-      }
+    },
+  );
+
+  ipcMain.handle(
+    'lyrics:save-candidate',
+    async (event, trackId, candidateId, expectedFingerprint) => {
+      requireFeatureGate(featureIds.LYRICS_FLOW);
+      const dir = resolveDownloadDir(getConfig());
+      const track = findTrackRecord(dir, trackId);
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      const result = await saveLrclibCandidate({
+        track,
+        trackDir,
+        candidateId,
+        expectedFingerprint,
+      });
+      if (result.status !== 'saved') return result;
 
       notifyLibraryUpdated();
-      return { source, sources: getTrackLyricsState(trackDir).sources };
+      return { ...result, sources: getTrackLyricsState(trackDir).sources };
     },
   );
 
@@ -292,7 +345,7 @@ function registerLyricsHandlers({
     const trackDir = resolveTrackDir(dir, trackId);
     if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
 
-    if (!deleteLyricsSource(trackDir, filename)) {
+    if (!deleteStoredLrclibSource(trackDir, filename)) {
       throw new Error(`unable to delete lyrics source: ${filename}`);
     }
 
@@ -491,4 +544,8 @@ function registerLyricsHandlers({
   );
 }
 
-module.exports = { registerLyricsHandlers, saveLrclibLyricsIfAbsent };
+module.exports = {
+  normalizeLrclibSearchOptions,
+  registerLyricsHandlers,
+  saveLrclibLyricsIfAbsent,
+};

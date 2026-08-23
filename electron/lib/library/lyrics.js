@@ -64,6 +64,25 @@ function getLyricsDirFromTrackDir(trackDir) {
 }
 
 const MAX_LYRICS_SOURCE_OFFSET_MS = 3_600_000;
+const LRCLIB_PROVIDER_ARTIFACT_RE = /^lrclib-[1-9]\d*\.json$/;
+
+function normalizeLyricsProvider(value) {
+  if (
+    !value ||
+    value.name !== 'lrclib' ||
+    !Number.isSafeInteger(value.recordId) ||
+    value.recordId <= 0 ||
+    typeof value.artifactFilename !== 'string' ||
+    !LRCLIB_PROVIDER_ARTIFACT_RE.test(value.artifactFilename)
+  ) {
+    return null;
+  }
+  return {
+    name: 'lrclib',
+    recordId: value.recordId,
+    artifactFilename: value.artifactFilename,
+  };
+}
 
 function normalizeLyricsSourceOffsetMs(value) {
   if (
@@ -93,12 +112,17 @@ function loadTrackLyricsManifest(trackDir) {
     return {
       checked: Boolean(manifest.checked),
       needsScan: manifest.version !== LYRICS_MANIFEST_VERSION,
-      sources: manifest.sources.filter(
-        (source) =>
-          source &&
-          isLyricsSubtitleFilename(source.filename) &&
-          typeof source.language === 'string',
-      ),
+      sources: manifest.sources
+        .filter(
+          (source) =>
+            source &&
+            isLyricsSubtitleFilename(source.filename) &&
+            typeof source.language === 'string',
+        )
+        .map((source) => {
+          const provider = normalizeLyricsProvider(source.provider);
+          return { ...source, ...(provider ? { provider } : {}) };
+        }),
     };
   } catch {
     return { checked: false, needsScan: false, sources: [] };
@@ -175,6 +199,12 @@ function getTrackLyricsState(trackDir) {
 }
 
 function saveTrackLyricsManifest(trackDir, sources) {
+  const existingByFilename = new Map(
+    loadTrackLyricsManifest(trackDir).sources.map((source) => [
+      source.filename,
+      source,
+    ]),
+  );
   const normalizedSources = (Array.isArray(sources) ? sources : [])
     .filter((source) => source && isLyricsSubtitleFilename(source.filename))
     .filter((source) => {
@@ -190,6 +220,11 @@ function saveTrackLyricsManifest(trackDir, sources) {
     .map((source) => {
       const label = normalizeLyricsSourceLabel(source.label);
       const offsetMs = normalizeLyricsSourceOffsetMs(source.offsetMs);
+      const provider =
+        normalizeLyricsProvider(source.provider) ||
+        normalizeLyricsProvider(
+          existingByFilename.get(source.filename)?.provider,
+        );
       return {
         filename: source.filename,
         language:
@@ -202,6 +237,7 @@ function saveTrackLyricsManifest(trackDir, sources) {
             : 'youtube-cc',
         ...(label ? { label } : {}),
         ...(offsetMs !== null && offsetMs !== 0 ? { offsetMs } : {}),
+        ...(provider ? { provider } : {}),
       };
     })
     .sort((a, b) => compareFilenames(a.filename, b.filename));
@@ -519,6 +555,7 @@ module.exports = {
   isAutomaticLyricsLanguage,
   extractYtDlpSubtitleLanguage,
   getTrackLyricsState,
+  loadTrackLyricsManifest,
   listTrackLyricsSources,
   saveTrackLyricsManifest,
   backfillLyricsSourceLabels,

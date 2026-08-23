@@ -1,6 +1,9 @@
 'use strict';
 
-const { rankLrclibCandidateMatches } = require('./candidate.js');
+const {
+  rankLrclibCandidateMatches,
+  summarizeLrclibCandidate,
+} = require('./candidate.js');
 const { createLrclibClient } = require('./client.js');
 const { buildLrclibQueryPlan } = require('./query.js');
 const { createLrclibRequestScheduler } = require('./scheduler.js');
@@ -83,31 +86,11 @@ function buildAvailableResult(match) {
 function isCurrentAutoSaveCompatible(match) {
   return (
     match.autoUsable &&
-    typeof match.record.syncedLyrics === 'string' &&
-    match.record.syncedLyrics.trim().length > 0
+    ((typeof match.record.lyricsfile === 'string' &&
+      (match.compatibility.t2 || match.compatibility.t1)) ||
+      (typeof match.record.syncedLyrics === 'string' &&
+        match.record.syncedLyrics.trim().length > 0))
   );
-}
-
-function candidateSummary(match) {
-  const record = match.record;
-  return {
-    id: record.id,
-    trackName: record.trackName,
-    artistName: record.artistName,
-    albumName: record.albumName,
-    duration: record.duration,
-    instrumental: record.instrumental,
-    lineCount: match.lineCount,
-    segmentCount: match.segmentCount,
-    previewLines: match.previewLines.slice(0, PREVIEW_LINE_LIMIT),
-    capability: match.capability,
-    compatibility: match.compatibility,
-    warnings: match.warnings,
-    matchBand: match.band,
-    matchReasons: match.matchReasons,
-    durationDelta: match.durationDelta,
-    durationDeltaSigned: match.durationDeltaSigned,
-  };
 }
 
 function buildCandidateResult(identity, records, invalidRecordCount = 0) {
@@ -115,7 +98,9 @@ function buildCandidateResult(identity, records, invalidRecordCount = 0) {
     0,
     MAX_MANUAL_CANDIDATES,
   );
-  const candidates = matches.map(candidateSummary);
+  const candidates = matches.map((match) =>
+    summarizeLrclibCandidate(match, PREVIEW_LINE_LIMIT),
+  );
   return {
     provider: LRCLIB_PROVIDER,
     status: 'ok',

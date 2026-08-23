@@ -97,6 +97,39 @@ describe('structured LRCLIB acquisition flow', () => {
     expect(provider.search).not.toHaveBeenCalled();
   });
 
+  it('auto-uses a validated Lyricsfile T2 record without requiring legacy syncedLyrics', async () => {
+    const provider = client({
+      getExact: vi.fn().mockResolvedValue({
+        status: 'ok',
+        record: record({
+          syncedLyrics: null,
+          lyricsfile: `version: "1.0"
+metadata:
+  title: Song
+  artist: Artist
+lines:
+  - text: Hello
+    start_ms: 1000
+    end_ms: 2000
+    words:
+      - text: Hello
+        start_ms: 1000
+        end_ms: 2000
+plain: Hello
+`,
+        }),
+      }),
+    });
+
+    await expect(
+      findLrclibSyncedLyrics(track, { client: provider }),
+    ).resolves.toMatchObject({
+      status: 'available',
+      record: { id: 42, syncedLyrics: null },
+    });
+    expect(provider.search).not.toHaveBeenCalled();
+  });
+
   it('uses one structured fallback after an exact miss', async () => {
     const provider = client({
       search: vi.fn().mockResolvedValue({

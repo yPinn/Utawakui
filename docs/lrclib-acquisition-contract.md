@@ -106,7 +106,8 @@ A new LRCLIB save is a small transaction inside the track lyrics tree:
 1. Write a versioned provider artifact containing the complete refreshed record,
    raw Lyricsfile, retrieval time, content hashes, provider id, capability,
    compatibility, and bounded warnings.
-2. Write or update the compatibility `.lrc` source when synced lyrics are valid.
+2. Write or update the compatibility `.lrc` source when validated line, synced,
+   or plain lyrics are compatible.
 3. Write the existing canonical timing sidecar directly from compatible validated
    words; do not re-infer provider word boundaries.
 4. Publish the lyrics manifest last.
@@ -116,10 +117,27 @@ write leaves the previous manifest authoritative. Deleting a new provider-backed
 source removes its artifact and source-derived timing/reading data; legacy LRC
 deletion behavior remains unchanged.
 
+The provider artifact is stored at
+`lyrics/providers/lrclib-<recordId>.json` with schema version 1. It contains the
+normalized complete provider record, retrieval timestamp, source capability,
+canonical compatibility, bounded warnings, and SHA-256 hashes for the record,
+plain lyrics, synced lyrics, raw Lyricsfile, and projected compatibility source.
+The corresponding manifest source carries validated internal provenance
+`{ name: "lrclib", recordId, artifactFilename }`; normal lyrics-state projection
+does not expose the artifact filename or raw provider body to the renderer.
+
+For supported Lyricsfile 1.0, line timestamps are projected deterministically to
+the compatibility LRC and complete non-overlapping words are projected directly
+to the existing timing schema v1. Stable ids use `lrclib:<recordId>`,
+`line:<index>`, and `line:<index>:word:<index>`. Provider `offset_ms` remains
+artifact-only provenance. Unsupported or invalid Lyricsfile content can be
+preserved as an artifact but cannot publish a falsely compatible source.
+
 ## Search/save consistency
 
-Candidate summaries carry a content fingerprint internal to main/preload flow.
-Before saving, `/api/get/:id` is normalized and fingerprinted again. If the
+Candidate summaries carry an opaque `previewFingerprint` through the
+main/preload flow. Before saving, `/api/get/:id` is normalized and fingerprinted
+again. If the
 content changed since preview, main returns `record-changed` plus a refreshed
 bounded summary and requires explicit confirmation; it never silently saves the
 new body.

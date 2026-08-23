@@ -4,7 +4,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import lyricsHandlersModule from './lyricsHandlers.js';
 
-const { registerLyricsHandlers } = lyricsHandlersModule;
+const { normalizeLrclibSearchOptions, registerLyricsHandlers } =
+  lyricsHandlersModule;
 
 function createIpcMain() {
   const handlers = new Map();
@@ -177,5 +178,34 @@ describe('lyrics timing IPC', () => {
         targetLineId: 'missing_line',
       }),
     ).rejects.toThrow(/target line is invalid/);
+  });
+});
+
+describe('normalizeLrclibSearchOptions', () => {
+  it('accepts only bounded query fields and the explicit broaden mode', () => {
+    expect(
+      normalizeLrclibSearchOptions({
+        query: { title: 'Song', artist: 'Artist' },
+        mode: 'broaden',
+      }),
+    ).toEqual({
+      query: { title: 'Song', artist: 'Artist' },
+      mode: 'broaden',
+    });
+    expect(normalizeLrclibSearchOptions(undefined)).toEqual({});
+  });
+
+  it('rejects transport injection, controls, and oversized query text', () => {
+    expect(() =>
+      normalizeLrclibSearchOptions({ baseUrl: 'https://example.com' }),
+    ).toThrow(/options/i);
+    expect(() =>
+      normalizeLrclibSearchOptions({ query: { title: 'Song\nOther' } }),
+    ).toThrow(/query/i);
+    expect(() =>
+      normalizeLrclibSearchOptions({
+        query: { title: 'x'.repeat(257), artist: 'Artist' },
+      }),
+    ).toThrow(/query/i);
   });
 });

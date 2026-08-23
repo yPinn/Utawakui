@@ -49,11 +49,11 @@ async function toggleSearch() {
 
 const candidateSavingId = ref(null);
 
-async function handleSaveCandidate(candidateId) {
-  candidateSavingId.value = candidateId;
+async function handleSaveCandidate(candidate) {
+  candidateSavingId.value = candidate.id;
   try {
-    const result = await saveLyricsCandidate(candidateId);
-    if (result) await searchLyricsCandidates();
+    const result = await saveLyricsCandidate(candidate);
+    if (result?.status === 'saved') await searchLyricsCandidates();
   } finally {
     candidateSavingId.value = null;
   }
@@ -225,7 +225,7 @@ function candidateSummaryLine(candidate) {
               v-else
               variant="accent"
               :disabled="candidateSavingId === candidate.id"
-              @click="handleSaveCandidate(candidate.id)"
+              @click="handleSaveCandidate(candidate)"
             >
               {{ candidateSavingId === candidate.id ? '保存中...' : '保存' }}
             </UiButton>

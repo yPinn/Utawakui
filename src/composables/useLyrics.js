@@ -521,7 +521,7 @@ async function probeMusixmatch() {
   }
 }
 
-async function searchLyricsCandidates() {
+async function searchLyricsCandidates(options) {
   const track = selectedTrack.value;
   if (!track) return;
   if (!(await ensureLyricsFlow())) return;
@@ -540,7 +540,10 @@ async function searchLyricsCandidates() {
   }
 
   try {
-    const result = await window.Utawakui.searchLyricsCandidates(track.id);
+    const result = await window.Utawakui.searchLyricsCandidates(
+      track.id,
+      options,
+    );
     if (requestId !== candidateSearchRequestId) return;
     state.candidateSearch.status = result?.status ?? null;
     state.candidateSearch.reason =
@@ -567,7 +570,7 @@ async function searchLyricsCandidates() {
 // main also broadcasts library:updated after a save, but that's fire-and-
 // forget — this explicit refresh is what lets selectSource() run only
 // once selectedLyrics.sources actually contains the new filename.
-async function saveLyricsCandidate(candidateId) {
+async function saveLyricsCandidate(candidate) {
   const track = selectedTrack.value;
   if (!track) return null;
   if (!(await ensureLyricsFlow())) return null;
@@ -582,8 +585,23 @@ async function saveLyricsCandidate(candidateId) {
   try {
     const result = await window.Utawakui.saveLyricsCandidate(
       track.id,
-      candidateId,
+      candidate.id,
+      candidate.previewFingerprint,
     );
+    if (result?.status === 'record-changed') {
+      const index = state.candidateSearch.candidates.findIndex(
+        (item) => item.id === candidate.id,
+      );
+      if (index >= 0 && result.candidate) {
+        state.candidateSearch.candidates[index] = result.candidate;
+      }
+      return result;
+    }
+    if (result?.status !== 'saved' || !result.source) {
+      throw new Error(
+        `lrclib save unavailable: ${result?.reason || 'unknown'}`,
+      );
+    }
     await refreshLibrary();
     selectSource(result.source.filename);
     return result;

@@ -8,6 +8,7 @@ const {
 const {
   analyzeLrclibRecord,
   rankLrclibCandidateMatches,
+  summarizeLrclibCandidate,
 } = require('./lrclib/candidate.js');
 const {
   buildLrclibUserAgent,
@@ -30,12 +31,20 @@ const {
   buildLrclibUrl,
   buildSearchParams,
 } = require('./lrclib/query.js');
-const { normalizeLrclibRecord } = require('./lrclib/record.js');
+const {
+  fingerprintLrclibRecord,
+  normalizeLrclibRecord,
+} = require('./lrclib/record.js');
 const { readJsonResponse } = require('./lrclib/response.js');
 const {
   createLrclibRequestScheduler,
   sharedLrclibRequestScheduler,
 } = require('./lrclib/scheduler.js');
+const { saveLrclibCandidate } = require('./lrclib/saveFlow.js');
+const {
+  deleteStoredLrclibSource,
+  saveLrclibRecord,
+} = require('./lrclib/storage.js');
 const {
   looksLikeChannelArtist,
   stripTrackDecorations,
@@ -54,8 +63,10 @@ module.exports = {
   createLrclibClient,
   createLrclibRequestScheduler,
   durationDelta,
+  deleteStoredLrclibSource,
   fetchLrclibRecord,
   findLrclibSyncedLyrics,
+  fingerprintLrclibRecord,
   looksLikeChannelArtist,
   normalizeLrclibRecord,
   parseLrcLines,
@@ -64,8 +75,11 @@ module.exports = {
   rankSyncedCandidates,
   rankLrclibCandidateMatches,
   readJsonResponse,
+  saveLrclibCandidate,
+  saveLrclibRecord,
   searchLrclibCandidates,
   sharedLrclibRequestScheduler,
   signedDurationDelta,
   stripTrackDecorations,
+  summarizeLrclibCandidate,
 };

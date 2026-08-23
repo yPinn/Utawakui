@@ -42,6 +42,7 @@ const FUNCTION_EXPORTS = [
   'listTracks',
   'loadIndex',
   'loadSeparationManifest',
+  'loadTrackLyricsManifest',
   'loadTrackLyricsTiming',
   'migrateTrackAlbumMetadata',
   'normalizeTrackLyricsSidecars',
@@ -84,7 +85,7 @@ const CONSTANT_EXPORTS = [
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 62 names its consumers expect', () => {
+  it('re-exports exactly the 63 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

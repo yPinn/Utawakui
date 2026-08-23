@@ -2,6 +2,7 @@
 
 const { parseLrcLines } = require('./lrc.js');
 const { parseLyricsfile } = require('./lyricsfile.js');
+const { fingerprintLrclibRecord } = require('./record.js');
 const {
   durationDelta,
   signedDurationDelta,
@@ -182,8 +183,32 @@ function rankLrclibCandidateMatches(identity, records) {
     );
 }
 
+function summarizeLrclibCandidate(match, previewLineLimit = 5) {
+  const record = match.record;
+  return {
+    id: record.id,
+    trackName: record.trackName,
+    artistName: record.artistName,
+    albumName: record.albumName,
+    duration: record.duration,
+    instrumental: record.instrumental,
+    lineCount: match.lineCount,
+    segmentCount: match.segmentCount,
+    previewLines: match.previewLines.slice(0, previewLineLimit),
+    capability: match.capability,
+    compatibility: match.compatibility,
+    warnings: match.warnings,
+    matchBand: match.band,
+    matchReasons: match.matchReasons,
+    durationDelta: match.durationDelta,
+    durationDeltaSigned: match.durationDeltaSigned,
+    previewFingerprint: fingerprintLrclibRecord(record),
+  };
+}
+
 module.exports = {
   analyzeLrclibRecord,
   evaluateLrclibCandidate,
   rankLrclibCandidateMatches,
+  summarizeLrclibCandidate,
 };
