@@ -22,10 +22,15 @@ const emit = defineEmits(['refresh', 'openFolder', 'clear', 'noticeAction']);
   <div class="diagnostics-settings-block">
     <SettingsActionRow
       :icon="ListChecks"
-      title="使用記錄"
-      description="記錄只保留在這台電腦。"
-      :value="isLoading ? '讀取中' : `${recordCount} 筆近期記錄`"
-      :status="recordCount > 0 ? '已記錄' : '待命'"
+      title="錯誤紀錄"
+      :value="
+        isLoading
+          ? '讀取中'
+          : recordCount > 0
+            ? `${recordCount} 筆近期錯誤`
+            : '沒有近期錯誤'
+      "
+      :status="recordCount > 0 ? '有紀錄' : '無紀錄'"
       :status-tone="recordCount > 0 ? 'warning' : 'muted'"
       tooltip="協助排查播放、匯入或音訊處理問題。"
     >
@@ -38,12 +43,12 @@ const emit = defineEmits(['refresh', 'openFolder', 'clear', 'noticeAction']);
         />
         <UiIconButton
           :icon="FolderOpen"
-          label="開啟使用記錄資料夾"
+          label="開啟錯誤紀錄資料夾"
           @click="emit('openFolder')"
         />
         <UiIconButton
           :icon="Trash2"
-          label="清除使用記錄"
+          label="清除錯誤紀錄"
           :disabled="isLoading || recordCount === 0"
           @click="emit('clear')"
         />

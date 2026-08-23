@@ -228,7 +228,7 @@ async function refreshSettingsState() {
 async function handleClearDiagnostics() {
   const confirmed =
     typeof window === 'undefined' ||
-    window.confirm('清除這台電腦上的使用記錄？');
+    window.confirm('清除這台電腦上的錯誤紀錄？');
   if (confirmed) await clearDiagnostics();
 }
 
@@ -410,16 +410,6 @@ onMounted(refreshSettingsState);
         />
 
         <SettingsBlock title="維護">
-          <DiagnosticsSettingsBlock
-            :record-count="persistentDiagnosticsState.recordCount"
-            :is-loading="persistentDiagnosticsState.isLoading"
-            :notice="persistentDiagnosticsState.notice"
-            @refresh="refreshDiagnostics"
-            @open-folder="openDiagnosticsFolder"
-            @clear="handleClearDiagnostics"
-            @notice-action="handleDiagnosticsNoticeAction"
-          />
-
           <AppUpdateSettingsRow
             :current-version="
               appInfoState.currentVersion || appUpdateState.currentVersion
@@ -433,6 +423,16 @@ onMounted(refreshSettingsState);
             @check="checkForAppUpdate"
             @download="downloadAppUpdate"
             @install="installAppUpdate"
+          />
+
+          <DiagnosticsSettingsBlock
+            :record-count="persistentDiagnosticsState.recordCount"
+            :is-loading="persistentDiagnosticsState.isLoading"
+            :notice="persistentDiagnosticsState.notice"
+            @refresh="refreshDiagnostics"
+            @open-folder="openDiagnosticsFolder"
+            @clear="handleClearDiagnostics"
+            @notice-action="handleDiagnosticsNoticeAction"
           />
         </SettingsBlock>
       </section>

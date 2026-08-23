@@ -40,7 +40,7 @@ describe('usePersistentDiagnostics', () => {
     await diagnostics.refresh();
 
     expect(diagnostics.state.notice).toMatchObject({
-      title: '無法讀取使用記錄',
+      title: '無法讀取錯誤紀錄',
       message: '請稍後再試一次。',
       actionLabel: '重試',
     });
@@ -60,8 +60,8 @@ describe('usePersistentDiagnostics', () => {
     expect(diagnostics.state.recordCount).toBe(0);
     expect(diagnostics.state.notice).toMatchObject({
       severity: 'success',
-      title: '使用記錄已清除',
-      message: '已移除本機診斷記錄。',
+      title: '錯誤紀錄已清除',
+      message: '已移除這台電腦上的錯誤紀錄。',
     });
   });
 
@@ -77,7 +77,7 @@ describe('usePersistentDiagnostics', () => {
     await diagnostics.openFolder();
 
     expect(diagnostics.state.notice).toMatchObject({
-      title: '無法開啟使用記錄資料夾',
+      title: '無法開啟錯誤紀錄資料夾',
       message: '請稍後再試一次。',
     });
     expect(JSON.stringify(diagnostics.state)).not.toContain('private path');

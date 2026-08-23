@@ -30,7 +30,7 @@ async function refresh() {
   if (!listRecent) {
     state.notice = failureNotice({
       title: '需要重新啟動',
-      message: '重新啟動後即可讀取使用記錄。',
+      message: '重新啟動後即可讀取錯誤紀錄。',
       operation: 'list',
     });
     return false;
@@ -44,7 +44,7 @@ async function refresh() {
     return true;
   } catch {
     state.notice = failureNotice({
-      title: '無法讀取使用記錄',
+      title: '無法讀取錯誤紀錄',
       operation: 'list',
     });
     return false;
@@ -57,7 +57,7 @@ async function clear() {
   const clearDiagnostics = bridgeMethod('clearDiagnostics');
   if (!clearDiagnostics) {
     state.notice = failureNotice({
-      title: '無法清除使用記錄',
+      title: '無法清除錯誤紀錄',
       operation: 'clear',
     });
     return false;
@@ -72,15 +72,15 @@ async function clear() {
     state.notice = normalizeAppError(null, {
       code: 'DIAGNOSTICS_CLEARED',
       severity: 'success',
-      title: '使用記錄已清除',
-      message: '已移除本機診斷記錄。',
+      title: '錯誤紀錄已清除',
+      message: '已移除這台電腦上的錯誤紀錄。',
       source: 'diagnostics',
       operation: 'clear',
     });
     return true;
   } catch {
     state.notice = failureNotice({
-      title: '無法清除使用記錄',
+      title: '無法清除錯誤紀錄',
       operation: 'clear',
     });
     return false;
@@ -93,7 +93,7 @@ async function openFolder() {
   const openDiagnosticsFolder = bridgeMethod('openDiagnosticsFolder');
   if (!openDiagnosticsFolder) {
     state.notice = failureNotice({
-      title: '無法開啟使用記錄資料夾',
+      title: '無法開啟錯誤紀錄資料夾',
       operation: 'open-folder',
     });
     return false;
@@ -106,7 +106,7 @@ async function openFolder() {
     return true;
   } catch {
     state.notice = failureNotice({
-      title: '無法開啟使用記錄資料夾',
+      title: '無法開啟錯誤紀錄資料夾',
       operation: 'open-folder',
     });
     return false;
