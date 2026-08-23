@@ -1,0 +1,8 @@
+version: '1.0'
+metadata:
+  title: 'Bad Clock'
+  artist: 'Example Artist'
+lines:
+  - text: 'Time runs backward'
+    start_ms: 2400
+    end_ms: 1200

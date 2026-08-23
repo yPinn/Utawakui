@@ -1,0 +1,11 @@
+version: '1.0'
+metadata:
+  title: 'First'
+  artist: 'Example Artist'
+plain: 'Hello'
+---
+version: '1.0'
+metadata:
+  title: 'Second'
+  artist: 'Example Artist'
+plain: 'World'

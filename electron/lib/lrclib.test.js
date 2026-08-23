@@ -1,18 +1,21 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  fetchLrclibRecord,
+  findLrclibSyncedLyrics,
+  searchLrclibCandidates,
+} from './lrclib/acquisition.js';
+import { parseLrcLines } from './lrclib/lrc.js';
+import {
+  pickBestSyncedCandidate,
+  rankSyncedCandidates,
+  signedDurationDelta,
+} from './lrclib/matching.js';
+import {
   buildLrclibSearchQueries,
   buildLrclibUrl,
   buildSearchParams,
-  fetchLrclibRecord,
-  findLrclibSyncedLyrics,
-  looksLikeChannelArtist,
-  parseLrcLines,
-  pickBestSyncedCandidate,
-  rankSyncedCandidates,
-  searchLrclibCandidates,
-  signedDurationDelta,
-  stripTrackDecorations,
-} from './lrclib.js';
+} from './lrclib/query.js';
+import { looksLikeChannelArtist, stripTrackDecorations } from './musicTitle.js';
 
 const fadedTitle = '\u892A\u8272';
 const labelUploader = '\u6dfb\u7ffc\u97f3\u6a02 TEAM EAR MUSIC';
@@ -423,7 +426,7 @@ describe('findLrclibSyncedLyrics', () => {
     vi.unstubAllGlobals();
   });
 
-  it('returns a network-error result when fetch itself throws', async () => {
+  it('returns a typed offline result when fetch itself throws', async () => {
     const fetchMock = vi.fn().mockRejectedValue(new TypeError('offline'));
 
     await expect(
@@ -434,7 +437,7 @@ describe('findLrclibSyncedLyrics', () => {
     ).resolves.toMatchObject({
       provider: 'lrclib',
       status: 'error',
-      reason: 'network-error',
+      reason: 'offline',
     });
   });
 
@@ -714,13 +717,21 @@ describe('searchLrclibCandidates', () => {
 
 describe('fetchLrclibRecord', () => {
   it('fetches a single record by id', async () => {
+    const record = {
+      id: 42,
+      name: 'Hello - Artist',
+      trackName: 'Hello',
+      artistName: 'Artist',
+      albumName: null,
+      duration: 180,
+      instrumental: false,
+      plainLyrics: 'Hello',
+      syncedLyrics: '[00:01.00]Hello',
+      lyricsfile: null,
+    };
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({ id: 42, syncedLyrics: '[00:01.00]Hello' }),
-        ),
-      );
+      .mockResolvedValue(new Response(JSON.stringify(record)));
 
     const result = await fetchLrclibRecord(42, {
       fetch: fetchMock,
@@ -730,10 +741,7 @@ describe('fetchLrclibRecord', () => {
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const url = new URL(String(fetchMock.mock.calls[0][0]));
     expect(url.pathname).toBe('/api/get/42');
-    expect(result).toEqual({
-      status: 'ok',
-      record: { id: 42, syncedLyrics: '[00:01.00]Hello' },
-    });
+    expect(result).toEqual({ status: 'ok', record });
   });
 
   it('reports an http error', async () => {

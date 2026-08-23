@@ -1,0 +1,6 @@
+version: '1.0'
+metadata: &metadata
+  title: 'Alias Song'
+  artist: 'Example Artist'
+plain: 'Hello'
+copy: *metadata

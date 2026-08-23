@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { gunzipSync, gzipSync } from 'node:zlib';
 
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import {

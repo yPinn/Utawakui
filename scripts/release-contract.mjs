@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { gunzipSync } from 'node:zlib';
 
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import semver from 'semver';
 
 function assertContract(condition, message) {

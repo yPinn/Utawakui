@@ -1,0 +1,6 @@
+version: '1.0'
+metadata:
+  title: 'First title'
+  title: 'Second title'
+  artist: 'Example Artist'
+plain: 'Hello'

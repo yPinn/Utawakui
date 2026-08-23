@@ -1,0 +1,24 @@
+version: '1.0'
+metadata:
+  title: 'Two Voices'
+  artist: 'Example Duo'
+  offset_ms: 120
+lines:
+  - text: 'I will follow'
+    start_ms: 10000
+    end_ms: 15000
+    words:
+      - text: 'I will '
+        start_ms: 10000
+        end_ms: 13000
+      - text: 'follow'
+        start_ms: 12000
+        end_ms: 15000
+  - text: 'Follow me home'
+    start_ms: 12500
+    end_ms: 16500
+    words:
+      - text: 'Follow '
+        start_ms: 12500
+      - text: 'me home'
+        start_ms: 14000

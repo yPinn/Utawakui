@@ -1,7 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   AUDIO_PYTHON_ENVIRONMENT_IDS,
