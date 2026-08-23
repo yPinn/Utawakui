@@ -694,6 +694,78 @@ describe('organizeTrackMetadataFromSidecars', () => {
     });
   });
 
+  it('upgrades an explicitly provider-owned artist across projection versions', () => {
+    makeStructuredTrack('provider-upgrade');
+    saveIndexEntry(dir, 'provider-upgrade', {
+      title: 'Blue Blood',
+      titleOrigin: 'provider',
+      artist: 'IVE, Seo Ji Eum, Sophia Brenan, Elle Campbell',
+      artistOrigin: 'provider',
+      duration: 167,
+    });
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: {
+          title: 'Blue Blood',
+          artist: 'IVE',
+          duration: 167,
+        },
+        previousProjection: {
+          title: 'Blue Blood',
+          artist: 'IVE, Seo Ji Eum, Nick Hahn, Sophia Brenan, Elle Campbell',
+        },
+      })),
+    ).toEqual({
+      updated: 1,
+      normalized: 1,
+      enriched: 0,
+      skipped: 0,
+    });
+    expect(loadIndex(dir).tracks['provider-upgrade']).toMatchObject({
+      artist: 'IVE',
+      artistOrigin: 'provider',
+    });
+  });
+
+  it('upgrades an originless value that exactly matches a compatible provider projection', () => {
+    makeStructuredTrack('compatible-upgrade');
+    saveIndexEntry(dir, 'compatible-upgrade', {
+      title: 'Blue Blood',
+      artist: 'IVE, Seo Ji Eum, Sophia Brenan, Elle Campbell',
+      duration: 167,
+    });
+
+    expect(
+      organizeTrackMetadataFromSidecars(dir, () => ({
+        normalized: {
+          title: 'Blue Blood',
+          artist: 'IVE',
+          duration: 167,
+        },
+        previousProjections: [
+          {
+            title: 'Blue Blood',
+            artist: 'IVE, Seo Ji Eum, Nick Hahn, Sophia Brenan, Elle Campbell',
+          },
+          {
+            title: 'Blue Blood',
+            artist: 'IVE, Seo Ji Eum, Sophia Brenan, Elle Campbell',
+          },
+        ],
+      })),
+    ).toEqual({
+      updated: 1,
+      normalized: 1,
+      enriched: 0,
+      skipped: 0,
+    });
+    expect(loadIndex(dir).tracks['compatible-upgrade']).toMatchObject({
+      artist: 'IVE',
+      artistOrigin: 'provider',
+    });
+  });
+
   it('treats a sidecar-backed track with no index entry as provider-owned', () => {
     makeStructuredTrack('new-provider-track');
 

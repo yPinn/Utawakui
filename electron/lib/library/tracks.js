@@ -107,7 +107,9 @@ function organizeTrackMetadataFromSidecars(dir, readTrackInfo) {
     if (!maintenance?.normalized) continue;
 
     const fields = maintenance.normalized;
-    const previous = maintenance.previousProjection || {};
+    const previousProjections = Array.isArray(maintenance.previousProjections)
+      ? maintenance.previousProjections
+      : [maintenance.previousProjection || {}];
     const hasExistingEntry = Object.prototype.hasOwnProperty.call(
       index.tracks,
       record.id,
@@ -145,7 +147,12 @@ function organizeTrackMetadataFromSidecars(dir, readTrackInfo) {
       }
       if (
         !isPresentText(existing[field]) ||
-        (isPresentText(previous[field]) && existing[field] === previous[field])
+        existing[`${field}Origin`] === 'provider' ||
+        previousProjections.some(
+          (previous) =>
+            isPresentText(previous?.[field]) &&
+            existing[field] === previous[field],
+        )
       ) {
         next[field] = proposed;
         next[`${field}Origin`] = 'provider';

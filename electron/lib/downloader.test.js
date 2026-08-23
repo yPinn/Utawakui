@@ -530,10 +530,12 @@ describe('finalizeDownloadedTrackFiles', () => {
         artist: 'Rick Astley',
         duration: 213,
       },
-      previousProjection: {
-        title: 'Never Gonna Give You Up',
-        artist: 'Rick Astley',
-      },
+      previousProjections: [
+        {
+          title: 'Never Gonna Give You Up',
+          artist: 'Rick Astley',
+        },
+      ],
     });
     expect(fs.existsSync(path.join(dir, 'audio.mp3'))).toBe(true);
     expect(fs.existsSync(path.join(dir, 'thumbnail.webp'))).toBe(true);
