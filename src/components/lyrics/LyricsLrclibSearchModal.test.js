@@ -34,12 +34,16 @@ describe('LRCLIB search modal contract', () => {
     expect(workspace).toContain('trackContext.id');
     expect(workspace).toContain('歌曲名稱');
     expect(workspace).toContain('歌手');
+    expect(workspace.match(/<UiTextField/g)).toHaveLength(2);
+    expect(workspace).not.toContain('<input');
     expect(workspace).toContain('擴大搜尋');
     expect(workspace).not.toContain('@input="handleSearch');
+    expect(workspace).toContain('onMounted(() =>');
+    expect(workspace).toContain('handleSearch()');
     expect(button).toContain(':type="type"');
   });
 
-  it('renders grouped bounded results with accessible status and disclosures', () => {
+  it('renders grouped bounded results without exposing provider diagnostics', () => {
     const workspace = source('./LyricsLrclibSearchWorkspace.vue');
     const row = source('./LyricsLrclibCandidateRow.vue');
 
@@ -47,13 +51,70 @@ describe('LRCLIB search modal contract', () => {
     expect(workspace).toContain('相近結果');
     expect(workspace).toContain('aria-live="polite"');
     expect(workspace).toContain('lyrics-lrclib-search__skeleton');
-    expect(row).toContain('<details');
+    expect(row).not.toContain('<details');
     expect(row).toContain('dir="auto"');
     expect(row).toContain('presentedCandidate.previewLines');
-    expect(row).toContain('presentedCandidate.language');
+    expect(row).toContain('candidateImportMessage');
+    expect(row).toContain('previewLineHasTiming(line)');
     expect(row).toContain("candidate.saveState === 'update-available'");
-    expect(row).toContain('retrievedAtLabel(presentedCandidate.retrievedAt)');
+    expect(row).not.toContain('LRCLIB id');
+    expect(row).not.toContain('資料量');
+    expect(row).not.toContain('技術層級');
+    expect(row).not.toContain('符合依據');
+    expect(row).not.toContain('上次保存');
+    expect(row).not.toContain('capabilityTechnicalLabel');
+    expect(row).not.toContain('candidateDataLabel');
+    expect(row).not.toContain('matchReasonLabels');
     expect(row).not.toContain('previewFingerprint');
+  });
+
+  it('keeps the saved state visible while a candidate row is collapsed', () => {
+    const row = source('./LyricsLrclibCandidateRow.vue');
+
+    const previewIndex = row.indexOf(
+      'class="lyrics-lrclib-candidate-row__preview-line"',
+    );
+    const savedStatusIndex = row.indexOf(
+      'class="lyrics-lrclib-candidate-row__saved-status"',
+    );
+
+    expect(previewIndex).toBeGreaterThan(-1);
+    expect(savedStatusIndex).toBeGreaterThan(previewIndex);
+    expect(row).toContain('v-if="!expanded && candidate.alreadySaved"');
+    expect(row).toContain('class="lyrics-lrclib-candidate-row__saved-status"');
+    expect(row).toContain('<UiChip tone="success">已保存</UiChip>');
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-row__saved-status\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*flex-end;[^}]*margin-top:\s*var\(--ui-space-1\);/s,
+    );
+    expect(row).toContain('v-else-if="candidate.alreadySaved"');
+  });
+
+  it('prevents accidental chrome selection while keeping text fields selectable', () => {
+    const workspace = source('./LyricsLrclibSearchWorkspace.vue');
+    const textField = source('../ui/UiTextField.vue');
+
+    expect(workspace).toMatch(
+      /\.lyrics-lrclib-search\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/s,
+    );
+    expect(textField).toMatch(
+      /\.ui-text-field__control\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/s,
+    );
+  });
+
+  it('lets untimed preview rows replace the timestamp grid without a specificity conflict', () => {
+    const row = source('./LyricsLrclibCandidateRow.vue');
+
+    expect(row).toContain('class="lyrics-lrclib-candidate-preview__line"');
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-preview__line\s*\{[^}]*grid-template-columns:\s*var\(--ui-space-7\) minmax\(0, 1fr\);/s,
+    );
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-preview__line--untimed\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s,
+    );
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-preview__text\s*\{[^}]*min-width:\s*0;[^}]*overflow-wrap:\s*anywhere;/s,
+    );
+    expect(row).not.toContain('.lyrics-lrclib-candidate-preview__lines li {');
   });
 
   it('stacks query and candidate layouts at the established narrow breakpoint', () => {

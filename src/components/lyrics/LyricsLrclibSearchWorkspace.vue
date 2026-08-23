@@ -12,6 +12,7 @@ import { useLyrics } from '../../composables/useLyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiTextField from '../ui/UiTextField.vue';
 import LyricsLrclibCandidateRow from './LyricsLrclibCandidateRow.vue';
 
 const emit = defineEmits(['back']);
@@ -37,8 +38,8 @@ const changedCandidates = ref(new Map());
 const titleInputRef = useTemplateRef('titleInput');
 
 onMounted(() => {
-  clearCandidateSearch();
   titleInputRef.value?.focus();
+  void handleSearch();
 });
 onUnmounted(clearCandidateSearch);
 
@@ -77,7 +78,9 @@ const draftDiffersFromResults = computed(() => {
 });
 const resultAnnouncement = computed(() => {
   if (isSearchPending.value) return '正在搜尋 LRCLIB';
-  if (!hasSearched.value) return '尚未搜尋';
+  if (!hasSearched.value) {
+    return titleIsMissing.value ? '請輸入歌曲名稱後搜尋' : '準備搜尋';
+  }
   if (state.candidateSearch.error) return '搜尋未完成';
   return `找到 ${resultCount.value} 筆候選歌詞`;
 });
@@ -152,34 +155,24 @@ function toggleCandidate(candidateId) {
   <div class="lyrics-lrclib-search">
     <div class="lyrics-lrclib-search__toolbar">
       <UiButton @click="emit('back')">返回來源管理</UiButton>
-      <p>查詢內容只用於這次搜尋，不會修改曲庫中的曲目資訊。</p>
+      <p>只搜尋，不會修改曲目資訊。</p>
     </div>
 
     <form class="lyrics-lrclib-search__form" @submit.prevent="handleSearch()">
-      <label class="lyrics-lrclib-search__field" for="lrclib-track-title">
-        <span>歌曲名稱</span>
-        <input
-          id="lrclib-track-title"
-          ref="titleInput"
-          v-model="titleDraft"
-          type="text"
-          maxlength="256"
-          autocomplete="off"
-          dir="auto"
-          required
-        />
-      </label>
-      <label class="lyrics-lrclib-search__field" for="lrclib-artist-name">
-        <span>歌手</span>
-        <input
-          id="lrclib-artist-name"
-          v-model="artistDraft"
-          type="text"
-          maxlength="256"
-          autocomplete="off"
-          dir="auto"
-        />
-      </label>
+      <UiTextField
+        id="lrclib-track-title"
+        ref="titleInput"
+        v-model="titleDraft"
+        label="歌曲名稱"
+        :maxlength="256"
+        required
+      />
+      <UiTextField
+        id="lrclib-artist-name"
+        v-model="artistDraft"
+        label="歌手"
+        :maxlength="256"
+      />
       <UiButton
         :icon="Search"
         variant="accent"
@@ -237,7 +230,7 @@ function toggleCandidate(candidateId) {
       </div>
 
       <UiHint v-else-if="!hasSearched" padded>
-        確認或修改曲名與歌手後按下搜尋。搜尋不會在輸入時自動送出。
+        請輸入歌曲名稱後搜尋。輸入期間不會自動送出。
       </UiHint>
       <UiHint v-else-if="state.candidateSearch.status === 'unavailable'" padded>
         目前找不到可用的候選歌詞。你可以調整查詢，或嘗試擴大搜尋。
@@ -323,11 +316,13 @@ function toggleCandidate(candidateId) {
 
 <style scoped>
 .lyrics-lrclib-search {
-  max-height: calc(100vh - 8rem);
+  max-height: calc(100vh - var(--ui-space-8) - var(--ui-space-8));
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: var(--ui-space-3);
   overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .lyrics-lrclib-search__toolbar,
@@ -351,43 +346,14 @@ function toggleCandidate(candidateId) {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: end;
   gap: var(--ui-space-3);
-  padding: var(--ui-space-4);
+  padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-canvas);
 }
 
-.lyrics-lrclib-search__field {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-}
-
-.lyrics-lrclib-search__field input {
-  width: 100%;
-  min-width: 0;
-  height: var(--ui-control-height);
-  padding: 0 var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-md);
-  text-align: start;
-}
-
-.lyrics-lrclib-search__field input:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
 .lyrics-lrclib-search__results {
-  min-height: 12rem;
+  min-height: calc(var(--ui-space-8) + var(--ui-space-8) + var(--ui-space-8));
   display: grid;
   align-content: start;
   gap: var(--ui-space-3);

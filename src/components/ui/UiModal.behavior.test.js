@@ -3,7 +3,7 @@ import { compile } from '@vue/compiler-dom';
 import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import UiButton from './UiButton.vue';
+import UiIconButton from './UiIconButton.vue';
 import UiModal from './UiModal.vue';
 
 const { createRenderer, h, nextTick, ref, ssrContextKey } = Vue;
@@ -20,7 +20,7 @@ function attachClientRender(component, filename) {
   component.render = new Function('Vue', code)(Vue);
 }
 
-attachClientRender(UiButton, './UiButton.vue');
+attachClientRender(UiIconButton, './UiIconButton.vue');
 attachClientRender(UiModal, './UiModal.vue');
 
 function hostNode(type, text = '') {
@@ -151,7 +151,7 @@ describe('UiModal behavior', () => {
     app.unmount();
   });
 
-  it('closes from the backdrop and close button, and wraps Tab focus', async () => {
+  it('keeps backdrop clicks inert, closes from the close button, and wraps Tab focus', async () => {
     const close = vi.fn();
     const Root = {
       setup: () => () =>
@@ -166,13 +166,15 @@ describe('UiModal behavior', () => {
     const backdrop = findAll(body, (node) =>
       String(node.props?.class || '').includes('ui-modal-backdrop'),
     )[0];
-    backdrop.props.onClick({ target: backdrop, currentTarget: backdrop });
+    expect(backdrop.props.onClick).toBeUndefined();
+    expect(close).not.toHaveBeenCalled();
+
     const closeButton = findAll(
       body,
       (node) => node.props?.['aria-label'] === '關閉',
     )[0];
     closeButton.props.onClick();
-    expect(close).toHaveBeenCalledTimes(2);
+    expect(close).toHaveBeenCalledOnce();
 
     const dialog = findAll(body, (node) => node.props?.role === 'dialog')[0];
     const first = { focus: vi.fn() };

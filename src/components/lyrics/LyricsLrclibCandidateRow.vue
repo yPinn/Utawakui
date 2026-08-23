@@ -4,8 +4,8 @@ import { Check, ChevronRight } from '../../icons/index.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 import {
+  candidateImportMessage,
   capabilityLabel,
-  matchReasonLabels,
   warningLabels,
 } from '../../utils/lrclibPresentation.js';
 import UiButton from '../ui/UiButton.vue';
@@ -28,8 +28,8 @@ const presentedCandidate = computed(
 const visibleWarnings = computed(() =>
   warningLabels(presentedCandidate.value.warnings),
 );
-const visibleReasons = computed(() =>
-  matchReasonLabels(presentedCandidate.value.matchReasons),
+const importMessage = computed(() =>
+  candidateImportMessage(presentedCandidate.value),
 );
 
 const capabilityTone = computed(() => {
@@ -60,13 +60,8 @@ function durationLabel(candidate) {
   return `${formatDuration(candidate.duration)}${delta}`;
 }
 
-function retrievedAtLabel(value) {
-  const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return null;
-  return new Intl.DateTimeFormat('zh-TW', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+function previewLineHasTiming(line) {
+  return Number.isFinite(line?.start);
 }
 </script>
 
@@ -110,9 +105,6 @@ function retrievedAtLabel(value) {
         <UiChip :tone="capabilityTone">{{
           capabilityLabel(presentedCandidate)
         }}</UiChip>
-        <UiChip v-if="presentedCandidate.language" tone="muted">
-          {{ presentedCandidate.language }}
-        </UiChip>
         <UiChip
           v-if="candidate.saveState === 'update-available'"
           tone="warning"
@@ -123,12 +115,19 @@ function retrievedAtLabel(value) {
     </div>
 
     <p
-      v-if="presentedCandidate.previewLines?.[0]"
+      v-if="!expanded && presentedCandidate.previewLines?.[0]"
       class="lyrics-lrclib-candidate-row__preview-line"
       dir="auto"
     >
       {{ presentedCandidate.previewLines[0].text }}
     </p>
+
+    <div
+      v-if="!expanded && candidate.alreadySaved"
+      class="lyrics-lrclib-candidate-row__saved-status"
+    >
+      <UiChip tone="success">已保存</UiChip>
+    </div>
 
     <div v-if="expanded" class="lyrics-lrclib-candidate-row__expanded">
       <ul
@@ -146,40 +145,22 @@ function retrievedAtLabel(value) {
         <li
           v-for="(line, index) in presentedCandidate.previewLines"
           :key="index"
+          class="lyrics-lrclib-candidate-preview__line"
+          :class="{
+            'lyrics-lrclib-candidate-preview__line--untimed':
+              !previewLineHasTiming(line),
+          }"
         >
-          <span class="lyrics-lrclib-candidate-preview__time">{{
-            formatLyricTime(line.start)
+          <span
+            v-if="previewLineHasTiming(line)"
+            class="lyrics-lrclib-candidate-preview__time"
+            >{{ formatLyricTime(line.start) }}</span
+          >
+          <span class="lyrics-lrclib-candidate-preview__text" dir="auto">{{
+            line.text
           }}</span>
-          <span dir="auto">{{ line.text }}</span>
         </li>
       </ol>
-
-      <details class="lyrics-lrclib-candidate-row__details">
-        <summary>更多比對資訊</summary>
-        <dl>
-          <div>
-            <dt>LRCLIB id</dt>
-            <dd>{{ presentedCandidate.id }}</dd>
-          </div>
-          <div>
-            <dt>資料量</dt>
-            <dd>
-              {{ presentedCandidate.lineCount }} 行・{{
-                presentedCandidate.segmentCount
-              }}
-              段
-            </dd>
-          </div>
-          <div v-if="visibleReasons.length">
-            <dt>符合依據</dt>
-            <dd>{{ visibleReasons.join('、') }}</dd>
-          </div>
-          <div v-if="retrievedAtLabel(presentedCandidate.retrievedAt)">
-            <dt>上次保存</dt>
-            <dd>{{ retrievedAtLabel(presentedCandidate.retrievedAt) }}</dd>
-          </div>
-        </dl>
-      </details>
 
       <UiNotice
         v-if="changedCandidate"
@@ -189,7 +170,11 @@ function retrievedAtLabel(value) {
         compact
       />
 
-      <div class="lyrics-lrclib-candidate-row__footer">
+      <p v-if="importMessage" class="lyrics-lrclib-candidate-row__availability">
+        {{ importMessage }}
+      </p>
+
+      <div v-else class="lyrics-lrclib-candidate-row__footer">
         <template v-if="changedCandidate">
           <UiButton @click="emit('cancelChanged')">取消</UiButton>
           <UiButton
@@ -210,6 +195,7 @@ function retrievedAtLabel(value) {
         </UiButton>
         <UiButton
           v-else
+          variant="accent"
           :disabled="saveDisabled"
           :aria-label="`${candidate.saveState === 'update-available' ? '更新' : '保存'} ${accessibleIdentity}`"
           @click="emit('save')"
@@ -233,6 +219,12 @@ function retrievedAtLabel(value) {
   align-items: flex-start;
   justify-content: space-between;
   gap: var(--ui-space-3);
+}
+
+.lyrics-lrclib-candidate-row__saved-status {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--ui-space-1);
 }
 
 .lyrics-lrclib-candidate-row__info {
@@ -294,15 +286,25 @@ function retrievedAtLabel(value) {
   font-size: var(--ui-font-size-sm);
 }
 
-.lyrics-lrclib-candidate-preview__lines li {
+.lyrics-lrclib-candidate-preview__line {
+  min-width: 0;
   display: grid;
-  grid-template-columns: 44px minmax(0, 1fr);
+  grid-template-columns: var(--ui-space-7) minmax(0, 1fr);
   gap: var(--ui-space-2);
+}
+
+.lyrics-lrclib-candidate-preview__line--untimed {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 .lyrics-lrclib-candidate-preview__time {
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.lyrics-lrclib-candidate-preview__text {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .lyrics-lrclib-candidate-row {
@@ -342,8 +344,8 @@ function retrievedAtLabel(value) {
 }
 
 .lyrics-lrclib-candidate-row__chevron {
-  width: 1rem;
-  flex: 0 0 1rem;
+  width: var(--ui-space-4);
+  flex: 0 0 var(--ui-space-4);
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   transition: transform var(--ui-motion-fast) var(--ui-motion-ease);
@@ -371,7 +373,7 @@ function retrievedAtLabel(value) {
 }
 
 .lyrics-lrclib-candidate-row__preview-line {
-  margin: var(--ui-space-2) 0 0 calc(1rem + var(--ui-space-2));
+  margin: var(--ui-space-2) 0 0 calc(var(--ui-space-4) + var(--ui-space-2));
   overflow: hidden;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
@@ -382,9 +384,9 @@ function retrievedAtLabel(value) {
 
 .lyrics-lrclib-candidate-row__expanded {
   display: grid;
-  gap: var(--ui-space-3);
-  margin-top: var(--ui-space-3);
-  padding-left: calc(1rem + var(--ui-space-2));
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-2);
+  padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
 }
 
 .lyrics-lrclib-candidate-row__warnings {
@@ -397,49 +399,17 @@ function retrievedAtLabel(value) {
   line-height: var(--ui-line-height-caption);
 }
 
-.lyrics-lrclib-candidate-preview__lines {
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border-left: var(--ui-border-width) solid var(--ui-color-border-strong);
-  background: var(--ui-color-surface);
-}
-
-.lyrics-lrclib-candidate-row__details {
+.lyrics-lrclib-candidate-row__availability {
+  margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
 }
 
-.lyrics-lrclib-candidate-row__details summary {
-  width: fit-content;
-  color: var(--ui-color-text);
-  cursor: pointer;
-}
-
-.lyrics-lrclib-candidate-row__details summary:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.lyrics-lrclib-candidate-row__details dl {
-  display: grid;
-  gap: var(--ui-space-1);
-  margin: var(--ui-space-2) 0 0;
-}
-
-.lyrics-lrclib-candidate-row__details dl div {
-  display: grid;
-  grid-template-columns: 6rem minmax(0, 1fr);
-  gap: var(--ui-space-2);
-}
-
-.lyrics-lrclib-candidate-row__details dt {
-  font-weight: var(--ui-font-weight-strong);
-}
-
-.lyrics-lrclib-candidate-row__details dd {
-  min-width: 0;
-  margin: 0;
-  overflow-wrap: anywhere;
+.lyrics-lrclib-candidate-preview__lines {
+  padding: var(--ui-space-2) var(--ui-space-3);
+  border-left: var(--ui-border-width) solid var(--ui-color-border-strong);
+  background: var(--ui-color-surface);
 }
 
 @media (max-width: 680px) {
@@ -449,7 +419,7 @@ function retrievedAtLabel(value) {
 
   .lyrics-lrclib-candidate-row__summary {
     flex-wrap: wrap;
-    padding-left: calc(1rem + var(--ui-space-2));
+    padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
   }
 
   .lyrics-lrclib-candidate-row__expanded {

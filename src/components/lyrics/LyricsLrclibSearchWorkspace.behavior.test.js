@@ -129,6 +129,7 @@ async function loadWorkspaceComponent() {
     { default: UiChip },
     { default: UiHint },
     { default: UiNotice },
+    { default: UiTextField },
   ] = await Promise.all([
     import('./LyricsLrclibSearchWorkspace.vue'),
     import('./LyricsLrclibCandidateRow.vue'),
@@ -136,6 +137,7 @@ async function loadWorkspaceComponent() {
     import('../ui/UiChip.vue'),
     import('../ui/UiHint.vue'),
     import('../ui/UiNotice.vue'),
+    import('../ui/UiTextField.vue'),
   ]);
   attachClientRender(Workspace, './LyricsLrclibSearchWorkspace.vue');
   attachClientRender(CandidateRow, './LyricsLrclibCandidateRow.vue');
@@ -143,6 +145,7 @@ async function loadWorkspaceComponent() {
   attachClientRender(UiChip, '../ui/UiChip.vue');
   attachClientRender(UiHint, '../ui/UiHint.vue');
   attachClientRender(UiNotice, '../ui/UiNotice.vue');
+  attachClientRender(UiTextField, '../ui/UiTextField.vue');
   return Workspace;
 }
 
@@ -153,16 +156,19 @@ afterEach(() => {
 });
 
 describe('LyricsLrclibSearchWorkspace behavior', () => {
-  it('submits edited fields once, pins the track, and exits on track drift', async () => {
+  it('searches prefilled metadata once, then submits edited fields only on demand', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});
-    let resolveSearch;
-    const searchLyricsCandidates = vi.fn(
-      () =>
-        new Promise((resolve) => {
-          resolveSearch = resolve;
-        }),
-    );
+    let resolveEditedSearch;
+    const searchLyricsCandidates = vi
+      .fn()
+      .mockResolvedValueOnce({ status: 'ok', candidates: [], groups: null })
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveEditedSearch = resolve;
+          }),
+      );
     const clearCandidateSearch = vi.fn();
     const selectedTrack = ref({
       id: 'track-a',
@@ -194,25 +200,39 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     const onBack = vi.fn();
     const { app, root } = mount(Workspace, { onBack });
+    await vi.waitFor(() =>
+      expect(searchLyricsCandidates).toHaveBeenCalledOnce(),
+    );
+    expect(searchLyricsCandidates).toHaveBeenCalledWith(
+      {
+        query: { title: 'Initial title', artist: 'Initial artist' },
+      },
+      'track-a',
+    );
+
     const titleInput = findByProp(root, 'id', 'lrclib-track-title');
     const artistInput = findByProp(root, 'id', 'lrclib-artist-name');
-    titleInput.props['onUpdate:modelValue']('Edited title');
-    artistInput.props['onUpdate:modelValue']('Edited artist');
+    expect(titleInput.focus).toHaveBeenCalledOnce();
+    titleInput.props.onInput({ target: { value: 'Edited title' } });
+    artistInput.props.onInput({ target: { value: 'Edited artist' } });
+    await nextTick();
+    expect(searchLyricsCandidates).toHaveBeenCalledOnce();
+
     const form = findAll(root, (node) => node.type === 'form')[0];
     const event = { preventDefault: vi.fn() };
 
     const first = form.props.onSubmit(event);
     form.props.onSubmit(event);
 
-    expect(searchLyricsCandidates).toHaveBeenCalledOnce();
-    expect(searchLyricsCandidates).toHaveBeenCalledWith(
+    expect(searchLyricsCandidates).toHaveBeenCalledTimes(2);
+    expect(searchLyricsCandidates).toHaveBeenLastCalledWith(
       {
         query: { title: 'Edited title', artist: 'Edited artist' },
       },
       'track-a',
     );
 
-    resolveSearch({ status: 'ok', candidates: [], groups: null });
+    resolveEditedSearch({ status: 'ok', candidates: [], groups: null });
     await first;
     selectedTrack.value = { id: 'track-b', title: 'B', artist: 'Artist B' };
     await nextTick();
@@ -220,6 +240,57 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     app.unmount();
     expect(clearCandidateSearch).toHaveBeenCalledTimes(3);
+  });
+
+  it('does not send an empty initial query and searches after the title is supplied', async () => {
+    vi.stubGlobal('Document', class Document {});
+    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+    const searchLyricsCandidates = vi.fn(async () => ({
+      status: 'ok',
+      candidates: [],
+      groups: null,
+    }));
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: null,
+        error: null,
+        candidates: [],
+        groups: { best: [], related: [] },
+        invalidRecordCount: 0,
+      },
+      manualSave: { error: null },
+    });
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: '', artist: 'Artist' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsCandidates,
+        saveLyricsCandidate: vi.fn(),
+      }),
+    }));
+
+    const Workspace = await loadWorkspaceComponent();
+    const { app, root } = mount(Workspace);
+    await nextTick();
+
+    expect(searchLyricsCandidates).not.toHaveBeenCalled();
+    expect(nodeText(root)).toContain('請輸入歌曲名稱後搜尋');
+
+    findByProp(root, 'id', 'lrclib-track-title').props.onInput({
+      target: { value: 'Manual title' },
+    });
+    await findAll(root, (node) => node.type === 'form')[0].props.onSubmit({
+      preventDefault: vi.fn(),
+    });
+
+    expect(searchLyricsCandidates).toHaveBeenCalledOnce();
+    expect(searchLyricsCandidates).toHaveBeenCalledWith(
+      { query: { title: 'Manual title', artist: 'Artist' } },
+      'track-a',
+    );
+    app.unmount();
   });
 
   it('renders 20 related candidates, broadens explicitly, and serializes changed-record saves', async () => {
@@ -296,20 +367,21 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     const Workspace = await loadWorkspaceComponent();
     const { app, root } = mount(Workspace);
-    const form = findAll(root, (node) => node.type === 'form')[0];
-
-    await form.props.onSubmit({ preventDefault: vi.fn() });
-    await nextTick();
-    expect(
-      findAll(
-        root,
-        (node) =>
-          node.type === 'li' &&
-          String(node.props?.class || '').includes(
-            'lyrics-lrclib-candidate-row',
-          ),
-      ),
-    ).toHaveLength(20);
+    await vi.waitFor(() =>
+      expect(searchLyricsCandidates).toHaveBeenCalledOnce(),
+    );
+    await vi.waitFor(() =>
+      expect(
+        findAll(
+          root,
+          (node) =>
+            node.type === 'li' &&
+            String(node.props?.class || '').includes(
+              'lyrics-lrclib-candidate-row',
+            ),
+        ),
+      ).toHaveLength(20),
+    );
 
     const broadenButton = findButtonByText(root, '擴大搜尋');
     await broadenButton.props.onClick();
@@ -331,6 +403,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     expect(saveLyricsCandidate).toHaveBeenCalledTimes(1);
     await nextTick();
     expect(findByProp(root, 'type', 'submit').props.disabled).toBe(true);
+    const form = findAll(root, (node) => node.type === 'form')[0];
     form.props.onSubmit({ preventDefault: vi.fn() });
     broadenButton.props.onClick();
     expect(searchLyricsCandidates).toHaveBeenCalledTimes(2);
@@ -391,14 +464,103 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     }));
     const Workspace = await loadWorkspaceComponent();
     const { app, root } = mount(Workspace);
-
-    await findAll(root, (node) => node.type === 'form')[0].props.onSubmit({
-      preventDefault: vi.fn(),
-    });
-    await nextTick();
+    await vi.waitFor(() =>
+      expect(nodeText(root)).toContain('沒有可安全顯示的候選'),
+    );
 
     expect(nodeText(root)).toContain('沒有可安全顯示的候選');
     expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
+    app.unmount();
+  });
+
+  it('renders plain lyrics without timestamps and withholds save for unusable sources', async () => {
+    vi.stubGlobal('Document', class Document {});
+    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+    const plainCandidate = {
+      id: 1,
+      trackName: 'Plain lyrics',
+      artistName: 'Artist',
+      capability: { level: 'T0', partial: false },
+      compatibility: { t0: true, t1: false, t2: false },
+      previewLines: [
+        { start: null, text: 'First plain line' },
+        { start: null, text: 'Second plain line' },
+      ],
+      lineCount: 2,
+      segmentCount: 0,
+      warnings: [],
+      matchReasons: [],
+      saveState: 'unsaved',
+      alreadySaved: false,
+    };
+    const unsupportedCandidate = {
+      id: 2,
+      trackName: 'Unsupported lyrics',
+      artistName: 'Artist',
+      capability: { level: 'unsupported', partial: false },
+      compatibility: { t0: false, t1: false, t2: false },
+      previewLines: [],
+      lineCount: 0,
+      segmentCount: 0,
+      warnings: ['invalid-lyricsfile'],
+      matchReasons: [],
+      saveState: 'unsaved',
+      alreadySaved: false,
+    };
+    const candidates = [plainCandidate, unsupportedCandidate];
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: null,
+        error: null,
+        candidates: [],
+        groups: { best: [], related: [] },
+        invalidRecordCount: 0,
+      },
+      manualSave: { error: null },
+    });
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsCandidates: vi.fn(async () => {
+          state.candidateSearch.status = 'ok';
+          state.candidateSearch.candidates = candidates;
+          state.candidateSearch.groups = { best: candidates, related: [] };
+          return { status: 'ok', candidates };
+        }),
+        saveLyricsCandidate: vi.fn(),
+      }),
+    }));
+
+    const Workspace = await loadWorkspaceComponent();
+    const { app, root } = mount(Workspace);
+    await vi.waitFor(() =>
+      expect(nodeText(root)).toContain('First plain line'),
+    );
+
+    expect(nodeText(root).match(/First plain line/g)).toHaveLength(1);
+    expect(nodeText(root)).not.toContain('0:00');
+    const plainSaveButton = findByProp(
+      root,
+      'aria-label',
+      '保存 Plain lyrics，Artist',
+    );
+    expect(plainSaveButton).toBeDefined();
+    expect(String(plainSaveButton.props.class)).toContain('ui-btn--accent');
+
+    findByProp(
+      root,
+      'aria-label',
+      '展開 Unsupported lyrics，Artist',
+    ).props.onClick();
+    await nextTick();
+
+    expect(nodeText(root)).toContain('這筆來源格式目前不支援，無法安全匯入。');
+    expect(
+      findByProp(root, 'aria-label', '保存 Unsupported lyrics，Artist'),
+    ).toBeUndefined();
     app.unmount();
   });
 });

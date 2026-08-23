@@ -2,12 +2,12 @@
 // Generic modal shell — first one in this app (see docs/spec.md's inline-
 // editing precedent for why one wasn't built sooner: it was only ever one
 // field at a time). Content lives entirely in the default slot; this
-// component owns only the overlay mechanics (teleport, backdrop, Escape,
-// focus), mirroring UiContextMenu.vue's window-level Escape/outside-click
-// pattern since that's the only existing overlay precedent in this app.
+// component owns only the overlay mechanics (teleport, locked backdrop,
+// Escape, focus). The backdrop is deliberately inert because modal content
+// can contain drafts; only explicit close controls may discard that work.
 import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
-import UiButton from './UiButton.vue';
+import UiIconButton from './UiIconButton.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -110,7 +110,7 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div v-if="open" class="ui-modal-backdrop" @click.self="close">
+    <div v-if="open" class="ui-modal-backdrop">
       <div
         ref="dialog"
         class="ui-modal"
@@ -122,7 +122,7 @@ onUnmounted(() => {
       >
         <div class="ui-modal__header">
           <h2 class="ui-modal__title">{{ title }}</h2>
-          <UiButton :icon="X" aria-label="關閉" title="關閉" @click="close" />
+          <UiIconButton :icon="X" label="關閉" @click="close" />
         </div>
         <slot />
       </div>
