@@ -1,6 +1,7 @@
 <script setup>
 import { computed, ref, watch } from 'vue';
 import { useLyrics } from '../../composables/useLyrics.js';
+import { usePlayer } from '../../composables/usePlayer.js';
 import { useLyricsReading } from '../../composables/useLyricsReading.js';
 import { useSeparation } from '../../composables/useSeparation.js';
 import { useLyricsTimingEditor } from '../../composables/useLyricsTimingEditor.js';
@@ -18,6 +19,8 @@ import LyricsSourceManagerModal from './LyricsSourceManagerModal.vue';
 import LyricsTimingToolbar from './LyricsTimingToolbar.vue';
 import LyricsTrackPickerModal from './LyricsTrackPickerModal.vue';
 import LyricsWorkspaceHeader from './LyricsWorkspaceHeader.vue';
+
+const SUPPORTED_READING_SCRIPTS = new Set(['ja', 'ko']);
 
 const {
   state,
@@ -37,6 +40,7 @@ const {
   playFromLine,
   saveTimingDocument,
 } = useLyrics();
+const { state: playerState } = usePlayer();
 
 const {
   draft: timingDraft,
@@ -146,7 +150,7 @@ const lyricsScript = computed(() =>
   detectLyricsScript(lyricLines.value.map((line) => line.text).join('')),
 );
 const showsReadingAid = computed(() =>
-  ['ja', 'ko'].includes(lyricsScript.value),
+  SUPPORTED_READING_SCRIPTS.has(lyricsScript.value),
 );
 
 // Korean lyrics never produce furigana (see reading.js's
@@ -173,27 +177,85 @@ const readingLines = computed(() =>
   alignReadings(lyricLines.value, selectedReadingDoc.value),
 );
 
-const isGeneratingReading = computed(() => {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  return track && source
-    ? isGeneratingReadingFor(track.id, source.filename)
-    : false;
-});
-
 const readingError = computed(() => {
   const track = selectedTrack.value;
   const source = selectedSource.value;
   return track && source ? readingErrorFor(track.id, source.filename) : null;
 });
 
+const isSelectedPlaybackAtStart = computed(() => {
+  const trackId = selectedTrack.value?.id;
+  return Boolean(
+    trackId &&
+    playerState.track?.id === trackId &&
+    Number.isFinite(playerState.currentTime) &&
+    playerState.currentTime <= 1,
+  );
+});
+
+let readingIntentRevision = 0;
+
+async function applySelectedReadingIntent() {
+  readingIntentRevision += 1;
+  const revision = readingIntentRevision;
+  editingReadingLineIndex.value = null;
+  const track = selectedTrack.value;
+  const source = selectedSource.value;
+  if (!track || !source) return;
+
+  const document = lyricsDocument.value;
+  const script = lyricsScript.value;
+  const loaded = await loadReading(track.id, source.filename);
+  if (
+    revision !== readingIntentRevision ||
+    selectedTrack.value?.id !== track.id ||
+    selectedSource.value?.filename !== source.filename
+  ) {
+    return;
+  }
+  if (
+    readingVariant.value === 'off' ||
+    loaded !== null ||
+    !SUPPORTED_READING_SCRIPTS.has(script) ||
+    isGeneratingReadingFor(track.id, source.filename)
+  ) {
+    return;
+  }
+
+  await generateReading(track.id, source.filename, document, script);
+}
+
 watch(
-  () => [selectedTrack.value?.id, selectedSource.value?.filename],
-  ([trackId, filename]) => {
-    editingReadingLineIndex.value = null;
-    if (trackId && filename) loadReading(trackId, filename);
-  },
+  () => [
+    selectedTrack.value?.id,
+    selectedSource.value?.filename,
+    lyricsScript.value,
+  ],
+  applySelectedReadingIntent,
   { immediate: true },
+);
+
+watch(
+  [
+    () => playerState.track,
+    () => playerState.continuityRevision ?? 0,
+    isSelectedPlaybackAtStart,
+  ],
+  ([track, continuityRevision, isAtStart], previous) => {
+    if (!isAtStart || !previous) return;
+    const [previousTrack, previousContinuityRevision, wasAtStart] = previous;
+    const samePlaybackTrack =
+      Boolean(track?.id) && track.id === previousTrack?.id;
+    if (!samePlaybackTrack) return;
+
+    const reloadedSameTrack = track !== previousTrack;
+    const restartedAtBeginning =
+      continuityRevision !== previousContinuityRevision;
+    const wrappedToBeginning = wasAtStart === false;
+    if (reloadedSameTrack || restartedAtBeginning || wrappedToBeginning) {
+      applySelectedReadingIntent();
+    }
+  },
 );
 
 function handlePresetChange(presetId) {
@@ -209,25 +271,11 @@ function generateSeparation() {
 
 function setReadingVariant(variant) {
   readingVariant.value = variant;
-  if (
-    variant !== 'off' &&
-    !selectedReadingDoc.value &&
-    !isGeneratingReading.value
-  ) {
-    generateReadingForSelected();
+  if (variant === 'off') {
+    readingIntentRevision += 1;
+    return;
   }
-}
-
-function generateReadingForSelected() {
-  const track = selectedTrack.value;
-  const source = selectedSource.value;
-  if (!track || !source) return;
-  generateReading(
-    track.id,
-    source.filename,
-    lyricsDocument.value,
-    lyricsScript.value,
-  );
+  applySelectedReadingIntent();
 }
 
 // Seeds the draft from whatever reading already exists for this line.

@@ -18,6 +18,7 @@ const state = reactive({
   inFlight: new Set(),
   errors: new Map(),
 });
+const loadRevisions = new Map();
 
 // Which display variant is selected — lives here rather than in
 // LyricsWorkspace's own refs so switching tabs and back doesn't reset it.
@@ -55,8 +56,12 @@ function errorFor(trackId, sourceFilename) {
 async function loadReading(trackId, sourceFilename) {
   if (!trackId || !sourceFilename) return null;
   const key = docKey(trackId, sourceFilename);
+  const revision = (loadRevisions.get(key) ?? 0) + 1;
+  loadRevisions.set(key, revision);
   try {
     const doc = await window.Utawakui.getLyricsReading(trackId, sourceFilename);
+    if (loadRevisions.get(key) !== revision)
+      return getDoc(trackId, sourceFilename);
     if (doc) state.docs.set(key, doc);
     else state.docs.delete(key);
     return doc;
@@ -68,7 +73,7 @@ async function loadReading(trackId, sourceFilename) {
       operation: 'get',
       context: { trackId, sourceFilename },
     });
-    return null;
+    return undefined;
   }
 }
 
@@ -96,6 +101,7 @@ async function generateReading(trackId, sourceFilename, document, script) {
       canonicalIdentity(document),
       script,
     );
+    loadRevisions.set(key, (loadRevisions.get(key) ?? 0) + 1);
     state.docs.set(key, doc);
   } catch (err) {
     const appError = recordError(err, {
@@ -126,6 +132,7 @@ async function setReadingLine(
       canonicalIdentity(document, lineId),
       readingKana,
     );
+    loadRevisions.set(key, (loadRevisions.get(key) ?? 0) + 1);
     state.docs.set(key, doc);
     state.errors.delete(key);
   } catch (err) {
@@ -144,6 +151,7 @@ async function deleteReading(trackId, sourceFilename) {
   const key = docKey(trackId, sourceFilename);
   try {
     await window.Utawakui.deleteLyricsReading(trackId, sourceFilename);
+    loadRevisions.set(key, (loadRevisions.get(key) ?? 0) + 1);
     state.docs.delete(key);
     state.errors.delete(key);
   } catch (err) {

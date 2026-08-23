@@ -403,6 +403,19 @@ describe('LyricsWorkspace event wiring', () => {
       },
     };
     const source = { filename: 'main.lrc', kind: 'manual' };
+    const secondTrack = {
+      ...track,
+      id: 'track-2',
+      title: 'Second song',
+    };
+    const secondSource = { filename: 'second.lrc', kind: 'manual' };
+    const selectedTrackRef = ref(track);
+    const selectedSourceRef = ref(source);
+    const playerState = reactive({
+      track: { id: track.id },
+      currentTime: 4,
+      continuityRevision: 0,
+    });
     const lyricsState = reactive({
       tracks: [track],
       selectedSourceFilename: source.filename,
@@ -419,32 +432,35 @@ describe('LyricsWorkspace event wiring', () => {
     const resetOffset = vi.fn();
     const refresh = vi.fn();
     const generateReading = vi.fn();
+    const loadReading = vi.fn().mockResolvedValue(null);
     const readingDoc = ref(null);
     const separate = vi.fn();
     const selectPreset = vi.fn();
     const selectedPreset = ref('quick');
     const readingVariant = ref('off');
+    const lyricsDocumentRef = ref({
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line_1',
+          text: '너는 내 삶에 다시 뜬 햇빛',
+          startMs: 0,
+          endMs: null,
+        },
+      ],
+    });
+    const lyricLinesRef = ref([
+      { lineId: 'line_1', start: 0, text: '너는 내 삶에 다시 뜬 햇빛' },
+    ]);
 
     vi.doMock('../../composables/useLyrics.js', () => ({
       useLyrics: () => ({
         state: lyricsState,
-        selectedTrack: ref(track),
+        selectedTrack: selectedTrackRef,
         selectedLyrics: ref({ status: 'available', sources: [source] }),
-        selectedSource: ref(source),
-        lyricsDocument: ref({
-          granularity: 'T1',
-          lines: [
-            {
-              lineId: 'line_1',
-              text: '너는 내 삶에 다시 뜬 햇빛',
-              startMs: 0,
-              endMs: null,
-            },
-          ],
-        }),
-        lyricLines: ref([
-          { lineId: 'line_1', start: 0, text: '너는 내 삶에 다시 뜬 햇빛' },
-        ]),
+        selectedSource: selectedSourceRef,
+        lyricsDocument: lyricsDocumentRef,
+        lyricLines: lyricLinesRef,
         activeLineIndex: ref(-1),
         currentLyricsPositionMs: ref(0),
         isReloading: ref(false),
@@ -463,7 +479,7 @@ describe('LyricsWorkspace event wiring', () => {
         getDoc: () => readingDoc.value,
         isGenerating: () => false,
         errorFor: () => null,
-        loadReading: vi.fn(),
+        loadReading,
         generateReading,
         setReadingLine: vi.fn(),
       }),
@@ -481,6 +497,9 @@ describe('LyricsWorkspace event wiring', () => {
         },
       }),
     }));
+    vi.doMock('../../composables/usePlayer.js', () => ({
+      usePlayer: () => ({ state: playerState }),
+    }));
 
     const [
       { default: LyricsTrackPickerModal },
@@ -497,6 +516,9 @@ describe('LyricsWorkspace event wiring', () => {
     const { default: LyricsWorkspace } = await import('./LyricsWorkspace.vue');
     attachClientRender(LyricsWorkspace, './LyricsWorkspace.vue');
     const { root } = mount(LyricsWorkspace);
+    await Promise.resolve();
+    expect(loadReading).toHaveBeenCalledWith(track.id, source.filename);
+    expect(generateReading).not.toHaveBeenCalled();
 
     findByProp(root, 'title', '選擇歌詞曲目').props.onClick();
     findByProp(root, 'title', '重新掃描歌詞').props.onClick();
@@ -507,9 +529,11 @@ describe('LyricsWorkspace event wiring', () => {
     findByProp(root, 'aria-label', '讀音顯示').props.onChange({
       target: { value: 'romaji' },
     });
+    await Promise.resolve();
     await nextTick();
     expect(generateReading).toHaveBeenCalledOnce();
     readingDoc.value = { lines: [] };
+    loadReading.mockResolvedValue(readingDoc.value);
     findByProp(root, 'aria-label', '讀音顯示').props.onChange({
       target: { value: 'off' },
     });
@@ -555,5 +579,111 @@ describe('LyricsWorkspace event wiring', () => {
     expect(separate).toHaveBeenCalledWith(track, 'quick');
     expect(adjustOffset.mock.calls).toEqual([[-0.1], [0.1]]);
     expect(resetOffset).toHaveBeenCalledOnce();
+
+    loadReading.mockClear();
+    generateReading.mockClear();
+    loadReading.mockResolvedValueOnce(null);
+    selectedTrackRef.value = secondTrack;
+    selectedSourceRef.value = secondSource;
+    await Promise.resolve();
+    await nextTick();
+    expect(loadReading).toHaveBeenCalledOnce();
+    expect(loadReading).toHaveBeenLastCalledWith('track-2', 'second.lrc');
+    expect(generateReading).toHaveBeenCalledOnce();
+    expect(generateReading).toHaveBeenLastCalledWith(
+      'track-2',
+      'second.lrc',
+      expect.any(Object),
+      'ko',
+    );
+
+    loadReading.mockClear();
+    generateReading.mockClear();
+    playerState.track = { id: secondTrack.id };
+    await nextTick();
+    expect(loadReading).not.toHaveBeenCalled();
+    playerState.currentTime = 0.1;
+    await nextTick();
+    expect(loadReading).toHaveBeenCalledOnce();
+    expect(loadReading).toHaveBeenLastCalledWith('track-2', 'second.lrc');
+    expect(generateReading).not.toHaveBeenCalled();
+
+    loadReading.mockClear();
+    playerState.continuityRevision += 1;
+    await nextTick();
+    expect(loadReading).toHaveBeenCalledOnce();
+    expect(loadReading).toHaveBeenLastCalledWith('track-2', 'second.lrc');
+    expect(generateReading).not.toHaveBeenCalled();
+
+    let resolveStaleTrackLoad;
+    const staleTrackLoad = new Promise((resolve) => {
+      resolveStaleTrackLoad = resolve;
+    });
+    const thirdTrack = { ...track, id: 'track-3', title: 'Third song' };
+    const thirdSource = { filename: 'third.lrc', kind: 'manual' };
+    const fourthTrack = { ...track, id: 'track-4', title: 'Fourth song' };
+    const fourthSource = { filename: 'fourth.lrc', kind: 'manual' };
+    loadReading.mockImplementationOnce(() => staleTrackLoad);
+    loadReading.mockClear();
+    generateReading.mockClear();
+    selectedTrackRef.value = thirdTrack;
+    selectedSourceRef.value = thirdSource;
+    await nextTick();
+    expect(loadReading).toHaveBeenLastCalledWith('track-3', 'third.lrc');
+
+    selectedTrackRef.value = fourthTrack;
+    selectedSourceRef.value = fourthSource;
+    await Promise.resolve();
+    await nextTick();
+    resolveStaleTrackLoad(null);
+    await Promise.resolve();
+    await nextTick();
+    expect(generateReading).not.toHaveBeenCalled();
+
+    loadReading.mockResolvedValueOnce(undefined);
+    const fifthTrack = { ...track, id: 'track-5', title: 'Fifth song' };
+    const fifthSource = { filename: 'fifth.lrc', kind: 'manual' };
+    selectedTrackRef.value = fifthTrack;
+    selectedSourceRef.value = fifthSource;
+    await Promise.resolve();
+    await nextTick();
+    expect(generateReading).not.toHaveBeenCalled();
+
+    loadReading.mockClear();
+    generateReading.mockClear();
+    loadReading.mockResolvedValue(null);
+    readingDoc.value = null;
+    lyricLinesRef.value = [];
+    lyricsDocumentRef.value = { granularity: 'T1', lines: [] };
+    const sixthTrack = { ...track, id: 'track-6', title: 'Sixth song' };
+    const sixthSource = { filename: 'sixth.lrc', kind: 'manual' };
+    selectedTrackRef.value = sixthTrack;
+    selectedSourceRef.value = sixthSource;
+    await Promise.resolve();
+    await nextTick();
+    expect(loadReading).toHaveBeenCalledWith('track-6', 'sixth.lrc');
+    expect(generateReading).not.toHaveBeenCalled();
+
+    lyricsDocumentRef.value = {
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line_ja',
+          text: '君の声',
+          startMs: 0,
+          endMs: null,
+        },
+      ],
+    };
+    lyricLinesRef.value = [{ lineId: 'line_ja', start: 0, text: '君の声' }];
+    await Promise.resolve();
+    await nextTick();
+    expect(generateReading).toHaveBeenCalledOnce();
+    expect(generateReading).toHaveBeenLastCalledWith(
+      'track-6',
+      'sixth.lrc',
+      lyricsDocumentRef.value,
+      'ja',
+    );
   });
 });

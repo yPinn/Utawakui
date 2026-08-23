@@ -71,6 +71,40 @@ describe('loadReading', () => {
     await reading.loadReading('t1', null);
     expect(getLyricsReadingMock).not.toHaveBeenCalled();
   });
+
+  it('keeps the newest refresh when an older request resolves last', async () => {
+    let resolveFirst;
+    let resolveSecond;
+    const first = new Promise((resolve) => {
+      resolveFirst = resolve;
+    });
+    const second = new Promise((resolve) => {
+      resolveSecond = resolve;
+    });
+    const staleDoc = { ...doc, revision: 'stale' };
+    const freshDoc = { ...doc, revision: 'fresh' };
+    getLyricsReadingMock.mockReturnValueOnce(first).mockReturnValueOnce(second);
+    const reading = await loadReading();
+
+    const firstLoad = reading.loadReading('t1', 'ja.vtt');
+    const secondLoad = reading.loadReading('t1', 'ja.vtt');
+    resolveSecond(freshDoc);
+    await secondLoad;
+    resolveFirst(staleDoc);
+    await firstLoad;
+
+    expect(reading.getDoc('t1', 'ja.vtt')).toEqual(freshDoc);
+  });
+
+  it('distinguishes a read failure from a missing reading document', async () => {
+    getLyricsReadingMock.mockRejectedValue(new Error('boom'));
+    const reading = await loadReading();
+
+    const result = await reading.loadReading('t1', 'ja.vtt');
+
+    expect(result).toBeUndefined();
+    expect(reading.getDoc('t1', 'ja.vtt')).toBeNull();
+  });
 });
 
 describe('generateReading', () => {

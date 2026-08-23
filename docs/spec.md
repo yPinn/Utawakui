@@ -307,7 +307,7 @@ Setlist 以獨立的「本機音訊」虛擬清單呈現本機匯入曲目；一
 
 Lyrics Workspace 的即時同步 offset 依 track 與歌詞來源分開保存：非零值以整數毫秒寫入該 track 的 `lyrics/lyrics.json` source entry，切換來源或重新啟動時恢復，未保存或重設的來源使用 0。此偏好不改寫原始 `.lrc` / `.vtt`，因此不會使 timing fingerprint、逐字校時 sidecar 或讀音資料失效。
 
-Lyrics Workspace 的歌詞同步操作保留為閱讀區右下角的 compact −0.1／reset／+0.1 控制，閱讀器預留底部 safe area，不另外顯示來源或保存狀態等常駐說明。讀音選項變更即為套用動作，因此工具列只保留讀音選單，不顯示套用狀態或重試／重建按鈕；失敗仍透過共用 notice 呈現。`T0` / `T1` / `T2` 是文件能力而非使用者設定，因此不在 idle 介面顯示；只有開始編輯一行時才呈現逐字校時面板。該面板以 recorded／current／pending 詞序呈現下一個待記錄起點，只有選取已記錄詞語後才顯示一組提前／延後微調，undo／save／cancel 則維持全域 draft 操作。
+Lyrics Workspace 的歌詞同步操作保留為閱讀區右下角的 compact −0.1／reset／+0.1 控制，閱讀器預留底部 safe area，不另外顯示來源或保存狀態等常駐說明。讀音選項變更即為套用動作，因此工具列只保留讀音選單，不顯示套用狀態或重試／重建按鈕；失敗仍透過共用 notice 呈現。讀音選項是跨歌曲保留的顯示意圖，不因切歌 reset。切換歌曲／來源，或同一播放曲目回到開頭（重播、restart、seek-to-start、repeat-one wrap）時，若選項關閉只檢查既有文件而不生成；若已啟用則先讀取對應文件，確認不存在後才自動生成目前語系的讀音。歌詞載入期間的 `unknown` script 是暫態，不得送入生成 IPC；待內容可辨識為 `ja` 或 `ko` 後，再以相同選項自動重試。讀取失敗不視為文件不存在，等待期間若 selection 已改變也不會替舊曲目啟動生成。同一 track/source 的並行讀取採 latest-response-wins，避免舊 IPC 回應覆寫較新的讀音。`T0` / `T1` / `T2` 是文件能力而非使用者設定，因此不在 idle 介面顯示；只有開始編輯一行時才呈現逐字校時面板。該面板以 recorded／current／pending 詞序呈現下一個待記錄起點，只有選取已記錄詞語後才顯示一組提前／延後微調，undo／save／cancel 則維持全域 draft 操作。
 
 目前 Lyrics Workspace 已能匯入、編輯與保存 T2 segment timing，Output v3 也已
 將 immutable `lyrics.document` 與 dynamic `state.snapshot` 分流。依
