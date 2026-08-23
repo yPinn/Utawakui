@@ -34,7 +34,7 @@ function publicErrorMessage(error) {
   }
   if (message.includes('cancelled')) return '分析工作已取消。';
   if (message.includes('unavailable')) return '所選曲目的音訊目前無法使用。';
-  return 'Music Analysis 操作未完成，請查看 diagnostics 後再試一次。';
+  return '音樂結構分析未完成，請查看診斷記錄後再試一次。';
 }
 
 function normalizedProgress(payload) {
@@ -181,7 +181,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
       state.phase = 'idle';
       state.progress = null;
       state.notice =
-        '接手的 job 已結束並重新讀取 sidecar；目前狀態 API 無法判定完成、失敗或取消。';
+        '接手的分析工作已結束並重新讀取 sidecar；目前狀態 API 無法判定完成、失敗或取消。';
       if (state.selectedTrackId === previousJob.trackId) {
         await signalOwner.loadForTrack(previousJob.trackId);
       }
@@ -205,7 +205,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
       await library.initialize();
       if (disposed) return;
       if (!bridge) {
-        state.error = '目前不在 Electron renderer，無法連接 Music Analysis。';
+        state.error = '目前不是 Electron renderer 環境，無法連接音樂結構分析。';
         state.initialized = true;
         return;
       }

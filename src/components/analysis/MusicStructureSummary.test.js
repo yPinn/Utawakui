@@ -44,6 +44,11 @@ describe('MusicStructureSummary', () => {
     expect(html).toContain('副歌');
     expect(html).toContain('91%');
     expect(html).toContain('abcdef123456');
+    expect(html).toContain('速度');
+    expect(html).toContain('節拍');
+    expect(html).toContain('強拍');
+    expect(html).toContain('段落');
+    expect(html).not.toContain('Sidecar result');
   });
 
   it('teaches the missing-sidecar state instead of showing an empty panel', async () => {

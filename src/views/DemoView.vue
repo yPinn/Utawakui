@@ -100,10 +100,10 @@ const showModal = shallowRef(false);
 
 <template>
   <div class="demo-view">
-    <UiPageHeader title="UI Demo" />
+    <UiPageHeader title="UI 元件展示" />
     <UiHint>
-      內部設計系統檢視頁——不出現在主導覽，僅供 F9 進入。元件依 Foundations、
-      Inputs、Actions、Feedback、Content、Overlays 排列；用滑鼠與 Tab 鍵檢查真實
+      內部設計系統檢視頁——不出現在主導覽，僅供 F9 進入。元件依基礎規範、輸入、
+      操作、狀態回饋、內容媒體與浮層排列；可用滑鼠與 Tab 鍵檢查真實的
       hover／focus-visible 狀態。
     </UiHint>
 
@@ -172,12 +172,12 @@ const showModal = shallowRef(false);
           </div>
 
           <div v-else-if="section.key === 'buttons'" class="demo-row">
-            <UiButton variant="ghost">Ghost</UiButton>
-            <UiButton variant="accent">Accent</UiButton>
+            <UiButton variant="ghost">Ghost（次要）</UiButton>
+            <UiButton variant="accent">Accent（主要）</UiButton>
             <UiButton variant="ghost" :icon="Repeat" active
-              >Ghost active</UiButton
+              >Ghost（啟用）</UiButton
             >
-            <UiButton variant="accent" disabled>Accent disabled</UiButton>
+            <UiButton variant="accent" disabled>Accent（停用）</UiButton>
           </div>
 
           <div v-else-if="section.key === 'icon-buttons'" class="demo-row">
@@ -242,7 +242,7 @@ const showModal = shallowRef(false);
             <UiNotice
               tone="warning"
               title="需要確認"
-              message="此能力尚未通過產品 activation gate。"
+              message="此能力尚未通過產品 activation 啟用條件。"
               compact
             />
             <UiNotice
@@ -283,20 +283,20 @@ const showModal = shallowRef(false);
           </template>
 
           <ul v-else-if="section.key === 'track-rows'" class="demo-track-list">
-            <UiTrackRow title="Default" artist="沒有互動" />
+            <UiTrackRow title="預設" artist="沒有互動" />
             <UiTrackRow
-              title="Interactive"
+              title="可互動"
               artist="hover／focus 試試看"
               interactive
             />
             <UiTrackRow
-              title="Selected"
+              title="已選取"
               artist="active = 選取狀態"
               interactive
               active
             />
             <UiTrackRow
-              title="Current"
+              title="正在播放"
               artist="current = 正在播放"
               interactive
               current
@@ -309,7 +309,7 @@ const showModal = shallowRef(false);
                 >點擊開啟選單</UiButton
               >
             </div>
-            <UiHint>展示分隔線、子選單、danger 與 disabled 項目。</UiHint>
+            <UiHint>展示分隔線、子選單、danger 與 disabled 狀態。</UiHint>
             <UiContextMenu
               :open="contextMenu.open"
               :x="contextMenu.x"
@@ -323,16 +323,16 @@ const showModal = shallowRef(false);
           <template v-else-if="section.key === 'modal'">
             <div class="demo-row">
               <UiButton variant="accent" @click="showModal = true"
-                >開啟 Modal</UiButton
+                >開啟對話框</UiButton
               >
             </div>
             <UiModal
               :open="showModal"
-              title="示範 Modal"
+              title="示範對話框"
               @close="showModal = false"
             >
               <p class="demo-type demo-type--body">
-                內容放在預設 slot；遮罩、Escape 與 focus trap 由 UiModal 負責。
+                內容放在預設 slot；遮罩、Escape 與焦點鎖定由 UiModal 負責。
               </p>
             </UiModal>
           </template>
@@ -344,7 +344,7 @@ const showModal = shallowRef(false);
 
 <style scoped>
 .demo-view {
-  height: 100%;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-5);

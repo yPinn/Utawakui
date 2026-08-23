@@ -70,6 +70,8 @@ function selectTrack(trackId) {
 <style scoped>
 .analysis-picker {
   min-width: 0;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
@@ -106,6 +108,9 @@ function selectTrack(trackId) {
 
 .analysis-picker__list {
   min-height: 0;
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   display: flex;
   flex-direction: column;
   gap: var(--ui-track-list-gap);

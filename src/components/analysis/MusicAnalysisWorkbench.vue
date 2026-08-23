@@ -16,16 +16,16 @@ onUnmounted(workbench.dispose);
 
 <template>
   <div class="analysis-workbench">
-    <UiPageHeader title="Music Analysis">
+    <UiPageHeader title="音樂結構分析">
       <template #actions>
-        <UiChip tone="gated">Internal · F10</UiChip>
+        <UiChip tone="gated">內部工具 · F10</UiChip>
       </template>
     </UiPageHeader>
 
     <UiNotice
       tone="warning"
       title="尚未是正式產品功能"
-      message="Producer IPC 與 sidecar consumer 已接通；模型授權、產品 activation、安裝與離線 release gate 尚未完成。"
+      message="分析端 IPC 與 sidecar 讀取流程已接通；模型授權、產品 activation、安裝與離線發行條件尚未完成。"
     />
     <UiNotice
       v-if="workbench.libraryState.error"
@@ -74,7 +74,8 @@ onUnmounted(workbench.dispose);
 
 <style scoped>
 .analysis-workbench {
-  min-height: 100%;
+  height: 100%;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
@@ -85,7 +86,8 @@ onUnmounted(workbench.dispose);
 }
 
 .analysis-workbench__layout {
-  min-height: 28rem;
+  min-height: 0;
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
   border: var(--ui-border-width) solid var(--ui-color-border);
@@ -97,10 +99,12 @@ onUnmounted(workbench.dispose);
 .analysis-workbench__tracks,
 .analysis-workbench__detail {
   min-width: 0;
+  min-height: 0;
   padding: var(--ui-space-4);
 }
 
 .analysis-workbench__tracks {
+  overflow: hidden;
   border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
   background: color-mix(
     in srgb,
@@ -113,6 +117,8 @@ onUnmounted(workbench.dispose);
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-5);
+  overflow-y: auto;
+  overscroll-behavior: contain;
 }
 
 .analysis-workbench__detail > * + * {
@@ -123,6 +129,7 @@ onUnmounted(workbench.dispose);
 @media (max-width: 840px) {
   .analysis-workbench__layout {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(11rem, 38%) minmax(0, 1fr);
   }
 
   .analysis-workbench__tracks {

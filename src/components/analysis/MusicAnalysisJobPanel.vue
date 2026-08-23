@@ -33,7 +33,7 @@ const statusTone = computed(() => {
     <div class="analysis-job__heading-row">
       <div>
         <h2 id="analysis-job-heading" class="analysis-job__heading">
-          Analysis job
+          分析工作
         </h2>
         <p class="analysis-job__selection">
           <template v-if="selectedTrack">
@@ -58,8 +58,8 @@ const statusTone = computed(() => {
 
     <UiNotice
       tone="info"
-      title="Internal workbench"
-      message="此頁只操作已存在的 analysis-structure activation，不會下載、安裝或核准 benchmark-only 模型。"
+      title="內部工作台"
+      message="此頁只操作既有的 analysis-structure activation，不會下載、安裝或核准 benchmark-only 模型。"
       compact
     />
     <UiNotice
@@ -89,11 +89,11 @@ const statusTone = computed(() => {
         class="analysis-job__progress"
         max="100"
         :value="progressPercent"
-        aria-label="Music Analysis 進度"
+        aria-label="音樂結構分析進度"
       />
       <div v-else class="analysis-job__progress analysis-job__progress--idle" />
       <p v-if="activeJob" class="analysis-job__job-id">
-        Job {{ activeJob.jobId || 'pending' }}
+        工作編號 {{ activeJob.jobId || '建立中' }}
       </p>
     </div>
 

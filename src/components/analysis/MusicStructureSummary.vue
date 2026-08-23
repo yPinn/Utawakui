@@ -36,7 +36,7 @@ const REASON_COPY = Object.freeze({
     message: '找不到可驗證的本機音訊，因此維持 M0 fallback。',
   },
   'no-signal': {
-    title: '分析沒有產生可用 signal',
+    title: '分析沒有產生可用訊號',
     message: 'Sidecar 有效，但沒有節拍或段落證據，因此維持 M0 fallback。',
   },
 });
@@ -48,7 +48,7 @@ const downbeatCount = computed(
 const fallbackCopy = computed(
   () =>
     REASON_COPY[signals.value?.reason] ?? {
-      title: '尚無 Music Structure 結果',
+      title: '尚無音樂結構分析結果',
       message: '選擇曲目後可讀取既有 sidecar。',
     },
 );
@@ -81,10 +81,10 @@ function sectionLabel(role) {
     <div class="structure-summary__heading-row">
       <div>
         <h2 id="structure-summary-heading" class="structure-summary__heading">
-          Sidecar result
+          sidecar 結果
         </h2>
         <p class="structure-summary__source">
-          Source {{ sourceRevision }} ·
+          來源版本 {{ sourceRevision }} ·
           {{ formatTime(result?.sourceDurationMs) }}
         </p>
       </div>
@@ -106,28 +106,28 @@ function sectionLabel(role) {
     <template v-else>
       <dl class="structure-summary__metrics">
         <div class="structure-summary__metric">
-          <dt>Tempo</dt>
+          <dt>速度</dt>
           <dd>
             {{ signals.tempo ? `${signals.tempo.bpm} BPM` : '—' }}
             <span>{{ formatConfidence(signals.tempo?.confidence) }}</span>
           </dd>
         </div>
         <div class="structure-summary__metric">
-          <dt>Beats</dt>
+          <dt>節拍</dt>
           <dd>{{ signals.beats.length }}</dd>
         </div>
         <div class="structure-summary__metric">
-          <dt>Downbeats</dt>
+          <dt>強拍</dt>
           <dd>{{ downbeatCount }}</dd>
         </div>
         <div class="structure-summary__metric">
-          <dt>Sections</dt>
+          <dt>段落</dt>
           <dd>{{ signals.sections.length }}</dd>
         </div>
       </dl>
 
       <div class="structure-summary__sections">
-        <h3 class="structure-summary__subheading">Sections</h3>
+        <h3 class="structure-summary__subheading">段落</h3>
         <p
           v-if="signals.sections.length === 0"
           class="structure-summary__empty"
