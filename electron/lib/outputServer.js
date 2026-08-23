@@ -17,11 +17,19 @@ const {
   host: OUTPUT_HOST,
   defaultPort: DEFAULT_OUTPUT_PORT,
 } = require('../../shared/outputRuntimeValues.json');
+const {
+  maxTelemetryBytes: OUTPUT_MAX_TELEMETRY_BYTES,
+} = require('../../shared/startupTraceValues.json');
 
 const OUTPUT_WS_PATH = '/ws';
 const OUTPUT_MAX_INBOUND_PAYLOAD_BYTES = 4096;
 const OUTPUT_MAX_INBOUND_PARTS = 16;
 const OUTPUT_ARTWORK_PATH_PREFIX = '/media/artwork/';
+const OUTPUT_STARTUP_TRACE_PATH = '/api/v1/startup-trace';
+const OVERLAY_TRACE_MILESTONES = new Set([
+  'first-instance-ready',
+  'first-rendered-frame',
+]);
 const DEFAULT_HEARTBEAT_INTERVAL_MS = 30000;
 const CLIENT_CLOSE_GRACE_MS = 500;
 const STATIC_CACHE_LIMIT = 32;
@@ -104,6 +112,51 @@ function writeJson(response, statusCode, body, extraHeaders = {}) {
     ...extraHeaders,
   });
   response.end(payload);
+}
+
+function writeEmpty(response, statusCode) {
+  response.writeHead(statusCode, {
+    'Cache-Control': 'no-store',
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    'Cross-Origin-Resource-Policy': 'same-origin',
+  });
+  response.end();
+}
+
+async function readBoundedJson(request, maxBytes) {
+  let bytes = 0;
+  let tooLarge = false;
+  const chunks = [];
+  for await (const chunk of request) {
+    bytes += chunk.byteLength;
+    if (bytes > maxBytes) {
+      tooLarge = true;
+    } else if (!tooLarge) {
+      chunks.push(chunk);
+    }
+  }
+  if (tooLarge) return { tooLarge: true, value: null };
+  try {
+    return {
+      tooLarge: false,
+      value: JSON.parse(Buffer.concat(chunks).toString('utf8')),
+    };
+  } catch {
+    return { tooLarge: false, value: null };
+  }
+}
+
+function parseOverlayTraceMilestone(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null;
+  if (
+    Object.keys(value).length !== 2 ||
+    !OVERLAY_TRACE_MILESTONES.has(value.name) ||
+    !Number.isFinite(value.atUnixMs)
+  ) {
+    return null;
+  }
+  return { name: value.name, atUnixMs: value.atUnixMs };
 }
 
 function cacheHeaders(contentType, etag) {
@@ -226,6 +279,7 @@ function createOutputServer(options = {}) {
   const resolveArtworkAsset = options.resolveArtworkAsset ?? (() => null);
   const deliveryFactory = options.deliveryFactory ?? createOutputClientDelivery;
   const deliveryOptions = options.deliveryOptions ?? {};
+  const recordStartupMilestone = options.recordStartupMilestone ?? null;
 
   let snapshot = createEmptyOutputSnapshot();
   let streamProjection = null;
@@ -450,6 +504,48 @@ function createOutputServer(options = {}) {
   }
 
   async function handleRequest(request, response) {
+    let pathname;
+    try {
+      pathname = new URL(request.url, 'http://127.0.0.1').pathname;
+    } catch {
+      writeJson(response, 400, { error: 'bad_request' });
+      return;
+    }
+
+    if (pathname === OUTPUT_STARTUP_TRACE_PATH && request.method === 'POST') {
+      if (typeof recordStartupMilestone !== 'function') {
+        writeJson(response, 404, { error: 'not_found' });
+        return;
+      }
+      if (
+        !String(request.headers['content-type']).startsWith('application/json')
+      ) {
+        writeJson(response, 415, { error: 'unsupported_media_type' });
+        return;
+      }
+      const body = await readBoundedJson(request, OUTPUT_MAX_TELEMETRY_BYTES);
+      if (body.tooLarge) {
+        writeJson(response, 413, { error: 'payload_too_large' });
+        return;
+      }
+      const milestone = parseOverlayTraceMilestone(body.value);
+      if (!milestone) {
+        writeJson(response, 400, { error: 'bad_request' });
+        return;
+      }
+      try {
+        recordStartupMilestone(milestone.name, {
+          process: 'overlay',
+          atUnixMs: milestone.atUnixMs,
+        });
+      } catch {
+        writeJson(response, 400, { error: 'bad_request' });
+        return;
+      }
+      writeEmpty(response, 204);
+      return;
+    }
+
     if (request.method !== 'GET') {
       writeJson(
         response,
@@ -457,14 +553,6 @@ function createOutputServer(options = {}) {
         { error: 'method_not_allowed' },
         { Allow: 'GET' },
       );
-      return;
-    }
-
-    let pathname;
-    try {
-      pathname = new URL(request.url, 'http://127.0.0.1').pathname;
-    } catch {
-      writeJson(response, 400, { error: 'bad_request' });
       return;
     }
 
@@ -576,7 +664,7 @@ function createOutputServer(options = {}) {
     });
     client.on('pong', () => clientLiveness.set(client, true));
     client.on('error', (error) => {
-      logger.warn?.('[output] WebSocket client error', error.message);
+      logger.warn?.('[output] WebSocket client error', error);
     });
     client.on('message', () => {
       client.close(1008, 'read-only channel');
@@ -678,7 +766,7 @@ function createOutputServer(options = {}) {
     nextHttpServer.keepAliveTimeout = 5000;
     nextWebSocketServer.on('connection', handleConnection);
     nextWebSocketServer.on('error', (error) => {
-      logger.error?.('[output] WebSocket server error', error.message);
+      logger.error?.('[output] WebSocket server error', error);
     });
     nextHttpServer.on('upgrade', handleUpgrade);
 

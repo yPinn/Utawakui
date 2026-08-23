@@ -40,6 +40,9 @@ function createOutputRuntime({
   requireFeatureGate = () => undefined,
   resolveArtworkAsset = () => null,
   featureId = 'public-output-flow',
+  onMilestone = () => undefined,
+  recordOverlayMilestone = null,
+  logger = console,
 } = {}) {
   let server = null;
   let serverPort = null;
@@ -51,7 +54,12 @@ function createOutputRuntime({
   let detachRendererListeners = null;
   const projectionHub = createOutputProjectionHub({
     bootId,
-    onChange: (projection) => server?.setProjectionState?.(projection),
+    onChange: (projection) => {
+      server?.setProjectionState?.(projection);
+      if (projection.sourceSynchronization === 'ready') {
+        onMilestone('source-synchronized');
+      }
+    },
   });
 
   function serializeError(error) {
@@ -86,6 +94,8 @@ function createOutputRuntime({
       overlaySlots,
       resolveArtworkAsset,
       initialProjection: projectionHub.getProjection(),
+      recordStartupMilestone: recordOverlayMilestone,
+      logger,
     });
     serverPort = port;
     server.setProjectionState?.(projectionHub.getProjection());
@@ -135,6 +145,7 @@ function createOutputRuntime({
     try {
       await ensureServer().start();
       serviceLifecycle = 'listening';
+      onMilestone('output-listening');
       lastError = null;
       return getStatus();
     } catch (error) {

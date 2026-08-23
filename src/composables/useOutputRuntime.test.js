@@ -24,6 +24,9 @@ let activeSegmentId;
 let initializeLibrary;
 let initializePlaylists;
 let initializeLyrics;
+let refreshConfirmations;
+let featureGateState;
+let recordError;
 let libraryHydration;
 let playlistHydration;
 let lyricsHydration;
@@ -62,6 +65,13 @@ beforeEach(() => {
   initializeLibrary = vi.fn(() => libraryHydration.promise);
   initializePlaylists = vi.fn(() => playlistHydration.promise);
   initializeLyrics = vi.fn(() => lyricsHydration.promise);
+  featureGateState = reactive({ error: '' });
+  recordError = vi.fn((error, options) => ({
+    message: options.message,
+  }));
+  refreshConfirmations = vi.fn(async () => ({
+    'public-output-flow': { enabled: true },
+  }));
   bridge = {
     connectOutputSource: vi.fn(async () => ({
       running: true,
@@ -162,7 +172,14 @@ beforeEach(() => {
     }),
   }));
   vi.doMock('./useFeatureGates.js', () => ({
-    useFeatureGates: () => ({ isFeatureEnabled: () => true }),
+    useFeatureGates: () => ({
+      state: featureGateState,
+      isFeatureEnabled: () => true,
+      refreshConfirmations,
+    }),
+  }));
+  vi.doMock('./useAppDiagnostics.js', () => ({
+    useAppDiagnostics: () => ({ recordError }),
   }));
 });
 
@@ -194,6 +211,7 @@ describe('output source handshake', () => {
 
     await flushMicrotasks();
     expect(bridge.connectOutputSource).toHaveBeenCalledOnce();
+    expect(refreshConfirmations).toHaveBeenCalledOnce();
     expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
 
     libraryHydration.resolve();
@@ -255,6 +273,51 @@ describe('output source handshake', () => {
     await initialization;
 
     expect(bridge.startOutput).not.toHaveBeenCalled();
+  });
+
+  it('surfaces an automatic startup failure returned by the initial handshake', async () => {
+    bridge.connectOutputSource.mockResolvedValueOnce({
+      running: false,
+      bootId: 'boot-main',
+      error: { code: 'EADDRINUSE', message: 'listen EADDRINUSE' },
+      desired: { running: true, port: 8700 },
+      observed: {
+        serviceLifecycle: 'error',
+        sourceSynchronization: 'syncing',
+      },
+    });
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+
+    await expect(initialization).resolves.toBe(true);
+    expect(runtime.state.error).toBe(
+      '輸出服務未啟動，請檢查連接埠後再試一次。',
+    );
+    expect(runtime.state.suggestedPorts).toEqual([8701, 8702]);
+    expect(recordError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({
+        source: 'output',
+        operation: 'automatic-start',
+      }),
+    );
+  });
+
+  it('surfaces feature confirmation hydration failures before connecting', async () => {
+    refreshConfirmations.mockImplementationOnce(async () => {
+      featureGateState.error = '目前無法讀取功能狀態，請再試一次。';
+      return {};
+    });
+    const runtime = await loadRuntime();
+
+    await expect(runtime.initialize()).resolves.toBe(false);
+
+    expect(runtime.state.error).toBe('目前無法讀取功能狀態，請再試一次。');
+    expect(bridge.connectOutputSource).not.toHaveBeenCalled();
+    expect(initializeLibrary).not.toHaveBeenCalled();
   });
 
   it('fails closed without an unhandled rejection when source connection fails', async () => {

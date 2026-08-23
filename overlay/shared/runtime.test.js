@@ -495,4 +495,94 @@ describe('overlay WebSocket runtime', () => {
 
     connection.stop();
   });
+
+  it('reports trace-only instance readiness and the first painted live frame without content', async () => {
+    FakeWebSocket.instances = [];
+    const frameCallbacks = [];
+    const fetchImpl = vi.fn(async () => ({ ok: true }));
+    const connection = createOverlayConnection({
+      location: {
+        protocol: 'http:',
+        host: '127.0.0.1:8700',
+        search: '?startupTrace=1',
+      },
+      WebSocketImpl: FakeWebSocket,
+      fetchImpl,
+      performance: { timeOrigin: 1000, now: () => 250 },
+      requestAnimationFrame: (callback) => frameCallbacks.push(callback),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(1),
+      }),
+    });
+    await Promise.resolve();
+    expect(fetchImpl).toHaveBeenCalledWith(
+      '/api/v1/startup-trace',
+      expect.objectContaining({
+        method: 'POST',
+        body: JSON.stringify({
+          name: 'first-instance-ready',
+          atUnixMs: 1250,
+        }),
+      }),
+    );
+    expect(frameCallbacks).toHaveLength(1);
+
+    frameCallbacks.shift()();
+    frameCallbacks.shift()();
+    await Promise.resolve();
+    expect(fetchImpl).toHaveBeenLastCalledWith(
+      '/api/v1/startup-trace',
+      expect.objectContaining({
+        body: JSON.stringify({
+          name: 'first-rendered-frame',
+          atUnixMs: 1250,
+        }),
+      }),
+    );
+    expect(JSON.stringify(fetchImpl.mock.calls)).not.toContain('lyrics');
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.changed',
+        snapshot: snapshot(2),
+      }),
+    });
+    expect(fetchImpl).toHaveBeenCalledTimes(2);
+    connection.stop();
+  });
+
+  it('never sends overlay telemetry without the explicit trace query', () => {
+    FakeWebSocket.instances = [];
+    const fetchImpl = vi.fn();
+    const connection = createOverlayConnection({
+      location: {
+        protocol: 'http:',
+        host: '127.0.0.1:8700',
+        search: '',
+      },
+      WebSocketImpl: FakeWebSocket,
+      fetchImpl,
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+    connection.start();
+    FakeWebSocket.instances[0].emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        snapshot: snapshot(1),
+      }),
+    });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    connection.stop();
+  });
 });

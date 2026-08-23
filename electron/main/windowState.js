@@ -157,6 +157,7 @@ function createMainWindow(
   initialTheme = 'dark',
   initialSidebarWidth = 256,
   initialCaptureDeviceId = null,
+  options = {},
 ) {
   const titlebarColors = TITLEBAR_COLORS[initialTheme] ?? TITLEBAR_COLORS.dark;
   mainWindow = new BrowserWindow({
@@ -189,6 +190,7 @@ function createMainWindow(
         `--ui-theme=${initialTheme}`,
         `--sidebar-width=${initialSidebarWidth}`,
         `--capture-device-id=${initialCaptureDeviceId ?? ''}`,
+        ...(options.startupTraceEnabled ? ['--startup-trace-enabled=1'] : []),
       ],
     },
   });

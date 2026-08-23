@@ -1,7 +1,9 @@
 'use strict';
 
 const crypto = require('node:crypto');
+const fs = require('node:fs/promises');
 const path = require('node:path');
+const { performance } = require('node:perf_hooks');
 
 const {
   app,
@@ -26,6 +28,12 @@ app.setAppLogsPath();
 const { FEATURE_IDS } = require('./lib/featureGates');
 const { resolveTrackArtworkPath } = require('./lib/library');
 const { createDiagnosticsService } = require('./lib/diagnostics');
+const {
+  createStartupBaselineMetadata,
+  createStartupTrace,
+  readStartupTraceOptions,
+  registerStartupTraceHandler,
+} = require('./lib/startupTrace');
 const windowState = require('./main/windowState');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
@@ -43,6 +51,7 @@ const {
 } = require('./main/featureDependencyHandlers');
 const { runStartupMigrations } = require('./main/startupMigrations');
 const { startInteractiveRuntime } = require('./main/startupCoordinator');
+const { createStartupTraceProbe } = require('./main/startupTraceProbe');
 const { MEDIA_SCHEME } = require('./main/mediaScheme');
 const {
   createOutputRuntime,
@@ -51,6 +60,9 @@ const {
 const { registerOutputHandlers } = require('./main/outputHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
+const {
+  createRuntimeDiagnosticsLogger,
+} = require('./main/runtimeDiagnosticsLogger');
 const { createPerformerWindowManager } = require('./main/performerWindow');
 const {
   registerPerformerViewHandlers,
@@ -60,6 +72,10 @@ const {
   runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
   startupCheckDelayMs: APP_UPDATE_STARTUP_DELAY_MS,
 } = require('../shared/appUpdateValues.json');
+const {
+  baselineIdleSampleMs: STARTUP_BASELINE_IDLE_SAMPLE_MS,
+  baselineSettleMs: STARTUP_BASELINE_SETTLE_MS,
+} = require('../shared/startupTraceValues.json');
 
 const diagnosticsService = createDiagnosticsService({
   logsDir: app.getPath('logs'),
@@ -68,9 +84,102 @@ const diagnosticsService = createDiagnosticsService({
   appVersion: app.getVersion(),
   electronVersion: process.versions.electron,
 });
+const runtimeDiagnosticsLogger = createRuntimeDiagnosticsLogger({
+  service: diagnosticsService,
+});
+const startupTraceOptions = readStartupTraceOptions(process.argv);
+const startupTraceFilePath = startupTraceOptions.enabled
+  ? path.resolve(
+      startupTraceOptions.filePath ??
+        path.join(
+          app.getPath('logs'),
+          `startup-trace-${Date.now()}-${process.pid}.jsonl`,
+        ),
+    )
+  : null;
+const startupTraceFileReady = startupTraceFilePath
+  ? fs
+      .mkdir(path.dirname(startupTraceFilePath), { recursive: true })
+      .then(() => fs.writeFile(startupTraceFilePath, '', { flag: 'wx' }))
+  : Promise.resolve();
+const startupTrace = createStartupTrace({
+  enabled: startupTraceOptions.enabled,
+  sessionId: crypto.randomUUID(),
+  timeOriginMs: performance.timeOrigin,
+  writeLine: (line) =>
+    startupTraceFileReady.then(() =>
+      fs.appendFile(startupTraceFilePath, `${line}\n`),
+    ),
+  onError: (error) => {
+    console.warn('[startup-trace] write failed', error?.code ?? 'unknown');
+  },
+});
+
+function recordMainMilestone(name, metadata) {
+  if (!startupTrace.enabled) return false;
+  return startupTrace.record(name, {
+    atUnixMs: performance.timeOrigin + performance.now(),
+    ...(metadata ? { metadata } : {}),
+  });
+}
+
+startupTrace.record('process-start', { atUnixMs: performance.timeOrigin });
 
 let performerWindowManager = null;
 let outputRuntimeController = null;
+const startupTraceProbe = startupTrace.enabled
+  ? createStartupTraceProbe({ BrowserWindow })
+  : null;
+let startupTraceCompletion = null;
+
+function completeStartupTrace() {
+  if (!startupTrace.enabled || startupTraceCompletion) {
+    return startupTraceCompletion;
+  }
+  startupTraceCompletion = Promise.resolve()
+    .then(
+      () =>
+        new Promise((resolve) =>
+          setTimeout(resolve, STARTUP_BASELINE_SETTLE_MS),
+        ),
+    )
+    .then(() => {
+      // After a fixed post-frame settle interval, reset Electron's CPU counters
+      // and sample the fully active default instance over a trace-only window.
+      app.getAppMetrics();
+      return new Promise((resolve) =>
+        setTimeout(resolve, STARTUP_BASELINE_IDLE_SAMPLE_MS),
+      );
+    })
+    .then(() => {
+      const metadata = createStartupBaselineMetadata({
+        appMetrics: app.getAppMetrics(),
+        gpuFeatureStatus: app.getGPUFeatureStatus(),
+        outputStatus: outputRuntimeController?.getStatus(),
+      });
+      recordMainMilestone('baseline-complete', metadata);
+      startupTraceProbe?.stop();
+      return startupTrace.flush();
+    })
+    .catch((error) => {
+      console.warn(
+        '[startup-trace] baseline completion failed',
+        error?.message ?? 'unknown',
+      );
+    })
+    .finally(() => {
+      if (startupTraceOptions.exitOnComplete) app.quit();
+    });
+  return startupTraceCompletion;
+}
+
+function recordOverlayMilestone(name, options) {
+  const accepted = startupTrace.record(name, options);
+  if (accepted && name === 'first-rendered-frame') {
+    void completeStartupTrace();
+  }
+  return accepted;
+}
 
 function createConfiguredMainWindow() {
   const config = configState.getConfig();
@@ -78,6 +187,7 @@ function createConfiguredMainWindow() {
     config.uiTheme,
     config.sidebarWidth,
     config.captureDeviceId,
+    { startupTraceEnabled: startupTrace.enabled },
   );
   performerWindowManager?.attachMainWindow(mainWindow);
   return mainWindow;
@@ -121,6 +231,7 @@ if (!gotSingleInstanceLock) {
   });
 
   app.whenReady().then(() => {
+    recordMainMilestone('electron-ready');
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
     // Narrow exception for the capture-device output picker (see
@@ -149,6 +260,7 @@ if (!gotSingleInstanceLock) {
     );
 
     configState.loadInitialConfig();
+    recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
@@ -159,8 +271,17 @@ if (!gotSingleInstanceLock) {
           trackId,
         ),
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+      onMilestone: recordMainMilestone,
+      recordOverlayMilestone: startupTrace.enabled
+        ? recordOverlayMilestone
+        : null,
+      logger: runtimeDiagnosticsLogger,
     });
-    registerOutputRuntimeLifecycle({ app, server: outputRuntimeController });
+    registerOutputRuntimeLifecycle({
+      app,
+      server: outputRuntimeController,
+      logger: runtimeDiagnosticsLogger,
+    });
     const providerRunnerManager = createProviderRunnerManager({
       app,
       userDataDir: app.getPath('userData'),
@@ -198,6 +319,11 @@ if (!gotSingleInstanceLock) {
       service: diagnosticsService,
       openLogsDirectory: () => shell.openPath(app.getPath('logs')),
     });
+    registerStartupTraceHandler({
+      ipcMain,
+      trace: startupTrace,
+      getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
+    });
     registerAppUpdateHandlers({ ipcMain, service: appUpdateService });
 
     registerMediaProtocol({
@@ -214,6 +340,7 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      logger: runtimeDiagnosticsLogger,
     });
 
     performerWindowManager = createPerformerWindowManager({
@@ -318,7 +445,7 @@ if (!gotSingleInstanceLock) {
 
     nativeTheme.on('updated', windowState.updateThumbar);
 
-    startInteractiveRuntime({
+    const interactiveRuntime = startInteractiveRuntime({
       createWindow: createConfiguredMainWindow,
       attachRenderer: (webContents) =>
         outputRuntimeController.attachRenderer(webContents),
@@ -327,7 +454,16 @@ if (!gotSingleInstanceLock) {
         runStartupMigrations(
           configState.resolveDownloadDir(configState.getConfig()),
         ),
+      recordMilestone: recordMainMilestone,
+      logger: runtimeDiagnosticsLogger,
     });
+    if (startupTraceProbe) {
+      interactiveRuntime.outputStartup.then((status) => {
+        if (status?.running && status.httpUrl) {
+          startupTraceProbe.start(status.httpUrl);
+        }
+      });
+    }
     appUpdateService.scheduleStartupCheck(APP_UPDATE_STARTUP_DELAY_MS);
   });
 

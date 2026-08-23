@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "flag": "--startup-trace",
+  "fileFlagPrefix": "--startup-trace-file=",
+  "exitFlag": "--startup-trace-exit",
+  "overlayQuery": "startupTrace",
+  "maxTelemetryBytes": 1024,
+  "maxFutureSkewMs": 5000,
+  "baselineSettleMs": 1000,
+  "baselineIdleSampleMs": 1000,
+  "milestones": {
+    "process-start": "main",
+    "electron-ready": "main",
+    "config-ready": "main",
+    "window-created": "main",
+    "dom-loaded": "main",
+    "first-paint": "renderer",
+    "interactive-shell": "renderer",
+    "output-listening": "main",
+    "source-synchronized": "main",
+    "first-instance-ready": "overlay",
+    "first-rendered-frame": "overlay",
+    "baseline-complete": "main"
+  },
+  "baselineMetadata": [
+    "cpuPercent",
+    "workingSetKb",
+    "peakWorkingSetKb",
+    "processCount",
+    "outputQueuedBytes",
+    "outputClients",
+    "gpuAccelerationEnabled"
+  ]
+}

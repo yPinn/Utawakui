@@ -27,7 +27,15 @@ function readInitialCaptureDeviceId() {
   return value.length > 0 ? value : null;
 }
 
+const startupTraceEnabled = process.argv.includes('--startup-trace-enabled=1');
+
 contextBridge.exposeInMainWorld('Utawakui', {
+  startupTraceEnabled,
+  recordStartupMilestone: (milestone) => {
+    if (startupTraceEnabled) {
+      ipcRenderer.send('startup-trace:milestone', milestone);
+    }
+  },
   recordDiagnostic: (event) =>
     ipcRenderer.invoke('diagnostics:record-renderer', event),
   listRecentDiagnostics: (limit) =>

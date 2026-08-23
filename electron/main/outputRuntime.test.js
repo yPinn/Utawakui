@@ -89,35 +89,45 @@ describe('outputRuntime lifecycle', () => {
 describe('outputRuntime controller', () => {
   function createServerFactory() {
     const servers = [];
-    const factory = vi.fn(({ port, overlaySlots, resolveArtworkAsset }) => {
-      let running = false;
-      const server = {
+    const factory = vi.fn(
+      ({
         port,
-        getStatus: vi.fn(() => ({
-          running,
-          host: '127.0.0.1',
-          port,
-          revision: 0,
-          httpUrl: running ? `http://127.0.0.1:${port}` : null,
-          wsUrl: running ? `ws://127.0.0.1:${port}/ws` : null,
-          clients: 0,
-        })),
-        start: vi.fn(async () => {
-          running = true;
-          return server.getStatus();
-        }),
-        stop: vi.fn(async () => {
-          running = false;
-        }),
-        publish: vi.fn(() => true),
-        setProjectionState: vi.fn(),
-        setOverlaySlots: vi.fn(),
-        initialOverlaySlots: overlaySlots,
+        overlaySlots,
         resolveArtworkAsset,
-      };
-      servers.push(server);
-      return server;
-    });
+        recordStartupMilestone,
+        logger,
+      }) => {
+        let running = false;
+        const server = {
+          port,
+          getStatus: vi.fn(() => ({
+            running,
+            host: '127.0.0.1',
+            port,
+            revision: 0,
+            httpUrl: running ? `http://127.0.0.1:${port}` : null,
+            wsUrl: running ? `ws://127.0.0.1:${port}/ws` : null,
+            clients: 0,
+          })),
+          start: vi.fn(async () => {
+            running = true;
+            return server.getStatus();
+          }),
+          stop: vi.fn(async () => {
+            running = false;
+          }),
+          publish: vi.fn(() => true),
+          setProjectionState: vi.fn(),
+          setOverlaySlots: vi.fn(),
+          initialOverlaySlots: overlaySlots,
+          resolveArtworkAsset,
+          recordStartupMilestone,
+          logger,
+        };
+        servers.push(server);
+        return server;
+      },
+    );
     return { factory, servers };
   }
 
@@ -197,6 +207,40 @@ describe('outputRuntime controller', () => {
         }),
       );
     }
+  });
+
+  it('reports Output-listening and source-synchronized milestones without payload data', async () => {
+    const { factory } = createServerFactory();
+    const onMilestone = vi.fn();
+    const runtime = createOutputRuntime({
+      bootId: 'boot-trace',
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+      onMilestone,
+    });
+    const source = { id: 8 };
+
+    await runtime.startConfigured();
+    runtime.connectSource(source);
+    runtime.publish(
+      {
+        contractVersion: 3,
+        bootId: 'boot-trace',
+        sourceEpoch: 'epoch-trace',
+        kind: 'full',
+        revision: 1,
+        payload: createEmptyOutputSnapshot({ revision: 1 }),
+      },
+      source,
+    );
+
+    expect(onMilestone.mock.calls).toEqual([
+      ['output-listening'],
+      ['source-synchronized'],
+    ]);
   });
 
   it('marks the projection unavailable when the attached renderer reloads, crashes, or closes', () => {
@@ -418,6 +462,47 @@ describe('outputRuntime controller', () => {
 
     await runtime.start();
     expect(servers[0].resolveArtworkAsset).toBe(resolveArtworkAsset);
+  });
+
+  it('passes the runtime logger through every server creation', async () => {
+    const { factory, servers } = createServerFactory();
+    const logger = { warn: vi.fn(), error: vi.fn() };
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+      logger,
+    });
+
+    await runtime.start();
+    expect(servers[0].logger).toBe(logger);
+  });
+
+  it('exposes overlay telemetry only when an explicit recorder is injected', async () => {
+    const { factory, servers } = createServerFactory();
+    const recordOverlayMilestone = vi.fn();
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+      recordOverlayMilestone,
+    });
+    await runtime.start();
+    expect(servers[0].recordStartupMilestone).toBe(recordOverlayMilestone);
+
+    const withoutTrace = createOutputRuntime({
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8701 },
+      }),
+      requireFeatureGate: vi.fn(),
+    });
+    await withoutTrace.start();
+    expect(servers[1].recordStartupMilestone).toBeNull();
   });
 
   it('retains a startup error in status for renderer diagnostics', async () => {

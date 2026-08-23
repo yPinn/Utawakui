@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -192,6 +192,62 @@ describe('outputServer', () => {
     });
     expect(method.status).toBe(405);
     expect(method.headers.get('allow')).toBe('GET');
+  });
+
+  it('accepts only bounded content-free startup telemetry when tracing is enabled', async () => {
+    const recordStartupMilestone = vi.fn();
+    const server = createServer({ recordStartupMilestone });
+    const status = await server.start();
+
+    const accepted = await fetch(`${status.httpUrl}/api/v1/startup-trace`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'first-rendered-frame',
+        atUnixMs: 1234.5,
+      }),
+    });
+    expect(accepted.status).toBe(204);
+    expect(accepted.headers.get('cache-control')).toBe('no-store');
+    expect(recordStartupMilestone).toHaveBeenCalledWith(
+      'first-rendered-frame',
+      { process: 'overlay', atUnixMs: 1234.5 },
+    );
+
+    const contentBearing = await fetch(
+      `${status.httpUrl}/api/v1/startup-trace`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: 'first-instance-ready',
+          atUnixMs: 1235,
+          title: 'private title',
+        }),
+      },
+    );
+    expect(contentBearing.status).toBe(400);
+
+    const oversized = await fetch(`${status.httpUrl}/api/v1/startup-trace`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ value: 'x'.repeat(2048) }),
+    });
+    expect(oversized.status).toBe(413);
+  });
+
+  it('does not expose the startup telemetry endpoint in normal runs', async () => {
+    const server = createServer();
+    const status = await server.start();
+    const response = await fetch(`${status.httpUrl}/api/v1/startup-trace`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: 'first-rendered-frame',
+        atUnixMs: 1234,
+      }),
+    });
+    expect(response.status).toBe(404);
   });
 
   it('serves only explicit overlay assets with browser-source headers', async () => {

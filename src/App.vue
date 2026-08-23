@@ -23,6 +23,7 @@ import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/outputRuntimeContext.js';
+import { recordRendererMilestone } from './utils/startupTrace.js';
 
 // Long-lived app hooks; each composable owns its cleanup.
 useTaskbarControls();
@@ -35,7 +36,10 @@ useTheme();
 useAudioOutput().restoreInitialDevice();
 const outputRuntime = useOutputRuntime();
 provide(OUTPUT_RUNTIME_KEY, outputRuntime);
-onMounted(() => outputRuntime.initialize());
+onMounted(() => {
+  recordRendererMilestone('interactive-shell');
+  outputRuntime.initialize();
+});
 const performerView = usePerformerSelfView();
 performerView.initialize();
 

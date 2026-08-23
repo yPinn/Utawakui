@@ -59,7 +59,11 @@ const {
   initialize: initializeLyrics,
 } = useLyrics();
 const { requireFeatureGate } = useFeatureGateAccess();
-const { isFeatureEnabled } = useFeatureGates();
+const {
+  state: featureGateState,
+  isFeatureEnabled,
+  refreshConfirmations,
+} = useFeatureGates();
 const { recordError } = useAppDiagnostics();
 
 const state = reactive({
@@ -134,6 +138,23 @@ function applyStatus(value = {}) {
     effective: { ...EMPTY_STATUS.effective, ...value.effective },
     running: value.running === true,
   };
+}
+
+async function surfaceStatusError(
+  status,
+  { operation, message, clearWhenHealthy = true },
+) {
+  const statusError = status?.error?.message ?? '';
+  if (statusError) {
+    state.error = reportOutputError(new Error(statusError), operation, message);
+    if (isOutputPortConflict(statusError)) await suggestPorts();
+    else state.suggestedPorts = [];
+    return true;
+  }
+
+  if (clearWhenHealthy) state.error = '';
+  state.suggestedPorts = [];
+  return false;
 }
 
 function applySlots(document = {}) {
@@ -319,16 +340,10 @@ async function refreshStatus() {
   try {
     const status = await bridgeMethod('getOutputStatus')();
     applyStatus(status);
-    const statusError = status.error?.message ?? '';
-    state.error = statusError
-      ? reportOutputError(
-          new Error(statusError),
-          'status',
-          '輸出服務未啟動，請檢查連接埠後再試一次。',
-        )
-      : '';
-    if (isOutputPortConflict(statusError)) await suggestPorts();
-    else state.suggestedPorts = [];
+    await surfaceStatusError(status, {
+      operation: 'status',
+      message: '輸出服務未啟動，請檢查連接埠後再試一次。',
+    });
     return state.status;
   } catch (error) {
     state.error = reportOutputError(
@@ -519,8 +534,19 @@ function initialize() {
   if (initializationPromise) return initializationPromise;
   initializationPromise = (async () => {
     try {
-      await refreshSettings();
-      applyStatus(await bridgeMethod('connectOutputSource')());
+      await Promise.all([refreshSettings(), refreshConfirmations()]);
+      if (featureGateState.error) {
+        sourcesSettled = false;
+        state.error = featureGateState.error;
+        return false;
+      }
+      const initialStatus = await bridgeMethod('connectOutputSource')();
+      applyStatus(initialStatus);
+      await surfaceStatusError(initialStatus, {
+        operation: 'automatic-start',
+        message: '輸出服務未啟動，請檢查連接埠後再試一次。',
+        clearWhenHealthy: false,
+      });
       await Promise.all([
         initializeLibrary(),
         initializePlaylists(),

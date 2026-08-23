@@ -1,6 +1,7 @@
 import { createApp } from 'vue';
 import App from './App.vue';
 import { installRendererDiagnostics } from './utils/rendererDiagnostics.js';
+import { scheduleFirstPaintMilestone } from './utils/startupTrace.js';
 import './styles/tokens.css';
 import './styles/base.css';
 
@@ -10,3 +11,4 @@ installRendererDiagnostics({
   recordDiagnostic: window.Utawakui?.recordDiagnostic,
 });
 app.mount('#app');
+scheduleFirstPaintMilestone();

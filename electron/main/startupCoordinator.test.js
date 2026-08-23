@@ -7,7 +7,8 @@ const { startInteractiveRuntime } = startupCoordinatorModule;
 describe('interactive startup coordinator', () => {
   it('creates and attaches the window before optional startup work begins', async () => {
     const calls = [];
-    const webContents = { id: 1 };
+    const webContents = new EventEmitter();
+    webContents.id = 1;
     const mainWindow = new EventEmitter();
     mainWindow.webContents = webContents;
     const deferredCallbacks = [];
@@ -18,6 +19,7 @@ describe('interactive startup coordinator', () => {
     const attachRenderer = vi.fn(() => calls.push('attach'));
     const startOutput = vi.fn(async () => calls.push('output'));
     const runMigrations = vi.fn(() => calls.push('migrations'));
+    const recordMilestone = vi.fn((name) => calls.push(name));
 
     const result = startInteractiveRuntime({
       attachRenderer,
@@ -25,23 +27,48 @@ describe('interactive startup coordinator', () => {
       defer: (callback) => deferredCallbacks.push(callback),
       runMigrations,
       startOutput,
+      recordMilestone,
     });
 
     expect(result.mainWindow).toBe(mainWindow);
-    expect(calls).toEqual(['window', 'attach']);
+    expect(calls).toEqual(['window', 'window-created', 'attach']);
     expect(attachRenderer).toHaveBeenCalledWith(webContents);
     expect(startOutput).not.toHaveBeenCalled();
     expect(runMigrations).not.toHaveBeenCalled();
 
     await Promise.resolve();
-    expect(calls).toEqual(['window', 'attach', 'output']);
+    expect(calls).toEqual(['window', 'window-created', 'attach', 'output']);
     expect(runMigrations).not.toHaveBeenCalled();
+
+    webContents.emit('did-finish-load');
+    expect(recordMilestone).toHaveBeenCalledWith('dom-loaded');
 
     mainWindow.emit('ready-to-show');
     expect(runMigrations).not.toHaveBeenCalled();
     deferredCallbacks[0]();
-    expect(calls).toEqual(['window', 'attach', 'output', 'migrations']);
+    expect(calls).toEqual([
+      'window',
+      'window-created',
+      'attach',
+      'output',
+      'dom-loaded',
+      'migrations',
+    ]);
     await result.outputStartup;
+  });
+
+  it('does not require a trace recorder for normal startup', () => {
+    const mainWindow = new EventEmitter();
+    mainWindow.webContents = new EventEmitter();
+    expect(() =>
+      startInteractiveRuntime({
+        attachRenderer: vi.fn(),
+        createWindow: () => mainWindow,
+        defer: vi.fn(),
+        runMigrations: vi.fn(),
+        startOutput: vi.fn(),
+      }),
+    ).not.toThrow();
   });
 
   it('reports optional startup failures without delaying the returned window', async () => {
@@ -63,7 +90,7 @@ describe('interactive startup coordinator', () => {
     await expect(result.outputStartup).resolves.toBeUndefined();
     expect(logger.warn).toHaveBeenCalledWith(
       '[output] Automatic startup failed',
-      'port unavailable',
+      failure,
     );
   });
 
@@ -89,7 +116,7 @@ describe('interactive startup coordinator', () => {
     expect(() => deferredCallbacks[0]()).not.toThrow();
     expect(logger.warn).toHaveBeenCalledWith(
       '[startup] Deferred migration failed',
-      'migration failed',
+      failure,
     );
   });
 });

@@ -337,6 +337,19 @@ remains. H3 is the next batch.
 - Set p50/p95 regression budgets only from those measurements; do not claim an
   absolute startup target from development-mode timing.
 
+Implementation status (2026-08-23): H3 tracing and the local packaged reference
+capture are complete. Main, renderer, Output, and overlay milestones share one
+Unix-clock domain and write bounded JSONL only behind explicit trace flags. A
+hidden trace-only bundled overlay supplies the first-instance and first-frame
+milestones, then the harness records aggregate process CPU/memory, Output backlog,
+client count, and GPU-compositing status before clean exit. The capture also
+exposed and fixed a missing renderer feature-confirmation hydration that could
+leave an already-enabled Output source in `syncing` until Settings was opened.
+The five-cold/five-warm packaged observations and their limitations are recorded
+in [startup-performance-baseline.md](startup-performance-baseline.md). Regression
+budgets remain intentionally unset until the open hardware, storage, library,
+OBS-process, GPU-memory, and multi-instance rows have representative evidence.
+
 ## Pre-Lyrics implementation gate
 
 Before Lyrics T2 code begins, the team must agree which hardening work is a direct

@@ -7,14 +7,19 @@ function startInteractiveRuntime({
   startOutput,
   defer = setImmediate,
   logger = console,
+  recordMilestone = () => undefined,
 }) {
   const mainWindow = createWindow();
+  recordMilestone('window-created');
+  mainWindow.webContents.once?.('did-finish-load', () => {
+    recordMilestone('dom-loaded');
+  });
   attachRenderer(mainWindow.webContents);
 
   const outputStartup = Promise.resolve()
     .then(startOutput)
     .catch((error) => {
-      logger.warn?.('[output] Automatic startup failed', error.message);
+      logger.warn?.('[output] Automatic startup failed', error);
     });
 
   mainWindow.once('ready-to-show', () => {
@@ -22,7 +27,7 @@ function startInteractiveRuntime({
       try {
         runMigrations();
       } catch (error) {
-        logger.warn?.('[startup] Deferred migration failed', error.message);
+        logger.warn?.('[startup] Deferred migration failed', error);
       }
     });
   });

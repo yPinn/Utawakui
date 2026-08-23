@@ -239,6 +239,48 @@ function emptyUnavailableSnapshot(now) {
     },
   };
 }
+
+function createOverlayTraceReporter(options) {
+  const search = options.location?.search ?? '';
+  const enabled = new URLSearchParams(search).get('startupTrace') === '1';
+  if (!enabled) return { onSnapshot: () => undefined };
+  const fetchImpl = options.fetchImpl ?? window.fetch.bind(window);
+  const performance = options.performance ?? window.performance;
+  const requestFrame =
+    options.requestAnimationFrame ?? window.requestAnimationFrame.bind(window);
+  let instanceReported = false;
+  let frameReported = false;
+
+  function report(name) {
+    const atUnixMs = performance.timeOrigin + performance.now();
+    try {
+      Promise.resolve(
+        fetchImpl('/api/v1/startup-trace', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, atUnixMs }),
+        }),
+      ).catch(() => undefined);
+    } catch {
+      // Trace-only diagnostics must never affect overlay rendering.
+    }
+  }
+
+  function onSnapshot(snapshot) {
+    if (instanceReported || snapshot.revision <= 0) return;
+    instanceReported = true;
+    report('first-instance-ready');
+    requestFrame(() => {
+      requestFrame(() => {
+        if (frameReported) return;
+        frameReported = true;
+        report('first-rendered-frame');
+      });
+    });
+  }
+
+  return { onSnapshot };
+}
 export function createOverlayConnection(options = {}) {
   const location = options.location ?? window.location;
   const WebSocketImpl = options.WebSocketImpl ?? window.WebSocket;
@@ -249,6 +291,7 @@ export function createOverlayConnection(options = {}) {
   const cancelSchedule =
     options.cancelSchedule ?? window.clearTimeout.bind(window);
   const now = options.now ?? Date.now;
+  const traceReporter = createOverlayTraceReporter({ ...options, location });
 
   let socket = null;
   let reconnectTimer = null;
@@ -277,6 +320,7 @@ export function createOverlayConnection(options = {}) {
     }
     lastDeliveredRevision = snapshot.revision;
     onSnapshot(snapshot);
+    traceReporter.onSnapshot(snapshot);
   }
 
   function scheduleSnapshot(snapshot, allowEqualRevision = false) {

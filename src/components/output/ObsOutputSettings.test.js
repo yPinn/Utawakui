@@ -7,6 +7,14 @@ const source = fs.readFileSync(
 );
 
 describe('ObsOutputSettings', () => {
+  it('renders runtime failures through the shared error notice', () => {
+    expect(source).toContain("import UiNotice from '../ui/UiNotice.vue'");
+    expect(source).toContain('<UiNotice');
+    expect(source).toContain('v-if="error"');
+    expect(source).toContain('tone="danger"');
+    expect(source).toContain(':message="error"');
+  });
+
   it('presents service state as status, not as a refresh or checkbox control', () => {
     expect(source).toContain('const serviceStatusIcon = computed');
     expect(source).toContain(':icon="serviceStatusIcon"');
