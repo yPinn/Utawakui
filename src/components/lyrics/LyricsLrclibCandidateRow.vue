@@ -114,19 +114,27 @@ function previewLineHasTiming(line) {
       </div>
     </div>
 
-    <p
-      v-if="!expanded && presentedCandidate.previewLines?.[0]"
-      class="lyrics-lrclib-candidate-row__preview-line"
-      dir="auto"
-    >
-      {{ presentedCandidate.previewLines[0].text }}
-    </p>
-
     <div
-      v-if="!expanded && candidate.alreadySaved"
-      class="lyrics-lrclib-candidate-row__saved-status"
+      v-if="
+        !expanded &&
+        (presentedCandidate.previewLines?.[0] || candidate.alreadySaved)
+      "
+      class="lyrics-lrclib-candidate-row__preview-row"
     >
-      <UiChip tone="success">已保存</UiChip>
+      <p
+        v-if="presentedCandidate.previewLines?.[0]"
+        class="lyrics-lrclib-candidate-row__preview-line"
+        dir="auto"
+      >
+        {{ presentedCandidate.previewLines[0].text }}
+      </p>
+
+      <div
+        v-if="candidate.alreadySaved"
+        class="lyrics-lrclib-candidate-row__saved-status"
+      >
+        <UiChip tone="success">已保存</UiChip>
+      </div>
     </div>
 
     <div v-if="expanded" class="lyrics-lrclib-candidate-row__expanded">
@@ -221,10 +229,18 @@ function previewLineHasTiming(line) {
   gap: var(--ui-space-3);
 }
 
-.lyrics-lrclib-candidate-row__saved-status {
+.lyrics-lrclib-candidate-row__preview-row {
   display: flex;
-  justify-content: flex-end;
-  margin-top: var(--ui-space-1);
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  margin-top: var(--ui-space-2);
+  padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
+}
+
+.lyrics-lrclib-candidate-row__saved-status {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
 }
 
 .lyrics-lrclib-candidate-row__info {
@@ -373,7 +389,9 @@ function previewLineHasTiming(line) {
 }
 
 .lyrics-lrclib-candidate-row__preview-line {
-  margin: var(--ui-space-2) 0 0 calc(var(--ui-space-4) + var(--ui-space-2));
+  min-width: 0;
+  flex: 1 1 50%;
+  margin: 0;
   overflow: hidden;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);

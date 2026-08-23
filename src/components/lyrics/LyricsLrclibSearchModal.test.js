@@ -68,9 +68,12 @@ describe('LRCLIB search modal contract', () => {
     expect(row).not.toContain('previewFingerprint');
   });
 
-  it('keeps the saved state visible while a candidate row is collapsed', () => {
+  it('keeps the collapsed preview and saved state on one compact row', () => {
     const row = source('./LyricsLrclibCandidateRow.vue');
 
+    const previewRowIndex = row.indexOf(
+      'class="lyrics-lrclib-candidate-row__preview-row"',
+    );
     const previewIndex = row.indexOf(
       'class="lyrics-lrclib-candidate-row__preview-line"',
     );
@@ -78,13 +81,22 @@ describe('LRCLIB search modal contract', () => {
       'class="lyrics-lrclib-candidate-row__saved-status"',
     );
 
-    expect(previewIndex).toBeGreaterThan(-1);
+    expect(previewRowIndex).toBeGreaterThan(-1);
+    expect(previewIndex).toBeGreaterThan(previewRowIndex);
     expect(savedStatusIndex).toBeGreaterThan(previewIndex);
-    expect(row).toContain('v-if="!expanded && candidate.alreadySaved"');
+    expect(row).toMatch(
+      /v-if="\s*!expanded &&\s*\(presentedCandidate\.previewLines\?\.\[0\] \|\| candidate\.alreadySaved\)\s*"/s,
+    );
     expect(row).toContain('class="lyrics-lrclib-candidate-row__saved-status"');
     expect(row).toContain('<UiChip tone="success">已保存</UiChip>');
     expect(row).toMatch(
-      /\.lyrics-lrclib-candidate-row__saved-status\s*\{[^}]*display:\s*flex;[^}]*justify-content:\s*flex-end;[^}]*margin-top:\s*var\(--ui-space-1\);/s,
+      /\.lyrics-lrclib-candidate-row__preview-row\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--ui-space-2\);/s,
+    );
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-row__preview-line\s*\{[^}]*min-width:\s*0;[^}]*flex:\s*1 1 50%;[^}]*margin:\s*0;/s,
+    );
+    expect(row).toMatch(
+      /\.lyrics-lrclib-candidate-row__saved-status\s*\{[^}]*flex:\s*0 0 auto;[^}]*margin-inline-start:\s*auto;/s,
     );
     expect(row).toContain('v-else-if="candidate.alreadySaved"');
   });
