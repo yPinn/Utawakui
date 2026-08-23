@@ -4,13 +4,14 @@ import { describe, expect, it } from 'vitest';
 import {
   applyOverlayAppearance,
   normalizeOverlayAppearance,
+  OVERLAY_APPEARANCE_DEFAULTS,
   overlayAppearanceOptionIds,
 } from './appearance.mjs';
 
 const sharedValues = JSON.parse(
   readFileSync(
     fileURLToPath(
-      new URL('../../shared/outputTemplateValues.json', import.meta.url),
+      new URL('../../shared/outputAppearanceValues.json', import.meta.url),
     ),
     'utf8',
   ),
@@ -24,6 +25,10 @@ describe('overlay appearance', () => {
     )) {
       expect(optionIds[key]).toEqual(options.map((option) => option.id));
     }
+  });
+
+  it('keeps browser fallbacks aligned with the shared appearance contract', () => {
+    expect(OVERLAY_APPEARANCE_DEFAULTS).toEqual(sharedValues.defaultSettings);
   });
 
   it('falls back from unsupported values instead of exposing raw CSS', () => {

@@ -1,6 +1,8 @@
 @layer ovl-semantic {
   :root {
     /* Public-output roles stay independent from control-panel UI tokens. */
+    --ovl-color-ink: var(--ovl-primitive-color-ink);
+    --ovl-color-paper: var(--ovl-primitive-color-paper);
     --ovl-color-text-primary: var(--ovl-primitive-color-paper);
     --ovl-color-text-secondary: var(--ovl-primitive-color-mist);
     --ovl-color-current: var(--ovl-primitive-color-coral);
@@ -26,77 +28,5 @@
     --ovl-text-shadow: var(--ovl-primitive-text-shadow);
     --ovl-motion-line-duration: var(--ovl-primitive-motion-standard);
     --ovl-motion-ease: var(--ovl-primitive-ease-out);
-  }
-}
-
-@layer ovl-appearance {
-  :root {
-    /* Current allowlisted settings; future packs resolve into this layer. */
-    --ovl-user-font-family: var(--ovl-font-ui);
-    --ovl-user-font-scale: 100%;
-    --ovl-user-font-weight: 600;
-    --ovl-user-text-align: left;
-    --ovl-user-justify: start;
-    --ovl-user-surface: transparent;
-    --ovl-user-outline: transparent;
-  }
-
-  :root[data-ovl-font='serif'] {
-    --ovl-user-font-family: var(--ovl-font-display-cjk);
-  }
-
-  :root[data-ovl-font='rounded'] {
-    --ovl-user-font-family:
-      'Arial Rounded MT Bold', 'Yu Gothic UI', 'Microsoft JhengHei', sans-serif;
-  }
-
-  :root[data-ovl-scale='small'] {
-    --ovl-user-font-scale: 85%;
-  }
-
-  :root[data-ovl-scale='large'] {
-    --ovl-user-font-scale: 120%;
-  }
-
-  :root[data-ovl-weight='regular'] {
-    --ovl-user-font-weight: 400;
-  }
-
-  :root[data-ovl-weight='bold'] {
-    --ovl-user-font-weight: 700;
-  }
-
-  :root[data-ovl-align='left'] {
-    --ovl-user-text-align: left;
-    --ovl-user-justify: start;
-  }
-
-  :root[data-ovl-align='right'] {
-    --ovl-user-text-align: right;
-    --ovl-user-justify: end;
-  }
-
-  :root[data-ovl-surface='soft'] {
-    --ovl-user-surface: var(--ovl-color-surface-soft);
-    --ovl-user-outline: var(--ovl-color-outline);
-  }
-
-  :root[data-ovl-surface='solid'] {
-    --ovl-user-surface: var(--ovl-color-surface);
-    --ovl-user-outline: var(--ovl-color-outline);
-  }
-
-  @media (max-width: 48rem), (max-height: 48rem) {
-    :root {
-      --ovl-safe-inline: var(--ovl-primitive-space-6);
-      --ovl-safe-block: var(--ovl-primitive-space-6);
-    }
-  }
-
-  @media (max-width: 36rem), (max-height: 36rem) {
-    :root {
-      --ovl-safe-inline: var(--ovl-primitive-space-4);
-      --ovl-safe-block: var(--ovl-primitive-space-4);
-    }
   }
 }

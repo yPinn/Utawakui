@@ -19,27 +19,29 @@ These packages are part of the production dependency closure in
 
 Summary from `node scripts/license-inventory.mjs`:
 
-| License        | Count |
-| -------------- | ----: |
-| MIT            |    67 |
-| ISC            |     6 |
-| Apache-2.0     |     3 |
-| BlueOak-1.0.0  |     1 |
-| BSD-3-Clause   |     1 |
-| MIT OR CC0-1.0 |     2 |
-| Python-2.0     |     1 |
+| License                      | Count |
+| ---------------------------- | ----: |
+| MIT                          |    67 |
+| ISC                          |     6 |
+| Apache-2.0                   |     3 |
+| BlueOak-1.0.0                |     1 |
+| BSD-3-Clause                 |     1 |
+| MIT OR CC0-1.0               |     2 |
+| Python-2.0                   |     1 |
+| Standard 'no charge' license |     1 |
 
 Direct runtime dependencies:
 
-| Package            | Version | License    | Release note                                                                                                                                                          |
-| ------------------ | ------- | ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `electron-updater` | 6.8.9   | MIT        | Main-process Windows update client; runtime network access remains release-gated until signing and update-channel verification are complete.                          |
-| `kissfft-js`       | 0.1.8   | MIT        | Packaged runtime dependency for DSP/audio analysis paths.                                                                                                             |
-| `koroman`          | 1.0.16  | MIT        | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                          |
-| `kuromoji`         | 0.1.2   | Apache-2.0 | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                      |
-| `onnxruntime-node` | 1.27.0  | MIT        | Native ONNX Runtime binding and Windows binaries; npm package has license metadata but no bundled license file. Keep upstream source/license link in release notices. |
-| `wanakana`         | 5.3.1   | MIT        | Kana/romaji conversion runtime.                                                                                                                                       |
-| `ws`               | 8.21.3  | MIT        | Loopback WebSocket server for OBS Browser Source output.                                                                                                              |
+| Package            | Version | License                                                            | Release note                                                                                                                                                          |
+| ------------------ | ------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `electron-updater` | 6.8.9   | MIT                                                                | Main-process Windows update client; runtime network access remains release-gated until signing and update-channel verification are complete.                          |
+| `gsap`             | 3.13.0  | [Standard 'no charge' license](https://gsap.com/standard-license/) | Browser Source timeline runtime; served only through the loopback Output allowlist. Retain the GSAP standard-license reference in release notices.                    |
+| `kissfft-js`       | 0.1.8   | MIT                                                                | Packaged runtime dependency for DSP/audio analysis paths.                                                                                                             |
+| `koroman`          | 1.0.16  | MIT                                                                | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                          |
+| `kuromoji`         | 0.1.2   | Apache-2.0                                                         | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                      |
+| `onnxruntime-node` | 1.27.0  | MIT                                                                | Native ONNX Runtime binding and Windows binaries; npm package has license metadata but no bundled license file. Keep upstream source/license link in release notices. |
+| `wanakana`         | 5.3.1   | MIT                                                                | Kana/romaji conversion runtime.                                                                                                                                       |
+| `ws`               | 8.21.3  | MIT                                                                | Loopback WebSocket server for OBS Browser Source output.                                                                                                              |
 
 Notable transitive runtime dependencies:
 
@@ -53,17 +55,18 @@ Notable transitive runtime dependencies:
 | `web-worker`    | 1.5.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
 | `type-fest`     | 0.20.2 / 4.41.0 | MIT OR CC0-1.0 | Dual-licensed transitive dependency.                                 |
 
-## Renderer-Bundled Dependencies
+## Browser-Delivered Dependencies
 
-These dependencies are declared as development dependencies because Vite bundles
-their code into `dist/`; they are not expected to appear as runtime
-`node_modules` in the package.
+These dependencies are delivered to a browser context. Vue and the renderer
+dependencies are bundled into `dist/` by Vite. GSAP is a production dependency
+served to OBS only through one exact loopback Output allowlist route.
 
-| Package family    | Version | License | Release note                                                                                                                                                               |
-| ----------------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `vue` / `@vue/*`  | 3.5.41  | MIT     | Renderer framework bundle.                                                                                                                                                 |
-| `@lucide/vue`     | 1.31.0  | ISC     | Renderer icon components.                                                                                                                                                  |
-| `@soundtouchjs/*` | 2.1.1   | MPL-2.0 | Pitch/tempo worklet bundle. MPL is file-level copyleft; if Utawakui modifies these source files, publish the modified MPL-covered source and provide a source-code notice. |
+| Package family    | Version | License                                                            | Release note                                                                                                                                                               |
+| ----------------- | ------- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vue` / `@vue/*`  | 3.5.41  | MIT                                                                | Renderer framework bundle.                                                                                                                                                 |
+| `@lucide/vue`     | 1.31.0  | ISC                                                                | Renderer icon components.                                                                                                                                                  |
+| `@soundtouchjs/*` | 2.1.1   | MPL-2.0                                                            | Pitch/tempo worklet bundle. MPL is file-level copyleft; if Utawakui modifies these source files, publish the modified MPL-covered source and provide a source-code notice. |
+| `gsap`            | 3.13.0  | [Standard 'no charge' license](https://gsap.com/standard-license/) | Loopback-served Browser Source animation runtime.                                                                                                                          |
 
 The renderer dependency closure also includes MIT/BSD/ISC packages such as
 `@babel/*`, `@jridgewell/sourcemap-codec`, `entities`, `estree-walker`,

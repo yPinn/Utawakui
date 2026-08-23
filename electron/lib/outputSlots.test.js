@@ -150,6 +150,51 @@ describe('outputSlots', () => {
     ).toThrow('Invalid output slot');
   });
 
+  it('round-trips bundled Lyrics template ids with appearance settings', () => {
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'manga-frame',
+      styleSetIds: ['runtime-source', 'lyrics-type'],
+      settings: {
+        fontFamily: 'serif',
+        fontScale: 'large',
+        alignment: 'left',
+        surface: 'solid',
+      },
+    });
+
+    expect(loadOutputSlots(dir).slots.lyrics).toEqual({
+      templateId: 'manga-frame',
+      styleSetIds: ['runtime-source', 'lyrics-type'],
+      settings: {
+        fontFamily: 'serif',
+        fontScale: 'large',
+        alignment: 'left',
+        surface: 'solid',
+      },
+    });
+
+    expect(() =>
+      upsertOutputSlot(dir, 'lyrics', {
+        templateId: 'quiet-caption',
+        settings: {},
+      }),
+    ).not.toThrow();
+  });
+
+  it('round-trips the bundled Cover Player Artwork template id', () => {
+    upsertOutputSlot(dir, 'artwork', {
+      templateId: 'cover-player',
+      styleSetIds: ['runtime-source'],
+      settings: { surface: 'soft', alignment: 'left' },
+    });
+
+    expect(loadOutputSlots(dir).slots.artwork).toEqual({
+      templateId: 'cover-player',
+      styleSetIds: ['runtime-source'],
+      settings: { surface: 'soft', alignment: 'left' },
+    });
+  });
+
   it('backs up corrupted documents and refuses newer versions', () => {
     fs.writeFileSync(filePath, '{ invalid json');
     expect(loadOutputSlots(dir).slots.lyrics.templateId).toBe('focus-line');

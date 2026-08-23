@@ -99,7 +99,7 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).toContain("emit('applyPreset'");
     expect(componentSource).toContain('@dblclick="applyPreset(preset)"');
     expect(componentSource).not.toContain('雙擊套用');
-    expect(componentSource).toContain('整套風格');
+    expect(componentSource).toContain('內建模板');
     expect(componentSource).not.toContain('startOutput');
     expect(componentSource).toContain('ObsTemplateMockup');
     expect(componentSource).toContain('ObsTemplatePreviewStage');
@@ -124,8 +124,37 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(mockupSource).toContain("animated ? 'playing' : 'paused'");
     expect(mockupSource).toContain("preset?.id ?? 'generic'");
+    expect(mockupSource).toContain("preset?.id === 'quiet-caption'");
+    expect(mockupSource).toContain("preset?.id === 'manga-frame'");
+    expect(mockupSource).toContain("preset?.id === 'cover-player'");
+    expect(mockupSource).toContain('obs-template-mockup__cover-player');
+    expect(mockupSource).toContain('obs-template-mockup__cover-player-copy');
+    expect(compactWhitespace(mockupSource)).toContain(
+      '.obs-template-mockup__cover-player .obs-template-mockup__artwork',
+    );
+    expect(mockupSource).toContain('obs-template-mockup__transport');
+    expect(mockupSource).toContain('obs-template-mockup__timeline');
+    expect(mockupSource).not.toContain('obs-template-mockup__volume');
+    expect(mockupSource).toContain('obs-template-mockup__manga-bubble');
+    expect(mockupSource).toContain(
+      "import MangaFrameSvg from './MangaFrameSvg.vue'",
+    );
+    expect(mockupSource).toContain('writing-mode: vertical-rl');
+    const mangaBranch = mockupSource.slice(
+      mockupSource.indexOf("preset?.id === 'manga-frame'"),
+      mockupSource.indexOf("preset?.id === 'karaoke-stack'"),
+    );
+    expect(mangaBranch).toContain('lyrics.current');
+    expect(mangaBranch).not.toContain('lyrics.next');
+    expect(mangaBranch).toContain(
+      'obs-template-mockup__manga-bubble obs-template-mockup__animated-bubble',
+    );
+    expect(mangaBranch).not.toContain(
+      'obs-template-mockup__title--manga obs-template-mockup__animated-primary',
+    );
     expect(mockupSource).toContain('@media (prefers-reduced-motion: reduce)');
     expect(mockupSource).toContain('@keyframes obs-preview-line-cycle');
+    expect(mockupSource).toContain('@keyframes obs-preview-bubble-cycle');
   });
 
   it('reuses shared preview tokens instead of hard-coded component values', () => {
@@ -136,6 +165,7 @@ describe('OBS output workspace layout contract', () => {
     expect(tokenSource).toContain('--ui-output-preview-accent:');
     expect(tokenSource).toContain('--ui-output-preview-cycle-duration:');
     expect(tokenSource).toContain('--ui-output-preview-cycle-ease:');
+    expect(tokenSource).toContain('--ui-output-preview-player-track-size:');
     expect(tokenSource).toContain(
       '--ui-output-template-thumb-caption-font-size:',
     );

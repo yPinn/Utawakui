@@ -65,6 +65,39 @@ describe('output template registry', () => {
     expect(data.styleSets.length).toBeGreaterThan(0);
   });
 
+  it('registers the first bundled appearance batch as independent Lyrics templates', () => {
+    const lyricsGroup = getOutputWorkbenchData().templateGroups.find(
+      (group) => group.kind === 'lyrics',
+    );
+
+    expect(lyricsGroup.templates.map((template) => template.id)).toEqual(
+      expect.arrayContaining(['quiet-caption', 'manga-frame']),
+    );
+    expect(
+      lyricsGroup.templates.find((template) => template.id === 'manga-frame'),
+    ).toMatchObject({
+      kind: 'lyrics',
+      tone: 'manga',
+      preview: { layoutLabel: '漫畫直書單句', motionLabel: '整框淡入淡出' },
+    });
+  });
+
+  it('registers Cover Player as an independent Artwork template', () => {
+    const artworkGroup = getOutputWorkbenchData().templateGroups.find(
+      (group) => group.kind === 'artwork',
+    );
+
+    expect(artworkGroup.templates.map((template) => template.id)).toEqual(
+      expect.arrayContaining(['art-card', 'cover-player']),
+    );
+    expect(
+      artworkGroup.templates.find((template) => template.id === 'cover-player'),
+    ).toMatchObject({
+      kind: 'artwork',
+      preview: { layoutLabel: '直式播放器', motionLabel: '進度同步' },
+    });
+  });
+
   it('uses one fixed Chinese preview scene for every template comparison', () => {
     const data = getOutputWorkbenchData();
 

@@ -3,6 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
+const OUTPUT_APPEARANCE_VALUES = require('../../shared/outputAppearanceValues.json');
 const OUTPUT_TEMPLATE_VALUES = require('../../shared/outputTemplateValues.json');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
@@ -89,7 +90,9 @@ function normalizeDocument(value) {
       sanitizeOutputSlot(slot.id, {
         templateId: slot.defaultTemplateId,
         styleSetIds: slot.defaultStyleSetIds,
-        settings: slot.defaultSettings,
+        settings:
+          OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
+          OUTPUT_APPEARANCE_VALUES.defaultSettings,
       });
     slots[slot.id] = normalized;
   }

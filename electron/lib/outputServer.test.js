@@ -309,6 +309,13 @@ describe('outputServer', () => {
     expect(fallback.headers.get('content-type')).toContain('text/css');
     expect(await fallback.text()).toContain('--ovl-primitive-color-ink');
 
+    const appearanceStyles = await fetch(
+      `${status.httpUrl}/overlay/shared/appearance.css`,
+    );
+    expect(appearanceStyles.status).toBe(200);
+    expect(appearanceStyles.headers.get('content-type')).toContain('text/css');
+    expect(await appearanceStyles.text()).toContain('@layer ovl-appearance');
+
     const tokens = await fetch(`${status.httpUrl}/overlay/shared/tokens.css`);
     expect(tokens.status).toBe(200);
     expect(tokens.headers.get('content-type')).toContain('text/css');
@@ -334,6 +341,17 @@ describe('outputServer', () => {
       `${status.httpUrl}/overlay/shared/appearance.mjs`,
     );
     expect(appearance.status).toBe(200);
+
+    const mangaContract = await fetch(
+      `${status.httpUrl}/overlay/shared/mangaFrameContract.mjs`,
+    );
+    expect(mangaContract.status).toBe(200);
+    expect(await mangaContract.text()).toContain('DEFAULT_MANGA_FRAME_ID');
+
+    const gsap = await fetch(`${status.httpUrl}/overlay/vendor/gsap.min.js`);
+    expect(gsap.status).toBe(200);
+    expect(gsap.headers.get('content-type')).toContain('text/javascript');
+    expect(await gsap.text()).toContain('GreenSock');
 
     const encodedTraversal = await fetch(
       `${status.httpUrl}/overlay/%2e%2e%2fpackage.json`,

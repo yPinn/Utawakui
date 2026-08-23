@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="/overlay/shared/fallback.css" />
     <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/lyrics/lyrics.css" />
+    <link rel="stylesheet" href="/overlay/shared/appearance.css" />
+    <script src="/overlay/vendor/gsap.min.js"></script>
     <script type="module" src="/overlay/lyrics/lyrics.mjs"></script>
   </head>
   <body>
@@ -19,6 +21,13 @@
       dir="auto"
       hidden
     >
+      <svg
+        id="lyrics-manga-frame"
+        class="lyrics-overlay__manga-frame"
+        viewBox="0 0 400 600"
+        aria-hidden="true"
+        focusable="false"
+      ></svg>
       <p id="lyrics-current" class="lyrics-overlay__current"></p>
       <p id="lyrics-next" class="lyrics-overlay__next"></p>
     </main>

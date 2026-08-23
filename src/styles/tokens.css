@@ -240,6 +240,15 @@
   --ui-output-preview-stage-accent: #78c9cb;
   --ui-output-preview-reading-accent: #f0b49d;
   --ui-output-preview-accent-contrast: #102326;
+  --ui-output-preview-manga-canvas: #e8e8e5;
+  --ui-output-preview-manga-paper: #ffffff;
+  --ui-output-preview-manga-ink: #101010;
+  --ui-output-preview-manga-halftone: rgb(16 16 16 / 20%);
+  --ui-output-preview-manga-border-width: 0.125rem;
+  --ui-output-preview-manga-dot-size: 0.045rem;
+  --ui-output-preview-manga-dot-gap: 0.055rem;
+  --ui-output-preview-manga-pattern-size: 0.2rem;
+  --ui-output-preview-player-track-size: 0.125rem;
   --ui-output-preview-aspect-ratio: 16 / 9;
   --ui-output-preview-cycle-duration: 4.8s;
   --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);

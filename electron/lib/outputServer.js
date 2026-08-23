@@ -35,6 +35,7 @@ const CLIENT_CLOSE_GRACE_MS = 500;
 const STATIC_CACHE_LIMIT = 32;
 const ARTWORK_CACHE_LIMIT = 128;
 const DEFAULT_OVERLAY_ROOT = path.resolve(__dirname, '../../overlay');
+const GSAP_BROWSER_ASSET = require.resolve('gsap/dist/gsap.min.js');
 const OVERLAY_CONTENT_SECURITY_POLICY = [
   "default-src 'none'",
   "style-src 'self'",
@@ -51,6 +52,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/': ['lyrics', 'index.html'],
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
+  '/overlay/lyrics/mangaFrame.mjs': ['lyrics', 'mangaFrame.mjs'],
   '/overlay/now-playing': ['now-playing', 'index.html'],
   '/overlay/now-playing/': ['now-playing', 'index.html'],
   '/overlay/now-playing/now-playing.css': ['now-playing', 'now-playing.css'],
@@ -63,17 +65,26 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/artwork/': ['artwork', 'index.html'],
   '/overlay/artwork/artwork.css': ['artwork', 'artwork.css'],
   '/overlay/artwork/artwork.mjs': ['artwork', 'artwork.mjs'],
+  '/overlay/shared/appearance.css': ['shared', 'appearance.css'],
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
   '/overlay/shared/fallback.css': ['shared', 'fallback.css'],
+  '/overlay/shared/mangaFrameContract.mjs': [
+    'shared',
+    'mangaFrameContract.mjs',
+  ],
   '/overlay/shared/preview.mjs': ['shared', 'preview.mjs'],
   '/overlay/shared/runtime.mjs': ['shared', 'runtime.mjs'],
   '/overlay/shared/state.mjs': ['shared', 'state.mjs'],
   '/overlay/shared/tokens.css': ['shared', 'tokens.css'],
 });
+const OVERLAY_VENDOR_ROUTES = Object.freeze({
+  '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
+});
 const OVERLAY_MIME_TYPES = Object.freeze({
   '.css': 'text/css; charset=utf-8',
   '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
 });
 const ARTWORK_MIME_TYPES = Object.freeze({
@@ -655,8 +666,10 @@ function createOutputServer(options = {}) {
     }
 
     const overlayFileParts = OVERLAY_STATIC_ROUTES[pathname];
-    if (overlayFileParts) {
-      const filePath = path.join(overlayRoot, ...overlayFileParts);
+    const vendorFilePath = OVERLAY_VENDOR_ROUTES[pathname];
+    if (overlayFileParts || vendorFilePath) {
+      const filePath =
+        vendorFilePath ?? path.join(overlayRoot, ...overlayFileParts);
       try {
         const asset = await readCachedAsset(
           staticAssetCache,

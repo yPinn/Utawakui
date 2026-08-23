@@ -373,6 +373,29 @@ export function selectNowPlayingFrame(snapshot) {
   };
 }
 
+export function selectArtworkFrame(snapshot, options = {}) {
+  const frame = selectNowPlayingFrame(snapshot);
+  const positionMs = playbackPositionMs(snapshot, options.nowMs ?? Date.now());
+  const durationMs = Number.isFinite(snapshot?.playback?.durationMs)
+    ? Math.max(0, snapshot.playback.durationMs)
+    : 0;
+  const boundedPositionMs = Math.max(0, positionMs);
+  const progress =
+    durationMs > 0
+      ? Math.min(1, Math.max(0, boundedPositionMs / durationMs))
+      : 0;
+
+  return {
+    ...frame,
+    playbackStatus: ['playing', 'paused'].includes(snapshot?.playback?.status)
+      ? snapshot.playback.status
+      : 'idle',
+    positionMs: boundedPositionMs,
+    durationMs,
+    progress,
+  };
+}
+
 export function selectSetlistFrame(snapshot) {
   const items = Array.isArray(snapshot?.queue?.items)
     ? snapshot.queue.items

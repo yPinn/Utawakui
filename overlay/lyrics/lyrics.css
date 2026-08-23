@@ -98,6 +98,10 @@
     paint-order: stroke fill;
   }
 
+  .lyrics-overlay__manga-frame {
+    display: none;
+  }
+
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
     --ovl-template-lyrics-line-width: 34ch;
     --ovl-template-lyrics-bottom: 6%;
@@ -114,6 +118,149 @@
     filter: drop-shadow(0 0 0.16em var(--ovl-color-current));
   }
 
+  :root[data-ovl-template='quiet-caption'] .lyrics-overlay {
+    --ovl-template-lyrics-current-size: 2.75em;
+    --ovl-template-lyrics-next-size: 1.35em;
+    --ovl-template-lyrics-line-width: 32ch;
+    --ovl-template-lyrics-panel-width: 58rem;
+    --ovl-template-lyrics-bottom: 8%;
+
+    gap: var(--ovl-primitive-space-2);
+    padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
+  }
+
+  :root[data-ovl-template='quiet-caption'] .lyrics-overlay__current,
+  :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
+    text-shadow: var(--ovl-text-shadow);
+    -webkit-text-stroke: 0;
+  }
+
+  :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
+    opacity: 0.72;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay {
+    --ovl-template-lyrics-current-size: 2.9em;
+    --ovl-template-lyrics-next-size: 1.35em;
+    --ovl-template-lyrics-line-width: none;
+    --ovl-template-lyrics-panel-width: 23rem;
+    --ovl-template-lyrics-bottom: 7%;
+
+    isolation: isolate;
+    inline-size: clamp(16rem, 27vw, var(--ovl-template-lyrics-panel-width));
+    block-size: min(72vh, 36rem);
+    min-block-size: 22rem;
+    place-items: center;
+    gap: 0;
+    padding: 4.5rem 3.5rem 5rem;
+    border: 0;
+    background: transparent;
+    color: var(--ovl-color-ink);
+    text-align: center;
+    will-change: opacity, transform;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__manga-frame {
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    display: block;
+    overflow: visible;
+    pointer-events: none;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__manga-frame-shape {
+    fill: var(--ovl-color-paper);
+    stroke: var(--ovl-color-ink);
+    stroke-linecap: round;
+    stroke-linejoin: var(--ovl-manga-frame-line-join, round);
+    stroke-width: var(--ovl-manga-frame-stroke-width, 7);
+    vector-effect: non-scaling-stroke;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__current,
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__next,
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__segment[data-segment-state='past'],
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__segment[data-segment-state='active'],
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__segment[data-segment-state='upcoming'] {
+    position: relative;
+    z-index: 1;
+    color: var(--ovl-color-ink);
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__current {
+    inline-size: 74%;
+    max-inline-size: none;
+    block-size: 64%;
+    max-block-size: none;
+    display: block;
+    line-break: strict;
+    overflow-wrap: anywhere;
+    text-align: center;
+    text-orientation: upright;
+    text-wrap: wrap;
+    white-space: pre-wrap;
+    word-break: normal;
+    writing-mode: vertical-rl;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__next {
+    display: none;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__segment {
+    position: relative;
+    isolation: isolate;
+    background-image: none;
+  }
+
+  :root[data-ovl-template='manga-frame'] .lyrics-overlay__segment::before {
+    position: absolute;
+    z-index: -1;
+    inset: -0.04em;
+    background-image: radial-gradient(
+      circle,
+      var(--ovl-color-ink) 0 0.045em,
+      transparent 0.055em
+    );
+    background-size: 0.16em 0.16em;
+    clip-path: inset(0 0 calc(100% - var(--ovl-segment-progress)) 0);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    content: '';
+    opacity: 0.18;
+  }
+
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__segment[data-segment-state='past'] {
+    --ovl-segment-progress: 100%;
+  }
+
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__segment[data-segment-state='upcoming'] {
+    --ovl-segment-progress: 0%;
+  }
+
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay[data-manga-length='medium']
+    .lyrics-overlay__current {
+    --ovl-template-lyrics-current-size: 2.55em;
+  }
+
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay[data-manga-length='long']
+    .lyrics-overlay__current {
+    --ovl-template-lyrics-current-size: 2.15em;
+    block-size: 70%;
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .lyrics-overlay__current {
       transition: none;
@@ -126,6 +273,13 @@
       --ovl-template-lyrics-next-size: 1.25em;
       --ovl-template-lyrics-line-width: 22ch;
     }
+
+    :root[data-ovl-template='manga-frame'] .lyrics-overlay {
+      inline-size: min(68vw, 19rem);
+      block-size: min(72vh, 31rem);
+      min-block-size: 18rem;
+      padding: 3.75rem 2.75rem 4rem;
+    }
   }
 
   @media (max-height: 36rem) {
@@ -135,6 +289,13 @@
       --ovl-template-lyrics-bottom: 6%;
 
       gap: var(--ovl-primitive-space-2);
+    }
+
+    :root[data-ovl-template='manga-frame'] .lyrics-overlay {
+      inline-size: min(36vw, 17rem);
+      block-size: 78vh;
+      min-block-size: 16rem;
+      padding: 3rem 2.5rem 3.5rem;
     }
   }
 }

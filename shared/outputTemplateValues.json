@@ -6,98 +6,39 @@
       "label": "Now Playing",
       "path": "/overlay/now-playing",
       "defaultTemplateId": "now-next",
-      "defaultStyleSetIds": ["runtime-source"],
-      "defaultSettings": {
-        "fontFamily": "sans",
-        "fontScale": "medium",
-        "fontWeight": "bold",
-        "alignment": "left",
-        "surface": "solid"
-      }
+      "defaultStyleSetIds": ["runtime-source"]
     },
     {
       "id": "setlist",
       "label": "Setlist",
       "path": "/overlay/setlist",
       "defaultTemplateId": "queue-board",
-      "defaultStyleSetIds": ["runtime-source", "setlist-layout"],
-      "defaultSettings": {
-        "fontFamily": "sans",
-        "fontScale": "medium",
-        "fontWeight": "semibold",
-        "alignment": "left",
-        "surface": "solid"
-      }
+      "defaultStyleSetIds": ["runtime-source", "setlist-layout"]
     },
     {
       "id": "lyrics",
       "label": "Lyrics",
       "path": "/overlay/lyrics",
       "defaultTemplateId": "focus-line",
-      "defaultStyleSetIds": ["runtime-source", "lyrics-type"],
-      "defaultSettings": {
-        "fontFamily": "serif",
-        "fontScale": "medium",
-        "fontWeight": "bold",
-        "alignment": "left",
-        "surface": "transparent"
-      }
+      "defaultStyleSetIds": ["runtime-source", "lyrics-type"]
     },
     {
       "id": "artwork",
       "label": "Artwork",
       "path": "/overlay/artwork",
       "defaultTemplateId": "art-card",
-      "defaultStyleSetIds": ["runtime-source"],
-      "defaultSettings": {
-        "fontFamily": "serif",
-        "fontScale": "medium",
-        "fontWeight": "bold",
-        "alignment": "left",
-        "surface": "soft"
-      }
+      "defaultStyleSetIds": ["runtime-source"]
     }
   ],
   "templateKinds": {
     "now-next": "now-playing",
     "queue-board": "setlist",
     "focus-line": "lyrics",
+    "quiet-caption": "lyrics",
     "karaoke-stack": "lyrics",
+    "manga-frame": "lyrics",
     "reading-aid": "lyrics",
-    "art-card": "artwork"
-  },
-  "appearanceOptions": {
-    "fontFamily": [
-      { "id": "sans", "label": "無襯線" },
-      { "id": "serif", "label": "襯線" },
-      { "id": "rounded", "label": "圓體" }
-    ],
-    "fontScale": [
-      { "id": "small", "label": "小" },
-      { "id": "medium", "label": "標準" },
-      { "id": "large", "label": "大" }
-    ],
-    "fontWeight": [
-      { "id": "regular", "label": "一般" },
-      { "id": "semibold", "label": "中粗" },
-      { "id": "bold", "label": "粗體" }
-    ],
-    "alignment": [
-      { "id": "left", "label": "靠左" },
-      { "id": "center", "label": "置中" },
-      { "id": "right", "label": "靠右" }
-    ],
-    "surface": [
-      { "id": "transparent", "label": "透明" },
-      { "id": "soft", "label": "半透明" },
-      { "id": "solid", "label": "實底" }
-    ]
-  },
-  "defaultSettings": {
-    "fontFamily": "sans",
-    "fontScale": "medium",
-    "fontWeight": "semibold",
-    "alignment": "left",
-    "surface": "transparent"
+    "art-card": "artwork",
+    "cover-player": "artwork"
   }
 }

@@ -1,3 +1,4 @@
+import OUTPUT_APPEARANCE_VALUES from '../../shared/outputAppearanceValues.json';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
@@ -87,6 +88,30 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     ],
   },
   {
+    id: 'quiet-caption',
+    kind: 'lyrics',
+    order: 5,
+    name: 'Quiet Caption',
+    tone: 'minimal',
+    availability: {
+      label: '可用',
+      tone: 'muted',
+      summary: '只需要目前行文字；無同步、逐字或段落資料時仍可正常顯示。',
+    },
+    summary: '低干擾的兩行歌詞，讓畫面與演出保持主角。',
+    detail: '拿掉多餘面板與裝飾，只保留清楚的目前行與輕量下一句。',
+    preview: {
+      layoutLabel: '極簡雙行',
+      motionLabel: '淡入',
+    },
+    tags: ['低干擾', '純文字', 'M0 fallback'],
+    settings: [
+      { label: '顯示', value: '目前行、下一行' },
+      { label: '表面', value: '預設透明' },
+      { label: '資料', value: '不要求逐字歌詞' },
+    ],
+  },
+  {
     id: 'focus-line',
     kind: 'lyrics',
     order: 10,
@@ -132,6 +157,33 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       { label: '顯示', value: '目前行、下一行' },
       { label: '節奏', value: '行進度提示' },
       { label: '背景', value: '半透明遮罩' },
+    ],
+  },
+  {
+    id: 'manga-frame',
+    kind: 'lyrics',
+    order: 30,
+    name: 'Manga Frame',
+    tone: 'manga',
+    availability: {
+      label: '可用',
+      tone: 'muted',
+      summary:
+        'M0 也會顯示單句黑白對話框；段落或逐字資料只增加外框與網點差異。',
+    },
+    summary: '一句歌詞就是一個置中的黑白直書漫畫對話框。',
+    detail:
+      '只顯示當下歌詞並以直書排列；換句時 SVG 外框與文字作為同一個事件淡出、淡入。',
+    preview: {
+      layoutLabel: '漫畫直書單句',
+      motionLabel: '整框淡入淡出',
+    },
+    tags: ['黑白漫畫', '置中單句', 'M0 fallback'],
+    settings: [
+      { label: '顯示', value: '只顯示目前行' },
+      { label: '排版', value: '直書、置中' },
+      { label: '切換', value: '外框與文字同步 Fade' },
+      { label: '進度', value: '文字後方網點' },
     ],
   },
   {
@@ -182,6 +234,32 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       { label: '顯示', value: '封面、歌名、歌手' },
       { label: '比例', value: '16:9 / 1:1 preview' },
       { label: '狀態', value: '播放中、下一首' },
+    ],
+  },
+  {
+    id: 'cover-player',
+    kind: 'artwork',
+    order: 100,
+    name: 'Cover Player',
+    tone: 'minimal',
+    availability: {
+      label: '可用',
+      tone: 'muted',
+      summary:
+        '使用現有播放時間與本機封面；缺少 duration 或封面時仍有穩定 fallback。',
+    },
+    summary: '大封面、曲目資訊與播放器控制列構成的直式節目卡。',
+    detail:
+      '參考音樂播放器的窄版構圖；控制圖示為唯讀狀態提示，不會在 OBS 中提供互動。',
+    preview: {
+      layoutLabel: '直式播放器',
+      motionLabel: '進度同步',
+    },
+    tags: ['大封面', '播放進度', '唯讀播放器'],
+    settings: [
+      { label: '顯示', value: '封面、歌名、歌手、進度' },
+      { label: '控制列', value: '唯讀播放狀態' },
+      { label: '缺圖', value: '曲名首字 fallback' },
     ],
   },
 ]);
@@ -256,7 +334,10 @@ export const OUTPUT_SLOT_DEFAULTS = Object.freeze(
       {
         templateId: slot.defaultTemplateId,
         styleSetIds: [...slot.defaultStyleSetIds],
-        settings: { ...slot.defaultSettings },
+        settings: {
+          ...(OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
+            OUTPUT_APPEARANCE_VALUES.defaultSettings),
+        },
       },
     ]),
   ),
@@ -264,7 +345,7 @@ export const OUTPUT_SLOT_DEFAULTS = Object.freeze(
 
 export const OUTPUT_APPEARANCE_OPTIONS = Object.freeze(
   Object.fromEntries(
-    Object.entries(OUTPUT_TEMPLATE_VALUES.appearanceOptions).map(
+    Object.entries(OUTPUT_APPEARANCE_VALUES.appearanceOptions).map(
       ([key, options]) => [key, options.map((option) => ({ ...option }))],
     ),
   ),

@@ -190,7 +190,7 @@ function applyPreset(preset) {
             {{ selectedPreset.availability.summary }}
           </p>
           <div class="obs-template-gallery__tags" aria-label="模板特性">
-            <UiChip tone="accent">整套風格</UiChip>
+            <UiChip tone="accent">內建模板</UiChip>
             <UiChip v-for="tag in selectedPreset.tags" :key="tag" tone="muted">
               {{ tag }}
             </UiChip>

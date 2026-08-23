@@ -2,9 +2,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import process from 'node:process';
 
-const rendererBundleRoots = Object.freeze([
+const browserRuntimeRoots = Object.freeze([
   '@lucide/vue',
   '@soundtouchjs/audio-worklet',
+  'gsap',
   'vue',
 ]);
 
@@ -103,12 +104,12 @@ const productionRows = Object.entries(lockPackages)
   .map(([lockPath, meta]) => buildRow(lockPath, meta))
   .sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 
-const rendererSeen = new Set();
-for (const packageName of rendererBundleRoots) {
-  walkDependencyClosure(lockPackages, packageName, rendererSeen);
+const browserRuntimeSeen = new Set();
+for (const packageName of browserRuntimeRoots) {
+  walkDependencyClosure(lockPackages, packageName, browserRuntimeSeen);
 }
 
-const rendererRows = [...rendererSeen]
+const browserRuntimeRows = [...browserRuntimeSeen]
   .map((lockPath) => buildRow(lockPath, lockPackages[lockPath]))
   .sort((a, b) => a.name.localeCompare(b.name) || a.path.localeCompare(b.path));
 
@@ -149,11 +150,11 @@ printTable(
   ]),
 );
 console.log('');
-console.log('## Renderer Bundle Dependency Closure');
+console.log('## Browser Runtime Dependency Closure');
 console.log('');
 printTable(
   ['Package', 'Version', 'License', 'Notice file', 'Path'],
-  rendererRows.map((row) => [
+  browserRuntimeRows.map((row) => [
     row.name,
     row.version,
     row.license,

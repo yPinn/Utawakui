@@ -645,14 +645,17 @@ describe('output runtime actions', () => {
     expect(runtime.state.slots.lyrics).toEqual(seed);
 
     await expect(
-      runtime.saveTemplateSelection('lyrics', 'karaoke-stack'),
+      runtime.saveTemplateSelection('lyrics', 'manga-frame'),
     ).resolves.toBe(true);
     await expect(
       runtime.saveSlotSettings('lyrics', { alignment: 'center' }),
     ).resolves.toBe(true);
     expect(bridge.upsertOutputSlot).toHaveBeenLastCalledWith(
       'lyrics',
-      expect.objectContaining({ settings: { alignment: 'center' } }),
+      expect.objectContaining({
+        templateId: 'manga-frame',
+        settings: { alignment: 'center' },
+      }),
     );
   });
 

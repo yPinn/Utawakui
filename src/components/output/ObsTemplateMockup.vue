@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import MangaFrameSvg from './MangaFrameSvg.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -56,7 +57,23 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
       v-else-if="preset?.kind === 'lyrics'"
       class="obs-template-mockup__content obs-template-mockup__content--lyrics"
     >
-      <template v-if="preset?.id === 'karaoke-stack'">
+      <template v-if="preset?.id === 'manga-frame'">
+        <span
+          class="obs-template-mockup__manga-bubble obs-template-mockup__animated-bubble"
+        >
+          <MangaFrameSvg
+            class="obs-template-mockup__manga-frame"
+            frame-id="spoken"
+          />
+          <strong
+            class="obs-template-mockup__title obs-template-mockup__title--manga"
+          >
+            {{ lyrics.current }}
+          </strong>
+        </span>
+      </template>
+
+      <template v-else-if="preset?.id === 'karaoke-stack'">
         <span class="obs-template-mockup__eyebrow">正在演唱</span>
         <strong
           class="obs-template-mockup__title obs-template-mockup__title--karaoke obs-template-mockup__animated-primary"
@@ -73,6 +90,15 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
         <span class="obs-template-mockup__reading">{{ lyrics.reading }}</span>
         <strong
           class="obs-template-mockup__title obs-template-mockup__animated-primary"
+        >
+          {{ lyrics.current }}
+        </strong>
+        <span class="obs-template-mockup__secondary">{{ lyrics.next }}</span>
+      </template>
+
+      <template v-else-if="preset?.id === 'quiet-caption'">
+        <strong
+          class="obs-template-mockup__title obs-template-mockup__title--quiet obs-template-mockup__animated-primary"
         >
           {{ lyrics.current }}
         </strong>
@@ -96,16 +122,45 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
       v-else-if="preset?.kind === 'artwork'"
       class="obs-template-mockup__content obs-template-mockup__content--artwork"
     >
-      <span
-        class="obs-template-mockup__artwork obs-template-mockup__animated-primary"
-      >
-        {{ track.title?.slice(0, 1) }}
-      </span>
-      <span class="obs-template-mockup__metadata">
-        <span class="obs-template-mockup__eyebrow">正在演唱</span>
-        <strong class="obs-template-mockup__title">{{ track.title }}</strong>
-        <span class="obs-template-mockup__secondary">{{ track.artist }}</span>
-      </span>
+      <template v-if="preset?.id === 'cover-player'">
+        <span class="obs-template-mockup__cover-player">
+          <span
+            class="obs-template-mockup__artwork obs-template-mockup__animated-primary"
+          >
+            {{ track.title?.slice(0, 1) }}
+          </span>
+          <span class="obs-template-mockup__cover-player-copy">
+            <span class="obs-template-mockup__metadata">
+              <strong class="obs-template-mockup__title">{{
+                track.title
+              }}</strong>
+              <span class="obs-template-mockup__secondary">{{
+                track.artist
+              }}</span>
+            </span>
+            <span class="obs-template-mockup__progress">
+              <span class="obs-template-mockup__progress-fill" />
+            </span>
+            <span class="obs-template-mockup__timeline">
+              <span>0:23</span>
+              <span>-3:27</span>
+            </span>
+            <span class="obs-template-mockup__transport">⇄ ◀ ▶ ▶| ↻</span>
+          </span>
+        </span>
+      </template>
+      <template v-else>
+        <span
+          class="obs-template-mockup__artwork obs-template-mockup__animated-primary"
+        >
+          {{ track.title?.slice(0, 1) }}
+        </span>
+        <span class="obs-template-mockup__metadata">
+          <span class="obs-template-mockup__eyebrow">正在演唱</span>
+          <strong class="obs-template-mockup__title">{{ track.title }}</strong>
+          <span class="obs-template-mockup__secondary">{{ track.artist }}</span>
+        </span>
+      </template>
     </div>
 
     <div
@@ -167,6 +222,12 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   --obs-preview-accent: var(--ui-output-preview-reading-accent);
 }
 
+.obs-template-mockup[data-tone='manga'] {
+  --obs-preview-bg: var(--ui-output-preview-manga-canvas);
+  --obs-preview-ink: var(--ui-output-preview-manga-ink);
+  --obs-preview-muted: var(--ui-output-preview-manga-ink);
+}
+
 .obs-template-mockup__content {
   min-width: 0;
   display: grid;
@@ -183,6 +244,12 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   align-content: end;
 }
 
+.obs-template-mockup[data-template-id='manga-frame']
+  .obs-template-mockup__content--lyrics {
+  place-content: center;
+  justify-items: center;
+}
+
 .obs-template-mockup__content--setlist {
   align-content: start;
 }
@@ -192,6 +259,67 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   align-content: end;
   align-items: center;
   gap: var(--ui-space-3);
+}
+
+.obs-template-mockup[data-template-id='cover-player']
+  .obs-template-mockup__content--artwork {
+  grid-template-columns: minmax(0, 1fr);
+  place-content: center;
+  justify-items: center;
+}
+
+.obs-template-mockup__cover-player {
+  width: 38%;
+  min-width: 0;
+  overflow: hidden;
+  display: grid;
+  gap: 0;
+  padding: 0;
+  border-radius: var(--ui-radius-sm);
+  background: var(--obs-preview-surface);
+}
+
+.obs-template-mockup__cover-player-copy {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1) var(--ui-space-2) var(--ui-space-2);
+}
+
+.obs-template-mockup__cover-player-copy .obs-template-mockup__metadata {
+  gap: 0;
+}
+
+.obs-template-mockup__cover-player-copy .obs-template-mockup__title {
+  font-size: var(--ui-output-template-thumb-title-font-size);
+  line-height: var(--ui-line-height-label);
+}
+
+.obs-template-mockup__cover-player-copy .obs-template-mockup__secondary {
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+}
+
+.obs-template-mockup__cover-player-copy .obs-template-mockup__progress {
+  height: var(--ui-output-preview-player-track-size);
+}
+
+.obs-template-mockup__timeline {
+  display: flex;
+  justify-content: space-between;
+  color: var(--obs-preview-muted);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.obs-template-mockup__transport {
+  overflow: hidden;
+  color: var(--obs-preview-ink);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-strong);
+  letter-spacing: var(--ui-space-1);
+  text-align: center;
+  white-space: nowrap;
 }
 
 .obs-template-mockup__artwork {
@@ -312,6 +440,46 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   background: var(--obs-preview-surface);
 }
 
+.obs-template-mockup__title--quiet {
+  font-weight: var(--ui-font-weight-strong);
+}
+
+.obs-template-mockup__manga-bubble {
+  position: relative;
+  width: min(30%, var(--ui-output-template-detail-artwork-size));
+  min-width: var(--ui-output-template-thumb-artwork-size);
+  aspect-ratio: 2 / 3;
+  display: grid;
+  place-items: center;
+  padding: var(--ui-space-4) var(--ui-space-3);
+  background: transparent;
+  color: var(--ui-output-preview-manga-ink);
+  --manga-frame-ink: var(--ui-output-preview-manga-ink);
+  --manga-frame-paper: var(--ui-output-preview-manga-paper);
+  text-align: center;
+}
+
+.obs-template-mockup__manga-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.obs-template-mockup__title--manga {
+  position: relative;
+  z-index: 1;
+  width: 62%;
+  height: 68%;
+  display: block;
+  color: var(--ui-output-preview-manga-ink);
+  line-height: var(--ui-line-height-body);
+  overflow-wrap: anywhere;
+  text-align: center;
+  text-orientation: upright;
+  writing-mode: vertical-rl;
+}
+
 .obs-template-mockup__progress {
   height: var(--ui-space-1);
   overflow: hidden;
@@ -331,6 +499,12 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
 .obs-template-mockup[data-motion='playing']
   .obs-template-mockup__animated-primary {
   animation: obs-preview-line-cycle var(--ui-output-preview-cycle-duration)
+    var(--ui-output-preview-cycle-ease) infinite;
+}
+
+.obs-template-mockup[data-motion='playing']
+  .obs-template-mockup__animated-bubble {
+  animation: obs-preview-bubble-cycle var(--ui-output-preview-cycle-duration)
     var(--ui-output-preview-cycle-ease) infinite;
 }
 
@@ -366,9 +540,47 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   text-align: left;
 }
 
+.obs-template-mockup[data-size='thumbnail'][data-template-id='cover-player']
+  .obs-template-mockup__content--artwork {
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: center;
+  text-align: left;
+}
+
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__cover-player {
+  width: 42%;
+  gap: 0;
+  padding: 0;
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__cover-player-copy {
+  gap: 0;
+  padding: var(--ui-space-1);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__cover-player-copy
+  .obs-template-mockup__timeline {
+  display: none;
+}
+
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__artwork {
   width: var(--ui-output-template-thumb-artwork-size);
   font-size: var(--ui-output-template-thumb-title-font-size);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__cover-player
+  .obs-template-mockup__artwork {
+  width: 100%;
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__cover-player
+  .obs-template-mockup__transport {
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  letter-spacing: 0;
 }
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__metadata {
@@ -378,6 +590,13 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__content > * {
   max-inline-size: 100%;
+}
+
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__manga-bubble {
+  width: 40%;
+  min-width: var(--ui-output-template-thumb-artwork-size);
+  box-sizing: border-box;
+  padding: var(--ui-space-3) var(--ui-space-2);
 }
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__title,
@@ -450,9 +669,25 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   }
 }
 
+@keyframes obs-preview-bubble-cycle {
+  0%,
+  12%,
+  88%,
+  100% {
+    opacity: 0;
+  }
+
+  24%,
+  76% {
+    opacity: 1;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__animated-primary,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__animated-bubble,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__progress-fill {
     animation: none;

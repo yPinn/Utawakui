@@ -1,5 +1,42 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createLyricsFrameScheduler, renderLyricsFrame } from './lyrics.mjs';
+import {
+  createLyricsFrameScheduler,
+  destroyLyricsAnimations,
+  renderLyricsFrame,
+} from './lyrics.mjs';
+
+function gsapHarness() {
+  const timelines = [];
+  const gsap = {
+    killTweensOf: vi.fn(),
+    set: vi.fn(),
+    to: vi.fn(),
+    timeline: vi.fn((options = {}) => {
+      const timeline = {
+        additions: [],
+        labels: [],
+        options,
+        tweens: [],
+        kill: vi.fn(),
+        addLabel(label) {
+          this.labels.push(label);
+          return this;
+        },
+        to(target, vars, position) {
+          this.tweens.push({ position, target, vars });
+          return this;
+        },
+        add(callback) {
+          this.additions.push(callback);
+          return this;
+        },
+      };
+      timelines.push(timeline);
+      return timeline;
+    }),
+  };
+  return { gsap, timelines };
+}
 
 function element(ownerDocument = null) {
   let ownText = '';
@@ -71,6 +108,164 @@ describe('lyrics overlay renderer', () => {
     expect(elements.root.lang).toBe('zh-Hant');
   });
 
+  it('renders Manga Frame as one centered utterance and fades the whole bubble', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    elements.current.textContent = 'previous line';
+    elements.current.dataset.currentText = 'previous line';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: 'current line',
+        nextText: 'must not render',
+        language: 'en',
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(elements.current.textContent).toBe('previous line');
+    expect(elements.next.textContent).toBe('');
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].labels).toEqual(['exit', 'enter']);
+    expect(timelines[0].tweens[0]).toMatchObject({
+      target: elements.root,
+      vars: {
+        autoAlpha: 0,
+        duration: 0.16,
+        ease: 'power2.in',
+        overwrite: 'auto',
+      },
+    });
+    expect(elements.current.animate).not.toHaveBeenCalled();
+
+    timelines[0].additions[0]();
+
+    expect(elements.current.textContent).toBe('current line');
+    expect(elements.next.textContent).toBe('');
+    expect(gsap.set).toHaveBeenCalledWith(elements.root, { autoAlpha: 0 });
+    expect(timelines[0].tweens[1]).toMatchObject({
+      target: elements.root,
+      vars: {
+        autoAlpha: 1,
+        duration: 0.18,
+        ease: 'power2.out',
+        overwrite: 'auto',
+      },
+    });
+    expect(elements.root.dataset).toMatchObject({
+      mangaFrame: 'spoken',
+      mangaLength: 'short',
+    });
+  });
+
+  it('switches Manga Frame immediately when reduced motion is requested', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    elements.current.textContent = 'previous line';
+    elements.current.dataset.currentText = 'previous line';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: 'pending line',
+        nextText: '',
+        language: 'en',
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 4,
+        visible: true,
+        currentText: 'current line',
+        nextText: 'must not render',
+        language: 'en',
+      },
+      { gsap, templateId: 'manga-frame', reducedMotion: true },
+    );
+
+    expect(elements.current.textContent).toBe('current line');
+    expect(elements.next.textContent).toBe('');
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(gsap.set).toHaveBeenCalledWith(elements.root, {
+      clearProps: 'opacity,visibility,scale',
+    });
+    expect(elements.current.animate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the final Manga Frame utterance visible until its bubble fades out', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    elements.current.textContent = 'final line';
+    elements.current.dataset.currentText = 'final line';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 5,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        language: 'en',
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(elements.root.hidden).toBe(false);
+    expect(elements.current.textContent).toBe('final line');
+
+    timelines[0].additions[0]();
+
+    expect(elements.root.hidden).toBe(true);
+    expect(elements.current.textContent).toBe('');
+    expect(elements.next.textContent).toBe('');
+  });
+
+  it('kills an interrupted Manga Frame timeline and animation targets on cleanup', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    elements.current.textContent = 'previous line';
+    elements.current.dataset.currentText = 'previous line';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 5,
+        visible: true,
+        currentText: 'first pending line',
+        nextText: '',
+        language: 'ja',
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 6,
+        visible: true,
+        currentText: 'latest line',
+        nextText: '',
+        language: 'ja',
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    destroyLyricsAnimations(elements, { gsap });
+    expect(timelines[1].kill).toHaveBeenCalledOnce();
+    expect(gsap.killTweensOf).toHaveBeenCalledWith(elements.root);
+    expect(gsap.set).toHaveBeenCalledWith(elements.root, {
+      clearProps: 'opacity,visibility,scale',
+    });
+  });
+
   it('clears text when no lyric line is active', () => {
     const elements = domElements();
     elements.current.textContent = 'stale';
@@ -129,6 +324,110 @@ describe('lyrics overlay renderer', () => {
         { '--ovl-segment-progress': '100%' },
       ],
       expect.objectContaining({ duration: 1500, easing: 'linear' }),
+    );
+  });
+
+  it('falls back from timed segments to an M0 text line without stale nodes', () => {
+    const elements = domElements();
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 4,
+        visible: true,
+        currentText: 'segmented line',
+        nextText: 'next',
+        language: 'en',
+        currentSegments: [
+          {
+            segmentId: 'segment-1',
+            text: 'segmented line',
+            state: 'active',
+            progress: 0.5,
+            remainingMs: 500,
+          },
+        ],
+      },
+      { templateId: 'manga-frame' },
+    );
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 5,
+        visible: true,
+        currentText: 'plain M0 line',
+        nextText: '',
+        language: 'en',
+      },
+      { templateId: 'manga-frame' },
+    );
+
+    expect(elements.current.children).toHaveLength(0);
+    expect(elements.current.dataset).not.toHaveProperty('segmented');
+    expect(elements.current.textContent).toBe('plain M0 line');
+    expect(elements.next.textContent).toBe('');
+  });
+
+  it('maps Manga Frame T2 progress to a GSAP paint tween without changing text color', () => {
+    const elements = domElements();
+    const { gsap } = gsapHarness();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 5,
+        visible: true,
+        currentText: '縦書き',
+        nextText: '',
+        language: 'ja',
+        currentSegments: [
+          {
+            segmentId: 'segment-1',
+            text: '縦書き',
+            state: 'active',
+            progress: 0.4,
+            remainingMs: 600,
+          },
+        ],
+      },
+      { gsap, reducedMotion: true, templateId: 'manga-frame' },
+    );
+
+    expect(elements.current.children[0].textContent).toBe('縦書き');
+    expect(
+      elements.current.children[0].style.values['--ovl-segment-progress'],
+    ).toBe('40%');
+    expect(gsap.to).not.toHaveBeenCalled();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 6,
+        visible: true,
+        currentText: '縦書き',
+        nextText: '',
+        language: 'ja',
+        currentSegments: [
+          {
+            segmentId: 'segment-2',
+            text: '縦書き',
+            state: 'active',
+            progress: 0.4,
+            remainingMs: 600,
+          },
+        ],
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(gsap.to).toHaveBeenCalledWith(
+      elements.current.children[0],
+      expect.objectContaining({
+        '--ovl-segment-progress': '100%',
+        duration: 0.6,
+        ease: 'none',
+        overwrite: 'auto',
+      }),
     );
   });
 
@@ -307,8 +606,7 @@ describe('lyrics overlay renderer', () => {
     scheduler.stop();
   });
 
-  it('applies confident music cues only to karaoke-stack and pulses a new downbeat', () => {
-    const elements = domElements();
+  it('applies confident music cues to bounded segment-aware templates and pulses a new downbeat', () => {
     const frame = {
       revision: 7,
       visible: true,
@@ -334,14 +632,17 @@ describe('lyrics overlay renderer', () => {
       },
     };
 
-    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+    const karaokeElements = domElements();
+    renderLyricsFrame(karaokeElements, frame, {
+      templateId: 'karaoke-stack',
+    });
 
-    expect(elements.root.dataset).toMatchObject({
+    expect(karaokeElements.root.dataset).toMatchObject({
       musicLevel: 'M2',
       musicSection: 'chorus',
       musicDownbeat: 'true',
     });
-    expect(elements.current.animate).toHaveBeenCalledWith(
+    expect(karaokeElements.current.animate).toHaveBeenCalledWith(
       [
         { filter: 'brightness(1)' },
         { filter: 'brightness(1.12)' },
@@ -350,12 +651,41 @@ describe('lyrics overlay renderer', () => {
       { duration: 180, easing: 'ease-out' },
     );
 
-    elements.current.animate.mockClear();
-    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
-    expect(elements.current.animate).not.toHaveBeenCalledWith(
-      expect.arrayContaining([{ filter: 'brightness(1)' }]),
-      expect.anything(),
+    const mangaElements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    renderLyricsFrame(mangaElements, frame, {
+      gsap,
+      reducedMotion: true,
+      templateId: 'manga-frame',
+    });
+    expect(mangaElements.root.dataset).toMatchObject({
+      musicLevel: 'M2',
+      musicSection: 'chorus',
+      musicDownbeat: 'true',
+    });
+    expect(timelines).toHaveLength(0);
+
+    renderLyricsFrame(
+      mangaElements,
+      {
+        ...frame,
+        revision: 8,
+        musicStructure: {
+          ...frame.musicStructure,
+          currentBeat: {
+            ...frame.musicStructure.currentBeat,
+            beatIndex: 8,
+            timeMs: 13000,
+          },
+        },
+      },
+      { gsap, templateId: 'manga-frame' },
     );
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].labels).toEqual(['accent']);
+    expect(timelines[0].tweens.map((entry) => entry.vars.scale)).toEqual([
+      1.025, 1,
+    ]);
   });
 
   it('keeps low-confidence, unknown, reduced-motion, and other templates static', () => {
@@ -384,8 +714,9 @@ describe('lyrics overlay renderer', () => {
       },
     };
     for (const options of [
-      { templateId: 'karaoke-stack' },
+      { templateId: 'manga-frame' },
       { templateId: 'karaoke-stack', reducedMotion: true },
+      { templateId: 'manga-frame', reducedMotion: true },
       { templateId: 'focus-line' },
     ]) {
       const elements = domElements();
@@ -393,6 +724,10 @@ describe('lyrics overlay renderer', () => {
       expect(elements.root.dataset).not.toHaveProperty('musicSection');
       expect(elements.root.dataset).not.toHaveProperty('musicDownbeat');
       expect(elements.current.animate).not.toHaveBeenCalledWith(
+        expect.arrayContaining([{ filter: 'brightness(1)' }]),
+        expect.anything(),
+      );
+      expect(elements.root.animate).not.toHaveBeenCalledWith(
         expect.arrayContaining([{ filter: 'brightness(1)' }]),
         expect.anything(),
       );
@@ -423,7 +758,7 @@ describe('lyrics overlay renderer', () => {
           },
         },
       },
-      { templateId: 'karaoke-stack' },
+      { templateId: 'manga-frame' },
     );
 
     expect(elements.root.dataset.musicDownbeat).toBe('true');
@@ -448,7 +783,7 @@ describe('lyrics overlay renderer', () => {
         nextText: '',
         language: 'en',
       },
-      { templateId: 'karaoke-stack' },
+      { templateId: 'manga-frame' },
     );
 
     expect(elements.root.dataset).not.toHaveProperty('musicLevel');

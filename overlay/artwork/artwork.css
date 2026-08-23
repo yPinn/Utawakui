@@ -56,6 +56,10 @@
     min-width: 0;
   }
 
+  .artwork-overlay__player {
+    display: none;
+  }
+
   .artwork-overlay__title,
   .artwork-overlay__artist {
     margin: 0;
@@ -101,6 +105,204 @@
 
       gap: var(--ovl-primitive-space-3);
       padding: var(--ovl-primitive-space-3);
+    }
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay {
+    --ovl-template-artwork-width: 29rem;
+    --ovl-template-artwork-title-size: 1em;
+    --ovl-template-player-inline: var(--ovl-primitive-space-4);
+    --ovl-template-player-track-size: calc(var(--ovl-primitive-space-1) * 0.75);
+    --ovl-artwork-progress: 0%;
+
+    inset-inline-start: 50%;
+    inline-size: min(
+      calc(100% - 2 * var(--ovl-safe-inline)),
+      var(--ovl-template-artwork-width)
+    );
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-user-surface);
+    text-align: start;
+    transform: translateX(-50%);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__mark {
+    width: 100%;
+    border: 0;
+    border-radius: var(--ovl-primitive-radius-md);
+    font-size: 7em;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__copy {
+    display: grid;
+    gap: calc(var(--ovl-primitive-space-1) / 2);
+    padding: var(--ovl-primitive-space-3) var(--ovl-template-player-inline)
+      var(--ovl-primitive-space-2);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__title {
+    display: block;
+    font-family: var(--ovl-font-ui);
+    font-size: var(--ovl-template-artwork-title-size);
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__artist {
+    margin-block-start: 0;
+    overflow: hidden;
+    font-family: var(--ovl-font-ui);
+    font-size: 0.8125em;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__player {
+    display: grid;
+    gap: 0;
+    padding: 0 var(--ovl-template-player-inline) var(--ovl-primitive-space-3);
+    color: var(--ovl-color-text-primary);
+    font-family: var(--ovl-font-ui);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber {
+    position: relative;
+    height: var(--ovl-template-player-track-size);
+    display: block;
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-color-stroke-soft);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber-fill {
+    width: var(--ovl-artwork-progress);
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: var(--ovl-color-text-primary);
+    transition: width var(--ovl-motion-line-duration) linear;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber::after {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: clamp(
+      var(--ovl-primitive-space-1),
+      var(--ovl-artwork-progress),
+      calc(100% - var(--ovl-primitive-space-1))
+    );
+    width: var(--ovl-primitive-space-2);
+    height: var(--ovl-primitive-space-2);
+    border-radius: 50%;
+    background: var(--ovl-color-text-primary);
+    content: '';
+    transform: translate(-50%, -50%);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__timeline {
+    display: flex;
+    justify-content: space-between;
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.75em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+    margin-block-start: var(--ovl-primitive-space-1);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__transport {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    justify-items: center;
+    margin-block-start: var(--ovl-primitive-space-3);
+    padding-block: var(--ovl-primitive-space-2) var(--ovl-primitive-space-1);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__transport svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    overflow: visible;
+    color: var(--ovl-color-text-secondary);
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.75;
+  }
+
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay__transport
+    > svg:nth-of-type(2),
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay__transport
+    > svg:nth-of-type(3) {
+    width: 2rem;
+    height: 2rem;
+    fill: currentColor;
+    color: var(--ovl-color-text-primary);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__play-state {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__play-state svg {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: var(--ovl-color-text-primary);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__play path {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__pause {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-playback-status='playing']
+    .artwork-overlay__play {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-playback-status='playing']
+    .artwork-overlay__pause {
+    display: block;
+  }
+
+  @media (max-width: 32rem) {
+    :root[data-ovl-template='cover-player'] .artwork-overlay {
+      --ovl-template-artwork-width: 22rem;
+      --ovl-template-player-inline: var(--ovl-primitive-space-3);
+    }
+  }
+
+  @media (max-height: 42rem) {
+    :root[data-ovl-template='cover-player'] .artwork-overlay {
+      --ovl-template-artwork-width: 22rem;
+      --ovl-template-player-inline: var(--ovl-primitive-space-3);
+    }
+
+    :root[data-ovl-template='cover-player'] .artwork-overlay__transport {
+      padding-block: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber-fill {
+      transition: none;
     }
   }
 }

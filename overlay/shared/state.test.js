@@ -4,6 +4,7 @@ import {
   nextLyricsBoundaryDelayMs,
   selectMusicStructureFrame,
   selectLyricsFrame,
+  selectArtworkFrame,
   selectNowPlayingFrame,
   selectSetlistFrame,
 } from './state.mjs';
@@ -554,6 +555,41 @@ describe('overlay state selectors', () => {
         { state: 'current', title: '海螺記', artist: '163braces' },
         { state: 'queued', title: 'Next Song', artist: 'Singer' },
       ],
+    });
+  });
+
+  it('projects bounded Artwork playback state with an M0-safe duration fallback', () => {
+    expect(
+      selectArtworkFrame(snapshot(), {
+        nowMs: Date.parse('2026-08-22T00:00:03.000Z'),
+      }),
+    ).toMatchObject({
+      revision: 8,
+      visible: true,
+      trackId: 'track-1',
+      title: '海螺記',
+      artist: '163braces',
+      playbackStatus: 'playing',
+      positionMs: 15000,
+      durationMs: 180000,
+      progress: 15 / 180,
+    });
+
+    expect(
+      selectArtworkFrame(
+        snapshot({
+          playback: {
+            status: 'paused',
+            positionMs: 32000,
+            track: { id: 'track-1', title: '海螺記', artist: '163braces' },
+          },
+        }),
+      ),
+    ).toMatchObject({
+      playbackStatus: 'paused',
+      positionMs: 32000,
+      durationMs: 0,
+      progress: 0,
     });
   });
 
