@@ -153,24 +153,6 @@ async function searchLrclibCandidates(track, options = {}) {
   }
   const client = clientForOptions(options);
 
-  if (options.mode === 'broaden') {
-    if (!plan.broaden) {
-      return unavailable('missing-track-title', {
-        candidates: [],
-        groups: null,
-      });
-    }
-    const broadened = await client.searchBroad(plan.broaden);
-    if (broadened.status === 'error') {
-      return providerFailure(broadened, { candidates: [], groups: null });
-    }
-    return buildCandidateResult(
-      plan.identity,
-      broadened.records,
-      broadened.invalidRecordCount,
-    );
-  }
-
   const records = [];
   let invalidRecordCount = 0;
   if (plan.exact) {

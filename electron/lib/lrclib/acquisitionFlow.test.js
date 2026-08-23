@@ -174,20 +174,25 @@ describe('structured LRCLIB acquisition flow', () => {
     ]);
   });
 
-  it('runs only the explicit q lookup for broaden mode', async () => {
-    const provider = client();
+  it('uses the same constrained and recovery plan for automatic and explicit broaden searches', async () => {
+    const automaticProvider = client();
+    const explicitProvider = client();
 
     await searchLrclibCandidates(track, {
-      client: provider,
+      client: automaticProvider,
+      query: { title: 'Edited Song', artist: 'Edited Artist' },
+    });
+    await searchLrclibCandidates(track, {
+      client: explicitProvider,
       mode: 'broaden',
       query: { title: 'Edited Song', artist: 'Edited Artist' },
     });
 
-    expect(provider.getExact).not.toHaveBeenCalled();
-    expect(provider.search).not.toHaveBeenCalled();
-    expect(provider.searchBroad).toHaveBeenCalledWith({
-      q: 'Edited Song Edited Artist',
-    });
+    expect(explicitProvider.getExact).toHaveBeenCalledOnce();
+    expect(explicitProvider.search.mock.calls.map(([query]) => query)).toEqual(
+      automaticProvider.search.mock.calls.map(([query]) => query),
+    );
+    expect(explicitProvider.searchBroad).not.toHaveBeenCalled();
   });
 
   it('short-circuits automatic acquisition on an exact compatible result', async () => {
@@ -335,7 +340,7 @@ plain: Hello
     });
 
     const broadenFailure = client({
-      searchBroad: vi.fn().mockResolvedValue({
+      search: vi.fn().mockResolvedValue({
         status: 'error',
         reason: 'rate-limited',
       }),
