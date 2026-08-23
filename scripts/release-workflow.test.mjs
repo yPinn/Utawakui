@@ -16,25 +16,32 @@ function readWorkflow(filename = 'release.yml') {
   );
 }
 
+function readYaml(filename) {
+  return yaml.load(
+    fs.readFileSync(path.join(rootDirectory, filename), 'utf8'),
+    {
+      schema: yaml.JSON_SCHEMA,
+    },
+  );
+}
+
+function readJson(filename) {
+  return JSON.parse(
+    fs.readFileSync(path.join(rootDirectory, filename), 'utf8'),
+  );
+}
+
 describe('release workflow', () => {
-  it('keeps the built-in token read-only and signing behind the release environment', () => {
+  it('keeps the built-in token read-only and public publishing behind the release environment', () => {
     const workflow = readWorkflow();
     const packageJob = workflow.jobs.package;
 
     expect(workflow.permissions).toEqual({ contents: 'read' });
     expect(packageJob.environment).toBe('release');
-    expect(packageJob.env.EXPECTED_SIGNING_SUBJECT).toContain(
-      'vars.WINDOWS_SIGNING_SUBJECT',
-    );
-    expect(packageJob.env).not.toHaveProperty('CSC_LINK');
-    expect(packageJob.env).not.toHaveProperty('CSC_KEY_PASSWORD');
     expect(packageJob.env).not.toHaveProperty('GH_TOKEN');
 
     const credentialStep = packageJob.steps.find(
       (step) => step.name === 'Require release credentials',
-    );
-    const signingStep = packageJob.steps.find(
-      (step) => step.name === 'Build signed installer',
     );
     const accessStep = packageJob.steps.find(
       (step) => step.name === 'Verify public release access',
@@ -43,14 +50,25 @@ describe('release workflow', () => {
       (step) => step.name === 'Create or update public draft release',
     );
 
-    expect(credentialStep.env.CSC_LINK).toContain(
-      'secrets.WINDOWS_CERTIFICATE',
-    );
-    expect(signingStep.env.CSC_KEY_PASSWORD).toContain(
-      'secrets.WINDOWS_CERTIFICATE_PASSWORD',
-    );
+    expect(JSON.stringify(credentialStep)).not.toContain('WINDOWS_CERTIFICATE');
+    expect(JSON.stringify(packageJob.steps)).not.toContain('CSC_');
     expect(accessStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
     expect(publishStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
+  });
+
+  it('enables packaged updates while explicitly disabling publisher verification', () => {
+    const updateValues = readJson('shared/appUpdateValues.json');
+    const builder = readYaml('electron-builder.yml');
+
+    expect(updateValues.runtimeEnabled).toBe(true);
+    expect(builder.publish).toMatchObject({
+      provider: 'github',
+      owner: 'yPinn',
+      repo: 'Utawakui-Releases',
+      releaseType: 'release',
+    });
+    expect(builder.win.signExecutable).toBe(false);
+    expect(builder.win.verifyUpdateCodeSignature).toBe(false);
   });
 
   it('uses Node 24 actions and project runtime in CI and release jobs', () => {
@@ -94,17 +112,18 @@ describe('release workflow', () => {
     }
   });
 
-  it('builds without builder publishing and only creates a public draft', () => {
+  it('builds without builder publishing and only creates a reviewed public draft', () => {
     const workflow = readWorkflow();
     const packageCommands = JSON.stringify(workflow.jobs.package.steps);
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(rootDirectory, 'package.json'), 'utf8'),
     );
 
-    expect(packageJson.scripts['dist:release']).toContain('--publish never');
-    expect(packageJson.scripts['dist:release']).toContain(
-      '--config.win.signExecutable=true',
-    );
+    expect(packageJson.scripts.dist).toContain('--publish never');
+    expect(packageCommands).toContain('Build unsigned updater bundle');
+    expect(packageCommands).toContain('NotSigned');
+    expect(packageCommands).toContain('release/latest.yml');
+    expect(packageCommands).toContain('.exe.blockmap');
     expect(packageCommands).toContain('gh release create');
     expect(packageCommands).toContain('--draft');
     expect(packageCommands).toContain(
@@ -115,12 +134,12 @@ describe('release workflow', () => {
     expect(packageCommands).not.toContain('--publish always');
   });
 
-  it('keeps signed releases manual and routes tags to unsigned test builds', () => {
-    const signedWorkflow = readWorkflow();
+  it('keeps public releases manual and routes tags to unsigned review builds', () => {
+    const releaseWorkflow = readWorkflow();
     const testWorkflow = readWorkflow('public-test-release.yml');
 
-    expect(signedWorkflow.on).not.toHaveProperty('push');
-    expect(signedWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
+    expect(releaseWorkflow.on).not.toHaveProperty('push');
+    expect(releaseWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
     expect(testWorkflow.on.push.tags).toEqual(['v*.*.*']);
     expect(testWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
     expect(testWorkflow.jobs.package.needs).toBe('validate');
@@ -129,7 +148,7 @@ describe('release workflow', () => {
     );
   });
 
-  it('keeps unsigned test artifacts private and excludes updater metadata', () => {
+  it('keeps tag builds private but includes the complete updater bundle for review', () => {
     const workflow = readWorkflow('public-test-release.yml');
     const packageSteps = workflow.jobs.package.steps;
     const packageCommands = JSON.stringify(packageSteps);
@@ -142,7 +161,7 @@ describe('release workflow', () => {
     expect(packageCommands).not.toContain('secrets.');
     expect(packageCommands).not.toContain('gh release');
     expect(uploadStep.with.path).toContain('SHA256SUMS.txt');
-    expect(uploadStep.with.path).not.toContain('latest.yml');
-    expect(uploadStep.with.path).not.toContain('.blockmap');
+    expect(uploadStep.with.path).toContain('latest.yml');
+    expect(uploadStep.with.path).toContain('.blockmap');
   });
 });

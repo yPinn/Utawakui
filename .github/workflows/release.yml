@@ -81,7 +81,6 @@ jobs:
     runs-on: windows-latest
     environment: release
     env:
-      EXPECTED_SIGNING_SUBJECT: ${{ vars.WINDOWS_SIGNING_SUBJECT }}
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
     steps:
       - uses: actions/checkout@v7
@@ -97,14 +96,9 @@ jobs:
       - name: Require release credentials
         shell: pwsh
         env:
-          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-          CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
           GH_TOKEN: ${{ secrets.PUBLIC_RELEASE_TOKEN }}
         run: |
           $required = @{
-            CSC_LINK = $env:CSC_LINK
-            CSC_KEY_PASSWORD = $env:CSC_KEY_PASSWORD
-            EXPECTED_SIGNING_SUBJECT = $env:EXPECTED_SIGNING_SUBJECT
             GH_TOKEN = $env:GH_TOKEN
           }
           foreach ($entry in $required.GetEnumerator()) {
@@ -135,30 +129,21 @@ jobs:
             throw 'Release version changed between validation and packaging'
           }
 
-      - name: Build signed installer
-        env:
-          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-          CSC_LINK: ${{ secrets.WINDOWS_CERTIFICATE }}
-        run: npm run dist:release
+      - name: Build unsigned updater bundle
+        run: npm run dist
 
-      - name: Verify signatures and packaged version
+      - name: Verify unsigned files and packaged version
         shell: pwsh
         run: |
           $installer = Join-Path $PWD "release/Utawakui-Setup-$env:RELEASE_VERSION.exe"
           $executable = Join-Path $PWD 'release/win-unpacked/electron.exe'
           foreach ($file in @($installer, $executable)) {
             if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
-              throw "Missing signed file: $file"
+              throw "Missing unsigned file: $file"
             }
             $signature = Get-AuthenticodeSignature -LiteralPath $file
-            if ($signature.Status -ne 'Valid') {
-              throw "Invalid Authenticode signature for ${file}: $($signature.Status)"
-            }
-            if ($signature.SignerCertificate.Subject -ne $env:EXPECTED_SIGNING_SUBJECT) {
-              throw "Unexpected Authenticode publisher for $file"
-            }
-            if (-not $signature.TimeStamperCertificate) {
-              throw "Missing Authenticode timestamp for $file"
+            if ($signature.Status -ne 'NotSigned') {
+              throw "Unexpected Authenticode status for ${file}: $($signature.Status)"
             }
           }
 
@@ -186,14 +171,23 @@ jobs:
       - name: Verify update artifacts
         run: npm run release:verify-artifacts -- --version ${{ env.RELEASE_VERSION }}
 
-      - name: Upload signed release bundle
+      - name: Create SHA-256 checksum
+        shell: pwsh
+        run: |
+          $name = "Utawakui-Setup-$env:RELEASE_VERSION.exe"
+          $installer = Join-Path 'release' $name
+          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath 'release/SHA256SUMS.txt' -Value "$hash  $name" -Encoding utf8NoBOM
+
+      - name: Upload unsigned updater bundle
         uses: actions/upload-artifact@v7
         with:
-          name: utawakui-${{ env.RELEASE_VERSION }}-signed
+          name: utawakui-${{ env.RELEASE_VERSION }}-unsigned-updater
           path: |
             release/Utawakui-Setup-${{ env.RELEASE_VERSION }}.exe
             release/Utawakui-Setup-${{ env.RELEASE_VERSION }}.exe.blockmap
             release/latest.yml
+            release/SHA256SUMS.txt
           if-no-files-found: error
           retention-days: 14
 
@@ -205,6 +199,7 @@ jobs:
           $installer = "release/Utawakui-Setup-$env:RELEASE_VERSION.exe"
           $blockmap = "$installer.blockmap"
           $metadata = 'release/latest.yml'
+          $checksum = 'release/SHA256SUMS.txt'
           $notes = "docs/releases/$env:RELEASE_TAG.md"
           $title = "Utawakui $env:RELEASE_VERSION"
 
@@ -227,13 +222,13 @@ jobs:
               --notes-file $notes
             if ($LASTEXITCODE -ne 0) { throw 'Failed to update draft release' }
             gh release upload $env:RELEASE_TAG `
-              $installer $blockmap $metadata `
+              $installer $blockmap $metadata $checksum `
               --repo $env:RELEASE_REPOSITORY `
               --clobber
             if ($LASTEXITCODE -ne 0) { throw 'Failed to upload release assets' }
           } else {
             gh release create $env:RELEASE_TAG `
-              $installer $blockmap $metadata `
+              $installer $blockmap $metadata $checksum `
               --repo $env:RELEASE_REPOSITORY `
               --target main `
               --draft `

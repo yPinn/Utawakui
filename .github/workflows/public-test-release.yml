@@ -162,6 +162,8 @@ jobs:
           name: utawakui-${{ env.RELEASE_VERSION }}-unsigned-test
           path: |
             release/Utawakui-Setup-${{ env.RELEASE_VERSION }}.exe
+            release/Utawakui-Setup-${{ env.RELEASE_VERSION }}.exe.blockmap
+            release/latest.yml
             release/SHA256SUMS.txt
             docs/releases/${{ env.RELEASE_TAG }}.md
           if-no-files-found: error

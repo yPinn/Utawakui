@@ -131,7 +131,7 @@ Utawakui 是給直播主、VTuber、歌回企劃與翻唱工作流使用的 OBS 
 - Recording/VOD session mode。
 - Pitch/Tempo pre-render cache。
 - Preset export/import。
-- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；執行版本與 main-owned 更新 runtime 已建立，但 release gate 維持停用；code signing、公開 release repo、release CI 與兩版本驗證仍未完成，契約見 ADR 0007。
+- Packaging、installer、AUMID（`electron-builder.yml` 與 `npm run dist`/`dist:dir` 已存在，NSIS 安裝檔的 `appId`/`productName` 對齊 `electron/main/windowState.js` 的 AUMID 常數；feature/runtime/package 對照見 `docs/release-inventory.md`）；執行版本、main-owned 更新 runtime、固定 public release feed 與完整 updater artifact workflow 已建立。現階段明確採未簽章自動更新：保留 HTTPS／`latest.yml` SHA-512 完整性檢查，但不驗證 Authenticode 發行者；兩版本 packaged acceptance 尚待完成，契約見 ADR 0007。
 
 ## 5. 架構邊界
 
@@ -614,9 +614,10 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 ### Phase 3：Distribution And Integrations
 
 - Windows installer、AUMID、執行版本 IPC 與 main-owned update runtime 已建立；
-  public test 與 signed public-release update 契約已由 ADR 0007 固定。未簽章
-  公開測試採手動安裝與更新；runtime release gate 維持停用，待日後完成
-  Authenticode signing 與兩個連續簽章版本的 packaged verification。
+  未簽章 public-release update 契約已由 ADR 0007 固定。packaged Windows
+  runtime 會檢查 stable release，下載仍需使用者確認，安裝仍需明確重新啟動；
+  v0.1.1 使用者需手動安裝一次首個 updater-enabled 版本，兩個連續版本的
+  packaged verification 仍待完成。
 - 公開 release repo 的 GitHub Pages 產品展示／下載入口（後期 promotion；Pages
   與 updater feed 分離，初期維持純靜態且不加入 analytics）。
 - 官方 metadata provider flows。

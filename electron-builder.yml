@@ -22,9 +22,8 @@ directories:
 
 # This only writes the public feed identity into packaged update metadata.
 # Local dist commands and the release build both use --publish never. The
-# release workflow uploads only the signed, verified artifacts to a public
-# draft release. Runtime checks remain disabled by shared/appUpdateValues.json
-# until that release gate is complete.
+# release workflow uploads only the verified updater artifacts to a public
+# draft release. Packaged Windows builds check only this stable public feed.
 publish:
   provider: github
   owner: yPinn
@@ -104,11 +103,16 @@ win:
   # Keep as "electron" — renaming it FATALs once onnxruntime-node/DirectML
   # is bundled. See docs/adr/0002-packaged-exe-kept-as-electron-exe.md.
   executableName: electron
-  # Normal local builds remain unsigned. The release-only command overrides
-  # this to true and fails unless CI provides the signing certificate. This
-  # does not skip icon/version-info resource editing (signAndEditExecutable is
-  # a separate flag).
+  # Normal local builds and the active public release workflow remain unsigned.
+  # The optional dist:release maintainer command can still override this for a
+  # future signing experiment. This does not skip icon/version-info resource
+  # editing (signAndEditExecutable is a separate flag).
   signExecutable: false
+  # The current product channel deliberately ships without a paid Authenticode
+  # publisher identity. electron-updater still verifies the installer SHA-512
+  # from latest.yml over the fixed HTTPS GitHub feed, but it must not expect a
+  # publisher name that an unsigned installer cannot provide.
+  verifyUpdateCodeSignature: false
 
 nsis:
   # Optional uninstaller checkboxes for app data cleanup — opt-in, not

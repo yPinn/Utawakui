@@ -1,13 +1,13 @@
-# ADR 0007: Signed app updates use a separate public release repository
+# ADR 0007: Public app updates use a separate release repository
 
 ## Status
 
-Accepted and partially implemented (2026-08-22). The runtime version boundary,
-main-process update service, fixed IPC intents, Settings status/actions, public
-feed configuration, release-only public repository, unsigned test-build path,
-signed draft-release workflow foundation, and proprietary product license are
-implemented. The runtime release gate remains disabled until signing
-credentials and two-version packaged verification are complete.
+Accepted and implemented (2026-08-23), with packaged verification pending. The
+runtime version boundary, main-process update service, fixed IPC intents,
+Settings status/actions, public feed configuration, release-only public
+repository, unsigned draft-release workflow, and proprietary product license
+are implemented. The current product decision accepts an unsigned automatic
+update channel instead of paying for a trusted publisher identity.
 
 ## Context
 
@@ -16,17 +16,19 @@ stable, unauthenticated endpoint from which it can discover and download public
 releases without embedding a repository credential on user machines.
 
 Version `0.1.0` was shared for limited testing without an official GitHub
-Release. Version `0.1.1` establishes the public test path, but its unsigned
-installer is not an updater baseline. The first updater-enabled baseline and
-the following two-version test target will be chosen when trusted signing is
-adopted. The Settings version row reads the running application version from
-Electron main through `app.getVersion()` and a minimal preload IPC method
-instead of importing `package.json` into the renderer.
+Release. Version `0.1.1` established the public download path, but it shipped
+without `latest.yml` or a blockmap and therefore cannot update itself. Existing
+v0.1.1 users need one manual installation of the next updater-enabled version.
+The Settings version row reads the running application version from Electron
+main through `app.getVersion()` and a minimal preload IPC method instead of
+importing `package.json` into the renderer.
 
-The existing Windows target is assisted NSIS x64. electron-builder can produce
-the installer, blockmap, and `latest.yml` required by `electron-updater`. The
-current build is unsigned (`win.signExecutable: false`), so it is not yet an
-acceptable production update channel.
+The existing Windows target is assisted NSIS x64. electron-builder produces the
+installer, blockmap, and `latest.yml` required by `electron-updater`. The build
+is unsigned (`win.signExecutable: false`) and deliberately sets
+`win.verifyUpdateCodeSignature: false`. This forfeits Authenticode publisher
+identity, but retains the fixed HTTPS feed and electron-builder SHA-512 metadata
+verification as the accepted current product boundary.
 
 ## Decision
 
@@ -38,9 +40,8 @@ acceptable production update channel.
 - While the product remains below `1.0.0`, patch versions are fixes and minor
   versions are feature milestones. A breaking pre-1.0 change must still be
   called out in release notes and migrations.
-- The production updater will use only the stable `latest` channel. GitHub may
-  label unsigned public test downloads as prereleases, but they are not an
-  updater channel and do not publish updater metadata.
+- The production updater uses only the stable `latest` channel. Draft and
+  prerelease assets are never update candidates.
 - Published versions are immutable and never reused. A broken release is fixed
   forward with a higher version; the updater does not allow downgrades.
 
@@ -72,7 +73,7 @@ a later promotion phase. Pages and Releases have different responsibilities:
 - GitHub Pages is the human-facing entry point for product identity, curated
   screenshots, concise feature/status summaries, system requirements, release
   notes, legal/privacy links, and a stable download action that links directly
-  to the signed GitHub Release asset.
+  to the public GitHub Release asset.
 - Only curated public site source and assets live in the release repository.
   Private application source, internal task notes, build logs, credentials,
   unpublished provider details, and user media never enter the Pages artifact.
@@ -102,11 +103,11 @@ idle -> checking -> available -> downloading -> downloaded
                  -> error
 ```
 
-The implementation also reports `disabled` when the build is not a packaged
-Windows release or when `shared/appUpdateValues.json` keeps the release gate
-closed. In that state it does not load `electron-updater`, schedule a timer, or
-contact GitHub. The dependency is pinned to stable `electron-updater@6.8.9` to
-stay aligned with the current stable electron-builder 26 toolchain.
+The implementation reports `disabled` when the build is not a packaged Windows
+release or when `shared/appUpdateValues.json` closes the release gate. The gate
+is enabled for the current packaged channel. Disabled builds do not load
+`electron-updater`, schedule a timer, or contact GitHub. The dependency is
+pinned to `electron-updater@6.8.9` to match electron-builder 26.
 
 - Update support runs only in a packaged Windows build. Development mode
   returns an explicit unsupported state and never contacts the release server.
@@ -131,38 +132,40 @@ stay aligned with the current stable electron-builder 26 toolchain.
   or sends bounded plain text rendered through Vue interpolation; it never
   renders release HTML with `v-html`.
 
-### Signing and integrity
+### Integrity and accepted unsigned boundary
 
-- Production app updates are blocked until the Windows executable and NSIS
-  installer are Authenticode-signed by the expected publisher.
-- Keep electron-updater's Windows signature verification enabled. Do not work
-  around the current unsigned build by disabling verification in a public
-  release.
-- electron-builder-generated SHA-512 metadata remains mandatory in
-  `latest.yml`; the signed installer and matching blockmap are uploaded from the
-  same CI run.
-- Signing credentials are CI secrets, never files committed to either
-  repository. Logs and uploaded diagnostic artifacts must not contain secret
-  values.
+- The current public channel does not provide Authenticode publisher identity.
+  `win.verifyUpdateCodeSignature: false` is explicit and must not be described as
+  publisher verification in UI, documentation, or release notes.
+- The installer, blockmap, and electron-builder-generated `latest.yml` are
+  uploaded from the same CI run. The SHA-512 recorded in `latest.yml` remains
+  mandatory and is verified before installation.
+- The feed identity stays fixed to `yPinn/Utawakui-Releases`, stable-only, with
+  prereleases and downgrades disabled. Renderer cannot provide URLs, request
+  headers, paths, versions, or updater options.
+- Public-repository credentials remain protected CI secrets and are never
+  packaged. A compromised repository or publishing credential could still
+  replace both payload and metadata; SHA-512 integrity does not authenticate the
+  publisher. This is the explicitly accepted residual risk.
+- Trusted signing can be added later by re-enabling signature verification and
+  verifying the expected publisher without changing renderer IPC.
 
 ### Release workflow
 
-Normal `npm run dist`, `dist:dir`, and both release builds explicitly pass
-`--publish never`. Stable version tags currently run an unsigned public test
-workflow that validates and packages the installer as a private CI artifact.
-It publishes no updater metadata and has no public-repository credential.
-
-The signed workflow is kept manual-only until signing is adopted. It publishes
-only after the build has been signed and verified:
+Normal `npm run dist`, `dist:dir`, and release builds explicitly pass
+`--publish never`. Stable version tags run an unsigned review workflow that
+validates and packages the complete updater bundle as a private CI artifact.
+The protected release workflow remains manual-only and publishes only after
+review:
 
 1. Rebuild an existing stable `v<semver>` tag in the private source repository.
 2. Verify the tag, `package.json`, lockfile root version, and versioned release
    notes are present and consistent.
 3. Run secret scan, dependency audit, license inventory, lint, format,
    markdownlint, tests with coverage, and Vite build.
-4. Build and Authenticode-sign the NSIS x64 installer on a Windows runner.
-5. Verify executable/installer signature, expected publisher, timestamp,
-   packaged version, required notices, and generated update metadata.
+4. Build the unsigned NSIS x64 installer on a Windows runner.
+5. Verify the executable and installer remain unsigned, and verify packaged
+   version, required notices, blockmap, and generated update metadata.
 6. Upload a draft release to the public release repository containing
    `Utawakui-Setup-<version>.exe`, its blockmap, `latest.yml`, and release notes.
 7. Publish only after an installed-package smoke test. Stable clients must not
@@ -170,14 +173,13 @@ only after the build has been signed and verified:
 
 Cross-repository upload is an explicit GitHub CLI step after verification. It
 uses a credential scoped only to the public release repository and creates or
-updates a draft. It refuses to modify an already published release.
+updates a draft. It refuses to modify an already published release. Publishing
+the reviewed draft remains a separate human action.
 
 ### Bootstrap, migration, and recovery
 
-- A build without updater code cannot update itself. If `0.1.0` is distributed
-  first, users need one manual install of the first updater-enabled signed
-  version. If it has not been distributed, updater support should be included
-  before the first public release.
+- A build with the runtime gate disabled cannot update itself. Published v0.1.1
+  users need one manual installation of the first updater-enabled version.
 - Updates replace application files only. `%APPDATA%\Utawakui`, app-managed
   workflow dependencies, and the selected media library remain outside the
   installer payload and are preserved.
@@ -186,7 +188,7 @@ updates a draft. It refuses to modify an already published release.
   cleanup options run.
 - Differential download is an optimization, not a guarantee. Publish the
   blockmap and test it, but allow electron-updater to fall back to the complete
-  signed installer.
+  installer.
 - Rollback is fix-forward: keep earlier release assets available for manual
   recovery, but publish a higher patched version for automatic recovery.
 
@@ -202,8 +204,10 @@ updates a draft. It refuses to modify an already published release.
   form the release boundary.
 - **Download and restart silently:** Utawakui can be active during playback or
   OBS output; an unexpected restart is operationally unsafe.
-- **Disable Windows signature verification:** checksum metadata alone does not
-  provide the publisher identity expected from a production update channel.
+- **Require paid publisher signing for the current channel:** rejected for the
+  current product stage because its recurring cost does not fit the product
+  position. The lost publisher-authentication guarantee is documented and
+  accepted rather than silently implied.
 - **Implement a custom downloader/installer:** electron-updater already models
   NSIS metadata, signatures, progress, caching, and differential fallback. A
   custom privileged installer path would add avoidable security surface.
@@ -213,14 +217,19 @@ updates a draft. It refuses to modify an already published release.
 The public release repository can expose binaries without exposing private
 source and can later provide a coherent public product/download page. The cost
 is an additional repository, separate Pages and release deployment boundaries,
-protected publishing credentials, code-signing setup, and a real two-version
-installed update test for every release workflow change.
+protected publishing credentials, and a real two-version installed update test
+for every release workflow change.
 
 The first updater-enabled public version cannot be considered complete until
 both per-user and per-machine installs have been tested, including UAC,
-shortcut retention, download interruption, invalid metadata/signature
-rejection, full-download fallback, explicit restart, and preservation of app
-data and the media library.
+shortcut retention, download interruption, invalid metadata/checksum rejection,
+full-download fallback, explicit restart, and preservation of app data and the
+media library.
+
+Unsigned installers may trigger SmartScreen warnings or be blocked by managed
+enterprise policy. More importantly, checksum verification detects corruption
+or mismatch against `latest.yml` but cannot prove the publisher when the feed
+and payload are compromised together.
 
 The delayed startup check is a necessary network request to GitHub and should be
 disclosed as update checking, not telemetry. No analytics or user media data is
