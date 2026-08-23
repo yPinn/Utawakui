@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "overrideSchemaVersion": 1,
+  "analyzerContractVersion": 1,
+  "canonicalSectionRoles": [
+    "intro",
+    "verse",
+    "pre-chorus",
+    "chorus",
+    "bridge",
+    "instrumental",
+    "outro",
+    "unknown"
+  ],
+  "maxDocumentBytes": 4194304,
+  "maxDurationMs": 604800000,
+  "durationToleranceMs": 1000,
+  "minBpm": 20,
+  "maxBpm": 400,
+  "minConfidence": 0,
+  "maxConfidence": 1,
+  "maxBeats": 200000,
+  "maxSections": 4096,
+  "maxModelIds": 32,
+  "maxIdLength": 128,
+  "maxRawLabelLength": 256,
+  "maxBeatsPerBar": 32
+}

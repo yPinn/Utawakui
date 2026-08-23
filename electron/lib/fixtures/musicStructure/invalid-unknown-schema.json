@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 999,
+  "source": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "durationMs": 180000
+  },
+  "analyzer": {
+    "contractVersion": 1,
+    "id": "fixture-analyzer",
+    "profileId": "fixture-cpu-v1",
+    "environmentLock": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "modelIds": ["fixture-model-v1"],
+    "completedAt": "2026-08-23T00:00:00.000Z"
+  },
+  "tempo": null,
+  "beats": [],
+  "sections": []
+}

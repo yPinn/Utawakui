@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "durationMs": 180000
+  },
+  "analyzer": {
+    "contractVersion": 1,
+    "id": "fixture-analyzer",
+    "profileId": "fixture-cpu-v1",
+    "environmentLock": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "modelIds": ["fixture-model-v1"],
+    "completedAt": "2026-08-23T00:00:00.000Z"
+  },
+  "tempo": { "bpm": 120, "confidence": 0.82 },
+  "beats": [
+    { "timeMs": 0, "positionInBar": 1, "downbeat": true, "confidence": 0.9 },
+    {
+      "timeMs": 500,
+      "positionInBar": 2,
+      "downbeat": false,
+      "confidence": 0.88
+    },
+    {
+      "timeMs": 1000,
+      "positionInBar": 3,
+      "downbeat": false,
+      "confidence": 0.87
+    }
+  ],
+  "sections": []
+}

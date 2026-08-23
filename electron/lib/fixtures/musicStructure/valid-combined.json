@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "durationMs": 180000
+  },
+  "analyzer": {
+    "contractVersion": 1,
+    "id": "fixture-analyzer",
+    "profileId": "fixture-cpu-v1",
+    "environmentLock": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "modelIds": ["fixture-model-v1"],
+    "completedAt": "2026-08-23T00:00:00.000Z"
+  },
+  "tempo": { "bpm": 128.5, "confidence": 0.91 },
+  "beats": [
+    { "timeMs": 250, "positionInBar": 1, "downbeat": true },
+    { "timeMs": 717, "positionInBar": 2, "downbeat": false }
+  ],
+  "sections": [
+    {
+      "sectionId": "section_01",
+      "startMs": 0,
+      "endMs": 16000,
+      "role": "intro",
+      "confidence": 0.8
+    },
+    {
+      "sectionId": "section_02",
+      "startMs": 16000,
+      "endMs": 48000,
+      "role": "chorus",
+      "rawLabel": "Hook",
+      "confidence": 0.86
+    }
+  ]
+}

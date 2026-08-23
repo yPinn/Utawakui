@@ -2,10 +2,12 @@
 
 ## Status and scope
 
-Draft planning contract, 2026-08-23. It defines the optional local analysis
-boundary needed for Lyrics presentations that react to rhythm and structural
-sections. No analyzer package, environment, model, sidecar, or Output projection
-described here is implemented today.
+Executable contract v1, implemented 2026-08-24. The bounded values live in
+`shared/musicStructureContractValues.json`; the main-process trust boundary is
+the pure validator in `electron/lib/musicStructureContract.js`, exercised by
+fixed JSON fixtures. Analyzer installation, sidecar persistence, authored UI,
+Output cue transport, presentation recipes, and model selection remain
+unimplemented.
 
 The accepted product endpoint is:
 
@@ -52,15 +54,17 @@ time, and confidence are provenance rather than executable input. A changed or
 missing source preserves the sidecar but marks it stale or unavailable; stale
 cues are never silently applied to different audio.
 
-Illustrative planning shape:
+Analyzer output v1:
 
 ```json
 {
   "schemaVersion": 1,
   "source": {
-    "sha256": "<lowercase hex digest>"
+    "sha256": "<lowercase hex digest>",
+    "durationMs": 180000
   },
   "analyzer": {
+    "contractVersion": 1,
     "id": "all-in-one-structure",
     "profileId": "all-in-one-cpu-v1",
     "environmentLock": "<sha256>",
@@ -85,12 +89,45 @@ Illustrative planning shape:
 }
 ```
 
-Field names remain planning examples until an executable schema and fixtures are
-accepted.
+`tempo` is either the shown object or `null`. `beats` and `sections` are always
+arrays, including for a valid M0/no-signal result. Confidence is optional and is
+never defaulted to certainty. M1 is present when source tempo or beats exist; M2
+is present when sections exist. These levels describe available signals rather
+than a requirement that M2 also contain M1.
+
+Authored overrides are a separate v1 document and never rewrite analyzer output:
+
+```json
+{
+  "schemaVersion": 1,
+  "source": {
+    "sha256": "<lowercase hex digest>",
+    "durationMs": 180000
+  },
+  "updatedAt": "2026-08-23T01:00:00.000Z",
+  "tempoOverride": {
+    "bpm": 121.5,
+    "anchorTimeMs": 250,
+    "beatsPerBar": 4
+  },
+  "sectionOverrides": [
+    {
+      "sectionId": "authored_01",
+      "startMs": 0,
+      "endMs": 14000,
+      "role": "intro"
+    }
+  ]
+}
+```
+
+`tempoOverride` may be `null`, and `sectionOverrides` may be empty. Analyzer
+provenance, confidence, raw labels, paths, commands, player rate, and Lyrics
+timing do not belong in the authored document.
 
 ## Canonical section roles
 
-Templates consume an app-owned allowlist such as `intro`, `verse`, `pre-chorus`,
+Templates consume the app-owned v1 allowlist: `intro`, `verse`, `pre-chorus`,
 `chorus`, `bridge`, `instrumental`, `outro`, and `unknown`. Raw analyzer labels
 remain bounded provenance and never become CSS classes, template ids, commands,
 or trusted selectors.
@@ -135,20 +172,29 @@ sidecar intact.
 
 ## Validation invariants
 
+- Analyzer and authored documents accept only their declared fields. Paths,
+  commands, executable arguments, player rate, and Lyrics timing fail closed.
 - Times are finite non-negative integer milliseconds and remain within source
-  duration subject to one documented tolerance.
+  duration plus the v1 tolerance of 1,000 ms.
 - Beats and sections are monotonic; section intervals do not overlap unless a
   later schema explicitly models hierarchy.
-- BPM and confidence have bounded numeric ranges; missing confidence is not
-  interpreted as certainty.
+- BPM is finite and bounded to 20–400. Confidence is finite and bounded to 0–1;
+  missing confidence is not interpreted as certainty. These bounds come from
+  the shared scalar JSON rather than renderer or template policy.
 - Section roles come only from the canonical allowlist; unknown raw labels map to
   `unknown`.
-- Array counts and document size are bounded in main before renderer or Output
-  projection.
-- Unknown schema or analyzer profile versions fail closed and are not rewritten
-  by older applications.
+- Beat count, section count, model-id count, string lengths, source duration, and
+  serialized document size use the bounds in the shared scalar JSON. Main
+  validates them before renderer or Output projection.
+- Unknown document or analyzer contract versions fail closed and are not
+  rewritten by older applications.
 - Provenance, raw labels, and model metadata never grant code execution or path
   access.
+
+The source SHA-256 and duration must match the current audio revision exactly.
+Missing, invalid, unsupported, or stale analysis resolves to an explicit M0
+fallback with no tempo, beats, or sections; the invalid sidecar is not repaired
+or rewritten by this validator.
 
 ## Lyrics and Output consumption
 
@@ -165,23 +211,24 @@ pause, buffering, seek, end, unavailable, or disconnect states.
 ## Rollout order
 
 1. Implement and verify T0/T1 normalization plus T2 import/manual editing.
-2. Accept the executable music-analysis schema, fixtures, and one segment-aware
-   visual recipe with an M0 fallback.
-3. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
+2. Accept the executable music-analysis schema and fixed fixtures.
+3. Add immutable cue transport and one segment-aware visual recipe with an M0
+   fallback.
+4. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
    provisional community environment.
-4. Resolve and package-smoke `analysis-structure`; resolve `combined-ml` only
+5. Resolve and package-smoke `analysis-structure`; resolve `combined-ml` only
    when Refined and analysis are both requested.
-5. Benchmark BPM, beat/downbeat, and section utility against fixed songs and
+6. Benchmark BPM, beat/downbeat, and section utility against fixed songs and
    record false/low-confidence behavior.
-6. Enable the optional analysis capability only after model license, capacity,
+7. Enable the optional analysis capability only after model license, capacity,
    offline, repair/removal, and real presentation acceptance gates pass.
-7. Evaluate automatic word/syllable alignment separately; do not treat music
+8. Evaluate automatic word/syllable alignment separately; do not treat music
    structure inference as lyric alignment.
 
 ## Deferred decisions
 
 - automatic word/syllable alignment provider and confidence UX;
-- exact canonical section-role set and manual correction UI;
+- manual correction UI;
 - meter changes and hierarchical or overlapping song sections;
 - compatibility window and message name for Output cue documents;
 - whether decoded-audio cache reuse justifies retained disk space; and

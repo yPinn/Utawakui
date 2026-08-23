@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "durationMs": 180000
+  },
+  "updatedAt": "2026-08-23T01:00:00.000Z",
+  "tempoOverride": {
+    "bpm": 121.5,
+    "anchorTimeMs": 250,
+    "beatsPerBar": 4
+  },
+  "sectionOverrides": [
+    {
+      "sectionId": "authored_01",
+      "startMs": 0,
+      "endMs": 14000,
+      "role": "intro"
+    },
+    {
+      "sectionId": "authored_02",
+      "startMs": 14000,
+      "endMs": 46000,
+      "role": "chorus"
+    }
+  ]
+}
