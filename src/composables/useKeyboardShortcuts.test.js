@@ -74,4 +74,16 @@ describe('useKeyboardShortcuts', () => {
     expect(activeView.value).toBe('import');
     expect(f4PreventDefault).toHaveBeenCalled();
   });
+
+  it('maps F9/F10 to the hidden UI and Music Analysis workbenches', async () => {
+    const activeView = await setupShortcuts();
+
+    const f9PreventDefault = dispatchKey('F9');
+    expect(activeView.value).toBe('demo');
+    expect(f9PreventDefault).toHaveBeenCalled();
+
+    const f10PreventDefault = dispatchKey('F10');
+    expect(activeView.value).toBe('music-analysis');
+    expect(f10PreventDefault).toHaveBeenCalled();
+  });
 });

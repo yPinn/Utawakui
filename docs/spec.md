@@ -372,7 +372,9 @@ decode、`AudioPythonRuntimeHost` generation lease、bounded Python worker、取
 unpacked Windows x64 packaged worker 完成真實 CPU、固定 local-model path 與
 worker-policy smoke；OS 層斷網驗證仍是 release gate。目前固定 Harmonix／HTDemucs
 權重 catalog 仍是 `benchmark-only`，因此沒有產品 activation、
-下載 UI 或自動安裝路徑。
+下載 UI 或自動安裝路徑。F10 提供不進主導覽的 internal Music Analysis
+workbench，可選曲、讀取 M0/M1/M2 sidecar、觀察 job progress、取消與重試；它只會
+呼叫既有 activation，不會下載、安裝或把 benchmark-only catalog 誤呈現為正式功能。
 
 All-In-One Infer 是第一個完整 M1/M2 候選，因為同一分析路線可提供 BPM、
 beat/downbeat 與 section evidence；它不產生 T2 逐字對齊，也不能讓 Lyrics

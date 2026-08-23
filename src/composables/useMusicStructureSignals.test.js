@@ -14,6 +14,21 @@ beforeEach(() => {
 });
 
 describe('music-structure signal owner', () => {
+  it('can create an isolated owner without mutating the playback singleton', async () => {
+    const { createMusicStructureSignals, useMusicStructureSignals } =
+      await import('./useMusicStructureSignals.js');
+    const shared = useMusicStructureSignals();
+    const isolated = createMusicStructureSignals();
+
+    isolated.replaceCurrent({
+      trackId: 'workbench-track',
+      signals: { level: 'M1', reason: 'current', beats: [], sections: [] },
+    });
+
+    expect(isolated.current.value?.trackId).toBe('workbench-track');
+    expect(shared.current.value).toBeNull();
+  });
+
   it('replaces main-validated signals immutably and clears them explicitly', async () => {
     const { useMusicStructureSignals } =
       await import('./useMusicStructureSignals.js');

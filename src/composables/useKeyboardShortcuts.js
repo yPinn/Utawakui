@@ -20,9 +20,9 @@ const VOLUME_STEP = 0.1;
 const TEMPO_STEP = 0.05;
 
 // F1-F5 match AppTopTabs.vue's left-to-right order — F-key position mirrors
-// tab position so the mapping stays obvious without a legend. F9 is the one
-// exception: 'demo' has no visible tab (see App.vue's views map comment),
-// so it isn't part of that left-to-right sequence.
+// tab position so the mapping stays obvious without a legend. F9/F10 are
+// internal workbenches with no visible tabs (see App.vue's views map comment),
+// so they aren't part of that left-to-right sequence.
 const VIEW_SHORTCUTS = {
   f1: 'setlist',
   f2: 'lyrics',
@@ -30,6 +30,7 @@ const VIEW_SHORTCUTS = {
   f4: 'import',
   f5: 'settings',
   f9: 'demo',
+  f10: 'music-analysis',
 };
 
 export function useKeyboardShortcuts(activeView) {

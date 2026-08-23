@@ -12,6 +12,7 @@ import LyricsView from './views/LyricsView.vue';
 import ImportView from './views/ImportView.vue';
 import SettingsView from './views/SettingsView.vue';
 import DemoView from './views/DemoView.vue';
+import MusicAnalysisView from './views/MusicAnalysisView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
@@ -48,8 +49,8 @@ performerView.initialize();
 const { width: sidebarWidth } = useSidebarWidth();
 
 // No router: the Electron shell has fixed sections and no deep links.
-// 'demo' is intentionally absent from AppTopTabs.vue's visible tab list —
-// an internal design-system view reached only via the F9 shortcut below.
+// 'demo' and 'music-analysis' are intentionally absent from AppTopTabs.vue's
+// visible tab list — internal workbenches reached only via F9/F10.
 const views = {
   setlist: SetlistView,
   output: OutputView,
@@ -57,6 +58,7 @@ const views = {
   import: ImportView,
   settings: SettingsView,
   demo: DemoView,
+  'music-analysis': MusicAnalysisView,
 };
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
