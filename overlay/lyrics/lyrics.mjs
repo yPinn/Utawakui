@@ -18,9 +18,64 @@ const PREVIEW_FRAME = Object.freeze({
   language: 'ja',
 });
 
+function progressPercentage(value) {
+  if (!Number.isFinite(value)) return 0;
+  return Math.round(Math.min(1, Math.max(0, value)) * 10000) / 100;
+}
+
+function renderCurrentLyrics(element, frame, options) {
+  const segments = Array.isArray(frame.currentSegments)
+    ? frame.currentSegments
+    : [];
+  const documentApi = element.ownerDocument ?? globalThis.document;
+  if (segments.length === 0 || !documentApi?.createElement) {
+    delete element.dataset.segmented;
+    element.textContent = frame.currentText;
+    return;
+  }
+
+  element.textContent = '';
+  element.dataset.segmented = 'true';
+  for (const segment of segments) {
+    const segmentElement = documentApi.createElement('span');
+    const progress = Number.isFinite(segment.progress)
+      ? progressPercentage(segment.progress)
+      : segment.state === 'active'
+        ? 100
+        : 0;
+    segmentElement.className = 'lyrics-overlay__segment';
+    segmentElement.dataset.segmentId = segment.segmentId;
+    segmentElement.dataset.segmentState = segment.state;
+    segmentElement.textContent = segment.text;
+    segmentElement.style.setProperty('--ovl-segment-progress', `${progress}%`);
+    if (
+      segment.state === 'active' &&
+      Number.isFinite(segment.remainingMs) &&
+      segment.remainingMs > 0 &&
+      options.reducedMotion !== true &&
+      typeof segmentElement.animate === 'function'
+    ) {
+      segmentElement.animate(
+        [
+          { '--ovl-segment-progress': `${progress}%` },
+          { '--ovl-segment-progress': '100%' },
+        ],
+        {
+          duration: Math.max(1, Math.ceil(segment.remainingMs)),
+          easing: 'linear',
+          fill: 'forwards',
+        },
+      );
+    }
+    element.append(segmentElement);
+  }
+}
+
 export function renderLyricsFrame(elements, frame, options = {}) {
-  const previousText = elements.current.textContent;
-  elements.current.textContent = frame.currentText;
+  const previousText =
+    elements.current.dataset.currentText ?? elements.current.textContent;
+  renderCurrentLyrics(elements.current, frame, options);
+  elements.current.dataset.currentText = frame.currentText;
   elements.next.textContent = frame.nextText;
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');

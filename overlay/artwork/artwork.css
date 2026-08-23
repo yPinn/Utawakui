@@ -1,104 +1,106 @@
-.artwork-overlay {
-  --ovl-template-artwork-width: 36rem;
-  --ovl-template-artwork-mark-size: 9rem;
-  --ovl-template-artwork-title-size: 2.25em;
-
-  position: fixed;
-  inset-inline-start: var(--ovl-safe-inline);
-  inset-block-end: var(--ovl-safe-block);
-  inline-size: min(
-    calc(100% - 2 * var(--ovl-safe-inline)),
-    var(--ovl-template-artwork-width)
-  );
-  display: grid;
-  grid-template-columns: var(--ovl-template-artwork-mark-size) minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ovl-primitive-space-6);
-  padding: var(--ovl-primitive-space-4);
-  border: 1px solid var(--ovl-user-outline);
-  border-radius: var(--ovl-primitive-radius-md);
-  background: var(--ovl-user-surface);
-  font-size: var(--ovl-user-font-scale);
-  font-family: var(--ovl-user-font-family);
-  text-align: var(--ovl-user-text-align);
-}
-
-.artwork-overlay__mark {
-  position: relative;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--ovl-color-outline);
-  border-radius: var(--ovl-primitive-radius-md);
-  background: var(--ovl-color-mark-surface);
-  color: var(--ovl-color-text-primary);
-  font-size: 4em;
-  font-weight: var(--ovl-user-font-weight);
-  line-height: 1;
-  text-shadow: var(--ovl-text-shadow);
-  overflow: hidden;
-}
-
-.artwork-overlay__image {
-  position: absolute;
-  inset: 0;
-  inline-size: 100%;
-  block-size: 100%;
-  object-fit: cover;
-}
-
-.artwork-overlay__fallback {
-  position: relative;
-}
-
-.artwork-overlay__copy {
-  min-width: 0;
-}
-
-.artwork-overlay__title,
-.artwork-overlay__artist {
-  margin: 0;
-  overflow-wrap: anywhere;
-}
-
-.artwork-overlay__title {
-  display: -webkit-box;
-  overflow: hidden;
-  font-size: var(--ovl-template-artwork-title-size);
-  font-weight: var(--ovl-user-font-weight);
-  line-height: 1.15;
-  text-wrap: balance;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
-}
-
-.artwork-overlay__artist {
-  margin-block-start: var(--ovl-primitive-space-2);
-  color: var(--ovl-color-text-secondary);
-  font-size: 1em;
-  line-height: 1.35;
-}
-
-@media (max-width: 42rem) {
+@layer ovl-template {
   .artwork-overlay {
-    --ovl-template-artwork-mark-size: 5rem;
-    --ovl-template-artwork-title-size: 1.5em;
+    --ovl-template-artwork-width: 36rem;
+    --ovl-template-artwork-mark-size: 9rem;
+    --ovl-template-artwork-title-size: 2.25em;
 
-    gap: var(--ovl-primitive-space-3);
-    padding: var(--ovl-primitive-space-3);
+    position: fixed;
+    inset-inline-start: var(--ovl-safe-inline);
+    inset-block-end: var(--ovl-safe-block);
+    inline-size: min(
+      calc(100% - 2 * var(--ovl-safe-inline)),
+      var(--ovl-template-artwork-width)
+    );
+    display: grid;
+    grid-template-columns: var(--ovl-template-artwork-mark-size) minmax(0, 1fr);
+    align-items: center;
+    gap: var(--ovl-primitive-space-6);
+    padding: var(--ovl-primitive-space-4);
+    border: 1px solid var(--ovl-user-outline);
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-user-surface);
+    font-size: var(--ovl-user-font-scale);
+    font-family: var(--ovl-user-font-family);
+    text-align: var(--ovl-user-text-align);
   }
 
   .artwork-overlay__mark {
-    font-size: 2.25em;
+    position: relative;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ovl-color-outline);
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-color-mark-surface);
+    color: var(--ovl-color-text-primary);
+    font-size: 4em;
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1;
+    text-shadow: var(--ovl-text-shadow);
+    overflow: hidden;
   }
-}
 
-@media (max-height: 36rem) {
-  .artwork-overlay {
-    --ovl-template-artwork-mark-size: 5rem;
-    --ovl-template-artwork-title-size: 1.5em;
+  .artwork-overlay__image {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
 
-    gap: var(--ovl-primitive-space-3);
-    padding: var(--ovl-primitive-space-3);
+  .artwork-overlay__fallback {
+    position: relative;
+  }
+
+  .artwork-overlay__copy {
+    min-width: 0;
+  }
+
+  .artwork-overlay__title,
+  .artwork-overlay__artist {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .artwork-overlay__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--ovl-template-artwork-title-size);
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1.15;
+    text-wrap: balance;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .artwork-overlay__artist {
+    margin-block-start: var(--ovl-primitive-space-2);
+    color: var(--ovl-color-text-secondary);
+    font-size: 1em;
+    line-height: 1.35;
+  }
+
+  @media (max-width: 42rem) {
+    .artwork-overlay {
+      --ovl-template-artwork-mark-size: 5rem;
+      --ovl-template-artwork-title-size: 1.5em;
+
+      gap: var(--ovl-primitive-space-3);
+      padding: var(--ovl-primitive-space-3);
+    }
+
+    .artwork-overlay__mark {
+      font-size: 2.25em;
+    }
+  }
+
+  @media (max-height: 36rem) {
+    .artwork-overlay {
+      --ovl-template-artwork-mark-size: 5rem;
+      --ovl-template-artwork-title-size: 1.5em;
+
+      gap: var(--ovl-primitive-space-3);
+      padding: var(--ovl-primitive-space-3);
+    }
   }
 }

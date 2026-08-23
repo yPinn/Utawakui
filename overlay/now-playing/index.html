@@ -4,13 +4,19 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Utawakui Now Playing Overlay</title>
-    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/shared/base.css" />
+    <link rel="stylesheet" href="/overlay/shared/fallback.css" />
+    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/now-playing/now-playing.css" />
     <script type="module" src="/overlay/now-playing/now-playing.mjs"></script>
   </head>
   <body>
-    <main id="now-playing-overlay" class="now-playing-overlay" hidden>
+    <main
+      id="now-playing-overlay"
+      class="now-playing-overlay"
+      dir="auto"
+      hidden
+    >
       <p id="now-playing-title" class="now-playing-overlay__title"></p>
       <p id="now-playing-artist" class="now-playing-overlay__artist"></p>
       <p id="now-playing-next" class="now-playing-overlay__next"></p>

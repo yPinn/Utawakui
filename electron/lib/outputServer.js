@@ -65,6 +65,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/artwork/artwork.mjs': ['artwork', 'artwork.mjs'],
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],
+  '/overlay/shared/fallback.css': ['shared', 'fallback.css'],
   '/overlay/shared/preview.mjs': ['shared', 'preview.mjs'],
   '/overlay/shared/runtime.mjs': ['shared', 'runtime.mjs'],
   '/overlay/shared/state.mjs': ['shared', 'state.mjs'],

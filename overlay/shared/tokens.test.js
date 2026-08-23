@@ -2,7 +2,11 @@ import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 describe('overlay CSS tokens', () => {
-  it('keeps primitive, semantic, and template tokens outside the UI system', () => {
+  it('keeps fallback primitive, semantic, and template tokens outside the UI system', () => {
+    const fallback = fs.readFileSync(
+      new URL('./fallback.css', import.meta.url),
+      'utf8',
+    );
     const tokens = fs.readFileSync(
       new URL('./tokens.css', import.meta.url),
       'utf8',
@@ -12,10 +16,76 @@ describe('overlay CSS tokens', () => {
       'utf8',
     );
 
-    expect(tokens).toContain('--ovl-primitive-color-ink');
+    expect(fallback).toContain('--ovl-primitive-color-ink');
+    expect(tokens).not.toContain('--ovl-primitive-color-ink:');
     expect(tokens).toContain('--ovl-color-text-primary');
     expect(lyrics).toContain('--ovl-template-lyrics-current-size');
-    expect(`${tokens}\n${lyrics}`).not.toContain('--ui-');
+    expect(`${fallback}\n${tokens}\n${lyrics}`).not.toContain('--ui-');
+  });
+
+  it('loads the explicit bundled fallback cascade on every fixed route', () => {
+    const base = fs.readFileSync(
+      new URL('./base.css', import.meta.url),
+      'utf8',
+    );
+    expect(base).toContain(
+      '@layer ovl-reset, ovl-fallback, ovl-semantic, ovl-template, ovl-appearance, ovl-constraints;',
+    );
+
+    for (const kind of ['lyrics', 'now-playing', 'setlist', 'artwork']) {
+      const html = fs.readFileSync(
+        new URL(`../${kind}/index.html`, import.meta.url),
+        'utf8',
+      );
+      const baseIndex = html.indexOf('/overlay/shared/base.css');
+      const fallbackIndex = html.indexOf('/overlay/shared/fallback.css');
+      const tokensIndex = html.indexOf('/overlay/shared/tokens.css');
+      const templateIndex = html.indexOf(`/overlay/${kind}/${kind}.css`);
+
+      expect(baseIndex).toBeGreaterThan(-1);
+      expect(fallbackIndex).toBeGreaterThan(baseIndex);
+      expect(tokensIndex).toBeGreaterThan(fallbackIndex);
+      expect(templateIndex).toBeGreaterThan(tokensIndex);
+    }
+  });
+
+  it('lets every fixed route derive text direction from its rendered content', () => {
+    for (const kind of ['lyrics', 'now-playing', 'setlist', 'artwork']) {
+      const html = fs.readFileSync(
+        new URL(`../${kind}/index.html`, import.meta.url),
+        'utf8',
+      );
+      expect(html).toMatch(/<main\b[^>]*\bdir="auto"/s);
+    }
+  });
+
+  it('keeps each CSS owner in its declared cascade layer', () => {
+    const fallback = fs.readFileSync(
+      new URL('./fallback.css', import.meta.url),
+      'utf8',
+    );
+    const tokens = fs.readFileSync(
+      new URL('./tokens.css', import.meta.url),
+      'utf8',
+    );
+    const base = fs.readFileSync(
+      new URL('./base.css', import.meta.url),
+      'utf8',
+    );
+
+    expect(base).toContain('@layer ovl-reset {');
+    expect(base).toContain('@layer ovl-constraints {');
+    expect(fallback).toContain('@layer ovl-fallback {');
+    expect(tokens).toContain('@layer ovl-semantic {');
+    expect(tokens).toContain('@layer ovl-appearance {');
+
+    for (const kind of ['lyrics', 'now-playing', 'setlist', 'artwork']) {
+      const styles = fs.readFileSync(
+        new URL(`../${kind}/${kind}.css`, import.meta.url),
+        'utf8',
+      );
+      expect(styles).toContain('@layer ovl-template {');
+    }
   });
 
   it('keeps raw colors in the shared token layer', () => {
@@ -62,6 +132,21 @@ describe('overlay CSS tokens', () => {
     expect(tokens).toContain('--ovl-color-current-surface');
     expect(tokens).toContain('--ovl-color-stroke-strong');
     expect(tokens).toContain('--ovl-color-stroke-soft');
+  });
+
+  it('keeps lyric glyphs visible while exposing segment progress', () => {
+    const lyrics = fs.readFileSync(
+      new URL('../lyrics/lyrics.css', import.meta.url),
+      'utf8',
+    );
+
+    expect(lyrics).toContain("[data-segment-state='past']");
+    expect(lyrics).toContain("[data-segment-state='active']");
+    expect(lyrics).toContain("[data-segment-state='upcoming']");
+    expect(lyrics).toContain('--ovl-segment-progress');
+    expect(lyrics).not.toContain('background-clip: text');
+    expect(lyrics).not.toContain('-webkit-text-fill-color: transparent');
+    expect(lyrics).not.toMatch(/\bcolor:\s*transparent\b/);
   });
 
   it('keeps every Browser Source capture surface non-selectable', () => {

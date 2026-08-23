@@ -1,88 +1,127 @@
-.lyrics-overlay {
-  /* Template layer: override these per profile/style set later. */
-  --ovl-template-lyrics-current-size: 3.5em;
-  --ovl-template-lyrics-next-size: 1.75em;
-  --ovl-template-lyrics-line-width: 28ch;
-  --ovl-template-lyrics-panel-width: 64rem;
-  --ovl-template-lyrics-bottom: 9%;
-
-  position: fixed;
-  inset-inline-start: 50%;
-  inset-block-end: max(
-    var(--ovl-safe-block),
-    var(--ovl-template-lyrics-bottom)
-  );
-  inline-size: min(
-    calc(100% - 2 * var(--ovl-safe-inline)),
-    var(--ovl-template-lyrics-panel-width)
-  );
-  display: grid;
-  transform: translateX(-50%);
-  gap: var(--ovl-primitive-space-3);
-  padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
-  border: 1px solid var(--ovl-user-outline);
-  border-radius: var(--ovl-primitive-radius-md);
-  background: var(--ovl-user-surface);
-  font-size: var(--ovl-user-font-scale);
-  pointer-events: none;
-  text-align: var(--ovl-user-text-align);
-  justify-items: var(--ovl-user-justify);
+@property --ovl-segment-progress {
+  syntax: '<percentage>';
+  inherits: false;
+  initial-value: 0%;
 }
 
-.lyrics-overlay__current,
-.lyrics-overlay__next {
-  max-inline-size: min(100%, var(--ovl-template-lyrics-line-width));
-  margin: 0;
-  overflow-wrap: anywhere;
-  text-wrap: balance;
-}
-
-.lyrics-overlay__current {
-  color: var(--ovl-color-text-primary);
-  font-family: var(--ovl-user-font-family);
-  font-size: var(--ovl-template-lyrics-current-size);
-  font-weight: var(--ovl-user-font-weight);
-  line-height: 1.22;
-  text-shadow: var(--ovl-text-shadow);
-  -webkit-text-stroke: 0.035em var(--ovl-color-stroke-strong);
-  paint-order: stroke fill;
-}
-
-.lyrics-overlay__next {
-  color: var(--ovl-color-text-secondary);
-  font-family: var(--ovl-user-font-family);
-  font-size: var(--ovl-template-lyrics-next-size);
-  font-weight: var(--ovl-user-font-weight);
-  line-height: 1.3;
-  text-shadow: var(--ovl-text-shadow);
-  -webkit-text-stroke: 0.025em var(--ovl-color-stroke-soft);
-  paint-order: stroke fill;
-}
-
-:root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
-  --ovl-template-lyrics-line-width: 34ch;
-  --ovl-template-lyrics-bottom: 6%;
-}
-
-:root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current,
-:root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
-  inline-size: 100%;
-}
-
-@media (max-width: 42rem) {
+@layer ovl-template {
   .lyrics-overlay {
-    --ovl-template-lyrics-current-size: 2.25em;
-    --ovl-template-lyrics-next-size: 1.25em;
-    --ovl-template-lyrics-line-width: 22ch;
+    /* Template layer: override these per profile/style set later. */
+    --ovl-template-lyrics-current-size: 3.5em;
+    --ovl-template-lyrics-next-size: 1.75em;
+    --ovl-template-lyrics-line-width: 28ch;
+    --ovl-template-lyrics-panel-width: 64rem;
+    --ovl-template-lyrics-bottom: 9%;
+
+    position: fixed;
+    inset-inline-start: 50%;
+    inset-block-end: max(
+      var(--ovl-safe-block),
+      var(--ovl-template-lyrics-bottom)
+    );
+    inline-size: min(
+      calc(100% - 2 * var(--ovl-safe-inline)),
+      var(--ovl-template-lyrics-panel-width)
+    );
+    display: grid;
+    transform: translateX(-50%);
+    gap: var(--ovl-primitive-space-3);
+    padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
+    border: 1px solid var(--ovl-user-outline);
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-user-surface);
+    font-size: var(--ovl-user-font-scale);
+    pointer-events: none;
+    text-align: var(--ovl-user-text-align);
+    justify-items: var(--ovl-user-justify);
   }
-}
 
-@media (max-height: 36rem) {
-  .lyrics-overlay {
-    --ovl-template-lyrics-current-size: 2em;
-    --ovl-template-lyrics-next-size: 1em;
+  .lyrics-overlay__current,
+  .lyrics-overlay__next {
+    max-inline-size: min(100%, var(--ovl-template-lyrics-line-width));
+    margin: 0;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
+  .lyrics-overlay__current {
+    color: var(--ovl-color-text-primary);
+    font-family: var(--ovl-user-font-family);
+    font-size: var(--ovl-template-lyrics-current-size);
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1.22;
+    text-shadow: var(--ovl-text-shadow);
+    -webkit-text-stroke: 0.035em var(--ovl-color-stroke-strong);
+    paint-order: stroke fill;
+  }
+
+  .lyrics-overlay__current[data-segmented='true'] {
+    white-space: pre-wrap;
+    text-wrap: wrap;
+  }
+
+  .lyrics-overlay__segment {
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+    color: var(--ovl-color-text-primary);
+    background-image: linear-gradient(
+      to right,
+      var(--ovl-color-current),
+      var(--ovl-color-current)
+    );
+    background-position: left calc(100% - 0.02em);
+    background-repeat: no-repeat;
+    background-size: var(--ovl-segment-progress) 0.09em;
+  }
+
+  .lyrics-overlay__segment[data-segment-state='past'] {
+    color: var(--ovl-color-current);
+  }
+
+  .lyrics-overlay__segment[data-segment-state='active'] {
+    color: var(--ovl-color-text-primary);
+  }
+
+  .lyrics-overlay__segment[data-segment-state='upcoming'] {
+    color: var(--ovl-color-text-secondary);
+  }
+
+  .lyrics-overlay__next {
+    color: var(--ovl-color-text-secondary);
+    font-family: var(--ovl-user-font-family);
+    font-size: var(--ovl-template-lyrics-next-size);
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1.3;
+    text-shadow: var(--ovl-text-shadow);
+    -webkit-text-stroke: 0.025em var(--ovl-color-stroke-soft);
+    paint-order: stroke fill;
+  }
+
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
+    --ovl-template-lyrics-line-width: 34ch;
     --ovl-template-lyrics-bottom: 6%;
+  }
 
-    gap: var(--ovl-primitive-space-2);
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current,
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
+    inline-size: 100%;
+  }
+
+  @media (max-width: 42rem) {
+    .lyrics-overlay {
+      --ovl-template-lyrics-current-size: 2.25em;
+      --ovl-template-lyrics-next-size: 1.25em;
+      --ovl-template-lyrics-line-width: 22ch;
+    }
+  }
+
+  @media (max-height: 36rem) {
+    .lyrics-overlay {
+      --ovl-template-lyrics-current-size: 2em;
+      --ovl-template-lyrics-next-size: 1em;
+      --ovl-template-lyrics-bottom: 6%;
+
+      gap: var(--ovl-primitive-space-2);
+    }
   }
 }

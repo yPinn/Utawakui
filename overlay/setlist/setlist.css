@@ -1,125 +1,127 @@
-.setlist-overlay {
-  --ovl-template-setlist-width: 31rem;
-  --ovl-template-setlist-row-height: 2.75rem;
-
-  position: fixed;
-  inset-inline-end: var(--ovl-safe-inline);
-  inset-block-start: var(--ovl-safe-block);
-  inline-size: min(
-    calc(100% - 2 * var(--ovl-safe-inline)),
-    var(--ovl-template-setlist-width)
-  );
-  max-block-size: calc(100% - 2 * var(--ovl-safe-block));
-  display: flex;
-  flex-direction: column;
-  padding: var(--ovl-primitive-space-4);
-  border: 1px solid var(--ovl-user-outline);
-  border-radius: var(--ovl-primitive-radius-md);
-  background: var(--ovl-user-surface);
-  font-size: var(--ovl-user-font-scale);
-  font-family: var(--ovl-user-font-family);
-  text-align: var(--ovl-user-text-align);
-}
-
-.setlist-overlay__title {
-  flex: 0 0 auto;
-  margin: 0;
-  padding-block-end: var(--ovl-primitive-space-3);
-  border-block-end: 1px solid var(--ovl-color-divider);
-  overflow: hidden;
-  font-size: 1.75em;
-  font-weight: var(--ovl-user-font-weight);
-  line-height: 1.15;
-  text-overflow: ellipsis;
-  text-wrap: balance;
-  white-space: nowrap;
-}
-
-.setlist-overlay__rows {
-  display: grid;
-  min-block-size: 0;
-  overflow: hidden;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  counter-reset: setlist;
-}
-
-.setlist-overlay__row {
-  min-block-size: var(--ovl-template-setlist-row-height);
-  display: grid;
-  grid-template-columns: 2rem minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ovl-primitive-space-3);
-  padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
-  border-block-end: 1px solid var(--ovl-color-divider);
-  background: transparent;
-  counter-increment: setlist;
-}
-
-.setlist-overlay__row:last-child {
-  border-block-end: 0;
-}
-
-.setlist-overlay__row::before {
-  content: counter(setlist, decimal-leading-zero);
-  color: var(--ovl-color-text-secondary);
-  font-size: 0.875rem;
-  font-variant-numeric: tabular-nums;
-}
-
-.setlist-overlay__row.is-current {
-  color: var(--ovl-color-text-primary);
-  background: var(--ovl-color-current-surface);
-}
-
-.setlist-overlay__row.is-current::before {
-  color: var(--ovl-color-text-primary);
-}
-
-.setlist-overlay__row.is-played {
-  opacity: 0.54;
-}
-
-.setlist-overlay__track {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-weight: var(--ovl-user-font-weight);
-}
-
-.setlist-overlay__artist {
-  color: var(--ovl-color-text-secondary);
-}
-
-@media (max-width: 42rem) {
+@layer ovl-template {
   .setlist-overlay {
-    --ovl-template-setlist-row-height: 2.5rem;
+    --ovl-template-setlist-width: 31rem;
+    --ovl-template-setlist-row-height: 2.75rem;
 
-    padding: var(--ovl-primitive-space-3);
+    position: fixed;
+    inset-inline-end: var(--ovl-safe-inline);
+    inset-block-start: var(--ovl-safe-block);
+    inline-size: min(
+      calc(100% - 2 * var(--ovl-safe-inline)),
+      var(--ovl-template-setlist-width)
+    );
+    max-block-size: calc(100% - 2 * var(--ovl-safe-block));
+    display: flex;
+    flex-direction: column;
+    padding: var(--ovl-primitive-space-4);
+    border: 1px solid var(--ovl-user-outline);
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-user-surface);
+    font-size: var(--ovl-user-font-scale);
+    font-family: var(--ovl-user-font-family);
+    text-align: var(--ovl-user-text-align);
   }
 
   .setlist-overlay__title {
-    font-size: 1.25em;
+    flex: 0 0 auto;
+    margin: 0;
+    padding-block-end: var(--ovl-primitive-space-3);
+    border-block-end: 1px solid var(--ovl-color-divider);
+    overflow: hidden;
+    font-size: 1.75em;
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1.15;
+    text-overflow: ellipsis;
+    text-wrap: balance;
+    white-space: nowrap;
   }
-}
 
-@media (max-height: 36rem) {
-  .setlist-overlay {
-    --ovl-template-setlist-width: 22rem;
-    --ovl-template-setlist-row-height: 2rem;
-
-    padding: var(--ovl-primitive-space-3);
-  }
-
-  .setlist-overlay__title {
-    padding-block-end: var(--ovl-primitive-space-2);
-    font-size: 1rem;
+  .setlist-overlay__rows {
+    display: grid;
+    min-block-size: 0;
+    overflow: hidden;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    counter-reset: setlist;
   }
 
   .setlist-overlay__row {
-    gap: var(--ovl-primitive-space-2);
-    padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
+    min-block-size: var(--ovl-template-setlist-row-height);
+    display: grid;
+    grid-template-columns: 2rem minmax(0, 1fr);
+    align-items: center;
+    gap: var(--ovl-primitive-space-3);
+    padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
+    border-block-end: 1px solid var(--ovl-color-divider);
+    background: transparent;
+    counter-increment: setlist;
+  }
+
+  .setlist-overlay__row:last-child {
+    border-block-end: 0;
+  }
+
+  .setlist-overlay__row::before {
+    content: counter(setlist, decimal-leading-zero);
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.875rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .setlist-overlay__row.is-current {
+    color: var(--ovl-color-text-primary);
+    background: var(--ovl-color-current-surface);
+  }
+
+  .setlist-overlay__row.is-current::before {
+    color: var(--ovl-color-text-primary);
+  }
+
+  .setlist-overlay__row.is-played {
+    opacity: 0.54;
+  }
+
+  .setlist-overlay__track {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: var(--ovl-user-font-weight);
+  }
+
+  .setlist-overlay__artist {
+    color: var(--ovl-color-text-secondary);
+  }
+
+  @media (max-width: 42rem) {
+    .setlist-overlay {
+      --ovl-template-setlist-row-height: 2.5rem;
+
+      padding: var(--ovl-primitive-space-3);
+    }
+
+    .setlist-overlay__title {
+      font-size: 1.25em;
+    }
+  }
+
+  @media (max-height: 36rem) {
+    .setlist-overlay {
+      --ovl-template-setlist-width: 22rem;
+      --ovl-template-setlist-row-height: 2rem;
+
+      padding: var(--ovl-primitive-space-3);
+    }
+
+    .setlist-overlay__title {
+      padding-block-end: var(--ovl-primitive-space-2);
+      font-size: 1rem;
+    }
+
+    .setlist-overlay__row {
+      gap: var(--ovl-primitive-space-2);
+      padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
+    }
   }
 }

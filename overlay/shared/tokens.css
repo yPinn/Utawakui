@@ -1,115 +1,102 @@
-:root {
-  /* Primitive layer: raw values shared by every overlay template. */
-  --ovl-primitive-color-ink: #111417;
-  --ovl-primitive-color-paper: #fffdfa;
-  --ovl-primitive-color-mist: #b8d8d2;
-  --ovl-primitive-color-teal: #55a2a7;
-  --ovl-primitive-color-coral: #d26a45;
-  --ovl-primitive-space-1: 0.25rem;
-  --ovl-primitive-space-2: 0.5rem;
-  --ovl-primitive-space-3: 0.75rem;
-  --ovl-primitive-space-4: 1rem;
-  --ovl-primitive-space-6: 2rem;
-  --ovl-primitive-space-8: 4rem;
-  --ovl-primitive-radius-sm: 0.25rem;
-  --ovl-primitive-radius-md: 0.5rem;
-  --ovl-primitive-motion-fast: 180ms;
-  --ovl-primitive-motion-standard: 240ms;
-  --ovl-primitive-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
-
-  /* Semantic layer: public-output roles, independent of control-panel UI. */
-  --ovl-color-text-primary: var(--ovl-primitive-color-paper);
-  --ovl-color-text-secondary: var(--ovl-primitive-color-mist);
-  --ovl-color-current: var(--ovl-primitive-color-coral);
-  --ovl-color-surface: rgb(17 20 23 / 82%);
-  --ovl-color-surface-soft: rgb(17 20 23 / 58%);
-  --ovl-color-outline: rgb(255 253 250 / 22%);
-  --ovl-color-divider: rgb(255 253 250 / 16%);
-  --ovl-color-current-surface: rgb(85 162 167 / 42%);
-  --ovl-color-mark-surface: rgb(85 162 167 / 72%);
-  --ovl-color-stroke-strong: rgb(17 20 23 / 88%);
-  --ovl-color-stroke-soft: rgb(17 20 23 / 78%);
-  --ovl-font-display-cjk:
-    var(--ovl-font-display-cjk-custom, 'GenWanMin2 TW'), 'GenWanMin2 TC',
-    'GenWanMin2 PJP', 'Noto Serif TC', 'Noto Serif JP', 'Noto Serif KR',
-    'Microsoft JhengHei', serif;
-  --ovl-font-display-latin:
-    var(--ovl-font-display-latin-custom, 'Playfair Display'), 'Source Serif 4',
-    Georgia, serif;
-  --ovl-font-ui:
-    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --ovl-safe-inline: var(--ovl-primitive-space-8);
-  --ovl-safe-block: var(--ovl-primitive-space-8);
-  --ovl-text-shadow:
-    0 0.08em 0.08em rgb(0 0 0 / 92%), 0 0.16em 0.45em rgb(0 0 0 / 72%);
-  --ovl-motion-line-duration: var(--ovl-primitive-motion-standard);
-  --ovl-motion-ease: var(--ovl-primitive-ease-out);
-
-  /* User appearance roles: values are selected through allowlisted ids. */
-  --ovl-user-font-family: var(--ovl-font-ui);
-  --ovl-user-font-scale: 100%;
-  --ovl-user-font-weight: 600;
-  --ovl-user-text-align: left;
-  --ovl-user-justify: start;
-  --ovl-user-surface: transparent;
-  --ovl-user-outline: transparent;
-}
-
-:root[data-ovl-font='serif'] {
-  --ovl-user-font-family: var(--ovl-font-display-cjk);
-}
-
-:root[data-ovl-font='rounded'] {
-  --ovl-user-font-family:
-    'Arial Rounded MT Bold', 'Yu Gothic UI', 'Microsoft JhengHei', sans-serif;
-}
-
-:root[data-ovl-scale='small'] {
-  --ovl-user-font-scale: 85%;
-}
-
-:root[data-ovl-scale='large'] {
-  --ovl-user-font-scale: 120%;
-}
-
-:root[data-ovl-weight='regular'] {
-  --ovl-user-font-weight: 400;
-}
-
-:root[data-ovl-weight='bold'] {
-  --ovl-user-font-weight: 700;
-}
-
-:root[data-ovl-align='left'] {
-  --ovl-user-text-align: left;
-  --ovl-user-justify: start;
-}
-
-:root[data-ovl-align='right'] {
-  --ovl-user-text-align: right;
-  --ovl-user-justify: end;
-}
-
-:root[data-ovl-surface='soft'] {
-  --ovl-user-surface: var(--ovl-color-surface-soft);
-  --ovl-user-outline: var(--ovl-color-outline);
-}
-
-:root[data-ovl-surface='solid'] {
-  --ovl-user-surface: var(--ovl-color-surface);
-  --ovl-user-outline: var(--ovl-color-outline);
-}
-
-@media (max-width: 48rem), (max-height: 48rem) {
+@layer ovl-semantic {
   :root {
-    --ovl-safe-inline: var(--ovl-primitive-space-6);
-    --ovl-safe-block: var(--ovl-primitive-space-6);
+    /* Public-output roles stay independent from control-panel UI tokens. */
+    --ovl-color-text-primary: var(--ovl-primitive-color-paper);
+    --ovl-color-text-secondary: var(--ovl-primitive-color-mist);
+    --ovl-color-current: var(--ovl-primitive-color-coral);
+    --ovl-color-surface: var(--ovl-primitive-color-surface);
+    --ovl-color-surface-soft: var(--ovl-primitive-color-surface-soft);
+    --ovl-color-outline: var(--ovl-primitive-color-outline);
+    --ovl-color-divider: var(--ovl-primitive-color-divider);
+    --ovl-color-current-surface: var(--ovl-primitive-color-current-surface);
+    --ovl-color-mark-surface: var(--ovl-primitive-color-mark-surface);
+    --ovl-color-stroke-strong: var(--ovl-primitive-color-stroke-strong);
+    --ovl-color-stroke-soft: var(--ovl-primitive-color-stroke-soft);
+    --ovl-font-display-cjk: var(
+      --ovl-font-display-cjk-custom,
+      var(--ovl-fallback-font-display-cjk)
+    );
+    --ovl-font-display-latin: var(
+      --ovl-font-display-latin-custom,
+      var(--ovl-fallback-font-display-latin)
+    );
+    --ovl-font-ui: var(--ovl-fallback-font-ui);
+    --ovl-safe-inline: var(--ovl-primitive-space-8);
+    --ovl-safe-block: var(--ovl-primitive-space-8);
+    --ovl-text-shadow: var(--ovl-primitive-text-shadow);
+    --ovl-motion-line-duration: var(--ovl-primitive-motion-standard);
+    --ovl-motion-ease: var(--ovl-primitive-ease-out);
   }
 }
 
-@media (max-width: 36rem), (max-height: 36rem) {
+@layer ovl-appearance {
   :root {
-    --ovl-safe-inline: var(--ovl-primitive-space-4);
-    --ovl-safe-block: var(--ovl-primitive-space-4);
+    /* Current allowlisted settings; future packs resolve into this layer. */
+    --ovl-user-font-family: var(--ovl-font-ui);
+    --ovl-user-font-scale: 100%;
+    --ovl-user-font-weight: 600;
+    --ovl-user-text-align: left;
+    --ovl-user-justify: start;
+    --ovl-user-surface: transparent;
+    --ovl-user-outline: transparent;
+  }
+
+  :root[data-ovl-font='serif'] {
+    --ovl-user-font-family: var(--ovl-font-display-cjk);
+  }
+
+  :root[data-ovl-font='rounded'] {
+    --ovl-user-font-family:
+      'Arial Rounded MT Bold', 'Yu Gothic UI', 'Microsoft JhengHei', sans-serif;
+  }
+
+  :root[data-ovl-scale='small'] {
+    --ovl-user-font-scale: 85%;
+  }
+
+  :root[data-ovl-scale='large'] {
+    --ovl-user-font-scale: 120%;
+  }
+
+  :root[data-ovl-weight='regular'] {
+    --ovl-user-font-weight: 400;
+  }
+
+  :root[data-ovl-weight='bold'] {
+    --ovl-user-font-weight: 700;
+  }
+
+  :root[data-ovl-align='left'] {
+    --ovl-user-text-align: left;
+    --ovl-user-justify: start;
+  }
+
+  :root[data-ovl-align='right'] {
+    --ovl-user-text-align: right;
+    --ovl-user-justify: end;
+  }
+
+  :root[data-ovl-surface='soft'] {
+    --ovl-user-surface: var(--ovl-color-surface-soft);
+    --ovl-user-outline: var(--ovl-color-outline);
+  }
+
+  :root[data-ovl-surface='solid'] {
+    --ovl-user-surface: var(--ovl-color-surface);
+    --ovl-user-outline: var(--ovl-color-outline);
+  }
+
+  @media (max-width: 48rem), (max-height: 48rem) {
+    :root {
+      --ovl-safe-inline: var(--ovl-primitive-space-6);
+      --ovl-safe-block: var(--ovl-primitive-space-6);
+    }
+  }
+
+  @media (max-width: 36rem), (max-height: 36rem) {
+    :root {
+      --ovl-safe-inline: var(--ovl-primitive-space-4);
+      --ovl-safe-block: var(--ovl-primitive-space-4);
+    }
   }
 }

@@ -269,12 +269,19 @@ describe('outputServer', () => {
       expect(await response.text()).toContain('<!doctype html>');
     }
 
+    const fallback = await fetch(
+      `${status.httpUrl}/overlay/shared/fallback.css`,
+    );
+    expect(fallback.status).toBe(200);
+    expect(fallback.headers.get('content-type')).toContain('text/css');
+    expect(await fallback.text()).toContain('--ovl-primitive-color-ink');
+
     const tokens = await fetch(`${status.httpUrl}/overlay/shared/tokens.css`);
     expect(tokens.status).toBe(200);
     expect(tokens.headers.get('content-type')).toContain('text/css');
     expect(tokens.headers.get('cache-control')).toBe('no-cache');
     expect(tokens.headers.get('etag')).toMatch(/^"[a-f0-9]{64}"$/);
-    expect(await tokens.text()).toContain('--ovl-primitive-color-ink');
+    expect(await tokens.text()).toContain('--ovl-color-text-primary');
     const unchangedTokens = await fetch(
       `${status.httpUrl}/overlay/shared/tokens.css`,
       { headers: { 'If-None-Match': tokens.headers.get('etag') } },

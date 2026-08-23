@@ -21,6 +21,84 @@ function playbackRate(snapshot) {
   return Number.isFinite(rate) && rate > 0 ? rate : 1;
 }
 
+function lyricsOffsetMs(snapshot) {
+  return Number.isFinite(snapshot?.lyrics?.offsetMs)
+    ? snapshot.lyrics.offsetMs
+    : 0;
+}
+
+function lyricsPositionMs(snapshot, nowMs) {
+  return playbackPositionMs(snapshot, nowMs) + lyricsOffsetMs(snapshot);
+}
+
+function nextFiniteLineStart(lines, lineIndex) {
+  return lines
+    .slice(lineIndex + 1)
+    .find((line) => Number.isFinite(line?.startMs))?.startMs;
+}
+
+function effectiveLineEnd(snapshot, lines, lineIndex) {
+  const line = lines[lineIndex];
+  if (Number.isFinite(line?.endMs)) return line.endMs;
+  const nextStartMs = nextFiniteLineStart(lines, lineIndex);
+  if (Number.isFinite(nextStartMs)) return nextStartMs;
+  return Number.isFinite(snapshot?.playback?.durationMs)
+    ? snapshot.playback.durationMs + lyricsOffsetMs(snapshot)
+    : null;
+}
+
+function boundedProgress(positionMs, startMs, endMs) {
+  if (!Number.isFinite(endMs) || endMs <= startMs) return null;
+  return Math.min(1, Math.max(0, (positionMs - startMs) / (endMs - startMs)));
+}
+
+function projectCurrentSegments(snapshot, lines, lineIndex, nowMs) {
+  const line = lines[lineIndex];
+  const segments = Array.isArray(line?.segments) ? line.segments : [];
+  if (
+    segments.length === 0 ||
+    segments.some(
+      (segment) =>
+        typeof segment?.segmentId !== 'string' ||
+        typeof segment?.text !== 'string' ||
+        !Number.isFinite(segment?.startMs),
+    ) ||
+    segments.map((segment) => segment.text).join('') !== line.text
+  ) {
+    return null;
+  }
+
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  const lineEndMs = effectiveLineEnd(snapshot, lines, lineIndex);
+  const rate = playbackRate(snapshot);
+  const isPlaying = snapshot?.playback?.status === 'playing';
+  return segments.map((segment, index) => {
+    const nextStartMs = segments[index + 1]?.startMs;
+    const endMs = Number.isFinite(segment.endMs)
+      ? segment.endMs
+      : Number.isFinite(nextStartMs)
+        ? nextStartMs
+        : lineEndMs;
+    const progress = boundedProgress(positionMs, segment.startMs, endMs);
+    const state =
+      positionMs < segment.startMs
+        ? 'upcoming'
+        : Number.isFinite(endMs) && positionMs >= endMs
+          ? 'past'
+          : 'active';
+    return {
+      segmentId: segment.segmentId,
+      text: segment.text,
+      state,
+      progress: state === 'past' ? 1 : state === 'upcoming' ? 0 : progress,
+      remainingMs:
+        state === 'active' && isPlaying && Number.isFinite(endMs)
+          ? Math.max(0, (endMs - positionMs) / rate)
+          : null,
+    };
+  });
+}
+
 export function playbackPositionMs(snapshot, nowMs) {
   const playback = snapshot?.playback;
   const basePosition = Number.isFinite(playback?.positionMs)
@@ -45,13 +123,10 @@ export function playbackPositionMs(snapshot, nowMs) {
 export function activeLyricIndex(snapshot, lines, nowMs) {
   const lyrics = snapshot?.lyrics;
   if (lyrics?.synced === true) {
-    const offsetMs = Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0;
-    const lyricPositionMs = playbackPositionMs(snapshot, nowMs) + offsetMs;
+    const lyricPositionMs = lyricsPositionMs(snapshot, nowMs);
     return lines.findIndex((line, index) => {
       if (!Number.isFinite(line?.startMs)) return false;
-      const nextStartMs = lines
-        .slice(index + 1)
-        .find((nextLine) => Number.isFinite(nextLine?.startMs))?.startMs;
+      const nextStartMs = nextFiniteLineStart(lines, index);
       const endMs = Number.isFinite(line.endMs)
         ? line.endMs
         : (nextStartMs ?? Infinity);
@@ -76,10 +151,15 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
   }
 
   const nowMs = options.nowMs ?? Date.now();
-  const offsetMs = Number.isFinite(lyrics.offsetMs) ? lyrics.offsetMs : 0;
-  const lyricPositionMs = playbackPositionMs(snapshot, nowMs) + offsetMs;
+  const lyricPositionMs = lyricsPositionMs(snapshot, nowMs);
   const boundaries = (Array.isArray(lyrics.lines) ? lyrics.lines : [])
-    .flatMap((line) => [line?.startMs, line?.endMs])
+    .flatMap((line) => [
+      line?.startMs,
+      line?.endMs,
+      ...(Array.isArray(line?.segments)
+        ? line.segments.flatMap((segment) => [segment?.startMs, segment?.endMs])
+        : []),
+    ])
     .filter(
       (boundary) => Number.isFinite(boundary) && boundary > lyricPositionMs,
     );
@@ -118,12 +198,19 @@ export function selectLyricsFrame(snapshot, options = {}) {
     if (nextText) break;
   }
 
+  const currentSegments = projectCurrentSegments(
+    snapshot,
+    lines,
+    activeIndex,
+    options.nowMs ?? Date.now(),
+  );
   return {
     revision: revision(snapshot),
     visible: Boolean(currentText || nextText),
     currentText,
     nextText,
     language: text(lyrics?.source?.language),
+    ...(currentSegments ? { currentSegments } : {}),
   };
 }
 

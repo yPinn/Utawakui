@@ -1,63 +1,69 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer ovl-reset, ovl-fallback, ovl-semantic, ovl-template, ovl-appearance, ovl-constraints;
 
-html,
-body {
-  width: 100%;
-  height: 100%;
-  margin: 0;
-  overflow: hidden;
-  background: transparent;
-}
-
-html[data-overlay-preview='true'],
-html[data-overlay-preview='true'] body {
-  background: var(--ovl-primitive-color-ink);
-}
-
-html[data-overlay-backdrop='checker'],
-html[data-overlay-backdrop='checker'] body {
-  background: conic-gradient(
-      var(--ovl-color-surface) 25%,
-      var(--ovl-color-surface-soft) 0 50%,
-      var(--ovl-color-surface) 0 75%,
-      var(--ovl-color-surface-soft) 0
-    )
-    0 0 / var(--ovl-primitive-space-6) var(--ovl-primitive-space-6);
-}
-
-html[data-overlay-backdrop='dark'],
-html[data-overlay-backdrop='dark'] body {
-  background: var(--ovl-primitive-color-ink);
-}
-
-html[data-overlay-backdrop='light'],
-html[data-overlay-backdrop='light'] body {
-  background: var(--ovl-primitive-color-paper);
-}
-
-body {
-  color: var(--ovl-color-text-primary);
-  font-family: var(--ovl-font-ui);
-  letter-spacing: 0;
-  -webkit-user-select: none;
-  user-select: none;
-}
-
-[hidden] {
-  display: none !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
+@layer ovl-reset {
   *,
   *::before,
   *::after {
-    scroll-behavior: auto !important;
-    animation-duration: 1ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 1ms !important;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  html[data-overlay-preview='true'],
+  html[data-overlay-preview='true'] body {
+    background: var(--ovl-primitive-color-ink);
+  }
+
+  html[data-overlay-backdrop='checker'],
+  html[data-overlay-backdrop='checker'] body {
+    background: conic-gradient(
+        var(--ovl-color-surface) 25%,
+        var(--ovl-color-surface-soft) 0 50%,
+        var(--ovl-color-surface) 0 75%,
+        var(--ovl-color-surface-soft) 0
+      )
+      0 0 / var(--ovl-primitive-space-6) var(--ovl-primitive-space-6);
+  }
+
+  html[data-overlay-backdrop='dark'],
+  html[data-overlay-backdrop='dark'] body {
+    background: var(--ovl-primitive-color-ink);
+  }
+
+  html[data-overlay-backdrop='light'],
+  html[data-overlay-backdrop='light'] body {
+    background: var(--ovl-primitive-color-paper);
+  }
+
+  body {
+    color: var(--ovl-color-text-primary);
+    font-family: var(--ovl-font-ui);
+    letter-spacing: 0;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+@layer ovl-constraints {
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      scroll-behavior: auto !important;
+      animation-duration: 1ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 1ms !important;
+    }
   }
 }

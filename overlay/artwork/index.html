@@ -4,13 +4,14 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Utawakui Artwork Overlay</title>
-    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/shared/base.css" />
+    <link rel="stylesheet" href="/overlay/shared/fallback.css" />
+    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/artwork/artwork.css" />
     <script type="module" src="/overlay/artwork/artwork.mjs"></script>
   </head>
   <body>
-    <main id="artwork-overlay" class="artwork-overlay" hidden>
+    <main id="artwork-overlay" class="artwork-overlay" dir="auto" hidden>
       <div id="artwork-mark" class="artwork-overlay__mark" aria-hidden="true">
         <img id="artwork-image" class="artwork-overlay__image" alt="" hidden />
         <span id="artwork-fallback" class="artwork-overlay__fallback"></span>
