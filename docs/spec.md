@@ -366,15 +366,23 @@ beat/downbeat 與 section role，缺少、無效、過期、低信心或不同�
 `analysis/music-structure.json` 保存／載入，且 renderer 只能要求 canonical track
 id；sidecar 存在時會重新串流計算當前音訊 SHA-256。缺失、損壞、unsupported、
 duration 不符或音訊被外部替換皆維持 M0，不會投影 analyzer provenance、sidecar
-內容或路徑。分析 sidecar 的實際產生與 optional runtime 尚未開始。
+內容或路徑。main-owned producer 現已接上共用 heavy-job scheduler、固定 FFmpeg
+decode、`AudioPythonRuntimeHost` generation lease、bounded Python worker、取消／清理與
+原子 sidecar publish；renderer 只能送 canonical track id。`analysis-structure` 已以
+unpacked Windows x64 packaged worker 完成真實 CPU、固定 local-model path 與
+worker-policy smoke；OS 層斷網驗證仍是 release gate。目前固定 Harmonix／HTDemucs
+權重 catalog 仍是 `benchmark-only`，因此沒有產品 activation、
+下載 UI 或自動安裝路徑。
 
 All-In-One Infer 是第一個完整 M1/M2 候選，因為同一分析路線可提供 BPM、
 beat/downbeat 與 section evidence；它不產生 T2 逐字對齊，也不能讓 Lyrics
 偷偷啟動 vocal separation。啟用前需通過固定 fixture、Windows packaged CPU、
-offline model path、取消／清理、容量、授權與實際 visual consumer 門檻，並依
+offline model path、OS 層斷網、取消／清理、容量、授權與實際 visual consumer 門檻，並依
 [Music Analysis Contract](music-analysis-contract.md) 與
 [ADR 0014](adr/0014-audio-python-runtime-family.md) 執行。All-In-One 的 Demucs
 stems 只是分析 job intermediate，不取代 refined RoFormer 路線。
+解析與 smoke 證據見
+[Analysis Structure CPU Spike](audio-python-analysis-structure-spike-2026-08-24.md)。
 
 **讀音輔助（furigana/羅馬拼音）**：每個歌詞來源可對應一份讀音資料，保存於
 `tracks/<trackId>/lyrics/readings/<sourceFilename>.json`（用完整來源檔名，而非去
@@ -658,6 +666,9 @@ Import 頁目前採本機優先切分：本機音訊檔匯入是預設入口，�
 - 分級 audio-processing service、manifest v2 與 legacy result 相容；基礎
   KARA2／Inst HQ4 維持輕量，BS-RoFormer／BVE 僅在 benchmark gate 通過後
   成為按需下載的錄製品質包。
+- Music Analysis producer、共用 heavy-job scheduler、固定 decode、sidecar
+  原子 publish 與 unpacked Windows CPU benchmark 已完成；產品 activation 仍需
+  通過模型授權、wheel-only lock、OS 層離線、容量與固定歌曲品質驗證。
 - Preset export/import。
 - Library maintenance UI。
 - 錯誤復原、缺檔提示與狀態修復；diagnostics foundation 已完成，Settings、

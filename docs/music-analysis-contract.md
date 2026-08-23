@@ -7,8 +7,13 @@ Executable contract v1, implemented 2026-08-24. The bounded values live in
 the pure validator in `electron/lib/musicStructureContract.js`, exercised by
 fixed JSON fixtures. Additive Output v3 cue transport and the first bounded
 `karaoke-stack` consumer are implemented. Atomic sidecar persistence/loading and
-current-track renderer wiring are also implemented; analyzer installation,
-authored UI, and model selection remain unimplemented.
+current-track renderer wiring are also implemented. The main-owned producer job,
+shared concurrency-one scheduling, fixed decode, bounded Python worker,
+cancellation, cleanup, and atomic publication are implemented. A real unpacked
+Windows x64 CPU/local-model smoke passed with the packaged worker and its
+worker-level network/cache policy; OS-level network denial remains unproven.
+Product installation, activation, authored UI, and model selection remain
+unavailable because the reviewed model catalog is benchmark-only.
 
 The accepted product endpoint is:
 
@@ -151,11 +156,16 @@ manual overrides are a separate authored layer so analysis can be regenerated.
 
 All-In-One Infer is the first full structure-analysis candidate because one
 pipeline can provide BPM, beat/downbeat, and section evidence needed by M1/M2.
-It is not yet a released dependency. Acceptance requires the immutable
+It is not a released dependency. The fixed All-In-One 3.1.0 / Demucs Infer 4.2.2
+Windows CPU graph and packaged worker have completed a real local-model smoke
+through the immutable runtime paths. Product acceptance still requires an
+OS-level network-denied smoke, an auditable wheel-only environment lock,
+acceptable model terms, capacity measurements,
+fixed-song utility benchmarks, repair/removal, and real presentation acceptance
+for the immutable
 `analysis-structure` and `combined-ml` paths from
-[ADR 0014](adr/0014-audio-python-runtime-family.md), real packaged Windows CPU
-smokes, fixed fixtures, cancellation, offline model loading, capacity disclosure,
-and license approval. The current package code is MIT, while the upstream
+[ADR 0014](adr/0014-audio-python-runtime-family.md). The current package code is
+MIT, while the upstream
 Harmonix checkpoint manifest declares CC-BY-NC-SA-4.0; those terms are reviewed
 as separate artifacts before any distribution or product enablement.
 
@@ -245,8 +255,10 @@ separate layer and is neither created nor shifted by these cues.
    complete; real M1/M2 acceptance still requires an analyzer-produced sidecar.
 4. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
    provisional community environment.
-5. Resolve and package-smoke `analysis-structure`; resolve `combined-ml` only
-   when Refined and analysis are both requested.
+5. Resolve and package-smoke `analysis-structure` — benchmark Windows CPU smoke
+   complete; product lock and activation remain blocked by environment/model
+   release gates. Resolve `combined-ml` only when Refined and analysis are both
+   requested.
 6. Benchmark BPM, beat/downbeat, and section utility against fixed songs and
    record false/low-confidence behavior.
 7. Enable the optional analysis capability only after model license, capacity,

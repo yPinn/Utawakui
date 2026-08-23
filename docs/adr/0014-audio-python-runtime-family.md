@@ -15,9 +15,15 @@ activation because it cannot enforce offline/new-loader-only execution and the
 checkpoint terms remain unresolved. A separate stdlib Refined policy worker and
 fake-wrapper probe now prove fixed main-owned intent, pre-import SHA-256 checks,
 network/legacy/forbidden-import rejection, bounded errors, cancellation, and
-job-owned caches without installing ML. Runtime/model installation, complete
-release locks, real capability-package readiness, repair, rollback, garbage
-collection, and ML execution are not implemented or downloadable yet.
+job-owned caches without installing ML. The Music Analysis producer now uses the
+same host and scheduler: fixed decode, capability lease, bounded All-In-One
+worker, model integrity checks, cancellation, cleanup, and validated atomic
+sidecar publication are implemented. A benchmark environment resolved and a real
+unpacked Windows x64 CPU/local-model inference passed under the worker policy;
+OS-level network denial remains a release gate. Its Harmonix and HTDemucs weights
+remain benchmark-only, so no product activation is published. Runtime/
+model installation, complete release locks, repair, rollback, garbage collection,
+and downloadable capability readiness remain unimplemented.
 
 ## Context
 
@@ -318,10 +324,12 @@ The implemented foundation deliberately stops before artifact preparation. Its
 atomic publisher accepts an already validated generation; the future preparation
 service must still download to staging, verify manifests/checksums, run
 capability-specific packaged and offline smokes, publish immutable artifacts, and
-only then call that primitive. The two packaged Python files are app-owned stdlib
-workers, not a runtime or capability. No Python, PyTorch, All-In-One,
-`audio-separator`, environment lock, catalog, config, or model weight is installed
-today.
+only then call that primitive. Packaged resources now include the host probe,
+separate Refined policy worker, separate structure-analysis worker, and a
+benchmark-only analysis model catalog. They are app-owned policy/transport files,
+not a Python runtime or activated capability. No Python, PyTorch, All-In-One,
+`audio-separator`, environment lock, model config, or model weight is installed
+by the product today.
 
 ## References
 
