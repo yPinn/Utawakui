@@ -9,6 +9,8 @@ tasks/
 # Dev-only vocal-separation model cache; production uses <userData>/models/.
 .models/
 .benchmarks/
+.tmp/
+__pycache__/
 
 .agents/settings.local.json
 .claude/settings.local.json

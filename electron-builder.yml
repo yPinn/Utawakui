@@ -90,6 +90,10 @@ extraResources:
     to: audio-processing/audio_python_worker.py
   - from: resources/audio-processing/refined_worker.py
     to: audio-processing/refined_worker.py
+  - from: resources/audio-processing/structure_analysis_worker.py
+    to: audio-processing/structure_analysis_worker.py
+  - from: resources/audio-processing/analysis-structure-model.json
+    to: audio-processing/analysis-structure-model.json
 
 win:
   target:

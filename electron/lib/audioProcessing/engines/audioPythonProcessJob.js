@@ -8,6 +8,17 @@ const DEFAULT_MAX_MESSAGE_BYTES = 64 * 1024;
 const MAX_STDERR_BYTES = 4096;
 const SAFE_STAGE_RE = /^[a-z][a-z0-9-]{0,63}$/;
 const SAFE_ERROR_CODE_RE = /^[A-Z][A-Z0-9_]{0,63}$/;
+const CHILD_ENV_ALLOWLIST = new Set([
+  'NUMBER_OF_PROCESSORS',
+  'PATH',
+  'PATHEXT',
+  'PROCESSOR_ARCHITECTURE',
+  'PROCESSOR_IDENTIFIER',
+  'SYSTEMROOT',
+  'TEMP',
+  'TMP',
+  'WINDIR',
+]);
 
 function isAbsolutePath(filePath) {
   return path.isAbsolute(filePath) || path.win32.isAbsolute(filePath);
@@ -47,7 +58,13 @@ function createAudioPythonProcessJob({
     throw new Error('invalid audio Python worker request');
   }
 
-  const child = spawnImpl(executablePath, [workerPath], {
+  const childEnv = Object.fromEntries(
+    Object.entries(process.env).filter(([name]) =>
+      CHILD_ENV_ALLOWLIST.has(name.toUpperCase()),
+    ),
+  );
+  const child = spawnImpl(executablePath, ['-I', workerPath], {
+    env: childEnv,
     shell: false,
     stdio: ['pipe', 'pipe', 'pipe'],
     windowsHide: true,
@@ -55,10 +72,11 @@ function createAudioPythonProcessJob({
   let settled = false;
   let cleaned = false;
   let cancelRequested = false;
+  let protocolError = null;
   let resolveCancellation;
   let terminalMessage = null;
   let stdoutBuffer = Buffer.alloc(0);
-  let stderr = '';
+  let stderrBytes = 0;
   let resolveResult;
   let rejectResult;
   const result = new Promise((resolve, reject) => {
@@ -83,13 +101,13 @@ function createAudioPythonProcessJob({
   }
 
   function terminateAfterProtocolError() {
+    if (settled || protocolError) return;
+    protocolError = createProtocolError();
     try {
       child.kill();
     } catch {
-      // The protocol failure is already authoritative. A process that exited
-      // between the bad line and kill() does not need a second error path.
+      settle(rejectResult, protocolError);
     }
-    settle(rejectResult, createProtocolError());
   }
 
   function handleMessage(message) {
@@ -162,19 +180,22 @@ function createAudioPythonProcessJob({
         terminateAfterProtocolError();
         return;
       }
-      if (settled) return;
+      if (settled || protocolError) return;
     }
   }
 
   child.stdout.on('data', (chunk) => {
-    if (settled || cancelRequested) return;
+    if (settled || cancelRequested || protocolError) return;
     stdoutBuffer = Buffer.concat([stdoutBuffer, Buffer.from(chunk)]);
     consumeStdout();
   });
   child.stderr.on('data', (chunk) => {
-    if (stderr.length >= MAX_STDERR_BYTES) return;
-    stderr += String(chunk).slice(0, MAX_STDERR_BYTES - stderr.length);
+    stderrBytes = Math.min(
+      MAX_STDERR_BYTES,
+      stderrBytes + Buffer.byteLength(chunk),
+    );
   });
+  child.stdin.on?.('error', () => terminateAfterProtocolError());
   child.on('error', () => {
     settle(
       rejectResult,
@@ -186,8 +207,13 @@ function createAudioPythonProcessJob({
   });
   child.on('close', (code, signal) => {
     if (settled) return;
-    if (stderr) {
-      console.error(`audio Python worker stderr:\n${stderr}`);
+    if (stderrBytes > 0) {
+      console.error('audio Python worker emitted stderr', { stderrBytes });
+    }
+    if (protocolError) {
+      settle(rejectResult, protocolError);
+      resolveCancellation?.();
+      return;
     }
     if (cancelRequested) {
       settle(rejectResult, new Error('audio-processing job cancelled'));
@@ -214,12 +240,16 @@ function createAudioPythonProcessJob({
     settle(resolveResult, terminalMessage.result);
   });
 
-  child.stdin.end(
-    `${JSON.stringify({
-      protocolVersion: AUDIO_PYTHON_PROTOCOL_VERSION,
-      ...request,
-    })}\n`,
-  );
+  try {
+    child.stdin.end(
+      `${JSON.stringify({
+        protocolVersion: AUDIO_PYTHON_PROTOCOL_VERSION,
+        ...request,
+      })}\n`,
+    );
+  } catch {
+    terminateAfterProtocolError();
+  }
 
   async function cancel() {
     if (settled || cancelRequested) return;

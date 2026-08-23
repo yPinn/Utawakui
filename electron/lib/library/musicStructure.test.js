@@ -9,6 +9,7 @@ import contractValues from '../../../shared/musicStructureContractValues.json';
 const {
   loadTrackMusicStructure,
   musicStructureSidecarPath,
+  prepareTrackMusicStructureSource,
   saveTrackMusicStructure,
 } = musicStructureModule;
 const AUDIO_BYTES = 'audio';
@@ -46,6 +47,20 @@ afterEach(() => {
 });
 
 describe('music-structure sidecar storage', () => {
+  it('derives the producer input path and fingerprint entirely in main', async () => {
+    const dir = temporaryLibrary();
+
+    await expect(
+      prepareTrackMusicStructureSource(dir, 'track-1'),
+    ).resolves.toEqual({
+      inputPath: path.join(dir, 'tracks', 'track-1', 'audio.wav'),
+      sourceSha256: SOURCE_SHA256,
+    });
+    await expect(
+      prepareTrackMusicStructureSource(dir, '../outside'),
+    ).rejects.toThrow(/track/i);
+  });
+
   it('atomically saves validated analysis and reloads only its current source revision', async () => {
     const dir = temporaryLibrary();
 

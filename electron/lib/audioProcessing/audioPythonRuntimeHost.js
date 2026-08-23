@@ -13,6 +13,10 @@ const AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH = path.join(
   'audio-processing',
   'refined_worker.py',
 );
+const AUDIO_PYTHON_STRUCTURE_WORKER_RELATIVE_PATH = path.join(
+  'audio-processing',
+  'structure_analysis_worker.py',
+);
 const AUDIO_PYTHON_ENVIRONMENT_IDS = Object.freeze([
   'separation-cpu',
   'analysis-structure',
@@ -148,12 +152,16 @@ function resolveAudioPythonWorkerPath(options) {
 }
 
 function resolveAudioPythonCapabilityWorkerPath(capabilityId, options) {
-  if (capabilityId !== 'refined') {
+  const relativePath = {
+    refined: AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH,
+    'structure-analysis': AUDIO_PYTHON_STRUCTURE_WORKER_RELATIVE_PATH,
+  }[capabilityId];
+  if (!relativePath) {
     throw new Error('audio Python capability worker is not available');
   }
   return resolveAudioPythonWorkerResourcePath({
     ...options,
-    relativePath: AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH,
+    relativePath,
   });
 }
 
@@ -422,6 +430,7 @@ module.exports = {
   AUDIO_PYTHON_MODEL_KINDS,
   AUDIO_PYTHON_PROTOCOL_VERSION,
   AUDIO_PYTHON_REFINED_WORKER_RELATIVE_PATH,
+  AUDIO_PYTHON_STRUCTURE_WORKER_RELATIVE_PATH,
   AUDIO_PYTHON_WORKER_RELATIVE_PATH,
   createAudioPythonRuntimeHost,
 };

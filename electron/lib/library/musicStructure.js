@@ -49,6 +49,17 @@ function computeFileSha256(filePath) {
   });
 }
 
+async function prepareTrackMusicStructureSource(dir, trackId) {
+  const inputPath = resolveTrackAudioPath(dir, trackId);
+  if (!inputPath) {
+    throw new Error('music structure track is unavailable');
+  }
+  return {
+    inputPath,
+    sourceSha256: await computeFileSha256(inputPath),
+  };
+}
+
 async function currentSourceIdentity(dir, trackId, sourceDurationMs) {
   const audioPath = resolveTrackAudioPath(dir, trackId);
   if (!audioPath) return null;
@@ -188,5 +199,6 @@ async function saveTrackMusicStructure(
 module.exports = {
   loadTrackMusicStructure,
   musicStructureSidecarPath,
+  prepareTrackMusicStructureSource,
   saveTrackMusicStructure,
 };

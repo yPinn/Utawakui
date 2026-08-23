@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "manifestKind": "model",
+  "kind": "analysis",
+  "id": "all-in-one-harmonix-fold0",
+  "version": "harmonix-fold0-htdemucs-v1",
+  "architecture": "all-in-one-with-htdemucs",
+  "wrapper": {
+    "package": "all-in-one-infer",
+    "version": "3.1.0",
+    "model": "harmonix-fold0"
+  },
+  "signals": ["tempo", "beats", "downbeats", "sections"],
+  "files": [
+    {
+      "role": "structure-checkpoint",
+      "filename": "harmonix-fold0-0vra4ys2.pth",
+      "url": "https://huggingface.co/taejunkim/allinone/resolve/main/harmonix-fold0-0vra4ys2.pth",
+      "sizeBytes": 1400571,
+      "sha256": "0db596dfb0995f41d62f6267d76a9d54c046f1649bd35e1dbeca0c5f9a7b8acd",
+      "license": {
+        "spdx": "CC-BY-NC-SA-4.0",
+        "evidenceUrl": "https://github.com/openmirlab/all-in-one-infer/blob/main/src/allin1_infer/config/checkpoints.toml",
+        "productUse": "blocked",
+        "reason": "The upstream checkpoint manifest restricts Harmonix weights to non-commercial use."
+      }
+    },
+    {
+      "role": "separation-checkpoint",
+      "filename": "955717e8-8726e21a.th",
+      "url": "https://dl.fbaipublicfiles.com/demucs/hybrid_transformer/955717e8-8726e21a.th",
+      "sizeBytes": 84141911,
+      "sha256": "8726e21a993978c7ba086d3872e7608d7d5bfca646ca4aca459ffda844faa8b4",
+      "license": {
+        "spdx": null,
+        "evidenceUrl": null,
+        "productUse": "blocked",
+        "reason": "The reviewed provenance records the official source and digest but no standalone checkpoint product-use grant."
+      }
+    },
+    {
+      "role": "separation-config",
+      "filename": "htdemucs.yaml",
+      "url": "https://raw.githubusercontent.com/openmirlab/demucs-infer/v4.2.2/demucs_infer/remote/htdemucs.yaml",
+      "sizeBytes": 21,
+      "sha256": "239c445d0b14454d541ad8bd9bb271c9e536d267e8a4625208744cbb2e7bb66c",
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://github.com/openmirlab/demucs-infer/blob/v4.2.2/LICENSE",
+        "productUse": "accepted",
+        "reason": null
+      }
+    }
+  ],
+  "distribution": {
+    "status": "benchmark-only",
+    "reason": "The Harmonix weights are non-commercial and the HTDemucs checkpoint lacks a standalone reviewed product-use grant."
+  }
+}

@@ -1,3 +1,4 @@
+import fs from 'fs';
 import { describe, expect, it } from 'vitest';
 import {
   assertAudioPythonEnvironmentActivatable,
@@ -110,6 +111,23 @@ function environmentLock() {
   };
 }
 
+function analysisEnvironmentLock() {
+  const lock = environmentLock();
+  lock.environmentId = 'analysis-structure';
+  lock.requirements = [
+    { name: 'all-in-one-infer', version: '3.1.0' },
+    { name: 'torch', version: '2.12.0+cpu' },
+  ];
+  lock.packages[0] = packageEntry({
+    name: 'all-in-one-infer',
+    version: '3.1.0',
+    filename: 'all_in_one_infer-3.1.0-py3-none-any.whl',
+    resolvedDependencies: ['numpy', 'torch'],
+  });
+  lock.probeImports = ['allin1_infer', 'numpy', 'torch'];
+  return lock;
+}
+
 function modelManifest() {
   return {
     schemaVersion: 1,
@@ -144,6 +162,44 @@ function modelManifest() {
     distribution: {
       status: 'benchmark-only',
       reason: 'The checkpoint weight license is not established.',
+    },
+  };
+}
+
+function analysisModelManifest() {
+  return {
+    schemaVersion: 1,
+    manifestKind: 'model',
+    kind: 'analysis',
+    id: 'all-in-one-harmonix-fold0',
+    version: 'harmonix-fold0-v1',
+    architecture: 'all-in-one-with-htdemucs',
+    wrapper: {
+      package: 'all-in-one-infer',
+      version: '3.1.0',
+      model: 'harmonix-fold0',
+    },
+    signals: ['tempo', 'beats', 'downbeats', 'sections'],
+    files: [
+      {
+        role: 'structure-checkpoint',
+        ...artifact('harmonix-fold0-0vra4ys2.pth'),
+        license: license('CC-BY-NC-SA-4.0', 'blocked'),
+      },
+      {
+        role: 'separation-checkpoint',
+        ...artifact('htdemucs-fake.th', HASH_B),
+        license: license('MIT'),
+      },
+      {
+        role: 'separation-config',
+        ...artifact('htdemucs.yaml', 'c'.repeat(64)),
+        license: license('MIT'),
+      },
+    ],
+    distribution: {
+      status: 'benchmark-only',
+      reason: 'The Harmonix checkpoint is restricted to non-commercial use.',
     },
   };
 }
@@ -187,6 +243,15 @@ describe('audio Python manifests', () => {
     const lock = environmentLock();
     expect(validateAudioPythonEnvironmentLock(lock)).toEqual(lock);
     expect(assertAudioPythonEnvironmentActivatable(lock)).toEqual(lock);
+  });
+
+  it('accepts independent analysis-structure and combined-ml locks', () => {
+    const analysis = analysisEnvironmentLock();
+    expect(validateAudioPythonEnvironmentLock(analysis)).toEqual(analysis);
+
+    const combined = analysisEnvironmentLock();
+    combined.environmentId = 'combined-ml';
+    expect(validateAudioPythonEnvironmentLock(combined)).toEqual(combined);
   });
 
   it('keeps a license-blocked lock valid for research but ineligible for activation', () => {
@@ -266,5 +331,40 @@ describe('audio Python manifests', () => {
       mutate(value);
       expect(() => validateAudioPythonModelManifest(value)).toThrow();
     }
+  });
+
+  it('validates an analysis bundle separately and keeps restricted weights benchmark-only', () => {
+    const candidate = analysisModelManifest();
+    expect(validateAudioPythonModelManifest(candidate)).toEqual(candidate);
+    expect(() => assertAudioPythonModelActivatable(candidate)).toThrow(
+      /benchmark-only/i,
+    );
+
+    for (const mutate of [
+      (value) => (value.signals = ['tempo', 'lyrics']),
+      (value) => (value.wrapper.model = '../harmonix-fold0'),
+      (value) => value.files.shift(),
+      (value) => (value.files[2].role = 'unknown'),
+      (value) => value.files.push({ ...value.files[0] }),
+      (value) => (value.stems = ['instrumental', 'vocals']),
+    ]) {
+      const value = analysisModelManifest();
+      mutate(value);
+      expect(() => validateAudioPythonModelManifest(value)).toThrow();
+    }
+  });
+
+  it('keeps the checked-in analysis model catalog valid and non-activatable', () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(
+        'resources/audio-processing/analysis-structure-model.json',
+        'utf8',
+      ),
+    );
+
+    expect(validateAudioPythonModelManifest(manifest)).toEqual(manifest);
+    expect(() => assertAudioPythonModelActivatable(manifest)).toThrow(
+      /benchmark-only/i,
+    );
   });
 });

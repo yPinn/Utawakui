@@ -8,6 +8,22 @@ const COMPONENT_RE = /^[a-z0-9][a-z0-9._-]{0,127}$/i;
 const PACKAGE_NAME_RE = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const VERSION_RE = /^[0-9][a-z0-9.+_-]{0,63}$/i;
 const MODEL_FILE_ROLES = Object.freeze(['weights', 'config']);
+const AUDIO_PYTHON_ENVIRONMENT_IDS = Object.freeze([
+  'separation-cpu',
+  'analysis-structure',
+  'combined-ml',
+]);
+const ANALYSIS_SIGNAL_IDS = Object.freeze([
+  'tempo',
+  'beats',
+  'downbeats',
+  'sections',
+]);
+const ANALYSIS_MODEL_FILE_ROLES = Object.freeze([
+  'structure-checkpoint',
+  'separation-checkpoint',
+  'separation-config',
+]);
 
 function isPlainObject(value) {
   return Boolean(
@@ -229,7 +245,7 @@ function validateAudioPythonEnvironmentLock(lock) {
   if (
     lock.schemaVersion !== 1 ||
     lock.manifestKind !== 'environment-lock' ||
-    lock.environmentId !== 'separation-cpu' ||
+    !AUDIO_PYTHON_ENVIRONMENT_IDS.includes(lock.environmentId) ||
     lock.platform !== 'win32' ||
     lock.arch !== 'x64'
   ) {
@@ -310,13 +326,13 @@ function assertAudioPythonEnvironmentActivatable(lock) {
   return lock;
 }
 
-function validateModelFile(file) {
+function validateModelFile(file, allowedRoles = MODEL_FILE_ROLES) {
   assertExactKeys(
     file,
     ['role', 'filename', 'url', 'sizeBytes', 'sha256', 'license'],
     'audio Python model file',
   );
-  if (!MODEL_FILE_ROLES.includes(file.role)) {
+  if (!allowedRoles.includes(file.role)) {
     throw new Error('invalid audio Python model file role');
   }
   validateArtifact(
@@ -331,7 +347,118 @@ function validateModelFile(file) {
   validateLicense(file.license, `model ${file.role}`, { nullable: true });
 }
 
+function validateModelDistribution(manifest) {
+  const weightFiles = manifest.files.filter((file) =>
+    ['weights', 'structure-checkpoint', 'separation-checkpoint'].includes(
+      file.role,
+    ),
+  );
+  assertExactKeys(
+    manifest.distribution,
+    ['status', 'reason'],
+    'audio Python model distribution',
+  );
+  if (manifest.distribution.status === 'benchmark-only') {
+    if (
+      typeof manifest.distribution.reason !== 'string' ||
+      manifest.distribution.reason.length === 0
+    ) {
+      throw new Error('invalid benchmark-only model reason');
+    }
+  } else if (
+    ['product-downloadable', 'redistributable'].includes(
+      manifest.distribution.status,
+    )
+  ) {
+    if (manifest.distribution.reason !== null) {
+      throw new Error('invalid product model reason');
+    }
+    if (
+      weightFiles.some(
+        (file) =>
+          file.license.spdx === null ||
+          file.license.evidenceUrl === null ||
+          file.license.productUse !== 'accepted',
+      )
+    ) {
+      throw new Error('missing model weight license');
+    }
+  } else {
+    throw new Error('invalid audio Python model distribution status');
+  }
+}
+
+function validateAnalysisModelManifest(manifest) {
+  assertExactKeys(
+    manifest,
+    [
+      'schemaVersion',
+      'manifestKind',
+      'kind',
+      'id',
+      'version',
+      'architecture',
+      'wrapper',
+      'signals',
+      'files',
+      'distribution',
+    ],
+    'audio Python analysis model manifest',
+  );
+  if (
+    manifest.schemaVersion !== 1 ||
+    manifest.manifestKind !== 'model' ||
+    manifest.kind !== 'analysis'
+  ) {
+    throw new Error('invalid audio Python analysis model manifest');
+  }
+  assertComponent(manifest.id, 'model id');
+  assertComponent(manifest.version, 'model version');
+  assertComponent(manifest.architecture, 'model architecture');
+  assertExactKeys(
+    manifest.wrapper,
+    ['package', 'version', 'model'],
+    'audio Python analysis model wrapper',
+  );
+  assertPackageName(manifest.wrapper.package, 'model wrapper package');
+  assertExactVersion(manifest.wrapper.version, 'model wrapper');
+  assertComponent(manifest.wrapper.model, 'analysis model');
+  if (
+    !Array.isArray(manifest.signals) ||
+    manifest.signals.length !== ANALYSIS_SIGNAL_IDS.length ||
+    new Set(manifest.signals).size !== ANALYSIS_SIGNAL_IDS.length ||
+    ANALYSIS_SIGNAL_IDS.some((signal) => !manifest.signals.includes(signal))
+  ) {
+    throw new Error('invalid audio Python analysis signals');
+  }
+  if (
+    !Array.isArray(manifest.files) ||
+    manifest.files.length !== ANALYSIS_MODEL_FILE_ROLES.length
+  ) {
+    throw new Error('invalid audio Python analysis model files');
+  }
+  for (const file of manifest.files) {
+    validateModelFile(file, ANALYSIS_MODEL_FILE_ROLES);
+  }
+  const roles = manifest.files.map(({ role }) => role);
+  if (
+    !manifest.files.some(({ role }) => role === 'structure-checkpoint') ||
+    !manifest.files.some(({ role }) => role === 'separation-checkpoint') ||
+    !manifest.files.some(({ role }) => role === 'separation-config') ||
+    new Set(roles).size !== ANALYSIS_MODEL_FILE_ROLES.length ||
+    new Set(manifest.files.map(({ filename }) => filename)).size !==
+      manifest.files.length
+  ) {
+    throw new Error('invalid audio Python analysis model files');
+  }
+  validateModelDistribution(manifest);
+  return manifest;
+}
+
 function validateAudioPythonModelManifest(manifest) {
+  if (manifest?.kind === 'analysis') {
+    return validateAnalysisModelManifest(manifest);
+  }
   assertExactKeys(
     manifest,
     [
@@ -389,36 +516,7 @@ function validateAudioPythonModelManifest(manifest) {
   if (weightFile.filename !== manifest.wrapper.modelFilename) {
     throw new Error('invalid audio Python model wrapper filename');
   }
-  assertExactKeys(
-    manifest.distribution,
-    ['status', 'reason'],
-    'audio Python model distribution',
-  );
-  if (manifest.distribution.status === 'benchmark-only') {
-    if (
-      typeof manifest.distribution.reason !== 'string' ||
-      manifest.distribution.reason.length === 0
-    ) {
-      throw new Error('invalid benchmark-only model reason');
-    }
-  } else if (
-    ['product-downloadable', 'redistributable'].includes(
-      manifest.distribution.status,
-    )
-  ) {
-    if (manifest.distribution.reason !== null) {
-      throw new Error('invalid product model reason');
-    }
-    if (
-      weightFile.license.spdx === null ||
-      weightFile.license.evidenceUrl === null ||
-      weightFile.license.productUse !== 'accepted'
-    ) {
-      throw new Error('missing model weight license');
-    }
-  } else {
-    throw new Error('invalid audio Python model distribution status');
-  }
+  validateModelDistribution(manifest);
   return manifest;
 }
 

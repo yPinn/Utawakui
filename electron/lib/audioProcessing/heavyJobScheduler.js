@@ -86,8 +86,9 @@ function createHeavyJobScheduler() {
       entry.reject(cancellationError());
       return true;
     }
-    if (entry.cancel) await entry.cancel();
-    return Boolean(entry.cancel);
+    if (!entry.cancel) return false;
+    const cancellation = await entry.cancel();
+    return cancellation !== false;
   }
 
   async function shutdown() {

@@ -121,6 +121,18 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   getTrackMusicStructure: (trackId) =>
     ipcRenderer.invoke('music-structure:get-track', trackId),
+  analyzeTrackMusicStructure: (trackId) =>
+    ipcRenderer.invoke('music-structure:analyze-track', trackId),
+  cancelTrackMusicStructureAnalysis: () =>
+    ipcRenderer.invoke('music-structure:cancel-analysis'),
+  getTrackMusicStructureAnalysisStatus: () =>
+    ipcRenderer.invoke('music-structure:get-analysis-status'),
+  onTrackMusicStructureAnalysisProgress: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('music-structure:analysis-progress', listener);
+    return () =>
+      ipcRenderer.removeListener('music-structure:analysis-progress', listener);
+  },
   saveLyricsTiming: (
     trackId,
     sourceFilename,

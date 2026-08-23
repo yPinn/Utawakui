@@ -33,6 +33,7 @@ function registerSeparationHandlers({
   notifyLibraryUpdated,
   requireFeatureGate,
   featureIds,
+  heavyJobScheduler,
 }) {
   const service = createAudioProcessingService({
     resolveRecipe,
@@ -68,28 +69,35 @@ function registerSeparationHandlers({
         modelId: recipe.modelIds[0],
       };
     },
-    createEngineJob: ({ engineId, prepared, emitProgress }) => {
+    createEngineJob: ({ jobId, engineId, prepared, emitProgress }) => {
       if (engineId !== 'onnx-mdx') {
         throw new Error(`unsupported audio-processing engine: ${engineId}`);
       }
-      return createOnnxMdxJob({
-        workerPath: path.join(
-          __dirname,
-          '..',
-          'lib',
-          'vocalSeparationWorker.js',
-        ),
-        workerData: {
-          inputPath: prepared.inputPath,
-          outputDir: prepared.outputDir,
-          modelPath: prepared.modelPath,
-          ffmpegPath: prepared.ffmpegPath,
-          recipeId: prepared.engineRecipeId,
-          profileId: prepared.profileId,
-          modelId: prepared.modelId,
-        },
-        emitProgress,
-      });
+      return {
+        result: heavyJobScheduler.schedule({
+          jobId,
+          start: () =>
+            createOnnxMdxJob({
+              workerPath: path.join(
+                __dirname,
+                '..',
+                'lib',
+                'vocalSeparationWorker.js',
+              ),
+              workerData: {
+                inputPath: prepared.inputPath,
+                outputDir: prepared.outputDir,
+                modelPath: prepared.modelPath,
+                ffmpegPath: prepared.ffmpegPath,
+                recipeId: prepared.engineRecipeId,
+                profileId: prepared.profileId,
+                modelId: prepared.modelId,
+              },
+              emitProgress,
+            }),
+        }),
+        cancel: () => heavyJobScheduler.cancel(jobId),
+      };
     },
   });
 

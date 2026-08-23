@@ -84,6 +84,20 @@ describe('HeavyJobScheduler', () => {
     ).toThrow(/shut down/i);
   });
 
+  it('reports finalizing active work as non-cancellable', async () => {
+    const finalizing = deferred();
+    const cancel = vi.fn(async () => false);
+    const scheduler = createHeavyJobScheduler();
+    const result = scheduler.schedule({
+      jobId: 'job-1',
+      start: () => ({ result: finalizing.promise, cancel }),
+    });
+
+    await expect(scheduler.cancel('job-1')).resolves.toBe(false);
+    finalizing.resolve('published');
+    await expect(result).resolves.toBe('published');
+  });
+
   it('rejects duplicate or unsafe main-owned job ids', () => {
     const scheduler = createHeavyJobScheduler();
     const active = deferred();

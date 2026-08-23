@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events';
 import { PassThrough } from 'stream';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createAudioPythonProcessJob } from './audioPythonProcessJob.js';
 
 class FakeChildProcess extends EventEmitter {
@@ -8,12 +8,13 @@ class FakeChildProcess extends EventEmitter {
     super();
     this.stdout = new PassThrough();
     this.stderr = new PassThrough();
-    this.stdin = {
-      end: vi.fn(),
-    };
+    this.stdin = new PassThrough();
+    vi.spyOn(this.stdin, 'end');
     this.kill = vi.fn(() => true);
   }
 }
+
+afterEach(() => vi.unstubAllEnvs());
 
 function startJob(overrides = {}) {
   const child = new FakeChildProcess();
@@ -32,17 +33,25 @@ function startJob(overrides = {}) {
 
 describe('createAudioPythonProcessJob', () => {
   it('spawns one hidden process without a shell and sends one versioned request', async () => {
+    vi.stubEnv('OPENAI_API_KEY', 'must-not-reach-worker');
     const { child, job, spawnImpl } = startJob();
 
     expect(spawnImpl).toHaveBeenCalledWith(
       'C:\\runtime\\python.exe',
-      ['C:\\app\\audio_python_worker.py'],
+      ['-I', 'C:\\app\\audio_python_worker.py'],
       {
+        env: expect.not.objectContaining({
+          PYTHONHOME: expect.anything(),
+          PYTHONPATH: expect.anything(),
+        }),
         shell: false,
         stdio: ['pipe', 'pipe', 'pipe'],
         windowsHide: true,
       },
     );
+    const childEnv = spawnImpl.mock.calls[0][2].env;
+    expect(childEnv).not.toHaveProperty('PYTHONPATH');
+    expect(childEnv).not.toHaveProperty('OPENAI_API_KEY');
     expect(child.stdin.end).toHaveBeenCalledOnce();
     expect(JSON.parse(child.stdin.end.mock.calls[0][0])).toEqual({
       protocolVersion: 1,
@@ -82,18 +91,21 @@ describe('createAudioPythonProcessJob', () => {
   it('rejects malformed, unknown, or oversized protocol messages and terminates the process', async () => {
     const malformed = startJob();
     malformed.child.stdout.write('not-json\n');
-    await expect(malformed.job.result).rejects.toThrow(/protocol/i);
     expect(malformed.child.kill).toHaveBeenCalledOnce();
+    malformed.child.emit('close', null, 'SIGTERM');
+    await expect(malformed.job.result).rejects.toThrow(/protocol/i);
 
     const unknown = startJob();
     unknown.child.stdout.write(`${JSON.stringify({ type: 'mystery' })}\n`);
-    await expect(unknown.job.result).rejects.toThrow(/protocol/i);
     expect(unknown.child.kill).toHaveBeenCalledOnce();
+    unknown.child.emit('close', null, 'SIGTERM');
+    await expect(unknown.job.result).rejects.toThrow(/protocol/i);
 
     const oversized = startJob({ maxMessageBytes: 32 });
     oversized.child.stdout.write('x'.repeat(33));
-    await expect(oversized.job.result).rejects.toThrow(/protocol/i);
     expect(oversized.child.kill).toHaveBeenCalledOnce();
+    oversized.child.emit('close', null, 'SIGTERM');
+    await expect(oversized.job.result).rejects.toThrow(/protocol/i);
   });
 
   it('does not expose stderr or local paths through abnormal-exit errors', async () => {
@@ -109,6 +121,9 @@ describe('createAudioPythonProcessJob', () => {
     );
     await expect(job.result).rejects.not.toThrow(/Users|song\.wav/);
     expect(consoleError).toHaveBeenCalled();
+    expect(JSON.stringify(consoleError.mock.calls)).not.toMatch(
+      /Users|song\.wav/,
+    );
     consoleError.mockRestore();
   });
 
@@ -134,6 +149,7 @@ describe('createAudioPythonProcessJob', () => {
         percent: 101,
       })}\n`,
     );
+    invalidProgress.child.emit('close', null, 'SIGTERM');
     await expect(invalidProgress.job.result).rejects.toThrow(/protocol/i);
 
     const duplicateDone = startJob();
@@ -143,7 +159,34 @@ describe('createAudioPythonProcessJob', () => {
     duplicateDone.child.stdout.write(
       `${JSON.stringify({ type: 'done', result: { ok: true } })}\n`,
     );
+    duplicateDone.child.emit('close', null, 'SIGTERM');
     await expect(duplicateDone.job.result).rejects.toThrow(/protocol/i);
+  });
+
+  it('waits for close after stdin failure and accepts a larger caller-owned bound', async () => {
+    const stdinFailure = startJob();
+    stdinFailure.child.stdin.emit('error', new Error('EPIPE'));
+    expect(stdinFailure.child.kill).toHaveBeenCalledOnce();
+    stdinFailure.child.emit('close', null, 'SIGTERM');
+    await expect(stdinFailure.job.result).rejects.toThrow(/protocol/i);
+
+    const large = startJob({ maxMessageBytes: 128 * 1024 });
+    const payload = { text: 'x'.repeat(70 * 1024) };
+    large.child.stdout.write(
+      `${JSON.stringify({ type: 'done', result: payload })}\n`,
+    );
+    large.child.emit('close', 0, null);
+    await expect(large.job.result).resolves.toEqual(payload);
+  });
+
+  it('settles cancellation when a protocol failure is already terminating the worker', async () => {
+    const failed = startJob();
+    failed.child.stdout.write('not-json\n');
+    const cancellation = failed.job.cancel();
+    failed.child.emit('close', null, 'SIGTERM');
+
+    await expect(cancellation).resolves.toBeUndefined();
+    await expect(failed.job.result).rejects.toThrow(/protocol/i);
   });
 
   it('owns cancellation and rejects without waiting for worker output', async () => {
@@ -172,8 +215,8 @@ describe('createAudioPythonProcessJob', () => {
     const failureCleanup = vi.fn();
     const failure = startJob({ cleanup: failureCleanup });
     failure.child.stdout.write('not-json\n');
-    await expect(failure.job.result).rejects.toThrow(/protocol/i);
     failure.child.emit('close', 1, null);
+    await expect(failure.job.result).rejects.toThrow(/protocol/i);
     expect(failureCleanup).toHaveBeenCalledOnce();
   });
 });

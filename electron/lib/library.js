@@ -96,6 +96,7 @@ const { runBackfillPass } = require('./library/backfill');
 const {
   loadTrackMusicStructure,
   musicStructureSidecarPath,
+  prepareTrackMusicStructureSource,
   saveTrackMusicStructure,
 } = require('./library/musicStructure');
 const {
@@ -138,6 +139,7 @@ module.exports = {
   loadTrackMusicStructure,
   migrateTrackAlbumMetadata,
   musicStructureSidecarPath,
+  prepareTrackMusicStructureSource,
   normalizeTrackLyricsSidecars,
   organizeTrackMetadataFromSidecars,
   readTrackLyrics,

@@ -26,7 +26,24 @@ app.setName(APP_NAME);
 app.setAppLogsPath();
 
 const { FEATURE_IDS } = require('./lib/featureGates');
-const { resolveTrackArtworkPath } = require('./lib/library');
+const {
+  prepareTrackMusicStructureSource,
+  resolveTrackArtworkPath,
+  saveTrackMusicStructure,
+} = require('./lib/library');
+const { getPreparedFfmpegPath } = require('./lib/featureDependencies');
+const {
+  createAudioPythonRuntimeHost,
+} = require('./lib/audioProcessing/audioPythonRuntimeHost');
+const {
+  createHeavyJobScheduler,
+} = require('./lib/audioProcessing/heavyJobScheduler');
+const {
+  createStructureAnalysisService,
+} = require('./lib/audioProcessing/structureAnalysisService');
+const {
+  registerHeavyJobSchedulerLifecycle,
+} = require('./main/heavyJobSchedulerLifecycle');
 const { createDiagnosticsService } = require('./lib/diagnostics');
 const {
   createStartupBaselineMetadata,
@@ -133,6 +150,7 @@ startupTrace.record('process-start', { atUnixMs: performance.timeOrigin });
 
 let performerWindowManager = null;
 let outputRuntimeController = null;
+let heavyJobScheduler = null;
 const startupTraceProbe = startupTrace.enabled
   ? createStartupTraceProbe({ BrowserWindow })
   : null;
@@ -268,6 +286,37 @@ if (!gotSingleInstanceLock) {
     configState.loadInitialConfig();
     recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
+    heavyJobScheduler = createHeavyJobScheduler();
+    registerHeavyJobSchedulerLifecycle({
+      app,
+      scheduler: heavyJobScheduler,
+      logger: runtimeDiagnosticsLogger,
+    });
+    const audioPythonRuntimeHost = createAudioPythonRuntimeHost({
+      userDataDir: app.getPath('userData'),
+      appPath: app.getAppPath(),
+      isPackaged: app.isPackaged,
+      resourcesPath: process.resourcesPath,
+    });
+    const structureAnalysisService = createStructureAnalysisService({
+      host: audioPythonRuntimeHost,
+      scheduler: heavyJobScheduler,
+      createJobId: crypto.randomUUID,
+      prepareSource: async ({ trackId }) => {
+        const config = configState.getConfig();
+        const dir = configState.resolveDownloadDir(config);
+        return {
+          ...(await prepareTrackMusicStructureSource(dir, trackId)),
+          libraryDir: dir,
+          ffmpegPath: getPreparedFfmpegPath(
+            app.getPath('userData'),
+            config.systemFfmpegPath,
+          ),
+        };
+      },
+      publishDocument: ({ trackId, document, identity, libraryDir }) =>
+        saveTrackMusicStructure(libraryDir, trackId, document, identity),
+    });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: FEATURE_IDS.LYRICS_FLOW,
@@ -409,6 +458,11 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      getMainWindow: windowState.getMainWindow,
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
+      analysisService: structureAnalysisService,
     });
 
     registerPlaylistsHandlers({
@@ -439,6 +493,7 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      heavyJobScheduler,
     });
 
     registerFeatureDependencyHandlers({
