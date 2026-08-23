@@ -41,6 +41,9 @@ const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
+const {
+  createLyricsAcquisitionService,
+} = require('./main/lyricsAcquisitionService');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
@@ -262,6 +265,10 @@ if (!gotSingleInstanceLock) {
     configState.loadInitialConfig();
     recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
+    const lyricsAcquisitionService = createLyricsAcquisitionService({
+      requireFeatureGate,
+      featureId: FEATURE_IDS.LYRICS_FLOW,
+    });
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
@@ -379,6 +386,7 @@ if (!gotSingleInstanceLock) {
       sendBackfillStatus: windowState.sendBackfillStatus,
       featureIds: FEATURE_IDS,
       getProviderRunner: providerRunnerManager.getRunner,
+      lyricsAcquisitionService,
     });
 
     registerLyricsHandlers({
@@ -390,6 +398,7 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      lyricsAcquisitionService,
     });
 
     registerPlaylistsHandlers({
@@ -409,6 +418,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       getProviderRunner: providerRunnerManager.getRunner,
+      lyricsAcquisitionService,
     });
 
     registerSeparationHandlers({

@@ -19,7 +19,6 @@ const {
   resolveTrackDir,
   saveIndexEntry,
 } = require('../lib/library');
-const { saveLrclibLyricsIfAbsent } = require('./lyricsHandlers');
 
 // error.stderr never survives ipcMain.handle's serialization, so
 // classification has to happen here. Only the sentinel code crosses the
@@ -34,6 +33,22 @@ async function classifyingFailures(run) {
   }
 }
 
+async function saveOptionalLyricsAfterImport(
+  track,
+  trackDir,
+  lyricsAcquisitionService,
+) {
+  try {
+    return Boolean(
+      await lyricsAcquisitionService.saveIfAbsent(track, trackDir),
+    );
+  } catch {
+    // The audio download succeeded. A failed or gated optional lyrics
+    // fallback must never turn that into a failed import.
+    return false;
+  }
+}
+
 function registerImportHandlers({
   ipcMain,
   getConfig,
@@ -41,6 +56,7 @@ function registerImportHandlers({
   requireFeatureGate,
   featureIds,
   getProviderRunner,
+  lyricsAcquisitionService,
 }) {
   ipcMain.handle('yt:fetch-playlist', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
@@ -129,16 +145,15 @@ function registerImportHandlers({
         }
       }
       if (trackDir) {
-        try {
-          await saveLrclibLyricsIfAbsent(result, trackDir);
-        } catch {
-          // The audio download succeeded. A failed optional lyrics fallback
-          // should not turn that into a failed import.
-        }
+        await saveOptionalLyricsAfterImport(
+          result,
+          trackDir,
+          lyricsAcquisitionService,
+        );
       }
       return result;
     });
   });
 }
 
-module.exports = { registerImportHandlers };
+module.exports = { registerImportHandlers, saveOptionalLyricsAfterImport };

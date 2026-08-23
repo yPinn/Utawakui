@@ -21,14 +21,7 @@ const {
   setReadingLine,
 } = require('../lib/library');
 const { probeMusixmatchLyrics } = require('../lib/musixmatch');
-const {
-  deleteStoredLrclibSource,
-  fetchLrclibRecord,
-  findLrclibSyncedLyrics,
-  saveLrclibCandidate,
-  saveLrclibRecord,
-  searchLrclibCandidates,
-} = require('../lib/lrclib');
+const { deleteStoredLrclibSource } = require('../lib/lrclib');
 
 // Main-owned per-target guard (trackId::sourceFilename), same reasoning as
 // separationHandlers.js's separationInProgress — renderer disabled state
@@ -132,22 +125,6 @@ function validateReadingIdentity(currentLyrics, identity) {
   }
 }
 
-// Used both by the passive startup backfill (electron/main/libraryHandlers.js's
-// backfillTrackInfoWithLyricsFallback) and by electron/main/importHandlers.js's
-// yt:download-audio — fundamentally lyrics-acquisition logic, so it lives
-// here rather than being duplicated or routed through a generic context.
-async function saveLrclibLyricsIfAbsent(track, trackDir) {
-  const lyricsState = getTrackLyricsState(trackDir);
-  if (lyricsState.sources.some((source) => source.kind === 'lrclib')) {
-    return false;
-  }
-
-  const lrclibResult = await findLrclibSyncedLyrics(track);
-  if (lrclibResult.status !== 'available') return false;
-
-  return saveLrclibRecord(trackDir, lrclibResult.record).status === 'saved';
-}
-
 function registerLyricsHandlers({
   ipcMain,
   dialog,
@@ -157,6 +134,7 @@ function registerLyricsHandlers({
   notifyLibraryUpdated,
   requireFeatureGate,
   featureIds,
+  lyricsAcquisitionService,
 }) {
   ipcMain.handle('lyrics:get-track', async (event, trackId, filename) => {
     const dir = resolveDownloadDir(getConfig());
@@ -214,7 +192,6 @@ function registerLyricsHandlers({
   ipcMain.handle(
     'lyrics:search-candidates',
     async (event, trackId, options) => {
-      requireFeatureGate(featureIds.LYRICS_FLOW);
       const dir = resolveDownloadDir(getConfig());
       const track = listTracks(dir).find(
         (candidate) => candidate.id === trackId,
@@ -222,7 +199,7 @@ function registerLyricsHandlers({
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 
-      const result = await searchLrclibCandidates(
+      const result = await lyricsAcquisitionService.searchCandidates(
         track,
         normalizeLrclibSearchOptions(options),
       );
@@ -262,13 +239,12 @@ function registerLyricsHandlers({
   ipcMain.handle(
     'lyrics:save-candidate',
     async (event, trackId, candidateId, expectedFingerprint) => {
-      requireFeatureGate(featureIds.LYRICS_FLOW);
       const dir = resolveDownloadDir(getConfig());
       const track = findTrackRecord(dir, trackId);
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
 
-      const result = await saveLrclibCandidate({
+      const result = await lyricsAcquisitionService.saveCandidate({
         track,
         trackDir,
         candidateId,
@@ -284,7 +260,6 @@ function registerLyricsHandlers({
   // One-time repair for lrclib sources saved before the label field
   // existed.
   ipcMain.handle('lyrics:backfill-source-labels', async (event, trackId) => {
-    requireFeatureGate(featureIds.LYRICS_FLOW);
     const dir = resolveDownloadDir(getConfig());
     const trackDir = resolveTrackDir(dir, trackId);
     if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
@@ -292,7 +267,7 @@ function registerLyricsHandlers({
     const sources = await backfillLyricsSourceLabels(
       trackDir,
       async (candidateId) => {
-        const fetched = await fetchLrclibRecord(candidateId);
+        const fetched = await lyricsAcquisitionService.fetchRecord(candidateId);
         if (fetched.status !== 'ok') return null;
         return fetched.record?.albumName || fetched.record?.artistName || null;
       },
@@ -547,5 +522,4 @@ function registerLyricsHandlers({
 module.exports = {
   normalizeLrclibSearchOptions,
   registerLyricsHandlers,
-  saveLrclibLyricsIfAbsent,
 };

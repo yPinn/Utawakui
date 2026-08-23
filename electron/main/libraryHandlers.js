@@ -16,31 +16,38 @@ const {
 } = require('../lib/library');
 const { removeTrackFromAllPlaylists } = require('../lib/playlists');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
-const { saveLrclibLyricsIfAbsent } = require('./lyricsHandlers');
 
 async function backfillTrackInfoWithLyricsFallback(
   videoId,
   trackDir,
   options = {},
 ) {
-  const result = await backfillTrackInfo(videoId, trackDir, {
+  const fetchTrackInfo = options.backfillTrackInfo || backfillTrackInfo;
+  const result = await fetchTrackInfo(videoId, trackDir, {
     runner: options.runner,
   });
   if (!result) return null;
 
   let saved = false;
   try {
-    saved = await saveLrclibLyricsIfAbsent(result, trackDir);
+    saved = await options.lyricsAcquisitionService.saveIfAbsent(
+      result,
+      trackDir,
+    );
   } catch {
     // Lyrics fallback is optional; metadata/artwork backfill already worked.
   }
   return saved ? { ...result, assetsUpdated: true } : result;
 }
 
-function createProviderBackfillTrackInfo(getProviderRunner) {
+function createProviderBackfillTrackInfo(
+  getProviderRunner,
+  lyricsAcquisitionService,
+) {
   return async (videoId, trackDir) =>
     backfillTrackInfoWithLyricsFallback(videoId, trackDir, {
       runner: await getProviderRunner(),
+      lyricsAcquisitionService,
     });
 }
 
@@ -54,9 +61,12 @@ function registerLibraryHandlers({
   sendBackfillStatus,
   featureIds,
   getProviderRunner,
+  lyricsAcquisitionService,
 }) {
-  const fetchBackfillTrackInfo =
-    createProviderBackfillTrackInfo(getProviderRunner);
+  const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
+    getProviderRunner,
+    lyricsAcquisitionService,
+  );
 
   ipcMain.handle('library:list', async () => {
     const dir = resolveDownloadDir(getConfig());

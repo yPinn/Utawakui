@@ -157,6 +157,23 @@ discarded, saving is single-flight per modal, and every typed provider failure i
 mapped to a bounded Traditional Chinese notice with an actionable retry only when
 retry can help.
 
+## Main ownership
+
+`electron/main.js` creates one lyrics acquisition service after configuration is
+loaded and injects it into lyrics, import, and library handlers. The service owns
+one LRCLIB client and therefore one scheduler across manual search/save, label
+repair, post-import fallback, and metadata backfill. Domain handlers do not import
+one another.
+
+Every service operation checks `lyrics-flow` before its first external request.
+The local already-saved check may return without consulting the gate because it
+performs no provider work. A denied gate therefore makes zero LRCLIB requests;
+optional post-import and metadata-backfill callers catch that denial or any
+provider failure so successful audio/library work remains successful. Creating
+the service performs no request, and automatic lookup starts only from deferred
+library backfill or an explicit import action; HTTP timeout/abort and the shared
+sequential scheduler bound its work.
+
 ## Verification gates
 
 - Unit: record normalization, hostile Lyricsfile fixtures, query planning,
