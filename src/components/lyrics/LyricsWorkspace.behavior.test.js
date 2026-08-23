@@ -295,7 +295,7 @@ describe('Lyrics workspace control contracts', () => {
     const header = mount(LyricsWorkspaceHeader, {
       track: { title: 'Euphoria', lyrics: { status: 'available' } },
       trackMeta: 'BTS / 3:49',
-      separationPresetOptions: [{ id: 'quick', label: '快速分離' }],
+      separationPresetOptions: [{ id: 'quick', label: '速度優先' }],
       selectedSeparationPresetId: 'quick',
       onSeparationPresetChange: preset,
       onGenerateSeparation: generateSeparation,
@@ -311,7 +311,7 @@ describe('Lyrics workspace control contracts', () => {
 
     findByProp(header.root, 'title', '選擇歌詞曲目').props.onClick();
     findByProp(header.root, 'title', '重新掃描歌詞').props.onClick();
-    findByProp(header.root, 'aria-label', '伴奏分離設定').props.onChange({
+    findByProp(header.root, 'aria-label', '伴奏處理模式').props.onChange({
       target: { value: 'quick' },
     });
     findByProp(header.root, 'aria-label', '產生伴奏').props.onClick();
@@ -452,13 +452,13 @@ describe('LyricsWorkspace event wiring', () => {
     findByProp(root, 'title', '放大歌詞').props.onClick();
     await nextTick();
     expect(findByProp(root, 'title', '放大歌詞').props.disabled).toBe(true);
-    findByProp(root, 'aria-label', '伴奏分離設定').props.onChange({
+    findByProp(root, 'aria-label', '伴奏處理模式').props.onChange({
       target: { value: 'high-quality' },
     });
     await nextTick();
     expect(separate).not.toHaveBeenCalled();
-    expect(findByProp(root, 'aria-label', '此模型已產生')).toBeTruthy();
-    findByProp(root, 'aria-label', '伴奏分離設定').props.onChange({
+    expect(findByProp(root, 'aria-label', '此模式已產生')).toBeTruthy();
+    findByProp(root, 'aria-label', '伴奏處理模式').props.onChange({
       target: { value: 'quick' },
     });
     await nextTick();
