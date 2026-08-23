@@ -44,7 +44,9 @@ const FUNCTION_EXPORTS = [
   'loadSeparationManifest',
   'loadTrackLyricsManifest',
   'loadTrackLyricsTiming',
+  'loadTrackMusicStructure',
   'migrateTrackAlbumMetadata',
+  'musicStructureSidecarPath',
   'normalizeTrackLyricsSidecars',
   'readTrackLyrics',
   'recordSeparationResult',
@@ -68,6 +70,7 @@ const FUNCTION_EXPORTS = [
   'saveTrackLyricsManifest',
   'saveTrackLyricsText',
   'saveTrackLyricsTiming',
+  'saveTrackMusicStructure',
   'saveTrackReading',
   'selectSeparationResult',
   'setLyricsSourceLabel',
@@ -86,7 +89,7 @@ const CONSTANT_EXPORTS = [
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 63 names its consumers expect', () => {
+  it('re-exports exactly the 66 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

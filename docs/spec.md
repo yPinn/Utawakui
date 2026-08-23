@@ -362,7 +362,11 @@ Output v3 已加入以來源 SHA revision 為 identity 的 immutable
 playback tick 重送。Lyrics `karaoke-stack` 已能依 canonical clock 消費可信的
 beat/downbeat 與 section role，缺少、無效、過期、低信心或不同曲目的資料維持 M0
 原樣，reduced motion 不執行 beat 動畫。這一層的自動測試已完成，Workbench／OBS
-人工視覺驗收仍待執行；分析 sidecar 的實際載入、產生與 optional runtime 尚未開始。
+人工視覺驗收仍待執行。Main 現已具備 bounded、原子化的
+`analysis/music-structure.json` 保存／載入，且 renderer 只能要求 canonical track
+id；sidecar 存在時會重新串流計算當前音訊 SHA-256。缺失、損壞、unsupported、
+duration 不符或音訊被外部替換皆維持 M0，不會投影 analyzer provenance、sidecar
+內容或路徑。分析 sidecar 的實際產生與 optional runtime 尚未開始。
 
 All-In-One Infer 是第一個完整 M1/M2 候選，因為同一分析路線可提供 BPM、
 beat/downbeat 與 section evidence；它不產生 T2 逐字對齊，也不能讓 Lyrics

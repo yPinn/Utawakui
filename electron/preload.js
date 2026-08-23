@@ -119,6 +119,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
   getTrackLyrics: (trackId, filename) =>
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
+  getTrackMusicStructure: (trackId) =>
+    ipcRenderer.invoke('music-structure:get-track', trackId),
   saveLyricsTiming: (
     trackId,
     sourceFilename,

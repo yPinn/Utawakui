@@ -6,8 +6,9 @@ Executable contract v1, implemented 2026-08-24. The bounded values live in
 `shared/musicStructureContractValues.json`; the main-process trust boundary is
 the pure validator in `electron/lib/musicStructureContract.js`, exercised by
 fixed JSON fixtures. Additive Output v3 cue transport and the first bounded
-`karaoke-stack` consumer are implemented; analyzer installation, sidecar
-persistence/loading, authored UI, and model selection remain unimplemented.
+`karaoke-stack` consumer are implemented. Atomic sidecar persistence/loading and
+current-track renderer wiring are also implemented; analyzer installation,
+authored UI, and model selection remain unimplemented.
 
 The accepted product endpoint is:
 
@@ -47,6 +48,16 @@ The target derived sidecar is:
 ```text
 tracks/<trackId>/analysis/music-structure.json
 ```
+
+Electron main is the only reader/writer. Save validates the complete document,
+verifies the main-derived audio SHA-256, writes bounded compact JSON through
+temporary-file replacement, and keeps the matching duration identity inside the
+validated document. Load
+reads at most the contract byte limit and recomputes the audio SHA-256 through a
+chunked stream only when a sidecar exists. Hashing therefore runs on track or
+library revision changes, never on playback ticks. A renderer request supplies
+only the canonical track id and receives the public M0/M1/M2 projection; raw
+analyzer provenance, sidecar bytes, and paths remain in main.
 
 It is atomically written, versioned, and linked to a SHA-256 fingerprint of the
 source audio. Analyzer id, profile id, environment lock, model ids, completion
@@ -230,6 +241,8 @@ separate layer and is neither created nor shifted by these cues.
 3. Add immutable cue transport and one segment-aware visual recipe with an M0
    fallback — implementation and automated verification complete; human
    Workbench/OBS visual acceptance pending.
+   Main-owned atomic sidecar storage/loading and current-track wiring are also
+   complete; real M1/M2 acceptance still requires an analyzer-produced sidecar.
 4. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
    provisional community environment.
 5. Resolve and package-smoke `analysis-structure`; resolve `combined-ml` only

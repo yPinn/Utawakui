@@ -94,6 +94,11 @@ const {
 const { importLocalAudioFiles } = require('./library/importLocal');
 const { runBackfillPass } = require('./library/backfill');
 const {
+  loadTrackMusicStructure,
+  musicStructureSidecarPath,
+  saveTrackMusicStructure,
+} = require('./library/musicStructure');
+const {
   INDEX_FILENAME,
   LYRICS_MANIFEST_VERSION,
 } = require('./library/constants');
@@ -130,7 +135,9 @@ module.exports = {
   loadIndex,
   loadSeparationManifest,
   loadTrackLyricsTiming,
+  loadTrackMusicStructure,
   migrateTrackAlbumMetadata,
+  musicStructureSidecarPath,
   normalizeTrackLyricsSidecars,
   organizeTrackMetadataFromSidecars,
   readTrackLyrics,
@@ -154,6 +161,7 @@ module.exports = {
   saveTrackLyricsManifest,
   saveTrackLyricsText,
   saveTrackLyricsTiming,
+  saveTrackMusicStructure,
   saveTrackReading,
   selectSeparationResult,
   setLyricsSourceLabel,

@@ -49,7 +49,8 @@ const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
 
 const { state: playerState } = usePlayer();
 const { state: queueState, upcomingTracks } = usePlaybackQueue();
-const { initialize: initializeLibrary } = useLibrary();
+const { initialize: initializeLibrary, tracksById: libraryTracksById } =
+  useLibrary();
 const { initialize: initializePlaylists } = usePlaylists();
 const {
   state: lyricsState,
@@ -67,7 +68,10 @@ const {
   refreshConfirmations,
 } = useFeatureGates();
 const { recordError } = useAppDiagnostics();
-const { current: musicStructureSignals } = useMusicStructureSignals();
+const {
+  current: musicStructureSignals,
+  loadForTrack: loadMusicStructureForTrack,
+} = useMusicStructureSignals();
 
 const state = reactive({
   status: { ...EMPTY_STATUS },
@@ -227,6 +231,20 @@ const continuityKey = computed(
       playerState.continuityRevision ?? 0
     }`,
 );
+
+const currentLibraryTrack = computed(
+  () => libraryTracksById.value.get(playerState.track?.id) ?? null,
+);
+
+function refreshCurrentMusicStructure() {
+  return Promise.resolve(
+    loadMusicStructureForTrack(currentLibraryTrack.value?.id ?? null),
+  ).catch(() => null);
+}
+
+watch(currentLibraryTrack, () => {
+  if (sourcesSettled) void refreshCurrentMusicStructure();
+});
 
 function createEnvelope(stream, kind, revision, payload) {
   return {
@@ -592,6 +610,7 @@ function initialize() {
         initializePlaylists(),
         initializeLyrics(),
       ]);
+      void refreshCurrentMusicStructure();
       sourcesSettled = true;
       if (isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
         publisher.request(currentProjection());

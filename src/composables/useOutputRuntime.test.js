@@ -22,6 +22,8 @@ let lyricsDocument;
 let activeLineId;
 let activeSegmentId;
 let musicStructureSignals;
+let loadMusicStructureForTrack;
+let libraryTracksById;
 let initializeLibrary;
 let initializePlaylists;
 let initializeLyrics;
@@ -61,6 +63,8 @@ beforeEach(() => {
   activeLineId = shallowRef(null);
   activeSegmentId = shallowRef(null);
   musicStructureSignals = shallowRef(null);
+  loadMusicStructureForTrack = vi.fn(async () => null);
+  libraryTracksById = shallowRef(new Map());
   libraryHydration = deferred();
   playlistHydration = deferred();
   lyricsHydration = deferred();
@@ -163,10 +167,16 @@ beforeEach(() => {
     }),
   }));
   vi.doMock('./useLibrary.js', () => ({
-    useLibrary: () => ({ initialize: initializeLibrary }),
+    useLibrary: () => ({
+      initialize: initializeLibrary,
+      tracksById: libraryTracksById,
+    }),
   }));
   vi.doMock('./useMusicStructureSignals.js', () => ({
-    useMusicStructureSignals: () => ({ current: musicStructureSignals }),
+    useMusicStructureSignals: () => ({
+      current: musicStructureSignals,
+      loadForTrack: loadMusicStructureForTrack,
+    }),
   }));
   vi.doMock('./usePlaylists.js', () => ({
     usePlaylists: () => ({ initialize: initializePlaylists }),
@@ -547,6 +557,41 @@ describe('output source handshake', () => {
         ([message]) => message.stream === 'music-structure.document',
       ),
     ).toHaveLength(1);
+  });
+
+  it('loads current music cues after library hydration and reloads on track or library changes', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    libraryTracksById.value = new Map([
+      ['track-1', { id: 'track-1', contentHash: 'a'.repeat(64) }],
+    ]);
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+
+    await flushMicrotasks();
+    expect(loadMusicStructureForTrack).not.toHaveBeenCalled();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    expect(loadMusicStructureForTrack).toHaveBeenCalledWith('track-1');
+
+    playerState.track = {
+      id: 'track-2',
+      title: 'Next',
+      url: 'media://next',
+    };
+    libraryTracksById.value = new Map([
+      ['track-2', { id: 'track-2', contentHash: 'b'.repeat(64) }],
+    ]);
+    await flushMicrotasks();
+    expect(loadMusicStructureForTrack).toHaveBeenLastCalledWith('track-2');
+
+    libraryTracksById.value = new Map([
+      ['track-2', { id: 'track-2', contentHash: 'c'.repeat(64) }],
+    ]);
+    await flushMicrotasks();
+    expect(loadMusicStructureForTrack).toHaveBeenCalledTimes(3);
+    expect(loadMusicStructureForTrack).toHaveBeenLastCalledWith('track-2');
   });
 });
 

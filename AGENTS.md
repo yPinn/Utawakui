@@ -37,6 +37,14 @@ Browser-bound composables are not testable under the current plain-Node Vitest e
 
 ## Architecture
 
+- **Music-structure sidecars are main-owned derived data.** The library module
+  map below predates this thirteenth domain submodule:
+  `electron/lib/library/musicStructure.js` atomically writes and bounded-reads
+  `tracks/<trackId>/analysis/music-structure.json`, recomputes the current audio
+  SHA-256 only when a sidecar is consumed, and projects explicit M0/M1/M2 state.
+  `electron/main/musicStructureHandlers.js` exposes one read-only track-id IPC;
+  renderer input never supplies paths, hashes, duration, or analyzer settings.
+
 The codebase is a Vite + Vue 3 control panel inside an Electron shell (Phase 0 in the roadmap). Key structural points to know before extending it:
 
 - **Process split**: `electron/main.js` is the Electron main process entry point; it creates a single `BrowserWindow` (via `electron/main/windowState.js`'s `createMainWindow` — see the module-split bullet below). In dev it points at the Vite dev server (`loadURL('http://localhost:5173')`); in production it loads the built `dist/index.html` (`loadFile`). `electron/preload.js` is the only bridge between main and renderer, using `contextBridge.exposeInMainWorld` — the renderer has no direct Node access (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`). Keep this isolation model when adding IPC: extend the preload's exposed API surface rather than relaxing these webPreferences.

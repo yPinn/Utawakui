@@ -1,7 +1,16 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+function deferred() {
+  let resolve;
+  const promise = new Promise((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 beforeEach(() => {
   vi.resetModules();
+  vi.unstubAllGlobals();
 });
 
 describe('music-structure signal owner', () => {
@@ -37,5 +46,82 @@ describe('music-structure signal owner', () => {
 
     owner.replaceCurrent(undefined);
     expect(owner.current.value).toBeNull();
+  });
+
+  it('clears immediately and ignores a late response after the track changes', async () => {
+    const first = deferred();
+    const second = deferred();
+    const getTrackMusicStructure = vi
+      .fn()
+      .mockReturnValueOnce(first.promise)
+      .mockReturnValueOnce(second.promise);
+    vi.stubGlobal('window', { Utawakui: { getTrackMusicStructure } });
+    const { useMusicStructureSignals } =
+      await import('./useMusicStructureSignals.js');
+    const owner = useMusicStructureSignals();
+    owner.replaceCurrent({ trackId: 'old' });
+
+    const firstLoad = owner.loadForTrack('track-1');
+    expect(owner.current.value).toBeNull();
+    const secondLoad = owner.loadForTrack('track-2');
+
+    first.resolve({
+      trackId: 'track-1',
+      sourceRevision: 'a'.repeat(64),
+      sourceDurationMs: 180000,
+      signals: { level: 'M1', reason: 'current', beats: [], sections: [] },
+    });
+    await firstLoad;
+    expect(owner.current.value).toBeNull();
+
+    second.resolve({
+      trackId: 'track-2',
+      sourceRevision: 'b'.repeat(64),
+      sourceDurationMs: 200000,
+      signals: { level: 'M0', reason: 'missing', beats: [], sections: [] },
+    });
+    await secondLoad;
+    expect(owner.current.value).toMatchObject({
+      trackId: 'track-2',
+      signals: { level: 'M0', reason: 'missing' },
+    });
+  });
+
+  it('fails closed for bridge errors, missing tracks, and mismatched responses', async () => {
+    const getTrackMusicStructure = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('read failed'))
+      .mockResolvedValueOnce({ trackId: 'other-track' });
+    vi.stubGlobal('window', { Utawakui: { getTrackMusicStructure } });
+    const { useMusicStructureSignals } =
+      await import('./useMusicStructureSignals.js');
+    const owner = useMusicStructureSignals();
+
+    await expect(owner.loadForTrack('track-1')).resolves.toBeNull();
+    await expect(owner.loadForTrack('track-1')).resolves.toBeNull();
+    await expect(owner.loadForTrack(null)).resolves.toBeNull();
+    expect(owner.current.value).toBeNull();
+  });
+
+  it('does not let an older request overwrite an explicit replacement', async () => {
+    const pending = deferred();
+    vi.stubGlobal('window', {
+      Utawakui: { getTrackMusicStructure: vi.fn(() => pending.promise) },
+    });
+    const { useMusicStructureSignals } =
+      await import('./useMusicStructureSignals.js');
+    const owner = useMusicStructureSignals();
+    const load = owner.loadForTrack('track-1');
+    owner.replaceCurrent({
+      trackId: 'track-2',
+      signals: { level: 'M0', reason: 'missing' },
+    });
+    pending.resolve({
+      trackId: 'track-1',
+      signals: { level: 'M1', reason: 'current' },
+    });
+
+    await load;
+    expect(owner.current.value).toMatchObject({ trackId: 'track-2' });
   });
 });

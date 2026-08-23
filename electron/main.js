@@ -42,6 +42,9 @@ const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
 const {
+  registerMusicStructureHandlers,
+} = require('./main/musicStructureHandlers');
+const {
   createLyricsAcquisitionService,
 } = require('./main/lyricsAcquisitionService');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
@@ -400,6 +403,12 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       lyricsAcquisitionService,
+    });
+
+    registerMusicStructureHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
     });
 
     registerPlaylistsHandlers({
