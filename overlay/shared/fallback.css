@@ -27,6 +27,10 @@
     --ovl-primitive-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     --ovl-primitive-text-shadow:
       0 0.08em 0.08em rgb(0 0 0 / 92%), 0 0.16em 0.45em rgb(0 0 0 / 72%);
+    --ovl-primitive-mark-shadow: drop-shadow(
+      0 0.18rem 0.12rem rgb(0 0 0 / 55%)
+    );
+    --ovl-primitive-panel-shadow: 0 0.35rem 1.1rem rgb(0 0 0 / 38%);
     --ovl-fallback-font-display-cjk:
       'GenWanMin2 TW', 'GenWanMin2 TC', 'GenWanMin2 PJP', 'Noto Serif TC',
       'Noto Serif JP', 'Noto Serif KR', 'Microsoft JhengHei', serif;

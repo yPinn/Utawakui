@@ -187,6 +187,12 @@ describe('outputSlots', () => {
         settings: {},
       }),
     ).not.toThrow();
+    expect(() =>
+      upsertOutputSlot(dir, 'lyrics', {
+        templateId: 'live-stage',
+        settings: { captureSize: 'full' },
+      }),
+    ).not.toThrow();
   });
 
   it('round-trips the bundled Cover Player Artwork template id', () => {

@@ -1,7 +1,10 @@
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
+export const MAX_LIVE_STAGE_CAPTION_LINES = 2;
 
 const PARENTHETICAL_RE = /\([^()（）]+\)|（[^()（）]+）/gu;
 const PARENTHESIS_MARK_RE = /[()（）]/u;
+const LIVE_STAGE_SPEAKER_RE = /^\[([^\]\r\n]{1,40})\](?:[ \t]*\r?\n|[ \t]+|$)/u;
+const LIVE_STAGE_BALANCE_THRESHOLD = 34;
 const HANGUL_RE = /[\uac00-\ud7af]/u;
 const KANA_RE = /[\u3040-\u30ff]/u;
 const HAN_RE = /[\u3400-\u9fff]/u;
@@ -61,6 +64,67 @@ function untouched(text) {
   return {
     transformed: false,
     bubbles: [{ kind: 'main', text }],
+  };
+}
+
+function balancedCaptionRows(text) {
+  const authoredRows = text
+    .split(/\r?\n/u)
+    .map((row) => row.replace(/[ \t]+/gu, ' ').trim())
+    .filter(Boolean);
+  if (authoredRows.length > 1) {
+    return [authoredRows[0], authoredRows.slice(1).join(' ')].filter(Boolean);
+  }
+
+  const row = authoredRows[0] ?? '';
+  const glyphs = Array.from(row);
+  if (glyphs.length <= LIVE_STAGE_BALANCE_THRESHOLD) {
+    return row ? [row] : [];
+  }
+
+  const words = row.split(' ').filter(Boolean);
+  if (words.length > 1) {
+    let bestIndex = 1;
+    let smallestDelta = Infinity;
+    for (let index = 1; index < words.length; index += 1) {
+      const first = words.slice(0, index).join(' ');
+      const second = words.slice(index).join(' ');
+      const delta = Math.abs(
+        Array.from(first).length - Array.from(second).length,
+      );
+      if (delta < smallestDelta) {
+        bestIndex = index;
+        smallestDelta = delta;
+      }
+    }
+    return [
+      words.slice(0, bestIndex).join(' '),
+      words.slice(bestIndex).join(' '),
+    ];
+  }
+
+  const midpoint = Math.ceil(glyphs.length / 2);
+  return [glyphs.slice(0, midpoint).join(''), glyphs.slice(midpoint).join('')];
+}
+
+export function preprocessLiveStageCaption(text) {
+  const sourceText = String(text ?? '').trim();
+  const speakerMatch = sourceText.match(LIVE_STAGE_SPEAKER_RE);
+  const speaker = speakerMatch?.[1]?.trim() ?? '';
+  const captionText = speakerMatch
+    ? sourceText.slice(speakerMatch[0].length).trim()
+    : sourceText;
+  const lines = balancedCaptionRows(captionText).slice(
+    0,
+    MAX_LIVE_STAGE_CAPTION_LINES,
+  );
+
+  return {
+    sourceText,
+    speaker,
+    lines,
+    metadataOnly: Boolean(speaker && lines.length === 0),
+    transformed: Boolean(speaker || lines.join('\n') !== sourceText),
   };
 }
 

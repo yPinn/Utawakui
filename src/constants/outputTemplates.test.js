@@ -74,8 +74,18 @@ describe('output template registry', () => {
     );
 
     expect(lyricsGroup.templates.map((template) => template.id)).toEqual(
-      expect.arrayContaining(['quiet-caption', 'manga-frame']),
+      expect.arrayContaining(['quiet-caption', 'live-stage', 'manga-frame']),
     );
+    expect(
+      lyricsGroup.templates.find((template) => template.id === 'live-stage'),
+    ).toMatchObject({
+      kind: 'lyrics',
+      tone: 'stage',
+      preview: {
+        layoutLabel: '舞台轉播字幕',
+        motionLabel: '獨立字卡時間軸',
+      },
+    });
     expect(
       lyricsGroup.templates.find((template) => template.id === 'manga-frame'),
     ).toMatchObject({

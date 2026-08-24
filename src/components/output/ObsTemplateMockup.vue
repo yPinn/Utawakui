@@ -69,7 +69,32 @@ const mangaBubbles = computed(
       v-else-if="preset?.kind === 'lyrics'"
       class="obs-template-mockup__content obs-template-mockup__content--lyrics"
     >
-      <template v-if="preset?.id === 'manga-frame'">
+      <template v-if="preset?.id === 'live-stage'">
+        <span class="obs-template-mockup__live-stage-brand">
+          <strong>U</strong>
+          <span>UTAWAKUI<br />LIVE STAGE</span>
+        </span>
+        <strong class="obs-template-mockup__live-stage-channel">UW</strong>
+        <strong
+          class="obs-template-mockup__live-stage-caption obs-template-mockup__animated-primary"
+        >
+          {{ lyrics.current }}
+        </strong>
+        <span
+          class="obs-template-mockup__live-stage-card obs-template-mockup__animated-primary"
+        >
+          <span class="obs-template-mockup__live-stage-card-mark">
+            <strong>U</strong>
+            <span>LIVE</span>
+          </span>
+          <span class="obs-template-mockup__live-stage-card-copy">
+            <strong>{{ track.title }}</strong>
+            <span>{{ track.artist }}</span>
+          </span>
+        </span>
+      </template>
+
+      <template v-else-if="preset?.id === 'manga-frame'">
         <span
           class="obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble"
           :data-manga-count="mangaBubbles.length"
@@ -270,6 +295,104 @@ const mangaBubbles = computed(
   .obs-template-mockup__content--lyrics {
   align-content: center;
   justify-items: stretch;
+}
+
+.obs-template-mockup[data-template-id='live-stage']
+  .obs-template-mockup__content--lyrics {
+  position: relative;
+  padding: 0;
+}
+
+.obs-template-mockup__live-stage-brand,
+.obs-template-mockup__live-stage-channel,
+.obs-template-mockup__live-stage-caption,
+.obs-template-mockup__live-stage-card {
+  position: absolute;
+}
+
+.obs-template-mockup__live-stage-brand {
+  inset-block-start: 8%;
+  inset-inline-start: 6.25%;
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: 1;
+}
+
+.obs-template-mockup__live-stage-brand > strong {
+  width: var(--ui-space-5);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  background: var(--obs-preview-accent);
+  color: var(--ui-output-preview-accent-contrast);
+  font-size: var(--ui-font-size-md);
+}
+
+.obs-template-mockup__live-stage-channel {
+  inset-block-start: 8%;
+  inset-inline-end: 5%;
+  font-size: var(--ui-font-size-lg);
+  line-height: 1;
+}
+
+.obs-template-mockup__live-stage-caption {
+  inset-inline-start: 6.25%;
+  inset-block-end: 8.333%;
+  max-inline-size: 43%;
+  overflow: hidden;
+  font-size: var(--ui-font-size-md);
+  line-height: 1.08;
+  text-align: left;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__live-stage-card {
+  inset-inline-end: 5%;
+  inset-block-end: 8.333%;
+  inline-size: 38%;
+  min-inline-size: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--obs-preview-surface);
+  color: var(--obs-preview-ink);
+  text-align: left;
+}
+
+.obs-template-mockup__live-stage-card-mark {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-1);
+  padding-inline: var(--ui-space-2);
+  background: var(--obs-preview-accent);
+  color: var(--ui-output-preview-accent-contrast);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-weight: var(--ui-font-weight-heavy);
+}
+
+.obs-template-mockup__live-stage-card-copy {
+  min-inline-size: 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1) var(--ui-space-2);
+  overflow: hidden;
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  white-space: nowrap;
+}
+
+.obs-template-mockup__live-stage-card-copy > strong,
+.obs-template-mockup__live-stage-card-copy > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.obs-template-mockup__live-stage-card-copy > span {
+  color: var(--obs-preview-accent);
 }
 
 .obs-template-mockup__content--setlist {

@@ -359,6 +359,13 @@ describe('outputServer', () => {
       'preprocessLyricsPresentation',
     );
 
+    const liveStage = await fetch(
+      `${status.httpUrl}/overlay/lyrics/liveStage.mjs`,
+    );
+    expect(liveStage.status).toBe(200);
+    expect(liveStage.headers.get('content-type')).toContain('text/javascript');
+    expect(await liveStage.text()).toContain('renderLiveStagePresentation');
+
     const gsap = await fetch(`${status.httpUrl}/overlay/vendor/gsap.min.js`);
     expect(gsap.status).toBe(200);
     expect(gsap.headers.get('content-type')).toContain('text/javascript');

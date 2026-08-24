@@ -2,7 +2,9 @@ import { describe, expect, it } from 'vitest';
 import {
   nextPresentationBoundaryDelayMs,
   nextLyricsBoundaryDelayMs,
+  selectLiveStageFrame,
   selectMusicStructureFrame,
+  selectLyricsOverlayFrame,
   selectLyricsFrame,
   selectArtworkFrame,
   selectNowPlayingFrame,
@@ -69,6 +71,99 @@ describe('overlay state selectors', () => {
       language: 'zh-Hant',
       lineIndex: 1,
     });
+  });
+
+  it('projects the Live Stage card from a fixed 1–7 second playback window', () => {
+    const base = snapshot({
+      playback: { ...snapshot().playback, positionMs: 0 },
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    for (const [positionMs, visible] of [
+      [999, false],
+      [1000, true],
+      [6999, true],
+      [7000, false],
+    ]) {
+      expect(
+        selectLiveStageFrame(
+          {
+            ...base,
+            playback: { ...base.playback, status: 'paused', positionMs },
+          },
+          { nowMs },
+        ),
+      ).toMatchObject({
+        active: true,
+        cardVisible: visible,
+        trackId: 'track-1',
+        title: '海螺記',
+        artist: '163braces',
+      });
+    }
+  });
+
+  it('keeps a timed lyric and the independently timed Live Stage card visible together', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 3500 },
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [{ text: '[리즈]\n現在就開始唱', startMs: 0, endMs: 8000 }],
+      },
+    });
+
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }),
+    ).toMatchObject({
+      visible: true,
+      currentText: '[리즈]\n現在就開始唱',
+      liveStage: {
+        active: true,
+        cardVisible: true,
+        title: '海螺記',
+      },
+    });
+  });
+
+  it('schedules fixed Live Stage boundaries even without synced lyrics', () => {
+    const base = snapshot({
+      playback: { ...snapshot().playback, positionMs: 0 },
+      lyrics: { ...snapshot().lyrics, trackId: 'another-track' },
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    expect(nextPresentationBoundaryDelayMs(base, { nowMs })).toBe(1000);
+    expect(
+      nextPresentationBoundaryDelayMs(
+        { ...base, playback: { ...base.playback, positionMs: 1000 } },
+        { nowMs },
+      ),
+    ).toBe(6000);
+    expect(
+      nextPresentationBoundaryDelayMs(
+        { ...base, playback: { ...base.playback, positionMs: 7000 } },
+        { nowMs },
+      ),
+    ).toBeNull();
+  });
+
+  it('does not reschedule a Live Stage boundary beyond a short track duration', () => {
+    const value = snapshot({
+      playback: {
+        ...snapshot().playback,
+        positionMs: 500,
+        durationMs: 800,
+      },
+      lyrics: { ...snapshot().lyrics, trackId: 'another-track' },
+    });
+
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }),
+    ).toBeNull();
   });
 
   it('hides lyrics that do not belong to the playing track', () => {

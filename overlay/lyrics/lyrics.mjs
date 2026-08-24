@@ -7,7 +7,7 @@ import {
 } from '../shared/preview.mjs';
 import {
   nextPresentationBoundaryDelayMs,
-  selectLyricsFrame,
+  selectLyricsOverlayFrame,
 } from '../shared/state.mjs';
 import { preprocessLyricsPresentation } from '../shared/lyricsPresentation.mjs';
 import {
@@ -19,6 +19,10 @@ import {
   applyMangaFramePresentation,
   renderMangaFrameSvg,
 } from './mangaFrame.mjs';
+import {
+  clearLiveStagePresentation,
+  renderLiveStagePresentation,
+} from './liveStage.mjs';
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
@@ -27,6 +31,13 @@ const PREVIEW_FRAME = Object.freeze({
   nextText: '重なって歌になる',
   language: 'ja',
   lineIndex: 0,
+  liveStage: {
+    active: true,
+    cardVisible: true,
+    trackId: 'preview-track',
+    title: '如果可以',
+    artist: '韋禮安',
+  },
 });
 const MIN_PRESENTATION_CONFIDENCE = 0.5;
 const PRESENTATION_SECTION_ROLES = new Set([
@@ -347,6 +358,12 @@ function clearMangaLyrics(elements) {
   elements.current.hidden = false;
 }
 
+function renderLiveStageFrame(elements, frame, options) {
+  clearMangaLyrics(elements);
+  renderLiveStagePresentation(elements, frame, options);
+  applyMusicStructurePresentation(elements, frame, options);
+}
+
 function activeTemplateId(elements, options) {
   if (typeof options.templateId === 'string') return options.templateId;
   return (
@@ -607,6 +624,7 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 
 export function destroyLyricsAnimations(elements, options = {}) {
   stopMangaAnimations(elements, options, true);
+  clearLiveStagePresentation(elements, options);
 }
 
 export function renderLyricsFrame(elements, frame, options = {}) {
@@ -615,6 +633,17 @@ export function renderLyricsFrame(elements, frame, options = {}) {
   const templateId = activeTemplateId(elements, options);
   const renderOptions = { ...options, templateId };
   const isMangaFrame = templateId === 'manga-frame';
+  const isLiveStage = templateId === 'live-stage';
+
+  if (isLiveStage) {
+    stopMangaAnimations(elements, renderOptions, true);
+    renderLiveStageFrame(elements, frame, renderOptions);
+    return;
+  }
+
+  if (elements.root.dataset.liveStage === 'true') {
+    clearLiveStagePresentation(elements, renderOptions);
+  }
   const lineChanged =
     previousText !== frame.currentText ||
     (isMangaFrame &&
@@ -692,7 +721,7 @@ export function createLyricsFrameScheduler(options = {}) {
   function renderLatest() {
     if (stopped || !latestSnapshot) return;
     const nowMs = now();
-    onFrame(selectLyricsFrame(latestSnapshot, { nowMs }));
+    onFrame(selectLyricsOverlayFrame(latestSnapshot, { nowMs }));
     const delay = nextPresentationBoundaryDelayMs(latestSnapshot, { nowMs });
     if (delay === null) return;
     timer = schedule(() => {
@@ -731,6 +760,10 @@ function boot() {
   const elements = {
     root: document.querySelector('#lyrics-overlay'),
     current: document.querySelector('#lyrics-current'),
+    liveStageCard: document.querySelector('#lyrics-live-stage-card'),
+    liveStageChrome: document.querySelector('#lyrics-live-stage-chrome'),
+    liveStageTitle: document.querySelector('#lyrics-live-stage-title'),
+    liveStageArtist: document.querySelector('#lyrics-live-stage-artist'),
     mangaBubbles: document.querySelector('#lyrics-manga-bubbles'),
     next: document.querySelector('#lyrics-next'),
   };

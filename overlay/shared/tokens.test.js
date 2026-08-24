@@ -23,6 +23,8 @@ describe('overlay CSS tokens', () => {
     expect(fallback).toContain('--ovl-primitive-color-ink');
     expect(tokens).not.toContain('--ovl-primitive-color-ink:');
     expect(tokens).toContain('--ovl-color-text-primary');
+    expect(tokens).toContain('--ovl-mark-shadow');
+    expect(tokens).toContain('--ovl-panel-shadow');
     expect(tokens).not.toContain('@layer ovl-appearance {');
     expect(appearance).toContain('@layer ovl-appearance {');
     expect(lyrics).toContain('--ovl-template-lyrics-current-size');

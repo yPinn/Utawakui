@@ -13,6 +13,8 @@ const CANONICAL_SECTION_ROLES = new Set([
   'unknown',
 ]);
 const MIN_PRESENTATION_CONFIDENCE = 0.5;
+const LIVE_STAGE_CARD_START_MS = 1000;
+const LIVE_STAGE_CARD_END_MS = 7000;
 
 function revision(snapshot) {
   return Number.isSafeInteger(snapshot?.revision) ? snapshot.revision : 0;
@@ -131,6 +133,51 @@ export function playbackPositionMs(snapshot, nowMs) {
   return Number.isFinite(durationMs)
     ? Math.min(projectedPosition, Math.max(0, durationMs))
     : projectedPosition;
+}
+
+export function selectLiveStageFrame(snapshot, options = {}) {
+  const track = snapshot?.playback?.track;
+  const trackId = text(track?.id);
+  const title = text(track?.title);
+  const active = Boolean(trackId && title);
+  const positionMs = playbackPositionMs(snapshot, options.nowMs ?? Date.now());
+
+  return {
+    active,
+    cardVisible:
+      active &&
+      positionMs >= LIVE_STAGE_CARD_START_MS &&
+      positionMs < LIVE_STAGE_CARD_END_MS,
+    trackId,
+    title,
+    artist: text(track?.artist),
+  };
+}
+
+function nextLiveStageBoundaryDelayMs(snapshot, options = {}) {
+  if (snapshot?.playback?.status !== 'playing') return null;
+  const stage = selectLiveStageFrame(snapshot, options);
+  if (!stage.active) return null;
+
+  const nowMs = options.nowMs ?? Date.now();
+  const positionMs = playbackPositionMs(snapshot, nowMs);
+  const boundaryMs =
+    positionMs < LIVE_STAGE_CARD_START_MS
+      ? LIVE_STAGE_CARD_START_MS
+      : positionMs < LIVE_STAGE_CARD_END_MS
+        ? LIVE_STAGE_CARD_END_MS
+        : null;
+  const durationMs = snapshot?.playback?.durationMs;
+  const boundaryFallsAfterTrack =
+    Number.isFinite(durationMs) &&
+    boundaryMs !== null &&
+    boundaryMs > durationMs;
+  return boundaryMs === null || boundaryFallsAfterTrack
+    ? null
+    : Math.max(
+        1,
+        Math.ceil((boundaryMs - positionMs) / playbackRate(snapshot)),
+      );
 }
 
 export function activeLyricIndex(snapshot, lines, nowMs) {
@@ -275,6 +322,8 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   const delays = [];
   const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, { nowMs });
   if (lyricsDelay !== null) delays.push(lyricsDelay);
+  const liveStageDelay = nextLiveStageBoundaryDelayMs(snapshot, { nowMs });
+  if (liveStageDelay !== null) delays.push(liveStageDelay);
 
   const document = musicStructureDocument(snapshot);
   if (document) {
@@ -356,6 +405,13 @@ export function selectLyricsFrame(snapshot, options = {}) {
     lineIndex: activeIndex,
     ...(currentSegments ? { currentSegments } : {}),
     ...(musicStructure ? { musicStructure } : {}),
+  };
+}
+
+export function selectLyricsOverlayFrame(snapshot, options = {}) {
+  return {
+    ...selectLyricsFrame(snapshot, options),
+    liveStage: selectLiveStageFrame(snapshot, options),
   };
 }
 

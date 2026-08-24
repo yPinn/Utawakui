@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
-import { preprocessLyricsPresentation } from './lyricsPresentation.mjs';
+import {
+  preprocessLiveStageCaption,
+  preprocessLyricsPresentation,
+} from './lyricsPresentation.mjs';
 
 describe('lyrics presentation preprocessing', () => {
   it('splits Japanese and Chinese whitespace as authored phrase boundaries', () => {
@@ -71,5 +74,53 @@ describe('lyrics presentation preprocessing', () => {
       { kind: 'main', text: '二 三 四 五' },
       { kind: 'aside', text: '六' },
     ]);
+  });
+});
+
+describe('Live Stage caption preprocessing', () => {
+  it('classifies a leading member marker without rendering it', () => {
+    expect(
+      preprocessLiveStageCaption(
+        "[아사]\nBut if you're killing my mood\nGood riddance",
+      ),
+    ).toEqual({
+      sourceText: "[아사]\nBut if you're killing my mood\nGood riddance",
+      speaker: '아사',
+      lines: ["But if you're killing my mood", 'Good riddance'],
+      metadataOnly: false,
+      transformed: true,
+    });
+  });
+
+  it('treats a marker-only cue as hidden metadata instead of a blank caption', () => {
+    expect(preprocessLiveStageCaption('[리즈]')).toMatchObject({
+      sourceText: '[리즈]',
+      speaker: '리즈',
+      lines: [],
+      metadataOnly: true,
+      transformed: true,
+    });
+  });
+
+  it('preserves literal brackets that are not a leading speaker marker', () => {
+    expect(preprocessLiveStageCaption('This is [not] a name')).toMatchObject({
+      speaker: '',
+      lines: ['This is [not] a name'],
+      metadataOnly: false,
+      transformed: false,
+    });
+  });
+
+  it('bounds authored and long captions to two complete presentation lines', () => {
+    const authored = preprocessLiveStageCaption('first\nsecond\nthird');
+    const balanced = preprocessLiveStageCaption(
+      'Every word remains visible even when a single authored row is unusually long',
+    );
+
+    expect(authored.lines).toEqual(['first', 'second third']);
+    expect(balanced.lines).toHaveLength(2);
+    expect(balanced.lines.join(' ')).toBe(
+      'Every word remains visible even when a single authored row is unusually long',
+    );
   });
 });

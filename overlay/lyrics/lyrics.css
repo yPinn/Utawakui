@@ -102,6 +102,11 @@
     display: none;
   }
 
+  .lyrics-overlay__live-stage-chrome,
+  .lyrics-overlay__live-stage-card {
+    display: none;
+  }
+
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
     --ovl-template-lyrics-line-width: 34ch;
     --ovl-template-lyrics-bottom: 6%;
@@ -137,6 +142,199 @@
 
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
     opacity: 0.72;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay {
+    isolation: isolate;
+    inset: 0;
+    inline-size: auto;
+    block-size: auto;
+    min-block-size: 0;
+    display: block;
+    transform: none;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    text-align: left;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-chrome {
+    position: absolute;
+    inset-block-start: 5.556%;
+    inset-inline: 6.25% 5%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--ovl-color-text-primary);
+    filter: var(--ovl-mark-shadow);
+    font-family: var(--ovl-font-ui);
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand-mark {
+    inline-size: 4rem;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 0.22rem solid var(--ovl-color-text-primary);
+    background: var(--ovl-color-current);
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+    color: var(--ovl-color-ink);
+    font-size: 2.1rem;
+    line-height: 1;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand-copy {
+    display: grid;
+    gap: 0.08rem;
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  :root[data-ovl-template='live-stage']
+    .lyrics-overlay__live-stage-brand-copy
+    strong {
+    font-size: 1.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-channel {
+    color: var(--ovl-color-text-primary);
+    filter: var(--ovl-mark-shadow);
+    font-family: var(--ovl-font-ui);
+    font-size: 3.25rem;
+    font-weight: 800;
+    letter-spacing: -0.08em;
+    line-height: 0.9;
+    -webkit-text-stroke: 0.08rem var(--ovl-color-stroke-strong);
+    paint-order: stroke fill;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__current {
+    position: absolute;
+    inset-inline-start: 6.25%;
+    inset-block-end: 8.333%;
+    inline-size: min(43%, 54rem);
+    max-inline-size: none;
+    display: grid;
+    justify-items: start;
+    gap: 0.08em;
+    color: var(--ovl-color-text-primary);
+    font-family: var(--ovl-user-font-family);
+    font-size: 2.75em;
+    font-weight: 700;
+    line-height: 1.08;
+    text-align: left;
+    text-shadow: var(--ovl-text-shadow);
+    -webkit-text-stroke: 0.065em var(--ovl-color-stroke-strong);
+    paint-order: stroke fill;
+  }
+
+  :root[data-ovl-template='live-stage']
+    .lyrics-overlay__live-stage-caption-line {
+    max-inline-size: 100%;
+    overflow: visible;
+    line-height: inherit;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='live-stage']
+    .lyrics-overlay[data-live-stage-caption-length='medium']
+    .lyrics-overlay__current {
+    font-size: 2.4em;
+  }
+
+  :root[data-ovl-template='live-stage']
+    .lyrics-overlay[data-live-stage-caption-length='long']
+    .lyrics-overlay__current {
+    font-size: 2.05em;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__next {
+    display: none;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-card {
+    position: absolute;
+    inset-inline-end: 5%;
+    inset-block-end: 8.333%;
+    inline-size: min(40%, 46rem);
+    min-block-size: 6.25rem;
+    display: grid;
+    grid-template-columns: 10rem minmax(0, 1fr);
+    overflow: hidden;
+    border-radius: 0.45rem;
+    background: var(--ovl-color-paper);
+    box-shadow: var(--ovl-panel-shadow);
+    color: var(--ovl-color-ink);
+    font-family: var(--ovl-font-ui);
+    will-change: clip-path, opacity, transform;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-card-mark {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    background: var(--ovl-color-current);
+    color: var(--ovl-color-ink);
+    font-size: 1.2rem;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  :root[data-ovl-template='live-stage']
+    .lyrics-overlay__live-stage-card-mark
+    strong {
+    inline-size: 2.5rem;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 0.14rem solid currentColor;
+    clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
+    font-size: 1.45rem;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-card-copy {
+    min-inline-size: 0;
+    display: flex;
+    align-items: baseline;
+    gap: 0.85rem;
+    padding: 1.15rem 1.4rem;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-title,
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-artist {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-title {
+    flex: 1 1 auto;
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+
+  :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-artist {
+    flex: 0 1 42%;
+    color: var(--ovl-color-current);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.05;
   }
 
   :root[data-ovl-template='manga-frame'] .lyrics-overlay {

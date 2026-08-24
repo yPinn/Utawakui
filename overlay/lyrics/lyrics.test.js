@@ -60,6 +60,10 @@ function element(ownerDocument = null) {
       ownText = '';
       this.children = children;
     },
+    removeAttribute(name) {
+      delete this.attributes[name];
+      delete this[name];
+    },
     setAttribute(name, value) {
       this.attributes[name] = value;
       this[name] = value;
@@ -96,6 +100,10 @@ function domElements() {
   return {
     root: element(documentApi),
     current: element(documentApi),
+    liveStageCard: element(documentApi),
+    liveStageChrome: element(documentApi),
+    liveStageTitle: element(documentApi),
+    liveStageArtist: element(documentApi),
     mangaBubbles: element(documentApi),
     next: element(documentApi),
   };
@@ -118,6 +126,217 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('下一句');
     expect(elements.root.hidden).toBe(false);
     expect(elements.root.lang).toBe('zh-Hant');
+  });
+
+  it('renders Live Stage lyrics and its independently visible track card together', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: "[아사]\nBut if you're killing my mood\nGood riddance",
+        currentSegments: [
+          {
+            segmentId: 'segment-1',
+            text: "But if you're killing my mood",
+            state: 'active',
+            progress: 0.5,
+            remainingMs: 400,
+          },
+        ],
+        nextText: 'must not render',
+        language: 'ko',
+        liveStage: {
+          active: true,
+          cardVisible: true,
+          trackId: 'track-1',
+          title: 'MOON',
+          artist: 'BABYMONSTER',
+        },
+      },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+
+    expect(elements.root.hidden).toBe(false);
+    expect(elements.liveStageChrome.hidden).toBe(false);
+    expect(elements.liveStageCard.hidden).toBe(false);
+    expect(elements.liveStageTitle.textContent).toBe('MOON');
+    expect(elements.liveStageArtist.textContent).toBe('BABYMONSTER');
+    expect(elements.current.children).toHaveLength(2);
+    expect(elements.current.children.map((line) => line.textContent)).toEqual([
+      "But if you're killing my mood",
+      'Good riddance',
+    ]);
+    expect(elements.current.textContent).not.toContain('[아사]');
+    expect(elements.current.dataset.segmented).toBeUndefined();
+    expect(elements.next.hidden).toBe(true);
+    expect(elements.next.textContent).toBe('');
+  });
+
+  it('keeps Live Stage chrome visible without lyrics and hides an absent artist safely', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        language: '',
+        liveStage: {
+          active: true,
+          cardVisible: false,
+          trackId: 'track-1',
+          title: 'Instrumental',
+          artist: '',
+        },
+      },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+
+    expect(elements.root.hidden).toBe(false);
+    expect(elements.liveStageChrome.hidden).toBe(false);
+    expect(elements.liveStageCard.hidden).toBe(true);
+    expect(elements.liveStageArtist.hidden).toBe(true);
+    expect(elements.current.hidden).toBe(true);
+  });
+
+  it('uses one interruptible GSAP timeline to dismiss the Live Stage card', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const baseFrame = {
+      revision: 4,
+      visible: true,
+      currentText: '歌詞仍然顯示',
+      nextText: '',
+      language: 'zh-Hant',
+      liveStage: {
+        active: true,
+        cardVisible: true,
+        trackId: 'track-1',
+        title: '如果可以',
+        artist: '韋禮安',
+      },
+    };
+
+    renderLyricsFrame(elements, baseFrame, {
+      gsap,
+      templateId: 'live-stage',
+      reducedMotion: true,
+    });
+    renderLyricsFrame(
+      elements,
+      {
+        ...baseFrame,
+        revision: 5,
+        liveStage: { ...baseFrame.liveStage, cardVisible: false },
+      },
+      { gsap, templateId: 'live-stage' },
+    );
+
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].tweens).toHaveLength(1);
+    expect(timelines[0].tweens[0]).toMatchObject({
+      target: elements.liveStageCard,
+      vars: {
+        autoAlpha: 0,
+        x: 24,
+        duration: 0.18,
+        ease: 'power2.in',
+        overwrite: 'auto',
+      },
+    });
+    expect(elements.current.textContent).toBe('歌詞仍然顯示');
+
+    timelines[0].options.onComplete();
+    expect(elements.liveStageCard.hidden).toBe(true);
+  });
+
+  it('interrupts the Live Stage card entrance when its playback window closes', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const liveStage = {
+      active: true,
+      cardVisible: true,
+      trackId: 'track-1',
+      title: '海螺記',
+      artist: '163braces',
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 6,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        language: 'zh-Hant',
+        liveStage,
+      },
+      { gsap, templateId: 'live-stage' },
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 7,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        language: 'zh-Hant',
+        liveStage: { ...liveStage, cardVisible: false },
+      },
+      { gsap, templateId: 'live-stage' },
+    );
+
+    expect(timelines).toHaveLength(2);
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(timelines[1].tweens[0]).toMatchObject({
+      target: elements.liveStageCard,
+      vars: { autoAlpha: 0, duration: 0.18 },
+    });
+  });
+
+  it('clears Live Stage accessibility metadata when another template takes over', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 8,
+        visible: true,
+        currentText: '[리즈]\nLive Stage line',
+        nextText: '',
+        language: 'ko',
+        liveStage: {
+          active: true,
+          cardVisible: false,
+          trackId: 'track-1',
+          title: 'Song',
+          artist: 'Singer',
+        },
+      },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+    expect(elements.root.attributes['aria-label']).toBe(
+      '[리즈]\nLive Stage line',
+    );
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 9,
+        visible: true,
+        currentText: 'Quiet caption line',
+        nextText: '',
+        language: 'en',
+      },
+      { templateId: 'quiet-caption', reducedMotion: true },
+    );
+
+    expect(elements.root.attributes['aria-label']).toBeUndefined();
   });
 
   it('fades one Manga utterance as one whole bubble', () => {

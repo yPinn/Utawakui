@@ -189,6 +189,32 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     ],
   },
   {
+    id: 'live-stage',
+    kind: 'lyrics',
+    order: 25,
+    name: 'Live Stage',
+    tone: 'stage',
+    availability: {
+      label: '可用',
+      tone: 'muted',
+      summary: 'M0 也會顯示目前歌詞；開場字卡只使用既有曲名與歌手資料。',
+    },
+    summary: '舞台轉播風格的左下雙行歌詞與右下開場曲目字卡。',
+    detail:
+      '歌詞完全跟隨原始時間，開場字卡則在播放後 1–7 秒獨立顯示；開頭方括號會解析為隱藏的成員 metadata。',
+    preview: {
+      layoutLabel: '舞台轉播字幕',
+      motionLabel: '獨立字卡時間軸',
+    },
+    tags: ['轉播字幕', '開場字卡', 'M0 fallback'],
+    settings: [
+      { label: '歌詞', value: '左下、最多兩行' },
+      { label: '字卡', value: '右下、播放後 1–7 秒' },
+      { label: '成員', value: '解析但不顯示' },
+      { label: '品牌', value: 'Utawakui 原創舞台識別' },
+    ],
+  },
+  {
     id: 'reading-aid',
     kind: 'lyrics',
     order: 80,
