@@ -48,7 +48,10 @@ const inspectionUrl = computed(() => {
   if (!props.previewUrl) return null;
   const url = new URL(props.previewUrl);
   if (isLyrics.value) {
-    url.searchParams.delete('backdrop');
+    url.pathname = '/workbench/lyrics';
+    url.search = '';
+    url.hash = '';
+    url.searchParams.set('backdrop', previewBackdrop.value);
   } else {
     url.searchParams.set('backdrop', previewBackdrop.value);
   }
@@ -130,7 +133,10 @@ onBeforeUnmount(() => {
             {{ line }}
           </span>
         </div>
-        <ObsStreamerPreview :src="streamerPreviewImage" />
+        <ObsStreamerPreview
+          v-if="!hasRuntimeTemplate"
+          :src="streamerPreviewImage"
+        />
       </div>
 
       <ObsWidgetCapturePreview

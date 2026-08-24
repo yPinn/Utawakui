@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-Hant" data-overlay-backdrop="checker">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Utawakui Lyrics Workbench</title>
+    <link rel="stylesheet" href="/overlay/shared/base.css" />
+    <link rel="stylesheet" href="/overlay/shared/fallback.css" />
+    <link rel="stylesheet" href="/overlay/shared/tokens.css" />
+    <link rel="stylesheet" href="/workbench/workbench.css" />
+    <script type="module" src="/workbench/workbench.mjs"></script>
+  </head>
+  <body>
+    <main class="workbench-preview" aria-label="Lyrics Workbench 預覽">
+      <div class="workbench-preview__guide" aria-hidden="true">
+        <div class="workbench-preview__guide-region">
+          <img
+            class="workbench-preview__guide-image"
+            src="/workbench/streamer-guide.png"
+            alt=""
+            draggable="false"
+            decoding="async"
+          />
+        </div>
+      </div>
+      <iframe
+        class="workbench-preview__output"
+        src="/overlay/lyrics"
+        title="Browser Source 即時輸出"
+        referrerpolicy="no-referrer"
+      ></iframe>
+    </main>
+  </body>
+</html>

@@ -232,7 +232,7 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('aria-label="預覽背景"');
     expect(previewSource).toContain('UiIconButton');
     expect(previewSource).not.toContain("emit('save");
-    expect(previewSource).toContain("searchParams.delete('backdrop'");
+    expect(previewSource).toContain("url.pathname = '/workbench/lyrics'");
     expect(previewSource).toContain("searchParams.set('backdrop'");
     expect(previewSource).not.toContain("searchParams.set('preview'");
     expect(previewSource).toContain('gap: var(--ui-space-1)');
@@ -241,9 +241,8 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
     expect(previewSource).toContain('ObsWidgetCapturePreview');
     expect(previewSource).toContain('v-if="isLyrics"');
-    expect(previewSource).toContain(
-      '<ObsStreamerPreview :src="streamerPreviewImage" />',
-    );
+    expect(previewSource).toContain('v-if="!hasRuntimeTemplate"');
+    expect(previewSource).toContain(':src="streamerPreviewImage"');
     expect(widgetCapturePreviewSource).toContain('gridTemplateColumns');
     expect(widgetCapturePreviewSource).toContain('supportedCaptureSizes');
     expect(widgetCapturePreviewSource).toContain('align-items: end');

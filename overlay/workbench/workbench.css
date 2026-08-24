@@ -1,0 +1,46 @@
+@layer ovl-template {
+  .workbench-preview,
+  .workbench-preview__guide,
+  .workbench-preview__output {
+    position: fixed;
+    inset: 0;
+  }
+
+  .workbench-preview {
+    isolation: isolate;
+    overflow: hidden;
+  }
+
+  .workbench-preview__guide {
+    z-index: 1;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .workbench-preview__guide-region {
+    position: absolute;
+    inset: calc(100% / 3) calc(100% / 3) 0;
+    display: grid;
+    place-items: end center;
+  }
+
+  .workbench-preview__guide-image {
+    inline-size: 100%;
+    block-size: 100%;
+    display: block;
+    object-fit: contain;
+    object-position: center bottom;
+    transform: scale(1.35);
+    transform-origin: center bottom;
+    -webkit-user-drag: none;
+  }
+
+  .workbench-preview__output {
+    z-index: 2;
+    inline-size: 100%;
+    block-size: 100%;
+    border: 0;
+    background: transparent;
+  }
+}

@@ -43,6 +43,7 @@ const OVERLAY_CONTENT_SECURITY_POLICY = [
   "connect-src 'self' ws://127.0.0.1:*",
   "img-src 'self' data:",
   "font-src 'self' data:",
+  "frame-src 'self'",
   "base-uri 'none'",
   "form-action 'none'",
   "frame-ancestors 'self' file: http://localhost:5173",
@@ -82,6 +83,11 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/shared/runtime.mjs': ['shared', 'runtime.mjs'],
   '/overlay/shared/state.mjs': ['shared', 'state.mjs'],
   '/overlay/shared/tokens.css': ['shared', 'tokens.css'],
+  '/workbench/lyrics': ['workbench', 'lyrics.html'],
+  '/workbench/lyrics/': ['workbench', 'lyrics.html'],
+  '/workbench/workbench.css': ['workbench', 'workbench.css'],
+  '/workbench/workbench.mjs': ['workbench', 'workbench.mjs'],
+  '/workbench/streamer-guide.png': ['workbench', 'streamer-guide.png'],
 });
 const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
@@ -91,6 +97,7 @@ const OVERLAY_MIME_TYPES = Object.freeze({
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
+  '.png': 'image/png',
 });
 const ARTWORK_MIME_TYPES = Object.freeze({
   '.jpg': 'image/jpeg',

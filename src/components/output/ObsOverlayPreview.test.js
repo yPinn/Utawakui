@@ -18,13 +18,14 @@ function renderPreview(props = {}) {
 }
 
 describe('ObsOverlayPreview', () => {
-  it('keeps the Lyrics inspection backdrop outside the real overlay iframe', async () => {
+  it('uses the isolated Lyrics workbench document for backdrop and guide composition', async () => {
     const html = await renderPreview();
 
     expect(html).toContain('data-backdrop="checker"');
-    expect(html).toContain('preview=1');
-    expect(html).not.toContain('backdrop=checker');
-    expect(html).toContain('obs-streamer-preview');
+    expect(html).toContain(
+      'src="http://127.0.0.1:8700/workbench/lyrics?backdrop=checker"',
+    );
+    expect(html).not.toContain('obs-streamer-preview');
   });
 
   it('keeps the inspection backdrop query for widget capture previews', async () => {

@@ -292,6 +292,7 @@ describe('outputServer', () => {
       '/overlay/now-playing',
       '/overlay/setlist',
       '/overlay/artwork',
+      '/workbench/lyrics',
     ]) {
       const response = await fetch(`${status.httpUrl}${route}`);
       expect(response.status).toBe(200);
@@ -301,6 +302,20 @@ describe('outputServer', () => {
       );
       expect(await response.text()).toContain('<!doctype html>');
     }
+
+    const workbench = await fetch(`${status.httpUrl}/workbench/lyrics`);
+    expect(workbench.headers.get('content-security-policy')).toContain(
+      "frame-src 'self'",
+    );
+    const workbenchDocument = await workbench.text();
+    expect(workbenchDocument).toContain('href="/overlay/shared/fallback.css"');
+    expect(workbenchDocument).toContain('src="/overlay/lyrics"');
+
+    const streamerGuide = await fetch(
+      `${status.httpUrl}/workbench/streamer-guide.png`,
+    );
+    expect(streamerGuide.status).toBe(200);
+    expect(streamerGuide.headers.get('content-type')).toBe('image/png');
 
     const fallback = await fetch(
       `${status.httpUrl}/overlay/shared/fallback.css`,
@@ -355,8 +370,11 @@ describe('outputServer', () => {
     expect(lyricsPresentation.headers.get('content-type')).toContain(
       'text/javascript',
     );
-    expect(await lyricsPresentation.text()).toContain(
-      'preprocessLyricsPresentation',
+    const lyricsPresentationSource = await lyricsPresentation.text();
+    expect(lyricsPresentationSource).toContain('analyzeLyricsSource');
+    expect(lyricsPresentationSource).toContain('adaptMangaLyricsPresentation');
+    expect(lyricsPresentationSource).toContain(
+      'adaptLiveStageLyricsPresentation',
     );
 
     const liveStage = await fetch(
