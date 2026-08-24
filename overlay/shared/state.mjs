@@ -1,3 +1,8 @@
+import {
+  adaptLiveStageLyricsPresentation,
+  analyzeLyricsSource,
+} from './lyricsPresentation.mjs';
+
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
@@ -13,8 +18,8 @@ const CANONICAL_SECTION_ROLES = new Set([
   'unknown',
 ]);
 const MIN_PRESENTATION_CONFIDENCE = 0.5;
-const LIVE_STAGE_CARD_START_MS = 1000;
-const LIVE_STAGE_CARD_END_MS = 7000;
+const LIVE_STAGE_CARD_START_MS = 4000;
+const LIVE_STAGE_CARD_END_MS = 8000;
 
 function revision(snapshot) {
   return Number.isSafeInteger(snapshot?.revision) ? snapshot.revision : 0;
@@ -180,6 +185,44 @@ function nextLiveStageBoundaryDelayMs(snapshot, options = {}) {
       );
 }
 
+function nextLiveStageCaptionBoundaryDelayMs(snapshot, options = {}) {
+  const trackId = snapshot?.playback?.track?.id;
+  const lyrics = snapshot?.lyrics;
+  const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
+  if (
+    snapshot?.playback?.status !== 'playing' ||
+    !trackId ||
+    lyrics?.trackId !== trackId ||
+    lyrics?.synced !== true
+  ) {
+    return null;
+  }
+
+  const nowMs = options.nowMs ?? Date.now();
+  const lineIndex = activeLyricIndex(snapshot, lines, nowMs);
+  const line = lines[lineIndex];
+  if (!line || !Number.isFinite(line.startMs)) return null;
+  const lineEndMs = effectiveLineEnd(snapshot, lines, lineIndex);
+  if (!Number.isFinite(lineEndMs) || lineEndMs <= line.startMs) return null;
+
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  const lineProgress = boundedProgress(positionMs, line.startMs, lineEndMs);
+  const presentation = adaptLiveStageLyricsPresentation(
+    analyzeLyricsSource(text(line.text)),
+    { lineProgress },
+  );
+  const nextBoundary = presentation.pageBreakProgresses.find(
+    (boundary) => boundary > lineProgress,
+  );
+  if (!Number.isFinite(nextBoundary)) return null;
+
+  const boundaryMs = line.startMs + (lineEndMs - line.startMs) * nextBoundary;
+  return Math.max(
+    1,
+    Math.ceil((boundaryMs - positionMs) / playbackRate(snapshot)),
+  );
+}
+
 export function activeLyricIndex(snapshot, lines, nowMs) {
   const lyrics = snapshot?.lyrics;
   if (lyrics?.synced === true) {
@@ -324,6 +367,10 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   if (lyricsDelay !== null) delays.push(lyricsDelay);
   const liveStageDelay = nextLiveStageBoundaryDelayMs(snapshot, { nowMs });
   if (liveStageDelay !== null) delays.push(liveStageDelay);
+  const liveStageCaptionDelay = nextLiveStageCaptionBoundaryDelayMs(snapshot, {
+    nowMs,
+  });
+  if (liveStageCaptionDelay !== null) delays.push(liveStageCaptionDelay);
 
   const document = musicStructureDocument(snapshot);
   if (document) {
@@ -395,6 +442,15 @@ export function selectLyricsFrame(snapshot, options = {}) {
     activeIndex,
     options.nowMs ?? Date.now(),
   );
+  const lineEndMs = effectiveLineEnd(snapshot, lines, activeIndex);
+  const lineProgress =
+    lyrics?.synced === true && Number.isFinite(lines[activeIndex]?.startMs)
+      ? boundedProgress(
+          lyricsPositionMs(snapshot, options.nowMs ?? Date.now()),
+          lines[activeIndex].startMs,
+          lineEndMs,
+        )
+      : null;
   const musicStructure = selectMusicStructureFrame(snapshot, options);
   return {
     revision: revision(snapshot),
@@ -403,14 +459,17 @@ export function selectLyricsFrame(snapshot, options = {}) {
     nextText,
     language: text(lyrics?.source?.language),
     lineIndex: activeIndex,
+    ...(lineProgress !== null ? { lineProgress } : {}),
     ...(currentSegments ? { currentSegments } : {}),
     ...(musicStructure ? { musicStructure } : {}),
   };
 }
 
 export function selectLyricsOverlayFrame(snapshot, options = {}) {
+  const frame = selectLyricsFrame(snapshot, options);
   return {
-    ...selectLyricsFrame(snapshot, options),
+    ...frame,
+    lyricsSourceAnalysis: analyzeLyricsSource(frame.currentText),
     liveStage: selectLiveStageFrame(snapshot, options),
   };
 }

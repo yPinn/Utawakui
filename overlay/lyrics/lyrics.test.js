@@ -175,6 +175,30 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('');
   });
 
+  it('keeps one typography contract for a long asymmetric Live Stage pair', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: '[리즈] 네가 보낸 DM을 읽고 나서 답이 없는 게',
+        nextText: '',
+        language: 'ko',
+        lineProgress: 0.5,
+        liveStage: { active: true, cardVisible: false },
+      },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+
+    expect(elements.current.children.map((line) => line.textContent)).toEqual([
+      '네가 보낸 DM을',
+      '읽고 나서 답이 없는 게',
+    ]);
+    expect(elements.root.dataset.liveStageCaptionLength).toBeUndefined();
+  });
+
   it('keeps Live Stage chrome visible without lyrics and hides an absent artist safely', () => {
     const elements = domElements();
 
@@ -430,7 +454,7 @@ describe('lyrics overlay renderer', () => {
         duration: 0.16,
         ease: 'power2.out',
         overwrite: 'auto',
-        stagger: { each: 0.06, from: 'start' },
+        stagger: { each: 0.2, from: 'start' },
       },
     });
     expect(elements.root.dataset).toMatchObject({
@@ -612,7 +636,7 @@ describe('lyrics overlay renderer', () => {
       vars: {
         autoAlpha: 1,
         duration: 0.16,
-        stagger: { each: 0.06, from: 'start' },
+        stagger: { each: 0.2, from: 'start' },
       },
     });
   });

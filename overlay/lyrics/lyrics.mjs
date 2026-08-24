@@ -9,7 +9,10 @@ import {
   nextPresentationBoundaryDelayMs,
   selectLyricsOverlayFrame,
 } from '../shared/state.mjs';
-import { preprocessLyricsPresentation } from '../shared/lyricsPresentation.mjs';
+import {
+  adaptMangaLyricsPresentation,
+  analyzeLyricsSource,
+} from '../shared/lyricsPresentation.mjs';
 import {
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
@@ -52,7 +55,8 @@ const PRESENTATION_SECTION_ROLES = new Set([
 const SEGMENT_AWARE_TEMPLATE_IDS = new Set(['karaoke-stack', 'manga-frame']);
 const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
 const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
-const MANGA_BUBBLE_STAGGER_SECONDS = 0.06;
+const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
+const MANGA_BUBBLE_ENTER_STAGGER_SECONDS = 0.2;
 const lastRenderedBeatKeys = new WeakMap();
 const mangaTransitions = new WeakMap();
 const mangaPulseTimelines = new WeakMap();
@@ -285,9 +289,10 @@ function renderMangaLyrics(elements, frame, options) {
   const segments = Array.isArray(frame.currentSegments)
     ? frame.currentSegments
     : [];
-  const presentation = preprocessLyricsPresentation(frame.currentText, {
-    language: frame.language,
-  });
+  const presentation = adaptMangaLyricsPresentation(
+    frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
+    { language: frame.language },
+  );
   const bubbles = presentation.bubbles;
   const projectedSegments =
     segments.length > 0 && presentation.transformed
@@ -542,7 +547,12 @@ function addMangaBubbleFade(timeline, targets, direction) {
         : MANGA_FADE_OUT_DURATION_SECONDS,
       ease: entering ? 'power2.out' : 'power2.in',
       overwrite: 'auto',
-      stagger: { each: MANGA_BUBBLE_STAGGER_SECONDS, from: 'start' },
+      stagger: {
+        each: entering
+          ? MANGA_BUBBLE_ENTER_STAGGER_SECONDS
+          : MANGA_BUBBLE_EXIT_STAGGER_SECONDS,
+        from: 'start',
+      },
     },
     direction,
   );

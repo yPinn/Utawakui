@@ -25,7 +25,7 @@ describe('Live Stage overlay layout contract', () => {
       /:root\[data-ovl-template='live-stage'\],\s*:root\[data-ovl-template='live-stage'\] body\s*\{\s*background: transparent;/u,
     );
     expect(css).toContain('inset-inline-start: 6.25%');
-    expect(css).toContain('inline-size: min(26%, 32rem)');
+    expect(css).toContain('inline-size: min(20%, 24rem)');
     expect(css).toContain('inset-inline-end: 5%');
     expect(css).toContain('inset-block-end: 8.333%');
     expect(css).toMatch(
@@ -33,6 +33,10 @@ describe('Live Stage overlay layout contract', () => {
     );
     expect(css).toContain('.lyrics-overlay__live-stage-caption-line');
     expect(css).toContain('white-space: nowrap');
+    expect(css).not.toContain('data-live-stage-caption-length');
+    expect(css).toMatch(
+      /:root\[data-ovl-template='live-stage'\] \.lyrics-overlay__current\s*\{[\s\S]*?font-size: 2\.75em;[\s\S]*?font-weight: 700;[\s\S]*?line-height: 1\.08;/u,
+    );
     expect(css).toContain('.lyrics-overlay__next');
   });
 });

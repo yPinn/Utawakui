@@ -1,4 +1,7 @@
-import { preprocessLiveStageCaption } from '../shared/lyricsPresentation.mjs';
+import {
+  adaptLiveStageLyricsPresentation,
+  analyzeLyricsSource,
+} from '../shared/lyricsPresentation.mjs';
 
 const CARD_ENTER_DURATION_SECONDS = 0.22;
 const CARD_EXIT_DURATION_SECONDS = 0.18;
@@ -6,10 +9,6 @@ const cardTransitions = new WeakMap();
 
 function resolveGsap(options) {
   return options.gsap ?? globalThis.gsap ?? null;
-}
-
-function glyphCount(text) {
-  return Math.max(1, Array.from(String(text ?? '').replace(/\s/gu, '')).length);
 }
 
 function clearCardTransition(elements, options = {}, clearProps = false) {
@@ -41,7 +40,6 @@ export function clearLiveStagePresentation(elements, options = {}) {
   elements.current.hidden = false;
   elements.next.hidden = false;
   delete elements.root.dataset.liveStage;
-  delete elements.root.dataset.liveStageCaptionLength;
   delete elements.root.dataset.liveStageCaptionLines;
 }
 
@@ -115,7 +113,10 @@ function renderCard(elements, stage, options) {
 }
 
 function renderCaption(elements, frame) {
-  const presentation = preprocessLiveStageCaption(frame.currentText);
+  const presentation = adaptLiveStageLyricsPresentation(
+    frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
+    { lineProgress: frame.lineProgress },
+  );
   const documentApi =
     elements.current.ownerDocument ?? elements.root.ownerDocument;
   elements.current.textContent = '';
@@ -132,15 +133,9 @@ function renderCaption(elements, frame) {
     elements.current.textContent = presentation.lines.join('\n');
   }
 
-  const displayLength = presentation.lines.reduce(
-    (total, line) => total + glyphCount(line),
-    0,
-  );
   elements.root.dataset.liveStageCaptionLines = String(
     presentation.lines.length,
   );
-  elements.root.dataset.liveStageCaptionLength =
-    displayLength > 64 ? 'long' : displayLength > 40 ? 'medium' : 'short';
   elements.current.dataset.currentText = frame.currentText;
   elements.current.hidden = presentation.lines.length === 0;
   elements.next.textContent = '';

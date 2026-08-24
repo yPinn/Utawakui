@@ -4,7 +4,11 @@ import {
   mangaFrameLengthTier,
   mangaFrameSideForLine,
 } from '../../../overlay/shared/mangaFrameContract.mjs';
-import { preprocessLyricsPresentation } from '../../../overlay/shared/lyricsPresentation.mjs';
+import {
+  adaptLiveStageLyricsPresentation,
+  adaptMangaLyricsPresentation,
+  analyzeLyricsSource,
+} from '../../../overlay/shared/lyricsPresentation.mjs';
 import MangaFrameSvg from './MangaFrameSvg.vue';
 
 const props = defineProps({
@@ -23,9 +27,15 @@ const nextTrack = computed(() => props.scene?.nextTrack ?? {});
 const queue = computed(() => props.scene?.queue ?? []);
 const lyrics = computed(() => props.scene?.lyrics ?? {});
 const mangaSide = computed(() => mangaFrameSideForLine(lyrics.value.lineIndex));
+const lyricsSourceAnalysis = computed(() =>
+  analyzeLyricsSource(lyrics.value.current),
+);
+const liveStageLines = computed(
+  () => adaptLiveStageLyricsPresentation(lyricsSourceAnalysis.value).lines,
+);
 const mangaBubbles = computed(
   () =>
-    preprocessLyricsPresentation(lyrics.value.current, {
+    adaptMangaLyricsPresentation(lyricsSourceAnalysis.value, {
       language: lyrics.value.language,
     }).bubbles,
 );
@@ -78,7 +88,7 @@ const mangaBubbles = computed(
         <strong
           class="obs-template-mockup__live-stage-caption obs-template-mockup__animated-primary"
         >
-          {{ lyrics.current }}
+          <span v-for="line in liveStageLines" :key="line">{{ line }}</span>
         </strong>
         <span
           class="obs-template-mockup__live-stage-card obs-template-mockup__animated-primary"
@@ -341,8 +351,9 @@ const mangaBubbles = computed(
 .obs-template-mockup__live-stage-caption {
   inset-inline-start: 6.25%;
   inset-block-end: 8.333%;
-  max-inline-size: 43%;
+  inline-size: 20%;
   overflow: hidden;
+  display: grid;
   font-size: var(--ui-font-size-md);
   line-height: 1.08;
   text-align: left;

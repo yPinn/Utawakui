@@ -227,7 +227,7 @@
     position: absolute;
     inset-inline-start: 6.25%;
     inset-block-end: 8.333%;
-    inline-size: min(26%, 32rem);
+    inline-size: min(20%, 24rem);
     max-inline-size: none;
     display: grid;
     justify-items: start;
@@ -249,18 +249,6 @@
     overflow: visible;
     line-height: inherit;
     white-space: nowrap;
-  }
-
-  :root[data-ovl-template='live-stage']
-    .lyrics-overlay[data-live-stage-caption-length='medium']
-    .lyrics-overlay__current {
-    font-size: 2.4em;
-  }
-
-  :root[data-ovl-template='live-stage']
-    .lyrics-overlay[data-live-stage-caption-length='long']
-    .lyrics-overlay__current {
-    font-size: 2.05em;
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__next {

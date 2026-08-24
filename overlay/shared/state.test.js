@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  adaptLiveStageLyricsPresentation,
+  analyzeLyricsSource,
+} from './lyricsPresentation.mjs';
+import {
   nextPresentationBoundaryDelayMs,
   nextLyricsBoundaryDelayMs,
   selectLiveStageFrame,
@@ -70,20 +74,69 @@ describe('overlay state selectors', () => {
       nextText: '下一句仍在遠方',
       language: 'zh-Hant',
       lineIndex: 1,
+      lineProgress: 0.5,
     });
   });
 
-  it('projects the Live Stage card from a fixed 1–7 second playback window', () => {
+  it('projects stable synced-line progress for Live Stage pagination after seek or reconnect', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 17000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [
+          {
+            text: 'Every little signal should leave the middle of the stage completely visible',
+            startMs: 12000,
+            endMs: 22000,
+          },
+        ],
+      },
+    });
+
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
+    ).toMatchObject({ lineIndex: 0, lineProgress: 0.5 });
+  });
+
+  it('analyzes the canonical lyric once before the overlay template receives it', () => {
+    const value = snapshot({
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [
+          {
+            text: "[리즈] 내 답이야 (That's my style)",
+            startMs: 9000,
+            endMs: 15000,
+          },
+        ],
+      },
+    });
+
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }).lyricsSourceAnalysis,
+    ).toMatchObject({
+      sourceText: "[리즈] 내 답이야 (That's my style)",
+      speaker: '리즈',
+      units: [
+        { kind: 'main', text: '내 답이야' },
+        { kind: 'parenthetical', text: "That's my style" },
+      ],
+    });
+  });
+
+  it('projects the Live Stage card from a fixed 4–8 second playback window', () => {
     const base = snapshot({
       playback: { ...snapshot().playback, positionMs: 0 },
     });
     const nowMs = Date.parse(base.generatedAt);
 
     for (const [positionMs, visible] of [
-      [999, false],
-      [1000, true],
-      [6999, true],
-      [7000, false],
+      [3999, false],
+      [4000, true],
+      [7999, true],
+      [8000, false],
     ]) {
       expect(
         selectLiveStageFrame(
@@ -105,7 +158,7 @@ describe('overlay state selectors', () => {
 
   it('keeps a timed lyric and the independently timed Live Stage card visible together', () => {
     const value = snapshot({
-      playback: { ...snapshot().playback, positionMs: 3500 },
+      playback: { ...snapshot().playback, positionMs: 4500 },
       lyrics: {
         ...snapshot().lyrics,
         lines: [{ text: '[리즈]\n現在就開始唱', startMs: 0, endMs: 8000 }],
@@ -134,16 +187,16 @@ describe('overlay state selectors', () => {
     });
     const nowMs = Date.parse(base.generatedAt);
 
-    expect(nextPresentationBoundaryDelayMs(base, { nowMs })).toBe(1000);
+    expect(nextPresentationBoundaryDelayMs(base, { nowMs })).toBe(4000);
     expect(
       nextPresentationBoundaryDelayMs(
-        { ...base, playback: { ...base.playback, positionMs: 1000 } },
+        { ...base, playback: { ...base.playback, positionMs: 4000 } },
         { nowMs },
       ),
-    ).toBe(6000);
+    ).toBe(4000);
     expect(
       nextPresentationBoundaryDelayMs(
-        { ...base, playback: { ...base.playback, positionMs: 7000 } },
+        { ...base, playback: { ...base.playback, positionMs: 8000 } },
         { nowMs },
       ),
     ).toBeNull();
@@ -164,6 +217,36 @@ describe('overlay state selectors', () => {
         nowMs: Date.parse(value.generatedAt),
       }),
     ).toBeNull();
+  });
+
+  it('schedules the next Live Stage caption page inside a long synced line', () => {
+    const text =
+      'Every little signal should leave the middle of the stage completely visible';
+    const lineStartMs = 9000;
+    const lineEndMs = 19000;
+    const positionMs = 10000;
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs },
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [{ text, startMs: lineStartMs, endMs: lineEndMs }],
+      },
+    });
+    const [pageBoundary] = adaptLiveStageLyricsPresentation(
+      analyzeLyricsSource(text),
+      { lineProgress: 0 },
+    ).pageBreakProgresses;
+
+    expect(pageBoundary).toBeGreaterThan(0.1);
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }),
+    ).toBe(
+      Math.ceil(
+        lineStartMs + (lineEndMs - lineStartMs) * pageBoundary - positionMs,
+      ),
+    );
   });
 
   it('hides lyrics that do not belong to the playing track', () => {

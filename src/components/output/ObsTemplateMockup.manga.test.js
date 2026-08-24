@@ -14,7 +14,8 @@ describe('Manga Frame gallery mockup', () => {
 
     expect(source).toContain('mangaFrameLengthTier');
     expect(source).toContain('mangaFrameSideForLine');
-    expect(source).toContain('preprocessLyricsPresentation');
+    expect(source).toContain('analyzeLyricsSource');
+    expect(source).toContain('adaptMangaLyricsPresentation');
     expect(source).toContain('mangaBubbles');
     expect(source).toContain(':data-manga-count="mangaBubbles.length"');
     expect(source).toContain(':data-manga-side="mangaSide"');

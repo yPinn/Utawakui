@@ -23,7 +23,9 @@ describe('Live Stage gallery mockup', () => {
     expect(branch).toContain('obs-template-mockup__live-stage-card');
     expect(branch).toContain('track.title');
     expect(branch).toContain('track.artist');
-    expect(branch).toContain('lyrics.current');
+    expect(branch).toContain('liveStageLines');
+    expect(source).toContain('adaptLiveStageLyricsPresentation');
+    expect(source).toContain('inline-size: 20%');
     expect(source).toContain("[data-template-id='live-stage']");
   });
 });
