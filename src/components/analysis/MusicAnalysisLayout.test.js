@@ -44,4 +44,16 @@ describe('Music Analysis scroll layout', () => {
       /<template v-else>[\s\S]*<MusicAnalysisJobPanel[\s\S]*<MusicStructureSummary/,
     );
   });
+
+  it('keeps benchmark review separate from sidecar-producing analysis', () => {
+    expect(workbenchSource).toContain("workbenchMode = shallowRef('analysis')");
+    expect(workbenchSource).toContain('正式分析');
+    expect(workbenchSource).toContain('Benchmark Review');
+    expect(workbenchSource).toMatch(
+      /<MusicAnalysisBenchmarkReview\s+v-if="workbenchMode === 'benchmark'"/,
+    );
+    expect(workbenchSource).toMatch(
+      /<div\s+v-else\s+class="analysis-workbench__layout">/,
+    );
+  });
 });

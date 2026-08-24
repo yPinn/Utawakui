@@ -491,6 +491,7 @@ if (!gotSingleInstanceLock) {
 
     registerMusicStructureHandlers({
       ipcMain,
+      dialog,
       getConfig: configState.getConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       getMainWindow: windowState.getMainWindow,

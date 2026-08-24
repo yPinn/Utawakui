@@ -112,6 +112,23 @@ are accepted only when a SHA-256 fingerprint still matches the source audio,
 worker, model artifacts, and case contract. `--case <opaque-id>` runs one case;
 `--force` deliberately ignores a valid cache.
 
+### Reviewing predictions in F10
+
+Press F10, switch from **正式分析** to **Benchmark Review**, and choose the
+ignored run config used for inference. The read-only review workspace shows the
+mapped library track, BPM, runtime, M1/M2 contract result, proportional semantic
+timeline, per-section confidence, and analyzer provenance. Clicking a timeline
+segment or its detail row loads the matching library track in the existing
+player and seeks to that segment's start.
+
+The renderer cannot supply a path. Electron's main process owns the file picker,
+requires the config's `libraryRoot` to match the currently configured library,
+reads only the bounded `predictions.json` beneath the declared output root, and
+returns a path-free projection. Malformed evidence, a different library, or a
+failed load produces no partial review data. Opening a review never writes or
+promotes a sidecar: low-confidence, incomplete, unknown, missing, and failed
+predictions remain visibly downgraded to M1.
+
 Keep reference annotation independent from these predictions. Merge the
 manually reviewed BPM and contiguous reference partition with the path-free
 prediction evidence only after annotation is complete; model output must never

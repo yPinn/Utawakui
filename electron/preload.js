@@ -122,6 +122,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:get-track', trackId, filename),
   getTrackMusicStructure: (trackId) =>
     ipcRenderer.invoke('music-structure:get-track', trackId),
+  openMusicAnalysisBenchmarkReview: () =>
+    ipcRenderer.invoke('music-structure:open-benchmark-review'),
   analyzeTrackMusicStructure: (trackId) =>
     ipcRenderer.invoke('music-structure:analyze-track', trackId),
   cancelTrackMusicStructureAnalysis: () =>

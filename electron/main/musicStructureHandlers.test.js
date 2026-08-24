@@ -280,4 +280,96 @@ describe('music-structure handlers', () => {
     ).resolves.toEqual({ cancelled: true });
     expect(requireFeatureGate).toHaveBeenCalledOnce();
   });
+
+  it('opens a benchmark run through the main-owned file picker', async () => {
+    const handlers = new Map();
+    const dialog = {
+      showOpenDialog: vi
+        .fn()
+        .mockResolvedValueOnce({ canceled: true, filePaths: [] })
+        .mockResolvedValueOnce({
+          canceled: false,
+          filePaths: ['E:\\benchmarks\\tuki-run.json'],
+        }),
+    };
+    const review = {
+      schemaVersion: 1,
+      benchmarkId: 'tuki-15',
+      cases: [],
+    };
+    const loadBenchmarkReview = vi.fn(() => review);
+    const mainWindow = { id: 1 };
+
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      dialog,
+      getConfig: () => ({ downloadDir: 'configured' }),
+      resolveDownloadDir: () => 'E:\\Music\\Utawakui',
+      getMainWindow: () => mainWindow,
+      loadBenchmarkReview,
+      analysisService: {
+        run: vi.fn(),
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(),
+      },
+      capabilityService: capabilityService(),
+      batchService: batchService(),
+    });
+
+    await expect(
+      handlers.get('music-structure:open-benchmark-review')(
+        null,
+        'E:\\untrusted\\chosen-by-renderer.json',
+      ),
+    ).resolves.toBeNull();
+    await expect(
+      handlers.get('music-structure:open-benchmark-review')(),
+    ).resolves.toEqual(review);
+    expect(dialog.showOpenDialog).toHaveBeenNthCalledWith(
+      2,
+      mainWindow,
+      expect.objectContaining({ properties: ['openFile'] }),
+    );
+    expect(loadBenchmarkReview).toHaveBeenCalledWith(
+      'E:\\benchmarks\\tuki-run.json',
+      { expectedLibraryRoot: 'E:\\Music\\Utawakui' },
+    );
+  });
+
+  it('does not expose benchmark paths or parse failures over IPC', async () => {
+    const handlers = new Map();
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      dialog: {
+        showOpenDialog: vi.fn(async () => ({
+          canceled: false,
+          filePaths: ['E:\\private\\broken-run.json'],
+        })),
+      },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'E:\\Music\\Utawakui',
+      getMainWindow: () => null,
+      loadBenchmarkReview: vi.fn(() => {
+        throw new Error('Unexpected token at E:\\private\\predictions.json');
+      }),
+      analysisService: {
+        run: vi.fn(),
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(),
+      },
+      capabilityService: capabilityService(),
+      batchService: batchService(),
+    });
+
+    await expect(
+      handlers.get('music-structure:open-benchmark-review')(),
+    ).rejects.toThrow('unable to load benchmark review');
+    await expect(
+      handlers.get('music-structure:open-benchmark-review')(),
+    ).rejects.not.toThrow(/private|predictions\.json/i);
+  });
 });

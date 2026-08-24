@@ -1,6 +1,9 @@
 'use strict';
 
 const { loadTrackMusicStructure } = require('../lib/library');
+const {
+  loadMusicAnalysisBenchmarkReview,
+} = require('../lib/audioProcessing/musicAnalysisBenchmarkReview');
 
 const PUBLIC_ANALYSIS_ERRORS = new Set([
   'a structure-analysis job is already running',
@@ -44,11 +47,21 @@ function publicBatchError(error) {
   return new Error('music analysis batch failed');
 }
 
+function benchmarkDialogOptions() {
+  return {
+    title: '開啟 M2 Benchmark Run',
+    properties: ['openFile'],
+    filters: [{ name: 'Benchmark run config', extensions: ['json'] }],
+  };
+}
+
 function registerMusicStructureHandlers({
   ipcMain,
+  dialog,
   getConfig,
   resolveDownloadDir,
   loadMusicStructure = loadTrackMusicStructure,
+  loadBenchmarkReview = loadMusicAnalysisBenchmarkReview,
   getMainWindow,
   notifyLibraryUpdated,
   requireFeatureGate,
@@ -60,6 +73,23 @@ function registerMusicStructureHandlers({
   ipcMain.handle('music-structure:get-track', async (event, trackId) =>
     loadMusicStructure(resolveDownloadDir(getConfig()), trackId),
   );
+
+  ipcMain.handle('music-structure:open-benchmark-review', async () => {
+    const ownerWindow = getMainWindow?.();
+    const options = benchmarkDialogOptions();
+    const result = ownerWindow
+      ? await dialog.showOpenDialog(ownerWindow, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || result.filePaths.length === 0) return null;
+
+    try {
+      return loadBenchmarkReview(result.filePaths[0], {
+        expectedLibraryRoot: resolveDownloadDir(getConfig()),
+      });
+    } catch {
+      throw new Error('unable to load benchmark review');
+    }
+  });
 
   ipcMain.handle('music-structure:analyze-track', async (event, trackId) => {
     requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);

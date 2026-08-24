@@ -1,12 +1,14 @@
 <script setup>
-import { onMounted, onUnmounted, shallowRef, watch } from 'vue';
+import { computed, onMounted, onUnmounted, shallowRef, watch } from 'vue';
 import { useMusicAnalysisWorkbench } from '../../composables/useMusicAnalysisWorkbench.js';
 import { Info } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
+import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
+import MusicAnalysisBenchmarkReview from './MusicAnalysisBenchmarkReview.vue';
 import MusicAnalysisCapabilityModal from './MusicAnalysisCapabilityModal.vue';
 import MusicAnalysisJobPanel from './MusicAnalysisJobPanel.vue';
 import MusicAnalysisTrackPicker from './MusicAnalysisTrackPicker.vue';
@@ -14,7 +16,20 @@ import MusicStructureSummary from './MusicStructureSummary.vue';
 
 const workbench = useMusicAnalysisWorkbench();
 const showCapabilityDetails = shallowRef(false);
+const workbenchMode = shallowRef('analysis');
 const analysisMode = shallowRef('single');
+const modeSwitchDisabled = computed(
+  () =>
+    workbench.isBusy.value ||
+    workbench.capabilityBusy.value ||
+    workbench.batch.active.value ||
+    Boolean(workbench.state.activeJob),
+);
+
+function setWorkbenchMode(mode) {
+  if (modeSwitchDisabled.value) return;
+  workbenchMode.value = mode;
+}
 
 function setAnalysisMode(mode) {
   if (workbench.batch.active.value) return;
@@ -47,7 +62,30 @@ watch(
     <UiPageHeader title="音樂結構分析">
       <template #actions>
         <div class="analysis-workbench__header-actions">
+          <div
+            class="analysis-workbench__mode-switch"
+            role="group"
+            aria-label="音樂分析工具模式"
+          >
+            <UiButton
+              :active="workbenchMode === 'analysis'"
+              :aria-pressed="workbenchMode === 'analysis'"
+              :disabled="modeSwitchDisabled"
+              @click="setWorkbenchMode('analysis')"
+            >
+              正式分析
+            </UiButton>
+            <UiButton
+              :active="workbenchMode === 'benchmark'"
+              :aria-pressed="workbenchMode === 'benchmark'"
+              :disabled="modeSwitchDisabled"
+              @click="setWorkbenchMode('benchmark')"
+            >
+              Benchmark Review
+            </UiButton>
+          </div>
           <UiIconButton
+            v-if="workbenchMode === 'analysis'"
             :icon="Info"
             label="查看分析功能資訊"
             title="模型、下載大小與維護資訊"
@@ -65,7 +103,9 @@ watch(
       @action="workbench.retryLibrary"
     />
 
-    <div class="analysis-workbench__layout">
+    <MusicAnalysisBenchmarkReview v-if="workbenchMode === 'benchmark'" />
+
+    <div v-else class="analysis-workbench__layout">
       <aside class="analysis-workbench__tracks">
         <MusicAnalysisTrackPicker
           :tracks="workbench.tracks.value"
@@ -171,6 +211,19 @@ watch(
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.analysis-workbench__mode-switch {
+  display: inline-flex;
+  align-items: center;
+  padding: calc(var(--ui-space-1) / 2);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius);
+  background: var(--ui-color-surface-raised);
+}
+
+.analysis-workbench__mode-switch :deep(.ui-btn) {
+  min-height: calc(var(--ui-control-height) - var(--ui-space-1));
 }
 
 .analysis-workbench__layout {
