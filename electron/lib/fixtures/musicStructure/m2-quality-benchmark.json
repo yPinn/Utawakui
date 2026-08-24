@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "synthetic-m2-quality-v1",
+  "analyzer": {
+    "id": "all-in-one-structure",
+    "version": "3.1.0",
+    "profileId": "all-in-one-cpu-v1",
+    "modelId": "all-in-one-harmonix-fold0"
+  },
+  "acceptance": {
+    "minimumTracks": 4,
+    "requiredTags": [{ "tag": "synthetic", "minimumTracks": 4 }],
+    "minimumBoundaryF1At500Ms": 0.75,
+    "minimumBoundaryF1At3000Ms": 0.9,
+    "minimumRoleDurationAccuracy": 0.8,
+    "minimumM2EligibleRate": 0.5,
+    "minimumRequiredTagRoleDurationAccuracy": 0.5,
+    "minimumRequiredTagM2EligibleRate": 0.5,
+    "maximumTempoOctaveErrorRate": 0.5,
+    "maximumTempoMissingRate": 0,
+    "maximumAnalysisFailureRate": 0
+  },
+  "cases": [
+    {
+      "id": "exact-match",
+      "tags": ["synthetic"],
+      "durationMs": 60000,
+      "referenceBpm": 120,
+      "referenceSections": [
+        { "startMs": 0, "endMs": 20000, "role": "intro" },
+        { "startMs": 20000, "endMs": 40000, "role": "verse" },
+        { "startMs": 40000, "endMs": 60000, "role": "chorus" }
+      ],
+      "estimate": {
+        "status": "completed",
+        "bpm": 120,
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 20000,
+            "role": "intro",
+            "confidence": 0.9
+          },
+          {
+            "startMs": 20000,
+            "endMs": 40000,
+            "role": "verse",
+            "confidence": 0.9
+          },
+          {
+            "startMs": 40000,
+            "endMs": 60000,
+            "role": "chorus",
+            "confidence": 0.9
+          }
+        ]
+      }
+    },
+    {
+      "id": "loose-boundary-semantic-mismatch",
+      "tags": ["synthetic"],
+      "durationMs": 60000,
+      "referenceBpm": 100,
+      "referenceSections": [
+        { "startMs": 0, "endMs": 20000, "role": "intro" },
+        { "startMs": 20000, "endMs": 40000, "role": "verse" },
+        { "startMs": 40000, "endMs": 60000, "role": "chorus" }
+      ],
+      "estimate": {
+        "status": "completed",
+        "bpm": 200,
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 22500,
+            "role": "intro",
+            "confidence": 0.8
+          },
+          {
+            "startMs": 22500,
+            "endMs": 40000,
+            "role": "chorus",
+            "confidence": 0.8
+          },
+          {
+            "startMs": 40000,
+            "endMs": 60000,
+            "role": "chorus",
+            "confidence": 0.8
+          }
+        ]
+      }
+    },
+    {
+      "id": "low-confidence",
+      "tags": ["synthetic"],
+      "durationMs": 90000,
+      "referenceBpm": 120,
+      "referenceSections": [
+        { "startMs": 0, "endMs": 30000, "role": "intro" },
+        { "startMs": 30000, "endMs": 60000, "role": "verse" },
+        { "startMs": 60000, "endMs": 90000, "role": "chorus" }
+      ],
+      "estimate": {
+        "status": "completed",
+        "bpm": 60,
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 30000,
+            "role": "intro",
+            "confidence": 0.9
+          },
+          {
+            "startMs": 30000,
+            "endMs": 60000,
+            "role": "verse",
+            "confidence": 0.49
+          },
+          {
+            "startMs": 60000,
+            "endMs": 90000,
+            "role": "chorus",
+            "confidence": 0.9
+          }
+        ]
+      }
+    },
+    {
+      "id": "incomplete-tail",
+      "tags": ["synthetic"],
+      "durationMs": 90000,
+      "referenceBpm": 120,
+      "referenceSections": [
+        { "startMs": 0, "endMs": 30000, "role": "intro" },
+        { "startMs": 30000, "endMs": 60000, "role": "verse" },
+        { "startMs": 60000, "endMs": 90000, "role": "outro" }
+      ],
+      "estimate": {
+        "status": "completed",
+        "bpm": 90,
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 30000,
+            "role": "intro",
+            "confidence": 0.9
+          },
+          {
+            "startMs": 30000,
+            "endMs": 60000,
+            "role": "verse",
+            "confidence": 0.9
+          }
+        ]
+      }
+    }
+  ]
+}

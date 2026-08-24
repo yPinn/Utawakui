@@ -17,6 +17,7 @@
     "lint:fix": "eslint . --fix",
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#dist\" \"#coverage\" \"#release\" \"#release-*\"",
     "license:inventory": "node scripts/license-inventory.mjs",
+    "analysis:evaluate": "node scripts/music-analysis-evaluation.mjs",
     "release:verify-version": "node scripts/release-contract-cli.mjs version",
     "release:verify-artifacts": "node scripts/release-contract-cli.mjs artifacts",
     "commitlint": "commitlint --from HEAD~1 --to HEAD --verbose",
