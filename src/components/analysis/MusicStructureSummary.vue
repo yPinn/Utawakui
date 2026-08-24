@@ -55,6 +55,17 @@ const fallbackCopy = computed(
       message: '選擇曲目後可讀取既有 sidecar。',
     },
 );
+const SECTION_EMPTY_COPY = Object.freeze({
+  missing: '此 sidecar 只有 M1 節拍資料，尚無段落。',
+  'low-confidence': '段落信心不足，已安全保留 M1 節拍結果。',
+  incomplete: '段落沒有完整連續覆蓋曲長，已安全保留 M1 節拍結果。',
+  unknown: '段落語意尚未完整辨識，已安全保留 M1 節拍結果。',
+});
+const sectionEmptyCopy = computed(
+  () =>
+    SECTION_EMPTY_COPY[signals.value?.sectionStatus] ??
+    SECTION_EMPTY_COPY.missing,
+);
 const sourceRevision = computed(() =>
   props.result?.sourceRevision ? props.result.sourceRevision.slice(0, 12) : '—',
 );
@@ -158,7 +169,7 @@ function sectionLabel(role) {
           v-if="signals.sections.length === 0"
           class="structure-summary__empty"
         >
-          此 sidecar 只有 M1 節拍資料，尚無段落。
+          {{ sectionEmptyCopy }}
         </p>
         <ol v-else class="structure-summary__section-list">
           <li

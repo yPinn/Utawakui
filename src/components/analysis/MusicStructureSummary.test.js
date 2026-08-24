@@ -60,6 +60,7 @@ describe('MusicStructureSummary', () => {
       signals: {
         level: 'M1',
         reason: 'current',
+        sectionStatus: 'low-confidence',
         tempo: { bpm: 91.94, confidence: 0.952124 },
         beats: [],
         sections: [],
@@ -69,6 +70,8 @@ describe('MusicStructureSummary', () => {
     expect(html).toContain('約 91.9 BPM');
     expect(html).toContain('節拍信心 95%');
     expect(html).not.toContain('91.94 BPM');
+    expect(html).toContain('段落信心不足');
+    expect(html).toContain('保留 M1');
   });
 
   it('teaches the missing-sidecar state instead of showing an empty panel', async () => {
