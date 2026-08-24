@@ -4,7 +4,7 @@ export const MAX_LIVE_STAGE_CAPTION_LINES = 2;
 const PARENTHETICAL_RE = /\([^()（）]+\)|（[^()（）]+）/gu;
 const PARENTHESIS_MARK_RE = /[()（）]/u;
 const LIVE_STAGE_SPEAKER_RE = /^\[([^\]\r\n]{1,40})\](?:[ \t]*\r?\n|[ \t]+|$)/u;
-const LIVE_STAGE_BALANCE_THRESHOLD = 34;
+const LIVE_STAGE_SINGLE_LINE_MAX_GLYPHS = 7;
 const HANGUL_RE = /[\uac00-\ud7af]/u;
 const KANA_RE = /[\u3040-\u30ff]/u;
 const HAN_RE = /[\u3400-\u9fff]/u;
@@ -67,6 +67,10 @@ function untouched(text) {
   };
 }
 
+function visibleGlyphCount(text) {
+  return Array.from(String(text ?? '').replace(/\s/gu, '')).length;
+}
+
 function balancedCaptionRows(text) {
   const authoredRows = text
     .split(/\r?\n/u)
@@ -78,7 +82,7 @@ function balancedCaptionRows(text) {
 
   const row = authoredRows[0] ?? '';
   const glyphs = Array.from(row);
-  if (glyphs.length <= LIVE_STAGE_BALANCE_THRESHOLD) {
+  if (visibleGlyphCount(row) <= LIVE_STAGE_SINGLE_LINE_MAX_GLYPHS) {
     return row ? [row] : [];
   }
 
@@ -90,7 +94,7 @@ function balancedCaptionRows(text) {
       const first = words.slice(0, index).join(' ');
       const second = words.slice(index).join(' ');
       const delta = Math.abs(
-        Array.from(first).length - Array.from(second).length,
+        visibleGlyphCount(first) - visibleGlyphCount(second),
       );
       if (delta < smallestDelta) {
         bestIndex = index;

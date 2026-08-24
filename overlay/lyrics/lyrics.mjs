@@ -601,24 +601,32 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
   const gsap = resolveGsap(options);
   const pulseTargets = mangaPulseTargets.get(elements.root) ?? [];
   const bubbleTargets = mangaBubbleTargets(elements);
+  const segmentTargets = mangaSegmentTargets.get(elements.root) ?? [];
+  const currentChildTargets = Array.from(elements.current.children ?? []);
   mangaTransitions.get(elements.root)?.timeline?.kill?.();
   mangaTransitions.delete(elements.root);
   mangaPulseTimelines.get(elements.root)?.kill?.();
   mangaPulseTimelines.delete(elements.root);
-  gsap?.killTweensOf?.(pulseTargets);
+  if (pulseTargets.length > 0) gsap?.killTweensOf?.(pulseTargets);
   mangaPulseTargets.delete(elements.root);
   gsap?.killTweensOf?.(elements.root);
   if (elements.mangaBubbles) gsap?.killTweensOf?.(elements.mangaBubbles);
-  gsap?.killTweensOf?.(bubbleTargets);
-  gsap?.killTweensOf?.(mangaSegmentTargets.get(elements.root) ?? []);
+  if (bubbleTargets.length > 0) gsap?.killTweensOf?.(bubbleTargets);
+  if (segmentTargets.length > 0) gsap?.killTweensOf?.(segmentTargets);
   mangaSegmentTargets.delete(elements.root);
-  gsap?.killTweensOf?.(Array.from(elements.current.children ?? []));
+  if (currentChildTargets.length > 0) {
+    gsap?.killTweensOf?.(currentChildTargets);
+  }
   if (clearProps) {
     gsap?.set?.(elements.root, {
       clearProps: 'opacity,visibility,scale',
     });
-    gsap?.set?.(pulseTargets, { clearProps: 'scale' });
-    gsap?.set?.(bubbleTargets, { clearProps: 'opacity,visibility' });
+    if (pulseTargets.length > 0) {
+      gsap?.set?.(pulseTargets, { clearProps: 'scale' });
+    }
+    if (bubbleTargets.length > 0) {
+      gsap?.set?.(bubbleTargets, { clearProps: 'opacity,visibility' });
+    }
   }
 }
 

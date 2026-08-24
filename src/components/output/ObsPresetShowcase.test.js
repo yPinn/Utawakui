@@ -232,6 +232,7 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('aria-label="預覽背景"');
     expect(previewSource).toContain('UiIconButton');
     expect(previewSource).not.toContain("emit('save");
+    expect(previewSource).toContain("searchParams.delete('backdrop'");
     expect(previewSource).toContain("searchParams.set('backdrop'");
     expect(previewSource).not.toContain("searchParams.set('preview'");
     expect(previewSource).toContain('gap: var(--ui-space-1)');

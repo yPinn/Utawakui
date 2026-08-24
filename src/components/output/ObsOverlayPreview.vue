@@ -47,7 +47,11 @@ const hasRuntimeTemplate = computed(() => Boolean(props.previewUrl));
 const inspectionUrl = computed(() => {
   if (!props.previewUrl) return null;
   const url = new URL(props.previewUrl);
-  url.searchParams.set('backdrop', previewBackdrop.value);
+  if (isLyrics.value) {
+    url.searchParams.delete('backdrop');
+  } else {
+    url.searchParams.set('backdrop', previewBackdrop.value);
+  }
   return url.toString();
 });
 const previewCanvasStyle = computed(() => ({

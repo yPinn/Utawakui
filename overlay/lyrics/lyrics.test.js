@@ -204,6 +204,36 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.hidden).toBe(true);
   });
 
+  it('does not send empty Manga target lists through GSAP during Live Stage cleanup', () => {
+    const elements = domElements();
+    const { gsap } = gsapHarness();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 4,
+        visible: true,
+        currentText: '一二三四五六 七八九十甲乙',
+        nextText: '',
+        language: 'zh-Hant',
+        liveStage: {
+          active: true,
+          cardVisible: false,
+          trackId: 'track-1',
+          title: 'Song',
+          artist: 'Singer',
+        },
+      },
+      { gsap, templateId: 'live-stage', reducedMotion: true },
+    );
+
+    const emptyTargetCalls = [
+      ...gsap.killTweensOf.mock.calls,
+      ...gsap.set.mock.calls,
+    ].filter(([target]) => Array.isArray(target) && target.length === 0);
+    expect(emptyTargetCalls).toEqual([]);
+  });
+
   it('uses one interruptible GSAP timeline to dismiss the Live Stage card', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();

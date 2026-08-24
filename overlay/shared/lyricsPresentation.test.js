@@ -103,15 +103,25 @@ describe('Live Stage caption preprocessing', () => {
   });
 
   it('preserves literal brackets that are not a leading speaker marker', () => {
-    expect(preprocessLiveStageCaption('This is [not] a name')).toMatchObject({
+    expect(preprocessLiveStageCaption('A [B]')).toMatchObject({
       speaker: '',
-      lines: ['This is [not] a name'],
+      lines: ['A [B]'],
       metadataOnly: false,
       transformed: false,
     });
   });
 
-  it('bounds authored and long captions to two complete presentation lines', () => {
+  it('keeps short captions on one row and balances longer captions into two compact rows', () => {
+    const short = preprocessLiveStageCaption('一二三四五六七');
+    const cjk = preprocessLiveStageCaption('一二三四五六七八九十甲乙');
+    const mixed = preprocessLiveStageCaption('Real live 바람을 타고 먼저');
+
+    expect(short.lines).toEqual(['一二三四五六七']);
+    expect(cjk.lines).toEqual(['一二三四五六', '七八九十甲乙']);
+    expect(mixed.lines).toEqual(['Real live', '바람을 타고 먼저']);
+  });
+
+  it('bounds authored and unusually long captions to two complete presentation lines', () => {
     const authored = preprocessLiveStageCaption('first\nsecond\nthird');
     const balanced = preprocessLiveStageCaption(
       'Every word remains visible even when a single authored row is unusually long',

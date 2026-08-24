@@ -22,6 +22,7 @@ describe('Live Stage overlay layout contract', () => {
 
     expect(css).toContain(":root[data-ovl-template='live-stage']");
     expect(css).toContain('inset-inline-start: 6.25%');
+    expect(css).toContain('inline-size: min(26%, 32rem)');
     expect(css).toContain('inset-inline-end: 5%');
     expect(css).toContain('inset-block-end: 8.333%');
     expect(css).toMatch(
