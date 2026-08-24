@@ -74,6 +74,20 @@ track id 清單與 force boolean，不控制路徑、模型、worker 參數或 c
 OS 層的網路隔離尚未驗證；Python policy 不是完整 sandbox。現有 activation 僅供
 feature-gated 內部 workbench 驗證，不代表已通過公開產品 release gate。
 
+## BPM 校準修正
+
+初版 profile 以相鄰 beat 間距的中位數回推 BPM。Beat This! 的輸出位於 50 fps
+時間格，單一間距因此會被量化到 20 ms 倍數：I AM 被鎖在 500 ms／120 BPM，
+一輪花被鎖在 660 ms／90.909091 BPM。`beat-this-small0-cpu-v2` 改用最多 32 拍
+的跨拍視窗中位數；不改變 beat/downbeat 時間，只降低全曲 tempo 的 frame-grid
+偏差。
+
+以相同已安裝 runtime、small0 checkpoint 與本機音檔重跑，I AM 為
+121.982211 BPM，一輪花為 91.954023 BPM；UI 分別顯示「約 122 BPM」與
+「約 92 BPM」。前者 363 beats／91 downbeats，後者 334 beats／110 downbeats，
+與修正前完全相同。既有 v1 sidecar 仍可安全使用，但必須重新分析或在批次操作
+勾選「重新分析已有結果」，才會寫入 v2 tempo。
+
 ## 下一個 phase
 
 1. 加入人工標註的 beat/downbeat fixtures，定義容許誤差與回歸門檻。

@@ -201,6 +201,14 @@ repair, and rollback follow ADR 0014. Successful analysis publishes the sidecar
 only after validation and atomic replacement. Failure leaves any previous valid
 sidecar intact.
 
+Beat This! profile `beat-this-small0-cpu-v2` derives one global tempo from the
+median per-beat duration across bounded windows of up to 32 beats. This preserves
+robustness against isolated timing noise without letting the 50 fps beat grid
+quantize the estimate to a single adjacent-frame interval. Beat and downbeat
+timestamps are unchanged. Renderer copy labels BPM as an estimate, displays at
+most one decimal place, and identifies the accompanying confidence as beat
+confidence rather than measured tempo certainty.
+
 Batch execution remains main-owned and in-memory. One retained bounded snapshot
 supports F10 remount/reconnect without introducing a second job owner. The batch
 uses the existing single-track analysis service for every runnable item, so the
