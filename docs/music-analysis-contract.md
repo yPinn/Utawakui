@@ -17,7 +17,11 @@ candidate because its checkpoint, memory, and installation cost are lower. This
 is not an accuracy claim: labeled beat/downbeat fixtures and OS-level network
 denial remain unproven. The internal F10 workbench now provides state-driven
 download/install, progress, repair, removal, and activation for the fixed
-`small0` choice; model selection is intentionally unavailable. Public product
+`small0` choice; model selection is intentionally unavailable. It also exposes a
+main-owned sequential batch queue: renderer input is limited to at most 500
+validated track ids plus one force boolean, current M1/M2 sidecars are skipped
+by default, per-track failures do not stop the queue, and cancellation covers
+the current inspection or inference plus all remaining items. Public product
 release remains gated on labeled accuracy, OS-level offline, license notice,
 disk-capacity, failure recovery, and manual UI acceptance.
 
@@ -196,6 +200,16 @@ Analysis progress, cancellation, error normalization, app shutdown, job cleanup,
 repair, and rollback follow ADR 0014. Successful analysis publishes the sidecar
 only after validation and atomic replacement. Failure leaves any previous valid
 sidecar intact.
+
+Batch execution remains main-owned and in-memory. One retained bounded snapshot
+supports F10 remount/reconnect without introducing a second job owner. The batch
+uses the existing single-track analysis service for every runnable item, so the
+shared heavy scheduler, source resolution, worker policy, validator, and atomic
+publication remain unchanged. The renderer may select library ids and request
+normal or forced analysis, but it cannot supply paths, model ids, worker
+arguments, concurrency, or retry policy. Public status exposes only bounded
+counts, allowlisted stages and reasons, progress, and per-track state; raw worker
+errors and paths stay in main.
 
 ## Validation invariants
 

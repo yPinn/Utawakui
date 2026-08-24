@@ -59,6 +59,9 @@ no-user-cache policy 均已啟用。
 UI 以 capability state 決定主動作：缺少時為「下載並安裝」、損壞時為「修復分析
 功能」、就緒後才是「開始分析」。低頻率的模型、下載量、安裝空間與安全說明移到
 資訊 modal；移除只處理 analysis capability，不刪歌曲、歌詞或既有 sidecar。
+F10 另提供最多 500 首的多選批次分析：main 依序處理、預設略過已有 M1／M2 的
+曲目、單首失敗後繼續，並可取消正在檢查或推論的曲目與剩餘佇列。Renderer 只送
+track id 清單與 force boolean，不控制路徑、模型、worker 參數或 concurrency。
 
 ## 已守住的邊界
 
@@ -75,7 +78,8 @@ feature-gated 內部 workbench 驗證，不代表已通過公開產品 release g
 
 1. 加入人工標註的 beat/downbeat fixtures，定義容許誤差與回歸門檻。
 2. 驗證 OS-level offline、release 授權 notice、磁碟空間與失敗復原。
-3. 完成人工 UI 驗收：安裝進度、ready/analyze、repair/remove、modal 與 scroll。
+3. 完成人工 UI 驗收：安裝進度、ready/analyze、repair/remove、modal、scroll，
+   以及批次選取、預設略過、強制重跑、逐曲狀態、失敗續跑與取消。
 4. 在相同固定歌曲上比較 app-owned CBM/librosa 的 M2 section boundary；不得臆造
    verse/chorus semantic role。
 
