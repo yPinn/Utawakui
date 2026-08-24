@@ -13,12 +13,33 @@ Proceed with two independently activated paths:
   a small research project: recent releases address compatibility, packaging,
   checkpoint delivery, and license clarity. The concentrated maintainer base
   remains a continuity risk that Utawakui must contain.
-- M2 boundary candidate: app-owned bar-synchronous CBM plus `librosa==1.0.0`,
+- Boundary-evidence candidate: app-owned bar-synchronous CBM plus `librosa==1.0.0`,
   with `ruptures` as a low-cost benchmark comparator. This initially emits
-  `role: "unknown"`; it does not pretend to infer verse/chorus semantics.
+  `role: "unknown"`; it does not pretend to infer verse/chorus semantics and
+  therefore does not activate M2 under the accepted contract.
 
 Keep All-In-One as the full M1/M2 benchmark baseline only. No surveyed semantic
 M2 checkpoint is eligible for product activation yet.
+
+## M2 phase recheck
+
+The implementation-phase recheck did not find a safer semantic replacement.
+All-In-One Infer 3.1.0 is actively packaged on PyPI as a pure-Python wheel and
+the fixed local-model Windows x64 CPU worker path already passes a synthetic
+smoke. Its result shape is the best match for the app contract, so it remains
+the benchmark runtime route. It is still not product-activatable: reviewed
+Harmonix/HTDemucs artifact evidence conflicts with or omits the product-use
+grant, one resolved dependency remains source-only, OS-level offline behavior is
+unproven, and no labeled real-song section set has passed.
+
+LinkSeg exposes the desired seven/nine semantic taxonomies, but the repository
+still has no license file or separately licensed checkpoints and requires a
+Python 3.9 research graph with Git-installed madmom, DGL, PyTorch, and PyTorch
+Geometric. Hybrid-Net also claims semantic structure, but has no visible license,
+release, packaged inference contract, or fixed checkpoint provenance. Neither is
+eligible for an install spike. Model-free CBM/librosa and ruptures remain useful
+only for boundary comparison or future authoring assistance because their
+cluster ids cannot establish intro/verse/chorus meaning.
 
 ## Candidate disposition
 
@@ -90,11 +111,17 @@ Use Beat This! downbeats as bar anchors, calculate bar-synchronous chroma and
 MFCC features, then compare app-owned CBM, librosa Laplacian segmentation, and a
 bounded ruptures change-point baseline.
 
-The initial result may publish valid section intervals with `role: "unknown"`
-and a bounded acoustic cluster id in `rawLabel`. It must not synthesize semantic
-roles or confidence. Because the current consumer deliberately ignores
-`unknown`, this improves analysis/authoring evidence but does not by itself
-enable chorus/verse visual variants.
+The initial boundary experiment may retain valid intervals with `role:
+"unknown"` and a bounded acoustic cluster id in benchmark evidence. It must not
+synthesize semantic roles or confidence and it does not publish an M2 sidecar.
+This may improve future authoring assistance, but it does not enable
+chorus/verse visual variants.
+
+The semantic M2 runtime contract accepts a result only when every interval has a
+canonical non-`unknown` role, confidence of at least `0.5`, and the ordered
+non-overlapping intervals form one contiguous partition from 0 ms through the
+source-duration tolerance. Low confidence, an unknown role, or incomplete
+coverage clears the section projection and retains any valid M1 tempo/beats.
 
 Automatic canonical roles remain blocked until one of these is true:
 
@@ -108,7 +135,8 @@ Automatic canonical roles remain blocked until one of these is true:
 The initial M1 contract and packaged Windows CPU spike are complete; see
 [`audio-python-beat-this-m1-spike-2026-08-24.md`](audio-python-beat-this-m1-spike-2026-08-24.md).
 `small0` is the provisional product-default candidate, not an accuracy winner.
-Next, add labeled beat/downbeat fixtures and close installation, activation,
-repair, removal, OS-offline, capacity, and license gates. Then run the no-weight
-M2 boundary experiment on the same songs. Recheck upstream health when rebuilding
-the activation rather than making the absence of an LTS tag a separate blocker.
+Next, add labeled beat/downbeat and semantic section fixtures, close
+installation, activation, repair, removal, OS-offline, capacity, and license
+gates, and run the no-weight boundary comparator on the same songs. Recheck
+upstream health when rebuilding the activation rather than making the absence
+of an LTS tag a separate blocker.

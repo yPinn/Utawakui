@@ -25,6 +25,13 @@ the current inspection or inference plus all remaining items. Public product
 release remains gated on labeled accuracy, OS-level offline, license notice,
 disk-capacity, failure recovery, and manual UI acceptance.
 
+The M2 acceptance path is executable independently of model activation. Fixed
+fixtures distinguish schema validity from semantic M2 eligibility, the main
+producer removes rejected section evidence before publication, and the sidecar
+consumer applies the same fail-safe rule to older documents. F10 shows accepted
+canonical sections and explains low-confidence, incomplete, unknown, or missing
+section fallbacks while keeping valid M1 tempo/beats visible.
+
 The accepted product endpoint is:
 
 - T2 word/phrase lyrics can display progressive text;
@@ -117,9 +124,16 @@ Analyzer output v1:
 
 `tempo` is either the shown object or `null`. `beats` and `sections` are always
 arrays, including for a valid M0/no-signal result. Confidence is optional and is
-never defaulted to certainty. M1 is present when source tempo or beats exist; M2
-is present when sections exist. These levels describe available signals rather
-than a requirement that M2 also contain M1.
+never defaulted to certainty. M1 is present when source tempo or beats exist.
+M2 is exposed only when every section has accepted semantic evidence and the
+sections form a complete song partition. These levels describe available
+signals rather than a requirement that M2 also contain M1.
+
+Analyzer provenance is document-scoped: `analyzer.id`, `profileId`,
+`environmentLock`, `modelIds`, `contractVersion`, and `completedAt` are the
+source/version for every section in that document. A section repeats only its
+canonical role, bounded raw label, interval, id, and confidence; it does not
+duplicate model metadata or accept a renderer-supplied source.
 
 Authored overrides are a separate v1 document and never rewrite analyzer output:
 
@@ -158,9 +172,13 @@ Templates consume the app-owned v1 allowlist: `intro`, `verse`, `pre-chorus`,
 remain bounded provenance and never become CSS classes, template ids, commands,
 or trusted selectors.
 
-Low-confidence or unknown sections use the template's normal fallback. The
-application must support user correction without overwriting the analyzer result;
-manual overrides are a separate authored layer so analysis can be regenerated.
+An analyzer document may contain bounded low-confidence, unknown, or incomplete
+section evidence, but it is not an M2 result. The public projection removes the
+whole section list and retains any valid tempo/beats as M1. The producer applies
+the same rule before atomic publication so a newly generated sidecar is safe for
+older consumers. The application must support user correction without
+overwriting the analyzer result; manual overrides are a separate authored layer
+so analysis can be regenerated.
 
 ## Analyzer and runtime selection
 
@@ -175,9 +193,12 @@ fixed-song utility benchmarks, repair/removal, and real presentation acceptance
 for the immutable
 `analysis-structure` and `combined-ml` paths from
 [ADR 0014](adr/0014-audio-python-runtime-family.md). The current package code is
-MIT, while the upstream
-Harmonix checkpoint manifest declares CC-BY-NC-SA-4.0; those terms are reviewed
-as separate artifacts before any distribution or product enablement.
+MIT and PyPI publishes a platform-independent wheel. The current Hugging Face
+repository labels the model MIT, but the pinned checkpoint manifest reviewed by
+the project declares the Harmonix artifact CC-BY-NC-SA-4.0, while the HTDemucs
+checkpoint still lacks a standalone reviewed product-use grant. Conflicting or
+missing weight evidence fails closed; package metadata does not authorize model
+distribution or product enablement.
 
 Lightweight libraries may still be used for tap/manual assistance or a bounded
 fallback, but the product does not install multiple analyzers merely because the
@@ -209,6 +230,11 @@ timestamps are unchanged. Renderer copy labels BPM as an estimate, displays at
 most one decimal place, and identifies the accompanying confidence as beat
 confidence rather than measured tempo certainty.
 
+The fixed `tempo-octave-evaluation.json` cases classify direct, half-time,
+double-time, and unrelated estimates against a labeled BPM with a four-percent
+tolerance. This evaluation never silently multiplies or divides a stored BPM:
+beat spacing alone cannot prove which metrical level is musically intended.
+
 Batch execution remains main-owned and in-memory. One retained bounded snapshot
 supports F10 remount/reconnect without introducing a second job owner. The batch
 uses the existing single-track analysis service for every runnable item, so the
@@ -227,6 +253,13 @@ errors and paths stay in main.
   duration plus the v1 tolerance of 1,000 ms.
 - Beats and sections are monotonic; section intervals do not overlap unless a
   later schema explicitly models hierarchy.
+- An M2 projection starts at 0 ms, has exactly contiguous adjacent intervals,
+  and ends within 1,000 ms of the source duration. A gap or incomplete tail is a
+  valid analyzer document but downgrades to M1/M0 rather than exposing partial
+  semantic structure.
+- Every M2 section uses a non-`unknown` canonical role and explicit confidence
+  at or above `0.5`. One rejected section downgrades the entire partition; the
+  app does not fill gaps or infer neighboring roles.
 - BPM is finite and bounded to 20–400. Confidence is finite and bounded to 0–1;
   missing confidence is not interpreted as certainty. These bounds come from
   the shared scalar JSON rather than renderer or template policy.
