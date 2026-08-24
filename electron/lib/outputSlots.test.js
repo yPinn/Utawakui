@@ -32,6 +32,12 @@ describe('outputSlots', () => {
       'artwork',
     ]);
     expect(document.slots.lyrics.templateId).toBe('focus-line');
+    expect(document.slots).toMatchObject({
+      'now-playing': { settings: { captureSize: 'small' } },
+      setlist: { settings: { captureSize: 'large' } },
+      lyrics: { settings: { captureSize: 'full' } },
+      artwork: { settings: { captureSize: 'small' } },
+    });
   });
 
   it('round-trips independent machine-safe slots atomically', () => {
@@ -159,6 +165,7 @@ describe('outputSlots', () => {
         fontScale: 'large',
         alignment: 'left',
         surface: 'solid',
+        captureSize: 'full',
       },
     });
 
@@ -170,6 +177,7 @@ describe('outputSlots', () => {
         fontScale: 'large',
         alignment: 'left',
         surface: 'solid',
+        captureSize: 'full',
       },
     });
 
@@ -191,7 +199,37 @@ describe('outputSlots', () => {
     expect(loadOutputSlots(dir).slots.artwork).toEqual({
       templateId: 'cover-player',
       styleSetIds: ['runtime-source'],
-      settings: { surface: 'soft', alignment: 'left' },
+      settings: {
+        surface: 'soft',
+        alignment: 'left',
+        captureSize: 'medium',
+      },
+    });
+  });
+
+  it('persists widget capture sizes and normalizes invalid or Lyrics values', () => {
+    upsertOutputSlot(dir, 'now-playing', {
+      templateId: 'now-next',
+      settings: { captureSize: 'medium' },
+    });
+    upsertOutputSlot(dir, 'artwork', {
+      templateId: 'art-card',
+      settings: { captureSize: 'large' },
+    });
+    upsertOutputSlot(dir, 'setlist', {
+      templateId: 'queue-board',
+      settings: { captureSize: 'medium' },
+    });
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'focus-line',
+      settings: { captureSize: 'small' },
+    });
+
+    expect(loadOutputSlots(dir).slots).toMatchObject({
+      'now-playing': { settings: { captureSize: 'small' } },
+      setlist: { settings: { captureSize: 'large' } },
+      artwork: { settings: { captureSize: 'small' } },
+      lyrics: { settings: { captureSize: 'full' } },
     });
   });
 

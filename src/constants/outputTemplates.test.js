@@ -61,6 +61,9 @@ describe('output template registry', () => {
     expect(
       Object.values(data.slotDefaults).map((slot) => slot.settings.alignment),
     ).toEqual(['left', 'left', 'left', 'left']);
+    expect(
+      Object.values(data.slotDefaults).map((slot) => slot.settings.captureSize),
+    ).toEqual(['small', 'large', 'full', 'small']);
     expect(data.appearanceOptions.fontFamily).toHaveLength(3);
     expect(data.styleSets.length).toBeGreaterThan(0);
   });

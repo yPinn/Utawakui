@@ -230,7 +230,14 @@ function createOutputRuntime({
 
   function publish(envelope, source) {
     const sourceId = rendererId(source);
-    if (!sourceId) return false;
+    if (
+      !sourceId ||
+      !rendererWebContents ||
+      sourceId !== rendererId(rendererWebContents)
+    ) {
+      return false;
+    }
+    projectionHub.connectSource(sourceId);
     return projectionHub.publish(envelope, sourceId);
   }
 

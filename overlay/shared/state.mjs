@@ -25,6 +25,7 @@ function hiddenLyricsFrame(snapshot) {
     currentText: '',
     nextText: '',
     language: '',
+    lineIndex: null,
   };
 }
 
@@ -352,6 +353,7 @@ export function selectLyricsFrame(snapshot, options = {}) {
     currentText,
     nextText,
     language: text(lyrics?.source?.language),
+    lineIndex: activeIndex,
     ...(currentSegments ? { currentSegments } : {}),
     ...(musicStructure ? { musicStructure } : {}),
   };

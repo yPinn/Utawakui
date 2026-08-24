@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
 const OUTPUT_APPEARANCE_VALUES = require('../../shared/outputAppearanceValues.json');
+const OUTPUT_CAPTURE_VALUES = require('../../shared/outputCaptureValues.json');
 const OUTPUT_TEMPLATE_VALUES = require('../../shared/outputTemplateValues.json');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
@@ -16,6 +17,24 @@ const SAFE_ID_RE = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const SAFE_SETTING_KEY_RE = /^[A-Za-z][A-Za-z0-9._-]*$/;
 const SLOT_IDS = new Set(OUTPUT_TEMPLATE_VALUES.slots.map((slot) => slot.id));
 const TEMPLATE_KINDS = OUTPUT_TEMPLATE_VALUES.templateKinds;
+const WIDGET_CAPTURE_SIZE_IDS = new Set(
+  OUTPUT_CAPTURE_VALUES.widgetSizes.map((size) => size.id),
+);
+
+function normalizeCaptureSize(kind, templateId, value) {
+  if (kind === 'lyrics') return OUTPUT_CAPTURE_VALUES.lyricsSize.id;
+  const configured = OUTPUT_TEMPLATE_VALUES.templateCaptureSizes?.[templateId];
+  const supported = (configured?.supported ?? []).filter((id) =>
+    WIDGET_CAPTURE_SIZE_IDS.has(id),
+  );
+  const allowed = supported.length
+    ? supported
+    : [OUTPUT_CAPTURE_VALUES.slotDefaults[kind]];
+  if (allowed.includes(value)) return value;
+  return allowed.includes(configured?.default)
+    ? configured.default
+    : allowed[0];
+}
 
 function emptyDocument() {
   return normalizeDocument({ slots: {} });
@@ -69,10 +88,17 @@ function sanitizeOutputSlot(kindValue, value) {
     styleSetIds.push(styleSetId);
   }
 
+  const settings = sanitizeSettings(value.settings);
+  settings.captureSize = normalizeCaptureSize(
+    kind,
+    templateId,
+    settings.captureSize,
+  );
+
   return {
     templateId,
     styleSetIds,
-    settings: sanitizeSettings(value.settings),
+    settings,
   };
 }
 
@@ -90,9 +116,11 @@ function normalizeDocument(value) {
       sanitizeOutputSlot(slot.id, {
         templateId: slot.defaultTemplateId,
         styleSetIds: slot.defaultStyleSetIds,
-        settings:
-          OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
-          OUTPUT_APPEARANCE_VALUES.defaultSettings,
+        settings: {
+          ...(OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
+            OUTPUT_APPEARANCE_VALUES.defaultSettings),
+          captureSize: OUTPUT_CAPTURE_VALUES.slotDefaults[slot.id],
+        },
       });
     slots[slot.id] = normalized;
   }

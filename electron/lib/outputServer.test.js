@@ -348,6 +348,17 @@ describe('outputServer', () => {
     expect(mangaContract.status).toBe(200);
     expect(await mangaContract.text()).toContain('DEFAULT_MANGA_FRAME_ID');
 
+    const lyricsPresentation = await fetch(
+      `${status.httpUrl}/overlay/shared/lyricsPresentation.mjs`,
+    );
+    expect(lyricsPresentation.status).toBe(200);
+    expect(lyricsPresentation.headers.get('content-type')).toContain(
+      'text/javascript',
+    );
+    expect(await lyricsPresentation.text()).toContain(
+      'preprocessLyricsPresentation',
+    );
+
     const gsap = await fetch(`${status.httpUrl}/overlay/vendor/gsap.min.js`);
     expect(gsap.status).toBe(200);
     expect(gsap.headers.get('content-type')).toContain('text/javascript');

@@ -1,5 +1,6 @@
 import OUTPUT_APPEARANCE_VALUES from '../../shared/outputAppearanceValues.json';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
   OUTPUT_TEMPLATE_VALUES.slots.map((slot) => ({
@@ -171,17 +172,18 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       summary:
         'M0 也會顯示單句黑白對話框；段落或逐字資料只增加外框與網點差異。',
     },
-    summary: '一句歌詞就是一個置中的黑白直書漫畫對話框。',
+    summary: '每個斷句各自成為一個在人物左右交替的黑白直書漫畫對話框。',
     detail:
-      '只顯示當下歌詞並以直書排列；換句時 SVG 外框與文字作為同一個事件淡出、淡入。',
+      '只顯示當下歌詞並以直書置中；日中歌詞的行內空格會拆成最多三個獨立對話框，括號內容另成背景聲候選框。框組依目前行切換人物左右，換句時所有 SVG 外框與文字一同淡出、淡入。',
     preview: {
       layoutLabel: '漫畫直書單句',
       motionLabel: '整框淡入淡出',
     },
-    tags: ['黑白漫畫', '置中單句', 'M0 fallback'],
+    tags: ['黑白漫畫', '左右多框', 'M0 fallback'],
     settings: [
-      { label: '顯示', value: '只顯示目前行' },
-      { label: '排版', value: '直書、置中' },
+      { label: '顯示', value: '目前行的 1–3 個斷句' },
+      { label: '排版', value: '直書置中、左右交替' },
+      { label: '分句', value: '日中空格、括號候選' },
       { label: '切換', value: '外框與文字同步 Fade' },
       { label: '進度', value: '文字後方網點' },
     ],
@@ -337,6 +339,7 @@ export const OUTPUT_SLOT_DEFAULTS = Object.freeze(
         settings: {
           ...(OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
             OUTPUT_APPEARANCE_VALUES.defaultSettings),
+          captureSize: defaultCaptureSizeIdForKind(slot.id),
         },
       },
     ]),

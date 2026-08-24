@@ -22,6 +22,10 @@ const previewSource = readFileSync(
   fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
   'utf8',
 );
+const widgetCapturePreviewSource = readFileSync(
+  fileURLToPath(new URL('./ObsWidgetCapturePreview.vue', import.meta.url)),
+  'utf8',
+);
 const mockupSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateMockup.vue', import.meta.url)),
   'utf8',
@@ -44,6 +48,10 @@ const settingsSource = readFileSync(
 );
 const settingsViewSource = readFileSync(
   fileURLToPath(new URL('../../views/SettingsView.vue', import.meta.url)),
+  'utf8',
+);
+const workspaceSource = readFileSync(
+  fileURLToPath(new URL('./ObsOutputWorkspace.vue', import.meta.url)),
   'utf8',
 );
 
@@ -144,10 +152,11 @@ describe('OBS output workspace layout contract', () => {
       mockupSource.indexOf("preset?.id === 'manga-frame'"),
       mockupSource.indexOf("preset?.id === 'karaoke-stack'"),
     );
-    expect(mangaBranch).toContain('lyrics.current');
+    expect(mangaBranch).toContain('mangaBubbles');
+    expect(mangaBranch).toContain('bubble.text');
     expect(mangaBranch).not.toContain('lyrics.next');
     expect(mangaBranch).toContain(
-      'obs-template-mockup__manga-bubble obs-template-mockup__animated-bubble',
+      'obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble',
     );
     expect(mangaBranch).not.toContain(
       'obs-template-mockup__title--manga obs-template-mockup__animated-primary',
@@ -198,9 +207,13 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain(
       'inline-size: min(100%, var(--ui-output-workbench-stage-max-width))',
     );
-    expect(previewSource).toContain('const PREVIEW_CANVAS_WIDTH = 1280');
-    expect(previewSource).toContain('const PREVIEW_CANVAS_HEIGHT = 720');
-    expect(previewSource).toContain('ref="previewFrame"');
+    expect(previewSource).toContain(
+      'const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width',
+    );
+    expect(previewSource).toContain(
+      'const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height',
+    );
+    expect(previewSource).toContain('ref="previewStage"');
     expect(previewSource).toContain('new ResizeObserver(measurePreview)');
     expect(previewSource).toContain(':style="previewCanvasStyle"');
     expect(previewSource).toContain('transform-origin: left top');
@@ -217,6 +230,17 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('var(--ui-color-surface)');
     expect(previewSource).toContain('var(--ui-color-canvas)');
     expect(previewSource).toContain('var(--ui-color-overlay-contrast)');
+    expect(previewSource).toContain('ObsWidgetCapturePreview');
+    expect(previewSource).toContain('v-if="isLyrics"');
+    expect(previewSource).toContain(
+      '<ObsStreamerPreview :src="streamerPreviewImage" />',
+    );
+    expect(widgetCapturePreviewSource).toContain('gridTemplateColumns');
+    expect(widgetCapturePreviewSource).toContain('supportedCaptureSizes');
+    expect(widgetCapturePreviewSource).toContain('align-items: end');
+    expect(widgetCapturePreviewSource).toContain(
+      "emit('selectSize', option.id)",
+    );
     expect(tokenSource).toContain('--ui-output-gallery-detail-width: clamp(');
   });
 
@@ -255,6 +279,19 @@ describe('OBS output workspace layout contract', () => {
     expect(workbenchSource).toContain("key: 'fontWeight'");
     expect(workbenchSource).toContain("key: 'alignment'");
     expect(workbenchSource).toContain("key: 'surface'");
+    expect(workbenchSource).toContain('captureSize: draft.captureSize');
+    expect(workbenchSource).toContain(
+      'class="obs-slot-workbench__capture-guide"',
+    );
+    expect(
+      workbenchSource.indexOf('obs-slot-workbench__capture-guide'),
+    ).toBeLessThan(workbenchSource.indexOf('<ObsOverlayPreview'));
+    expect(workbenchSource).toContain(
+      ':supported-capture-sizes="supportedCaptureSizes"',
+    );
+    expect(workbenchSource).toContain(
+      '{{ capturePreset.width }} × {{ capturePreset.height }} px',
+    );
     expect(settingsSource).toContain('type="text"');
     expect(settingsSource).toContain('inputmode="numeric"');
     expect(settingsSource).toContain('text-align: right');
@@ -266,9 +303,12 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain('step="1"');
     expect(settingsSource).not.toContain(':icon="Check"');
     expect(settingsSource).toContain('type="checkbox"');
-    expect(settingsSource).toContain('服務可用');
-    expect(settingsSource).toContain('Browser Source 已連線');
-    expect(settingsSource).toContain('等待 Browser Source 連線');
+    expect(settingsSource).toContain('describeOutputRuntimeStatus');
+    expect(previewSource).toContain('describeOutputRuntimeStatus');
+    expect(settingsSource).toContain('runtimeStatus.value.detail');
+    expect(previewSource).toContain('sourceDiagnostic');
+    expect(workspaceSource).toContain('await initializeOutput()');
+    expect(workspaceSource).toContain('await refreshOutputStatus()');
     expect(settingsSource).not.toContain('OBS 已連線');
     expect(settingsSource).not.toContain('等待 OBS Browser Source 連線');
     expect(settingsSource).toContain('Port 被占用');

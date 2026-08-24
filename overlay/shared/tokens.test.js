@@ -149,6 +149,19 @@ describe('overlay CSS tokens', () => {
     expect(tokens).toContain('--ovl-color-stroke-soft');
   });
 
+  it('keeps one equal physical safe inset across fixed-width widget tiers', () => {
+    const appearance = fs.readFileSync(
+      new URL('./appearance.css', import.meta.url),
+      'utf8',
+    );
+
+    expect(appearance).toContain('@media (max-width: 48rem) {');
+    expect(appearance).toContain('@media (max-width: 36rem) {');
+    expect(appearance).not.toMatch(
+      /@media[^{]*max-height[^{]*{[^}]*--ovl-safe-(?:inline|block)/s,
+    );
+  });
+
   it('keeps lyric glyphs visible while exposing segment progress', () => {
     const lyrics = fs.readFileSync(
       new URL('../lyrics/lyrics.css', import.meta.url),
@@ -210,6 +223,145 @@ describe('overlay CSS tokens', () => {
     expect(coverPlayerStyles).toContain('@media (max-height:');
     expect(coverPlayerStyles).not.toMatch(
       /#[\da-f]{3,8}\b|\b(?:rgb|hsl|oklch)\(/i,
+    );
+  });
+
+  it('authors each widget template for its supported capture heights', () => {
+    const nowPlaying = fs.readFileSync(
+      new URL('../now-playing/now-playing.css', import.meta.url),
+      'utf8',
+    );
+    const setlist = fs.readFileSync(
+      new URL('../setlist/setlist.css', import.meta.url),
+      'utf8',
+    );
+    const artwork = fs.readFileSync(
+      new URL('../artwork/artwork.css', import.meta.url),
+      'utf8',
+    );
+    const coverPlayerStart = artwork.indexOf(
+      ":root[data-ovl-template='cover-player']",
+    );
+    const coverPlayer = artwork.slice(coverPlayerStart);
+
+    expect(nowPlaying).toContain(
+      '@media (max-width: 42rem) and (max-height: 48rem)',
+    );
+    expect(nowPlaying).toContain(
+      '@media (max-width: 42rem) and (max-height: 24rem)',
+    );
+    expect(nowPlaying).not.toContain('--ovl-template-now-playing-width: 20rem');
+
+    expect(setlist).toContain(
+      '@media (max-width: 42rem) and (max-height: 48rem)',
+    );
+    expect(setlist).toContain('block-size: calc(100% - 2 *');
+
+    expect(artwork).toContain(
+      '@media (max-width: 42rem) and (max-height: 24rem)',
+    );
+    expect(coverPlayer).toContain('inset-block-start: 50%;');
+    expect(coverPlayer).toContain('inset-block-end: auto;');
+    expect(coverPlayer).toContain('transform: translate(-50%, -50%);');
+    expect(coverPlayer).toContain('block-size: calc(100% - 2 *');
+  });
+
+  it('centers every widget in its own capture canvas without tier repositioning', () => {
+    const nowPlaying = fs.readFileSync(
+      new URL('../now-playing/now-playing.css', import.meta.url),
+      'utf8',
+    );
+    const setlist = fs.readFileSync(
+      new URL('../setlist/setlist.css', import.meta.url),
+      'utf8',
+    );
+    const artwork = fs.readFileSync(
+      new URL('../artwork/artwork.css', import.meta.url),
+      'utf8',
+    );
+    const coverPlayerStart = artwork.indexOf(
+      ":root[data-ovl-template='cover-player']",
+    );
+    const artCard = artwork.slice(0, coverPlayerStart);
+    const coverPlayer = artwork.slice(coverPlayerStart);
+
+    for (const styles of [nowPlaying, setlist, artCard, coverPlayer]) {
+      expect(styles).toContain('inset-inline-start: 50%;');
+      expect(styles).toContain('inset-block-start: 50%;');
+      expect(styles).toContain('inset-block-end: auto;');
+      expect(styles).toContain('transform: translate(-50%, -50%);');
+    }
+
+    for (const styles of [nowPlaying, setlist, artCard]) {
+      expect(styles).not.toContain(
+        'inset-inline-start: var(--ovl-safe-inline);',
+      );
+      expect(styles).not.toContain('inset-inline-end: var(--ovl-safe-inline);');
+      expect(styles).not.toContain('inset-block-start: var(--ovl-safe-block);');
+      expect(styles).not.toContain('inset-block-end: var(--ovl-safe-block);');
+
+      const responsiveRules = styles.slice(styles.indexOf('@media'));
+      expect(responsiveRules).not.toMatch(/\binset-(?:inline|block)/);
+      expect(responsiveRules).not.toContain('transform:');
+    }
+  });
+
+  it('fills each widget capture canvas inside the shared safe boundary', () => {
+    const nowPlaying = fs.readFileSync(
+      new URL('../now-playing/now-playing.css', import.meta.url),
+      'utf8',
+    );
+    const setlist = fs.readFileSync(
+      new URL('../setlist/setlist.css', import.meta.url),
+      'utf8',
+    );
+    const artwork = fs.readFileSync(
+      new URL('../artwork/artwork.css', import.meta.url),
+      'utf8',
+    );
+    const coverPlayerStart = artwork.indexOf(
+      ":root[data-ovl-template='cover-player']",
+    );
+    const artCard = artwork.slice(0, coverPlayerStart);
+    const coverPlayer = artwork.slice(coverPlayerStart);
+
+    for (const styles of [nowPlaying, setlist, artCard, coverPlayer]) {
+      expect(styles).toMatch(
+        /\n\s{4}inline-size: calc\(100% - 2 \* var\(--ovl-safe-inline\)\);/,
+      );
+      expect(styles).toMatch(
+        /\n\s{4}block-size: calc\(100% - 2 \* var\(--ovl-safe-block\)\);/,
+      );
+    }
+
+    expect(nowPlaying).toContain('display: flex;');
+    expect(nowPlaying).toContain('flex-direction: column;');
+    expect(nowPlaying).toMatch(
+      /\.now-playing-overlay__next\s*{[^}]*margin-block-start: auto;/s,
+    );
+
+    expect(setlist).toMatch(
+      /\.setlist-overlay__rows\s*{[^}]*flex: 1 1 auto;[^}]*grid-auto-rows: var\(--ovl-template-setlist-row-height\);[^}]*align-content: start;/s,
+    );
+
+    expect(artCard).toMatch(
+      /@media \(max-width: 42rem\)[\s\S]*grid-template-columns: minmax\(0, 1fr\);[\s\S]*grid-template-rows: minmax\(0, 1fr\) auto;/,
+    );
+    expect(artCard).toMatch(
+      /@media \(max-width: 42rem\) and \(max-height: 24rem\)[\s\S]*grid-template-columns: auto minmax\(0, 1fr\);[\s\S]*grid-template-rows: minmax\(0, 1fr\);/,
+    );
+    expect(coverPlayer).toContain(
+      'grid-template-rows: minmax(0, 1fr) auto auto;',
+    );
+    expect(coverPlayer).toMatch(
+      /\.artwork-overlay__mark\s*{[^}]*max-inline-size: 100%;[^}]*inline-size: auto;[^}]*block-size: 100%;/s,
+    );
+    expect(setlist).toContain('--ovl-template-setlist-row-height: 7rem;');
+    expect(artCard).toMatch(
+      /\.artwork-overlay__copy\s*{[^}]*min-block-size: 0;[^}]*overflow: hidden;/s,
+    );
+    expect(artCard).toMatch(
+      /\.artwork-overlay__artist\s*{[^}]*overflow: hidden;[^}]*-webkit-line-clamp: 2;/s,
     );
   });
 

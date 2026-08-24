@@ -1,5 +1,10 @@
 <script setup>
 import { computed } from 'vue';
+import {
+  mangaFrameLengthTier,
+  mangaFrameSideForLine,
+} from '../../../overlay/shared/mangaFrameContract.mjs';
+import { preprocessLyricsPresentation } from '../../../overlay/shared/lyricsPresentation.mjs';
 import MangaFrameSvg from './MangaFrameSvg.vue';
 
 const props = defineProps({
@@ -17,6 +22,13 @@ const track = computed(() => props.scene?.track ?? {});
 const nextTrack = computed(() => props.scene?.nextTrack ?? {});
 const queue = computed(() => props.scene?.queue ?? []);
 const lyrics = computed(() => props.scene?.lyrics ?? {});
+const mangaSide = computed(() => mangaFrameSideForLine(lyrics.value.lineIndex));
+const mangaBubbles = computed(
+  () =>
+    preprocessLyricsPresentation(lyrics.value.current, {
+      language: lyrics.value.language,
+    }).bubbles,
+);
 </script>
 
 <template>
@@ -59,17 +71,27 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
     >
       <template v-if="preset?.id === 'manga-frame'">
         <span
-          class="obs-template-mockup__manga-bubble obs-template-mockup__animated-bubble"
+          class="obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble"
+          :data-manga-count="mangaBubbles.length"
+          :data-manga-side="mangaSide"
         >
-          <MangaFrameSvg
-            class="obs-template-mockup__manga-frame"
-            frame-id="spoken"
-          />
-          <strong
-            class="obs-template-mockup__title obs-template-mockup__title--manga"
+          <span
+            v-for="(bubble, index) in mangaBubbles"
+            :key="`${bubble.kind}-${index}`"
+            class="obs-template-mockup__manga-bubble"
+            :data-lyric-kind="bubble.kind"
+            :data-manga-length="mangaFrameLengthTier(bubble.text)"
           >
-            {{ lyrics.current }}
-          </strong>
+            <MangaFrameSvg
+              class="obs-template-mockup__manga-frame"
+              frame-id="spoken"
+            />
+            <strong
+              class="obs-template-mockup__title obs-template-mockup__title--manga"
+            >
+              {{ bubble.text }}
+            </strong>
+          </span>
         </span>
       </template>
 
@@ -246,8 +268,8 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
 
 .obs-template-mockup[data-template-id='manga-frame']
   .obs-template-mockup__content--lyrics {
-  place-content: center;
-  justify-items: center;
+  align-content: center;
+  justify-items: stretch;
 }
 
 .obs-template-mockup__content--setlist {
@@ -444,19 +466,70 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   font-weight: var(--ui-font-weight-strong);
 }
 
+.obs-template-mockup__manga-bubbles {
+  position: relative;
+  width: 32%;
+  height: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--ui-space-1);
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='2'] {
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='3'] {
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-side='left'] {
+  justify-self: start;
+  margin-inline-start: var(--ui-space-3);
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-side='right'] {
+  justify-self: end;
+  margin-inline-end: var(--ui-space-3);
+}
+
 .obs-template-mockup__manga-bubble {
   position: relative;
-  width: min(30%, var(--ui-output-template-detail-artwork-size));
-  min-width: var(--ui-output-template-thumb-artwork-size);
+  box-sizing: border-box;
+  height: min(92%, var(--ui-output-template-detail-artwork-size));
+  max-width: 100%;
   aspect-ratio: 2 / 3;
+  justify-self: center;
   display: grid;
   place-items: center;
-  padding: var(--ui-space-4) var(--ui-space-3);
   background: transparent;
   color: var(--ui-output-preview-manga-ink);
   --manga-frame-ink: var(--ui-output-preview-manga-ink);
   --manga-frame-paper: var(--ui-output-preview-manga-paper);
   text-align: center;
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-side='left']
+  .obs-template-mockup__manga-bubble:nth-child(odd),
+.obs-template-mockup__manga-bubbles[data-manga-side='right']
+  .obs-template-mockup__manga-bubble:nth-child(even) {
+  justify-self: start;
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-side='left']
+  .obs-template-mockup__manga-bubble:nth-child(even),
+.obs-template-mockup__manga-bubbles[data-manga-side='right']
+  .obs-template-mockup__manga-bubble:nth-child(odd) {
+  justify-self: end;
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='1']
+  .obs-template-mockup__manga-bubble,
+.obs-template-mockup__manga-bubbles[data-manga-count='3']
+  .obs-template-mockup__manga-bubble:nth-child(3) {
+  justify-self: center;
 }
 
 .obs-template-mockup__manga-frame {
@@ -469,15 +542,21 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
 .obs-template-mockup__title--manga {
   position: relative;
   z-index: 1;
-  width: 62%;
-  height: 68%;
+  width: 66%;
+  height: 66%;
   display: block;
   color: var(--ui-output-preview-manga-ink);
-  line-height: var(--ui-line-height-body);
+  line-height: 1.16;
   overflow-wrap: anywhere;
   text-align: center;
   text-orientation: upright;
+  white-space: pre-wrap;
   writing-mode: vertical-rl;
+}
+
+.obs-template-mockup__manga-bubble[data-lyric-kind='aside']
+  .obs-template-mockup__title--manga {
+  font-size: 0.78em;
 }
 
 .obs-template-mockup__progress {
@@ -592,11 +671,15 @@ const lyrics = computed(() => props.scene?.lyrics ?? {});
   max-inline-size: 100%;
 }
 
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__manga-bubbles {
+  width: 48%;
+  margin-inline: var(--ui-space-1);
+}
+
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__manga-bubble {
-  width: 40%;
-  min-width: var(--ui-output-template-thumb-artwork-size);
-  box-sizing: border-box;
-  padding: var(--ui-space-3) var(--ui-space-2);
+  height: 92%;
+  min-width: 0;
 }
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__title,

@@ -1,16 +1,14 @@
 @layer ovl-template {
   .setlist-overlay {
-    --ovl-template-setlist-width: 31rem;
-    --ovl-template-setlist-row-height: 2.75rem;
+    --ovl-template-setlist-row-height: 7rem;
 
     position: fixed;
-    inset-inline-end: var(--ovl-safe-inline);
-    inset-block-start: var(--ovl-safe-block);
-    inline-size: min(
-      calc(100% - 2 * var(--ovl-safe-inline)),
-      var(--ovl-template-setlist-width)
-    );
-    max-block-size: calc(100% - 2 * var(--ovl-safe-block));
+    inset-inline-start: 50%;
+    inset-inline-end: auto;
+    inset-block-start: 50%;
+    inset-block-end: auto;
+    inline-size: calc(100% - 2 * var(--ovl-safe-inline));
+    block-size: calc(100% - 2 * var(--ovl-safe-block));
     display: flex;
     flex-direction: column;
     padding: var(--ovl-primitive-space-4);
@@ -20,6 +18,7 @@
     font-size: var(--ovl-user-font-scale);
     font-family: var(--ovl-user-font-family);
     text-align: var(--ovl-user-text-align);
+    transform: translate(-50%, -50%);
   }
 
   .setlist-overlay__title {
@@ -37,7 +36,10 @@
   }
 
   .setlist-overlay__rows {
+    flex: 1 1 auto;
     display: grid;
+    grid-auto-rows: var(--ovl-template-setlist-row-height);
+    align-content: start;
     min-block-size: 0;
     overflow: hidden;
     margin: 0;
@@ -96,20 +98,32 @@
 
   @media (max-width: 42rem) {
     .setlist-overlay {
-      --ovl-template-setlist-row-height: 2.5rem;
-
       padding: var(--ovl-primitive-space-3);
+    }
+
+    .setlist-overlay__title {
+      font-size: 1.75em;
+    }
+  }
+
+  @media (max-width: 42rem) and (max-height: 48rem) {
+    .setlist-overlay {
+      --ovl-template-setlist-row-height: 4rem;
     }
 
     .setlist-overlay__title {
       font-size: 1.25em;
     }
+
+    .setlist-overlay__row {
+      gap: var(--ovl-primitive-space-2);
+      padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
+    }
   }
 
   @media (max-height: 36rem) {
     .setlist-overlay {
-      --ovl-template-setlist-width: 22rem;
-      --ovl-template-setlist-row-height: 2rem;
+      --ovl-template-setlist-row-height: 3rem;
 
       padding: var(--ovl-primitive-space-3);
     }

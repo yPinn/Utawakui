@@ -67,6 +67,7 @@ describe('overlay state selectors', () => {
       currentText: '潮聲沿著夜色靠岸',
       nextText: '下一句仍在遠方',
       language: 'zh-Hant',
+      lineIndex: 1,
     });
   });
 
@@ -79,6 +80,7 @@ describe('overlay state selectors', () => {
       visible: false,
       currentText: '',
       nextText: '',
+      lineIndex: null,
     });
   });
 
@@ -101,6 +103,7 @@ describe('overlay state selectors', () => {
     ).toMatchObject({
       currentText: '下一句仍在遠方',
       nextText: '',
+      lineIndex: 3,
     });
   });
 

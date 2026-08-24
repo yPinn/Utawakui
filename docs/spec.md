@@ -537,16 +537,25 @@ Output 內分為工作台、模板庫與輸出設定，並以工作台作為預�
 縮圖與右欄共用控制台內的 `ObsTemplateMockup`，只呈現固定 16:9 的標準化模板示意，
 不依賴 runtime 或 iframe，避免實際 overlay 在小尺寸下因原始字級、定位與動畫基準
 縮放失真。Workbench 才載入目前類型的真實 served iframe，並以 inspector 編輯該
-slot 的文字與背景設定，不改動其他類型。預覽以固定 1280×720 reference canvas
-等比縮入 stage，避免面板寬度觸發與 OBS 不同的 responsive layout。Workbench
+slot 的文字、背景與擷取尺寸設定，不改動其他類型。Lyrics 維持單一 1920×1080
+reference canvas，並保留只存在於 Workbench 的角色站位示意；Now Playing、Setlist
+與 Artwork 則視為 widget，以 FHD 九宮格的一格 640×360 為單位，定義沿垂直方向
+累加的一格、兩格與三格尺寸（640×360、640×720、640×1080）。每個內建模板只登錄
+實際設計過的尺寸子集，不要求同時支援三種；支援的真實 iframe 在 Workbench 內並列
+且底部對齊，讓使用者比較後保存目前 slot 的建議尺寸。Widget 預覽不顯示角色站位。
+這些固定 reference canvas 會等比縮入 stage，避免面板寬度
+觸發與 OBS 不同的 responsive layout。Workbench
 可在真實 capture URL 附加 allowlisted `backdrop=checker|dark|light` 檢視參數；
 此參數只切換透明畫布的本機辨識底，不注入 demo state，也不保存到 slot。複製給
 OBS 的 URL 不含 query，因此不會發布假狀態，且頁面背景保持透明。Browser Source
 URL 複製屬於 Workbench 的目前類型操作，不放在本機服務設定中。
 
 Gallery 右欄與 Workbench inspector 都使用 rem 上下限與 viewport-relative 中間值，
-不依賴可折疊／可拖曳的 playlist sidebar 內容寬度；Workbench 的 iframe stage 使用
-16:9 與 rem 最大寬度，在 inspector 之外盡量填滿可用空間。輸出設定集中管理
+不依賴可折疊／可拖曳的 playlist sidebar 內容寬度；Workbench 的 Lyrics stage 使用
+16:9，widget stage 使用三欄直列比例，兩者都受 rem 最大寬度限制並在 inspector
+之外盡量填滿可用空間。目前選擇對應的 OBS Browser Source 建議寬高顯示在預覽上方
+的獨立資訊列，不佔用右側外觀 inspector；擷取尺寸不寫入 URL，實際 OBS source
+geometry 仍由使用者依建議設定。輸出設定集中管理
 `autoStart`、port、服務啟停與可用 port 建議。目前四種輸出採固定路徑，URL 是低頻操作，
 不讓長網址占用主要資訊層級。服務連線狀態只表示有 Browser Source client 連入，不
 推論一定是 OBS 本體。Host 固定為 `127.0.0.1`，port 衝突不會靜默改號。

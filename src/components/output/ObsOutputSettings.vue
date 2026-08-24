@@ -16,6 +16,7 @@ import SettingsActionRow from '../settings/SettingsActionRow.vue';
 import SettingsBlock from '../settings/SettingsBlock.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
 
 const props = defineProps({
   status: { type: Object, default: () => ({ running: false }) },
@@ -73,33 +74,33 @@ const displayDelayLabel = computed(() => {
   return `${value > 0 ? '+' : ''}${value} 毫秒`;
 });
 const hasPortConflict = computed(() => props.suggestedPorts.length > 0);
+const runtimeStatus = computed(() => describeOutputRuntimeStatus(props.status));
 const statusLabel = computed(() => {
   if (hasPortConflict.value) return 'Port 被占用';
-  if ((props.status.clients ?? 0) > 0) return 'Browser Source 已連線';
-  if (props.status.running) return '服務可用';
-  return '服務已停止';
+  return runtimeStatus.value.label;
 });
 const statusTone = computed(() => {
   if (hasPortConflict.value) return 'danger';
-  if ((props.status.clients ?? 0) > 0) return 'success';
-  if (props.status.running) return 'accent';
-  return 'muted';
+  return runtimeStatus.value.tone;
 });
 const serviceStatusIcon = computed(() => {
   if (hasPortConflict.value) return CircleAlert;
-  if ((props.status.clients ?? 0) > 0) return BadgeCheck;
-  if (props.status.running) return CircleDashed;
+  if (runtimeStatus.value.state === 'source-unavailable') return CircleAlert;
+  if (
+    ['source-ready', 'client-connected'].includes(runtimeStatus.value.state)
+  ) {
+    return BadgeCheck;
+  }
+  if (
+    ['source-syncing', 'service-running'].includes(runtimeStatus.value.state)
+  ) {
+    return CircleDashed;
+  }
   return CircleX;
 });
 const serviceStatusValue = computed(() => {
   if (hasPortConflict.value) return props.error || '請改用其他 Port。';
-  if (props.status.running) {
-    const clients = props.status.clients ?? 0;
-    return clients > 0
-      ? `${clients} 個 Browser Source 連線`
-      : '等待 Browser Source 連線';
-  }
-  return '本機服務未啟動。';
+  return runtimeStatus.value.detail;
 });
 
 function commitSettings(overrides = {}) {

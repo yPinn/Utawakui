@@ -2,6 +2,34 @@
 export const MANGA_FRAME_VIEW_BOX = '0 0 400 600';
 export const DEFAULT_MANGA_FRAME_ID = 'spoken';
 
+const MANGA_TEXT_SIZE_EM = Object.freeze({
+  short: 2.9,
+  medium: 2.55,
+  long: 2.15,
+});
+const MANGA_COUNT_SIZE_CAP_EM = Object.freeze({ 1: 2.9, 2: 2.35, 3: 1.9 });
+const MANGA_COUNT_GLYPH_CAPACITY = Object.freeze({ 2: 22, 3: 18 });
+const MANGA_LENGTH_GLYPH_CAPACITY = Object.freeze({
+  short: 12,
+  medium: 24,
+  long: 60,
+});
+const MANGA_PLACEMENT_PATTERNS = Object.freeze({
+  1: Object.freeze([
+    Object.freeze({ side: 'right', anchorYPercent: 50, jitterYPercent: 4 }),
+  ]),
+  2: Object.freeze([
+    Object.freeze({ side: 'right', anchorYPercent: 46, jitterYPercent: 1 }),
+    Object.freeze({ side: 'left', anchorYPercent: 54, jitterYPercent: 1 }),
+  ]),
+  3: Object.freeze([
+    Object.freeze({ side: 'right', anchorYPercent: 33, jitterYPercent: 1 }),
+    Object.freeze({ side: 'left', anchorYPercent: 50, jitterYPercent: 2 }),
+    Object.freeze({ side: 'right', anchorYPercent: 67, jitterYPercent: 1 }),
+  ]),
+});
+const MANGA_INLINE_JITTER_REM = Object.freeze([0, 0.5, 1]);
+
 function frame(id, label, usage, elements, options = {}) {
   return Object.freeze({
     id,
@@ -104,8 +132,90 @@ export function resolveMangaFrame(frameId) {
 }
 
 export function mangaFrameLengthTier(text) {
-  const length = Array.from(String(text ?? '').trim()).length;
+  const length = Array.from(String(text ?? '').replace(/\s/gu, '')).length;
   if (length <= 12) return 'short';
   if (length <= 24) return 'medium';
   return 'long';
+}
+
+export function mangaFrameTextFitEm(text, bubbleCount = 1) {
+  const normalizedText = String(text ?? '')
+    .trim()
+    .replace(/\s+/gu, ' ');
+  const glyphCount = Math.max(1, Array.from(normalizedText).length);
+  const count = Math.min(
+    3,
+    Math.max(1, Number.isSafeInteger(bubbleCount) ? bubbleCount : 1),
+  );
+  const lengthTier = mangaFrameLengthTier(text);
+  const maximumSize = Math.min(
+    MANGA_TEXT_SIZE_EM[lengthTier],
+    MANGA_COUNT_SIZE_CAP_EM[count],
+  );
+  const capacity =
+    MANGA_COUNT_GLYPH_CAPACITY[count] ??
+    MANGA_LENGTH_GLYPH_CAPACITY[lengthTier];
+  const fittedSize =
+    glyphCount <= capacity
+      ? maximumSize
+      : maximumSize * Math.sqrt(capacity / glyphCount);
+  return Math.round(Math.max(0.65, fittedSize) * 100) / 100;
+}
+
+function stableFraction(value) {
+  let hash = 2166136261;
+  for (const character of String(value)) {
+    hash ^= character.codePointAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return (hash >>> 0) / 4294967295;
+}
+
+function roundHundredths(value) {
+  return Math.round(value * 100) / 100;
+}
+
+export function mangaFramePlacementForBubble(options = {}) {
+  const bubbleCount = Math.min(
+    3,
+    Math.max(
+      1,
+      Number.isSafeInteger(options.bubbleCount) ? options.bubbleCount : 1,
+    ),
+  );
+  const bubbleIndex = Math.min(
+    bubbleCount - 1,
+    Math.max(
+      0,
+      Number.isSafeInteger(options.bubbleIndex) ? options.bubbleIndex : 0,
+    ),
+  );
+  const pattern = MANGA_PLACEMENT_PATTERNS[bubbleCount][bubbleIndex];
+  const lineIndex = Number.isSafeInteger(options.lineIndex)
+    ? options.lineIndex
+    : -1;
+  const seed = `${lineIndex}\0${bubbleCount}\0${bubbleIndex}\0${String(options.text ?? '')}`;
+  const verticalOffset =
+    (stableFraction(`${seed}\0vertical`) * 2 - 1) * pattern.jitterYPercent;
+  const inlineJitterIndex = Math.min(
+    MANGA_INLINE_JITTER_REM.length - 1,
+    Math.floor(
+      stableFraction(`${seed}\0inline`) * MANGA_INLINE_JITTER_REM.length,
+    ),
+  );
+  const inlineJitterRem = MANGA_INLINE_JITTER_REM[inlineJitterIndex];
+
+  return Object.freeze({
+    side:
+      bubbleCount === 1
+        ? mangaFrameSideForLine(options.lineIndex)
+        : pattern.side,
+    anchorYPercent: roundHundredths(pattern.anchorYPercent + verticalOffset),
+    inlineJitterRem: roundHundredths(inlineJitterRem),
+  });
+}
+
+export function mangaFrameSideForLine(lineIndex) {
+  if (!Number.isSafeInteger(lineIndex)) return 'right';
+  return ((lineIndex % 4) + 4) % 4 === 3 ? 'left' : 'right';
 }

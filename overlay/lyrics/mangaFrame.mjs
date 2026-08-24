@@ -2,6 +2,7 @@ import {
   DEFAULT_MANGA_FRAME_ID,
   MANGA_FRAME_VIEW_BOX,
   mangaFrameLengthTier,
+  mangaFrameSideForLine,
   resolveMangaFrame,
 } from '../shared/mangaFrameContract.mjs';
 
@@ -49,5 +50,6 @@ export function applyMangaFramePresentation(elements, frame, options = {}) {
   );
   elements.root.dataset.mangaFrame = definition.id;
   elements.root.dataset.mangaLength = mangaFrameLengthTier(frame.currentText);
+  elements.root.dataset.mangaSide = mangaFrameSideForLine(frame.lineIndex);
   return definition;
 }

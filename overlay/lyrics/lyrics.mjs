@@ -9,7 +9,16 @@ import {
   nextPresentationBoundaryDelayMs,
   selectLyricsFrame,
 } from '../shared/state.mjs';
-import { applyMangaFramePresentation } from './mangaFrame.mjs';
+import { preprocessLyricsPresentation } from '../shared/lyricsPresentation.mjs';
+import {
+  mangaFrameLengthTier,
+  mangaFramePlacementForBubble,
+  mangaFrameTextFitEm,
+} from '../shared/mangaFrameContract.mjs';
+import {
+  applyMangaFramePresentation,
+  renderMangaFrameSvg,
+} from './mangaFrame.mjs';
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
@@ -17,6 +26,7 @@ const PREVIEW_FRAME = Object.freeze({
   currentText: '一つずつ こぼした音が',
   nextText: '重なって歌になる',
   language: 'ja',
+  lineIndex: 0,
 });
 const MIN_PRESENTATION_CONFIDENCE = 0.5;
 const PRESENTATION_SECTION_ROLES = new Set([
@@ -29,11 +39,15 @@ const PRESENTATION_SECTION_ROLES = new Set([
   'outro',
 ]);
 const SEGMENT_AWARE_TEMPLATE_IDS = new Set(['karaoke-stack', 'manga-frame']);
-const MANGA_FADE_OUT_DURATION_SECONDS = 0.16;
-const MANGA_FADE_IN_DURATION_SECONDS = 0.18;
+const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
+const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
+const MANGA_BUBBLE_STAGGER_SECONDS = 0.06;
 const lastRenderedBeatKeys = new WeakMap();
 const mangaTransitions = new WeakMap();
 const mangaPulseTimelines = new WeakMap();
+const mangaPulseTargets = new WeakMap();
+const mangaLineIndexes = new WeakMap();
+const mangaSegmentTargets = new WeakMap();
 
 function resolveGsap(options) {
   return options.gsap ?? globalThis.gsap ?? null;
@@ -44,12 +58,92 @@ function progressPercentage(value) {
   return Math.round(Math.min(1, Math.max(0, value)) * 10000) / 100;
 }
 
+function glyphCount(text) {
+  return Math.max(1, Array.from(String(text ?? '').replace(/\s/gu, '')).length);
+}
+
+function projectSegmentsToBubbles(bubbles, segments) {
+  const sourceTotal = segments.reduce(
+    (total, segment) => total + glyphCount(segment.text),
+    0,
+  );
+  const paintedSource = segments.reduce((total, segment) => {
+    const length = glyphCount(segment.text);
+    if (segment.state === 'past') return total + length;
+    if (segment.state !== 'active') return total;
+    const progress = Number.isFinite(segment.progress)
+      ? Math.min(1, Math.max(0, segment.progress))
+      : 0;
+    return total + length * progress;
+  }, 0);
+  const bubbleLengths = bubbles.map((bubble) => glyphCount(bubble.text));
+  const bubbleTotal = bubbleLengths.reduce(
+    (total, length) => total + length,
+    0,
+  );
+  const paintedBubbles = (paintedSource / sourceTotal) * bubbleTotal;
+  const activeSegment = segments.find((segment) => segment.state === 'active');
+  let sourceOffset = 0;
+  let activeEndSource = paintedSource;
+  for (const segment of segments) {
+    const length = glyphCount(segment.text);
+    if (segment === activeSegment) {
+      activeEndSource = sourceOffset + length;
+      break;
+    }
+    sourceOffset += length;
+  }
+  const targetPaintedBubbles = activeSegment
+    ? (activeEndSource / sourceTotal) * bubbleTotal
+    : paintedBubbles;
+  const animationSpan = Math.max(0, targetPaintedBubbles - paintedBubbles);
+  const totalRemainingMs =
+    Number.isFinite(activeSegment?.remainingMs) && activeSegment.remainingMs > 0
+      ? activeSegment.remainingMs
+      : null;
+  let offset = 0;
+
+  return bubbles.map((bubble, index) => {
+    const length = bubbleLengths[index];
+    const end = offset + length;
+    const localProgress = Math.min(
+      1,
+      Math.max(0, (paintedBubbles - offset) / length),
+    );
+    const targetProgress = Math.min(
+      1,
+      Math.max(0, (targetPaintedBubbles - offset) / length),
+    );
+    const fillStart = Math.max(offset, paintedBubbles);
+    const fillEnd = Math.min(end, targetPaintedBubbles);
+    const fillUnits = Math.max(0, fillEnd - fillStart);
+    const delayUnits = Math.max(0, fillStart - paintedBubbles);
+    const delayMs =
+      totalRemainingMs !== null && animationSpan > 0
+        ? (delayUnits / animationSpan) * totalRemainingMs
+        : 0;
+    const durationMs =
+      totalRemainingMs !== null && animationSpan > 0
+        ? (fillUnits / animationSpan) * totalRemainingMs
+        : null;
+    const state =
+      localProgress >= 1 ? 'past' : fillUnits > 0 ? 'active' : 'upcoming';
+    offset += length;
+    return {
+      segmentId: `${activeSegment?.segmentId ?? segments[0]?.segmentId ?? 't2'}:bubble:${index}`,
+      text: bubble.text,
+      state,
+      progress: localProgress,
+      targetProgress,
+      delayMs,
+      remainingMs: state === 'active' ? durationMs : undefined,
+    };
+  });
+}
+
 function renderCurrentLyrics(element, frame, options) {
   const templateId = options.templateId ?? '';
   const gsap = resolveGsap(options);
-  if (templateId === 'manga-frame') {
-    gsap?.killTweensOf?.(Array.from(element.children ?? []));
-  }
   const segments = Array.isArray(frame.currentSegments)
     ? frame.currentSegments
     : [];
@@ -69,6 +163,13 @@ function renderCurrentLyrics(element, frame, options) {
       : segment.state === 'active'
         ? 100
         : 0;
+    const targetProgress = Number.isFinite(segment.targetProgress)
+      ? progressPercentage(segment.targetProgress)
+      : 100;
+    const delayMs =
+      Number.isFinite(segment.delayMs) && segment.delayMs > 0
+        ? segment.delayMs
+        : 0;
     segmentElement.className = 'lyrics-overlay__segment';
     segmentElement.dataset.segmentId = segment.segmentId;
     segmentElement.dataset.segmentState = segment.state;
@@ -82,7 +183,8 @@ function renderCurrentLyrics(element, frame, options) {
     ) {
       if (templateId === 'manga-frame' && typeof gsap?.to === 'function') {
         gsap.to(segmentElement, {
-          '--ovl-segment-progress': '100%',
+          '--ovl-segment-progress': `${targetProgress}%`,
+          delay: delayMs / 1000,
           duration: Math.max(0.001, segment.remainingMs / 1000),
           ease: 'none',
           overwrite: 'auto',
@@ -91,9 +193,10 @@ function renderCurrentLyrics(element, frame, options) {
         segmentElement.animate(
           [
             { '--ovl-segment-progress': `${progress}%` },
-            { '--ovl-segment-progress': '100%' },
+            { '--ovl-segment-progress': `${targetProgress}%` },
           ],
           {
+            delay: Math.max(0, Math.ceil(delayMs)),
             duration: Math.max(1, Math.ceil(segment.remainingMs)),
             easing: 'linear',
             fill: 'forwards',
@@ -103,6 +206,145 @@ function renderCurrentLyrics(element, frame, options) {
     }
     element.append(segmentElement);
   }
+}
+
+function createMangaBubble(
+  documentApi,
+  presentation,
+  bubbleCount,
+  placement,
+  options,
+) {
+  const bubble = documentApi.createElement('span');
+  bubble.className = 'lyrics-overlay__manga-bubble';
+  bubble.dataset.lyricKind = presentation.kind;
+  bubble.dataset.mangaLength = mangaFrameLengthTier(presentation.text);
+  bubble.dataset.mangaSide = placement.side;
+  bubble.dataset.mangaOrder = String(placement.order);
+  bubble.style.setProperty(
+    '--ovl-manga-anchor-y',
+    `${placement.anchorYPercent}%`,
+  );
+  bubble.style.setProperty(
+    '--ovl-manga-inline-jitter',
+    `${placement.inlineJitterRem}rem`,
+  );
+  bubble.style.setProperty(
+    '--ovl-manga-text-fit-size',
+    `${mangaFrameTextFitEm(presentation.text, bubbleCount)}em`,
+  );
+
+  const svg = documentApi.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'lyrics-overlay__manga-frame');
+  svg.setAttribute('aria-hidden', 'true');
+  svg.setAttribute('focusable', 'false');
+  renderMangaFrameSvg(
+    svg,
+    presentation.kind === 'aside'
+      ? options.mangaFrameId === 'whisper'
+        ? 'thought'
+        : 'whisper'
+      : options.mangaFrameId,
+  );
+
+  const text = documentApi.createElement('strong');
+  text.className = 'lyrics-overlay__manga-text';
+  text.dataset.lyricKind = presentation.kind;
+  bubble.append(svg, text);
+  return { bubble, text };
+}
+
+function renderMangaLyrics(elements, frame, options) {
+  const group = elements.mangaBubbles;
+  const documentApi = group?.ownerDocument ?? globalThis.document;
+  if (!group || !documentApi?.createElement || !documentApi?.createElementNS) {
+    renderCurrentLyrics(elements.current, frame, options);
+    return;
+  }
+
+  const gsap = resolveGsap(options);
+  mangaPulseTimelines.get(elements.root)?.kill?.();
+  mangaPulseTimelines.delete(elements.root);
+  gsap?.killTweensOf?.(mangaPulseTargets.get(elements.root) ?? []);
+  mangaPulseTargets.delete(elements.root);
+  gsap?.killTweensOf?.(mangaSegmentTargets.get(elements.root) ?? []);
+  mangaSegmentTargets.delete(elements.root);
+  group.textContent = '';
+
+  const segments = Array.isArray(frame.currentSegments)
+    ? frame.currentSegments
+    : [];
+  const presentation = preprocessLyricsPresentation(frame.currentText, {
+    language: frame.language,
+  });
+  const bubbles = presentation.bubbles;
+  const projectedSegments =
+    segments.length > 0 && presentation.transformed
+      ? projectSegmentsToBubbles(bubbles, segments)
+      : null;
+  const segmentTargets = [];
+  const placements = bubbles.map((bubble, index) => ({
+    ...mangaFramePlacementForBubble({
+      bubbleCount: bubbles.length,
+      bubbleIndex: index,
+      lineIndex: frame.lineIndex,
+      text: bubble.text,
+    }),
+    order: index + 1,
+  }));
+
+  group.dataset.mangaCount = String(bubbles.length);
+  group.dataset.mangaLayout = placements
+    .map((placement) => placement.side)
+    .join('-');
+  elements.root.dataset.mangaSide = placements[0]?.side ?? 'right';
+  group.hidden = !frame.visible;
+  elements.root.setAttribute('aria-label', frame.currentText);
+  elements.current.hidden = true;
+  elements.current.textContent = '';
+
+  for (const [index, bubblePresentation] of bubbles.entries()) {
+    const { bubble, text } = createMangaBubble(
+      documentApi,
+      bubblePresentation,
+      bubbles.length,
+      placements[index],
+      options,
+    );
+    if (segments.length > 0) {
+      renderCurrentLyrics(
+        text,
+        projectedSegments
+          ? {
+              ...frame,
+              currentText: bubblePresentation.text,
+              currentSegments: [projectedSegments[index]],
+            }
+          : frame,
+        options,
+      );
+      segmentTargets.push(...Array.from(text.children ?? []));
+    } else {
+      text.textContent = bubblePresentation.text;
+    }
+    group.append(bubble);
+  }
+  if (segmentTargets.length > 0) {
+    mangaSegmentTargets.set(elements.root, segmentTargets);
+  }
+  elements.current.textContent = frame.currentText;
+}
+
+function clearMangaLyrics(elements) {
+  if (elements.mangaBubbles) {
+    elements.mangaBubbles.textContent = '';
+    elements.mangaBubbles.hidden = true;
+    delete elements.mangaBubbles.dataset.mangaCount;
+    delete elements.mangaBubbles.dataset.mangaSide;
+    delete elements.mangaBubbles.dataset.mangaLayout;
+  }
+  elements.root.removeAttribute?.('aria-label');
+  elements.current.hidden = false;
 }
 
 function activeTemplateId(elements, options) {
@@ -161,12 +403,16 @@ function applyMusicStructurePresentation(elements, frame, options) {
 
   elements.root.dataset.musicDownbeat = 'true';
   const pulseTarget =
-    templateId === 'manga-frame' ? elements.root : elements.current;
+    templateId === 'manga-frame'
+      ? Array.from(elements.mangaBubbles?.children ?? [])
+      : elements.current;
+  const hasPulseTarget = templateId !== 'manga-frame' || pulseTarget.length > 0;
   if (
     beatKey !== previousBeatKey &&
     Number.isFinite(beat.elapsedMs) &&
     beat.elapsedMs <= 250 &&
     frame.visible &&
+    hasPulseTarget &&
     options.reducedMotion !== true &&
     (templateId === 'manga-frame' || typeof pulseTarget.animate === 'function')
   ) {
@@ -178,18 +424,20 @@ function applyMusicStructurePresentation(elements, frame, options) {
         onComplete: () => {
           if (mangaPulseTimelines.get(elements.root) === timeline) {
             mangaPulseTimelines.delete(elements.root);
+            mangaPulseTargets.delete(elements.root);
           }
         },
       });
       mangaPulseTimelines.set(elements.root, timeline);
+      mangaPulseTargets.set(elements.root, pulseTarget);
       timeline
         .addLabel('accent')
         .to(
-          elements.root,
+          pulseTarget,
           { scale: 1.025, duration: 0.09, ease: 'power1.out' },
           'accent',
         )
-        .to(elements.root, {
+        .to(pulseTarget, {
           scale: 1,
           duration: 0.09,
           ease: 'power1.inOut',
@@ -210,11 +458,20 @@ function applyMusicStructurePresentation(elements, frame, options) {
 function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   if (isMangaFrame) {
     applyMangaFramePresentation(elements, frame, options);
+    if (Number.isSafeInteger(frame.lineIndex)) {
+      mangaLineIndexes.set(elements.root, frame.lineIndex);
+    } else {
+      mangaLineIndexes.delete(elements.root);
+    }
   } else {
     delete elements.root.dataset.mangaFrame;
     delete elements.root.dataset.mangaLength;
+    delete elements.root.dataset.mangaSide;
+    mangaLineIndexes.delete(elements.root);
+    clearMangaLyrics(elements);
   }
-  renderCurrentLyrics(elements.current, frame, options);
+  if (isMangaFrame) renderMangaLyrics(elements, frame, options);
+  else renderCurrentLyrics(elements.current, frame, options);
   elements.current.dataset.currentText = frame.currentText;
   elements.next.textContent = isMangaFrame ? '' : frame.nextText;
   elements.root.hidden = !frame.visible;
@@ -227,16 +484,59 @@ function clearMangaTransition(root, token) {
   if (mangaTransitions.get(root) === token) mangaTransitions.delete(root);
 }
 
+function matchesMangaTransition(token, frame) {
+  return (
+    token?.targetText === frame.currentText &&
+    token.targetLineIndex === frame.lineIndex &&
+    token.visible === frame.visible
+  );
+}
+
+function updateMangaTransition(token, frame, options) {
+  token.frame = frame;
+  token.options = options;
+}
+
+function commitMangaTransitionFrame(elements, token) {
+  commitLyricsFrame(elements, token.frame, token.options, true);
+  token.committedFrame = token.frame;
+}
+
+function completeMangaTransition(elements, root, token) {
+  if (mangaTransitions.get(root) !== token) return;
+  if (token.committedFrame !== token.frame) {
+    commitMangaTransitionFrame(elements, token);
+  }
+  clearMangaTransition(root, token);
+}
+
+function mangaBubbleTargets(elements) {
+  return Array.from(elements.mangaBubbles?.children ?? []);
+}
+
+function addMangaBubbleFade(timeline, targets, direction) {
+  const entering = direction === 'enter';
+  timeline.addLabel(direction).to(
+    targets,
+    {
+      autoAlpha: entering ? 1 : 0,
+      duration: entering
+        ? MANGA_FADE_IN_DURATION_SECONDS
+        : MANGA_FADE_OUT_DURATION_SECONDS,
+      ease: entering ? 'power2.out' : 'power2.in',
+      overwrite: 'auto',
+      stagger: { each: MANGA_BUBBLE_STAGGER_SECONDS, from: 'start' },
+    },
+    direction,
+  );
+}
+
 function transitionMangaFrame(elements, frame, options, enterOnly = false) {
   const root = elements.root;
   const gsap = resolveGsap(options);
   const activeTransition = mangaTransitions.get(root);
-  if (
-    activeTransition?.targetText === frame.currentText &&
-    activeTransition.visible === frame.visible
-  ) {
-    activeTransition.frame = frame;
-    activeTransition.options = options;
+  if (matchesMangaTransition(activeTransition, frame)) {
+    updateMangaTransition(activeTransition, frame, options);
     return;
   }
   activeTransition?.timeline?.kill?.();
@@ -245,79 +545,63 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
     timeline: null,
     frame,
     options,
+    committedFrame: null,
+    targetLineIndex: frame.lineIndex,
     targetText: frame.currentText,
     visible: frame.visible,
   };
   mangaTransitions.set(root, token);
   const timeline = gsap.timeline({
-    onComplete: () => clearMangaTransition(root, token),
+    onComplete: () => completeMangaTransition(elements, root, token),
   });
   token.timeline = timeline;
 
   if (enterOnly) {
-    commitLyricsFrame(elements, frame, options, true);
+    commitMangaTransitionFrame(elements, token);
     if (!frame.visible) {
       clearMangaTransition(root, token);
       timeline.kill?.();
       return;
     }
-    gsap.set(root, { autoAlpha: 0 });
-    timeline.addLabel('enter').to(
-      root,
-      {
-        autoAlpha: 1,
-        duration: MANGA_FADE_IN_DURATION_SECONDS,
-        ease: 'power2.out',
-        overwrite: 'auto',
-      },
-      'enter',
-    );
+    const incomingBubbles = mangaBubbleTargets(elements);
+    gsap.set(incomingBubbles, { autoAlpha: 0 });
+    addMangaBubbleFade(timeline, incomingBubbles, 'enter');
     return;
   }
 
-  timeline
-    .addLabel('exit')
-    .to(
-      root,
-      {
-        autoAlpha: 0,
-        duration: MANGA_FADE_OUT_DURATION_SECONDS,
-        ease: 'power2.in',
-        overwrite: 'auto',
-      },
-      'exit',
-    )
-    .add(() => {
-      if (mangaTransitions.get(root) !== token) return;
-      commitLyricsFrame(elements, token.frame, token.options, true);
-      if (token.frame.visible) gsap.set(root, { autoAlpha: 0 });
-    });
-  if (frame.visible) {
-    timeline.addLabel('enter').to(
-      root,
-      {
-        autoAlpha: 1,
-        duration: MANGA_FADE_IN_DURATION_SECONDS,
-        ease: 'power2.out',
-        overwrite: 'auto',
-      },
-      'enter',
-    );
-  }
+  addMangaBubbleFade(timeline, mangaBubbleTargets(elements), 'exit');
+  timeline.add(() => {
+    if (mangaTransitions.get(root) !== token) return;
+    commitMangaTransitionFrame(elements, token);
+    if (!token.frame.visible) return;
+    const incomingBubbles = mangaBubbleTargets(elements);
+    gsap.set(incomingBubbles, { autoAlpha: 0 });
+    addMangaBubbleFade(timeline, incomingBubbles, 'enter');
+  });
 }
 
 function stopMangaAnimations(elements, options = {}, clearProps = false) {
   const gsap = resolveGsap(options);
+  const pulseTargets = mangaPulseTargets.get(elements.root) ?? [];
+  const bubbleTargets = mangaBubbleTargets(elements);
   mangaTransitions.get(elements.root)?.timeline?.kill?.();
   mangaTransitions.delete(elements.root);
   mangaPulseTimelines.get(elements.root)?.kill?.();
   mangaPulseTimelines.delete(elements.root);
+  gsap?.killTweensOf?.(pulseTargets);
+  mangaPulseTargets.delete(elements.root);
   gsap?.killTweensOf?.(elements.root);
+  if (elements.mangaBubbles) gsap?.killTweensOf?.(elements.mangaBubbles);
+  gsap?.killTweensOf?.(bubbleTargets);
+  gsap?.killTweensOf?.(mangaSegmentTargets.get(elements.root) ?? []);
+  mangaSegmentTargets.delete(elements.root);
   gsap?.killTweensOf?.(Array.from(elements.current.children ?? []));
   if (clearProps) {
     gsap?.set?.(elements.root, {
       clearProps: 'opacity,visibility,scale',
     });
+    gsap?.set?.(pulseTargets, { clearProps: 'scale' });
+    gsap?.set?.(bubbleTargets, { clearProps: 'opacity,visibility' });
   }
 }
 
@@ -331,13 +615,27 @@ export function renderLyricsFrame(elements, frame, options = {}) {
   const templateId = activeTemplateId(elements, options);
   const renderOptions = { ...options, templateId };
   const isMangaFrame = templateId === 'manga-frame';
-  const lineChanged = previousText !== frame.currentText;
+  const lineChanged =
+    previousText !== frame.currentText ||
+    (isMangaFrame &&
+      Number.isSafeInteger(frame.lineIndex) &&
+      mangaLineIndexes.get(elements.root) !== frame.lineIndex);
   const gsap = resolveGsap(renderOptions);
   const canAnimateManga =
     isMangaFrame &&
     lineChanged &&
     renderOptions.reducedMotion !== true &&
     typeof gsap?.timeline === 'function';
+  const activeTransition = mangaTransitions.get(elements.root);
+
+  if (
+    isMangaFrame &&
+    renderOptions.reducedMotion !== true &&
+    matchesMangaTransition(activeTransition, frame)
+  ) {
+    updateMangaTransition(activeTransition, frame, renderOptions);
+    return;
+  }
 
   if (canAnimateManga && !elements.root.hidden && previousText) {
     transitionMangaFrame(elements, frame, renderOptions);
@@ -433,7 +731,7 @@ function boot() {
   const elements = {
     root: document.querySelector('#lyrics-overlay'),
     current: document.querySelector('#lyrics-current'),
-    mangaFrame: document.querySelector('#lyrics-manga-frame'),
+    mangaBubbles: document.querySelector('#lyrics-manga-bubbles'),
     next: document.querySelector('#lyrics-next'),
   };
   if (!elements.root || !elements.current || !elements.next) return;

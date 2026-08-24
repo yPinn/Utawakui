@@ -55,14 +55,14 @@
     --ovl-user-outline: var(--ovl-color-outline);
   }
 
-  @media (max-width: 48rem), (max-height: 48rem) {
+  @media (max-width: 48rem) {
     :root {
       --ovl-safe-inline: var(--ovl-primitive-space-6);
       --ovl-safe-block: var(--ovl-primitive-space-6);
     }
   }
 
-  @media (max-width: 36rem), (max-height: 36rem) {
+  @media (max-width: 36rem) {
     :root {
       --ovl-safe-inline: var(--ovl-primitive-space-4);
       --ovl-safe-block: var(--ovl-primitive-space-4);

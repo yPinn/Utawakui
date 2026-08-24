@@ -7,25 +7,35 @@ import {
   useTemplateRef,
 } from 'vue';
 import { Copy, Grid2X2, Moon, Sun } from '../../icons/index.js';
+import streamerPreviewImage from '../../assets/output-preview/Reze.png';
+import { OUTPUT_LYRICS_CAPTURE_SIZE } from '../../constants/outputCaptureSizes.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import ObsStreamerPreview from './ObsStreamerPreview.vue';
+import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
+import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
+  activeKind: { type: String, default: null },
+  captureSize: { type: String, default: null },
+  supportedCaptureSizes: { type: Array, default: () => [] },
   outputStatus: { type: Object, default: () => ({ running: false }) },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
   error: { type: String, default: '' },
 });
 
+const emit = defineEmits(['update:captureSize']);
+
 const copyState = shallowRef('idle');
-const previewFrame = useTemplateRef('previewFrame');
+const previewStage = useTemplateRef('previewStage');
 const previewScale = shallowRef(1);
 const previewBackdrop = shallowRef('checker');
-const PREVIEW_CANVAS_WIDTH = 1280;
-const PREVIEW_CANVAS_HEIGHT = 720;
+const PREVIEW_CANVAS_WIDTH = OUTPUT_LYRICS_CAPTURE_SIZE.width;
+const PREVIEW_CANVAS_HEIGHT = OUTPUT_LYRICS_CAPTURE_SIZE.height;
 const PREVIEW_BACKDROPS = Object.freeze([
   { id: 'checker', label: '透明背景', icon: Grid2X2 },
   { id: 'dark', label: '暗色背景', icon: Moon },
@@ -34,18 +44,19 @@ const PREVIEW_BACKDROPS = Object.freeze([
 let copyResetTimer = null;
 let resizeObserver = null;
 
-const isRunning = computed(() => props.outputStatus.running === true);
 const hasClients = computed(() => (props.outputStatus.clients ?? 0) > 0);
-const statusLabel = computed(() => {
-  if (hasClients.value) return 'Browser Source 已連線';
-  if (isRunning.value) return '服務可用';
-  return '服務已停止';
-});
-const statusTone = computed(() => {
-  if (hasClients.value) return 'success';
-  if (isRunning.value) return 'accent';
-  return 'muted';
-});
+const isLyrics = computed(() => props.activeKind === 'lyrics');
+const selectedCaptureSize = computed(
+  () => props.captureSize ?? props.supportedCaptureSizes[0] ?? 'small',
+);
+const runtimeStatus = computed(() =>
+  describeOutputRuntimeStatus(props.outputStatus),
+);
+const sourceDiagnostic = computed(() =>
+  ['source-unavailable', 'source-syncing'].includes(runtimeStatus.value.state)
+    ? runtimeStatus.value
+    : null,
+);
 const hasRuntimeTemplate = computed(() => Boolean(props.previewUrl));
 const inspectionUrl = computed(() => {
   if (!props.previewUrl) return null;
@@ -60,7 +71,7 @@ const previewCanvasStyle = computed(() => ({
 }));
 
 function measurePreview() {
-  const availableWidth = previewFrame.value?.clientWidth ?? 0;
+  const availableWidth = previewStage.value?.clientWidth ?? 0;
   if (availableWidth > 0) {
     previewScale.value = availableWidth / PREVIEW_CANVAS_WIDTH;
   }
@@ -82,9 +93,9 @@ async function copyObsUrl() {
 
 onMounted(() => {
   measurePreview();
-  if (typeof ResizeObserver === 'function' && previewFrame.value) {
+  if (typeof ResizeObserver === 'function' && previewStage.value) {
     resizeObserver = new ResizeObserver(measurePreview);
-    resizeObserver.observe(previewFrame.value);
+    resizeObserver.observe(previewStage.value);
   }
 });
 
@@ -96,41 +107,54 @@ onBeforeUnmount(() => {
 
 <template>
   <section class="obs-overlay-preview" aria-label="Browser Source 預覽">
-    <div
-      ref="previewFrame"
-      class="obs-overlay-preview__frame"
-      :data-tone="preset?.tone"
-      :data-backdrop="previewBackdrop"
-    >
-      <iframe
-        v-if="hasRuntimeTemplate"
-        class="obs-overlay-preview__iframe"
-        :src="inspectionUrl"
-        :style="previewCanvasStyle"
-        :width="PREVIEW_CANVAS_WIDTH"
-        :height="PREVIEW_CANVAS_HEIGHT"
-        title="Browser Source 即時預覽"
-        sandbox="allow-scripts allow-same-origin"
-        referrerpolicy="no-referrer"
-      />
-      <div v-else class="obs-overlay-preview__fallback">
-        <span class="obs-overlay-preview__fallback-title">
-          {{ preset?.preview?.title ?? 'Preview' }}
-        </span>
-        <span
-          v-for="line in preset?.preview?.lines ?? []"
-          :key="line"
-          class="obs-overlay-preview__fallback-line"
-        >
-          {{ line }}
-        </span>
+    <div ref="previewStage" class="obs-overlay-preview__stage">
+      <div
+        v-if="isLyrics"
+        class="obs-overlay-preview__frame"
+        :data-tone="preset?.tone"
+        :data-backdrop="previewBackdrop"
+      >
+        <iframe
+          v-if="hasRuntimeTemplate"
+          class="obs-overlay-preview__iframe"
+          :src="inspectionUrl"
+          :style="previewCanvasStyle"
+          :width="PREVIEW_CANVAS_WIDTH"
+          :height="PREVIEW_CANVAS_HEIGHT"
+          title="Browser Source 即時預覽"
+          sandbox="allow-scripts allow-same-origin"
+          referrerpolicy="no-referrer"
+        />
+        <div v-else class="obs-overlay-preview__fallback">
+          <span class="obs-overlay-preview__fallback-title">
+            {{ preset?.preview?.title ?? 'Preview' }}
+          </span>
+          <span
+            v-for="line in preset?.preview?.lines ?? []"
+            :key="line"
+            class="obs-overlay-preview__fallback-line"
+          >
+            {{ line }}
+          </span>
+        </div>
+        <ObsStreamerPreview :src="streamerPreviewImage" />
       </div>
+
+      <ObsWidgetCapturePreview
+        v-else
+        :inspection-url="inspectionUrl"
+        :selected-size="selectedCaptureSize"
+        :supported-sizes="supportedCaptureSizes"
+        :preset="preset"
+        :backdrop="previewBackdrop"
+        @select-size="emit('update:captureSize', $event)"
+      />
     </div>
 
     <div class="obs-overlay-preview__toolbar">
       <div class="obs-overlay-preview__status">
-        <UiChip :tone="statusTone">
-          {{ statusLabel }}
+        <UiChip :tone="runtimeStatus.tone">
+          {{ runtimeStatus.label }}
         </UiChip>
         <span v-if="hasClients" class="obs-overlay-preview__client-count">
           {{ outputStatus.clients }} 個來源
@@ -170,8 +194,15 @@ onBeforeUnmount(() => {
       :message="error"
       compact
     />
+    <UiNotice
+      v-else-if="sourceDiagnostic"
+      :tone="sourceDiagnostic.tone"
+      :title="sourceDiagnostic.label"
+      :message="sourceDiagnostic.detail"
+      compact
+    />
     <p
-      v-else-if="copyState !== 'idle'"
+      v-if="copyState !== 'idle'"
       class="obs-overlay-preview__feedback"
       :role="copyState === 'error' ? 'alert' : 'status'"
       aria-live="polite"
@@ -187,8 +218,11 @@ onBeforeUnmount(() => {
 <style scoped>
 .obs-overlay-preview {
   inline-size: min(100%, var(--ui-output-workbench-stage-max-width));
+  block-size: 100%;
   min-inline-size: 0;
+  min-block-size: 0;
   display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   gap: var(--ui-space-2);
   justify-self: center;
 }
@@ -210,6 +244,16 @@ onBeforeUnmount(() => {
       var(--ui-color-surface-raised) 0
     )
     0 0 / var(--ui-space-6) var(--ui-space-6);
+}
+
+.obs-overlay-preview__stage {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
 }
 
 .obs-overlay-preview__frame[data-backdrop='dark'] {

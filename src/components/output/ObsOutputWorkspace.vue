@@ -44,6 +44,8 @@ const browsedPresetIds = reactive(
 );
 const {
   state: outputState,
+  initialize: initializeOutput,
+  refreshStatus: refreshOutputStatus,
   start: startOutput,
   stop: stopOutput,
   loadSlots,
@@ -145,6 +147,8 @@ async function saveRuntimeSettings(settings) {
 }
 
 onMounted(async () => {
+  await initializeOutput();
+  await refreshOutputStatus();
   await loadSlots(props.slotDefaults);
   for (const definition of props.slotDefinitions) {
     const templateId = outputState.slots[definition.id]?.templateId;

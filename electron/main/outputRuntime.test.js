@@ -364,6 +364,101 @@ describe('outputRuntime controller', () => {
     ).toBe(true);
   });
 
+  it('self-establishes the source handshake on publish from the attached renderer', () => {
+    const runtime = createOutputRuntime({
+      bootId: 'boot-publish-handshake',
+      getConfig: () => ({
+        outputRuntime: { autoStart: false, port: 8700 },
+      }),
+    });
+    const attached = new EventEmitter();
+    attached.id = 15;
+    const ipcSender = { id: 15 };
+    runtime.attachRenderer(attached);
+
+    expect(
+      runtime.publish(
+        {
+          contractVersion: 3,
+          bootId: 'boot-publish-handshake',
+          sourceEpoch: 'epoch-publish-handshake',
+          kind: 'full',
+          revision: 1,
+          payload: createEmptyOutputSnapshot({ revision: 1 }),
+        },
+        ipcSender,
+      ),
+    ).toBe(true);
+    expect(runtime.getStatus()).toMatchObject({
+      revision: 1,
+      observed: { sourceSynchronization: 'ready' },
+    });
+  });
+
+  it('self-establishes the source handshake for the split stream sequence', () => {
+    const runtime = createOutputRuntime({
+      bootId: 'boot-stream-publish-handshake',
+      getConfig: () => ({
+        outputRuntime: { autoStart: false, port: 8700 },
+      }),
+    });
+    const attached = new EventEmitter();
+    attached.id = 16;
+    const ipcSender = { id: 16 };
+    const envelope = (stream, payload) => ({
+      contractVersion: 3,
+      bootId: 'boot-stream-publish-handshake',
+      sourceEpoch: 'epoch-stream-publish-handshake',
+      stream,
+      kind: 'full',
+      revision: 1,
+      payload,
+    });
+    runtime.attachRenderer(attached);
+
+    expect(
+      runtime.publish(
+        envelope('queue.document', {
+          document: {
+            documentId: 'queue-handshake',
+            sourceName: '',
+            items: [],
+          },
+        }),
+        ipcSender,
+      ),
+    ).toBe(true);
+    expect(
+      runtime.publish(
+        envelope('state.snapshot', {
+          generatedAt: '2026-08-24T00:00:00.000Z',
+          displayDelayMs: 0,
+          playback: {
+            status: 'idle',
+            positionMs: 0,
+            durationMs: null,
+            rate: 1,
+            track: null,
+          },
+          lyrics: {
+            documentId: null,
+            documentRevision: 0,
+            offsetMs: 0,
+            activeLineId: null,
+            activeSegmentId: null,
+          },
+          queue: { documentId: 'queue-handshake', documentRevision: 1 },
+          musicStructure: { documentId: null, documentRevision: 0 },
+        }),
+        ipcSender,
+      ),
+    ).toBe(true);
+    expect(runtime.getStatus()).toMatchObject({
+      revision: 1,
+      observed: { sourceSynchronization: 'ready' },
+    });
+  });
+
   it('starts automatically only when configured and gate-authorized', async () => {
     const { factory, servers } = createServerFactory();
     let config = { outputRuntime: { autoStart: false, port: 8700 } };
