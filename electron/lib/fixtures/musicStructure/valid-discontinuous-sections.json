@@ -12,26 +12,22 @@
     "modelIds": ["fixture-model-v1"],
     "completedAt": "2026-08-23T00:00:00.000Z"
   },
-  "tempo": { "bpm": 128.5, "confidence": 0.91 },
-  "beats": [
-    { "timeMs": 250, "positionInBar": 1, "downbeat": true },
-    { "timeMs": 717, "positionInBar": 2, "downbeat": false }
-  ],
+  "tempo": { "bpm": 120, "confidence": 0.82 },
+  "beats": [{ "timeMs": 500, "downbeat": true, "confidence": 0.9 }],
   "sections": [
     {
       "sectionId": "section_01",
       "startMs": 0,
-      "endMs": 16000,
+      "endMs": 12000,
       "role": "intro",
       "confidence": 0.8
     },
     {
       "sectionId": "section_02",
-      "startMs": 16000,
+      "startMs": 13000,
       "endMs": 180000,
-      "role": "chorus",
-      "rawLabel": "Hook",
-      "confidence": 0.86
+      "role": "verse",
+      "confidence": 0.75
     }
   ]
 }

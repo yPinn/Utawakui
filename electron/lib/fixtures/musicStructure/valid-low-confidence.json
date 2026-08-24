@@ -18,9 +18,9 @@
     {
       "sectionId": "section_01",
       "startMs": 0,
-      "endMs": 30000,
-      "role": "unknown",
-      "rawLabel": "Possible hook",
+      "endMs": 180000,
+      "role": "chorus",
+      "rawLabel": "Chorus",
       "confidence": 0.03
     }
   ]

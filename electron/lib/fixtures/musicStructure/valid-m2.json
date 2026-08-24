@@ -26,10 +26,34 @@
     {
       "sectionId": "section_02",
       "startMs": 12000,
-      "endMs": 42000,
+      "endMs": 54000,
       "role": "verse",
       "rawLabel": "Verse A",
       "confidence": 0.71
+    },
+    {
+      "sectionId": "section_03",
+      "startMs": 54000,
+      "endMs": 90000,
+      "role": "chorus",
+      "rawLabel": "Chorus",
+      "confidence": 0.83
+    },
+    {
+      "sectionId": "section_04",
+      "startMs": 90000,
+      "endMs": 132000,
+      "role": "bridge",
+      "rawLabel": "Bridge",
+      "confidence": 0.68
+    },
+    {
+      "sectionId": "section_05",
+      "startMs": 132000,
+      "endMs": 180000,
+      "role": "outro",
+      "rawLabel": "Outro",
+      "confidence": 0.79
     }
   ]
 }

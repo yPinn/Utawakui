@@ -19,6 +19,7 @@
   "maxBpm": 400,
   "minConfidence": 0,
   "maxConfidence": 1,
+  "minM2SectionConfidence": 0.5,
   "maxBeats": 200000,
   "maxSections": 4096,
   "maxModelIds": 32,

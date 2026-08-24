@@ -53,6 +53,33 @@ describe('validateMusicStructureDocument', () => {
     expect(document.beats[0].confidence).toBe(0.04);
     expect(document.sections[0].confidence).toBe(0.03);
     expect(document.beats[0].positionInBar).toBeUndefined();
+    expect(resolveMusicStructureSignals(document, options)).toMatchObject({
+      level: 'M1',
+      reason: 'current',
+      sectionStatus: 'low-confidence',
+      sections: [],
+    });
+  });
+
+  it('keeps analyzer source and version at document scope for every section', () => {
+    const document = validateMusicStructureDocument(
+      fixture('valid-m2'),
+      options,
+    );
+
+    expect(document.analyzer).toMatchObject({
+      contractVersion: 1,
+      id: 'fixture-analyzer',
+      profileId: 'fixture-cpu-v1',
+      modelIds: ['fixture-model-v1'],
+    });
+    expect(document.sections.map((section) => section.role)).toEqual([
+      'intro',
+      'verse',
+      'chorus',
+      'bridge',
+      'outro',
+    ]);
   });
 
   it('keeps source BPM separate and rejects playback or Lyrics timing fields', () => {
@@ -90,6 +117,7 @@ describe('validateMusicStructureDocument', () => {
     ['invalid-unknown-schema', /schema/i],
     ['invalid-unordered-beats', /monotonic/i],
     ['invalid-overlapping-sections', /overlap/i],
+    ['invalid-section-out-of-bounds', /bounded integer/i],
     ['invalid-unsafe-provenance', /unexpected/i],
   ])('rejects the fixed %s fixture', (name, message) => {
     expect(() =>
@@ -166,6 +194,33 @@ describe('resolveMusicStructureSignals', () => {
       reason: 'unavailable-source',
       tempo: null,
       beats: [],
+      sections: [],
+    });
+  });
+
+  it('requires a complete contiguous section partition before exposing M2', () => {
+    const result = resolveMusicStructureSignals(
+      fixture('valid-discontinuous-sections'),
+      options,
+    );
+
+    expect(result).toMatchObject({
+      level: 'M1',
+      reason: 'current',
+      sectionStatus: 'incomplete',
+      sections: [],
+    });
+    expect(result.tempo?.bpm).toBe(120);
+    expect(result.beats).toHaveLength(1);
+  });
+
+  it('reports missing sections without changing a valid M1 result', () => {
+    expect(
+      resolveMusicStructureSignals(fixture('valid-m1'), options),
+    ).toMatchObject({
+      level: 'M1',
+      reason: 'current',
+      sectionStatus: 'missing',
       sections: [],
     });
   });

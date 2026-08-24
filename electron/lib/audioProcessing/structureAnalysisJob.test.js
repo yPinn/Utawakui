@@ -9,7 +9,9 @@ import {
   STRUCTURE_ANALYZER_ID,
   STRUCTURE_MODEL_ID,
   STRUCTURE_PROFILE_ID,
+  SUPPORTED_STRUCTURE_ANALYSIS_MODELS,
   createStructureAnalysisJob,
+  normalizeWorkerResult,
 } from './structureAnalysisJob.js';
 
 const HASH_A = 'a'.repeat(64);
@@ -222,7 +224,71 @@ function workerResult() {
   };
 }
 
+function semanticWorkerResult(sectionOverrides = {}) {
+  return {
+    ...workerResult(),
+    analyzerId: 'all-in-one-structure',
+    profileId: 'all-in-one-cpu-v1',
+    modelId: 'all-in-one-harmonix-fold0',
+    sections: [
+      {
+        sectionId: 'section_01',
+        startMs: 0,
+        endMs: 12000,
+        role: 'intro',
+        rawLabel: 'intro',
+        confidence: 0.82,
+      },
+      {
+        sectionId: 'section_02',
+        startMs: 12000,
+        endMs: 180000,
+        role: 'chorus',
+        rawLabel: 'chorus',
+        confidence: 0.76,
+        ...sectionOverrides,
+      },
+    ],
+  };
+}
+
+function semanticProvenance() {
+  return {
+    sourceSha256: SOURCE_SHA256,
+    environmentLock: HASH_B,
+    modelId: 'all-in-one-harmonix-fold0',
+    completedAt: '2026-08-24T00:00:00.000Z',
+  };
+}
+
 describe('createStructureAnalysisJob', () => {
+  it('publishes only complete confident semantic sections from the M2 runtime path', () => {
+    const profile =
+      SUPPORTED_STRUCTURE_ANALYSIS_MODELS['all-in-one-harmonix-fold0'];
+    const accepted = normalizeWorkerResult(
+      semanticWorkerResult(),
+      semanticProvenance(),
+      profile,
+    );
+
+    expect(accepted.document.sections).toHaveLength(2);
+
+    for (const sectionOverrides of [
+      { confidence: 0.49 },
+      { role: 'unknown', rawLabel: 'other' },
+      { startMs: 13000 },
+    ]) {
+      const downgraded = normalizeWorkerResult(
+        semanticWorkerResult(sectionOverrides),
+        semanticProvenance(),
+        profile,
+      );
+      expect(downgraded.document.tempo?.bpm).toBe(120);
+      expect(downgraded.document.beats).toHaveLength(2);
+      expect(downgraded.document.sections).toEqual([]);
+    }
+  });
+
   it('derives a fixed offline CPU request and publishes only a validated document', async () => {
     expect(STRUCTURE_PROFILE_ID).toBe('beat-this-small0-cpu-v2');
     const prepared = prepareJob();

@@ -427,6 +427,32 @@ function m0Fallback(reason) {
   return { level: 'M0', reason, tempo: null, beats: [], sections: [] };
 }
 
+function evaluateM2Sections(sections, durationMs) {
+  if (sections.length === 0) return 'missing';
+  if (sections.some((section) => section.role === 'unknown')) return 'unknown';
+  if (
+    sections.some(
+      (section) =>
+        !Number.isFinite(section.confidence) ||
+        section.confidence < contractValues.minM2SectionConfidence,
+    )
+  ) {
+    return 'low-confidence';
+  }
+  if (
+    sections[0].startMs !== 0 ||
+    sections.some(
+      (section, index) =>
+        index > 0 && section.startMs !== sections[index - 1].endMs,
+    ) ||
+    Math.abs(sections.at(-1).endMs - durationMs) >
+      contractValues.durationToleranceMs
+  ) {
+    return 'incomplete';
+  }
+  return 'current';
+}
+
 function resolveMusicStructureSignals(rawDocument, options = {}) {
   if (rawDocument === null || rawDocument === undefined) {
     return m0Fallback('missing');
@@ -451,22 +477,25 @@ function resolveMusicStructureSignals(rawDocument, options = {}) {
         : 'invalid',
     );
   }
+  const sectionStatus = evaluateM2Sections(
+    document.sections,
+    document.source.durationMs,
+  );
+  const sections = sectionStatus === 'current' ? document.sections : [];
+  const level =
+    sections.length > 0
+      ? 'M2'
+      : document.tempo !== null || document.beats.length > 0
+        ? 'M1'
+        : 'M0';
+  if (level === 'M0') return m0Fallback('no-signal');
   return {
-    level:
-      document.sections.length > 0
-        ? 'M2'
-        : document.tempo !== null || document.beats.length > 0
-          ? 'M1'
-          : 'M0',
-    reason:
-      document.tempo === null &&
-      document.beats.length === 0 &&
-      document.sections.length === 0
-        ? 'no-signal'
-        : 'current',
+    level,
+    reason: 'current',
     tempo: document.tempo,
     beats: document.beats,
-    sections: document.sections,
+    sections,
+    sectionStatus,
   };
 }
 
@@ -474,6 +503,7 @@ module.exports = {
   MUSIC_STRUCTURE_OVERRIDE_SCHEMA_VERSION,
   MUSIC_STRUCTURE_SCHEMA_VERSION,
   MusicStructureValidationError,
+  evaluateM2Sections,
   resolveMusicStructureSignals,
   validateMusicStructureDocument,
   validateMusicStructureOverrides,

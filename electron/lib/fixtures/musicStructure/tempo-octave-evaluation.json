@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "toleranceRatio": 0.04,
+  "cases": [
+    {
+      "id": "same-tempo",
+      "referenceBpm": 120,
+      "estimatedBpm": 120.6,
+      "expectedRelation": "match"
+    },
+    {
+      "id": "half-time-estimate",
+      "referenceBpm": 120,
+      "estimatedBpm": 60.2,
+      "expectedRelation": "half-time"
+    },
+    {
+      "id": "double-time-estimate",
+      "referenceBpm": 92,
+      "estimatedBpm": 183.5,
+      "expectedRelation": "double-time"
+    },
+    {
+      "id": "unrelated-estimate",
+      "referenceBpm": 122,
+      "estimatedBpm": 97,
+      "expectedRelation": "unrelated"
+    }
+  ]
+}

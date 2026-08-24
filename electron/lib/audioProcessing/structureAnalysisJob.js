@@ -15,7 +15,10 @@ const {
   createAudioPythonProcessJob,
 } = require('./engines/audioPythonProcessJob');
 const { createFfmpegDecodeJob } = require('./ffmpegDecodeJob');
-const { validateMusicStructureDocument } = require('../musicStructureContract');
+const {
+  evaluateM2Sections,
+  validateMusicStructureDocument,
+} = require('../musicStructureContract');
 const musicStructureContractValues = require('../../../shared/musicStructureContractValues.json');
 
 const STRUCTURE_CAPABILITY_ID = 'structure-analysis';
@@ -166,7 +169,7 @@ function normalizeWorkerResult(result, provenance, profile) {
     sourceSha256: provenance.sourceSha256,
     sourceDurationMs: result.durationMs,
   };
-  const document = validateMusicStructureDocument(
+  let document = validateMusicStructureDocument(
     {
       schemaVersion: 1,
       source: {
@@ -187,6 +190,13 @@ function normalizeWorkerResult(result, provenance, profile) {
     },
     identity,
   );
+  if (
+    profile.signals.includes('sections') &&
+    evaluateM2Sections(document.sections, document.source.durationMs) !==
+      'current'
+  ) {
+    document = { ...document, sections: [] };
+  }
   return { document, identity };
 }
 
@@ -439,4 +449,5 @@ module.exports = {
   STRUCTURE_PROFILE_ID,
   SUPPORTED_STRUCTURE_ANALYSIS_MODELS,
   createStructureAnalysisJob,
+  normalizeWorkerResult,
 };
