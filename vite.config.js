@@ -4,9 +4,10 @@
 const { defineConfig } = require('vitest/config');
 const vue = require('@vitejs/plugin-vue');
 const path = require('node:path');
+const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
 
 module.exports = defineConfig({
-  plugins: [vue()],
+  plugins: [vue(), createOverlayReloadPlugin(__dirname)],
   // Required for Electron loadFile(); file:// cannot resolve root paths.
   base: './',
   server: {
