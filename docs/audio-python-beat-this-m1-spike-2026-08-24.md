@@ -19,13 +19,16 @@ ground truth，下一階段仍需加入有標註的 beat/downbeat fixtures。
 - Runtime pair：PyTorch 2.11.0+cpu / TorchAudio 2.11.0+cpu。
 - Dependency graph：16 個 exact-version Windows wheels，拒絕 sdist。
 - Checkpoints：`small0` 與 `final0` 皆以固定 URL、size、SHA-256 描述。
-- Product default candidate：`beat-this-small0-cpu-v1`。
+- Product default candidate：`beat-this-small0-cpu-v2`。
 
 所有 runtime、package 與 model 輸入均由 main process 的 manifest、角色集合、
 檔名、大小與 SHA-256 驗證。Worker 不接受 renderer 提供的路徑、模型 id 或參數，
 也不會在執行時下載 checkpoint。
 
-## Windows CPU 實測
+## Windows CPU 初始實測（v1 baseline）
+
+下表保留校準前 `cpu-v1` 的初始效能與推論基準；目前 `cpu-v2` 的校準結果另列於
+後方「BPM 校準修正」。
 
 | 輸入                    | 模型   | 經過時間 | Peak working set | 推定 BPM | Beats / Downbeats |
 | ----------------------- | ------ | -------: | ---------------: | -------: | ----------------: |
