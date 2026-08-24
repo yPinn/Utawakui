@@ -35,13 +35,13 @@ describe('Music Analysis scroll layout', () => {
     );
   });
 
-  it('orders batch actions before the selected-track job and result summary', () => {
-    const batchPanel = workbenchSource.indexOf('<MusicAnalysisBatchPanel');
-    const jobPanel = workbenchSource.indexOf('<MusicAnalysisJobPanel');
-    const resultSummary = workbenchSource.indexOf('<MusicStructureSummary');
-
-    expect(batchPanel).toBeGreaterThan(-1);
-    expect(batchPanel).toBeLessThan(jobPanel);
-    expect(jobPanel).toBeLessThan(resultSummary);
+  it('shows one task surface at a time for single-track and batch modes', () => {
+    expect(workbenchSource).toContain("analysisMode === 'batch'");
+    expect(workbenchSource).toMatch(
+      /<MusicAnalysisBatchPanel[\s\S]*v-if="analysisMode === 'batch'"/,
+    );
+    expect(workbenchSource).toMatch(
+      /<template v-else>[\s\S]*<MusicAnalysisJobPanel[\s\S]*<MusicStructureSummary/,
+    );
   });
 });

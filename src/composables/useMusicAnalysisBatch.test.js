@@ -91,6 +91,10 @@ describe('useMusicAnalysisBatch', () => {
     await harness.batch.initialize();
 
     expect(harness.batch.active.value).toBe(true);
+    expect(harness.batch.selectedTrackIds.value).toEqual([
+      'track-1',
+      'track-2',
+    ]);
     expect(harness.batch.itemsByTrackId.value['track-1']).toMatchObject({
       status: 'running',
       percent: 50,
@@ -117,6 +121,10 @@ describe('useMusicAnalysisBatch', () => {
 
     expect(harness.batch.active.value).toBe(false);
     expect(harness.batch.summary.value).toBe('完成 1 首，略過 1 首');
+    expect(harness.batch.selectedTrackIds.value).toEqual([
+      'track-1',
+      'track-2',
+    ]);
   });
 
   it('caps renderer selection at the main-process batch limit', () => {
@@ -131,6 +139,15 @@ describe('useMusicAnalysisBatch', () => {
     expect(harness.batch.error.value).toBe('單次最多選取 500 首曲目。');
   });
 
+  it('sets or clears only the requested allowlisted tracks', () => {
+    const harness = createHarness();
+
+    harness.batch.setTracksSelected(['track-1', 'track-2', 'unknown'], true);
+    harness.batch.setTracksSelected(['track-2', 'unknown'], false);
+
+    expect(harness.batch.selectedTrackIds.value).toEqual(['track-1']);
+  });
+
   it('cancels through the batch endpoint and cleans up its listener', async () => {
     const harness = createHarness();
     harness.bridge.getMusicStructureBatchStatus.mockResolvedValue(
@@ -139,6 +156,23 @@ describe('useMusicAnalysisBatch', () => {
     await harness.batch.initialize();
 
     await expect(harness.batch.cancel()).resolves.toBe(true);
+    expect(harness.batch.selectedTrackIds.value).toEqual([
+      'track-1',
+      'track-2',
+    ]);
+    harness.emit({
+      batch: {
+        ...runningBatch().batch,
+        status: 'cancelled',
+        cancelled: 2,
+        activeTrackId: null,
+        percent: 100,
+        items: [
+          { trackId: 'track-1', status: 'cancelled' },
+          { trackId: 'track-2', status: 'cancelled' },
+        ],
+      },
+    });
     harness.batch.clearSelection();
     expect(harness.batch.selectedTrackIds.value).toEqual([]);
 

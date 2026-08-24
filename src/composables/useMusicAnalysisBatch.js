@@ -168,7 +168,18 @@ export function useMusicAnalysisBatch({ tracks, bridge, onStatusChange } = {}) {
   function applyStatus(payload) {
     if (disposed) return null;
     try {
-      batch.value = normalizeBatchStatus(payload);
+      const nextBatch = normalizeBatchStatus(payload);
+      if (['running', 'cancelling'].includes(nextBatch?.status)) {
+        const allowed = allowedTrackIds();
+        selectedTrackIds.value = [
+          ...new Set(
+            nextBatch.items
+              .map(({ trackId }) => trackId)
+              .filter((trackId) => allowed.has(trackId)),
+          ),
+        ].slice(0, MAX_BATCH_TRACKS);
+      }
+      batch.value = nextBatch;
       error.value = '';
       onStatusChange?.(batch.value);
       return batch.value;
@@ -213,13 +224,18 @@ export function useMusicAnalysisBatch({ tracks, bridge, onStatusChange } = {}) {
     error.value = '';
   }
 
-  function selectTracks(trackIds) {
+  function setTracksSelected(trackIds, selected) {
     if (!Array.isArray(trackIds) || active.value) return;
     const allowed = allowedTrackIds();
     const next = new Set(selectedTrackIds.value);
     let reachedLimit = false;
     for (const trackId of trackIds) {
-      if (!allowed.has(trackId) || next.has(trackId)) continue;
+      if (!allowed.has(trackId)) continue;
+      if (selected !== true) {
+        next.delete(trackId);
+        continue;
+      }
+      if (next.has(trackId)) continue;
       if (next.size >= MAX_BATCH_TRACKS) {
         reachedLimit = true;
         continue;
@@ -228,6 +244,10 @@ export function useMusicAnalysisBatch({ tracks, bridge, onStatusChange } = {}) {
     }
     selectedTrackIds.value = [...next];
     error.value = reachedLimit ? '單次最多選取 500 首曲目。' : '';
+  }
+
+  function selectTracks(trackIds) {
+    setTracksSelected(trackIds, true);
   }
 
   function clearSelection() {
@@ -291,6 +311,7 @@ export function useMusicAnalysisBatch({ tracks, bridge, onStatusChange } = {}) {
     initialize,
     refreshStatus,
     toggleTrack,
+    setTracksSelected,
     selectTracks,
     clearSelection,
     start,

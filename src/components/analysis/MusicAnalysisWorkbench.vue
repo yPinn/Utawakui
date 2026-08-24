@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, shallowRef, watch } from 'vue';
 import { useMusicAnalysisWorkbench } from '../../composables/useMusicAnalysisWorkbench.js';
 import { Info } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
@@ -13,7 +13,17 @@ import MusicAnalysisTrackPicker from './MusicAnalysisTrackPicker.vue';
 import MusicStructureSummary from './MusicStructureSummary.vue';
 
 const workbench = useMusicAnalysisWorkbench();
-const showCapabilityDetails = ref(false);
+const showCapabilityDetails = shallowRef(false);
+const analysisMode = shallowRef('single');
+
+function setAnalysisMode(mode) {
+  if (workbench.batch.active.value) return;
+  analysisMode.value = mode;
+}
+
+function setBatchSelection({ trackIds, selected }) {
+  workbench.batch.setTracksSelected(trackIds, selected);
+}
 
 async function removeCapability() {
   const confirmed =
@@ -24,6 +34,12 @@ async function removeCapability() {
 
 onMounted(workbench.initialize);
 onUnmounted(workbench.dispose);
+watch(
+  () => workbench.batch.active.value,
+  (active) => {
+    if (active) analysisMode.value = 'batch';
+  },
+);
 </script>
 
 <template>
@@ -53,9 +69,10 @@ onUnmounted(workbench.dispose);
       <aside class="analysis-workbench__tracks">
         <MusicAnalysisTrackPicker
           :tracks="workbench.tracks.value"
+          :mode="analysisMode"
           :selected-track-id="workbench.state.selectedTrackId"
-          :selected-level="workbench.structure.value?.signals?.level"
           :loading="workbench.libraryState.isLoading"
+          :batch-available="workbench.capabilityReady.value"
           :batch-selected-track-ids="workbench.batch.selectedTrackIds.value"
           :batch-items-by-track-id="workbench.batch.itemsByTrackId.value"
           :disabled="
@@ -66,14 +83,15 @@ onUnmounted(workbench.dispose);
             Boolean(workbench.state.activeJob)
           "
           @select="workbench.selectTrack"
-          @toggle-batch="workbench.batch.toggleTrack"
-          @select-visible="workbench.batch.selectTracks"
+          @mode-change="setAnalysisMode"
+          @set-batch-selection="setBatchSelection"
           @clear-batch="workbench.batch.clearSelection"
         />
       </aside>
 
       <div class="analysis-workbench__detail">
         <MusicAnalysisBatchPanel
+          v-if="analysisMode === 'batch'"
           :selected-count="workbench.batch.selectedTrackIds.value.length"
           :batch="workbench.batch.batch.value"
           :active="workbench.batch.active.value"
@@ -88,33 +106,35 @@ onUnmounted(workbench.dispose);
           @start="workbench.startBatchAnalysis"
           @cancel="workbench.cancelBatchAnalysis"
         />
-        <MusicAnalysisJobPanel
-          :selected-track="workbench.selectedTrack.value"
-          :active-job="workbench.state.activeJob"
-          :error="workbench.state.error"
-          :notice="workbench.state.notice"
-          :phase-label="workbench.phaseLabel.value"
-          :stage-label="workbench.stageLabel.value"
-          :progress-percent="workbench.progressPercent.value"
-          :busy="workbench.isBusy.value"
-          :can-analyze="workbench.canAnalyze.value"
-          :can-cancel="
-            workbench.canCancel.value && !workbench.batch.active.value
-          "
-          :capability="workbench.capability.value"
-          :capability-stage-label="workbench.capabilityStageLabel.value"
-          :capability-progress-percent="
-            workbench.capabilityProgressPercent.value
-          "
-          :capability-busy="workbench.capabilityBusy.value"
-          :capability-error="workbench.state.capabilityError"
-          @analyze="workbench.analyzeSelectedTrack"
-          @cancel="workbench.cancelAnalysis"
-          @reload="workbench.refreshSelectedTrack"
-          @prepare="workbench.prepareCapability"
-          @repair="workbench.repairCapability"
-        />
-        <MusicStructureSummary :result="workbench.structure.value" />
+        <template v-else>
+          <MusicAnalysisJobPanel
+            :selected-track="workbench.selectedTrack.value"
+            :active-job="workbench.state.activeJob"
+            :error="workbench.state.error"
+            :notice="workbench.state.notice"
+            :phase-label="workbench.phaseLabel.value"
+            :stage-label="workbench.stageLabel.value"
+            :progress-percent="workbench.progressPercent.value"
+            :busy="workbench.isBusy.value"
+            :can-analyze="workbench.canAnalyze.value"
+            :can-cancel="
+              workbench.canCancel.value && !workbench.batch.active.value
+            "
+            :capability="workbench.capability.value"
+            :capability-stage-label="workbench.capabilityStageLabel.value"
+            :capability-progress-percent="
+              workbench.capabilityProgressPercent.value
+            "
+            :capability-busy="workbench.capabilityBusy.value"
+            :capability-error="workbench.state.capabilityError"
+            @analyze="workbench.analyzeSelectedTrack"
+            @cancel="workbench.cancelAnalysis"
+            @reload="workbench.refreshSelectedTrack"
+            @prepare="workbench.prepareCapability"
+            @repair="workbench.repairCapability"
+          />
+          <MusicStructureSummary :result="workbench.structure.value" />
+        </template>
       </div>
     </div>
 
@@ -140,6 +160,7 @@ onUnmounted(workbench.dispose);
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
+  user-select: none;
 }
 
 .analysis-workbench :deep(.ui-page-header) {
@@ -188,9 +209,9 @@ onUnmounted(workbench.dispose);
   overscroll-behavior: contain;
 }
 
-.analysis-workbench__detail > * + * {
-  padding-block-start: var(--ui-space-5);
-  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+.analysis-workbench :deep(input[type='search']),
+.analysis-workbench :deep(input[type='text']) {
+  user-select: text;
 }
 
 @media (max-width: 840px) {

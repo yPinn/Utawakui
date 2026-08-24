@@ -1,38 +1,45 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
+import { rangeTrackIds } from '../../utils/musicAnalysisSelection.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import MusicAnalysisSelectionToolbar from './MusicAnalysisSelectionToolbar.vue';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
+  mode: {
+    type: String,
+    default: 'single',
+    validator: (value) => ['single', 'batch'].includes(value),
+  },
   selectedTrackId: { type: String, default: '' },
-  selectedLevel: { type: String, default: '' },
   loading: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
+  batchAvailable: { type: Boolean, default: true },
   batchSelectedTrackIds: { type: Array, default: () => [] },
   batchItemsByTrackId: { type: Object, default: () => ({}) },
 });
 
 const emit = defineEmits([
   'select',
-  'toggleBatch',
-  'selectVisible',
+  'modeChange',
+  'setBatchSelection',
   'clearBatch',
 ]);
 const query = shallowRef('');
+const lastBatchAnchorId = shallowRef('');
 
 const BATCH_STATUS = Object.freeze({
-  pending: { label: '等待', tone: 'muted' },
   checking: { label: '檢查中', tone: 'info' },
   running: { label: '分析中', tone: 'info' },
-  completed: { label: '完成', tone: 'success' },
   failed: { label: '失敗', tone: 'danger' },
-  skipped: { label: '略過', tone: 'muted' },
   cancelled: { label: '已取消', tone: 'warning' },
 });
+
+const batchMode = computed(() => props.mode === 'batch');
 
 const visibleTracks = computed(() => {
   const normalized = query.value.trim().toLocaleLowerCase();
@@ -43,26 +50,50 @@ const visibleTracks = computed(() => {
       .includes(normalized),
   );
 });
+const visibleTrackIds = computed(() => visibleTracks.value.map(({ id }) => id));
+const visibleSelectedCount = computed(
+  () =>
+    visibleTrackIds.value.filter((trackId) => isBatchSelected(trackId)).length,
+);
+const allVisibleSelected = computed(
+  () =>
+    visibleTrackIds.value.length > 0 &&
+    visibleSelectedCount.value === visibleTrackIds.value.length,
+);
+const someVisibleSelected = computed(() => visibleSelectedCount.value > 0);
 
-function selectTrack(trackId) {
-  if (!props.disabled) emit('select', trackId);
+function changeMode(mode) {
+  if (props.disabled || mode === props.mode) return;
+  lastBatchAnchorId.value = '';
+  emit('modeChange', mode);
 }
 
 function isBatchSelected(trackId) {
   return props.batchSelectedTrackIds.includes(trackId);
 }
 
-function toggleBatch(trackId) {
-  if (!props.disabled) emit('toggleBatch', trackId);
+function activateTrack(trackId, event) {
+  if (props.disabled) return;
+  if (!batchMode.value) {
+    emit('select', trackId);
+    return;
+  }
+  const trackIds = event?.shiftKey
+    ? rangeTrackIds(visibleTrackIds.value, lastBatchAnchorId.value, trackId)
+    : [trackId];
+  emit('setBatchSelection', {
+    trackIds,
+    selected: !isBatchSelected(trackId),
+  });
+  lastBatchAnchorId.value = trackId;
 }
 
-function selectVisible() {
-  if (!props.disabled) {
-    emit(
-      'selectVisible',
-      visibleTracks.value.map(({ id }) => id),
-    );
-  }
+function setVisibleSelection(selected) {
+  if (props.disabled) return;
+  emit('setBatchSelection', {
+    trackIds: visibleTrackIds.value,
+    selected,
+  });
 }
 
 function batchStatus(trackId) {
@@ -79,30 +110,43 @@ function batchStatus(trackId) {
         </h2>
         <p class="analysis-picker__count">{{ tracks.length }} 首本機曲目</p>
       </div>
-      <UiChip v-if="selectedLevel" tone="info">{{ selectedLevel }}</UiChip>
+      <div class="analysis-picker__mode" role="group" aria-label="分析模式">
+        <UiButton
+          :active="mode === 'single'"
+          :aria-pressed="mode === 'single'"
+          :disabled="disabled"
+          @click="changeMode('single')"
+        >
+          單曲
+        </UiButton>
+        <UiButton
+          :active="batchMode"
+          :aria-pressed="batchMode"
+          :disabled="disabled || (!batchAvailable && !batchMode)"
+          :title="
+            batchAvailable || batchMode
+              ? '選取多首曲目進行分析'
+              : '請先下載並安裝分析功能'
+          "
+          @click="changeMode('batch')"
+        >
+          批次選取
+        </UiButton>
+      </div>
     </div>
 
     <UiSearchBox v-model="query" placeholder="搜尋可分析曲目" />
 
-    <div class="analysis-picker__batch-tools">
-      <span class="analysis-picker__selected-count">
-        已選 {{ batchSelectedTrackIds.length }} 首
-      </span>
-      <div class="analysis-picker__batch-actions">
-        <UiButton
-          :disabled="disabled || visibleTracks.length === 0"
-          @click="selectVisible"
-        >
-          選取篩選結果
-        </UiButton>
-        <UiButton
-          :disabled="disabled || batchSelectedTrackIds.length === 0"
-          @click="emit('clearBatch')"
-        >
-          清除
-        </UiButton>
-      </div>
-    </div>
+    <MusicAnalysisSelectionToolbar
+      v-if="batchMode"
+      :visible-count="visibleTracks.length"
+      :selected-count="batchSelectedTrackIds.length"
+      :all-visible-selected="allVisibleSelected"
+      :some-visible-selected="someVisibleSelected"
+      :disabled="disabled"
+      @set-visible="setVisibleSelection"
+      @clear="emit('clearBatch')"
+    />
 
     <UiHint v-if="loading" padded>正在讀取本機曲庫…</UiHint>
     <UiHint v-else-if="visibleTracks.length === 0" padded center>
@@ -115,27 +159,38 @@ function batchStatus(trackId) {
         v-for="track in visibleTracks"
         :key="track.id"
         :track="track"
-        :active="track.id === selectedTrackId"
-        :interactive="!disabled"
-        :aria-current="track.id === selectedTrackId ? 'true' : undefined"
-        :aria-pressed="!disabled ? track.id === selectedTrackId : undefined"
+        :class="{
+          'analysis-picker__batch-row': batchMode && !disabled,
+        }"
+        :active="
+          batchMode ? isBatchSelected(track.id) : track.id === selectedTrackId
+        "
+        :interactive="!disabled && !batchMode"
+        :hide-duration="batchMode"
+        :aria-current="
+          !batchMode && track.id === selectedTrackId ? 'true' : undefined
+        "
+        :aria-pressed="
+          !disabled && !batchMode ? track.id === selectedTrackId : undefined
+        "
         :aria-disabled="disabled || undefined"
-        @click="selectTrack(track.id)"
+        @click="activateTrack(track.id, $event)"
       >
         <template #lead>
-          <input
-            class="analysis-picker__checkbox"
-            type="checkbox"
-            :checked="isBatchSelected(track.id)"
-            :disabled="disabled"
-            :aria-label="`選取${track.title ?? track.id}進行批次分析`"
-            @click.stop
-            @change="toggleBatch(track.id)"
-          />
+          <span v-if="batchMode" class="analysis-picker__checkbox-control">
+            <input
+              class="analysis-picker__checkbox"
+              type="checkbox"
+              :checked="isBatchSelected(track.id)"
+              :disabled="disabled"
+              :aria-label="`選取${track.title ?? track.id}進行批次分析`"
+              @click.stop.prevent="activateTrack(track.id, $event)"
+            />
+          </span>
         </template>
         <template #trail>
           <UiChip
-            v-if="batchStatus(track.id)"
+            v-if="batchMode && batchStatus(track.id)"
             :tone="batchStatus(track.id).tone"
           >
             {{ batchStatus(track.id).label }}
@@ -158,7 +213,7 @@ function batchStatus(trackId) {
 
 .analysis-picker__heading-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-3);
 }
@@ -185,41 +240,36 @@ function batchStatus(trackId) {
   width: 100%;
 }
 
-.analysis-picker__batch-tools,
-.analysis-picker__batch-actions {
+.analysis-picker__mode {
   display: flex;
   align-items: center;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-canvas);
 }
 
-.analysis-picker__batch-tools {
-  justify-content: space-between;
-  min-width: 0;
-}
-
-.analysis-picker__batch-actions {
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.analysis-picker__batch-actions :deep(.ui-btn) {
-  min-height: auto;
-  padding-block: calc(var(--ui-space-1) / 2);
-}
-
-.analysis-picker__selected-count {
-  flex-shrink: 0;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-variant-numeric: tabular-nums;
+.analysis-picker__checkbox-control {
+  width: var(--ui-control-height);
+  height: var(--ui-control-height);
+  flex: 0 0 var(--ui-control-height);
+  display: inline-grid;
+  place-items: center;
 }
 
 .analysis-picker__checkbox {
   width: var(--ui-space-4);
   height: var(--ui-space-4);
-  flex: 0 0 var(--ui-space-4);
   margin: 0;
   accent-color: var(--ui-color-accent);
+}
+
+.analysis-picker__batch-row {
+  cursor: pointer;
+}
+
+.analysis-picker__batch-row:hover {
+  background: var(--ui-color-surface-hover);
 }
 
 .analysis-picker__list {
@@ -236,13 +286,9 @@ function batchStatus(trackId) {
 }
 
 @media (max-width: 520px) {
-  .analysis-picker__batch-tools {
+  .analysis-picker__heading-row {
     align-items: flex-start;
     flex-direction: column;
-  }
-
-  .analysis-picker__batch-actions {
-    justify-content: flex-start;
   }
 }
 </style>
