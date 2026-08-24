@@ -20,10 +20,13 @@ same host and scheduler: fixed decode, capability lease, bounded All-In-One
 worker, model integrity checks, cancellation, cleanup, and validated atomic
 sidecar publication are implemented. A benchmark environment resolved and a real
 unpacked Windows x64 CPU/local-model inference passed under the worker policy;
-OS-level network denial remains a release gate. Its Harmonix and HTDemucs weights
-remain benchmark-only, so no product activation is published. Runtime/
-model installation, complete release locks, repair, rollback, garbage collection,
-and downloadable capability readiness remain unimplemented.
+OS-level network denial remains a release gate. The internal Music Analysis
+workbench now owns a fixed Beat This! `small0` preparation lifecycle: exact
+runtime, wheel, and checkpoint downloads; size/SHA-256 verification; immutable
+publication; version/import probe; progress; repair; removal; and atomic
+activation. A real install from an empty app-owned root and inference through the
+installed environment passed on Windows x64 CPU. Its Harmonix and HTDemucs
+weights remain benchmark-only, so no Refined product activation is published.
 
 ## Context
 
@@ -320,16 +323,20 @@ product state or allowing package mutation to couple their reliability. The
 cost is an activation manager, three release locks, capability-aware removal,
 leases, packaged dual-feature smokes, and explicit model-license review.
 
-The implemented foundation deliberately stops before artifact preparation. Its
-atomic publisher accepts an already validated generation; the future preparation
-service must still download to staging, verify manifests/checksums, run
-capability-specific packaged and offline smokes, publish immutable artifacts, and
-only then call that primitive. Packaged resources now include the host probe,
-separate Refined policy worker, separate structure-analysis worker, and a
-benchmark-only analysis model catalog. They are app-owned policy/transport files,
-not a Python runtime or activated capability. No Python, PyTorch, All-In-One,
-`audio-separator`, environment lock, model config, or model weight is installed
-by the product today.
+Music Analysis now exercises the preparation side of this contract. Main owns a
+fixed `analysis-structure` catalog, downloads each exact artifact into staging,
+verifies size and SHA-256, probes the exact Python/package versions and native
+imports, publishes immutable directories, then atomically switches activation.
+Repair repeats that verified preparation; removal first publishes a generation
+without the capability and only collects artifacts not protected by a lease or
+another capability. The renderer can request only prepare, repair, or remove and
+cannot supply URLs, paths, versions, hashes, model ids, or worker arguments.
+
+This does not make every runtime-family gate complete. Refined remains
+benchmark-only, shared-environment migration and broader garbage collection are
+future work, and Music Analysis remains an internal feature until labeled
+accuracy, OS-level offline, release license notice, disk-capacity, and recovery
+acceptance are closed.
 
 ## References
 

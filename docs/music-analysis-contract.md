@@ -15,8 +15,11 @@ worker-level network/cache policy. Beat This! 1.1.0 `small0` and `final0` both
 satisfy the M1 transport contract; `small0` is the provisional product-default
 candidate because its checkpoint, memory, and installation cost are lower. This
 is not an accuracy claim: labeled beat/downbeat fixtures and OS-level network
-denial remain unproven. Product installation, activation, authored UI, and model
-selection therefore remain unavailable.
+denial remain unproven. The internal F10 workbench now provides state-driven
+download/install, progress, repair, removal, and activation for the fixed
+`small0` choice; model selection is intentionally unavailable. Public product
+release remains gated on labeled accuracy, OS-level offline, license notice,
+disk-capacity, failure recovery, and manual UI acceptance.
 
 The accepted product endpoint is:
 
@@ -259,13 +262,15 @@ separate layer and is neither created nor shifted by these cues.
 4. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
    provisional community environment.
 5. Resolve and package-smoke `analysis-structure` — Beat This! `small0` and
-   `final0` Windows CPU smoke complete; close labeled accuracy, lifecycle,
-   licensing, and OS-offline gates before activation. Resolve `combined-ml` only
-   when Refined and analysis are both requested.
+   `final0` Windows CPU smoke complete; fixed `small0` install, repair, removal,
+   activation, and installed-environment inference complete in the internal F10
+   workbench. Resolve `combined-ml` only when Refined and analysis are both
+   requested.
 6. Benchmark BPM, beat/downbeat, and section utility against fixed songs and
    record false/low-confidence behavior.
-7. Enable the optional analysis capability only after model license, capacity,
-   offline, repair/removal, and real presentation acceptance gates pass.
+7. Promote the optional analysis capability beyond the internal gate only after
+   labeled accuracy, release license notice, disk capacity, OS-level offline,
+   recovery, and real presentation acceptance pass.
 8. Evaluate automatic word/syllable alignment separately; do not treat music
    structure inference as lyric alignment.
 

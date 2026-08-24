@@ -42,8 +42,23 @@ ground truth，下一階段仍需加入有標註的 beat/downbeat fixtures。
 在做吞吐量結論前必須重複量測。三首真實歌曲也尚無人工標註，因此只能證明讀取、
 推論與 sidecar contract 能成立，不能據此宣稱 beat/downbeat 準確率。
 
-完整 Python site-packages 約 645 MB；packaged `win-unpacked` 已成功使用其中的
-worker 與固定 checkpoint 完成合成音訊及 I AM 的 smoke。
+先前 benchmark 環境的完整 Python site-packages 約 645 MB；packaged
+`win-unpacked` 已成功使用其中的 worker 與固定 checkpoint 完成合成音訊及 I AM
+的 smoke。現在 app-owned 直接 wheel 安裝實測總量約 531 MiB，UI 以此提供約略的
+安裝空間提示。
+
+## 安裝與 activation 驗證
+
+內部 F10 workbench 已接上真實準備流程。由空白 app-owned root 開始的 Windows
+x64 驗證下載 152 MB 固定資源，通過長路徑 wheel 解壓、每個 artifact 的 size 與
+SHA-256、CPython 3.14.7 與全部 package exact-version/native import probe，最後
+發布 immutable generation。使用剛安裝的環境再次跑 36 秒合成音訊，3.02 秒完成，
+得到 120.00 BPM、73 beats，peak working set 約 347 MB；worker 回報 offline 與
+no-user-cache policy 均已啟用。
+
+UI 以 capability state 決定主動作：缺少時為「下載並安裝」、損壞時為「修復分析
+功能」、就緒後才是「開始分析」。低頻率的模型、下載量、安裝空間與安全說明移到
+資訊 modal；移除只處理 analysis capability，不刪歌曲、歌詞或既有 sidecar。
 
 ## 已守住的邊界
 
@@ -53,14 +68,14 @@ worker 與固定 checkpoint 完成合成音訊及 I AM 的 smoke。
 - Worker 輸出仍經 main-owned sidecar validator 與 atomic publication。
 - Beat This! 失敗不會破壞播放、Lyrics 或 M0 presentation fallback。
 
-OS 層的網路隔離尚未驗證；Python policy 不是完整 sandbox。產品 activation 仍須在
-此 gate 關閉後才可啟用。
+OS 層的網路隔離尚未驗證；Python policy 不是完整 sandbox。現有 activation 僅供
+feature-gated 內部 workbench 驗證，不代表已通過公開產品 release gate。
 
 ## 下一個 phase
 
 1. 加入人工標註的 beat/downbeat fixtures，定義容許誤差與回歸門檻。
-2. 完成 runtime/model install、activation、repair、removal 與 generation lease。
-3. 驗證 OS-level offline、授權 notices、磁碟空間與失敗復原。
+2. 驗證 OS-level offline、release 授權 notice、磁碟空間與失敗復原。
+3. 完成人工 UI 驗收：安裝進度、ready/analyze、repair/remove、modal 與 scroll。
 4. 在相同固定歌曲上比較 app-owned CBM/librosa 的 M2 section boundary；不得臆造
    verse/chorus semantic role。
 
