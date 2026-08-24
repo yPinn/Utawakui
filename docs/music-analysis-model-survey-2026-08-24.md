@@ -30,7 +30,9 @@ smoke. Its result shape is the best match for the app contract, so it remains
 the benchmark runtime route. It is still not product-activatable: reviewed
 Harmonix/HTDemucs artifact evidence conflicts with or omits the product-use
 grant, one resolved dependency remains source-only, OS-level offline behavior is
-unproven, and no labeled real-song section set has passed.
+unproven, and no labeled real-song section set has passed. The bounded M2.1
+evaluator and privacy-safe manifest template now exist, but the minimum
+30-song decision corpus has not been supplied or annotated.
 
 LinkSeg exposes the desired seven/nine semantic taxonomies, but the repository
 still has no license file or separately licensed checkpoints and requires a
@@ -135,8 +137,11 @@ Automatic canonical roles remain blocked until one of these is true:
 The initial M1 contract and packaged Windows CPU spike are complete; see
 [`audio-python-beat-this-m1-spike-2026-08-24.md`](audio-python-beat-this-m1-spike-2026-08-24.md).
 `small0` is the provisional product-default candidate, not an accuracy winner.
-Next, add labeled beat/downbeat and semantic section fixtures, close
-installation, activation, repair, removal, OS-offline, capacity, and license
-gates, and run the no-weight boundary comparator on the same songs. Recheck
+Next, copy the M2 benchmark template to ignored task storage, annotate at least
+30 user-owned J-pop/K-pop/karaoke songs, run the fixed All-In-One worker, and
+score the predictions without committing audio or identifying paths. On the
+same corpus, add labeled beat/downbeat scoring and the no-weight boundary
+comparator. Only after utility passes should the project close installation,
+activation, repair, removal, OS-offline, capacity, and license gates. Recheck
 upstream health when rebuilding the activation rather than making the absence
 of an LTS tag a separate blocker.

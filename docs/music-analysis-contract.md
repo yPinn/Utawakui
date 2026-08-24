@@ -32,6 +32,14 @@ consumer applies the same fail-safe rule to older documents. F10 shows accepted
 canonical sections and explains low-confidence, incomplete, unknown, or missing
 section fallbacks while keeping valid M1 tempo/beats visible.
 
+The M2.1 real-song evaluation path is also executable without activating the
+benchmark model in F10. A bounded, path-free labeled manifest reports macro
+boundary F1 at ±500 ms and ±3000 ms, duration-weighted canonical-role accuracy,
+contract-eligible M2 yield, BPM octave/missing rates, inference failures, and
+required song-group summaries. Until the minimum 30-song J-pop/K-pop/karaoke
+corpus is populated, its result must remain `insufficient-data`; synthetic
+fixtures prove evaluator behavior, not analyzer quality.
+
 The accepted product endpoint is:
 
 - T2 word/phrase lyrics can display progressive text;

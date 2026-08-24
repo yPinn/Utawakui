@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "all-in-one-real-song-v1",
+  "analyzer": {
+    "id": "all-in-one-structure",
+    "version": "3.1.0",
+    "profileId": "all-in-one-cpu-v1",
+    "modelId": "all-in-one-harmonix-fold0"
+  },
+  "acceptance": {
+    "minimumTracks": 30,
+    "requiredTags": [
+      { "tag": "j-pop", "minimumTracks": 10 },
+      { "tag": "k-pop", "minimumTracks": 10 },
+      { "tag": "karaoke", "minimumTracks": 10 }
+    ],
+    "minimumBoundaryF1At500Ms": 0.5,
+    "minimumBoundaryF1At3000Ms": 0.75,
+    "minimumRoleDurationAccuracy": 0.65,
+    "minimumM2EligibleRate": 0.6,
+    "minimumRequiredTagRoleDurationAccuracy": 0.55,
+    "minimumRequiredTagM2EligibleRate": 0.5,
+    "maximumTempoOctaveErrorRate": 0.1,
+    "maximumTempoMissingRate": 0.05,
+    "maximumAnalysisFailureRate": 0.05
+  },
+  "cases": [
+    {
+      "id": "track-001",
+      "tags": ["j-pop", "karaoke"],
+      "durationMs": 90000,
+      "referenceBpm": 120,
+      "referenceSections": [
+        { "startMs": 0, "endMs": 30000, "role": "intro" },
+        { "startMs": 30000, "endMs": 60000, "role": "verse" },
+        { "startMs": 60000, "endMs": 90000, "role": "chorus" }
+      ],
+      "estimate": {
+        "status": "completed",
+        "bpm": 120,
+        "sections": [
+          {
+            "startMs": 0,
+            "endMs": 30000,
+            "role": "intro",
+            "confidence": 0.82
+          },
+          {
+            "startMs": 30000,
+            "endMs": 60000,
+            "role": "verse",
+            "confidence": 0.73
+          },
+          {
+            "startMs": 60000,
+            "endMs": 90000,
+            "role": "chorus",
+            "confidence": 0.88
+          }
+        ]
+      }
+    }
+  ]
+}
