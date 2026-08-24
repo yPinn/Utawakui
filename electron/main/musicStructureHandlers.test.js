@@ -3,6 +3,16 @@ import handlersModule from './musicStructureHandlers.js';
 
 const { registerMusicStructureHandlers } = handlersModule;
 
+function capabilityService(overrides = {}) {
+  return {
+    getStatus: vi.fn(() => ({ status: 'missing', installed: false })),
+    prepare: vi.fn(async () => ({ status: 'ready', installed: true })),
+    repair: vi.fn(async () => ({ status: 'ready', installed: true })),
+    remove: vi.fn(async () => ({ status: 'missing', installed: false })),
+    ...overrides,
+  };
+}
+
 describe('music-structure handlers', () => {
   it('loads a bounded main-owned projection using only the requested track id', async () => {
     const handlers = new Map();
@@ -32,6 +42,7 @@ describe('music-structure handlers', () => {
         cancelActiveJob: vi.fn(),
         getActiveJob: vi.fn(() => null),
       },
+      capabilityService: capabilityService(),
     });
 
     await expect(
@@ -77,6 +88,7 @@ describe('music-structure handlers', () => {
       requireFeatureGate,
       featureIds: { AUDIO_PROCESSING_FLOW: 'audio-processing-flow' },
       analysisService,
+      capabilityService: capabilityService(),
     });
 
     await expect(
@@ -124,6 +136,7 @@ describe('music-structure handlers', () => {
         cancelActiveJob: vi.fn(),
         getActiveJob: vi.fn(),
       },
+      capabilityService: capabilityService(),
     });
 
     await expect(
@@ -132,5 +145,56 @@ describe('music-structure handlers', () => {
     await expect(
       handlers.get('music-structure:analyze-track')(null, 'track-1'),
     ).rejects.not.toThrow(/Users|input\.wav/i);
+  });
+
+  it('exposes bounded preparation lifecycle actions and progress', async () => {
+    const handlers = new Map();
+    const send = vi.fn();
+    const service = capabilityService({
+      prepare: vi.fn(async ({ onProgress }) => {
+        onProgress({ stage: 'downloading-model', percent: 91 });
+        return { status: 'ready', installed: true };
+      }),
+    });
+    const requireFeatureGate = vi.fn();
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: () => ({ webContents: { send } }),
+      notifyLibraryUpdated: vi.fn(),
+      requireFeatureGate,
+      featureIds: { AUDIO_PROCESSING_FLOW: 'audio-processing-flow' },
+      analysisService: {
+        run: vi.fn(),
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(),
+      },
+      capabilityService: service,
+    });
+
+    await expect(
+      handlers.get('music-structure:get-capability-status')(),
+    ).resolves.toEqual({ status: 'missing', installed: false });
+    await expect(
+      handlers.get('music-structure:prepare-capability')(
+        null,
+        'https://untrusted.example/model',
+      ),
+    ).resolves.toEqual({ status: 'ready', installed: true });
+    expect(service.prepare).toHaveBeenCalledWith({
+      onProgress: expect.any(Function),
+    });
+    expect(send).toHaveBeenCalledWith('music-structure:capability-progress', {
+      stage: 'downloading-model',
+      percent: 91,
+    });
+    await handlers.get('music-structure:repair-capability')();
+    await handlers.get('music-structure:remove-capability')();
+    expect(service.repair).toHaveBeenCalledOnce();
+    expect(service.remove).toHaveBeenCalledOnce();
+    expect(requireFeatureGate).toHaveBeenCalledTimes(3);
   });
 });

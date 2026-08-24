@@ -16,6 +16,20 @@ function publicAnalysisError(error) {
   return new Error(message);
 }
 
+function publicCapabilityError(error) {
+  const message = String(error?.message ?? '');
+  if (message.includes('already running')) {
+    return new Error('a music analysis setup operation is already running');
+  }
+  if (
+    message.includes('active analysis job') ||
+    message.includes('still in use')
+  ) {
+    return new Error('music analysis setup is currently in use');
+  }
+  return new Error('music analysis preparation failed');
+}
+
 function registerMusicStructureHandlers({
   ipcMain,
   getConfig,
@@ -26,6 +40,7 @@ function registerMusicStructureHandlers({
   requireFeatureGate,
   featureIds,
   analysisService,
+  capabilityService,
 }) {
   ipcMain.handle('music-structure:get-track', async (event, trackId) =>
     loadMusicStructure(resolveDownloadDir(getConfig()), trackId),
@@ -58,6 +73,48 @@ function registerMusicStructureHandlers({
   ipcMain.handle('music-structure:get-analysis-status', async () => ({
     activeJob: analysisService.getActiveJob(),
   }));
+
+  ipcMain.handle('music-structure:get-capability-status', async () =>
+    capabilityService.getStatus(),
+  );
+
+  function progressOptions() {
+    return {
+      onProgress: (progress) => {
+        getMainWindow()?.webContents.send(
+          'music-structure:capability-progress',
+          progress,
+        );
+      },
+    };
+  }
+
+  ipcMain.handle('music-structure:prepare-capability', async () => {
+    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    try {
+      return await capabilityService.prepare(progressOptions());
+    } catch (error) {
+      throw publicCapabilityError(error);
+    }
+  });
+
+  ipcMain.handle('music-structure:repair-capability', async () => {
+    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    try {
+      return await capabilityService.repair(progressOptions());
+    } catch (error) {
+      throw publicCapabilityError(error);
+    }
+  });
+
+  ipcMain.handle('music-structure:remove-capability', async () => {
+    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    try {
+      return await capabilityService.remove();
+    } catch (error) {
+      throw publicCapabilityError(error);
+    }
+  });
 }
 
 module.exports = { registerMusicStructureHandlers };

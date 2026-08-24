@@ -42,6 +42,10 @@ const {
   createStructureAnalysisService,
 } = require('./lib/audioProcessing/structureAnalysisService');
 const {
+  createStructureAnalysisCapabilityService,
+  loadStructureAnalysisCapabilityCatalog,
+} = require('./lib/audioProcessing/structureAnalysisCapability');
+const {
   registerHeavyJobSchedulerLifecycle,
 } = require('./main/heavyJobSchedulerLifecycle');
 const { createDiagnosticsService } = require('./lib/diagnostics');
@@ -317,6 +321,16 @@ if (!gotSingleInstanceLock) {
       publishDocument: ({ trackId, document, identity, libraryDir }) =>
         saveTrackMusicStructure(libraryDir, trackId, document, identity),
     });
+    const structureAnalysisCapabilityService =
+      createStructureAnalysisCapabilityService({
+        host: audioPythonRuntimeHost,
+        ...loadStructureAnalysisCapabilityCatalog({
+          appPath: app.getAppPath(),
+          isPackaged: app.isPackaged,
+          resourcesPath: process.resourcesPath,
+        }),
+        getActiveJob: structureAnalysisService.getActiveJob,
+      });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: FEATURE_IDS.LYRICS_FLOW,
@@ -463,6 +477,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       analysisService: structureAnalysisService,
+      capabilityService: structureAnalysisCapabilityService,
     });
 
     registerPlaylistsHandlers({
