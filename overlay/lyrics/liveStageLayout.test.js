@@ -21,6 +21,9 @@ describe('Live Stage overlay layout contract', () => {
     expect(html).not.toMatch(/Mnet|M COUNTDOWN|Genie/i);
 
     expect(css).toContain(":root[data-ovl-template='live-stage']");
+    expect(css).toMatch(
+      /:root\[data-ovl-template='live-stage'\],\s*:root\[data-ovl-template='live-stage'\] body\s*\{\s*background: transparent;/u,
+    );
     expect(css).toContain('inset-inline-start: 6.25%');
     expect(css).toContain('inline-size: min(26%, 32rem)');
     expect(css).toContain('inset-inline-end: 5%');

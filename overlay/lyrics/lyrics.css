@@ -144,6 +144,11 @@
     opacity: 0.72;
   }
 
+  :root[data-ovl-template='live-stage'],
+  :root[data-ovl-template='live-stage'] body {
+    background: transparent;
+  }
+
   :root[data-ovl-template='live-stage'] .lyrics-overlay {
     isolation: isolate;
     inset: 0;
