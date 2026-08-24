@@ -19,12 +19,45 @@ const { validateMusicStructureDocument } = require('../musicStructureContract');
 const musicStructureContractValues = require('../../../shared/musicStructureContractValues.json');
 
 const STRUCTURE_CAPABILITY_ID = 'structure-analysis';
-const STRUCTURE_ANALYZER_ID = 'all-in-one-structure';
-const STRUCTURE_PROFILE_ID = 'all-in-one-cpu-v1';
-const STRUCTURE_MODEL_ID = 'all-in-one-harmonix-fold0';
-const STRUCTURE_WRAPPER_PACKAGE = 'all-in-one-infer';
-const STRUCTURE_WRAPPER_VERSION = '3.1.0';
-const STRUCTURE_MODEL_NAME = 'harmonix-fold0';
+const STRUCTURE_ANALYZER_ID = 'beat-this';
+const STRUCTURE_PROFILE_ID = 'beat-this-small0-cpu-v1';
+const STRUCTURE_MODEL_ID = 'beat-this-small0';
+const SUPPORTED_STRUCTURE_ANALYSIS_MODELS = Object.freeze({
+  'beat-this-small0': Object.freeze({
+    analyzerId: STRUCTURE_ANALYZER_ID,
+    profileId: STRUCTURE_PROFILE_ID,
+    architecture: 'beat-this',
+    wrapperPackage: 'beat-this',
+    wrapperVersion: '1.1.0',
+    modelName: 'small0',
+    signals: Object.freeze(['tempo', 'beats', 'downbeats']),
+    files: Object.freeze({ weights: 'small0.ckpt' }),
+  }),
+  'beat-this-final0': Object.freeze({
+    analyzerId: STRUCTURE_ANALYZER_ID,
+    profileId: 'beat-this-final0-cpu-v1',
+    architecture: 'beat-this',
+    wrapperPackage: 'beat-this',
+    wrapperVersion: '1.1.0',
+    modelName: 'final0',
+    signals: Object.freeze(['tempo', 'beats', 'downbeats']),
+    files: Object.freeze({ weights: 'final0.ckpt' }),
+  }),
+  'all-in-one-harmonix-fold0': Object.freeze({
+    analyzerId: 'all-in-one-structure',
+    profileId: 'all-in-one-cpu-v1',
+    architecture: 'all-in-one-with-htdemucs',
+    wrapperPackage: 'all-in-one-infer',
+    wrapperVersion: '3.1.0',
+    modelName: 'harmonix-fold0',
+    signals: Object.freeze(['tempo', 'beats', 'downbeats', 'sections']),
+    files: Object.freeze({
+      'structure-checkpoint': 'harmonix-fold0-0vra4ys2.pth',
+      'separation-checkpoint': '955717e8-8726e21a.th',
+      'separation-config': 'htdemucs.yaml',
+    }),
+  }),
+});
 const MAX_MANIFEST_BYTES = 256 * 1024;
 const MAX_WORKER_MESSAGE_BYTES =
   musicStructureContractValues.maxDocumentBytes + 64 * 1024;
@@ -88,7 +121,7 @@ function requireConfidence(value, label) {
   }
 }
 
-function normalizeWorkerResult(result, provenance) {
+function normalizeWorkerResult(result, provenance, profile) {
   assertExactKeys(
     result,
     [
@@ -107,9 +140,9 @@ function normalizeWorkerResult(result, provenance) {
   );
   if (
     result.protocolVersion !== AUDIO_PYTHON_PROTOCOL_VERSION ||
-    result.analyzerId !== STRUCTURE_ANALYZER_ID ||
-    result.profileId !== STRUCTURE_PROFILE_ID ||
-    result.modelId !== STRUCTURE_MODEL_ID ||
+    result.analyzerId !== profile.analyzerId ||
+    result.profileId !== profile.profileId ||
+    result.modelId !== provenance.modelId ||
     result.offlineEnforced !== true ||
     result.noUserCache !== true ||
     !Number.isSafeInteger(result.durationMs) ||
@@ -142,10 +175,10 @@ function normalizeWorkerResult(result, provenance) {
       },
       analyzer: {
         contractVersion: 1,
-        id: STRUCTURE_ANALYZER_ID,
-        profileId: STRUCTURE_PROFILE_ID,
+        id: profile.analyzerId,
+        profileId: profile.profileId,
         environmentLock: provenance.environmentLock,
-        modelIds: [STRUCTURE_MODEL_ID],
+        modelIds: [provenance.modelId],
         completedAt: provenance.completedAt,
       },
       tempo: result.tempo,
@@ -213,7 +246,7 @@ function createStructureAnalysisJob({
     }
     if (
       modelRef.kind !== 'analysis' ||
-      modelRef.id !== STRUCTURE_MODEL_ID ||
+      !SUPPORTED_STRUCTURE_ANALYSIS_MODELS[modelRef.id] ||
       !SHA256_RE.test(modelRef.manifestHash || '') ||
       !SHA256_RE.test(sourceSha256 || '') ||
       !path.isAbsolute(inputPath || '') ||
@@ -235,7 +268,7 @@ function createStructureAnalysisJob({
     );
     const modelPaths = host.getModelPaths(
       'analysis',
-      STRUCTURE_MODEL_ID,
+      modelRef.id,
       modelRef.version,
     );
     const workerPath = host.resolveCapabilityWorkerPath(
@@ -286,12 +319,26 @@ function createStructureAnalysisJob({
       throw new Error('structure-analysis model manifest hash mismatch');
     }
     assertAudioPythonModelActivatable(modelManifest);
+    const profile = SUPPORTED_STRUCTURE_ANALYSIS_MODELS[modelRef.id];
+    const expectedFiles = Object.entries(profile.files);
     if (
-      modelManifest.id !== STRUCTURE_MODEL_ID ||
+      modelManifest.id !== modelRef.id ||
       modelManifest.version !== modelRef.version ||
-      modelManifest.wrapper.package !== STRUCTURE_WRAPPER_PACKAGE ||
-      modelManifest.wrapper.version !== STRUCTURE_WRAPPER_VERSION ||
-      modelManifest.wrapper.model !== STRUCTURE_MODEL_NAME
+      modelManifest.architecture !== profile.architecture ||
+      modelManifest.wrapper.package !== profile.wrapperPackage ||
+      modelManifest.wrapper.version !== profile.wrapperVersion ||
+      modelManifest.wrapper.model !== profile.modelName ||
+      modelManifest.signals.length !== profile.signals.length ||
+      profile.signals.some(
+        (signal) => !modelManifest.signals.includes(signal),
+      ) ||
+      modelManifest.files.length !== expectedFiles.length ||
+      expectedFiles.some(
+        ([role, filename]) =>
+          !modelManifest.files.some(
+            (file) => file.role === role && file.filename === filename,
+          ),
+      )
     ) {
       throw new Error('invalid fixed structure-analysis model');
     }
@@ -328,10 +375,10 @@ function createStructureAnalysisJob({
         workerPath,
         request: {
           operation: 'analyze-structure',
-          analyzerId: STRUCTURE_ANALYZER_ID,
-          profileId: STRUCTURE_PROFILE_ID,
-          modelId: STRUCTURE_MODEL_ID,
-          modelName: STRUCTURE_MODEL_NAME,
+          analyzerId: profile.analyzerId,
+          profileId: profile.profileId,
+          modelId: modelRef.id,
+          modelName: profile.modelName,
           environmentPath: environmentPaths.sitePackagesPath,
           inputPath: decodedInputPath,
           jobPath: workspace.jobDir,
@@ -346,11 +393,16 @@ function createStructureAnalysisJob({
     return {
       result: run()
         .then((result) =>
-          normalizeWorkerResult(result, {
-            sourceSha256,
-            environmentLock: environmentRef.lockHash,
-            completedAt: completedAt(),
-          }),
+          normalizeWorkerResult(
+            result,
+            {
+              sourceSha256,
+              environmentLock: environmentRef.lockHash,
+              modelId: modelRef.id,
+              completedAt: completedAt(),
+            },
+            profile,
+          ),
         )
         .then(({ document, identity }) => {
           finalizing = true;
@@ -385,5 +437,6 @@ module.exports = {
   STRUCTURE_CAPABILITY_ID,
   STRUCTURE_MODEL_ID,
   STRUCTURE_PROFILE_ID,
+  SUPPORTED_STRUCTURE_ANALYSIS_MODELS,
   createStructureAnalysisJob,
 };

@@ -268,6 +268,17 @@ describe('AudioPythonRuntimeHost', () => {
       from: 'resources/audio-processing/analysis-structure-model.json',
       to: 'audio-processing/analysis-structure-model.json',
     });
+    for (const filename of [
+      'analysis-beat-this-small0-model.json',
+      'analysis-beat-this-final0-model.json',
+      'analysis-beat-this-py314-lock.json',
+      'audio-python-runtime-3.14.7.json',
+    ]) {
+      expect(config.extraResources).toContainEqual({
+        from: `resources/audio-processing/${filename}`,
+        to: `audio-processing/${filename}`,
+      });
+    }
     expect(JSON.stringify(config.extraResources)).not.toMatch(
       /fixture|python\.exe|site-packages|\.onnx|\.ckpt|\.pth/i,
     );

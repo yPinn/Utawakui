@@ -204,6 +204,34 @@ function analysisModelManifest() {
   };
 }
 
+function beatThisModelManifest(model = 'small0') {
+  return {
+    schemaVersion: 1,
+    manifestKind: 'model',
+    kind: 'analysis',
+    id: `beat-this-${model}`,
+    version: `1.1.0-${model}`,
+    architecture: 'beat-this',
+    wrapper: {
+      package: 'beat-this',
+      version: '1.1.0',
+      model,
+    },
+    signals: ['tempo', 'beats', 'downbeats'],
+    files: [
+      {
+        role: 'weights',
+        ...artifact(`${model}.ckpt`),
+        license: license('MIT'),
+      },
+    ],
+    distribution: {
+      status: 'product-downloadable',
+      reason: null,
+    },
+  };
+}
+
 describe('audio Python manifests', () => {
   it('accepts an exact Windows runtime artifact and hashes canonical content', () => {
     const manifest = runtimeManifest();
@@ -354,6 +382,25 @@ describe('audio Python manifests', () => {
     }
   });
 
+  it('accepts product-downloadable Beat This! M1 checkpoints without section claims', () => {
+    for (const model of ['small0', 'final0']) {
+      const manifest = beatThisModelManifest(model);
+      expect(validateAudioPythonModelManifest(manifest)).toEqual(manifest);
+      expect(assertAudioPythonModelActivatable(manifest)).toEqual(manifest);
+    }
+
+    for (const mutate of [
+      (value) => (value.signals = ['tempo', 'beats', 'lyrics']),
+      (value) => value.files.push({ ...value.files[0] }),
+      (value) => (value.files[0].role = 'structure-checkpoint'),
+      (value) => (value.files[0].license = license('MIT', 'blocked')),
+    ]) {
+      const value = beatThisModelManifest();
+      mutate(value);
+      expect(() => assertAudioPythonModelActivatable(value)).toThrow();
+    }
+  });
+
   it('keeps the checked-in analysis model catalog valid and non-activatable', () => {
     const manifest = JSON.parse(
       fs.readFileSync(
@@ -366,5 +413,43 @@ describe('audio Python manifests', () => {
     expect(() => assertAudioPythonModelActivatable(manifest)).toThrow(
       /benchmark-only/i,
     );
+  });
+
+  it('keeps both checked-in Beat This! model manifests valid and activatable', () => {
+    for (const filename of [
+      'analysis-beat-this-small0-model.json',
+      'analysis-beat-this-final0-model.json',
+    ]) {
+      const manifest = JSON.parse(
+        fs.readFileSync(`resources/audio-processing/${filename}`, 'utf8'),
+      );
+
+      expect(validateAudioPythonModelManifest(manifest)).toEqual(manifest);
+      expect(assertAudioPythonModelActivatable(manifest)).toEqual(manifest);
+    }
+  });
+
+  it('keeps the checked-in Beat This! runtime and wheel-only lock activatable', () => {
+    const runtime = JSON.parse(
+      fs.readFileSync(
+        'resources/audio-processing/audio-python-runtime-3.14.7.json',
+        'utf8',
+      ),
+    );
+    const environment = JSON.parse(
+      fs.readFileSync(
+        'resources/audio-processing/analysis-beat-this-py314-lock.json',
+        'utf8',
+      ),
+    );
+
+    expect(validateAudioPythonRuntimeManifest(runtime)).toEqual(runtime);
+    expect(validateAudioPythonEnvironmentLock(environment)).toEqual(
+      environment,
+    );
+    expect(assertAudioPythonEnvironmentActivatable(environment)).toEqual(
+      environment,
+    );
+    expect(environment.packages).toHaveLength(16);
   });
 });

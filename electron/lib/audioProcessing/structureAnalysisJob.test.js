@@ -53,7 +53,7 @@ function prepareJob() {
     isPackaged: false,
   });
   const runtimeRef = {
-    familyId: 'cpython-3.13.x',
+    familyId: 'cpython-3.14.x',
     artifactHash: HASH_A,
   };
   const environmentLock = {
@@ -62,19 +62,19 @@ function prepareJob() {
     environmentId: 'analysis-structure',
     runtime: {
       familyId: runtimeRef.familyId,
-      pythonVersion: '3.12.10',
+      pythonVersion: '3.14.7',
     },
     platform: 'win32',
     arch: 'x64',
     resolver: { name: 'pip', version: '26.2.1' },
-    requirements: [{ name: 'all-in-one-infer', version: '3.1.0' }],
+    requirements: [{ name: 'beat-this', version: '1.1.0' }],
     packages: [
       {
-        name: 'all-in-one-infer',
-        version: '3.1.0',
+        name: 'beat-this',
+        version: '1.1.0',
         artifact: {
-          filename: 'all_in_one_infer-3.1.0-py3-none-any.whl',
-          url: 'https://downloads.example.test/all-in-one.whl',
+          filename: 'beat_this-1.1.0-py3-none-any.whl',
+          url: 'https://downloads.example.test/beat-this.whl',
           sizeBytes: 100,
           sha256: HASH_B,
         },
@@ -82,13 +82,13 @@ function prepareJob() {
         license: license(),
       },
     ],
-    probeImports: ['allin1_infer'],
+    probeImports: ['beat_this'],
   };
   const environmentRef = {
     id: 'analysis-structure',
     lockHash: computeAudioPythonManifestHash(environmentLock),
   };
-  const modelVersion = 'harmonix-fold0-v1';
+  const modelVersion = '1.1.0-small0';
   const runtimePaths = host.getRuntimeArtifactPaths(
     runtimeRef.familyId,
     runtimeRef.artifactHash,
@@ -110,9 +110,7 @@ function prepareJob() {
   );
   const inputPath = path.join(makeTempDir(), 'decoded-input.wav');
   const ffmpegPath = path.join(makeTempDir(), 'ffmpeg.exe');
-  const structureBytes = Buffer.from('structure checkpoint');
-  const separationBytes = Buffer.from('separation checkpoint');
-  const separationConfigBytes = Buffer.from("models: ['fake']\n");
+  const weightsBytes = Buffer.from('beat-this small0 checkpoint');
 
   fs.mkdirSync(path.dirname(runtimePaths.pythonPath), { recursive: true });
   fs.mkdirSync(environmentPaths.sitePackagesPath, { recursive: true });
@@ -125,12 +123,12 @@ function prepareJob() {
       schemaVersion: 1,
       manifestKind: 'runtime-artifact',
       familyId: runtimeRef.familyId,
-      version: '3.12.10',
+      version: '3.14.7',
       platform: 'win32',
       arch: 'x64',
       entryPoint: 'python.exe',
       artifact: {
-        filename: 'python-3.12.10-embed-amd64.zip',
+        filename: 'python-3.14.7-embed-amd64.zip',
         url: 'https://downloads.example.test/python.zip',
         sizeBytes: 100,
         sha256: runtimeRef.artifactHash,
@@ -146,16 +144,8 @@ function prepareJob() {
   fs.writeFileSync(inputPath, 'decoded audio');
   fs.writeFileSync(ffmpegPath, 'ffmpeg');
   fs.writeFileSync(
-    path.join(modelPaths.installDir, 'harmonix-fold0-0vra4ys2.pth'),
-    structureBytes,
-  );
-  fs.writeFileSync(
-    path.join(modelPaths.installDir, 'htdemucs-fake.th'),
-    separationBytes,
-  );
-  fs.writeFileSync(
-    path.join(modelPaths.installDir, 'htdemucs.yaml'),
-    separationConfigBytes,
+    path.join(modelPaths.installDir, 'small0.ckpt'),
+    weightsBytes,
   );
 
   const artifact = (role, filename, bytes, blocked = false) => ({
@@ -172,22 +162,14 @@ function prepareJob() {
     kind: 'analysis',
     id: STRUCTURE_MODEL_ID,
     version: modelVersion,
-    architecture: 'all-in-one-with-htdemucs',
+    architecture: 'beat-this',
     wrapper: {
-      package: 'all-in-one-infer',
-      version: '3.1.0',
-      model: 'harmonix-fold0',
+      package: 'beat-this',
+      version: '1.1.0',
+      model: 'small0',
     },
-    signals: ['tempo', 'beats', 'downbeats', 'sections'],
-    files: [
-      artifact(
-        'structure-checkpoint',
-        'harmonix-fold0-0vra4ys2.pth',
-        structureBytes,
-      ),
-      artifact('separation-checkpoint', 'htdemucs-fake.th', separationBytes),
-      artifact('separation-config', 'htdemucs.yaml', separationConfigBytes),
-    ],
+    signals: ['tempo', 'beats', 'downbeats'],
+    files: [artifact('weights', 'small0.ckpt', weightsBytes)],
     distribution: {
       status: 'product-downloadable',
       reason: null,
@@ -236,16 +218,7 @@ function workerResult() {
       { timeMs: 500, positionInBar: 1, downbeat: true, confidence: 0.9 },
       { timeMs: 1000, positionInBar: 2, downbeat: false, confidence: 0.82 },
     ],
-    sections: [
-      {
-        sectionId: 'section_01',
-        startMs: 0,
-        endMs: 180000,
-        role: 'chorus',
-        rawLabel: 'chorus',
-        confidence: 0.74,
-      },
-    ],
+    sections: [],
   };
 }
 
@@ -300,7 +273,7 @@ describe('createStructureAnalysisJob', () => {
       analyzerId: STRUCTURE_ANALYZER_ID,
       profileId: STRUCTURE_PROFILE_ID,
       modelId: STRUCTURE_MODEL_ID,
-      modelName: 'harmonix-fold0',
+      modelName: 'small0',
       environmentPath: prepared.paths.environmentPaths.sitePackagesPath,
       inputPath: expect.stringContaining(
         path.join('jobs', 'structure-analysis', 'analysis-job-1', 'input.wav'),
@@ -308,11 +281,7 @@ describe('createStructureAnalysisJob', () => {
       jobPath: expect.stringContaining(
         path.join('jobs', 'structure-analysis', 'analysis-job-1'),
       ),
-      modelFiles: [
-        expect.objectContaining({ role: 'structure-checkpoint' }),
-        expect.objectContaining({ role: 'separation-checkpoint' }),
-        expect.objectContaining({ role: 'separation-config' }),
-      ],
+      modelFiles: [expect.objectContaining({ role: 'weights' })],
     });
     expect(processInput.request).not.toHaveProperty('trackId');
     expect(publishDocument).toHaveBeenCalledWith(
@@ -338,7 +307,7 @@ describe('createStructureAnalysisJob', () => {
     for (const mutate of [
       (value) => (value.durationMs = Infinity),
       (value) => delete value.beats[0].confidence,
-      (value) => (value.sections[0].role = 'drop'),
+      (value) => (value.beats[0].downbeat = 'yes'),
       (value) => (value.localPath = 'C:\\private\\model'),
     ]) {
       const prepared = prepareJob();
@@ -363,12 +332,7 @@ describe('createStructureAnalysisJob', () => {
 
   it('fails before spawning for missing artifacts or incompatible activation references', () => {
     const missing = prepareJob();
-    fs.rmSync(
-      path.join(
-        missing.paths.modelPaths.installDir,
-        'harmonix-fold0-0vra4ys2.pth',
-      ),
-    );
+    fs.rmSync(path.join(missing.paths.modelPaths.installDir, 'small0.ckpt'));
     const createMissingProcess = vi.fn();
     expect(() =>
       createStructureAnalysisJob({

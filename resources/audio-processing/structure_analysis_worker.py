@@ -4,15 +4,18 @@ from __future__ import annotations
 
 import contextlib
 import hashlib
+import importlib.metadata
 import json
 import math
 import os
 import platform
 import socket
+import statistics
 import subprocess
 import sys
 import urllib.request
 import wave
+from array import array
 from collections import namedtuple
 from pathlib import Path
 from typing import Any
@@ -20,24 +23,36 @@ from typing import Any
 
 PROTOCOL_VERSION = 1
 MAX_REQUEST_BYTES = 64 * 1024
-ANALYZER_ID = "all-in-one-structure"
-PROFILE_ID = "all-in-one-cpu-v1"
-MODEL_ID = "all-in-one-harmonix-fold0"
-MODEL_NAME = "harmonix-fold0"
 WRAPPER_VERSION = "3.1.0"
+BEAT_THIS_VERSION = "1.1.0"
+BEAT_THIS_FPS = 50
 WINDOWS_X64_UNAME = namedtuple(
     "uname_result",
     "system node release version machine processor",
 )("Windows", "", "", "", "AMD64", "AMD64")
-SAFE_ROLES = {
-    "structure-checkpoint",
-    "separation-checkpoint",
-    "separation-config",
-}
-EXPECTED_MODEL_FILES = {
-    "structure-checkpoint": "harmonix-fold0-0vra4ys2.pth",
-    "separation-checkpoint": "955717e8-8726e21a.th",
-    "separation-config": "htdemucs.yaml",
+ANALYSIS_PROFILES = {
+    "beat-this-small0": {
+        "analyzer_id": "beat-this",
+        "profile_id": "beat-this-small0-cpu-v1",
+        "model_name": "small0",
+        "files": {"weights": "small0.ckpt"},
+    },
+    "beat-this-final0": {
+        "analyzer_id": "beat-this",
+        "profile_id": "beat-this-final0-cpu-v1",
+        "model_name": "final0",
+        "files": {"weights": "final0.ckpt"},
+    },
+    "all-in-one-harmonix-fold0": {
+        "analyzer_id": "all-in-one-structure",
+        "profile_id": "all-in-one-cpu-v1",
+        "model_name": "harmonix-fold0",
+        "files": {
+            "structure-checkpoint": "harmonix-fold0-0vra4ys2.pth",
+            "separation-checkpoint": "955717e8-8726e21a.th",
+            "separation-config": "htdemucs.yaml",
+        },
+    },
 }
 LABEL_ORDER = (
     "start",
@@ -170,14 +185,15 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
         "modelPath",
         "modelFiles",
     }
+    profile = ANALYSIS_PROFILES.get(request.get("modelId"))
     if (
         not exact_keys(request, expected)
         or request.get("protocolVersion") != PROTOCOL_VERSION
         or request.get("operation") != "analyze-structure"
-        or request.get("analyzerId") != ANALYZER_ID
-        or request.get("profileId") != PROFILE_ID
-        or request.get("modelId") != MODEL_ID
-        or request.get("modelName") != MODEL_NAME
+        or profile is None
+        or request.get("analyzerId") != profile["analyzer_id"]
+        or request.get("profileId") != profile["profile_id"]
+        or request.get("modelName") != profile["model_name"]
     ):
         raise invalid_request()
     environment_path = resolved_path(request["environmentPath"], directory=True)
@@ -187,7 +203,10 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
     if input_path.suffix.lower() != ".wav":
         raise invalid_request()
     model_files = request["modelFiles"]
-    if not isinstance(model_files, list) or len(model_files) < 2:
+    expected_model_files = profile["files"]
+    if not isinstance(model_files, list) or len(model_files) != len(
+        expected_model_files
+    ):
         raise invalid_request()
     validated_files: list[dict[str, Any]] = []
     seen_paths: set[Path] = set()
@@ -199,13 +218,13 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
         expected_hash = model_file.get("sha256")
         file_path = resolved_path(model_file.get("path"), directory=False)
         if (
-            role not in SAFE_ROLES
+            role not in expected_model_files
             or not isinstance(expected_hash, str)
             or len(expected_hash) != 64
             or any(character not in "0123456789abcdef" for character in expected_hash)
             or not is_within(file_path, model_path)
             or file_path in seen_paths
-            or file_path.name != EXPECTED_MODEL_FILES.get(role)
+            or file_path.name != expected_model_files.get(role)
         ):
             raise invalid_request()
         seen_paths.add(file_path)
@@ -213,12 +232,12 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
         validated_files.append(
             {"role": role, "path": file_path, "sha256": expected_hash}
         )
-    if seen_roles != SAFE_ROLES:
+    if seen_roles != set(expected_model_files):
         raise invalid_request()
     expected_model_paths = {item["path"] for item in validated_files}
     discovered_model_paths = {
         item.resolve()
-        for pattern in ("*.pth", "*.th", "*.yaml")
+        for pattern in ("*.ckpt", "*.pth", "*.th", "*.yaml")
         for item in model_path.glob(pattern)
         if item.is_file()
     }
@@ -236,6 +255,8 @@ def validate_request(request: dict[str, Any]) -> dict[str, Any]:
         "job_path": job_path,
         "model_path": model_path,
         "model_files": validated_files,
+        "model_id": request["modelId"],
+        "profile": profile,
     }
 
 
@@ -369,8 +390,7 @@ def local_structure_checkpoint(model_files: list[dict[str, Any]]) -> Path:
     return matches[0]
 
 
-def analyze(validated: dict[str, Any]) -> dict[str, Any]:
-    install_runtime_policy(validated["environment_path"], validated["job_path"])
+def analyze_all_in_one(validated: dict[str, Any]) -> dict[str, Any]:
     try:
         import allin1_infer
         from allin1_infer import CustomSeparatorProvider
@@ -441,7 +461,7 @@ def analyze(validated: dict[str, Any]) -> dict[str, Any]:
         with contextlib.redirect_stdout(sys.stderr):
             result = allin1_infer.analyze(
                 str(validated["input_path"]),
-                model=MODEL_NAME,
+                model=validated["profile"]["model_name"],
                 device="cpu",
                 include_activations=True,
                 include_embeddings=False,
@@ -550,9 +570,9 @@ def analyze(validated: dict[str, Any]) -> dict[str, Any]:
     write_message({"type": "progress", "stage": "validating", "percent": 95})
     return {
         "protocolVersion": PROTOCOL_VERSION,
-        "analyzerId": ANALYZER_ID,
-        "profileId": PROFILE_ID,
-        "modelId": MODEL_ID,
+        "analyzerId": validated["profile"]["analyzer_id"],
+        "profileId": validated["profile"]["profile_id"],
+        "modelId": validated["model_id"],
         "offlineEnforced": True,
         "noUserCache": True,
         "durationMs": wav_duration_ms(validated["input_path"]),
@@ -560,6 +580,191 @@ def analyze(validated: dict[str, Any]) -> dict[str, Any]:
         "beats": beats,
         "sections": sections,
     }
+
+
+def local_weights_checkpoint(model_files: list[dict[str, Any]]) -> Path:
+    matches = [item["path"] for item in model_files if item["role"] == "weights"]
+    if len(matches) != 1:
+        raise WorkerError("INVALID_REQUEST", "The structure-analysis model is invalid.")
+    return matches[0]
+
+
+def load_pcm16_wav(input_path: Path) -> tuple[Any, int]:
+    """Read the fixed FFmpeg PCM profile without TorchAudio file I/O."""
+    try:
+        with wave.open(str(input_path), "rb") as source:
+            channels = source.getnchannels()
+            sample_width = source.getsampwidth()
+            sample_rate = source.getframerate()
+            compression = source.getcomptype()
+            frame_count = source.getnframes()
+            frames = source.readframes(frame_count)
+    except (OSError, wave.Error) as error:
+        raise WorkerError(
+            "INVALID_DECODED_INPUT",
+            "The decoded analysis input is invalid.",
+        ) from error
+    if (
+        channels not in (1, 2)
+        or sample_width != 2
+        or sample_rate != 44_100
+        or compression != "NONE"
+        or frame_count < 1
+    ):
+        raise WorkerError(
+            "INVALID_DECODED_INPUT",
+            "The decoded analysis input is invalid.",
+        )
+    samples = array("h")
+    samples.frombytes(frames)
+    if sys.byteorder != "little":
+        samples.byteswap()
+    try:
+        import numpy as np
+    except ImportError as error:
+        raise WorkerError(
+            "ENVIRONMENT_INVALID",
+            "The structure-analysis environment is incomplete.",
+        ) from error
+    signal = np.asarray(samples, dtype=np.float32).reshape(-1, channels) / 32768.0
+    return signal, sample_rate
+
+
+def logit_confidence(logits: Any, time_seconds: float) -> float:
+    index = min(max(round(time_seconds * BEAT_THIS_FPS), 0), len(logits) - 1)
+    value = float(logits[index])
+    if not math.isfinite(value):
+        raise WorkerError(
+            "ANALYSIS_CONFIDENCE_INVALID",
+            "The analyzer returned invalid confidence evidence.",
+        )
+    if value >= 0:
+        probability = 1 / (1 + math.exp(-value))
+    else:
+        exp_value = math.exp(value)
+        probability = exp_value / (1 + exp_value)
+    return round(probability, 6)
+
+
+def analyze_beat_this(validated: dict[str, Any]) -> dict[str, Any]:
+    try:
+        from beat_this.inference import Audio2Frames
+        from beat_this.model.postprocessor import Postprocessor
+    except (ImportError, SystemExit) as error:
+        raise WorkerError(
+            "ENVIRONMENT_INVALID",
+            "The structure-analysis environment is incomplete.",
+        ) from error
+    try:
+        installed_version = importlib.metadata.version("beat-this")
+    except importlib.metadata.PackageNotFoundError as error:
+        raise WorkerError(
+            "ENVIRONMENT_INVALID",
+            "The structure-analysis environment is incomplete.",
+        ) from error
+    if installed_version != BEAT_THIS_VERSION:
+        raise WorkerError(
+            "ENVIRONMENT_INVALID",
+            "The structure-analysis environment is incompatible.",
+        )
+    checkpoint_path = local_weights_checkpoint(validated["model_files"])
+    signal, sample_rate = load_pcm16_wav(validated["input_path"])
+    write_message({"type": "progress", "stage": "analyzing", "percent": 10})
+    try:
+        analyzer = Audio2Frames(
+            checkpoint_path=str(checkpoint_path),
+            device="cpu",
+            float16=False,
+        )
+        with contextlib.redirect_stdout(sys.stderr):
+            beat_logits, downbeat_logits = analyzer(signal, sample_rate)
+            raw_beats, raw_downbeats = Postprocessor(
+                type="minimal", fps=BEAT_THIS_FPS
+            )(beat_logits, downbeat_logits)
+    except NetworkDisabledError:
+        raise
+    except WorkerError:
+        raise
+    except (Exception, SystemExit, KeyboardInterrupt) as error:
+        raise WorkerError(
+            "ANALYSIS_FAILED",
+            "Music structure analysis failed.",
+        ) from error
+
+    beat_times = [float(value) for value in raw_beats]
+    downbeat_times = [float(value) for value in raw_downbeats]
+    if any(
+        not math.isfinite(value) or value < 0
+        for value in [*beat_times, *downbeat_times]
+    ) or any(current <= previous for previous, current in zip(beat_times, beat_times[1:])):
+        raise WorkerError(
+            "ANALYSIS_CONFIDENCE_INVALID",
+            "The analyzer returned invalid confidence evidence.",
+        )
+
+    beats: list[dict[str, Any]] = []
+    position_in_bar: int | None = None
+    for time_seconds in beat_times:
+        is_downbeat = any(
+            abs(time_seconds - downbeat_time) <= 0.011
+            for downbeat_time in downbeat_times
+        )
+        confidence = logit_confidence(beat_logits, time_seconds)
+        if is_downbeat:
+            confidence = min(
+                confidence,
+                logit_confidence(downbeat_logits, time_seconds),
+            )
+            position_in_bar = 1
+        elif position_in_bar is not None:
+            position_in_bar += 1
+        beat: dict[str, Any] = {
+            "timeMs": round(time_seconds * 1000),
+            "downbeat": is_downbeat,
+            "confidence": confidence,
+        }
+        if position_in_bar is not None and position_in_bar <= 32:
+            beat["positionInBar"] = position_in_bar
+        beats.append(beat)
+
+    intervals = [
+        current - previous for previous, current in zip(beat_times, beat_times[1:])
+    ]
+    bpm = 60 / statistics.median(intervals) if intervals else None
+    beat_confidences = [beat["confidence"] for beat in beats]
+    tempo = (
+        {
+            "bpm": round(bpm, 6),
+            "confidence": round(
+                sum(beat_confidences) / len(beat_confidences), 6
+            ),
+        }
+        if bpm is not None
+        and math.isfinite(bpm)
+        and 20 <= bpm <= 400
+        and beat_confidences
+        else None
+    )
+    write_message({"type": "progress", "stage": "validating", "percent": 95})
+    return {
+        "protocolVersion": PROTOCOL_VERSION,
+        "analyzerId": validated["profile"]["analyzer_id"],
+        "profileId": validated["profile"]["profile_id"],
+        "modelId": validated["model_id"],
+        "offlineEnforced": True,
+        "noUserCache": True,
+        "durationMs": wav_duration_ms(validated["input_path"]),
+        "tempo": tempo,
+        "beats": beats,
+        "sections": [],
+    }
+
+
+def analyze(validated: dict[str, Any]) -> dict[str, Any]:
+    install_runtime_policy(validated["environment_path"], validated["job_path"])
+    if validated["profile"]["analyzer_id"] == "beat-this":
+        return analyze_beat_this(validated)
+    return analyze_all_in_one(validated)
 
 
 def main() -> int:

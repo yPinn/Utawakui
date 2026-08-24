@@ -20,9 +20,18 @@ const ANALYSIS_SIGNAL_IDS = Object.freeze([
   'sections',
 ]);
 const ANALYSIS_MODEL_FILE_ROLES = Object.freeze([
+  'weights',
   'structure-checkpoint',
   'separation-checkpoint',
   'separation-config',
+]);
+const ANALYSIS_MODEL_FILE_ROLE_SETS = Object.freeze([
+  Object.freeze(['weights']),
+  Object.freeze([
+    'structure-checkpoint',
+    'separation-checkpoint',
+    'separation-config',
+  ]),
 ]);
 
 function isPlainObject(value) {
@@ -425,27 +434,33 @@ function validateAnalysisModelManifest(manifest) {
   assertComponent(manifest.wrapper.model, 'analysis model');
   if (
     !Array.isArray(manifest.signals) ||
-    manifest.signals.length !== ANALYSIS_SIGNAL_IDS.length ||
-    new Set(manifest.signals).size !== ANALYSIS_SIGNAL_IDS.length ||
-    ANALYSIS_SIGNAL_IDS.some((signal) => !manifest.signals.includes(signal))
+    manifest.signals.length === 0 ||
+    new Set(manifest.signals).size !== manifest.signals.length ||
+    manifest.signals.some((signal) => !ANALYSIS_SIGNAL_IDS.includes(signal))
   ) {
     throw new Error('invalid audio Python analysis signals');
   }
   if (
     !Array.isArray(manifest.files) ||
-    manifest.files.length !== ANALYSIS_MODEL_FILE_ROLES.length
+    manifest.files.length === 0 ||
+    manifest.files.length > ANALYSIS_MODEL_FILE_ROLES.length
   ) {
     throw new Error('invalid audio Python analysis model files');
   }
   for (const file of manifest.files) {
     validateModelFile(file, ANALYSIS_MODEL_FILE_ROLES);
   }
-  const roles = manifest.files.map(({ role }) => role);
+  const roles = manifest.files.map(({ role }) => role).sort();
+  const validRoleSet = ANALYSIS_MODEL_FILE_ROLE_SETS.some(
+    (roleSet) =>
+      roleSet.length === roles.length &&
+      [...roleSet]
+        .sort()
+        .every((expectedRole, index) => expectedRole === roles[index]),
+  );
   if (
-    !manifest.files.some(({ role }) => role === 'structure-checkpoint') ||
-    !manifest.files.some(({ role }) => role === 'separation-checkpoint') ||
-    !manifest.files.some(({ role }) => role === 'separation-config') ||
-    new Set(roles).size !== ANALYSIS_MODEL_FILE_ROLES.length ||
+    !validRoleSet ||
+    new Set(roles).size !== roles.length ||
     new Set(manifest.files.map(({ filename }) => filename)).size !==
       manifest.files.length
   ) {

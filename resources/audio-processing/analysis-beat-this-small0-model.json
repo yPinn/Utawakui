@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "manifestKind": "model",
+  "kind": "analysis",
+  "id": "beat-this-small0",
+  "version": "1.1.0-small0",
+  "architecture": "beat-this",
+  "wrapper": {
+    "package": "beat-this",
+    "version": "1.1.0",
+    "model": "small0"
+  },
+  "signals": ["tempo", "beats", "downbeats"],
+  "files": [
+    {
+      "role": "weights",
+      "filename": "small0.ckpt",
+      "url": "https://cloud.cp.jku.at/public.php/dav/files/7ik4RrBKTS273gp/small0.ckpt",
+      "sizeBytes": 8451101,
+      "sha256": "6074be2c4d490c5f6101fcc374a1ec72ae93456e23bb6019783b849f5dc7d47b",
+      "license": {
+        "spdx": "MIT",
+        "evidenceUrl": "https://github.com/CPJKU/beat_this/blob/v1.1.0/LICENSE",
+        "productUse": "accepted",
+        "reason": null
+      }
+    }
+  ],
+  "distribution": {
+    "status": "product-downloadable",
+    "reason": null
+  }
+}

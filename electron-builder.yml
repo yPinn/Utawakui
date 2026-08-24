@@ -94,6 +94,14 @@ extraResources:
     to: audio-processing/structure_analysis_worker.py
   - from: resources/audio-processing/analysis-structure-model.json
     to: audio-processing/analysis-structure-model.json
+  - from: resources/audio-processing/analysis-beat-this-small0-model.json
+    to: audio-processing/analysis-beat-this-small0-model.json
+  - from: resources/audio-processing/analysis-beat-this-final0-model.json
+    to: audio-processing/analysis-beat-this-final0-model.json
+  - from: resources/audio-processing/analysis-beat-this-py314-lock.json
+    to: audio-processing/analysis-beat-this-py314-lock.json
+  - from: resources/audio-processing/audio-python-runtime-3.14.7.json
+    to: audio-processing/audio-python-runtime-3.14.7.json
 
 win:
   target:
