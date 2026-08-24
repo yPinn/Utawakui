@@ -58,15 +58,15 @@ describe('MusicStructureSummary', () => {
       signals: {
         level: 'M1',
         reason: 'current',
-        tempo: { bpm: 91.954023, confidence: 0.952124 },
+        tempo: { bpm: 91.94, confidence: 0.952124 },
         beats: [],
         sections: [],
       },
     });
 
-    expect(html).toContain('約 92 BPM');
+    expect(html).toContain('約 91.9 BPM');
     expect(html).toContain('節拍信心 95%');
-    expect(html).not.toContain('91.954023');
+    expect(html).not.toContain('91.94 BPM');
   });
 
   it('teaches the missing-sidecar state instead of showing an empty panel', async () => {
