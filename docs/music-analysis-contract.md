@@ -11,9 +11,12 @@ current-track renderer wiring are also implemented. The main-owned producer job,
 shared concurrency-one scheduling, fixed decode, bounded Python worker,
 cancellation, cleanup, and atomic publication are implemented. A real unpacked
 Windows x64 CPU/local-model smoke passed with the packaged worker and its
-worker-level network/cache policy; OS-level network denial remains unproven.
-Product installation, activation, authored UI, and model selection remain
-unavailable because the reviewed model catalog is benchmark-only.
+worker-level network/cache policy. Beat This! 1.1.0 `small0` and `final0` both
+satisfy the M1 transport contract; `small0` is the provisional product-default
+candidate because its checkpoint, memory, and installation cost are lower. This
+is not an accuracy claim: labeled beat/downbeat fixtures and OS-level network
+denial remain unproven. Product installation, activation, authored UI, and model
+selection therefore remain unavailable.
 
 The accepted product endpoint is:
 
@@ -255,10 +258,10 @@ separate layer and is neither created nor shifted by these cues.
    complete; real M1/M2 acceptance still requires an analyzer-produced sidecar.
 4. Generalize Stage A into `AudioPythonRuntimeHost`; do not install into the
    provisional community environment.
-5. Resolve and package-smoke `analysis-structure` — benchmark Windows CPU smoke
-   complete; product lock and activation remain blocked by environment/model
-   release gates. Resolve `combined-ml` only when Refined and analysis are both
-   requested.
+5. Resolve and package-smoke `analysis-structure` — Beat This! `small0` and
+   `final0` Windows CPU smoke complete; close labeled accuracy, lifecycle,
+   licensing, and OS-offline gates before activation. Resolve `combined-ml` only
+   when Refined and analysis are both requested.
 6. Benchmark BPM, beat/downbeat, and section utility against fixed songs and
    record false/low-confidence behavior.
 7. Enable the optional analysis capability only after model license, capacity,

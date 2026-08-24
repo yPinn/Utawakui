@@ -105,11 +105,10 @@ Automatic canonical roles remain blocked until one of these is true:
 
 ## Next phase
 
-Prepare and benchmark the Beat This! `small0` and `final0` artifacts with an exact
-CPython/PyTorch/TorchAudio Windows CPU lock and fixed regression corpus. Run the
-no-weight M2 boundary experiment from the same songs after the M1 lock is
-reproducible. Recheck upstream health when rebuilding the activation rather than
-making the absence of an LTS tag a separate blocker. Do not add a product
-activation or model download UI until packaged offline, capacity, license,
-maintenance ownership, removal/repair, and real presentation acceptance gates
-pass.
+The initial M1 contract and packaged Windows CPU spike are complete; see
+[`audio-python-beat-this-m1-spike-2026-08-24.md`](audio-python-beat-this-m1-spike-2026-08-24.md).
+`small0` is the provisional product-default candidate, not an accuracy winner.
+Next, add labeled beat/downbeat fixtures and close installation, activation,
+repair, removal, OS-offline, capacity, and license gates. Then run the no-weight
+M2 boundary experiment on the same songs. Recheck upstream health when rebuilding
+the activation rather than making the absence of an LTS tag a separate blocker.
