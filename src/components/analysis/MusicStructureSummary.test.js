@@ -38,17 +38,35 @@ describe('MusicStructureSummary', () => {
     });
 
     expect(html).toContain('M2');
-    expect(html).toContain('120 BPM');
+    expect(html).toContain('約 120 BPM');
     expect(html).toContain('2');
     expect(html).toContain('1');
     expect(html).toContain('副歌');
-    expect(html).toContain('91%');
+    expect(html).toContain('節拍信心 91%');
     expect(html).toContain('abcdef123456');
     expect(html).toContain('速度');
     expect(html).toContain('節拍');
     expect(html).toContain('強拍');
     expect(html).toContain('段落');
     expect(html).not.toContain('Sidecar result');
+  });
+
+  it('does not expose analyzer precision beyond one decimal place', async () => {
+    const html = await render({
+      sourceRevision: 'abcdef1234567890'.repeat(4),
+      sourceDurationMs: 225000,
+      signals: {
+        level: 'M1',
+        reason: 'current',
+        tempo: { bpm: 91.954023, confidence: 0.952124 },
+        beats: [],
+        sections: [],
+      },
+    });
+
+    expect(html).toContain('約 92 BPM');
+    expect(html).toContain('節拍信心 95%');
+    expect(html).not.toContain('91.954023');
   });
 
   it('teaches the missing-sidecar state instead of showing an empty panel', async () => {

@@ -55,9 +55,16 @@ const fallbackCopy = computed(
 const sourceRevision = computed(() =>
   props.result?.sourceRevision ? props.result.sourceRevision.slice(0, 12) : '—',
 );
+const bpmFormatter = new Intl.NumberFormat('zh-TW', {
+  maximumFractionDigits: 1,
+});
 
 function formatConfidence(value) {
   return Number.isFinite(value) ? `${Math.round(value * 100)}%` : '—';
+}
+
+function formatEstimatedBpm(value) {
+  return Number.isFinite(value) ? `約 ${bpmFormatter.format(value)} BPM` : '—';
 }
 
 function formatTime(milliseconds) {
@@ -106,10 +113,12 @@ function sectionLabel(role) {
     <template v-else>
       <dl class="structure-summary__metrics">
         <div class="structure-summary__metric">
-          <dt>速度</dt>
+          <dt>估算速度</dt>
           <dd>
-            {{ signals.tempo ? `${signals.tempo.bpm} BPM` : '—' }}
-            <span>{{ formatConfidence(signals.tempo?.confidence) }}</span>
+            {{ formatEstimatedBpm(signals.tempo?.bpm) }}
+            <span v-if="signals.tempo">
+              節拍信心 {{ formatConfidence(signals.tempo.confidence) }}
+            </span>
           </dd>
         </div>
         <div class="structure-summary__metric">
