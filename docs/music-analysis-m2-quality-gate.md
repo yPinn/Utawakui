@@ -97,7 +97,27 @@ not lower a gate after seeing a poor result merely to make a model pass.
 
 ## Running the evaluator
 
-From the repository root:
+Run the isolated inference utility first with an ignored, machine-local config:
+
+```powershell
+npm run analysis:benchmark-real -- tasks/music-analysis-m2-real-run.json
+```
+
+The config supplies absolute paths to the private library, isolated Python
+environment, fixed worker, verified model directory, and an output directory
+outside the library. The runner resolves audio only through a track id, decodes
+one case at a time, keeps raw audio and identifying paths out of prediction
+evidence, and removes each decoded work file after inference. Reusable results
+are accepted only when a SHA-256 fingerprint still matches the source audio,
+worker, model artifacts, and case contract. `--case <opaque-id>` runs one case;
+`--force` deliberately ignores a valid cache.
+
+Keep reference annotation independent from these predictions. Merge the
+manually reviewed BPM and contiguous reference partition with the path-free
+prediction evidence only after annotation is complete; model output must never
+be copied into the reference fields as ground truth.
+
+Then run the evaluator from the repository root:
 
 ```powershell
 npm run analysis:evaluate -- tasks/music-analysis-m2-real.json tasks/music-analysis-m2-report.json
