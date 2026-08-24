@@ -89,11 +89,16 @@ class Audio2Frames:
         )
         (model_package / "postprocessor.py").write_text(
             """
+import os
+
 class Postprocessor:
     def __init__(self, type="minimal", fps=50):
         assert type == "minimal"
         assert fps == 50
     def __call__(self, beat_logits, downbeat_logits):
+        if os.environ.get("FAKE_BEAT_THIS_SCENARIO") == "quantized-tempo":
+            beats = [round(index * 50 * 60 / 122) / 50 for index in range(100)]
+            return beats, beats[::4]
         return [0.5, 1.0, 1.5], [0.5]
 """.lstrip(),
             encoding="utf-8",
@@ -127,7 +132,7 @@ def asarray(_values, dtype=None):
             "protocolVersion": 1,
             "operation": "analyze-structure",
             "analyzerId": "beat-this",
-            "profileId": "beat-this-small0-cpu-v1",
+            "profileId": "beat-this-small0-cpu-v2",
             "modelId": "beat-this-small0",
             "modelName": "small0",
             "environmentPath": str(self.environment.resolve()),
@@ -161,7 +166,7 @@ def asarray(_values, dtype=None):
         messages = [json.loads(line) for line in completed.stdout.splitlines()]
         result = messages[-1]["result"]
         self.assertEqual(result["analyzerId"], "beat-this")
-        self.assertEqual(result["profileId"], "beat-this-small0-cpu-v1")
+        self.assertEqual(result["profileId"], "beat-this-small0-cpu-v2")
         self.assertEqual(result["modelId"], "beat-this-small0")
         self.assertEqual(result["tempo"]["bpm"], 120.0)
         self.assertEqual(len(result["beats"]), 3)
@@ -171,6 +176,14 @@ def asarray(_values, dtype=None):
         self.assertEqual(result["sections"], [])
         self.assertTrue(result["offlineEnforced"])
         self.assertTrue(result["noUserCache"])
+
+    def test_estimates_global_tempo_without_single_frame_interval_bias(self) -> None:
+        completed = self.run_worker(self.request(), "quantized-tempo")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        messages = [json.loads(line) for line in completed.stdout.splitlines()]
+        result = messages[-1]["result"]
+
+        self.assertAlmostEqual(result["tempo"]["bpm"], 122.0, places=1)
 
     def test_rejects_network_and_tampered_or_extra_checkpoints(self) -> None:
         network = self.run_worker(self.request(), "network")

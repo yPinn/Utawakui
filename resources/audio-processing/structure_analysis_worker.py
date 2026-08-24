@@ -33,13 +33,13 @@ WINDOWS_X64_UNAME = namedtuple(
 ANALYSIS_PROFILES = {
     "beat-this-small0": {
         "analyzer_id": "beat-this",
-        "profile_id": "beat-this-small0-cpu-v1",
+        "profile_id": "beat-this-small0-cpu-v2",
         "model_name": "small0",
         "files": {"weights": "small0.ckpt"},
     },
     "beat-this-final0": {
         "analyzer_id": "beat-this",
-        "profile_id": "beat-this-final0-cpu-v1",
+        "profile_id": "beat-this-final0-cpu-v2",
         "model_name": "final0",
         "files": {"weights": "final0.ckpt"},
     },
@@ -646,6 +646,25 @@ def logit_confidence(logits: Any, time_seconds: float) -> float:
     return round(probability, 6)
 
 
+def estimate_global_bpm(beat_times: list[float]) -> float | None:
+    """Estimate tempo across long beat windows to reduce frame-grid bias."""
+    if len(beat_times) < 2:
+        return None
+    window_beats = min(32, len(beat_times) - 1)
+    intervals = [
+        (current - previous) / window_beats
+        for previous, current in zip(
+            beat_times,
+            beat_times[window_beats:],
+        )
+        if math.isfinite(current - previous) and current > previous
+    ]
+    if not intervals:
+        return None
+    bpm = 60 / statistics.median(intervals)
+    return bpm if math.isfinite(bpm) and 20 <= bpm <= 400 else None
+
+
 def analyze_beat_this(validated: dict[str, Any]) -> dict[str, Any]:
     try:
         from beat_this.inference import Audio2Frames
@@ -727,10 +746,7 @@ def analyze_beat_this(validated: dict[str, Any]) -> dict[str, Any]:
             beat["positionInBar"] = position_in_bar
         beats.append(beat)
 
-    intervals = [
-        current - previous for previous, current in zip(beat_times, beat_times[1:])
-    ]
-    bpm = 60 / statistics.median(intervals) if intervals else None
+    bpm = estimate_global_bpm(beat_times)
     beat_confidences = [beat["confidence"] for beat in beats]
     tempo = (
         {
@@ -739,10 +755,7 @@ def analyze_beat_this(validated: dict[str, Any]) -> dict[str, Any]:
                 sum(beat_confidences) / len(beat_confidences), 6
             ),
         }
-        if bpm is not None
-        and math.isfinite(bpm)
-        and 20 <= bpm <= 400
-        and beat_confidences
+        if bpm is not None and beat_confidences
         else None
     )
     write_message({"type": "progress", "stage": "validating", "percent": 95})

@@ -20,7 +20,7 @@ const musicStructureContractValues = require('../../../shared/musicStructureCont
 
 const STRUCTURE_CAPABILITY_ID = 'structure-analysis';
 const STRUCTURE_ANALYZER_ID = 'beat-this';
-const STRUCTURE_PROFILE_ID = 'beat-this-small0-cpu-v1';
+const STRUCTURE_PROFILE_ID = 'beat-this-small0-cpu-v2';
 const STRUCTURE_MODEL_ID = 'beat-this-small0';
 const SUPPORTED_STRUCTURE_ANALYSIS_MODELS = Object.freeze({
   'beat-this-small0': Object.freeze({
@@ -35,7 +35,7 @@ const SUPPORTED_STRUCTURE_ANALYSIS_MODELS = Object.freeze({
   }),
   'beat-this-final0': Object.freeze({
     analyzerId: STRUCTURE_ANALYZER_ID,
-    profileId: 'beat-this-final0-cpu-v1',
+    profileId: 'beat-this-final0-cpu-v2',
     architecture: 'beat-this',
     wrapperPackage: 'beat-this',
     wrapperVersion: '1.1.0',

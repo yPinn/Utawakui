@@ -224,6 +224,7 @@ function workerResult() {
 
 describe('createStructureAnalysisJob', () => {
   it('derives a fixed offline CPU request and publishes only a validated document', async () => {
+    expect(STRUCTURE_PROFILE_ID).toBe('beat-this-small0-cpu-v2');
     const prepared = prepareJob();
     const publishDocument = vi.fn(async (document, identity) => ({
       trackId: prepared.trackId,
