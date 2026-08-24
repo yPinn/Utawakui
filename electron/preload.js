@@ -86,6 +86,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   stopOutput: () => ipcRenderer.invoke('output:stop'),
   publishOutputSnapshot: (snapshot) =>
     ipcRenderer.invoke('output:publish', snapshot),
+  copyOutputUrl: (kind) => ipcRenderer.invoke('output:copy-url', kind),
   openPerformerView: (snapshot) =>
     ipcRenderer.invoke('performer-view:open', snapshot),
   publishPerformerSnapshot: (snapshot) =>

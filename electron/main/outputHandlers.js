@@ -9,6 +9,26 @@ const {
 const {
   suggestedPorts: OUTPUT_PORT_CANDIDATES,
 } = require('../../shared/outputRuntimeValues.json');
+const {
+  slots: OUTPUT_SLOT_DEFINITIONS,
+} = require('../../shared/outputTemplateValues.json');
+
+const OUTPUT_PATH_BY_KIND = new Map(
+  OUTPUT_SLOT_DEFINITIONS.map((slot) => [slot.id, slot.path]),
+);
+
+function buildOutputUrl(status, kind) {
+  const routePath = OUTPUT_PATH_BY_KIND.get(kind);
+  if (!routePath) throw new Error('invalid output slot kind');
+
+  const baseUrl =
+    status?.httpUrl ??
+    (status?.host && Number.isSafeInteger(status.port)
+      ? `http://${status.host}:${status.port}`
+      : null);
+  if (!baseUrl) throw new Error('output URL unavailable');
+  return new URL(routePath, baseUrl).toString();
+}
 
 function registerOutputHandlers({
   ipcMain,
@@ -20,6 +40,7 @@ function registerOutputHandlers({
   resolveDownloadDir,
   isPortAvailable = isOutputPortAvailable,
   findAvailablePorts = findAvailableOutputPorts,
+  writeClipboardText = null,
   logger = console,
 }) {
   function outputDir() {
@@ -34,6 +55,15 @@ function registerOutputHandlers({
   syncOutputSlots();
 
   ipcMain.handle('output:get-status', async () => server.getStatus());
+
+  ipcMain.handle('output:copy-url', async (event, kind) => {
+    const url = buildOutputUrl(server.getStatus(), kind);
+    if (typeof writeClipboardText !== 'function') {
+      throw new Error('clipboard unavailable');
+    }
+    writeClipboardText(url);
+    return url;
+  });
 
   ipcMain.handle('output:connect-source', async (event) =>
     server.connectSource(event.sender),
@@ -110,4 +140,4 @@ function registerOutputHandlers({
   });
 }
 
-module.exports = { registerOutputHandlers };
+module.exports = { buildOutputUrl, registerOutputHandlers };

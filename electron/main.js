@@ -16,6 +16,7 @@ const {
   nativeTheme,
   screen,
   shell,
+  clipboard,
 } = require('electron');
 
 const APP_NAME = 'Utawakui';
@@ -433,6 +434,7 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      writeClipboardText: (value) => clipboard.writeText(value),
       logger: runtimeDiagnosticsLogger,
     });
 

@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { describeOutputRuntimeStatus } from './outputRuntimeStatus.js';
+import {
+  describeOutputClientStatus,
+  describeOutputRuntimeStatus,
+  describeOutputSourceStatus,
+} from './outputRuntimeStatus.js';
 
 describe('describeOutputRuntimeStatus', () => {
   it('reports a stopped service before considering source or clients', () => {
@@ -101,5 +105,92 @@ describe('describeOutputRuntimeStatus', () => {
         },
       }).detail,
     ).toBe(detail);
+  });
+});
+
+describe('compact output status descriptions', () => {
+  it.each([
+    [
+      { running: false },
+      {
+        state: 'stopped',
+        label: '服務停止',
+        tone: 'muted',
+        detail: '本機輸出服務未啟動。',
+      },
+    ],
+    [
+      {
+        running: true,
+        observed: { sourceSynchronization: 'syncing' },
+      },
+      {
+        state: 'syncing',
+        label: '同步中',
+        tone: 'warning',
+        detail: '正在接收播放器、佇列與歌詞狀態。',
+      },
+    ],
+    [
+      {
+        running: true,
+        observed: {
+          sourceSynchronization: 'unavailable',
+          unavailableReason: 'renderer_crashed',
+        },
+      },
+      {
+        state: 'unavailable',
+        label: '來源中斷',
+        tone: 'danger',
+        detail: '播放器資料來源已中斷，請重新啟動應用程式。',
+      },
+    ],
+    [
+      {
+        running: true,
+        observed: { sourceSynchronization: 'ready' },
+      },
+      {
+        state: 'ready',
+        label: '已同步',
+        tone: 'success',
+        detail: '播放資料已就緒。',
+      },
+    ],
+  ])('describes source state independently', (status, expected) => {
+    expect(describeOutputSourceStatus(status)).toEqual(expected);
+  });
+
+  it.each([
+    [
+      { running: false, clients: 3 },
+      {
+        state: 'stopped',
+        label: '未連線',
+        tone: 'muted',
+        detail: '輸出服務停止時不接受 Browser Source 連線。',
+      },
+    ],
+    [
+      { running: true, clients: 0 },
+      {
+        state: 'disconnected',
+        label: '未連線',
+        tone: 'muted',
+        detail: '尚無 Browser Source 連線。',
+      },
+    ],
+    [
+      { running: true, clients: 2 },
+      {
+        state: 'connected',
+        label: '2 個來源',
+        tone: 'success',
+        detail: '2 個 Browser Source 已連線。',
+      },
+    ],
+  ])('describes Browser Source clients independently', (status, expected) => {
+    expect(describeOutputClientStatus(status)).toEqual(expected);
   });
 });

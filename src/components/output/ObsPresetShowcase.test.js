@@ -38,6 +38,14 @@ const workbenchSource = readFileSync(
   fileURLToPath(new URL('./ObsSlotWorkbench.vue', import.meta.url)),
   'utf8',
 );
+const briefSource = readFileSync(
+  fileURLToPath(new URL('./ObsOutputBrief.vue', import.meta.url)),
+  'utf8',
+);
+const preloadSource = readFileSync(
+  fileURLToPath(new URL('../../../electron/preload.js', import.meta.url)),
+  'utf8',
+);
 const appearanceControlRowSource = readFileSync(
   fileURLToPath(new URL('./ObsAppearanceControlRow.vue', import.meta.url)),
   'utf8',
@@ -304,9 +312,22 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain(':icon="Check"');
     expect(settingsSource).toContain('type="checkbox"');
     expect(settingsSource).toContain('describeOutputRuntimeStatus');
-    expect(previewSource).toContain('describeOutputRuntimeStatus');
+    expect(previewSource).not.toContain('describeOutputRuntimeStatus');
     expect(settingsSource).toContain('runtimeStatus.value.detail');
-    expect(previewSource).toContain('sourceDiagnostic');
+    expect(previewSource).not.toContain('sourceDiagnostic');
+    expect(previewSource).not.toContain('UiChip');
+    expect(previewSource).not.toContain('UiNotice');
+    expect(workbenchSource).toContain('ObsOutputBrief');
+    expect(workbenchSource).toContain(':output-status="outputStatus"');
+    expect(workbenchSource).toContain(':error="outputError"');
+    expect(workbenchSource).not.toContain('preset.detail');
+    expect(workbenchSource).not.toContain('preset.tags');
+    expect(briefSource).toContain('preset?.summary');
+    expect(briefSource).toContain('describeOutputSourceStatus');
+    expect(briefSource).toContain('describeOutputClientStatus');
+    expect(briefSource).toContain('aria-label="輸出摘要"');
+    expect(briefSource).toContain('v-if="error"');
+    expect(briefSource).toContain('title="輸出未更新"');
     expect(workspaceSource).toContain('await initializeOutput()');
     expect(workspaceSource).toContain('await refreshOutputStatus()');
     expect(settingsSource).not.toContain('OBS 已連線');
@@ -333,6 +354,13 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).not.toContain("emit('suggestPorts')");
     expect(previewSource).toContain('Browser Source 即時預覽');
     expect(previewSource).toContain('Browser Source URL');
+    expect(previewSource).toContain(
+      'window.Utawakui.copyOutputUrl(props.activeKind)',
+    );
+    expect(previewSource).not.toContain('navigator.clipboard');
+    expect(preloadSource).toContain(
+      "ipcRenderer.invoke('output:copy-url', kind)",
+    );
     expect(previewSource).not.toContain('OBS Overlay 即時預覽');
   });
 });

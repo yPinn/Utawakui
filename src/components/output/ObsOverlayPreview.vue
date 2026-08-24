@@ -10,22 +10,17 @@ import { Copy, Grid2X2, Moon, Sun } from '../../icons/index.js';
 import streamerPreviewImage from '../../assets/output-preview/Reze.png';
 import { OUTPUT_LYRICS_CAPTURE_SIZE } from '../../constants/outputCaptureSizes.js';
 import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiNotice from '../ui/UiNotice.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
-import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
 
 const props = defineProps({
   preset: { type: Object, default: null },
   activeKind: { type: String, default: null },
   captureSize: { type: String, default: null },
   supportedCaptureSizes: { type: Array, default: () => [] },
-  outputStatus: { type: Object, default: () => ({ running: false }) },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
-  error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['update:captureSize']);
@@ -44,18 +39,9 @@ const PREVIEW_BACKDROPS = Object.freeze([
 let copyResetTimer = null;
 let resizeObserver = null;
 
-const hasClients = computed(() => (props.outputStatus.clients ?? 0) > 0);
 const isLyrics = computed(() => props.activeKind === 'lyrics');
 const selectedCaptureSize = computed(
   () => props.captureSize ?? props.supportedCaptureSizes[0] ?? 'small',
-);
-const runtimeStatus = computed(() =>
-  describeOutputRuntimeStatus(props.outputStatus),
-);
-const sourceDiagnostic = computed(() =>
-  ['source-unavailable', 'source-syncing'].includes(runtimeStatus.value.state)
-    ? runtimeStatus.value
-    : null,
 );
 const hasRuntimeTemplate = computed(() => Boolean(props.previewUrl));
 const inspectionUrl = computed(() => {
@@ -80,7 +66,10 @@ function measurePreview() {
 async function copyObsUrl() {
   if (!props.obsUrl) return;
   try {
-    await navigator.clipboard.writeText(props.obsUrl);
+    if (typeof window.Utawakui?.copyOutputUrl !== 'function') {
+      throw new Error('clipboard bridge unavailable');
+    }
+    await window.Utawakui.copyOutputUrl(props.activeKind);
     copyState.value = 'copied';
   } catch {
     copyState.value = 'error';
@@ -152,14 +141,17 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="obs-overlay-preview__toolbar">
-      <div class="obs-overlay-preview__status">
-        <UiChip :tone="runtimeStatus.tone">
-          {{ runtimeStatus.label }}
-        </UiChip>
-        <span v-if="hasClients" class="obs-overlay-preview__client-count">
-          {{ outputStatus.clients }} 個來源
-        </span>
-      </div>
+      <p
+        v-if="copyState !== 'idle'"
+        class="obs-overlay-preview__feedback"
+        :role="copyState === 'error' ? 'alert' : 'status'"
+        aria-live="polite"
+      >
+        <template v-if="copyState === 'copied'">
+          已複製 Browser Source URL
+        </template>
+        <template v-else-if="copyState === 'error'">無法複製 URL</template>
+      </p>
       <div class="obs-overlay-preview__actions">
         <div
           class="obs-overlay-preview__backdrops"
@@ -186,32 +178,6 @@ onBeforeUnmount(() => {
         />
       </div>
     </div>
-
-    <UiNotice
-      v-if="error"
-      tone="danger"
-      title="輸出預覽未更新"
-      :message="error"
-      compact
-    />
-    <UiNotice
-      v-else-if="sourceDiagnostic"
-      :tone="sourceDiagnostic.tone"
-      :title="sourceDiagnostic.label"
-      :message="sourceDiagnostic.detail"
-      compact
-    />
-    <p
-      v-if="copyState !== 'idle'"
-      class="obs-overlay-preview__feedback"
-      :role="copyState === 'error' ? 'alert' : 'status'"
-      aria-live="polite"
-    >
-      <template v-if="copyState === 'copied'">
-        已複製 Browser Source URL
-      </template>
-      <template v-else-if="copyState === 'error'">無法複製 URL</template>
-    </p>
   </section>
 </template>
 
@@ -314,16 +280,9 @@ onBeforeUnmount(() => {
 .obs-overlay-preview__toolbar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--ui-space-2);
   min-width: 0;
-}
-
-.obs-overlay-preview__status {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
 }
 
 .obs-overlay-preview__actions,
@@ -345,14 +304,9 @@ onBeforeUnmount(() => {
   background: var(--ui-color-canvas);
 }
 
-.obs-overlay-preview__client-count {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-}
-
 .obs-overlay-preview__feedback {
   margin: 0;
+  margin-inline-end: auto;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);

@@ -8,10 +8,10 @@ import {
 } from '../../constants/outputCaptureSizes.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
+import ObsOutputBrief from './ObsOutputBrief.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
 import UiButton from '../ui/UiButton.vue';
-import UiChip from '../ui/UiChip.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -168,10 +168,8 @@ function saveSettings() {
             :active-kind="activeKind"
             :capture-size="draft.captureSize"
             :supported-capture-sizes="supportedCaptureSizes"
-            :output-status="outputStatus"
             :preview-url="previewUrl"
             :obs-url="obsUrl"
-            :error="outputError"
             @update:capture-size="draft.captureSize = $event"
           />
         </div>
@@ -180,12 +178,9 @@ function saveSettings() {
 
     <template #side>
       <header class="obs-slot-workbench__inspector-header">
-        <div>
-          <span class="obs-slot-workbench__section-label">外觀</span>
-          <h2 class="obs-slot-workbench__title">
-            {{ preset?.name ?? '未選擇模板' }}
-          </h2>
-        </div>
+        <h2 class="obs-slot-workbench__title">
+          {{ preset?.name ?? '未選擇模板' }}
+        </h2>
         <UiButton
           :icon="Check"
           variant="accent"
@@ -195,6 +190,12 @@ function saveSettings() {
           儲存
         </UiButton>
       </header>
+
+      <ObsOutputBrief
+        :preset="preset"
+        :output-status="outputStatus"
+        :error="outputError"
+      />
 
       <section class="obs-slot-workbench__section">
         <h3 class="obs-slot-workbench__section-title">文字與背景</h3>
@@ -221,16 +222,6 @@ function saveSettings() {
           </ObsAppearanceControlRow>
         </div>
       </section>
-
-      <section v-if="preset" class="obs-slot-workbench__section">
-        <h3 class="obs-slot-workbench__section-title">模板內容</h3>
-        <p class="obs-slot-workbench__section-copy">{{ preset.detail }}</p>
-        <div class="obs-slot-workbench__tags">
-          <UiChip v-for="tag in preset.tags" :key="tag" tone="muted">
-            {{ tag }}
-          </UiChip>
-        </div>
-      </section>
     </template>
   </ObsOutputSplitLayout>
 </template>
@@ -245,17 +236,12 @@ function saveSettings() {
 }
 
 .obs-slot-workbench__canvas-header,
-.obs-slot-workbench__inspector-header,
-.obs-slot-workbench__tags {
+.obs-slot-workbench__inspector-header {
   min-width: 0;
   display: flex;
   align-items: center;
-  gap: var(--ui-space-2);
-}
-
-.obs-slot-workbench__canvas-header,
-.obs-slot-workbench__inspector-header {
   justify-content: space-between;
+  gap: var(--ui-space-2);
 }
 
 .obs-slot-workbench__select:focus-visible {
@@ -325,15 +311,8 @@ function saveSettings() {
   border-bottom: 0;
 }
 
-.obs-slot-workbench__section-label {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
-}
-
 .obs-slot-workbench__title,
-.obs-slot-workbench__section-title,
-.obs-slot-workbench__section-copy {
+.obs-slot-workbench__section-title {
   margin: 0;
 }
 
@@ -350,12 +329,6 @@ function saveSettings() {
 
 .obs-slot-workbench__section-title {
   font-size: var(--ui-font-size-md);
-}
-
-.obs-slot-workbench__section-copy {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
 }
 
 .obs-slot-workbench__fields {
@@ -385,11 +358,6 @@ function saveSettings() {
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
   cursor: pointer;
-}
-
-.obs-slot-workbench__tags {
-  flex-wrap: wrap;
-  gap: var(--ui-space-1);
 }
 
 @container (width < 48rem) {
