@@ -1,14 +1,25 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useMusicAnalysisWorkbench } from '../../composables/useMusicAnalysisWorkbench.js';
+import { Info } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import MusicAnalysisCapabilityModal from './MusicAnalysisCapabilityModal.vue';
 import MusicAnalysisJobPanel from './MusicAnalysisJobPanel.vue';
 import MusicAnalysisTrackPicker from './MusicAnalysisTrackPicker.vue';
 import MusicStructureSummary from './MusicStructureSummary.vue';
 
 const workbench = useMusicAnalysisWorkbench();
+const showCapabilityDetails = ref(false);
+
+async function removeCapability() {
+  const confirmed =
+    typeof window === 'undefined' ||
+    window.confirm('移除本機音樂分析功能？歌曲、歌詞與既有 sidecar 都會保留。');
+  if (confirmed) await workbench.removeCapability();
+}
 
 onMounted(workbench.initialize);
 onUnmounted(workbench.dispose);
@@ -18,15 +29,19 @@ onUnmounted(workbench.dispose);
   <div class="analysis-workbench">
     <UiPageHeader title="音樂結構分析">
       <template #actions>
-        <UiChip tone="gated">內部工具 · F10</UiChip>
+        <div class="analysis-workbench__header-actions">
+          <UiIconButton
+            :icon="Info"
+            label="查看分析功能資訊"
+            title="模型、下載大小與維護資訊"
+            size="sm"
+            @click="showCapabilityDetails = true"
+          />
+          <UiChip tone="gated">內部工具 · F10</UiChip>
+        </div>
       </template>
     </UiPageHeader>
 
-    <UiNotice
-      tone="warning"
-      title="尚未是正式產品功能"
-      message="分析端 IPC 與 sidecar 讀取流程已接通；模型授權、產品 activation、安裝與離線發行條件尚未完成。"
-    />
     <UiNotice
       v-if="workbench.libraryState.error"
       :notice="workbench.libraryState.error"
@@ -62,13 +77,31 @@ onUnmounted(workbench.dispose);
           :busy="workbench.isBusy.value"
           :can-analyze="workbench.canAnalyze.value"
           :can-cancel="workbench.canCancel.value"
+          :capability="workbench.capability.value"
+          :capability-stage-label="workbench.capabilityStageLabel.value"
+          :capability-progress-percent="
+            workbench.capabilityProgressPercent.value
+          "
+          :capability-busy="workbench.capabilityBusy.value"
+          :capability-error="workbench.state.capabilityError"
           @analyze="workbench.analyzeSelectedTrack"
           @cancel="workbench.cancelAnalysis"
           @reload="workbench.refreshSelectedTrack"
+          @prepare="workbench.prepareCapability"
+          @repair="workbench.repairCapability"
         />
         <MusicStructureSummary :result="workbench.structure.value" />
       </div>
     </div>
+
+    <MusicAnalysisCapabilityModal
+      :open="showCapabilityDetails"
+      :capability="workbench.capability.value"
+      :busy="workbench.capabilityBusy.value"
+      @close="showCapabilityDetails = false"
+      @repair="workbench.repairCapability"
+      @remove="removeCapability"
+    />
   </div>
 </template>
 
@@ -83,6 +116,12 @@ onUnmounted(workbench.dispose);
 
 .analysis-workbench :deep(.ui-page-header) {
   margin-bottom: 0;
+}
+
+.analysis-workbench__header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
 }
 
 .analysis-workbench__layout {

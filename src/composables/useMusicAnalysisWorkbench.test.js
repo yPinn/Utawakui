@@ -48,6 +48,7 @@ function createHarness(options = {}) {
     }),
   };
   let progressListener;
+  let capabilityProgressListener;
   let pollCallback;
   const unsubscribe = vi.fn();
   const clearTimer = vi.fn();
@@ -63,6 +64,25 @@ function createHarness(options = {}) {
     cancelTrackMusicStructureAnalysis: vi
       .fn()
       .mockResolvedValue({ cancelled: true }),
+    getMusicStructureCapabilityStatus: vi.fn().mockResolvedValue({
+      status: 'ready',
+      installed: true,
+      busy: false,
+      canPrepare: false,
+      canRepair: true,
+      canRemove: true,
+      modelName: 'Beat This! small0',
+      modelVersion: '1.1.0',
+      downloadBytes: 159368729,
+      installedBytesEstimate: 557000000,
+    }),
+    prepareMusicStructureCapability: vi.fn(),
+    repairMusicStructureCapability: vi.fn(),
+    removeMusicStructureCapability: vi.fn(),
+    onMusicStructureCapabilityProgress: vi.fn((listener) => {
+      capabilityProgressListener = listener;
+      return vi.fn();
+    }),
   };
   const workbench = useMusicAnalysisWorkbench({
     library,
@@ -85,6 +105,7 @@ function createHarness(options = {}) {
       await callback?.();
     },
     progress: (value) => progressListener?.(value),
+    capabilityProgress: (value) => capabilityProgressListener?.(value),
     signalOwner,
     unsubscribe,
     clearTimer,
@@ -112,9 +133,77 @@ describe('Music Analysis workbench', () => {
     expect(harness.signalOwner.loadForTrack).toHaveBeenCalledWith('track-1');
     expect(harness.workbench.selectedTrack.value?.title).toBe('First song');
     expect(harness.workbench.canAnalyze.value).toBe(true);
+    expect(harness.workbench.capability.value.status).toBe('ready');
 
     harness.workbench.dispose();
     expect(harness.unsubscribe).toHaveBeenCalledOnce();
+  });
+
+  it('prepares a missing capability and exposes bounded download progress', async () => {
+    const harness = createHarness();
+    const missing = {
+      status: 'missing',
+      installed: false,
+      busy: false,
+      canPrepare: true,
+      canRepair: false,
+      canRemove: false,
+      modelName: 'Beat This! small0',
+      modelVersion: '1.1.0',
+      downloadBytes: 159368729,
+      installedBytesEstimate: 557000000,
+    };
+    const ready = { ...missing, status: 'ready', installed: true };
+    harness.bridge.getMusicStructureCapabilityStatus.mockResolvedValue(missing);
+    harness.bridge.prepareMusicStructureCapability.mockImplementation(
+      async () => {
+        harness.capabilityProgress({
+          stage: 'downloading-environment',
+          percent: 52,
+        });
+        return ready;
+      },
+    );
+    await harness.workbench.initialize();
+
+    expect(harness.workbench.canAnalyze.value).toBe(false);
+    const preparation = harness.workbench.prepareCapability();
+    expect(harness.workbench.capabilityBusy.value).toBe(true);
+    await preparation;
+
+    expect(harness.workbench.capability.value).toEqual(ready);
+    expect(harness.workbench.capabilityStageLabel.value).toBe('分析功能已就緒');
+    expect(harness.workbench.canAnalyze.value).toBe(true);
+  });
+
+  it('keeps setup failures concise and supports repair and removal', async () => {
+    const harness = createHarness();
+    harness.bridge.repairMusicStructureCapability.mockRejectedValue(
+      new Error('EPERM C:\\Users\\private\\runtime'),
+    );
+    harness.bridge.removeMusicStructureCapability.mockResolvedValue({
+      status: 'missing',
+      installed: false,
+      busy: false,
+      canPrepare: true,
+      canRepair: false,
+      canRemove: false,
+      modelName: 'Beat This! small0',
+      modelVersion: '1.1.0',
+      downloadBytes: 159368729,
+      installedBytesEstimate: 557000000,
+    });
+    await harness.workbench.initialize();
+
+    await harness.workbench.repairCapability();
+    expect(harness.workbench.state.capabilityError).toBe(
+      '分析功能修復未完成，請再試一次。',
+    );
+    expect(harness.workbench.state.capabilityError).not.toContain('Users');
+
+    await harness.workbench.removeCapability();
+    expect(harness.workbench.capability.value.status).toBe('missing');
+    expect(harness.workbench.state.capabilityProgress).toBeNull();
   });
 
   it('restores an active job before falling back to the first track', async () => {
@@ -250,7 +339,7 @@ describe('Music Analysis workbench', () => {
 
     await expect(harness.workbench.analyzeSelectedTrack()).resolves.toBeNull();
 
-    expect(harness.workbench.state.error).toContain('runtime／模型尚未啟用');
+    expect(harness.workbench.state.error).toContain('尚未安裝音樂分析功能');
     expect(harness.workbench.state.phase).toBe('idle');
     expect(harness.workbench.state.activeJob).toBeNull();
   });

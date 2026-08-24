@@ -1,4 +1,4 @@
-import { computed, reactive, readonly } from 'vue';
+import { computed, reactive, readonly, shallowRef } from 'vue';
 import { useLibrary } from './useLibrary.js';
 import { createMusicStructureSignals } from './useMusicStructureSignals.js';
 
@@ -18,6 +18,19 @@ const STAGE_LABELS = Object.freeze({
   complete: '分析完成',
 });
 
+const CAPABILITY_STAGE_LABELS = Object.freeze({
+  starting: '準備下載',
+  'downloading-runtime': '下載 Python runtime',
+  'installing-runtime': '安裝 Python runtime',
+  'downloading-environment': '下載分析環境',
+  'installing-environment': '安裝分析環境',
+  'verifying-environment': '驗證分析環境',
+  'downloading-model': '下載 Beat This! 模型',
+  'verifying-model': '驗證模型',
+  activating: '啟用分析功能',
+  ready: '分析功能已就緒',
+});
+
 function resolveBridge(bridge) {
   if (bridge) return bridge;
   if (typeof window !== 'undefined') return window.Utawakui;
@@ -27,7 +40,7 @@ function resolveBridge(bridge) {
 function publicErrorMessage(error) {
   const message = String(error?.message ?? '');
   if (message.includes('capability is not activated')) {
-    return '分析 runtime／模型尚未啟用。此內部頁面不會自動下載 benchmark 模型。';
+    return '尚未安裝音樂分析功能，請先完成下載與安裝。';
   }
   if (message.includes('job is already running')) {
     return '已有一個音訊處理工作正在執行，請等待完成或先取消。';
@@ -35,6 +48,12 @@ function publicErrorMessage(error) {
   if (message.includes('cancelled')) return '分析工作已取消。';
   if (message.includes('unavailable')) return '所選曲目的音訊目前無法使用。';
   return '音樂結構分析未完成，請查看診斷記錄後再試一次。';
+}
+
+function capabilityErrorMessage(operation) {
+  if (operation === 'repair') return '分析功能修復未完成，請再試一次。';
+  if (operation === 'remove') return '分析功能移除未完成，請再試一次。';
+  return '分析功能安裝未完成，請檢查網路連線後再試一次。';
 }
 
 function normalizedProgress(payload) {
@@ -65,6 +84,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
   const setTimer = options.setTimer ?? setTimeout;
   const clearTimer = options.clearTimer ?? clearTimeout;
   const statusPollIntervalMs = options.statusPollIntervalMs ?? 1000;
+  const capability = shallowRef(null);
   const state = reactive({
     selectedTrackId: '',
     activeJob: null,
@@ -72,10 +92,14 @@ export function useMusicAnalysisWorkbench(options = {}) {
     phase: 'idle',
     error: '',
     notice: '',
+    capabilityProgress: null,
+    capabilityBusy: false,
+    capabilityError: '',
     initialized: false,
   });
 
   let unsubscribeProgress = null;
+  let unsubscribeCapabilityProgress = null;
   let initializationPromise = null;
   let statusPollTimer = null;
   let disposed = false;
@@ -87,10 +111,18 @@ export function useMusicAnalysisWorkbench(options = {}) {
       tracks.value.find((track) => track.id === state.selectedTrackId) ?? null,
   );
   const isBusy = computed(() => state.phase !== 'idle');
+  const capabilityReady = computed(
+    () =>
+      capability.value?.status === 'ready' &&
+      capability.value?.installed === true,
+  );
+  const capabilityBusy = computed(() => state.capabilityBusy);
   const canAnalyze = computed(
     () =>
       state.initialized &&
       Boolean(selectedTrack.value) &&
+      capabilityReady.value &&
+      !capabilityBusy.value &&
       !isBusy.value &&
       !state.activeJob,
   );
@@ -103,6 +135,20 @@ export function useMusicAnalysisWorkbench(options = {}) {
   const progressPercent = computed(() =>
     Number.isFinite(state.progress?.percent) ? state.progress.percent : null,
   );
+  const capabilityProgressPercent = computed(() =>
+    Number.isFinite(state.capabilityProgress?.percent)
+      ? state.capabilityProgress.percent
+      : null,
+  );
+  const capabilityStageLabel = computed(() => {
+    const stage = state.capabilityProgress?.stage;
+    if (stage) return CAPABILITY_STAGE_LABELS[stage] ?? '準備分析功能';
+    if (capability.value?.status === 'ready') return '分析功能已就緒';
+    if (capability.value?.status === 'damaged') return '分析功能需要修復';
+    if (capability.value?.status === 'unavailable')
+      return '目前無法管理分析功能';
+    return '尚未安裝分析功能';
+  });
 
   async function loadSelectedTrack() {
     if (!state.selectedTrackId) {
@@ -141,6 +187,48 @@ export function useMusicAnalysisWorkbench(options = {}) {
       state.selectedTrackId = progress.trackId;
     }
     scheduleStatusPoll();
+  }
+
+  function handleCapabilityProgress(payload) {
+    if (
+      disposed ||
+      !payload ||
+      typeof payload.stage !== 'string' ||
+      (payload.percent !== undefined && !Number.isFinite(payload.percent))
+    ) {
+      return;
+    }
+    state.capabilityProgress = {
+      stage: payload.stage,
+      ...(Number.isFinite(payload.percent)
+        ? { percent: Math.min(100, Math.max(0, payload.percent)) }
+        : {}),
+    };
+  }
+
+  async function refreshCapabilityStatus() {
+    if (typeof bridge?.getMusicStructureCapabilityStatus !== 'function') {
+      capability.value = {
+        status: 'unavailable',
+        installed: false,
+        busy: false,
+        canPrepare: false,
+        canRepair: false,
+        canRemove: false,
+        modelName: 'Beat This! small0',
+        modelVersion: '1.1.0',
+        downloadBytes: 0,
+        installedBytesEstimate: 0,
+      };
+      return capability.value;
+    }
+    try {
+      capability.value = await bridge.getMusicStructureCapabilityStatus();
+      state.capabilityError = '';
+    } catch {
+      state.capabilityError = '目前無法讀取分析功能狀態，請重新啟動後再試。';
+    }
+    return capability.value;
   }
 
   function clearStatusPoll() {
@@ -201,6 +289,10 @@ export function useMusicAnalysisWorkbench(options = {}) {
         unsubscribeProgress ??=
           bridge.onTrackMusicStructureAnalysisProgress?.(handleProgress) ??
           null;
+        unsubscribeCapabilityProgress ??=
+          bridge.onMusicStructureCapabilityProgress?.(
+            handleCapabilityProgress,
+          ) ?? null;
       }
       await library.initialize();
       if (disposed) return;
@@ -210,7 +302,10 @@ export function useMusicAnalysisWorkbench(options = {}) {
         return;
       }
       try {
-        const status = await bridge.getTrackMusicStructureAnalysisStatus?.();
+        const [status] = await Promise.all([
+          bridge.getTrackMusicStructureAnalysisStatus?.(),
+          refreshCapabilityStatus(),
+        ]);
         state.activeJob = status?.activeJob ?? null;
       } catch (error) {
         state.error = publicErrorMessage(error);
@@ -231,6 +326,39 @@ export function useMusicAnalysisWorkbench(options = {}) {
       if (state.activeJob) scheduleStatusPoll();
     })();
     return initializationPromise;
+  }
+
+  async function runCapabilityAction(operation, bridgeMethod) {
+    if (state.capabilityBusy || typeof bridge?.[bridgeMethod] !== 'function') {
+      return null;
+    }
+    state.capabilityBusy = true;
+    state.capabilityError = '';
+    state.capabilityProgress = { stage: 'starting', percent: 0 };
+    try {
+      capability.value = await bridge[bridgeMethod]();
+      state.capabilityProgress = capability.value?.installed
+        ? { stage: 'ready', percent: 100 }
+        : null;
+      return capability.value;
+    } catch {
+      state.capabilityError = capabilityErrorMessage(operation);
+      return null;
+    } finally {
+      state.capabilityBusy = false;
+    }
+  }
+
+  function prepareCapability() {
+    return runCapabilityAction('prepare', 'prepareMusicStructureCapability');
+  }
+
+  function repairCapability() {
+    return runCapabilityAction('repair', 'repairMusicStructureCapability');
+  }
+
+  function removeCapability() {
+    return runCapabilityAction('remove', 'removeMusicStructureCapability');
   }
 
   async function analyzeSelectedTrack() {
@@ -314,6 +442,8 @@ export function useMusicAnalysisWorkbench(options = {}) {
     clearStatusPoll();
     unsubscribeProgress?.();
     unsubscribeProgress = null;
+    unsubscribeCapabilityProgress?.();
+    unsubscribeCapabilityProgress = null;
   }
 
   return {
@@ -322,18 +452,27 @@ export function useMusicAnalysisWorkbench(options = {}) {
     tracks,
     selectedTrack,
     structure: signalOwner.current,
+    capability,
     isBusy,
+    capabilityReady,
+    capabilityBusy,
     canAnalyze,
     canCancel,
     phaseLabel,
     stageLabel,
     progressPercent,
+    capabilityProgressPercent,
+    capabilityStageLabel,
     initialize,
     selectTrack,
     analyzeSelectedTrack,
     cancelAnalysis,
     refreshSelectedTrack,
     retryLibrary,
+    refreshCapabilityStatus,
+    prepareCapability,
+    repairCapability,
+    removeCapability,
     dispose,
   };
 }

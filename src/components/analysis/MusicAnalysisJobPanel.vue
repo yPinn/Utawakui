@@ -1,10 +1,17 @@
 <script setup>
 import { computed } from 'vue';
-import { Loader2, Play, RefreshCw, Square } from '../../icons/index.js';
+import {
+  Download,
+  Play,
+  RefreshCw,
+  Square,
+  Wrench,
+} from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiStatusIcon from '../ui/UiStatusIcon.vue';
 
 const props = defineProps({
   selectedTrack: { type: Object, default: null },
@@ -17,15 +24,89 @@ const props = defineProps({
   busy: { type: Boolean, default: false },
   canAnalyze: { type: Boolean, default: false },
   canCancel: { type: Boolean, default: false },
+  capability: { type: Object, default: null },
+  capabilityStageLabel: { type: String, default: '讀取分析功能狀態' },
+  capabilityProgressPercent: { type: Number, default: null },
+  capabilityBusy: { type: Boolean, default: false },
+  capabilityError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['analyze', 'cancel', 'reload']);
+const emit = defineEmits(['analyze', 'cancel', 'reload', 'prepare', 'repair']);
+
+const capabilityReady = computed(
+  () =>
+    props.capability?.status === 'ready' &&
+    props.capability?.installed === true,
+);
+
+const displayStageLabel = computed(() =>
+  capabilityReady.value ? props.stageLabel : props.capabilityStageLabel,
+);
+
+const displayProgressPercent = computed(() =>
+  props.capabilityBusy
+    ? props.capabilityProgressPercent
+    : props.progressPercent,
+);
+
+const primaryAction = computed(() => {
+  if (!props.capability) {
+    return { label: '讀取分析功能', icon: Download, event: 'prepare' };
+  }
+  if (props.capability.status === 'unavailable') {
+    return { label: '目前無法安裝', icon: Download, event: 'prepare' };
+  }
+  if (capabilityReady.value) {
+    return { label: '開始分析', icon: Play, event: 'analyze' };
+  }
+  if (props.capability?.status === 'damaged') {
+    return { label: '修復分析功能', icon: Wrench, event: 'repair' };
+  }
+  return { label: '下載並安裝', icon: Download, event: 'prepare' };
+});
+
+const primaryDisabled = computed(() => {
+  if (props.capabilityBusy) return true;
+  if (primaryAction.value.event === 'analyze') return !props.canAnalyze;
+  if (primaryAction.value.event === 'repair') {
+    return props.capability?.canRepair !== true;
+  }
+  return props.capability?.canPrepare !== true;
+});
 
 const statusTone = computed(() => {
-  if (props.error) return 'danger';
-  if (props.activeJob || props.busy) return 'info';
+  if (props.error || props.capabilityError) return 'danger';
+  if (props.activeJob || props.busy || props.capabilityBusy) return 'info';
+  if (!capabilityReady.value) return 'warning';
   return 'success';
 });
+
+const statusLabel = computed(() => {
+  if (props.capabilityBusy) return '安裝中';
+  if (props.activeJob || props.busy) return '分析中';
+  if (!props.capability) return '讀取中';
+  if (props.capability.status === 'unavailable') return '不可用';
+  if (props.capability?.status === 'damaged') return '需修復';
+  if (!capabilityReady.value) return '未安裝';
+  return '待命';
+});
+
+const showRuntimeProgress = computed(
+  () =>
+    props.capabilityBusy ||
+    props.busy ||
+    props.activeJob !== null ||
+    displayProgressPercent.value !== null,
+);
+
+function formatMegabytes(bytes) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return null;
+  return Math.ceil(bytes / 1024 / 1024);
+}
+
+function runPrimaryAction() {
+  emit(primaryAction.value.event);
+}
 </script>
 
 <template>
@@ -46,76 +127,75 @@ const statusTone = computed(() => {
         </p>
       </div>
       <div class="analysis-job__status">
-        <UiStatusIcon
-          :icon="Loader2"
-          :tone="statusTone"
-          :spinning="busy"
-          :label="stageLabel"
-        />
-        <UiChip :tone="statusTone">{{ phaseLabel }}</UiChip>
+        <UiChip :tone="statusTone">{{ statusLabel }}</UiChip>
       </div>
     </div>
 
     <UiNotice
-      tone="info"
-      title="內部工作台"
-      message="此頁只操作既有的 analysis-structure activation，不會下載、安裝或核准 benchmark-only 模型。"
-      compact
-    />
-    <UiNotice
-      v-if="error"
+      v-if="capabilityError || error"
       tone="danger"
-      title="分析未完成"
-      :message="error"
+      title="操作未完成"
+      :message="capabilityError || error"
       compact
     />
-    <UiNotice
-      v-else-if="notice"
-      tone="info"
-      title="狀態已更新"
-      :message="notice"
-      compact
-    />
+    <UiHint v-else-if="notice" tone="info" role="status">
+      {{ notice }}
+    </UiHint>
 
-    <div class="analysis-job__runtime" role="status" aria-live="polite">
+    <UiHint
+      v-if="
+        !capabilityReady &&
+        !capabilityBusy &&
+        formatMegabytes(capability?.downloadBytes)
+      "
+      tone="muted"
+    >
+      將下載 {{ capability?.modelName }} 與固定 runtime，約
+      {{ formatMegabytes(capability?.downloadBytes) }} MB。
+    </UiHint>
+
+    <div
+      v-if="showRuntimeProgress"
+      class="analysis-job__runtime"
+      role="status"
+      aria-live="polite"
+    >
       <div class="analysis-job__runtime-copy">
-        <span>{{ stageLabel }}</span>
-        <span v-if="progressPercent !== null"
-          >{{ Math.round(progressPercent) }}%</span
+        <span>{{ displayStageLabel }}</span>
+        <span v-if="displayProgressPercent !== null"
+          >{{ Math.round(displayProgressPercent) }}%</span
         >
       </div>
       <progress
-        v-if="progressPercent !== null"
+        v-if="displayProgressPercent !== null"
         class="analysis-job__progress"
         max="100"
-        :value="progressPercent"
-        aria-label="音樂結構分析進度"
+        :value="displayProgressPercent"
+        :aria-label="capabilityBusy ? '分析功能安裝進度' : '音樂結構分析進度'"
       />
       <div v-else class="analysis-job__progress analysis-job__progress--idle" />
-      <p v-if="activeJob" class="analysis-job__job-id">
-        工作編號 {{ activeJob.jobId || '建立中' }}
-      </p>
     </div>
 
     <div class="analysis-job__actions">
       <UiButton
         variant="accent"
-        :icon="Play"
-        :disabled="!canAnalyze"
-        @click="emit('analyze')"
+        :icon="primaryAction.icon"
+        :disabled="primaryDisabled"
+        @click="runPrimaryAction"
       >
-        開始分析
+        {{ primaryAction.label }}
       </UiButton>
       <UiButton v-if="canCancel" :icon="Square" @click="emit('cancel')">
         取消
       </UiButton>
-      <UiButton
+      <UiIconButton
         :icon="RefreshCw"
+        label="重新讀取 sidecar"
+        title="重新讀取 sidecar"
+        size="sm"
         :disabled="!selectedTrack || busy"
         @click="emit('reload')"
-      >
-        重新讀取 sidecar
-      </UiButton>
+      />
     </div>
   </section>
 </template>
