@@ -1,11 +1,14 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, shallowRef } from 'vue';
+import { Info } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
   result: { type: Object, default: null },
 });
+const showSourceDetails = shallowRef(false);
 
 const ROLE_LABELS = Object.freeze({
   intro: '前奏',
@@ -86,22 +89,32 @@ function sectionLabel(role) {
     aria-labelledby="structure-summary-heading"
   >
     <div class="structure-summary__heading-row">
-      <div>
-        <h2 id="structure-summary-heading" class="structure-summary__heading">
-          sidecar 結果
-        </h2>
-        <p class="structure-summary__source">
-          來源版本 {{ sourceRevision }} ·
-          {{ formatTime(result?.sourceDurationMs) }}
-        </p>
+      <h2 id="structure-summary-heading" class="structure-summary__heading">
+        分析結果
+      </h2>
+      <div class="structure-summary__heading-actions">
+        <UiIconButton
+          v-if="result"
+          :icon="Info"
+          label="查看來源資訊"
+          title="查看 sidecar 來源版本與音訊長度"
+          size="sm"
+          :aria-expanded="showSourceDetails"
+          @click="showSourceDetails = !showSourceDetails"
+        />
+        <UiChip
+          v-if="signals"
+          :tone="signals.level === 'M0' ? 'muted' : 'success'"
+        >
+          {{ signals.level }}
+        </UiChip>
       </div>
-      <UiChip
-        v-if="signals"
-        :tone="signals.level === 'M0' ? 'muted' : 'success'"
-      >
-        {{ signals.level }}
-      </UiChip>
     </div>
+
+    <p v-if="showSourceDetails" class="structure-summary__source">
+      Sidecar 來源 {{ sourceRevision }} · 音訊長度
+      {{ formatTime(result?.sourceDurationMs) }}
+    </p>
 
     <UiNotice
       v-if="!signals || signals.level === 'M0'"
@@ -112,26 +125,30 @@ function sectionLabel(role) {
 
     <template v-else>
       <dl class="structure-summary__metrics">
-        <div class="structure-summary__metric">
+        <div class="structure-summary__metric structure-summary__metric--tempo">
           <dt>估算速度</dt>
           <dd>
-            {{ formatEstimatedBpm(signals.tempo?.bpm) }}
-            <span v-if="signals.tempo">
+            <span class="structure-summary__tempo-value">
+              {{ formatEstimatedBpm(signals.tempo?.bpm) }}
+            </span>
+            <span v-if="signals.tempo" class="structure-summary__confidence">
               節拍信心 {{ formatConfidence(signals.tempo.confidence) }}
             </span>
           </dd>
         </div>
-        <div class="structure-summary__metric">
-          <dt>節拍</dt>
-          <dd>{{ signals.beats.length }}</dd>
-        </div>
-        <div class="structure-summary__metric">
-          <dt>強拍</dt>
-          <dd>{{ downbeatCount }}</dd>
-        </div>
-        <div class="structure-summary__metric">
-          <dt>段落</dt>
-          <dd>{{ signals.sections.length }}</dd>
+        <div class="structure-summary__counts">
+          <div class="structure-summary__metric">
+            <dt>節拍</dt>
+            <dd>{{ signals.beats.length }}</dd>
+          </div>
+          <div class="structure-summary__metric">
+            <dt>強拍</dt>
+            <dd>{{ downbeatCount }}</dd>
+          </div>
+          <div class="structure-summary__metric">
+            <dt>段落</dt>
+            <dd>{{ signals.sections.length }}</dd>
+          </div>
         </div>
       </dl>
 
@@ -174,9 +191,15 @@ function sectionLabel(role) {
 
 .structure-summary__heading-row {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-3);
+}
+
+.structure-summary__heading-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-2);
 }
 
 .structure-summary__heading,
@@ -208,21 +231,30 @@ function sectionLabel(role) {
 }
 
 .structure-summary__metrics {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: minmax(12rem, 1.5fr) minmax(15rem, 2fr);
   margin: 0;
   border-block: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .structure-summary__metric {
-  min-width: 8rem;
-  flex: 1 1 8rem;
   display: grid;
   gap: var(--ui-space-1);
   padding: var(--ui-space-3);
 }
 
-.structure-summary__metric + .structure-summary__metric {
+.structure-summary__metric--tempo {
+  border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.structure-summary__counts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.structure-summary__counts
+  .structure-summary__metric
+  + .structure-summary__metric {
   border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
@@ -240,8 +272,19 @@ function sectionLabel(role) {
   font-variant-numeric: tabular-nums;
 }
 
-.structure-summary__metric dd span {
-  margin-inline-start: var(--ui-space-1);
+.structure-summary__metric--tempo dd {
+  display: flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: var(--ui-space-1);
+}
+
+.structure-summary__tempo-value {
+  font-size: var(--ui-font-size-xl);
+  line-height: var(--ui-line-height-headline);
+}
+
+.structure-summary__confidence {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
@@ -281,8 +324,13 @@ function sectionLabel(role) {
 }
 
 @media (max-width: 620px) {
-  .structure-summary__metric + .structure-summary__metric {
-    border-inline-start: 0;
+  .structure-summary__metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .structure-summary__metric--tempo {
+    border-inline-end: 0;
+    border-block-end: var(--ui-border-width) solid var(--ui-color-border);
   }
 
   .structure-summary__section {

@@ -20,7 +20,7 @@ describe('MusicAnalysisJobPanel', () => {
       }),
     );
 
-    expect(html).toContain('分析工作');
+    expect(html).toContain('單曲分析');
     expect(html).toContain('開始分析');
     expect(html).toContain('重新讀取 sidecar');
     expect(html).not.toContain('此頁只操作既有');

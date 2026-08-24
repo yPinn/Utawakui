@@ -114,7 +114,7 @@ function runPrimaryAction() {
     <div class="analysis-job__heading-row">
       <div>
         <h2 id="analysis-job-heading" class="analysis-job__heading">
-          分析工作
+          單曲分析
         </h2>
         <p class="analysis-job__selection">
           <template v-if="selectedTrack">

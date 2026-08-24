@@ -43,7 +43,9 @@ describe('MusicStructureSummary', () => {
     expect(html).toContain('1');
     expect(html).toContain('副歌');
     expect(html).toContain('節拍信心 91%');
-    expect(html).toContain('abcdef123456');
+    expect(html).toContain('分析結果');
+    expect(html).toContain('查看來源資訊');
+    expect(html).not.toContain('abcdef123456');
     expect(html).toContain('速度');
     expect(html).toContain('節拍');
     expect(html).toContain('強拍');
