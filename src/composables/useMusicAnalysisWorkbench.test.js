@@ -12,6 +12,35 @@ function deferred() {
   return { promise, resolve, reject };
 }
 
+function runningBatchStatus(overrides = {}) {
+  return {
+    batch: {
+      batchId: 'batch-1',
+      status: 'running',
+      force: false,
+      total: 2,
+      completed: 0,
+      succeeded: 0,
+      failed: 0,
+      skipped: 0,
+      cancelled: 0,
+      activeTrackId: 'track-1',
+      percent: 25,
+      items: [
+        {
+          trackId: 'track-1',
+          status: 'running',
+          jobId: 'job-1',
+          stage: 'analyzing',
+          percent: 50,
+        },
+        { trackId: 'track-2', status: 'pending' },
+      ],
+      ...overrides,
+    },
+  };
+}
+
 function createHarness(options = {}) {
   const tracks = options.tracks ?? [
     { id: 'track-1', title: 'First song', artist: 'Singer' },
@@ -49,6 +78,7 @@ function createHarness(options = {}) {
   };
   let progressListener;
   let capabilityProgressListener;
+  let batchProgressListener;
   let pollCallback;
   const unsubscribe = vi.fn();
   const clearTimer = vi.fn();
@@ -83,6 +113,13 @@ function createHarness(options = {}) {
       capabilityProgressListener = listener;
       return vi.fn();
     }),
+    getMusicStructureBatchStatus: vi.fn().mockResolvedValue({ batch: null }),
+    startMusicStructureBatch: vi.fn().mockResolvedValue(runningBatchStatus()),
+    cancelMusicStructureBatch: vi.fn().mockResolvedValue({ cancelled: true }),
+    onMusicStructureBatchProgress: vi.fn((listener) => {
+      batchProgressListener = listener;
+      return vi.fn();
+    }),
   };
   const workbench = useMusicAnalysisWorkbench({
     library,
@@ -106,6 +143,7 @@ function createHarness(options = {}) {
     },
     progress: (value) => progressListener?.(value),
     capabilityProgress: (value) => capabilityProgressListener?.(value),
+    batchProgress: (value) => batchProgressListener?.(value),
     signalOwner,
     unsubscribe,
     clearTimer,
@@ -234,6 +272,69 @@ describe('Music Analysis workbench', () => {
     expect(harness.signalOwner.loadForTrack).toHaveBeenLastCalledWith(
       'track-2',
     );
+  });
+
+  it('restores a running batch and projects its active track into the workbench', async () => {
+    const harness = createHarness();
+    harness.bridge.getMusicStructureBatchStatus.mockResolvedValue(
+      runningBatchStatus({ activeTrackId: 'track-2', percent: 10 }),
+    );
+
+    await harness.workbench.initialize();
+
+    expect(harness.workbench.batch.active.value).toBe(true);
+    expect(harness.workbench.state.selectedTrackId).toBe('track-2');
+    expect(harness.workbench.state.activeJob).toEqual({
+      jobId: '',
+      trackId: 'track-2',
+    });
+    expect(harness.workbench.canAnalyze.value).toBe(false);
+    expect(harness.workbench.canCancel.value).toBe(true);
+  });
+
+  it('starts a selected batch, handles terminal progress, and reloads its last track', async () => {
+    const harness = createHarness();
+    await harness.workbench.initialize();
+    harness.workbench.batch.toggleTrack('track-1');
+    harness.workbench.batch.toggleTrack('track-2');
+
+    await harness.workbench.startBatchAnalysis({ force: true });
+
+    expect(harness.bridge.startMusicStructureBatch).toHaveBeenCalledWith(
+      ['track-1', 'track-2'],
+      true,
+    );
+    expect(harness.workbench.batch.active.value).toBe(true);
+
+    harness.batchProgress(
+      runningBatchStatus({
+        status: 'completed',
+        force: true,
+        completed: 2,
+        succeeded: 1,
+        skipped: 0,
+        failed: 1,
+        activeTrackId: null,
+        percent: 100,
+        items: [
+          { trackId: 'track-1', status: 'completed', percent: 100 },
+          {
+            trackId: 'track-2',
+            status: 'failed',
+            reason: 'analysis-failed',
+          },
+        ],
+      }),
+    );
+    await vi.waitFor(() =>
+      expect(harness.signalOwner.loadForTrack).toHaveBeenLastCalledWith(
+        'track-1',
+      ),
+    );
+
+    expect(harness.workbench.state.phase).toBe('idle');
+    expect(harness.workbench.state.notice).toBe('完成 1 首，失敗 1 首');
+    expect(harness.workbench.canAnalyze.value).toBe(true);
   });
 
   it('clears a transient polling error after status reconciliation recovers', async () => {

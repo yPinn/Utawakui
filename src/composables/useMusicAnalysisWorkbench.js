@@ -1,5 +1,6 @@
 import { computed, reactive, readonly, shallowRef } from 'vue';
 import { useLibrary } from './useLibrary.js';
+import { useMusicAnalysisBatch } from './useMusicAnalysisBatch.js';
 import { createMusicStructureSignals } from './useMusicStructureSignals.js';
 
 const PHASE_LABELS = Object.freeze({
@@ -8,6 +9,7 @@ const PHASE_LABELS = Object.freeze({
   starting: '建立分析工作',
   analyzing: '分析中',
   cancelling: '正在取消',
+  batch: '批次分析',
 });
 
 const STAGE_LABELS = Object.freeze({
@@ -16,6 +18,7 @@ const STAGE_LABELS = Object.freeze({
   analyzing: '分析節拍與段落',
   validating: '驗證分析結果',
   complete: '分析完成',
+  checking: '檢查既有 sidecar',
 });
 
 const CAPABILITY_STAGE_LABELS = Object.freeze({
@@ -104,8 +107,15 @@ export function useMusicAnalysisWorkbench(options = {}) {
   let statusPollTimer = null;
   let disposed = false;
   let statusPollFailed = false;
+  let batchWasActive = false;
+  let lastBatchTrackId = '';
 
   const tracks = computed(() => library.state.tracks ?? []);
+  const batch = useMusicAnalysisBatch({
+    tracks,
+    bridge,
+    onStatusChange: applyBatchState,
+  });
   const selectedTrack = computed(
     () =>
       tracks.value.find((track) => track.id === state.selectedTrackId) ?? null,
@@ -123,10 +133,13 @@ export function useMusicAnalysisWorkbench(options = {}) {
       Boolean(selectedTrack.value) &&
       capabilityReady.value &&
       !capabilityBusy.value &&
+      !batch.active.value &&
       !isBusy.value &&
       !state.activeJob,
   );
-  const canCancel = computed(() => Boolean(state.activeJob));
+  const canCancel = computed(
+    () => Boolean(state.activeJob) || batch.active.value,
+  );
   const phaseLabel = computed(() => PHASE_LABELS[state.phase] ?? state.phase);
   const stageLabel = computed(() => {
     const stage = state.progress?.stage;
@@ -150,6 +163,56 @@ export function useMusicAnalysisWorkbench(options = {}) {
     return '尚未安裝分析功能';
   });
 
+  function applyBatchState(value) {
+    const isActive = ['running', 'cancelling'].includes(value?.status);
+    if (isActive) {
+      batchWasActive = true;
+      state.notice = '';
+      const activeTrackId = value.activeTrackId;
+      if (
+        activeTrackId &&
+        tracks.value.some(({ id }) => id === activeTrackId)
+      ) {
+        lastBatchTrackId = activeTrackId;
+        if (state.selectedTrackId !== activeTrackId) {
+          state.selectedTrackId = activeTrackId;
+          signalOwner.clear();
+        }
+        const item = value.items.find(
+          ({ trackId }) => trackId === activeTrackId,
+        );
+        state.activeJob = {
+          jobId: item?.jobId ?? '',
+          trackId: activeTrackId,
+        };
+        state.progress = {
+          jobId: item?.jobId ?? '',
+          trackId: activeTrackId,
+          stage: item?.stage ?? 'checking',
+          ...(Number.isFinite(item?.percent) ? { percent: item.percent } : {}),
+        };
+      }
+      state.phase = value.status === 'cancelling' ? 'cancelling' : 'batch';
+      scheduleStatusPoll();
+      return;
+    }
+
+    const shouldReload = batchWasActive && Boolean(lastBatchTrackId);
+    batchWasActive = false;
+    state.activeJob = null;
+    state.progress = null;
+    state.phase = 'idle';
+    if (value) state.notice = batch.summary.value;
+    if (shouldReload) {
+      const trackId = lastBatchTrackId;
+      lastBatchTrackId = '';
+      if (tracks.value.some(({ id }) => id === trackId)) {
+        state.selectedTrackId = trackId;
+        void signalOwner.loadForTrack(trackId);
+      }
+    }
+  }
+
   async function loadSelectedTrack() {
     if (!state.selectedTrackId) {
       signalOwner.clear();
@@ -164,7 +227,14 @@ export function useMusicAnalysisWorkbench(options = {}) {
   }
 
   async function selectTrack(trackId) {
-    if (!state.initialized || isBusy.value || state.activeJob) return null;
+    if (
+      !state.initialized ||
+      isBusy.value ||
+      state.activeJob ||
+      batch.active.value
+    ) {
+      return null;
+    }
     if (!tracks.value.some((track) => track.id === trackId)) return null;
     state.selectedTrackId = trackId;
     state.error = '';
@@ -241,7 +311,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
     if (
       disposed ||
       statusPollTimer !== null ||
-      !state.activeJob ||
+      (!state.activeJob && !batch.active.value) ||
       typeof bridge?.getTrackMusicStructureAnalysisStatus !== 'function'
     ) {
       return;
@@ -252,13 +322,21 @@ export function useMusicAnalysisWorkbench(options = {}) {
   async function reconcileActiveJob() {
     statusPollTimer = null;
     const previousJob = state.activeJob;
-    if (disposed || !previousJob) return;
+    const hadActiveBatch = batch.active.value;
+    if (disposed || (!previousJob && !hadActiveBatch)) return;
     try {
-      const status = await bridge.getTrackMusicStructureAnalysisStatus();
+      const [status] = await Promise.all([
+        bridge.getTrackMusicStructureAnalysisStatus(),
+        hadActiveBatch ? batch.refreshStatus() : Promise.resolve(null),
+      ]);
       if (disposed) return;
       if (statusPollFailed) {
         statusPollFailed = false;
         state.error = '';
+      }
+      if (batch.active.value) {
+        scheduleStatusPoll();
+        return;
       }
       state.activeJob = status?.activeJob ?? null;
       if (state.activeJob) {
@@ -270,7 +348,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
       state.progress = null;
       state.notice =
         '接手的分析工作已結束並重新讀取 sidecar；目前狀態 API 無法判定完成、失敗或取消。';
-      if (state.selectedTrackId === previousJob.trackId) {
+      if (previousJob && state.selectedTrackId === previousJob.trackId) {
         await signalOwner.loadForTrack(previousJob.trackId);
       }
     } catch (error) {
@@ -305,13 +383,15 @@ export function useMusicAnalysisWorkbench(options = {}) {
         const [status] = await Promise.all([
           bridge.getTrackMusicStructureAnalysisStatus?.(),
           refreshCapabilityStatus(),
+          batch.initialize(),
         ]);
-        state.activeJob = status?.activeJob ?? null;
+        if (!batch.active.value) state.activeJob = status?.activeJob ?? null;
       } catch (error) {
         state.error = publicErrorMessage(error);
       }
 
-      const activeTrackId = state.activeJob?.trackId;
+      const activeTrackId =
+        batch.batch.value?.activeTrackId ?? state.activeJob?.trackId;
       const initialTrackId = tracks.value.some(
         (track) => track.id === activeTrackId,
       )
@@ -321,15 +401,23 @@ export function useMusicAnalysisWorkbench(options = {}) {
         state.selectedTrackId = initialTrackId;
         await signalOwner.loadForTrack(initialTrackId);
       }
-      state.phase = state.activeJob ? 'analyzing' : 'idle';
+      state.phase = batch.active.value
+        ? 'batch'
+        : state.activeJob
+          ? 'analyzing'
+          : 'idle';
       state.initialized = true;
-      if (state.activeJob) scheduleStatusPoll();
+      if (state.activeJob || batch.active.value) scheduleStatusPoll();
     })();
     return initializationPromise;
   }
 
   async function runCapabilityAction(operation, bridgeMethod) {
-    if (state.capabilityBusy || typeof bridge?.[bridgeMethod] !== 'function') {
+    if (
+      state.capabilityBusy ||
+      batch.active.value ||
+      typeof bridge?.[bridgeMethod] !== 'function'
+    ) {
       return null;
     }
     state.capabilityBusy = true;
@@ -396,7 +484,33 @@ export function useMusicAnalysisWorkbench(options = {}) {
     }
   }
 
+  async function startBatchAnalysis({ force = false } = {}) {
+    if (
+      !state.initialized ||
+      !capabilityReady.value ||
+      capabilityBusy.value ||
+      isBusy.value ||
+      state.activeJob ||
+      batch.active.value
+    ) {
+      return null;
+    }
+    state.error = '';
+    state.notice = '';
+    state.phase = 'batch';
+    const result = await batch.start({ force });
+    if (!result && !batch.active.value) state.phase = 'idle';
+    return result;
+  }
+
+  async function cancelBatchAnalysis() {
+    if (!batch.active.value) return false;
+    state.phase = 'cancelling';
+    return batch.cancel();
+  }
+
   async function cancelAnalysis() {
+    if (batch.active.value) return cancelBatchAnalysis();
     if (!state.activeJob || !bridge?.cancelTrackMusicStructureAnalysis) {
       return false;
     }
@@ -444,6 +558,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
     unsubscribeProgress = null;
     unsubscribeCapabilityProgress?.();
     unsubscribeCapabilityProgress = null;
+    batch.dispose();
   }
 
   return {
@@ -453,6 +568,7 @@ export function useMusicAnalysisWorkbench(options = {}) {
     selectedTrack,
     structure: signalOwner.current,
     capability,
+    batch,
     isBusy,
     capabilityReady,
     capabilityBusy,
@@ -466,6 +582,8 @@ export function useMusicAnalysisWorkbench(options = {}) {
     initialize,
     selectTrack,
     analyzeSelectedTrack,
+    startBatchAnalysis,
+    cancelBatchAnalysis,
     cancelAnalysis,
     refreshSelectedTrack,
     retryLibrary,

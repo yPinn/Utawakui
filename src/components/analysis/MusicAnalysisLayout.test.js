@@ -34,4 +34,14 @@ describe('Music Analysis scroll layout', () => {
       /\.analysis-workbench__detail\s*\{[^}]*overflow-y:\s*auto;/s,
     );
   });
+
+  it('orders batch actions before the selected-track job and result summary', () => {
+    const batchPanel = workbenchSource.indexOf('<MusicAnalysisBatchPanel');
+    const jobPanel = workbenchSource.indexOf('<MusicAnalysisJobPanel');
+    const resultSummary = workbenchSource.indexOf('<MusicStructureSummary');
+
+    expect(batchPanel).toBeGreaterThan(-1);
+    expect(batchPanel).toBeLessThan(jobPanel);
+    expect(jobPanel).toBeLessThan(resultSummary);
+  });
 });
