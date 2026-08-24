@@ -27,6 +27,7 @@ app.setAppLogsPath();
 
 const { FEATURE_IDS } = require('./lib/featureGates');
 const {
+  loadTrackMusicStructure,
   prepareTrackMusicStructureSource,
   resolveTrackArtworkPath,
   saveTrackMusicStructure,
@@ -41,6 +42,9 @@ const {
 const {
   createStructureAnalysisService,
 } = require('./lib/audioProcessing/structureAnalysisService');
+const {
+  createStructureAnalysisBatchService,
+} = require('./lib/audioProcessing/structureAnalysisBatchService');
 const {
   createStructureAnalysisCapabilityService,
   loadStructureAnalysisCapabilityCatalog,
@@ -321,6 +325,17 @@ if (!gotSingleInstanceLock) {
       publishDocument: ({ trackId, document, identity, libraryDir }) =>
         saveTrackMusicStructure(libraryDir, trackId, document, identity),
     });
+    const structureAnalysisBatchService = createStructureAnalysisBatchService({
+      analysisService: structureAnalysisService,
+      inspectTrack: (trackId) => {
+        const config = configState.getConfig();
+        return loadTrackMusicStructure(
+          configState.resolveDownloadDir(config),
+          trackId,
+        );
+      },
+      onTrackComplete: windowState.notifyLibraryUpdated,
+    });
     const structureAnalysisCapabilityService =
       createStructureAnalysisCapabilityService({
         host: audioPythonRuntimeHost,
@@ -329,7 +344,11 @@ if (!gotSingleInstanceLock) {
           isPackaged: app.isPackaged,
           resourcesPath: process.resourcesPath,
         }),
-        getActiveJob: structureAnalysisService.getActiveJob,
+        getActiveJob: () =>
+          structureAnalysisService.getActiveJob() ??
+          (structureAnalysisBatchService.hasActiveBatch()
+            ? { jobId: 'batch', trackId: 'batch' }
+            : null),
       });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       requireFeatureGate,
@@ -478,6 +497,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       analysisService: structureAnalysisService,
       capabilityService: structureAnalysisCapabilityService,
+      batchService: structureAnalysisBatchService,
     });
 
     registerPlaylistsHandlers({

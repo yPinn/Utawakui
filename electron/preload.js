@@ -127,6 +127,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('music-structure:cancel-analysis'),
   getTrackMusicStructureAnalysisStatus: () =>
     ipcRenderer.invoke('music-structure:get-analysis-status'),
+  getMusicStructureBatchStatus: () =>
+    ipcRenderer.invoke('music-structure:get-batch-status'),
+  startMusicStructureBatch: (trackIds, force = false) =>
+    ipcRenderer.invoke('music-structure:start-batch', { trackIds, force }),
+  cancelMusicStructureBatch: () =>
+    ipcRenderer.invoke('music-structure:cancel-batch'),
   getMusicStructureCapabilityStatus: () =>
     ipcRenderer.invoke('music-structure:get-capability-status'),
   prepareMusicStructureCapability: () =>
@@ -140,6 +146,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('music-structure:analysis-progress', listener);
     return () =>
       ipcRenderer.removeListener('music-structure:analysis-progress', listener);
+  },
+  onMusicStructureBatchProgress: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('music-structure:batch-progress', listener);
+    return () =>
+      ipcRenderer.removeListener('music-structure:batch-progress', listener);
   },
   onMusicStructureCapabilityProgress: (callback) => {
     const listener = (event, payload) => callback(payload);

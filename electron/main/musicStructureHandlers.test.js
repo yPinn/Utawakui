@@ -13,6 +13,18 @@ function capabilityService(overrides = {}) {
   };
 }
 
+function batchService(overrides = {}) {
+  return {
+    getStatus: vi.fn(() => ({ batch: null })),
+    start: vi.fn(() => ({
+      batch: { batchId: 'batch-1', status: 'running', total: 2 },
+    })),
+    cancel: vi.fn(async () => true),
+    hasActiveBatch: vi.fn(() => false),
+    ...overrides,
+  };
+}
+
 describe('music-structure handlers', () => {
   it('loads a bounded main-owned projection using only the requested track id', async () => {
     const handlers = new Map();
@@ -43,6 +55,7 @@ describe('music-structure handlers', () => {
         getActiveJob: vi.fn(() => null),
       },
       capabilityService: capabilityService(),
+      batchService: batchService(),
     });
 
     await expect(
@@ -89,6 +102,7 @@ describe('music-structure handlers', () => {
       featureIds: { AUDIO_PROCESSING_FLOW: 'audio-processing-flow' },
       analysisService,
       capabilityService: capabilityService(),
+      batchService: batchService(),
     });
 
     await expect(
@@ -137,6 +151,7 @@ describe('music-structure handlers', () => {
         getActiveJob: vi.fn(),
       },
       capabilityService: capabilityService(),
+      batchService: batchService(),
     });
 
     await expect(
@@ -173,6 +188,7 @@ describe('music-structure handlers', () => {
         getActiveJob: vi.fn(),
       },
       capabilityService: service,
+      batchService: batchService(),
     });
 
     await expect(
@@ -196,5 +212,72 @@ describe('music-structure handlers', () => {
     expect(service.repair).toHaveBeenCalledOnce();
     expect(service.remove).toHaveBeenCalledOnce();
     expect(requireFeatureGate).toHaveBeenCalledTimes(3);
+  });
+
+  it('starts, reports, progresses, and cancels a bounded batch intent', async () => {
+    const handlers = new Map();
+    const send = vi.fn();
+    const service = batchService({
+      start: vi.fn(({ trackIds, force, onUpdate }) => {
+        onUpdate({
+          batch: {
+            batchId: 'batch-1',
+            status: 'running',
+            total: trackIds.length,
+            force,
+          },
+        });
+        return {
+          batch: {
+            batchId: 'batch-1',
+            status: 'running',
+            total: trackIds.length,
+            force,
+          },
+        };
+      }),
+    });
+    const requireFeatureGate = vi.fn();
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: () => ({ webContents: { send } }),
+      notifyLibraryUpdated: vi.fn(),
+      requireFeatureGate,
+      featureIds: { AUDIO_PROCESSING_FLOW: 'audio-processing-flow' },
+      analysisService: {
+        run: vi.fn(),
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(),
+      },
+      capabilityService: capabilityService(),
+      batchService: service,
+    });
+
+    await expect(
+      handlers.get('music-structure:start-batch')(null, {
+        trackIds: ['track-1', 'track-2'],
+        force: true,
+        modelUrl: 'https://untrusted.example/model',
+      }),
+    ).resolves.toMatchObject({ batch: { batchId: 'batch-1', total: 2 } });
+    expect(service.start).toHaveBeenCalledWith({
+      trackIds: ['track-1', 'track-2'],
+      force: true,
+      onUpdate: expect.any(Function),
+    });
+    expect(send).toHaveBeenCalledWith('music-structure:batch-progress', {
+      batch: expect.objectContaining({ batchId: 'batch-1' }),
+    });
+    await expect(
+      handlers.get('music-structure:get-batch-status')(),
+    ).resolves.toEqual({ batch: null });
+    await expect(
+      handlers.get('music-structure:cancel-batch')(),
+    ).resolves.toEqual({ cancelled: true });
+    expect(requireFeatureGate).toHaveBeenCalledOnce();
   });
 });
