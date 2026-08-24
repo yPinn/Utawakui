@@ -194,6 +194,9 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__frame {
+  --ui-output-preview-layer-guide: 1;
+  --ui-output-preview-layer-output: 2;
+
   position: relative;
   inline-size: 100%;
   aspect-ratio: var(--ui-output-preview-aspect-ratio);
@@ -232,6 +235,7 @@ onBeforeUnmount(() => {
 
 .obs-overlay-preview__iframe {
   position: absolute;
+  z-index: var(--ui-output-preview-layer-output);
   inset: 0;
   display: block;
   border: 0;

@@ -21,6 +21,7 @@ defineProps({
 <style scoped>
 .obs-streamer-preview {
   position: absolute;
+  z-index: var(--ui-output-preview-layer-guide);
   inset: 0;
   overflow: hidden;
   pointer-events: none;

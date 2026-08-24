@@ -47,9 +47,21 @@ describe('Workbench streamer preview', () => {
     expect(componentSource).toContain(':draggable="false"');
   });
 
-  it('renders after the iframe as a foreground occupancy guide', () => {
+  it('keeps the real output on an explicit layer above the occupancy guide', () => {
     expect(
       workbenchPreviewSource.indexOf('<ObsStreamerPreview'),
     ).toBeGreaterThan(workbenchPreviewSource.indexOf('<iframe'));
+    expect(workbenchPreviewSource).toContain(
+      '--ui-output-preview-layer-guide: 1;',
+    );
+    expect(workbenchPreviewSource).toContain(
+      '--ui-output-preview-layer-output: 2;',
+    );
+    expect(workbenchPreviewSource).toContain(
+      'z-index: var(--ui-output-preview-layer-output);',
+    );
+    expect(componentSource).toContain(
+      'z-index: var(--ui-output-preview-layer-guide);',
+    );
   });
 });
