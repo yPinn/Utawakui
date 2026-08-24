@@ -6,7 +6,15 @@ const eslintConfigPrettier = require('eslint-config-prettier');
 const globals = require('globals');
 
 module.exports = [
-  { ignores: ['coverage/**', 'dist/**', 'release/**', 'node_modules/**'] },
+  {
+    ignores: [
+      'coverage/**',
+      'dist/**',
+      'release/**',
+      'node_modules/**',
+      'tasks/**',
+    ],
+  },
   {
     linterOptions: {
       reportUnusedDisableDirectives: 'warn',
