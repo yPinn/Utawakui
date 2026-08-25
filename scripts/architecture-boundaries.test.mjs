@@ -171,6 +171,44 @@ describe('architecture ownership boundaries', () => {
     expect(publisher).not.toContain('upsertOutputSlot');
   });
 
+  it('keeps Import session state separate from resolution and execution workflows', () => {
+    const resolutionPath = resolve(
+      root,
+      'src/composables/import/useImportSourceResolution.js',
+    );
+    const executionPath = resolve(
+      root,
+      'src/composables/import/useImportExecution.js',
+    );
+    expect(existsSync(resolutionPath)).toBe(true);
+    expect(existsSync(executionPath)).toBe(true);
+    if (!existsSync(resolutionPath) || !existsSync(executionPath)) return;
+
+    const facade = read('src/composables/useImportSession.js');
+    const resolution = read(
+      'src/composables/import/useImportSourceResolution.js',
+    );
+    const execution = read('src/composables/import/useImportExecution.js');
+
+    expect(facade.split(/\r?\n/u).length).toBeLessThan(430);
+    expect(facade).toContain("from './import/useImportSourceResolution.js'");
+    expect(facade).toContain("from './import/useImportExecution.js'");
+    expect(facade).not.toContain('markRaw');
+    expect(facade).not.toContain('downloadAudio');
+    expect(resolution).toContain('useImportSourceResolution');
+    expect(resolution).toContain('markRaw');
+    expect(resolution).not.toContain('downloadAudio');
+    expect(resolution).not.toContain('upsertAlbum');
+    expect(execution).toContain('useImportExecution');
+    expect(execution).toContain('downloadAudio');
+    expect(execution).not.toContain('fetchYoutubePlaylist');
+    expect(execution).not.toContain('markRaw');
+    expect(resolution).not.toContain('reactive(');
+    expect(execution).not.toContain('reactive(');
+    expect(resolution).not.toContain('useImportExecution');
+    expect(execution).not.toContain('useImportSourceResolution');
+  });
+
   it('keeps durable architecture guidance aligned with the composition root', () => {
     const guidance = read('AGENTS.md');
     expect(guidance).not.toContain('now ~210 lines');

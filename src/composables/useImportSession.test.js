@@ -10,6 +10,7 @@ let getFeatureConfirmationsMock;
 let confirmFeatureGateMock;
 let chooseDownloadDirMock;
 let resetDownloadDirMock;
+let openDownloadDirMock;
 let listPlaylistsMock;
 let createPlaylistMock;
 let setPlaylistTracksMock;
@@ -56,6 +57,7 @@ beforeEach(() => {
   confirmFeatureGateMock = vi.fn().mockResolvedValue(confirmedProviderFlow);
   chooseDownloadDirMock = vi.fn();
   resetDownloadDirMock = vi.fn();
+  openDownloadDirMock = vi.fn();
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
   createPlaylistMock = vi.fn(async (name) => {
     mockPlaylist = {
@@ -91,6 +93,7 @@ beforeEach(() => {
       confirmFeatureGate: confirmFeatureGateMock,
       chooseDownloadDir: chooseDownloadDirMock,
       resetDownloadDir: resetDownloadDirMock,
+      openDownloadDir: openDownloadDirMock,
       listPlaylists: listPlaylistsMock,
       createPlaylist: createPlaylistMock,
       setPlaylistTracks: setPlaylistTracksMock,
@@ -114,7 +117,49 @@ async function flushPromises() {
   await Promise.resolve();
 }
 
+function deferred() {
+  let resolve;
+  const promise = new Promise((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
+}
+
 describe('useImportSession', () => {
+  it('preserves the exact public import-session API', async () => {
+    const session = await loadImportSession();
+
+    expect(Object.keys(session).sort()).toEqual([
+      'allSelected',
+      'canConfirmImport',
+      'canRetryFailed',
+      'canUseConfirmButton',
+      'chooseDownloadDir',
+      'clearPreview',
+      'confirmImport',
+      'confirmImportLabel',
+      'dominantFailureCode',
+      'filterOptions',
+      'getTrackStatusClass',
+      'getTrackStatusLabel',
+      'openDownloadDir',
+      'playlistStats',
+      'refreshConfig',
+      'resetDownloadDir',
+      'resolveSource',
+      'retryFailedTracks',
+      'selectImportCandidate',
+      'selectMissingTracks',
+      'selectablePlaylistTracks',
+      'setActiveFilter',
+      'setInput',
+      'setTrackSelected',
+      'state',
+      'toggleSelectAll',
+      'visiblePlaylistTracks',
+    ]);
+  });
+
   it('keeps a resolved playlist preview in the shared session without downloading', async () => {
     fetchYoutubePlaylistMock.mockResolvedValueOnce({
       title: 'My Setlist',
@@ -148,6 +193,23 @@ describe('useImportSession', () => {
         errorCode: null,
       },
     ]);
+  });
+
+  it('prevents a second source resolution while the first is pending', async () => {
+    const pendingResolution = deferred();
+    fetchYoutubePlaylistMock.mockReturnValueOnce(pendingResolution.promise);
+    const session = await loadImportSession();
+    session.setInput('playlist-id');
+
+    const first = session.resolveSource();
+    await vi.waitFor(() => {
+      expect(fetchYoutubePlaylistMock).toHaveBeenCalledOnce();
+    });
+    await session.resolveSource();
+
+    expect(fetchYoutubePlaylistMock).toHaveBeenCalledOnce();
+    pendingResolution.resolve({ title: 'Set', entries: [] });
+    await first;
   });
 
   it('treats non-playlist input as a confirmation-ready single source', async () => {
@@ -1068,6 +1130,34 @@ describe('useImportSession', () => {
 
       expect(resetDownloadDirMock).toHaveBeenCalledTimes(1);
       expect(session.state.isDefaultDir).toBe(true);
+    });
+
+    it('opens the configured download directory', async () => {
+      const session = await loadImportSession();
+
+      await expect(session.openDownloadDir()).resolves.toBe(true);
+
+      expect(openDownloadDirMock).toHaveBeenCalledOnce();
+    });
+
+    it('contains download-directory bridge failures', async () => {
+      const session = await loadImportSession();
+
+      getConfigMock.mockRejectedValueOnce(new Error('read failed'));
+      await expect(session.refreshConfig()).resolves.toBe(false);
+      expect(session.state.status).toBe('目前無法讀取匯入設定，請再試一次。');
+
+      chooseDownloadDirMock.mockRejectedValueOnce(new Error('choose failed'));
+      await expect(session.chooseDownloadDir()).resolves.toBe(false);
+      expect(session.state.status).toBe('下載資料夾未變更，請再試一次。');
+
+      resetDownloadDirMock.mockRejectedValueOnce(new Error('reset failed'));
+      await expect(session.resetDownloadDir()).resolves.toBe(false);
+      expect(session.state.status).toBe('下載資料夾未重設，請再試一次。');
+
+      openDownloadDirMock.mockRejectedValueOnce(new Error('open failed'));
+      await expect(session.openDownloadDir()).resolves.toBe(false);
+      expect(session.state.status).toBe('目前無法開啟下載資料夾，請再試一次。');
     });
   });
 });

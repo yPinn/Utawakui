@@ -313,6 +313,33 @@ const coveragePolicy = Object.freeze({
       }),
     }),
     Object.freeze({
+      path: 'src/composables/useImportSession.js',
+      minimum: Object.freeze({
+        statements: 97,
+        branches: 85,
+        functions: 100,
+        lines: 100,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/import/useImportSourceResolution.js',
+      minimum: Object.freeze({
+        statements: 96,
+        branches: 81,
+        functions: 100,
+        lines: 100,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/import/useImportExecution.js',
+      minimum: Object.freeze({
+        statements: 91,
+        branches: 81,
+        functions: 100,
+        lines: 97,
+      }),
+    }),
+    Object.freeze({
       path: 'src/composables/useLyrics.js',
       minimum: Object.freeze({
         statements: 91,

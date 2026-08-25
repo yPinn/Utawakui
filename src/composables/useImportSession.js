@@ -1,27 +1,17 @@
-import { computed, markRaw, reactive, readonly } from 'vue';
+import { computed, reactive, readonly } from 'vue';
 import {
   IMPORT_FILTERS,
   filterPlaylistImportTracks,
   getPlaylistImportStats,
   hasImportableSelection,
 } from '../utils/importPlaylist.js';
-import {
-  describeDownloadFailure,
-  downloadFailureHint,
-  downloadFailureLabel,
-} from '../utils/downloadFailureDisplay.js';
 import { normalizeAppError } from '../utils/appErrors.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
+import { useImportExecution } from './import/useImportExecution.js';
+import { useImportSourceResolution } from './import/useImportSourceResolution.js';
 import { useAppView } from './useAppView.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
-import { usePlaylists } from './usePlaylists.js';
-
-const {
-  create: createPlaylist,
-  setTracks: setPlaylistTracks,
-  upsertAlbum,
-} = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { setActiveView } = useAppView();
 const { recordError } = useAppDiagnostics();
@@ -50,8 +40,6 @@ const state = reactive({
   isResolving: false,
   isImporting: false,
 });
-
-let cancelRequested = false;
 
 const playlistStats = computed(() =>
   getPlaylistImportStats(state.playlistTracks),
@@ -220,182 +208,31 @@ function clearPreview() {
   state.collectionThumbnailUrl = null;
   state.createdPlaylistId = null;
   state.activeFilter = 'all';
-  cancelRequested = false;
+  importExecution.resetCancellation();
 }
 
-function createPreviewTrack(entry) {
-  return {
-    ...entry,
-    // Always default-selected, including already-owned tracks: upsertAlbum
-    // fully replaces trackIds on every sync (see electron/lib/playlists.js),
-    // so a track this preview shows but the user doesn't select gets
-    // dropped from the resulting playlist/album, not just skipped.
-    selected: true,
-    status: 'pending',
-    errorCode: null,
-  };
-}
+const importExecution = useImportExecution({
+  state,
+  canConfirmImport,
+  canRetryFailed,
+  dominantFailureCode,
+  ensureProviderFlow,
+  handleProviderSetupError,
+  reportImportError,
+  setStatus,
+});
 
-function candidateId(candidate) {
-  return candidate?.playbackVideoId || candidate?.id || null;
-}
+const sourceResolution = useImportSourceResolution({
+  state,
+  clearPreview,
+  ensureProviderFlow,
+  handleProviderSetupError,
+  reportImportError,
+  setStatus,
+});
 
-// YT Music album playlists (OLAK5uy_-prefixed, see youtube.js's
-// classifyPlaylistKind) come back from yt-dlp with a literal "Album - "
-// prefix on the playlist title (e.g. "Album - strobo") — that's how
-// YouTube itself titles the album's playlist page, not part of the album
-// name. Only applied when the source already classified as 'album'; an
-// ordinary user playlist literally named "Album - My Mix" keeps its name.
-function stripAlbumTitlePrefix(title) {
-  return typeof title === 'string'
-    ? title.replace(/^album\s*-\s*/i, '')
-    : title;
-}
-
-function createSingleTrackFromResolution(resolution, selectedCandidate = null) {
-  const candidate =
-    selectedCandidate || resolution.recommendedCandidate || resolution.source;
-  return createPreviewTrack({
-    id: candidateId(candidate),
-    title: candidate.title || resolution.canonical?.title || resolution.input,
-    artist: candidate.artist || resolution.canonical?.artist,
-    duration: candidate.duration || resolution.canonical?.duration,
-    thumbnailUrl: candidate.thumbnailUrl || resolution.source?.thumbnailUrl,
-    alreadyDownloaded: candidate.alreadyDownloaded,
-    downloadInput: candidateId(candidate),
-    sourceVideoId: resolution.sourceVideoId,
-    playbackKind: candidate.playbackKind,
-    trackIdentity: resolution.trackIdentity || candidate.trackIdentity,
-    importResolution: resolution,
-  });
-}
-
-function selectImportCandidate(candidateIdValue) {
-  if (!state.singleResolution || state.isImporting) return;
-  const candidate = state.singleResolution.candidates?.find(
-    (entry) => candidateId(entry) === candidateIdValue,
-  );
-  if (!candidate) return;
-  state.selectedCandidateId = candidateIdValue;
-  state.singleTrack = createSingleTrackFromResolution(
-    state.singleResolution,
-    candidate,
-  );
-}
-
-async function resolveSource() {
-  const input = state.input.trim();
-  if (!input) {
-    setStatus('請貼上 YouTube 或 YouTube Music 連結', 'error');
-    return;
-  }
-  // Set before the first await so a call arriving during ensureProviderFlow()
-  // can't start a second, racing resolution (matches useLocalImport's guard).
-  if (state.isResolving) return;
-  state.isResolving = true;
-
-  if (!(await ensureProviderFlow())) {
-    state.isResolving = false;
-    return;
-  }
-
-  clearPreview();
-  setStatus('檢查連結中...', 'pending');
-
-  try {
-    const playlistResult = await window.Utawakui.fetchYoutubePlaylist(input);
-    const entries = playlistResult?.entries;
-    if (entries && entries.length > 0) {
-      state.sourceKind = 'playlist';
-      state.collectionKind =
-        playlistResult.kind === 'album' ? 'album' : 'playlist';
-      state.playlistTitle =
-        (state.collectionKind === 'album'
-          ? stripAlbumTitlePrefix(playlistResult.title)
-          : playlistResult.title) || '未命名播放清單';
-      // markRaw: this is only ever read back out whole (syncImportedPlaylist
-      // hands it straight to upsertAlbum's IPC payload) and never displayed
-      // field-by-field, so it doesn't need Vue's reactivity — and it must
-      // NOT get reactive()'s deep-proxy treatment, because ipcRenderer.invoke
-      // structured-clones its arguments, and a Proxy fails that clone with
-      // "An object could not be cloned."
-      state.collectionSource = playlistResult.source
-        ? markRaw(playlistResult.source)
-        : null;
-      state.collectionThumbnailUrl = playlistResult.thumbnailUrl || null;
-      state.playlistTracks = entries.map(createPreviewTrack);
-      setStatus(`已找到 ${entries.length} 首，請確認要下載的曲目`, 'success');
-    } else {
-      if (typeof window.Utawakui.resolveImportSource === 'function') {
-        const resolution = await window.Utawakui.resolveImportSource(input);
-        state.sourceKind = 'single';
-        state.singleResolution = resolution;
-        state.selectedCandidateId = candidateId(
-          resolution.recommendedCandidate || resolution.source,
-        );
-        state.singleTrack = createSingleTrackFromResolution(resolution);
-        setStatus('已找到歌曲，確認後開始下載', 'success');
-        return;
-      }
-
-      if (typeof window.Utawakui.fetchVideoMetadata !== 'function') {
-        state.sourceKind = 'single';
-        state.singleTrack = createPreviewTrack({
-          id: input,
-          title: input,
-          alreadyDownloaded: false,
-        });
-        setStatus(
-          '需要重新啟動應用程式才能使用新版單曲預覽；目前仍可下載。',
-          'pending',
-        );
-        return;
-      }
-
-      const metadata = await window.Utawakui.fetchVideoMetadata(input);
-      state.sourceKind = 'single';
-      state.singleTrack = createPreviewTrack(metadata);
-      setStatus('已找到歌曲，確認後開始下載', 'success');
-    }
-  } catch (err) {
-    clearPreview();
-    if (handleProviderSetupError(err)) return;
-    const failure = describeDownloadFailure(err);
-    reportImportError(err, 'resolve-source', '目前無法檢查這個來源。');
-    setStatus(`找不到來源：${failure.label}`, 'error');
-    state.failureHint = failure.hint;
-  } finally {
-    state.isResolving = false;
-  }
-}
-
-async function importSingle() {
-  const input = state.input.trim();
-  const downloadInput =
-    state.singleTrack?.downloadInput ||
-    state.singleTrack?.playbackVideoId ||
-    input;
-  setStatus('下載中...', 'pending');
-  state.isImporting = true;
-
-  try {
-    const result = await window.Utawakui.downloadAudio(downloadInput);
-    if (state.singleTrack) state.singleTrack.status = 'done';
-    setStatus(
-      result.title ? `已下載：${result.title}` : '歌曲已下載',
-      'success',
-    );
-    state.sourceKind = 'idle';
-  } catch (err) {
-    if (handleProviderSetupError(err)) return;
-    const failure = describeDownloadFailure(err);
-    reportImportError(err, 'download-track', '下載未完成，請再試一次。');
-    setStatus(`下載失敗：${failure.label}`, 'error');
-    state.failureHint = failure.hint;
-  } finally {
-    state.isImporting = false;
-  }
-}
+const { confirmImport, retryFailedTracks } = importExecution;
+const { resolveSource, selectImportCandidate } = sourceResolution;
 
 function toggleSelectAll() {
   const next = !allSelected.value;
@@ -416,146 +253,6 @@ function selectMissingTracks() {
     }
   }
   state.activeFilter = 'missing';
-}
-
-function selectFailedTracks() {
-  if (!state.playlistTracks) return;
-  for (const track of state.playlistTracks) {
-    if (track.status === 'error') track.selected = true;
-  }
-  state.activeFilter = 'failed';
-}
-
-async function downloadPlaylistTrack(track) {
-  if (track.alreadyDownloaded || track.status === 'done') return;
-
-  track.status = 'downloading';
-  track.errorCode = null;
-
-  try {
-    await window.Utawakui.downloadAudio(track.id);
-    track.status = 'done';
-  } catch (err) {
-    track.status = 'error';
-    track.errorCode = describeDownloadFailure(err).code;
-    reportImportError(err, 'download-track', '部分曲目未下載。');
-  }
-}
-
-// Runs unconditionally after the download loop, including on cancel, so
-// whatever succeeded before a stop is still captured.
-//
-// Album imports (state.collectionKind === 'album') go through upsertAlbum,
-// keyed by source on the main-process side — a retry or a later
-// re-import of the same album updates its track list in place, never
-// creates a duplicate, so no session-local id needs tracking.
-//
-// Ordinary playlist imports keep the original create-once-per-session
-// path: state.createdPlaylistId tracks the playlist across retries within
-// this session so a retry re-syncs the same playlist with the current
-// full success set instead of creating a duplicate.
-async function syncImportedPlaylist() {
-  const trackIds = state.playlistTracks
-    .filter(
-      (track) =>
-        track.selected && (track.status === 'done' || track.alreadyDownloaded),
-    )
-    .map((track) => track.id);
-  if (trackIds.length === 0) return null;
-
-  if (state.collectionKind === 'album') {
-    const upserted = await upsertAlbum({
-      name: state.playlistTitle,
-      source: state.collectionSource,
-      trackIds,
-      thumbnailUrl: state.collectionThumbnailUrl,
-    });
-    return Boolean(upserted);
-  }
-
-  if (!state.createdPlaylistId) {
-    const created = await createPlaylist(state.playlistTitle);
-    if (!created) return false;
-    state.createdPlaylistId = created.id;
-  }
-  return setPlaylistTracks(state.createdPlaylistId, trackIds);
-}
-
-async function importPlaylist() {
-  if (!state.playlistTracks || !hasImportableSelection(state.playlistTracks)) {
-    return;
-  }
-
-  cancelRequested = false;
-  state.isImporting = true;
-  setStatus('下載選取曲目中...', 'pending');
-
-  try {
-    for (const track of state.playlistTracks) {
-      if (cancelRequested) break;
-      if (
-        !track.selected ||
-        track.alreadyDownloaded ||
-        track.status === 'done'
-      ) {
-        continue;
-      }
-      await downloadPlaylistTrack(track);
-    }
-
-    const playlistSynced = await syncImportedPlaylist();
-    const stats = getPlaylistImportStats(state.playlistTracks);
-    if (cancelRequested) {
-      setStatus('已停止，未完成的曲目仍留在預覽中', 'pending');
-    } else if (stats.error > 0) {
-      const dominant = dominantFailureCode.value;
-      setStatus(
-        dominant
-          ? `下載完成，${stats.error} 首失敗（${downloadFailureLabel(dominant)}）`
-          : `下載完成，${stats.error} 首失敗`,
-        'error',
-      );
-      if (dominant) state.failureHint = downloadFailureHint(dominant);
-    } else if (playlistSynced === true) {
-      setStatus(
-        state.collectionKind === 'album'
-          ? `已加入專輯「${state.playlistTitle}」`
-          : `已加入播放清單「${state.playlistTitle}」`,
-        'success',
-      );
-    } else if (playlistSynced === false) {
-      setStatus('曲目已下載，但播放清單未儲存。請再試一次。', 'error');
-    } else {
-      setStatus('下載完成', 'success');
-    }
-  } finally {
-    state.isImporting = false;
-  }
-}
-
-function cancelImport() {
-  cancelRequested = true;
-}
-
-async function confirmImport() {
-  if (state.isImporting) {
-    cancelImport();
-    return;
-  }
-  if (!canConfirmImport.value) return;
-  if (!(await ensureProviderFlow())) return;
-  if (state.sourceKind === 'single') {
-    await importSingle();
-    return;
-  }
-  await importPlaylist();
-}
-
-async function retryFailedTracks() {
-  if (!canRetryFailed.value) return;
-  if (!(await ensureProviderFlow())) return;
-  selectFailedTracks();
-  await importPlaylist();
 }
 
 function getTrackStatusLabel(track) {

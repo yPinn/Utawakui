@@ -59,6 +59,15 @@ playlist scope、選曲、HTML audio playback projection、watchers 與 `useLyri
 label／delete 與手動匯入。兩個內部 composable 接受具名 dependency，不互相 import；
 reading aid 與 timing editor 繼續由既有獨立 composable 持有，不建立第二份 Lyrics state。
 
+Import renderer 也維持單一 session state：`src/composables/useImportSession.js` 保留
+`useImportSession()` readonly public facade、computed UI projection、selection／filter、共用
+status/error 與 download-directory adapter；
+`src/composables/import/useImportSourceResolution.js` 負責 provider-backed playlist／single
+resolution、candidate selection 與 structured-clone-safe preview；
+`src/composables/import/useImportExecution.js` 負責 single／batch download、cancel／retry、
+partial failure aggregation 與 playlist／album persistence。兩個內部 composable 只接收同一份
+session state 與具名 callbacks，不自行建立 reactive state，也不互相 import。
+
 ## Feature Gates 與最小依賴單位
 
 | 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                            |
