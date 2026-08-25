@@ -42,7 +42,7 @@ module.exports = [
     },
   },
   {
-    files: ['electron/**/*.test.js'],
+    files: ['electron/**/*.test.js', 'shared/**/*.test.js'],
     languageOptions: {
       sourceType: 'module',
       globals: globals.node,

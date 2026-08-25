@@ -162,30 +162,7 @@
   ${ifNot} ${Errors}
     FileReadUTF16LE $1 $LibraryDir
     FileClose $1
-    GetFullPathName $LibraryDir "$LibraryDir"
-    ${GetRoot} $0 "$LibraryDir"
-    ${GetParent} $2 "$LibraryDir"
-    ${if} $LibraryDir != $0
-    ${andIf} $2 != $0
-    ${andIf} $LibraryDir != "$PROFILE"
-    ${andIf} $LibraryDir != "$APPDATA"
-    ${andIf} $LibraryDir != "$LOCALAPPDATA"
-    ${andIf} $LibraryDir != "$DOCUMENTS"
-    ${andIf} $LibraryDir != "$MUSIC"
-    ${andIf} $LibraryDir != "$DESKTOP"
-    ${andIf} $LibraryDir != "$INSTDIR"
-    ${andIf} $LibraryDir != "$WINDIR"
-    ${andIf} $LibraryDir != "$SYSDIR"
-    ${andIf} $LibraryDir != "$PROGRAMFILES"
-    ${andIf} $LibraryDir != "$PROGRAMFILES32"
-    ${andIf} $LibraryDir != "$PROGRAMFILES64"
-    ${andIf} $LibraryDir != "$COMMONFILES"
-    ${andIf} $LibraryDir != "$COMMONFILES32"
-    ${andIf} $LibraryDir != "$COMMONFILES64"
-    ${andIf} $LibraryDir != "$TEMP"
-    ${andIf} ${FileExists} "$LibraryDir\.utawakui-library"
-      StrCpy $LibraryCleanupSafe "true"
-    ${endIf}
+    Call un.utaValidateLibraryCleanup
   ${endIf}
 
   ; Can't touch the SEC_UN_LIBRARY section here directly: ${SEC_UN_LIBRARY}
@@ -228,12 +205,53 @@
   ; as-is.
   Section /o "un.$(utaSecLibrary)" SEC_UN_LIBRARY
     ; $LibraryDir came from a file on disk, i.e. untrusted input crossing a
-    ; trust boundary — re-check the validated marker-backed decision here,
-    ; so a missing or dangerous path can never reach recursive deletion.
+    ; trust boundary. Revalidate the path and marker immediately before the
+    ; destructive operation so a removed/replaced marker fails closed.
+    Call un.utaValidateLibraryCleanup
     ${if} $LibraryCleanupSafe == "true"
       RMDir /r /REBOOTOK "$LibraryDir"
     ${endIf}
   SectionEnd
+
+  Function un.utaValidateLibraryCleanup
+    StrCpy $LibraryCleanupSafe "false"
+    ${if} $LibraryDir != ""
+      GetFullPathName $LibraryDir "$LibraryDir"
+      ${GetRoot} $0 "$LibraryDir"
+      ${GetParent} $2 "$LibraryDir"
+      ${if} $LibraryDir != $0
+      ${andIf} $2 != $0
+      ${andIf} $LibraryDir != "$PROFILE"
+      ${andIf} $LibraryDir != "$APPDATA"
+      ${andIf} $LibraryDir != "$LOCALAPPDATA"
+      ${andIf} $LibraryDir != "$DOCUMENTS"
+      ${andIf} $LibraryDir != "$MUSIC"
+      ${andIf} $LibraryDir != "$DESKTOP"
+      ${andIf} $LibraryDir != "$INSTDIR"
+      ${andIf} $LibraryDir != "$WINDIR"
+      ${andIf} $LibraryDir != "$SYSDIR"
+      ${andIf} $LibraryDir != "$PROGRAMFILES"
+      ${andIf} $LibraryDir != "$PROGRAMFILES32"
+      ${andIf} $LibraryDir != "$PROGRAMFILES64"
+      ${andIf} $LibraryDir != "$COMMONFILES"
+      ${andIf} $LibraryDir != "$COMMONFILES32"
+      ${andIf} $LibraryDir != "$COMMONFILES64"
+      ${andIf} $LibraryDir != "$TEMP"
+        ClearErrors
+        FileOpen $3 "$LibraryDir\.utawakui-library-owner-v2" r
+        ${ifNot} ${Errors}
+          StrCpy $4 ""
+          ClearErrors
+          FileRead $3 $4
+          ${ifNot} ${Errors}
+          ${andIf} $4 == "utawakui-dedicated-library-v2"
+            StrCpy $LibraryCleanupSafe "true"
+          ${endIf}
+          FileClose $3
+        ${endIf}
+      ${endIf}
+    ${endIf}
+  FunctionEnd
 
   ; Must live after the Section above — see the comment in customUnInit on
   ; why ${SEC_UN_LIBRARY} can't be referenced any earlier in the script.

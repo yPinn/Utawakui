@@ -54,7 +54,9 @@ describe('runtime configuration boundaries', () => {
     const installer = read('build/installer.nsh');
     const sidecar = read('electron/main/libraryPathSidecar.js');
 
-    expect(sidecar).toContain("'.utawakui-library'");
+    expect(sidecar).toContain("'.utawakui-library-owner-v2'");
+    expect(sidecar).toContain("'utawakui-dedicated-library-v2'");
+    expect(sidecar).toContain('entries.length === 0');
     expect(sidecar).toContain('path.dirname(resolvedLibraryDir) === root');
     expect(sidecar).toContain('removeSidecar(sidecarPath)');
     expect(installer).toContain('GetFullPathName $LibraryDir "$LibraryDir"');
@@ -65,7 +67,14 @@ describe('runtime configuration boundaries', () => {
     expect(installer).toContain('$LibraryDir != "$WINDIR"');
     expect(installer).toContain('$LibraryDir != "$TEMP"');
     expect(installer).toContain(
-      '${FileExists} "$LibraryDir\\.utawakui-library"',
+      'FileOpen $3 "$LibraryDir\\.utawakui-library-owner-v2" r',
+    );
+    expect(installer).toContain('StrCpy $4 ""');
+    expect(installer).toContain('FileRead $3 $4');
+    expect(installer).toContain('$4 == "utawakui-dedicated-library-v2"');
+    expect(installer).toContain('Function un.utaValidateLibraryCleanup');
+    expect(installer.match(/Call un\.utaValidateLibraryCleanup/g)).toHaveLength(
+      2,
     );
     expect(installer).toContain('$LibraryCleanupSafe == "true"');
   });

@@ -15,43 +15,66 @@ const { MEDIA_SCHEME } = require('./mediaScheme');
 // (`<trackId>/<assetFilename>`, resolveTrackAssetPath) or a 3-segment
 // separation-result request (`<trackId>/separations/<presetId>.wav`,
 // resolveSeparationResultPath); 'playlist-cover' resolves a playlist's
-// cover image (resolvePlaylistCoverPath); anything else falls back to
-// resolveTrackPath for legacy pre-migration local audio. Never trust the
-// requested path beyond what these resolvers allow.
-function registerMediaProtocol({ protocol, getConfig, resolveDownloadDir }) {
+// cover image (resolvePlaylistCoverPath); 'local' resolves legacy
+// pre-migration audio through resolveTrackPath. Every hostname and segment
+// count is allowlisted before a filesystem resolver sees it.
+function notFoundResponse() {
+  return new Response('Not found', { status: 404 });
+}
+
+function decodePathSegments(pathname) {
+  try {
+    return pathname.split('/').filter(Boolean).map(decodeURIComponent);
+  } catch {
+    return null;
+  }
+}
+
+function registerMediaProtocol({
+  protocol,
+  getConfig,
+  resolveDownloadDir,
+  buildRangeResponse: createRangeResponse = buildRangeResponse,
+  resolvePlaylistCoverPath: resolveCoverPath = resolvePlaylistCoverPath,
+  resolveTrackAssetPath: resolveAssetPath = resolveTrackAssetPath,
+  resolveSeparationResultPath:
+    resolveSeparationPath = resolveSeparationResultPath,
+  resolveTrackPath: resolveLegacyTrackPath = resolveTrackPath,
+}) {
   protocol.handle(MEDIA_SCHEME, (request) => {
     const url = new URL(request.url);
     const dir = resolveDownloadDir(getConfig());
+    const segments = decodePathSegments(url.pathname);
+    if (!segments) return notFoundResponse();
+
     let filePath;
     if (url.hostname === 'track') {
-      const segments = url.pathname
-        .split('/')
-        .filter(Boolean)
-        .map(decodeURIComponent);
       if (segments.length === 3 && segments[1] === 'separations') {
-        filePath = resolveSeparationResultPath(dir, segments[0], segments[2]);
-      } else {
+        filePath = resolveSeparationPath(dir, segments[0], segments[2]);
+      } else if (segments.length === 2) {
         const [trackId, assetFilename] = segments;
-        filePath = resolveTrackAssetPath(dir, trackId, assetFilename);
+        filePath = resolveAssetPath(dir, trackId, assetFilename);
+      } else {
+        return notFoundResponse();
       }
     } else if (url.hostname === 'playlist-cover') {
-      const [playlistId, coverFilename] = url.pathname
-        .split('/')
-        .filter(Boolean)
-        .map(decodeURIComponent);
-      filePath = resolvePlaylistCoverPath(dir, playlistId, coverFilename);
+      if (segments.length !== 2) return notFoundResponse();
+      const [playlistId, coverFilename] = segments;
+      filePath = resolveCoverPath(dir, playlistId, coverFilename);
+    } else if (url.hostname === 'local') {
+      if (segments.length !== 1) return notFoundResponse();
+      filePath = resolveLegacyTrackPath(dir, segments[0]);
     } else {
-      const filename = decodeURIComponent(url.pathname.replace(/^\/+/, ''));
-      filePath = resolveTrackPath(dir, filename);
+      return notFoundResponse();
     }
     if (!filePath) {
-      return new Response('Not found', { status: 404 });
+      return notFoundResponse();
     }
     try {
       // Real 206 Partial Content support — see buildRangeResponse's own
       // comment for why net.fetch(pathToFileURL(...)) doesn't actually
       // provide this despite looking like it should.
-      return buildRangeResponse(filePath, request.headers.get('range'));
+      return createRangeResponse(filePath, request.headers.get('range'));
     } catch (error) {
       // Most likely the file was deleted between resolveTrackPath (which
       // only checks the path is safe, not that the file exists) and here
@@ -60,7 +83,7 @@ function registerMediaProtocol({ protocol, getConfig, resolveDownloadDir }) {
       // opposed to the expected deleted-file race) is still visible
       // instead of silently degrading to "track won't play".
       console.error(`utawakui-media: failed to serve ${filePath}:`, error);
-      return new Response('Not found', { status: 404 });
+      return notFoundResponse();
     }
   });
 }

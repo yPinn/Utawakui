@@ -38,12 +38,22 @@ Windows packaging is configured in `electron-builder.yml`.
   can clean app-managed dependencies under `%APPDATA%\Utawakui\dependencies`,
   app settings under `%APPDATA%\Utawakui`, and the selected library root only
   when the normalized `library-path.txt` target is below a filesystem root,
-  differs from protected Windows/user folders, and contains the app-written
-  `.utawakui-library` marker. Invalid targets hide the library cleanup option.
+  differs from protected Windows/user folders, and contains the exact app-written
+  `.utawakui-library-owner-v2` ownership marker. The app creates that marker only
+  for a new or empty dedicated library root; selecting an existing populated
+  folder does not make it uninstall-owned. Invalid targets hide the library cleanup
+  option.
   All cleanup checkboxes default to unchecked. Cleanup uses
   `RMDir /r /REBOOTOK`, so locked folders may finish deleting after a reboot.
 - Installer copy discloses that advanced features are enabled and prepared from
   Settings. The uninstaller welcome page explains that data cleanup is opt-in.
+- Pull requests and `main` pushes run the ordinary Ubuntu quality gate before a
+  GitHub-hosted Windows job builds the complete unsigned NSIS/update bundle.
+  `scripts/verify-unsigned-windows-package.ps1` is the shared verifier for PR,
+  tag-review, and public-draft packaging; it checks `NotSigned` status, packaged
+  version/notices, blockmap, and `latest.yml`. PR packages are ephemeral and are
+  neither uploaded nor published; tag/release workflows additionally use the
+  verifier to write `SHA256SUMS.txt`.
 
 The `electron.exe` filename is intentional. See
 `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`.
@@ -285,6 +295,9 @@ After changing gates or dependencies:
   output without loading missing modules or dictionary files from inside ASAR.
 - For installer verification, use `npm run dist`; `dist:dir` does not create
   Start Menu shortcuts, so it cannot verify installed AUMID / SMTC app name.
+- Run `scripts/verify-unsigned-windows-package.ps1 -Version <version>` after an
+  unsigned full build. Add `-WriteChecksum` only for a tag-review or public-draft
+  bundle that will retain `SHA256SUMS.txt` alongside the installer.
 - Before publishing the first updater-enabled baseline, verify `latest.yml`
   SHA-512 rejection, blockmap/full-download fallback, explicit restart, and
   app-data/library preservation across two installed versions. Record that
@@ -298,4 +311,6 @@ After changing gates or dependencies:
   folder. All three options must default to unchecked; when selected, verify
   only the expected target is removed or scheduled for removal if Windows has
   it locked. Tampering `library-path.txt` to a root, one-level root child, or
-  unmarked folder must hide the library option.
+  unmarked folder must hide the library option. Replacing the ownership marker
+  content, or selecting a populated folder that the app did not previously claim,
+  must also hide the option and preserve that folder during uninstall.

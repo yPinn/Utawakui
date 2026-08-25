@@ -5,6 +5,7 @@ const { defineConfig } = require('vitest/config');
 const vue = require('@vitejs/plugin-vue');
 const path = require('node:path');
 const { createOverlayReloadPlugin } = require('./scripts/viteOverlayReload.js');
+const { coveragePolicy } = require('./scripts/coveragePolicy.js');
 
 module.exports = defineConfig({
   plugins: [vue(), createOverlayReloadPlugin(__dirname)],
@@ -33,10 +34,12 @@ module.exports = defineConfig({
   test: {
     environment: 'node',
     include: [
+      'electron/*.test.js',
       'electron/lib/**/*.test.js',
       'electron/main/**/*.test.js',
       'overlay/**/*.test.js',
       'scripts/**/*.test.mjs',
+      'shared/**/*.test.js',
       'src/**/*.test.js',
     ],
     exclude: ['coverage/**', 'dist/**', 'node_modules/**'],
@@ -53,42 +56,14 @@ module.exports = defineConfig({
       // together). istanbul instruments source directly instead of
       // sampling V8 runtime coverage, so it isn't affected.
       provider: 'istanbul',
-      reporter: ['text', 'html', 'lcov'],
+      reporter: ['text', 'html', 'lcov', 'json-summary'],
       reportsDirectory: 'coverage',
       all: true,
       clean: true,
       skipFull: true,
-      include: [
-        'electron/lib/**/*.js',
-        'electron/main/appUpdateService.js',
-        'electron/main/runtimeEnvironment.js',
-        'shared/presentation/*.mjs',
-        'scripts/audio-separator-roformer-wheel-patch.mjs',
-        'scripts/release-contract.mjs',
-        'src/utils/*.js',
-        'src/composables/useAudioOutput.js',
-        'src/composables/useAppUpdate.js',
-        'src/composables/useDragReorder.js',
-        'src/composables/useAppInfo.js',
-        'src/composables/useImportSession.js',
-        'src/composables/useLyrics.js',
-        'src/composables/useLibraryMetadataMaintenance.js',
-        'src/composables/usePlaybackQueue.js',
-        'src/composables/usePlaylists.js',
-        'src/composables/useRovingRadioGroup.js',
-        'src/composables/useSeparation.js',
-      ],
-      exclude: [
-        '**/*.test.js',
-        'electron/lib/downloader.js',
-        'electron/lib/vocalSeparationWorker.js',
-      ],
-      thresholds: {
-        statements: 70,
-        branches: 65,
-        functions: 75,
-        lines: 75,
-      },
+      include: coveragePolicy.include,
+      exclude: coveragePolicy.exclude,
+      thresholds: coveragePolicy.globalThresholds,
     },
   },
 });

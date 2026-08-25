@@ -3,7 +3,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const LIBRARY_MARKER_FILENAME = '.utawakui-library';
+const LEGACY_LIBRARY_MARKER_FILENAME = '.utawakui-library';
+const LEGACY_LIBRARY_MARKER_VALUE = 'Utawakui library root\n';
+const LIBRARY_OWNERSHIP_MARKER_FILENAME = '.utawakui-library-owner-v2';
+const LIBRARY_OWNERSHIP_MARKER_VALUE = 'utawakui-dedicated-library-v2';
 const LIBRARY_PATH_SIDECAR_FILENAME = 'library-path.txt';
 
 function removeSidecar(sidecarPath) {
@@ -12,6 +15,54 @@ function removeSidecar(sidecarPath) {
   } catch {
     // Best effort: the NSIS uninstaller independently validates the path.
   }
+}
+
+function readMarker(markerPath) {
+  try {
+    return fs.readFileSync(markerPath, 'utf8');
+  } catch {
+    return null;
+  }
+}
+
+function claimLibraryRoot(libraryDir) {
+  const ownershipMarkerPath = path.join(
+    libraryDir,
+    LIBRARY_OWNERSHIP_MARKER_FILENAME,
+  );
+  const ownershipMarker = readMarker(ownershipMarkerPath);
+
+  if (ownershipMarker !== null) {
+    return ownershipMarker === LIBRARY_OWNERSHIP_MARKER_VALUE;
+  }
+
+  const entries = fs.readdirSync(libraryDir);
+  const isEmpty = entries.length === 0;
+  const hasOnlyLegacyMarker =
+    entries.length === 1 && entries[0] === LEGACY_LIBRARY_MARKER_FILENAME;
+
+  if (!isEmpty && !hasOnlyLegacyMarker) return false;
+
+  if (hasOnlyLegacyMarker) {
+    const legacyMarkerPath = path.join(
+      libraryDir,
+      LEGACY_LIBRARY_MARKER_FILENAME,
+    );
+    if (readMarker(legacyMarkerPath) !== LEGACY_LIBRARY_MARKER_VALUE) {
+      return false;
+    }
+  }
+
+  fs.writeFileSync(ownershipMarkerPath, LIBRARY_OWNERSHIP_MARKER_VALUE, {
+    encoding: 'utf8',
+    flag: 'wx',
+  });
+
+  if (hasOnlyLegacyMarker) {
+    fs.rmSync(path.join(libraryDir, LEGACY_LIBRARY_MARKER_FILENAME));
+  }
+
+  return true;
 }
 
 function writeLibraryPathSidecar(userDataDir, libraryDir) {
@@ -33,11 +84,10 @@ function writeLibraryPathSidecar(userDataDir, libraryDir) {
 
   try {
     fs.mkdirSync(resolvedLibraryDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(resolvedLibraryDir, LIBRARY_MARKER_FILENAME),
-      'Utawakui library root\n',
-      { flag: 'a' },
-    );
+    if (!claimLibraryRoot(resolvedLibraryDir)) {
+      removeSidecar(sidecarPath);
+      return false;
+    }
     fs.mkdirSync(resolvedUserDataDir, { recursive: true });
     fs.writeFileSync(sidecarPath, resolvedLibraryDir, 'utf16le');
     return true;
@@ -48,6 +98,8 @@ function writeLibraryPathSidecar(userDataDir, libraryDir) {
 }
 
 module.exports = {
-  LIBRARY_MARKER_FILENAME,
+  LEGACY_LIBRARY_MARKER_FILENAME,
+  LIBRARY_OWNERSHIP_MARKER_FILENAME,
+  LIBRARY_OWNERSHIP_MARKER_VALUE,
   writeLibraryPathSidecar,
 };

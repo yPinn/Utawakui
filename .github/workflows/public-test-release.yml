@@ -109,52 +109,9 @@ jobs:
       - name: Build unsigned installer
         run: npm run dist
 
-      - name: Verify unsigned files and packaged version
+      - name: Verify unsigned updater bundle and create checksum
         shell: pwsh
-        run: |
-          $installer = Join-Path $PWD "release/Utawakui-Setup-$env:RELEASE_VERSION.exe"
-          $executable = Join-Path $PWD 'release/win-unpacked/electron.exe'
-          foreach ($file in @($installer, $executable)) {
-            if (-not (Test-Path -LiteralPath $file -PathType Leaf)) {
-              throw "Missing unsigned file: $file"
-            }
-            $signature = Get-AuthenticodeSignature -LiteralPath $file
-            if ($signature.Status -ne 'NotSigned') {
-              throw "Unexpected Authenticode status for ${file}: $($signature.Status)"
-            }
-          }
-
-          $productVersion = (Get-Item -LiteralPath $executable).VersionInfo.ProductVersion
-          $acceptedVersions = @($env:RELEASE_VERSION, "$env:RELEASE_VERSION.0")
-          if ($productVersion -notin $acceptedVersions) {
-            throw "Packaged version mismatch: $productVersion"
-          }
-
-      - name: Verify packaged notices
-        shell: pwsh
-        run: |
-          $asarPath = 'release/win-unpacked/resources/app.asar'
-          if (-not (Test-Path -LiteralPath $asarPath -PathType Leaf)) {
-            throw 'Missing packaged app.asar'
-          }
-          $listing = node node_modules/@electron/asar/bin/asar.js list $asarPath
-          if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect packaged app.asar' }
-          foreach ($requiredNotice in @('LICENSE.md', 'THIRD_PARTY_NOTICES.md')) {
-            $escapedName = [regex]::Escape($requiredNotice)
-            $notice = $listing | Where-Object { $_ -match "[/\\]$escapedName$" }
-            if (-not $notice) { throw "$requiredNotice is not packaged" }
-          }
-
-      - name: Verify generated update artifacts
-        run: npm run release:verify-artifacts -- --version ${{ env.RELEASE_VERSION }}
-
-      - name: Create SHA-256 checksum
-        shell: pwsh
-        run: |
-          $name = "Utawakui-Setup-$env:RELEASE_VERSION.exe"
-          $installer = Join-Path 'release' $name
-          $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
-          Set-Content -LiteralPath 'release/SHA256SUMS.txt' -Value "$hash  $name" -Encoding utf8NoBOM
+        run: ./scripts/verify-unsigned-windows-package.ps1 -Version $env:RELEASE_VERSION -WriteChecksum
 
       - name: Upload unsigned test bundle
         uses: actions/upload-artifact@v7

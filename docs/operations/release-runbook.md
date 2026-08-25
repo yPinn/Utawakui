@@ -26,6 +26,33 @@ Published v0.1.1 predates the updater metadata bundle. Existing v0.1.1 users nee
 one manual installation of the first updater-enabled release; only later versions
 can prove the in-app update path.
 
+## Pull Request And Main CI
+
+`.github/workflows/ci.yml` runs for pull requests, pushes to `main`, and manual
+diagnostics. Its Ubuntu `build` job is the ordinary quality gate: secret scan,
+critical dependency audit, license inventory, commit lint where an event supplies
+a commit range, ESLint, formatting, Markdown, complete coverage ratchets, and the
+production renderer build.
+
+After that job passes, `windows-package` uses a GitHub-hosted Windows runner to
+build the full NSIS/update bundle with `npm run dist`. It calls
+`scripts/verify-unsigned-windows-package.ps1`, which fails unless the installer
+and packaged executable are both `NotSigned`, the packaged version matches,
+required legal notices are in ASAR, and the installer/blockmap/`latest.yml`
+contract is valid. The job has a 30-minute timeout and does not read secrets,
+upload its package, contact the public release repository, or retain a
+downloadable PR installer.
+
+This gate does not require an Authenticode certificate, signing account, or a
+project-managed Windows machine. The hosted runner is CI infrastructure only;
+public installers remain unsigned and Windows may show **Unknown publisher**.
+If a self-hosted runner is introduced later, its operating-system licensing is a
+separate infrastructure responsibility and does not change the signing policy.
+
+Repository branch protection must require both `CI / build` and
+`CI / windows-package`; workflow source can define the checks but cannot make
+them required in repository settings.
+
 ## Prepare A Version
 
 1. Update `package.json` and `package-lock.json` to the same new stable version.

@@ -1,8 +1,7 @@
 'use strict';
 
-// No dedicated test file: this module's migration behavior is asserted
-// through listTracks()'s output in tracks.test.js (integration tests),
-// not through these functions directly.
+// Direct tests cover migration and partial-failure contracts here; tracks.test.js
+// additionally verifies the resulting library projection end to end.
 
 const fs = require('fs');
 const path = require('path');

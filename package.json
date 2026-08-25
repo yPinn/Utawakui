@@ -26,7 +26,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "test": "vitest run",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage && node scripts/coverageRatchet.js",
     "test:watch": "vitest",
     "perf:startup": "node scripts/startup-performance.mjs",
     "prepare": "husky"

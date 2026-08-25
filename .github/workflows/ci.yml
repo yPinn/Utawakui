@@ -3,6 +3,7 @@ name: CI
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
@@ -33,8 +34,12 @@ jobs:
       - run: npm ci
 
       - name: Commitlint push
-        if: github.event.before != '0000000000000000000000000000000000000000'
+        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         run: npx --no -- commitlint --from "${{ github.event.before }}" --to "${{ github.sha }}" --verbose
+
+      - name: Commitlint pull request
+        if: github.event_name == 'pull_request'
+        run: npx --no -- commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
 
       - name: Dependency audit
         run: npm audit --audit-level=critical
@@ -59,3 +64,26 @@ jobs:
           if-no-files-found: ignore
 
       - run: npm run build
+
+  windows-package:
+    needs: build
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build unsigned Windows updater bundle
+        run: npm run dist
+
+      - name: Verify ephemeral unsigned package
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
+          ./scripts/verify-unsigned-windows-package.ps1 -Version $version

@@ -31,6 +31,10 @@ function readJson(filename) {
   );
 }
 
+function readText(filename) {
+  return fs.readFileSync(path.join(rootDirectory, filename), 'utf8');
+}
+
 describe('release workflow', () => {
   it('keeps the built-in token read-only and public publishing behind the release environment', () => {
     const workflow = readWorkflow();
@@ -118,19 +122,28 @@ describe('release workflow', () => {
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(rootDirectory, 'package.json'), 'utf8'),
     );
+    const packageVerifier = readText(
+      'scripts/verify-unsigned-windows-package.ps1',
+    );
 
     expect(packageJson.scripts.dist).toContain('--publish never');
     expect(packageCommands).toContain('Build unsigned updater bundle');
-    expect(packageCommands).toContain('NotSigned');
-    expect(packageCommands).toContain('release/latest.yml');
-    expect(packageCommands).toContain('.exe.blockmap');
+    expect(packageCommands).toContain(
+      'scripts/verify-unsigned-windows-package.ps1',
+    );
+    expect(packageCommands).toContain('-WriteChecksum');
+    expect(packageVerifier).toContain('NotSigned');
+    expect(packageVerifier).toContain(
+      'scripts/release-contract-cli.mjs artifacts',
+    );
+    expect(packageVerifier).toContain('SHA256SUMS.txt');
     expect(packageCommands).toContain('gh release create');
     expect(packageCommands).toContain('--draft');
     expect(packageCommands).toContain(
       'Refusing to modify an already published release',
     );
-    expect(packageCommands).toContain('LICENSE.md');
-    expect(packageCommands).toContain('THIRD_PARTY_NOTICES.md');
+    expect(packageVerifier).toContain('LICENSE.md');
+    expect(packageVerifier).toContain('THIRD_PARTY_NOTICES.md');
     expect(packageCommands).not.toContain('--publish always');
   });
 
@@ -160,6 +173,10 @@ describe('release workflow', () => {
     expect(workflow.jobs.package).not.toHaveProperty('environment');
     expect(packageCommands).not.toContain('secrets.');
     expect(packageCommands).not.toContain('gh release');
+    expect(packageCommands).toContain(
+      'scripts/verify-unsigned-windows-package.ps1',
+    );
+    expect(packageCommands).toContain('-WriteChecksum');
     expect(uploadStep.with.path).toContain('SHA256SUMS.txt');
     expect(uploadStep.with.path).toContain('latest.yml');
     expect(uploadStep.with.path).toContain('.blockmap');
