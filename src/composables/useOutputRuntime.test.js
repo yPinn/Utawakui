@@ -29,6 +29,7 @@ let initializePlaylists;
 let initializeLyrics;
 let refreshConfirmations;
 let featureGateState;
+let outputEnabled;
 let recordError;
 let libraryHydration;
 let playlistHydration;
@@ -72,6 +73,7 @@ beforeEach(() => {
   initializePlaylists = vi.fn(() => playlistHydration.promise);
   initializeLyrics = vi.fn(() => lyricsHydration.promise);
   featureGateState = reactive({ error: '' });
+  outputEnabled = true;
   recordError = vi.fn((error, options) => ({
     message: options.message,
   }));
@@ -189,7 +191,7 @@ beforeEach(() => {
   vi.doMock('./useFeatureGates.js', () => ({
     useFeatureGates: () => ({
       state: featureGateState,
-      isFeatureEnabled: () => true,
+      isFeatureEnabled: () => outputEnabled,
       refreshConfirmations,
     }),
   }));
@@ -207,6 +209,24 @@ async function loadRuntime() {
   const { useOutputRuntime } = await import('./useOutputRuntime.js');
   return useOutputRuntime();
 }
+
+it('preserves the exact public runtime API', async () => {
+  const runtime = await loadRuntime();
+
+  expect(Object.keys(runtime).sort()).toEqual([
+    'initialize',
+    'loadSlots',
+    'refreshSettings',
+    'refreshStatus',
+    'saveOutputSlot',
+    'saveSlotSettings',
+    'saveTemplateSelection',
+    'start',
+    'state',
+    'stop',
+    'updateSettings',
+  ]);
+});
 
 describe('output source handshake', () => {
   it('has no IPC or hydration side effects at module import time', async () => {
@@ -346,6 +366,87 @@ describe('output source handshake', () => {
     expect(runtime.state.error).toBe('輸出初始化未完成，請再試一次。');
     expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
     expect(initializeLibrary).not.toHaveBeenCalled();
+  });
+
+  it('keeps projection publishing disabled when the Output feature gate is off', async () => {
+    outputEnabled = false;
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+
+    await initialization;
+    playerState.currentTime = 1;
+    await flushMicrotasks();
+
+    expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('refreshes runtime status when main rejects an Output envelope', async () => {
+    bridge.publishOutputSnapshot.mockResolvedValueOnce(false);
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+
+    await expect(initialization).resolves.toBe(true);
+
+    expect(bridge.publishOutputSnapshot).toHaveBeenCalledOnce();
+    expect(bridge.getOutputStatus).toHaveBeenCalledOnce();
+  });
+
+  it('records a bounded diagnostic when projection publishing throws', async () => {
+    bridge.publishOutputSnapshot.mockRejectedValueOnce(
+      new Error('private projection failure'),
+    );
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+
+    await expect(initialization).resolves.toBe(true);
+
+    expect(runtime.state.error).toBe('輸出畫面未更新，請再試一次。');
+    expect(recordError).toHaveBeenCalledWith(
+      expect.any(Error),
+      expect.objectContaining({ operation: 'publish', source: 'output' }),
+    );
+  });
+
+  it('coalesces clock changes to the latest projection while publishing', async () => {
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+
+    bridge.publishOutputSnapshot.mockClear();
+    const inFlight = deferred();
+    bridge.publishOutputSnapshot
+      .mockImplementationOnce(() => inFlight.promise)
+      .mockResolvedValue(true);
+
+    playerState.currentTime = 1;
+    await flushMicrotasks();
+    playerState.currentTime = 2;
+    await flushMicrotasks();
+    playerState.currentTime = 3;
+    await flushMicrotasks();
+
+    expect(bridge.publishOutputSnapshot).toHaveBeenCalledOnce();
+    inFlight.resolve(true);
+    await flushMicrotasks();
+    await flushMicrotasks();
+
+    expect(bridge.publishOutputSnapshot).toHaveBeenCalledTimes(2);
+    expect(bridge.publishOutputSnapshot.mock.calls.at(-1)[0]).toMatchObject({
+      stream: 'state.snapshot',
+      payload: { playback: { positionMs: 3000 } },
+    });
   });
 
   it('uses update envelopes until playback continuity changes', async () => {
@@ -593,6 +694,20 @@ describe('output source handshake', () => {
     expect(loadMusicStructureForTrack).toHaveBeenCalledTimes(3);
     expect(loadMusicStructureForTrack).toHaveBeenLastCalledWith('track-2');
   });
+
+  it('contains a failed optional music-structure refresh', async () => {
+    loadMusicStructureForTrack.mockRejectedValueOnce(
+      new Error('private sidecar failure'),
+    );
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+
+    await expect(initialization).resolves.toBe(true);
+    expect(runtime.state.error).toBe('');
+  });
 });
 
 describe('output runtime actions', () => {
@@ -630,6 +745,18 @@ describe('output runtime actions', () => {
     await expect(runtime.stop()).resolves.toBe(true);
     expect(bridge.startOutput).toHaveBeenCalledOnce();
     expect(bridge.stopOutput).toHaveBeenCalledOnce();
+  });
+
+  it('publishes an initial handshake when start runs before initialization', async () => {
+    const runtime = await loadRuntime();
+
+    await expect(runtime.start()).resolves.toBe(true);
+
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(
+        ([message]) => message.stream,
+      ),
+    ).toEqual(['queue.document', 'state.snapshot']);
   });
 
   it('loads seed slots and persists template and appearance changes', async () => {
@@ -688,5 +815,17 @@ describe('output runtime actions', () => {
     bridge.listOutputSlots.mockRejectedValueOnce(new Error('slots failed'));
     await expect(runtime.loadSlots()).resolves.toBeUndefined();
     expect(runtime.state.error).toBe('目前無法讀取輸出設定，請再試一次。');
+
+    bridge.upsertOutputSlot.mockRejectedValueOnce(
+      new Error('save slot failed'),
+    );
+    await expect(
+      runtime.saveOutputSlot(
+        'lyrics',
+        { templateId: 'manga-frame' },
+        { templateId: 'focus-line', styleSetIds: [], settings: {} },
+      ),
+    ).resolves.toBe(false);
+    expect(runtime.state.error).toBe('輸出樣式未儲存，請再試一次。');
   });
 });

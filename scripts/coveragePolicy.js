@@ -358,6 +358,24 @@ const coveragePolicy = Object.freeze({
       }),
     }),
     Object.freeze({
+      path: 'src/composables/useOutputRuntime.js',
+      minimum: Object.freeze({
+        statements: 89,
+        branches: 66,
+        functions: 100,
+        lines: 92,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/output/useOutputProjectionPublisher.js',
+      minimum: Object.freeze({
+        statements: 96,
+        branches: 88,
+        functions: 100,
+        lines: 100,
+      }),
+    }),
+    Object.freeze({
       path: 'src/composables/usePerformerViewState.js',
       minimum: Object.freeze({
         statements: 96,

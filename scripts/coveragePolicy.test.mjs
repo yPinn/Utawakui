@@ -141,6 +141,8 @@ describe('coverage policy', () => {
         'src/composables/useMediaSession.js',
         'src/composables/usePlayer.js',
         'src/composables/player/usePlayerAudioGraph.js',
+        'src/composables/useOutputRuntime.js',
+        'src/composables/output/useOutputProjectionPublisher.js',
         'src/composables/usePerformerViewState.js',
       ]),
     );

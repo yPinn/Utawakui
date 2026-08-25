@@ -83,6 +83,14 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 則是所�
 收斂邊界。Envelope 使用 `bootId`、`sourceEpoch` 與 revision 排除 stale source；Output
 server 分開呈現 liveness、source readiness 與 content/state updates。
 
+Renderer Output ownership 分成控制與發布兩層：`src/composables/useOutputRuntime.js`
+保留唯一 public singleton facade，負責 status／settings、port recovery、start／stop、slot
+persistence、diagnostics 與初始化組合；
+`src/composables/output/useOutputProjectionPublisher.js` 負責 player／queue／lyrics／music
+structure projection、document-before-state envelope 排序、continuity／`sourceEpoch`、各 stream
+revision/reference 與 latest-only watcher publishing。Publisher 只透過具名 callbacks 取得
+bridge、gate 與 runtime status 邊界，不持有服務啟停、設定或 slot persistence。
+
 Browser Source 只能讀取 canonical snapshot 與 allowlisted media。Artwork route 由已公開
 的 track id 解析縮圖；snapshot 不包含 `utawakui-media:` URL、absolute path 或 provider
 payload。Public WebSocket 不接受 playback commands。

@@ -1,24 +1,14 @@
-import { computed, reactive, readonly, watch } from 'vue';
+import { reactive, readonly } from 'vue';
 import { FEATURE_IDS } from '../constants/featureGates.js';
-import OUTPUT_CONTRACT_VALUES from '../../shared/outputContractValues.json';
 import OUTPUT_RUNTIME_VALUES from '../../shared/outputRuntimeValues.json';
-import { createLatestAsyncPublisher } from '../utils/latestAsyncPublisher.js';
 import { isOutputPortConflict } from '../utils/outputRuntimeError.js';
 import { buildOutputSlotPayload } from '../utils/outputSlotPayload.js';
-import {
-  projectDynamicOutputState,
-  projectLyricsOutputDocument,
-  projectMusicStructureOutputDocument,
-  projectQueueOutputDocument,
-} from '../utils/outputStreamProjection.js';
+import { useOutputProjectionPublisher } from './output/useOutputProjectionPublisher.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useLibrary } from './useLibrary.js';
 import { useLyrics } from './useLyrics.js';
-import { useMusicStructureSignals } from './useMusicStructureSignals.js';
-import { usePlaybackQueue } from './usePlaybackQueue.js';
-import { usePlayer } from './usePlayer.js';
 import { usePlaylists } from './usePlaylists.js';
 
 const EMPTY_STATUS = Object.freeze({
@@ -45,22 +35,9 @@ const EMPTY_STATUS = Object.freeze({
   effective: { host: null, port: null, sourceEpoch: null },
   error: null,
 });
-const PROJECTION_TIMESTAMP = '1970-01-01T00:00:00.000Z';
-
-const { state: playerState } = usePlayer();
-const { state: queueState, upcomingTracks } = usePlaybackQueue();
-const { initialize: initializeLibrary, tracksById: libraryTracksById } =
-  useLibrary();
+const { initialize: initializeLibrary } = useLibrary();
 const { initialize: initializePlaylists } = usePlaylists();
-const {
-  state: lyricsState,
-  selectedTrack: lyricsTrack,
-  selectedSource: lyricsSource,
-  lyricsDocument,
-  activeLineId,
-  activeSegmentId,
-  initialize: initializeLyrics,
-} = useLyrics();
+const { initialize: initializeLyrics } = useLyrics();
 const { requireFeatureGate } = useFeatureGateAccess();
 const {
   state: featureGateState,
@@ -68,10 +45,6 @@ const {
   refreshConfirmations,
 } = useFeatureGates();
 const { recordError } = useAppDiagnostics();
-const {
-  current: musicStructureSignals,
-  loadForTrack: loadMusicStructureForTrack,
-} = useMusicStructureSignals();
 
 const state = reactive({
   status: { ...EMPTY_STATUS },
@@ -93,27 +66,6 @@ const state = reactive({
 });
 
 let initializationPromise = null;
-let sourceEpoch = createSourceEpoch();
-let nextStateRevision = 0;
-let nextLyricsRevision = 0;
-let nextMusicStructureRevision = 0;
-let nextQueueRevision = 0;
-let handshakeComplete = false;
-let sourcesSettled = false;
-let lastContinuity = null;
-let lastLyricsDocument;
-let lastMusicStructureDocument;
-let lastQueueDocument;
-let lyricsReference = null;
-let musicStructureReference = null;
-let queueReference = null;
-
-function createSourceEpoch() {
-  return (
-    globalThis.crypto?.randomUUID?.() ??
-    `epoch-${Date.now()}-${Math.random().toString(16).slice(2)}`
-  );
-}
 
 function bridgeMethod(name) {
   const method =
@@ -175,201 +127,14 @@ function applySlots(document = {}) {
   state.slotsLoaded = true;
 }
 
-function queueInput() {
-  return {
-    historyEntries: queueState.historyEntries,
-    currentTrack: queueState.currentTrack,
-    upcomingTracks: upcomingTracks.value,
-    sourceName: queueState.sourceName,
-  };
-}
-
-const projectedLyricsDocument = computed(() => {
-  const trackId = playerState.track?.id ?? null;
-  if (!trackId || lyricsTrack.value?.id !== trackId) return null;
-  return projectLyricsOutputDocument({
-    trackId,
-    source: lyricsSource.value,
-    document: lyricsDocument.value,
-  });
-});
-
-const projectedQueueDocument = computed(() =>
-  projectQueueOutputDocument(queueInput()),
-);
-
-const projectedMusicStructureDocument = computed(() => {
-  const trackId = playerState.track?.id ?? null;
-  const current = musicStructureSignals.value;
-  if (!trackId || current?.trackId !== trackId) return null;
-  return projectMusicStructureOutputDocument(current);
-});
-
-const projectedDynamicState = computed(() =>
-  projectDynamicOutputState(
-    {
-      player: playerState,
-      output: { displayDelayMs: state.settings.displayDelayMs },
-      lyrics: {
-        offsetSeconds: lyricsState.offsetSeconds,
-        activeLineId: activeLineId.value,
-        activeSegmentId: activeSegmentId.value,
-        reference: null,
-      },
-      queue: { reference: null },
-      musicStructure: { reference: null },
-    },
-    {
-      generatedAt: PROJECTION_TIMESTAMP,
-    },
-  ),
-);
-
-const continuityKey = computed(
-  () =>
-    `${playerState.track?.id ?? ''}\0${playerState.track?.url ?? ''}\0${
-      playerState.continuityRevision ?? 0
-    }`,
-);
-
-const currentLibraryTrack = computed(
-  () => libraryTracksById.value.get(playerState.track?.id) ?? null,
-);
-
-function refreshCurrentMusicStructure() {
-  return Promise.resolve(
-    loadMusicStructureForTrack(currentLibraryTrack.value?.id ?? null),
-  ).catch(() => null);
-}
-
-watch(currentLibraryTrack, () => {
-  if (sourcesSettled) void refreshCurrentMusicStructure();
-});
-
-function createEnvelope(stream, kind, revision, payload) {
-  return {
-    contractVersion: OUTPUT_CONTRACT_VALUES.projectionEnvelopeVersion,
-    bootId: state.status.bootId,
-    sourceEpoch,
-    stream,
-    kind,
-    revision,
-    payload,
-  };
-}
-
-async function sendEnvelope(stream, kind, revision, payload) {
-  const accepted = await bridgeMethod('publishOutputSnapshot')(
-    createEnvelope(stream, kind, revision, payload),
-  );
-  if (!accepted) await refreshStatus();
-  return accepted;
-}
-
-function currentProjection() {
-  return {
-    continuity: continuityKey.value,
-    lyricsDocument: projectedLyricsDocument.value,
-    musicStructureDocument: projectedMusicStructureDocument.value,
-    queueDocument: projectedQueueDocument.value,
-    dynamicState: projectedDynamicState.value,
-  };
-}
-
-async function publishProjection(projection) {
-  const continuityChanged =
-    lastContinuity !== null && projection.continuity !== lastContinuity;
-  if (continuityChanged) {
-    handshakeComplete = false;
-    sourceEpoch = createSourceEpoch();
-    nextStateRevision = 0;
-  }
-
-  if (projection.lyricsDocument !== lastLyricsDocument) {
-    if (projection.lyricsDocument) {
-      nextLyricsRevision += 1;
-      const accepted = await sendEnvelope(
-        'lyrics.document',
-        continuityChanged || !lyricsReference ? 'full' : 'update',
-        nextLyricsRevision,
-        { document: projection.lyricsDocument },
-      );
-      if (!accepted) return false;
-      lyricsReference = {
-        documentId: projection.lyricsDocument.documentId,
-        documentRevision: nextLyricsRevision,
-      };
-    } else {
-      lyricsReference = null;
-    }
-    lastLyricsDocument = projection.lyricsDocument;
-  }
-
-  if (projection.musicStructureDocument !== lastMusicStructureDocument) {
-    if (projection.musicStructureDocument) {
-      nextMusicStructureRevision += 1;
-      const accepted = await sendEnvelope(
-        'music-structure.document',
-        continuityChanged || !musicStructureReference ? 'full' : 'update',
-        nextMusicStructureRevision,
-        { document: projection.musicStructureDocument },
-      );
-      if (!accepted) return false;
-      musicStructureReference = {
-        documentId: projection.musicStructureDocument.documentId,
-        documentRevision: nextMusicStructureRevision,
-      };
-    } else {
-      musicStructureReference = null;
-    }
-    lastMusicStructureDocument = projection.musicStructureDocument;
-  }
-
-  if (projection.queueDocument !== lastQueueDocument) {
-    nextQueueRevision += 1;
-    const accepted = await sendEnvelope(
-      'queue.document',
-      continuityChanged || !queueReference ? 'full' : 'update',
-      nextQueueRevision,
-      { document: projection.queueDocument },
-    );
-    if (!accepted) return false;
-    queueReference = {
-      documentId: projection.queueDocument.documentId,
-      documentRevision: nextQueueRevision,
-    };
-    lastQueueDocument = projection.queueDocument;
-  }
-
-  if (!queueReference) return false;
-  nextStateRevision += 1;
-  const dynamic = {
-    ...projection.dynamicState,
-    generatedAt: new Date().toISOString(),
-    lyrics: {
-      ...projection.dynamicState.lyrics,
-      documentId: lyricsReference?.documentId ?? null,
-      documentRevision: lyricsReference?.documentRevision ?? 0,
-    },
-    queue: queueReference,
-    musicStructure: {
-      documentId: musicStructureReference?.documentId ?? null,
-      documentRevision: musicStructureReference?.documentRevision ?? 0,
-    },
-  };
-  const accepted = await sendEnvelope(
-    'state.snapshot',
-    handshakeComplete ? 'update' : 'full',
-    nextStateRevision,
-    dynamic,
-  );
-  handshakeComplete = accepted;
-  if (accepted) lastContinuity = projection.continuity;
-  return accepted;
-}
-
-const publisher = createLatestAsyncPublisher(publishProjection, {
-  onError: (error) => {
+const projectionPublisher = useOutputProjectionPublisher({
+  getBootId: () => state.status.bootId,
+  getDisplayDelayMs: () => state.settings.displayDelayMs,
+  isOutputEnabled: () => isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW),
+  publishSnapshot: (envelope) =>
+    bridgeMethod('publishOutputSnapshot')(envelope),
+  refreshStatus,
+  reportPublishError: (error) => {
     state.error = reportOutputError(
       error,
       'publish',
@@ -377,22 +142,6 @@ const publisher = createLatestAsyncPublisher(publishProjection, {
     );
   },
 });
-
-watch(
-  [
-    continuityKey,
-    projectedLyricsDocument,
-    projectedMusicStructureDocument,
-    projectedQueueDocument,
-    projectedDynamicState,
-  ],
-  () => {
-    if (!sourcesSettled || !isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
-      return;
-    }
-    publisher.request(currentProjection());
-  },
-);
 
 async function refreshStatus() {
   try {
@@ -493,9 +242,8 @@ async function start() {
     applyStatus(await bridgeMethod('startOutput')());
     state.error = '';
     state.suggestedPorts = [];
-    if (!handshakeComplete) {
-      publisher.request(currentProjection());
-      await publisher.whenIdle();
+    if (!projectionPublisher.isHandshakeComplete()) {
+      await projectionPublisher.publishCurrentProjection();
     }
     return true;
   } catch (error) {
@@ -594,7 +342,7 @@ function initialize() {
     try {
       await Promise.all([refreshSettings(), refreshConfirmations()]);
       if (featureGateState.error) {
-        sourcesSettled = false;
+        projectionPublisher.setSourcesReady(false);
         state.error = featureGateState.error;
         return false;
       }
@@ -610,15 +358,14 @@ function initialize() {
         initializePlaylists(),
         initializeLyrics(),
       ]);
-      void refreshCurrentMusicStructure();
-      sourcesSettled = true;
+      void projectionPublisher.refreshCurrentMusicStructure();
+      projectionPublisher.setSourcesReady(true);
       if (isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW)) {
-        publisher.request(currentProjection());
-        await publisher.whenIdle();
+        await projectionPublisher.publishCurrentProjection();
       }
       return true;
     } catch (error) {
-      sourcesSettled = false;
+      projectionPublisher.setSourcesReady(false);
       state.error = reportOutputError(
         error,
         'initialize',

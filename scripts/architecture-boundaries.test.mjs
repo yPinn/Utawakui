@@ -145,6 +145,32 @@ describe('architecture ownership boundaries', () => {
     expect(documents).not.toContain('requireFeatureGate');
   });
 
+  it('keeps Output service control separate from projection publishing', () => {
+    const publisherPath = resolve(
+      root,
+      'src/composables/output/useOutputProjectionPublisher.js',
+    );
+    expect(existsSync(publisherPath)).toBe(true);
+    if (!existsSync(publisherPath)) return;
+
+    const runtime = read('src/composables/useOutputRuntime.js');
+    const publisher = read(
+      'src/composables/output/useOutputProjectionPublisher.js',
+    );
+
+    expect(runtime.split(/\r?\n/u).length).toBeLessThan(450);
+    expect(runtime).toContain(
+      "from './output/useOutputProjectionPublisher.js'",
+    );
+    expect(runtime).not.toContain('projectDynamicOutputState');
+    expect(runtime).not.toContain('createLatestAsyncPublisher');
+    expect(publisher).toContain('useOutputProjectionPublisher');
+    expect(publisher).toContain('createLatestAsyncPublisher');
+    expect(publisher).not.toContain('startOutput');
+    expect(publisher).not.toContain('updateOutputSettings');
+    expect(publisher).not.toContain('upsertOutputSlot');
+  });
+
   it('keeps durable architecture guidance aligned with the composition root', () => {
     const guidance = read('AGENTS.md');
     expect(guidance).not.toContain('now ~210 lines');
