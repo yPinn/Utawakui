@@ -5,11 +5,13 @@
 // reassignment sites used to close over directly. loadInitialConfig() must
 // run once, early in whenReady, before anything else here is called.
 
-const fs = require('fs');
 const path = require('path');
 const { app } = require('electron');
 const { loadConfig, saveConfig } = require('../lib/config');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
+const {
+  writeLibraryPathSidecar: writeUninstallLibraryPathSidecar,
+} = require('./libraryPathSidecar');
 
 let configPath = null;
 let cachedConfig = null;
@@ -21,18 +23,12 @@ let lastWrittenLibraryPath = null;
 // installer machine's ANSI codepage. Same machine-local, never-in-a-preset
 // status as config.json itself (see CLAUDE.md).
 function writeLibraryPathSidecar(config) {
-  const libraryDir = resolveDownloadDir(config);
+  const libraryDir = path.resolve(resolveDownloadDir(config));
   if (libraryDir === lastWrittenLibraryPath) return;
-  try {
-    fs.writeFileSync(
-      path.join(app.getPath('userData'), 'library-path.txt'),
-      libraryDir,
-      'utf16le',
-    );
+  if (writeUninstallLibraryPathSidecar(app.getPath('userData'), libraryDir)) {
     lastWrittenLibraryPath = libraryDir;
-  } catch {
-    // Best-effort hint file only — a failed write just costs the
-    // uninstaller one checkbox, not a reason to fail app startup.
+  } else {
+    lastWrittenLibraryPath = null;
   }
 }
 

@@ -4,27 +4,36 @@ import path from 'path';
 import { EventEmitter } from 'events';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
-  ensureFfmpegDependency,
-  ensureYtdlpDependency,
-  ensureModelDependency,
   getFfmpegDependency,
   getFeatureDependencies,
   getFeatureDependency,
-  getPreparedFfmpegPath,
-  getPreparedSeparationModelPath,
-  getPreparedYtdlpPath,
   getFfmpegPaths,
   getManagedDependencyInstallDir,
   getYtdlpDependency,
   getYtdlpPaths,
   getModelDependencyPaths,
   getSeparationModelDependency,
+} from './featureDependencies/registry.js';
+import {
+  ensureYtdlpDependency,
+  getPreparedYtdlpPath,
+} from './featureDependencies/providerRuntime.js';
+import {
+  ensureFfmpegDependency,
+  getPreparedFfmpegPath,
+} from './featureDependencies/ffmpeg.js';
+import {
+  ensureModelDependency,
+  getPreparedSeparationModelPath,
+} from './featureDependencies/models.js';
+import {
+  buildDependencyStatus,
   listFeatureDependencyStatuses,
   prepareFeatureDependency,
   removeFeatureDependency,
   repairFeatureDependency,
-  sha256,
-} from './featureDependencies.js';
+} from './featureDependencies/service.js';
+import { sha256 } from './featureDependencies/download.js';
 import { APP_ERROR_PREFIX } from './appError.js';
 
 let tmpDirs = [];
@@ -678,6 +687,29 @@ describe('buildDependencyStatus / listFeatureDependencyStatuses for FFmpeg sourc
       source: 'managed',
     });
   });
+
+  it('reports installed metadata for a complete managed FFmpeg unit', () => {
+    const userDataDir = makeTempDir();
+    const dependency = getFfmpegDependency();
+    const paths = getFfmpegPaths(userDataDir, dependency);
+    fs.mkdirSync(path.dirname(paths.executablePath), { recursive: true });
+    fs.writeFileSync(paths.executablePath, 'ffmpeg');
+    fs.writeFileSync(
+      paths.manifestPath,
+      JSON.stringify({
+        version: dependency.version,
+        installedAt: '2026-08-25T01:00:00.000Z',
+      }),
+    );
+
+    expect(buildDependencyStatus(userDataDir, dependency)).toMatchObject({
+      installed: true,
+      source: 'managed',
+      installedAt: '2026-08-25T01:00:00.000Z',
+      installedVersion: dependency.version,
+      updateAvailable: false,
+    });
+  });
 });
 
 describe('yt-dlp feature dependency', () => {
@@ -899,6 +931,52 @@ describe('yt-dlp feature dependency', () => {
     });
   });
 
+  it('removes stale family caches, prior versions, and legacy model files', () => {
+    const userDataDir = makeTempDir();
+    const ffmpeg = getFfmpegDependency();
+    const ffmpegPaths = getFfmpegPaths(userDataDir, ffmpeg);
+    const previousFfmpegDir = path.join(
+      userDataDir,
+      'dependencies',
+      'ffmpeg',
+      'previous-version',
+    );
+    const ffmpegArchiveCache = path.join(
+      userDataDir,
+      'dependencies',
+      'ffmpeg',
+      '_archives',
+      'stale.zip',
+    );
+    fs.mkdirSync(path.dirname(ffmpegPaths.executablePath), { recursive: true });
+    fs.mkdirSync(previousFfmpegDir, { recursive: true });
+    fs.mkdirSync(path.dirname(ffmpegArchiveCache), { recursive: true });
+    fs.writeFileSync(ffmpegPaths.executablePath, 'ffmpeg');
+    fs.writeFileSync(ffmpegArchiveCache, 'archive');
+
+    removeFeatureDependency(userDataDir, ffmpeg.id);
+
+    expect(
+      fs.existsSync(path.join(userDataDir, 'dependencies', 'ffmpeg')),
+    ).toBe(false);
+
+    const modelBuffer = Buffer.from('legacy cleanup model');
+    const model = makeModelDependency(modelBuffer);
+    const modelPaths = getModelDependencyPaths(userDataDir, model);
+    fs.mkdirSync(modelPaths.installDir, { recursive: true });
+    fs.mkdirSync(path.dirname(modelPaths.legacyPath), { recursive: true });
+    fs.writeFileSync(modelPaths.filePath, modelBuffer);
+    fs.writeFileSync(modelPaths.legacyPath, modelBuffer);
+
+    const status = removeFeatureDependency(userDataDir, model.id, {
+      registryDependencies: [model],
+    });
+
+    expect(fs.existsSync(modelPaths.installDir)).toBe(false);
+    expect(fs.existsSync(modelPaths.legacyPath)).toBe(false);
+    expect(status).toMatchObject({ installed: false, canMigrate: false });
+  });
+
   it('reports the registry provider runtime as installed only when every runtime artifact exists', () => {
     const userDataDir = makeTempDir();
 
@@ -909,6 +987,75 @@ describe('yt-dlp feature dependency', () => {
       kind: 'runtime',
       installed: false,
     });
+  });
+
+  it('reads installed provider manifest metadata only after the atomic unit is complete', async () => {
+    const userDataDir = makeTempDir();
+    const dependency = getYtdlpDependency();
+    const paths = getYtdlpPaths(userDataDir, dependency);
+    fs.mkdirSync(paths.pythonDir, { recursive: true });
+    fs.mkdirSync(path.join(paths.sitePackagesDir, 'yt_dlp'), {
+      recursive: true,
+    });
+    fs.mkdirSync(path.join(paths.pluginPackageDir, 'yt_dlp_plugins'), {
+      recursive: true,
+    });
+    fs.mkdirSync(path.dirname(paths.bgutilProviderPath), { recursive: true });
+    fs.writeFileSync(paths.pythonPath, 'python');
+    fs.writeFileSync(paths.bgutilProviderPath, 'provider');
+    fs.writeFileSync(
+      paths.manifestPath,
+      JSON.stringify({
+        version: dependency.version,
+        installedAt: '2026-08-25T00:00:00.000Z',
+      }),
+    );
+
+    expect(buildDependencyStatus(userDataDir, dependency)).toMatchObject({
+      installed: true,
+      installedAt: '2026-08-25T00:00:00.000Z',
+      installedVersion: dependency.version,
+      updateAvailable: false,
+    });
+    await expect(
+      prepareFeatureDependency(userDataDir, dependency.id),
+    ).resolves.toMatchObject({ installed: true });
+  });
+
+  it('fails closed for unknown and unsupported lifecycle dependency ids', async () => {
+    const userDataDir = makeTempDir();
+    const unsupported = {
+      id: 'unsupported-unit',
+      featureId: 'audio-processing-flow',
+      kind: 'binary',
+    };
+
+    await expect(
+      prepareFeatureDependency(userDataDir, 'missing', {
+        registryDependencies: [],
+      }),
+    ).rejects.toThrow(/unknown feature dependency/i);
+    await expect(
+      prepareFeatureDependency(userDataDir, unsupported.id, {
+        registryDependencies: [unsupported],
+      }),
+    ).rejects.toThrow(/unsupported feature dependency/i);
+    expect(() =>
+      removeFeatureDependency(userDataDir, 'missing', {
+        registryDependencies: [],
+      }),
+    ).toThrow(/unknown feature dependency/i);
+    expect(buildDependencyStatus(userDataDir, unsupported)).toMatchObject({
+      installed: false,
+      installedAt: null,
+      updateAvailable: false,
+    });
+    expect(listFeatureDependencyStatuses(userDataDir)).toHaveLength(
+      getFeatureDependencies().length,
+    );
+    await expect(
+      repairFeatureDependency(userDataDir, 'missing'),
+    ).rejects.toThrow(/unknown feature dependency/i);
   });
 
   it('reports an installed provider runtime as updateable when its manifest version is older', () => {

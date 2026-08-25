@@ -10,13 +10,14 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../lib/thumbarIcons');
+const { readDeveloperOptions } = require('./runtimeEnvironment');
 
 // Must equal APP_NAME in electron/main.js (that copy feeds app.setName(),
 // which has to run before any lib require reads app.getPath('userData') —
 // see main.js's own comment — so it can't import this module that early).
 const APP_NAME = 'Utawakui';
 const BASE_APP_USER_MODEL_ID = 'com.utawakui.app';
-const isDev = process.argv.includes('--dev');
+const { isDev, openDevTools } = readDeveloperOptions(process.argv);
 
 const iconPath = path.join(
   __dirname,
@@ -213,7 +214,7 @@ function createMainWindow(
 
   mainWindow.once('ready-to-show', () => {
     mainWindow.show();
-    if (isDev) mainWindow.webContents.openDevTools();
+    if (openDevTools) mainWindow.webContents.openDevTools();
     // Show thumbar controls before the first renderer player:state event.
     updateThumbar();
   });

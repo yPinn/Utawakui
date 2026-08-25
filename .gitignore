@@ -12,6 +12,14 @@ tasks/
 .tmp/
 __pycache__/
 
+# Local Python environments and package/runtime caches. Audio Python and
+# provider runtimes are app-managed under userData, never repository content.
+.venv/
+venv/
+uv-cache/
+.pytest_cache/
+*.py[cod]
+
 .agents/settings.local.json
 .claude/settings.local.json
 .env

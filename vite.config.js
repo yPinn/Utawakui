@@ -13,6 +13,14 @@ module.exports = defineConfig({
   server: {
     port: 5173,
     strictPort: true,
+    watch: {
+      ignored: [
+        '**/.tmp/**',
+        '**/coverage/**',
+        '**/release/**',
+        '**/release-*/**',
+      ],
+    },
   },
   build: {
     rollupOptions: {
@@ -53,7 +61,8 @@ module.exports = defineConfig({
       include: [
         'electron/lib/**/*.js',
         'electron/main/appUpdateService.js',
-        'overlay/shared/*.mjs',
+        'electron/main/runtimeEnvironment.js',
+        'shared/presentation/*.mjs',
         'scripts/audio-separator-roformer-wheel-patch.mjs',
         'scripts/release-contract.mjs',
         'src/utils/*.js',

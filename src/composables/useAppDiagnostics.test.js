@@ -134,4 +134,22 @@ describe('useAppDiagnostics', () => {
     await Promise.resolve();
     expect(diagnostics.state.records).toHaveLength(2);
   });
+
+  it('does not persist a duplicate when main already recorded the failure', async () => {
+    const { diagnostics, recordDiagnostic } = await loadDiagnostics();
+    const error = new Error(
+      'UTAWAKUI_APP_ERROR:{"code":"FEATURE_DEPENDENCY_PREPARE_FAILED","message":"無法準備這個項目，請稍後再試。","context":{"dependencyId":"ffmpeg-gyan-essentials","diagnosticRecorded":true}}',
+    );
+
+    const record = diagnostics.recordError(error, {
+      source: 'feature-dependencies',
+      operation: 'prepare',
+    });
+
+    expect(record.context).toEqual({
+      dependencyId: 'ffmpeg-gyan-essentials',
+      diagnosticRecorded: true,
+    });
+    expect(recordDiagnostic).not.toHaveBeenCalled();
+  });
 });

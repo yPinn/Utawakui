@@ -114,6 +114,8 @@ win:
   icon: public/assets/icons/app-icon.ico
   # Keep as "electron" — renaming it FATALs once onnxruntime-node/DirectML
   # is bundled. See docs/adr/0002-packaged-exe-kept-as-electron-exe.md.
+  # This literal filename also makes Electron 43 report app.isPackaged=false;
+  # product code must use main/runtimeEnvironment.js's app.asar detector.
   executableName: electron
   # Normal local builds and the active public release workflow remain unsigned.
   # The optional dist:release maintainer command can still override this for a

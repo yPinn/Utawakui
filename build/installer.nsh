@@ -5,6 +5,8 @@
 ; binary should not silently erase user state. These sections appear as
 ; checkboxes on the uninstaller components page.
 
+!include "FileFunc.nsh"
+
 ; ADR 0002 keeps the packaged exe named electron.exe, which would otherwise
 ; leak into the install path too. Override APP_FILENAME only, so install
 ; paths still read "Utawakui".
@@ -141,6 +143,7 @@
   ; top-level Var would sit unused in the installer-side pass and trip
   ; NSIS's "wasting memory" warning (fatal, since warningsAsErrors is on).
   Var /GLOBAL LibraryDir
+  Var /GLOBAL LibraryCleanupSafe
 
   ReadRegStr $0 SHELL_CONTEXT "${INSTALL_REGISTRY_KEY}" "InstallerLanguage"
   ${ifNot} $0 == ""
@@ -153,11 +156,36 @@
   SetShellVarContext current
 
   StrCpy $LibraryDir ""
+  StrCpy $LibraryCleanupSafe "false"
   ClearErrors
   FileOpen $1 "$APPDATA\Utawakui\library-path.txt" r
   ${ifNot} ${Errors}
     FileReadUTF16LE $1 $LibraryDir
     FileClose $1
+    GetFullPathName $LibraryDir "$LibraryDir"
+    ${GetRoot} $0 "$LibraryDir"
+    ${GetParent} $2 "$LibraryDir"
+    ${if} $LibraryDir != $0
+    ${andIf} $2 != $0
+    ${andIf} $LibraryDir != "$PROFILE"
+    ${andIf} $LibraryDir != "$APPDATA"
+    ${andIf} $LibraryDir != "$LOCALAPPDATA"
+    ${andIf} $LibraryDir != "$DOCUMENTS"
+    ${andIf} $LibraryDir != "$MUSIC"
+    ${andIf} $LibraryDir != "$DESKTOP"
+    ${andIf} $LibraryDir != "$INSTDIR"
+    ${andIf} $LibraryDir != "$WINDIR"
+    ${andIf} $LibraryDir != "$SYSDIR"
+    ${andIf} $LibraryDir != "$PROGRAMFILES"
+    ${andIf} $LibraryDir != "$PROGRAMFILES32"
+    ${andIf} $LibraryDir != "$PROGRAMFILES64"
+    ${andIf} $LibraryDir != "$COMMONFILES"
+    ${andIf} $LibraryDir != "$COMMONFILES32"
+    ${andIf} $LibraryDir != "$COMMONFILES64"
+    ${andIf} $LibraryDir != "$TEMP"
+    ${andIf} ${FileExists} "$LibraryDir\.utawakui-library"
+      StrCpy $LibraryCleanupSafe "true"
+    ${endIf}
   ${endIf}
 
   ; Can't touch the SEC_UN_LIBRARY section here directly: ${SEC_UN_LIBRARY}
@@ -200,9 +228,9 @@
   ; as-is.
   Section /o "un.$(utaSecLibrary)" SEC_UN_LIBRARY
     ; $LibraryDir came from a file on disk, i.e. untrusted input crossing a
-    ; trust boundary — re-check it's non-empty here too, since an empty
-    ; path would make RMDir /r target $INSTDIR.
-    ${ifNot} $LibraryDir == ""
+    ; trust boundary — re-check the validated marker-backed decision here,
+    ; so a missing or dangerous path can never reach recursive deletion.
+    ${if} $LibraryCleanupSafe == "true"
       RMDir /r /REBOOTOK "$LibraryDir"
     ${endIf}
   SectionEnd
@@ -217,7 +245,7 @@
     ; from a hand-cleared config dir, or simply not exist yet. Hide the
     ; section entirely rather than show a checkbox that would do nothing —
     ; SectionSetText with an empty string is how NSIS hides a component.
-    ${if} $LibraryDir != ""
+    ${if} $LibraryCleanupSafe == "true"
     ${andIf} ${FileExists} "$LibraryDir\*.*"
       StrCpy $0 "$(utaSecLibrary) ($LibraryDir)"
       SectionSetText ${SEC_UN_LIBRARY} $0

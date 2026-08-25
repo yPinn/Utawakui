@@ -9,27 +9,97 @@ const {
   repairFeatureDependency,
 } = require('../lib/featureDependencies');
 const { detectSystemFfmpeg } = require('../lib/systemFfmpeg');
+const { createAppError } = require('../lib/appError');
+const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 
-function getDependencyStatusOrThrow(userDataDir, dependencyId, getConfig) {
-  const currentStatus = listFeatureDependencyStatuses(
+const OPERATION_PUBLIC_ERRORS = Object.freeze({
+  list: Object.freeze({
+    code: 'FEATURE_DEPENDENCY_LIST_FAILED',
+    title: '無法讀取準備狀態',
+    message: '目前無法讀取功能項目狀態，請稍後再試。',
+  }),
+  prepare: Object.freeze({
+    code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
+    title: '準備失敗',
+    message: '無法準備這個項目，請稍後再試。',
+  }),
+  remove: Object.freeze({
+    code: 'FEATURE_DEPENDENCY_REMOVE_FAILED',
+    title: '移除失敗',
+    message: '無法移除這個項目，請稍後再試。',
+  }),
+  repair: Object.freeze({
+    code: 'FEATURE_DEPENDENCY_REPAIR_FAILED',
+    title: '修復失敗',
+    message: '無法修復這個項目，請稍後再試。',
+  }),
+  detect: Object.freeze({
+    code: 'SYSTEM_FFMPEG_DETECTION_FAILED',
+    title: '偵測失敗',
+    message: '目前無法偵測系統 FFmpeg，請稍後再試。',
+  }),
+  'set-ffmpeg-source': Object.freeze({
+    code: 'FFMPEG_SOURCE_UPDATE_FAILED',
+    title: '無法更新 FFmpeg 來源',
+    message: '目前無法更新 FFmpeg 來源，請稍後再試。',
+  }),
+});
+
+function getDependencyStatusOrThrow(
+  userDataDir,
+  dependencyId,
+  getConfig,
+  listStatuses,
+) {
+  const currentStatus = listStatuses(
     userDataDir,
     undefined,
     getConfig().systemFfmpegPath,
   ).find((dependency) => dependency.id === dependencyId);
   if (!currentStatus) {
-    throw new Error(`unknown feature dependency: ${dependencyId}`);
+    throw createAppError({
+      code: 'FEATURE_DEPENDENCY_UNKNOWN',
+      severity: 'warning',
+      title: '無法辨識功能項目',
+      message: '這個功能項目不存在或已不再支援。',
+    });
   }
   return currentStatus;
 }
 
-function emitFeatureDependencyStatuses(getMainWindow, userDataDir, getConfig) {
+function runDependencyOperation(
+  operation,
+  dependencyId,
+  recordDiagnostic,
+  handler,
+) {
+  const publicError = OPERATION_PUBLIC_ERRORS[operation];
+  const context = dependencyId ? { dependencyId } : {};
+  return runDiagnosticIpcOperation(
+    {
+      recordDiagnostic,
+      diagnostic: {
+        source: 'feature-dependencies',
+        operation,
+        code: publicError.code,
+        message: `Feature dependency ${operation} failed`,
+        context,
+      },
+      publicError: { ...publicError, context },
+    },
+    handler,
+  );
+}
+
+function emitFeatureDependencyStatuses(
+  getMainWindow,
+  userDataDir,
+  getConfig,
+  listStatuses,
+) {
   getMainWindow()?.webContents.send(
     'feature-dependencies:updated',
-    listFeatureDependencyStatuses(
-      userDataDir,
-      undefined,
-      getConfig().systemFfmpegPath,
-    ),
+    listStatuses(userDataDir, undefined, getConfig().systemFfmpegPath),
   );
 }
 
@@ -40,9 +110,9 @@ function emitFeatureDependencyProgress(getMainWindow, dependencyId, payload) {
   });
 }
 
-function buildPrepareOptions(getMainWindow, dependencyId) {
+function buildPrepareOptions(getMainWindow, dependencyId, resourcesPath) {
   return {
-    ...(app.isPackaged ? { resourcesPath: process.resourcesPath } : {}),
+    ...(resourcesPath ? { resourcesPath } : {}),
     onProgress: (payload) =>
       emitFeatureDependencyProgress(getMainWindow, dependencyId, payload),
   };
@@ -54,73 +124,130 @@ function registerFeatureDependencyHandlers({
   getMainWindow,
   getConfig,
   updateConfig,
+  recordDiagnostic,
+  getUserDataDir = () => app.getPath('userData'),
+  dependencyService = {
+    getFfmpegDependency,
+    listFeatureDependencyStatuses,
+    prepareFeatureDependency,
+    removeFeatureDependency,
+    repairFeatureDependency,
+  },
+  detectSystemFfmpegImpl = detectSystemFfmpeg,
+  resourcesPath = null,
 }) {
   ipcMain.handle('feature-dependencies:list', async () =>
-    listFeatureDependencyStatuses(
-      app.getPath('userData'),
-      undefined,
-      getConfig().systemFfmpegPath,
+    runDependencyOperation('list', null, recordDiagnostic, () =>
+      dependencyService.listFeatureDependencyStatuses(
+        getUserDataDir(),
+        undefined,
+        getConfig().systemFfmpegPath,
+      ),
     ),
   );
 
   ipcMain.handle(
     'feature-dependencies:prepare',
     async (event, dependencyId) => {
-      const userDataDir = app.getPath('userData');
+      const userDataDir = getUserDataDir();
       const currentStatus = getDependencyStatusOrThrow(
         userDataDir,
         dependencyId,
         getConfig,
+        dependencyService.listFeatureDependencyStatuses,
       );
 
       requireFeatureGate(currentStatus.featureId);
-      const prepared = await prepareFeatureDependency(
-        userDataDir,
+      return runDependencyOperation(
+        'prepare',
         dependencyId,
-        buildPrepareOptions(getMainWindow, dependencyId),
+        recordDiagnostic,
+        async () => {
+          const prepared = await dependencyService.prepareFeatureDependency(
+            userDataDir,
+            dependencyId,
+            buildPrepareOptions(getMainWindow, dependencyId, resourcesPath),
+          );
+          emitFeatureDependencyStatuses(
+            getMainWindow,
+            userDataDir,
+            getConfig,
+            dependencyService.listFeatureDependencyStatuses,
+          );
+          return prepared;
+        },
       );
-      emitFeatureDependencyStatuses(getMainWindow, userDataDir, getConfig);
-      return prepared;
     },
   );
 
   ipcMain.handle('feature-dependencies:remove', async (event, dependencyId) => {
-    const userDataDir = app.getPath('userData');
+    const userDataDir = getUserDataDir();
     const currentStatus = getDependencyStatusOrThrow(
       userDataDir,
       dependencyId,
       getConfig,
+      dependencyService.listFeatureDependencyStatuses,
     );
 
     requireFeatureGate(currentStatus.featureId);
-    const removed = removeFeatureDependency(userDataDir, dependencyId);
-    emitFeatureDependencyStatuses(getMainWindow, userDataDir, getConfig);
-    return removed;
+    return runDependencyOperation(
+      'remove',
+      dependencyId,
+      recordDiagnostic,
+      () => {
+        const removed = dependencyService.removeFeatureDependency(
+          userDataDir,
+          dependencyId,
+        );
+        emitFeatureDependencyStatuses(
+          getMainWindow,
+          userDataDir,
+          getConfig,
+          dependencyService.listFeatureDependencyStatuses,
+        );
+        return removed;
+      },
+    );
   });
 
   ipcMain.handle('feature-dependencies:repair', async (event, dependencyId) => {
-    const userDataDir = app.getPath('userData');
+    const userDataDir = getUserDataDir();
     const currentStatus = getDependencyStatusOrThrow(
       userDataDir,
       dependencyId,
       getConfig,
+      dependencyService.listFeatureDependencyStatuses,
     );
 
     requireFeatureGate(currentStatus.featureId);
-    const repaired = await repairFeatureDependency(
-      userDataDir,
+    return runDependencyOperation(
+      'repair',
       dependencyId,
-      buildPrepareOptions(getMainWindow, dependencyId),
+      recordDiagnostic,
+      async () => {
+        const repaired = await dependencyService.repairFeatureDependency(
+          userDataDir,
+          dependencyId,
+          buildPrepareOptions(getMainWindow, dependencyId, resourcesPath),
+        );
+        emitFeatureDependencyStatuses(
+          getMainWindow,
+          userDataDir,
+          getConfig,
+          dependencyService.listFeatureDependencyStatuses,
+        );
+        return repaired;
+      },
     );
-    emitFeatureDependencyStatuses(getMainWindow, userDataDir, getConfig);
-    return repaired;
   });
 
   // Read-only PATH probe — no feature gate, since it neither downloads nor
   // installs anything. The renderer can call this speculatively (e.g. on
   // Settings mount) to learn whether the opt-in is even offerable.
   ipcMain.handle('feature-dependencies:detect-system-ffmpeg', async () =>
-    detectSystemFfmpeg(),
+    runDependencyOperation('detect', null, recordDiagnostic, () =>
+      detectSystemFfmpegImpl(),
+    ),
   );
 
   // `useSystem` is the only renderer-controlled input here — main always
@@ -130,33 +257,41 @@ function registerFeatureDependencyHandlers({
   ipcMain.handle(
     'feature-dependencies:set-ffmpeg-source',
     async (event, useSystem) => {
-      requireFeatureGate(getFfmpegDependency().featureId);
+      requireFeatureGate(dependencyService.getFfmpegDependency().featureId);
+      return runDependencyOperation(
+        'set-ffmpeg-source',
+        dependencyService.getFfmpegDependency().id,
+        recordDiagnostic,
+        async () => {
+          if (!useSystem) {
+            updateConfig({ systemFfmpegPath: null });
+            emitFeatureDependencyStatuses(
+              getMainWindow,
+              getUserDataDir(),
+              getConfig,
+              dependencyService.listFeatureDependencyStatuses,
+            );
+            return { source: 'managed' };
+          }
 
-      if (!useSystem) {
-        updateConfig({ systemFfmpegPath: null });
-        emitFeatureDependencyStatuses(
-          getMainWindow,
-          app.getPath('userData'),
-          getConfig,
-        );
-        return { source: 'managed' };
-      }
-
-      const detected = await detectSystemFfmpeg();
-      if (!detected.ok) {
-        throw new Error(detected.reason || '找不到可用的系統 FFmpeg');
-      }
-      updateConfig({ systemFfmpegPath: detected.path });
-      emitFeatureDependencyStatuses(
-        getMainWindow,
-        app.getPath('userData'),
-        getConfig,
+          const detected = await detectSystemFfmpegImpl();
+          if (!detected.ok) {
+            throw new Error(detected.reason || 'system FFmpeg unavailable');
+          }
+          updateConfig({ systemFfmpegPath: detected.path });
+          emitFeatureDependencyStatuses(
+            getMainWindow,
+            getUserDataDir(),
+            getConfig,
+            dependencyService.listFeatureDependencyStatuses,
+          );
+          return {
+            source: 'system',
+            path: detected.path,
+            version: detected.version,
+          };
+        },
       );
-      return {
-        source: 'system',
-        path: detected.path,
-        version: detected.version,
-      };
     },
   );
 }

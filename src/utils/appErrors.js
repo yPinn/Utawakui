@@ -17,6 +17,7 @@ const DEFAULT_TITLES = Object.freeze({
 const DEFAULT_PUBLIC_MESSAGE = '操作未完成，請稍後再試。';
 const PUBLIC_CONTEXT_KEYS = new Set([
   'count',
+  'diagnosticRecorded',
   'dependencyId',
   'featureId',
   'httpStatus',

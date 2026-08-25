@@ -5,21 +5,10 @@ const {
   isAudioFormatUnavailableError,
   isForbiddenAudioDownloadError,
 } = require('./youtubeAttempts');
+const downloadFailureValues = require('../../shared/downloadFailureValues.json');
 
-const DOWNLOAD_FAILURE_PREFIX = 'utawakui-download-failed:';
-
-const DOWNLOAD_FAILURE_CODES = [
-  'invalid-input',
-  'members-only',
-  'age-restricted',
-  'region-restricted',
-  'video-unavailable',
-  'rate-limited',
-  'network-error',
-  'disk-full',
-  'bot-protected',
-  'unknown',
-];
+const DOWNLOAD_FAILURE_PREFIX = downloadFailureValues.prefix;
+const DOWNLOAD_FAILURE_CODES = Object.freeze([...downloadFailureValues.codes]);
 
 // Order matters: yt-dlp's "Video unavailable" wording is also emitted for
 // members-only/geo-blocked videos, so those more specific codes must be

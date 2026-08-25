@@ -26,6 +26,12 @@ const APP_NAME = 'Utawakui';
 app.setName(APP_NAME);
 app.setAppLogsPath();
 
+const { detectPackagedRuntime } = require('./main/runtimeEnvironment');
+const isPackagedRuntime = detectPackagedRuntime({
+  appPath: app.getAppPath(),
+  resourcesPath: process.resourcesPath,
+});
+
 const { FEATURE_IDS } = require('./lib/featureGates');
 const {
   loadTrackMusicStructure,
@@ -304,7 +310,7 @@ if (!gotSingleInstanceLock) {
     const audioPythonRuntimeHost = createAudioPythonRuntimeHost({
       userDataDir: app.getPath('userData'),
       appPath: app.getAppPath(),
-      isPackaged: app.isPackaged,
+      isPackaged: isPackagedRuntime,
       resourcesPath: process.resourcesPath,
     });
     const structureAnalysisService = createStructureAnalysisService({
@@ -342,7 +348,7 @@ if (!gotSingleInstanceLock) {
         host: audioPythonRuntimeHost,
         ...loadStructureAnalysisCapabilityCatalog({
           appPath: app.getAppPath(),
-          isPackaged: app.isPackaged,
+          isPackaged: isPackagedRuntime,
           resourcesPath: process.resourcesPath,
         }),
         getActiveJob: () =>
@@ -382,7 +388,7 @@ if (!gotSingleInstanceLock) {
     });
     const appUpdateService = createAppUpdateService({
       currentVersion: app.getVersion(),
-      isPackaged: app.isPackaged,
+      isPackaged: isPackagedRuntime,
       isWindows: process.platform === 'win32',
       runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
       publishStatus: (status) => {
@@ -540,6 +546,8 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+      resourcesPath: isPackagedRuntime ? process.resourcesPath : null,
     });
 
     registerConfigHandlers({

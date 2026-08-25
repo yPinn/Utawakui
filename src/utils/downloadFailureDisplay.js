@@ -1,18 +1,7 @@
-// Mirrors electron/lib/downloadFailure.js's code list — kept in sync by hand
-// so IPC never exposes raw yt-dlp stderr to the renderer.
-const DOWNLOAD_FAILURE_PREFIX = 'utawakui-download-failed:';
-const DOWNLOAD_FAILURE_CODES = [
-  'invalid-input',
-  'members-only',
-  'age-restricted',
-  'region-restricted',
-  'video-unavailable',
-  'rate-limited',
-  'network-error',
-  'disk-full',
-  'bot-protected',
-  'unknown',
-];
+import downloadFailureValues from '../../shared/downloadFailureValues.json';
+
+const DOWNLOAD_FAILURE_PREFIX = downloadFailureValues.prefix;
+const DOWNLOAD_FAILURE_CODES = Object.freeze([...downloadFailureValues.codes]);
 
 const CODE_RE = /utawakui-download-failed:([a-z][a-z-]*)/;
 

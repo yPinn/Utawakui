@@ -32,7 +32,7 @@ function recordError(error, options = {}) {
     state.records.splice(MAX_RECORDS);
   }
   if (error && typeof error === 'object') recordedErrors.set(error, record);
-  if (options.persist !== false) {
+  if (options.persist !== false && record.context.diagnosticRecorded !== true) {
     const context = Object.fromEntries(
       Object.entries(record.context).filter(([key]) =>
         DIAGNOSTIC_CONTEXT_KEYS.has(key),

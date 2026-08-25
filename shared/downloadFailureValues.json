@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "prefix": "utawakui-download-failed:",
+  "codes": [
+    "invalid-input",
+    "members-only",
+    "age-restricted",
+    "region-restricted",
+    "video-unavailable",
+    "rate-limited",
+    "network-error",
+    "disk-full",
+    "bot-protected",
+    "unknown"
+  ]
+}

@@ -8,6 +8,7 @@
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron . --dev\"",
+    "dev:tools": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron . --dev --devtools\"",
     "build": "vite build",
     "start": "npm run build && electron .",
     "dist:dir": "npm run build && electron-builder --win --dir --publish never",

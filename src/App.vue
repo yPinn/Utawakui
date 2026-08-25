@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, provide } from 'vue';
+import { defineAsyncComponent, onMounted, provide } from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
@@ -7,12 +7,6 @@ import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
-import OutputView from './views/OutputView.vue';
-import LyricsView from './views/LyricsView.vue';
-import ImportView from './views/ImportView.vue';
-import SettingsView from './views/SettingsView.vue';
-import DemoView from './views/DemoView.vue';
-import MusicAnalysisView from './views/MusicAnalysisView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
@@ -25,6 +19,19 @@ import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/outputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
+
+// Setlist is the only initial view. Keep inactive workflows out of Vite's first
+// renderer graph so a new dev server can show the working shell immediately.
+const OutputView = defineAsyncComponent(() => import('./views/OutputView.vue'));
+const LyricsView = defineAsyncComponent(() => import('./views/LyricsView.vue'));
+const ImportView = defineAsyncComponent(() => import('./views/ImportView.vue'));
+const SettingsView = defineAsyncComponent(
+  () => import('./views/SettingsView.vue'),
+);
+const DemoView = defineAsyncComponent(() => import('./views/DemoView.vue'));
+const MusicAnalysisView = defineAsyncComponent(
+  () => import('./views/MusicAnalysisView.vue'),
+);
 
 // Long-lived app hooks; each composable owns its cleanup.
 useTaskbarControls();
