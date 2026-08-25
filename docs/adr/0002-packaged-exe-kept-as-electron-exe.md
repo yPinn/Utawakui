@@ -38,6 +38,14 @@ Keep `win.executableName: electron` in `electron-builder.yml`. The on-disk packa
 
 This does not affect user-facing identity: the Start Menu shortcut label comes from `productName` (`CommonWindowsInstallerConfiguration`'s `shortcutName` default), its AUMID is stamped from `appId` by the NSIS template independent of the target exe's filename, and `userData` resolves from `app.setName('Utawakui')` in `electron/main.js`, not from `process.execPath`. `build/installer.nsh` also overrides NSIS `APP_FILENAME` back to `Utawakui`, so the assisted installer defaults to `%LOCALAPPDATA%\Programs\Utawakui` while `APP_EXECUTABLE_FILENAME` remains `electron.exe`. The remaining visible side effect is Task Manager's process-name column showing `electron.exe` (its `FileDescription` still reads "Utawakui").
 
+Electron 43 also reports `app.isPackaged === false` for this deliberately
+literal `electron.exe`, even when `app.getAppPath()` is the builder-owned
+`resources/app.asar`. Product code must therefore use
+`electron/main/runtimeEnvironment.js`'s exact app-artifact detector. This is
+load-bearing for external `extraResources`, optional dependency preparation,
+and updater enablement: treating the installed build as development can resolve
+resources beneath the nonexistent `app.asar/resources/` path and block startup.
+
 ## Consequences
 
 A real fix requires symbolized crash-dump analysis (WinDbg + Electron's own PDB symbols) to identify which specific Chromium `CHECK()` is failing and why it's sensitive to the host process's own image name when DirectML is loaded — not another command-line flag. That work is not scoped for now.

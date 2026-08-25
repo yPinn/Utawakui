@@ -200,7 +200,7 @@ acceptable model terms, capacity measurements,
 fixed-song utility benchmarks, repair/removal, and real presentation acceptance
 for the immutable
 `analysis-structure` and `combined-ml` paths from
-[ADR 0014](adr/0014-audio-python-runtime-family.md). The current package code is
+[ADR 0014](../adr/0014-audio-python-runtime-family.md). The current package code is
 MIT and PyPI publishes a platform-independent wheel. The current Hugging Face
 repository labels the model MIT, but the pinned checkpoint manifest reviewed by
 the project declares the Harmonix artifact CC-BY-NC-SA-4.0, while the HTDemucs
@@ -349,7 +349,7 @@ separate layer and is neither created nor shifted by these cues.
 
 ## Related decisions
 
-- [ADR 0009: Tiered audio-processing recipes](adr/0009-tiered-audio-processing-runtime.md)
-- [ADR 0010: Lyrics timing granularity](adr/0010-lyrics-timing-granularity-and-output-content-split.md)
-- [ADR 0014: Audio Python Runtime Family](adr/0014-audio-python-runtime-family.md)
+- [ADR 0009: Tiered audio-processing recipes](../adr/0009-tiered-audio-processing-runtime.md)
+- [ADR 0010: Lyrics timing granularity](../adr/0010-lyrics-timing-granularity-and-output-content-split.md)
+- [ADR 0014: Audio Python Runtime Family](../adr/0014-audio-python-runtime-family.md)
 - [Lyrics timing contract](lyrics-timing-contract.md)

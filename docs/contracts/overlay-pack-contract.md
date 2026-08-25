@@ -3,7 +3,7 @@
 ## Status and scope
 
 Draft planning contract, 2026-08-23. It elaborates
-[ADR 0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md).
+[ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md).
 The current app implements four fixed slots, placeholder `styleSetIds`, and an
 app-bundled fallback CSS cascade that keeps those routes independent from future
 pack installation. No remote Presentation Pack updater or User Variant import

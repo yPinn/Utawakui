@@ -4,6 +4,10 @@
 > packaging locations. Keep it in sync when adding IPC handlers, native binaries,
 > feature gates, or electron-builder packaging rules.
 
+This is the live packaging inventory, not the product roadmap. Product status
+belongs in [spec.md](../spec.md), and release operations belong in
+[release-runbook.md](release-runbook.md).
+
 ## Current Build Shape
 
 Windows packaging is configured in `electron-builder.yml`.
@@ -16,17 +20,28 @@ Windows packaging is configured in `electron-builder.yml`.
 - App id / AUMID: `com.utawakui.app`.
 - Renderer output: `dist/`, loaded by `electron/main/windowState.js`.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
+- Cross-runtime JSON contracts and pure presentation projections: `shared/`,
+  packaged into `app.asar`; Browser Source access is limited to exact loopback
+  routes declared by `outputServer.js`.
 - Worker/runtime JS that must resolve outside asar: `electron/lib/**/*`,
   unpacked through `asarUnpack`.
+- Repository boundary: fixed worker scripts and runtime catalogs under
+  `resources/audio-processing/` are source-controlled and packaged explicitly;
+  build/test outputs plus local Python environments and caches (`dist/`,
+  `release/`, `coverage/`, `.venv/`, `venv/`, `uv-cache/`, `.pytest_cache/`,
+  `*.pyc`) are ignored. Downloaded runtimes, models, and activation state belong
+  under app `userData`, never in the repository or installer payload.
 - Installer shortcuts: Start Menu is always created because it carries the
   AUMID / SMTC app identity; the desktop shortcut is shown as a checked
   optional installer checkbox in `build/installer.nsh`.
 - Uninstaller data cleanup: optional NSIS checkboxes from `build/installer.nsh`
   can clean app-managed dependencies under `%APPDATA%\Utawakui\dependencies`,
   app settings under `%APPDATA%\Utawakui`, and the selected library root only
-  when `library-path.txt` points to an existing folder. All cleanup checkboxes
-  default to unchecked. Cleanup uses `RMDir /r /REBOOTOK`, so locked folders may
-  finish deleting after a reboot.
+  when the normalized `library-path.txt` target is below a filesystem root,
+  differs from protected Windows/user folders, and contains the app-written
+  `.utawakui-library` marker. Invalid targets hide the library cleanup option.
+  All cleanup checkboxes default to unchecked. Cleanup uses
+  `RMDir /r /REBOOTOK`, so locked folders may finish deleting after a reboot.
 - Installer copy discloses that advanced features are enabled and prepared from
   Settings. The uninstaller welcome page explains that data cleanup is opt-in.
 
@@ -97,8 +112,9 @@ This is intentionally not a selectable "Basic vs Ext" component split yet:
   pages or post-install work than to surgically splitting `app.asar` and
   unpacked native modules into optional component payloads.
 - Current extension-like dependencies are not all installer payloads. The
-  provider runtime (Python embed, yt-dlp wheel, and bgutil PO-token provider) is
-  app-managed and downloaded only after `provider-flow` is enabled and prepared;
+  provider runtime (Python embed, yt-dlp wheel, bgutil PO-token provider, and
+  bgutil plugin) is one app-managed atomic unit downloaded only after
+  `provider-flow` is enabled and prepared;
   FFmpeg is app-managed and downloaded only after `audio-processing-flow` is
   enabled; model files are also prepared from Settings before use.
 - A component/payload checkbox in the installer would therefore over-promise a
@@ -213,6 +229,7 @@ When adding a dependency, classify it before installing:
 | `release/win-unpacked/resources/app.asar/LICENSE.md`                                                   | Utawakui proprietary software use terms.                                                                                         |
 | `release/win-unpacked/resources/app.asar/node_modules/ws`                                              | Pure JavaScript WebSocket server used by the loopback output runtime.                                                            |
 | `release/win-unpacked/resources/app.asar/overlay`                                                      | Plain HTML/CSS/JS Browser Source pages and shared `--ovl-*` tokens/runtime.                                                      |
+| `release/win-unpacked/resources/app.asar/shared/presentation`                                          | Pure renderer/Browser Source presentation contracts, served to OBS only through exact allowlisted loopback routes.               |
 | `release/win-unpacked/resources/app.asar.unpacked/electron/lib`                                        | Worker and runtime JS needed outside asar.                                                                                       |
 | `release/win-unpacked/resources/app.asar.unpacked/node_modules/onnxruntime-node/bin/napi-v6/win32/x64` | ONNX Runtime / DirectML native files for vocal separation.                                                                       |
 | `release/win-unpacked/resources/app.asar.unpacked/node_modules/kuromoji`                               | Japanese tokenizer and dictionary files used by reading workers.                                                                 |
@@ -261,6 +278,9 @@ After changing gates or dependencies:
   EJS enabled.
 - Confirm audio-processing-flow can prepare/download/verify FFmpeg and UVR
   models from Settings, then load the prepared model and spawn its worker.
+  Removing a dependency must clear its app-owned family root, including stale
+  versions/caches and the verified legacy model location, without touching
+  tracks or generated separation results.
 - Confirm packaged reading-aid workers can generate Japanese and Korean reading
   output without loading missing modules or dictionary files from inside ASAR.
 - For installer verification, use `npm run dist`; `dist:dir` does not create
@@ -274,6 +294,8 @@ After changing gates or dependencies:
 - For uninstaller verification, run the installed uninstaller interactively and
   confirm the component page separately offers optional cleanup for app-managed
   dependencies, `%APPDATA%\Utawakui`, and the selected library when its recorded
-  path is valid. All three options must default to unchecked; when selected,
-  verify only the expected target is removed or scheduled for removal if
-  Windows has it locked.
+  path is normalized, marker-backed, and not a root or protected system/user
+  folder. All three options must default to unchecked; when selected, verify
+  only the expected target is removed or scheduled for removal if Windows has
+  it locked. Tampering `library-path.txt` to a root, one-level root child, or
+  unmarked folder must hide the library option.

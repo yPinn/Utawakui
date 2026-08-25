@@ -1,6 +1,8 @@
 # 競品調查：歌回與 OBS 輔助工具
 
 > 研究日期：2026-08-13。本文是產品與工程判斷用的競品整理，不構成法律意見。
+> 時效說明：本文的 Utawakui 現況與競品版本固定在研究日期，不會隨實作更新。
+> 目前產品狀態請見 [產品規格](../spec.md) 與[文件決策圖](../README.md)。
 
 ## 1. 研究範圍
 
@@ -23,10 +25,10 @@
 對照基準：
 
 - `docs/spec.md`：Utawakui 產品定位、功能分類、架構邊界與 roadmap。
-- `docs/legal-compliance.md`：Utawakui 的合規姿態與 feature gate 建議。
+- `docs/governance/legal-compliance.md`：Utawakui 的合規姿態與 feature gate 建議。
 - 官方平台資料：YouTube API Services Developer Policies、Twitch Music Guidelines / DMCA FAQ、Spotify Developer Policy。
 
-## 2. Utawakui 現況摘要
+## 2. 研究當時的 Utawakui 現況摘要
 
 Utawakui 的規格核心是「本機媒體優先」的 Electron + Vue 桌面控制台。已實作本機曲庫、播放、播放佇列、playlist / collection、metadata 顯示、Windows shell integration、pitch / tempo preview、vocal separation / guide vocal、provider candidate import、yt-dlp download path、lyrics/subtitle 基礎路徑。
 
@@ -410,7 +412,7 @@ Utawakui 建議：
 
 已完成：
 
-- 讀取 `docs/spec.md` 與 `docs/legal-compliance.md`。
+- 讀取 `docs/spec.md` 與 `docs/governance/legal-compliance.md`。
 - 檢視 `E:\elitesand-pro` 本地 README、package 與主要目錄。
 - 檢視 `E:\Singing-Stream-Savior-Manual` 本地手冊與版本資料。
 - 查閱 Setlista 舊版、3rd session 與 app control / view 公開頁面。

@@ -3,10 +3,9 @@
 ## Status and scope
 
 Implemented hardening contract, 2026-08-23. It turns
-[ADR 0012](adr/0012-state-convergence-and-startup-phases.md) into checkable
-requirements and records the completed H1-H3 behavior. Lyrics T2 data and
-authoring batches are complete; the current follow-up is the segment-aware
-presentation consumer described by ADR 0010.
+[ADR 0012](../adr/0012-state-convergence-and-startup-phases.md) into checkable
+requirements and records the completed H1-H3 behavior. Lyrics T2 data, authoring,
+and the segment-aware presentation consumer described by ADR 0010 are complete.
 
 ## Authority and ownership
 
@@ -327,7 +326,7 @@ dynamic revisions; per-client delivery is bounded and latest-wins; and HTTP
 assets now follow the route-specific ETag, pointer, and immutable-digest policies
 above. Focused runtime coverage exceeds the 80% branch gate, and the repository-
 wide suite passes. No H2 test, lint, build, security, or scoped diff failure
-remains. H3 is the next batch.
+remains. The completed H3 contract is recorded below.
 
 ### H3: measured startup and runtime budgets
 
@@ -347,7 +346,7 @@ client count, and GPU-compositing status before clean exit. The capture also
 exposed and fixed a missing renderer feature-confirmation hydration that could
 leave an already-enabled Output source in `syncing` until Settings was opened.
 The five-cold/five-warm packaged observations and their limitations are recorded
-in [startup-performance-baseline.md](startup-performance-baseline.md). Regression
+in [startup-performance-baseline.md](../operations/startup-performance-baseline.md). Regression
 budgets remain intentionally unset until the open hardware, storage, library,
 OBS-process, GPU-memory, and multi-instance rows have representative evidence.
 

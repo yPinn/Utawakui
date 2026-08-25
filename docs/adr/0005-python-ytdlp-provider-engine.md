@@ -2,8 +2,9 @@
 
 ## Status
 
-Accepted for implementation (2026-08-22). Runtime spike completed; app code is
-not yet switched.
+Accepted and implemented (2026-08-22). Provider search, import, download, and
+backfill now use the app-managed Python yt-dlp runtime. Its Python, yt-dlp,
+bgutil provider, and plugin artifacts form one verified activation unit.
 
 ## Context
 
@@ -178,7 +179,8 @@ Licensing must be updated before release: Python Software Foundation License,
 yt-dlp Unlicense, Rust provider GPL-3.0-or-later/GPL-family terms as published
 by the provider project, plus any EJS component license notes. The provider
 runtime is optional and app-managed, but it is still redistributable software
-and must appear in `docs/legal-compliance.md` and `docs/release-inventory.md`.
+and must appear in `docs/governance/legal-compliance.md` and
+`docs/operations/release-inventory.md`.
 
 ## References
 

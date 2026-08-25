@@ -3,7 +3,7 @@
 ## Status and scope
 
 Version 1 contract, implemented 2026-08-23. It defines the data boundary from
-[ADR 0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md).
+[ADR 0010](../adr/0010-lyrics-timing-granularity-and-output-content-split.md).
 Canonical T0/T1 normalization, stable ids, bounded sidecar validation, source
 fingerprints, stale/corrupt status, additive load/save IPC, the visible T2
 importer/editor, reading v2 identity, negotiated Output v3 projection, and
@@ -183,9 +183,9 @@ must stop during paused, buffering, seeking, ended, or disconnected phases.
 
 ## Related decisions
 
-- [ADR 0010: Lyrics Timing Granularity](adr/0010-lyrics-timing-granularity-and-output-content-split.md)
-- [ADR 0012: State Convergence and Startup Phases](adr/0012-state-convergence-and-startup-phases.md)
-- [ADR 0014: Audio Python Runtime Family](adr/0014-audio-python-runtime-family.md)
+- [ADR 0010: Lyrics Timing Granularity](../adr/0010-lyrics-timing-granularity-and-output-content-split.md)
+- [ADR 0012: State Convergence and Startup Phases](../adr/0012-state-convergence-and-startup-phases.md)
+- [ADR 0014: Audio Python Runtime Family](../adr/0014-audio-python-runtime-family.md)
 - [Music Analysis Contract](music-analysis-contract.md)
-- [T2 implementation plan](lyrics-t2-implementation-plan.md)
+- [T2 implementation plan](../archive/lyrics-t2-implementation-plan.md)
 - [Output Runtime Hardening Contract](output-runtime-hardening.md)

@@ -139,7 +139,7 @@ ports and no automatic use of common VMC ports. Full pose forwarding is outside
 Utawakui's karaoke scope.
 
 The evolving port, lifecycle, event, and command contract lives in
-[`docs/integration-adapter-contract.md`](../integration-adapter-contract.md).
+[`docs/contracts/integration-adapter-contract.md`](../contracts/integration-adapter-contract.md).
 
 ## Rejected options
 
@@ -174,7 +174,7 @@ The evolving port, lifecycle, event, and command contract lives in
 
 ## References
 
-- [Integration adapter contract](../integration-adapter-contract.md)
+- [Integration adapter contract](../contracts/integration-adapter-contract.md)
 - [ADR 0012: State Convergence and Startup Phases](0012-state-convergence-and-startup-phases.md)
 - [OBS Browser Source](https://obsproject.com/kb/browser-source)
 - [OBS remote control guide](https://obsproject.com/kb/remote-control-guide)

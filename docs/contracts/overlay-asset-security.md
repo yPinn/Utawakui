@@ -190,9 +190,9 @@ a future explicit-consent and retention policy.
 
 ## References
 
-- [ADR 0011: Overlay Instances and Presentation Pack Delivery](adr/0011-overlay-instances-and-presentation-pack-delivery.md)
-- [ADR 0012: State Convergence and Startup Phases](adr/0012-state-convergence-and-startup-phases.md)
-- [ADR 0013: External Integration Planes](adr/0013-external-integration-planes.md)
+- [ADR 0011: Overlay Instances and Presentation Pack Delivery](../adr/0011-overlay-instances-and-presentation-pack-delivery.md)
+- [ADR 0012: State Convergence and Startup Phases](../adr/0012-state-convergence-and-startup-phases.md)
+- [ADR 0013: External Integration Planes](../adr/0013-external-integration-planes.md)
 - [The Update Framework specification](https://theupdateframework.github.io/specification/latest/)
 - [Electron security recommendations](https://www.electronjs.org/docs/latest/tutorial/security)
 - [JSON Schema Draft 2020-12](https://json-schema.org/draft/2020-12)

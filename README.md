@@ -1,85 +1,83 @@
 # Utawakui
 
-> 面向 OBS 歌回與翻唱工作流的本機控制台。
+> 為 OBS 歌回與翻唱流程設計的 local-first Windows 桌面控制台。
 
-Utawakui 是一個以 Electron、Vite 與 Vue 3 建構的桌面工具，提供曲庫整理、播放控制、歌詞工作區、音訊處理與 OBS Browser Source Overlay 基礎。產品設計以**使用者自備媒體**為預設前提，進階來源與公開輸出流程則以明確啟用的方式管理。
+Utawakui 將本機曲庫、歌單、播放、歌詞、音訊處理與 OBS Browser Source
+輸出集中在同一個操作介面。預設工作流只使用使用者自備的本機媒體；外部來源、
+歌詞服務、音訊處理與公開輸出均是可獨立啟用的進階流程。
 
-## 專案概覽
+目前專案處於 Windows x64 公開測試階段。它不是曲庫、授權服務或串流平台的
+替代品，也不會替使用者判斷第三方素材的使用權利。
 
-Utawakui 主要服務直播主、VTuber 與歌回企劃者，讓演出前準備與直播中操作集中在同一個本機控制台中：
+## 已有能力
 
-- 整理本機曲庫、歌單與待播佇列。
-- 播放曲目並操作音量、進度、循環、隨機與上一首/下一首。
-- 依曲目調整 pitch、tempo，或使用 guide vocal 輔助練習。
-- 管理歌詞資料，作為自用顯示與未來 Overlay 的基礎。
-- 在需要時啟用進階 provider flow，協助建立可播放曲目。
+| 範圍           | 現況                                                                                                                |
+| -------------- | ------------------------------------------------------------------------------------------------------------------- |
+| 本機曲庫與播放 | 結構化 track storage、歌單、待播佇列、播放控制與 Windows shell integration 已可用。                                 |
+| 練習與音訊     | Pitch/tempo 即時預覽、`quick`／`general` 分離與 guide vocal 已可用；pre-render 與 Refined recipe 尚未成為產品能力。 |
+| 歌詞           | 本機匯入、provider lookup、時間軸／讀音、演出者視窗與 Lyrics Overlay 主路徑已建立，仍持續做視覺驗收與操作整理。     |
+| OBS 輸出       | 本機 HTTP/WebSocket runtime、四類 Browser Source、Gallery、Workbench 與 URL 複製已完成 MVP。                        |
+| 進階來源       | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。            |
+| 發布與維護     | NSIS installer、啟動量測、local diagnostics 與 updater runtime 已建立；公開測試版仍為未簽章發行。                   |
 
-## 功能狀態
+完整的已實作／部分完成／規劃中對照，以
+[產品規格](docs/spec.md) 為準；技術邊界請見
+[架構圖](docs/architecture.md)。
 
-| 類別                       | 狀態            | 說明                                                                                         |
-| -------------------------- | --------------- | -------------------------------------------------------------------------------------------- |
-| 桌面控制台                 | 已實作          | Electron shell、Vue renderer、固定 views 與共用 composables。                                |
-| 本機曲庫                   | 已實作          | 以 track folder 保存音訊、metadata、縮圖、歌詞與 generated files。                           |
-| 播放與佇列                 | 已實作          | 播放、暫停、seek、音量、shuffle、repeat、previous/next。                                     |
-| Playlist / Collection      | 已實作          | 使用 `playlists.json` 保存集合、排序與 track ids。                                           |
-| Pitch / Tempo              | 已實作          | 即時 preview 已可用；背景 pre-render cache 尚未完成。                                        |
-| Vocal Separation           | 已實作          | Worker-based separation，播放時可混合 guide vocal。                                          |
-| Lyrics Workspace           | 部分實作        | 歌詞資料讀取、保存與同步歌詞基礎已存在，仍需整理完整使用流程。                               |
-| 進階 Provider Flow         | 已實作核心路徑  | YouTube/YT Music candidate import 與 `yt-dlp` download path 已存在，產品上應走明確啟用流程。 |
-| OBS Browser Source Overlay | 基本 MVP 已實作 | 本機 HTTP/WebSocket runtime、Browser Source routes、Workbench preview 與 URL copy 已存在。   |
-| Feature Notice / Gate      | 已實作基礎      | Provider、lyrics、audio processing 與 public output workflows 已有 gate 基礎。               |
+## 開發
 
-## 使用前提
-
-Utawakui 是本機工作流工具，不是曲庫、授權服務或平台替代品。請以你適合使用的素材建立曲庫，並依照實際情境啟用需要的進階流程。
-
-## 授權
-
-Utawakui 是可免費使用的專有軟體，允許用於個人、內容創作，以及營利直播與錄製。
-原始碼不公開，軟體與安裝檔不得重新散布、轉售、修改或冒充官方版本。這項授權不
-包含歌曲、歌詞、封面、錄音或其他第三方內容；完整條款請見 [LICENSE.md](LICENSE.md)。
-
-## 開發環境
-
-需要 Node.js 24+。
+需要 Node.js 24+ 與 npm。
 
 ```bash
 npm install
 npm run dev
 ```
 
-`npm install` 會安裝 JavaScript dependencies。Provider flow 使用的 Python `yt-dlp`
-runtime、FFmpeg 與分離模型屬於 app-managed workflow dependencies，會在對應功能啟用後
-由 Settings 準備，不作為預設開發安裝步驟。
+`npm install` 只準備 JavaScript dependencies。Provider runtime、FFmpeg 與音訊
+模型由應用程式在對應功能啟用後，從 Settings 個別準備；它們不是預設開發依賴。
 
-## Scripts
+常用指令：
 
-| 指令                    | 說明                                                               |
-| ----------------------- | ------------------------------------------------------------------ |
-| `npm run dev`           | 同時啟動 Vite dev server 與 Electron。                             |
-| `npm run build`         | 建立 production build 到 `dist/`。                                 |
-| `npm start`             | Build 後以 production-like 模式啟動 Electron。                     |
-| `npm run dist:dir`      | 打包成未壓縮的 `release/win-unpacked/`（快速驗證用，不建立捷徑）。 |
-| `npm run dist`          | 打包成 Windows NSIS 安裝檔（`release/*.exe`）。                    |
-| `npm run lint`          | 執行 ESLint。                                                      |
-| `npm run lint:fix`      | 執行 ESLint 並套用可自動修復項目。                                 |
-| `npm run format`        | 使用 Prettier 格式化專案。                                         |
-| `npm run format:check`  | 檢查 Prettier 格式。                                               |
-| `npm run lint:md`       | 檢查 Markdown。                                                    |
-| `npm test`              | 執行 Vitest。                                                      |
-| `npm run test:coverage` | 執行 Vitest 並產生 coverage 報表。                                 |
-| `npm run test:watch`    | 以 watch mode 執行 Vitest。                                        |
+| 指令                    | 用途                                                   |
+| ----------------------- | ------------------------------------------------------ |
+| `npm run dev`           | 啟動 Vite 與 Electron；關閉視窗會一併結束 dev server。 |
+| `npm run dev:tools`     | 啟動開發環境並開啟 Chromium DevTools。                 |
+| `npm run build`         | 建立 renderer production build。                       |
+| `npm start`             | Build 後以 production-like `loadFile` 路徑啟動。       |
+| `npm run dist:dir`      | 建立未壓縮的 packaged app，供快速驗證。                |
+| `npm run dist`          | 建立未簽章 NSIS installer 與 updater metadata。        |
+| `npm run lint`          | 執行 ESLint。                                          |
+| `npm run lint:md`       | 執行 Markdownlint。                                    |
+| `npm run format:check`  | 檢查 Prettier 格式。                                   |
+| `npm test`              | 執行完整 Vitest suite。                                |
+| `npm run test:coverage` | 執行測試並產生 coverage。                              |
+| `npm run perf:startup`  | 量測 packaged startup milestones。                     |
 
 ## 專案結構
 
 ```text
-electron/   Electron main process、preload bridge、IPC、protocol 與 pure lib modules
-src/        Vue renderer：views、components、composables、utils
-public/     Vite static assets（app icons）
-docs/       產品規格、範圍與 roadmap
-tasks/      開發任務紀錄
+electron/   Electron main、preload、IPC、local services 與純 Node modules
+src/        Vue control panel renderer
+overlay/    OBS Browser Source 文件、樣式與瀏覽器端 adapters
+shared/     跨 runtime 的純資料契約與 presentation projections
+resources/  隨 app 提供、但不屬於 renderer bundle 的 runtime resources
+public/     Vite 固定 URL 靜態資產
+build/      Installer resources 與 NSIS hooks
+docs/       產品、架構、ADR、contracts、研究與發行文件
+scripts/    驗證、benchmark、release 與 startup 工具
 ```
 
-完整產品邊界、功能分類與 roadmap 請見 [docs/spec.md](docs/spec.md)。
-打包內容、feature gate 與 runtime dependency 對照請見
-[docs/release-inventory.md](docs/release-inventory.md)。
+## 文件入口
+
+- [文件導覽與決策現況](docs/README.md)：文件權責、ADR 現況與閱讀順序。
+- [產品定位](PRODUCT.md)：穩定的產品承諾、原則與非目標。
+- [產品規格](docs/spec.md)：目前範圍、完成度與下一階段方向。
+- [架構圖](docs/architecture.md)：runtime ownership、feature gate、依賴單位與錯誤邊界。
+- [Release inventory](docs/operations/release-inventory.md)：打包內容、依賴與 feature 對照。
+- [Release runbook](docs/operations/release-runbook.md)：未簽章公開測試與發行流程。
+
+## 授權
+
+Utawakui 是可免費使用的專有軟體，可用於個人、內容創作，以及營利直播與錄製。
+軟體、原始碼與安裝檔的散布限制，以及第三方內容責任，請見
+[LICENSE.md](LICENSE.md) 與 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

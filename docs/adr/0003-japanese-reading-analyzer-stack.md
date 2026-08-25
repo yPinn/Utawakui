@@ -78,10 +78,10 @@ way — accepted for the same reason: an optional feature the user
 explicitly generates, not overhead on every launch.
 
 **Runtime license ≠ dictionary license, same split as `onnxruntime-node`**
-(`docs/legal-compliance.md`'s existing row: "Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。"):
+(`docs/governance/legal-compliance.md`'s existing row: "Runtime 授權不等於模型授權；模型檔需另行列示來源與 license。"):
 `kuromoji`'s own code is Apache-2.0/MIT dual-licensed, but the bundled
 IPADIC dictionary carries its own separate license terms. When Stage 5b
-lands, `docs/legal-compliance.md`'s dependency table gets both rows, not
+lands, `docs/governance/legal-compliance.md`'s dependency table gets both rows, not
 one collapsed row.
 
 ## Consequences

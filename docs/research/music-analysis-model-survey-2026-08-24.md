@@ -1,4 +1,4 @@
-# Music Analysis Model Survey — 2026-08-24
+# Music Analysis Model Survey (2026-08-24)
 
 ## Outcome
 

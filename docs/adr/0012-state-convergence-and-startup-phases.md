@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted for planning on 2026-08-23. The current Output runtime remains in place;
-the hardening work described here must precede Lyrics T2 and the large Overlay
-platform migration.
+Accepted and implemented at the core boundary. Projection Hub, `bootId` /
+`sourceEpoch` identity, revision convergence, liveness/readiness separation,
+startup tracing, and measured startup budgets are in production code. Further
+activation hardening remains incremental work.
 
 ## Context
 
@@ -145,7 +146,7 @@ adapter must demonstrate that it is absent from the startup critical path when
 disabled.
 
 The executable checklist lives in
-[`docs/output-runtime-hardening.md`](../output-runtime-hardening.md).
+[`docs/contracts/output-runtime-hardening.md`](../contracts/output-runtime-hardening.md).
 
 ## Rejected options
 
@@ -175,7 +176,7 @@ The executable checklist lives in
 
 ## References
 
-- [Output runtime hardening contract](../output-runtime-hardening.md)
+- [Output runtime hardening contract](../contracts/output-runtime-hardening.md)
 - [ADR 0010: Lyrics Timing Granularity](0010-lyrics-timing-granularity-and-output-content-split.md)
 - [ADR 0011: Overlay Instances and Presentation Packs](0011-overlay-instances-and-presentation-pack-delivery.md)
 - [Electron performance guidance](https://www.electronjs.org/docs/latest/tutorial/performance)

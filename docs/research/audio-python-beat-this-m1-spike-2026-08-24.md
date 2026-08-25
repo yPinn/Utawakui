@@ -1,6 +1,6 @@
 # Beat This! M1 Windows CPU Spike
 
-## 結論
+## 記錄結論
 
 Beat This! 1.1.0 已通過 Utawakui 的第一輪 M1 Windows x64 CPU spike。
 `small0` 與 `final0` 都能在完全固定的 CPython 3.14.7、PyTorch 2.11.0 CPU、

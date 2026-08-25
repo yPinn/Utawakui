@@ -1,6 +1,6 @@
 # LRCLIB acquisition and storage contract
 
-Status: accepted for implementation on 2026-08-23.
+Status: implemented on 2026-08-23.
 
 This contract defines the trust boundary between LRCLIB, Electron main, local
 lyrics storage, and the renderer. It extends the existing lyrics timing contract;

@@ -1,6 +1,6 @@
 # Audio-processing model review — 2026-08-23
 
-## Product question
+## Product Question
 
 Are Utawakui's KARA2 and Inst HQ4 models the best product combination,
 and which additional model capabilities are worth maintaining?

@@ -1,6 +1,6 @@
 # Analysis Structure Windows CPU Spike — 2026-08-24
 
-## Outcome
+## Recorded Outcome
 
 The main-owned `analysis-structure` producer path and packaged worker execute a
 real All-In-One inference on Windows x64 CPU using only app-supplied model paths

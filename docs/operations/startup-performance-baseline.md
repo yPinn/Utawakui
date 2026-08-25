@@ -1,4 +1,4 @@
-# Startup performance baseline
+# Startup Performance Baseline
 
 ## 2026-08-23 packaged Windows capture
 

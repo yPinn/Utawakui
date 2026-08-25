@@ -302,7 +302,7 @@ happened without turning expected cancellation or recovery into alarming UI.
 After foundation Batch 2, expansion is intentionally deferred until Phase 2
 error recovery or a packaged-release/support trigger. The ordered file-level
 route, resume triggers, stop conditions, and acceptance checks are recorded in
-[Local diagnostics rollout route](../diagnostics-rollout.md).
+[Local diagnostics rollout route](../operations/diagnostics-rollout.md).
 
 ## References
 

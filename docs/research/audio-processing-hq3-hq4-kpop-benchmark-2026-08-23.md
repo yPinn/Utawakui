@@ -1,6 +1,6 @@
 # Inst HQ3 vs Inst HQ4 K-pop benchmark (2026-08-23)
 
-Status: accepted. Inst HQ4 is the active versioned implementation behind the
+Status: accepted point-in-time evidence. Inst HQ4 is the active implementation behind the
 stable `general` product recipe. HQ3 remains compatible with existing results
 and available only for controlled benchmark/legacy execution, not as another UI
 tier.

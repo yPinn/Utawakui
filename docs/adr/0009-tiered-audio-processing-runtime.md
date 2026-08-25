@@ -303,7 +303,7 @@ format checks passed. Blind listening found HQ3 generally a little cleaner but
 the overall practical result effectively tied and difficult to distinguish
 without focused comparison. No material regression was found, so HQ4 passed
 the replacement gate and `general` moved to `mdx-inst-hq4-v1`. See
-[the K-pop benchmark report](../audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md).
+[the K-pop benchmark report](../research/audio-processing-hq3-hq4-kpop-benchmark-2026-08-23.md).
 
 The managed dependency update downloads and verifies the 59,074,342-byte HQ4
 weight before removing the deprecated 66,759,214-byte HQ3 managed cache. This
@@ -357,7 +357,7 @@ base installation:
    fallback. Strict runtime/environment/model manifest validation is implemented,
    but no complete release lock, runtime, model, capability worker, or activation
    is published. See
-   [the lock spike](../audio-python-separation-cpu-spike-2026-08-23.md).
+   [the lock spike](../research/audio-python-separation-cpu-spike-2026-08-23.md).
 5. **Optional-pack productization — gated:** add dependency preparation,
    repair/removal, capacity presentation, packaged execution, cancellation,
    and manifest publication only after the refined candidate passes all gates.
@@ -420,8 +420,8 @@ model replacement or additional feature recipe ships.
 
 ## References
 
-- [Local ONNX CPU baseline](../audio-processing-baseline-2026-08-22.md)
-- [Current community model review](../audio-processing-model-review-2026-08-23.md)
+- [Local ONNX CPU baseline](../research/audio-processing-baseline-2026-08-22.md)
+- [Current community model review](../research/audio-processing-model-review-2026-08-23.md)
 - [ADR 0014: Audio Python Runtime Family](0014-audio-python-runtime-family.md)
 - [python-audio-separator](https://github.com/nomadkaraoke/python-audio-separator)
 - [python-audio-separator maintained model scores](https://raw.githubusercontent.com/nomadkaraoke/python-audio-separator/main/audio_separator/models-scores.json)

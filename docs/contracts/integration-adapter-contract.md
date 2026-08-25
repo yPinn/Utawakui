@@ -3,7 +3,7 @@
 ## Status and scope
 
 Draft planning contract, 2026-08-23. It elaborates
-[ADR 0013](adr/0013-external-integration-planes.md). No external adapter is
+[ADR 0013](../adr/0013-external-integration-planes.md). No external adapter is
 currently implemented; OBS Browser Source remains the only supported integration.
 
 ## Architectural boundary

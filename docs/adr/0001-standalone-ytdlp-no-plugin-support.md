@@ -2,7 +2,9 @@
 
 ## Status
 
-Accepted (2026-08-19).
+Superseded by ADR 0005 (2026-08-22). The standalone executable limitation and
+experiment remain historical evidence; the product now uses an app-managed
+Python yt-dlp runtime instead of that distribution model.
 
 ## Context
 

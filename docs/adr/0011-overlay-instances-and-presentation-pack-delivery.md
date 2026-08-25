@@ -184,7 +184,7 @@ moderation, rights review, compatibility testing, signing, and publication.
 ### Treat asset safety, licensing, and aggregate OBS cost as gates
 
 The concrete validation policy is maintained in
-[`docs/overlay-asset-security.md`](../overlay-asset-security.md). It includes
+[`docs/contracts/overlay-asset-security.md`](../contracts/overlay-asset-security.md). It includes
 archive traversal and bomb protection, MIME/magic/digest checks, SVG sanitation,
 embedded-only GLB dependencies, decode and GPU budgets, font redistribution
 metadata, CSP restrictions, and quarantine behavior.
@@ -238,8 +238,8 @@ ADR 0012 and does not delay the interactive shell or local playback.
 
 ## References
 
-- [Overlay pack contract](../overlay-pack-contract.md)
-- [Overlay asset security policy](../overlay-asset-security.md)
+- [Overlay pack contract](../contracts/overlay-pack-contract.md)
+- [Overlay asset security policy](../contracts/overlay-asset-security.md)
 - [ADR 0010: Lyrics Timing Granularity](0010-lyrics-timing-granularity-and-output-content-split.md)
 - [ADR 0012: State Convergence and Startup Phases](0012-state-convergence-and-startup-phases.md)
 - [ADR 0013: External Integration Planes](0013-external-integration-planes.md)

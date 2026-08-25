@@ -70,7 +70,7 @@ ADR 0014's `analysis-structure` or validated `combined-ml` environment and never
 turns its four-stem Demucs intermediate into the Refined product default.
 
 The versioned field, persistence, fallback, and rollout boundary lives in the
-[Music Analysis Contract](../music-analysis-contract.md). Automatic analysis is
+[Music Analysis Contract](../contracts/music-analysis-contract.md). Automatic analysis is
 not a prerequisite for T2 implementation or normal playback.
 
 ### Keep timing as a derived sidecar
@@ -92,7 +92,7 @@ segment ids rather than being embedded into timing records. This prevents a
 romanization or furigana refresh from rewriting timing work.
 
 The evolving field contract and validation rules live in
-[`docs/lyrics-timing-contract.md`](../lyrics-timing-contract.md). The main-process
+[`docs/contracts/lyrics-timing-contract.md`](../contracts/lyrics-timing-contract.md). The main-process
 validator and co-located fixtures are the executable trust boundary.
 
 ### Split immutable lyric content from the playback clock at T2
@@ -158,9 +158,9 @@ analysis package preparation remain a later, independently gated batch.
 
 ## References
 
-- [Lyrics timing contract](../lyrics-timing-contract.md)
-- [T2 implementation plan](../lyrics-t2-implementation-plan.md)
-- [Music analysis contract](../music-analysis-contract.md)
+- [Lyrics timing contract](../contracts/lyrics-timing-contract.md)
+- [T2 implementation plan](../archive/lyrics-t2-implementation-plan.md)
+- [Music analysis contract](../contracts/music-analysis-contract.md)
 - [ADR 0006: Loopback Output WebSocket Runtime](0006-loopback-output-websocket-runtime.md)
 - [ADR 0012: State Convergence and Startup Phases](0012-state-convergence-and-startup-phases.md)
 - [ADR 0014: Audio Python Runtime Family](0014-audio-python-runtime-family.md)

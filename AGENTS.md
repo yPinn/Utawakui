@@ -1,173 +1,156 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+This file contains project-specific guidance for coding agents. Do not duplicate
+product status or detailed architecture here.
 
-## Project
+## Read First
 
-Utawakui — an Electron desktop control panel for streamers/VTubers doing karaoke ("歌回") or cover-song workflows with OBS. The product is local-media-first: it manages a structured local library, playback, playlists/collections, pitch/tempo preview, lyrics workspace foundations, vocal separation/guide-vocal mixing, Windows shell integration, and basic OBS Browser Source overlays driven by a loopback HTTP/WebSocket state server. Provider-backed acquisition exists in the current codebase as an advanced flow, not the default product assumption. See docs/spec.md for what's built vs. planned.
+- [Documentation map](docs/README.md): document roles and current ADR status.
+- [Product specification](docs/spec.md): current scope, status and direction.
+- [Architecture map](docs/architecture.md): implemented runtime and dependency boundaries.
+- [Design guide](DESIGN.md): renderer visual system and component conventions.
 
-Full product spec, scope decisions, feature classification, and roadmap: [docs/spec.md](docs/spec.md). Read it before making architectural decisions — it documents what's explicitly in scope, deferred, advanced/gated, and excluded (e.g. no built-in commercial song library, no Twitch chat song requests, no OBS native plugin, no multi-user collaboration).
+When sources conflict, use the spec and active ADRs for intended behavior, then
+verify current behavior in code, registries and tests. `tasks/`, when present, is
+ignored local scratch and is never a durable product-status source.
+
+## Product Boundary
+
+Utawakui is a local-first Windows Electron control panel for OBS singing and cover
+workflows. Local import, library and playback are the default core. Provider
+acquisition, external lyrics, audio processing and public Output are separable,
+gated flows. Do not add a built-in commercial library, licensing claims, chat song
+requests, cloud collaboration or an OBS native plugin without an explicit product
+decision.
 
 ## Commands
 
 ```bash
-npm run dev           # Vite dev server + Electron together (concurrently -k — closing
-                       # the Electron window kills the Vite server too, no orphaned process)
-npm run build          # vite build -> dist/
-npm start               # build + run the packaged-style production app (loadFile on dist/)
-npm run dist:dir        # build + electron-builder --win --dir -> release/win-unpacked/
-                        # (no NSIS compression step; run this to sanity-check packaging
-                        # config quickly — but it doesn't create a Start Menu shortcut,
-                        # so it can't be used to verify the AUMID/SMTC-name fix below)
-npm run dist            # build + electron-builder --win -> release/*.exe (NSIS installer)
-npm run lint             # eslint .
-npm run lint:fix
-npm run lint:md          # markdownlint-cli2
-npm run commitlint       # commitlint HEAD~1..HEAD
-npm run format            # prettier --write .
+npm run dev
+npm run dev:tools
+npm run build
+npm start
+npm run dist:dir
+npm run dist
+npm run lint
+npm run lint:md
 npm run format:check
-npm test                  # vitest run — single pass, used by CI
-npm run test:coverage     # vitest run --coverage
-npm run test:watch
+npm test
+npm run test:coverage
+npm run perf:startup
 ```
 
-Tests are Vitest, co-located next to the source file they cover (`electron/lib/config.js` + `electron/lib/config.test.js`, etc.) — no separate `tests/` directory mirroring `src`/`electron`. Coverage focuses on pure logic with no browser/Electron API dependency: `electron/lib/**/*.js` (the recursive glob is required now — `electron/lib/library.js` is a re-export barrel with no logic of its own, and the real logic lives under `electron/lib/library/`'s submodules, which a non-recursive glob would silently miss), `electron/main/appUpdateService.js`, `src/utils/*.js`, and qualifying composables such as `useAppUpdate.js`, `useSeparation.js`, `usePlaylists.js`, and `usePlaybackQueue.js`. `electron/lib/playbackSearch.js` (search runs against an injectable `runner`) and `electron/lib/ytdlpInfo.js` (pure field extraction) are covered too; `electron/lib/downloader.js` stays excluded, but its excluded surface is now just `downloadAudio`/`fetchMetadata` — the two functions that hit real yt-dlp/YouTube paths. `electron/lib/*.test.js` files use ESM `import` even when testing CJS modules; Vite/Vitest handles that interop, and `eslint.config.js` has a dedicated `electron/**/*.test.js` override for `sourceType: 'module'`.
+Tests are Vitest and stay next to the production file they cover. Use the recursive
+`electron/lib/**/*.js` coverage shape: `electron/lib/library.js` and
+`electron/lib/featureDependencies.js` are re-export barrels, while their logic lives
+in subdirectories. Browser-bound player composables need DOM and Web Audio mocks;
+do not force them into the plain Node test environment without providing those
+boundaries.
 
-Browser-bound composables are not testable under the current plain-Node Vitest environment. `usePlayer.js` creates `Audio`/`AudioContext` at module load time, so it and anything importing it (`useKeyboardShortcuts.js`, `useMediaSession.js`, `useTaskbarControls.js`, `useWindowTitle.js`) cannot load without jsdom plus Web Audio mocks or a pure-logic extraction. Composables that avoid that import chain can be tested directly; singleton modules such as `useSeparation.js` and `usePlaylists.js` use `vi.resetModules()`, `vi.stubGlobal('window', ...)`, and dynamic `import()` so each test gets a fresh instance and captured IPC callbacks.
+## Runtime Rules
 
-## Architecture
+### Process Isolation
 
-- **Music-structure sidecars are main-owned derived data.** The library module
-  map below predates this thirteenth domain submodule:
-  `electron/lib/library/musicStructure.js` atomically writes and bounded-reads
-  `tracks/<trackId>/analysis/music-structure.json`, recomputes the current audio
-  SHA-256 only when a sidecar is consumed, and projects explicit M0/M1/M2 state.
-  `electron/main/musicStructureHandlers.js` exposes one read-only track-id IPC;
-  renderer input never supplies paths, hashes, duration, or analyzer settings.
+- `electron/main.js` is the composition root. Domain IPC belongs in
+  `electron/main/*Handlers.js`, with named dependencies.
+- Pure filesystem, provider, processing and protocol logic belongs in
+  `electron/lib/`; it must not own BrowserWindow lifecycle.
+- Renderer code uses `electron/preload.js` only. Keep `contextIsolation: true`,
+  `nodeIntegration: false` and `sandbox: true`.
+- Renderer intent must never provide filesystem paths, URLs, hashes, models,
+  executables or arbitrary IPC channels that main can derive itself.
 
-The codebase is a Vite + Vue 3 control panel inside an Electron shell (Phase 0 in the roadmap). Key structural points to know before extending it:
+### Renderer State
 
-- **Process split**: `electron/main.js` is the Electron main process entry point; it creates a single `BrowserWindow` (via `electron/main/windowState.js`'s `createMainWindow` — see the module-split bullet below). In dev it points at the Vite dev server (`loadURL('http://localhost:5173')`); in production it loads the built `dist/index.html` (`loadFile`). `electron/preload.js` is the only bridge between main and renderer, using `contextBridge.exposeInMainWorld` — the renderer has no direct Node access (`contextIsolation: true`, `nodeIntegration: false`, `sandbox: true`). Keep this isolation model when adding IPC: extend the preload's exposed API surface rather than relaxing these webPreferences.
-- **`electron/main.js` only wires things up; per-domain IPC logic lives in `electron/main/*.js`.** The file used to be a 1300+-line monolith holding all 46 `ipcMain` registrations plus window/thumbar/protocol/migration logic in one place; it's now ~210 lines: requires, `app.setName`, the packaged-mode yt-dlp env bootstrap (must stay before the `./lib/*` requires — see its own comment), `protocol.registerSchemesAsPrivileged` (the one call that must run before `app.whenReady()`), single-instance-lock handling, and a `whenReady()` body that just calls one `register*Handlers(...)` per domain. Module map: `windowState.js` owns the single `mainWindow` plus taskbar-thumbar/playback-mirror state (`createMainWindow`, `getMainWindow`, `notifyLibraryUpdated`, `sendBackfillStatus`, `updateThumbar`, `getAppUserModelId`, `TITLEBAR_COLORS`); `configState.js` owns `config.json`'s in-memory cache (`loadInitialConfig`, `getConfig`, `updateConfig`, `requireFeatureGate`, `resolveDownloadDir`); `libraryHandlers.js` / `lyricsHandlers.js` / `playlistsHandlers.js` / `importHandlers.js` / `separationHandlers.js` / `configHandlers.js` / `ytdlpHandlers.js` each export one `register<Domain>Handlers({ ipcMain, ...specific deps })` function taking named params, not a shared context blob — keeps dependencies grep-able, same "no premature abstraction" bias as the rest of this codebase; `mediaProtocol.js` is the `utawakui-media://` `protocol.handle` dispatcher; `startupMigrations.js` is the one-time migration block; `mediaScheme.js` holds the `MEDIA_SCHEME` constant (needed by main.js's scheme registration, `mediaProtocol.js`, and `separationHandlers.js`'s `stemsUrl`). Dependency direction is one-way, same rule as the `library/` split below: domain handler modules depend on `windowState.js`/`configState.js` and `../lib/*`, never each other, except `libraryHandlers.js` → `../lib/playlists` and `importHandlers.js` → `lyricsHandlers.js`'s `saveLrclibLyricsIfAbsent` (both documented at the call site). `electron/preload.js` is untouched by this split — it only ever referenced IPC channels by string, never by handler location.
-- **LRCLIB ownership supersedes the older handler exception above**: `importHandlers.js` no longer imports `lyricsHandlers.js`. `electron/main.js` creates one `lyricsAcquisitionService` after config load and injects it into Lyrics, Import, and Library handlers. The service owns the shared LRCLIB client/scheduler and checks `lyrics-flow` before every external request; optional import/backfill callers contain provider failures so successful audio or metadata work stays successful.
-- **`src/` vs `public/`**: control panel Vue source (`.vue`/`.js`/`.css`) lives under `src/`, bundled by Vite. Global renderer CSS uses `src/styles/` and is imported from `src/main.js`. `public/` is Vite's static-passthrough directory for assets that need fixed public URLs, such as app icons; don't put renderer design-system CSS there.
-- **App shell (`src/App.vue`)**: a CSS grid — `titlebar` on top, `sidebar` + `main` in the middle, a `player` row spanning full width underneath. `sidebar` here is the playlist rail (`AppPlaylistSidebar.vue`, wrapping `src/components/playlists/PlaylistSidebar.vue`), not primary section navigation — that's `AppTopTabs.vue` (top tabs: Setlist/Lyrics/Import/Output), rendered by `AppArchiveFrame.vue` inside `main`, which also wraps the active view in the card shell `AppInnerPage.vue`. Sections live in `src/views/` (`SetlistView`, `LyricsView`, `ImportView`, `OutputView`, plus a `DemoView` design-system page reached only via the F9 shortcut and absent from `AppTopTabs.vue`'s visible list) and are switched via `useAppView.js`, a module-scope singleton composable (same pattern as `usePlayer.js`, not a local ref) so components below `App.vue` can also switch tabs, rendered via `<component :is>` — **no vue-router, no Pinia/state library**. An Electron `BrowserWindow` has no address bar, so there's nothing deep-linking would attach to; don't add a router unless that concrete need actually shows up. `PlayerBar.vue` (`src/components/playback/`) now plays real audio (play/pause, seek, volume) and playlist-backed manual previous/next/shuffle controls via `usePlaybackQueue.js`.
-- **Local playback (`src/composables/usePlayer.js`)**: a single shared module-scope composable, not Pinia — one `<audio>` element and a handful of reactive fields don't need a store framework, and both `SetlistView` (picks a track) and `PlayerBar` (persistent, shows/controls playback) just import the same instance. **The `<audio>` element is the sole source of truth for timing**; `isPlaying`/`currentTime`/`duration` are written _only_ from the element's own events (`play`/`pause`/`ended`/`timeupdate`/`loadedmetadata`/`error`), never assigned directly by actions. Do not add a second write path (e.g. setting `isPlaying = true` inside `play()`) — that reintroduces exactly the desync bug this design avoids (icon stuck on "playing" after a track ends, autoplay rejection not reflected, etc.). `ended` is still reported by the audio element, but queue auto-advance lives in persistent `PlayerBar.vue` via `usePlayer().onEnded()` and `usePlaybackQueue.js`, so `usePlayer.js` does not import queue state or become a second queue owner. **The element is wired into a Web Audio graph** (`createMediaElementSource` → `ChannelSplitterNode(4)` → two `ChannelMergerNode(2)`s → a `vocalGain`/`masterGain` pair → `destination`) so the guide-vocal feature can gain-control the vocals pair independently — see the vocal-separation bullet below for the channel layout this depends on. Once that wiring exists, the element's own audio **no longer reaches the speakers directly**, which is why `setVolume`/`toggleMute` write to `masterGain.gain` (ramped via `setTargetAtTime`, not `audio.volume`/`audio.muted` — those are now inert). `audio.crossOrigin = 'anonymous'` is set once at element creation and is **load-bearing, not optional**: without it, `createMediaElementSource` silently outputs zeroes for a cross-origin source — see the protocol-registration bullet below for the matching main-process requirement.
-- **Local audio is served to the renderer via a custom protocol, not `file://`**: the renderer is `nodeIntegration: false`/`sandbox: true` and CSP is `default-src 'self'`, so it has no filesystem access and `'self'` never covers another scheme. `electron/main.js` registers `utawakui-media:` via `protocol.registerSchemesAsPrivileged` at module top level (must happen before `app.whenReady()` — the one exception to "everything Electron-API-related lives in the ready callback" in this file); the actual `protocol.handle` dispatcher lives in `electron/main/mediaProtocol.js`'s `registerMediaProtocol`, called from `whenReady()`, calling `electron/lib/library/range.js`'s `buildRangeResponse(filePath, rangeHeader)` (re-exported through the `electron/lib/library.js` barrel — see the module-split bullet below). The privileges are `{ standard: true, stream: true, supportFetchAPI: true, corsEnabled: true }` — the last two were added for the guide-vocal feature and are **not optional decoration**: without them, `fetch()` to this scheme fails outright ("URL scheme is not supported") and `audio.crossOrigin = 'anonymous'` (see above) gets rejected by Chromium before the request ever reaches this handler. **This manually builds the 206 Partial Content response (`fs.createReadStream(filePath, { start, end })` piped through `Readable.toWeb`, with `Content-Range`/`Accept-Ranges` headers) instead of `net.fetch(pathToFileURL(...))`** — that was tried first and looked like it should work, but empirically (verified byte-for-byte against a direct file read) it silently slices the response body to the requested range while still returning status `200` with no `Content-Range` header. An `<audio>` element can't tell that's a partial response — it reads as "the whole file is this short," which is why every seek looked like the media source got reset and jumped playback back to 0. If touching this again, don't reach for `net.fetch(file://...)` for range-sensitive serving without re-verifying its behavior directly (see the buildRangeResponse comment for the same warning at the source). `index.html`'s CSP allows the scheme narrowly via `media-src 'self' utawakui-media:` and `img-src 'self' utawakui-media:` — script/style/default-src are untouched. The handler only serves strict structured assets from `tracks/<trackId>/` via `electron/lib/library/paths.js`'s `resolveTrackAssetPath()` (audio/artwork/stems allowlists; `info.json` is not servable), plus legacy local audio through the same module's `resolveTrackPath()` during migration. `library:list`/`listTracks()` returns `{ id, filename, url, thumbnailUrl, title, artist, duration, needsBackfill, hasSeparation, stemsUrl }` objects, never bare strings, so the renderer never does string surgery on filenames.
-- **`electron/lib/library.js` is a re-export-only barrel over `electron/lib/library/`'s 12 submodules — no logic lives in the barrel file itself.** The split happened because the original single file had grown to 1846 lines bundling roughly nine unrelated responsibilities (index persistence, lyrics sidecars, playlist covers, separation manifests, migrations, track CRUD/backfill, HTTP range serving, path validation) into one module. Module map, leaf-first: `constants.js` (MIME/dirname/filename constants, including the 4-channel `SEPARATIONS_DIRNAME` order comment the vocal-separation bullet below cross-references); `paths.js` (filename/id/dir validation, a leaf with no fs writes — "never touches disk" is a checkable invariant); `range.js` (`buildRangeResponse`, HTTP range serving); `lyrics.js` (lyrics sidecar manifest, language inference, manual import); `playlistCovers.js` (playlist/album cover image read/write); `separationManifest.js` (per-recipe result manifest read/write plus legacy normalization); `metadataIndex.js` (`library.json` persistence — `loadIndex`/`saveIndexEntry`/`migrateTrackAlbumMetadata`); `migrations.js` (legacy on-disk layout normalization — deliberately has no dedicated test file, since its behavior is asserted transitively through `tracks.test.js`'s `listTracks()` output); `tracks.js` (listing/CRUD/refresh, including `refreshTrackMetadataFromSidecars`); `trackArtwork.js` (`writeTrackArtworkFile`/`deleteTrackArtworkFile`); `importLocal.js` (content-hash local import, `importLocalAudioFiles`); `backfill.js` (`runBackfillPass` — owns the only module-level mutable state anywhere in the split, the `backfillInProgress`/`backfillFailedIds` guard). The barrel's body is explicit destructure-then-shorthand-name per submodule, never a spread — this is load-bearing, not style: `library.test.js` uses ESM `import { x } from './library.js'` against this CJS module, which depends on `cjs-module-lexer` statically detecting named exports from a single object-literal `module.exports`; a spread defeats that detection and every named import silently resolves to `undefined`. Do not add `electron/lib/library/index.js` — Node resolves `require('./library')` to `library.js` first if both exist, so a second barrel is pure ambiguity, not redundancy — and nothing under `library/` may `require('../library')` back into the barrel, which would be a load-time cycle. Dependency direction is one-way: `metadataIndex.js` must never import `tracks.js` — this is literally the one real cycle the original file had (`refreshTrackMetadataFromSidecars` called into track-listing code from inside the index code), fixed by keeping that function in `tracks.js` instead. The one place the graph isn't strictly leaf-ordered: `importLocal.js` and `trackArtwork.js` both require `tracks.js` (`listTrackRecords`/`findTrackRecord` respectively) — `importLocal.js`'s content-hash dedup needs the same filesystem-truth track list `tracks.js` already builds, and duplicating that enumeration/migration logic just to avoid the dependency would drift from it instead.
-- **Structured track storage supersedes the earlier flat-root wording**: the library root remains `<Music>/Utawakui`, but new track assets live under `tracks/<trackId>/` as `audio.<ext>`, optional `thumbnail.<ext>`, optional `info.json`, and optional `stems.wav`. `listTracks()` performs a conservative legacy migration: root-level audio is moved into `tracks/<id>/audio.<ext>`, old `.separated/<id>/stems.wav` is moved into `tracks/<id>/stems.wav`, and duplicate same-stem legacy audio is preserved under `.duplicates/<id>/` rather than deleted. `library.json` and `playlists.json` stay at the library root; `library.json` remains scalar metadata and should not store absolute asset paths. Renderer URLs now primarily use `utawakui-media://track/<trackId>/<assetFilename>`, with strict audio/artwork/stems allowlists and `img-src 'self' utawakui-media:` in CSP for thumbnails.
-- **Audio processing is recipe-oriented and writes one four-channel result per completed recipe, never a shared `stems.wav`.** Renderer may request only the allowlisted product recipes `quick` (KARA2) and default `general` (currently Inst HQ4); main resolves model, profile, dependency, path, and inference details through `electron/lib/audioProcessing/`. `refined` and `backing-vocals` are catalogued but non-runnable until their benchmark/dependency gates pass. The service owns the one-job-at-a-time lock and cancellation, while the ONNX adapter owns a one-shot `worker_threads` worker so DSP does not block media serving or IPC. Optional Python ML uses ADR 0014's unused-by-product `AudioPythonRuntimeHost`: `%APPDATA%/Utawakui/dependencies/audio-python` separates content-addressed CPython artifacts, complete immutable `separation-cpu`/`analysis-structure`/`combined-ml` locks, activation generations, capability model roots, and capability jobs. A generation file is immutable; only `activations/current.json` switches atomically, and jobs pin a generation/lock with a lease. Shared process transport and the main-owned heavy scheduler never merge Refined worker/model/readiness/result/removal state with Music Analysis. Electron Builder ships only the stdlib host probe `resources/audio-processing/audio_python_worker.py` and the separate fail-closed Refined policy worker `refined_worker.py`—no Python, PyTorch, environment, `audio-separator`, catalog, config, or model. The Refined worker accepts only main-derived fixed Viperx intent, rechecks exact SHA-256 values before third-party import, denies network/legacy/forbidden-import paths, and is exercised with an unpackaged fake wrapper; it is not wired into the service and must not make `refined` runnable. Renderer can eventually send only `refined` recipe intent, never paths, arguments, model ids, or environment ids. Results live at `tracks/<id>/separations/<recipeId>.wav`; manifest v2 stores `selectedRecipeId` plus recipe version, engine, profile, model ids, artifact filename, completion time, and fixed `accompaniment-guide-4ch` layout. Channels remain 0/1 accompaniment L/R and 2/3 guide/lead-vocal L/R because `usePlayer.js` depends on that order. Released v1 ids normalize on read (`standard` → `quick`, `clean`/`inst-hq3` → `general`) without renaming artifacts; `high-quality` is a selectable legacy KARA2 result but cannot start a new product job, and safe unknown legacy results stay selectable for recovery. Existing HQ3 results retain exact provenance; direct HQ3 execution is benchmark/legacy-only. The active HQ4 dependency is checksum-verified before its deprecated managed HQ3 cache is removed, and this cleanup never touches separation WAVs. `useSeparation.js` remains the module-scope renderer owner for in-flight progress and result selection; `usePlayer.js` reloads a newly selected result while preserving position/play state. See ADR 0009 and ADR 0014.
-- **Track metadata (`library.json`) is an interim, text-only metadata store — deliberately not the future SQLite index** (pitch/tempo memory, lyrics offset): `electron/lib/library/metadataIndex.js`'s `loadIndex`/`saveIndexEntry` read/write a `{ version, tracks: { [id]: { title, artist, duration, album?, releaseYear? } } }` file inside the download dir (travels with the tracks when the user changes download folder), atomically (`.tmp` + rename), tolerant of a missing/corrupt file same as `config.js`. **The filesystem, not this index, is the source of truth for which tracks exist** — `listTracks()` always enumerates actual files first and only uses the index to enrich matches, falling back to the id (filename stem) for `title` and leaving `artist`/`duration`/`album`/`releaseYear` `undefined` when there's no entry — the renderer omits those fields rather than showing a placeholder. This is why deleting an audio file needs no special handling (the orphaned index entry is just never looked up) and why locally-imported files with already-meaningful filenames need no separate display logic (same title fallback path). **This file only ever holds scalar text/number fields**: thumbnails and yt-dlp source info live beside the audio as `tracks/<trackId>/thumbnail.<ext>` and `tracks/<trackId>/info.json`, with `thumbnailUrl` derived at list time rather than persisted as an absolute path. `album`/`releaseYear` come from yt-dlp's `info.album`/`info.release_year` (present only for recognized-music sources, same gate as `artist`'s `info.artist`; verified against real library data that `album_artist`/`track_number` are never populated and so aren't extracted) via `electron/lib/ytdlpInfo.js`'s `extractMetadataFields()`, and are deliberately **excluded** from `listTracks()`'s `needsBackfill` check — a real fraction of the library has no album metadata and no fallback to reach for (unlike `title`, which falls back to id), so including it would retry those tracks on every launch forever. A one-time offline migration (`migrateTrackAlbumMetadata`, gated on the raw on-disk index version, run once at startup via `electron/main/startupMigrations.js`'s `runStartupMigrations`, before the window loads) backfilled these two fields from each track's already-downloaded `info.json` sidecar with no network calls. When pitch/lyrics-offset metadata is built, everything here migrates into a real SQLite schema instead of growing further.
-- **Named playlists (`playlists.json`, `electron/lib/playlists.js`) are user-authored data, not a `library.json` key and not `config.json`**: they live in the download dir so they travel with track ids. Shape is `{ version, playlists: [{ id, name, kind, source?, trackIds, addedAt }] }`; the top-level playlist collection is an array because display order matters, and `id` is a UUID. `kind` is `'playlist' | 'album'` (default `'playlist'` when absent/invalid) — **`'album'` collections are read-only from the renderer's side**: track membership/order comes from the source itself, so `electron/main/playlistsHandlers.js`'s `playlists:set-tracks` handler silently no-ops (returns the array unchanged) when the target's `kind` is `'album'`, the same trust-boundary role `electron/main/importHandlers.js`'s `extractVideoId()` plays for untrusted video ids. `source` (`{ platform, id }`, e.g. `{ platform: 'youtube', id: 'OLAK5uy_…' }`) is optional — present for collections created via `upsertAlbum()` (album imports, keyed by source so a re-import updates in place instead of duplicating), absent for ordinary `createPlaylist()` calls and for pre-existing albums that were classified by the one-time heuristic migration below rather than freshly imported. Which source-list ids count as an album (`OLAK5uy_`-prefixed) is `electron/lib/youtube.js`'s `classifyPlaylistKind()`; classifying an _already-imported_ collection from its members' shared `album` metadata (for the migration, and for the manual "轉為專輯/轉為播放清單" context-menu escape hatch when the heuristic gets an existing collection wrong) is the separate, independent `classifyCollectionKind()` in `electron/lib/albumClassifier.js`. Missing files load as empty, corrupted JSON/shape is backed up to `playlists.json.corrupted-<timestamp>`, and other read errors throw so transient filesystem failures cannot be overwritten by an empty fallback. `setPlaylistTracks(dir, id, trackIds)` is the single write path for add/remove/reorder, and it deliberately preserves orphan track ids because `listTracks()` can temporarily fail on an unavailable drive. A one-time migration (`migratePlaylistKinds`, gated on the raw on-disk version like the library.json migration above, also run via `runStartupMigrations` at startup before the window loads and backing up the pre-migration file first) stamps `kind` onto collections that predate the field. `usePlaylists.js` serializes refreshes and mutations through one queue, exposes persistence errors in `state.error`, and refreshes on `library:updated` so download-directory changes invalidate the singleton cache.
-- **Overlay is a separate delivery path, not an Electron window or part of the Vite app**: root-level `overlay/` contains plain HTML/CSS/ES modules served from an exact allowlist by `electron/lib/outputServer.js` over `127.0.0.1`; it is packaged independently of the Vite renderer bundle and loaded by OBS as a Browser Source. `electron/main/outputHandlers.js` gates start/publish behind `public-output-flow`, while stop/status stay available for recovery. Renderer state reaches main through the minimal preload IPC, then overlays receive canonical snapshots over read-only WebSocket. `src/composables/useOutputRuntime.js` is App-level and long-lived so changing views does not stop updates; it projects the existing player/queue/playing-track lyrics state and never becomes a second source of truth. Gallery uses standardized Vue mockups; Workbench loads the real capture route on a fixed 1280x720 reference canvas and may append only an allowlisted local inspection `backdrop=checker|dark|light` query. That query changes the document inspection canvas only: it injects no demo content and is never copied or persisted. Copied OBS URLs omit all queries and remain transparent. Renderer ESM and main CJS share version/list limits through `shared/outputContractValues.json`; only the CJS parser in main is the trust boundary.
-- **Artwork media stays behind a track-id resolver, not snapshot URLs or client-provided paths**: the output server exposes same-origin `GET /media/artwork/<encoded trackId>` only while the gated loopback runtime is running. `electron/main.js` injects a resolver that maps the already-public canonical track id to the structured library's allowlisted `thumbnail.{jpg,jpeg,png,webp}`; the request cannot choose a filename or absolute path, and canonical snapshots still contain no `utawakui-media:` URL or filesystem data. The Artwork overlay waits for image decode before replacing its first-letter fallback and restores the fallback on missing/corrupt images.
-- **Audio pipeline is local-playback-first, not real-time-integrated with streaming platforms**: playback uses local library assets served through `utawakui-media:`. Provider-backed acquisition runs through the explicitly gated, app-managed Python `yt-dlp` runner shared by import, search, and backfill; it is an advanced flow, not the default entry point. Audio processing remains offline-then-play: a worker produces generated media that playback later reads. Pitch/tempo preview is implemented in the renderer audio graph; the future pre-render cache belongs to the roadmap — see docs/spec.md.
-- **First IPC channel (`yt:download-audio`)**: `electron/lib/downloader.js` is a pure module (`downloadAudio(videoId, destDir)`) with no Electron API calls — this is deliberate so it can be exercised directly under plain Node without launching the GUI. It writes into `tracks/<videoId>/audio.<ext>`, preserves yt-dlp's raw `info.json`, stores `thumbnail.<ext>`, and resolves `{ filePath, title, artist, duration }`; parsing stdout instead of the sidecar isn't reliable since progress output precedes any JSON. YouTube and YouTube Music use the same `ytdlpInfo.js` display projection: structured `track` and plural `artists` outrank legacy singular fields; when an auto-generated description assigns a listed member a staff-only role and uploader/channel corroborates the primary artist, only that confirmed staff member is removed, while primary, performing, and unclassified collaborators remain intact. Unstructured YouTube uploads may use the existing title-derived identity only when label/channel evidence or uploader agreement makes it trustworthy, then fall back to uploader/channel. This never rewrites `info.json`; only the scalar projection stored in `library.json` changes. `duration` has no fallback, left `undefined` when absent. `electron/main/importHandlers.js`'s `yt:download-audio` handler is what persists scalar fields into `library.json` via `saveIndexEntry` — `downloader.js` only downloads/reports and never stores absolute asset paths in the index. `importHandlers.js` is the place that interprets untrusted renderer input, via `electron/lib/youtube.js`'s `extractVideoId()`: it accepts either a bare 11-char ID or a `youtube.com`/`music.youtube.com`/`youtu.be` URL (watch/shorts/embed) and always re-validates the extracted ID against the same 11-char pattern — never trust a video ID/URL coming from the renderer without going through that function first. The same module's `VIDEO_ID_RE` is reused by `electron/lib/library/backfill.js`'s `runBackfillPass` to recognize which local track ids look like real YouTube ids worth re-querying; reload/list backfill uses `backfillTrackInfo(videoId, trackDir)` so missing scalar metadata, `info.json`, or `thumbnail.<ext>` can be repaired without re-downloading audio. Downloaded audio defaults to `<Music>/Utawakui` (`app.getPath('music')`), not `userData` — `userData` is Electron/Chromium's own internal engine state (Cache, GPUCache, Session Storage, etc.), while downloaded tracks are user content someone may want to browse directly. This is overridable via `config:choose-download-dir`/`config.json`'s `downloadDir`; either way it's outside the repo, not in `public/` or `dist/` — don't add a `.gitignore` rule for it. Downloads use `-f bestaudio` (no `-x`/ffmpeg) since YouTube already serves audio-only streams; only reach for `ffmpeg-static` if a downloaded file turns out to be undecodable (DASH m4a needs yt-dlp's ffmpeg-dependent fixup, opus/webm generally doesn't).
-- **Windows taskbar thumbar (`electron/lib/thumbarIcons.js`, `electron/main/windowState.js`, `src/composables/useTaskbarControls.js`)**: hovering the app in the Windows taskbar shows a thumbnail with play/pause/prev/next buttons (`BrowserWindow.setThumbarButtons`, `@platform win32` — no-op elsewhere). Prev/next are still `flags: ['disabled']` in the Windows thumbar because only the renderer-side `PlayerBar.vue` is wired to `usePlaybackQueue.js` today; only play/pause is live there. State flows one-way and never violates `usePlayer.js`'s "the `<audio>` element is the sole source of truth" rule: a thumbar click sends `player:command` to the renderer, which calls `usePlayer()`'s `toggle()` exactly like a button click would — main never sets `isPlaying` itself. The renderer separately reports state changes back over `player:state` (a `watchEffect` in `useTaskbarControls.js`, deliberately reading only `state.isPlaying`/`state.track` so per-second `timeupdate` ticks don't trigger redraws), and `windowState.js`'s `updateThumbar` redraws the whole button array from that report (`setThumbarButtons` has no per-button update). `useTaskbarControls.js` exists so `usePlayer.js` itself stays Electron-free — it's the only renderer-side file that knows IPC exists on top of the player state. Button icons are rasterized at runtime in `thumbarIcons.js` (hand-rolled PNG encoder using only Node's built-in `zlib`, no image dependency) rather than committed as static assets, for two reasons that will look like unnecessary complexity to a future reader who hasn't hit them: (1) the icon must track `nativeTheme.shouldUseDarkColorsForSystemIntegratedUI` — the _Windows system_ taskbar theme, a separate toggle from the app's own theme — because a white icon on a light-mode taskbar flyout is nearly invisible, and (2) `nativeImage.createFromBitmap`'s raw pixel format is explicitly documented as "platform-dependent" with no further spec, unverifiable from an agent sandbox with no GUI access; `createFromBuffer` decoding an actual PNG has a real, checkable format instead.
-- **Now-playing info on the Windows shell (`src/composables/useWindowTitle.js`, `useMediaSession.js`)**: two independent, unrelated Windows mechanisms, both mirroring the current track outward from `usePlayer.js` state — don't conflate them when extending either. (1) `useWindowTitle.js` sets `document.title` to `歌名 - 歌手` (or just the title when `artist` is absent); Electron's `BrowserWindow` `title` option is documented to defer to the loaded page's `<title>` tag, so this alone is what makes the taskbar thumbnail hover-preview show the track — no IPC, no main-process change. (2) `useMediaSession.js` uses the standard Web `navigator.mediaSession` API (`MediaMetadata`, `playbackState`, `setActionHandler`) to populate the Windows SMTC card (lock screen / `Win+A` volume flyout). **Confirmed working with zero Chromium command-line flags** — don't add a speculative `app.commandLine.appendSwitch('enable-features', 'MediaSessionService')` or similar if touching this again; it was tried, found unverifiable from this repo's docs, deliberately omitted, and the feature worked anyway. SMTC's play/pause buttons route through `usePlayer()`'s `play()`/`pause()` directly (not `toggle()` — the SMTC API already tells you which action fired, so guessing via toggle risks going out of sync), preserving the same "`<audio>` element is the sole source of truth" rule as the taskbar thumbar. Deliberately **not** wired to hardware media keys (a different Chromium feature) — this app may run alongside another player (e.g. Spotify for BGM) during a live stream, and losing keyboard media-key control to whichever app grabbed it last is a real risk mid-broadcast. SMTC artwork still uses the app icon (`public/assets/icons/app-icon.png`, 1024×1024) as a stable placeholder; per-track thumbnails exist for the app UI/library rows but are not yet wired into Media Session artwork. The SMTC card shows "未知的應用程式" (unknown application) as the app name when run unpackaged (`npm run dev` / `npm start`) — Windows resolves that name from the AUMID's registered Start Menu shortcut, which only an installer creates (`app.setAppUserModelId()`/`app.setName()` do not affect it — confirmed in `electron.d.ts`, the latter explicitly documented as internal-to-Electron-only). A packaging pipeline now exists (`electron-builder.yml`, `npm run dist`/`dist:dir`) specifically to fix this — its NSIS installer's `appId`/`productName` are kept in sync with `BASE_APP_USER_MODEL_ID`/`APP_NAME` in `electron/main/windowState.js` (`APP_NAME` is also duplicated as a literal in `electron/main.js` itself, since `app.setName()` has to run before `windowState.js` could be required — see the module-split bullet above) so the installed shortcut's AUMID matches the running app. Only the installed build creates that shortcut; `dist:dir`'s unpacked output does not, so the SMTC name still won't resolve from an unpacked run.
-- **Data model**: continuous autosave is the baseline; named "preset" snapshots (playlist + theme + layout) are an optional additional layer on top, not a replacement for autosave.
-- **`<userData>/config.json` is machine-local settings, never the shareable layer**: `electron/lib/config.js` (`loadConfig`/`saveConfig`) persists things like the download directory — anything that's meaningful only on this machine (a filesystem path, later maybe OBS connection info). It is **never** exported or included in a preset. spec.md §6.3 defines the preset boundary as playlist/setlist structure, theme/display settings, overlay layout, and optional track references — no machine paths — so when that feature gets built, it must be its own file format that structurally excludes `config.json`'s keys, not a filter applied on top of this one. Like `downloader.js`, `config.js` takes its file path as a parameter and has no Electron API calls, so it's testable under plain Node. It's deliberately tolerant of a missing, corrupted, or hand-edited file and writes atomically (`.tmp` + rename) to avoid a half-written file surviving a crash.
+- The HTML audio element is the only authority for playback timing and play state.
+  Actions call the element; `play`, `pause`, `ended`, `timeupdate`, metadata and
+  error events update reactive state.
+- `usePlayer`, queue and lyrics composables remain the single renderer owners.
+  Taskbar, SMTC, Performer Self-View and Output consume projections.
+- The app uses module-scope composables and view switching, not Pinia or vue-router.
+  Add either only for a demonstrated product need.
+- `audio.crossOrigin = 'anonymous'` and the four-channel Web Audio graph are
+  required. Separation channel order is accompaniment L/R then guide-vocal L/R.
 
-## `.agents/` project conventions
+### Local Media And Data
 
-`.agents/agents/`, `.agents/skills/`, `.agents/commands/`, and `.agents/settings.json` are project standard and tracked in git — this is how AI-assisted development conventions stay consistent across contributors/sessions on this repo. Only `.agents/settings.local.json` is gitignored (personal machine-local overrides, per Codex's own convention). Don't pre-create empty agents/skills/commands speculatively — add them when a real, repeated need shows up (see `.agents/skills/run-electron/SKILL.md` for the kind of thing that belongs there: concrete, hard-won knowledge about this specific repo/sandbox, not generic advice).
+- Renderer media uses `utawakui-media:`. Keep privileged scheme registration before
+  `app.whenReady()` and preserve `standard`, `stream`, `supportFetchAPI` and
+  `corsEnabled` privileges.
+- Range serving must return correct 206 responses. Do not replace the manual stream
+  response with `net.fetch(file://...)` without byte- and header-level verification.
+- The filesystem is authoritative for track existence. New assets live under
+  `tracks/<trackId>/`; `library.json` stores scalar metadata only and no absolute
+  paths.
+- Sidecars are main-owned derived data. Renderer sends track ids and bounded product
+  intents only.
+- `playlists.json` owns ordered user collections. Source-backed albums have
+  read-only membership from the renderer.
 
-## CSS tokens
+### Optional Services
 
-Plain CSS custom properties, no preprocessor (Sass/Less/PostCSS) — this predates and is independent of the Vue/Vite decision described in Architecture above; don't read the JS framework choice as license to add a CSS one too.
+- Every gated main operation rechecks its feature gate. A renderer notice is not a
+  trust boundary.
+- Provider runtime, FFmpeg, each active model and Audio Python capability locks are
+  separate lifecycle units as defined in `docs/architecture.md`.
+- Provider Python and Audio Python are different runtime families and must not share
+  environments, activation files or process policy.
+- `quick` and `general` are the runnable separation recipe intents. Refined and
+  benchmark models must remain unavailable until their explicit gates pass.
 
-There are two separate token layers, deliberately not shared:
+### Output And Shared Code
 
-- **`--ui-*`** (`src/styles/tokens.css`): control panel chrome only. Opaque app window, not user-themeable.
-- **`--ovl-*`** (not created yet — no overlay code exists in the repo): the OBS overlay's tokens. Transparent-background, needs strong text outlines to read over stream video, and **is user-selectable** (see spec.md §5 and §8 for the overlay architecture and roadmap).
+- `overlay/` is an independent Browser Source delivery path, not a Vite view or an
+  Electron window. It uses its own visual tokens.
+- Canonical pure presentation projections belong in `shared/presentation/`;
+  `overlay/shared/` contains Browser Source route adapters only.
+- Output routes and media resolvers use exact allowlists. Never serve arbitrary
+  renderer HTML, request-derived paths or filesystem data.
+- Renderer remains player／queue／lyrics authority. Projection Hub validates
+  `bootId`, `sourceEpoch` and revisions; the public WebSocket stays read-only.
 
-Do not merge these into one token file, even though it looks like duplication. Reasons that hold regardless of how the code evolves:
+### Errors And Diagnostics
 
-1. They mean different things — an overlay theme the _viewer/streamer picks per-stream_ must not bleed into the control panel's own chrome.
-2. spec.md §5 requires the overlay be decoupled from the Electron shell; a shared token file re-couples them.
-3. There's no shared build pipeline to share a file through anyway — the control panel's `src/styles/` is bundled by Vite for _this_ app, while the overlay will be served over HTTP from its own root by a separate server. "Sharing" a file would mean coupling those delivery paths, so two independent layers is the zero-infrastructure option, not just the tidier one.
+- Operational errors are recorded in main with original private context, then
+  crossed over IPC as bounded structured public errors.
+- Gate-disabled flow is expected and is not a diagnostic failure.
+- Do not expose stderr, provider bodies, paths, URLs or untrusted ids in public
+  errors. Preserve `diagnosticRecorded` deduplication semantics.
 
-**Overlay theme contract** (for when overlay code is actually built): one theme = one CSS file under `overlay/themes/<name>.css` that overrides the fixed set of `--ovl-*` custom properties. Overlay CSS must never `@import` or reference `src/styles/tokens.css`.
+## Packaging Rules
 
-When adding a new token: only add it once a real piece of UI needs it. Don't pre-invent state colors (error/warning/success, etc.) for screens that don't exist yet.
+- `dist/` is the Vue renderer bundle; `overlay/` is packaged separately.
+- Keep `electron-builder.yml`, `docs/operations/release-inventory.md` and packaging tests in
+  sync whenever runtime files, workers, shared assets or dependencies move.
+- The packaged executable filename intentionally remains `electron.exe`; installer
+  product identity and AUMID are `Utawakui` / `com.utawakui.app`.
+- App-managed optional dependencies do not belong in the base installer or startup
+  critical path.
 
-`--ui-color-accent-contrast` is a semantic token, not an alias for `--ui-color-canvas` — it's what every accent-filled surface (selected nav item, active track row, accent button, play button) uses for its text/icon color. It reads the same as `--ui-color-canvas` under the current dark palette, but a light theme's `--ui-color-canvas` going white would break all four of those controls if this weren't its own token. `--ui-color-focus` backs every `:focus-visible` ring; `--ui-color-accent-hover` backs `.ui-btn--accent`'s hover state (not an `opacity` trick — opacity blends toward whatever's behind the element, which flips visual direction between light and dark).
+## UI Conventions
 
-`electron/main/windowState.js`'s `BrowserWindow` `backgroundColor` is a JS literal (can't reference a CSS variable) and must be kept in sync with `--ui-color-canvas` by hand — it's commented at the call site.
+- Global renderer styles live in `src/styles/`; fixed public assets live in `public/`.
+- Feature components are grouped under `src/components/<feature>/`; reusable
+  primitives live in `src/components/ui/`.
+- Prefer existing semantic design tokens and shared primitives. Avoid page-local
+  hex colors, duplicate buttons, bespoke track rows or control-panel tokens in
+  Overlay code.
+- The control panel optimizes operator clarity and dense live use. Preserve visible
+  focus, keyboard access, reduced-motion behavior and WCAG AA contrast.
 
-Icon sizing has the same hand-synced-literal problem, in the opposite direction: `@lucide/vue`'s `:size` is a Vue prop, not a CSS property, so a CSS custom property can't feed it. `src/constants/ui.js`'s `ICON_SIZE` (16px, desktop-density — not borrowed from iOS HIG, which sizes for touch targets, not mouse-driven desktop UI) is the single literal every icon usage imports, instead of each component hardcoding its own size.
+## Change Discipline
 
-## Component folders
-
-Components are grouped by product role rather than current visual styling. Existing UI is temporary; keep future rebuilds in the folder that matches responsibility:
-
-- `src/components/layout/`: app shell, global navigation, and long-lived frame components.
-- `src/components/playback/`: persistent playback controls, transport, pitch/tempo, and now-playing surfaces.
-- `src/components/library/`: track rows, artwork, metadata, album grouping, and media-library surfaces.
-- `src/components/playlists/`: playlist, album, setlist, and collection navigation components.
-- `src/components/queue/`: active queue, upcoming tracks, and reorderable queue sections.
-- `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.
-- `src/components/lyrics/`: lyrics workspace, synced-line display, lyric editing, and timing surfaces.
-- `src/components/output/`: OBS output-preview workbench — style-set/preset panels and the saved-config list.
-- `src/components/settings/`: Settings-view blocks, action rows, and feature-gate rows.
-- `src/components/ui/`: low-level primitives only. Do not put track-, playlist-, provider-, lyric-, playback-, or OBS-specific behavior here.
-
-## Shared UI primitives (`src/components/ui/`)
-
-`UiButton.vue` (ghost/accent, icon + optional label), `UiTrackRow.vue` (title/artist/duration list row with `lead`/`trail` slots, or pass a whole `:track` object), and `UiPageHeader.vue` (page title + optional `#actions` slot, replacing each view's own `<h1>`) exist because the same CSS had drifted into multiple files with slightly different values before being consolidated. Same threshold as the `.agents/` conventions above: add a new primitive here only once a real, already-existing duplication needs collapsing — don't pre-build a component library for UI that doesn't exist yet.
-
-Four more collapsed the same way in a later pass: `UiTrackThumb.vue` (img-or-initial-fallback square; `size` required; `radius`/`background`/`color`/`font-size` are passed as CSS custom-property overrides, not inline `color`/`background`, so caller-scope selectors like `.playlist-sidebar-row--active .playlist-sidebar-row__thumb` still win the cascade; `decorative`/`uppercase` flags plus a `#overlay` slot cover the play/pause-button and Music2-icon-fallback callers) backs `UiTrackRow`, `SetlistPlaylistTable`, `QueueTrackButton`, `PlayerBar`'s artwork, and `PlaylistSidebarRow`. `UiHint.vue` (`tone: 'muted' | 'text' | 'danger'`, `padded`/`center`) replaced the empty/loading/error text blocks that had drifted across Setlist/Import/Lyrics/Queue. `UiChip.vue` (`background`/`color` style overrides) is the pill badge behind platform tags, the download-mode label, and candidate confidence/selected markers. `UiSearchBox.vue` (`v-model`, icon + clear button) replaced two byte-for-byte duplicated search inputs in `SetlistView.vue`. `UiIconButton.vue` (ghost/accent/overlay variants, `sm`/`md`/`lg` sizes, `square`/`circle`/`inherit` shape) is the icon-only counterpart to `UiButton` — it backs `PlayerBar`'s play/pause control (`shape="circle" size="lg" variant="accent"`), `AppTitleBar`, and playlist-row/detail icon actions.
-
-One call site is **deliberately not** using `UiButton` (or `UiIconButton`), not an oversight:
-
-- **`AppTopTabs.vue`'s section tabs** stay bespoke — each tab is a `clip-path`-shaped "folder" button with its own reveal animation and an active state that fills with `--ui-color-accent`, none of which match `UiButton`'s ghost/accent action-button semantics. Forcing it in would mean `UiButton` growing shape/animation props for a single caller.
-
-`UiButton`'s `icon` prop takes the lucide component itself (not a rendered `<Icon :size="ICON_SIZE" />`) specifically so `ICON_SIZE` only needs importing in `UiButton.vue` (and `UiIconButton.vue`, which renders icons the same way) plus the one bespoke exception above — every other call site just passes the icon reference.
-
-## Settings metadata maintenance
-
-`organizeTrackMetadataFromSidecars()` is Settings' repeatable offline organizer.
-It reuses each saved `info.json`, updates `title` / `artist` only when no
-manual-origin marker exists and the value is missing or still equal to the
-one of the explicitly compatible previous provider projections, fills only an invalid/missing `duration`, and
-refreshes `album` / `releaseYear`. Manual metadata saves stamp
-`titleOrigin`/`artistOrigin: 'manual'`, including an explicitly cleared artist;
-provider imports, backfill, and first-time sidecar organization stamp
-`'provider'` origins. A legacy entry with an absent artist and no origin is
-conservatively treated as a possible pre-origin manual clear, so neither path
-refills it. Both organizer and automatic backfill preserve manual fields. Its update event
-sets `allowProviderBackfill: false` all the way through the follow-up
-`library:list`, so the action remains offline. It returns per-track
-normalized/enriched/skipped counts, never rewrites sidecars, and does not touch
-thumbnails, source identity, or unsupported credit fields.
-
-For a provider `artists` list, the current projection is stricter than the
-original confirmed-staff-only pass documented in the historical IPC overview:
-when an auto-generated description and uploader/channel exactly corroborate a
-primary artist, retain only that primary, description-confirmed performers, and
-artist-list members explicitly named by a `feat.` / `ft.` title marker. If the
-primary cannot be corroborated, preserve the full provider list. Maintenance
-emits both the raw pre-normalization projection and the prior confirmed-staff
-projection as compatible predecessors, so originless first-phase values can be
-upgraded only on an exact match; provider-origin values may advance directly.
-
-## Design Context
-
-### Users
-
-Streamers/VTubers running karaoke ("歌回") streams, operating this control panel live while performing — switching tracks, adjusting pitch, checking lyrics — while an audience watches the OBS overlay output, not this panel. Mistakes or confusion here cost real-time composure during a live broadcast; this is an operational tool used under time pressure, not a leisurely browsing surface.
-
-### Brand Personality
-
-Calm, deliberate, unobtrusive. Not a playful VTuber-branded skin, not a commerce/SaaS dashboard — closer to a professional live-production tool: fast to scan, low visual noise, nothing competing for the performer's attention. Product color identity is **still being refined** — the current palette (`--ui-color-canvas: #1f2328`, `--ui-color-accent: #55a2a7`) follows DESIGN.md's graphite/washed-teal/paper/coral direction, but DESIGN.md itself still calls these tokens structural placeholders, not final brand identity (see its Color Rules). Don't treat it as fully final when critiquing color choices.
-
-### Aesthetic Direction
-
-Both dark and light themes are implemented (`src/styles/tokens.css`'s `:root` and `:root[data-ui-theme='light']` blocks), toggled via `useTheme.js` and persisted in `config.json`'s `uiTheme`. Layout structure (persistent bottom player bar spanning full width, a playlist rail plus top section tabs) references Spotify/YT Music for information architecture — that's a structural reference, not necessarily the target visual skin. No explicit anti-references were given, but the calm/low-distraction goal implies avoiding generic "AI slop" dark-mode-with-glow aesthetics: gradient accents, glowing borders, or glassmorphism would work against the "don't distract the performer mid-stream" goal, not just look generic.
-
-### Design Principles
-
-1. **Legibility and speed-of-scan over decoration** — operated live, under time pressure, mid-performance.
-2. **Low visual noise** — no unnecessary motion, glow, or competing accents; two elements fighting for attention is a bug, not a style choice.
-3. **Structure is borrowed, skin is not decided** — Spotify/YT Music inform layout conventions (playlist rail + persistent player); color/type identity is still open and shouldn't be critiqued as if it were a finished brand decision.
-4. **Design for both themes** — light + dark are both implemented; don't bake in assumptions (contrast, opacity tricks) that only hold for one palette.
+- Keep changes minimal and preserve unrelated work in a dirty tree.
+- Do not create commits until the user explicitly requests them. Keep iterative
+  visual corrections uncommitted through manual acceptance.
+- Add or update focused tests for changed contracts. Use CJS exports that remain
+  statically discoverable where ESM tests import named values from CJS barrels.
+- Vite HMR does not reload Electron main or preload code. Restart the complete dev
+  process after those changes before treating desktop behavior as verified.
+- Reproduce visual or alpha-composition failures in the same visible Electron／OBS
+  mode. Offscreen capture and DOM/CSS assertions are supporting evidence, not
+  substitutes for the requested manual acceptance.
+- For architecture changes, update the relevant ADR or focused contract and the
+  architecture map. For product status changes, update only the spec status table.
+- Before completion, run proportionate lint, Markdown, formatting, tests, build and
+  packaging/startup checks. Document only verified results.

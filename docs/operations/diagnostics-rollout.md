@@ -1,10 +1,10 @@
-# Local diagnostics rollout route
+# Local Diagnostics Rollout
 
 ## Status
 
-Renderer recovery and Settings controls resumed on 2026-08-23. Packaged smoke,
-explicit export, and main domain-handler wrappers remain deferred to their
-release/support triggers below.
+Renderer recovery, Settings controls, and the first main-owned IPC error boundary
+are implemented. Packaged location smoke, explicit export, additional domain
+wrappers, and recovery evidence remain tied to the release/support triggers below.
 
 The pause is intentional, not a technical blocker. ADR 0008 remains the
 architecture and privacy contract; this document records the implementation
@@ -147,10 +147,9 @@ Expected main path:
 Test cancellation as expected control flow, unsafe persisted legacy lines,
 partial final lines, destination write failure, and absence of private fields.
 
-### Batch 6: Domain IPC wrapper and first migrations
+### Batch 6: Domain IPC wrapper and first migrations — started
 
-Add one small main helper, tentatively
-`electron/main/diagnosticIpcHandler.js`, with tests written first. It must:
+The implemented helper is `electron/main/ipcErrorBoundary.js`. It must:
 
 - preserve handler success values and Electron invoke semantics;
 - assign operation/correlation metadata in main;
@@ -161,12 +160,11 @@ Add one small main helper, tentatively
 - prevent duplicate records when a worker and its parent handler describe the
   same failure.
 
-Migrate only these domains first because they already have structured renderer
-diagnostics:
+The dependency handler migration is complete. Separation and reading remain the
+next scoped migrations because they already have structured renderer diagnostics:
 
-1. `electron/main/featureDependencyHandlers.js`
-2. `electron/main/separationHandlers.js`
-3. The reading-related paths in `electron/main/lyricsHandlers.js`
+1. `electron/main/separationHandlers.js`
+2. The reading-related paths in `electron/main/lyricsHandlers.js`
 
 Update their matching renderer composables so `useAppDiagnostics` remains the
 safe recovery/presentation surface and does not submit a duplicate persistent

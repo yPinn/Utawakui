@@ -1,4 +1,4 @@
-# Audio Python `separation-cpu` Lock Spike — 2026-08-23
+# Audio Python Separation CPU Lock Spike — 2026-08-23
 
 ## Scope and safety boundary
 

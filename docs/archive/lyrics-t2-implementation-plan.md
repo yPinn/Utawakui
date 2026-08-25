@@ -337,7 +337,7 @@ implementation:
 
 ## References
 
-- [ADR 0010: Lyrics timing granularity](adr/0010-lyrics-timing-granularity-and-output-content-split.md)
-- [ADR 0012: State convergence and startup](adr/0012-state-convergence-and-startup-phases.md)
-- [Lyrics Timing Contract](lyrics-timing-contract.md)
-- [Music Analysis Contract](music-analysis-contract.md)
+- [ADR 0010: Lyrics timing granularity](../adr/0010-lyrics-timing-granularity-and-output-content-split.md)
+- [ADR 0012: State convergence and startup](../adr/0012-state-convergence-and-startup-phases.md)
+- [Lyrics Timing Contract](../contracts/lyrics-timing-contract.md)
+- [Music Analysis Contract](../contracts/music-analysis-contract.md)
