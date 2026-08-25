@@ -95,6 +95,26 @@ describe('architecture ownership boundaries', () => {
     expect(readings).not.toContain('../lib/musixmatch');
   });
 
+  it('keeps player transport separate from Web Audio graph ownership', () => {
+    const graphPath = resolve(
+      root,
+      'src/composables/player/usePlayerAudioGraph.js',
+    );
+    expect(existsSync(graphPath)).toBe(true);
+    if (!existsSync(graphPath)) return;
+
+    const player = read('src/composables/usePlayer.js');
+    const graph = read('src/composables/player/usePlayerAudioGraph.js');
+
+    expect(player.split(/\r?\n/u).length).toBeLessThan(600);
+    expect(player).toContain("from './player/usePlayerAudioGraph.js'");
+    expect(player).not.toContain('@soundtouchjs/audio-worklet');
+    expect(player).not.toContain('createChannelSplitter');
+    expect(graph).toContain('usePlayerAudioGraph');
+    expect(graph).not.toContain("addEventListener('timeupdate'");
+    expect(graph).not.toContain('endedListeners');
+  });
+
   it('keeps durable architecture guidance aligned with the composition root', () => {
     const guidance = read('AGENTS.md');
     expect(guidance).not.toContain('now ~210 lines');

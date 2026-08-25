@@ -29,7 +29,7 @@ const coveragePolicy = Object.freeze({
     'shared/**/*.mjs',
     'scripts/audio-separator-roformer-wheel-patch.mjs',
     'scripts/release-contract.mjs',
-    'src/composables/*.js',
+    'src/composables/**/*.js',
     'src/constants/*.js',
     'src/icons/*.js',
     'src/utils/*.js',
@@ -310,6 +310,24 @@ const coveragePolicy = Object.freeze({
         branches: 82,
         functions: 100,
         lines: 92,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/usePlayer.js',
+      minimum: Object.freeze({
+        statements: 84,
+        branches: 79,
+        functions: 95,
+        lines: 87,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/player/usePlayerAudioGraph.js',
+      minimum: Object.freeze({
+        statements: 85,
+        branches: 78,
+        functions: 90,
+        lines: 86,
       }),
     }),
     Object.freeze({

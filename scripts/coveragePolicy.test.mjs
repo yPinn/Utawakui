@@ -106,6 +106,13 @@ describe('coverage policy', () => {
     );
   });
 
+  it('measures nested renderer composable support modules', () => {
+    expect(coveragePolicy.include).toContain('src/composables/**/*.js');
+    expect(
+      classifyAppSource('src/composables/player/usePlayerAudioGraph.js'),
+    ).toEqual({ status: 'measured' });
+  });
+
   it('does not let imported static JSON inflate executable coverage', () => {
     expect(coveragePolicy.exclude).toContain('shared/**/*.json');
   });
@@ -129,6 +136,8 @@ describe('coverage policy', () => {
         'shared/outputContract.js',
         'shared/outputStreamContract.js',
         'src/composables/useMediaSession.js',
+        'src/composables/usePlayer.js',
+        'src/composables/player/usePlayerAudioGraph.js',
         'src/composables/usePerformerViewState.js',
       ]),
     );
