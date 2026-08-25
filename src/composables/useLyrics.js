@@ -1,11 +1,12 @@
-import { computed, nextTick, reactive, readonly, shallowRef, watch } from 'vue';
+import { computed, nextTick, reactive, readonly, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { useLibrary } from './useLibrary.js';
 import { usePlaylists } from './usePlaylists.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
-import { FEATURE_IDS } from '../constants/featureGates.js';
+import { useLyricsAcquisition } from './lyrics/useLyricsAcquisition.js';
+import { useLyricsSourceDocuments } from './lyrics/useLyricsSourceDocuments.js';
 import { pickPreferredLyricsSource } from '../utils/lyrics.js';
 import {
   deriveLyricsPlaybackState,
@@ -14,17 +15,19 @@ import {
 } from '../utils/lyricsDocument.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
-const EMPTY_LYRICS = { status: 'unchecked', sources: [] };
-const EMPTY_TIMING = Object.freeze({
-  status: 'missing',
-  sourceFingerprint: null,
-});
+const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
 
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
 const { selectedPlaylist, initialize: initializePlaylists } = usePlaylists();
 const { requireFeatureGate } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
+const {
+  state: libraryState,
+  tracksById,
+  initialize: initializeLibrary,
+  refresh: refreshLibrary,
+} = useLibrary();
 
 function reportLyricsError(error, operation, message, options = {}) {
   return recordError(error, {
@@ -37,17 +40,6 @@ function reportLyricsError(error, operation, message, options = {}) {
     ...options,
   }).message;
 }
-// The full library pool (title/artist/lyrics/hasSeparation lookups) is
-// shared with SetlistView.vue via this singleton — see useLibrary.js for why
-// the fetch + onLibraryUpdated subscription moved out of here. Lyrics owns
-// its own internal track scope/selection; the Setlist collection rail is only
-// consulted when the user explicitly chooses the "current playlist" scope.
-const {
-  state: libraryState,
-  tracksById,
-  initialize: initializeLibrary,
-  refresh: refreshLibrary,
-} = useLibrary();
 
 const state = reactive({
   tracks: [],
@@ -56,9 +48,6 @@ const state = reactive({
   selectedSourceFilename: null,
   lyricsText: '',
   lyricSource: null,
-  // Auto-unwrapped by reactive() — libraryState.isLoading is the only
-  // writer, so this stays a live mirror rather than a value this module
-  // manages itself.
   isLoading: computed(() => libraryState.isLoading),
   isLoadingLyrics: false,
   backfillStatus: {
@@ -75,11 +64,10 @@ const state = reactive({
     result: null,
     error: null,
   },
-  // Manual lrclib search — separate from the passive backfill above.
   candidateSearch: {
     isLoading: false,
     trackId: null,
-    status: null, // 'ok' | 'unavailable' | 'error' | null
+    status: null,
     reason: null,
     candidates: [],
     groups: { best: [], related: [] },
@@ -101,18 +89,6 @@ const state = reactive({
   error: null,
   offsetSeconds: 0,
 });
-// Timing documents can grow to thousands of lines/segments and are immutable
-// snapshots. Replacing one shallow ref avoids recursively proxying the document
-// while keeping useLyrics as the sole renderer owner.
-const lyricsTiming = shallowRef(EMPTY_TIMING);
-
-let unsubscribeLibraryBackfillStatus = null;
-let lyricsRequestId = 0;
-let offsetSaveRequestId = 0;
-let musixmatchProbeRequestId = 0;
-let candidateSearchRequestId = 0;
-let initializationPromise = null;
-let selectedLyricsLoad = Promise.resolve();
 
 const selectedTrack = computed(
   () =>
@@ -129,6 +105,46 @@ const selectedSource = computed(() => {
     ) ?? null
   );
 });
+
+const sourceDocuments = useLyricsSourceDocuments({
+  state,
+  selectedTrack,
+  reportLyricsError,
+  refreshLibrary,
+  selectSource: (filename) => selectSource(filename),
+});
+const {
+  lyricsTiming,
+  loadSelectedLyrics,
+  waitForSelectedLyricsLoad,
+  adjustOffset,
+  resetOffset,
+  retryOffsetSave,
+  saveTimingDocument,
+  setSourceLabel,
+  deleteSource,
+  importManualLyricsText,
+  importManualLyricsFile,
+} = sourceDocuments;
+
+const acquisition = useLyricsAcquisition({
+  state,
+  selectedTrack,
+  requireFeatureGate,
+  reportLyricsError,
+  refreshLibrary,
+  selectSource: (filename) => selectSource(filename),
+});
+const {
+  clearMusixmatchProbe,
+  clearCandidateSearch,
+  ensureLyricsFlow,
+  probeMusixmatch,
+  searchLyricsCandidates,
+  saveLyricsCandidate,
+  backfillSourceLabels,
+} = acquisition;
+
 const lyricsDocument = computed(() =>
   normalizeLyricsDocument({
     text: state.lyricsText,
@@ -146,8 +162,6 @@ const isSelectedTrackPlaying = computed(
     Boolean(state.selectedTrackId) &&
     playerState.track?.id === state.selectedTrackId,
 );
-// For the track list's own per-row "current" cue — independent of
-// selectedTrackId (which track's lyrics are open), not a duplicate of it.
 const currentTrackId = computed(() => playerState.track?.id ?? null);
 const currentLyricsPositionMs = computed(() =>
   isSelectedTrackPlaying.value
@@ -177,10 +191,6 @@ function joinPlaylistTracks(pool, playlist) {
   return playlist.trackIds.map((id) => byId.get(id)).filter(Boolean);
 }
 
-function isMissingLyrics(track) {
-  return track?.lyrics?.status !== 'available';
-}
-
 function buildScopedTracks(pool) {
   if (state.trackScope === 'current-playlist') {
     return joinPlaylistTracks(pool, selectedPlaylist.value);
@@ -189,7 +199,7 @@ function buildScopedTracks(pool) {
     return pool.filter((track) => track.sourceType === 'local-file');
   }
   if (state.trackScope === 'missing-lyrics') {
-    return pool.filter(isMissingLyrics);
+    return pool.filter((track) => track?.lyrics?.status !== 'available');
   }
   if (state.trackScope === 'available-lyrics') {
     return pool.filter((track) => track.lyrics?.status === 'available');
@@ -213,136 +223,6 @@ function pickSelectedTrackId(tracks) {
   return tracks[0]?.id ?? null;
 }
 
-function clearMusixmatchProbe() {
-  musixmatchProbeRequestId += 1;
-  state.musixmatchProbe.isLoading = false;
-  state.musixmatchProbe.trackId = null;
-  state.musixmatchProbe.result = null;
-  state.musixmatchProbe.error = null;
-}
-
-function clearCandidateSearch() {
-  candidateSearchRequestId += 1;
-  state.candidateSearch.isLoading = false;
-  state.candidateSearch.trackId = null;
-  state.candidateSearch.status = null;
-  state.candidateSearch.reason = null;
-  state.candidateSearch.candidates = [];
-  state.candidateSearch.groups = { best: [], related: [] };
-  state.candidateSearch.invalidRecordCount = 0;
-  state.candidateSearch.error = null;
-  state.manualSave.error = null;
-}
-
-const LRCLIB_FAILURE_MESSAGES = Object.freeze({
-  'rate-limited': 'LRCLIB 暫時限制搜尋請求，請稍後再試。',
-  offline: '目前無法連線至 LRCLIB，請檢查網路後再試。',
-  'fetch-unavailable': '目前無法連線至 LRCLIB，請稍後再試。',
-  timeout: 'LRCLIB 回應逾時，請稍後再試。',
-  'service-unavailable': 'LRCLIB 服務暫時無法使用，請稍後再試。',
-  'invalid-json': 'LRCLIB 回傳了無法讀取的資料，請稍後再試。',
-  'invalid-record': 'LRCLIB 回傳的候選資料不完整，請調整條件後再試。',
-  'response-too-large': 'LRCLIB 回傳資料超出安全限制，請縮小搜尋範圍。',
-  busy: '已有一筆 LRCLIB 搜尋正在進行，請稍候。',
-});
-
-function candidateGroups(result) {
-  if (result?.groups) {
-    return {
-      best: Array.isArray(result.groups.best) ? result.groups.best : [],
-      related: Array.isArray(result.groups.related)
-        ? result.groups.related
-        : [],
-    };
-  }
-  const candidates = Array.isArray(result?.candidates) ? result.candidates : [];
-  return {
-    best: candidates.filter((candidate) => candidate.matchBand !== 'related'),
-    related: candidates.filter(
-      (candidate) => candidate.matchBand === 'related',
-    ),
-  };
-}
-
-function candidateSaveOptions(query) {
-  if (!query) return undefined;
-  const plainQuery = {};
-  for (const field of ['title', 'artist']) {
-    if (typeof query[field] === 'string') plainQuery[field] = query[field];
-  }
-  return { query: plainQuery };
-}
-
-function replaceCandidate(candidate) {
-  const candidates = state.candidateSearch.candidates.map((item) =>
-    item.id === candidate.id ? candidate : item,
-  );
-  state.candidateSearch.candidates = candidates;
-  state.candidateSearch.groups = candidateGroups({ candidates });
-}
-
-async function ensureLyricsFlow(options = {}) {
-  const enabled = await requireFeatureGate(FEATURE_IDS.LYRICS_FLOW, {
-    source: 'lyrics',
-    operation: options.operation || 'external-source',
-    message: '請先到設定啟用歌詞來源，才能搜尋、保存或整理線上歌詞。',
-  });
-  if (!enabled) {
-    const message = '請先到設定啟用歌詞來源';
-    if (options.errorTarget === 'musixmatchProbe') {
-      state.musixmatchProbe.error = message;
-    } else if (options.errorTarget === 'manualSave') {
-      state.manualSave.error = message;
-    } else {
-      state.candidateSearch.error = message;
-    }
-  }
-  return enabled;
-}
-
-async function loadSelectedLyrics() {
-  const track = selectedTrack.value;
-  const filename = state.selectedSourceFilename;
-  lyricsRequestId += 1;
-  const requestId = lyricsRequestId;
-  offsetSaveRequestId += 1;
-
-  state.lyricsText = '';
-  state.lyricSource = null;
-  state.offsetSeconds = 0;
-  state.offsetSave.isSaving = false;
-  state.offsetSave.error = null;
-  lyricsTiming.value = EMPTY_TIMING;
-  if (!track || !filename) return;
-
-  if (typeof window.Utawakui?.getTrackLyrics !== 'function') {
-    state.error = '請重新啟動應用程式後再讀取歌詞。';
-    return;
-  }
-
-  state.isLoadingLyrics = true;
-  try {
-    const result = await window.Utawakui.getTrackLyrics(track.id, filename);
-    if (requestId !== lyricsRequestId) return;
-    state.lyricsText = result?.text ?? '';
-    state.lyricSource = result?.source ?? null;
-    state.offsetSeconds = Number.isInteger(result?.source?.offsetMs)
-      ? result.source.offsetMs / 1000
-      : 0;
-    lyricsTiming.value = result?.timing ?? EMPTY_TIMING;
-    state.error = null;
-  } catch (err) {
-    if (requestId !== lyricsRequestId) return;
-    state.error = reportLyricsError(
-      err,
-      'load',
-      '目前無法讀取歌詞，請再試一次。',
-    );
-  } finally {
-    if (requestId === lyricsRequestId) state.isLoadingLyrics = false;
-  }
-}
-
 function applyLibraryTracks() {
   const previousTrackId = state.selectedTrackId;
   state.tracks = buildScopedTracks(libraryState.tracks);
@@ -361,7 +241,7 @@ function applyLibraryTracks() {
   state.selectedSourceFilename =
     pickPreferredLyricsSource(selectedTrack.value, currentFilename)?.filename ??
     null;
-  selectedLyricsLoad = loadSelectedLyrics();
+  loadSelectedLyrics();
 }
 
 function setTrackScope(scope) {
@@ -370,21 +250,17 @@ function setTrackScope(scope) {
   applyLibraryTracks();
 }
 
-// The "重新掃描" (reload) button's handler — delegates the actual fetch to
-// the shared singleton (which also updates SetlistView.vue's copy).
-// applyLibraryTracks() reruns on its own via the libraryState.tracks watch
-// below once the fetch resolves, and state.error mirrors libraryState.error
-// via its own watch below too, so this only needs to trigger the fetch.
 async function refresh() {
   await refreshLibrary();
 }
 
+let initializationPromise = null;
 function initialize() {
   if (initializationPromise) return initializationPromise;
   initializationPromise = (async () => {
     await Promise.all([initializeLibrary(), initializePlaylists()]);
     await nextTick();
-    await selectedLyricsLoad;
+    await waitForSelectedLyricsLoad();
   })();
   return initializationPromise;
 }
@@ -407,92 +283,6 @@ function selectSource(filename) {
   state.selectedSourceFilename = filename;
   state.offsetSeconds = 0;
   loadSelectedLyrics();
-}
-
-async function persistSelectedOffset() {
-  const trackId = state.selectedTrackId;
-  const sourceFilename = state.selectedSourceFilename;
-  const offsetMs = Math.round(state.offsetSeconds * 1000);
-  if (!trackId || !sourceFilename) return null;
-
-  offsetSaveRequestId += 1;
-  const requestId = offsetSaveRequestId;
-  state.offsetSave.isSaving = true;
-  state.offsetSave.error = null;
-  try {
-    if (typeof window.Utawakui?.setLyricsSourceOffset !== 'function') {
-      throw new Error('lyrics offset bridge unavailable');
-    }
-    return await window.Utawakui.setLyricsSourceOffset(
-      trackId,
-      sourceFilename,
-      offsetMs,
-    );
-  } catch (err) {
-    if (requestId === offsetSaveRequestId) {
-      state.offsetSave.error = reportLyricsError(
-        err,
-        'offset-save',
-        '同步調整未儲存，請再試一次。',
-      );
-    }
-    return null;
-  } finally {
-    if (requestId === offsetSaveRequestId) state.offsetSave.isSaving = false;
-  }
-}
-
-function adjustOffset(deltaSeconds) {
-  state.offsetSeconds =
-    Math.round((state.offsetSeconds + deltaSeconds) * 10) / 10;
-  persistSelectedOffset();
-}
-
-function resetOffset() {
-  state.offsetSeconds = 0;
-  persistSelectedOffset();
-}
-
-async function saveTimingDocument(document) {
-  const trackId = state.selectedTrackId;
-  const sourceFilename = state.selectedSourceFilename;
-  const sourceFingerprint = lyricsTiming.value.sourceFingerprint;
-  if (!trackId || !sourceFilename || !sourceFingerprint) {
-    state.timingSave.error = '目前歌詞來源缺少可驗證的版本資訊。';
-    return null;
-  }
-  if (typeof window.Utawakui?.saveLyricsTiming !== 'function') {
-    state.timingSave.error = '請重新啟動應用程式後再儲存歌詞時間。';
-    return null;
-  }
-
-  state.timingSave.isSaving = true;
-  state.timingSave.error = null;
-  try {
-    const timing = await window.Utawakui.saveLyricsTiming(
-      trackId,
-      sourceFilename,
-      sourceFingerprint,
-      document,
-    );
-    if (
-      state.selectedTrackId === trackId &&
-      state.selectedSourceFilename === sourceFilename &&
-      lyricsTiming.value.sourceFingerprint === sourceFingerprint
-    ) {
-      lyricsTiming.value = timing;
-    }
-    return timing?.document ?? document;
-  } catch (err) {
-    state.timingSave.error = reportLyricsError(
-      err,
-      'save-timing',
-      '歌詞時間未儲存，請再試一次。',
-    );
-    return null;
-  } finally {
-    state.timingSave.isSaving = false;
-  }
 }
 
 function applyBackfillStatus(payload = {}) {
@@ -520,9 +310,6 @@ async function playFromLine(line) {
   if (!line || !Number.isFinite(line.start) || !selectedTrack.value) return;
   const targetTime = Math.max(0, line.start - state.offsetSeconds);
   if (playerState.track?.id !== selectedTrack.value.id) {
-    // Queue the Lyrics workspace's own track pool, not the Setlist sidebar's
-    // selection. Lyrics is an internal work surface; the persistent playlist
-    // rail should not become its hidden queue/source owner.
     setQueue(state.tracks, selectedTrack.value.id, {
       sourceName: '歌詞',
       sourceId: 'lyrics-workspace',
@@ -531,318 +318,6 @@ async function playFromLine(line) {
   }
   seek(targetTime);
   await play();
-}
-
-async function probeMusixmatch() {
-  const track = selectedTrack.value;
-  if (!track) return null;
-  if (!(await ensureLyricsFlow({ errorTarget: 'musixmatchProbe' }))) {
-    return null;
-  }
-
-  musixmatchProbeRequestId += 1;
-  const requestId = musixmatchProbeRequestId;
-
-  state.musixmatchProbe.isLoading = true;
-  state.musixmatchProbe.trackId = track.id;
-  state.musixmatchProbe.result = null;
-  state.musixmatchProbe.error = null;
-
-  if (typeof window.Utawakui?.probeMusixmatchLyrics !== 'function') {
-    state.musixmatchProbe.isLoading = false;
-    state.musixmatchProbe.error = '請重新啟動應用程式後再檢查歌詞來源。';
-    return null;
-  }
-
-  try {
-    const result = await window.Utawakui.probeMusixmatchLyrics(track.id);
-    if (requestId !== musixmatchProbeRequestId) return null;
-    state.musixmatchProbe.result = result;
-    return result;
-  } catch (err) {
-    if (requestId !== musixmatchProbeRequestId) return null;
-    state.musixmatchProbe.error = reportLyricsError(
-      err,
-      'probe-source',
-      '目前無法檢查歌詞來源，請再試一次。',
-    );
-    return null;
-  } finally {
-    if (requestId === musixmatchProbeRequestId) {
-      state.musixmatchProbe.isLoading = false;
-    }
-  }
-}
-
-async function searchLyricsCandidates(
-  options,
-  trackId = state.selectedTrackId,
-) {
-  const track = state.tracks.find((candidate) => candidate.id === trackId);
-  if (!track) return;
-  candidateSearchRequestId += 1;
-  const requestId = candidateSearchRequestId;
-  if (!(await ensureLyricsFlow())) return;
-  if (requestId !== candidateSearchRequestId) return;
-
-  state.candidateSearch.isLoading = true;
-  state.candidateSearch.trackId = track.id;
-  state.candidateSearch.error = null;
-
-  if (typeof window.Utawakui?.searchLyricsCandidates !== 'function') {
-    state.candidateSearch.isLoading = false;
-    state.candidateSearch.error = '請重新啟動應用程式後再搜尋歌詞。';
-    return;
-  }
-
-  try {
-    const result = await window.Utawakui.searchLyricsCandidates(
-      track.id,
-      options,
-    );
-    if (requestId !== candidateSearchRequestId) return;
-    state.candidateSearch.status = result?.status ?? null;
-    state.candidateSearch.reason = result?.reason ?? null;
-    state.candidateSearch.candidates = Array.isArray(result?.candidates)
-      ? result.candidates
-      : [];
-    state.candidateSearch.groups = candidateGroups(result);
-    state.candidateSearch.invalidRecordCount = Number.isSafeInteger(
-      result?.invalidRecordCount,
-    )
-      ? result.invalidRecordCount
-      : 0;
-    if (result?.status === 'error') {
-      state.candidateSearch.error = reportLyricsError(
-        new Error(`lrclib search failed: ${result.reason || 'unknown'}`),
-        'search',
-        LRCLIB_FAILURE_MESSAGES[result.reason] ||
-          '目前無法搜尋歌詞，請稍後再試。',
-        { persist: false },
-      );
-    }
-    return result;
-  } catch (err) {
-    if (requestId !== candidateSearchRequestId) return;
-    state.candidateSearch.error = reportLyricsError(
-      err,
-      'search',
-      '目前無法搜尋歌詞，請再試一次。',
-      { persist: false },
-    );
-  } finally {
-    if (requestId === candidateSearchRequestId) {
-      state.candidateSearch.isLoading = false;
-    }
-  }
-}
-
-// main also broadcasts library:updated after a save, but that's fire-and-
-// forget — this explicit refresh is what lets selectSource() run only
-// once selectedLyrics.sources actually contains the new filename.
-async function saveLyricsCandidate(
-  candidate,
-  trackId = state.selectedTrackId,
-  query = undefined,
-) {
-  const track = state.tracks.find((item) => item.id === trackId);
-  if (!track) return null;
-  if (!(await ensureLyricsFlow())) return null;
-
-  if (typeof window.Utawakui?.saveLyricsCandidate !== 'function') {
-    state.manualSave.error = '請重新啟動應用程式後再儲存歌詞。';
-    return null;
-  }
-
-  state.manualSave.isSaving = true;
-  state.manualSave.error = null;
-  try {
-    const result = await window.Utawakui.saveLyricsCandidate(
-      track.id,
-      candidate.id,
-      candidate.previewFingerprint,
-      candidateSaveOptions(query),
-    );
-    if (result?.status === 'record-changed') {
-      return result;
-    }
-    if (result?.status !== 'saved' || !result.source) {
-      throw new Error(
-        `lrclib save unavailable: ${result?.reason || 'unknown'}`,
-      );
-    }
-    await refreshLibrary();
-    replaceCandidate({
-      ...candidate,
-      alreadySaved: true,
-      saveState: 'current',
-      ...(result.retrievedAt ? { retrievedAt: result.retrievedAt } : {}),
-    });
-    if (state.selectedTrackId === track.id) {
-      selectSource(result.source.filename);
-    }
-    return result;
-  } catch (err) {
-    state.manualSave.error = reportLyricsError(
-      err,
-      'save-candidate',
-      '歌詞未儲存，請再試一次。',
-      { persist: false },
-    );
-    return null;
-  } finally {
-    state.manualSave.isSaving = false;
-  }
-}
-
-// One-time repair for lrclib sources saved before the label field existed.
-async function backfillSourceLabels() {
-  const track = selectedTrack.value;
-  if (!track) return null;
-  if (!(await ensureLyricsFlow())) return null;
-
-  if (typeof window.Utawakui?.backfillLyricsSourceLabels !== 'function') {
-    state.manualSave.error = '請重新啟動應用程式後再更新標籤。';
-    return null;
-  }
-
-  state.manualSave.isSaving = true;
-  state.manualSave.error = null;
-  try {
-    const result = await window.Utawakui.backfillLyricsSourceLabels(track.id);
-    await refreshLibrary();
-    return result;
-  } catch (err) {
-    state.manualSave.error = reportLyricsError(
-      err,
-      'backfill-labels',
-      '標籤未更新，請再試一次。',
-    );
-    return null;
-  } finally {
-    state.manualSave.isSaving = false;
-  }
-}
-
-// A blank label clears it back to plain language/kind display.
-async function setSourceLabel(filename, label) {
-  const track = selectedTrack.value;
-  if (!track) return null;
-
-  if (typeof window.Utawakui?.setLyricsSourceLabel !== 'function') {
-    state.manualSave.error = '請重新啟動應用程式後再編輯標籤。';
-    return null;
-  }
-
-  state.manualSave.isSaving = true;
-  state.manualSave.error = null;
-  try {
-    const result = await window.Utawakui.setLyricsSourceLabel(
-      track.id,
-      filename,
-      label,
-    );
-    await refreshLibrary();
-    return result;
-  } catch (err) {
-    state.manualSave.error = reportLyricsError(
-      err,
-      'set-label',
-      '標籤未更新，請再試一次。',
-    );
-    return null;
-  } finally {
-    state.manualSave.isSaving = false;
-  }
-}
-
-// Falls the active selection off the deleted filename so
-// loadSelectedLyrics() doesn't keep requesting a file that's now gone.
-async function deleteSource(filename) {
-  const track = selectedTrack.value;
-  if (!track) return null;
-
-  if (typeof window.Utawakui?.deleteLyricsSource !== 'function') {
-    state.manualSave.error = '請重新啟動應用程式後再刪除歌詞來源。';
-    return null;
-  }
-
-  state.manualSave.isSaving = true;
-  state.manualSave.error = null;
-  try {
-    const result = await window.Utawakui.deleteLyricsSource(track.id, filename);
-    await refreshLibrary();
-    if (state.selectedSourceFilename === filename) {
-      selectSource(result.sources[0]?.filename ?? '');
-    }
-    return result;
-  } catch (err) {
-    state.manualSave.error = reportLyricsError(
-      err,
-      'delete-source',
-      '無法刪除歌詞來源，請再試一次。',
-    );
-    return null;
-  } finally {
-    state.manualSave.isSaving = false;
-  }
-}
-
-async function importManualLyricsText(payload) {
-  const track = selectedTrack.value;
-  if (!track) return null;
-
-  if (typeof window.Utawakui?.importLyricsText !== 'function') {
-    state.manualSave.error = '請重新啟動應用程式後再匯入歌詞。';
-    return null;
-  }
-
-  state.manualSave.isSaving = true;
-  state.manualSave.error = null;
-  try {
-    const result = await window.Utawakui.importLyricsText(track.id, payload);
-    await refreshLibrary();
-    if (result?.source?.filename) selectSource(result.source.filename);
-    return result;
-  } catch (err) {
-    state.manualSave.error = reportLyricsError(
-      err,
-      'import-text',
-      '歌詞未匯入，請再試一次。',
-    );
-    return null;
-  } finally {
-    state.manualSave.isSaving = false;
-  }
-}
-
-async function importManualLyricsFile() {
-  const track = selectedTrack.value;
-  if (!track) return null;
-
-  if (typeof window.Utawakui?.importLyricsFile !== 'function') {
-    state.manualSave.error = '請重新啟動應用程式後再匯入歌詞檔。';
-    return null;
-  }
-
-  state.manualSave.isSaving = true;
-  state.manualSave.error = null;
-  try {
-    const result = await window.Utawakui.importLyricsFile(track.id);
-    if (!result) return null;
-    await refreshLibrary();
-    if (result?.source?.filename) selectSource(result.source.filename);
-    return result;
-  } catch (err) {
-    state.manualSave.error = reportLyricsError(
-      err,
-      'import-file',
-      '歌詞未匯入，請再試一次。',
-    );
-    return null;
-  } finally {
-    state.manualSave.isSaving = false;
-  }
 }
 
 const stopPlayerSync = watch(
@@ -854,11 +329,6 @@ const stopPlayerSync = watch(
   },
 );
 
-// Reruns whenever the shared library pool changes, whether from this
-// module's own refresh(), SetlistView.vue's, or the singleton's own
-// onLibraryUpdated subscription — immediate so it applies whatever's
-// already in libraryState.tracks (possibly already loaded by another
-// consumer) instead of waiting for the next change.
 const stopLibrarySync = watch(
   () => [
     libraryState.tracks,
@@ -874,11 +344,6 @@ const stopLibrarySync = watch(
   { immediate: true },
 );
 
-// Mirrors fetch errors from every path that can update the shared pool
-// (initial load, SetlistView.vue's onMounted re-fetch, the
-// onLibraryUpdated subscription, and this module's own refresh()) — not
-// just the last one, which unconditionally overwriting state.error also
-// clears a stale error on the next successful fetch.
 const stopLibraryErrorSync = watch(
   () => libraryState.error,
   (error) => {
@@ -887,11 +352,13 @@ const stopLibraryErrorSync = watch(
   { immediate: true },
 );
 
-if (typeof window !== 'undefined' && window.Utawakui) {
-  if (typeof window.Utawakui.onLibraryBackfillStatus === 'function') {
-    unsubscribeLibraryBackfillStatus =
-      window.Utawakui.onLibraryBackfillStatus(applyBackfillStatus);
-  }
+let unsubscribeLibraryBackfillStatus = null;
+if (
+  typeof window !== 'undefined' &&
+  typeof window.Utawakui?.onLibraryBackfillStatus === 'function'
+) {
+  unsubscribeLibraryBackfillStatus =
+    window.Utawakui.onLibraryBackfillStatus(applyBackfillStatus);
 }
 
 if (import.meta.hot) {
@@ -929,7 +396,7 @@ export function useLyrics() {
     selectSource,
     adjustOffset,
     resetOffset,
-    retryOffsetSave: persistSelectedOffset,
+    retryOffsetSave,
     saveTimingDocument,
     playFromLine,
     probeMusixmatch,

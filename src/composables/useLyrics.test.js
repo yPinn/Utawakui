@@ -11,6 +11,9 @@ let importLyricsTextMock;
 let importLyricsFileMock;
 let searchLyricsCandidatesMock;
 let saveLyricsCandidateMock;
+let backfillLyricsSourceLabelsMock;
+let setLyricsSourceLabelMock;
+let deleteLyricsSourceMock;
 let getFeatureConfirmationsMock;
 let confirmFeatureGateMock;
 let listPlaylistsMock;
@@ -174,6 +177,13 @@ beforeEach(() => {
     invalidRecordCount: 0,
   });
   saveLyricsCandidateMock = vi.fn();
+  backfillLyricsSourceLabelsMock = vi.fn().mockResolvedValue({ updated: 1 });
+  setLyricsSourceLabelMock = vi.fn().mockResolvedValue({
+    source: { filename: 'en.vtt', label: 'Primary' },
+  });
+  deleteLyricsSourceMock = vi.fn().mockResolvedValue({
+    sources: [{ filename: 'replacement.lrc', kind: 'manual' }],
+  });
   getFeatureConfirmationsMock = vi.fn().mockResolvedValue({
     'lyrics-flow': confirmedLyricsFlow,
   });
@@ -208,6 +218,9 @@ beforeEach(() => {
       importLyricsFile: importLyricsFileMock,
       searchLyricsCandidates: searchLyricsCandidatesMock,
       saveLyricsCandidate: saveLyricsCandidateMock,
+      backfillLyricsSourceLabels: backfillLyricsSourceLabelsMock,
+      setLyricsSourceLabel: setLyricsSourceLabelMock,
+      deleteLyricsSource: deleteLyricsSourceMock,
       getFeatureConfirmations: getFeatureConfirmationsMock,
       confirmFeatureGate: confirmFeatureGateMock,
       listPlaylists: listPlaylistsMock,
@@ -230,6 +243,52 @@ afterEach(() => {
 });
 
 describe('useLyrics', () => {
+  it('preserves the stable public Lyrics composable contract', async () => {
+    const lyrics = await loadLyrics();
+
+    expect(Object.keys(lyrics).sort()).toEqual(
+      [
+        'activeLine',
+        'activeLineId',
+        'activeLineIndex',
+        'activeSegmentId',
+        'adjustOffset',
+        'backfillSourceLabels',
+        'clearCandidateSearch',
+        'currentLyricsPositionMs',
+        'currentTrackId',
+        'deleteSource',
+        'ensureLyricsFlow',
+        'importManualLyricsFile',
+        'importManualLyricsText',
+        'initialize',
+        'isReloading',
+        'isSelectedTrackPlaying',
+        'lyricLines',
+        'lyricsDocument',
+        'lyricsTiming',
+        'playFromLine',
+        'playbackState',
+        'probeMusixmatch',
+        'refresh',
+        'resetOffset',
+        'retryOffsetSave',
+        'saveLyricsCandidate',
+        'saveTimingDocument',
+        'searchLyricsCandidates',
+        'selectSource',
+        'selectTrack',
+        'selectedLyrics',
+        'selectedSource',
+        'selectedTrack',
+        'setSourceLabel',
+        'setTrackScope',
+        'state',
+        'tracksById',
+      ].sort(),
+    );
+  });
+
   it('submits an explicit editable LRCLIB query and preserves grouped diagnostics', async () => {
     const candidate = {
       id: 42,
@@ -1291,6 +1350,163 @@ describe('useLyrics', () => {
       isSaving: false,
       error: '請重新啟動應用程式後再匯入歌詞。',
     });
+  });
+
+  it('targets the shared save status when a gated provider mutation is denied', async () => {
+    getFeatureConfirmationsMock.mockResolvedValueOnce({});
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(
+      lyrics.ensureLyricsFlow({ errorTarget: 'manualSave' }),
+    ).resolves.toBe(false);
+
+    expect(lyrics.state.manualSave.error).toBe('請先到設定啟用歌詞來源');
+  });
+
+  it('shows restart guidance when provider search or save bridges are unavailable', async () => {
+    delete window.Utawakui.searchLyricsCandidates;
+    delete window.Utawakui.saveLyricsCandidate;
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    const candidate = {
+      id: 10,
+      previewFingerprint: 'b'.repeat(64),
+    };
+
+    await lyrics.searchLyricsCandidates({ title: 'Track A' });
+    expect(lyrics.state.candidateSearch.error).toBe(
+      '請重新啟動應用程式後再搜尋歌詞。',
+    );
+
+    await expect(lyrics.saveLyricsCandidate(candidate)).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe(
+      '請重新啟動應用程式後再儲存歌詞。',
+    );
+  });
+
+  it('bounds rejected provider search, save, and label-backfill failures', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    searchLyricsCandidatesMock.mockRejectedValueOnce(
+      new Error('private provider response'),
+    );
+    saveLyricsCandidateMock.mockResolvedValueOnce({
+      status: 'unavailable',
+      reason: 'private-reason',
+    });
+    backfillLyricsSourceLabelsMock.mockRejectedValueOnce(
+      new Error('private backfill response'),
+    );
+
+    await lyrics.searchLyricsCandidates({ title: 'Track A' });
+    expect(lyrics.state.candidateSearch.error).toBe(
+      '目前無法搜尋歌詞，請再試一次。',
+    );
+
+    await expect(
+      lyrics.saveLyricsCandidate({
+        id: 10,
+        previewFingerprint: 'b'.repeat(64),
+      }),
+    ).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe('歌詞未儲存，請再試一次。');
+
+    await expect(lyrics.backfillSourceLabels()).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe('標籤未更新，請再試一次。');
+  });
+
+  it('backfills and edits local source labels through their distinct boundaries', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(lyrics.backfillSourceLabels()).resolves.toEqual({
+      updated: 1,
+    });
+    expect(backfillLyricsSourceLabelsMock).toHaveBeenCalledWith(trackA.id);
+
+    await expect(lyrics.setSourceLabel('en.vtt', 'Primary')).resolves.toEqual({
+      source: { filename: 'en.vtt', label: 'Primary' },
+    });
+    expect(setLyricsSourceLabelMock).toHaveBeenCalledWith(
+      trackA.id,
+      'en.vtt',
+      'Primary',
+    );
+    expect(lyrics.state.manualSave.isSaving).toBe(false);
+  });
+
+  it('selects the first remaining source after deleting the active source', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(lyrics.deleteSource('en.vtt')).resolves.toEqual({
+      sources: [{ filename: 'replacement.lrc', kind: 'manual' }],
+    });
+
+    expect(deleteLyricsSourceMock).toHaveBeenCalledWith(trackA.id, 'en.vtt');
+    expect(lyrics.state.selectedSourceFilename).toBe('replacement.lrc');
+  });
+
+  it('bounds local source edit, delete, and manual import failures', async () => {
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    setLyricsSourceLabelMock.mockRejectedValueOnce(new Error('private label'));
+    deleteLyricsSourceMock.mockRejectedValueOnce(new Error('private delete'));
+    importLyricsTextMock.mockRejectedValueOnce(new Error('private paste'));
+    importLyricsFileMock.mockRejectedValueOnce(new Error('private file'));
+
+    await expect(lyrics.setSourceLabel('en.vtt', 'Primary')).resolves.toBe(
+      null,
+    );
+    expect(lyrics.state.manualSave.error).toBe('標籤未更新，請再試一次。');
+
+    await expect(lyrics.deleteSource('en.vtt')).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe(
+      '無法刪除歌詞來源，請再試一次。',
+    );
+
+    await expect(lyrics.importManualLyricsText({ text: 'line' })).resolves.toBe(
+      null,
+    );
+    expect(lyrics.state.manualSave.error).toBe('歌詞未匯入，請再試一次。');
+
+    await expect(lyrics.importManualLyricsFile()).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe('歌詞未匯入，請再試一次。');
+  });
+
+  it('rejects unverifiable timing and unavailable offset bridges locally', async () => {
+    getTrackLyricsMock.mockResolvedValueOnce({
+      source: { filename: 'en.vtt', language: 'en', kind: 'youtube-cc' },
+      text: lyricsText,
+      timing: { status: 'missing', sourceFingerprint: null },
+    });
+    delete window.Utawakui.setLyricsSourceOffset;
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(lyrics.saveTimingDocument({ lines: [] })).resolves.toBe(null);
+    expect(lyrics.state.timingSave.error).toBe(
+      '目前歌詞來源缺少可驗證的版本資訊。',
+    );
+
+    await expect(lyrics.retryOffsetSave()).resolves.toBe(null);
+    expect(lyrics.state.offsetSave.error).toBe('同步調整未儲存，請再試一次。');
+  });
+
+  it('shows restart guidance for unavailable timing, delete, and file-import bridges', async () => {
+    delete window.Utawakui.saveLyricsTiming;
+    delete window.Utawakui.deleteLyricsSource;
+    delete window.Utawakui.importLyricsFile;
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await expect(lyrics.saveTimingDocument({ lines: [] })).resolves.toBe(null);
+    expect(lyrics.state.timingSave.error).toBe(
+      '請重新啟動應用程式後再儲存歌詞時間。',
+    );
+
+    await expect(lyrics.deleteSource('en.vtt')).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe(
+      '請重新啟動應用程式後再刪除歌詞來源。',
+    );
+
+    await expect(lyrics.importManualLyricsFile()).resolves.toBe(null);
+    expect(lyrics.state.manualSave.error).toBe(
+      '請重新啟動應用程式後再匯入歌詞檔。',
+    );
   });
 
   // Regression test: the shared useLibrary.js singleton's own

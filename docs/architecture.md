@@ -52,6 +52,13 @@ pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media 
 也不直接建立第二份 playback state；所有播放時間與 phase 仍只由 HTML audio events
 更新。
 
+Lyrics renderer 同樣維持單一 public owner：`src/composables/useLyrics.js` 保留 library／
+playlist scope、選曲、HTML audio playback projection、watchers 與 `useLyrics()` facade；
+`src/composables/lyrics/useLyricsAcquisition.js` 負責 gated Musixmatch／LRCLIB acquisition，
+`src/composables/lyrics/useLyricsSourceDocuments.js` 負責本機來源讀取、offset、timing、
+label／delete 與手動匯入。兩個內部 composable 接受具名 dependency，不互相 import；
+reading aid 與 timing editor 繼續由既有獨立 composable 持有，不建立第二份 Lyrics state。
+
 ## Feature Gates 與最小依賴單位
 
 | 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                            |

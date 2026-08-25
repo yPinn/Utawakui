@@ -115,6 +115,36 @@ describe('architecture ownership boundaries', () => {
     expect(graph).not.toContain('endedListeners');
   });
 
+  it('keeps the Lyrics renderer facade split by product responsibility', () => {
+    const acquisitionPath = resolve(
+      root,
+      'src/composables/lyrics/useLyricsAcquisition.js',
+    );
+    const documentsPath = resolve(
+      root,
+      'src/composables/lyrics/useLyricsSourceDocuments.js',
+    );
+    expect(existsSync(acquisitionPath)).toBe(true);
+    expect(existsSync(documentsPath)).toBe(true);
+    if (!existsSync(acquisitionPath) || !existsSync(documentsPath)) return;
+
+    const facade = read('src/composables/useLyrics.js');
+    const acquisition = read('src/composables/lyrics/useLyricsAcquisition.js');
+    const documents = read(
+      'src/composables/lyrics/useLyricsSourceDocuments.js',
+    );
+
+    expect(facade.split(/\r?\n/u).length).toBeLessThan(550);
+    expect(facade).toContain("from './lyrics/useLyricsAcquisition.js'");
+    expect(facade).toContain("from './lyrics/useLyricsSourceDocuments.js'");
+    expect(facade).not.toContain('LRCLIB_FAILURE_MESSAGES');
+    expect(acquisition).not.toContain('importLyricsText');
+    expect(acquisition).not.toContain('saveLyricsTiming');
+    expect(documents).not.toContain('searchLyricsCandidates');
+    expect(documents).not.toContain('probeMusixmatchLyrics');
+    expect(documents).not.toContain('requireFeatureGate');
+  });
+
   it('keeps durable architecture guidance aligned with the composition root', () => {
     const guidance = read('AGENTS.md');
     expect(guidance).not.toContain('now ~210 lines');
