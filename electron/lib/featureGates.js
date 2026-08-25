@@ -22,7 +22,9 @@ const FEATURE_GATES = Object.freeze(
 );
 
 function getFeatureGate(featureId) {
-  return FEATURE_GATES[featureId] || null;
+  return Object.hasOwn(FEATURE_GATES, featureId)
+    ? FEATURE_GATES[featureId]
+    : null;
 }
 
 function isIsoDateString(value) {

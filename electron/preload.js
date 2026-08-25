@@ -63,7 +63,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getCaptureDevice: () => ipcRenderer.invoke('config:get-capture-device'),
   setCaptureDevice: (deviceId) =>
     ipcRenderer.invoke('config:set-capture-device', deviceId),
-  openExternalUrl: (url) => ipcRenderer.invoke('shell:open-external', url),
+  openExternalTarget: (targetId) =>
+    ipcRenderer.invoke('shell:open-external', targetId),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
   // YouTube playlist URL/ID resolution — distinct from the user-named
   // playlists API below (listPlaylists/createPlaylist/etc.).

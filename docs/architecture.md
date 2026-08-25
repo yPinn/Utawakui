@@ -19,6 +19,10 @@ contracts 與 tests 管理。
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
 隱藏依賴，也不彼此直接協調；跨 domain 流程由 composition root 建立的 service 負責。
 
+Machine config、feature confirmation 與 external navigation 分別由獨立 handler registrar
+持有。Renderer 開啟外部頁面時只提交 allowlisted target id；vendor URL 固定在 main，且
+preload 不提供任意 URL API。
+
 Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實際 channel 依責任
 分在 `electron/main/lyrics/`：`documentHandlers.js` 只處理本機歌詞／timing，
 `acquisitionHandlers.js` 處理 gated provider、候選與 provider-backed 回填，

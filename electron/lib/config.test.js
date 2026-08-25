@@ -2,7 +2,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { loadConfig, saveConfig } from './config.js';
+import {
+  CAPTURE_DEVICE_ID_MAX_LENGTH,
+  loadConfig,
+  saveConfig,
+} from './config.js';
 
 describe('config', () => {
   let dir;
@@ -176,6 +180,14 @@ describe('config', () => {
     );
     expect(loadConfig(configPath).captureDeviceId).toBe(null);
   });
+
+  it.each(['', 'x'.repeat(CAPTURE_DEVICE_ID_MAX_LENGTH + 1)])(
+    'out-of-bounds captureDeviceId falls back to null',
+    (captureDeviceId) => {
+      fs.writeFileSync(configPath, JSON.stringify({ captureDeviceId }));
+      expect(loadConfig(configPath).captureDeviceId).toBe(null);
+    },
+  );
 
   it('round-trips systemFfmpegPath through save/load', () => {
     saveConfig(configPath, { systemFfmpegPath: 'C:\\ffmpeg\\bin\\ffmpeg.exe' });

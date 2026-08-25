@@ -20,7 +20,6 @@ const TOOLS = [
     tag: '推薦：最簡單',
     tagTone: 'success',
     description: '一對一音訊路由，安裝最快、設定最少。免費。',
-    url: 'https://vb-audio.com/Cable/',
   },
   {
     id: 'voicemeeter',
@@ -28,12 +27,11 @@ const TOOLS = [
     tag: '需混合多個音源',
     tagTone: 'info',
     description: '完整虛擬混音台，可同時混合多個聲音來源。免費。',
-    url: 'https://vb-audio.com/Voicemeeter/',
   },
 ];
 
-function openDownload(url) {
-  window.Utawakui?.openExternalUrl(url);
+function openDownload(targetId) {
+  window.Utawakui?.openExternalTarget(targetId);
 }
 </script>
 
@@ -64,7 +62,7 @@ function openDownload(url) {
               {{ tool.description }}
             </p>
           </div>
-          <UiButton :icon="ExternalLink" @click="openDownload(tool.url)">
+          <UiButton :icon="ExternalLink" @click="openDownload(tool.id)">
             前往官網下載
           </UiButton>
         </li>

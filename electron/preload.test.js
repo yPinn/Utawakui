@@ -279,6 +279,18 @@ describe('main preload bridge', () => {
     ]);
   });
 
+  it('forwards only an allowlisted external target intent', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    expect(bridge).not.toHaveProperty('openExternalUrl');
+    bridge.openExternalTarget('vb-cable', 'https://example.test/private');
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'shell:open-external',
+      'vb-cable',
+    );
+  });
+
   it('does not send startup milestones when tracing is disabled', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 

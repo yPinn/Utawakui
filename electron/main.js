@@ -69,6 +69,10 @@ const {
 const windowState = require('./main/windowState');
 const configState = require('./main/configState');
 const { registerConfigHandlers } = require('./main/configHandlers');
+const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
+const {
+  registerExternalNavigationHandlers,
+} = require('./main/externalNavigationHandlers');
 const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
@@ -553,13 +557,27 @@ if (!gotSingleInstanceLock) {
     registerConfigHandlers({
       ipcMain,
       dialog,
-      shell,
+      openPath: (targetPath) => shell.openPath(targetPath),
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       getMainWindow: windowState.getMainWindow,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
       titlebarColors: windowState.TITLEBAR_COLORS,
+    });
+
+    registerFeatureGateHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+    });
+
+    registerExternalNavigationHandlers({
+      ipcMain,
+      openExternal: (url) => shell.openExternal(url),
+      recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
     windowState.registerPlayerStateHandler(ipcMain);

@@ -24,8 +24,12 @@ describe('featureGates', () => {
 
   it('rejects unknown feature ids', () => {
     expect(getFeatureGate('missing-flow')).toBe(null);
+    expect(getFeatureGate('__proto__')).toBe(null);
     expect(() => buildFeatureConfirmation('missing-flow')).toThrow(
       'unknown feature gate: missing-flow',
+    );
+    expect(() => buildFeatureConfirmation('__proto__')).toThrow(
+      'unknown feature gate: __proto__',
     );
   });
 

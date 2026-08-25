@@ -1,157 +1,241 @@
 'use strict';
 
-const { SIDEBAR_WIDTH_MIN, SIDEBAR_WIDTH_MAX } = require('../lib/config');
+const { createAppError } = require('../lib/appError');
 const {
-  buildFeatureConfirmation,
-  normalizeFeatureConfirmations,
-} = require('../lib/featureGates');
+  CAPTURE_DEVICE_ID_MAX_LENGTH,
+  SIDEBAR_WIDTH_MAX,
+  SIDEBAR_WIDTH_MIN,
+} = require('../lib/config');
+const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+
+function createValidationError(code, title, message) {
+  return createAppError({ code, severity: 'warning', title, message });
+}
+
+function runConfigOperation(
+  { recordDiagnostic, operation, code, title, message },
+  handler,
+) {
+  return runDiagnosticIpcOperation(
+    {
+      recordDiagnostic,
+      diagnostic: { source: 'config', operation, code },
+      publicError: { code, title, message },
+    },
+    handler,
+  );
+}
 
 function registerConfigHandlers({
   ipcMain,
   dialog,
-  shell,
+  openPath,
   getConfig,
   updateConfig,
   resolveDownloadDir,
   getMainWindow,
   notifyLibraryUpdated,
+  recordDiagnostic,
   titlebarColors,
 }) {
-  ipcMain.handle('config:get', async () => {
-    return {
-      downloadDir: resolveDownloadDir(getConfig()),
-      isDefault: !getConfig().downloadDir,
-    };
-  });
-
-  ipcMain.handle('feature-gates:list', async () => {
-    return normalizeFeatureConfirmations(getConfig().featureConfirmations);
-  });
-
-  ipcMain.handle(
-    'feature-gates:confirm',
-    async (event, featureId, noticeVersion) => {
-      const record = buildFeatureConfirmation(featureId);
-      if (noticeVersion !== record.noticeVersion) {
-        throw new Error(`stale feature notice: ${featureId}`);
-      }
-      updateConfig({
-        featureConfirmations: {
-          ...getConfig().featureConfirmations,
-          [featureId]: record,
-        },
-      });
-      return record;
-    },
+  ipcMain.handle('config:get', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-download-directory',
+        code: 'DOWNLOAD_DIRECTORY_READ_FAILED',
+        title: '無法讀取下載位置',
+        message: '目前無法讀取下載位置，請稍後再試。',
+      },
+      () => {
+        const config = getConfig();
+        return {
+          downloadDir: resolveDownloadDir(config),
+          isDefault: !config.downloadDir,
+        };
+      },
+    ),
   );
 
-  ipcMain.handle('config:choose-download-dir', async () => {
-    const result = await dialog.showOpenDialog(getMainWindow(), {
-      properties: ['openDirectory', 'createDirectory'],
-    });
-    if (result.canceled || !result.filePaths[0]) {
-      return resolveDownloadDir(getConfig());
-    }
-    updateConfig({
-      downloadDir: result.filePaths[0],
-    });
-    // Invalidates both the renderer's track list AND usePlaylists.js's
-    // module-scope playlist cache — that composable survives Setlist tab
-    // switches, so without this push it would keep the old dir's
-    // playlists and silently write them (with stale trackIds) into the
-    // new dir on the next mutation.
-    notifyLibraryUpdated();
-    return result.filePaths[0];
-  });
+  ipcMain.handle('config:choose-download-dir', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'choose-download-directory',
+        code: 'DOWNLOAD_DIRECTORY_CHOOSE_FAILED',
+        title: '無法變更下載位置',
+        message: '目前無法變更下載位置，請稍後再試。',
+      },
+      async () => {
+        const result = await dialog.showOpenDialog(getMainWindow(), {
+          properties: ['openDirectory', 'createDirectory'],
+        });
+        if (result.canceled || !result.filePaths[0]) {
+          return resolveDownloadDir(getConfig());
+        }
+        updateConfig({ downloadDir: result.filePaths[0] });
+        // Invalidates both renderer library state and the module-scope playlist
+        // cache before either can write against the newly selected directory.
+        notifyLibraryUpdated();
+        return result.filePaths[0];
+      },
+    ),
+  );
 
-  ipcMain.handle('config:reset-download-dir', async () => {
-    updateConfig({ downloadDir: null });
-    notifyLibraryUpdated();
-    return resolveDownloadDir(getConfig());
-  });
+  ipcMain.handle('config:reset-download-dir', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'reset-download-directory',
+        code: 'DOWNLOAD_DIRECTORY_RESET_FAILED',
+        title: '無法重設下載位置',
+        message: '目前無法重設下載位置，請稍後再試。',
+      },
+      () => {
+        updateConfig({ downloadDir: null });
+        notifyLibraryUpdated();
+        return resolveDownloadDir(getConfig());
+      },
+    ),
+  );
 
-  // shell.openPath resolves (never rejects) with an empty string on
-  // success or an OS error string on failure — surfacing that as a thrown
-  // error keeps this handler's failure shape consistent with every other
-  // handler in this file.
-  ipcMain.handle('config:open-download-dir', async () => {
-    const error = await shell.openPath(resolveDownloadDir(getConfig()));
-    if (error) throw new Error(error);
-  });
+  ipcMain.handle('config:open-download-dir', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'open-download-directory',
+        code: 'DOWNLOAD_DIRECTORY_OPEN_FAILED',
+        title: '無法開啟下載位置',
+        message: '目前無法開啟下載位置，請確認資料夾仍可使用。',
+      },
+      async () => {
+        // Electron resolves with an OS error string instead of rejecting.
+        const error = await openPath(resolveDownloadDir(getConfig()));
+        if (error) throw new Error(error);
+      },
+    ),
+  );
 
-  ipcMain.handle('config:get-ui-theme', async () => getConfig().uiTheme);
+  ipcMain.handle('config:get-ui-theme', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-ui-theme',
+        code: 'UI_THEME_READ_FAILED',
+        title: '無法讀取介面主題',
+        message: '目前無法讀取介面主題。',
+      },
+      () => getConfig().uiTheme,
+    ),
+  );
 
   ipcMain.handle('config:set-ui-theme', async (event, theme) => {
-    // Untrusted renderer input — same trust-boundary role as
-    // extractVideoId() for video ids.
     if (!Object.hasOwn(titlebarColors, theme)) {
-      throw new Error(`invalid ui theme: ${theme}`);
+      throw createValidationError(
+        'UI_THEME_INVALID',
+        '無法套用介面主題',
+        '指定的介面主題不受支援。',
+      );
     }
-    updateConfig({ uiTheme: theme });
-    const win = getMainWindow();
-    if (win) {
-      win.setTitleBarOverlay(titlebarColors[theme]);
-      win.setBackgroundColor(titlebarColors[theme].color);
-    }
-    return getConfig().uiTheme;
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-ui-theme',
+        code: 'UI_THEME_UPDATE_FAILED',
+        title: '無法套用介面主題',
+        message: '目前無法套用介面主題，請稍後再試。',
+      },
+      () => {
+        updateConfig({ uiTheme: theme });
+        const win = getMainWindow();
+        if (win) {
+          win.setTitleBarOverlay(titlebarColors[theme]);
+          win.setBackgroundColor(titlebarColors[theme].color);
+        }
+        return getConfig().uiTheme;
+      },
+    );
   });
 
-  ipcMain.handle(
-    'config:get-sidebar-width',
-    async () => getConfig().sidebarWidth,
+  ipcMain.handle('config:get-sidebar-width', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-sidebar-width',
+        code: 'SIDEBAR_WIDTH_READ_FAILED',
+        title: '無法讀取側欄寬度',
+        message: '目前無法讀取側欄寬度。',
+      },
+      () => getConfig().sidebarWidth,
+    ),
   );
 
-  // Same untrusted-input trust boundary as config:set-ui-theme above.
   ipcMain.handle('config:set-sidebar-width', async (event, width) => {
     if (
       !Number.isFinite(width) ||
       width < SIDEBAR_WIDTH_MIN ||
       width > SIDEBAR_WIDTH_MAX
     ) {
-      throw new Error(`invalid sidebar width: ${width}`);
+      throw createValidationError(
+        'SIDEBAR_WIDTH_INVALID',
+        '無法調整側欄寬度',
+        '指定的側欄寬度超出支援範圍。',
+      );
     }
-    updateConfig({ sidebarWidth: width });
-    return getConfig().sidebarWidth;
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-sidebar-width',
+        code: 'SIDEBAR_WIDTH_UPDATE_FAILED',
+        title: '無法調整側欄寬度',
+        message: '目前無法調整側欄寬度，請稍後再試。',
+      },
+      () => {
+        updateConfig({ sidebarWidth: width });
+        return getConfig().sidebarWidth;
+      },
+    );
   });
 
-  ipcMain.handle(
-    'config:get-capture-device',
-    async () => getConfig().captureDeviceId,
+  ipcMain.handle('config:get-capture-device', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-capture-device',
+        code: 'CAPTURE_DEVICE_READ_FAILED',
+        title: '無法讀取擷取裝置',
+        message: '目前無法讀取擷取裝置設定。',
+      },
+      () => getConfig().captureDeviceId,
+    ),
   );
 
-  // Same untrusted-input trust boundary as config:set-ui-theme above. `null`
-  // clears the setting (feature off); anything else must be a device id
-  // string — device *existence* is not verifiable from main (device list is
-  // a renderer-only Web API), so that's left to useAudioOutput.js at apply
-  // time, same as an unplugged device failing later rather than up front.
   ipcMain.handle('config:set-capture-device', async (event, deviceId) => {
-    if (deviceId !== null && typeof deviceId !== 'string') {
-      throw new Error(`invalid capture device id: ${deviceId}`);
+    if (
+      deviceId !== null &&
+      (typeof deviceId !== 'string' ||
+        deviceId.length === 0 ||
+        deviceId.length > CAPTURE_DEVICE_ID_MAX_LENGTH)
+    ) {
+      throw createValidationError(
+        'CAPTURE_DEVICE_INVALID',
+        '無法套用擷取裝置',
+        '指定的擷取裝置識別值無效。',
+      );
     }
-    updateConfig({ captureDeviceId: deviceId });
-    return getConfig().captureDeviceId;
-  });
-
-  // shell.openExternal launches the OS default browser — a plain <a href>
-  // in the renderer is inert here (main.js's setWindowOpenHandler denies
-  // all new windows, and will-navigate blocks any non-same-document URL),
-  // so this is the only way a Vue component can send someone to a vendor
-  // download page (see VirtualCableGuideModal.vue's only caller). https-only
-  // is deliberate, same untrusted-input posture as the setters above: this
-  // channel only ever receives hardcoded vendor URLs today, but validating
-  // the scheme rather than trusting it costs nothing and rules out
-  // javascript:/file:/custom schemes outright.
-  ipcMain.handle('shell:open-external', async (event, url) => {
-    let parsed;
-    try {
-      parsed = new URL(url);
-    } catch {
-      throw new Error(`invalid url: ${url}`);
-    }
-    if (parsed.protocol !== 'https:') {
-      throw new Error(`unsupported url scheme: ${parsed.protocol}`);
-    }
-    await shell.openExternal(url);
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-capture-device',
+        code: 'CAPTURE_DEVICE_UPDATE_FAILED',
+        title: '無法套用擷取裝置',
+        message: '目前無法套用擷取裝置，請稍後再試。',
+      },
+      () => {
+        updateConfig({ captureDeviceId: deviceId });
+        return getConfig().captureDeviceId;
+      },
+    );
   });
 }
 

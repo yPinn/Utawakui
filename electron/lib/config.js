@@ -18,6 +18,7 @@ const UI_THEMES = ['light', 'dark'];
 // src/styles/tokens.css — main process can't read CSS.
 const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
 const SIDEBAR_WIDTH_MAX = 392; // 24.5rem
+const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
@@ -128,7 +129,9 @@ function loadConfig(configPath) {
         ? data.sidebarWidth
         : DEFAULTS.sidebarWidth,
     captureDeviceId:
-      typeof data.captureDeviceId === 'string'
+      typeof data.captureDeviceId === 'string' &&
+      data.captureDeviceId.length > 0 &&
+      data.captureDeviceId.length <= CAPTURE_DEVICE_ID_MAX_LENGTH
         ? data.captureDeviceId
         : DEFAULTS.captureDeviceId,
     systemFfmpegPath:
@@ -153,6 +156,7 @@ module.exports = {
   loadConfig,
   saveConfig,
   DEFAULTS,
+  CAPTURE_DEVICE_ID_MAX_LENGTH,
   SIDEBAR_WIDTH_MIN,
   SIDEBAR_WIDTH_MAX,
   OUTPUT_PORT_MIN,

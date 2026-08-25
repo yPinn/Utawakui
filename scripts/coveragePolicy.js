@@ -223,12 +223,39 @@ const coveragePolicy = Object.freeze({
       }),
     }),
     Object.freeze({
+      path: 'electron/main/configHandlers.js',
+      minimum: Object.freeze({
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      }),
+    }),
+    Object.freeze({
+      path: 'electron/main/externalNavigationHandlers.js',
+      minimum: Object.freeze({
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
+      }),
+    }),
+    Object.freeze({
       path: 'electron/main/featureDependencyHandlers.js',
       minimum: Object.freeze({
         statements: 98,
         branches: 75,
         functions: 95,
         lines: 98,
+      }),
+    }),
+    Object.freeze({
+      path: 'electron/main/featureGateHandlers.js',
+      minimum: Object.freeze({
+        statements: 100,
+        branches: 100,
+        functions: 100,
+        lines: 100,
       }),
     }),
     Object.freeze({

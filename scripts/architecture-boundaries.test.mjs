@@ -10,6 +10,32 @@ function read(relativePath) {
 }
 
 describe('architecture ownership boundaries', () => {
+  it('keeps config, feature gates, and external navigation in separate IPC owners', () => {
+    const main = read('electron/main.js');
+    const config = read('electron/main/configHandlers.js');
+    const featureGates = read('electron/main/featureGateHandlers.js');
+    const externalNavigation = read(
+      'electron/main/externalNavigationHandlers.js',
+    );
+    const preload = read('electron/preload.js');
+    const virtualCableGuide = read(
+      'src/components/settings/VirtualCableGuideModal.vue',
+    );
+
+    expect(main).toContain("require('./main/configHandlers')");
+    expect(main).toContain("require('./main/featureGateHandlers')");
+    expect(main).toContain("require('./main/externalNavigationHandlers')");
+    expect(config).not.toContain('feature-gates:');
+    expect(config).not.toContain('shell:open-external');
+    expect(featureGates).toContain("'feature-gates:list'");
+    expect(featureGates).toContain("'feature-gates:confirm'");
+    expect(externalNavigation).toContain("'shell:open-external'");
+    expect(preload).toContain('openExternalTarget');
+    expect(preload).not.toContain('openExternalUrl');
+    expect(virtualCableGuide).not.toContain('https://');
+    expect(virtualCableGuide).not.toContain('openExternalUrl');
+  });
+
   it('keeps app-wide presentation contracts outside the Overlay delivery tree', () => {
     for (const relativePath of [
       'src/components/output/MangaFrameSvg.vue',
