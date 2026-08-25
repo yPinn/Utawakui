@@ -1,5 +1,5 @@
 import { computed, onMounted, onUnmounted, reactive, shallowRef } from 'vue';
-import { nextLyricsBoundaryDelayMs } from '../../overlay/shared/state.mjs';
+import { nextLyricsBoundaryDelayMs } from '../../shared/presentation/state.mjs';
 import { selectPerformerFrame } from '../utils/performerView.js';
 import { normalizeAppError } from '../utils/appErrors.js';
 

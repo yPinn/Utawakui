@@ -35,6 +35,7 @@ const CLIENT_CLOSE_GRACE_MS = 500;
 const STATIC_CACHE_LIMIT = 32;
 const ARTWORK_CACHE_LIMIT = 128;
 const DEFAULT_OVERLAY_ROOT = path.resolve(__dirname, '../../overlay');
+const DEFAULT_SHARED_ROOT = path.resolve(__dirname, '../../shared');
 const GSAP_BROWSER_ASSET = require.resolve('gsap/dist/gsap.min.js');
 const OVERLAY_CONTENT_SECURITY_POLICY = [
   "default-src 'none'",
@@ -91,6 +92,17 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
 });
 const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
+});
+const SHARED_PRESENTATION_STATIC_ROUTES = Object.freeze({
+  '/shared/presentation/lyricsPresentation.mjs': [
+    'presentation',
+    'lyricsPresentation.mjs',
+  ],
+  '/shared/presentation/mangaFrameContract.mjs': [
+    'presentation',
+    'mangaFrameContract.mjs',
+  ],
+  '/shared/presentation/state.mjs': ['presentation', 'state.mjs'],
 });
 const OVERLAY_MIME_TYPES = Object.freeze({
   '.css': 'text/css; charset=utf-8',
@@ -313,6 +325,7 @@ function createOutputServer(options = {}) {
   );
   const logger = options.logger ?? console;
   const overlayRoot = options.overlayRoot ?? DEFAULT_OVERLAY_ROOT;
+  const sharedRoot = options.sharedRoot ?? DEFAULT_SHARED_ROOT;
   const resolveArtworkAsset = options.resolveArtworkAsset ?? (() => null);
   const deliveryFactory = options.deliveryFactory ?? createOutputClientDelivery;
   const deliveryOptions = options.deliveryOptions ?? {};
@@ -678,10 +691,15 @@ function createOutputServer(options = {}) {
     }
 
     const overlayFileParts = OVERLAY_STATIC_ROUTES[pathname];
+    const sharedFileParts = SHARED_PRESENTATION_STATIC_ROUTES[pathname];
     const vendorFilePath = OVERLAY_VENDOR_ROUTES[pathname];
-    if (overlayFileParts || vendorFilePath) {
+    if (overlayFileParts || sharedFileParts || vendorFilePath) {
       const filePath =
-        vendorFilePath ?? path.join(overlayRoot, ...overlayFileParts);
+        vendorFilePath ??
+        path.join(
+          sharedFileParts ? sharedRoot : overlayRoot,
+          ...(sharedFileParts ?? overlayFileParts),
+        );
       try {
         const asset = await readCachedAsset(
           staticAssetCache,

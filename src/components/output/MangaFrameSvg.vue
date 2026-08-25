@@ -4,7 +4,7 @@ import {
   DEFAULT_MANGA_FRAME_ID,
   MANGA_FRAME_VIEW_BOX,
   resolveMangaFrame,
-} from '../../../overlay/shared/mangaFrameContract.mjs';
+} from '../../../shared/presentation/mangaFrameContract.mjs';
 
 const props = defineProps({
   frameId: { type: String, default: DEFAULT_MANGA_FRAME_ID },

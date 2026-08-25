@@ -3,12 +3,12 @@ import { computed } from 'vue';
 import {
   mangaFrameLengthTier,
   mangaFrameSideForLine,
-} from '../../../overlay/shared/mangaFrameContract.mjs';
+} from '../../../shared/presentation/mangaFrameContract.mjs';
 import {
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
-} from '../../../overlay/shared/lyricsPresentation.mjs';
+} from '../../../shared/presentation/lyricsPresentation.mjs';
 import MangaFrameSvg from './MangaFrameSvg.vue';
 
 const props = defineProps({

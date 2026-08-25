@@ -1,7 +1,7 @@
 import {
   activeLyricIndex,
   playbackPositionMs,
-} from '../../overlay/shared/state.mjs';
+} from '../../shared/presentation/state.mjs';
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';

@@ -361,7 +361,9 @@ describe('outputServer', () => {
       `${status.httpUrl}/overlay/shared/mangaFrameContract.mjs`,
     );
     expect(mangaContract.status).toBe(200);
-    expect(await mangaContract.text()).toContain('DEFAULT_MANGA_FRAME_ID');
+    expect(await mangaContract.text()).toContain(
+      '../../shared/presentation/mangaFrameContract.mjs',
+    );
 
     const lyricsPresentation = await fetch(
       `${status.httpUrl}/overlay/shared/lyricsPresentation.mjs`,
@@ -371,11 +373,22 @@ describe('outputServer', () => {
       'text/javascript',
     );
     const lyricsPresentationSource = await lyricsPresentation.text();
-    expect(lyricsPresentationSource).toContain('analyzeLyricsSource');
-    expect(lyricsPresentationSource).toContain('adaptMangaLyricsPresentation');
     expect(lyricsPresentationSource).toContain(
-      'adaptLiveStageLyricsPresentation',
+      '../../shared/presentation/lyricsPresentation.mjs',
     );
+
+    for (const [route, exportedSymbol] of [
+      ['/shared/presentation/lyricsPresentation.mjs', 'analyzeLyricsSource'],
+      ['/shared/presentation/mangaFrameContract.mjs', 'DEFAULT_MANGA_FRAME_ID'],
+      ['/shared/presentation/state.mjs', 'selectLyricsFrame'],
+    ]) {
+      const sharedPresentation = await fetch(`${status.httpUrl}${route}`);
+      expect(sharedPresentation.status).toBe(200);
+      expect(sharedPresentation.headers.get('content-type')).toContain(
+        'text/javascript',
+      );
+      expect(await sharedPresentation.text()).toContain(exportedSymbol);
+    }
 
     const liveStage = await fetch(
       `${status.httpUrl}/overlay/lyrics/liveStage.mjs`,
