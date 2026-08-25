@@ -4,7 +4,7 @@
 
 Accepted and implemented (2026-08-22). Stage 5c, following the same
 injected-dependency shape ADR 0003 established for Japanese: `koroman` is
-wired into `electron/lib/readingWorker.js` as an alternative branch, not a
+wired into `electron/lib/lyricsReadingWorker.js` as an alternative branch, not a
 new machinery layer.
 
 ## Context
@@ -64,7 +64,7 @@ because Korean lyrics frequently code-switch into English mid-line
 source, and covered by `electron/lib/koromanIntegration.test.js`.
 
 Because 한글 needs no ruby step at all, Stage 5c does **not** reuse
-`buildReadingDoc`/`alignOkurigana`. `electron/lib/reading.js` gets a
+`buildReadingDoc`/`alignOkurigana`. `electron/lib/lyricsReading.js` gets a
 parallel, much simpler `buildRomanizationDoc(lines, { romanize, analyzer,
 onProgress })`: no tokenizer, no okurigana alignment, no kanji word-gap
 heuristic (한글 already carries 띄어쓰기 spacing) — each line becomes a
@@ -72,7 +72,7 @@ single plain `{ t: text }` segment plus a `romaji` string. The existing
 `<ruby>`-based rendering path in `LyricsWorkspace.vue` naturally renders
 Korean lines as plain text, since no segment ever carries an `r`.
 
-`electron/lib/readingWorker.js` dispatches on `workerData.script` before
+`electron/lib/lyricsReadingWorker.js` dispatches on `workerData.script` before
 doing any script-specific work — in particular, kuromoji's `buildTokenizer()`
 (the ~1-3s IPADIC dictionary load) must never run for a Korean request.
 
@@ -107,7 +107,7 @@ an `exports` map with no `./package.json` entry, so
 used for kuromoji) throws `ERR_PACKAGE_PATH_NOT_EXPORTED`. The analyzer
 version is instead read via `require.resolve('koroman')` resolved back to
 the package root — see the comment at that call site in
-`readingWorker.js`; don't "simplify" it back to a bare subpath require.
+`lyricsReadingWorker.js`; don't "simplify" it back to a bare subpath require.
 
 **Known risk, accepted deliberately**: `koroman` has a much smaller
 install base (1,140 downloads/month vs. 6-12K for the rejected

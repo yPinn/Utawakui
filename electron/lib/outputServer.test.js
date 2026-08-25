@@ -192,6 +192,33 @@ describe('outputServer', () => {
     });
   });
 
+  it('rejects invalid lifecycle and projection identity inputs', () => {
+    expect(() => createOutputServer({ port: -1 })).toThrow(
+      'Output server port must be an integer from 0 to 65535',
+    );
+    expect(() => createOutputServer({ heartbeatIntervalMs: 9 })).toThrow(
+      'Output server heartbeat interval must be an integer of at least 10ms',
+    );
+
+    const server = createServer();
+    const valid = splitProjection();
+    expect(() => server.setProjectionState(null)).toThrow(
+      'Output projection state must be an object',
+    );
+    expect(() => server.setProjectionState({ ...valid, bootId: '' })).toThrow(
+      'Output projection state requires bootId',
+    );
+    expect(() =>
+      server.setProjectionState({ ...valid, sourceEpoch: '' }),
+    ).toThrow('Output projection state has invalid sourceEpoch');
+    expect(() =>
+      server.setProjectionState({
+        ...valid,
+        sourceSynchronization: 'private',
+      }),
+    ).toThrow('Output projection state has invalid readiness');
+  });
+
   it('serves only allowlisted read-only HTTP routes', async () => {
     const server = createServer();
     const status = await server.start();

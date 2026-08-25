@@ -3,9 +3,9 @@
 ## Status
 
 Accepted and implemented (2026-08-21). Stage 5a
-(`electron/lib/reading.js`) was built against an injected fake analyzer with
+(`electron/lib/lyricsReading.js`) was built against an injected fake analyzer with
 this exact interface shape; Stage 5b swapped in the real `kuromoji`/
-`wanakana` inside `electron/lib/readingWorker.js` with no changes to the
+`wanakana` inside `electron/lib/lyricsReadingWorker.js` with no changes to the
 IPC shape, sidecar format, or renderer code, confirming the drop-in design
 worked as intended.
 
@@ -37,7 +37,7 @@ for yt-dlp plugins).
 
 Use `kuromoji` (tokenizer + per-token katakana reading) plus `wanakana`
 (katakana→romaji) plus a hand-written okurigana-alignment function
-(`alignOkurigana` in `electron/lib/reading.js`), instead of `kuroshiro`.
+(`alignOkurigana` in `electron/lib/lyricsReading.js`), instead of `kuroshiro`.
 
 Rejected `kuroshiro`:
 
@@ -86,11 +86,11 @@ one collapsed row.
 
 ## Consequences
 
-`electron/lib/reading.js`'s injected interface is shaped to match kuromoji's
+`electron/lib/lyricsReading.js`'s injected interface is shaped to match kuromoji's
 own token fields (`{ surface_form, reading }`, katakana) and wanakana's
 `toRomaji()` signature directly — Stage 5b replaces the injected
 `tokenize`/`kanaToRomaji` functions with the real libraries inside
-`electron/lib/readingWorker.js` (never on the main process or at app
+`electron/lib/lyricsReadingWorker.js` (never on the main process or at app
 startup — dictionary load is CPU/memory-heavy, same isolation reasoning as
 `onnxruntime-node` in `vocalSeparationWorker.js`). No IPC shape, sidecar
 format, or renderer code changes for that swap.
@@ -105,9 +105,9 @@ the dictionary files. Verified empirically against a real `dist:dir`
 build, not just reasoned about: (1) confirmed the unpacked files physically
 exist under `app.asar.unpacked`, correctly missing the excluded
 `test`/`demo`/`example`/`build` directories; (2) spawned
-`readingWorker.js` directly from its `app.asar`-internal path via
+`lyricsReadingWorker.js` directly from its `app.asar`-internal path via
 `ELECTRON_RUN_AS_NODE=1 electron.exe <script>` (the same asar-internal path
-`electron/main/lyricsHandlers.js` uses in production) and got back a
+`electron/main/lyrics/readingHandlers.js` uses in production) and got back a
 correct real furigana result for `歌う声` (`歌`→`うた`, `声`→`こえ`), proving
 the worker's own `require('kuromoji')`/`require('wanakana')`/dictionary
 read all resolve correctly once physically unpacked.

@@ -1,6 +1,6 @@
 <script setup>
 import { computed, onMounted, reactive, shallowRef, watch } from 'vue';
-import { useOutputRuntimeContext } from '../../composables/outputRuntimeContext.js';
+import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputSettings from './ObsOutputSettings.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';

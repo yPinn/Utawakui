@@ -19,7 +19,7 @@ const { parentPort, workerData } = require('worker_threads');
 const kuromoji = require('kuromoji');
 const wanakana = require('wanakana');
 const koroman = require('koroman');
-const { buildReadingDoc, buildRomanizationDoc } = require('./reading');
+const { buildReadingDoc, buildRomanizationDoc } = require('./lyricsReading');
 const { getKuromojiDicPath } = require('./kuromojiDictionary');
 
 function buildTokenizer() {

@@ -68,7 +68,7 @@ asarUnpack:
   # Read directly by Windows shell APIs (setAppDetails's appIconPath in
   # electron/main.js), not through Electron/Node's own fs layer.
   - public/assets/icons/app-icon.ico
-  # readingWorker.js (unpacked above via electron/lib/**/*) requires these
+  # lyricsReadingWorker.js (unpacked above via electron/lib/**/*) requires these
   # inside the worker thread, which has its own Node context without
   # Electron's asar fs patch — same reasoning as onnxruntime-node's bin/
   # above, but here the whole package (not just a native binary) is what a

@@ -59,6 +59,42 @@ describe('architecture ownership boundaries', () => {
     }
   });
 
+  it('keeps Output HTTP delivery separate from WebSocket state ownership', () => {
+    const entry = read('electron/lib/outputServer.js');
+    const httpDelivery = read('electron/lib/outputServer/http.js');
+
+    expect(entry).toContain("require('./outputServer/http')");
+    expect(entry.split(/\r?\n/u).length).toBeLessThan(700);
+    expect(httpDelivery).not.toContain("require('ws')");
+    expect(httpDelivery).not.toContain('createOutputClientDelivery');
+    expect(httpDelivery).toContain('createOutputHttpHandler');
+  });
+
+  it('keeps the Lyrics IPC facade split by product responsibility', () => {
+    const facade = read('electron/main/lyricsHandlers.js');
+    const acquisition = read('electron/main/lyrics/acquisitionHandlers.js');
+    const documents = read('electron/main/lyrics/documentHandlers.js');
+    const readings = read('electron/main/lyrics/readingHandlers.js');
+
+    expect(facade.split(/\r?\n/u).length).toBeLessThan(120);
+    for (const filename of [
+      'acquisitionHandlers.js',
+      'documentHandlers.js',
+      'readingHandlers.js',
+    ]) {
+      expect(existsSync(resolve(root, 'electron/main/lyrics', filename))).toBe(
+        true,
+      );
+    }
+    expect(facade).not.toContain("require('../lib/");
+    expect(acquisition).not.toContain('worker_threads');
+    expect(acquisition).not.toContain('importManualLyrics');
+    expect(documents).not.toContain('probeMusixmatchLyrics');
+    expect(documents).not.toContain('worker_threads');
+    expect(readings).not.toContain('../lib/lrclib');
+    expect(readings).not.toContain('../lib/musixmatch');
+  });
+
   it('keeps durable architecture guidance aligned with the composition root', () => {
     const guidance = read('AGENTS.md');
     expect(guidance).not.toContain('now ~210 lines');

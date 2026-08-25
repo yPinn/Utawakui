@@ -1,7 +1,7 @@
-# Output Preview Assets
+# Renderer Assets
 
-Workbench-only static preview assets belong in this directory. They are
-renderer references and must not be served by the Overlay Output Server or
+Imported renderer assets belong in this directory. `workbench-streamer-guide.png`
+is a Workbench-only reference and must not be served by the Output server or
 added to an OBS URL.
 
 Use semantic filenames such as `streamer.png`, `camera-frame.svg`, or

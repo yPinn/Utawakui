@@ -153,7 +153,7 @@ const showsReadingAid = computed(() =>
   SUPPORTED_READING_SCRIPTS.has(lyricsScript.value),
 );
 
-// Korean lyrics never produce furigana (see reading.js's
+// Korean lyrics never produce furigana (see lyricsReading.js's
 // buildRomanizationDoc — Korean has no ruby step at all), so the variant
 // select hides that option for them. `readingVariant` lives in
 // useLyricsReading.js's module scope and survives switching tracks, so

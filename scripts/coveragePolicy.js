@@ -5,7 +5,7 @@ const APP_SOURCE_PATTERN =
 
 const DEFERRED_SOURCES = new Map([
   ['electron/main.js', 'electron-entrypoint'],
-  ['electron/lib/readingWorker.js', 'child-process-entrypoint'],
+  ['electron/lib/lyricsReadingWorker.js', 'child-process-entrypoint'],
   ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],
   ['src/main.js', 'renderer-entrypoint'],
   ['src/performer-main.js', 'renderer-entrypoint'],
@@ -38,7 +38,7 @@ const coveragePolicy = Object.freeze({
     '**/*.test.js',
     '**/*.test.mjs',
     'shared/**/*.json',
-    'electron/lib/readingWorker.js',
+    'electron/lib/lyricsReadingWorker.js',
     'electron/lib/vocalSeparationWorker.js',
     ...COVERAGE_NEUTRAL_SOURCES,
   ]),
@@ -207,10 +207,46 @@ const coveragePolicy = Object.freeze({
     Object.freeze({
       path: 'electron/lib/outputServer.js',
       minimum: Object.freeze({
-        statements: 86,
+        statements: 88,
         branches: 82,
-        functions: 91,
-        lines: 90,
+        functions: 92,
+        lines: 92,
+      }),
+    }),
+    Object.freeze({
+      path: 'electron/lib/outputServer/http.js',
+      minimum: Object.freeze({
+        statements: 85,
+        branches: 80,
+        functions: 85,
+        lines: 88,
+      }),
+    }),
+    Object.freeze({
+      path: 'electron/main/lyrics/acquisitionHandlers.js',
+      minimum: Object.freeze({
+        statements: 79,
+        branches: 77,
+        functions: 88,
+        lines: 83,
+      }),
+    }),
+    Object.freeze({
+      path: 'electron/main/lyrics/documentHandlers.js',
+      minimum: Object.freeze({
+        statements: 85,
+        branches: 72,
+        functions: 100,
+        lines: 98,
+      }),
+    }),
+    Object.freeze({
+      path: 'electron/main/lyrics/readingHandlers.js',
+      minimum: Object.freeze({
+        statements: 75,
+        branches: 68,
+        functions: 69,
+        lines: 82,
       }),
     }),
     Object.freeze({

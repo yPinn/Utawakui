@@ -7,7 +7,7 @@ import {
   useTemplateRef,
 } from 'vue';
 import { Copy, Grid2X2, Moon, Sun } from '../../icons/index.js';
-import streamerPreviewImage from '../../assets/output-preview/Reze.png';
+import streamerPreviewImage from '../../assets/workbench-streamer-guide.png';
 import { OUTPUT_LYRICS_CAPTURE_SIZE } from '../../constants/outputCaptureSizes.js';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';

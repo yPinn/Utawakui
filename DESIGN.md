@@ -646,6 +646,11 @@ Component folders are grouped by product role, not by current visual style. Exis
 - `src/components/queue/`: active queue, upcoming tracks, reorderable queue sections.
 - `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.
 - `src/components/lyrics/`: lyrics workspace, synced-line display, lyric editing and timing surfaces.
+- `src/components/analysis/`: Music Analysis selection, capability, batch, benchmark, and Music Structure result surfaces.
+- `src/components/output/`: OBS Output Gallery, Workbench, preview, slot, and appearance surfaces.
+- `src/components/performer/`: Performer Self-View stage, lyric cue, and window toolbar surfaces.
+- `src/components/separation/`: vocal-separation recipe and result controls that are not persistent playback chrome.
+- `src/components/settings/`: app configuration, dependency, diagnostics, update, and device settings surfaces.
 - `src/components/ui/`: low-level primitives only, such as buttons, menus, text rows, status icons, and typography helpers.
 
 Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` only when it can be reused without knowing about tracks, playlists, providers, lyrics, playback, or OBS.

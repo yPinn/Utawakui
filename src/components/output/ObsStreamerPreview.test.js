@@ -10,9 +10,9 @@ const workbenchPreviewSource = readFileSync(
   fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
   'utf8',
 );
-const outputServerSource = readFileSync(
+const outputHttpSource = readFileSync(
   fileURLToPath(
-    new URL('../../../electron/lib/outputServer.js', import.meta.url),
+    new URL('../../../electron/lib/outputServer/http.js', import.meta.url),
   ),
   'utf8',
 );
@@ -32,7 +32,7 @@ const workbenchStylesSource = readFileSync(
 describe('Workbench streamer preview', () => {
   it('uses a dedicated Workbench route while preserving the renderer fallback', () => {
     expect(workbenchPreviewSource).toContain(
-      "import streamerPreviewImage from '../../assets/output-preview/Reze.png'",
+      "import streamerPreviewImage from '../../assets/workbench-streamer-guide.png'",
     );
     expect(workbenchPreviewSource).toContain('v-if="!hasRuntimeTemplate"');
     expect(workbenchPreviewSource).toContain(':src="streamerPreviewImage"');
@@ -41,10 +41,10 @@ describe('Workbench streamer preview', () => {
     );
     expect(workbenchPreviewSource).toContain('v-if="isLyrics"');
     expect(workbenchPreviewSource).toContain('<ObsWidgetCapturePreview');
-    expect(outputServerSource).toContain(
+    expect(outputHttpSource).toContain(
       "'/workbench/streamer-guide.png': ['workbench', 'streamer-guide.png']",
     );
-    expect(outputServerSource).not.toContain('ObsStreamerPreview');
+    expect(outputHttpSource).not.toContain('ObsStreamerPreview');
     expect(workbenchDocumentSource).toContain('src="/overlay/lyrics"');
   });
 

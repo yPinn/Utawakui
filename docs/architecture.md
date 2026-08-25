@@ -19,6 +19,12 @@ contracts 與 tests 管理。
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
 隱藏依賴，也不彼此直接協調；跨 domain 流程由 composition root 建立的 service 負責。
 
+Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實際 channel 依責任
+分在 `electron/main/lyrics/`：`documentHandlers.js` 只處理本機歌詞／timing，
+`acquisitionHandlers.js` 處理 gated provider、候選與 provider-backed 回填，
+`readingHandlers.js` 處理本機 reading worker／sidecar。三者不互相 import，facade 只注入
+同一組具名 composition dependencies。
+
 跨 runtime 的 presentation logic 位於 `shared/presentation/`。`overlay/shared/` 只保留
 Browser Source route adapters；Output server 以 exact allowlist 提供兩個目錄的必要檔案，
 不把 request path 轉成任意 filesystem path。
@@ -65,6 +71,12 @@ server 分開呈現 liveness、source readiness 與 content/state updates。
 Browser Source 只能讀取 canonical snapshot 與 allowlisted media。Artwork route 由已公開
 的 track id 解析縮圖；snapshot 不包含 `utawakui-media:` URL、absolute path 或 provider
 payload。Public WebSocket 不接受 playback commands。
+
+`electron/lib/outputServer.js` 保留 public service API、WebSocket lifecycle 與 projection
+delivery ownership；`electron/lib/outputServer/http.js` 是獨立的唯讀 HTTP delivery plane，
+持有 exact static/artwork route、asset cache、security headers 與 bounded startup telemetry。
+HTTP plane 只透過具名 getter 讀取 canonical snapshot／client count，不 import `ws`、delivery
+queue 或 mutable projection state。
 
 ## 錯誤與 Diagnostics
 

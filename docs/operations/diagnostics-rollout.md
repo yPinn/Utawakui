@@ -164,7 +164,7 @@ The dependency handler migration is complete. Separation and reading remain the
 next scoped migrations because they already have structured renderer diagnostics:
 
 1. `electron/main/separationHandlers.js`
-2. The reading-related paths in `electron/main/lyricsHandlers.js`
+2. `electron/main/lyrics/readingHandlers.js`
 
 Update their matching renderer composables so `useAppDiagnostics` remains the
 safe recovery/presentation surface and does not submit a duplicate persistent

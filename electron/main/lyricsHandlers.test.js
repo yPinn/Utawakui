@@ -3,10 +3,20 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveLrclibRecord } from '../lib/lrclib.js';
-import lyricsHandlersModule from './lyricsHandlers.js';
+import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
+import documentHandlersModule from './lyrics/documentHandlers.js';
+import readingHandlersModule from './lyrics/readingHandlers.js';
 
-const { normalizeLrclibSearchOptions, registerLyricsHandlers } =
-  lyricsHandlersModule;
+const { normalizeLrclibSearchOptions, registerLyricsAcquisitionHandlers } =
+  acquisitionHandlersModule;
+const { registerLyricsDocumentHandlers } = documentHandlersModule;
+const { registerLyricsReadingHandlers } = readingHandlersModule;
+
+function registerLyricsHandlers(options) {
+  registerLyricsDocumentHandlers(options);
+  registerLyricsAcquisitionHandlers(options);
+  registerLyricsReadingHandlers(options);
+}
 
 function createIpcMain() {
   const handlers = new Map();
@@ -22,6 +32,10 @@ describe('lyrics timing IPC', () => {
   let ipcMain;
   let notifyLibraryUpdated;
   let lyricsAcquisitionService;
+  let dialog;
+  let mainWindow;
+  let requireFeatureGate;
+  let runReadingWorker;
 
   beforeEach(() => {
     dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-ipc-'));
@@ -35,6 +49,10 @@ describe('lyrics timing IPC', () => {
 
     ipcMain = createIpcMain();
     notifyLibraryUpdated = vi.fn();
+    dialog = { showOpenDialog: vi.fn() };
+    mainWindow = null;
+    requireFeatureGate = vi.fn();
+    runReadingWorker = vi.fn();
     lyricsAcquisitionService = {
       searchCandidates: vi.fn(),
       saveCandidate: vi.fn(),
@@ -42,14 +60,15 @@ describe('lyrics timing IPC', () => {
     };
     registerLyricsHandlers({
       ipcMain,
-      dialog: { showOpenDialog: vi.fn() },
+      dialog,
       getConfig: () => ({}),
       resolveDownloadDir: () => dir,
-      getMainWindow: () => null,
+      getMainWindow: () => mainWindow,
       notifyLibraryUpdated,
-      requireFeatureGate: vi.fn(),
+      requireFeatureGate,
       featureIds: { LYRICS_FLOW: 'lyrics-flow' },
       lyricsAcquisitionService,
+      runReadingWorker,
     });
   });
 
@@ -339,6 +358,182 @@ describe('lyrics timing IPC', () => {
         { mode: 'broaden' },
       ),
     ).rejects.toThrow(/unsupported mode/i);
+  });
+
+  it('enforces the external-provider gate and bounds unknown Musixmatch tracks', async () => {
+    await expect(
+      ipcMain.handlers.get('lyrics:probe-musixmatch')(null, 'missing'),
+    ).resolves.toEqual({
+      provider: 'musixmatch',
+      status: 'unavailable',
+      reason: 'unknown-track',
+    });
+    expect(requireFeatureGate).toHaveBeenCalledWith('lyrics-flow');
+  });
+
+  it('publishes a saved provider candidate with the current local source list', async () => {
+    lyricsAcquisitionService.saveCandidate.mockResolvedValue({
+      provider: 'lrclib',
+      status: 'saved',
+      candidate: { id: 42 },
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:save-candidate')(
+        null,
+        'track-a',
+        42,
+        'a'.repeat(64),
+      ),
+    ).resolves.toMatchObject({
+      status: 'saved',
+      sources: [expect.objectContaining({ filename: 'main.lrc' })],
+    });
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+  });
+
+  it('keeps manual document import, labels, and deletion local and ungated', async () => {
+    await expect(
+      ipcMain.handlers.get('lyrics:set-source-label')(
+        null,
+        'track-a',
+        'main.lrc',
+        'Main lyrics',
+      ),
+    ).resolves.toMatchObject({
+      sources: [
+        expect.objectContaining({ filename: 'main.lrc', label: 'Main lyrics' }),
+      ],
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:import-text')(null, 'track-a', {
+        text: 'First line\nSecond line',
+        label: 'Pasted',
+      }),
+    ).resolves.toMatchObject({
+      source: { filename: 'manual.lrc', label: 'Pasted' },
+    });
+
+    const pickedLyricsPath = path.join(dir, 'picked.vtt');
+    fs.writeFileSync(
+      pickedLyricsPath,
+      'WEBVTT\n\n00:00:01.000 --> 00:00:02.000\nHello',
+    );
+    dialog.showOpenDialog.mockResolvedValueOnce({
+      canceled: false,
+      filePaths: [pickedLyricsPath],
+    });
+    await expect(
+      ipcMain.handlers.get('lyrics:import-file')(null, 'track-a'),
+    ).resolves.toMatchObject({ source: { filename: 'manual.vtt' } });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:delete-source')(
+        null,
+        'track-a',
+        'manual.lrc',
+      ),
+    ).resolves.toMatchObject({
+      sources: expect.not.arrayContaining([
+        expect.objectContaining({ filename: 'manual.lrc' }),
+      ]),
+    });
+    expect(requireFeatureGate).not.toHaveBeenCalled();
+  });
+
+  it('generates, edits, reports progress for, and deletes a reading document', async () => {
+    const loaded = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    const identity = {
+      documentId: 'lyr_document_01',
+      sourceFingerprint: loaded.timing.sourceFingerprint,
+      lines: [{ lineId: 'line_01', text: 'Hello' }],
+    };
+    mainWindow = { webContents: { send: vi.fn() } };
+    runReadingWorker.mockImplementation(
+      async ({ lines, script, onProgress }) => {
+        onProgress({ stage: 'tokenizing', index: 0, total: lines.length });
+        return {
+          analyzer: { id: script },
+          lines: lines.map((text) => ({
+            text,
+            segments: [{ t: text }],
+            romaji: 'hello',
+          })),
+        };
+      },
+    );
+
+    await expect(
+      ipcMain.handlers.get('lyrics:generate-reading')(
+        null,
+        'track-a',
+        'main.lrc',
+        identity,
+        'ja',
+      ),
+    ).resolves.toMatchObject({
+      version: 2,
+      script: 'ja',
+      lines: [{ lineId: 'line_01', text: 'Hello' }],
+    });
+    expect(mainWindow.webContents.send).toHaveBeenCalledWith(
+      'lyrics:reading-progress',
+      expect.objectContaining({
+        trackId: 'track-a',
+        sourceFilename: 'main.lrc',
+      }),
+    );
+    await expect(
+      ipcMain.handlers.get('lyrics:get-reading')(null, 'track-a', 'main.lrc'),
+    ).resolves.toMatchObject({ script: 'ja' });
+    await expect(
+      ipcMain.handlers.get('lyrics:set-reading-line')(
+        null,
+        'track-a',
+        'main.lrc',
+        { ...identity, targetLineId: 'line_01' },
+        'ハロー',
+      ),
+    ).resolves.toMatchObject({
+      lines: [expect.objectContaining({ edited: true })],
+    });
+    await expect(
+      ipcMain.handlers.get('lyrics:delete-reading')(
+        null,
+        'track-a',
+        'main.lrc',
+      ),
+    ).resolves.toEqual({ ok: true });
+    await expect(
+      ipcMain.handlers.get('lyrics:get-reading')(null, 'track-a', 'main.lrc'),
+    ).resolves.toBe(null);
+  });
+
+  it('rejects unsupported reading scripts and unknown lyric sources before work', async () => {
+    const loaded = await ipcMain.handlers.get('lyrics:get-track')(
+      null,
+      'track-a',
+      'main.lrc',
+    );
+    const identity = {
+      documentId: 'lyr_document_01',
+      sourceFingerprint: loaded.timing.sourceFingerprint,
+      lines: [{ lineId: 'line_01', text: 'Hello' }],
+    };
+    const generate = ipcMain.handlers.get('lyrics:generate-reading');
+
+    await expect(
+      generate(null, 'track-a', 'main.lrc', identity, 'en'),
+    ).rejects.toThrow(/unsupported reading script/i);
+    await expect(
+      generate(null, 'track-a', 'missing.lrc', identity, 'ja'),
+    ).rejects.toThrow(/unknown lyrics source/i);
+    expect(runReadingWorker).not.toHaveBeenCalled();
   });
 });
 

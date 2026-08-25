@@ -5,7 +5,7 @@
 // systemFfmpeg.js. Stage 5a runs this against a fake analyzer in tests and
 // electron/main/lyricsHandlers.js; Stage 5b (see docs/adr/0003) swaps the
 // injected tokenize/kanaToRomaji for real kuromoji/wanakana calls inside
-// electron/lib/readingWorker.js — nothing here changes.
+// electron/lib/lyricsReadingWorker.js — nothing here changes.
 
 const KANJI_CHAR_RE = /[一-龯㐀-䶿]/;
 const RUN_SPLIT_RE = /([一-龯㐀-䶿]+)|([^一-龯㐀-䶿]+)/g;

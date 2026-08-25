@@ -17,7 +17,7 @@ import { useTheme } from './composables/useTheme.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
-import { OUTPUT_RUNTIME_KEY } from './composables/outputRuntimeContext.js';
+import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 
 // Setlist is the only initial view. Keep inactive workflows out of Vite's first

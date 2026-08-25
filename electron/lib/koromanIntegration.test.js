@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { romanize } from 'koroman';
-import { buildRomanizationDoc } from './reading.js';
+import { buildRomanizationDoc } from './lyricsReading.js';
 
-// Exercises the real adapter shape readingWorker.js uses (koroman.romanize
+// Exercises the real adapter shape lyricsReadingWorker.js uses (koroman.romanize
 // fed straight into buildRomanizationDoc) against the actual package — the
 // one test in this repo that would catch a koroman version bump silently
 // changing its pronunciation-rule output. No network dependency (koroman

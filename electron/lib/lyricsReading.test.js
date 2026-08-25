@@ -4,7 +4,7 @@ import {
   buildReadingDoc,
   buildRomanizationDoc,
   katakanaToHiragana,
-} from './reading.js';
+} from './lyricsReading.js';
 
 describe('katakanaToHiragana', () => {
   it('shifts katakana to hiragana and leaves everything else untouched', () => {

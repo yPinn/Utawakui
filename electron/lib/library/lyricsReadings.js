@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson } = require('../atomicWrite');
-const { alignOkurigana, katakanaToHiragana } = require('../reading');
+const { alignOkurigana, katakanaToHiragana } = require('../lyricsReading');
 const {
   LYRICS_DIRNAME,
   LYRICS_READINGS_DIRNAME,
@@ -151,7 +151,7 @@ function deleteTrackReading(trackDir, sourceFilename) {
 //
 // - 'ja': `readingValue` is a whole-line kana string (not per-segment) —
 //   re-running alignOkurigana against the line's own text generalizes
-//   correctly to multi-kanji-run lines (see reading.js's right-to-left
+//   correctly to multi-kanji-run lines (see lyricsReading.js's right-to-left
 //   matching), so there's only one segment-construction path for both
 //   automatic generation and manual correction.
 // - anything else (Korean, per Stage 5c): there's no kana-to-ruby step to

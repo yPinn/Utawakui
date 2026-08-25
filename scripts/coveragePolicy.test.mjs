@@ -56,7 +56,7 @@ describe('coverage policy', () => {
 
   it.each([
     ['electron/main.js', 'electron-entrypoint'],
-    ['electron/lib/readingWorker.js', 'child-process-entrypoint'],
+    ['electron/lib/lyricsReadingWorker.js', 'child-process-entrypoint'],
     ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],
     ['src/main.js', 'renderer-entrypoint'],
     ['src/performer-main.js', 'renderer-entrypoint'],
@@ -116,6 +116,10 @@ describe('coverage policy', () => {
         'electron/lib/diagnostics.js',
         'electron/lib/downloader.js',
         'electron/lib/featureDependencies/archive.js',
+        'electron/lib/outputServer/http.js',
+        'electron/main/lyrics/acquisitionHandlers.js',
+        'electron/main/lyrics/documentHandlers.js',
+        'electron/main/lyrics/readingHandlers.js',
         'electron/main/mediaProtocol.js',
         'electron/main/windowState.js',
         'electron/main/libraryPathSidecar.js',

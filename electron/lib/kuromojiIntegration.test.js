@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import kuromoji from 'kuromoji';
 import wanakana from 'wanakana';
-import { buildReadingDoc } from './reading.js';
+import { buildReadingDoc } from './lyricsReading.js';
 import { getKuromojiDicPath } from './kuromojiDictionary.js';
 
-// Exercises the real adapter shape readingWorker.js uses (kuromoji token
+// Exercises the real adapter shape lyricsReadingWorker.js uses (kuromoji token
 // fields fed straight into buildReadingDoc, wanakana.toRomaji as
 // kanaToRomaji) against the actual IPADIC dictionary — the one test in this
 // repo that would catch a kuromoji/wanakana version bump silently changing
