@@ -140,6 +140,8 @@ describe('coverage policy', () => {
         'src/composables/analysis/useMusicAnalysisCapability.js',
         'src/composables/analysis/useMusicAnalysisJob.js',
         'src/composables/useFeatureDependencies.js',
+        'src/composables/useFeatureGatePresentation.js',
+        'src/composables/useFeatureGates.js',
         'src/composables/useImportSession.js',
         'src/composables/import/useImportSourceResolution.js',
         'src/composables/import/useImportExecution.js',

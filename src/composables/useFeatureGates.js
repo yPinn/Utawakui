@@ -13,6 +13,7 @@ const state = reactive({
 });
 
 let refreshPromise = null;
+let confirmationPromise = null;
 let pendingResolve = null;
 
 function hasBridge() {
@@ -111,42 +112,53 @@ async function ensureFeatureGate(featureId) {
   });
 }
 
-async function confirmPendingFeature() {
+function confirmPendingFeature() {
+  if (confirmationPromise) return confirmationPromise;
+
   const featureId = state.pendingFeatureId;
   const gate = getFeatureGate(featureId);
   if (!gate || !hasBridge()) {
     settlePending(false);
-    return false;
+    return Promise.resolve(false);
   }
 
   state.isSaving = true;
-  try {
-    const record = await window.Utawakui.confirmFeatureGate(
-      featureId,
-      gate.noticeVersion,
-    );
-    state.confirmations[featureId] = normalizeConfirmations({
-      [featureId]: record,
-    })[featureId];
-    state.error = '';
-    settlePending(true);
-    return true;
-  } catch (err) {
-    state.error = recordError(err, {
-      code: 'FEATURE_GATE_CONFIRM_FAILED',
-      title: '功能未啟用',
-      message: '目前無法啟用這項功能，請再試一次。',
-      source: 'feature-gates',
-      operation: 'confirm',
-      context: { featureId, retryable: true },
-    }).message;
-    return false;
-  } finally {
-    state.isSaving = false;
-  }
+  confirmationPromise = (async () => {
+    try {
+      const record = await window.Utawakui.confirmFeatureGate(
+        featureId,
+        gate.noticeVersion,
+      );
+      const confirmation = normalizeConfirmations({
+        [featureId]: record,
+      })[featureId];
+      if (!confirmation) {
+        throw new Error('invalid feature confirmation response');
+      }
+      state.confirmations[featureId] = confirmation;
+      state.error = '';
+      settlePending(true);
+      return true;
+    } catch (err) {
+      state.error = recordError(err, {
+        code: 'FEATURE_GATE_CONFIRM_FAILED',
+        title: '功能未啟用',
+        message: '目前無法啟用這項功能，請再試一次。',
+        source: 'feature-gates',
+        operation: 'confirm',
+        context: { featureId, retryable: true },
+      }).message;
+      return false;
+    } finally {
+      state.isSaving = false;
+      confirmationPromise = null;
+    }
+  })();
+  return confirmationPromise;
 }
 
 function cancelPendingFeature() {
+  if (state.isSaving) return;
   state.error = '';
   settlePending(false);
 }

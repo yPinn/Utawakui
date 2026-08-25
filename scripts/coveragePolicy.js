@@ -358,6 +358,24 @@ const coveragePolicy = Object.freeze({
       }),
     }),
     Object.freeze({
+      path: 'src/composables/useFeatureGatePresentation.js',
+      minimum: Object.freeze({
+        statements: 96,
+        branches: 91,
+        functions: 100,
+        lines: 97,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/useFeatureGates.js',
+      minimum: Object.freeze({
+        statements: 98,
+        branches: 97,
+        functions: 100,
+        lines: 100,
+      }),
+    }),
+    Object.freeze({
       path: 'src/composables/useImportSession.js',
       minimum: Object.freeze({
         statements: 97,

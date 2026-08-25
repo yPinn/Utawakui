@@ -263,6 +263,22 @@ describe('main preload bridge', () => {
     ]);
   });
 
+  it('forwards only the feature id and notice version for gate confirmation', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.getFeatureConfirmations('ignored');
+    bridge.confirmFeatureGate(
+      'provider-flow',
+      'feature-notice-v3',
+      'ignored-config',
+    );
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['feature-gates:list'],
+      ['feature-gates:confirm', 'provider-flow', 'feature-notice-v3'],
+    ]);
+  });
+
   it('does not send startup milestones when tracing is disabled', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 
