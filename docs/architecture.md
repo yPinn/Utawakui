@@ -68,6 +68,15 @@ resolution、candidate selection 與 structured-clone-safe preview；
 partial failure aggregation 與 playlist／album persistence。兩個內部 composable 只接收同一份
 session state 與具名 callbacks，不自行建立 reactive state，也不互相 import。
 
+Music Analysis Workbench 同樣以 `src/composables/useMusicAnalysisWorkbench.js` 作為唯一
+session state 與 public facade，負責 track selection、library／isolated signal owner、共用
+phase/error/notice、初始化順序及既有 `useMusicAnalysisBatch.js` composition；
+`src/composables/analysis/useMusicAnalysisCapability.js` 負責 capability status、準備／修復／
+移除與 bounded setup progress；`src/composables/analysis/useMusicAnalysisJob.js` 負責單曲
+analysis progress、status polling、run／cancel 與 sidecar reconciliation。兩個內部 owner
+只接收具名 dependencies 與同一份 session state，不自行建立 reactive state、不互相 import，
+也不取代獨立的 batch owner。
+
 ## Feature Gates 與最小依賴單位
 
 | 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                            |

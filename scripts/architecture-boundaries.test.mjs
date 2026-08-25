@@ -209,6 +209,47 @@ describe('architecture ownership boundaries', () => {
     expect(execution).not.toContain('useImportSourceResolution');
   });
 
+  it('keeps Music Analysis session, capability, job, and batch ownership separate', () => {
+    const capabilityPath = resolve(
+      root,
+      'src/composables/analysis/useMusicAnalysisCapability.js',
+    );
+    const jobPath = resolve(
+      root,
+      'src/composables/analysis/useMusicAnalysisJob.js',
+    );
+    expect(existsSync(capabilityPath)).toBe(true);
+    expect(existsSync(jobPath)).toBe(true);
+    if (!existsSync(capabilityPath) || !existsSync(jobPath)) return;
+
+    const facade = read('src/composables/useMusicAnalysisWorkbench.js');
+    const capability = read(
+      'src/composables/analysis/useMusicAnalysisCapability.js',
+    );
+    const job = read('src/composables/analysis/useMusicAnalysisJob.js');
+
+    expect(facade.split(/\r?\n/u).length).toBeLessThan(380);
+    expect(facade).toContain("from './analysis/useMusicAnalysisCapability.js'");
+    expect(facade).toContain("from './analysis/useMusicAnalysisJob.js'");
+    expect(facade).not.toContain('CAPABILITY_STAGE_LABELS');
+    expect(facade).not.toContain('normalizedProgress');
+    expect(facade).not.toContain('statusPollTimer');
+    expect(capability).toContain('useMusicAnalysisCapability');
+    expect(capability).toContain('getMusicStructureCapabilityStatus');
+    expect(capability).not.toContain('analyzeTrackMusicStructure');
+    expect(capability).not.toContain('startMusicStructureBatch');
+    expect(job).toContain('useMusicAnalysisJob');
+    expect(job).toContain('getTrackMusicStructureAnalysisStatus');
+    expect(job).not.toContain('prepareMusicStructureCapability');
+    expect(job).not.toContain('startMusicStructureBatch');
+    expect(capability).not.toContain('reactive(');
+    expect(job).not.toContain('reactive(');
+    expect(capability).not.toContain('useMusicAnalysisJob');
+    expect(job).not.toContain('useMusicAnalysisCapability');
+    expect(capability).not.toContain('useMusicAnalysisBatch');
+    expect(job).not.toContain('useMusicAnalysisBatch');
+  });
+
   it('keeps durable architecture guidance aligned with the composition root', () => {
     const guidance = read('AGENTS.md');
     expect(guidance).not.toContain('now ~210 lines');

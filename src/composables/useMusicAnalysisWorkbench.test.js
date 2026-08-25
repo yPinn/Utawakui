@@ -156,6 +156,59 @@ beforeEach(() => {
 });
 
 describe('Music Analysis workbench', () => {
+  it('preserves the exact public API and readonly session state shape', () => {
+    const { workbench } = createHarness();
+
+    expect(Object.keys(workbench).sort()).toEqual(
+      [
+        'analyzeSelectedTrack',
+        'batch',
+        'canAnalyze',
+        'canCancel',
+        'cancelAnalysis',
+        'cancelBatchAnalysis',
+        'capability',
+        'capabilityBusy',
+        'capabilityProgressPercent',
+        'capabilityReady',
+        'capabilityStageLabel',
+        'dispose',
+        'initialize',
+        'isBusy',
+        'libraryState',
+        'phaseLabel',
+        'prepareCapability',
+        'progressPercent',
+        'refreshCapabilityStatus',
+        'refreshSelectedTrack',
+        'removeCapability',
+        'repairCapability',
+        'retryLibrary',
+        'selectTrack',
+        'selectedTrack',
+        'stageLabel',
+        'startBatchAnalysis',
+        'state',
+        'structure',
+        'tracks',
+      ].sort(),
+    );
+    expect(Object.keys(workbench.state).sort()).toEqual(
+      [
+        'activeJob',
+        'capabilityBusy',
+        'capabilityError',
+        'capabilityProgress',
+        'error',
+        'initialized',
+        'notice',
+        'phase',
+        'progress',
+        'selectedTrackId',
+      ].sort(),
+    );
+  });
+
   it('initializes the library, resumes status, and selects the first track', async () => {
     const harness = createHarness();
 
@@ -242,6 +295,66 @@ describe('Music Analysis workbench', () => {
     await harness.workbench.removeCapability();
     expect(harness.workbench.capability.value.status).toBe('missing');
     expect(harness.workbench.state.capabilityProgress).toBeNull();
+  });
+
+  it('ignores invalid progress and clamps bounded progress projections', async () => {
+    const harness = createHarness();
+    await harness.workbench.initialize();
+
+    harness.progress({ jobId: 'job-1', trackId: 'track-1' });
+    harness.capabilityProgress({ stage: 'downloading-model', percent: NaN });
+    expect(harness.workbench.state.progress).toBeNull();
+    expect(harness.workbench.state.capabilityProgress).toBeNull();
+
+    harness.progress({
+      jobId: 'job-1',
+      trackId: 'track-1',
+      stage: 'analyzing',
+      percent: 140,
+    });
+    harness.capabilityProgress({
+      stage: 'downloading-model',
+      percent: -10,
+    });
+
+    expect(harness.workbench.state.progress?.percent).toBe(100);
+    expect(harness.workbench.state.capabilityProgress?.percent).toBe(0);
+  });
+
+  it('prevents concurrent capability preparation requests', async () => {
+    const harness = createHarness();
+    const preparation = deferred();
+    harness.bridge.prepareMusicStructureCapability.mockReturnValue(
+      preparation.promise,
+    );
+    await harness.workbench.initialize();
+
+    const first = harness.workbench.prepareCapability();
+    await expect(harness.workbench.prepareCapability()).resolves.toBeNull();
+
+    expect(
+      harness.bridge.prepareMusicStructureCapability,
+    ).toHaveBeenCalledOnce();
+    preparation.resolve({ status: 'ready', installed: true });
+    await first;
+  });
+
+  it('uses a bounded unavailable capability when its bridge is absent', async () => {
+    const harness = createHarness();
+    delete harness.bridge.getMusicStructureCapabilityStatus;
+
+    await harness.workbench.initialize();
+
+    expect(harness.workbench.capability.value).toMatchObject({
+      status: 'unavailable',
+      installed: false,
+      canPrepare: false,
+      canRepair: false,
+      canRemove: false,
+    });
+    expect(harness.workbench.capabilityStageLabel.value).toBe(
+      '目前無法管理分析功能',
+    );
   });
 
   it('restores an active job before falling back to the first track', async () => {
