@@ -223,6 +223,15 @@ const coveragePolicy = Object.freeze({
       }),
     }),
     Object.freeze({
+      path: 'electron/main/featureDependencyHandlers.js',
+      minimum: Object.freeze({
+        statements: 98,
+        branches: 75,
+        functions: 95,
+        lines: 98,
+      }),
+    }),
+    Object.freeze({
       path: 'electron/main/lyrics/acquisitionHandlers.js',
       minimum: Object.freeze({
         statements: 79,
@@ -337,6 +346,15 @@ const coveragePolicy = Object.freeze({
         branches: 79,
         functions: 88,
         lines: 97,
+      }),
+    }),
+    Object.freeze({
+      path: 'src/composables/useFeatureDependencies.js',
+      minimum: Object.freeze({
+        statements: 95,
+        branches: 90,
+        functions: 92,
+        lines: 94,
       }),
     }),
     Object.freeze({

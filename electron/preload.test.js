@@ -243,6 +243,26 @@ describe('main preload bridge', () => {
     );
   });
 
+  it('forwards only dependency ids and the FFmpeg source intent', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.listFeatureDependencies('ignored');
+    bridge.prepareFeatureDependency('ffmpeg-gyan-essentials', 'ignored-path');
+    bridge.removeFeatureDependency('ffmpeg-gyan-essentials', 'ignored-path');
+    bridge.repairFeatureDependency('ffmpeg-gyan-essentials', 'ignored-path');
+    bridge.detectSystemFfmpeg('ignored-path');
+    bridge.setFfmpegSource(true, 'C:\\untrusted\\ffmpeg.exe');
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['feature-dependencies:list'],
+      ['feature-dependencies:prepare', 'ffmpeg-gyan-essentials'],
+      ['feature-dependencies:remove', 'ffmpeg-gyan-essentials'],
+      ['feature-dependencies:repair', 'ffmpeg-gyan-essentials'],
+      ['feature-dependencies:detect-system-ffmpeg'],
+      ['feature-dependencies:set-ffmpeg-source', true],
+    ]);
+  });
+
   it('does not send startup milestones when tracing is disabled', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 
