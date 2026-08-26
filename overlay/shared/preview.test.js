@@ -3,6 +3,7 @@ import {
   applyPreviewCanvas,
   inspectionBackdrop,
   isPreviewMode,
+  isWorkbenchMode,
   withPreviewFallback,
 } from './preview.mjs';
 
@@ -13,13 +14,21 @@ describe('overlay preview fallback', () => {
     expect(isPreviewMode({ search: '' })).toBe(false);
   });
 
+  it('recognizes only the explicit Workbench composition query', () => {
+    expect(isWorkbenchMode({ search: '?workbench=1' })).toBe(true);
+    expect(isWorkbenchMode({ search: '?workbench=0' })).toBe(false);
+    expect(isWorkbenchMode({ search: '' })).toBe(false);
+  });
+
   it('marks demo and inspection canvases independently', () => {
     const document = { documentElement: { dataset: {} } };
     applyPreviewCanvas(document, {
       previewMode: true,
-      location: { search: '?preview=1&backdrop=checker' },
+      workbenchMode: true,
+      location: { search: '?preview=1&workbench=1&backdrop=checker' },
     });
     expect(document.documentElement.dataset.overlayPreview).toBe('true');
+    expect(document.documentElement.dataset.overlayWorkbench).toBe('true');
     expect(document.documentElement.dataset.overlayBackdrop).toBe('checker');
   });
 

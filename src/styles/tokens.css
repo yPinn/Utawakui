@@ -240,6 +240,14 @@
   --ui-output-preview-stage-accent: #78c9cb;
   --ui-output-preview-reading-accent: #f0b49d;
   --ui-output-preview-accent-contrast: #102326;
+  --ui-output-preview-ktv-canvas: #11151d;
+  --ui-output-preview-ktv-fill-unsung: #ffffff;
+  --ui-output-preview-ktv-fill-solo: #2344b5;
+  --ui-output-preview-ktv-fill-male: #2344b5;
+  --ui-output-preview-ktv-fill-female: #b5213f;
+  --ui-output-preview-ktv-fill-group: #178346;
+  --ui-output-preview-ktv-stroke-unsung: #0b2b75;
+  --ui-output-preview-ktv-stroke-sung: #ffffff;
   --ui-output-preview-manga-canvas: #e8e8e5;
   --ui-output-preview-manga-paper: #ffffff;
   --ui-output-preview-manga-ink: #101010;

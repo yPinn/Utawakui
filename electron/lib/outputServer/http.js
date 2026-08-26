@@ -76,7 +76,12 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
 const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
 });
-const SHARED_PRESENTATION_STATIC_ROUTES = Object.freeze({
+const SHARED_STATIC_ROUTES = Object.freeze({
+  '/shared/assets/fonts/jf-open-huninn-2.1.ttf': [
+    'assets',
+    'fonts',
+    'jf-open-huninn-2.1.ttf',
+  ],
   '/shared/presentation/lyricsPresentation.mjs': [
     'presentation',
     'lyricsPresentation.mjs',
@@ -93,6 +98,8 @@ const OVERLAY_MIME_TYPES = Object.freeze({
   '.js': 'text/javascript; charset=utf-8',
   '.mjs': 'text/javascript; charset=utf-8',
   '.png': 'image/png',
+  '.ttf': 'font/ttf',
+  '.woff2': 'font/woff2',
 });
 const ARTWORK_MIME_TYPES = Object.freeze({
   '.jpg': 'image/jpeg',
@@ -395,7 +402,7 @@ function createOutputHttpHandler(options = {}) {
     }
 
     const overlayFileParts = OVERLAY_STATIC_ROUTES[pathname];
-    const sharedFileParts = SHARED_PRESENTATION_STATIC_ROUTES[pathname];
+    const sharedFileParts = SHARED_STATIC_ROUTES[pathname];
     const vendorFilePath = OVERLAY_VENDOR_ROUTES[pathname];
     if (overlayFileParts || sharedFileParts || vendorFilePath) {
       const filePath =

@@ -93,6 +93,28 @@ describe('output template registry', () => {
       tone: 'manga',
       preview: { layoutLabel: '漫畫直書單句', motionLabel: '整框淡入淡出' },
     });
+    expect(
+      lyricsGroup.templates.find((template) => template.id === 'karaoke-stack'),
+    ).toMatchObject({
+      id: 'karaoke-stack',
+      name: 'Classic KTV',
+      kind: 'lyrics',
+      preview: {
+        layoutLabel: '經典 KTV 雙行',
+        motionLabel: '由左至右掃色',
+      },
+      editableAppearanceKeys: ['fontScale'],
+      detail: expect.stringContaining('A 列固定在上方靠左'),
+      settings: expect.arrayContaining([
+        { label: '顯示', value: 'A 上左、B 下右，逐行交替' },
+        { label: '換詞', value: '唱完保留 2 秒' },
+        { label: '外觀', value: '白字、深藍粗框、黑色陰影' },
+        { label: '進度', value: 'T1 整行估算／T2 精確掃色' },
+      ]),
+    });
+    expect(
+      lyricsGroup.templates.some((template) => template.id === 'classic-ktv'),
+    ).toBe(false);
   });
 
   it('registers Cover Player as an independent Artwork template', () => {

@@ -49,6 +49,9 @@ function element(ownerDocument = null) {
     animate: vi.fn(),
     style: {
       values: {},
+      removeProperty(name) {
+        delete this.values[name];
+      },
       setProperty(name, nextValue) {
         this.values[name] = nextValue;
       },
@@ -126,6 +129,519 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('下一句');
     expect(elements.root.hidden).toBe(false);
     expect(elements.root.lang).toBe('zh-Hant');
+  });
+
+  it('keeps Classic KTV A and B as fixed lanes while the active lyric alternates in place', () => {
+    const elements = domElements();
+    const scheduled = [];
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule: vi.fn((callback, delayMs) => {
+        const token = { callback, delayMs };
+        scheduled.push(token);
+        return token;
+      }),
+      cancelSchedule: vi.fn(),
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: 'A 正在唱',
+        currentVisibleLineIndex: 0,
+        nextText: 'B 等待中',
+        nextVisibleLineIndex: 1,
+        language: 'zh-Hant',
+        lineIndex: 0,
+      },
+      options,
+    );
+
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.root.dataset.ktvActiveLane).toBe('a');
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: 'B 等待中',
+        currentVisibleLineIndex: 1,
+        nextText: 'A 換成下一句',
+        nextVisibleLineIndex: 2,
+        language: 'zh-Hant',
+        lineIndex: 1,
+        lineProgress: 0.65,
+      },
+      options,
+    );
+
+    expect(elements.current.textContent).toBe('B 等待中');
+    expect(elements.current.dataset.ktvLane).toBe('b');
+    expect(elements.next.textContent).toBe('A 正在唱');
+    expect(elements.next.dataset.ktvLane).toBe('a');
+    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(elements.root.dataset.ktvActiveLane).toBe('b');
+    expect(scheduled[0]?.delayMs).toBe(2000);
+
+    scheduled[0].callback();
+
+    expect(elements.next.textContent).toBe('A 換成下一句');
+    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: 'A 換成下一句',
+        currentVisibleLineIndex: 2,
+        nextText: 'B 再換下一句',
+        nextVisibleLineIndex: 3,
+        language: 'zh-Hant',
+        lineIndex: 3,
+      },
+      options,
+    );
+
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.next.textContent).toBe('B 等待中');
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.root.dataset.ktvActiveLane).toBe('a');
+  });
+
+  it('uses explicit vocal roles, strips speaker cues, and keeps the completed role during the hold', () => {
+    const elements = domElements();
+    let release;
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule: vi.fn((callback) => {
+        release = callback;
+        return callback;
+      }),
+      cancelSchedule: vi.fn(),
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '[男] 他的歌詞',
+        currentVisibleLineIndex: 0,
+        nextText: '[女]她的歌詞',
+        nextVisibleLineIndex: 1,
+        lineIndex: 0,
+      },
+      options,
+    );
+
+    expect(elements.current.textContent).toBe('他的歌詞');
+    expect(elements.current.dataset.ktvRole).toBe('male');
+    expect(elements.next.textContent).toBe('她的歌詞');
+    expect(elements.next.dataset.ktvRole).toBe('female');
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: '[女]她的歌詞',
+        currentVisibleLineIndex: 1,
+        nextText: '[合] 一起唱',
+        nextVisibleLineIndex: 2,
+        lineIndex: 1,
+        lineProgress: 0,
+      },
+      options,
+    );
+
+    expect(elements.current.textContent).toBe('她的歌詞');
+    expect(elements.current.dataset.ktvRole).toBe('female');
+    expect(elements.next.textContent).toBe('他的歌詞');
+    expect(elements.next.dataset.ktvRole).toBe('male');
+    expect(elements.next.dataset.ktvHeld).toBe('true');
+
+    release();
+
+    expect(elements.next.textContent).toBe('一起唱');
+    expect(elements.next.dataset.ktvRole).toBe('group');
+    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+  });
+
+  it('removes an explicit KTV speaker cue from the first T2 segment without changing its projection', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '[女] 歌詞',
+        currentVisibleLineIndex: 0,
+        currentSegments: [
+          {
+            segmentId: 'first-word',
+            text: '[女] 歌',
+            state: 'active',
+            progress: 0.25,
+            remainingMs: 900,
+          },
+          {
+            segmentId: 'second-word',
+            text: '詞',
+            state: 'upcoming',
+            progress: 0,
+          },
+        ],
+        nextText: '',
+        nextVisibleLineIndex: null,
+        lineIndex: 0,
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+
+    expect(elements.current.textContent).toBe('歌詞');
+    expect(elements.current.children).toHaveLength(2);
+    expect(elements.current.children[0]).toMatchObject({
+      textContent: '歌',
+      dataset: expect.objectContaining({
+        segmentId: 'first-word',
+        segmentState: 'active',
+      }),
+    });
+    expect(elements.current.children[1]).toMatchObject({
+      textContent: '詞',
+      dataset: expect.objectContaining({ segmentId: 'second-word' }),
+    });
+    expect(elements.current.dataset.ktvRole).toBe('female');
+  });
+
+  it('keeps Classic KTV lanes still while preserving generic lyric entrance motion', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '固定不抖動',
+      currentVisibleLineIndex: 0,
+      nextText: '下一句',
+      nextVisibleLineIndex: 1,
+      language: 'zh-Hant',
+      lineIndex: 0,
+    };
+
+    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+
+    expect(elements.current.animate).not.toHaveBeenCalled();
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        revision: 2,
+        currentText: '其他模板仍可動態進場',
+        lineIndex: 1,
+      },
+      { templateId: 'quiet-caption' },
+    );
+
+    expect(elements.current.animate).toHaveBeenCalledWith(
+      [
+        { opacity: 0.35, transform: 'translateY(0.3em)' },
+        { opacity: 1, transform: 'translateY(0)' },
+      ],
+      { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+    );
+  });
+
+  it('estimates Classic KTV sung progress from synced line timing without T2 segments', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '沒有逐字也會掃色',
+        currentVisibleLineIndex: 0,
+        nextText: '下一句',
+        nextVisibleLineIndex: 1,
+        language: 'zh-Hant',
+        lineIndex: 0,
+        lineProgress: 0.25,
+        lineRemainingMs: 3000,
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.current.dataset.lineProgress).toBe('true');
+    expect(elements.current.dataset.text).toBe('沒有逐字也會掃色');
+    expect(elements.current.style.values['--ovl-segment-progress']).toBe('25%');
+    expect(elements.current.animate).toHaveBeenCalledWith(
+      [
+        { '--ovl-segment-progress': '25%' },
+        { '--ovl-segment-progress': '100%' },
+      ],
+      { duration: 3000, easing: 'linear', fill: 'forwards' },
+    );
+    expect(elements.current.animate).not.toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ transform: expect.any(String) }),
+      ]),
+      expect.anything(),
+    );
+  });
+
+  it('freezes estimated Classic KTV progress when playback is not advancing', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '暫停在這裡',
+        currentVisibleLineIndex: 0,
+        nextText: '下一句',
+        nextVisibleLineIndex: 1,
+        language: 'zh-Hant',
+        lineIndex: 0,
+        lineProgress: 0.4,
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.current.dataset.lineProgress).toBe('true');
+    expect(elements.current.style.values['--ovl-segment-progress']).toBe('40%');
+    expect(elements.current.animate).not.toHaveBeenCalled();
+  });
+
+  it('does not retain a stale Classic KTV lane after seeking into the middle of a line', () => {
+    const elements = domElements();
+    const timer = {};
+    const schedule = vi.fn(() => timer);
+    const cancelSchedule = vi.fn();
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule,
+      cancelSchedule,
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '原本的 A',
+        currentVisibleLineIndex: 0,
+        nextText: '原本的 B',
+        nextVisibleLineIndex: 1,
+        lineIndex: 0,
+      },
+      options,
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: 'B 從起點接唱',
+        currentVisibleLineIndex: 1,
+        nextText: '新的 A',
+        nextVisibleLineIndex: 2,
+        lineIndex: 1,
+        lineProgress: 0,
+      },
+      options,
+    );
+
+    expect(elements.next.textContent).toBe('原本的 A');
+    expect(schedule).toHaveBeenCalledOnce();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: 'B 從起點接唱',
+        currentVisibleLineIndex: 1,
+        nextText: '新的 A',
+        nextVisibleLineIndex: 2,
+        lineIndex: 1,
+        lineProgress: 0.65,
+        timelineDiscontinuity: true,
+      },
+      options,
+    );
+
+    expect(elements.next.textContent).toBe('新的 A');
+    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(cancelSchedule).toHaveBeenCalledWith(timer);
+  });
+
+  it('keeps the completed Classic KTV lane for two seconds beside the final line', () => {
+    const elements = domElements();
+    let release;
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule: vi.fn((callback) => {
+        release = callback;
+        return callback;
+      }),
+      cancelSchedule: vi.fn(),
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '倒數第二句',
+        currentVisibleLineIndex: 0,
+        nextText: '最後一句',
+        nextVisibleLineIndex: 1,
+        lineIndex: 0,
+      },
+      options,
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: '最後一句',
+        currentVisibleLineIndex: 1,
+        nextText: '',
+        nextVisibleLineIndex: null,
+        lineIndex: 1,
+        lineProgress: 0,
+      },
+      options,
+    );
+
+    expect(elements.next.dataset.ktvLane).toBe('a');
+    expect(elements.next.textContent).toBe('倒數第二句');
+    expect(elements.next.dataset.ktvHeld).toBe('true');
+
+    release();
+
+    expect(elements.next.textContent).toBe('');
+    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+  });
+
+  it('cancels a pending Classic KTV lane replacement when the template changes', () => {
+    const elements = domElements();
+    const timer = {};
+    let staleCallback;
+    const cancelSchedule = vi.fn();
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule: vi.fn((callback) => {
+        staleCallback = callback;
+        return timer;
+      }),
+      cancelSchedule,
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: 'KTV A',
+        currentVisibleLineIndex: 0,
+        nextText: 'KTV B',
+        nextVisibleLineIndex: 1,
+        lineIndex: 0,
+      },
+      options,
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: 'KTV B',
+        currentVisibleLineIndex: 1,
+        nextText: 'KTV A2',
+        nextVisibleLineIndex: 2,
+        lineIndex: 1,
+      },
+      options,
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: '一般字幕',
+        nextText: '一般下一句',
+        lineIndex: 1,
+      },
+      { templateId: 'quiet-caption', reducedMotion: true },
+    );
+
+    expect(cancelSchedule).toHaveBeenCalledWith(timer);
+    expect(elements.next.textContent).toBe('一般下一句');
+
+    staleCallback();
+
+    expect(elements.next.textContent).toBe('一般下一句');
+  });
+
+  it('clears Classic KTV lane metadata when another template takes over', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '固定槽位',
+      currentVisibleLineIndex: 0,
+      nextText: '下一句',
+      nextVisibleLineIndex: 1,
+      language: 'zh-Hant',
+      lineIndex: 0,
+    };
+
+    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+    renderLyricsFrame(elements, frame, { templateId: 'quiet-caption' });
+
+    expect(elements.current.dataset).not.toHaveProperty('ktvLane');
+    expect(elements.next.dataset).not.toHaveProperty('ktvLane');
+    expect(elements.current.dataset).not.toHaveProperty('ktvRole');
+    expect(elements.next.dataset).not.toHaveProperty('ktvRole');
+    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(elements.root.dataset).not.toHaveProperty('ktvActiveLane');
+  });
+
+  it('keeps an upcoming lyric in its deterministic lane while the active source row is blank', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: '',
+        currentVisibleLineIndex: null,
+        nextText: '空白後的第三個可見句',
+        nextVisibleLineIndex: 2,
+        language: 'zh-Hant',
+        lineIndex: 4,
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+
+    expect(elements.current.dataset).not.toHaveProperty('ktvLane');
+    expect(elements.next.dataset.ktvLane).toBe('a');
+    expect(elements.root.dataset).not.toHaveProperty('ktvActiveLane');
   });
 
   it('renders Live Stage lyrics and its independently visible track card together', () => {
@@ -448,13 +964,13 @@ describe('lyrics overlay renderer', () => {
     expect(gsap.set).toHaveBeenCalledWith([bubble], { autoAlpha: 0 });
     expect(timelines[0].labels).toEqual(['exit', 'enter']);
     expect(timelines[0].tweens[1]).toMatchObject({
-      target: [bubble],
+      position: 'enter',
+      target: bubble,
       vars: {
         autoAlpha: 1,
         duration: 0.16,
         ease: 'power2.out',
         overwrite: 'auto',
-        stagger: { each: 0.2, from: 'start' },
       },
     });
     expect(elements.root.dataset).toMatchObject({
@@ -582,7 +1098,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.root.attributes['aria-label']).toBe('（echo）');
   });
 
-  it('stagger-fades three whole bubbles in DOM reading order', () => {
+  it('reveals each bubble one second after the prior fade completes', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
 
@@ -631,14 +1147,23 @@ describe('lyrics overlay renderer', () => {
       '新三',
     ]);
     expect(gsap.set).toHaveBeenCalledWith(incoming, { autoAlpha: 0 });
-    expect(timelines[0].tweens[1]).toMatchObject({
-      target: incoming,
-      vars: {
-        autoAlpha: 1,
-        duration: 0.16,
-        stagger: { each: 0.2, from: 'start' },
+    expect(timelines[0].tweens.slice(1)).toMatchObject([
+      {
+        position: 'enter',
+        target: incoming[0],
+        vars: { autoAlpha: 1, duration: 0.16 },
       },
-    });
+      {
+        position: '+=1',
+        target: incoming[1],
+        vars: { autoAlpha: 1, duration: 0.16 },
+      },
+      {
+        position: '+=1',
+        target: incoming[2],
+        vars: { autoAlpha: 1, duration: 0.16 },
+      },
+    ]);
   });
 
   it('applies a count-aware text fit to a long phrase inside three bubbles', () => {
@@ -873,7 +1398,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.root.dataset.mangaSide).toBe('right');
   });
 
-  it('queues same-line snapshots without replacing bubbles during enter stagger', () => {
+  it('queues same-line snapshots without replacing bubbles during sequential entrance', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
 
@@ -1049,9 +1574,11 @@ describe('lyrics overlay renderer', () => {
 
     expect(elements.current.children).toHaveLength(2);
     expect(elements.current.children[0].dataset.segmentState).toBe('past');
+    expect(elements.current.children[0].dataset.text).toBe(malicious);
     expect(elements.current.children[0].textContent).toBe(malicious);
     const active = elements.current.children[1];
     expect(active.dataset.segmentState).toBe('active');
+    expect(active.dataset.text).toBe('安全');
     expect(active.textContent).toBe('安全');
     expect(active.style.values['--ovl-segment-progress']).toBe('25%');
     expect(active.animate).toHaveBeenCalledWith(

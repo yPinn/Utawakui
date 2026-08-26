@@ -74,7 +74,92 @@ describe('overlay state selectors', () => {
       nextText: '下一句仍在遠方',
       language: 'zh-Hant',
       lineIndex: 1,
+      currentVisibleLineIndex: 1,
+      nextVisibleLineIndex: 2,
       lineProgress: 0.5,
+      lineRemainingMs: 3000,
+    });
+  });
+
+  it('freezes whole-line progress projection when playback is paused', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, status: 'paused' },
+    });
+
+    const frame = selectLyricsFrame(value, {
+      nowMs: Date.parse(value.generatedAt),
+    });
+
+    expect(frame.lineProgress).toBe(0.5);
+    expect(frame).not.toHaveProperty('lineRemainingMs');
+  });
+
+  it('numbers only visible lyric lines so fixed KTV lanes survive blank rows and reconnects', () => {
+    const value = snapshot();
+
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
+    ).toMatchObject({
+      currentText: '潮聲沿著夜色靠岸',
+      currentVisibleLineIndex: 1,
+      nextText: '下一句仍在遠方',
+      nextVisibleLineIndex: 2,
+    });
+
+    expect(
+      selectLyricsFrame(
+        {
+          ...value,
+          playback: { ...value.playback, positionMs: 17000 },
+          lyrics: { ...value.lyrics, activeLineIndex: 3 },
+        },
+        { nowMs: Date.parse(value.generatedAt) },
+      ),
+    ).toMatchObject({
+      currentText: '下一句仍在遠方',
+      currentVisibleLineIndex: 2,
+      nextText: '',
+      nextVisibleLineIndex: null,
+    });
+  });
+
+  it('does not let a speaker-only metadata row consume a visible KTV lane', () => {
+    const lines = [
+      { text: '第一句', startMs: 0, endMs: 9000 },
+      { text: '[男]', startMs: 9000, endMs: 10000 },
+      { text: '第二句', startMs: 10000, endMs: 15000 },
+    ];
+    const base = snapshot({
+      playback: { ...snapshot().playback, positionMs: 5000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        activeLineIndex: 0,
+        lines,
+      },
+    });
+
+    expect(
+      selectLyricsFrame(base, { nowMs: Date.parse(base.generatedAt) }),
+    ).toMatchObject({
+      currentText: '第一句',
+      currentVisibleLineIndex: 0,
+      nextText: '第二句',
+      nextVisibleLineIndex: 1,
+    });
+
+    const markerFrame = selectLyricsFrame(
+      {
+        ...base,
+        playback: { ...base.playback, positionMs: 9500 },
+        lyrics: { ...base.lyrics, activeLineIndex: 1 },
+      },
+      { nowMs: Date.parse(base.generatedAt) },
+    );
+    expect(markerFrame).toMatchObject({
+      currentText: '',
+      currentVisibleLineIndex: null,
+      nextText: '第二句',
+      nextVisibleLineIndex: 1,
     });
   });
 
@@ -259,6 +344,8 @@ describe('overlay state selectors', () => {
       currentText: '',
       nextText: '',
       lineIndex: null,
+      currentVisibleLineIndex: null,
+      nextVisibleLineIndex: null,
     });
   });
 
@@ -418,7 +505,7 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('keeps plain T1 output when the active line has no segments', () => {
+  it('keeps T1 projection separate from fabricated segment timing', () => {
     const value = snapshot();
     const frame = selectLyricsFrame(value, {
       nowMs: Date.parse(value.generatedAt),
@@ -426,6 +513,7 @@ describe('overlay state selectors', () => {
 
     expect(frame.currentText).toBe('潮聲沿著夜色靠岸');
     expect(frame).not.toHaveProperty('currentSegments');
+    expect(frame.lineRemainingMs).toBe(3000);
   });
 
   it('keeps an open-ended active segment without fabricated progress', () => {
@@ -517,6 +605,11 @@ describe('overlay state selectors', () => {
           nowMs: Date.parse(value.generatedAt) + 10000,
         }),
       ).toMatchObject({ currentText: '潮聲沿著夜色靠岸' });
+      if (status === 'seeking') {
+        expect(selectLyricsFrame(value)).toMatchObject({
+          timelineDiscontinuity: true,
+        });
+      }
       expect(nextLyricsBoundaryDelayMs(value)).toBeNull();
     }
   });

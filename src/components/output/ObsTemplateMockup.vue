@@ -5,6 +5,7 @@ import {
   mangaFrameSideForLine,
 } from '../../../shared/presentation/mangaFrameContract.mjs';
 import {
+  adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
@@ -32,6 +33,12 @@ const lyricsSourceAnalysis = computed(() =>
 );
 const liveStageLines = computed(
   () => adaptLiveStageLyricsPresentation(lyricsSourceAnalysis.value).lines,
+);
+const ktvCurrent = computed(() =>
+  adaptKtvLyricsPresentation(lyricsSourceAnalysis.value),
+);
+const ktvNext = computed(() =>
+  adaptKtvLyricsPresentation(analyzeLyricsSource(lyrics.value.next)),
 );
 const mangaBubbles = computed(
   () =>
@@ -131,16 +138,28 @@ const mangaBubbles = computed(
       </template>
 
       <template v-else-if="preset?.id === 'karaoke-stack'">
-        <span class="obs-template-mockup__eyebrow">正在演唱</span>
-        <strong
-          class="obs-template-mockup__title obs-template-mockup__title--karaoke obs-template-mockup__animated-primary"
-        >
-          {{ lyrics.current }}
-        </strong>
-        <span class="obs-template-mockup__progress" aria-hidden="true">
-          <span class="obs-template-mockup__progress-fill" />
+        <span class="obs-template-mockup__ktv-lines">
+          <strong
+            class="obs-template-mockup__ktv-line"
+            data-ktv-lane="a"
+            :data-ktv-role="ktvCurrent.role"
+          >
+            <span class="obs-template-mockup__ktv-line-base">
+              {{ ktvCurrent.text }}
+            </span>
+            <span class="obs-template-mockup__ktv-line-fill" aria-hidden="true">
+              {{ ktvCurrent.text }}
+            </span>
+          </strong>
+          <strong
+            class="obs-template-mockup__ktv-line"
+            data-ktv-held="true"
+            data-ktv-lane="b"
+            :data-ktv-role="ktvNext.role"
+          >
+            {{ ktvNext.text }}
+          </strong>
         </span>
-        <span class="obs-template-mockup__secondary">{{ lyrics.next }}</span>
       </template>
 
       <template v-else-if="preset?.id === 'reading-aid'">
@@ -240,6 +259,15 @@ const mangaBubbles = computed(
 </template>
 
 <style scoped>
+@font-face {
+  font-family: 'Utawakui Open Huninn';
+  src: url('../../../shared/assets/fonts/jf-open-huninn-2.1.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 .obs-template-mockup {
   --obs-preview-bg: var(--ui-output-preview-canvas);
   --obs-preview-surface: var(--ui-output-preview-surface);
@@ -267,6 +295,10 @@ const mangaBubbles = computed(
 .obs-template-mockup[data-tone='stage'] {
   --obs-preview-bg: var(--ui-output-preview-stage-canvas);
   --obs-preview-accent: var(--ui-output-preview-stage-accent);
+}
+
+.obs-template-mockup[data-template-id='karaoke-stack'] {
+  --obs-preview-bg: var(--ui-output-preview-ktv-canvas);
 }
 
 .obs-template-mockup[data-tone='lyrics'] {
@@ -590,10 +622,81 @@ const mangaBubbles = computed(
   font-size: var(--ui-output-template-thumb-caption-font-size);
 }
 
-.obs-template-mockup__title--karaoke {
-  padding: var(--ui-space-2);
-  border-radius: var(--ui-radius-sm);
-  background: var(--obs-preview-surface);
+.obs-template-mockup[data-template-id='karaoke-stack']
+  .obs-template-mockup__content--lyrics {
+  padding: 0;
+}
+
+.obs-template-mockup__ktv-lines {
+  width: 92%;
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, auto));
+  justify-self: center;
+  gap: 0.16em;
+  padding-block-end: 5%;
+}
+
+.obs-template-mockup__ktv-line {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-solo);
+
+  position: relative;
+  max-width: 84%;
+  box-sizing: border-box;
+  overflow: hidden;
+  margin: -0.11em -0.16em -0.18em -0.11em;
+  padding: 0.11em 0.16em 0.18em 0.11em;
+  color: var(--ui-output-preview-ktv-fill-unsung);
+  font-family: 'Utawakui Open Huninn', 'Microsoft JhengHei', sans-serif;
+  font-size: 1.75rem;
+  font-weight: 900;
+  letter-spacing: 0.015em;
+  line-height: 1.08;
+  text-overflow: ellipsis;
+  text-shadow: none;
+  white-space: nowrap;
+  -webkit-text-stroke: 0.075em var(--ui-output-preview-ktv-stroke-unsung);
+  paint-order: stroke fill;
+}
+
+.obs-template-mockup__ktv-line[data-ktv-role='male'] {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-male);
+}
+
+.obs-template-mockup__ktv-line[data-ktv-role='female'] {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-female);
+}
+
+.obs-template-mockup__ktv-line[data-ktv-role='group'] {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-group);
+}
+
+.obs-template-mockup__ktv-line[data-ktv-held='true'] {
+  color: var(--ui-output-preview-ktv-fill-sung);
+  -webkit-text-stroke: 0.085em var(--ui-output-preview-ktv-stroke-sung);
+}
+
+.obs-template-mockup__ktv-line[data-ktv-lane='a'] {
+  grid-row: 1;
+  justify-self: start;
+  text-align: left;
+}
+
+.obs-template-mockup__ktv-line[data-ktv-lane='b'] {
+  grid-row: 2;
+  justify-self: end;
+  text-align: right;
+}
+
+.obs-template-mockup__ktv-line-fill {
+  position: absolute;
+  inset: 0.11em 0.16em 0.18em 0.11em;
+  display: block;
+  overflow: hidden;
+  clip-path: inset(0 38% 0 0);
+  color: var(--ui-output-preview-ktv-fill-sung);
+  white-space: nowrap;
+  -webkit-text-stroke: 0.085em var(--ui-output-preview-ktv-stroke-sung);
+  paint-order: stroke fill;
 }
 
 .obs-template-mockup__title--quiet {
@@ -727,6 +830,12 @@ const mangaBubbles = computed(
     linear infinite;
 }
 
+.obs-template-mockup[data-motion='playing']
+  .obs-template-mockup__ktv-line-fill {
+  animation: obs-preview-ktv-fill var(--ui-output-preview-cycle-duration) linear
+    infinite;
+}
+
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__content {
   box-sizing: border-box;
   width: var(--ui-output-template-thumb-content-width);
@@ -816,6 +925,19 @@ const mangaBubbles = computed(
   min-width: 0;
 }
 
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__ktv-lines {
+  gap: 0.12em;
+}
+
+.obs-template-mockup[data-size='thumbnail'][data-template-id='karaoke-stack']
+  .obs-template-mockup__content--lyrics {
+  align-content: end;
+}
+
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__ktv-line {
+  font-size: 0.875rem;
+}
+
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__title,
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__queue-line,
 .obs-template-mockup[data-size='thumbnail']
@@ -886,6 +1008,18 @@ const mangaBubbles = computed(
   }
 }
 
+@keyframes obs-preview-ktv-fill {
+  0%,
+  12% {
+    clip-path: inset(0 92% 0 0);
+  }
+
+  76%,
+  100% {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
 @keyframes obs-preview-bubble-cycle {
   0%,
   12%,
@@ -905,6 +1039,8 @@ const mangaBubbles = computed(
     .obs-template-mockup__animated-primary,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__animated-bubble,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__ktv-line-fill,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__progress-fill {
     animation: none;

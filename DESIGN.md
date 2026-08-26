@@ -587,6 +587,23 @@ First-version bundled overlay fonts should stay small:
 - Let Korean and other CJK fallback through system / Noto-family fallbacks first.
 - Consider optional font packs or user-selected local fonts only after the overlay MVP exists.
 
+The `karaoke-stack` template is a deliberate display exception. It uses the
+bundled jf open-huninn 2.1 Traditional Chinese rounded TTF under the local CSS
+family name `Utawakui Open Huninn`. Both fixed A／B lanes use the same face, size,
+line-height, tracking, stroke, and shadow. Unsung text is white with a dark navy
+outline; the sung portion replaces it with dark blue solo／male, dark red female,
+or dark green group fill and a thicker white outline. Explicit `[男]`, `[女]`, and
+`[合]` source cues select those roles; unmarked and unknown-speaker lines use the
+solo blue default. A newly active lane follows its lyric timestamp immediately;
+the completed lane remains visible for two seconds before receiving the following
+line and remains fully filled during that hold. The KTV adapter consumes the
+shared lyric source analyzer for cue cleanup and phrase diagnostics, while the
+normalized LRC timestamp／row remains the authoritative sentence boundary. T2
+segments drive exact sung progress. When only synced line timing is
+available, the active lane uses a clearly estimated whole-line left-to-right sweep
+and freezes that estimate whenever playback is not advancing. The control-panel UI
+remains on the native system stack.
+
 `GenWanMin2 TW` and `Playfair Display` are suitable for bundling under SIL Open Font License 1.1, but release artifacts must include license notices.
 
 ### Custom Overlay Fonts

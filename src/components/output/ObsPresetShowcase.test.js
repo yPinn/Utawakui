@@ -187,6 +187,15 @@ describe('OBS output workspace layout contract', () => {
     expect(tokenSource).toContain('--ui-output-preview-cycle-duration:');
     expect(tokenSource).toContain('--ui-output-preview-cycle-ease:');
     expect(tokenSource).toContain('--ui-output-preview-player-track-size:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-canvas:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-unsung:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-solo:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-male:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-female:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-group:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-stroke-unsung:');
+    expect(tokenSource).toContain('--ui-output-preview-ktv-stroke-sung:');
+    expect(tokenSource).not.toContain('--ui-output-preview-ktv-shadow:');
     expect(tokenSource).toContain(
       '--ui-output-template-thumb-caption-font-size:',
     );

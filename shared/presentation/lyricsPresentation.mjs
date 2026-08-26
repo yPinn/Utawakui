@@ -5,7 +5,7 @@ export const MAX_LIVE_STAGE_CAPTION_PAGES = 2;
 
 const PARENTHETICAL_RE = /\([^()（）]+\)|（[^()（）]+）/gu;
 const PARENTHESIS_MARK_RE = /[()（）]/u;
-const SPEAKER_RE = /^\[([^\]\r\n]{1,40})\](?:[ \t]*\r?\n|[ \t]+|$)/u;
+const SPEAKER_RE = /^\[([^\]\r\n]{1,40})\](?:[ \t]*\r?\n|[ \t]*)/u;
 const SEMANTIC_PUNCTUATION_RE = /[,，、。！？!?;；:：]/u;
 const WORD_RE = /[\p{L}\p{N}]+(?:['’][\p{L}\p{N}]+)*/gu;
 const CJK_GLYPH_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u;
@@ -13,6 +13,36 @@ const HANGUL_RE = /[\uac00-\ud7af]/u;
 const KANA_RE = /[\u3040-\u30ff]/u;
 const HAN_RE = /[\u3400-\u9fff]/u;
 const FILLER_WORDS = new Set(['ah', 'eh', 'hm', 'hmm', 'oh', 'ooh', 'uh']);
+const KTV_MALE_LABELS = new Set([
+  '男',
+  '男聲',
+  '男声',
+  'male',
+  'man',
+  'm',
+  '♂',
+]);
+const KTV_FEMALE_LABELS = new Set([
+  '女',
+  '女聲',
+  '女声',
+  'female',
+  'woman',
+  'f',
+  '♀',
+]);
+const KTV_GROUP_LABELS = new Set([
+  '合',
+  '合唱',
+  '男女',
+  '全體',
+  '全体',
+  'duet',
+  'both',
+  'all',
+  'together',
+  'group',
+]);
 const LIVE_STAGE_ROW_WIDTHS = [7, 11, 7, 11];
 const LIVE_STAGE_MAX_ROW_WIDTH = Math.max(...LIVE_STAGE_ROW_WIDTHS);
 const KOREAN_GENITIVE_PRONOUNS = new Set([
@@ -189,6 +219,32 @@ export function analyzeLyricsSource(value) {
     speaker,
     units,
     malformedParenthetical: false,
+  };
+}
+
+function ktvVocalRole(speaker) {
+  const label = String(speaker ?? '')
+    .trim()
+    .toLocaleLowerCase();
+  if (KTV_MALE_LABELS.has(label)) return 'male';
+  if (KTV_FEMALE_LABELS.has(label)) return 'female';
+  if (KTV_GROUP_LABELS.has(label)) return 'group';
+  return 'solo';
+}
+
+export function adaptKtvLyricsPresentation(analysis) {
+  const sourceText = String(analysis?.sourceText ?? '');
+  const units = Array.isArray(analysis?.units) ? analysis.units : [];
+  const contentStart = analysis?.speaker
+    ? (units[0]?.sourceStart ?? sourceText.length)
+    : 0;
+  return {
+    sourceText,
+    text: sourceText.slice(contentStart).trim(),
+    speaker: analysis?.speaker ?? '',
+    role: ktvVocalRole(analysis?.speaker),
+    phrases: units.map((unit) => unit.text).filter(Boolean),
+    contentStart,
   };
 }
 

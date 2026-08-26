@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Utawakui Lyrics Overlay</title>
+    <link
+      rel="preload"
+      href="/shared/assets/fonts/jf-open-huninn-2.1.ttf"
+      as="font"
+      type="font/ttf"
+      crossorigin
+    />
     <link rel="stylesheet" href="/overlay/shared/base.css" />
     <link rel="stylesheet" href="/overlay/shared/fallback.css" />
     <link rel="stylesheet" href="/overlay/shared/tokens.css" />
@@ -13,6 +20,10 @@
     <script type="module" src="/overlay/lyrics/lyrics.mjs"></script>
   </head>
   <body>
+    <div class="lyrics-workbench__backdrop" aria-hidden="true"></div>
+    <div class="lyrics-workbench__guide" aria-hidden="true">
+      <div class="lyrics-workbench__guide-region"></div>
+    </div>
     <main
       id="lyrics-overlay"
       class="lyrics-overlay"

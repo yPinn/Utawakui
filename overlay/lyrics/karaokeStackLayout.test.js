@@ -1,0 +1,89 @@
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+
+import { describe, expect, it } from 'vitest';
+
+const css = readFileSync(
+  fileURLToPath(new URL('./lyrics.css', import.meta.url)),
+  'utf8',
+);
+
+describe('Classic KTV Karaoke Stack layout contract', () => {
+  it('lets the animated segment percentage reach the progress pseudo-element', () => {
+    expect(css).toMatch(
+      /@property --ovl-segment-progress\s*\{[\s\S]*?inherits: true;/u,
+    );
+  });
+
+  it('keeps the existing id while replacing the panel with a transparent lower third', () => {
+    const start = css.indexOf(":root[data-ovl-template='karaoke-stack']");
+    const end = css.indexOf(":root[data-ovl-template='quiet-caption']", start);
+    const karaokeCss = css.slice(start, end);
+
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(karaokeCss).toContain(
+      '--ovl-ktv-fill-unsung: var(--ovl-color-ktv-fill-unsung);',
+    );
+    expect(karaokeCss).toContain(
+      '--ovl-ktv-fill-sung: var(--ovl-color-ktv-fill-solo);',
+    );
+    expect(karaokeCss).toContain(
+      '--ovl-ktv-stroke-unsung: var(--ovl-color-ktv-stroke-unsung);',
+    );
+    expect(karaokeCss).toContain(
+      '--ovl-ktv-stroke-sung: var(--ovl-color-ktv-stroke-sung);',
+    );
+    expect(karaokeCss).not.toContain('--ovl-ktv-shadow');
+    expect(karaokeCss).toContain('background: transparent;');
+    expect(karaokeCss).toContain('border: 0;');
+    expect(karaokeCss).toContain(
+      'grid-template-rows: repeat(2, minmax(0, auto));',
+    );
+    expect(karaokeCss).toContain('font-size: 4.1em;');
+    expect(karaokeCss).toContain('padding: 0.11em 0.16em 0.18em 0.11em;');
+    expect(karaokeCss).toContain('margin: -0.11em -0.16em -0.18em -0.11em;');
+    expect(karaokeCss).not.toMatch(/font-size:[^;]*vw/u);
+    expect(karaokeCss).not.toContain('var(--ovl-user-surface)');
+  });
+
+  it('uses offset twin lanes and a clipped text duplicate for T2 sung progress', () => {
+    const start = css.indexOf(":root[data-ovl-template='karaoke-stack']");
+    const end = css.indexOf(":root[data-ovl-template='quiet-caption']", start);
+    const karaokeCss = css.slice(start, end);
+
+    expect(css).toContain(
+      ":root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current",
+    );
+    expect(css).toContain(
+      ":root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next",
+    );
+    expect(css).toContain("[data-ktv-lane='a']");
+    expect(css).toContain("[data-ktv-lane='b']");
+    expect(css).toContain('grid-row: 1;');
+    expect(css).toContain('grid-row: 2;');
+    expect(css).toContain('content: attr(data-text);');
+    expect(css).toMatch(
+      /clip-path:\s*inset\(\s*0 calc\(100% - var\(--ovl-segment-progress\)\) 0 0\s*\);/u,
+    );
+    expect(css).toContain(
+      '-webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);',
+    );
+    expect(css).toContain("[data-ktv-role='female']");
+    expect(css).toContain("[data-ktv-role='group']");
+    expect(css).toMatch(
+      /\[data-ktv-held='true'\][^{]*\{[\s\S]*?color: var\(--ovl-ktv-fill-sung\);[\s\S]*?-webkit-text-stroke: 0\.085em var\(--ovl-ktv-stroke-sung\);/u,
+    );
+    expect(karaokeCss).toContain('text-shadow: none;');
+    expect(karaokeCss).not.toContain('0.045em 0.07em');
+    expect(css).not.toContain('background-clip: text');
+  });
+
+  it('falls back to static current and next lines without requiring T2 segments', () => {
+    expect(css).toMatch(
+      /data-ovl-template='karaoke-stack'\]\s+\.lyrics-overlay__current:not\(\[data-segmented='true'\]\)[^{]*\{[\s\S]*?color: var\(--ovl-ktv-fill-unsung\);/u,
+    );
+    expect(css).toMatch(
+      /data-ovl-template='karaoke-stack'\]\s+\.lyrics-overlay__next\s*\{[\s\S]*?color: var\(--ovl-ktv-fill-unsung\);/u,
+    );
+  });
+});

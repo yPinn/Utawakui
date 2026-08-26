@@ -8,6 +8,13 @@ function text(value) {
   return typeof value === 'string' ? value.trim() : '';
 }
 
+function displayableLyricsText(value) {
+  const normalized = text(value);
+  if (!normalized) return '';
+  const analysis = analyzeLyricsSource(normalized);
+  return analysis.speaker && analysis.units.length === 0 ? '' : normalized;
+}
+
 const CANONICAL_SECTION_ROLES = new Set([
   'intro',
   'verse',
@@ -34,7 +41,21 @@ function hiddenLyricsFrame(snapshot) {
     nextText: '',
     language: '',
     lineIndex: null,
+    currentVisibleLineIndex: null,
+    nextVisibleLineIndex: null,
   };
+}
+
+function visibleLyricLineIndex(lines, sourceLineIndex) {
+  if (!Number.isSafeInteger(sourceLineIndex) || sourceLineIndex < 0)
+    return null;
+  if (!displayableLyricsText(lines[sourceLineIndex]?.text)) return null;
+
+  let visibleIndex = -1;
+  for (let index = 0; index <= sourceLineIndex; index += 1) {
+    if (displayableLyricsText(lines[index]?.text)) visibleIndex += 1;
+  }
+  return visibleIndex;
 }
 
 function playbackRate(snapshot) {
@@ -415,11 +436,8 @@ export function selectLyricsFrame(snapshot, options = {}) {
   const trackId = snapshot?.playback?.track?.id;
   const lyrics = snapshot?.lyrics;
   const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
-  const activeIndex = activeLyricIndex(
-    snapshot,
-    lines,
-    options.nowMs ?? Date.now(),
-  );
+  const nowMs = options.nowMs ?? Date.now();
+  const activeIndex = activeLyricIndex(snapshot, lines, nowMs);
   if (
     !trackId ||
     lyrics?.trackId !== trackId ||
@@ -430,27 +448,35 @@ export function selectLyricsFrame(snapshot, options = {}) {
     return hiddenLyricsFrame(snapshot);
   }
 
-  const currentText = text(lines[activeIndex]?.text);
+  const currentText = displayableLyricsText(lines[activeIndex]?.text);
   let nextText = '';
+  let nextIndex = null;
   for (let index = activeIndex + 1; index < lines.length; index += 1) {
-    nextText = text(lines[index]?.text);
-    if (nextText) break;
+    nextText = displayableLyricsText(lines[index]?.text);
+    if (nextText) {
+      nextIndex = index;
+      break;
+    }
   }
 
   const currentSegments = projectCurrentSegments(
     snapshot,
     lines,
     activeIndex,
-    options.nowMs ?? Date.now(),
+    nowMs,
   );
   const lineEndMs = effectiveLineEnd(snapshot, lines, activeIndex);
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
   const lineProgress =
     lyrics?.synced === true && Number.isFinite(lines[activeIndex]?.startMs)
-      ? boundedProgress(
-          lyricsPositionMs(snapshot, options.nowMs ?? Date.now()),
-          lines[activeIndex].startMs,
-          lineEndMs,
-        )
+      ? boundedProgress(positionMs, lines[activeIndex].startMs, lineEndMs)
+      : null;
+  const lineRemainingMs =
+    !currentSegments &&
+    lineProgress !== null &&
+    snapshot?.playback?.status === 'playing' &&
+    Number.isFinite(lineEndMs)
+      ? Math.max(0, (lineEndMs - positionMs) / playbackRate(snapshot))
       : null;
   const musicStructure = selectMusicStructureFrame(snapshot, options);
   return {
@@ -460,7 +486,13 @@ export function selectLyricsFrame(snapshot, options = {}) {
     nextText,
     language: text(lyrics?.source?.language),
     lineIndex: activeIndex,
+    currentVisibleLineIndex: visibleLyricLineIndex(lines, activeIndex),
+    nextVisibleLineIndex: visibleLyricLineIndex(lines, nextIndex),
+    ...(snapshot?.playback?.status === 'seeking'
+      ? { timelineDiscontinuity: true }
+      : {}),
     ...(lineProgress !== null ? { lineProgress } : {}),
+    ...(lineRemainingMs !== null ? { lineRemainingMs } : {}),
     ...(currentSegments ? { currentSegments } : {}),
     ...(musicStructure ? { musicStructure } : {}),
   };

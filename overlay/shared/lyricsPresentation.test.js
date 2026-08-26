@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
@@ -12,6 +13,10 @@ function mangaPresentation(text, options = {}) {
 
 function liveStagePresentation(text, options = {}) {
   return adaptLiveStageLyricsPresentation(analyzeLyricsSource(text), options);
+}
+
+function ktvPresentation(text) {
+  return adaptKtvLyricsPresentation(analyzeLyricsSource(text));
 }
 
 describe('shared lyrics source analysis', () => {
@@ -63,6 +68,37 @@ describe('shared lyrics source analysis', () => {
 });
 
 describe('lyrics presentation preprocessing', () => {
+  it('keeps one normalized LRC row intact while exposing analyzer phrase boundaries to KTV', () => {
+    expect(
+      ktvPresentation('[男] 風箏在陰天擱淺，卻無法掩埋歉疚'),
+    ).toMatchObject({
+      sourceText: '[男] 風箏在陰天擱淺，卻無法掩埋歉疚',
+      text: '風箏在陰天擱淺，卻無法掩埋歉疚',
+      speaker: '男',
+      role: 'male',
+      phrases: ['風箏在陰天擱淺，', '卻無法掩埋歉疚'],
+    });
+  });
+
+  it('maps only explicit KTV vocal labels and defaults unknown or solo rows to blue', () => {
+    expect(ktvPresentation('[女]她的歌詞')).toMatchObject({
+      text: '她的歌詞',
+      role: 'female',
+    });
+    expect(ktvPresentation('[合] 一起唱')).toMatchObject({
+      text: '一起唱',
+      role: 'group',
+    });
+    expect(ktvPresentation('[主唱] 保留安全預設')).toMatchObject({
+      text: '保留安全預設',
+      role: 'solo',
+    });
+    expect(ktvPresentation('沒有標記的單人歌曲')).toMatchObject({
+      text: '沒有標記的單人歌曲',
+      role: 'solo',
+    });
+  });
+
   it('splits Japanese and Chinese whitespace as authored phrase boundaries', () => {
     expect(
       mangaPresentation('君を泣かすから だから一緒には居れないな'),

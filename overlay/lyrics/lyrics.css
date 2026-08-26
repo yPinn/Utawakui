@@ -1,10 +1,79 @@
 @property --ovl-segment-progress {
   syntax: '<percentage>';
-  inherits: false;
+  inherits: true;
   initial-value: 0%;
 }
 
+@font-face {
+  font-family: 'Utawakui Open Huninn';
+  src: url('/shared/assets/fonts/jf-open-huninn-2.1.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 @layer ovl-template {
+  .lyrics-workbench__backdrop,
+  .lyrics-workbench__guide {
+    position: fixed;
+    inset: 0;
+    display: none;
+    pointer-events: none;
+  }
+
+  :root[data-overlay-workbench='true'] .lyrics-workbench__backdrop,
+  :root[data-overlay-workbench='true'] .lyrics-workbench__guide {
+    display: block;
+  }
+
+  .lyrics-workbench__backdrop {
+    z-index: 0;
+    background: transparent;
+  }
+
+  :root[data-overlay-backdrop='checker'] .lyrics-workbench__backdrop {
+    background: conic-gradient(
+        var(--ovl-color-surface) 25%,
+        var(--ovl-color-surface-soft) 0 50%,
+        var(--ovl-color-surface) 0 75%,
+        var(--ovl-color-surface-soft) 0
+      )
+      0 0 / var(--ovl-primitive-space-6) var(--ovl-primitive-space-6);
+  }
+
+  :root[data-overlay-backdrop='dark'] .lyrics-workbench__backdrop {
+    background: var(--ovl-primitive-color-ink);
+  }
+
+  :root[data-overlay-backdrop='light'] .lyrics-workbench__backdrop {
+    background: var(--ovl-primitive-color-paper);
+  }
+
+  .lyrics-workbench__guide {
+    z-index: 1;
+    overflow: hidden;
+    user-select: none;
+  }
+
+  .lyrics-workbench__guide-region {
+    position: absolute;
+    inset: calc(100% / 3) calc(100% / 3) 0;
+  }
+
+  :root[data-overlay-workbench='true'] .lyrics-workbench__guide-region::before {
+    position: absolute;
+    inset: 0;
+    content: '';
+    background: url('/workbench/streamer-guide.png') center bottom / contain
+      no-repeat;
+    transform: scale(1.35);
+    transform-origin: center bottom;
+  }
+
+  :root[data-overlay-workbench='true'] .lyrics-overlay {
+    z-index: 2;
+  }
+
   .lyrics-overlay {
     /* Template layer: override these per profile/style set later. */
     --ovl-template-lyrics-current-size: 3.5em;
@@ -107,20 +176,136 @@
     display: none;
   }
 
+  :root[data-ovl-template='karaoke-stack'],
+  :root[data-ovl-template='karaoke-stack'] body {
+    background: transparent;
+  }
+
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay {
-    --ovl-template-lyrics-line-width: 34ch;
-    --ovl-template-lyrics-bottom: 6%;
+    --ovl-ktv-fill-unsung: var(--ovl-color-ktv-fill-unsung);
+    --ovl-ktv-fill-sung: var(--ovl-color-ktv-fill-solo);
+    --ovl-ktv-stroke-unsung: var(--ovl-color-ktv-stroke-unsung);
+    --ovl-ktv-stroke-sung: var(--ovl-color-ktv-stroke-sung);
+    --ovl-template-lyrics-bottom: 5%;
+
+    inset-inline: max(var(--ovl-safe-inline), 4%);
+    inline-size: auto;
+    grid-template-rows: repeat(2, minmax(0, auto));
+    transform: none;
+    gap: 0.16em;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    justify-items: stretch;
+    text-align: left;
   }
 
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__current,
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
-    inline-size: 100%;
+    position: relative;
+    inline-size: fit-content;
+    max-inline-size: 84%;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin: -0.11em -0.16em -0.18em -0.11em;
+    padding: 0.11em 0.16em 0.18em 0.11em;
+    color: var(--ovl-ktv-fill-unsung);
+    font-family:
+      'Utawakui Open Huninn', 'Microsoft JhengHei', 'Noto Sans CJK TC',
+      sans-serif;
+    font-size: 4.1em;
+    font-weight: 900;
+    letter-spacing: 0.015em;
+    line-height: 1.08;
+    overflow-wrap: normal;
+    text-overflow: ellipsis;
+    text-shadow: none;
+    text-wrap: nowrap;
+    white-space: nowrap;
+    -webkit-text-stroke: 0.075em var(--ovl-ktv-stroke-unsung);
+    paint-order: stroke fill;
+  }
+
+  :root[data-ovl-template='karaoke-stack'] [data-ktv-role='male'] {
+    --ovl-ktv-fill-sung: var(--ovl-color-ktv-fill-male);
+  }
+
+  :root[data-ovl-template='karaoke-stack'] [data-ktv-role='female'] {
+    --ovl-ktv-fill-sung: var(--ovl-color-ktv-fill-female);
+  }
+
+  :root[data-ovl-template='karaoke-stack'] [data-ktv-role='group'] {
+    --ovl-ktv-fill-sung: var(--ovl-color-ktv-fill-group);
+  }
+
+  :root[data-ovl-template='karaoke-stack'] [data-ktv-lane='a'] {
+    grid-row: 1;
+    justify-self: start;
+    text-align: left;
+  }
+
+  :root[data-ovl-template='karaoke-stack'] [data-ktv-lane='b'] {
+    grid-row: 2;
+    justify-self: end;
+    text-align: right;
+  }
+
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__next {
+    color: var(--ovl-ktv-fill-unsung);
+  }
+
+  :root[data-ovl-template='karaoke-stack'] [data-ktv-held='true'] {
+    color: var(--ovl-ktv-fill-sung);
+    -webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);
   }
 
   :root[data-ovl-template='karaoke-stack']
-    .lyrics-overlay[data-music-section='chorus']
-    .lyrics-overlay__current {
-    filter: drop-shadow(0 0 0.16em var(--ovl-color-current));
+    .lyrics-overlay__current:not([data-segmented='true']) {
+    color: var(--ovl-ktv-fill-unsung);
+  }
+
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__current[data-line-progress='true']::after {
+    position: absolute;
+    inset: 0.11em 0.16em 0.18em 0.11em;
+    overflow: hidden;
+    clip-path: inset(0 calc(100% - var(--ovl-segment-progress)) 0 0);
+    color: var(--ovl-ktv-fill-sung);
+    content: attr(data-text);
+    pointer-events: none;
+    white-space: pre;
+    -webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);
+    paint-order: stroke fill;
+  }
+
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__segment {
+    position: relative;
+    display: inline-block;
+    color: var(--ovl-ktv-fill-unsung);
+    background: none;
+  }
+
+  :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__segment::after {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    clip-path: inset(0 calc(100% - var(--ovl-segment-progress)) 0 0);
+    color: var(--ovl-ktv-fill-sung);
+    content: attr(data-text);
+    pointer-events: none;
+    white-space: pre;
+    -webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);
+    paint-order: stroke fill;
+  }
+
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment[data-segment-state='past'],
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment[data-segment-state='active'],
+  :root[data-ovl-template='karaoke-stack']
+    .lyrics-overlay__segment[data-segment-state='upcoming'] {
+    color: var(--ovl-ktv-fill-unsung);
   }
 
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay {

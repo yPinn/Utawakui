@@ -148,6 +148,14 @@ describe('overlay CSS tokens', () => {
 
     expect(tokens).toContain('--ovl-color-current-surface');
     expect(tokens).toContain('--ovl-color-stroke-strong');
+    expect(tokens).toContain('--ovl-color-ktv-fill-unsung');
+    expect(tokens).toContain('--ovl-color-ktv-fill-solo');
+    expect(tokens).toContain('--ovl-color-ktv-fill-male');
+    expect(tokens).toContain('--ovl-color-ktv-fill-female');
+    expect(tokens).toContain('--ovl-color-ktv-fill-group');
+    expect(tokens).toContain('--ovl-color-ktv-stroke-unsung');
+    expect(tokens).toContain('--ovl-color-ktv-stroke-sung');
+    expect(tokens).not.toContain('--ovl-color-ktv-shadow');
     expect(tokens).toContain('--ovl-color-stroke-soft');
   });
 

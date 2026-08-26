@@ -4,6 +4,7 @@ import {
   normalizeLyricsDocument,
   projectLegacyLyricLines,
 } from './lyricsDocument.js';
+import { selectLyricsFrame } from '../../shared/presentation/state.mjs';
 
 const SOURCE = {
   filename: 'main.lrc',
@@ -85,6 +86,45 @@ describe('normalizeLyricsDocument', () => {
     );
     expect(document.lines[1]).not.toHaveProperty('segments');
     expect(JSON.stringify(document)).not.toMatch(/NaN|Infinity/);
+  });
+
+  it('keeps KTV vocal cues T2-complete through normalization and frame projection', () => {
+    const document = normalize(
+      `[00:01.00][女]<00:01.00>她的<00:02.00>歌詞
+[00:03.00]下一句`,
+    );
+    const generatedAt = '2026-08-26T00:00:00.000Z';
+    const frame = selectLyricsFrame(
+      {
+        revision: 1,
+        generatedAt,
+        playback: {
+          status: 'playing',
+          positionMs: 1500,
+          durationMs: 5000,
+          rate: 1,
+          track: { id: 'track-1' },
+        },
+        lyrics: {
+          trackId: 'track-1',
+          source: { language: 'zh-Hant' },
+          synced: true,
+          offsetMs: 0,
+          activeLineIndex: 0,
+          lines: document.lines,
+        },
+      },
+      { nowMs: Date.parse(generatedAt) },
+    );
+
+    expect(document.granularity).toBe('T2');
+    expect(frame).toMatchObject({
+      currentText: '[女]她的歌詞',
+      currentSegments: [
+        { text: '[女]她的', state: 'active', progress: 0.5 },
+        { text: '歌詞', state: 'upcoming', progress: 0 },
+      ],
+    });
   });
 
   it('changes derived identity when the source or normalizer profile changes', () => {

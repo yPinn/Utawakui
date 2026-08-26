@@ -16,6 +16,7 @@ function createFixtureRoots() {
   const overlayRoot = path.join(root, 'overlay');
   const sharedRoot = path.join(root, 'shared');
   fs.mkdirSync(path.join(overlayRoot, 'lyrics'), { recursive: true });
+  fs.mkdirSync(path.join(sharedRoot, 'assets', 'fonts'), { recursive: true });
   fs.mkdirSync(path.join(sharedRoot, 'presentation'), { recursive: true });
   fs.writeFileSync(
     path.join(overlayRoot, 'lyrics', 'index.html'),
@@ -24,6 +25,10 @@ function createFixtureRoots() {
   fs.writeFileSync(
     path.join(sharedRoot, 'presentation', 'state.mjs'),
     'export const state = true;',
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'assets', 'fonts', 'jf-open-huninn-2.1.ttf'),
+    Buffer.from([0, 1, 0, 0]),
   );
   return { overlayRoot, root, sharedRoot };
 }
@@ -157,6 +162,9 @@ describe('output HTTP delivery', () => {
 
     const overlay = await fetch(`${baseUrl}/overlay/lyrics`);
     const shared = await fetch(`${baseUrl}/shared/presentation/state.mjs`);
+    const font = await fetch(
+      `${baseUrl}/shared/assets/fonts/jf-open-huninn-2.1.ttf`,
+    );
     const unknown = await fetch(`${baseUrl}/overlay/lyrics/private.txt`);
 
     expect(await overlay.text()).toBe('<main>Lyrics route</main>');
@@ -164,6 +172,11 @@ describe('output HTTP delivery', () => {
       "default-src 'none'",
     );
     expect(await shared.text()).toBe('export const state = true;');
+    expect(font.status).toBe(200);
+    expect(font.headers.get('content-type')).toBe('font/ttf');
+    expect(Buffer.from(await font.arrayBuffer())).toEqual(
+      Buffer.from([0, 1, 0, 0]),
+    );
     expect(unknown.status).toBe(404);
   });
 

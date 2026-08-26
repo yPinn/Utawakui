@@ -1,0 +1,12 @@
+jf open-huninn Traditional Chinese Rounded TTF
+
+Upstream: justfont/open-huninn-font
+Version: 2.1
+Source: https://github.com/justfont/open-huninn-font/releases/tag/v2.1
+Download: https://github.com/justfont/open-huninn-font/releases/download/v2.1/jf-openhuninn-2.1.ttf
+SHA-256: 9d5bf4932d31fe94c18cd8cfddc98bc1b14ce10f4e354c682179db290a99c825
+License: SIL Open Font License 1.1; see OFL.txt in this directory.
+
+Utawakui uses this official release only in the Classic KTV lyrics template. The
+CSS family name `Utawakui Open Huninn` is application-local and does not rename or
+modify the font binary.

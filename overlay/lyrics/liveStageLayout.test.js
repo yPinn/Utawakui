@@ -13,6 +13,23 @@ const css = readFileSync(
 );
 
 describe('Live Stage overlay layout contract', () => {
+  it('keeps Workbench backdrop and guide inside the direct iframe below Lyrics', () => {
+    expect(html).toContain('class="lyrics-workbench__backdrop"');
+    expect(html).toContain('class="lyrics-workbench__guide"');
+    expect(html).toContain('aria-hidden="true"');
+
+    expect(css).toContain(
+      ":root[data-overlay-workbench='true'] .lyrics-workbench__backdrop",
+    );
+    expect(css).toContain(
+      ":root[data-overlay-backdrop='checker'] .lyrics-workbench__backdrop",
+    );
+    expect(css).toContain('z-index: 0;');
+    expect(css).toContain('z-index: 1;');
+    expect(css).toContain('z-index: 2;');
+    expect(css).toContain("url('/workbench/streamer-guide.png')");
+  });
+
   it('owns original top branding and independent lower-left/lower-right lanes', () => {
     expect(html).toContain('id="lyrics-live-stage-chrome"');
     expect(html).toContain('id="lyrics-live-stage-card"');

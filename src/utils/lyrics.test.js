@@ -187,6 +187,48 @@ Line two`,
 });
 
 describe('parseLrc', () => {
+  it('preserves explicit KTV vocal cues while keeping each timestamped LRC row intact', () => {
+    expect(
+      parseLrc(`[00:01.00][男] 風箏在陰天擱淺，卻無法掩埋歉疚
+[00:04.50][女]她的歌詞
+[00:07.00][合] 一起唱`),
+    ).toEqual([
+      {
+        start: 1,
+        end: 4.5,
+        text: '[男] 風箏在陰天擱淺，卻無法掩埋歉疚',
+      },
+      { start: 4.5, end: 7, text: '[女]她的歌詞' },
+      {
+        start: 7,
+        end: Number.POSITIVE_INFINITY,
+        text: '[合] 一起唱',
+      },
+    ]);
+  });
+
+  it('preserves a KTV vocal cue inside the first Enhanced LRC segment without a separate timestamp', () => {
+    expect(
+      parseEnhancedLrc(`[00:01.00][女]<00:01.00>她的<00:02.00>歌詞
+[00:03.00]下一句`),
+    ).toEqual([
+      {
+        start: 1,
+        end: 3,
+        text: '[女]她的歌詞',
+        segments: [
+          { text: '[女]她的', start: 1, end: 2 },
+          { text: '歌詞', start: 2, end: 3 },
+        ],
+      },
+      {
+        start: 3,
+        end: Number.POSITIVE_INFINITY,
+        text: '下一句',
+      },
+    ]);
+  });
+
   it('parses LRCLIB synced LRC lines with next-line end times', () => {
     expect(
       parseLrc(`[ar:Artist]

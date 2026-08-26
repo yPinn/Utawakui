@@ -1,6 +1,7 @@
 const TIME_RE = /(?:(\d+):)?(\d{2}):(\d{2})(?:[.,](\d{1,3}))?/;
 const LRC_TIME_RE = /^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/;
 const LRC_METADATA_RE = /^\[(?:ar|ti|al|by|offset|length|re|ve):[^\]]*\]$/i;
+const LRC_SPEAKER_CUE_RE = /^\[[^\]\r\n]{1,40}\][ \t]*/u;
 const SOURCE_KIND_YOUTUBE_CC = 'youtube-cc';
 const SOURCE_KIND_LRCLIB = 'lrclib';
 const MUSIC_NOTE_RE = /[♪♫♬♩🎵🎶]+/gu;
@@ -396,7 +397,11 @@ export function parseEnhancedLrc(text) {
     .flatMap((line) => {
       const matches = [...line.matchAll(/\[([^\]]+)\]/g)];
       if (matches.length === 0) return [];
-      const sourceText = line.replace(/\[[^\]]+\]/g, '').trim();
+      const sourceText = line
+        .replace(/\[([^\]]+)\]/g, (tag, value) =>
+          parseLrcTimestamp(value) === null ? tag : '',
+        )
+        .trim();
       const lyricText = sourceText.replace(/<[^>]+>/g, '').trim();
       if (!lyricText) return [];
       return matches
@@ -419,7 +424,12 @@ export function parseEnhancedLrc(text) {
 
   return starts.map((line, index) => {
     const end = starts[index + 1]?.start ?? Number.POSITIVE_INFINITY;
-    const segments = parseEnhancedSegments(line.sourceText, line.start, end);
+    const speakerCue = line.sourceText.match(LRC_SPEAKER_CUE_RE)?.[0] ?? '';
+    const segmentSourceText = line.sourceText.slice(speakerCue.length);
+    const segments = parseEnhancedSegments(segmentSourceText, line.start, end);
+    if (segments && speakerCue) {
+      segments[0].text = `${speakerCue}${segments[0].text}`;
+    }
     const parsed = { start: line.start, end, text: line.text };
     if (segments) parsed.segments = segments;
     return parsed;

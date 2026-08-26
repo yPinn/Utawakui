@@ -3,6 +3,7 @@ import { applyOverlayAppearance } from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
+  isWorkbenchMode,
   withPreviewFallback,
 } from '../shared/preview.mjs';
 import {
@@ -10,6 +11,7 @@ import {
   selectLyricsOverlayFrame,
 } from '../shared/state.mjs';
 import {
+  adaptKtvLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
 } from '../shared/lyricsPresentation.mjs';
@@ -34,6 +36,8 @@ const PREVIEW_FRAME = Object.freeze({
   nextText: '重なって歌になる',
   language: 'ja',
   lineIndex: 0,
+  currentVisibleLineIndex: 0,
+  nextVisibleLineIndex: 1,
   liveStage: {
     active: true,
     cardVisible: true,
@@ -56,8 +60,11 @@ const SEGMENT_AWARE_TEMPLATE_IDS = new Set(['karaoke-stack', 'manga-frame']);
 const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
 const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
-const MANGA_BUBBLE_ENTER_STAGGER_SECONDS = 0.2;
+const MANGA_BUBBLE_ENTER_GAP_SECONDS = 1;
+const KTV_LANE_REPLACEMENT_DELAY_MS = 2000;
 const lastRenderedBeatKeys = new WeakMap();
+const ktvFallbackAnimations = new WeakMap();
+const ktvLanePresentations = new WeakMap();
 const mangaTransitions = new WeakMap();
 const mangaPulseTimelines = new WeakMap();
 const mangaPulseTargets = new WeakMap();
@@ -75,6 +82,213 @@ function progressPercentage(value) {
 
 function glyphCount(text) {
   return Math.max(1, Array.from(String(text ?? '').replace(/\s/gu, '')).length);
+}
+
+function ktvLaneForVisibleLineIndex(value) {
+  if (!Number.isSafeInteger(value) || value < 0) return null;
+  return value % 2 === 0 ? 'a' : 'b';
+}
+
+function setKtvLane(element, lane) {
+  if (lane) element.dataset.ktvLane = lane;
+  else delete element.dataset.ktvLane;
+}
+
+function setKtvRole(element, role) {
+  if (role) element.dataset.ktvRole = role;
+  else delete element.dataset.ktvRole;
+}
+
+function stripKtvCueFromSegments(segments, presentation) {
+  if (!Array.isArray(segments) || presentation.contentStart <= 0) {
+    return segments;
+  }
+  const cueText = presentation.sourceText.slice(0, presentation.contentStart);
+  if (
+    !segments
+      .map((segment) => segment.text)
+      .join('')
+      .startsWith(cueText)
+  ) {
+    return segments;
+  }
+  let remaining = presentation.contentStart;
+  const projected = [];
+  for (const segment of segments) {
+    const text = String(segment.text ?? '');
+    if (remaining >= text.length) {
+      remaining -= text.length;
+      continue;
+    }
+    projected.push(
+      remaining > 0 ? { ...segment, text: text.slice(remaining) } : segment,
+    );
+    remaining = 0;
+  }
+  return projected.filter((segment) => segment.text);
+}
+
+function projectKtvFrame(frame) {
+  const current = adaptKtvLyricsPresentation(
+    frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
+  );
+  const next = adaptKtvLyricsPresentation(analyzeLyricsSource(frame.nextText));
+  return {
+    ...frame,
+    currentText: current.text,
+    nextText: next.text,
+    currentSegments: stripKtvCueFromSegments(frame.currentSegments, current),
+    ktvCurrentRole: current.role,
+    ktvNextRole: next.role,
+  };
+}
+
+function cancelKtvFallbackAnimation(element) {
+  ktvFallbackAnimations.get(element)?.cancel?.();
+  ktvFallbackAnimations.delete(element);
+}
+
+function clearKtvFallbackProgress(element) {
+  cancelKtvFallbackAnimation(element);
+  delete element.dataset.lineProgress;
+  delete element.dataset.text;
+  element.style?.removeProperty?.('--ovl-segment-progress');
+}
+
+function cancelKtvLaneHold(state) {
+  const hold = state?.hold;
+  if (!hold) return;
+  hold.cancelSchedule?.(hold.timer);
+  state.hold = null;
+}
+
+function clearKtvLanePresentation(root) {
+  const state = ktvLanePresentations.get(root);
+  cancelKtvLaneHold(state);
+  ktvLanePresentations.delete(root);
+}
+
+function applyKtvLaneReplacementDelay(elements, frame, options) {
+  const root = elements.root;
+  const currentIndex = frame.currentVisibleLineIndex;
+  const currentLane = elements.current.dataset.ktvLane;
+  let nextLane = elements.next.dataset.ktvLane;
+  if (
+    options.templateId !== 'karaoke-stack' ||
+    !frame.visible ||
+    !Number.isSafeInteger(currentIndex) ||
+    !currentLane
+  ) {
+    clearKtvLanePresentation(root);
+    return;
+  }
+
+  const previous = ktvLanePresentations.get(root);
+  const sameLine = previous?.currentVisibleLineIndex === currentIndex;
+  if (sameLine && previous.hold) {
+    previous.currentText = frame.currentText;
+    previous.currentRole = frame.ktvCurrentRole;
+    previous.hold.targetText = frame.nextText;
+    previous.hold.targetRole = frame.ktvNextRole;
+    if (frame.timelineDiscontinuity === true) {
+      cancelKtvLaneHold(previous);
+      return;
+    }
+    if (nextLane === previous.hold.lane) {
+      elements.next.textContent = previous.hold.heldText;
+      setKtvRole(elements.next, previous.hold.heldRole);
+      elements.next.dataset.ktvHeld = 'true';
+    }
+    return;
+  }
+
+  const sequentialLine =
+    previous &&
+    currentIndex === previous.currentVisibleLineIndex + 1 &&
+    currentLane !== previous.currentLane;
+  if (sequentialLine && !nextLane && !frame.nextText) {
+    nextLane = previous.currentLane;
+    setKtvLane(elements.next, nextLane);
+  }
+  const sequentialHandoff =
+    sequentialLine &&
+    nextLane === previous.currentLane &&
+    frame.timelineDiscontinuity !== true;
+  cancelKtvLaneHold(previous);
+
+  const state = {
+    currentVisibleLineIndex: currentIndex,
+    currentLane,
+    currentText: frame.currentText,
+    currentRole: frame.ktvCurrentRole,
+    hold: null,
+  };
+  ktvLanePresentations.set(root, state);
+  if (!sequentialHandoff || !previous.currentText || !nextLane) return;
+
+  const schedule = options.schedule ?? globalThis.setTimeout?.bind(globalThis);
+  const cancelSchedule =
+    options.cancelSchedule ?? globalThis.clearTimeout?.bind(globalThis);
+  if (typeof schedule !== 'function') return;
+
+  const hold = {
+    lane: nextLane,
+    heldText: previous.currentText,
+    heldRole: previous.currentRole,
+    targetText: frame.nextText,
+    targetRole: frame.ktvNextRole,
+    timer: null,
+    cancelSchedule,
+  };
+  state.hold = hold;
+  elements.next.textContent = hold.heldText;
+  setKtvRole(elements.next, hold.heldRole);
+  elements.next.dataset.ktvHeld = 'true';
+  hold.timer = schedule(() => {
+    const latest = ktvLanePresentations.get(root);
+    if (latest !== state || latest.hold !== hold) return;
+    if (elements.next.dataset.ktvLane === hold.lane) {
+      elements.next.textContent = hold.targetText;
+      setKtvRole(elements.next, hold.targetRole);
+      delete elements.next.dataset.ktvHeld;
+    }
+    latest.hold = null;
+  }, KTV_LANE_REPLACEMENT_DELAY_MS);
+}
+
+function applyKtvLanePresentation(elements, frame, templateId) {
+  if (templateId !== 'karaoke-stack') {
+    delete elements.root.dataset.ktvActiveLane;
+    setKtvLane(elements.current, null);
+    setKtvLane(elements.next, null);
+    setKtvRole(elements.current, null);
+    setKtvRole(elements.next, null);
+    delete elements.next.dataset.ktvHeld;
+    return;
+  }
+
+  const fallbackCurrentIndex = frame.currentText ? frame.lineIndex : null;
+  const currentIndex = Number.isSafeInteger(frame.currentVisibleLineIndex)
+    ? frame.currentVisibleLineIndex
+    : fallbackCurrentIndex;
+  const nextIndex = Number.isSafeInteger(frame.nextVisibleLineIndex)
+    ? frame.nextVisibleLineIndex
+    : Number.isSafeInteger(currentIndex) && frame.nextText
+      ? currentIndex + 1
+      : null;
+  const currentLane = ktvLaneForVisibleLineIndex(currentIndex);
+  const nextLane = ktvLaneForVisibleLineIndex(nextIndex);
+
+  setKtvLane(elements.current, currentLane);
+  setKtvLane(elements.next, nextLane);
+  setKtvRole(elements.current, frame.ktvCurrentRole);
+  setKtvRole(elements.next, frame.ktvNextRole);
+  delete elements.next.dataset.ktvHeld;
+  if (currentLane && frame.currentText) {
+    elements.root.dataset.ktvActiveLane = currentLane;
+  } else {
+    delete elements.root.dataset.ktvActiveLane;
+  }
 }
 
 function projectSegmentsToBubbles(bubbles, segments) {
@@ -165,10 +379,41 @@ function renderCurrentLyrics(element, frame, options) {
   const documentApi = element.ownerDocument ?? globalThis.document;
   if (segments.length === 0 || !documentApi?.createElement) {
     delete element.dataset.segmented;
+    clearKtvFallbackProgress(element);
     element.textContent = frame.currentText;
+    if (
+      templateId === 'karaoke-stack' &&
+      frame.currentText &&
+      Number.isFinite(frame.lineProgress)
+    ) {
+      const progress = progressPercentage(frame.lineProgress);
+      element.dataset.lineProgress = 'true';
+      element.dataset.text = frame.currentText;
+      element.style.setProperty('--ovl-segment-progress', `${progress}%`);
+      if (
+        Number.isFinite(frame.lineRemainingMs) &&
+        frame.lineRemainingMs > 0 &&
+        options.reducedMotion !== true &&
+        typeof element.animate === 'function'
+      ) {
+        const animation = element.animate(
+          [
+            { '--ovl-segment-progress': `${progress}%` },
+            { '--ovl-segment-progress': '100%' },
+          ],
+          {
+            duration: Math.max(1, Math.ceil(frame.lineRemainingMs)),
+            easing: 'linear',
+            fill: 'forwards',
+          },
+        );
+        if (animation) ktvFallbackAnimations.set(element, animation);
+      }
+    }
     return;
   }
 
+  clearKtvFallbackProgress(element);
   element.textContent = '';
   element.dataset.segmented = 'true';
   for (const segment of segments) {
@@ -188,6 +433,7 @@ function renderCurrentLyrics(element, frame, options) {
     segmentElement.className = 'lyrics-overlay__segment';
     segmentElement.dataset.segmentId = segment.segmentId;
     segmentElement.dataset.segmentState = segment.state;
+    segmentElement.dataset.text = segment.text;
     segmentElement.textContent = segment.text;
     segmentElement.style.setProperty('--ovl-segment-progress', `${progress}%`);
     if (
@@ -494,8 +740,10 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   }
   if (isMangaFrame) renderMangaLyrics(elements, frame, options);
   else renderCurrentLyrics(elements.current, frame, options);
+  applyKtvLanePresentation(elements, frame, options.templateId);
   elements.current.dataset.currentText = frame.currentText;
   elements.next.textContent = isMangaFrame ? '' : frame.nextText;
+  applyKtvLaneReplacementDelay(elements, frame, options);
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
   elements.root.dataset.revision = String(frame.revision);
@@ -538,19 +786,33 @@ function mangaBubbleTargets(elements) {
 
 function addMangaBubbleFade(timeline, targets, direction) {
   const entering = direction === 'enter';
-  timeline.addLabel(direction).to(
+  timeline.addLabel(direction);
+
+  if (entering) {
+    for (const [index, target] of targets.entries()) {
+      timeline.to(
+        target,
+        {
+          autoAlpha: 1,
+          duration: MANGA_FADE_IN_DURATION_SECONDS,
+          ease: 'power2.out',
+          overwrite: 'auto',
+        },
+        index === 0 ? direction : `+=${MANGA_BUBBLE_ENTER_GAP_SECONDS}`,
+      );
+    }
+    return;
+  }
+
+  timeline.to(
     targets,
     {
-      autoAlpha: entering ? 1 : 0,
-      duration: entering
-        ? MANGA_FADE_IN_DURATION_SECONDS
-        : MANGA_FADE_OUT_DURATION_SECONDS,
-      ease: entering ? 'power2.out' : 'power2.in',
+      autoAlpha: 0,
+      duration: MANGA_FADE_OUT_DURATION_SECONDS,
+      ease: 'power2.in',
       overwrite: 'auto',
       stagger: {
-        each: entering
-          ? MANGA_BUBBLE_ENTER_STAGGER_SECONDS
-          : MANGA_BUBBLE_EXIT_STAGGER_SECONDS,
+        each: MANGA_BUBBLE_EXIT_STAGGER_SECONDS,
         from: 'start',
       },
     },
@@ -642,16 +904,25 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 
 export function destroyLyricsAnimations(elements, options = {}) {
   stopMangaAnimations(elements, options, true);
+  clearKtvFallbackProgress(elements.current);
+  clearKtvLanePresentation(elements.root);
   clearLiveStagePresentation(elements, options);
 }
 
-export function renderLyricsFrame(elements, frame, options = {}) {
+export function renderLyricsFrame(elements, sourceFrame, options = {}) {
+  const templateId = activeTemplateId(elements, options);
+  const frame =
+    templateId === 'karaoke-stack' ? projectKtvFrame(sourceFrame) : sourceFrame;
   const previousText =
     elements.current.dataset.currentText ?? elements.current.textContent;
-  const templateId = activeTemplateId(elements, options);
   const renderOptions = { ...options, templateId };
   const isMangaFrame = templateId === 'manga-frame';
   const isLiveStage = templateId === 'live-stage';
+
+  if (templateId !== 'karaoke-stack') {
+    clearKtvFallbackProgress(elements.current);
+    clearKtvLanePresentation(elements.root);
+  }
 
   if (isLiveStage) {
     stopMangaAnimations(elements, renderOptions, true);
@@ -706,6 +977,7 @@ export function renderLyricsFrame(elements, frame, options = {}) {
 
   const shouldAnimate =
     !isMangaFrame &&
+    templateId !== 'karaoke-stack' &&
     frame.visible &&
     lineChanged &&
     renderOptions.reducedMotion !== true &&
@@ -801,8 +1073,13 @@ function boot() {
     },
   );
   const previewMode = isPreviewMode(window.location);
+  const workbenchMode = isWorkbenchMode(window.location);
   applyOverlayAppearance(document, null);
-  applyPreviewCanvas(document, { previewMode, location: window.location });
+  applyPreviewCanvas(document, {
+    previewMode,
+    workbenchMode,
+    location: window.location,
+  });
   if (previewMode) {
     renderLyricsFrame(elements, PREVIEW_FRAME, {
       gsap,

@@ -14,6 +14,13 @@
     --ovl-color-mark-surface: var(--ovl-primitive-color-mark-surface);
     --ovl-color-stroke-strong: var(--ovl-primitive-color-stroke-strong);
     --ovl-color-stroke-soft: var(--ovl-primitive-color-stroke-soft);
+    --ovl-color-ktv-fill-unsung: var(--ovl-primitive-color-ktv-fill-unsung);
+    --ovl-color-ktv-fill-solo: var(--ovl-primitive-color-ktv-fill-solo);
+    --ovl-color-ktv-fill-male: var(--ovl-primitive-color-ktv-fill-male);
+    --ovl-color-ktv-fill-female: var(--ovl-primitive-color-ktv-fill-female);
+    --ovl-color-ktv-fill-group: var(--ovl-primitive-color-ktv-fill-group);
+    --ovl-color-ktv-stroke-unsung: var(--ovl-primitive-color-ktv-stroke-unsung);
+    --ovl-color-ktv-stroke-sung: var(--ovl-primitive-color-ktv-stroke-sung);
     --ovl-font-display-cjk: var(
       --ovl-font-display-cjk-custom,
       var(--ovl-fallback-font-display-cjk)

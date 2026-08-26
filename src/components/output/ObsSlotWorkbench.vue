@@ -64,6 +64,11 @@ const controls = computed(() => [
     options: props.appearanceOptions.surface ?? [],
   },
 ]);
+const editableControls = computed(() => {
+  const editableKeys = props.preset?.editableAppearanceKeys;
+  if (!Array.isArray(editableKeys)) return controls.value;
+  return controls.value.filter((control) => editableKeys.includes(control.key));
+});
 const kindTabs = computed(() =>
   props.slotDefinitions.map((definition) => ({
     id: definition.id,
@@ -201,7 +206,7 @@ function saveSettings() {
         <h3 class="obs-slot-workbench__section-title">文字與背景</h3>
         <div class="obs-slot-workbench__fields">
           <ObsAppearanceControlRow
-            v-for="control in controls"
+            v-for="control in editableControls"
             :key="control.key"
             :control-id="`output-appearance-${control.key}`"
             :label="control.label"
