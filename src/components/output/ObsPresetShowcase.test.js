@@ -30,6 +30,10 @@ const mockupSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateMockup.vue', import.meta.url)),
   'utf8',
 );
+const thumbnailSource = readFileSync(
+  fileURLToPath(new URL('./ObsTemplateThumbnail.vue', import.meta.url)),
+  'utf8',
+);
 const previewStageSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplatePreviewStage.vue', import.meta.url)),
   'utf8',
@@ -117,7 +121,7 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).not.toContain('雙擊套用');
     expect(componentSource).toContain('內建模板');
     expect(componentSource).not.toContain('startOutput');
-    expect(componentSource).toContain('ObsTemplateMockup');
+    expect(componentSource).toContain('ObsTemplateThumbnail');
     expect(componentSource).toContain('ObsTemplatePreviewStage');
     expect(componentSource).not.toContain('ObsOverlayPreview');
     expect(componentSource).not.toContain('previewUrl');
@@ -129,7 +133,7 @@ describe('OBS output workspace layout contract', () => {
 
   it('keeps thumbnails static and animates only the selected detail preview', () => {
     expect(componentSource).toContain(':scene="previewScene"');
-    expect(componentSource).toContain(':animated="false"');
+    expect(thumbnailSource).toContain(':animated="false"');
     expect(previewStageSource).toContain('<ObsTemplateMockup');
     expect(previewStageSource).toContain(':animated="isMotionPlaying"');
     expect(previewStageSource).toContain('暫停動態預覽');

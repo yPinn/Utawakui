@@ -3,8 +3,8 @@ import { computed } from 'vue';
 import { Check, ICON_SIZE } from '../../icons/index.js';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
-import ObsTemplateMockup from './ObsTemplateMockup.vue';
 import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
+import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 
@@ -131,12 +131,7 @@ function applyPreset(preset) {
                 @click="selectPreset(preset.id)"
                 @dblclick="applyPreset(preset)"
               >
-                <ObsTemplateMockup
-                  :preset="preset"
-                  :scene="previewScene"
-                  size="thumbnail"
-                  :animated="false"
-                />
+                <ObsTemplateThumbnail :preset="preset" :scene="previewScene" />
                 <div class="obs-template-thumb__body">
                   <span class="obs-template-thumb__name">
                     {{ preset.name }}
