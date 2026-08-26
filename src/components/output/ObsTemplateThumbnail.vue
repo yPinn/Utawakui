@@ -9,15 +9,12 @@ const props = defineProps({
 });
 
 const failedSource = shallowRef(null);
-const prefersLiveMockup = computed(() => props.preset?.id === 'karaoke-stack');
 const bundledSource = computed(() =>
   getOutputTemplateThumbnail(props.preset?.id),
 );
 const showBundledThumbnail = computed(
   () =>
-    !prefersLiveMockup.value &&
-    Boolean(bundledSource.value) &&
-    failedSource.value !== bundledSource.value,
+    Boolean(bundledSource.value) && failedSource.value !== bundledSource.value,
 );
 
 function markThumbnailFailed() {

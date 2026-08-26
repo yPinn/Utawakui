@@ -44,4 +44,10 @@ describe('bundled output template thumbnails', () => {
     expect(getOutputTemplateThumbnail('not-yet-supplied')).toBeNull();
     expect(getOutputTemplateThumbnail()).toBeNull();
   });
+
+  it('maps the Classic KTV asset to its stable Karaoke Stack template id', () => {
+    expect(getOutputTemplateThumbnail('karaoke-stack')).toMatch(
+      /karaoke-stack.*\.jpg$/,
+    );
+  });
 });

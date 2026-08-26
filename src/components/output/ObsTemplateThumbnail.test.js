@@ -35,9 +35,8 @@ describe('output template thumbnail', () => {
     expect(source).toContain('pointer-events: none');
   });
 
-  it('uses the live replacement mockup for the stable Karaoke Stack id', () => {
-    expect(source).toContain("props.preset?.id === 'karaoke-stack'");
-    expect(source).toContain('prefersLiveMockup');
-    expect(source).toContain('!prefersLiveMockup.value');
+  it('does not bypass bundled thumbnails for the stable Karaoke Stack id', () => {
+    expect(source).not.toContain("props.preset?.id === 'karaoke-stack'");
+    expect(source).not.toContain('prefersLiveMockup');
   });
 });
