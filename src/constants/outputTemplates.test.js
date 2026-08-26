@@ -107,8 +107,9 @@ describe('output template registry', () => {
       detail: expect.stringContaining('A 列固定在上方靠左'),
       settings: expect.arrayContaining([
         { label: '顯示', value: 'A 上左、B 下右，逐行交替' },
-        { label: '換詞', value: '唱完保留 2 秒' },
-        { label: '外觀', value: '白字、深藍粗框、黑色陰影' },
+        { label: '倒數', value: '歌詞與四點同時出現，依 BPM 倒數' },
+        { label: '換詞', value: '唱完短暫保留 0.6 秒' },
+        { label: '外觀', value: '白字深藍框、唱過角色色配白邊' },
         { label: '進度', value: 'T1 整行估算／T2 精確掃色' },
       ]),
     });

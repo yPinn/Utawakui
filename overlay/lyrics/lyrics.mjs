@@ -61,7 +61,7 @@ const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
 const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
 const MANGA_BUBBLE_ENTER_GAP_SECONDS = 1;
-const KTV_LANE_REPLACEMENT_DELAY_MS = 2000;
+const KTV_LANE_REPLACEMENT_DELAY_MS = 600;
 const lastRenderedBeatKeys = new WeakMap();
 const ktvFallbackAnimations = new WeakMap();
 const ktvLanePresentations = new WeakMap();
@@ -129,17 +129,68 @@ function stripKtvCueFromSegments(segments, presentation) {
 }
 
 function projectKtvFrame(frame) {
+  if (frame.ktv) {
+    const source = frame.ktv;
+    const current = adaptKtvLyricsPresentation(
+      analyzeLyricsSource(source.currentText),
+      { language: source.language },
+    );
+    const next = adaptKtvLyricsPresentation(
+      analyzeLyricsSource(source.nextText),
+      { language: source.language },
+    );
+    return {
+      ...frame,
+      ...source,
+      currentText: current.text,
+      nextText: next.text,
+      ktvCurrentRole: source.currentRole ?? current.role,
+      ktvNextRole: source.nextRole ?? next.role,
+      ktvCountIn: source.countIn
+        ? {
+            remainingBeats: source.countIn.remainingBeats,
+            totalBeats: source.countIn.totalBeats,
+            timingSource: source.countIn.timingSource,
+            visibleLineIndex:
+              source.countIn.visibleLineIndex ?? source.currentVisibleLineIndex,
+            role: source.countIn.role ?? source.currentRole ?? current.role,
+          }
+        : null,
+    };
+  }
+
+  const countIn = frame.countIn;
+  const currentText = countIn?.text ?? frame.currentText;
   const current = adaptKtvLyricsPresentation(
-    frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
+    countIn
+      ? analyzeLyricsSource(currentText)
+      : (frame.lyricsSourceAnalysis ?? analyzeLyricsSource(currentText)),
   );
-  const next = adaptKtvLyricsPresentation(analyzeLyricsSource(frame.nextText));
+  const next = adaptKtvLyricsPresentation(
+    analyzeLyricsSource(countIn ? '' : frame.nextText),
+  );
   return {
     ...frame,
+    visible: frame.visible || Boolean(countIn),
     currentText: current.text,
     nextText: next.text,
-    currentSegments: stripKtvCueFromSegments(frame.currentSegments, current),
+    currentSegments: countIn
+      ? undefined
+      : stripKtvCueFromSegments(frame.currentSegments, current),
+    lineIndex: countIn?.lineIndex ?? frame.lineIndex,
+    currentVisibleLineIndex:
+      countIn?.visibleLineIndex ?? frame.currentVisibleLineIndex,
+    nextVisibleLineIndex: countIn ? null : frame.nextVisibleLineIndex,
+    ...(countIn ? { lineProgress: 0 } : {}),
     ktvCurrentRole: current.role,
     ktvNextRole: next.role,
+    ktvCountIn: countIn
+      ? {
+          remainingBeats: countIn.remainingBeats,
+          totalBeats: countIn.totalBeats,
+          timingSource: countIn.timingSource,
+        }
+      : null,
   };
 }
 
@@ -214,6 +265,12 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     sequentialLine &&
     nextLane === previous.currentLane &&
     frame.timelineDiscontinuity !== true;
+  const replacementDelayMs = Number.isFinite(frame.laneReplacementDelayMs)
+    ? Math.max(
+        0,
+        Math.min(KTV_LANE_REPLACEMENT_DELAY_MS, frame.laneReplacementDelayMs),
+      )
+    : KTV_LANE_REPLACEMENT_DELAY_MS;
   cancelKtvLaneHold(previous);
 
   const state = {
@@ -224,7 +281,14 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     hold: null,
   };
   ktvLanePresentations.set(root, state);
-  if (!sequentialHandoff || !previous.currentText || !nextLane) return;
+  if (
+    !sequentialHandoff ||
+    !previous.currentText ||
+    !nextLane ||
+    replacementDelayMs <= 0
+  ) {
+    return;
+  }
 
   const schedule = options.schedule ?? globalThis.setTimeout?.bind(globalThis);
   const cancelSchedule =
@@ -253,7 +317,7 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
       delete elements.next.dataset.ktvHeld;
     }
     latest.hold = null;
-  }, KTV_LANE_REPLACEMENT_DELAY_MS);
+  }, replacementDelayMs);
 }
 
 function applyKtvLanePresentation(elements, frame, templateId) {
@@ -289,6 +353,32 @@ function applyKtvLanePresentation(elements, frame, templateId) {
   } else {
     delete elements.root.dataset.ktvActiveLane;
   }
+}
+
+function applyKtvCountInPresentation(elements, frame, templateId) {
+  const element = elements.ktvCountIn;
+  if (!element) return;
+  const remainingBeats = frame.ktvCountIn?.remainingBeats;
+  const visible =
+    templateId === 'karaoke-stack' &&
+    Number.isSafeInteger(remainingBeats) &&
+    remainingBeats >= 1 &&
+    remainingBeats <= 4;
+  element.hidden = !visible;
+  if (!visible) {
+    delete element.dataset.remainingBeats;
+    setKtvLane(element, null);
+    setKtvRole(element, null);
+    return;
+  }
+  element.dataset.remainingBeats = String(remainingBeats);
+  setKtvLane(
+    element,
+    ktvLaneForVisibleLineIndex(
+      frame.ktvCountIn?.visibleLineIndex ?? frame.currentVisibleLineIndex,
+    ),
+  );
+  setKtvRole(element, frame.ktvCountIn?.role ?? frame.ktvCurrentRole);
 }
 
 function projectSegmentsToBubbles(bubbles, segments) {
@@ -741,6 +831,7 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   if (isMangaFrame) renderMangaLyrics(elements, frame, options);
   else renderCurrentLyrics(elements.current, frame, options);
   applyKtvLanePresentation(elements, frame, options.templateId);
+  applyKtvCountInPresentation(elements, frame, options.templateId);
   elements.current.dataset.currentText = frame.currentText;
   elements.next.textContent = isMangaFrame ? '' : frame.nextText;
   applyKtvLaneReplacementDelay(elements, frame, options);
@@ -1056,6 +1147,7 @@ function boot() {
     liveStageArtist: document.querySelector('#lyrics-live-stage-artist'),
     mangaBubbles: document.querySelector('#lyrics-manga-bubbles'),
     next: document.querySelector('#lyrics-next'),
+    ktvCountIn: document.querySelector('#lyrics-ktv-count-in'),
   };
   if (!elements.root || !elements.current || !elements.next) return;
 

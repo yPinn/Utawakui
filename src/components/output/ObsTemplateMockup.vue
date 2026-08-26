@@ -9,6 +9,7 @@ import {
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
+  parseKtvDisplayPhrases,
 } from '../../../shared/presentation/lyricsPresentation.mjs';
 import MangaFrameSvg from './MangaFrameSvg.vue';
 
@@ -34,11 +35,38 @@ const lyricsSourceAnalysis = computed(() =>
 const liveStageLines = computed(
   () => adaptLiveStageLyricsPresentation(lyricsSourceAnalysis.value).lines,
 );
-const ktvCurrent = computed(() =>
-  adaptKtvLyricsPresentation(lyricsSourceAnalysis.value),
+const ktvCurrentSource = computed(() =>
+  adaptKtvLyricsPresentation(lyricsSourceAnalysis.value, {
+    language: lyrics.value.language,
+  }),
 );
-const ktvNext = computed(() =>
-  adaptKtvLyricsPresentation(analyzeLyricsSource(lyrics.value.next)),
+const ktvNextAnalysis = computed(() => analyzeLyricsSource(lyrics.value.next));
+const ktvNextSource = computed(() =>
+  adaptKtvLyricsPresentation(ktvNextAnalysis.value, {
+    language: lyrics.value.language,
+  }),
+);
+const ktvDisplayPhrases = computed(() => [
+  ...parseKtvDisplayPhrases(lyricsSourceAnalysis.value, {
+    language: lyrics.value.language,
+  }).map((phrase) => ({ ...phrase, role: ktvCurrentSource.value.role })),
+  ...parseKtvDisplayPhrases(ktvNextAnalysis.value, {
+    language: lyrics.value.language,
+  }).map((phrase) => ({ ...phrase, role: ktvNextSource.value.role })),
+]);
+const ktvCurrent = computed(
+  () =>
+    ktvDisplayPhrases.value[0] ?? {
+      text: ktvCurrentSource.value.text,
+      role: ktvCurrentSource.value.role,
+    },
+);
+const ktvNext = computed(
+  () =>
+    ktvDisplayPhrases.value[1] ?? {
+      text: ktvNextSource.value.text,
+      role: ktvNextSource.value.role,
+    },
 );
 const mangaBubbles = computed(
   () =>
@@ -139,6 +167,16 @@ const mangaBubbles = computed(
 
       <template v-else-if="preset?.id === 'karaoke-stack'">
         <span class="obs-template-mockup__ktv-lines">
+          <span
+            class="obs-template-mockup__ktv-count-in"
+            :data-ktv-role="ktvCurrent.role"
+            aria-hidden="true"
+          >
+            <span class="obs-template-mockup__ktv-count-in-dot" />
+            <span class="obs-template-mockup__ktv-count-in-dot" />
+            <span class="obs-template-mockup__ktv-count-in-dot" />
+            <span class="obs-template-mockup__ktv-count-in-dot" />
+          </span>
           <strong
             class="obs-template-mockup__ktv-line"
             data-ktv-lane="a"
@@ -628,7 +666,8 @@ const mangaBubbles = computed(
 }
 
 .obs-template-mockup__ktv-lines {
-  width: 92%;
+  position: relative;
+  width: 94%;
   display: grid;
   grid-template-rows: repeat(2, minmax(0, auto));
   justify-self: center;
@@ -640,14 +679,14 @@ const mangaBubbles = computed(
   --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-solo);
 
   position: relative;
-  max-width: 84%;
+  max-width: 94%;
   box-sizing: border-box;
   overflow: hidden;
   margin: -0.11em -0.16em -0.18em -0.11em;
   padding: 0.11em 0.16em 0.18em 0.11em;
   color: var(--ui-output-preview-ktv-fill-unsung);
   font-family: 'Utawakui Open Huninn', 'Microsoft JhengHei', sans-serif;
-  font-size: 1.75rem;
+  font-size: 2.6rem;
   font-weight: 900;
   letter-spacing: 0.015em;
   line-height: 1.08;
@@ -670,6 +709,38 @@ const mangaBubbles = computed(
   --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-group);
 }
 
+.obs-template-mockup__ktv-count-in {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-solo);
+
+  position: absolute;
+  inset-block-start: -1.35rem;
+  inset-inline-start: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.32rem;
+}
+
+.obs-template-mockup__ktv-count-in[data-ktv-role='male'] {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-male);
+}
+
+.obs-template-mockup__ktv-count-in[data-ktv-role='female'] {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-female);
+}
+
+.obs-template-mockup__ktv-count-in[data-ktv-role='group'] {
+  --ui-output-preview-ktv-fill-sung: var(--ui-output-preview-ktv-fill-group);
+}
+
+.obs-template-mockup__ktv-count-in-dot {
+  width: 1rem;
+  aspect-ratio: 1;
+  box-sizing: border-box;
+  border: 0.08rem solid var(--ui-output-preview-ktv-stroke-sung);
+  border-radius: 50%;
+  background: var(--ui-output-preview-ktv-fill-sung);
+}
+
 .obs-template-mockup__ktv-line[data-ktv-held='true'] {
   color: var(--ui-output-preview-ktv-fill-sung);
   -webkit-text-stroke: 0.085em var(--ui-output-preview-ktv-stroke-sung);
@@ -689,10 +760,10 @@ const mangaBubbles = computed(
 
 .obs-template-mockup__ktv-line-fill {
   position: absolute;
-  inset: 0.11em 0.16em 0.18em 0.11em;
+  inset: 0.11em 0.16em 0 0.11em;
   display: block;
-  overflow: hidden;
-  clip-path: inset(0 38% 0 0);
+  overflow: visible;
+  clip-path: inset(-0.2em 38% -0.2em 0);
   color: var(--ui-output-preview-ktv-fill-sung);
   white-space: nowrap;
   -webkit-text-stroke: 0.085em var(--ui-output-preview-ktv-stroke-sung);
@@ -834,6 +905,11 @@ const mangaBubbles = computed(
   .obs-template-mockup__ktv-line-fill {
   animation: obs-preview-ktv-fill var(--ui-output-preview-cycle-duration) linear
     infinite;
+}
+
+.obs-template-mockup[data-motion='playing'] .obs-template-mockup__ktv-count-in {
+  animation: obs-preview-ktv-count-in var(--ui-output-preview-cycle-duration)
+    step-end infinite;
 }
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__content {
@@ -1011,12 +1087,36 @@ const mangaBubbles = computed(
 @keyframes obs-preview-ktv-fill {
   0%,
   12% {
-    clip-path: inset(0 92% 0 0);
+    clip-path: inset(-0.2em 92% -0.2em 0);
   }
 
   76%,
   100% {
+    clip-path: inset(-0.2em 0 -0.2em 0);
+  }
+}
+
+@keyframes obs-preview-ktv-count-in {
+  0%,
+  10% {
     clip-path: inset(0 0 0 0);
+  }
+
+  20% {
+    clip-path: inset(0 25% 0 0);
+  }
+
+  30% {
+    clip-path: inset(0 50% 0 0);
+  }
+
+  40% {
+    clip-path: inset(0 75% 0 0);
+  }
+
+  50%,
+  100% {
+    clip-path: inset(0 100% 0 0);
   }
 }
 
@@ -1041,6 +1141,8 @@ const mangaBubbles = computed(
     .obs-template-mockup__animated-bubble,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__ktv-line-fill,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__ktv-count-in,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__progress-fill {
     animation: none;

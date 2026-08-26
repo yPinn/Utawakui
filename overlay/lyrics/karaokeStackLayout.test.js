@@ -7,6 +7,10 @@ const css = readFileSync(
   fileURLToPath(new URL('./lyrics.css', import.meta.url)),
   'utf8',
 );
+const html = readFileSync(
+  fileURLToPath(new URL('./index.html', import.meta.url)),
+  'utf8',
+);
 
 describe('Classic KTV Karaoke Stack layout contract', () => {
   it('lets the animated segment percentage reach the progress pseudo-element', () => {
@@ -39,7 +43,11 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
     expect(karaokeCss).toContain(
       'grid-template-rows: repeat(2, minmax(0, auto));',
     );
-    expect(karaokeCss).toContain('font-size: 4.1em;');
+    expect(karaokeCss).toContain(
+      'inset-inline: max(var(--ovl-safe-inline), 3%);',
+    );
+    expect(karaokeCss).toContain('max-inline-size: 94%;');
+    expect(karaokeCss).toContain('font-size: 5.4em;');
     expect(karaokeCss).toContain('padding: 0.11em 0.16em 0.18em 0.11em;');
     expect(karaokeCss).toContain('margin: -0.11em -0.16em -0.18em -0.11em;');
     expect(karaokeCss).not.toMatch(/font-size:[^;]*vw/u);
@@ -63,8 +71,10 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
     expect(css).toContain('grid-row: 2;');
     expect(css).toContain('content: attr(data-text);');
     expect(css).toMatch(
-      /clip-path:\s*inset\(\s*0 calc\(100% - var\(--ovl-segment-progress\)\) 0 0\s*\);/u,
+      /clip-path:\s*inset\(\s*-0\.2em calc\(100% - var\(--ovl-segment-progress\)\) -0\.2em 0\s*\);/u,
     );
+    expect(karaokeCss).toContain('inset: 0.11em 0.16em 0 0.11em;');
+    expect(karaokeCss).not.toContain('inset: 0.11em 0.16em 0.18em 0.11em;');
     expect(css).toContain(
       '-webkit-text-stroke: 0.085em var(--ovl-ktv-stroke-sung);',
     );
@@ -76,6 +86,16 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
     expect(karaokeCss).toContain('text-shadow: none;');
     expect(karaokeCss).not.toContain('0.045em 0.07em');
     expect(css).not.toContain('background-clip: text');
+  });
+
+  it('provides four role-colored countdown dots before the first vocal entrance', () => {
+    expect(html).toContain('id="lyrics-ktv-count-in"');
+    expect(html.match(/lyrics-overlay__ktv-count-in-dot/gu)).toHaveLength(4);
+    expect(css).toContain('.lyrics-overlay__ktv-count-in');
+    expect(css).toContain("[data-remaining-beats='3']");
+    expect(css).toContain("[data-remaining-beats='2']");
+    expect(css).toContain("[data-remaining-beats='1']");
+    expect(css).toContain(".lyrics-overlay__ktv-count-in[data-ktv-lane='b']");
   });
 
   it('falls back to static current and next lines without requiring T2 segments', () => {

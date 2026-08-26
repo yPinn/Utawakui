@@ -25,9 +25,15 @@ describe('Classic KTV gallery mockup', () => {
     expect(branch).toContain('{{ ktvCurrent.text }}');
     expect(branch).toContain('{{ ktvNext.text }}');
     expect(branch).toContain('obs-template-mockup__ktv-line-fill');
+    expect(branch).toContain('obs-template-mockup__ktv-count-in');
+    expect(
+      branch.match(/obs-template-mockup__ktv-count-in-dot/gu),
+    ).toHaveLength(4);
     expect(branch).not.toContain('obs-template-mockup__animated-primary');
     expect(branch).not.toContain('正在演唱');
     expect(branch).not.toContain('obs-template-mockup__progress');
+    expect(source).toContain('parseKtvDisplayPhrases');
+    expect(source).toContain('ktvDisplayPhrases');
   });
 
   it('uses a transparent lower-third composition with a clipped sung fill', () => {
@@ -36,11 +42,13 @@ describe('Classic KTV gallery mockup', () => {
     );
     expect(source).toContain('.obs-template-mockup__ktv-lines');
     expect(source).toContain('.obs-template-mockup__ktv-line-fill');
-    expect(source).toContain('clip-path: inset(0 38% 0 0)');
-    expect(source).toContain('inset: 0.11em 0.16em 0.18em 0.11em;');
+    expect(source).toContain('clip-path: inset(-0.2em 38% -0.2em 0)');
+    expect(source).toContain('inset: 0.11em 0.16em 0 0.11em;');
     expect(source).toContain('-webkit-text-stroke:');
     expect(source).toContain("font-family: 'Utawakui Open Huninn'");
-    expect(source).toContain('font-size: 1.75rem;');
+    expect(source).toContain('width: 94%;');
+    expect(source).toContain('max-width: 94%;');
+    expect(source).toContain('font-size: 2.6rem;');
     expect(source).toContain('padding: 0.11em 0.16em 0.18em 0.11em;');
     expect(source).toContain('margin: -0.11em -0.16em -0.18em -0.11em;');
     expect(source).not.toContain('background-clip: text');

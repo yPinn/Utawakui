@@ -232,7 +232,51 @@ function ktvVocalRole(speaker) {
   return 'solo';
 }
 
-export function adaptKtvLyricsPresentation(analysis) {
+function phraseFromUnit(unit) {
+  return {
+    text: unit.kind === 'parenthetical' ? unit.sourceText : unit.text,
+    sourceStart: unit.sourceStart,
+    sourceEnd: unit.sourceEnd,
+    visualWeight: Math.max(1, visualWidth(unit.text)),
+  };
+}
+
+export function parseKtvDisplayPhrases(analysis, options = {}) {
+  const units = Array.isArray(analysis?.units) ? analysis.units : [];
+  const phrases = [];
+
+  for (const unit of units) {
+    if (
+      unit.kind !== 'main' ||
+      !CJK_GLYPH_RE.test(unit.text) ||
+      lineSpacingMode(unit.text, options.language) !== 'phrase'
+    ) {
+      phrases.push(phraseFromUnit(unit));
+      continue;
+    }
+
+    const authoredChunks = [...unit.sourceText.matchAll(/\S+/gu)];
+    if (authoredChunks.length <= 1) {
+      phrases.push(phraseFromUnit(unit));
+      continue;
+    }
+
+    for (const match of authoredChunks) {
+      const text = match[0].trim();
+      if (!text) continue;
+      phrases.push({
+        text,
+        sourceStart: unit.sourceStart + match.index,
+        sourceEnd: unit.sourceStart + match.index + match[0].length,
+        visualWeight: Math.max(1, visualWidth(text)),
+      });
+    }
+  }
+
+  return phrases;
+}
+
+export function adaptKtvLyricsPresentation(analysis, options = {}) {
   const sourceText = String(analysis?.sourceText ?? '');
   const units = Array.isArray(analysis?.units) ? analysis.units : [];
   const contentStart = analysis?.speaker
@@ -243,7 +287,9 @@ export function adaptKtvLyricsPresentation(analysis) {
     text: sourceText.slice(contentStart).trim(),
     speaker: analysis?.speaker ?? '',
     role: ktvVocalRole(analysis?.speaker),
-    phrases: units.map((unit) => unit.text).filter(Boolean),
+    phrases: parseKtvDisplayPhrases(analysis, options).map(
+      (phrase) => phrase.text,
+    ),
     contentStart,
   };
 }

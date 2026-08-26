@@ -1,7 +1,9 @@
 // Pure canonical snapshot projection shared across renderer and Browser Source.
 import {
+  adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   analyzeLyricsSource,
+  parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 
 function text(value) {
@@ -28,6 +30,15 @@ const CANONICAL_SECTION_ROLES = new Set([
 const MIN_PRESENTATION_CONFIDENCE = 0.5;
 const LIVE_STAGE_CARD_START_MS = 4000;
 const LIVE_STAGE_CARD_END_MS = 8000;
+const LYRICS_COUNT_IN_BEATS = 4;
+const LYRICS_COUNT_IN_FALLBACK_BEAT_MS = 500;
+const KTV_DEFAULT_LINE_DURATION_MS = 7000;
+const KTV_MIN_LINE_DURATION_MS = 3000;
+const KTV_MAX_LINE_DURATION_MS = 10000;
+const KTV_LONG_GAP_MIN_MS = 12000;
+const KTV_LONG_GAP_FACTOR = 1.8;
+const KTV_COUNT_IN_WINDOW_MS = 5000;
+const KTV_COMPLETED_HOLD_MS = 600;
 
 function revision(snapshot) {
   return Number.isSafeInteger(snapshot?.revision) ? snapshot.revision : 0;
@@ -263,6 +274,689 @@ export function activeLyricIndex(snapshot, lines, nowMs) {
     : -1;
 }
 
+function median(values) {
+  if (values.length === 0) return null;
+  const sorted = [...values].sort((left, right) => left - right);
+  const middle = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0
+    ? (sorted[middle - 1] + sorted[middle]) / 2
+    : sorted[middle];
+}
+
+function clamp(value, minimum, maximum) {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+function hiddenKtvFrame(snapshot) {
+  return {
+    revision: revision(snapshot),
+    visible: false,
+    currentText: '',
+    nextText: '',
+    language: '',
+    lineIndex: null,
+    currentVisibleLineIndex: null,
+    nextVisibleLineIndex: null,
+    lineProgress: null,
+    countIn: null,
+  };
+}
+
+function timedVisibleLyricsLines(lines) {
+  return lines
+    .map((line, sourceLineIndex) => ({ line, sourceLineIndex }))
+    .filter(
+      ({ line }) =>
+        Number.isFinite(line?.startMs) &&
+        Boolean(displayableLyricsText(line?.text)),
+    );
+}
+
+function typicalKtvLineIntervalMs(timedLines) {
+  const intervals = timedLines
+    .slice(1)
+    .map(({ line }, index) => line.startMs - timedLines[index].line.startMs)
+    .filter(
+      (interval) =>
+        interval >= KTV_MIN_LINE_DURATION_MS && interval <= KTV_LONG_GAP_MIN_MS,
+    );
+  return median(intervals) ?? KTV_DEFAULT_LINE_DURATION_MS;
+}
+
+function ktvLineVisualWeight(line, language) {
+  return parseKtvDisplayPhrases(analyzeLyricsSource(text(line?.text)), {
+    language,
+  }).reduce((total, phrase) => total + phrase.visualWeight, 0);
+}
+
+function estimatedKtvLineDurationMs(
+  line,
+  language,
+  typicalIntervalMs,
+  medianWeight,
+) {
+  const lineWeight = ktvLineVisualWeight(line, language);
+  const weightRatio =
+    Number.isFinite(medianWeight) && medianWeight > 0 && lineWeight > 0
+      ? lineWeight / medianWeight
+      : 1;
+  return clamp(
+    typicalIntervalMs * clamp(weightRatio, 0.65, 1.35),
+    KTV_MIN_LINE_DURATION_MS,
+    KTV_MAX_LINE_DURATION_MS,
+  );
+}
+
+function confidentInstrumentalStartMs(snapshot, lineStartMs, nextStartMs) {
+  const offsetMs = lyricsOffsetMs(snapshot);
+  const document = musicStructureDocument(snapshot);
+  if (document?.level !== 'M2') return null;
+  const section = (
+    Array.isArray(document.sections) ? document.sections : []
+  ).find((candidate) => {
+    const startMs = candidate?.startMs + offsetMs;
+    return (
+      candidate?.role === 'instrumental' &&
+      isConfident(candidate?.confidence) &&
+      Number.isFinite(startMs) &&
+      startMs > lineStartMs &&
+      (!Number.isFinite(nextStartMs) || startMs < nextStartMs)
+    );
+  });
+  return section ? section.startMs + offsetMs : null;
+}
+
+function resolvedKtvLineEndMs(
+  snapshot,
+  timedLines,
+  timedLineIndex,
+  language,
+  typicalIntervalMs,
+  medianWeight,
+) {
+  const line = timedLines[timedLineIndex].line;
+  const nextStartMs = timedLines[timedLineIndex + 1]?.line?.startMs;
+  const hasFiniteLineEnd =
+    Number.isFinite(line.endMs) && line.endMs > line.startMs;
+  const hasInferredLineEnd = line.endInferred === true && hasFiniteLineEnd;
+  if (hasFiniteLineEnd && !hasInferredLineEnd) {
+    return line.endMs;
+  }
+  const finalSegment = Array.isArray(line.segments)
+    ? line.segments.at(-1)
+    : null;
+  const finalSegmentEndMs = Number.isFinite(finalSegment?.endMs)
+    ? finalSegment.endMs
+    : null;
+  const hasInferredFinalSegmentEnd =
+    hasInferredLineEnd && finalSegmentEndMs === line.endMs;
+  if (
+    Number.isFinite(finalSegmentEndMs) &&
+    finalSegmentEndMs > line.startMs &&
+    !hasInferredFinalSegmentEnd
+  ) {
+    return finalSegmentEndMs;
+  }
+
+  const finalSegmentStartMs =
+    (hasInferredFinalSegmentEnd || finalSegmentEndMs === null) &&
+    Number.isFinite(finalSegment?.startMs)
+      ? finalSegment.startMs
+      : null;
+  const estimateAnchorMs = Number.isFinite(finalSegmentStartMs)
+    ? Math.max(line.startMs, finalSegmentStartMs)
+    : line.startMs;
+  const sourceBoundaryMs = hasInferredLineEnd ? line.endMs : nextStartMs;
+
+  const instrumentalStartMs = confidentInstrumentalStartMs(
+    snapshot,
+    line.startMs,
+    sourceBoundaryMs,
+  );
+  if (
+    Number.isFinite(instrumentalStartMs) &&
+    instrumentalStartMs > estimateAnchorMs
+  ) {
+    return instrumentalStartMs;
+  }
+
+  const estimatedDurationMs = estimatedKtvLineDurationMs(
+    line,
+    language,
+    typicalIntervalMs,
+    medianWeight,
+  );
+  if (!Number.isFinite(sourceBoundaryMs)) {
+    const durationEndMs = Number.isFinite(snapshot?.playback?.durationMs)
+      ? snapshot.playback.durationMs + lyricsOffsetMs(snapshot)
+      : Infinity;
+    return Math.min(durationEndMs, estimateAnchorMs + estimatedDurationMs);
+  }
+  const sourceGapMs = sourceBoundaryMs - line.startMs;
+  const longGapThresholdMs = Math.max(
+    KTV_LONG_GAP_MIN_MS,
+    typicalIntervalMs * KTV_LONG_GAP_FACTOR,
+  );
+  return sourceGapMs >= longGapThresholdMs
+    ? Math.min(
+        sourceBoundaryMs,
+        estimateAnchorMs +
+          clamp(
+            typicalIntervalMs,
+            KTV_MIN_LINE_DURATION_MS,
+            KTV_MAX_LINE_DURATION_MS,
+          ),
+      )
+    : sourceBoundaryMs;
+}
+
+function exactKtvPhraseSegments(line, phrase, lineEndMs, contentStart) {
+  const segments = Array.isArray(line?.segments) ? line.segments : [];
+  if (
+    segments.length === 0 ||
+    segments.some(
+      (segment) =>
+        typeof segment?.segmentId !== 'string' ||
+        typeof segment?.text !== 'string' ||
+        !Number.isFinite(segment?.startMs),
+    ) ||
+    segments.map((segment) => segment.text).join('') !== line.text
+  ) {
+    return null;
+  }
+
+  let sourceOffset = 0;
+  const ranged = segments.map((segment, index) => {
+    const sourceStart = sourceOffset;
+    sourceOffset += segment.text.length;
+    const nextStartMs = segments[index + 1]?.startMs;
+    return {
+      ...segment,
+      sourceStart,
+      sourceEnd: sourceOffset,
+      endMs: Number.isFinite(segment.endMs)
+        ? line.endInferred === true &&
+          index === segments.length - 1 &&
+          segment.endMs === line.endMs
+          ? Math.max(segment.startMs + 1, lineEndMs)
+          : segment.endMs
+        : Number.isFinite(nextStartMs)
+          ? nextStartMs
+          : lineEndMs,
+    };
+  });
+  const content = line.text.slice(contentStart);
+  const outerLeadingWhitespace = content.match(/^\s+/u)?.[0].length ?? 0;
+  const outerTrailingWhitespace = content.match(/\s+$/u)?.[0].length ?? 0;
+  const displaySourceStart = contentStart + outerLeadingWhitespace;
+  const displaySourceEnd = line.text.length - outerTrailingWhitespace;
+  const normalizedRanges = ranged
+    .map((segment) => {
+      const sourceStart = Math.max(segment.sourceStart, displaySourceStart);
+      const sourceEnd = Math.min(segment.sourceEnd, displaySourceEnd);
+      const textStart = Math.max(0, sourceStart - segment.sourceStart);
+      const textEnd = Math.max(textStart, sourceEnd - segment.sourceStart);
+      return {
+        ...segment,
+        text: segment.text.slice(textStart, textEnd),
+        sourceStart,
+        sourceEnd,
+      };
+    })
+    .filter((segment) => segment.text.length > 0);
+  const selected = normalizedRanges
+    .filter(
+      (segment) =>
+        segment.sourceEnd > phrase.sourceStart &&
+        segment.sourceStart < phrase.sourceEnd,
+    )
+    .map((segment) => {
+      const sourceStart = Math.max(segment.sourceStart, phrase.sourceStart);
+      const sourceEnd = Math.min(segment.sourceEnd, phrase.sourceEnd);
+      return {
+        ...segment,
+        text: segment.text.slice(
+          sourceStart - segment.sourceStart,
+          sourceEnd - segment.sourceStart,
+        ),
+        sourceStart,
+        sourceEnd,
+      };
+    });
+  if (
+    selected.length === 0 ||
+    selected[0].sourceStart !== phrase.sourceStart ||
+    selected.at(-1).sourceEnd !== phrase.sourceEnd ||
+    selected.map((segment) => segment.text).join('') !== phrase.text
+  ) {
+    return null;
+  }
+  return selected.map((segment) => ({
+    segmentId: segment.segmentId,
+    text: segment.text,
+    startMs: segment.startMs,
+    endMs: segment.endMs,
+  }));
+}
+
+function projectKtvDisplayTimeline(snapshot, lines) {
+  const language = text(snapshot?.lyrics?.source?.language);
+  const timedLines = timedVisibleLyricsLines(lines);
+  const typicalIntervalMs = typicalKtvLineIntervalMs(timedLines);
+  const weights = timedLines
+    .map(({ line }) => ktvLineVisualWeight(line, language))
+    .filter((weight) => weight > 0);
+  const medianWeight = median(weights);
+  const units = [];
+
+  timedLines.forEach(({ line, sourceLineIndex }, timedLineIndex) => {
+    const analysis = analyzeLyricsSource(text(line.text));
+    const presentation = adaptKtvLyricsPresentation(analysis, { language });
+    const phrases = parseKtvDisplayPhrases(analysis, { language });
+    if (phrases.length === 0) return;
+    const lineEndMs = resolvedKtvLineEndMs(
+      snapshot,
+      timedLines,
+      timedLineIndex,
+      language,
+      typicalIntervalMs,
+      medianWeight,
+    );
+    if (!Number.isFinite(lineEndMs) || lineEndMs <= line.startMs) return;
+
+    const contentStart = presentation.speaker
+      ? (analysis.units[0]?.sourceStart ?? text(line.text).length)
+      : 0;
+    const exactSegments = phrases.map((phrase) =>
+      exactKtvPhraseSegments(line, phrase, lineEndMs, contentStart),
+    );
+    const exactSegmentIds = exactSegments.flatMap(
+      (segments) => segments?.map((segment) => segment.segmentId) ?? [],
+    );
+    const hasExactPhraseTiming =
+      exactSegments.every(Boolean) &&
+      new Set(exactSegmentIds).size === exactSegmentIds.length;
+    const totalWeight = phrases.reduce(
+      (total, phrase) => total + phrase.visualWeight,
+      0,
+    );
+    let elapsedWeight = 0;
+
+    phrases.forEach((phrase, phraseIndex) => {
+      const segments = exactSegments[phraseIndex];
+      const estimatedStartMs =
+        line.startMs +
+        ((lineEndMs - line.startMs) * elapsedWeight) / totalWeight;
+      elapsedWeight += phrase.visualWeight;
+      const estimatedEndMs =
+        phraseIndex === phrases.length - 1
+          ? lineEndMs
+          : line.startMs +
+            ((lineEndMs - line.startMs) * elapsedWeight) / totalWeight;
+      const startMs = hasExactPhraseTiming
+        ? segments[0].startMs
+        : estimatedStartMs;
+      const endMs = hasExactPhraseTiming
+        ? (segments.at(-1).endMs ?? estimatedEndMs)
+        : estimatedEndMs;
+      units.push({
+        displayUnitIndex: units.length,
+        sourceLineIndex,
+        phraseIndex,
+        text: phrase.text,
+        role: presentation.role,
+        startMs,
+        endMs,
+        timingSource: hasExactPhraseTiming ? 't2' : 'line-estimate',
+        ...(hasExactPhraseTiming ? { segments } : {}),
+      });
+    });
+  });
+
+  return units;
+}
+
+function hasKtvEntranceWindow(lineStartMs, earliestStartMs) {
+  return lineStartMs - KTV_COUNT_IN_WINDOW_MS >= earliestStartMs;
+}
+
+function musicalCountInBoundaries(snapshot, lineStartMs) {
+  const offsetMs = lyricsOffsetMs(snapshot);
+  const document = musicStructureDocument(snapshot);
+  const confidentBeats = (Array.isArray(document?.beats) ? document.beats : [])
+    .map((beat, sourceIndex) => ({ beat, sourceIndex }))
+    .filter(
+      ({ beat }) =>
+        Number.isFinite(beat?.timeMs) &&
+        isConfident(beat.confidence) &&
+        beat.timeMs + offsetMs < lineStartMs,
+    )
+    .slice(-LYRICS_COUNT_IN_BEATS);
+
+  if (confidentBeats.length === LYRICS_COUNT_IN_BEATS) {
+    const consecutiveSourceBeats = confidentBeats.every(
+      ({ sourceIndex }, index) =>
+        index === 0 ||
+        sourceIndex === confidentBeats[index - 1].sourceIndex + 1,
+    );
+    const beatTimes = confidentBeats.map(({ beat }) => beat.timeMs + offsetMs);
+    const intervals = beatTimes
+      .slice(1)
+      .map((timeMs, index) => timeMs - beatTimes[index]);
+    const finalGapMs = lineStartMs - beatTimes.at(-1);
+    const allIntervals = [...intervals, finalGapMs];
+    const typicalIntervalMs = median(allIntervals);
+    const regularIntervals = allIntervals.every(
+      (intervalMs) =>
+        intervalMs >= typicalIntervalMs * 0.75 &&
+        intervalMs <= typicalIntervalMs * 1.25,
+    );
+    if (
+      consecutiveSourceBeats &&
+      Number.isFinite(typicalIntervalMs) &&
+      typicalIntervalMs > 0 &&
+      finalGapMs > 0 &&
+      regularIntervals
+    ) {
+      return {
+        boundaries: [...beatTimes, lineStartMs],
+        timingSource: 'beat-grid',
+      };
+    }
+  }
+
+  const tempo = document?.tempo;
+  const hasConfidentTempo =
+    Number.isFinite(tempo?.bpm) &&
+    tempo.bpm > 0 &&
+    isConfident(tempo.confidence);
+  const beatDurationMs = hasConfidentTempo
+    ? 60000 / tempo.bpm
+    : LYRICS_COUNT_IN_FALLBACK_BEAT_MS;
+  return {
+    boundaries: Array.from(
+      { length: LYRICS_COUNT_IN_BEATS + 1 },
+      (_, index) =>
+        lineStartMs - (LYRICS_COUNT_IN_BEATS - index) * beatDurationMs,
+    ),
+    timingSource: hasConfidentTempo ? 'tempo' : 'fallback',
+  };
+}
+
+function ktvCountInBoundaries(snapshot, lineStartMs, earliestStartMs) {
+  if (!hasKtvEntranceWindow(lineStartMs, earliestStartMs)) return null;
+  const countIn = musicalCountInBoundaries(snapshot, lineStartMs);
+  return {
+    visibleStartMs: Math.min(
+      lineStartMs - KTV_COUNT_IN_WINDOW_MS,
+      countIn.boundaries[0],
+    ),
+    ...countIn,
+  };
+}
+
+function ktvEntrances(snapshot, units) {
+  return units.flatMap((unit, index) => {
+    const previousEndMs = index === 0 ? -Infinity : units[index - 1].endMs;
+    const countIn = ktvCountInBoundaries(snapshot, unit.startMs, previousEndMs);
+    return countIn ? [{ unit, previousEndMs, ...countIn }] : [];
+  });
+}
+
+function activeKtvDisplayUnit(units, positionMs) {
+  return units.find(
+    (unit) => positionMs >= unit.startMs && positionMs < unit.endMs,
+  );
+}
+
+function ktvCountInForEntrance(entrance, positionMs) {
+  if (!entrance) return null;
+  const nextBoundaryIndex = entrance.boundaries.findIndex(
+    (boundaryMs) => boundaryMs > positionMs,
+  );
+  const elapsedBeatCount = Math.max(0, nextBoundaryIndex - 1);
+  return {
+    remainingBeats: Math.max(1, LYRICS_COUNT_IN_BEATS - elapsedBeatCount),
+    totalBeats: LYRICS_COUNT_IN_BEATS,
+    timingSource: entrance.timingSource,
+    visibleLineIndex: entrance.unit.displayUnitIndex,
+    role: entrance.unit.role,
+  };
+}
+
+function nextKtvDisplayUnit(units, unit) {
+  const candidate = units[unit.displayUnitIndex + 1] ?? null;
+  if (!candidate || hasKtvEntranceWindow(candidate.startMs, unit.endMs)) {
+    return null;
+  }
+  return candidate;
+}
+
+function projectKtvSegments(snapshot, unit, positionMs) {
+  const segments = Array.isArray(unit?.segments) ? unit.segments : [];
+  if (segments.length === 0) return null;
+  const rate = playbackRate(snapshot);
+  const isPlaying = snapshot?.playback?.status === 'playing';
+  return segments.map((segment, index) => {
+    const endMs = Number.isFinite(segment.endMs)
+      ? segment.endMs
+      : (segments[index + 1]?.startMs ?? unit.endMs);
+    const progress = boundedProgress(positionMs, segment.startMs, endMs);
+    const state =
+      positionMs < segment.startMs
+        ? 'upcoming'
+        : positionMs >= endMs
+          ? 'past'
+          : 'active';
+    return {
+      segmentId: segment.segmentId,
+      text: segment.text,
+      state,
+      progress: state === 'past' ? 1 : state === 'upcoming' ? 0 : progress,
+      remainingMs:
+        state === 'active' && isPlaying
+          ? Math.max(0, (endMs - positionMs) / rate)
+          : null,
+    };
+  });
+}
+
+function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
+  const nextUnit = options.completed
+    ? null
+    : Object.hasOwn(options, 'nextUnit')
+      ? options.nextUnit
+      : nextKtvDisplayUnit(units, unit);
+  const lineProgress = options.completed
+    ? 1
+    : options.preRoll
+      ? 0
+      : boundedProgress(positionMs, unit.startMs, unit.endMs);
+  const currentSegments = options.preRoll
+    ? null
+    : projectKtvSegments(snapshot, unit, positionMs);
+  return {
+    revision: revision(snapshot),
+    visible: true,
+    currentText: unit.text,
+    nextText: nextUnit?.text ?? '',
+    language: text(snapshot?.lyrics?.source?.language),
+    lineIndex: unit.sourceLineIndex,
+    currentVisibleLineIndex: unit.displayUnitIndex,
+    nextVisibleLineIndex: nextUnit?.displayUnitIndex ?? null,
+    lineProgress,
+    lineRemainingMs:
+      !options.preRoll &&
+      !options.completed &&
+      !currentSegments &&
+      snapshot?.playback?.status === 'playing'
+        ? Math.max(0, (unit.endMs - positionMs) / playbackRate(snapshot))
+        : null,
+    currentRole: unit.role,
+    nextRole: nextUnit?.role ?? 'solo',
+    currentTimingSource: unit.timingSource,
+    ...(currentSegments ? { currentSegments } : {}),
+    ...(Number.isFinite(options.laneReplacementDelayMs)
+      ? { laneReplacementDelayMs: options.laneReplacementDelayMs }
+      : {}),
+    countIn: options.countIn ?? null,
+  };
+}
+
+function selectKtvLyricsFrame(snapshot, lines, nowMs) {
+  const trackId = snapshot?.playback?.track?.id;
+  const lyrics = snapshot?.lyrics;
+  if (!trackId || lyrics?.trackId !== trackId || lyrics?.synced !== true) {
+    return hiddenKtvFrame(snapshot);
+  }
+  const units = projectKtvDisplayTimeline(snapshot, lines);
+  if (units.length === 0) return hiddenKtvFrame(snapshot);
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  const entrance = ktvEntrances(snapshot, units).find(
+    ({ visibleStartMs, unit }) =>
+      positionMs >= visibleStartMs && positionMs < unit.startMs,
+  );
+  const activeUnit = activeKtvDisplayUnit(units, positionMs);
+  if (activeUnit) {
+    const overlappingEntrance =
+      entrance?.unit.displayUnitIndex === activeUnit.displayUnitIndex + 1
+        ? entrance
+        : null;
+    return ktvFrameForUnit(snapshot, units, activeUnit, positionMs, {
+      ...(overlappingEntrance
+        ? {
+            nextUnit: overlappingEntrance.unit,
+            countIn: ktvCountInForEntrance(overlappingEntrance, positionMs),
+          }
+        : {}),
+    });
+  }
+
+  if (entrance) {
+    return ktvFrameForUnit(snapshot, units, entrance.unit, positionMs, {
+      preRoll: true,
+      laneReplacementDelayMs: Number.isFinite(entrance.previousEndMs)
+        ? Math.max(
+            0,
+            entrance.previousEndMs + KTV_COMPLETED_HOLD_MS - positionMs,
+          )
+        : 0,
+      countIn: ktvCountInForEntrance(entrance, positionMs),
+    });
+  }
+
+  const completedUnit = units.findLast(
+    (unit) =>
+      positionMs >= unit.endMs &&
+      positionMs < unit.endMs + KTV_COMPLETED_HOLD_MS,
+  );
+  return completedUnit
+    ? ktvFrameForUnit(snapshot, units, completedUnit, positionMs, {
+        completed: true,
+      })
+    : hiddenKtvFrame(snapshot);
+}
+
+function nextKtvBoundaryDelayMs(snapshot, lines, nowMs) {
+  if (
+    snapshot?.playback?.status !== 'playing' ||
+    !snapshot?.playback?.track?.id ||
+    snapshot?.lyrics?.trackId !== snapshot.playback.track.id ||
+    snapshot?.lyrics?.synced !== true
+  ) {
+    return null;
+  }
+  const units = projectKtvDisplayTimeline(snapshot, lines);
+  if (units.length === 0) return null;
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  const boundaries = units.flatMap((unit) => [
+    unit.startMs,
+    unit.endMs,
+    unit.endMs + KTV_COMPLETED_HOLD_MS,
+  ]);
+  for (const entrance of ktvEntrances(snapshot, units)) {
+    boundaries.push(entrance.visibleStartMs, ...entrance.boundaries);
+  }
+  const nextBoundaryMs = Math.min(
+    ...boundaries.filter(
+      (boundaryMs) => Number.isFinite(boundaryMs) && boundaryMs > positionMs,
+    ),
+  );
+  return Number.isFinite(nextBoundaryMs)
+    ? Math.max(
+        1,
+        Math.ceil((nextBoundaryMs - positionMs) / playbackRate(snapshot)),
+      )
+    : null;
+}
+
+function firstTimedVisibleLyric(lines) {
+  const lineIndex = lines.findIndex(
+    (line) =>
+      Number.isFinite(line?.startMs) &&
+      Boolean(displayableLyricsText(line.text)),
+  );
+  if (lineIndex < 0) return null;
+  return {
+    lineIndex,
+    line: lines[lineIndex],
+    visibleLineIndex: visibleLyricLineIndex(lines, lineIndex),
+  };
+}
+
+function lyricsCountInTimeline(snapshot, lines) {
+  const trackId = snapshot?.playback?.track?.id;
+  const lyrics = snapshot?.lyrics;
+  if (!trackId || lyrics?.trackId !== trackId || lyrics?.synced !== true) {
+    return null;
+  }
+
+  const firstLyric = firstTimedVisibleLyric(lines);
+  if (!firstLyric) return null;
+  const lineStartMs = firstLyric.line.startMs;
+  const countIn = musicalCountInBoundaries(snapshot, lineStartMs);
+
+  return {
+    ...firstLyric,
+    ...countIn,
+    lineStartMs,
+  };
+}
+
+function projectLyricsCountIn(snapshot, lines, nowMs) {
+  const timeline = lyricsCountInTimeline(snapshot, lines);
+  if (!timeline) return null;
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  if (
+    positionMs < timeline.boundaries[0] ||
+    positionMs >= timeline.lineStartMs
+  ) {
+    return null;
+  }
+
+  const nextBoundaryIndex = timeline.boundaries.findIndex(
+    (boundaryMs) => boundaryMs > positionMs,
+  );
+  const elapsedBeatCount = Math.max(0, nextBoundaryIndex - 1);
+  return {
+    text: timeline.line.text,
+    lineIndex: timeline.lineIndex,
+    visibleLineIndex: timeline.visibleLineIndex,
+    remainingBeats: Math.max(1, LYRICS_COUNT_IN_BEATS - elapsedBeatCount),
+    totalBeats: LYRICS_COUNT_IN_BEATS,
+    timingSource: timeline.timingSource,
+  };
+}
+
+function nextLyricsCountInBoundaryMs(snapshot, lines, nowMs) {
+  const timeline = lyricsCountInTimeline(snapshot, lines);
+  if (!timeline) return null;
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  return (
+    timeline.boundaries.find((boundaryMs) => boundaryMs > positionMs) ?? null
+  );
+}
+
 export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
   const trackId = snapshot?.playback?.track?.id;
   const lyrics = snapshot?.lyrics;
@@ -277,7 +971,8 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
 
   const nowMs = options.nowMs ?? Date.now();
   const lyricPositionMs = lyricsPositionMs(snapshot, nowMs);
-  const boundaries = (Array.isArray(lyrics.lines) ? lyrics.lines : [])
+  const lines = Array.isArray(lyrics.lines) ? lyrics.lines : [];
+  const boundaries = lines
     .flatMap((line) => [
       line?.startMs,
       line?.endMs,
@@ -288,6 +983,8 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
     .filter(
       (boundary) => Number.isFinite(boundary) && boundary > lyricPositionMs,
     );
+  const countInBoundaryMs = nextLyricsCountInBoundaryMs(snapshot, lines, nowMs);
+  if (Number.isFinite(countInBoundaryMs)) boundaries.push(countInBoundaryMs);
   if (boundaries.length === 0) return null;
 
   const nextBoundaryMs = Math.min(...boundaries);
@@ -387,6 +1084,12 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   const delays = [];
   const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, { nowMs });
   if (lyricsDelay !== null) delays.push(lyricsDelay);
+  const ktvDelay = nextKtvBoundaryDelayMs(
+    snapshot,
+    Array.isArray(snapshot?.lyrics?.lines) ? snapshot.lyrics.lines : [],
+    nowMs,
+  );
+  if (ktvDelay !== null) delays.push(ktvDelay);
   const liveStageDelay = nextLiveStageBoundaryDelayMs(snapshot, { nowMs });
   if (liveStageDelay !== null) delays.push(liveStageDelay);
   const liveStageCaptionDelay = nextLiveStageCaptionBoundaryDelayMs(snapshot, {
@@ -438,6 +1141,14 @@ export function selectLyricsFrame(snapshot, options = {}) {
   const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
   const nowMs = options.nowMs ?? Date.now();
   const activeIndex = activeLyricIndex(snapshot, lines, nowMs);
+  const countIn = projectLyricsCountIn(snapshot, lines, nowMs);
+  if (countIn) {
+    return {
+      ...hiddenLyricsFrame(snapshot),
+      language: text(lyrics?.source?.language),
+      countIn,
+    };
+  }
   if (
     !trackId ||
     lyrics?.trackId !== trackId ||
@@ -500,9 +1211,17 @@ export function selectLyricsFrame(snapshot, options = {}) {
 
 export function selectLyricsOverlayFrame(snapshot, options = {}) {
   const frame = selectLyricsFrame(snapshot, options);
+  const lines = Array.isArray(snapshot?.lyrics?.lines)
+    ? snapshot.lyrics.lines
+    : [];
+  const nowMs = options.nowMs ?? Date.now();
   return {
     ...frame,
+    ...(snapshot?.playback?.status === 'seeking'
+      ? { timelineDiscontinuity: true }
+      : {}),
     lyricsSourceAnalysis: analyzeLyricsSource(frame.currentText),
+    ktv: selectKtvLyricsFrame(snapshot, lines, nowMs),
     liveStage: selectLiveStageFrame(snapshot, options),
   };
 }

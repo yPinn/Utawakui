@@ -5,6 +5,7 @@ import {
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
+  parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 
 function mangaPresentation(text, options = {}) {
@@ -68,6 +69,35 @@ describe('shared lyrics source analysis', () => {
 });
 
 describe('lyrics presentation preprocessing', () => {
+  it('turns authored Chinese spacing into sequential KTV display phrases', () => {
+    expect(
+      parseKtvDisplayPhrases(
+        analyzeLyricsSource('雨下整夜 我的愛溢出就像雨水'),
+        { language: 'zh-Hant' },
+      ).map(({ text }) => text),
+    ).toEqual(['雨下整夜', '我的愛溢出就像雨水']);
+
+    expect(
+      parseKtvDisplayPhrases(
+        analyzeLyricsSource('幾句是非，也無法將我的熱情冷卻'),
+        { language: 'zh-Hant' },
+      ).map(({ text }) => text),
+    ).toEqual(['幾句是非，', '也無法將我的熱情冷卻']);
+  });
+
+  it('keeps low-confidence Latin and unmarked short CJK rows intact', () => {
+    expect(
+      parseKtvDisplayPhrases(analyzeLyricsSource('I still want you'), {
+        language: 'en',
+      }).map(({ text }) => text),
+    ).toEqual(['I still want you']);
+    expect(
+      parseKtvDisplayPhrases(analyzeLyricsSource('窗外的麻雀'), {
+        language: 'zh-Hant',
+      }).map(({ text }) => text),
+    ).toEqual(['窗外的麻雀']);
+  });
+
   it('keeps one normalized LRC row intact while exposing analyzer phrase boundaries to KTV', () => {
     expect(
       ktvPresentation('[男] 風箏在陰天擱淺，卻無法掩埋歉疚'),
