@@ -61,4 +61,29 @@ describe('koroman integration', () => {
       edited: false,
     });
   });
+
+  it('also skips a bare-jamo line — unlike buildReadingDoc, this is not the all-kana bug', () => {
+    // Japanese has two phonetic scripts (kanji needs tokenizing, kana
+    // doesn't but still needs romaji) — buildReadingDoc's containsKanji
+    // gate used to wrongly skip romaji for all-kana lines too (see
+    // lyricsReading.test.js). Korean has no such split: every real word is
+    // written as composed syllables (U+AC00-D7A3), which containsHangul
+    // already catches completely. A bare-jamo line like "ㅋㅋㅋ" (laughter)
+    // isn't a composed word at all — koroman itself has no rule for it and
+    // hands it back unchanged (verified directly against the real
+    // package, not assumed), so widening the gate to catch it would only
+    // add a romaji row identical to the line itself, not a translation.
+    expect(romanize('ㅋㅋㅋ', { usePronunciationRules: true })).toBe('ㅋㅋㅋ');
+
+    const doc = buildRomanizationDoc(['ㅋㅋㅋ'], {
+      romanize: (text) => romanize(text, { usePronunciationRules: true }),
+    });
+
+    expect(doc.lines[0]).toEqual({
+      text: 'ㅋㅋㅋ',
+      segments: [{ t: 'ㅋㅋㅋ' }],
+      romaji: '',
+      edited: false,
+    });
+  });
 });

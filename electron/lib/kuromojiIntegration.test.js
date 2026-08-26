@@ -41,11 +41,13 @@ describe('kuromoji + wanakana integration', () => {
     });
 
     // No kanji at all — buildReadingDoc skips tokenizing entirely (see
-    // reading.test.js), so this line gets no romaji either.
+    // lyricsReading.test.js), but still romanizes the line directly (see
+    // that file's "still computes romaji for an all-kana line" test): the
+    // line's own text already is its own reading.
     expect(doc.lines[1]).toEqual({
       text: 'こんにちは',
       segments: [{ t: 'こんにちは' }],
-      romaji: '',
+      romaji: 'konnichiha',
       edited: false,
     });
 

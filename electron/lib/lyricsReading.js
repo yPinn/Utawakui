@@ -9,6 +9,11 @@
 
 const KANJI_CHAR_RE = /[一-龯㐀-䶿]/;
 const RUN_SPLIT_RE = /([一-龯㐀-䶿]+)|([^一-龯㐀-䶿]+)/g;
+// Hiragana + katakana (same range src/utils/lyrics.js's JAPANESE_KANA_RE
+// uses for script detection) — a line built only from this range has no
+// kanji to build ruby from, but still needs its own romaji (see
+// containsKana's use below).
+const KANA_CHAR_RE = /[぀-ヿ]/;
 // Same combined-syllable range koroman itself romanizes (0xAC00-0xD7A3) —
 // jamo-only characters (ㅋㅋㅋ) fall outside it and are correctly left as
 // plain text by both this check and koroman's own non-hangul passthrough.
@@ -119,6 +124,14 @@ function startsWithKanji(text) {
   return containsKanji(value[0] || '');
 }
 
+// Whether text has at least one hiragana/katakana character. Distinct
+// from containsKanji: a line can be all-kana (no kanji, e.g. だから,
+// なくなった) and still be fully Japanese, needing romaji even though
+// there's no ruby to build — see buildReadingDoc's no-kanji branch below.
+function containsKana(text) {
+  return KANA_CHAR_RE.test(String(text || ''));
+}
+
 // Same role as containsKanji above, for Korean lines — skips romanizing
 // lines that are plainly not Korean at all (an all-English hook line, a
 // stray sound-effect line), not a script detector.
@@ -144,10 +157,30 @@ function buildReadingDoc(lines, options = {}) {
     onProgress?.({ stage: 'line', index, total: sourceLines.length });
     const text = typeof rawText === 'string' ? rawText : '';
     if (!text || !containsKanji(text)) {
+      // No kanji doesn't mean no romaji: an all-kana line (だから, ああ,
+      // なくなった) has nothing to annotate with ruby, but its surface text
+      // already IS its own reading — feeding it straight to kanaToRomaji
+      // gives the correct romaji with no tokenizer/alignment step needed.
+      // Skipping romaji entirely here (as an earlier version of this
+      // function did) silently drops the romaji line for every all-kana
+      // lyric line, which is common, not an edge case.
+      //
+      // Gated on containsKana, not just "no kanji": a line that's already
+      // pure Latin/symbols (an English hook line, "123", punctuation) has
+      // no Japanese phonetic content to convert at all — kanaToRomaji
+      // would just hand the same text back unchanged (wanakana passes
+      // non-kana text through untouched), producing a redundant "romaji"
+      // row identical to the line above it. Same reasoning
+      // buildRomanizationDoc's containsHangul gate already applies to
+      // Korean's all-Latin lines.
+      const romaji =
+        text && containsKana(text) && typeof kanaToRomaji === 'function'
+          ? kanaToRomaji(text.replace(/\s+/g, ' '))
+          : '';
       return {
         text,
         segments: text ? [{ t: text }] : [],
-        romaji: '',
+        romaji,
         edited: false,
       };
     }

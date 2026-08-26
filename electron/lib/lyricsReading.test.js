@@ -104,6 +104,54 @@ describe('buildReadingDoc', () => {
     ]);
   });
 
+  it('still computes romaji for an all-kana line even though it skips tokenizing', () => {
+    // Regression: an earlier version of this branch hard-coded romaji to
+    // '' for any line with no kanji, silently dropping the romaji row for
+    // every plain all-kana lyric line (だから, ああ, なくなった, ...) —
+    // common, not an edge case. No kanji just means no ruby to build; the
+    // line's own text already is its own reading.
+    const tokenize = vi.fn(fakeTokenize);
+    const kanaToRomaji = vi.fn().mockReturnValue('naku natta');
+
+    const doc = buildReadingDoc(['なくなった'], { tokenize, kanaToRomaji });
+
+    expect(tokenize).not.toHaveBeenCalled();
+    expect(kanaToRomaji).toHaveBeenCalledWith('なくなった');
+    expect(doc.lines[0]).toEqual({
+      text: 'なくなった',
+      segments: [{ t: 'なくなった' }],
+      romaji: 'naku natta',
+      edited: false,
+    });
+  });
+
+  it('leaves romaji empty for a line with no kanji and no kana at all', () => {
+    // Not the same bug as the all-kana case above: a pure-Latin/symbol
+    // line (an English hook, "123") has no Japanese phonetic content to
+    // convert — calling kanaToRomaji on it would just hand the same text
+    // back unchanged (wanakana passes non-kana text through untouched),
+    // producing a redundant "romaji" row identical to the line itself.
+    const tokenize = vi.fn(fakeTokenize);
+    const kanaToRomaji = vi.fn((text) => text);
+
+    const doc = buildReadingDoc(['Oh my love', '123'], {
+      tokenize,
+      kanaToRomaji,
+    });
+
+    expect(tokenize).not.toHaveBeenCalled();
+    expect(kanaToRomaji).not.toHaveBeenCalled();
+    expect(doc.lines).toEqual([
+      {
+        text: 'Oh my love',
+        segments: [{ t: 'Oh my love' }],
+        romaji: '',
+        edited: false,
+      },
+      { text: '123', segments: [{ t: '123' }], romaji: '', edited: false },
+    ]);
+  });
+
   it('tokenizes lines containing kanji and aligns each token', () => {
     const tokenize = vi.fn((text) => {
       if (text === '歌う声') {
