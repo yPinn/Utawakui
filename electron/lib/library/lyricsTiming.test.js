@@ -162,6 +162,26 @@ describe('lyrics timing sidecars', () => {
     expect(loaded.sourceFingerprint).not.toBe(sourceSha256);
   });
 
+  it('reports a v1 sidecar as stale so inferred-end provenance is regenerated', () => {
+    const sourceSha256 = computeLyricsSourceFingerprint(trackDir, 'main.lrc');
+    const sidecarPath = timingSidecarPath(trackDir, 'main.lrc');
+    fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+    fs.writeFileSync(
+      sidecarPath,
+      JSON.stringify(
+        createDocument(sourceSha256, {
+          normalizerProfileId: 'lyrics-source-v1',
+        }),
+      ),
+    );
+
+    expect(loadTrackLyricsTiming(trackDir, 'main.lrc')).toMatchObject({
+      status: 'stale',
+      sourceFingerprint: sourceSha256,
+      normalizerProfileId: 'lyrics-source-v2',
+    });
+  });
+
   it('retains timing and reports unavailable when the source disappears', () => {
     const sourceSha256 = computeLyricsSourceFingerprint(trackDir, 'main.lrc');
     saveTrackLyricsTiming(
@@ -259,7 +279,7 @@ describe('validateLyricsTimingDocument', () => {
   const options = {
     sourceFilename: 'main.lrc',
     sourceSha256,
-    normalizerProfileId: 'lyrics-source-v1',
+    normalizerProfileId: 'lyrics-source-v2',
   };
 
   it('derives T0, T1, and T2 granularity from validated content', () => {
@@ -307,6 +327,34 @@ describe('validateLyricsTimingDocument', () => {
     expect(t2.granularity).toBe('T2');
   });
 
+  it('preserves a validated next-line inferred end boundary', () => {
+    const document = validateLyricsTimingDocument(
+      createDocument(sourceSha256, {
+        lines: [
+          {
+            lineId: 'line_01',
+            text: 'First',
+            startMs: 1000,
+            endMs: 3000,
+            endInferred: true,
+          },
+          {
+            lineId: 'line_02',
+            text: 'Second',
+            startMs: 3000,
+            endMs: null,
+          },
+        ],
+      }),
+      options,
+    );
+
+    expect(document.lines[0]).toMatchObject({
+      endMs: 3000,
+      endInferred: true,
+    });
+  });
+
   it.each([
     [
       'duplicate line ids',
@@ -333,6 +381,46 @@ describe('validateLyricsTimingDocument', () => {
     [
       'negative time',
       { lines: [{ lineId: 'line_01', text: 'A', startMs: -1, endMs: null }] },
+    ],
+    [
+      'invalid inferred end provenance',
+      {
+        lines: [
+          {
+            lineId: 'line_01',
+            text: 'First',
+            startMs: 1000,
+            endMs: 2500,
+            endInferred: true,
+          },
+          {
+            lineId: 'line_02',
+            text: 'Second',
+            startMs: 3000,
+            endMs: null,
+          },
+        ],
+      },
+    ],
+    [
+      'untimed inferred end provenance',
+      {
+        lines: [
+          {
+            lineId: 'line_01',
+            text: 'First',
+            startMs: null,
+            endMs: null,
+            endInferred: true,
+          },
+          {
+            lineId: 'line_02',
+            text: 'Second',
+            startMs: null,
+            endMs: null,
+          },
+        ],
+      },
     ],
     [
       'mismatched segment text',

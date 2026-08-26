@@ -66,11 +66,15 @@ executable validator and fixture tests live in
 `electron/lib/library/lyricsTiming.js` and its co-located test; this prose is not
 used as the trust boundary.
 
+Normalizer profile `lyrics-source-v2` adds converter-end provenance. A saved v1
+sidecar is therefore reported as stale and regenerated from its unchanged source;
+schema version 1 remains unchanged because the new field is optional.
+
 ```json
 {
   "schemaVersion": 1,
   "documentId": "lyr_01J...",
-  "normalizerProfileId": "lyrics-source-v1",
+  "normalizerProfileId": "lyrics-source-v2",
   "granularity": "T2",
   "source": {
     "filename": "main.ja.lrc",
@@ -101,9 +105,11 @@ used as the trust boundary.
 }
 ```
 
-Provenance/manual-edit metadata, `lane`, and semantic `role` remain optional
-future schema additions. They must not change timing meaning or become
-template-specific CSS classes.
+An optional line-level `endInferred: true` records that an LRC converter derived
+`endMs` from the following line's `startMs`. It is omitted for source-authored
+ends such as VTT cue boundaries and for open final lines. Manual-edit metadata,
+`lane`, and semantic `role` remain optional future schema additions. Provenance
+must not become a trust signal or a template-specific CSS class.
 
 ## Validation invariants
 
@@ -112,6 +118,10 @@ template-specific CSS classes.
 - A T0 line has `startMs: null` and `endMs: null`. A timed line has a finite
   `startMs`; `endMs` may be `null` only for an open final interval resolved from
   the next boundary, parent interval, or playable duration at runtime.
+- `endInferred: true` is valid only when the finite `endMs` equals the following
+  line's `startMs`. Validators preserve this provenance through sidecar storage
+  and Output projection; renderers may use it to distinguish an LRC placeholder
+  tail from a source-authored long cue.
 - A segment has a finite `startMs`; its `endMs` follows the same bounded open-end
   rule. Unresolved finite progress falls back to active/inactive presentation.
 - Where both ends are finite, `startMs <= endMs`; timed lines and segments are
@@ -169,8 +179,10 @@ can reference it. Clients discard snapshots for unknown document ids and request
 nothing over the read-only socket; reconnect supplies a complete current pair.
 
 Templates derive current line, current segment, and fractional progress from the
-canonical playback clock. Local interpolation is corrected by later snapshots and
-must stop during paused, buffering, seeking, ended, or disconnected phases.
+canonical playback clock. `lyrics.document` preserves `endInferred` when present
+so presentation logic does not infer provenance from timestamp equality alone.
+Local interpolation is corrected by later snapshots and must stop during paused,
+buffering, seeking, ended, or disconnected phases.
 
 ## Deferred decisions
 

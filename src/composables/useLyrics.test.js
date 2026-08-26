@@ -117,7 +117,7 @@ beforeEach(() => {
     timing: {
       status: 'missing',
       sourceFingerprint: lyricsSourceFingerprint,
-      normalizerProfileId: 'lyrics-source-v1',
+      normalizerProfileId: 'lyrics-source-v2',
     },
   });
   saveLyricsTimingMock = vi.fn(
@@ -731,7 +731,7 @@ describe('useLyrics', () => {
     const segmentedDocument = {
       schemaVersion: 1,
       documentId: 'lyr_saved',
-      normalizerProfileId: 'lyrics-source-v1',
+      normalizerProfileId: 'lyrics-source-v2',
       source: { filename: 'en.vtt', sha256: lyricsSourceFingerprint },
       granularity: 'T2',
       lines: [
@@ -757,7 +757,7 @@ describe('useLyrics', () => {
       timing: {
         status: 'current',
         sourceFingerprint: lyricsSourceFingerprint,
-        normalizerProfileId: 'lyrics-source-v1',
+        normalizerProfileId: 'lyrics-source-v2',
         document: segmentedDocument,
       },
     });
@@ -923,7 +923,7 @@ describe('useLyrics', () => {
       timing: {
         status: 'missing',
         sourceFingerprint: lyricsSourceFingerprint,
-        normalizerProfileId: 'lyrics-source-v1',
+        normalizerProfileId: 'lyrics-source-v2',
       },
     }));
     setLyricsSourceOffsetMock.mockImplementation(

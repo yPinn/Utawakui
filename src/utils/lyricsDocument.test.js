@@ -12,7 +12,7 @@ const SOURCE = {
   kind: 'manual',
 };
 const SOURCE_FINGERPRINT = 'a'.repeat(64);
-const NORMALIZER_PROFILE_ID = 'lyrics-source-v1';
+const NORMALIZER_PROFILE_ID = 'lyrics-source-v2';
 
 function normalize(text, options = {}) {
   return normalizeLyricsDocument({
@@ -38,7 +38,12 @@ describe('normalizeLyricsDocument', () => {
       source: { filename: 'main.lrc', sha256: SOURCE_FINGERPRINT },
       granularity: 'T1',
       lines: [
-        { text: 'Repeat', startMs: 1250, endMs: 3500 },
+        {
+          text: 'Repeat',
+          startMs: 1250,
+          endMs: 3500,
+          endInferred: true,
+        },
         { text: 'Repeat', startMs: 3500, endMs: null },
       ],
     });
@@ -133,7 +138,7 @@ describe('normalizeLyricsDocument', () => {
       sourceFingerprint: 'b'.repeat(64),
     });
     const changedProfile = normalize('[00:01.00]Hello', {
-      normalizerProfileId: 'lyrics-source-v2',
+      normalizerProfileId: 'lyrics-source-v3',
     });
 
     expect(changedSource.documentId).not.toBe(base.documentId);

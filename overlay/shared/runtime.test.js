@@ -286,7 +286,13 @@ describe('overlay WebSocket runtime', () => {
           granularity: 'T1',
           source: { language: 'ja' },
           lines: [
-            { lineId: 'line-1', text: 'first', startMs: 0, endMs: 1000 },
+            {
+              lineId: 'line-1',
+              text: 'first',
+              startMs: 0,
+              endMs: 1000,
+              endInferred: true,
+            },
             { lineId: 'line-2', text: 'second', startMs: 1000, endMs: null },
           ],
         },
@@ -321,7 +327,7 @@ describe('overlay WebSocket runtime', () => {
       queue: { sourceName: 'Setlist' },
       lyrics: {
         activeLineIndex: 1,
-        lines: [{ text: 'first' }, { text: 'second' }],
+        lines: [{ text: 'first', endInferred: true }, { text: 'second' }],
       },
     });
     connection.stop();

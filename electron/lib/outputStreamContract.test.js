@@ -169,6 +169,36 @@ describe('output stream contract', () => {
     expect(parsed.payload.document.source).toEqual({ language: 'ja' });
   });
 
+  it('preserves a validated next-line inferred lyric boundary', () => {
+    const value = lyricsEnvelope({
+      payload: {
+        document: {
+          ...lyricsEnvelope().payload.document,
+          granularity: 'T1',
+          lines: [
+            {
+              lineId: 'line-1',
+              text: 'First',
+              startMs: 1000,
+              endMs: 3000,
+              endInferred: true,
+            },
+            {
+              lineId: 'line-2',
+              text: 'Second',
+              startMs: 3000,
+              endMs: null,
+            },
+          ],
+        },
+      },
+    });
+
+    expect(
+      parseOutputStreamEnvelope(value, 'boot-1').payload.document.lines[0],
+    ).toMatchObject({ endMs: 3000, endInferred: true });
+  });
+
   it('validates queue and dynamic state references independently', () => {
     expect(parseOutputStreamEnvelope(queueEnvelope(), 'boot-1')).toMatchObject({
       stream: 'queue.document',
@@ -230,6 +260,48 @@ describe('output stream contract', () => {
               {
                 ...musicStructureEnvelope().payload.document.sections[0],
                 selector: 'body > script',
+              },
+            ],
+          },
+        },
+      }),
+    ],
+    [
+      'non-boolean inferred lyric boundary',
+      lyricsEnvelope({
+        payload: {
+          document: {
+            ...lyricsEnvelope().payload.document,
+            lines: [
+              {
+                ...lyricsEnvelope().payload.document.lines[0],
+                endInferred: 'yes',
+              },
+            ],
+          },
+        },
+      }),
+    ],
+    [
+      'untimed inferred lyric boundary',
+      lyricsEnvelope({
+        payload: {
+          document: {
+            ...lyricsEnvelope().payload.document,
+            granularity: 'T0',
+            lines: [
+              {
+                lineId: 'line-1',
+                text: 'First',
+                startMs: null,
+                endMs: null,
+                endInferred: true,
+              },
+              {
+                lineId: 'line-2',
+                text: 'Second',
+                startMs: null,
+                endMs: null,
               },
             ],
           },

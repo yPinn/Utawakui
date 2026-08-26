@@ -131,6 +131,9 @@ function parseLine(value, path, usedIds, counters) {
   if (startMs !== null && endMs !== null && endMs < startMs) {
     invalid(`${path}.endMs`, 'precedes startMs');
   }
+  if (line.endInferred !== undefined && typeof line.endInferred !== 'boolean') {
+    invalid(`${path}.endInferred`, 'expected a boolean');
+  }
 
   let segments;
   if (line.segments !== undefined) {
@@ -188,6 +191,7 @@ function parseLine(value, path, usedIds, counters) {
     text,
     startMs,
     endMs,
+    ...(line.endInferred === true ? { endInferred: true } : {}),
     ...(segments ? { segments } : {}),
   };
 }
@@ -225,6 +229,20 @@ function parseLyricsDocument(value) {
     }
     if (line.startMs !== null) previousLineStart = line.startMs;
     return line;
+  });
+  lines.forEach((line, index) => {
+    const nextStartMs = lines[index + 1]?.startMs;
+    if (
+      line.endInferred === true &&
+      (!Number.isFinite(line.endMs) ||
+        !Number.isFinite(nextStartMs) ||
+        line.endMs !== nextStartMs)
+    ) {
+      invalid(
+        `payload.document.lines[${index}].endInferred`,
+        'must match the next line start',
+      );
+    }
   });
   const granularity = lines.some((line) => line.segments?.length)
     ? 'T2'

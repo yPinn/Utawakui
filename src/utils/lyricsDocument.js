@@ -17,6 +17,15 @@ function toMilliseconds(value) {
   return Number.isFinite(value) && value >= 0 ? Math.round(value * 1000) : null;
 }
 
+function sourceUsesInferredLrcEnds(source) {
+  return (
+    source?.kind === 'lrclib' ||
+    String(source?.filename ?? '')
+      .toLocaleLowerCase()
+      .endsWith('.lrc')
+  );
+}
+
 function identityToken(sourceFingerprint, source, text, normalizerProfileId) {
   const sourceIdentity = SHA256_RE.test(sourceFingerprint)
     ? sourceFingerprint
@@ -54,15 +63,20 @@ export function normalizeLyricsDocument({
     normalizerProfileId,
   );
   const parsedLines = parseLyricsText(text, { source });
+  const inferredLrcEnds = sourceUsesInferredLrcEnds(source);
   const lines = parsedLines.map((line, index) => {
     const startMs = toMilliseconds(line.start);
     const endMs = toMilliseconds(line.end);
+    const nextStartMs = toMilliseconds(parsedLines[index + 1]?.start);
+    const endInferred =
+      inferredLrcEnds && endMs !== null && endMs === nextStartMs;
     const lineId = `${documentId}_l_${index.toString(36)}`;
     const normalized = {
       lineId,
       text: line.text,
       startMs,
       endMs,
+      ...(endInferred ? { endInferred: true } : {}),
     };
     if (Array.isArray(line.segments) && line.segments.length > 0) {
       normalized.segments = line.segments.map((segment, segmentIndex) => ({

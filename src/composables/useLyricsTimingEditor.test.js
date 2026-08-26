@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 const document = {
   schemaVersion: 1,
   documentId: 'lyr_document',
-  normalizerProfileId: 'lyrics-source-v1',
+  normalizerProfileId: 'lyrics-source-v2',
   source: { filename: 'main.lrc', sha256: 'a'.repeat(64) },
   granularity: 'T1',
   lines: [

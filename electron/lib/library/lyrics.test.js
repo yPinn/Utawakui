@@ -89,7 +89,7 @@ describe('resolveTrackLyricsPath', () => {
       text: 'WEBVTT',
       timing: {
         status: 'missing',
-        normalizerProfileId: 'lyrics-source-v1',
+        normalizerProfileId: 'lyrics-source-v2',
       },
     });
     expect(result.timing.sourceFingerprint).toMatch(/^[a-f0-9]{64}$/);
@@ -115,7 +115,7 @@ describe('resolveTrackLyricsPath', () => {
       text: '[00:01.00]Hello',
       timing: {
         status: 'missing',
-        normalizerProfileId: 'lyrics-source-v1',
+        normalizerProfileId: 'lyrics-source-v2',
       },
     });
 

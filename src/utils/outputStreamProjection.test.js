@@ -25,6 +25,7 @@ describe('output stream projection', () => {
             text: '歌詞',
             startMs: 1000,
             endMs: 2000,
+            endInferred: true,
             segments: [
               {
                 segmentId: 'segment-1',
@@ -49,6 +50,7 @@ describe('output stream projection', () => {
           text: '歌詞',
           startMs: 1000,
           endMs: 2000,
+          endInferred: true,
           segments: [
             {
               segmentId: 'segment-1',

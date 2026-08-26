@@ -167,6 +167,13 @@ function validateLyricsTimingDocument(rawDocument, options = {}) {
     const text = validateText(line.text, `line ${lineIndex} text`);
     const startMs = validateTime(line.startMs, `line ${lineIndex} startMs`);
     const endMs = validateTime(line.endMs, `line ${lineIndex} endMs`);
+    if (
+      line.endInferred !== undefined &&
+      typeof line.endInferred !== 'boolean'
+    ) {
+      throw new Error(`line ${lineIndex} endInferred must be a boolean`);
+    }
+    const endInferred = line.endInferred === true;
     if (startMs === null && endMs !== null) {
       throw new Error(`line ${lineIndex} cannot end without a start`);
     }
@@ -275,8 +282,22 @@ function validateLyricsTimingDocument(rawDocument, options = {}) {
       text,
       startMs,
       endMs,
+      ...(endInferred ? { endInferred: true } : {}),
       ...(segments ? { segments } : {}),
     };
+  });
+  lines.forEach((line, lineIndex) => {
+    const nextStartMs = lines[lineIndex + 1]?.startMs;
+    if (
+      line.endInferred === true &&
+      (!Number.isFinite(line.endMs) ||
+        !Number.isFinite(nextStartMs) ||
+        line.endMs !== nextStartMs)
+    ) {
+      throw new Error(
+        `line ${lineIndex} inferred end must match the next line start`,
+      );
+    }
   });
 
   return {

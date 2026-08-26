@@ -123,7 +123,7 @@ describe('lyrics timing IPC', () => {
     const document = {
       schemaVersion: 1,
       documentId: 'lyr_document_01',
-      normalizerProfileId: 'lyrics-source-v1',
+      normalizerProfileId: 'lyrics-source-v2',
       source: { filename: 'main.lrc', sha256: 'a'.repeat(64) },
       lines: [],
     };

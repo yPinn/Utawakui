@@ -200,6 +200,7 @@ function assembleSplitSnapshot(
     text: line.text,
     startMs: line.startMs,
     endMs: line.endMs,
+    ...(line.endInferred === true ? { endInferred: true } : {}),
     ...(Array.isArray(line.segments) ? { segments: line.segments } : {}),
   }));
   return {
