@@ -112,18 +112,152 @@ describe('verifyVersionContract', () => {
 });
 
 describe('verifyReleaseNotes', () => {
-  it('requires non-empty release notes', () => {
+  function writeNotes(contents, filename = 'v0.2.0.md') {
     const directory = createTemporaryDirectory();
-    const notesPath = path.join(directory, 'v0.2.0.md');
-    fs.writeFileSync(notesPath, '# Utawakui 0.2.0\n\nRelease notes.\n');
+    const notesPath = path.join(directory, filename);
+    fs.writeFileSync(notesPath, contents);
+    return notesPath;
+  }
+
+  const minimalCategorizedNotes = `# Utawakui v0.2.0 公開測試版
+
+本版新增一項使用者功能。
+
+## 新功能
+
+- 新增測試功能。
+
+## 安裝前須知
+
+- 請從官方來源下載。
+
+---
+
+## Utawakui v0.2.0 Public Test
+
+This release adds one user-facing feature.
+
+## New Features
+
+- Added a test feature.
+
+## Before Installing
+
+- Download from the official source.
+`;
+
+  it('accepts categorized bilingual notes without empty optional sections', () => {
+    const notesPath = writeNotes(minimalCategorizedNotes);
 
     expect(verifyReleaseNotes(notesPath)).toBe(notesPath);
+  });
+
+  it('accepts a paired optional developer message', () => {
+    const notesPath = writeNotes(
+      minimalCategorizedNotes
+        .replace(
+          '## 新功能',
+          '## 開發者的話\n\n> 謝謝你一起測試。\n\n## 新功能',
+        )
+        .replace(
+          '## New Features',
+          '## A Note from the Developer\n\n> Thank you for testing with me.\n\n## New Features',
+        ),
+    );
+
+    expect(verifyReleaseNotes(notesPath)).toBe(notesPath);
+  });
+
+  it('requires optional developer messages to use distinct blockquotes', () => {
+    const notesPath = writeNotes(
+      minimalCategorizedNotes
+        .replace(
+          '## 新功能',
+          '## 開發者的話\n\n這不是獨立留言區塊。\n\n## 新功能',
+        )
+        .replace(
+          '## New Features',
+          '## A Note from the Developer\n\nThis is not a distinct message block.\n\n## New Features',
+        ),
+    );
+
+    expect(() => verifyReleaseNotes(notesPath)).toThrow(/blockquote/i);
+  });
+
+  it.each([
+    [
+      'flat changes sections',
+      `# Utawakui v0.2.0 公開測試版
+
+本版新增功能並修正問題。
+
+## 本次調整
+
+- 新增功能並修正問題。
+
+## 安裝前須知
+
+- 請從官方來源下載。
+
+---
+
+## Utawakui v0.2.0 Public Test
+
+This release adds a feature and fixes a bug.
+
+## Changes
+
+- Added a feature and fixed a bug.
+
+## Before Installing
+
+- Download from the official source.
+`,
+      /categorized changes/i,
+    ],
+    [
+      'mismatched bilingual categories',
+      minimalCategorizedNotes.replace('## New Features', '## Improvements'),
+      /matching bilingual sections/i,
+    ],
+    [
+      'missing required installation guidance',
+      minimalCategorizedNotes.replace(
+        /\n## Before Installing\n\n- Download from the official source\.\n/,
+        '\n',
+      ),
+      /Before Installing/,
+    ],
+    [
+      'an empty categorized section',
+      minimalCategorizedNotes.replace(
+        '## 新功能\n\n- 新增測試功能。',
+        '## 新功能',
+      ),
+      /must not be empty/i,
+    ],
+  ])('rejects %s', (_label, contents, error) => {
+    const notesPath = writeNotes(contents);
+
+    expect(() => verifyReleaseNotes(notesPath)).toThrow(error);
+  });
+
+  it('requires a versioned bilingual title and an existing non-empty file', () => {
+    const directory = createTemporaryDirectory();
+    const notesPath = writeNotes(
+      minimalCategorizedNotes.replace(
+        '# Utawakui v0.2.0 公開測試版',
+        '# Utawakui 公開測試版',
+      ),
+    );
+
+    expect(() => verifyReleaseNotes(notesPath)).toThrow(/title/i);
     expect(() =>
       verifyReleaseNotes(path.join(directory, 'missing.md')),
     ).toThrow();
 
-    fs.writeFileSync(notesPath, '  \n');
-    expect(() => verifyReleaseNotes(notesPath)).toThrow();
+    const emptyNotesPath = writeNotes('  \n');
+    expect(() => verifyReleaseNotes(emptyNotesPath)).toThrow();
   });
 });
 

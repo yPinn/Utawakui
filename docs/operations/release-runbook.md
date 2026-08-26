@@ -56,8 +56,11 @@ them required in repository settings.
 ## Prepare A Version
 
 1. Update `package.json` and `package-lock.json` to the same new stable version.
-2. Add `docs/releases/v<version>.md` with user-facing changes, unsigned-publisher
-   disclosure, official download location, update behavior, and data-retention note.
+2. Copy the [release-notes template](release-notes-template.md) to
+   `docs/releases/v<version>.md`. Keep matching Chinese／English change categories,
+   write for broad readers without assumed engineering knowledge, remove empty
+   optional sections, and retain concise unsigned-publisher, official-download,
+   update-behavior, and data-retention guidance.
 3. Run the normal CI checks and Windows package/startup acceptance.
 4. Commit the release source on `main`, then create the exact tag `v<version>`.
 5. Never reuse a published version. Correct a failed release with a higher version.

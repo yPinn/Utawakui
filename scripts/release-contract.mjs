@@ -116,6 +116,131 @@ export function verifyReleaseNotes(notesPath) {
     throw new Error(`[release] Missing release notes: ${notesPath}`);
   }
   assertContract(notes.trim().length > 0, 'release notes must not be empty');
+
+  const filenameMatch = /^v(\d+\.\d+\.\d+)\.md$/.exec(path.basename(notesPath));
+  assertContract(
+    filenameMatch && semver.valid(filenameMatch[1]) === filenameMatch[1],
+    'release notes filename must be v<stable-version>.md',
+  );
+  const [, version] = filenameMatch;
+  const sections = new Map();
+  let currentSection = null;
+
+  for (const line of notes.split(/\r?\n/)) {
+    const headingMatch = /^(#{1,6})\s+(.+?)\s*$/.exec(line);
+    if (headingMatch) {
+      const heading = headingMatch[2];
+      assertContract(
+        !sections.has(heading),
+        `release notes section is duplicated: ${heading}`,
+      );
+      currentSection = {
+        content: [],
+        level: headingMatch[1].length,
+      };
+      sections.set(heading, currentSection);
+    } else if (currentSection) {
+      currentSection.content.push(line);
+    }
+  }
+
+  function sectionContent(heading) {
+    const section = sections.get(heading);
+    if (!section) return null;
+    return section.content
+      .join('\n')
+      .replace(/<!--[\s\S]*?-->/g, '')
+      .replace(/^---$/gm, '')
+      .trim();
+  }
+
+  function requireSection(heading, level) {
+    const section = sections.get(heading);
+    assertContract(section, `release notes must include: ${heading}`);
+    assertContract(
+      section.level === level,
+      `release notes heading level is invalid: ${heading}`,
+    );
+    assertContract(
+      sectionContent(heading),
+      `release notes section must not be empty: ${heading}`,
+    );
+  }
+
+  function requireTitle(heading, level) {
+    const section = sections.get(heading);
+    assertContract(
+      section && section.level === level,
+      `release notes must include the versioned bilingual title: ${heading}`,
+    );
+    assertContract(
+      sectionContent(heading),
+      `release notes title must include a summary: ${heading}`,
+    );
+  }
+
+  requireTitle(`Utawakui v${version} 公開測試版`, 1);
+  requireTitle(`Utawakui v${version} Public Test`, 2);
+  requireSection('安裝前須知', 2);
+  requireSection('Before Installing', 2);
+
+  assertContract(
+    !sections.has('本次調整') && !sections.has('Changes'),
+    'release notes must use categorized changes instead of generic Changes sections',
+  );
+
+  const changeSectionPairs = [
+    ['新功能', 'New Features'],
+    ['改善', 'Improvements'],
+    ['問題修復', 'Bug Fixes'],
+  ];
+  const optionalSectionPairs = [
+    ['開發者的話', 'A Note from the Developer'],
+    ['升級注意事項', 'Upgrade Notes'],
+    ['已知限制', 'Known Limitations'],
+  ];
+  let categorizedChanges = 0;
+
+  for (const [chineseHeading, englishHeading] of [
+    ...changeSectionPairs,
+    ...optionalSectionPairs,
+  ]) {
+    const hasChineseSection = sections.has(chineseHeading);
+    const hasEnglishSection = sections.has(englishHeading);
+    assertContract(
+      hasChineseSection === hasEnglishSection,
+      `release notes must include matching bilingual sections: ${chineseHeading} / ${englishHeading}`,
+    );
+    if (!hasChineseSection) continue;
+
+    requireSection(chineseHeading, 2);
+    requireSection(englishHeading, 2);
+    if (chineseHeading === '開發者的話') {
+      const usesBlockquotes = [chineseHeading, englishHeading].every(
+        (heading) =>
+          sectionContent(heading)
+            .split('\n')
+            .filter((line) => line.trim())
+            .every((line) => /^>\s?/.test(line)),
+      );
+      assertContract(
+        usesBlockquotes,
+        'developer messages must use Markdown blockquotes',
+      );
+    }
+    if (
+      changeSectionPairs.some(
+        ([changeHeading]) => changeHeading === chineseHeading,
+      )
+    ) {
+      categorizedChanges += 1;
+    }
+  }
+
+  assertContract(
+    categorizedChanges > 0,
+    'release notes must include categorized changes in both languages',
+  );
   return notesPath;
 }
 
