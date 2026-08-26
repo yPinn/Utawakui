@@ -1,9 +1,14 @@
+import { createRequire } from 'node:module';
+
 import { describe, expect, it, vi } from 'vitest';
 import {
   buildLrclibUserAgent,
   createLrclibClient,
   parseRetryAfterMs,
 } from './client.js';
+
+const require = createRequire(import.meta.url);
+const packageMetadata = require('../../../package.json');
 
 function completeRecord(overrides = {}) {
   return {
@@ -30,8 +35,8 @@ function immediateScheduler() {
 
 describe('buildLrclibUserAgent', () => {
   it('identifies the package version and project URL', () => {
-    expect(buildLrclibUserAgent()).toMatch(
-      /^Utawakui\/0\.1\.1 \(https:\/\/github\.com\/yPinn\/Utawakui\)$/,
+    expect(buildLrclibUserAgent()).toBe(
+      `Utawakui/${packageMetadata.version} (https://github.com/yPinn/Utawakui)`,
     );
   });
 });
