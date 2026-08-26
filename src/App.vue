@@ -28,10 +28,19 @@ const ImportView = defineAsyncComponent(() => import('./views/ImportView.vue'));
 const SettingsView = defineAsyncComponent(
   () => import('./views/SettingsView.vue'),
 );
-const DemoView = defineAsyncComponent(() => import('./views/DemoView.vue'));
-const MusicAnalysisView = defineAsyncComponent(
-  () => import('./views/MusicAnalysisView.vue'),
-);
+
+// These workbenches are development aids, not user-facing product pages.
+// Keeping their imports inside a compile-time DEV branch lets Vite omit the
+// modules entirely from production builds instead of merely hiding navigation.
+const internalWorkbenchesEnabled = import.meta.env.DEV;
+const internalViews = internalWorkbenchesEnabled
+  ? {
+      demo: defineAsyncComponent(() => import('./views/DemoView.vue')),
+      'music-analysis': defineAsyncComponent(
+        () => import('./views/MusicAnalysisView.vue'),
+      ),
+    }
+  : {};
 
 // Long-lived app hooks; each composable owns its cleanup.
 useTaskbarControls();
@@ -56,22 +65,19 @@ performerView.initialize();
 const { width: sidebarWidth } = useSidebarWidth();
 
 // No router: the Electron shell has fixed sections and no deep links.
-// 'demo' and 'music-analysis' are intentionally absent from AppTopTabs.vue's
-// visible tab list — internal workbenches reached only via F9/F10.
 const views = {
   setlist: SetlistView,
   output: OutputView,
   lyrics: LyricsView,
   import: ImportView,
   settings: SettingsView,
-  demo: DemoView,
-  'music-analysis': MusicAnalysisView,
+  ...internalViews,
 };
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const { activeView } = useAppView();
 // Pass the ref so global shortcuts can read and update the active view.
-useKeyboardShortcuts(activeView);
+useKeyboardShortcuts(activeView, { internalWorkbenchesEnabled });
 </script>
 
 <template>

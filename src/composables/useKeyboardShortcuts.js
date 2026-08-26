@@ -20,20 +20,27 @@ const VOLUME_STEP = 0.1;
 const TEMPO_STEP = 0.05;
 
 // F1-F5 match AppTopTabs.vue's left-to-right order — F-key position mirrors
-// tab position so the mapping stays obvious without a legend. F9/F10 are
-// internal workbenches with no visible tabs (see App.vue's views map comment),
-// so they aren't part of that left-to-right sequence.
+// tab position so the mapping stays obvious without a legend.
 const VIEW_SHORTCUTS = {
   f1: 'setlist',
   f2: 'lyrics',
   f3: 'output',
   f4: 'import',
   f5: 'settings',
+};
+
+// Internal workbenches have no visible tabs and must remain unavailable in
+// production. App.vue passes the same Vite development flag used to exclude
+// their view modules from production builds.
+const INTERNAL_VIEW_SHORTCUTS = {
   f9: 'demo',
   f10: 'music-analysis',
 };
 
-export function useKeyboardShortcuts(activeView) {
+export function useKeyboardShortcuts(
+  activeView,
+  { internalWorkbenchesEnabled = import.meta.env.DEV } = {},
+) {
   const {
     state,
     setVolume,
@@ -86,9 +93,12 @@ export function useKeyboardShortcuts(activeView) {
     // box) — F-keys don't insert characters, and this is a global app-level
     // shortcut a performer needs mid-stream regardless of focus. Every
     // other shortcut below stays gated behind isEditableTarget.
-    if (key in VIEW_SHORTCUTS) {
+    const shortcutView =
+      VIEW_SHORTCUTS[key] ??
+      (internalWorkbenchesEnabled ? INTERNAL_VIEW_SHORTCUTS[key] : undefined);
+    if (shortcutView) {
       event.preventDefault();
-      if (activeView) activeView.value = VIEW_SHORTCUTS[key];
+      if (activeView) activeView.value = shortcutView;
       return;
     }
 

@@ -33,14 +33,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-async function setupShortcuts() {
+async function setupShortcuts(options) {
   const activeView = shallowRef('setlist');
   const { useKeyboardShortcuts } = await import('./useKeyboardShortcuts.js');
 
   await renderToString(
     createSSRApp({
       setup() {
-        useKeyboardShortcuts(activeView);
+        useKeyboardShortcuts(activeView, options);
         return () => h('div');
       },
     }),
@@ -76,7 +76,9 @@ describe('useKeyboardShortcuts', () => {
   });
 
   it('maps F9/F10 to the hidden UI and Music Analysis workbenches', async () => {
-    const activeView = await setupShortcuts();
+    const activeView = await setupShortcuts({
+      internalWorkbenchesEnabled: true,
+    });
 
     const f9PreventDefault = dispatchKey('F9');
     expect(activeView.value).toBe('demo');
@@ -85,5 +87,19 @@ describe('useKeyboardShortcuts', () => {
     const f10PreventDefault = dispatchKey('F10');
     expect(activeView.value).toBe('music-analysis');
     expect(f10PreventDefault).toHaveBeenCalled();
+  });
+
+  it('leaves F9/F10 unused when internal workbenches are disabled', async () => {
+    const activeView = await setupShortcuts({
+      internalWorkbenchesEnabled: false,
+    });
+
+    const f9PreventDefault = dispatchKey('F9');
+    expect(activeView.value).toBe('setlist');
+    expect(f9PreventDefault).not.toHaveBeenCalled();
+
+    const f10PreventDefault = dispatchKey('F10');
+    expect(activeView.value).toBe('setlist');
+    expect(f10PreventDefault).not.toHaveBeenCalled();
   });
 });

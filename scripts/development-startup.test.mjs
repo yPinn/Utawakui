@@ -10,13 +10,15 @@ const packageJson = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
 
-const INACTIVE_VIEWS = [
+const PUBLIC_INACTIVE_VIEWS = [
   'OutputView',
   'LyricsView',
   'ImportView',
   'SettingsView',
-  'DemoView',
-  'MusicAnalysisView',
+];
+const INTERNAL_VIEWS = [
+  ['demo', 'DemoView'],
+  ['music-analysis', 'MusicAnalysisView'],
 ];
 
 describe('development startup contract', () => {
@@ -25,7 +27,7 @@ describe('development startup contract', () => {
       "import SetlistView from './views/SetlistView.vue';",
     );
 
-    for (const viewName of INACTIVE_VIEWS) {
+    for (const viewName of PUBLIC_INACTIVE_VIEWS) {
       expect(appSource).not.toMatch(
         new RegExp(`import\\s+${viewName}\\s+from`, 'u'),
       );
@@ -33,6 +35,24 @@ describe('development startup contract', () => {
         new RegExp(`const\\s+${viewName}\\s*=\\s*defineAsyncComponent`, 'u'),
       );
       expect(appSource).toContain(`import('./views/${viewName}.vue')`);
+    }
+
+    expect(appSource).toContain(
+      'const internalWorkbenchesEnabled = import.meta.env.DEV;',
+    );
+    expect(appSource).toContain(
+      'const internalViews = internalWorkbenchesEnabled',
+    );
+    for (const [viewId, viewName] of INTERNAL_VIEWS) {
+      expect(appSource).not.toMatch(
+        new RegExp(`const\\s+${viewName}\\s*=`, 'u'),
+      );
+      expect(appSource).toMatch(
+        new RegExp(
+          `['"]?${viewId}['"]?:\\s*defineAsyncComponent\\([\\s\\S]*?import\\('\\./views/${viewName}\\.vue'\\)`,
+          'u',
+        ),
+      );
     }
   });
 
