@@ -26,7 +26,12 @@ const props = defineProps({
   isSaving: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['update:activeKind', 'saveSettings', 'openGallery']);
+const emit = defineEmits([
+  'update:activeKind',
+  'saveSettings',
+  'openGallery',
+  'refreshProjection',
+]);
 
 const draft = reactive({
   fontFamily: 'sans',
@@ -176,6 +181,7 @@ function saveSettings() {
             :preview-url="previewUrl"
             :obs-url="obsUrl"
             @update:capture-size="draft.captureSize = $event"
+            @refresh-projection="emit('refreshProjection')"
           />
         </div>
       </main>

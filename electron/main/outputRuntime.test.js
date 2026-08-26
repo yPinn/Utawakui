@@ -270,7 +270,44 @@ describe('outputRuntime controller', () => {
       ),
     ).toBe(true);
 
-    webContents.emit('did-start-loading');
+    webContents.emit('did-start-navigation', { isMainFrame: false });
+    expect(runtime.getStatus().observed).toMatchObject({
+      sourceSynchronization: 'ready',
+      unavailableReason: null,
+    });
+    expect(
+      runtime.publish(
+        {
+          contractVersion: 3,
+          bootId: 'boot-lifecycle',
+          sourceEpoch: 'epoch-1',
+          kind: 'update',
+          revision: 2,
+          payload: createEmptyOutputSnapshot({ revision: 2 }),
+        },
+        webContents,
+      ),
+    ).toBe(true);
+
+    webContents.emit('did-start-navigation', {
+      isMainFrame: true,
+      isSameDocument: true,
+    });
+    expect(runtime.getStatus().observed).toMatchObject({
+      sourceSynchronization: 'ready',
+      unavailableReason: null,
+    });
+
+    webContents.emit('did-start-navigation', {
+      isMainFrame: true,
+      isSameDocument: false,
+    });
+    expect(runtime.getStatus().observed).toMatchObject({
+      sourceSynchronization: 'ready',
+      unavailableReason: null,
+    });
+
+    webContents.emit('did-navigate');
     expect(runtime.getStatus().observed).toMatchObject({
       sourceSynchronization: 'unavailable',
       unavailableReason: 'renderer_loading',
@@ -305,10 +342,10 @@ describe('outputRuntime controller', () => {
     runtime.attachRenderer(first);
     runtime.attachRenderer(second);
 
-    expect(first.listenerCount('did-start-loading')).toBe(0);
+    expect(first.listenerCount('did-navigate')).toBe(0);
     expect(first.listenerCount('render-process-gone')).toBe(0);
     expect(first.listenerCount('destroyed')).toBe(0);
-    expect(second.listenerCount('did-start-loading')).toBe(1);
+    expect(second.listenerCount('did-navigate')).toBe(1);
   });
 
   it('rejects missing or non-active renderer identities', () => {

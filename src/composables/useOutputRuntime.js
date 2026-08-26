@@ -190,6 +190,23 @@ async function refreshSettings() {
   }
 }
 
+async function refreshProjection() {
+  const initiallyEnabled = isFeatureEnabled(FEATURE_IDS.PUBLIC_OUTPUT_FLOW);
+  if (!state.status.running || !initiallyEnabled) {
+    return false;
+  }
+  const initialized = await initialize();
+  const enabledAfterInitialize = isFeatureEnabled(
+    FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+  );
+  if (!initialized || !state.status.running || !enabledAfterInitialize) {
+    return false;
+  }
+  return projectionPublisher.publishCurrentProjection({
+    forceContent: true,
+  });
+}
+
 async function suggestPorts() {
   try {
     const ports = await bridgeMethod('suggestOutputPorts')();
@@ -381,6 +398,7 @@ export function useOutputRuntime() {
   return {
     state: readonly(state),
     initialize,
+    refreshProjection,
     refreshStatus,
     refreshSettings,
     updateSettings,

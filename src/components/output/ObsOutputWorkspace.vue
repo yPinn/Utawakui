@@ -1,6 +1,7 @@
 <script setup>
-import { computed, onMounted, reactive, shallowRef, watch } from 'vue';
+import { computed, onMounted, reactive, watch } from 'vue';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
+import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputSettings from './ObsOutputSettings.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
@@ -29,11 +30,17 @@ function orderPresets(presets) {
   });
 }
 
-const activePage = shallowRef('workbench');
 const orderedPresets = computed(() => orderPresets(props.presets));
-const activeKind = shallowRef(
-  props.templateGroups[0]?.kind ?? props.slotDefinitions[0]?.id ?? null,
+const availableKindIds = computed(() =>
+  props.slotDefinitions.map((definition) => definition.id),
 );
+const {
+  activePage,
+  activeKind,
+  selectPage,
+  selectKind: rememberKind,
+  ensureAvailableKind,
+} = useOutputWorkspaceNavigation();
 const browsedPresetIds = reactive(
   Object.fromEntries(
     props.templateGroups.map((group) => [
@@ -45,6 +52,7 @@ const browsedPresetIds = reactive(
 const {
   state: outputState,
   initialize: initializeOutput,
+  refreshProjection,
   refreshStatus: refreshOutputStatus,
   start: startOutput,
   stop: stopOutput,
@@ -94,6 +102,8 @@ const runtimeBusy = computed(
     outputState.isSavingSlot,
 );
 
+watch(availableKindIds, ensureAvailableKind, { immediate: true });
+
 watch([orderedPresets, () => outputState.slots], ([presets]) => {
   for (const definition of props.slotDefinitions) {
     const currentId = browsedPresetIds[definition.id];
@@ -107,20 +117,14 @@ watch([orderedPresets, () => outputState.slots], ([presets]) => {
   }
 });
 
-function selectPage(page) {
-  activePage.value = page;
-}
-
 function selectPreset(id) {
   const preset = orderedPresets.value.find((candidate) => candidate.id === id);
-  if (!preset) return;
-  activeKind.value = preset.kind;
+  if (!preset || !rememberKind(preset.kind, availableKindIds.value)) return;
   browsedPresetIds[preset.kind] = id;
 }
 
 function selectKind(kind) {
-  if (!props.slotDefinitions.some((slot) => slot.id === kind)) return;
-  activeKind.value = kind;
+  rememberKind(kind, availableKindIds.value);
 }
 
 async function applyPreset(id) {
@@ -150,6 +154,7 @@ onMounted(async () => {
   await initializeOutput();
   await refreshOutputStatus();
   await loadSlots(props.slotDefaults);
+  await refreshProjection();
   for (const definition of props.slotDefinitions) {
     const templateId = outputState.slots[definition.id]?.templateId;
     if (templateId) browsedPresetIds[definition.id] = templateId;
@@ -194,7 +199,7 @@ onMounted(async () => {
     </section>
 
     <section
-      v-show="activePage === 'workbench'"
+      v-if="activePage === 'workbench'"
       id="obs-output-workbench-panel"
       class="obs-output-workspace__panel"
       role="tabpanel"
@@ -214,6 +219,7 @@ onMounted(async () => {
         @update:active-kind="selectKind"
         @save-settings="saveAppearance"
         @open-gallery="selectPage('gallery')"
+        @refresh-projection="refreshProjection"
       />
     </section>
 

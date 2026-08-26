@@ -310,6 +310,7 @@ function createOverlayTraceReporter(options) {
 
   return { onSnapshot };
 }
+
 export function createOverlayConnection(options = {}) {
   const location = options.location ?? window.location;
   const WebSocketImpl = options.WebSocketImpl ?? window.WebSocket;
@@ -333,6 +334,7 @@ export function createOverlayConnection(options = {}) {
   let lyricsEntry = null;
   let queueEntry = null;
   let musicStructureEntry = null;
+  let pendingSplitState = null;
   const snapshotTimers = new Set();
   let stopped = true;
 
@@ -345,9 +347,8 @@ export function createOverlayConnection(options = {}) {
     if (
       snapshot.revision < lastDeliveredRevision ||
       (!allowEqualRevision && snapshot.revision === lastDeliveredRevision)
-    ) {
+    )
       return;
-    }
     lastDeliveredRevision = snapshot.revision;
     onSnapshot(snapshot);
     traceReporter.onSnapshot(snapshot);
@@ -380,6 +381,22 @@ export function createOverlayConnection(options = {}) {
     snapshotTimers.add(timer);
   }
 
+  function retryPendingSplitState() {
+    if (!pendingSplitState) return false;
+    const assembled = assembleSplitSnapshot(
+      pendingSplitState,
+      lyricsEntry,
+      queueEntry,
+      musicStructureEntry,
+    );
+    if (!assembled) return false;
+    const revision = pendingSplitState.revision;
+    lastReceivedRevision = revision;
+    pendingSplitState = null;
+    scheduleSnapshot(assembled);
+    return true;
+  }
+
   function connect() {
     if (stopped) return;
     onStatus(reconnectAttempt === 0 ? 'connecting' : 'reconnecting');
@@ -406,6 +423,7 @@ export function createOverlayConnection(options = {}) {
           revision: message.revision,
           document: message.document,
         };
+        retryPendingSplitState();
         return;
       }
       if (message.type === 'queue.document') {
@@ -414,6 +432,7 @@ export function createOverlayConnection(options = {}) {
           revision: message.revision,
           document: message.document,
         };
+        retryPendingSplitState();
         return;
       }
       if (message.type === 'music-structure.document') {
@@ -422,6 +441,7 @@ export function createOverlayConnection(options = {}) {
           revision: message.revision,
           document: message.document,
         };
+        retryPendingSplitState();
         return;
       }
       if (message.type === 'source.status') {
@@ -436,16 +456,13 @@ export function createOverlayConnection(options = {}) {
       }
       if (message.state) {
         updateSplitIdentity(message);
-        if (message.revision <= lastReceivedRevision) return;
-        const assembled = assembleSplitSnapshot(
-          message,
-          lyricsEntry,
-          queueEntry,
-          musicStructureEntry,
-        );
-        if (!assembled) return;
-        lastReceivedRevision = message.revision;
-        scheduleSnapshot(assembled);
+        if (
+          message.revision <= lastReceivedRevision ||
+          message.revision <= (pendingSplitState?.revision ?? -1)
+        )
+          return;
+        pendingSplitState = message;
+        retryPendingSplitState();
         return;
       }
       if (message.snapshot) {
@@ -506,6 +523,7 @@ export function createOverlayConnection(options = {}) {
     lyricsEntry = null;
     queueEntry = null;
     musicStructureEntry = null;
+    pendingSplitState = null;
   }
 
   function updateSplitIdentity(message) {

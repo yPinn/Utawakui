@@ -72,6 +72,29 @@ function compactWhitespace(source) {
 }
 
 describe('OBS output workspace layout contract', () => {
+  it('routes page and kind selections through the session navigation owner', () => {
+    expect(workspaceSource).not.toContain('activePage.value =');
+    expect(workspaceSource).not.toContain('activeKind.value =');
+    expect(workspaceSource).toContain(
+      'rememberKind(preset.kind, availableKindIds.value)',
+    );
+    expect(workspaceSource).toContain(
+      'rememberKind(kind, availableKindIds.value);',
+    );
+  });
+
+  it('remounts the live Workbench subtree when its page becomes active again', () => {
+    expect(workspaceSource).toMatch(
+      /<section\s+v-if="activePage === 'workbench'"\s+id="obs-output-workbench-panel"/u,
+    );
+    expect(workspaceSource).toMatch(
+      /<section\s+v-show="activePage === 'gallery'"\s+id="obs-output-gallery-panel"/u,
+    );
+    expect(workspaceSource).toMatch(
+      /<section\s+v-show="activePage === 'settings'"\s+id="obs-output-settings-panel"/u,
+    );
+  });
+
   it('keeps gallery sizing token-driven and responsive to its own column width', () => {
     const compactComponentSource = compactWhitespace(componentSource);
     const compactSplitLayoutSource = compactWhitespace(splitLayoutSource);
@@ -245,8 +268,10 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('aria-label="預覽背景"');
     expect(previewSource).toContain('UiIconButton');
     expect(previewSource).not.toContain("emit('save");
-    expect(previewSource).toContain("url.pathname = '/workbench/lyrics'");
-    expect(previewSource).toContain("searchParams.set('backdrop'");
+    expect(previewSource).toContain("url.pathname = '/overlay/lyrics'");
+    expect(previewSource).not.toContain('/workbench/lyrics');
+    expect(previewSource).toContain("url.searchParams.set('workbench', '1')");
+    expect(previewSource).toContain("url.searchParams.set('backdrop'");
     expect(previewSource).not.toContain("searchParams.set('preview'");
     expect(previewSource).toContain('gap: var(--ui-space-1)');
     expect(previewSource).toContain('var(--ui-color-surface)');

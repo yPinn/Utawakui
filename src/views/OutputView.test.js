@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import OutputView from './OutputView.vue';
+import { useOutputWorkspaceNavigation } from '../composables/useOutputWorkspaceNavigation.js';
+
+const outputKindIds = ['now-playing', 'setlist', 'lyrics', 'artwork'];
 
 function renderOutputView() {
   return renderToString(
@@ -43,5 +46,25 @@ describe('OutputView', () => {
     expect(html).toContain('Artwork');
     expect(html).toContain('Now / Next');
     expect(html).not.toContain('Focus Line');
+  });
+
+  it('reopens the last page and kind selected during this renderer session', async () => {
+    const navigation = useOutputWorkspaceNavigation();
+    navigation.selectPage('gallery');
+    navigation.selectKind('lyrics', outputKindIds);
+
+    try {
+      const html = await renderOutputView();
+
+      expect(html).toMatch(
+        /id="obs-output-gallery-tab"[^>]*aria-selected="true"/,
+      );
+      expect(html).toMatch(
+        /id="output-kind-lyrics-tab"[^>]*aria-selected="true"/,
+      );
+    } finally {
+      navigation.selectPage('workbench');
+      navigation.selectKind('now-playing', outputKindIds);
+    }
   });
 });

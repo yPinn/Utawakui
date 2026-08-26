@@ -33,6 +33,7 @@ const unavailableState = Object.freeze({
 
 const unavailableRuntime = Object.freeze({
   state: unavailableState,
+  refreshProjection: async () => false,
   start: async () => false,
   stop: async () => false,
   refreshSettings: async () => false,

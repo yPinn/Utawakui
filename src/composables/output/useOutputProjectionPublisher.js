@@ -62,6 +62,8 @@ export function useOutputProjectionPublisher({
   let lyricsReference = null;
   let musicStructureReference = null;
   let queueReference = null;
+  let requestedContentRefreshGeneration = 0;
+  let acceptedContentRefreshGeneration = 0;
 
   function queueInput() {
     return {
@@ -165,6 +167,11 @@ export function useOutputProjectionPublisher({
   }
 
   async function publishProjection(projection) {
+    const contentRefreshGeneration =
+      requestedContentRefreshGeneration > acceptedContentRefreshGeneration
+        ? requestedContentRefreshGeneration
+        : null;
+    const forceContentRefresh = contentRefreshGeneration !== null;
     const continuityChanged =
       lastContinuity !== null && projection.continuity !== lastContinuity;
     if (continuityChanged) {
@@ -172,8 +179,10 @@ export function useOutputProjectionPublisher({
       sourceEpoch = createSourceEpoch();
       nextStateRevision = 0;
     }
-
-    if (projection.lyricsDocument !== lastLyricsDocument) {
+    if (
+      forceContentRefresh ||
+      projection.lyricsDocument !== lastLyricsDocument
+    ) {
       if (projection.lyricsDocument) {
         nextLyricsRevision += 1;
         const accepted = await sendEnvelope(
@@ -193,7 +202,10 @@ export function useOutputProjectionPublisher({
       lastLyricsDocument = projection.lyricsDocument;
     }
 
-    if (projection.musicStructureDocument !== lastMusicStructureDocument) {
+    if (
+      forceContentRefresh ||
+      projection.musicStructureDocument !== lastMusicStructureDocument
+    ) {
       if (projection.musicStructureDocument) {
         nextMusicStructureRevision += 1;
         const accepted = await sendEnvelope(
@@ -213,7 +225,7 @@ export function useOutputProjectionPublisher({
       lastMusicStructureDocument = projection.musicStructureDocument;
     }
 
-    if (projection.queueDocument !== lastQueueDocument) {
+    if (forceContentRefresh || projection.queueDocument !== lastQueueDocument) {
       nextQueueRevision += 1;
       const accepted = await sendEnvelope(
         'queue.document',
@@ -252,7 +264,15 @@ export function useOutputProjectionPublisher({
       dynamic,
     );
     handshakeComplete = accepted;
-    if (accepted) lastContinuity = projection.continuity;
+    if (accepted) {
+      lastContinuity = projection.continuity;
+      if (forceContentRefresh) {
+        acceptedContentRefreshGeneration = Math.max(
+          acceptedContentRefreshGeneration,
+          contentRefreshGeneration,
+        );
+      }
+    }
     return accepted;
   }
 
@@ -278,9 +298,17 @@ export function useOutputProjectionPublisher({
     sourcesReady = value === true;
   }
 
-  async function publishCurrentProjection() {
+  async function publishCurrentProjection(options = {}) {
+    let requestedGeneration = null;
+    if (options.forceContent === true) {
+      requestedContentRefreshGeneration += 1;
+      requestedGeneration = requestedContentRefreshGeneration;
+    }
     publisher.request(currentProjection());
     await publisher.whenIdle();
+    return requestedGeneration === null
+      ? handshakeComplete
+      : acceptedContentRefreshGeneration >= requestedGeneration;
   }
 
   return {

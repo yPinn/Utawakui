@@ -1,3 +1,12 @@
+<script>
+let nextPreviewReloadToken = 0;
+
+function claimPreviewReloadToken() {
+  nextPreviewReloadToken += 1;
+  return String(nextPreviewReloadToken);
+}
+</script>
+
 <script setup>
 import {
   computed,
@@ -23,8 +32,9 @@ const props = defineProps({
   obsUrl: { type: String, default: null },
 });
 
-const emit = defineEmits(['update:captureSize']);
+const emit = defineEmits(['update:captureSize', 'refreshProjection']);
 
+const previewReloadToken = claimPreviewReloadToken();
 const copyState = shallowRef('idle');
 const previewStage = useTemplateRef('previewStage');
 const previewScale = shallowRef(1);
@@ -48,13 +58,15 @@ const inspectionUrl = computed(() => {
   if (!props.previewUrl) return null;
   const url = new URL(props.previewUrl);
   if (isLyrics.value) {
-    url.pathname = '/workbench/lyrics';
+    url.pathname = '/overlay/lyrics';
     url.search = '';
     url.hash = '';
+    url.searchParams.set('workbench', '1');
     url.searchParams.set('backdrop', previewBackdrop.value);
   } else {
     url.searchParams.set('backdrop', previewBackdrop.value);
   }
+  url.searchParams.set('reload', previewReloadToken);
   return url.toString();
 });
 const previewCanvasStyle = computed(() => ({
@@ -68,6 +80,10 @@ function measurePreview() {
   if (availableWidth > 0) {
     previewScale.value = availableWidth / PREVIEW_CANVAS_WIDTH;
   }
+}
+
+function handlePreviewLoad() {
+  emit('refreshProjection');
 }
 
 async function copyObsUrl() {
@@ -110,8 +126,13 @@ onBeforeUnmount(() => {
         :data-tone="preset?.tone"
         :data-backdrop="previewBackdrop"
       >
+        <ObsStreamerPreview
+          v-if="!hasRuntimeTemplate"
+          :src="streamerPreviewImage"
+        />
         <iframe
           v-if="hasRuntimeTemplate"
+          :key="inspectionUrl"
           class="obs-overlay-preview__iframe"
           :src="inspectionUrl"
           :style="previewCanvasStyle"
@@ -120,6 +141,7 @@ onBeforeUnmount(() => {
           title="Browser Source 即時預覽"
           sandbox="allow-scripts allow-same-origin"
           referrerpolicy="no-referrer"
+          @load="handlePreviewLoad"
         />
         <div v-else class="obs-overlay-preview__fallback">
           <span class="obs-overlay-preview__fallback-title">
@@ -133,10 +155,6 @@ onBeforeUnmount(() => {
             {{ line }}
           </span>
         </div>
-        <ObsStreamerPreview
-          v-if="!hasRuntimeTemplate"
-          :src="streamerPreviewImage"
-        />
       </div>
 
       <ObsWidgetCapturePreview

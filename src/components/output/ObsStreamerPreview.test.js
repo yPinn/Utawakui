@@ -10,42 +10,23 @@ const workbenchPreviewSource = readFileSync(
   fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
   'utf8',
 );
-const outputHttpSource = readFileSync(
-  fileURLToPath(
-    new URL('../../../electron/lib/outputServer/http.js', import.meta.url),
-  ),
-  'utf8',
-);
-const workbenchDocumentSource = readFileSync(
-  fileURLToPath(
-    new URL('../../../overlay/workbench/lyrics.html', import.meta.url),
-  ),
-  'utf8',
-);
-const workbenchStylesSource = readFileSync(
-  fileURLToPath(
-    new URL('../../../overlay/workbench/workbench.css', import.meta.url),
-  ),
-  'utf8',
-);
 
 describe('Workbench streamer preview', () => {
-  it('uses a dedicated Workbench route while preserving the renderer fallback', () => {
+  it('keeps the renderer guide only as the no-runtime fallback', () => {
     expect(workbenchPreviewSource).toContain(
       "import streamerPreviewImage from '../../assets/workbench-streamer-guide.png'",
     );
+    expect(workbenchPreviewSource).toContain('<ObsStreamerPreview');
     expect(workbenchPreviewSource).toContain('v-if="!hasRuntimeTemplate"');
     expect(workbenchPreviewSource).toContain(':src="streamerPreviewImage"');
     expect(workbenchPreviewSource).toContain(
-      "url.pathname = '/workbench/lyrics';",
+      "url.pathname = '/overlay/lyrics';",
     );
-    expect(workbenchPreviewSource).toContain('v-if="isLyrics"');
+    expect(workbenchPreviewSource).not.toContain('/workbench/lyrics');
+    expect(workbenchPreviewSource).toContain(
+      "url.searchParams.set('workbench', '1');",
+    );
     expect(workbenchPreviewSource).toContain('<ObsWidgetCapturePreview');
-    expect(outputHttpSource).toContain(
-      "'/workbench/streamer-guide.png': ['workbench', 'streamer-guide.png']",
-    );
-    expect(outputHttpSource).not.toContain('ObsStreamerPreview');
-    expect(workbenchDocumentSource).toContain('src="/overlay/lyrics"');
   });
 
   it('occupies the middle and bottom center cells without cropping the image', () => {
@@ -61,21 +42,14 @@ describe('Workbench streamer preview', () => {
     expect(componentSource).toContain(':src="src"');
     expect(componentSource).toContain('alt=""');
     expect(componentSource).toContain(':draggable="false"');
-    expect(workbenchStylesSource).toContain('transform: scale(1.35);');
-    expect(workbenchStylesSource).toContain('object-fit: contain;');
   });
 
-  it('keeps the real output on an explicit layer above the occupancy guide', () => {
-    expect(
-      workbenchDocumentSource.indexOf('workbench-preview__output'),
-    ).toBeGreaterThan(
-      workbenchDocumentSource.indexOf('workbench-preview__guide'),
+  it('keeps the fallback guide on its explicit occupancy layer', () => {
+    expect(componentSource).toContain(
+      'z-index: var(--ui-output-preview-layer-guide);',
     );
-    expect(workbenchStylesSource).toContain(
-      '.workbench-preview__guide {\n    z-index: 1;',
-    );
-    expect(workbenchStylesSource).toContain(
-      '.workbench-preview__output {\n    z-index: 2;',
+    expect(workbenchPreviewSource).toContain(
+      'z-index: var(--ui-output-preview-layer-output);',
     );
   });
 });

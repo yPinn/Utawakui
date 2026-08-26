@@ -216,6 +216,7 @@ it('preserves the exact public runtime API', async () => {
   expect(Object.keys(runtime).sort()).toEqual([
     'initialize',
     'loadSlots',
+    'refreshProjection',
     'refreshSettings',
     'refreshStatus',
     'saveOutputSlot',
@@ -287,6 +288,228 @@ describe('output source handshake', () => {
           message.stream === 'state.snapshot' && message.kind === 'full',
       ),
     ).toHaveLength(1);
+  });
+
+  it('republishes the already-playing current projection on Workbench refresh', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    playerState.isPlaying = true;
+    playerState.playbackPhase = 'playing';
+    playerState.currentTime = 44;
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    selectedLyricsSource.value = { language: 'ja' };
+    lyricsDocument.value = {
+      documentId: 'lyrics-current',
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-current',
+          text: 'Current line',
+          startMs: 43000,
+          endMs: 46000,
+        },
+      ],
+    };
+    activeLineId.value = 'line-current';
+    musicStructureSignals.value = {
+      trackId: 'track-1',
+      sourceRevision: 'a'.repeat(64),
+      sourceDurationMs: 180000,
+      signals: {
+        level: 'M1',
+        reason: 'current',
+        tempo: { bpm: 120, confidence: 0.8 },
+        beats: [],
+        sections: [],
+      },
+    };
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    const initialSourceEpoch =
+      bridge.publishOutputSnapshot.mock.calls.at(-1)[0].sourceEpoch;
+    bridge.publishOutputSnapshot.mockClear();
+
+    await expect(runtime.refreshProjection()).resolves.toBe(true);
+
+    const refreshMessages = bridge.publishOutputSnapshot.mock.calls.map(
+      ([message]) => message,
+    );
+    expect(refreshMessages.map((message) => message.stream)).toEqual([
+      'lyrics.document',
+      'music-structure.document',
+      'queue.document',
+      'state.snapshot',
+    ]);
+    expect(refreshMessages.map((message) => message.kind)).toEqual([
+      'update',
+      'update',
+      'update',
+      'update',
+    ]);
+    expect(
+      new Set(refreshMessages.map((message) => message.sourceEpoch)),
+    ).toEqual(new Set([initialSourceEpoch]));
+    expect(bridge.publishOutputSnapshot).toHaveBeenCalledWith(
+      expect.objectContaining({
+        stream: 'state.snapshot',
+        payload: expect.objectContaining({
+          playback: expect.objectContaining({ positionMs: 44000 }),
+          lyrics: expect.objectContaining({
+            documentId: 'lyrics-current',
+            documentRevision: 2,
+            activeLineId: 'line-current',
+          }),
+          musicStructure: expect.objectContaining({ documentRevision: 2 }),
+          queue: expect.objectContaining({ documentRevision: 2 }),
+        }),
+      }),
+    );
+  });
+
+  it('does not refresh a projection before Output is running or while its gate is off', async () => {
+    const runtime = await loadRuntime();
+
+    await expect(runtime.refreshProjection()).resolves.toBe(false);
+    expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
+
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    bridge.publishOutputSnapshot.mockClear();
+    outputEnabled = false;
+
+    await expect(runtime.refreshProjection()).resolves.toBe(false);
+    expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
+  });
+
+  it('retains a forced content refresh until a later projection is accepted', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    playerState.isPlaying = true;
+    playerState.playbackPhase = 'playing';
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    lyricsDocument.value = {
+      documentId: 'lyrics-current',
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-current',
+          text: 'Current line',
+          startMs: 0,
+          endMs: null,
+        },
+      ],
+    };
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    bridge.publishOutputSnapshot.mockClear();
+    bridge.publishOutputSnapshot.mockResolvedValueOnce(false);
+
+    await expect(runtime.refreshProjection()).resolves.toBe(false);
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(
+        ([message]) => message.stream,
+      ),
+    ).toEqual(['lyrics.document']);
+    bridge.publishOutputSnapshot.mockClear();
+
+    playerState.currentTime = 1;
+    await flushMicrotasks();
+
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(
+        ([message]) => message.stream,
+      ),
+    ).toEqual(['lyrics.document', 'queue.document', 'state.snapshot']);
+  });
+
+  it('preserves a newer forced refresh while an earlier document batch is in flight', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    playerState.isPlaying = true;
+    playerState.playbackPhase = 'playing';
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    lyricsDocument.value = {
+      documentId: 'lyrics-current',
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-current',
+          text: 'Current line',
+          startMs: 0,
+          endMs: null,
+        },
+      ],
+    };
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    bridge.publishOutputSnapshot.mockClear();
+    const firstDocument = deferred();
+    let delayedFirstDocument = false;
+    bridge.publishOutputSnapshot.mockImplementation((message) => {
+      if (!delayedFirstDocument && message.stream === 'lyrics.document') {
+        delayedFirstDocument = true;
+        return firstDocument.promise;
+      }
+      return Promise.resolve(true);
+    });
+
+    const firstRefresh = runtime.refreshProjection();
+    await flushMicrotasks();
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(
+        ([message]) => message.stream,
+      ),
+    ).toEqual(['lyrics.document']);
+
+    const secondRefresh = runtime.refreshProjection();
+    firstDocument.resolve(true);
+    await Promise.all([firstRefresh, secondRefresh]);
+
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(
+        ([message]) => message.stream,
+      ),
+    ).toEqual([
+      'lyrics.document',
+      'queue.document',
+      'state.snapshot',
+      'lyrics.document',
+      'queue.document',
+      'state.snapshot',
+    ]);
+  });
+
+  it('waits for source hydration before honoring an early Preview refresh', async () => {
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    await flushMicrotasks();
+    expect(runtime.state.status.running).toBe(true);
+
+    const refresh = runtime.refreshProjection();
+    await flushMicrotasks();
+    expect(bridge.publishOutputSnapshot).not.toHaveBeenCalled();
+
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    await expect(refresh).resolves.toBe(true);
+    expect(bridge.publishOutputSnapshot.mock.calls.at(-1)[0]).toMatchObject({
+      stream: 'state.snapshot',
+      kind: 'update',
+    });
   });
 
   it('does not run a renderer-owned auto-start loop', async () => {

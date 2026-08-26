@@ -216,7 +216,7 @@ describe('overlay WebSocket runtime', () => {
     expect(second.close).toHaveBeenCalledOnce();
   });
 
-  it('assembles split content and state only after all references resolve', () => {
+  it('reassembles an initial split state as soon as later documents resolve', () => {
     FakeWebSocket.instances = [];
     const received = [];
     const configs = [];
@@ -311,46 +311,241 @@ describe('overlay WebSocket runtime', () => {
         },
       }),
     });
-    socket.emit('message', {
-      data: JSON.stringify({
-        type: 'state.snapshot',
-        bootId: 'boot-1',
-        sourceEpoch: 'epoch-1',
-        sourceStatus: 'ready',
-        revision: 8,
-        state: {
-          generatedAt: '2026-08-23T00:00:00.000Z',
-          displayDelayMs: 0,
-          playback: {
-            status: 'playing',
-            positionMs: 1300,
-            durationMs: 90000,
-            rate: 1,
-            track: { id: 'track-1', title: 'Song' },
-          },
-          lyrics: {
-            documentId: 'lyrics-1',
-            documentRevision: 2,
-            offsetMs: 100,
-            activeLineId: 'line-2',
-            activeSegmentId: null,
-          },
-          queue: { documentId: 'queue-current', documentRevision: 3 },
-        },
-      }),
-    });
 
     expect(configs).toEqual(['karaoke-stack']);
     expect(received).toHaveLength(1);
     expect(received[0]).toMatchObject({
       version: 2,
-      revision: 8,
-      playback: { positionMs: 1300 },
+      revision: 7,
+      playback: { positionMs: 1200 },
       queue: { sourceName: 'Setlist' },
       lyrics: {
         activeLineIndex: 1,
         lines: [{ text: 'first' }, { text: 'second' }],
       },
+    });
+    connection.stop();
+  });
+
+  it('delivers the latest unresolved split state when its documents arrive', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const connection = createOverlayConnection({
+      location: {
+        protocol: 'http:',
+        host: '127.0.0.1:8700',
+        search: '',
+      },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (snapshot) => received.push(snapshot),
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+      now: () => Date.parse('2026-08-23T00:00:00.000Z'),
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    socket.emit('open');
+    const identity = {
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceStatus: 'ready',
+    };
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        ...identity,
+        revision: 7,
+        state: {
+          generatedAt: '2026-08-23T00:00:00.000Z',
+          displayDelayMs: 0,
+          playback: { status: 'playing', positionMs: 1200, rate: 1 },
+          lyrics: {
+            documentId: 'lyrics-1',
+            documentRevision: 2,
+            offsetMs: 0,
+            activeLineId: 'line-1',
+            activeSegmentId: null,
+          },
+          queue: { documentId: 'queue-1', documentRevision: 3 },
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        ...identity,
+        revision: 8,
+        state: {
+          generatedAt: '2026-08-23T00:00:00.000Z',
+          displayDelayMs: 0,
+          playback: { status: 'playing', positionMs: 1300, rate: 1 },
+          lyrics: {
+            documentId: 'lyrics-1',
+            documentRevision: 2,
+            offsetMs: 0,
+            activeLineId: 'line-1',
+            activeSegmentId: 'segment-1',
+          },
+          queue: { documentId: 'queue-1', documentRevision: 3 },
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'lyrics.document',
+        ...identity,
+        revision: 2,
+        document: {
+          documentId: 'lyrics-1',
+          trackId: 'track-1',
+          lines: [{ lineId: 'line-1', text: 'secret lyric text' }],
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'queue.document',
+        ...identity,
+        revision: 3,
+        document: { documentId: 'queue-1', sourceName: '', items: [] },
+      }),
+    });
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toMatchObject({
+      revision: 8,
+      playback: { positionMs: 1300 },
+      lyrics: { activeLineIndex: 0 },
+    });
+
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'state.snapshot',
+        ...identity,
+        revision: 9,
+        state: {
+          generatedAt: '2026-08-23T00:00:00.000Z',
+          displayDelayMs: 0,
+          playback: { status: 'playing', positionMs: 1400, rate: 1 },
+          lyrics: {
+            documentId: 'lyrics-1',
+            documentRevision: 2,
+            offsetMs: 0,
+            activeLineId: 'line-1',
+            activeSegmentId: 'segment-2',
+          },
+          queue: { documentId: 'queue-1', documentRevision: 3 },
+        },
+      }),
+    });
+    expect(received.map(({ revision }) => revision)).toEqual([8, 9]);
+    connection.stop();
+  });
+
+  it('does not write synchronization console logs', () => {
+    FakeWebSocket.instances = [];
+    const logger = { info: vi.fn() };
+    const connection = createOverlayConnection({
+      location: {
+        protocol: 'http:',
+        host: '127.0.0.1:8700',
+        search: '',
+      },
+      WebSocketImpl: FakeWebSocket,
+      logger,
+      schedule: setTimeout,
+      cancelSchedule: clearTimeout,
+    });
+
+    connection.start();
+    FakeWebSocket.instances[0].emit('open');
+
+    expect(logger.info).not.toHaveBeenCalled();
+    connection.stop();
+  });
+
+  it('keeps delayed delivery scheduling stable during clock-only updates', () => {
+    FakeWebSocket.instances = [];
+    const received = [];
+    const scheduled = [];
+    const baseTime = Date.parse('2026-08-23T00:00:00.000Z');
+    const connection = createOverlayConnection({
+      location: {
+        protocol: 'http:',
+        host: '127.0.0.1:8700',
+        search: '',
+      },
+      WebSocketImpl: FakeWebSocket,
+      onSnapshot: (snapshot) => received.push(snapshot),
+      schedule: (callback, delay) => {
+        scheduled.push({ callback, delay });
+        return scheduled.length;
+      },
+      cancelSchedule: vi.fn(),
+      now: () => baseTime + 100,
+    });
+
+    connection.start();
+    const socket = FakeWebSocket.instances[0];
+    const identity = {
+      bootId: 'boot-1',
+      sourceEpoch: 'epoch-1',
+      sourceStatus: 'ready',
+    };
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'lyrics.document',
+        ...identity,
+        revision: 2,
+        document: {
+          documentId: 'lyrics-1',
+          trackId: 'track-1',
+          lines: [{ lineId: 'line-1', text: 'hidden content' }],
+        },
+      }),
+    });
+    socket.emit('message', {
+      data: JSON.stringify({
+        type: 'queue.document',
+        ...identity,
+        revision: 3,
+        document: { documentId: 'queue-1', sourceName: '', items: [] },
+      }),
+    });
+    const state = (revision, generatedAt, activeSegmentId) => ({
+      type: 'state.snapshot',
+      ...identity,
+      revision,
+      state: {
+        generatedAt,
+        displayDelayMs: 1000,
+        playback: { status: 'playing', positionMs: revision * 100, rate: 1 },
+        lyrics: {
+          documentId: 'lyrics-1',
+          documentRevision: 2,
+          offsetMs: 0,
+          activeLineId: 'line-1',
+          activeSegmentId,
+        },
+        queue: { documentId: 'queue-1', documentRevision: 3 },
+      },
+    });
+
+    socket.emit('message', {
+      data: JSON.stringify(state(7, '2026-08-23T00:00:00.000Z', 'segment-1')),
+    });
+    socket.emit('message', {
+      data: JSON.stringify(state(8, '2026-08-23T00:00:00.100Z', 'segment-2')),
+    });
+    expect(scheduled.map(({ delay }) => delay)).toEqual([900, 1000]);
+
+    scheduled[0].callback();
+
+    expect(received).toHaveLength(1);
+    expect(received[0]).toMatchObject({
+      revision: 7,
+      lyrics: { activeLineIndex: 0 },
     });
     connection.stop();
   });

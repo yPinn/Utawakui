@@ -245,10 +245,7 @@ function createOutputRuntime({
     detachRendererListeners?.();
     rendererWebContents = webContents;
     const listeners = [
-      [
-        'did-start-loading',
-        () => projectionHub.markUnavailable('renderer_loading'),
-      ],
+      ['did-navigate', () => projectionHub.markUnavailable('renderer_loading')],
       [
         'render-process-gone',
         () => projectionHub.markUnavailable('renderer_crashed'),
