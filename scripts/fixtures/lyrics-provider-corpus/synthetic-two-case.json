@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "corpusId": "lyrics-provider-private-synthetic-v1",
+  "baselineProviderId": "lrclib",
+  "providers": [
+    {
+      "id": "lrclib",
+      "mode": "baseline",
+      "profileId": "lrclib-http-v1",
+      "accessMode": "none",
+      "tokenRefresh": "not-required",
+      "boundedPayload": true
+    },
+    {
+      "id": "amll",
+      "mode": "candidate",
+      "profileId": "amll-http-v1",
+      "accessMode": "none",
+      "tokenRefresh": "not-required",
+      "boundedPayload": true
+    }
+  ],
+  "acceptance": {
+    "minimumCases": 2,
+    "requiredTags": [
+      { "tag": "english-catalog", "minimumCases": 1 },
+      { "tag": "chinese-pop", "minimumCases": 1 }
+    ],
+    "minimumReviewedMatches": 1,
+    "minimumRequestSuccessRate": 0.5,
+    "maximumFalseMatchRate": 0.1,
+    "minimumIncrementalCoverageRate": 0.5,
+    "minimumUniqueValidT2Count": 1
+  },
+  "cases": [
+    {
+      "id": "case-001",
+      "tags": ["english", "english-catalog", "mainstream", "studio"],
+      "goldStatus": "reviewed",
+      "reference": {
+        "title": "Synthetic Private Title One",
+        "artist": "Synthetic Private Artist",
+        "album": "Synthetic Private Album",
+        "durationSeconds": 180,
+        "version": "studio"
+      }
+    },
+    {
+      "id": "case-002",
+      "tags": ["mandarin", "chinese-pop", "long-tail", "live"],
+      "goldStatus": "reviewed",
+      "reference": {
+        "title": "合成私有標題二",
+        "artist": "合成私有歌手",
+        "album": null,
+        "durationSeconds": 220,
+        "version": "live"
+      }
+    }
+  ]
+}

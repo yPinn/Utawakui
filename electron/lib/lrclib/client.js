@@ -44,7 +44,7 @@ function parseRetryAfterMs(value, now = Date.now()) {
   return Math.max(0, timestamp - now);
 }
 
-async function readBoundedText(response, maxResponseBytes) {
+async function readBoundedText(response, maxResponseBytes, signal) {
   const contentLength = Number(response.headers.get('content-length'));
   if (Number.isFinite(contentLength) && contentLength > maxResponseBytes) {
     await response.body?.cancel().catch(() => undefined);
@@ -69,8 +69,10 @@ async function readBoundedText(response, maxResponseBytes) {
     }
     text += decoder.decode();
     return { status: 'ok', text };
-  } catch {
-    return { status: 'error', reason: 'offline' };
+  } catch (error) {
+    return signal?.aborted
+      ? classifyTransportFailure(signal.reason)
+      : classifyTransportFailure(error);
   } finally {
     reader.releaseLock();
   }
@@ -136,6 +138,7 @@ function createLrclibClient(options = {}) {
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
   const maxRetryAfterMs = options.maxRetryAfterMs ?? DEFAULT_MAX_RETRY_AFTER_MS;
   const userAgent = options.userAgent || buildLrclibUserAgent();
+  const acquisitionSignal = options.signal;
 
   async function request(endpoint, params) {
     if (typeof fetchFn !== 'function') {
@@ -145,12 +148,20 @@ function createLrclibClient(options = {}) {
 
     for (let attempt = 0; attempt < 2; attempt += 1) {
       let response;
+      let requestSignal;
       try {
-        response = await scheduler.schedule(() =>
-          fetchFn(url, {
-            headers: { 'User-Agent': userAgent },
-            signal: AbortSignal.timeout(timeoutMs),
-          }),
+        response = await scheduler.schedule(
+          () => {
+            const requestTimeoutSignal = AbortSignal.timeout(timeoutMs);
+            requestSignal = acquisitionSignal
+              ? AbortSignal.any([acquisitionSignal, requestTimeoutSignal])
+              : requestTimeoutSignal;
+            return fetchFn(url, {
+              headers: { 'User-Agent': userAgent },
+              signal: requestSignal,
+            });
+          },
+          { signal: acquisitionSignal },
         );
       } catch (error) {
         return classifyTransportFailure(error);
@@ -183,7 +194,11 @@ function createLrclibClient(options = {}) {
         };
       }
 
-      const bounded = await readBoundedText(response, maxResponseBytes);
+      const bounded = await readBoundedText(
+        response,
+        maxResponseBytes,
+        requestSignal,
+      );
       if (bounded.status === 'error') return bounded;
       return parseJson(bounded.text);
     }

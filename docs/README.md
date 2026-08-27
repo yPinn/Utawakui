@@ -92,7 +92,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 ## 常用文件
 
 - Lyrics：[LRCLIB acquisition](contracts/lrclib-acquisition-contract.md)、
-  [timing](contracts/lyrics-timing-contract.md)。
+  [timing](contracts/lyrics-timing-contract.md)、
+  [provider evaluation corpus](contracts/lyrics-provider-evaluation-corpus.md)。
 - Output：[runtime hardening](contracts/output-runtime-hardening.md)、
   [asset security](contracts/overlay-asset-security.md)、
   [pack model](contracts/overlay-pack-contract.md)。

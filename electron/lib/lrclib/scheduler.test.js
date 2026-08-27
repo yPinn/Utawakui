@@ -59,4 +59,37 @@ describe('createLrclibRequestScheduler', () => {
     await expect(scheduler.schedule(second)).resolves.toBe('ok');
     expect(second).toHaveBeenCalledOnce();
   });
+
+  it('cancels a deferred schedule without starting its operation', async () => {
+    vi.useFakeTimers();
+    try {
+      const scheduler = createLrclibRequestScheduler({ intervalMs: 0 });
+      await scheduler.schedule(async () => undefined);
+      scheduler.deferFor(60_000);
+      const operation = vi.fn();
+      const controller = new AbortController();
+      const pending = scheduler.schedule(operation, {
+        signal: controller.signal,
+      });
+      const outcome = pending.then(
+        () => ({ status: 'fulfilled' }),
+        (error) => ({ status: 'rejected', error }),
+      );
+
+      controller.abort(
+        Object.assign(new Error('probe deadline exceeded'), {
+          name: 'TimeoutError',
+        }),
+      );
+      await vi.advanceTimersByTimeAsync(60_000);
+
+      await expect(outcome).resolves.toMatchObject({
+        status: 'rejected',
+        error: { name: 'TimeoutError' },
+      });
+      expect(operation).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
 });

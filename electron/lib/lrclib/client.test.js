@@ -336,4 +336,83 @@ describe('createLrclibClient', () => {
       });
     },
   );
+
+  it('classifies an abort while reading a response body as timeout', async () => {
+    const fetch = vi.fn(async (_url, options) => {
+      const body = new ReadableStream({
+        start(controller) {
+          options.signal.addEventListener(
+            'abort',
+            () => controller.error(options.signal.reason),
+            { once: true },
+          );
+        },
+      });
+      return new Response(body);
+    });
+    const client = createLrclibClient({
+      fetch,
+      scheduler: immediateScheduler(),
+      timeoutMs: 10,
+    });
+
+    await expect(client.getById(42)).resolves.toEqual({
+      status: 'error',
+      reason: 'timeout',
+    });
+  });
+
+  it('passes an acquisition signal through the scheduler', async () => {
+    const controller = new AbortController();
+    controller.abort(
+      Object.assign(new Error('probe deadline exceeded'), {
+        name: 'TimeoutError',
+      }),
+    );
+    const scheduler = {
+      schedule: vi.fn((_operation, options) =>
+        Promise.reject(options.signal.reason),
+      ),
+      deferFor: vi.fn(),
+    };
+    const fetch = vi.fn();
+    const client = createLrclibClient({
+      fetch,
+      scheduler,
+      signal: controller.signal,
+    });
+
+    await expect(client.getById(42)).resolves.toEqual({
+      status: 'error',
+      reason: 'timeout',
+    });
+    expect(fetch).not.toHaveBeenCalled();
+    expect(scheduler.schedule).toHaveBeenCalledWith(expect.any(Function), {
+      signal: controller.signal,
+    });
+  });
+
+  it('starts the per-request timeout after scheduler queueing', async () => {
+    const scheduler = {
+      schedule: vi.fn(async (operation) => {
+        await new Promise((resolve) => setTimeout(resolve, 30));
+        return operation();
+      }),
+      deferFor: vi.fn(),
+    };
+    const fetch = vi.fn(async (_url, options) => {
+      if (options.signal.aborted) throw options.signal.reason;
+      return new Response(JSON.stringify(completeRecord()));
+    });
+    const controller = new AbortController();
+    const client = createLrclibClient({
+      fetch,
+      scheduler,
+      signal: controller.signal,
+      timeoutMs: 10,
+    });
+
+    await expect(client.getById(42)).resolves.toMatchObject({ status: 'ok' });
+    expect(fetch).toHaveBeenCalledOnce();
+  });
 });

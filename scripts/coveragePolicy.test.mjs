@@ -92,8 +92,30 @@ describe('coverage policy', () => {
     expect(coveragePolicy.include).toEqual(
       expect.arrayContaining([
         'scripts/audio-separator-roformer-wheel-patch.mjs',
+        'scripts/lyrics-provider-amll.mjs',
+        'scripts/lyrics-provider-amll-probe.mjs',
+        'scripts/lyrics-provider-amll-ttml.mjs',
+        'scripts/lyrics-provider-corpus-candidates.mjs',
+        'scripts/lyrics-provider-corpus-runner.mjs',
+        'scripts/lyrics-provider-corpus-cli.mjs',
+        'scripts/lyrics-provider-corpus-metadata.mjs',
+        'scripts/lyrics-provider-corpus-prepare.mjs',
+        'scripts/lyrics-provider-corpus-prepare-cli.mjs',
+        'scripts/lyrics-provider-corpus-review.mjs',
+        'scripts/lyrics-provider-corpus-review-cli.mjs',
+        'scripts/lyrics-provider-corpus-sources.mjs',
+        'scripts/lyrics-provider-corpus-strata.mjs',
+        'scripts/lyrics-provider-evaluation.mjs',
+        'scripts/lyrics-provider-lrclib.mjs',
+        'scripts/lyrics-provider-probe-registry.mjs',
         'scripts/release-contract.mjs',
       ]),
+    );
+  });
+
+  it('does not duplicate measured coverage include patterns', () => {
+    expect(new Set(coveragePolicy.include).size).toBe(
+      coveragePolicy.include.length,
     );
   });
 

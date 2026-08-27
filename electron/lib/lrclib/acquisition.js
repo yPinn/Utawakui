@@ -22,6 +22,9 @@ function clientForOptions(options) {
   } else if (options.scheduler) {
     clientOptions.scheduler = options.scheduler;
   }
+  if (Object.prototype.hasOwnProperty.call(options, 'signal')) {
+    clientOptions.signal = options.signal;
+  }
   return createLrclibClient(clientOptions);
 }
 

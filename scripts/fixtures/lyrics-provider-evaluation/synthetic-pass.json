@@ -1,0 +1,193 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "lyrics-provider-synthetic-v1",
+  "baselineProviderId": "lrclib",
+  "providers": [
+    {
+      "id": "lrclib",
+      "mode": "baseline",
+      "profileId": "lrclib-http-v1",
+      "accessMode": "none",
+      "tokenRefresh": "not-required",
+      "boundedPayload": true
+    },
+    {
+      "id": "amll",
+      "mode": "candidate",
+      "profileId": "amll-http-v1",
+      "accessMode": "none",
+      "tokenRefresh": "not-required",
+      "boundedPayload": true
+    }
+  ],
+  "acceptance": {
+    "minimumCases": 4,
+    "requiredTags": [
+      { "tag": "english", "minimumCases": 2 },
+      { "tag": "mandarin", "minimumCases": 2 }
+    ],
+    "minimumReviewedMatches": 2,
+    "minimumRequestSuccessRate": 0.95,
+    "maximumFalseMatchRate": 0.01,
+    "minimumIncrementalCoverageRate": 0.25,
+    "minimumUniqueValidT2Count": 2
+  },
+  "cases": [
+    {
+      "id": "english-mainstream",
+      "tags": ["english", "mainstream"],
+      "reference": {
+        "title": "Synthetic Song One",
+        "artist": "Example Artist",
+        "album": "Example Album",
+        "durationSeconds": 180,
+        "version": "studio"
+      },
+      "observations": [
+        {
+          "providerId": "lrclib",
+          "request": {
+            "status": "ok",
+            "durationMs": 100,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "exact",
+          "reviewVerdict": "correct",
+          "capability": "T1",
+          "timingValidation": "not-applicable"
+        },
+        {
+          "providerId": "amll",
+          "request": {
+            "status": "ok",
+            "durationMs": 150,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "exact",
+          "reviewVerdict": "correct",
+          "capability": "T2",
+          "timingValidation": "valid"
+        }
+      ]
+    },
+    {
+      "id": "english-live",
+      "tags": ["english", "live"],
+      "reference": {
+        "title": "Synthetic Song Two",
+        "artist": "Example Artist",
+        "album": "Example Live",
+        "durationSeconds": 220,
+        "version": "live"
+      },
+      "observations": [
+        {
+          "providerId": "lrclib",
+          "request": {
+            "status": "ok",
+            "durationMs": 120,
+            "failureCode": null
+          },
+          "catalogStatus": "miss",
+          "matchBand": null,
+          "reviewVerdict": null,
+          "capability": null,
+          "timingValidation": "not-applicable"
+        },
+        {
+          "providerId": "amll",
+          "request": {
+            "status": "ok",
+            "durationMs": 180,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "strong",
+          "reviewVerdict": "correct",
+          "capability": "T2",
+          "timingValidation": "valid"
+        }
+      ]
+    },
+    {
+      "id": "mandarin-independent",
+      "tags": ["mandarin", "independent"],
+      "reference": {
+        "title": "合成歌曲三",
+        "artist": "範例歌手",
+        "album": null,
+        "durationSeconds": 200,
+        "version": "studio"
+      },
+      "observations": [
+        {
+          "providerId": "lrclib",
+          "request": {
+            "status": "ok",
+            "durationMs": 110,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "exact",
+          "reviewVerdict": "correct",
+          "capability": "T1",
+          "timingValidation": "not-applicable"
+        },
+        {
+          "providerId": "amll",
+          "request": {
+            "status": "ok",
+            "durationMs": 160,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "exact",
+          "reviewVerdict": "correct",
+          "capability": "T1",
+          "timingValidation": "not-applicable"
+        }
+      ]
+    },
+    {
+      "id": "mandarin-remaster",
+      "tags": ["mandarin", "remaster"],
+      "reference": {
+        "title": "合成歌曲四",
+        "artist": "範例歌手",
+        "album": "重製範例",
+        "durationSeconds": 205,
+        "version": "remaster"
+      },
+      "observations": [
+        {
+          "providerId": "lrclib",
+          "request": {
+            "status": "ok",
+            "durationMs": 130,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "exact",
+          "reviewVerdict": "correct",
+          "capability": "T1",
+          "timingValidation": "not-applicable"
+        },
+        {
+          "providerId": "amll",
+          "request": {
+            "status": "ok",
+            "durationMs": 170,
+            "failureCode": null
+          },
+          "catalogStatus": "match",
+          "matchBand": "exact",
+          "reviewVerdict": "correct",
+          "capability": "T1",
+          "timingValidation": "not-applicable"
+        }
+      ]
+    }
+  ]
+}
