@@ -62,7 +62,8 @@ const inspectionUrl = computed(() => {
     url.search = '';
     url.hash = '';
     url.searchParams.set('workbench', '1');
-    url.searchParams.set('lyricsDebug', '1');
+    // Opt-in lyrics diagnostics: keep them out of production preview iframes.
+    if (import.meta.env.DEV) url.searchParams.set('lyricsDebug', '1');
     url.searchParams.set('backdrop', previewBackdrop.value);
   } else {
     url.searchParams.set('backdrop', previewBackdrop.value);

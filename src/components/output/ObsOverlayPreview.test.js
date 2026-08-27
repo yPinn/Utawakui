@@ -1,6 +1,6 @@
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 
 function renderPreview(props = {}) {
@@ -18,6 +18,10 @@ function renderPreview(props = {}) {
 }
 
 describe('ObsOverlayPreview', () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it('uses a fresh inspection URL for every Workbench preview mount', async () => {
     const firstHtml = await renderPreview();
     const secondHtml = await renderPreview();
@@ -37,6 +41,14 @@ describe('ObsOverlayPreview', () => {
     expect(html).not.toContain('obs-streamer-preview');
     expect(html.match(/<iframe/g)).toHaveLength(1);
     expect(html).not.toContain('/workbench/lyrics');
+  });
+
+  it('omits opt-in lyrics diagnostics from the inspection URL in production', async () => {
+    vi.stubEnv('DEV', false);
+    const html = await renderPreview();
+
+    expect(html).toContain('overlay/lyrics?workbench=1&amp;backdrop=checker');
+    expect(html).not.toContain('lyricsDebug');
   });
 
   it('keeps the inspection backdrop query for widget capture previews', async () => {
