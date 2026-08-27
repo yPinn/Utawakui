@@ -67,6 +67,10 @@ describe('development startup contract', () => {
     );
   });
 
+  it('preserves terminal scrollback when Vite starts or reloads', () => {
+    expect(viteConfig.clearScreen).toBe(false);
+  });
+
   it('keeps normal dev lean and exposes an explicit DevTools launch command', () => {
     expect(packageJson.scripts.dev).not.toContain('--devtools');
     expect(packageJson.scripts['dev:tools']).toContain(

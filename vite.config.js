@@ -9,6 +9,9 @@ const { coveragePolicy } = require('./scripts/coveragePolicy.js');
 
 module.exports = defineConfig({
   plugins: [vue(), createOverlayReloadPlugin(__dirname)],
+  // Vite clears interactive terminals when it restarts or re-optimizes. Keep the
+  // complete npm run dev scrollback available for startup diagnosis.
+  clearScreen: false,
   // Required for Electron loadFile(); file:// cannot resolve root paths.
   base: './',
   server: {
