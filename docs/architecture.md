@@ -58,10 +58,14 @@ pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media 
 
 Lyrics renderer 同樣維持單一 public owner：`src/composables/useLyrics.js` 保留 library／
 playlist scope、選曲、HTML audio playback projection、watchers 與 `useLyrics()` facade；
-`src/composables/lyrics/useLyricsAcquisition.js` 負責 gated Musixmatch／LRCLIB acquisition，
+`src/composables/lyrics/useLyricsAcquisition.js` 負責 gated LRCLIB acquisition，並保留沒有
+production UI caller 的 Musixmatch official-API probe compatibility path；
 `src/composables/lyrics/useLyricsSourceDocuments.js` 負責本機來源讀取、offset、timing、
-label／delete 與手動匯入。兩個內部 composable 接受具名 dependency，不互相 import；
-reading aid 與 timing editor 繼續由既有獨立 composable 持有，不建立第二份 Lyrics state。
+label／delete 與手動匯入。Musixmatch path 不加入 candidate search／save 或自動取得；它只
+作為未來取得付費 API 後的備用接線，詳細邊界見
+[Musixmatch reserve adapter contract](contracts/musixmatch-reserve-adapter.md)。兩個內部
+composable 接受具名 dependency，不互相 import；reading aid 與 timing editor 繼續由既有
+獨立 composable 持有，不建立第二份 Lyrics state。
 
 Import renderer 也維持單一 session state：`src/composables/useImportSession.js` 保留
 `useImportSession()` readonly public facade、computed UI projection、selection／filter、共用
