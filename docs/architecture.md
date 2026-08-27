@@ -92,6 +92,10 @@ analysis progress、status polling、run／cancel 與 sidecar reconciliation。�
 | Audio Python capabilities              | Capability policy       | Immutable lock／generation     | 獨立 runtime family、scheduler 與 lease；不與 Provider 或 ONNX lifecycle 合併 |
 | OBS loopback output                    | `public-output-flow`    | Built-in Overlay assets        | Start／publish 受 gate；stop／status 保持可用以復原                           |
 
+Research-only reverse-provider validation runs from `scripts/` in an ignored,
+separately locked runtime and is not part of either product gate, Electron startup,
+packaging, preload, renderer acquisition, or the fixed lyrics-provider registry.
+
 `electron/lib/featureDependencies.js` 是 compatibility barrel；實作依責任拆為 registry、
 download、safe archive、manifests、provider runtime、FFmpeg、models 與 lifecycle service。
 每個 active dependency 必須對應一個已註冊 gate，deprecated model 不屬於 active state。

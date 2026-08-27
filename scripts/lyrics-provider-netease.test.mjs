@@ -374,6 +374,45 @@ describe('NetEase evaluation client', () => {
       durationMs: 25,
     });
   });
+
+  it('distinguishes provider response schema drift from invalid lyric timing', async () => {
+    const searchDrift = createNeteaseEvaluationClient({
+      api: {
+        cloudsearch: vi
+          .fn()
+          .mockResolvedValue(response({ code: 200, result: { songs: {} } })),
+        lyric_new: vi.fn(),
+      },
+      now: immediateNow(),
+    });
+    await expect(
+      searchDrift.search({
+        trackName: 'Synthetic Example',
+        artistName: 'Example Artist',
+      }),
+    ).resolves.toEqual({
+      status: 'error',
+      reason: 'schema-drift',
+      durationMs: 25,
+    });
+
+    const lyricDrift = createNeteaseEvaluationClient({
+      api: {
+        cloudsearch: vi.fn(),
+        lyric_new: vi
+          .fn()
+          .mockResolvedValue(
+            response({ code: 200, yrc: { lyric: 42 }, lrc: { lyric: '' } }),
+          ),
+      },
+      now: immediateNow(),
+    });
+    await expect(lyricDrift.getLyrics(1001)).resolves.toEqual({
+      status: 'error',
+      reason: 'schema-drift',
+      durationMs: 25,
+    });
+  });
 });
 
 describe('NetEase isolated evaluation probe', () => {
@@ -409,9 +448,11 @@ describe('NetEase isolated evaluation probe', () => {
         durationMs: 25,
       }),
     };
+    const onCandidateSelected = vi.fn();
     const probe = createNeteaseEvaluationProbe({
       client,
       now: immediateNow(),
+      onCandidateSelected,
     });
 
     await expect(
@@ -426,6 +467,15 @@ describe('NetEase isolated evaluation probe', () => {
       timingValidation: 'valid',
     });
     expect(client.getLyrics).toHaveBeenCalledWith(1001);
+    expect(onCandidateSelected).toHaveBeenCalledWith({
+      title: 'Synthetic Example',
+      artists: ['Example Artist'],
+      album: 'Example Album',
+      durationSeconds: 180,
+      matchBand: 'exact',
+      durationDeltaSeconds: 0,
+      versionMismatch: false,
+    });
     expect(FIXED_LYRICS_PROVIDER_DESCRIPTORS.map(({ id }) => id)).toEqual([
       'lrclib',
       'amll',

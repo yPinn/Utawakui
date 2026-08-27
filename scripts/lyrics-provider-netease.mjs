@@ -567,7 +567,7 @@ export function createNeteaseEvaluationClient(options = {}) {
       ) {
         return {
           status: 'error',
-          reason: 'invalid-record',
+          reason: 'schema-drift',
           durationMs: elapsed(now, startedAt),
         };
       }
@@ -605,6 +605,13 @@ export function createNeteaseEvaluationClient(options = {}) {
     });
     if (result.status === 'error') return result;
     const body = responseBody(result.value);
+    if (!body) {
+      return {
+        status: 'error',
+        reason: 'schema-drift',
+        durationMs: result.durationMs,
+      };
+    }
     const failure = mapProviderCode(body?.code);
     if (failure) {
       return {
@@ -614,10 +621,17 @@ export function createNeteaseEvaluationClient(options = {}) {
       };
     }
     const songs = body.result?.songs;
-    if (!Array.isArray(songs) || songs.length > 10) {
+    if (!Array.isArray(songs)) {
       return {
         status: 'error',
-        reason: 'invalid-record',
+        reason: 'schema-drift',
+        durationMs: result.durationMs,
+      };
+    }
+    if (songs.length > 10) {
+      return {
+        status: 'error',
+        reason: 'response-too-large',
         durationMs: result.durationMs,
       };
     }
@@ -646,6 +660,13 @@ export function createNeteaseEvaluationClient(options = {}) {
     });
     if (result.status === 'error') return result;
     const body = responseBody(result.value);
+    if (!body) {
+      return {
+        status: 'error',
+        reason: 'schema-drift',
+        durationMs: result.durationMs,
+      };
+    }
     const failure = mapProviderCode(body?.code);
     if (failure) {
       return {
@@ -659,7 +680,7 @@ export function createNeteaseEvaluationClient(options = {}) {
     if (yrc === null || lrc === null) {
       return {
         status: 'error',
-        reason: 'invalid-record',
+        reason: 'schema-drift',
         durationMs: result.durationMs,
       };
     }
@@ -752,6 +773,7 @@ export function createNeteaseEvaluationProbe(options = {}) {
         'scheduler',
         'requestTimeoutMs',
         'now',
+        'onCandidateSelected',
       ]),
     ) ||
     (Object.hasOwn(options, 'client') &&
@@ -762,6 +784,7 @@ export function createNeteaseEvaluationProbe(options = {}) {
     throw new TypeError('invalid NetEase evaluation probe options');
   }
   const now = options.now || (() => performance.now());
+  const onCandidateSelected = options.onCandidateSelected;
   const client =
     options.client ||
     createNeteaseEvaluationClient({
@@ -779,6 +802,8 @@ export function createNeteaseEvaluationProbe(options = {}) {
     });
   if (
     typeof now !== 'function' ||
+    (onCandidateSelected !== undefined &&
+      typeof onCandidateSelected !== 'function') ||
     !client ||
     typeof client.search !== 'function' ||
     typeof client.getLyrics !== 'function'
@@ -816,6 +841,15 @@ export function createNeteaseEvaluationProbe(options = {}) {
         search.records,
       ).find(({ matchBand }) => matchBand !== 'related');
       if (!selected) return missObservation(durationMs());
+      onCandidateSelected?.({
+        title: selected.record.title,
+        artists: selected.record.artists.slice(0, 4),
+        album: selected.record.album,
+        durationSeconds: selected.record.durationSeconds,
+        matchBand: selected.matchBand,
+        durationDeltaSeconds: selected.durationDeltaSeconds,
+        versionMismatch: selected.versionMismatch,
+      });
       const lyrics = await client.getLyrics(selected.record.id);
       if (lyrics.status === 'error') {
         return failureObservation(lyrics.reason, durationMs());

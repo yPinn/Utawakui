@@ -1,0 +1,8 @@
+{
+  "name": "utawakui-netease-evaluation-runtime",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "@neteasecloudmusicapienhanced/api": "4.40.1"
+  }
+}
