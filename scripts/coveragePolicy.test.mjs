@@ -107,6 +107,7 @@ describe('coverage policy', () => {
         'scripts/lyrics-provider-corpus-strata.mjs',
         'scripts/lyrics-provider-evaluation.mjs',
         'scripts/lyrics-provider-lrclib.mjs',
+        'scripts/lyrics-provider-netease.mjs',
         'scripts/lyrics-provider-probe-registry.mjs',
         'scripts/release-contract.mjs',
       ]),
