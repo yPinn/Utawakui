@@ -62,17 +62,71 @@ const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
 const MANGA_BUBBLE_ENTER_GAP_SECONDS = 1;
 const KTV_LANE_REPLACEMENT_DELAY_MS = 600;
-const lastRenderedBeatKeys = new WeakMap();
 const ktvFallbackAnimations = new WeakMap();
+const ktvFallbackAnimationKeys = new WeakMap();
 const ktvLanePresentations = new WeakMap();
+const lyricsRenderStates = new WeakMap();
+const segmentPaintAnimations = new WeakMap();
 const mangaTransitions = new WeakMap();
-const mangaPulseTimelines = new WeakMap();
-const mangaPulseTargets = new WeakMap();
 const mangaLineIndexes = new WeakMap();
+const mangaRenderKeys = new WeakMap();
 const mangaSegmentTargets = new WeakMap();
 
 function resolveGsap(options) {
   return options.gsap ?? globalThis.gsap ?? null;
+}
+
+export function createLyricsDiagnostics(options = {}) {
+  const location = options.location ?? globalThis.location;
+  const consoleApi = options.consoleApi ?? globalThis.console;
+  const enabled =
+    new URLSearchParams(location?.search ?? '').get('lyricsDebug') === '1';
+  if (!enabled || typeof consoleApi?.debug !== 'function') return null;
+  return (event, details = {}) => {
+    consoleApi.debug('[Utawakui lyrics]', event, details);
+  };
+}
+
+function traceLyrics(options, event, details) {
+  options.trace?.(event, details);
+}
+
+function setTextContent(element, value) {
+  const text = String(value ?? '');
+  if (element.textContent !== text) element.textContent = text;
+}
+
+function lyricLineKey(frame) {
+  const lineIndex = Number.isSafeInteger(frame.currentVisibleLineIndex)
+    ? frame.currentVisibleLineIndex
+    : Number.isSafeInteger(frame.lineIndex)
+      ? frame.lineIndex
+      : '';
+  return `${lineIndex}\0${frame.currentText ?? ''}`;
+}
+
+function segmentStructureKey(segments) {
+  return segments
+    .map((segment) => `${segment.segmentId ?? ''}\0${segment.text ?? ''}`)
+    .join('\u0001');
+}
+
+function cancelSegmentPaintAnimation(element, options) {
+  const active = segmentPaintAnimations.get(element);
+  if (!active) return;
+  active.animation?.cancel?.();
+  if (active.engine === 'gsap') {
+    resolveGsap(options)?.killTweensOf?.(element);
+  }
+  segmentPaintAnimations.delete(element);
+}
+
+function clearLyricsRenderState(element, options) {
+  const state = lyricsRenderStates.get(element);
+  for (const node of state?.nodes ?? []) {
+    cancelSegmentPaintAnimation(node, options);
+  }
+  lyricsRenderStates.delete(element);
 }
 
 function progressPercentage(value) {
@@ -197,6 +251,7 @@ function projectKtvFrame(frame) {
 function cancelKtvFallbackAnimation(element) {
   ktvFallbackAnimations.get(element)?.cancel?.();
   ktvFallbackAnimations.delete(element);
+  ktvFallbackAnimationKeys.delete(element);
 }
 
 function clearKtvFallbackProgress(element) {
@@ -246,7 +301,7 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
       return;
     }
     if (nextLane === previous.hold.lane) {
-      elements.next.textContent = previous.hold.heldText;
+      setTextContent(elements.next, previous.hold.heldText);
       setKtvRole(elements.next, previous.hold.heldRole);
       elements.next.dataset.ktvHeld = 'true';
     }
@@ -305,14 +360,14 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     cancelSchedule,
   };
   state.hold = hold;
-  elements.next.textContent = hold.heldText;
+  setTextContent(elements.next, hold.heldText);
   setKtvRole(elements.next, hold.heldRole);
   elements.next.dataset.ktvHeld = 'true';
   hold.timer = schedule(() => {
     const latest = ktvLanePresentations.get(root);
     if (latest !== state || latest.hold !== hold) return;
     if (elements.next.dataset.ktvLane === hold.lane) {
-      elements.next.textContent = hold.targetText;
+      setTextContent(elements.next, hold.targetText);
       setKtvRole(elements.next, hold.targetRole);
       delete elements.next.dataset.ktvHeld;
     }
@@ -467,10 +522,21 @@ function renderCurrentLyrics(element, frame, options) {
     ? frame.currentSegments
     : [];
   const documentApi = element.ownerDocument ?? globalThis.document;
+  const lineKey = lyricLineKey(frame);
   if (segments.length === 0 || !documentApi?.createElement) {
+    const previousState = lyricsRenderStates.get(element);
+    if (previousState?.mode === 'segments') {
+      clearLyricsRenderState(element, options);
+    }
     delete element.dataset.segmented;
-    clearKtvFallbackProgress(element);
-    element.textContent = frame.currentText;
+    if (
+      previousState?.mode !== 'plain' ||
+      previousState.lineKey !== lineKey ||
+      element.textContent !== String(frame.currentText ?? '')
+    ) {
+      setTextContent(element, frame.currentText);
+    }
+    lyricsRenderStates.set(element, { lineKey, mode: 'plain', nodes: [] });
     if (
       templateId === 'karaoke-stack' &&
       frame.currentText &&
@@ -479,13 +545,37 @@ function renderCurrentLyrics(element, frame, options) {
       const progress = progressPercentage(frame.lineProgress);
       element.dataset.lineProgress = 'true';
       element.dataset.text = frame.currentText;
-      element.style.setProperty('--ovl-segment-progress', `${progress}%`);
-      if (
+      const canAnimate =
         Number.isFinite(frame.lineRemainingMs) &&
         frame.lineRemainingMs > 0 &&
         options.reducedMotion !== true &&
-        typeof element.animate === 'function'
-      ) {
+        typeof element.animate === 'function';
+      const animationIsCurrent =
+        ktvFallbackAnimationKeys.get(element) === lineKey &&
+        frame.timelineDiscontinuity !== true;
+      if (canAnimate && animationIsCurrent) {
+        traceLyrics(options, 'sweep-reuse', {
+          lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+          mode: 't1',
+          progress,
+          revision: frame.revision,
+          templateId,
+        });
+        return;
+      }
+
+      cancelKtvFallbackAnimation(element);
+      element.style.setProperty('--ovl-segment-progress', `${progress}%`);
+      if (canAnimate) {
+        traceLyrics(options, 'sweep-start', {
+          durationMs: Math.max(1, Math.ceil(frame.lineRemainingMs)),
+          lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+          mode: 't1',
+          progress,
+          revision: frame.revision,
+          templateId,
+          timelineDiscontinuity: frame.timelineDiscontinuity === true,
+        });
         const animation = element.animate(
           [
             { '--ovl-segment-progress': `${progress}%` },
@@ -498,16 +588,35 @@ function renderCurrentLyrics(element, frame, options) {
           },
         );
         if (animation) ktvFallbackAnimations.set(element, animation);
+        ktvFallbackAnimationKeys.set(element, lineKey);
       }
+    } else {
+      clearKtvFallbackProgress(element);
     }
     return;
   }
 
   clearKtvFallbackProgress(element);
-  element.textContent = '';
+  const structureKey = `${lineKey}\0${segmentStructureKey(segments)}`;
+  let state = lyricsRenderStates.get(element);
+  if (state?.mode !== 'segments' || state.structureKey !== structureKey) {
+    clearLyricsRenderState(element, options);
+    setTextContent(element, '');
+    const nodes = segments.map((segment) => {
+      const segmentElement = documentApi.createElement('span');
+      segmentElement.className = 'lyrics-overlay__segment';
+      segmentElement.dataset.segmentId = segment.segmentId;
+      segmentElement.dataset.text = segment.text;
+      segmentElement.textContent = segment.text;
+      element.append(segmentElement);
+      return segmentElement;
+    });
+    state = { mode: 'segments', nodes, structureKey };
+    lyricsRenderStates.set(element, state);
+  }
   element.dataset.segmented = 'true';
-  for (const segment of segments) {
-    const segmentElement = documentApi.createElement('span');
+  for (const [index, segment] of segments.entries()) {
+    const segmentElement = state.nodes[index];
     const progress = Number.isFinite(segment.progress)
       ? progressPercentage(segment.progress)
       : segment.state === 'active'
@@ -520,28 +629,57 @@ function renderCurrentLyrics(element, frame, options) {
       Number.isFinite(segment.delayMs) && segment.delayMs > 0
         ? segment.delayMs
         : 0;
-    segmentElement.className = 'lyrics-overlay__segment';
-    segmentElement.dataset.segmentId = segment.segmentId;
     segmentElement.dataset.segmentState = segment.state;
-    segmentElement.dataset.text = segment.text;
-    segmentElement.textContent = segment.text;
-    segmentElement.style.setProperty('--ovl-segment-progress', `${progress}%`);
-    if (
+    const canAnimate =
       segment.state === 'active' &&
       Number.isFinite(segment.remainingMs) &&
       segment.remainingMs > 0 &&
-      options.reducedMotion !== true
-    ) {
+      options.reducedMotion !== true;
+    const animationKey = `${structureKey}\0${segment.segmentId ?? index}`;
+    const activeAnimation = segmentPaintAnimations.get(segmentElement);
+    const animationIsCurrent =
+      activeAnimation?.key === animationKey &&
+      frame.timelineDiscontinuity !== true;
+    if (canAnimate && animationIsCurrent) {
+      traceLyrics(options, 'sweep-reuse', {
+        lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+        mode: 't2',
+        progress,
+        revision: frame.revision,
+        segmentIndex: index,
+        templateId,
+      });
+      continue;
+    }
+
+    cancelSegmentPaintAnimation(segmentElement, options);
+    segmentElement.style.setProperty('--ovl-segment-progress', `${progress}%`);
+    if (canAnimate) {
+      traceLyrics(options, 'sweep-start', {
+        durationMs: Math.max(1, Math.ceil(segment.remainingMs)),
+        lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+        mode: 't2',
+        progress,
+        revision: frame.revision,
+        segmentIndex: index,
+        templateId,
+        timelineDiscontinuity: frame.timelineDiscontinuity === true,
+      });
       if (templateId === 'manga-frame' && typeof gsap?.to === 'function') {
-        gsap.to(segmentElement, {
+        const animation = gsap.to(segmentElement, {
           '--ovl-segment-progress': `${targetProgress}%`,
           delay: delayMs / 1000,
           duration: Math.max(0.001, segment.remainingMs / 1000),
           ease: 'none',
           overwrite: 'auto',
         });
+        segmentPaintAnimations.set(segmentElement, {
+          animation,
+          engine: 'gsap',
+          key: animationKey,
+        });
       } else if (typeof segmentElement.animate === 'function') {
-        segmentElement.animate(
+        const animation = segmentElement.animate(
           [
             { '--ovl-segment-progress': `${progress}%` },
             { '--ovl-segment-progress': `${targetProgress}%` },
@@ -553,9 +691,13 @@ function renderCurrentLyrics(element, frame, options) {
             fill: 'forwards',
           },
         );
+        segmentPaintAnimations.set(segmentElement, {
+          animation,
+          engine: 'waapi',
+          key: animationKey,
+        });
       }
     }
-    element.append(segmentElement);
   }
 }
 
@@ -613,15 +755,6 @@ function renderMangaLyrics(elements, frame, options) {
     return;
   }
 
-  const gsap = resolveGsap(options);
-  mangaPulseTimelines.get(elements.root)?.kill?.();
-  mangaPulseTimelines.delete(elements.root);
-  gsap?.killTweensOf?.(mangaPulseTargets.get(elements.root) ?? []);
-  mangaPulseTargets.delete(elements.root);
-  gsap?.killTweensOf?.(mangaSegmentTargets.get(elements.root) ?? []);
-  mangaSegmentTargets.delete(elements.root);
-  group.textContent = '';
-
   const segments = Array.isArray(frame.currentSegments)
     ? frame.currentSegments
     : [];
@@ -634,7 +767,6 @@ function renderMangaLyrics(elements, frame, options) {
     segments.length > 0 && presentation.transformed
       ? projectSegmentsToBubbles(bubbles, segments)
       : null;
-  const segmentTargets = [];
   const placements = bubbles.map((bubble, index) => ({
     ...mangaFramePlacementForBubble({
       bubbleCount: bubbles.length,
@@ -644,6 +776,26 @@ function renderMangaLyrics(elements, frame, options) {
     }),
     order: index + 1,
   }));
+  const renderKey = [
+    lyricLineKey(frame),
+    options.mangaFrameId ?? '',
+    bubbles.map((bubble) => `${bubble.kind}\0${bubble.text}`).join('\u0001'),
+    segmentStructureKey(segments),
+  ].join('\u0002');
+  const canReuseBubbles =
+    mangaRenderKeys.get(elements.root) === renderKey &&
+    group.children.length === bubbles.length;
+
+  if (!canReuseBubbles) {
+    const gsap = resolveGsap(options);
+    gsap?.killTweensOf?.(mangaSegmentTargets.get(elements.root) ?? []);
+    mangaSegmentTargets.delete(elements.root);
+    for (const bubble of Array.from(group.children ?? [])) {
+      const text = bubble.children?.[1];
+      if (text) clearLyricsRenderState(text, options);
+    }
+    setTextContent(group, '');
+  }
 
   group.dataset.mangaCount = String(bubbles.length);
   group.dataset.mangaLayout = placements
@@ -653,16 +805,21 @@ function renderMangaLyrics(elements, frame, options) {
   group.hidden = !frame.visible;
   elements.root.setAttribute('aria-label', frame.currentText);
   elements.current.hidden = true;
-  elements.current.textContent = '';
+  setTextContent(elements.current, '');
 
+  const segmentTargets = [];
   for (const [index, bubblePresentation] of bubbles.entries()) {
-    const { bubble, text } = createMangaBubble(
-      documentApi,
-      bubblePresentation,
-      bubbles.length,
-      placements[index],
-      options,
-    );
+    const existingBubble = canReuseBubbles ? group.children[index] : null;
+    const created = existingBubble
+      ? { bubble: existingBubble, text: existingBubble.children[1] }
+      : createMangaBubble(
+          documentApi,
+          bubblePresentation,
+          bubbles.length,
+          placements[index],
+          options,
+        );
+    const { bubble, text } = created;
     if (segments.length > 0) {
       renderCurrentLyrics(
         text,
@@ -677,24 +834,30 @@ function renderMangaLyrics(elements, frame, options) {
       );
       segmentTargets.push(...Array.from(text.children ?? []));
     } else {
-      text.textContent = bubblePresentation.text;
+      setTextContent(text, bubblePresentation.text);
     }
-    group.append(bubble);
+    if (!existingBubble) group.append(bubble);
   }
+  mangaRenderKeys.set(elements.root, renderKey);
   if (segmentTargets.length > 0) {
     mangaSegmentTargets.set(elements.root, segmentTargets);
+  } else {
+    mangaSegmentTargets.delete(elements.root);
   }
-  elements.current.textContent = frame.currentText;
+  setTextContent(elements.current, frame.currentText);
 }
 
 function clearMangaLyrics(elements) {
   if (elements.mangaBubbles) {
-    elements.mangaBubbles.textContent = '';
+    if (elements.mangaBubbles.textContent) {
+      setTextContent(elements.mangaBubbles, '');
+    }
     elements.mangaBubbles.hidden = true;
     delete elements.mangaBubbles.dataset.mangaCount;
     delete elements.mangaBubbles.dataset.mangaSide;
     delete elements.mangaBubbles.dataset.mangaLayout;
   }
+  mangaRenderKeys.delete(elements.root);
   elements.root.removeAttribute?.('aria-label');
   elements.current.hidden = false;
 }
@@ -736,7 +899,6 @@ function applyMusicStructurePresentation(elements, frame, options) {
     !music ||
     !['M1', 'M2'].includes(music.level)
   ) {
-    lastRenderedBeatKeys.delete(elements.root);
     return;
   }
 
@@ -747,70 +909,19 @@ function applyMusicStructurePresentation(elements, frame, options) {
   }
 
   const beat = music.currentBeat;
-  const beatKey =
-    confidentCue(beat) && Number.isFinite(beat.timeMs)
-      ? `${music.documentId}\0${beat.timeMs}`
-      : null;
-  const previousBeatKey = lastRenderedBeatKeys.get(elements.root) ?? null;
-  if (beatKey === null) {
-    lastRenderedBeatKeys.delete(elements.root);
-    return;
+  const confidentBeat =
+    confidentCue(beat) && Number.isFinite(beat.timeMs) ? beat : null;
+  if (confidentBeat?.downbeat === true) {
+    elements.root.dataset.musicDownbeat = 'true';
   }
-  lastRenderedBeatKeys.set(elements.root, beatKey);
-  if (beat.downbeat !== true) return;
-
-  elements.root.dataset.musicDownbeat = 'true';
-  const pulseTarget =
-    templateId === 'manga-frame'
-      ? Array.from(elements.mangaBubbles?.children ?? [])
-      : elements.current;
-  const hasPulseTarget = templateId !== 'manga-frame' || pulseTarget.length > 0;
-  if (
-    beatKey !== previousBeatKey &&
-    Number.isFinite(beat.elapsedMs) &&
-    beat.elapsedMs <= 250 &&
-    frame.visible &&
-    hasPulseTarget &&
-    options.reducedMotion !== true &&
-    (templateId === 'manga-frame' || typeof pulseTarget.animate === 'function')
-  ) {
-    const gsap = resolveGsap(options);
-    if (templateId === 'manga-frame' && typeof gsap?.timeline === 'function') {
-      mangaPulseTimelines.get(elements.root)?.kill?.();
-      const timeline = gsap.timeline({
-        defaults: { overwrite: 'auto' },
-        onComplete: () => {
-          if (mangaPulseTimelines.get(elements.root) === timeline) {
-            mangaPulseTimelines.delete(elements.root);
-            mangaPulseTargets.delete(elements.root);
-          }
-        },
-      });
-      mangaPulseTimelines.set(elements.root, timeline);
-      mangaPulseTargets.set(elements.root, pulseTarget);
-      timeline
-        .addLabel('accent')
-        .to(
-          pulseTarget,
-          { scale: 1.025, duration: 0.09, ease: 'power1.out' },
-          'accent',
-        )
-        .to(pulseTarget, {
-          scale: 1,
-          duration: 0.09,
-          ease: 'power1.inOut',
-        });
-    } else if (typeof pulseTarget.animate === 'function') {
-      pulseTarget.animate(
-        [
-          { filter: 'brightness(1)' },
-          { filter: 'brightness(1.12)' },
-          { filter: 'brightness(1)' },
-        ],
-        { duration: 180, easing: 'ease-out' },
-      );
-    }
-  }
+  traceLyrics(options, 'music-cue', {
+    downbeat: confidentBeat?.downbeat === true,
+    level: music.level,
+    motion: 'none',
+    revision: frame.revision,
+    section: elements.root.dataset.musicSection ?? null,
+    templateId,
+  });
 }
 
 function commitLyricsFrame(elements, frame, options, isMangaFrame) {
@@ -833,7 +944,7 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   applyKtvLanePresentation(elements, frame, options.templateId);
   applyKtvCountInPresentation(elements, frame, options.templateId);
   elements.current.dataset.currentText = frame.currentText;
-  elements.next.textContent = isMangaFrame ? '' : frame.nextText;
+  setTextContent(elements.next, isMangaFrame ? '' : frame.nextText);
   applyKtvLaneReplacementDelay(elements, frame, options);
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
@@ -962,16 +1073,11 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
 
 function stopMangaAnimations(elements, options = {}, clearProps = false) {
   const gsap = resolveGsap(options);
-  const pulseTargets = mangaPulseTargets.get(elements.root) ?? [];
   const bubbleTargets = mangaBubbleTargets(elements);
   const segmentTargets = mangaSegmentTargets.get(elements.root) ?? [];
   const currentChildTargets = Array.from(elements.current.children ?? []);
   mangaTransitions.get(elements.root)?.timeline?.kill?.();
   mangaTransitions.delete(elements.root);
-  mangaPulseTimelines.get(elements.root)?.kill?.();
-  mangaPulseTimelines.delete(elements.root);
-  if (pulseTargets.length > 0) gsap?.killTweensOf?.(pulseTargets);
-  mangaPulseTargets.delete(elements.root);
   gsap?.killTweensOf?.(elements.root);
   if (elements.mangaBubbles) gsap?.killTweensOf?.(elements.mangaBubbles);
   if (bubbleTargets.length > 0) gsap?.killTweensOf?.(bubbleTargets);
@@ -984,9 +1090,6 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
     gsap?.set?.(elements.root, {
       clearProps: 'opacity,visibility,scale',
     });
-    if (pulseTargets.length > 0) {
-      gsap?.set?.(pulseTargets, { clearProps: 'scale' });
-    }
     if (bubbleTargets.length > 0) {
       gsap?.set?.(bubbleTargets, { clearProps: 'opacity,visibility' });
     }
@@ -995,6 +1098,12 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 
 export function destroyLyricsAnimations(elements, options = {}) {
   stopMangaAnimations(elements, options, true);
+  clearLyricsRenderState(elements.current, options);
+  for (const bubble of Array.from(elements.mangaBubbles?.children ?? [])) {
+    const text = bubble.children?.[1];
+    if (text) clearLyricsRenderState(text, options);
+  }
+  mangaRenderKeys.delete(elements.root);
   clearKtvFallbackProgress(elements.current);
   clearKtvLanePresentation(elements.root);
   clearLiveStagePresentation(elements, options);
@@ -1007,6 +1116,17 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
   const previousText =
     elements.current.dataset.currentText ?? elements.current.textContent;
   const renderOptions = { ...options, templateId };
+  traceLyrics(renderOptions, 'frame', {
+    lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex ?? null,
+    lineProgress: Number.isFinite(frame.lineProgress)
+      ? progressPercentage(frame.lineProgress)
+      : null,
+    revision: frame.revision,
+    segmented: Array.isArray(frame.currentSegments),
+    templateId,
+    timelineDiscontinuity: frame.timelineDiscontinuity === true,
+    visible: frame.visible === true,
+  });
   const isMangaFrame = templateId === 'manga-frame';
   const isLiveStage = templateId === 'live-stage';
 
@@ -1166,6 +1286,7 @@ function boot() {
   );
   const previewMode = isPreviewMode(window.location);
   const workbenchMode = isWorkbenchMode(window.location);
+  const trace = createLyricsDiagnostics({ location: window.location });
   applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, {
     previewMode,
@@ -1176,6 +1297,7 @@ function boot() {
     renderLyricsFrame(elements, PREVIEW_FRAME, {
       gsap,
       reducedMotion: true,
+      trace,
     });
   }
   frameScheduler = createLyricsFrameScheduler({
@@ -1185,7 +1307,11 @@ function boot() {
         PREVIEW_FRAME,
         previewMode,
       );
-      renderLyricsFrame(elements, visibleFrame, { gsap, reducedMotion });
+      renderLyricsFrame(elements, visibleFrame, {
+        gsap,
+        reducedMotion,
+        trace,
+      });
     },
   });
   const connection = createOverlayConnection({

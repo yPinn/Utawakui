@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  createLyricsDiagnostics,
   createLyricsFrameScheduler,
   destroyLyricsAnimations,
   renderLyricsFrame,
@@ -40,6 +41,7 @@ function gsapHarness() {
 
 function element(ownerDocument = null) {
   let ownText = '';
+  let textContentWriteCount = 0;
   const value = {
     ownerDocument,
     children: [],
@@ -77,8 +79,14 @@ function element(ownerDocument = null) {
       return ownText + this.children.map((child) => child.textContent).join('');
     },
     set(nextValue) {
+      textContentWriteCount += 1;
       ownText = String(nextValue);
       this.children = [];
+    },
+  });
+  Object.defineProperty(value, 'textContentWriteCount', {
+    get() {
+      return textContentWriteCount;
     },
   });
   Object.defineProperty(value, 'innerHTML', {
@@ -114,6 +122,37 @@ function domElements() {
 }
 
 describe('lyrics overlay renderer', () => {
+  it('emits bounded sweep diagnostics only when lyricsDebug is explicitly enabled', () => {
+    const consoleApi = { debug: vi.fn() };
+    const disabled = createLyricsDiagnostics({
+      consoleApi,
+      location: { search: '?workbench=1' },
+    });
+    const enabled = createLyricsDiagnostics({
+      consoleApi,
+      location: { search: '?workbench=1&lyricsDebug=1' },
+    });
+
+    expect(disabled).toBeNull();
+    expect(enabled).toEqual(expect.any(Function));
+    enabled('sweep-start', {
+      lineIndex: 3,
+      mode: 't1',
+      progress: 25,
+      templateId: 'karaoke-stack',
+    });
+    expect(consoleApi.debug).toHaveBeenCalledWith(
+      '[Utawakui lyrics]',
+      'sweep-start',
+      {
+        lineIndex: 3,
+        mode: 't1',
+        progress: 25,
+        templateId: 'karaoke-stack',
+      },
+    );
+  });
+
   it('shows a four-beat Classic KTV cue without exposing it to other templates', () => {
     const elements = domElements();
     const frame = {
@@ -212,6 +251,285 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('下一句');
     expect(elements.root.hidden).toBe(false);
     expect(elements.root.lang).toBe('zh-Hant');
+  });
+
+  it('keeps a Classic KTV T1 line mounted and does not restart its sweep on clock-only updates', () => {
+    const elements = domElements();
+    const animation = { cancel: vi.fn() };
+    elements.current.animate.mockReturnValue(animation);
+    const baseFrame = {
+      revision: 1,
+      visible: true,
+      currentText: '同一句保持穩定',
+      currentVisibleLineIndex: 0,
+      nextText: '下一句',
+      nextVisibleLineIndex: 1,
+      lineIndex: 0,
+      lineProgress: 0.2,
+      lineRemainingMs: 4000,
+    };
+
+    renderLyricsFrame(elements, baseFrame, { templateId: 'karaoke-stack' });
+    const currentWrites = elements.current.textContentWriteCount;
+    const nextWrites = elements.next.textContentWriteCount;
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...baseFrame,
+        revision: 2,
+        lineProgress: 0.35,
+        lineRemainingMs: 3000,
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.current.textContentWriteCount).toBe(currentWrites);
+    expect(elements.next.textContentWriteCount).toBe(nextWrites);
+    expect(elements.current.animate).toHaveBeenCalledOnce();
+    expect(animation.cancel).not.toHaveBeenCalled();
+  });
+
+  it('traces one Classic KTV sweep start followed by reuse without logging lyric text', () => {
+    const elements = domElements();
+    const trace = vi.fn();
+    elements.current.animate.mockReturnValue({ cancel: vi.fn() });
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '不可寫入診斷的歌詞',
+      currentVisibleLineIndex: 2,
+      nextText: '',
+      lineIndex: 2,
+      lineProgress: 0.2,
+      lineRemainingMs: 4000,
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'karaoke-stack',
+      trace,
+    });
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 2, lineProgress: 0.4, lineRemainingMs: 3000 },
+      { templateId: 'karaoke-stack', trace },
+    );
+
+    expect(trace).toHaveBeenCalledWith(
+      'sweep-start',
+      expect.objectContaining({ lineIndex: 2, mode: 't1', revision: 1 }),
+    );
+    expect(trace).toHaveBeenCalledWith(
+      'sweep-reuse',
+      expect.objectContaining({ lineIndex: 2, mode: 't1', revision: 2 }),
+    );
+    expect(JSON.stringify(trace.mock.calls)).not.toContain(
+      '不可寫入診斷的歌詞',
+    );
+  });
+
+  it('resynchronizes a mounted Classic KTV line only when playback pauses, resumes, or seeks', () => {
+    const elements = domElements();
+    const firstAnimation = { cancel: vi.fn() };
+    const resumedAnimation = { cancel: vi.fn() };
+    const seekAnimation = { cancel: vi.fn() };
+    elements.current.animate
+      .mockReturnValueOnce(firstAnimation)
+      .mockReturnValueOnce(resumedAnimation)
+      .mockReturnValueOnce(seekAnimation);
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '暫停與 seek 不換字',
+      currentVisibleLineIndex: 0,
+      nextText: '',
+      lineIndex: 0,
+      lineProgress: 0.2,
+      lineRemainingMs: 4000,
+    };
+
+    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+    const textWrites = elements.current.textContentWriteCount;
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 2, lineProgress: 0.4, lineRemainingMs: null },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(firstAnimation.cancel).toHaveBeenCalledOnce();
+    expect(elements.current.style.values['--ovl-segment-progress']).toBe('40%');
+    expect(elements.current.textContentWriteCount).toBe(textWrites);
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 3, lineProgress: 0.4, lineRemainingMs: 3000 },
+      { templateId: 'karaoke-stack' },
+    );
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        revision: 4,
+        lineProgress: 0.7,
+        lineRemainingMs: 1500,
+        timelineDiscontinuity: true,
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(resumedAnimation.cancel).toHaveBeenCalledOnce();
+    expect(elements.current.animate).toHaveBeenCalledTimes(3);
+    expect(elements.current.textContentWriteCount).toBe(textWrites);
+  });
+
+  it('keeps generic caption text mounted on clock-only updates', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '普通字幕也不重建',
+      nextText: '下一句',
+      language: 'zh-Hant',
+      lineIndex: 0,
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'quiet-caption',
+      reducedMotion: true,
+    });
+    const currentWrites = elements.current.textContentWriteCount;
+    const nextWrites = elements.next.textContentWriteCount;
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 2 },
+      { templateId: 'quiet-caption', reducedMotion: true },
+    );
+
+    expect(elements.current.textContentWriteCount).toBe(currentWrites);
+    expect(elements.next.textContentWriteCount).toBe(nextWrites);
+  });
+
+  it('reuses T2 segment nodes and active sweep animations on clock-only updates', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '逐字保持穩定',
+      nextText: '',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      currentSegments: [
+        {
+          segmentId: 'segment-1',
+          text: '逐字',
+          state: 'active',
+          progress: 0.2,
+          remainingMs: 800,
+        },
+        {
+          segmentId: 'segment-2',
+          text: '保持穩定',
+          state: 'upcoming',
+          progress: 0,
+        },
+      ],
+    };
+
+    renderLyricsFrame(elements, frame, { templateId: 'karaoke-stack' });
+    const segmentNodes = [...elements.current.children];
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        revision: 2,
+        currentSegments: [
+          { ...frame.currentSegments[0], progress: 0.4, remainingMs: 600 },
+          frame.currentSegments[1],
+        ],
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.current.children).toEqual(segmentNodes);
+    expect(segmentNodes[0].animate).toHaveBeenCalledOnce();
+  });
+
+  it('keeps Live Stage caption line nodes mounted on clock-only updates', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '第一行\n第二行',
+      nextText: '',
+      language: 'zh-Hant',
+      lineIndex: 0,
+      liveStage: {
+        active: true,
+        cardVisible: false,
+        trackId: 'track-1',
+        title: 'Song',
+        artist: 'Singer',
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'live-stage',
+      reducedMotion: true,
+    });
+    const captionLines = [...elements.current.children];
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 2, lineProgress: 0.25 },
+      { templateId: 'live-stage', reducedMotion: true },
+    );
+
+    expect(elements.current.children).toEqual(captionLines);
+  });
+
+  it('keeps Manga Frame bubbles and segment nodes mounted on clock-only updates', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '漫画保持穩定',
+      nextText: '',
+      language: 'zh-Hant',
+      lineIndex: 0,
+      currentSegments: [
+        {
+          segmentId: 'segment-1',
+          text: '漫画保持穩定',
+          state: 'active',
+          progress: 0.2,
+          remainingMs: 800,
+        },
+      ],
+    };
+
+    renderLyricsFrame(elements, frame, { gsap, templateId: 'manga-frame' });
+    timelines[0].options.onComplete();
+    const bubble = elements.mangaBubbles.children[0];
+    const segment = bubble.children[1].children[0];
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        revision: 2,
+        currentSegments: [
+          { ...frame.currentSegments[0], progress: 0.4, remainingMs: 600 },
+        ],
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(elements.mangaBubbles.children[0]).toBe(bubble);
+    expect(bubble.children[1].children[0]).toBe(segment);
+    expect(gsap.to).toHaveBeenCalledOnce();
   });
 
   it('keeps Classic KTV A and B as fixed lanes while the active lyric alternates in place', () => {
@@ -2070,7 +2388,7 @@ describe('lyrics overlay renderer', () => {
     scheduler.stop();
   });
 
-  it('applies confident music cues to bounded segment-aware templates and pulses a new downbeat', () => {
+  it('applies confident music cues without flashing or moving the active lyric text', () => {
     const frame = {
       revision: 7,
       visible: true,
@@ -2106,14 +2424,7 @@ describe('lyrics overlay renderer', () => {
       musicSection: 'chorus',
       musicDownbeat: 'true',
     });
-    expect(karaokeElements.current.animate).toHaveBeenCalledWith(
-      [
-        { filter: 'brightness(1)' },
-        { filter: 'brightness(1.12)' },
-        { filter: 'brightness(1)' },
-      ],
-      { duration: 180, easing: 'ease-out' },
-    );
+    expect(karaokeElements.current.animate).not.toHaveBeenCalled();
 
     const mangaElements = domElements();
     const { gsap, timelines } = gsapHarness();
@@ -2128,6 +2439,7 @@ describe('lyrics overlay renderer', () => {
       musicDownbeat: 'true',
     });
     expect(timelines).toHaveLength(0);
+    expect(gsap.to).not.toHaveBeenCalled();
 
     renderLyricsFrame(
       mangaElements,
@@ -2145,19 +2457,8 @@ describe('lyrics overlay renderer', () => {
       },
       { gsap, templateId: 'manga-frame' },
     );
-    expect(timelines).toHaveLength(1);
-    expect(timelines[0].labels).toEqual(['accent']);
-    expect(
-      timelines[0].tweens.every(
-        (entry) =>
-          Array.isArray(entry.target) &&
-          entry.target.length === 1 &&
-          entry.target[0] === mangaElements.mangaBubbles.children[0],
-      ),
-    ).toBe(true);
-    expect(timelines[0].tweens.map((entry) => entry.vars.scale)).toEqual([
-      1.025, 1,
-    ]);
+    expect(timelines).toHaveLength(0);
+    expect(gsap.to).not.toHaveBeenCalled();
   });
 
   it('keeps low-confidence, unknown, reduced-motion, and other templates static', () => {

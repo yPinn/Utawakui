@@ -32,7 +32,7 @@ describe('ObsOverlayPreview', () => {
 
     expect(html).toContain('data-backdrop="checker"');
     expect(html).toMatch(
-      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;backdrop=checker&amp;reload=\d+"/,
+      /src="http:\/\/127\.0\.0\.1:8700\/overlay\/lyrics\?workbench=1&amp;lyricsDebug=1&amp;backdrop=checker&amp;reload=\d+"/,
     );
     expect(html).not.toContain('obs-streamer-preview');
     expect(html.match(/<iframe/g)).toHaveLength(1);

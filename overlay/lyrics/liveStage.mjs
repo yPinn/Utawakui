@@ -6,9 +6,15 @@ import {
 const CARD_ENTER_DURATION_SECONDS = 0.22;
 const CARD_EXIT_DURATION_SECONDS = 0.18;
 const cardTransitions = new WeakMap();
+const captionRenderKeys = new WeakMap();
 
 function resolveGsap(options) {
   return options.gsap ?? globalThis.gsap ?? null;
+}
+
+function setTextContent(element, value) {
+  const text = String(value ?? '');
+  if (element.textContent !== text) element.textContent = text;
 }
 
 function clearCardTransition(elements, options = {}, clearProps = false) {
@@ -27,14 +33,15 @@ function clearCardTransition(elements, options = {}, clearProps = false) {
 
 export function clearLiveStagePresentation(elements, options = {}) {
   clearCardTransition(elements, options, true);
+  captionRenderKeys.delete(elements.current);
   if (elements.liveStageChrome) elements.liveStageChrome.hidden = true;
   if (elements.liveStageCard) {
     elements.liveStageCard.hidden = true;
     delete elements.liveStageCard.dataset.liveStageVisible;
   }
-  if (elements.liveStageTitle) elements.liveStageTitle.textContent = '';
+  if (elements.liveStageTitle) setTextContent(elements.liveStageTitle, '');
   if (elements.liveStageArtist) {
-    elements.liveStageArtist.textContent = '';
+    setTextContent(elements.liveStageArtist, '');
     elements.liveStageArtist.hidden = true;
   }
   elements.current.hidden = false;
@@ -57,10 +64,10 @@ function renderCard(elements, stage, options) {
   card.dataset.liveStageVisible = String(visible);
 
   if (elements.liveStageTitle) {
-    elements.liveStageTitle.textContent = stage?.title ?? '';
+    setTextContent(elements.liveStageTitle, stage?.title);
   }
   if (elements.liveStageArtist) {
-    elements.liveStageArtist.textContent = stage?.artist ?? '';
+    setTextContent(elements.liveStageArtist, stage?.artist);
     elements.liveStageArtist.hidden = !stage?.artist;
   }
 
@@ -119,18 +126,26 @@ function renderCaption(elements, frame) {
   );
   const documentApi =
     elements.current.ownerDocument ?? elements.root.ownerDocument;
-  elements.current.textContent = '';
   delete elements.current.dataset.segmented;
+  const renderKey = presentation.lines.join('\0');
 
   if (documentApi?.createElement) {
-    for (const line of presentation.lines) {
-      const lineElement = documentApi.createElement('span');
-      lineElement.className = 'lyrics-overlay__live-stage-caption-line';
-      lineElement.textContent = line;
-      elements.current.append(lineElement);
+    const canReuse =
+      captionRenderKeys.get(elements.current) === renderKey &&
+      elements.current.children.length === presentation.lines.length;
+    if (!canReuse) {
+      setTextContent(elements.current, '');
+      for (const line of presentation.lines) {
+        const lineElement = documentApi.createElement('span');
+        lineElement.className = 'lyrics-overlay__live-stage-caption-line';
+        lineElement.textContent = line;
+        elements.current.append(lineElement);
+      }
+      captionRenderKeys.set(elements.current, renderKey);
     }
   } else {
-    elements.current.textContent = presentation.lines.join('\n');
+    setTextContent(elements.current, presentation.lines.join('\n'));
+    captionRenderKeys.set(elements.current, renderKey);
   }
 
   elements.root.dataset.liveStageCaptionLines = String(
@@ -138,7 +153,7 @@ function renderCaption(elements, frame) {
   );
   elements.current.dataset.currentText = frame.currentText;
   elements.current.hidden = presentation.lines.length === 0;
-  elements.next.textContent = '';
+  setTextContent(elements.next, '');
   elements.next.hidden = true;
   return presentation;
 }
