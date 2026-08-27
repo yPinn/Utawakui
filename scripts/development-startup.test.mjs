@@ -6,6 +6,14 @@ const appSource = readFileSync(
   new URL('../src/App.vue', import.meta.url),
   'utf8',
 );
+const mainSource = readFileSync(
+  new URL('../electron/main.js', import.meta.url),
+  'utf8',
+);
+const windowStateSource = readFileSync(
+  new URL('../electron/main/windowState.js', import.meta.url),
+  'utf8',
+);
 const packageJson = JSON.parse(
   readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
 );
@@ -17,6 +25,7 @@ const PUBLIC_INACTIVE_VIEWS = [
   'SettingsView',
 ];
 const INTERNAL_VIEWS = [
+  ['lyrics-provider-review', 'LyricsProviderReviewView'],
   ['demo', 'DemoView'],
   ['music-analysis', 'MusicAnalysisView'],
 ];
@@ -75,6 +84,18 @@ describe('development startup contract', () => {
     expect(packageJson.scripts.dev).not.toContain('--devtools');
     expect(packageJson.scripts['dev:tools']).toContain(
       'electron . --dev --devtools',
+    );
+  });
+
+  it('keeps the lyrics-provider review bridge and IPC registration dev-only', () => {
+    expect(windowStateSource).toContain(
+      "isDev ? ['--internal-workbenches-enabled=1'] : []",
+    );
+    expect(mainSource).toMatch(
+      /if \(windowState\.isDev\) \{[\s\S]*?require\('\.\/lib\/lyricsProviderCorpusReview'\)[\s\S]*?registerLyricsProviderCorpusReviewHandlers/u,
+    );
+    expect(mainSource).toMatch(
+      /registerLyricsProviderCorpusReviewHandlers\(\{[\s\S]*?writeClipboardText:[\s\S]*?clipboard\.writeText[\s\S]*?openExternal:[\s\S]*?shell\.openExternal/u,
     );
   });
 });

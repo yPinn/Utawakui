@@ -28,6 +28,9 @@ function readInitialCaptureDeviceId() {
 }
 
 const startupTraceEnabled = process.argv.includes('--startup-trace-enabled=1');
+const internalWorkbenchesEnabled = process.argv.includes(
+  '--internal-workbenches-enabled=1',
+);
 
 contextBridge.exposeInMainWorld('Utawakui', {
   startupTraceEnabled,
@@ -36,6 +39,18 @@ contextBridge.exposeInMainWorld('Utawakui', {
       ipcRenderer.send('startup-trace:milestone', milestone);
     }
   },
+  ...(internalWorkbenchesEnabled
+    ? {
+        loadLyricsProviderReview: () =>
+          ipcRenderer.invoke('lyrics-provider-review:load'),
+        saveLyricsProviderReviewDecision: (intent) =>
+          ipcRenderer.invoke('lyrics-provider-review:save-decision', intent),
+        exportLyricsProviderReviewCorpus: () =>
+          ipcRenderer.invoke('lyrics-provider-review:export'),
+        runLyricsProviderReviewLookupAction: (intent) =>
+          ipcRenderer.invoke('lyrics-provider-review:lookup-action', intent),
+      }
+    : {}),
   recordDiagnostic: (event) =>
     ipcRenderer.invoke('diagnostics:record-renderer', event),
   listRecentDiagnostics: (limit) =>

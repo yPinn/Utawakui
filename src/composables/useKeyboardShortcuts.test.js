@@ -75,10 +75,18 @@ describe('useKeyboardShortcuts', () => {
     expect(f4PreventDefault).toHaveBeenCalled();
   });
 
-  it('maps F9/F10 to the hidden UI and Music Analysis workbenches', async () => {
+  it('maps F8/F9/F10 to the hidden review, UI, and Music Analysis workbenches', async () => {
     const activeView = await setupShortcuts({
-      internalWorkbenchesEnabled: true,
+      internalViewShortcuts: {
+        f8: 'lyrics-provider-review',
+        f9: 'demo',
+        f10: 'music-analysis',
+      },
     });
+
+    const f8PreventDefault = dispatchKey('F8');
+    expect(activeView.value).toBe('lyrics-provider-review');
+    expect(f8PreventDefault).toHaveBeenCalled();
 
     const f9PreventDefault = dispatchKey('F9');
     expect(activeView.value).toBe('demo');
@@ -89,10 +97,14 @@ describe('useKeyboardShortcuts', () => {
     expect(f10PreventDefault).toHaveBeenCalled();
   });
 
-  it('leaves F9/F10 unused when internal workbenches are disabled', async () => {
+  it('leaves F8/F9/F10 unused when internal workbenches are disabled', async () => {
     const activeView = await setupShortcuts({
-      internalWorkbenchesEnabled: false,
+      internalViewShortcuts: {},
     });
+
+    const f8PreventDefault = dispatchKey('F8');
+    expect(activeView.value).toBe('setlist');
+    expect(f8PreventDefault).not.toHaveBeenCalled();
 
     const f9PreventDefault = dispatchKey('F9');
     expect(activeView.value).toBe('setlist');

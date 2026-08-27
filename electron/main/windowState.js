@@ -192,6 +192,7 @@ function createMainWindow(
         `--sidebar-width=${initialSidebarWidth}`,
         `--capture-device-id=${initialCaptureDeviceId ?? ''}`,
         ...(options.startupTraceEnabled ? ['--startup-trace-enabled=1'] : []),
+        ...(isDev ? ['--internal-workbenches-enabled=1'] : []),
       ],
     },
   });

@@ -29,17 +29,9 @@ const VIEW_SHORTCUTS = {
   f5: 'settings',
 };
 
-// Internal workbenches have no visible tabs and must remain unavailable in
-// production. App.vue passes the same Vite development flag used to exclude
-// their view modules from production builds.
-const INTERNAL_VIEW_SHORTCUTS = {
-  f9: 'demo',
-  f10: 'music-analysis',
-};
-
 export function useKeyboardShortcuts(
   activeView,
-  { internalWorkbenchesEnabled = import.meta.env.DEV } = {},
+  { internalViewShortcuts = {} } = {},
 ) {
   const {
     state,
@@ -93,9 +85,7 @@ export function useKeyboardShortcuts(
     // box) — F-keys don't insert characters, and this is a global app-level
     // shortcut a performer needs mid-stream regardless of focus. Every
     // other shortcut below stays gated behind isEditableTarget.
-    const shortcutView =
-      VIEW_SHORTCUTS[key] ??
-      (internalWorkbenchesEnabled ? INTERNAL_VIEW_SHORTCUTS[key] : undefined);
+    const shortcutView = VIEW_SHORTCUTS[key] ?? internalViewShortcuts[key];
     if (shortcutView) {
       event.preventDefault();
       if (activeView) activeView.value = shortcutView;

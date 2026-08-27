@@ -35,10 +35,20 @@ const SettingsView = defineAsyncComponent(
 const internalWorkbenchesEnabled = import.meta.env.DEV;
 const internalViews = internalWorkbenchesEnabled
   ? {
+      'lyrics-provider-review': defineAsyncComponent(
+        () => import('./views/LyricsProviderReviewView.vue'),
+      ),
       demo: defineAsyncComponent(() => import('./views/DemoView.vue')),
       'music-analysis': defineAsyncComponent(
         () => import('./views/MusicAnalysisView.vue'),
       ),
+    }
+  : {};
+const internalViewShortcuts = internalWorkbenchesEnabled
+  ? {
+      f8: 'lyrics-provider-review',
+      f9: 'demo',
+      f10: 'music-analysis',
     }
   : {};
 
@@ -77,7 +87,7 @@ const views = {
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const { activeView } = useAppView();
 // Pass the ref so global shortcuts can read and update the active view.
-useKeyboardShortcuts(activeView, { internalWorkbenchesEnabled });
+useKeyboardShortcuts(activeView, { internalViewShortcuts });
 </script>
 
 <template>

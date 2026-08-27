@@ -212,11 +212,63 @@ describe('main preload bridge', () => {
       MAIN_EVENT_CHANNELS,
     );
     expect(bridge).not.toHaveProperty('ipcRenderer');
+    expect(bridge).not.toHaveProperty('loadLyricsProviderReview');
+    expect(bridge).not.toHaveProperty('saveLyricsProviderReviewDecision');
+    expect(bridge).not.toHaveProperty('exportLyricsProviderReviewCorpus');
+    expect(bridge).not.toHaveProperty('runLyricsProviderReviewLookupAction');
 
     for (const cleanup of cleanups) cleanup();
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledTimes(
       MAIN_EVENT_CHANNELS.length,
     );
+  });
+
+  it('adds only the fixed lyrics review intents for the internal development preload', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui', [
+      '--internal-workbenches-enabled=1',
+    ]);
+
+    expect(bridge.loadLyricsProviderReview).toEqual(expect.any(Function));
+    expect(bridge.saveLyricsProviderReviewDecision).toEqual(
+      expect.any(Function),
+    );
+    expect(bridge.exportLyricsProviderReviewCorpus).toEqual(
+      expect.any(Function),
+    );
+    expect(bridge.runLyricsProviderReviewLookupAction).toEqual(
+      expect.any(Function),
+    );
+
+    await bridge.loadLyricsProviderReview('E:\\untrusted\\candidates.json');
+    await bridge.saveLyricsProviderReviewDecision(
+      { candidateId: 'candidate-0000000000000001', decision: 'approved' },
+      'E:\\untrusted\\reviews.json',
+    );
+    await bridge.exportLyricsProviderReviewCorpus('E:\\untrusted\\corpus.json');
+    await bridge.runLyricsProviderReviewLookupAction(
+      {
+        candidateId: 'candidate-0000000000000001',
+        action: 'copy-recording-mbid',
+      },
+      'arbitrary text',
+      'https://untrusted.example',
+    );
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['lyrics-provider-review:load'],
+      [
+        'lyrics-provider-review:save-decision',
+        { candidateId: 'candidate-0000000000000001', decision: 'approved' },
+      ],
+      ['lyrics-provider-review:export'],
+      [
+        'lyrics-provider-review:lookup-action',
+        {
+          candidateId: 'candidate-0000000000000001',
+          action: 'copy-recording-mbid',
+        },
+      ],
+    ]);
   });
 
   it('shapes bounded intents and strips the private event object', async () => {

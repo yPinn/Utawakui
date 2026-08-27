@@ -580,6 +580,25 @@ if (!gotSingleInstanceLock) {
       recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
+    if (windowState.isDev) {
+      const {
+        createLyricsProviderCorpusReviewService,
+      } = require('./lib/lyricsProviderCorpusReview');
+      const {
+        registerLyricsProviderCorpusReviewHandlers,
+      } = require('./main/lyricsProviderCorpusReviewHandlers');
+      registerLyricsProviderCorpusReviewHandlers({
+        ipcMain,
+        enabled: true,
+        recordDiagnostic: (event) => diagnosticsService.record(event),
+        writeClipboardText: (value) => clipboard.writeText(value),
+        openExternal: (url) => shell.openExternal(url),
+        service: createLyricsProviderCorpusReviewService({
+          workspaceRoot: app.getAppPath(),
+        }),
+      });
+    }
+
     windowState.registerPlayerStateHandler(ipcMain);
 
     nativeTheme.on('updated', windowState.updateThumbar);
