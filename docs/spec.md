@@ -53,21 +53,21 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ## 3. 目前功能現況
 
-| 領域              | 現況                 | 邊界與剩餘工作                                                                                                                                             |
-| ----------------- | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Desktop shell     | 已實作               | Electron、Vite、Vue、secure preload、single instance 與 production `loadFile` 路徑已建立。                                                                 |
-| Local library     | 已實作               | Structured track folders、metadata index、local import、legacy migration 與 media protocol 已建立。                                                        |
-| Playback／queue   | 已實作               | Audio element 是 timing 權威；queue、pitch／tempo preview、Windows shell controls 已連線。                                                                 |
-| Playlists／albums | 已實作               | Collections 可排序；來源型 album 維持 read-only membership。                                                                                               |
-| Lyrics            | 主路徑已實作         | T0／T1／T2、provider acquisition、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；持續做人工視覺驗收與操作 polish。                            |
-| Audio processing  | 基礎產品能力已實作   | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle 與 guide vocal 可用；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。      |
-| Provider assist   | 核心路徑已實作       | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、candidate/import/backfill 已連線，只能作為 gated advanced flow。                             |
-| OBS output        | MVP 已實作           | Loopback HTTP/WebSocket、四個固定 slot、Gallery、Workbench、URL copy、content/state split 與 source convergence 已建立。                                   |
-| Feature gates     | 已實作               | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                     |
-| Diagnostics       | 基礎與主要邊界已實作 | Main-owned persistence/redaction、renderer capture、Settings 控制與 dependency IPC boundary 已建立；其他 domain wrappers 與 explicit export 持續增量導入。 |
-| Distribution      | 已實作基礎           | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                        |
-| Session／VOD mode | 規劃中               | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                           |
-| External adapters | 規劃中               | 目前只有 Browser Source；OBS WebSocket、VTube Studio 等 adapter 尚未成為產品能力。                                                                         |
+| 領域              | 現況                 | 邊界與剩餘工作                                                                                                                                                          |
+| ----------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Desktop shell     | 已實作               | Electron、Vite、Vue、secure preload、single instance 與 production `loadFile` 路徑已建立。                                                                              |
+| Local library     | 已實作               | Structured track folders、metadata index、local import、legacy migration 與 media protocol 已建立。                                                                     |
+| Playback／queue   | 已實作               | Audio element 是 timing 權威；queue、pitch／tempo preview、Windows shell controls 已連線。                                                                              |
+| Playlists／albums | 已實作               | Collections 可排序；來源型 album 維持 read-only membership。                                                                                                            |
+| Lyrics            | 主路徑已實作         | T0／T1／T2、provider acquisition、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；持續做人工視覺驗收與操作 polish。                                         |
+| Audio processing  | 基礎產品能力已實作   | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。 |
+| Provider assist   | 核心路徑已實作       | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、candidate/import/backfill 已連線，只能作為 gated advanced flow。                                          |
+| OBS output        | MVP 已實作           | Loopback HTTP/WebSocket、四個固定 slot、Gallery、Workbench、URL copy、content/state split 與 source convergence 已建立。                                                |
+| Feature gates     | 已實作               | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                  |
+| Diagnostics       | 基礎與主要邊界已實作 | Main-owned persistence/redaction、renderer capture、Settings 控制與 dependency IPC boundary 已建立；其他 domain wrappers 與 explicit export 持續增量導入。              |
+| Distribution      | 已實作基礎           | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                     |
+| Session／VOD mode | 規劃中               | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                        |
+| External adapters | 規劃中               | 目前只有 Browser Source；OBS WebSocket、VTube Studio 等 adapter 尚未成為產品能力。                                                                                      |
 
 ## 4. 產品與資料邊界
 
@@ -113,8 +113,10 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
   guide vocal L/R。
 - FFmpeg 與每個 active model 是可獨立準備、修復與移除的最小單位。
 - Provider Python 與 Audio Python 是不同 runtime family，不共用 activation 或 lifecycle。
-- Refined 與 Music Analysis 只有在 dependency、授權、離線、安全與品質 gate 通過後
-  才能成為可執行產品能力。
+- Music Analysis 需要 `audio-processing-flow` 授權與已準備的 BPM 分析元件；Settings
+  預設開啟「匯入後自動分析」，成功下載或本地匯入不等待分析，失敗也不回滾歌曲。
+- Refined 只有在 dependency、授權、離線、安全與品質 gate 通過後才能成為可執行
+  產品能力。
 
 ### 4.4 Output
 
@@ -129,12 +131,12 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ## 5. Feature Gates 與依賴
 
-| Gate                    | 保護的產品動作                      | 依賴原則                                                    |
-| ----------------------- | ----------------------------------- | ----------------------------------------------------------- |
-| `provider-flow`         | 外部候選、下載、來源匯入與 backfill | Provider runtime 四個 artifact 原子準備；不得阻擋本機匯入。 |
-| `lyrics-flow`           | 外部歌詞查詢與保存                  | 每次 external request 都在 main 再檢查；不需要安裝 binary。 |
-| `audio-processing-flow` | Separation 與未來 pre-render        | FFmpeg 與 active model 各自管理；缺一項只影響該能力。       |
-| `public-output-flow`    | 啟動 Output server 與發布狀態       | 內建 Overlay 不需外部 binary；stop／status 永遠可用於復原。 |
+| Gate                    | 保護的產品動作                            | 依賴原則                                                    |
+| ----------------------- | ----------------------------------------- | ----------------------------------------------------------- |
+| `provider-flow`         | 外部候選、下載、來源匯入與 backfill       | Provider runtime 四個 artifact 原子準備；不得阻擋本機匯入。 |
+| `lyrics-flow`           | 外部歌詞查詢與保存                        | 每次 external request 都在 main 再檢查；不需要安裝 binary。 |
+| `audio-processing-flow` | Separation、本機音樂分析與未來 pre-render | FFmpeg 與 active model 各自管理；缺一項只影響該能力。       |
+| `public-output-flow`    | 啟動 Output server 與發布狀態             | 內建 Overlay 不需外部 binary；stop／status 永遠可用於復原。 |
 
 Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 enabled 狀態。
 它不保存素材權利判斷，也不能成為 main trust boundary 的替代品。
@@ -158,8 +160,8 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
 
 ### 6.3 後期：經驗證後的擴充
 
-- 通過 license、offline、wheel、容量與固定歌曲品質驗證後，才啟用 Music Analysis
-  或 Refined runtime。
+- Music Analysis 持續補強 offline、容量、失敗復原與人工驗收證據；Refined runtime
+  仍須通過 license、offline、wheel、容量與固定歌曲品質驗證後才可啟用。
 - 只有明確 workflow 需求成立後，才加入 OBS WebSocket、VTube Studio、Stream Deck
   或 native transport adapters。
 - Provider 模組與官方 metadata integrations 保持 optional，不改變 local-first 入口。
@@ -169,5 +171,5 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
 1. Recording／VOD gate 應每次 session 確認，或保存可見但可重用的 session preset？
 2. Preset 匯入遇到缺曲時，採提示、略過或 track remapping？
 3. Official Presentation Pack 與 User Variant 的版本、簽章與分享邊界如何落地？
-4. Music Analysis／Refined 的固定品質與容量門檻達到多少才可進產品 catalog？
+4. Refined 的固定品質與容量門檻達到多少才可進產品 catalog？
 5. 哪一個外部 adapter 有足夠真實需求，值得新增 credential 與 command trust boundary？

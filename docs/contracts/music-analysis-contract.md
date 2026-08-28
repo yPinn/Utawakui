@@ -15,15 +15,20 @@ worker-level network/cache policy. Beat This! 1.1.0 `small0` and `final0` both
 satisfy the M1 transport contract; `small0` is the provisional product-default
 candidate because its checkpoint, memory, and installation cost are lower. This
 is not an accuracy claim: labeled beat/downbeat fixtures and OS-level network
-denial remain unproven. The internal F10 workbench now provides state-driven
-download/install, progress, repair, removal, and activation for the fixed
-`small0` choice; model selection is intentionally unavailable. It also exposes a
-main-owned sequential batch queue: renderer input is limited to at most 500
+denial remain unproven. Settings now provides state-driven preparation, progress,
+repair, removal, and an enabled-by-default `匯入後自動分析` preference for the
+fixed product choice; ordinary Settings exposes neither model identity nor model
+selection. Successful
+provider downloads and local imports enqueue main-owned, currentness-aware,
+non-blocking analysis only when the gate and capability are ready. The internal
+F10 workbench remains the owner of explicit reruns and exposes a main-owned
+sequential batch queue: renderer input is limited to at most 500
 validated track ids plus one force boolean, current M1/M2 sidecars are skipped
 by default only when their analyzer profile is still supported; source-current
 Beat This! v2 sidecars are reanalyzed by the normal v3 batch path. Per-track
-failures do not stop the queue, and cancellation covers the current inspection
-or inference plus all remaining items. Public product
+failures do not stop the batch, and cancellation covers the current inspection
+or inference plus all remaining items. Automatic queue failures never turn a
+successful import into a failed import. Public product
 release remains gated on labeled accuracy, OS-level offline, license notice,
 disk-capacity, failure recovery, and manual UI acceptance.
 

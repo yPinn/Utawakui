@@ -96,6 +96,18 @@ analysis progress、status polling、run／cancel 與 sidecar reconciliation。�
 只接收具名 dependencies 與同一份 session state，不自行建立 reactive state、不互相 import，
 也不取代獨立的 batch owner。
 
+一般使用者的 Music Analysis lifecycle 位於 Settings：
+`src/composables/useMusicAnalysisSettings.js` 負責 boolean-only 自動分析偏好與既有
+capability owner 的組合，`MusicAnalysisSettingsRow.vue` 只呈現用途、安裝狀態與
+準備／修復／移除 intent。F10 Workbench 保留單曲強制執行、批次重跑與診斷，不再是
+新曲分析的必要入口。
+
+`electron/lib/audioProcessing/structureAnalysisAutoQueue.js` 是 main-owned、記憶體內、
+去重且單工的匯入後佇列。Provider download 與 local import handler 只交付 main-derived
+track id；佇列重新檢查自動分析偏好、`audio-processing-flow`、capability readiness 與
+sidecar currentness，並在手動 analysis／batch 結束後再執行。排入、檢查或分析失敗均
+不得回滾已成功的下載或本地匯入。
+
 ## Feature Gates 與最小依賴單位
 
 | 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                            |
@@ -104,6 +116,7 @@ analysis progress、status polling、run／cancel 與 sidecar reconciliation。�
 | Provider acquisition／search／backfill | `provider-flow`         | `yt-dlp-provider-tool` runtime | Embedded Python、yt-dlp wheel、provider 與 plugin 原子驗證／啟用              |
 | External lyrics lookup                 | `lyrics-flow`           | 無 installed binary            | 每次 external request 檢查；provider failure 不回滾已成功的本機工作           |
 | Quick／general separation              | `audio-processing-flow` | FFmpeg + selected model        | FFmpeg 與每個 model 可獨立 install／repair／remove                            |
+| BPM／beat analysis                     | `audio-processing-flow` | Beat This! `small0` capability | Settings 管理 lifecycle；ready 後新匯入依偏好進入 main-owned 單工佇列         |
 | Audio Python capabilities              | Capability policy       | Immutable lock／generation     | 獨立 runtime family、scheduler 與 lease；不與 Provider 或 ONNX lifecycle 合併 |
 | OBS loopback output                    | `public-output-flow`    | Built-in Overlay assets        | Start／publish 受 gate；stop／status 保持可用以復原                           |
 
