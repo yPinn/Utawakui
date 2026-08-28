@@ -33,8 +33,9 @@ Text timing and musical cues are separate axes:
 - `M2`: section intervals or authored cues, planned after M1; and
 - `M3`: song-specific choreography, deferred.
 
-The first implementation target accepts T0 and T1 and persists T2. Unsupported
-levels must not be silently downgraded and overwritten.
+The implemented baseline accepts T0 and T1, persists partial or complete T2, and
+projects valid segments to the bundled Lyrics overlay. Unsupported levels must
+not be silently downgraded and overwritten.
 
 T2 segment timing and M1/M2 music cues are independent. Segment timing may be
 imported or manually authored with no analyzer installed. Music cues live in the
@@ -141,6 +142,37 @@ uses its T0/T1 fallback; non-empty segments must satisfy all T2 invariants.
 Document granularity reports the highest validated detail present rather than
 claiming every line has the same completion level.
 
+For presentation only, a finite T1 line without valid authored segments receives
+estimated word／character progress from the minimal shared timing-unit layer. The
+line duration is distributed by visible grapheme weight: whitespace-delimited words
+receive time proportional to their visible character count, while unspaced CJK text
+advances by grapheme. Authored whitespace, line breaks, and punctuation stay
+attached without semantic labels so the projected segments concatenate to the
+displayed line. Punctuation does not add timing weight. These ephemeral
+`line-estimate` segments are never persisted, transported as T2 provenance, or
+described as source-authored timing. A punctuation-only visible line uses one
+minimum fallback weight so a finite interval can still be projected. Authored
+validated T2 always takes precedence; a line without a finite interval remains on
+the plain T0/T1 display.
+
+Template preprocessing is separate from canonical text and timing normalization.
+Generic Caption preserves the canonical display text without semantic analysis.
+Classic KTV, Manga Frame, and Live Stage may interpret authored breaks,
+punctuation, speaker labels, and parentheticals inside their own versioned profiles.
+Their source-mapped phrase／role／bubble／caption decisions affect display only: they
+cannot delete or rewrite canonical line text, replace authored T2, create persisted
+segments, or change `currentTimingSource`. Static profile results are cached by
+document id, document revision, language, profile id, and profile version.
+
+Beat grids, section roles, count-ins, and similar musical interpretation are also
+template-owned dynamic behavior. They are excluded from the base lyrics frame, the
+shared T1 timing-unit stream, and canonical cache identity.
+
+The Output scheduler receives the selected template id and evaluates only that
+template's dynamic projection and timing boundaries. Reading Aid is not an active
+Output profile until reading content has an explicit transport and renderer
+contract; a design preview is not runtime availability.
+
 ## Source changes and stale state
 
 On load, the application hashes the current source bytes and compares the digest
@@ -164,8 +196,9 @@ reports which reading references could not be preserved.
 
 ## Output projection
 
-Output contract version 2 remains unchanged until T2 lands. The next contract
-projects the timing model as two message families:
+Output contract version 2 remains available for legacy clients and
+`/api/v1/state`. Bundled overlays negotiate version 3, which projects the timing
+model as two message families:
 
 ```text
 lyrics.document  -> immutable content, identity, revision, lines, segments
@@ -186,7 +219,6 @@ buffering, seeking, ended, or disconnected phases.
 
 ## Deferred decisions
 
-- authoring UX and keyboard interaction for segment boundaries;
 - automatic alignment provider and confidence representation;
 - T3 language-specific semantics;
 - duet and multi-lane editing behavior;

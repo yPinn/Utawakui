@@ -197,6 +197,43 @@ describe('lyrics overlay renderer', () => {
     expect(elements.ktvCountIn.hidden).toBe(true);
   });
 
+  it('restarts a vocal section and its countdown on the first KTV lane', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        language: 'zh-Hant',
+        ktv: {
+          visible: true,
+          currentText: '第二段第一句',
+          nextText: '第二段第二句',
+          currentVisibleLineIndex: 3,
+          nextVisibleLineIndex: 4,
+          currentLaneIndex: 0,
+          nextLaneIndex: 1,
+          lineProgress: 0,
+          countIn: {
+            remainingBeats: 4,
+            totalBeats: 4,
+            timingSource: 'fallback',
+            visibleLineIndex: 3,
+            laneIndex: 0,
+          },
+        },
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.ktvCountIn.dataset.ktvLane).toBe('a');
+  });
+
   it('places an overlapping slow-BPM count-in on the upcoming KTV lane', () => {
     const elements = domElements();
 
@@ -456,6 +493,66 @@ describe('lyrics overlay renderer', () => {
     expect(segmentNodes[0].animate).toHaveBeenCalledOnce();
   });
 
+  it('keeps KTV timing nodes and authored spacing mounted across vocal start', () => {
+    const elements = domElements();
+    const segments = [
+      {
+        segmentId: 'estimate-0',
+        text: "Time's ",
+        state: 'upcoming',
+        progress: 0,
+      },
+      {
+        segmentId: 'estimate-1',
+        text: 'up,',
+        state: 'upcoming',
+        progress: 0,
+      },
+    ];
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: "Time's up,",
+      nextText: '설명할 시간 없어',
+      language: 'en',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      nextVisibleLineIndex: 1,
+      currentSegments: segments,
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+    });
+    const timingNodes = [...elements.current.children];
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        revision: 2,
+        currentSegments: [
+          {
+            ...segments[0],
+            state: 'active',
+            progress: 0.2,
+            remainingMs: 800,
+          },
+          segments[1],
+        ],
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+
+    expect(elements.current.children).toEqual(timingNodes);
+    expect(timingNodes.map((node) => node.textContent)).toEqual([
+      "Time's ",
+      'up,',
+    ]);
+    expect(elements.current.textContent).toBe(frame.currentText);
+  });
+
   it('keeps Live Stage caption line nodes mounted on clock-only updates', () => {
     const elements = domElements();
     const frame = {
@@ -613,6 +710,105 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('B 等待中');
     expect(elements.next.dataset.ktvLane).toBe('b');
     expect(elements.root.dataset.ktvActiveLane).toBe('a');
+  });
+
+  it('keeps a lyric on its logical lane when the other lane disappears', () => {
+    const elements = domElements();
+    let release;
+    const options = {
+      templateId: 'karaoke-stack',
+      reducedMotion: true,
+      schedule: vi.fn((callback) => {
+        release = callback;
+        return callback;
+      }),
+      cancelSchedule: vi.fn(),
+    };
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '讀完了依賴',
+        currentVisibleLineIndex: 1,
+        nextText: '我很快就離開',
+        nextVisibleLineIndex: 2,
+        language: 'zh-Hant',
+        lineIndex: 1,
+      },
+      options,
+    );
+
+    expect(elements.current.dataset.ktvLane).toBe('b');
+    expect(elements.next.dataset.ktvLane).toBe('a');
+    expect(elements.next.textContent).toBe('我很快就離開');
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: '我很快就離開',
+        currentVisibleLineIndex: 2,
+        nextText: '',
+        nextVisibleLineIndex: null,
+        language: 'zh-Hant',
+        lineIndex: 2,
+      },
+      options,
+    );
+
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.textContent).toBe('我很快就離開');
+    expect(elements.next.textContent).toBe('讀完了依賴');
+
+    release();
+
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.textContent).toBe('我很快就離開');
+    expect(elements.next.textContent).toBe('');
+  });
+
+  it('reconstructs a completed final-pair companion without a renderer timer', () => {
+    const elements = domElements();
+    const schedule = vi.fn();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        ktv: {
+          visible: true,
+          currentText: "If it's gonna be a BAD DAY",
+          currentVisibleLineIndex: 1,
+          nextText: 'You will shine',
+          nextVisibleLineIndex: 0,
+          nextHeld: true,
+          language: 'en',
+          lineIndex: 1,
+          lineProgress: 1,
+          currentRole: 'solo',
+          nextRole: 'solo',
+          countIn: null,
+        },
+      },
+      {
+        templateId: 'karaoke-stack',
+        reducedMotion: true,
+        schedule,
+      },
+    );
+
+    expect(elements.current.textContent).toBe("If it's gonna be a BAD DAY");
+    expect(elements.current.dataset.ktvLane).toBe('b');
+    expect(elements.next.textContent).toBe('You will shine');
+    expect(elements.next.dataset.ktvLane).toBe('a');
+    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(schedule).not.toHaveBeenCalled();
   });
 
   it('uses explicit vocal roles, strips speaker cues, and keeps the completed role during the hold', () => {
@@ -1035,7 +1231,7 @@ describe('lyrics overlay renderer', () => {
           nextText: '下一句',
           nextVisibleLineIndex: 2,
           lineProgress: 0,
-          laneReplacementDelayMs: 100,
+          laneReplacementDelayMs: 4500,
           countIn: {
             remainingBeats: 4,
             totalBeats: 4,
@@ -1048,7 +1244,7 @@ describe('lyrics overlay renderer', () => {
 
     expect(elements.next.textContent).toBe('副歌尾句');
     expect(elements.next.dataset.ktvHeld).toBe('true');
-    expect(scheduled[0]?.delayMs).toBe(100);
+    expect(scheduled[0]?.delayMs).toBe(4500);
   });
 
   it('cancels a pending Classic KTV lane replacement when the template changes', () => {
@@ -2636,6 +2832,51 @@ describe('lyrics overlay renderer', () => {
 
     scheduler.refresh();
     expect(frames).toHaveLength(2);
+    scheduler.stop();
+  });
+
+  it('switches the scheduler to the selected template projection only', () => {
+    const frames = [];
+    const scheduler = createLyricsFrameScheduler({
+      now: () => Date.parse('2026-08-22T00:00:00.000Z'),
+      onFrame: (frame) => frames.push(frame),
+      schedule: vi.fn(),
+      cancelSchedule: vi.fn(),
+    });
+    scheduler.update({
+      version: 2,
+      revision: 1,
+      generatedAt: '2026-08-22T00:00:00.000Z',
+      displayDelayMs: 0,
+      playback: {
+        status: 'paused',
+        positionMs: 1000,
+        durationMs: 10000,
+        rate: 1,
+        track: { id: 'track-1', title: 'Song' },
+      },
+      lyrics: {
+        documentId: 'lyrics-1',
+        documentRevision: 4,
+        trackId: 'track-1',
+        source: { language: 'en' },
+        synced: true,
+        offsetMs: 0,
+        activeLineIndex: 0,
+        lines: [{ text: 'first line', startMs: 0, endMs: 2000 }],
+      },
+    });
+
+    expect(frames.at(-1)).not.toHaveProperty('ktv');
+    expect(frames.at(-1)).not.toHaveProperty('liveStage');
+
+    scheduler.setTemplateId('karaoke-stack');
+    expect(frames.at(-1).ktv).toMatchObject({ visible: true });
+    expect(frames.at(-1)).not.toHaveProperty('liveStage');
+
+    scheduler.setTemplateId('live-stage');
+    expect(frames.at(-1).liveStage).toMatchObject({ active: true });
+    expect(frames.at(-1)).not.toHaveProperty('ktv');
     scheduler.stop();
   });
 });

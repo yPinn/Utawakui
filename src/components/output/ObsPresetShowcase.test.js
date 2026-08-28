@@ -141,6 +141,16 @@ describe('OBS output workspace layout contract', () => {
     expect(componentSource).toContain('@container (width < 48rem)');
     expect(componentSource).toContain("emit('applyPreset'");
     expect(componentSource).toContain('@dblclick="applyPreset(preset)"');
+    expect(componentSource).toContain(
+      'preset.availability?.available === false',
+    );
+    expect(componentSource).toContain(
+      ':disabled="isApplying || isApplied || !isSelectedPresetAvailable"',
+    );
+    expect(componentSource).toContain("'尚未提供'");
+    expect(workspaceSource).toContain(
+      'preset.availability?.available === false',
+    );
     expect(componentSource).not.toContain('雙擊套用');
     expect(componentSource).toContain('內建模板');
     expect(componentSource).not.toContain('startOutput');

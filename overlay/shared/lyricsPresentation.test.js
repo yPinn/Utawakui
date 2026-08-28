@@ -1,10 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
+  compileLyricsPresentationDocument,
+  createLyricsPresentationDocumentCache,
+  lyricsPresentationProfileForTemplate,
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 
@@ -20,7 +23,7 @@ function ktvPresentation(text) {
   return adaptKtvLyricsPresentation(analyzeLyricsSource(text));
 }
 
-describe('shared lyrics source analysis', () => {
+describe('template semantic source analysis', () => {
   it('extracts speaker metadata and source-mapped semantic units without deleting text', () => {
     const sourceText = "[리즈] 내 답이야 (That's my style)";
     const analysis = analyzeLyricsSource(sourceText);
@@ -65,6 +68,131 @@ describe('shared lyrics source analysis', () => {
       'kitsch kitsch',
       'kitsch',
     ]);
+  });
+
+  it('does not duplicate generic grapheme or word streams in template analysis', () => {
+    const sourceText = '  [女] 雨の song!  ';
+    const analysis = analyzeLyricsSource(sourceText);
+
+    expect(analysis.sourceText).toBe(sourceText);
+    expect(analysis).not.toHaveProperty('graphemes');
+    expect(analysis).not.toHaveProperty('words');
+  });
+});
+
+describe('lyrics presentation profiles', () => {
+  const document = {
+    documentId: 'lyrics-1',
+    documentRevision: 7,
+    language: 'zh-Hant',
+    lines: [
+      { text: '[女] 雨下整夜 我的愛溢出就像雨水', startMs: 0, endMs: 8000 },
+    ],
+  };
+
+  it.each([
+    ['focus-line', 'generic-caption', true],
+    ['quiet-caption', 'generic-caption', true],
+    ['karaoke-stack', 'classic-ktv', true],
+    ['manga-frame', 'manga-frame', true],
+    ['live-stage', 'live-stage', true],
+    ['reading-aid', 'reading-aid', false],
+  ])(
+    'maps %s to its versioned presentation profile',
+    (templateId, id, available) => {
+      expect(lyricsPresentationProfileForTemplate(templateId)).toMatchObject({
+        id,
+        version: 1,
+        available,
+      });
+    },
+  );
+
+  it('compiles only the selected template semantic customization', () => {
+    const compiled = compileLyricsPresentationDocument(document, {
+      templateId: 'karaoke-stack',
+    });
+
+    expect(compiled).toMatchObject({
+      documentId: 'lyrics-1',
+      documentRevision: 7,
+      language: 'zh-Hant',
+      profile: { id: 'classic-ktv', version: 1 },
+    });
+    expect(compiled.lines[0].analysis.sourceText).toBe(document.lines[0].text);
+    expect(compiled.lines[0].presentation).toMatchObject({
+      role: 'female',
+      text: '雨下整夜 我的愛溢出就像雨水',
+    });
+    expect(
+      compiled.lines[0].presentation.phrases.map((phrase) => phrase.text),
+    ).toEqual(['雨下整夜', '我的愛溢出就像雨水']);
+    expect(compiled.lines[0].presentation).not.toHaveProperty('bubbles');
+    expect(document.lines[0]).not.toHaveProperty('analysis');
+  });
+
+  it('compiles generic, manga, and live-stage customization independently', () => {
+    const generic = compileLyricsPresentationDocument(document, {
+      templateId: 'focus-line',
+    });
+    const manga = compileLyricsPresentationDocument(document, {
+      templateId: 'manga-frame',
+    });
+    const liveStage = compileLyricsPresentationDocument(document, {
+      templateId: 'live-stage',
+    });
+
+    expect(generic.lines[0].presentation).toEqual({
+      sourceText: document.lines[0].text,
+      text: document.lines[0].text,
+    });
+    expect(generic.lines[0]).not.toHaveProperty('analysis');
+    expect(manga.lines[0].presentation).toHaveProperty('bubbles');
+    expect(manga.lines[0]).toHaveProperty('analysis');
+    expect(liveStage.lines[0].presentation).toHaveProperty('pages');
+    expect(liveStage.lines[0]).toHaveProperty('analysis');
+  });
+
+  it('caches static compilation by document revision, language, and profile', () => {
+    const compile = vi.fn(compileLyricsPresentationDocument);
+    const cache = createLyricsPresentationDocumentCache({ compile });
+
+    const first = cache.get(document, { templateId: 'focus-line' });
+    const sameIdentity = cache.get(
+      { ...document, lines: document.lines.map((line) => ({ ...line })) },
+      { templateId: 'quiet-caption' },
+    );
+    const ktv = cache.get(document, { templateId: 'karaoke-stack' });
+    const revised = cache.get(
+      { ...document, documentRevision: 8 },
+      { templateId: 'focus-line' },
+    );
+
+    expect(sameIdentity).toBe(first);
+    expect(ktv).not.toBe(first);
+    expect(revised).not.toBe(first);
+    expect(compile).toHaveBeenCalledTimes(3);
+  });
+
+  it('bypasses unstable identities and bounds or clears cached revisions', () => {
+    const compile = vi.fn(compileLyricsPresentationDocument);
+    const cache = createLyricsPresentationDocumentCache({
+      compile,
+      maxEntries: 1,
+    });
+    const unstable = { language: 'en', lines: [{ text: 'plain' }] };
+
+    expect(cache.get(unstable)).not.toBe(cache.get(unstable));
+    cache.get(document, { templateId: 'focus-line' });
+    cache.get(
+      { ...document, documentId: 'lyrics-2' },
+      { templateId: 'focus-line' },
+    );
+    cache.get(document, { templateId: 'focus-line' });
+    cache.clear();
+    cache.get(document, { templateId: 'focus-line' });
+
+    expect(compile).toHaveBeenCalledTimes(6);
   });
 });
 

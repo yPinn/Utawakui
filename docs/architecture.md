@@ -33,6 +33,17 @@ Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實
 Browser Source route adapters；Output server 以 exact allowlist 提供兩個目錄的必要檔案，
 不把 request path 轉成任意 filesystem path。
 
+Lyrics presentation 分成兩層：第一層保留 canonical 原文與 T0／T1／T2 timing；只有有限
+T1 fallback 會經 `lyricsTimingUnits.mjs` 產生唯一共用、無語意標記的 `{ text, weight }`
+單元。原有換行、空白與標點無損附著，不在這層判斷斷句、角色或段落。
+第二層 `lyricsPresentation.mjs` 才依 versioned Generic／KTV／Manga／Live Stage profile
+做模板客製化；Generic 是 identity，其他 profile 才可把換行、標點、speaker label、括號
+解讀成 phrase、role、bubble 或 caption page。Browser Source 以 document id、revision、
+language、profile id／version 快取靜態結果，`state.mjs` 只投影目前 template 的動態 frame
+與下一個 boundary；count-in、beat／section 判斷也只屬於對應模板。Raw LRC／VTT parser
+不進模板，模板分句不回寫 canonical timing，T2 永遠優先。Reading Aid 在 reading
+document 尚未進入 Output transport 前維持不可套用。
+
 ## 權威狀態與資料
 
 | 資料                                  | 權威 owner                        | 投影／持久化                                      |

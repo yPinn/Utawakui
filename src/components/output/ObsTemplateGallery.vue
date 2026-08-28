@@ -42,6 +42,9 @@ const isApplied = computed(
     selectedPreset.value?.id ===
     props.appliedPresetIds[selectedPreset.value?.kind],
 );
+const isSelectedPresetAvailable = computed(
+  () => selectedPreset.value?.availability?.available !== false,
+);
 const visibleGroups = computed(() =>
   props.templateGroups.filter((group) => group.templates.length),
 );
@@ -78,6 +81,7 @@ function selectKind(kind) {
 function applyPreset(preset) {
   if (
     !preset?.id ||
+    preset.availability?.available === false ||
     props.isApplying ||
     preset.id === props.appliedPresetIds[preset.kind]
   ) {
@@ -196,10 +200,16 @@ function applyPreset(preset) {
           <UiButton @click="emit('openWorkbench')">前往工作台</UiButton>
           <UiButton
             variant="accent"
-            :disabled="isApplying || isApplied"
+            :disabled="isApplying || isApplied || !isSelectedPresetAvailable"
             @click="applyPreset(selectedPreset)"
           >
-            {{ isApplied ? '已套用' : '套用模板' }}
+            {{
+              !isSelectedPresetAvailable
+                ? '尚未提供'
+                : isApplied
+                  ? '已套用'
+                  : '套用模板'
+            }}
           </UiButton>
         </div>
       </template>

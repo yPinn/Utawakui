@@ -186,11 +186,12 @@
     --ovl-ktv-fill-sung: var(--ovl-color-ktv-fill-solo);
     --ovl-ktv-stroke-unsung: var(--ovl-color-ktv-stroke-unsung);
     --ovl-ktv-stroke-sung: var(--ovl-color-ktv-stroke-sung);
+    --ovl-ktv-lane-block-size: 5.832em;
     --ovl-template-lyrics-bottom: 5%;
 
     inset-inline: max(var(--ovl-safe-inline), 3%);
     inline-size: auto;
-    grid-template-rows: repeat(2, minmax(0, auto));
+    grid-template-rows: repeat(2, minmax(var(--ovl-ktv-lane-block-size), auto));
     transform: none;
     gap: 0.16em;
     padding: 0;
@@ -326,6 +327,7 @@
     display: inline-block;
     color: var(--ovl-ktv-fill-unsung);
     background: none;
+    white-space: pre;
   }
 
   :root[data-ovl-template='karaoke-stack'] .lyrics-overlay__segment::after {

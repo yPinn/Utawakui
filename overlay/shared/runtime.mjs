@@ -215,6 +215,8 @@ function assembleSplitSnapshot(
     },
     lyrics: lyricsDocument
       ? {
+          documentId: lyricsDocument.documentId,
+          documentRevision: lyricsReference.documentRevision,
           trackId: lyricsDocument.trackId,
           source: lyricsDocument.source,
           synced: lines.some((line) => Number.isFinite(line.startMs)),
@@ -226,6 +228,8 @@ function assembleSplitSnapshot(
           lines,
         }
       : {
+          documentId: null,
+          documentRevision: 0,
           trackId: null,
           source: null,
           synced: false,
@@ -258,6 +262,8 @@ function emptyUnavailableSnapshot(now) {
     },
     queue: { sourceName: '', items: [] },
     lyrics: {
+      documentId: null,
+      documentRevision: 0,
       trackId: null,
       source: null,
       synced: false,

@@ -40,8 +40,9 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
     expect(karaokeCss).not.toContain('--ovl-ktv-shadow');
     expect(karaokeCss).toContain('background: transparent;');
     expect(karaokeCss).toContain('border: 0;');
+    expect(karaokeCss).toContain('--ovl-ktv-lane-block-size: 5.832em;');
     expect(karaokeCss).toContain(
-      'grid-template-rows: repeat(2, minmax(0, auto));',
+      'grid-template-rows: repeat(2, minmax(var(--ovl-ktv-lane-block-size), auto));',
     );
     expect(karaokeCss).toContain(
       'inset-inline: max(var(--ovl-safe-inline), 3%);',

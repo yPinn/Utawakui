@@ -129,7 +129,7 @@ function selectKind(kind) {
 
 async function applyPreset(id) {
   const preset = orderedPresets.value.find((candidate) => candidate.id === id);
-  if (!preset) return;
+  if (!preset || preset.availability?.available === false) return;
   const saved = await saveTemplateSelection(
     preset.kind,
     preset.id,

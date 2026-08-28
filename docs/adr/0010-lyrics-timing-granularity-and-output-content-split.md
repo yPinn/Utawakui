@@ -7,7 +7,8 @@ normalization and bounded T2 sidecars, Batch 2 segment import/authoring plus
 reading v2, the negotiated Output content/state split, segment-aware rendering,
 and a no-Pack bundled fallback cascade for the real Lyrics overlay are complete.
 Human Workbench/OBS visual acceptance is still required; M1/M2 analysis and
-reusable presentation recipes remain later work.
+manual visual acceptance remain later work. The versioned Lyrics presentation
+profiles and active-template projection boundary are implemented.
 
 ## Context
 
@@ -32,7 +33,7 @@ Text timing has four levels:
 | Level | Meaning                                                 | Product status                                             |
 | ----- | ------------------------------------------------------- | ---------------------------------------------------------- |
 | T0    | Untimed document                                        | Supported by normalization                                 |
-| T1    | Line timing                                             | Supported presentation fallback                            |
+| T1    | Line timing                                             | Shared estimated word／character presentation fallback     |
 | T2    | Segment timing, where a segment may be a word or phrase | Import, authoring, transport, and presentation implemented |
 | T3    | Grapheme or syllable timing                             | Schema-ready; editor and effects deferred                  |
 
@@ -131,10 +132,43 @@ M1/M2 begins only after T2 is stable and at least one accepted presentation
 consumes the signal with an M0 fallback. Runtime-family implementation and
 analysis package preparation remain a later, independently gated batch.
 
+### Normalize minimally, then apply one active template profile
+
+Raw LRC／VTT and provider formats still normalize at the Lyrics source boundary;
+templates never parse source formats. The shared base keeps canonical line text and
+T0／T1／T2 timing unchanged. For finite T1 fallback only,
+`shared/presentation/lyricsTimingUnits.mjs` derives one lossless `{ text, weight }`
+stream. It preserves authored whitespace, line breaks, and punctuation without
+assigning semantic labels; punctuation attaches to an adjacent timing unit and does
+not add duration weight. A punctuation-only visible line receives one minimum
+fallback weight so its finite interval remains projectable.
+
+`shared/presentation/lyricsPresentation.mjs` is the second, template-owned layer.
+Only profiles that need semantic customization interpret authored breaks,
+punctuation, speaker labels, or parentheticals as phrases, roles, bubbles, or caption
+pages. Generic Caption is an identity projection and does not run semantic analysis.
+Static template results compile under a versioned profile and are cached by document
+id, document revision, language, profile id, and profile version.
+
+The implemented profiles are Generic Caption, Classic KTV, Manga Frame, and Live
+Stage. Their phrase, role, count-in, bubble, and caption decisions are
+presentation-only and never rewrite canonical text or timing. Beat／section signals
+may affect only a selected template's dynamic projection. Reading Aid remains
+unavailable to Output until the runtime transports a real reading document. The
+Browser Source scheduler projects and schedules only the selected template; legacy
+selector calls without a template id retain the combined shape only for
+compatibility and tests.
+
+Authored T2 timing remains authoritative. Finite T1 timing uses the same shared
+lossless weighted unit stream for every profile; profile-specific phrase grouping
+may change layout but cannot claim new timing provenance.
+
 ## Rejected options
 
-- **Keep line timing and infer words inside each template.** Inference would be
-  inconsistent across templates and cannot recover reliable timing.
+- **Infer fallback timing independently inside each template.** Template-local
+  inference would be inconsistent and cannot recover reliable source timing.
+  The implemented T1 fallback instead uses one shared presentation-only estimate
+  based on finite line duration and visible text weight; it never becomes T2.
 - **Jump directly to syllable timing.** It expands language, editor, and import
   complexity before segment effects prove the need.
 - **Rewrite the original lyrics file.** Not every source format can preserve the
@@ -153,8 +187,11 @@ analysis package preparation remain a later, independently gated batch.
   state messages while preserving snapshot-v2 compatibility.
 - Multi-lane, beat, and syllable features remain possible without being promised
   by the first implementation.
-- T1 overlays remain the fallback while segment-aware rendering is verified in
-  the real Workbench and OBS Browser Sources.
+- T1 overlays derive shared presentation-only word／character progress when a
+  finite line interval exists; authored T2 remains authoritative, and an
+  unresolvable interval stays on plain line presentation.
+- Static language and phrase analysis is revision-keyed and reusable, while only
+  the active template's dynamic frame and boundaries run on playback updates.
 
 ## References
 

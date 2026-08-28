@@ -1,5 +1,6 @@
 import OUTPUT_APPEARANCE_VALUES from '../../shared/outputAppearanceValues.json';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import { lyricsPresentationProfileForTemplate } from '../../shared/presentation/lyricsPresentation.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
@@ -39,7 +40,7 @@ export const OUTPUT_PREVIEW_SCENE = Object.freeze({
   }),
 });
 
-export const OUTPUT_TEMPLATES = Object.freeze([
+const OUTPUT_TEMPLATE_DEFINITIONS = [
   {
     id: 'now-next',
     kind: 'now-playing',
@@ -97,7 +98,7 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     availability: {
       label: '可用',
       tone: 'muted',
-      summary: '只需要目前行文字；無同步、逐字或段落資料時仍可正常顯示。',
+      summary: '只需要目前行文字；不依賴逐字或音樂段落資料。',
     },
     summary: '低干擾的兩行歌詞，讓畫面與演出保持主角。',
     detail: '拿掉多餘面板與裝飾，只保留清楚的目前行與輕量下一句。',
@@ -105,7 +106,7 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       layoutLabel: '極簡雙行',
       motionLabel: '淡入',
     },
-    tags: ['低干擾', '純文字', 'M0 fallback'],
+    tags: ['低干擾', '純文字', '目前行 fallback'],
     settings: [
       { label: '顯示', value: '目前行、下一行' },
       { label: '表面', value: '預設透明' },
@@ -123,15 +124,15 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       tone: 'accent',
       summary: '不依賴 artwork，適合作為歌詞 overlay 的預設起點。',
     },
-    summary: '目前歌詞行置中，前後行降低存在感。',
+    summary: '目前歌詞行置中，下一行降低存在感。',
     detail: '適合多數歌回場景，讓觀眾視線集中在當前演唱行。',
     preview: {
       layoutLabel: '焦點單行',
       motionLabel: '淡入',
     },
-    tags: ['當前行', '前後行', '高可讀'],
+    tags: ['當前行', '下一行', '高可讀'],
     settings: [
-      { label: '顯示', value: '目前行、上一行、下一行' },
+      { label: '顯示', value: '目前行、下一行' },
       { label: '文字', value: '描邊、陰影、置中' },
       { label: '切換', value: 'Fade' },
     ],
@@ -146,23 +147,22 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       label: '可用',
       tone: 'muted',
       summary:
-        '一般同步歌詞會依整行時間估算掃色；有 T2 逐字資料時改用逐字／逐段精確進度。',
+        '一般同步歌詞會依行時長與可見字／詞數估算掃色；有 T2 逐字資料時改用精確進度。',
     },
     summary: '重現華語 KTV／MV 常見的白字、藍框與雙行錯位字幕。',
     detail:
-      '保留透明輸出，只在畫面下緣顯示兩行粗體歌詞；A 列固定在上方靠左，B 列固定在下方靠右，演唱逐行交替。下一段歌詞與四個提示點會一起預先顯示，再依歌曲 BPM／beat grid 對齊最後一個 4／4 小節正常倒數；間奏期間不會提早露出，唱完的列短暫保留後替換。未唱文字使用白色填滿與深藍粗框，唱過文字使用角色色填滿與等距白邊；一般同步歌詞依整行時間估算掃色，T2 則使用逐字／逐段精確進度。',
+      '保留透明輸出，只在畫面下緣顯示兩行粗體歌詞；A 列固定在上方靠左，B 列固定在下方靠右，演唱逐行交替。下一段歌詞與四個提示點會一起預先顯示，再依歌曲 BPM／beat grid 對齊最後一個 4／4 小節正常倒數；間奏期間不會提早露出，唱完的列短暫保留後替換。未唱文字使用白色填滿與深藍粗框，唱過文字使用角色色填滿與等距白邊；一般同步歌詞依行時長與可見字／詞數估算掃色，T2 則使用逐字／逐段精確進度。',
     preview: {
       layoutLabel: '經典 KTV 雙行',
       motionLabel: '由左至右掃色',
     },
-    editableAppearanceKeys: ['fontScale'],
     tags: ['華語 KTV', '錯位雙行', 'T1／T2 掃色'],
     settings: [
       { label: '顯示', value: 'A 上左、B 下右，逐行交替' },
       { label: '倒數', value: '歌詞與四點同時出現，依 BPM 倒數' },
       { label: '換詞', value: '唱完短暫保留 0.6 秒' },
       { label: '外觀', value: '白字深藍框、唱過角色色配白邊' },
-      { label: '進度', value: 'T1 整行估算／T2 精確掃色' },
+      { label: '進度', value: 'T1 字／詞估算、T2 精確掃色' },
       { label: '背景', value: '固定透明' },
     ],
   },
@@ -175,8 +175,7 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     availability: {
       label: '可用',
       tone: 'muted',
-      summary:
-        'M0 也會顯示單句黑白對話框；段落或逐字資料只增加外框與網點差異。',
+      summary: '只要有目前行文字就會顯示黑白對話框；逐字資料只增加網點進度。',
     },
     summary: '每個斷句各自成為一個在人物左右交替的黑白直書漫畫對話框。',
     detail:
@@ -185,7 +184,7 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       layoutLabel: '漫畫直書單句',
       motionLabel: '整框淡入淡出',
     },
-    tags: ['黑白漫畫', '左右多框', 'M0 fallback'],
+    tags: ['黑白漫畫', '左右多框', '目前行 fallback'],
     settings: [
       { label: '顯示', value: '目前行的 1–3 個斷句' },
       { label: '排版', value: '直書置中、左右交替' },
@@ -203,19 +202,20 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     availability: {
       label: '可用',
       tone: 'muted',
-      summary: 'M0 也會顯示目前歌詞；開場字卡只使用既有曲名與歌手資料。',
+      summary:
+        '只要有目前行文字就會顯示歌詞；開場字卡只使用既有曲名與歌手資料。',
     },
     summary: '舞台轉播風格的左下雙行歌詞與右下開場曲目字卡。',
     detail:
-      '歌詞完全跟隨原始時間，開場字卡則在播放後 1–7 秒獨立顯示；開頭方括號會解析為隱藏的成員 metadata。',
+      '歌詞完全跟隨原始時間，開場字卡則在播放後 4–8 秒獨立顯示；開頭方括號會解析為隱藏的成員 metadata。',
     preview: {
       layoutLabel: '舞台轉播字幕',
       motionLabel: '獨立字卡時間軸',
     },
-    tags: ['轉播字幕', '開場字卡', 'M0 fallback'],
+    tags: ['轉播字幕', '開場字卡', '目前行 fallback'],
     settings: [
       { label: '歌詞', value: '左下、最多兩行' },
-      { label: '字卡', value: '右下、播放後 1–7 秒' },
+      { label: '字卡', value: '右下、播放後 4–8 秒' },
       { label: '成員', value: '解析但不顯示' },
       { label: '品牌', value: 'Utawakui 原創舞台識別' },
     ],
@@ -227,10 +227,10 @@ export const OUTPUT_TEMPLATES = Object.freeze([
     name: 'Reading Aid',
     tone: 'minimal',
     availability: {
-      label: '待資料',
+      available: false,
+      label: '尚未提供',
       tone: 'warning',
-      summary:
-        '讀音輔助需要額外 reading 資料；目前先保留在後段，避免被誤認為預設可用。',
+      summary: 'runtime 尚未傳輸 reading 資料；目前只保留設計預覽，不能套用。',
     },
     summary: '保留讀音輔助行，支援未來 furigana / romaji 顯示。',
     detail: '適合日文、韓文或跨語言歌詞練唱與觀眾跟唱。',
@@ -296,7 +296,25 @@ export const OUTPUT_TEMPLATES = Object.freeze([
       { label: '缺圖', value: '曲名首字 fallback' },
     ],
   },
-]);
+];
+
+export const OUTPUT_TEMPLATES = Object.freeze(
+  OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
+    if (template.kind !== 'lyrics') return Object.freeze(template);
+    const presentationProfile = lyricsPresentationProfileForTemplate(
+      template.id,
+    );
+    return Object.freeze({
+      ...template,
+      availability: Object.freeze({
+        ...template.availability,
+        available: presentationProfile.available,
+      }),
+      editableAppearanceKeys: [...presentationProfile.editableAppearanceKeys],
+      presentationProfile,
+    });
+  }),
+);
 
 export const OUTPUT_STYLE_SETS = Object.freeze([
   {

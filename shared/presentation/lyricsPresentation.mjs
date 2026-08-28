@@ -2,6 +2,7 @@
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
 export const MAX_LIVE_STAGE_CAPTION_LINES = 2;
 export const MAX_LIVE_STAGE_CAPTION_PAGES = 2;
+export const LYRICS_PRESENTATION_PROFILE_VERSION = 1;
 
 const PARENTHETICAL_RE = /\([^()（）]+\)|（[^()（）]+）/gu;
 const PARENTHESIS_MARK_RE = /[()（）]/u;
@@ -63,11 +64,64 @@ const KOREAN_PHRASE_END_WORDS = new Set([
   '조차',
   '마저',
 ]);
+const ALL_APPEARANCE_KEYS = Object.freeze([
+  'fontFamily',
+  'fontScale',
+  'fontWeight',
+  'alignment',
+  'surface',
+]);
+const LYRICS_PRESENTATION_PROFILES = Object.freeze({
+  'generic-caption': Object.freeze({
+    id: 'generic-caption',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: ALL_APPEARANCE_KEYS,
+  }),
+  'classic-ktv': Object.freeze({
+    id: 'classic-ktv',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(['fontScale']),
+  }),
+  'manga-frame': Object.freeze({
+    id: 'manga-frame',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze([
+      'fontFamily',
+      'fontScale',
+      'fontWeight',
+    ]),
+  }),
+  'live-stage': Object.freeze({
+    id: 'live-stage',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(['fontFamily', 'fontScale']),
+  }),
+  'reading-aid': Object.freeze({
+    id: 'reading-aid',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: false,
+    editableAppearanceKeys: Object.freeze([]),
+  }),
+});
+const TEMPLATE_PROFILE_IDS = Object.freeze({
+  'focus-line': 'generic-caption',
+  'quiet-caption': 'generic-caption',
+  'karaoke-stack': 'classic-ktv',
+  'manga-frame': 'manga-frame',
+  'live-stage': 'live-stage',
+  'reading-aid': 'reading-aid',
+});
 
 function lexicalTokens(value) {
   return [...String(value ?? '').matchAll(WORD_RE)].map((match) => ({
     end: match.index + match[0].length,
     normalized: match[0].toLocaleLowerCase(),
+    sourceEnd: match.index + match[0].length,
+    sourceStart: match.index,
     start: match.index,
     text: match[0],
   }));
@@ -163,16 +217,27 @@ function splitMainRange(sourceText, start, end, initialBreak = null) {
 }
 
 export function analyzeLyricsSource(value) {
-  const sourceText = String(value ?? '').trim();
-  const speakerMatch = sourceText.match(SPEAKER_RE);
+  const sourceText = String(value ?? '');
+  const significantStart = sourceText.search(/\S/u);
+  const significantEnd =
+    significantStart === -1
+      ? 0
+      : sourceText.length - (sourceText.match(/\s*$/u)?.[0].length ?? 0);
+  const significantText =
+    significantStart === -1
+      ? ''
+      : sourceText.slice(significantStart, significantEnd);
+  const speakerMatch = significantText.match(SPEAKER_RE);
   const speaker = speakerMatch?.[1]?.trim() ?? '';
-  const contentStart = speakerMatch?.[0]?.length ?? 0;
-  const contentText = sourceText.slice(contentStart);
+  const contentStart =
+    significantStart === -1
+      ? 0
+      : significantStart + (speakerMatch?.[0]?.length ?? 0);
+  const contentText = sourceText.slice(contentStart, significantEnd);
   const parentheticals = [...contentText.matchAll(PARENTHETICAL_RE)];
   const residualText = contentText.replace(PARENTHETICAL_RE, ' ');
   const malformedParenthetical = PARENTHESIS_MARK_RE.test(residualText);
-
-  if (!sourceText) {
+  if (significantStart === -1) {
     return {
       sourceText,
       speaker,
@@ -185,9 +250,7 @@ export function analyzeLyricsSource(value) {
     return {
       sourceText,
       speaker,
-      units: [
-        semanticUnit(sourceText, 'main', contentStart, sourceText.length),
-      ],
+      units: [semanticUnit(sourceText, 'main', contentStart, significantEnd)],
       malformedParenthetical: true,
     };
   }
@@ -210,9 +273,7 @@ export function analyzeLyricsSource(value) {
     cursor = start + match[0].length;
     nextBreak = 'parenthetical';
   }
-  units.push(
-    ...splitMainRange(sourceText, cursor, sourceText.length, nextBreak),
-  );
+  units.push(...splitMainRange(sourceText, cursor, significantEnd, nextBreak));
 
   return {
     sourceText,
@@ -762,5 +823,114 @@ export function adaptLiveStageLyricsPresentation(analysis, options = {}) {
     transformed: Boolean(
       analysis?.speaker || lines.join('\n') !== sourceText || pages.length > 1,
     ),
+  };
+}
+
+export function lyricsPresentationProfileForTemplate(templateId) {
+  const profileId =
+    TEMPLATE_PROFILE_IDS[String(templateId ?? '')] ?? 'generic-caption';
+  return LYRICS_PRESENTATION_PROFILES[profileId];
+}
+
+function compileLinePresentation(sourceText, analysis, profile, options) {
+  if (profile.id === 'classic-ktv') {
+    const presentation = adaptKtvLyricsPresentation(analysis, options);
+    return {
+      ...presentation,
+      phrases: parseKtvDisplayPhrases(analysis, options),
+    };
+  }
+  if (profile.id === 'manga-frame') {
+    return adaptMangaLyricsPresentation(analysis, options);
+  }
+  if (profile.id === 'live-stage') {
+    return adaptLiveStageLyricsPresentation(analysis, options);
+  }
+  return { sourceText, text: sourceText };
+}
+
+export function compileLyricsPresentationDocument(document = {}, options = {}) {
+  const profile = lyricsPresentationProfileForTemplate(options.templateId);
+  const language = String(document.language ?? '');
+  const lines = Array.isArray(document.lines) ? document.lines : [];
+  return {
+    documentId:
+      typeof document.documentId === 'string' ? document.documentId : null,
+    documentRevision: Number.isSafeInteger(document.documentRevision)
+      ? document.documentRevision
+      : 0,
+    language,
+    profile,
+    lines: lines.map((line, sourceLineIndex) => {
+      const sourceText = String(line?.text ?? '');
+      const needsSemanticAnalysis = ![
+        'generic-caption',
+        'reading-aid',
+      ].includes(profile.id);
+      const analysis = needsSemanticAnalysis
+        ? analyzeLyricsSource(sourceText)
+        : null;
+      return {
+        sourceLineIndex,
+        sourceText,
+        ...(analysis ? { analysis } : {}),
+        presentation: compileLinePresentation(sourceText, analysis, profile, {
+          language,
+        }),
+      };
+    }),
+  };
+}
+
+function documentCacheKey(document, profile) {
+  const documentId =
+    typeof document?.documentId === 'string' ? document.documentId.trim() : '';
+  if (!documentId || !Number.isSafeInteger(document?.documentRevision)) {
+    return null;
+  }
+  return [
+    documentId,
+    document.documentRevision,
+    String(document.language ?? ''),
+    profile.id,
+    profile.version,
+  ].join('\u0000');
+}
+
+export function createLyricsPresentationDocumentCache(options = {}) {
+  const compile =
+    typeof options.compile === 'function'
+      ? options.compile
+      : compileLyricsPresentationDocument;
+  const maxEntries = Number.isSafeInteger(options.maxEntries)
+    ? Math.max(1, options.maxEntries)
+    : 8;
+  const entries = new Map();
+
+  return {
+    get(document = {}, compileOptions = {}) {
+      const profile = lyricsPresentationProfileForTemplate(
+        compileOptions.templateId,
+      );
+      const cacheKey = documentCacheKey(document, profile);
+      if (cacheKey === null) return compile(document, compileOptions);
+
+      const cached = entries.get(cacheKey);
+      if (cached) {
+        entries.delete(cacheKey);
+        entries.set(cacheKey, cached);
+        return cached;
+      }
+
+      const compiled = compile(document, compileOptions);
+      entries.set(cacheKey, compiled);
+      while (entries.size > maxEntries) {
+        entries.delete(entries.keys().next().value);
+      }
+      return compiled;
+    },
+    clear() {
+      entries.clear();
+    },
   };
 }

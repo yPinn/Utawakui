@@ -14,6 +14,7 @@ import {
   adaptKtvLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
+  createLyricsPresentationDocumentCache,
 } from '../shared/lyricsPresentation.mjs';
 import {
   mangaFrameLengthTier,
@@ -61,7 +62,8 @@ const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
 const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
 const MANGA_BUBBLE_ENTER_GAP_SECONDS = 1;
-const KTV_LANE_REPLACEMENT_DELAY_MS = 600;
+const KTV_DEFAULT_LANE_REPLACEMENT_DELAY_MS = 600;
+const KTV_MAX_LANE_REPLACEMENT_DELAY_MS = 5000;
 const ktvFallbackAnimations = new WeakMap();
 const ktvFallbackAnimationKeys = new WeakMap();
 const ktvLanePresentations = new WeakMap();
@@ -185,14 +187,18 @@ function stripKtvCueFromSegments(segments, presentation) {
 function projectKtvFrame(frame) {
   if (frame.ktv) {
     const source = frame.ktv;
-    const current = adaptKtvLyricsPresentation(
-      analyzeLyricsSource(source.currentText),
-      { language: source.language },
-    );
-    const next = adaptKtvLyricsPresentation(
-      analyzeLyricsSource(source.nextText),
-      { language: source.language },
-    );
+    const current =
+      source.currentRole === undefined
+        ? adaptKtvLyricsPresentation(analyzeLyricsSource(source.currentText), {
+            language: source.language,
+          })
+        : { text: source.currentText, role: source.currentRole };
+    const next =
+      source.nextRole === undefined
+        ? adaptKtvLyricsPresentation(analyzeLyricsSource(source.nextText), {
+            language: source.language,
+          })
+        : { text: source.nextText, role: source.nextRole };
     return {
       ...frame,
       ...source,
@@ -200,6 +206,7 @@ function projectKtvFrame(frame) {
       nextText: next.text,
       ktvCurrentRole: source.currentRole ?? current.role,
       ktvNextRole: source.nextRole ?? next.role,
+      ktvNextHeld: source.nextHeld === true,
       ktvCountIn: source.countIn
         ? {
             remainingBeats: source.countIn.remainingBeats,
@@ -207,6 +214,8 @@ function projectKtvFrame(frame) {
             timingSource: source.countIn.timingSource,
             visibleLineIndex:
               source.countIn.visibleLineIndex ?? source.currentVisibleLineIndex,
+            laneIndex:
+              source.countIn.laneIndex ?? source.currentLaneIndex ?? null,
             role: source.countIn.role ?? source.currentRole ?? current.role,
           }
         : null,
@@ -291,6 +300,12 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
 
   const previous = ktvLanePresentations.get(root);
   const sameLine = previous?.currentVisibleLineIndex === currentIndex;
+  if (sameLine && frame.ktvNextHeld === true) {
+    cancelKtvLaneHold(previous);
+    previous.currentText = frame.currentText;
+    previous.currentRole = frame.ktvCurrentRole;
+    return;
+  }
   if (sameLine && previous.hold) {
     previous.currentText = frame.currentText;
     previous.currentRole = frame.ktvCurrentRole;
@@ -323,9 +338,12 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
   const replacementDelayMs = Number.isFinite(frame.laneReplacementDelayMs)
     ? Math.max(
         0,
-        Math.min(KTV_LANE_REPLACEMENT_DELAY_MS, frame.laneReplacementDelayMs),
+        Math.min(
+          KTV_MAX_LANE_REPLACEMENT_DELAY_MS,
+          frame.laneReplacementDelayMs,
+        ),
       )
-    : KTV_LANE_REPLACEMENT_DELAY_MS;
+    : KTV_DEFAULT_LANE_REPLACEMENT_DELAY_MS;
   cancelKtvLaneHold(previous);
 
   const state = {
@@ -337,6 +355,7 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
   };
   ktvLanePresentations.set(root, state);
   if (
+    frame.ktvNextHeld === true ||
     !sequentialHandoff ||
     !previous.currentText ||
     !nextLane ||
@@ -395,14 +414,24 @@ function applyKtvLanePresentation(elements, frame, templateId) {
     : Number.isSafeInteger(currentIndex) && frame.nextText
       ? currentIndex + 1
       : null;
-  const currentLane = ktvLaneForVisibleLineIndex(currentIndex);
-  const nextLane = ktvLaneForVisibleLineIndex(nextIndex);
+  const currentLaneIndex = Number.isSafeInteger(frame.currentLaneIndex)
+    ? frame.currentLaneIndex
+    : currentIndex;
+  const nextLaneIndex = Number.isSafeInteger(frame.nextLaneIndex)
+    ? frame.nextLaneIndex
+    : nextIndex;
+  const currentLane = ktvLaneForVisibleLineIndex(currentLaneIndex);
+  const nextLane = ktvLaneForVisibleLineIndex(nextLaneIndex);
 
   setKtvLane(elements.current, currentLane);
   setKtvLane(elements.next, nextLane);
   setKtvRole(elements.current, frame.ktvCurrentRole);
   setKtvRole(elements.next, frame.ktvNextRole);
-  delete elements.next.dataset.ktvHeld;
+  if (frame.ktvNextHeld === true && nextLane && frame.nextText) {
+    elements.next.dataset.ktvHeld = 'true';
+  } else {
+    delete elements.next.dataset.ktvHeld;
+  }
   if (currentLane && frame.currentText) {
     elements.root.dataset.ktvActiveLane = currentLane;
   } else {
@@ -430,7 +459,10 @@ function applyKtvCountInPresentation(elements, frame, templateId) {
   setKtvLane(
     element,
     ktvLaneForVisibleLineIndex(
-      frame.ktvCountIn?.visibleLineIndex ?? frame.currentVisibleLineIndex,
+      frame.ktvCountIn?.laneIndex ??
+        frame.ktvCountIn?.visibleLineIndex ??
+        frame.currentLaneIndex ??
+        frame.currentVisibleLineIndex,
     ),
   );
   setKtvRole(element, frame.ktvCountIn?.role ?? frame.ktvCurrentRole);
@@ -1213,6 +1245,10 @@ export function createLyricsFrameScheduler(options = {}) {
   let latestSnapshot = null;
   let timer = null;
   let stopped = false;
+  let templateId =
+    typeof options.templateId === 'string' ? options.templateId : 'focus-line';
+  const presentationCache =
+    options.presentationCache ?? createLyricsPresentationDocumentCache();
 
   function clearTimer() {
     if (timer !== null) cancelSchedule(timer);
@@ -1222,8 +1258,22 @@ export function createLyricsFrameScheduler(options = {}) {
   function renderLatest() {
     if (stopped || !latestSnapshot) return;
     const nowMs = now();
-    onFrame(selectLyricsOverlayFrame(latestSnapshot, { nowMs }));
-    const delay = nextPresentationBoundaryDelayMs(latestSnapshot, { nowMs });
+    const lyrics = latestSnapshot.lyrics ?? {};
+    const presentationDocument = presentationCache.get(
+      {
+        documentId: lyrics.documentId,
+        documentRevision: lyrics.documentRevision,
+        language: lyrics.source?.language,
+        lines: lyrics.lines,
+      },
+      { templateId },
+    );
+    const projectionOptions = { nowMs, presentationDocument, templateId };
+    onFrame(selectLyricsOverlayFrame(latestSnapshot, projectionOptions));
+    const delay = nextPresentationBoundaryDelayMs(
+      latestSnapshot,
+      projectionOptions,
+    );
     if (delay === null) return;
     timer = schedule(() => {
       timer = null;
@@ -1254,7 +1304,17 @@ export function createLyricsFrameScheduler(options = {}) {
     renderLatest();
   }
 
-  return { refresh, stop, suspend, update };
+  function setTemplateId(nextTemplateId) {
+    const normalized =
+      typeof nextTemplateId === 'string' && nextTemplateId
+        ? nextTemplateId
+        : 'focus-line';
+    if (normalized === templateId) return;
+    templateId = normalized;
+    refresh();
+  }
+
+  return { refresh, setTemplateId, stop, suspend, update };
 }
 
 function boot() {
@@ -1318,7 +1378,7 @@ function boot() {
     kind: 'lyrics',
     onConfig: (slot) => {
       applyOverlayAppearance(document, slot);
-      frameScheduler.refresh();
+      frameScheduler.setTemplateId(slot?.templateId);
     },
     onSnapshot: (snapshot) => frameScheduler.update(snapshot),
     onStatus: (status) => {

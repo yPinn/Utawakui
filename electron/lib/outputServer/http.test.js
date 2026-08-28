@@ -27,6 +27,10 @@ function createFixtureRoots() {
     'export const state = true;',
   );
   fs.writeFileSync(
+    path.join(sharedRoot, 'presentation', 'lyricsTimingUnits.mjs'),
+    'export const timingUnits = true;',
+  );
+  fs.writeFileSync(
     path.join(sharedRoot, 'assets', 'fonts', 'jf-open-huninn-2.1.ttf'),
     Buffer.from([0, 1, 0, 0]),
   );
@@ -162,6 +166,9 @@ describe('output HTTP delivery', () => {
 
     const overlay = await fetch(`${baseUrl}/overlay/lyrics`);
     const shared = await fetch(`${baseUrl}/shared/presentation/state.mjs`);
+    const timingUnits = await fetch(
+      `${baseUrl}/shared/presentation/lyricsTimingUnits.mjs`,
+    );
     const font = await fetch(
       `${baseUrl}/shared/assets/fonts/jf-open-huninn-2.1.ttf`,
     );
@@ -172,6 +179,7 @@ describe('output HTTP delivery', () => {
       "default-src 'none'",
     );
     expect(await shared.text()).toBe('export const state = true;');
+    expect(await timingUnits.text()).toBe('export const timingUnits = true;');
     expect(font.status).toBe(200);
     expect(font.headers.get('content-type')).toBe('font/ttf');
     expect(Buffer.from(await font.arrayBuffer())).toEqual(

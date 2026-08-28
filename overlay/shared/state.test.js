@@ -67,9 +67,11 @@ function snapshot(overrides = {}) {
 describe('overlay state selectors', () => {
   it('selects the current and next non-empty lyric lines', () => {
     const value = snapshot();
-    expect(
-      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
-    ).toEqual({
+    const frame = selectLyricsFrame(value, {
+      nowMs: Date.parse(value.generatedAt),
+    });
+
+    expect(frame).toMatchObject({
       revision: 8,
       visible: true,
       currentText: '潮聲沿著夜色靠岸',
@@ -79,8 +81,81 @@ describe('overlay state selectors', () => {
       currentVisibleLineIndex: 1,
       nextVisibleLineIndex: 2,
       lineProgress: 0.5,
-      lineRemainingMs: 3000,
+      currentTimingSource: 'line-estimate',
     });
+    expect(frame.currentSegments.map((segment) => segment.text).join('')).toBe(
+      '潮聲沿著夜色靠岸',
+    );
+    expect(frame.currentSegments).toHaveLength(8);
+    expect(frame).not.toHaveProperty('lineRemainingMs');
+  });
+
+  it('projects only the active template customization when a template is selected', () => {
+    const value = snapshot();
+    const nowMs = Date.parse(value.generatedAt);
+
+    const generic = selectLyricsOverlayFrame(value, {
+      nowMs,
+      templateId: 'focus-line',
+    });
+    expect(generic).not.toHaveProperty('ktv');
+    expect(generic).not.toHaveProperty('liveStage');
+    expect(generic).not.toHaveProperty('lyricsSourceAnalysis');
+
+    const ktv = selectLyricsOverlayFrame(value, {
+      nowMs,
+      templateId: 'karaoke-stack',
+    });
+    expect(ktv.ktv).toMatchObject({ visible: true });
+    expect(ktv).not.toHaveProperty('liveStage');
+
+    const manga = selectLyricsOverlayFrame(value, {
+      nowMs,
+      templateId: 'manga-frame',
+    });
+    expect(manga.lyricsSourceAnalysis?.sourceText).toBe(generic.currentText);
+    expect(manga).not.toHaveProperty('ktv');
+    expect(manga).not.toHaveProperty('liveStage');
+
+    const liveStage = selectLyricsOverlayFrame(value, {
+      nowMs,
+      templateId: 'live-stage',
+    });
+    expect(liveStage.liveStage).toMatchObject({ active: true });
+    expect(liveStage.lyricsSourceAnalysis?.sourceText).toBe(
+      generic.currentText,
+    );
+    expect(liveStage).not.toHaveProperty('ktv');
+  });
+
+  it('schedules only boundaries used by the active template', () => {
+    const value = snapshot({
+      playback: {
+        ...snapshot().playback,
+        positionMs: 1000,
+      },
+      lyrics: {
+        ...snapshot().lyrics,
+        trackId: null,
+        synced: false,
+        activeLineIndex: -1,
+        lines: [],
+      },
+    });
+    const nowMs = Date.parse(value.generatedAt);
+
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'focus-line',
+      }),
+    ).toBeNull();
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'live-stage',
+      }),
+    ).toBe(3000);
   });
 
   it('projects a four-beat first-vocal count-in from the beat grid', () => {
@@ -107,18 +182,26 @@ describe('overlay state selectors', () => {
     });
     const nowMs = Date.parse(value.generatedAt);
 
-    expect(selectLyricsFrame(value, { nowMs })).toMatchObject({
-      visible: false,
+    expect(selectLyricsFrame(value, { nowMs })).not.toHaveProperty('countIn');
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }).ktv,
+    ).toMatchObject({
+      visible: true,
       countIn: {
-        text: '[女]第一句',
-        lineIndex: 0,
-        visibleLineIndex: 0,
         remainingBeats: 2,
         totalBeats: 4,
         timingSource: 'beat-grid',
       },
     });
-    expect(nextLyricsBoundaryDelayMs(value, { nowMs })).toBe(500);
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }),
+    ).toBe(500);
   });
 
   it('falls back to a lyric-aligned 120 BPM count-in without analysis', () => {
@@ -133,16 +216,25 @@ describe('overlay state selectors', () => {
     });
     const nowMs = Date.parse(value.generatedAt);
 
-    expect(selectLyricsFrame(value, { nowMs })).toMatchObject({
-      visible: false,
+    expect(selectLyricsFrame(value, { nowMs })).not.toHaveProperty('countIn');
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }).ktv,
+    ).toMatchObject({
       countIn: {
-        text: '第一句',
         remainingBeats: 3,
         totalBeats: 4,
         timingSource: 'fallback',
       },
     });
-    expect(nextLyricsBoundaryDelayMs(value, { nowMs })).toBe(500);
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }),
+    ).toBe(500);
 
     const beforeCountIn = {
       ...value,
@@ -151,7 +243,13 @@ describe('overlay state selectors', () => {
     expect(selectLyricsFrame(beforeCountIn, { nowMs })).not.toHaveProperty(
       'countIn',
     );
-    expect(nextLyricsBoundaryDelayMs(beforeCountIn, { nowMs })).toBe(1000);
+    expect(nextLyricsBoundaryDelayMs(beforeCountIn, { nowMs })).toBe(3000);
+    expect(
+      nextPresentationBoundaryDelayMs(beforeCountIn, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }),
+    ).toBe(1000);
   });
 
   it('uses confident tempo when no beat grid is available', () => {
@@ -175,13 +273,21 @@ describe('overlay state selectors', () => {
     });
     const nowMs = Date.parse(value.generatedAt);
 
-    expect(selectLyricsFrame(value, { nowMs })).toMatchObject({
-      countIn: {
-        remainingBeats: 3,
-        timingSource: 'tempo',
-      },
+    expect(selectLyricsFrame(value, { nowMs })).not.toHaveProperty('countIn');
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }).ktv,
+    ).toMatchObject({
+      countIn: { remainingBeats: 3, timingSource: 'tempo' },
     });
-    expect(nextLyricsBoundaryDelayMs(value, { nowMs })).toBe(600);
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }),
+    ).toBe(600);
   });
 
   it('keeps the first-vocal count-in when a timed speaker cue is active', () => {
@@ -200,14 +306,17 @@ describe('overlay state selectors', () => {
     const nowMs = Date.parse(value.generatedAt);
 
     expect(selectLyricsFrame(value, { nowMs })).toMatchObject({
-      visible: false,
-      currentText: '',
-      nextText: '',
-      countIn: {
-        text: '[女]第一句',
-        visibleLineIndex: 0,
-        remainingBeats: 3,
-      },
+      visible: true,
+      currentText: '[女]',
+      nextText: '[女]第一句',
+    });
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }).ktv,
+    ).toMatchObject({
+      countIn: { visibleLineIndex: 0, remainingBeats: 3 },
     });
   });
 
@@ -307,7 +416,7 @@ describe('overlay state selectors', () => {
 
   it('honors an explicit final T2 segment end when the parent line is open', () => {
     const value = snapshot({
-      playback: { ...snapshot().playback, positionMs: 4000 },
+      playback: { ...snapshot().playback, positionMs: 8000 },
       lyrics: {
         ...snapshot().lyrics,
         lines: [
@@ -324,7 +433,7 @@ describe('overlay state selectors', () => {
               },
             ],
           },
-          { text: '下一句', startMs: 10000, endMs: 15000 },
+          { text: '下一句', startMs: 14000, endMs: 19000 },
         ],
       },
     });
@@ -436,12 +545,29 @@ describe('overlay state selectors', () => {
         timingSource: 'fallback',
       },
     });
+    expect(preRoll.currentSegments).toHaveLength(5);
+    expect(
+      preRoll.currentSegments.every(
+        (segment) => segment.state === 'upcoming' && segment.progress === 0,
+      ),
+    ).toBe(true);
     expect(active).toMatchObject({
       currentText: '窗外的麻雀',
       nextText: '在電線桿上多嘴',
       currentVisibleLineIndex: 0,
       nextVisibleLineIndex: 1,
     });
+    expect(
+      active.currentSegments.map(({ segmentId, text }) => ({
+        segmentId,
+        text,
+      })),
+    ).toEqual(
+      preRoll.currentSegments.map(({ segmentId, text }) => ({
+        segmentId,
+        text,
+      })),
+    );
     expect(active.countIn).toBeNull();
 
     expect(
@@ -579,11 +705,14 @@ describe('overlay state selectors', () => {
       nextText: '慢歌下段',
       currentVisibleLineIndex: 0,
       nextVisibleLineIndex: 1,
+      currentLaneIndex: 0,
+      nextLaneIndex: 1,
       countIn: {
         remainingBeats: 4,
         totalBeats: 4,
         timingSource: 'tempo',
         visibleLineIndex: 1,
+        laneIndex: 1,
       },
     });
   });
@@ -629,14 +758,15 @@ describe('overlay state selectors', () => {
     ).toMatchObject({
       visible: true,
       currentText: '副歌尾句',
-      nextText: '',
-      nextVisibleLineIndex: null,
+      nextText: '第二行',
+      nextVisibleLineIndex: 1,
+      nextHeld: true,
     });
 
     const interlude = selectLyricsOverlayFrame(
       {
         ...base,
-        playback: { ...base.playback, positionMs: 25000 },
+        playback: { ...base.playback, positionMs: 26000 },
       },
       { nowMs },
     ).ktv;
@@ -655,7 +785,13 @@ describe('overlay state selectors', () => {
       nextText: '我的愛溢出就像雨水',
       currentVisibleLineIndex: 3,
       nextVisibleLineIndex: 4,
-      countIn: { remainingBeats: 3, timingSource: 'fallback' },
+      currentLaneIndex: 0,
+      nextLaneIndex: 1,
+      countIn: {
+        remainingBeats: 3,
+        timingSource: 'fallback',
+        laneIndex: 0,
+      },
     });
   });
 
@@ -694,7 +830,7 @@ describe('overlay state selectors', () => {
     });
     expect(
       selectLyricsOverlayFrame(
-        { ...base, playback: { ...base.playback, positionMs: 17000 } },
+        { ...base, playback: { ...base.playback, positionMs: 20000 } },
         { nowMs },
       ).ktv,
     ).toMatchObject({ visible: false, countIn: null });
@@ -893,8 +1029,8 @@ describe('overlay state selectors', () => {
 [00:07.00]第二行
 [00:14.00]<00:29.00>尾詞
 [00:30.00][女]
-[00:40.00]下段開頭
-[00:47.00]下一句`,
+[00:42.00]下段開頭
+[00:49.00]下一句`,
       source,
     });
     const outputDocument = projectLyricsOutputDocument({
@@ -903,7 +1039,7 @@ describe('overlay state selectors', () => {
       document,
     });
     const value = snapshot({
-      playback: { ...snapshot().playback, positionMs: 34999 },
+      playback: { ...snapshot().playback, positionMs: 35000 },
       lyrics: {
         ...snapshot().lyrics,
         source: outputDocument.source,
@@ -968,7 +1104,7 @@ describe('overlay state selectors', () => {
     });
     expect(
       selectLyricsOverlayFrame(
-        { ...base, playback: { ...base.playback, positionMs: 35000 } },
+        { ...base, playback: { ...base.playback, positionMs: 37000 } },
         { nowMs },
       ).ktv,
     ).toMatchObject({ visible: false, countIn: null });
@@ -1053,7 +1189,7 @@ describe('overlay state selectors', () => {
 
     expect(
       selectLyricsOverlayFrame(
-        { ...base, playback: { ...base.playback, positionMs: 10000 } },
+        { ...base, playback: { ...base.playback, positionMs: 11000 } },
         { nowMs },
       ).ktv,
     ).toMatchObject({ visible: false });
@@ -1122,13 +1258,115 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('releases a completed Classic KTV line after a short handoff', () => {
+  it('keeps a Classic KTV section tail for five seconds before a long interlude', () => {
     const base = snapshot({
       lyrics: {
         ...snapshot().lyrics,
         lines: [
           { text: '尾句', startMs: 0, endMs: 5000 },
-          { text: '下段', startMs: 12000, endMs: 16000 },
+          { text: '下段', startMs: 30000, endMs: 34000 },
+        ],
+      },
+      musicStructure: null,
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    expect(
+      selectLyricsOverlayFrame(
+        { ...base, playback: { ...base.playback, positionMs: 9999 } },
+        { nowMs },
+      ).ktv,
+    ).toMatchObject({ visible: true, currentText: '尾句', lineProgress: 1 });
+    expect(
+      selectLyricsOverlayFrame(
+        {
+          ...base,
+          playback: {
+            ...base.playback,
+            status: 'seeking',
+            positionMs: 9999,
+          },
+        },
+        { nowMs },
+      ),
+    ).toMatchObject({
+      timelineDiscontinuity: true,
+      ktv: { visible: true, currentText: '尾句', lineProgress: 1 },
+    });
+    expect(
+      selectLyricsOverlayFrame(
+        { ...base, playback: { ...base.playback, positionMs: 10000 } },
+        { nowMs },
+      ).ktv,
+    ).toMatchObject({ visible: false, countIn: null });
+  });
+
+  it('keeps the contiguous final pair together through the active and completed tail', () => {
+    const base = snapshot({
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [
+          { text: 'You will shine', startMs: 0, endMs: 4000 },
+          {
+            text: "If it's gonna be a BAD DAY",
+            startMs: 4000,
+            endMs: 8000,
+          },
+          { text: 'Next verse', startMs: 30000, endMs: 34000 },
+        ],
+      },
+      musicStructure: null,
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    for (const positionMs of [6000, 12999]) {
+      expect(
+        selectLyricsOverlayFrame(
+          { ...base, playback: { ...base.playback, positionMs } },
+          { nowMs },
+        ).ktv,
+      ).toMatchObject({
+        visible: true,
+        currentText: "If it's gonna be a BAD DAY",
+        currentVisibleLineIndex: 1,
+        nextText: 'You will shine',
+        nextVisibleLineIndex: 0,
+        nextHeld: true,
+      });
+    }
+  });
+
+  it('does not pull a previous section across an entrance gap into the final pair', () => {
+    const base = snapshot({
+      playback: { ...snapshot().playback, positionMs: 12000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [
+          { text: 'Prior section', startMs: 0, endMs: 4000 },
+          { text: 'Final isolated line', startMs: 10000, endMs: 14000 },
+        ],
+      },
+      musicStructure: null,
+    });
+
+    expect(
+      selectLyricsOverlayFrame(base, {
+        nowMs: Date.parse(base.generatedAt),
+      }).ktv,
+    ).toMatchObject({
+      currentText: 'Final isolated line',
+      nextText: '',
+      nextVisibleLineIndex: null,
+    });
+  });
+
+  it('keeps the 600ms completed hold for a continuous lyric handoff', () => {
+    const base = snapshot({
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [
+          { text: '連續尾句', startMs: 0, endMs: 5000 },
+          { text: '接續歌詞', startMs: 7000, endMs: 11000 },
         ],
       },
       musicStructure: null,
@@ -1140,22 +1378,10 @@ describe('overlay state selectors', () => {
         { ...base, playback: { ...base.playback, positionMs: 5599 } },
         { nowMs },
       ).ktv,
-    ).toMatchObject({ visible: true, currentText: '尾句', lineProgress: 1 });
-    expect(
-      selectLyricsOverlayFrame(
-        {
-          ...base,
-          playback: {
-            ...base.playback,
-            status: 'seeking',
-            positionMs: 5599,
-          },
-        },
-        { nowMs },
-      ),
     ).toMatchObject({
-      timelineDiscontinuity: true,
-      ktv: { visible: true, currentText: '尾句', lineProgress: 1 },
+      visible: true,
+      currentText: '連續尾句',
+      lineProgress: 1,
     });
     expect(
       selectLyricsOverlayFrame(
@@ -1165,7 +1391,41 @@ describe('overlay state selectors', () => {
     ).toMatchObject({ visible: false, countIn: null });
   });
 
-  it('carries only the remaining lane hold into a five-second entrance', () => {
+  it('keeps the final track lyric for the same five-second tail', () => {
+    const base = snapshot({
+      lyrics: {
+        ...snapshot().lyrics,
+        lines: [{ text: '全曲最後一句', startMs: 0, endMs: 5000 }],
+      },
+      musicStructure: null,
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    expect(
+      selectLyricsOverlayFrame(
+        { ...base, playback: { ...base.playback, positionMs: 9999 } },
+        { nowMs },
+      ).ktv,
+    ).toMatchObject({
+      visible: true,
+      currentText: '全曲最後一句',
+      lineProgress: 1,
+    });
+    expect(
+      nextPresentationBoundaryDelayMs(
+        { ...base, playback: { ...base.playback, positionMs: 5000 } },
+        { nowMs, templateId: 'karaoke-stack' },
+      ),
+    ).toBe(5000);
+    expect(
+      selectLyricsOverlayFrame(
+        { ...base, playback: { ...base.playback, positionMs: 10000 } },
+        { nowMs },
+      ).ktv,
+    ).toMatchObject({ visible: false, countIn: null });
+  });
+
+  it('carries the remaining section-tail hold into a five-second entrance', () => {
     const base = snapshot({
       lyrics: {
         ...snapshot().lyrics,
@@ -1187,7 +1447,7 @@ describe('overlay state selectors', () => {
       visible: true,
       currentText: '下段開頭',
       countIn: { remainingBeats: 4, timingSource: 'fallback' },
-      laneReplacementDelayMs: 100,
+      laneReplacementDelayMs: 4500,
     });
   });
 
@@ -1233,7 +1493,7 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('does not let a speaker-only metadata row consume a visible KTV lane', () => {
+  it('preserves speaker-like source text in base projection but excludes it from KTV lanes', () => {
     const lines = [
       { text: '第一句', startMs: 0, endMs: 9000 },
       { text: '[男]', startMs: 9000, endMs: 10000 },
@@ -1253,7 +1513,7 @@ describe('overlay state selectors', () => {
     ).toMatchObject({
       currentText: '第一句',
       currentVisibleLineIndex: 0,
-      nextText: '第二句',
+      nextText: '[男]',
       nextVisibleLineIndex: 1,
     });
 
@@ -1266,10 +1526,19 @@ describe('overlay state selectors', () => {
       { nowMs: Date.parse(base.generatedAt) },
     );
     expect(markerFrame).toMatchObject({
-      currentText: '',
-      currentVisibleLineIndex: null,
+      currentText: '[男]',
+      currentVisibleLineIndex: 1,
       nextText: '第二句',
-      nextVisibleLineIndex: 1,
+      nextVisibleLineIndex: 2,
+    });
+    expect(
+      selectLyricsOverlayFrame(base, {
+        nowMs: Date.parse(base.generatedAt),
+        templateId: 'karaoke-stack',
+      }).ktv,
+    ).toMatchObject({
+      currentText: '第一句',
+      nextText: '第二句',
     });
   });
 
@@ -1433,15 +1702,14 @@ describe('overlay state selectors', () => {
     ).pageBreakProgresses;
 
     expect(pageBoundary).toBeGreaterThan(0.1);
-    expect(
-      nextPresentationBoundaryDelayMs(value, {
-        nowMs: Date.parse(value.generatedAt),
-      }),
-    ).toBe(
-      Math.ceil(
-        lineStartMs + (lineEndMs - lineStartMs) * pageBoundary - positionMs,
-      ),
+    const pageDelayMs = Math.ceil(
+      lineStartMs + (lineEndMs - lineStartMs) * pageBoundary - positionMs,
     );
+    const nextDelayMs = nextPresentationBoundaryDelayMs(value, {
+      nowMs: Date.parse(value.generatedAt),
+    });
+    expect(nextDelayMs).toBeGreaterThan(0);
+    expect(nextDelayMs).toBeLessThanOrEqual(pageDelayMs);
   });
 
   it('hides lyrics that do not belong to the playing track', () => {
@@ -1482,7 +1750,7 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('schedules the next lyric boundary using playback rate and lyrics offset', () => {
+  it('schedules the next estimated word boundary using rate and offset', () => {
     const value = snapshot({
       playback: {
         ...snapshot().playback,
@@ -1499,7 +1767,7 @@ describe('overlay state selectors', () => {
       nextLyricsBoundaryDelayMs(value, {
         nowMs: Date.parse(value.generatedAt),
       }),
-    ).toBe(1250);
+    ).toBe(125);
     expect(
       nextLyricsBoundaryDelayMs(
         {
@@ -1546,6 +1814,7 @@ describe('overlay state selectors', () => {
       selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
     ).toMatchObject({
       currentText: '潮聲沿著夜色靠岸',
+      currentTimingSource: 't2',
       currentSegments: [
         {
           segmentId: 'segment-1',
@@ -1615,15 +1884,235 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('keeps T1 projection separate from fabricated segment timing', () => {
-    const value = snapshot();
+  it('estimates T1 word timing from line duration and visible character weight', () => {
+    const line = { text: 'I love music', startMs: 0, endMs: 10000 };
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 3000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        activeLineIndex: 0,
+        source: { language: 'en' },
+        lines: [line],
+      },
+    });
+    const nowMs = Date.parse(value.generatedAt);
+    const frame = selectLyricsFrame(value, {
+      nowMs,
+    });
+
+    expect(frame).toMatchObject({
+      currentText: 'I love music',
+      currentTimingSource: 'line-estimate',
+      currentSegments: [
+        {
+          text: 'I ',
+          state: 'past',
+          progress: 1,
+          remainingMs: null,
+        },
+        {
+          text: 'love ',
+          state: 'active',
+          progress: 0.5,
+          remainingMs: 2000,
+        },
+        {
+          text: 'music',
+          state: 'upcoming',
+          progress: 0,
+          remainingMs: null,
+        },
+      ],
+    });
+    expect(nextLyricsBoundaryDelayMs(value, { nowMs })).toBe(2000);
+    expect(line).not.toHaveProperty('segments');
+    const ktvFrame = selectLyricsOverlayFrame(value, { nowMs }).ktv;
+    expect(ktvFrame).toMatchObject({
+      currentTimingSource: 'line-estimate',
+    });
+    expect(ktvFrame.currentSegments).toHaveLength(frame.currentSegments.length);
+    frame.currentSegments.forEach((segment, index) => {
+      expect(ktvFrame.currentSegments[index]).toMatchObject({
+        text: segment.text,
+        state: segment.state,
+        progress: segment.progress,
+        remainingMs: segment.remainingMs,
+      });
+    });
+    expect(
+      selectLyricsFrame(
+        {
+          ...value,
+          playback: { ...value.playback, status: 'paused' },
+        },
+        { nowMs: nowMs + 5000 },
+      ).currentSegments[1],
+    ).toMatchObject({
+      state: 'active',
+      progress: 0.5,
+      remainingMs: null,
+    });
+  });
+
+  it('uses estimated word timing when partial T2 reaches a T1 line', () => {
+    const lines = [
+      {
+        text: 'timed segments',
+        startMs: 0,
+        endMs: 4000,
+        segments: [
+          {
+            segmentId: 'segment-1',
+            text: 'timed ',
+            startMs: 0,
+            endMs: 2000,
+          },
+          {
+            segmentId: 'segment-2',
+            text: 'segments',
+            startMs: 2000,
+            endMs: 4000,
+          },
+        ],
+      },
+      { text: 'line fallback', startMs: 4000, endMs: 8000 },
+    ];
+    const segmented = snapshot({
+      playback: { ...snapshot().playback, positionMs: 1000 },
+      lyrics: { ...snapshot().lyrics, activeLineIndex: 0, lines },
+    });
+    const fallback = {
+      ...segmented,
+      playback: { ...segmented.playback, positionMs: 5500 },
+      lyrics: { ...segmented.lyrics, activeLineIndex: 1 },
+    };
+
+    expect(
+      selectLyricsFrame(segmented, {
+        nowMs: Date.parse(segmented.generatedAt),
+      }),
+    ).toMatchObject({
+      currentText: 'timed segments',
+      currentTimingSource: 't2',
+      currentSegments: [
+        expect.objectContaining({
+          segmentId: 'segment-1',
+          state: 'active',
+        }),
+        expect.objectContaining({
+          segmentId: 'segment-2',
+          state: 'upcoming',
+        }),
+      ],
+    });
+    const fallbackFrame = selectLyricsFrame(fallback, {
+      nowMs: Date.parse(fallback.generatedAt),
+    });
+    expect(fallbackFrame).toMatchObject({
+      currentText: 'line fallback',
+      currentTimingSource: 'line-estimate',
+      currentSegments: [
+        expect.objectContaining({ text: 'line ', state: 'past' }),
+        expect.objectContaining({ text: 'fallback', state: 'active' }),
+      ],
+    });
+    expect(fallbackFrame).not.toHaveProperty('lineRemainingMs');
+  });
+
+  it('estimates unspaced CJK timing per visible character', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 1500 },
+      lyrics: {
+        ...snapshot().lyrics,
+        activeLineIndex: 0,
+        source: { language: 'zh-Hant' },
+        lines: [{ text: '你 好嗎！', startMs: 0, endMs: 3000 }],
+      },
+    });
+    const nowMs = Date.parse(value.generatedAt);
+
+    expect(selectLyricsFrame(value, { nowMs })).toMatchObject({
+      currentTimingSource: 'line-estimate',
+      currentSegments: [
+        expect.objectContaining({ text: '你 ', state: 'past' }),
+        expect.objectContaining({
+          text: '好',
+          state: 'active',
+          progress: 0.5,
+          remainingMs: 500,
+        }),
+        expect.objectContaining({ text: '嗎！', state: 'upcoming' }),
+      ],
+    });
+    expect(nextLyricsBoundaryDelayMs(value, { nowMs })).toBe(500);
+  });
+
+  it.each([
+    {
+      label: 'Japanese graphemes',
+      language: 'ja',
+      sourceText: '歌になる',
+      expectedText: ['歌', 'に', 'な', 'る'],
+      positionMs: 1500,
+      activeIndex: 1,
+    },
+    {
+      label: 'Korean words',
+      language: 'ko',
+      sourceText: '나의 노래',
+      expectedText: ['나의 ', '노래'],
+      positionMs: 1000,
+      activeIndex: 0,
+    },
+  ])(
+    'keeps $label deterministic while preserving exact text',
+    ({ language, sourceText, expectedText, positionMs, activeIndex }) => {
+      const value = snapshot({
+        playback: { ...snapshot().playback, positionMs },
+        lyrics: {
+          ...snapshot().lyrics,
+          activeLineIndex: 0,
+          source: { language },
+          lines: [{ text: sourceText, startMs: 0, endMs: 4000 }],
+        },
+      });
+      const frame = selectLyricsFrame(value, {
+        nowMs: Date.parse(value.generatedAt),
+      });
+
+      expect(frame.currentSegments.map((segment) => segment.text)).toEqual(
+        expectedText,
+      );
+      expect(
+        frame.currentSegments.map((segment) => segment.text).join(''),
+      ).toBe(sourceText);
+      expect(frame.currentSegments[activeIndex]).toMatchObject({
+        state: 'active',
+        progress: 0.5,
+      });
+    },
+  );
+
+  it('does not estimate word timing without a finite T1 interval', () => {
+    const value = snapshot({
+      playback: {
+        ...snapshot().playback,
+        positionMs: 1000,
+        durationMs: null,
+      },
+      lyrics: {
+        ...snapshot().lyrics,
+        activeLineIndex: 0,
+        lines: [{ text: 'open line', startMs: 0, endMs: null }],
+      },
+    });
     const frame = selectLyricsFrame(value, {
       nowMs: Date.parse(value.generatedAt),
     });
 
-    expect(frame.currentText).toBe('潮聲沿著夜色靠岸');
+    expect(frame.currentText).toBe('open line');
+    expect(frame).not.toHaveProperty('currentTimingSource');
     expect(frame).not.toHaveProperty('currentSegments');
-    expect(frame.lineRemainingMs).toBe(3000);
   });
 
   it('keeps an open-ended active segment without fabricated progress', () => {

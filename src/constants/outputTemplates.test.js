@@ -110,12 +110,33 @@ describe('output template registry', () => {
         { label: '倒數', value: '歌詞與四點同時出現，依 BPM 倒數' },
         { label: '換詞', value: '唱完短暫保留 0.6 秒' },
         { label: '外觀', value: '白字深藍框、唱過角色色配白邊' },
-        { label: '進度', value: 'T1 整行估算／T2 精確掃色' },
+        { label: '進度', value: 'T1 字／詞估算、T2 精確掃色' },
       ]),
     });
     expect(
       lyricsGroup.templates.some((template) => template.id === 'classic-ktv'),
     ).toBe(false);
+    expect(
+      Object.fromEntries(
+        lyricsGroup.templates.map((template) => [
+          template.id,
+          template.presentationProfile,
+        ]),
+      ),
+    ).toMatchObject({
+      'focus-line': { id: 'generic-caption', version: 1, available: true },
+      'quiet-caption': { id: 'generic-caption', version: 1, available: true },
+      'karaoke-stack': { id: 'classic-ktv', version: 1, available: true },
+      'manga-frame': { id: 'manga-frame', version: 1, available: true },
+      'live-stage': { id: 'live-stage', version: 1, available: true },
+      'reading-aid': { id: 'reading-aid', version: 1, available: false },
+    });
+    expect(
+      lyricsGroup.templates.find((template) => template.id === 'reading-aid'),
+    ).toMatchObject({
+      availability: { available: false, label: '尚未提供' },
+      editableAppearanceKeys: [],
+    });
   });
 
   it('registers Cover Player as an independent Artwork template', () => {
