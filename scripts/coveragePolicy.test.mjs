@@ -41,6 +41,7 @@ describe('coverage policy', () => {
       'electron/performerPreload.js',
       'overlay/now-playing/now-playing.mjs',
       'shared/outputContract.js',
+      'src/components/ui/fieldAttrs.js',
       'src/composables/usePlaylistActions.js',
       'src/constants/featureGates.js',
       'src/utils/lyrics.js',
@@ -75,6 +76,16 @@ describe('coverage policy', () => {
     expect(classifyAppSource(file)).toEqual({
       status: 'coverage-neutral',
       reason: 're-export-only',
+    });
+    expect(coveragePolicy.exclude).toContain(file);
+  });
+
+  it('excludes the shared Vue test host as test infrastructure', () => {
+    const file = 'src/components/ui/uiTestHost.js';
+
+    expect(classifyAppSource(file)).toEqual({
+      status: 'coverage-neutral',
+      reason: 'test-infrastructure',
     });
     expect(coveragePolicy.exclude).toContain(file);
   });

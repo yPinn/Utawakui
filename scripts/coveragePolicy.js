@@ -11,11 +11,12 @@ const DEFERRED_SOURCES = new Map([
   ['src/performer-main.js', 'renderer-entrypoint'],
 ]);
 
-const COVERAGE_NEUTRAL_SOURCES = new Set([
-  'overlay/shared/lyricsPresentation.mjs',
-  'overlay/shared/mangaFrameContract.mjs',
-  'overlay/shared/state.mjs',
-  'src/icons/index.js',
+const COVERAGE_NEUTRAL_SOURCES = new Map([
+  ['overlay/shared/lyricsPresentation.mjs', 're-export-only'],
+  ['overlay/shared/mangaFrameContract.mjs', 're-export-only'],
+  ['overlay/shared/state.mjs', 're-export-only'],
+  ['src/icons/index.js', 're-export-only'],
+  ['src/components/ui/uiTestHost.js', 'test-infrastructure'],
 ]);
 
 const coveragePolicy = Object.freeze({
@@ -51,6 +52,7 @@ const coveragePolicy = Object.freeze({
     'scripts/lyrics-provider-probe-registry.mjs',
     'scripts/release-contract.mjs',
     'src/composables/**/*.js',
+    'src/components/ui/fieldAttrs.js',
     'src/constants/*.js',
     'src/icons/*.js',
     'src/utils/*.js',
@@ -61,7 +63,7 @@ const coveragePolicy = Object.freeze({
     'shared/**/*.json',
     'electron/lib/lyricsReadingWorker.js',
     'electron/lib/vocalSeparationWorker.js',
-    ...COVERAGE_NEUTRAL_SOURCES,
+    ...COVERAGE_NEUTRAL_SOURCES.keys(),
   ]),
   globalThresholds: Object.freeze({
     statements: 80,
@@ -527,9 +529,9 @@ const coveragePolicy = Object.freeze({
 
 function classifyAppSource(filePath) {
   const normalized = String(filePath).replaceAll('\\', '/');
-  if (COVERAGE_NEUTRAL_SOURCES.has(normalized)) {
-    return { status: 'coverage-neutral', reason: 're-export-only' };
-  }
+  const coverageNeutralReason = COVERAGE_NEUTRAL_SOURCES.get(normalized);
+  if (coverageNeutralReason)
+    return { status: 'coverage-neutral', reason: coverageNeutralReason };
   const deferredReason = DEFERRED_SOURCES.get(normalized);
   if (deferredReason) return { status: 'deferred', reason: deferredReason };
   if (normalized.startsWith('src/') && normalized.endsWith('.vue')) {
@@ -540,6 +542,7 @@ function classifyAppSource(filePath) {
       /^electron\/(?:lib|main)\/.+\.js$/.test(normalized) ||
       /^overlay\/.+\.mjs$/.test(normalized) ||
       /^shared\/.+\.(?:js|mjs)$/.test(normalized) ||
+      normalized === 'src/components/ui/fieldAttrs.js' ||
       /^src\/(?:composables|constants|icons|utils)\/.+\.js$/.test(
         normalized,
       )) &&
