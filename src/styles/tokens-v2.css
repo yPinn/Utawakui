@@ -1,0 +1,235 @@
+/* Candidate control-panel token system.
+ *
+ * This file is intentionally not imported by src/main.js or performer-main.js.
+ * The active renderer continues to use tokens.css until the candidate system is
+ * complete and explicitly accepted. The opt-in selector exists only for future
+ * isolated prototypes; do not activate it in production flows yet.
+ *
+ * OBS Overlay tokens remain independent in overlay/shared/tokens.css.
+ */
+
+:root[data-ui-system='v2'] {
+  /* Primitive colors: value-based names only. */
+  --ui-palette-neutral-50: #f3f3f4;
+  --ui-palette-neutral-100: #e2e2e4;
+  --ui-palette-neutral-200: #c7c8cc;
+  --ui-palette-neutral-300: #a7a9af;
+  --ui-palette-neutral-400: #85888f;
+  --ui-palette-neutral-500: #70737b;
+  --ui-palette-neutral-600: #50535b;
+  --ui-palette-neutral-700: #3c3e46;
+  --ui-palette-neutral-800: #2d2f35;
+  --ui-palette-neutral-900: #272928;
+  --ui-palette-neutral-950: #191a1e;
+
+  --ui-palette-indigo-50: #f1f3fa;
+  --ui-palette-indigo-100: #e0e5f3;
+  --ui-palette-indigo-200: #c4cee7;
+  --ui-palette-indigo-300: #a5b3d8;
+  --ui-palette-indigo-400: #8296d0;
+  --ui-palette-indigo-500: #667db8;
+  --ui-palette-indigo-600: #50679f;
+  --ui-palette-indigo-700: #3d578e;
+  --ui-palette-indigo-800: #334873;
+  --ui-palette-indigo-900: #293a5b;
+  --ui-palette-indigo-950: #202c43;
+
+  --ui-palette-plum-50: #f9f1f5;
+  --ui-palette-plum-100: #f1dee7;
+  --ui-palette-plum-200: #e3bccf;
+  --ui-palette-plum-300: #d496b2;
+  --ui-palette-plum-400: #bd748f;
+  --ui-palette-plum-500: #9d5f79;
+  --ui-palette-plum-600: #7f4f68;
+  --ui-palette-plum-700: #694d64;
+  --ui-palette-plum-800: #4d384a;
+  --ui-palette-plum-900: #382a36;
+  --ui-palette-plum-950: #271e26;
+
+  --ui-palette-olive-50: #f8f5e9;
+  --ui-palette-olive-100: #eee8d0;
+  --ui-palette-olive-200: #ded39f;
+  --ui-palette-olive-300: #cfbd75;
+  --ui-palette-olive-400: #bfab68;
+  --ui-palette-olive-500: #9d8d58;
+  --ui-palette-olive-600: #80754b;
+  --ui-palette-olive-700: #69634e;
+  --ui-palette-olive-800: #4d493a;
+  --ui-palette-olive-900: #37352d;
+  --ui-palette-olive-950: #272620;
+
+  --ui-palette-warm-neutral-50: #fbfaf7;
+  --ui-palette-warm-neutral-100: #f3f1ec;
+  --ui-palette-warm-neutral-200: #e8e4dd;
+  --ui-palette-warm-neutral-300: #dad7d0;
+  --ui-palette-warm-neutral-400: #c6c2ba;
+  --ui-palette-warm-neutral-500: #aaa69f;
+  --ui-palette-warm-neutral-600: #88857f;
+  --ui-palette-warm-neutral-700: #66645f;
+  --ui-palette-warm-neutral-800: #464641;
+  --ui-palette-warm-neutral-900: #2f302d;
+  --ui-palette-warm-neutral-950: #222320;
+
+  /* Clear Pastel signal primitives. These are independent of brand materials. */
+  --ui-palette-cool-gray-200: #bec5cc;
+  --ui-palette-cool-gray-300: #b2b8bf;
+  --ui-palette-sky-300: #86d7fd;
+  --ui-palette-sky-400: #7ec9ed;
+  --ui-palette-green-300: #9fdda0;
+  --ui-palette-green-400: #95cf96;
+  --ui-palette-amber-300: #f7d37b;
+  --ui-palette-amber-400: #ebc669;
+  --ui-palette-red-300: #ffa9a8;
+  --ui-palette-red-400: #f79494;
+
+  /* Typography foundation: fixed rem scale for product UI. */
+  --ui-font-family-base:
+    'Segoe UI Variable Text', 'Segoe UI', 'Microsoft JhengHei UI',
+    'Microsoft JhengHei', system-ui, sans-serif;
+
+  --ui-font-size-sm: 0.875rem;
+  --ui-font-size-md: 1rem;
+  --ui-font-size-lg: 1.125rem;
+  --ui-font-size-xl: 1.5rem;
+  --ui-font-size-2xl: 1.75rem;
+
+  --ui-font-weight-regular: 400;
+  --ui-font-weight-semibold: 600;
+  --ui-font-weight-bold: 700;
+
+  --ui-line-height-display: 1.15;
+  --ui-line-height-heading: 1.2;
+  --ui-line-height-title: 1.3;
+  --ui-line-height-body: 1.5;
+  --ui-line-height-label: 1.25;
+  --ui-line-height-caption: 1.4;
+
+  /* Semantic colors: components should prefer these purpose-based aliases. */
+  --ui-color-canvas: var(--ui-palette-neutral-950);
+  --ui-color-surface: var(--ui-palette-neutral-900);
+  --ui-color-surface-raised: var(--ui-palette-neutral-800);
+  --ui-color-surface-hover: var(--ui-palette-neutral-700);
+  --ui-color-surface-active: var(--ui-palette-neutral-600);
+  --ui-color-surface-selected: var(--ui-palette-indigo-900);
+
+  --ui-color-text: var(--ui-palette-warm-neutral-100);
+  --ui-color-text-muted: var(--ui-palette-neutral-300);
+  --ui-color-text-subtle: var(--ui-palette-neutral-400);
+
+  --ui-color-border: var(--ui-palette-neutral-700);
+  --ui-color-border-strong: var(--ui-palette-neutral-500);
+
+  --ui-color-accent: var(--ui-palette-indigo-400);
+  --ui-color-accent-hover: var(--ui-palette-indigo-300);
+  --ui-color-accent-active: var(--ui-palette-indigo-500);
+  --ui-color-accent-soft: var(--ui-palette-indigo-900);
+  --ui-color-accent-contrast: var(--ui-palette-neutral-950);
+  --ui-color-focus: var(--ui-palette-indigo-300);
+
+  --ui-color-neutral: var(--ui-palette-cool-gray-300);
+  --ui-color-info: var(--ui-palette-sky-400);
+  --ui-color-success: var(--ui-palette-green-400);
+  --ui-color-warning: var(--ui-palette-amber-400);
+  --ui-color-live: var(--ui-palette-red-400);
+  --ui-color-danger: var(--ui-palette-red-400);
+  --ui-color-status-contrast: var(--ui-palette-neutral-950);
+  --ui-color-status-outline: var(--ui-color-text);
+
+  --ui-color-neutral-soft: color-mix(
+    in srgb,
+    var(--ui-color-neutral) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-info-soft: color-mix(
+    in srgb,
+    var(--ui-color-info) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-success-soft: color-mix(
+    in srgb,
+    var(--ui-color-success) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-warning-soft: color-mix(
+    in srgb,
+    var(--ui-color-warning) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-live-soft: color-mix(
+    in srgb,
+    var(--ui-color-live) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-danger-soft: color-mix(
+    in srgb,
+    var(--ui-color-danger) 16%,
+    var(--ui-color-surface)
+  );
+
+  /* Semantic materials: color does not imply status or feature level. */
+  --ui-color-folder-primary: var(--ui-palette-indigo-700);
+  --ui-color-folder-secondary: var(--ui-palette-plum-700);
+  --ui-color-folder-tertiary: var(--ui-palette-olive-700);
+  --ui-color-paper: var(--ui-palette-warm-neutral-300);
+  --ui-color-paper-text: var(--ui-palette-neutral-900);
+
+  /* Component aliases exist only where the component owns a real contract. */
+  --ui-folder-bg: var(--ui-color-folder-primary);
+  --ui-folder-bg-secondary: var(--ui-color-folder-secondary);
+  --ui-folder-bg-tertiary: var(--ui-color-folder-tertiary);
+  --ui-folder-paper-bg: var(--ui-color-paper);
+  --ui-folder-paper-text: var(--ui-color-paper-text);
+  --ui-folder-selected-ring: var(--ui-color-accent);
+}
+
+/* Language-aware Windows fallbacks keep one semantic UI-family token. */
+:root[data-ui-system='v2']:lang(ja),
+:root[data-ui-system='v2'] :lang(ja) {
+  --ui-font-family-base:
+    'Yu Gothic UI', 'Meiryo UI', 'Segoe UI Variable Text', 'Segoe UI',
+    system-ui, sans-serif;
+}
+
+:root[data-ui-system='v2']:lang(ko),
+:root[data-ui-system='v2'] :lang(ko) {
+  --ui-font-family-base:
+    'Malgun Gothic', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+}
+
+/* Light is a semantic remap of the same primitives, not a color inversion. */
+:root[data-ui-system='v2'][data-ui-theme='light'] {
+  --ui-color-canvas: var(--ui-palette-warm-neutral-200);
+  --ui-color-surface: var(--ui-palette-warm-neutral-100);
+  --ui-color-surface-raised: var(--ui-palette-warm-neutral-50);
+  --ui-color-surface-hover: var(--ui-palette-neutral-100);
+  --ui-color-surface-active: var(--ui-palette-neutral-200);
+  --ui-color-surface-selected: var(--ui-palette-indigo-100);
+
+  --ui-color-text: var(--ui-palette-neutral-900);
+  --ui-color-text-muted: var(--ui-palette-neutral-600);
+  --ui-color-text-subtle: var(--ui-palette-neutral-500);
+
+  --ui-color-border: var(--ui-palette-neutral-200);
+  --ui-color-border-strong: var(--ui-palette-neutral-400);
+
+  --ui-color-accent: var(--ui-palette-indigo-700);
+  --ui-color-accent-hover: var(--ui-palette-indigo-800);
+  --ui-color-accent-active: var(--ui-palette-indigo-900);
+  --ui-color-accent-soft: var(--ui-palette-indigo-100);
+  --ui-color-accent-contrast: var(--ui-palette-warm-neutral-100);
+  --ui-color-focus: var(--ui-palette-indigo-600);
+
+  --ui-color-neutral: var(--ui-palette-cool-gray-200);
+  --ui-color-info: var(--ui-palette-sky-300);
+  --ui-color-success: var(--ui-palette-green-300);
+  --ui-color-warning: var(--ui-palette-amber-300);
+  --ui-color-live: var(--ui-palette-red-300);
+  --ui-color-danger: var(--ui-palette-red-300);
+  --ui-color-status-contrast: var(--ui-palette-neutral-900);
+
+  --ui-color-folder-primary: var(--ui-palette-indigo-300);
+  --ui-color-folder-secondary: var(--ui-palette-plum-200);
+  --ui-color-folder-tertiary: var(--ui-palette-olive-200);
+  --ui-color-paper: var(--ui-palette-warm-neutral-50);
+  --ui-color-paper-text: var(--ui-palette-neutral-900);
+}

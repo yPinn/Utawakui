@@ -112,6 +112,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Research：[競品調查](research/competitive-research.md)、
   [Visual System Discovery](research/visual-system-discovery-2026-08-25.md)、
   [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、
+  [Visual System Foundation](research/visual-system-foundation-2026-08-28.md)、
   [LRCLIB T2 validation](research/lrclib-t2-live-validation-2026-08-24.md)、
   [NetEase isolated validation report](research/netease-isolated-technical-validation-2026-08-28.md)
   與其他

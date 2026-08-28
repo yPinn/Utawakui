@@ -2,8 +2,9 @@
 
 - **產品：** Utawakui
 - **日期：** 2026-08-25
-- **狀態：** Draft — owner selection
+- **狀態：** Approved by owner — 2026-08-28
 - **依據：** Approved Visual System Discovery Brief
+- **選定方向：** B — Studio Library
 - **範圍：** Electron／Vue 主控制台與演出操作 View
 
 ## 1. 文件角色
@@ -213,11 +214,13 @@ Gate、Output 和 error 透過 semantic tokens 分開，而不把整個介面變
 通過此代表性 workspace 後，才建立完整 foundation、token 和 shared primitive
 規格；不先把 provisional 色票批次替換到全專案。
 
-## 9. Owner 選擇
+## 9. Owner 決策
 
-請選擇：
+2026-08-28 選定 **B — Studio Library**。
 
-- **A — Quiet Native：** 更安靜、舒適、偏 macOS。
-- **B — Studio Library：** 準備與 live 最平衡；目前建議。
-- **C — Music Operations：** 更密集、即時、偏 Spotify。
-- 或指定 A／B／C 的混合比例與必須保留的特徵。
+Foundation 應以 B 的 macOS 55／Spotify 45 平衡為主，並依第 7 節建議：
+
+- 保留 A 的低疲勞 surface、克制的 settings／modal 與自然 light theme。
+- 保留 C 在演出 View 對 upcoming event、queue 和 Output visibility 的辨識強度。
+- 不採 A 可能壓低 live state 的過度安靜層級。
+- 不採 C 的全面高密度與過度接近 Spotify 的產品皮膚。

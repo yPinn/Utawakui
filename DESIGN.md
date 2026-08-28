@@ -88,6 +88,15 @@ components:
 
 <!-- BASELINE: this is a first-pass scaffold. Replace palette character, final type choices, and component details after the visual direction is confirmed. -->
 
+> **Visual refresh status — 2026-08-28:** This guide still describes the active／
+> legacy renderer contract. The owner-selected replacement direction is recorded
+> in [Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):
+> Direction B／Studio Library, Architectural Slate, Clear Pastel semantic signals,
+> and the Controlled Dossier folder interior. Those values remain inactive review
+> candidates in `src/styles/tokens-v2.css`; they do not supersede production CSS
+> until a separate adoption decision. For refresh work, use the dated foundation
+> document for candidate intent and this guide for currently implemented behavior.
+
 ## Overview
 
 Utawakui is a product UI for live operation. The design system should support a calm desktop control panel first, then extend to responsive and OBS overlay surfaces without assuming that all surfaces share the same tokens.
