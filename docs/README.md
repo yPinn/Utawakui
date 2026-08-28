@@ -100,6 +100,9 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [asset security](contracts/overlay-asset-security.md)、
   [pack model](contracts/overlay-pack-contract.md)。
 - Music analysis：[producer contract](contracts/music-analysis-contract.md)、
+  [BPM quality gate](contracts/music-analysis-bpm-quality-gate.md)、
+  [BPM local-run config](contracts/music-analysis-bpm-run-config-template.json)、
+  [BPM runtime-smoke config](contracts/music-analysis-bpm-smoke-run-config-template.json)、
   [M2 quality gate](contracts/music-analysis-m2-quality-gate.md)。
 - Integrations：[adapter contract](contracts/integration-adapter-contract.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。
@@ -110,9 +113,11 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [release runbook](operations/release-runbook.md)。
 - Governance：[legal compliance](governance/legal-compliance.md)。
 - Research：[競品調查](research/competitive-research.md)、
+  [BPM normalization study](research/music-analysis-bpm-normalization-2026-08-28.md)、
   [Visual System Discovery](research/visual-system-discovery-2026-08-25.md)、
   [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、
   [Visual System Foundation](research/visual-system-foundation-2026-08-28.md)、
+  [UI Component Foundation](research/ui-component-foundation-2026-08-28.md)、
   [LRCLIB T2 validation](research/lrclib-t2-live-validation-2026-08-24.md)、
   [NetEase isolated validation report](research/netease-isolated-technical-validation-2026-08-28.md)
   與其他
