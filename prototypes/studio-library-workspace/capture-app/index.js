@@ -1,0 +1,202 @@
+/* global __dirname, console, process, require, setTimeout, URL */
+
+const { app, BrowserWindow } = require('electron');
+const fs = require('node:fs');
+const path = require('node:path');
+const { pathToFileURL } = require('node:url');
+
+const prototypeDir = path.resolve(__dirname, '..');
+const outputDir = path.join(prototypeDir, 'screenshots');
+const captureDataDir = process.env.UTAWAKUI_CAPTURE_USER_DATA;
+const entryUrl = pathToFileURL(path.join(prototypeDir, 'index.html'));
+
+if (!captureDataDir) {
+  throw new Error('Capture must be started through capture-app/run.js');
+}
+
+const variants = [
+  {
+    name: 'studio-library-dark-1440x810.png',
+    width: 1440,
+    height: 810,
+    theme: 'dark',
+    density: 'standard',
+  },
+  {
+    name: 'studio-library-light-1440x810.png',
+    width: 1440,
+    height: 810,
+    theme: 'light',
+    density: 'standard',
+  },
+  {
+    name: 'studio-library-dark-960x650.png',
+    width: 960,
+    height: 650,
+    theme: 'dark',
+    density: 'compact',
+  },
+  {
+    name: 'studio-library-light-960x650.png',
+    width: 960,
+    height: 650,
+    theme: 'light',
+    density: 'compact',
+  },
+];
+
+let captureInProgress = true;
+
+app.setPath('userData', captureDataDir);
+app.commandLine.appendSwitch('force-device-scale-factor', '1');
+app.commandLine.appendSwitch(
+  'disk-cache-dir',
+  path.join(captureDataDir, 'Cache'),
+);
+
+async function waitForStablePaint(window) {
+  await window.webContents.executeJavaScript('document.fonts.ready');
+  await new Promise((resolve) => setTimeout(resolve, 100));
+}
+
+async function verifyInteractions(window) {
+  return window.webContents.executeJavaScript(`(() => {
+    const assert = (condition, message) => {
+      if (!condition) throw new Error(message);
+    };
+    const body = document.body;
+    const rows = [...document.querySelectorAll('.track-row')];
+    const search = document.querySelector('[data-track-search]');
+    const ready = document.querySelector('[data-action="toggle-ready"]');
+
+    ready.click();
+    assert(ready.getAttribute('aria-pressed') === 'true', 'ready filter did not toggle');
+    assert(rows.filter((row) => !row.hidden).length === 5, 'ready filter count changed');
+
+    search.value = 'no-result';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    assert(body.dataset.scenario === 'search-empty', 'search-empty state did not activate');
+    document.querySelector('[data-action="clear-search"]').click();
+    assert(body.dataset.scenario === 'populated', 'search clear did not restore populated state');
+
+    rows[2].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    assert(document.querySelector('[data-now-title]').textContent === '별빛 리허설', 'double-click did not update playback');
+
+    rows[1].dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }));
+    assert(document.querySelector('[data-now-title]').textContent === '夜明けのアーカイブ', 'keyboard playback did not update');
+    assert(rows[1].getAttribute('aria-current') === 'true', 'playing row state was not exposed');
+
+    document.querySelector('[data-action="open-details"]').click();
+    const dialog = document.querySelector('.details-dialog');
+    assert(dialog.open, 'details dialog did not open');
+    dialog.close('cancel');
+
+    rows[1].querySelector('.row-action').dispatchEvent(
+      new MouseEvent('click', { bubbles: true, clientX: 200, clientY: 200 }),
+    );
+    const menu = document.querySelector('#track-menu');
+    assert(menu.matches(':popover-open'), 'track popover did not open');
+    menu.hidePopover();
+
+    const labWasHidden = body.classList.contains('is-lab-hidden');
+    search.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'h' }));
+    assert(body.classList.contains('is-lab-hidden') === labWasHidden, 'typing H changed lab visibility');
+
+    return true;
+  })()`);
+}
+
+async function verifyZoomReflow(window) {
+  for (const zoomFactor of [1.25, 2]) {
+    window.webContents.setZoomFactor(zoomFactor);
+    await waitForStablePaint(window);
+    const result = await window.webContents.executeJavaScript(`(() => {
+      const root = document.documentElement;
+      const workspace = document.querySelector('.workspace').getBoundingClientRect();
+      const player = document.querySelector('.player-bar').getBoundingClientRect();
+      const trackDocument = document.querySelector('.track-document');
+      return {
+        horizontalOverflow: root.scrollWidth - root.clientWidth,
+        verticalOverflow: root.scrollHeight - root.clientHeight,
+        workspaceRight: workspace.right,
+        playerBottom: player.bottom,
+        viewportWidth: window.innerWidth,
+        viewportHeight: window.innerHeight,
+        trackDocumentHeight: trackDocument.clientHeight,
+      };
+    })()`);
+    if (
+      result.horizontalOverflow > 1 ||
+      result.verticalOverflow > 1 ||
+      result.workspaceRight > result.viewportWidth + 1 ||
+      result.playerBottom > result.viewportHeight + 1 ||
+      result.trackDocumentHeight <= 0
+    ) {
+      throw new Error(
+        `zoom ${zoomFactor} reflow failed: ${JSON.stringify(result)}`,
+      );
+    }
+    console.log(`verified ${zoomFactor * 100}% zoom reflow`);
+  }
+  window.webContents.setZoomFactor(1);
+}
+
+async function captureVariant(variant) {
+  const window = new BrowserWindow({
+    width: variant.width,
+    height: variant.height,
+    useContentSize: true,
+    frame: false,
+    show: false,
+    backgroundColor: variant.theme === 'light' ? '#e8e4dd' : '#191a1e',
+    webPreferences: {
+      backgroundThrottling: false,
+      contextIsolation: true,
+      nodeIntegration: false,
+      paintWhenInitiallyHidden: true,
+      sandbox: true,
+    },
+  });
+
+  const url = new URL(entryUrl.href);
+  url.searchParams.set('clean', '1');
+  url.searchParams.set('theme', variant.theme);
+  url.searchParams.set('density', variant.density);
+  url.searchParams.set('motion', 'reduced');
+  url.searchParams.set('scenario', 'populated');
+
+  await window.loadURL(url.href);
+  window.webContents.setZoomFactor(1);
+  await waitForStablePaint(window);
+  const image = await window.webContents.capturePage();
+  const outputPath = path.join(outputDir, variant.name);
+  fs.writeFileSync(outputPath, image.toPNG());
+  console.log(`captured ${outputPath}`);
+  if (variant === variants[0]) {
+    await verifyInteractions(window);
+    console.log(
+      'verified prototype search, filter, playback, dialog, and popover',
+    );
+  }
+  if (variant.width === 960 && variant.theme === 'light') {
+    await verifyZoomReflow(window);
+  }
+  window.destroy();
+}
+
+app.whenReady().then(async () => {
+  try {
+    fs.mkdirSync(outputDir, { recursive: true });
+    for (const variant of variants) await captureVariant(variant);
+  } catch (error) {
+    console.error(error);
+    process.exitCode = 1;
+  } finally {
+    captureInProgress = false;
+    console.log(`UTAWAKUI_CAPTURE_COMPLETE:${process.exitCode ?? 0}`);
+  }
+});
+
+app.on('window-all-closed', () => {
+  if (!captureInProgress) app.quit();
+});

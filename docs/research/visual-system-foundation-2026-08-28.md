@@ -1,9 +1,10 @@
 # Visual System Foundation
 
 Status: In progress — semantic status colors, the Architectural Slate palette
-relationship, the Controlled Dossier material rules, and the rem-based typography
-hierarchy were selected by the owner on 2026-08-28. Detailed theme values,
-spacing, shape, elevation, and motion remain review candidates.
+relationship, the Controlled Dossier material rules, rem-based typography, and
+the rem-first spacing／density, shape／layering, and motion contracts were selected
+by the owner on 2026-08-28. Detailed theme values, shadow alpha, and prototype
+visible acceptance remain review candidates.
 
 This document records visual-foundation decisions made after the approved
 discovery brief and Studio Library direction. It does not authorize production
@@ -31,12 +32,19 @@ Selected direction:
 - stable sidebar, full-width player bar, and main-filling archive frame;
 - Controlled Dossier folder interior with restrained medium physicality and one
   in-flow note grammar;
-- fixed rem-based product typography with structural narrow-window reflow.
+- fixed rem-based product typography with structural narrow-window reflow;
+- responsibility-based units, a `4px`-equivalent rem spacing scale, and discrete
+  standard／compact density modes;
+- restrained `2／4／6／8px`-equivalent radii, flat archival elevation, and a
+  semantic z-index scale;
+- a display-refresh／60Hz quality target with a measured, constrained 30Hz
+  custom-loop capability that remains separate from reduced motion;
+- restrained `100／140／200／280ms` timing, three purpose-based easing curves,
+  component motion limits, and an OS-authoritative reduced-motion remap.
 
 Still candidate or pending:
 
-- exact theme values and final contrast acceptance;
-- spacing, density, shape, elevation, motion, and reduced-motion details;
+- exact theme values, shadow alpha, and final contrast／visible acceptance;
 - the isolated `1440 × 810` prototype and `960 × 650` reflow;
 - final primitive → semantic → necessary component token freeze and migration.
 
@@ -66,13 +74,18 @@ some token structure. Do not incrementally rewrite the active
 
 Use concise conventional naming by layer:
 
-| Layer       | Pattern                                   | Example                    |
-| ----------- | ----------------------------------------- | -------------------------- |
-| Color value | `--ui-palette-{hue}-{step}`               | `--ui-palette-indigo-400`  |
-| Semantic    | `--ui-{category}-{role}[-{state}]`        | `--ui-color-surface-hover` |
-| Type scale  | `--ui-font-{property}-{step}`             | `--ui-font-size-lg`        |
-| Leading     | `--ui-line-height-{role}`                 | `--ui-line-height-body`    |
-| Component   | `--ui-{component}-{property}[-{variant}]` | `--ui-folder-bg-secondary` |
+| Layer       | Pattern                                   | Example                     |
+| ----------- | ----------------------------------------- | --------------------------- |
+| Color value | `--ui-palette-{hue}-{step}`               | `--ui-palette-indigo-400`   |
+| Semantic    | `--ui-{category}-{role}[-{state}]`        | `--ui-color-surface-hover`  |
+| Type scale  | `--ui-font-{property}-{step}`             | `--ui-font-size-lg`         |
+| Leading     | `--ui-line-height-{role}`                 | `--ui-line-height-body`     |
+| Spacing     | `--ui-space-{step}`                       | `--ui-space-4`              |
+| Radius      | `--ui-radius-{step}`                      | `--ui-radius-md`            |
+| Elevation   | `--ui-shadow-{role}`                      | `--ui-shadow-overlay`       |
+| Stacking    | `--ui-z-{role}`                           | `--ui-z-dialog`             |
+| Motion      | `--ui-motion-{property}-{role}`           | `--ui-motion-duration-fast` |
+| Component   | `--ui-{component}-{property}[-{variant}]` | `--ui-control-height-live`  |
 
 Components must not reference palette primitives directly. Add a component token
 only when a component owns a real reusable override or state contract; otherwise
@@ -229,6 +242,11 @@ The light theme remaps the same primitives instead of inverting the dark theme:
 Light folder materials use `#A5B3D8`, `#E3BCCF`, and `#DED39F`; paper uses
 `#FBFAF7`. This retains the folder relationship without carrying the dark
 theme's visual weight into a light workspace.
+
+Each theme also exposes its matching native control scheme through the semantic
+`--ui-color-scheme` token (`dark` or `light`). The prototype applies that token
+to the document root so scrollbars, form controls, and other Chromium-owned
+surfaces do not retain dark chrome in the official light theme.
 
 Initial contrast checks pass the intended WCAG thresholds:
 
@@ -419,17 +437,313 @@ not be the only carrier of state.
 - Validate both themes at `100%` and `125%` UI scale. Separately verify readable
   reflow at `200%` accessibility zoom.
 
+## Units, Spacing, And Density
+
+The candidate system is **rem-first, not rem-only**. Units follow responsibility
+instead of forcing every value into one notation:
+
+| Responsibility                                                                                     | Unit                        | Contract                                                                                            |
+| -------------------------------------------------------------------------------------------------- | --------------------------- | --------------------------------------------------------------------------------------------------- |
+| Typography, spacing, control／row dimensions, radii, material thickness, and responsive thresholds | `rem`                       | Scales from the shared UI basis and preserves product proportions.                                  |
+| Hairlines, control boundaries, focus outlines, and drag indicators                                 | `px`                        | Represents an exact CSS-pixel optical boundary; device scaling still rasterizes it for the display. |
+| Flexible layout tracks and proportions                                                             | `%`, `fr`, `minmax()`       | Responds to available container space rather than the type scale.                                   |
+| Readable text measure                                                                              | `ch`／`ic`                  | Bounds Latin／CJK line length where content measure matters.                                        |
+| Ruby and locally relative type details                                                             | `em`／`%`                   | Follows the owning text role without creating a new global size.                                    |
+| Line height                                                                                        | unitless                    | Inherits proportionally with the text role.                                                         |
+| Electron window and screen geometry                                                                | DIP numbers                 | Matches Electron's display-independent coordinate system.                                           |
+| Raster assets and canvas backing buffers                                                           | physical pixel calculations | Preserves asset fidelity independently of CSS layout units.                                         |
+
+This follows established web practice: relative units support scalable product
+geometry, while one-pixel optical details remain explicit exceptions. Reference
+[MDN CSS length units](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/Values/length),
+[Electron screen coordinates](https://www.electronjs.org/docs/latest/api/screen/),
+[Bootstrap spacing](https://getbootstrap.com/docs/5.3/utilities/spacing/), and
+[Tailwind responsive design](https://tailwindcss.com/docs/responsive-design).
+
+### Base Spacing Scale
+
+Use a compact numeric base scale derived from `0.25rem`, normally `4` DIP at the
+default root:
+
+| Token          | Value     | Default-root equivalent |
+| -------------- | --------- | ----------------------- |
+| `--ui-space-0` | `0`       | `0`                     |
+| `--ui-space-1` | `0.25rem` | `4` DIP                 |
+| `--ui-space-2` | `0.5rem`  | `8` DIP                 |
+| `--ui-space-3` | `0.75rem` | `12` DIP                |
+| `--ui-space-4` | `1rem`    | `16` DIP                |
+| `--ui-space-5` | `1.5rem`  | `24` DIP                |
+| `--ui-space-6` | `2rem`    | `32` DIP                |
+| `--ui-space-7` | `3rem`    | `48` DIP                |
+| `--ui-space-8` | `4rem`    | `64` DIP                |
+
+Numeric spacing tokens are primitives, not semantic aliases. Components should
+consume them directly unless a reusable component contract must remap by density.
+Do not add aliases such as `small`, `medium`, `comfortable`, or page-specific gap
+names that merely repeat the scale. A component token is justified when it owns a
+stable dimension, safety floor, or a standard／compact override.
+
+### Density Contract
+
+Density is a discrete mode, selected with
+`data-ui-density='standard'|'compact'`; it is not a global multiplier. Compact
+density preserves the approved type ramp, Live／emergency target floors, focus
+geometry, and dossier material identity. It reduces routine padding, row height,
+and simultaneous information cost:
+
+| Contract                | Standard  | Compact   |
+| ----------------------- | --------- | --------- |
+| Ordinary control height | `2.25rem` | `2rem`    |
+| Live action target      | `2.75rem` | `2.75rem` |
+| Emergency action target | `3rem`    | `3rem`    |
+| Track row minimum       | `3.25rem` | `2.75rem` |
+| Sidebar row minimum     | `3.25rem` | `3rem`    |
+| Track artwork           | `2.5rem`  | `2.25rem` |
+| List header             | `2.25rem` | `2rem`    |
+| Player bar              | `4.75rem` | `4.25rem` |
+| Panel inset             | `1rem`    | `0.75rem` |
+| Shell gutter            | `0.75rem` | `0.5rem`  |
+
+The Controlled Dossier keeps a `0.25rem` material perimeter and `2.5rem`／
+`2.75rem` inactive／active tab heights in both modes. At `1440 × 810` DIP,
+standard is the default working density. At `960 × 650` DIP, compact density may
+be selected as part of the narrow workspace composition, but it does not replace
+the structural reflow rules: the sidebar becomes an approximately `4.5rem` rail,
+the metadata rail becomes a summary or disclosure, low-priority columns leave the
+table, and secondary tools move to popovers.
+
+Exact optical tokens stay outside the rem scale: persistent boundaries use
+`1px`, while focus and drag indicators use `2px`. These values describe CSS
+pixels, not unmanaged physical display pixels.
+
+## Shape, Elevation, And Layering
+
+The control panel uses restrained geometry and **flat archival** depth. Shape
+clarifies the boundary of a control or object; it does not turn every region into
+a floating card. Elevation communicates actual overlap or a temporary lifted
+state and is not decoration.
+
+### Shape Scale
+
+| Token              | Value      | Intended role                                       |
+| ------------------ | ---------- | --------------------------------------------------- |
+| `--ui-radius-xs`   | `0.125rem` | Tight micro-surfaces and narrow tracks.             |
+| `--ui-radius-sm`   | `0.25rem`  | Rows, thumbnails, fields, and exposed paper edges.  |
+| `--ui-radius-md`   | `0.375rem` | Buttons, tabs, controls, and note modules.          |
+| `--ui-radius-lg`   | `0.5rem`   | Popovers, dialogs, and bounded floating panels.     |
+| `--ui-radius-pill` | `999rem`   | Chips, status capsules, and circular variants only. |
+
+Use literal `0` for structural seams instead of adding a `radius-none` token.
+Shell chrome, sidebar／player boundaries, dossier planes, and adjoining table
+edges stay square unless an exposed outer edge needs `sm`. Do not keep an
+unqualified `--ui-radius`; explicit size names make mappings reviewable and avoid
+the active contract's `radius`／`radius-md` ambiguity. Pill geometry must not
+spread to ordinary buttons, fields, panels, or rows.
+
+### Elevation Contract
+
+| Level      | Token                 | Use                                                        |
+| ---------- | --------------------- | ---------------------------------------------------------- |
+| Structural | none                  | Shell, sidebar, player, dossier frame, rows, and controls. |
+| Contact    | `--ui-shadow-contact` | An exposed light paper edge or deliberately lifted object. |
+| Overlay    | `--ui-shadow-overlay` | Menus, popovers, tooltips, and drag previews.              |
+| Dialog     | `--ui-shadow-dialog`  | Modal or otherwise blocking task surfaces.                 |
+
+Dark dossier surfaces use no contact shadow; contour, surface tone, and the
+accepted material perimeter carry their structure. The light paper plane may use
+one quiet contact shadow. Static panels, rows, ordinary buttons, selected states,
+and hover states do not acquire shadows. Every floating surface keeps a `1px`
+contour so its boundary remains legible when a shadow is weak or unavailable.
+
+The initial theme candidates are:
+
+| Token                 | Dark candidate                        | Light candidate                           |
+| --------------------- | ------------------------------------- | ----------------------------------------- |
+| `--ui-shadow-contact` | `none`                                | `0 0.125rem 0.375rem rgb(39 41 40 / 10%)` |
+| `--ui-shadow-overlay` | `0 0.75rem 1.875rem rgb(0 0 0 / 32%)` | `0 0.75rem 1.875rem rgb(39 41 40 / 18%)`  |
+| `--ui-shadow-dialog`  | `0 1rem 2.5rem rgb(0 0 0 / 42%)`      | `0 1rem 2.5rem rgb(39 41 40 / 24%)`       |
+
+The relationship and usage are selected; alpha and blur remain candidates until
+both themes are reviewed in the isolated workspace. Do not add card, hover, or
+component-specific shadow aliases unless a future component owns a distinct
+reusable elevation contract.
+
+### Stacking Contract
+
+Global overlap uses semantic layers rather than component names or arbitrary
+large values:
+
+| Token             | Value | Responsibility                                  |
+| ----------------- | ----- | ----------------------------------------------- |
+| `--ui-z-sticky`   | `10`  | Sticky shell or content chrome.                 |
+| `--ui-z-popover`  | `20`  | Menus, context menus, and nonblocking popovers. |
+| `--ui-z-backdrop` | `30`  | Dialog backdrop and interaction boundary.       |
+| `--ui-z-dialog`   | `40`  | Modal dialog or blocking task surface.          |
+| `--ui-z-toast`    | `50`  | Global transient notices.                       |
+| `--ui-z-tooltip`  | `60`  | Short-lived explanatory overlays.               |
+| `--ui-z-drag`     | `70`  | Active drag preview and drop affordance.        |
+
+Within one component or established stacking context, use local `0`／`1`／`2`
+values and DOM order; do not allocate global tokens for internal ornament. Global
+popover, dialog, notice, tooltip, and drag surfaces must mount in a top-level
+layer host outside clipped scroll containers and transformed, filtered, or
+isolated ancestors. A large z-index cannot escape an ancestor stacking context.
+
+Visible elevation and stacking order are separate contracts: not every high
+z-index surface needs the strongest shadow, and a material contact shadow does
+not authorize global overlap. Set the correct layer before the first rendered
+frame and never animate z-index. OBS Overlay retains its independent `--ovl-*`
+stacking and motion rules.
+
+## Motion Performance Boundary
+
+The control panel targets display-refresh animation with `60Hz` as the quality
+reference, not as an application-owned frame-rate setting. A nominal `60Hz`
+frame provides approximately `16.67ms`; motion should therefore prefer compositor
+friendly `transform` and `opacity` changes, avoid layout work inside animation
+loops, and never animate blur, backdrop filters, ordinary filters, or shadows.
+
+Keep a constrained `30Hz` capability for future custom JavaScript or canvas loops.
+This is an implementation boundary, not a global CSS FPS token or a second set of
+interaction durations:
+
+- Standard motion follows the display refresh and retains the full set of
+  approved, purposeful transitions.
+- Constrained motion keeps the same interaction durations and response semantics,
+  but disables nonessential continuous previews and loops. Gallery material stays
+  static except for a selected preview; marquee content truncates or runs once
+  instead of looping indefinitely.
+- A future custom loop may use `requestAnimationFrame` timestamps to cap work near
+  `33.33ms` intervals. CSS transitions remain refresh-driven; do not simulate a
+  global 30fps mode with stepped easing or duplicated duration tokens.
+- `prefers-reduced-motion` is an accessibility preference, not a performance
+  detector. Reduced motion takes precedence when it is combined with the
+  constrained profile.
+- OBS Browser Source output keeps its independent Overlay contract and uses the
+  Browser Source custom FPS setting when a 30fps Output is required. The control
+  panel must not infer or mirror that rate.
+
+Do not automatically select the constrained profile, or expose it as a product
+setting, until the isolated prototype and OBS matrix demonstrate a repeatable
+need. `@media (update: slow)`, `navigator.hardwareConcurrency`, and
+`navigator.deviceMemory` do not measure current renderer load and must not be used
+as automatic fallbacks. If later evidence supports automatic switching, base the
+decision on sustained frame pacing with hysteresis and a reversible recovery path,
+not one device-class hint.
+
+The prototype performance matrix must include `1440 × 810` and `960 × 650`, the
+current host and a representative integrated-GPU system, OBS at `1080p60`, and
+Browser Source at both `60` and `30` FPS. Exercise Gallery preview, popover／dialog
+entry, dossier scrolling, and representative static states. Record animation-frame
+pacing, Chromium performance traces and Long Animation Frames, renderer CPU／GPU
+load, and OBS rendering lag before deciding whether a user-facing performance
+profile or runtime fallback is justified.
+
+References: [Electron performance guidance](https://www.electronjs.org/docs/latest/tutorial/performance),
+[Electron 43／Chromium 150](https://www.electronjs.org/blog/electron-43-0),
+[MDN `requestAnimationFrame`](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame),
+[MDN `update`](https://developer.mozilla.org/en-US/docs/Web/CSS/Reference/At-rules/%40media/update),
+[Chrome Long Animation Frames](https://developer.chrome.com/docs/web-platform/long-animation-frames),
+[web.dev animation performance](https://web.dev/articles/animations-overview),
+[OBS Browser Source](https://obsproject.com/kb/browser-source), and
+[OBS performance troubleshooting](https://obsproject.com/kb/encoding-performance-troubleshooting).
+
+## Motion Timing And Behavior
+
+Motion is restrained, responsive, and operational. It explains state change or
+spatial relationship; it does not add atmosphere to static dossier material.
+The shared semantic timing tokens are:
+
+| Token                           | Value                            | Responsibility                                      |
+| ------------------------------- | -------------------------------- | --------------------------------------------------- |
+| `--ui-motion-duration-feedback` | `100ms`                          | Color, contour, press, and necessary reduced fades. |
+| `--ui-motion-duration-fast`     | `140ms`                          | Selection changes and compact exits.                |
+| `--ui-motion-duration-standard` | `200ms`                          | Ordinary disclosure and spatial continuity.         |
+| `--ui-motion-duration-slow`     | `280ms`                          | Blocking-surface entry only.                        |
+| `--ui-motion-easing-standard`   | `cubic-bezier(0.2, 0, 0, 1)`     | State changes and spatial continuity.               |
+| `--ui-motion-easing-enter`      | `cubic-bezier(0.22, 1, 0.36, 1)` | Decelerating entry.                                 |
+| `--ui-motion-easing-exit`       | `cubic-bezier(0.4, 0, 1, 1)`     | Accelerating exit.                                  |
+
+These are purpose-based cross-component tokens. Do not duplicate them as button,
+popover, or dialog aliases unless a component later proves it owns a different
+reusable timing contract. Exit normally uses the next shorter duration; do not
+multiply every duration or add numeric aliases such as `duration-1`.
+
+### Component Mapping
+
+| Pattern              | Mapping                                                                                           |
+| -------------------- | ------------------------------------------------------------------------------------------------- |
+| Hover／focus／press  | `feedback` with color／contour only; Live and emergency controls do not scale.                    |
+| Tab／selection       | `fast`; no page-load choreography or dossier-height animation.                                    |
+| Popover              | enter `standard`, exit `fast`; opacity plus `0.125rem` to `0.25rem` transform.                    |
+| Dialog               | enter `slow`, exit `standard`; backdrop fades while focus and input become available immediately. |
+| List insert／reorder | `standard` transform／FLIP; no mass stagger.                                                      |
+| Status change        | `feedback` opacity／color; Live status never pulses continuously.                                 |
+
+Do not animate blur, `filter`, `backdrop-filter`, box shadow, z-index, or layout
+height. Tabs and dossier sections change geometry immediately or preserve it with
+a transform／pseudo-layer. Use bounce, elastic easing, looping marquee, decorative
+spin, and large stagger only if a later product contract establishes an essential
+meaning; they are not part of this foundation.
+
+### Reduced Motion
+
+`prefers-reduced-motion: reduce` is authoritative. A future manual preference may
+reduce motion further but cannot force full motion against the OS preference. The
+candidate `data-ui-motion='reduced'` hook exists only for the isolated prototype
+and future explicit product review; it is not activated in the production UI.
+
+Reduced motion remaps `fast`, `standard`, and `slow` to `0ms`. The `feedback`
+token remains `100ms` so an essential opacity or color confirmation can stay
+perceivable. Components must also remove translate, scale, FLIP, stagger, marquee,
+pulse, and nonessential spin; changing duration alone is insufficient. Content,
+focus, progress meaning, and state labels remain immediately available, with a
+static text／icon alternative whenever removing movement would otherwise hide
+meaning. Reduced motion takes precedence over the constrained performance profile.
+
 Review artifact:
 [Controlled Dossier dark／light folder interior](architectural-slate-folder-interior.png).
 
 Inactive candidate source:
 [`src/styles/tokens-v2.css`](../../src/styles/tokens-v2.css).
 
+### Isolated Workspace Prototype Snapshot
+
+The first high-completion workspace prototype now lives under
+`prototypes/studio-library-workspace/`. It is plain HTML／CSS／JavaScript and is
+not a renderer entry point. It imports only the inactive candidate token file;
+production Vue entries, the active renderer token contract, preload APIs, and
+Overlay remain untouched.
+
+The prototype exercises the approved titlebar, library／playlist sidebar,
+full-width PlayerBar, Controlled Dossier header, horizontal／vertical metadata
+rail, note module, multilingual track table, static state matrix, popover, dialog,
+theme, density, and reduced-motion controls. Clean reference captures cover dark
+and light themes at both `1440 × 810` and `960 × 650`.
+
+Automated prototype verification currently proves:
+
+- populated, loading, empty, search-empty, warning, and error state availability;
+- search, ready filtering, mouse and keyboard playback, dialog, and popover paths;
+- narrow sidebar accessible names and synchronized selection／playing ARIA state;
+- structural reflow at `960 × 650`, `125%`, and `200%` zoom without page-level
+  horizontal or vertical overflow;
+- native dark／light `color-scheme`, OS and manual reduced-motion paths, and
+  essential semantic text pairs at WCAG AA;
+- a complete candidate graph of `212` unique token names after the shared-component
+  foundation expansion, with no unresolved references and no production-source
+  reference to `tokens-v2.css`.
+
+This is visual-system evidence, not a production contract. Owner review of the
+material weight, metadata rail, note prominence, density, and multilingual
+hierarchy remains required. Integrated-GPU／OBS frame-pacing evidence and the
+production migration plan remain later work.
+
 ### Next Decisions
 
-1. Define spacing, density, shape, elevation, and motion foundations.
-2. Validate the combined foundations and Clear Pastel statuses inside
-   representative operator components and a `1440 × 810` workspace composition.
-3. Validate the `960 × 650` structural reflow and `100%`／`125%` UI-scale matrix.
-4. After high-completion visual acceptance, freeze the primitive → semantic →
+1. Review the four clean prototype captures and confirm the Controlled Dossier
+   material weight, metadata rail, note module, density, and information hierarchy.
+2. Run the later integrated-GPU／OBS performance matrix before deciding whether a
+   constrained profile needs product exposure.
+3. After high-completion owner acceptance, freeze the primitive → semantic →
    necessary component contract and plan the production migration.

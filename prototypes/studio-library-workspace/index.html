@@ -1,0 +1,818 @@
+<!doctype html>
+<html
+  lang="zh-Hant"
+  data-ui-system="v2"
+  data-ui-theme="dark"
+  data-ui-density="standard"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self' file:; style-src 'self' 'unsafe-inline' file:; script-src 'self' file:"
+    />
+    <title>Utawakui Studio Library Prototype</title>
+    <link rel="stylesheet" href="../../src/styles/tokens-v2.css" />
+    <link rel="stylesheet" href="./prototype.css" />
+    <script src="./prototype.js" defer></script>
+  </head>
+  <body data-scenario="populated">
+    <svg class="svg-definitions" aria-hidden="true">
+      <symbol id="icon-library" viewBox="0 0 24 24">
+        <path d="M4 5.5h16v13H4z" />
+        <path d="M8 5.5v13M16 5.5v13M4 10h16" />
+      </symbol>
+      <symbol id="icon-music" viewBox="0 0 24 24">
+        <path d="M9 18V5l10-2v13" />
+        <circle cx="6" cy="18" r="3" />
+        <circle cx="16" cy="16" r="3" />
+      </symbol>
+      <symbol id="icon-search" viewBox="0 0 24 24">
+        <circle cx="11" cy="11" r="6.5" />
+        <path d="m16 16 4 4" />
+      </symbol>
+      <symbol id="icon-play" viewBox="0 0 24 24">
+        <path d="m8 5 11 7-11 7z" />
+      </symbol>
+      <symbol id="icon-pause" viewBox="0 0 24 24">
+        <path d="M8 5v14M16 5v14" />
+      </symbol>
+      <symbol id="icon-skip-back" viewBox="0 0 24 24">
+        <path d="M6 5v14M18 6l-9 6 9 6z" />
+      </symbol>
+      <symbol id="icon-skip-forward" viewBox="0 0 24 24">
+        <path d="M18 5v14M6 6l9 6-9 6z" />
+      </symbol>
+      <symbol id="icon-shuffle" viewBox="0 0 24 24">
+        <path d="M4 7h3c4 0 6 10 10 10h3" />
+        <path
+          d="m17 14 3 3-3 3M4 17h3c1.5 0 2.7-1.2 3.8-2.8M14 8.6C15 7.6 16 7 17 7h3"
+        />
+        <path d="m17 4 3 3-3 3" />
+      </symbol>
+      <symbol id="icon-repeat" viewBox="0 0 24 24">
+        <path d="m17 2 4 4-4 4" />
+        <path d="M3 11V9a3 3 0 0 1 3-3h15M7 22l-4-4 4-4" />
+        <path d="M21 13v2a3 3 0 0 1-3 3H3" />
+      </symbol>
+      <symbol id="icon-more" viewBox="0 0 24 24">
+        <circle cx="5" cy="12" r="1" />
+        <circle cx="12" cy="12" r="1" />
+        <circle cx="19" cy="12" r="1" />
+      </symbol>
+      <symbol id="icon-check" viewBox="0 0 24 24">
+        <path d="m5 12 4 4L19 6" />
+      </symbol>
+      <symbol id="icon-alert" viewBox="0 0 24 24">
+        <path d="M12 3 2.5 20h19z" />
+        <path d="M12 9v4M12 17h.01" />
+      </symbol>
+      <symbol id="icon-info" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 11v6M12 7h.01" />
+      </symbol>
+      <symbol id="icon-settings" viewBox="0 0 24 24">
+        <circle cx="12" cy="12" r="3" />
+        <path
+          d="M19 13.5v-3l-2.2-.7-.7-1.6L17.2 6 15 3.8l-2.2 1.1-1.6-.7L10.5 2h-3l-.7 2.2-1.6.7L3 3.8.8 6l1.1 2.2-.7 1.6-2.2.7v3l2.2.7.7 1.6L.8 18 3 20.2l2.2-1.1 1.6.7.7 2.2h3l.7-2.2 1.6-.7 2.2 1.1L17.2 18l-1.1-2.2.7-1.6z"
+          transform="translate(2) scale(.83)"
+        />
+      </symbol>
+      <symbol id="icon-volume" viewBox="0 0 24 24">
+        <path
+          d="M11 5 6.5 9H3v6h3.5l4.5 4zM15 9a4 4 0 0 1 0 6M18 6a8 8 0 0 1 0 12"
+        />
+      </symbol>
+      <symbol id="icon-list" viewBox="0 0 24 24">
+        <path d="M9 6h11M9 12h11M9 18h11" />
+        <circle cx="4" cy="6" r="1" />
+        <circle cx="4" cy="12" r="1" />
+        <circle cx="4" cy="18" r="1" />
+      </symbol>
+    </svg>
+
+    <aside class="prototype-lab" aria-label="Prototype 檢視工具">
+      <div class="prototype-lab__heading">
+        <strong>Workspace Lab</strong>
+        <button type="button" class="lab-hide" data-action="hide-lab">
+          隱藏
+        </button>
+      </div>
+      <label>
+        Theme
+        <select data-control="theme">
+          <option value="dark">Dark</option>
+          <option value="light">Light</option>
+        </select>
+      </label>
+      <label>
+        Density
+        <select data-control="density">
+          <option value="standard">Standard</option>
+          <option value="compact">Compact</option>
+        </select>
+      </label>
+      <label>
+        Motion
+        <select data-control="motion">
+          <option value="default">Default</option>
+          <option value="reduced">Reduced</option>
+        </select>
+      </label>
+      <label>
+        State
+        <select data-control="scenario">
+          <option value="populated">Populated</option>
+          <option value="loading">Loading</option>
+          <option value="empty">Empty</option>
+          <option value="search-empty">Search empty</option>
+          <option value="warning">Warning</option>
+          <option value="error">Error</option>
+        </select>
+      </label>
+    </aside>
+    <button type="button" class="lab-show" data-action="show-lab">
+      顯示檢視工具
+    </button>
+
+    <div class="app-shell">
+      <header class="titlebar">
+        <div class="titlebar__brand">
+          <span class="app-mark" aria-hidden="true">
+            <svg><use href="#icon-music"></use></svg>
+          </span>
+          <span>Utawakui</span>
+        </div>
+        <div class="titlebar__context">Studio Library Prototype</div>
+        <div class="window-controls" aria-hidden="true">
+          <span>—</span><span>□</span><span>×</span>
+        </div>
+      </header>
+
+      <nav class="sidebar" aria-label="本機曲庫與播放清單">
+        <div class="sidebar__section sidebar__section--library">
+          <h2>曲庫</h2>
+          <button
+            type="button"
+            class="sidebar-row"
+            aria-label="全部曲目，42 首"
+            data-library="全部曲目"
+          >
+            <span class="sidebar-row__icon"
+              ><svg><use href="#icon-library"></use></svg
+            ></span>
+            <span class="sidebar-row__copy"
+              ><strong>全部曲目</strong><small>42 首</small></span
+            >
+          </button>
+          <button
+            type="button"
+            class="sidebar-row"
+            aria-label="本機曲目，36 首"
+            data-library="本機曲目"
+          >
+            <span class="sidebar-row__icon"
+              ><svg><use href="#icon-music"></use></svg
+            ></span>
+            <span class="sidebar-row__copy"
+              ><strong>本機曲目</strong><small>36 首</small></span
+            >
+          </button>
+        </div>
+
+        <div class="sidebar__section sidebar__section--playlists">
+          <div class="sidebar__section-title">
+            <h2>播放清單</h2>
+            <button
+              type="button"
+              class="icon-button sidebar-add"
+              aria-label="建立播放清單"
+            >
+              ＋
+            </button>
+          </div>
+          <button
+            type="button"
+            class="playlist-row is-active"
+            aria-label="夜航歌回播放清單，8 首"
+            aria-current="page"
+            data-playlist="夜航歌回"
+            data-meta="8 首曲目 · 約 31 分鐘"
+          >
+            <span class="cover cover--indigo"><span>夜</span></span>
+            <span class="playlist-row__copy"
+              ><strong>夜航歌回</strong><small>播放清單 · 8 首</small></span
+            >
+          </button>
+          <button
+            type="button"
+            class="playlist-row"
+            aria-label="練唱備忘播放清單，12 首"
+            data-playlist="練唱備忘"
+            data-meta="12 首曲目 · 約 48 分鐘"
+          >
+            <span class="cover cover--plum"><span>練</span></span>
+            <span class="playlist-row__copy"
+              ><strong>練唱備忘</strong><small>播放清單 · 12 首</small></span
+            >
+          </button>
+          <button
+            type="button"
+            class="playlist-row"
+            aria-label="Acoustic Set 播放清單，6 首"
+            data-playlist="Acoustic Set"
+            data-lang="en"
+            data-meta="6 首曲目 · 約 24 分鐘"
+          >
+            <span class="cover cover--olive"><span lang="en">A</span></span>
+            <span class="playlist-row__copy"
+              ><strong lang="en">Acoustic Set</strong
+              ><small>播放清單 · 6 首</small></span
+            >
+          </button>
+          <button
+            type="button"
+            class="playlist-row"
+            aria-label="새벽 리허설 播放清單，9 首"
+            data-playlist="새벽 리허설"
+            data-meta="9 首曲目 · 約 36 分鐘"
+            data-lang="ko"
+          >
+            <span class="cover cover--paper"><span lang="ko">새</span></span>
+            <span class="playlist-row__copy"
+              ><strong lang="ko">새벽 리허설</strong
+              ><small>播放清單 · 9 首</small></span
+            >
+          </button>
+        </div>
+
+        <button type="button" class="sidebar-settings" aria-label="設定">
+          <svg><use href="#icon-settings"></use></svg>
+          <span>設定</span>
+        </button>
+      </nav>
+
+      <main class="workspace">
+        <nav class="folder-tabs" aria-label="主要工作區">
+          <span class="folder-tab folder-tab--primary" aria-current="page"
+            >Setlist</span
+          >
+          <span class="folder-tab folder-tab--secondary">Lyrics</span>
+          <span class="folder-tab folder-tab--tertiary">Output</span>
+          <span class="folder-tab folder-tab--neutral">Import</span>
+        </nav>
+
+        <section class="dossier" aria-labelledby="workspace-title">
+          <header class="dossier-header">
+            <div class="dossier-header__identity">
+              <div class="cover cover--hero"><span>夜</span></div>
+              <div>
+                <p class="dossier-kicker">本機播放清單</p>
+                <h1 id="workspace-title">夜航歌回</h1>
+                <p class="dossier-summary">
+                  8 首曲目 · 約 31 分鐘 · 上次整理於今天 18:40
+                </p>
+              </div>
+            </div>
+            <div class="dossier-header__actions">
+              <span class="status-chip status-chip--success">
+                <svg><use href="#icon-check"></use></svg>可播放
+              </span>
+              <button
+                type="button"
+                class="button button--secondary"
+                data-action="open-details"
+              >
+                詳細資料
+              </button>
+              <button
+                type="button"
+                class="button button--primary"
+                data-action="play-playlist"
+              >
+                <svg><use href="#icon-play"></use></svg><span>播放</span>
+              </button>
+            </div>
+          </header>
+
+          <div class="scenario-notice scenario-notice--warning" role="status">
+            <svg><use href="#icon-alert"></use></svg>
+            <div>
+              <strong>有 1 首曲目需要確認</strong
+              ><span
+                >「<span lang="ko">별빛 리허설</span
+                >」尚未設定歌詞來源，但仍可正常播放。</span
+              >
+            </div>
+            <button type="button" class="button button--secondary">
+              查看曲目
+            </button>
+          </div>
+          <div class="scenario-notice scenario-notice--error" role="alert">
+            <svg><use href="#icon-alert"></use></svg>
+            <div>
+              <strong>曲庫更新未完成</strong
+              ><span>目前無法讀取一個本機檔案；其他 7 首曲目仍可使用。</span>
+            </div>
+            <button type="button" class="button button--secondary">
+              重新整理
+            </button>
+          </div>
+
+          <div class="dossier-body">
+            <section class="track-document" aria-label="播放清單曲目">
+              <div class="document-toolbar">
+                <label class="search-box">
+                  <svg><use href="#icon-search"></use></svg>
+                  <span class="visually-hidden">搜尋曲目</span>
+                  <input
+                    type="search"
+                    data-track-search
+                    placeholder="搜尋曲目或演出者"
+                  />
+                </label>
+                <div class="toolbar-actions">
+                  <button
+                    type="button"
+                    class="button button--quiet"
+                    aria-pressed="false"
+                    data-action="toggle-ready"
+                  >
+                    只顯示已就緒
+                  </button>
+                  <button
+                    type="button"
+                    class="icon-button"
+                    aria-label="曲目排序"
+                  >
+                    <svg><use href="#icon-list"></use></svg>
+                  </button>
+                </div>
+              </div>
+
+              <div class="note-module">
+                <svg><use href="#icon-info"></use></svg>
+                <p>
+                  <strong>播放規則</strong
+                  ><span
+                    >待機音樂不會取代目前公開曲目；此 demo 不連接 Output
+                    runtime。</span
+                  >
+                </p>
+              </div>
+
+              <div
+                class="track-table track-table--populated"
+                aria-label="夜航歌回曲目"
+                role="list"
+              >
+                <div class="track-table__header" aria-hidden="true">
+                  <span>#</span>
+                  <span>曲目</span>
+                  <span>準備狀態</span>
+                  <span class="column-source">來源</span>
+                  <span class="column-duration">時間</span>
+                  <span></span>
+                </div>
+
+                <div
+                  class="track-row is-playing"
+                  role="listitem"
+                  tabindex="0"
+                  aria-current="true"
+                  aria-label="玻璃海岸，正在播放"
+                  data-title="玻璃海岸"
+                  data-ready="true"
+                >
+                  <span class="track-index"
+                    ><span class="row-number">1</span
+                    ><svg class="row-playing">
+                      <use href="#icon-volume"></use></svg
+                  ></span>
+                  <span class="track-identity"
+                    ><span class="cover cover--track cover--indigo"
+                      ><span>玻</span></span
+                    ><span
+                      ><strong>玻璃海岸</strong
+                      ><small>林澄 · Glass Coast</small></span
+                    ></span
+                  >
+                  <span
+                    ><span class="status-label status-label--success"
+                      ><i></i>已就緒</span
+                    ></span
+                  >
+                  <span class="column-source">本機 FLAC</span>
+                  <span class="column-duration">4:12</span>
+                  <span
+                    ><button
+                      type="button"
+                      class="row-action"
+                      aria-label="玻璃海岸更多選項"
+                      aria-expanded="false"
+                      aria-controls="track-menu"
+                    >
+                      <svg><use href="#icon-more"></use></svg></button
+                  ></span>
+                </div>
+
+                <div
+                  class="track-row is-selected"
+                  role="listitem"
+                  tabindex="0"
+                  aria-label="夜明けのアーカイブ，已選取"
+                  data-title="夜明けのアーカイブ"
+                  data-lang="ja"
+                  data-ready="true"
+                >
+                  <span class="track-index"
+                    ><span class="row-number">2</span
+                    ><svg class="row-playing">
+                      <use href="#icon-volume"></use></svg
+                  ></span>
+                  <span class="track-identity"
+                    ><span class="cover cover--track cover--plum"
+                      ><span lang="ja">夜</span></span
+                    ><span
+                      ><strong lang="ja">夜明けのアーカイブ</strong
+                      ><small lang="en">Aoi Naruse</small></span
+                    ></span
+                  >
+                  <span
+                    ><span class="status-label status-label--info"
+                      ><i></i>歌詞同步</span
+                    ></span
+                  >
+                  <span class="column-source">本機 WAV</span>
+                  <span class="column-duration">3:48</span>
+                  <span
+                    ><button
+                      type="button"
+                      class="row-action"
+                      aria-label="夜明けのアーカイブ更多選項"
+                      aria-expanded="false"
+                      aria-controls="track-menu"
+                    >
+                      <svg><use href="#icon-more"></use></svg></button
+                  ></span>
+                </div>
+
+                <div
+                  class="track-row"
+                  role="listitem"
+                  tabindex="0"
+                  aria-label="별빛 리허설"
+                  data-title="별빛 리허설"
+                  data-lang="ko"
+                  data-ready="false"
+                >
+                  <span class="track-index"
+                    ><span class="row-number">3</span
+                    ><svg class="row-playing">
+                      <use href="#icon-volume"></use></svg
+                  ></span>
+                  <span class="track-identity"
+                    ><span class="cover cover--track cover--olive"
+                      ><span lang="ko">별</span></span
+                    ><span
+                      ><strong lang="ko">별빛 리허설</strong
+                      ><small lang="en">Haneul Project</small></span
+                    ></span
+                  >
+                  <span
+                    ><span class="status-label status-label--warning"
+                      ><i></i>需確認</span
+                    ></span
+                  >
+                  <span class="column-source">本機 MP3</span>
+                  <span class="column-duration">4:05</span>
+                  <span
+                    ><button
+                      type="button"
+                      class="row-action"
+                      aria-label="별빛 리허설 更多選項"
+                      aria-expanded="false"
+                      aria-controls="track-menu"
+                    >
+                      <svg><use href="#icon-more"></use></svg></button
+                  ></span>
+                </div>
+
+                <div
+                  class="track-row"
+                  role="listitem"
+                  tabindex="0"
+                  aria-label="Paper Satellites"
+                  data-title="Paper Satellites"
+                  data-lang="en"
+                  data-ready="true"
+                >
+                  <span class="track-index"
+                    ><span class="row-number">4</span
+                    ><svg class="row-playing">
+                      <use href="#icon-volume"></use></svg
+                  ></span>
+                  <span class="track-identity"
+                    ><span class="cover cover--track cover--paper"
+                      ><span>P</span></span
+                    ><span
+                      ><strong lang="en">Paper Satellites</strong
+                      ><small lang="en">North Window</small></span
+                    ></span
+                  >
+                  <span
+                    ><span class="status-label status-label--success"
+                      ><i></i>已就緒</span
+                    ></span
+                  >
+                  <span class="column-source">本機 FLAC</span>
+                  <span class="column-duration">3:36</span>
+                  <span
+                    ><button
+                      type="button"
+                      class="row-action"
+                      aria-label="Paper Satellites 更多選項"
+                      aria-expanded="false"
+                      aria-controls="track-menu"
+                    >
+                      <svg><use href="#icon-more"></use></svg></button
+                  ></span>
+                </div>
+
+                <div
+                  class="track-row"
+                  role="listitem"
+                  tabindex="0"
+                  aria-label="雨聲裡的練習"
+                  data-title="雨聲裡的練習"
+                  data-ready="true"
+                >
+                  <span class="track-index"
+                    ><span class="row-number">5</span
+                    ><svg class="row-playing">
+                      <use href="#icon-volume"></use></svg
+                  ></span>
+                  <span class="track-identity"
+                    ><span class="cover cover--track cover--indigo"
+                      ><span>雨</span></span
+                    ><span
+                      ><strong>雨聲裡的練習</strong><small>周以沫</small></span
+                    ></span
+                  >
+                  <span
+                    ><span class="status-label status-label--neutral"
+                      ><i></i>僅音訊</span
+                    ></span
+                  >
+                  <span class="column-source">本機 WAV</span>
+                  <span class="column-duration">4:27</span>
+                  <span
+                    ><button
+                      type="button"
+                      class="row-action"
+                      aria-label="雨聲裡的練習更多選項"
+                      aria-expanded="false"
+                      aria-controls="track-menu"
+                    >
+                      <svg><use href="#icon-more"></use></svg></button
+                  ></span>
+                </div>
+
+                <div
+                  class="track-row"
+                  role="listitem"
+                  tabindex="0"
+                  aria-label="Midnight Notes — Acoustic"
+                  data-title="Midnight Notes — Acoustic"
+                  data-lang="en"
+                  data-ready="true"
+                >
+                  <span class="track-index"
+                    ><span class="row-number">6</span
+                    ><svg class="row-playing">
+                      <use href="#icon-volume"></use></svg
+                  ></span>
+                  <span class="track-identity"
+                    ><span class="cover cover--track cover--plum"
+                      ><span>M</span></span
+                    ><span
+                      ><strong lang="en">Midnight Notes — Acoustic</strong
+                      ><small lang="en">Elena Rowe</small></span
+                    ></span
+                  >
+                  <span
+                    ><span class="status-label status-label--success"
+                      ><i></i>已就緒</span
+                    ></span
+                  >
+                  <span class="column-source">本機 FLAC</span>
+                  <span class="column-duration">5:01</span>
+                  <span
+                    ><button
+                      type="button"
+                      class="row-action"
+                      aria-label="Midnight Notes — Acoustic 更多選項"
+                      aria-expanded="false"
+                      aria-controls="track-menu"
+                    >
+                      <svg><use href="#icon-more"></use></svg></button
+                  ></span>
+                </div>
+              </div>
+
+              <div
+                class="track-table track-table--loading"
+                aria-label="正在載入曲目"
+                aria-busy="true"
+              >
+                <div class="skeleton-row"><i></i><span></span><em></em></div>
+                <div class="skeleton-row"><i></i><span></span><em></em></div>
+                <div class="skeleton-row"><i></i><span></span><em></em></div>
+                <div class="skeleton-row"><i></i><span></span><em></em></div>
+                <div class="skeleton-row"><i></i><span></span><em></em></div>
+              </div>
+
+              <div class="empty-state empty-state--empty">
+                <svg><use href="#icon-music"></use></svg>
+                <h2>這個播放清單還沒有曲目</h2>
+                <p>從本機曲庫加入曲目，建立下一次排練或演出的順序。</p>
+                <button type="button" class="button button--primary">
+                  瀏覽本機曲庫
+                </button>
+              </div>
+
+              <div class="empty-state empty-state--search">
+                <svg><use href="#icon-search"></use></svg>
+                <h2>找不到符合條件的曲目</h2>
+                <p>清除搜尋或改用曲名、演出者與檔案名稱查找。</p>
+                <button
+                  type="button"
+                  class="button button--secondary"
+                  data-action="clear-search"
+                >
+                  清除搜尋
+                </button>
+              </div>
+            </section>
+
+            <aside class="metadata-rail" aria-label="播放清單摘要">
+              <div class="metadata-rail__heading">
+                <h2>檔案摘要</h2>
+                <span>Local</span>
+              </div>
+              <dl>
+                <div>
+                  <dt>曲目</dt>
+                  <dd>8 首</dd>
+                </div>
+                <div>
+                  <dt>總長</dt>
+                  <dd>31 分鐘</dd>
+                </div>
+                <div>
+                  <dt>格式</dt>
+                  <dd>FLAC · WAV · MP3</dd>
+                </div>
+                <div>
+                  <dt>更新</dt>
+                  <dd>今天 18:40</dd>
+                </div>
+              </dl>
+              <div class="readiness-summary">
+                <h3>準備狀態</h3>
+                <p>
+                  <span class="summary-dot summary-dot--success"></span
+                  ><strong>7</strong> 已就緒
+                </p>
+                <p>
+                  <span class="summary-dot summary-dot--warning"></span
+                  ><strong>1</strong> 需確認
+                </p>
+              </div>
+              <p class="metadata-caption">
+                這些資料來自本機檔案與已保存的 metadata，不代表公開 Output
+                狀態。
+              </p>
+            </aside>
+          </div>
+        </section>
+      </main>
+
+      <footer class="player-bar" aria-label="播放控制列">
+        <div class="now-playing">
+          <span class="cover cover--player cover--indigo"><span>玻</span></span>
+          <span class="now-playing__copy"
+            ><strong data-now-title>玻璃海岸</strong
+            ><small data-now-artist>林澄 · Glass Coast</small></span
+          >
+        </div>
+        <div class="transport">
+          <div class="transport__buttons">
+            <button
+              type="button"
+              class="icon-button"
+              data-action="shuffle"
+              aria-label="隨機播放"
+              aria-pressed="false"
+            >
+              <svg><use href="#icon-shuffle"></use></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-action="previous"
+              aria-label="上一首"
+            >
+              <svg><use href="#icon-skip-back"></use></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button transport__primary"
+              data-action="toggle-play"
+              aria-label="暫停"
+            >
+              <svg><use href="#icon-pause"></use></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-action="next"
+              aria-label="下一首"
+            >
+              <svg><use href="#icon-skip-forward"></use></svg>
+            </button>
+            <button
+              type="button"
+              class="icon-button"
+              data-action="repeat"
+              aria-label="重複播放"
+              aria-pressed="false"
+            >
+              <svg><use href="#icon-repeat"></use></svg>
+            </button>
+          </div>
+          <div class="progress-row">
+            <span>1:42</span>
+            <input
+              type="range"
+              min="0"
+              max="252"
+              value="102"
+              aria-label="播放進度"
+            />
+            <span>4:12</span>
+          </div>
+        </div>
+        <div class="player-extras">
+          <button type="button" class="icon-button" aria-label="歌詞">
+            <span class="text-icon">詞</span>
+          </button>
+          <button type="button" class="icon-button" aria-label="播放佇列">
+            <svg><use href="#icon-list"></use></svg>
+          </button>
+          <svg class="volume-icon"><use href="#icon-volume"></use></svg>
+          <input type="range" min="0" max="100" value="72" aria-label="音量" />
+          <span>72%</span>
+        </div>
+      </footer>
+    </div>
+
+    <div id="track-menu" popover class="track-menu">
+      <button type="button" data-menu-action="queue">新增至佇列</button>
+      <button type="button" data-menu-action="lyrics">查看歌詞</button>
+      <hr />
+      <button type="button" data-menu-action="metadata">編輯資訊</button>
+    </div>
+
+    <dialog class="details-dialog" aria-labelledby="details-title">
+      <form method="dialog">
+        <header>
+          <div>
+            <p>播放清單詳細資料</p>
+            <h2 id="details-title">夜航歌回</h2>
+          </div>
+          <button type="submit" class="icon-button" aria-label="關閉">×</button>
+        </header>
+        <div class="dialog-content">
+          <div class="cover cover--dialog cover--indigo"><span>夜</span></div>
+          <label>名稱<input value="夜航歌回" /></label>
+          <label
+            >備註<textarea rows="3">
+夜間歌回的主要 setlist；演出前確認第三首歌詞來源。</textarea>
+          </label>
+        </div>
+        <footer>
+          <button type="submit" value="cancel" class="button button--secondary">
+            取消</button
+          ><button type="submit" value="save" class="button button--primary">
+            儲存
+          </button>
+        </footer>
+      </form>
+    </dialog>
+
+    <div class="prototype-toast" role="status" aria-live="polite"></div>
+  </body>
+</html>
