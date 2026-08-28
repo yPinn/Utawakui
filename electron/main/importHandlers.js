@@ -69,6 +69,8 @@ function registerImportHandlers({
   featureIds,
   getProviderRunner,
   lyricsAcquisitionService,
+  enqueueMusicAnalysis = () => false,
+  downloadTrackAudio = downloadAudio,
 }) {
   ipcMain.handle('yt:fetch-playlist', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
@@ -138,7 +140,7 @@ function registerImportHandlers({
       const videoId = extractVideoId(input);
       if (!videoId) throw new Error('invalid video id or YouTube URL');
       const destDir = resolveDownloadDir(getConfig());
-      const result = await downloadAudio(videoId, destDir, { runner });
+      const result = await downloadTrackAudio(videoId, destDir, { runner });
       const trackDir = resolveTrackDir(destDir, videoId);
       if (result.title) {
         try {
@@ -156,6 +158,12 @@ function registerImportHandlers({
           trackDir,
           lyricsAcquisitionService,
         );
+      }
+      try {
+        enqueueMusicAnalysis(videoId);
+      } catch {
+        // Analysis is optional background work. A playable download remains
+        // successful even if queue admission fails unexpectedly.
       }
       return result;
     });

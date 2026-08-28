@@ -30,6 +30,7 @@ describe('config', () => {
       uiTheme: 'dark',
       sidebarWidth: 256,
       captureDeviceId: null,
+      autoAnalyzeMusicStructure: true,
       systemFfmpegPath: null,
       outputRuntime: {
         autoStart: true,
@@ -71,6 +72,7 @@ describe('config', () => {
       uiTheme: 'dark',
       sidebarWidth: 256,
       captureDeviceId: null,
+      autoAnalyzeMusicStructure: true,
       systemFfmpegPath: null,
       outputRuntime: {
         autoStart: true,
@@ -180,6 +182,22 @@ describe('config', () => {
     );
     expect(loadConfig(configPath).captureDeviceId).toBe(null);
   });
+
+  it('round-trips the automatic music-analysis preference', () => {
+    saveConfig(configPath, { autoAnalyzeMusicStructure: false });
+    expect(loadConfig(configPath).autoAnalyzeMusicStructure).toBe(false);
+  });
+
+  it.each([null, 1, 'true', {}])(
+    'falls back to automatic music analysis for invalid value %j',
+    (autoAnalyzeMusicStructure) => {
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify({ autoAnalyzeMusicStructure }),
+      );
+      expect(loadConfig(configPath).autoAnalyzeMusicStructure).toBe(true);
+    },
+  );
 
   it.each(['', 'x'.repeat(CAPTURE_DEVICE_ID_MAX_LENGTH + 1)])(
     'out-of-bounds captureDeviceId falls back to null',

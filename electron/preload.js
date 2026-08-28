@@ -78,6 +78,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getCaptureDevice: () => ipcRenderer.invoke('config:get-capture-device'),
   setCaptureDevice: (deviceId) =>
     ipcRenderer.invoke('config:set-capture-device', deviceId),
+  getAutoMusicAnalysis: () =>
+    ipcRenderer.invoke('config:get-auto-music-analysis'),
+  setAutoMusicAnalysis: (enabled) =>
+    ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
   openExternalTarget: (targetId) =>
     ipcRenderer.invoke('shell:open-external', targetId),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),

@@ -65,6 +65,8 @@ function registerLibraryHandlers({
   listLibraryTracks = listTracks,
   runLibraryBackfill = runBackfillPass,
   organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
+  importAudioFiles = importLocalAudioFiles,
+  enqueueMusicAnalysis = () => false,
 }) {
   const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
     getProviderRunner,
@@ -128,11 +130,21 @@ function registerLibraryHandlers({
       return { imported: [], skipped: [] };
     }
 
-    const imported = importLocalAudioFiles(
+    const imported = importAudioFiles(
       resolveDownloadDir(getConfig()),
       result.filePaths,
     );
-    if (imported.imported.length > 0) notifyLibraryUpdated();
+    if (imported.imported.length > 0) {
+      notifyLibraryUpdated();
+      for (const track of imported.imported) {
+        try {
+          enqueueMusicAnalysis(track.id);
+        } catch {
+          // Analysis is optional background work. Imported audio remains
+          // available even if queue admission fails unexpectedly.
+        }
+      }
+    }
     return imported;
   });
 

@@ -60,6 +60,28 @@ describe('runtime diagnostics logger', () => {
     });
   });
 
+  it('maps automatic music analysis failures to a bounded audio event', () => {
+    const failure = new Error('private model path failed');
+    const service = { record: vi.fn(() => ({ ok: true })) };
+    const logger = createRuntimeDiagnosticsLogger({
+      service,
+      consoleTarget: { warn: vi.fn(), error: vi.fn() },
+    });
+
+    logger.error('Automatic music analysis failed', failure);
+
+    expect(service.record).toHaveBeenCalledWith({
+      process: 'main',
+      level: 'error',
+      source: 'audio-processing',
+      operation: 'automatic-music-analysis',
+      code: 'AUTOMATIC_MUSIC_ANALYSIS_FAILED',
+      message: 'Automatic music analysis failed',
+      error: failure,
+      context: { retryable: true },
+    });
+  });
+
   it.each([
     [
       'error',

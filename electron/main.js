@@ -32,7 +32,7 @@ const isPackagedRuntime = detectPackagedRuntime({
   resourcesPath: process.resourcesPath,
 });
 
-const { FEATURE_IDS } = require('./lib/featureGates');
+const { FEATURE_IDS, isFeatureGateEnabled } = require('./lib/featureGates');
 const {
   inspectTrackMusicStructure,
   prepareTrackMusicStructureSource,
@@ -55,6 +55,9 @@ const {
 const {
   createStructureAnalysisBatchService,
 } = require('./lib/audioProcessing/structureAnalysisBatchService');
+const {
+  createStructureAnalysisAutoQueue,
+} = require('./lib/audioProcessing/structureAnalysisAutoQueue');
 const {
   createStructureAnalysisCapabilityService,
   loadStructureAnalysisCapabilityCatalog,
@@ -339,6 +342,9 @@ if (!gotSingleInstanceLock) {
       publishDocument: ({ trackId, document, identity, libraryDir }) =>
         saveTrackMusicStructure(libraryDir, trackId, document, identity),
     });
+    const structureAnalysisProfileIds = Object.values(
+      SUPPORTED_STRUCTURE_ANALYSIS_MODELS,
+    ).map(({ profileId }) => profileId);
     const structureAnalysisBatchService = createStructureAnalysisBatchService({
       analysisService: structureAnalysisService,
       inspectTrack: (trackId) => {
@@ -348,9 +354,7 @@ if (!gotSingleInstanceLock) {
           trackId,
         );
       },
-      currentProfileIds: Object.values(SUPPORTED_STRUCTURE_ANALYSIS_MODELS).map(
-        ({ profileId }) => profileId,
-      ),
+      currentProfileIds: structureAnalysisProfileIds,
       onTrackComplete: windowState.notifyLibraryUpdated,
     });
     const structureAnalysisCapabilityService =
@@ -367,6 +371,24 @@ if (!gotSingleInstanceLock) {
             ? { jobId: 'batch', trackId: 'batch' }
             : null),
       });
+    const structureAnalysisAutoQueue = createStructureAnalysisAutoQueue({
+      getConfig: configState.getConfig,
+      isFeatureEnabled: isFeatureGateEnabled,
+      featureId: FEATURE_IDS.AUDIO_PROCESSING_FLOW,
+      capabilityService: structureAnalysisCapabilityService,
+      analysisService: structureAnalysisService,
+      batchService: structureAnalysisBatchService,
+      inspectTrack: (trackId) => {
+        const config = configState.getConfig();
+        return inspectTrackMusicStructure(
+          configState.resolveDownloadDir(config),
+          trackId,
+        );
+      },
+      currentProfileIds: structureAnalysisProfileIds,
+      onTrackComplete: windowState.notifyLibraryUpdated,
+      logger: runtimeDiagnosticsLogger,
+    });
     const lyricsAcquisitionService = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: FEATURE_IDS.LYRICS_FLOW,
@@ -491,6 +513,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
+      enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
     });
 
     registerLyricsHandlers({
@@ -537,6 +560,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
+      enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
     });
 
     registerSeparationHandlers({

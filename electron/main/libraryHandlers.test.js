@@ -87,3 +87,69 @@ describe('library metadata maintenance handlers', () => {
     expect(runLibraryBackfill).not.toHaveBeenCalled();
   });
 });
+
+describe('local import automatic music analysis', () => {
+  function registerLocalImport(overrides = {}) {
+    const handlers = new Map();
+    const ipcMain = {
+      handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+    };
+    const enqueueMusicAnalysis = vi.fn(() => true);
+    const importAudioFiles = vi.fn().mockReturnValue({
+      imported: [
+        { id: 'local-1', title: 'One' },
+        { id: 'local-2', title: 'Two' },
+      ],
+      skipped: [],
+    });
+    registerLibraryHandlers({
+      ipcMain,
+      dialog: {
+        showOpenDialog: vi.fn().mockResolvedValue({
+          canceled: false,
+          filePaths: ['one.mp3', 'two.mp3'],
+        }),
+      },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: vi.fn(),
+      notifyLibraryUpdated: vi.fn(),
+      sendBackfillStatus: vi.fn(),
+      featureIds: FEATURE_IDS,
+      getProviderRunner: vi.fn(),
+      lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
+      enqueueMusicAnalysis,
+      importAudioFiles,
+      ...overrides,
+    });
+    return { handlers, enqueueMusicAnalysis, importAudioFiles };
+  }
+
+  it('enqueues every successfully imported local track', async () => {
+    const harness = registerLocalImport();
+
+    await expect(
+      harness.handlers.get('library:import-audio-files')(),
+    ).resolves.toMatchObject({
+      imported: [{ id: 'local-1' }, { id: 'local-2' }],
+    });
+    expect(harness.enqueueMusicAnalysis.mock.calls).toEqual([
+      ['local-1'],
+      ['local-2'],
+    ]);
+  });
+
+  it('keeps the import result when optional enqueueing throws', async () => {
+    const harness = registerLocalImport({
+      enqueueMusicAnalysis: vi.fn(() => {
+        throw new Error('private queue failure');
+      }),
+    });
+
+    await expect(
+      harness.handlers.get('library:import-audio-files')(),
+    ).resolves.toMatchObject({
+      imported: [{ id: 'local-1' }, { id: 'local-2' }],
+    });
+  });
+});

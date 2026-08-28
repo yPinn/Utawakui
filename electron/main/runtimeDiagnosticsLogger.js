@@ -120,6 +120,15 @@ const EVENT_DEFINITIONS = new Map([
       message: 'LRCLIB automatic acquisition failed',
     },
   ],
+  [
+    'Automatic music analysis failed',
+    {
+      source: 'audio-processing',
+      operation: 'automatic-music-analysis',
+      code: 'AUTOMATIC_MUSIC_ANALYSIS_FAILED',
+      message: 'Automatic music analysis failed',
+    },
+  ],
 ]);
 
 const FALLBACK_DEFINITION = Object.freeze({

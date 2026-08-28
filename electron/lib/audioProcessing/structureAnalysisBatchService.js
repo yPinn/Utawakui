@@ -285,4 +285,5 @@ function createStructureAnalysisBatchService({
 module.exports = {
   MAX_BATCH_TRACKS,
   createStructureAnalysisBatchService,
+  isCurrentAnalysis,
 };

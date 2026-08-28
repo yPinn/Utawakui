@@ -22,6 +22,7 @@ function register(overrides = {}) {
     uiTheme: 'dark',
     sidebarWidth: 256,
     captureDeviceId: null,
+    autoAnalyzeMusicStructure: true,
   };
   const getConfig = vi.fn(() => config);
   const updateConfig = vi.fn((patch) => {
@@ -81,6 +82,8 @@ describe('registerConfigHandlers', () => {
       'config:set-sidebar-width',
       'config:get-capture-device',
       'config:set-capture-device',
+      'config:get-auto-music-analysis',
+      'config:set-auto-music-analysis',
     ]);
   });
 
@@ -199,6 +202,9 @@ describe('registerConfigHandlers', () => {
     await expect(
       ipcMain.handlers.get('config:get-capture-device')(),
     ).resolves.toBeNull();
+    await expect(
+      ipcMain.handlers.get('config:get-auto-music-analysis')(),
+    ).resolves.toBe(true);
   });
 
   it('persists a valid theme and updates an available main window', async () => {
@@ -301,6 +307,35 @@ describe('registerConfigHandlers', () => {
     expect(updateConfig).not.toHaveBeenCalled();
     expect(recordDiagnostic).not.toHaveBeenCalled();
   });
+
+  it.each([true, false])(
+    'persists automatic music analysis as %s',
+    async (enabled) => {
+      const { ipcMain, updateConfig } = register();
+
+      await expect(
+        ipcMain.handlers.get('config:set-auto-music-analysis')(null, enabled),
+      ).resolves.toBe(enabled);
+      expect(updateConfig).toHaveBeenCalledWith({
+        autoAnalyzeMusicStructure: enabled,
+      });
+    },
+  );
+
+  it.each([null, 0, 'true', {}])(
+    'rejects invalid automatic music analysis value %j',
+    async (enabled) => {
+      const { ipcMain, updateConfig, recordDiagnostic } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-auto-music-analysis')(null, enabled)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('AUTO_MUSIC_ANALYSIS_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
+      expect(recordDiagnostic).not.toHaveBeenCalled();
+    },
+  );
 
   it('bounds and diagnoses a private config persistence failure', async () => {
     const privateError = new Error('failed E:\\Users\\Singer\\config.json');

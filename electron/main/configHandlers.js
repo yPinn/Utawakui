@@ -237,6 +237,42 @@ function registerConfigHandlers({
       },
     );
   });
+
+  ipcMain.handle('config:get-auto-music-analysis', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-auto-music-analysis',
+        code: 'AUTO_MUSIC_ANALYSIS_READ_FAILED',
+        title: '無法讀取自動分析設定',
+        message: '目前無法讀取自動分析設定。',
+      },
+      () => getConfig().autoAnalyzeMusicStructure,
+    ),
+  );
+
+  ipcMain.handle('config:set-auto-music-analysis', async (event, enabled) => {
+    if (typeof enabled !== 'boolean') {
+      throw createValidationError(
+        'AUTO_MUSIC_ANALYSIS_INVALID',
+        '無法套用自動分析設定',
+        '指定的自動分析設定無效。',
+      );
+    }
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-auto-music-analysis',
+        code: 'AUTO_MUSIC_ANALYSIS_UPDATE_FAILED',
+        title: '無法套用自動分析設定',
+        message: '目前無法套用自動分析設定，請稍後再試。',
+      },
+      () => {
+        updateConfig({ autoAnalyzeMusicStructure: enabled });
+        return getConfig().autoAnalyzeMusicStructure;
+      },
+    );
+  });
 }
 
 module.exports = { registerConfigHandlers };
