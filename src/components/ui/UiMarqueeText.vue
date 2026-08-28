@@ -142,6 +142,15 @@ watch(displayText, async () => {
   }
 }
 
+:global(
+  :root[data-ui-motion='reduced'] .ui-marquee--overflow .ui-marquee__text
+) {
+  max-width: 100%;
+  padding-right: 0;
+  animation: none;
+  will-change: auto;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ui-marquee--overflow .ui-marquee__text {
     max-width: 100%;

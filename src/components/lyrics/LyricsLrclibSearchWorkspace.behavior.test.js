@@ -129,6 +129,7 @@ async function loadWorkspaceComponent() {
     { default: UiChip },
     { default: UiHint },
     { default: UiNotice },
+    { default: UiField },
     { default: UiTextField },
   ] = await Promise.all([
     import('./LyricsLrclibSearchWorkspace.vue'),
@@ -137,6 +138,7 @@ async function loadWorkspaceComponent() {
     import('../ui/UiChip.vue'),
     import('../ui/UiHint.vue'),
     import('../ui/UiNotice.vue'),
+    import('../ui/UiField.vue'),
     import('../ui/UiTextField.vue'),
   ]);
   attachClientRender(Workspace, './LyricsLrclibSearchWorkspace.vue');
@@ -145,6 +147,7 @@ async function loadWorkspaceComponent() {
   attachClientRender(UiChip, '../ui/UiChip.vue');
   attachClientRender(UiHint, '../ui/UiHint.vue');
   attachClientRender(UiNotice, '../ui/UiNotice.vue');
+  attachClientRender(UiField, '../ui/UiField.vue');
   attachClientRender(UiTextField, '../ui/UiTextField.vue');
   return Workspace;
 }

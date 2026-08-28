@@ -63,7 +63,7 @@ function toCssLength(value) {
   background: var(--ui-track-thumb-bg, var(--ui-color-surface-hover));
   color: var(--ui-track-thumb-color, var(--ui-color-text));
   font-size: var(--ui-track-thumb-font-size, var(--ui-font-size-sm));
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   text-transform: var(--ui-track-thumb-transform, uppercase);
   overflow: hidden;
   user-select: none;

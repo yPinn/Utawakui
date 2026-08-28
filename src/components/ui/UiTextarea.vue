@@ -12,6 +12,7 @@ defineProps({
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
   placeholder: { type: String, default: '' },
+  rows: { type: Number, default: 3 },
   maxlength: { type: Number, default: undefined },
   autocomplete: { type: String, default: 'off' },
   dir: { type: String, default: 'auto' },
@@ -23,10 +24,10 @@ defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
-const inputRef = useTemplateRef('input');
+const textareaRef = useTemplateRef('textarea');
 
 function focus() {
-  inputRef.value?.focus();
+  textareaRef.value?.focus();
 }
 
 defineExpose({ focus });
@@ -46,14 +47,14 @@ defineExpose({ focus });
     :label-hidden="labelHidden"
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
-      <input
+      <textarea
         v-bind="nativeControlAttrs(attrs)"
         :id="id"
-        ref="input"
-        class="ui-text-field"
-        type="text"
+        ref="textarea"
+        class="ui-textarea"
         :value="modelValue"
         :placeholder="placeholder"
+        :rows="rows"
         :maxlength="maxlength"
         :autocomplete="autocomplete"
         :dir="dir"
@@ -68,11 +69,12 @@ defineExpose({ focus });
 </template>
 
 <style scoped>
-.ui-text-field {
+.ui-textarea {
   width: 100%;
   min-width: 0;
-  min-height: var(--ui-field-height);
+  min-height: calc(var(--ui-field-height) * 2);
   padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
+  resize: vertical;
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
   background: var(--ui-field-bg);
@@ -80,7 +82,7 @@ defineExpose({ focus });
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-label);
+  line-height: var(--ui-line-height-body);
   -webkit-user-select: text;
   user-select: text;
   transition:
@@ -90,25 +92,25 @@ defineExpose({ focus });
       var(--ui-motion-easing-standard);
 }
 
-.ui-text-field:hover:not(:disabled) {
+.ui-textarea:hover:not(:disabled) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }
 
-.ui-text-field::placeholder {
+.ui-textarea::placeholder {
   color: var(--ui-field-placeholder);
 }
 
-.ui-text-field:focus-visible {
+.ui-textarea:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
-.ui-text-field[aria-invalid='true'] {
+.ui-textarea[aria-invalid='true'] {
   border-color: var(--ui-field-border-invalid);
 }
 
-.ui-text-field:disabled {
+.ui-textarea:disabled {
   cursor: not-allowed;
   opacity: var(--ui-opacity-disabled);
 }

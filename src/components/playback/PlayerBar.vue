@@ -720,32 +720,23 @@ onUnmounted(() => {
 }
 
 .player-bar__track {
-  /* Width matches a sidebar row's actual box — column width minus
-     --ui-playlist-sidebar-padding-inline x2, since rows are inset by that
-     padding, not by this file's own --ui-player-bar-padding-inline (that
-     one's calibrated for the artwork/compact-rail alignment below).
-     Fixed, not flexible: .player-bar__center absorbs resize pressure
-     instead; min-width:0 still lets the title truncate via UiMarqueeText
-     when this is narrower than the content wants. */
-  flex: 0 0
-    calc(
-      clamp(
-          var(--ui-playlist-sidebar-width-min),
-          var(--ui-playlist-sidebar-width),
-          var(--ui-playlist-sidebar-width-max)
-        ) -
-        (var(--ui-playlist-sidebar-padding-inline) * 2)
-    );
-  min-width: 0;
+  /* Now-playing is a player concern, so collapsing the independent playlist
+     sidebar must not collapse this region around the artwork. It may yield
+     some width to the center column, but keeps enough room for readable
+     single-line metadata. */
+  flex: 0 1 var(--ui-player-bar-track-width);
+  min-width: var(--ui-player-bar-track-width-min);
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
 }
 
 .player-bar__track-copy {
+  flex: 1 1 auto;
   min-width: 0;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .player-bar__track-empty {
@@ -808,14 +799,18 @@ onUnmounted(() => {
 }
 
 .player-bar__track-artist {
+  display: block;
+  overflow: hidden;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-/* The only column that flexes — both side columns are fixed-width now,
-   so all resize pressure lands here, capped by max-width on wide windows. */
+/* The only column that grows: now-playing can shrink only to its readable
+   minimum, while extras remain fixed to their controls. */
 .player-bar__center {
   flex: 1 1 auto;
   min-width: 0;

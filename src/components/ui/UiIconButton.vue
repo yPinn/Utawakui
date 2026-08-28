@@ -60,13 +60,14 @@ const titleText = computed(() => props.title ?? props.label);
   justify-content: center;
   padding: 0;
   border: none;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   font-family: var(--ui-font-family-base);
   cursor: pointer;
   transition:
-    background-color var(--ui-motion-fast) var(--ui-motion-ease),
-    color var(--ui-motion-fast) var(--ui-motion-ease),
-    opacity var(--ui-motion-fast) var(--ui-motion-ease);
+    background-color var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard),
+    color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard),
+    opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
 .ui-icon-btn--sm {
@@ -82,7 +83,7 @@ const titleText = computed(() => props.title ?? props.label);
 }
 
 .ui-icon-btn--square {
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 
 .ui-icon-btn--circle {

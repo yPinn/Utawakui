@@ -134,7 +134,7 @@ onUnmounted(() => {
 .ui-modal-backdrop {
   position: fixed;
   inset: 0;
-  z-index: var(--ui-z-modal);
+  z-index: var(--ui-z-dialog);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -174,7 +174,7 @@ onUnmounted(() => {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-bold);
+  line-height: var(--ui-line-height-heading);
 }
 </style>

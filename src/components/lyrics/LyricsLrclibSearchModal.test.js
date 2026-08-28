@@ -109,7 +109,7 @@ describe('LRCLIB search modal contract', () => {
       /\.lyrics-lrclib-search\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/s,
     );
     expect(textField).toMatch(
-      /\.ui-text-field__control\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/s,
+      /\.ui-text-field\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/s,
     );
   });
 

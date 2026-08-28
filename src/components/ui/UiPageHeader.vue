@@ -25,8 +25,8 @@ defineProps({
 .ui-page-header__title {
   margin: 0;
   font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-bold);
+  line-height: var(--ui-line-height-heading);
   color: var(--ui-color-text);
 }
 

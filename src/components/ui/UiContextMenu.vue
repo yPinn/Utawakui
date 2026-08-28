@@ -30,8 +30,10 @@ const props = defineProps({
 const emit = defineEmits(['select', 'close']);
 const { claim, release } = useContextMenuGate();
 
-const ROW_HEIGHT = 34;
-const MAX_MENU_HEIGHT = 320; // must match the CSS `max-height` below
+const MAX_MENU_HEIGHT_REM = 20;
+const MENU_PADDING_BLOCK_REM = 0.5;
+const VIEWPORT_MARGIN_REM = 0.5;
+const SUBMENU_GAP_REM = 0.25;
 
 const menuRef = useTemplateRef('menu');
 const position = ref({ x: props.x, y: props.y });
@@ -43,6 +45,37 @@ const menuStyle = computed(() => ({
   top: `${position.value.y}px`,
   width: `${menuWidth.value}px`,
 }));
+
+function remPixels(value) {
+  if (typeof window === 'undefined') return value * 16;
+  const rootSize = Number.parseFloat(
+    window.getComputedStyle(document.documentElement).fontSize,
+  );
+  return value * (Number.isFinite(rootSize) ? rootSize : 16);
+}
+
+function customLengthPixels(name, fallbackRem, seen = new Set()) {
+  if (typeof window === 'undefined' || seen.has(name)) {
+    return remPixels(fallbackRem);
+  }
+  seen.add(name);
+  const value = window
+    .getComputedStyle(document.documentElement)
+    .getPropertyValue(name)
+    .trim();
+  const reference = value.match(/^var\((--ui-[\w-]+)\)$/)?.[1];
+  if (reference) return customLengthPixels(reference, fallbackRem, seen);
+
+  const amount = Number.parseFloat(value);
+  if (!Number.isFinite(amount)) return remPixels(fallbackRem);
+  if (value.endsWith('rem')) return remPixels(amount);
+  if (value.endsWith('px')) return amount;
+  return remPixels(fallbackRem);
+}
+
+function menuRowHeightPixels() {
+  return customLengthPixels('--ui-menu-item-height', 2);
+}
 
 const activeSubmenuItem = computed(
   () =>
@@ -64,15 +97,17 @@ const submenuStyle = computed(() => {
   if (!activeSubmenuItem.value) return {};
   if (typeof window === 'undefined') {
     return {
-      left: `${position.value.x + menuWidth.value + 4}px`,
+      left: `${position.value.x + menuWidth.value + remPixels(SUBMENU_GAP_REM)}px`,
       top: `${position.value.y}px`,
       width: `${activeSubmenuWidth.value}px`,
     };
   }
 
-  const margin = 8;
-  const gap = 4;
-  const rowOffset = 4 + Math.max(0, activeSubmenuIndex.value) * ROW_HEIGHT;
+  const margin = remPixels(VIEWPORT_MARGIN_REM);
+  const gap = remPixels(SUBMENU_GAP_REM);
+  const rowOffset =
+    remPixels(SUBMENU_GAP_REM) +
+    Math.max(0, activeSubmenuIndex.value) * menuRowHeightPixels();
   const submenuHeight = estimateSubmenuHeight(activeSubmenuItem.value);
   const rightX = position.value.x + menuWidth.value + gap;
   const leftX = position.value.x - activeSubmenuWidth.value - gap;
@@ -95,13 +130,17 @@ function itemKey(item) {
 
 function estimateMenuHeight() {
   const itemCount = Math.max(1, props.items.length);
-  return Math.min(MAX_MENU_HEIGHT, 8 + itemCount * ROW_HEIGHT);
+  return Math.min(
+    remPixels(MAX_MENU_HEIGHT_REM),
+    remPixels(MENU_PADDING_BLOCK_REM) + itemCount * menuRowHeightPixels(),
+  );
 }
 
 function estimateSubmenuHeight(item) {
   return Math.min(
-    MAX_MENU_HEIGHT,
-    8 + Math.max(1, item.children?.length ?? 0) * ROW_HEIGHT,
+    remPixels(MAX_MENU_HEIGHT_REM),
+    remPixels(MENU_PADDING_BLOCK_REM) +
+      Math.max(1, item.children?.length ?? 0) * menuRowHeightPixels(),
   );
 }
 
@@ -118,7 +157,7 @@ function clampPosition() {
   const rect = menuRef.value?.getBoundingClientRect();
   const width = rect?.width ?? menuWidth.value;
   const menuHeight = rect?.height ?? estimateMenuHeight();
-  const margin = 8;
+  const margin = remPixels(VIEWPORT_MARGIN_REM);
   const maxX = window.innerWidth - width - margin;
   const maxY = window.innerHeight - menuHeight - margin;
   const x = preferredX(width);
@@ -336,20 +375,19 @@ onUnmounted(() => {
 <style scoped>
 .ui-context-menu {
   position: fixed;
-  z-index: var(--ui-z-context-menu);
-  /* 320px must match MAX_MENU_HEIGHT in the script block — CSS can't read
-     a JS constant, so keep the two in sync by hand if this changes. */
-  max-height: min(320px, calc(100vh - 16px));
+  z-index: var(--ui-z-popover);
+  /* Keep 20rem aligned with MAX_MENU_HEIGHT_REM in the script block. */
+  max-height: min(20rem, calc(100vh - 1rem));
   overflow-y: auto;
   padding: var(--ui-space-1);
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-overlay);
 }
 
 .ui-context-menu--submenu {
-  z-index: var(--ui-z-context-menu-submenu);
+  z-index: 1;
 }
 
 .ui-context-menu__empty {
@@ -363,14 +401,14 @@ onUnmounted(() => {
 
 .ui-context-menu__item {
   display: grid;
-  grid-template-columns: 16px minmax(0, 1fr) max-content 16px;
+  grid-template-columns: 1rem minmax(0, 1fr) max-content 1rem;
   align-items: center;
   column-gap: var(--ui-space-2);
   width: 100%;
   min-height: var(--ui-menu-item-height);
   padding: var(--ui-space-1) var(--ui-space-2);
   border: 0;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: transparent;
   color: var(--ui-color-text);
   font: inherit;
@@ -417,8 +455,8 @@ onUnmounted(() => {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 16px;
-  height: 16px;
+  width: 1rem;
+  height: 1rem;
   color: currentColor;
 }
 

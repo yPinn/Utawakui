@@ -102,13 +102,18 @@ defineProps({
 }
 
 .ui-status-icon__glyph--spin {
-  animation: ui-status-icon-spin var(--ui-motion-spin) infinite;
+  animation: ui-status-icon-spin calc(var(--ui-motion-duration-slow) * 4) linear
+    infinite;
 }
 
 @keyframes ui-status-icon-spin {
   to {
     transform: rotate(360deg);
   }
+}
+
+:global(:root[data-ui-motion='reduced'] .ui-status-icon__glyph--spin) {
+  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

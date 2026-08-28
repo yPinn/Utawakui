@@ -102,7 +102,7 @@ function handleKeydown(event) {
   gap: var(--ui-track-row-gap);
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   font-size: var(--ui-font-size-sm);
 }
 
@@ -134,7 +134,7 @@ function handleKeydown(event) {
 
 .ui-track__title {
   color: inherit;
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .ui-track--current .ui-track__title {

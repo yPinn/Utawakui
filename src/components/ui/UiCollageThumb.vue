@@ -188,7 +188,7 @@ const singleIconSize = computed(() =>
 
 .ui-collage-thumb__single-initial {
   font-size: var(--ui-collage-thumb-font-size);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   text-transform: var(--ui-collage-thumb-transform, uppercase);
 }
 
@@ -199,7 +199,7 @@ const singleIconSize = computed(() =>
   min-width: 0;
   background: var(--ui-collage-thumb-bg, var(--ui-color-surface-hover));
   font-size: var(--ui-collage-thumb-font-size);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   text-transform: var(--ui-collage-thumb-transform, uppercase);
   overflow: hidden;
 }

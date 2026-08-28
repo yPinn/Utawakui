@@ -63,7 +63,7 @@ defineProps({
 
 .ui-hint--danger {
   color: var(--ui-color-danger);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .ui-hint--gated {

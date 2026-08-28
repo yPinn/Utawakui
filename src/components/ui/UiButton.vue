@@ -1,7 +1,7 @@
 <script setup>
 // `disabled`/`aria-*`/`title`/`@click` reach the root <button> via Vue's
 // attribute fallthrough, so they aren't declared as props.
-import { ICON_SIZE } from '../../icons/index.js';
+import { ICON_SIZE, Loader2 } from '../../icons/index.js';
 
 defineProps({
   icon: { type: [Object, Function], default: null },
@@ -16,6 +16,9 @@ defineProps({
     validator: (value) => ['ghost', 'accent'].includes(value),
   },
   active: { type: Boolean, default: false }, // toggle state, e.g. repeat-on
+  disabled: { type: Boolean, default: false },
+  loading: { type: Boolean, default: false },
+  loadingLabel: { type: String, default: '處理中' },
 });
 </script>
 
@@ -23,16 +26,31 @@ defineProps({
   <button
     :type="type"
     class="ui-btn"
+    :disabled="disabled || loading"
+    :aria-busy="loading || undefined"
     :class="[
       `ui-btn--${variant}`,
       {
         'ui-btn--active': active,
-        'ui-btn--icon-only': icon && !$slots.default,
+        'ui-btn--icon-only': (icon || loading) && !$slots.default,
+        'is-loading': loading,
       },
     ]"
   >
-    <component :is="icon" v-if="icon" :size="ICON_SIZE" aria-hidden="true" />
-    <span v-if="$slots.default"><slot /></span>
+    <Loader2
+      v-if="loading"
+      class="ui-btn__spinner"
+      :size="ICON_SIZE"
+      aria-hidden="true"
+    />
+    <component
+      :is="icon"
+      v-else-if="icon"
+      :size="ICON_SIZE"
+      aria-hidden="true"
+    />
+    <span v-if="loading">{{ loadingLabel }}</span>
+    <span v-else-if="$slots.default"><slot /></span>
   </button>
 </template>
 
@@ -44,15 +62,16 @@ defineProps({
   min-height: var(--ui-control-height);
   padding: var(--ui-space-1) var(--ui-space-2);
   border: none;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   cursor: pointer;
   transition:
-    background-color var(--ui-motion-fast) var(--ui-motion-ease),
-    color var(--ui-motion-fast) var(--ui-motion-ease);
+    background-color var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard),
+    color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
 .ui-btn--icon-only {
@@ -113,5 +132,26 @@ defineProps({
 .ui-btn:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-btn__spinner {
+  animation: ui-btn-spin calc(var(--ui-motion-duration-slow) * 4) linear
+    infinite;
+}
+
+@keyframes ui-btn-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+:global(:root[data-ui-motion='reduced'] .ui-btn__spinner) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-btn__spinner {
+    animation: none;
+  }
 }
 </style>

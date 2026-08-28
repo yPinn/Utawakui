@@ -48,6 +48,11 @@
 
   /* --- Color: status --- */
   --ui-color-info: #7fb8bd;
+  --ui-color-info-soft: color-mix(
+    in srgb,
+    var(--ui-color-info) 18%,
+    transparent
+  );
   --ui-color-success: #7bbd8b;
   --ui-color-success-soft: color-mix(
     in srgb,
@@ -99,10 +104,13 @@
   --ui-font-size-xl: 1.5rem; /* 24px — headline */
   --ui-font-size-2xl: 2rem; /* 32px — display */
   --ui-font-weight-regular: 400; /* body */
-  --ui-font-weight-strong: 600; /* title, label */
-  --ui-font-weight-heavy: 650; /* display, headline */
+  --ui-font-weight-semibold: 600; /* title, label */
+  --ui-font-weight-bold: 650; /* display, headline */
+  --ui-font-weight-strong: var(--ui-font-weight-semibold); /* legacy alias */
+  --ui-font-weight-heavy: var(--ui-font-weight-bold); /* legacy alias */
   --ui-line-height-display: 1.15;
-  --ui-line-height-headline: 1.2;
+  --ui-line-height-heading: 1.2;
+  --ui-line-height-headline: var(--ui-line-height-heading); /* legacy alias */
   --ui-line-height-title: 1.3;
   --ui-line-height-body: 1.5;
   --ui-line-height-label: 1.25;
@@ -113,7 +121,8 @@
   /* --- Radius --- */
   --ui-radius-xs: 0.125rem; /* 2px */
   --ui-radius-sm: 0.25rem; /* 4px */
-  --ui-radius: 0.375rem; /* 6px */
+  --ui-radius-md: 0.375rem; /* 6px */
+  --ui-radius: var(--ui-radius-md); /* legacy alias */
   --ui-radius-lg: 0.5rem; /* 8px */
   --ui-radius-pill: 999rem;
 
@@ -127,6 +136,22 @@
   --ui-icon-button-size-sm: 1.5rem; /* 24px */
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: 2.25rem; /* 36px */
+  /* --- Shared field component contract --- */
+  --ui-field-height: var(--ui-control-height);
+  --ui-field-padding-block: var(--ui-space-1);
+  --ui-field-padding-inline: var(--ui-space-2);
+  --ui-field-radius: var(--ui-radius-md);
+  --ui-field-bg: var(--ui-color-surface-hover);
+  --ui-field-bg-hover: var(--ui-color-surface-active);
+  --ui-field-fg: var(--ui-color-text);
+  --ui-field-placeholder: var(--ui-color-text-muted);
+  --ui-field-border: var(--ui-color-border);
+  --ui-field-border-hover: var(--ui-color-border-strong);
+  --ui-field-border-invalid: var(--ui-color-danger);
+  --ui-checkbox-size: var(--ui-space-4);
+  --ui-range-track-size: var(--ui-space-1);
+  --ui-range-thumb-size: var(--ui-space-4);
+  --ui-progress-track-size: var(--ui-space-2);
   --ui-separation-mode-min-width: 8.5rem; /* mode label + native select affordance */
   --ui-lyrics-live-control-height: 2.75rem; /* 44px urgent live action target */
   --ui-lyrics-live-action-width: 4.5rem;
@@ -307,6 +332,8 @@
   --ui-player-bar-artwork-size: var(
     --ui-track-row-min-height
   ); /* 52px: keep in sync with PLAYER_BAR_ARTWORK_SIZE */
+  --ui-player-bar-track-width: 15rem; /* 240px: stable now-playing region at common desktop widths */
+  --ui-player-bar-track-width-min: 11rem; /* 176px: artwork plus readable one-line metadata */
   --ui-player-bar-center-max-width: 28rem; /* 448px: stable scrubber width at common desktop sizes */
   --ui-player-bar-volume-slider-width: 5rem; /* 80px: compact desktop volume control */
   --ui-player-bar-height: calc(
@@ -359,16 +386,23 @@
   --ui-focus-offset-inset: -2px; /* for clipped row surfaces */
 
   /* --- Motion --- */
-  --ui-motion-fast: 120ms;
-  --ui-motion-slow: 220ms;
-  --ui-motion-ease: ease-out;
+  --ui-motion-duration-feedback: 100ms;
+  --ui-motion-duration-fast: 120ms;
+  --ui-motion-duration-standard: 220ms;
+  --ui-motion-duration-slow: 280ms;
+  --ui-motion-easing-standard: ease-out;
+  --ui-motion-fast: var(--ui-motion-duration-fast); /* legacy alias */
+  --ui-motion-slow: var(--ui-motion-duration-standard); /* legacy alias */
+  --ui-motion-ease: var(--ui-motion-easing-standard); /* legacy alias */
   --ui-motion-spin: 1s linear;
 
   /* --- Z-index --- */
   --ui-z-dropdown: 20;
-  --ui-z-context-menu: 100;
+  --ui-z-popover: 100;
+  --ui-z-dialog: 200;
+  --ui-z-context-menu: var(--ui-z-popover); /* legacy alias */
   --ui-z-context-menu-submenu: 101;
-  --ui-z-modal: 200;
+  --ui-z-modal: var(--ui-z-dialog); /* legacy alias */
 }
 
 /* Light theme: only color tokens are redefined — spacing, typography,
@@ -410,6 +444,11 @@
 
   /* --- Color: status --- */
   --ui-color-info: #4d8793;
+  --ui-color-info-soft: color-mix(
+    in srgb,
+    var(--ui-color-info) 18%,
+    transparent
+  );
   --ui-color-success: #5f9a72;
   --ui-color-success-soft: color-mix(
     in srgb,

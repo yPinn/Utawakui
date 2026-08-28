@@ -90,7 +90,7 @@ const role = computed(() =>
   align-items: start;
   gap: var(--ui-space-2);
   padding: var(--ui-space-3);
-  border: 1px solid var(--ui-color-border);
+  border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface-raised);
   color: var(--ui-color-text);
@@ -102,7 +102,7 @@ const role = computed(() =>
 
 .ui-notice--info {
   border-color: var(--ui-color-info);
-  background: color-mix(in srgb, var(--ui-color-info) 18%, transparent);
+  background: var(--ui-color-info-soft);
 }
 
 .ui-notice--success {
@@ -154,7 +154,7 @@ const role = computed(() =>
 
 .ui-notice__title {
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -169,7 +169,7 @@ const role = computed(() =>
   align-self: center;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 35rem) {
   .ui-notice {
     grid-template-columns: auto minmax(0, 1fr);
   }

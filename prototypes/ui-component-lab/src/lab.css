@@ -1,0 +1,102 @@
+body {
+  min-width: 20rem;
+  min-height: 100vh;
+  height: auto;
+  overflow: auto;
+}
+
+#app {
+  min-height: 100vh;
+  height: auto;
+}
+
+.component-lab {
+  min-height: 100vh;
+  display: grid;
+  align-content: start;
+  gap: var(--ui-space-5);
+  padding: var(--ui-space-5);
+  background: var(--ui-color-canvas);
+}
+
+.lab-toolbar,
+.lab-grid,
+.lab-fields {
+  display: grid;
+  gap: var(--ui-space-4);
+}
+
+.lab-toolbar {
+  grid-template-columns: repeat(4, minmax(9rem, 1fr));
+  padding: var(--ui-space-4);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface);
+}
+
+.lab-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lab-panel {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--ui-space-3);
+  padding: var(--ui-space-4);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface);
+}
+
+.lab-panel h2 {
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-lg);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-title);
+}
+
+.lab-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+}
+
+.lab-fields {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.lab-native-field {
+  width: 100%;
+  min-height: var(--ui-field-height);
+  padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
+  border: var(--ui-border-width) solid var(--ui-field-border);
+  border-radius: var(--ui-field-radius);
+  background: var(--ui-field-bg);
+  color: var(--ui-field-fg);
+}
+
+.lab-native-field:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
+.lab-track-list {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (max-width: 60rem) {
+  .component-lab {
+    padding: var(--ui-space-3);
+  }
+
+  .lab-toolbar,
+  .lab-grid,
+  .lab-fields {
+    grid-template-columns: 1fr;
+  }
+}

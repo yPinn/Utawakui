@@ -5,16 +5,14 @@ import UiField from './UiField.vue';
 
 defineOptions({ inheritAttrs: false });
 
-defineProps({
+const props = defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
-  modelValue: { type: String, default: '' },
+  modelValue: { type: [String, Number], default: '' },
+  options: { type: Array, default: () => [] },
+  placeholder: { type: String, default: '' },
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
-  placeholder: { type: String, default: '' },
-  maxlength: { type: Number, default: undefined },
-  autocomplete: { type: String, default: 'off' },
-  dir: { type: String, default: 'auto' },
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
@@ -23,10 +21,17 @@ defineProps({
 
 const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
-const inputRef = useTemplateRef('input');
+const selectRef = useTemplateRef('select');
+
+function updateValue(event) {
+  const selected = props.options.find(
+    (option) => String(option.value) === event.target.value,
+  );
+  emit('update:modelValue', selected ? selected.value : event.target.value);
+}
 
 function focus() {
-  inputRef.value?.focus();
+  selectRef.value?.focus();
 }
 
 defineExpose({ focus });
@@ -46,29 +51,34 @@ defineExpose({ focus });
     :label-hidden="labelHidden"
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
-      <input
+      <select
         v-bind="nativeControlAttrs(attrs)"
         :id="id"
-        ref="input"
-        class="ui-text-field"
-        type="text"
+        ref="select"
+        class="ui-select"
         :value="modelValue"
-        :placeholder="placeholder"
-        :maxlength="maxlength"
-        :autocomplete="autocomplete"
-        :dir="dir"
         :required="required"
         :disabled="disabled"
         :aria-describedby="describedBy"
         :aria-invalid="fieldInvalid || undefined"
-        @input="emit('update:modelValue', $event.target.value)"
-      />
+        @change="updateValue"
+      >
+        <option v-if="placeholder" value="" disabled>{{ placeholder }}</option>
+        <option
+          v-for="option in options"
+          :key="String(option.value)"
+          :value="option.value"
+          :disabled="option.disabled"
+        >
+          {{ option.label }}
+        </option>
+      </select>
     </template>
   </UiField>
 </template>
 
 <style scoped>
-.ui-text-field {
+.ui-select {
   width: 100%;
   min-width: 0;
   min-height: var(--ui-field-height);
@@ -81,8 +91,6 @@ defineExpose({ focus });
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-label);
-  -webkit-user-select: text;
-  user-select: text;
   transition:
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),
@@ -90,25 +98,21 @@ defineExpose({ focus });
       var(--ui-motion-easing-standard);
 }
 
-.ui-text-field:hover:not(:disabled) {
+.ui-select:hover:not(:disabled) {
   border-color: var(--ui-field-border-hover);
   background: var(--ui-field-bg-hover);
 }
 
-.ui-text-field::placeholder {
-  color: var(--ui-field-placeholder);
-}
-
-.ui-text-field:focus-visible {
+.ui-select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
-.ui-text-field[aria-invalid='true'] {
+.ui-select[aria-invalid='true'] {
   border-color: var(--ui-field-border-invalid);
 }
 
-.ui-text-field:disabled {
+.ui-select:disabled {
   cursor: not-allowed;
   opacity: var(--ui-opacity-disabled);
 }
