@@ -10,6 +10,32 @@ const maintenanceSource = source.slice(
 );
 
 describe('SettingsView maintenance section', () => {
+  it('describes optional downloads in user-facing terms', () => {
+    expect(source).toContain('功能與下載項目');
+    expect(source).toContain(
+      '啟用前會說明用途與需要的額外下載；之後可隨時移除。',
+    );
+    expect(source).not.toContain('工具與模型會列在下方');
+    expect(source).toContain('<MusicAnalysisSettingsRow');
+    expect(source).toContain('FEATURE_IDS.AUDIO_PROCESSING_FLOW');
+  });
+
+  it('nests BPM controls inside the audio-processing feature row', () => {
+    const gateRowStart = source.indexOf('<SettingsFeatureGateRow');
+    const bpmRow = source.indexOf('<MusicAnalysisSettingsRow', gateRowStart);
+    const gateRowEnd = source.indexOf(
+      '</SettingsFeatureGateRow>',
+      gateRowStart,
+    );
+
+    expect(gateRowStart).toBeGreaterThan(-1);
+    expect(bpmRow).toBeGreaterThan(gateRowStart);
+    expect(gateRowEnd).toBeGreaterThan(bpmRow);
+    expect(source.slice(bpmRow, gateRowEnd)).toContain(
+      'gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled',
+    );
+  });
+
   it('orders app updates before error diagnostics', () => {
     const appUpdateIndex = maintenanceSource.indexOf('<AppUpdateSettingsRow');
     const diagnosticsIndex = maintenanceSource.indexOf(
@@ -23,5 +49,12 @@ describe('SettingsView maintenance section', () => {
 
   it('describes the destructive confirmation as clearing error records', () => {
     expect(source).toContain("window.confirm('清除這台電腦上的錯誤紀錄？')");
+  });
+
+  it('confirms BPM component removal without exposing storage details', () => {
+    expect(source).toContain(
+      "window.confirm('移除 BPM 分析元件？歌曲與既有分析資料都會保留。')",
+    );
+    expect(source).toContain('@remove="handleRemoveMusicAnalysis"');
   });
 });

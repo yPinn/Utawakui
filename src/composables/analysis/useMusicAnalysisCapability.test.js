@@ -77,6 +77,7 @@ describe('Music Analysis capability owner', () => {
     expect(
       harness.bridge.onMusicStructureCapabilityProgress,
     ).toHaveBeenCalledOnce();
+    expect(harness.owner.stageLabel.value).toBe('下載分析元件');
 
     harness.owner.dispose();
     harness.progress({ stage: 'ready', percent: 100 });

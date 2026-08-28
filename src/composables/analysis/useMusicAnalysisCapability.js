@@ -2,14 +2,14 @@ import { computed } from 'vue';
 
 const CAPABILITY_STAGE_LABELS = Object.freeze({
   starting: '準備下載',
-  'downloading-runtime': '下載 Python runtime',
-  'installing-runtime': '安裝 Python runtime',
-  'downloading-environment': '下載分析環境',
-  'installing-environment': '安裝分析環境',
-  'verifying-environment': '驗證分析環境',
-  'downloading-model': '下載 Beat This! 模型',
-  'verifying-model': '驗證模型',
-  activating: '啟用分析功能',
+  'downloading-runtime': '下載分析元件',
+  'installing-runtime': '安裝分析元件',
+  'downloading-environment': '下載分析元件',
+  'installing-environment': '安裝分析元件',
+  'verifying-environment': '確認分析元件',
+  'downloading-model': '下載分析元件',
+  'verifying-model': '確認分析元件',
+  activating: '完成分析功能設定',
   ready: '分析功能已就緒',
 });
 

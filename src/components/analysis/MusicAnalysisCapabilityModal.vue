@@ -29,7 +29,7 @@ function formatSize(bytes) {
 <template>
   <UiModal
     :open="open"
-    title="分析功能資訊"
+    title="BPM 分析功能"
     size="notice"
     @close="emit('close')"
   >
@@ -40,7 +40,7 @@ function formatSize(bytes) {
           <dd>{{ statusLabel }}</dd>
         </div>
         <div>
-          <dt>模型</dt>
+          <dt>分析元件</dt>
           <dd>
             {{ capability?.modelName || 'Beat This! small0' }}
             <span v-if="capability?.modelVersion">
@@ -59,18 +59,14 @@ function formatSize(bytes) {
       </dl>
 
       <div class="analysis-capability-modal__copy">
+        <p>啟用後，Utawakui 會額外下載分析元件，並使用上方所列的本機空間。</p>
         <p>
-          Utawakui 會下載固定版本的 Python runtime、CPU
-          分析環境與模型，並在啟用前逐一驗證檔案大小與 SHA-256。
-        </p>
-        <p>
-          分析在本機執行；歌曲音訊與 sidecar
-          不會上傳。移除功能不會刪除歌曲或既有 sidecar。
+          分析只在這台電腦執行，歌曲不會上傳。移除分析功能不會刪除歌曲；已產生的分析資料也會保留。
         </p>
       </div>
 
       <UiHint tone="warning">
-        Beat This! 只產生 BPM、節拍與強拍；段落分析將由後續 M2 功能補上。
+        目前提供 BPM、節拍與強拍分析，不包含歌曲段落辨識或逐字歌詞。
       </UiHint>
 
       <div

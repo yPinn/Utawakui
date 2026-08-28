@@ -109,6 +109,15 @@ describe('featureGates', () => {
     expect(
       getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
     ).toContain('FFmpeg（GPLv3）');
+    expect(getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).summary).toContain(
+      'BPM／節拍分析',
+    );
+    expect(
+      getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
+    ).toContain('額外下載');
+    expect(
+      getFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW).body.join(''),
+    ).toContain('歌曲不會上傳');
     expect(
       getFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW).body.join(''),
     ).toContain('直播、錄影或 VOD');

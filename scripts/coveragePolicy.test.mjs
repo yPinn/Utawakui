@@ -36,6 +36,7 @@ describe('coverage policy', () => {
   it('measures ordinary domain logic instead of deferring low coverage', () => {
     for (const file of [
       'electron/lib/downloader.js',
+      'electron/lib/audioProcessing/structureAnalysisAutoQueue.js',
       'electron/main/configHandlers.js',
       'electron/preload.js',
       'electron/performerPreload.js',
@@ -43,6 +44,7 @@ describe('coverage policy', () => {
       'shared/outputContract.js',
       'src/components/ui/fieldAttrs.js',
       'src/composables/usePlaylistActions.js',
+      'src/composables/useMusicAnalysisSettings.js',
       'src/constants/featureGates.js',
       'src/utils/lyrics.js',
     ]) {

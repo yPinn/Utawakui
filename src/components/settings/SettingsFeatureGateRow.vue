@@ -1,5 +1,5 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, useSlots } from 'vue';
 import { Info, Loader2, Plus } from '../../icons/index.js';
 import SettingsActionRow from './SettingsActionRow.vue';
 import SettingsDependencyActions from './SettingsDependencyActions.vue';
@@ -16,9 +16,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['enable', 'itemAction', 'itemAdvancedAction']);
+const slots = useSlots();
 
 const hasItems = computed(() => props.items.length > 0);
-const shouldShowItems = computed(() => props.gate.enabled && hasItems.value);
+const shouldShowItems = computed(
+  () => props.gate.enabled && (hasItems.value || Boolean(slots.items)),
+);
 
 // Available whether the gate is enabled or not — the declaration is what
 // enabling it means, which is exactly what someone deciding whether to
@@ -107,6 +110,7 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
           />
         </template>
       </SettingsActionRow>
+      <slot name="items" />
     </div>
   </div>
 </template>

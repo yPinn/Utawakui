@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, shallowRef } from 'vue';
+import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import { Ellipsis, FolderOpen, RefreshCw, RotateCcw } from '../icons/index.js';
 import AppUpdateSettingsRow from '../components/settings/AppUpdateSettingsRow.vue';
 import AudioOutputSettingsBlock from '../components/settings/AudioOutputSettingsBlock.vue';
@@ -7,6 +7,7 @@ import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
 import DiagnosticsSettingsBlock from '../components/settings/DiagnosticsSettingsBlock.vue';
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
+import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
@@ -19,6 +20,7 @@ import {
   getFeatureDependencies,
   isKnownFeatureDependency,
 } from '../constants/featureDependencies.js';
+import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useFeatureDependencies } from '../composables/useFeatureDependencies.js';
 import { useFeatureGateAccess } from '../composables/useFeatureGateAccess.js';
 import { useFeatureGatePresentation } from '../composables/useFeatureGatePresentation.js';
@@ -29,6 +31,7 @@ import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibraryMetadataMaintenance } from '../composables/useLibraryMetadataMaintenance.js';
+import { useMusicAnalysisSettings } from '../composables/useMusicAnalysisSettings.js';
 import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
 import { usePlayer } from '../composables/usePlayer.js';
 
@@ -73,6 +76,7 @@ const {
   removeDependency,
   repairDependency,
 } = useFeatureDependencies();
+const musicAnalysisSettings = useMusicAnalysisSettings();
 
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
@@ -223,6 +227,16 @@ async function refreshSettingsState() {
   refreshConfirmations();
   refreshDependencies();
   refreshDiagnostics();
+  musicAnalysisSettings.initialize();
+}
+
+async function handleRemoveMusicAnalysis() {
+  const confirmed =
+    typeof window === 'undefined' ||
+    window.confirm('移除 BPM 分析元件？歌曲與既有分析資料都會保留。');
+  if (!confirmed) return;
+
+  await musicAnalysisSettings.remove();
 }
 
 async function handleClearDiagnostics() {
@@ -317,6 +331,7 @@ function handleFeatureGateRequestAction() {
 }
 
 onMounted(refreshSettingsState);
+onUnmounted(musicAnalysisSettings.dispose);
 </script>
 
 <template>
@@ -443,16 +458,16 @@ onMounted(refreshSettingsState);
       >
         <header class="settings-view__column-header">
           <h2 id="settings-status-title" class="settings-view__column-title">
-            進階功能準備
+            功能與下載項目
           </h2>
           <p class="settings-view__column-summary">
-            啟用流程，並準備需要下載的項目
+            選擇需要的功能，並管理額外下載
           </p>
         </header>
 
         <SettingsBlock
-          title="進階功能"
-          summary="只啟用你需要的流程；工具與模型會列在下方。"
+          title="選用功能"
+          summary="啟用前會說明用途與需要的額外下載；之後可隨時移除。"
           :status="`${enabledGateCount} / ${featureGateRows.length}`"
           status-tone="gated"
         >
@@ -490,7 +505,26 @@ onMounted(refreshSettingsState);
             @enable="enableFeature"
             @item-action="handleWorkflowItemAction"
             @item-advanced-action="handleWorkflowItemAdvancedAction"
-          />
+          >
+            <template #items>
+              <MusicAnalysisSettingsRow
+                v-if="
+                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
+                "
+                :capability="musicAnalysisSettings.capability.value"
+                :auto-analyze="musicAnalysisSettings.autoAnalyze.value"
+                :capability-busy="musicAnalysisSettings.capabilityBusy.value"
+                :preference-busy="musicAnalysisSettings.preferenceBusy.value"
+                :stage-label="musicAnalysisSettings.stageLabel.value"
+                :capability-error="musicAnalysisSettings.capabilityError.value"
+                :preference-error="musicAnalysisSettings.preferenceError.value"
+                @set-auto-analyze="musicAnalysisSettings.setAutoAnalyze"
+                @prepare="musicAnalysisSettings.prepare"
+                @repair="musicAnalysisSettings.repair"
+                @remove="handleRemoveMusicAnalysis"
+              />
+            </template>
+          </SettingsFeatureGateRow>
 
           <UiNotice
             v-if="featureGateState.error"
