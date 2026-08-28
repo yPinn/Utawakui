@@ -328,17 +328,17 @@ timeout and bounded response limit. Raw TTML, metadata arrays, filenames, record
 ids, and exception text are discarded before the normalized observation returns.
 
 The NetEase YRC adapter remains an isolated engineering probe and is not a member
-of the fixed runner registry. It dynamically accepts the maintained reverse client
-only inside an evaluation environment, applies a provider-local two-request-per-
-second scheduler and the reverse client's own bounded request timeout, ranks title,
-artist, album, duration, aliases and recording-version evidence, and returns only
-categorical T0／T1／validated-T2 observations. Raw YRC／LRC, provider records, ids,
-translations and exception text are discarded. The reverse package is deliberately
-absent from Utawakui's main dependency tree: it imports environment state, writes
-temporary token state and may print upstream failures. Before this adapter can join
-the fixed runner, it requires a separately provisioned child-process runtime whose
-output is suppressed and whose process can be terminated at the hard deadline. An
-in-process `Promise.race` is not an acceptable substitute.
+of the fixed runner registry. Its separately provisioned one-shot child-process
+runtime pins the reverse client, isolates user state, suppresses process output,
+enforces bounded IPC and terminates the process tree at the hard deadline. The
+adapter ranks title, artist, album, duration, aliases and recording-version
+evidence, then returns only categorical T0／T1／validated-T2 observations. Raw
+YRC／LRC, provider records, ids, translations and exception text are discarded.
+The runtime and reverse package remain absent from Utawakui's main dependency
+tree, Electron startup, preload and renderer. The durable isolation boundary is
+defined in the
+[NetEase validation contract](netease-isolated-technical-validation.md); its
+point-in-time outcome belongs to the dated validation report.
 
 ## Result Boundary
 
