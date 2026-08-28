@@ -33,13 +33,13 @@ WINDOWS_X64_UNAME = namedtuple(
 ANALYSIS_PROFILES = {
     "beat-this-small0": {
         "analyzer_id": "beat-this",
-        "profile_id": "beat-this-small0-cpu-v2",
+        "profile_id": "beat-this-small0-cpu-v3",
         "model_name": "small0",
         "files": {"weights": "small0.ckpt"},
     },
     "beat-this-final0": {
         "analyzer_id": "beat-this",
-        "profile_id": "beat-this-final0-cpu-v2",
+        "profile_id": "beat-this-final0-cpu-v3",
         "model_name": "final0",
         "files": {"weights": "final0.ckpt"},
     },
@@ -647,10 +647,10 @@ def logit_confidence(logits: Any, time_seconds: float) -> float:
 
 
 def estimate_global_bpm(beat_times: list[float]) -> float | None:
-    """Estimate tempo across long beat windows to reduce frame-grid bias."""
+    """Estimate the modal local tempo while smoothing frame-grid bias."""
     if len(beat_times) < 2:
         return None
-    window_beats = min(32, len(beat_times) - 1)
+    window_beats = min(4, len(beat_times) - 1)
     intervals = [
         (current - previous) / window_beats
         for previous, current in zip(

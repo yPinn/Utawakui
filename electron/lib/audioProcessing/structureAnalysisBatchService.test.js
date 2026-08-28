@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createStructureAnalysisBatchService } from './structureAnalysisBatchService.js';
 
-function current(level = 'M1') {
-  return { signals: { level, reason: 'current' } };
+const CURRENT_PROFILE_IDS = [
+  'beat-this-small0-cpu-v3',
+  'beat-this-final0-cpu-v3',
+  'all-in-one-cpu-v1',
+];
+
+function current(level = 'M1', analysisProfileId = 'beat-this-small0-cpu-v3') {
+  return { signals: { level, reason: 'current' }, analysisProfileId };
 }
 
 function missing() {
@@ -31,6 +37,7 @@ function createHarness(overrides = {}) {
   const service = createStructureAnalysisBatchService({
     analysisService,
     inspectTrack,
+    currentProfileIds: CURRENT_PROFILE_IDS,
     onTrackComplete,
     createBatchId: () => 'batch-1',
     ...overrides,
@@ -96,6 +103,19 @@ describe('structure-analysis batch service', () => {
     expect(batch.succeeded).toBe(2);
     expect(batch.skipped).toBe(0);
     expect(harness.analysisService.run).toHaveBeenCalledTimes(2);
+  });
+
+  it('reanalyzes a source-current sidecar produced by an obsolete profile', async () => {
+    const harness = createHarness({
+      inspectTrack: vi.fn(async () => current('M1', 'beat-this-small0-cpu-v2')),
+    });
+
+    harness.service.start({ trackIds: ['outdated'], force: false });
+    const batch = await waitForTerminal(harness.service);
+
+    expect(batch.succeeded).toBe(1);
+    expect(batch.skipped).toBe(0);
+    expect(harness.analysisService.run).toHaveBeenCalledOnce();
   });
 
   it('cancels the active analysis and marks the remaining queue cancelled', async () => {

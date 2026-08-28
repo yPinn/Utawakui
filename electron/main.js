@@ -34,7 +34,7 @@ const isPackagedRuntime = detectPackagedRuntime({
 
 const { FEATURE_IDS } = require('./lib/featureGates');
 const {
-  loadTrackMusicStructure,
+  inspectTrackMusicStructure,
   prepareTrackMusicStructureSource,
   resolveTrackArtworkPath,
   saveTrackMusicStructure,
@@ -49,6 +49,9 @@ const {
 const {
   createStructureAnalysisService,
 } = require('./lib/audioProcessing/structureAnalysisService');
+const {
+  SUPPORTED_STRUCTURE_ANALYSIS_MODELS,
+} = require('./lib/audioProcessing/structureAnalysisJob');
 const {
   createStructureAnalysisBatchService,
 } = require('./lib/audioProcessing/structureAnalysisBatchService');
@@ -340,11 +343,14 @@ if (!gotSingleInstanceLock) {
       analysisService: structureAnalysisService,
       inspectTrack: (trackId) => {
         const config = configState.getConfig();
-        return loadTrackMusicStructure(
+        return inspectTrackMusicStructure(
           configState.resolveDownloadDir(config),
           trackId,
         );
       },
+      currentProfileIds: Object.values(SUPPORTED_STRUCTURE_ANALYSIS_MODELS).map(
+        ({ profileId }) => profileId,
+      ),
       onTrackComplete: windowState.notifyLibraryUpdated,
     });
     const structureAnalysisCapabilityService =

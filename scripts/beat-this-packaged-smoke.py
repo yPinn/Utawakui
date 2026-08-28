@@ -125,7 +125,7 @@ def run_smoke(args: argparse.Namespace) -> dict[str, object]:
     manifest = json.loads(manifest_path.read_text("utf-8"))
     if manifest.get("architecture") != "beat-this":
         raise RuntimeError("unexpected Beat This! model manifest")
-    profile_id = f"beat-this-{manifest['wrapper']['model']}-cpu-v2"
+    profile_id = f"beat-this-{manifest['wrapper']['model']}-cpu-v3"
     output_path.mkdir(parents=True, exist_ok=True)
     input_path = args.input.resolve(strict=True) if args.input else output_path / "input.wav"
     job_path = output_path / "job"

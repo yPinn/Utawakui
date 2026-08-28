@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "beat-this-bpm-pilot-v1",
+  "tempoToleranceRatio": 0.04,
+  "acceptance": {
+    "minimumTracks": 30,
+    "requiredTags": [
+      { "tag": "j-pop", "minimumTracks": 10 },
+      { "tag": "k-pop", "minimumTracks": 10 },
+      { "tag": "karaoke", "minimumTracks": 10 },
+      { "tag": "slow", "minimumTracks": 5 },
+      { "tag": "mid", "minimumTracks": 10 },
+      { "tag": "fast", "minimumTracks": 5 }
+    ],
+    "minimumDirectMatchRate": 0.9,
+    "minimumRequiredTagDirectMatchRate": 0.8,
+    "maximumTempoOctaveErrorRate": 0.05,
+    "maximumTempoUnrelatedErrorRate": 0.05,
+    "maximumTempoMissingRate": 0.05,
+    "maximumAnalysisFailureRate": 0.05
+  },
+  "cases": [
+    {
+      "id": "track-001",
+      "tags": ["j-pop", "karaoke", "mid"],
+      "referenceBpm": 120
+    }
+  ]
+}

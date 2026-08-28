@@ -7,6 +7,7 @@ import musicStructureModule from './musicStructure.js';
 import contractValues from '../../../shared/musicStructureContractValues.json';
 
 const {
+  inspectTrackMusicStructure,
   loadTrackMusicStructure,
   musicStructureSidecarPath,
   prepareTrackMusicStructureSource,
@@ -78,6 +79,14 @@ describe('music-structure sidecar storage', () => {
     await expect(loadTrackMusicStructure(dir, 'track-1')).resolves.toEqual(
       saved,
     );
+    await expect(
+      inspectTrackMusicStructure(dir, 'track-1'),
+    ).resolves.toMatchObject({
+      trackId: 'track-1',
+      analysisProfileId: fixture().analyzer.profileId,
+      signals: { level: 'M1', reason: 'current' },
+    });
+    expect(saved).not.toHaveProperty('analysisProfileId');
     expect(
       JSON.parse(
         fs.readFileSync(musicStructureSidecarPath(dir, 'track-1'), 'utf8'),

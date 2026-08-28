@@ -37,6 +37,7 @@ const FUNCTION_EXPORTS = [
   'importManualLyricsFile',
   'importManualLyricsText',
   'importLocalAudioFiles',
+  'inspectTrackMusicStructure',
   'getTrackLyricsState',
   'getTrackReading',
   'listTracks',
@@ -90,7 +91,7 @@ const CONSTANT_EXPORTS = [
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 67 names its consumers expect', () => {
+  it('re-exports exactly the 68 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

@@ -46,10 +46,11 @@ function validateTrackIds(value) {
   return unique;
 }
 
-function isCurrentAnalysis(result) {
+function isCurrentAnalysis(result, currentProfileIds) {
   return (
     result?.signals?.reason === 'current' &&
-    ['M1', 'M2'].includes(result?.signals?.level)
+    ['M1', 'M2'].includes(result?.signals?.level) &&
+    currentProfileIds.has(result?.analysisProfileId)
   );
 }
 
@@ -95,6 +96,7 @@ function snapshot(batch) {
 function createStructureAnalysisBatchService({
   analysisService,
   inspectTrack,
+  currentProfileIds,
   onTrackComplete = () => {},
   createBatchId = crypto.randomUUID,
 }) {
@@ -104,11 +106,17 @@ function createStructureAnalysisBatchService({
     typeof analysisService.getActiveJob !== 'function' ||
     typeof analysisService.cancelActiveJob !== 'function' ||
     typeof inspectTrack !== 'function' ||
+    !Array.isArray(currentProfileIds) ||
+    currentProfileIds.length === 0 ||
+    currentProfileIds.some(
+      (profileId) => typeof profileId !== 'string' || profileId.length === 0,
+    ) ||
     typeof onTrackComplete !== 'function' ||
     typeof createBatchId !== 'function'
   ) {
     throw new Error('invalid structure-analysis batch dependencies');
   }
+  const supportedProfileIds = new Set(currentProfileIds);
 
   let batch = null;
   let updateListener = null;
@@ -155,7 +163,7 @@ function createStructureAnalysisBatchService({
       try {
         const existing = await inspectTrack(item.trackId);
         if (finishCancellationIfRequested()) return;
-        if (!batch.force && isCurrentAnalysis(existing)) {
+        if (!batch.force && isCurrentAnalysis(existing, supportedProfileIds)) {
           item.status = 'skipped';
           emitUpdate();
           continue;

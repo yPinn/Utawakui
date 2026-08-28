@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 3,
+  "benchmarkKind": "bpm-runtime-smoke",
+  "benchmarkId": "beat-this-bpm-runtime-smoke-v1",
+  "libraryRoot": "D:\\UtawakuiLibrary",
+  "outputRoot": "C:\\private\\utawakui-bpm\\runtime-smoke-results",
+  "ffmpegPath": "C:\\private\\utawakui-audio-python\\ffmpeg.exe",
+  "pythonPath": "C:\\private\\utawakui-audio-python\\python.exe",
+  "environmentPath": "C:\\private\\utawakui-audio-python\\site-packages",
+  "workerPath": "E:\\Utawakui\\resources\\audio-processing\\structure_analysis_worker.py",
+  "modelManifestPath": "E:\\Utawakui\\resources\\audio-processing\\analysis-beat-this-small0-model.json",
+  "modelPath": "C:\\private\\utawakui-audio-python\\models\\beat-this-small0",
+  "cases": [
+    {
+      "benchmarkCaseId": "smoke-001",
+      "trackId": "replace-with-local-library-track-id",
+      "durationMs": 180000
+    }
+  ]
+}

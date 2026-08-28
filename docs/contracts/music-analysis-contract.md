@@ -20,8 +20,10 @@ download/install, progress, repair, removal, and activation for the fixed
 `small0` choice; model selection is intentionally unavailable. It also exposes a
 main-owned sequential batch queue: renderer input is limited to at most 500
 validated track ids plus one force boolean, current M1/M2 sidecars are skipped
-by default, per-track failures do not stop the queue, and cancellation covers
-the current inspection or inference plus all remaining items. Public product
+by default only when their analyzer profile is still supported; source-current
+Beat This! v2 sidecars are reanalyzed by the normal v3 batch path. Per-track
+failures do not stop the queue, and cancellation covers the current inspection
+or inference plus all remaining items. Public product
 release remains gated on labeled accuracy, OS-level offline, license notice,
 disk-capacity, failure recovery, and manual UI acceptance.
 
@@ -39,6 +41,28 @@ contract-eligible M2 yield, BPM octave/missing rates, inference failures, and
 required song-group summaries. Until the minimum 30-song J-pop/K-pop/karaoke
 corpus is populated, its result must remain `insufficient-data`; synthetic
 fixtures prove evaluator behavior, not analyzer quality.
+
+The independent [BPM quality gate](music-analysis-bpm-quality-gate.md) now owns
+the M1 global-tempo acceptance boundary. It separates locked private ground truth
+from corpus-fingerprinted path-free predictions, treats half／double-time estimates
+as errors, and keeps beat-evidence confidence diagnostic-only. The locked tuning
+and holdout evidence selected the four-beat estimator without automatic
+half／double-time normalization. That decision is promoted as
+`beat-this-small0-cpu-v3`; the evaluator and historical v2 evidence remain
+unchanged.
+
+The isolated real-song runner now accepts a separate schema-v2 BPM config that
+maps opaque corpus ids to current local-library track ids. It can execute only the
+fixed checked-in `small0` or `final0` manifest contract and emits
+corpus-fingerprinted, path-free BPM predictions for that evaluator. This CLI-only
+comparison does not expose model selection through renderer／IPC, publish sidecars,
+or alter the active product profile.
+
+Schema v3 is the explicitly non-scoring companion for runtime breadth before
+annotation. It executes the same fixed model and cache boundaries but accepts no
+reference BPM, emits `bpm-runtime-smoke` evidence without a corpus fingerprint,
+and cannot pass the scored prediction validator. Runtime completion or high beat
+confidence from this path is never an accuracy claim.
 
 The accepted product endpoint is:
 
@@ -230,13 +254,14 @@ repair, and rollback follow ADR 0014. Successful analysis publishes the sidecar
 only after validation and atomic replacement. Failure leaves any previous valid
 sidecar intact.
 
-Beat This! profile `beat-this-small0-cpu-v2` derives one global tempo from the
-median per-beat duration across bounded windows of up to 32 beats. This preserves
-robustness against isolated timing noise without letting the 50 fps beat grid
-quantize the estimate to a single adjacent-frame interval. Beat and downbeat
-timestamps are unchanged. Renderer copy labels BPM as an estimate, displays at
-most one decimal place, and identifies the accompanying confidence as beat
-confidence rather than measured tempo certainty.
+Beat This! profiles `beat-this-small0-cpu-v3` and
+`beat-this-final0-cpu-v3` derive one global tempo from the median per-beat
+duration across bounded windows of up to four beats. This preserves smoothing
+across the 50 fps beat grid while tracking the modal local tempo instead of
+smearing missing／extra-beat regions across 32 beats. Beat and downbeat timestamps
+are unchanged. Renderer copy labels BPM as an estimate, displays at most one
+decimal place, and identifies the accompanying confidence as beat confidence
+rather than measured tempo certainty.
 
 The fixed `tempo-octave-evaluation.json` cases classify direct, half-time,
 double-time, and unrelated estimates against a labeled BPM with a four-percent
@@ -252,6 +277,13 @@ normal or forced analysis, but it cannot supply paths, model ids, worker
 arguments, concurrency, or retry policy. Public status exposes only bounded
 counts, allowlisted stages and reasons, progress, and per-track state; raw worker
 errors and paths stay in main.
+
+Batch freshness compares source validity and a main-owned supported-profile
+allowlist. The private storage inspection returns only the validated profile id
+needed for that decision; the renderer-facing music-structure projection does not
+expose analyzer provenance. A valid v2 sidecar therefore remains readable until
+the track is analyzed, but normal F10 batch execution does not misclassify it as a
+current v3 result.
 
 ## Validation invariants
 

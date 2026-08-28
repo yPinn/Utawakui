@@ -94,6 +94,7 @@ const {
 const { importLocalAudioFiles } = require('./library/importLocal');
 const { runBackfillPass } = require('./library/backfill');
 const {
+  inspectTrackMusicStructure,
   loadTrackMusicStructure,
   musicStructureSidecarPath,
   prepareTrackMusicStructureSource,
@@ -126,6 +127,7 @@ module.exports = {
   importManualLyricsFile,
   importManualLyricsText,
   importLocalAudioFiles,
+  inspectTrackMusicStructure,
   LYRICS_MANIFEST_VERSION,
   LYRICS_NORMALIZER_PROFILE_ID,
   LYRICS_TIMING_SCHEMA_VERSION,

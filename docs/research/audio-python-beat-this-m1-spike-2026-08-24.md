@@ -1,5 +1,10 @@
 # Beat This! M1 Windows CPU Spike
 
+> 2026-08-28 follow-up: this document records the original v2 spike. The active
+> estimator is now `beat-this-small0-cpu-v3`, using four-beat median intervals as
+> selected by the [BPM normalization study](music-analysis-bpm-normalization-2026-08-28.md).
+> Model weights and the minimal postprocessor remain unchanged.
+
 ## 記錄結論
 
 Beat This! 1.1.0 已通過 Utawakui 的第一輪 M1 Windows x64 CPU spike。

@@ -123,47 +123,69 @@ function readBoundedSidecar(filePath) {
   }
 }
 
-function publicResult(trackId, identity, signals) {
+function publicResult(trackId, identity, signals, analysisProfileId) {
   return {
     trackId,
     sourceRevision: identity?.sourceSha256 ?? null,
     sourceDurationMs: identity?.sourceDurationMs ?? null,
     signals,
+    ...(analysisProfileId === undefined ? {} : { analysisProfileId }),
   };
 }
 
-async function loadTrackMusicStructure(dir, trackId) {
+async function readTrackMusicStructure(dir, trackId, includeAnalysisProfileId) {
+  const project = (
+    resultTrackId,
+    identity,
+    signals,
+    analysisProfileId = null,
+  ) =>
+    publicResult(
+      resultTrackId,
+      identity,
+      signals,
+      includeAnalysisProfileId ? analysisProfileId : undefined,
+    );
   const filePath = musicStructureSidecarPath(dir, trackId);
   if (!filePath) {
-    return publicResult(null, null, m0Fallback('unavailable-source'));
+    return project(null, null, m0Fallback('unavailable-source'));
   }
 
   const stored = readBoundedSidecar(filePath);
   if (stored.kind === 'missing') {
-    return publicResult(trackId, null, m0Fallback('missing'));
+    return project(trackId, null, m0Fallback('missing'));
   }
   if (stored.kind !== 'document') {
-    return publicResult(trackId, null, m0Fallback('invalid'));
+    return project(trackId, null, m0Fallback('invalid'));
   }
   let document;
   try {
     document = validateMusicStructureDocument(stored.document);
   } catch {
-    return publicResult(trackId, null, m0Fallback('invalid'));
+    return project(trackId, null, m0Fallback('invalid'));
   }
   const identity = await currentSourceIdentity(
     dir,
     trackId,
     document.source.durationMs,
   );
-  return publicResult(
+  return project(
     trackId,
     identity,
     resolveMusicStructureSignals(document, {
       sourceSha256: identity?.sourceSha256,
       sourceDurationMs: identity?.sourceDurationMs,
     }),
+    document.analyzer.profileId,
   );
+}
+
+async function loadTrackMusicStructure(dir, trackId) {
+  return readTrackMusicStructure(dir, trackId, false);
+}
+
+async function inspectTrackMusicStructure(dir, trackId) {
+  return readTrackMusicStructure(dir, trackId, true);
 }
 
 async function saveTrackMusicStructure(
@@ -197,6 +219,7 @@ async function saveTrackMusicStructure(
 }
 
 module.exports = {
+  inspectTrackMusicStructure,
   loadTrackMusicStructure,
   musicStructureSidecarPath,
   prepareTrackMusicStructureSource,

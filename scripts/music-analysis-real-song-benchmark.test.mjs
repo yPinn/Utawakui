@@ -6,15 +6,27 @@ import { describe, expect, it } from 'vitest';
 import {
   buildPredictionEvidence,
   buildRunFingerprint,
+  buildRuntimeBenchmarkConfig,
   buildWorkerRequest,
+  deriveBenchmarkRuntimeRequirements,
   loadCachedResult,
   projectWorkerResult,
+  validateBenchmarkModelManifest,
+  validateBpmBenchmarkMapping,
   validateRealSongBenchmarkConfig,
 } from './music-analysis-real-song-benchmark.mjs';
+import {
+  fingerprintBpmCorpus,
+  validateBpmPredictions,
+} from './music-analysis-bpm-evaluation.mjs';
 
 const SHA_A = 'a'.repeat(64);
 const SHA_B = 'b'.repeat(64);
 const SHA_C = 'c'.repeat(64);
+const SMALL0_SHA =
+  '6074be2c4d490c5f6101fcc374a1ec72ae93456e23bb6019783b849f5dc7d47b';
+const FINAL0_SHA =
+  '8c328b45f59d8dd3dff219253ff6a8d6482be57d0133a29140e2febbf8eb8331';
 
 function config() {
   const libraryRoot = path.resolve('private-library');
@@ -139,7 +151,129 @@ function workerResult() {
   };
 }
 
+function bpmConfig(modelId = 'beat-this-small0') {
+  const libraryRoot = path.resolve('private-library');
+  return {
+    schemaVersion: 2,
+    benchmarkKind: 'bpm',
+    benchmarkId: 'beat-this-bpm-pilot-v1',
+    corpusPath: path.resolve('tasks', 'music-analysis-bpm-corpus.json'),
+    libraryRoot,
+    outputRoot: path.resolve('tasks', `${modelId}-results`),
+    ffmpegPath: path.resolve('tools', 'ffmpeg.exe'),
+    pythonPath: path.resolve('runtime', 'python.exe'),
+    environmentPath: path.resolve('runtime', 'site-packages'),
+    workerPath: path.resolve(
+      'resources',
+      'audio-processing',
+      'structure_analysis_worker.py',
+    ),
+    modelManifestPath: path.resolve(
+      'resources',
+      'audio-processing',
+      `analysis-${modelId}-model.json`,
+    ),
+    modelPath: path.resolve('tasks', 'bpm-models', modelId),
+    cases: [
+      {
+        benchmarkCaseId: 'track-001',
+        trackId: 'p1tsL0YmNqU',
+        durationMs: 218000,
+      },
+    ],
+  };
+}
+
+function bpmSmokeConfig() {
+  const value = bpmConfig();
+  value.schemaVersion = 3;
+  value.benchmarkKind = 'bpm-runtime-smoke';
+  value.benchmarkId = 'beat-this-bpm-runtime-smoke-v1';
+  delete value.corpusPath;
+  return value;
+}
+
+function bpmCorpus() {
+  return {
+    schemaVersion: 1,
+    benchmarkId: 'beat-this-bpm-pilot-v1',
+    tempoToleranceRatio: 0.04,
+    acceptance: {
+      minimumTracks: 1,
+      requiredTags: [],
+      minimumDirectMatchRate: 0.9,
+      minimumRequiredTagDirectMatchRate: 0.8,
+      maximumTempoOctaveErrorRate: 0.05,
+      maximumTempoUnrelatedErrorRate: 0.05,
+      maximumTempoMissingRate: 0.05,
+      maximumAnalysisFailureRate: 0.05,
+    },
+    cases: [{ id: 'track-001', tags: ['j-pop', 'mid'], referenceBpm: 122 }],
+  };
+}
+
+function beatThisManifest(model = 'small0') {
+  return {
+    schemaVersion: 1,
+    manifestKind: 'model',
+    kind: 'analysis',
+    id: `beat-this-${model}`,
+    version: `1.1.0-${model}`,
+    architecture: 'beat-this',
+    wrapper: { package: 'beat-this', version: '1.1.0', model },
+    signals: ['tempo', 'beats', 'downbeats'],
+    files: [
+      {
+        role: 'weights',
+        filename: `${model}.ckpt`,
+        url: `https://example.test/${model}.ckpt`,
+        sizeBytes: model === 'small0' ? 8451101 : 81058141,
+        sha256: model === 'small0' ? SMALL0_SHA : FINAL0_SHA,
+        license: {
+          spdx: 'MIT',
+          evidenceUrl: 'https://example.test/license',
+          productUse: 'accepted',
+          reason: null,
+        },
+      },
+    ],
+    distribution: { status: 'product-downloadable', reason: null },
+  };
+}
+
+function beatThisWorkerResult(model = 'small0') {
+  return {
+    protocolVersion: 1,
+    analyzerId: 'beat-this',
+    profileId: `beat-this-${model}-cpu-v3`,
+    modelId: `beat-this-${model}`,
+    offlineEnforced: true,
+    noUserCache: true,
+    durationMs: 218123,
+    tempo: { bpm: 122.25, confidence: 0.73 },
+    beats: [{ timeMs: 500, downbeat: true, confidence: 0.8 }],
+    sections: [],
+  };
+}
+
 describe('real-song M2 benchmark runner', () => {
+  it('keeps the checked-in All-In-One manifest in the fixed catalog', () => {
+    const manifest = JSON.parse(
+      fs.readFileSync(
+        path.resolve(
+          'resources',
+          'audio-processing',
+          'analysis-structure-model.json',
+        ),
+        'utf8',
+      ),
+    );
+    expect(validateBenchmarkModelManifest(manifest)).toMatchObject({
+      analyzerId: 'all-in-one-structure',
+      profileId: 'all-in-one-cpu-v1',
+    });
+  });
+
   it('accepts a bounded private config and rejects unsafe or ambiguous paths', () => {
     const valid = config();
     expect(validateRealSongBenchmarkConfig(valid)).toEqual(valid);
@@ -333,5 +467,270 @@ describe('real-song M2 benchmark runner', () => {
         },
       ],
     });
+  });
+});
+
+describe('real-song BPM benchmark runner', () => {
+  it.each(['small0', 'final0'])(
+    'keeps the checked-in Beat This %s manifest in the fixed catalog',
+    (model) => {
+      const manifestPath = path.resolve(
+        'resources',
+        'audio-processing',
+        `analysis-beat-this-${model}-model.json`,
+      );
+      const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+      expect(validateBenchmarkModelManifest(manifest)).toMatchObject({
+        analyzerId: 'beat-this',
+        profileId: `beat-this-${model}-cpu-v3`,
+      });
+    },
+  );
+
+  it('keeps the documented local-run template valid', () => {
+    const template = JSON.parse(
+      fs.readFileSync(
+        path.resolve(
+          'docs',
+          'contracts',
+          'music-analysis-bpm-run-config-template.json',
+        ),
+        'utf8',
+      ),
+    );
+    expect(validateRealSongBenchmarkConfig(template)).toEqual(template);
+  });
+
+  it('keeps the documented non-scoring smoke template valid', () => {
+    const template = JSON.parse(
+      fs.readFileSync(
+        path.resolve(
+          'docs',
+          'contracts',
+          'music-analysis-bpm-smoke-run-config-template.json',
+        ),
+        'utf8',
+      ),
+    );
+    expect(validateRealSongBenchmarkConfig(template)).toEqual(template);
+  });
+
+  it('accepts only the explicit schema-v2 BPM mapping shape', () => {
+    const valid = bpmConfig();
+    expect(validateRealSongBenchmarkConfig(valid)).toEqual(valid);
+
+    for (const mutate of [
+      (value) => (value.benchmarkKind = 'sections'),
+      (value) => (value.corpusPath = 'relative-corpus.json'),
+      (value) => (value.cases[0].tags = ['private-title']),
+      (value) => (value.cases[0].benchmarkCaseId = 'bad/path'),
+      (value) => (value.outputRoot = path.join(value.libraryRoot, 'analysis')),
+    ]) {
+      const candidate = structuredClone(valid);
+      mutate(candidate);
+      expect(() => validateRealSongBenchmarkConfig(candidate)).toThrow();
+    }
+  });
+
+  it.each(['small0', 'final0'])(
+    'allows only the fixed Beat This %s manifest contract',
+    (model) => {
+      const manifest = beatThisManifest(model);
+      expect(validateBenchmarkModelManifest(manifest)).toMatchObject({
+        analyzerId: 'beat-this',
+        profileId: `beat-this-${model}-cpu-v3`,
+      });
+
+      for (const mutate of [
+        (value) => (value.wrapper.model = 'arbitrary'),
+        (value) => (value.wrapper.version = 'latest'),
+        (value) => (value.distribution.status = 'benchmark-only'),
+        (value) => (value.files[0].filename = 'other.ckpt'),
+      ]) {
+        const candidate = structuredClone(manifest);
+        mutate(candidate);
+        expect(() => validateBenchmarkModelManifest(candidate)).toThrow();
+      }
+    },
+  );
+
+  it('derives a fixed Beat This worker request and profile-aware cache key', () => {
+    const value = bpmConfig();
+    const manifest = beatThisManifest();
+    const request = buildWorkerRequest({
+      config: value,
+      manifest,
+      inputPath: path.join(value.outputRoot, 'track-001', 'work', 'input.wav'),
+      jobPath: path.join(value.outputRoot, 'track-001', 'work'),
+    });
+
+    expect(request).toMatchObject({
+      analyzerId: 'beat-this',
+      profileId: 'beat-this-small0-cpu-v3',
+      modelId: 'beat-this-small0',
+      modelName: 'small0',
+      modelFiles: [
+        {
+          role: 'weights',
+          path: path.join(value.modelPath, 'small0.ckpt'),
+          sha256: SMALL0_SHA,
+        },
+      ],
+    });
+
+    const smallKey = buildRunFingerprint({
+      benchmarkCase: value.cases[0],
+      manifest,
+      sourceSha256: SHA_A,
+      workerSha256: SHA_B,
+    });
+    const finalKey = buildRunFingerprint({
+      benchmarkCase: value.cases[0],
+      manifest: beatThisManifest('final0'),
+      sourceSha256: SHA_A,
+      workerSha256: SHA_B,
+    });
+    expect(finalKey).not.toBe(smallKey);
+  });
+
+  it('keeps runtime hashes out of the strict user config and BPM evidence mapping', () => {
+    const value = bpmConfig();
+    const runtimeConfig = buildRuntimeBenchmarkConfig(value, {
+      workerSha256: SHA_B,
+    });
+
+    expect(runtimeConfig).toEqual({ ...value, workerSha256: SHA_B });
+    expect(value).not.toHaveProperty('workerSha256');
+    expect(validateBpmBenchmarkMapping(value, bpmCorpus())).toEqual(
+      bpmCorpus(),
+    );
+  });
+
+  it('emits evaluator-compatible, corpus-bound, path-free BPM predictions', () => {
+    const value = bpmConfig();
+    const manifest = beatThisManifest();
+    const corpus = bpmCorpus();
+    const result = projectWorkerResult(
+      value.cases[0],
+      beatThisWorkerResult(),
+      12345,
+      manifest,
+    );
+    const evidence = buildPredictionEvidence(value, manifest, [result], corpus);
+
+    expect(evidence).toEqual({
+      schemaVersion: 1,
+      benchmarkId: corpus.benchmarkId,
+      corpusFingerprint: fingerprintBpmCorpus(corpus),
+      analyzer: {
+        id: 'beat-this',
+        version: '1.1.0',
+        profileId: 'beat-this-small0-cpu-v3',
+        modelId: 'beat-this-small0',
+      },
+      cases: [
+        {
+          id: 'track-001',
+          estimate: {
+            status: 'completed',
+            bpm: 122.25,
+            beatEvidenceConfidence: 0.73,
+          },
+        },
+      ],
+    });
+    expect(validateBpmPredictions(evidence, corpus)).toEqual(evidence);
+    expect(JSON.stringify(evidence)).not.toMatch(
+      /trackId|libraryRoot|corpusPath|inputPath|modelPath|durationMs|wallMs|tags/i,
+    );
+  });
+
+  it('rejects stale or incomplete corpus mappings before evidence is emitted', () => {
+    const value = bpmConfig();
+    const manifest = beatThisManifest();
+    const result = projectWorkerResult(
+      value.cases[0],
+      beatThisWorkerResult(),
+      1000,
+      manifest,
+    );
+    const staleCorpus = bpmCorpus();
+    staleCorpus.benchmarkId = 'other-pilot';
+    expect(() => validateBpmBenchmarkMapping(value, staleCorpus)).toThrow();
+    expect(() =>
+      buildPredictionEvidence(value, manifest, [result], staleCorpus),
+    ).toThrow();
+    expect(() =>
+      buildPredictionEvidence(value, manifest, [], bpmCorpus()),
+    ).toThrow();
+  });
+});
+
+describe('real-song BPM runtime smoke runner', () => {
+  it('accepts only the explicit non-scoring schema-v3 config', () => {
+    const valid = bpmSmokeConfig();
+    expect(validateRealSongBenchmarkConfig(valid)).toEqual(valid);
+
+    for (const mutate of [
+      (value) => (value.benchmarkKind = 'bpm'),
+      (value) => (value.corpusPath = path.resolve('fake-corpus.json')),
+      (value) => (value.cases[0].referenceBpm = 120),
+    ]) {
+      const candidate = structuredClone(valid);
+      mutate(candidate);
+      expect(() => validateRealSongBenchmarkConfig(candidate)).toThrow();
+    }
+  });
+
+  it('requires a corpus only for scored BPM execution', () => {
+    expect(
+      deriveBenchmarkRuntimeRequirements(bpmConfig(), beatThisManifest()),
+    ).toMatchObject({ benchmarkKind: 'bpm', requiresCorpus: true });
+    expect(
+      deriveBenchmarkRuntimeRequirements(bpmSmokeConfig(), beatThisManifest()),
+    ).toMatchObject({
+      benchmarkKind: 'bpm-runtime-smoke',
+      requiresCorpus: false,
+    });
+  });
+
+  it('emits path-free runtime evidence that cannot be mistaken for scored predictions', () => {
+    const value = bpmSmokeConfig();
+    const manifest = beatThisManifest();
+    const completed = projectWorkerResult(
+      value.cases[0],
+      beatThisWorkerResult(),
+      12345,
+      manifest,
+    );
+    const evidence = buildPredictionEvidence(value, manifest, [completed]);
+
+    expect(evidence).toEqual({
+      schemaVersion: 1,
+      evidenceKind: 'bpm-runtime-smoke',
+      benchmarkId: 'beat-this-bpm-runtime-smoke-v1',
+      analyzer: {
+        id: 'beat-this',
+        version: '1.1.0',
+        profileId: 'beat-this-small0-cpu-v3',
+        modelId: 'beat-this-small0',
+      },
+      cases: [
+        {
+          id: 'track-001',
+          durationMs: 218123,
+          wallMs: 12345,
+          estimate: {
+            status: 'completed',
+            bpm: 122.25,
+            beatEvidenceConfidence: 0.73,
+          },
+        },
+      ],
+    });
+    expect(() => validateBpmPredictions(evidence, bpmCorpus())).toThrow();
+    expect(JSON.stringify(evidence)).not.toMatch(
+      /trackId|libraryRoot|inputPath|modelPath|corpusFingerprint/i,
+    );
   });
 });

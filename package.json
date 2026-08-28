@@ -19,6 +19,8 @@
     "lint:md": "markdownlint-cli2 \"**/*.md\" \"#node_modules\" \"#.benchmarks\" \"#dist\" \"#coverage\" \"#release\" \"#release-*\" \"#tasks\"",
     "license:inventory": "node scripts/license-inventory.mjs",
     "analysis:benchmark-real": "node scripts/music-analysis-real-song-benchmark.mjs",
+    "analysis:benchmark-bpm": "node scripts/music-analysis-real-song-benchmark.mjs",
+    "analysis:evaluate-bpm": "node scripts/music-analysis-bpm-evaluation.mjs",
     "analysis:evaluate": "node scripts/music-analysis-evaluation.mjs",
     "lyrics:evaluate-providers": "node scripts/lyrics-provider-corpus-cli.mjs",
     "lyrics:netease-evaluation": "node scripts/lyrics-provider-netease-cli.mjs",

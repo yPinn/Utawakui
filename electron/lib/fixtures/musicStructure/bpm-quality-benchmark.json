@@ -1,0 +1,114 @@
+{
+  "corpus": {
+    "schemaVersion": 1,
+    "benchmarkId": "synthetic-bpm-quality-v1",
+    "tempoToleranceRatio": 0.04,
+    "acceptance": {
+      "minimumTracks": 6,
+      "requiredTags": [
+        { "tag": "j-pop", "minimumTracks": 2 },
+        { "tag": "k-pop", "minimumTracks": 2 },
+        { "tag": "karaoke", "minimumTracks": 2 }
+      ],
+      "minimumDirectMatchRate": 0.9,
+      "minimumRequiredTagDirectMatchRate": 0.8,
+      "maximumTempoOctaveErrorRate": 0.05,
+      "maximumTempoUnrelatedErrorRate": 0.05,
+      "maximumTempoMissingRate": 0.05,
+      "maximumAnalysisFailureRate": 0.05
+    },
+    "cases": [
+      {
+        "id": "slow-j-pop",
+        "tags": ["j-pop", "slow"],
+        "referenceBpm": 72
+      },
+      {
+        "id": "mid-j-pop",
+        "tags": ["j-pop", "mid"],
+        "referenceBpm": 120
+      },
+      {
+        "id": "fast-k-pop",
+        "tags": ["k-pop", "fast"],
+        "referenceBpm": 180
+      },
+      {
+        "id": "mid-k-pop",
+        "tags": ["k-pop", "mid"],
+        "referenceBpm": 100
+      },
+      {
+        "id": "slow-karaoke",
+        "tags": ["karaoke", "slow"],
+        "referenceBpm": 60
+      },
+      {
+        "id": "fast-karaoke",
+        "tags": ["karaoke", "fast"],
+        "referenceBpm": 150
+      }
+    ]
+  },
+  "predictions": {
+    "schemaVersion": 1,
+    "benchmarkId": "synthetic-bpm-quality-v1",
+    "corpusFingerprint": "9fdeae5630548408d5657c4271e39a3c18d24a19ca28001a4e5ffdbbbb11c423",
+    "analyzer": {
+      "id": "beat-this",
+      "version": "1.1.0",
+      "profileId": "beat-this-small0-cpu-v2",
+      "modelId": "beat-this-small0"
+    },
+    "cases": [
+      {
+        "id": "slow-j-pop",
+        "estimate": {
+          "status": "completed",
+          "bpm": 72,
+          "beatEvidenceConfidence": 0.8
+        }
+      },
+      {
+        "id": "mid-j-pop",
+        "estimate": {
+          "status": "completed",
+          "bpm": 120,
+          "beatEvidenceConfidence": 0.8
+        }
+      },
+      {
+        "id": "fast-k-pop",
+        "estimate": {
+          "status": "completed",
+          "bpm": 180,
+          "beatEvidenceConfidence": 0.8
+        }
+      },
+      {
+        "id": "mid-k-pop",
+        "estimate": {
+          "status": "completed",
+          "bpm": 100,
+          "beatEvidenceConfidence": 0.8
+        }
+      },
+      {
+        "id": "slow-karaoke",
+        "estimate": {
+          "status": "completed",
+          "bpm": 60,
+          "beatEvidenceConfidence": 0.8
+        }
+      },
+      {
+        "id": "fast-karaoke",
+        "estimate": {
+          "status": "completed",
+          "bpm": 150,
+          "beatEvidenceConfidence": 0.8
+        }
+      }
+    ]
+  }
+}

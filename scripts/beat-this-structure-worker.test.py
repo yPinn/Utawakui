@@ -99,6 +99,10 @@ class Postprocessor:
         if os.environ.get("FAKE_BEAT_THIS_SCENARIO") == "quantized-tempo":
             beats = [round(index * 50 * 60 / 122) / 50 for index in range(100)]
             return beats, beats[::4]
+        if os.environ.get("FAKE_BEAT_THIS_SCENARIO") == "modal-tempo-drift":
+            beats = [index * 0.4 for index in range(57)]
+            beats.extend(beats[-1] + index * 0.44 for index in range(1, 44))
+            return beats, beats[::4]
         return [0.5, 1.0, 1.5], [0.5]
 """.lstrip(),
             encoding="utf-8",
@@ -132,7 +136,7 @@ def asarray(_values, dtype=None):
             "protocolVersion": 1,
             "operation": "analyze-structure",
             "analyzerId": "beat-this",
-            "profileId": "beat-this-small0-cpu-v2",
+            "profileId": "beat-this-small0-cpu-v3",
             "modelId": "beat-this-small0",
             "modelName": "small0",
             "environmentPath": str(self.environment.resolve()),
@@ -166,7 +170,7 @@ def asarray(_values, dtype=None):
         messages = [json.loads(line) for line in completed.stdout.splitlines()]
         result = messages[-1]["result"]
         self.assertEqual(result["analyzerId"], "beat-this")
-        self.assertEqual(result["profileId"], "beat-this-small0-cpu-v2")
+        self.assertEqual(result["profileId"], "beat-this-small0-cpu-v3")
         self.assertEqual(result["modelId"], "beat-this-small0")
         self.assertEqual(result["tempo"]["bpm"], 120.0)
         self.assertEqual(len(result["beats"]), 3)
@@ -183,7 +187,15 @@ def asarray(_values, dtype=None):
         messages = [json.loads(line) for line in completed.stdout.splitlines()]
         result = messages[-1]["result"]
 
-        self.assertAlmostEqual(result["tempo"]["bpm"], 122.0, places=1)
+        self.assertAlmostEqual(result["tempo"]["bpm"], 122.0, delta=0.5)
+
+    def test_prefers_the_modal_four_beat_tempo_over_long_window_drift(self) -> None:
+        completed = self.run_worker(self.request(), "modal-tempo-drift")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        messages = [json.loads(line) for line in completed.stdout.splitlines()]
+        result = messages[-1]["result"]
+
+        self.assertAlmostEqual(result["tempo"]["bpm"], 150.0, places=1)
 
     def test_rejects_network_and_tampered_or_extra_checkpoints(self) -> None:
         network = self.run_worker(self.request(), "network")
