@@ -28,12 +28,14 @@ const {
   selectedLyrics,
   selectedSource,
   lyricsDocument,
+  lyricsTextVariant,
   lyricLines,
   activeLineIndex,
   currentLyricsPositionMs,
   isReloading,
   refresh,
   selectSource,
+  setLyricsTextVariant,
   adjustOffset,
   resetOffset,
   retryOffsetSave,
@@ -393,7 +395,9 @@ async function commitTimingDocument() {
         :selected-source-filename="state.selectedSourceFilename || ''"
         :has-selected-track="Boolean(selectedTrack)"
         :shows-reading-aid="showsReadingAid"
+        :shows-lyrics-text-variant="lyricsScript === 'zh'"
         :lyrics-script="lyricsScript"
+        :lyrics-text-variant="lyricsTextVariant"
         :reading-variant="readingVariant"
         :reading-error="readingError || ''"
         :can-decrease-font-size="canDecreaseLyricsFontSize"
@@ -401,6 +405,7 @@ async function commitTimingDocument() {
         @source-change="selectSource"
         @manage-sources="isSourceManagerOpen = true"
         @reading-variant-change="setReadingVariant"
+        @lyrics-text-variant-change="setLyricsTextVariant"
         @decrease-font-size="decreaseLyricsFontSize"
         @increase-font-size="increaseLyricsFontSize"
       />

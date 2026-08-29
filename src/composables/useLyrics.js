@@ -1,4 +1,4 @@
-import { computed, nextTick, reactive, readonly, watch } from 'vue';
+import { computed, nextTick, reactive, readonly, shallowRef, watch } from 'vue';
 import { usePlayer } from './usePlayer.js';
 import { usePlaybackQueue } from './usePlaybackQueue.js';
 import { useLibrary } from './useLibrary.js';
@@ -13,9 +13,15 @@ import {
   normalizeLyricsDocument,
   projectLegacyLyricLines,
 } from '../utils/lyricsDocument.js';
+import {
+  DEFAULT_LYRICS_TEXT_VARIANT,
+  LYRICS_TEXT_VARIANTS,
+  projectLyricsTextVariant,
+} from '../utils/lyricsTextVariant.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 
 const EMPTY_LYRICS = Object.freeze({ status: 'unchecked', sources: [] });
+const lyricsTextVariant = shallowRef(DEFAULT_LYRICS_TEXT_VARIANT);
 
 const { state: playerState, playTrack, play, seek } = usePlayer();
 const { setQueue } = usePlaybackQueue();
@@ -160,8 +166,13 @@ const lyricsDocument = computed(() =>
     timing: lyricsTiming.value,
   }),
 );
+const displayLyricsDocument = computed(() =>
+  projectLyricsTextVariant(lyricsDocument.value, {
+    variant: lyricsTextVariant.value,
+  }),
+);
 const lyricLines = computed(() =>
-  projectLegacyLyricLines(lyricsDocument.value),
+  projectLegacyLyricLines(displayLyricsDocument.value),
 );
 const isSelectedTrackPlaying = computed(
   () =>
@@ -176,11 +187,17 @@ const currentLyricsPositionMs = computed(() =>
 );
 const playbackState = computed(() =>
   deriveLyricsPlaybackState(
-    lyricsDocument.value,
+    displayLyricsDocument.value,
     currentLyricsPositionMs.value ?? Number.NaN,
     Number.isFinite(playerState.duration) ? playerState.duration * 1000 : null,
   ),
 );
+
+function setLyricsTextVariant(variant) {
+  if (!Object.values(LYRICS_TEXT_VARIANTS).includes(variant)) return false;
+  lyricsTextVariant.value = variant;
+  return true;
+}
 const activeLineIndex = computed(() => playbackState.value.activeLineIndex);
 const activeLine = computed(() =>
   activeLineIndex.value >= 0 ? lyricLines.value[activeLineIndex.value] : null,
@@ -385,6 +402,8 @@ export function useLyrics() {
     selectedSource,
     lyricsTiming: readonly(lyricsTiming),
     lyricsDocument,
+    displayLyricsDocument,
+    lyricsTextVariant: readonly(lyricsTextVariant),
     lyricLines,
     activeLine,
     activeLineIndex,
@@ -400,6 +419,7 @@ export function useLyrics() {
     setTrackScope,
     selectTrack,
     selectSource,
+    setLyricsTextVariant,
     adjustOffset,
     resetOffset,
     retryOffsetSave,

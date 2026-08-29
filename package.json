@@ -89,6 +89,7 @@
     "koroman": "^1.0.16",
     "kuromoji": "^0.1.2",
     "onnxruntime-node": "^1.27.0",
+    "opencc-js": "1.4.2",
     "wanakana": "^5.3.1",
     "ws": "^8.21.3"
   }

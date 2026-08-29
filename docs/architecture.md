@@ -44,6 +44,14 @@ language、profile id／version 快取靜態結果，`state.mjs` 只投影目前
 不進模板，模板分句不回寫 canonical timing，T2 永遠優先。Reading Aid 在 reading
 document 尚未進入 Output transport 前維持不可套用。
 
+Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯示變體：
+`useLyrics` 預設把實際內容判定為中文的任一來源，以 bundled `opencc-js` 的 `s2tw-v1`
+離線投影為台灣繁體，並保留可切回原文的 session intent。來源種類不參與語系判定；日文、
+韓文與拉丁文字不套用。這個 display document 使用變體專屬 identity，控制面板與 Output
+共用同一投影；原始 LRC／VTT／YRC、canonical document、timing sidecar、line／segment id
+與來源 provenance 均不改寫。T2 優先整行轉換後依等長字元邊界切回原 segment；若無法安全
+等長切分，才逐 segment 轉換並以其串接結果保持 line／segment 文字一致。
+
 ## 權威狀態與資料
 
 | 資料                                  | 權威 owner                        | 投影／持久化                                      |
@@ -69,6 +77,8 @@ pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media 
 
 Lyrics renderer 同樣維持單一 public owner：`src/composables/useLyrics.js` 保留 library／
 playlist scope、選曲、HTML audio playback projection、watchers 與 `useLyrics()` facade；
+canonical `lyricsDocument` 仍供 timing／reading authoring，衍生 `displayLyricsDocument` 則供
+工作區與 Output；預設開啟的台灣繁體變體只依實際歌詞 script 判斷，不依 provider。
 `src/composables/lyrics/useLyricsAcquisition.js` 負責 gated LRCLIB／NetEase 手動候選
 acquisition；兩者共用 renderer 候選狀態與搜尋 workspace。Main 的 allowlisted `all` intent
 平行執行各來源、容納 partial failure，再以來源中立的錄音相關性與 timing capability 排序，

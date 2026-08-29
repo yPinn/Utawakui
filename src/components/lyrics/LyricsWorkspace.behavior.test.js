@@ -327,6 +327,37 @@ describe('Lyrics workspace control contracts', () => {
     expect(handlers.increase).toHaveBeenCalledOnce();
   });
 
+  it('orders Original before Traditional Chinese while keeping Traditional selected by default', () => {
+    const changeVariant = vi.fn();
+    const { root } = mount(LyricsPreparationBar, {
+      showsLyricsTextVariant: true,
+      lyricsTextVariant: 'traditional-tw',
+      onLyricsTextVariantChange: changeVariant,
+    });
+    const selector = findByProp(root, 'aria-label', '歌詞文字顯示');
+    const options = findAll(selector, (node) => node.type === 'option');
+
+    expect(selector.props.value).toBe('traditional-tw');
+    expect(options.map((option) => option.props.value)).toEqual([
+      'original',
+      'traditional-tw',
+    ]);
+    expect(options.map(nodeText)).toEqual(['原文', '繁體中文']);
+
+    selector.props.onChange({ target: { value: 'original' } });
+
+    expect(changeVariant).toHaveBeenCalledWith('original');
+  });
+
+  it('hides the text display control for non-Chinese lyrics', () => {
+    const { root } = mount(LyricsPreparationBar, {
+      showsLyricsTextVariant: false,
+      lyricsTextVariant: 'traditional-tw',
+    });
+
+    expect(findByProp(root, 'aria-label', '歌詞文字顯示')).toBeUndefined();
+  });
+
   it('emits header and live-control commands without changing their meaning', () => {
     const selectTrack = vi.fn();
     const refresh = vi.fn();
@@ -438,6 +469,10 @@ describe('LyricsWorkspace event wiring', () => {
     const selectPreset = vi.fn();
     const selectedPreset = ref('quick');
     const readingVariant = ref('off');
+    const lyricsTextVariant = ref('traditional-tw');
+    const setLyricsTextVariant = vi.fn((variant) => {
+      lyricsTextVariant.value = variant;
+    });
     const lyricsDocumentRef = ref({
       granularity: 'T1',
       lines: [
@@ -460,12 +495,14 @@ describe('LyricsWorkspace event wiring', () => {
         selectedLyrics: ref({ status: 'available', sources: [source] }),
         selectedSource: selectedSourceRef,
         lyricsDocument: lyricsDocumentRef,
+        lyricsTextVariant,
         lyricLines: lyricLinesRef,
         activeLineIndex: ref(-1),
         currentLyricsPositionMs: ref(0),
         isReloading: ref(false),
         refresh,
         selectSource,
+        setLyricsTextVariant,
         adjustOffset,
         resetOffset,
         retryOffsetSave: vi.fn(),

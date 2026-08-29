@@ -11,6 +11,8 @@ defineProps({
   lyricsScript: { type: String, default: '' },
   readingVariant: { type: String, default: 'off' },
   readingError: { type: String, default: '' },
+  showsLyricsTextVariant: { type: Boolean, default: false },
+  lyricsTextVariant: { type: String, default: 'traditional-tw' },
   canDecreaseFontSize: { type: Boolean, default: false },
   canIncreaseFontSize: { type: Boolean, default: false },
 });
@@ -19,6 +21,7 @@ const emit = defineEmits([
   'sourceChange',
   'manageSources',
   'readingVariantChange',
+  'lyricsTextVariantChange',
   'decreaseFontSize',
   'increaseFontSize',
 ]);
@@ -29,6 +32,10 @@ function handleSourceChange(event) {
 
 function handleReadingVariantChange(event) {
   emit('readingVariantChange', event.target.value);
+}
+
+function handleLyricsTextVariantChange(event) {
+  emit('lyricsTextVariantChange', event.target.value);
 }
 </script>
 
@@ -65,6 +72,23 @@ function handleReadingVariantChange(event) {
         >
           管理
         </UiButton>
+      </div>
+
+      <div
+        v-if="showsLyricsTextVariant"
+        class="lyrics-preparation__group"
+        title="歌詞文字顯示"
+      >
+        <span class="lyrics-preparation__label">文字</span>
+        <select
+          class="lyrics-preparation__select lyrics-preparation__text-select"
+          :value="lyricsTextVariant"
+          aria-label="歌詞文字顯示"
+          @change="handleLyricsTextVariantChange"
+        >
+          <option value="original">原文</option>
+          <option value="traditional-tw">繁體中文</option>
+        </select>
       </div>
 
       <div
@@ -189,6 +213,10 @@ function handleReadingVariantChange(event) {
 
 .lyrics-preparation__reading-select {
   width: 92px;
+}
+
+.lyrics-preparation__text-select {
+  width: 104px;
 }
 
 .lyrics-preparation__command {

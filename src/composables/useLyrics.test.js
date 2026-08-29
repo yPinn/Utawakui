@@ -270,6 +270,7 @@ describe('useLyrics', () => {
         'currentLyricsPositionMs',
         'currentTrackId',
         'deleteSource',
+        'displayLyricsDocument',
         'ensureLyricsFlow',
         'importManualLyricsFile',
         'importManualLyricsText',
@@ -278,6 +279,7 @@ describe('useLyrics', () => {
         'isSelectedTrackPlaying',
         'lyricLines',
         'lyricsDocument',
+        'lyricsTextVariant',
         'lyricsTiming',
         'playFromLine',
         'playbackState',
@@ -295,12 +297,56 @@ describe('useLyrics', () => {
         'selectedLyrics',
         'selectedSource',
         'selectedTrack',
+        'setLyricsTextVariant',
         'setSourceLabel',
         'setTrackScope',
         'state',
         'tracksById',
       ].sort(),
     );
+  });
+
+  it('defaults Chinese lyrics from any source to Taiwan Traditional and can show the canonical original', async () => {
+    getTrackLyricsMock.mockResolvedValue({
+      source: { filename: 'en.vtt', language: 'zh', kind: 'youtube-cc' },
+      text: 'WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n我喜欢你的头发\n',
+      timing: {
+        status: 'missing',
+        sourceFingerprint: lyricsSourceFingerprint,
+        normalizerProfileId: 'lyrics-source-v2',
+      },
+    });
+    const lyrics = await loadLyrics();
+
+    expect(lyrics.lyricsTextVariant.value).toBe('traditional-tw');
+    expect(lyrics.lyricsDocument.value.lines[0].text).toBe('我喜欢你的头发');
+    expect(lyrics.displayLyricsDocument.value.lines[0].text).toBe(
+      '我喜歡你的頭髮',
+    );
+    expect(lyrics.lyricLines.value[0].text).toBe('我喜歡你的頭髮');
+
+    lyrics.setLyricsTextVariant('original');
+
+    expect(lyrics.lyricsTextVariant.value).toBe('original');
+    expect(lyrics.lyricLines.value[0].text).toBe('我喜欢你的头发');
+    expect(lyrics.setLyricsTextVariant('unsupported')).toBe(false);
+    expect(lyrics.lyricsTextVariant.value).toBe('original');
+  });
+
+  it('does not apply the Chinese display conversion to Japanese lyrics', async () => {
+    getTrackLyricsMock.mockResolvedValue({
+      source: { filename: 'en.vtt', language: 'ja', kind: 'youtube-cc' },
+      text: 'WEBVTT\n\n00:00:01.000 --> 00:00:03.000\n君の声が聞こえる\n',
+      timing: {
+        status: 'missing',
+        sourceFingerprint: lyricsSourceFingerprint,
+        normalizerProfileId: 'lyrics-source-v2',
+      },
+    });
+    const lyrics = await loadLyrics();
+
+    expect(lyrics.lyricsTextVariant.value).toBe('traditional-tw');
+    expect(lyrics.lyricLines.value[0].text).toBe('君の声が聞こえる');
   });
 
   it('submits an explicit editable LRCLIB query and preserves grouped diagnostics', async () => {

@@ -19,6 +19,7 @@ let lyricsState;
 let selectedLyricsTrack;
 let selectedLyricsSource;
 let lyricsDocument;
+let displayLyricsDocument;
 let activeLineId;
 let activeSegmentId;
 let musicStructureSignals;
@@ -61,6 +62,7 @@ beforeEach(() => {
     granularity: 'T0',
     lines: [],
   });
+  displayLyricsDocument = lyricsDocument;
   activeLineId = shallowRef(null);
   activeSegmentId = shallowRef(null);
   musicStructureSignals = shallowRef(null);
@@ -161,6 +163,7 @@ beforeEach(() => {
       selectedTrack: selectedLyricsTrack,
       selectedSource: selectedLyricsSource,
       lyricsDocument,
+      displayLyricsDocument,
       lyricLines: { value: [] },
       activeLineIndex: { value: -1 },
       activeLineId,
@@ -288,6 +291,51 @@ describe('output source handshake', () => {
           message.stream === 'state.snapshot' && message.kind === 'full',
       ),
     ).toHaveLength(1);
+  });
+
+  it('publishes the derived display lyrics document while keeping canonical authoring private', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    selectedLyricsSource.value = { language: 'zh' };
+    lyricsDocument.value = {
+      documentId: 'lyrics-canonical',
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: '简体歌词',
+          startMs: 1000,
+          endMs: 2000,
+        },
+      ],
+    };
+    displayLyricsDocument = shallowRef({
+      documentId: 'lyrics-display-s2tw',
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: '簡體歌詞',
+          startMs: 1000,
+          endMs: 2000,
+        },
+      ],
+    });
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+
+    const lyricsMessage = bridge.publishOutputSnapshot.mock.calls
+      .map(([message]) => message)
+      .find((message) => message.stream === 'lyrics.document');
+    expect(lyricsMessage.payload.document).toMatchObject({
+      documentId: 'lyrics-display-s2tw',
+      lines: [{ lineId: 'line-1', text: '簡體歌詞' }],
+    });
+    expect(JSON.stringify(lyricsMessage)).not.toContain('简体歌词');
   });
 
   it('republishes the already-playing current projection on Workbench refresh', async () => {

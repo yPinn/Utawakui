@@ -39,7 +39,7 @@ export function useOutputProjectionPublisher({
     state: lyricsState,
     selectedTrack: lyricsTrack,
     selectedSource: lyricsSource,
-    lyricsDocument,
+    displayLyricsDocument,
     activeLineId,
     activeSegmentId,
   } = useLyrics();
@@ -80,7 +80,7 @@ export function useOutputProjectionPublisher({
     return projectLyricsOutputDocument({
       trackId,
       source: lyricsSource.value,
-      document: lyricsDocument.value,
+      document: displayLyricsDocument.value,
     });
   });
 

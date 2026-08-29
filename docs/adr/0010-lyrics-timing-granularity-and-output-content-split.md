@@ -163,6 +163,18 @@ Authored T2 timing remains authoritative. Finite T1 timing uses the same shared
 lossless weighted unit stream for every profile; profile-specific phrase grouping
 may change layout but cannot claim new timing provenance.
 
+Chinese script conversion is also a presentation-only document variant, not
+canonical normalization or template semantics. The renderer defaults each App run
+to the offline `s2tw-v1` Taiwan-Traditional projection for content classified as
+Chinese regardless of provider, and offers an explicit Original option. Japanese,
+Korean, and Latin lyrics remain untouched. The canonical document continues to own
+timing and reading authoring; the derived display document receives a
+variant-distinct identity and is the single content projection consumed by both the
+control panel and Output. T2 conversion uses whole-line context, then restores
+equal-length segment boundaries; an unsafe length change falls back to per-segment
+conversion so line and segment text cannot diverge. No source file, timing sidecar,
+stable line／segment id, or provenance is rewritten.
+
 ## Rejected options
 
 - **Infer fallback timing independently inside each template.** Template-local

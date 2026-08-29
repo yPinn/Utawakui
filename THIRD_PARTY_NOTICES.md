@@ -22,6 +22,7 @@ Summary from `node scripts/license-inventory.mjs`:
 | License                      | Count |
 | ---------------------------- | ----: |
 | MIT                          |    67 |
+| MIT AND Apache-2.0           |     1 |
 | ISC                          |     6 |
 | Apache-2.0                   |     3 |
 | BlueOak-1.0.0                |     1 |
@@ -40,6 +41,7 @@ Direct runtime dependencies:
 | `koroman`          | 1.0.16  | MIT                                                                | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                          |
 | `kuromoji`         | 0.1.2   | Apache-2.0                                                         | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                      |
 | `onnxruntime-node` | 1.27.0  | MIT                                                                | Native ONNX Runtime binding and Windows binaries; npm package has license metadata but no bundled license file. Keep upstream source/license link in release notices. |
+| `opencc-js`        | 1.4.2   | MIT AND Apache-2.0                                                 | Pure-JavaScript OpenCC renderer bundle with generated `opencc-data` dictionaries; retain its MIT license and Apache-2.0 third-party notices.                          |
 | `wanakana`         | 5.3.1   | MIT                                                                | Kana/romaji conversion runtime.                                                                                                                                       |
 | `ws`               | 8.21.3  | MIT                                                                | Loopback WebSocket server for OBS Browser Source output.                                                                                                              |
 
@@ -67,6 +69,7 @@ served to OBS only through one exact loopback Output allowlist route.
 | `@lucide/vue`     | 1.31.0  | ISC                                                                | Renderer icon components.                                                                                                                                                          |
 | `@soundtouchjs/*` | 2.1.1   | MPL-2.0                                                            | Pitch/tempo worklet bundle. MPL is file-level copyleft; if Utawakui modifies these source files, publish the modified MPL-covered source and provide a source-code notice.         |
 | `gsap`            | 3.13.0  | [Standard 'no charge' license](https://gsap.com/standard-license/) | Loopback-served Browser Source animation runtime.                                                                                                                                  |
+| `opencc-js`       | 1.4.2   | MIT AND Apache-2.0                                                 | Offline Simplified-to-Taiwan-Traditional renderer conversion; generated dictionary data is bundled into `dist/` and performs no runtime download.                                  |
 | jf open-huninn    | 2.1     | SIL Open Font License 1.1                                          | justfont Traditional Chinese rounded TTF bundled for the Classic KTV lyrics template; the exact source, checksum, and complete upstream license ship under `shared/assets/fonts/`. |
 
 The renderer dependency closure also includes MIT/BSD/ISC packages such as
@@ -106,6 +109,8 @@ Before publishing a binary release:
 - Confirm `THIRD_PARTY_NOTICES.md` is included in the packaged app.
 - Preserve `kuromoji`'s Apache-2.0 license and `NOTICE.md`, including the
   `mecab-ipadic-2.7.0-20070801` notice.
+- Preserve `opencc-js`'s MIT license and its Apache-2.0
+  `THIRD_PARTY_LICENSES.md` notice for generated OpenCC dictionary data.
 - Confirm MPL-covered SoundTouchJS source availability for the exact bundled
   versions, especially if any local modifications are made.
 - Re-check app-managed FFmpeg, yt-dlp, bgutil, Python, and UVR model license

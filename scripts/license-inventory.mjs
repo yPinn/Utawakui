@@ -6,6 +6,7 @@ const browserRuntimeRoots = Object.freeze([
   '@lucide/vue',
   '@soundtouchjs/audio-worklet',
   'gsap',
+  'opencc-js',
   'vue',
 ]);
 
