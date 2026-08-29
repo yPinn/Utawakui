@@ -91,6 +91,18 @@
         <circle cx="4" cy="12" r="1" />
         <circle cx="4" cy="18" r="1" />
       </symbol>
+      <symbol id="icon-chevron-left" viewBox="0 0 24 24">
+        <path d="m15 18-6-6 6-6" />
+      </symbol>
+      <symbol id="icon-chevron-right" viewBox="0 0 24 24">
+        <path d="m9 18 6-6-6-6" />
+      </symbol>
+      <symbol id="icon-arrow-up" viewBox="0 0 24 24">
+        <path d="m6 15 6-6 6 6" />
+      </symbol>
+      <symbol id="icon-arrow-down" viewBox="0 0 24 24">
+        <path d="m6 9 6 6 6-6" />
+      </symbol>
     </svg>
 
     <aside class="prototype-lab" aria-label="Prototype 檢視工具">
@@ -153,7 +165,18 @@
 
       <nav class="sidebar" aria-label="本機曲庫與播放清單">
         <div class="sidebar__section sidebar__section--library">
-          <h2>曲庫</h2>
+          <div class="sidebar__heading">
+            <h2>曲庫</h2>
+            <button
+              type="button"
+              class="icon-button sidebar-toggle"
+              data-action="toggle-sidebar"
+              aria-label="收合側邊欄"
+              aria-expanded="true"
+            >
+              <svg><use href="#icon-chevron-left"></use></svg>
+            </button>
+          </div>
           <button
             type="button"
             class="sidebar-row"
@@ -252,6 +275,17 @@
           <svg><use href="#icon-settings"></use></svg>
           <span>設定</span>
         </button>
+        <div
+          class="sidebar-resize-handle"
+          data-action="resize-sidebar"
+          role="separator"
+          aria-label="調整側邊欄寬度"
+          aria-orientation="vertical"
+          aria-valuemin="256"
+          aria-valuemax="392"
+          aria-valuenow="272"
+          tabindex="0"
+        ></div>
       </nav>
 
       <main class="workspace">
@@ -747,29 +781,38 @@
               type="button"
               class="icon-button"
               data-action="repeat"
-              aria-label="重複播放"
+              data-repeat-mode="off"
+              aria-label="開啟清單循環"
               aria-pressed="false"
             >
               <svg><use href="#icon-repeat"></use></svg>
             </button>
           </div>
           <div class="progress-row">
-            <span>1:42</span>
+            <span data-current-time>1:42</span>
             <input
               type="range"
               min="0"
               max="252"
               value="102"
+              data-playback-progress
               aria-label="播放進度"
             />
-            <span>4:12</span>
+            <span data-duration>4:12</span>
           </div>
         </div>
         <div class="player-extras">
           <button type="button" class="icon-button" aria-label="歌詞">
             <span class="text-icon">詞</span>
           </button>
-          <button type="button" class="icon-button" aria-label="播放佇列">
+          <button
+            type="button"
+            class="icon-button"
+            data-action="queue"
+            aria-label="播放佇列"
+            aria-controls="queue-panel"
+            aria-expanded="false"
+          >
             <svg><use href="#icon-list"></use></svg>
           </button>
           <svg class="volume-icon"><use href="#icon-volume"></use></svg>
@@ -778,6 +821,67 @@
         </div>
       </footer>
     </div>
+
+    <aside
+      id="queue-panel"
+      class="queue-panel"
+      aria-labelledby="queue-title"
+      hidden
+    >
+      <header class="queue-panel__header">
+        <div>
+          <h2 id="queue-title">播放佇列</h2>
+          <p data-queue-context>夜航歌回 · 本次播放</p>
+        </div>
+        <button
+          type="button"
+          class="icon-button"
+          data-action="close-queue"
+          aria-label="關閉播放佇列"
+        >
+          ×
+        </button>
+      </header>
+
+      <div class="queue-panel__scroll">
+        <section class="queue-section" aria-labelledby="queue-current-title">
+          <h3 id="queue-current-title">現正播放</h3>
+          <button
+            type="button"
+            class="queue-track queue-track--current"
+            data-queue-current
+          >
+            <span class="queue-track__marker" aria-hidden="true">▶</span>
+            <span class="queue-track__copy">
+              <strong data-queue-current-title>玻璃海岸</strong>
+              <small data-queue-current-artist>林澄 · Glass Coast</small>
+            </span>
+          </button>
+        </section>
+
+        <section class="queue-section" aria-labelledby="queue-manual-title">
+          <div class="queue-section__heading">
+            <h3 id="queue-manual-title">佇列中下一首</h3>
+            <button type="button" class="queue-clear" data-action="clear-queue">
+              清除
+            </button>
+          </div>
+          <p class="queue-empty" data-queue-empty>尚未加入臨時曲目</p>
+          <ol class="queue-list" data-queue-manual></ol>
+        </section>
+
+        <section class="queue-section" aria-labelledby="queue-source-title">
+          <div class="queue-section__heading queue-section__heading--source">
+            <div>
+              <span>下一首來自</span>
+              <h3 id="queue-source-title" data-queue-source-title>夜航歌回</h3>
+            </div>
+            <span class="queue-session-label">僅本次順序</span>
+          </div>
+          <ol class="queue-list" data-queue-source></ol>
+        </section>
+      </div>
+    </aside>
 
     <div id="track-menu" popover class="track-menu">
       <button type="button" data-menu-action="queue">新增至佇列</button>

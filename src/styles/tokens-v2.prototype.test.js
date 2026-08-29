@@ -166,6 +166,26 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(html).toContain('<dialog class="details-dialog"');
   });
 
+  it('offers a dossier-only embed without leaking candidate tokens into Vue', () => {
+    expect(script).toContain("params.get('embed') === 'dossier'");
+    expect(script).toContain("body.classList.add('is-dossier-embed'");
+    expect(css).toMatch(
+      /body\.is-dossier-embed \.titlebar[\s\S]*?body\.is-dossier-embed \.player-bar[\s\S]*?display:\s*none;/u,
+    );
+    expect(css).toMatch(
+      /body\.is-dossier-embed \.app-shell\s*\{[^}]*grid-template-areas:\s*'workspace'/su,
+    );
+    expect(main).not.toContain('tokens-v2.css');
+  });
+
+  it('synchronizes the embedded theme and forwards only app-owned shortcuts', () => {
+    expect(script).toContain("type !== 'utawakui-prototype-theme'");
+    expect(script).toContain("type: 'utawakui-app-shortcut'");
+    expect(script).toContain('event.source !== window.parent');
+    expect(script).toContain('event.origin !== window.location.origin');
+    expect(script).toContain('/^f(?:10|[1-5]|[7-9])$/u');
+  });
+
   it.each([
     ['dark', ":root[data-ui-system='v2']"],
     ['light', ":root[data-ui-system='v2'][data-ui-theme='light']"],

@@ -25,6 +25,7 @@ const PUBLIC_INACTIVE_VIEWS = [
   'SettingsView',
 ];
 const INTERNAL_VIEWS = [
+  ['studio-library', 'StudioLibraryPrototypeView'],
   ['lyrics-provider-review', 'LyricsProviderReviewView'],
   ['demo', 'DemoView'],
   ['music-analysis', 'MusicAnalysisView'],
@@ -63,6 +64,10 @@ describe('development startup contract', () => {
         ),
       );
     }
+    expect(appSource).toContain("f7: 'studio-library'");
+    expect(appSource).toMatch(
+      /const archiveTabView = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'studio-library'\s*\? 'setlist'\s*:\s*activeView\.value/u,
+    );
   });
 
   it('does not watch generated artifacts during development', () => {

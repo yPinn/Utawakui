@@ -24,6 +24,36 @@ The Workspace Lab switches theme, density, motion, and static content state. Pre
 ?clean=1&theme=light&density=compact&motion=reduced&scenario=warning
 ```
 
+## In-app development view
+
+During `npm run dev`, press `F7` in the Utawakui window to open the Studio Library
+development view. The real Vue shell continues to own the titlebar, Sidebar,
+Setlist folder tab, and PlayerBar; an isolated iframe supplies only the candidate
+dossier interior and follows the active dark／light app theme. Production builds
+exclude this view and its shortcut.
+
+The iframe mode is also directly inspectable at:
+
+```text
+?embed=dossier&clean=1&theme=dark&density=standard&scenario=populated
+```
+
+## Interaction contract
+
+- A single track click selects; double-click or Enter starts a new playback
+  context from the authored collection order.
+- Search, readiness filtering, and display sorting do not replace that playback
+  context.
+- Manual queue entries have unique identities, may contain the same track more
+  than once, and play before the source's next track. Starting a new collection
+  context clears the previous manual queue.
+- Repeat cycles through off, context, and track. Sequence playback stops at the
+  source end; it does not autoplay or wrap without context repeat.
+- Previous restarts the current track after three elapsed seconds; near the start,
+  it returns through playback history.
+- The Sidebar has an explicit persisted rail／expanded mode. Expanded width is
+  adjustable without a hidden resistance zone.
+
 Generate the four reference screenshots through the cleanup-safe capture runner:
 
 ```powershell

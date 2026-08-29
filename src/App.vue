@@ -1,5 +1,5 @@
 <script setup>
-import { defineAsyncComponent, onMounted, provide } from 'vue';
+import { computed, defineAsyncComponent, onMounted, provide } from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
@@ -35,6 +35,9 @@ const SettingsView = defineAsyncComponent(
 const internalWorkbenchesEnabled = import.meta.env.DEV;
 const internalViews = internalWorkbenchesEnabled
   ? {
+      'studio-library': defineAsyncComponent(
+        () => import('./views/StudioLibraryPrototypeView.vue'),
+      ),
       'lyrics-provider-review': defineAsyncComponent(
         () => import('./views/LyricsProviderReviewView.vue'),
       ),
@@ -46,6 +49,7 @@ const internalViews = internalWorkbenchesEnabled
   : {};
 const internalViewShortcuts = internalWorkbenchesEnabled
   ? {
+      f7: 'studio-library',
       f8: 'lyrics-provider-review',
       f9: 'demo',
       f10: 'music-analysis',
@@ -86,6 +90,14 @@ const views = {
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const { activeView } = useAppView();
+// Studio Library is a development preview of the Setlist interior. Keep the
+// real Setlist folder visibly selected while the hidden preview component is
+// active so the shell still communicates the owning workflow.
+const archiveTabView = internalWorkbenchesEnabled
+  ? computed(() =>
+      activeView.value === 'studio-library' ? 'setlist' : activeView.value,
+    )
+  : activeView;
 // Pass the ref so global shortcuts can read and update the active view.
 useKeyboardShortcuts(activeView, { internalViewShortcuts });
 </script>
@@ -98,7 +110,10 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
     <AppTitleBar class="shell__titlebar" />
     <AppPlaylistSidebar class="shell__sidebar" />
     <main class="shell__main">
-      <AppArchiveFrame v-model:active-view="activeView">
+      <AppArchiveFrame
+        v-model:active-view="activeView"
+        :tab-active-view="archiveTabView"
+      >
         <component :is="views[activeView]" />
       </AppArchiveFrame>
     </main>

@@ -68,6 +68,22 @@ async function verifyInteractions(window) {
     const rows = [...document.querySelectorAll('.track-row')];
     const search = document.querySelector('[data-track-search]');
     const ready = document.querySelector('[data-action="toggle-ready"]');
+    const play = document.querySelector('[data-action="toggle-play"]');
+    const next = document.querySelector('[data-action="next"]');
+    const previous = document.querySelector('[data-action="previous"]');
+    const repeat = document.querySelector('[data-action="repeat"]');
+    const progress = document.querySelector('[data-playback-progress]');
+    const playPlaylist = document.querySelector('[data-action="play-playlist"]');
+    const queueToggle = document.querySelector('[data-action="queue"]');
+    const sidebarToggle = document.querySelector('[data-action="toggle-sidebar"]');
+
+    const nowTitle = () => document.querySelector('[data-now-title]').textContent;
+    const openTrackMenu = (row) => {
+      row.querySelector('.row-action').dispatchEvent(
+        new MouseEvent('click', { bubbles: true, clientX: 200, clientY: 200 }),
+      );
+      return document.querySelector('#track-menu');
+    };
 
     ready.click();
     assert(ready.getAttribute('aria-pressed') === 'true', 'ready filter did not toggle');
@@ -79,22 +95,90 @@ async function verifyInteractions(window) {
     document.querySelector('[data-action="clear-search"]').click();
     assert(body.dataset.scenario === 'populated', 'search clear did not restore populated state');
 
+    const originalTitle = nowTitle();
+    rows[2].click();
+    assert(nowTitle() === originalTitle, 'single-click unexpectedly started playback');
+
     rows[2].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
-    assert(document.querySelector('[data-now-title]').textContent === '별빛 리허설', 'double-click did not update playback');
+    assert(nowTitle() === '별빛 리허설', 'double-click did not update playback');
 
     rows[1].dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }));
-    assert(document.querySelector('[data-now-title]').textContent === '夜明けのアーカイブ', 'keyboard playback did not update');
+    assert(nowTitle() === '夜明けのアーカイブ', 'keyboard playback did not update');
     assert(rows[1].getAttribute('aria-current') === 'true', 'playing row state was not exposed');
+
+    search.value = '별빛 리허설';
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    rows[2].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    next.click();
+    assert(
+      nowTitle() === rows[3].dataset.title,
+      'filter replaced the authored playback context',
+    );
+    document.querySelector('[data-action="clear-search"]').click();
+
+    repeat.click();
+    assert(repeat.dataset.repeatMode === 'context', 'repeat did not enter context mode');
+    repeat.click();
+    assert(repeat.dataset.repeatMode === 'track', 'repeat did not enter track mode');
+    repeat.click();
+    assert(repeat.dataset.repeatMode === 'off', 'repeat did not return to off mode');
+
+    rows.at(-1).dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    document.dispatchEvent(new Event('prototype:track-ended'));
+    assert(nowTitle() === rows.at(-1).dataset.title, 'sequence end wrapped to the first track');
+    assert(play.getAttribute('aria-label') === '播放', 'sequence end did not stop playback');
+
+    rows[1].dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    next.click();
+    progress.value = '45';
+    progress.dispatchEvent(new Event('input', { bubbles: true }));
+    previous.click();
+    assert(nowTitle() === rows[2].dataset.title, 'Previous skipped despite elapsed threshold');
+    assert(progress.value === '0', 'Previous did not restart the current track');
+    previous.click();
+    assert(nowTitle() === rows[1].dataset.title, 'Previous did not return to playback history near the start');
+
+    let menu = openTrackMenu(rows[4]);
+    menu.querySelector('[data-menu-action="queue"]').click();
+    menu = openTrackMenu(rows[4]);
+    menu.querySelector('[data-menu-action="queue"]').click();
+    queueToggle.click();
+    assert(
+      document.querySelectorAll('[data-queue-entry]').length === 2,
+      'queue did not preserve duplicate entries',
+    );
+    next.click();
+    assert(nowTitle() === rows[4].dataset.title, 'manual queue did not take priority');
+    assert(
+      document.querySelectorAll('[data-queue-entry]').length === 1,
+      'manual queue did not consume one unique entry',
+    );
+    progress.value = '27';
+    progress.dispatchEvent(new Event('input', { bubbles: true }));
+    document.querySelector('[data-queue-current]').click();
+    assert(progress.value === '27', 'current queue row restarted playback');
+
+    search.value = rows[4].dataset.title;
+    search.dispatchEvent(new Event('input', { bubbles: true }));
+    playPlaylist.click();
+    assert(nowTitle() === rows[0].dataset.title, 'Play playlist used the filtered first row');
+    assert(
+      document.querySelectorAll('[data-queue-entry]').length === 0,
+      'starting a new source retained the previous manual queue',
+    );
+    document.querySelector('[data-action="clear-search"]').click();
+
+    sidebarToggle.click();
+    assert(body.classList.contains('is-sidebar-collapsed'), 'sidebar did not collapse explicitly');
+    sidebarToggle.click();
+    assert(!body.classList.contains('is-sidebar-collapsed'), 'sidebar did not expand explicitly');
 
     document.querySelector('[data-action="open-details"]').click();
     const dialog = document.querySelector('.details-dialog');
     assert(dialog.open, 'details dialog did not open');
     dialog.close('cancel');
 
-    rows[1].querySelector('.row-action').dispatchEvent(
-      new MouseEvent('click', { bubbles: true, clientX: 200, clientY: 200 }),
-    );
-    const menu = document.querySelector('#track-menu');
+    menu = openTrackMenu(rows[1]);
     assert(menu.matches(':popover-open'), 'track popover did not open');
     menu.hidePopover();
 
@@ -175,7 +259,7 @@ async function captureVariant(variant) {
   if (variant === variants[0]) {
     await verifyInteractions(window);
     console.log(
-      'verified prototype search, filter, playback, dialog, and popover',
+      'verified prototype filters, context playback, repeat, queue, sidebar, dialog, and popover',
     );
   }
   if (variant.width === 960 && variant.theme === 'light') {
