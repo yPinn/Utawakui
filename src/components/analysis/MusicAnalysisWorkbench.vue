@@ -11,6 +11,7 @@ import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
 import MusicAnalysisBenchmarkReview from './MusicAnalysisBenchmarkReview.vue';
 import MusicAnalysisCapabilityModal from './MusicAnalysisCapabilityModal.vue';
 import MusicAnalysisJobPanel from './MusicAnalysisJobPanel.vue';
+import MusicAnalysisReferenceAnnotation from './MusicAnalysisReferenceAnnotation.vue';
 import MusicAnalysisTrackPicker from './MusicAnalysisTrackPicker.vue';
 import MusicStructureSummary from './MusicStructureSummary.vue';
 
@@ -76,6 +77,14 @@ watch(
               正式分析
             </UiButton>
             <UiButton
+              :active="workbenchMode === 'annotation'"
+              :aria-pressed="workbenchMode === 'annotation'"
+              :disabled="modeSwitchDisabled"
+              @click="setWorkbenchMode('annotation')"
+            >
+              人工標註
+            </UiButton>
+            <UiButton
               :active="workbenchMode === 'benchmark'"
               :aria-pressed="workbenchMode === 'benchmark'"
               :disabled="modeSwitchDisabled"
@@ -103,7 +112,9 @@ watch(
       @action="workbench.retryLibrary"
     />
 
-    <MusicAnalysisBenchmarkReview v-if="workbenchMode === 'benchmark'" />
+    <MusicAnalysisReferenceAnnotation v-if="workbenchMode === 'annotation'" />
+
+    <MusicAnalysisBenchmarkReview v-else-if="workbenchMode === 'benchmark'" />
 
     <div v-else class="analysis-workbench__layout">
       <aside class="analysis-workbench__tracks">

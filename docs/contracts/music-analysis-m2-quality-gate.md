@@ -112,6 +112,31 @@ are accepted only when a SHA-256 fingerprint still matches the source audio,
 worker, model artifacts, and case contract. `--case <opaque-id>` runs one case;
 `--force` deliberately ignores a valid cache.
 
+### Annotating references in F10
+
+Press F10, switch from **正式分析** to **人工標註**, and choose the ignored run
+config before opening Benchmark Review. This blind workspace never reads
+`predictions.json`. It maps each opaque case back to the current library for
+playback, then records only manually entered BPM, contiguous boundaries, and
+canonical roles in `<outputRoot>/reference-worklist.json`. Incomplete drafts can
+be saved; a case is complete only after BPM and at least two fully labeled,
+exactly contiguous intervals cover the decoded duration.
+
+The quick-annotation surface may use only a matching `level: M1` beat result as
+non-semantic timing guidance. It renders beat／downbeat marks and can snap a new
+boundary to a downbeat within ±300 ms; any M2 result supplies no guidance in this
+blind mode. The active interval follows the player clock. `B` inserts a boundary,
+`1`–`7` assigns its canonical role, `Shift+1`–`7` inserts and assigns the following
+interval, `Alt+Left／Right` moves the active starting boundary by 100 ms, `N` selects
+the next incomplete case, and `Ctrl／Cmd+S` saves explicitly. Draft edits also save
+after a short idle delay; a completed older save must not replace newer local edits.
+
+The renderer cannot supply config or worklist paths. Main owns the picker,
+validates the run config against the current library, returns an opaque session
+id, and accepts only bounded case references on save. The worklist contains no
+track ids, source paths, model fields, or predictions and never writes song
+sidecars.
+
 ### Reviewing predictions in F10
 
 Press F10, switch from **正式分析** to **Benchmark Review**, and choose the
@@ -129,7 +154,8 @@ failed load produces no partial review data. Opening a review never writes or
 promotes a sidecar: low-confidence, incomplete, unknown, missing, and failed
 predictions remain visibly downgraded to M1.
 
-Keep reference annotation independent from these predictions. Merge the
+Keep reference annotation independent from these predictions. Finish and save
+the blind worklist before switching to Benchmark Review. Merge the
 manually reviewed BPM and contiguous reference partition with the path-free
 prediction evidence only after annotation is complete; model output must never
 be copied into the reference fields as ground truth.

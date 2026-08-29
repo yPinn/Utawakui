@@ -144,6 +144,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('music-structure:get-track', trackId),
   openMusicAnalysisBenchmarkReview: () =>
     ipcRenderer.invoke('music-structure:open-benchmark-review'),
+  openMusicAnalysisReferenceAnnotation: () =>
+    ipcRenderer.invoke('music-structure:open-reference-annotation'),
+  saveMusicAnalysisReferenceAnnotation: (payload) =>
+    ipcRenderer.invoke('music-structure:save-reference-annotation', payload),
   analyzeTrackMusicStructure: (trackId) =>
     ipcRenderer.invoke('music-structure:analyze-track', trackId),
   cancelTrackMusicStructureAnalysis: () =>

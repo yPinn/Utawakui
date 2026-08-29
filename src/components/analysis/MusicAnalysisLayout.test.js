@@ -49,8 +49,12 @@ describe('Music Analysis scroll layout', () => {
     expect(workbenchSource).toContain("workbenchMode = shallowRef('analysis')");
     expect(workbenchSource).toContain('正式分析');
     expect(workbenchSource).toContain('Benchmark Review');
+    expect(workbenchSource).toContain('人工標註');
     expect(workbenchSource).toMatch(
-      /<MusicAnalysisBenchmarkReview\s+v-if="workbenchMode === 'benchmark'"/,
+      /<MusicAnalysisReferenceAnnotation\s+v-if="workbenchMode === 'annotation'"/,
+    );
+    expect(workbenchSource).toMatch(
+      /<MusicAnalysisBenchmarkReview\s+v-else-if="workbenchMode === 'benchmark'"/,
     );
     expect(workbenchSource).toMatch(
       /<div\s+v-else\s+class="analysis-workbench__layout">/,

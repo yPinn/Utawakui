@@ -4,6 +4,9 @@ const { loadTrackMusicStructure } = require('../lib/library');
 const {
   loadMusicAnalysisBenchmarkReview,
 } = require('../lib/audioProcessing/musicAnalysisBenchmarkReview');
+const {
+  createMusicAnalysisReferenceAnnotationService,
+} = require('../lib/audioProcessing/musicAnalysisReferenceAnnotation');
 
 const PUBLIC_ANALYSIS_ERRORS = new Set([
   'a structure-analysis job is already running',
@@ -55,6 +58,14 @@ function benchmarkDialogOptions() {
   };
 }
 
+function referenceAnnotationDialogOptions() {
+  return {
+    title: '開啟 M2 人工標註工作集',
+    properties: ['openFile'],
+    filters: [{ name: 'Benchmark run config', extensions: ['json'] }],
+  };
+}
+
 function registerMusicStructureHandlers({
   ipcMain,
   dialog,
@@ -62,6 +73,7 @@ function registerMusicStructureHandlers({
   resolveDownloadDir,
   loadMusicStructure = loadTrackMusicStructure,
   loadBenchmarkReview = loadMusicAnalysisBenchmarkReview,
+  referenceAnnotationService = createMusicAnalysisReferenceAnnotationService(),
   getMainWindow,
   notifyLibraryUpdated,
   requireFeatureGate,
@@ -90,6 +102,34 @@ function registerMusicStructureHandlers({
       throw new Error('unable to load benchmark review');
     }
   });
+
+  ipcMain.handle('music-structure:open-reference-annotation', async () => {
+    const ownerWindow = getMainWindow?.();
+    const options = referenceAnnotationDialogOptions();
+    const result = ownerWindow
+      ? await dialog.showOpenDialog(ownerWindow, options)
+      : await dialog.showOpenDialog(options);
+    if (result.canceled || result.filePaths.length === 0) return null;
+
+    try {
+      return referenceAnnotationService.open(result.filePaths[0], {
+        expectedLibraryRoot: resolveDownloadDir(getConfig()),
+      });
+    } catch {
+      throw new Error('unable to open reference annotation');
+    }
+  });
+
+  ipcMain.handle(
+    'music-structure:save-reference-annotation',
+    async (event, payload) => {
+      try {
+        return referenceAnnotationService.save(payload);
+      } catch {
+        throw new Error('unable to save reference annotation');
+      }
+    },
+  );
 
   ipcMain.handle('music-structure:analyze-track', async (event, trackId) => {
     requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);

@@ -123,7 +123,10 @@ analysis progress、status polling、run／cancel 與 sidecar reconciliation。�
 `src/composables/useMusicAnalysisSettings.js` 負責 boolean-only 自動分析偏好與既有
 capability owner 的組合，`MusicAnalysisSettingsRow.vue` 只呈現用途、安裝狀態與
 準備／修復／移除 intent。F10 Workbench 保留單曲強制執行、批次重跑與診斷，不再是
-新曲分析的必要入口。
+新曲分析的必要入口。F10 的 M2 `人工標註` 由
+`useMusicAnalysisReferenceAnnotation.js` 單獨擁有 renderer draft；main 以 opaque session
+鎖定已驗證的 run config 與固定 `reference-worklist.json`，renderer 不提供路徑，且該路徑
+不讀 prediction、不寫歌曲 sidecar。
 
 `electron/lib/audioProcessing/structureAnalysisAutoQueue.js` 是 main-owned、記憶體內、
 去重且單工的匯入後佇列。Provider download 與 local import handler 只交付 main-derived

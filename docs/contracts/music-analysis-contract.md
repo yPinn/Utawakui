@@ -47,6 +47,13 @@ required song-group summaries. Until the minimum 30-song J-pop/K-pop/karaoke
 corpus is populated, its result must remain `insufficient-data`; synthetic
 fixtures prove evaluator behavior, not analyzer quality.
 
+F10 also has an independent **人工標註** mode for building that manifest. Main
+owns the run-config picker and an opaque annotation session, reads or atomically
+writes only `<outputRoot>/reference-worklist.json`, and never opens benchmark
+predictions on this path. Renderer state owns selection, dirty state, BPM,
+boundary and role edits while the existing player remains the sole playback
+clock. Draft references do not publish or upgrade track sidecars.
+
 The independent [BPM quality gate](music-analysis-bpm-quality-gate.md) now owns
 the M1 global-tempo acceptance boundary. It separates locked private ground truth
 from corpus-fingerprinted path-free predictions, treats half／double-time estimates

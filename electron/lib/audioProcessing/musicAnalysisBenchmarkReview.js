@@ -340,18 +340,7 @@ function validatePredictions(value, runConfig) {
 }
 
 function loadMusicAnalysisBenchmarkReview(configPath, options = {}) {
-  if (
-    typeof configPath !== 'string' ||
-    !path.isAbsolute(configPath) ||
-    typeof options.expectedLibraryRoot !== 'string' ||
-    !path.isAbsolute(options.expectedLibraryRoot)
-  ) {
-    throw new TypeError('benchmark review paths are invalid');
-  }
-  const runConfig = validateRunConfig(
-    readBoundedJson(configPath, MAX_CONFIG_BYTES, 'benchmark run config'),
-    options.expectedLibraryRoot,
-  );
+  const runConfig = loadMusicAnalysisRunConfig(configPath, options);
   const evidencePath = path.join(runConfig.outputRoot, 'predictions.json');
   if (!isWithin(runConfig.outputRoot, evidencePath)) {
     throw new Error('benchmark evidence path is invalid');
@@ -369,4 +358,22 @@ function loadMusicAnalysisBenchmarkReview(configPath, options = {}) {
   };
 }
 
-module.exports = { loadMusicAnalysisBenchmarkReview };
+function loadMusicAnalysisRunConfig(configPath, options = {}) {
+  if (
+    typeof configPath !== 'string' ||
+    !path.isAbsolute(configPath) ||
+    typeof options.expectedLibraryRoot !== 'string' ||
+    !path.isAbsolute(options.expectedLibraryRoot)
+  ) {
+    throw new TypeError('benchmark review paths are invalid');
+  }
+  return validateRunConfig(
+    readBoundedJson(configPath, MAX_CONFIG_BYTES, 'benchmark run config'),
+    options.expectedLibraryRoot,
+  );
+}
+
+module.exports = {
+  loadMusicAnalysisBenchmarkReview,
+  loadMusicAnalysisRunConfig,
+};

@@ -372,4 +372,113 @@ describe('music-structure handlers', () => {
       handlers.get('music-structure:open-benchmark-review')(),
     ).rejects.not.toThrow(/private|predictions\.json/i);
   });
+
+  it('opens and saves a blind annotation session without renderer paths', async () => {
+    const handlers = new Map();
+    const annotation = {
+      schemaVersion: 1,
+      sessionId: 'session-1',
+      benchmarkId: 'pilot-01',
+      cases: [],
+    };
+    const referenceAnnotationService = {
+      open: vi.fn(() => annotation),
+      save: vi.fn((payload) => ({
+        ...annotation,
+        saved: payload.cases.length,
+      })),
+    };
+    const dialog = {
+      showOpenDialog: vi.fn(async () => ({
+        canceled: false,
+        filePaths: ['E:\\benchmarks\\pilot-run.json'],
+      })),
+    };
+
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      dialog,
+      getConfig: () => ({ downloadDir: 'configured' }),
+      resolveDownloadDir: () => 'E:\\Music\\Utawakui',
+      getMainWindow: () => null,
+      referenceAnnotationService,
+      analysisService: {
+        run: vi.fn(),
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(() => null),
+      },
+      capabilityService: capabilityService(),
+      batchService: batchService(),
+    });
+
+    await expect(
+      handlers.get('music-structure:open-reference-annotation')(
+        null,
+        'E:\\untrusted\\renderer-run.json',
+      ),
+    ).resolves.toEqual(annotation);
+    expect(referenceAnnotationService.open).toHaveBeenCalledWith(
+      'E:\\benchmarks\\pilot-run.json',
+      { expectedLibraryRoot: 'E:\\Music\\Utawakui' },
+    );
+
+    const payload = {
+      sessionId: 'session-1',
+      cases: [],
+      outputRoot: 'E:\\untrusted\\output',
+    };
+    await expect(
+      handlers.get('music-structure:save-reference-annotation')(
+        null,
+        payload,
+        'E:\\untrusted\\worklist.json',
+      ),
+    ).resolves.toEqual({ ...annotation, saved: 0 });
+    expect(referenceAnnotationService.save).toHaveBeenCalledWith(payload);
+  });
+
+  it('bounds annotation open and save failures', async () => {
+    const handlers = new Map();
+    registerMusicStructureHandlers({
+      ipcMain: {
+        handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
+      },
+      dialog: {
+        showOpenDialog: vi.fn(async () => ({
+          canceled: false,
+          filePaths: ['E:\\private\\broken-run.json'],
+        })),
+      },
+      getConfig: () => ({}),
+      resolveDownloadDir: () => 'E:\\Music\\Utawakui',
+      getMainWindow: () => null,
+      referenceAnnotationService: {
+        open: vi.fn(() => {
+          throw new Error('E:\\private\\predictions.json');
+        }),
+        save: vi.fn(() => {
+          throw new Error('E:\\private\\reference-worklist.json');
+        }),
+      },
+      analysisService: {
+        run: vi.fn(),
+        cancelActiveJob: vi.fn(),
+        getActiveJob: vi.fn(() => null),
+      },
+      capabilityService: capabilityService(),
+      batchService: batchService(),
+    });
+
+    await expect(
+      handlers.get('music-structure:open-reference-annotation')(),
+    ).rejects.toThrow('unable to open reference annotation');
+    await expect(
+      handlers.get('music-structure:save-reference-annotation')(null, {
+        sessionId: 'session-1',
+        cases: [],
+      }),
+    ).rejects.toThrow('unable to save reference annotation');
+  });
 });

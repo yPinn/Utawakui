@@ -76,9 +76,11 @@ const MAIN_INVOKE_CHANNELS = [
   'music-structure:get-capability-status',
   'music-structure:get-track',
   'music-structure:open-benchmark-review',
+  'music-structure:open-reference-annotation',
   'music-structure:prepare-capability',
   'music-structure:remove-capability',
   'music-structure:repair-capability',
+  'music-structure:save-reference-annotation',
   'music-structure:start-batch',
   'output-slots:list',
   'output-slots:upsert',
@@ -301,6 +303,19 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'music-structure:start-batch',
       { trackIds: ['track-1'], force: true },
+    );
+
+    bridge.openMusicAnalysisReferenceAnnotation('E:\\untrusted\\run.json');
+    bridge.saveMusicAnalysisReferenceAnnotation(
+      { sessionId: 'session-1', cases: [] },
+      'E:\\untrusted\\reference-worklist.json',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'music-structure:open-reference-annotation',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'music-structure:save-reference-annotation',
+      { sessionId: 'session-1', cases: [] },
     );
 
     const callback = vi.fn();
