@@ -3,7 +3,7 @@ import {
   computed,
   onMounted,
   onUnmounted,
-  ref,
+  shallowRef,
   useTemplateRef,
   watch,
 } from 'vue';
@@ -13,28 +13,35 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
-import LyricsLrclibCandidateRow from './LyricsLrclibCandidateRow.vue';
+import LyricsProviderRecordingGroup from './LyricsProviderRecordingGroup.vue';
 
 const emit = defineEmits(['back']);
+const props = defineProps({
+  providerId: { type: String, default: 'lrclib' },
+  providerLabel: { type: String, default: 'LRCLIB' },
+});
 
-const {
-  state,
-  selectedTrack,
-  clearCandidateSearch,
-  searchLyricsCandidates,
-  saveLyricsCandidate,
-} = useLyrics();
+const lyrics = useLyrics();
+const { state, selectedTrack, clearCandidateSearch } = lyrics;
+const searchLyricsProviderCandidates =
+  lyrics.searchLyricsProviderCandidates ||
+  ((_providerId, options, trackId) =>
+    lyrics.searchLyricsCandidates(options, trackId));
+const saveLyricsProviderCandidate =
+  lyrics.saveLyricsProviderCandidate ||
+  ((_providerId, candidate, trackId, query) =>
+    lyrics.saveLyricsCandidate(candidate, trackId, query));
 
 const trackContext = selectedTrack.value;
-const titleDraft = ref(trackContext?.title || '');
-const artistDraft = ref(trackContext?.artist || '');
-const submittedQuery = ref(null);
-const activeMode = ref('structured');
-const hasSearched = ref(false);
-const expandedId = ref(null);
-const savingId = ref(null);
-const submissionPending = ref(false);
-const changedCandidates = ref(new Map());
+const titleDraft = shallowRef(trackContext?.title || '');
+const artistDraft = shallowRef(trackContext?.artist || '');
+const submittedQuery = shallowRef(null);
+const activeMode = shallowRef('structured');
+const hasSearched = shallowRef(false);
+const expandedKey = shallowRef(null);
+const savingKey = shallowRef(null);
+const submissionPending = shallowRef(false);
+const changedCandidates = shallowRef(new Map());
 const titleInputRef = useTemplateRef('titleInput');
 
 onMounted(() => {
@@ -55,10 +62,41 @@ const isSearchPending = computed(
   () => submissionPending.value || state.candidateSearch.isLoading,
 );
 const isSearchDisabled = computed(
-  () => isSearchPending.value || savingId.value !== null,
+  () => isSearchPending.value || savingKey.value !== null,
 );
-const resultCount = computed(() => state.candidateSearch.candidates.length);
-const hasResults = computed(() => resultCount.value > 0);
+const resultRecordingGroups = computed(() => {
+  const recordingGroups = state.candidateSearch.recordingGroups;
+  if (
+    recordingGroups &&
+    (recordingGroups.best?.length || recordingGroups.related?.length)
+  ) {
+    return recordingGroups;
+  }
+  function singleCandidateGroup(candidate) {
+    const key = candidateKey(candidate);
+    return {
+      recordingKey: `candidate:${key}`,
+      matchBand: candidate.matchBand,
+      recommendedCandidateKey: key,
+      candidates: [{ ...candidate, candidateKey: key }],
+    };
+  }
+  return {
+    best: (state.candidateSearch.groups.best || []).map(singleCandidateGroup),
+    related: (state.candidateSearch.groups.related || []).map(
+      singleCandidateGroup,
+    ),
+  };
+});
+const resultCount = computed(
+  () =>
+    resultRecordingGroups.value.best.length +
+    resultRecordingGroups.value.related.length,
+);
+const sourceResultCount = computed(
+  () => state.candidateSearch.candidates.length,
+);
+const hasResults = computed(() => sourceResultCount.value > 0);
 const canBroaden = computed(
   () =>
     hasSearched.value &&
@@ -76,23 +114,45 @@ const draftDiffersFromResults = computed(() => {
     artistDraft.value.trim() !== submittedQuery.value.artist
   );
 });
+const unavailableProviderLabels = computed(() =>
+  (state.candidateSearch.providerStatuses || [])
+    .filter((status) => status.status !== 'ok')
+    .map((status) => providerNameFor(status.provider)),
+);
 const resultAnnouncement = computed(() => {
-  if (isSearchPending.value) return '正在搜尋 LRCLIB';
+  if (isSearchPending.value) return `正在搜尋 ${props.providerLabel}`;
   if (!hasSearched.value) {
     return titleIsMissing.value ? '請輸入歌曲名稱後搜尋' : '準備搜尋';
   }
   if (state.candidateSearch.error) return '搜尋未完成';
-  return `找到 ${resultCount.value} 筆候選歌詞`;
+  return props.providerId === 'all'
+    ? `找到 ${resultCount.value} 個錄音版本、${sourceResultCount.value} 個歌詞來源`
+    : `找到 ${sourceResultCount.value} 筆候選歌詞`;
 });
 
-function changedCandidate(candidateId) {
-  return changedCandidates.value.get(candidateId) || null;
+function providerNameFor(providerId) {
+  if (providerId === 'netease') return '網易雲音樂';
+  if (providerId === 'lrclib') return 'LRCLIB';
+  return '線上來源';
 }
 
-function setChangedCandidate(candidateId, candidate) {
+function candidateKey(candidate) {
+  return (
+    candidate?.candidateKey ||
+    `${candidate?.providerId || props.providerId}:${candidate?.id}`
+  );
+}
+
+function setChangedCandidate(candidate, changedCandidate) {
   const next = new Map(changedCandidates.value);
-  if (candidate) next.set(candidateId, candidate);
-  else next.delete(candidateId);
+  const key = candidateKey(candidate);
+  if (changedCandidate) {
+    next.set(key, {
+      ...changedCandidate,
+      providerId: candidate.providerId || props.providerId,
+      candidateKey: key,
+    });
+  } else next.delete(key);
   changedCandidates.value = next;
 }
 
@@ -110,7 +170,8 @@ async function handleSearch(mode = 'structured') {
     activeMode.value = mode;
     submittedQuery.value = query;
     changedCandidates.value = new Map();
-    const result = await searchLyricsCandidates(
+    const result = await searchLyricsProviderCandidates(
+      props.providerId,
       {
         query,
         ...(mode === 'broaden' ? { mode: 'broaden' } : {}),
@@ -120,34 +181,51 @@ async function handleSearch(mode = 'structured') {
     if (!result) return;
 
     hasSearched.value = true;
-    expandedId.value = result.candidates?.[0]?.id ?? null;
+    expandedKey.value =
+      state.candidateSearch.recordingGroups?.best?.[0]
+        ?.recommendedCandidateKey ||
+      state.candidateSearch.recordingGroups?.related?.[0]
+        ?.recommendedCandidateKey ||
+      (result.candidates?.[0] ? candidateKey(result.candidates[0]) : null);
   } finally {
     submissionPending.value = false;
   }
 }
 
 async function handleSave(candidate) {
-  if (savingId.value !== null || !trackContext) return;
-  savingId.value = candidate.id;
+  if (!candidate || savingKey.value !== null || !trackContext) return;
+  const key = candidateKey(candidate);
+  const candidateProviderId = candidate.providerId || props.providerId;
+  const candidateForSave =
+    props.providerId === 'all'
+      ? candidate
+      : Object.fromEntries(
+          Object.entries(candidate).filter(
+            ([field]) => !['candidateKey', 'providerId'].includes(field),
+          ),
+        );
+  savingKey.value = key;
   try {
-    const result = await saveLyricsCandidate(
-      candidate,
+    const result = await saveLyricsProviderCandidate(
+      candidateProviderId,
+      candidateForSave,
       trackContext.id,
       submittedQuery.value,
     );
     if (result?.status === 'record-changed' && result.candidate) {
-      setChangedCandidate(candidate.id, result.candidate);
-      expandedId.value = candidate.id;
+      setChangedCandidate(candidate, result.candidate);
+      expandedKey.value = key;
     } else if (result?.status === 'saved') {
-      setChangedCandidate(candidate.id, null);
+      setChangedCandidate(candidate, null);
     }
   } finally {
-    savingId.value = null;
+    savingKey.value = null;
   }
 }
 
-function toggleCandidate(candidateId) {
-  expandedId.value = expandedId.value === candidateId ? null : candidateId;
+function toggleCandidate(candidate) {
+  const key = candidateKey(candidate);
+  expandedKey.value = expandedKey.value === key ? null : key;
 }
 </script>
 
@@ -155,12 +233,11 @@ function toggleCandidate(candidateId) {
   <div class="lyrics-lrclib-search">
     <div class="lyrics-lrclib-search__toolbar">
       <UiButton @click="emit('back')">返回來源管理</UiButton>
-      <p>只搜尋，不會修改曲目資訊。</p>
     </div>
 
     <form class="lyrics-lrclib-search__form" @submit.prevent="handleSearch()">
       <UiTextField
-        id="lrclib-track-title"
+        :id="`${providerId}-track-title`"
         ref="titleInput"
         v-model="titleDraft"
         label="歌曲名稱"
@@ -168,7 +245,7 @@ function toggleCandidate(candidateId) {
         required
       />
       <UiTextField
-        id="lrclib-artist-name"
+        :id="`${providerId}-artist-name`"
         v-model="artistDraft"
         label="歌手"
         :maxlength="256"
@@ -207,6 +284,13 @@ function toggleCandidate(candidateId) {
         tone="danger"
         title="歌詞未儲存"
         :message="state.manualSave.error"
+        compact
+      />
+      <UiNotice
+        v-if="state.candidateSearch.partial && unavailableProviderLabels.length"
+        tone="warning"
+        title="部分來源未完成"
+        :message="`${unavailableProviderLabels.join('、')} 暫時無法完成搜尋；目前顯示的其他來源仍可使用。`"
         compact
       />
       <UiNotice
@@ -254,58 +338,60 @@ function toggleCandidate(candidateId) {
           :message="`${state.candidateSearch.invalidRecordCount} 筆來源資料不完整，已安全略過。`"
           compact
         />
-        <UiHint v-if="state.candidateSearch.groups.best.length === 0" padded>
+        <UiHint v-if="resultRecordingGroups.best.length === 0" padded>
           沒有高度符合的結果；以下相近結果可能是不同版本，請先確認。
         </UiHint>
 
         <section
-          v-if="state.candidateSearch.groups.best.length"
+          v-if="resultRecordingGroups.best.length"
           class="lyrics-lrclib-search__group"
-          aria-labelledby="lrclib-best-results"
+          :aria-labelledby="`${providerId}-best-results`"
         >
-          <h3 id="lrclib-best-results">
+          <h3 :id="`${providerId}-best-results`">
             最佳符合
-            <span>{{ state.candidateSearch.groups.best.length }}</span>
+            <span>{{ resultRecordingGroups.best.length }}</span>
           </h3>
           <ul class="lyrics-lrclib-search__list">
-            <LyricsLrclibCandidateRow
-              v-for="candidate in state.candidateSearch.groups.best"
-              :key="candidate.id"
-              :candidate="candidate"
-              :expanded="expandedId === candidate.id"
-              :saving="savingId === candidate.id"
-              :save-disabled="savingId !== null"
-              :changed-candidate="changedCandidate(candidate.id)"
-              @toggle="toggleCandidate(candidate.id)"
-              @save="handleSave(candidate)"
-              @confirm-changed="handleSave(changedCandidate(candidate.id))"
-              @cancel-changed="setChangedCandidate(candidate.id, null)"
+            <LyricsProviderRecordingGroup
+              v-for="group in resultRecordingGroups.best"
+              :key="group.recordingKey"
+              :group="group"
+              :expanded-key="expandedKey"
+              :saving-key="savingKey"
+              :save-disabled="savingKey !== null"
+              :changed-candidates="changedCandidates"
+              :show-provider="providerId === 'all'"
+              @toggle="toggleCandidate"
+              @save="handleSave"
+              @confirm-changed="handleSave"
+              @cancel-changed="setChangedCandidate($event, null)"
             />
           </ul>
         </section>
 
         <section
-          v-if="state.candidateSearch.groups.related.length"
+          v-if="resultRecordingGroups.related.length"
           class="lyrics-lrclib-search__group"
-          aria-labelledby="lrclib-related-results"
+          :aria-labelledby="`${providerId}-related-results`"
         >
-          <h3 id="lrclib-related-results">
+          <h3 :id="`${providerId}-related-results`">
             相近結果
-            <span>{{ state.candidateSearch.groups.related.length }}</span>
+            <span>{{ resultRecordingGroups.related.length }}</span>
           </h3>
           <ul class="lyrics-lrclib-search__list">
-            <LyricsLrclibCandidateRow
-              v-for="candidate in state.candidateSearch.groups.related"
-              :key="candidate.id"
-              :candidate="candidate"
-              :expanded="expandedId === candidate.id"
-              :saving="savingId === candidate.id"
-              :save-disabled="savingId !== null"
-              :changed-candidate="changedCandidate(candidate.id)"
-              @toggle="toggleCandidate(candidate.id)"
-              @save="handleSave(candidate)"
-              @confirm-changed="handleSave(changedCandidate(candidate.id))"
-              @cancel-changed="setChangedCandidate(candidate.id, null)"
+            <LyricsProviderRecordingGroup
+              v-for="group in resultRecordingGroups.related"
+              :key="group.recordingKey"
+              :group="group"
+              :expanded-key="expandedKey"
+              :saving-key="savingKey"
+              :save-disabled="savingKey !== null"
+              :changed-candidates="changedCandidates"
+              :show-provider="providerId === 'all'"
+              @toggle="toggleCandidate"
+              @save="handleSave"
+              @confirm-changed="handleSave"
+              @cancel-changed="setChangedCandidate($event, null)"
             />
           </ul>
         </section>
@@ -325,7 +411,11 @@ function toggleCandidate(candidateId) {
   user-select: none;
 }
 
-.lyrics-lrclib-search__toolbar,
+.lyrics-lrclib-search__toolbar {
+  display: flex;
+  align-items: center;
+}
+
 .lyrics-lrclib-search__result-meta {
   display: flex;
   align-items: center;
@@ -333,7 +423,6 @@ function toggleCandidate(candidateId) {
   gap: var(--ui-space-3);
 }
 
-.lyrics-lrclib-search__toolbar p,
 .lyrics-lrclib-search__result-meta p {
   margin: 0;
   color: var(--ui-color-text-muted);
@@ -345,8 +434,8 @@ function toggleCandidate(candidateId) {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: end;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-3);
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-canvas);
@@ -431,7 +520,6 @@ function toggleCandidate(candidateId) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .lyrics-lrclib-search__toolbar,
   .lyrics-lrclib-search__result-meta {
     align-items: stretch;
     flex-direction: column;

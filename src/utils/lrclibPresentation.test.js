@@ -42,6 +42,7 @@ describe('LRCLIB candidate presentation', () => {
         'invalid-lyricsfile',
         'unsupported-lyricsfile-version-fallback',
         'invalid-lyricsfile-fallback',
+        'invalid-yrc',
         'version-mismatch',
         'lyricsfile-missing',
       ]),
@@ -52,6 +53,7 @@ describe('LRCLIB candidate presentation', () => {
       '逐字資料無法安全讀取',
       '逐字格式版本尚未支援，已改用逐行或純文字歌詞',
       '逐字資料無法安全讀取，已改用逐行或純文字歌詞',
+      '網易逐字資料無法安全讀取，已改用逐行或純文字歌詞',
       '可能是不同版本',
     ]);
   });

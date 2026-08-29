@@ -18,6 +18,9 @@ const props = defineProps({
   saving: { type: Boolean, default: false },
   saveDisabled: { type: Boolean, default: false },
   changedCandidate: { type: Object, default: null },
+  providerLabel: { type: String, default: 'LRCLIB' },
+  showProvider: { type: Boolean, default: false },
+  recommended: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['toggle', 'save', 'confirmChanged', 'cancelChanged']);
@@ -75,7 +78,7 @@ function previewLineHasTiming(line) {
         type="button"
         class="lyrics-lrclib-candidate-row__toggle"
         :aria-expanded="expanded"
-        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}`"
+        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，推薦' : ''}`"
         @click="emit('toggle')"
       >
         <ChevronRight
@@ -86,8 +89,18 @@ function previewLineHasTiming(line) {
           aria-hidden="true"
         />
         <span class="lyrics-lrclib-candidate-row__info">
-          <span class="lyrics-lrclib-candidate-row__title" dir="auto">
-            {{ presentedCandidate.trackName }}
+          <span class="lyrics-lrclib-candidate-row__title-row">
+            <span class="lyrics-lrclib-candidate-row__title" dir="auto">
+              {{ presentedCandidate.trackName }}
+            </span>
+            <UiChip
+              v-if="recommended"
+              class="lyrics-lrclib-candidate-row__recommendation"
+              tone="accent"
+              aria-hidden="true"
+            >
+              推薦
+            </UiChip>
           </span>
           <span class="lyrics-lrclib-candidate-row__subtitle" dir="auto">
             {{ presentedCandidate.artistName }}
@@ -99,41 +112,53 @@ function previewLineHasTiming(line) {
       </button>
 
       <div class="lyrics-lrclib-candidate-row__summary">
-        <span v-if="durationLabel(presentedCandidate)">{{
-          durationLabel(presentedCandidate)
-        }}</span>
-        <UiChip :tone="capabilityTone">{{
-          capabilityLabel(presentedCandidate)
-        }}</UiChip>
-        <UiChip
-          v-if="candidate.saveState === 'update-available'"
-          tone="warning"
-        >
-          有更新
-        </UiChip>
+        <span class="lyrics-lrclib-candidate-row__summary-details">
+          <span
+            v-if="showProvider"
+            class="lyrics-lrclib-candidate-row__provider-slot"
+          >
+            <span class="lyrics-lrclib-candidate-row__provider" dir="auto">
+              {{ providerLabel }}
+            </span>
+          </span>
+          <span
+            v-if="durationLabel(presentedCandidate)"
+            class="lyrics-lrclib-candidate-row__duration"
+            :class="{
+              'lyrics-lrclib-candidate-row__duration--divided': showProvider,
+            }"
+          >
+            {{ durationLabel(presentedCandidate) }}
+          </span>
+        </span>
       </div>
     </div>
 
-    <div
-      v-if="
-        !expanded &&
-        (presentedCandidate.previewLines?.[0] || candidate.alreadySaved)
-      "
-      class="lyrics-lrclib-candidate-row__preview-row"
-    >
+    <div class="lyrics-lrclib-candidate-row__preview-row">
       <p
-        v-if="presentedCandidate.previewLines?.[0]"
+        v-if="!expanded && presentedCandidate.previewLines?.[0]"
         class="lyrics-lrclib-candidate-row__preview-line"
         dir="auto"
       >
         {{ presentedCandidate.previewLines[0].text }}
       </p>
 
-      <div
-        v-if="candidate.alreadySaved"
-        class="lyrics-lrclib-candidate-row__saved-status"
-      >
-        <UiChip tone="success">已保存</UiChip>
+      <div class="lyrics-lrclib-candidate-row__metadata">
+        <div
+          v-if="candidate.alreadySaved"
+          class="lyrics-lrclib-candidate-row__saved-status"
+        >
+          <UiChip tone="success">已保存</UiChip>
+        </div>
+        <UiChip
+          v-if="candidate.saveState === 'update-available'"
+          tone="warning"
+        >
+          有更新
+        </UiChip>
+        <UiChip :tone="capabilityTone">{{
+          capabilityLabel(presentedCandidate)
+        }}</UiChip>
       </div>
     </div>
 
@@ -174,7 +199,7 @@ function previewLineHasTiming(line) {
         v-if="changedCandidate"
         tone="warning"
         title="來源內容已更新"
-        message="LRCLIB 的內容與預覽時不同。請先確認，再決定是否改用更新後內容。"
+        :message="`${providerLabel} 的內容與預覽時不同。請先確認，再決定是否改用更新後內容。`"
         compact
       />
 
@@ -238,9 +263,18 @@ function previewLineHasTiming(line) {
   padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
 }
 
+.lyrics-lrclib-candidate-row__metadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
+  margin-inline-start: auto;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+}
+
 .lyrics-lrclib-candidate-row__saved-status {
   flex: 0 0 auto;
-  margin-inline-start: auto;
 }
 
 .lyrics-lrclib-candidate-row__info {
@@ -249,7 +283,16 @@ function previewLineHasTiming(line) {
   gap: var(--ui-space-1);
 }
 
+.lyrics-lrclib-candidate-row__title-row {
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ui-space-2);
+}
+
 .lyrics-lrclib-candidate-row__title {
+  min-width: 0;
+  flex: 0 1 auto;
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
@@ -258,6 +301,10 @@ function previewLineHasTiming(line) {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.lyrics-lrclib-candidate-row__recommendation {
+  flex: 0 0 auto;
 }
 
 .lyrics-lrclib-candidate-row__subtitle {
@@ -276,12 +323,48 @@ function previewLineHasTiming(line) {
 .lyrics-lrclib-candidate-row__summary {
   display: flex;
   align-items: center;
+  justify-content: flex-end;
   flex-shrink: 0;
-  gap: var(--ui-space-2);
   padding-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
+}
+
+.lyrics-lrclib-candidate-row__summary-details {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+}
+
+.lyrics-lrclib-candidate-row__provider-slot {
+  flex: 0 0 var(--ui-lyrics-provider-slot-width);
+  width: var(--ui-lyrics-provider-slot-width);
+  box-sizing: border-box;
+  padding-inline-end: var(--ui-space-2);
+  text-align: end;
+}
+
+.lyrics-lrclib-candidate-row__provider {
+  display: block;
+  overflow: hidden;
+  color: var(--ui-color-text);
+  font-weight: var(--ui-font-weight-strong);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lyrics-lrclib-candidate-row__duration {
+  flex: 0 0 var(--ui-lyrics-duration-slot-width);
+  width: var(--ui-lyrics-duration-slot-width);
+  box-sizing: border-box;
+  text-align: end;
+  white-space: nowrap;
+}
+
+.lyrics-lrclib-candidate-row__duration--divided {
+  padding-inline-start: var(--ui-space-2);
+  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .lyrics-lrclib-candidate-row__footer {
@@ -324,7 +407,10 @@ function previewLineHasTiming(line) {
 }
 
 .lyrics-lrclib-candidate-row {
-  padding: var(--ui-space-3) var(--ui-space-4);
+  --ui-lyrics-provider-slot-width: 5.5rem;
+  --ui-lyrics-duration-slot-width: 5.5rem;
+
+  padding: var(--ui-space-2) var(--ui-space-3);
   border: 0;
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: 0;
@@ -438,6 +524,10 @@ function previewLineHasTiming(line) {
   .lyrics-lrclib-candidate-row__summary {
     flex-wrap: wrap;
     padding-left: calc(var(--ui-space-4) + var(--ui-space-2));
+  }
+
+  .lyrics-lrclib-candidate-row__preview-row {
+    align-items: flex-start;
   }
 
   .lyrics-lrclib-candidate-row__expanded {

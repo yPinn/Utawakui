@@ -124,6 +124,7 @@ function findButtonByText(root, label) {
 async function loadWorkspaceComponent() {
   const [
     { default: Workspace },
+    { default: RecordingGroup },
     { default: CandidateRow },
     { default: UiButton },
     { default: UiChip },
@@ -133,6 +134,7 @@ async function loadWorkspaceComponent() {
     { default: UiTextField },
   ] = await Promise.all([
     import('./LyricsLrclibSearchWorkspace.vue'),
+    import('./LyricsProviderRecordingGroup.vue'),
     import('./LyricsLrclibCandidateRow.vue'),
     import('../ui/UiButton.vue'),
     import('../ui/UiChip.vue'),
@@ -142,6 +144,7 @@ async function loadWorkspaceComponent() {
     import('../ui/UiTextField.vue'),
   ]);
   attachClientRender(Workspace, './LyricsLrclibSearchWorkspace.vue');
+  attachClientRender(RecordingGroup, './LyricsProviderRecordingGroup.vue');
   attachClientRender(CandidateRow, './LyricsLrclibCandidateRow.vue');
   attachClientRender(UiButton, '../ui/UiButton.vue');
   attachClientRender(UiChip, '../ui/UiChip.vue');
@@ -159,6 +162,88 @@ afterEach(() => {
 });
 
 describe('LyricsLrclibSearchWorkspace behavior', () => {
+  it('shows every grouped source immediately with one recommended marker', async () => {
+    vi.stubGlobal('Document', class Document {});
+    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+    const netease = {
+      id: 42,
+      providerId: 'netease',
+      candidateKey: 'netease:42',
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T2', partial: false },
+      compatibility: { t0: true, t1: true, t2: true },
+      previewLines: [{ start: 1, text: 'Word timed' }],
+      warnings: [],
+      saveState: 'unsaved',
+      alreadySaved: false,
+    };
+    const lrclib = {
+      ...netease,
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:42',
+      capability: { level: 'T1', partial: false },
+      compatibility: { t0: true, t1: true, t2: false },
+      previewLines: [{ start: 1, text: 'Line timed' }],
+    };
+    const recordingGroup = {
+      recordingKey: 'recording:one',
+      matchBand: 'exact',
+      recommendedCandidateKey: 'netease:42',
+      candidates: [netease, lrclib],
+    };
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: null,
+        error: null,
+        candidates: [],
+        groups: { best: [], related: [] },
+        recordingGroups: { best: [], related: [] },
+        providerStatuses: [],
+        partial: false,
+        invalidRecordCount: 0,
+      },
+      manualSave: { error: null },
+    });
+    const searchLyricsProviderCandidates = vi.fn(async () => {
+      state.candidateSearch.status = 'ok';
+      state.candidateSearch.candidates = [netease, lrclib];
+      state.candidateSearch.groups = {
+        best: [netease, lrclib],
+        related: [],
+      };
+      state.candidateSearch.recordingGroups = {
+        best: [recordingGroup],
+        related: [],
+      };
+      return { status: 'ok', candidates: [netease, lrclib] };
+    });
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsProviderCandidates,
+        saveLyricsProviderCandidate: vi.fn(),
+      }),
+    }));
+
+    const Workspace = await loadWorkspaceComponent();
+    const { app, root } = mount(Workspace, {
+      providerId: 'all',
+      providerLabel: '所有線上來源',
+    });
+    await vi.waitFor(() => expect(nodeText(root)).toContain('網易雲音樂'));
+
+    expect(nodeText(root)).toContain('LRCLIB');
+    expect(nodeText(root)).not.toContain('顯示其他');
+    expect(nodeText(root).match(/推薦/g)).toHaveLength(1);
+
+    app.unmount();
+  });
+
   it('searches prefilled metadata once, then submits edited fields only on demand', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});

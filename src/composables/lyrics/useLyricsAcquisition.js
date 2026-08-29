@@ -12,6 +12,34 @@ const LRCLIB_FAILURE_MESSAGES = Object.freeze({
   busy: '已有一筆 LRCLIB 搜尋正在進行，請稍候。',
 });
 
+const NETEASE_FAILURE_MESSAGES = Object.freeze({
+  'rate-limited': '網易雲音樂暫時限制搜尋請求，請稍後再試。',
+  offline: '目前無法連線至網易雲音樂，請檢查網路後再試。',
+  'fetch-unavailable': '目前無法連線至網易雲音樂，請稍後再試。',
+  timeout: '網易雲音樂回應逾時，請稍後再試。',
+  'service-unavailable': '網易雲音樂服務暫時無法使用，請稍後再試。',
+  'invalid-json': '網易雲音樂回傳了無法讀取的資料，請稍後再試。',
+  'invalid-record': '網易雲音樂回傳的候選資料不完整，請調整條件後再試。',
+  'response-too-large': '網易雲音樂回傳資料超出安全限制，請縮小搜尋範圍。',
+  busy: '已有一筆網易雲音樂搜尋正在進行，請稍候。',
+});
+
+const PROVIDER_FAILURE_MESSAGES = Object.freeze({
+  all: Object.freeze({
+    'all-providers-failed': '目前無法搜尋任何線上歌詞來源，請稍後再試。',
+    'all-providers-unavailable': '目前沒有可用的線上歌詞來源。',
+  }),
+  lrclib: LRCLIB_FAILURE_MESSAGES,
+  netease: NETEASE_FAILURE_MESSAGES,
+});
+
+function candidateKey(candidate, fallbackProviderId) {
+  return (
+    candidate?.candidateKey ||
+    `${candidate?.providerId || fallbackProviderId}:${candidate?.id}`
+  );
+}
+
 function candidateGroups(result) {
   if (result?.groups) {
     return {
@@ -27,6 +55,34 @@ function candidateGroups(result) {
     related: candidates.filter(
       (candidate) => candidate.matchBand === 'related',
     ),
+  };
+}
+
+function candidateRecordingGroups(result) {
+  if (result?.recordingGroups) {
+    return {
+      best: Array.isArray(result.recordingGroups.best)
+        ? result.recordingGroups.best
+        : [],
+      related: Array.isArray(result.recordingGroups.related)
+        ? result.recordingGroups.related
+        : [],
+    };
+  }
+  const groups = candidateGroups(result);
+  const providerId = result?.provider;
+  function singleCandidateGroup(candidate) {
+    const key = candidateKey(candidate, providerId);
+    return {
+      recordingKey: `candidate:${key}`,
+      matchBand: candidate.matchBand,
+      recommendedCandidateKey: key,
+      candidates: [candidate],
+    };
+  }
+  return {
+    best: groups.best.map(singleCandidateGroup),
+    related: groups.related.map(singleCandidateGroup),
   };
 }
 
@@ -62,21 +118,56 @@ export function useLyricsAcquisition({
     candidateSearchRequestId += 1;
     state.candidateSearch.isLoading = false;
     state.candidateSearch.trackId = null;
+    state.candidateSearch.providerId = null;
     state.candidateSearch.status = null;
     state.candidateSearch.reason = null;
     state.candidateSearch.candidates = [];
     state.candidateSearch.groups = { best: [], related: [] };
+    state.candidateSearch.recordingGroups = { best: [], related: [] };
+    state.candidateSearch.providerStatuses = [];
+    state.candidateSearch.partial = false;
     state.candidateSearch.invalidRecordCount = 0;
     state.candidateSearch.error = null;
     state.manualSave.error = null;
   }
 
   function replaceCandidate(candidate) {
+    const replacementKey = candidateKey(
+      candidate,
+      state.candidateSearch.providerId,
+    );
     const candidates = state.candidateSearch.candidates.map((item) =>
-      item.id === candidate.id ? candidate : item,
+      candidateKey(item, state.candidateSearch.providerId) === replacementKey
+        ? candidate
+        : item,
     );
     state.candidateSearch.candidates = candidates;
     state.candidateSearch.groups = candidateGroups({ candidates });
+    const existingGroups = [
+      ...state.candidateSearch.recordingGroups.best,
+      ...state.candidateSearch.recordingGroups.related,
+    ].map((group) => {
+      const groupCandidates = group.candidates.map((item) =>
+        candidateKey(item, state.candidateSearch.providerId) === replacementKey
+          ? candidate
+          : item,
+      );
+      const recommended =
+        groupCandidates.find(
+          (item) =>
+            candidateKey(item, state.candidateSearch.providerId) ===
+            group.recommendedCandidateKey,
+        ) || groupCandidates[0];
+      return {
+        ...group,
+        matchBand: recommended?.matchBand || group.matchBand,
+        candidates: groupCandidates,
+      };
+    });
+    state.candidateSearch.recordingGroups = {
+      best: existingGroups.filter((group) => group.matchBand !== 'related'),
+      related: existingGroups.filter((group) => group.matchBand === 'related'),
+    };
   }
 
   async function ensureLyricsFlow(options = {}) {
@@ -138,9 +229,11 @@ export function useLyricsAcquisition({
     }
   }
 
-  async function searchLyricsCandidates(
+  async function searchLyricsProviderCandidates(
+    providerId,
     options,
     trackId = state.selectedTrackId,
+    preferLegacyBridge = false,
   ) {
     const track = state.tracks.find((candidate) => candidate.id === trackId);
     if (!track) return;
@@ -151,19 +244,28 @@ export function useLyricsAcquisition({
 
     state.candidateSearch.isLoading = true;
     state.candidateSearch.trackId = track.id;
+    state.candidateSearch.providerId = providerId;
     state.candidateSearch.error = null;
 
-    if (typeof window.Utawakui?.searchLyricsCandidates !== 'function') {
+    const genericSearch = preferLegacyBridge
+      ? null
+      : window.Utawakui?.searchLyricsProviderCandidates;
+    const legacySearch =
+      providerId === 'lrclib' ? window.Utawakui?.searchLyricsCandidates : null;
+    if (
+      typeof genericSearch !== 'function' &&
+      typeof legacySearch !== 'function'
+    ) {
       state.candidateSearch.isLoading = false;
       state.candidateSearch.error = '請重新啟動應用程式後再搜尋歌詞。';
       return;
     }
 
     try {
-      const result = await window.Utawakui.searchLyricsCandidates(
-        track.id,
-        options,
-      );
+      const result =
+        typeof genericSearch === 'function'
+          ? await genericSearch(providerId, track.id, options)
+          : await legacySearch(track.id, options);
       if (requestId !== candidateSearchRequestId) return;
       state.candidateSearch.status = result?.status ?? null;
       state.candidateSearch.reason = result?.reason ?? null;
@@ -171,6 +273,13 @@ export function useLyricsAcquisition({
         ? result.candidates
         : [];
       state.candidateSearch.groups = candidateGroups(result);
+      state.candidateSearch.recordingGroups = candidateRecordingGroups(result);
+      state.candidateSearch.providerStatuses = Array.isArray(
+        result?.providerStatuses,
+      )
+        ? result.providerStatuses
+        : [];
+      state.candidateSearch.partial = result?.partial === true;
       state.candidateSearch.invalidRecordCount = Number.isSafeInteger(
         result?.invalidRecordCount,
       )
@@ -178,9 +287,11 @@ export function useLyricsAcquisition({
         : 0;
       if (result?.status === 'error') {
         state.candidateSearch.error = reportLyricsError(
-          new Error(`lrclib search failed: ${result.reason || 'unknown'}`),
+          new Error(
+            `${providerId} search failed: ${result.reason || 'unknown'}`,
+          ),
           'search',
-          LRCLIB_FAILURE_MESSAGES[result.reason] ||
+          PROVIDER_FAILURE_MESSAGES[providerId]?.[result.reason] ||
             '目前無法搜尋歌詞，請稍後再試。',
           { persist: false },
         );
@@ -201,16 +312,30 @@ export function useLyricsAcquisition({
     }
   }
 
-  async function saveLyricsCandidate(
+  async function searchLyricsCandidates(
+    options,
+    trackId = state.selectedTrackId,
+  ) {
+    return searchLyricsProviderCandidates('lrclib', options, trackId, true);
+  }
+
+  async function saveLyricsProviderCandidate(
+    providerId,
     candidate,
     trackId = state.selectedTrackId,
     query = undefined,
+    preferLegacyBridge = false,
   ) {
     const track = state.tracks.find((item) => item.id === trackId);
     if (!track) return null;
     if (!(await ensureLyricsFlow())) return null;
 
-    if (typeof window.Utawakui?.saveLyricsCandidate !== 'function') {
+    const genericSave = preferLegacyBridge
+      ? null
+      : window.Utawakui?.saveLyricsProviderCandidate;
+    const legacySave =
+      providerId === 'lrclib' ? window.Utawakui?.saveLyricsCandidate : null;
+    if (typeof genericSave !== 'function' && typeof legacySave !== 'function') {
       state.manualSave.error = '請重新啟動應用程式後再儲存歌詞。';
       return null;
     }
@@ -218,21 +343,34 @@ export function useLyricsAcquisition({
     state.manualSave.isSaving = true;
     state.manualSave.error = null;
     try {
-      const result = await window.Utawakui.saveLyricsCandidate(
+      const args = [
         track.id,
         candidate.id,
         candidate.previewFingerprint,
         candidateSaveOptions(query),
-      );
+      ];
+      const result =
+        typeof genericSave === 'function'
+          ? await genericSave(providerId, ...args)
+          : await legacySave(...args);
       if (result?.status === 'record-changed') return result;
       if (result?.status !== 'saved' || !result.source) {
         throw new Error(
-          `lrclib save unavailable: ${result?.reason || 'unknown'}`,
+          `${providerId} save unavailable: ${result?.reason || 'unknown'}`,
         );
       }
       await refreshLibrary();
+      const keepProviderIdentity =
+        Boolean(candidate.providerId || candidate.candidateKey) ||
+        state.candidateSearch.providerId === 'all';
       replaceCandidate({
         ...candidate,
+        ...(keepProviderIdentity
+          ? {
+              providerId: candidate.providerId || providerId,
+              candidateKey: candidateKey(candidate, providerId),
+            }
+          : {}),
         alreadySaved: true,
         saveState: 'current',
         ...(result.retrievedAt ? { retrievedAt: result.retrievedAt } : {}),
@@ -252,6 +390,20 @@ export function useLyricsAcquisition({
     } finally {
       state.manualSave.isSaving = false;
     }
+  }
+
+  async function saveLyricsCandidate(
+    candidate,
+    trackId = state.selectedTrackId,
+    query = undefined,
+  ) {
+    return saveLyricsProviderCandidate(
+      'lrclib',
+      candidate,
+      trackId,
+      query,
+      true,
+    );
   }
 
   async function backfillSourceLabels() {
@@ -287,7 +439,9 @@ export function useLyricsAcquisition({
     clearCandidateSearch,
     ensureLyricsFlow,
     probeMusixmatch,
+    searchLyricsProviderCandidates,
     searchLyricsCandidates,
+    saveLyricsProviderCandidate,
     saveLyricsCandidate,
     backfillSourceLabels,
   };

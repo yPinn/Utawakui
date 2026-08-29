@@ -3,6 +3,8 @@ import {
   alignReadings,
   detectLyricsScript,
   formatLyricsSourceLabel,
+  formatLyricsSourceOffset,
+  formatLyricsSourceTier,
   formatLyricTime,
   inferPreferredLyricsLanguagePrefixes,
   isNonLyricCue,
@@ -624,5 +626,28 @@ describe('formatLyricsSourceLabel', () => {
         label: 'Live Version',
       }),
     ).toBe('YouTube CC / JA · Live Version');
+  });
+});
+
+describe('formatLyricsSourceOffset', () => {
+  it.each([
+    [undefined, '0.0s'],
+    [0, '0.0s'],
+    [250, '+0.3s'],
+    [-1200, '-1.2s'],
+  ])('formats persisted offset %s as %s', (offsetMs, expected) => {
+    expect(formatLyricsSourceOffset(offsetMs)).toBe(expected);
+  });
+});
+
+describe('formatLyricsSourceTier', () => {
+  it.each([
+    ['T0', 'T0'],
+    ['T1', 'T1'],
+    ['T2', 'T2'],
+    [undefined, '—'],
+    ['unsupported', '—'],
+  ])('formats source tier %s as %s', (tier, expected) => {
+    expect(formatLyricsSourceTier(tier)).toBe(expected);
   });
 });

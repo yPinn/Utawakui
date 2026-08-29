@@ -558,6 +558,7 @@ export function pickPreferredLyricsSource(track, currentFilename = null) {
 const LYRICS_SOURCE_KIND_LABELS = {
   'youtube-cc': 'YouTube CC',
   lrclib: 'LRCLIB',
+  netease: '網易雲音樂',
   manual: '手動匯入',
 };
 
@@ -576,4 +577,14 @@ export function formatLyricsSourceLabel(source) {
       : null;
   const descriptor = [languagePart, source.label].filter(Boolean).join(' · ');
   return descriptor ? `${kindLabel} / ${descriptor}` : kindLabel;
+}
+
+export function formatLyricsSourceOffset(offsetMs) {
+  const seconds = Number.isInteger(offsetMs) ? offsetMs / 1000 : 0;
+  const sign = seconds > 0 ? '+' : '';
+  return `${sign}${seconds.toFixed(1)}s`;
+}
+
+export function formatLyricsSourceTier(tier) {
+  return ['T0', 'T1', 'T2'].includes(tier) ? tier : '—';
 }

@@ -15,6 +15,7 @@ const WARNING_LABELS = Object.freeze({
   'unsupported-lyricsfile-version-fallback':
     '逐字格式版本尚未支援，已改用逐行或純文字歌詞',
   'invalid-lyricsfile-fallback': '逐字資料無法安全讀取，已改用逐行或純文字歌詞',
+  'invalid-yrc': '網易逐字資料無法安全讀取，已改用逐行或純文字歌詞',
   'version-mismatch': '可能是不同版本',
   'instrumental-record': '這筆資料標示為純音樂',
 });

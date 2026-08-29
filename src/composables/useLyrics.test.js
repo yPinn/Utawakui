@@ -11,6 +11,8 @@ let importLyricsTextMock;
 let importLyricsFileMock;
 let searchLyricsCandidatesMock;
 let saveLyricsCandidateMock;
+let searchLyricsProviderCandidatesMock;
+let saveLyricsProviderCandidateMock;
 let backfillLyricsSourceLabelsMock;
 let setLyricsSourceLabelMock;
 let deleteLyricsSourceMock;
@@ -177,6 +179,14 @@ beforeEach(() => {
     invalidRecordCount: 0,
   });
   saveLyricsCandidateMock = vi.fn();
+  searchLyricsProviderCandidatesMock = vi.fn().mockResolvedValue({
+    provider: 'netease',
+    status: 'ok',
+    candidates: [],
+    groups: { best: [], related: [] },
+    invalidRecordCount: 0,
+  });
+  saveLyricsProviderCandidateMock = vi.fn();
   backfillLyricsSourceLabelsMock = vi.fn().mockResolvedValue({ updated: 1 });
   setLyricsSourceLabelMock = vi.fn().mockResolvedValue({
     source: { filename: 'en.vtt', label: 'Primary' },
@@ -218,6 +228,8 @@ beforeEach(() => {
       importLyricsFile: importLyricsFileMock,
       searchLyricsCandidates: searchLyricsCandidatesMock,
       saveLyricsCandidate: saveLyricsCandidateMock,
+      searchLyricsProviderCandidates: searchLyricsProviderCandidatesMock,
+      saveLyricsProviderCandidate: saveLyricsProviderCandidateMock,
       backfillLyricsSourceLabels: backfillLyricsSourceLabelsMock,
       setLyricsSourceLabel: setLyricsSourceLabelMock,
       deleteLyricsSource: deleteLyricsSourceMock,
@@ -274,8 +286,10 @@ describe('useLyrics', () => {
         'resetOffset',
         'retryOffsetSave',
         'saveLyricsCandidate',
+        'saveLyricsProviderCandidate',
         'saveTimingDocument',
         'searchLyricsCandidates',
+        'searchLyricsProviderCandidates',
         'selectSource',
         'selectTrack',
         'selectedLyrics',
@@ -322,6 +336,193 @@ describe('useLyrics', () => {
       invalidRecordCount: 2,
       groups: { best: [candidate], related: [] },
     });
+  });
+
+  it('routes NetEase search through the provider bridge and records its word-timing capability', async () => {
+    const candidate = {
+      id: 347230,
+      trackName: '海闊天空',
+      artistName: 'Beyond',
+      matchBand: 'exact',
+      previewFingerprint: 'c'.repeat(64),
+      capability: { level: 'T2', partial: false },
+    };
+    searchLyricsProviderCandidatesMock.mockResolvedValue({
+      provider: 'netease',
+      status: 'ok',
+      candidates: [candidate],
+      groups: { best: [candidate], related: [] },
+      invalidRecordCount: 0,
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    const result = await lyrics.searchLyricsProviderCandidates('netease', {
+      query: { title: '海闊天空', artist: 'Beyond' },
+    });
+
+    expect(searchLyricsProviderCandidatesMock).toHaveBeenCalledWith(
+      'netease',
+      trackA.id,
+      { query: { title: '海闊天空', artist: 'Beyond' } },
+    );
+    expect(result.candidates[0].capability).toEqual({
+      level: 'T2',
+      partial: false,
+    });
+    expect(lyrics.state.candidateSearch).toMatchObject({
+      providerId: 'netease',
+      trackId: trackA.id,
+      groups: { best: [candidate], related: [] },
+    });
+  });
+
+  it('retains grouped all-provider results and bounded provider statuses', async () => {
+    const netease = {
+      id: 42,
+      providerId: 'netease',
+      candidateKey: 'netease:42',
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T2', partial: false },
+      previewFingerprint: 'b'.repeat(64),
+    };
+    const lrclib = {
+      id: 42,
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:42',
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T1', partial: false },
+      previewFingerprint: 'a'.repeat(64),
+    };
+    const recordingGroup = {
+      recordingKey: 'recording:one',
+      matchBand: 'exact',
+      recommendedCandidateKey: 'netease:42',
+      candidates: [netease, lrclib],
+    };
+    searchLyricsProviderCandidatesMock.mockResolvedValue({
+      provider: 'all',
+      status: 'ok',
+      partial: true,
+      candidates: [netease, lrclib],
+      groups: { best: [netease, lrclib], related: [] },
+      recordingGroups: { best: [recordingGroup], related: [] },
+      providerStatuses: [
+        { provider: 'lrclib', status: 'error', reason: 'offline' },
+        { provider: 'netease', status: 'ok' },
+      ],
+      invalidRecordCount: 0,
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    await lyrics.searchLyricsProviderCandidates('all', {
+      query: { title: 'Song', artist: 'Artist' },
+    });
+
+    expect(lyrics.state.candidateSearch).toMatchObject({
+      providerId: 'all',
+      partial: true,
+      recordingGroups: { best: [recordingGroup], related: [] },
+      providerStatuses: [
+        { provider: 'lrclib', status: 'error', reason: 'offline' },
+        { provider: 'netease', status: 'ok' },
+      ],
+    });
+  });
+
+  it('updates only the saved provider when candidate ids collide', async () => {
+    const netease = {
+      id: 42,
+      providerId: 'netease',
+      candidateKey: 'netease:42',
+      matchBand: 'exact',
+      previewFingerprint: 'b'.repeat(64),
+      saveState: 'unsaved',
+      alreadySaved: false,
+    };
+    const lrclib = {
+      id: 42,
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:42',
+      matchBand: 'exact',
+      previewFingerprint: 'a'.repeat(64),
+      saveState: 'unsaved',
+      alreadySaved: false,
+    };
+    searchLyricsProviderCandidatesMock.mockResolvedValue({
+      provider: 'all',
+      status: 'ok',
+      candidates: [netease, lrclib],
+      groups: { best: [netease, lrclib], related: [] },
+      recordingGroups: {
+        best: [
+          {
+            recordingKey: 'recording:one',
+            matchBand: 'exact',
+            recommendedCandidateKey: 'netease:42',
+            candidates: [netease, lrclib],
+          },
+        ],
+        related: [],
+      },
+      providerStatuses: [],
+      invalidRecordCount: 0,
+    });
+    saveLyricsProviderCandidateMock.mockResolvedValue({
+      provider: 'netease',
+      status: 'saved',
+      source: { filename: 'netease-42.lrc', kind: 'netease' },
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+    await lyrics.searchLyricsProviderCandidates('all');
+
+    await lyrics.saveLyricsProviderCandidate('netease', netease);
+
+    expect(lyrics.state.candidateSearch.candidates).toEqual([
+      expect.objectContaining({
+        candidateKey: 'netease:42',
+        alreadySaved: true,
+      }),
+      expect.objectContaining({
+        candidateKey: 'lrclib:42',
+        alreadySaved: false,
+      }),
+    ]);
+  });
+
+  it('saves a NetEase candidate through the provider bridge and selects the new source', async () => {
+    const candidate = {
+      id: 347230,
+      previewFingerprint: 'd'.repeat(64),
+      matchBand: 'exact',
+      capability: { level: 'T2', partial: false },
+    };
+    saveLyricsProviderCandidateMock.mockResolvedValue({
+      provider: 'netease',
+      status: 'saved',
+      source: { filename: 'netease-347230.lrc', kind: 'netease' },
+    });
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    const result = await lyrics.saveLyricsProviderCandidate(
+      'netease',
+      candidate,
+      trackA.id,
+      reactive({ title: '海闊天空', artist: 'Beyond' }),
+    );
+
+    expect(saveLyricsProviderCandidateMock).toHaveBeenCalledWith(
+      'netease',
+      trackA.id,
+      candidate.id,
+      candidate.previewFingerprint,
+      { query: { title: '海闊天空', artist: 'Beyond' } },
+    );
+    expect(result).toMatchObject({ status: 'saved' });
+    expect(lyrics.state.selectedSourceFilename).toBe('netease-347230.lrc');
   });
 
   it('keeps a newer LRCLIB result when an older request resolves late', async () => {
