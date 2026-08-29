@@ -45,6 +45,7 @@ const {
 } = require('./library/lyrics');
 const {
   getTrackReading,
+  loadTrackReadingForIdentity,
   deleteTrackReading,
   saveTrackReading,
   setReadingLine,
@@ -134,6 +135,7 @@ module.exports = {
   getTrackLyricsState,
   loadTrackLyricsManifest,
   getTrackReading,
+  loadTrackReadingForIdentity,
   listTracks,
   loadIndex,
   loadSeparationManifest,

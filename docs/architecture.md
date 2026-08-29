@@ -29,6 +29,10 @@ Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實
 `readingHandlers.js` 處理本機 reading worker／sidecar。三者不互相 import，facade 只注入
 同一組具名 composition dependencies。
 
+Reading sidecar v3 由 main 持有 `documentId`、normalizer profile、來源 fingerprint 與
+line identity。Renderer 載入時只送當前 canonical identity；main 對文字相容的 v1／v2
+sidecar 做原子 re-key 並保留人工修正，文字不相容或格式損壞才交回既有重新產生流程。
+
 跨 runtime 的 presentation logic 位於 `shared/presentation/`。`overlay/shared/` 只保留
 Browser Source route adapters；Output server 以 exact allowlist 提供兩個目錄的必要檔案，
 不把 request path 轉成任意 filesystem path。

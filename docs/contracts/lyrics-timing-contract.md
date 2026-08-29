@@ -6,7 +6,7 @@ Version 1 contract, implemented 2026-08-23. It defines the data boundary from
 [ADR 0010](../adr/0010-lyrics-timing-granularity-and-output-content-split.md).
 Canonical T0/T1 normalization, stable ids, bounded sidecar validation, source
 fingerprints, stale/corrupt status, additive load/save IPC, the visible T2
-importer/editor, reading v2 identity, negotiated Output v3 projection, and
+importer/editor, reading v3 identity migration, negotiated Output v3 projection, and
 segment-aware rendering in the real Lyrics overlay are implemented. Human
 Workbench/OBS visual acceptance remains a release check, not a contract gap.
 
@@ -193,6 +193,16 @@ their own derived documents. They may align at line or segment granularity using
 stable ids. Timing updates must not erase readings, and reading regeneration must
 not rewrite timing. If ids change through an explicit re-alignment, the operation
 reports which reading references could not be preserved.
+
+Reading sidecar version 3 stores `documentId`, `normalizerProfileId`,
+`sourceFingerprint`, and stable `lineId` values. Every load supplies the current
+canonical identity to main. A v1／v2 sidecar whose ordered line text still matches
+is atomically re-keyed to the current identity while preserving generated values,
+analyzer provenance, timestamps, and manual `edited` corrections. A corrupt
+sidecar or one whose line count／text no longer matches is treated as missing; an
+enabled reading intent then regenerates it instead of attaching stale readings to
+different lyrics. I/O or migration failures remain distinct from missing data and
+surface through the Lyrics error notice.
 
 ## Output projection
 

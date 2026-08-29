@@ -5,7 +5,7 @@ const { Worker } = require('worker_threads');
 const {
   deleteTrackReading,
   getTrackLyricsState,
-  getTrackReading,
+  loadTrackReadingForIdentity,
   readTrackLyrics,
   resolveTrackDir,
   saveTrackReading,
@@ -23,6 +23,9 @@ function validateReadingIdentity(currentLyrics, identity) {
     typeof identity.documentId !== 'string' ||
     identity.documentId.length === 0 ||
     identity.documentId.length > 200 ||
+    typeof identity.normalizerProfileId !== 'string' ||
+    identity.normalizerProfileId !==
+      currentLyrics?.timing?.normalizerProfileId ||
     !READING_SHA256_RE.test(identity.sourceFingerprint) ||
     identity.sourceFingerprint !== currentLyrics?.timing?.sourceFingerprint ||
     !Array.isArray(identity.lines) ||
@@ -86,11 +89,15 @@ function registerLyricsReadingHandlers({
 }) {
   ipcMain.handle(
     'lyrics:get-reading',
-    async (event, trackId, sourceFilename) => {
+    async (event, trackId, sourceFilename, identity) => {
       const dir = resolveDownloadDir(getConfig());
       const trackDir = resolveTrackDir(dir, trackId);
       if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
-      return getTrackReading(trackDir, sourceFilename);
+      validateReadingIdentity(
+        readTrackLyrics(dir, trackId, sourceFilename),
+        identity,
+      );
+      return loadTrackReadingForIdentity(trackDir, sourceFilename, identity);
     },
   );
 

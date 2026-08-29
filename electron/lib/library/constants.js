@@ -38,7 +38,7 @@ const LYRICS_MANIFEST_VERSION = 8;
 // Sidecar filenames are the FULL source filename + .json (not the stem) —
 // manual.lrc and manual.vtt would otherwise collide on one reading doc.
 const LYRICS_READINGS_DIRNAME = 'readings';
-const READING_DOC_VERSION = 2;
+const READING_DOC_VERSION = 3;
 // Per-recipe files avoid overwriting audio that may be open for playback.
 // manifest.json stores selectedRecipeId and result provenance; it is not
 // served. Separation files are per-result 4-channel WAVs: 0/1 accompaniment

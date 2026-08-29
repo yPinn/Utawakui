@@ -191,6 +191,25 @@ describe('main preload bridge', () => {
     });
   });
 
+  it('forwards the canonical lyrics identity when loading a reading', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const identity = {
+      documentId: 'lyr_document',
+      normalizerProfileId: 'lyrics-source-v2',
+      sourceFingerprint: 'a'.repeat(64),
+      lines: [{ lineId: 'line_1', text: '歌う声' }],
+    };
+
+    await bridge.getLyricsReading('track-1', 'main.lrc', identity);
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'lyrics:get-reading',
+      'track-1',
+      'main.lrc',
+      identity,
+    );
+  });
+
   it('exposes only fixed invoke, send, and subscription channels', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui', [
       '--startup-trace-enabled=1',

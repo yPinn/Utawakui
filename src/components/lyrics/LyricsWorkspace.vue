@@ -207,7 +207,7 @@ async function applySelectedReadingIntent() {
 
   const document = lyricsDocument.value;
   const script = lyricsScript.value;
-  const loaded = await loadReading(track.id, source.filename);
+  const loaded = await loadReading(track.id, source.filename, document);
   if (
     revision !== readingIntentRevision ||
     selectedTrack.value?.id !== track.id ||
@@ -232,6 +232,9 @@ watch(
     selectedTrack.value?.id,
     selectedSource.value?.filename,
     lyricsScript.value,
+    lyricsDocument.value?.documentId,
+    lyricsDocument.value?.normalizerProfileId,
+    lyricsDocument.value?.source?.sha256,
   ],
   applySelectedReadingIntent,
   { immediate: true },

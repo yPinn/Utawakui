@@ -12,14 +12,23 @@ const {
 const { isLyricsSubtitleFilename } = require('./paths');
 
 const LEGACY_READING_DOC_VERSION = 1;
+const STABLE_ID_READING_DOC_VERSION = 2;
 const SHA256_RE = /^[a-f0-9]{64}$/;
 
-function normalizeCanonicalIdentity(identity, readingLines) {
+function normalizeCanonicalIdentity(
+  identity,
+  readingLines,
+  { requireNormalizerProfile = true } = {},
+) {
   if (
     !identity ||
     typeof identity.documentId !== 'string' ||
     identity.documentId.length === 0 ||
     identity.documentId.length > 200 ||
+    (requireNormalizerProfile &&
+      (typeof identity.normalizerProfileId !== 'string' ||
+        identity.normalizerProfileId.length === 0 ||
+        identity.normalizerProfileId.length > 200)) ||
     !SHA256_RE.test(identity.sourceFingerprint) ||
     !Array.isArray(identity.lines) ||
     identity.lines.length !== readingLines.length
@@ -45,6 +54,7 @@ function normalizeCanonicalIdentity(identity, readingLines) {
   if (lines.some((line) => line === null)) return null;
   return {
     documentId: identity.documentId,
+    normalizerProfileId: identity.normalizerProfileId ?? null,
     sourceFingerprint: identity.sourceFingerprint,
     lines,
     targetLineId: identity.targetLineId,
@@ -75,17 +85,21 @@ function getTrackReading(trackDir, sourceFilename) {
     if (
       typeof doc !== 'object' ||
       doc === null ||
-      ![LEGACY_READING_DOC_VERSION, READING_DOC_VERSION].includes(
-        doc.version,
-      ) ||
+      ![
+        LEGACY_READING_DOC_VERSION,
+        STABLE_ID_READING_DOC_VERSION,
+        READING_DOC_VERSION,
+      ].includes(doc.version) ||
       doc.sourceFilename !== sourceFilename ||
       !Array.isArray(doc.lines)
     ) {
       return null;
     }
     if (
-      doc.version === READING_DOC_VERSION &&
-      !normalizeCanonicalIdentity(doc, doc.lines)
+      doc.version !== LEGACY_READING_DOC_VERSION &&
+      !normalizeCanonicalIdentity(doc, doc.lines, {
+        requireNormalizerProfile: doc.version === READING_DOC_VERSION,
+      })
     ) {
       return null;
     }
@@ -93,6 +107,40 @@ function getTrackReading(trackDir, sourceFilename) {
   } catch {
     return null;
   }
+}
+
+function loadTrackReadingForIdentity(trackDir, sourceFilename, identity) {
+  const doc = getTrackReading(trackDir, sourceFilename);
+  if (!doc) return null;
+
+  const canonical = normalizeCanonicalIdentity(identity, doc.lines);
+  if (!canonical) return null;
+
+  const hasCurrentIdentity =
+    doc.version === READING_DOC_VERSION &&
+    doc.documentId === canonical.documentId &&
+    doc.normalizerProfileId === canonical.normalizerProfileId &&
+    doc.sourceFingerprint === canonical.sourceFingerprint &&
+    doc.lines.every(
+      (line, index) => line.lineId === canonical.lines[index].lineId,
+    );
+  if (hasCurrentIdentity) return doc;
+
+  const sidecarPath = readingSidecarPath(trackDir, sourceFilename);
+  const migrated = {
+    ...doc,
+    version: READING_DOC_VERSION,
+    documentId: canonical.documentId,
+    normalizerProfileId: canonical.normalizerProfileId,
+    sourceFingerprint: canonical.sourceFingerprint,
+    identityMigratedAt: new Date().toISOString(),
+    lines: doc.lines.map((line, index) => ({
+      ...line,
+      lineId: canonical.lines[index].lineId,
+    })),
+  };
+  atomicWriteJson(sidecarPath, migrated);
+  return migrated;
 }
 
 // `readingDoc` is buildReadingDoc()'s return shape ({ analyzer, lines }).
@@ -130,6 +178,7 @@ function saveTrackReading(
   };
   if (canonical) {
     doc.documentId = canonical.documentId;
+    doc.normalizerProfileId = canonical.normalizerProfileId;
     doc.sourceFingerprint = canonical.sourceFingerprint;
   }
   atomicWriteJson(sidecarPath, doc);
@@ -213,6 +262,7 @@ function setReadingLine(
         ...doc,
         version: READING_DOC_VERSION,
         documentId: canonical.documentId,
+        normalizerProfileId: canonical.normalizerProfileId,
         sourceFingerprint: canonical.sourceFingerprint,
         lines: nextLines,
       }
@@ -225,6 +275,7 @@ module.exports = {
   getReadingsDirFromTrackDir,
   readingSidecarPath,
   getTrackReading,
+  loadTrackReadingForIdentity,
   saveTrackReading,
   deleteTrackReading,
   setReadingLine,

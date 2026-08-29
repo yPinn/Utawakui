@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import {
   deleteTrackReading,
   getTrackReading,
+  loadTrackReadingForIdentity,
   readingSidecarPath,
   saveTrackReading,
   setReadingLine,
@@ -49,6 +50,7 @@ const sampleKoreanDoc = {
 
 const canonicalIdentity = {
   documentId: 'lyr_document',
+  normalizerProfileId: 'lyrics-source-v2',
   sourceFingerprint: 'a'.repeat(64),
   lines: [
     { lineId: 'line_1', text: '歌う声' },
@@ -138,7 +140,7 @@ describe('saveTrackReading / getTrackReading round trip', () => {
     expect(getTrackReading(trackDir, 'ja.vtt').lines).toHaveLength(1);
   });
 
-  it('writes v2 stable document and line identity when canonical identity is supplied', () => {
+  it('writes current stable document, normalizer, and line identity when canonical identity is supplied', () => {
     const saved = saveTrackReading(
       trackDir,
       'ja.vtt',
@@ -148,8 +150,9 @@ describe('saveTrackReading / getTrackReading round trip', () => {
     );
 
     expect(saved).toMatchObject({
-      version: 2,
+      version: 3,
       documentId: 'lyr_document',
+      normalizerProfileId: 'lyrics-source-v2',
       sourceFingerprint: 'a'.repeat(64),
     });
     expect(saved.lines.map((line) => line.lineId)).toEqual([
@@ -157,6 +160,77 @@ describe('saveTrackReading / getTrackReading round trip', () => {
       'line_2',
     ]);
     expect(getTrackReading(trackDir, 'ja.vtt')).toEqual(saved);
+  });
+
+  it('atomically migrates a text-compatible v2 identity and preserves manual readings', () => {
+    const sidecarPath = readingSidecarPath(trackDir, 'ja.vtt');
+    fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+    fs.writeFileSync(
+      sidecarPath,
+      JSON.stringify({
+        version: 2,
+        sourceFilename: 'ja.vtt',
+        script: 'ja',
+        generatedAt: '2026-08-23T00:00:00.000Z',
+        analyzer: sampleDoc.analyzer,
+        documentId: 'lyr_old_profile',
+        sourceFingerprint: 'a'.repeat(64),
+        lines: sampleDoc.lines.map((line, index) => ({
+          ...line,
+          lineId: `old_line_${index + 1}`,
+          edited: index === 0,
+        })),
+      }),
+    );
+
+    const migrated = loadTrackReadingForIdentity(
+      trackDir,
+      'ja.vtt',
+      canonicalIdentity,
+    );
+
+    expect(migrated).toMatchObject({
+      version: 3,
+      documentId: 'lyr_document',
+      normalizerProfileId: 'lyrics-source-v2',
+      sourceFingerprint: 'a'.repeat(64),
+      generatedAt: '2026-08-23T00:00:00.000Z',
+      lines: [
+        expect.objectContaining({
+          lineId: 'line_1',
+          text: '歌う声',
+          romaji: 'utau koe',
+          edited: true,
+        }),
+        expect.objectContaining({ lineId: 'line_2', text: 'です' }),
+      ],
+    });
+    expect(typeof migrated.identityMigratedAt).toBe('string');
+    expect(getTrackReading(trackDir, 'ja.vtt')).toEqual(migrated);
+  });
+
+  it('returns null instead of re-keying a reading whose line text is stale', () => {
+    const sidecarPath = readingSidecarPath(trackDir, 'ja.vtt');
+    fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+    fs.writeFileSync(
+      sidecarPath,
+      JSON.stringify({
+        version: 2,
+        sourceFilename: 'ja.vtt',
+        script: 'ja',
+        documentId: 'lyr_old_profile',
+        sourceFingerprint: 'a'.repeat(64),
+        lines: [
+          { lineId: 'old_line_1', text: '歌詞已改變', romaji: 'stale' },
+          { lineId: 'old_line_2', text: 'です', romaji: 'desu' },
+        ],
+      }),
+    );
+
+    expect(
+      loadTrackReadingForIdentity(trackDir, 'ja.vtt', canonicalIdentity),
+    ).toBeNull();
+    expect(getTrackReading(trackDir, 'ja.vtt').version).toBe(2);
   });
 
   it('returns null for an invalid source filename or a malformed doc', () => {
@@ -225,8 +299,9 @@ describe('setReadingLine', () => {
       'デス',
     );
 
-    expect(updated.version).toBe(2);
+    expect(updated.version).toBe(3);
     expect(updated.documentId).toBe('lyr_document');
+    expect(updated.normalizerProfileId).toBe('lyrics-source-v2');
     expect(updated.lines.map((line) => line.lineId)).toEqual([
       'line_1',
       'line_2',

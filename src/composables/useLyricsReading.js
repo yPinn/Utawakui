@@ -53,26 +53,34 @@ function errorFor(trackId, sourceFilename) {
   return state.errors.get(docKey(trackId, sourceFilename)) ?? null;
 }
 
-async function loadReading(trackId, sourceFilename) {
-  if (!trackId || !sourceFilename) return null;
+async function loadReading(trackId, sourceFilename, document) {
+  if (!trackId || !sourceFilename || !document) return null;
   const key = docKey(trackId, sourceFilename);
   const revision = (loadRevisions.get(key) ?? 0) + 1;
   loadRevisions.set(key, revision);
   try {
-    const doc = await window.Utawakui.getLyricsReading(trackId, sourceFilename);
+    const doc = await window.Utawakui.getLyricsReading(
+      trackId,
+      sourceFilename,
+      canonicalIdentity(document),
+    );
     if (loadRevisions.get(key) !== revision)
       return getDoc(trackId, sourceFilename);
     if (doc) state.docs.set(key, doc);
     else state.docs.delete(key);
+    state.errors.delete(key);
     return doc;
   } catch (err) {
-    recordError(err, {
+    if (loadRevisions.get(key) !== revision) return undefined;
+    state.docs.delete(key);
+    const appError = recordError(err, {
       title: '讀取讀音資料失敗',
       message: '目前無法讀取讀音資料，請再試一次。',
       source: 'lyrics-reading',
       operation: 'get',
       context: { trackId, sourceFilename },
     });
+    state.errors.set(key, appError.message);
     return undefined;
   }
 }
@@ -80,6 +88,7 @@ async function loadReading(trackId, sourceFilename) {
 function canonicalIdentity(document, targetLineId = null) {
   return {
     documentId: document?.documentId,
+    normalizerProfileId: document?.normalizerProfileId,
     sourceFingerprint: document?.source?.sha256,
     lines: (document?.lines ?? []).map((line) => ({
       lineId: line.lineId,

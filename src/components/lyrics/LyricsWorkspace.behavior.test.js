@@ -554,7 +554,11 @@ describe('LyricsWorkspace event wiring', () => {
     attachClientRender(LyricsWorkspace, './LyricsWorkspace.vue');
     const { root } = mount(LyricsWorkspace);
     await Promise.resolve();
-    expect(loadReading).toHaveBeenCalledWith(track.id, source.filename);
+    expect(loadReading).toHaveBeenCalledWith(
+      track.id,
+      source.filename,
+      lyricsDocumentRef.value,
+    );
     expect(generateReading).not.toHaveBeenCalled();
 
     findByProp(root, 'title', '選擇歌詞曲目').props.onClick();
@@ -625,7 +629,11 @@ describe('LyricsWorkspace event wiring', () => {
     await Promise.resolve();
     await nextTick();
     expect(loadReading).toHaveBeenCalledOnce();
-    expect(loadReading).toHaveBeenLastCalledWith('track-2', 'second.lrc');
+    expect(loadReading).toHaveBeenLastCalledWith(
+      'track-2',
+      'second.lrc',
+      lyricsDocumentRef.value,
+    );
     expect(generateReading).toHaveBeenCalledOnce();
     expect(generateReading).toHaveBeenLastCalledWith(
       'track-2',
@@ -642,14 +650,22 @@ describe('LyricsWorkspace event wiring', () => {
     playerState.currentTime = 0.1;
     await nextTick();
     expect(loadReading).toHaveBeenCalledOnce();
-    expect(loadReading).toHaveBeenLastCalledWith('track-2', 'second.lrc');
+    expect(loadReading).toHaveBeenLastCalledWith(
+      'track-2',
+      'second.lrc',
+      lyricsDocumentRef.value,
+    );
     expect(generateReading).not.toHaveBeenCalled();
 
     loadReading.mockClear();
     playerState.continuityRevision += 1;
     await nextTick();
     expect(loadReading).toHaveBeenCalledOnce();
-    expect(loadReading).toHaveBeenLastCalledWith('track-2', 'second.lrc');
+    expect(loadReading).toHaveBeenLastCalledWith(
+      'track-2',
+      'second.lrc',
+      lyricsDocumentRef.value,
+    );
     expect(generateReading).not.toHaveBeenCalled();
 
     let resolveStaleTrackLoad;
@@ -666,7 +682,11 @@ describe('LyricsWorkspace event wiring', () => {
     selectedTrackRef.value = thirdTrack;
     selectedSourceRef.value = thirdSource;
     await nextTick();
-    expect(loadReading).toHaveBeenLastCalledWith('track-3', 'third.lrc');
+    expect(loadReading).toHaveBeenLastCalledWith(
+      'track-3',
+      'third.lrc',
+      lyricsDocumentRef.value,
+    );
 
     selectedTrackRef.value = fourthTrack;
     selectedSourceRef.value = fourthSource;
@@ -698,7 +718,11 @@ describe('LyricsWorkspace event wiring', () => {
     selectedSourceRef.value = sixthSource;
     await Promise.resolve();
     await nextTick();
-    expect(loadReading).toHaveBeenCalledWith('track-6', 'sixth.lrc');
+    expect(loadReading).toHaveBeenCalledWith(
+      'track-6',
+      'sixth.lrc',
+      lyricsDocumentRef.value,
+    );
     expect(generateReading).not.toHaveBeenCalled();
 
     lyricsDocumentRef.value = {

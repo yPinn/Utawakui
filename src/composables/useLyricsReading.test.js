@@ -39,7 +39,14 @@ const doc = {
 };
 const lyricsDocument = {
   documentId: 'lyr_document',
+  normalizerProfileId: 'lyrics-source-v2',
   source: { sha256: 'a'.repeat(64) },
+  lines: [{ lineId: 'line_1', text: 'です' }],
+};
+const canonicalIdentity = {
+  documentId: 'lyr_document',
+  normalizerProfileId: 'lyrics-source-v2',
+  sourceFingerprint: 'a'.repeat(64),
   lines: [{ lineId: 'line_1', text: 'です' }],
 };
 
@@ -48,27 +55,32 @@ describe('loadReading', () => {
     getLyricsReadingMock.mockResolvedValue(doc);
     const reading = await loadReading();
 
-    await reading.loadReading('t1', 'ja.vtt');
+    await reading.loadReading('t1', 'ja.vtt', lyricsDocument);
 
-    expect(getLyricsReadingMock).toHaveBeenCalledWith('t1', 'ja.vtt');
+    expect(getLyricsReadingMock).toHaveBeenCalledWith(
+      't1',
+      'ja.vtt',
+      canonicalIdentity,
+    );
     expect(reading.getDoc('t1', 'ja.vtt')).toEqual(doc);
   });
 
   it('clears any cached doc when the IPC call resolves to null', async () => {
     getLyricsReadingMock.mockResolvedValue(doc);
     const reading = await loadReading();
-    await reading.loadReading('t1', 'ja.vtt');
+    await reading.loadReading('t1', 'ja.vtt', lyricsDocument);
     expect(reading.getDoc('t1', 'ja.vtt')).toEqual(doc);
 
     getLyricsReadingMock.mockResolvedValue(null);
-    await reading.loadReading('t1', 'ja.vtt');
+    await reading.loadReading('t1', 'ja.vtt', lyricsDocument);
     expect(reading.getDoc('t1', 'ja.vtt')).toBeNull();
   });
 
   it('is a no-op without a trackId or sourceFilename', async () => {
     const reading = await loadReading();
-    await reading.loadReading(null, 'ja.vtt');
-    await reading.loadReading('t1', null);
+    await reading.loadReading(null, 'ja.vtt', lyricsDocument);
+    await reading.loadReading('t1', null, lyricsDocument);
+    await reading.loadReading('t1', 'ja.vtt', null);
     expect(getLyricsReadingMock).not.toHaveBeenCalled();
   });
 
@@ -86,8 +98,8 @@ describe('loadReading', () => {
     getLyricsReadingMock.mockReturnValueOnce(first).mockReturnValueOnce(second);
     const reading = await loadReading();
 
-    const firstLoad = reading.loadReading('t1', 'ja.vtt');
-    const secondLoad = reading.loadReading('t1', 'ja.vtt');
+    const firstLoad = reading.loadReading('t1', 'ja.vtt', lyricsDocument);
+    const secondLoad = reading.loadReading('t1', 'ja.vtt', lyricsDocument);
     resolveSecond(freshDoc);
     await secondLoad;
     resolveFirst(staleDoc);
@@ -100,10 +112,13 @@ describe('loadReading', () => {
     getLyricsReadingMock.mockRejectedValue(new Error('boom'));
     const reading = await loadReading();
 
-    const result = await reading.loadReading('t1', 'ja.vtt');
+    const result = await reading.loadReading('t1', 'ja.vtt', lyricsDocument);
 
     expect(result).toBeUndefined();
     expect(reading.getDoc('t1', 'ja.vtt')).toBeNull();
+    expect(reading.errorFor('t1', 'ja.vtt')).toBe(
+      '目前無法讀取讀音資料，請再試一次。',
+    );
   });
 });
 
@@ -146,6 +161,7 @@ describe('generateReading', () => {
       'ko.vtt',
       {
         documentId: 'lyr_document',
+        normalizerProfileId: 'lyrics-source-v2',
         sourceFingerprint: 'a'.repeat(64),
         lines: [{ lineId: 'line_ko', text: '한글' }],
       },
@@ -194,6 +210,7 @@ describe('setReadingLine', () => {
       'ja.vtt',
       {
         documentId: 'lyr_document',
+        normalizerProfileId: 'lyrics-source-v2',
         sourceFingerprint: 'a'.repeat(64),
         lines: [{ lineId: 'line_1', text: 'です' }],
         targetLineId: 'line_1',
@@ -223,7 +240,7 @@ describe('deleteReading', () => {
   it('clears the cached doc on success', async () => {
     getLyricsReadingMock.mockResolvedValue(doc);
     const reading = await loadReading();
-    await reading.loadReading('t1', 'ja.vtt');
+    await reading.loadReading('t1', 'ja.vtt', lyricsDocument);
     expect(reading.getDoc('t1', 'ja.vtt')).toEqual(doc);
 
     await reading.deleteReading('t1', 'ja.vtt');

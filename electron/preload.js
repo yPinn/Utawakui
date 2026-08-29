@@ -244,8 +244,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('lyrics:import-text', trackId, payload),
   importLyricsFile: (trackId) =>
     ipcRenderer.invoke('lyrics:import-file', trackId),
-  getLyricsReading: (trackId, sourceFilename) =>
-    ipcRenderer.invoke('lyrics:get-reading', trackId, sourceFilename),
+  getLyricsReading: (trackId, sourceFilename, identity) =>
+    ipcRenderer.invoke('lyrics:get-reading', trackId, sourceFilename, identity),
   generateLyricsReading: (trackId, sourceFilename, identity, script) =>
     ipcRenderer.invoke(
       'lyrics:generate-reading',

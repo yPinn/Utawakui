@@ -182,6 +182,7 @@ describe('lyrics timing IPC', () => {
     const setLine = ipcMain.handlers.get('lyrics:set-reading-line');
     const identity = {
       documentId: 'lyr_document_01',
+      normalizerProfileId: loaded.timing.normalizerProfileId,
       sourceFingerprint: loaded.timing.sourceFingerprint,
       targetLineId: 'line_01',
       lines: [{ lineId: 'line_01', text: 'Hello' }],
@@ -191,6 +192,12 @@ describe('lyrics timing IPC', () => {
       setLine(null, 'track-a', 'main.lrc', {
         ...identity,
         sourceFingerprint: 'a'.repeat(64),
+      }),
+    ).rejects.toThrow(/stale or invalid/);
+    await expect(
+      setLine(null, 'track-a', 'main.lrc', {
+        ...identity,
+        normalizerProfileId: 'lyrics-source-v1',
       }),
     ).rejects.toThrow(/stale or invalid/);
     await expect(
@@ -695,6 +702,7 @@ describe('lyrics timing IPC', () => {
     );
     const identity = {
       documentId: 'lyr_document_01',
+      normalizerProfileId: loaded.timing.normalizerProfileId,
       sourceFingerprint: loaded.timing.sourceFingerprint,
       lines: [{ lineId: 'line_01', text: 'Hello' }],
     };
@@ -722,8 +730,9 @@ describe('lyrics timing IPC', () => {
         'ja',
       ),
     ).resolves.toMatchObject({
-      version: 2,
+      version: 3,
       script: 'ja',
+      normalizerProfileId: loaded.timing.normalizerProfileId,
       lines: [{ lineId: 'line_01', text: 'Hello' }],
     });
     expect(mainWindow.webContents.send).toHaveBeenCalledWith(
@@ -734,7 +743,12 @@ describe('lyrics timing IPC', () => {
       }),
     );
     await expect(
-      ipcMain.handlers.get('lyrics:get-reading')(null, 'track-a', 'main.lrc'),
+      ipcMain.handlers.get('lyrics:get-reading')(
+        null,
+        'track-a',
+        'main.lrc',
+        identity,
+      ),
     ).resolves.toMatchObject({ script: 'ja' });
     await expect(
       ipcMain.handlers.get('lyrics:set-reading-line')(
@@ -755,7 +769,12 @@ describe('lyrics timing IPC', () => {
       ),
     ).resolves.toEqual({ ok: true });
     await expect(
-      ipcMain.handlers.get('lyrics:get-reading')(null, 'track-a', 'main.lrc'),
+      ipcMain.handlers.get('lyrics:get-reading')(
+        null,
+        'track-a',
+        'main.lrc',
+        identity,
+      ),
     ).resolves.toBe(null);
   });
 
@@ -767,6 +786,7 @@ describe('lyrics timing IPC', () => {
     );
     const identity = {
       documentId: 'lyr_document_01',
+      normalizerProfileId: loaded.timing.normalizerProfileId,
       sourceFingerprint: loaded.timing.sourceFingerprint,
       lines: [{ lineId: 'line_01', text: 'Hello' }],
     };
