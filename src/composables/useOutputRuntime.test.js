@@ -521,6 +521,33 @@ describe('output source handshake', () => {
     expect(stateMessages[1].sourceEpoch).not.toBe(initialEpoch);
   });
 
+  it('accepts a forced refresh when rejected state recovery succeeds', async () => {
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    bridge.publishOutputSnapshot.mockClear();
+    bridge.publishOutputSnapshot
+      .mockResolvedValueOnce(true)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
+    await expect(runtime.refreshProjection()).resolves.toBe(true);
+
+    expect(
+      bridge.publishOutputSnapshot.mock.calls.map(([message]) => [
+        message.stream,
+        message.kind,
+      ]),
+    ).toEqual([
+      ['queue.document', 'update'],
+      ['state.snapshot', 'update'],
+      ['state.snapshot', 'full'],
+    ]);
+  });
+
   it('preserves a newer forced refresh while an earlier document batch is in flight', async () => {
     playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
     playerState.isPlaying = true;
