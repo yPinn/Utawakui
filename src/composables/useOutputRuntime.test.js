@@ -479,6 +479,48 @@ describe('output source handshake', () => {
     ).toEqual(['lyrics.document', 'queue.document', 'state.snapshot']);
   });
 
+  it('renews the source epoch and retries a rejected paused state immediately', async () => {
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    playerState.isPlaying = true;
+    playerState.playbackPhase = 'playing';
+    playerState.currentTime = 12;
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    const initialEpoch =
+      bridge.publishOutputSnapshot.mock.calls.at(-1)[0].sourceEpoch;
+    bridge.publishOutputSnapshot.mockClear();
+    bridge.publishOutputSnapshot
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+
+    playerState.isPlaying = false;
+    playerState.playbackPhase = 'paused';
+    playerState.currentTime = 12.25;
+    await flushMicrotasks();
+
+    const stateMessages = bridge.publishOutputSnapshot.mock.calls.map(
+      ([message]) => message,
+    );
+    expect(stateMessages).toHaveLength(2);
+    expect(stateMessages[0]).toMatchObject({
+      stream: 'state.snapshot',
+      kind: 'update',
+      sourceEpoch: initialEpoch,
+      payload: { playback: { status: 'paused', positionMs: 12250 } },
+    });
+    expect(stateMessages[1]).toMatchObject({
+      stream: 'state.snapshot',
+      kind: 'full',
+      revision: 1,
+      payload: { playback: { status: 'paused', positionMs: 12250 } },
+    });
+    expect(stateMessages[1].sourceEpoch).not.toBe(initialEpoch);
+  });
+
   it('preserves a newer forced refresh while an earlier document batch is in flight', async () => {
     playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
     playerState.isPlaying = true;

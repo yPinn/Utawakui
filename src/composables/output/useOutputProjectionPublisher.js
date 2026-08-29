@@ -166,6 +166,31 @@ export function useOutputProjectionPublisher({
     };
   }
 
+  async function recoverRejectedState(
+    projection,
+    dynamic,
+    contentRefreshGeneration,
+  ) {
+    sourceEpoch = createSourceEpoch();
+    nextStateRevision = 1;
+    handshakeComplete = false;
+    const accepted = await sendEnvelope('state.snapshot', 'full', 1, {
+      ...dynamic,
+      generatedAt: now(),
+    });
+    handshakeComplete = accepted;
+    if (accepted) {
+      lastContinuity = projection.continuity;
+      if (contentRefreshGeneration !== null) {
+        acceptedContentRefreshGeneration = Math.max(
+          acceptedContentRefreshGeneration,
+          contentRefreshGeneration,
+        );
+      }
+    }
+    return accepted;
+  }
+
   async function publishProjection(projection) {
     const contentRefreshGeneration =
       requestedContentRefreshGeneration > acceptedContentRefreshGeneration
@@ -264,6 +289,13 @@ export function useOutputProjectionPublisher({
       dynamic,
     );
     handshakeComplete = accepted;
+    if (!accepted) {
+      return recoverRejectedState(
+        projection,
+        dynamic,
+        contentRefreshGeneration,
+      );
+    }
     if (accepted) {
       lastContinuity = projection.continuity;
       if (forceContentRefresh) {
