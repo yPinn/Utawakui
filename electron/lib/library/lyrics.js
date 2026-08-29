@@ -64,21 +64,24 @@ function getLyricsDirFromTrackDir(trackDir) {
 }
 
 const MAX_LYRICS_SOURCE_OFFSET_MS = 3_600_000;
-const LRCLIB_PROVIDER_ARTIFACT_RE = /^lrclib-[1-9]\d*\.json$/;
+const PROVIDER_ARTIFACT_PATTERNS = Object.freeze({
+  lrclib: /^lrclib-[1-9]\d*\.json$/,
+  netease: /^netease-[1-9]\d*\.json$/,
+});
 
 function normalizeLyricsProvider(value) {
   if (
     !value ||
-    value.name !== 'lrclib' ||
+    !Object.hasOwn(PROVIDER_ARTIFACT_PATTERNS, value.name) ||
     !Number.isSafeInteger(value.recordId) ||
     value.recordId <= 0 ||
     typeof value.artifactFilename !== 'string' ||
-    !LRCLIB_PROVIDER_ARTIFACT_RE.test(value.artifactFilename)
+    !PROVIDER_ARTIFACT_PATTERNS[value.name].test(value.artifactFilename)
   ) {
     return null;
   }
   return {
-    name: 'lrclib',
+    name: value.name,
     recordId: value.recordId,
     artifactFilename: value.artifactFilename,
   };

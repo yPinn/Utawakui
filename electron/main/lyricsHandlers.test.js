@@ -3,6 +3,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveLrclibRecord } from '../lib/lrclib.js';
+import { saveTrackLyricsText } from '../lib/library/lyrics.js';
 import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
 import documentHandlersModule from './lyrics/documentHandlers.js';
 import readingHandlersModule from './lyrics/readingHandlers.js';
@@ -56,6 +57,8 @@ describe('lyrics timing IPC', () => {
     lyricsAcquisitionService = {
       searchCandidates: vi.fn(),
       saveCandidate: vi.fn(),
+      searchProviderCandidates: vi.fn(),
+      saveProviderCandidate: vi.fn(),
       fetchRecord: vi.fn(),
     };
     registerLyricsHandlers({
@@ -249,6 +252,223 @@ describe('lyrics timing IPC', () => {
     });
   });
 
+  it('routes a bounded NetEase provider intent without accepting dynamic providers', async () => {
+    const candidate = {
+      id: 77,
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T2', partial: false },
+      previewFingerprint: 'b'.repeat(64),
+    };
+    lyricsAcquisitionService.searchProviderCandidates.mockResolvedValue({
+      provider: 'netease',
+      status: 'ok',
+      candidates: [candidate],
+      groups: { best: [candidate], related: [] },
+      invalidRecordCount: 0,
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:search-provider-candidates')(
+        null,
+        'netease',
+        'track-a',
+        { query: { title: 'Song', artist: 'Artist' } },
+      ),
+    ).resolves.toMatchObject({
+      provider: 'netease',
+      candidates: [{ id: 77, saveState: 'unsaved' }],
+    });
+    expect(
+      lyricsAcquisitionService.searchProviderCandidates,
+    ).toHaveBeenCalledWith(
+      'netease',
+      expect.objectContaining({ id: 'track-a' }),
+      {
+        query: { title: 'Song', artist: 'Artist' },
+      },
+    );
+
+    await expect(
+      ipcMain.handlers.get('lyrics:search-provider-candidates')(
+        null,
+        'netease',
+        'track-a',
+        {
+          query: { title: 'Song', artist: 'Artist' },
+          mode: 'broaden',
+        },
+      ),
+    ).resolves.toMatchObject({ provider: 'netease', status: 'ok' });
+    expect(
+      lyricsAcquisitionService.searchProviderCandidates,
+    ).toHaveBeenLastCalledWith(
+      'netease',
+      expect.objectContaining({ id: 'track-a' }),
+      {
+        query: { title: 'Song', artist: 'Artist' },
+        mode: 'broaden',
+      },
+    );
+
+    await expect(
+      ipcMain.handlers.get('lyrics:search-provider-candidates')(
+        null,
+        'dynamic-provider',
+        'track-a',
+      ),
+    ).rejects.toThrow(/provider/i);
+
+    await expect(
+      ipcMain.handlers.get('lyrics:search-provider-candidates')(
+        null,
+        'netease',
+        'missing-track',
+        { query: { title: 'Song' } },
+      ),
+    ).rejects.toThrow(/unknown track/i);
+  });
+
+  it('maps storage state for every source in an all-provider recording group', async () => {
+    const lrclib = {
+      id: 42,
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:42',
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T1', partial: false },
+      previewFingerprint: 'a'.repeat(64),
+    };
+    const netease = {
+      id: 77,
+      providerId: 'netease',
+      candidateKey: 'netease:77',
+      trackName: 'Song',
+      artistName: 'Artist',
+      matchBand: 'exact',
+      capability: { level: 'T2', partial: false },
+      previewFingerprint: 'b'.repeat(64),
+    };
+    lyricsAcquisitionService.searchProviderCandidates.mockResolvedValue({
+      provider: 'all',
+      status: 'ok',
+      partial: false,
+      candidates: [netease, lrclib],
+      groups: { best: [netease, lrclib], related: [] },
+      recordingGroups: {
+        best: [
+          {
+            recordingKey: 'recording:one',
+            matchBand: 'exact',
+            recommendedCandidateKey: 'netease:77',
+            candidates: [netease, lrclib],
+          },
+        ],
+        related: [],
+      },
+      providerStatuses: [
+        { provider: 'lrclib', status: 'ok' },
+        { provider: 'netease', status: 'ok' },
+      ],
+      invalidRecordCount: 0,
+    });
+
+    const result = await ipcMain.handlers.get(
+      'lyrics:search-provider-candidates',
+    )(null, 'all', 'track-a', {
+      query: { title: 'Song', artist: 'Artist' },
+    });
+
+    expect(result).toMatchObject({
+      provider: 'all',
+      candidates: [
+        {
+          providerId: 'netease',
+          candidateKey: 'netease:77',
+          saveState: 'unsaved',
+        },
+        {
+          providerId: 'lrclib',
+          candidateKey: 'lrclib:42',
+          saveState: 'unsaved',
+        },
+      ],
+      recordingGroups: {
+        best: [
+          {
+            recommendedCandidateKey: 'netease:77',
+            candidates: [
+              { candidateKey: 'netease:77', saveState: 'unsaved' },
+              { candidateKey: 'lrclib:42', saveState: 'unsaved' },
+            ],
+          },
+        ],
+        related: [],
+      },
+    });
+    expect(
+      lyricsAcquisitionService.searchProviderCandidates,
+    ).toHaveBeenCalledWith('all', expect.objectContaining({ id: 'track-a' }), {
+      query: { title: 'Song', artist: 'Artist' },
+    });
+  });
+
+  it('passes NetEase save through main-owned track and query resolution', async () => {
+    lyricsAcquisitionService.saveProviderCandidate.mockResolvedValue({
+      provider: 'netease',
+      status: 'saved',
+      source: { filename: 'netease-77.lrc', kind: 'netease' },
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:save-provider-candidate')(
+        null,
+        'netease',
+        'track-a',
+        77,
+        'b'.repeat(64),
+        { query: { title: 'Song', artist: 'Artist' } },
+      ),
+    ).resolves.toMatchObject({ status: 'saved', sources: expect.any(Array) });
+    expect(lyricsAcquisitionService.saveProviderCandidate).toHaveBeenCalledWith(
+      'netease',
+      {
+        track: expect.objectContaining({ id: 'track-a' }),
+        trackDir,
+        candidateId: 77,
+        expectedFingerprint: 'b'.repeat(64),
+        query: { title: 'Song', artist: 'Artist' },
+      },
+    );
+    expect(notifyLibraryUpdated).toHaveBeenCalled();
+  });
+
+  it('rejects broaden mode and preserves a bounded provider save failure', async () => {
+    const save = ipcMain.handlers.get('lyrics:save-provider-candidate');
+
+    await expect(
+      save(null, 'netease', 'track-a', 77, 'b'.repeat(64), {
+        mode: 'broaden',
+      }),
+    ).rejects.toThrow(/unsupported mode/i);
+
+    lyricsAcquisitionService.saveProviderCandidate.mockResolvedValue({
+      provider: 'netease',
+      status: 'unavailable',
+      reason: 'record-mismatch',
+    });
+    await expect(
+      save(null, 'netease', 'track-a', 77, 'b'.repeat(64)),
+    ).resolves.toEqual({
+      provider: 'netease',
+      status: 'unavailable',
+      reason: 'record-mismatch',
+    });
+    expect(notifyLibraryUpdated).not.toHaveBeenCalled();
+  });
+
   it('distinguishes a current stored LRCLIB record from an available update', async () => {
     const saved = saveLrclibRecord(
       trackDir,
@@ -369,6 +589,31 @@ describe('lyrics timing IPC', () => {
       reason: 'unknown-track',
     });
     expect(requireFeatureGate).toHaveBeenCalledWith('lyrics-flow');
+  });
+
+  it('backfills a legacy LRCLIB source label through the bounded fetch callback', async () => {
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-99.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.000]Legacy',
+    );
+    lyricsAcquisitionService.fetchRecord.mockResolvedValue({
+      status: 'ok',
+      record: { albumName: null, artistName: 'Resolved Artist' },
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:backfill-source-labels')(null, 'track-a'),
+    ).resolves.toMatchObject({
+      sources: expect.arrayContaining([
+        expect.objectContaining({
+          filename: 'lrclib-99.lrc',
+          label: 'Resolved Artist',
+        }),
+      ]),
+    });
+    expect(lyricsAcquisitionService.fetchRecord).toHaveBeenCalledWith(99);
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 
   it('publishes a saved provider candidate with the current local source list', async () => {

@@ -140,7 +140,7 @@ function createLrclibClient(options = {}) {
   const userAgent = options.userAgent || buildLrclibUserAgent();
   const acquisitionSignal = options.signal;
 
-  async function request(endpoint, params) {
+  async function request(endpoint, params, requestOptions = {}) {
     if (typeof fetchFn !== 'function') {
       return { status: 'error', reason: 'fetch-unavailable' };
     }
@@ -153,15 +153,20 @@ function createLrclibClient(options = {}) {
         response = await scheduler.schedule(
           () => {
             const requestTimeoutSignal = AbortSignal.timeout(timeoutMs);
-            requestSignal = acquisitionSignal
-              ? AbortSignal.any([acquisitionSignal, requestTimeoutSignal])
-              : requestTimeoutSignal;
+            const externalSignals = [
+              acquisitionSignal,
+              requestOptions.signal,
+            ].filter(Boolean);
+            requestSignal =
+              externalSignals.length > 0
+                ? AbortSignal.any([...externalSignals, requestTimeoutSignal])
+                : requestTimeoutSignal;
             return fetchFn(url, {
               headers: { 'User-Agent': userAgent },
               signal: requestSignal,
             });
           },
-          { signal: acquisitionSignal },
+          { signal: requestOptions.signal || acquisitionSignal },
         );
       } catch (error) {
         return classifyTransportFailure(error);
@@ -206,23 +211,28 @@ function createLrclibClient(options = {}) {
     return { status: 'error', reason: 'http-error' };
   }
 
-  async function getById(recordId) {
+  async function getById(recordId, requestOptions) {
     if (!Number.isSafeInteger(recordId) || recordId <= 0) {
       return { status: 'error', reason: 'invalid-request' };
     }
     const result = await request(
       `/api/get/${encodeURIComponent(recordId)}`,
       {},
+      requestOptions,
     );
     if (result.status === 'error') return result;
     return normalizeLrclibRecord(result.value);
   }
 
-  async function getExact(query) {
+  async function getExact(query, requestOptions) {
     if (!validIdentityQuery(query)) {
       return { status: 'error', reason: 'invalid-request' };
     }
-    const result = await request('/api/get', structuredParams(query));
+    const result = await request(
+      '/api/get',
+      structuredParams(query),
+      requestOptions,
+    );
     if (
       result.status === 'error' &&
       result.reason === 'http-error' &&
@@ -234,11 +244,15 @@ function createLrclibClient(options = {}) {
     return normalizeLrclibRecord(result.value);
   }
 
-  async function search(query) {
+  async function search(query, requestOptions) {
     if (!validTitleQuery(query)) {
       return { status: 'error', reason: 'invalid-request' };
     }
-    const result = await request('/api/search', structuredParams(query));
+    const result = await request(
+      '/api/search',
+      structuredParams(query),
+      requestOptions,
+    );
     if (
       result.status === 'error' &&
       result.reason === 'http-error' &&
@@ -250,11 +264,11 @@ function createLrclibClient(options = {}) {
     return normalizeSearchRecords(result.value);
   }
 
-  async function searchBroad(query) {
+  async function searchBroad(query, requestOptions) {
     if (!query || typeof query.q !== 'string' || query.q.trim().length === 0) {
       return { status: 'error', reason: 'invalid-request' };
     }
-    const result = await request('/api/search', { q: query.q });
+    const result = await request('/api/search', { q: query.q }, requestOptions);
     if (result.status === 'error') return result;
     return normalizeSearchRecords(result.value);
   }

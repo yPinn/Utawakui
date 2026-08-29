@@ -72,7 +72,51 @@ describe('createLyricsAcquisitionService', () => {
     expect(provider.getById).toHaveBeenCalledOnce();
   });
 
-  it('rejects concurrent manual searches before they grow the provider queue', async () => {
+  it('routes the allowlisted NetEase provider through the same lyrics gate', async () => {
+    const requireFeatureGate = vi.fn();
+    const neteaseProvider = {
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'netease',
+        status: 'ok',
+        candidates: [],
+        groups: { best: [], related: [] },
+      }),
+      saveCandidate: vi.fn().mockResolvedValue({
+        provider: 'netease',
+        status: 'saved',
+      }),
+    };
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate,
+      featureId: 'lyrics-flow',
+      client: client(),
+      neteaseProvider,
+    });
+
+    await service.searchProviderCandidates('netease', track);
+    await service.saveProviderCandidate('netease', {
+      track,
+      trackDir,
+      candidateId: 42,
+      expectedFingerprint: 'a'.repeat(64),
+    });
+
+    expect(requireFeatureGate).toHaveBeenCalledTimes(2);
+    expect(neteaseProvider.searchCandidates).toHaveBeenCalledWith(track, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(neteaseProvider.saveCandidate).toHaveBeenCalledWith({
+      track,
+      trackDir,
+      candidateId: 42,
+      expectedFingerprint: 'a'.repeat(64),
+    });
+    await expect(
+      service.searchProviderCandidates('unknown-provider', track),
+    ).rejects.toThrow(/provider is invalid/i);
+  });
+
+  it('deduplicates identical concurrent manual searches', async () => {
     let resolveExact;
     const provider = client({
       getExact: vi.fn(
@@ -92,17 +136,150 @@ describe('createLyricsAcquisitionService', () => {
 
     const first = service.searchCandidates(track);
     await vi.waitFor(() => expect(provider.getExact).toHaveBeenCalledOnce());
-    await expect(service.searchCandidates(track)).resolves.toMatchObject({
-      status: 'error',
-      reason: 'busy',
-      candidates: [],
-    });
+    const second = service.searchCandidates(track);
     expect(provider.getExact).toHaveBeenCalledOnce();
 
     resolveExact({ status: 'ok', record: record() });
-    await first;
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+    expect(secondResult).toEqual(firstResult);
+    expect(provider.search).toHaveBeenCalledOnce();
     expect(logger.warn).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('fans out all-provider search in parallel and returns source-neutral groups', async () => {
+    let resolveExact;
+    let resolveNetease;
+    const provider = client({
+      getExact: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveExact = resolve;
+          }),
+      ),
+    });
+    const neteaseProvider = {
+      searchCandidates: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveNetease = resolve;
+          }),
+      ),
+      saveCandidate: vi.fn(),
+    };
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider,
+    });
+
+    const pending = service.searchProviderCandidates('all', track);
+    await vi.waitFor(() => {
+      expect(provider.getExact).toHaveBeenCalledOnce();
+      expect(neteaseProvider.searchCandidates).toHaveBeenCalledOnce();
+    });
+    resolveExact({ status: 'unavailable', reason: 'not-found' });
+    resolveNetease({
+      provider: 'netease',
+      status: 'ok',
+      candidates: [
+        {
+          id: 9,
+          trackName: 'Song',
+          artistName: 'Artist',
+          albumName: 'Album',
+          duration: 180,
+          capability: { level: 'T2', partial: false },
+          compatibility: { t0: true, t1: true, t2: true },
+          warnings: [],
+          previewLines: [{ start: 1, text: 'Word' }],
+          previewFingerprint: 'b'.repeat(64),
+          matchBand: 'exact',
+        },
+      ],
+      groups: null,
+      invalidRecordCount: 0,
+    });
+
+    await expect(pending).resolves.toMatchObject({
+      provider: 'all',
+      status: 'ok',
+      partial: false,
+      candidates: [{ providerId: 'netease', candidateKey: 'netease:9' }],
+      recordingGroups: {
+        best: [{ recommendedCandidateKey: 'netease:9' }],
+        related: [],
+      },
+    });
+  });
+
+  it('reuses a short-lived successful discovery result', async () => {
+    const provider = client({
+      getExact: vi
+        .fn()
+        .mockResolvedValue({ status: 'unavailable', reason: 'not-found' }),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+    });
+
+    const first = await service.searchCandidates(track, {
+      query: { title: 'Song', artist: 'Artist' },
+    });
+    const searchCallsAfterFirst = provider.search.mock.calls.length;
+    const second = await service.searchCandidates(track, {
+      query: { title: 'Song', artist: 'Artist' },
+    });
+
+    expect(second).toEqual(first);
+    expect(provider.getExact).toHaveBeenCalledOnce();
+    expect(provider.search).toHaveBeenCalledTimes(searchCallsAfterFirst);
+  });
+
+  it('aborts a superseded provider query while preserving the newer search', async () => {
+    let firstSignal;
+    const provider = client({
+      getExact: vi
+        .fn()
+        .mockImplementationOnce(
+          (_query, options) =>
+            new Promise((resolve) => {
+              firstSignal = options.signal;
+              options.signal.addEventListener(
+                'abort',
+                () => resolve({ status: 'error', reason: 'timeout' }),
+                { once: true },
+              );
+            }),
+        )
+        .mockResolvedValueOnce({
+          status: 'unavailable',
+          reason: 'not-found',
+        }),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+    });
+
+    const first = service.searchCandidates(track, {
+      query: { title: 'First', artist: 'Artist' },
+    });
+    await vi.waitFor(() => expect(firstSignal).toBeDefined());
+    const second = service.searchCandidates(track, {
+      query: { title: 'Second', artist: 'Artist' },
+    });
+
+    expect(firstSignal.aborted).toBe(true);
+    await expect(first).resolves.toMatchObject({
+      status: 'error',
+      reason: 'timeout',
+    });
+    await expect(second).resolves.toMatchObject({ status: 'ok' });
   });
 
   it('logs typed provider failures once without exposing track metadata', async () => {

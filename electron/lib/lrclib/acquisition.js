@@ -155,11 +155,14 @@ async function searchLrclibCandidates(track, options = {}) {
     return unavailable('missing-track-title', { candidates: [], groups: null });
   }
   const client = clientForOptions(options);
+  const requestOptions = options.signal ? { signal: options.signal } : null;
 
   const records = [];
   let invalidRecordCount = 0;
   if (plan.exact) {
-    const exact = await client.getExact(plan.exact);
+    const exact = requestOptions
+      ? await client.getExact(plan.exact, requestOptions)
+      : await client.getExact(plan.exact);
     if (exact.status === 'ok') records.push(exact.record);
     else if (exact.reason === 'invalid-record') invalidRecordCount += 1;
     else if (!canContinueAfterExact(exact)) {
@@ -168,7 +171,9 @@ async function searchLrclibCandidates(track, options = {}) {
   }
 
   for (const query of plan.structuredQueries || [plan.structured]) {
-    const structured = await client.search(query);
+    const structured = requestOptions
+      ? await client.search(query, requestOptions)
+      : await client.search(query);
     if (structured.status === 'error') {
       return providerFailure(structured, { candidates: [], groups: null });
     }
@@ -183,7 +188,9 @@ async function searchLrclibCandidates(track, options = {}) {
   );
   if (constrained.groups.best.length === 0) {
     for (const query of plan.recoveryQueries || []) {
-      const recovered = await client.search(query);
+      const recovered = requestOptions
+        ? await client.search(query, requestOptions)
+        : await client.search(query);
       if (recovered.status === 'error') {
         return providerFailure(recovered, { candidates: [], groups: null });
       }

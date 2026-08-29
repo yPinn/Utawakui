@@ -9,12 +9,18 @@ const {
   saveLrclibRecord,
   searchLrclibCandidates,
 } = require('../lib/lrclib');
+const { createNeteaseAcquisitionProvider } = require('../lib/netease');
+const {
+  aggregateLyricsProviderResults,
+} = require('../lib/lyricsProviders/candidates.js');
 
 const OPERATION_MESSAGES = Object.freeze({
   search: '[lyrics] LRCLIB search failed',
   save: '[lyrics] LRCLIB save failed',
   fetch: '[lyrics] LRCLIB fetch failed',
   'automatic-acquisition': '[lyrics] LRCLIB automatic acquisition failed',
+  'netease-search': '[lyrics] NetEase search failed',
+  'netease-save': '[lyrics] NetEase save failed',
 });
 const NON_RETRYABLE_REASONS = new Set([
   'invalid-json',
@@ -22,6 +28,23 @@ const NON_RETRYABLE_REASONS = new Set([
   'invalid-request',
   'response-too-large',
 ]);
+const SEARCH_PROVIDER_IDS = Object.freeze(['lrclib', 'netease']);
+const DEFAULT_CANDIDATE_CACHE_TTL_MS = 5 * 60 * 1000;
+const MAX_CACHED_CANDIDATE_SEARCHES = 32;
+
+function candidateSearchKey(providerId, track, options) {
+  return JSON.stringify([
+    providerId,
+    track?.id ?? null,
+    track?.title ?? track?.trackName ?? '',
+    track?.artist ?? track?.artistName ?? '',
+    track?.album ?? track?.albumName ?? '',
+    Number.isFinite(track?.duration) ? track.duration : null,
+    options?.query?.title ?? '',
+    options?.query?.artist ?? '',
+    options?.mode ?? 'structured',
+  ]);
+}
 
 function isRetryableFailure(result) {
   if (NON_RETRYABLE_REASONS.has(result?.reason)) return false;
@@ -32,11 +55,13 @@ function isRetryableFailure(result) {
 }
 
 function providerFailureError(operation, result) {
+  const provider = operation.startsWith('netease-') ? 'NetEase' : 'LRCLIB';
+  const operationName = operation.replace(/^netease-/u, '');
   const httpStatus = Number.isInteger(result?.httpStatus)
     ? ` (HTTP ${result.httpStatus})`
     : '';
   return new Error(
-    `LRCLIB ${operation} failed: ${result?.reason || 'unknown'}${httpStatus}`,
+    `${provider} ${operationName} failed: ${result?.reason || 'unknown'}${httpStatus}`,
   );
 }
 
@@ -44,9 +69,14 @@ function createLyricsAcquisitionService({
   requireFeatureGate,
   featureId,
   client = createLrclibClient(),
+  neteaseProvider = createNeteaseAcquisitionProvider(),
   logger = console,
+  candidateCacheTtlMs = DEFAULT_CANDIDATE_CACHE_TTL_MS,
+  now = Date.now,
 }) {
-  let candidateSearchInFlight = null;
+  const candidateSearchesInFlight = new Map();
+  const activeCandidateSearches = new Map();
+  const candidateSearchCache = new Map();
   let candidateSaveInFlight = null;
 
   function requireLyricsFlow() {
@@ -88,28 +118,113 @@ function createLyricsAcquisitionService({
     }
   }
 
+  function writeSearchMetric(provider, metric) {
+    try {
+      logger?.debug?.('[lyrics] provider search timing', {
+        provider,
+        ...metric,
+      });
+    } catch {
+      // Metrics must never affect provider acquisition.
+    }
+  }
+
+  function readCachedSearch(key, providerId) {
+    const cached = candidateSearchCache.get(key);
+    if (!cached) return null;
+    if (now() - cached.storedAt > candidateCacheTtlMs) {
+      candidateSearchCache.delete(key);
+      return null;
+    }
+    writeSearchMetric(providerId, {
+      cacheHit: true,
+      durationMs: 0,
+      candidateCount: cached.result.candidates?.length ?? 0,
+      status: cached.result.status,
+    });
+    return cached.result;
+  }
+
+  function cacheSearchResult(key, result) {
+    if (result?.status !== 'ok' || candidateCacheTtlMs <= 0) return;
+    if (
+      candidateSearchCache.size >= MAX_CACHED_CANDIDATE_SEARCHES &&
+      !candidateSearchCache.has(key)
+    ) {
+      candidateSearchCache.delete(candidateSearchCache.keys().next().value);
+    }
+    candidateSearchCache.set(key, { result, storedAt: now() });
+  }
+
+  function startProviderCandidateSearch(providerId, track, options, signal) {
+    if (providerId === 'lrclib') {
+      return observeProviderOperation('search', () =>
+        searchLrclibCandidates(track, { ...options, client, signal }),
+      );
+    }
+    return observeProviderOperation('netease-search', () =>
+      neteaseProvider.searchCandidates(track, { ...options, signal }),
+    );
+  }
+
+  function searchOneProvider(providerId, track, options = {}) {
+    const key = candidateSearchKey(providerId, track, options);
+    const cached = readCachedSearch(key, providerId);
+    if (cached) return Promise.resolve(cached);
+    const existing = candidateSearchesInFlight.get(key);
+    if (existing) return existing;
+
+    const previous = activeCandidateSearches.get(providerId);
+    if (previous && previous.key !== key) previous.controller.abort();
+    const controller = new AbortController();
+    activeCandidateSearches.set(providerId, { key, controller });
+    const startedAt = now();
+    const operation = (async () => {
+      try {
+        const result = await startProviderCandidateSearch(
+          providerId,
+          track,
+          options,
+          controller.signal,
+        );
+        cacheSearchResult(key, result);
+        writeSearchMetric(providerId, {
+          cacheHit: false,
+          durationMs: Math.max(0, now() - startedAt),
+          candidateCount: result?.candidates?.length ?? 0,
+          status: result?.status || 'error',
+        });
+        return result;
+      } finally {
+        candidateSearchesInFlight.delete(key);
+        if (
+          activeCandidateSearches.get(providerId)?.controller === controller
+        ) {
+          activeCandidateSearches.delete(providerId);
+        }
+      }
+    })();
+    candidateSearchesInFlight.set(key, operation);
+    return operation;
+  }
+
   async function searchCandidates(track, options = {}) {
     requireLyricsFlow();
-    if (candidateSearchInFlight) {
-      return {
-        provider: 'lrclib',
-        status: 'error',
-        reason: 'busy',
-        candidates: [],
-        groups: null,
-      };
+    return searchOneProvider('lrclib', track, options);
+  }
+
+  async function searchProviderCandidates(providerId, track, options = {}) {
+    if (providerId !== 'all' && !SEARCH_PROVIDER_IDS.includes(providerId)) {
+      throw new Error('lyrics provider is invalid');
     }
-    const operation = observeProviderOperation('search', () =>
-      searchLrclibCandidates(track, { ...options, client }),
-    );
-    candidateSearchInFlight = operation;
-    try {
-      return await operation;
-    } finally {
-      if (candidateSearchInFlight === operation) {
-        candidateSearchInFlight = null;
-      }
+    requireLyricsFlow();
+    if (providerId === 'all') {
+      const results = await Promise.all(
+        SEARCH_PROVIDER_IDS.map((id) => searchOneProvider(id, track, options)),
+      );
+      return aggregateLyricsProviderResults(track, results);
     }
+    return searchOneProvider(providerId, track, options);
   }
 
   async function fetchRecord(recordId) {
@@ -138,6 +253,26 @@ function createLyricsAcquisitionService({
     }
   }
 
+  async function saveProviderCandidate(providerId, options) {
+    if (providerId === 'lrclib') return saveCandidate(options);
+    if (providerId !== 'netease') {
+      throw new Error('lyrics provider is invalid');
+    }
+    requireLyricsFlow();
+    if (candidateSaveInFlight) {
+      return { provider: 'netease', status: 'error', reason: 'busy' };
+    }
+    const operation = observeProviderOperation('netease-save', () =>
+      neteaseProvider.saveCandidate(options),
+    );
+    candidateSaveInFlight = operation;
+    try {
+      return await operation;
+    } finally {
+      if (candidateSaveInFlight === operation) candidateSaveInFlight = null;
+    }
+  }
+
   async function saveIfAbsent(track, trackDir) {
     const lyricsState = getTrackLyricsState(trackDir);
     if (lyricsState.sources.some((source) => source.kind === 'lrclib')) {
@@ -152,7 +287,14 @@ function createLyricsAcquisitionService({
     return saveLrclibRecord(trackDir, result.record).status === 'saved';
   }
 
-  return { fetchRecord, saveCandidate, saveIfAbsent, searchCandidates };
+  return {
+    fetchRecord,
+    saveCandidate,
+    saveIfAbsent,
+    saveProviderCandidate,
+    searchCandidates,
+    searchProviderCandidates,
+  };
 }
 
 module.exports = { createLyricsAcquisitionService };
