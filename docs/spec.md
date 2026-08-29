@@ -53,21 +53,21 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ## 3. 目前功能現況
 
-| 領域              | 現況                 | 邊界與剩餘工作                                                                                                                                                          |
-| ----------------- | -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Desktop shell     | 已實作               | Electron、Vite、Vue、secure preload、single instance 與 production `loadFile` 路徑已建立。                                                                              |
-| Local library     | 已實作               | Structured track folders、metadata index、local import、legacy migration 與 media protocol 已建立。                                                                     |
-| Playback／queue   | 已實作               | Audio element 是 timing 權威；queue、pitch／tempo preview、Windows shell controls 已連線。                                                                              |
-| Playlists／albums | 已實作               | Collections 可排序；來源型 album 維持 read-only membership。                                                                                                            |
-| Lyrics            | 主路徑已實作         | T0／T1／T2、provider acquisition、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；持續做人工視覺驗收與操作 polish。                                         |
-| Audio processing  | 基礎產品能力已實作   | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。 |
-| Provider assist   | 核心路徑已實作       | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、candidate/import/backfill 已連線，只能作為 gated advanced flow。                                          |
-| OBS output        | MVP 已實作           | Loopback HTTP/WebSocket、四個固定 slot、Gallery、Workbench、URL copy、content/state split 與 source convergence 已建立。                                                |
-| Feature gates     | 已實作               | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                  |
-| Diagnostics       | 基礎與主要邊界已實作 | Main-owned persistence/redaction、renderer capture、Settings 控制與 dependency IPC boundary 已建立；其他 domain wrappers 與 explicit export 持續增量導入。              |
-| Distribution      | 已實作基礎           | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                     |
-| Session／VOD mode | 規劃中               | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                        |
-| External adapters | 規劃中               | 目前只有 Browser Source；OBS WebSocket、VTube Studio 等 adapter 尚未成為產品能力。                                                                                      |
+| 領域              | 現況                 | 邊界與剩餘工作                                                                                                                                                                             |
+| ----------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Desktop shell     | 已實作               | Electron、Vite、Vue、secure preload、single instance 與 production `loadFile` 路徑已建立。                                                                                                 |
+| Local library     | 已實作               | Structured track folders、metadata index、local import、legacy migration 與 media protocol 已建立。                                                                                        |
+| Playback／queue   | 已實作               | Audio element 是 timing 權威；queue、pitch／tempo preview、Windows shell controls 已連線。                                                                                                 |
+| Playlists／albums | 已實作               | Collections 可排序；來源型 album 維持 read-only membership。                                                                                                                               |
+| Lyrics            | 主路徑已實作         | T0／T1／T2、LRCLIB／實驗性 NetEase 多來源平行搜尋、來源中立排序與同錄音來源替代、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；NetEase 只在完整 YRC 驗證通過時標示逐字同步。 |
+| Audio processing  | 基礎產品能力已實作   | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。                    |
+| Provider assist   | 核心路徑已實作       | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、candidate/import/backfill 已連線，只能作為 gated advanced flow。                                                             |
+| OBS output        | MVP 已實作           | Loopback HTTP/WebSocket、四個固定 slot、Gallery、Workbench、URL copy、content/state split 與 source convergence 已建立。                                                                   |
+| Feature gates     | 已實作               | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                     |
+| Diagnostics       | 基礎與主要邊界已實作 | Main-owned persistence/redaction、renderer capture、Settings 控制與 dependency IPC boundary 已建立；其他 domain wrappers 與 explicit export 持續增量導入。                                 |
+| Distribution      | 已實作基礎           | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                                        |
+| Session／VOD mode | 規劃中               | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                                           |
+| External adapters | 規劃中               | 目前只有 Browser Source；OBS WebSocket、VTube Studio 等 adapter 尚未成為產品能力。                                                                                                         |
 
 ## 4. 產品與資料邊界
 

@@ -91,10 +91,12 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 
 ## 常用文件
 
-- Lyrics：[LRCLIB acquisition](contracts/lrclib-acquisition-contract.md)、
+- Lyrics：[Multi-source search](contracts/multi-source-lyrics-search-contract.md)、
+  [LRCLIB acquisition](contracts/lrclib-acquisition-contract.md)、
   [timing](contracts/lyrics-timing-contract.md)、
   [provider evaluation corpus](contracts/lyrics-provider-evaluation-corpus.md)、
-  [NetEase isolated validation](contracts/netease-isolated-technical-validation.md)、
+  [NetEase acquisition](contracts/netease-acquisition-contract.md)、
+  [NetEase isolated validation (historical)](contracts/netease-isolated-technical-validation.md)、
   [Musixmatch reserve adapter](contracts/musixmatch-reserve-adapter.md)。
 - Output：[runtime hardening](contracts/output-runtime-hardening.md)、
   [asset security](contracts/overlay-asset-security.md)、

@@ -3,6 +3,14 @@
 日期：2026-08-28
 範圍：Engineering evaluation；非產品來源。
 
+## 2026-08-29 Owner Decision Addendum
+
+Owner 明確決定不繼續 Sentinel／30 日觀測，改為直接接入實驗性產品來源並以 LRCLIB UI
+作為比較基線。這項決定取代原本的產品資格 gate，但不把下列 `unstable-exclude` 歷史結果
+改寫為穩定性通過。當日以固定 HTTPS 直連再次完成四語 smoke：4／4 requests、4／4 matches，
+中文與英文取得完整 validated YRC T2，日文與韓文為 T1。現行實作與安全邊界見
+[NetEase 歌詞取得契約](../contracts/netease-acquisition-contract.md)。
+
 ## 結論
 
 暫定結論為 **不穩定，暫時排除**。這個分類由必要證據未完成觸發，不代表已觀測到

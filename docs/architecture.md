@@ -69,7 +69,16 @@ pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media 
 
 Lyrics renderer 同樣維持單一 public owner：`src/composables/useLyrics.js` 保留 library／
 playlist scope、選曲、HTML audio playback projection、watchers 與 `useLyrics()` facade；
-`src/composables/lyrics/useLyricsAcquisition.js` 負責 gated LRCLIB acquisition，並保留沒有
+`src/composables/lyrics/useLyricsAcquisition.js` 負責 gated LRCLIB／NetEase 手動候選
+acquisition；兩者共用 renderer 候選狀態與搜尋 workspace。Main 的 allowlisted `all` intent
+平行執行各來源、容納 partial failure，再以來源中立的錄音相關性與 timing capability 排序，
+同錄音只在 presentation group 中提供來源替代項。每個 provider 仍保有自己的 scheduler、
+parser、save-time refetch 與 provenance；跨來源不拼接歌詞。成功 discovery 使用 bounded
+main-memory TTL cache，相同 in-flight query 去重，同來源的新 query abort 舊 query。NetEase
+使用固定 HTTPS origin 的 bounded direct client，先做 metadata gate，再自適應取得足夠候選
+的歌詞；逐筆驗證完整 YRC 才建立 T2 canonical timing sidecar，沒有有效 YRC 時只如實保存
+T1／T0。完整契約見
+[多來源歌詞搜尋契約](contracts/multi-source-lyrics-search-contract.md)。此 composable 也保留沒有
 production UI caller 的 Musixmatch official-API probe compatibility path；
 `src/composables/lyrics/useLyricsSourceDocuments.js` 負責本機來源讀取、offset、timing、
 label／delete 與手動匯入。Musixmatch path 不加入 candidate search／save 或自動取得；它只
