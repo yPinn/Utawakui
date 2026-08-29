@@ -4,6 +4,7 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { saveLrclibRecord } from '../lib/lrclib.js';
 import { saveTrackLyricsText } from '../lib/library/lyrics.js';
+import { saveNeteaseRecord } from '../lib/netease.js';
 import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
 import documentHandlersModule from './lyrics/documentHandlers.js';
 import readingHandlersModule from './lyrics/readingHandlers.js';
@@ -692,6 +693,42 @@ describe('lyrics timing IPC', () => {
       ]),
     });
     expect(requireFeatureGate).not.toHaveBeenCalled();
+  });
+
+  it('deletes a NetEase source through its provider-owned storage', async () => {
+    const saved = saveNeteaseRecord(trackDir, {
+      id: 42,
+      trackName: 'Song',
+      artistName: 'Artist',
+      artists: ['Artist'],
+      albumName: 'Album',
+      duration: 180,
+      aliases: [],
+      translatedTitles: [],
+      yrcLyrics: '[1000,1000](1000,1000,0)Hello',
+      lrcLyrics: '[00:01.000]Hello',
+    });
+    const artifactPath = path.join(
+      trackDir,
+      'lyrics',
+      'providers',
+      'netease-42.json',
+    );
+    expect(fs.existsSync(artifactPath)).toBe(true);
+
+    await expect(
+      ipcMain.handlers.get('lyrics:delete-source')(
+        null,
+        'track-a',
+        saved.source.filename,
+      ),
+    ).resolves.toMatchObject({
+      sources: expect.not.arrayContaining([
+        expect.objectContaining({ filename: saved.source.filename }),
+      ]),
+    });
+    expect(fs.existsSync(artifactPath)).toBe(false);
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 
   it('generates, edits, reports progress for, and deletes a reading document', async () => {

@@ -5,6 +5,7 @@ const {
   getTrackLyricsState,
   importManualLyricsFile,
   importManualLyricsText,
+  loadTrackLyricsManifest,
   readTrackLyrics,
   resolveTrackDir,
   saveTrackLyricsTiming,
@@ -12,6 +13,7 @@ const {
   setLyricsSourceOffset,
 } = require('../../lib/library');
 const { deleteStoredLrclibSource } = require('../../lib/lrclib');
+const { deleteStoredNeteaseSource } = require('../../lib/netease');
 
 function registerLyricsDocumentHandlers({
   ipcMain,
@@ -91,7 +93,14 @@ function registerLyricsDocumentHandlers({
     const trackDir = resolveTrackDir(dir, trackId);
     if (!trackDir) throw new Error(`unknown track id: ${trackId}`);
 
-    if (!deleteStoredLrclibSource(trackDir, filename)) {
+    const source = loadTrackLyricsManifest(trackDir).sources.find(
+      (candidate) => candidate.filename === filename,
+    );
+    const deleteSource =
+      source?.provider?.name === 'netease'
+        ? deleteStoredNeteaseSource
+        : deleteStoredLrclibSource;
+    if (!deleteSource(trackDir, filename)) {
       throw new Error(`unable to delete lyrics source: ${filename}`);
     }
 
