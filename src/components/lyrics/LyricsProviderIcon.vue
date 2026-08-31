@@ -1,5 +1,11 @@
 <script setup>
-import { Disc3, Library, Music2 } from '../../icons/index.js';
+import {
+  Captions,
+  Disc3,
+  Library,
+  MicVocal,
+  Music2,
+} from '../../icons/index.js';
 
 defineProps({
   providerId: { type: String, required: true },
@@ -13,13 +19,17 @@ defineProps({
     aria-hidden="true"
   >
     <Library v-if="providerId === 'all'" :size="16" :stroke-width="1.8" />
-    <span
+    <Captions
       v-else-if="providerId === 'lrclib'"
-      class="lyrics-provider-icon__monogram"
-    >
-      LRC
-    </span>
+      :size="17"
+      :stroke-width="1.8"
+    />
     <Disc3 v-else-if="providerId === 'netease'" :size="17" :stroke-width="2" />
+    <MicVocal
+      v-else-if="providerId === 'betterlyrics'"
+      :size="17"
+      :stroke-width="1.8"
+    />
     <Music2 v-else :size="16" :stroke-width="1.8" />
   </span>
 </template>
@@ -47,10 +57,7 @@ defineProps({
   color: var(--ui-color-text);
 }
 
-.lyrics-provider-icon__monogram {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  letter-spacing: -0.08em;
-  line-height: 1;
+.lyrics-provider-icon--betterlyrics {
+  color: var(--ui-color-accent);
 }
 </style>

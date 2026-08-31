@@ -1660,6 +1660,31 @@ describe('useLyrics', () => {
     expect(lyrics.state.manualSave.error).toBe('標籤未更新，請再試一次。');
   });
 
+  it.each([
+    ['cache-miss', '這首歌已不在 Better Lyrics 公開快取中，請重新搜尋。'],
+    ['offline', '保存時無法連線至 Better Lyrics，請檢查網路後再試。'],
+    ['stale-search', 'Better Lyrics 搜尋結果已過期，請重新搜尋。'],
+  ])(
+    'preserves the bounded Better Lyrics %s save failure reason',
+    async (reason, expectedMessage) => {
+      saveLyricsProviderCandidateMock.mockResolvedValueOnce({
+        provider: 'betterlyrics',
+        status: 'unavailable',
+        reason,
+      });
+      const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+      await expect(
+        lyrics.saveLyricsProviderCandidate('betterlyrics', {
+          id: 10,
+          previewFingerprint: 'b'.repeat(64),
+        }),
+      ).resolves.toBe(null);
+
+      expect(lyrics.state.manualSave.error).toBe(expectedMessage);
+    },
+  );
+
   it('backfills and edits local source labels through their distinct boundaries', async () => {
     const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
 

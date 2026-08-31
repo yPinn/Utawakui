@@ -43,6 +43,7 @@ describe('LRCLIB candidate presentation', () => {
         'unsupported-lyricsfile-version-fallback',
         'invalid-lyricsfile-fallback',
         'invalid-yrc',
+        'normalized-boundary-jitter',
         'version-mismatch',
         'lyricsfile-missing',
       ]),
@@ -54,6 +55,7 @@ describe('LRCLIB candidate presentation', () => {
       '逐字格式版本尚未支援，已改用逐行或純文字歌詞',
       '逐字資料無法安全讀取，已改用逐行或純文字歌詞',
       '網易逐字資料無法安全讀取，已改用逐行或純文字歌詞',
+      '來源有 1ms 邊界誤差，已對齊相鄰逐字時間',
       '可能是不同版本',
     ]);
   });

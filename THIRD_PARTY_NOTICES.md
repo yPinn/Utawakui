@@ -53,7 +53,7 @@ Notable transitive runtime dependencies:
 | `argparse`      | 2.0.1           | Python-2.0     | Transitive parser dependency used by the update runtime closure.     |
 | `global-agent`  | 4.1.3           | BSD-3-Clause   | Transitive dependency in the production closure.                     |
 | `human-signals` | 5.0.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
-| `sax`           | 1.6.1           | BlueOak-1.0.0  | Transitive XML parser used by the update runtime closure.            |
+| `sax`           | 1.6.1           | BlueOak-1.0.0  | Direct runtime XML parser for bounded provider TTML.                 |
 | `web-worker`    | 1.5.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
 | `type-fest`     | 0.20.2 / 4.41.0 | MIT OR CC0-1.0 | Dual-licensed transitive dependency.                                 |
 

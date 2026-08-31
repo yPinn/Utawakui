@@ -2,18 +2,20 @@
 
 const {
   backfillLyricsSourceLabels,
-  findTrackRecord,
   getTrackLyricsState,
   loadTrackLyricsManifest,
   listTracks,
   resolveTrackDir,
 } = require('../../lib/library');
+const {
+  loadStoredBetterLyricsArtifactSummary,
+} = require('../../lib/betterlyrics');
 const { probeMusixmatchLyrics } = require('../../lib/musixmatch');
 const { loadStoredLrclibArtifactSummary } = require('../../lib/lrclib');
 const { loadStoredNeteaseArtifactSummary } = require('../../lib/netease');
 
 const MAX_LRCLIB_QUERY_CHARS = 256;
-const LYRICS_PROVIDER_IDS = new Set(['lrclib', 'netease']);
+const LYRICS_PROVIDER_IDS = new Set(['lrclib', 'netease', 'betterlyrics']);
 const LYRICS_SEARCH_PROVIDER_IDS = new Set(['all', ...LYRICS_PROVIDER_IDS]);
 
 function normalizeLyricsProviderId(value, options = {}) {
@@ -27,6 +29,9 @@ function normalizeLyricsProviderId(value, options = {}) {
 }
 
 function storedArtifactSummary(trackDir, providerId, provider) {
+  if (providerId === 'betterlyrics') {
+    return loadStoredBetterLyricsArtifactSummary(trackDir, provider);
+  }
   if (providerId === 'lrclib') {
     return loadStoredLrclibArtifactSummary(trackDir, provider);
   }
@@ -236,7 +241,9 @@ function registerLyricsAcquisitionHandlers({
     'lyrics:save-candidate',
     async (event, trackId, candidateId, expectedFingerprint, options) => {
       const dir = resolveDownloadDir(getConfig());
-      const track = findTrackRecord(dir, trackId);
+      const track = listTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
       const normalizedOptions = normalizeLrclibSearchOptions(options);
@@ -270,7 +277,9 @@ function registerLyricsAcquisitionHandlers({
     ) => {
       const providerId = normalizeLyricsProviderId(providerIdValue);
       const dir = resolveDownloadDir(getConfig());
-      const track = findTrackRecord(dir, trackId);
+      const track = listTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
       const trackDir = resolveTrackDir(dir, trackId);
       if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
       const normalizedOptions = normalizeLrclibSearchOptions(options);

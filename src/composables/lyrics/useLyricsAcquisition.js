@@ -24,6 +24,24 @@ const NETEASE_FAILURE_MESSAGES = Object.freeze({
   busy: '已有一筆網易雲音樂搜尋正在進行，請稍候。',
 });
 
+const BETTER_LYRICS_FAILURE_MESSAGES = Object.freeze({
+  'cache-miss': '這首歌目前不在 Better Lyrics 公開快取中。',
+  'not-found': 'Better Lyrics 找不到這首歌的歌詞。',
+  'low-confidence-match': 'Better Lyrics 的符合度不足，已略過可能錯配的歌詞。',
+  'missing-track-identity':
+    'Better Lyrics 需要歌曲名稱、歌手與長度才能安全搜尋。',
+  'rate-limited': 'Better Lyrics 暫時限制搜尋請求，請稍後再試。',
+  offline: '目前無法連線至 Better Lyrics，請檢查網路後再試。',
+  'fetch-unavailable': '目前無法連線至 Better Lyrics，請稍後再試。',
+  timeout: 'Better Lyrics 回應逾時，請稍後再試。',
+  'service-unavailable': 'Better Lyrics 服務暫時無法使用，請稍後再試。',
+  'invalid-json': 'Better Lyrics 回傳了無法讀取的資料，請稍後再試。',
+  'invalid-record': 'Better Lyrics 回傳的資料不完整，已停止使用。',
+  'invalid-ttml': 'Better Lyrics 歌詞不符合安全的逐字格式。',
+  'response-too-large': 'Better Lyrics 回傳資料超出安全限制。',
+  busy: '已有一筆 Better Lyrics 搜尋正在進行，請稍候。',
+});
+
 const PROVIDER_FAILURE_MESSAGES = Object.freeze({
   all: Object.freeze({
     'all-providers-failed': '目前無法搜尋任何線上歌詞來源，請稍後再試。',
@@ -31,7 +49,29 @@ const PROVIDER_FAILURE_MESSAGES = Object.freeze({
   }),
   lrclib: LRCLIB_FAILURE_MESSAGES,
   netease: NETEASE_FAILURE_MESSAGES,
+  betterlyrics: BETTER_LYRICS_FAILURE_MESSAGES,
 });
+
+const BETTER_LYRICS_SAVE_FAILURE_MESSAGES = Object.freeze({
+  'cache-miss': '這首歌已不在 Better Lyrics 公開快取中，請重新搜尋。',
+  offline: '保存時無法連線至 Better Lyrics，請檢查網路後再試。',
+  'fetch-unavailable': '保存時無法連線至 Better Lyrics，請稍後再試。',
+  timeout: 'Better Lyrics 保存驗證逾時，請稍後再試。',
+  'service-unavailable': 'Better Lyrics 服務暫時無法完成保存驗證。',
+  'stale-search': 'Better Lyrics 搜尋結果已過期，請重新搜尋。',
+  'record-mismatch': 'Better Lyrics 的歌詞已不再符合目前曲目，請重新搜尋。',
+  busy: '已有一筆歌詞正在儲存，請稍候。',
+});
+
+function providerSaveFailureMessage(providerId, reason) {
+  return (
+    (providerId === 'betterlyrics'
+      ? BETTER_LYRICS_SAVE_FAILURE_MESSAGES[reason]
+      : null) ||
+    PROVIDER_FAILURE_MESSAGES[providerId]?.[reason] ||
+    '歌詞未儲存，請再試一次。'
+  );
+}
 
 function candidateKey(candidate, fallbackProviderId) {
   return (
@@ -355,9 +395,14 @@ export function useLyricsAcquisition({
           : await legacySave(...args);
       if (result?.status === 'record-changed') return result;
       if (result?.status !== 'saved' || !result.source) {
-        throw new Error(
-          `${providerId} save unavailable: ${result?.reason || 'unknown'}`,
+        const reason = result?.reason || 'unknown';
+        state.manualSave.error = reportLyricsError(
+          new Error(`${providerId} save unavailable: ${reason}`),
+          'save-candidate',
+          providerSaveFailureMessage(providerId, reason),
+          { persist: false },
         );
+        return null;
       }
       await refreshLibrary();
       const keepProviderIdentity =

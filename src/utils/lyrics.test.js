@@ -608,6 +608,18 @@ describe('formatLyricsSourceLabel', () => {
     );
   });
 
+  it('uses the AMLL TTML provider label', () => {
+    expect(formatLyricsSourceLabel({ language: 'und', kind: 'amll' })).toBe(
+      'AMLL TTML',
+    );
+  });
+
+  it('uses the Better Lyrics provider label', () => {
+    expect(
+      formatLyricsSourceLabel({ language: 'und', kind: 'betterlyrics' }),
+    ).toBe('Better Lyrics');
+  });
+
   it('uses the label in place of an unreal language', () => {
     expect(
       formatLyricsSourceLabel({

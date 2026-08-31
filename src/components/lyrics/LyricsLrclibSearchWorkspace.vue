@@ -131,6 +131,7 @@ const resultAnnouncement = computed(() => {
 });
 
 function providerNameFor(providerId) {
+  if (providerId === 'betterlyrics') return 'Better Lyrics';
   if (providerId === 'netease') return '網易雲音樂';
   if (providerId === 'lrclib') return 'LRCLIB';
   return '線上來源';

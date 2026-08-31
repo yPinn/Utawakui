@@ -19,6 +19,16 @@ describe('online lyrics search modal contract', () => {
     expect(manager).toContain('provider-label="所有線上來源"');
     expect(manager).toContain('provider-id="netease"');
     expect(manager).toContain('provider-label="網易雲音樂"');
+    expect(manager).not.toContain('provider-id="amll"');
+    expect(manager).not.toContain('provider-label="AMLL TTML"');
+    expect(manager).toContain('provider-id="betterlyrics"');
+    expect(manager).toContain('provider-label="Better Lyrics"');
+    expect(manager.indexOf('ref="neteasePanelRef"')).toBeLessThan(
+      manager.indexOf('ref="lrclibPanelRef"'),
+    );
+    expect(manager.indexOf('ref="lrclibPanelRef"')).toBeLessThan(
+      manager.indexOf('ref="betterLyricsPanelRef"'),
+    );
     expect(manager).toContain(':provider-id="activeProvider.id"');
     expect(manager).toContain('@back="returnToSources"');
     expect(manager).toContain('lyrics-source-manager__online-list');
@@ -36,8 +46,14 @@ describe('online lyrics search modal contract', () => {
     expect(panel).toContain(':provider-id="providerId"');
     expect(providerIcon).toContain("providerId === 'lrclib'");
     expect(providerIcon).toContain("providerId === 'netease'");
+    expect(providerIcon).not.toContain("providerId === 'amll'");
+    expect(providerIcon).toContain("providerId === 'betterlyrics'");
     expect(providerIcon).toContain('<Disc3');
-    expect(providerIcon).toContain('LRC');
+    expect(providerIcon).toContain('<Captions');
+    expect(providerIcon).not.toContain('<Languages');
+    expect(providerIcon).toContain('<MicVocal');
+    expect(providerIcon).not.toContain('lyrics-provider-icon__monogram');
+    expect(providerIcon).not.toMatch(/>\s*(?:LRC|TTML|BL)\s*</);
     expect(providerIcon).not.toMatch(/https?:\/\//);
   });
 

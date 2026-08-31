@@ -2,8 +2,10 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { saveAmllRecord } from '../lib/amll.js';
 import { saveLrclibRecord } from '../lib/lrclib.js';
 import { saveTrackLyricsText } from '../lib/library/lyrics.js';
+import { saveIndexEntry } from '../lib/library/metadataIndex.js';
 import { saveNeteaseRecord } from '../lib/netease.js';
 import acquisitionHandlersModule from './lyrics/acquisitionHandlers.js';
 import documentHandlersModule from './lyrics/documentHandlers.js';
@@ -301,6 +303,36 @@ describe('lyrics timing IPC', () => {
     await expect(
       ipcMain.handlers.get('lyrics:search-provider-candidates')(
         null,
+        'amll',
+        'track-a',
+        { query: { title: 'Song', artist: 'Artist' } },
+      ),
+    ).rejects.toThrow(/provider/i);
+
+    lyricsAcquisitionService.searchProviderCandidates.mockResolvedValueOnce({
+      provider: 'betterlyrics',
+      status: 'unavailable',
+      reason: 'cache-miss',
+      candidates: [],
+      groups: null,
+      invalidRecordCount: 0,
+    });
+    await expect(
+      ipcMain.handlers.get('lyrics:search-provider-candidates')(
+        null,
+        'betterlyrics',
+        'track-a',
+        { query: { title: 'Song', artist: 'Artist' } },
+      ),
+    ).resolves.toMatchObject({
+      provider: 'betterlyrics',
+      status: 'unavailable',
+      reason: 'cache-miss',
+    });
+
+    await expect(
+      ipcMain.handlers.get('lyrics:search-provider-candidates')(
+        null,
         'netease',
         'track-a',
         {
@@ -451,6 +483,42 @@ describe('lyrics timing IPC', () => {
       },
     );
     expect(notifyLibraryUpdated).toHaveBeenCalled();
+  });
+
+  it('passes indexed track identity into Better Lyrics save revalidation', async () => {
+    saveIndexEntry(dir, 'track-a', {
+      title: 'I AM',
+      artist: 'IVE',
+      album: "I've IVE",
+      duration: 184,
+    });
+    lyricsAcquisitionService.saveProviderCandidate.mockResolvedValue({
+      provider: 'betterlyrics',
+      status: 'saved',
+      source: { filename: 'betterlyrics-42.lrc', kind: 'betterlyrics' },
+    });
+
+    await ipcMain.handlers.get('lyrics:save-provider-candidate')(
+      null,
+      'betterlyrics',
+      'track-a',
+      42,
+      'c'.repeat(64),
+      { query: { title: 'I AM', artist: 'IVE' } },
+    );
+
+    expect(lyricsAcquisitionService.saveProviderCandidate).toHaveBeenCalledWith(
+      'betterlyrics',
+      expect.objectContaining({
+        track: expect.objectContaining({
+          id: 'track-a',
+          title: 'I AM',
+          artist: 'IVE',
+          album: "I've IVE",
+          duration: 184,
+        }),
+      }),
+    );
   });
 
   it('rejects broaden mode and preserves a bounded provider save failure', async () => {
@@ -729,6 +797,47 @@ describe('lyrics timing IPC', () => {
     });
     expect(fs.existsSync(artifactPath)).toBe(false);
     expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+  });
+
+  it('deletes an AMLL source through its provider-owned storage', async () => {
+    const saved = saveAmllRecord(trackDir, {
+      id: 43,
+      filename: '1700000000000-1-song.ttml',
+      trackName: 'Song',
+      artistName: 'Artist',
+      albumName: 'Album',
+      musicNames: ['Song'],
+      artistNames: ['Artist'],
+      albumNames: ['Album'],
+      ncmMusicIds: [],
+      qqMusicIds: [],
+      appleMusicIds: [],
+      spotifyIds: [],
+      isrcs: [],
+      authorIds: ['1'],
+      authorUsernames: ['author'],
+      ttml: '<?xml version="1.0"?><tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://itunes.apple.com/lyric-ttml-extensions" itunes:timing="Word"><body><p begin="1s" end="2s"><span begin="1s" end="2s">Hello</span></p></body></tt>',
+    });
+    const artifactPath = path.join(
+      trackDir,
+      'lyrics',
+      'providers',
+      'amll-43.json',
+    );
+    expect(fs.existsSync(artifactPath)).toBe(true);
+
+    await expect(
+      ipcMain.handlers.get('lyrics:delete-source')(
+        null,
+        'track-a',
+        saved.source.filename,
+      ),
+    ).resolves.toMatchObject({
+      sources: expect.not.arrayContaining([
+        expect.objectContaining({ filename: saved.source.filename }),
+      ]),
+    });
+    expect(fs.existsSync(artifactPath)).toBe(false);
   });
 
   it('generates, edits, reports progress for, and deletes a reading document', async () => {

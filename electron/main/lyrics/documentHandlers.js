@@ -12,6 +12,8 @@ const {
   setLyricsSourceLabel,
   setLyricsSourceOffset,
 } = require('../../lib/library');
+const { deleteStoredAmllSource } = require('../../lib/amll');
+const { deleteStoredBetterLyricsSource } = require('../../lib/betterlyrics');
 const { deleteStoredLrclibSource } = require('../../lib/lrclib');
 const { deleteStoredNeteaseSource } = require('../../lib/netease');
 
@@ -97,9 +99,11 @@ function registerLyricsDocumentHandlers({
       (candidate) => candidate.filename === filename,
     );
     const deleteSource =
-      source?.provider?.name === 'netease'
-        ? deleteStoredNeteaseSource
-        : deleteStoredLrclibSource;
+      {
+        amll: deleteStoredAmllSource,
+        betterlyrics: deleteStoredBetterLyricsSource,
+        netease: deleteStoredNeteaseSource,
+      }[source?.provider?.name] || deleteStoredLrclibSource;
     if (!deleteSource(trackDir, filename)) {
       throw new Error(`unable to delete lyrics source: ${filename}`);
     }

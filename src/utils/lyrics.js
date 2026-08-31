@@ -557,6 +557,8 @@ export function pickPreferredLyricsSource(track, currentFilename = null) {
 
 const LYRICS_SOURCE_KIND_LABELS = {
   'youtube-cc': 'YouTube CC',
+  amll: 'AMLL TTML',
+  betterlyrics: 'Better Lyrics',
   lrclib: 'LRCLIB',
   netease: '網易雲音樂',
   manual: '手動匯入',

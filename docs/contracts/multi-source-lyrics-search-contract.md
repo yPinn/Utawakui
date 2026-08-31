@@ -6,7 +6,7 @@
 ## 產品行為
 
 `所有線上來源` 是手動歌詞搜尋的主要入口，仍受 `lyrics-flow` gate 保護。Main 只對
-allowlisted 的 LRCLIB 與 NetEase 平行 fan-out；任一來源成功即可回傳可用結果，另一來源
+allowlisted 的 LRCLIB、NetEase 與 Better Lyrics 公開快取平行 fan-out；任一來源成功即可回傳可用結果，其他來源
 失敗只形成 bounded partial status，不會丟棄成功候選。個別來源入口仍保留供使用者篩選、
 重試與確認來源差異。
 
@@ -43,6 +43,8 @@ Group 是搜尋 presentation，不是新的歌詞 artifact。不同來源的 lin
 - NetEase 先以 metadata identity gate 過濾最多十筆搜尋結果，再依排名最多三筆一批取得
   YRC／LRC；取得三筆可用候選即停止。若高排名項目沒有可用歌詞，繼續下一批直到達標或
   metadata exhausted。
+- Better Lyrics 以 title、artist、album 與 duration 執行單筆 cache-first 查詢；401 是預期
+  cache miss。回應缺少命中 metadata，因此只提供手動預覽／保存，並沿用相同 TTML validator。
 - 每個來源保留自己的 scheduler 與 request interval；平行 fan-out 不繞過 provider rate
   limit。
 - 相同 provider／track identity／query／mode 的 in-flight search 共用同一 promise。成功
@@ -53,6 +55,10 @@ Group 是搜尋 presentation，不是新的歌詞 artifact。不同來源的 lin
 
 Main 的 timing metric 只包含 provider、cache hit、duration、candidate count 與 status；不得
 記錄 track title、artist、candidate id 或歌詞內容。
+
+AMLL acquisition 已退出 renderer 入口、main provider allowlist 與 `all` fan-out。Main 對
+`amll` search／save intent 回覆 invalid provider；退役前保存的 AMLL 本機來源仍由 document
+handler 提供讀取與刪除相容，不屬於本搜尋契約。
 
 ## Renderer contract
 

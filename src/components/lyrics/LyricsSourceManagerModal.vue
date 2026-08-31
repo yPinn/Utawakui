@@ -26,8 +26,9 @@ const { state, selectedLyrics, setSourceLabel, deleteSource } = useLyrics();
 const activeView = ref('sources');
 const activeProviderId = ref('all');
 const allProvidersPanelRef = useTemplateRef('allProvidersPanelRef');
-const lrclibPanelRef = useTemplateRef('lrclibPanelRef');
 const neteasePanelRef = useTemplateRef('neteasePanelRef');
+const lrclibPanelRef = useTemplateRef('lrclibPanelRef');
+const betterLyricsPanelRef = useTemplateRef('betterLyricsPanelRef');
 const isManualImportOpen = ref(false);
 const editingFilename = ref(null);
 const labelDraft = ref('');
@@ -35,8 +36,9 @@ const sourceTiers = ref(new Map());
 let sourceTierRequestId = 0;
 const PROVIDERS = Object.freeze({
   all: Object.freeze({ id: 'all', label: '所有線上來源' }),
-  lrclib: Object.freeze({ id: 'lrclib', label: 'LRCLIB' }),
   netease: Object.freeze({ id: 'netease', label: '網易雲音樂' }),
+  lrclib: Object.freeze({ id: 'lrclib', label: 'LRCLIB' }),
+  betterlyrics: Object.freeze({ id: 'betterlyrics', label: 'Better Lyrics' }),
 });
 const activeProvider = computed(() => PROVIDERS[activeProviderId.value]);
 const modalTitle = computed(() =>
@@ -78,8 +80,9 @@ async function returnToSources() {
   await nextTick();
   const panelRef = {
     all: allProvidersPanelRef.value,
-    lrclib: lrclibPanelRef.value,
     netease: neteasePanelRef.value,
+    lrclib: lrclibPanelRef.value,
+    betterlyrics: betterLyricsPanelRef.value,
   }[activeProviderId.value];
   panelRef?.focusSearchTrigger();
 }
@@ -275,14 +278,20 @@ function sourceTierLabel(source) {
             @open-search="openProviderSearch('all')"
           />
           <LyricsLrclibSearchPanel
-            ref="lrclibPanelRef"
-            @open-search="openProviderSearch('lrclib')"
-          />
-          <LyricsLrclibSearchPanel
             ref="neteasePanelRef"
             provider-id="netease"
             provider-label="網易雲音樂"
             @open-search="openProviderSearch('netease')"
+          />
+          <LyricsLrclibSearchPanel
+            ref="lrclibPanelRef"
+            @open-search="openProviderSearch('lrclib')"
+          />
+          <LyricsLrclibSearchPanel
+            ref="betterLyricsPanelRef"
+            provider-id="betterlyrics"
+            provider-label="Better Lyrics"
+            @open-search="openProviderSearch('betterlyrics')"
           />
         </div>
       </section>

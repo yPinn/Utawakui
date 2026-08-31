@@ -96,6 +96,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [timing](contracts/lyrics-timing-contract.md)、
   [provider evaluation corpus](contracts/lyrics-provider-evaluation-corpus.md)、
   [NetEase acquisition](contracts/netease-acquisition-contract.md)、
+  [AMLL retired-source compatibility](contracts/amll-acquisition-contract.md)、
+  [Better Lyrics cache acquisition](contracts/betterlyrics-acquisition-contract.md)、
   [NetEase isolated validation (historical)](contracts/netease-isolated-technical-validation.md)、
   [Musixmatch reserve adapter](contracts/musixmatch-reserve-adapter.md)。
 - Output：[runtime hardening](contracts/output-runtime-hardening.md)、

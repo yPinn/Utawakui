@@ -2,6 +2,9 @@
 
 const { getTrackLyricsState } = require('../lib/library');
 const {
+  createBetterLyricsAcquisitionProvider,
+} = require('../lib/betterlyrics');
+const {
   createLrclibClient,
   fetchLrclibRecord,
   findLrclibSyncedLyrics,
@@ -19,6 +22,8 @@ const OPERATION_MESSAGES = Object.freeze({
   save: '[lyrics] LRCLIB save failed',
   fetch: '[lyrics] LRCLIB fetch failed',
   'automatic-acquisition': '[lyrics] LRCLIB automatic acquisition failed',
+  'betterlyrics-search': '[lyrics] Better Lyrics search failed',
+  'betterlyrics-save': '[lyrics] Better Lyrics save failed',
   'netease-search': '[lyrics] NetEase search failed',
   'netease-save': '[lyrics] NetEase save failed',
 });
@@ -28,7 +33,11 @@ const NON_RETRYABLE_REASONS = new Set([
   'invalid-request',
   'response-too-large',
 ]);
-const SEARCH_PROVIDER_IDS = Object.freeze(['lrclib', 'netease']);
+const SEARCH_PROVIDER_IDS = Object.freeze([
+  'lrclib',
+  'netease',
+  'betterlyrics',
+]);
 const DEFAULT_CANDIDATE_CACHE_TTL_MS = 5 * 60 * 1000;
 const MAX_CACHED_CANDIDATE_SEARCHES = 32;
 
@@ -55,8 +64,12 @@ function isRetryableFailure(result) {
 }
 
 function providerFailureError(operation, result) {
-  const provider = operation.startsWith('netease-') ? 'NetEase' : 'LRCLIB';
-  const operationName = operation.replace(/^netease-/u, '');
+  const provider = operation.startsWith('netease-')
+    ? 'NetEase'
+    : operation.startsWith('betterlyrics-')
+      ? 'Better Lyrics'
+      : 'LRCLIB';
+  const operationName = operation.replace(/^(?:betterlyrics|netease)-/u, '');
   const httpStatus = Number.isInteger(result?.httpStatus)
     ? ` (HTTP ${result.httpStatus})`
     : '';
@@ -70,6 +83,7 @@ function createLyricsAcquisitionService({
   featureId,
   client = createLrclibClient(),
   neteaseProvider = createNeteaseAcquisitionProvider(),
+  betterLyricsProvider = createBetterLyricsAcquisitionProvider(),
   logger = console,
   candidateCacheTtlMs = DEFAULT_CANDIDATE_CACHE_TTL_MS,
   now = Date.now,
@@ -160,6 +174,11 @@ function createLyricsAcquisitionService({
     if (providerId === 'lrclib') {
       return observeProviderOperation('search', () =>
         searchLrclibCandidates(track, { ...options, client, signal }),
+      );
+    }
+    if (providerId === 'betterlyrics') {
+      return observeProviderOperation('betterlyrics-search', () =>
+        betterLyricsProvider.searchCandidates(track, { ...options, signal }),
       );
     }
     return observeProviderOperation('netease-search', () =>
@@ -255,15 +274,17 @@ function createLyricsAcquisitionService({
 
   async function saveProviderCandidate(providerId, options) {
     if (providerId === 'lrclib') return saveCandidate(options);
-    if (providerId !== 'netease') {
+    if (!['betterlyrics', 'netease'].includes(providerId)) {
       throw new Error('lyrics provider is invalid');
     }
     requireLyricsFlow();
     if (candidateSaveInFlight) {
-      return { provider: 'netease', status: 'error', reason: 'busy' };
+      return { provider: providerId, status: 'error', reason: 'busy' };
     }
-    const operation = observeProviderOperation('netease-save', () =>
-      neteaseProvider.saveCandidate(options),
+    const provider =
+      providerId === 'betterlyrics' ? betterLyricsProvider : neteaseProvider;
+    const operation = observeProviderOperation(`${providerId}-save`, () =>
+      provider.saveCandidate(options),
     );
     candidateSaveInFlight = operation;
     try {

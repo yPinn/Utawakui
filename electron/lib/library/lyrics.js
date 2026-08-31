@@ -65,6 +65,8 @@ function getLyricsDirFromTrackDir(trackDir) {
 
 const MAX_LYRICS_SOURCE_OFFSET_MS = 3_600_000;
 const PROVIDER_ARTIFACT_PATTERNS = Object.freeze({
+  amll: /^amll-[1-9]\d*\.json$/,
+  betterlyrics: /^betterlyrics-[1-9]\d*\.json$/,
   lrclib: /^lrclib-[1-9]\d*\.json$/,
   netease: /^netease-[1-9]\d*\.json$/,
 });

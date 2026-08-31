@@ -72,7 +72,7 @@ describe('createLyricsAcquisitionService', () => {
     expect(provider.getById).toHaveBeenCalledOnce();
   });
 
-  it('routes the allowlisted NetEase provider through the same lyrics gate', async () => {
+  it('routes allowlisted NetEase and Better Lyrics providers through the same lyrics gate', async () => {
     const requireFeatureGate = vi.fn();
     const neteaseProvider = {
       searchCandidates: vi.fn().mockResolvedValue({
@@ -86,11 +86,24 @@ describe('createLyricsAcquisitionService', () => {
         status: 'saved',
       }),
     };
+    const betterLyricsProvider = {
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'betterlyrics',
+        status: 'ok',
+        candidates: [],
+        groups: { best: [], related: [] },
+      }),
+      saveCandidate: vi.fn().mockResolvedValue({
+        provider: 'betterlyrics',
+        status: 'saved',
+      }),
+    };
     const service = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: 'lyrics-flow',
       client: client(),
       neteaseProvider,
+      betterLyricsProvider,
     });
 
     await service.searchProviderCandidates('netease', track);
@@ -100,8 +113,15 @@ describe('createLyricsAcquisitionService', () => {
       candidateId: 42,
       expectedFingerprint: 'a'.repeat(64),
     });
+    await service.searchProviderCandidates('betterlyrics', track);
+    await service.saveProviderCandidate('betterlyrics', {
+      track,
+      trackDir,
+      candidateId: 44,
+      expectedFingerprint: 'c'.repeat(64),
+    });
 
-    expect(requireFeatureGate).toHaveBeenCalledTimes(2);
+    expect(requireFeatureGate).toHaveBeenCalledTimes(4);
     expect(neteaseProvider.searchCandidates).toHaveBeenCalledWith(track, {
       signal: expect.any(AbortSignal),
     });
@@ -111,6 +131,26 @@ describe('createLyricsAcquisitionService', () => {
       candidateId: 42,
       expectedFingerprint: 'a'.repeat(64),
     });
+    expect(betterLyricsProvider.searchCandidates).toHaveBeenCalledWith(track, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(betterLyricsProvider.saveCandidate).toHaveBeenCalledWith({
+      track,
+      trackDir,
+      candidateId: 44,
+      expectedFingerprint: 'c'.repeat(64),
+    });
+    await expect(
+      service.searchProviderCandidates('amll', track),
+    ).rejects.toThrow(/provider is invalid/i);
+    await expect(
+      service.saveProviderCandidate('amll', {
+        track,
+        trackDir,
+        candidateId: 43,
+        expectedFingerprint: 'b'.repeat(64),
+      }),
+    ).rejects.toThrow(/provider is invalid/i);
     await expect(
       service.searchProviderCandidates('unknown-provider', track),
     ).rejects.toThrow(/provider is invalid/i);
@@ -167,17 +207,28 @@ describe('createLyricsAcquisitionService', () => {
       ),
       saveCandidate: vi.fn(),
     };
+    const betterLyricsProvider = {
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'betterlyrics',
+        status: 'unavailable',
+        reason: 'cache-miss',
+        candidates: [],
+      }),
+      saveCandidate: vi.fn(),
+    };
     const service = createLyricsAcquisitionService({
       requireFeatureGate: vi.fn(),
       featureId: 'lyrics-flow',
       client: provider,
       neteaseProvider,
+      betterLyricsProvider,
     });
 
     const pending = service.searchProviderCandidates('all', track);
     await vi.waitFor(() => {
       expect(provider.getExact).toHaveBeenCalledOnce();
       expect(neteaseProvider.searchCandidates).toHaveBeenCalledOnce();
+      expect(betterLyricsProvider.searchCandidates).toHaveBeenCalledOnce();
     });
     resolveExact({ status: 'unavailable', reason: 'not-found' });
     resolveNetease({
@@ -205,7 +256,7 @@ describe('createLyricsAcquisitionService', () => {
     await expect(pending).resolves.toMatchObject({
       provider: 'all',
       status: 'ok',
-      partial: false,
+      partial: true,
       candidates: [{ providerId: 'netease', candidateKey: 'netease:9' }],
       recordingGroups: {
         best: [{ recommendedCandidateKey: 'netease:9' }],

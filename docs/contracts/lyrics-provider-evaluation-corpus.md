@@ -272,6 +272,11 @@ rejects extra fields. Do not add lyrics, provider payloads, provider
 record ids, credentials, cookies, URLs, filesystem paths, source hashes, notes, or
 free-form tags.
 
+The AMLL profile remains an isolated research／historical comparison after its
+product acquisition path was retired on 2026-08-31. Its presence in this private
+evaluation registry does not make it a renderer option, main IPC provider, or
+member of the production `all` fan-out.
+
 ## Probe Contract
 
 The runner receives one statically constructed probe function per declared
