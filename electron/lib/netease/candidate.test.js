@@ -99,4 +99,26 @@ describe('NetEase candidate projection', () => {
       artistScore: 1,
     });
   });
+
+  it('treats traditional and simplified Chinese recording metadata as the same identity', () => {
+    const [match] = rankNeteaseMetadata(
+      { title: '七里香', artist: '周杰倫', duration: 299 },
+      [
+        record({
+          trackName: '七里香',
+          artistName: '周杰伦',
+          artists: ['周杰伦'],
+          duration: 299,
+          yrcLyrics: undefined,
+          lrcLyrics: undefined,
+        }),
+      ],
+    );
+
+    expect(match).toMatchObject({
+      matchBand: 'exact',
+      titleScore: 1,
+      artistScore: 1,
+    });
+  });
 });

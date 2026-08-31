@@ -1,6 +1,8 @@
 'use strict';
 
 const crypto = require('crypto');
+const OpenCCSimplified = require('opencc-js/t2cn');
+const OpenCCTraditional = require('opencc-js/cn2t');
 const {
   durationDelta,
   signedDurationDelta,
@@ -9,6 +11,9 @@ const {
 } = require('../lrclib/matching.js');
 const { parseLrcLines } = require('../lrclib/lrc.js');
 const { analyzeNeteaseLyrics } = require('./yrc.js');
+
+const toSimplified = OpenCCSimplified.Converter({ from: 'tw', to: 'cn' });
+const toTraditional = OpenCCTraditional.Converter({ from: 'cn', to: 'tw' });
 
 function stableRecord(record) {
   return {
@@ -33,7 +38,14 @@ function fingerprintNeteaseRecord(record) {
 }
 
 function bestTextScore(expected, values) {
-  return Math.max(0, ...values.map((value) => textMatchScore(expected, value)));
+  return Math.max(
+    0,
+    ...values.flatMap((value) => [
+      textMatchScore(expected, value),
+      textMatchScore(toSimplified(expected), toSimplified(value)),
+      textMatchScore(toTraditional(expected), toTraditional(value)),
+    ]),
+  );
 }
 
 function evaluateNeteaseMetadata(track, record) {

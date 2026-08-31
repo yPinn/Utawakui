@@ -33,13 +33,11 @@ function broadenedTitle(value) {
   );
 }
 
-function searchQueries(identity, mode, retainCached) {
+function searchQueries(plan, mode, retainCached) {
+  const { identity } = plan;
   const queries = [];
   if (mode !== 'broaden' || !retainCached) {
-    queries.push({
-      trackName: identity.trackName,
-      ...(identity.artistName ? { artistName: identity.artistName } : {}),
-    });
+    queries.push(...plan.structuredQueries);
   }
   if (mode === 'broaden') {
     queries.push({ trackName: broadenedTitle(identity.trackName) });
@@ -105,11 +103,7 @@ function createNeteaseAcquisitionProvider(options = {}) {
     const metadataById = new Map();
     let invalidRecordCount = 0;
     let firstFailure = null;
-    for (const query of searchQueries(
-      plan.identity,
-      searchOptions.mode,
-      retainCached,
-    )) {
+    for (const query of searchQueries(plan, searchOptions.mode, retainCached)) {
       const search = searchOptions.signal
         ? await client.search(query, { signal: searchOptions.signal })
         : await client.search(query);

@@ -188,6 +188,63 @@ describe('createNeteaseAcquisitionProvider', () => {
     ]);
   });
 
+  it('uses bounded cross-script structured title variants before hydration', async () => {
+    const api = client({
+      search: vi
+        .fn()
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [],
+          invalidRecordCount: 0,
+        })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [
+            metadata({
+              trackName: '夜に駆ける',
+              artistName: 'YOASOBI',
+              artists: ['YOASOBI'],
+              duration: 261,
+            }),
+          ],
+          invalidRecordCount: 0,
+        })
+        .mockResolvedValueOnce({
+          status: 'ok',
+          records: [],
+          invalidRecordCount: 0,
+        }),
+    });
+    const provider = createNeteaseAcquisitionProvider({ client: api });
+
+    const result = await provider.searchCandidates({
+      title: '夜に駆ける - Racing into the Night',
+      artist: 'YOASOBI',
+      duration: 261,
+    });
+
+    expect(api.search.mock.calls).toEqual([
+      [
+        {
+          trackName: '夜に駆ける - Racing into the Night',
+          artistName: 'YOASOBI',
+        },
+      ],
+      [{ trackName: '夜に駆ける', artistName: 'YOASOBI' }],
+      [{ trackName: 'Racing into the Night', artistName: 'YOASOBI' }],
+    ]);
+    expect(api.getLyrics).toHaveBeenCalledWith(42);
+    expect(result).toMatchObject({
+      status: 'ok',
+      candidates: [
+        {
+          id: 42,
+          capability: { level: 'T2', partial: false },
+        },
+      ],
+    });
+  });
+
   it('keeps structured candidates when a punctuation-cleaned broaden query returns none', async () => {
     const leadingPunctuationRecord = metadata({
       trackName: '.锁链',

@@ -40,7 +40,9 @@ Group 是搜尋 presentation，不是新的歌詞 artifact。不同來源的 lin
 ## 查詢成本與生命週期
 
 - LRCLIB search response 已包含候選歌詞，直接 normalize／analyze，不製造第二輪 hydration。
-- NetEase 先以 metadata identity gate 過濾最多十筆搜尋結果，再依排名最多三筆一批取得
+- NetEase 依既有 query plan 最多送出三個 structured title／artist variants，涵蓋 bounded
+  cross-script title aliases；候選 identity 比對會把繁／簡中文視為同一文字身份，但不改寫
+  保存內容。每次搜尋先以 metadata gate 過濾最多十筆結果，再依排名最多三筆一批取得
   YRC／LRC；取得三筆可用候選即停止。若高排名項目沒有可用歌詞，繼續下一批直到達標或
   metadata exhausted。
 - Better Lyrics 以 title、artist、album 與 duration 執行單筆 cache-first 查詢；401 是預期

@@ -11,6 +11,10 @@ NetEase 是 `lyrics-flow` 保護下的手動候選來源，與 LRCLIB 並列於�
 去重原本候選，再合併移除歌手限制、清理曲名邊界標點的 recovery query；候選仍沿用相同的
 錄音版本與時長 gate，因此結果集不會比原搜尋縮小。
 
+一般搜尋會使用 shared query plan 產生的最多三組 structured title／artist variants，包含
+bounded cross-script title aliases。候選 identity scoring 會把繁／簡中文標題與歌手視為等價，
+但不改寫下載內容、保存 metadata 或 provenance。
+
 2026-08-29 的 owner 決定略過原本的 Sentinel／30 日資格觀測，直接進行實驗性接入。
 這取代產品進入條件，不改寫 2026-08-28 隔離式穩定性報告，也不代表對上游可用率或曲庫
 覆蓋率作出保證。
@@ -43,6 +47,11 @@ marker 過濾及排序；明顯版本不符或時長差距過大的資料不發�
 Live proof 於 2026-08-29 使用四語 smoke：4／4 requests、4／4 matches；其中中文與英文候選
 取得完整 validated T2，日文與韓文候選只有 T1。這只證明逐字資料確實存在且不是由本機推估，
 不代表每首歌曲都有 YRC。
+
+2026-09-01 的三筆 anonymous endpoint regression smoke 則是 3／3 top records 有 LRC、0／3
+有 YRC；production candidate smoke 得到四筆 T1、零筆 T2。這不推翻歷史樣本，但證明 YRC
+availability 已改變或高度不穩定。產品必須保留 truthful T1 fallback，不得把此來源描述為
+穩定逐字來源，也不得為提高命中率而放寬完整 YRC validator。
 
 ## 保存與 provenance
 
