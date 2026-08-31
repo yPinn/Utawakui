@@ -43,6 +43,7 @@ const coveragePolicy = Object.freeze({
     'scripts/lyrics-provider-corpus-sources.mjs',
     'scripts/lyrics-provider-corpus-strata.mjs',
     'scripts/lyrics-provider-evaluation.mjs',
+    'scripts/lyrics-provider-kugou.mjs',
     'scripts/lyrics-provider-lrclib.mjs',
     'scripts/lyrics-provider-netease.mjs',
     'scripts/lyrics-provider-netease-evaluation.mjs',
