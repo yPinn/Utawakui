@@ -219,8 +219,8 @@ describe('buildReadingDoc', () => {
     expect(doc.lines).toEqual([]);
   });
 
-  describe('deliberate word-boundary spacing', () => {
-    it('inserts a gap between two adjacent tokens that both touch kanji with no kana between them', () => {
+  describe('canonical segment text', () => {
+    it('does not invent a gap between adjacent kanji tokens', () => {
       const tokenize = () => [
         { surface_form: '会議', reading: 'カイギ' },
         { surface_form: '資料', reading: 'シリョウ' },
@@ -229,9 +229,11 @@ describe('buildReadingDoc', () => {
 
       expect(doc.lines[0].segments).toEqual([
         { t: '会議', r: 'かいぎ' },
-        { t: ' ' },
         { t: '資料', r: 'しりょう' },
       ]);
+      expect(doc.lines[0].segments.map((segment) => segment.t).join('')).toBe(
+        doc.lines[0].text,
+      );
     });
 
     it('does not insert a gap when a kana character already separates the tokens', () => {
@@ -265,7 +267,7 @@ describe('buildReadingDoc', () => {
       ]);
     });
 
-    it('inserts a gap at every qualifying boundary across more than two tokens', () => {
+    it('keeps every adjacent kanji boundary source-exact', () => {
       const tokenize = () => [
         { surface_form: '何', reading: 'ナン' },
         { surface_form: '十', reading: 'ジュウ' },
@@ -275,11 +277,12 @@ describe('buildReadingDoc', () => {
 
       expect(doc.lines[0].segments).toEqual([
         { t: '何', r: 'なん' },
-        { t: ' ' },
         { t: '十', r: 'じゅう' },
-        { t: ' ' },
         { t: '回', r: 'かい' },
       ]);
+      expect(doc.lines[0].segments.map((segment) => segment.t).join('')).toBe(
+        '何十回',
+      );
     });
   });
 });

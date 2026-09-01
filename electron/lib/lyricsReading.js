@@ -114,16 +114,6 @@ function containsKanji(text) {
   return KANJI_CHAR_RE.test(String(text || ''));
 }
 
-function endsWithKanji(text) {
-  const value = String(text || '');
-  return containsKanji(value.at(-1) || '');
-}
-
-function startsWithKanji(text) {
-  const value = String(text || '');
-  return containsKanji(value[0] || '');
-}
-
 // Whether text has at least one hiragana/katakana character. Distinct
 // from containsKanji: a line can be all-kana (no kanji, e.g. だから,
 // なくなった) and still be fully Japanese, needing romaji even though
@@ -185,36 +175,14 @@ function buildReadingDoc(lines, options = {}) {
       };
     }
 
-    // Some lyrics sources use a full-width space (U+3000) as a visual
-    // word separator between adjacent kanji compounds that have no
-    // natural kana between them (e.g. two back-to-back nouns). Rendered
-    // literally, that reads as a whole extra character's worth of gap —
-    // wildly inconsistent next to the narrow gaps kana already provides
-    // elsewhere in the same line. Collapsed to one regular space here
-    // (only for what gets tokenized/annotated — the returned `text`
-    // below stays the untouched original) so word-boundary gaps read
-    // consistently regardless of which whitespace character the source
-    // happened to use.
-    const tokens = tokenize(text.replace(/\s+/g, ' ')) || [];
-    const segments = tokens.flatMap((token, tokenIndex) => {
-      const tokenSegments = alignOkurigana(token.surface_form, token.reading);
-      const previous = tokens[tokenIndex - 1];
-      // Deliberate word-boundary spacing: two adjacent tokens that both
-      // end/start with kanji (no natural kana between them, e.g. two
-      // back-to-back nouns) run together with no visual cue for where one
-      // reading ends and the next begins — the same illegibility the
-      // full-width-space normalization above fixes for lines that already
-      // had a literal space, but proactive here for lines that never had
-      // one. `.trim()` guards against inserting this next to a token that
-      // is itself pure whitespace (already handled on its own).
-      const needsWordGap =
-        previous &&
-        previous.surface_form.trim() &&
-        token.surface_form.trim() &&
-        endsWithKanji(previous.surface_form) &&
-        startsWithKanji(token.surface_form);
-      return needsWordGap ? [{ t: ' ' }, ...tokenSegments] : tokenSegments;
-    });
+    // Segment text is part of the canonical reading identity: concatenating
+    // every `t` must reproduce the untouched lyric line exactly. Tokenize the
+    // original string and never add presentation-only separators here. Romaji
+    // can still use token boundaries below without changing visible source text.
+    const tokens = tokenize(text) || [];
+    const segments = tokens.flatMap((token) =>
+      alignOkurigana(token.surface_form, token.reading),
+    );
     // Joined with a space per token boundary (kuromoji's own word
     // segmentation), not concatenated — wanakana passes the spaces through
     // untouched, so the romaji reads as separate words ("utau koe") instead

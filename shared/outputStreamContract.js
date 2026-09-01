@@ -4,6 +4,7 @@ const outputValues = require('./outputContractValues.json');
 const runtimeValues = require('./outputRuntimeValues.json');
 const timingValues = require('./lyricsTimingValues.json');
 const musicValues = require('./musicStructureContractValues.json');
+const performerValues = require('./performerContractValues.json');
 const { parseOutputSnapshot } = require('./outputContract');
 
 const OUTPUT_V3_SUBPROTOCOL = outputValues.webSocketSubprotocol;
@@ -29,6 +30,8 @@ const MAX_LABEL_LENGTH = 300;
 const SHA256_RE = /^[a-f0-9]{64}$/;
 const MUSIC_LEVELS = new Set(['M1', 'M2']);
 const MUSIC_SECTION_ROLES = new Set(musicValues.canonicalSectionRoles);
+const JAPANESE_KANA_RE = /[\u3040-\u30ff]/g;
+const KOREAN_HANGUL_RE = /[\uac00-\ud7af]/g;
 
 function invalid(path, reason) {
   throw new TypeError(`Invalid output stream ${path}: ${reason}`);
@@ -196,6 +199,75 @@ function parseLine(value, path, usedIds, counters) {
   };
 }
 
+function parseReading(value, lines) {
+  if (value === undefined || value === null) return null;
+  const reading = record(value, 'payload.document.reading');
+  if (!Array.isArray(reading.lines) || reading.lines.length !== lines.length) {
+    invalid(
+      'payload.document.reading.lines',
+      'must align with every lyric line',
+    );
+  }
+  return {
+    lines: reading.lines.map((rawLine, lineIndex) => {
+      const path = `payload.document.reading.lines[${lineIndex}]`;
+      const line = record(rawLine, path);
+      const lyricLine = lines[lineIndex];
+      const lineId = id(line.lineId, `${path}.lineId`);
+      const lineText = string(
+        line.text,
+        `${path}.text`,
+        timingValues.maxTextLength,
+      );
+      if (lineId !== lyricLine.lineId || lineText !== lyricLine.text) {
+        invalid(path, 'must match the corresponding lyric line');
+      }
+      if (
+        !Array.isArray(line.segments) ||
+        line.segments.length > performerValues.maxReadingSegmentsPerLine
+      ) {
+        invalid(`${path}.segments`, 'expected a bounded array');
+      }
+      const segments = line.segments.map((rawSegment, segmentIndex) => {
+        const segmentPath = `${path}.segments[${segmentIndex}]`;
+        const segment = record(rawSegment, segmentPath);
+        const segmentText = string(
+          segment.text,
+          `${segmentPath}.text`,
+          timingValues.maxTextLength,
+        );
+        const readingText = optionalString(
+          segment.reading,
+          `${segmentPath}.reading`,
+          timingValues.maxTextLength,
+        );
+        return {
+          text: segmentText,
+          ...(readingText ? { reading: readingText } : {}),
+        };
+      });
+      if (segments.map((segment) => segment.text).join('') !== lineText) {
+        invalid(`${path}.segments`, 'text must preserve the parent line');
+      }
+      return { lineId, text: lineText, segments };
+    }),
+  };
+}
+
+function hasJapaneseLyricsEvidence(source, lines) {
+  if (
+    String(source?.language ?? '')
+      .toLocaleLowerCase()
+      .startsWith('ja')
+  ) {
+    return true;
+  }
+  const text = lines.map((line) => line.text).join('\n');
+  const kana = (text.match(JAPANESE_KANA_RE) || []).length;
+  const hangul = (text.match(KOREAN_HANGUL_RE) || []).length;
+  return kana > 0 && hangul <= kana;
+}
+
 function parseLyricsDocument(value) {
   if (value === null) return null;
   const document = record(value, 'payload.document');
@@ -252,12 +324,18 @@ function parseLyricsDocument(value) {
   if (document.granularity !== granularity) {
     invalid('payload.document.granularity', `expected ${granularity}`);
   }
+  const source = parseSource(document.source, 'payload.document.source');
+  const reading = parseReading(document.reading, lines);
+  if (reading && !hasJapaneseLyricsEvidence(source, lines)) {
+    invalid('payload.document.reading', 'Japanese lyrics are required');
+  }
   return {
     documentId: id(document.documentId, 'payload.document.documentId'),
     trackId: id(document.trackId, 'payload.document.trackId'),
     granularity,
-    source: parseSource(document.source, 'payload.document.source'),
+    source,
     lines,
+    ...(reading ? { reading } : {}),
   };
 }
 

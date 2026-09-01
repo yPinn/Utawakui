@@ -65,6 +65,142 @@ describe('output stream projection', () => {
     expect(JSON.stringify(document)).not.toContain('filename');
   });
 
+  it('projects only identity-matched Japanese readings as public ruby segments', () => {
+    const sourceFingerprint = 'a'.repeat(64);
+    const document = projectLyricsOutputDocument({
+      trackId: 'track-1',
+      source: { filename: 'main.ja.lrc', language: 'ja' },
+      document: {
+        documentId: 'lyrics-1',
+        normalizerProfileId: 'lyrics-source-v2',
+        granularity: 'T0',
+        source: { sha256: sourceFingerprint },
+        lines: [
+          { lineId: 'line-1', text: '地下鉄', startMs: null, endMs: null },
+        ],
+      },
+      readingDocument: {
+        version: 3,
+        documentId: 'lyrics-1',
+        normalizerProfileId: 'lyrics-source-v2',
+        sourceFingerprint,
+        lines: [
+          {
+            lineId: 'line-1',
+            text: '地下鉄',
+            segments: [{ t: '地下鉄', r: 'ちかてつ', privateTag: 'hidden' }],
+            romaji: 'chikatetsu',
+          },
+        ],
+      },
+    });
+
+    expect(document.reading).toEqual({
+      lines: [
+        {
+          lineId: 'line-1',
+          text: '地下鉄',
+          segments: [{ text: '地下鉄', reading: 'ちかてつ' }],
+        },
+      ],
+    });
+    expect(JSON.stringify(document.reading)).not.toContain('romaji');
+    expect(JSON.stringify(document.reading)).not.toContain('privateTag');
+  });
+
+  it('projects an identity-matched reading when Japanese text has undetermined source metadata', () => {
+    const sourceFingerprint = 'a'.repeat(64);
+    const document = projectLyricsOutputDocument({
+      trackId: 'track-1',
+      source: { filename: 'betterlyrics.lrc', language: 'und' },
+      document: {
+        documentId: 'lyrics-1',
+        normalizerProfileId: 'lyrics-source-v2',
+        granularity: 'T0',
+        source: { sha256: sourceFingerprint },
+        lines: [
+          {
+            lineId: 'line-1',
+            text: '残したこの火種は離さない',
+            startMs: null,
+            endMs: null,
+          },
+        ],
+      },
+      readingDocument: {
+        version: 3,
+        documentId: 'lyrics-1',
+        normalizerProfileId: 'lyrics-source-v2',
+        sourceFingerprint,
+        lines: [
+          {
+            lineId: 'line-1',
+            text: '残したこの火種は離さない',
+            segments: [
+              { t: '残', r: 'のこ' },
+              { t: 'したこの' },
+              { t: '火種', r: 'ひだね' },
+              { t: 'は' },
+              { t: '離', r: 'はな' },
+              { t: 'さない' },
+            ],
+          },
+        ],
+      },
+    });
+
+    expect(document.reading?.lines[0].segments).toContainEqual({
+      text: '火種',
+      reading: 'ひだね',
+    });
+  });
+
+  it.each([
+    ['non-Japanese source', { language: 'zh-Hant' }, {}],
+    ['stale document id', { language: 'ja' }, { documentId: 'lyrics-old' }],
+    [
+      'stale source fingerprint',
+      { language: 'ja' },
+      { sourceFingerprint: 'b'.repeat(64) },
+    ],
+    [
+      'mismatched line text',
+      { language: 'ja' },
+      { lines: [{ lineId: 'line-1', text: '旧歌詞', segments: [] }] },
+    ],
+  ])('omits %s reading data', (_label, source, overrides) => {
+    const fingerprint = 'a'.repeat(64);
+    const document = projectLyricsOutputDocument({
+      trackId: 'track-1',
+      source,
+      document: {
+        documentId: 'lyrics-1',
+        normalizerProfileId: 'lyrics-source-v2',
+        granularity: 'T0',
+        source: { sha256: fingerprint },
+        lines: [
+          { lineId: 'line-1', text: '地下鉄', startMs: null, endMs: null },
+        ],
+      },
+      readingDocument: {
+        version: 3,
+        documentId: 'lyrics-1',
+        normalizerProfileId: 'lyrics-source-v2',
+        sourceFingerprint: fingerprint,
+        lines: [
+          {
+            lineId: 'line-1',
+            text: '地下鉄',
+            segments: [{ t: '地下鉄', r: 'ちかてつ' }],
+          },
+        ],
+        ...overrides,
+      },
+    });
+
+    expect(document).not.toHaveProperty('reading');
+  });
+
   it('projects bounded queue content under a stable document id', () => {
     expect(
       projectQueueOutputDocument({

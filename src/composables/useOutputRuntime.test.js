@@ -109,6 +109,7 @@ beforeEach(() => {
       },
     })),
     publishOutputSnapshot: vi.fn(async () => true),
+    getLyricsReading: vi.fn(async () => null),
     suggestOutputPorts: vi.fn(async () => [8701, 8702]),
     updateOutputSettings: vi.fn(async (settings) => ({
       settings,
@@ -336,6 +337,73 @@ describe('output source handshake', () => {
       lines: [{ lineId: 'line-1', text: '簡體歌詞' }],
     });
     expect(JSON.stringify(lyricsMessage)).not.toContain('简体歌词');
+  });
+
+  it('loads and publishes an existing Japanese reading when provider language is undetermined', async () => {
+    const fingerprint = 'a'.repeat(64);
+    playerState.track = { id: 'track-1', title: 'Song', url: 'media://song' };
+    selectedLyricsTrack.value = { id: 'track-1', title: 'Song' };
+    selectedLyricsSource.value = {
+      filename: 'betterlyrics.lrc',
+      language: 'und',
+    };
+    lyricsDocument.value = {
+      documentId: 'betterlyrics:1',
+      normalizerProfileId: 'lyrics-source-v2',
+      source: { sha256: fingerprint },
+      granularity: 'T1',
+      lines: [
+        {
+          lineId: 'line-1',
+          text: '残したこの火種は離さない',
+          startMs: 15000,
+          endMs: 19000,
+        },
+      ],
+    };
+    bridge.getLyricsReading.mockResolvedValue({
+      version: 3,
+      documentId: 'betterlyrics:1',
+      normalizerProfileId: 'lyrics-source-v2',
+      sourceFingerprint: fingerprint,
+      lines: [
+        {
+          lineId: 'line-1',
+          text: '残したこの火種は離さない',
+          segments: [
+            { t: '残', r: 'のこ' },
+            { t: 'したこの' },
+            { t: '火種', r: 'ひだね' },
+            { t: 'は' },
+            { t: '離', r: 'はな' },
+            { t: 'さない' },
+          ],
+        },
+      ],
+    });
+
+    const runtime = await loadRuntime();
+    const initialization = runtime.initialize();
+    libraryHydration.resolve();
+    playlistHydration.resolve();
+    lyricsHydration.resolve();
+    await initialization;
+    await flushMicrotasks();
+
+    expect(bridge.getLyricsReading).toHaveBeenCalledWith(
+      'track-1',
+      'betterlyrics.lrc',
+      expect.objectContaining({
+        documentId: 'betterlyrics:1',
+        sourceFingerprint: fingerprint,
+      }),
+    );
+    const lyricsMessages = bridge.publishOutputSnapshot.mock.calls
+      .map(([message]) => message)
+      .filter((message) => message.stream === 'lyrics.document');
+    expect(
+      lyricsMessages.at(-1).payload.document.reading.lines[0].segments,
+    ).toContainEqual({ text: '火種', reading: 'ひだね' });
   });
 
   it('republishes the already-playing current projection on Workbench refresh', async () => {

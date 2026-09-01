@@ -170,8 +170,8 @@ shared T1 timing-unit stream, and canonical cache identity.
 
 The Output scheduler receives the selected template id and evaluates only that
 template's dynamic projection and timing boundaries. Reading Aid is not an active
-Output profile until reading content has an explicit transport and renderer
-contract; a design preview is not runtime availability.
+Output profile. Manga Frame may consume the optional bounded reading projection
+described below; this does not make the separate Reading Aid template available.
 
 ## Source changes and stale state
 
@@ -204,6 +204,20 @@ enabled reading intent then regenerates it instead of attaching stale readings t
 different lyrics. I/O or migration failures remain distinct from missing data and
 surface through the Lyrics error notice.
 
+The Output publisher may load an existing Japanese sidecar for Manga Frame. It
+must match `documentId`, `normalizerProfileId`, `sourceFingerprint`, every stable
+`lineId`, and every line's canonical text before any reading crosses the public
+boundary. Output never generates or repairs reading data. Missing, stale,
+non-Japanese, malformed, or over-bound data is omitted as a whole and the template
+renders the unchanged plain lyric.
+
+Japanese eligibility uses the canonical lyric text's kana／Hangul classification,
+the same rule as the Lyrics workspace, with an explicit `ja` source tag retained as
+an all-kanji compatibility signal. Provider metadata such as `language: und` does
+not suppress an otherwise identity-matched Japanese reading sidecar. Main repeats
+this content check when accepting the public document; renderer metadata alone is
+not the trust boundary.
+
 ## Output projection
 
 Output contract version 2 remains available for legacy clients and
@@ -211,7 +225,8 @@ Output contract version 2 remains available for legacy clients and
 model as two message families:
 
 ```text
-lyrics.document  -> immutable content, identity, revision, lines, segments
+lyrics.document  -> immutable content, identity, revision, lines, timing segments,
+                    optional aligned reading segments
 state.snapshot   -> playback phase, position, rate, offset, documentId
 ```
 
@@ -226,6 +241,13 @@ canonical playback clock. `lyrics.document` preserves `endInferred` when present
 so presentation logic does not infer provenance from timestamp equality alone.
 Local interpolation is corrected by later snapshots and must stop during paused,
 buffering, seeking, ended, or disconnected phases.
+
+The optional `reading` member remains a separate projection nested under the
+immutable content envelope; it is not added to canonical timing lines or timing
+sidecars. It carries only aligned `lineId`, line text, and bounded
+`{ text, reading? }` segments. Romaji, analyzer provenance, source filenames,
+paths, edit flags, and worker state remain private. A reading change advances the
+`lyrics.document` content revision before state references it.
 
 ## Deferred decisions
 

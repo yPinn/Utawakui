@@ -109,9 +109,73 @@ function getTrackReading(trackDir, sourceFilename) {
   }
 }
 
+function normalizeReadingLineSegments(line) {
+  if (
+    typeof line?.text !== 'string' ||
+    !Array.isArray(line.segments) ||
+    line.segments.some((segment) => typeof segment?.t !== 'string')
+  ) {
+    return { line, changed: false };
+  }
+  if (line.segments.map((segment) => segment.t).join('') === line.text) {
+    return { line, changed: false };
+  }
+
+  const segments = [];
+  let offset = 0;
+  let changed = false;
+  for (const segment of line.segments) {
+    if (line.text.startsWith(segment.t, offset)) {
+      segments.push(segment);
+      offset += segment.t.length;
+      continue;
+    }
+    if (segment.r || !/^\s+$/u.test(segment.t)) {
+      return { line, changed: false };
+    }
+
+    let whitespaceEnd = offset;
+    while (
+      whitespaceEnd < line.text.length &&
+      /\s/u.test(line.text[whitespaceEnd])
+    ) {
+      whitespaceEnd += 1;
+    }
+    if (whitespaceEnd === offset) {
+      changed = true;
+      continue;
+    }
+    const sourceWhitespace = line.text.slice(offset, whitespaceEnd);
+    segments.push({ ...segment, t: sourceWhitespace });
+    offset = whitespaceEnd;
+    changed ||= sourceWhitespace !== segment.t;
+  }
+
+  if (offset !== line.text.length) return { line, changed: false };
+  return {
+    line: changed ? { ...line, segments } : line,
+    changed,
+  };
+}
+
+function normalizeReadingDocumentSegments(doc) {
+  if (doc?.script !== 'ja' || !Array.isArray(doc.lines)) {
+    return { doc, changed: false };
+  }
+  let changed = false;
+  const lines = doc.lines.map((line) => {
+    const normalized = normalizeReadingLineSegments(line);
+    changed ||= normalized.changed;
+    return normalized.line;
+  });
+  return { doc: changed ? { ...doc, lines } : doc, changed };
+}
+
 function loadTrackReadingForIdentity(trackDir, sourceFilename, identity) {
-  const doc = getTrackReading(trackDir, sourceFilename);
-  if (!doc) return null;
+  const storedDoc = getTrackReading(trackDir, sourceFilename);
+  if (!storedDoc) return null;
+  const normalized = normalizeReadingDocumentSegments(storedDoc);
+  const doc = normalized.doc;
 
   const canonical = normalizeCanonicalIdentity(identity, doc.lines);
   if (!canonical) return null;
@@ -124,7 +188,12 @@ function loadTrackReadingForIdentity(trackDir, sourceFilename, identity) {
     doc.lines.every(
       (line, index) => line.lineId === canonical.lines[index].lineId,
     );
-  if (hasCurrentIdentity) return doc;
+  if (hasCurrentIdentity) {
+    if (normalized.changed) {
+      atomicWriteJson(readingSidecarPath(trackDir, sourceFilename), doc);
+    }
+    return doc;
+  }
 
   const sidecarPath = readingSidecarPath(trackDir, sourceFilename);
   const migrated = {

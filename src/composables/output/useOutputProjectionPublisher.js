@@ -2,6 +2,7 @@ import { computed, watch } from 'vue';
 import OUTPUT_CONTRACT_VALUES from '../../../shared/outputContractValues.json';
 import { createLatestAsyncPublisher } from '../../utils/latestAsyncPublisher.js';
 import {
+  isJapaneseLyricsDocument,
   projectDynamicOutputState,
   projectLyricsOutputDocument,
   projectMusicStructureOutputDocument,
@@ -9,6 +10,7 @@ import {
 } from '../../utils/outputStreamProjection.js';
 import { useLibrary } from '../useLibrary.js';
 import { useLyrics } from '../useLyrics.js';
+import { useLyricsReading } from '../useLyricsReading.js';
 import { useMusicStructureSignals } from '../useMusicStructureSignals.js';
 import { usePlaybackQueue } from '../usePlaybackQueue.js';
 import { usePlayer } from '../usePlayer.js';
@@ -43,6 +45,7 @@ export function useOutputProjectionPublisher({
     activeLineId,
     activeSegmentId,
   } = useLyrics();
+  const { getDoc: getReadingDoc, loadReading } = useLyricsReading();
   const {
     current: musicStructureSignals,
     loadForTrack: loadMusicStructureForTrack,
@@ -64,6 +67,7 @@ export function useOutputProjectionPublisher({
   let queueReference = null;
   let requestedContentRefreshGeneration = 0;
   let acceptedContentRefreshGeneration = 0;
+  let lastReadingLoadKey = null;
 
   function queueInput() {
     return {
@@ -81,6 +85,7 @@ export function useOutputProjectionPublisher({
       trackId,
       source: lyricsSource.value,
       document: displayLyricsDocument.value,
+      readingDocument: getReadingDoc(trackId, lyricsSource.value?.filename),
     });
   });
 
@@ -132,9 +137,51 @@ export function useOutputProjectionPublisher({
     ).catch(() => null);
   }
 
+  function refreshCurrentReading() {
+    const trackId = playerState.track?.id ?? null;
+    const source = lyricsSource.value;
+    const document = displayLyricsDocument.value;
+    if (
+      !trackId ||
+      lyricsTrack.value?.id !== trackId ||
+      !source?.filename ||
+      !isOutputEnabled() ||
+      !isJapaneseLyricsDocument(source, document) ||
+      !document
+    ) {
+      lastReadingLoadKey = null;
+      return Promise.resolve(null);
+    }
+    const key = `${trackId}\0${source.filename}\0${document.documentId ?? ''}\0${document.source?.sha256 ?? ''}`;
+    if (key === lastReadingLoadKey) return Promise.resolve(null);
+    lastReadingLoadKey = key;
+    return Promise.resolve(loadReading(trackId, source.filename, document))
+      .then((result) => {
+        if (result === undefined) lastReadingLoadKey = null;
+        return result;
+      })
+      .catch(() => {
+        lastReadingLoadKey = null;
+        return null;
+      });
+  }
+
   watch(currentLibraryTrack, () => {
     if (sourcesReady) void refreshCurrentMusicStructure();
   });
+
+  watch(
+    [
+      () => playerState.track?.id,
+      () => lyricsSource.value?.filename,
+      () => lyricsSource.value?.language,
+      () => displayLyricsDocument.value?.documentId,
+      () => displayLyricsDocument.value?.source?.sha256,
+    ],
+    () => {
+      if (sourcesReady) void refreshCurrentReading();
+    },
+  );
 
   function createEnvelope(stream, kind, revision, payload) {
     return {
@@ -328,9 +375,11 @@ export function useOutputProjectionPublisher({
 
   function setSourcesReady(value) {
     sourcesReady = value === true;
+    if (sourcesReady && isOutputEnabled()) void refreshCurrentReading();
   }
 
   async function publishCurrentProjection(options = {}) {
+    if (sourcesReady && isOutputEnabled()) await refreshCurrentReading();
     let requestedGeneration = null;
     if (options.forceContent === true) {
       requestedContentRefreshGeneration += 1;
@@ -347,6 +396,7 @@ export function useOutputProjectionPublisher({
     isHandshakeComplete: () => handshakeComplete,
     publishCurrentProjection,
     refreshCurrentMusicStructure,
+    refreshCurrentReading,
     setSourcesReady,
   };
 }

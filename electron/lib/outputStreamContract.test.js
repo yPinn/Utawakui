@@ -169,6 +169,85 @@ describe('output stream contract', () => {
     expect(parsed.payload.document.source).toEqual({ language: 'ja' });
   });
 
+  it('canonicalizes aligned ruby readings with undetermined source metadata and rejects a stale line binding', () => {
+    const baseDocument = lyricsEnvelope().payload.document;
+    const withReading = lyricsEnvelope({
+      payload: {
+        document: {
+          ...baseDocument,
+          reading: {
+            lines: [
+              {
+                lineId: 'line-1',
+                text: '歌詞です',
+                segments: [
+                  { text: '歌詞', reading: 'かし', privateTag: 'hidden' },
+                  { text: 'です' },
+                ],
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    expect(
+      parseOutputStreamEnvelope(withReading, 'boot-1').payload.document.reading,
+    ).toEqual({
+      lines: [
+        {
+          lineId: 'line-1',
+          text: '歌詞です',
+          segments: [{ text: '歌詞', reading: 'かし' }, { text: 'です' }],
+        },
+      ],
+    });
+
+    withReading.payload.document.source = { language: 'und' };
+    expect(
+      parseOutputStreamEnvelope(withReading, 'boot-1').payload.document.reading,
+    ).toBeTruthy();
+
+    withReading.payload.document.reading.lines[0].text = '古い歌詞';
+    expect(() => parseOutputStreamEnvelope(withReading, 'boot-1')).toThrow(
+      TypeError,
+    );
+  });
+
+  it('rejects reading data on undetermined non-Japanese lyric text', () => {
+    const baseDocument = lyricsEnvelope().payload.document;
+    const value = lyricsEnvelope({
+      payload: {
+        document: {
+          ...baseDocument,
+          granularity: 'T0',
+          source: { language: 'und' },
+          lines: [
+            {
+              lineId: 'line-1',
+              text: '你到底在選擇什麼',
+              startMs: null,
+              endMs: null,
+            },
+          ],
+          reading: {
+            lines: [
+              {
+                lineId: 'line-1',
+                text: '你到底在選擇什麼',
+                segments: [{ text: '你到底在選擇什麼', reading: 'reading' }],
+              },
+            ],
+          },
+        },
+      },
+    });
+
+    expect(() => parseOutputStreamEnvelope(value, 'boot-1')).toThrow(
+      'Japanese lyrics are required',
+    );
+  });
+
   it('preserves a validated next-line inferred lyric boundary', () => {
     const value = lyricsEnvelope({
       payload: {

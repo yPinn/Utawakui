@@ -1,4 +1,6 @@
 import { projectOutputSnapshot } from './outputSnapshot.js';
+import performerValues from '../../shared/performerContractValues.json';
+import { detectLyricsScript } from './lyrics.js';
 
 const QUEUE_DOCUMENT_ID = 'queue-current';
 const SHA256_RE = /^[a-f0-9]{64}$/;
@@ -36,10 +38,73 @@ function projectLine(line) {
   };
 }
 
+export function isJapaneseLyricsDocument(source, document) {
+  if (
+    String(source?.language ?? '')
+      .toLocaleLowerCase()
+      .startsWith('ja')
+  ) {
+    return true;
+  }
+  const text = Array.isArray(document?.lines)
+    ? document.lines.map((line) => line?.text ?? '').join('\n')
+    : '';
+  return detectLyricsScript(text) === 'ja';
+}
+
+function projectReadingDocument(source, document, readingDocument) {
+  if (
+    !isJapaneseLyricsDocument(source, document) ||
+    readingDocument?.version !== 3 ||
+    readingDocument.documentId !== document.documentId ||
+    readingDocument.normalizerProfileId !== document.normalizerProfileId ||
+    readingDocument.sourceFingerprint !== document.source?.sha256 ||
+    !Array.isArray(document.lines) ||
+    !Array.isArray(readingDocument.lines) ||
+    readingDocument.lines.length !== document.lines.length
+  ) {
+    return null;
+  }
+
+  const lines = [];
+  for (const [index, line] of document.lines.entries()) {
+    const readingLine = readingDocument.lines[index];
+    if (
+      readingLine?.lineId !== line.lineId ||
+      readingLine.text !== line.text ||
+      !Array.isArray(readingLine.segments) ||
+      readingLine.segments.length > performerValues.maxReadingSegmentsPerLine
+    ) {
+      return null;
+    }
+    const segments = [];
+    for (const segment of readingLine.segments) {
+      if (
+        typeof segment?.t !== 'string' ||
+        segment.t.length > 2000 ||
+        (segment.r !== undefined &&
+          (typeof segment.r !== 'string' || segment.r.length > 2000))
+      ) {
+        return null;
+      }
+      segments.push({
+        text: segment.t,
+        ...(segment.r ? { reading: segment.r } : {}),
+      });
+    }
+    if (segments.map((segment) => segment.text).join('') !== line.text) {
+      return null;
+    }
+    lines.push({ lineId: line.lineId, text: line.text, segments });
+  }
+  return { lines };
+}
+
 export function projectLyricsOutputDocument({
   trackId,
   source,
   document,
+  readingDocument,
 } = {}) {
   if (
     typeof trackId !== 'string' ||
@@ -49,12 +114,14 @@ export function projectLyricsOutputDocument({
   ) {
     return null;
   }
+  const reading = projectReadingDocument(source, document, readingDocument);
   return {
     documentId: document.documentId,
     trackId,
     granularity: document.granularity,
     source: publicLyricsSource(source),
     lines: Array.isArray(document.lines) ? document.lines.map(projectLine) : [],
+    ...(reading ? { reading } : {}),
   };
 }
 

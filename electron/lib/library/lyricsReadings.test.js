@@ -209,6 +209,106 @@ describe('saveTrackReading / getTrackReading round trip', () => {
     expect(getTrackReading(trackDir, 'ja.vtt')).toEqual(migrated);
   });
 
+  it('repairs analyzer-only whitespace while loading an identity-matched sidecar', () => {
+    const sidecarPath = readingSidecarPath(trackDir, 'ja.vtt');
+    fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+    fs.writeFileSync(
+      sidecarPath,
+      JSON.stringify({
+        version: 3,
+        sourceFilename: 'ja.vtt',
+        script: 'ja',
+        documentId: canonicalIdentity.documentId,
+        normalizerProfileId: canonicalIdentity.normalizerProfileId,
+        sourceFingerprint: canonicalIdentity.sourceFingerprint,
+        lines: [
+          {
+            lineId: 'line_1',
+            text: '歌う声',
+            segments: [
+              { t: '歌', r: 'うた' },
+              { t: 'う' },
+              { t: ' ' },
+              { t: '声', r: 'こえ' },
+            ],
+          },
+          {
+            lineId: 'line_2',
+            text: 'です',
+            segments: [{ t: 'です' }],
+          },
+        ],
+      }),
+    );
+
+    const loaded = loadTrackReadingForIdentity(
+      trackDir,
+      'ja.vtt',
+      canonicalIdentity,
+    );
+
+    expect(loaded.lines[0].segments).toEqual([
+      { t: '歌', r: 'うた' },
+      { t: 'う' },
+      { t: '声', r: 'こえ' },
+    ]);
+    expect(loaded.lines[0].segments.map((segment) => segment.t).join('')).toBe(
+      '歌う声',
+    );
+    expect(getTrackReading(trackDir, 'ja.vtt')).toEqual(loaded);
+  });
+
+  it('drops a synthetic gap without removing the source-authored gap later in the line', () => {
+    const identity = {
+      ...canonicalIdentity,
+      lines: [{ lineId: 'line_1', text: '閻魔さま 調子はどう' }],
+    };
+    const sidecarPath = readingSidecarPath(trackDir, 'ja.vtt');
+    fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });
+    fs.writeFileSync(
+      sidecarPath,
+      JSON.stringify({
+        version: 3,
+        sourceFilename: 'ja.vtt',
+        script: 'ja',
+        documentId: identity.documentId,
+        normalizerProfileId: identity.normalizerProfileId,
+        sourceFingerprint: identity.sourceFingerprint,
+        lines: [
+          {
+            lineId: 'line_1',
+            text: '閻魔さま 調子はどう',
+            segments: [
+              { t: '閻' },
+              { t: ' ' },
+              { t: '魔', r: 'ま' },
+              { t: 'さま' },
+              { t: ' ' },
+              { t: '調子', r: 'ちょうし' },
+              { t: 'は' },
+              { t: 'どう' },
+            ],
+          },
+        ],
+      }),
+    );
+
+    const loaded = loadTrackReadingForIdentity(trackDir, 'ja.vtt', identity);
+
+    expect(loaded.lines[0].segments).toEqual([
+      { t: '閻' },
+      { t: '魔', r: 'ま' },
+      { t: 'さま' },
+      { t: ' ' },
+      { t: '調子', r: 'ちょうし' },
+      { t: 'は' },
+      { t: 'どう' },
+    ]);
+    expect(loaded.lines[0].segments.map((segment) => segment.t).join('')).toBe(
+      identity.lines[0].text,
+    );
+  });
+
   it('returns null instead of re-keying a reading whose line text is stale', () => {
     const sidecarPath = readingSidecarPath(trackDir, 'ja.vtt');
     fs.mkdirSync(path.dirname(sidecarPath), { recursive: true });

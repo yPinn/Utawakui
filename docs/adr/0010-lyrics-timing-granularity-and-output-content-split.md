@@ -153,9 +153,12 @@ id, document revision, language, profile id, and profile version.
 The implemented profiles are Generic Caption, Classic KTV, Manga Frame, and Live
 Stage. Their phrase, role, count-in, bubble, and caption decisions are
 presentation-only and never rewrite canonical text or timing. Beat／section signals
-may affect only a selected template's dynamic projection. Reading Aid remains
-unavailable to Output until the runtime transports a real reading document. The
-Browser Source scheduler projects and schedules only the selected template; legacy
+may affect only a selected template's dynamic projection. The standalone Reading
+Aid profile remains unavailable to Output. Manga Frame may render a bounded,
+identity-matched projection of an existing Japanese reading sidecar from the
+immutable `lyrics.document`; this stays separate from timing and never triggers
+reading generation. The Browser Source scheduler projects and schedules only the
+selected template; legacy
 selector calls without a template id retain the combined shape only for
 compatibility and tests.
 

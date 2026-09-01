@@ -80,13 +80,11 @@ describe('kuromoji + wanakana integration', () => {
     });
   }, 20000);
 
-  it('normalizes a full-width space between two kanji compounds to a regular space', async () => {
+  it('preserves a full-width source space exactly between two kanji compounds', async () => {
     const tokenizer = await buildTokenizer();
-    // Two generic 2-kanji nouns joined by a U+3000 ideographic space —
-    // some lyrics sources use this as a visual word separator. Rendered
-    // literally it reads as a whole extra character's worth of gap;
-    // buildReadingDoc collapses it to a regular space for annotation
-    // purposes while `text` keeps the original full-width space.
+    // Segment text is a canonical identity boundary. The analyzer may use
+    // normalized input internally, but the stored segments must reconstruct
+    // the untouched source line byte-for-byte.
     const doc = buildReadingDoc(['会議　資料'], {
       tokenize: (text) => tokenizer.tokenize(text),
       kanaToRomaji: (kana) => wanakana.toRomaji(kana),
@@ -95,12 +93,15 @@ describe('kuromoji + wanakana integration', () => {
     expect(doc.lines[0].text).toBe('会議　資料');
     expect(doc.lines[0].segments).toEqual([
       { t: '会議', r: 'かいぎ' },
-      { t: ' ' },
+      { t: '　' },
       { t: '資料', r: 'しりょう' },
     ]);
+    expect(doc.lines[0].segments.map((segment) => segment.t).join('')).toBe(
+      doc.lines[0].text,
+    );
   }, 20000);
 
-  it('inserts the same deliberate gap between two adjacent kanji tokens even when the source has no separator at all', async () => {
+  it('does not insert a presentation-only gap when the source has no separator', async () => {
     const tokenizer = await buildTokenizer();
     // Same two nouns as above, back-to-back with zero whitespace in the
     // source — kuromoji still splits them into two tokens (no natural kana
@@ -114,8 +115,10 @@ describe('kuromoji + wanakana integration', () => {
     expect(doc.lines[0].text).toBe('会議資料');
     expect(doc.lines[0].segments).toEqual([
       { t: '会議', r: 'かいぎ' },
-      { t: ' ' },
       { t: '資料', r: 'しりょう' },
     ]);
+    expect(doc.lines[0].segments.map((segment) => segment.t).join('')).toBe(
+      doc.lines[0].text,
+    );
   }, 20000);
 });
