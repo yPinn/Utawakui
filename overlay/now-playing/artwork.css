@@ -11,6 +11,16 @@
       0.875em
     );
     --ovl-template-artwork-paper-grain: 0.035;
+    --ovl-template-artwork-platter-ring-lowlight: color-mix(
+      in srgb,
+      var(--ovl-color-vinyl-lowlight) 22%,
+      transparent
+    );
+    --ovl-template-artwork-platter-ring-highlight: color-mix(
+      in srgb,
+      var(--ovl-color-paper) 12%,
+      transparent
+    );
     --ovl-template-artwork-record-body: color-mix(
       in srgb,
       var(--ovl-color-artwork-accent) 50%,
@@ -44,6 +54,8 @@
     );
     --ovl-template-artwork-record-shadow-mask: none;
     --ovl-template-artwork-record-highlight-mask: none;
+    --ovl-template-artwork-record-spray-mask: none;
+    --ovl-template-artwork-record-surface-spray-mask: none;
     --ovl-template-artwork-dye-saturation: 1.12;
     --ovl-template-artwork-shadow-ink: color-mix(
       in srgb,
@@ -53,6 +65,16 @@
     --ovl-template-artwork-highlight-ink: color-mix(
       in srgb,
       var(--ovl-color-paper) 44%,
+      var(--ovl-color-artwork-secondary)
+    );
+    --ovl-template-artwork-spray-ink: color-mix(
+      in srgb,
+      var(--ovl-color-vinyl-lowlight) 68%,
+      var(--ovl-color-artwork-accent)
+    );
+    --ovl-template-artwork-surface-spray-ink: color-mix(
+      in srgb,
+      var(--ovl-color-paper) 88%,
       var(--ovl-color-artwork-secondary)
     );
     --ovl-template-artwork-bloom-core: color-mix(
@@ -156,7 +178,22 @@
     place-items: center;
     border: 1px solid var(--ovl-color-outline);
     border-radius: 50%;
-    background: var(--ovl-color-deck-metal);
+    background: radial-gradient(
+      circle,
+      var(--ovl-color-vinyl-lowlight) 0 46%,
+      var(--ovl-color-outline) 48% 54%,
+      var(--ovl-color-deck-metal-highlight) 56% 65%,
+      var(--ovl-color-deck-metal) 68%
+    );
+    box-shadow:
+      inset 1px 1px 1px
+        color-mix(
+          in srgb,
+          var(--ovl-color-deck-metal-highlight) 72%,
+          transparent
+        ),
+      inset -1px -1px 1px
+        color-mix(in srgb, var(--ovl-color-vinyl-lowlight) 76%, transparent);
   }
 
   .artwork-overlay__deck-light::before,
@@ -197,7 +234,15 @@
     isolation: isolate;
     border: 1px solid var(--ovl-color-outline);
     border-radius: 50%;
-    background: var(--ovl-color-platter-rim);
+    background:
+      repeating-radial-gradient(
+        circle at center,
+        transparent 0 9%,
+        var(--ovl-template-artwork-platter-ring-lowlight) 9.5% 10.25%,
+        var(--ovl-template-artwork-platter-ring-highlight) 10.5% 11%,
+        transparent 11.5% 14%
+      ),
+      var(--ovl-color-platter-rim);
     box-shadow:
       inset 0 0 0 var(--ovl-primitive-space-1) var(--ovl-color-vinyl-lowlight),
       var(--ovl-panel-shadow);
@@ -244,6 +289,26 @@
     will-change: transform;
   }
 
+  .artwork-overlay__record-rotor::after {
+    position: absolute;
+    z-index: 5;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--ovl-template-artwork-surface-spray-ink);
+    -webkit-mask-image: var(--ovl-template-artwork-record-surface-spray-mask);
+    mask-image: var(--ovl-template-artwork-record-surface-spray-mask);
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    mix-blend-mode: screen;
+    opacity: 0.72;
+    pointer-events: none;
+    content: '';
+  }
+
   .artwork-overlay__record-dye,
   .artwork-overlay__record-shadow,
   .artwork-overlay__record-highlight,
@@ -271,6 +336,24 @@
       transparent 97%
     );
     opacity: 0.96;
+  }
+
+  .artwork-overlay__record-dye::after {
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: var(--ovl-template-artwork-spray-ink);
+    -webkit-mask-image: var(--ovl-template-artwork-record-spray-mask);
+    mask-image: var(--ovl-template-artwork-record-spray-mask);
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+    mix-blend-mode: multiply;
+    opacity: 0.62;
+    content: '';
   }
 
   .artwork-overlay__record-shadow,
@@ -432,15 +515,30 @@
   }
 
   .artwork-overlay__tonearm-pivot {
-    fill: var(--ovl-color-deck-metal-highlight);
-    stroke: var(--ovl-color-outline);
-    stroke-width: 3;
+    fill: var(--ovl-color-deck-metal);
+  }
+
+  .artwork-overlay__tonearm-pivot-edge {
+    fill: var(--ovl-color-outline);
+  }
+
+  .artwork-overlay__tonearm-pivot-highlight {
+    fill: none;
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-linecap: round;
+    stroke-width: 2.5;
   }
 
   .artwork-overlay__tonearm-pivot-core {
     fill: var(--ovl-color-vinyl-lowlight);
     stroke: var(--ovl-color-deck-metal-highlight);
-    stroke-width: 3;
+    stroke-width: 2;
+  }
+
+  .artwork-overlay__tonearm-pivot-pin {
+    fill: var(--ovl-color-paper);
+    stroke: var(--ovl-color-outline);
+    stroke-width: 1;
   }
 
   .artwork-overlay__tonearm-assembly {
@@ -449,38 +547,104 @@
   }
 
   .artwork-overlay__tonearm-counterweight {
-    fill: var(--ovl-color-deck-metal-highlight);
-    stroke: var(--ovl-color-outline);
-    stroke-width: 2;
+    fill: var(--ovl-color-deck-metal);
   }
 
-  .artwork-overlay__tonearm-rail {
+  .artwork-overlay__tonearm-counterweight-edge {
+    fill: var(--ovl-color-outline);
+  }
+
+  .artwork-overlay__tonearm-counterweight-highlight,
+  .artwork-overlay__tonearm-counterweight-cap {
     fill: none;
-    stroke: var(--ovl-color-text-secondary);
     stroke-linecap: round;
-    stroke-width: 7;
   }
 
-  .artwork-overlay__tonearm-head {
-    fill: var(--ovl-color-paper);
-    stroke: var(--ovl-color-ink);
+  .artwork-overlay__tonearm-counterweight-highlight {
+    stroke: var(--ovl-color-deck-metal-highlight);
     stroke-width: 1.5;
   }
 
-  .artwork-overlay__stylus,
-  .artwork-overlay__tonearm-rest {
-    fill: none;
+  .artwork-overlay__tonearm-counterweight-cap {
     stroke: var(--ovl-color-vinyl-lowlight);
+    stroke-width: 2;
+  }
+
+  .artwork-overlay__tonearm-rail-edge,
+  .artwork-overlay__tonearm-rail,
+  .artwork-overlay__tonearm-rail-highlight {
+    fill: none;
     stroke-linecap: round;
   }
 
-  .artwork-overlay__stylus {
-    stroke-width: 3;
+  .artwork-overlay__tonearm-rail-edge {
+    stroke: var(--ovl-color-vinyl-lowlight);
+    stroke-width: 10;
   }
 
-  .artwork-overlay__tonearm-rest {
+  .artwork-overlay__tonearm-rail {
+    stroke: var(--ovl-color-text-secondary);
+    stroke-width: 7;
+  }
+
+  .artwork-overlay__tonearm-rail-highlight {
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-width: 2;
+  }
+
+  .artwork-overlay__tonearm-head-edge {
+    fill: var(--ovl-color-ink);
+  }
+
+  .artwork-overlay__tonearm-head-body {
+    fill: var(--ovl-color-paper);
+  }
+
+  .artwork-overlay__tonearm-head-highlight {
+    fill: none;
+    stroke: color-mix(in srgb, var(--ovl-color-paper) 72%, transparent);
+    stroke-linecap: round;
+    stroke-width: 1.5;
+  }
+
+  .artwork-overlay__tonearm-head-screw {
+    fill: var(--ovl-color-vinyl-lowlight);
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-width: 0.8;
+  }
+
+  .artwork-overlay__stylus-cantilever,
+  .artwork-overlay__stylus-tip,
+  .artwork-overlay__tonearm-rest-post,
+  .artwork-overlay__tonearm-rest-cradle {
+    fill: none;
+    stroke-linecap: round;
+  }
+
+  .artwork-overlay__stylus-cantilever {
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-width: 2.5;
+  }
+
+  .artwork-overlay__stylus-tip {
+    stroke: var(--ovl-color-vinyl-lowlight);
+    stroke-width: 3.5;
+  }
+
+  .artwork-overlay__tonearm-rest-base {
+    fill: var(--ovl-color-deck-metal);
+    stroke: var(--ovl-color-outline);
+    stroke-width: 1.5;
+  }
+
+  .artwork-overlay__tonearm-rest-post {
     stroke: var(--ovl-color-deck-metal-highlight);
     stroke-width: 5;
+  }
+
+  .artwork-overlay__tonearm-rest-cradle {
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-width: 4;
   }
 
   :root:not([data-ovl-template='cover-player']) .artwork-overlay__sleeve {

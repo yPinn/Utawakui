@@ -25,6 +25,12 @@ decision.
 
 ## Commands
 
+This repository uses npm exclusively, as declared by the committed
+`package-lock.json`. Never run pnpm, yarn or Corepack package-manager fallbacks;
+never create `pnpm-lock.yaml`, `.pnpm-store` or a pnpm virtual store. If npm is not
+on `PATH`, use the available npm installation explicitly or stop and report the
+missing runtime instead of substituting another package manager.
+
 ```bash
 npm run dev
 npm run dev:tools

@@ -5,6 +5,7 @@
   "author": "llazyPilot Studio",
   "license": "UNLICENSED",
   "private": true,
+  "packageManager": "npm@11.12.1",
   "main": "electron/main.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron . --dev\"",

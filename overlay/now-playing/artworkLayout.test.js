@@ -240,6 +240,14 @@ describe('Now Playing artwork layouts', () => {
       expect.stringContaining('data:image/svg+xml'),
     );
     expect(view.root.style.setProperty).toHaveBeenCalledWith(
+      '--ovl-template-artwork-record-spray-mask',
+      expect.stringContaining('data:image/svg+xml'),
+    );
+    expect(view.root.style.setProperty).toHaveBeenCalledWith(
+      '--ovl-template-artwork-record-surface-spray-mask',
+      expect.stringContaining('data:image/svg+xml'),
+    );
+    expect(view.root.style.setProperty).toHaveBeenCalledWith(
       '--ovl-template-artwork-record-ink',
       expect.stringContaining('radial-gradient('),
     );

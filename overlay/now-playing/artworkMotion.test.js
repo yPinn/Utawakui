@@ -191,6 +191,52 @@ describe('Now Playing artwork motion', () => {
     expect(elements.root.dataset.motionState).toBe('presented');
   });
 
+  it('slides the complete scene down from above and back upward without fading the root', () => {
+    const elements = scene();
+    const { gsap, timelines } = gsapHarness();
+    const motion = createArtworkMotionController({
+      gsap,
+      ...elements,
+      commitFrame: vi.fn(),
+    });
+
+    motion.update({ active: true, frame: frame() });
+
+    expect(timelines[0].set).toHaveBeenCalledWith(
+      elements.root,
+      { autoAlpha: 1, yPercent: -150 },
+      'cover',
+    );
+    expect(timelines[0].to).toHaveBeenCalledWith(
+      elements.root,
+      { duration: 0.42, ease: 'power3.out', yPercent: -50 },
+      'cover',
+    );
+    expect(
+      timelines[0].fromTo.mock.calls.filter(
+        ([target]) => target === elements.root,
+      ),
+    ).toHaveLength(0);
+
+    timelines[0].complete();
+    motion.update({
+      active: true,
+      frame: frame({ playbackStatus: 'ended', nextTitle: '' }),
+    });
+
+    expect(timelines[1].to).toHaveBeenCalledWith(
+      elements.root,
+      { duration: 0.38, ease: 'power3.in', yPercent: -150 },
+      'close+=0.3',
+    );
+    expect(
+      timelines[1].to.mock.calls.filter(
+        ([target, options]) =>
+          target === elements.root && 'autoAlpha' in (options ?? {}),
+      ),
+    ).toHaveLength(0);
+  });
+
   it('keeps one vinyl tween and preserves its playhead through seeking', () => {
     const elements = scene();
     const { gsap, spinTween, timelines } = gsapHarness();
@@ -615,6 +661,10 @@ describe('Now Playing artwork motion', () => {
     expect(timelines).toHaveLength(0);
     expect(commitFrame).toHaveBeenCalledWith(frame());
     expect(elements.root.dataset.motionState).toBe('presented');
+    expect(gsap.set).toHaveBeenCalledWith(elements.root, {
+      autoAlpha: 1,
+      yPercent: -50,
+    });
     expect(gsap.set).toHaveBeenCalledWith(elements.bloom, { autoAlpha: 0.92 });
 
     motion.setReducedMotion(false);

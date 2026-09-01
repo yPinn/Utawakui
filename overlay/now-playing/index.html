@@ -125,10 +125,20 @@
             focusable="false"
           >
             <circle
+              class="artwork-overlay__tonearm-pivot-edge"
+              cx="66"
+              cy="28"
+              r="21"
+            />
+            <circle
               class="artwork-overlay__tonearm-pivot"
               cx="66"
               cy="28"
-              r="20"
+              r="18"
+            />
+            <path
+              class="artwork-overlay__tonearm-pivot-highlight"
+              d="M53 23 A14 14 0 0 1 72 16"
             />
             <circle
               class="artwork-overlay__tonearm-pivot-core"
@@ -136,7 +146,21 @@
               cy="28"
               r="8"
             />
+            <circle
+              class="artwork-overlay__tonearm-pivot-pin"
+              cx="66"
+              cy="28"
+              r="2.5"
+            />
             <g class="artwork-overlay__tonearm-assembly">
+              <rect
+                class="artwork-overlay__tonearm-counterweight-edge"
+                x="52"
+                y="0"
+                width="28"
+                height="15"
+                rx="7.5"
+              />
               <rect
                 class="artwork-overlay__tonearm-counterweight"
                 x="53"
@@ -146,21 +170,80 @@
                 rx="6.5"
               />
               <path
+                class="artwork-overlay__tonearm-counterweight-highlight"
+                d="M58 4h14"
+              />
+              <path
+                class="artwork-overlay__tonearm-counterweight-cap"
+                d="M76.5 3v9"
+              />
+              <path
+                class="artwork-overlay__tonearm-rail-edge"
+                d="M66 28 C69 78 42 134 11.5 179"
+              />
+              <path
                 class="artwork-overlay__tonearm-rail"
                 d="M66 28 C69 78 42 134 11.5 179"
+              />
+              <path
+                class="artwork-overlay__tonearm-rail-highlight"
+                d="M65 28 C67.5 73 46 122 20 165"
               />
               <g
                 class="artwork-overlay__tonearm-head"
                 transform="translate(11.5 179) rotate(17)"
               >
-                <rect x="-6" y="-4" width="28" height="13" rx="3" />
-                <path class="artwork-overlay__stylus" d="M5 9v14" />
+                <rect
+                  class="artwork-overlay__tonearm-head-edge"
+                  x="-7"
+                  y="-5"
+                  width="30"
+                  height="15"
+                  rx="4"
+                />
+                <rect
+                  class="artwork-overlay__tonearm-head-body"
+                  x="-6"
+                  y="-4"
+                  width="28"
+                  height="13"
+                  rx="3"
+                />
+                <path
+                  class="artwork-overlay__tonearm-head-highlight"
+                  d="M-2 -1h18"
+                />
+                <circle
+                  class="artwork-overlay__tonearm-head-screw"
+                  cx="16"
+                  cy="5"
+                  r="1.6"
+                />
+                <path
+                  class="artwork-overlay__stylus artwork-overlay__stylus-cantilever"
+                  d="M5 9v10"
+                />
+                <path class="artwork-overlay__stylus-tip" d="M5 19v4" />
               </g>
             </g>
-            <path
-              class="artwork-overlay__tonearm-rest"
-              d="M91 103v16m-6-5h12"
-            />
+            <g class="artwork-overlay__tonearm-rest">
+              <rect
+                class="artwork-overlay__tonearm-rest-base"
+                x="85"
+                y="116"
+                width="12"
+                height="6"
+                rx="2"
+              />
+              <path
+                class="artwork-overlay__tonearm-rest-post"
+                d="M91 117v-12"
+              />
+              <path
+                class="artwork-overlay__tonearm-rest-cradle"
+                d="M84.5 108 Q91 114 97.5 108"
+              />
+            </g>
           </svg>
         </div>
       </div>

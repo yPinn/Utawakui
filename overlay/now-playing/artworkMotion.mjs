@@ -7,6 +7,8 @@ const SLEEVE_HANDOFF_OFFSET_MAX_PX = 18;
 const BLOOM_PLAYING_ALPHA = 0.92;
 const BLOOM_PAUSED_ALPHA = 0.4;
 const BLOOM_TRANSFER_ALPHA = 0.18;
+const ROOT_PRESENTED_Y_PERCENT = -50;
+const ROOT_SLIDE_OFFSET_PERCENT = -150;
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -344,7 +346,10 @@ export function createArtworkMotionController({
     if (typeof gsap?.set !== 'function') return;
     resetExchangeRecord();
     resetIncomingSleeve();
-    gsap.set(root, { autoAlpha: 1 });
+    gsap.set(root, {
+      autoAlpha: 1,
+      yPercent: ROOT_PRESENTED_Y_PERCENT,
+    });
     gsap.set([albumPanel, sleeve, turntable], {
       autoAlpha: 1,
       scale: 1,
@@ -411,7 +416,16 @@ export function createArtworkMotionController({
     sceneTimeline
       .set(tonearmAssembly, { rotation: 0 })
       .addLabel('cover', 0)
-      .fromTo(root, { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.16 }, 'cover')
+      .set(root, { autoAlpha: 1, yPercent: ROOT_SLIDE_OFFSET_PERCENT }, 'cover')
+      .to(
+        root,
+        {
+          duration: 0.42,
+          ease: 'power3.out',
+          yPercent: ROOT_PRESENTED_Y_PERCENT,
+        },
+        'cover',
+      )
       .addLabel('split', 0.26)
       .fromTo(
         albumPanel,
@@ -656,7 +670,15 @@ export function createArtworkMotionController({
         },
         'close',
       )
-      .to(root, { autoAlpha: 0, duration: 0.16 }, 'close+=0.3');
+      .to(
+        root,
+        {
+          duration: 0.38,
+          ease: 'power3.in',
+          yPercent: ROOT_SLIDE_OFFSET_PERCENT,
+        },
+        'close+=0.3',
+      );
     syncSpin();
   }
 

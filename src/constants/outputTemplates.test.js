@@ -7,6 +7,39 @@ import {
   orderOutputTemplates,
 } from './outputTemplates.js';
 
+const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
+  'queue-board': '黑幕歌單',
+  'karaoke-stack': '經典伴唱',
+  'live-stage': '舞台轉播',
+  'manga-frame': '漫畫對白',
+  'quiet-caption': '靜語雙行',
+  'focus-line': '聚焦歌詞',
+  'reading-aid': '讀音跟唱',
+  'art-card': '星染黑膠',
+  'now-next': '浮光光碟',
+  'cover-player': '封面播放卡',
+});
+
+function graphemeCount(value) {
+  return Array.from(value).length;
+}
+
+function visibleTemplateCopy(template) {
+  return [
+    template.name,
+    template.availability?.label,
+    template.availability?.summary,
+    template.summary,
+    template.detail,
+    template.preview?.layoutLabel,
+    template.preview?.motionLabel,
+    ...(template.tags ?? []),
+    ...(template.settings ?? []).flatMap(({ label, value }) => [label, value]),
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
+
 describe('output template registry', () => {
   it('orders templates by output kind and template order', () => {
     const templates = [
@@ -48,6 +81,11 @@ describe('output template registry', () => {
       'lyrics',
       'now-playing',
     ]);
+    expect(OUTPUT_TEMPLATE_KINDS.map((kind) => kind.label)).toEqual([
+      '歌單',
+      '歌詞',
+      '播放中',
+    ]);
     expect(Object.keys(data.slotDefaults)).toEqual([
       'setlist',
       'lyrics',
@@ -66,22 +104,96 @@ describe('output template registry', () => {
     expect(data.styleSets.length).toBeGreaterThan(0);
   });
 
+  it('keeps stable storage ids behind a distinctive Chinese display system', () => {
+    const templates = getOutputWorkbenchData().templates;
+
+    expect(
+      Object.fromEntries(
+        templates.map((template) => [template.id, template.name]),
+      ),
+    ).toEqual(EXPECTED_TEMPLATE_DISPLAY_NAMES);
+    expect(templates.map((template) => template.id).sort()).toEqual(
+      Object.keys(EXPECTED_TEMPLATE_DISPLAY_NAMES).sort(),
+    );
+
+    for (const template of templates) {
+      expect(template.name).toMatch(/^\p{Script=Han}{4,8}$/u);
+      expect(
+        visibleTemplateCopy(template).replaceAll('Utawakui', ''),
+      ).not.toMatch(/[A-Za-z]/);
+    }
+  });
+
+  it('keeps every template copy layer within its gallery reading budget', () => {
+    const templates = getOutputWorkbenchData().templates;
+
+    for (const template of templates) {
+      expect(
+        graphemeCount(template.summary),
+        `${template.id} summary`,
+      ).toBeLessThanOrEqual(24);
+      expect(
+        graphemeCount(template.detail),
+        `${template.id} detail`,
+      ).toBeLessThanOrEqual(48);
+      expect(
+        graphemeCount(template.availability.summary),
+        `${template.id} availability`,
+      ).toBeLessThanOrEqual(32);
+      expect(
+        graphemeCount(template.preview.layoutLabel),
+        `${template.id} layout label`,
+      ).toBeLessThanOrEqual(7);
+      expect(
+        graphemeCount(template.preview.motionLabel),
+        `${template.id} motion label`,
+      ).toBeLessThanOrEqual(6);
+      expect(
+        graphemeCount(template.preview.layoutLabel) +
+          graphemeCount(template.preview.motionLabel),
+        `${template.id} card metadata`,
+      ).toBeLessThanOrEqual(14);
+      expect(template.tags).toHaveLength(3);
+      for (const tag of template.tags) {
+        expect(
+          graphemeCount(tag),
+          `${template.id} tag: ${tag}`,
+        ).toBeGreaterThanOrEqual(2);
+        expect(
+          graphemeCount(tag),
+          `${template.id} tag: ${tag}`,
+        ).toBeLessThanOrEqual(5);
+      }
+      for (const setting of template.settings) {
+        expect(
+          graphemeCount(setting.value),
+          `${template.id} setting: ${setting.label}`,
+        ).toBeLessThanOrEqual(16);
+      }
+    }
+  });
+
   it('registers the first bundled appearance batch as independent Lyrics templates', () => {
     const lyricsGroup = getOutputWorkbenchData().templateGroups.find(
       (group) => group.kind === 'lyrics',
     );
 
-    expect(lyricsGroup.templates.map((template) => template.id)).toEqual(
-      expect.arrayContaining(['quiet-caption', 'live-stage', 'manga-frame']),
-    );
+    expect(lyricsGroup.templates.map((template) => template.id)).toEqual([
+      'karaoke-stack',
+      'live-stage',
+      'manga-frame',
+      'quiet-caption',
+      'focus-line',
+      'reading-aid',
+    ]);
     expect(
       lyricsGroup.templates.find((template) => template.id === 'live-stage'),
     ).toMatchObject({
       kind: 'lyrics',
       tone: 'stage',
       preview: {
-        layoutLabel: '舞台轉播字幕',
-        motionLabel: '獨立字卡時間軸',
+        layoutLabel: '舞台雙行',
+        motionLabel: '字卡進場',
       },
     });
     expect(
@@ -89,26 +201,26 @@ describe('output template registry', () => {
     ).toMatchObject({
       kind: 'lyrics',
       tone: 'manga',
-      preview: { layoutLabel: '漫畫直書單句', motionLabel: '整框淡入淡出' },
+      preview: { layoutLabel: '直書對白', motionLabel: '整框淡入' },
     });
     expect(
       lyricsGroup.templates.find((template) => template.id === 'karaoke-stack'),
     ).toMatchObject({
       id: 'karaoke-stack',
-      name: 'Classic KTV',
+      name: '經典伴唱',
       kind: 'lyrics',
       preview: {
-        layoutLabel: '經典 KTV 雙行',
-        motionLabel: '由左至右掃色',
+        layoutLabel: '錯位雙行',
+        motionLabel: '逐字掃色',
       },
       editableAppearanceKeys: ['fontScale'],
-      detail: expect.stringContaining('A 列固定在上方靠左'),
+      detail: expect.stringContaining('提示點先行倒數'),
       settings: expect.arrayContaining([
-        { label: '顯示', value: 'A 上左、B 下右，逐行交替' },
-        { label: '倒數', value: '歌詞與四點同時出現，依 BPM 倒數' },
-        { label: '換詞', value: '唱完短暫保留 0.6 秒' },
-        { label: '外觀', value: '白字深藍框、唱過角色色配白邊' },
-        { label: '進度', value: 'T1 字／詞估算、T2 精確掃色' },
+        { label: '顯示', value: '上列靠左、下列靠右' },
+        { label: '倒數', value: '依歌曲節拍對齊' },
+        { label: '換詞', value: '唱完保留零點六秒' },
+        { label: '外觀', value: '白字藍框、角色色掃字' },
+        { label: '進度', value: '逐行估算／逐字精確' },
       ]),
     });
     expect(
@@ -149,9 +261,9 @@ describe('output template registry', () => {
         order,
       })),
     ).toEqual([
-      { id: 'now-next', name: 'Compact CD', order: 10 },
-      { id: 'art-card', name: '黑膠主題', order: 20 },
-      { id: 'cover-player', name: 'Cover Player', order: 30 },
+      { id: 'art-card', name: '星染黑膠', order: 10 },
+      { id: 'now-next', name: '浮光光碟', order: 20 },
+      { id: 'cover-player', name: '封面播放卡', order: 30 },
     ]);
     expect(
       nowPlayingGroup.templates.find(
@@ -159,7 +271,7 @@ describe('output template registry', () => {
       ),
     ).toMatchObject({
       kind: 'now-playing',
-      preview: { layoutLabel: '直式播放器', motionLabel: '進度同步' },
+      preview: { layoutLabel: '直式封面卡', motionLabel: '進度同步' },
     });
     expect(
       getOutputWorkbenchData().templateGroups.some(

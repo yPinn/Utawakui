@@ -127,6 +127,9 @@ describe('Now Playing CD player layout', () => {
     expect(artworkStyles).toContain(
       '--ovl-template-artwork-record-highlight-mask:',
     );
+    expect(artworkStyles).toContain(
+      '--ovl-template-artwork-record-surface-spray-mask:',
+    );
     expect(artworkStyles).toContain('--ovl-template-artwork-shadow-ink:');
     expect(artworkStyles).toContain('--ovl-template-artwork-highlight-ink:');
     expect(artworkStyles).toMatch(
@@ -214,6 +217,28 @@ describe('Now Playing CD player layout', () => {
     );
   });
 
+  it('gives the exposed platter a restrained token-derived machining texture', () => {
+    const platterRule = artworkStyles.match(
+      /\.artwork-overlay__platter\s*{[^}]*}/s,
+    )?.[0];
+
+    expect(artworkStyles).toMatch(
+      /--ovl-template-artwork-platter-ring-lowlight:[^;]*var\(--ovl-color-vinyl-lowlight\)/s,
+    );
+    expect(artworkStyles).toMatch(
+      /--ovl-template-artwork-platter-ring-highlight:[^;]*var\(--ovl-color-paper\)/s,
+    );
+    expect(platterRule).toContain('repeating-radial-gradient(');
+    expect(platterRule).toContain(
+      'var(--ovl-template-artwork-platter-ring-lowlight)',
+    );
+    expect(platterRule).toContain(
+      'var(--ovl-template-artwork-platter-ring-highlight)',
+    );
+    expect(platterRule).toContain('transparent 11.5% 14%');
+    expect(platterRule).toContain('var(--ovl-color-platter-rim)');
+  });
+
   it('uses neutral vinyl and dark ink for predominantly white albums', () => {
     expect(artworkStyles).toContain("data-artwork-copy-tone='dark'");
     expect(artworkStyles).toContain('var(--ovl-color-artwork-label)');
@@ -247,6 +272,12 @@ describe('Now Playing CD player layout', () => {
     );
     expect(artworkStyles).toMatch(
       /\.artwork-overlay__record-dye\s*{[^}]*filter:\s*saturate\(var\(--ovl-template-artwork-dye-saturation\)\);/s,
+    );
+    expect(artworkStyles).toMatch(
+      /\.artwork-overlay__record-dye::after\s*{[^}]*background:\s*var\(--ovl-template-artwork-spray-ink\);[^}]*mask-image:\s*var\(--ovl-template-artwork-record-spray-mask\);[^}]*mix-blend-mode:\s*multiply;[^}]*opacity:\s*0\.62;/s,
+    );
+    expect(artworkStyles).toMatch(
+      /\.artwork-overlay__record-rotor::after\s*{[^}]*z-index:\s*5;[^}]*background:\s*var\(--ovl-template-artwork-surface-spray-ink\);[^}]*mask-image:\s*var\(--ovl-template-artwork-record-surface-spray-mask\);[^}]*mix-blend-mode:\s*screen;[^}]*opacity:\s*0\.72;/s,
     );
     expect(artworkStyles).toMatch(
       /\.artwork-overlay__record-grooves\s*{[^}]*background:\s*radial-gradient\(/s,

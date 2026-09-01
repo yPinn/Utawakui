@@ -63,7 +63,7 @@ function stylusTip(svg, stylusClass) {
   );
   const stylus = svg.match(
     new RegExp(
-      `class="${escapeRegExp(stylusClass)}"\\s+d="M([\\d.-]+) ([\\d.-]+)v([\\d.-]+)"`,
+      `class="[^"]*${escapeRegExp(stylusClass)}[^"]*"\\s+d="M([\\d.-]+) ([\\d.-]+)v([\\d.-]+)"`,
     ),
   );
 
@@ -95,7 +95,7 @@ function contactError({
   const record = cssRule(source, `.${prefix}record`, sizeProperties[0]);
   const grooves = cssRule(source, `.${prefix}record-grooves`, 'inset');
   const tonearm = cssRule(source, `.${prefix}tonearm`, sizeProperties[0]);
-  const tip = stylusTip(html, `${prefix}stylus`);
+  const tip = stylusTip(html, `${prefix}stylus-tip`);
 
   const platterLeft = percent(platter, 'inset-inline-start');
   const platterTop = percent(platter, 'inset-block-start');

@@ -412,10 +412,20 @@ const mangaBubbles = computed(() => {
               focusable="false"
             >
               <circle
+                class="obs-template-mockup__vinyl-tonearm-pivot-edge"
+                cx="66"
+                cy="28"
+                r="21"
+              />
+              <circle
                 class="obs-template-mockup__vinyl-tonearm-pivot"
                 cx="66"
                 cy="28"
-                r="20"
+                r="18"
+              />
+              <path
+                class="obs-template-mockup__vinyl-tonearm-pivot-highlight"
+                d="M53 23 A14 14 0 0 1 72 16"
               />
               <circle
                 class="obs-template-mockup__vinyl-tonearm-pivot-core"
@@ -423,7 +433,21 @@ const mangaBubbles = computed(() => {
                 cy="28"
                 r="8"
               />
+              <circle
+                class="obs-template-mockup__vinyl-tonearm-pivot-pin"
+                cx="66"
+                cy="28"
+                r="2.5"
+              />
               <g class="obs-template-mockup__vinyl-tonearm-assembly">
+                <rect
+                  class="obs-template-mockup__vinyl-tonearm-counterweight-edge"
+                  x="52"
+                  y="0"
+                  width="28"
+                  height="15"
+                  rx="7.5"
+                />
                 <rect
                   class="obs-template-mockup__vinyl-tonearm-counterweight"
                   x="53"
@@ -433,21 +457,83 @@ const mangaBubbles = computed(() => {
                   rx="6.5"
                 />
                 <path
+                  class="obs-template-mockup__vinyl-tonearm-counterweight-highlight"
+                  d="M58 4h14"
+                />
+                <path
+                  class="obs-template-mockup__vinyl-tonearm-counterweight-cap"
+                  d="M76.5 3v9"
+                />
+                <path
+                  class="obs-template-mockup__vinyl-tonearm-rail-edge"
+                  d="M66 28 C69 78 42 134 11.5 179"
+                />
+                <path
                   class="obs-template-mockup__vinyl-tonearm-rail"
                   d="M66 28 C69 78 42 134 11.5 179"
+                />
+                <path
+                  class="obs-template-mockup__vinyl-tonearm-rail-highlight"
+                  d="M65 28 C67.5 73 46 122 20 165"
                 />
                 <g
                   class="obs-template-mockup__vinyl-tonearm-head"
                   transform="translate(11.5 179) rotate(17)"
                 >
-                  <rect x="-6" y="-4" width="28" height="13" rx="3" />
-                  <path class="obs-template-mockup__vinyl-stylus" d="M5 9v14" />
+                  <rect
+                    class="obs-template-mockup__vinyl-tonearm-head-edge"
+                    x="-7"
+                    y="-5"
+                    width="30"
+                    height="15"
+                    rx="4"
+                  />
+                  <rect
+                    class="obs-template-mockup__vinyl-tonearm-head-body"
+                    x="-6"
+                    y="-4"
+                    width="28"
+                    height="13"
+                    rx="3"
+                  />
+                  <path
+                    class="obs-template-mockup__vinyl-tonearm-head-highlight"
+                    d="M-2 -1h18"
+                  />
+                  <circle
+                    class="obs-template-mockup__vinyl-tonearm-head-screw"
+                    cx="16"
+                    cy="5"
+                    r="1.6"
+                  />
+                  <path
+                    class="obs-template-mockup__vinyl-stylus obs-template-mockup__vinyl-stylus-cantilever"
+                    d="M5 9v10"
+                  />
+                  <path
+                    class="obs-template-mockup__vinyl-stylus-tip"
+                    d="M5 19v4"
+                  />
                 </g>
               </g>
-              <path
-                class="obs-template-mockup__vinyl-tonearm-rest"
-                d="M91 103v16m-6-5h12"
-              />
+              <g class="obs-template-mockup__vinyl-tonearm-rest">
+                <rect
+                  class="obs-template-mockup__vinyl-tonearm-rest-base"
+                  x="85"
+                  y="116"
+                  width="12"
+                  height="6"
+                  rx="2"
+                />
+                <path
+                  class="obs-template-mockup__vinyl-tonearm-rest-post"
+                  d="M91 117v-12"
+                />
+                <path
+                  class="obs-template-mockup__vinyl-tonearm-rest-cradle"
+                  d="M84.5 108 Q91 114 97.5 108"
+                />
+              </g>
             </svg>
           </span>
         </span>
@@ -1079,17 +1165,52 @@ const mangaBubbles = computed(() => {
   inset-inline-end: 8%;
   inset-block-end: 8%;
   width: var(--ui-space-3);
-  aspect-ratio: 1;
+  height: var(--ui-space-3);
+  box-sizing: border-box;
   display: grid;
   place-items: center;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: 50%;
-  background: var(--ui-output-preview-vinyl-deck-metal);
+  background: radial-gradient(
+    circle,
+    var(--ui-output-preview-vinyl-dark) 0 46%,
+    var(--ui-color-border) 48% 54%,
+    var(--ui-output-preview-vinyl-deck-metal-highlight) 56% 65%,
+    var(--ui-output-preview-vinyl-deck-metal) 68%
+  );
+  box-shadow:
+    inset 1px 1px 1px
+      color-mix(
+        in srgb,
+        var(--ui-output-preview-vinyl-deck-metal-highlight) 72%,
+        transparent
+      ),
+    inset -1px -1px 1px
+      color-mix(in srgb, var(--ui-output-preview-vinyl-dark) 76%, transparent);
+}
+
+.obs-template-mockup__vinyl-deck-light::before,
+.obs-template-mockup__vinyl-deck-light::after {
+  grid-area: 1 / 1;
+  place-self: center;
+  border-radius: 50%;
+  content: '';
+}
+
+.obs-template-mockup__vinyl-deck-light::before {
+  width: 125%;
+  height: 125%;
+  background: color-mix(
+    in srgb,
+    var(--ui-output-preview-vinyl-sleeve-paper) 54%,
+    transparent
+  );
+  filter: blur(var(--ui-space-1));
 }
 
 .obs-template-mockup__vinyl-deck-light::after {
-  width: 42%;
-  aspect-ratio: 1;
+  width: 38%;
+  height: 38%;
   border-radius: 50%;
   background: var(--ui-output-preview-vinyl-sleeve-paper);
   box-shadow: 0 0 var(--ui-space-2)
@@ -1111,7 +1232,21 @@ const mangaBubbles = computed(() => {
   place-items: center;
   border: var(--ui-border-width) solid var(--ui-output-preview-surface-muted);
   border-radius: 50%;
-  background: var(--ui-output-preview-vinyl-platter-rim);
+  background:
+    repeating-radial-gradient(
+      circle at center,
+      transparent 0 9%,
+      color-mix(in srgb, var(--ui-output-preview-vinyl-dark) 22%, transparent)
+        9.5% 10.25%,
+      color-mix(
+          in srgb,
+          var(--ui-output-preview-vinyl-highlight) 12%,
+          transparent
+        )
+        10.5% 11%,
+      transparent 11.5% 14%
+    ),
+    var(--ui-output-preview-vinyl-platter-rim);
   box-shadow:
     inset 0 0 0 var(--ui-space-1) var(--ui-output-preview-vinyl-dark),
     var(--ui-shadow-overlay);
@@ -1217,50 +1352,131 @@ const mangaBubbles = computed(() => {
 }
 
 .obs-template-mockup__vinyl-tonearm-pivot {
-  fill: var(--ui-output-preview-vinyl-deck-metal-highlight);
-  stroke: var(--ui-color-border);
-  stroke-width: 3;
+  fill: var(--ui-output-preview-vinyl-deck-metal);
+}
+
+.obs-template-mockup__vinyl-tonearm-pivot-edge {
+  fill: var(--ui-color-border);
+}
+
+.obs-template-mockup__vinyl-tonearm-pivot-highlight {
+  fill: none;
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-linecap: round;
+  stroke-width: 2.5;
 }
 
 .obs-template-mockup__vinyl-tonearm-pivot-core {
   fill: var(--ui-output-preview-vinyl-dark);
   stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
-  stroke-width: 3;
-}
-
-.obs-template-mockup__vinyl-tonearm-counterweight {
-  fill: var(--ui-output-preview-vinyl-deck-metal-highlight);
-  stroke: var(--ui-color-border);
   stroke-width: 2;
 }
 
-.obs-template-mockup__vinyl-tonearm-rail {
-  fill: none;
-  stroke: var(--ui-output-preview-text-muted);
-  stroke-linecap: round;
-  stroke-width: 7;
+.obs-template-mockup__vinyl-tonearm-pivot-pin {
+  fill: var(--ui-output-preview-vinyl-sleeve-paper);
+  stroke: var(--ui-color-border);
+  stroke-width: 1;
 }
 
-.obs-template-mockup__vinyl-tonearm-head {
-  fill: var(--ui-output-preview-text);
-  stroke: var(--ui-output-preview-canvas);
+.obs-template-mockup__vinyl-tonearm-counterweight {
+  fill: var(--ui-output-preview-vinyl-deck-metal);
+}
+
+.obs-template-mockup__vinyl-tonearm-counterweight-edge {
+  fill: var(--ui-color-border);
+}
+
+.obs-template-mockup__vinyl-tonearm-counterweight-highlight,
+.obs-template-mockup__vinyl-tonearm-counterweight-cap {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.obs-template-mockup__vinyl-tonearm-counterweight-highlight {
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
   stroke-width: 1.5;
 }
 
-.obs-template-mockup__vinyl-stylus,
-.obs-template-mockup__vinyl-tonearm-rest {
+.obs-template-mockup__vinyl-tonearm-counterweight-cap {
+  stroke: var(--ui-output-preview-vinyl-dark);
+  stroke-width: 2;
+}
+
+.obs-template-mockup__vinyl-tonearm-rail-edge,
+.obs-template-mockup__vinyl-tonearm-rail,
+.obs-template-mockup__vinyl-tonearm-rail-highlight {
   fill: none;
   stroke-linecap: round;
 }
 
-.obs-template-mockup__vinyl-stylus {
+.obs-template-mockup__vinyl-tonearm-rail-edge {
   stroke: var(--ui-output-preview-vinyl-dark);
-  stroke-width: 3;
+  stroke-width: 10;
 }
 
-.obs-template-mockup__vinyl-tonearm-rest {
+.obs-template-mockup__vinyl-tonearm-rail {
+  stroke: var(--ui-output-preview-text-muted);
+  stroke-width: 7;
+}
+
+.obs-template-mockup__vinyl-tonearm-rail-highlight {
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-width: 2;
+}
+
+.obs-template-mockup__vinyl-tonearm-head-edge {
+  fill: var(--ui-output-preview-canvas);
+}
+
+.obs-template-mockup__vinyl-tonearm-head-body {
+  fill: var(--ui-output-preview-text);
+}
+
+.obs-template-mockup__vinyl-tonearm-head-highlight {
+  fill: none;
+  stroke: color-mix(in srgb, var(--ui-output-preview-text) 72%, transparent);
+  stroke-linecap: round;
+  stroke-width: 1.5;
+}
+
+.obs-template-mockup__vinyl-tonearm-head-screw {
+  fill: var(--ui-output-preview-vinyl-dark);
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-width: 0.8;
+}
+
+.obs-template-mockup__vinyl-stylus-cantilever,
+.obs-template-mockup__vinyl-stylus-tip,
+.obs-template-mockup__vinyl-tonearm-rest-post,
+.obs-template-mockup__vinyl-tonearm-rest-cradle {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.obs-template-mockup__vinyl-stylus-cantilever {
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-width: 2.5;
+}
+
+.obs-template-mockup__vinyl-stylus-tip {
+  stroke: var(--ui-output-preview-vinyl-dark);
+  stroke-width: 3.5;
+}
+
+.obs-template-mockup__vinyl-tonearm-rest-base {
+  fill: var(--ui-output-preview-vinyl-deck-metal);
+  stroke: var(--ui-color-border);
+  stroke-width: 1.5;
+}
+
+.obs-template-mockup__vinyl-tonearm-rest-post {
   stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
   stroke-width: 5;
+}
+
+.obs-template-mockup__vinyl-tonearm-rest-cradle {
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-width: 4;
 }
 
 .obs-template-mockup[data-template-id='art-card']

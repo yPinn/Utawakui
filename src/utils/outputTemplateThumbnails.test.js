@@ -50,4 +50,8 @@ describe('bundled output template thumbnails', () => {
       /karaoke-stack.*\.jpg$/,
     );
   });
+
+  it('maps the bundled vinyl artwork to the stable Art Card template id', () => {
+    expect(getOutputTemplateThumbnail('art-card')).toMatch(/art-card.*\.jpg$/);
+  });
 });

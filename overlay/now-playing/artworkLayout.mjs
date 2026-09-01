@@ -5,6 +5,9 @@ const ARTWORK_SHADOW_MASK_PROPERTY =
   '--ovl-template-artwork-record-shadow-mask';
 const ARTWORK_HIGHLIGHT_MASK_PROPERTY =
   '--ovl-template-artwork-record-highlight-mask';
+const ARTWORK_SPRAY_MASK_PROPERTY = '--ovl-template-artwork-record-spray-mask';
+const ARTWORK_SURFACE_SPRAY_MASK_PROPERTY =
+  '--ovl-template-artwork-record-surface-spray-mask';
 const ARTWORK_INK_PROPERTY = '--ovl-template-artwork-record-ink';
 const MIN_ALPHA = 192;
 const MIN_CHROMA = 0.12;
@@ -207,6 +210,105 @@ function pointFromAngle(origin, distance, angleDegrees) {
   };
 }
 
+function smoothstep(progress) {
+  const boundedProgress = clamp(progress, 0, 1);
+  return boundedProgress * boundedProgress * (3 - 2 * boundedProgress);
+}
+
+function createSpiralCenterlinePoint(progress, arm, spiral) {
+  const innerSquared = 20.5 ** 2;
+  const radialSquaredSpan = 47 ** 2 - innerSquared;
+  const boundedProgress = clamp(progress, 0, 1);
+  const normalizedRadius = 0.012 + Math.pow(boundedProgress, 1.4) * 0.938;
+  const fullArmSeparation = 360 / spiral.armCount;
+  const splitProgress = smoothstep(boundedProgress / 0.24);
+  const armSeparation = fullArmSeparation * (0.28 + splitProgress * 0.72);
+  const angle =
+    spiral.phase + arm * armSeparation + boundedProgress * spiral.turns * 360;
+  const distance = Math.sqrt(
+    innerSquared + normalizedRadius * radialSquaredSpan,
+  );
+
+  return {
+    angle: decimal(angle),
+    normalizedRadius: decimal(normalizedRadius),
+    point: pointFromAngle({ x: 50, y: 50 }, distance, angle),
+  };
+}
+
+function createSpiralTrajectorySegments(spiral) {
+  const ranges = [
+    { progressStart: 0.015, progressEnd: 0.34, width: 6.2, opacity: 0.22 },
+    { progressStart: 0.42, progressEnd: 0.7, width: 4.8, opacity: 0.13 },
+  ];
+  return Array.from({ length: spiral.armCount }, (_, arm) =>
+    ranges.map((range) => {
+      const pointCount = 11;
+      const centerline = Array.from({ length: pointCount }, (_, index) => {
+        const progress =
+          range.progressStart +
+          (index / (pointCount - 1)) *
+            (range.progressEnd - range.progressStart);
+        return createSpiralCenterlinePoint(progress, arm, spiral);
+      });
+      const [start] = centerline;
+      const end = centerline.at(-1);
+      const path = centerline
+        .map(
+          ({ point }, index) =>
+            `${index === 0 ? 'M' : 'L'} ${pointText(point)}`,
+        )
+        .join(' ');
+      return {
+        arm,
+        ...range,
+        startAngle: start.angle,
+        startPoint: start.point,
+        endPoint: end.point,
+        path,
+      };
+    }),
+  ).flat();
+}
+
+function midpoint(first, second) {
+  return {
+    x: decimal((first.x + second.x) / 2),
+    y: decimal((first.y + second.y) / 2),
+  };
+}
+
+function createSoftBlobPath(random, center, width, height, rotation) {
+  const points = Array.from({ length: 9 }, (_, index) => {
+    const angle = (index / 9) * 360;
+    const radius = 0.72 + random() * 0.42;
+    const radians = (angle * Math.PI) / 180;
+    const rotationRadians = (rotation * Math.PI) / 180;
+    const localX = Math.cos(radians) * (width / 2) * radius;
+    const localY = Math.sin(radians) * (height / 2) * radius;
+    return {
+      x: decimal(
+        center.x +
+          localX * Math.cos(rotationRadians) -
+          localY * Math.sin(rotationRadians),
+      ),
+      y: decimal(
+        center.y +
+          localX * Math.sin(rotationRadians) +
+          localY * Math.cos(rotationRadians),
+      ),
+    };
+  });
+  const start = midpoint(points.at(-1), points[0]);
+  const segments = points
+    .map((point, index) => {
+      const next = points[(index + 1) % points.length];
+      return `Q ${pointText(point)} ${pointText(midpoint(point, next))}`;
+    })
+    .join(' ');
+  return `M ${pointText(start)} ${segments} Z`;
+}
+
 function createContourRibbon(random, role, index, count, phase) {
   const isShadow = role === 'shadow';
   const width = decimal(isShadow ? 8 + random() * 6 : 5 + random() * 5);
@@ -279,6 +381,117 @@ export function createVinylContourGeometry(trackId) {
   const highlightCount = 2 + Math.floor(random() * 2);
   const shadowPhase = random() * 360;
   const highlightPhase = shadowPhase + 28 + random() * 42;
+  const sprayBloomCount = 1 + Math.floor(random() * 2);
+  const sprayBlooms = Array.from({ length: sprayBloomCount }, (_, index) => {
+    const angle = shadowPhase + index * (118 + random() * 54);
+    const center = pointFromAngle({ x: 50, y: 50 }, 27 + random() * 12, angle);
+    const width = decimal(9 + random() * 7);
+    const height = decimal(4.5 + random() * 5.5);
+    return {
+      center,
+      opacity: decimal(0.52 + random() * 0.22),
+      path: createSoftBlobPath(
+        random,
+        center,
+        width,
+        height,
+        angle + 68 + (random() - 0.5) * 34,
+      ),
+    };
+  });
+  const createClusterDabs = (count) =>
+    Array.from({ length: count }, (_, index) => {
+      const bloom = sprayBlooms[index % sprayBlooms.length];
+      let point = bloom.center;
+      for (let attempt = 0; attempt < 8; attempt += 1) {
+        const angle = random() * 360;
+        const distance = 6 + random() * 18;
+        const candidate = pointFromAngle(bloom.center, distance, angle);
+        const radiusFromCenter = Math.hypot(candidate.x - 50, candidate.y - 50);
+        if (radiusFromCenter >= 20.5 && radiusFromCenter <= 47) {
+          point = candidate;
+          break;
+        }
+      }
+      return {
+        ...point,
+        radius: decimal(0.38 + random() * 0.72),
+        opacity: decimal(0.42 + random() * 0.24),
+      };
+    });
+  const createSurfaceDab = (point, details) => ({
+    ...point,
+    ...details,
+    radius: decimal(0.34 + random() * 0.48),
+    opacity: decimal(0.52 + random() * 0.3),
+  });
+  const createSurfaceFieldDabs = (count) => {
+    const angularSectorCount = 12;
+    const radialBandCount = 4;
+    const innerSquared = 20.5 ** 2;
+    const radialSquaredSpan = 47 ** 2 - innerSquared;
+    return Array.from({ length: count }, (_, index) => {
+      const angularSector = index % angularSectorCount;
+      const radialBand =
+        Math.floor(index / angularSectorCount) % radialBandCount;
+      const angle =
+        ((angularSector + 0.1 + random() * 0.8) / angularSectorCount) * 360;
+      const normalizedRadius =
+        (radialBand + 0.1 + random() * 0.8) / radialBandCount;
+      const distance = Math.sqrt(
+        innerSquared + normalizedRadius * radialSquaredSpan,
+      );
+      return createSurfaceDab(
+        pointFromAngle({ x: 50, y: 50 }, distance, angle),
+        { distribution: 'field' },
+      );
+    });
+  };
+  const createSurfaceSpiralDabs = (count, spiral) => {
+    const innerSquared = 20.5 ** 2;
+    const radialSquaredSpan = 47 ** 2 - innerSquared;
+    return Array.from({ length: count }, (_, index) => {
+      const arm = index % spiral.armCount;
+      const armPointIndex = Math.floor(index / spiral.armCount);
+      const armPointCount = Math.ceil((count - arm) / spiral.armCount);
+      const progress = decimal((armPointIndex + 0.5) / armPointCount);
+      const centerline = createSpiralCenterlinePoint(progress, arm, spiral);
+      const normalizedRadius = Math.min(
+        0.97,
+        Math.max(0.012, centerline.normalizedRadius + (random() - 0.5) * 0.04),
+      );
+      const distance = Math.sqrt(
+        innerSquared + normalizedRadius * radialSquaredSpan,
+      );
+      const angle = centerline.angle + (random() - 0.5) * 12;
+      return createSurfaceDab(
+        pointFromAngle({ x: 50, y: 50 }, distance, angle),
+        {
+          arm,
+          centerAngle: centerline.angle,
+          centerNormalizedRadius: centerline.normalizedRadius,
+          distribution: 'spiral',
+          progress,
+        },
+      );
+    });
+  };
+  const shadowDabs = createClusterDabs(8 + Math.floor(random() * 5));
+  const surfaceCount = 160 + Math.floor(random() * 5) * 10;
+  const surfaceFieldCount = Math.round(surfaceCount * 0.3);
+  const surfaceSpiral = {
+    armCount: 2,
+    phase: decimal(random() * 360),
+    turns: decimal(0.72 + random() * 0.23),
+  };
+  const surfaceFieldDabs = createSurfaceFieldDabs(surfaceFieldCount);
+  const surfaceSpiralDabs = createSurfaceSpiralDabs(
+    surfaceCount - surfaceFieldCount,
+    surfaceSpiral,
+  );
+  const spiralTrajectorySegments =
+    createSpiralTrajectorySegments(surfaceSpiral);
+  const surfaceDabs = [...surfaceFieldDabs, ...surfaceSpiralDabs];
   return {
     shadowContours: Array.from({ length: shadowCount }, (_, index) =>
       createContourRibbon(random, 'shadow', index, shadowCount, shadowPhase),
@@ -292,39 +505,104 @@ export function createVinylContourGeometry(trackId) {
         highlightPhase,
       ),
     ),
+    sprayBlooms,
+    shadowDabs,
+    surfaceDabs,
+    surfaceFieldDabs,
+    surfaceSpiral,
+    surfaceSpiralDabs,
+    spiralTrajectorySegments,
   };
 }
 
-function createVinylInk(trackId) {
+export function createVinylNebulaGeometry(trackId) {
   const random = seededRandom(hashTrackId(`${trackId}:ink`));
-  return VINYL_PATTERN_COLORS.map((color) => {
-    const width = decimal(58 + random() * 28);
-    const height = decimal(44 + random() * 30);
-    const x = decimal(12 + random() * 76);
-    const y = decimal(12 + random() * 76);
-    const strength = Math.round(54 + random() * 22);
-    const reach = decimal(68 + random() * 18);
-    return `radial-gradient(ellipse ${width}% ${height}% at ${x}% ${y}%, color-mix(in srgb, ${color} ${strength}%, transparent) 0%, color-mix(in srgb, ${color} ${Math.max(30, strength - 20)}%, transparent) 44%, transparent ${reach}%)`;
-  }).join(', ');
+  const veils = VINYL_PATTERN_COLORS.map((color) => ({
+    color,
+    width: decimal(58 + random() * 30),
+    height: decimal(42 + random() * 34),
+    x: decimal(12 + random() * 76),
+    y: decimal(12 + random() * 76),
+    strength: Math.round(48 + random() * 28),
+    reach: decimal(70 + random() * 16),
+  }));
+  const knots = Array.from(
+    { length: 1 + Math.floor(random() * 2) },
+    (_, index) => ({
+      color: VINYL_PATTERN_COLORS[(index + 1) % VINYL_PATTERN_COLORS.length],
+      width: decimal(18 + random() * 20),
+      height: decimal(12 + random() * 18),
+      x: decimal(16 + random() * 68),
+      y: decimal(16 + random() * 68),
+      strength: Math.round(30 + random() * 28),
+      reach: decimal(72 + random() * 16),
+    }),
+  );
+  return { veils, knots };
+}
+
+function createVinylInk(trackId) {
+  const { veils, knots } = createVinylNebulaGeometry(trackId);
+  const knotGradients = knots.map(
+    ({ color, width, height, x, y, strength, reach }) =>
+      `radial-gradient(ellipse ${width}% ${height}% at ${x}% ${y}%, color-mix(in srgb, ${color} ${strength}%, transparent) 0%, color-mix(in srgb, ${color} ${Math.max(16, strength - 14)}%, transparent) 36%, transparent ${reach}%)`,
+  );
+  const veilGradients = veils.map(
+    ({ color, width, height, x, y, strength, reach }) =>
+      `radial-gradient(ellipse ${width}% ${height}% at ${x}% ${y}%, color-mix(in srgb, ${color} ${strength}%, transparent) 0%, color-mix(in srgb, ${color} ${Math.max(24, strength - 22)}%, transparent) 46%, transparent ${reach}%)`,
+  );
+  return [...knotGradients, ...veilGradients].join(', ');
 }
 
 const VINYL_ANNULUS_CLIP =
-  '<clipPath id="annulus"><path d="M50 2a48 48 0 1 0 0 96a48 48 0 1 0 0-96ZM50 19a31 31 0 1 1 0 62a31 31 0 1 1 0-62Z" fill-rule="evenodd" clip-rule="evenodd"/></clipPath>';
+  '<clipPath id="annulus"><path d="M50 2a48 48 0 1 0 0 96a48 48 0 1 0 0-96ZM50 31a19 19 0 1 1 0 38a19 19 0 1 1 0-38Z" fill-rule="evenodd" clip-rule="evenodd"/></clipPath>';
 
 function encodeVinylMask(layer, definitions, content) {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" data-layer="${layer}"><defs>${definitions}${VINYL_ANNULUS_CLIP}</defs><g clip-path="url(#annulus)">${content}</g></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
 }
 
-function createContourMask(layer, contours, blur) {
-  const content = contours
+function createContourMask(
+  layer,
+  contours,
+  blur,
+  {
+    sprayBlooms = [],
+    sprayDabs = [],
+    dabPigment = 'spray-dab',
+    trajectorySegments = [],
+  } = {},
+) {
+  const contourContent = contours
     .map(
       ({ path, opacity }) =>
         `<path d="${path}" fill="white" opacity="${opacity}" filter="url(#contour-soft)"/>`,
     )
     .join('');
-  const filter = `<filter id="contour-soft" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="${blur}"/></filter>`;
-  return encodeVinylMask(layer, filter, content);
+  const sprayContent = sprayBlooms
+    .map(
+      ({ path, opacity }) =>
+        `<path data-pigment="spray-bloom" d="${path}" fill="white" opacity="${opacity}" filter="url(#spray-soft)"/>`,
+    )
+    .join('');
+  const dabContent = sprayDabs
+    .map(
+      ({ x, y, radius, opacity }) =>
+        `<circle data-pigment="${dabPigment}" cx="${x}" cy="${y}" r="${radius}" fill="white" opacity="${opacity}" filter="url(#dab-soft)"/>`,
+    )
+    .join('');
+  const trajectoryContent = trajectorySegments
+    .map(
+      ({ path, width, opacity }) =>
+        `<path data-pigment="spiral-trajectory" d="${path}" fill="none" stroke="white" stroke-width="${width}" stroke-linecap="round" opacity="${opacity}" filter="url(#contour-soft)"/>`,
+    )
+    .join('');
+  const filters = `<filter id="contour-soft" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="${blur}"/></filter><filter id="spray-soft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="0.72"/></filter><filter id="dab-soft" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="0.28"/></filter>`;
+  return encodeVinylMask(
+    layer,
+    filters,
+    `${contourContent}${trajectoryContent}${sprayContent}${dabContent}`,
+  );
 }
 
 export function createVinylSurface(trackId) {
@@ -336,11 +614,20 @@ export function createVinylSurface(trackId) {
       geometry.shadowContours,
       3.2,
     ),
+    sprayMask: createContourMask('spray-ink', [], 0.1, {
+      sprayBlooms: geometry.sprayBlooms,
+      sprayDabs: geometry.shadowDabs,
+    }),
     highlightMask: createContourMask(
       'highlight-contours',
       geometry.highlightContours,
       2.6,
+      { trajectorySegments: geometry.spiralTrajectorySegments },
     ),
+    surfaceSprayMask: createContourMask('surface-spray', [], 0.1, {
+      sprayDabs: geometry.surfaceDabs,
+      dabPigment: 'surface-spray-dab',
+    }),
   };
 }
 
@@ -484,10 +771,20 @@ function setArtworkSource(elements, trackId) {
       ARTWORK_HIGHLIGHT_MASK_PROPERTY,
       surface.highlightMask,
     );
+    elements.root.style.setProperty(
+      ARTWORK_SPRAY_MASK_PROPERTY,
+      surface.sprayMask,
+    );
+    elements.root.style.setProperty(
+      ARTWORK_SURFACE_SPRAY_MASK_PROPERTY,
+      surface.surfaceSprayMask,
+    );
     elements.root.style.setProperty(ARTWORK_INK_PROPERTY, surface.ink);
   } else {
     elements.root.style.removeProperty(ARTWORK_SHADOW_MASK_PROPERTY);
     elements.root.style.removeProperty(ARTWORK_HIGHLIGHT_MASK_PROPERTY);
+    elements.root.style.removeProperty(ARTWORK_SPRAY_MASK_PROPERTY);
+    elements.root.style.removeProperty(ARTWORK_SURFACE_SPRAY_MASK_PROPERTY);
     elements.root.style.removeProperty(ARTWORK_INK_PROPERTY);
   }
   elements.image.hidden = true;

@@ -72,6 +72,14 @@ function compactWhitespace(source) {
 }
 
 describe('OBS output workspace layout contract', () => {
+  it('keeps custom-first gallery browsing independent from the applied slot', () => {
+    expect(workspaceSource).toContain('group.templates[0]?.id ?? null');
+    expect(workspaceSource).toContain(':applied-preset-ids="appliedPresetIds"');
+    expect(workspaceSource).not.toContain(
+      'if (templateId) browsedPresetIds[definition.id] = templateId;',
+    );
+  });
+
   it('routes page and kind selections through the session navigation owner', () => {
     expect(workspaceSource).not.toContain('activePage.value =');
     expect(workspaceSource).not.toContain('activeKind.value =');

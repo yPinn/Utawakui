@@ -109,9 +109,9 @@ watch([orderedPresets, () => outputState.slots], ([presets]) => {
     const currentId = browsedPresetIds[definition.id];
     if (!presets.some((preset) => preset.id === currentId)) {
       browsedPresetIds[definition.id] =
+        presets.find((preset) => preset.kind === definition.id)?.id ??
         outputState.slots[definition.id]?.templateId ??
         props.slotDefaults[definition.id]?.templateId ??
-        presets.find((preset) => preset.kind === definition.id)?.id ??
         null;
     }
   }
@@ -155,10 +155,6 @@ onMounted(async () => {
   await refreshOutputStatus();
   await loadSlots(props.slotDefaults);
   await refreshProjection();
-  for (const definition of props.slotDefinitions) {
-    const templateId = outputState.slots[definition.id]?.templateId;
-    if (templateId) browsedPresetIds[definition.id] = templateId;
-  }
 });
 </script>
 

@@ -3,21 +3,21 @@
   "slots": [
     {
       "id": "setlist",
-      "label": "Setlist",
+      "label": "歌單",
       "path": "/overlay/setlist",
       "defaultTemplateId": "queue-board",
       "defaultStyleSetIds": ["runtime-source", "setlist-layout"]
     },
     {
       "id": "lyrics",
-      "label": "Lyrics",
+      "label": "歌詞",
       "path": "/overlay/lyrics",
       "defaultTemplateId": "focus-line",
       "defaultStyleSetIds": ["runtime-source", "lyrics-type"]
     },
     {
       "id": "now-playing",
-      "label": "Now Playing",
+      "label": "播放中",
       "path": "/overlay/now-playing",
       "defaultTemplateId": "now-next",
       "defaultStyleSetIds": ["runtime-source"]

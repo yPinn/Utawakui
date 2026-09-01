@@ -28,7 +28,7 @@ describe('Now Playing template mockup', () => {
     );
   });
 
-  it('describes the new composition in the template registry', () => {
+  it('describes the composition with concise Chinese gallery copy', () => {
     const nowPlayingStart = templateRegistrySource.indexOf("id: 'now-next'");
     const setlistStart = templateRegistrySource.indexOf("id: 'queue-board'");
     const nowPlayingDefinition = templateRegistrySource.slice(
@@ -36,8 +36,9 @@ describe('Now Playing template mockup', () => {
       setlistStart,
     );
 
-    expect(nowPlayingDefinition).toContain("layoutLabel: '3／1／6 CD Player'");
-    expect(nowPlayingDefinition).toContain('透明 CD Player');
+    expect(nowPlayingDefinition).toContain("name: '浮光光碟'");
+    expect(nowPlayingDefinition).toContain("layoutLabel: '光碟＋曲目'");
+    expect(nowPlayingDefinition).toContain("tags: ['透明光碟'");
   });
 
   it('mirrors the 50／50 黑膠主題 hierarchy in the Workbench preview', () => {
@@ -86,6 +87,25 @@ describe('Now Playing template mockup', () => {
     expect(mockupSource).toMatch(
       /\.obs-template-mockup__vinyl-label\s*{[^}]*background:\s*var\(--ui-output-preview-vinyl-sleeve-paper\);/s,
     );
+  });
+
+  it('mirrors the subtle platter machining rings in the Workbench preview', () => {
+    const platterStart = mockupSource.indexOf(
+      '.obs-template-mockup__vinyl-platter {',
+    );
+    const recordStart = mockupSource.indexOf(
+      '.obs-template-mockup__vinyl-record {',
+      platterStart,
+    );
+    const platterRule = mockupSource.slice(platterStart, recordStart);
+
+    expect(platterRule).toContain('repeating-radial-gradient(');
+    expect(platterRule).toContain('var(--ui-output-preview-vinyl-dark) 22%');
+    expect(platterRule).toContain(
+      'var(--ui-output-preview-vinyl-highlight) 12%',
+    );
+    expect(platterRule).toContain('transparent 11.5% 14%');
+    expect(platterRule).toContain('var(--ui-output-preview-vinyl-platter-rim)');
   });
 
   it('keeps the preview vinyl playhead attached while motion is paused', () => {

@@ -45,9 +45,9 @@ describe('OutputView', () => {
     expect(html).toContain('輸出設定');
     expect(html).toContain('模板縮圖');
     expect(html).toContain('模板展示預覽');
-    expect(html).toContain('Now Playing');
-    expect(html).toContain('Setlist');
-    expect(html).toContain('Lyrics');
+    expect(html).toContain('播放中');
+    expect(html).toContain('歌單');
+    expect(html).toContain('歌詞');
     expect(setlistTab).toBeGreaterThan(-1);
     expect(setlistTab).toBeLessThan(lyricsTab);
     expect(lyricsTab).toBeLessThan(nowPlayingTab);
@@ -55,8 +55,8 @@ describe('OutputView', () => {
     expect(html).toMatch(
       /id="output-workbench-kind-setlist-tab"[^>]*aria-selected="true"/,
     );
-    expect(html).toContain('Simple Black B');
-    expect(html).not.toContain('Focus Line');
+    expect(html).toContain('黑幕歌單');
+    expect(html).not.toContain('聚焦歌詞');
   });
 
   it('reopens the last page and kind selected during this renderer session', async () => {
