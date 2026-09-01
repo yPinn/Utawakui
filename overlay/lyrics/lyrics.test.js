@@ -1,9 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createLyricsDiagnostics,
+  createLyricsErrorReporter,
   createLyricsFrameScheduler,
   destroyLyricsAnimations,
   renderLyricsFrame,
+  renderLyricsFrameSafely,
 } from './lyrics.mjs';
 
 function gsapHarness() {
@@ -39,7 +41,7 @@ function gsapHarness() {
   return { gsap, timelines };
 }
 
-function element(ownerDocument = null) {
+function element(ownerDocument = null, localName = '') {
   let ownText = '';
   let textContentWriteCount = 0;
   const value = {
@@ -48,6 +50,7 @@ function element(ownerDocument = null) {
     hidden: false,
     dataset: {},
     attributes: {},
+    localName,
     animate: vi.fn(),
     style: {
       values: {},
@@ -99,7 +102,7 @@ function element(ownerDocument = null) {
 
 function domElements() {
   const documentApi = {
-    createElement: vi.fn(() => element(documentApi)),
+    createElement: vi.fn((localName) => element(documentApi, localName)),
     createElementNS: vi.fn(() => {
       const svgElement = element(documentApi);
       Object.defineProperty(svgElement, 'className', {
@@ -123,10 +126,14 @@ function domElements() {
 
 describe('lyrics overlay renderer', () => {
   it('emits bounded sweep diagnostics only when lyricsDebug is explicitly enabled', () => {
-    const consoleApi = { debug: vi.fn() };
+    const consoleApi = { log: vi.fn() };
     const disabled = createLyricsDiagnostics({
       consoleApi,
       location: { search: '?workbench=1' },
+    });
+    const publicOverlay = createLyricsDiagnostics({
+      consoleApi,
+      location: { search: '?lyricsDebug=1' },
     });
     const enabled = createLyricsDiagnostics({
       consoleApi,
@@ -134,6 +141,7 @@ describe('lyrics overlay renderer', () => {
     });
 
     expect(disabled).toBeNull();
+    expect(publicOverlay).toBeNull();
     expect(enabled).toEqual(expect.any(Function));
     enabled('sweep-start', {
       lineIndex: 3,
@@ -141,7 +149,7 @@ describe('lyrics overlay renderer', () => {
       progress: 25,
       templateId: 'karaoke-stack',
     });
-    expect(consoleApi.debug).toHaveBeenCalledWith(
+    expect(consoleApi.log).toHaveBeenCalledWith(
       '[Utawakui lyrics]',
       'sweep-start',
       {
@@ -151,6 +159,69 @@ describe('lyrics overlay renderer', () => {
         templateId: 'karaoke-stack',
       },
     );
+  });
+
+  it('reports bounded render errors only when lyricsDebug is explicitly enabled', () => {
+    const consoleApi = { error: vi.fn() };
+    const disabled = createLyricsErrorReporter({
+      consoleApi,
+      location: { search: '?workbench=1' },
+    });
+    const publicOverlay = createLyricsErrorReporter({
+      consoleApi,
+      location: { search: '?lyricsDebug=1' },
+    });
+    const enabled = createLyricsErrorReporter({
+      consoleApi,
+      location: { search: '?workbench=1&lyricsDebug=1' },
+    });
+
+    expect(disabled).toBeNull();
+    expect(publicOverlay).toBeNull();
+    expect(enabled).toEqual(expect.any(Function));
+    enabled(new TypeError('render failed'), {
+      phase: 'render',
+      revision: 17,
+      templateId: 'karaoke-stack',
+    });
+    expect(consoleApi.error).toHaveBeenCalledWith(
+      '[Utawakui lyrics]',
+      'render-error',
+      expect.objectContaining({
+        errorName: 'TypeError',
+        message: 'render failed',
+        phase: 'render',
+        revision: 17,
+        templateId: 'karaoke-stack',
+      }),
+    );
+  });
+
+  it('keeps the live renderer running after reporting a malformed frame', () => {
+    const reportError = vi.fn();
+
+    expect(
+      renderLyricsFrameSafely(
+        { root: null, current: null, next: null },
+        {
+          revision: 18,
+          ktv: {
+            currentVisibleLineIndex: 4,
+            currentSegments: [{ segmentId: 'word:0', text: 'bad' }],
+            nextSegments: [{ segmentId: 'word:1', text: 'next' }],
+          },
+        },
+        { templateId: 'karaoke-stack', reportError },
+      ),
+    ).toBe(false);
+    expect(reportError).toHaveBeenCalledWith(expect.any(TypeError), {
+      currentSegmentCount: 1,
+      lineIndex: 4,
+      nextSegmentCount: 1,
+      phase: 'render',
+      revision: 18,
+      templateId: 'karaoke-stack',
+    });
   });
 
   it('shows a four-beat Classic KTV cue without exposing it to other templates', () => {
@@ -197,6 +268,41 @@ describe('lyrics overlay renderer', () => {
     expect(elements.ktvCountIn.hidden).toBe(true);
   });
 
+  it('does not create a Manga bubble for a KTV count-in before the first lyric', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: false,
+      currentText: '',
+      nextText: '',
+      language: 'ja',
+      ktv: {
+        visible: true,
+        currentText: '最初の歌詞',
+        nextText: '次の歌詞',
+        currentVisibleLineIndex: 0,
+        nextVisibleLineIndex: 1,
+        lineProgress: 0,
+        countIn: {
+          remainingBeats: 4,
+          totalBeats: 4,
+          timingSource: 'fixed-window',
+        },
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+
+    expect(elements.root.hidden).toBe(true);
+    expect(elements.mangaBubbles.hidden).toBe(true);
+    expect(elements.mangaBubbles.children).toHaveLength(0);
+    expect(elements.mangaBubbles.dataset.mangaCount).toBeUndefined();
+    expect(elements.ktvCountIn.hidden).toBe(true);
+  });
+
   it('restarts a vocal section and its countdown on the first KTV lane', () => {
     const elements = domElements();
 
@@ -226,7 +332,7 @@ describe('lyrics overlay renderer', () => {
           },
         },
       },
-      { templateId: 'karaoke-stack', reducedMotion: true },
+      { templateId: 'karaoke-stack' },
     );
 
     expect(elements.current.dataset.ktvLane).toBe('a');
@@ -363,6 +469,16 @@ describe('lyrics overlay renderer', () => {
     expect(JSON.stringify(trace.mock.calls)).not.toContain(
       '不可寫入診斷的歌詞',
     );
+  });
+
+  it('preserves render failures when diagnostics are disabled', () => {
+    expect(() =>
+      renderLyricsFrameSafely(
+        { root: null, current: null, next: null },
+        { revision: 19 },
+        { templateId: 'karaoke-stack' },
+      ),
+    ).toThrow(TypeError);
   });
 
   it('resynchronizes a mounted Classic KTV line only when playback pauses, resumes, or seeks', () => {
@@ -553,6 +669,240 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.textContent).toBe(frame.currentText);
   });
 
+  it('keeps upcoming T2 glyph nodes mounted across a continuous KTV lane handoff', () => {
+    const elements = domElements();
+    const upcomingSegments = [
+      {
+        segmentId: 'b-1',
+        text: 'B ',
+        state: 'upcoming',
+        progress: 0,
+      },
+      {
+        segmentId: 'b-2',
+        text: 'line',
+        state: 'upcoming',
+        progress: 0,
+      },
+    ];
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: 'A line',
+        nextText: 'B line',
+        language: 'en',
+        lineIndex: 0,
+        currentVisibleLineIndex: 0,
+        nextVisibleLineIndex: 1,
+        currentLaneIndex: 0,
+        nextLaneIndex: 1,
+        currentSegments: [
+          {
+            segmentId: 'a-1',
+            text: 'A line',
+            state: 'active',
+            progress: 0.5,
+            remainingMs: 1000,
+          },
+        ],
+        nextSegments: upcomingSegments,
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+    const laneBGlyphs = [...elements.next.children];
+
+    expect(laneBGlyphs).toHaveLength(2);
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: 'A line',
+        nextText: 'B line',
+        language: 'en',
+        lineIndex: 0,
+        lineProgress: 1,
+        currentVisibleLineIndex: 0,
+        nextVisibleLineIndex: 1,
+        currentLaneIndex: 0,
+        nextLaneIndex: 1,
+        currentSegments: [
+          {
+            segmentId: 'a-1',
+            text: 'A line',
+            state: 'past',
+            progress: 1,
+          },
+        ],
+        nextSegments: upcomingSegments,
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true },
+    );
+
+    expect(elements.next.children).toEqual(laneBGlyphs);
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: 'B line',
+        nextText: 'A again',
+        language: 'en',
+        lineIndex: 1,
+        currentVisibleLineIndex: 1,
+        nextVisibleLineIndex: 2,
+        currentLaneIndex: 1,
+        nextLaneIndex: 2,
+        laneReplacementDelayMs: 0,
+        currentSegments: [
+          {
+            ...upcomingSegments[0],
+            state: 'active',
+            progress: 0.2,
+            remainingMs: 800,
+          },
+          upcomingSegments[1],
+        ],
+        nextSegments: [
+          {
+            segmentId: 'a-3',
+            text: 'A again',
+            state: 'upcoming',
+            progress: 0,
+          },
+        ],
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.next.children).toEqual(laneBGlyphs);
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.next.dataset.ktvActive).toBe('true');
+    expect(laneBGlyphs[0].animate).toHaveBeenCalledOnce();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: 'B line',
+        nextText: 'A again',
+        language: 'en',
+        lineIndex: 1,
+        currentVisibleLineIndex: 1,
+        nextVisibleLineIndex: 2,
+        currentLaneIndex: 1,
+        nextLaneIndex: 2,
+        currentSegments: [
+          {
+            ...upcomingSegments[0],
+            state: 'active',
+            progress: 0.4,
+            remainingMs: 600,
+          },
+          upcomingSegments[1],
+        ],
+        nextSegments: [
+          {
+            segmentId: 'a-3',
+            text: 'A again',
+            state: 'upcoming',
+            progress: 0,
+          },
+        ],
+      },
+      { templateId: 'karaoke-stack' },
+    );
+
+    expect(elements.next.children).toEqual(laneBGlyphs);
+    expect(laneBGlyphs[0].animate).toHaveBeenCalledOnce();
+  });
+
+  it('renders both T2 lanes from the explicit-role KTV frame used by Output', () => {
+    const elements = domElements();
+    const trace = vi.fn();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: false,
+        currentText: '',
+        nextText: '',
+        ktv: {
+          visible: true,
+          currentText: '誰說每天都晴朗',
+          nextText: '就算洩氣我也不必假裝',
+          language: 'zh-Hant',
+          lineIndex: 15,
+          currentVisibleLineIndex: 19,
+          nextVisibleLineIndex: 20,
+          currentLaneIndex: 18,
+          nextLaneIndex: 19,
+          currentRole: 'solo',
+          nextRole: 'solo',
+          currentSegments: [
+            {
+              segmentId: 'line:15:word:0',
+              text: '誰說每天都晴朗',
+              state: 'active',
+              progress: 0.2,
+              remainingMs: 800,
+            },
+          ],
+          nextSegments: [
+            {
+              segmentId: 'line:16:word:0',
+              text: '就算洩氣我也不必假裝',
+              state: 'upcoming',
+              progress: 0,
+            },
+          ],
+          countIn: null,
+        },
+      },
+      { templateId: 'karaoke-stack', reducedMotion: true, trace },
+    );
+
+    expect(elements.current.textContent).toBe('誰說每天都晴朗');
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.next.textContent).toBe('就算洩氣我也不必假裝');
+    expect(elements.next.children).toHaveLength(1);
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(trace).toHaveBeenCalledWith(
+      'ktv-layout',
+      expect.objectContaining({
+        currentLaneIndex: 18,
+        currentSegmentCount: 1,
+        currentVisibleLineIndex: 19,
+        nextLaneIndex: 19,
+        nextSegmentCount: 1,
+        nextVisibleLineIndex: 20,
+        revision: 1,
+        hosts: {
+          current: expect.objectContaining({
+            active: true,
+            childCount: 1,
+            lane: 'a',
+            segmented: true,
+          }),
+          next: expect.objectContaining({
+            active: false,
+            childCount: 1,
+            lane: 'b',
+            segmented: true,
+          }),
+        },
+      }),
+    );
+  });
+
   it('keeps Live Stage caption line nodes mounted on clock-only updates', () => {
     const elements = domElements();
     const frame = {
@@ -586,7 +936,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.current.children).toEqual(captionLines);
   });
 
-  it('keeps Manga Frame bubbles and segment nodes mounted on clock-only updates', () => {
+  it('keeps one static Manga Frame bubble mounted across timing-only updates', () => {
     const elements = domElements();
     const { gsap, timelines } = gsapHarness();
     const frame = {
@@ -610,7 +960,7 @@ describe('lyrics overlay renderer', () => {
     renderLyricsFrame(elements, frame, { gsap, templateId: 'manga-frame' });
     timelines[0].options.onComplete();
     const bubble = elements.mangaBubbles.children[0];
-    const segment = bubble.children[1].children[0];
+    const text = bubble.children[1];
 
     renderLyricsFrame(
       elements,
@@ -625,8 +975,73 @@ describe('lyrics overlay renderer', () => {
     );
 
     expect(elements.mangaBubbles.children[0]).toBe(bubble);
-    expect(bubble.children[1].children[0]).toBe(segment);
-    expect(gsap.to).toHaveBeenCalledOnce();
+    expect(bubble.children[1]).toBe(text);
+    expect(text.children).toHaveLength(0);
+    expect(text.textContent).toBe('漫画保持穩定');
+    expect(gsap.to).not.toHaveBeenCalled();
+  });
+
+  it('rebuilds Manga frame metrics when the same pure-kanji line changes language', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '長'.repeat(8),
+      nextText: '',
+      language: 'zh-Hant',
+      lineIndex: 0,
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+    const chineseBubble = elements.mangaBubbles.children[0];
+    expect(chineseBubble.dataset.mangaColumns).toBe('1');
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 2, language: 'ja' },
+      { templateId: 'manga-frame', reducedMotion: true },
+    );
+    const japaneseBubble = elements.mangaBubbles.children[0];
+    expect(japaneseBubble).not.toBe(chineseBubble);
+    expect(japaneseBubble.dataset.mangaColumns).toBe('2');
+    expect(
+      japaneseBubble.style.values['--ovl-manga-frame-required-block-size'],
+    ).toBe('8.06em');
+  });
+
+  it('keeps the Manga fallback static when its bubble container is unavailable', () => {
+    const elements = domElements();
+    const { gsap } = gsapHarness();
+    elements.mangaBubbles = null;
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: 'fallback stays still',
+        nextText: '',
+        language: 'en',
+        lineIndex: 0,
+        currentSegments: [
+          {
+            segmentId: 'segment-1',
+            text: 'fallback stays still',
+            state: 'active',
+            progress: 0.2,
+            remainingMs: 800,
+          },
+        ],
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(elements.current.children).toHaveLength(0);
+    expect(elements.current.textContent).toBe('fallback stays still');
+    expect(gsap.to).not.toHaveBeenCalled();
   });
 
   it('keeps Classic KTV A and B as fixed lanes while the active lyric alternates in place', () => {
@@ -678,18 +1093,18 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.current.textContent).toBe('B 等待中');
-    expect(elements.current.dataset.ktvLane).toBe('b');
-    expect(elements.next.textContent).toBe('A 正在唱');
-    expect(elements.next.dataset.ktvLane).toBe('a');
-    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(elements.next.textContent).toBe('B 等待中');
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.current.textContent).toBe('A 正在唱');
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.dataset.ktvHeld).toBe('true');
     expect(elements.root.dataset.ktvActiveLane).toBe('b');
     expect(scheduled[0]?.delayMs).toBe(600);
 
     scheduled[0].callback();
 
-    expect(elements.next.textContent).toBe('A 換成下一句');
-    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(elements.current.textContent).toBe('A 換成下一句');
+    expect(elements.current.dataset).not.toHaveProperty('ktvHeld');
 
     renderLyricsFrame(
       elements,
@@ -740,9 +1155,9 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.current.dataset.ktvLane).toBe('b');
-    expect(elements.next.dataset.ktvLane).toBe('a');
-    expect(elements.next.textContent).toBe('我很快就離開');
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.textContent).toBe('我很快就離開');
 
     renderLyricsFrame(
       elements,
@@ -803,11 +1218,11 @@ describe('lyrics overlay renderer', () => {
       },
     );
 
-    expect(elements.current.textContent).toBe("If it's gonna be a BAD DAY");
-    expect(elements.current.dataset.ktvLane).toBe('b');
-    expect(elements.next.textContent).toBe('You will shine');
-    expect(elements.next.dataset.ktvLane).toBe('a');
-    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(elements.next.textContent).toBe("If it's gonna be a BAD DAY");
+    expect(elements.next.dataset.ktvLane).toBe('b');
+    expect(elements.current.textContent).toBe('You will shine');
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.dataset.ktvHeld).toBe('true');
     expect(schedule).not.toHaveBeenCalled();
   });
 
@@ -858,17 +1273,17 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.current.textContent).toBe('她的歌詞');
-    expect(elements.current.dataset.ktvRole).toBe('female');
-    expect(elements.next.textContent).toBe('他的歌詞');
-    expect(elements.next.dataset.ktvRole).toBe('male');
-    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(elements.next.textContent).toBe('她的歌詞');
+    expect(elements.next.dataset.ktvRole).toBe('female');
+    expect(elements.current.textContent).toBe('他的歌詞');
+    expect(elements.current.dataset.ktvRole).toBe('male');
+    expect(elements.current.dataset.ktvHeld).toBe('true');
 
     release();
 
-    expect(elements.next.textContent).toBe('一起唱');
-    expect(elements.next.dataset.ktvRole).toBe('group');
-    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(elements.current.textContent).toBe('一起唱');
+    expect(elements.current.dataset.ktvRole).toBe('group');
+    expect(elements.current.dataset).not.toHaveProperty('ktvHeld');
   });
 
   it('removes an explicit KTV speaker cue from the first T2 segment without changing its projection', () => {
@@ -1058,7 +1473,7 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.next.textContent).toBe('原本的 A');
+    expect(elements.current.textContent).toBe('原本的 A');
     expect(schedule).toHaveBeenCalledOnce();
 
     renderLyricsFrame(
@@ -1077,8 +1492,8 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.next.textContent).toBe('新的 A');
-    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(elements.current.textContent).toBe('新的 A');
+    expect(elements.current.dataset).not.toHaveProperty('ktvHeld');
     expect(cancelSchedule).toHaveBeenCalledWith(timer);
   });
 
@@ -1130,9 +1545,9 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.current.textContent).toBe('Seek 後的 B');
-    expect(elements.next.textContent).toBe('Seek 後的 A');
-    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(elements.next.textContent).toBe('Seek 後的 B');
+    expect(elements.current.textContent).toBe('Seek 後的 A');
+    expect(elements.current.dataset).not.toHaveProperty('ktvHeld');
     expect(schedule).not.toHaveBeenCalled();
   });
 
@@ -1179,15 +1594,34 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.next.dataset.ktvLane).toBe('a');
-    expect(elements.next.textContent).toBe('倒數第二句');
-    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.textContent).toBe('倒數第二句');
+    expect(elements.current.dataset.ktvHeld).toBe('true');
     expect(releaseDelayMs).toBe(600);
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: '最後一句',
+        currentVisibleLineIndex: 1,
+        nextText: '',
+        nextVisibleLineIndex: null,
+        lineIndex: 1,
+        lineProgress: 0.2,
+      },
+      options,
+    );
+
+    expect(elements.current.dataset.ktvLane).toBe('a');
+    expect(elements.current.textContent).toBe('倒數第二句');
+    expect(elements.current.dataset.ktvHeld).toBe('true');
 
     release();
 
-    expect(elements.next.textContent).toBe('');
-    expect(elements.next.dataset).not.toHaveProperty('ktvHeld');
+    expect(elements.current.textContent).toBe('');
+    expect(elements.current.dataset).not.toHaveProperty('ktvHeld');
   });
 
   it('uses only the remaining lane hold when a count-in begins', () => {
@@ -1242,8 +1676,8 @@ describe('lyrics overlay renderer', () => {
       options,
     );
 
-    expect(elements.next.textContent).toBe('副歌尾句');
-    expect(elements.next.dataset.ktvHeld).toBe('true');
+    expect(elements.current.textContent).toBe('副歌尾句');
+    expect(elements.current.dataset.ktvHeld).toBe('true');
     expect(scheduled[0]?.delayMs).toBe(4500);
   });
 
@@ -1720,8 +2154,15 @@ describe('lyrics overlay renderer', () => {
       elements.mangaBubbles.children.map((bubble) => bubble.dataset.lyricKind),
     ).toEqual(['main', 'main', 'aside']);
     expect(
-      elements.mangaBubbles.children.map((bubble) => bubble.textContent),
+      elements.mangaBubbles.children.map((bubble) =>
+        bubble.textContent.replace(/\n/gu, ''),
+      ),
     ).toEqual(['マニュアル', '私だけにフォーカス', 'フォーカス']);
+    expect(
+      elements.mangaBubbles.children.map(
+        (bubble) => bubble.dataset.mangaColumns,
+      ),
+    ).toEqual(['1', '2', '1']);
     expect(
       elements.mangaBubbles.children.map((bubble) => bubble.dataset.mangaSide),
     ).toEqual(['right', 'left', 'right']);
@@ -1746,6 +2187,161 @@ describe('lyrics overlay renderer', () => {
     ).toBe(true);
     expect(elements.mangaBubbles.children[2].children[0].dataset.frameId).toBe(
       'whisper',
+    );
+  });
+
+  it('renders adjacent Japanese quoted clauses as two independent Manga bubbles', () => {
+    const elements = domElements();
+    const first = '「アンタちょっと問題がある」';
+    const second = '「アンタちょっと問題よ」';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: `${first}${second}`,
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+      },
+      { templateId: 'manga-frame', reducedMotion: true },
+    );
+
+    expect(elements.mangaBubbles.dataset.mangaCount).toBe('2');
+    expect(elements.mangaBubbles.children).toHaveLength(2);
+    expect(
+      elements.mangaBubbles.children.map((bubble) =>
+        bubble.textContent.replace(/\n/gu, ''),
+      ),
+    ).toEqual([first, second]);
+    expect(
+      elements.mangaBubbles.children.map((bubble) => bubble.dataset.mangaSide),
+    ).toEqual(['right', 'left']);
+  });
+
+  it('keeps sentence punctuation attached while rendering quoted Manga bubbles', () => {
+    const elements = domElements();
+    const first = '「本当だ」。';
+    const second = '「次だ」';
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 4,
+        visible: true,
+        currentText: `${first}${second}`,
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+      },
+      { templateId: 'manga-frame', reducedMotion: true },
+    );
+
+    expect(elements.mangaBubbles.dataset.mangaCount).toBe('2');
+    expect(
+      elements.mangaBubbles.children.map((bubble) =>
+        bubble.textContent.replace(/\n/gu, ''),
+      ),
+    ).toEqual([first, second]);
+  });
+
+  it('renders existing Japanese readings as literal semantic ruby and honors the off setting', () => {
+    const frame = {
+      revision: 3,
+      visible: true,
+      currentText: '地下鉄に飲み込まれる',
+      currentReading: {
+        text: '地下鉄に飲み込まれる',
+        segments: [
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: 'に' },
+          { text: '飲み込まれる', reading: 'のみこまれる' },
+        ],
+      },
+      nextText: '',
+      language: 'ja',
+      lineIndex: 0,
+    };
+    const elements = domElements();
+    elements.root.ownerDocument.documentElement = {
+      dataset: { ovlFurigana: 'auto' },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+
+    const text = elements.mangaBubbles.children[0].children[1];
+    const rubyElements = text.children.filter(
+      (child) => child.localName === 'ruby',
+    );
+    expect(rubyElements).toHaveLength(2);
+    expect(rubyElements[0].textContent).toBe('地下鉄ちかてつ');
+    expect(rubyElements[0].children[0]).toMatchObject({
+      localName: 'rt',
+      textContent: 'ちかてつ',
+    });
+    expect(elements.root.attributes['aria-label']).toBe(frame.currentText);
+
+    const plain = domElements();
+    plain.root.ownerDocument.documentElement = {
+      dataset: { ovlFurigana: 'off' },
+    };
+    renderLyricsFrame(plain, frame, {
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+    expect(
+      plain.root.ownerDocument.createElement.mock.calls.some(
+        ([name]) => name === 'ruby' || name === 'rt',
+      ),
+    ).toBe(false);
+  });
+
+  it('keeps und pure-kanji Manga columns unchanged when furigana is off', () => {
+    const frame = {
+      revision: 3,
+      visible: true,
+      currentText: '地下鉄最高品質',
+      currentReading: {
+        text: '地下鉄最高品質',
+        segments: [
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: '最高', reading: 'さいこう' },
+          { text: '品質', reading: 'ひんしつ' },
+        ],
+      },
+      nextText: '',
+      language: 'und',
+      lineIndex: 0,
+    };
+    const auto = domElements();
+    auto.root.ownerDocument.documentElement = {
+      dataset: { ovlFurigana: 'auto' },
+    };
+    const off = domElements();
+    off.root.ownerDocument.documentElement = {
+      dataset: { ovlFurigana: 'off' },
+    };
+
+    renderLyricsFrame(auto, frame, {
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+    renderLyricsFrame(off, frame, {
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+
+    expect(off.mangaBubbles.children[0].dataset.mangaColumns).toBe(
+      auto.mangaBubbles.children[0].dataset.mangaColumns,
+    );
+    const plainText = off.mangaBubbles.children[0].children[1].textContent;
+    const rubyText = auto.mangaBubbles.children[0].children[1].textContent;
+    expect(plainText.replace(/\s/gu, '')).toBe(
+      rubyText.replace(/ちかてつ|さいこう|ひんしつ|\s/gu, ''),
     );
   });
 
@@ -1803,9 +2399,10 @@ describe('lyrics overlay renderer', () => {
     );
 
     const bubble = elements.mangaBubbles.children[0];
-    const segment = bubble.children[1].children[0];
+    const text = bubble.children[1];
     expect(bubble.dataset.lyricKind).toBe('aside');
-    expect(segment.textContent).toBe('echo');
+    expect(text.children).toHaveLength(0);
+    expect(text.textContent).toBe('echo');
     expect(elements.root.attributes['aria-label']).toBe('（echo）');
   });
 
@@ -1877,7 +2474,7 @@ describe('lyrics overlay renderer', () => {
     ]);
   });
 
-  it('applies a count-aware text fit to a long phrase inside three bubbles', () => {
+  it('grows a Manga frame for long copy without assigning a text resize', () => {
     const elements = domElements();
     const longPhrase = '長'.repeat(25);
 
@@ -1894,13 +2491,70 @@ describe('lyrics overlay renderer', () => {
       { templateId: 'manga-frame', reducedMotion: true },
     );
 
+    const shortBubble = elements.mangaBubbles.children[0];
     const longBubble = elements.mangaBubbles.children[1];
     expect(
-      Number.parseFloat(longBubble.style.values['--ovl-manga-text-fit-size']),
-    ).toBeLessThan(1.9);
+      Number.parseFloat(
+        longBubble.style.values['--ovl-manga-frame-required-block-size'],
+      ),
+    ).toBeGreaterThan(
+      Number.parseFloat(
+        shortBubble.style.values['--ovl-manga-frame-required-block-size'],
+      ),
+    );
+    expect(longBubble.style.values).not.toHaveProperty(
+      '--ovl-manga-text-fit-size',
+    );
   });
 
-  it('projects T2 progress across independent authored phrase bubbles', () => {
+  it('classifies pure Latin Manga copy without deriving a length-based font size', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: 'STAND-ALONE',
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+      },
+      { templateId: 'manga-frame', reducedMotion: true },
+    );
+
+    const bubble = elements.mangaBubbles.children[0];
+    expect(bubble.dataset.mangaScript).toBe('latin');
+    expect(bubble.style.values).not.toHaveProperty('--ovl-manga-text-fit-size');
+  });
+
+  it('renders deterministic balanced columns instead of an uneven browser wrap', () => {
+    const elements = domElements();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: '長'.repeat(10),
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+      },
+      { templateId: 'manga-frame', reducedMotion: true },
+    );
+
+    const bubble = elements.mangaBubbles.children[0];
+    expect(bubble.dataset.mangaColumns).toBe('2');
+    expect(bubble.children[1].textContent).toBe(
+      `${'長'.repeat(5)}\n${'長'.repeat(5)}`,
+    );
+    expect(bubble.style.values['--ovl-manga-frame-required-block-size']).toBe(
+      '8.06em',
+    );
+  });
+
+  it('renders authored Manga phrase bubbles as static literal copy', () => {
     const elements = domElements();
 
     renderLyricsFrame(
@@ -1926,21 +2580,228 @@ describe('lyrics overlay renderer', () => {
     );
 
     expect(elements.mangaBubbles.dataset.mangaCount).toBe('2');
-    const segmentBubbles = elements.mangaBubbles.children.map(
-      (bubble) => bubble.children[1].children[0],
+    const textBubbles = elements.mangaBubbles.children.map(
+      (bubble) => bubble.children[1],
     );
-    expect(segmentBubbles.map((segment) => segment.textContent)).toEqual([
+    expect(textBubbles.map((text) => text.textContent)).toEqual([
       '前半',
       '後半',
     ]);
-    expect(
-      segmentBubbles.map(
-        (segment) => segment.style.values['--ovl-segment-progress'],
-      ),
-    ).toEqual(['100%', '0%']);
+    expect(textBubbles.every((text) => text.children.length === 0)).toBe(true);
   });
 
-  it('sequences one T2 segment across bubble boundaries without waiting for another snapshot', () => {
+  it('reveals Manga bubbles on same-line T2 boundaries without rebuilding their DOM', () => {
+    const elements = domElements();
+    const { gsap } = gsapHarness();
+    const frame = {
+      revision: 3,
+      visible: true,
+      currentText: '「前半」「後半」',
+      currentTimingSource: 't2',
+      mangaBubbleTiming: [
+        { startMs: 9000, state: 'revealed' },
+        { startMs: 13000, state: 'upcoming' },
+      ],
+      nextText: '',
+      language: 'ja',
+      lineIndex: 0,
+    };
+
+    renderLyricsFrame(elements, frame, {
+      gsap,
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+    const bubbles = [...elements.mangaBubbles.children];
+    const textNodes = bubbles.map((bubble) => bubble.children[1]);
+
+    expect(bubbles.map((bubble) => bubble.dataset.mangaTimingState)).toEqual([
+      'revealed',
+      'upcoming',
+    ]);
+    expect(bubbles[0].style.values).toMatchObject({
+      opacity: '1',
+      visibility: 'visible',
+    });
+    expect(bubbles[1].style.values).toMatchObject({
+      opacity: '0',
+      visibility: 'hidden',
+    });
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        mangaBubbleTiming: [
+          { startMs: 9000, state: 'revealed' },
+          { startMs: 13000, state: 'revealed' },
+        ],
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(elements.mangaBubbles.children).toEqual(bubbles);
+    expect(
+      elements.mangaBubbles.children.map((bubble) => bubble.children[1]),
+    ).toEqual(textNodes);
+    expect(gsap.to).toHaveBeenCalledWith(
+      bubbles[1],
+      expect.objectContaining({
+        autoAlpha: 1,
+        duration: 0.16,
+        overwrite: 'auto',
+      }),
+    );
+
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        timelineDiscontinuity: true,
+        mangaBubbleTiming: [
+          { startMs: 9000, state: 'revealed' },
+          { startMs: 13000, state: 'revealed' },
+        ],
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(gsap.killTweensOf).toHaveBeenCalledWith(bubbles[1]);
+    expect(bubbles[1].style.values).toMatchObject({
+      opacity: '1',
+      visibility: 'visible',
+    });
+  });
+
+  it('does not apply the fixed one-second entrance gap to T2 Manga bubbles', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: '「前半」「後半」',
+        currentTimingSource: 't2',
+        mangaBubbleTiming: [
+          { startMs: 9000, state: 'revealed' },
+          { startMs: 13000, state: 'upcoming' },
+        ],
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    const bubbles = [...elements.mangaBubbles.children];
+    expect(timelines[0].tweens).toEqual([
+      expect.objectContaining({
+        position: 'enter',
+        target: bubbles[0],
+        vars: expect.objectContaining({ autoAlpha: 1 }),
+      }),
+    ]);
+    expect(bubbles[1].dataset.mangaTimingState).toBe('upcoming');
+    expect(bubbles[1].style.values.visibility).toBe('hidden');
+  });
+
+  it('hides future Manga bubbles again when a T2 seek moves backward', () => {
+    const elements = domElements();
+    const { gsap } = gsapHarness();
+    const frame = {
+      revision: 3,
+      visible: true,
+      currentText: '「前半」「後半」',
+      currentTimingSource: 't2',
+      mangaBubbleTiming: [
+        { startMs: 9000, state: 'revealed' },
+        { startMs: 13000, state: 'revealed' },
+      ],
+      nextText: '',
+      language: 'ja',
+      lineIndex: 0,
+    };
+
+    renderLyricsFrame(elements, frame, {
+      gsap,
+      templateId: 'manga-frame',
+      reducedMotion: true,
+    });
+    const bubbles = [...elements.mangaBubbles.children];
+    renderLyricsFrame(
+      elements,
+      {
+        ...frame,
+        timelineDiscontinuity: true,
+        mangaBubbleTiming: [
+          { startMs: 9000, state: 'revealed' },
+          { startMs: 13000, state: 'upcoming' },
+        ],
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(elements.mangaBubbles.children).toEqual(bubbles);
+    expect(bubbles[1].dataset.mangaTimingState).toBe('upcoming');
+    expect(bubbles[1].style.values).toMatchObject({
+      opacity: '0',
+      visibility: 'hidden',
+    });
+    expect(gsap.killTweensOf).toHaveBeenCalledWith(bubbles[1]);
+  });
+
+  it('commits a cross-line T2 seek immediately without a Manga transition', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 3,
+        visible: true,
+        currentText: '舊句',
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+    const oldTimeline = timelines[0];
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 4,
+        visible: true,
+        currentText: '「新一」「新二」',
+        currentTimingSource: 't2',
+        mangaBubbleTiming: [
+          { startMs: 14000, state: 'revealed' },
+          { startMs: 16000, state: 'upcoming' },
+        ],
+        nextText: '',
+        language: 'ja',
+        lineIndex: 1,
+        timelineDiscontinuity: true,
+      },
+      { gsap, templateId: 'manga-frame' },
+    );
+
+    expect(oldTimeline.kill).toHaveBeenCalledOnce();
+    expect(timelines).toHaveLength(1);
+    expect(
+      elements.mangaBubbles.children.map((bubble) => bubble.textContent),
+    ).toEqual(['「新一」', '「新二」']);
+    expect(
+      elements.mangaBubbles.children.map(
+        (bubble) => bubble.dataset.mangaTimingState,
+      ),
+    ).toEqual(['revealed', 'upcoming']);
+  });
+
+  it('does not schedule a Manga scan tween across bubble boundaries', () => {
     const elements = domElements();
     const { gsap } = gsapHarness();
 
@@ -1966,32 +2827,12 @@ describe('lyrics overlay renderer', () => {
       { gsap, templateId: 'manga-frame' },
     );
 
-    const segmentBubbles = elements.mangaBubbles.children.map(
-      (bubble) => bubble.children[1].children[0],
-    );
+    expect(gsap.to).not.toHaveBeenCalled();
     expect(
-      segmentBubbles.map(
-        (segment) => segment.style.values['--ovl-segment-progress'],
+      elements.mangaBubbles.children.map(
+        (bubble) => bubble.children[1].textContent,
       ),
-    ).toEqual(['50%', '0%']);
-    expect(gsap.to).toHaveBeenNthCalledWith(
-      1,
-      segmentBubbles[0],
-      expect.objectContaining({
-        '--ovl-segment-progress': '100%',
-        delay: 0,
-        duration: 0.25,
-      }),
-    );
-    expect(gsap.to).toHaveBeenNthCalledWith(
-      2,
-      segmentBubbles[1],
-      expect.objectContaining({
-        '--ovl-segment-progress': '100%',
-        delay: 0.25,
-        duration: 0.5,
-      }),
-    );
+    ).toEqual(['前半', '後半']);
   });
 
   it('replaces a multi-bubble M0 line without retaining prior phrase content', () => {
@@ -2168,7 +3009,8 @@ describe('lyrics overlay renderer', () => {
     timelines[0].options.onComplete();
 
     expect(elements.root.dataset.revision).toBe('4');
-    expect(elements.mangaBubbles.children).not.toEqual(enteringBubbles);
+    expect(elements.mangaBubbles.children).toEqual(enteringBubbles);
+    expect(gsap.to).not.toHaveBeenCalled();
   });
 
   it('keeps the final Manga Frame utterance visible until its bubble fades out', () => {
@@ -2342,7 +3184,7 @@ describe('lyrics overlay renderer', () => {
     expect(elements.next.textContent).toBe('');
   });
 
-  it('maps Manga Frame T2 progress to a GSAP paint tween without changing text color', () => {
+  it('ignores Manga Frame T2 paint progress while keeping literal text visible', () => {
     const elements = domElements();
     const { gsap } = gsapHarness();
 
@@ -2367,12 +3209,9 @@ describe('lyrics overlay renderer', () => {
       { gsap, reducedMotion: true, templateId: 'manga-frame' },
     );
 
-    const reducedMotionSegment =
-      elements.mangaBubbles.children[0].children[1].children[0];
-    expect(reducedMotionSegment.textContent).toBe('縦書き');
-    expect(reducedMotionSegment.style.values['--ovl-segment-progress']).toBe(
-      '40%',
-    );
+    const reducedMotionText = elements.mangaBubbles.children[0].children[1];
+    expect(reducedMotionText.textContent).toBe('縦書き');
+    expect(reducedMotionText.children).toHaveLength(0);
     expect(gsap.to).not.toHaveBeenCalled();
 
     renderLyricsFrame(
@@ -2396,17 +3235,10 @@ describe('lyrics overlay renderer', () => {
       { gsap, templateId: 'manga-frame' },
     );
 
-    const animatedSegment =
-      elements.mangaBubbles.children[0].children[1].children[0];
-    expect(gsap.to).toHaveBeenCalledWith(
-      animatedSegment,
-      expect.objectContaining({
-        '--ovl-segment-progress': '100%',
-        duration: 0.6,
-        ease: 'none',
-        overwrite: 'auto',
-      }),
-    );
+    const animatedText = elements.mangaBubbles.children[0].children[1];
+    expect(animatedText.textContent).toBe('縦書き');
+    expect(animatedText.children).toHaveLength(0);
+    expect(gsap.to).not.toHaveBeenCalled();
   });
 
   it('keeps paused or reduced-motion segment progress static', () => {

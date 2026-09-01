@@ -101,7 +101,7 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
 
   it('falls back to static current and next lines without requiring T2 segments', () => {
     expect(css).toMatch(
-      /data-ovl-template='karaoke-stack'\]\s+\.lyrics-overlay__current:not\(\[data-segmented='true'\]\)[^{]*\{[\s\S]*?color: var\(--ovl-ktv-fill-unsung\);/u,
+      /data-ovl-template='karaoke-stack'\]\s+\[data-ktv-active='true'\]:not\(\[data-segmented='true'\]\)[^{]*\{[\s\S]*?color: var\(--ovl-ktv-fill-unsung\);/u,
     );
     expect(css).toMatch(
       /data-ovl-template='karaoke-stack'\]\s+\.lyrics-overlay__next\s*\{[\s\S]*?color: var\(--ovl-ktv-fill-unsung\);/u,

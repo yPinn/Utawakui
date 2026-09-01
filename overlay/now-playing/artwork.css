@@ -1,0 +1,912 @@
+@layer ovl-template {
+  .artwork-overlay {
+    --ovl-template-artwork-title-size: clamp(
+      1.125em,
+      calc(1em + 2cqi),
+      1.375em
+    );
+    --ovl-template-artwork-artist-size: clamp(
+      0.75em,
+      calc(0.7em + 0.5cqi),
+      0.875em
+    );
+    --ovl-template-artwork-paper-grain: 0.035;
+    --ovl-template-artwork-record-body: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 50%,
+      var(--ovl-color-vinyl-ink)
+    );
+    --ovl-template-artwork-record-sheen: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 40%,
+      var(--ovl-color-vinyl-sheen)
+    );
+    --ovl-template-artwork-record-lowlight: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 32%,
+      var(--ovl-color-vinyl-lowlight)
+    );
+    --ovl-color-artwork-secondary: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 68%,
+      var(--ovl-color-paper)
+    );
+    --ovl-color-artwork-tertiary: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 58%,
+      var(--ovl-color-vinyl-sheen)
+    );
+    --ovl-template-artwork-record-ink: radial-gradient(
+      circle,
+      var(--ovl-color-artwork-accent),
+      var(--ovl-color-artwork-secondary) 52%,
+      var(--ovl-color-artwork-tertiary)
+    );
+    --ovl-template-artwork-record-shadow-mask: none;
+    --ovl-template-artwork-record-highlight-mask: none;
+    --ovl-template-artwork-dye-saturation: 1.12;
+    --ovl-template-artwork-shadow-ink: color-mix(
+      in srgb,
+      var(--ovl-color-vinyl-lowlight) 54%,
+      var(--ovl-color-artwork-accent)
+    );
+    --ovl-template-artwork-highlight-ink: color-mix(
+      in srgb,
+      var(--ovl-color-paper) 44%,
+      var(--ovl-color-artwork-secondary)
+    );
+    --ovl-template-artwork-bloom-core: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 34%,
+      var(--ovl-color-paper)
+    );
+    --ovl-template-artwork-bloom-halo: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-accent) 58%,
+      var(--ovl-color-text-secondary)
+    );
+    --ovl-template-artwork-bloom-blur: var(--ovl-primitive-space-2);
+    --ovl-template-artwork-bloom-playing-opacity: 0.92;
+    --ovl-template-artwork-bloom-paused-opacity: 0.4;
+    --ovl-template-artwork-deck-light-blur: var(--ovl-primitive-space-1);
+    --ovl-artwork-progress: 0%;
+    --ovl-artwork-progress-scale: 0;
+
+    position: fixed;
+    inset-inline-start: 50%;
+    inset-inline-end: auto;
+    inset-block-start: 50%;
+    inset-block-end: auto;
+    inline-size: calc(100% - 2 * var(--ovl-safe-inline));
+    block-size: calc(100% - 2 * var(--ovl-safe-block));
+    overflow: hidden;
+    display: grid;
+    place-items: center;
+    padding: var(--ovl-primitive-space-2);
+    font-family: var(--ovl-user-font-family);
+    font-size: var(--ovl-user-font-scale);
+    transform: translate(-50%, -50%);
+  }
+
+  .artwork-overlay__vinyl-stage {
+    position: relative;
+    inline-size: min(100%, 28rem);
+    block-size: 100%;
+    min-inline-size: 0;
+    min-block-size: 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: center;
+    gap: var(--ovl-primitive-space-3);
+  }
+
+  .artwork-overlay__album-panel {
+    position: relative;
+    z-index: 3;
+    min-inline-size: 0;
+    min-block-size: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .artwork-overlay__turntable {
+    position: relative;
+    z-index: 1;
+    inline-size: min(100%, 13.25rem);
+    aspect-ratio: 1;
+    overflow: hidden;
+    justify-self: center;
+    border: 1px solid var(--ovl-color-divider);
+    border-radius: var(--ovl-primitive-radius-md);
+    background:
+      linear-gradient(
+        128deg,
+        transparent 0 42%,
+        color-mix(
+            in srgb,
+            var(--ovl-color-deck-metal-highlight) 24%,
+            transparent
+          )
+          49%,
+        transparent 56%
+      ),
+      repeating-linear-gradient(
+        90deg,
+        var(--ovl-color-deck-metal) 0 1px,
+        color-mix(
+            in srgb,
+            var(--ovl-color-deck-metal-highlight) 30%,
+            var(--ovl-color-deck-metal)
+          )
+          1px 2px
+      );
+    box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--ovl-color-deck-metal-highlight) 48%, transparent);
+  }
+
+  .artwork-overlay__deck-light {
+    position: absolute;
+    z-index: 3;
+    inset-inline-end: 8%;
+    inset-block-end: 8%;
+    inline-size: var(--ovl-primitive-space-4);
+    block-size: var(--ovl-primitive-space-4);
+    box-sizing: border-box;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ovl-color-outline);
+    border-radius: 50%;
+    background: var(--ovl-color-deck-metal);
+  }
+
+  .artwork-overlay__deck-light::before,
+  .artwork-overlay__deck-light::after {
+    grid-area: 1 / 1;
+    place-self: center;
+    border-radius: 50%;
+    content: '';
+  }
+
+  .artwork-overlay__deck-light::before {
+    inline-size: 125%;
+    block-size: 125%;
+    background: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-label) 64%,
+      transparent
+    );
+    filter: blur(var(--ovl-template-artwork-deck-light-blur));
+  }
+
+  .artwork-overlay__deck-light::after {
+    inline-size: 38%;
+    block-size: 38%;
+    background: var(--ovl-color-artwork-label);
+    box-shadow: 0 0 var(--ovl-primitive-space-1)
+      color-mix(in srgb, var(--ovl-color-artwork-label) 72%, transparent);
+  }
+
+  .artwork-overlay__platter {
+    position: absolute;
+    inset-inline-start: 5%;
+    inset-block-start: 50%;
+    inline-size: 82%;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    isolation: isolate;
+    border: 1px solid var(--ovl-color-outline);
+    border-radius: 50%;
+    background: var(--ovl-color-platter-rim);
+    box-shadow:
+      inset 0 0 0 var(--ovl-primitive-space-1) var(--ovl-color-vinyl-lowlight),
+      var(--ovl-panel-shadow);
+    transform: translateY(-50%);
+  }
+
+  .artwork-overlay__record,
+  .artwork-overlay__exchange-record {
+    position: relative;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    transform-origin: center;
+  }
+
+  .artwork-overlay__record {
+    z-index: 1;
+    inline-size: 90%;
+  }
+
+  .artwork-overlay__record-rotor {
+    position: absolute;
+    z-index: 1;
+    inset: 0;
+    isolation: isolate;
+    overflow: hidden;
+    border: 1px solid var(--ovl-color-divider);
+    border-radius: 50%;
+    background: conic-gradient(
+      from 18deg,
+      var(--ovl-template-artwork-record-body),
+      var(--ovl-template-artwork-record-sheen) 11%,
+      var(--ovl-template-artwork-record-lowlight) 22%,
+      var(--ovl-template-artwork-record-sheen) 34%,
+      var(--ovl-template-artwork-record-body) 48%,
+      var(--ovl-color-vinyl-sheen) 62%,
+      var(--ovl-template-artwork-record-body) 78%,
+      var(--ovl-template-artwork-record-sheen) 91%,
+      var(--ovl-template-artwork-record-body)
+    );
+    box-shadow: inset 0 0 var(--ovl-primitive-space-3)
+      var(--ovl-color-stroke-soft);
+    transform-origin: center;
+    will-change: transform;
+  }
+
+  .artwork-overlay__record-dye,
+  .artwork-overlay__record-shadow,
+  .artwork-overlay__record-highlight,
+  .artwork-overlay__record-grooves {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  .artwork-overlay__record-dye {
+    z-index: 1;
+    background: var(--ovl-template-artwork-record-ink);
+    filter: saturate(var(--ovl-template-artwork-dye-saturation));
+    -webkit-mask-image: radial-gradient(
+      circle,
+      transparent 0 18%,
+      black 19% 95%,
+      transparent 97%
+    );
+    mask-image: radial-gradient(
+      circle,
+      transparent 0 18%,
+      black 19% 95%,
+      transparent 97%
+    );
+    opacity: 0.96;
+  }
+
+  .artwork-overlay__record-shadow,
+  .artwork-overlay__record-highlight {
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+    -webkit-mask-size: 100% 100%;
+    mask-size: 100% 100%;
+  }
+
+  .artwork-overlay__record-shadow {
+    z-index: 2;
+    background: var(--ovl-template-artwork-shadow-ink);
+    -webkit-mask-image: var(--ovl-template-artwork-record-shadow-mask);
+    mask-image: var(--ovl-template-artwork-record-shadow-mask);
+    mix-blend-mode: soft-light;
+    opacity: 0.58;
+  }
+
+  .artwork-overlay__record-highlight {
+    z-index: 3;
+    background: var(--ovl-template-artwork-highlight-ink);
+    -webkit-mask-image: var(--ovl-template-artwork-record-highlight-mask);
+    mask-image: var(--ovl-template-artwork-record-highlight-mask);
+    mix-blend-mode: soft-light;
+    opacity: 0.5;
+  }
+
+  .artwork-overlay__record-grooves {
+    z-index: 4;
+    inset: 7%;
+    border: 1px solid var(--ovl-color-divider);
+    background: radial-gradient(
+      circle,
+      transparent 0 15%,
+      var(--ovl-color-divider) 15.5% 16%,
+      transparent 16.5% 41%,
+      var(--ovl-color-outline) 41.5% 42%,
+      transparent 42.5% 65%,
+      var(--ovl-color-divider) 65.5% 66%,
+      transparent 66.5%
+    );
+    box-shadow:
+      inset 0 0 0 0.14rem var(--ovl-color-stroke-soft),
+      inset 0 0 1.2rem var(--ovl-color-divider);
+  }
+
+  .artwork-overlay__platter-bloom {
+    position: absolute;
+    z-index: 0;
+    inset: -8%;
+    border-radius: 50%;
+    background: radial-gradient(
+      circle,
+      transparent 0 11%,
+      color-mix(
+          in srgb,
+          var(--ovl-template-artwork-bloom-core) 78%,
+          transparent
+        )
+        16%,
+      var(--ovl-template-artwork-bloom-core) 24%,
+      var(--ovl-template-artwork-bloom-halo) 38%,
+      color-mix(
+          in srgb,
+          var(--ovl-template-artwork-bloom-halo) 60%,
+          transparent
+        )
+        55%,
+      color-mix(
+          in srgb,
+          var(--ovl-template-artwork-bloom-halo) 24%,
+          transparent
+        )
+        68%,
+      transparent 78%
+    );
+    filter: blur(var(--ovl-template-artwork-bloom-blur));
+    opacity: var(--ovl-template-artwork-bloom-paused-opacity);
+    pointer-events: none;
+    will-change: opacity;
+  }
+
+  .artwork-overlay[data-playback-status='playing']
+    .artwork-overlay__platter-bloom {
+    opacity: var(--ovl-template-artwork-bloom-playing-opacity);
+  }
+
+  .artwork-overlay__exchange-record {
+    position: absolute;
+    z-index: 2;
+    inset: 0 auto auto 0;
+    inline-size: 0;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  .artwork-overlay__exchange-record[hidden] {
+    display: none;
+  }
+
+  .artwork-overlay__record::after,
+  .artwork-overlay__exchange-record::after {
+    position: absolute;
+    z-index: 3;
+    border-radius: 50%;
+    content: '';
+  }
+
+  .artwork-overlay__record::after,
+  .artwork-overlay__exchange-record::after {
+    inset: 49%;
+    background: var(--ovl-color-text-primary);
+  }
+
+  .artwork-overlay__record-label {
+    position: relative;
+    z-index: 2;
+    inline-size: 31%;
+    aspect-ratio: 1;
+    display: grid;
+    place-items: center;
+    border: 1px solid var(--ovl-color-outline);
+    border-radius: 50%;
+    background: color-mix(
+      in srgb,
+      var(--ovl-color-artwork-label) 84%,
+      var(--ovl-color-paper)
+    );
+    color: var(--ovl-color-ink);
+    font-family: var(--ovl-font-ui);
+    font-size: 0.58em;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+  }
+
+  .artwork-overlay__spindle {
+    position: absolute;
+    z-index: 3;
+    inset-inline-start: 50%;
+    inset-block-start: 50%;
+    inline-size: var(--ovl-primitive-space-1);
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: var(--ovl-color-text-primary);
+    transform: translate(-50%, -50%);
+  }
+
+  .artwork-overlay__tonearm {
+    position: absolute;
+    z-index: 2;
+    inset-inline-end: 2%;
+    inset-block-start: 8%;
+    inline-size: 30%;
+    block-size: 74%;
+    overflow: visible;
+  }
+
+  .artwork-overlay__tonearm-pivot {
+    fill: var(--ovl-color-deck-metal-highlight);
+    stroke: var(--ovl-color-outline);
+    stroke-width: 3;
+  }
+
+  .artwork-overlay__tonearm-pivot-core {
+    fill: var(--ovl-color-vinyl-lowlight);
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-width: 3;
+  }
+
+  .artwork-overlay__tonearm-assembly {
+    transform-box: view-box;
+    transform-origin: 66px 28px;
+  }
+
+  .artwork-overlay__tonearm-counterweight {
+    fill: var(--ovl-color-deck-metal-highlight);
+    stroke: var(--ovl-color-outline);
+    stroke-width: 2;
+  }
+
+  .artwork-overlay__tonearm-rail {
+    fill: none;
+    stroke: var(--ovl-color-text-secondary);
+    stroke-linecap: round;
+    stroke-width: 7;
+  }
+
+  .artwork-overlay__tonearm-head {
+    fill: var(--ovl-color-paper);
+    stroke: var(--ovl-color-ink);
+    stroke-width: 1.5;
+  }
+
+  .artwork-overlay__stylus,
+  .artwork-overlay__tonearm-rest {
+    fill: none;
+    stroke: var(--ovl-color-vinyl-lowlight);
+    stroke-linecap: round;
+  }
+
+  .artwork-overlay__stylus {
+    stroke-width: 3;
+  }
+
+  .artwork-overlay__tonearm-rest {
+    stroke: var(--ovl-color-deck-metal-highlight);
+    stroke-width: 5;
+  }
+
+  :root:not([data-ovl-template='cover-player']) .artwork-overlay__sleeve {
+    position: relative;
+    z-index: 1;
+    inline-size: min(100%, 13.25rem);
+    aspect-ratio: 1;
+    container-type: inline-size;
+    overflow: hidden;
+    justify-self: center;
+    border: 1px solid var(--ovl-color-divider);
+    border-radius: var(--ovl-primitive-radius-sm);
+    background: var(--ovl-color-paper);
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__incoming-sleeve {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    margin: auto;
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__incoming-sleeve[hidden] {
+    display: none;
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__sleeve::before,
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__sleeve::after {
+    position: absolute;
+    z-index: 2;
+    inset: 0;
+    pointer-events: none;
+    content: '';
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__sleeve::before {
+    border: 2px solid
+      color-mix(in srgb, var(--ovl-color-paper) 86%, var(--ovl-color-divider));
+    box-shadow: inset 0 0 0 1px
+      color-mix(in srgb, var(--ovl-color-ink) 24%, transparent);
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__sleeve::after {
+    background:
+      linear-gradient(
+        94deg,
+        transparent 0 38%,
+        color-mix(in srgb, var(--ovl-color-paper) 46%, transparent) 49%,
+        transparent 58%
+      ),
+      repeating-linear-gradient(
+        8deg,
+        color-mix(in srgb, var(--ovl-color-paper) 34%, transparent) 0 1px,
+        transparent 1px 4px
+      );
+    mix-blend-mode: soft-light;
+    opacity: var(--ovl-template-artwork-paper-grain);
+  }
+
+  .artwork-overlay__mark {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background:
+      linear-gradient(145deg, var(--ovl-color-divider), transparent 42%),
+      var(--ovl-color-ink);
+    color: var(--ovl-color-text-secondary);
+    font-size: 3em;
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1;
+  }
+
+  .artwork-overlay__image {
+    position: absolute;
+    inset: 0;
+    inline-size: 100%;
+    block-size: 100%;
+    object-fit: cover;
+  }
+
+  .artwork-overlay__fallback {
+    position: relative;
+  }
+
+  .artwork-overlay__copy {
+    position: absolute;
+    z-index: 3;
+    inset: 0;
+    min-width: 0;
+    min-block-size: 0;
+    overflow: hidden;
+    display: grid;
+    align-content: end;
+    gap: calc(var(--ovl-primitive-space-1) / 2);
+    padding: var(--ovl-primitive-space-6) var(--ovl-primitive-space-3)
+      var(--ovl-primitive-space-3);
+    background: linear-gradient(
+      to bottom,
+      transparent 36%,
+      color-mix(in srgb, var(--ovl-color-ink) 20%, transparent) 50%,
+      color-mix(in srgb, var(--ovl-color-ink) 88%, transparent) 100%
+    );
+    color: var(--ovl-color-text-primary);
+    text-align: start;
+  }
+
+  .artwork-overlay__player {
+    display: none;
+  }
+
+  .artwork-overlay__title,
+  .artwork-overlay__artist {
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .artwork-overlay__title {
+    display: -webkit-box;
+    overflow: hidden;
+    font-size: var(--ovl-template-artwork-title-size);
+    font-weight: var(--ovl-user-font-weight);
+    line-height: 1.15;
+    text-wrap: balance;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .artwork-overlay__artist {
+    display: block;
+    overflow: hidden;
+    color: var(--ovl-color-text-secondary);
+    font-family: var(--ovl-font-ui);
+    font-size: var(--ovl-template-artwork-artist-size);
+    font-weight: 500;
+    line-height: 1.25;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay[data-artwork-copy-tone='dark']
+    .artwork-overlay__copy,
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__incoming-sleeve[data-artwork-copy-tone='dark']
+    .artwork-overlay__copy {
+    background: linear-gradient(
+      to bottom,
+      transparent 42%,
+      color-mix(in srgb, var(--ovl-color-paper) 24%, transparent) 58%,
+      color-mix(in srgb, var(--ovl-color-paper) 94%, transparent) 100%
+    );
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay[data-artwork-copy-tone='dark']
+    .artwork-overlay__title,
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__incoming-sleeve[data-artwork-copy-tone='dark']
+    .artwork-overlay__title {
+    color: var(--ovl-color-ink);
+  }
+
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay[data-artwork-copy-tone='dark']
+    .artwork-overlay__artist,
+  :root:not([data-ovl-template='cover-player'])
+    .artwork-overlay__incoming-sleeve[data-artwork-copy-tone='dark']
+    .artwork-overlay__artist {
+    color: color-mix(in srgb, var(--ovl-color-ink) 76%, var(--ovl-color-paper));
+  }
+
+  @media (max-height: 36rem) {
+    .artwork-overlay {
+      --ovl-template-artwork-title-size: clamp(
+        1.125em,
+        calc(1em + 1cqi),
+        1.25em
+      );
+    }
+  }
+
+  @media (max-width: 42rem) and (max-height: 24rem) {
+    .artwork-overlay__vinyl-stage {
+      gap: var(--ovl-primitive-space-2);
+    }
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay {
+    --ovl-template-artwork-title-size: 1em;
+    --ovl-template-player-inline: var(--ovl-primitive-space-4);
+    --ovl-template-player-track-size: calc(var(--ovl-primitive-space-1) * 0.75);
+    --ovl-artwork-progress: 0%;
+    --ovl-artwork-progress-scale: 0;
+
+    inset-inline-start: 50%;
+    inset-inline-end: auto;
+    inset-block-start: 50%;
+    inset-block-end: auto;
+    inline-size: calc(100% - 2 * var(--ovl-safe-inline));
+    block-size: calc(100% - 2 * var(--ovl-safe-block));
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0;
+    overflow: hidden;
+    padding: 0;
+    border: 0;
+    background: var(--ovl-user-surface);
+    text-align: start;
+    transform: translate(-50%, -50%);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__vinyl-stage {
+    inline-size: 100%;
+    block-size: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: 0;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__album-panel {
+    min-inline-size: 0;
+    min-block-size: 0;
+    display: contents;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__turntable {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__record {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__exchange-record {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__incoming-sleeve {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__sleeve {
+    min-inline-size: 0;
+    min-block-size: 0;
+    display: contents;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__mark {
+    position: relative;
+    min-inline-size: 0;
+    min-block-size: 0;
+    max-inline-size: 100%;
+    max-block-size: 100%;
+    inline-size: auto;
+    block-size: 100%;
+    justify-self: center;
+    border: 0;
+    background: var(--ovl-color-mark-surface);
+    color: var(--ovl-color-text-primary);
+    font-size: 7em;
+    text-shadow: var(--ovl-text-shadow);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__copy {
+    position: relative;
+    inset: auto;
+    display: grid;
+    gap: calc(var(--ovl-primitive-space-1) / 2);
+    padding: var(--ovl-primitive-space-3) var(--ovl-template-player-inline)
+      var(--ovl-primitive-space-2);
+    background: transparent;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__title,
+  :root[data-ovl-template='cover-player'] .artwork-overlay__artist {
+    display: block;
+    overflow: hidden;
+    font-family: var(--ovl-font-ui);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__title {
+    font-size: var(--ovl-template-artwork-title-size);
+    line-height: 1.2;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__artist {
+    margin-block-start: 0;
+    font-size: 0.8125em;
+    line-height: 1.25;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__player {
+    min-block-size: 0;
+    display: grid;
+    align-content: center;
+    gap: 0;
+    padding: 0 var(--ovl-template-player-inline) var(--ovl-primitive-space-3);
+    color: var(--ovl-color-text-primary);
+    font-family: var(--ovl-font-ui);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber {
+    position: relative;
+    height: var(--ovl-template-player-track-size);
+    display: block;
+    border-radius: var(--ovl-primitive-radius-md);
+    background: var(--ovl-color-stroke-soft);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber-fill {
+    width: 100%;
+    height: 100%;
+    display: block;
+    border-radius: inherit;
+    background: var(--ovl-color-text-primary);
+    transform: scaleX(var(--ovl-artwork-progress-scale));
+    transform-origin: left center;
+    transition: transform var(--ovl-motion-line-duration) linear;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber::after {
+    position: absolute;
+    inset-block-start: 50%;
+    inset-inline-start: clamp(
+      var(--ovl-primitive-space-1),
+      var(--ovl-artwork-progress),
+      calc(100% - var(--ovl-primitive-space-1))
+    );
+    width: var(--ovl-primitive-space-2);
+    height: var(--ovl-primitive-space-2);
+    border-radius: 50%;
+    background: var(--ovl-color-text-primary);
+    content: '';
+    transform: translate(-50%, -50%);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__timeline {
+    display: flex;
+    justify-content: space-between;
+    margin-block-start: var(--ovl-primitive-space-1);
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.75em;
+    font-variant-numeric: tabular-nums;
+    line-height: 1;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__transport {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    align-items: center;
+    justify-items: center;
+    margin-block-start: var(--ovl-primitive-space-3);
+    padding-block: var(--ovl-primitive-space-2) var(--ovl-primitive-space-1);
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__transport svg {
+    width: 1.125rem;
+    height: 1.125rem;
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    stroke-width: 1.75;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__play-state {
+    width: 2.75rem;
+    height: 2.75rem;
+    display: grid;
+    place-items: center;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__play-state svg {
+    width: 2.5rem;
+    height: 2.5rem;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__play path {
+    fill: currentColor;
+    stroke: none;
+  }
+
+  :root[data-ovl-template='cover-player'] .artwork-overlay__pause {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-playback-status='playing']
+    .artwork-overlay__play {
+    display: none;
+  }
+
+  :root[data-ovl-template='cover-player']
+    .artwork-overlay[data-playback-status='playing']
+    .artwork-overlay__pause {
+    display: block;
+  }
+
+  @media (max-width: 32rem) {
+    :root[data-ovl-template='cover-player'] .artwork-overlay {
+      --ovl-template-player-inline: var(--ovl-primitive-space-3);
+    }
+  }
+
+  @media (max-height: 42rem) {
+    :root[data-ovl-template='cover-player'] .artwork-overlay__transport {
+      padding-block: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    :root[data-ovl-template='cover-player'] .artwork-overlay__scrubber-fill {
+      transition: none;
+    }
+  }
+}

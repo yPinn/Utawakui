@@ -1,6 +1,7 @@
 @layer ovl-template {
   .setlist-overlay {
-    --ovl-template-setlist-row-height: 7rem;
+    --ovl-template-setlist-scroll-distance: 0px;
+    --ovl-template-setlist-scroll-duration: 12s;
 
     position: fixed;
     inset-inline-start: 50%;
@@ -9,8 +10,9 @@
     inset-block-end: auto;
     inline-size: calc(100% - 2 * var(--ovl-safe-inline));
     block-size: calc(100% - 2 * var(--ovl-safe-block));
-    display: flex;
-    flex-direction: column;
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: repeat(10, minmax(0, 1fr));
     padding: var(--ovl-primitive-space-4);
     border: 1px solid var(--ovl-user-outline);
     border-radius: var(--ovl-primitive-radius-md);
@@ -21,121 +23,227 @@
     transform: translate(-50%, -50%);
   }
 
-  .setlist-overlay__title {
-    flex: 0 0 auto;
-    margin: 0;
-    padding-block-end: var(--ovl-primitive-space-3);
-    border-block-end: 1px solid var(--ovl-color-divider);
+  .setlist-overlay__current {
+    grid-row: 1 / span 3;
+    min-inline-size: 0;
+    min-block-size: 0;
     overflow: hidden;
-    font-size: 1.75em;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .setlist-overlay__current-header,
+  .setlist-overlay__history-header {
+    min-inline-size: 0;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--ovl-primitive-space-3);
+    padding-block-end: var(--ovl-primitive-space-2);
+    border-block-end: 1px solid var(--ovl-color-divider);
+  }
+
+  .setlist-overlay__title {
+    min-inline-size: 0;
+    overflow: hidden;
+    margin: 0;
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.72em;
     font-weight: var(--ovl-user-font-weight);
-    line-height: 1.15;
+    line-height: 1;
     text-overflow: ellipsis;
-    text-wrap: balance;
     white-space: nowrap;
   }
 
-  .setlist-overlay__rows {
-    flex: 1 1 auto;
+  .setlist-overlay__section-label,
+  .setlist-overlay__history-caption {
+    flex: 0 0 auto;
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.72em;
+    font-weight: var(--ovl-user-font-weight);
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  .setlist-overlay__history-caption {
+    letter-spacing: 0.04em;
+  }
+
+  .setlist-overlay__current-track {
+    grid-row: 2;
+    min-inline-size: 0;
+    align-self: start;
+    justify-self: stretch;
     display: grid;
-    grid-auto-rows: var(--ovl-template-setlist-row-height);
-    align-content: start;
+    gap: var(--ovl-primitive-space-1);
+    padding-block-start: var(--ovl-primitive-space-4);
+    padding-inline: var(--ovl-primitive-space-2);
+    text-align: start;
+  }
+
+  .setlist-overlay__current-title,
+  .setlist-overlay__current-artist {
+    min-inline-size: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .setlist-overlay__current-title {
+    color: var(--ovl-color-text-primary);
+    font-size: 1.85em;
+    font-weight: var(--ovl-user-font-weight);
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
+
+  .setlist-overlay__current-artist {
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.88em;
+    line-height: 1.2;
+  }
+
+  .setlist-overlay__history {
+    grid-row: 5 / span 6;
+    min-inline-size: 0;
     min-block-size: 0;
     overflow: hidden;
+    display: grid;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .setlist-overlay__history-viewport {
+    grid-row: 2;
+    min-inline-size: 0;
+    min-block-size: 0;
+    overflow: hidden;
+    display: flex;
+    align-items: flex-start;
+    padding-block-start: var(--ovl-primitive-space-4);
+  }
+
+  .setlist-overlay__history-list {
+    inline-size: 100%;
+    min-inline-size: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    align-content: start;
+    row-gap: var(--ovl-primitive-space-2);
     margin: 0;
     padding: 0;
     list-style: none;
-    counter-reset: setlist;
+    counter-reset: setlist-history;
   }
 
-  .setlist-overlay__row {
-    min-block-size: var(--ovl-template-setlist-row-height);
+  .setlist-overlay[data-history-overflow='true']
+    .setlist-overlay__history-list {
+    animation: setlist-history-scroll
+      var(--ovl-template-setlist-scroll-duration) linear infinite alternate;
+  }
+
+  .setlist-overlay__history-row {
+    inline-size: 100%;
+    min-inline-size: 0;
+    min-block-size: var(--ovl-primitive-space-7);
     display: grid;
-    grid-template-columns: 2rem minmax(0, 1fr);
+    grid-template-columns: 1.6rem minmax(0, 1fr) minmax(0, 34%);
     align-items: center;
-    gap: var(--ovl-primitive-space-3);
-    padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
+    column-gap: var(--ovl-primitive-space-2);
+    padding-inline: var(--ovl-primitive-space-2);
     border-block-end: 1px solid var(--ovl-color-divider);
-    background: transparent;
-    counter-increment: setlist;
+    counter-increment: setlist-history;
+    text-align: start;
   }
 
-  .setlist-overlay__row:last-child {
-    border-block-end: 0;
-  }
-
-  .setlist-overlay__row::before {
-    content: counter(setlist, decimal-leading-zero);
+  .setlist-overlay__history-row::before {
+    align-self: center;
     color: var(--ovl-color-text-secondary);
-    font-size: 0.875rem;
+    content: counter(setlist-history, decimal-leading-zero);
+    font-size: 0.7em;
     font-variant-numeric: tabular-nums;
   }
 
-  .setlist-overlay__row.is-current {
-    color: var(--ovl-color-text-primary);
-    background: var(--ovl-color-current-surface);
-  }
-
-  .setlist-overlay__row.is-current::before {
-    color: var(--ovl-color-text-primary);
-  }
-
-  .setlist-overlay__row.is-played {
-    opacity: 0.54;
-  }
-
-  .setlist-overlay__track {
-    min-width: 0;
+  .setlist-overlay__track,
+  .setlist-overlay__artist {
+    min-inline-size: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .setlist-overlay__track {
+    color: var(--ovl-color-text-primary);
+    font-size: 1.05em;
     font-weight: var(--ovl-user-font-weight);
+    line-height: 1.2;
   }
 
   .setlist-overlay__artist {
     color: var(--ovl-color-text-secondary);
+    font-size: 0.76em;
+    line-height: 1.2;
+  }
+
+  .setlist-overlay__empty {
+    grid-row: 2;
+    align-self: start;
+    margin: 0;
+    padding-block-start: var(--ovl-primitive-space-4);
+    padding-inline: var(--ovl-primitive-space-2);
+    color: var(--ovl-color-text-secondary);
+    font-size: 0.82em;
+    text-align: start;
+  }
+
+  @keyframes setlist-history-scroll {
+    0%,
+    10% {
+      transform: translateY(0);
+    }
+
+    90%,
+    100% {
+      transform: translateY(
+        calc(-1 * var(--ovl-template-setlist-scroll-distance))
+      );
+    }
   }
 
   @media (max-width: 42rem) {
     .setlist-overlay {
       padding: var(--ovl-primitive-space-3);
     }
-
-    .setlist-overlay__title {
-      font-size: 1.75em;
-    }
   }
 
   @media (max-width: 42rem) and (max-height: 48rem) {
-    .setlist-overlay {
-      --ovl-template-setlist-row-height: 4rem;
-    }
-
-    .setlist-overlay__title {
-      font-size: 1.25em;
-    }
-
-    .setlist-overlay__row {
-      gap: var(--ovl-primitive-space-2);
-      padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
+    .setlist-overlay__current-title {
+      font-size: 1.65em;
     }
   }
 
   @media (max-height: 36rem) {
     .setlist-overlay {
-      --ovl-template-setlist-row-height: 3rem;
-
       padding: var(--ovl-primitive-space-3);
     }
 
-    .setlist-overlay__title {
-      padding-block-end: var(--ovl-primitive-space-2);
-      font-size: 1rem;
+    .setlist-overlay__current-title {
+      font-size: 1.45em;
     }
 
-    .setlist-overlay__row {
-      gap: var(--ovl-primitive-space-2);
-      padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
+    .setlist-overlay__current-artist,
+    .setlist-overlay__artist {
+      font-size: 0.7em;
+    }
+
+    .setlist-overlay__history-row {
+      min-block-size: var(--ovl-primitive-space-6);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .setlist-overlay[data-history-overflow='true']
+      .setlist-overlay__history-list {
+      animation: none;
     }
   }
 }

@@ -2,13 +2,6 @@
   "version": 1,
   "slots": [
     {
-      "id": "now-playing",
-      "label": "Now Playing",
-      "path": "/overlay/now-playing",
-      "defaultTemplateId": "now-next",
-      "defaultStyleSetIds": ["runtime-source"]
-    },
-    {
       "id": "setlist",
       "label": "Setlist",
       "path": "/overlay/setlist",
@@ -23,10 +16,10 @@
       "defaultStyleSetIds": ["runtime-source", "lyrics-type"]
     },
     {
-      "id": "artwork",
-      "label": "Artwork",
-      "path": "/overlay/artwork",
-      "defaultTemplateId": "art-card",
+      "id": "now-playing",
+      "label": "Now Playing",
+      "path": "/overlay/now-playing",
+      "defaultTemplateId": "now-next",
       "defaultStyleSetIds": ["runtime-source"]
     }
   ],
@@ -39,8 +32,8 @@
     "live-stage": "lyrics",
     "manga-frame": "lyrics",
     "reading-aid": "lyrics",
-    "art-card": "artwork",
-    "cover-player": "artwork"
+    "art-card": "now-playing",
+    "cover-player": "now-playing"
   },
   "templateCaptureSizes": {
     "now-next": { "default": "small", "supported": ["small"] },

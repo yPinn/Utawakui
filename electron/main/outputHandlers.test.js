@@ -102,7 +102,6 @@ describe('output handlers', () => {
         'now-playing': { templateId: 'now-next' },
         setlist: { templateId: 'queue-board' },
         lyrics: { templateId: 'focus-line' },
-        artwork: { templateId: 'art-card' },
       },
     });
 
@@ -116,14 +115,14 @@ describe('output handlers', () => {
       null,
       'now-playing',
       {
-        templateId: 'now-next',
+        templateId: 'cover-player',
         settings: { alignment: 'left' },
       },
     );
 
     expect(saved.slots).toMatchObject({
       'now-playing': {
-        templateId: 'now-next',
+        templateId: 'cover-player',
         styleSetIds: [],
         settings: { alignment: 'left' },
       },

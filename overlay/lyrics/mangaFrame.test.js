@@ -8,8 +8,10 @@ import {
   MANGA_FRAMES,
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
+  mangaFrameRequiredBlockSizeEm,
   mangaFrameSideForLine,
-  mangaFrameTextFitEm,
+  mangaFrameTextLayout,
+  mangaFrameTextScript,
 } from '../shared/mangaFrameContract.mjs';
 import {
   applyMangaFramePresentation,
@@ -55,7 +57,13 @@ describe('manga frame contract', () => {
     const html = fs.readFileSync(path.join(directory, 'index.html'), 'utf8');
 
     expect(css).toContain('writing-mode: vertical-rl');
-    expect(css).toContain('text-orientation: upright');
+    expect(css).toContain('text-orientation: mixed');
+    expect(css).toMatch(
+      /\.lyrics-overlay__manga-text\s*{[^}]*text-orientation: mixed/s,
+    );
+    expect(css).toMatch(
+      /\.lyrics-overlay__manga-text rt\s*{[^}]*text-orientation: upright/s,
+    );
     expect(css).toContain('will-change: opacity, transform');
     expect(html).toContain('id="lyrics-manga-bubbles"');
     expect(html.indexOf('/overlay/vendor/gsap.min.js')).toBeLessThan(
@@ -236,49 +244,328 @@ describe('manga frame contract', () => {
     );
   });
 
-  it('fits every Manga bubble to its phrase length before applying the row cap', () => {
+  it('sizes every Manga frame from its fixed type measure before applying the placement cap', () => {
     const directory = path.dirname(fileURLToPath(import.meta.url));
     const css = fs.readFileSync(path.join(directory, 'lyrics.css'), 'utf8');
 
     expect(css).toContain(
-      '--ovl-manga-bubble-content-block-size: min(36vh, 24rem)',
+      '--ovl-manga-bubble-base-block-size: min(36vh, 24rem)',
     );
-    expect(css).toMatch(
-      /\.lyrics-overlay__manga-bubble\[data-manga-length='medium'\][^{]*{[^}]*--ovl-manga-bubble-content-block-size: min\(46vh, 31rem\)/s,
-    );
-    expect(css).toMatch(
-      /\.lyrics-overlay__manga-bubble\[data-manga-length='long'\][^{]*{[^}]*--ovl-manga-bubble-content-block-size: min\(55\.556vh, 37\.5rem\)/s,
-    );
-    expect(css).toContain(
-      'var(--ovl-manga-bubble-content-block-size),\n      var(--ovl-manga-bubble-row-cap)',
-    );
-    expect(css).toContain('--ovl-manga-bubble-row-cap: min(38vh, 25rem)');
-    expect(css).toContain('--ovl-manga-bubble-row-cap: min(27vh, 18rem)');
+    expect(css).toContain('var(--ovl-manga-frame-required-block-size)');
+    expect(css).toContain('--ovl-manga-bubble-row-cap: min(55.556vh, 37.5rem)');
+    expect(css).toContain('--ovl-manga-bubble-row-cap: min(55vh, 37rem)');
+    expect(css).toContain('--ovl-manga-bubble-row-cap: min(30vh, 20rem)');
   });
 
-  it('reduces vertical text size when a long phrase shares a three-bubble lane', () => {
-    expect(mangaFrameTextFitEm('短い歌詞', 1)).toBe(2.9);
-    expect(mangaFrameTextFitEm('中'.repeat(18), 1)).toBe(2.55);
-    expect(mangaFrameTextFitEm('長'.repeat(25), 1)).toBe(2.15);
-
-    const twentyFiveGlyphs = mangaFrameTextFitEm('長'.repeat(25), 3);
-    const fiftyGlyphs = mangaFrameTextFitEm('長'.repeat(50), 3);
-    expect(twentyFiveGlyphs).toBeLessThan(1.9);
-    expect(fiftyGlyphs).toBeLessThan(twentyFiveGlyphs);
-    expect(mangaFrameTextFitEm('長 '.repeat(18), 3)).toBeLessThan(
-      mangaFrameTextFitEm('長'.repeat(18), 3),
+  it('grows the frame instead of resizing the fixed Manga type', () => {
+    expect(mangaFrameRequiredBlockSizeEm()).toBe(1.61);
+    expect(mangaFrameRequiredBlockSizeEm('   ')).toBe(1.61);
+    expect(mangaFrameRequiredBlockSizeEm('短い歌詞')).toBe(6.44);
+    expect(mangaFrameRequiredBlockSizeEm('長'.repeat(8))).toBe(12.89);
+    expect(mangaFrameRequiredBlockSizeEm(`長${' '.repeat(4)}長`)).toBe(
+      mangaFrameRequiredBlockSizeEm('長 長'),
     );
-    expect(mangaFrameTextFitEm(`長${' '.repeat(4)}長`, 3)).toBe(
-      mangaFrameTextFitEm('長 長', 3),
+
+    const directory = path.dirname(fileURLToPath(import.meta.url));
+    const css = fs.readFileSync(path.join(directory, 'lyrics.css'), 'utf8');
+    expect(css).toContain('--ovl-manga-text-size-by-count: 2.9em');
+    expect(css).not.toContain('--ovl-manga-text-fit-size');
+    expect(css).not.toContain('--ovl-manga-text-size-by-length');
+  });
+
+  it('uses a fixed script class and sideways-run measure for pure Latin copy', () => {
+    expect(mangaFrameTextScript('STAND-ALONE')).toBe('latin');
+    expect(mangaFrameTextScript('地下鉄')).toBe('cjk');
+    expect(mangaFrameTextScript('愛 LOVE')).toBe('mixed');
+    expect(mangaFrameTextScript('123')).toBe('other');
+    expect(mangaFrameRequiredBlockSizeEm('STAND-ALONE')).toBe(7.73);
+    expect(mangaFrameRequiredBlockSizeEm('STAND-ALONE')).toBeLessThan(
+      mangaFrameRequiredBlockSizeEm('長'.repeat(11)),
     );
   });
 
-  it('centers the content-fit vertical column group inside its bubble', () => {
+  it('uses forward five-unit columns before choosing the Manga frame height', () => {
+    const tenGlyphs = mangaFrameTextLayout('長'.repeat(10), 1, {
+      language: 'ja',
+    });
+    const twelveGlyphs = mangaFrameTextLayout('長'.repeat(12), 3, {
+      language: 'ja',
+    });
+
+    expect(
+      tenGlyphs.columns.map((column) => Array.from(column).length),
+    ).toEqual([5, 5]);
+    expect(tenGlyphs.displayText).toBe(`${'長'.repeat(5)}\n${'長'.repeat(5)}`);
+    expect(tenGlyphs.requiredBlockSizeEm).toBe(8.06);
+    expect(
+      twelveGlyphs.columns.map((column) => Array.from(column).length),
+    ).toEqual([5, 5, 2]);
+    expect(twelveGlyphs.requiredBlockSizeEm).toBe(8.06);
+  });
+
+  it('fills Japanese columns forward to five visual units instead of rebalancing them', () => {
+    const layout = mangaFrameTextLayout('その勘違い最高', 3, {
+      language: 'ja',
+    });
+
+    expect(layout.columns).toEqual(['その勘違い', '最高']);
+    expect(layout.displayText).toBe('その勘違い\n最高');
+  });
+
+  it('keeps compact punctuation with its phrase and prefers authored punctuation boundaries', () => {
+    expect(mangaFrameTextLayout('え、ほんと？', 3).columns).toEqual([
+      'え、ほんと？',
+    ]);
+    expect(mangaFrameTextLayout('今日は、最高！', 1).columns).toEqual([
+      '今日は、',
+      '最高！',
+    ]);
+    expect(mangaFrameTextLayout('夢だ。まだ行く', 1).columns).toEqual([
+      '夢だ。',
+      'まだ行く',
+    ]);
+    expect(mangaFrameTextLayout('「本当？」まだ行く', 1).columns).toEqual([
+      '「本当？」',
+      'まだ行く',
+    ]);
+    expect(mangaFrameTextLayout('“本当？”まだ行く', 1).columns).toEqual([
+      '“本当？”',
+      'まだ行く',
+    ]);
+    expect(mangaFrameTextLayout('(本当?)まだ行く', 1).columns).toEqual([
+      '(本当?)',
+      'まだ行く',
+    ]);
+    expect(mangaFrameTextLayout('待って……まだ', 1).columns).toEqual([
+      '待って……',
+      'まだ',
+    ]);
+  });
+
+  it('uses matched Japanese quotes as phrase boundaries for adjacent long clauses', () => {
+    expect(
+      mangaFrameTextLayout('「アンタちょっと問題がある」「次だよ」', 1, {
+        language: 'ja',
+      }).columns,
+    ).toEqual(['「アンタち', 'ょっと問題', 'がある」', '「次だよ」']);
+  });
+
+  it('separates surrounding copy from matched Japanese and curly quotes', () => {
+    expect(
+      mangaFrameTextLayout('前置き「本当だ」後ろ', 1, {
+        language: 'ja',
+      }).columns,
+    ).toEqual(['前置き', '「本当だ」', '後ろ']);
+    expect(
+      mangaFrameTextLayout('前置き“本当だ”後ろ', 1, {
+        language: 'ja',
+      }).columns,
+    ).toEqual(['前置き', '“本当だ”', '後ろ']);
+  });
+
+  it('keeps sentence punctuation after a matched closing quote', () => {
+    expect(
+      mangaFrameTextLayout('「本当だ」。次', 1, { language: 'ja' }).columns,
+    ).toEqual(['「本当だ」。', '次']);
+    expect(
+      mangaFrameTextLayout('“本当だ”！次', 1, { language: 'ja' }).columns,
+    ).toEqual(['“本当だ”！', '次']);
+  });
+
+  it('hangs closing quotes and sentence punctuation from a full Japanese column', () => {
+    expect(
+      mangaFrameTextLayout('「本当です」', 1, { language: 'ja' }).columns,
+    ).toEqual(['「本当です」']);
+    expect(
+      mangaFrameTextLayout('本当に最高。次', 1, { language: 'ja' }).columns,
+    ).toEqual(['本当に最高。', '次']);
+    expect(
+      mangaFrameTextLayout('「本当です」。次', 1, { language: 'ja' }).columns,
+    ).toEqual(['「本当です」。', '次']);
+  });
+
+  it('keeps nested quotes inside one top-level quoted phrase', () => {
+    const layout = mangaFrameTextLayout('「彼は『本当』と言った」次', 1, {
+      language: 'ja',
+    });
+
+    expect(layout.columns.join('')).toBe('「彼は『本当』と言った」次');
+    expect(layout.columns.at(-1)).toBe('次');
+    expect(layout.columns.slice(0, -1).at(-1).endsWith('」')).toBe(true);
+  });
+
+  it('falls back to sentence punctuation when an opening quote is unmatched', () => {
+    expect(
+      mangaFrameTextLayout('「夢だ。まだ行く', 1, { language: 'ja' }).columns,
+    ).toEqual(['「夢だ。', 'まだ行く']);
+  });
+
+  it('keeps ruby groups atomic inside a matched quoted phrase', () => {
+    const layout = mangaFrameTextLayout('「地下鉄最高」次', 1, {
+      language: 'ja',
+      sourceRanges: [{ start: 0, end: 8 }],
+      readingLine: {
+        text: '「地下鉄最高」次',
+        segments: [
+          { text: '「' },
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: '最高', reading: 'さいこう' },
+          { text: '」次' },
+        ],
+      },
+    });
+
+    expect(layout.columns).toEqual(['「地下鉄', '最高」', '次']);
+    expect(layout.columnTokens.flat()).toEqual(
+      expect.arrayContaining([
+        { text: '地下鉄', reading: 'ちかてつ' },
+        { text: '最高', reading: 'さいこう' },
+      ]),
+    );
+  });
+
+  it('treats explicit newlines as phrase boundaries while wrapping each phrase independently', () => {
+    expect(
+      mangaFrameTextLayout(`${'長'.repeat(6)}\n短い`, 1, {
+        language: 'ja',
+      }).columns,
+    ).toEqual(['長'.repeat(5), '長', '短い']);
+  });
+
+  it('keeps non-Japanese CJK copy on its established balanced layout', () => {
+    expect(
+      mangaFrameTextLayout('漫画保持穩定', 1, { language: 'zh-Hant' }).columns,
+    ).toEqual(['漫画保持穩定']);
+  });
+
+  it('keeps ruby groups atomic even when the five-unit boundary crosses a group', () => {
+    const layout = mangaFrameTextLayout('これは地下鉄最高', 1, {
+      sourceRanges: [{ start: 0, end: 8 }],
+      readingLine: {
+        text: 'これは地下鉄最高',
+        segments: [
+          { text: 'これは' },
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: '最高', reading: 'さいこう' },
+        ],
+      },
+    });
+
+    expect(layout.columns).toEqual(['これは', '地下鉄最高']);
+    expect(layout.columnTokens[1]).toEqual([
+      { text: '地下鉄', reading: 'ちかてつ' },
+      { text: '最高', reading: 'さいこう' },
+    ]);
+  });
+
+  it('keeps pure-kanji Japanese columns stable when ruby display is disabled', () => {
+    const options = {
+      language: 'und',
+      sourceRanges: [{ start: 0, end: 7 }],
+      readingLine: {
+        text: '地下鉄最高品質',
+        segments: [
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: '最高', reading: 'さいこう' },
+          { text: '品質', reading: 'ひんしつ' },
+        ],
+      },
+    };
+    const ruby = mangaFrameTextLayout('地下鉄最高品質', 1, options);
+    const plain = mangaFrameTextLayout('地下鉄最高品質', 1, {
+      ...options,
+      includeRuby: false,
+    });
+
+    expect(plain.columns).toEqual(ruby.columns);
+    expect(plain.hasRuby).toBe(false);
+    expect(ruby.hasRuby).toBe(true);
+  });
+
+  it('preserves ruby tokens across explicit Japanese line breaks', () => {
+    const layout = mangaFrameTextLayout('地下鉄\n最高', 1, {
+      language: 'ja',
+      sourceRanges: [{ start: 0, end: 6 }],
+      readingLine: {
+        text: '地下鉄\n最高',
+        segments: [
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: '\n' },
+          { text: '最高', reading: 'さいこう' },
+        ],
+      },
+    });
+
+    expect(layout.columns).toEqual(['地下鉄', '最高']);
+    expect(layout.columnTokens).toEqual([
+      [{ text: '地下鉄', reading: 'ちかてつ' }],
+      [{ text: '最高', reading: 'さいこう' }],
+    ]);
+    expect(layout.hasRuby).toBe(true);
+  });
+
+  it('keeps ruby groups atomic and reserves an annotation lane without resizing type', () => {
+    const plain = mangaFrameTextLayout('地下鉄に飲み込まれる', 1);
+    const ruby = mangaFrameTextLayout('地下鉄に飲み込まれる', 1, {
+      sourceRanges: [{ start: 0, end: 10 }],
+      readingLine: {
+        text: '地下鉄に飲み込まれる',
+        segments: [
+          { text: '地下鉄', reading: 'ちかてつ' },
+          { text: 'に' },
+          { text: '飲み込まれる', reading: 'のみこまれる' },
+        ],
+      },
+    });
+
+    expect(ruby.columnTokens.flat()).toEqual(
+      expect.arrayContaining([
+        { text: '地下鉄', reading: 'ちかてつ' },
+        { text: '飲み込まれる', reading: 'のみこまれる' },
+      ]),
+    );
+    expect(ruby.hasRuby).toBe(true);
+    expect(ruby.requiredBlockSizeEm).toBeGreaterThan(plain.requiredBlockSizeEm);
+  });
+
+  it('keeps Japanese columns at the five-glyph cap and permits a short ending', () => {
+    for (const bubbleCount of [1, 2, 3]) {
+      for (let glyphCount = 1; glyphCount <= 30; glyphCount += 1) {
+        const lengths = mangaFrameTextLayout(
+          '長'.repeat(glyphCount),
+          bubbleCount,
+          { language: 'ja' },
+        ).columns.map((column) => Array.from(column).length);
+        expect(lengths.every((length) => length <= 5)).toBe(true);
+        expect(lengths.slice(0, -1).every((length) => length === 5)).toBe(true);
+      }
+    }
+  });
+
+  it('keeps count and script sizing fixed while containing the visible text box', () => {
     const directory = path.dirname(fileURLToPath(import.meta.url));
     const css = fs.readFileSync(path.join(directory, 'lyrics.css'), 'utf8');
 
     expect(css).toMatch(
-      /\.lyrics-overlay__manga-text\s*{[^}]*inline-size: 66%;[^}]*block-size: fit-content;[^}]*max-block-size: 66%;[^}]*display: block;[^}]*place-self: center;[^}]*text-align: center;[^}]*writing-mode: vertical-rl;/s,
+      /data-manga-count='2'[^}]*--ovl-manga-text-size-by-count: 2\.35em/s,
+    );
+    expect(css).toMatch(
+      /data-manga-count='3'[^}]*--ovl-manga-text-size-by-count: 1\.9em/s,
+    );
+    expect(css).toMatch(
+      /data-manga-script='latin'[^}]*\.lyrics-overlay__manga-text[^}]*font-size: 0\.82em/s,
+    );
+    expect(css).toMatch(
+      /\.lyrics-overlay__manga-text\s*{[^}]*min-inline-size: 0;[^}]*max-inline-size: 72%;[^}]*min-block-size: 0;[^}]*max-block-size: 72%;[^}]*overflow: hidden;/s,
+    );
+  });
+
+  it('centers the text block while start-aligning and balancing wrapped columns', () => {
+    const directory = path.dirname(fileURLToPath(import.meta.url));
+    const css = fs.readFileSync(path.join(directory, 'lyrics.css'), 'utf8');
+
+    expect(css).toMatch(
+      /\.lyrics-overlay__manga-text\s*{[^}]*inline-size: max-content;[^}]*max-inline-size: 72%;[^}]*block-size: fit-content;[^}]*max-block-size: 72%;[^}]*display: block;[^}]*place-self: center;[^}]*text-align: start;[^}]*text-orientation: mixed;[^}]*text-wrap: balance;[^}]*writing-mode: vertical-rl;/s,
     );
   });
 });

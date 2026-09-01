@@ -1,8 +1,9 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import {
   mangaFrameLengthTier,
   mangaFrameSideForLine,
+  mangaFrameTextLayout,
 } from '../../../shared/presentation/mangaFrameContract.mjs';
 import {
   adaptKtvLyricsPresentation,
@@ -27,7 +28,65 @@ const props = defineProps({
 const track = computed(() => props.scene?.track ?? {});
 const nextTrack = computed(() => props.scene?.nextTrack ?? {});
 const queue = computed(() => props.scene?.queue ?? []);
+const currentTrack = computed(
+  () => queue.value.find((item) => item.state === 'current') ?? null,
+);
+const completedTracks = computed(() =>
+  queue.value.filter((item) => item.state === 'played'),
+);
+const setlistHistoryViewport = useTemplateRef('setlistHistoryViewport');
+const setlistHistoryList = useTemplateRef('setlistHistoryList');
+const setlistHistoryOverflow = ref(false);
+const setlistHistoryScrollDistance = ref(0);
+const setlistHistoryScrollDuration = ref(0);
+const setlistHistoryStyle = computed(() => ({
+  '--ui-setlist-scroll-distance': `${setlistHistoryScrollDistance.value}px`,
+  '--ui-setlist-scroll-duration': `${setlistHistoryScrollDuration.value}s`,
+}));
+
+function measureSetlistHistory() {
+  if (!setlistHistoryViewport.value || !setlistHistoryList.value) {
+    setlistHistoryOverflow.value = false;
+    setlistHistoryScrollDistance.value = 0;
+    setlistHistoryScrollDuration.value = 0;
+    return;
+  }
+
+  const contentHeight = setlistHistoryViewport.value.scrollHeight;
+  const viewportHeight = setlistHistoryViewport.value.clientHeight;
+  const distance = Math.max(0, Math.ceil(contentHeight - viewportHeight));
+  setlistHistoryOverflow.value = distance > 0;
+  setlistHistoryScrollDistance.value = distance;
+  setlistHistoryScrollDuration.value = distance
+    ? Math.max(12, Math.ceil((distance / 18 + 4) * 10) / 10)
+    : 0;
+}
+
+watch(
+  [setlistHistoryViewport, setlistHistoryList],
+  ([viewport, list], _previous, onCleanup) => {
+    if (!viewport || !list) return;
+    if (typeof ResizeObserver === 'undefined') {
+      void nextTick(measureSetlistHistory);
+      return;
+    }
+
+    const resizeObserver = new ResizeObserver(measureSetlistHistory);
+    resizeObserver.observe(viewport);
+    resizeObserver.observe(list);
+    void nextTick(measureSetlistHistory);
+    onCleanup(() => resizeObserver.disconnect());
+  },
+  { immediate: true },
+);
+
+watch([completedTracks, () => props.size], async () => {
+  setlistHistoryOverflow.value = false;
+  await nextTick();
+  measureSetlistHistory();
+});
 const lyrics = computed(() => props.scene?.lyrics ?? {});
+const mangaLyrics = computed(() => lyrics.value.manga ?? lyrics.value);
 const mangaSide = computed(() => mangaFrameSideForLine(lyrics.value.lineIndex));
 const lyricsSourceAnalysis = computed(() =>
   analyzeLyricsSource(lyrics.value.current),
@@ -68,12 +127,20 @@ const ktvNext = computed(
       role: ktvNextSource.value.role,
     },
 );
-const mangaBubbles = computed(
-  () =>
-    adaptMangaLyricsPresentation(lyricsSourceAnalysis.value, {
-      language: lyrics.value.language,
-    }).bubbles,
-);
+const mangaBubbles = computed(() => {
+  const analysis = analyzeLyricsSource(mangaLyrics.value.current);
+  const bubbles = adaptMangaLyricsPresentation(analysis, {
+    language: mangaLyrics.value.language,
+  }).bubbles;
+  return bubbles.map((bubble) => ({
+    ...bubble,
+    layout: mangaFrameTextLayout(bubble.text, bubbles.length, {
+      language: mangaLyrics.value.language,
+      readingLine: mangaLyrics.value.reading,
+      sourceRanges: bubble.sourceRanges,
+    }),
+  }));
+});
 </script>
 
 <template>
@@ -90,22 +157,53 @@ const mangaBubbles = computed(
       v-if="preset?.kind === 'setlist'"
       class="obs-template-mockup__content obs-template-mockup__content--setlist"
     >
-      <strong class="obs-template-mockup__section-title">今晚歌單</strong>
-      <span
-        v-for="item in queue"
-        :key="`${item.number}-${item.title}`"
-        class="obs-template-mockup__queue-line"
-        :class="{
-          'obs-template-mockup__queue-line--current': item.state === 'current',
-        }"
-      >
-        <span class="obs-template-mockup__queue-number">{{ item.number }}</span>
-        <span class="obs-template-mockup__queue-title">{{ item.title }}</span>
+      <span class="obs-template-mockup__setlist-current">
+        <span class="obs-template-mockup__setlist-header">
+          <span class="obs-template-mockup__setlist-label">Now Singing</span>
+          <strong class="obs-template-mockup__setlist-source">Tonight</strong>
+        </span>
+        <span class="obs-template-mockup__setlist-current-track">
+          <strong class="obs-template-mockup__setlist-current-title">
+            {{ currentTrack?.title }}
+          </strong>
+          <span class="obs-template-mockup__setlist-current-artist">
+            {{ currentTrack?.artist }}
+          </span>
+        </span>
+      </span>
+
+      <span class="obs-template-mockup__setlist-history">
+        <span class="obs-template-mockup__setlist-header">
+          <span class="obs-template-mockup__setlist-label">Set List</span>
+          <span class="obs-template-mockup__setlist-caption">已唱紀錄</span>
+        </span>
         <span
-          v-if="item.state === 'current'"
-          class="obs-template-mockup__queue-state"
+          ref="setlistHistoryViewport"
+          class="obs-template-mockup__setlist-history-viewport"
+          :data-history-motion="animated ? 'running' : 'paused'"
+          :data-history-overflow="setlistHistoryOverflow ? 'true' : 'false'"
+          :style="setlistHistoryStyle"
         >
-          現正
+          <ol
+            ref="setlistHistoryList"
+            class="obs-template-mockup__setlist-history-list"
+          >
+            <li
+              v-for="item in completedTracks"
+              :key="`${item.number}-${item.title}`"
+              class="obs-template-mockup__setlist-history-row"
+            >
+              <span class="obs-template-mockup__queue-number">
+                {{ item.number }}
+              </span>
+              <strong class="obs-template-mockup__queue-title">
+                {{ item.title }}
+              </strong>
+              <span class="obs-template-mockup__setlist-artist">
+                {{ item.artist }}
+              </span>
+            </li>
+          </ol>
         </span>
       </span>
     </div>
@@ -141,7 +239,7 @@ const mangaBubbles = computed(
 
       <template v-else-if="preset?.id === 'manga-frame'">
         <span
-          class="obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble"
+          class="obs-template-mockup__manga-bubbles"
           :data-manga-count="mangaBubbles.length"
           :data-manga-side="mangaSide"
         >
@@ -151,6 +249,11 @@ const mangaBubbles = computed(
             class="obs-template-mockup__manga-bubble"
             :data-lyric-kind="bubble.kind"
             :data-manga-length="mangaFrameLengthTier(bubble.text)"
+            :data-manga-script="bubble.layout.script"
+            :data-manga-columns="bubble.layout.columnCount"
+            :style="{
+              '--ui-manga-frame-required-block-size': `${bubble.layout.requiredBlockSizeEm}em`,
+            }"
           >
             <MangaFrameSvg
               class="obs-template-mockup__manga-frame"
@@ -159,7 +262,21 @@ const mangaBubbles = computed(
             <strong
               class="obs-template-mockup__title obs-template-mockup__title--manga"
             >
-              {{ bubble.text }}
+              <template
+                v-for="(column, columnIndex) in bubble.layout.columnTokens"
+                :key="columnIndex"
+              >
+                <br v-if="columnIndex > 0" />
+                <template
+                  v-for="(token, tokenIndex) in column"
+                  :key="tokenIndex"
+                >
+                  <ruby v-if="token.reading">
+                    {{ token.text }}<rt>{{ token.reading }}</rt>
+                  </ruby>
+                  <template v-else>{{ token.text }}</template>
+                </template>
+              </template>
             </strong>
           </span>
         </span>
@@ -233,7 +350,7 @@ const mangaBubbles = computed(
     </div>
 
     <div
-      v-else-if="preset?.kind === 'artwork'"
+      v-else-if="['art-card', 'cover-player'].includes(preset?.id)"
       class="obs-template-mockup__content obs-template-mockup__content--artwork"
     >
       <template v-if="preset?.id === 'cover-player'">
@@ -264,15 +381,75 @@ const mangaBubbles = computed(
         </span>
       </template>
       <template v-else>
-        <span
-          class="obs-template-mockup__artwork obs-template-mockup__animated-primary"
-        >
-          {{ track.title?.slice(0, 1) }}
-        </span>
-        <span class="obs-template-mockup__metadata">
-          <span class="obs-template-mockup__eyebrow">正在演唱</span>
-          <strong class="obs-template-mockup__title">{{ track.title }}</strong>
-          <span class="obs-template-mockup__secondary">{{ track.artist }}</span>
+        <span class="obs-template-mockup__vinyl-stage">
+          <span class="obs-template-mockup__vinyl-album">
+            <span class="obs-template-mockup__vinyl-sleeve">
+              <span class="obs-template-mockup__vinyl-artwork">
+                {{ track.title?.slice(0, 1) }}
+              </span>
+              <span class="obs-template-mockup__vinyl-copy">
+                <strong class="obs-template-mockup__title">
+                  {{ track.title }}
+                </strong>
+                <span class="obs-template-mockup__secondary">
+                  {{ track.artist }}
+                </span>
+              </span>
+            </span>
+          </span>
+          <span class="obs-template-mockup__vinyl-turntable">
+            <span class="obs-template-mockup__vinyl-deck-light" />
+            <span class="obs-template-mockup__vinyl-platter">
+              <span class="obs-template-mockup__vinyl-record">
+                <span class="obs-template-mockup__vinyl-record-grooves" />
+                <span class="obs-template-mockup__vinyl-label">UW</span>
+              </span>
+              <span class="obs-template-mockup__vinyl-spindle" />
+            </span>
+            <svg
+              class="obs-template-mockup__vinyl-tonearm"
+              viewBox="0 0 100 240"
+              focusable="false"
+            >
+              <circle
+                class="obs-template-mockup__vinyl-tonearm-pivot"
+                cx="66"
+                cy="28"
+                r="20"
+              />
+              <circle
+                class="obs-template-mockup__vinyl-tonearm-pivot-core"
+                cx="66"
+                cy="28"
+                r="8"
+              />
+              <g class="obs-template-mockup__vinyl-tonearm-assembly">
+                <rect
+                  class="obs-template-mockup__vinyl-tonearm-counterweight"
+                  x="53"
+                  y="1"
+                  width="26"
+                  height="13"
+                  rx="6.5"
+                />
+                <path
+                  class="obs-template-mockup__vinyl-tonearm-rail"
+                  d="M66 28 C69 78 42 134 11.5 179"
+                />
+                <g
+                  class="obs-template-mockup__vinyl-tonearm-head"
+                  transform="translate(11.5 179) rotate(17)"
+                >
+                  <rect x="-6" y="-4" width="28" height="13" rx="3" />
+                  <path class="obs-template-mockup__vinyl-stylus" d="M5 9v14" />
+                </g>
+              </g>
+              <path
+                class="obs-template-mockup__vinyl-tonearm-rest"
+                d="M91 103v16m-6-5h12"
+              />
+            </svg>
+          </span>
         </span>
       </template>
     </div>
@@ -281,16 +458,33 @@ const mangaBubbles = computed(
       v-else
       class="obs-template-mockup__content obs-template-mockup__content--now-playing"
     >
-      <span class="obs-template-mockup__eyebrow">正在演唱</span>
-      <strong
-        class="obs-template-mockup__title obs-template-mockup__animated-primary"
-      >
-        {{ track.title }}
-      </strong>
-      <span class="obs-template-mockup__secondary">{{ track.artist }}</span>
-      <span class="obs-template-mockup__next">
-        下一首
-        <strong>{{ nextTrack.title }}</strong>
+      <span class="obs-template-mockup__now-player">
+        <span class="obs-template-mockup__now-player-shell">
+          <span class="obs-template-mockup__now-disc">
+            <span class="obs-template-mockup__now-disc-label">UW</span>
+          </span>
+          <span class="obs-template-mockup__now-spindle" />
+          <span class="obs-template-mockup__now-pickup" />
+          <span class="obs-template-mockup__now-controls">
+            <span />
+            <span />
+            <span />
+          </span>
+        </span>
+      </span>
+      <span class="obs-template-mockup__now-information">
+        <span class="obs-template-mockup__now-current">
+          <strong
+            class="obs-template-mockup__title obs-template-mockup__animated-primary"
+          >
+            {{ track.title }}
+          </strong>
+          <span class="obs-template-mockup__secondary">{{ track.artist }}</span>
+        </span>
+        <span class="obs-template-mockup__now-next">
+          下一首
+          <strong>{{ nextTrack.title }}</strong>
+        </span>
       </span>
     </div>
   </div>
@@ -364,7 +558,202 @@ const mangaBubbles = computed(
 }
 
 .obs-template-mockup__content--now-playing {
-  align-content: end;
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  align-items: center;
+  gap: 0;
+}
+
+.obs-template-mockup__now-player {
+  grid-column: 1 / span 3;
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  padding-inline-end: var(--ui-space-2);
+}
+
+.obs-template-mockup__now-player-shell {
+  position: relative;
+  width: min(100%, var(--ui-output-template-detail-artwork-size));
+  aspect-ratio: 1;
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background:
+    linear-gradient(
+      145deg,
+      var(--obs-preview-surface),
+      transparent 42%,
+      var(--obs-preview-accent)
+    ),
+    var(--obs-preview-surface);
+}
+
+.obs-template-mockup__now-player-shell::before,
+.obs-template-mockup__now-player-shell::after {
+  position: absolute;
+  content: '';
+}
+
+.obs-template-mockup__now-player-shell::before {
+  inset: var(--ui-space-1);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-xs);
+}
+
+.obs-template-mockup__now-player-shell::after {
+  inset-inline: 12%;
+  inset-block-end: 8%;
+  height: var(--ui-output-preview-player-track-size);
+  border-radius: var(--ui-radius-xs);
+  background: var(--obs-preview-accent);
+}
+
+.obs-template-mockup__now-disc {
+  position: relative;
+  width: 72%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at center,
+      var(--obs-preview-bg) 0 13%,
+      transparent 13.5% 20%,
+      var(--obs-preview-surface) 20.5% 27%,
+      transparent 27.5%
+    ),
+    conic-gradient(
+      from 24deg,
+      var(--obs-preview-muted),
+      transparent 14%,
+      var(--obs-preview-accent) 24%,
+      transparent 38%,
+      var(--obs-preview-ink) 52%,
+      transparent 66%,
+      var(--obs-preview-accent) 82%,
+      transparent 94%,
+      var(--obs-preview-muted)
+    );
+}
+
+.obs-template-mockup__now-disc::before {
+  position: absolute;
+  inset: 8%;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 50%;
+  content: '';
+}
+
+.obs-template-mockup__now-disc-label {
+  position: relative;
+  z-index: 1;
+  width: 27%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--obs-preview-bg);
+  color: var(--obs-preview-ink);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-weight: var(--ui-font-weight-heavy);
+  letter-spacing: -0.03em;
+}
+
+.obs-template-mockup__now-spindle {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  width: var(--ui-space-1);
+  aspect-ratio: 1;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 50%;
+  background: var(--obs-preview-muted);
+  transform: translate(-50%, -50%);
+}
+
+.obs-template-mockup__now-pickup {
+  position: absolute;
+  inset-inline-end: 15%;
+  inset-block-start: 15%;
+  width: 31%;
+  height: var(--ui-output-preview-player-track-size);
+  border-radius: var(--ui-radius-xs);
+  background: var(--obs-preview-ink);
+  transform: rotate(43deg);
+  transform-origin: 100% 50%;
+}
+
+.obs-template-mockup__now-pickup::after {
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-start: 50%;
+  width: var(--ui-space-2);
+  aspect-ratio: 1;
+  border-radius: var(--ui-radius-xs);
+  background: var(--obs-preview-accent);
+  content: '';
+  transform: translate(-35%, -50%);
+}
+
+.obs-template-mockup__now-controls {
+  position: absolute;
+  inset-inline-start: 11%;
+  inset-block-end: 8%;
+  display: flex;
+  gap: var(--ui-space-1);
+}
+
+.obs-template-mockup__now-controls > span {
+  width: var(--ui-space-1);
+  aspect-ratio: 1;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 50%;
+  background: var(--obs-preview-surface);
+}
+
+.obs-template-mockup__now-information {
+  grid-column: 5 / span 6;
+  min-width: 0;
+  min-height: 68%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  align-content: center;
+  padding-inline: var(--ui-space-3) var(--ui-space-2);
+  border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.obs-template-mockup__now-current {
+  min-width: 0;
+  align-self: center;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.obs-template-mockup__now-information .obs-template-mockup__title {
+  font-size: var(--ui-font-size-xl);
+}
+
+.obs-template-mockup__now-next {
+  min-width: 0;
+  display: flex;
+  gap: var(--ui-space-1);
+  padding-block-start: var(--ui-space-2);
+  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+  color: var(--obs-preview-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
+  white-space: nowrap;
+}
+
+.obs-template-mockup__now-next strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--obs-preview-ink);
+  text-overflow: ellipsis;
 }
 
 .obs-template-mockup__content--lyrics {
@@ -477,7 +866,139 @@ const mangaBubbles = computed(
 }
 
 .obs-template-mockup__content--setlist {
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+  gap: 0;
+}
+
+.obs-template-mockup__setlist-history {
+  grid-row: 5 / span 6;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.obs-template-mockup__setlist-history-viewport {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  align-items: flex-start;
+  padding-block-start: var(--ui-space-3);
+}
+
+.obs-template-mockup__setlist-history-list {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
+  row-gap: var(--ui-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.obs-template-mockup__setlist-history-viewport[data-history-overflow='true'][data-history-motion='running']
+  .obs-template-mockup__setlist-history-list {
+  animation: obs-template-setlist-scroll var(--ui-setlist-scroll-duration, 12s)
+    linear infinite alternate;
+}
+
+.obs-template-mockup__setlist-header {
+  min-width: 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  padding-block-end: var(--ui-space-1);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.obs-template-mockup__setlist-label,
+.obs-template-mockup__setlist-caption,
+.obs-template-mockup__setlist-source {
+  flex: 0 0 auto;
+  color: var(--obs-preview-muted);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-weight: var(--ui-font-weight-strong);
+  letter-spacing: 0.06em;
+  line-height: 1;
+}
+
+.obs-template-mockup__setlist-caption,
+.obs-template-mockup__setlist-source {
+  min-width: 0;
+  overflow: hidden;
+  letter-spacing: 0.02em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__setlist-history-row {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--ui-space-5);
+  display: grid;
+  grid-template-columns: 1rem minmax(0, 1fr) minmax(0, 34%);
+  align-items: center;
+  column-gap: var(--ui-space-1);
+  padding-inline: var(--ui-space-2);
+  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
+  text-align: start;
+}
+
+.obs-template-mockup__setlist-history-row .obs-template-mockup__queue-number {
+  align-self: center;
+  color: var(--obs-preview-muted);
+}
+
+.obs-template-mockup__setlist-artist {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--obs-preview-muted);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__setlist-current {
+  grid-row: 1 / span 3;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.obs-template-mockup__setlist-current-track {
+  min-width: 0;
+  align-self: start;
+  justify-self: stretch;
+  display: grid;
+  gap: var(--ui-space-1);
+  padding-block-start: var(--ui-space-3);
+  padding-inline: var(--ui-space-2);
+  text-align: start;
+}
+
+.obs-template-mockup__setlist-current-title,
+.obs-template-mockup__setlist-current-artist {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__setlist-current-title {
+  font-size: var(--ui-font-size-xl);
+  letter-spacing: -0.02em;
+  line-height: var(--ui-line-height-title);
+}
+
+.obs-template-mockup__setlist-current-artist {
+  font-size: var(--ui-font-size-sm);
 }
 
 .obs-template-mockup__content--artwork {
@@ -485,6 +1006,378 @@ const mangaBubbles = computed(
   align-content: end;
   align-items: center;
   gap: var(--ui-space-3);
+}
+
+.obs-template-mockup[data-template-id='art-card']
+  .obs-template-mockup__content--artwork {
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  align-content: center;
+  padding-block: var(--ui-space-2);
+}
+
+.obs-template-mockup__vinyl-stage {
+  position: relative;
+  width: min(94%, 28rem);
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
+.obs-template-mockup__vinyl-album {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.obs-template-mockup__vinyl-turntable {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  overflow: hidden;
+  justify-self: center;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background:
+    linear-gradient(
+      128deg,
+      transparent 0 42%,
+      color-mix(
+          in srgb,
+          var(--ui-output-preview-vinyl-deck-metal-highlight) 24%,
+          transparent
+        )
+        49%,
+      transparent 56%
+    ),
+    repeating-linear-gradient(
+      90deg,
+      var(--ui-output-preview-vinyl-deck-metal) 0 1px,
+      color-mix(
+          in srgb,
+          var(--ui-output-preview-vinyl-deck-metal-highlight) 30%,
+          var(--ui-output-preview-vinyl-deck-metal)
+        )
+        1px 2px
+    );
+  box-shadow: inset 0 0 0 var(--ui-border-width)
+    color-mix(
+      in srgb,
+      var(--ui-output-preview-vinyl-deck-metal-highlight) 48%,
+      transparent
+    );
+}
+
+.obs-template-mockup__vinyl-deck-light {
+  position: absolute;
+  z-index: 3;
+  inset-inline-end: 8%;
+  inset-block-end: 8%;
+  width: var(--ui-space-3);
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: 50%;
+  background: var(--ui-output-preview-vinyl-deck-metal);
+}
+
+.obs-template-mockup__vinyl-deck-light::after {
+  width: 42%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--ui-output-preview-vinyl-sleeve-paper);
+  box-shadow: 0 0 var(--ui-space-2)
+    color-mix(
+      in srgb,
+      var(--ui-output-preview-vinyl-sleeve-paper) 62%,
+      transparent
+    );
+  content: '';
+}
+
+.obs-template-mockup__vinyl-platter {
+  position: absolute;
+  inset-inline-start: 5%;
+  inset-block-start: 50%;
+  width: 82%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: var(--ui-border-width) solid var(--ui-output-preview-surface-muted);
+  border-radius: 50%;
+  background: var(--ui-output-preview-vinyl-platter-rim);
+  box-shadow:
+    inset 0 0 0 var(--ui-space-1) var(--ui-output-preview-vinyl-dark),
+    var(--ui-shadow-overlay);
+  transform: translateY(-50%);
+}
+
+.obs-template-mockup__vinyl-record {
+  position: relative;
+  width: 90%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: var(--ui-border-width) solid var(--ui-output-preview-surface-muted);
+  border-radius: 50%;
+  background: conic-gradient(
+    from 18deg,
+    color-mix(
+      in srgb,
+      var(--ui-output-preview-vinyl-neutral-accent) 24%,
+      var(--ui-output-preview-vinyl-dark)
+    ),
+    color-mix(
+        in srgb,
+        var(--ui-output-preview-vinyl-neutral-accent) 18%,
+        var(--ui-output-preview-vinyl-highlight)
+      )
+      11%,
+    var(--ui-output-preview-vinyl-dark) 24%,
+    color-mix(
+        in srgb,
+        var(--ui-output-preview-vinyl-neutral-accent) 18%,
+        var(--ui-output-preview-vinyl-highlight)
+      )
+      36%,
+    var(--ui-output-preview-vinyl-dark) 51%,
+    var(--ui-output-preview-vinyl-mid) 66%,
+    var(--ui-output-preview-vinyl-dark) 81%,
+    var(--ui-output-preview-vinyl-mid) 92%,
+    var(--ui-output-preview-vinyl-dark)
+  );
+  box-shadow: inset 0 0 var(--ui-space-3) var(--ui-output-preview-vinyl-dark);
+  animation: obs-preview-vinyl-spin 18s linear infinite;
+  animation-play-state: paused;
+}
+
+.obs-template-mockup__vinyl-record-grooves {
+  position: absolute;
+  z-index: 1;
+  inset: 7%;
+  border: var(--ui-border-width) solid var(--ui-output-preview-vinyl-dark);
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    transparent 0 15%,
+    var(--ui-output-preview-surface-muted) 15.5% 16%,
+    transparent 16.5% 41%,
+    var(--ui-output-preview-vinyl-highlight) 41.5% 42%,
+    transparent 42.5% 65%,
+    var(--ui-output-preview-vinyl-dark) 65.5% 66%,
+    transparent 66.5%
+  );
+  box-shadow:
+    inset 0 0 0 var(--ui-border-width) var(--ui-output-preview-vinyl-highlight),
+    inset 0 0 var(--ui-space-3) var(--ui-output-preview-vinyl-dark);
+  pointer-events: none;
+}
+
+.obs-template-mockup__vinyl-label {
+  position: relative;
+  z-index: 2;
+  width: 31%;
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border: var(--ui-border-width) solid var(--ui-output-preview-surface-muted);
+  border-radius: 50%;
+  background: var(--ui-output-preview-vinyl-sleeve-paper);
+  color: var(--ui-output-preview-vinyl-copy-ink);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-weight: var(--ui-font-weight-heavy);
+  letter-spacing: 0.08em;
+}
+
+.obs-template-mockup__vinyl-spindle {
+  position: absolute;
+  inset-inline-start: 50%;
+  inset-block-start: 50%;
+  width: var(--ui-space-1);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--ui-output-preview-text);
+  transform: translate(-50%, -50%);
+}
+
+.obs-template-mockup__vinyl-tonearm {
+  position: absolute;
+  z-index: 2;
+  inset-inline-end: 2%;
+  inset-block-start: 8%;
+  width: 30%;
+  height: 74%;
+  overflow: visible;
+}
+
+.obs-template-mockup__vinyl-tonearm-pivot {
+  fill: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke: var(--ui-color-border);
+  stroke-width: 3;
+}
+
+.obs-template-mockup__vinyl-tonearm-pivot-core {
+  fill: var(--ui-output-preview-vinyl-dark);
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-width: 3;
+}
+
+.obs-template-mockup__vinyl-tonearm-counterweight {
+  fill: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke: var(--ui-color-border);
+  stroke-width: 2;
+}
+
+.obs-template-mockup__vinyl-tonearm-rail {
+  fill: none;
+  stroke: var(--ui-output-preview-text-muted);
+  stroke-linecap: round;
+  stroke-width: 7;
+}
+
+.obs-template-mockup__vinyl-tonearm-head {
+  fill: var(--ui-output-preview-text);
+  stroke: var(--ui-output-preview-canvas);
+  stroke-width: 1.5;
+}
+
+.obs-template-mockup__vinyl-stylus,
+.obs-template-mockup__vinyl-tonearm-rest {
+  fill: none;
+  stroke-linecap: round;
+}
+
+.obs-template-mockup__vinyl-stylus {
+  stroke: var(--ui-output-preview-vinyl-dark);
+  stroke-width: 3;
+}
+
+.obs-template-mockup__vinyl-tonearm-rest {
+  stroke: var(--ui-output-preview-vinyl-deck-metal-highlight);
+  stroke-width: 5;
+}
+
+.obs-template-mockup[data-template-id='art-card']
+  .obs-template-mockup__vinyl-sleeve {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 1;
+  container-type: inline-size;
+  overflow: hidden;
+  justify-self: start;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-xs);
+  background: var(--ui-output-preview-vinyl-sleeve-paper);
+}
+
+.obs-template-mockup__vinyl-sleeve::before,
+.obs-template-mockup__vinyl-sleeve::after {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  pointer-events: none;
+  content: '';
+}
+
+.obs-template-mockup__vinyl-sleeve::before {
+  border: calc(2 * var(--ui-border-width)) solid
+    color-mix(
+      in srgb,
+      var(--ui-output-preview-vinyl-sleeve-paper) 86%,
+      var(--ui-color-border)
+    );
+  box-shadow: inset 0 0 0 var(--ui-border-width)
+    color-mix(in srgb, var(--ui-output-preview-canvas) 24%, transparent);
+}
+
+.obs-template-mockup__vinyl-sleeve::after {
+  background:
+    linear-gradient(
+      94deg,
+      transparent 0 38%,
+      color-mix(
+          in srgb,
+          var(--ui-output-preview-vinyl-sleeve-paper) 46%,
+          transparent
+        )
+        49%,
+      transparent 58%
+    ),
+    repeating-linear-gradient(
+      8deg,
+      color-mix(
+          in srgb,
+          var(--ui-output-preview-vinyl-sleeve-paper) 34%,
+          transparent
+        )
+        0 var(--ui-border-width),
+      transparent var(--ui-border-width) var(--ui-space-1)
+    );
+  mix-blend-mode: soft-light;
+  opacity: 0.035;
+}
+
+.obs-template-mockup__vinyl-artwork,
+.obs-template-mockup__vinyl-copy {
+  position: absolute;
+  inset: 0;
+}
+
+.obs-template-mockup__vinyl-artwork {
+  display: grid;
+  place-items: center;
+  background: var(--ui-output-preview-vinyl-sleeve-paper);
+  color: var(--ui-output-preview-vinyl-copy-muted);
+  font-size: var(--ui-font-size-2xl);
+  font-weight: var(--ui-font-weight-heavy);
+}
+
+.obs-template-mockup__vinyl-copy {
+  z-index: 3;
+  display: grid;
+  align-content: end;
+  gap: var(--ui-output-template-thumb-tight-gap);
+  padding: 30% var(--ui-space-2) var(--ui-space-2);
+  background: linear-gradient(
+    to bottom,
+    transparent 42%,
+    color-mix(
+        in srgb,
+        var(--ui-output-preview-vinyl-sleeve-paper) 24%,
+        transparent
+      )
+      58%,
+    color-mix(
+        in srgb,
+        var(--ui-output-preview-vinyl-sleeve-paper) 94%,
+        transparent
+      )
+      100%
+  );
+  text-align: left;
+}
+
+.obs-template-mockup__vinyl-copy .obs-template-mockup__title {
+  color: var(--ui-output-preview-vinyl-copy-ink);
+  font-size: var(--ui-output-preview-vinyl-title-size);
+  line-height: var(--ui-line-height-label);
+}
+
+.obs-template-mockup__vinyl-copy .obs-template-mockup__secondary {
+  color: var(--ui-output-preview-vinyl-copy-muted);
+  font-size: var(--ui-output-preview-vinyl-artist-size);
+  font-weight: var(--ui-output-preview-vinyl-artist-weight);
+}
+
+.obs-template-mockup[data-motion='playing'] .obs-template-mockup__vinyl-record {
+  animation-play-state: running;
 }
 
 .obs-template-mockup[data-template-id='cover-player']
@@ -626,27 +1519,7 @@ const mangaBubbles = computed(
   text-overflow: ellipsis;
 }
 
-.obs-template-mockup__queue-line {
-  min-width: 0;
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-1) var(--ui-space-2);
-  border-radius: var(--ui-radius-sm);
-  background: var(--obs-preview-surface);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  line-height: var(--ui-line-height-label);
-}
-
-.obs-template-mockup__queue-line--current {
-  background: var(--obs-preview-accent);
-  color: var(--ui-output-preview-accent-contrast);
-}
-
-.obs-template-mockup__queue-number,
-.obs-template-mockup__queue-state {
+.obs-template-mockup__queue-number {
   font-variant-numeric: tabular-nums;
 }
 
@@ -654,10 +1527,6 @@ const mangaBubbles = computed(
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-.obs-template-mockup__queue-state {
-  font-size: var(--ui-output-template-thumb-caption-font-size);
 }
 
 .obs-template-mockup[data-template-id='karaoke-stack']
@@ -789,8 +1658,18 @@ const mangaBubbles = computed(
   grid-template-rows: repeat(2, minmax(0, 1fr));
 }
 
+.obs-template-mockup__manga-bubbles[data-manga-count='2']
+  .obs-template-mockup__manga-bubble {
+  font-size: 0.81em;
+}
+
 .obs-template-mockup__manga-bubbles[data-manga-count='3'] {
   grid-template-rows: repeat(3, minmax(0, 1fr));
+}
+
+.obs-template-mockup__manga-bubbles[data-manga-count='3']
+  .obs-template-mockup__manga-bubble {
+  font-size: 0.66em;
 }
 
 .obs-template-mockup__manga-bubbles[data-manga-side='left'] {
@@ -806,7 +1685,11 @@ const mangaBubbles = computed(
 .obs-template-mockup__manga-bubble {
   position: relative;
   box-sizing: border-box;
-  height: min(92%, var(--ui-output-template-detail-artwork-size));
+  height: min(
+    max(36%, var(--ui-manga-frame-required-block-size)),
+    56%,
+    var(--ui-output-template-detail-artwork-size)
+  );
   max-width: 100%;
   aspect-ratio: 2 / 3;
   justify-self: center;
@@ -850,16 +1733,42 @@ const mangaBubbles = computed(
 .obs-template-mockup__title--manga {
   position: relative;
   z-index: 1;
-  width: 66%;
-  height: 66%;
+  inline-size: max-content;
+  min-inline-size: 0;
+  max-inline-size: 72%;
+  block-size: fit-content;
+  min-block-size: 0;
+  max-block-size: 72%;
   display: block;
+  overflow: hidden;
   color: var(--ui-output-preview-manga-ink);
+  font-size: 1em;
   line-height: 1.16;
   overflow-wrap: anywhere;
-  text-align: center;
-  text-orientation: upright;
+  text-align: start;
+  text-orientation: mixed;
+  text-wrap: balance;
   white-space: pre-wrap;
   writing-mode: vertical-rl;
+}
+
+.obs-template-mockup__title--manga ruby {
+  ruby-align: center;
+  ruby-position: over;
+}
+
+.obs-template-mockup__title--manga rt {
+  font-family: inherit;
+  font-size: 0.4em;
+  font-weight: 500;
+  letter-spacing: 0;
+  line-height: 1;
+  text-orientation: upright;
+}
+
+.obs-template-mockup__manga-bubble[data-manga-script='latin']
+  .obs-template-mockup__title--manga {
+  font-size: 0.82em;
 }
 
 .obs-template-mockup__manga-bubble[data-lyric-kind='aside']
@@ -886,12 +1795,6 @@ const mangaBubbles = computed(
 .obs-template-mockup[data-motion='playing']
   .obs-template-mockup__animated-primary {
   animation: obs-preview-line-cycle var(--ui-output-preview-cycle-duration)
-    var(--ui-output-preview-cycle-ease) infinite;
-}
-
-.obs-template-mockup[data-motion='playing']
-  .obs-template-mockup__animated-bubble {
-  animation: obs-preview-bubble-cycle var(--ui-output-preview-cycle-duration)
     var(--ui-output-preview-cycle-ease) infinite;
 }
 
@@ -925,9 +1828,70 @@ const mangaBubbles = computed(
 }
 
 .obs-template-mockup[data-size='thumbnail']
-  .obs-template-mockup__content--setlist {
+  .obs-template-mockup__content--now-playing {
+  place-content: stretch;
+  align-items: center;
   justify-items: stretch;
+  gap: 0;
   text-align: left;
+}
+
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__now-player {
+  padding-inline-end: var(--ui-space-1);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__now-information {
+  min-height: 58%;
+  padding-inline: var(--ui-space-2) var(--ui-space-1);
+}
+
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__now-next {
+  padding-block-start: var(--ui-space-1);
+  font-size: var(--ui-output-template-thumb-caption-font-size);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__content--setlist {
+  width: var(--ui-output-template-thumb-content-width);
+  place-content: stretch;
+  justify-items: stretch;
+  gap: 0;
+  text-align: left;
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-current {
+  gap: 0;
+  padding: var(--ui-space-1) var(--ui-space-2);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-current-track {
+  padding-block-start: var(--ui-space-1);
+  padding-inline: 0;
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-history-viewport {
+  padding-block-start: var(--ui-space-1);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-history-list {
+  row-gap: var(--ui-space-1);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-current-title {
+  font-size: var(--ui-output-template-thumb-title-font-size);
+}
+
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-current-artist,
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-artist {
+  display: none;
 }
 
 .obs-template-mockup[data-size='thumbnail']
@@ -936,6 +1900,18 @@ const mangaBubbles = computed(
   justify-items: start;
   gap: var(--ui-output-template-thumb-group-gap);
   text-align: left;
+}
+
+.obs-template-mockup[data-size='thumbnail'][data-template-id='art-card']
+  .obs-template-mockup__content--artwork {
+  grid-template-columns: minmax(0, 1fr);
+  place-items: center;
+  padding-block: var(--ui-space-1);
+}
+
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__vinyl-stage {
+  width: 96%;
+  gap: var(--ui-space-1);
 }
 
 .obs-template-mockup[data-size='thumbnail'][data-template-id='cover-player']
@@ -1015,14 +1991,14 @@ const mangaBubbles = computed(
 }
 
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__title,
-.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__queue-line,
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-history-row,
 .obs-template-mockup[data-size='thumbnail']
   .obs-template-mockup__section-title {
   font-size: var(--ui-output-template-thumb-title-font-size);
 }
 
-.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__eyebrow,
-.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__queue-state {
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__eyebrow {
   display: none;
 }
 
@@ -1042,14 +2018,27 @@ const mangaBubbles = computed(
   margin-block-end: 0;
 }
 
-.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__queue-line {
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__setlist-history-row {
   padding: 0 var(--ui-space-1);
 }
 
-.obs-template-mockup[data-size='thumbnail']
-  .obs-template-mockup__content--setlist
-  .obs-template-mockup__queue-line:nth-of-type(n + 3) {
-  display: none;
+@keyframes obs-preview-vinyl-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes obs-template-setlist-scroll {
+  0%,
+  10% {
+    transform: translateY(0);
+  }
+
+  90%,
+  100% {
+    transform: translateY(calc(-1 * var(--ui-setlist-scroll-distance, 0px)));
+  }
 }
 
 @keyframes obs-preview-line-cycle {
@@ -1120,25 +2109,12 @@ const mangaBubbles = computed(
   }
 }
 
-@keyframes obs-preview-bubble-cycle {
-  0%,
-  12%,
-  88%,
-  100% {
-    opacity: 0;
-  }
-
-  24%,
-  76% {
-    opacity: 1;
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
+  .obs-template-mockup__setlist-history-viewport[data-history-overflow='true'][data-history-motion='running']
+    .obs-template-mockup__setlist-history-list,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__animated-primary,
-  .obs-template-mockup[data-motion='playing']
-    .obs-template-mockup__animated-bubble,
+  .obs-template-mockup__vinyl-record,
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__ktv-line-fill,
   .obs-template-mockup[data-motion='playing']

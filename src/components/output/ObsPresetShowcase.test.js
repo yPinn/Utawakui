@@ -200,7 +200,7 @@ describe('OBS output workspace layout contract', () => {
     expect(mangaBranch).toContain('mangaBubbles');
     expect(mangaBranch).toContain('bubble.text');
     expect(mangaBranch).not.toContain('lyrics.next');
-    expect(mangaBranch).toContain(
+    expect(mangaBranch).not.toContain(
       'obs-template-mockup__manga-bubbles obs-template-mockup__animated-bubble',
     );
     expect(mangaBranch).not.toContain(
@@ -208,7 +208,7 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(mockupSource).toContain('@media (prefers-reduced-motion: reduce)');
     expect(mockupSource).toContain('@keyframes obs-preview-line-cycle');
-    expect(mockupSource).toContain('@keyframes obs-preview-bubble-cycle');
+    expect(mockupSource).not.toContain('@keyframes obs-preview-bubble-cycle');
   });
 
   it('reuses shared preview tokens instead of hard-coded component values', () => {

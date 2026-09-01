@@ -4,7 +4,7 @@
 
 Draft planning contract, 2026-08-23. It elaborates
 [ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md).
-The current app implements four fixed slots, placeholder `styleSetIds`, and an
+The current app implements three fixed slots, placeholder `styleSetIds`, and an
 app-bundled fallback CSS cascade that keeps those routes independent from future
 pack installation. No remote Presentation Pack updater or User Variant import
 exists yet.
@@ -221,10 +221,11 @@ reusable variants. A planning example is:
 }
 ```
 
-The canonical endpoint is `/overlay/slot/<instanceId>`. Existing four routes are
-aliases to migrated default instances. Migration preserves template selection,
-style ids, scalar settings, and URL behavior; it does not merge the Now Playing
-and Artwork instances.
+The canonical endpoint is `/overlay/slot/<instanceId>`. The existing Setlist,
+Lyrics and Now Playing routes become aliases to migrated default instances. The
+current Now Playing instance already owns Compact CD, 黑膠主題 and Cover
+Player templates; a future need for two simultaneous track layouts creates a
+second instance instead of restoring a template-specific route.
 
 The instance stores ids and bounded settings only. It never stores live playback
 state, absolute asset paths, media URLs, executable content, or provider secrets.

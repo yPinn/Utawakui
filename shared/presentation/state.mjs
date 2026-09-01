@@ -2,6 +2,7 @@
 import {
   adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
+  adaptMangaLyricsPresentation,
   analyzeLyricsSource,
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
@@ -38,6 +39,15 @@ const KTV_LONG_GAP_FACTOR = 1.8;
 const KTV_COUNT_IN_WINDOW_MS = 5000;
 const KTV_COMPLETED_HANDOFF_HOLD_MS = 600;
 const KTV_SECTION_TAIL_HOLD_MS = 5000;
+const ARTWORK_PLAYBACK_STATUSES = new Set([
+  'idle',
+  'buffering',
+  'playing',
+  'seeking',
+  'paused',
+  'ended',
+  'error',
+]);
 
 function revision(snapshot) {
   return Number.isSafeInteger(snapshot?.revision) ? snapshot.revision : 0;
@@ -207,6 +217,114 @@ function projectCurrentSegments(snapshot, lines, lineIndex, nowMs) {
       lineEndMs,
     ),
   };
+}
+
+function authoredSegmentsForDisplay(line, lineEndMs, displayText) {
+  const segments = authoredLineSegments(line);
+  const sourceText = typeof line?.text === 'string' ? line.text : '';
+  if (!segments || !displayText || !sourceText) return null;
+
+  const displayStart = sourceText.search(/\S/u);
+  const trailingWhitespace = sourceText.match(/\s*$/u)?.[0].length ?? 0;
+  const displayEnd = sourceText.length - trailingWhitespace;
+  if (
+    displayStart < 0 ||
+    displayEnd <= displayStart ||
+    sourceText.slice(displayStart, displayEnd) !== displayText
+  ) {
+    return null;
+  }
+
+  let sourceOffset = 0;
+  return segments
+    .map((segment, index) => {
+      const sourceStart = sourceOffset;
+      sourceOffset += segment.text.length;
+      const sourceEnd = sourceOffset;
+      const clippedStart = Math.max(sourceStart, displayStart);
+      const clippedEnd = Math.min(sourceEnd, displayEnd);
+      if (clippedEnd <= clippedStart) return null;
+      const nextStartMs = segments[index + 1]?.startMs;
+      return {
+        sourceStart: clippedStart - displayStart,
+        sourceEnd: clippedEnd - displayStart,
+        startMs: segment.startMs,
+        endMs: Number.isFinite(segment.endMs)
+          ? segment.endMs
+          : Number.isFinite(nextStartMs)
+            ? nextStartMs
+            : lineEndMs,
+      };
+    })
+    .filter(Boolean);
+}
+
+function mangaBubbleStartMs(bubble, segments) {
+  const sourceStart = Math.min(
+    ...(Array.isArray(bubble?.sourceRanges) ? bubble.sourceRanges : [])
+      .map((range) => range?.start)
+      .filter(Number.isSafeInteger),
+  );
+  if (!Number.isFinite(sourceStart)) return null;
+  const segment = segments.find(
+    (candidate) =>
+      sourceStart >= candidate.sourceStart && sourceStart < candidate.sourceEnd,
+  );
+  if (!segment || !Number.isFinite(segment.startMs)) return null;
+  if (sourceStart <= segment.sourceStart) return segment.startMs;
+  if (
+    !Number.isFinite(segment.endMs) ||
+    segment.endMs <= segment.startMs ||
+    segment.sourceEnd <= segment.sourceStart
+  ) {
+    return null;
+  }
+  const progress =
+    (sourceStart - segment.sourceStart) /
+    (segment.sourceEnd - segment.sourceStart);
+  return segment.startMs + (segment.endMs - segment.startMs) * progress;
+}
+
+function mangaBubbleTimeline(snapshot, lines, lineIndex, analysis, language) {
+  const line = lines[lineIndex];
+  const displayText = displayableLyricsText(line?.text);
+  const lineEndMs = effectiveLineEnd(snapshot, lines, lineIndex);
+  const segments = authoredSegmentsForDisplay(line, lineEndMs, displayText);
+  if (!segments) return null;
+  const presentation = adaptMangaLyricsPresentation(
+    analysis?.sourceText === displayText
+      ? analysis
+      : analyzeLyricsSource(displayText),
+    { language },
+  );
+  if (presentation.bubbles.length <= 1) return null;
+  const timeline = presentation.bubbles.map((bubble) => ({
+    startMs: mangaBubbleStartMs(bubble, segments),
+  }));
+  return timeline.every(({ startMs }) => Number.isFinite(startMs))
+    ? timeline
+    : null;
+}
+
+function projectMangaBubbleTiming(
+  snapshot,
+  lines,
+  lineIndex,
+  analysis,
+  language,
+  positionMs,
+) {
+  const timeline = mangaBubbleTimeline(
+    snapshot,
+    lines,
+    lineIndex,
+    analysis,
+    language,
+  );
+  return timeline?.map(({ startMs }) => ({
+    startMs,
+    state: positionMs >= startMs ? 'revealed' : 'upcoming',
+  }));
 }
 
 export function playbackPositionMs(snapshot, nowMs) {
@@ -859,10 +977,10 @@ function projectKtvSegments(snapshot, unit, positionMs) {
 }
 
 function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
-  const nextUnit = options.completed
-    ? null
-    : Object.hasOwn(options, 'nextUnit')
-      ? options.nextUnit
+  const nextUnit = Object.hasOwn(options, 'nextUnit')
+    ? options.nextUnit
+    : options.completed
+      ? null
       : nextKtvDisplayUnit(units, unit);
   const companionUnit = options.companionUnit ?? null;
   const secondaryUnit = companionUnit ?? nextUnit;
@@ -872,6 +990,7 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
       ? 0
       : boundedProgress(positionMs, unit.startMs, unit.endMs);
   const currentSegments = projectKtvSegments(snapshot, unit, positionMs);
+  const nextSegments = projectKtvSegments(snapshot, secondaryUnit, positionMs);
   return {
     revision: revision(snapshot),
     visible: true,
@@ -896,6 +1015,7 @@ function ktvFrameForUnit(snapshot, units, unit, positionMs, options = {}) {
     nextHeld: companionUnit !== null,
     currentTimingSource: unit.timingSource,
     ...(currentSegments ? { currentSegments } : {}),
+    ...(nextSegments ? { nextSegments } : {}),
     ...(Number.isFinite(options.laneReplacementDelayMs)
       ? { laneReplacementDelayMs: options.laneReplacementDelayMs }
       : {}),
@@ -966,6 +1086,7 @@ function selectKtvLyricsFrame(
     ? ktvFrameForUnit(snapshot, units, completedUnit, positionMs, {
         completed: true,
         companionUnit: ktvTailCompanionUnit(units, completedUnit),
+        nextUnit: nextKtvDisplayUnit(units, completedUnit),
       })
     : hiddenKtvFrame(snapshot);
 }
@@ -1053,6 +1174,41 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
     1,
     Math.ceil((nextBoundaryMs - lyricPositionMs) / playbackRate(snapshot)),
   );
+}
+
+function nextMangaBubbleBoundaryDelayMs(snapshot, options = {}) {
+  const lines = Array.isArray(snapshot?.lyrics?.lines)
+    ? snapshot.lyrics.lines
+    : [];
+  const nowMs = options.nowMs ?? Date.now();
+  const lineIndex = activeLyricIndex(snapshot, lines, nowMs);
+  if (!Number.isSafeInteger(lineIndex) || lineIndex < 0) return null;
+  const displayText = displayableLyricsText(lines[lineIndex]?.text);
+  const cachedLine = options.presentationDocument?.lines?.[lineIndex];
+  const analysis =
+    cachedLine?.sourceText === displayText
+      ? cachedLine.analysis
+      : analyzeLyricsSource(displayText);
+  const timeline = mangaBubbleTimeline(
+    snapshot,
+    lines,
+    lineIndex,
+    analysis,
+    text(snapshot?.lyrics?.source?.language),
+  );
+  if (!timeline) return null;
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  const nextBoundaryMs = Math.min(
+    ...timeline
+      .map(({ startMs }) => startMs)
+      .filter((startMs) => startMs > positionMs),
+  );
+  return Number.isFinite(nextBoundaryMs)
+    ? Math.max(
+        1,
+        Math.ceil((nextBoundaryMs - positionMs) / playbackRate(snapshot)),
+      )
+    : null;
 }
 
 function confidence(value) {
@@ -1153,6 +1309,13 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
     const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, { nowMs });
     if (lyricsDelay !== null) delays.push(lyricsDelay);
   }
+  if (legacyAllTemplates || templateId === 'manga-frame') {
+    const mangaDelay = nextMangaBubbleBoundaryDelayMs(snapshot, {
+      nowMs,
+      presentationDocument: options.presentationDocument,
+    });
+    if (mangaDelay !== null) delays.push(mangaDelay);
+  }
   if (legacyAllTemplates || templateId === 'karaoke-stack') {
     const ktvDelay = nextKtvBoundaryDelayMs(
       snapshot,
@@ -1231,6 +1394,12 @@ export function selectLyricsFrame(snapshot, options = {}) {
   }
 
   const currentText = displayableLyricsText(lines[activeIndex]?.text);
+  const readingLine = lyrics?.reading?.lines?.[activeIndex];
+  const currentReading =
+    readingLine?.text === lines[activeIndex]?.text &&
+    Array.isArray(readingLine.segments)
+      ? readingLine
+      : null;
   let nextText = '';
   let nextIndex = null;
   for (let index = activeIndex + 1; index < lines.length; index += 1) {
@@ -1276,6 +1445,7 @@ export function selectLyricsFrame(snapshot, options = {}) {
     lineIndex: activeIndex,
     currentVisibleLineIndex: visibleLyricLineIndex(lines, activeIndex),
     nextVisibleLineIndex: visibleLyricLineIndex(lines, nextIndex),
+    ...(currentReading ? { currentReading } : {}),
     ...(snapshot?.playback?.status === 'seeking'
       ? { timelineDiscontinuity: true }
       : {}),
@@ -1308,12 +1478,24 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       ? options.presentationDocument.lines[frame.lineIndex].analysis
       : analyzeLyricsSource(frame.currentText)
     : null;
+  const mangaBubbleTiming =
+    templateId === 'manga-frame' && frame.currentTimingSource === 't2'
+      ? projectMangaBubbleTiming(
+          snapshot,
+          lines,
+          frame.lineIndex,
+          sourceAnalysis,
+          frame.language,
+          lyricsPositionMs(snapshot, nowMs),
+        )
+      : null;
   return {
     ...frame,
     ...(snapshot?.playback?.status === 'seeking'
       ? { timelineDiscontinuity: true }
       : {}),
     ...(needsSourceAnalysis ? { lyricsSourceAnalysis: sourceAnalysis } : {}),
+    ...(mangaBubbleTiming ? { mangaBubbleTiming } : {}),
     ...(legacyAllTemplates || templateId === 'karaoke-stack'
       ? {
           ktv: selectKtvLyricsFrame(
@@ -1360,7 +1542,7 @@ export function selectArtworkFrame(snapshot, options = {}) {
 
   return {
     ...frame,
-    playbackStatus: ['playing', 'paused'].includes(snapshot?.playback?.status)
+    playbackStatus: ARTWORK_PLAYBACK_STATUSES.has(snapshot?.playback?.status)
       ? snapshot.playback.status
       : 'idle',
     positionMs: boundedPositionMs,
@@ -1373,26 +1555,27 @@ export function selectSetlistFrame(snapshot) {
   const items = Array.isArray(snapshot?.queue?.items)
     ? snapshot.queue.items
     : [];
-  const currentIndex = items.findIndex((item) => item?.state === 'current');
-  const start = Math.max(0, currentIndex > 1 ? currentIndex - 1 : 0);
-  const rows = items.slice(start, start + 8).flatMap((item) => {
+  const projectTrack = (item) => {
     const title = text(item?.track?.title);
-    if (!title || !['played', 'current', 'queued'].includes(item?.state)) {
-      return [];
-    }
-    return [
-      {
-        state: item.state,
-        title,
-        artist: text(item?.track?.artist),
-      },
-    ];
-  });
+    return title
+      ? {
+          title,
+          artist: text(item?.track?.artist),
+        }
+      : null;
+  };
+  const current = projectTrack(items.find((item) => item?.state === 'current'));
+  const history = items
+    .filter((item) => item?.state === 'played')
+    .map(projectTrack)
+    .filter(Boolean)
+    .slice(-8);
 
   return {
     revision: revision(snapshot),
-    visible: rows.length > 0,
+    visible: Boolean(current || history.length),
     sourceName: text(snapshot?.queue?.sourceName),
-    rows,
+    current,
+    history,
   };
 }

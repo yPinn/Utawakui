@@ -13,6 +13,15 @@ const CJK_GLYPH_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u;
 const HANGUL_RE = /[\uac00-\ud7af]/u;
 const KANA_RE = /[\u3040-\u30ff]/u;
 const HAN_RE = /[\u3400-\u9fff]/u;
+const MANGA_BUBBLE_QUOTE_PAIRS = Object.freeze({
+  '「': '」',
+  '『': '』',
+  '“': '”',
+});
+const MANGA_BUBBLE_QUOTE_CLOSINGS = new Set(
+  Object.values(MANGA_BUBBLE_QUOTE_PAIRS),
+);
+const MANGA_BUBBLE_TRAILING_PUNCTUATION_RE = /[。！？!?…‥．.]/u;
 const FILLER_WORDS = new Set(['ah', 'eh', 'hm', 'hmm', 'oh', 'ooh', 'uh']);
 const KTV_MALE_LABELS = new Set([
   '男',
@@ -92,6 +101,7 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
       'fontFamily',
       'fontScale',
       'fontWeight',
+      'furigana',
     ]),
   }),
   'live-stage': Object.freeze({
@@ -373,6 +383,7 @@ function compactBubbles(bubbles, limit) {
       {
         kind: bubbles[0].kind,
         text: bubbles.map((bubble) => bubble.text).join(' '),
+        sourceRanges: bubbles.flatMap((bubble) => bubble.sourceRanges ?? []),
       },
     ];
   }
@@ -384,6 +395,9 @@ function compactBubbles(bubbles, limit) {
         .slice(limit - 1)
         .map((bubble) => bubble.text)
         .join(' '),
+      sourceRanges: bubbles
+        .slice(limit - 1)
+        .flatMap((bubble) => bubble.sourceRanges ?? []),
     },
   ];
 }
@@ -409,8 +423,90 @@ function boundBubbles(mainBubbles, asideBubbles) {
 function untouchedManga(sourceText) {
   return {
     transformed: false,
-    bubbles: [{ kind: 'main', text: sourceText }],
+    bubbles: [
+      {
+        kind: 'main',
+        text: sourceText,
+        sourceRanges: sourceText.length
+          ? [{ start: 0, end: sourceText.length }]
+          : [],
+      },
+    ],
   };
+}
+
+function matchedTopLevelQuoteRanges(text) {
+  const ranges = [];
+  const stack = [];
+  for (let index = 0; index < text.length;) {
+    const codePoint = text.codePointAt(index);
+    const character = String.fromCodePoint(codePoint);
+    const characterLength = character.length;
+    if (Object.hasOwn(MANGA_BUBBLE_QUOTE_PAIRS, character)) {
+      stack.push({
+        start: index,
+        closing: MANGA_BUBBLE_QUOTE_PAIRS[character],
+        topLevel: stack.length === 0,
+      });
+    } else if (MANGA_BUBBLE_QUOTE_CLOSINGS.has(character)) {
+      const opening = stack.at(-1);
+      if (!opening || character !== opening.closing) {
+        return { valid: false, ranges: [] };
+      }
+      stack.pop();
+      if (opening.topLevel && stack.length === 0) {
+        let end = index + characterLength;
+        while (end < text.length) {
+          const trailingCharacter = String.fromCodePoint(text.codePointAt(end));
+          if (!MANGA_BUBBLE_TRAILING_PUNCTUATION_RE.test(trailingCharacter)) {
+            break;
+          }
+          end += trailingCharacter.length;
+        }
+        ranges.push({ start: opening.start, end });
+      }
+    }
+    index += characterLength;
+  }
+  return stack.length === 0
+    ? { valid: true, ranges }
+    : { valid: false, ranges: [] };
+}
+
+function phraseBubblesFromQuotedRanges(maskedText, quotedRanges) {
+  const bubbles = [];
+  const appendUnquoted = (start, end) => {
+    for (const match of maskedText.slice(start, end).matchAll(/\S+/gu)) {
+      const sourceStart = start + match.index;
+      bubbles.push({
+        kind: 'main',
+        text: match[0],
+        sourceRanges: [
+          { start: sourceStart, end: sourceStart + match[0].length },
+        ],
+      });
+    }
+  };
+  let cursor = 0;
+  for (const range of quotedRanges) {
+    appendUnquoted(cursor, range.start);
+    const matches = [
+      ...maskedText.slice(range.start, range.end).matchAll(/\S+/gu),
+    ];
+    if (matches.length > 0) {
+      bubbles.push({
+        kind: 'main',
+        text: matches.map((match) => match[0]).join(' '),
+        sourceRanges: matches.map((match) => ({
+          start: range.start + match.index,
+          end: range.start + match.index + match[0].length,
+        })),
+      });
+    }
+    cursor = range.end;
+  }
+  appendUnquoted(cursor, maskedText.length);
+  return bubbles;
 }
 
 export function adaptMangaLyricsPresentation(analysis, options = {}) {
@@ -432,15 +528,39 @@ export function adaptMangaLyricsPresentation(analysis, options = {}) {
     normalizedMain || sourceText,
     options.language,
   );
-  const mainChunks = normalizedMain
+  const mainMatches = [...maskedMain.join('').matchAll(/\S+/gu)];
+  const quoteParsing =
+    phraseSpacing === 'phrase'
+      ? matchedTopLevelQuoteRanges(maskedMain.join(''))
+      : { valid: true, ranges: [] };
+  if (!quoteParsing.valid) return untouchedManga(sourceText);
+  const quotedRanges = quoteParsing.ranges;
+  const mainBubbles = normalizedMain
     ? phraseSpacing === 'phrase'
-      ? normalizedMain.split(/\s+/u)
-      : [normalizedMain]
+      ? quotedRanges.length > 0
+        ? phraseBubblesFromQuotedRanges(maskedMain.join(''), quotedRanges)
+        : mainMatches.map((match) => ({
+            kind: 'main',
+            text: match[0],
+            sourceRanges: [
+              { start: match.index, end: match.index + match[0].length },
+            ],
+          }))
+      : [
+          {
+            kind: 'main',
+            text: normalizedMain,
+            sourceRanges: mainMatches.map((match) => ({
+              start: match.index,
+              end: match.index + match[0].length,
+            })),
+          },
+        ]
     : [];
-  const mainBubbles = mainChunks.map((text) => ({ kind: 'main', text }));
   const asideBubbles = parentheticalUnits.map((unit) => ({
     kind: 'aside',
     text: unit.text,
+    sourceRanges: [{ start: unit.contentStart, end: unit.contentEnd }],
   }));
   const bubbles = boundBubbles(mainBubbles, asideBubbles);
   const transformed =

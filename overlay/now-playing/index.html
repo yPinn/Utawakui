@@ -8,7 +8,9 @@
     <link rel="stylesheet" href="/overlay/shared/fallback.css" />
     <link rel="stylesheet" href="/overlay/shared/tokens.css" />
     <link rel="stylesheet" href="/overlay/now-playing/now-playing.css" />
+    <link rel="stylesheet" href="/overlay/now-playing/artwork.css" />
     <link rel="stylesheet" href="/overlay/shared/appearance.css" />
+    <script src="/overlay/vendor/gsap.min.js"></script>
     <script type="module" src="/overlay/now-playing/now-playing.mjs"></script>
   </head>
   <body>
@@ -18,9 +20,181 @@
       dir="auto"
       hidden
     >
-      <p id="now-playing-title" class="now-playing-overlay__title"></p>
-      <p id="now-playing-artist" class="now-playing-overlay__artist"></p>
-      <p id="now-playing-next" class="now-playing-overlay__next"></p>
+      <div class="now-playing-overlay__player" aria-hidden="true">
+        <div class="now-playing-overlay__player-shell">
+          <div class="now-playing-overlay__disc">
+            <span class="now-playing-overlay__disc-label">UW</span>
+          </div>
+          <span class="now-playing-overlay__spindle"></span>
+          <span class="now-playing-overlay__pickup"></span>
+          <span class="now-playing-overlay__controls">
+            <span></span>
+            <span></span>
+            <span></span>
+          </span>
+        </div>
+      </div>
+
+      <section
+        class="now-playing-overlay__information"
+        aria-label="目前播放資訊"
+      >
+        <div class="now-playing-overlay__current">
+          <p id="now-playing-title" class="now-playing-overlay__title"></p>
+          <p id="now-playing-artist" class="now-playing-overlay__artist"></p>
+        </div>
+        <p id="now-playing-next" class="now-playing-overlay__next"></p>
+      </section>
+    </main>
+
+    <main id="artwork-overlay" class="artwork-overlay" dir="auto" hidden>
+      <div class="artwork-overlay__vinyl-stage">
+        <div class="artwork-overlay__album-panel">
+          <div class="artwork-overlay__sleeve">
+            <div class="artwork-overlay__mark" aria-hidden="true">
+              <img
+                id="artwork-image"
+                class="artwork-overlay__image"
+                alt=""
+                hidden
+              />
+              <span
+                id="artwork-fallback"
+                class="artwork-overlay__fallback"
+              ></span>
+            </div>
+            <div class="artwork-overlay__copy">
+              <h1 id="artwork-title" class="artwork-overlay__title"></h1>
+              <p id="artwork-artist" class="artwork-overlay__artist"></p>
+            </div>
+          </div>
+          <div
+            class="artwork-overlay__sleeve artwork-overlay__incoming-sleeve"
+            aria-hidden="true"
+            hidden
+          >
+            <div class="artwork-overlay__mark">
+              <img
+                class="artwork-overlay__image artwork-overlay__incoming-image"
+                alt=""
+                hidden
+              />
+              <span
+                class="artwork-overlay__fallback artwork-overlay__incoming-fallback"
+              ></span>
+            </div>
+            <div class="artwork-overlay__copy">
+              <h1
+                class="artwork-overlay__title artwork-overlay__incoming-title"
+              ></h1>
+              <p
+                class="artwork-overlay__artist artwork-overlay__incoming-artist"
+              ></p>
+            </div>
+          </div>
+        </div>
+        <div class="artwork-overlay__exchange-record" aria-hidden="true" hidden>
+          <span
+            class="artwork-overlay__record-rotor artwork-overlay__exchange-record-rotor"
+          >
+            <span class="artwork-overlay__record-dye"></span>
+            <span class="artwork-overlay__record-shadow"></span>
+            <span class="artwork-overlay__record-highlight"></span>
+            <span class="artwork-overlay__record-grooves"></span>
+          </span>
+          <span class="artwork-overlay__record-label">UW</span>
+        </div>
+        <div class="artwork-overlay__turntable" aria-hidden="true">
+          <span class="artwork-overlay__deck-light"></span>
+          <div class="artwork-overlay__platter">
+            <div class="artwork-overlay__record">
+              <span class="artwork-overlay__record-rotor">
+                <span class="artwork-overlay__record-dye"></span>
+                <span class="artwork-overlay__record-shadow"></span>
+                <span class="artwork-overlay__record-highlight"></span>
+                <span class="artwork-overlay__record-grooves"></span>
+              </span>
+              <span class="artwork-overlay__record-label">UW</span>
+            </div>
+            <span class="artwork-overlay__platter-bloom"></span>
+            <span class="artwork-overlay__spindle"></span>
+          </div>
+          <svg
+            class="artwork-overlay__tonearm"
+            viewBox="0 0 100 240"
+            focusable="false"
+          >
+            <circle
+              class="artwork-overlay__tonearm-pivot"
+              cx="66"
+              cy="28"
+              r="20"
+            />
+            <circle
+              class="artwork-overlay__tonearm-pivot-core"
+              cx="66"
+              cy="28"
+              r="8"
+            />
+            <g class="artwork-overlay__tonearm-assembly">
+              <rect
+                class="artwork-overlay__tonearm-counterweight"
+                x="53"
+                y="1"
+                width="26"
+                height="13"
+                rx="6.5"
+              />
+              <path
+                class="artwork-overlay__tonearm-rail"
+                d="M66 28 C69 78 42 134 11.5 179"
+              />
+              <g
+                class="artwork-overlay__tonearm-head"
+                transform="translate(11.5 179) rotate(17)"
+              >
+                <rect x="-6" y="-4" width="28" height="13" rx="3" />
+                <path class="artwork-overlay__stylus" d="M5 9v14" />
+              </g>
+            </g>
+            <path
+              class="artwork-overlay__tonearm-rest"
+              d="M91 103v16m-6-5h12"
+            />
+          </svg>
+        </div>
+      </div>
+      <div class="artwork-overlay__player" aria-hidden="true">
+        <div class="artwork-overlay__scrubber">
+          <span class="artwork-overlay__scrubber-fill"></span>
+        </div>
+        <div class="artwork-overlay__timeline">
+          <span id="artwork-elapsed">0:00</span>
+          <span id="artwork-remaining">-0:00</span>
+        </div>
+        <div class="artwork-overlay__transport">
+          <svg viewBox="0 0 24 24">
+            <path
+              d="m4 7 5 5-5 5m5-5h2.5c4.5 0 4.5-5 8.5-5m0 0-2-2m2 2-2 2M9 12h2.5c4.5 0 4.5 5 8.5 5m0 0-2-2m2 2-2 2"
+            />
+          </svg>
+          <svg viewBox="0 0 24 24"><path d="M6 5v14M19 6l-9 6 9 6Z" /></svg>
+          <span class="artwork-overlay__play-state">
+            <svg class="artwork-overlay__play" viewBox="0 0 24 24">
+              <path d="m8 5 11 7-11 7Z" />
+            </svg>
+            <svg class="artwork-overlay__pause" viewBox="0 0 24 24">
+              <path d="M8 5v14M16 5v14" />
+            </svg>
+          </span>
+          <svg viewBox="0 0 24 24"><path d="M18 5v14M5 6l9 6-9 6Z" /></svg>
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M5 8h12l2 2m0 0-2 2m2-2-2-2M19 16H7l-2-2m0 0 2-2m-2 2 2 2"
+            />
+          </svg>
+        </div>
+      </div>
     </main>
   </body>
 </html>

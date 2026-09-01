@@ -14,6 +14,13 @@
     --ovl-primitive-color-mark-surface: rgb(85 162 167 / 72%);
     --ovl-primitive-color-stroke-strong: rgb(17 20 23 / 88%);
     --ovl-primitive-color-stroke-soft: rgb(17 20 23 / 78%);
+    --ovl-primitive-color-vinyl-ink: #07090a;
+    --ovl-primitive-color-vinyl-lowlight: #0a0c0e;
+    --ovl-primitive-color-vinyl-sheen: #262a2d;
+    --ovl-primitive-color-vinyl-highlight: #303538;
+    --ovl-primitive-color-deck-metal: #373d3f;
+    --ovl-primitive-color-deck-metal-highlight: #646b6d;
+    --ovl-primitive-color-platter-rim: #8a9294;
     --ovl-primitive-color-ktv-fill-unsung: #ffffff;
     --ovl-primitive-color-ktv-fill-solo: #2344b5;
     --ovl-primitive-color-ktv-fill-male: #2344b5;

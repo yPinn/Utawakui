@@ -4,7 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import OutputView from './OutputView.vue';
 import { useOutputWorkspaceNavigation } from '../composables/useOutputWorkspaceNavigation.js';
 
-const outputKindIds = ['now-playing', 'setlist', 'lyrics', 'artwork'];
+const outputKindIds = ['setlist', 'lyrics', 'now-playing'];
 
 function renderOutputView() {
   return renderToString(
@@ -32,8 +32,13 @@ describe('OutputView', () => {
     );
   });
 
-  it('renders four output categories while keeping one template grid active', async () => {
+  it('renders three output categories while keeping one template grid active', async () => {
     const html = await renderOutputView();
+    const setlistTab = html.indexOf('id="output-workbench-kind-setlist-tab"');
+    const lyricsTab = html.indexOf('id="output-workbench-kind-lyrics-tab"');
+    const nowPlayingTab = html.indexOf(
+      'id="output-workbench-kind-now-playing-tab"',
+    );
 
     expect(html).toContain('模板庫');
     expect(html).toContain('工作台');
@@ -43,8 +48,14 @@ describe('OutputView', () => {
     expect(html).toContain('Now Playing');
     expect(html).toContain('Setlist');
     expect(html).toContain('Lyrics');
-    expect(html).toContain('Artwork');
-    expect(html).toContain('Now / Next');
+    expect(setlistTab).toBeGreaterThan(-1);
+    expect(setlistTab).toBeLessThan(lyricsTab);
+    expect(lyricsTab).toBeLessThan(nowPlayingTab);
+    expect(html).not.toContain('id="output-workbench-kind-artwork-tab"');
+    expect(html).toMatch(
+      /id="output-workbench-kind-setlist-tab"[^>]*aria-selected="true"/,
+    );
+    expect(html).toContain('Simple Black B');
     expect(html).not.toContain('Focus Line');
   });
 
@@ -64,7 +75,7 @@ describe('OutputView', () => {
       );
     } finally {
       navigation.selectPage('workbench');
-      navigation.selectKind('now-playing', outputKindIds);
+      navigation.selectKind('setlist', outputKindIds);
     }
   });
 });

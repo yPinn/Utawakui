@@ -44,6 +44,7 @@ describe('overlay appearance', () => {
       fontWeight: 'semibold',
       alignment: 'left',
       surface: 'transparent',
+      furigana: 'auto',
     });
   });
 
@@ -66,6 +67,7 @@ describe('overlay appearance', () => {
       ovlWeight: 'bold',
       ovlAlign: 'left',
       ovlSurface: 'soft',
+      ovlFurigana: 'auto',
       ovlTemplate: 'karaoke-stack',
     });
   });

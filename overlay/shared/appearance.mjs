@@ -4,6 +4,7 @@ const ALLOWED_VALUES = Object.freeze({
   fontWeight: new Set(['regular', 'semibold', 'bold']),
   alignment: new Set(['left', 'center', 'right']),
   surface: new Set(['transparent', 'soft', 'solid']),
+  furigana: new Set(['auto', 'off']),
 });
 
 export const OVERLAY_APPEARANCE_DEFAULTS = Object.freeze({
@@ -12,6 +13,7 @@ export const OVERLAY_APPEARANCE_DEFAULTS = Object.freeze({
   fontWeight: 'semibold',
   alignment: 'left',
   surface: 'transparent',
+  furigana: 'auto',
 });
 
 export function normalizeOverlayAppearance(settings = {}) {
@@ -32,6 +34,7 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlWeight = appearance.fontWeight;
   root.dataset.ovlAlign = appearance.alignment;
   root.dataset.ovlSurface = appearance.surface;
+  root.dataset.ovlFurigana = appearance.furigana;
   root.dataset.ovlTemplate = slot?.templateId ?? '';
 }
 

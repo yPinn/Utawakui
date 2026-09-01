@@ -2,18 +2,19 @@
 
 ## Status
 
-Accepted for planning on 2026-08-23. The existing four-slot runtime and explicit
+Accepted for planning on 2026-08-23; revised on 2026-09-01. The existing three-slot runtime and explicit
 app-bundled fallback cascade are the implemented baseline; the instance and pack
 model described here is not yet implemented.
 
 ## Context
 
-The current Output model has four fixed slots: `now-playing`, `setlist`,
-`lyrics`, and `artwork`. This was a useful first delivery shape, but it conflates
-an OBS endpoint, a template category, a concrete template, and its data needs.
-For example, Now Playing and Artwork both render track data and should reuse
-styles, yet users may need both at the same time and therefore cannot share one
-URL or one persisted configuration.
+The current Output model has three fixed slots: `now-playing`, `setlist`, and
+`lyrics`. The earlier Artwork slot duplicated Now Playing's job and left the
+Workbench split across two categories for the same track-information workflow.
+Because no released user or OBS scene depended on that route, 黑膠主題 and
+Cover Player were folded into Now Playing without a compatibility alias. The
+fixed-slot model still conflates an OBS endpoint, a template category, a concrete
+template, and its data needs, which the planned instance model must separate.
 
 The product also needs to distinguish executable template behavior from remotely
 updated appearance content. Official Style Sets A/B/C should update without an
@@ -32,17 +33,18 @@ style need different entry points but do not require two unrelated backends.
 - **Data Requirements** declare which canonical projections a template consumes,
   such as track, queue, lyrics, or artwork.
 
-Now Playing and Artwork become members of one Track template family and share
-tokens and components, but their default instances remain independent. Lyrics
-and Setlist also remain default instances. Future scene/composite templates and
-multiple instances of the same category are allowed without changing the meaning
-of a template id.
+Compact CD, 黑膠主題 and Cover Player are members of one Track template
+family and share one current `now-playing` instance, tokens, components and
+canonical track frame. Lyrics and Setlist remain independent default instances.
+Future scene/composite templates and multiple instances of the same category are
+allowed without changing the meaning of a template id. If simultaneous compact
+and cover layouts become a demonstrated need, users create a second Track
+instance instead of relying on a template-specific default route.
 
 The future canonical route is `/overlay/slot/<instanceId>`. Existing routes stay
 as aliases to their default instances:
 
 - `/overlay/now-playing`
-- `/overlay/artwork`
 - `/overlay/lyrics`
 - `/overlay/setlist`
 
@@ -209,7 +211,10 @@ ADR 0012 and does not delay the interactive shell or local playback.
 
 - **Keep fixed kinds as the permanent identity model.** It prevents multiple
   instances and confuses category with endpoint identity.
-- **Merge Now Playing and Artwork into one URL.** Users may need both concurrently.
+- **Keep separate Now Playing and Artwork default routes.** They describe the same
+  track-information workflow, duplicate Workbench navigation, and had no released
+  compatibility dependency. Future concurrent layouts belong to multiple Track
+  instances.
 - **Allow remote packs to contain arbitrary web code.** That creates a remote code
   execution and persistent OBS attack surface.
 - **Use the Electron updater for content.** App binaries and presentation content
@@ -224,8 +229,8 @@ ADR 0012 and does not delay the interactive shell or local playback.
 
 ## Consequences
 
-- Current four-slot storage and routes need an explicit migration to instances,
-  while keeping legacy aliases stable for OBS scenes.
+- Current three-slot storage and routes need an explicit migration to instances;
+  the three implemented routes remain aliases when that migration ships.
 - Template runtime releases are slower but maintain a small executable trust
   boundary; presentation and user styling can evolve independently.
 - The main process gains a separate content updater, immutable storage, rollback,

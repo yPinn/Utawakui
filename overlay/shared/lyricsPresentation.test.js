@@ -15,6 +15,13 @@ function mangaPresentation(text, options = {}) {
   return adaptMangaLyricsPresentation(analyzeLyricsSource(text), options);
 }
 
+function visibleMangaBubbles(text, options = {}) {
+  return mangaPresentation(text, options).bubbles.map(({ kind, text }) => ({
+    kind,
+    text,
+  }));
+}
+
 function liveStagePresentation(text, options = {}) {
   return adaptLiveStageLyricsPresentation(analyzeLyricsSource(text), options);
 }
@@ -259,45 +266,126 @@ describe('lyrics presentation preprocessing', () => {
 
   it('splits Japanese and Chinese whitespace as authored phrase boundaries', () => {
     expect(
-      mangaPresentation('君を泣かすから だから一緒には居れないな'),
-    ).toEqual({
-      transformed: true,
-      bubbles: [
-        { kind: 'main', text: '君を泣かすから' },
-        { kind: 'main', text: 'だから一緒には居れないな' },
-      ],
-    });
-    expect(mangaPresentation('我抱著你 許願綻放的時機').bubbles).toEqual([
+      visibleMangaBubbles('君を泣かすから だから一緒には居れないな'),
+    ).toEqual([
+      { kind: 'main', text: '君を泣かすから' },
+      { kind: 'main', text: 'だから一緒には居れないな' },
+    ]);
+    expect(visibleMangaBubbles('我抱著你 許願綻放的時機')).toEqual([
       { kind: 'main', text: '我抱著你' },
       { kind: 'main', text: '許願綻放的時機' },
     ]);
+    expect(
+      mangaPresentation('地下鉄に 飲み込まれる').bubbles.map(
+        ({ sourceRanges }) => sourceRanges,
+      ),
+    ).toEqual([[{ start: 0, end: 4 }], [{ start: 5, end: 11 }]]);
+  });
+
+  it('projects adjacent matched Japanese quoted clauses as independent bubbles', () => {
+    const first = '「アンタちょっと問題がある」';
+    const second = '「アンタちょっと問題よ」';
+    const result = mangaPresentation(`${first}${second}`, { language: 'ja' });
+
+    expect(result.transformed).toBe(true);
+    expect(result.bubbles).toEqual([
+      {
+        kind: 'main',
+        text: first,
+        sourceRanges: [{ start: 0, end: first.length }],
+      },
+      {
+        kind: 'main',
+        text: second,
+        sourceRanges: [
+          { start: first.length, end: first.length + second.length },
+        ],
+      },
+    ]);
+  });
+
+  it('keeps trailing sentence punctuation with the preceding quoted bubble', () => {
+    const first = '「本当だ」。';
+    const second = '「次だ」';
+    const result = mangaPresentation(`${first}${second}`, { language: 'ja' });
+
+    expect(result.bubbles).toEqual([
+      {
+        kind: 'main',
+        text: first,
+        sourceRanges: [{ start: 0, end: first.length }],
+      },
+      {
+        kind: 'main',
+        text: second,
+        sourceRanges: [
+          { start: first.length, end: first.length + second.length },
+        ],
+      },
+    ]);
+  });
+
+  it('does not treat a Latin curly apostrophe as a Manga quote boundary', () => {
+    const result = mangaPresentation('I’m「本当」「次」', { language: 'ja' });
+
+    expect(result.bubbles).toEqual([
+      {
+        kind: 'main',
+        text: 'I’m',
+        sourceRanges: [{ start: 0, end: 3 }],
+      },
+      {
+        kind: 'main',
+        text: '「本当」',
+        sourceRanges: [{ start: 3, end: 7 }],
+      },
+      {
+        kind: 'main',
+        text: '「次」',
+        sourceRanges: [{ start: 7, end: 10 }],
+      },
+    ]);
+  });
+
+  it('keeps a malformed Japanese quoted clause in one conservative bubble', () => {
+    for (const text of [
+      '「アンタちょっと問題がある',
+      '「正常」「未閉じ',
+      '「正常」余分」',
+      '「入れ子『錯配」だ』',
+    ]) {
+      expect(mangaPresentation(text, { language: 'ja' })).toMatchObject({
+        transformed: false,
+        bubbles: [{ kind: 'main', text }],
+      });
+    }
   });
 
   it('keeps ordinary Korean and Latin word spacing inside one main row', () => {
-    expect(mangaPresentation('투명한 네 맘이 다 보여').bubbles).toEqual([
+    expect(visibleMangaBubbles('투명한 네 맘이 다 보여')).toEqual([
       { kind: 'main', text: '투명한 네 맘이 다 보여' },
     ]);
-    expect(mangaPresentation('I still want you').bubbles).toEqual([
+    expect(visibleMangaBubbles('I still want you')).toEqual([
       { kind: 'main', text: 'I still want you' },
     ]);
   });
 
   it('extracts balanced half-width and full-width parentheticals as aside rows', () => {
-    expect(mangaPresentation('투명한 네 맘이 다 보여 (oh)').bubbles).toEqual([
+    expect(visibleMangaBubbles('투명한 네 맘이 다 보여 (oh)')).toEqual([
       { kind: 'main', text: '투명한 네 맘이 다 보여' },
       { kind: 'aside', text: 'oh' },
     ]);
     expect(
-      mangaPresentation('マニュアル 私だけにフォーカス （フォーカス）').bubbles,
+      visibleMangaBubbles('マニュアル 私だけにフォーカス （フォーカス）'),
     ).toEqual([
       { kind: 'main', text: 'マニュアル' },
       { kind: 'main', text: '私だけにフォーカス' },
       { kind: 'aside', text: 'フォーカス' },
     ]);
-    expect(mangaPresentation('(Ooh-ooh)').bubbles).toEqual([
+    expect(visibleMangaBubbles('(Ooh-ooh)')).toEqual([
       { kind: 'aside', text: 'Ooh-ooh' },
     ]);
-    expect(mangaPresentation('main (  echo  )').bubbles).toEqual([
+    expect(visibleMangaBubbles('main (  echo  )')).toEqual([
       { kind: 'main', text: 'main' },
       { kind: 'aside', text: 'echo' },
     ]);
@@ -314,7 +402,7 @@ describe('lyrics presentation preprocessing', () => {
     const result = mangaPresentation('一 二 三 四 五 （六）');
 
     expect(result.bubbles).toHaveLength(3);
-    expect(result.bubbles).toEqual([
+    expect(result.bubbles.map(({ kind, text }) => ({ kind, text }))).toEqual([
       { kind: 'main', text: '一' },
       { kind: 'main', text: '二 三 四 五' },
       { kind: 'aside', text: '六' },

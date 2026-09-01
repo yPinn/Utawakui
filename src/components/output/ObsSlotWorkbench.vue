@@ -39,6 +39,7 @@ const draft = reactive({
   fontWeight: 'semibold',
   alignment: 'center',
   surface: 'transparent',
+  furigana: 'auto',
   captureSize: 'small',
 });
 
@@ -67,6 +68,11 @@ const controls = computed(() => [
     key: 'surface',
     label: '背景',
     options: props.appearanceOptions.surface ?? [],
+  },
+  {
+    key: 'furigana',
+    label: '假名標音',
+    options: props.appearanceOptions.furigana ?? [],
   },
 ]);
 const editableControls = computed(() => {

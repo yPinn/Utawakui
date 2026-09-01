@@ -86,7 +86,7 @@ function measurePreview() {
   previewScale.value = calculateWidgetPreviewScale({
     availableWidth,
     availableHeight,
-    optionCount: supportedCaptureSizes.value.length,
+    captureSizes: supportedCaptureSizes.value,
     columnGap,
     captionHeight,
     rowGap,

@@ -19,7 +19,7 @@ import {
 import {
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
-  mangaFrameTextFitEm,
+  mangaFrameTextLayout,
 } from '../shared/mangaFrameContract.mjs';
 import {
   applyMangaFramePresentation,
@@ -72,20 +72,49 @@ const segmentPaintAnimations = new WeakMap();
 const mangaTransitions = new WeakMap();
 const mangaLineIndexes = new WeakMap();
 const mangaRenderKeys = new WeakMap();
-const mangaSegmentTargets = new WeakMap();
 
 function resolveGsap(options) {
   return options.gsap ?? globalThis.gsap ?? null;
 }
 
+function lyricsDiagnosticsEnabled(location) {
+  return (
+    isWorkbenchMode(location) &&
+    new URLSearchParams(location?.search ?? '').get('lyricsDebug') === '1'
+  );
+}
+
 export function createLyricsDiagnostics(options = {}) {
   const location = options.location ?? globalThis.location;
   const consoleApi = options.consoleApi ?? globalThis.console;
-  const enabled =
-    new URLSearchParams(location?.search ?? '').get('lyricsDebug') === '1';
-  if (!enabled || typeof consoleApi?.debug !== 'function') return null;
+  const enabled = lyricsDiagnosticsEnabled(location);
+  if (!enabled || typeof consoleApi?.log !== 'function') return null;
   return (event, details = {}) => {
-    consoleApi.debug('[Utawakui lyrics]', event, details);
+    consoleApi.log('[Utawakui lyrics]', event, details);
+  };
+}
+
+function boundedDiagnosticText(value, maximumLength) {
+  const text = String(value ?? '');
+  return text.length <= maximumLength
+    ? text
+    : `${text.slice(0, maximumLength)}…`;
+}
+
+export function createLyricsErrorReporter(options = {}) {
+  const location = options.location ?? globalThis.location;
+  const consoleApi = options.consoleApi ?? globalThis.console;
+  const enabled = lyricsDiagnosticsEnabled(location);
+  if (!enabled || typeof consoleApi?.error !== 'function') return null;
+  return (error, details = {}) => {
+    consoleApi.error('[Utawakui lyrics]', 'render-error', {
+      ...details,
+      errorName: boundedDiagnosticText(error?.name || 'Error', 80),
+      message: boundedDiagnosticText(error?.message || error, 320),
+      stack: error?.stack
+        ? boundedDiagnosticText(error.stack, 2000)
+        : undefined,
+    });
   };
 }
 
@@ -136,10 +165,6 @@ function progressPercentage(value) {
   return Math.round(Math.min(1, Math.max(0, value)) * 10000) / 100;
 }
 
-function glyphCount(text) {
-  return Math.max(1, Array.from(String(text ?? '').replace(/\s/gu, '')).length);
-}
-
 function ktvLaneForVisibleLineIndex(value) {
   if (!Number.isSafeInteger(value) || value < 0) return null;
   return value % 2 === 0 ? 'a' : 'b';
@@ -156,7 +181,12 @@ function setKtvRole(element, role) {
 }
 
 function stripKtvCueFromSegments(segments, presentation) {
-  if (!Array.isArray(segments) || presentation.contentStart <= 0) {
+  if (
+    !Array.isArray(segments) ||
+    !Number.isSafeInteger(presentation?.contentStart) ||
+    presentation.contentStart <= 0 ||
+    typeof presentation.sourceText !== 'string'
+  ) {
     return segments;
   }
   const cueText = presentation.sourceText.slice(0, presentation.contentStart);
@@ -204,6 +234,7 @@ function projectKtvFrame(frame) {
       ...source,
       currentText: current.text,
       nextText: next.text,
+      nextSegments: stripKtvCueFromSegments(source.nextSegments, next),
       ktvCurrentRole: source.currentRole ?? current.role,
       ktvNextRole: source.nextRole ?? next.role,
       ktvNextHeld: source.nextHeld === true,
@@ -240,6 +271,9 @@ function projectKtvFrame(frame) {
     currentSegments: countIn
       ? undefined
       : stripKtvCueFromSegments(frame.currentSegments, current),
+    nextSegments: countIn
+      ? undefined
+      : stripKtvCueFromSegments(frame.nextSegments, next),
     lineIndex: countIn?.lineIndex ?? frame.lineIndex,
     currentVisibleLineIndex:
       countIn?.visibleLineIndex ?? frame.currentVisibleLineIndex,
@@ -283,11 +317,32 @@ function clearKtvLanePresentation(root) {
   ktvLanePresentations.delete(root);
 }
 
-function applyKtvLaneReplacementDelay(elements, frame, options) {
+function secondaryKtvFrame(frame) {
+  return {
+    ...frame,
+    currentText: frame.nextText,
+    currentSegments: frame.nextSegments,
+    currentVisibleLineIndex: frame.nextVisibleLineIndex,
+    currentLaneIndex: frame.nextLaneIndex,
+    currentRole: frame.ktvNextRole,
+    lineIndex: frame.nextVisibleLineIndex,
+    lineProgress: 0,
+    lineRemainingMs: null,
+  };
+}
+
+function ktvLaneElement(elements, lane) {
+  if (lane === 'a') return elements.current;
+  if (lane === 'b') return elements.next;
+  return null;
+}
+
+function applyKtvLaneReplacementDelay(elements, frame, options, presentation) {
   const root = elements.root;
   const currentIndex = frame.currentVisibleLineIndex;
-  const currentLane = elements.current.dataset.ktvLane;
-  let nextLane = elements.next.dataset.ktvLane;
+  const currentLane = presentation.currentLane;
+  let nextLane = presentation.nextLane;
+  let nextElement = presentation.nextElement;
   if (
     options.templateId !== 'karaoke-stack' ||
     !frame.visible ||
@@ -295,7 +350,7 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     !currentLane
   ) {
     clearKtvLanePresentation(root);
-    return;
+    return false;
   }
 
   const previous = ktvLanePresentations.get(root);
@@ -304,23 +359,26 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     cancelKtvLaneHold(previous);
     previous.currentText = frame.currentText;
     previous.currentRole = frame.ktvCurrentRole;
-    return;
+    return false;
   }
   if (sameLine && previous.hold) {
     previous.currentText = frame.currentText;
     previous.currentRole = frame.ktvCurrentRole;
-    previous.hold.targetText = frame.nextText;
     previous.hold.targetRole = frame.ktvNextRole;
+    previous.hold.targetFrame = secondaryKtvFrame(frame);
     if (frame.timelineDiscontinuity === true) {
       cancelKtvLaneHold(previous);
-      return;
+      return false;
     }
-    if (nextLane === previous.hold.lane) {
-      setTextContent(elements.next, previous.hold.heldText);
-      setKtvRole(elements.next, previous.hold.heldRole);
-      elements.next.dataset.ktvHeld = 'true';
+    if (nextLane && nextLane !== previous.hold.lane) {
+      cancelKtvLaneHold(previous);
+      return false;
     }
-    return;
+    setKtvLane(previous.hold.element, previous.hold.lane);
+    setTextContent(previous.hold.element, previous.hold.heldText);
+    setKtvRole(previous.hold.element, previous.hold.heldRole);
+    previous.hold.element.dataset.ktvHeld = 'true';
+    return true;
   }
 
   const sequentialLine =
@@ -329,7 +387,8 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     currentLane !== previous.currentLane;
   if (sequentialLine && !nextLane && !frame.nextText) {
     nextLane = previous.currentLane;
-    setKtvLane(elements.next, nextLane);
+    nextElement = ktvLaneElement(elements, nextLane);
+    setKtvLane(nextElement, nextLane);
   }
   const sequentialHandoff =
     sequentialLine &&
@@ -361,37 +420,39 @@ function applyKtvLaneReplacementDelay(elements, frame, options) {
     !nextLane ||
     replacementDelayMs <= 0
   ) {
-    return;
+    return false;
   }
 
   const schedule = options.schedule ?? globalThis.setTimeout?.bind(globalThis);
   const cancelSchedule =
     options.cancelSchedule ?? globalThis.clearTimeout?.bind(globalThis);
-  if (typeof schedule !== 'function') return;
+  if (typeof schedule !== 'function') return false;
 
   const hold = {
     lane: nextLane,
     heldText: previous.currentText,
     heldRole: previous.currentRole,
-    targetText: frame.nextText,
     targetRole: frame.ktvNextRole,
+    targetFrame: secondaryKtvFrame(frame),
+    element: nextElement,
     timer: null,
     cancelSchedule,
   };
   state.hold = hold;
-  setTextContent(elements.next, hold.heldText);
-  setKtvRole(elements.next, hold.heldRole);
-  elements.next.dataset.ktvHeld = 'true';
+  setTextContent(hold.element, hold.heldText);
+  setKtvRole(hold.element, hold.heldRole);
+  hold.element.dataset.ktvHeld = 'true';
   hold.timer = schedule(() => {
     const latest = ktvLanePresentations.get(root);
     if (latest !== state || latest.hold !== hold) return;
-    if (elements.next.dataset.ktvLane === hold.lane) {
-      setTextContent(elements.next, hold.targetText);
-      setKtvRole(elements.next, hold.targetRole);
-      delete elements.next.dataset.ktvHeld;
+    if (hold.element.dataset.ktvLane === hold.lane) {
+      renderCurrentLyrics(hold.element, hold.targetFrame, options);
+      setKtvRole(hold.element, hold.targetRole);
+      delete hold.element.dataset.ktvHeld;
     }
     latest.hold = null;
   }, replacementDelayMs);
+  return true;
 }
 
 function applyKtvLanePresentation(elements, frame, templateId) {
@@ -401,8 +462,11 @@ function applyKtvLanePresentation(elements, frame, templateId) {
     setKtvLane(elements.next, null);
     setKtvRole(elements.current, null);
     setKtvRole(elements.next, null);
+    delete elements.current.dataset.ktvActive;
+    delete elements.next.dataset.ktvActive;
+    delete elements.current.dataset.ktvHeld;
     delete elements.next.dataset.ktvHeld;
-    return;
+    return null;
   }
 
   const fallbackCurrentIndex = frame.currentText ? frame.lineIndex : null;
@@ -422,21 +486,38 @@ function applyKtvLanePresentation(elements, frame, templateId) {
     : nextIndex;
   const currentLane = ktvLaneForVisibleLineIndex(currentLaneIndex);
   const nextLane = ktvLaneForVisibleLineIndex(nextLaneIndex);
+  const currentElement =
+    ktvLaneElement(elements, currentLane) ?? elements.current;
+  const nextElement =
+    ktvLaneElement(elements, nextLane) ??
+    (currentElement === elements.current ? elements.next : elements.current);
 
-  setKtvLane(elements.current, currentLane);
-  setKtvLane(elements.next, nextLane);
-  setKtvRole(elements.current, frame.ktvCurrentRole);
-  setKtvRole(elements.next, frame.ktvNextRole);
+  setKtvLane(
+    elements.current,
+    currentElement === elements.current ? currentLane : nextLane,
+  );
+  setKtvLane(
+    elements.next,
+    currentElement === elements.next ? currentLane : nextLane,
+  );
+  setKtvRole(elements.current, null);
+  setKtvRole(elements.next, null);
+  delete elements.current.dataset.ktvActive;
+  delete elements.next.dataset.ktvActive;
+  delete elements.current.dataset.ktvHeld;
+  delete elements.next.dataset.ktvHeld;
+  setKtvRole(currentElement, frame.ktvCurrentRole);
+  setKtvRole(nextElement, frame.ktvNextRole);
   if (frame.ktvNextHeld === true && nextLane && frame.nextText) {
-    elements.next.dataset.ktvHeld = 'true';
-  } else {
-    delete elements.next.dataset.ktvHeld;
+    nextElement.dataset.ktvHeld = 'true';
   }
   if (currentLane && frame.currentText) {
+    currentElement.dataset.ktvActive = 'true';
     elements.root.dataset.ktvActiveLane = currentLane;
   } else {
     delete elements.root.dataset.ktvActiveLane;
   }
+  return { currentElement, currentLane, nextElement, nextLane };
 }
 
 function applyKtvCountInPresentation(elements, frame, templateId) {
@@ -466,85 +547,6 @@ function applyKtvCountInPresentation(elements, frame, templateId) {
     ),
   );
   setKtvRole(element, frame.ktvCountIn?.role ?? frame.ktvCurrentRole);
-}
-
-function projectSegmentsToBubbles(bubbles, segments) {
-  const sourceTotal = segments.reduce(
-    (total, segment) => total + glyphCount(segment.text),
-    0,
-  );
-  const paintedSource = segments.reduce((total, segment) => {
-    const length = glyphCount(segment.text);
-    if (segment.state === 'past') return total + length;
-    if (segment.state !== 'active') return total;
-    const progress = Number.isFinite(segment.progress)
-      ? Math.min(1, Math.max(0, segment.progress))
-      : 0;
-    return total + length * progress;
-  }, 0);
-  const bubbleLengths = bubbles.map((bubble) => glyphCount(bubble.text));
-  const bubbleTotal = bubbleLengths.reduce(
-    (total, length) => total + length,
-    0,
-  );
-  const paintedBubbles = (paintedSource / sourceTotal) * bubbleTotal;
-  const activeSegment = segments.find((segment) => segment.state === 'active');
-  let sourceOffset = 0;
-  let activeEndSource = paintedSource;
-  for (const segment of segments) {
-    const length = glyphCount(segment.text);
-    if (segment === activeSegment) {
-      activeEndSource = sourceOffset + length;
-      break;
-    }
-    sourceOffset += length;
-  }
-  const targetPaintedBubbles = activeSegment
-    ? (activeEndSource / sourceTotal) * bubbleTotal
-    : paintedBubbles;
-  const animationSpan = Math.max(0, targetPaintedBubbles - paintedBubbles);
-  const totalRemainingMs =
-    Number.isFinite(activeSegment?.remainingMs) && activeSegment.remainingMs > 0
-      ? activeSegment.remainingMs
-      : null;
-  let offset = 0;
-
-  return bubbles.map((bubble, index) => {
-    const length = bubbleLengths[index];
-    const end = offset + length;
-    const localProgress = Math.min(
-      1,
-      Math.max(0, (paintedBubbles - offset) / length),
-    );
-    const targetProgress = Math.min(
-      1,
-      Math.max(0, (targetPaintedBubbles - offset) / length),
-    );
-    const fillStart = Math.max(offset, paintedBubbles);
-    const fillEnd = Math.min(end, targetPaintedBubbles);
-    const fillUnits = Math.max(0, fillEnd - fillStart);
-    const delayUnits = Math.max(0, fillStart - paintedBubbles);
-    const delayMs =
-      totalRemainingMs !== null && animationSpan > 0
-        ? (delayUnits / animationSpan) * totalRemainingMs
-        : 0;
-    const durationMs =
-      totalRemainingMs !== null && animationSpan > 0
-        ? (fillUnits / animationSpan) * totalRemainingMs
-        : null;
-    const state =
-      localProgress >= 1 ? 'past' : fillUnits > 0 ? 'active' : 'upcoming';
-    offset += length;
-    return {
-      segmentId: `${activeSegment?.segmentId ?? segments[0]?.segmentId ?? 't2'}:bubble:${index}`,
-      text: bubble.text,
-      state,
-      progress: localProgress,
-      targetProgress,
-      delayMs,
-      remainingMs: state === 'active' ? durationMs : undefined,
-    };
-  });
 }
 
 function renderCurrentLyrics(element, frame, options) {
@@ -736,7 +738,7 @@ function renderCurrentLyrics(element, frame, options) {
 function createMangaBubble(
   documentApi,
   presentation,
-  bubbleCount,
+  textLayout,
   placement,
   options,
 ) {
@@ -744,6 +746,8 @@ function createMangaBubble(
   bubble.className = 'lyrics-overlay__manga-bubble';
   bubble.dataset.lyricKind = presentation.kind;
   bubble.dataset.mangaLength = mangaFrameLengthTier(presentation.text);
+  bubble.dataset.mangaScript = textLayout.script;
+  bubble.dataset.mangaColumns = String(textLayout.columnCount);
   bubble.dataset.mangaSide = placement.side;
   bubble.dataset.mangaOrder = String(placement.order);
   bubble.style.setProperty(
@@ -755,8 +759,8 @@ function createMangaBubble(
     `${placement.inlineJitterRem}rem`,
   );
   bubble.style.setProperty(
-    '--ovl-manga-text-fit-size',
-    `${mangaFrameTextFitEm(presentation.text, bubbleCount)}em`,
+    '--ovl-manga-frame-required-block-size',
+    `${textLayout.requiredBlockSizeEm}em`,
   );
 
   const svg = documentApi.createElementNS('http://www.w3.org/2000/svg', 'svg');
@@ -779,26 +783,92 @@ function createMangaBubble(
   return { bubble, text };
 }
 
+function clearMangaBubbleTiming(bubble, options) {
+  if (!bubble.dataset.mangaTimingState) return;
+  resolveGsap(options)?.killTweensOf?.(bubble);
+  delete bubble.dataset.mangaTimingState;
+  bubble.style.removeProperty?.('opacity');
+  bubble.style.removeProperty?.('visibility');
+}
+
+function applyMangaBubbleTiming(bubble, timing, frame, options) {
+  if (!timing || !['revealed', 'upcoming'].includes(timing.state)) {
+    clearMangaBubbleTiming(bubble, options);
+    return;
+  }
+  const previousState = bubble.dataset.mangaTimingState;
+  const gsap = resolveGsap(options);
+  if (previousState === timing.state) {
+    if (
+      frame.timelineDiscontinuity === true ||
+      options.reducedMotion === true
+    ) {
+      gsap?.killTweensOf?.(bubble);
+      bubble.style.setProperty(
+        'opacity',
+        timing.state === 'revealed' ? '1' : '0',
+      );
+      bubble.style.setProperty(
+        'visibility',
+        timing.state === 'revealed' ? 'visible' : 'hidden',
+      );
+    }
+    return;
+  }
+  bubble.dataset.mangaTimingState = timing.state;
+  if (timing.state === 'upcoming') {
+    gsap?.killTweensOf?.(bubble);
+    bubble.style.setProperty('opacity', '0');
+    bubble.style.setProperty('visibility', 'hidden');
+    return;
+  }
+
+  const animate =
+    previousState === 'upcoming' &&
+    frame.timelineDiscontinuity !== true &&
+    options.reducedMotion !== true &&
+    typeof gsap?.to === 'function';
+  bubble.style.setProperty('visibility', 'visible');
+  if (animate) {
+    gsap.to(bubble, {
+      autoAlpha: 1,
+      duration: MANGA_FADE_IN_DURATION_SECONDS,
+      ease: 'power2.out',
+      overwrite: 'auto',
+    });
+    return;
+  }
+  gsap?.killTweensOf?.(bubble);
+  bubble.style.setProperty('opacity', '1');
+}
+
 function renderMangaLyrics(elements, frame, options) {
   const group = elements.mangaBubbles;
   const documentApi = group?.ownerDocument ?? globalThis.document;
   if (!group || !documentApi?.createElement || !documentApi?.createElementNS) {
-    renderCurrentLyrics(elements.current, frame, options);
+    clearLyricsRenderState(elements.current, options);
+    delete elements.current.dataset.segmented;
+    setTextContent(elements.current, frame.currentText);
     return;
   }
 
-  const segments = Array.isArray(frame.currentSegments)
-    ? frame.currentSegments
-    : [];
+  if (!String(frame.currentText ?? '').trim()) {
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, options);
+    delete elements.current.dataset.segmented;
+    elements.current.hidden = true;
+    setTextContent(elements.current, '');
+    return;
+  }
+
   const presentation = adaptMangaLyricsPresentation(
     frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
     { language: frame.language },
   );
   const bubbles = presentation.bubbles;
-  const projectedSegments =
-    segments.length > 0 && presentation.transformed
-      ? projectSegmentsToBubbles(bubbles, segments)
-      : null;
+  const furiganaEnabled =
+    elements.root.ownerDocument?.documentElement?.dataset?.ovlFurigana !==
+    'off';
   const placements = bubbles.map((bubble, index) => ({
     ...mangaFramePlacementForBubble({
       bubbleCount: bubbles.length,
@@ -811,21 +881,16 @@ function renderMangaLyrics(elements, frame, options) {
   const renderKey = [
     lyricLineKey(frame),
     options.mangaFrameId ?? '',
+    String(frame.language ?? ''),
+    furiganaEnabled ? 'furigana' : 'plain',
+    JSON.stringify(frame.currentReading ?? null),
     bubbles.map((bubble) => `${bubble.kind}\0${bubble.text}`).join('\u0001'),
-    segmentStructureKey(segments),
   ].join('\u0002');
   const canReuseBubbles =
     mangaRenderKeys.get(elements.root) === renderKey &&
     group.children.length === bubbles.length;
 
   if (!canReuseBubbles) {
-    const gsap = resolveGsap(options);
-    gsap?.killTweensOf?.(mangaSegmentTargets.get(elements.root) ?? []);
-    mangaSegmentTargets.delete(elements.root);
-    for (const bubble of Array.from(group.children ?? [])) {
-      const text = bubble.children?.[1];
-      if (text) clearLyricsRenderState(text, options);
-    }
     setTextContent(group, '');
   }
 
@@ -839,49 +904,74 @@ function renderMangaLyrics(elements, frame, options) {
   elements.current.hidden = true;
   setTextContent(elements.current, '');
 
-  const segmentTargets = [];
   for (const [index, bubblePresentation] of bubbles.entries()) {
+    const textLayout = mangaFrameTextLayout(
+      bubblePresentation.text,
+      bubbles.length,
+      {
+        language: frame.language,
+        includeRuby: furiganaEnabled,
+        readingLine: frame.currentReading,
+        sourceRanges: bubblePresentation.sourceRanges,
+      },
+    );
     const existingBubble = canReuseBubbles ? group.children[index] : null;
     const created = existingBubble
       ? { bubble: existingBubble, text: existingBubble.children[1] }
       : createMangaBubble(
           documentApi,
           bubblePresentation,
-          bubbles.length,
+          textLayout,
           placements[index],
           options,
         );
     const { bubble, text } = created;
-    if (segments.length > 0) {
-      renderCurrentLyrics(
-        text,
-        projectedSegments
-          ? {
-              ...frame,
-              currentText: bubblePresentation.text,
-              currentSegments: [projectedSegments[index]],
-            }
-          : frame,
-        options,
-      );
-      segmentTargets.push(...Array.from(text.children ?? []));
-    } else {
-      setTextContent(text, bubblePresentation.text);
-    }
+    renderMangaText(documentApi, text, textLayout);
+    applyMangaBubbleTiming(
+      bubble,
+      frame.currentTimingSource === 't2'
+        ? frame.mangaBubbleTiming?.[index]
+        : null,
+      frame,
+      options,
+    );
     if (!existingBubble) group.append(bubble);
   }
   mangaRenderKeys.set(elements.root, renderKey);
-  if (segmentTargets.length > 0) {
-    mangaSegmentTargets.set(elements.root, segmentTargets);
-  } else {
-    mangaSegmentTargets.delete(elements.root);
-  }
   setTextContent(elements.current, frame.currentText);
+}
+
+function renderMangaText(documentApi, element, layout) {
+  if (!layout.hasRuby) {
+    setTextContent(element, layout.displayText);
+    return;
+  }
+  setTextContent(element, '');
+  for (const [columnIndex, column] of layout.columnTokens.entries()) {
+    if (columnIndex > 0) element.append(documentApi.createElement('br'));
+    for (const token of column) {
+      if (token.reading) {
+        const ruby = documentApi.createElement('ruby');
+        ruby.textContent = token.text;
+        const rt = documentApi.createElement('rt');
+        rt.textContent = token.reading;
+        ruby.append(rt);
+        element.append(ruby);
+      } else if (token.text) {
+        const span = documentApi.createElement('span');
+        span.textContent = token.text;
+        element.append(span);
+      }
+    }
+  }
 }
 
 function clearMangaLyrics(elements) {
   if (elements.mangaBubbles) {
-    if (elements.mangaBubbles.textContent) {
+    if (
+      elements.mangaBubbles.textContent ||
+      elements.mangaBubbles.children.length > 0
+    ) {
       setTextContent(elements.mangaBubbles, '');
     }
     elements.mangaBubbles.hidden = true;
@@ -971,17 +1061,88 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
     mangaLineIndexes.delete(elements.root);
     clearMangaLyrics(elements);
   }
-  if (isMangaFrame) renderMangaLyrics(elements, frame, options);
-  else renderCurrentLyrics(elements.current, frame, options);
-  applyKtvLanePresentation(elements, frame, options.templateId);
+  const ktvPresentation = applyKtvLanePresentation(
+    elements,
+    frame,
+    options.templateId,
+  );
+  if (isMangaFrame) {
+    renderMangaLyrics(elements, frame, options);
+  } else if (ktvPresentation) {
+    renderCurrentLyrics(ktvPresentation.currentElement, frame, options);
+    const holdingNextLane = applyKtvLaneReplacementDelay(
+      elements,
+      frame,
+      options,
+      ktvPresentation,
+    );
+    if (!holdingNextLane) {
+      renderCurrentLyrics(
+        ktvPresentation.nextElement,
+        secondaryKtvFrame(frame),
+        options,
+      );
+    }
+  } else {
+    renderCurrentLyrics(elements.current, frame, options);
+  }
   applyKtvCountInPresentation(elements, frame, options.templateId);
-  elements.current.dataset.currentText = frame.currentText;
-  setTextContent(elements.next, isMangaFrame ? '' : frame.nextText);
-  applyKtvLaneReplacementDelay(elements, frame, options);
+  if (ktvPresentation) {
+    ktvPresentation.currentElement.dataset.currentText = frame.currentText;
+    ktvPresentation.nextElement.dataset.currentText = frame.nextText;
+  } else {
+    elements.current.dataset.currentText = frame.currentText;
+    setTextContent(elements.next, isMangaFrame ? '' : frame.nextText);
+  }
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
   elements.root.dataset.revision = String(frame.revision);
   applyMusicStructurePresentation(elements, frame, options);
+}
+
+function finiteKtvHostRect(element) {
+  const rect = element?.getBoundingClientRect?.();
+  if (!rect) return null;
+  const values = ['x', 'y', 'width', 'height'];
+  if (!values.every((key) => Number.isFinite(rect[key]))) return null;
+  return Object.fromEntries(
+    values.map((key) => [key, Math.round(rect[key] * 100) / 100]),
+  );
+}
+
+function ktvHostDiagnostics(element) {
+  return {
+    active: element?.dataset?.ktvActive === 'true',
+    childCount: element?.children?.length ?? 0,
+    held: element?.dataset?.ktvHeld === 'true',
+    hidden: element?.hidden === true,
+    lane: element?.dataset?.ktvLane ?? null,
+    rect: finiteKtvHostRect(element),
+    role: element?.dataset?.ktvRole ?? null,
+    segmented: element?.dataset?.segmented === 'true',
+    textLength: String(element?.textContent ?? '').length,
+  };
+}
+
+function traceCommittedKtvLayout(elements, frame, options) {
+  traceLyrics(options, 'ktv-layout', {
+    currentLaneIndex: frame.currentLaneIndex ?? null,
+    currentSegmentCount: Array.isArray(frame.currentSegments)
+      ? frame.currentSegments.length
+      : 0,
+    currentVisibleLineIndex: frame.currentVisibleLineIndex ?? null,
+    hosts: {
+      current: ktvHostDiagnostics(elements.current),
+      next: ktvHostDiagnostics(elements.next),
+    },
+    nextLaneIndex: frame.nextLaneIndex ?? null,
+    nextSegmentCount: Array.isArray(frame.nextSegments)
+      ? frame.nextSegments.length
+      : 0,
+    nextVisibleLineIndex: frame.nextVisibleLineIndex ?? null,
+    revision: frame.revision ?? null,
+    rootHidden: elements.root.hidden === true,
+  });
 }
 
 function clearMangaTransition(root, token) {
@@ -1018,7 +1179,25 @@ function mangaBubbleTargets(elements) {
   return Array.from(elements.mangaBubbles?.children ?? []);
 }
 
-function addMangaBubbleFade(timeline, targets, direction) {
+function mangaEnteringBubbleTargets(elements, frame) {
+  const targets = mangaBubbleTargets(elements);
+  if (
+    frame.currentTimingSource !== 't2' ||
+    !Array.isArray(frame.mangaBubbleTiming)
+  ) {
+    return targets;
+  }
+  return targets.filter(
+    (_, index) => frame.mangaBubbleTiming[index]?.state === 'revealed',
+  );
+}
+
+function addMangaBubbleFade(
+  timeline,
+  targets,
+  direction,
+  staggerEntrance = true,
+) {
   const entering = direction === 'enter';
   timeline.addLabel(direction);
 
@@ -1032,7 +1211,9 @@ function addMangaBubbleFade(timeline, targets, direction) {
           ease: 'power2.out',
           overwrite: 'auto',
         },
-        index === 0 ? direction : `+=${MANGA_BUBBLE_ENTER_GAP_SECONDS}`,
+        index === 0 || !staggerEntrance
+          ? direction
+          : `+=${MANGA_BUBBLE_ENTER_GAP_SECONDS}`,
       );
     }
     return;
@@ -1086,9 +1267,14 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
       timeline.kill?.();
       return;
     }
-    const incomingBubbles = mangaBubbleTargets(elements);
+    const incomingBubbles = mangaEnteringBubbleTargets(elements, token.frame);
     gsap.set(incomingBubbles, { autoAlpha: 0 });
-    addMangaBubbleFade(timeline, incomingBubbles, 'enter');
+    addMangaBubbleFade(
+      timeline,
+      incomingBubbles,
+      'enter',
+      token.frame.currentTimingSource !== 't2',
+    );
     return;
   }
 
@@ -1097,24 +1283,26 @@ function transitionMangaFrame(elements, frame, options, enterOnly = false) {
     if (mangaTransitions.get(root) !== token) return;
     commitMangaTransitionFrame(elements, token);
     if (!token.frame.visible) return;
-    const incomingBubbles = mangaBubbleTargets(elements);
+    const incomingBubbles = mangaEnteringBubbleTargets(elements, token.frame);
     gsap.set(incomingBubbles, { autoAlpha: 0 });
-    addMangaBubbleFade(timeline, incomingBubbles, 'enter');
+    addMangaBubbleFade(
+      timeline,
+      incomingBubbles,
+      'enter',
+      token.frame.currentTimingSource !== 't2',
+    );
   });
 }
 
 function stopMangaAnimations(elements, options = {}, clearProps = false) {
   const gsap = resolveGsap(options);
   const bubbleTargets = mangaBubbleTargets(elements);
-  const segmentTargets = mangaSegmentTargets.get(elements.root) ?? [];
   const currentChildTargets = Array.from(elements.current.children ?? []);
   mangaTransitions.get(elements.root)?.timeline?.kill?.();
   mangaTransitions.delete(elements.root);
   gsap?.killTweensOf?.(elements.root);
   if (elements.mangaBubbles) gsap?.killTweensOf?.(elements.mangaBubbles);
   if (bubbleTargets.length > 0) gsap?.killTweensOf?.(bubbleTargets);
-  if (segmentTargets.length > 0) gsap?.killTweensOf?.(segmentTargets);
-  mangaSegmentTargets.delete(elements.root);
   if (currentChildTargets.length > 0) {
     gsap?.killTweensOf?.(currentChildTargets);
   }
@@ -1131,12 +1319,14 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 export function destroyLyricsAnimations(elements, options = {}) {
   stopMangaAnimations(elements, options, true);
   clearLyricsRenderState(elements.current, options);
+  clearLyricsRenderState(elements.next, options);
   for (const bubble of Array.from(elements.mangaBubbles?.children ?? [])) {
     const text = bubble.children?.[1];
     if (text) clearLyricsRenderState(text, options);
   }
   mangaRenderKeys.delete(elements.root);
   clearKtvFallbackProgress(elements.current);
+  clearKtvFallbackProgress(elements.next);
   clearKtvLanePresentation(elements.root);
   clearLiveStagePresentation(elements, options);
 }
@@ -1182,9 +1372,14 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
       Number.isSafeInteger(frame.lineIndex) &&
       mangaLineIndexes.get(elements.root) !== frame.lineIndex);
   const gsap = resolveGsap(renderOptions);
+  const timelineDiscontinuity = frame.timelineDiscontinuity === true;
+  if (isMangaFrame && timelineDiscontinuity) {
+    stopMangaAnimations(elements, renderOptions, true);
+  }
   const canAnimateManga =
     isMangaFrame &&
     lineChanged &&
+    !timelineDiscontinuity &&
     renderOptions.reducedMotion !== true &&
     typeof gsap?.timeline === 'function';
   const activeTransition = mangaTransitions.get(elements.root);
@@ -1217,6 +1412,9 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
   }
 
   commitLyricsFrame(elements, frame, renderOptions, isMangaFrame);
+  if (templateId === 'karaoke-stack') {
+    traceCommittedKtvLayout(elements, frame, renderOptions);
+  }
 
   const shouldAnimate =
     !isMangaFrame &&
@@ -1233,6 +1431,43 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
       ],
       { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
     );
+  }
+}
+
+export function renderLyricsFrameSafely(elements, sourceFrame, options = {}) {
+  if (typeof options.reportError !== 'function') {
+    renderLyricsFrame(elements, sourceFrame, options);
+    return true;
+  }
+  try {
+    renderLyricsFrame(elements, sourceFrame, options);
+    return true;
+  } catch (error) {
+    const diagnosticFrame = sourceFrame?.ktv ?? sourceFrame ?? {};
+    try {
+      options.reportError?.(error, {
+        currentSegmentCount: Array.isArray(diagnosticFrame.currentSegments)
+          ? diagnosticFrame.currentSegments.length
+          : 0,
+        lineIndex:
+          diagnosticFrame.currentVisibleLineIndex ??
+          diagnosticFrame.lineIndex ??
+          null,
+        nextSegmentCount: Array.isArray(diagnosticFrame.nextSegments)
+          ? diagnosticFrame.nextSegments.length
+          : 0,
+        phase: 'render',
+        revision: diagnosticFrame.revision ?? sourceFrame?.revision ?? null,
+        templateId:
+          options.templateId ??
+          elements?.root?.ownerDocument?.documentElement?.dataset
+            ?.ovlTemplate ??
+          null,
+      });
+    } catch {
+      // Diagnostics must never stop later overlay frames from rendering.
+    }
+    return false;
   }
 }
 
@@ -1347,6 +1582,7 @@ function boot() {
   const previewMode = isPreviewMode(window.location);
   const workbenchMode = isWorkbenchMode(window.location);
   const trace = createLyricsDiagnostics({ location: window.location });
+  const reportError = createLyricsErrorReporter({ location: window.location });
   applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, {
     previewMode,
@@ -1354,8 +1590,9 @@ function boot() {
     location: window.location,
   });
   if (previewMode) {
-    renderLyricsFrame(elements, PREVIEW_FRAME, {
+    renderLyricsFrameSafely(elements, PREVIEW_FRAME, {
       gsap,
+      reportError,
       reducedMotion: true,
       trace,
     });
@@ -1367,8 +1604,9 @@ function boot() {
         PREVIEW_FRAME,
         previewMode,
       );
-      renderLyricsFrame(elements, visibleFrame, {
+      renderLyricsFrameSafely(elements, visibleFrame, {
         gsap,
+        reportError,
         reducedMotion,
         trace,
       });

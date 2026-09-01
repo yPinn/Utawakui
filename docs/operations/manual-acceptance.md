@@ -47,7 +47,7 @@ not this UI checklist.
       reconnect, client count, port conflict recovery, artwork fallback, and URL
       updates in a real OBS Browser Source.
 - [ ] Verify widget surfaces fill their Small／Medium／Large canvas as authored,
-      including Now／Next, Art Card, Queue Board, and Cover Player fallbacks.
+      including Now／Next, Art Card, Simple Black B, and Cover Player fallbacks.
 - [ ] When M1／M2 analysis is available, verify Lyrics cues without regressing M0,
       pause, seek, reconnect, or reduced-motion fallback.
 

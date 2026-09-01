@@ -318,7 +318,6 @@ describe('outputServer', () => {
       '/overlay/lyrics',
       '/overlay/now-playing',
       '/overlay/setlist',
-      '/overlay/artwork',
       '/workbench/lyrics',
     ]) {
       const response = await fetch(`${status.httpUrl}${route}`);
@@ -329,6 +328,8 @@ describe('outputServer', () => {
       );
       expect(await response.text()).toContain('<!doctype html>');
     }
+
+    expect((await fetch(`${status.httpUrl}/overlay/artwork`)).status).toBe(404);
 
     const workbench = await fetch(`${status.httpUrl}/workbench/lyrics`);
     expect(workbench.headers.get('content-security-policy')).toContain(
@@ -423,6 +424,17 @@ describe('outputServer', () => {
     expect(liveStage.status).toBe(200);
     expect(liveStage.headers.get('content-type')).toContain('text/javascript');
     expect(await liveStage.text()).toContain('renderLiveStagePresentation');
+
+    const artworkMotion = await fetch(
+      `${status.httpUrl}/overlay/now-playing/artworkMotion.mjs`,
+    );
+    expect(artworkMotion.status).toBe(200);
+    expect(artworkMotion.headers.get('content-type')).toContain(
+      'text/javascript',
+    );
+    expect(await artworkMotion.text()).toContain(
+      'createArtworkMotionController',
+    );
 
     const gsap = await fetch(`${status.httpUrl}/overlay/vendor/gsap.min.js`);
     expect(gsap.status).toBe(200);

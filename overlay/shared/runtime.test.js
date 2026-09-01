@@ -295,6 +295,20 @@ describe('overlay WebSocket runtime', () => {
             },
             { lineId: 'line-2', text: 'second', startMs: 1000, endMs: null },
           ],
+          reading: {
+            lines: [
+              {
+                lineId: 'line-1',
+                text: 'first',
+                segments: [{ text: 'first' }],
+              },
+              {
+                lineId: 'line-2',
+                text: 'second',
+                segments: [{ text: 'second', reading: 'せかんど' }],
+              },
+            ],
+          },
         },
       }),
     });
@@ -328,6 +342,16 @@ describe('overlay WebSocket runtime', () => {
       lyrics: {
         activeLineIndex: 1,
         lines: [{ text: 'first', endInferred: true }, { text: 'second' }],
+        reading: {
+          lines: [
+            { lineId: 'line-1', text: 'first', segments: [{ text: 'first' }] },
+            {
+              lineId: 'line-2',
+              text: 'second',
+              segments: [{ text: 'second', reading: 'せかんど' }],
+            },
+          ],
+        },
       },
     });
     connection.stop();

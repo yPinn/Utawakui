@@ -226,6 +226,9 @@ function assembleSplitSnapshot(
           ),
           activeSegmentId: state.lyrics.activeSegmentId,
           lines,
+          ...(lyricsDocument.reading
+            ? { reading: lyricsDocument.reading }
+            : {}),
         }
       : {
           documentId: null,

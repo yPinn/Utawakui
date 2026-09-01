@@ -3,25 +3,24 @@
   "referenceCanvas": {
     "width": 1920,
     "height": 1080,
-    "columns": 3,
-    "rows": 3
+    "columns": 4,
+    "rows": 4
   },
   "widgetSizes": [
-    { "id": "small", "label": "小", "width": 640, "height": 360, "rows": 1 },
-    { "id": "medium", "label": "中", "width": 640, "height": 720, "rows": 2 },
-    { "id": "large", "label": "大", "width": 640, "height": 1080, "rows": 3 }
+    { "id": "small", "label": "小", "width": 480, "height": 270, "rows": 1 },
+    { "id": "medium", "label": "中", "width": 480, "height": 540, "rows": 2 },
+    { "id": "large", "label": "大", "width": 480, "height": 810, "rows": 3 }
   ],
   "lyricsSize": {
     "id": "full",
     "label": "FHD",
     "width": 1920,
     "height": 1080,
-    "rows": 3
+    "rows": 4
   },
   "slotDefaults": {
     "now-playing": "small",
     "setlist": "large",
-    "lyrics": "full",
-    "artwork": "small"
+    "lyrics": "full"
   }
 }

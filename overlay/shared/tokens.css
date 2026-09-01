@@ -14,6 +14,17 @@
     --ovl-color-mark-surface: var(--ovl-primitive-color-mark-surface);
     --ovl-color-stroke-strong: var(--ovl-primitive-color-stroke-strong);
     --ovl-color-stroke-soft: var(--ovl-primitive-color-stroke-soft);
+    --ovl-color-vinyl-ink: var(--ovl-primitive-color-vinyl-ink);
+    --ovl-color-vinyl-lowlight: var(--ovl-primitive-color-vinyl-lowlight);
+    --ovl-color-vinyl-sheen: var(--ovl-primitive-color-vinyl-sheen);
+    --ovl-color-vinyl-highlight: var(--ovl-primitive-color-vinyl-highlight);
+    --ovl-color-artwork-accent: var(--ovl-primitive-color-vinyl-highlight);
+    --ovl-color-artwork-label: var(--ovl-primitive-color-paper);
+    --ovl-color-deck-metal: var(--ovl-primitive-color-deck-metal);
+    --ovl-color-deck-metal-highlight: var(
+      --ovl-primitive-color-deck-metal-highlight
+    );
+    --ovl-color-platter-rim: var(--ovl-primitive-color-platter-rim);
     --ovl-color-ktv-fill-unsung: var(--ovl-primitive-color-ktv-fill-unsung);
     --ovl-color-ktv-fill-solo: var(--ovl-primitive-color-ktv-fill-solo);
     --ovl-color-ktv-fill-male: var(--ovl-primitive-color-ktv-fill-male);

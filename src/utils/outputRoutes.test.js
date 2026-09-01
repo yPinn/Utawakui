@@ -6,11 +6,11 @@ import {
 } from './outputRoutes.js';
 
 describe('output template routes', () => {
-  it('maps four independent kinds to stable routes', () => {
+  it('maps three independent kinds to stable routes', () => {
     expect(outputPathForKind('now-playing')).toBe('/overlay/now-playing');
     expect(outputPathForKind('setlist')).toBe('/overlay/setlist');
     expect(outputPathForKind('lyrics')).toBe('/overlay/lyrics');
-    expect(outputPathForKind('artwork')).toBe('/overlay/artwork');
+    expect(outputPathForKind('artwork')).toBeNull();
     expect(outputPathForKind('composite')).toBeNull();
   });
 
@@ -45,12 +45,9 @@ describe('output template routes', () => {
       running: true,
       httpUrl: 'http://127.0.0.1:8700',
     });
-    expect(Object.keys(urls)).toEqual([
-      'now-playing',
-      'setlist',
-      'lyrics',
-      'artwork',
-    ]);
-    expect(urls.artwork.obsUrl).toBe('http://127.0.0.1:8700/overlay/artwork');
+    expect(Object.keys(urls)).toEqual(['setlist', 'lyrics', 'now-playing']);
+    expect(urls['now-playing'].obsUrl).toBe(
+      'http://127.0.0.1:8700/overlay/now-playing',
+    );
   });
 });

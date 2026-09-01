@@ -9,6 +9,10 @@ const appearanceOptions = {
   fontWeight: [{ id: 'bold', label: '粗體' }],
   alignment: [{ id: 'left', label: '靠左' }],
   surface: [{ id: 'transparent', label: '透明' }],
+  furigana: [
+    { id: 'auto', label: '有資料時顯示' },
+    { id: 'off', label: '關閉' },
+  ],
 };
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
@@ -45,5 +49,35 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).not.toContain('output-appearance-fontWeight');
     expect(html).not.toContain('output-appearance-alignment');
     expect(html).not.toContain('output-appearance-surface');
+  });
+
+  it('shows the Manga-only furigana selector with the approved wording', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ObsSlotWorkbench, {
+            preset: {
+              id: 'manga-frame',
+              name: 'Manga Frame',
+              kind: 'lyrics',
+              editableAppearanceKeys: [
+                'fontFamily',
+                'fontScale',
+                'fontWeight',
+                'furigana',
+              ],
+            },
+            activeKind: 'lyrics',
+            outputSlot: {
+              templateId: 'manga-frame',
+              settings: { furigana: 'auto', captureSize: 'full' },
+            },
+            appearanceOptions,
+          }),
+      }),
+    );
+
+    expect(html).toContain('假名標音');
+    expect(html).toContain('有資料時顯示');
   });
 });

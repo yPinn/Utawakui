@@ -26,17 +26,15 @@ describe('outputSlots', () => {
     const document = loadOutputSlots(dir);
     expect(document.version).toBe(2);
     expect(Object.keys(document.slots)).toEqual([
-      'now-playing',
       'setlist',
       'lyrics',
-      'artwork',
+      'now-playing',
     ]);
     expect(document.slots.lyrics.templateId).toBe('focus-line');
     expect(document.slots).toMatchObject({
       'now-playing': { settings: { captureSize: 'small' } },
       setlist: { settings: { captureSize: 'large' } },
       lyrics: { settings: { captureSize: 'full' } },
-      artwork: { settings: { captureSize: 'small' } },
     });
   });
 
@@ -195,14 +193,14 @@ describe('outputSlots', () => {
     ).not.toThrow();
   });
 
-  it('round-trips the bundled Cover Player Artwork template id', () => {
-    upsertOutputSlot(dir, 'artwork', {
+  it('round-trips the bundled Cover Player Now Playing template id', () => {
+    upsertOutputSlot(dir, 'now-playing', {
       templateId: 'cover-player',
       styleSetIds: ['runtime-source'],
       settings: { surface: 'soft', alignment: 'left' },
     });
 
-    expect(loadOutputSlots(dir).slots.artwork).toEqual({
+    expect(loadOutputSlots(dir).slots['now-playing']).toEqual({
       templateId: 'cover-player',
       styleSetIds: ['runtime-source'],
       settings: {
@@ -218,7 +216,7 @@ describe('outputSlots', () => {
       templateId: 'now-next',
       settings: { captureSize: 'medium' },
     });
-    upsertOutputSlot(dir, 'artwork', {
+    upsertOutputSlot(dir, 'now-playing', {
       templateId: 'art-card',
       settings: { captureSize: 'large' },
     });
@@ -234,7 +232,6 @@ describe('outputSlots', () => {
     expect(loadOutputSlots(dir).slots).toMatchObject({
       'now-playing': { settings: { captureSize: 'small' } },
       setlist: { settings: { captureSize: 'large' } },
-      artwork: { settings: { captureSize: 'small' } },
       lyrics: { settings: { captureSize: 'full' } },
     });
   });

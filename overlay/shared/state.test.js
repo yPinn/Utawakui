@@ -90,6 +90,41 @@ describe('overlay state selectors', () => {
     expect(frame).not.toHaveProperty('lineRemainingMs');
   });
 
+  it('selects only the reading aligned to the active canonical lyric line', () => {
+    const base = snapshot();
+    const currentReading = {
+      lineId: 'line-2',
+      text: '潮聲沿著夜色靠岸',
+      segments: [{ text: '潮聲', reading: 'しおごえ' }],
+    };
+    const value = {
+      ...base,
+      lyrics: {
+        ...base.lyrics,
+        reading: {
+          lines: [
+            { text: '上一句', segments: [] },
+            currentReading,
+            { text: '   ', segments: [] },
+            { text: '下一句仍在遠方', segments: [] },
+          ],
+        },
+      },
+    };
+
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) })
+        .currentReading,
+    ).toBe(currentReading);
+    value.lyrics.reading.lines[1] = {
+      ...currentReading,
+      text: '過期文字',
+    };
+    expect(
+      selectLyricsFrame(value, { nowMs: Date.parse(value.generatedAt) }),
+    ).not.toHaveProperty('currentReading');
+  });
+
   it('projects only the active template customization when a template is selected', () => {
     const value = snapshot();
     const nowMs = Date.parse(value.generatedAt);
@@ -582,6 +617,111 @@ describe('overlay state selectors', () => {
       timelineDiscontinuity: true,
       ktv: { visible: true, countIn: { remainingBeats: 3 } },
     });
+  });
+
+  it('projects the upcoming T2 line before a continuous KTV lane handoff', () => {
+    const lines = [
+      {
+        text: 'A line',
+        startMs: 0,
+        endMs: 2000,
+        segments: [
+          { segmentId: 'a-1', text: 'A ', startMs: 0, endMs: 1000 },
+          { segmentId: 'a-2', text: 'line', startMs: 1000, endMs: 2000 },
+        ],
+      },
+      {
+        text: 'B line',
+        startMs: 2000,
+        endMs: 4000,
+        segments: [
+          { segmentId: 'b-1', text: 'B ', startMs: 2000, endMs: 3000 },
+          { segmentId: 'b-2', text: 'line', startMs: 3000, endMs: 4000 },
+        ],
+      },
+    ];
+    const before = snapshot({
+      playback: { ...snapshot().playback, positionMs: 1000 },
+      lyrics: { ...snapshot().lyrics, activeLineIndex: 0, lines },
+    });
+    const after = {
+      ...before,
+      playback: { ...before.playback, positionMs: 2500 },
+      lyrics: { ...before.lyrics, activeLineIndex: 1 },
+    };
+    const nowMs = Date.parse(before.generatedAt);
+    const upcoming = selectLyricsOverlayFrame(before, { nowMs }).ktv;
+    const active = selectLyricsOverlayFrame(after, { nowMs }).ktv;
+
+    expect(upcoming.nextSegments).toEqual([
+      expect.objectContaining({
+        segmentId: 'b-1',
+        state: 'upcoming',
+        progress: 0,
+      }),
+      expect.objectContaining({
+        segmentId: 'b-2',
+        state: 'upcoming',
+        progress: 0,
+      }),
+    ]);
+    expect(
+      active.currentSegments.map(({ segmentId, text }) => ({
+        segmentId,
+        text,
+      })),
+    ).toEqual(
+      upcoming.nextSegments.map(({ segmentId, text }) => ({
+        segmentId,
+        text,
+      })),
+    );
+  });
+
+  it('keeps the upcoming T2 lane mounted through a sub-frame completed gap', () => {
+    const lines = [
+      {
+        text: 'A line',
+        startMs: 0,
+        endMs: 2000,
+        segments: [
+          { segmentId: 'a-1', text: 'A ', startMs: 0, endMs: 1000 },
+          { segmentId: 'a-2', text: 'line', startMs: 1000, endMs: 2000 },
+        ],
+      },
+      {
+        text: 'B line',
+        startMs: 2001,
+        endMs: 4000,
+        segments: [
+          { segmentId: 'b-1', text: 'B ', startMs: 2001, endMs: 3000 },
+          { segmentId: 'b-2', text: 'line', startMs: 3000, endMs: 4000 },
+        ],
+      },
+    ];
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 2000 },
+      lyrics: { ...snapshot().lyrics, activeLineIndex: 0, lines },
+      musicStructure: null,
+    });
+
+    const completed = selectLyricsOverlayFrame(value, {
+      nowMs: Date.parse(value.generatedAt),
+      templateId: 'karaoke-stack',
+    }).ktv;
+
+    expect(completed).toMatchObject({
+      currentText: 'A line',
+      currentVisibleLineIndex: 0,
+      lineProgress: 1,
+      nextText: 'B line',
+      nextVisibleLineIndex: 1,
+      nextLaneIndex: 1,
+    });
+    expect(completed.nextSegments).toEqual([
+      expect.objectContaining({ segmentId: 'b-1', state: 'upcoming' }),
+      expect.objectContaining({ segmentId: 'b-2', state: 'upcoming' }),
+    ]);
   });
 
   it('falls back to BPM when the final four confident beat-grid points are not consecutive', () => {
@@ -1834,6 +1974,114 @@ describe('overlay state selectors', () => {
     });
   });
 
+  it('projects Manga bubble reveal from authored T2 source ranges', () => {
+    const line = {
+      text: '「前半」「後半」',
+      startMs: 9000,
+      endMs: 17000,
+      segments: [
+        {
+          segmentId: 'segment-all',
+          text: '「前半」「後半」',
+          startMs: 9000,
+          endMs: 17000,
+        },
+      ],
+    };
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 12000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        source: { language: 'ja' },
+        lines: [line],
+      },
+    });
+    const nowMs = Date.parse(value.generatedAt);
+
+    expect(
+      selectLyricsOverlayFrame(value, {
+        nowMs,
+        templateId: 'manga-frame',
+      }),
+    ).toMatchObject({
+      currentTimingSource: 't2',
+      mangaBubbleTiming: [
+        { startMs: 9000, state: 'revealed' },
+        { startMs: 13000, state: 'upcoming' },
+      ],
+    });
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'manga-frame',
+      }),
+    ).toBe(1000);
+  });
+
+  it('recomputes T2 Manga bubble reveal on seek and freezes scheduling when paused', () => {
+    const line = {
+      text: '「前半」「後半」',
+      startMs: 9000,
+      endMs: 17000,
+      segments: [
+        {
+          segmentId: 'segment-first',
+          text: '「前半」',
+          startMs: 9000,
+          endMs: 12000,
+        },
+        {
+          segmentId: 'segment-second',
+          text: '「後半」',
+          startMs: 14000,
+          endMs: 17000,
+        },
+      ],
+    };
+    const base = snapshot({
+      lyrics: {
+        ...snapshot().lyrics,
+        source: { language: 'ja' },
+        lines: [line],
+      },
+    });
+    const nowMs = Date.parse(base.generatedAt);
+    const frameAt = (positionMs, status) =>
+      selectLyricsOverlayFrame(
+        {
+          ...base,
+          playback: { ...base.playback, positionMs, status },
+        },
+        { nowMs, templateId: 'manga-frame' },
+      );
+
+    expect(frameAt(15000, 'seeking').mangaBubbleTiming).toMatchObject([
+      { state: 'revealed' },
+      { state: 'revealed' },
+    ]);
+    expect(frameAt(10000, 'seeking').mangaBubbleTiming).toMatchObject([
+      { state: 'revealed' },
+      { state: 'upcoming' },
+    ]);
+    expect(frameAt(13000, 'paused').mangaBubbleTiming).toMatchObject([
+      { state: 'revealed' },
+      { state: 'upcoming' },
+    ]);
+    expect(
+      nextPresentationBoundaryDelayMs(
+        {
+          ...base,
+          playback: {
+            ...base.playback,
+            positionMs: 13000,
+            status: 'paused',
+          },
+        },
+        { nowMs, templateId: 'manga-frame' },
+      ),
+    ).toBeNull();
+  });
+
   it('uses segment boundaries for local scheduling and freezes paused progress', () => {
     const segmentLine = {
       text: 'first second',
@@ -2423,11 +2671,8 @@ describe('overlay state selectors', () => {
       revision: 8,
       visible: true,
       sourceName: 'Tonight',
-      rows: [
-        { state: 'played', title: 'Intro', artist: 'Singer' },
-        { state: 'current', title: '海螺記', artist: '163braces' },
-        { state: 'queued', title: 'Next Song', artist: 'Singer' },
-      ],
+      current: { title: '海螺記', artist: '163braces' },
+      history: [{ title: 'Intro', artist: 'Singer' }],
     });
   });
 
@@ -2466,21 +2711,103 @@ describe('overlay state selectors', () => {
     });
   });
 
-  it('caps the public setlist frame at eight readable rows', () => {
+  it.each(['buffering', 'seeking', 'ended', 'error'])(
+    'preserves the %s transport phase for Artwork choreography',
+    (status) => {
+      expect(
+        selectArtworkFrame(
+          snapshot({
+            playback: {
+              status,
+              positionMs: 32000,
+              durationMs: 180000,
+              rate: 1,
+              track: {
+                id: 'track-1',
+                title: '海螺記',
+                artist: '163braces',
+              },
+            },
+          }),
+        ).playbackStatus,
+      ).toBe(status);
+    },
+  );
+
+  it('projects only the current song and recent completed history in playback order', () => {
     const value = snapshot({
       queue: {
         sourceName: 'Tonight',
-        items: Array.from({ length: 12 }, (_, index) => ({
-          state: index === 0 ? 'current' : 'queued',
-          track: {
-            id: `track-${index}`,
-            title: `Track ${index + 1}`,
-            artist: 'Singer',
+        items: [
+          ...Array.from({ length: 10 }, (_, index) => ({
+            state: 'played',
+            track: {
+              id: `played-${index}`,
+              title: `Played ${index + 1}`,
+              artist: 'Singer',
+            },
+          })),
+          {
+            state: 'current',
+            track: { id: 'current', title: 'Current', artist: 'Singer' },
           },
-        })),
+          {
+            state: 'queued',
+            track: { id: 'queued', title: 'Upcoming', artist: 'Singer' },
+          },
+        ],
       },
     });
 
-    expect(selectSetlistFrame(value).rows).toHaveLength(8);
+    expect(selectSetlistFrame(value)).toMatchObject({
+      current: { title: 'Current', artist: 'Singer' },
+      history: [
+        { title: 'Played 3', artist: 'Singer' },
+        { title: 'Played 4', artist: 'Singer' },
+        { title: 'Played 5', artist: 'Singer' },
+        { title: 'Played 6', artist: 'Singer' },
+        { title: 'Played 7', artist: 'Singer' },
+        { title: 'Played 8', artist: 'Singer' },
+        { title: 'Played 9', artist: 'Singer' },
+        { title: 'Played 10', artist: 'Singer' },
+      ],
+    });
+    expect(JSON.stringify(selectSetlistFrame(value))).not.toContain('Upcoming');
+  });
+
+  it('does not expose a queued-only Setlist and keeps completed history visible', () => {
+    const queuedOnly = snapshot({
+      queue: {
+        sourceName: 'Tonight',
+        items: [
+          {
+            state: 'queued',
+            track: { id: 'queued', title: 'Upcoming', artist: 'Singer' },
+          },
+        ],
+      },
+    });
+    expect(selectSetlistFrame(queuedOnly)).toMatchObject({
+      visible: false,
+      current: null,
+      history: [],
+    });
+
+    const historyOnly = snapshot({
+      queue: {
+        sourceName: 'Tonight',
+        items: [
+          {
+            state: 'played',
+            track: { id: 'played', title: 'Completed', artist: 'Singer' },
+          },
+        ],
+      },
+    });
+    expect(selectSetlistFrame(historyOnly)).toMatchObject({
+      visible: true,
+      current: null,
+      history: [{ title: 'Completed', artist: 'Singer' }],
+    });
   });
 });

@@ -45,8 +45,10 @@ T1 fallback 會經 `lyricsTimingUnits.mjs` 產生唯一共用、無語意標記�
 解讀成 phrase、role、bubble 或 caption page。Browser Source 以 document id、revision、
 language、profile id／version 快取靜態結果，`state.mjs` 只投影目前 template 的動態 frame
 與下一個 boundary；count-in、beat／section 判斷也只屬於對應模板。Raw LRC／VTT parser
-不進模板，模板分句不回寫 canonical timing，T2 永遠優先。Reading Aid 在 reading
-document 尚未進入 Output transport 前維持不可套用。
+不進模板，模板分句不回寫 canonical timing，T2 永遠優先。獨立 Reading Aid profile
+仍未開放給 Output；Manga Frame 則可從 `lyrics.document` 的 optional reading projection
+取得已存在、identity-matched 的日文 `{ text, reading }` segments。Publisher 只讀 sidecar，
+不因 OBS 啟動 reading worker，缺少或 stale 時維持純文字。
 
 Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯示變體：
 `useLyrics` 預設把實際內容判定為中文的任一來源，以 bundled `opencc-js` 的 `s2tw-v1`
@@ -175,14 +177,23 @@ server 分開呈現 liveness、source readiness 與 content/state updates。
 Renderer Output ownership 分成控制與發布兩層：`src/composables/useOutputRuntime.js`
 保留唯一 public singleton facade，負責 status／settings、port recovery、start／stop、slot
 persistence、diagnostics 與初始化組合；
-`src/composables/output/useOutputProjectionPublisher.js` 負責 player／queue／lyrics／music
-structure projection、document-before-state envelope 排序、continuity／`sourceEpoch`、各 stream
+`src/composables/output/useOutputProjectionPublisher.js` 負責
+player／queue／lyrics／既有日文 reading／music structure projection、document-before-state
+envelope 排序、continuity／`sourceEpoch`、各 stream
 revision/reference 與 latest-only watcher publishing。Publisher 只透過具名 callbacks 取得
 bridge、gate 與 runtime status 邊界，不持有服務啟停、設定或 slot persistence。
 
-Browser Source 只能讀取 canonical snapshot 與 allowlisted media。Artwork route 由已公開
-的 track id 解析縮圖；snapshot 不包含 `utawakui-media:` URL、absolute path 或 provider
-payload。Public WebSocket 不接受 playback commands。
+Browser Source 只能讀取 canonical snapshot 與 allowlisted media。Now Playing 的封面
+模板由已公開的 track id 經 `/media/artwork/` 解析縮圖；snapshot 不包含
+`utawakui-media:` URL、absolute path 或 provider payload。Public WebSocket 不接受
+playback commands。
+
+App-owned Overlay choreography 透過 exact allowlist 提供的 GSAP browser asset 執行；
+GSAP recipe 持有可中斷的 playhead、sequencing、reduced-motion 與 lifecycle cleanup，
+但只消費 canonical projection，不建立第二份播放狀態。CSS 仍持有 layout、material、
+transform origin、靜態 state 與簡單且非歌曲同步的 transition；兩個引擎不得同時持有
+同一 animated property。控制面板的 Gallery mockup 可使用輕量 CSS preview，真實
+Workbench iframe 則沿用 Browser Source runtime。
 
 `electron/lib/outputServer.js` 保留 public service API、WebSocket lifecycle 與 projection
 delivery ownership；`electron/lib/outputServer/http.js` 是獨立的唯讀 HTTP delivery plane，

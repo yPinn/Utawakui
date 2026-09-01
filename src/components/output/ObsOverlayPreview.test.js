@@ -53,10 +53,10 @@ describe('ObsOverlayPreview', () => {
 
   it('keeps the inspection backdrop query for widget capture previews', async () => {
     const html = await renderPreview({
-      activeKind: 'artwork',
+      activeKind: 'now-playing',
       captureSize: 'small',
       supportedCaptureSizes: ['small'],
-      previewUrl: 'http://127.0.0.1:8700/overlay/artwork',
+      previewUrl: 'http://127.0.0.1:8700/overlay/now-playing',
     });
 
     expect(html).toContain('backdrop=checker');

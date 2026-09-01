@@ -13,8 +13,57 @@
   </head>
   <body>
     <main id="setlist-overlay" class="setlist-overlay" dir="auto" hidden>
-      <h1 id="setlist-title" class="setlist-overlay__title"></h1>
-      <ol id="setlist-rows" class="setlist-overlay__rows"></ol>
+      <section
+        class="setlist-overlay__current"
+        aria-labelledby="setlist-current-label"
+      >
+        <header class="setlist-overlay__current-header">
+          <span
+            id="setlist-current-label"
+            class="setlist-overlay__section-label"
+          >
+            Now Singing
+          </span>
+          <h1 id="setlist-title" class="setlist-overlay__title"></h1>
+        </header>
+        <div id="setlist-current" class="setlist-overlay__current-track">
+          <strong
+            id="setlist-current-title"
+            class="setlist-overlay__current-title"
+          ></strong>
+          <span
+            id="setlist-current-artist"
+            class="setlist-overlay__current-artist"
+          ></span>
+        </div>
+        <p id="setlist-current-empty" class="setlist-overlay__empty" hidden>
+          目前無演唱曲目
+        </p>
+      </section>
+
+      <section
+        class="setlist-overlay__history"
+        aria-labelledby="setlist-history-label"
+      >
+        <header class="setlist-overlay__history-header">
+          <span
+            id="setlist-history-label"
+            class="setlist-overlay__section-label"
+          >
+            Set List
+          </span>
+          <span class="setlist-overlay__history-caption">已唱紀錄</span>
+        </header>
+        <div
+          id="setlist-history-viewport"
+          class="setlist-overlay__history-viewport"
+        >
+          <ol id="setlist-history" class="setlist-overlay__history-list"></ol>
+        </div>
+        <p id="setlist-history-empty" class="setlist-overlay__empty" hidden>
+          尚無已唱歌曲
+        </p>
+      </section>
     </main>
   </body>
 </html>

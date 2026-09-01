@@ -42,7 +42,7 @@ describe('overlay CSS tokens', () => {
       '@layer ovl-reset, ovl-fallback, ovl-semantic, ovl-template, ovl-appearance, ovl-constraints;',
     );
 
-    for (const kind of ['lyrics', 'now-playing', 'setlist', 'artwork']) {
+    for (const kind of ['lyrics', 'now-playing', 'setlist']) {
       const html = fs.readFileSync(
         new URL(`../${kind}/index.html`, import.meta.url),
         'utf8',
@@ -62,7 +62,7 @@ describe('overlay CSS tokens', () => {
   });
 
   it('lets every fixed route derive text direction from its rendered content', () => {
-    for (const kind of ['lyrics', 'now-playing', 'setlist', 'artwork']) {
+    for (const kind of ['lyrics', 'now-playing', 'setlist']) {
       const html = fs.readFileSync(
         new URL(`../${kind}/index.html`, import.meta.url),
         'utf8',
@@ -96,13 +96,19 @@ describe('overlay CSS tokens', () => {
     expect(tokens).not.toContain('@layer ovl-appearance {');
     expect(appearance).toContain('@layer ovl-appearance {');
 
-    for (const kind of ['lyrics', 'now-playing', 'setlist', 'artwork']) {
+    for (const kind of ['lyrics', 'now-playing', 'setlist']) {
       const styles = fs.readFileSync(
         new URL(`../${kind}/${kind}.css`, import.meta.url),
         'utf8',
       );
       expect(styles).toContain('@layer ovl-template {');
     }
+    expect(
+      fs.readFileSync(
+        new URL('../now-playing/artwork.css', import.meta.url),
+        'utf8',
+      ),
+    ).toContain('@layer ovl-template {');
   });
 
   it('keeps raw colors in the shared token layer', () => {
@@ -110,7 +116,7 @@ describe('overlay CSS tokens', () => {
       '../lyrics/lyrics.css',
       '../now-playing/now-playing.css',
       '../setlist/setlist.css',
-      '../artwork/artwork.css',
+      '../now-playing/artwork.css',
     ].map((relativePath) =>
       fs.readFileSync(new URL(relativePath, import.meta.url), 'utf8'),
     );
@@ -126,7 +132,7 @@ describe('overlay CSS tokens', () => {
       ['lyrics', '../lyrics/lyrics.css'],
       ['now-playing', '../now-playing/now-playing.css'],
       ['setlist', '../setlist/setlist.css'],
-      ['artwork', '../artwork/artwork.css'],
+      ['artwork', '../now-playing/artwork.css'],
     ];
 
     for (const [kind, relativePath] of templateStyles) {
@@ -157,6 +163,16 @@ describe('overlay CSS tokens', () => {
     expect(tokens).toContain('--ovl-color-ktv-stroke-sung');
     expect(tokens).not.toContain('--ovl-color-ktv-shadow');
     expect(tokens).toContain('--ovl-color-stroke-soft');
+    expect(tokens).toContain('--ovl-color-artwork-accent');
+    expect(tokens).toContain(
+      '--ovl-color-artwork-accent: var(--ovl-primitive-color-vinyl-highlight)',
+    );
+    expect(tokens).toContain(
+      '--ovl-color-artwork-label: var(--ovl-primitive-color-paper)',
+    );
+    expect(tokens).toContain('--ovl-color-deck-metal');
+    expect(tokens).toContain('--ovl-color-deck-metal-highlight');
+    expect(tokens).toContain('--ovl-color-platter-rim');
   });
 
   it('keeps one equal physical safe inset across fixed-width widget tiers', () => {
@@ -197,11 +213,13 @@ describe('overlay CSS tokens', () => {
 
     expect(mangaStart).toBeGreaterThan(-1);
     expect(mangaStyles).toContain('var(--ovl-color-ink)');
-    expect(mangaStyles).toContain("data-segment-state='active'");
-    expect(mangaStyles).toContain('--ovl-segment-progress');
+    expect(mangaStyles).not.toContain("data-segment-state='active'");
+    expect(mangaStyles).not.toContain('--ovl-segment-progress');
     expect(mangaStyles).toContain('.lyrics-overlay__manga-frame-shape');
     expect(mangaStyles).toContain('writing-mode: vertical-rl');
-    expect(mangaStyles).toContain('text-align: center');
+    expect(mangaStyles).toContain('text-orientation: mixed');
+    expect(mangaStyles).toContain('text-align: start');
+    expect(mangaStyles).toContain('text-wrap: balance');
     expect(mangaStyles).toContain('place-items: center');
     expect(mangaStyles).toContain('.lyrics-overlay__next');
     expect(mangaStyles).toContain('display: none');
@@ -211,7 +229,7 @@ describe('overlay CSS tokens', () => {
 
   it('keeps Cover Player scoped, responsive, and token-driven', () => {
     const artwork = fs.readFileSync(
-      new URL('../artwork/artwork.css', import.meta.url),
+      new URL('../now-playing/artwork.css', import.meta.url),
       'utf8',
     );
     const coverPlayerStart = artwork.indexOf(
@@ -246,7 +264,7 @@ describe('overlay CSS tokens', () => {
       'utf8',
     );
     const artwork = fs.readFileSync(
-      new URL('../artwork/artwork.css', import.meta.url),
+      new URL('../now-playing/artwork.css', import.meta.url),
       'utf8',
     );
     const coverPlayerStart = artwork.indexOf(
@@ -286,7 +304,7 @@ describe('overlay CSS tokens', () => {
       'utf8',
     );
     const artwork = fs.readFileSync(
-      new URL('../artwork/artwork.css', import.meta.url),
+      new URL('../now-playing/artwork.css', import.meta.url),
       'utf8',
     );
     const coverPlayerStart = artwork.indexOf(
@@ -310,7 +328,14 @@ describe('overlay CSS tokens', () => {
       expect(styles).not.toContain('inset-block-start: var(--ovl-safe-block);');
       expect(styles).not.toContain('inset-block-end: var(--ovl-safe-block);');
 
-      const responsiveRules = styles.slice(styles.indexOf('@media'));
+      const viewportRulesStart = styles.indexOf('@media');
+      const reducedMotionStart = styles.indexOf(
+        '@media (prefers-reduced-motion: reduce)',
+      );
+      const responsiveRules = styles.slice(
+        viewportRulesStart,
+        reducedMotionStart === -1 ? undefined : reducedMotionStart,
+      );
       expect(responsiveRules).not.toMatch(/\binset-(?:inline|block)/);
       expect(responsiveRules).not.toContain('transform:');
     }
@@ -326,7 +351,7 @@ describe('overlay CSS tokens', () => {
       'utf8',
     );
     const artwork = fs.readFileSync(
-      new URL('../artwork/artwork.css', import.meta.url),
+      new URL('../now-playing/artwork.css', import.meta.url),
       'utf8',
     );
     const coverPlayerStart = artwork.indexOf(
@@ -344,34 +369,46 @@ describe('overlay CSS tokens', () => {
       );
     }
 
-    expect(nowPlaying).toContain('display: flex;');
-    expect(nowPlaying).toContain('flex-direction: column;');
+    expect(nowPlaying).toContain('display: grid;');
+    expect(nowPlaying).toContain(
+      'grid-template-columns: repeat(10, minmax(0, 1fr));',
+    );
+    expect(nowPlaying).toMatch(
+      /\.now-playing-overlay__player\s*{[^}]*grid-column:\s*1\s*\/\s*span 3;/s,
+    );
+    expect(nowPlaying).toMatch(
+      /\.now-playing-overlay__information\s*{[^}]*grid-column:\s*5\s*\/\s*span 6;/s,
+    );
     expect(nowPlaying).toMatch(
       /\.now-playing-overlay__next\s*{[^}]*margin-block-start: auto;/s,
     );
 
+    expect(setlist).toContain(
+      'grid-template-rows: repeat(10, minmax(0, 1fr));',
+    );
     expect(setlist).toMatch(
-      /\.setlist-overlay__rows\s*{[^}]*flex: 1 1 auto;[^}]*grid-auto-rows: var\(--ovl-template-setlist-row-height\);[^}]*align-content: start;/s,
+      /\.setlist-overlay__current\s*{[^}]*grid-row:\s*1\s*\/\s*span 3;/s,
+    );
+    expect(setlist).toMatch(
+      /\.setlist-overlay__history\s*{[^}]*grid-row:\s*5\s*\/\s*span 6;/s,
     );
 
     expect(artCard).toMatch(
-      /@media \(max-width: 42rem\)[\s\S]*grid-template-columns: minmax\(0, 1fr\);[\s\S]*grid-template-rows: minmax\(0, 1fr\) auto;/,
+      /\.artwork-overlay__vinyl-stage\s*{[^}]*inline-size: min\(100%, 28rem\);[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s,
     );
     expect(artCard).toMatch(
-      /@media \(max-width: 42rem\) and \(max-height: 24rem\)[\s\S]*grid-template-columns: auto minmax\(0, 1fr\);[\s\S]*grid-template-rows: minmax\(0, 1fr\);/,
+      /@media \(max-width: 42rem\) and \(max-height: 24rem\)[\s\S]*\.artwork-overlay__vinyl-stage\s*{[^}]*gap: var\(--ovl-primitive-space-2\);/,
     );
-    expect(coverPlayer).toContain(
-      'grid-template-rows: minmax(0, 1fr) auto auto;',
-    );
+    expect(coverPlayer).toContain('grid-template-rows: minmax(0, 1fr) auto;');
     expect(coverPlayer).toMatch(
       /\.artwork-overlay__mark\s*{[^}]*max-inline-size: 100%;[^}]*inline-size: auto;[^}]*block-size: 100%;/s,
     );
-    expect(setlist).toContain('--ovl-template-setlist-row-height: 7rem;');
+    expect(setlist).toContain('--ovl-template-setlist-scroll-duration:');
     expect(artCard).toMatch(
       /\.artwork-overlay__copy\s*{[^}]*min-block-size: 0;[^}]*overflow: hidden;/s,
     );
     expect(artCard).toMatch(
-      /\.artwork-overlay__artist\s*{[^}]*overflow: hidden;[^}]*-webkit-line-clamp: 2;/s,
+      /\.artwork-overlay__artist\s*{[^}]*overflow: hidden;[^}]*text-overflow: ellipsis;[^}]*white-space: nowrap;/s,
     );
   });
 
@@ -397,7 +434,7 @@ describe('overlay CSS tokens', () => {
       '../lyrics/lyrics.mjs',
       '../now-playing/now-playing.mjs',
       '../setlist/setlist.mjs',
-      '../artwork/artwork.mjs',
+      '../now-playing/artworkLayout.mjs',
     ].map((relativePath) =>
       fs.readFileSync(new URL(relativePath, import.meta.url), 'utf8'),
     );

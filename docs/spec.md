@@ -38,7 +38,8 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 - **Lyrics**：外部歌詞查詢、同步資料、讀音、演出者視窗與 Lyrics Overlay。
 - **Audio processing**：pitch／tempo preview、分離 recipe、guide vocal 與未來
   pre-render assets。
-- **Public output**：now-playing、setlist、lyrics、artwork Browser Sources。
+- **Public output**：Setlist、Lyrics、Now Playing Browser Sources；封面型模板歸入
+  Now Playing。
 - **Provider assist**：候選搜尋、來源匯入、下載與 metadata backfill。
 
 每個可選工作流都必須在對應 gate 關閉或依賴缺失時，讓預設核心繼續可用。
@@ -62,7 +63,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 | Lyrics            | 主路徑已實作         | T0／T1／T2、LRCLIB／實驗性 NetEase／Better Lyrics 公開快取多來源平行搜尋、來源中立排序與同錄音來源替代、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；provider-authored timing 皆只在完整驗證通過時標示逐字同步。既有 AMLL 來源仍可讀取與刪除，但不再提供線上搜尋。 |
 | Audio processing  | 基礎產品能力已實作   | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。                                                                                                           |
 | Provider assist   | 核心路徑已實作       | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、candidate/import/backfill 已連線，只能作為 gated advanced flow。                                                                                                                                                    |
-| OBS output        | MVP 已實作           | Loopback HTTP/WebSocket、四個固定 slot、Gallery、Workbench、URL copy、content/state split 與 source convergence 已建立。                                                                                                                                                          |
+| OBS output        | MVP 已實作           | Loopback HTTP/WebSocket、三個固定 slot、Gallery、Workbench、URL copy、content/state split 與 source convergence 已建立。                                                                                                                                                          |
 | Feature gates     | 已實作               | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                                                                                                            |
 | Diagnostics       | 基礎與主要邊界已實作 | Main-owned persistence/redaction、renderer capture、Settings 控制與 dependency IPC boundary 已建立；其他 domain wrappers 與 explicit export 持續增量導入。                                                                                                                        |
 | Distribution      | 已實作基礎           | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                                                                                                                               |
@@ -123,8 +124,13 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 - Output server 只綁定 loopback，並以 exact route allowlist 提供資產。
 - Snapshot 不包含 filesystem path、provider payload 或任意 renderer HTML。
 - Artwork 只透過 public track id 解析 allowlisted thumbnail。
-- 現行四個固定 slot 是 MVP 相容基線；Output Instance／Presentation Pack 是未來
+- 現行三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；黑膠主題與
+  Cover Player 是 Now Playing 模板。Output Instance／Presentation Pack 是未來
   擴充方向，不應提前宣稱已完成。
+- Setlist 的基礎公開契約只顯示目前演唱曲目與已唱紀錄，不投影待唱佇列。預設
+  480×810 `Simple Black B` 模板在扣除安全邊界與內部 padding 後，以上方目前
+  `3`／中間留白 `1`／下方已唱 `6` 分配內容區；最近八首已唱紀錄依正常播放
+  順序向下排列，只有實際內容超出下方區域時才自動垂直滾動。
 
 詳細 runtime ownership、依賴切分與 diagnostics flow 見
 [architecture.md](architecture.md)。

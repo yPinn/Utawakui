@@ -15,7 +15,7 @@ const OUTPUT_KIND_ORDER = new Map(
 );
 
 export const OUTPUT_PREVIEW_SCENE = Object.freeze({
-  label: '固定示例 · 中文',
+  label: '固定示例 · 多語',
   track: Object.freeze({
     title: '如果可以',
     artist: '韋禮安',
@@ -25,18 +25,41 @@ export const OUTPUT_PREVIEW_SCENE = Object.freeze({
     artist: '田馥甄',
   }),
   queue: Object.freeze([
-    Object.freeze({ number: '01', title: '如果可以', state: 'current' }),
-    Object.freeze({ number: '02', title: '小幸運', state: 'upcoming' }),
+    Object.freeze({
+      number: '01',
+      title: '小幸運',
+      artist: '田馥甄',
+      state: 'played',
+    }),
+    Object.freeze({
+      number: '02',
+      title: '刻在我心底的名字',
+      artist: '盧廣仲',
+      state: 'played',
+    }),
     Object.freeze({
       number: '03',
-      title: '刻在我心底的名字',
-      state: 'upcoming',
+      title: '如果可以',
+      artist: '韋禮安',
+      state: 'current',
     }),
   ]),
   lyrics: Object.freeze({
     current: '目前歌詞',
     next: '下一句',
     reading: '歌詞讀音',
+    manga: Object.freeze({
+      current: '地下鉄に飲み込まれる',
+      language: 'ja',
+      reading: Object.freeze({
+        text: '地下鉄に飲み込まれる',
+        segments: Object.freeze([
+          Object.freeze({ text: '地下鉄', reading: 'ちかてつ' }),
+          Object.freeze({ text: 'に' }),
+          Object.freeze({ text: '飲み込まれる', reading: 'のみこまれる' }),
+        ]),
+      }),
+    }),
   }),
 });
 
@@ -45,20 +68,21 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'now-next',
     kind: 'now-playing',
     order: 10,
-    name: 'Now / Next',
+    name: 'Compact CD',
     tone: 'stage',
     availability: {
       label: '建議',
       tone: 'accent',
       summary: '不依賴 artwork，適合作為對外輸出 gate 開啟後的預設起點。',
     },
-    summary: '直播中最常用的目前曲目與下一首資訊。',
-    detail: '適合小面積放在角落，保留歌名、歌手與下一首提示。',
+    summary: '透明 CD Player 與目前曲目、下一首資訊的橫向展示。',
+    detail:
+      '使用 3／1／6 十欄比例：左側透明 CD Player、中間保留呼吸空間、右側顯示歌曲資訊。',
     preview: {
-      layoutLabel: '角落資訊',
-      motionLabel: '滑入',
+      layoutLabel: '3／1／6 CD Player',
+      motionLabel: '靜態反光',
     },
-    tags: ['低干擾', '角落顯示', '基本資訊'],
+    tags: ['CD Player', '橫向展示', '基本資訊'],
     settings: [
       { label: '顯示', value: '目前曲目、下一首' },
       { label: '密度', value: 'Compact' },
@@ -69,24 +93,26 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     id: 'queue-board',
     kind: 'setlist',
     order: 20,
-    name: 'Queue Board',
+    name: 'Simple Black B',
     tone: 'minimal',
     availability: {
       label: '可用',
       tone: 'muted',
       summary: '只依賴歌單與曲目文字資料，適合等待畫面或幕間使用。',
     },
-    summary: '給觀眾查看待播與已唱曲目的歌單板。',
-    detail: '適合等待畫面或幕間，強調隊列順序與歌單狀態。',
+    summary: '黑底細線的極簡歌單，呈現目前曲目與本場已唱紀錄。',
+    detail:
+      '扣除邊界與 padding 後，上方目前曲目占三份、中間留白一份、下方已唱紀錄占六份；已唱歌曲依播放順序向下排列，超出範圍時自動滾動。',
     preview: {
-      layoutLabel: '清單板',
-      motionLabel: '逐列更新',
+      layoutLabel: '目前 3／間隔 1／已唱 6',
+      motionLabel: '溢位時自動垂直滾動',
     },
-    tags: ['待播清單', '已唱紀錄', '幕間'],
+    tags: ['目前曲目', '已唱紀錄', '幕間'],
     settings: [
-      { label: '顯示', value: '已唱、待播、目前曲目' },
+      { label: '顯示', value: '目前曲目、已唱紀錄' },
       { label: '密度', value: 'Readable' },
-      { label: '行數', value: '最多 8 列' },
+      { label: '紀錄', value: '最近 8 首' },
+      { label: '動態', value: '溢位時垂直滾動' },
     ],
   },
   {
@@ -175,11 +201,12 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     availability: {
       label: '可用',
       tone: 'muted',
-      summary: '只要有目前行文字就會顯示黑白對話框；逐字資料只增加網點進度。',
+      summary:
+        '只要有目前行文字就會顯示黑白對話框；既有日文讀音可選擇顯示假名標音。',
     },
     summary: '每個斷句各自成為一個在人物左右交替的黑白直書漫畫對話框。',
     detail:
-      '只顯示當下歌詞並以直書置中；日中歌詞的行內空格會拆成最多三個獨立對話框，括號內容另成背景聲候選框。框組依目前行切換人物左右，換句時所有 SVG 外框與文字一同淡出、淡入。',
+      '只顯示當下歌詞並以直書置中；日中歌詞的行內空格會拆成最多三個獨立對話框，括號內容另成背景聲候選框。日文可使用已存在且與歌詞相符的讀音資料，在主字右側顯示小型假名；不會由 OBS 觸發產生。框組依目前行切換人物左右，換句時所有 SVG 外框與文字一同淡出、淡入。',
     preview: {
       layoutLabel: '漫畫直書單句',
       motionLabel: '整框淡入淡出',
@@ -190,7 +217,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
       { label: '排版', value: '直書置中、左右交替' },
       { label: '分句', value: '日中空格、括號候選' },
       { label: '切換', value: '外框與文字同步 Fade' },
-      { label: '進度', value: '文字後方網點' },
+      { label: '假名', value: '有資料時顯示／關閉' },
     ],
   },
   {
@@ -247,33 +274,34 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   },
   {
     id: 'art-card',
-    kind: 'artwork',
-    order: 90,
-    name: 'Artwork Card',
-    tone: 'lyrics',
+    kind: 'now-playing',
+    order: 20,
+    name: '黑膠主題',
+    tone: 'minimal',
     availability: {
       label: '可用',
       tone: 'muted',
       summary:
         '優先使用本機曲目封面；缺圖或載入失敗時以曲名首字維持可辨識內容。',
     },
-    summary: '以本機封面與曲目 metadata 構成獨立節目卡。',
-    detail: '適合需要比角落歌名更明確的曲目識別畫面，缺圖時仍可閱讀。',
+    summary: '左右各半：專輯封面承載歌曲資訊，俯視唱盤呈現播放狀態。',
+    detail:
+      '左側以實際曲目封面和封面內文字辨識歌曲，右側用唱片、轉盤與唱臂建立完整黑膠播放場景；缺圖時仍以深色封面和曲名首字保持辨識。',
     preview: {
-      layoutLabel: '封面節目卡',
-      motionLabel: '揭示',
+      layoutLabel: '50／50 封面＋唱盤',
+      motionLabel: '唱片隨播放緩慢旋轉',
     },
-    tags: ['封面', 'Metadata', '節目卡'],
+    tags: ['專輯封面', '黑膠唱盤', 'Metadata'],
     settings: [
-      { label: '顯示', value: '封面、歌名、歌手' },
-      { label: '比例', value: '16:9 / 1:1 preview' },
-      { label: '狀態', value: '播放中、下一首' },
+      { label: '顯示', value: '左封面、右唱盤、歌名、歌手' },
+      { label: '動態', value: '唱片播放時旋轉、暫停時停止' },
+      { label: '缺圖', value: '深色封面與曲名首字 fallback' },
     ],
   },
   {
     id: 'cover-player',
-    kind: 'artwork',
-    order: 100,
+    kind: 'now-playing',
+    order: 30,
     name: 'Cover Player',
     tone: 'minimal',
     availability: {
@@ -362,11 +390,11 @@ export const OUTPUT_STYLE_SETS = Object.freeze([
     name: '排列與密度',
     status: 'Draft',
     tone: 'muted',
-    summary: '文字型模板的間距、行數與資訊密度。',
+    summary: 'Simple Black B 的內容比例、留白與已唱溢位滾動。',
     tokens: [
-      { label: '間距', value: 'compact' },
-      { label: '行數', value: '最多 8 列' },
-      { label: '比例', value: '16:9 / 1:1' },
+      { label: '上方', value: '目前曲目 3' },
+      { label: '間隔', value: '1' },
+      { label: '下方', value: '已唱紀錄 6' },
     ],
   },
 ]);

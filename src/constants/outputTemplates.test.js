@@ -18,7 +18,7 @@ describe('output template registry', () => {
 
     expect(
       orderOutputTemplates(templates).map((template) => template.id),
-    ).toEqual(['now', 'queue', 'focus', 'late-lyrics']);
+    ).toEqual(['queue', 'focus', 'late-lyrics', 'now']);
   });
 
   it('groups templates without dropping unknown future kinds', () => {
@@ -29,8 +29,8 @@ describe('output template registry', () => {
     ]);
 
     expect(grouped.map((group) => group.kind)).toEqual([
-      'now-playing',
       'lyrics',
+      'now-playing',
       'custom-widget',
     ]);
     expect(grouped.at(-1)).toMatchObject({
@@ -39,31 +39,29 @@ describe('output template registry', () => {
     });
   });
 
-  it('keeps four independent slot defaults internally consistent', () => {
+  it('keeps three independent slot defaults internally consistent', () => {
     const data = getOutputWorkbenchData();
     const templateIds = new Set(data.templates.map((template) => template.id));
 
     expect(OUTPUT_TEMPLATE_KINDS.map((kind) => kind.id)).toEqual([
-      'now-playing',
       'setlist',
       'lyrics',
-      'artwork',
+      'now-playing',
     ]);
     expect(Object.keys(data.slotDefaults)).toEqual([
-      'now-playing',
       'setlist',
       'lyrics',
-      'artwork',
+      'now-playing',
     ]);
     for (const slot of data.slotDefinitions) {
       expect(templateIds.has(data.slotDefaults[slot.id].templateId)).toBe(true);
     }
     expect(
       Object.values(data.slotDefaults).map((slot) => slot.settings.alignment),
-    ).toEqual(['left', 'left', 'left', 'left']);
+    ).toEqual(['left', 'left', 'left']);
     expect(
       Object.values(data.slotDefaults).map((slot) => slot.settings.captureSize),
-    ).toEqual(['small', 'large', 'full', 'small']);
+    ).toEqual(['large', 'full', 'small']);
     expect(data.appearanceOptions.fontFamily).toHaveLength(3);
     expect(data.styleSets.length).toBeGreaterThan(0);
   });
@@ -139,23 +137,38 @@ describe('output template registry', () => {
     });
   });
 
-  it('registers Cover Player as an independent Artwork template', () => {
-    const artworkGroup = getOutputWorkbenchData().templateGroups.find(
-      (group) => group.kind === 'artwork',
+  it('registers compact and artwork layouts in one Now Playing family', () => {
+    const nowPlayingGroup = getOutputWorkbenchData().templateGroups.find(
+      (group) => group.kind === 'now-playing',
     );
 
-    expect(artworkGroup.templates.map((template) => template.id)).toEqual(
-      expect.arrayContaining(['art-card', 'cover-player']),
-    );
     expect(
-      artworkGroup.templates.find((template) => template.id === 'cover-player'),
+      nowPlayingGroup.templates.map(({ id, name, order }) => ({
+        id,
+        name,
+        order,
+      })),
+    ).toEqual([
+      { id: 'now-next', name: 'Compact CD', order: 10 },
+      { id: 'art-card', name: '黑膠主題', order: 20 },
+      { id: 'cover-player', name: 'Cover Player', order: 30 },
+    ]);
+    expect(
+      nowPlayingGroup.templates.find(
+        (template) => template.id === 'cover-player',
+      ),
     ).toMatchObject({
-      kind: 'artwork',
+      kind: 'now-playing',
       preview: { layoutLabel: '直式播放器', motionLabel: '進度同步' },
     });
+    expect(
+      getOutputWorkbenchData().templateGroups.some(
+        (group) => group.kind === 'artwork',
+      ),
+    ).toBe(false);
   });
 
-  it('uses one fixed Chinese preview scene for every template comparison', () => {
+  it('uses one fixed multilingual preview scene for every template comparison', () => {
     const data = getOutputWorkbenchData();
 
     expect(OUTPUT_PREVIEW_SCENE.track).toEqual({
@@ -166,8 +179,20 @@ describe('output template registry', () => {
       current: '目前歌詞',
       next: '下一句',
       reading: '歌詞讀音',
+      manga: {
+        current: '地下鉄に飲み込まれる',
+        language: 'ja',
+        reading: {
+          text: '地下鉄に飲み込まれる',
+          segments: [
+            { text: '地下鉄', reading: 'ちかてつ' },
+            { text: 'に' },
+            { text: '飲み込まれる', reading: 'のみこまれる' },
+          ],
+        },
+      },
     });
-    expect(OUTPUT_PREVIEW_SCENE.label).toBe('固定示例 · 中文');
+    expect(OUTPUT_PREVIEW_SCENE.label).toBe('固定示例 · 多語');
     expect(data.previewScene).toEqual(OUTPUT_PREVIEW_SCENE);
     expect(
       data.templates.every(

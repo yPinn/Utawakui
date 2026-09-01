@@ -2,17 +2,26 @@
 export const MANGA_FRAME_VIEW_BOX = '0 0 400 600';
 export const DEFAULT_MANGA_FRAME_ID = 'spoken';
 
-const MANGA_TEXT_SIZE_EM = Object.freeze({
-  short: 2.9,
-  medium: 2.55,
-  long: 2.15,
-});
-const MANGA_COUNT_SIZE_CAP_EM = Object.freeze({ 1: 2.9, 2: 2.35, 3: 1.9 });
-const MANGA_COUNT_GLYPH_CAPACITY = Object.freeze({ 2: 22, 3: 18 });
-const MANGA_LENGTH_GLYPH_CAPACITY = Object.freeze({
-  short: 12,
-  medium: 24,
-  long: 60,
+const MANGA_TEXT_LINE_HEIGHT = 1.16;
+const MANGA_RUBY_LANE_WIDTH = 0.46;
+const MANGA_TEXT_MAX_INLINE_RATIO = 0.72;
+const MANGA_LATIN_TEXT_SCALE = 0.82;
+const MANGA_FRAME_BLOCK_TO_INLINE_RATIO = 2 / 3;
+const MANGA_JAPANESE_COLUMN_UNIT_CAPACITY = 5;
+const MANGA_CJK_COLUMN_UNIT_CAPACITY = Object.freeze({ 1: 8, 2: 7, 3: 4 });
+const MANGA_CJK_SINGLE_COLUMN_TOLERANCE = 0.75;
+const MANGA_CJK_GLYPH_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u;
+const MANGA_KANA_GLYPH_RE = /[\u3040-\u30ff]/u;
+const MANGA_LATIN_GLYPH_RE = /\p{Script=Latin}/u;
+const MANGA_COMPACT_PUNCTUATION_RE = /[‐‑–—,，、。！？!?…‥;；:：()（）'’-]/u;
+const MANGA_SENTENCE_END_RE = /[。！？!?…‥]/u;
+const MANGA_PREFERRED_BREAK_RE = /[、，,；;：:]/u;
+const MANGA_CLOSING_PUNCTUATION_RE = /^[」』】）》〉〕〗〙〛）)\]}｝}”’"']+$/u;
+const MANGA_QUOTE_PAIRS = Object.freeze({
+  '「': '」',
+  '『': '』',
+  '“': '”',
+  '‘': '’',
 });
 const MANGA_PLACEMENT_PATTERNS = Object.freeze({
   1: Object.freeze([
@@ -138,28 +147,419 @@ export function mangaFrameLengthTier(text) {
   return 'long';
 }
 
-export function mangaFrameTextFitEm(text, bubbleCount = 1) {
-  const normalizedText = String(text ?? '')
+export function mangaFrameTextScript(text) {
+  const value = String(text ?? '');
+  const hasCjk = MANGA_CJK_GLYPH_RE.test(value);
+  const hasLatin = MANGA_LATIN_GLYPH_RE.test(value);
+  if (hasCjk && hasLatin) return 'mixed';
+  if (hasCjk) return 'cjk';
+  if (hasLatin) return 'latin';
+  return 'other';
+}
+
+function mangaFrameVisualInlineUnits(text) {
+  return Array.from(text).reduce((total, character) => {
+    if (/\s/u.test(character)) return total + 0.35;
+    if (MANGA_CJK_GLYPH_RE.test(character)) return total + 1;
+    if (MANGA_COMPACT_PUNCTUATION_RE.test(character)) return total + 0.35;
+    return total + 0.55;
+  }, 0);
+}
+
+function normalizedBubbleCount(value) {
+  return Math.min(3, Math.max(1, Number.isSafeInteger(value) ? value : 1));
+}
+
+function mangaFrameBalanceTokens(text) {
+  return (
+    String(text).match(
+      /\p{Script=Latin}[\p{Script=Latin}\p{N}'’‐‑–—-]*|[^\p{Script=Latin}]/gu,
+    ) ?? []
+  );
+}
+
+function plainLayoutTokens(text) {
+  return mangaFrameBalanceTokens(text).map((value) => ({ text: value }));
+}
+
+function normalizedRanges(ranges, sourceLength) {
+  if (!Array.isArray(ranges) || ranges.length === 0) return [];
+  const result = [];
+  for (const range of ranges) {
+    const start = Number.isSafeInteger(range?.start) ? range.start : -1;
+    const end = Number.isSafeInteger(range?.end) ? range.end : -1;
+    if (start < 0 || end <= start || end > sourceLength) return [];
+    result.push({ start, end });
+  }
+  return result;
+}
+
+function readingLayoutTokens(text, options) {
+  const readingLine = options?.readingLine;
+  const sourceText = String(readingLine?.text ?? '');
+  const segments = Array.isArray(readingLine?.segments)
+    ? readingLine.segments
+    : [];
+  const ranges = normalizedRanges(options?.sourceRanges, sourceText.length);
+  if (!sourceText || ranges.length === 0 || segments.length === 0) return null;
+  if (segments.map((segment) => segment?.text ?? '').join('') !== sourceText) {
+    return null;
+  }
+
+  const spans = [];
+  let cursor = 0;
+  for (const segment of segments) {
+    if (!segment || typeof segment.text !== 'string') return null;
+    spans.push({
+      start: cursor,
+      end: cursor + segment.text.length,
+      text: segment.text,
+      reading:
+        typeof segment.reading === 'string' && segment.reading.length > 0
+          ? segment.reading
+          : null,
+    });
+    cursor += segment.text.length;
+  }
+
+  const tokens = [];
+  for (const [rangeIndex, range] of ranges.entries()) {
+    if (rangeIndex > 0) tokens.push({ text: ' ' });
+    for (const span of spans) {
+      const start = Math.max(range.start, span.start);
+      const end = Math.min(range.end, span.end);
+      if (end <= start) continue;
+      const fragment = span.text.slice(start - span.start, end - span.start);
+      if (span.reading && start === span.start && end === span.end) {
+        tokens.push({ text: fragment, reading: span.reading });
+      } else {
+        tokens.push(...plainLayoutTokens(fragment));
+      }
+    }
+  }
+  const normalizedTokenText = tokens
+    .map((token) => token.text)
+    .join('')
     .trim()
-    .replace(/\s+/gu, ' ');
-  const glyphCount = Math.max(1, Array.from(normalizedText).length);
-  const count = Math.min(
-    3,
-    Math.max(1, Number.isSafeInteger(bubbleCount) ? bubbleCount : 1),
-  );
-  const lengthTier = mangaFrameLengthTier(text);
-  const maximumSize = Math.min(
-    MANGA_TEXT_SIZE_EM[lengthTier],
-    MANGA_COUNT_SIZE_CAP_EM[count],
-  );
+    .replace(/[ \t]+/gu, ' ');
+  return normalizedTokenText === text ? tokens : null;
+}
+
+function tokenText(token) {
+  return typeof token === 'string' ? token : token.text;
+}
+
+function projectedLayoutTokens(text, options) {
+  const tokens = readingLayoutTokens(text, options);
+  if (!tokens) return plainLayoutTokens(text);
+  return options?.includeRuby === false
+    ? tokens.map((token) => ({ text: token.text }))
+    : tokens;
+}
+
+function splitLayoutTokensAtNewlines(tokens) {
+  const columns = [[]];
+  for (const token of tokens) {
+    const value = tokenText(token);
+    const parts = value.split(/\r?\n/u);
+    for (const [partIndex, part] of parts.entries()) {
+      if (part) {
+        if (parts.length === 1) {
+          columns.at(-1).push(token);
+        } else {
+          columns.at(-1).push(...plainLayoutTokens(part));
+        }
+      }
+      if (partIndex < parts.length - 1) columns.push([]);
+    }
+  }
+  return columns;
+}
+
+function usesJapanesePhraseLayout(text, options) {
+  const language = String(options?.language ?? '')
+    .trim()
+    .toLowerCase();
+  if (language === 'ja' || language.startsWith('ja-')) return true;
+  if (language && language !== 'und') return false;
+  if (MANGA_KANA_GLYPH_RE.test(text)) return true;
+  return Array.isArray(options?.readingLine?.segments)
+    ? options.readingLine.segments.some(
+        (segment) =>
+          typeof segment?.reading === 'string' && segment.reading.length > 0,
+      )
+    : false;
+}
+
+function automaticCjkColumnCount(tokens, bubbleCount) {
   const capacity =
-    MANGA_COUNT_GLYPH_CAPACITY[count] ??
-    MANGA_LENGTH_GLYPH_CAPACITY[lengthTier];
-  const fittedSize =
-    glyphCount <= capacity
-      ? maximumSize
-      : maximumSize * Math.sqrt(capacity / glyphCount);
-  return Math.round(Math.max(0.65, fittedSize) * 100) / 100;
+    MANGA_CJK_COLUMN_UNIT_CAPACITY[normalizedBubbleCount(bubbleCount)];
+  const totalUnits = tokens.reduce(
+    (total, token) => total + mangaFrameVisualInlineUnits(tokenText(token)),
+    0,
+  );
+  if (totalUnits <= capacity + MANGA_CJK_SINGLE_COLUMN_TOLERANCE) return 1;
+  return Math.max(1, Math.ceil(totalUnits / capacity));
+}
+
+function balancedCjkColumns(tokens, bubbleCount) {
+  if (tokens.length === 0) return [[]];
+  const columnCount = automaticCjkColumnCount(tokens, bubbleCount);
+  if (columnCount === 1) return [tokens];
+
+  const columns = [];
+  let start = 0;
+  let remainingUnits = tokens.reduce(
+    (total, token) => total + mangaFrameVisualInlineUnits(tokenText(token)),
+    0,
+  );
+  for (let columnIndex = 0; columnIndex < columnCount; columnIndex += 1) {
+    const remainingColumns = columnCount - columnIndex;
+    if (remainingColumns === 1) {
+      columns.push(tokens.slice(start));
+      break;
+    }
+
+    const targetUnits = remainingUnits / remainingColumns;
+    let end = start;
+    let columnUnits = 0;
+    const lastAllowedEnd = tokens.length - (remainingColumns - 1);
+    while (end < lastAllowedEnd) {
+      const nextUnits = mangaFrameVisualInlineUnits(tokenText(tokens[end]));
+      if (
+        end > start &&
+        Math.abs(targetUnits - columnUnits) <=
+          Math.abs(targetUnits - (columnUnits + nextUnits))
+      ) {
+        break;
+      }
+      columnUnits += nextUnits;
+      end += 1;
+    }
+    if (end === start) {
+      columnUnits = mangaFrameVisualInlineUnits(tokenText(tokens[end]));
+      end += 1;
+    }
+    columns.push(tokens.slice(start, end));
+    start = end;
+    remainingUnits -= columnUnits;
+  }
+  return columns;
+}
+
+function matchedTopLevelQuoteBoundaries(tokens) {
+  const openings = new Set();
+  const closings = new Set();
+  const stack = [];
+  for (const [index, token] of tokens.entries()) {
+    const text = tokenText(token);
+    if (Object.hasOwn(MANGA_QUOTE_PAIRS, text)) {
+      stack.push({
+        index,
+        closing: MANGA_QUOTE_PAIRS[text],
+        topLevel: stack.length === 0,
+      });
+      continue;
+    }
+    const opening = stack.at(-1);
+    if (!opening || text !== opening.closing) continue;
+    stack.pop();
+    if (opening.topLevel && stack.length === 0) {
+      openings.add(opening.index);
+      closings.add(index);
+    }
+  }
+  return { openings, closings };
+}
+
+function sentencePhrases(tokens) {
+  const phrases = [];
+  const quoteBoundaries = matchedTopLevelQuoteBoundaries(tokens);
+  let phrase = [];
+  let sentenceEnded = false;
+  let insideMatchedQuote = false;
+  let matchedQuoteEnded = false;
+  for (const [index, token] of tokens.entries()) {
+    const text = tokenText(token);
+    if (
+      matchedQuoteEnded &&
+      !MANGA_SENTENCE_END_RE.test(text) &&
+      !MANGA_CLOSING_PUNCTUATION_RE.test(text)
+    ) {
+      phrases.push(phrase);
+      phrase = [];
+      sentenceEnded = false;
+      matchedQuoteEnded = false;
+    }
+    if (quoteBoundaries.openings.has(index)) {
+      if (phrase.length > 0) phrases.push(phrase);
+      phrase = [token];
+      sentenceEnded = false;
+      insideMatchedQuote = true;
+      matchedQuoteEnded = false;
+      continue;
+    }
+    if (quoteBoundaries.closings.has(index)) {
+      phrase.push(token);
+      sentenceEnded = false;
+      insideMatchedQuote = false;
+      matchedQuoteEnded = true;
+      continue;
+    }
+    if (
+      sentenceEnded &&
+      !MANGA_SENTENCE_END_RE.test(text) &&
+      !MANGA_CLOSING_PUNCTUATION_RE.test(text)
+    ) {
+      phrases.push(phrase);
+      phrase = [];
+      sentenceEnded = false;
+    }
+    phrase.push(token);
+    if (!insideMatchedQuote && MANGA_SENTENCE_END_RE.test(text)) {
+      sentenceEnded = true;
+    }
+  }
+  if (phrase.length > 0) phrases.push(phrase);
+  return phrases;
+}
+
+function isHangingMangaPunctuation(text) {
+  return (
+    MANGA_SENTENCE_END_RE.test(text) || MANGA_CLOSING_PUNCTUATION_RE.test(text)
+  );
+}
+
+function wrapPhraseTokens(tokens, unitCapacity) {
+  if (tokens.length === 0) return [[]];
+  const columns = [];
+  let start = 0;
+  while (start < tokens.length) {
+    let fittedEnd = start;
+    let preferredEnd = null;
+    let units = 0;
+    let consumedHangingOverflow = false;
+    for (let end = start; end < tokens.length; end += 1) {
+      const token = tokens[end];
+      const text = tokenText(token);
+      const tokenUnits = mangaFrameVisualInlineUnits(text);
+      const overCapacity = units + tokenUnits > unitCapacity;
+      if (
+        fittedEnd > start &&
+        overCapacity &&
+        !isHangingMangaPunctuation(text)
+      ) {
+        break;
+      }
+      fittedEnd = end + 1;
+      units += tokenUnits;
+      if (overCapacity && isHangingMangaPunctuation(text)) {
+        consumedHangingOverflow = true;
+      }
+      if (MANGA_PREFERRED_BREAK_RE.test(text)) {
+        preferredEnd = fittedEnd;
+      }
+      if (units >= unitCapacity) {
+        const nextText = tokens[end + 1] ? tokenText(tokens[end + 1]) : null;
+        if (nextText && isHangingMangaPunctuation(nextText)) continue;
+        break;
+      }
+    }
+
+    if (fittedEnd >= tokens.length) {
+      columns.push(tokens.slice(start));
+      break;
+    }
+    const end =
+      !consumedHangingOverflow && preferredEnd && preferredEnd > start
+        ? preferredEnd
+        : fittedEnd;
+    columns.push(tokens.slice(start, Math.max(start + 1, end)));
+    start = Math.max(start + 1, end);
+  }
+  return columns;
+}
+
+function phraseFirstColumns(tokens) {
+  if (tokens.length === 0) return [[]];
+  return sentencePhrases(tokens).flatMap((phrase) =>
+    wrapPhraseTokens(phrase, MANGA_JAPANESE_COLUMN_UNIT_CAPACITY),
+  );
+}
+
+export function mangaFrameTextLayout(text, bubbleCount = 1, options = {}) {
+  const sourceText = String(text ?? '');
+  const normalizedText = sourceText.trim().replace(/[ \t]+/gu, ' ');
+  const script = mangaFrameTextScript(normalizedText);
+  const japanesePhraseLayout = usesJapanesePhraseLayout(
+    normalizedText,
+    options,
+  );
+  let columnTokens;
+
+  if (/\r?\n/u.test(normalizedText)) {
+    const tokens = projectedLayoutTokens(normalizedText, options);
+    columnTokens = splitLayoutTokensAtNewlines(tokens).flatMap((column) => {
+      const columnScript = mangaFrameTextScript(column.map(tokenText).join(''));
+      if (columnScript !== 'cjk' && columnScript !== 'mixed') return [column];
+      return japanesePhraseLayout ? phraseFirstColumns(column) : [column];
+    });
+  } else if (script === 'cjk' || script === 'mixed') {
+    const tokens = projectedLayoutTokens(normalizedText, options);
+    columnTokens = japanesePhraseLayout
+      ? phraseFirstColumns(tokens)
+      : balancedCjkColumns(tokens, bubbleCount);
+  } else {
+    columnTokens = [plainLayoutTokens(normalizedText)];
+  }
+
+  const columns = columnTokens.map((column) => column.map(tokenText).join(''));
+  const hasRuby = columnTokens.some((column) =>
+    column.some((token) => Boolean(token.reading)),
+  );
+
+  const scriptScale = script === 'latin' ? MANGA_LATIN_TEXT_SCALE : 1;
+  const tallestColumnUnits = Math.max(
+    1,
+    ...columns.map((column) => mangaFrameVisualInlineUnits(column)),
+  );
+  const inlineRequiredBlockSize =
+    (tallestColumnUnits * scriptScale * MANGA_TEXT_LINE_HEIGHT) /
+    MANGA_TEXT_MAX_INLINE_RATIO;
+  const columnWidthUnits = columnTokens.reduce(
+    (total, column) =>
+      total +
+      MANGA_TEXT_LINE_HEIGHT +
+      (column.some((token) => Boolean(token.reading))
+        ? MANGA_RUBY_LANE_WIDTH
+        : 0),
+    0,
+  );
+  const widthRequiredBlockSize =
+    columns.length > 1 || hasRuby
+      ? columnWidthUnits /
+        (MANGA_TEXT_MAX_INLINE_RATIO * MANGA_FRAME_BLOCK_TO_INLINE_RATIO)
+      : 0;
+
+  return Object.freeze({
+    columns: Object.freeze(columns),
+    columnTokens: Object.freeze(
+      columnTokens.map((column) =>
+        Object.freeze(column.map((token) => Object.freeze({ ...token }))),
+      ),
+    ),
+    columnCount: columns.length,
+    displayText: columns.join('\n'),
+    requiredBlockSizeEm: roundHundredths(
+      Math.max(inlineRequiredBlockSize, widthRequiredBlockSize),
+    ),
+    script,
+    hasRuby,
+  });
+}
+
+export function mangaFrameRequiredBlockSizeEm(text, bubbleCount = 1) {
+  return mangaFrameTextLayout(text, bubbleCount).requiredBlockSizeEm;
 }
 
 function stableFraction(value) {

@@ -20,17 +20,25 @@ export const OUTPUT_LYRICS_CAPTURE_SIZE = freezeCaptureSize(
 const WIDGET_SIZE_BY_ID = new Map(
   OUTPUT_WIDGET_CAPTURE_SIZES.map((size) => [size.id, size]),
 );
-const LARGE_WIDGET_CAPTURE_SIZE = WIDGET_SIZE_BY_ID.get('large');
-
 export function calculateWidgetPreviewScale({
   availableWidth,
   availableHeight,
-  optionCount,
+  captureSizes,
   columnGap = 0,
   captionHeight = 0,
   rowGap = 0,
 }) {
-  const count = Math.max(1, Number.isFinite(optionCount) ? optionCount : 1);
+  const sizes = Array.isArray(captureSizes)
+    ? captureSizes.filter(
+        (size) =>
+          Number.isFinite(size?.width) &&
+          size.width > 0 &&
+          Number.isFinite(size?.height) &&
+          size.height > 0,
+      )
+    : [];
+  const visibleSizes = sizes.length ? sizes : [OUTPUT_WIDGET_CAPTURE_SIZES[0]];
+  const count = visibleSizes.length;
   const width = Math.max(0, Number(availableWidth) || 0);
   const height = Math.max(0, Number(availableHeight) || 0);
   const horizontalGaps = Math.max(0, Number(columnGap) || 0) * (count - 1);
@@ -41,13 +49,11 @@ export function calculateWidgetPreviewScale({
       Math.max(0, Number(rowGap) || 0),
   );
   const columnWidth = Math.max(0, width - horizontalGaps) / count;
+  const widestCapture = Math.max(...visibleSizes.map((size) => size.width));
+  const tallestCapture = Math.max(...visibleSizes.map((size) => size.height));
   return Math.max(
     0,
-    Math.min(
-      1,
-      columnWidth / LARGE_WIDGET_CAPTURE_SIZE.width,
-      canvasHeight / LARGE_WIDGET_CAPTURE_SIZE.height,
-    ),
+    Math.min(1, columnWidth / widestCapture, canvasHeight / tallestCapture),
   );
 }
 export function defaultCaptureSizeIdForKind(kind) {

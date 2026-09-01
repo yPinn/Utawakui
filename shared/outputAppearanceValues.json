@@ -25,6 +25,10 @@
       { "id": "transparent", "label": "透明" },
       { "id": "soft", "label": "半透明" },
       { "id": "solid", "label": "實底" }
+    ],
+    "furigana": [
+      { "id": "auto", "label": "有資料時顯示" },
+      { "id": "off", "label": "關閉" }
     ]
   },
   "defaultSettings": {
@@ -32,7 +36,8 @@
     "fontScale": "medium",
     "fontWeight": "semibold",
     "alignment": "left",
-    "surface": "transparent"
+    "surface": "transparent",
+    "furigana": "auto"
   },
   "slotDefaultSettings": {
     "now-playing": {
@@ -40,28 +45,24 @@
       "fontScale": "medium",
       "fontWeight": "bold",
       "alignment": "left",
-      "surface": "solid"
+      "surface": "solid",
+      "furigana": "auto"
     },
     "setlist": {
       "fontFamily": "sans",
       "fontScale": "medium",
       "fontWeight": "semibold",
       "alignment": "left",
-      "surface": "solid"
+      "surface": "solid",
+      "furigana": "auto"
     },
     "lyrics": {
       "fontFamily": "serif",
       "fontScale": "medium",
       "fontWeight": "bold",
       "alignment": "left",
-      "surface": "transparent"
-    },
-    "artwork": {
-      "fontFamily": "serif",
-      "fontScale": "medium",
-      "fontWeight": "bold",
-      "alignment": "left",
-      "surface": "soft"
+      "surface": "transparent",
+      "furigana": "auto"
     }
   }
 }
