@@ -141,6 +141,8 @@
   --ui-list-header-height: 2.25rem;
   --ui-player-bar-height: 4.75rem;
   --ui-panel-inset: 1rem;
+  --ui-inspector-width: 20rem;
+  --ui-inspector-rail-width: 2.5rem;
   --ui-shell-gutter: 0.75rem;
   --ui-folder-perimeter: 0.25rem;
   --ui-folder-tab-height: 2.5rem;

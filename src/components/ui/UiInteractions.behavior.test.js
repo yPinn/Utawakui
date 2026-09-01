@@ -1,8 +1,13 @@
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
+import { readFileSync } from 'node:fs';
 import UiButton from './UiButton.vue';
+import UiIconButton from './UiIconButton.vue';
+import UiNotice from './UiNotice.vue';
 import UiSearchBox from './UiSearchBox.vue';
+import UiStatusIcon from './UiStatusIcon.vue';
 import UiTabs from './UiTabs.vue';
+import { Volume2 } from '../../icons/index.js';
 import {
   attachClientRender,
   findAll,
@@ -13,13 +18,54 @@ import {
 
 for (const [component, filename] of [
   [UiButton, './UiButton.vue'],
+  [UiIconButton, './UiIconButton.vue'],
+  [UiNotice, './UiNotice.vue'],
   [UiSearchBox, './UiSearchBox.vue'],
+  [UiStatusIcon, './UiStatusIcon.vue'],
   [UiTabs, './UiTabs.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
 
 describe('shared UI interaction contracts', () => {
+  it('lets an icon button stretch into a parent-owned disclosure hit area', () => {
+    const { app, root } = mount(UiIconButton, {
+      icon: Volume2,
+      label: '展開集合資料',
+      stretch: true,
+    });
+    const button = findAll(root, (node) => node.type === 'button')[0];
+
+    expect(String(button.props.class)).toContain('ui-icon-btn--stretch');
+    expect(button.props['aria-label']).toBe('展開集合資料');
+
+    const source = readFileSync(
+      new URL('./UiIconButton.vue', import.meta.url),
+      'utf8',
+    );
+    expect(source).toMatch(
+      /\.ui-icon-btn--stretch\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
+    );
+    expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):hover');
+    expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):active');
+    app.unmount();
+  });
+
+  it('uses the semantic information glyph for informational notices', () => {
+    const { app, root } = mount(UiNotice, {
+      tone: 'info',
+      title: '遷移切面',
+      message: '資料來自目前的本機曲庫。',
+      compact: true,
+    });
+    const notice = findAll(root, (node) => node.props.role === 'status')[0];
+    const icon = findAll(root, (node) => node.type === 'svg')[0];
+
+    expect(String(notice.props.class)).toContain('ui-notice--compact');
+    expect(String(icon.props.class)).toContain('lucide-info');
+    app.unmount();
+  });
+
   it('keeps search labeling, native attributes, disabled state, and clearing explicit', () => {
     const update = vi.fn();
     const { app, root } = mount(UiSearchBox, {
@@ -69,6 +115,35 @@ describe('shared UI interaction contracts', () => {
     expect(textContent(button)).toContain('正在儲存');
     expect(textContent(button)).not.toContain('儲存儲存');
     app.unmount();
+  });
+
+  it('distinguishes standalone status meaning from a decorative duplicate', () => {
+    const standalone = mount(UiStatusIcon, {
+      icon: Volume2,
+      label: '目前播放',
+    });
+    const standaloneRoot = findAll(standalone.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-status-icon'),
+    )[0];
+
+    expect(standaloneRoot.props.role).toBe('img');
+    expect(standaloneRoot.props['aria-label']).toBe('目前播放');
+    expect(standaloneRoot.props['aria-hidden']).toBeUndefined();
+    standalone.app.unmount();
+
+    const decorative = mount(UiStatusIcon, {
+      icon: Volume2,
+      label: '目前播放',
+      decorative: true,
+    });
+    const decorativeRoot = findAll(decorative.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-status-icon'),
+    )[0];
+
+    expect(decorativeRoot.props.role).toBeUndefined();
+    expect(decorativeRoot.props['aria-label']).toBeUndefined();
+    expect(decorativeRoot.props['aria-hidden']).toBe('true');
+    decorative.app.unmount();
   });
 
   it('implements roving tab focus and skips disabled tabs', async () => {

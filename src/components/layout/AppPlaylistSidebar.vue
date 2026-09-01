@@ -9,7 +9,7 @@ import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
-const { setActiveView } = useAppView();
+const { activeView, setActiveView } = useAppView();
 const {
   editDetailsPlaylist,
   editDetailsIsAlbum,
@@ -25,7 +25,7 @@ const {
 const { isResizing, startResize } = useSidebarResize();
 
 function activateSetlistView() {
-  setActiveView('setlist');
+  if (activeView.value !== 'studio-library') setActiveView('setlist');
 }
 </script>
 

@@ -44,6 +44,8 @@ export {
   Music,
   Music2,
   Palette,
+  PanelRightClose,
+  PanelRightOpen,
   Pause,
   Pencil,
   Pin,

@@ -25,6 +25,7 @@ defineProps({
   },
   spinning: { type: Boolean, default: false },
   label: { type: String, required: true },
+  decorative: { type: Boolean, default: false },
 });
 </script>
 
@@ -32,8 +33,10 @@ defineProps({
   <span
     class="ui-status-icon"
     :class="`ui-status-icon--${tone}`"
-    :title="label"
-    :aria-label="label"
+    :role="decorative ? undefined : 'img'"
+    :title="decorative ? undefined : label"
+    :aria-label="decorative ? undefined : label"
+    :aria-hidden="decorative ? 'true' : undefined"
   >
     <component
       :is="icon"

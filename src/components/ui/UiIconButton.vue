@@ -22,6 +22,7 @@ const props = defineProps({
     validator: (value) => ['square', 'circle', 'inherit'].includes(value),
   },
   active: { type: Boolean, default: false },
+  stretch: { type: Boolean, default: false },
   fill: { type: Boolean, default: false },
 });
 
@@ -36,7 +37,10 @@ const titleText = computed(() => props.title ?? props.label);
       `ui-icon-btn--${variant}`,
       `ui-icon-btn--${size}`,
       `ui-icon-btn--${shape}`,
-      { 'ui-icon-btn--active': active },
+      {
+        'ui-icon-btn--active': active,
+        'ui-icon-btn--stretch': stretch,
+      },
     ]"
     :aria-label="label"
     :title="titleText"
@@ -94,6 +98,13 @@ const titleText = computed(() => props.title ?? props.label);
   border-radius: inherit;
 }
 
+.ui-icon-btn--stretch {
+  width: 100%;
+  height: 100%;
+  flex: 1 1 auto;
+  border-radius: inherit;
+}
+
 .ui-icon-btn--ghost {
   background: transparent;
   color: var(--ui-color-text-muted);
@@ -101,6 +112,11 @@ const titleText = computed(() => props.title ?? props.label);
 
 .ui-icon-btn--ghost:not(:disabled):hover {
   background: var(--ui-color-surface-hover);
+  color: var(--ui-color-text);
+}
+
+.ui-icon-btn--ghost:not(:disabled):active {
+  background: var(--ui-color-surface-active);
   color: var(--ui-color-text);
 }
 
@@ -148,5 +164,9 @@ const titleText = computed(() => props.title ?? props.label);
 .ui-icon-btn:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
+}
+
+.ui-icon-btn--stretch:focus-visible {
+  outline-offset: var(--ui-focus-offset-inset);
 }
 </style>

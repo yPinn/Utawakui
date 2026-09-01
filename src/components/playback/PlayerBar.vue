@@ -23,7 +23,6 @@ import { useMetronome } from '../../composables/useMetronome.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { useSeparation } from '../../composables/useSeparation.js';
-import { PLAYER_BAR_ARTWORK_SIZE } from '../../constants/ui.js';
 import {
   SEPARATION_PRESET_SELECT_TITLE,
   separationPresetOptionsFor,
@@ -39,12 +38,20 @@ import { formatDuration } from '../../utils/format.js';
 import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
+import PlayerBarArtwork from './PlayerBarArtwork.vue';
 import QueuePanel from '../queue/QueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
+
+defineProps({
+  artworkExpandable: { type: Boolean, default: false },
+  artworkExpanded: { type: Boolean, default: false },
+  artworkControls: { type: String, default: undefined },
+});
+
+const emit = defineEmits(['artworkActivate']);
 
 const {
   state,
@@ -505,12 +512,14 @@ onUnmounted(() => {
       @action="toggle"
     />
     <div class="player-bar__track">
-      <UiTrackThumb
+      <PlayerBarArtwork
         v-if="state.track"
         class="player-bar__artwork"
         :track="state.track"
-        :size="PLAYER_BAR_ARTWORK_SIZE"
-        font-size="var(--ui-font-size-lg)"
+        :expandable="artworkExpandable"
+        :expanded="artworkExpanded"
+        :controls="artworkControls"
+        @activate="emit('artworkActivate')"
       />
       <div class="player-bar__track-copy">
         <template v-if="state.track">

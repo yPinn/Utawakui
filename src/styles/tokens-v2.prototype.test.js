@@ -39,6 +39,7 @@ const performerView = readFileSync(
   new URL('../../performer-view.html', import.meta.url),
   'utf8',
 );
+const app = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');
 
 function filesUnder(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -60,6 +61,9 @@ const candidateProductionReferences = filesUnder(
   )
   .filter(
     (file) => !file.pathname.endsWith('/styles/ui-component-tokens.test.js'),
+  )
+  .filter(
+    (file) => !file.pathname.endsWith('/views/StudioLibraryPrototypeView.vue'),
   )
   .filter((file) => readFileSync(file, 'utf8').includes('tokens-v2.css'))
   .map((file) => file.pathname);
@@ -113,6 +117,10 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(rootIndex).not.toContain('tokens-v2.css');
     expect(performerView).not.toContain('tokens-v2.css');
     expect(candidateProductionReferences).toEqual([]);
+    expect(app).toContain(
+      'const internalWorkbenchesEnabled = import.meta.env.DEV',
+    );
+    expect(app).toContain("import('./views/StudioLibraryPrototypeView.vue')");
   });
 
   it('covers the approved theme, density, motion, and state matrix', () => {
@@ -151,7 +159,9 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(212);
+    expect(uniqueNames.size).toBe(214);
+    expect(uniqueNames).toContain('--ui-inspector-width');
+    expect(uniqueNames).toContain('--ui-inspector-rail-width');
     expect(missing).toEqual([]);
   });
 
@@ -164,6 +174,10 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(html).toContain('class="player-bar"');
     expect(html).toContain('popover class="track-menu"');
     expect(html).toContain('<dialog class="details-dialog"');
+  });
+
+  it('keeps the folder perimeter restrained because the interior owns the material color', () => {
+    expect(tokens).toContain('--ui-folder-perimeter: 0.25rem;');
   });
 
   it('offers a dossier-only embed without leaking candidate tokens into Vue', () => {

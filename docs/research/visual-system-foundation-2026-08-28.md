@@ -1,10 +1,9 @@
 # Visual System Foundation
 
-Status: In progress — semantic status colors, the Architectural Slate palette
-relationship, the Controlled Dossier material rules, rem-based typography, and
-the rem-first spacing／density, shape／layering, and motion contracts were selected
-by the owner on 2026-08-28. Detailed theme values, shadow alpha, and prototype
-visible acceptance remain review candidates.
+Status: implemented development candidate — the foundation, shared-component
+contracts, and native F7 real-library slice have passed automated verification.
+Owner-visible acceptance, candidate contract freeze, and production page migration
+remain pending.
 
 This document records visual-foundation decisions made after the approved
 discovery brief and Studio Library direction. It does not authorize production
@@ -12,15 +11,18 @@ CSS or Vue component changes.
 
 ## Session Handoff Snapshot
 
-As of 2026-08-28, the documented decision chain is:
+As of 2026-08-30, the documented decision chain and implementation boundary are:
 
 1. [Visual System Discovery](visual-system-discovery-2026-08-25.md) owns the
    approved product context, Session／Output／Feature Gate UX boundaries, viewport
    targets, platform posture, and control-panel／Overlay separation.
 2. [Visual Direction Options](visual-direction-options-2026-08-25.md) owns the
    approved Direction B／Studio Library choice.
-3. This document owns the selected foundation relationships and the remaining
-   review gates.
+3. This document owns the selected foundation relationships, the development-only
+   validation slice, and the remaining review gates.
+4. [UI Component Foundation](ui-component-foundation-2026-08-28.md) owns the
+   primitive／compound／feature boundaries and compatibility rules used by that
+   slice.
 
 Selected direction:
 
@@ -42,18 +44,47 @@ Selected direction:
 - restrained `100／140／200／280ms` timing, three purpose-based easing curves,
   component motion limits, and an OS-authoritative reduced-motion remap.
 
+Implemented and automatically verified:
+
+- a native Vue F7 view using the real local library and playlist projections;
+- reuse of the mature production Sidebar and PlayerBar around a read-only
+  Controlled Dossier composition;
+- an external shell-level Context Inspector that expands, collapses, and uses the
+  PlayerBar artwork as a symmetric disclosure entry point;
+- shared primitive reuse for notices, chips, status icons, search, artwork,
+  thumbnails, and Inspector icon buttons;
+- desktop／compact source contracts, focused and complete tests, coverage ratchet,
+  lint／format／Markdown, candidate token graph, production build, and production-
+  bundle exclusion of the development-only view and candidate token payload.
+
 Still candidate or pending:
 
-- exact theme values, shadow alpha, and final contrast／visible acceptance;
-- the isolated `1440 × 810` prototype and `960 × 650` reflow;
-- final primitive → semantic → necessary component token freeze and migration.
+- owner-visible F7 acceptance of material weight, metadata rail, note prominence,
+  density, hierarchy, hover／focus behavior, and artwork at `1440 × 810` and
+  `960 × 650`, in dark and light themes;
+- accepted track-selection, playback-context, queue-precedence, and end-of-context
+  behavior wired through the existing player／queue owners;
+- final primitive → semantic → necessary component token freeze;
+- a separately planned production page migration and later integrated-GPU／OBS
+  performance matrix.
 
-Unchanged by this research phase:
+Production boundary:
 
-- product name and icon;
-- active `src/styles/tokens.css` and production Vue styling;
-- independent Overlay tokens and templates;
-- Session／Output runtime behavior and other product implementation.
+- the product name, icon, Overlay tokens／templates, Session behavior, and Output
+  behavior are unchanged;
+- `src/styles/tokens.css` remains the active production token contract;
+- `src/styles/tokens-v2.css` is imported only by the compile-time development F7
+  module and remains absent from production bundles;
+- shared components were compatibility-hardened in place, but production pages
+  have not adopted the Studio Library visual system or Controlled Dossier layout.
+
+History boundary:
+
+- the owner authorized an implementation snapshot commit on 2026-09-02 for the F7
+  native slice, Inspector, supporting shared-component changes, tests, candidate-
+  token adjustments, and these records;
+- that commit preserves the candidate for session handoff but does not constitute
+  visible acceptance, a final token freeze, or production-page migration approval.
 
 ## Parallel Token File Contract
 
@@ -302,14 +333,14 @@ copying its editorial collage behavior.
 The stable anatomy is:
 
 1. Integrated folder tabs define the active workspace category.
-2. The folder frame fills the right main block rather than sitting inside another
-   page card.
+2. The folder frame fills the primary workspace column rather than sitting inside
+   another page card. An optional shell-level Context Inspector may sit beside it.
 3. A bounded internal header owns the page title, readiness／visibility context,
    and primary actions.
 4. A paper plane owns the structured list, table, editor, or grid appropriate to
    the active category.
-5. A metadata rail appears only when the page has stable contextual facts that
-   improve preparation or live operation.
+5. Stable contextual facts belong to the optional Context Inspector, not a fixed
+   column inside every dossier page.
 6. Note and preview modules stay in normal document flow and communicate real
    information; they do not overlap controls or become decoration.
 
@@ -341,12 +372,28 @@ scale correction, not a new folder direction:
   canvas.
 - Inactive tabs retain material identity but reduce their visible color weight;
   selection, focus, status, and action emphasis remain separate.
-- A metadata rail is conditional and contains stable contextual facts only. Its
-  desktop target is approximately 16% to 18% of the dossier content width, with a
-  practical range of `11rem` to `13rem`.
+- The Context Inspector is conditional and contains stable contextual facts only.
+  Its expanded desktop target is `18rem` to `22rem`; its collapsed desktop rail is
+  approximately `2.5rem` and is itself the explicit expand control. The whole rail
+  uses the shared icon-button hover／pressed／focus contract; there is no smaller
+  nested hit target. Collapsing releases the remaining width to the primary
+  workspace.
 - Transient Session／Output readiness stays in the bounded header instead of the
-  metadata rail. When the main content region becomes narrower than approximately
-  `52.5rem`, the rail becomes a horizontal summary or collapsible disclosure.
+  Inspector. The Inspector owns a separate scroll region above PlayerBar, preserves
+  its session open state across page changes, and never opens automatically because
+  a collection changed.
+- When the active workspace provides this context plane, the current-song artwork
+  in PlayerBar and the Inspector's own header／rail icon are symmetric toggle
+  affordances over the same session state. Either entry point expands or collapses
+  the Inspector; pages without a context consumer keep PlayerBar artwork decorative
+  instead of exposing a dead control.
+- At the `960 × 650` target the Inspector becomes a temporary right-side panel when
+  explicitly open; when closed its full-height edge rail overlays the context edge
+  without reserving a persistent metadata column. Both states use the Archive
+  Frame's shell-level top／bottom gutter. The Archive Frame and Inspector currently
+  enter that projection at the same authored `70rem` breakpoint. A behavior
+  contract keeps both literals synchronized; do not disguise the media condition
+  as a CSS token that cannot be consumed there.
 - Use one neutral in-flow note module with a hairline boundary and restrained
   material tint. Folder plum／olive must not become competing information or
   warning fills; real warning content uses the semantic warning family.
@@ -430,10 +477,10 @@ not be the only carrier of state.
 ### Workspace Reflow
 
 - At `1440 × 810` DIP, retain the full sidebar, bounded dossier header, optional
-  metadata rail, primary content plane, and inline actions.
-- At `960 × 650` DIP, keep the same type ramp. Convert the metadata rail to a
-  horizontal summary or disclosure, wrap header actions below identity, remove
-  low-priority table columns, and move secondary tools into popovers.
+  expanded／collapsed Context Inspector, primary content plane, and inline actions.
+- At `960 × 650` DIP, keep the same type ramp. Render an explicitly opened Context
+  Inspector as a temporary right-side panel, wrap header actions below identity,
+  remove low-priority table columns, and move secondary tools into popovers.
 - Validate both themes at `100%` and `125%` UI scale. Separately verify readable
   reflow at `200%` accessibility zoom.
 
@@ -509,8 +556,8 @@ The Controlled Dossier keeps a `0.25rem` material perimeter and `2.5rem`／
 standard is the default working density. At `960 × 650` DIP, compact density may
 be selected as part of the narrow workspace composition, but it does not replace
 the structural reflow rules: the sidebar becomes an approximately `4.5rem` rail,
-the metadata rail becomes a summary or disclosure, low-priority columns leave the
-table, and secondary tools move to popovers.
+an explicitly opened Context Inspector becomes a shell-level temporary panel,
+low-priority columns leave the table, and secondary tools move to popovers.
 
 Exact optical tokens stay outside the rem scale: persistent boundaries use
 `1px`, while focus and drag indicators use `2px`. These values describe CSS
@@ -730,8 +777,8 @@ Automated prototype verification currently proves:
   horizontal or vertical overflow;
 - native dark／light `color-scheme`, OS and manual reduced-motion paths, and
   essential semantic text pairs at WCAG AA;
-- a complete candidate graph of `212` unique token names after the shared-component
-  foundation expansion, with no unresolved references and no production-source
+- a complete candidate graph of `214` unique token names after the shared-component
+  foundation expansion, with no unresolved references and no production-bundle
   reference to `tokens-v2.css`.
 
 This is visual-system evidence, not a production contract. Owner review of the
@@ -739,11 +786,59 @@ material weight, metadata rail, note prominence, density, and multilingual
 hierarchy remains required. Integrated-GPU／OBS frame-pacing evidence and the
 production migration plan remain later work.
 
+### Native Real-Library Slice
+
+The F7 development view now replaces its dossier iframe with native Vue
+components. It reads the authoritative `useLibrary` and `usePlaylists` projections,
+shows the selected real album／playlist or current library root, and projects the
+existing player's current track without creating another store, audio element, IPC
+contract, or playback action.
+
+One component hierarchy adapts by collection type: albums use one release cover
+and derived artist／year facts; playlists retain collage-capable artwork and manual
+order; library roots use their existing source filters. Search remains local to the
+candidate view. The real Sidebar stays in F7 while changing collections, and the
+production PlayerBar remains the only transport console.
+
+`StudioLibraryPrototypeView.vue` is still inside App's compile-time development
+branch. It imports `tokens-v2.css` only in that excluded module and activates
+`data-ui-system='v2'` for the view lifetime. The candidate semantic values override
+the active system temporarily, while legacy component aliases continue to provide
+compatibility for the mature Sidebar and PlayerBar. Production builds contain
+neither the native dossier component nor the candidate token payload.
+
+This slice is intentionally read-only. Track selection, playback, queue mutation,
+sorting, editing, and deletion remain in the existing Setlist until their accepted
+Spotify-informed behavior contracts are connected and tested separately.
+
+The native slice also corrects the prototype's containment model. `AppInnerPage`
+wraps only the primary Dossier; `AppArchiveFrame` owns an optional `context` slot
+beside that page. The feature-owned Inspector renders through the slot as an
+external rail spanning the Archive Frame rather than as a second card inside the
+folder page. Pages without context content create neither a wrapper nor reserved
+space. At the compact target, the same rail leaves normal flow and becomes a
+temporary overlay while the primary page keeps its full width.
+
 ### Next Decisions
 
-1. Review the four clean prototype captures and confirm the Controlled Dossier
-   material weight, metadata rail, note module, density, and information hierarchy.
-2. Run the later integrated-GPU／OBS performance matrix before deciding whether a
-   constrained profile needs product exposure.
-3. After high-completion owner acceptance, freeze the primitive → semantic →
-   necessary component contract and plan the production migration.
+The immediate next phase is **F7 visible acceptance and candidate contract
+freeze**. It is a gate, not production migration.
+
+1. Start the Electron development surface with `npm run dev`, open F7, and review
+   one real album, one ordinary playlist, and both library roots at `1440 × 810`
+   and `960 × 650` in dark and light themes.
+2. Exercise expanded／collapsed Inspector, full-rail hover／pressed／focus behavior,
+   PlayerBar-artwork toggle, real cover／collage fallback, note prominence, long
+   multilingual metadata, empty search, and no-current-track states.
+3. Correct only acceptance defects inside the existing ownership boundaries. Do
+   not add sorting, editing, deletion, queue mutation, or a second player.
+4. When the visible matrix passes, freeze the accepted primitive → semantic →
+   necessary component subset and create a phase commit only after explicit owner
+   approval.
+
+The following phase is the first behavioral vertical slice: connect row selection
+and playback through the existing player／queue owners using the accepted Spotify-
+informed rules. View filtering must remain separate from playback context; queue
+precedence and end-of-context behavior must be explicit rather than inherited from
+the legacy filtered-row snapshot. Production page migration and integrated-GPU／OBS
+performance validation remain later gates.

@@ -1,95 +1,71 @@
 <script setup>
-import { onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
-import { useTheme } from '../composables/useTheme.js';
+import { computed, onMounted, onUnmounted } from 'vue';
+import { useLibrary } from '../composables/useLibrary.js';
+import { usePlayer } from '../composables/usePlayer.js';
+import { usePlaylists } from '../composables/usePlaylists.js';
+import StudioLibraryDossier from '../components/playlists/StudioLibraryDossier.vue';
+import { createStudioLibraryPresentation } from '../utils/studioLibraryPresentation.js';
+import '../styles/tokens-v2.css';
 
-const { theme } = useTheme();
-const prototypeFrame = useTemplateRef('prototype-frame');
-const initialTheme = theme.value;
-const forwardedKeys = new Set([
-  'm',
-  'g',
-  'arrowup',
-  'arrowdown',
-  'f1',
-  'f2',
-  'f3',
-  'f4',
-  'f5',
-  'f7',
-  'f8',
-  'f9',
-  'f10',
-]);
+const {
+  state: libraryState,
+  initialize: initializeLibrary,
+  refresh: refreshLibrary,
+} = useLibrary();
+const { state: playlistState, selectedPlaylist } = usePlaylists();
+const { state: playerState } = usePlayer();
 
-const search = new URLSearchParams({
-  embed: 'dossier',
-  clean: '1',
-  theme: initialTheme,
-  density: 'standard',
-  scenario: 'populated',
-});
-const prototypeUrl = `/prototypes/studio-library-workspace/index.html?${search.toString()}`;
-
-function postToPrototype(message) {
-  prototypeFrame.value?.contentWindow?.postMessage(
-    message,
-    window.location.origin,
-  );
-}
-
-function syncTheme() {
-  postToPrototype({
-    type: 'utawakui-prototype-theme',
-    theme: theme.value,
-  });
-}
-
-function handlePrototypeMessage(event) {
-  if (
-    event.origin !== window.location.origin ||
-    event.source !== prototypeFrame.value?.contentWindow
-  ) {
-    return;
-  }
-
-  const data = event.data;
-  if (!data || data.type !== 'utawakui-app-shortcut') return;
-  const key = typeof data.key === 'string' ? data.key.toLowerCase() : '';
-  if (!forwardedKeys.has(key)) return;
-
-  window.dispatchEvent(
-    new KeyboardEvent('keydown', {
-      key: data.key,
-      ctrlKey: data.ctrlKey === true,
-      shiftKey: data.shiftKey === true,
-      altKey: data.altKey === true,
-      metaKey: data.metaKey === true,
-    }),
-  );
-}
-
-watch(theme, syncTheme);
-onMounted(() => window.addEventListener('message', handlePrototypeMessage));
-onUnmounted(() =>
-  window.removeEventListener('message', handlePrototypeMessage),
+const presentation = computed(() =>
+  createStudioLibraryPresentation({
+    selectedPlaylist: selectedPlaylist.value,
+    libraryView: playlistState.libraryView,
+    tracks: libraryState.tracks,
+  }),
 );
+const libraryErrorMessage = computed(
+  () => libraryState.error?.message ?? libraryState.error?.title ?? '',
+);
+let previousUiSystem;
+
+onMounted(async () => {
+  const root = document.documentElement;
+  previousUiSystem = root.dataset.uiSystem;
+  root.dataset.uiSystem = 'v2';
+
+  const wasInitialized = libraryState.isInitialized;
+  await initializeLibrary();
+  if (wasInitialized) await refreshLibrary();
+});
+
+onUnmounted(() => {
+  const root = document.documentElement;
+  if (previousUiSystem) root.dataset.uiSystem = previousUiSystem;
+  else delete root.dataset.uiSystem;
+});
 </script>
 
 <template>
-  <section class="studio-library-prototype">
-    <iframe
-      ref="prototype-frame"
-      class="studio-library-prototype__frame"
-      :src="prototypeUrl"
-      title="Studio Library dossier 開發預覽"
-      referrerpolicy="no-referrer"
-      @load="syncTheme"
-    ></iframe>
+  <section class="studio-library-view">
+    <StudioLibraryDossier
+      :collection-type="presentation.collectionType"
+      :kind-label="presentation.kindLabel"
+      :title="presentation.title"
+      :summary="presentation.summary"
+      :description="presentation.description"
+      :tracks="presentation.tracks"
+      :cover-url="presentation.coverUrl"
+      :can-collage="presentation.canCollage"
+      :current-track-id="playerState.track?.id ?? null"
+      :loading="libraryState.isLoading"
+      :error-message="libraryErrorMessage"
+      @retry="refreshLibrary"
+    />
   </section>
 </template>
 
 <style scoped>
-.studio-library-prototype {
+.studio-library-view {
+  container: studio-library / inline-size;
   display: flex;
   flex: 1;
   min-width: 0;
@@ -98,11 +74,12 @@ onUnmounted(() =>
   background: var(--ui-color-surface);
 }
 
-.studio-library-prototype__frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: var(--ui-color-surface);
+:global(:root[data-ui-system='v2'] .app-tabs__folder--active),
+:global(:root[data-ui-system='v2'] .app-tabs__row::after) {
+  background: var(--ui-color-folder-primary);
+}
+
+:global(:root[data-ui-system='v2'] .app-tabs__folder--active) {
+  color: var(--ui-color-text);
 }
 </style>

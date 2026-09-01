@@ -9,11 +9,14 @@ const { createRenderer, h, ssrContextKey } = Vue;
 export function attachClientRender(component, filename, importMetaUrl) {
   const source = fs.readFileSync(new URL(filename, importMetaUrl), 'utf8');
   const { descriptor } = parse(source, { filename });
-  const script = compileScript(descriptor, { id: filename });
+  const bindingMetadata =
+    descriptor.script || descriptor.scriptSetup
+      ? compileScript(descriptor, { id: filename }).bindings
+      : {};
   const { code } = compile(descriptor.template.content, {
     mode: 'function',
     prefixIdentifiers: true,
-    bindingMetadata: script.bindings,
+    bindingMetadata,
   });
   component.render = new Function('Vue', code)(Vue);
 }

@@ -1,5 +1,12 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, provide } from 'vue';
+import {
+  computed,
+  defineAsyncComponent,
+  onMounted,
+  provide,
+  shallowRef,
+  watch,
+} from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
@@ -47,6 +54,20 @@ const internalViews = internalWorkbenchesEnabled
       ),
     }
   : {};
+const internalContextDefinitions = internalWorkbenchesEnabled
+  ? {
+      'studio-library': {
+        component: defineAsyncComponent(
+          () => import('./views/StudioLibraryContextView.vue'),
+        ),
+        controlId: 'studio-library-inspector-content',
+        loadController: () =>
+          import('./composables/useStudioLibraryInspector.js').then(
+            ({ useStudioLibraryInspector }) => useStudioLibraryInspector(),
+          ),
+      },
+    }
+  : {};
 const internalViewShortcuts = internalWorkbenchesEnabled
   ? {
       f7: 'studio-library',
@@ -90,6 +111,47 @@ const views = {
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const { activeView } = useAppView();
+const activeContextDefinition = computed(
+  () => internalContextDefinitions[activeView.value] ?? null,
+);
+const activeContextView = computed(
+  () => activeContextDefinition.value?.component ?? null,
+);
+const activeContextController = shallowRef(null);
+let activeContextRequest = 0;
+
+watch(
+  activeView,
+  async () => {
+    const request = ++activeContextRequest;
+    const definition = activeContextDefinition.value;
+    activeContextController.value = null;
+    if (!definition) return;
+
+    const controller = await definition.loadController();
+    if (request !== activeContextRequest) return;
+    activeContextController.value = controller;
+  },
+  { immediate: true },
+);
+
+const activeContextControlId = computed(
+  () => activeContextDefinition.value?.controlId,
+);
+const activeContextAvailable = computed(() =>
+  Boolean(
+    activeContextView.value &&
+    activeContextController.value &&
+    activeContextControlId.value,
+  ),
+);
+const activeContextExpanded = computed(
+  () => activeContextController.value?.isInspectorOpen.value ?? false,
+);
+
+function toggleActiveContext() {
+  activeContextController.value?.toggleInspector();
+}
 // Studio Library is a development preview of the Setlist interior. Keep the
 // real Setlist folder visibly selected while the hidden preview component is
 // active so the shell still communicates the owning workflow.
@@ -115,9 +177,18 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
         :tab-active-view="archiveTabView"
       >
         <component :is="views[activeView]" />
+        <template v-if="activeContextView" #context>
+          <component :is="activeContextView" />
+        </template>
       </AppArchiveFrame>
     </main>
-    <PlayerBar class="shell__player" />
+    <PlayerBar
+      class="shell__player"
+      :artwork-expandable="activeContextAvailable"
+      :artwork-expanded="activeContextExpanded"
+      :artwork-controls="activeContextControlId"
+      @artwork-activate="toggleActiveContext"
+    />
     <UiNotice
       v-if="performerView.state.error"
       class="shell__notice"

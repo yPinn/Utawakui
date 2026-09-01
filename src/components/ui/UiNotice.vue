@@ -5,7 +5,7 @@ import {
   CircleAlert,
   CircleX,
   ICON_SIZE,
-  RefreshCw,
+  Info,
 } from '../../icons/index.js';
 import { appErrorTone } from '../../utils/appErrors.js';
 import UiButton from './UiButton.vue';
@@ -42,7 +42,7 @@ const resolvedActionLabel = computed(
 const icon = computed(() => {
   if (resolvedTone.value === 'success') return Check;
   if (resolvedTone.value === 'danger') return CircleX;
-  if (resolvedTone.value === 'info') return RefreshCw;
+  if (resolvedTone.value === 'info') return Info;
   return CircleAlert;
 });
 

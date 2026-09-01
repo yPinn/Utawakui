@@ -43,6 +43,15 @@ const componentFiles = fs
     source: fs.readFileSync(new URL(entry.name, uiDirectory), 'utf8'),
   }));
 
+const metadataFeatureFiles = [
+  '../components/layout/AppArchiveFrame.vue',
+  '../components/playback/PlayerBarArtwork.vue',
+  '../components/playlists/StudioLibraryContextInspector.vue',
+].map((filename) => ({
+  name: filename,
+  source: fs.readFileSync(new URL(filename, import.meta.url), 'utf8'),
+}));
+
 describe('shared UI component token contract', () => {
   it.each([
     ['active', active],
@@ -66,6 +75,21 @@ describe('shared UI component token contract', () => {
         expect(values.has(reference), `${name} -> ${reference}`).toBe(true);
       }
     }
+  });
+
+  it('satisfies Metadata feature references through the effective candidate cascade', () => {
+    const globalNames = new Set([
+      ...declarations(active).keys(),
+      ...declarations(candidate).keys(),
+    ]);
+    const missing = metadataFeatureFiles.flatMap(({ name, source }) =>
+      [...source.matchAll(/var\((--ui-[\w-]+)\)/g)]
+        .map((match) => match[1])
+        .filter((token) => !globalNames.has(token))
+        .map((token) => `${name}: ${token}`),
+    );
+
+    expect(missing).toEqual([]);
   });
 
   it.each([
