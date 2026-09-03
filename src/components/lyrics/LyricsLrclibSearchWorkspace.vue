@@ -114,10 +114,10 @@ const draftDiffersFromResults = computed(() => {
     artistDraft.value.trim() !== submittedQuery.value.artist
   );
 });
-const unavailableProviderLabels = computed(() =>
+const providerFailureMessages = computed(() =>
   (state.candidateSearch.providerStatuses || [])
-    .filter((status) => status.status !== 'ok')
-    .map((status) => providerNameFor(status.provider)),
+    .filter((providerStatus) => providerStatus.status === 'error')
+    .map(providerFailureMessage),
 );
 const resultAnnouncement = computed(() => {
   if (isSearchPending.value) return `正在搜尋 ${props.providerLabel}`;
@@ -135,6 +135,19 @@ function providerNameFor(providerId) {
   if (providerId === 'netease') return '網易雲音樂';
   if (providerId === 'lrclib') return 'LRCLIB';
   return '線上來源';
+}
+
+function providerFailureMessage(providerStatus) {
+  const providerName = providerNameFor(providerStatus.provider);
+  if (providerStatus.reason === 'timeout') return `${providerName} 回應逾時`;
+  if (providerStatus.reason === 'offline') return `${providerName} 無法連線`;
+  if (providerStatus.reason === 'rate-limited') {
+    return `${providerName} 暫時限制請求`;
+  }
+  if (providerStatus.reason === 'service-unavailable') {
+    return `${providerName} 服務暫時無法使用`;
+  }
+  return `${providerName} 搜尋失敗`;
 }
 
 function candidateKey(candidate) {
@@ -288,10 +301,10 @@ function toggleCandidate(candidate) {
         compact
       />
       <UiNotice
-        v-if="state.candidateSearch.partial && unavailableProviderLabels.length"
+        v-if="providerFailureMessages.length"
         tone="warning"
         title="部分來源未完成"
-        :message="`${unavailableProviderLabels.join('、')} 暫時無法完成搜尋；目前顯示的其他來源仍可使用。`"
+        :message="`${providerFailureMessages.join('；')}；目前顯示的其他來源仍可使用。`"
         compact
       />
       <UiNotice

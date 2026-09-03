@@ -66,5 +66,9 @@ handler 提供讀取與刪除相容，不屬於本搜尋契約。
 
 跨來源候選使用 `providerId:id` 的 stable `candidateKey`，避免不同來源相同數字 id 互相覆寫。
 Renderer 維持單一 acquisition state owner，保存展開列與 saving state 時均使用此 key。
-同一 recording group 預設只顯示推薦來源，使用者可明確展開替代來源；partial provider
-failure 以不阻擋結果的提示呈現。
+同一 recording group 預設只顯示推薦來源，使用者可明確展開替代來源。
+
+Aggregate 的每筆 `providerStatuses` 只投影 provider、status 與 reason。Renderer 不為個別
+來源的正常零結果或 `unavailable`（例如 Better Lyrics `cache-miss`）增加提示；全部沒有候選
+時由既有 aggregate empty state 統一說明。只有 `error`（例如 timeout、offline、rate limit）
+才顯示不阻擋其他結果的來源警告，不得把 cache miss 描述成來源暫時故障。
