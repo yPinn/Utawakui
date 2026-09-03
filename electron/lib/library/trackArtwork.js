@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const { atomicCopyFileSync } = require('../atomicWrite');
 const { ARTWORK_BASENAME, IMAGE_EXTENSIONS } = require('./constants');
 const {
   resolveTrackDir,
@@ -47,7 +48,7 @@ function writeTrackArtworkFile(dir, trackId, sourcePath) {
       fs.rmSync(path.join(trackDir, entry.name), { force: true });
     }
   }
-  fs.copyFileSync(sourcePath, path.join(trackDir, filename));
+  atomicCopyFileSync(sourcePath, path.join(trackDir, filename));
   return filename;
 }
 

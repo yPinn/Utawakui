@@ -13,6 +13,28 @@ const { MIME_TYPES } = require('./constants');
 // net.fetch(file://...) without re-verifying.
 function buildRangeResponse(filePath, rangeHeader) {
   const stat = fs.statSync(filePath);
+
+  // An empty file has no bytes to slice: end = stat.size - 1 would be -1,
+  // and createReadStream(path, { start: 0, end: -1 }) throws ERR_OUT_OF_RANGE
+  // synchronously, which the caller's catch collapses into a misleading
+  // "file missing" 404 for a file that actually exists (just empty/corrupt).
+  if (stat.size === 0) {
+    if (rangeHeader) {
+      return new Response(null, {
+        status: 416,
+        headers: { 'Content-Range': 'bytes */0' },
+      });
+    }
+    return new Response(null, {
+      status: 200,
+      headers: {
+        'Content-Type': MIME_TYPES[path.extname(filePath).toLowerCase()],
+        'Content-Length': '0',
+        'Accept-Ranges': 'bytes',
+      },
+    });
+  }
+
   let start = 0;
   let end = stat.size - 1;
   let status = 200;

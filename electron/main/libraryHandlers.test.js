@@ -37,7 +37,7 @@ describe('backfillTrackInfoWithLyricsFallback', () => {
 });
 
 describe('library metadata maintenance handlers', () => {
-  it('refreshes renderers without allowing the follow-up list to start provider backfill', async () => {
+  function registerHandlers(overrides = {}) {
     const handlers = new Map();
     const ipcMain = {
       handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
@@ -49,6 +49,27 @@ describe('library metadata maintenance handlers', () => {
         ),
       },
     };
+
+    registerLibraryHandlers({
+      ipcMain,
+      dialog: {},
+      getConfig: () => config,
+      resolveDownloadDir: () => 'library-dir',
+      getMainWindow: vi.fn(),
+      notifyLibraryUpdated: vi.fn(),
+      sendBackfillStatus: vi.fn(),
+      featureIds: FEATURE_IDS,
+      getProviderRunner: vi.fn(),
+      lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
+      listLibraryTracks: vi.fn().mockReturnValue([]),
+      runLibraryBackfill: vi.fn().mockResolvedValue(0),
+      ...overrides,
+    });
+
+    return handlers;
+  }
+
+  it('refreshes renderers without allowing the follow-up list to start provider backfill', async () => {
     const listLibraryTracks = vi.fn().mockReturnValue([]);
     const runLibraryBackfill = vi.fn().mockResolvedValue(0);
     const organizeLibraryMetadata = vi.fn().mockReturnValue({
@@ -59,17 +80,8 @@ describe('library metadata maintenance handlers', () => {
     });
     const notifyLibraryUpdated = vi.fn();
 
-    registerLibraryHandlers({
-      ipcMain,
-      dialog: {},
-      getConfig: () => config,
-      resolveDownloadDir: () => 'library-dir',
-      getMainWindow: vi.fn(),
+    const handlers = registerHandlers({
       notifyLibraryUpdated,
-      sendBackfillStatus: vi.fn(),
-      featureIds: FEATURE_IDS,
-      getProviderRunner: vi.fn(),
-      lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
       listLibraryTracks,
       runLibraryBackfill,
       organizeLibraryMetadata,
@@ -85,6 +97,33 @@ describe('library metadata maintenance handlers', () => {
     });
     expect(listLibraryTracks).toHaveBeenCalledWith('library-dir');
     expect(runLibraryBackfill).not.toHaveBeenCalled();
+  });
+
+  it('records a failed background backfill server-side without pushing the raw error to the renderer', async () => {
+    const rawError = new Error('ENOENT: /Users/someone/private/path/yt-dlp');
+    const sendBackfillStatus = vi.fn();
+    const recordDiagnostic = vi.fn();
+
+    const handlers = registerHandlers({
+      sendBackfillStatus,
+      runLibraryBackfill: vi.fn().mockRejectedValue(rawError),
+      recordDiagnostic,
+    });
+
+    await handlers.get('library:list')(null, {});
+    // The background promise chain settles on the microtask queue after the
+    // handler itself has already returned.
+    await new Promise((resolve) => setImmediate(resolve));
+
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'library', error: rawError }),
+    );
+    expect(sendBackfillStatus).toHaveBeenCalledWith({
+      stage: 'error',
+      isRunning: false,
+    });
+    const [pushedStatus] = sendBackfillStatus.mock.calls[0];
+    expect(JSON.stringify(pushedStatus)).not.toContain('/Users/');
   });
 });
 

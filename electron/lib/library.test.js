@@ -89,10 +89,11 @@ const CONSTANT_EXPORTS = [
   'LYRICS_MANIFEST_VERSION',
   'LYRICS_NORMALIZER_PROFILE_ID',
   'LYRICS_TIMING_SCHEMA_VERSION',
+  'SAFE_RECIPE_ID_RE',
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 69 names its consumers expect', () => {
+  it('re-exports exactly the 70 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

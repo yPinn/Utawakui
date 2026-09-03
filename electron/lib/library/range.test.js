@@ -84,4 +84,20 @@ describe('buildRangeResponse', () => {
     expect(res.status).toBe(416);
     expect(res.headers.get('content-range')).toBe(`bytes */${content.length}`);
   });
+
+  it('serves an empty 200 response for a zero-byte file with no Range header', async () => {
+    fs.writeFileSync(filePath, Buffer.alloc(0));
+    const res = buildRangeResponse(filePath, null);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-length')).toBe('0');
+    const body = Buffer.from(await res.arrayBuffer());
+    expect(body.length).toBe(0);
+  });
+
+  it('returns 416 for a Range header against a zero-byte file', () => {
+    fs.writeFileSync(filePath, Buffer.alloc(0));
+    const res = buildRangeResponse(filePath, 'bytes=0-10');
+    expect(res.status).toBe(416);
+    expect(res.headers.get('content-range')).toBe('bytes */0');
+  });
 });

@@ -297,8 +297,12 @@ async function backfillLyricsSourceLabels(trackDir, resolveLabel) {
   }
   if (labelByFilename.size === 0) return sources;
 
-  const nextSources = sources.map((source) =>
-    labelByFilename.has(source.filename)
+  // Re-read fresh: a manual edit (label/offset/delete) may have landed on
+  // this track while the label lookups above were in flight — don't clobber
+  // it with the pre-await snapshot.
+  const { sources: currentSources } = listTrackLyricsSources(trackDir);
+  const nextSources = currentSources.map((source) =>
+    labelByFilename.has(source.filename) && !source.label
       ? { ...source, label: labelByFilename.get(source.filename) }
       : source,
   );

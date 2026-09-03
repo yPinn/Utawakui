@@ -74,6 +74,7 @@ const {
   hasSeparationResultFile,
   hasSeparation,
   resolveSeparationResultPath,
+  SAFE_RECIPE_ID_RE,
 } = require('./library/separationManifest');
 const {
   loadIndex,
@@ -157,6 +158,7 @@ module.exports = {
   resolveTrackLyricsPath,
   resolveSeparationsDir,
   resolveSeparationResultPath,
+  SAFE_RECIPE_ID_RE,
   resolveTrackAssetPath,
   resolveTrackAudioPath,
   resolveTrackArtworkPath,

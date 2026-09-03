@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { atomicWriteBuffer } = require('../atomicWrite');
+const { atomicWriteBuffer, atomicCopyFileSync } = require('../atomicWrite');
 const {
   IMAGE_EXTENSIONS,
   EXTENSION_BY_IMAGE_MIME_TYPE,
@@ -76,7 +76,7 @@ function writePlaylistCoverFile(dir, playlistId, sourcePath) {
   if (existing && existing !== filename) {
     fs.rmSync(path.join(coverDir, existing), { force: true });
   }
-  fs.copyFileSync(sourcePath, path.join(coverDir, filename));
+  atomicCopyFileSync(sourcePath, path.join(coverDir, filename));
   return filename;
 }
 

@@ -67,6 +67,7 @@ function registerLibraryHandlers({
   organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
   importAudioFiles = importLocalAudioFiles,
   enqueueMusicAnalysis = () => false,
+  recordDiagnostic,
 }) {
   const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
     getProviderRunner,
@@ -91,12 +92,23 @@ function registerLibraryHandlers({
         .then((updated) => {
           if (updated) notifyLibraryUpdated();
         })
-        .catch((err) => {
-          sendBackfillStatus({
-            stage: 'error',
-            isRunning: false,
-            error: err instanceof Error ? err.message : String(err),
-          });
+        .catch((error) => {
+          // The renderer only keys off stage === 'error' to show a fixed
+          // notice (useLyrics.js); the raw error text never renders, so it
+          // must not cross IPC either — record it server-side instead, same
+          // as every other operational failure boundary in this codebase.
+          try {
+            recordDiagnostic?.({
+              process: 'main',
+              level: 'error',
+              source: 'library',
+              operation: 'backfill',
+              error,
+            });
+          } catch {
+            // Diagnostics are fail-open and must not block the status push.
+          }
+          sendBackfillStatus({ stage: 'error', isRunning: false });
         });
     }
     return tracks;

@@ -62,11 +62,30 @@ function createOutputRuntime({
     },
   });
 
+  // Bounded per-code messages, not the raw OS error text: renderer's
+  // isOutputPortConflict() only needs the literal code substring to offer
+  // alternate ports, never the full "listen EADDRINUSE: address already in
+  // use <host>:<port>" string this crosses IPC as.
+  const KNOWN_OUTPUT_START_ERROR_CODES = new Set([
+    'EADDRINUSE',
+    'EACCES',
+    'EADDRNOTAVAIL',
+  ]);
+
   function serializeError(error) {
     if (!error) return null;
+    logger.error?.('[output] Failed to start output runtime', error);
+    const code =
+      typeof error.code === 'string' &&
+      KNOWN_OUTPUT_START_ERROR_CODES.has(error.code)
+        ? error.code
+        : 'OUTPUT_START_FAILED';
     return {
-      code: typeof error.code === 'string' ? error.code : 'OUTPUT_START_FAILED',
-      message: error instanceof Error ? error.message : String(error),
+      code,
+      message:
+        code === 'OUTPUT_START_FAILED'
+          ? 'output server failed to start'
+          : `listen ${code}`,
     };
   }
 

@@ -6,6 +6,7 @@ import {
   atomicWriteJson,
   atomicWriteText,
   atomicWriteBuffer,
+  atomicCopyFileSync,
   backupCorrupted,
 } from './atomicWrite.js';
 
@@ -80,6 +81,36 @@ describe('atomicWriteBuffer', () => {
     atomicWriteBuffer(filePath, buffer);
     expect(fs.readFileSync(filePath)).toEqual(buffer);
     expect(fs.existsSync(`${filePath}.tmp`)).toBe(false);
+  });
+});
+
+describe('atomicCopyFileSync', () => {
+  let dir;
+  let sourcePath;
+  let targetPath;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-atomic-test-'));
+    sourcePath = path.join(dir, 'source.png');
+    targetPath = path.join(dir, 'target.png');
+    fs.writeFileSync(sourcePath, Buffer.from([1, 2, 3, 4]));
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('copies the source bytes exactly and leaves no .tmp file', () => {
+    atomicCopyFileSync(sourcePath, targetPath);
+    expect(fs.readFileSync(targetPath)).toEqual(Buffer.from([1, 2, 3, 4]));
+    expect(fs.existsSync(`${targetPath}.tmp`)).toBe(false);
+  });
+
+  it('a second copy cleanly overwrites the first target', () => {
+    atomicCopyFileSync(sourcePath, targetPath);
+    fs.writeFileSync(sourcePath, Buffer.from([9, 9]));
+    atomicCopyFileSync(sourcePath, targetPath);
+    expect(fs.readFileSync(targetPath)).toEqual(Buffer.from([9, 9]));
   });
 });
 

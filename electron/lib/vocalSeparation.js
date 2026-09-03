@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 const KissFFT = require('kissfft-js');
-const { recordSeparationResult } = require('./library');
+const { recordSeparationResult, SAFE_RECIPE_ID_RE } = require('./library');
 const { atomicWriteBuffer } = require('./atomicWrite');
 
 // Model values come from UVR model_data.json. primaryStem must be instrumental.
@@ -250,6 +250,12 @@ function resolvePreset(presetId) {
 }
 
 function resolveExecutionPreset(presetId, expectedProfileId, expectedModelId) {
+  // presetId is interpolated into the output filename below, so it must be
+  // constrained the same way separationManifest.js constrains it when
+  // reading the manifest back.
+  if (!SAFE_RECIPE_ID_RE.test(presetId)) {
+    throw new Error(`Invalid separation preset id "${presetId}".`);
+  }
   const preset = resolvePreset(presetId);
   if (expectedProfileId && preset.profileId !== expectedProfileId) {
     throw new Error(

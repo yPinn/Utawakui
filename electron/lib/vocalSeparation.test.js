@@ -163,6 +163,15 @@ describe('resolveExecutionPreset', () => {
       resolveExecutionPreset('general', 'mdx-inst-hq4-v1', 'kara2'),
     ).toThrow(/model/i);
   });
+
+  it('rejects a presetId outside the safe filename charset before it can reach the output path', () => {
+    // presetId is interpolated straight into `${presetId}.wav`; an
+    // unvalidated value like this would otherwise let separateTrack write
+    // outside outputDir.
+    expect(() =>
+      resolveExecutionPreset('../../evil', undefined, undefined),
+    ).toThrow(/invalid separation preset id/i);
+  });
 });
 
 // Cheap consistency checks that would otherwise only surface as a runtime

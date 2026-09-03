@@ -263,4 +263,5 @@ module.exports = {
   manifestHasSelectedResult,
   hasSeparation,
   resolveSeparationResultPath,
+  SAFE_RECIPE_ID_RE,
 };

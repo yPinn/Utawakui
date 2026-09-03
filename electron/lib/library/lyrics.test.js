@@ -403,6 +403,33 @@ describe('backfillLyricsSourceLabels', () => {
       { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
     ]);
   });
+
+  it('does not clobber a manual label set while a lookup is in flight', async () => {
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
+      '[00:01.00]Hello',
+    );
+
+    const sources = await backfillLyricsSourceLabels(trackDir, async () => {
+      // Simulate a concurrent manual edit landing while this lookup is
+      // still in flight, before the backfill writes its own result back.
+      setLyricsSourceLabel(trackDir, 'lrclib-42.lrc', 'Manually Renamed');
+      return 'Resolved From Network';
+    });
+
+    expect(sources).toContainEqual(
+      expect.objectContaining({
+        filename: 'lrclib-42.lrc',
+        label: 'Manually Renamed',
+      }),
+    );
+    expect(
+      listTracks(dir)[0].lyrics.sources.find(
+        (source) => source.filename === 'lrclib-42.lrc',
+      ).label,
+    ).toBe('Manually Renamed');
+  });
 });
 
 describe('allocateLyricsFilename', () => {
