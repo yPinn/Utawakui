@@ -61,7 +61,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   已建立；剩餘重點是人工視覺驗收與操作 polish。
 - `quick`／`general` audio processing 可用；Refined 與 Music Analysis 尚未通過產品
   activation gate。
-- OBS Browser Source MVP 已具備四個固定 slot、Gallery、Workbench、Projection Hub
+- OBS Browser Source MVP 已具備三個固定 slot、Gallery、Workbench、Projection Hub
   與 content/state convergence；instance／pack model 仍是後續方向。
 - Provider assist 已改為 app-managed Python `yt-dlp` runtime，且只存在於明確啟用的
   advanced flow。
@@ -84,7 +84,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 主路徑已實作         | Main diagnostics、Settings 控制與顯式 redacted export 已建立；F6 dev workbench 與獨立單檔 HTML 檢視工具已提供；domain wrappers 持續增量導入。 |
 | [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作             | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                                                                               |
 | [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作         | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                              |
-| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中               | 現行仍是四個固定 slot；instance／pack model 尚未交付。                                                                                        |
+| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中               | 現行仍是三個固定 slot；instance／pack model 尚未交付。                                                                                        |
 | [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作           | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                         |
 | [0013](adr/0013-external-integration-planes.md)                        | 規劃中               | 目前只有 Browser Source；其他 adapters 尚未實作。                                                                                             |
 | [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |

@@ -6,19 +6,19 @@ Utawakui 將本機曲庫、歌單、播放、歌詞、音訊處理與 OBS Browse
 輸出集中在同一個操作介面。預設工作流只使用使用者自備的本機媒體；外部來源、
 歌詞服務、音訊處理與公開輸出均是可獨立啟用的進階流程。
 
-目前專案處於 Windows x64 公開測試階段。它不是曲庫、授權服務或串流平台的
+目前專案處於 **Windows x64 公開測試階段**。它不是曲庫、授權服務或串流平台的
 替代品，也不會替使用者判斷第三方素材的使用權利。
 
 ## 已有能力
 
-| 範圍           | 現況                                                                                                                |
-| -------------- | ------------------------------------------------------------------------------------------------------------------- |
-| 本機曲庫與播放 | 結構化 track storage、歌單、待播佇列、播放控制與 Windows shell integration 已可用。                                 |
-| 練習與音訊     | Pitch/tempo 即時預覽、`quick`／`general` 分離與 guide vocal 已可用；pre-render 與 Refined recipe 尚未成為產品能力。 |
-| 歌詞           | 本機匯入、provider lookup、時間軸／讀音、演出者視窗與 Lyrics Overlay 主路徑已建立，仍持續做視覺驗收與操作整理。     |
-| OBS 輸出       | 本機 HTTP/WebSocket runtime、四類 Browser Source、Gallery、Workbench 與 URL 複製已完成 MVP。                        |
-| 進階來源       | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。            |
-| 發布與維護     | NSIS installer、啟動量測、local diagnostics 與 updater runtime 已建立；公開測試版仍為未簽章發行。                   |
+| 範圍           | 現況                                                                                                                        |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------- |
+| 本機曲庫與播放 | 結構化 track storage、歌單、待播佇列、播放控制與 Windows shell integration **已可用**。                                     |
+| 練習與音訊     | Pitch/tempo 即時預覽、`quick`／`general` 分離與 guide vocal **已可用**；pre-render 與 Refined recipe **尚未成為產品能力**。 |
+| 歌詞           | 本機匯入、provider lookup、時間軸／讀音、演出者視窗與 Lyrics Overlay 主路徑**已建立**，仍持續做視覺驗收與操作整理。         |
+| OBS 輸出       | 本機 HTTP/WebSocket runtime、三類 Browser Source、Gallery、Workbench 與 URL 複製**已完成 MVP**。                            |
+| 進階來源       | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。                    |
+| 發布與維護     | NSIS installer、啟動量測、local diagnostics 與 updater runtime **已建立**；公開測試版**仍為未簽章發行**。                   |
 
 完整的已實作／部分完成／規劃中對照，以
 [產品規格](docs/spec.md) 為準；技術邊界請見
@@ -78,6 +78,6 @@ scripts/    驗證、benchmark、release 與 startup 工具
 
 ## 授權
 
-Utawakui 是可免費使用的專有軟體，可用於個人、內容創作，以及營利直播與錄製。
+Utawakui 是**可免費使用的專有軟體**，可用於個人、內容創作，以及營利直播與錄製。
 軟體、原始碼與安裝檔的散布限制，以及第三方內容責任，請見
 [LICENSE.md](LICENSE.md) 與 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

@@ -44,6 +44,7 @@ npm run format:check
 npm test
 npm run test:coverage
 npm run perf:startup
+npm run clean
 ```
 
 Tests are Vitest and stay next to the production file they cover. Use the recursive
@@ -143,6 +144,37 @@ boundaries.
   Overlay code.
 - The control panel optimizes operator clarity and dense live use. Preserve visible
   focus, keyboard access, reduced-motion behavior and WCAG AA contrast.
+
+## Markdown Conventions
+
+Applies to documents whose primary audience is an end user reading for context or
+instructions — currently `README.md` and `docs/releases/v<version>.md`. Internal
+status/reference docs (`docs/spec.md`, `docs/architecture.md`, `docs/README.md`,
+ADRs, contracts, operations runbooks) stay plain prose and tables; do not add this
+styling to them just for decoration.
+
+- Bold the key state or action word in a table cell or status line (`**已可用**`,
+  `**Fixed**`), not the whole sentence. This is for scanning, not emphasis of
+  everything.
+- Use inline code spans only for exact identifiers a reader could type or search
+  for: file paths, commands, flags, environment variables, package names. Do not
+  wrap ordinary feature names in code spans.
+- A single-sentence framing statement (tagline, disclaimer) at the top of a
+  document may use a blockquote (`>`); do not blockquote multi-paragraph content.
+- Keep heading depth at H1 (title) and H2 (sections) for short docs; use H3 only
+  when a section genuinely needs sub-grouping. Do not skip a level.
+- Bilingual public documents (`docs/releases/*.md`) repeat the full structure once
+  per language, separated by a single `---` horizontal rule; do not interleave
+  languages within one section.
+- `.markdownlint-cli2.jsonc` disables MD013 (line length) because prose here wraps
+  at sentence boundaries, not a fixed column, and MD041 (first-line heading) so
+  skill/template files can start with front matter. Every other default rule,
+  including MD060 table-column alignment, stays enforced — run `npm run lint:md`
+  before treating a table edit as done.
+- MD060 counts visual width, not character count: East-Asian-wide characters
+  (Chinese/Japanese/Korean script and punctuation) count as width 2. When editing
+  an existing CJK table by hand, `npx prettier --write <file>` reflows the pipe
+  alignment correctly in one pass — prefer that over manually padding spaces.
 
 ## Change Discipline
 

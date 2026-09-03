@@ -18,15 +18,20 @@ copying the commit log or describing how the software is built.
 - Include **Upgrade Notes** when an existing user must take an action or when data,
   settings, compatibility, or update behavior changes.
 - Include **Known Limitations** for material constraints that remain in the shipped
-  artifact. Do not disguise a limitation as an improvement.
+  artifact. Do not disguise a limitation as an improvement. This section is
+  otherwise optional, but stays required for as long as public builds ship
+  unsigned: it is the one place that carries the unsigned-publisher disclosure.
+  Drop it only after Authenticode signing lands (see Future Authenticode Signing
+  in the release runbook).
 - **A Note from the Developer** is optional. When used, keep the Chinese and English
   sections together and write the message as a blockquote. It may add gratitude,
   context, or personality, but must not be the only place for upgrade steps,
   security disclosures, known limitations, or other required information.
 - Keep the unsigned-publisher disclosure, official download location, checksum,
   update behavior, data-retention guidance, and user-provided-media rights current
-  in every public-test note. State each disclosure once, briefly, with its practical
-  effect or next action.
+  in every public-test note. State each disclosure once, briefly, with its
+  practical effect or next action — the unsigned-publisher disclosure belongs in
+  Known Limitations; the other four belong in Before Installing.
 
 Conventional Commit types are source evidence, not release-note copy:
 
@@ -78,15 +83,15 @@ Translate source evidence into reader outcomes. For example:
 
 - <手動步驟、相容性、資料或設定影響。>
 
-<!-- 選填；發布成品仍有重要限制時保留。 -->
+<!-- 目前必須保留：需含未簽章揭露；正式簽章上線後視情況精簡或移除本段。 -->
 
 ## 已知限制
 
-- <限制、影響及可行的因應方式。>
+- <此測試版本尚未加上受信任的 Windows 數位簽章，安裝時可能顯示「未知的發行者」。>
+- <其他限制、影響及可行的因應方式，選填。>
 
 ## 安裝前須知
 
-- <簽章／發行者狀態。>
 - <官方下載位置與 checksum 驗證方式。>
 - <更新是否自動，以及哪些步驟需要明確操作。>
 - <覆蓋安裝、設定、曲庫與自備素材的保留／備份說明。>
@@ -125,15 +130,17 @@ Translate source evidence into reader outcomes. For example:
 
 - <Manual steps or compatibility, data, or settings impact.>
 
-<!-- Optional; keep for material limitations in the shipped artifact. -->
+<!-- Currently required: must include the unsigned-publisher disclosure; may be
+     trimmed or removed once Authenticode signing lands. -->
 
 ## Known Limitations
 
-- <The limitation, impact, and available workaround.>
+- <This test build does not yet have a trusted Windows digital signature, so
+  Windows may show "Unknown publisher.">
+- <Other limitation, impact, and available workaround — optional.>
 
 ## Before Installing
 
-- <Signature and publisher status.>
 - <Official download location and checksum verification.>
 - <Update behavior and steps that require explicit action.>
 - <Installation, settings, library, and user-media retention or backup guidance.>
