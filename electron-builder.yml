@@ -38,6 +38,7 @@ files:
   - overlay/**/*
   - '!overlay/**/*.test.js'
   - shared/**/*
+  - '!shared/**/*.test.js'
   - LICENSE.md
   - THIRD_PARTY_NOTICES.md
   - package.json
