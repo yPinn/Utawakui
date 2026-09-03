@@ -48,11 +48,11 @@ typography:
     lineHeight: 1.25
     letterSpacing: '0'
 rounded:
-  xs: '2px'
-  sm: '4px'
-  md: '6px'
-  lg: '8px'
-  pill: '999px'
+  xs: '0.125rem'
+  sm: '0.25rem'
+  md: '0.375rem'
+  lg: '0.5rem'
+  pill: '999rem'
 spacing:
   0: '0'
   1: '0.25rem'
@@ -360,14 +360,17 @@ Radius decisions:
 
 | Target                         | Radius          | Reference | Reason                                              |
 | ------------------------------ | --------------- | --------- | --------------------------------------------------- |
-| Hairlines, progress fills      | `2px`           | Spotify   | Keeps thin interactive marks crisp.                 |
-| Dense thumbnails and artwork   | `4px`           | Spotify   | Keeps album and track art compact.                  |
-| Rows, buttons, inputs, menus   | `6px`           | Shared    | Default operational radius: friendly, not pillowy.  |
-| Modals, popovers, major panels | `8px`           | macOS     | Softens system surfaces without card-heavy styling. |
-| Chips, transport toggles       | `999px`         | Spotify   | Pills are reserved for binary and status controls.  |
+| Hairlines, progress fills      | `0.125rem`      | Spotify   | Keeps thin interactive marks crisp.                 |
+| Dense thumbnails and artwork   | `0.25rem`       | Spotify   | Keeps album and track art compact.                  |
+| Rows, buttons, inputs, menus   | `0.375rem`      | Shared    | Default operational radius: friendly, not pillowy.  |
+| Modals, popovers, major panels | `0.5rem`        | macOS     | Softens system surfaces without card-heavy styling. |
+| Chips, transport toggles       | `999rem`        | Spotify   | Pills are reserved for binary and status controls.  |
 | App icon                       | platform-native | macOS     | Follows OS icon masks, not component radii.         |
 
-Do not increase general UI cards beyond `8px`. If a surface wants more softness, use tone, spacing, or artwork rather than larger radius. The app icon and overlay graphics may use larger rounded silhouettes because they are brand/art surfaces, not control-panel components.
+Do not increase general UI cards beyond `0.5rem` (normally 8 DIP). If a
+surface wants more softness, use tone, spacing, or artwork rather than larger
+radius. The app icon and overlay graphics may use larger rounded silhouettes
+because they are brand／art surfaces, not control-panel components.
 
 Density decisions:
 
@@ -383,27 +386,43 @@ Density decisions:
 
 Spacing decisions:
 
-- Keep the 4px spacing base.
-- Use `8px` inside compact rows and toolbar groups.
-- Use `12px` for row horizontal padding and compact panel gutters.
-- Use `16px` for stable panel padding.
-- Use `24px` for page/header breathing room.
-- Reserve `32px+` for layout separation, not ordinary component padding.
+- Keep the `0.25rem` spacing base (normally 4 DIP).
+- Use `0.5rem` inside compact rows and toolbar groups.
+- Use `0.75rem` for row horizontal padding and compact panel gutters.
+- Use `1rem` for stable panel padding.
+- Use `1.5rem` for page／header breathing room.
+- Reserve `2rem+` for layout separation, not ordinary component padding.
 
 Primary control heights:
 
-| Control                    | Height target | Reason                                             |
-| -------------------------- | ------------- | -------------------------------------------------- |
-| Compact icon button        | `30px`        | Current desktop density; good for repeated tools.  |
-| Menu item / context action | `32px`        | Easier target without wasting vertical scan space. |
-| Track row                  | `52px`        | Enough for title + artist and 40px artwork.        |
-| Player bar                 | `68px`        | Preserves persistent transport plus 52px artwork.  |
+| Control                    | Height target                | Reason                                             |
+| -------------------------- | ---------------------------- | -------------------------------------------------- |
+| Compact icon button        | `1.875rem` (normally 30 DIP) | Current desktop density; good for repeated tools.  |
+| Menu item / context action | `2rem` (normally 32 DIP)     | Easier target without wasting vertical scan space. |
+| Track row                  | `3.25rem` (normally 52 DIP)  | Enough for title + artist and compact artwork.     |
+| Player bar                 | `4.25rem` (normally 68 DIP)  | Preserves persistent transport and artwork.        |
 
 These numbers should be treated as implementation targets when refreshing tokens and components. If a future touch-first surface exists, it can introduce touch-specific component tokens instead of enlarging the desktop control panel.
 
 ### Unit Rules
 
-Use `rem` for scalable dimensional tokens such as spacing, typography, control heights, player height, and titlebar height. Keep `px` for true device-pixel details: 1px borders, focus rings, hairline drag/drop indicators, image pixel slots, media-query breakpoints, and Electron API literals that require integer pixel values.
+The control panel is **rem-first, not rem-only**. Choose units by responsibility:
+
+| Responsibility                | Unit                       | Rule                                                                                                              |
+| ----------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Scalable product geometry     | `rem`                      | Typography, spacing, radius, control／row height, panel bounds, material thickness and CSS responsive thresholds. |
+| Exact optical boundaries      | `px`                       | One-pixel borders plus two-pixel focus, drag and state indicators that must stay optically crisp.                 |
+| Flexible layout tracks        | `%`, `fr`, `minmax()`      | Columns and proportions that respond to available container space.                                                |
+| Readable text measure         | `ch`／`ic`                 | Latin／CJK reading width where content measure matters.                                                           |
+| Line height                   | Unitless                   | Inherits proportionally from the owning text role.                                                                |
+| Electron window geometry      | DIP number                 | BrowserWindow bounds and screen coordinates passed through Electron APIs without a CSS unit suffix.               |
+| Raster source／canvas backing | Physical pixel calculation | Encoded image dimensions and backing-buffer fidelity, independent from CSS layout size.                           |
+
+CSS responsive thresholds use `rem`; viewport examples such as `960 × 650` are
+Electron／CSS DIP acceptance targets, not media-query `px` tokens. CSS image slots
+use `rem` or flexible layout units; only raster source dimensions and canvas
+backing buffers use physical-pixel calculations. A CSS `px` is an optical CSS-pixel
+boundary and must not be described as a physical display pixel.
 
 ### Default vs Feature-Gated Visuals
 
@@ -634,7 +653,7 @@ Custom font settings should not affect control panel UI. The control panel shoul
 - **Title** (600, `1.125rem`, 1.3): Section headers, panel titles, and active item titles.
 - **Body** (400, `1rem`, 1.5): Standard UI copy and readable prose.
 - **Label** (600, `0.875rem`, 1.25): Buttons, tabs, metadata labels, compact controls.
-- **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14px control vs. a quiet 14px description).
+- **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14 DIP control vs. a quiet 14 DIP description at the default root).
 
 Naming here is this project's own semantic roles, not a literal port of any platform's type-style names. In particular, Apple's HIG `Headline` style (small, bold, body-adjacent emphasis) is not what this document's `Headline` means (a big view/modal title, closer to HIG's `Title 1`/`Title 2`) — don't assume HIG familiarity carries over to these names.
 
@@ -683,11 +702,11 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 
 ### Buttons
 
-- **Shape:** compact rounded rectangle (`6px`) for tool buttons; circular only when the control is a true transport action.
+- **Shape:** compact rounded rectangle (`0.375rem`) for tool buttons; circular only when the control is a true transport action.
 - **Primary:** accent-filled, used sparingly for the main action in a local context.
 - **Ghost:** transparent at rest, neutral hover fill, used for toolbar and repeated actions.
 - **Focus:** visible 2px focus ring with 1-2px offset.
-- **Touch baseline:** desktop buttons can be compact, but touch-responsive surfaces should preserve at least `44px` iOS / `48dp` Android target guidance.
+- **Touch baseline:** desktop buttons can be compact, but touch-responsive surfaces should preserve at least `44pt` iOS / `48dp` Android target guidance.
 
 ### Inputs / Fields
 

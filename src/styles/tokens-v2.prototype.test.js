@@ -40,6 +40,10 @@ const performerView = readFileSync(
   'utf8',
 );
 const app = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');
+const designGuide = readFileSync(
+  new URL('../../DESIGN.md', import.meta.url),
+  'utf8',
+);
 
 function filesUnder(directory) {
   return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
@@ -65,6 +69,20 @@ const candidateProductionReferences = filesUnder(
   .filter(
     (file) => !file.pathname.endsWith('/views/StudioLibraryPrototypeView.vue'),
   )
+  .filter((file) => !file.pathname.endsWith('/views/DemoView.vue'))
+  .filter((file) => !file.pathname.endsWith('/views/DemoView.test.js'))
+  .filter(
+    (file) =>
+      !file.pathname.endsWith('/components/demo/DemoTypography.test.js'),
+  )
+  .filter(
+    (file) =>
+      !file.pathname.endsWith('/components/demo/DemoFoundations.test.js'),
+  )
+  .filter(
+    (file) => !file.pathname.endsWith('/components/demo/DemoDensity.test.js'),
+  )
+  .filter((file) => !file.pathname.endsWith('/constants/uiDemoPalette.test.js'))
   .filter((file) => readFileSync(file, 'utf8').includes('tokens-v2.css'))
   .map((file) => file.pathname);
 
@@ -121,6 +139,7 @@ describe('Studio Library workspace prototype isolation', () => {
       'const internalWorkbenchesEnabled = import.meta.env.DEV',
     );
     expect(app).toContain("import('./views/StudioLibraryPrototypeView.vue')");
+    expect(app).toContain("import('./views/DemoView.vue')");
   });
 
   it('covers the approved theme, density, motion, and state matrix', () => {
@@ -163,6 +182,56 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
     expect(missing).toEqual([]);
+  });
+
+  it('documents scalable, optical, window, and raster unit responsibilities separately', () => {
+    for (const responsibility of [
+      /\|\s*Scalable product geometry\s*\|\s*`rem`\s*\|/u,
+      /\|\s*Exact optical boundaries\s*\|\s*`px`\s*\|/u,
+      /\|\s*Flexible layout tracks\s*\|\s*`%`, `fr`, `minmax\(\)`\s*\|/u,
+      /\|\s*Readable text measure\s*\|\s*`ch`／`ic`\s*\|/u,
+      /\|\s*Line height\s*\|\s*Unitless\s*\|/u,
+      /\|\s*Electron window geometry\s*\|\s*DIP number\s*\|/u,
+      /\|\s*Raster source／canvas backing\s*\|\s*Physical pixel calculation\s*\|/u,
+    ]) {
+      expect(designGuide).toMatch(responsibility);
+    }
+
+    expect(designGuide).toMatch(
+      /CSS image slots\s+use `rem` or flexible layout units/u,
+    );
+    expect(designGuide).toContain('CSS responsive thresholds use `rem`');
+    expect(designGuide).not.toContain(
+      'image pixel slots, media-query breakpoints',
+    );
+  });
+
+  it('keeps candidate px tokens limited to exact optical boundaries', () => {
+    const pxTokens = [
+      ...tokens.matchAll(/(--ui-[\w-]+):\s*([^;]*\d(?:\.\d+)?px\b[^;]*);/g),
+    ]
+      .map(([, name]) => name)
+      .sort();
+
+    expect(pxTokens).toEqual(
+      [
+        '--ui-border-width',
+        '--ui-drag-indicator-width',
+        '--ui-focus-offset',
+        '--ui-focus-offset-inset',
+        '--ui-focus-width',
+        '--ui-row-active-shadow',
+      ].sort(),
+    );
+  });
+
+  it('expresses radius and control targets as rem contracts in the design guide', () => {
+    expect(designGuide).toMatch(
+      /rounded:[\s\S]*?xs: '0\.125rem'[\s\S]*?sm: '0\.25rem'[\s\S]*?md: '0\.375rem'[\s\S]*?lg: '0\.5rem'[\s\S]*?pill: '999rem'/u,
+    );
+    expect(designGuide).toContain('| Compact icon button');
+    expect(designGuide).toContain('`1.875rem` (normally 30 DIP)');
+    expect(designGuide).toContain('`4.25rem` (normally 68 DIP)');
   });
 
   it('keeps the Spotify-informed shell anchors and dossier anatomy', () => {
