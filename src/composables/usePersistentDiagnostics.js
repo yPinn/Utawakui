@@ -113,11 +113,50 @@ async function openFolder() {
   }
 }
 
+async function exportBundle() {
+  const exportDiagnostics = bridgeMethod('exportDiagnostics');
+  if (!exportDiagnostics) {
+    state.notice = failureNotice({
+      title: '無法匯出錯誤紀錄',
+      operation: 'export',
+    });
+    return false;
+  }
+
+  state.isLoading = true;
+  state.notice = null;
+  try {
+    const result = await exportDiagnostics();
+    // A cancelled save dialog is expected control flow, not a failure — it
+    // gets neither a success nor an error notice.
+    if (result?.cancelled) return true;
+    if (!result?.ok) throw new Error('diagnostics export failed');
+    state.notice = normalizeAppError(null, {
+      code: 'DIAGNOSTICS_EXPORTED',
+      severity: 'success',
+      title: '已匯出錯誤紀錄',
+      message: '檔案已儲存在你選擇的位置。',
+      source: 'diagnostics',
+      operation: 'export',
+    });
+    return true;
+  } catch {
+    state.notice = failureNotice({
+      title: '無法匯出錯誤紀錄',
+      operation: 'export',
+    });
+    return false;
+  } finally {
+    state.isLoading = false;
+  }
+}
+
 export function usePersistentDiagnostics() {
   return {
     state: readonly(state),
     refresh,
     clear,
     openFolder,
+    exportBundle,
   };
 }

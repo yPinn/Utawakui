@@ -57,6 +57,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('diagnostics:list-recent', limit),
   clearDiagnostics: () => ipcRenderer.invoke('diagnostics:clear'),
   openDiagnosticsFolder: () => ipcRenderer.invoke('diagnostics:open-folder'),
+  exportDiagnostics: () => ipcRenderer.invoke('diagnostics:export'),
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
   getAppUpdateStatus: () => ipcRenderer.invoke('app-update:get-status'),
   checkForAppUpdate: () => ipcRenderer.invoke('app-update:check'),

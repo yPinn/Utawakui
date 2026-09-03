@@ -82,4 +82,44 @@ describe('usePersistentDiagnostics', () => {
     });
     expect(JSON.stringify(diagnostics.state)).not.toContain('private path');
   });
+
+  it('reports a short success state after exporting the bundle', async () => {
+    const exportDiagnostics = vi
+      .fn()
+      .mockResolvedValue({ ok: true, cancelled: false });
+    const diagnostics = await loadComposable({ exportDiagnostics });
+
+    await expect(diagnostics.exportBundle()).resolves.toBe(true);
+
+    expect(diagnostics.state.notice).toMatchObject({
+      severity: 'success',
+      title: '已匯出錯誤紀錄',
+    });
+  });
+
+  it('treats a cancelled export as expected control flow, not a failure', async () => {
+    const exportDiagnostics = vi
+      .fn()
+      .mockResolvedValue({ ok: true, cancelled: true });
+    const diagnostics = await loadComposable({ exportDiagnostics });
+
+    await expect(diagnostics.exportBundle()).resolves.toBe(true);
+
+    expect(diagnostics.state.notice).toBeNull();
+  });
+
+  it('uses one safe recovery notice when export fails', async () => {
+    const exportDiagnostics = vi.fn().mockResolvedValue({
+      ok: false,
+      errorCode: 'DIAGNOSTICS_EXPORT_FAILED',
+    });
+    const diagnostics = await loadComposable({ exportDiagnostics });
+
+    await expect(diagnostics.exportBundle()).resolves.toBe(false);
+
+    expect(diagnostics.state.notice).toMatchObject({
+      title: '無法匯出錯誤紀錄',
+      message: '請稍後再試一次。',
+    });
+  });
 });

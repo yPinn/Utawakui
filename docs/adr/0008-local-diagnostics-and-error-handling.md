@@ -2,14 +2,17 @@
 
 ## Status
 
-Accepted and partially implemented (updated 2026-08-23). The current renderer
+Accepted and partially implemented (updated 2026-09-04). The current renderer
 error surface has been audited and migrated to a shared public-message boundary.
 The dependency-free main-owned core implements event
 normalization, redaction, JSONL persistence/recovery, rotation, recent reads,
 managed-file clearing, and fail-open results. Main startup, Electron lifecycle,
 bounded preload/IPC intents, Vue/renderer global capture, and Settings
-count/open/clear controls are wired. Explicit export and main domain-handler
-wrappers remain incremental work.
+count/open/clear/export controls are wired. Explicit export writes a single
+JSON support bundle to a user-selected, main-owned save-dialog destination; a
+cancelled dialog is expected control flow, not a failure. Main domain-handler
+wrappers beyond the completed dependency-handler migration remain incremental
+work.
 
 ## Context
 

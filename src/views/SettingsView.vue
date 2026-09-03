@@ -47,6 +47,7 @@ const {
   refresh: refreshDiagnostics,
   clear: clearDiagnostics,
   openFolder: openDiagnosticsFolder,
+  exportBundle: exportDiagnostics,
 } = usePersistentDiagnostics();
 const { recordError } = useAppDiagnostics();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
@@ -255,6 +256,10 @@ function handleDiagnosticsNoticeAction(operation) {
     handleClearDiagnostics();
     return;
   }
+  if (operation === 'export') {
+    exportDiagnostics();
+    return;
+  }
   refreshDiagnostics();
 }
 
@@ -447,6 +452,7 @@ onUnmounted(musicAnalysisSettings.dispose);
             @refresh="refreshDiagnostics"
             @open-folder="openDiagnosticsFolder"
             @clear="handleClearDiagnostics"
+            @export="exportDiagnostics"
             @notice-action="handleDiagnosticsNoticeAction"
           />
         </SettingsBlock>

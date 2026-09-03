@@ -33,6 +33,7 @@ const MAIN_INVOKE_CHANNELS = [
   'config:set-ui-theme',
   'config:set-auto-music-analysis',
   'diagnostics:clear',
+  'diagnostics:export',
   'diagnostics:list-recent',
   'diagnostics:open-folder',
   'diagnostics:record-renderer',

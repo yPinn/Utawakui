@@ -1,5 +1,8 @@
 'use strict';
 
+const { atomicWriteJson } = require('../lib/atomicWrite');
+const { buildDiagnosticsSupportBundle } = require('../lib/diagnosticsExport');
+
 const DEFAULT_RECENT_LIMIT = 100;
 const MAX_RECENT_LIMIT = 500;
 const DEFAULT_RENDERER_EVENTS_PER_MINUTE = 120;
@@ -48,6 +51,11 @@ function registerDiagnosticsHandlers({
   openLogsDirectory,
   now = Date.now,
   maxRendererEventsPerMinute = DEFAULT_RENDERER_EVENTS_PER_MINUTE,
+  dialog,
+  getMainWindow = () => null,
+  appVersion = '',
+  electronVersion = '',
+  writeExportFile = (filePath, data) => atomicWriteJson(filePath, data),
 }) {
   const rendererEventLimit =
     Number.isSafeInteger(maxRendererEventsPerMinute) &&
@@ -87,6 +95,39 @@ function registerDiagnosticsHandlers({
         : { ok: true };
     } catch {
       return { ok: false, errorCode: 'OPEN_LOGS_DIRECTORY_FAILED' };
+    }
+  });
+
+  // Renderer never supplies a path: the destination comes only from this
+  // main-owned native save dialog. A cancelled dialog is expected control
+  // flow, not a failure — it is neither recorded nor reported as one.
+  ipcMain.handle('diagnostics:export', async () => {
+    try {
+      const ownerWindow = getMainWindow();
+      const dialogOptions = {
+        title: '匯出錯誤紀錄',
+        defaultPath: `utawakui-diagnostics-${new Date(now())
+          .toISOString()
+          .replace(/[:.]/g, '-')}.json`,
+        filters: [{ name: 'JSON', extensions: ['json'] }],
+      };
+      const result = ownerWindow
+        ? await dialog.showSaveDialog(ownerWindow, dialogOptions)
+        : await dialog.showSaveDialog(dialogOptions);
+      if (result.canceled || !result.filePath) {
+        return { ok: true, cancelled: true };
+      }
+
+      const bundle = buildDiagnosticsSupportBundle({
+        events: service.listRecent(MAX_RECENT_LIMIT),
+        appVersion,
+        electronVersion,
+        exportedAt: new Date(now()).toISOString(),
+      });
+      writeExportFile(result.filePath, bundle);
+      return { ok: true, cancelled: false };
+    } catch {
+      return { ok: false, errorCode: 'DIAGNOSTICS_EXPORT_FAILED' };
     }
   });
 }

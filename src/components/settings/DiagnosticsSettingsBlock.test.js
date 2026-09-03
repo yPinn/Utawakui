@@ -17,23 +17,27 @@ async function renderBlock(props = {}) {
   );
 }
 
+function buttonTag(html, label) {
+  const start = html.indexOf(`aria-label="${label}"`);
+  return html.slice(start, html.indexOf('>', start));
+}
+
 describe('DiagnosticsSettingsBlock', () => {
-  it('shows familiar actions as labelled icon buttons with tooltips', async () => {
+  it('shows export as the one visible primary action plus an overflow menu trigger', async () => {
     const html = await renderBlock({ recordCount: 4 });
 
     expect(html).toContain('錯誤紀錄');
     expect(html).toContain('有紀錄');
     expect(html).toContain('4 筆近期錯誤');
-    expect(html).not.toContain('記錄只保留在這台電腦');
-    expect(html).toContain('aria-label="重新讀取"');
-    expect(html).toContain('title="重新讀取"');
-    expect(html).toContain('aria-label="開啟錯誤紀錄資料夾"');
-    expect(html).toContain('title="開啟錯誤紀錄資料夾"');
-    expect(html).toContain('aria-label="清除錯誤紀錄"');
-    expect(html).toContain('title="清除錯誤紀錄"');
-    expect(html).not.toContain('>重新讀取<');
-    expect(html).not.toContain('>開啟資料夾<');
-    expect(html).not.toContain('>清除<');
+    expect(html).toContain('aria-label="匯出錯誤紀錄"');
+    expect(html).toContain('title="匯出錯誤紀錄"');
+    expect(html).toContain('aria-label="錯誤紀錄選項"');
+    expect(html).toContain('aria-haspopup="menu"');
+    // Refresh/open-folder/clear move behind the overflow menu instead of
+    // sitting as their own always-visible icon buttons.
+    expect(html).not.toContain('aria-label="重新讀取"');
+    expect(html).not.toContain('aria-label="開啟錯誤紀錄資料夾"');
+    expect(html).not.toContain('aria-label="清除錯誤紀錄"');
   });
 
   it('uses a concise two-row empty state', async () => {
@@ -43,6 +47,19 @@ describe('DiagnosticsSettingsBlock', () => {
     expect(html).toContain('無紀錄');
     expect(html).toContain('沒有近期錯誤');
     expect(html).not.toContain('settings-action-row__description');
+  });
+
+  it('disables export while a record request is in flight but not when empty', async () => {
+    const emptyHtml = await renderBlock({ recordCount: 0 });
+    expect(buttonTag(emptyHtml, '匯出錯誤紀錄')).not.toContain('disabled');
+
+    const loadingHtml = await renderBlock({ recordCount: 4, isLoading: true });
+    expect(buttonTag(loadingHtml, '匯出錯誤紀錄')).toContain('disabled');
+  });
+
+  it('keeps the overflow trigger enabled even while loading or empty', async () => {
+    const loadingHtml = await renderBlock({ recordCount: 0, isLoading: true });
+    expect(buttonTag(loadingHtml, '錯誤紀錄選項')).not.toContain('disabled');
   });
 
   it('renders safe notices without exposing diagnostic event details', async () => {

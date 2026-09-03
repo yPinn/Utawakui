@@ -438,6 +438,10 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       service: diagnosticsService,
       openLogsDirectory: () => shell.openPath(app.getPath('logs')),
+      dialog,
+      getMainWindow: windowState.getMainWindow,
+      appVersion: app.getVersion(),
+      electronVersion: process.versions.electron,
     });
     registerStartupTraceHandler({
       ipcMain,

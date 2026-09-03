@@ -33,17 +33,17 @@ Reasons to pause:
 
 ## Current baseline
 
-| Surface                 | Current state                                                    | Coverage boundary                                                          |
-| ----------------------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Main persistence        | `electron/lib/diagnostics.js`                                    | JSONL, redaction, 5 MiB plus five rotations, recent read, clear, fail-open |
-| Main startup            | `electron/main.js`                                               | One session-scoped service using `app.getPath('logs')`                     |
-| Electron lifecycle      | `electron/main/diagnosticsLifecycle.js`                          | Fatal monitor, process gone, load/preload failure, unresponsive            |
-| Renderer global capture | `src/utils/rendererDiagnostics.js`                               | Vue, browser `error`, and `unhandledrejection`                             |
-| IPC boundary            | `electron/main/diagnosticsHandlers.js` and `electron/preload.js` | Record, recent read, clear, open folder; renderer writes are rate-limited  |
-| In-memory public errors | `src/composables/useAppDiagnostics.js`                           | Shared bounded public projection; never uses plain caught error text       |
-| Settings                | `src/views/SettingsView.vue`                                     | Persistent count plus clear/open-folder controls; no raw event list        |
-| Domain handlers         | Existing `electron/main/*Handlers.js` files                      | No shared diagnostics wrapper yet                                          |
-| Export                  | Not implemented                                                  | Must remain explicit, redacted, and user-selected                          |
+| Surface                 | Current state                                                    | Coverage boundary                                                                 |
+| ----------------------- | ---------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Main persistence        | `electron/lib/diagnostics.js`                                    | JSONL, redaction, 5 MiB plus five rotations, recent read, clear, fail-open        |
+| Main startup            | `electron/main.js`                                               | One session-scoped service using `app.getPath('logs')`                            |
+| Electron lifecycle      | `electron/main/diagnosticsLifecycle.js`                          | Fatal monitor, process gone, load/preload failure, unresponsive                   |
+| Renderer global capture | `src/utils/rendererDiagnostics.js`                               | Vue, browser `error`, and `unhandledrejection`                                    |
+| IPC boundary            | `electron/main/diagnosticsHandlers.js` and `electron/preload.js` | Record, recent read, clear, open folder, export; renderer writes are rate-limited |
+| In-memory public errors | `src/composables/useAppDiagnostics.js`                           | Shared bounded public projection; never uses plain caught error text              |
+| Settings                | `src/views/SettingsView.vue`                                     | Persistent count plus clear/open-folder/export controls; no raw event list        |
+| Domain handlers         | Existing `electron/main/*Handlers.js` files                      | No shared diagnostics wrapper yet                                                 |
+| Export                  | `electron/lib/diagnosticsExport.js`, `diagnostics:export`        | Main-owned save dialog, single JSON support bundle, atomic write, cancel-safe     |
 
 The two record surfaces are deliberately still separate:
 
@@ -131,21 +131,65 @@ Renderer Views use explicit concise Traditional Chinese messages through
 `UiNotice`; structured application errors remain the only IPC-provided public
 message source.
 
-### Batch 5: Explicit redacted export
+### Batch 5: Explicit redacted export — implemented
 
-Expected main path:
+Implemented as planned, with one simplification: export reuses
+`service.listRecent()` (already fully normalized/sanitized by
+`electron/lib/diagnostics.js`'s own read path) rather than re-parsing raw
+JSONL lines a second time in the export module itself.
 
-1. Add `diagnostics:export` to `electron/main/diagnosticsHandlers.js`.
-2. Inject a main-owned save-dialog function; renderer never supplies an
-   arbitrary destination path.
-3. Re-parse and normalize every persisted line before export rather than
-   copying managed JSONL files byte-for-byte.
-4. Write a new export file atomically and leave source logs untouched.
-5. Expose only `exportDiagnostics()` from `electron/preload.js`.
-6. Add the explicit export action and local-only explanation to Settings.
+- `electron/lib/diagnosticsExport.js` — pure `buildDiagnosticsSupportBundle()`,
+  shapes events into a single JSON support bundle (`bundleVersion`,
+  `schemaVersion`, `exportedAt`, `appVersion`, `electronVersion`,
+  `eventCount`, `levelCounts`, `events`).
+- `electron/main/diagnosticsHandlers.js` — `diagnostics:export` handler.
+  Injected `dialog`/`getMainWindow` (main.js composition root); a cancelled
+  save dialog returns `{ ok: true, cancelled: true }` and is never recorded
+  as a failure; write uses the existing `atomicWriteJson` from
+  `electron/lib/atomicWrite.js`.
+- `electron/preload.js` — `exportDiagnostics()`, not dev-gated (a product
+  feature).
+- `src/composables/usePersistentDiagnostics.js` — `exportBundle()`.
+- `src/components/settings/DiagnosticsSettingsBlock.vue` — export is the one
+  primary visible action; refresh/open-folder/clear moved behind an
+  `Ellipsis` + `UiContextMenu` overflow menu (matching
+  `SettingsDependencyActions.vue`'s existing primary+menu convention — the
+  four-icon-button layout this replaced was this file's only departure from
+  that convention).
 
-Test cancellation as expected control flow, unsafe persisted legacy lines,
-partial final lines, destination write failure, and absence of private fields.
+The exported bundle includes `stack` and `sessionId` (unlike the Settings
+list-recent public projection, which strips both) — this is an explicit,
+user-initiated export, not the ambient count-only surface, so ADR 0008's
+"must not turn Settings into a developer log viewer" constraint does not
+apply to it.
+
+### Batch 5b: Dev-only structured reader (F6) and standalone viewer — implemented
+
+Two reader surfaces beyond the ADR's original batch list, added to answer
+"how does a developer read this without the Settings UI becoming a log
+viewer":
+
+- `src/composables/useDiagnosticsWorkbench.js` +
+  `src/components/settings/DiagnosticsWorkbench.vue` +
+  `src/views/DiagnosticsWorkbenchView.vue` — an F6, dev-build-only workbench
+  (same `import.meta.env.DEV` tree-shake mechanism as the F5/F7/F8 internal
+  workbenches in `src/App.vue`). Reads the full event list via the existing
+  `listRecentDiagnostics` IPC — no new IPC channel, no new preload method.
+  Level filter, text search, per-level counts, native `<details>` disclosure
+  per row for full JSON (including `stack`, which the Settings projection
+  never exposes).
+- `scripts/diagnostics-viewer.html` — a single static HTML file, no
+  dependencies, no build step, never packaged (electron-builder's `files:`
+  allowlist does not list `scripts/`) and invisible to ESLint/Vitest/
+  markdownlint (none of their include globs match a bare `.html` file
+  outside `docs/`). Opened directly in a browser; drag-and-drop or file-picker
+  loads an exported support bundle and renders the same
+  summary/filter/disclosure UI as the F6 workbench. Deliberately reads only
+  the export bundle format (`buildDiagnosticsSupportBundle`'s shape) — it
+  does not parse raw `diagnostics.jsonl`. Exists specifically so a
+  developer can also open a bundle a _user_ emailed in, which the in-app F6
+  workbench cannot do (accepting a renderer-supplied file path is the ADR's
+  own stop condition — see below).
 
 ### Batch 6: Domain IPC wrapper and first migrations — started
 

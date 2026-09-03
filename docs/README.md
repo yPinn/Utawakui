@@ -72,23 +72,23 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 
 ## ADR 現況對照
 
-| ADR                                                                    | 目前效力             | 現況／方向                                                                                |
-| ---------------------------------------------------------------------- | -------------------- | ----------------------------------------------------------------------------------------- |
-| [0001](adr/0001-standalone-ytdlp-no-plugin-support.md)                 | 已被 0005 取代       | Standalone executable 限制仍是有效證據；產品已改用 app-managed Python。                   |
-| [0002](adr/0002-packaged-exe-kept-as-electron-exe.md)                  | 現行                 | Executable 維持 `electron.exe`，產品 identity 由 installer／AUMID 提供。                  |
-| [0003](adr/0003-japanese-reading-analyzer-stack.md)                    | 已實作               | 日文 reading 使用 kuromoji + wanakana。                                                   |
-| [0004](adr/0004-korean-romanization-package.md)                        | 已實作               | 韓文 romanization 使用 koroman。                                                          |
-| [0005](adr/0005-python-ytdlp-provider-engine.md)                       | 已實作               | Provider runtime、plugin 與 sidecar 由 app 原子準備和驗證。                               |
-| [0006](adr/0006-loopback-output-websocket-runtime.md)                  | 已實作               | Loopback HTTP + `ws` 是目前 Browser Source transport。                                    |
-| [0007](adr/0007-signed-public-release-app-updates.md)                  | 已實作基礎           | Public feed、updater 與 unsigned metadata flow 已建立；簽章與連續版本 acceptance 未完成。 |
-| [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 部分實作             | Main diagnostics 已建立；domain wrappers 與 export 增量導入。                             |
-| [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作             | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                           |
-| [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作         | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。          |
-| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中               | 現行仍是四個固定 slot；instance／pack model 尚未交付。                                    |
-| [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作           | Projection Hub、source identity、liveness 與 startup budgets 已落地。                     |
-| [0013](adr/0013-external-integration-planes.md)                        | 規劃中               | 目前只有 Browser Source；其他 adapters 尚未實作。                                         |
-| [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                    |
-| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。               |
+| ADR                                                                    | 目前效力             | 現況／方向                                                                                                                                    |
+| ---------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [0001](adr/0001-standalone-ytdlp-no-plugin-support.md)                 | 已被 0005 取代       | Standalone executable 限制仍是有效證據；產品已改用 app-managed Python。                                                                       |
+| [0002](adr/0002-packaged-exe-kept-as-electron-exe.md)                  | 現行                 | Executable 維持 `electron.exe`，產品 identity 由 installer／AUMID 提供。                                                                      |
+| [0003](adr/0003-japanese-reading-analyzer-stack.md)                    | 已實作               | 日文 reading 使用 kuromoji + wanakana。                                                                                                       |
+| [0004](adr/0004-korean-romanization-package.md)                        | 已實作               | 韓文 romanization 使用 koroman。                                                                                                              |
+| [0005](adr/0005-python-ytdlp-provider-engine.md)                       | 已實作               | Provider runtime、plugin 與 sidecar 由 app 原子準備和驗證。                                                                                   |
+| [0006](adr/0006-loopback-output-websocket-runtime.md)                  | 已實作               | Loopback HTTP + `ws` 是目前 Browser Source transport。                                                                                        |
+| [0007](adr/0007-signed-public-release-app-updates.md)                  | 已實作基礎           | Public feed、updater 與 unsigned metadata flow 已建立；簽章與連續版本 acceptance 未完成。                                                     |
+| [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 主路徑已實作         | Main diagnostics、Settings 控制與顯式 redacted export 已建立；F6 dev workbench 與獨立單檔 HTML 檢視工具已提供；domain wrappers 持續增量導入。 |
+| [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作             | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                                                                               |
+| [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作         | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                              |
+| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中               | 現行仍是四個固定 slot；instance／pack model 尚未交付。                                                                                        |
+| [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作           | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                         |
+| [0013](adr/0013-external-integration-planes.md)                        | 規劃中               | 目前只有 Browser Source；其他 adapters 尚未實作。                                                                                             |
+| [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |
+| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                   |
 
 ## 常用文件
 

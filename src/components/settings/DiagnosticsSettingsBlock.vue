@@ -1,21 +1,75 @@
 <script setup>
+import { computed, shallowRef } from 'vue';
 import {
+  Download,
+  Ellipsis,
   FolderOpen,
   ListChecks,
   RefreshCw,
   Trash2,
 } from '../../icons/index.js';
+import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import SettingsActionRow from './SettingsActionRow.vue';
 
-defineProps({
+const props = defineProps({
   recordCount: { type: Number, default: 0 },
   isLoading: { type: Boolean, default: false },
   notice: { type: Object, default: null },
 });
 
-const emit = defineEmits(['refresh', 'openFolder', 'clear', 'noticeAction']);
+const emit = defineEmits([
+  'refresh',
+  'openFolder',
+  'clear',
+  'export',
+  'noticeAction',
+]);
+
+// Export is the one action most people actually reach for (sending records
+// to a developer); refresh/open-folder/clear are advanced/support actions,
+// same split as SettingsDependencyActions.vue's primary + Ellipsis menu.
+const isMenuOpen = shallowRef(false);
+const menuX = shallowRef(0);
+const menuY = shallowRef(0);
+
+const menuItems = computed(() => [
+  {
+    value: 'refresh',
+    label: '重新讀取',
+    icon: RefreshCw,
+    disabled: props.isLoading,
+  },
+  { value: 'open-folder', label: '開啟資料夾', icon: FolderOpen },
+  { separator: true },
+  {
+    value: 'clear',
+    label: '清除紀錄',
+    icon: Trash2,
+    danger: true,
+    disabled: props.isLoading || props.recordCount === 0,
+  },
+]);
+
+function openMenu(event) {
+  event.stopPropagation();
+  const rect = event.currentTarget.getBoundingClientRect();
+  menuX.value = rect.right;
+  menuY.value = rect.bottom + 4;
+  isMenuOpen.value = true;
+}
+
+function closeMenu() {
+  isMenuOpen.value = false;
+}
+
+function handleMenuSelect(actionId) {
+  closeMenu();
+  if (actionId === 'refresh') emit('refresh');
+  else if (actionId === 'open-folder') emit('openFolder');
+  else if (actionId === 'clear') emit('clear');
+}
 </script>
 
 <template>
@@ -36,24 +90,31 @@ const emit = defineEmits(['refresh', 'openFolder', 'clear', 'noticeAction']);
     >
       <template #actions>
         <UiIconButton
-          :icon="RefreshCw"
-          label="重新讀取"
+          :icon="Download"
+          label="匯出錯誤紀錄"
           :disabled="isLoading"
-          @click="emit('refresh')"
+          @click="emit('export')"
         />
         <UiIconButton
-          :icon="FolderOpen"
-          label="開啟錯誤紀錄資料夾"
-          @click="emit('openFolder')"
-        />
-        <UiIconButton
-          :icon="Trash2"
-          label="清除錯誤紀錄"
-          :disabled="isLoading || recordCount === 0"
-          @click="emit('clear')"
+          :icon="Ellipsis"
+          label="錯誤紀錄選項"
+          aria-haspopup="menu"
+          :aria-expanded="isMenuOpen ? 'true' : 'false'"
+          @click="openMenu"
         />
       </template>
     </SettingsActionRow>
+
+    <UiContextMenu
+      :open="isMenuOpen"
+      :x="menuX"
+      :y="menuY"
+      :width="184"
+      align-x="right"
+      :items="menuItems"
+      @select="handleMenuSelect"
+      @close="closeMenu"
+    />
 
     <UiNotice
       v-if="notice"
