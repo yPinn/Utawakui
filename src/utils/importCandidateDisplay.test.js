@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import {
   candidateId,
   candidateSourceLabel,
-  confidenceLabel,
   identityArtistLabel,
   identityStatusClass,
   identityStatusLabel,
   identityTitle,
+  formatViewCount,
   platformLabel,
   playbackKindLabel,
 } from './importCandidateDisplay.js';
@@ -20,6 +20,9 @@ describe('import candidate display helpers', () => {
 
   it('maps technical candidate fields to user-facing labels', () => {
     expect(playbackKindLabel('yt-music-song')).toBe('音樂版');
+    expect(playbackKindLabel('youtube-official-mv')).toBe('MV');
+    expect(playbackKindLabel('youtube-live')).toBe('Live');
+    expect(playbackKindLabel('youtube-variant')).toBe('其他版本');
     expect(playbackKindLabel('unknown-kind')).toBe('來源');
     expect(platformLabel({ searchProvider: 'yt-music' })).toBe('YT Music');
     expect(platformLabel({ isSource: true })).toBe('貼上的來源');
@@ -30,11 +33,12 @@ describe('import candidate display helpers', () => {
     expect(platformLabel({})).toBe('YouTube');
   });
 
-  it('labels match confidence levels, with a fallback for unknown values', () => {
-    expect(confidenceLabel('high')).toBe('吻合度高');
-    expect(confidenceLabel('medium')).toBe('吻合度中');
-    expect(confidenceLabel('low')).toBe('吻合度低');
-    expect(confidenceLabel(undefined)).toBe('一般吻合');
+  it('formats familiar compact YouTube view counts', () => {
+    expect(formatViewCount(undefined)).toBe('');
+    expect(formatViewCount(-1)).toBe('');
+    expect(formatViewCount(9876)).toBe('9,876 次觀看');
+    expect(formatViewCount(123456)).toBe('12.3 萬次觀看');
+    expect(formatViewCount(123456789)).toBe('1.2 億次觀看');
   });
 
   it('uses only the source name for candidate badges', () => {

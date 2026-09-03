@@ -20,8 +20,9 @@ services，再將具名 dependency 注入各 domain handler。Handler 不以共�
 隱藏依賴，也不彼此直接協調；跨 domain 流程由 composition root 建立的 service 負責。
 
 Machine config、feature confirmation 與 external navigation 分別由獨立 handler registrar
-持有。Renderer 開啟外部頁面時只提交 allowlisted target id；vendor URL 固定在 main，且
-preload 不提供任意 URL API。
+持有。Renderer 開啟固定說明頁面時只提交 allowlisted target id；provider discovery 則只提交
+bounded query，由 `providerDiscoveryHandlers.js` 在 main 建立固定 YT Music search URL 並重查
+`provider-flow` gate。Vendor origin／path 均固定在 main，preload 不提供任意 URL API。
 
 Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實際 channel 依責任
 分在 `electron/main/lyrics/`：`documentHandlers.js` 只處理本機歌詞／timing，
@@ -115,11 +116,28 @@ composable 接受具名 dependency，不互相 import；reading aid 與 timing e
 Import renderer 也維持單一 session state：`src/composables/useImportSession.js` 保留
 `useImportSession()` readonly public facade、computed UI projection、selection／filter、共用
 status/error 與 download-directory adapter；
-`src/composables/import/useImportSourceResolution.js` 負責 provider-backed playlist／single
-resolution、candidate selection 與 structured-clone-safe preview；
+`src/composables/import/useImportSourceResolution.js` 負責 provider-backed text／URL、
+playlist／single resolution、candidate selection 與 structured-clone-safe preview；main 的
+`electron/lib/importInput.js` 先將 bounded intent 分類，`playbackSearch.js` 只組合固定
+YT Music `#songs` URL 與 bounded flat `ytsearch` 查詢。前者完整解析最多三筆結構化歌曲
+資訊，後者每個 query 最多取八筆一般 YouTube 版本；runner 回傳後再次截到各來源上限，
+同 video id 合併 provider evidence，再由 `importResolver.js` 對完整 bounded pool 評分後
+最多投影十二筆。YT Music hostname 或搜尋命中本身不覆蓋 live／MV／variant 證據；
+Topic／auto-generated music fields、官方音源、title／artist、duration 與弱化封頂的
+`view_count` 共同決定 recording fit 與順序。純文字搜尋只有 finite-duration
+release recording 可自動選取，其他版本保留人工選擇。Renderer 只顯示來源、版本、
+長度與精簡觀看數，不揭露內部分數或 confidence badge。
+Spotify／Apple Music URL 目前只回傳 deferred 狀態，不觸發外站 request。需要人工探索時，
+現有 session owner 只發出
+「以目前文字開啟 YT Music」意圖；系統瀏覽器的帳號／cookie 不進入 Electron，結果必須由
+使用者複製回既有 allowlisted input；
 `src/composables/import/useImportExecution.js` 負責 single／batch download、cancel／retry、
 partial failure aggregation 與 playlist／album persistence。兩個內部 composable 只接收同一份
 session state 與具名 callbacks，不自行建立 reactive state，也不互相 import。
+
+候選搜尋的 duration 是預覽資訊；下載階段會由 yt-dlp 對 main-derived video id 再做 metadata
+phase，完成後 `info.json` 的 duration 才是 library index 與 optional lyrics acquisition 的本機
+權威。Renderer 不提供 executable、provider option、任意 URL 或最終 duration。
 
 Music Analysis Workbench 同樣以 `src/composables/useMusicAnalysisWorkbench.js` 作為唯一
 session state 與 public facade，負責 track selection、library／isolated signal owner、共用

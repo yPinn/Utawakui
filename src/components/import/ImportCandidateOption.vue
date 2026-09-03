@@ -4,10 +4,12 @@ import { ICON_SIZE, Music, Video } from '../../icons/index.js';
 import {
   candidateId,
   candidateSourceLabel,
-  confidenceLabel,
+  formatViewCount,
+  playbackKindLabel,
 } from '../../utils/importCandidateDisplay.js';
 import { formatDuration } from '../../utils/format.js';
 import UiChip from '../ui/UiChip.vue';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
   candidate: {
@@ -39,15 +41,24 @@ const emit = defineEmits(['select']);
 const durationLabel = computed(() =>
   formatDuration(props.candidate.duration, ''),
 );
+const viewCountLabel = computed(() =>
+  formatViewCount(props.candidate.viewCount),
+);
 const isMusicPlatform = computed(
   () =>
+    props.candidate.availableProviders?.includes('yt-music') ||
     props.candidate.searchProvider === 'yt-music' ||
     props.candidate.playbackKind?.startsWith('yt-music'),
 );
 const platformIcon = computed(() => (isMusicPlatform.value ? Music : Video));
 const title = computed(() => props.candidate.title || '未命名歌曲');
+const versionLabel = computed(() =>
+  playbackKindLabel(props.candidate.playbackKind),
+);
 const metaParts = computed(() =>
-  [props.candidate.artist, durationLabel.value].filter(Boolean),
+  [props.candidate.artist, durationLabel.value, viewCountLabel.value].filter(
+    Boolean,
+  ),
 );
 </script>
 
@@ -63,6 +74,11 @@ const metaParts = computed(() =>
     role="radio"
     @click="emit('select', candidateId(candidate))"
   >
+    <UiTrackThumb
+      :track="candidate"
+      size="calc(var(--ui-space-5) + var(--ui-space-2))"
+    />
+
     <UiChip
       class="platform-badge"
       background="var(--ui-color-surface)"
@@ -93,7 +109,7 @@ const metaParts = computed(() =>
         建議
       </UiChip>
       <UiChip background="var(--ui-color-surface)">
-        {{ confidenceLabel(candidate.confidence) }}
+        {{ versionLabel }}
       </UiChip>
     </span>
   </button>
@@ -102,7 +118,7 @@ const metaParts = computed(() =>
 <style scoped>
 .candidate-option {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--ui-space-2);
   width: 100%;

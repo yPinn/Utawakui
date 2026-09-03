@@ -84,6 +84,13 @@ describe('extractPlaylistId', () => {
     expect(extractPlaylistId('not a url')).toBe(null);
   });
 
+  it.each([
+    'https://youtube.com/playlist?list=PLsafe%26index%3D99',
+    `https://youtube.com/playlist?list=${'x'.repeat(129)}`,
+  ])('rejects a playlist id that cannot be safely embedded: %s', (input) => {
+    expect(extractPlaylistId(input)).toBe(null);
+  });
+
   // RD-prefixed lists are YouTube's auto-generated Radio/Mix — personalized,
   // open-ended, not a fixed saved playlist. yt-dlp's flat-playlist mode
   // can't list them ("YouTube said: This playlist type is unviewable.",

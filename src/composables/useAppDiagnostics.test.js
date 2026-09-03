@@ -80,6 +80,7 @@ describe('useAppDiagnostics', () => {
       message: '目前無法讀取曲庫，請再試一次。',
       context: {
         retryable: true,
+        reason: 'network-error',
         trackId: 'private-track-id',
         technicalMessage: error.message,
       },
@@ -97,7 +98,7 @@ describe('useAppDiagnostics', () => {
       code: 'LIBRARY_LIST_FAILED',
       message: 'Renderer operation failed',
       correlationId: 'library-list-id',
-      context: { retryable: true },
+      context: { retryable: true, reason: 'network-error' },
     });
     expect(JSON.stringify(recordDiagnostic.mock.calls)).not.toContain(
       'secret.wav',

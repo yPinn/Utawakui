@@ -79,6 +79,9 @@ const { registerFeatureGateHandlers } = require('./main/featureGateHandlers');
 const {
   registerExternalNavigationHandlers,
 } = require('./main/externalNavigationHandlers');
+const {
+  registerProviderDiscoveryHandlers,
+} = require('./main/providerDiscoveryHandlers');
 const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
@@ -499,6 +502,7 @@ if (!gotSingleInstanceLock) {
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
     registerLyricsHandlers({
@@ -592,6 +596,14 @@ if (!gotSingleInstanceLock) {
     registerExternalNavigationHandlers({
       ipcMain,
       openExternal: (url) => shell.openExternal(url),
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+    });
+
+    registerProviderDiscoveryHandlers({
+      ipcMain,
+      openExternal: (url) => shell.openExternal(url),
+      requireFeatureGate,
+      featureIds: FEATURE_IDS,
       recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 

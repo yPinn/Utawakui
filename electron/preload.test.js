@@ -44,6 +44,7 @@ const MAIN_INVOKE_CHANNELS = [
   'feature-dependencies:set-ffmpeg-source',
   'feature-gates:confirm',
   'feature-gates:list',
+  'import:resolve-source',
   'library:choose-track-artwork',
   'library:clear-track-artwork',
   'library:delete-track',
@@ -107,6 +108,7 @@ const MAIN_INVOKE_CHANNELS = [
   'playlists:set-kind',
   'playlists:set-tracks',
   'playlists:upsert-album',
+  'provider-discovery:open-youtube-music-search',
   'separation:cancel',
   'separation:run',
   'separation:select',
@@ -378,6 +380,21 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
       'shell:open-external',
       'vb-cable',
+    );
+  });
+
+  it('forwards only the search text for YT Music discovery', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    expect(bridge).not.toHaveProperty('openExternalUrl');
+    bridge.openYoutubeMusicSearch(
+      '宇多田ヒカル First Love',
+      'https://example.test/private',
+    );
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'provider-discovery:open-youtube-music-search',
+      '宇多田ヒカル First Love',
     );
   });
 

@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../utils/appErrors.js';
 
 let fetchYoutubePlaylistMock;
+let resolveImportInputMock;
 let resolveImportSourceMock;
 let fetchVideoMetadataMock;
 let downloadAudioMock;
@@ -11,6 +12,7 @@ let confirmFeatureGateMock;
 let chooseDownloadDirMock;
 let resetDownloadDirMock;
 let openDownloadDirMock;
+let openYoutubeMusicSearchMock;
 let listPlaylistsMock;
 let createPlaylistMock;
 let setPlaylistTracksMock;
@@ -44,6 +46,7 @@ beforeEach(() => {
   vi.resetModules();
   mockPlaylist = null;
   fetchYoutubePlaylistMock = vi.fn();
+  resolveImportInputMock = vi.fn();
   resolveImportSourceMock = vi.fn();
   fetchVideoMetadataMock = vi.fn();
   downloadAudioMock = vi.fn();
@@ -58,6 +61,7 @@ beforeEach(() => {
   chooseDownloadDirMock = vi.fn();
   resetDownloadDirMock = vi.fn();
   openDownloadDirMock = vi.fn();
+  openYoutubeMusicSearchMock = vi.fn().mockResolvedValue(undefined);
   listPlaylistsMock = vi.fn().mockResolvedValue([]);
   createPlaylistMock = vi.fn(async (name) => {
     mockPlaylist = {
@@ -94,6 +98,7 @@ beforeEach(() => {
       chooseDownloadDir: chooseDownloadDirMock,
       resetDownloadDir: resetDownloadDirMock,
       openDownloadDir: openDownloadDirMock,
+      openYoutubeMusicSearch: openYoutubeMusicSearchMock,
       listPlaylists: listPlaylistsMock,
       createPlaylist: createPlaylistMock,
       setPlaylistTracks: setPlaylistTracksMock,
@@ -126,6 +131,65 @@ function deferred() {
 }
 
 describe('useImportSession', () => {
+  it('opens the current query in YT Music after checking the provider gate', async () => {
+    const session = await loadImportSession();
+
+    session.setInput('宇多田ヒカル First Love');
+    await expect(session.openYoutubeMusicSearch()).resolves.toBe(true);
+
+    expect(openYoutubeMusicSearchMock).toHaveBeenCalledWith(
+      '宇多田ヒカル First Love',
+    );
+    expect(session.state.status).toBe(
+      '已在系統瀏覽器開啟 YT Music，找到來源後請複製連結貼回此處。',
+    );
+    expect(session.state.statusType).toBe('success');
+    expect(session.state.isOpeningDiscovery).toBe(false);
+  });
+
+  it('does not request a gate or open a browser for an empty discovery query', async () => {
+    const session = await loadImportSession();
+
+    session.setInput('   ');
+    await expect(session.openYoutubeMusicSearch()).resolves.toBe(false);
+
+    expect(getFeatureConfirmationsMock).not.toHaveBeenCalled();
+    expect(openYoutubeMusicSearchMock).not.toHaveBeenCalled();
+    expect(session.state.status).toBe('請先輸入要在 YT Music 尋找的歌曲或歌手');
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it('routes discovery gate setup to Settings with its own operation', async () => {
+    getFeatureConfirmationsMock.mockResolvedValueOnce({});
+    const session = await loadImportSession();
+    const { useFeatureGateAccess } = await import('./useFeatureGateAccess.js');
+
+    session.setInput('Artist Song');
+    await expect(session.openYoutubeMusicSearch()).resolves.toBe(false);
+
+    expect(openYoutubeMusicSearchMock).not.toHaveBeenCalled();
+    expect(useFeatureGateAccess().state.request).toMatchObject({
+      featureId: 'provider-flow',
+      source: 'import',
+      operation: 'open-youtube-music-search',
+    });
+  });
+
+  it('surfaces a bounded discovery error and clears the pending state', async () => {
+    openYoutubeMusicSearchMock.mockRejectedValueOnce(
+      new Error('private browser profile path'),
+    );
+    const session = await loadImportSession();
+
+    session.setInput('Artist Song');
+    await expect(session.openYoutubeMusicSearch()).resolves.toBe(false);
+
+    expect(session.state.status).toBe('目前無法開啟 YT Music，請稍後再試。');
+    expect(session.state.statusType).toBe('error');
+    expect(session.state.status).not.toContain('private browser');
+    expect(session.state.isOpeningDiscovery).toBe(false);
+  });
+
   it('preserves the exact public import-session API', async () => {
     const session = await loadImportSession();
 
@@ -143,6 +207,7 @@ describe('useImportSession', () => {
       'getTrackStatusClass',
       'getTrackStatusLabel',
       'openDownloadDir',
+      'openYoutubeMusicSearch',
       'playlistStats',
       'refreshConfig',
       'resetDownloadDir',
@@ -286,6 +351,253 @@ describe('useImportSession', () => {
     expect(downloadAudioMock).toHaveBeenCalledWith('aud12345678');
     expect(session.state.status).toBe('已下載：Single Song');
     expect(session.state.sourceKind).toBe('idle');
+  });
+
+  it('resolves a free-text query through the generic import bridge', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'single',
+      inputKind: 'text-query',
+      resolution: {
+        input: 'Artist Song',
+        canonical: { title: 'Artist Song' },
+        source: null,
+        recommendedCandidate: {
+          playbackVideoId: 'topic000001',
+          title: 'Song',
+          artist: 'Artist - Topic',
+          duration: 211,
+          playbackKind: 'youtube-topic-audio',
+          recordingFit: 'release-recording',
+          alreadyDownloaded: false,
+        },
+        candidates: [
+          {
+            playbackVideoId: 'topic000001',
+            title: 'Song',
+            artist: 'Artist - Topic',
+            duration: 211,
+            playbackKind: 'youtube-topic-audio',
+            recordingFit: 'release-recording',
+            alreadyDownloaded: false,
+          },
+        ],
+      },
+    });
+    const session = await loadImportSession();
+
+    session.setInput('Artist Song');
+    await session.resolveSource();
+
+    expect(resolveImportInputMock).toHaveBeenCalledWith('Artist Song');
+    expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
+    expect(session.state.sourceKind).toBe('single');
+    expect(session.state.selectedCandidateId).toBe('topic000001');
+    expect(session.state.singleTrack).toMatchObject({
+      id: 'topic000001',
+      recordingFit: 'release-recording',
+    });
+    expect(session.canConfirmImport.value).toBe(true);
+  });
+
+  it('keeps ambiguous search candidates visible without auto-selecting one', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'single',
+      inputKind: 'text-query',
+      resolution: {
+        input: 'Artist Song',
+        canonical: { title: 'Artist Song' },
+        source: null,
+        recommendedCandidate: null,
+        candidates: [
+          {
+            playbackVideoId: 'live1234567',
+            title: 'Song Live',
+            artist: 'Artist',
+            playbackKind: 'youtube-live',
+            recordingFit: 'mismatch',
+            confidence: 'low',
+            alreadyDownloaded: false,
+          },
+        ],
+      },
+    });
+    const session = await loadImportSession();
+
+    session.setInput('Artist Song');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('single');
+    expect(session.state.singleTrack).toBe(null);
+    expect(session.state.selectedCandidateId).toBe(null);
+    expect(session.canConfirmImport.value).toBe(false);
+    expect(session.state.status).toBe('找到 1 個候選，請選擇下載版本');
+
+    session.selectImportCandidate('live1234567');
+    expect(session.state.singleTrack).toMatchObject({ id: 'live1234567' });
+    expect(session.canConfirmImport.value).toBe(true);
+  });
+
+  it('explains deferred Spotify URLs without calling legacy YouTube handlers', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'deferred',
+      platform: 'spotify',
+    });
+    const session = await loadImportSession();
+
+    session.setInput('https://open.spotify.com/track/123');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.status).toBe('Spotify 連結轉換尚未開放');
+    expect(session.state.statusType).toBe('pending');
+    expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['apple-music', 'Apple Music 連結轉換尚未開放'],
+    ['future-provider', '未知平台 連結轉換尚未開放'],
+  ])('labels a deferred %s input', async (platform, message) => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'deferred',
+      platform,
+    });
+    const session = await loadImportSession();
+
+    session.setInput('https://provider.example/item');
+    await session.resolveSource();
+
+    expect(session.state.status).toBe(message);
+    expect(session.state.statusType).toBe('pending');
+  });
+
+  it('builds an album preview from the generic import bridge', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'playlist',
+      collectionKind: 'album',
+      title: 'Album - Example Album',
+      thumbnailUrl: 'https://i.ytimg.com/example.jpg',
+      source: { platform: 'yt-music', id: 'OLAK5uy_example' },
+      entries: [{ id: 'song-1', title: 'Song 1' }],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('https://music.youtube.com/playlist?list=OLAK5uy_example');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('playlist');
+    expect(session.state.collectionKind).toBe('album');
+    expect(session.state.playlistTitle).toBe('Example Album');
+    expect(session.state.collectionSource).toEqual({
+      platform: 'yt-music',
+      id: 'OLAK5uy_example',
+    });
+    expect(session.state.collectionThumbnailUrl).toBe(
+      'https://i.ytimg.com/example.jpg',
+    );
+  });
+
+  it('reports an empty playlist returned by the generic import bridge', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'playlist',
+      collectionKind: 'playlist',
+      entries: [],
+    });
+    const session = await loadImportSession();
+
+    session.setInput('https://youtube.com/playlist?list=PL123');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.status).toBe('這個播放清單沒有可匯入的曲目');
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it.each([
+    ['query-too-long', '搜尋文字過長，請縮短歌曲名稱或歌手名稱'],
+    ['unsupported-url', '目前只支援歌曲名稱、YouTube 與 YouTube Music 連結'],
+  ])('explains generic unsupported input: %s', async (reason, message) => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'unsupported',
+      reason,
+    });
+    const session = await loadImportSession();
+
+    session.setInput('unsupported');
+    await session.resolveSource();
+
+    expect(session.state.status).toBe(message);
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it('reports a search with no usable candidates', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'single',
+      resolution: {
+        source: null,
+        recommendedCandidate: null,
+        candidates: [],
+      },
+    });
+    const session = await loadImportSession();
+
+    session.setInput('missing song');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.status).toBe(
+      '沒有搜尋到可用的 YT Music／YouTube 結果，可到 YT Music 手動尋找',
+    );
+    expect(session.state.statusType).toBe('error');
+  });
+
+  it('distinguishes a provider search failure from a genuine empty result', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockRejectedValueOnce(
+      new Error(
+        `${APP_ERROR_PREFIX}${JSON.stringify({
+          code: 'PROVIDER_SEARCH_FAILED',
+          severity: 'error',
+          title: 'YT Music／YouTube 搜尋未完成',
+          message: '目前無法完成 YT Music／YouTube 搜尋，請稍後再試。',
+          context: {
+            reason: 'network-error',
+            retryable: true,
+            diagnosticRecorded: true,
+          },
+        })}`,
+      ),
+    );
+    const session = await loadImportSession();
+
+    session.setInput('\u96e8\u611b');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.status).toBe(
+      '搜尋 YT Music／YouTube 失敗：網路連線失敗',
+    );
+    expect(session.state.statusType).toBe('error');
+    expect(session.state.failureHint).toBe('請確認網路連線後再重試。');
+  });
+
+  it('contains a malformed generic import response as a safe resolve failure', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({ kind: 'unexpected' });
+    const session = await loadImportSession();
+
+    session.setInput('Artist Song');
+    await session.resolveSource();
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.status).toBe('找不到來源：下載失敗');
   });
 
   it('lets the selected single candidate decide the downloaded video id', async () => {

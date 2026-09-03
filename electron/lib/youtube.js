@@ -1,6 +1,7 @@
 'use strict';
 
 const VIDEO_ID_RE = /^[A-Za-z0-9_-]{11}$/;
+const PLAYLIST_ID_RE = /^[A-Za-z0-9_-]{3,128}$/;
 const YOUTUBE_HOSTS = new Set([
   'youtube.com',
   'm.youtube.com',
@@ -41,10 +42,9 @@ function extractVideoId(input) {
   return null;
 }
 
-// Returns the `list` query param, or null (not an error — caller falls back
-// to the single-video path). Not format-validated like VIDEO_ID_RE — yt-dlp
-// itself rejects bad values, and the host check here is just a UX signal,
-// not a security boundary (the request URL is always built by us).
+// Returns the bounded `list` query param, or null (not an error — caller falls
+// back to the single-video path). The allowlist keeps the main-built playlist
+// URL from inheriting query delimiters or unbounded renderer input.
 //
 // RD-prefixed ids are excluded even though otherwise valid: they're
 // YouTube's auto-generated Radio/mix, not a fixed playlist, and confirmed
@@ -65,7 +65,9 @@ function extractPlaylistId(input) {
   if (host !== 'youtu.be' && !YOUTUBE_HOSTS.has(host)) return null;
 
   const listId = url.searchParams.get('list');
-  if (!listId || listId.startsWith('RD')) return null;
+  if (!listId || !PLAYLIST_ID_RE.test(listId) || listId.startsWith('RD')) {
+    return null;
+  }
   return listId;
 }
 

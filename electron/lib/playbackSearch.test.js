@@ -92,7 +92,7 @@ describe('searchPlaybackCandidates', () => {
     ]);
   });
 
-  it('starts all metadata searches in parallel', async () => {
+  it('starts one YT Music Songs search and bounded YouTube fallbacks in parallel', async () => {
     const pending = [];
     const runner = vi.fn(() => {
       let resolve;
@@ -112,25 +112,168 @@ describe('searchPlaybackCandidates', () => {
       { runner },
     );
 
-    expect(runner).toHaveBeenCalledTimes(4);
+    expect(runner).toHaveBeenCalledTimes(5);
+    const ytmCall = runner.mock.calls.find(([input]) =>
+      String(input).startsWith('https://music.youtube.com/search?'),
+    );
+    expect(ytmCall).toBeDefined();
+    const ytmUrl = new URL(ytmCall[0]);
+    expect(ytmUrl.searchParams.get('q')).toBe('Actual Artist Canonical Title');
+    expect(ytmUrl.hash).toBe('#songs');
+    expect(ytmCall[1]).not.toHaveProperty('flatPlaylist');
+    expect(ytmCall[1].playlistEnd).toBe(3);
     pending.forEach((resolve) => resolve({ entries: [] }));
     await expect(searchPromise).resolves.toEqual([]);
   });
 
-  it('searches YouTube for a same-platform match without downloading media', async () => {
+  it('keeps the bounded provider pool intact for downstream ranking', async () => {
+    const entries = (prefix, count) =>
+      Array.from({ length: count }, (_, index) => ({
+        id: `${prefix}${String(index).padStart(10, '0')}`,
+        title: `Song ${index}`,
+        uploader: 'Artist',
+        duration: 211,
+      }));
+    const runner = vi.fn(async (input) => ({
+      entries: String(input).startsWith('https://music.youtube.com/')
+        ? entries('m', 6)
+        : entries('y', 12),
+    }));
+
+    const candidates = await searchPlaybackCandidates(
+      { title: 'Song' },
+      {},
+      { runner },
+    );
+
+    expect(candidates).toHaveLength(11);
+    expect(
+      candidates.filter((entry) => entry.searchProvider === 'yt-music'),
+    ).toHaveLength(3);
+    expect(runner).toHaveBeenCalledWith(
+      'ytsearch8:Song',
+      expect.objectContaining({ flatPlaylist: true, playlistEnd: 8 }),
+    );
+  });
+
+  it('rejects an all-failed search batch with bounded query-free counters', async () => {
+    const privateError = Object.assign(
+      new Error('Unable to download webpage for private query'),
+      {
+        stderr: 'ERROR: Unable to download webpage for private query',
+      },
+    );
+    const runner = vi.fn().mockRejectedValue(privateError);
+
+    await expect(
+      searchPlaybackCandidates(
+        { title: 'Canonical Title', artist: 'Actual Artist' },
+        {},
+        { runner },
+      ),
+    ).rejects.toBe(privateError);
+    expect(privateError.searchDiagnostics).toEqual({
+      stage: 'initial',
+      status: 'failed',
+      inputCount: 4,
+      successCount: 0,
+      failureCount: 4,
+      candidateCount: 0,
+    });
+    expect(JSON.stringify(privateError.searchDiagnostics)).not.toContain(
+      'Canonical Title',
+    );
+  });
+
+  it('keeps usable candidates when only part of a search batch fails', async () => {
+    const onSearchDiagnostics = vi.fn();
     const runner = vi
       .fn()
+      .mockRejectedValueOnce(new Error('temporary provider failure'))
       .mockResolvedValueOnce({
         entries: [
           {
             id: 'audio000001',
-            title: 'Canonical Title (Official Audio)',
+            title: 'Canonical Title',
             uploader: 'Actual Artist',
             duration: 211,
           },
         ],
       })
       .mockResolvedValue({ entries: [] });
+
+    await expect(
+      searchPlaybackCandidates(
+        { title: 'Canonical Title', artist: 'Actual Artist' },
+        {},
+        { runner, onSearchDiagnostics },
+      ),
+    ).resolves.toEqual([
+      expect.objectContaining({ playbackVideoId: 'audio000001' }),
+    ]);
+    expect(onSearchDiagnostics).toHaveBeenCalledWith({
+      stage: 'initial',
+      status: 'partial',
+      inputCount: 4,
+      successCount: 3,
+      failureCount: 1,
+      candidateCount: 1,
+    });
+  });
+
+  it('reports a genuine empty search without treating it as a failure', async () => {
+    const onSearchDiagnostics = vi.fn();
+    const runner = vi.fn().mockResolvedValue({ entries: [] });
+
+    await expect(
+      searchPlaybackCandidates(
+        { title: '\u96e8\u611b' },
+        {},
+        { runner, onSearchDiagnostics },
+      ),
+    ).resolves.toEqual([]);
+    expect(onSearchDiagnostics).toHaveBeenCalledWith({
+      stage: 'complete',
+      status: 'empty',
+      inputCount: 2,
+      successCount: 2,
+      failureCount: 0,
+      candidateCount: 0,
+    });
+  });
+
+  it('prefers structured YT Music Songs metadata while retaining YouTube fallback search', async () => {
+    const runner = vi.fn(async (input) => {
+      if (String(input).startsWith('https://music.youtube.com/search?')) {
+        return {
+          entries: [
+            {
+              id: 'audio000001',
+              title: 'Canonical Title',
+              track: 'Canonical Title',
+              artist: 'Actual Artist',
+              artists: ['Actual Artist'],
+              album: 'Canonical Album',
+              duration: 211,
+              view_count: 123456789,
+            },
+          ],
+        };
+      }
+      if (input === 'ytsearch8:Actual Artist Canonical Title') {
+        return {
+          entries: [
+            {
+              id: 'mv000000000',
+              title: 'Canonical Title (Official Music Video)',
+              uploader: 'Actual Artist',
+              duration: 240,
+            },
+          ],
+        };
+      }
+      return { entries: [] };
+    });
 
     await expect(
       searchPlaybackCandidates(
@@ -142,46 +285,108 @@ describe('searchPlaybackCandidates', () => {
         { title: 'Actual Artist - Canonical Title (Official Music Video)' },
         { runner },
       ),
-    ).resolves.toEqual([
-      {
-        id: 'audio000001',
-        playbackVideoId: 'audio000001',
-        title: 'Canonical Title (Official Audio)',
-        artist: 'Actual Artist',
-        duration: 211,
-        searchProvider: 'youtube',
-        availableProviders: ['youtube'],
-        reason: 'youtube-search',
-        thumbnailUrl: 'https://i.ytimg.com/vi/audio000001/hqdefault.jpg',
-      },
-    ]);
+    ).resolves.toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'audio000001',
+          playbackVideoId: 'audio000001',
+          title: 'Canonical Title',
+          artist: 'Actual Artist',
+          duration: 211,
+          album: 'Canonical Album',
+          searchProvider: 'yt-music',
+          viewCount: 123456789,
+          availableProviders: ['yt-music'],
+          reason: 'yt-music-search',
+          thumbnailUrl: 'https://i.ytimg.com/vi/audio000001/hqdefault.jpg',
+          signals: {
+            isAutoGenerated: false,
+            isTopicChannel: false,
+            hasStructuredTrack: true,
+            hasStructuredAlbum: true,
+            isYoutubeMusicSong: true,
+            variantFlags: [],
+          },
+        }),
+        expect.objectContaining({
+          playbackVideoId: 'mv000000000',
+          searchProvider: 'youtube',
+        }),
+      ]),
+    );
 
     expect(runner).toHaveBeenCalledWith(
-      'ytsearch5:Actual Artist Canonical Title',
+      'ytsearch8:Actual Artist Canonical Title',
       expect.objectContaining({
         dumpSingleJson: true,
         flatPlaylist: true,
-        playlistEnd: 5,
+        playlistEnd: 8,
         skipDownload: true,
       }),
     );
     expect(
       runner.mock.calls.some(([input]) =>
-        String(input).startsWith('https://music.youtube.com'),
+        String(input).startsWith('https://music.youtube.com/search?'),
       ),
-    ).toBe(false);
+    ).toBe(true);
+  });
+
+  it('merges the same id with YT Music provenance preferred over YouTube metadata', async () => {
+    const runner = vi.fn(async (input) => {
+      if (String(input).startsWith('https://music.youtube.com/search?')) {
+        return {
+          entries: [
+            {
+              id: 'nR-LSk3LfEA',
+              title: 'Canonical Title',
+              track: 'Canonical Title',
+              artist: 'Actual Artist',
+              album: 'Canonical Album',
+              duration: 211,
+            },
+          ],
+        };
+      }
+      return {
+        entries: [
+          {
+            id: 'nR-LSk3LfEA',
+            title: 'Actual Artist - Canonical Title',
+            uploader: 'Actual Artist',
+            duration: 211,
+          },
+        ],
+      };
+    });
+
+    const candidates = await searchPlaybackCandidates(
+      { title: 'Canonical Title', artist: 'Actual Artist', duration: 211 },
+      {},
+      { runner },
+    );
+
+    expect(candidates).toEqual([
+      expect.objectContaining({
+        playbackVideoId: 'nR-LSk3LfEA',
+        title: 'Canonical Title',
+        album: 'Canonical Album',
+        searchProvider: 'yt-music',
+        availableProviders: ['yt-music', 'youtube'],
+        reason: 'yt-music-search',
+      }),
+    ]);
   });
 
   it('merges the same id found by two different YouTube search queries', async () => {
     const runner = vi.fn(async (input) => {
-      if (input === 'ytsearch5:Actual Artist Canonical Title') {
+      if (input === 'ytsearch8:Actual Artist Canonical Title') {
         return {
           entries: [
             { id: 'nR-LSk3LfEA', title: 'Canonical Title', duration: 211 },
           ],
         };
       }
-      if (input === 'ytsearch5:Canonical Title Actual Artist') {
+      if (input === 'ytsearch8:Canonical Title Actual Artist') {
         return {
           entries: [
             {
@@ -234,7 +439,7 @@ describe('searchPlaybackCandidates', () => {
     ]);
   });
 
-  it('trusts a YT Music source completely and does not search', async () => {
+  it('still searches when the source URL came from YT Music', async () => {
     const runner = vi.fn().mockResolvedValue({ entries: [] });
 
     const candidates = await searchPlaybackCandidates(
@@ -247,7 +452,49 @@ describe('searchPlaybackCandidates', () => {
     );
 
     expect(candidates).toEqual([]);
-    expect(runner).not.toHaveBeenCalled();
+    expect(
+      runner.mock.calls.some(
+        ([input, options]) =>
+          String(input).startsWith('https://music.youtube.com/search?') &&
+          new URL(input).hash === '#songs' &&
+          options.skipDownload === true,
+      ),
+    ).toBe(true);
+  });
+
+  it('preserves music provenance signals from yt-dlp search results', async () => {
+    const runner = vi.fn().mockResolvedValueOnce({
+      entries: [
+        {
+          id: 'topic000001',
+          title: 'Canonical Title',
+          track: 'Canonical Title',
+          artist: 'Actual Artist',
+          uploader: 'Actual Artist - Topic',
+          album: 'Canonical Album',
+          description:
+            'Provided to YouTube by Example\n\nAuto-generated by YouTube.',
+          duration: 211,
+        },
+      ],
+    });
+
+    const candidates = await searchPlaybackCandidates(
+      { title: 'Canonical Title', artist: 'Actual Artist', duration: 211 },
+      {},
+      { runner },
+    );
+
+    expect(candidates[0]).toMatchObject({
+      playbackVideoId: 'topic000001',
+      signals: {
+        isAutoGenerated: true,
+        isTopicChannel: true,
+        hasStructuredTrack: true,
+        hasStructuredAlbum: true,
+        variantFlags: [],
+      },
+    });
   });
 
   it('does not keep long video-like or live/medley-titled results as song candidates', async () => {

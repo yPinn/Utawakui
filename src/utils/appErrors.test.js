@@ -45,6 +45,7 @@ describe('normalizeAppError', () => {
         actionLabel: '重試',
         context: {
           retryable: true,
+          reason: 'network-error',
           trackId: 'private-track-id',
           technicalMessage: 'private-message',
         },
@@ -56,7 +57,7 @@ describe('normalizeAppError', () => {
       title: '曲庫讀取失敗',
       message: '目前無法讀取曲庫，請再試一次。',
       actionLabel: '重試',
-      context: { retryable: true },
+      context: { retryable: true, reason: 'network-error' },
     });
     expect(JSON.stringify(normalized)).not.toContain('secret.wav');
     expect(JSON.stringify(normalized)).not.toContain('private-track-id');

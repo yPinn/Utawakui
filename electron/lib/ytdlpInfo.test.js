@@ -53,6 +53,23 @@ describe('extractMetadataFields', () => {
     });
   });
 
+  it('projects a finite non-negative YouTube view count without coercion', () => {
+    expect(
+      extractMetadataFields({
+        title: 'Song',
+        uploader: 'Artist',
+        duration: 211,
+        view_count: 123456789,
+      }),
+    ).toMatchObject({ viewCount: 123456789 });
+
+    for (const view_count of [-1, Number.POSITIVE_INFINITY, '123456789']) {
+      expect(
+        extractMetadataFields({ title: 'Song', view_count }),
+      ).not.toHaveProperty('viewCount');
+    }
+  });
+
   it('prefers structured track and plural artists from a YT Music album entry', () => {
     expect(
       extractMetadataFields({

@@ -14,6 +14,7 @@ const DIAGNOSTIC_CONTEXT_KEYS = new Set([
   'featureId',
   'httpStatus',
   'presetId',
+  'reason',
   'retryable',
   'stage',
   'status',

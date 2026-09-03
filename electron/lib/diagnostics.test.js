@@ -49,6 +49,10 @@ describe('normalizeDiagnosticEvent', () => {
           dependencyId: 'python-ytdlp',
           retryable: true,
           durationMs: 123,
+          inputCount: 3,
+          successCount: 2,
+          failureCount: 1,
+          candidateCount: 5,
           trackTitle: 'private title',
           nested: { secret: 'drop me' },
         },
@@ -72,6 +76,10 @@ describe('normalizeDiagnosticEvent', () => {
         dependencyId: 'python-ytdlp',
         retryable: true,
         durationMs: 123,
+        inputCount: 3,
+        successCount: 2,
+        failureCount: 1,
+        candidateCount: 5,
       },
     });
   });

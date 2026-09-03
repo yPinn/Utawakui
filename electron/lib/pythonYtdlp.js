@@ -9,6 +9,7 @@ const OPTION_FLAGS = Object.freeze([
   ['quiet', '--quiet', 'boolean'],
   ['noWarnings', '--no-warnings', 'boolean'],
   ['flatPlaylist', '--flat-playlist', 'boolean'],
+  ['playlistEnd', '--playlist-end', 'value'],
   ['output', '--output', 'value'],
   ['format', '--format', 'value'],
   ['extractorArgs', '--extractor-args', 'value'],

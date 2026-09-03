@@ -13,11 +13,15 @@ const {
   applyYoutubeRuntimeOptions,
   requireYoutubeRunner,
 } = require('./youtubeAttempts');
+const { buildYoutubeMusicSongsSearchUrl } = require('./providerDiscovery');
 const { VIDEO_ID_RE } = require('./youtube');
-const { extractMetadataFields } = require('./ytdlpInfo');
+const {
+  extractMetadataFields,
+  extractPlaybackSignals,
+} = require('./ytdlpInfo');
 
-const PLAYBACK_SEARCH_LIMIT_PER_SOURCE = 5;
-const MAX_PLAYBACK_SEARCH_CANDIDATES = 8;
+const PLAYBACK_SEARCH_LIMIT_PER_SOURCE = 8;
+const YOUTUBE_MUSIC_SEARCH_LIMIT = 3;
 const MAX_PLAYBACK_SEARCH_QUERIES = 4;
 const MAX_CROSS_SEARCH_QUERIES = 2;
 const LIVE_OR_MEDLEY_TITLE_RE =
@@ -241,7 +245,11 @@ function isUsableSearchCandidate(candidate, context = {}) {
   return candidateArtistMatchesExpected(candidate, context.expectedArtistKeys);
 }
 
-function normalizePlaybackSearchCandidate(entry, context = {}) {
+function normalizePlaybackSearchCandidate(
+  entry,
+  context = {},
+  searchProvider = 'youtube',
+) {
   if (!entry || typeof entry.id !== 'string' || !VIDEO_ID_RE.test(entry.id)) {
     return null;
   }
@@ -250,53 +258,133 @@ function normalizePlaybackSearchCandidate(entry, context = {}) {
   // not `artist`, and fields is what applies the fallback.
   if (!isUsableSearchCandidate({ ...entry, ...fields }, context)) return null;
 
+  const signals = extractPlaybackSignals(entry);
+  if (searchProvider === 'yt-music') {
+    signals.isYoutubeMusicSong = true;
+  }
+
   return {
     id: entry.id,
     playbackVideoId: entry.id,
     ...fields,
-    searchProvider: 'youtube',
-    availableProviders: ['youtube'],
-    reason: 'youtube-search',
+    signals,
+    searchProvider,
+    availableProviders: [searchProvider],
+    reason:
+      searchProvider === 'yt-music' ? 'yt-music-search' : 'youtube-search',
   };
 }
 
-async function fetchPlaybackSearchEntries(input, runner) {
+async function fetchPlaybackSearchEntries(source, runner) {
   const info = await runner(
-    input,
+    source.input,
     applyYoutubeRuntimeOptions({
-      flatPlaylist: true,
+      ...(source.flatPlaylist ? { flatPlaylist: true } : {}),
       skipDownload: true,
       dumpSingleJson: true,
       quiet: true,
       noWarnings: true,
-      playlistEnd: PLAYBACK_SEARCH_LIMIT_PER_SOURCE,
+      playlistEnd: source.resultLimit,
     }),
   );
-  return extractSearchEntries(info);
+  return extractSearchEntries(info).slice(0, source.resultLimit);
 }
 
-// Same-platform only, by design — cross-platform identity between a YT
-// video and a YT Music track can't be proven (confirmed by probing YT
-// Music's "counterpart" API anonymously and getting no hits), so widening
-// the search used to be recommending a guess, not confirming a match.
 function buildPlaybackSearchSources(queries) {
-  return queries.map(
-    (query) => `ytsearch${PLAYBACK_SEARCH_LIMIT_PER_SOURCE}:${query}`,
-  );
+  const primaryQuery = queries[0];
+  const youtubeMusicInput = primaryQuery
+    ? buildYoutubeMusicSongsSearchUrl(primaryQuery)
+    : null;
+  return [
+    ...(youtubeMusicInput
+      ? [
+          {
+            input: youtubeMusicInput,
+            provider: 'yt-music',
+            flatPlaylist: false,
+            resultLimit: YOUTUBE_MUSIC_SEARCH_LIMIT,
+          },
+        ]
+      : []),
+    ...queries.map((query) => ({
+      input: `ytsearch${PLAYBACK_SEARCH_LIMIT_PER_SOURCE}:${query}`,
+      provider: 'youtube',
+      flatPlaylist: true,
+      resultLimit: PLAYBACK_SEARCH_LIMIT_PER_SOURCE,
+    })),
+  ];
 }
 
 async function fetchSettledPlaybackSearches(searchInputs, runner) {
   const settled = await Promise.allSettled(
-    searchInputs.map(async (input) => ({
-      entries: await fetchPlaybackSearchEntries(input, runner),
+    searchInputs.map(async (source) => ({
+      source,
+      entries: await fetchPlaybackSearchEntries(source, runner),
     })),
   );
 
-  return settled.filter((result) => result.status === 'fulfilled');
+  return {
+    fulfilled: settled.filter((result) => result.status === 'fulfilled'),
+    rejected: settled.filter((result) => result.status === 'rejected'),
+  };
 }
 
-// Two ytsearch5: queries can return the same video id; whichever side
-// already has an artist wins the merge.
+function summarizeSearchBatch(batch, stage) {
+  return {
+    stage,
+    status:
+      batch.rejected.length === 0
+        ? 'ok'
+        : batch.fulfilled.length === 0
+          ? 'failed'
+          : 'partial',
+    inputCount: batch.fulfilled.length + batch.rejected.length,
+    successCount: batch.fulfilled.length,
+    failureCount: batch.rejected.length,
+    candidateCount: batch.fulfilled.reduce(
+      (count, result) => count + result.value.entries.length,
+      0,
+    ),
+  };
+}
+
+function reportSearchDiagnostics(callback, summary) {
+  if (typeof callback !== 'function') return;
+  try {
+    callback(summary);
+  } catch {
+    // Search diagnostics are supporting evidence and must stay fail-open.
+  }
+}
+
+function attachSearchDiagnostics(error, summary) {
+  const normalizedError =
+    error && typeof error === 'object'
+      ? error
+      : new Error('youtube provider search failed');
+  try {
+    Object.defineProperty(normalizedError, 'searchDiagnostics', {
+      configurable: true,
+      value: summary,
+    });
+  } catch {
+    // A provider could theoretically throw a non-extensible object. The
+    // original failure remains more useful than replacing it with telemetry.
+  }
+  return normalizedError;
+}
+
+// Multiple search sources can return the same video id. Prefer structured
+// YT Music metadata, then whichever observation supplies an artist.
+function providerPriority(provider) {
+  return provider === 'yt-music' ? 0 : 1;
+}
+
+function maximumViewCount(...values) {
+  const counts = values.filter(Number.isFinite);
+  return counts.length > 0 ? Math.max(...counts) : undefined;
+}
+
 function mergeSearchCandidates(existing, incoming) {
   const availableProviders = [
     ...new Set(
@@ -305,8 +393,11 @@ function mergeSearchCandidates(existing, incoming) {
         ...(incoming.availableProviders || [incoming.searchProvider]),
       ].filter(Boolean),
     ),
-  ];
-  const preferIncoming = !existing.artist && Boolean(incoming.artist);
+  ].sort((first, second) => providerPriority(first) - providerPriority(second));
+  const preferIncoming =
+    providerPriority(incoming.searchProvider) <
+      providerPriority(existing.searchProvider) ||
+    (!existing.artist && Boolean(incoming.artist));
   const primary = preferIncoming ? incoming : existing;
   const secondary = preferIncoming ? existing : incoming;
 
@@ -316,6 +407,7 @@ function mergeSearchCandidates(existing, incoming) {
     title: primary.title || secondary.title,
     artist: primary.artist || secondary.artist,
     duration: primary.duration || secondary.duration,
+    viewCount: maximumViewCount(primary.viewCount, secondary.viewCount),
     thumbnailUrl: primary.thumbnailUrl || secondary.thumbnailUrl,
     availableProviders,
   };
@@ -324,7 +416,11 @@ function mergeSearchCandidates(existing, incoming) {
 function addSearchResults(candidatesById, settledResults, context = {}) {
   for (const result of settledResults) {
     for (const entry of result.value.entries) {
-      const candidate = normalizePlaybackSearchCandidate(entry, context);
+      const candidate = normalizePlaybackSearchCandidate(
+        entry,
+        context,
+        result.value.source.provider,
+      );
       if (!candidate) continue;
       const existing = candidatesById.get(candidate.id);
       if (existing) {
@@ -344,10 +440,6 @@ async function searchPlaybackCandidates(
   sourceMetadata,
   options = {},
 ) {
-  // A YT Music source is already the audio-native version of the song —
-  // nothing to search for.
-  if (options.sourcePlatform === 'yt-music') return [];
-
   const runner = requireYoutubeRunner(options.runner);
   const titleParts = titlePartsFor(canonical, sourceMetadata);
   const queries = buildPlaybackSearchQueries(
@@ -364,30 +456,62 @@ async function searchPlaybackCandidates(
     ),
   };
   const searchSources = buildPlaybackSearchSources(queries);
-  const searchedInputs = new Set(searchSources);
+  const searchedInputs = new Set(searchSources.map((source) => source.input));
+  const aggregateSummary = {
+    inputCount: 0,
+    successCount: 0,
+    failureCount: 0,
+    candidateCount: 0,
+  };
 
-  addSearchResults(
-    candidatesById,
-    await fetchSettledPlaybackSearches(searchSources, runner),
-    searchContext,
+  const initialBatch = await fetchSettledPlaybackSearches(
+    searchSources,
+    runner,
   );
+  const initialSummary = summarizeSearchBatch(initialBatch, 'initial');
+  for (const key of Object.keys(aggregateSummary)) {
+    aggregateSummary[key] += initialSummary[key];
+  }
+  if (initialSummary.failureCount > 0) {
+    reportSearchDiagnostics(options.onSearchDiagnostics, initialSummary);
+  }
+  if (initialSummary.status === 'failed') {
+    throw attachSearchDiagnostics(
+      initialBatch.rejected[0]?.reason,
+      initialSummary,
+    );
+  }
+  addSearchResults(candidatesById, initialBatch.fulfilled, searchContext);
 
   const crossQueries = buildPlaybackCrossSearchQueries(
     [...candidatesById.values()],
     canonical,
   );
   const crossSources = buildPlaybackSearchSources(crossQueries).filter(
-    (input) => !searchedInputs.has(input),
+    (source) => !searchedInputs.has(source.input),
   );
   if (crossSources.length > 0) {
-    addSearchResults(
-      candidatesById,
-      await fetchSettledPlaybackSearches(crossSources, runner),
-      searchContext,
-    );
+    const crossBatch = await fetchSettledPlaybackSearches(crossSources, runner);
+    const crossSummary = summarizeSearchBatch(crossBatch, 'cross');
+    for (const key of Object.keys(aggregateSummary)) {
+      aggregateSummary[key] += crossSummary[key];
+    }
+    if (crossSummary.failureCount > 0) {
+      reportSearchDiagnostics(options.onSearchDiagnostics, crossSummary);
+    }
+    addSearchResults(candidatesById, crossBatch.fulfilled, searchContext);
   }
 
-  return [...candidatesById.values()].slice(0, MAX_PLAYBACK_SEARCH_CANDIDATES);
+  const candidates = [...candidatesById.values()];
+  if (candidates.length === 0 && aggregateSummary.successCount > 0) {
+    reportSearchDiagnostics(options.onSearchDiagnostics, {
+      stage: 'complete',
+      status: 'empty',
+      ...aggregateSummary,
+      candidateCount: 0,
+    });
+  }
+  return candidates;
 }
 
 module.exports = {

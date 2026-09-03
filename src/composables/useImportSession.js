@@ -38,6 +38,7 @@ const state = reactive({
   createdPlaylistId: null,
   activeFilter: 'all',
   isResolving: false,
+  isOpeningDiscovery: false,
   isImporting: false,
 });
 
@@ -162,11 +163,14 @@ function handleProviderSetupError(err) {
   return true;
 }
 
-async function ensureProviderFlow() {
+async function ensureProviderFlow({
+  operation = 'resolve-source',
+  message = '請先到設定啟用外部來源，才能解析或下載線上歌曲。',
+} = {}) {
   const enabled = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
     source: 'import',
-    operation: 'resolve-source',
-    message: '請先到設定啟用外部來源，才能解析或下載線上歌曲。',
+    operation,
+    message,
   });
   if (!enabled) {
     setStatus('請先到設定啟用外部來源', 'pending');
@@ -232,7 +236,8 @@ const sourceResolution = useImportSourceResolution({
 });
 
 const { confirmImport, retryFailedTracks } = importExecution;
-const { resolveSource, selectImportCandidate } = sourceResolution;
+const { openYoutubeMusicSearch, resolveSource, selectImportCandidate } =
+  sourceResolution;
 
 function toggleSelectAll() {
   const next = !allSelected.value;
@@ -331,6 +336,7 @@ export function useImportSession() {
     setInput,
     setActiveFilter,
     setTrackSelected,
+    openYoutubeMusicSearch,
     resolveSource,
     confirmImport,
     clearPreview,

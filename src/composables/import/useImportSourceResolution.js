@@ -1,5 +1,10 @@
 import { markRaw } from 'vue';
-import { describeDownloadFailure } from '../../utils/downloadFailureDisplay.js';
+import {
+  describeDownloadFailure,
+  downloadFailureHint,
+  downloadFailureLabel,
+} from '../../utils/downloadFailureDisplay.js';
+import { normalizeAppError } from '../../utils/appErrors.js';
 
 function createPreviewTrack(entry) {
   return {
@@ -23,6 +28,7 @@ function stripAlbumTitlePrefix(title) {
 function createSingleTrackFromResolution(resolution, selectedCandidate = null) {
   const candidate =
     selectedCandidate || resolution.recommendedCandidate || resolution.source;
+  if (!candidate) return null;
   return createPreviewTrack({
     id: candidateId(candidate),
     title: candidate.title || resolution.canonical?.title || resolution.input,
@@ -33,9 +39,16 @@ function createSingleTrackFromResolution(resolution, selectedCandidate = null) {
     downloadInput: candidateId(candidate),
     sourceVideoId: resolution.sourceVideoId,
     playbackKind: candidate.playbackKind,
+    recordingFit: candidate.recordingFit,
     trackIdentity: resolution.trackIdentity || candidate.trackIdentity,
     importResolution: resolution,
   });
+}
+
+function deferredPlatformLabel(platform) {
+  if (platform === 'spotify') return 'Spotify';
+  if (platform === 'apple-music') return 'Apple Music';
+  return '未知平台';
 }
 
 export function useImportSourceResolution({
@@ -74,9 +87,79 @@ export function useImportSourceResolution({
     }
 
     clearPreview();
-    setStatus('檢查連結中...', 'pending');
+    setStatus('搜尋可用音源中...', 'pending');
 
     try {
+      if (typeof window.Utawakui.resolveImportInput === 'function') {
+        const result = await window.Utawakui.resolveImportInput(input);
+        if (result?.kind === 'deferred') {
+          setStatus(
+            `${deferredPlatformLabel(result.platform)} 連結轉換尚未開放`,
+            'pending',
+          );
+          return;
+        }
+        if (result?.kind === 'unsupported') {
+          const message =
+            result.reason === 'query-too-long'
+              ? '搜尋文字過長，請縮短歌曲名稱或歌手名稱'
+              : '目前只支援歌曲名稱、YouTube 與 YouTube Music 連結';
+          setStatus(message, 'error');
+          return;
+        }
+        if (result?.kind === 'playlist') {
+          const entries = result.entries || [];
+          if (entries.length === 0) {
+            setStatus('這個播放清單沒有可匯入的曲目', 'error');
+            return;
+          }
+          state.sourceKind = 'playlist';
+          state.collectionKind =
+            result.collectionKind === 'album' ? 'album' : 'playlist';
+          state.playlistTitle =
+            (state.collectionKind === 'album'
+              ? stripAlbumTitlePrefix(result.title)
+              : result.title) || '未命名播放清單';
+          state.collectionSource = result.source
+            ? markRaw(result.source)
+            : null;
+          state.collectionThumbnailUrl = result.thumbnailUrl || null;
+          state.playlistTracks = entries.map(createPreviewTrack);
+          setStatus(
+            `已找到 ${entries.length} 首，請確認要下載的曲目`,
+            'success',
+          );
+          return;
+        }
+        if (result?.kind === 'single' && result.resolution) {
+          const resolution = result.resolution;
+          const selectedCandidate =
+            resolution.recommendedCandidate || resolution.source || null;
+          const candidateCount = resolution.candidates?.length || 0;
+          if (!selectedCandidate && candidateCount === 0) {
+            setStatus(
+              '沒有搜尋到可用的 YT Music／YouTube 結果，可到 YT Music 手動尋找',
+              'error',
+            );
+            return;
+          }
+          state.sourceKind = 'single';
+          state.singleResolution = resolution;
+          state.selectedCandidateId = candidateId(selectedCandidate);
+          state.singleTrack = createSingleTrackFromResolution(resolution);
+          if (!selectedCandidate) {
+            setStatus(
+              `找到 ${candidateCount} 個候選，請選擇下載版本`,
+              'pending',
+            );
+          } else {
+            setStatus('已找到歌曲，確認後開始下載', 'success');
+          }
+          return;
+        }
+        throw new Error('invalid import resolution');
+      }
+
       const playlistResult = await window.Utawakui.fetchYoutubePlaylist(input);
       const entries = playlistResult?.entries;
       if (entries && entries.length > 0) {
@@ -129,6 +212,21 @@ export function useImportSourceResolution({
     } catch (error) {
       clearPreview();
       if (handleProviderSetupError(error)) return;
+      const appError = normalizeAppError(error, {
+        source: 'import',
+        operation: 'resolve-source',
+      });
+      if (appError.code === 'PROVIDER_SEARCH_FAILED') {
+        const reason = appError.context.reason || 'unknown';
+        const label =
+          reason === 'unknown'
+            ? '外部來源暫時無法回應'
+            : downloadFailureLabel(reason);
+        reportImportError(error, 'resolve-source', appError.message);
+        setStatus(`搜尋 YT Music／YouTube 失敗：${label}`, 'error');
+        state.failureHint = downloadFailureHint(reason);
+        return;
+      }
       const failure = describeDownloadFailure(error);
       reportImportError(error, 'resolve-source', '目前無法檢查這個來源。');
       setStatus(`找不到來源：${failure.label}`, 'error');
@@ -138,7 +236,43 @@ export function useImportSourceResolution({
     }
   }
 
+  async function openYoutubeMusicSearch() {
+    const query = state.input.trim();
+    if (!query) {
+      setStatus('請先輸入要在 YT Music 尋找的歌曲或歌手', 'error');
+      return false;
+    }
+    if (state.isOpeningDiscovery) return false;
+    state.isOpeningDiscovery = true;
+
+    try {
+      const enabled = await ensureProviderFlow({
+        operation: 'open-youtube-music-search',
+        message: '請先到設定啟用外部來源，才能前往 YT Music 尋找來源。',
+      });
+      if (!enabled) return false;
+
+      await window.Utawakui.openYoutubeMusicSearch(query);
+      setStatus(
+        '已在系統瀏覽器開啟 YT Music，找到來源後請複製連結貼回此處。',
+        'success',
+      );
+      return true;
+    } catch (error) {
+      reportImportError(
+        error,
+        'open-youtube-music-search',
+        '目前無法開啟 YT Music。',
+      );
+      setStatus('目前無法開啟 YT Music，請稍後再試。', 'error');
+      return false;
+    } finally {
+      state.isOpeningDiscovery = false;
+    }
+  }
+
   return {
+    openYoutubeMusicSearch,
     resolveSource,
     selectImportCandidate,
   };

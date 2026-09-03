@@ -8,6 +8,7 @@ import {
   CircleDashed,
   CircleX,
   Download,
+  ExternalLink,
   Library,
   ListChecks,
   Loader2,
@@ -81,6 +82,7 @@ const {
   setInput,
   setActiveFilter,
   setTrackSelected,
+  openYoutubeMusicSearch,
   resolveSource,
   confirmImport,
   clearPreview,
@@ -187,7 +189,7 @@ function trackStatusIconLabel(track) {
         <h2 id="provider-import-title" class="section-heading__title">
           外部來源
         </h2>
-        <p class="section-heading__meta">YouTube / YouTube Music</p>
+        <p class="section-heading__meta">YT Music / YouTube</p>
       </div>
     </div>
 
@@ -196,9 +198,11 @@ function trackStatusIconLabel(track) {
         <input
           :value="state.input"
           class="source-row__input"
-          aria-label="YouTube 或 YouTube Music 連結"
-          placeholder="貼上歌曲、MV 或播放清單連結"
-          :disabled="state.isResolving || state.isImporting"
+          aria-label="歌曲名稱或外部來源連結"
+          placeholder="搜尋歌名、歌手，或貼上 YouTube / YouTube Music 連結"
+          :disabled="
+            state.isResolving || state.isOpeningDiscovery || state.isImporting
+          "
           @input="setInput($event.target.value)"
           @keydown.enter="resolveSource"
         />
@@ -208,7 +212,9 @@ function trackStatusIconLabel(track) {
           class="source-row__clear"
           aria-label="清除輸入內容"
           title="清除輸入內容"
-          :disabled="state.isResolving || state.isImporting"
+          :disabled="
+            state.isResolving || state.isOpeningDiscovery || state.isImporting
+          "
           @click="setInput('')"
         />
       </div>
@@ -216,10 +222,31 @@ function trackStatusIconLabel(track) {
         :icon="Search"
         class="source-row__action"
         variant="accent"
-        :disabled="state.isResolving || state.isImporting"
+        :disabled="
+          state.isResolving || state.isOpeningDiscovery || state.isImporting
+        "
         @click="resolveSource"
       >
-        {{ state.isResolving ? '搜尋中' : '搜尋版本' }}
+        {{ state.isResolving ? '搜尋中' : '搜尋音源' }}
+      </UiButton>
+    </div>
+
+    <div class="discovery-row">
+      <UiHint class="discovery-row__hint" tone="muted">
+        <span>優先搜尋 YT Music 歌曲；YouTube 補足其他版本。</span>
+        <span>在瀏覽器複製歌曲、專輯或播放清單連結，再貼回上方欄位。</span>
+      </UiHint>
+      <UiButton
+        :icon="ExternalLink"
+        :disabled="
+          !state.input.trim() ||
+          state.isResolving ||
+          state.isOpeningDiscovery ||
+          state.isImporting
+        "
+        @click="openYoutubeMusicSearch"
+      >
+        {{ state.isOpeningDiscovery ? '開啟中' : '到 YT Music 尋找更多結果' }}
       </UiButton>
     </div>
 
@@ -256,7 +283,9 @@ function trackStatusIconLabel(track) {
             {{
               sourceDiffersFromSelection
                 ? '會下載較適合播放的版本'
-                : '會下載你貼上的來源'
+                : sourceCandidate
+                  ? '會下載你選擇的來源'
+                  : '優先顯示較接近發行錄音的來源'
             }}
           </p>
         </div>
@@ -269,8 +298,12 @@ function trackStatusIconLabel(track) {
         />
       </div>
 
-      <div v-if="state.singleTrack" class="single-source-stack">
-        <section class="source-summary" aria-labelledby="recommended-source">
+      <div class="single-source-stack">
+        <section
+          v-if="state.singleTrack"
+          class="source-summary"
+          aria-labelledby="recommended-source"
+        >
           <div class="source-summary__bar">
             <h3 id="recommended-source" class="source-summary__title">
               準備下載
@@ -314,7 +347,10 @@ function trackStatusIconLabel(track) {
         </section>
 
         <section
-          v-if="candidateOptions.length > 1"
+          v-if="
+            candidateOptions.length > 0 &&
+            (candidateOptions.length > 1 || !state.singleTrack)
+          "
           class="candidate-picker"
           aria-labelledby="candidate-picker-title"
         >
@@ -322,7 +358,9 @@ function trackStatusIconLabel(track) {
             <h3 id="candidate-picker-title" class="source-summary__title">
               可選版本
             </h3>
-            <p class="section-heading__meta">已依適合播放程度排序</p>
+            <p class="section-heading__meta">
+              已依發行錄音與歌詞同步適用性排序
+            </p>
           </div>
 
           <div
@@ -497,7 +535,7 @@ function trackStatusIconLabel(track) {
     </section>
 
     <section v-else class="provider-empty-panel" aria-label="外部來源起始畫面">
-      <p>貼上連結後先預覽，確認無誤再下載。</p>
+      <p>輸入歌曲名稱或貼上連結，選擇合適音源後再下載。</p>
     </section>
   </section>
 </template>
@@ -575,6 +613,19 @@ function trackStatusIconLabel(track) {
   align-items: center;
   gap: var(--ui-space-2);
   min-height: var(--import-control-height);
+}
+
+.discovery-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+}
+
+.discovery-row__hint {
+  display: grid;
+  gap: calc(var(--ui-space-1) / 2);
+  min-width: 0;
 }
 
 .source-row__input-wrap {
@@ -788,6 +839,7 @@ function trackStatusIconLabel(track) {
 
 @media (max-width: 680px) {
   .source-row,
+  .discovery-row,
   .preview-footer,
   .source-summary__bar {
     align-items: stretch;

@@ -84,11 +84,15 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
   openExternalTarget: (targetId) =>
     ipcRenderer.invoke('shell:open-external', targetId),
+  openYoutubeMusicSearch: (query) =>
+    ipcRenderer.invoke('provider-discovery:open-youtube-music-search', query),
   downloadAudio: (videoId) => ipcRenderer.invoke('yt:download-audio', videoId),
   // YouTube playlist URL/ID resolution — distinct from the user-named
   // playlists API below (listPlaylists/createPlaylist/etc.).
   fetchYoutubePlaylist: (input) =>
     ipcRenderer.invoke('yt:fetch-playlist', input),
+  resolveImportInput: (input) =>
+    ipcRenderer.invoke('import:resolve-source', input),
   resolveImportSource: (input) =>
     ipcRenderer.invoke('yt:resolve-import-source', input),
   fetchVideoMetadata: (input) => ipcRenderer.invoke('yt:fetch-metadata', input),

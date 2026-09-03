@@ -9,20 +9,31 @@ export function playbackKindLabel(kind) {
     'youtube-official-audio': '官方音源',
     'yt-music-source': 'YT Music 來源',
     'youtube-lyric-video': '歌詞影片',
-    'youtube-official-mv': 'Official MV',
-    'youtube-live': '現場演出',
+    'youtube-official-mv': 'MV',
+    'youtube-live': 'Live',
+    'youtube-variant': '其他版本',
     'youtube-other': '影片',
   };
   return labels[kind] || '來源';
 }
 
-export function confidenceLabel(confidence) {
-  const labels = {
-    high: '吻合度高',
-    medium: '吻合度中',
-    low: '吻合度低',
-  };
-  return labels[confidence] || '一般吻合';
+const INTEGER_FORMATTER = new Intl.NumberFormat('zh-TW', {
+  maximumFractionDigits: 0,
+});
+const COMPACT_FORMATTER = new Intl.NumberFormat('zh-TW', {
+  maximumFractionDigits: 1,
+});
+
+export function formatViewCount(value) {
+  if (!Number.isFinite(value) || value < 0) return '';
+  const count = Math.floor(value);
+  if (count >= 100_000_000) {
+    return `${COMPACT_FORMATTER.format(count / 100_000_000)} 億次觀看`;
+  }
+  if (count >= 10_000) {
+    return `${COMPACT_FORMATTER.format(count / 10_000)} 萬次觀看`;
+  }
+  return `${INTEGER_FORMATTER.format(count)} 次觀看`;
 }
 
 export function platformLabel(candidate) {

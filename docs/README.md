@@ -88,6 +88,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作           | Projection Hub、source identity、liveness 與 startup budgets 已落地。                     |
 | [0013](adr/0013-external-integration-planes.md)                        | 規劃中               | 目前只有 Browser Source；其他 adapters 尚未實作。                                         |
 | [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                    |
+| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。               |
 
 ## 常用文件
 
