@@ -19,14 +19,18 @@ const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.
 const TEMPO_STEP = 0.05;
 
-// F1-F5 match AppTopTabs.vue's left-to-right order — F-key position mirrors
-// tab position so the mapping stays obvious without a legend.
+// F1-F4 match AppTopTabs.vue's left-to-right workflow-tab order — F-key
+// position mirrors tab position so the mapping stays obvious without a
+// legend. Settings sits in AppTopTabs' separate utility slot (a lone gear
+// icon, not part of that tab row), so its shortcut isn't part of that
+// contiguous run either — F5-F8 are reserved for internal dev-only
+// workbenches (see App.vue's internalViewShortcuts), so Settings uses F9.
 const VIEW_SHORTCUTS = {
   f1: 'setlist',
   f2: 'lyrics',
   f3: 'output',
   f4: 'import',
-  f5: 'settings',
+  f9: 'settings',
 };
 
 export function useKeyboardShortcuts(

@@ -876,10 +876,7 @@ document.addEventListener('keydown', (event) => {
   );
   const key = event.key.toLocaleLowerCase();
   const isFunctionShortcut =
-    /^f(?:10|[1-5]|[7-9])$/u.test(key) &&
-    !event.ctrlKey &&
-    !event.altKey &&
-    !event.metaKey;
+    /^f[1-9]$/u.test(key) && !event.ctrlKey && !event.altKey && !event.metaKey;
   const isArrow = key === 'arrowup' || key === 'arrowdown';
   const isModifiedArrow =
     !editing && isArrow && event.ctrlKey && !event.altKey && !event.metaKey;

@@ -151,8 +151,8 @@ analysis progress、status polling、run／cancel 與 sidecar reconciliation。�
 一般使用者的 Music Analysis lifecycle 位於 Settings：
 `src/composables/useMusicAnalysisSettings.js` 負責 boolean-only 自動分析偏好與既有
 capability owner 的組合，`MusicAnalysisSettingsRow.vue` 只呈現用途、安裝狀態與
-準備／修復／移除 intent。F10 Workbench 保留單曲強制執行、批次重跑與診斷，不再是
-新曲分析的必要入口。F10 的 M2 `人工標註` 由
+準備／修復／移除 intent。F5 Workbench 保留單曲強制執行、批次重跑與診斷，不再是
+新曲分析的必要入口。F5 的 M2 `人工標註` 由
 `useMusicAnalysisReferenceAnnotation.js` 單獨擁有 renderer draft；main 以 opaque session
 鎖定已驗證的 run config 與固定 `reference-worklist.json`，renderer 不提供路徑，且該路徑
 不讀 prediction、不寫歌曲 sidecar。

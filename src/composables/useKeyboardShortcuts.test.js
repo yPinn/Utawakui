@@ -75,37 +75,53 @@ describe('useKeyboardShortcuts', () => {
     expect(f4PreventDefault).toHaveBeenCalled();
   });
 
-  it('maps F7-F10 to the hidden Studio Library, review, UI, and Music Analysis workbenches', async () => {
+  it('maps F9 to Settings even with no internal workbenches injected', async () => {
+    const activeView = await setupShortcuts();
+
+    const f9PreventDefault = dispatchKey('F9');
+    expect(activeView.value).toBe('settings');
+    expect(f9PreventDefault).toHaveBeenCalled();
+  });
+
+  it('maps F5-F8 to the hidden Music Analysis, Diagnostics, Lyrics Provider Review, and Visual System workbenches', async () => {
     const activeView = await setupShortcuts({
       internalViewShortcuts: {
-        f7: 'studio-library',
-        f8: 'lyrics-provider-review',
-        f9: 'demo',
-        f10: 'music-analysis',
+        f5: 'music-analysis',
+        f6: 'diagnostics-workbench',
+        f7: 'lyrics-provider-review',
+        f8: 'visual-system',
       },
     });
 
+    const f5PreventDefault = dispatchKey('F5');
+    expect(activeView.value).toBe('music-analysis');
+    expect(f5PreventDefault).toHaveBeenCalled();
+
+    const f6PreventDefault = dispatchKey('F6');
+    expect(activeView.value).toBe('diagnostics-workbench');
+    expect(f6PreventDefault).toHaveBeenCalled();
+
     const f7PreventDefault = dispatchKey('F7');
-    expect(activeView.value).toBe('studio-library');
+    expect(activeView.value).toBe('lyrics-provider-review');
     expect(f7PreventDefault).toHaveBeenCalled();
 
     const f8PreventDefault = dispatchKey('F8');
-    expect(activeView.value).toBe('lyrics-provider-review');
+    expect(activeView.value).toBe('visual-system');
     expect(f8PreventDefault).toHaveBeenCalled();
-
-    const f9PreventDefault = dispatchKey('F9');
-    expect(activeView.value).toBe('demo');
-    expect(f9PreventDefault).toHaveBeenCalled();
-
-    const f10PreventDefault = dispatchKey('F10');
-    expect(activeView.value).toBe('music-analysis');
-    expect(f10PreventDefault).toHaveBeenCalled();
   });
 
-  it('leaves F7-F10 unused when internal workbenches are disabled', async () => {
+  it('leaves F5-F8 unused when internal workbenches are disabled', async () => {
     const activeView = await setupShortcuts({
       internalViewShortcuts: {},
     });
+
+    const f5PreventDefault = dispatchKey('F5');
+    expect(activeView.value).toBe('setlist');
+    expect(f5PreventDefault).not.toHaveBeenCalled();
+
+    const f6PreventDefault = dispatchKey('F6');
+    expect(activeView.value).toBe('setlist');
+    expect(f6PreventDefault).not.toHaveBeenCalled();
 
     const f7PreventDefault = dispatchKey('F7');
     expect(activeView.value).toBe('setlist');
@@ -114,13 +130,5 @@ describe('useKeyboardShortcuts', () => {
     const f8PreventDefault = dispatchKey('F8');
     expect(activeView.value).toBe('setlist');
     expect(f8PreventDefault).not.toHaveBeenCalled();
-
-    const f9PreventDefault = dispatchKey('F9');
-    expect(activeView.value).toBe('setlist');
-    expect(f9PreventDefault).not.toHaveBeenCalled();
-
-    const f10PreventDefault = dispatchKey('F10');
-    expect(activeView.value).toBe('setlist');
-    expect(f10PreventDefault).not.toHaveBeenCalled();
   });
 });

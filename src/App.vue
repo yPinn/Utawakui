@@ -20,6 +20,7 @@ import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
+import { useVisualSystemMode } from './composables/useVisualSystemMode.js';
 import { useTheme } from './composables/useTheme.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
@@ -42,21 +43,26 @@ const SettingsView = defineAsyncComponent(
 const internalWorkbenchesEnabled = import.meta.env.DEV;
 const internalViews = internalWorkbenchesEnabled
   ? {
-      'studio-library': defineAsyncComponent(
-        () => import('./views/StudioLibraryPrototypeView.vue'),
+      'music-analysis': defineAsyncComponent(
+        () => import('./views/MusicAnalysisView.vue'),
+      ),
+      'diagnostics-workbench': defineAsyncComponent(
+        () => import('./views/DiagnosticsWorkbenchView.vue'),
       ),
       'lyrics-provider-review': defineAsyncComponent(
         () => import('./views/LyricsProviderReviewView.vue'),
       ),
-      demo: defineAsyncComponent(() => import('./views/DemoView.vue')),
-      'music-analysis': defineAsyncComponent(
-        () => import('./views/MusicAnalysisView.vue'),
+      // Demo and Studio Library are both facets of the same not-yet-adopted
+      // visual-refresh exploration — see VisualSystemView.vue's internal
+      // mode toggle instead of two separate global shortcuts.
+      'visual-system': defineAsyncComponent(
+        () => import('./views/VisualSystemView.vue'),
       ),
     }
   : {};
 const internalContextDefinitions = internalWorkbenchesEnabled
   ? {
-      'studio-library': {
+      'visual-system': {
         component: defineAsyncComponent(
           () => import('./views/StudioLibraryContextView.vue'),
         ),
@@ -68,12 +74,16 @@ const internalContextDefinitions = internalWorkbenchesEnabled
       },
     }
   : {};
+// Ordered by current workflow/usage priority: Music Analysis is the most
+// active dev-tool area right now, Diagnostics/Lyrics Provider Review are
+// established support workflows, and the merged Visual System exploration
+// (not yet adopted, see DESIGN.md) sits last.
 const internalViewShortcuts = internalWorkbenchesEnabled
   ? {
-      f7: 'studio-library',
-      f8: 'lyrics-provider-review',
-      f9: 'demo',
-      f10: 'music-analysis',
+      f5: 'music-analysis',
+      f6: 'diagnostics-workbench',
+      f7: 'lyrics-provider-review',
+      f8: 'visual-system',
     }
   : {};
 
@@ -111,9 +121,18 @@ const views = {
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
 const { activeView } = useAppView();
-const activeContextDefinition = computed(
-  () => internalContextDefinitions[activeView.value] ?? null,
-);
+// The Studio Library inspector only makes sense while VisualSystemView is
+// actually showing its Studio Library sub-mode, not its Demo sub-mode.
+const { mode: visualSystemMode } = useVisualSystemMode();
+const activeContextDefinition = computed(() => {
+  if (
+    activeView.value === 'visual-system' &&
+    visualSystemMode.value !== 'studio-library'
+  ) {
+    return null;
+  }
+  return internalContextDefinitions[activeView.value] ?? null;
+});
 const activeContextView = computed(
   () => activeContextDefinition.value?.component ?? null,
 );
@@ -121,7 +140,7 @@ const activeContextController = shallowRef(null);
 let activeContextRequest = 0;
 
 watch(
-  activeView,
+  [activeView, visualSystemMode],
   async () => {
     const request = ++activeContextRequest;
     const definition = activeContextDefinition.value;
@@ -154,10 +173,14 @@ function toggleActiveContext() {
 }
 // Studio Library is a development preview of the Setlist interior. Keep the
 // real Setlist folder visibly selected while the hidden preview component is
-// active so the shell still communicates the owning workflow.
+// active so the shell still communicates the owning workflow. Only applies
+// to VisualSystemView's Studio Library sub-mode, not its Demo sub-mode.
 const archiveTabView = internalWorkbenchesEnabled
   ? computed(() =>
-      activeView.value === 'studio-library' ? 'setlist' : activeView.value,
+      activeView.value === 'visual-system' &&
+      visualSystemMode.value === 'studio-library'
+        ? 'setlist'
+        : activeView.value,
     )
   : activeView;
 // Pass the ref so global shortcuts can read and update the active view.

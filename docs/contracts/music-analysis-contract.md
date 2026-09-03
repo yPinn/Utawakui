@@ -21,7 +21,7 @@ fixed product choice; ordinary Settings exposes neither model identity nor model
 selection. Successful
 provider downloads and local imports enqueue main-owned, currentness-aware,
 non-blocking analysis only when the gate and capability are ready. The internal
-F10 workbench remains the owner of explicit reruns and exposes a main-owned
+F5 workbench remains the owner of explicit reruns and exposes a main-owned
 sequential batch queue: renderer input is limited to at most 500
 validated track ids plus one force boolean, current M1/M2 sidecars are skipped
 by default only when their analyzer profile is still supported; source-current
@@ -35,19 +35,19 @@ disk-capacity, failure recovery, and manual UI acceptance.
 The M2 acceptance path is executable independently of model activation. Fixed
 fixtures distinguish schema validity from semantic M2 eligibility, the main
 producer removes rejected section evidence before publication, and the sidecar
-consumer applies the same fail-safe rule to older documents. F10 shows accepted
+consumer applies the same fail-safe rule to older documents. F5 shows accepted
 canonical sections and explains low-confidence, incomplete, unknown, or missing
 section fallbacks while keeping valid M1 tempo/beats visible.
 
 The M2.1 real-song evaluation path is also executable without activating the
-benchmark model in F10. A bounded, path-free labeled manifest reports macro
+benchmark model in F5. A bounded, path-free labeled manifest reports macro
 boundary F1 at ±500 ms and ±3000 ms, duration-weighted canonical-role accuracy,
 contract-eligible M2 yield, BPM octave/missing rates, inference failures, and
 required song-group summaries. Until the minimum 30-song J-pop/K-pop/karaoke
 corpus is populated, its result must remain `insufficient-data`; synthetic
 fixtures prove evaluator behavior, not analyzer quality.
 
-F10 also has an independent **人工標註** mode for building that manifest. Main
+F5 also has an independent **人工標註** mode for building that manifest. Main
 owns the run-config picker and an opaque annotation session, reads or atomically
 writes only `<outputRoot>/reference-worklist.json`, and never opens benchmark
 predictions on this path. Renderer state owns selection, dirty state, BPM,
@@ -281,7 +281,7 @@ tolerance. This evaluation never silently multiplies or divides a stored BPM:
 beat spacing alone cannot prove which metrical level is musically intended.
 
 Batch execution remains main-owned and in-memory. One retained bounded snapshot
-supports F10 remount/reconnect without introducing a second job owner. The batch
+supports F5 remount/reconnect without introducing a second job owner. The batch
 uses the existing single-track analysis service for every runnable item, so the
 shared heavy scheduler, source resolution, worker policy, validator, and atomic
 publication remain unchanged. The renderer may select library ids and request
@@ -294,7 +294,7 @@ Batch freshness compares source validity and a main-owned supported-profile
 allowlist. The private storage inspection returns only the validated profile id
 needed for that decision; the renderer-facing music-structure projection does not
 expose analyzer provenance. A valid v2 sidecar therefore remains readable until
-the track is analyzed, but normal F10 batch execution does not misclassify it as a
+the track is analyzed, but normal F5 batch execution does not misclassify it as a
 current v3 result.
 
 ## Validation invariants
@@ -370,7 +370,7 @@ separate layer and is neither created nor shifted by these cues.
    provisional community environment.
 5. Resolve and package-smoke `analysis-structure` — Beat This! `small0` and
    `final0` Windows CPU smoke complete; fixed `small0` install, repair, removal,
-   activation, and installed-environment inference complete in the internal F10
+   activation, and installed-environment inference complete in the internal F5
    workbench. Resolve `combined-ml` only when Refined and analysis are both
    requested.
 6. Benchmark BPM, beat/downbeat, and section utility against fixed songs and

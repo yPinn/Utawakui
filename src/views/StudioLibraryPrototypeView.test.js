@@ -67,8 +67,11 @@ describe('StudioLibraryPrototypeView development integration', () => {
     );
   });
 
-  it('keeps real Sidebar collection changes inside the F7 comparison view', () => {
-    expect(sidebarSource).toContain("activeView.value !== 'studio-library'");
+  it('keeps real Sidebar collection changes inside the Visual System comparison view', () => {
+    expect(sidebarSource).toContain("activeView.value === 'visual-system'");
+    expect(sidebarSource).toContain(
+      "visualSystemMode.value === 'studio-library'",
+    );
     expect(sidebarSource).toContain("setActiveView('setlist')");
   });
 

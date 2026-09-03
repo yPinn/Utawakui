@@ -4,7 +4,7 @@
 
 M2.1 evaluates a pretrained semantic analyzer before it can become an
 installable Music Analysis capability. It does not train a model and does not
-change F10 activation. The first benchmark target remains
+change F5 activation. The first benchmark target remains
 [All-In-One Infer 3.1.0](https://github.com/openmirlab/all-in-one-infer), using
 the already-spiked Windows CPU worker and `harmonix-fold0` checkpoint.
 
@@ -112,9 +112,9 @@ are accepted only when a SHA-256 fingerprint still matches the source audio,
 worker, model artifacts, and case contract. `--case <opaque-id>` runs one case;
 `--force` deliberately ignores a valid cache.
 
-### Annotating references in F10
+### Annotating references in F5
 
-Press F10, switch from **正式分析** to **人工標註**, and choose the ignored run
+Press F5, switch from **正式分析** to **人工標註**, and choose the ignored run
 config before opening Benchmark Review. This blind workspace never reads
 `predictions.json`. It maps each opaque case back to the current library for
 playback, then records only manually entered BPM, contiguous boundaries, and
@@ -137,9 +137,9 @@ id, and accepts only bounded case references on save. The worklist contains no
 track ids, source paths, model fields, or predictions and never writes song
 sidecars.
 
-### Reviewing predictions in F10
+### Reviewing predictions in F5
 
-Press F10, switch from **正式分析** to **Benchmark Review**, and choose the
+Press F5, switch from **正式分析** to **Benchmark Review**, and choose the
 ignored run config used for inference. The read-only review workspace shows the
 mapped library track, BPM, runtime, M1/M2 contract result, proportional semantic
 timeline, per-section confidence, and analyzer provenance. Clicking a timeline

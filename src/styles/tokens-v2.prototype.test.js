@@ -40,6 +40,10 @@ const performerView = readFileSync(
   'utf8',
 );
 const app = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');
+const visualSystemView = readFileSync(
+  new URL('../views/VisualSystemView.vue', import.meta.url),
+  'utf8',
+);
 const designGuide = readFileSync(
   new URL('../../DESIGN.md', import.meta.url),
   'utf8',
@@ -138,8 +142,13 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(app).toContain(
       'const internalWorkbenchesEnabled = import.meta.env.DEV',
     );
-    expect(app).toContain("import('./views/StudioLibraryPrototypeView.vue')");
-    expect(app).toContain("import('./views/DemoView.vue')");
+    expect(app).toContain("import('./views/VisualSystemView.vue')");
+    expect(visualSystemView).toContain(
+      "import StudioLibraryPrototypeView from './StudioLibraryPrototypeView.vue';",
+    );
+    expect(visualSystemView).toContain(
+      "import DemoView from './DemoView.vue';",
+    );
   });
 
   it('covers the approved theme, density, motion, and state matrix', () => {
@@ -266,7 +275,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(script).toContain("type: 'utawakui-app-shortcut'");
     expect(script).toContain('event.source !== window.parent');
     expect(script).toContain('event.origin !== window.location.origin');
-    expect(script).toContain('/^f(?:10|[1-5]|[7-9])$/u');
+    expect(script).toContain('/^f[1-9]$/u');
   });
 
   it.each([

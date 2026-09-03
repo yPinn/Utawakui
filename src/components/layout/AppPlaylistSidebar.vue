@@ -4,12 +4,14 @@ import { useAppView } from '../../composables/useAppView.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSidebarResize } from '../../composables/useSidebarResize.js';
+import { useVisualSystemMode } from '../../composables/useVisualSystemMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
 const { activeView, setActiveView } = useAppView();
+const { mode: visualSystemMode } = useVisualSystemMode();
 const {
   editDetailsPlaylist,
   editDetailsIsAlbum,
@@ -25,7 +27,10 @@ const {
 const { isResizing, startResize } = useSidebarResize();
 
 function activateSetlistView() {
-  if (activeView.value !== 'studio-library') setActiveView('setlist');
+  const isViewingStudioLibrary =
+    activeView.value === 'visual-system' &&
+    visualSystemMode.value === 'studio-library';
+  if (!isViewingStudioLibrary) setActiveView('setlist');
 }
 </script>
 

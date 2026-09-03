@@ -26,11 +26,12 @@ The Workspace Lab switches theme, density, motion, and static content state. Pre
 
 ## In-app development view
 
-During `npm run dev`, press `F7` in the Utawakui window to open the Studio Library
-development view. The real Vue shell continues to own the titlebar, Sidebar,
-Setlist folder tab, and PlayerBar; an isolated iframe supplies only the candidate
-dossier interior and follows the active dark／light app theme. Production builds
-exclude this view and its shortcut.
+During `npm run dev`, press `F8` in the Utawakui window to open the merged
+Visual System development view, then switch to its Studio Library tab. The real
+Vue shell continues to own the titlebar, Sidebar, Setlist folder tab, and
+PlayerBar; an isolated iframe supplies only the candidate dossier interior and
+follows the active dark／light app theme. Production builds exclude this view
+and its shortcut.
 
 The iframe mode is also directly inspectable at:
 

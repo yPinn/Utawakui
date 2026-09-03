@@ -1,6 +1,6 @@
 import { readonly, shallowRef } from 'vue';
 
-const isInspectorOpen = shallowRef(true);
+const isInspectorOpen = shallowRef(false);
 
 export function useStudioLibraryInspector() {
   function setInspectorOpen(open) {

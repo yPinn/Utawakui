@@ -168,5 +168,5 @@ estimator candidates must be compared one factor at a time on the same locked
 corpus. The 2026-08-28 normalization study completed that review and the owner
 approved its four-beat estimator as `beat-this-small0-cpu-v3`／
 `beat-this-final0-cpu-v3`. Existing v2 sidecars remain readable but are not
-considered current by normal F10 batch analysis; no automatic half／double-time
+considered current by normal F5 batch analysis; no automatic half／double-time
 normalization was authorized.
