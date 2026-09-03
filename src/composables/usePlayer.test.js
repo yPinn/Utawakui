@@ -57,21 +57,48 @@ class MockAudioNode {
 
 class MockAudioContext {
   static instances = [];
+  static unavailableSinkIds = new Set();
+  static resumeDeferredBySinkId = new Map();
+  static workletDeferredBySinkId = new Map();
+  static closeDeferredBySinkId = new Map();
 
-  constructor() {
+  constructor(options = {}) {
+    this.options = options;
     this.currentTime = 0;
     this.destination = new MockAudioNode();
-    this.sinkId = '';
+    this.sinkId = options.sinkId ?? '';
+    this.state = 'suspended';
     this.workletRegistered = false;
     this.failWorkletRegistration = false;
     this.failSetSinkId = false;
     this.listeners = new Map();
-    this.resume = vi.fn();
-    this.suspend = vi.fn();
-    this.close = vi.fn();
+    this.resume = vi.fn(async () => {
+      const deferred = MockAudioContext.resumeDeferredBySinkId.get(this.sinkId);
+      if (deferred) await deferred.promise;
+      if (MockAudioContext.unavailableSinkIds.has(this.sinkId)) {
+        throw new Error('sink unavailable');
+      }
+      this.state = 'running';
+    });
+    this.suspend = vi.fn(async () => {
+      this.state = 'suspended';
+    });
+    this.close = vi.fn(async () => {
+      const deferred = MockAudioContext.closeDeferredBySinkId.get(this.sinkId);
+      if (deferred) await deferred.promise;
+      this.state = 'closed';
+    });
+    this.setSinkId = vi.fn(async (deviceId) => {
+      if (this.failSetSinkId) throw new Error('sink unavailable');
+      this.sinkId = deviceId;
+    });
     this.createdGains = [];
     this.audioWorklet = {
       addModule: vi.fn(async () => {
+        const deferred = MockAudioContext.workletDeferredBySinkId.get(
+          this.sinkId,
+        );
+        if (deferred) await deferred.promise;
         if (this.failWorkletRegistration) {
           throw new Error('worklet registration failed');
         }
@@ -118,11 +145,6 @@ class MockAudioContext {
   dispatch(type) {
     this.listeners.get(type)?.();
   }
-
-  async setSinkId(deviceId) {
-    if (this.failSetSinkId) throw new Error('sink unavailable');
-    this.sinkId = deviceId;
-  }
 }
 
 class MockAudio {
@@ -165,6 +187,10 @@ class MockAudio {
 beforeEach(() => {
   vi.resetModules();
   MockAudioContext.instances = [];
+  MockAudioContext.unavailableSinkIds = new Set();
+  MockAudioContext.resumeDeferredBySinkId = new Map();
+  MockAudioContext.workletDeferredBySinkId = new Map();
+  MockAudioContext.closeDeferredBySinkId = new Map();
   MockAudio.latest = null;
   vi.stubGlobal('Audio', MockAudio);
   vi.stubGlobal('AudioContext', MockAudioContext);
@@ -187,6 +213,14 @@ function pitchCrossfade(context) {
     dry: context.createdGains[2].gain.value,
     wet: context.createdGains[3].gain.value,
   };
+}
+
+function createDeferred() {
+  let resolve;
+  const promise = new Promise((resolvePromise) => {
+    resolve = resolvePromise;
+  });
+  return { promise, resolve };
 }
 
 describe('guide vocal defaults', () => {
@@ -539,26 +573,66 @@ describe('library synchronization', () => {
 });
 
 describe('capture device lifecycle', () => {
-  it('suspends capture output when the selected device is cleared', async () => {
+  it('creates the capture graph already bound to the selected device', async () => {
+    const player = await loadPlayer();
+
+    await player.applyCaptureDevice('capture-device');
+
+    const captureContext = MockAudioContext.instances[1];
+    expect(captureContext.options).toEqual({ sinkId: 'capture-device' });
+    expect(captureContext.setSinkId).not.toHaveBeenCalled();
+    expect(captureContext.resume).toHaveBeenCalledOnce();
+    expect(player.state.captureDeviceId).toBe('capture-device');
+  });
+
+  it('closes capture output when the selected device is cleared', async () => {
     const player = await loadPlayer();
 
     await player.applyCaptureDevice('capture-device');
     const captureContext = MockAudioContext.instances[1];
     await player.applyCaptureDevice(null);
 
-    expect(captureContext.suspend).toHaveBeenCalledOnce();
+    expect(captureContext.close).toHaveBeenCalledOnce();
     expect(player.state.captureDeviceId).toBeNull();
   });
 
-  it('clears an unavailable capture device with bounded public error copy', async () => {
+  it('rebuilds the capture graph when switching devices', async () => {
+    const player = await loadPlayer();
+
+    await player.applyCaptureDevice('first-device');
+    const firstContext = MockAudioContext.instances[1];
+    await player.applyCaptureDevice('second-device');
+    const secondContext = MockAudioContext.instances[2];
+
+    expect(firstContext.close).toHaveBeenCalledOnce();
+    expect(secondContext.options).toEqual({ sinkId: 'second-device' });
+    expect(secondContext.resume).toHaveBeenCalledOnce();
+    expect(player.state.captureDeviceId).toBe('second-device');
+  });
+
+  it('rebuilds a fresh graph when capture is re-enabled', async () => {
     const player = await loadPlayer();
 
     await player.applyCaptureDevice('capture-device');
-    const captureContext = MockAudioContext.instances[1];
-    captureContext.failSetSinkId = true;
+    const firstContext = MockAudioContext.instances[1];
+    await player.applyCaptureDevice(null);
+    await player.applyCaptureDevice('capture-device');
+    const secondContext = MockAudioContext.instances[2];
+
+    expect(firstContext.close).toHaveBeenCalledOnce();
+    expect(secondContext).not.toBe(firstContext);
+    expect(secondContext.options).toEqual({ sinkId: 'capture-device' });
+    expect(player.state.captureDeviceId).toBe('capture-device');
+  });
+
+  it('closes an unavailable capture device with bounded public error copy', async () => {
+    const player = await loadPlayer();
+    MockAudioContext.unavailableSinkIds.add('missing-device');
+
     await player.applyCaptureDevice('missing-device');
 
-    expect(captureContext.suspend).toHaveBeenCalledOnce();
+    const captureContext = MockAudioContext.instances[1];
+    expect(captureContext.close).toHaveBeenCalledOnce();
     expect(player.state.captureDeviceId).toBeNull();
     expect(player.state.captureError).toBe('擷取輸出裝置無法使用。');
   });
@@ -573,6 +647,113 @@ describe('capture device lifecycle', () => {
 
     expect(player.state.captureDeviceId).toBeNull();
     expect(player.state.captureError).toBe('選擇的輸出裝置已中斷連線。');
+  });
+
+  it('clears a capture context that stops running unexpectedly', async () => {
+    const player = await loadPlayer();
+
+    await player.applyCaptureDevice('capture-device');
+    const captureContext = MockAudioContext.instances[1];
+    captureContext.state = 'suspended';
+    captureContext.dispatch('statechange');
+
+    expect(player.state.captureDeviceId).toBeNull();
+    expect(player.state.captureError).toBe('擷取輸出已停止，請重新選擇裝置。');
+  });
+
+  it('keeps the latest device when an older resume finishes late', async () => {
+    const player = await loadPlayer();
+    const firstResume = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set('first-device', firstResume);
+
+    const firstSelection = player.applyCaptureDevice('first-device');
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
+    const firstContext = MockAudioContext.instances[1];
+
+    await player.applyCaptureDevice('second-device');
+    const secondContext = MockAudioContext.instances[2];
+    firstResume.resolve();
+    await firstSelection;
+
+    expect(firstContext.close).toHaveBeenCalledOnce();
+    expect(secondContext.close).not.toHaveBeenCalled();
+    expect(player.state.captureDeviceId).toBe('second-device');
+    expect(player.state.captureError).toBeNull();
+  });
+
+  it('does not restore a device after capture is disabled during resume', async () => {
+    const player = await loadPlayer();
+    const pendingResume = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set(
+      'capture-device',
+      pendingResume,
+    );
+
+    const selection = player.applyCaptureDevice('capture-device');
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
+    await player.applyCaptureDevice(null);
+    pendingResume.resolve();
+    await selection;
+
+    expect(player.state.captureDeviceId).toBeNull();
+    expect(player.state.captureError).toBeNull();
+  });
+
+  it('does not commit a sink that is lost while its graph is starting', async () => {
+    const player = await loadPlayer();
+    const pendingResume = createDeferred();
+    MockAudioContext.resumeDeferredBySinkId.set(
+      'capture-device',
+      pendingResume,
+    );
+
+    const selection = player.applyCaptureDevice('capture-device');
+    await vi.waitFor(() => expect(MockAudioContext.instances).toHaveLength(2));
+    const captureContext = MockAudioContext.instances[1];
+    captureContext.sinkId = '';
+    captureContext.dispatch('sinkchange');
+    pendingResume.resolve();
+    await selection;
+
+    expect(captureContext.close).toHaveBeenCalledOnce();
+    expect(player.state.captureDeviceId).toBeNull();
+    expect(player.state.captureError).toBe('選擇的輸出裝置已中斷連線。');
+  });
+
+  it('does not create a capture graph after its owner is cleaned up', async () => {
+    const { usePlayerAudioGraph } =
+      await import('./player/usePlayerAudioGraph.js');
+    const state = {
+      captureDeviceId: null,
+      captureError: null,
+      captureGuideVocalOn: false,
+      captureGuideVocalValue: 0,
+      guideVocalOn: true,
+      guideVocalValue: 0.5,
+      isMuted: false,
+      pitchCents: 0,
+      transposeSemitones: 0,
+      volume: 0.5,
+    };
+    const graph = usePlayerAudioGraph({
+      audio: new MockAudio(),
+      state,
+      reportPlayerError: vi.fn(),
+    });
+    await graph.applyCaptureDevice('first-device');
+    const pendingClose = createDeferred();
+    MockAudioContext.closeDeferredBySinkId.set('first-device', pendingClose);
+
+    const switching = graph.applyCaptureDevice('second-device');
+    await vi.waitFor(() =>
+      expect(MockAudioContext.instances[1].close).toHaveBeenCalled(),
+    );
+    graph.cleanup();
+    pendingClose.resolve();
+    await switching;
+
+    expect(MockAudioContext.instances).toHaveLength(2);
+    expect(state.captureDeviceId).toBeNull();
   });
 });
 
@@ -631,6 +812,33 @@ describe('transpose AudioWorklet routing', () => {
     expect(capturePitchNode.pitchSemitones.value).toBe(-3);
     expect(pitchCrossfade(captureContext)).toEqual({ dry: 0, wet: 1 });
     expect(player.state.captureDeviceId).toBe('capture-device');
+    expect(player.state.captureError).toBeNull();
+  });
+
+  it('does not connect a stale pitch worklet into a replacement graph', async () => {
+    const player = await loadPlayer();
+    const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
+    await player.setTransposeSemitones(2);
+    const firstWorklet = createDeferred();
+    MockAudioContext.workletDeferredBySinkId.set('first-device', firstWorklet);
+
+    const firstSelection = player.applyCaptureDevice('first-device');
+    await vi.waitFor(() =>
+      expect(
+        MockAudioContext.instances[1].audioWorklet.addModule,
+      ).toHaveBeenCalled(),
+    );
+    await player.applyCaptureDevice('second-device');
+    firstWorklet.resolve();
+    await firstSelection;
+
+    const secondContext = MockAudioContext.instances[2];
+    const capturePitchNodes = SoundTouchNode.instances.filter(
+      (node) => node.context !== MockAudioContext.instances[0],
+    );
+    expect(capturePitchNodes).toHaveLength(1);
+    expect(capturePitchNodes[0].context).toBe(secondContext);
+    expect(player.state.captureDeviceId).toBe('second-device');
     expect(player.state.captureError).toBeNull();
   });
 

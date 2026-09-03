@@ -109,6 +109,9 @@ const { registerOutputHandlers } = require('./main/outputHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
 const {
+  registerAudioOutputPermissions,
+} = require('./main/audioOutputPermissions');
+const {
   createRuntimeDiagnosticsLogger,
 } = require('./main/runtimeDiagnosticsLogger');
 const { createPerformerWindowManager } = require('./main/performerWindow');
@@ -283,31 +286,13 @@ if (!gotSingleInstanceLock) {
     recordMainMilestone('electron-ready');
     if (process.platform === 'win32')
       app.setAppUserModelId(windowState.getAppUserModelId());
-    // Narrow exception for the capture-device output picker (see
-    // usePlayer.js's capture chain / useAudioOutput.js): 'media' with
-    // mediaType 'audio' unlocks labeled enumerateDevices() results (Chromium
-    // returns blank labels for audiooutput devices without it), and
-    // 'speaker-selection' is what setSinkId() itself checks for a
-    // non-default device. Neither grants microphone *capture* — no
-    // getUserMedia call is ever made, so no mic indicator lights up.
-    // Everything else stays denied.
-    session.defaultSession.setPermissionRequestHandler(
-      (webContents, permission, callback, details) => {
-        if (permission === 'speaker-selection') return callback(true);
-        if (permission === 'media' && details?.mediaType === 'audio') {
-          return callback(true);
-        }
-        callback(false);
-      },
-    );
-    // setPermissionCheckHandler is the synchronous counterpart
-    // enumerateDevices() itself consults for device labels — without this,
-    // the request handler above only covers explicit getUserMedia() calls,
-    // which this app never makes.
-    session.defaultSession.setPermissionCheckHandler(
-      (webContents, permission) => permission === 'media',
-    );
-
+    // Narrow exception for the main renderer's output picker and Web Audio
+    // capture sink. Both Electron permission paths allow speaker selection
+    // only for that trusted main frame; media capture and every unrelated
+    // permission remain denied.
+    registerAudioOutputPermissions(session.defaultSession, {
+      getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
+    });
     configState.loadInitialConfig();
     recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
