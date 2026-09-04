@@ -135,7 +135,14 @@ function requireComponent(value, label) {
 }
 
 function requireAbsolutePath(value, label) {
-  if (typeof value !== 'string' || !path.isAbsolute(value)) {
+  // Config paths are authored on Windows (the only supported runtime), but this
+  // validator also runs in CI on Linux against the documented templates. Accept
+  // a path that is absolute under either convention so "is this absolute?" does
+  // not depend on the host OS.
+  if (
+    typeof value !== 'string' ||
+    !(path.win32.isAbsolute(value) || path.posix.isAbsolute(value))
+  ) {
     throw new TypeError(`${label} must be an absolute path`);
   }
 }

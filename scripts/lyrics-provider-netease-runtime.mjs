@@ -337,10 +337,12 @@ export async function terminateNeteaseProcessTree(
     }
     return;
   }
-  if (typeof systemRoot !== 'string' || !path.isAbsolute(systemRoot)) {
+  // This branch is Windows-only by contract (platform === 'win32'), so judge
+  // the path with Windows semantics regardless of the host running this code.
+  if (typeof systemRoot !== 'string' || !path.win32.isAbsolute(systemRoot)) {
     throw new Error('NetEase worker process could not be terminated');
   }
-  const taskkillPath = path.join(systemRoot, 'System32', 'taskkill.exe');
+  const taskkillPath = path.win32.join(systemRoot, 'System32', 'taskkill.exe');
   await new Promise((resolve, reject) => {
     const killer = spawnImpl(
       taskkillPath,
