@@ -11,6 +11,17 @@ const UPDATE_PHASES = new Set([
   'error',
 ]);
 
+// Phases from which an unprompted background recheck is allowed to run. Once a
+// user has an update in hand (available / downloading / downloaded) the timer
+// stays quiet so it can never reset visible progress or a ready-to-install
+// state under them.
+const RECHECKABLE_PHASES = new Set(['idle', 'not-available', 'error']);
+
+// A pathological bytesPerSecond (e.g. a stall then a burst) can make the naive
+// remaining-time estimate enormous; clamp it so the renderer never shows a
+// multi-day countdown.
+const MAX_ETA_SECONDS = 24 * 60 * 60;
+
 function boundedString(value, maxLength = 80) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -24,10 +35,40 @@ function normalizeReleaseDate(value) {
   return Number.isNaN(timestamp) ? null : new Date(timestamp).toISOString();
 }
 
-function normalizeProgress(value) {
+function normalizePercent(value) {
   const percent = Number(value?.percent);
   if (!Number.isFinite(percent)) return null;
   return Math.round(Math.min(100, Math.max(0, percent)) * 10) / 10;
+}
+
+function normalizeBytesPerSecond(value) {
+  const rate = Number(value?.bytesPerSecond);
+  if (!Number.isFinite(rate) || rate <= 0) return null;
+  return Math.round(rate);
+}
+
+function normalizeEtaSeconds(value) {
+  const total = Number(value?.total);
+  const transferred = Number(value?.transferred);
+  const rate = Number(value?.bytesPerSecond);
+  if (
+    !Number.isFinite(total) ||
+    !Number.isFinite(transferred) ||
+    !Number.isFinite(rate) ||
+    rate <= 0 ||
+    total <= transferred
+  ) {
+    return null;
+  }
+  return Math.min(MAX_ETA_SECONDS, Math.round((total - transferred) / rate));
+}
+
+function projectDownloadProgress(info) {
+  return {
+    progress: normalizePercent(info),
+    downloadBytesPerSecond: normalizeBytesPerSecond(info),
+    downloadEtaSeconds: normalizeEtaSeconds(info),
+  };
 }
 
 function createAppUpdateService({
@@ -35,21 +76,27 @@ function createAppUpdateService({
   isPackaged,
   isWindows = process.platform === 'win32',
   runtimeEnabled = false,
+  autoCheckEnabled = true,
   updaterFactory = () => require('electron-updater').autoUpdater,
   publishStatus = () => undefined,
   schedule = setTimeout,
+  scheduleInterval = setInterval,
   logger = console,
 } = {}) {
   const enabled = Boolean(isPackaged && isWindows && runtimeEnabled);
+  let autoChecksAllowed = Boolean(autoCheckEnabled);
   let updater = null;
   let initialized = false;
   let startupCheckScheduled = false;
+  let recheckScheduled = false;
   let status = {
     enabled,
     phase: enabled ? 'idle' : 'disabled',
     currentVersion: boundedString(currentVersion) || '0.0.0',
     availableVersion: null,
     progress: null,
+    downloadBytesPerSecond: null,
+    downloadEtaSeconds: null,
     releaseDate: null,
     error: null,
   };
@@ -72,6 +119,8 @@ function createAppUpdateService({
     return setStatus({
       phase: 'error',
       progress: null,
+      downloadBytesPerSecond: null,
+      downloadEtaSeconds: null,
       error: '無法完成更新操作，請稍後再試。',
     });
   }
@@ -95,6 +144,8 @@ function createAppUpdateService({
           availableVersion: boundedString(info?.version),
           releaseDate: normalizeReleaseDate(info?.releaseDate),
           progress: null,
+          downloadBytesPerSecond: null,
+          downloadEtaSeconds: null,
           error: null,
         });
       });
@@ -104,13 +155,15 @@ function createAppUpdateService({
           availableVersion: null,
           releaseDate: null,
           progress: null,
+          downloadBytesPerSecond: null,
+          downloadEtaSeconds: null,
           error: null,
         });
       });
       updater.on('download-progress', (progress) => {
         setStatus({
           phase: 'downloading',
-          progress: normalizeProgress(progress),
+          ...projectDownloadProgress(progress),
           error: null,
         });
       });
@@ -122,6 +175,8 @@ function createAppUpdateService({
           releaseDate:
             normalizeReleaseDate(info?.releaseDate) || status.releaseDate,
           progress: 100,
+          downloadBytesPerSecond: null,
+          downloadEtaSeconds: null,
           error: null,
         });
       });
@@ -145,6 +200,8 @@ function createAppUpdateService({
       availableVersion: null,
       releaseDate: null,
       progress: null,
+      downloadBytesPerSecond: null,
+      downloadEtaSeconds: null,
       error: null,
     });
     try {
@@ -162,7 +219,13 @@ function createAppUpdateService({
     if (!enabled || !canDownload) return getStatus();
 
     initialize();
-    setStatus({ phase: 'downloading', progress: 0, error: null });
+    setStatus({
+      phase: 'downloading',
+      progress: 0,
+      downloadBytesPerSecond: null,
+      downloadEtaSeconds: null,
+      error: null,
+    });
     try {
       await updater.downloadUpdate();
     } catch (error) {
@@ -181,14 +244,36 @@ function createAppUpdateService({
     return getStatus();
   }
 
+  function setAutoCheckEnabled(next) {
+    // Only gates the automatic paths. An already-armed timer is left in place;
+    // its callback re-reads this flag, so toggling the preference back on
+    // resumes background checks without a relaunch.
+    autoChecksAllowed = Boolean(next);
+    return autoChecksAllowed;
+  }
+
   function scheduleStartupCheck(delayMs) {
-    if (!enabled || startupCheckScheduled) return false;
+    if (!enabled || !autoChecksAllowed || startupCheckScheduled) return false;
     initialize();
     if (!updater) return false;
     startupCheckScheduled = true;
     const timer = schedule(() => {
       void check();
     }, delayMs);
+    timer?.unref?.();
+    return true;
+  }
+
+  function scheduleRecheck(intervalMs) {
+    if (!enabled || recheckScheduled) return false;
+    initialize();
+    if (!updater) return false;
+    recheckScheduled = true;
+    const timer = scheduleInterval(() => {
+      if (autoChecksAllowed && RECHECKABLE_PHASES.has(status.phase)) {
+        void check();
+      }
+    }, intervalMs);
     timer?.unref?.();
     return true;
   }
@@ -200,6 +285,8 @@ function createAppUpdateService({
     initialize,
     install,
     scheduleStartupCheck,
+    scheduleRecheck,
+    setAutoCheckEnabled,
   };
 }
 

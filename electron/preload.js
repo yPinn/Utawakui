@@ -83,6 +83,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-auto-music-analysis'),
   setAutoMusicAnalysis: (enabled) =>
     ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
+  getAppUpdateAutoCheck: () =>
+    ipcRenderer.invoke('config:get-app-update-auto-check'),
+  setAppUpdateAutoCheck: (enabled) =>
+    ipcRenderer.invoke('config:set-app-update-auto-check', enabled),
   openExternalTarget: (targetId) =>
     ipcRenderer.invoke('shell:open-external', targetId),
   openYoutubeMusicSearch: (query) =>

@@ -37,6 +37,7 @@ function registerConfigHandlers({
   notifyLibraryUpdated,
   recordDiagnostic,
   titlebarColors,
+  applyAppUpdateAutoCheck = () => undefined,
 }) {
   ipcMain.handle('config:get', async () =>
     runConfigOperation(
@@ -270,6 +271,44 @@ function registerConfigHandlers({
       () => {
         updateConfig({ autoAnalyzeMusicStructure: enabled });
         return getConfig().autoAnalyzeMusicStructure;
+      },
+    );
+  });
+
+  ipcMain.handle('config:get-app-update-auto-check', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-app-update-auto-check',
+        code: 'APP_UPDATE_AUTO_CHECK_READ_FAILED',
+        title: '無法讀取自動檢查更新設定',
+        message: '目前無法讀取自動檢查更新設定。',
+      },
+      () => getConfig().autoCheckAppUpdates,
+    ),
+  );
+
+  ipcMain.handle('config:set-app-update-auto-check', async (event, enabled) => {
+    if (typeof enabled !== 'boolean') {
+      throw createValidationError(
+        'APP_UPDATE_AUTO_CHECK_INVALID',
+        '無法套用自動檢查更新設定',
+        '指定的自動檢查更新設定無效。',
+      );
+    }
+    return runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'set-app-update-auto-check',
+        code: 'APP_UPDATE_AUTO_CHECK_UPDATE_FAILED',
+        title: '無法套用自動檢查更新設定',
+        message: '目前無法套用自動檢查更新設定，請稍後再試。',
+      },
+      () => {
+        updateConfig({ autoCheckAppUpdates: enabled });
+        const next = getConfig().autoCheckAppUpdates;
+        applyAppUpdateAutoCheck(next);
+        return next;
       },
     );
   });

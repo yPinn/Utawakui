@@ -23,6 +23,7 @@ function register(overrides = {}) {
     sidebarWidth: 256,
     captureDeviceId: null,
     autoAnalyzeMusicStructure: true,
+    autoCheckAppUpdates: true,
   };
   const getConfig = vi.fn(() => config);
   const updateConfig = vi.fn((patch) => {
@@ -46,6 +47,7 @@ function register(overrides = {}) {
   const getMainWindow = vi.fn(() => mainWindow);
   const notifyLibraryUpdated = vi.fn();
   const recordDiagnostic = vi.fn(() => ({ ok: true }));
+  const applyAppUpdateAutoCheck = vi.fn();
   const titlebarColors = {
     dark: { color: '#101010', symbolColor: '#ffffff' },
     light: { color: '#ffffff', symbolColor: '#101010' },
@@ -60,6 +62,7 @@ function register(overrides = {}) {
     getMainWindow,
     notifyLibraryUpdated,
     recordDiagnostic,
+    applyAppUpdateAutoCheck,
     titlebarColors,
     ...overrides,
   };
@@ -84,6 +87,8 @@ describe('registerConfigHandlers', () => {
       'config:set-capture-device',
       'config:get-auto-music-analysis',
       'config:set-auto-music-analysis',
+      'config:get-app-update-auto-check',
+      'config:set-app-update-auto-check',
     ]);
   });
 
@@ -204,6 +209,9 @@ describe('registerConfigHandlers', () => {
     ).resolves.toBeNull();
     await expect(
       ipcMain.handlers.get('config:get-auto-music-analysis')(),
+    ).resolves.toBe(true);
+    await expect(
+      ipcMain.handlers.get('config:get-app-update-auto-check')(),
     ).resolves.toBe(true);
   });
 
@@ -334,6 +342,53 @@ describe('registerConfigHandlers', () => {
       expect(thrown.message).toContain('AUTO_MUSIC_ANALYSIS_INVALID');
       expect(updateConfig).not.toHaveBeenCalled();
       expect(recordDiagnostic).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([true, false])(
+    'persists the automatic app-update check preference as %s and applies it live',
+    async (enabled) => {
+      const { ipcMain, updateConfig, applyAppUpdateAutoCheck } = register();
+
+      await expect(
+        ipcMain.handlers.get('config:set-app-update-auto-check')(null, enabled),
+      ).resolves.toBe(enabled);
+      expect(updateConfig).toHaveBeenCalledWith({
+        autoCheckAppUpdates: enabled,
+      });
+      expect(applyAppUpdateAutoCheck).toHaveBeenCalledWith(enabled);
+    },
+  );
+
+  it('persists the app-update check preference without an apply callback', async () => {
+    const { ipcMain, updateConfig } = register({
+      applyAppUpdateAutoCheck: undefined,
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:set-app-update-auto-check')(null, false),
+    ).resolves.toBe(false);
+    expect(updateConfig).toHaveBeenCalledWith({ autoCheckAppUpdates: false });
+  });
+
+  it.each([null, 0, 'true', {}])(
+    'rejects invalid automatic app-update check value %j',
+    async (enabled) => {
+      const {
+        ipcMain,
+        updateConfig,
+        recordDiagnostic,
+        applyAppUpdateAutoCheck,
+      } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-app-update-auto-check')(null, enabled)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('APP_UPDATE_AUTO_CHECK_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
+      expect(recordDiagnostic).not.toHaveBeenCalled();
+      expect(applyAppUpdateAutoCheck).not.toHaveBeenCalled();
     },
   );
 

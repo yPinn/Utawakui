@@ -12,6 +12,16 @@ function createUpdater() {
   return updater;
 }
 
+function createIntervalSchedule() {
+  const calls = [];
+  const schedule = vi.fn((callback, intervalMs) => {
+    const timer = { unref: vi.fn() };
+    calls.push({ callback, intervalMs, timer });
+    return timer;
+  });
+  return { schedule, calls };
+}
+
 describe('app update service', () => {
   it('does not load or contact the updater while the release gate is disabled', async () => {
     const updaterFactory = vi.fn();
@@ -30,6 +40,8 @@ describe('app update service', () => {
       currentVersion: '0.1.0',
       availableVersion: null,
       progress: null,
+      downloadBytesPerSecond: null,
+      downloadEtaSeconds: null,
       releaseDate: null,
       error: null,
     });
@@ -88,21 +100,32 @@ describe('app update service', () => {
       currentVersion: '0.1.0',
       availableVersion: '0.2.0',
       progress: null,
+      downloadBytesPerSecond: null,
+      downloadEtaSeconds: null,
       releaseDate: '2026-08-22T05:00:00.000Z',
       error: null,
     });
     expect(JSON.stringify(published.at(-1))).not.toContain('installer.exe');
     expect(JSON.stringify(published.at(-1))).not.toContain('script');
 
-    updater.emit('download-progress', { percent: 42.26 });
+    updater.emit('download-progress', {
+      percent: 42.26,
+      bytesPerSecond: 3_145_728.7,
+      transferred: 40_000_000,
+      total: 90_000_000,
+    });
     expect(service.getStatus()).toMatchObject({
       phase: 'downloading',
       progress: 42.3,
+      downloadBytesPerSecond: 3_145_729,
+      downloadEtaSeconds: 16,
     });
     updater.emit('update-downloaded', { version: '0.2.0' });
     expect(service.getStatus()).toMatchObject({
       phase: 'downloaded',
       progress: 100,
+      downloadBytesPerSecond: null,
+      downloadEtaSeconds: null,
     });
 
     expect(service.install()).toMatchObject({ phase: 'downloaded' });
@@ -233,5 +256,89 @@ describe('app update service', () => {
       '[update] Install failed',
       expect.any(Error),
     );
+  });
+
+  it('runs the background recheck only from idle, not-available, or error phases', async () => {
+    const updater = createUpdater();
+    const { schedule: scheduleInterval, calls } = createIntervalSchedule();
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      scheduleInterval,
+    });
+
+    expect(service.scheduleRecheck(21_600_000)).toBe(true);
+    expect(service.scheduleRecheck(21_600_000)).toBe(false);
+    expect(scheduleInterval).toHaveBeenCalledWith(
+      expect.any(Function),
+      21_600_000,
+    );
+    expect(calls[0].timer.unref).toHaveBeenCalledOnce();
+
+    const tick = calls[0].callback;
+
+    tick();
+    await Promise.resolve();
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
+
+    updater.emit('update-available', { version: '0.2.0' });
+    tick();
+    await Promise.resolve();
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
+
+    updater.emit('update-downloaded', { version: '0.2.0' });
+    tick();
+    await Promise.resolve();
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
+
+    updater.emit('update-not-available');
+    tick();
+    await Promise.resolve();
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
+  });
+
+  it('lets the auto-check preference gate the automatic paths without touching manual actions', async () => {
+    const updater = createUpdater();
+    const { schedule: scheduleInterval, calls } = createIntervalSchedule();
+    let startupCallback;
+    const startupTimer = { unref: vi.fn() };
+    const schedule = vi.fn((callback) => {
+      startupCallback = callback;
+      return startupTimer;
+    });
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      autoCheckEnabled: false,
+      updaterFactory: () => updater,
+      schedule,
+      scheduleInterval,
+    });
+
+    expect(service.scheduleStartupCheck(15000)).toBe(false);
+    expect(startupCallback).toBeUndefined();
+
+    // Recheck still arms (so the preference can be turned back on without a
+    // relaunch) but its callback stays inert while auto-checks are off.
+    expect(service.scheduleRecheck(21_600_000)).toBe(true);
+    calls[0].callback();
+    await Promise.resolve();
+    expect(updater.checkForUpdates).not.toHaveBeenCalled();
+
+    // Manual check is unaffected by the preference.
+    await service.check();
+    expect(updater.checkForUpdates).toHaveBeenCalledOnce();
+
+    // Re-enabling resumes the armed recheck.
+    service.setAutoCheckEnabled(true);
+    updater.emit('update-not-available');
+    calls[0].callback();
+    await Promise.resolve();
+    expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
   });
 });

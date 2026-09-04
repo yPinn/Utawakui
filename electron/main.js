@@ -125,6 +125,7 @@ const { createProviderRunnerManager } = require('./main/providerRunner');
 const {
   runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
   startupCheckDelayMs: APP_UPDATE_STARTUP_DELAY_MS,
+  recheckIntervalMs: APP_UPDATE_RECHECK_INTERVAL_MS,
 } = require('../shared/appUpdateValues.json');
 const {
   baselineIdleSampleMs: STARTUP_BASELINE_IDLE_SAMPLE_MS,
@@ -411,6 +412,7 @@ if (!gotSingleInstanceLock) {
       isPackaged: isPackagedRuntime,
       isWindows: process.platform === 'win32',
       runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
+      autoCheckEnabled: configState.getConfig().autoCheckAppUpdates,
       publishStatus: (status) => {
         const mainWindow = windowState.getMainWindow();
         if (!mainWindow?.isDestroyed()) {
@@ -588,6 +590,8 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       recordDiagnostic: (event) => diagnosticsService.record(event),
       titlebarColors: windowState.TITLEBAR_COLORS,
+      applyAppUpdateAutoCheck: (enabled) =>
+        appUpdateService.setAutoCheckEnabled(enabled),
     });
 
     registerFeatureGateHandlers({
@@ -654,6 +658,7 @@ if (!gotSingleInstanceLock) {
       });
     }
     appUpdateService.scheduleStartupCheck(APP_UPDATE_STARTUP_DELAY_MS);
+    appUpdateService.scheduleRecheck(APP_UPDATE_RECHECK_INTERVAL_MS);
   });
 
   app.on('window-all-closed', () => {

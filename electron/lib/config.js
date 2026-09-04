@@ -34,6 +34,11 @@ const DEFAULTS = {
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
+  // When true, the packaged Windows build runs the delayed startup update check
+  // and the background recheck. Turning it off leaves the manual Settings
+  // "check" action working; it only stops the app from contacting the release
+  // feed on its own.
+  autoCheckAppUpdates: true,
   // Absolute path to a system-installed FFmpeg the user opted into via
   // Settings (see electron/lib/systemFfmpeg.js's detectSystemFfmpeg()).
   // null means the app-managed Gyan download is used (the default). Only
@@ -141,6 +146,10 @@ function loadConfig(configPath) {
       typeof data.autoAnalyzeMusicStructure === 'boolean'
         ? data.autoAnalyzeMusicStructure
         : DEFAULTS.autoAnalyzeMusicStructure,
+    autoCheckAppUpdates:
+      typeof data.autoCheckAppUpdates === 'boolean'
+        ? data.autoCheckAppUpdates
+        : DEFAULTS.autoCheckAppUpdates,
     systemFfmpegPath:
       typeof data.systemFfmpegPath === 'string'
         ? data.systemFfmpegPath

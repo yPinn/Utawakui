@@ -31,6 +31,7 @@ describe('config', () => {
       sidebarWidth: 256,
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
+      autoCheckAppUpdates: true,
       systemFfmpegPath: null,
       outputRuntime: {
         autoStart: true,
@@ -73,6 +74,7 @@ describe('config', () => {
       sidebarWidth: 256,
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
+      autoCheckAppUpdates: true,
       systemFfmpegPath: null,
       outputRuntime: {
         autoStart: true,
@@ -196,6 +198,19 @@ describe('config', () => {
         JSON.stringify({ autoAnalyzeMusicStructure }),
       );
       expect(loadConfig(configPath).autoAnalyzeMusicStructure).toBe(true);
+    },
+  );
+
+  it('round-trips the automatic app-update check preference', () => {
+    saveConfig(configPath, { autoCheckAppUpdates: false });
+    expect(loadConfig(configPath).autoCheckAppUpdates).toBe(false);
+  });
+
+  it.each([null, 1, 'true', {}])(
+    'falls back to automatic app-update checks for invalid value %j',
+    (autoCheckAppUpdates) => {
+      fs.writeFileSync(configPath, JSON.stringify({ autoCheckAppUpdates }));
+      expect(loadConfig(configPath).autoCheckAppUpdates).toBe(true);
     },
   );
 
