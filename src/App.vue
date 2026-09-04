@@ -25,6 +25,7 @@ import { useTheme } from './composables/useTheme.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
+import { useAppUpdate } from './composables/useAppUpdate.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 
@@ -104,6 +105,13 @@ onMounted(() => {
 });
 const performerView = usePerformerSelfView();
 performerView.initialize();
+
+// Root-level so the passive "update available" tab marker reflects the
+// main-process startup check even before Settings is ever opened. The
+// subscription is idempotent — SettingsView's own useAppUpdate() call is
+// unaffected.
+const { updateReady: appUpdateReady, refreshAppUpdateStatus } = useAppUpdate();
+onMounted(refreshAppUpdateStatus);
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).
@@ -198,6 +206,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
       <AppArchiveFrame
         v-model:active-view="activeView"
         :tab-active-view="archiveTabView"
+        :update-available="appUpdateReady"
       >
         <component :is="views[activeView]" />
         <template v-if="activeContextView" #context>

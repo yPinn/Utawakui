@@ -47,6 +47,24 @@ describe('SettingsView maintenance section', () => {
     expect(appUpdateIndex).toBeLessThan(diagnosticsIndex);
   });
 
+  it('wires the app-update row to download telemetry and the auto-check toggle', () => {
+    const rowStart = maintenanceSource.indexOf('<AppUpdateSettingsRow');
+    const rowEnd = maintenanceSource.indexOf('/>', rowStart);
+    const row = maintenanceSource.slice(rowStart, rowEnd);
+
+    expect(row).toContain(
+      ':download-bytes-per-second="appUpdateState.downloadBytesPerSecond"',
+    );
+    expect(row).toContain(
+      ':download-eta-seconds="appUpdateState.downloadEtaSeconds"',
+    );
+    expect(row).toContain(
+      ':auto-check-enabled="appUpdateState.autoCheckEnabled"',
+    );
+    expect(row).toContain('@set-auto-check="setAppUpdateAutoCheck"');
+    expect(source).toContain('refreshAppUpdateAutoCheck();');
+  });
+
   it('describes the destructive confirmation as clearing error records', () => {
     expect(source).toContain("window.confirm('清除這台電腦上的錯誤紀錄？')");
   });

@@ -59,6 +59,36 @@ describe('AppUpdateSettingsRow', () => {
     expect(html).not.toContain('<button');
   });
 
+  it('shows download rate and remaining time when the updater reports them', async () => {
+    const html = await renderRow({
+      phase: 'downloading',
+      progress: 42.3,
+      downloadBytesPerSecond: 3_145_728,
+      downloadEtaSeconds: 25,
+    });
+
+    expect(html).toContain('正在下載 42.3% · 3.0 MB/s · 剩餘約 25 秒');
+  });
+
+  it('offers an automatic-check toggle, disabled outside a packaged build', async () => {
+    const on = await renderRow({ phase: 'idle', autoCheckEnabled: true });
+    const off = await renderRow({ enabled: false, phase: 'disabled' });
+
+    expect(on).toContain('自動檢查更新');
+    expect(on).toContain('aria-label="啟動與定期自動檢查是否有新版本"');
+    expect(on).toContain('checked');
+    expect(off).toMatch(/id="app-update-auto-check"[^>]*disabled/);
+  });
+
+  it('surfaces a preference-save failure without a second update action', async () => {
+    const html = await renderRow({
+      phase: 'idle',
+      autoCheckError: '目前無法儲存自動檢查更新設定，請再試一次。',
+    });
+
+    expect(html).toContain('自動檢查更新設定未儲存');
+  });
+
   it('shows the disabled and safe error states without remote details', async () => {
     const disabled = await renderRow({ enabled: false, phase: 'disabled' });
     const failed = await renderRow({

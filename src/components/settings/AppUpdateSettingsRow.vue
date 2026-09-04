@@ -1,8 +1,11 @@
 <script setup>
 import { computed } from 'vue';
 import { Download, RefreshCw } from '../../icons/index.js';
+import { formatDownloadProgress } from '../../utils/appUpdateProgress.js';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiNotice from '../ui/UiNotice.vue';
 import SettingsActionRow from './SettingsActionRow.vue';
 
 const props = defineProps({
@@ -25,11 +28,16 @@ const props = defineProps({
   },
   availableVersion: { type: String, default: null },
   progress: { type: Number, default: null },
+  downloadBytesPerSecond: { type: Number, default: null },
+  downloadEtaSeconds: { type: Number, default: null },
   error: { type: String, default: null },
   infoError: { type: String, default: '' },
+  autoCheckEnabled: { type: Boolean, default: true },
+  autoCheckBusy: { type: Boolean, default: false },
+  autoCheckError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['check', 'download', 'install']);
+const emit = defineEmits(['check', 'download', 'install', 'setAutoCheck']);
 
 const availableVersionLabel = computed(() =>
   props.availableVersion ? `v${props.availableVersion}` : '新版本',
@@ -51,10 +59,11 @@ const updatePresentation = computed(() => {
       return { value: '目前已是最新版本', status: '最新', tone: 'success' };
     case 'downloading':
       return {
-        value:
-          props.progress === null
-            ? '正在下載更新'
-            : `正在下載 ${props.progress}%`,
+        value: formatDownloadProgress({
+          progress: props.progress,
+          downloadBytesPerSecond: props.downloadBytesPerSecond,
+          downloadEtaSeconds: props.downloadEtaSeconds,
+        }),
         status: '下載中',
         tone: 'info',
       };
@@ -126,33 +135,61 @@ function handleAction() {
 </script>
 
 <template>
-  <SettingsActionRow
-    :icon="RefreshCw"
-    title="Utawakui 版本"
-    :value="rowPresentation.value"
-    :status="rowPresentation.status"
-    :status-tone="rowPresentation.tone"
-    :tooltip="infoError || '顯示目前安裝版本與公開發行版本的更新狀態。'"
-  >
-    <template v-if="action" #actions>
-      <UiIconButton
-        v-if="action !== 'install'"
-        :icon="action === 'download' ? Download : RefreshCw"
-        :label="actionLabel"
-        :disabled="actionDisabled"
-        :title="actionTitle"
-        @click="handleAction"
-      />
-      <UiButton
-        v-else
-        :icon="RefreshCw"
-        variant="accent"
-        :disabled="actionDisabled"
-        :title="actionTitle"
-        @click="handleAction"
-      >
-        {{ actionLabel }}
-      </UiButton>
-    </template>
-  </SettingsActionRow>
+  <div class="app-update-settings-row">
+    <SettingsActionRow
+      :icon="RefreshCw"
+      title="Utawakui 版本"
+      :value="rowPresentation.value"
+      :status="rowPresentation.status"
+      :status-tone="rowPresentation.tone"
+      :tooltip="infoError || '顯示目前安裝版本與公開發行版本的更新狀態。'"
+    >
+      <template #actions>
+        <UiCheckbox
+          id="app-update-auto-check"
+          label="自動檢查更新"
+          aria-label="啟動與定期自動檢查是否有新版本"
+          :model-value="autoCheckEnabled"
+          :disabled="!enabled || autoCheckBusy"
+          @update:model-value="emit('setAutoCheck', $event)"
+        />
+        <template v-if="action">
+          <UiIconButton
+            v-if="action !== 'install'"
+            :icon="action === 'download' ? Download : RefreshCw"
+            :label="actionLabel"
+            :disabled="actionDisabled"
+            :title="actionTitle"
+            @click="handleAction"
+          />
+          <UiButton
+            v-else
+            :icon="RefreshCw"
+            variant="accent"
+            :disabled="actionDisabled"
+            :title="actionTitle"
+            @click="handleAction"
+          >
+            {{ actionLabel }}
+          </UiButton>
+        </template>
+      </template>
+    </SettingsActionRow>
+
+    <UiNotice
+      v-if="autoCheckError"
+      tone="danger"
+      title="自動檢查更新設定未儲存"
+      :message="autoCheckError"
+      compact
+    />
+  </div>
 </template>
+
+<style scoped>
+.app-update-settings-row {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+</style>

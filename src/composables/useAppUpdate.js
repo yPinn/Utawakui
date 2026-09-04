@@ -1,4 +1,4 @@
-import { reactive, readonly } from 'vue';
+import { computed, reactive, readonly } from 'vue';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 
 const { recordError } = useAppDiagnostics();
@@ -20,9 +20,21 @@ const state = reactive({
   currentVersion: '',
   availableVersion: null,
   progress: null,
+  downloadBytesPerSecond: null,
+  downloadEtaSeconds: null,
   releaseDate: null,
   error: null,
+  autoCheckEnabled: true,
+  autoCheckBusy: false,
+  autoCheckError: null,
 });
+
+// True whenever the user has something to act on — drives the passive
+// navigation indicator, which must stay lit through the download and until the
+// update is actually installed.
+const updateReady = computed(
+  () => state.phase === 'available' || state.phase === 'downloaded',
+);
 
 let unsubscribe = null;
 
@@ -44,6 +56,12 @@ function applyStatus(status) {
       ? status.availableVersion
       : null;
   state.progress = Number.isFinite(status.progress) ? status.progress : null;
+  state.downloadBytesPerSecond = Number.isFinite(status.downloadBytesPerSecond)
+    ? status.downloadBytesPerSecond
+    : null;
+  state.downloadEtaSeconds = Number.isFinite(status.downloadEtaSeconds)
+    ? status.downloadEtaSeconds
+    : null;
   state.releaseDate =
     typeof status.releaseDate === 'string' ? status.releaseDate : null;
   state.error =
@@ -92,13 +110,53 @@ function installAppUpdate() {
   return invoke('installAppUpdate');
 }
 
+async function refreshAppUpdateAutoCheck() {
+  if (!hasBridge('getAppUpdateAutoCheck')) return state.autoCheckEnabled;
+  try {
+    state.autoCheckEnabled =
+      (await window.Utawakui.getAppUpdateAutoCheck()) !== false;
+    state.autoCheckError = null;
+  } catch {
+    state.autoCheckError = '目前無法讀取自動檢查更新設定，請重新啟動後再試。';
+  }
+  return state.autoCheckEnabled;
+}
+
+async function setAppUpdateAutoCheck(enabled) {
+  if (
+    typeof enabled !== 'boolean' ||
+    state.autoCheckBusy ||
+    !hasBridge('setAppUpdateAutoCheck')
+  ) {
+    return false;
+  }
+  const previous = state.autoCheckEnabled;
+  state.autoCheckEnabled = enabled;
+  state.autoCheckBusy = true;
+  state.autoCheckError = null;
+  try {
+    state.autoCheckEnabled =
+      (await window.Utawakui.setAppUpdateAutoCheck(enabled)) === true;
+    return true;
+  } catch {
+    state.autoCheckEnabled = previous;
+    state.autoCheckError = '目前無法儲存自動檢查更新設定，請再試一次。';
+    return false;
+  } finally {
+    state.autoCheckBusy = false;
+  }
+}
+
 export function useAppUpdate() {
   ensureSubscription();
   return {
     state: readonly(state),
+    updateReady,
     refreshAppUpdateStatus,
     checkForAppUpdate,
     downloadAppUpdate,
     installAppUpdate,
+    refreshAppUpdateAutoCheck,
+    setAppUpdateAutoCheck,
   };
 }

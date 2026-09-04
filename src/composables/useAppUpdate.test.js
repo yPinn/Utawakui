@@ -42,6 +42,8 @@ describe('useAppUpdate', () => {
       currentVersion: '0.1.0',
       availableVersion: '0.2.0',
       progress: 24.5,
+      downloadBytesPerSecond: 3_145_728,
+      downloadEtaSeconds: 25,
       releaseDate: '2026-08-22T05:00:00.000Z',
       error: null,
     });
@@ -49,8 +51,71 @@ describe('useAppUpdate', () => {
       phase: 'downloading',
       availableVersion: '0.2.0',
       progress: 24.5,
+      downloadBytesPerSecond: 3_145_728,
+      downloadEtaSeconds: 25,
     });
+    expect(appUpdate.updateReady.value).toBe(false);
     expect(window.Utawakui.onAppUpdateStatus).toHaveBeenCalledOnce();
+  });
+
+  it('flags updateReady for available and downloaded phases only', async () => {
+    let statusListener;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onAppUpdateStatus: vi.fn((listener) => {
+          statusListener = listener;
+          return vi.fn();
+        }),
+      },
+    });
+    const appUpdate = await loadAppUpdate();
+
+    statusListener({
+      enabled: true,
+      phase: 'available',
+      currentVersion: '0.1.0',
+    });
+    expect(appUpdate.updateReady.value).toBe(true);
+
+    statusListener({
+      enabled: true,
+      phase: 'downloaded',
+      currentVersion: '0.1.0',
+    });
+    expect(appUpdate.updateReady.value).toBe(true);
+
+    statusListener({
+      enabled: true,
+      phase: 'not-available',
+      currentVersion: '0.1.0',
+    });
+    expect(appUpdate.updateReady.value).toBe(false);
+  });
+
+  it('reads and stores the automatic check preference with optimistic rollback', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onAppUpdateStatus: vi.fn(() => vi.fn()),
+        getAppUpdateAutoCheck: vi.fn().mockResolvedValue(false),
+        setAppUpdateAutoCheck: vi
+          .fn()
+          .mockResolvedValueOnce(true)
+          .mockRejectedValueOnce(new Error('IPC failed')),
+      },
+    });
+    const appUpdate = await loadAppUpdate();
+
+    await appUpdate.refreshAppUpdateAutoCheck();
+    expect(appUpdate.state.autoCheckEnabled).toBe(false);
+
+    await appUpdate.setAppUpdateAutoCheck(true);
+    expect(appUpdate.state.autoCheckEnabled).toBe(true);
+
+    await appUpdate.setAppUpdateAutoCheck(false);
+    expect(appUpdate.state.autoCheckEnabled).toBe(true);
+    expect(appUpdate.state.autoCheckError).toBe(
+      '目前無法儲存自動檢查更新設定，請再試一次。',
+    );
   });
 
   it('routes fixed check, download, and install actions through preload', async () => {

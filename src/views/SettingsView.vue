@@ -57,6 +57,8 @@ const {
   checkForAppUpdate,
   downloadAppUpdate,
   installAppUpdate,
+  refreshAppUpdateAutoCheck,
+  setAppUpdateAutoCheck,
 } = useAppUpdate();
 const {
   state: libraryMetadataMaintenanceState,
@@ -212,6 +214,7 @@ async function refreshSettingsState() {
   detectSystemFfmpeg();
   refreshAppInfo();
   refreshAppUpdateStatus();
+  refreshAppUpdateAutoCheck();
   try {
     await refreshConfig();
   } catch (err) {
@@ -438,11 +441,17 @@ onUnmounted(musicAnalysisSettings.dispose);
             :phase="appUpdateState.phase"
             :available-version="appUpdateState.availableVersion"
             :progress="appUpdateState.progress"
+            :download-bytes-per-second="appUpdateState.downloadBytesPerSecond"
+            :download-eta-seconds="appUpdateState.downloadEtaSeconds"
             :error="appUpdateState.error"
             :info-error="appInfoState.error"
+            :auto-check-enabled="appUpdateState.autoCheckEnabled"
+            :auto-check-busy="appUpdateState.autoCheckBusy"
+            :auto-check-error="appUpdateState.autoCheckError"
             @check="checkForAppUpdate"
             @download="downloadAppUpdate"
             @install="installAppUpdate"
+            @set-auto-check="setAppUpdateAutoCheck"
           />
 
           <DiagnosticsSettingsBlock

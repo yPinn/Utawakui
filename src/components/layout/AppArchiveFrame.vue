@@ -5,6 +5,7 @@ import AppTopTabs from './AppTopTabs.vue';
 defineProps({
   activeView: { type: String, required: true },
   tabActiveView: { type: String, default: '' },
+  updateAvailable: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:activeView']);
@@ -19,6 +20,7 @@ const emit = defineEmits(['update:activeView']);
       <AppTopTabs
         class="app-archive-frame__tabs"
         :active-view="tabActiveView || activeView"
+        :update-available="updateAvailable"
         @update:active-view="emit('update:activeView', $event)"
       />
       <AppInnerPage class="app-archive-frame__page">

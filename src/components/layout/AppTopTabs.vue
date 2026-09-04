@@ -1,8 +1,12 @@
 <script setup>
+import { computed } from 'vue';
 import { ICON_SIZE, Settings } from '../../icons/index.js';
 
-defineProps({
+const props = defineProps({
   activeView: { type: String, required: true },
+  // Passive marker: a released update is waiting in Settings. Kept low-noise —
+  // one dot, no animation, meaning carried in the button's aria-label.
+  updateAvailable: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:activeView']);
@@ -20,6 +24,10 @@ const workflowItems = [
 ];
 
 const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
+
+const settingsAriaLabel = computed(() =>
+  props.updateAvailable ? '設定（有可用更新）' : '設定',
+);
 </script>
 
 <template>
@@ -52,23 +60,36 @@ const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
         </button>
       </div>
       <div class="app-tabs__group app-tabs__group--utility">
-        <button
+        <span
           v-for="item in utilityItems"
           :key="item.key"
-          type="button"
-          class="app-tabs__folder app-tabs__folder--utility"
-          :class="{ 'app-tabs__folder--active': item.key === activeView }"
-          :aria-current="item.key === activeView ? 'page' : undefined"
-          :aria-label="item.ariaLabel"
-          :title="item.ariaLabel"
-          @click="emit('update:activeView', item.key)"
+          class="app-tabs__utility-slot"
         >
-          <Settings
-            class="app-tabs__icon"
-            :size="ICON_SIZE"
+          <button
+            type="button"
+            class="app-tabs__folder app-tabs__folder--utility"
+            :class="{ 'app-tabs__folder--active': item.key === activeView }"
+            :aria-current="item.key === activeView ? 'page' : undefined"
+            :aria-label="
+              item.key === 'settings' ? settingsAriaLabel : item.ariaLabel
+            "
+            :title="
+              item.key === 'settings' ? settingsAriaLabel : item.ariaLabel
+            "
+            @click="emit('update:activeView', item.key)"
+          >
+            <Settings
+              class="app-tabs__icon"
+              :size="ICON_SIZE"
+              aria-hidden="true"
+            />
+          </button>
+          <span
+            v-if="item.key === 'settings' && updateAvailable"
+            class="app-tabs__update-dot"
             aria-hidden="true"
           />
-        </button>
+        </span>
       </div>
     </div>
   </nav>
@@ -127,6 +148,27 @@ const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
 .app-tabs__group--utility {
   flex: 0 0 auto;
   margin-left: auto;
+}
+
+/* Wrapper so the dot escapes .app-tabs__folder's clip-path (which would
+   otherwise cut a corner-pinned child). */
+.app-tabs__utility-slot {
+  position: relative;
+  display: inline-flex;
+}
+
+.app-tabs__update-dot {
+  position: absolute;
+  top: var(--ui-space-2);
+  inset-inline-end: var(--ui-space-4);
+  inline-size: var(--ui-space-2);
+  block-size: var(--ui-space-2);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-warning);
+  /* Keeps the dot legible on both the resting surface and the accent fill of
+     the active Settings tab. */
+  box-shadow: 0 0 0 0.125rem var(--ui-color-surface-raised);
+  pointer-events: none;
 }
 
 /* One shape on one element via clip-path, not a multi-piece
