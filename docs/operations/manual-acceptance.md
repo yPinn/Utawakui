@@ -57,7 +57,11 @@ not this UI checklist.
 - [ ] Verify cold and warm installed launch, Self-View／Output lifecycle, and no
       orphan Electron or loopback process after closing.
 - [ ] Verify updater current／available／download／offline／retry／restart states and
-      explicit download/install actions.
+      explicit download/install actions, that the download row shows rate and
+      remaining time, and that the Settings navigation tab shows the update dot
+      from `available` until install.
+- [ ] Verify the "自動檢查更新" toggle: off stops the startup check and the
+      background recheck while the manual check still works; on resumes both.
 - [ ] Verify installer paths, Start Menu and optional desktop shortcuts, AUMID／SMTC
       identity, launch, uninstall retention, cleanup opt-in, locked files, and UAC.
 - [ ] Verify a dependency-free install still supports local import, library, and

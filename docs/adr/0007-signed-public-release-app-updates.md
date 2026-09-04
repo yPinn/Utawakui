@@ -2,12 +2,14 @@
 
 ## Status
 
-Accepted and implemented (2026-08-23), with packaged verification pending. The
-runtime version boundary, main-process update service, fixed IPC intents,
-Settings status/actions, public feed configuration, release-only public
-repository, unsigned draft-release workflow, and proprietary product license
-are implemented. The current product decision accepts an unsigned automatic
-update channel instead of paying for a trusted publisher identity.
+Accepted and implemented (2026-08-23; recheck interval, `autoCheckAppUpdates`
+preference, download rate/ETA projection, and the passive navigation marker
+added 2026-09-04), with packaged verification pending. The runtime version
+boundary, main-process update service, fixed IPC intents, Settings
+status/actions, public feed configuration, release-only public repository,
+unsigned draft-release workflow, and proprietary product license are
+implemented. The current product decision accepts an unsigned automatic update
+channel instead of paying for a trusted publisher identity.
 
 ## Context
 
@@ -111,10 +113,17 @@ pinned to `electron-updater@6.8.9` to match electron-builder 26.
 
 - Update support runs only in a packaged Windows build. Development mode
   returns an explicit unsupported state and never contacts the release server.
-- A packaged app performs at most one delayed startup check and also exposes a
-  manual Settings action. The request goes only to the configured public GitHub
-  release endpoint; no library, playback, lyrics, provider, or OBS state is
-  transmitted.
+- A packaged app performs one delayed startup check and then a background
+  recheck on a fixed multi-hour interval (`recheckIntervalMs` in
+  `shared/appUpdateValues.json`), and also exposes a manual Settings action. The
+  recheck runs only from the `idle`, `not-available`, or `error` phase so it can
+  never reset visible download progress or a ready-to-install state. Every
+  request goes only to the configured public GitHub release endpoint; no
+  library, playback, lyrics, provider, or OBS state is transmitted.
+- A persisted `autoCheckAppUpdates` preference (default on, in `config.json`)
+  gates both automatic paths. Turning it off stops the startup check and the
+  recheck; the manual Settings action still works. The setting applies live
+  through a main-owned callback, without a relaunch.
 - `autoDownload` is disabled. Discovering an update does not download it.
 - Download and `quitAndInstall()` are separate user actions. No update forces a
   restart during playback or public output.
@@ -122,12 +131,13 @@ pinned to `electron-updater@6.8.9` to match electron-builder 26.
   an update the user deferred.
 - `allowPrerelease` and `allowDowngrade` remain disabled for the stable channel.
 - Main emits only a bounded status projection to renderer: phase, current and
-  available versions, progress, release date, and a user-safe error. Renderer
+  available versions, percent progress, a whole-second download rate and
+  remaining-time estimate, release date, and a user-safe error. Renderer
   receives no local installer path, provider credentials, request headers, or
   updater object.
-- Renderer IPC carries only fixed intents: get status, check, download, and
-  install. It cannot supply a feed URL, file path, version, command argument, or
-  arbitrary updater option.
+- Renderer IPC carries only fixed intents: get status, check, download, install,
+  and get/set the `autoCheckAppUpdates` preference. It cannot supply a feed URL,
+  file path, version, command argument, interval, or arbitrary updater option.
 - Release notes are remote content. The first implementation either omits them
   or sends bounded plain text rendered through Vue interpolation; it never
   renders release HTML with `v-html`.
@@ -231,9 +241,10 @@ enterprise policy. More importantly, checksum verification detects corruption
 or mismatch against `latest.yml` but cannot prove the publisher when the feed
 and payload are compromised together.
 
-The delayed startup check is a necessary network request to GitHub and should be
-disclosed as update checking, not telemetry. No analytics or user media data is
-added by this design.
+The delayed startup check and the background recheck are necessary network
+requests to GitHub and should be disclosed as update checking, not telemetry.
+Both stop when `autoCheckAppUpdates` is turned off. No analytics or user media
+data is added by this design.
 
 ## References
 
