@@ -534,7 +534,7 @@ describe('AMLL evaluation client', () => {
     expect(fetch.mock.calls[0][1].headers).toMatchObject({
       Accept: 'application/json',
       'User-Agent': expect.stringMatching(
-        /^Utawakui\/0\.1\.2 \(lyrics-provider-evaluation\)$/u,
+        /^Utawakui\/\d+\.\d+\.\d+ \(lyrics-provider-evaluation\)$/u,
       ),
     });
     expect(fetch.mock.calls[0][1].redirect).toBe('error');
