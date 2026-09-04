@@ -155,15 +155,14 @@ export function useOutputProjectionPublisher({
     const key = `${trackId}\0${source.filename}\0${document.documentId ?? ''}\0${document.source?.sha256 ?? ''}`;
     if (key === lastReadingLoadKey) return Promise.resolve(null);
     lastReadingLoadKey = key;
-    return Promise.resolve(loadReading(trackId, source.filename, document))
-      .then((result) => {
-        if (result === undefined) lastReadingLoadKey = null;
-        return result;
-      })
-      .catch(() => {
-        lastReadingLoadKey = null;
-        return null;
-      });
+    // useLyricsReading.loadReading() resolves on every path (it maps its own
+    // failures to undefined), so a rejection guard here would be dead code.
+    return Promise.resolve(
+      loadReading(trackId, source.filename, document),
+    ).then((result) => {
+      if (result === undefined) lastReadingLoadKey = null;
+      return result;
+    });
   }
 
   watch(currentLibraryTrack, () => {
