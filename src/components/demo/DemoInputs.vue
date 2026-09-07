@@ -1,22 +1,18 @@
 <script setup>
 import { shallowRef } from 'vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
-import UiField from '../ui/UiField.vue';
 import UiRange from '../ui/UiRange.vue';
-import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiSelect from '../ui/UiSelect.vue';
-import UiTextarea from '../ui/UiTextarea.vue';
-import UiTextField from '../ui/UiTextField.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoFieldAppearance from './DemoFieldAppearance.vue';
+import DemoSearchBoxAppearance from './DemoSearchBoxAppearance.vue';
+import DemoTextFieldAppearance from './DemoTextFieldAppearance.vue';
+import DemoTextareaAppearance from './DemoTextareaAppearance.vue';
 
 defineProps({
   sections: { type: Array, default: () => [] },
 });
 
-const searchQuery = shallowRef('');
-const titleValue = shallowRef('雨愛');
-const emptyTitle = shallowRef('');
-const noteValue = shallowRef('第二段副歌前保留四拍。');
 const recipe = shallowRef('general');
 const includeGuideVocal = shallowRef(true);
 const disabledOption = shallowRef(false);
@@ -38,104 +34,13 @@ const RECIPE_OPTIONS = [
       :title="section.title"
       :component-label="section.components?.join(' · ')"
     >
-      <div v-if="section.key === 'search-box'" class="demo-search-samples">
-        <UiSearchBox
-          v-model="searchQuery"
-          label="搜尋 UI 元件"
-          placeholder="輸入元件或狀態名稱"
-        />
-        <p class="demo-sample-caption">
-          空白、輸入中與一鍵清除共用同一個可存取搜尋合約。
-        </p>
-      </div>
+      <DemoSearchBoxAppearance v-if="section.key === 'search-box'" />
 
-      <div v-else-if="section.key === 'field'" class="demo-sample-grid">
-        <UiField
-          id="demo-field-source"
-          label="歌詞來源"
-          hint="欄位框架管理標籤、提示與描述關係。"
-          required
-        >
-          <template #default="{ controlId, describedBy, invalid }">
-            <input
-              :id="controlId"
-              class="demo-native-control"
-              value="本機 sidecar"
-              :aria-describedby="describedBy"
-              :aria-invalid="invalid || undefined"
-              readonly
-            />
-          </template>
-        </UiField>
-        <UiField
-          id="demo-field-error"
-          label="公開輸出名稱"
-          error="請輸入可辨識的場景名稱。"
-          invalid
-        >
-          <template #default="{ controlId, describedBy, invalid }">
-            <input
-              :id="controlId"
-              class="demo-native-control"
-              :aria-describedby="describedBy"
-              :aria-invalid="invalid || undefined"
-              value=""
-            />
-          </template>
-        </UiField>
-      </div>
+      <DemoFieldAppearance v-else-if="section.key === 'field'" />
 
-      <div v-else-if="section.key === 'text-field'" class="demo-sample-grid">
-        <UiTextField
-          id="demo-title-populated"
-          v-model="titleValue"
-          label="曲目名稱"
-          hint="已填寫／必要欄位"
-          required
-        />
-        <UiTextField
-          id="demo-title-empty"
-          v-model="emptyTitle"
-          label="演出者"
-          placeholder="輸入演出者名稱"
-        />
-        <UiTextField
-          id="demo-title-error"
-          label="輸出標題"
-          model-value=""
-          error="輸出標題不可空白。"
-        />
-        <UiTextField
-          id="demo-title-disabled"
-          label="來源識別碼"
-          model-value="main-owned-id"
-          disabled
-        />
-      </div>
+      <DemoTextFieldAppearance v-else-if="section.key === 'text-field'" />
 
-      <div v-else-if="section.key === 'textarea'" class="demo-sample-grid">
-        <UiTextarea
-          id="demo-note"
-          v-model="noteValue"
-          label="演出備註"
-          hint="可拖曳控制高度。"
-          :rows="4"
-        />
-        <UiTextarea
-          id="demo-note-error"
-          label="公開說明"
-          model-value=""
-          error="請確認公開輸出的文字內容。"
-          :rows="4"
-        />
-        <UiTextarea
-          id="demo-note-disabled"
-          label="來源備註"
-          model-value="由來源自動建立"
-          disabled
-          :rows="4"
-        />
-      </div>
+      <DemoTextareaAppearance v-else-if="section.key === 'textarea'" />
 
       <div v-else-if="section.key === 'select'" class="demo-sample-grid">
         <UiSelect
@@ -221,33 +126,6 @@ const RECIPE_OPTIONS = [
 </template>
 
 <style scoped>
-.demo-search-samples {
-  max-width: 28rem;
-  display: grid;
-  gap: var(--ui-space-2);
-}
-
-.demo-native-control {
-  width: 100%;
-  min-height: var(--ui-field-height);
-  padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
-  border: var(--ui-border-width) solid var(--ui-field-border);
-  border-radius: var(--ui-field-radius);
-  background: var(--ui-field-bg);
-  color: var(--ui-field-fg);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
-}
-
-.demo-native-control:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.demo-native-control[aria-invalid='true'] {
-  border-color: var(--ui-field-border-invalid);
-}
-
 .demo-checkbox-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(15rem, 100%), 1fr));

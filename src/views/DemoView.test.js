@@ -45,6 +45,9 @@ describe('DemoView scroll layout', () => {
 
   it('renders the conventional catalogue order and its review boundary', async () => {
     const html = await renderToString(createSSRApp(DemoView));
+    const header = html.match(
+      /<header class="demo-view__header"[\s\S]*?<\/header>/u,
+    )?.[0];
     const groupTitles = UI_DEMO_GROUPS.map((group) => group.title);
     const positions = groupTitles.map((title) => html.indexOf(title));
 
@@ -52,9 +55,10 @@ describe('DemoView scroll layout', () => {
     expect(positions).toEqual(
       [...positions].sort((left, right) => left - right),
     );
-    expect(html).toContain('F9');
-    expect(html).toContain('Token v2 分階段檢查');
-    expect(html).toContain('不代表 View 核准');
+    expect(header).toContain('F8');
+    expect(header).not.toContain('F9');
+    expect(header).toContain('Token v2 新制定內容與現有設定分區檢查');
+    expect(header).toContain('不代表 View 核准');
   });
 
   it('keeps catalogue jumps inside the demo scroll boundary', async () => {

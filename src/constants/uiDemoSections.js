@@ -9,6 +9,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       { key: 'status-palette', title: 'Mildliner 狀態色' },
       { key: 'typography', title: '文字層級' },
       { key: 'spacing-shape', title: '間距與形狀' },
+      { key: 'core-minimums', title: '核心最小尺寸' },
       { key: 'density', title: '密度與尺寸' },
       {
         key: 'page-header',
@@ -22,12 +23,12 @@ export const UI_DEMO_GROUPS = Object.freeze([
     title: '輸入元件',
     description: '由搜尋入口到完整欄位狀態，確認標籤、提示與錯誤關係。',
     sections: [
+      { key: 'field', title: '欄位共用外觀', components: ['UiField'] },
       {
         key: 'search-box',
         title: '搜尋欄',
         components: ['UiSearchBox'],
       },
-      { key: 'field', title: '欄位框架', components: ['UiField'] },
       {
         key: 'text-field',
         title: '文字欄位',

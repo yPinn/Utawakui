@@ -60,18 +60,19 @@ function scrollToGroup(key) {
       <div class="demo-view__intro">
         <h1 id="demo-catalogue-title" class="demo-view__title">UI 元件目錄</h1>
         <p class="demo-view__summary">
-          F9 是 Token v2 分階段檢查台。先在中性背景確認 Foundation
-          與單一元件，再進入組合元件及完整 View；目前展示不代表 View 核准。
+          F8 是 Token v2
+          分階段檢查台。新制定內容與現有設定分區顯示；先核定規格，
+          再逐項檢查元件映射。目前展示不代表 View 核准。
         </p>
       </div>
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
           <dt>入口</dt>
-          <dd>F9</dd>
+          <dd>F8</dd>
         </div>
         <div>
           <dt>系統</dt>
-          <dd>Token v2 分階段檢查</dd>
+          <dd>Token v2 新制定內容與現有設定分區檢查</dd>
         </div>
         <div>
           <dt>邊界</dt>

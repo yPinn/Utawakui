@@ -127,4 +127,6 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [NetEase isolated validation report](research/netease-isolated-technical-validation-2026-08-28.md)
   與其他
   dated evidence。
+- Visual system live gate：
+  [Token v2 元件檢查契約](contracts/token-v2-component-review.md)。
 - Archive：[Lyrics T2 implementation plan](archive/lyrics-t2-implementation-plan.md)。

@@ -8,6 +8,7 @@ import { CircleX, Play } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoCoreMinimums from './DemoCoreMinimums.vue';
 import DemoDensity from './DemoDensity.vue';
 import DemoTypography from './DemoTypography.vue';
 
@@ -401,6 +402,8 @@ const UNIT_RESPONSIBILITIES = [
           </section>
         </div>
       </div>
+
+      <DemoCoreMinimums v-else-if="section.key === 'core-minimums'" />
 
       <DemoDensity v-else-if="section.key === 'density'" />
 

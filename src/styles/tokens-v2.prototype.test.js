@@ -63,30 +63,12 @@ const candidateProductionReferences = filesUnder(
   new URL('../', import.meta.url),
 )
   .filter((file) => /\.(?:css|html|js|vue)$/.test(file.pathname))
+  .filter((file) => !/\.(?:test|spec)\.[^.]+$/.test(file.pathname))
   .filter((file) => !file.pathname.endsWith('/styles/tokens-v2.css'))
-  .filter(
-    (file) => !file.pathname.endsWith('/styles/tokens-v2.prototype.test.js'),
-  )
-  .filter(
-    (file) => !file.pathname.endsWith('/styles/ui-component-tokens.test.js'),
-  )
   .filter(
     (file) => !file.pathname.endsWith('/views/StudioLibraryPrototypeView.vue'),
   )
   .filter((file) => !file.pathname.endsWith('/views/DemoView.vue'))
-  .filter((file) => !file.pathname.endsWith('/views/DemoView.test.js'))
-  .filter(
-    (file) =>
-      !file.pathname.endsWith('/components/demo/DemoTypography.test.js'),
-  )
-  .filter(
-    (file) =>
-      !file.pathname.endsWith('/components/demo/DemoFoundations.test.js'),
-  )
-  .filter(
-    (file) => !file.pathname.endsWith('/components/demo/DemoDensity.test.js'),
-  )
-  .filter((file) => !file.pathname.endsWith('/constants/uiDemoPalette.test.js'))
   .filter((file) => readFileSync(file, 'utf8').includes('tokens-v2.css'))
   .map((file) => file.pathname);
 

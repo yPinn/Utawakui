@@ -88,14 +88,21 @@ components:
 
 <!-- BASELINE: this is a first-pass scaffold. Replace palette character, final type choices, and component details after the visual direction is confirmed. -->
 
-> **Visual refresh status — 2026-08-28:** This guide still describes the active／
-> legacy renderer contract. The owner-selected replacement direction is recorded
-> in [Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):
-> Direction B／Studio Library, Architectural Slate, Clear Pastel semantic signals,
-> and the Controlled Dossier folder interior. Those values remain inactive review
-> candidates in `src/styles/tokens-v2.css`; they do not supersede production CSS
-> until a separate adoption decision. For refresh work, use the dated foundation
-> document for candidate intent and this guide for currently implemented behavior.
+> **Visual refresh status — 2026-09-07:** Token v2 is now reviewed in strict
+> Foundation → primitive／Field family → compound component → View order. The
+> current checkpoint and next owner decisions live in
+> [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
+> F8 is the development-only Candidate／Current inspection surface; F7 remains a
+> later View candidate and cannot approve primitive values by implication.
+
+The owner-selected replacement direction remains recorded in
+[Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):
+Direction B／Studio Library, Architectural Slate, semantic status signals, and the
+Controlled Dossier folder interior. Candidate values in
+`src/styles/tokens-v2.css` remain isolated from production until a separate
+adoption decision. The only active component change in the 2026-09-07 checkpoint
+is the Icon Button hard floor: `sm` is removed, `md` is 2rem／32 CSS px, and `lg`
+is 2.75rem／44 CSS px.
 
 ## Overview
 

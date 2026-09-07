@@ -1,5 +1,11 @@
 # Visual System Foundation
 
+2026-09-07 note: this dated document remains the source for the selected visual
+direction, but its “immediate next phase” section is historical. The owner inserted
+the sequential F8 Foundation／component review gate before F7 View acceptance.
+Current status and next decisions are maintained in
+[Token v2 Component Review](../contracts/token-v2-component-review.md).
+
 Status: implemented development candidate — the foundation, shared-component
 contracts, and native F7 real-library slice have passed automated verification.
 Owner-visible acceptance, candidate contract freeze, and production page migration
