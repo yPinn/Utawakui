@@ -14,7 +14,7 @@ const props = defineProps({
   size: {
     type: String,
     default: 'md',
-    validator: (value) => ['sm', 'md', 'lg'].includes(value),
+    validator: (value) => ['md', 'lg'].includes(value),
   },
   shape: {
     type: String,
@@ -74,10 +74,6 @@ const titleText = computed(() => props.title ?? props.label);
     opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
-.ui-icon-btn--sm {
-  --ui-icon-btn-size: var(--ui-icon-button-size-sm);
-}
-
 .ui-icon-btn--md {
   --ui-icon-btn-size: var(--ui-icon-button-size-md);
 }
@@ -99,6 +95,8 @@ const titleText = computed(() => props.title ?? props.label);
 }
 
 .ui-icon-btn--stretch {
+  min-width: var(--ui-icon-button-size-md);
+  min-height: var(--ui-icon-button-size-md);
   width: 100%;
   height: 100%;
   flex: 1 1 auto;

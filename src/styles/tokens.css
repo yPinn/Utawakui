@@ -133,9 +133,8 @@
   --ui-titlebar-height: 2.5rem; /* 40px */
   --ui-control-height: 1.875rem; /* 30px */
   --ui-menu-item-height: 2rem; /* 32px */
-  --ui-icon-button-size-sm: 1.5rem; /* 24px */
-  --ui-icon-button-size-md: var(--ui-control-height);
-  --ui-icon-button-size-lg: 2.25rem; /* 36px */
+  --ui-icon-button-size-md: var(--ui-space-6); /* 32px hard floor */
+  --ui-icon-button-size-lg: 2.75rem; /* 44px Live action */
   /* --- Shared field component contract --- */
   --ui-field-height: var(--ui-control-height);
   --ui-field-padding-block: var(--ui-space-1);

@@ -187,7 +187,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(214);
+    expect(uniqueNames.size).toBe(213);
     expect(uniqueNames).toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
     expect(missing).toEqual([]);
@@ -238,9 +238,11 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(designGuide).toMatch(
       /rounded:[\s\S]*?xs: '0\.125rem'[\s\S]*?sm: '0\.25rem'[\s\S]*?md: '0\.375rem'[\s\S]*?lg: '0\.5rem'[\s\S]*?pill: '999rem'/u,
     );
-    expect(designGuide).toContain('| Compact icon button');
-    expect(designGuide).toContain('`1.875rem` (normally 30 DIP)');
-    expect(designGuide).toContain('`4.25rem` (normally 68 DIP)');
+    expect(designGuide).toContain('| Routine icon button');
+    expect(designGuide).toContain('`2rem`–`2.25rem` (32–36 CSS px)');
+    expect(designGuide).toContain('| Live icon button');
+    expect(designGuide).toContain('`2.75rem` (44 CSS px)');
+    expect(designGuide).toContain('`4.25rem` (68 CSS px)');
   });
 
   it('keeps the Spotify-informed shell anchors and dossier anatomy', () => {

@@ -28,6 +28,20 @@ for (const [component, filename] of [
 }
 
 describe('shared UI interaction contracts', () => {
+  it('keeps icon glyphs small without exposing a 24px interactive size', () => {
+    const source = readFileSync(
+      new URL('./UiIconButton.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      "validator: (value) => ['md', 'lg'].includes(value)",
+    );
+    expect(source).not.toContain("'sm'");
+    expect(source).not.toContain('.ui-icon-btn--sm');
+    expect(source).toContain(':size="ICON_SIZE"');
+  });
+
   it('lets an icon button stretch into a parent-owned disclosure hit area', () => {
     const { app, root } = mount(UiIconButton, {
       icon: Volume2,
@@ -44,7 +58,7 @@ describe('shared UI interaction contracts', () => {
       'utf8',
     );
     expect(source).toMatch(
-      /\.ui-icon-btn--stretch\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
+      /\.ui-icon-btn--stretch\s*\{[^}]*min-width:\s*var\(--ui-icon-button-size-md\);[^}]*min-height:\s*var\(--ui-icon-button-size-md\);[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
     );
     expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):hover');
     expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):active');

@@ -195,7 +195,6 @@ onBeforeUnmount(() => {
             :label="backdrop.label"
             :active="previewBackdrop === backdrop.id"
             :aria-pressed="previewBackdrop === backdrop.id"
-            size="sm"
             @click="previewBackdrop = backdrop.id"
           />
         </div>

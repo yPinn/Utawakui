@@ -34,6 +34,16 @@ function declarations(css) {
   );
 }
 
+function filesUnder(directory) {
+  return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const child = new URL(
+      `${entry.name}${entry.isDirectory() ? '/' : ''}`,
+      directory,
+    );
+    return entry.isDirectory() ? filesUnder(child) : [child];
+  });
+}
+
 const uiDirectory = new URL('../components/ui/', import.meta.url);
 const componentFiles = fs
   .readdirSync(uiDirectory, { withFileTypes: true })
@@ -74,6 +84,31 @@ describe('shared UI component token contract', () => {
           ?.match(/^var\((--ui-[\w-]+)\)$/)?.[1];
         expect(values.has(reference), `${name} -> ${reference}`).toBe(true);
       }
+    }
+  });
+
+  it('keeps icon-button hit areas at or above the 2rem responsive floor', () => {
+    const activeValues = declarations(active);
+    const candidateValues = declarations(candidate);
+    const consumerSources = filesUnder(new URL('../', import.meta.url))
+      .filter((file) => file.pathname.endsWith('.vue'))
+      .map((file) => fs.readFileSync(file, 'utf8'))
+      .filter((source) => source.includes('<UiIconButton'));
+
+    expect(activeValues.has('--ui-icon-button-size-sm')).toBe(false);
+    expect(candidateValues.has('--ui-icon-button-size-sm')).toBe(false);
+    expect(activeValues.get('--ui-icon-button-size-md')).toBe(
+      'var(--ui-space-6)',
+    );
+    expect(candidateValues.get('--ui-icon-button-size-md')).toBe(
+      'var(--ui-control-height)',
+    );
+    expect(activeValues.get('--ui-icon-button-size-lg')).toBe('2.75rem');
+    expect(candidateValues.get('--ui-icon-button-size-lg')).toBe(
+      'var(--ui-control-height-live)',
+    );
+    for (const source of consumerSources) {
+      expect(source).not.toMatch(/\bsize\s*=\s*(?:"sm"|'sm'|"'sm'"|'"sm"')/u);
     }
   });
 

@@ -274,9 +274,8 @@
   --ui-range-track-size: var(--ui-space-1);
   --ui-range-thumb-size: var(--ui-space-4);
   --ui-progress-track-size: var(--ui-space-2);
-  --ui-icon-button-size-sm: var(--ui-space-5);
   --ui-icon-button-size-md: var(--ui-control-height);
-  --ui-icon-button-size-lg: calc(var(--ui-space-5) + var(--ui-space-3));
+  --ui-icon-button-size-lg: var(--ui-control-height-live);
   --ui-menu-item-height: var(--ui-control-height);
   --ui-modal-width-default: 26.25rem;
   --ui-modal-width-notice: 40rem;

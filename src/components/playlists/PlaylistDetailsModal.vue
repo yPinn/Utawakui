@@ -77,7 +77,6 @@ function save() {
             :icon="X"
             class="playlist-details__cover-clear"
             label="移除自訂封面"
-            size="sm"
             variant="overlay"
             @click="emit('clearCover')"
           />

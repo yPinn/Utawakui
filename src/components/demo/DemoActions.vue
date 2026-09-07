@@ -40,9 +40,8 @@ defineProps({
 
       <div v-else-if="section.key === 'icon-buttons'" class="demo-sample-stack">
         <div class="demo-sample-row">
-          <UiIconButton :icon="Play" label="播放，小型" size="sm" />
-          <UiIconButton :icon="Play" label="播放，中型" size="md" />
-          <UiIconButton :icon="Play" label="播放，大型" size="lg" />
+          <UiIconButton :icon="Play" label="播放，預設尺寸" />
+          <UiIconButton :icon="Play" label="播放，Live 尺寸" size="lg" />
           <UiIconButton :icon="Pause" label="暫停，主要樣式" variant="accent" />
           <UiIconButton :icon="Repeat" label="重複播放，已啟用" active />
           <UiIconButton :icon="Download" label="下載，停用" disabled />

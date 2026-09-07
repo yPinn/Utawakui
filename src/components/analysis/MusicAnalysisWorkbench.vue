@@ -98,7 +98,6 @@ watch(
             :icon="Info"
             label="查看分析功能資訊"
             title="模型、下載大小與維護資訊"
-            size="sm"
             @click="showCapabilityDetails = true"
           />
           <UiChip tone="gated">內部工具 · F10</UiChip>

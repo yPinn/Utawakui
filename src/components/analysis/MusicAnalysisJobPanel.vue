@@ -192,7 +192,6 @@ function runPrimaryAction() {
         :icon="RefreshCw"
         label="重新讀取 sidecar"
         title="重新讀取 sidecar"
-        size="sm"
         :disabled="!selectedTrack || busy"
         @click="emit('reload')"
       />

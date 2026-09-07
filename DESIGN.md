@@ -367,7 +367,7 @@ Radius decisions:
 | Chips, transport toggles       | `999rem`        | Spotify   | Pills are reserved for binary and status controls.  |
 | App icon                       | platform-native | macOS     | Follows OS icon masks, not component radii.         |
 
-Do not increase general UI cards beyond `0.5rem` (normally 8 DIP). If a
+Do not increase general UI cards beyond `0.5rem` (8 CSS px at the default root). If a
 surface wants more softness, use tone, spacing, or artwork rather than larger
 radius. The app icon and overlay graphics may use larger rounded silhouettes
 because they are brand／art surfaces, not control-panel components.
@@ -386,7 +386,7 @@ Density decisions:
 
 Spacing decisions:
 
-- Keep the `0.25rem` spacing base (normally 4 DIP).
+- Keep the `0.25rem` spacing base (4 CSS px at the default root).
 - Use `0.5rem` inside compact rows and toolbar groups.
 - Use `0.75rem` for row horizontal padding and compact panel gutters.
 - Use `1rem` for stable panel padding.
@@ -395,14 +395,15 @@ Spacing decisions:
 
 Primary control heights:
 
-| Control                    | Height target                | Reason                                             |
-| -------------------------- | ---------------------------- | -------------------------------------------------- |
-| Compact icon button        | `1.875rem` (normally 30 DIP) | Current desktop density; good for repeated tools.  |
-| Menu item / context action | `2rem` (normally 32 DIP)     | Easier target without wasting vertical scan space. |
-| Track row                  | `3.25rem` (normally 52 DIP)  | Enough for title + artist and compact artwork.     |
-| Player bar                 | `4.25rem` (normally 68 DIP)  | Preserves persistent transport and artwork.        |
+| Control                    | Height target                   | Reason                                                   |
+| -------------------------- | ------------------------------- | -------------------------------------------------------- |
+| Routine icon button        | `2rem`–`2.25rem` (32–36 CSS px) | Keeps a 16-unit glyph while preserving the target floor. |
+| Live icon button           | `2.75rem` (44 CSS px)           | Separates primary playback from routine toolbar actions. |
+| Menu item / context action | `2rem` (32 CSS px)              | Easier target without wasting vertical scan space.       |
+| Track row                  | `3.25rem` (52 CSS px)           | Enough for title + artist and compact artwork.           |
+| Player bar                 | `4.25rem` (68 CSS px)           | Preserves persistent transport and artwork.              |
 
-These numbers should be treated as implementation targets when refreshing tokens and components. If a future touch-first surface exists, it can introduce touch-specific component tokens instead of enlarging the desktop control panel.
+These CSS-pixel equivalents assume a `16px` root and 100% Chromium zoom. Treat the rem values as implementation targets when refreshing tokens and components. A future touch-first surface can introduce touch-specific component tokens without shrinking the desktop hard floors.
 
 ### Unit Rules
 
@@ -418,8 +419,8 @@ The control panel is **rem-first, not rem-only**. Choose units by responsibility
 | Electron window geometry      | DIP number                 | BrowserWindow bounds and screen coordinates passed through Electron APIs without a CSS unit suffix.               |
 | Raster source／canvas backing | Physical pixel calculation | Encoded image dimensions and backing-buffer fidelity, independent from CSS layout size.                           |
 
-CSS responsive thresholds use `rem`; viewport examples such as `960 × 650` are
-Electron／CSS DIP acceptance targets, not media-query `px` tokens. CSS image slots
+CSS responsive thresholds use `rem`; Electron window acceptance examples such as
+`960 × 650` are BrowserWindow DIP values, not media-query `px` tokens. CSS image slots
 use `rem` or flexible layout units; only raster source dimensions and canvas
 backing buffers use physical-pixel calculations. A CSS `px` is an optical CSS-pixel
 boundary and must not be described as a physical display pixel.
@@ -653,7 +654,7 @@ Custom font settings should not affect control panel UI. The control panel shoul
 - **Title** (600, `1.125rem`, 1.3): Section headers, panel titles, and active item titles.
 - **Body** (400, `1rem`, 1.5): Standard UI copy and readable prose.
 - **Label** (600, `0.875rem`, 1.25): Buttons, tabs, metadata labels, compact controls.
-- **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14 DIP control vs. a quiet 14 DIP description at the default root).
+- **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14 CSS px control vs. a quiet 14 CSS px description at the default root).
 
 Naming here is this project's own semantic roles, not a literal port of any platform's type-style names. In particular, Apple's HIG `Headline` style (small, bold, body-adjacent emphasis) is not what this document's `Headline` means (a big view/modal title, closer to HIG's `Title 1`/`Title 2`) — don't assume HIG familiarity carries over to these names.
 

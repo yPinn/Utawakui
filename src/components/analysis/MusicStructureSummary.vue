@@ -109,7 +109,6 @@ function sectionLabel(role) {
           :icon="Info"
           label="查看來源資訊"
           title="查看 sidecar 來源版本與音訊長度"
-          size="sm"
           :aria-expanded="showSourceDetails"
           @click="showSourceDetails = !showSourceDetails"
         />
