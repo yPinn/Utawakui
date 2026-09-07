@@ -265,6 +265,7 @@
   --ui-field-radius: var(--ui-radius-md);
   --ui-field-bg: var(--ui-color-surface-raised);
   --ui-field-bg-hover: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly: var(--ui-color-surface);
   --ui-field-fg: var(--ui-color-text);
   --ui-field-placeholder: var(--ui-color-text-muted);
   --ui-field-border: var(--ui-color-border);

@@ -3,11 +3,17 @@ defineProps({
   id: { type: String, required: true },
   title: { type: String, required: true },
   componentLabel: { type: String, default: '' },
+  reviewed: { type: Boolean, default: false },
 });
 </script>
 
 <template>
-  <section class="demo-catalogue-section" :aria-labelledby="`${id}-title`">
+  <section
+    class="demo-catalogue-section"
+    :class="{ 'demo-catalogue-section--reviewed': reviewed }"
+    :data-review-section="reviewed ? 'reviewed' : undefined"
+    :aria-labelledby="`${id}-title`"
+  >
     <header class="demo-catalogue-section__header">
       <h3 :id="`${id}-title`" class="demo-catalogue-section__title">
         {{ title }}
@@ -29,6 +35,13 @@ defineProps({
   gap: var(--ui-space-5);
   padding: var(--ui-space-5) 0;
   border-top: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.demo-catalogue-section--reviewed {
+  padding: var(--ui-space-5);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--ui-color-surface);
 }
 
 .demo-catalogue-section__header {

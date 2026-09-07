@@ -139,6 +139,7 @@ const UNIT_RESPONSIBILITIES = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
+      :reviewed="true"
     >
       <div v-if="section.key === 'system-palette'" class="demo-review-block">
         <p class="demo-review-note">
@@ -425,6 +426,11 @@ const UNIT_RESPONSIBILITIES = [
 </template>
 
 <style scoped>
+.demo-foundations {
+  display: grid;
+  gap: var(--ui-space-4);
+}
+
 .demo-review-block {
   display: grid;
   gap: var(--ui-space-4);

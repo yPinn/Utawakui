@@ -142,7 +142,7 @@ describe('DemoTextareaAppearance', () => {
     expect(html).toContain('maxlength="24"');
     expect(html).toContain('dir="auto"');
     expect(html).toContain(
-      'data-textarea-coverage="candidate-readonly-surface" data-coverage-status="review"',
+      'data-textarea-coverage="candidate-readonly-surface" data-coverage-status="complete"',
     );
     expect(html).toContain(
       'data-textarea-coverage="current-readonly-surface" data-coverage-status="pending"',
@@ -150,8 +150,8 @@ describe('DemoTextareaAppearance', () => {
     expect(componentSource).toMatch(
       /data-textarea-state='disabled'[\s\S]*?-webkit-user-select: none;[\s\S]*?user-select: none;/u,
     );
-    expect(componentSource).not.toMatch(
-      /data-textarea-state='readonly'[\s\S]*?background:/u,
+    expect(componentSource).toMatch(
+      /data-textarea-state='readonly'[\s\S]*?background: var\(--ui-field-bg-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
     );
   });
 

@@ -314,6 +314,7 @@ function coverageFor(layer, state, index) {
       class="demo-search-layer"
       :class="`demo-search-layer--${layer.key}`"
       :data-search-source="layer.key"
+      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-search-${layer.key}-title`"
     >
       <header class="demo-search-layer__header">

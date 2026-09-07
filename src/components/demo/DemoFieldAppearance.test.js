@@ -231,7 +231,19 @@ describe('DemoFieldAppearance', () => {
       }
     }
     expect(html.match(/data-field-coverage=/gu)).toHaveLength(70);
-    expect(html).toContain('Readonly 專屬外觀待決');
+    expect(html).toContain(
+      'Readonly 使用 quiet surface · 保留文字選取、複製與 focus',
+    );
+    expect(html).toMatch(
+      /data-field-coverage="candidate-readonly-surface"[^>]*data-coverage-status="complete"[^>]*>Quiet surface</u,
+    );
+    expect(html).toMatch(
+      /data-field-coverage="current-readonly-surface"[^>]*data-coverage-status="base"[^>]*>Same as editable</u,
+    );
+    expect(html).toContain(
+      'Readonly 與 Editable 同表面 · Label／Disabled Select none 尚未套用',
+    );
+    expect(html).not.toContain('Readonly 專屬外觀待決');
     expect(html).toContain('data-coverage-status="pending"');
   });
 
@@ -416,6 +428,9 @@ describe('DemoFieldAppearance', () => {
     expect(componentSource).not.toMatch(
       /data-field-state='readonly'[^{]*\{[^}]*user-select:\s*none;/su,
     );
+    expect(componentSource).toMatch(
+      /data-field-state='readonly'[\s\S]*?background: var\(--ui-field-bg-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
+    );
     const disabledBlock = selectNoneBlocks.find(([, selector]) =>
       selector.includes("data-field-state='disabled'"),
     );
@@ -446,7 +461,7 @@ describe('DemoFieldAppearance', () => {
     expect(html).toMatch(
       /data-field-label-selection="current"[^>]*data-selection-status="pending"[^>]*>[\s\S]*?<small[^>]*>可選取（待補）<\/small><\/div>/u,
     );
-    expect(html).toContain('Readonly 保留文字選取與複製');
+    expect(html).toContain('Readonly 使用 quiet surface');
   });
 
   it('keeps the specimen responsive to its catalogue container', () => {

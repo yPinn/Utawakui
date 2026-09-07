@@ -57,7 +57,8 @@ describe('DemoView scroll layout', () => {
     );
     expect(header).toContain('F8');
     expect(header).not.toContain('F9');
-    expect(header).toContain('Token v2 新制定內容與現有設定分區檢查');
+    expect(header).toContain('Token v2 Candidate 與 Current');
+    expect(header).toContain('Candidate ≠ production adoption');
     expect(header).toContain('不代表 View 核准');
   });
 

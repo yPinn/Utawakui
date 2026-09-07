@@ -163,7 +163,7 @@ describe('DemoTextFieldAppearance', () => {
     }
     expect(html.match(/data-text-field-coverage-matrix/gu)).toHaveLength(2);
     expect(html).toContain(
-      'data-text-field-coverage="candidate-readonly-surface" data-coverage-status="review"',
+      'data-text-field-coverage="candidate-readonly-surface" data-coverage-status="complete"',
     );
     expect(html).toContain(
       'data-text-field-coverage="current-readonly-surface" data-coverage-status="pending"',
@@ -185,7 +185,7 @@ describe('DemoTextFieldAppearance', () => {
       /data-text-field-state='disabled'[\s\S]*?-webkit-user-select: none;[\s\S]*?user-select: none;/u,
     );
     expect(componentSource).toMatch(
-      /data-text-field-state='readonly'[\s\S]*?background: var\(--ui-color-surface\);/u,
+      /data-text-field-state='readonly'[\s\S]*?background: var\(--ui-field-bg-readonly\);[\s\S]*?border-color: var\(--ui-field-border\);/u,
     );
   });
 

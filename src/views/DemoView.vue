@@ -20,6 +20,8 @@ const GROUP_COMPONENTS = {
   overlays: DemoOverlays,
 };
 
+const REVIEWED_GROUP_KEYS = new Set(['foundations', 'inputs']);
+
 let previousUiSystem;
 
 onMounted(() => {
@@ -60,23 +62,18 @@ function scrollToGroup(key) {
       <div class="demo-view__intro">
         <h1 id="demo-catalogue-title" class="demo-view__title">UI 元件目錄</h1>
         <p class="demo-view__summary">
-          F8 是 Token v2
-          分階段檢查台。新制定內容與現有設定分區顯示；先核定規格，
-          再逐項檢查元件映射。目前展示不代表 View 核准。
+          F8 分階段比較 Token v2 Candidate 與 Current；先核定元件契約，
+          再決定是否採用。
         </p>
       </div>
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
-          <dt>入口</dt>
-          <dd>F8</dd>
-        </div>
-        <div>
-          <dt>系統</dt>
-          <dd>Token v2 新制定內容與現有設定分區檢查</dd>
+          <dt>已檢查</dt>
+          <dd>Foundation · Input</dd>
         </div>
         <div>
           <dt>邊界</dt>
-          <dd>不代表 View 核准</dd>
+          <dd>Candidate ≠ production adoption／不代表 View 核准</dd>
         </div>
       </dl>
     </header>
@@ -99,6 +96,9 @@ function scrollToGroup(key) {
         :id="`demo-group-${group.key}`"
         :key="group.key"
         class="demo-group"
+        :data-review-status="
+          REVIEWED_GROUP_KEYS.has(group.key) ? 'reviewed' : 'pending'
+        "
         :aria-labelledby="`demo-group-${group.key}-title`"
       >
         <header class="demo-group__header">
@@ -135,7 +135,7 @@ function scrollToGroup(key) {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: var(--ui-space-6);
-  padding: var(--ui-space-6) var(--ui-panel-inset) var(--ui-space-5);
+  padding: var(--ui-space-5) var(--ui-panel-inset);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
@@ -170,8 +170,8 @@ function scrollToGroup(key) {
 
 .demo-view__meta {
   display: grid;
-  grid-template-columns: repeat(3, auto);
-  gap: var(--ui-space-4);
+  grid-template-columns: repeat(2, auto);
+  gap: var(--ui-space-5);
 }
 
 .demo-view__meta div {
@@ -280,7 +280,7 @@ function scrollToGroup(key) {
   }
 
   .demo-view__meta {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .demo-view__meta dd {

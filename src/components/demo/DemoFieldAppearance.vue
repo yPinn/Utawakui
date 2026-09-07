@@ -111,10 +111,10 @@ const FIELD_STATES = [
     modelValue: '可選取但不可編輯',
     readonly: true,
     coverage: [
-      ['pending', '與 Base 相同'],
+      ['complete', 'Quiet surface'],
       ['base', 'Base border'],
       ['base', 'Value'],
-      ['pending', '專屬提示未定'],
+      ['complete', '可選取／複製'],
       ['complete', 'Readonly'],
     ],
   },
@@ -127,7 +127,8 @@ const FIELD_LAYERS = [
     note: '尚未套用正式元件；本區由 F8 的 Token v2 scope 驅動。',
     labelSelection: ['complete', 'Select none'],
     disabledFeedback: ['complete', 'Not-allowed · Select none'],
-    pendingNote: 'Readonly 專屬外觀待決 · Readonly 保留文字選取與複製',
+    readonlySurface: ['complete', 'Quiet surface'],
+    pendingNote: 'Readonly 使用 quiet surface · 保留文字選取、複製與 focus',
     sizes: [
       ['standard', 'Standard', '36 CSS px'],
       ['compact', 'Compact', '32 CSS px'],
@@ -148,7 +149,9 @@ const FIELD_LAYERS = [
     note: '以 active token 快照呈現，避免繼承 F8 候選配色。',
     labelSelection: ['pending', '可選取（待補）'],
     disabledFeedback: ['pending', 'Not-allowed · 可選取（待補）'],
-    pendingNote: 'Readonly 專屬外觀待決 · Label／Disabled Select none 尚未套用',
+    readonlySurface: ['base', 'Same as editable'],
+    pendingNote:
+      'Readonly 與 Editable 同表面 · Label／Disabled Select none 尚未套用',
     sizes: [['active', 'Active default', '30 CSS px']],
     values: [
       ['高度', '1.875rem／30 CSS px', '無 Compact 映射'],
@@ -163,9 +166,17 @@ const FIELD_LAYERS = [
 ];
 
 function coverageFor(layer, state, index) {
-  return state.key === 'disabled' && COVERAGE_COLUMNS[index][0] === 'feedback'
-    ? layer.disabledFeedback
-    : state.coverage[index];
+  const category = COVERAGE_COLUMNS[index][0];
+
+  if (state.key === 'disabled' && category === 'feedback') {
+    return layer.disabledFeedback;
+  }
+
+  if (state.key === 'readonly' && category === 'surface') {
+    return layer.readonlySurface;
+  }
+
+  return state.coverage[index];
 }
 </script>
 
@@ -183,6 +194,7 @@ function coverageFor(layer, state, index) {
       class="demo-field-layer"
       :class="`demo-field-layer--${layer.key}`"
       :data-field-source="layer.key"
+      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-field-${layer.key}-title`"
     >
       <header class="demo-field-layer__header">
@@ -698,6 +710,13 @@ function coverageFor(layer, state, index) {
   :deep(.ui-text-field:disabled) {
   -webkit-user-select: none;
   user-select: none;
+}
+
+.demo-field-layer--candidate
+  .demo-field-state[data-field-state='readonly']
+  :deep(.ui-text-field:read-only) {
+  background: var(--ui-field-bg-readonly);
+  border-color: var(--ui-field-border);
 }
 
 .demo-field-layer--current {

@@ -169,7 +169,8 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(213);
+    expect(uniqueNames.size).toBe(214);
+    expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
     expect(missing).toEqual([]);

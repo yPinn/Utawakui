@@ -9,6 +9,7 @@ export {
   Cable,
   Captions,
   Check,
+  ChevronDown,
   ChevronRight,
   CircleAlert,
   CircleDashed,

@@ -173,10 +173,10 @@ const STATES = [
   {
     key: 'readonly',
     label: 'Readonly',
-    value: '可選取與複製\n表面暫不定案',
+    value: '可選取與複製\nQuiet surface',
     readonly: true,
     candidate: [
-      ['review', 'Field 家族待核'],
+      ['complete', 'Quiet surface'],
       ['base', 'Base border'],
       ['complete', 'Value'],
       ['complete', 'Text'],
@@ -263,6 +263,7 @@ function coverageFor(layer, state) {
       class="demo-textarea-layer"
       :class="`demo-textarea-layer--${layer.key}`"
       :data-textarea-source="layer.key"
+      :data-demo-review-layer="layer.key"
     >
       <header class="demo-textarea-layer__header">
         <h4>{{ layer.title }}</h4>
@@ -402,7 +403,10 @@ function coverageFor(layer, state) {
       <section class="demo-textarea-state-review">
         <header class="demo-textarea-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
-          <p>Readonly 只驗證原生語意與可選取性；專屬 surface 暫不套用。</p>
+          <p>
+            Readonly 使用跨 Field 家族核定的 quiet surface，保留選取、複製與
+            keyboard focus。
+          </p>
         </header>
         <div class="demo-textarea-state-list">
           <article
@@ -834,6 +838,13 @@ function coverageFor(layer, state) {
   :deep(.ui-textarea) {
   -webkit-user-select: none;
   user-select: none;
+}
+
+.demo-textarea-layer--candidate
+  .demo-textarea-state[data-textarea-state='readonly']
+  :deep(.ui-textarea) {
+  background: var(--ui-field-bg-readonly);
+  border-color: var(--ui-field-border);
 }
 
 .demo-textarea-layer--current {

@@ -175,7 +175,7 @@ const STATES = [
     value: '可選取與複製',
     readonly: true,
     candidate: [
-      ['review', 'Quiet surface'],
+      ['complete', 'Quiet surface'],
       ['base', 'Base border'],
       ['complete', 'Value'],
       ['complete', 'Text'],
@@ -272,6 +272,7 @@ function coverageFor(layer, state) {
       class="demo-text-field-layer"
       :class="`demo-text-field-layer--${layer.key}`"
       :data-text-field-source="layer.key"
+      :data-demo-review-layer="layer.key"
       :aria-labelledby="`demo-text-field-${layer.key}-title`"
     >
       <header class="demo-text-field-layer__header">
@@ -400,7 +401,8 @@ function coverageFor(layer, state) {
         <header class="demo-text-field-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
           <p>
-            Readonly Quiet surface 暫存為跨 Field 家族比較項，不視為已核准。
+            Readonly 使用跨 Field 家族核定的 quiet surface，保留選取、複製與
+            keyboard focus。
           </p>
         </header>
         <div class="demo-text-field-state-list">
@@ -835,7 +837,8 @@ function coverageFor(layer, state) {
 .demo-text-field-layer--candidate
   .demo-text-field-state[data-text-field-state='readonly']
   :deep(.ui-text-field) {
-  background: var(--ui-color-surface);
+  background: var(--ui-field-bg-readonly);
+  border-color: var(--ui-field-border);
 }
 
 .demo-text-field-layer--current {
