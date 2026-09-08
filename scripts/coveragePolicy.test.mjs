@@ -58,6 +58,7 @@ describe('coverage policy', () => {
   });
 
   it.each([
+    ['electron/entry.js', 'electron-entrypoint'],
     ['electron/main.js', 'electron-entrypoint'],
     ['electron/lib/lyricsReadingWorker.js', 'child-process-entrypoint'],
     ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],

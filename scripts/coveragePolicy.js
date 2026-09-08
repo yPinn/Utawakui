@@ -4,6 +4,7 @@ const APP_SOURCE_PATTERN =
   /^(?:electron\/.*\.js|overlay\/.*\.mjs|shared\/.*\.(?:js|mjs)|src\/.*\.(?:js|vue))$/;
 
 const DEFERRED_SOURCES = new Map([
+  ['electron/entry.js', 'electron-entrypoint'],
   ['electron/main.js', 'electron-entrypoint'],
   ['electron/lib/lyricsReadingWorker.js', 'child-process-entrypoint'],
   ['electron/lib/vocalSeparationWorker.js', 'child-process-entrypoint'],
