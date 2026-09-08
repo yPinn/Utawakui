@@ -21,7 +21,7 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
 
   it('keeps the existing id while replacing the panel with a transparent lower third', () => {
     const start = css.indexOf(":root[data-ovl-template='karaoke-stack']");
-    const end = css.indexOf(":root[data-ovl-template='quiet-caption']", start);
+    const end = css.indexOf(":root[data-ovl-template='kinetic-pop']", start);
     const karaokeCss = css.slice(start, end);
 
     expect(start).toBeGreaterThanOrEqual(0);
@@ -57,7 +57,7 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
 
   it('uses offset twin lanes and a clipped text duplicate for T2 sung progress', () => {
     const start = css.indexOf(":root[data-ovl-template='karaoke-stack']");
-    const end = css.indexOf(":root[data-ovl-template='quiet-caption']", start);
+    const end = css.indexOf(":root[data-ovl-template='kinetic-pop']", start);
     const karaokeCss = css.slice(start, end);
 
     expect(css).toContain(
@@ -86,7 +86,7 @@ describe('Classic KTV Karaoke Stack layout contract', () => {
     );
     expect(karaokeCss).toContain('text-shadow: none;');
     expect(karaokeCss).not.toContain('0.045em 0.07em');
-    expect(css).not.toContain('background-clip: text');
+    expect(karaokeCss).not.toContain('background-clip: text');
   });
 
   it('provides four role-colored countdown dots before the first vocal entrance', () => {

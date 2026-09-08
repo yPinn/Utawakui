@@ -1,0 +1,10 @@
+M PLUS Rounded 1c ExtraBold
+
+Upstream project: https://github.com/google/fonts/tree/main/ofl/roundedmplus1c
+Source file: RoundedMplus1c-ExtraBold.ttf
+Downloaded from: https://raw.githubusercontent.com/google/fonts/main/ofl/roundedmplus1c/RoundedMplus1c-ExtraBold.ttf
+Local file: MPLUSRounded1c-ExtraBold.ttf
+SHA-256: 8e7c15901dca87f1451b356dda594f7d092ba252a5dcc47da74523a242493c36
+License: SIL Open Font License 1.1; see OFL-MPLUS-ROUNDED-1C.txt.
+
+The local family name used by Utawakui CSS is "Utawakui M PLUS Rounded 1c".

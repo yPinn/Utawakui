@@ -577,6 +577,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 - **Control Panel Font:** native system UI stack. Do not bundle brand fonts into the control panel by default.
 - **Overlay CJK Display Font:** `GenWanMin2 TW`, with CJK serif fallbacks.
 - **Overlay Latin Display Font:** `Playfair Display`, with practical serif fallbacks.
+- **Overlay Kinetic Pop Display Fonts:** `Utawakui M PLUS Rounded 1c` for the flat／split-depth materials; `Utawakui Keifont` for the enlarged gradient material.
 - **Overlay Utility Font:** system sans.
 - **Label/Mono Font:** pending; only introduce mono if timestamps, technical metadata, or counters clearly benefit.
 
@@ -639,6 +640,63 @@ segments drive exact sung progress. When only synced line timing is
 available, the active lane uses a clearly estimated whole-line left-to-right sweep
 and freezes that estimate whenever playback is not advancing. The control-panel UI
 remains on the native system stack.
+
+The `kinetic-pop` template is the Japanese-first rounded display exception. Its
+first and third materials use the bundled M PLUS Rounded 1c ExtraBold face under
+the local CSS family name `Utawakui M PLUS Rounded 1c`; the larger gradient
+material uses bundled Keifont as `Utawakui Keifont`. Traditional Chinese output
+falls back to the bundled jf open-huninn face. One stage hides the next-line lane
+and can pin one of three print-like materials or rotate them by
+source-line index: a flat yellow face with a surrounding black outline; an
+enlarged heavy face with a lower-right black shadow, white rim, and gradient from
+deep upper-right to light lower-left; and a white face whose cyan／magenta split
+depth is offset only to the lower right. Material two is the default and renders
+at 1.18×; materials one and three share the base scale. Material two keeps a
+`0.03em` paper-white rim, then paints a hairline `0.0125em` paper-white stroke on
+the top gradient face. Together they read as the reference video's thin separator
+between gradient face and black depth, never as a heavy white band or black inner
+outline.
+
+The Workbench also exposes a Kinetic Pop-only text arrangement choice. `端正` is
+the default and compatibility fallback, leaving every glyph on the shared
+baseline after its entrance. `些微偏移` applies a bounded, deterministic
+eight-pose rest pattern with small rotation, baseline, horizontal, and scale
+differences. It is a settled layout treatment rather than continuous jitter: the
+depth, rim, and fill copies of a glyph always share one pose, and the Gallery and
+Browser Source consume the same presentation motion contract.
+
+Each timed source line occupies one horizontal presentation row at any instant;
+Kinetic Pop never repairs an overlong source line by wrapping it into a second
+visual row. The lyric stage uses equal safe insets from the complete output canvas;
+its line, row, and depth／rim／fill tracks all span that same stage and center their
+glyph group within it. The programme artwork is never an alignment anchor, and an
+overwide `nowrap` phrase extends or clips equally on both sides instead of falling
+back to one-sided overflow. For this Japanese-first template, authored whitespace
+inside a source line is a sequential phrase boundary within its existing timing
+interval: presentation assigns each phrase a duration share by visual weight,
+shows the earlier phrase first, and then replaces it with the later phrase. This
+visual phrase schedule neither creates nor rewrites canonical or T2 timing. An
+unspaced overlong line still belongs to the upstream lyrics document and timing
+pipeline. Every visible phrase is split into
+presentation-owned, grapheme-aware visual entrance units; small kana and the
+prolonged-sound mark enter independently while punctuation stays attached to the
+preceding glyph. These units are choreography only and do not claim T2 timing.
+Caption and punch entrances, including each authored phrase replacement, use one
+interruptible GSAP timeline with a bounded interleaved burst rather than a
+left-to-right sweep. Every unit begins at its final horizontal slot; an eight-step
+deterministic phase pattern repeats across the row within a 28 ms window, while odd
+and even units start with opposing vertical offset, rotation, and scale. A 115 ms
+back-out settle supplies the single quick rebound. The three material tracks remain
+ordered depth／rim／fill across the complete row, while the matching unit in each
+track receives the same delay, transform, and opacity tween. This preserves
+per-glyph motion without letting a neighboring glyph's white rim paint above the
+gradient face.
+Material two uses a 1.12 line-height so the clipped gradient background covers
+Keifont's full ascent instead of exposing a white cap. Reduced motion and playback
+discontinuities commit the readable final state immediately. The Gallery shows one
+fixed material-two sample in the shared line position; users choose a fixed
+material or the explicit three-material rotation from the Workbench, and may
+preview either the straight or subtle-offset settled arrangement.
 
 `GenWanMin2 TW` and `Playfair Display` are suitable for bundling under SIL Open Font License 1.1, but release artifacts must include license notices.
 

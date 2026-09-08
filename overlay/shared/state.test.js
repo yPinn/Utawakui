@@ -161,6 +161,88 @@ describe('overlay state selectors', () => {
       generic.currentText,
     );
     expect(liveStage).not.toHaveProperty('ktv');
+
+    const kineticPop = selectLyricsOverlayFrame(value, {
+      nowMs,
+      templateId: 'kinetic-pop',
+    });
+    expect(kineticPop.kineticPop).toMatchObject({
+      text: generic.currentText,
+      material: 'candy-rim',
+      composition: 'punch',
+    });
+    expect(kineticPop).not.toHaveProperty('ktv');
+    expect(kineticPop).not.toHaveProperty('liveStage');
+    expect(kineticPop).not.toHaveProperty('lyricsSourceAnalysis');
+
+    const fixedMaterial = selectLyricsOverlayFrame(value, {
+      nowMs,
+      templateId: 'kinetic-pop',
+      kineticMaterial: 'chromatic-depth',
+    });
+    expect(fixedMaterial.kineticPop.material).toBe('chromatic-depth');
+  });
+
+  it('schedules the next lyric boundary for the kinetic template', () => {
+    const value = snapshot();
+    const nowMs = Date.parse(value.generatedAt);
+
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'kinetic-pop',
+      }),
+    ).toBe(3000);
+  });
+
+  it('selects and schedules authored Kinetic Pop phrases inside one timed line', () => {
+    const base = snapshot();
+    const sourceText = 'いつでも僕らはこんな風に ぼんくらな夜に飽き飽き';
+    const valueAt = (positionMs) => ({
+      ...base,
+      playback: { ...base.playback, positionMs },
+      lyrics: {
+        ...base.lyrics,
+        lines: [
+          base.lyrics.lines[0],
+          { text: sourceText, startMs: 9000, endMs: 15000 },
+          ...base.lyrics.lines.slice(2),
+        ],
+      },
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    const first = selectLyricsOverlayFrame(valueAt(11000), {
+      nowMs,
+      templateId: 'kinetic-pop',
+    });
+    const second = selectLyricsOverlayFrame(valueAt(13000), {
+      nowMs,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(first.kineticPop).toMatchObject({
+      text: sourceText,
+      displayText: 'いつでも僕らはこんな風に',
+      phraseIndex: 0,
+    });
+    expect(second.kineticPop).toMatchObject({
+      text: sourceText,
+      displayText: 'ぼんくらな夜に飽き飽き',
+      phraseIndex: 1,
+    });
+    expect(
+      nextPresentationBoundaryDelayMs(valueAt(11000), {
+        nowMs,
+        templateId: 'kinetic-pop',
+      }),
+    ).toBe(1131);
+    expect(
+      nextPresentationBoundaryDelayMs(valueAt(13000), {
+        nowMs,
+        templateId: 'kinetic-pop',
+      }),
+    ).toBe(2000);
   });
 
   it('schedules only boundaries used by the active template', () => {

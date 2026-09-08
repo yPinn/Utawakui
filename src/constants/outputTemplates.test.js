@@ -11,6 +11,7 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'queue-board': '黑幕歌單',
   'karaoke-stack': '經典伴唱',
   'live-stage': '舞台轉播',
+  'kinetic-pop': '霓彩跳字',
   'manga-frame': '漫畫對白',
   'quiet-caption': '靜語雙行',
   'focus-line': '聚焦歌詞',
@@ -101,7 +102,39 @@ describe('output template registry', () => {
       Object.values(data.slotDefaults).map((slot) => slot.settings.captureSize),
     ).toEqual(['large', 'full', 'small']);
     expect(data.appearanceOptions.fontFamily).toHaveLength(3);
+    expect(data.appearanceOptions.kineticMaterial).toEqual([
+      { id: 'solid-outline', label: '樣式 1｜單色黑框' },
+      { id: 'candy-rim', label: '樣式 2｜漸層白框' },
+      { id: 'chromatic-depth', label: '樣式 3｜右下錯位' },
+      { id: 'cycle', label: '三款依句序切換' },
+    ]);
+    expect(data.appearanceOptions.kineticArrangement).toEqual([
+      { id: 'straight', label: '端正' },
+      { id: 'subtle-offset', label: '些微偏移' },
+    ]);
+    expect(
+      Object.values(data.slotDefaults).map(
+        (slot) => slot.settings.kineticMaterial,
+      ),
+    ).toEqual(['candy-rim', 'candy-rim', 'candy-rim']);
+    expect(
+      Object.values(data.slotDefaults).map(
+        (slot) => slot.settings.kineticArrangement,
+      ),
+    ).toEqual(['straight', 'straight', 'straight']);
     expect(data.styleSets.length).toBeGreaterThan(0);
+  });
+
+  it('describes the Kinetic Pop burst consistently for every visible phrase', () => {
+    const kineticPop = getOutputWorkbenchData().templates.find(
+      (template) => template.id === 'kinetic-pop',
+    );
+    const copy = visibleTemplateCopy(kineticPop);
+
+    expect(copy).toContain('每段逐字交錯跳入');
+    expect(copy).toContain('逐字定點交錯跳入');
+    expect(copy).toContain('可選端正或些微偏移');
+    expect(copy).not.toMatch(/短句|長句直切|長句保持穩定/);
   });
 
   it('keeps stable storage ids behind a distinctive Chinese display system', () => {
@@ -181,6 +214,7 @@ describe('output template registry', () => {
     expect(lyricsGroup.templates.map((template) => template.id)).toEqual([
       'karaoke-stack',
       'live-stage',
+      'kinetic-pop',
       'manga-frame',
       'quiet-caption',
       'focus-line',
@@ -237,6 +271,7 @@ describe('output template registry', () => {
       'focus-line': { id: 'generic-caption', version: 1, available: true },
       'quiet-caption': { id: 'generic-caption', version: 1, available: true },
       'karaoke-stack': { id: 'classic-ktv', version: 1, available: true },
+      'kinetic-pop': { id: 'kinetic-pop', version: 1, available: true },
       'manga-frame': { id: 'manga-frame', version: 1, available: true },
       'live-stage': { id: 'live-stage', version: 1, available: true },
       'reading-aid': { id: 'reading-aid', version: 1, available: false },
@@ -246,6 +281,22 @@ describe('output template registry', () => {
     ).toMatchObject({
       availability: { available: false, label: '尚未提供' },
       editableAppearanceKeys: [],
+    });
+    expect(
+      lyricsGroup.templates.find((template) => template.id === 'kinetic-pop'),
+    ).toMatchObject({
+      id: 'kinetic-pop',
+      name: '霓彩跳字',
+      kind: 'lyrics',
+      preview: {
+        layoutLabel: '底部跳字',
+        motionLabel: '定點交錯',
+      },
+      editableAppearanceKeys: [
+        'fontScale',
+        'kineticMaterial',
+        'kineticArrangement',
+      ],
     });
   });
 
@@ -291,6 +342,9 @@ describe('output template registry', () => {
       current: '目前歌詞',
       next: '下一句',
       reading: '歌詞讀音',
+      kinetic: {
+        samples: ['選ばれる', 'すてっぷ', '美意識'],
+      },
       manga: {
         current: '地下鉄に飲み込まれる',
         language: 'ja',

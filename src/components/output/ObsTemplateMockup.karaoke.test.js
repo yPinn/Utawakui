@@ -37,6 +37,15 @@ describe('Classic KTV gallery mockup', () => {
   });
 
   it('uses a transparent lower-third composition with a clipped sung fill', () => {
+    const ktvStylesStart = source.indexOf(
+      ".obs-template-mockup[data-template-id='karaoke-stack']\n  .obs-template-mockup__content--lyrics",
+    );
+    const ktvStylesEnd = source.indexOf(
+      ".obs-template-mockup[data-template-id='kinetic-pop']\n  .obs-template-mockup__content--lyrics",
+      ktvStylesStart,
+    );
+    const ktvStyles = source.slice(ktvStylesStart, ktvStylesEnd);
+
     expect(source).toContain(
       ".obs-template-mockup[data-template-id='karaoke-stack']",
     );
@@ -51,7 +60,7 @@ describe('Classic KTV gallery mockup', () => {
     expect(source).toContain('font-size: 2.6rem;');
     expect(source).toContain('padding: 0.11em 0.16em 0.18em 0.11em;');
     expect(source).toContain('margin: -0.11em -0.16em -0.18em -0.11em;');
-    expect(source).not.toContain('background-clip: text');
+    expect(ktvStyles).not.toContain('background-clip: text');
     expect(source).toContain('var(--ui-output-preview-ktv-stroke-sung)');
     expect(source).toContain('text-shadow: none;');
     expect(source).not.toContain('var(--ui-output-preview-ktv-shadow)');

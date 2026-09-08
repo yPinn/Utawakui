@@ -124,7 +124,677 @@ function domElements() {
   };
 }
 
+function kineticLineTracks(line) {
+  return line.children.flatMap((row) => row.children);
+}
+
+function kineticLineUnits(line) {
+  return kineticLineTracks(line).flatMap((track) => track.children);
+}
+
 describe('lyrics overlay renderer', () => {
+  it('renders Kinetic Pop as semantic text with three aria-hidden full-line layer tracks', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: 'すてっぷ！',
+      nextText: '仰せのまま',
+      language: 'ja',
+      lineIndex: 1,
+      currentVisibleLineIndex: 1,
+      kineticPop: {
+        text: 'すてっぷ！',
+        material: 'candy-rim',
+        composition: 'punch',
+        rows: [
+          {
+            text: 'すてっぷ！',
+            units: [
+              { text: 'す', weight: 1 },
+              { text: 'てっ', weight: 2 },
+              { text: 'ぷ！', weight: 1 },
+            ],
+          },
+        ],
+        units: [
+          { text: 'す', weight: 1 },
+          { text: 'てっ', weight: 2 },
+          { text: 'ぷ！', weight: 1 },
+        ],
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+
+    expect(elements.root.dataset.kineticPop).toBe('true');
+    expect(elements.root.dataset.kineticMaterial).toBe('candy-rim');
+    expect(elements.root.dataset.kineticComposition).toBe('punch');
+    expect(elements.current.attributes['aria-label']).toBe('すてっぷ！');
+    expect(elements.current.dataset.currentText).toBe('すてっぷ！');
+    expect(elements.next.hidden).toBe(true);
+    expect(elements.next.textContent).toBe('');
+    expect(elements.current.children).toHaveLength(1);
+
+    const line = elements.current.children[0];
+    expect(line.className).toBe('lyrics-overlay__kinetic-line');
+    expect(line.dataset.kineticMaterial).toBe('candy-rim');
+    expect(line.dataset.kineticComposition).toBe('punch');
+    expect(line.dataset.kineticRows).toBe('1');
+    expect(line.attributes['aria-hidden']).toBe('true');
+    expect(line.children).toHaveLength(1);
+    expect(line.children[0].className).toBe('lyrics-overlay__kinetic-row');
+    expect(line.children[0].dataset.kineticRow).toBe('0');
+    expect(line.children[0].children).toHaveLength(3);
+    expect(
+      line.children[0].children.map((track) => track.dataset.kineticLayer),
+    ).toEqual(['depth', 'rim', 'fill']);
+    expect(
+      line.children[0].children.every(
+        (track) =>
+          track.attributes['aria-hidden'] === 'true' &&
+          track.children.length === 3 &&
+          track.children.every(
+            (unit) =>
+              unit.className === 'lyrics-overlay__kinetic-unit' &&
+              unit.children.length === 1 &&
+              unit.children[0].className.includes(
+                'lyrics-overlay__kinetic-layer',
+              ),
+          ),
+      ),
+    ).toBe(true);
+    expect(
+      line.children[0].children.map((track) =>
+        track.children.map((unit) => unit.dataset.kineticUnit),
+      ),
+    ).toEqual([
+      ['0', '1', '2'],
+      ['0', '1', '2'],
+      ['0', '1', '2'],
+    ]);
+  });
+
+  it('keeps a one-row Kinetic Pop caption split into visual entrance units without changing accessible text', () => {
+    const elements = domElements();
+    const text = '歩き回ってやっとついたここはどうだ楽園か？';
+    const rows = [
+      {
+        text,
+        units: [...text].map((unit) => ({
+          text: unit,
+          weight: 1,
+        })),
+      },
+    ];
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: text,
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+        currentVisibleLineIndex: 0,
+        kineticPop: {
+          text,
+          material: 'candy-rim',
+          composition: 'caption',
+          rows,
+          units: rows.flatMap((row) => row.units),
+        },
+      },
+      { templateId: 'kinetic-pop', reducedMotion: true },
+    );
+
+    const line = elements.current.children[0];
+    expect(elements.current.attributes['aria-label']).toBe(text);
+    expect(line.dataset.kineticRows).toBe('1');
+    expect(line.children.map((row) => row.dataset.kineticRow)).toEqual(['0']);
+    expect(line.children[0].children).toHaveLength(3);
+    expect(line.children[0].children.map((track) => track.textContent)).toEqual(
+      [text, text, text],
+    );
+    expect(
+      line.children[0].children.map((track) => track.children.length),
+    ).toEqual([text.length, text.length, text.length]);
+  });
+
+  it('cross-swaps Kinetic Pop lines on one interruptible three-layer GSAP timeline', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const first = {
+      revision: 1,
+      visible: true,
+      currentText: 'すてっぷ！',
+      nextText: '',
+      language: 'ja',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      kineticPop: {
+        text: 'すてっぷ！',
+        material: 'solid-outline',
+        composition: 'punch',
+        units: [
+          { text: 'す', weight: 1 },
+          { text: 'てっ', weight: 2 },
+          { text: 'ぷ！', weight: 1 },
+        ],
+      },
+    };
+    const second = {
+      ...first,
+      revision: 2,
+      currentText: '仰せのまま',
+      lineIndex: 1,
+      currentVisibleLineIndex: 1,
+      kineticPop: {
+        text: '仰せのまま',
+        material: 'candy-rim',
+        composition: 'punch',
+        units: [
+          { text: '仰', weight: 1 },
+          { text: 'せ', weight: 1 },
+          { text: 'の', weight: 1 },
+          { text: 'ま', weight: 1 },
+          { text: 'ま', weight: 1 },
+        ],
+      },
+    };
+
+    renderLyricsFrame(elements, first, {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    gsap.set.mockClear();
+    renderLyricsFrame(elements, second, {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].labels).toContain('swap');
+    expect(timelines[0].tweens).toHaveLength(6);
+    expect(
+      timelines[0].tweens.slice(0, 3).every(({ vars }) =>
+        Object.entries({
+          autoAlpha: 0,
+          duration: 0.08,
+          ease: 'power2.in',
+          x: 0,
+        }).every(([key, value]) => vars[key] === value),
+      ),
+    ).toBe(true);
+    expect(
+      timelines[0].tweens.slice(3).every(({ vars }) =>
+        Object.entries({
+          autoAlpha: 1,
+          duration: 0.115,
+          ease: 'back.out(2.2)',
+          scale: 1,
+        }).every(([key, value]) => vars[key] === value),
+      ),
+    ).toBe(true);
+    const exitDelays = timelines[0].tweens
+      .slice(0, 3)
+      .map(({ vars }) =>
+        first.kineticPop.units.map((_unit, index) => vars.stagger(index)),
+      );
+    expect(exitDelays[0]).toEqual([0.018, 0, 0.025]);
+    expect(exitDelays[1]).toEqual(exitDelays[0]);
+    expect(exitDelays[2]).toEqual(exitDelays[0]);
+    expect(elements.current.children).toHaveLength(2);
+    for (const track of kineticLineTracks(elements.current.children[1])) {
+      expect(gsap.set).toHaveBeenCalledWith(
+        track.children,
+        expect.objectContaining({
+          autoAlpha: 0,
+          scale: expect.any(Function),
+          x: 0,
+        }),
+      );
+    }
+
+    timelines[0].options.onComplete();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.kineticMaterial).toBe(
+      'candy-rim',
+    );
+  });
+
+  it('normalizes an interrupted Kinetic Pop swap before a third punch arrives', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = (text, revision, material) => ({
+      revision,
+      visible: true,
+      currentText: text,
+      nextText: '',
+      language: 'ja',
+      lineIndex: revision,
+      currentVisibleLineIndex: revision,
+      kineticPop: {
+        text,
+        material,
+        composition: 'punch',
+        units: [...text].map((unit) => ({ text: unit, weight: 1 })),
+      },
+    });
+
+    renderLyricsFrame(elements, frame('最初', 1, 'solid-outline'), {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    renderLyricsFrame(elements, frame('途中', 2, 'candy-rim'), {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+    renderLyricsFrame(elements, frame('最後', 3, 'chromatic-depth'), {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(2);
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(elements.current.children).toHaveLength(2);
+    expect(
+      elements.current.children.map((line) => line.dataset.kineticText),
+    ).toEqual(['途中', '最後']);
+    expect(timelines[1].tweens[0].target).toEqual(
+      kineticLineTracks(elements.current.children[0])[0].children,
+    );
+
+    timelines[1].options.onComplete();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.kineticText).toBe('最後');
+  });
+
+  it('animates repeated Kinetic Pop text when the source line and material change', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = (revision, lineIndex, material) => ({
+      revision,
+      visible: true,
+      currentText: '同じ',
+      nextText: '',
+      language: 'ja',
+      lineIndex,
+      currentVisibleLineIndex: lineIndex,
+      kineticPop: {
+        text: '同じ',
+        material,
+        composition: 'punch',
+        units: [
+          { text: '同', weight: 1 },
+          { text: 'じ', weight: 1 },
+        ],
+      },
+    });
+
+    renderLyricsFrame(elements, frame(1, 0, 'solid-outline'), {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    renderLyricsFrame(elements, frame(2, 1, 'candy-rim'), {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(elements.current.children).toHaveLength(2);
+    expect(
+      elements.current.children.map((line) => line.dataset.kineticMaterial),
+    ).toEqual(['solid-outline', 'candy-rim']);
+
+    timelines[0].options.onComplete();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.kineticMaterial).toBe(
+      'candy-rim',
+    );
+  });
+
+  it('bursts the first Kinetic Pop punch in place with synchronized interleaved layer tracks', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '選ばれる',
+      nextText: '',
+      language: 'ja',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      kineticPop: {
+        text: '選ばれる',
+        material: 'solid-outline',
+        composition: 'punch',
+        units: [...'選ばれる'].map((text) => ({ text, weight: 1 })),
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].tweens).toHaveLength(3);
+    expect(timelines[0].tweens.map(({ target }) => target)).toEqual(
+      kineticLineTracks(elements.current.children[0]).map(
+        (track) => track.children,
+      ),
+    );
+    expect(
+      timelines[0].tweens.every(({ target }) =>
+        target.every(
+          (unit) =>
+            unit.className === 'lyrics-overlay__kinetic-unit' &&
+            !unit.className.includes('lyrics-overlay__kinetic-layer--'),
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      timelines[0].tweens.every(({ vars }) =>
+        Object.entries({
+          autoAlpha: 1,
+          duration: 0.115,
+          ease: 'back.out(2.2)',
+          scale: 1,
+        }).every(([key, value]) => vars[key] === value),
+      ),
+    ).toBe(true);
+
+    const entranceDelays = timelines[0].tweens.map(({ vars }) =>
+      frame.kineticPop.units.map((_unit, index) => vars.stagger(index)),
+    );
+    expect(entranceDelays[0]).toEqual([0.018, 0, 0.025, 0.006]);
+    expect(entranceDelays[1]).toEqual(entranceDelays[0]);
+    expect(entranceDelays[2]).toEqual(entranceDelays[0]);
+    expect(entranceDelays[0][0]).toBeGreaterThan(entranceDelays[0][1]);
+
+    const entranceSetCalls = gsap.set.mock.calls.filter(
+      ([, vars]) => vars.autoAlpha === 0,
+    );
+    expect(entranceSetCalls).toHaveLength(3);
+    for (const [, vars] of entranceSetCalls) {
+      expect(vars.x).toBe(0);
+      expect(vars.y(0)).toBeGreaterThan(0);
+      expect(vars.y(1)).toBeLessThan(0);
+      expect(vars.rotation(0)).toBeLessThan(0);
+      expect(vars.rotation(1)).toBeGreaterThan(0);
+      expect(vars.scale(0)).toBeLessThan(1);
+      expect(vars.scale(1)).toBeGreaterThan(1);
+    }
+  });
+
+  it('animates every visual unit when a caption first appears without T2 timings', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const text = '何千回の夜を過ごしたって';
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: text,
+      nextText: '',
+      language: 'ja',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      kineticPop: {
+        text,
+        material: 'candy-rim',
+        composition: 'caption',
+        units: [...text].map((unit) => ({ text: unit, weight: 1 })),
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].tweens).toHaveLength(3);
+    expect(timelines[0].tweens.map(({ target }) => target.length)).toEqual([
+      text.length,
+      text.length,
+      text.length,
+    ]);
+    const stagger = timelines[0].tweens[0].vars.stagger;
+    const delays = Array.from({ length: text.length }, (_unit, index) =>
+      stagger(index),
+    );
+    expect(Math.max(...delays)).toBeLessThanOrEqual(0.028);
+    expect(delays.slice(0, 8)).toEqual([
+      0.018, 0, 0.025, 0.006, 0.021, 0.003, 0.028, 0.009,
+    ]);
+    expect(kineticLineUnits(elements.current.children[0])).toHaveLength(
+      text.length * 3,
+    );
+  });
+
+  it('settles every Kinetic Pop material track into the selected subtle glyph arrangement', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    elements.root.dataset.ovlKineticArrangement = 'subtle-offset';
+    const text = 'すてっぷ';
+    const units = [...text].map((unit) => ({ text: unit, weight: 1 }));
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 1,
+        visible: true,
+        currentText: text,
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+        currentVisibleLineIndex: 0,
+        kineticPop: {
+          text,
+          material: 'candy-rim',
+          composition: 'punch',
+          rows: [{ text, units }],
+          units,
+        },
+      },
+      { gsap, templateId: 'kinetic-pop' },
+    );
+
+    const tracks = kineticLineTracks(elements.current.children[0]);
+    expect(tracks.map((track) => track.children[0].style.values)).toEqual([
+      expect.objectContaining({
+        '--kinetic-rest-rotation': '-1.6deg',
+        '--kinetic-rest-scale': '1.01',
+        '--kinetic-rest-x': '-0.02em',
+        '--kinetic-rest-y': '0.025em',
+      }),
+      expect.objectContaining({
+        '--kinetic-rest-rotation': '-1.6deg',
+        '--kinetic-rest-scale': '1.01',
+        '--kinetic-rest-x': '-0.02em',
+        '--kinetic-rest-y': '0.025em',
+      }),
+      expect.objectContaining({
+        '--kinetic-rest-rotation': '-1.6deg',
+        '--kinetic-rest-scale': '1.01',
+        '--kinetic-rest-x': '-0.02em',
+        '--kinetic-rest-y': '0.025em',
+      }),
+    ]);
+
+    const restTweens = timelines[0].tweens.map(({ vars }) => ({
+      rotation: [vars.rotation(0), vars.rotation(1)],
+      scale: [vars.scale(0), vars.scale(1)],
+      x: [vars.x(0), vars.x(1)],
+      y: [vars.y(0), vars.y(1)],
+    }));
+    expect(restTweens).toEqual([restTweens[0], restTweens[0], restTweens[0]]);
+    expect(restTweens[0]).toEqual({
+      rotation: [-1.6, 1.3],
+      scale: [1.01, 0.99],
+      x: ['-0.02em', '0.012em'],
+      y: ['0.025em', '-0.02em'],
+    });
+  });
+
+  it('cross-swaps authored phrases within one timed line and does not replay inside a phrase', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const sourceText = 'いつでも僕らはこんな風に ぼんくらな夜に飽き飽き';
+    const frame = (displayText, phraseIndex, lineProgress) => {
+      const units = [...displayText].map((text) => ({ text, weight: 1 }));
+      return {
+        revision: 1,
+        visible: true,
+        currentText: sourceText,
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+        currentVisibleLineIndex: 0,
+        lineProgress,
+        kineticPop: {
+          text: sourceText,
+          displayText,
+          phraseIndex,
+          material: 'candy-rim',
+          composition: 'caption',
+          rows: [{ text: displayText, units }],
+          units,
+        },
+      };
+    };
+
+    renderLyricsFrame(elements, frame('いつでも僕らはこんな風に', 0, 0.3), {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    const firstLine = elements.current.children[0];
+    renderLyricsFrame(elements, frame('いつでも僕らはこんな風に', 0, 0.5), {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(0);
+    expect(elements.current.children[0]).toBe(firstLine);
+
+    renderLyricsFrame(elements, frame('ぼんくらな夜に飽き飽き', 1, 0.6), {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(timelines[0].tweens).toHaveLength(6);
+    expect(elements.current.attributes['aria-label']).toBe(
+      'ぼんくらな夜に飽き飽き',
+    );
+    expect(elements.current.dataset.currentText).toBe('ぼんくらな夜に飽き飽き');
+    expect(
+      elements.current.children.map((line) => line.dataset.kineticText),
+    ).toEqual(['いつでも僕らはこんな風に', 'ぼんくらな夜に飽き飽き']);
+    expect(elements.current.children[1].dataset.kineticPhrase).toBe('1');
+  });
+
+  it('commits Kinetic Pop immediately for timeline discontinuities and reduced motion', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = (text, revision, timelineDiscontinuity = false) => ({
+      revision,
+      visible: true,
+      currentText: text,
+      nextText: '',
+      language: 'ja',
+      lineIndex: revision,
+      currentVisibleLineIndex: revision,
+      timelineDiscontinuity,
+      kineticPop: {
+        text,
+        material: 'chromatic-depth',
+        composition: 'punch',
+        units: [{ text, weight: 1 }],
+      },
+    });
+
+    renderLyricsFrame(elements, frame('前', 1), {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    renderLyricsFrame(elements, frame('後', 2, true), {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(0);
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.dataset.currentText).toBe('後');
+    expect(gsap.killTweensOf).toHaveBeenCalled();
+  });
+
+  it('stops an active Kinetic Pop swap when reduced motion is enabled for the same phrase', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = (text, lineIndex) => ({
+      revision: lineIndex + 1,
+      visible: true,
+      currentText: text,
+      nextText: '',
+      language: 'ja',
+      lineIndex,
+      currentVisibleLineIndex: lineIndex,
+      kineticPop: {
+        text,
+        material: 'candy-rim',
+        composition: 'caption',
+        units: [...text].map((unit) => ({ text: unit, weight: 1 })),
+      },
+    });
+
+    renderLyricsFrame(elements, frame('前半', 0), {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    const incomingFrame = frame('後半', 1);
+    renderLyricsFrame(elements, incomingFrame, {
+      gsap,
+      templateId: 'kinetic-pop',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(elements.current.children).toHaveLength(2);
+
+    renderLyricsFrame(elements, incomingFrame, {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(elements.current.children).toHaveLength(1);
+    const committedLine = elements.current.children[0];
+    const committedUnits = kineticLineUnits(committedLine);
+    expect(committedLine.dataset.kineticText).toBe('後半');
+    expect(gsap.set).toHaveBeenCalledWith(committedUnits, {
+      clearProps: 'opacity,visibility,transform,transformOrigin',
+    });
+
+    renderLyricsFrame(elements, incomingFrame, {
+      gsap,
+      templateId: 'kinetic-pop',
+      reducedMotion: true,
+    });
+    expect(elements.current.children[0]).toBe(committedLine);
+  });
+
   it('emits bounded sweep diagnostics only when lyricsDebug is explicitly enabled', () => {
     const consoleApi = { log: vi.fn() };
     const disabled = createLyricsDiagnostics({
@@ -3705,6 +4375,16 @@ describe('lyrics overlay renderer', () => {
     scheduler.setTemplateId('karaoke-stack');
     expect(frames.at(-1).ktv).toMatchObject({ visible: true });
     expect(frames.at(-1)).not.toHaveProperty('liveStage');
+
+    const framesBeforeAtomicChange = frames.length;
+    scheduler.setPresentationSettings({
+      templateId: 'kinetic-pop',
+      kineticMaterial: 'candy-rim',
+    });
+    expect(frames).toHaveLength(framesBeforeAtomicChange + 1);
+    expect(frames.at(-1).kineticPop.material).toBe('candy-rim');
+    scheduler.setKineticMaterial('chromatic-depth');
+    expect(frames.at(-1).kineticPop.material).toBe('chromatic-depth');
 
     scheduler.setTemplateId('live-stage');
     expect(frames.at(-1).liveStage).toMatchObject({ active: true });

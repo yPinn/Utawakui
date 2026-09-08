@@ -37,6 +37,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/': ['lyrics', 'index.html'],
   '/overlay/lyrics/lyrics.css': ['lyrics', 'lyrics.css'],
   '/overlay/lyrics/lyrics.mjs': ['lyrics', 'lyrics.mjs'],
+  '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
   '/overlay/lyrics/liveStage.mjs': ['lyrics', 'liveStage.mjs'],
   '/overlay/lyrics/mangaFrame.mjs': ['lyrics', 'mangaFrame.mjs'],
   '/overlay/now-playing': ['now-playing', 'index.html'],
@@ -87,9 +88,19 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'fonts',
     'jf-open-huninn-2.1.ttf',
   ],
+  '/shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf': [
+    'assets',
+    'fonts',
+    'MPLUSRounded1c-ExtraBold.ttf',
+  ],
+  '/shared/assets/fonts/Keifont.ttf': ['assets', 'fonts', 'Keifont.ttf'],
   '/shared/presentation/lyricsPresentation.mjs': [
     'presentation',
     'lyricsPresentation.mjs',
+  ],
+  '/shared/presentation/kineticPopMotion.mjs': [
+    'presentation',
+    'kineticPopMotion.mjs',
   ],
   '/shared/presentation/lyricsTimingUnits.mjs': [
     'presentation',

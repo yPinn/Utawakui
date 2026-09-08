@@ -34,6 +34,14 @@ function createFixtureRoots() {
     path.join(sharedRoot, 'assets', 'fonts', 'jf-open-huninn-2.1.ttf'),
     Buffer.from([0, 1, 0, 0]),
   );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'assets', 'fonts', 'MPLUSRounded1c-ExtraBold.ttf'),
+    Buffer.from([0, 1, 0, 0]),
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'assets', 'fonts', 'Keifont.ttf'),
+    Buffer.from([0, 1, 0, 0]),
+  );
   return { overlayRoot, root, sharedRoot };
 }
 
@@ -172,6 +180,12 @@ describe('output HTTP delivery', () => {
     const font = await fetch(
       `${baseUrl}/shared/assets/fonts/jf-open-huninn-2.1.ttf`,
     );
+    const kineticFont = await fetch(
+      `${baseUrl}/shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf`,
+    );
+    const kineticPopFont = await fetch(
+      `${baseUrl}/shared/assets/fonts/Keifont.ttf`,
+    );
     const unknown = await fetch(`${baseUrl}/overlay/lyrics/private.txt`);
 
     expect(await overlay.text()).toBe('<main>Lyrics route</main>');
@@ -185,6 +199,10 @@ describe('output HTTP delivery', () => {
     expect(Buffer.from(await font.arrayBuffer())).toEqual(
       Buffer.from([0, 1, 0, 0]),
     );
+    expect(kineticFont.status).toBe(200);
+    expect(kineticFont.headers.get('content-type')).toBe('font/ttf');
+    expect(kineticPopFont.status).toBe(200);
+    expect(kineticPopFont.headers.get('content-type')).toBe('font/ttf');
     expect(unknown.status).toBe(404);
   });
 

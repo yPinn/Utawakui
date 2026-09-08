@@ -28,6 +28,15 @@
     --ovl-primitive-color-ktv-fill-group: #178346;
     --ovl-primitive-color-ktv-stroke-unsung: #0b2b75;
     --ovl-primitive-color-ktv-stroke-sung: #ffffff;
+    --ovl-primitive-color-kinetic-ink: #10152f;
+    --ovl-primitive-color-kinetic-paper: #fff9ef;
+    --ovl-primitive-color-kinetic-yellow: #ffd92e;
+    --ovl-primitive-color-kinetic-red: #e42d5f;
+    --ovl-primitive-color-kinetic-ochre: #e29a1b;
+    --ovl-primitive-color-kinetic-cyan: #38d8e8;
+    --ovl-primitive-color-kinetic-magenta: #f24e9b;
+    --ovl-primitive-color-kinetic-candy-deep: #941361;
+    --ovl-primitive-color-kinetic-candy-light: #f33a52;
     --ovl-primitive-space-1: 0.25rem;
     --ovl-primitive-space-2: 0.5rem;
     --ovl-primitive-space-3: 0.75rem;

@@ -32,6 +32,19 @@
     --ovl-color-ktv-fill-group: var(--ovl-primitive-color-ktv-fill-group);
     --ovl-color-ktv-stroke-unsung: var(--ovl-primitive-color-ktv-stroke-unsung);
     --ovl-color-ktv-stroke-sung: var(--ovl-primitive-color-ktv-stroke-sung);
+    --ovl-color-kinetic-ink: var(--ovl-primitive-color-kinetic-ink);
+    --ovl-color-kinetic-paper: var(--ovl-primitive-color-kinetic-paper);
+    --ovl-color-kinetic-yellow: var(--ovl-primitive-color-kinetic-yellow);
+    --ovl-color-kinetic-red: var(--ovl-primitive-color-kinetic-red);
+    --ovl-color-kinetic-ochre: var(--ovl-primitive-color-kinetic-ochre);
+    --ovl-color-kinetic-cyan: var(--ovl-primitive-color-kinetic-cyan);
+    --ovl-color-kinetic-magenta: var(--ovl-primitive-color-kinetic-magenta);
+    --ovl-color-kinetic-candy-deep: var(
+      --ovl-primitive-color-kinetic-candy-deep
+    );
+    --ovl-color-kinetic-candy-light: var(
+      --ovl-primitive-color-kinetic-candy-light
+    );
     --ovl-font-display-cjk: var(
       --ovl-font-display-cjk-custom,
       var(--ovl-fallback-font-display-cjk)

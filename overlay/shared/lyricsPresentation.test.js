@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 
 import {
   adaptKtvLyricsPresentation,
+  adaptKineticPopLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
@@ -101,6 +102,7 @@ describe('lyrics presentation profiles', () => {
     ['focus-line', 'generic-caption', true],
     ['quiet-caption', 'generic-caption', true],
     ['karaoke-stack', 'classic-ktv', true],
+    ['kinetic-pop', 'kinetic-pop', true],
     ['manga-frame', 'manga-frame', true],
     ['live-stage', 'live-stage', true],
     ['reading-aid', 'reading-aid', false],
@@ -160,6 +162,139 @@ describe('lyrics presentation profiles', () => {
     expect(liveStage.lines[0]).toHaveProperty('analysis');
   });
 
+  it('defaults kinetic lines to material two and supports fixed or sequential material selection', () => {
+    expect(
+      adaptKineticPopLyricsPresentation('すてっぷ！', {
+        lineIndex: 2,
+      }),
+    ).toEqual({
+      sourceText: 'すてっぷ！',
+      text: 'すてっぷ！',
+      displayText: 'すてっぷ！',
+      phrases: [
+        {
+          text: 'すてっぷ！',
+          units: [
+            { text: 'す', weight: 1 },
+            { text: 'て', weight: 1 },
+            { text: 'っ', weight: 1 },
+            { text: 'ぷ！', weight: 1 },
+          ],
+          weight: 4,
+        },
+      ],
+      phraseIndex: null,
+      phraseBreakProgresses: [],
+      material: 'candy-rim',
+      composition: 'punch',
+      units: [
+        { text: 'す', weight: 1 },
+        { text: 'て', weight: 1 },
+        { text: 'っ', weight: 1 },
+        { text: 'ぷ！', weight: 1 },
+      ],
+      rows: [
+        {
+          text: 'すてっぷ！',
+          units: [
+            { text: 'す', weight: 1 },
+            { text: 'て', weight: 1 },
+            { text: 'っ', weight: 1 },
+            { text: 'ぷ！', weight: 1 },
+          ],
+        },
+      ],
+    });
+
+    expect(
+      adaptKineticPopLyricsPresentation('知りもせずに意味を美意識だと崇める', {
+        lineIndex: 2,
+        kineticMaterial: 'chromatic-depth',
+      }),
+    ).toMatchObject({
+      material: 'chromatic-depth',
+      composition: 'caption',
+    });
+
+    expect(
+      [0, 1, 2, 3].map(
+        (lineIndex) =>
+          adaptKineticPopLyricsPresentation('文字', {
+            lineIndex,
+            kineticMaterial: 'cycle',
+          }).material,
+      ),
+    ).toEqual([
+      'solid-outline',
+      'candy-rim',
+      'chromatic-depth',
+      'solid-outline',
+    ]);
+
+    expect(
+      adaptKineticPopLyricsPresentation('文字', {
+        lineIndex: 0,
+        kineticMaterial: 'unsupported-value',
+      }).material,
+    ).toBe('candy-rim');
+
+    expect(
+      adaptKineticPopLyricsPresentation('「キャット！」すてっぷ。').units,
+    ).toEqual([
+      { text: '「キ', weight: 1 },
+      { text: 'ャ', weight: 1 },
+      { text: 'ッ', weight: 1 },
+      { text: 'ト！」', weight: 1 },
+      { text: 'す', weight: 1 },
+      { text: 'て', weight: 1 },
+      { text: 'っ', weight: 1 },
+      { text: 'ぷ。', weight: 1 },
+    ]);
+  });
+
+  it('uses authored whitespace as sequential Kinetic Pop phrases while keeping one horizontal row', () => {
+    const authored =
+      adaptKineticPopLyricsPresentation('何千回の夜を\n過ごしたって');
+    const sourceText = 'いつでも僕らはこんな風に ぼんくらな夜に飽き飽き';
+    const overview = adaptKineticPopLyricsPresentation(sourceText);
+    const firstPhrase = adaptKineticPopLyricsPresentation(sourceText, {
+      lineProgress: 0.5,
+    });
+    const secondPhrase = adaptKineticPopLyricsPresentation(sourceText, {
+      lineProgress: 0.6,
+    });
+    const unspaced = adaptKineticPopLyricsPresentation(
+      'いつでも僕らはこんな風にぼんくらな夜に飽き飽き',
+    );
+
+    expect(authored.sourceText).toBe('何千回の夜を\n過ごしたって');
+    expect(authored.text).toBe('何千回の夜を 過ごしたって');
+    expect(overview.rows.map((row) => row.text)).toEqual([sourceText]);
+    expect(overview.phrases.map((phrase) => phrase.text)).toEqual([
+      'いつでも僕らはこんな風に',
+      'ぼんくらな夜に飽き飽き',
+    ]);
+    expect(overview.phraseBreakProgresses).toEqual([12 / 23]);
+    expect(overview.phraseIndex).toBeNull();
+    expect(firstPhrase.phraseIndex).toBe(0);
+    expect(firstPhrase.displayText).toBe('いつでも僕らはこんな風に');
+    expect(firstPhrase.rows.map((row) => row.text)).toEqual([
+      'いつでも僕らはこんな風に',
+    ]);
+    expect(secondPhrase.phraseIndex).toBe(1);
+    expect(secondPhrase.displayText).toBe('ぼんくらな夜に飽き飽き');
+    expect(secondPhrase.rows.map((row) => row.text)).toEqual([
+      'ぼんくらな夜に飽き飽き',
+    ]);
+    expect(unspaced.rows.map((row) => row.text)).toEqual([
+      'いつでも僕らはこんな風にぼんくらな夜に飽き飽き',
+    ]);
+    expect(
+      unspaced.rows.flatMap((row) => row.units).map((unit) => unit.text),
+    ).toContain('風');
+    expect(unspaced.rows).toHaveLength(1);
+  });
+
   it('caches static compilation by document revision, language, and profile', () => {
     const compile = vi.fn(compileLyricsPresentationDocument);
     const cache = createLyricsPresentationDocumentCache({ compile });
@@ -179,6 +314,28 @@ describe('lyrics presentation profiles', () => {
     expect(ktv).not.toBe(first);
     expect(revised).not.toBe(first);
     expect(compile).toHaveBeenCalledTimes(3);
+  });
+
+  it('invalidates kinetic compilation when the selected material changes', () => {
+    const compile = vi.fn(compileLyricsPresentationDocument);
+    const cache = createLyricsPresentationDocumentCache({ compile });
+
+    const candy = cache.get(document, {
+      templateId: 'kinetic-pop',
+      kineticMaterial: 'candy-rim',
+    });
+    const sameCandy = cache.get(document, {
+      templateId: 'kinetic-pop',
+      kineticMaterial: 'candy-rim',
+    });
+    const chromatic = cache.get(document, {
+      templateId: 'kinetic-pop',
+      kineticMaterial: 'chromatic-depth',
+    });
+
+    expect(sameCandy).toBe(candy);
+    expect(chromatic).not.toBe(candy);
+    expect(compile).toHaveBeenCalledTimes(2);
   });
 
   it('bypasses unstable identities and bounds or clears cached revisions', () => {

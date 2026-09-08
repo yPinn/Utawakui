@@ -12,6 +12,23 @@
   font-weight: 400;
 }
 
+@font-face {
+  font-family: 'Utawakui M PLUS Rounded 1c';
+  src: url('/shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: 'Utawakui Keifont';
+  src: url('/shared/assets/fonts/Keifont.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 900;
+}
+
 @layer ovl-template {
   .lyrics-workbench__backdrop,
   .lyrics-workbench__guide {
@@ -350,6 +367,205 @@
   :root[data-ovl-template='karaoke-stack']
     .lyrics-overlay__segment[data-segment-state='upcoming'] {
     color: var(--ovl-ktv-fill-unsung);
+  }
+
+  :root[data-ovl-template='kinetic-pop'],
+  :root[data-ovl-template='kinetic-pop'] body {
+    background: transparent;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay {
+    --ovl-template-lyrics-bottom: 4.5%;
+
+    inset-inline: max(var(--ovl-safe-inline), 3%);
+    inline-size: auto;
+    transform: none;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    justify-items: center;
+    text-align: center;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__current {
+    position: relative;
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    max-inline-size: none;
+    min-block-size: 1.3em;
+    overflow: visible;
+    color: transparent;
+    font-family:
+      'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP',
+      sans-serif;
+    font-size: 5em;
+    font-weight: 800;
+    line-height: 1.04;
+    text-shadow: none;
+    -webkit-text-stroke: 0;
+  }
+
+  :root[data-ovl-template='kinetic-pop'][lang^='zh'] .lyrics-overlay__current {
+    font-family:
+      'Utawakui Open Huninn', 'Microsoft JhengHei', 'Noto Sans CJK TC',
+      sans-serif;
+    font-weight: 900;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__next,
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__ktv-count-in {
+    display: none;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__kinetic-line {
+    grid-area: 1 / 1;
+    display: grid;
+    justify-items: center;
+    inline-size: 100%;
+    max-inline-size: none;
+    overflow-wrap: normal;
+    row-gap: 0.02em;
+    line-height: 0.96;
+    text-align: center;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__kinetic-row {
+    display: grid;
+    place-items: center;
+    inline-size: 100%;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    .lyrics-overlay__kinetic-line[data-kinetic-material='candy-rim'] {
+    font-family:
+      'Utawakui Keifont', 'Utawakui M PLUS Rounded 1c', 'Noto Sans CJK JP',
+      sans-serif;
+    font-size: 1.18em;
+    font-weight: 900;
+    line-height: 1.12;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__kinetic-layer-track {
+    position: relative;
+    grid-area: 1 / 1;
+    display: flex;
+    justify-content: center;
+    inline-size: 100%;
+    white-space: nowrap;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    .lyrics-overlay__kinetic-layer-track--depth {
+    z-index: 0;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    .lyrics-overlay__kinetic-layer-track--rim {
+    z-index: 1;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    .lyrics-overlay__kinetic-layer-track--fill {
+    z-index: 2;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__kinetic-unit {
+    display: inline-grid;
+    transform-origin: 50% 70%;
+  }
+
+  :root[data-ovl-template='kinetic-pop'][data-ovl-kinetic-arrangement='subtle-offset']
+    .lyrics-overlay__kinetic-unit {
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(var(--kinetic-rest-scale)) rotate(var(--kinetic-rest-rotation));
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-motion='active']
+    .lyrics-overlay__kinetic-unit {
+    will-change: opacity, transform;
+  }
+
+  :root[data-ovl-template='kinetic-pop'] .lyrics-overlay__kinetic-layer {
+    grid-area: 1 / 1;
+    display: block;
+    color: var(--ovl-color-kinetic-yellow);
+    -webkit-text-stroke-color: transparent;
+    -webkit-text-stroke-width: 0;
+    paint-order: fill;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='solid-outline']
+    .lyrics-overlay__kinetic-layer--depth {
+    display: none;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='solid-outline']
+    .lyrics-overlay__kinetic-layer--rim {
+    color: var(--ovl-color-kinetic-yellow);
+    transform: none;
+    -webkit-text-stroke: 0.085em var(--ovl-color-kinetic-ink);
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='candy-rim']
+    .lyrics-overlay__kinetic-layer--depth {
+    color: var(--ovl-color-kinetic-ink);
+    transform: translate(0.07em, 0.09em);
+    -webkit-text-stroke: 0.1em var(--ovl-color-kinetic-ink);
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='candy-rim']
+    .lyrics-overlay__kinetic-layer--rim {
+    color: var(--ovl-color-kinetic-paper);
+    transform: none;
+    -webkit-text-stroke: 0.03em var(--ovl-color-kinetic-paper);
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='candy-rim']
+    .lyrics-overlay__kinetic-layer--fill {
+    color: var(--ovl-color-kinetic-candy-light);
+    background: linear-gradient(
+      to bottom left,
+      var(--ovl-color-kinetic-candy-deep),
+      var(--ovl-color-kinetic-candy-light)
+    );
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -webkit-text-stroke: 0.0125em var(--ovl-color-kinetic-paper);
+    paint-order: fill stroke;
+    text-shadow: none;
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='chromatic-depth']
+    .lyrics-overlay__kinetic-layer--depth {
+    color: var(--ovl-color-kinetic-cyan);
+    transform: translate(0.065em, 0.075em);
+    -webkit-text-stroke: 0.075em var(--ovl-color-kinetic-ink);
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='chromatic-depth']
+    .lyrics-overlay__kinetic-layer--rim {
+    color: var(--ovl-color-kinetic-magenta);
+    transform: translate(0.12em, 0.14em);
+    -webkit-text-stroke: 0.075em var(--ovl-color-kinetic-ink);
+  }
+
+  :root[data-ovl-template='kinetic-pop']
+    [data-kinetic-material='chromatic-depth']
+    .lyrics-overlay__kinetic-layer--fill {
+    color: var(--ovl-color-kinetic-paper);
+    -webkit-text-stroke: 0.045em var(--ovl-color-kinetic-ink);
   }
 
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay {

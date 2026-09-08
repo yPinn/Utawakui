@@ -406,6 +406,10 @@ describe('outputServer', () => {
     );
 
     for (const [route, exportedSymbol] of [
+      [
+        '/shared/presentation/kineticPopMotion.mjs',
+        'kineticPopBurstDelaySeconds',
+      ],
       ['/shared/presentation/lyricsPresentation.mjs', 'analyzeLyricsSource'],
       ['/shared/presentation/mangaFrameContract.mjs', 'DEFAULT_MANGA_FRAME_ID'],
       ['/shared/presentation/state.mjs', 'selectLyricsFrame'],

@@ -285,6 +285,17 @@
   --ui-output-preview-ktv-fill-group: #178346;
   --ui-output-preview-ktv-stroke-unsung: #0b2b75;
   --ui-output-preview-ktv-stroke-sung: #ffffff;
+  --ui-output-preview-kinetic-ink: #10152f;
+  --ui-output-preview-kinetic-paper: #fff9ef;
+  --ui-output-preview-kinetic-yellow: #ffd92e;
+  --ui-output-preview-kinetic-red: #e42d5f;
+  --ui-output-preview-kinetic-ochre: #e29a1b;
+  --ui-output-preview-kinetic-cyan: #38d8e8;
+  --ui-output-preview-kinetic-magenta: #f24e9b;
+  --ui-output-preview-kinetic-candy-deep: #941361;
+  --ui-output-preview-kinetic-candy-light: #f33a52;
+  --ui-output-preview-kinetic-offset-start: -0.6em;
+  --ui-output-preview-kinetic-offset-end: 0.7em;
   --ui-output-preview-manga-canvas: #e8e8e5;
   --ui-output-preview-manga-paper: #ffffff;
   --ui-output-preview-manga-ink: #101010;

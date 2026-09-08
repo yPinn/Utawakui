@@ -6,6 +6,7 @@ import {
   normalizeCaptureSizeId,
   supportedCaptureSizeIdsForTemplate,
 } from '../../constants/outputCaptureSizes.js';
+import { OUTPUT_SLOT_DEFAULTS } from '../../constants/outputTemplates.js';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputBrief from './ObsOutputBrief.vue';
@@ -40,6 +41,8 @@ const draft = reactive({
   alignment: 'center',
   surface: 'transparent',
   furigana: 'auto',
+  kineticMaterial: 'candy-rim',
+  kineticArrangement: 'straight',
   captureSize: 'small',
 });
 
@@ -74,6 +77,16 @@ const controls = computed(() => [
     label: '假名標音',
     options: props.appearanceOptions.furigana ?? [],
   },
+  {
+    key: 'kineticMaterial',
+    label: '文字樣式',
+    options: props.appearanceOptions.kineticMaterial ?? [],
+  },
+  {
+    key: 'kineticArrangement',
+    label: '文字排列',
+    options: props.appearanceOptions.kineticArrangement ?? [],
+  },
 ]);
 const editableControls = computed(() => {
   const editableKeys = props.preset?.editableAppearanceKeys;
@@ -93,11 +106,30 @@ const supportedCaptureSizes = computed(() =>
   supportedCaptureSizeIdsForTemplate(templateId.value, props.activeKind),
 );
 
+function normalizedControlValue(control, settings, activeKind) {
+  const allowedValues = new Set(
+    control.options.map((option) => option.id).filter(Boolean),
+  );
+  const storedValue = settings?.[control.key];
+  if (allowedValues.has(storedValue)) return storedValue;
+
+  const defaultValue =
+    OUTPUT_SLOT_DEFAULTS[activeKind]?.settings?.[control.key];
+  if (allowedValues.has(defaultValue)) return defaultValue;
+
+  return control.options[0]?.id ?? '';
+}
+
 const isDirty = computed(() =>
   Boolean(
-    controls.value.some(
+    editableControls.value.some(
       (control) =>
-        draft[control.key] !== props.outputSlot?.settings?.[control.key],
+        draft[control.key] !==
+        normalizedControlValue(
+          control,
+          props.outputSlot?.settings,
+          props.activeKind,
+        ),
     ) ||
     draft.captureSize !==
       normalizeCaptureSizeId(
@@ -117,8 +149,11 @@ watch(
   [() => props.activeKind, () => props.outputSlot, templateId],
   ([activeKind, outputSlot, activeTemplateId]) => {
     for (const control of controls.value) {
-      draft[control.key] =
-        outputSlot?.settings?.[control.key] ?? control.options[0]?.id ?? '';
+      draft[control.key] = normalizedControlValue(
+        control,
+        outputSlot?.settings,
+        activeKind,
+      );
     }
     draft.captureSize = normalizeCaptureSizeId(
       activeKind,

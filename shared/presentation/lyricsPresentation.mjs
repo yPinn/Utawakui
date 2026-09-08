@@ -1,4 +1,5 @@
 // Pure presentation projection shared across renderer and Browser Source.
+
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
 export const MAX_LIVE_STAGE_CAPTION_LINES = 2;
 export const MAX_LIVE_STAGE_CAPTION_PAGES = 2;
@@ -80,6 +81,22 @@ const ALL_APPEARANCE_KEYS = Object.freeze([
   'alignment',
   'surface',
 ]);
+const KINETIC_POP_MATERIALS = Object.freeze([
+  'solid-outline',
+  'candy-rim',
+  'chromatic-depth',
+]);
+const KINETIC_POP_DEFAULT_MATERIAL = 'candy-rim';
+const KINETIC_POP_GRAPHEME_SEGMENTER =
+  typeof Intl?.Segmenter === 'function'
+    ? new Intl.Segmenter(undefined, { granularity: 'grapheme' })
+    : null;
+const KINETIC_POP_TRAILING_MARK_RE = /^[\s\p{P}]+$/u;
+const KINETIC_POP_MATERIAL_SETTINGS = new Set([
+  ...KINETIC_POP_MATERIALS,
+  'cycle',
+]);
+const KINETIC_POP_PUNCH_MAX_WEIGHT = 8;
 const LYRICS_PRESENTATION_PROFILES = Object.freeze({
   'generic-caption': Object.freeze({
     id: 'generic-caption',
@@ -92,6 +109,16 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: true,
     editableAppearanceKeys: Object.freeze(['fontScale']),
+  }),
+  'kinetic-pop': Object.freeze({
+    id: 'kinetic-pop',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze([
+      'fontScale',
+      'kineticMaterial',
+      'kineticArrangement',
+    ]),
   }),
   'manga-frame': Object.freeze({
     id: 'manga-frame',
@@ -121,6 +148,7 @@ const TEMPLATE_PROFILE_IDS = Object.freeze({
   'focus-line': 'generic-caption',
   'quiet-caption': 'generic-caption',
   'karaoke-stack': 'classic-ktv',
+  'kinetic-pop': 'kinetic-pop',
   'manga-frame': 'manga-frame',
   'live-stage': 'live-stage',
   'reading-aid': 'reading-aid',
@@ -362,6 +390,119 @@ export function adaptKtvLyricsPresentation(analysis, options = {}) {
       (phrase) => phrase.text,
     ),
     contentStart,
+  };
+}
+
+function kineticPopVisualUnits(value) {
+  const graphemes = KINETIC_POP_GRAPHEME_SEGMENTER
+    ? [...KINETIC_POP_GRAPHEME_SEGMENTER.segment(value)].map(
+        ({ segment }) => segment,
+      )
+    : Array.from(value);
+  const units = [];
+  let leadingText = '';
+  for (const grapheme of graphemes) {
+    if (KINETIC_POP_TRAILING_MARK_RE.test(grapheme)) {
+      if (units.length > 0) units.at(-1).text += grapheme;
+      else leadingText += grapheme;
+      continue;
+    }
+    const text = `${leadingText}${grapheme}`;
+    leadingText = '';
+    units.push({ text, weight: Math.max(1, visualWidth(grapheme)) });
+  }
+  if (leadingText) {
+    units.push({
+      text: leadingText,
+      weight: Math.max(1, visualWidth(leadingText)),
+    });
+  }
+  return units;
+}
+
+function kineticPopPhrases(text) {
+  return text
+    .split(/\s+/gu)
+    .filter(Boolean)
+    .map((phraseText) => {
+      const units = kineticPopVisualUnits(phraseText);
+      return {
+        text: phraseText,
+        units,
+        weight: Math.max(
+          1,
+          units.reduce((total, unit) => total + unit.weight, 0),
+        ),
+      };
+    });
+}
+
+function kineticPopPhraseBreakProgresses(phrases) {
+  const totalWeight = phrases.reduce(
+    (total, phrase) => total + phrase.weight,
+    0,
+  );
+  if (phrases.length <= 1 || totalWeight <= 0) return [];
+  let elapsedWeight = 0;
+  return phrases.slice(0, -1).map((phrase) => {
+    elapsedWeight += phrase.weight;
+    return elapsedWeight / totalWeight;
+  });
+}
+
+export function adaptKineticPopLyricsPresentation(value, options = {}) {
+  const sourceText = String(value ?? '');
+  const text = sourceText.trim().replace(/\s+/gu, ' ');
+  const sourceUnits = kineticPopVisualUnits(text);
+  const phrases = kineticPopPhrases(text);
+  const phraseBreakProgresses = kineticPopPhraseBreakProgresses(phrases);
+  const lineProgress = Number.isFinite(options.lineProgress)
+    ? Math.min(1, Math.max(0, options.lineProgress))
+    : null;
+  const phraseIndex =
+    lineProgress === null || phrases.length <= 1
+      ? null
+      : Math.min(
+          phrases.length - 1,
+          phraseBreakProgresses.filter((boundary) => lineProgress >= boundary)
+            .length,
+        );
+  const displayPhrase =
+    phraseIndex === null
+      ? { text, units: sourceUnits }
+      : (phrases[phraseIndex] ?? { text, units: sourceUnits });
+  const visualWeight = sourceUnits.reduce(
+    (total, unit) => total + unit.weight,
+    0,
+  );
+  const rows = displayPhrase.text
+    ? [{ text: displayPhrase.text, units: displayPhrase.units }]
+    : [];
+  const lineIndex = Number.isSafeInteger(options.lineIndex)
+    ? Math.max(0, options.lineIndex)
+    : 0;
+  const materialSetting = KINETIC_POP_MATERIAL_SETTINGS.has(
+    options.kineticMaterial,
+  )
+    ? options.kineticMaterial
+    : KINETIC_POP_DEFAULT_MATERIAL;
+  return {
+    sourceText,
+    text,
+    displayText: displayPhrase.text,
+    phrases,
+    phraseIndex,
+    phraseBreakProgresses,
+    material:
+      materialSetting === 'cycle'
+        ? KINETIC_POP_MATERIALS[lineIndex % KINETIC_POP_MATERIALS.length]
+        : materialSetting,
+    composition:
+      visualWeight > 0 && visualWeight <= KINETIC_POP_PUNCH_MAX_WEIGHT
+        ? 'punch'
+        : 'caption',
+    units: displayPhrase.units,
+    rows,
   };
 }
 
@@ -966,6 +1107,9 @@ function compileLinePresentation(sourceText, analysis, profile, options) {
   if (profile.id === 'live-stage') {
     return adaptLiveStageLyricsPresentation(analysis, options);
   }
+  if (profile.id === 'kinetic-pop') {
+    return adaptKineticPopLyricsPresentation(sourceText, options);
+  }
   return { sourceText, text: sourceText };
 }
 
@@ -985,6 +1129,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
       const sourceText = String(line?.text ?? '');
       const needsSemanticAnalysis = ![
         'generic-caption',
+        'kinetic-pop',
         'reading-aid',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
@@ -996,13 +1141,15 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
         ...(analysis ? { analysis } : {}),
         presentation: compileLinePresentation(sourceText, analysis, profile, {
           language,
+          lineIndex: sourceLineIndex,
+          kineticMaterial: options.kineticMaterial,
         }),
       };
     }),
   };
 }
 
-function documentCacheKey(document, profile) {
+function documentCacheKey(document, profile, options = {}) {
   const documentId =
     typeof document?.documentId === 'string' ? document.documentId.trim() : '';
   if (!documentId || !Number.isSafeInteger(document?.documentRevision)) {
@@ -1014,6 +1161,11 @@ function documentCacheKey(document, profile) {
     String(document.language ?? ''),
     profile.id,
     profile.version,
+    profile.id === 'kinetic-pop'
+      ? KINETIC_POP_MATERIAL_SETTINGS.has(options.kineticMaterial)
+        ? options.kineticMaterial
+        : KINETIC_POP_DEFAULT_MATERIAL
+      : '',
   ].join('\u0000');
 }
 
@@ -1032,7 +1184,7 @@ export function createLyricsPresentationDocumentCache(options = {}) {
       const profile = lyricsPresentationProfileForTemplate(
         compileOptions.templateId,
       );
-      const cacheKey = documentCacheKey(document, profile);
+      const cacheKey = documentCacheKey(document, profile, compileOptions);
       if (cacheKey === null) return compile(document, compileOptions);
 
       const cached = entries.get(cacheKey);

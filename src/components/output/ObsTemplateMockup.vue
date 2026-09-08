@@ -6,6 +6,11 @@ import {
   mangaFrameTextLayout,
 } from '../../../shared/presentation/mangaFrameContract.mjs';
 import {
+  kineticPopBurstDelaySeconds,
+  kineticPopRestPose,
+} from '../../../shared/presentation/kineticPopMotion.mjs';
+import {
+  adaptKineticPopLyricsPresentation,
   adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
@@ -86,6 +91,41 @@ watch([completedTracks, () => props.size], async () => {
   measureSetlistHistory();
 });
 const lyrics = computed(() => props.scene?.lyrics ?? {});
+const kineticPreviewArrangement = computed(
+  () => lyrics.value.kinetic?.arrangement ?? 'straight',
+);
+const kineticPreviewLine = computed(() => {
+  const samples = lyrics.value.kinetic?.samples ?? [];
+  const text = samples[1] ?? 'すてっぷ';
+  const presentation = adaptKineticPopLyricsPresentation(text, {
+    kineticMaterial: 'candy-rim',
+  });
+  let unitIndex = 0;
+  return {
+    ...presentation,
+    rows: presentation.rows.map((row) => {
+      return {
+        ...row,
+        units: row.units.map((unit) => {
+          const restPose = kineticPopRestPose(
+            unitIndex,
+            kineticPreviewArrangement.value,
+          );
+          const previewUnit = {
+            delay: `${kineticPopBurstDelaySeconds(unitIndex)}s`,
+            restRotation: `${restPose.rotation}deg`,
+            restScale: String(restPose.scale),
+            restX: `${restPose.xEm}em`,
+            restY: `${restPose.yEm}em`,
+            text: unit.text,
+          };
+          unitIndex += 1;
+          return previewUnit;
+        }),
+      };
+    }),
+  };
+});
 const mangaLyrics = computed(() => lyrics.value.manga ?? lyrics.value);
 const mangaSide = computed(() => mangaFrameSideForLine(lyrics.value.lineIndex));
 const lyricsSourceAnalysis = computed(() =>
@@ -234,6 +274,38 @@ const mangaBubbles = computed(() => {
             <strong>{{ track.title }}</strong>
             <span>{{ track.artist }}</span>
           </span>
+        </span>
+      </template>
+
+      <template v-else-if="preset?.id === 'kinetic-pop'">
+        <span class="obs-template-mockup__kinetic-stage">
+          <strong
+            class="obs-template-mockup__kinetic-line"
+            :data-kinetic-material="kineticPreviewLine.material"
+            :data-kinetic-arrangement="kineticPreviewArrangement"
+          >
+            <span
+              v-for="(row, rowIndex) in kineticPreviewLine.rows"
+              :key="`${kineticPreviewLine.material}-row-${rowIndex}`"
+              class="obs-template-mockup__kinetic-row"
+            >
+              <span
+                v-for="(unit, unitIndex) in row.units"
+                :key="`${kineticPreviewLine.material}-${rowIndex}-${unitIndex}`"
+                class="obs-template-mockup__kinetic-unit"
+                :data-text="unit.text"
+                :style="{
+                  '--kinetic-unit-delay': unit.delay,
+                  '--kinetic-rest-x': unit.restX,
+                  '--kinetic-rest-y': unit.restY,
+                  '--kinetic-rest-rotation': unit.restRotation,
+                  '--kinetic-rest-scale': unit.restScale,
+                }"
+              >
+                {{ unit.text }}
+              </span>
+            </span>
+          </strong>
         </span>
       </template>
 
@@ -586,6 +658,23 @@ const mangaBubbles = computed(() => {
   font-weight: 400;
 }
 
+@font-face {
+  font-family: 'Utawakui M PLUS Rounded 1c';
+  src: url('../../../shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: 'Utawakui Keifont';
+  src: url('../../../shared/assets/fonts/Keifont.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .obs-template-mockup {
   --obs-preview-bg: var(--ui-output-preview-canvas);
   --obs-preview-surface: var(--ui-output-preview-surface);
@@ -617,6 +706,10 @@ const mangaBubbles = computed(() => {
 
 .obs-template-mockup[data-template-id='karaoke-stack'] {
   --obs-preview-bg: var(--ui-output-preview-ktv-canvas);
+}
+
+.obs-template-mockup[data-template-id='kinetic-pop'] {
+  --obs-preview-bg: var(--ui-output-preview-canvas);
 }
 
 .obs-template-mockup[data-tone='lyrics'] {
@@ -1859,6 +1952,152 @@ const mangaBubbles = computed(() => {
   font-weight: var(--ui-font-weight-strong);
 }
 
+.obs-template-mockup[data-template-id='kinetic-pop']
+  .obs-template-mockup__content--lyrics {
+  align-items: end;
+  padding: 0 4% 6%;
+}
+
+.obs-template-mockup__kinetic-stage {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  min-width: 0;
+  font-family:
+    'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP',
+    sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.obs-template-mockup__kinetic-line {
+  position: relative;
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+  inline-size: 100%;
+  row-gap: 0.02em;
+  color: var(--ui-output-preview-kinetic-yellow);
+  line-height: 0.96;
+  opacity: 1;
+}
+
+.obs-template-mockup__kinetic-row {
+  display: flex;
+  justify-content: center;
+  inline-size: 100%;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__kinetic-unit {
+  --kinetic-preview-enter-x: 0;
+  --kinetic-preview-enter-y: 0.22em;
+  --kinetic-preview-enter-rotation: -5deg;
+  --kinetic-preview-enter-scale: 0.78;
+  --kinetic-preview-exit-y: -0.14em;
+  --kinetic-preview-exit-rotation: 5deg;
+  --kinetic-preview-exit-scale: 1.08;
+
+  display: inline-block;
+  color: inherit;
+  paint-order: stroke fill;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-arrangement='subtle-offset']
+  .obs-template-mockup__kinetic-unit {
+  transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+    scale(var(--kinetic-rest-scale)) rotate(var(--kinetic-rest-rotation));
+}
+
+.obs-template-mockup__kinetic-unit:nth-child(even) {
+  --kinetic-preview-enter-x: 0;
+  --kinetic-preview-enter-y: -0.18em;
+  --kinetic-preview-enter-rotation: 5deg;
+  --kinetic-preview-enter-scale: 1.14;
+  --kinetic-preview-exit-y: 0.12em;
+  --kinetic-preview-exit-rotation: -5deg;
+  --kinetic-preview-exit-scale: 0.9;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='solid-outline']
+  .obs-template-mockup__kinetic-unit {
+  color: var(--ui-output-preview-kinetic-yellow);
+  -webkit-text-stroke: 0.085em var(--ui-output-preview-kinetic-ink);
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim'] {
+  font-family:
+    'Utawakui Keifont', 'Utawakui M PLUS Rounded 1c', 'Noto Sans CJK JP',
+    sans-serif;
+  font-size: 1.18em;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit {
+  position: relative;
+  isolation: isolate;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::before,
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::after {
+  position: absolute;
+  inset: 0;
+  display: block;
+  content: attr(data-text);
+  pointer-events: none;
+  white-space: pre;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::before {
+  z-index: 0;
+  color: var(--ui-output-preview-kinetic-paper);
+  -webkit-text-fill-color: var(--ui-output-preview-kinetic-paper);
+  -webkit-text-stroke: 0.03em var(--ui-output-preview-kinetic-paper);
+  paint-order: fill stroke;
+  text-shadow: 0.07em 0.09em 0 var(--ui-output-preview-kinetic-ink);
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::after {
+  z-index: 1;
+  color: var(--ui-output-preview-kinetic-red);
+  background: linear-gradient(
+    to bottom left,
+    var(--ui-output-preview-kinetic-candy-deep),
+    var(--ui-output-preview-kinetic-candy-light)
+  );
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.0125em var(--ui-output-preview-kinetic-paper);
+  paint-order: fill stroke;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='chromatic-depth']
+  .obs-template-mockup__kinetic-unit {
+  color: var(--ui-output-preview-kinetic-paper);
+  -webkit-text-stroke: 0.045em var(--ui-output-preview-kinetic-ink);
+  text-shadow:
+    0.065em 0.075em 0 var(--ui-output-preview-kinetic-cyan),
+    0.12em 0.14em 0 var(--ui-output-preview-kinetic-magenta);
+}
+
+.obs-template-mockup[data-motion='playing'] .obs-template-mockup__kinetic-unit {
+  animation: obs-preview-kinetic-unit-cycle 3.2s cubic-bezier(0.16, 1, 0.3, 1)
+    infinite both;
+  animation-delay: var(--kinetic-unit-delay);
+}
+
 .obs-template-mockup__manga-bubbles {
   position: relative;
   width: 32%;
@@ -2206,6 +2445,11 @@ const mangaBubbles = computed(() => {
   font-size: 0.875rem;
 }
 
+.obs-template-mockup[data-size='thumbnail']
+  .obs-template-mockup__kinetic-stage {
+  font-size: 0.78rem;
+}
+
 .obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__title,
 .obs-template-mockup[data-size='thumbnail']
   .obs-template-mockup__setlist-history-row,
@@ -2254,6 +2498,41 @@ const mangaBubbles = computed(() => {
   90%,
   100% {
     transform: translateY(calc(-1 * var(--ui-setlist-scroll-distance, 0px)));
+  }
+}
+
+@keyframes obs-preview-kinetic-unit-cycle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(
+        var(--kinetic-preview-enter-x),
+        var(--kinetic-preview-enter-y)
+      )
+      scale(var(--kinetic-preview-enter-scale))
+      rotate(var(--kinetic-preview-enter-rotation));
+  }
+
+  2.6% {
+    opacity: 1;
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(1.07) rotate(var(--kinetic-rest-rotation));
+  }
+
+  4.2%,
+  78%,
+  90% {
+    opacity: 1;
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(var(--kinetic-rest-scale)) rotate(var(--kinetic-rest-rotation));
+  }
+
+  93%,
+  99% {
+    opacity: 0;
+    transform: translate(0, var(--kinetic-preview-exit-y))
+      scale(var(--kinetic-preview-exit-scale))
+      rotate(var(--kinetic-preview-exit-rotation));
   }
 }
 
@@ -2336,8 +2615,15 @@ const mangaBubbles = computed(() => {
   .obs-template-mockup[data-motion='playing']
     .obs-template-mockup__ktv-count-in,
   .obs-template-mockup[data-motion='playing']
-    .obs-template-mockup__progress-fill {
+    .obs-template-mockup__progress-fill,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__kinetic-unit {
     animation: none;
+  }
+
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__kinetic-line {
+    opacity: 1;
   }
 }
 </style>

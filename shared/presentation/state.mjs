@@ -1,5 +1,6 @@
 // Pure canonical snapshot projection shared across renderer and Browser Source.
 import {
+  adaptKineticPopLyricsPresentation,
   adaptKtvLyricsPresentation,
   adaptLiveStageLyricsPresentation,
   adaptMangaLyricsPresentation,
@@ -420,6 +421,44 @@ function nextLiveStageCaptionBoundaryDelayMs(snapshot, options = {}) {
     { lineProgress },
   );
   const nextBoundary = presentation.pageBreakProgresses.find(
+    (boundary) => boundary > lineProgress,
+  );
+  if (!Number.isFinite(nextBoundary)) return null;
+
+  const boundaryMs = line.startMs + (lineEndMs - line.startMs) * nextBoundary;
+  return Math.max(
+    1,
+    Math.ceil((boundaryMs - positionMs) / playbackRate(snapshot)),
+  );
+}
+
+function nextKineticPopPhraseBoundaryDelayMs(snapshot, options = {}) {
+  const trackId = snapshot?.playback?.track?.id;
+  const lyrics = snapshot?.lyrics;
+  const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
+  if (
+    snapshot?.playback?.status !== 'playing' ||
+    !trackId ||
+    lyrics?.trackId !== trackId ||
+    lyrics?.synced !== true
+  ) {
+    return null;
+  }
+
+  const nowMs = options.nowMs ?? Date.now();
+  const lineIndex = activeLyricIndex(snapshot, lines, nowMs);
+  const line = lines[lineIndex];
+  if (!line || !Number.isFinite(line.startMs)) return null;
+  const lineEndMs = effectiveLineEnd(snapshot, lines, lineIndex);
+  if (!Number.isFinite(lineEndMs) || lineEndMs <= line.startMs) return null;
+
+  const positionMs = lyricsPositionMs(snapshot, nowMs);
+  const lineProgress = boundedProgress(positionMs, line.startMs, lineEndMs);
+  const presentation = adaptKineticPopLyricsPresentation(
+    displayableLyricsText(line.text),
+    { lineProgress },
+  );
+  const nextBoundary = presentation.phraseBreakProgresses.find(
     (boundary) => boundary > lineProgress,
   );
   if (!Number.isFinite(nextBoundary)) return null;
@@ -1154,6 +1193,9 @@ export function nextLyricsBoundaryDelayMs(snapshot, options = {}) {
   const lines = Array.isArray(lyrics.lines) ? lyrics.lines : [];
   const boundaries = lines
     .flatMap((line, lineIndex) => {
+      if (options.includeSegments === false) {
+        return [line?.startMs, line?.endMs];
+      }
       const projection = presentationLineSegments(snapshot, lines, lineIndex);
       return [
         line?.startMs,
@@ -1304,9 +1346,14 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   const legacyAllTemplates = templateId === null;
   if (
     legacyAllTemplates ||
-    ['focus-line', 'quiet-caption', 'manga-frame'].includes(templateId)
+    ['focus-line', 'quiet-caption', 'kinetic-pop', 'manga-frame'].includes(
+      templateId,
+    )
   ) {
-    const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, { nowMs });
+    const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, {
+      nowMs,
+      includeSegments: templateId !== 'kinetic-pop',
+    });
     if (lyricsDelay !== null) delays.push(lyricsDelay);
   }
   if (legacyAllTemplates || templateId === 'manga-frame') {
@@ -1315,6 +1362,13 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
       presentationDocument: options.presentationDocument,
     });
     if (mangaDelay !== null) delays.push(mangaDelay);
+  }
+  if (legacyAllTemplates || templateId === 'kinetic-pop') {
+    const kineticPopPhraseDelay = nextKineticPopPhraseBoundaryDelayMs(
+      snapshot,
+      { nowMs },
+    );
+    if (kineticPopPhraseDelay !== null) delays.push(kineticPopPhraseDelay);
   }
   if (legacyAllTemplates || templateId === 'karaoke-stack') {
     const ktvDelay = nextKtvBoundaryDelayMs(
@@ -1489,6 +1543,14 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           lyricsPositionMs(snapshot, nowMs),
         )
       : null;
+  const kineticPop =
+    templateId === 'kinetic-pop'
+      ? adaptKineticPopLyricsPresentation(frame.currentText, {
+          lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex,
+          lineProgress: frame.lineProgress,
+          kineticMaterial: options.kineticMaterial,
+        })
+      : null;
   return {
     ...frame,
     ...(snapshot?.playback?.status === 'seeking'
@@ -1496,6 +1558,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       : {}),
     ...(needsSourceAnalysis ? { lyricsSourceAnalysis: sourceAnalysis } : {}),
     ...(mangaBubbleTiming ? { mangaBubbleTiming } : {}),
+    ...(kineticPop ? { kineticPop } : {}),
     ...(legacyAllTemplates || templateId === 'karaoke-stack'
       ? {
           ktv: selectKtvLyricsFrame(

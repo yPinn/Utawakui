@@ -29,6 +29,16 @@
     "furigana": [
       { "id": "auto", "label": "有資料時顯示" },
       { "id": "off", "label": "關閉" }
+    ],
+    "kineticMaterial": [
+      { "id": "solid-outline", "label": "樣式 1｜單色黑框" },
+      { "id": "candy-rim", "label": "樣式 2｜漸層白框" },
+      { "id": "chromatic-depth", "label": "樣式 3｜右下錯位" },
+      { "id": "cycle", "label": "三款依句序切換" }
+    ],
+    "kineticArrangement": [
+      { "id": "straight", "label": "端正" },
+      { "id": "subtle-offset", "label": "些微偏移" }
     ]
   },
   "defaultSettings": {
@@ -37,7 +47,9 @@
     "fontWeight": "semibold",
     "alignment": "left",
     "surface": "transparent",
-    "furigana": "auto"
+    "furigana": "auto",
+    "kineticMaterial": "candy-rim",
+    "kineticArrangement": "straight"
   },
   "slotDefaultSettings": {
     "now-playing": {
@@ -46,7 +58,9 @@
       "fontWeight": "bold",
       "alignment": "left",
       "surface": "solid",
-      "furigana": "auto"
+      "furigana": "auto",
+      "kineticMaterial": "candy-rim",
+      "kineticArrangement": "straight"
     },
     "setlist": {
       "fontFamily": "sans",
@@ -54,7 +68,9 @@
       "fontWeight": "semibold",
       "alignment": "left",
       "surface": "solid",
-      "furigana": "auto"
+      "furigana": "auto",
+      "kineticMaterial": "candy-rim",
+      "kineticArrangement": "straight"
     },
     "lyrics": {
       "fontFamily": "serif",
@@ -62,7 +78,9 @@
       "fontWeight": "bold",
       "alignment": "left",
       "surface": "transparent",
-      "furigana": "auto"
+      "furigana": "auto",
+      "kineticMaterial": "candy-rim",
+      "kineticArrangement": "straight"
     }
   }
 }

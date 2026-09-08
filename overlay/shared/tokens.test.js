@@ -193,14 +193,25 @@ describe('overlay CSS tokens', () => {
       new URL('../lyrics/lyrics.css', import.meta.url),
       'utf8',
     );
+    const kineticStart = lyrics.indexOf(
+      ":root[data-ovl-template='kinetic-pop']",
+    );
+    const kineticEnd = lyrics.indexOf(
+      ":root[data-ovl-template='quiet-caption']",
+      kineticStart,
+    );
+    const nonKineticLyrics =
+      lyrics.slice(0, kineticStart) + lyrics.slice(kineticEnd);
 
     expect(lyrics).toContain("[data-segment-state='past']");
     expect(lyrics).toContain("[data-segment-state='active']");
     expect(lyrics).toContain("[data-segment-state='upcoming']");
     expect(lyrics).toContain('--ovl-segment-progress');
-    expect(lyrics).not.toContain('background-clip: text');
-    expect(lyrics).not.toContain('-webkit-text-fill-color: transparent');
-    expect(lyrics).not.toMatch(/\bcolor:\s*transparent\b/);
+    expect(nonKineticLyrics).not.toContain('background-clip: text');
+    expect(nonKineticLyrics).not.toContain(
+      '-webkit-text-fill-color: transparent',
+    );
+    expect(nonKineticLyrics).not.toMatch(/\bcolor:\s*transparent\b/);
   });
 
   it('keeps the manga frame monochrome and leaves scenario semantics explicit', () => {

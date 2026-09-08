@@ -193,6 +193,25 @@ describe('outputSlots', () => {
     ).not.toThrow();
   });
 
+  it('persists the Kinetic Pop material selection', () => {
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'kinetic-pop',
+      settings: {
+        kineticMaterial: 'cycle',
+        captureSize: 'full',
+      },
+    });
+
+    expect(loadOutputSlots(dir).slots.lyrics).toEqual({
+      templateId: 'kinetic-pop',
+      styleSetIds: [],
+      settings: {
+        kineticMaterial: 'cycle',
+        captureSize: 'full',
+      },
+    });
+  });
+
   it('round-trips the bundled Cover Player Now Playing template id', () => {
     upsertOutputSlot(dir, 'now-playing', {
       templateId: 'cover-player',

@@ -5,6 +5,13 @@ const ALLOWED_VALUES = Object.freeze({
   alignment: new Set(['left', 'center', 'right']),
   surface: new Set(['transparent', 'soft', 'solid']),
   furigana: new Set(['auto', 'off']),
+  kineticMaterial: new Set([
+    'solid-outline',
+    'candy-rim',
+    'chromatic-depth',
+    'cycle',
+  ]),
+  kineticArrangement: new Set(['straight', 'subtle-offset']),
 });
 
 export const OVERLAY_APPEARANCE_DEFAULTS = Object.freeze({
@@ -14,6 +21,8 @@ export const OVERLAY_APPEARANCE_DEFAULTS = Object.freeze({
   alignment: 'left',
   surface: 'transparent',
   furigana: 'auto',
+  kineticMaterial: 'candy-rim',
+  kineticArrangement: 'straight',
 });
 
 export function normalizeOverlayAppearance(settings = {}) {
@@ -35,6 +44,8 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlAlign = appearance.alignment;
   root.dataset.ovlSurface = appearance.surface;
   root.dataset.ovlFurigana = appearance.furigana;
+  root.dataset.ovlKineticMaterial = appearance.kineticMaterial;
+  root.dataset.ovlKineticArrangement = appearance.kineticArrangement;
   root.dataset.ovlTemplate = slot?.templateId ?? '';
 }
 

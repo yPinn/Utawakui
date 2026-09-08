@@ -48,6 +48,9 @@ export const OUTPUT_PREVIEW_SCENE = Object.freeze({
     current: '目前歌詞',
     next: '下一句',
     reading: '歌詞讀音',
+    kinetic: Object.freeze({
+      samples: Object.freeze(['選ばれる', 'すてっぷ', '美意識']),
+    }),
     manga: Object.freeze({
       current: '地下鉄に飲み込まれる',
       language: 'ja',
@@ -214,6 +217,34 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
       { label: '分句', value: '空格與括號分框' },
       { label: '切換', value: '整框淡入淡出' },
       { label: '假名', value: '有資料時顯示' },
+    ],
+  },
+  {
+    id: 'kinetic-pop',
+    kind: 'lyrics',
+    order: 25,
+    name: '霓彩跳字',
+    tone: 'lyrics',
+    availability: {
+      label: '可用',
+      tone: 'accent',
+      summary: '逐行歌詞即可；每段歌詞自動交錯跳入。',
+    },
+    summary: '粗體漸層白框字，每段逐字交錯跳入。',
+    detail:
+      '預設使用斜向漸層白框字，也可固定單色或錯位材質，或依句切換三款；文字在定點交錯跳入。',
+    preview: {
+      layoutLabel: '底部跳字',
+      motionLabel: '定點交錯',
+    },
+    tags: ['日系字卡', '材質可選', '交錯跳字'],
+    settings: [
+      { label: '顯示', value: '目前行' },
+      { label: '材質', value: '預設漸層白框，可固定或輪替' },
+      { label: '排列', value: '可選端正或些微偏移' },
+      { label: '切換', value: '逐字定點交錯跳入' },
+      { label: '字型', value: '日文圓體粗字' },
+      { label: '背景', value: '透明' },
     ],
   },
   {

@@ -45,6 +45,8 @@ describe('overlay appearance', () => {
       alignment: 'left',
       surface: 'transparent',
       furigana: 'auto',
+      kineticMaterial: 'candy-rim',
+      kineticArrangement: 'straight',
     });
   });
 
@@ -58,6 +60,8 @@ describe('overlay appearance', () => {
         fontWeight: 'bold',
         alignment: 'left',
         surface: 'soft',
+        kineticMaterial: 'cycle',
+        kineticArrangement: 'subtle-offset',
       },
     });
 
@@ -68,6 +72,8 @@ describe('overlay appearance', () => {
       ovlAlign: 'left',
       ovlSurface: 'soft',
       ovlFurigana: 'auto',
+      ovlKineticMaterial: 'cycle',
+      ovlKineticArrangement: 'subtle-offset',
       ovlTemplate: 'karaoke-stack',
     });
   });

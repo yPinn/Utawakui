@@ -41,7 +41,7 @@ Browser Source route adapters；Output server 以 exact allowlist 提供兩個�
 Lyrics presentation 分成兩層：第一層保留 canonical 原文與 T0／T1／T2 timing；只有有限
 T1 fallback 會經 `lyricsTimingUnits.mjs` 產生唯一共用、無語意標記的 `{ text, weight }`
 單元。原有換行、空白與標點無損附著，不在這層判斷斷句、角色或段落。
-第二層 `lyricsPresentation.mjs` 才依 versioned Generic／KTV／Manga／Live Stage profile
+第二層 `lyricsPresentation.mjs` 才依 versioned Generic／KTV／Kinetic Pop／Manga／Live Stage profile
 做模板客製化；Generic 是 identity，其他 profile 才可把換行、標點、speaker label、括號
 解讀成 phrase、role、bubble 或 caption page。Browser Source 以 document id、revision、
 language、profile id／version 快取靜態結果，`state.mjs` 只投影目前 template 的動態 frame
@@ -50,6 +50,32 @@ language、profile id／version 快取靜態結果，`state.mjs` 只投影目前
 仍未開放給 Output；Manga Frame 則可從 `lyrics.document` 的 optional reading projection
 取得已存在、identity-matched 的日文 `{ text, reading }` segments。Publisher 只讀 sidecar，
 不因 OBS 啟動 reading worker，缺少或 stale 時維持純文字。
+
+Kinetic Pop profile 保持在同一 Lyrics Output route 內：共享 projection 依 source line
+index 輪替三種材質，並以 grapheme-aware unit 判斷短句。每個已計時 source line 在任一時刻
+只輸出一個橫向 row；此日文優先模板會把來源行內的作者空白編譯成 sequential phrases，依各段視覺
+字重占比分配既有 `lineProgress`，先顯示前段再替換後段。這個顯示排程不建立或回寫 canonical／
+T2 timing；無空白的過長內容仍必須由上游 lyrics document／timing pipeline 斷成下一個 timed
+line，模板不以第二列掩蓋來源問題。Kinetic Pop 的 Overlay、line、row 與三個材質 track 使用同一
+份左右對稱 safe stage 寬度；glyph 群以完整輸出畫布為中心，背景圖不參與定位，超寬 `nowrap`
+內容則由中心向兩側等量溢出。Output scheduler 會把下一個 phrase progress boundary 納入
+喚醒時間。`overlay/lyrics/kineticPop.mjs` 只擁有 row／視覺字元 DOM 與 GSAP cross-swap；每個
+caption／punch 與 phrase 替換都沿用 presentation-owned grapheme units 做逐字進場，與 T2
+時間資料無關。
+DOM 以全行 depth／rim／fill track 分層，同一字的三個材質副本共用相同的 deterministic
+interleaved phase；`kineticPopMotion.mjs` 讓 Browser Source 與 Renderer Gallery 共用 28ms
+內重複的 burst delay contract。字元固定在最終水平排版位置，以奇偶相反的垂直位移、旋轉與縮放
+短促回彈，不依字串長度累積成由左至右掃描；reduced motion 與 seek／source discontinuity 直接
+commit。同一 shared motion module 也提供可選的 deterministic 八相位 rest pose；`端正`／缺值／
+無效值落到零偏移，只有明確選擇 `些微偏移` 才保留幅度受控的字元傾斜、基線與尺寸差。設定經
+appearance normalization 投影到 Overlay root dataset，既有可見行可由 CSS 即時切換，不重編
+歌詞 presentation 或建立新的播放狀態；後續 GSAP 進場則直接落到相同 rest pose，且三個材質 track
+共用每字姿態。樣式 2 使用 `0.03em` 白色 rim，最上層漸層 fill 則使用 hairline `0.0125em` 白色
+stroke；fill 先畫、stroke 後畫，讓白框只作為漸層字面與黑色深度之間的薄分隔線，不能形成高份量
+白色帶，fill 也不得使用黑色 stroke。M PLUS Rounded 1c 與漸層材質專用的
+Keifont、來源 checksum 及各自的 OFL／Apache 2.0 授權都隨 `shared/assets/fonts/`
+封裝，並由 Output server exact allowlist 提供；Renderer 預覽與 Browser Source
+使用同一份字型檔。
 
 Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯示變體：
 `useLyrics` 預設把實際內容判定為中文的任一來源，以 bundled `opencc-js` 的 `s2tw-v1`

@@ -1,5 +1,8 @@
 import { createOverlayConnection } from '../shared/runtime.mjs';
-import { applyOverlayAppearance } from '../shared/appearance.mjs';
+import {
+  applyOverlayAppearance,
+  normalizeOverlayAppearance,
+} from '../shared/appearance.mjs';
 import {
   applyPreviewCanvas,
   isPreviewMode,
@@ -29,6 +32,11 @@ import {
   clearLiveStagePresentation,
   renderLiveStagePresentation,
 } from './liveStage.mjs';
+import {
+  clearKineticPopPresentation,
+  renderKineticPopPresentation,
+  stopKineticPopTransition,
+} from './kineticPop.mjs';
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
@@ -1317,6 +1325,7 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 }
 
 export function destroyLyricsAnimations(elements, options = {}) {
+  stopKineticPopTransition(elements, options);
   stopMangaAnimations(elements, options, true);
   clearLyricsRenderState(elements.current, options);
   clearLyricsRenderState(elements.next, options);
@@ -1329,6 +1338,7 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearKtvFallbackProgress(elements.next);
   clearKtvLanePresentation(elements.root);
   clearLiveStagePresentation(elements, options);
+  clearKineticPopPresentation(elements, options);
 }
 
 export function renderLyricsFrame(elements, sourceFrame, options = {}) {
@@ -1351,6 +1361,7 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
   });
   const isMangaFrame = templateId === 'manga-frame';
   const isLiveStage = templateId === 'live-stage';
+  const isKineticPop = templateId === 'kinetic-pop';
 
   if (templateId !== 'karaoke-stack') {
     clearKtvFallbackProgress(elements.current);
@@ -1358,6 +1369,7 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
   }
 
   if (isLiveStage) {
+    clearKineticPopPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
     renderLiveStageFrame(elements, frame, renderOptions);
     return;
@@ -1366,6 +1378,21 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
   if (elements.root.dataset.liveStage === 'true') {
     clearLiveStagePresentation(elements, renderOptions);
   }
+  if (isKineticPop) {
+    stopMangaAnimations(elements, renderOptions, true);
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, renderOptions);
+    clearLyricsRenderState(elements.next, renderOptions);
+    applyKtvLanePresentation(elements, frame, templateId);
+    applyKtvCountInPresentation(elements, frame, templateId);
+    renderKineticPopPresentation(elements, frame, renderOptions);
+    elements.root.hidden = !frame.visible;
+    elements.root.setAttribute('lang', frame.language || 'und');
+    elements.root.dataset.revision = String(frame.revision);
+    clearMusicPresentation(elements.root);
+    return;
+  }
+  clearKineticPopPresentation(elements, renderOptions);
   const lineChanged =
     previousText !== frame.currentText ||
     (isMangaFrame &&
@@ -1418,6 +1445,7 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
 
   const shouldAnimate =
     !isMangaFrame &&
+    !isKineticPop &&
     templateId !== 'karaoke-stack' &&
     frame.visible &&
     lineChanged &&
@@ -1482,6 +1510,9 @@ export function createLyricsFrameScheduler(options = {}) {
   let stopped = false;
   let templateId =
     typeof options.templateId === 'string' ? options.templateId : 'focus-line';
+  let kineticMaterial = normalizeOverlayAppearance({
+    kineticMaterial: options.kineticMaterial,
+  }).kineticMaterial;
   const presentationCache =
     options.presentationCache ?? createLyricsPresentationDocumentCache();
 
@@ -1501,9 +1532,14 @@ export function createLyricsFrameScheduler(options = {}) {
         language: lyrics.source?.language,
         lines: lyrics.lines,
       },
-      { templateId },
+      { kineticMaterial, templateId },
     );
-    const projectionOptions = { nowMs, presentationDocument, templateId };
+    const projectionOptions = {
+      kineticMaterial,
+      nowMs,
+      presentationDocument,
+      templateId,
+    };
     onFrame(selectLyricsOverlayFrame(latestSnapshot, projectionOptions));
     const delay = nextPresentationBoundaryDelayMs(
       latestSnapshot,
@@ -1539,17 +1575,48 @@ export function createLyricsFrameScheduler(options = {}) {
     renderLatest();
   }
 
-  function setTemplateId(nextTemplateId) {
-    const normalized =
-      typeof nextTemplateId === 'string' && nextTemplateId
-        ? nextTemplateId
+  function setPresentationSettings(nextSettings = {}) {
+    const normalizedTemplateId =
+      typeof nextSettings.templateId === 'string' && nextSettings.templateId
+        ? nextSettings.templateId
         : 'focus-line';
-    if (normalized === templateId) return;
-    templateId = normalized;
+    const normalizedKineticMaterial = normalizeOverlayAppearance({
+      kineticMaterial: nextSettings.kineticMaterial,
+    }).kineticMaterial;
+    if (
+      normalizedTemplateId === templateId &&
+      normalizedKineticMaterial === kineticMaterial
+    ) {
+      return;
+    }
+    templateId = normalizedTemplateId;
+    kineticMaterial = normalizedKineticMaterial;
     refresh();
   }
 
-  return { refresh, setTemplateId, stop, suspend, update };
+  function setTemplateId(nextTemplateId) {
+    setPresentationSettings({
+      kineticMaterial,
+      templateId: nextTemplateId,
+    });
+  }
+
+  function setKineticMaterial(nextKineticMaterial) {
+    setPresentationSettings({
+      kineticMaterial: nextKineticMaterial,
+      templateId,
+    });
+  }
+
+  return {
+    refresh,
+    setKineticMaterial,
+    setPresentationSettings,
+    setTemplateId,
+    stop,
+    suspend,
+    update,
+  };
 }
 
 function boot() {
@@ -1616,7 +1683,11 @@ function boot() {
     kind: 'lyrics',
     onConfig: (slot) => {
       applyOverlayAppearance(document, slot);
-      frameScheduler.setTemplateId(slot?.templateId);
+      frameScheduler.setPresentationSettings({
+        kineticMaterial: normalizeOverlayAppearance(slot?.settings)
+          .kineticMaterial,
+        templateId: slot?.templateId,
+      });
     },
     onSnapshot: (snapshot) => frameScheduler.update(snapshot),
     onStatus: (status) => {
