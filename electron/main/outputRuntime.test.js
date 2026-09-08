@@ -544,6 +544,27 @@ describe('outputRuntime controller', () => {
     expect(servers).toHaveLength(1);
   });
 
+  it('stops native dependents before stopping the loopback server', async () => {
+    const { factory, servers } = createServerFactory();
+    const order = [];
+    const beforeStop = vi.fn(async () => order.push('dependent'));
+    const runtime = createOutputRuntime({
+      serverFactory: factory,
+      beforeStop,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+    });
+    await runtime.start();
+    servers[0].stop.mockImplementationOnce(async () => order.push('server'));
+
+    await runtime.stop();
+
+    expect(beforeStop).toHaveBeenCalledOnce();
+    expect(order).toEqual(['dependent', 'server']);
+  });
+
   it('leaves the service stopped when automatic start is not gate-authorized', async () => {
     const { factory } = createServerFactory();
     const runtime = createOutputRuntime({

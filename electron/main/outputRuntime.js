@@ -42,6 +42,7 @@ function createOutputRuntime({
   featureId = 'public-output-flow',
   onMilestone = () => undefined,
   recordOverlayMilestone = null,
+  beforeStop = () => undefined,
   logger = console,
 } = {}) {
   let server = null;
@@ -180,6 +181,7 @@ function createOutputRuntime({
       return getStatus();
     }
     serviceLifecycle = 'stopping';
+    await beforeStop();
     await server.stop();
     serviceLifecycle = 'stopped';
     return getStatus();

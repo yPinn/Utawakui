@@ -1,6 +1,6 @@
 # Third-Party Notices
 
-> This inventory is for Utawakui 0.1.0 release preparation. It summarizes
+> This inventory is for Utawakui 0.2.0 release preparation. It summarizes
 > third-party software distributed in the packaged app or used by app-managed
 > feature downloads. It is not legal advice.
 
@@ -21,41 +21,49 @@ Summary from `node scripts/license-inventory.mjs`:
 
 | License                      | Count |
 | ---------------------------- | ----: |
-| MIT                          |    67 |
+| MIT                          |    49 |
 | MIT AND Apache-2.0           |     1 |
-| ISC                          |     6 |
-| Apache-2.0                   |     3 |
+| ISC                          |     3 |
+| Apache-2.0                   |     2 |
 | BlueOak-1.0.0                |     1 |
+| BSD-2-Clause                 |     1 |
 | BSD-3-Clause                 |     1 |
-| MIT OR CC0-1.0               |     2 |
+| MIT OR CC0-1.0               |     1 |
 | Python-2.0                   |     1 |
 | Standard 'no charge' license |     1 |
 
 Direct runtime dependencies:
 
-| Package            | Version | License                                                            | Release note                                                                                                                                                          |
-| ------------------ | ------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `electron-updater` | 6.8.9   | MIT                                                                | Main-process Windows update client; runtime network access remains release-gated until signing and update-channel verification are complete.                          |
-| `gsap`             | 3.13.0  | [Standard 'no charge' license](https://gsap.com/standard-license/) | Browser Source timeline runtime; served only through the loopback Output allowlist. Retain the GSAP standard-license reference in release notices.                    |
-| `kissfft-js`       | 0.1.8   | MIT                                                                | Packaged runtime dependency for DSP/audio analysis paths.                                                                                                             |
-| `koroman`          | 1.0.16  | MIT                                                                | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                          |
-| `kuromoji`         | 0.1.2   | Apache-2.0                                                         | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                      |
-| `onnxruntime-node` | 1.27.0  | MIT                                                                | Native ONNX Runtime binding and Windows binaries; npm package has license metadata but no bundled license file. Keep upstream source/license link in release notices. |
-| `opencc-js`        | 1.4.2   | MIT AND Apache-2.0                                                 | Pure-JavaScript OpenCC renderer bundle with generated `opencc-data` dictionaries; retain its MIT license and Apache-2.0 third-party notices.                          |
-| `wanakana`         | 5.3.1   | MIT                                                                | Kana/romaji conversion runtime.                                                                                                                                       |
-| `ws`               | 8.21.3  | MIT                                                                | Loopback WebSocket server for OBS Browser Source output.                                                                                                              |
+| Package                        | Version | License                                                            | Release note                                                                                                                                                          |
+| ------------------------------ | ------- | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@napolab/texture-bridge-core` | 0.15.0  | MIT                                                                | Experimental Windows x64 Spout2 shared-texture sender, loaded only by the isolated helper and unpacked with its native platform binding and notices.                  |
+| `electron-updater`             | 6.8.9   | MIT                                                                | Main-process Windows update client; runtime network access remains release-gated until signing and update-channel verification are complete.                          |
+| `gsap`                         | 3.13.0  | [Standard 'no charge' license](https://gsap.com/standard-license/) | Browser Source timeline runtime; served only through the loopback Output allowlist. Retain the GSAP standard-license reference in release notices.                    |
+| `kissfft-js`                   | 0.1.8   | MIT                                                                | Packaged runtime dependency for DSP/audio analysis paths.                                                                                                             |
+| `koroman`                      | 1.0.16  | MIT                                                                | Korean romanization runtime; npm package has license metadata but no bundled license file. Re-check upstream before release.                                          |
+| `kuromoji`                     | 0.1.2   | Apache-2.0                                                         | Japanese tokenizer; keep Apache license and bundled `NOTICE.md`.                                                                                                      |
+| `onnxruntime-node`             | 1.27.0  | MIT                                                                | Native ONNX Runtime binding and Windows binaries; npm package has license metadata but no bundled license file. Keep upstream source/license link in release notices. |
+| `opencc-js`                    | 1.4.2   | MIT AND Apache-2.0                                                 | Pure-JavaScript OpenCC renderer bundle with generated `opencc-data` dictionaries; retain its MIT license and Apache-2.0 third-party notices.                          |
+| `wanakana`                     | 5.3.1   | MIT                                                                | Kana/romaji conversion runtime.                                                                                                                                       |
+| `ws`                           | 8.21.3  | MIT                                                                | Loopback WebSocket server for OBS Browser Source output.                                                                                                              |
 
 Notable transitive runtime dependencies:
 
-| Package         | Version         | License        | Reason to track                                                      |
-| --------------- | --------------- | -------------- | -------------------------------------------------------------------- |
-| `adm-zip`       | 0.5.18          | MIT            | Pulled by `onnxruntime-node`; keep in dependency/security follow-up. |
-| `argparse`      | 2.0.1           | Python-2.0     | Transitive parser dependency used by the update runtime closure.     |
-| `global-agent`  | 4.1.3           | BSD-3-Clause   | Transitive dependency in the production closure.                     |
-| `human-signals` | 5.0.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
-| `sax`           | 1.6.1           | BlueOak-1.0.0  | Direct runtime XML parser for bounded provider TTML.                 |
-| `web-worker`    | 1.5.0           | Apache-2.0     | Transitive dependency in the production closure.                     |
-| `type-fest`     | 0.20.2 / 4.41.0 | MIT OR CC0-1.0 | Dual-licensed transitive dependency.                                 |
+| Package                                  | Version         | License        | Reason to track                                                                 |
+| ---------------------------------------- | --------------- | -------------- | ------------------------------------------------------------------------------- |
+| `adm-zip`                                | 0.5.18          | MIT            | Pulled by `onnxruntime-node`; keep in dependency/security follow-up.            |
+| `argparse`                               | 2.0.1           | Python-2.0     | Transitive parser dependency used by the update runtime closure.                |
+| `global-agent`                           | 4.1.3           | BSD-3-Clause   | Transitive dependency in the production closure.                                |
+| `human-signals`                          | 5.0.0           | Apache-2.0     | Transitive dependency in the production closure.                                |
+| `sax`                                    | 1.6.1           | BlueOak-1.0.0  | Direct runtime XML parser for bounded provider TTML.                            |
+| `web-worker`                             | 1.5.0           | Apache-2.0     | Transitive dependency in the production closure.                                |
+| `type-fest`                              | 0.20.2 / 4.41.0 | MIT OR CC0-1.0 | Dual-licensed transitive dependency.                                            |
+| `@napolab/texture-bridge` / `neverthrow` | 0.15.0 / 8.2.0  | MIT            | Native Spout binding and bounded result helper used by the experimental sender. |
+
+The Windows texture-bridge binding incorporates Spout2／SpoutDX under the
+BSD-2-Clause license and ships its full `THIRD-PARTY-NOTICES` beside the native
+module in `app.asar.unpacked`. The package notice identifies Lynn Jarvis as the
+Spout2 copyright holder. Utawakui does not bundle Shoost or an OBS Spout plugin.
 
 ## Browser-Delivered Dependencies
 
@@ -114,6 +122,8 @@ Before publishing a binary release:
   `mecab-ipadic-2.7.0-20070801` notice.
 - Preserve `opencc-js`'s MIT license and its Apache-2.0
   `THIRD_PARTY_LICENSES.md` notice for generated OpenCC dictionary data.
+- Preserve the texture-bridge MIT license and its native binding's complete
+  Spout2／SpoutDX BSD-2-Clause `THIRD-PARTY-NOTICES` file.
 - Confirm MPL-covered SoundTouchJS source availability for the exact bundled
   versions, especially if any local modifications are made.
 - Re-check app-managed FFmpeg, yt-dlp, bgutil, Python, and UVR model license

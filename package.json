@@ -6,7 +6,7 @@
   "license": "UNLICENSED",
   "private": true,
   "packageManager": "npm@11.12.1",
-  "main": "electron/main.js",
+  "main": "electron/entry.js",
   "scripts": {
     "dev": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron . --dev\"",
     "dev:tools": "concurrently -k \"vite\" \"wait-on http://localhost:5173 && electron . --dev --devtools\"",
@@ -83,6 +83,7 @@
     "node": ">=24.0.0"
   },
   "dependencies": {
+    "@napolab/texture-bridge-core": "0.15.0",
     "electron-updater": "6.8.9",
     "gsap": "^3.13.0",
     "js-yaml": "5.2.2",

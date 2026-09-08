@@ -129,6 +129,16 @@ contextBridge.exposeInMainWorld('Utawakui', {
   suggestOutputPorts: () => ipcRenderer.invoke('output:suggest-ports'),
   startOutput: () => ipcRenderer.invoke('output:start'),
   stopOutput: () => ipcRenderer.invoke('output:stop'),
+  getSpoutOutputStatus: () => ipcRenderer.invoke('spout-output:get-status'),
+  setSpoutOutputFrameRateProfile: (frameRateProfile) =>
+    ipcRenderer.invoke('spout-output:set-frame-rate-profile', frameRateProfile),
+  startSpoutOutput: () => ipcRenderer.invoke('spout-output:start'),
+  stopSpoutOutput: () => ipcRenderer.invoke('spout-output:stop'),
+  onSpoutOutputStatus: (callback) => {
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on('spout-output:status', listener);
+    return () => ipcRenderer.removeListener('spout-output:status', listener);
+  },
   publishOutputSnapshot: (snapshot) =>
     ipcRenderer.invoke('output:publish', snapshot),
   copyOutputUrl: (kind) => ipcRenderer.invoke('output:copy-url', kind),

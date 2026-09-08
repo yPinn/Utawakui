@@ -116,6 +116,10 @@ const MAIN_INVOKE_CHANNELS = [
   'separation:run',
   'separation:select',
   'shell:open-external',
+  'spout-output:get-status',
+  'spout-output:set-frame-rate-profile',
+  'spout-output:start',
+  'spout-output:stop',
   'yt:download-audio',
   'yt:fetch-metadata',
   'yt:fetch-playlist',
@@ -135,6 +139,7 @@ const MAIN_EVENT_CHANNELS = [
   'performer-view:status',
   'player:command',
   'separation:progress',
+  'spout-output:status',
   'ui-density:changed',
 ].sort();
 

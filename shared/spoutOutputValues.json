@@ -1,0 +1,19 @@
+{
+  "contractVersion": 1,
+  "helperArgument": "--utawakui-spout-helper",
+  "defaultFrameRateProfile": "standard",
+  "frameRateProfiles": {
+    "reduced": 30,
+    "standard": 60
+  },
+  "surface": {
+    "kind": "lyrics",
+    "senderName": "Utawakui.Lyrics",
+    "width": 1920,
+    "height": 1080,
+    "framesPerSecond": 60,
+    "pixelFormat": "bgra8",
+    "alphaMode": "premultiplied",
+    "colorSpace": "srgb-sdr"
+  }
+}

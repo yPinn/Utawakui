@@ -82,6 +82,9 @@ asarUnpack:
   # koroman (Stage 5c, Korean romanization) is tiny (~40KB, zero deps) but
   # still needs to resolve from real disk, not just inside asar.
   - node_modules/koroman/**/*
+  # Spout2 shared-texture sender is loaded only by the isolated helper process.
+  # Its platform binding and DLL dependencies must resolve from the real disk.
+  - node_modules/@napolab/texture-bridge*/**/*
 
 # App-owned host and Refined policy workers only. The independent Python/PyTorch
 # runtime and every model remain explicit, removable downloads under userData;

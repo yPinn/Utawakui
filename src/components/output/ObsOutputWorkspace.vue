@@ -2,6 +2,7 @@
 import { computed, onMounted, reactive, watch } from 'vue';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
+import { useSpoutOutput } from '../../composables/output/useSpoutOutput.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputSettings from './ObsOutputSettings.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
@@ -61,6 +62,13 @@ const {
   saveTemplateSelection,
   updateSettings,
 } = useOutputRuntimeContext();
+const {
+  state: spoutState,
+  refresh: refreshSpoutStatus,
+  setFrameRateProfile: setSpoutFrameRateProfile,
+  start: startSpoutOutput,
+  stop: stopSpoutOutput,
+} = useSpoutOutput();
 
 const browsedPreset = computed(
   () =>
@@ -153,6 +161,7 @@ async function saveRuntimeSettings(settings) {
 onMounted(async () => {
   await initializeOutput();
   await refreshOutputStatus();
+  await refreshSpoutStatus();
   await loadSlots(props.slotDefaults);
   await refreshProjection();
 });
@@ -232,9 +241,19 @@ onMounted(async () => {
         :suggested-ports="outputState.suggestedPorts"
         :busy="runtimeBusy"
         :error="outputState.error"
+        :spout-status="spoutState.status"
+        :spout-busy="
+          spoutState.isConfiguring ||
+          spoutState.isStarting ||
+          spoutState.isStopping
+        "
+        :spout-error="spoutState.error"
         @save="saveRuntimeSettings"
         @start="startOutput"
         @stop="stopOutput"
+        @spout-start="startSpoutOutput"
+        @spout-stop="stopSpoutOutput"
+        @spout-set-frame-rate-profile="setSpoutFrameRateProfile"
       />
     </section>
   </div>

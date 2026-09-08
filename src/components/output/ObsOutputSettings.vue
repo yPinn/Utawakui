@@ -17,6 +17,7 @@ import SettingsBlock from '../settings/SettingsBlock.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
+import ObsSpoutOutputSettings from './ObsSpoutOutputSettings.vue';
 
 const props = defineProps({
   status: { type: Object, default: () => ({ running: false }) },
@@ -31,9 +32,19 @@ const props = defineProps({
   suggestedPorts: { type: Array, default: () => [] },
   busy: { type: Boolean, default: false },
   error: { type: String, default: '' },
+  spoutStatus: { type: Object, default: () => ({}) },
+  spoutBusy: { type: Boolean, default: false },
+  spoutError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['save', 'start', 'stop']);
+const emit = defineEmits([
+  'save',
+  'start',
+  'stop',
+  'spout-start',
+  'spout-stop',
+  'spout-set-frame-rate-profile',
+]);
 const draftAutoStart = shallowRef(props.settings.autoStart);
 const draftPort = shallowRef(props.settings.port);
 const draftDisplayDelayMs = shallowRef(
@@ -258,6 +269,15 @@ function chooseSuggestedPort(port) {
           </UiButton>
         </div>
       </SettingsBlock>
+
+      <ObsSpoutOutputSettings
+        :status="spoutStatus"
+        :busy="spoutBusy"
+        :error="spoutError"
+        @start="emit('spout-start')"
+        @stop="emit('spout-stop')"
+        @set-frame-rate-profile="emit('spout-set-frame-rate-profile', $event)"
+      />
     </div>
 
     <UiNotice

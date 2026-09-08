@@ -109,6 +109,11 @@ const {
   registerOutputRuntimeLifecycle,
 } = require('./main/outputRuntime');
 const { registerOutputHandlers } = require('./main/outputHandlers');
+const {
+  createSpoutHelperLaunch,
+  createSpoutOutputRuntime,
+} = require('./main/spoutOutputRuntime');
+const { registerSpoutOutputHandlers } = require('./main/spoutOutputHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
 const {
@@ -182,6 +187,7 @@ startupTrace.record('process-start', { atUnixMs: performance.timeOrigin });
 
 let performerWindowManager = null;
 let outputRuntimeController = null;
+let spoutOutputRuntimeController = null;
 let heavyJobScheduler = null;
 const startupTraceProbe = startupTrace.enabled
   ? createStartupTraceProbe({ BrowserWindow })
@@ -396,6 +402,25 @@ if (!gotSingleInstanceLock) {
       recordOverlayMilestone: startupTrace.enabled
         ? recordOverlayMilestone
         : null,
+      beforeStop: () => spoutOutputRuntimeController?.stop(),
+      logger: runtimeDiagnosticsLogger,
+    });
+    spoutOutputRuntimeController = createSpoutOutputRuntime({
+      outputRuntime: outputRuntimeController,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+      resolveLaunch: () =>
+        createSpoutHelperLaunch({
+          execPath: process.execPath,
+          appPath: app.getAppPath(),
+          packaged: isPackagedRuntime,
+        }),
+      onStatusChange: (status) => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow?.isDestroyed()) {
+          mainWindow.webContents.send('spout-output:status', status);
+        }
+      },
       logger: runtimeDiagnosticsLogger,
     });
     registerOutputRuntimeLifecycle({
@@ -468,6 +493,12 @@ if (!gotSingleInstanceLock) {
       resolveDownloadDir: configState.resolveDownloadDir,
       writeClipboardText: (value) => clipboard.writeText(value),
       logger: runtimeDiagnosticsLogger,
+    });
+    registerSpoutOutputHandlers({
+      ipcMain,
+      runtime: spoutOutputRuntimeController,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
     });
 
     performerWindowManager = createPerformerWindowManager({
