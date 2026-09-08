@@ -24,10 +24,11 @@ env:
 jobs:
   validate:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     outputs:
       version: ${{ steps.release-version.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: ${{ env.RELEASE_TAG }}
@@ -38,14 +39,17 @@ jobs:
           git merge-base --is-ancestor HEAD origin/main
 
       - name: Gitleaks secret scan
-        uses: docker://ghcr.io/gitleaks/gitleaks:latest
+        uses: docker://ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f # v8.30.1
         with:
           args: detect --source . --verbose --redact
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           cache: npm
+
+      - name: Dependency audit
+        run: npm audit --audit-level=critical
 
       - run: npm ci
 
@@ -56,9 +60,6 @@ jobs:
             --tag "$RELEASE_TAG" \
             --notes "docs/releases/$RELEASE_TAG.md")"
           echo "version=$version" >> "$GITHUB_OUTPUT"
-
-      - name: Dependency audit
-        run: npm audit --audit-level=critical
 
       - name: License inventory
         run: npm run license:inventory
@@ -71,25 +72,27 @@ jobs:
       - run: npm run build
 
       - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v7
+        if: failure()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: public-test-coverage-${{ env.RELEASE_TAG }}
           path: coverage/
           if-no-files-found: ignore
+          retention-days: 7
 
   package:
     needs: validate
     runs-on: windows-latest
+    timeout-minutes: 20
     env:
       RELEASE_VERSION: ${{ needs.validate.outputs.version }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
           ref: ${{ env.RELEASE_TAG }}
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           cache: npm
@@ -114,7 +117,7 @@ jobs:
         run: ./scripts/verify-unsigned-windows-package.ps1 -Version $env:RELEASE_VERSION -WriteChecksum
 
       - name: Upload unsigned test bundle
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: utawakui-${{ env.RELEASE_VERSION }}-unsigned-test
           path: |
@@ -124,4 +127,4 @@ jobs:
             release/SHA256SUMS.txt
             docs/releases/${{ env.RELEASE_TAG }}.md
           if-no-files-found: error
-          retention-days: 14
+          retention-days: 7

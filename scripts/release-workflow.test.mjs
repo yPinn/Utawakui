@@ -75,7 +75,7 @@ describe('release workflow', () => {
     expect(builder.win.verifyUpdateCodeSignature).toBe(false);
   });
 
-  it('uses Node 24 actions and project runtime in CI and release jobs', () => {
+  it('pins Node 24 actions and Gitleaks to immutable references', () => {
     for (const filename of [
       'ci.yml',
       'public-test-release.yml',
@@ -86,15 +86,25 @@ describe('release workflow', () => {
         'utf8',
       );
 
-      expect(workflowText).not.toMatch(/actions\/(checkout|setup-node)@v4/);
-      expect(workflowText).not.toContain('actions/upload-artifact@v4');
-      expect(workflowText).toMatch(/actions\/checkout@v7/);
-      expect(workflowText).toMatch(/actions\/setup-node@v7/);
-      expect(workflowText).toMatch(/actions\/upload-artifact@v7/);
+      expect(workflowText).toMatch(
+        /uses:\s+actions\/checkout@[a-f0-9]{40}\s+# v7/u,
+      );
+      expect(workflowText).toMatch(
+        /uses:\s+actions\/setup-node@[a-f0-9]{40}\s+# v7/u,
+      );
+      expect(workflowText).toMatch(
+        /uses:\s+actions\/upload-artifact@[a-f0-9]{40}\s+# v7/u,
+      );
+      expect(workflowText).toMatch(
+        /uses:\s+docker:\/\/ghcr\.io\/gitleaks\/gitleaks:v\d+\.\d+\.\d+@sha256:[a-f0-9]{64}\s+# v\d+\.\d+\.\d+/u,
+      );
+      expect(workflowText).not.toContain('gitleaks:latest');
 
       const workflow = readWorkflow(filename);
       const setupSteps = Object.values(workflow.jobs).flatMap((job) =>
-        job.steps.filter((step) => step.uses === 'actions/setup-node@v7'),
+        job.steps.filter((step) =>
+          step.uses?.startsWith('actions/setup-node@'),
+        ),
       );
       expect(setupSteps.length).toBeGreaterThan(0);
       expect(setupSteps.every((step) => step.with['node-version'] === 24)).toBe(
@@ -150,9 +160,17 @@ describe('release workflow', () => {
   it('keeps public releases manual and routes tags to unsigned review builds', () => {
     const releaseWorkflow = readWorkflow();
     const testWorkflow = readWorkflow('public-test-release.yml');
+    const validateSteps = releaseWorkflow.jobs.validate.steps;
+    const guardStep = validateSteps[0];
 
     expect(releaseWorkflow.on).not.toHaveProperty('push');
     expect(releaseWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
+    expect(guardStep.name).toBe('Require workflow dispatched from release tag');
+    expect(JSON.stringify(guardStep)).toContain('github.ref_type');
+    expect(JSON.stringify(guardStep)).toContain('github.ref_name');
+    expect(
+      validateSteps.findIndex((step) => step.uses?.includes('checkout')),
+    ).toBe(1);
     expect(testWorkflow.on.push.tags).toEqual(['v*.*.*']);
     expect(testWorkflow.on.workflow_dispatch.inputs.tag.required).toBe(true);
     expect(testWorkflow.jobs.package.needs).toBe('validate');
@@ -180,5 +198,39 @@ describe('release workflow', () => {
     expect(uploadStep.with.path).toContain('SHA256SUMS.txt');
     expect(uploadStep.with.path).toContain('latest.yml');
     expect(uploadStep.with.path).toContain('.blockmap');
+    expect(uploadStep.with['retention-days']).toBe(7);
+  });
+
+  it('bounds release jobs and retains only short-lived failure diagnostics', () => {
+    for (const filename of ['public-test-release.yml', 'release.yml']) {
+      const workflow = readWorkflow(filename);
+
+      for (const job of Object.values(workflow.jobs)) {
+        expect(job['timeout-minutes']).toBeLessThanOrEqual(
+          job['runs-on'] === 'windows-latest' ? 20 : 15,
+        );
+      }
+
+      const coverageStep = workflow.jobs.validate.steps.find((step) =>
+        step.uses?.startsWith('actions/upload-artifact@'),
+      );
+      expect(coverageStep.if).toContain('failure()');
+      expect(coverageStep.with['retention-days']).toBe(7);
+    }
+
+    const releaseWorkflow = readWorkflow();
+    const packageSteps = releaseWorkflow.jobs.package.steps;
+    const publishIndex = packageSteps.findIndex(
+      (step) => step.name === 'Create or update public draft release',
+    );
+    const recoveryIndex = packageSteps.findIndex(
+      (step) => step.name === 'Upload failed release recovery bundle',
+    );
+    const recoveryStep = packageSteps[recoveryIndex];
+
+    expect(recoveryIndex).toBeGreaterThan(publishIndex);
+    expect(recoveryStep.if).toContain('failure()');
+    expect(recoveryStep.with['retention-days']).toBe(3);
+    expect(recoveryStep.with['if-no-files-found']).toBe('ignore');
   });
 });

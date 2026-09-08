@@ -48,13 +48,18 @@ Windows packaging is configured in `electron-builder.yml`.
   `RMDir /r /REBOOTOK`, so locked folders may finish deleting after a reboot.
 - Installer copy discloses that advanced features are enabled and prepared from
   Settings. The uninstaller welcome page explains that data cleanup is opt-in.
-- Pull requests and `main` pushes run the ordinary Ubuntu quality gate before a
-  GitHub-hosted Windows job builds the complete unsigned NSIS/update bundle.
+- Pull requests and `main` pushes always run the ordinary Ubuntu preflight. Draft
+  and documentation-only pull requests stop there; ready code pull requests run
+  tests without coverage, while `main` and manual runs retain coverage. A
+  GitHub-hosted Windows job builds the complete unsigned NSIS/update bundle only
+  for manual runs and package-sensitive changes.
   `scripts/verify-unsigned-windows-package.ps1` is the shared verifier for PR,
   tag-review, and public-draft packaging; it checks `NotSigned` status, packaged
   version/notices, blockmap, and `latest.yml`. PR packages are ephemeral and are
   neither uploaded nor published; tag/release workflows additionally use the
-  verifier to write `SHA256SUMS.txt`.
+  verifier to write `SHA256SUMS.txt`. Public-test bundles expire after 7 days. A
+  successful public draft is not duplicated in private Actions storage; a failed
+  release recovery bundle expires after 3 days.
 
 The `electron.exe` filename is intentional. See
 `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`.
