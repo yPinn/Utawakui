@@ -248,8 +248,8 @@ const CANDIDATE_ROWS = DENSITY_CONTRACTS.map((contract) => ({
   <div class="demo-density">
     <p class="demo-density__note">
       <strong>兩段密度只做離散映射，不隨視窗連續縮放。</strong>
-      Standard 是預設候選密度；Compact 是離散候選映射。實際切換條件留到 View
-      階段依容器與內容下限決定，Live／緊急操作維持固定安全下限。
+      視窗化／還原使用 Compact；最大化／全螢幕使用 Standard。內容不足仍由 parent
+      reflow，Live／緊急操作維持固定安全下限。
     </p>
 
     <section

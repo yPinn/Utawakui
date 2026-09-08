@@ -135,6 +135,7 @@ const MAIN_EVENT_CHANNELS = [
   'performer-view:status',
   'player:command',
   'separation:progress',
+  'ui-density:changed',
 ].sort();
 
 async function loadBridge(modulePath, worldName, args = []) {
@@ -174,11 +175,13 @@ describe('main preload bridge', () => {
   it('parses only bounded initial renderer arguments', async () => {
     const defaults = await loadBridge('./preload.js', 'Utawakui', [
       '--ui-theme=unknown',
+      '--ui-density=dense',
       '--sidebar-width=Infinity',
       '--capture-device-id=',
     ]);
     expect(defaults).toMatchObject({
       initialUiTheme: 'dark',
+      initialUiDensity: 'compact',
       initialSidebarWidth: 256,
       initialCaptureDeviceId: null,
       startupTraceEnabled: false,
@@ -186,16 +189,39 @@ describe('main preload bridge', () => {
 
     const configured = await loadBridge('./preload.js', 'Utawakui', [
       '--ui-theme=light',
+      '--ui-density=standard',
       '--sidebar-width=320',
       '--capture-device-id=device-1',
       '--startup-trace-enabled=1',
     ]);
     expect(configured).toMatchObject({
       initialUiTheme: 'light',
+      initialUiDensity: 'standard',
       initialSidebarWidth: 320,
       initialCaptureDeviceId: 'device-1',
       startupTraceEnabled: true,
     });
+  });
+
+  it('forwards only the bounded density payload from the fixed event channel', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const callback = vi.fn();
+    const cleanup = bridge.onUiDensityChanged(callback);
+    const listener = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'ui-density:changed',
+    )[1];
+
+    listener({ sender: 'private-web-contents' }, 'wide');
+    expect(callback).not.toHaveBeenCalled();
+
+    listener({ sender: 'private-web-contents' }, 'standard');
+    expect(callback).toHaveBeenCalledWith('standard');
+
+    cleanup();
+    expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
+      'ui-density:changed',
+      listener,
+    );
   });
 
   it('forwards the canonical lyrics identity when loading a reading', async () => {

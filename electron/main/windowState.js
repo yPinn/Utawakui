@@ -17,6 +17,8 @@ const { readDeveloperOptions } = require('./runtimeEnvironment');
 // see main.js's own comment — so it can't import this module that early).
 const APP_NAME = 'Utawakui';
 const BASE_APP_USER_MODEL_ID = 'com.utawakui.app';
+const UI_DENSITY_COMPACT = 'compact';
+const UI_DENSITY_STANDARD = 'standard';
 const { isDev, openDevTools } = readDeveloperOptions(process.argv);
 
 const iconPath = path.join(
@@ -184,17 +186,46 @@ function createMainWindow(
       sandbox: true,
       backgroundThrottling: false,
       // Lets preload's initialUiTheme/initialSidebarWidth/
-      // initialCaptureDeviceId read these synchronously, so the first frame
-      // paints the right palette/sidebar width and useAudioOutput.js can
-      // apply the persisted capture device without an async round trip.
+      // initialCaptureDeviceId/initialUiDensity read these synchronously, so
+      // the first frame paints the right palette, dimensions and sidebar
+      // width and useAudioOutput.js can apply the persisted capture device
+      // without an async round trip. New windows always begin restored.
       additionalArguments: [
         `--ui-theme=${initialTheme}`,
+        `--ui-density=${UI_DENSITY_COMPACT}`,
         `--sidebar-width=${initialSidebarWidth}`,
         `--capture-device-id=${initialCaptureDeviceId ?? ''}`,
         ...(options.startupTraceEnabled ? ['--startup-trace-enabled=1'] : []),
         ...(isDev ? ['--internal-workbenches-enabled=1'] : []),
       ],
     },
+  });
+
+  let currentUiDensity = UI_DENSITY_COMPACT;
+  let isMaximized = false;
+  let isFullScreen = false;
+  const publishUiDensity = () => {
+    const nextUiDensity =
+      isMaximized || isFullScreen ? UI_DENSITY_STANDARD : UI_DENSITY_COMPACT;
+    if (nextUiDensity === currentUiDensity) return;
+    currentUiDensity = nextUiDensity;
+    mainWindow.webContents.send('ui-density:changed', nextUiDensity);
+  };
+  mainWindow.on('maximize', () => {
+    isMaximized = true;
+    publishUiDensity();
+  });
+  mainWindow.on('unmaximize', () => {
+    isMaximized = false;
+    publishUiDensity();
+  });
+  mainWindow.on('enter-full-screen', () => {
+    isFullScreen = true;
+    publishUiDensity();
+  });
+  mainWindow.on('leave-full-screen', () => {
+    isFullScreen = false;
+    publishUiDensity();
   });
 
   if (process.platform === 'win32') {

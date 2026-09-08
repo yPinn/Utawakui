@@ -10,6 +10,14 @@ function readInitialUiTheme() {
   return theme === 'light' ? 'light' : 'dark';
 }
 
+// BrowserWindow starts restored, so main can synchronously seed compact before
+// the renderer's first frame; later native window-state events update it.
+function readInitialUiDensity() {
+  const arg = process.argv.find((a) => a.startsWith('--ui-density='));
+  const density = arg ? arg.slice('--ui-density='.length) : 'compact';
+  return density === 'standard' ? 'standard' : 'compact';
+}
+
 // Same synchronous-first-paint reasoning as readInitialUiTheme above.
 function readInitialSidebarWidth() {
   const arg = process.argv.find((a) => a.startsWith('--sidebar-width='));
@@ -69,6 +77,14 @@ contextBridge.exposeInMainWorld('Utawakui', {
     return () => ipcRenderer.removeListener('app-update:status', listener);
   },
   initialUiTheme: readInitialUiTheme(),
+  initialUiDensity: readInitialUiDensity(),
+  onUiDensityChanged: (callback) => {
+    const listener = (event, density) => {
+      if (density === 'compact' || density === 'standard') callback(density);
+    };
+    ipcRenderer.on('ui-density:changed', listener);
+    return () => ipcRenderer.removeListener('ui-density:changed', listener);
+  },
   getUiTheme: () => ipcRenderer.invoke('config:get-ui-theme'),
   setUiTheme: (theme) => ipcRenderer.invoke('config:set-ui-theme', theme),
   initialSidebarWidth: readInitialSidebarWidth(),

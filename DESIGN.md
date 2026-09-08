@@ -381,6 +381,15 @@ because they are brand／art surfaces, not control-panel components.
 
 Density decisions:
 
+The desktop shell projects one explicit density value onto the document root.
+A restored／windowed `BrowserWindow` uses `data-ui-density="compact"`; maximized
+and full-screen states use `data-ui-density="standard"`. Electron native window
+state is authoritative: manual resizing does not switch density, and CSS viewport
+or media queries must not guess it. The active production tokens intentionally do
+not consume this attribute yet; only Token v2 surfaces that explicitly opt into
+`data-ui-system="v2"` remap their dimensions. Content-driven responsive reflow
+remains a separate parent-layout responsibility.
+
 | Surface                     | Direction | Rule                                                        |
 | --------------------------- | --------- | ----------------------------------------------------------- |
 | Playlist sidebar            | Spotify   | Compact rows, clear selected state, no large cards.         |

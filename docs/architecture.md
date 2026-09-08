@@ -19,6 +19,13 @@ contracts 與 tests 管理。
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
 隱藏依賴，也不彼此直接協調；跨 domain 流程由 composition root 建立的 service 負責。
 
+主視窗 density 由 `electron/main/windowState.js` 的原生 `BrowserWindow` 狀態擁有：
+windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`。初始 bounded 值
+經 `additionalArguments` 同步提供給 preload，後續只透過固定 `ui-density:changed` channel
+更新；`src/composables/useUiDensity.js` 驗證後寫入 document root。Renderer 不取得
+`BrowserWindow`、不依 viewport 猜測狀態。現行 active tokens 不消費 density attribute，
+只有 opt-in Token v2 surface 會改變尺寸，因此此投影不代表 production Token v2 adoption。
+
 Machine config、feature confirmation 與 external navigation 分別由獨立 handler registrar
 持有。Renderer 開啟固定說明頁面時只提交 allowlisted target id；provider discovery 則只提交
 bounded query，由 `providerDiscoveryHandlers.js` 在 main 建立固定 YT Music search URL 並重查

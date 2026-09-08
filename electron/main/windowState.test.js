@@ -8,6 +8,8 @@ function createWindowDouble() {
   const windowListeners = new Map();
   const webContentsListeners = new Map();
   let windowOpenHandler = null;
+  let maximized = false;
+  let fullScreen = false;
   const webContents = {
     getURL: vi.fn(() => 'file:///app/dist/index.html'),
     on: vi.fn((event, callback) => webContentsListeners.set(event, callback)),
@@ -20,6 +22,8 @@ function createWindowDouble() {
   const win = {
     loadFile: vi.fn(),
     loadURL: vi.fn(),
+    isFullScreen: vi.fn(() => fullScreen),
+    isMaximized: vi.fn(() => maximized),
     on: vi.fn((event, callback) => windowListeners.set(event, callback)),
     once: vi.fn((event, callback) => windowListeners.set(event, callback)),
     setAppDetails: vi.fn(),
@@ -33,6 +37,12 @@ function createWindowDouble() {
     webContentsListeners,
     windowListeners,
     getWindowOpenHandler: () => windowOpenHandler,
+    setFullScreen: (value) => {
+      fullScreen = value;
+    },
+    setMaximized: (value) => {
+      maximized = value;
+    },
     win,
   };
 }
@@ -119,6 +129,7 @@ describe('windowState security boundary', () => {
         backgroundThrottling: false,
         additionalArguments: [
           '--ui-theme=light',
+          '--ui-density=compact',
           '--sidebar-width=320',
           '--capture-device-id=capture-device',
           '--startup-trace-enabled=1',
@@ -137,6 +148,43 @@ describe('windowState security boundary', () => {
         appId: 'com.utawakui.app',
         relaunchDisplayName: 'Utawakui',
       }),
+    );
+  });
+
+  it('projects compact for windowed mode and standard for maximized or full-screen mode', async () => {
+    const { module, windowDouble } = await loadWindowState();
+    module.createMainWindow();
+    const { webContents } = windowDouble.win;
+
+    // Electron may still expose the previous getter value while dispatching
+    // the native transition event. The event itself is authoritative.
+    windowDouble.windowListeners.get('maximize')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'ui-density:changed',
+      'standard',
+    );
+
+    windowDouble.windowListeners.get('maximize')();
+    expect(webContents.send).toHaveBeenCalledTimes(1);
+
+    windowDouble.setMaximized(true);
+    windowDouble.windowListeners.get('unmaximize')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'ui-density:changed',
+      'compact',
+    );
+
+    windowDouble.windowListeners.get('enter-full-screen')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'ui-density:changed',
+      'standard',
+    );
+
+    windowDouble.setFullScreen(true);
+    windowDouble.windowListeners.get('leave-full-screen')();
+    expect(webContents.send).toHaveBeenLastCalledWith(
+      'ui-density:changed',
+      'compact',
     );
   });
 

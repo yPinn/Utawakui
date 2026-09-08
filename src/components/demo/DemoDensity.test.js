@@ -128,9 +128,11 @@ describe('DemoDensity', () => {
   it('shows the complete candidate matrix in CSS px rather than DIP', async () => {
     const html = await renderToString(createSSRApp(DemoDensity));
 
-    expect(html).toContain('Standard 是預設候選密度');
-    expect(html).toContain('Compact 是離散候選映射');
+    expect(html).toContain('視窗化／還原使用 Compact');
+    expect(html).toContain('最大化／全螢幕使用 Standard');
+    expect(html).toContain('內容不足仍由 parent reflow');
     expect(html).toContain('Live／緊急操作維持固定安全下限');
+    expect(html).not.toContain('切換條件留到 View 階段');
     expect(html).toContain('data-density-reference="candidate"');
     expect(html).not.toContain('DIP');
     expect(html).not.toContain('1440 × 810');

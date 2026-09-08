@@ -22,6 +22,7 @@ import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import { useVisualSystemMode } from './composables/useVisualSystemMode.js';
 import { useTheme } from './composables/useTheme.js';
+import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
@@ -93,6 +94,7 @@ useTaskbarControls();
 useWindowTitle();
 useMediaSession();
 useTheme();
+useUiDensity();
 // Restores the persisted capture device (see usePlayer.js's capture chain)
 // before any track can play — same "kick off the module-load side effect
 // once" reasoning as useTheme() above.
