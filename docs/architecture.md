@@ -14,6 +14,7 @@ contracts 與 tests 管理。
 | Renderer (`src/`)                     | Vue UI、interaction、player／queue／lyrics owners                                           | Node／Electron import、dependency URL、model 或 executable path |
 | Shared (`shared/`)                    | Scalar JSON contracts 與純 cross-runtime presentation projections                           | Filesystem、Electron、browser globals、mutable service state    |
 | Browser Source (`overlay/`)           | OBS delivery adapters、DOM rendering 與獨立 visual tokens                                   | Control-panel tokens、canonical product-state ownership         |
+| Spout helper (`electron/entry.js`)    | Windows offscreen Lyrics surface、native Spout sender、texture release                      | Core state、renderer IPC、Spout receiver ownership              |
 
 `electron/main.js` 是 composition root：設定 app identity、註冊 privileged scheme、建立
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
@@ -257,6 +258,8 @@ delivery ownership；`electron/lib/outputServer/http.js` 是獨立的唯讀 HTTP
 持有 exact static/artwork route、asset cache、security headers 與 bounded startup telemetry。
 HTTP plane 只透過具名 getter 讀取 canonical snapshot／client count，不 import `ws`、delivery
 queue 或 mutable projection state。
+
+Spout2 重用 canonical Lyrics route。Main 推導固定 surface／loopback URL、重新檢查 gate 並監督 helper；helper 才載入 native bridge、擁有 sandboxed offscreen BrowserWindow／sender、驗證 shared texture 並釋放每個 frame。Renderer IPC 只有 status、30／60 FPS intent、start 與 stop。名稱碰撞、連續 texture defect 或 renderer failure 都回傳 bounded error；`sending` 只代表首幀已送入 sender。Browser Source 獨立運作，Output server 重建前會先停止 helper。
 
 ## 錯誤與 Diagnostics
 

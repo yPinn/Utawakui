@@ -2,9 +2,10 @@
 
 ## Status
 
-Accepted for planning on 2026-08-23. OBS Browser Source remains the only current
-public integration. No OBS WebSocket, VTube Studio, VMC/OSC, Shoost, or Spout2
-adapter is implemented by this decision.
+Accepted on 2026-08-23 and amended on 2026-09-08. OBS Browser Source remains the
+supported baseline. Windows x64 now has an explicitly started experimental
+Spout2 Lyrics sender; receiver, alpha, GPU, recovery, and installed acceptance
+remain required before support. No external control adapter is added here.
 
 ## Context
 
@@ -122,13 +123,20 @@ Utawakui Browser Source ----------> OBS
 OBS remains the final compositor. This requires no direct Shoost integration and
 lets users independently position karaoke UI and processed avatar video.
 
-Direct `Utawakui -> Spout2 -> compatible receiver/OBS` is deferred until users
-demonstrate a workflow that Browser Source or transparent capture cannot satisfy.
-Receiver compatibility, including any proposed effects compositor, must be proven
-before naming it as supported. Spout2 is a Windows GPU shared-texture path that
-requires a native helper/addon, alpha/color-space handling, device compatibility,
-context-loss recovery, packaging review, and measured GPU cost. It cannot be
-introduced as a small JavaScript transport change.
+The accepted experimental workflow is receiver-neutral:
+
+```text
+Utawakui -> Spout2 -> compatible receiver/filter -> downstream compositor
+```
+
+Utawakui publishes one fixed, session-only `Utawakui.Lyrics` surface through an
+isolated Electron helper. Main owns the gate, derived route, fixed configuration
+and lifecycle; renderer intent is limited to 30／60 FPS, start and stop. Helper
+failure cannot stop Browser Source, and ready state never claims receiver state.
+
+Promotion requires real receiver verification of premultiplied alpha, sRGB SDR,
+same/cross-GPU behavior, restart and device-loss recovery, installed cleanup and
+measured cost. The native dependency remains pinned and unpacked for review.
 
 ### Keep VMC/OSC optional and semantically narrow
 
@@ -167,8 +175,8 @@ The evolving port, lifecycle, event, and command contract lives in
 - OBS and VTube Studio are the first plausible adapters, but neither blocks core
   Lyrics or Overlay use.
 - VBridger works through coexistence rather than competing tracking ownership.
-- Shoost parallel composition and a separate future Spout2 plane remain possible;
-  native packaging cost stays isolated and evidence-gated.
+- Shoost parallel composition remains supported through OBS; the experimental
+  Spout2 plane is isolated and evidence-gated until real receiver acceptance.
 - SDK adoption is thin and replaceable; vendor types never cross the adapter
   boundary.
 

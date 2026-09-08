@@ -63,6 +63,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   activation gate。
 - OBS Browser Source MVP 已具備三個固定 slot、Gallery、Workbench、Projection Hub
   與 content/state convergence；instance／pack model 仍是後續方向。
+- Windows x64 已有手動啟動的實驗性 Spout2 Lyrics sender；Browser Source 仍是支援基線，正式支援尚待實機相容性驗收。
 - Provider assist 已改為 app-managed Python `yt-dlp` runtime，且只存在於明確啟用的
   advanced flow。
 - Installer、startup trace、diagnostics 與 unsigned updater runtime 已建立；公開簽章
@@ -86,7 +87,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作         | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                              |
 | [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中               | 現行仍是三個固定 slot；instance／pack model 尚未交付。                                                                                        |
 | [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作           | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                         |
-| [0013](adr/0013-external-integration-planes.md)                        | 規劃中               | 目前只有 Browser Source；其他 adapters 尚未實作。                                                                                             |
+| [0013](adr/0013-external-integration-planes.md)                        | 部分實作             | Browser Source 是支援基線；Spout2 Lyrics sender 為 Windows x64 實驗性原型。                                                                   |
 | [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |
 | [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                   |
 

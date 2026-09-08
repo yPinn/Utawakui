@@ -2,9 +2,10 @@
 
 ## Status and scope
 
-Draft planning contract, 2026-08-23. It elaborates
-[ADR 0013](../adr/0013-external-integration-planes.md). No external adapter is
-currently implemented; OBS Browser Source remains the only supported integration.
+Active planning and experimental contract, amended 2026-09-08. It elaborates
+[ADR 0013](../adr/0013-external-integration-planes.md). OBS Browser Source remains
+the supported integration. The fixed Spout2 Lyrics sender described below is an
+implemented Windows x64 prototype, not yet a supported receiver integration.
 
 ## Architectural boundary
 
@@ -181,25 +182,46 @@ own plugin identity so VBridger and other plugins remain independent.
 - Lyrics, queue, and track metadata are not encoded as invented VMC messages.
 - Generic OSC cue mapping, if added, uses a separate namespace and contract.
 
-## Shoost and native video profile
+## Spout2 native video profile
 
-Default supported topology is parallel composition in OBS. No Shoost control API
-is assumed.
+The protocol topology does not assume a specific receiver:
 
-A future Spout2 sender is an optional Windows native-video adapter with a named
-surface and explicit pixel format, alpha mode, color space, resolution, and frame
-rate. It must define:
+```text
+Utawakui.Lyrics -> Spout2 -> compatible receiver/filter -> downstream compositor
+```
+
+The current prototype has this fixed contract:
+
+| Property   | Value                                      |
+| ---------- | ------------------------------------------ |
+| Platform   | Windows x64                                |
+| Sender     | `Utawakui.Lyrics`                          |
+| Surface    | 1920×1080, BGRA8, premultiplied alpha, SDR |
+| Color      | BT.709 primaries, sRGB transfer, full RGB  |
+| Frame rate | Session-only 30／60 FPS; default 60        |
+| Lifecycle  | Manual start／stop                         |
+
+Main derives the route, surface and helper launch. The isolated helper loads
+`@napolab/texture-bridge-core@0.15.0`, denies off-route capabilities, releases
+each Chromium texture, exits with its parent, and rejects name collisions,
+invalid surfaces, consecutive texture defects and renderer failure. `ready` means
+only that the first valid texture reached Spout.
+
+The npm tarball and integrity are pinned, but the upstream 0.15.0 publish did not
+record the exact Spout2 commit embedded in its Windows binding. A reproducible
+production release therefore requires upstream pinned provenance or a reviewed
+fork that fixes the Spout2 revision; the current binary remains prototype-only.
+
+Promotion still requires:
 
 - GPU-adapter compatibility and cross-GPU fallback;
 - context/device-loss recovery;
-- one producer per named surface and collision handling;
-- bounded frame queue and drop policy;
-- helper crash isolation and lifecycle cleanup;
-- signed/packaged native binary inventory and license review; and
-- measured cost alongside OBS, VTube Studio/VBridger, and any verified receiver.
+- sender-name collision races after the preflight registry check;
+- real receiver behavior under frame drops and static-content intervals;
+- packaged lifecycle cleanup and native provenance; and
+- measured cost against Browser Source.
 
-It is enabled only after a prototype proves that Browser Source or a transparent
-capture surface cannot satisfy the accepted user workflow.
+Browser Source remains independent if the helper fails.
 
 ## Testing and diagnostics
 

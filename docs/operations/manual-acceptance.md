@@ -52,6 +52,20 @@ not this UI checklist.
 - [ ] When M1／M2 analysis is available, verify Lyrics cues without regressing M0,
       pause, seek, reconnect, or reduced-motion fallback.
 
+## Spout2
+
+- [ ] On Windows x64, explicitly start the experimental sender and confirm a
+      compatible receiver lists exactly `Utawakui.Lyrics` at 1920×1080 and the
+      selected 30／60 FPS profile.
+- [ ] Verify the full sender／receiver／downstream chain with real Lyrics playback,
+      pause, seek, track change, and Output restart.
+- [ ] Inspect checker／dark／light backgrounds for transparent edges, premultiplied
+      alpha halos, channel order, color shift, vertical orientation, and frame size.
+- [ ] Exercise same-GPU and available cross-GPU paths, receiver restart, helper crash,
+      display/GPU reset, sender-name collision, and repeated start／stop recovery.
+- [ ] Compare idle and active CPU／GPU／memory against the Browser Source baseline;
+      confirm closing Utawakui leaves no helper process or named sender.
+
 ## Packaged Windows
 
 - [ ] Verify cold and warm installed launch, Self-View／Output lifecycle, and no
