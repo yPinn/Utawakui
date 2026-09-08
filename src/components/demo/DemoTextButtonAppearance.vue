@@ -7,21 +7,23 @@ import DemoTextButtonRecipes from './DemoTextButtonRecipes.vue';
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Text Button',
-    note: '只處理顯示文字本身就是次要目的地的操作；靜止時保留 quiet underline。Candidate 不代表 production adoption。',
+    title: 'Token v2 候選 Text Action',
+    note: '預設無底線；hover／focus-visible 顯示底線。Candidate 不代表 production adoption。',
     component: DemoCandidateTextButton,
-    defaultStateLabel: 'Candidate · quiet underline at rest',
+    appearanceContract: '預設無底線 · hover／focus-visible underline',
+    recipeProps: {},
     stateNote:
-      'Candidate 補足靜止 affordance、pressed 與 disabled；不改 caller typography。',
+      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',
   },
   {
     key: 'current',
-    title: '現行 UiTextButton',
-    note: 'Active token 快照保留透明、繼承文字，以及 hover／focus 才出現 underline 的現況。',
+    title: '現行 UiTextButton · Text Action baseline',
+    note: '現行同樣是 Default 無底線，hover／focus-visible 顯示底線。',
     component: UiTextButton,
-    defaultStateLabel: 'Current · underline only on hover／focus',
+    appearanceContract: '僅 hover／focus-visible 顯示底線',
+    recipeProps: {},
     stateNote:
-      'Current 無 authored pressed／disabled appearance；pressed 與 hover 沒有獨立層次。',
+      'Default 無底線；hover／focus 顯示底線；pressed／disabled 沒有獨立樣式。',
   },
 ];
 </script>

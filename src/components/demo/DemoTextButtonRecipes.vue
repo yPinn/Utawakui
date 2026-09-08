@@ -11,9 +11,7 @@ defineProps({
   >
     <header class="demo-text-button-group-header">
       <h5>Parent-owned recipes</h5>
-      <p>
-        Recipe 是 parent-owned composition，不是 UiTextButton variant／prop。
-      </p>
+      <p>只示範使用情境，不增加 primitive API。</p>
     </header>
 
     <div class="demo-text-button-recipe-list">
@@ -30,6 +28,7 @@ defineProps({
           <span class="demo-text-button-track-row__copy">
             <component
               :is="layer.component"
+              v-bind="layer.recipeProps"
               class="demo-text-button-track-row__title"
               text="群青日和"
               aria-label="前往專輯：群青日和"
@@ -50,6 +49,7 @@ defineProps({
           <span>
             <component
               :is="layer.component"
+              v-bind="layer.recipeProps"
               text="海螺記 — 很長的來源集合名稱"
               aria-label="前往專輯：海螺記"
             />
@@ -67,6 +67,7 @@ defineProps({
           <span class="demo-text-button-table-row__title">
             <component
               :is="layer.component"
+              v-bind="layer.recipeProps"
               text="東京事変／椎名林檎／非常に長い曲目名稱"
               aria-label="前往專輯：東京事変／椎名林檎"
             />
@@ -77,10 +78,7 @@ defineProps({
       </article>
     </div>
 
-    <p class="demo-text-button-recipe-note">
-      Navigation intent stays with parent；row geometry、z-index、prefix 與
-      metadata columns 都不是 primitive API。
-    </p>
+    <p class="demo-text-button-recipe-note">幾何與導覽由 parent 擁有。</p>
   </section>
 </template>
 

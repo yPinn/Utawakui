@@ -32,10 +32,10 @@ const STATES = [
 
 const COVERAGE = {
   candidate: [
-    ['default', 'Quiet underline', 'Inherit', 'Pointer'],
-    ['hover', 'Full underline', 'Inherit', ':hover'],
-    ['pressed', '2px accent underline', 'Inherit', ':active'],
-    ['focus-visible', 'Quiet underline', '2px inset ring', 'Keyboard'],
+    ['default', 'No underline', 'Inherit', 'Pointer'],
+    ['hover', 'Underline', 'Inherit', ':hover'],
+    ['pressed', 'Same as hover', 'Inherit', 'No authored :active'],
+    ['focus-visible', 'Underline', '2px inset ring', 'Keyboard'],
     ['disabled', 'No underline／50%', 'None', 'Native disabled'],
   ],
   current: [
@@ -54,15 +54,15 @@ const COVERAGE = {
     data-text-button-group="primitive"
   >
     <header class="demo-text-button-group-header">
-      <h5>Primitive 提供內容</h5>
-      <p>只列文字 action 自身擁有的 geometry、內容、狀態與 native boundary。</p>
+      <h5>Primitive contract</h5>
+      <p>可點擊文字；元件只擁有內容、互動語意與 overflow。</p>
     </header>
 
     <section class="demo-text-button-subsection">
       <header class="demo-text-button-subsection__header">
         <h6>Inherited geometry</h6>
         <p>
-          Typography · inherit from caller；Text Button 不建立 density／size。
+          Typography · inherit from caller；Text Action 不建立 density／size。
         </p>
       </header>
       <div class="demo-text-button-geometry-grid">
@@ -95,18 +95,13 @@ const COVERAGE = {
           />
         </article>
       </div>
-      <p class="demo-text-button-callout">
-        Standalone 32px action → UiButton；Text Button 不提供一般 full-width。
-      </p>
+      <p class="demo-text-button-callout">獨立 32px 動作使用 UiButton。</p>
     </section>
 
     <section class="demo-text-button-subsection">
       <header class="demo-text-button-subsection__header">
-        <h6>Owned anatomy</h6>
-        <p>
-          文字、名稱與 overflow lane 是完整結構；不承接 icon 或 destination
-          URL。
-        </p>
+        <h6>Anatomy＋accessibility</h6>
+        <p>Visible text 預設命名；ariaLabel 只在需要時補充目的地。</p>
       </header>
       <div class="demo-text-button-anatomy">
         <component
@@ -125,15 +120,30 @@ const COVERAGE = {
           </li>
         </ol>
       </div>
+      <div class="demo-text-button-anatomy-examples">
+        <article>
+          <span>Visible-name fallback</span>
+          <component :is="layer.component" text="海螺記" />
+        </article>
+        <article>
+          <span>Destination override</span>
+          <component
+            :is="layer.component"
+            text="海螺記"
+            aria-label="前往專輯：海螺記"
+            name="album-destination"
+          />
+        </article>
+      </div>
+      <p class="demo-text-button-callout">
+        Native attrs fallthrough；click.stop 隔離 parent row action。
+      </p>
     </section>
 
     <section class="demo-text-button-subsection">
       <header class="demo-text-button-subsection__header">
-        <h6>內容與 overflow</h6>
-        <p>
-          Overflow → existing marquee＋title；Reduced motion → single-line
-          ellipsis。
-        </p>
+        <h6>Content＋overflow</h6>
+        <p>溢位沿用 UiMarqueeText；reduced motion 回到單行省略。</p>
       </header>
       <div class="demo-text-button-content-grid">
         <article
@@ -149,11 +159,8 @@ const COVERAGE = {
 
     <section class="demo-text-button-subsection">
       <header class="demo-text-button-subsection__header">
-        <h6>狀態外觀與覆蓋</h6>
-        <div class="demo-text-button-state-summary">
-          <strong>{{ layer.defaultStateLabel }}</strong>
-          <p>{{ layer.stateNote }}</p>
-        </div>
+        <h6>Affordance＋states</h6>
+        <p>{{ layer.stateNote }}</p>
       </header>
       <div class="demo-text-button-state-grid">
         <article
@@ -174,7 +181,7 @@ const COVERAGE = {
         class="demo-text-button-coverage"
         data-text-button-coverage-matrix
         tabindex="0"
-        aria-label="Text Button 狀態覆蓋表"
+        aria-label="Text Action 狀態覆蓋表"
       >
         <table>
           <thead>
@@ -197,36 +204,10 @@ const COVERAGE = {
       </div>
     </section>
 
-    <section class="demo-text-button-subsection">
-      <header class="demo-text-button-subsection__header">
-        <h6>ARIA 與 event boundary</h6>
-        <p>visible text 預設供命名；ariaLabel 只在需要說明目的地時覆寫。</p>
-      </header>
-      <div class="demo-text-button-event-grid">
-        <article>
-          <span>Visible-name fallback</span>
-          <component :is="layer.component" text="海螺記" />
-        </article>
-        <article>
-          <span>Destination override</span>
-          <component
-            :is="layer.component"
-            text="海螺記"
-            aria-label="前往專輯：海螺記"
-            name="album-destination"
-          />
-        </article>
-      </div>
-      <p class="demo-text-button-callout">
-        Native attrs fallthrough；click.stop 隔離 parent row action；Navigation
-        intent stays with parent。
-      </p>
-    </section>
-
     <section class="demo-text-button-subsection demo-text-button-api">
       <header class="demo-text-button-subsection__header">
         <h6>Public contract</h6>
-        <p>維持 clickable text primitive bounded，不把它擴張成一般 Button。</p>
+        <p>字體、文字色與版面由 caller 擁有；底線由 primitive 擁有。</p>
       </header>
       <dl>
         <div>
@@ -248,10 +229,14 @@ const COVERAGE = {
           <dd>UiMarqueeText owns overflow／title／reduced motion</dd>
         </div>
         <div>
+          <dt>Appearance</dt>
+          <dd>{{ layer.appearanceContract }}</dd>
+        </div>
+        <div>
           <dt>Boundary</dt>
           <dd>
-            No icon · No variant · No size · No active · No loading · No
-            readonly · No href
+            No icon · No variant · No size · No full-width · No active · No
+            loading · No readonly · No href
           </dd>
         </div>
       </dl>
@@ -304,19 +289,6 @@ const COVERAGE = {
   line-height: var(--ui-line-height-caption);
 }
 
-.demo-text-button-state-summary {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.demo-text-button-state-summary strong {
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-}
-
 .demo-text-button-subsection {
   gap: var(--ui-space-3);
   padding-block-start: var(--ui-space-3);
@@ -333,7 +305,7 @@ const COVERAGE = {
 .demo-text-button-geometry-grid,
 .demo-text-button-content-grid,
 .demo-text-button-state-grid,
-.demo-text-button-event-grid {
+.demo-text-button-anatomy-examples {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(11rem, 100%), 1fr));
   gap: var(--ui-space-3);
@@ -342,7 +314,7 @@ const COVERAGE = {
 .demo-text-button-geometry-grid article,
 .demo-text-button-content-grid article,
 .demo-text-button-state,
-.demo-text-button-event-grid article {
+.demo-text-button-anatomy-examples article {
   min-width: 0;
   display: grid;
   align-content: start;
@@ -357,7 +329,7 @@ const COVERAGE = {
 .demo-text-button-geometry-grid article > span,
 .demo-text-button-content-grid article > span,
 .demo-text-button-state > span,
-.demo-text-button-event-grid article > span {
+.demo-text-button-anatomy-examples article > span {
   color: var(--ui-color-text-subtle);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
@@ -415,18 +387,18 @@ const COVERAGE = {
 
 .demo-text-button-state[data-text-button-state='hover']
   :deep(.demo-candidate-text-btn .ui-marquee__text),
+.demo-text-button-state[data-text-button-state='focus']
+  :deep(.demo-candidate-text-btn .ui-marquee__text),
+.demo-text-button-state[data-text-button-state='pressed']
+  :deep(.demo-candidate-text-btn .ui-marquee__text),
 .demo-text-button-state[data-text-button-state='hover']
+  :deep(.ui-text-btn .ui-marquee__text),
+.demo-text-button-state[data-text-button-state='focus']
   :deep(.ui-text-btn .ui-marquee__text),
 .demo-text-button-state[data-text-button-state='pressed']
   :deep(.ui-text-btn .ui-marquee__text) {
   text-decoration: underline;
   text-decoration-color: currentcolor;
-  text-underline-offset: 0.18em;
-}
-
-.demo-text-button-state[data-text-button-state='pressed']
-  :deep(.demo-candidate-text-btn .ui-marquee__text) {
-  text-decoration: underline var(--ui-focus-width) var(--ui-color-accent);
   text-underline-offset: 0.18em;
 }
 

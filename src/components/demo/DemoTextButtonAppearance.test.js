@@ -17,6 +17,10 @@ const actionsSource = readFileSync(
   new URL('./DemoActions.vue', import.meta.url),
   'utf8',
 );
+const catalogueSource = readFileSync(
+  new URL('../../constants/uiDemoSections.js', import.meta.url),
+  'utf8',
+);
 const componentSource = readFileSync(
   new URL('./DemoTextButtonAppearance.vue', import.meta.url),
   'utf8',
@@ -64,6 +68,9 @@ vi.stubGlobal('document', {});
 
 describe('DemoTextButtonAppearance', () => {
   it('replaces only the Text Button sample with the staged appearance review', () => {
+    expect(catalogueSource).toMatch(
+      /key: 'text-button',[\s\S]*?title: '文字操作',[\s\S]*?components: \['UiTextButton'\]/u,
+    );
     expect(actionsSource).toContain(
       "import DemoTextButtonAppearance from './DemoTextButtonAppearance.vue';",
     );
@@ -92,12 +99,11 @@ describe('DemoTextButtonAppearance', () => {
     expect(html.match(/data-text-button-group="recipes"/gu)).toHaveLength(2);
 
     const sequence = [
-      'Primitive 提供內容',
+      'Primitive contract',
       'Inherited geometry',
-      'Owned anatomy',
-      '內容與 overflow',
-      '狀態外觀與覆蓋',
-      'ARIA 與 event boundary',
+      'Anatomy＋accessibility',
+      'Content＋overflow',
+      'Affordance＋states',
       'Public contract',
       'Parent-owned recipes',
     ];
@@ -115,6 +121,9 @@ describe('DemoTextButtonAppearance', () => {
         previousIndex = index;
       }
     }
+    expect(html).not.toContain('Primitive 提供內容');
+    expect(html).not.toContain('Underline affordance');
+    expect(html).not.toContain('ARIA 與 event boundary');
   });
 
   it('keeps typography inherited and width intrinsic without inventing density or size props', async () => {
@@ -133,7 +142,7 @@ describe('DemoTextButtonAppearance', () => {
     expect(html).toContain('Typography · inherit from caller');
     expect(html).toContain('Intrinsic width · fit-content');
     expect(html).toContain('Constrained parent · 10rem');
-    expect(html).toContain('Standalone 32px action → UiButton');
+    expect(html).toContain('獨立 32px 動作使用 UiButton');
     expect(candidateSource).toContain('width: fit-content;');
     expect(candidateSource).toContain('max-width: 100%;');
     expect(candidateSource).toContain('min-width: 0;');
@@ -182,14 +191,45 @@ describe('DemoTextButtonAppearance', () => {
     );
     expect(html).toContain('繁體中文／日本語／한국어／English');
     expect(html).toContain('前往第 12 首');
-    expect(html).toContain('Overflow → existing marquee＋title');
-    expect(html).toContain('Reduced motion → single-line ellipsis');
+    expect(html).toContain('溢位沿用 UiMarqueeText');
+    expect(html).toContain('reduced motion 回到單行省略');
     expect(marqueeSource).toContain('ui-marquee--overflow');
     expect(marqueeSource).toContain('@media (prefers-reduced-motion: reduce)');
     expect(candidateSource).not.toMatch(/marqueeMode|marqueeSpeed/u);
   });
 
-  it('shows a quiet default affordance in Candidate and keeps Current gaps truthful', async () => {
+  it('summarizes the interaction-only underline without a duplicate variation section', async () => {
+    const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
+
+    expect(html).toContain('Token v2 候選 Text Action');
+    expect(html).toContain('現行 UiTextButton · Text Action baseline');
+    expect(html).toContain('預設無底線；hover／focus-visible 顯示底線。');
+    expect(html).toContain(
+      '現行同樣是 Default 無底線，hover／focus-visible 顯示底線。',
+    );
+    expect(html).not.toContain('data-text-action-affordance-sample');
+    expect(html).not.toContain('Default · persistent quiet underline');
+    expect(html).not.toContain('Current · hover／focus only');
+    expect(html).not.toContain('quiet underline is always visible');
+
+    expect(candidateSource).not.toContain('emphasis:');
+    expect(candidateSource).not.toContain('data-text-action-emphasis');
+    expect(candidateSource).not.toContain('demo-candidate-text-btn--quiet');
+    expect(candidateSource).not.toContain('demo-candidate-text-btn--accent');
+    expect(candidateSource).not.toContain('currentcolor 40%');
+    expect(candidateSource).not.toContain('var(--ui-color-accent) 70%');
+    expect(candidateSource).toContain('text-underline-offset: 0.18em;');
+    expect(candidateSource).toMatch(
+      /\.demo-candidate-text-btn:not\(:disabled\):hover[\s\S]*?\.demo-candidate-text-btn:focus-visible[\s\S]*?\{[^}]*text-decoration:\s*underline;/su,
+    );
+    expect(candidateSource).not.toMatch(
+      /\.demo-candidate-text-btn\s+:deep\(\.ui-marquee__text\)[\s\S]*?\{[^}]*text-decoration-line:\s*underline;/su,
+    );
+    expect(candidateSource).not.toContain('var(--ui-color-accent-active)');
+    expect(candidateSource).not.toMatch(/dotted|dashed|reveal/u);
+  });
+
+  it('shows an interaction-only underline in Candidate and keeps Current gaps truthful', async () => {
     const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
 
     for (const state of ['default', 'hover', 'pressed', 'focus', 'disabled']) {
@@ -198,16 +238,25 @@ describe('DemoTextButtonAppearance', () => {
       ).toHaveLength(2);
     }
     expect(html.match(/data-text-button-coverage-matrix/gu)).toHaveLength(2);
-    expect(html).toContain('Candidate · quiet underline at rest');
-    expect(html).toContain('Current · underline only on hover／focus');
-    expect(html).toContain('Current 無 authored pressed／disabled appearance');
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-text-btn :deep\(\.ui-marquee__text\)\s*\{[^}]*text-decoration-line:\s*underline;/su,
+    expect(html).toContain(
+      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',
     );
+    expect(html).toContain(
+      'Default 無底線；hover／focus 顯示底線；pressed／disabled 沒有獨立樣式。',
+    );
+    expect(html).not.toContain('Current · underline only on hover／focus');
     expect(candidateSource).toContain(':not(:disabled):hover');
-    expect(candidateSource).toContain(':not(:disabled):active');
+    expect(candidateSource).not.toContain(':not(:disabled):active');
     expect(candidateSource).toContain(':focus-visible');
     expect(candidateSource).toContain(':disabled');
+    for (const state of ['hover', 'pressed', 'focus']) {
+      expect(primitiveSource).toMatch(
+        new RegExp(
+          `data-text-button-state='${state}'[\\s\\S]*?demo-candidate-text-btn[\\s\\S]*?\\{[^}]*text-decoration:\\s*underline;`,
+          'su',
+        ),
+      );
+    }
     expect(currentSource).not.toContain(':active');
     expect(currentSource).not.toContain(':disabled');
   });
@@ -233,6 +282,39 @@ describe('DemoTextButtonAppearance', () => {
       expect(textContent(button)).toContain('海螺記');
       mounted.app.unmount();
     }
+  });
+
+  it('keeps Candidate appearance prop-free while preserving Current native attrs', () => {
+    const candidate = mount(DemoCandidateTextButton, {
+      text: '前往來源專輯',
+      'data-contract': 'candidate-affordance',
+    });
+    const candidateButton = findAll(
+      candidate.root,
+      (node) => node.type === 'button',
+    )[0];
+    expect(candidateButton.props).toMatchObject({
+      type: 'button',
+      'data-contract': 'candidate-affordance',
+    });
+    expect(candidateButton.props['data-text-action-emphasis']).toBeUndefined();
+    expect(candidateButton.props.class).toBe('demo-candidate-text-btn');
+    candidate.app.unmount();
+
+    const current = mount(UiTextButton, {
+      text: '前往來源專輯',
+      'data-contract': 'current-baseline',
+    });
+    const currentButton = findAll(
+      current.root,
+      (node) => node.type === 'button',
+    )[0];
+    expect(currentButton.props).toMatchObject({
+      type: 'button',
+      'data-contract': 'current-baseline',
+    });
+    expect(currentButton.props['data-text-action-emphasis']).toBeUndefined();
+    current.app.unmount();
   });
 
   it('keeps click.stop and the optional ariaLabel override in the bounded API', () => {
@@ -262,16 +344,16 @@ describe('DemoTextButtonAppearance', () => {
         html.match(new RegExp(`data-text-button-recipe="${recipe}"`, 'gu')),
       ).toHaveLength(2);
     }
-    expect(html).toContain(
-      'Recipe 是 parent-owned composition，不是 UiTextButton variant／prop。',
-    );
+    expect(html).toContain('只示範使用情境，不增加 primitive API。');
     expect(html).toContain('Row primary action＋nested destination');
     expect(html).toContain('Prefix static／destination interactive');
     expect(html).toContain('Cell owns available width／metadata columns');
-    expect(html).toContain('Navigation intent stays with parent');
+    expect(html).toContain('幾何與導覽由 parent 擁有。');
     expect(recipesSource).toContain('position: absolute;');
     expect(recipesSource).toContain('z-index: 1;');
     expect(recipesSource).toContain('@container (max-width: 34rem)');
+    expect(recipesSource).toContain('v-bind="layer.recipeProps"');
+    expect(componentSource.match(/recipeProps: \{\}/gu)).toHaveLength(2);
   });
 
   it('documents a narrow public contract and isolates Candidate styling', async () => {
@@ -279,6 +361,9 @@ describe('DemoTextButtonAppearance', () => {
 
     expect(html).toContain('text · String／Number');
     expect(html).toContain('ariaLabel · optional accessible-name override');
+    expect(html).toContain(
+      '字體、文字色與版面由 caller 擁有；底線由 primitive 擁有。',
+    );
     expect(primitiveSource).toContain(
       'type="button" · native attrs fallthrough',
     );
@@ -286,9 +371,12 @@ describe('DemoTextButtonAppearance', () => {
     expect(html).toContain(
       'UiMarqueeText owns overflow／title／reduced motion',
     );
+    expect(html).toContain('預設無底線 · hover／focus-visible underline');
+    expect(html).toContain('僅 hover／focus-visible 顯示底線');
     expect(html).toContain(
-      'No icon · No variant · No size · No active · No loading · No readonly · No href',
+      'No icon · No variant · No size · No full-width · No active · No loading · No readonly · No href',
     );
+    expect(currentSource).not.toContain('emphasis');
     expect(componentSource).toContain(
       ':class="`demo-text-button-layer--${layer.key}`"',
     );
@@ -298,7 +386,9 @@ describe('DemoTextButtonAppearance', () => {
     );
     expect(currentSource).not.toContain('demo-candidate-text-btn');
     expect(activeTokensSource).not.toContain('data-text-button-source');
-    expect(html).toContain('Candidate 不代表 production adoption');
+    expect(html.match(/Candidate 不代表 production adoption/gu)).toHaveLength(
+      1,
+    );
   });
 
   it('snapshots every active color consumed by the Current layer', () => {

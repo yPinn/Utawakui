@@ -61,7 +61,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       },
       {
         key: 'text-button',
-        title: '文字按鈕',
+        title: '文字操作',
         components: ['UiTextButton'],
       },
     ],
