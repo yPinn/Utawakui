@@ -243,6 +243,8 @@
   --ui-color-gated: var(--ui-color-warning);
   --ui-color-gated-bg: var(--ui-color-warning-soft);
   --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
+  --ui-color-overlay-scrim-hover: rgb(0 0 0 / 68%);
+  --ui-color-overlay-scrim-active: rgb(0 0 0 / 78%);
   --ui-color-overlay-contrast: var(--ui-palette-warm-neutral-50);
 
   /* Semantic materials: color does not imply status or feature level. */

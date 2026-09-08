@@ -169,9 +169,11 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(214);
+    expect(uniqueNames.size).toBe(216);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-inspector-width');
+    expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
+    expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
     expect(missing).toEqual([]);
   });
