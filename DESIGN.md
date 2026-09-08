@@ -586,6 +586,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 - **Control Panel Font:** native system UI stack. Do not bundle brand fonts into the control panel by default.
 - **Overlay CJK Display Font:** `GenWanMin2 TW`, with CJK serif fallbacks.
 - **Overlay Latin Display Font:** `Playfair Display`, with practical serif fallbacks.
+- **Overlay KTV Display Font:** `Utawakui Open Huninn`.
 - **Overlay Kinetic Pop Display Fonts:** `Utawakui M PLUS Rounded 1c` for the flat／split-depth materials; `Utawakui Keifont` for the enlarged gradient material.
 - **Overlay Utility Font:** system sans.
 - **Label/Mono Font:** pending; only introduce mono if timestamps, technical metadata, or counters clearly benefit.
