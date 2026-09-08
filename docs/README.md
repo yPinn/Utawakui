@@ -113,6 +113,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Codebase：[naming contract](contracts/codebase-naming.md)。
 - Operations：[diagnostics rollout](operations/diagnostics-rollout.md)、
   [startup baseline](operations/startup-performance-baseline.md)、
+  [CI usage policy](operations/ci-usage.md)、
   [manual acceptance](operations/manual-acceptance.md)、
   [release inventory](operations/release-inventory.md)、
   [release runbook](operations/release-runbook.md)。
