@@ -27,18 +27,33 @@ describe('ordinary CI workflow', () => {
     const workflow = readWorkflow();
 
     expect(workflow.on.push.branches).toEqual(['main']);
-    expect(workflow.on).toHaveProperty('pull_request');
+    expect(workflow.on.pull_request.types).toEqual([
+      'opened',
+      'synchronize',
+      'reopened',
+      'ready_for_review',
+      'converted_to_draft',
+    ]);
     expect(workflow.on).toHaveProperty('workflow_dispatch');
     expect(workflow.permissions).toEqual({ contents: 'read' });
     expect(workflow.concurrency['cancel-in-progress']).toBe(true);
+    expect(workflow.concurrency.group).toContain('github.workflow');
+    expect(workflow.concurrency.group).toContain(
+      'github.event.pull_request.number',
+    );
+    expect(workflow.concurrency.group).toContain('github.run_id');
   });
 
-  it('keeps the complete Ubuntu quality gate and coverage artifact', () => {
+  it('keeps one bounded Ubuntu job and derives a tested execution plan', () => {
     const workflow = readWorkflow();
     const qualityJob = workflow.jobs.build;
     const commands = jobCommands(qualityJob);
 
     expect(qualityJob['runs-on']).toBe('ubuntu-latest');
+    expect(qualityJob['timeout-minutes']).toBeLessThanOrEqual(15);
+    expect(qualityJob.outputs['windows-package']).toContain(
+      'steps.scope.outputs.windows_package',
+    );
     expect(commands).toEqual(
       expect.arrayContaining([
         'npm ci',
@@ -47,17 +62,54 @@ describe('ordinary CI workflow', () => {
         'npm run lint',
         'npm run format:check',
         'npm run lint:md',
+        'npm test',
         'npm run test:coverage',
         'npm run build',
       ]),
     );
-    expect(
-      qualityJob.steps.some(
-        (step) =>
-          step.uses === 'actions/upload-artifact@v7' &&
-          step.with?.path === 'coverage/',
-      ),
-    ).toBe(true);
+
+    const scopeStep = qualityJob.steps.find(
+      (step) => step.name === 'Classify CI scope',
+    );
+    expect(scopeStep?.id).toBe('scope');
+    expect(scopeStep?.run).toContain('scripts/ci-changed-paths.mjs');
+    expect(scopeStep?.run).toContain('$GITHUB_OUTPUT');
+
+    const installStep = qualityJob.steps.find((step) => step.run === 'npm ci');
+    const auditStep = qualityJob.steps.find(
+      (step) => step.run === 'npm audit --audit-level=critical',
+    );
+    expect(auditStep?.if).toContain('dependency_audit');
+    expect(installStep?.if).toContain('quality');
+    expect(qualityJob.steps.indexOf(auditStep)).toBeLessThan(
+      qualityJob.steps.indexOf(installStep),
+    );
+
+    const testStep = qualityJob.steps.find((step) => step.run === 'npm test');
+    const coverageStep = qualityJob.steps.find(
+      (step) => step.run === 'npm run test:coverage',
+    );
+    expect(testStep?.if).toContain("coverage == 'false'");
+    expect(coverageStep?.if).toContain("coverage == 'true'");
+
+    for (const command of [
+      'npm run license:inventory',
+      'npm run lint',
+      'npm run format:check',
+      'npm run lint:md',
+      'npm run build',
+    ]) {
+      expect(
+        qualityJob.steps.find((step) => step.run === command)?.if,
+      ).toContain('quality');
+    }
+
+    const uploadStep = qualityJob.steps.find((step) =>
+      step.uses?.startsWith('actions/upload-artifact@'),
+    );
+    expect(uploadStep?.if).toContain('failure()');
+    expect(uploadStep?.with?.path).toBe('coverage/');
+    expect(uploadStep?.with?.['retention-days']).toBe(7);
   });
 
   it('lints the correct commit range for pushes and pull requests', () => {
@@ -78,7 +130,10 @@ describe('ordinary CI workflow', () => {
     expect(packageJob).toBeDefined();
     expect(packageJob?.needs).toBe('build');
     expect(packageJob?.['runs-on']).toBe('windows-latest');
-    expect(packageJob?.['timeout-minutes']).toBeLessThanOrEqual(30);
+    expect(packageJob?.['timeout-minutes']).toBeLessThanOrEqual(20);
+    expect(packageJob?.if).toContain(
+      "needs.build.outputs.windows-package == 'true'",
+    );
     expect(packageJob).not.toHaveProperty('environment');
 
     const serializedJob = JSON.stringify(packageJob);

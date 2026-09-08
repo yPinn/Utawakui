@@ -4,75 +4,114 @@ on:
   push:
     branches: [main]
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, converted_to_draft]
   workflow_dispatch:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.event.pull_request.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
   build:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    outputs:
+      windows-package: ${{ steps.scope.outputs.windows_package }}
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           fetch-depth: 0
 
       - name: Gitleaks secret scan
-        uses: docker://ghcr.io/gitleaks/gitleaks:latest
+        uses: docker://ghcr.io/gitleaks/gitleaks:v8.30.1@sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f # v8.30.1
         with:
           args: detect --source . --verbose --redact
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           cache: npm
 
-      - run: npm ci
+      - name: Classify CI scope
+        id: scope
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
+          CI_EVENT_NAME: ${{ github.event_name }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+          PR_DRAFT: ${{ github.event.pull_request.draft || false }}
+        run: >-
+          node scripts/ci-changed-paths.mjs
+          --event "$CI_EVENT_NAME"
+          --draft "$PR_DRAFT"
+          --base "$BASE_SHA"
+          --head "$HEAD_SHA"
+          >> "$GITHUB_OUTPUT"
+
+      - name: Dependency audit
+        if: steps.scope.outputs.dependency_audit == 'true'
+        run: npm audit --audit-level=critical
+
+      - name: Install dependencies
+        if: steps.scope.outputs.quality == 'true'
+        run: npm ci
 
       - name: Commitlint push
-        if: github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
+        if: steps.scope.outputs.quality == 'true' && github.event_name == 'push' && github.event.before != '0000000000000000000000000000000000000000'
         run: npx --no -- commitlint --from "${{ github.event.before }}" --to "${{ github.sha }}" --verbose
 
       - name: Commitlint pull request
-        if: github.event_name == 'pull_request'
+        if: steps.scope.outputs.quality == 'true' && github.event_name == 'pull_request'
         run: npx --no -- commitlint --from "${{ github.event.pull_request.base.sha }}" --to "${{ github.event.pull_request.head.sha }}" --verbose
 
-      - name: Dependency audit
-        run: npm audit --audit-level=critical
-
       - name: License inventory
+        if: steps.scope.outputs.quality == 'true'
         run: npm run license:inventory
 
-      - run: npm run lint
+      - name: Lint
+        if: steps.scope.outputs.quality == 'true'
+        run: npm run lint
 
-      - run: npm run format:check
+      - name: Check formatting
+        if: steps.scope.outputs.quality == 'true'
+        run: npm run format:check
 
-      - run: npm run lint:md
+      - name: Lint Markdown
+        if: steps.scope.outputs.quality == 'true'
+        run: npm run lint:md
 
-      - run: npm run test:coverage
+      - name: Run tests
+        if: steps.scope.outputs.quality == 'true' && steps.scope.outputs.coverage == 'false'
+        run: npm test
+
+      - name: Run tests with coverage
+        if: steps.scope.outputs.quality == 'true' && steps.scope.outputs.coverage == 'true'
+        run: npm run test:coverage
 
       - name: Upload coverage report
-        if: always()
-        uses: actions/upload-artifact@v7
+        if: failure() && steps.scope.outputs.coverage == 'true'
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: coverage-report
+          name: coverage-report-${{ github.run_id }}-${{ github.run_attempt }}
           path: coverage/
           if-no-files-found: ignore
+          retention-days: 7
 
-      - run: npm run build
+      - name: Build renderer
+        if: steps.scope.outputs.quality == 'true'
+        run: npm run build
 
   windows-package:
     needs: build
+    if: needs.build.result == 'success' && needs.build.outputs.windows-package == 'true'
     runs-on: windows-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
-      - uses: actions/setup-node@v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
         with:
           node-version: 24
           cache: npm
