@@ -42,6 +42,10 @@ function createFixtureRoots() {
     path.join(sharedRoot, 'assets', 'fonts', 'Keifont.ttf'),
     Buffer.from([0, 1, 0, 0]),
   );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'assets', 'fonts', 'GenEiAntiqueNv6-M.ttf'),
+    Buffer.from([0, 1, 0, 0]),
+  );
   return { overlayRoot, root, sharedRoot };
 }
 
@@ -186,6 +190,9 @@ describe('output HTTP delivery', () => {
     const kineticPopFont = await fetch(
       `${baseUrl}/shared/assets/fonts/Keifont.ttf`,
     );
+    const mangaFont = await fetch(
+      `${baseUrl}/shared/assets/fonts/GenEiAntiqueNv6-M.ttf`,
+    );
     const unknown = await fetch(`${baseUrl}/overlay/lyrics/private.txt`);
 
     expect(await overlay.text()).toBe('<main>Lyrics route</main>');
@@ -203,6 +210,8 @@ describe('output HTTP delivery', () => {
     expect(kineticFont.headers.get('content-type')).toBe('font/ttf');
     expect(kineticPopFont.status).toBe(200);
     expect(kineticPopFont.headers.get('content-type')).toBe('font/ttf');
+    expect(mangaFont.status).toBe(200);
+    expect(mangaFont.headers.get('content-type')).toBe('font/ttf');
     expect(unknown.status).toBe(404);
   });
 

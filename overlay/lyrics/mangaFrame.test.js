@@ -62,7 +62,7 @@ describe('manga frame contract', () => {
       /\.lyrics-overlay__manga-text\s*{[^}]*text-orientation: mixed/s,
     );
     expect(css).toMatch(
-      /\.lyrics-overlay__manga-text rt\s*{[^}]*text-orientation: upright/s,
+      /\.lyrics-overlay__manga-text rt\s*{[^}]*text-align: center;[^}]*text-orientation: upright/s,
     );
     expect(css).toContain('will-change: opacity, transform');
     expect(html).toContain('id="lyrics-manga-bubbles"');
@@ -433,9 +433,28 @@ describe('manga frame contract', () => {
   });
 
   it('keeps non-Japanese CJK copy on its established balanced layout', () => {
+    const layout = mangaFrameTextLayout('漫画保持穩定', 1, {
+      language: 'zh-Hant',
+    });
+
+    expect(layout.columns).toEqual(['漫画保持穩定']);
+    expect(layout.language).toBe('other');
+  });
+
+  it('marks Japanese typography from language, kana content, or an existing reading', () => {
+    const readingLine = {
+      text: '地下鉄',
+      segments: [{ text: '地下鉄', reading: 'ちかてつ' }],
+    };
+
+    expect(mangaFrameTextLayout('地下鉄', 1, { language: 'ja' }).language).toBe(
+      'ja',
+    );
+    expect(mangaFrameTextLayout('これは歌', 1).language).toBe('ja');
     expect(
-      mangaFrameTextLayout('漫画保持穩定', 1, { language: 'zh-Hant' }).columns,
-    ).toEqual(['漫画保持穩定']);
+      mangaFrameTextLayout('地下鉄', 1, { language: 'und', readingLine })
+        .language,
+    ).toBe('ja');
   });
 
   it('keeps ruby groups atomic even when the five-unit boundary crosses a group', () => {

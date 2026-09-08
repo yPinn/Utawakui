@@ -29,6 +29,14 @@
   font-weight: 900;
 }
 
+@font-face {
+  font-family: 'Utawakui GenEi Antique';
+  src: url('/shared/assets/fonts/GenEiAntiqueNv6-M.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
+}
+
 @layer ovl-template {
   .lyrics-workbench__backdrop,
   .lyrics-workbench__guide {
@@ -927,6 +935,14 @@
     -webkit-text-stroke: 0;
   }
 
+  :root[data-ovl-template='manga-frame']
+    .lyrics-overlay__manga-bubble[data-manga-language='ja']
+    .lyrics-overlay__manga-text {
+    font-family:
+      'Utawakui GenEi Antique', 'Noto Sans CJK JP', 'Yu Gothic UI',
+      var(--ovl-user-font-family);
+  }
+
   :root[data-ovl-template='manga-frame'] .lyrics-overlay__manga-text ruby {
     ruby-align: center;
     ruby-position: over;
@@ -938,6 +954,7 @@
     font-weight: 500;
     letter-spacing: 0;
     line-height: 1;
+    text-align: center;
     text-orientation: upright;
   }
 

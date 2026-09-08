@@ -321,6 +321,7 @@ const mangaBubbles = computed(() => {
             class="obs-template-mockup__manga-bubble"
             :data-lyric-kind="bubble.kind"
             :data-manga-length="mangaFrameLengthTier(bubble.text)"
+            :data-manga-language="bubble.layout.language"
             :data-manga-script="bubble.layout.script"
             :data-manga-columns="bubble.layout.columnCount"
             :style="{
@@ -673,6 +674,15 @@ const mangaBubbles = computed(() => {
   font-display: swap;
   font-style: normal;
   font-weight: 900;
+}
+
+@font-face {
+  font-family: 'Utawakui GenEi Antique';
+  src: url('../../../shared/assets/fonts/GenEiAntiqueNv6-M.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
 }
 
 .obs-template-mockup {
@@ -2207,6 +2217,12 @@ const mangaBubbles = computed(() => {
   writing-mode: vertical-rl;
 }
 
+.obs-template-mockup__manga-bubble[data-manga-language='ja']
+  .obs-template-mockup__title--manga {
+  font-family:
+    'Utawakui GenEi Antique', 'Noto Sans CJK JP', 'Yu Gothic UI', sans-serif;
+}
+
 .obs-template-mockup__title--manga ruby {
   ruby-align: center;
   ruby-position: over;
@@ -2218,6 +2234,7 @@ const mangaBubbles = computed(() => {
   font-weight: 500;
   letter-spacing: 0;
   line-height: 1;
+  text-align: center;
   text-orientation: upright;
 }
 

@@ -665,6 +665,13 @@ differences. It is a settled layout treatment rather than continuous jitter: the
 depth, rim, and fill copies of a glyph always share one pose, and the Gallery and
 Browser Source consume the same presentation motion contract.
 
+The `manga-frame` template uses the bundled normal-width GenEi Antique 6.0a face
+under the local CSS family name `Utawakui GenEi Antique` when the projected line
+is Japanese. Ruby annotations inherit the same face so kanji and kana retain one
+comic-dialogue texture in vertical setting. Traditional Chinese and other content
+continue through the selected profile font stack; this exception does not alter
+the control panel or any other Output template.
+
 Each timed source line occupies one horizontal presentation row at any instant;
 Kinetic Pop never repairs an overlong source line by wrapping it into a second
 visual row. The lyric stage uses equal safe insets from the complete output canvas;

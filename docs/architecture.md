@@ -51,6 +51,12 @@ language、profile id／version 快取靜態結果，`state.mjs` 只投影目前
 取得已存在、identity-matched 的日文 `{ text, reading }` segments。Publisher 只讀 sidecar，
 不因 OBS 啟動 reading worker，缺少或 stale 時維持純文字。
 
+Manga Frame 的共享 layout contract 以 document language、實際假名或既有 reading segment
+投影 `ja`／`other` 呈現提示。Browser Source 與 Renderer 預覽只在 `ja` bubble 套用封裝的
+GenEi Antique 6.0a 一般版；ruby `rt` 繼承相同字體，繁中與其他內容維持 profile font
+fallback。字型、固定來源 checksum 與 OFL 1.1 授權隨 `shared/assets/fonts/` 封裝，並只經
+Output server exact allowlist 提供，不依賴遠端 webfont。
+
 Kinetic Pop profile 保持在同一 Lyrics Output route 內：共享 projection 依 source line
 index 輪替三種材質，並以 grapheme-aware unit 判斷短句。每個已計時 source line 在任一時刻
 只輸出一個橫向 row；此日文優先模板會把來源行內的作者空白編譯成 sequential phrases，依各段視覺

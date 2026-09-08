@@ -754,6 +754,7 @@ function createMangaBubble(
   bubble.className = 'lyrics-overlay__manga-bubble';
   bubble.dataset.lyricKind = presentation.kind;
   bubble.dataset.mangaLength = mangaFrameLengthTier(presentation.text);
+  bubble.dataset.mangaLanguage = textLayout.language;
   bubble.dataset.mangaScript = textLayout.script;
   bubble.dataset.mangaColumns = String(textLayout.columnCount);
   bubble.dataset.mangaSide = placement.side;

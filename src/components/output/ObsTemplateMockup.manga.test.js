@@ -21,6 +21,7 @@ describe('Manga Frame gallery mockup', () => {
     expect(source).toContain(':data-manga-count="mangaBubbles.length"');
     expect(source).toContain(':data-manga-side="mangaSide"');
     expect(source).toContain(':data-manga-script="bubble.layout.script"');
+    expect(source).toContain(':data-manga-language="bubble.layout.language"');
     expect(source).toContain(':data-manga-columns="bubble.layout.columnCount"');
     expect(source).toContain('bubble.layout.columnTokens');
     expect(source).toContain('<ruby v-if="token.reading">');
@@ -33,6 +34,10 @@ describe('Manga Frame gallery mockup', () => {
     expect(source).toContain('text-orientation: mixed');
     expect(source).toContain('text-align: start');
     expect(source).toContain('text-wrap: balance');
+    expect(source).toContain("font-family: 'Utawakui GenEi Antique';");
+    expect(source).toMatch(
+      /\.obs-template-mockup__title--manga rt\s*{[^}]*text-align: center;/s,
+    );
     expect(source).toContain(
       'max(36%, var(--ui-manga-frame-required-block-size))',
     );

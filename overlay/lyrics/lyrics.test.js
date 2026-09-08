@@ -2944,6 +2944,7 @@ describe('lyrics overlay renderer', () => {
     });
 
     const text = elements.mangaBubbles.children[0].children[1];
+    expect(elements.mangaBubbles.children[0].dataset.mangaLanguage).toBe('ja');
     const rubyElements = text.children.filter(
       (child) => child.localName === 'ruby',
     );
@@ -2968,6 +2969,7 @@ describe('lyrics overlay renderer', () => {
         ([name]) => name === 'ruby' || name === 'rt',
       ),
     ).toBe(false);
+    expect(plain.mangaBubbles.children[0].dataset.mangaLanguage).toBe('ja');
   });
 
   it('keeps und pure-kanji Manga columns unchanged when furigana is off', () => {

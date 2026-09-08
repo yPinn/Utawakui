@@ -553,6 +553,7 @@ export function mangaFrameTextLayout(text, bubbleCount = 1, options = {}) {
     requiredBlockSizeEm: roundHundredths(
       Math.max(inlineRequiredBlockSize, widthRequiredBlockSize),
     ),
+    language: japanesePhraseLayout ? 'ja' : 'other',
     script,
     hasRuby,
   });
