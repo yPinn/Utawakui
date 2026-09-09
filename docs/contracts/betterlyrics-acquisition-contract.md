@@ -42,3 +42,7 @@ query 與 fingerprint；保存前以完全相同查詢重抓，重新解析並�
 2026-08-31 的四首唯讀 smoke test 中，`Shape of You` 為公開 `HIT` 且通過完整 T2 驗證；
 `Lemon`、`アイドル` 與 `告白氣球` 皆為 `cache-miss`。這只證明接線與失敗分類，不能推論
 總體覆蓋率。Better Lyrics 維持手動、實驗性、cache-first 來源。
+
+單一 Better Lyrics 面板遇到 `cache-miss`、`not-found` 或 `low-confidence-match` 時不顯示
+空結果或錯誤提示；這些是正常無候選狀態。只有 timeout、offline、rate limit、服務異常或
+資料驗證失敗才顯示操作提示。Better Lyrics 不加入 automatic acquisition fan-out。

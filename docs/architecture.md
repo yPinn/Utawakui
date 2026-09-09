@@ -135,7 +135,17 @@ parser、save-time refetch 與 provenance；跨來源不拼接歌詞。成功 di
 main-memory TTL cache，相同 in-flight query 去重，同來源的新 query abort 舊 query。NetEase
 使用固定 HTTPS origin 的 bounded direct client，先做 metadata gate，再自適應取得足夠候選
 的歌詞；逐筆驗證完整 YRC 才建立 T2 canonical timing sidecar，沒有有效 YRC 時只如實保存
-T1／T0。完整契約見
+T1／T0。Provider import 與 metadata backfill 另共用 main-owned automatic acquisition
+orchestrator：只平行搜尋 LRCLIB／NetEase、只保存最佳 exact candidate，同一錄音內完整
+T2 優先於 T1；Better Lyrics 不在自動 policy。最多同時處理兩首曲目並維持每曲 single-flight；
+完整 T2 要求每一行都有 validated segments。Provider save-time refetch／fingerprint 後、同步保存
+前再次檢查完整 T2、曲目音訊與 main-derived track-id generation，防止舊工作在曲目刪除或同 id
+重建後提交；刪除先確認 filesystem record、失效該曲目的工作與 discovery cache，再同步移除，
+generation 會在相關工作完成後回收。音訊 import 不等待此背景工作；provider source 保存成功
+就以 bounded refresh options 刷新 library，後續 automatic preference 寫入失敗只記錄 bounded
+diagnostic，不隱藏已提交來源。歌詞
+manifest 的可選 preference 由 main 持久化，renderer 採 user preference 優先，
+automatic preference 不覆寫使用者選擇。完整契約見
 [多來源歌詞搜尋契約](contracts/multi-source-lyrics-search-contract.md)與
 [Better Lyrics 快取來源取得契約](contracts/betterlyrics-acquisition-contract.md)。Better Lyrics
 使用固定公開 cache-first API，不接受

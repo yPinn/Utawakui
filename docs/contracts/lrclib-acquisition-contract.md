@@ -64,7 +64,9 @@ record outright.
 ## Query progression
 
 1. When trusted title and artist are available, try one `/api/get` signature
-   lookup with album and duration when known.
+   lookup with album and duration when known. Automatic acquisition does not
+   save this response immediately; it continues discovery so the shared
+   cross-provider comparator can evaluate LRCLIB against NetEase.
 2. For discovery, send one structured `/api/search` request with editable
    `track_name` and `artist_name`; include album when known. Do not combine `q`
    with structured fields.
@@ -172,17 +174,21 @@ retry can help.
 `electron/main.js` creates one lyrics acquisition service after configuration is
 loaded and injects it into lyrics, import, and library handlers. The service owns
 one LRCLIB client and therefore one scheduler across manual search/save, label
-repair, post-import fallback, and metadata backfill. Domain handlers do not import
-one another.
+repair, post-import automatic acquisition, and metadata backfill. Domain handlers
+do not import one another.
 
 Every service operation checks `lyrics-flow` before its first external request.
-The local already-saved check may return without consulting the gate because it
-performs no provider work. A denied gate therefore makes zero LRCLIB requests;
-optional post-import and metadata-backfill callers catch that denial or any
-provider failure so successful audio/library work remains successful. Creating
-the service performs no request, and automatic lookup starts only from deferred
-library backfill or an explicit import action; HTTP timeout/abort and the shared
-sequential scheduler bound its work.
+The local full-T2 check may return without consulting the gate because it performs
+no provider work. A denied gate therefore makes zero LRCLIB requests. Automatic
+lookup searches LRCLIB and NetEase in parallel, accepts only the best exact
+candidate, then uses the normal save-time id refetch and fingerprint validation.
+Immediately after that refetch and before synchronous persistence, automatic saves
+recheck the track generation, real audio presence, and current complete-T2 state;
+the old LRCLIB-only discovery-record save path is not used. Post-import callers
+schedule this work without awaiting it, and metadata backfill uses the same
+bounded two-track queue and per-track single-flight operation. A denial, miss, or provider failure therefore
+cannot delay or fail successful audio/library work; only a committed lyrics save
+causes a follow-up library update.
 
 ## Verification gates
 

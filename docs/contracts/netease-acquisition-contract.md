@@ -5,9 +5,11 @@
 
 ## 產品邊界
 
-NetEase 是 `lyrics-flow` 保護下的手動候選來源，與 LRCLIB 並列於歌詞來源管理 UI。
-它不會自動替曲目取得歌詞，也不是預設來源。使用者以可編輯的曲名與歌手搜尋、檢視候選
-的錄音版本與同步能力，再明確保存一筆來源。當高度符合結果為空時，「擴大搜尋」保留並
+NetEase 是 `lyrics-flow` 保護下的候選來源，與 LRCLIB 並列於歌詞來源管理 UI。
+使用者可用可編輯的曲名與歌手搜尋、檢視候選的錄音版本與同步能力，再明確保存一筆來源。
+Provider import 與 provider metadata backfill 也可在背景自動探索 NetEase，但只允許 shared
+comparator 判定為 `exact` 的候選自動保存；錯誤版本的 T2 不得壓過 exact T1，Better Lyrics
+仍維持 manual-only。當高度符合結果為空時，「擴大搜尋」保留並
 去重原本候選，再合併移除歌手限制、清理曲名邊界標點的 recovery query；候選仍沿用相同的
 錄音版本與時長 gate，因此結果集不會比原搜尋縮小。
 
@@ -30,6 +32,10 @@ Main 使用內建 `fetch`，只向固定 HTTPS origin `https://interface.music.1
 拒絕 control characters；回應 body 有固定 byte 上限，候選與文字行／segment 數量亦有上限。
 所有外部操作在 main 再檢查 `lyrics-flow`。Renderer 只傳 allowlisted provider id、track id、
 bounded query、candidate id 與 preview fingerprint。
+
+Discovery／hydration cache 依 bounded track／query identity 隔離，最多保留 32 組。不同曲目
+的 manual 或 background search 不得清空另一曲目已授權的候選；保存仍需以同一 identity 找到
+先前 candidate，並重新取得歌詞驗證 fingerprint。
 
 ## 候選與逐字能力
 
@@ -56,7 +62,9 @@ availability 已改變或高度不穩定。產品必須保留 truthful T1 fallba
 ## 保存與 provenance
 
 保存前 main 會重新取得 candidate，並以 SHA-256 fingerprint 比對預覽內容。內容變更時回傳
-bounded candidate summary 要求再次確認；缺少 search cache 的保存請求視為 stale。保存後：
+bounded candidate summary 要求再次確認；缺少 search cache 的保存請求視為 stale。Automatic
+保存會在此 refetch 後、同步 persistence 前再次驗證曲目 generation、實際音訊與完整 T2 狀態；
+被刪除曲目的舊工作不得建立新目錄。保存後：
 
 - `lyrics/netease-<id>[-n].lrc` 保存 T0／T1 compatibility source；
 - 完整 T2 另保存 canonical timing sidecar；
