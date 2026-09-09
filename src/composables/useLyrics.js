@@ -121,7 +121,7 @@ const sourceDocuments = useLyricsSourceDocuments({
   selectedTrack,
   reportLyricsError,
   refreshLibrary,
-  selectSource: (filename) => selectSource(filename),
+  selectSource,
 });
 const {
   lyricsTiming,
@@ -143,7 +143,7 @@ const acquisition = useLyricsAcquisition({
   requireFeatureGate,
   reportLyricsError,
   refreshLibrary,
-  selectSource: (filename) => selectSource(filename),
+  selectSource,
 });
 const {
   clearMusixmatchProbe,
@@ -301,11 +301,29 @@ function selectTrack(trackId) {
   loadSelectedLyrics();
 }
 
-function selectSource(filename) {
+function selectSource(filename, options = {}) {
   if (state.selectedSourceFilename === filename) return;
+  const trackId = state.selectedTrackId;
   state.selectedSourceFilename = filename;
   state.offsetSeconds = 0;
   loadSelectedLyrics();
+  if (
+    options.persistPreference !== false &&
+    trackId &&
+    filename &&
+    typeof window.Utawakui?.setLyricsSourcePreference === 'function'
+  ) {
+    Promise.resolve(
+      window.Utawakui.setLyricsSourcePreference(trackId, filename),
+    ).catch((error) => {
+      reportLyricsError(
+        error,
+        'set-source-preference',
+        '歌詞來源偏好未儲存。',
+        { persist: false },
+      );
+    });
+  }
 }
 
 function applyBackfillStatus(payload = {}) {

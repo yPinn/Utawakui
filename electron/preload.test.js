@@ -72,6 +72,7 @@ const MAIN_INVOKE_CHANNELS = [
   'lyrics:set-reading-line',
   'lyrics:set-source-label',
   'lyrics:set-source-offset',
+  'lyrics:set-preferred-source',
   'music-structure:analyze-track',
   'music-structure:cancel-analysis',
   'music-structure:cancel-batch',

@@ -34,6 +34,7 @@ async function saveLrclibCandidate({
   query,
   fetchRecord = fetchLrclibRecord,
   persistRecord = saveLrclibRecord,
+  validateCommit,
 }) {
   if (!Number.isSafeInteger(candidateId) || candidateId <= 0) {
     throw new Error('lrclib candidate id is invalid');
@@ -51,6 +52,16 @@ async function saveLrclibCandidate({
       provider: 'lrclib',
       status: 'record-changed',
       candidate: refreshedCandidateSummary(track, fetched.record, query),
+    };
+  }
+
+  const commitDenial =
+    typeof validateCommit === 'function' ? validateCommit() : null;
+  if (commitDenial) {
+    return {
+      provider: 'lrclib',
+      status: 'unavailable',
+      reason: commitDenial,
     };
   }
 

@@ -99,6 +99,19 @@ function normalizeLyricsSourceOffsetMs(value) {
   return value;
 }
 
+function normalizeLyricsSourcePreference(value, sources) {
+  if (
+    !value ||
+    typeof value !== 'object' ||
+    !isLyricsSubtitleFilename(value.filename) ||
+    !['user', 'automatic'].includes(value.origin) ||
+    !sources.some((source) => source.filename === value.filename)
+  ) {
+    return null;
+  }
+  return { filename: value.filename, origin: value.origin };
+}
+
 function loadTrackLyricsManifest(trackDir) {
   try {
     const manifest = JSON.parse(
@@ -114,20 +127,26 @@ function loadTrackLyricsManifest(trackDir) {
     ) {
       return { checked: false, needsScan: false, sources: [] };
     }
+    const sources = manifest.sources
+      .filter(
+        (source) =>
+          source &&
+          isLyricsSubtitleFilename(source.filename) &&
+          typeof source.language === 'string',
+      )
+      .map((source) => {
+        const provider = normalizeLyricsProvider(source.provider);
+        return { ...source, ...(provider ? { provider } : {}) };
+      });
+    const preference = normalizeLyricsSourcePreference(
+      manifest.preference,
+      sources,
+    );
     return {
       checked: Boolean(manifest.checked),
       needsScan: manifest.version !== LYRICS_MANIFEST_VERSION,
-      sources: manifest.sources
-        .filter(
-          (source) =>
-            source &&
-            isLyricsSubtitleFilename(source.filename) &&
-            typeof source.language === 'string',
-        )
-        .map((source) => {
-          const provider = normalizeLyricsProvider(source.provider);
-          return { ...source, ...(provider ? { provider } : {}) };
-        }),
+      sources,
+      ...(preference ? { preference } : {}),
     };
   } catch {
     return { checked: false, needsScan: false, sources: [] };
@@ -172,11 +191,16 @@ function listTrackLyricsSources(trackDir) {
       ...(offsetMs !== null && offsetMs !== 0 ? { offsetMs } : {}),
     };
   });
+  const preference = normalizeLyricsSourcePreference(
+    manifest.preference,
+    sources,
+  );
 
   return {
     checked: manifest.checked || sources.length > 0,
     needsScan: manifest.needsScan,
     sources,
+    ...(preference ? { preference } : {}),
   };
 }
 
@@ -194,21 +218,26 @@ function normalizeLyricsSourceLabel(label) {
 }
 
 function getTrackLyricsState(trackDir) {
-  const { checked, needsScan, sources } = listTrackLyricsSources(trackDir);
+  const { checked, needsScan, sources, preference } =
+    listTrackLyricsSources(trackDir);
   return {
     status:
       sources.length > 0 ? 'available' : checked ? 'missing' : 'unchecked',
     needsScan,
     sources,
+    ...(preference
+      ? {
+          preferredSourceFilename: preference.filename,
+          preferenceOrigin: preference.origin,
+        }
+      : {}),
   };
 }
 
-function saveTrackLyricsManifest(trackDir, sources) {
+function saveTrackLyricsManifest(trackDir, sources, options = {}) {
+  const existingManifest = loadTrackLyricsManifest(trackDir);
   const existingByFilename = new Map(
-    loadTrackLyricsManifest(trackDir).sources.map((source) => [
-      source.filename,
-      source,
-    ]),
+    existingManifest.sources.map((source) => [source.filename, source]),
   );
   const normalizedSources = (Array.isArray(sources) ? sources : [])
     .filter((source) => source && isLyricsSubtitleFilename(source.filename))
@@ -246,6 +275,12 @@ function saveTrackLyricsManifest(trackDir, sources) {
       };
     })
     .sort((a, b) => compareFilenames(a.filename, b.filename));
+  const preference = normalizeLyricsSourcePreference(
+    Object.hasOwn(options, 'preference')
+      ? options.preference
+      : existingManifest.preference,
+    normalizedSources,
+  );
 
   const lyricsDir = getLyricsDirFromTrackDir(trackDir);
   fs.mkdirSync(lyricsDir, { recursive: true });
@@ -254,8 +289,45 @@ function saveTrackLyricsManifest(trackDir, sources) {
     checked: true,
     checkedAt: new Date().toISOString(),
     sources: normalizedSources,
+    ...(preference ? { preference } : {}),
   });
   return normalizedSources;
+}
+
+function setLyricsSourcePreference(trackDir, filename, origin, options = {}) {
+  if (!['user', 'automatic'].includes(origin)) return null;
+  const state = listTrackLyricsSources(trackDir);
+  if (!state.sources.some((source) => source.filename === filename)) {
+    return null;
+  }
+  if (
+    options.preserveUser === true &&
+    origin === 'automatic' &&
+    state.preference?.origin === 'user'
+  ) {
+    return getTrackLyricsState(trackDir);
+  }
+
+  saveTrackLyricsManifest(trackDir, state.sources, {
+    preference: { filename, origin },
+  });
+  return getTrackLyricsState(trackDir);
+}
+
+function hasCurrentFullT2Lyrics(trackDir) {
+  return listTrackLyricsSources(trackDir).sources.some((source) => {
+    const timing = loadTrackLyricsTiming(trackDir, source.filename);
+    const document = timing.document;
+    return (
+      timing.status === 'current' &&
+      document?.granularity === 'T2' &&
+      Array.isArray(document.lines) &&
+      document.lines.length > 0 &&
+      document.lines.every(
+        (line) => Array.isArray(line.segments) && line.segments.length > 0,
+      )
+    );
+  });
 }
 
 // Matches allocateLyricsFilename's own naming (`lrclib-<id>.lrc`,
@@ -564,12 +636,14 @@ module.exports = {
   isAutomaticLyricsLanguage,
   extractYtDlpSubtitleLanguage,
   getTrackLyricsState,
+  hasCurrentFullT2Lyrics,
   loadTrackLyricsManifest,
   listTrackLyricsSources,
   saveTrackLyricsManifest,
   backfillLyricsSourceLabels,
   setLyricsSourceLabel,
   setLyricsSourceOffset,
+  setLyricsSourcePreference,
   deleteLyricsSource,
   allocateLyricsFilename,
   saveTrackLyricsText,

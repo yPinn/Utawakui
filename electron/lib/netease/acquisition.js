@@ -13,6 +13,7 @@ const { saveNeteaseRecord } = require('./storage.js');
 const SHA256_RE = /^[a-f0-9]{64}$/u;
 const TARGET_USABLE_CANDIDATES = 3;
 const MAX_HYDRATION_BATCH_SIZE = 3;
+const MAX_CACHED_IDENTITIES = 32;
 
 function identityCacheKey(identity) {
   return JSON.stringify([
@@ -83,8 +84,22 @@ function buildCandidateResult(track, records, invalidRecordCount) {
 function createNeteaseAcquisitionProvider(options = {}) {
   const client = options.client || createNeteaseClient();
   const persistRecord = options.persistRecord || saveNeteaseRecord;
-  const cachedRecords = new Map();
-  let cachedIdentityKey = null;
+  const cachedRecordsByIdentity = new Map();
+
+  function recordsForSearch(identityKey, retainCached) {
+    let records = retainCached
+      ? cachedRecordsByIdentity.get(identityKey)
+      : null;
+    if (!records) records = new Map();
+    cachedRecordsByIdentity.delete(identityKey);
+    cachedRecordsByIdentity.set(identityKey, records);
+    while (cachedRecordsByIdentity.size > MAX_CACHED_IDENTITIES) {
+      cachedRecordsByIdentity.delete(
+        cachedRecordsByIdentity.keys().next().value,
+      );
+    }
+    return records;
+  }
 
   async function searchCandidates(track, searchOptions = {}) {
     const plan = buildLrclibQueryPlan(track, searchOptions.query);
@@ -96,9 +111,9 @@ function createNeteaseAcquisitionProvider(options = {}) {
     }
     const identityKey = identityCacheKey(plan.identity);
     const retainCached =
-      searchOptions.mode === 'broaden' && cachedIdentityKey === identityKey;
-    if (!retainCached) cachedRecords.clear();
-    cachedIdentityKey = identityKey;
+      searchOptions.mode === 'broaden' &&
+      cachedRecordsByIdentity.has(identityKey);
+    const cachedRecords = recordsForSearch(identityKey, retainCached);
 
     const metadataById = new Map();
     let invalidRecordCount = 0;
@@ -176,6 +191,7 @@ function createNeteaseAcquisitionProvider(options = {}) {
     candidateId,
     expectedFingerprint,
     query,
+    validateCommit,
   }) {
     if (!Number.isSafeInteger(candidateId) || candidateId <= 0) {
       throw new Error('netease candidate id is invalid');
@@ -183,7 +199,11 @@ function createNeteaseAcquisitionProvider(options = {}) {
     if (!SHA256_RE.test(expectedFingerprint)) {
       throw new Error('netease preview fingerprint is invalid');
     }
-    const metadata = cachedRecords.get(candidateId);
+    const plan = buildLrclibQueryPlan(track, query);
+    const cachedRecords = cachedRecordsByIdentity.get(
+      identityCacheKey(plan.identity),
+    );
+    const metadata = cachedRecords?.get(candidateId);
     if (!metadata) {
       return {
         provider: 'netease',
@@ -196,7 +216,6 @@ function createNeteaseAcquisitionProvider(options = {}) {
     const record = { ...metadata, ...fetched.record };
     const currentFingerprint = fingerprintNeteaseRecord(record);
     if (currentFingerprint !== expectedFingerprint) {
-      const plan = buildLrclibQueryPlan(track, query);
       const [match] = rankNeteaseCandidates(plan.identity, [record]);
       if (!match) {
         return {
@@ -209,6 +228,15 @@ function createNeteaseAcquisitionProvider(options = {}) {
         provider: 'netease',
         status: 'record-changed',
         candidate: summarizeNeteaseCandidate(match),
+      };
+    }
+    const commitDenial =
+      typeof validateCommit === 'function' ? validateCommit() : null;
+    if (commitDenial) {
+      return {
+        provider: 'netease',
+        status: 'unavailable',
+        reason: commitDenial,
       };
     }
     const result = persistRecord(trackDir, record);

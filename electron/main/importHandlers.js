@@ -116,18 +116,23 @@ async function classifyingProviderSearchFailures(run, { recordDiagnostic }) {
   }
 }
 
-async function saveOptionalLyricsAfterImport(
+function scheduleOptionalLyricsAfterImport(
   track,
   trackDir,
   lyricsAcquisitionService,
+  onSaved,
 ) {
   try {
-    return Boolean(
-      await lyricsAcquisitionService.saveIfAbsent(track, trackDir),
+    const operation = lyricsAcquisitionService.scheduleAutomaticAcquisition(
+      track,
+      trackDir,
+      { onSaved },
     );
+    Promise.resolve(operation).catch(() => {});
+    return true;
   } catch {
-    // The audio download succeeded. A failed or gated optional lyrics
-    // fallback must never turn that into a failed import.
+    // The audio download succeeded. Optional background work cannot turn
+    // scheduling failure into a failed import.
     return false;
   }
 }
@@ -152,6 +157,7 @@ function registerImportHandlers({
   featureIds,
   getProviderRunner,
   lyricsAcquisitionService,
+  notifyLibraryUpdated = () => {},
   enqueueMusicAnalysis = () => false,
   downloadTrackAudio = downloadAudio,
   fetchPlaylistMetadata = fetchPlaylist,
@@ -352,10 +358,11 @@ function registerImportHandlers({
         }
       }
       if (trackDir) {
-        await saveOptionalLyricsAfterImport(
-          result,
+        scheduleOptionalLyricsAfterImport(
+          { ...result, id: videoId },
           trackDir,
           lyricsAcquisitionService,
+          () => notifyLibraryUpdated({ allowProviderBackfill: false }),
         );
       }
       try {
@@ -372,5 +379,5 @@ function registerImportHandlers({
 module.exports = {
   buildProviderIndexEntry,
   registerImportHandlers,
-  saveOptionalLyricsAfterImport,
+  scheduleOptionalLyricsAfterImport,
 };

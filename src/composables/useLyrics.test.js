@@ -6,6 +6,7 @@ let listTracksMock;
 let getTrackLyricsMock;
 let saveLyricsTimingMock;
 let setLyricsSourceOffsetMock;
+let setLyricsSourcePreferenceMock;
 let probeMusixmatchLyricsMock;
 let importLyricsTextMock;
 let importLyricsFileMock;
@@ -133,6 +134,10 @@ beforeEach(() => {
   setLyricsSourceOffsetMock = vi.fn().mockResolvedValue({
     source: { filename: 'en.vtt' },
   });
+  setLyricsSourcePreferenceMock = vi.fn().mockResolvedValue({
+    preferredSourceFilename: 'en.vtt',
+    preferenceOrigin: 'user',
+  });
   probeMusixmatchLyricsMock = vi.fn().mockResolvedValue({
     provider: 'musixmatch',
     status: 'available',
@@ -223,6 +228,7 @@ beforeEach(() => {
       getTrackLyrics: getTrackLyricsMock,
       saveLyricsTiming: saveLyricsTimingMock,
       setLyricsSourceOffset: setLyricsSourceOffsetMock,
+      setLyricsSourcePreference: setLyricsSourcePreferenceMock,
       probeMusixmatchLyrics: probeMusixmatchLyricsMock,
       importLyricsText: importLyricsTextMock,
       importLyricsFile: importLyricsFileMock,
@@ -1216,6 +1222,53 @@ describe('useLyrics', () => {
     expect(lyrics.state.offsetSeconds).toBe(2.6);
   });
 
+  it('restores a persisted source preference and records later user selection', async () => {
+    const preferredTrack = {
+      ...trackA,
+      lyrics: {
+        status: 'available',
+        sources: [
+          { filename: 'ja.vtt', language: 'ja', kind: 'youtube-cc' },
+          { filename: 'en.vtt', language: 'en', kind: 'youtube-cc' },
+        ],
+        preferredSourceFilename: 'ja.vtt',
+        preferenceOrigin: 'automatic',
+      },
+    };
+    listTracksMock.mockResolvedValue([
+      preferredTrack,
+      trackB,
+      trackMissingLyrics,
+    ]);
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    expect(lyrics.state.selectedSourceFilename).toBe('ja.vtt');
+    lyrics.selectSource('en.vtt');
+    await flushPromises();
+
+    expect(setLyricsSourcePreferenceMock).toHaveBeenCalledWith(
+      'track-a',
+      'en.vtt',
+    );
+  });
+
+  it('keeps the live source selection when preference persistence fails', async () => {
+    setLyricsSourcePreferenceMock.mockRejectedValueOnce(
+      new Error('private manifest path'),
+    );
+    const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
+
+    lyrics.selectSource('manual.lrc');
+    await flushPromises();
+
+    expect(lyrics.state.selectedSourceFilename).toBe('manual.lrc');
+    expect(setLyricsSourcePreferenceMock).toHaveBeenCalledWith(
+      'track-a',
+      'manual.lrc',
+    );
+    expect(lyrics.state.error).toBeNull();
+  });
+
   it('keeps the live adjustment and reports a bounded offset persistence failure', async () => {
     const lyrics = await loadLyrics({ playlists: [DEFAULT_PLAYLIST] });
     setLyricsSourceOffsetMock.mockRejectedValueOnce(
@@ -1713,6 +1766,7 @@ describe('useLyrics', () => {
 
     expect(deleteLyricsSourceMock).toHaveBeenCalledWith(trackA.id, 'en.vtt');
     expect(lyrics.state.selectedSourceFilename).toBe('replacement.lrc');
+    expect(setLyricsSourcePreferenceMock).not.toHaveBeenCalled();
   });
 
   it('bounds local source edit, delete, and manual import failures', async () => {

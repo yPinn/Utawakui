@@ -7,6 +7,7 @@ const {
 const {
   deleteTrack,
   deleteTrackArtworkFile,
+  findTrackRecord,
   importLocalAudioFiles,
   listTracks,
   organizeTrackMetadataFromSidecars,
@@ -28,26 +29,30 @@ async function backfillTrackInfoWithLyricsFallback(
   });
   if (!result) return null;
 
-  let saved = false;
   try {
-    saved = await options.lyricsAcquisitionService.saveIfAbsent(
-      result,
-      trackDir,
-    );
+    const operation =
+      options.lyricsAcquisitionService.scheduleAutomaticAcquisition(
+        { ...result, id: videoId },
+        trackDir,
+        { onSaved: options.onLyricsSaved },
+      );
+    Promise.resolve(operation).catch(() => {});
   } catch {
-    // Lyrics fallback is optional; metadata/artwork backfill already worked.
+    // Lyrics acquisition is optional; metadata/artwork backfill already worked.
   }
-  return saved ? { ...result, assetsUpdated: true } : result;
+  return result;
 }
 
 function createProviderBackfillTrackInfo(
   getProviderRunner,
   lyricsAcquisitionService,
+  onLyricsSaved,
 ) {
   return async (videoId, trackDir) =>
     backfillTrackInfoWithLyricsFallback(videoId, trackDir, {
       runner: await getProviderRunner(),
       lyricsAcquisitionService,
+      onLyricsSaved,
     });
 }
 
@@ -66,12 +71,15 @@ function registerLibraryHandlers({
   runLibraryBackfill = runBackfillPass,
   organizeLibraryMetadata = organizeTrackMetadataFromSidecars,
   importAudioFiles = importLocalAudioFiles,
+  findLibraryTrackRecord = findTrackRecord,
+  deleteLibraryTrack = deleteTrack,
   enqueueMusicAnalysis = () => false,
   recordDiagnostic,
 }) {
   const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
     getProviderRunner,
     lyricsAcquisitionService,
+    () => notifyLibraryUpdated({ allowProviderBackfill: false }),
   );
 
   ipcMain.handle('library:list', async (event, options = {}) => {
@@ -162,7 +170,9 @@ function registerLibraryHandlers({
 
   ipcMain.handle('library:delete-track', async (event, trackId) => {
     const dir = resolveDownloadDir(getConfig());
-    const deleted = deleteTrack(dir, trackId);
+    if (!findLibraryTrackRecord(dir, trackId)) return false;
+    lyricsAcquisitionService.invalidateAutomaticAcquisition?.(trackId);
+    const deleted = deleteLibraryTrack(dir, trackId);
     if (deleted) {
       // Cascades into any playlist that referenced this track — a
       // playlist can otherwise end up pointing at a trackId that no

@@ -586,6 +586,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
     });
 

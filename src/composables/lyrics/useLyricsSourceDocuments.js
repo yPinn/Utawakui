@@ -208,7 +208,9 @@ export function useLyricsSourceDocuments({
       );
       await refreshLibrary();
       if (state.selectedSourceFilename === filename) {
-        selectSource(result.sources[0]?.filename ?? '');
+        selectSource(result.sources[0]?.filename ?? '', {
+          persistPreference: false,
+        });
       }
       return result;
     } catch (error) {

@@ -112,4 +112,31 @@ describe('saveLrclibCandidate', () => {
     });
     expect(persistRecord).not.toHaveBeenCalled();
   });
+
+  it('runs the automatic commit guard after re-fetch and before persistence', async () => {
+    const fetchedRecord = record();
+    const persistRecord = vi.fn();
+    const validateCommit = vi.fn(() => 'current-t2');
+
+    await expect(
+      saveLrclibCandidate({
+        track,
+        trackDir: 'track-dir',
+        candidateId: 42,
+        expectedFingerprint: fingerprintLrclibRecord(fetchedRecord),
+        fetchRecord: vi.fn().mockResolvedValue({
+          status: 'ok',
+          record: fetchedRecord,
+        }),
+        persistRecord,
+        validateCommit,
+      }),
+    ).resolves.toEqual({
+      provider: 'lrclib',
+      status: 'unavailable',
+      reason: 'current-t2',
+    });
+    expect(validateCommit).toHaveBeenCalledOnce();
+    expect(persistRecord).not.toHaveBeenCalled();
+  });
 });

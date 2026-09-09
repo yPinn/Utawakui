@@ -4,7 +4,7 @@ import importHandlersModule from './importHandlers.js';
 const {
   buildProviderIndexEntry,
   registerImportHandlers,
-  saveOptionalLyricsAfterImport,
+  scheduleOptionalLyricsAfterImport,
 } = importHandlersModule;
 
 function registerDownload(overrides = {}) {
@@ -19,6 +19,7 @@ function registerDownload(overrides = {}) {
     duration: 180,
   });
   const requireFeatureGate = vi.fn();
+  const notifyLibraryUpdated = vi.fn();
   const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
   const getProviderRunner = vi.fn().mockResolvedValue({ run: true });
   registerImportHandlers({
@@ -28,8 +29,9 @@ function registerDownload(overrides = {}) {
     requireFeatureGate,
     featureIds: { PROVIDER_FLOW: 'provider-flow' },
     getProviderRunner,
-    lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
+    lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
     enqueueMusicAnalysis,
+    notifyLibraryUpdated,
     recordDiagnostic,
     downloadTrackAudio,
     ...overrides,
@@ -41,6 +43,7 @@ function registerDownload(overrides = {}) {
     getProviderRunner,
     requireFeatureGate,
     recordDiagnostic,
+    notifyLibraryUpdated,
   };
 }
 
@@ -216,39 +219,49 @@ describe('buildProviderIndexEntry', () => {
   });
 });
 
-describe('saveOptionalLyricsAfterImport', () => {
+describe('scheduleOptionalLyricsAfterImport', () => {
   it('never turns a successful audio import into a lyrics failure', async () => {
     const lyricsAcquisitionService = {
-      saveIfAbsent: vi.fn().mockRejectedValue(new Error('offline')),
+      scheduleAutomaticAcquisition: vi
+        .fn()
+        .mockRejectedValue(new Error('offline')),
     };
 
-    await expect(
-      saveOptionalLyricsAfterImport(
+    expect(
+      scheduleOptionalLyricsAfterImport(
         { title: 'Song', artist: 'Artist' },
         'track-dir',
         lyricsAcquisitionService,
       ),
-    ).resolves.toBe(false);
-    expect(lyricsAcquisitionService.saveIfAbsent).toHaveBeenCalledOnce();
+    ).toBe(true);
+    expect(
+      lyricsAcquisitionService.scheduleAutomaticAcquisition,
+    ).toHaveBeenCalledOnce();
+    await Promise.resolve();
   });
 
-  it('reports whether optional lyrics were stored', async () => {
+  it('returns false when background scheduling cannot start', () => {
     const lyricsAcquisitionService = {
-      saveIfAbsent: vi.fn().mockResolvedValue(true),
+      scheduleAutomaticAcquisition: vi.fn(() => {
+        throw new Error('queue unavailable');
+      }),
     };
-    await expect(
-      saveOptionalLyricsAfterImport(
+
+    expect(
+      scheduleOptionalLyricsAfterImport(
         { title: 'Song' },
         'track-dir',
         lyricsAcquisitionService,
       ),
-    ).resolves.toBe(true);
+    ).toBe(false);
   });
 });
 
 describe('provider download automatic music analysis', () => {
   it('uses the downloaded file duration for lyrics acquisition', async () => {
-    const lyricsAcquisitionService = { saveIfAbsent: vi.fn() };
+    const lyricsAcquisitionService = {
+      scheduleAutomaticAcquisition: vi.fn(),
+    };
     const downloadTrackAudio = vi.fn().mockResolvedValue({
       title: 'Song',
       artist: 'Artist',
@@ -261,10 +274,43 @@ describe('provider download automatic music analysis', () => {
 
     await harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ');
 
-    expect(lyricsAcquisitionService.saveIfAbsent).toHaveBeenCalledWith(
-      expect.objectContaining({ duration: 211 }),
+    expect(
+      lyricsAcquisitionService.scheduleAutomaticAcquisition,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'dQw4w9WgXcQ', duration: 211 }),
       expect.any(String),
+      expect.objectContaining({ onSaved: expect.any(Function) }),
     );
+  });
+
+  it('returns the successful audio import without awaiting lyrics acquisition', async () => {
+    const lyricsAcquisitionService = {
+      scheduleAutomaticAcquisition: vi.fn(() => new Promise(() => {})),
+    };
+    const harness = registerDownload({ lyricsAcquisitionService });
+
+    await expect(
+      harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ'),
+    ).resolves.toMatchObject({ title: 'Song' });
+    expect(
+      lyricsAcquisitionService.scheduleAutomaticAcquisition,
+    ).toHaveBeenCalledOnce();
+  });
+
+  it('refreshes the library only after automatic lyrics are saved', async () => {
+    const lyricsAcquisitionService = {
+      scheduleAutomaticAcquisition: vi.fn((_track, _trackDir, options) => {
+        options.onSaved();
+        return Promise.resolve({ status: 'saved' });
+      }),
+    };
+    const harness = registerDownload({ lyricsAcquisitionService });
+
+    await harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ');
+
+    expect(harness.notifyLibraryUpdated).toHaveBeenCalledWith({
+      allowProviderBackfill: false,
+    });
   });
 
   it('enqueues the main-derived track id after a successful download', async () => {

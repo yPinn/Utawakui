@@ -26,6 +26,7 @@ const FUNCTION_EXPORTS = [
   'deleteTrackReading',
   'deleteTrackLyricsTiming',
   'findTrackRecord',
+  'hasCurrentFullT2Lyrics',
   'hasSeparation',
   'hasSeparationResultFile',
   'isArtworkFilename',
@@ -78,6 +79,7 @@ const FUNCTION_EXPORTS = [
   'selectSeparationResult',
   'setLyricsSourceLabel',
   'setLyricsSourceOffset',
+  'setLyricsSourcePreference',
   'setReadingLine',
   'timingSidecarPath',
   'updateTrackMetadata',
@@ -93,7 +95,7 @@ const CONSTANT_EXPORTS = [
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 70 names its consumers expect', () => {
+  it('re-exports exactly the 72 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

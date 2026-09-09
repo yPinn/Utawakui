@@ -551,6 +551,14 @@ export function pickPreferredLyricsSource(track, currentFilename = null) {
     return sources.find((source) => source.filename === currentFilename);
   }
 
+  const preferredFilename = track?.lyrics?.preferredSourceFilename;
+  if (
+    preferredFilename &&
+    sources.some((source) => source.filename === preferredFilename)
+  ) {
+    return sources.find((source) => source.filename === preferredFilename);
+  }
+
   const preferredPrefixes = inferPreferredLyricsLanguagePrefixes(track);
   return pickSourceByLanguage(sources, preferredPrefixes) ?? sources[0];
 }

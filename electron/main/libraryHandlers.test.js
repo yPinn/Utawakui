@@ -9,7 +9,9 @@ describe('backfillTrackInfoWithLyricsFallback', () => {
   it('keeps a successful metadata backfill when optional lyrics fail', async () => {
     const metadata = { title: 'Song', artist: 'Artist', assetsUpdated: false };
     const lyricsAcquisitionService = {
-      saveIfAbsent: vi.fn().mockRejectedValue(new Error('gate closed')),
+      scheduleAutomaticAcquisition: vi.fn(() => {
+        throw new Error('gate closed');
+      }),
     };
 
     await expect(
@@ -21,9 +23,10 @@ describe('backfillTrackInfoWithLyricsFallback', () => {
     ).resolves.toEqual(metadata);
   });
 
-  it('marks assets updated when optional lyrics are stored', async () => {
+  it('schedules lyrics without delaying or rewriting the metadata result', async () => {
+    const onLyricsSaved = vi.fn();
     const lyricsAcquisitionService = {
-      saveIfAbsent: vi.fn().mockResolvedValue(true),
+      scheduleAutomaticAcquisition: vi.fn(() => new Promise(() => {})),
     };
     await expect(
       backfillTrackInfoWithLyricsFallback('video-id', 'track-dir', {
@@ -31,8 +34,16 @@ describe('backfillTrackInfoWithLyricsFallback', () => {
           .fn()
           .mockResolvedValue({ title: 'Song', assetsUpdated: false }),
         lyricsAcquisitionService,
+        onLyricsSaved,
       }),
-    ).resolves.toMatchObject({ title: 'Song', assetsUpdated: true });
+    ).resolves.toEqual({ title: 'Song', assetsUpdated: false });
+    expect(
+      lyricsAcquisitionService.scheduleAutomaticAcquisition,
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'video-id', title: 'Song' }),
+      'track-dir',
+      { onSaved: onLyricsSaved },
+    );
   });
 });
 
@@ -60,7 +71,7 @@ describe('library metadata maintenance handlers', () => {
       sendBackfillStatus: vi.fn(),
       featureIds: FEATURE_IDS,
       getProviderRunner: vi.fn(),
-      lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
+      lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
       listLibraryTracks: vi.fn().mockReturnValue([]),
       runLibraryBackfill: vi.fn().mockResolvedValue(0),
       ...overrides,
@@ -125,6 +136,77 @@ describe('library metadata maintenance handlers', () => {
     const [pushedStatus] = sendBackfillStatus.mock.calls[0];
     expect(JSON.stringify(pushedStatus)).not.toContain('/Users/');
   });
+
+  it('invalidates automatic lyrics work after validating and before deleting the track directory', async () => {
+    const calls = [];
+    const lyricsAcquisitionService = {
+      scheduleAutomaticAcquisition: vi.fn(),
+      invalidateAutomaticAcquisition: vi.fn(() => calls.push('invalidate')),
+    };
+    const deleteLibraryTrack = vi.fn(() => {
+      calls.push('delete');
+      return true;
+    });
+    const notifyLibraryUpdated = vi.fn();
+    const handlers = registerHandlers({
+      lyricsAcquisitionService,
+      findLibraryTrackRecord: vi.fn().mockReturnValue({ id: 'track-1' }),
+      deleteLibraryTrack,
+      notifyLibraryUpdated,
+    });
+
+    await expect(
+      handlers.get('library:delete-track')(null, 'track-1'),
+    ).resolves.toBe(true);
+
+    expect(calls).toEqual(['invalidate', 'delete']);
+    expect(
+      lyricsAcquisitionService.invalidateAutomaticAcquisition,
+    ).toHaveBeenCalledWith('track-1');
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+  });
+
+  it('does not allocate lyrics generations for missing track ids', async () => {
+    const lyricsAcquisitionService = {
+      scheduleAutomaticAcquisition: vi.fn(),
+      invalidateAutomaticAcquisition: vi.fn(),
+    };
+    const deleteLibraryTrack = vi.fn();
+    const handlers = registerHandlers({
+      lyricsAcquisitionService,
+      findLibraryTrackRecord: vi.fn().mockReturnValue(null),
+      deleteLibraryTrack,
+    });
+
+    await expect(
+      handlers.get('library:delete-track')(null, 'missing-track'),
+    ).resolves.toBe(false);
+    expect(
+      lyricsAcquisitionService.invalidateAutomaticAcquisition,
+    ).not.toHaveBeenCalled();
+    expect(deleteLibraryTrack).not.toHaveBeenCalled();
+  });
+
+  it('invalidates automatic lyrics work before a partial deletion can throw', async () => {
+    const calls = [];
+    const lyricsAcquisitionService = {
+      scheduleAutomaticAcquisition: vi.fn(),
+      invalidateAutomaticAcquisition: vi.fn(() => calls.push('invalidate')),
+    };
+    const handlers = registerHandlers({
+      lyricsAcquisitionService,
+      findLibraryTrackRecord: vi.fn().mockReturnValue({ id: 'track-1' }),
+      deleteLibraryTrack: vi.fn(() => {
+        calls.push('delete');
+        throw new Error('index write failed');
+      }),
+    });
+
+    await expect(
+      handlers.get('library:delete-track')(null, 'track-1'),
+    ).rejects.toThrow(/index write failed/i);
+    expect(calls).toEqual(['invalidate', 'delete']);
+  });
 });
 
 describe('local import automatic music analysis', () => {
@@ -156,7 +238,7 @@ describe('local import automatic music analysis', () => {
       sendBackfillStatus: vi.fn(),
       featureIds: FEATURE_IDS,
       getProviderRunner: vi.fn(),
-      lyricsAcquisitionService: { saveIfAbsent: vi.fn() },
+      lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
       enqueueMusicAnalysis,
       importAudioFiles,
       ...overrides,

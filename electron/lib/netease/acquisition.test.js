@@ -357,6 +357,91 @@ describe('createNeteaseAcquisitionProvider', () => {
     });
   });
 
+  it('runs the automatic commit guard after re-fetch and before persistence', async () => {
+    const persistRecord = vi.fn();
+    const provider = createNeteaseAcquisitionProvider({
+      client: client(),
+      persistRecord,
+    });
+    const searched = await provider.searchCandidates({
+      title: 'Song',
+      artist: 'Artist',
+      duration: 180,
+    });
+
+    await expect(
+      provider.saveCandidate({
+        track: { title: 'Song', artist: 'Artist', duration: 180 },
+        trackDir,
+        candidateId: 42,
+        expectedFingerprint: searched.candidates[0].previewFingerprint,
+        validateCommit: () => 'stale-track',
+      }),
+    ).resolves.toEqual({
+      provider: 'netease',
+      status: 'unavailable',
+      reason: 'stale-track',
+    });
+    expect(persistRecord).not.toHaveBeenCalled();
+  });
+
+  it('keeps authorized candidates isolated across concurrent track identities', async () => {
+    const api = client({
+      search: vi.fn(async (query) => {
+        const other = query.trackName === 'Other Song';
+        return {
+          status: 'ok',
+          records: [
+            metadata({
+              id: other ? 43 : 42,
+              trackName: other ? 'Other Song' : 'Song',
+              artistName: other ? 'Other Artist' : 'Artist',
+              artists: [other ? 'Other Artist' : 'Artist'],
+            }),
+          ],
+          invalidRecordCount: 0,
+        };
+      }),
+      getLyrics: vi.fn(async (id) => ({
+        status: 'ok',
+        record: {
+          id,
+          yrcLyrics: `[1000,1000](1000,1000,0)Word ${id}`,
+          lrcLyrics: `[00:01.000]Word ${id}`,
+        },
+      })),
+    });
+    const provider = createNeteaseAcquisitionProvider({ client: api });
+    const firstTrack = {
+      id: 'track-a',
+      title: 'Song',
+      artist: 'Artist',
+      duration: 180,
+    };
+    const secondTrack = {
+      id: 'track-b',
+      title: 'Other Song',
+      artist: 'Other Artist',
+      duration: 180,
+    };
+
+    const firstSearch = await provider.searchCandidates(firstTrack);
+    await provider.searchCandidates(secondTrack);
+
+    await expect(
+      provider.saveCandidate({
+        track: firstTrack,
+        trackDir,
+        candidateId: 42,
+        expectedFingerprint: firstSearch.candidates[0].previewFingerprint,
+      }),
+    ).resolves.toMatchObject({
+      provider: 'netease',
+      status: 'saved',
+      source: { kind: 'netease' },
+    });
+  });
+
   it('returns a bounded unavailable result when changed content is no longer a valid candidate', async () => {
     const api = client();
     const provider = createNeteaseAcquisitionProvider({ client: api });

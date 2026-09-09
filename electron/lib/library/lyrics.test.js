@@ -11,12 +11,20 @@ import {
   allocateLyricsFilename,
   importManualLyricsText,
   importManualLyricsFile,
+  getTrackLyricsState,
+  hasCurrentFullT2Lyrics,
+  loadTrackLyricsManifest,
   setLyricsSourceLabel,
   setLyricsSourceOffset,
+  setLyricsSourcePreference,
   deleteLyricsSource,
   readTrackLyrics,
   saveTrackLyricsText,
 } from './lyrics.js';
+import {
+  computeLyricsSourceFingerprint,
+  saveTrackLyricsTiming,
+} from './lyricsTiming.js';
 import { listTracks } from './tracks.js';
 
 describe('isTranslatedLyricsLanguage', () => {
@@ -288,6 +296,148 @@ describe('setLyricsSourceOffset', () => {
     expect(
       readTrackLyrics(dir, 'abc', 'main.lrc').source.offsetMs,
     ).toBeUndefined();
+  });
+});
+
+describe('lyrics source preference', () => {
+  let dir;
+  let trackDir;
+
+  beforeEach(() => {
+    dir = fs.mkdtempSync(path.join(os.tmpdir(), 'utawakui-lyrics-preference-'));
+    trackDir = path.join(dir, 'tracks', 'abc');
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'x');
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'manual.lrc', language: 'ja', kind: 'manual' },
+      '[00:01.00]Manual',
+    );
+    saveTrackLyricsText(
+      trackDir,
+      { filename: 'netease-42.lrc', language: 'und', kind: 'netease' },
+      '[00:01.00]Provider',
+    );
+  });
+
+  afterEach(() => {
+    fs.rmSync(dir, { recursive: true, force: true });
+  });
+
+  it('projects a persisted user-owned preference through the library state', () => {
+    expect(
+      setLyricsSourcePreference(trackDir, 'manual.lrc', 'user'),
+    ).toMatchObject({
+      preferredSourceFilename: 'manual.lrc',
+      preferenceOrigin: 'user',
+    });
+
+    expect(loadTrackLyricsManifest(trackDir).preference).toEqual({
+      filename: 'manual.lrc',
+      origin: 'user',
+    });
+    expect(getTrackLyricsState(trackDir)).toMatchObject({
+      preferredSourceFilename: 'manual.lrc',
+      preferenceOrigin: 'user',
+    });
+    expect(listTracks(dir)[0].lyrics).toMatchObject({
+      preferredSourceFilename: 'manual.lrc',
+      preferenceOrigin: 'user',
+    });
+  });
+
+  it('does not let an automatic preference replace a user choice', () => {
+    setLyricsSourcePreference(trackDir, 'manual.lrc', 'user');
+
+    expect(
+      setLyricsSourcePreference(trackDir, 'netease-42.lrc', 'automatic', {
+        preserveUser: true,
+      }),
+    ).toMatchObject({
+      preferredSourceFilename: 'manual.lrc',
+      preferenceOrigin: 'user',
+    });
+  });
+
+  it('clears a preference when its source is deleted', () => {
+    setLyricsSourcePreference(trackDir, 'netease-42.lrc', 'automatic');
+
+    expect(deleteLyricsSource(trackDir, 'netease-42.lrc')).toBe(true);
+    expect(getTrackLyricsState(trackDir)).not.toHaveProperty(
+      'preferredSourceFilename',
+    );
+  });
+
+  it('detects a current full T2 sidecar for automatic acquisition rechecks', () => {
+    const sourceFilename = 'netease-42.lrc';
+    const sourceSha256 = computeLyricsSourceFingerprint(
+      trackDir,
+      sourceFilename,
+    );
+    saveTrackLyricsTiming(trackDir, sourceFilename, sourceSha256, {
+      schemaVersion: 1,
+      documentId: 'netease:42',
+      normalizerProfileId: 'lyrics-source-v2',
+      source: { filename: sourceFilename, sha256: sourceSha256 },
+      granularity: 'T2',
+      lines: [
+        {
+          lineId: 'l1',
+          text: 'Provider',
+          startMs: 1000,
+          endMs: 2000,
+          segments: [
+            {
+              segmentId: 's1',
+              text: 'Provider',
+              startMs: 1000,
+              endMs: 2000,
+            },
+          ],
+        },
+      ],
+    });
+
+    expect(hasCurrentFullT2Lyrics(trackDir)).toBe(true);
+  });
+
+  it('does not treat a mixed T2 and line-timed sidecar as complete T2', () => {
+    const sourceFilename = 'netease-42.lrc';
+    const sourceSha256 = computeLyricsSourceFingerprint(
+      trackDir,
+      sourceFilename,
+    );
+    saveTrackLyricsTiming(trackDir, sourceFilename, sourceSha256, {
+      schemaVersion: 1,
+      documentId: 'netease:42',
+      normalizerProfileId: 'lyrics-source-v2',
+      source: { filename: sourceFilename, sha256: sourceSha256 },
+      granularity: 'T2',
+      lines: [
+        {
+          lineId: 'l1',
+          text: 'Provider',
+          startMs: 1000,
+          endMs: 2000,
+          segments: [
+            {
+              segmentId: 's1',
+              text: 'Provider',
+              startMs: 1000,
+              endMs: 2000,
+            },
+          ],
+        },
+        {
+          lineId: 'l2',
+          text: 'Fallback',
+          startMs: 2000,
+          endMs: 3000,
+        },
+      ],
+    });
+
+    expect(hasCurrentFullT2Lyrics(trackDir)).toBe(false);
   });
 });
 

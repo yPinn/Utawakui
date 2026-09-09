@@ -162,6 +162,21 @@ describe('lyrics timing IPC', () => {
     expect(notifyLibraryUpdated).not.toHaveBeenCalled();
   });
 
+  it('persists a user-owned preferred lyrics source', async () => {
+    const savePreference = ipcMain.handlers.get('lyrics:set-preferred-source');
+
+    await expect(
+      savePreference(null, 'track-a', 'main.lrc'),
+    ).resolves.toMatchObject({
+      preferredSourceFilename: 'main.lrc',
+      preferenceOrigin: 'user',
+    });
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+    await expect(
+      savePreference(null, 'track-a', '../main.lrc'),
+    ).rejects.toThrow(/unknown lyrics source/i);
+  });
+
   it('rejects unsafe or invalid lyrics offset writes', async () => {
     const saveOffset = ipcMain.handlers.get('lyrics:set-source-offset');
 

@@ -11,6 +11,7 @@ const {
   saveTrackLyricsTiming,
   setLyricsSourceLabel,
   setLyricsSourceOffset,
+  setLyricsSourcePreference,
 } = require('../../lib/library');
 const { deleteStoredAmllSource } = require('../../lib/amll');
 const { deleteStoredBetterLyricsSource } = require('../../lib/betterlyrics');
@@ -90,6 +91,22 @@ function registerLyricsDocumentHandlers({
     },
   );
 
+  ipcMain.handle(
+    'lyrics:set-preferred-source',
+    async (event, trackId, filename) => {
+      const dir = resolveDownloadDir(getConfig());
+      const track = findTrackRecord(dir, trackId);
+      const trackDir = resolveTrackDir(dir, trackId);
+      if (!track || !trackDir) throw new Error(`unknown track id: ${trackId}`);
+
+      const state = setLyricsSourcePreference(trackDir, filename, 'user');
+      if (!state) throw new Error('unknown lyrics source');
+
+      notifyLibraryUpdated();
+      return state;
+    },
+  );
+
   ipcMain.handle('lyrics:delete-source', async (event, trackId, filename) => {
     const dir = resolveDownloadDir(getConfig());
     const trackDir = resolveTrackDir(dir, trackId);
@@ -120,6 +137,7 @@ function registerLyricsDocumentHandlers({
 
     const result = importManualLyricsText(trackDir, payload);
     if (!result) throw new Error('unable to import manual lyrics');
+    setLyricsSourcePreference(trackDir, result.source.filename, 'user');
 
     notifyLibraryUpdated();
     return result;
@@ -143,6 +161,7 @@ function registerLyricsDocumentHandlers({
 
     const result = importManualLyricsFile(trackDir, picked.filePaths[0]);
     if (!result) throw new Error('unable to import manual lyrics file');
+    setLyricsSourcePreference(trackDir, result.source.filename, 'user');
 
     notifyLibraryUpdated();
     return result;

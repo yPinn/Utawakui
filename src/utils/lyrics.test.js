@@ -576,6 +576,21 @@ describe('pickPreferredLyricsSource', () => {
     ).toEqual(sources[0]);
   });
 
+  it('uses a persisted preference before inferred language fallback', () => {
+    expect(
+      pickPreferredLyricsSource({
+        title: '沒空想你',
+        artist: 'Sabrina',
+        lyrics: {
+          status: 'available',
+          sources,
+          preferredSourceFilename: 'en.vtt',
+          preferenceOrigin: 'automatic',
+        },
+      }),
+    ).toEqual(sources[2]);
+  });
+
   it('falls back to the first source when there is no useful language hint', () => {
     expect(
       pickPreferredLyricsSource({

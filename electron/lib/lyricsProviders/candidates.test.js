@@ -1,6 +1,7 @@
 import {
   aggregateLyricsProviderResults,
   compareUnifiedLyricsCandidates,
+  selectAutomaticLyricsCandidate,
 } from './candidates.js';
 import { describe, expect, it } from 'vitest';
 
@@ -114,6 +115,47 @@ describe('unified lyrics provider candidates', () => {
     expect(aggregated.recordingGroups.best[0].recommendedCandidateKey).toBe(
       'netease:9',
     );
+  });
+
+  it('selects full T2 ahead of T1 for exact automatic acquisition', () => {
+    const exactT1 = {
+      ...candidate({ id: 7 }),
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:7',
+    };
+    const exactT2 = {
+      ...candidate({
+        id: 9,
+        capability: { level: 'T2', partial: false },
+        compatibility: { t0: true, t1: true, t2: true },
+        previewFingerprint: 'b'.repeat(64),
+      }),
+      providerId: 'netease',
+      candidateKey: 'netease:9',
+    };
+
+    expect(selectAutomaticLyricsCandidate([exactT1, exactT2])).toBe(exactT2);
+  });
+
+  it('never promotes a strong or related T2 result over an exact T1 result', () => {
+    const exactT1 = {
+      ...candidate({ id: 7 }),
+      providerId: 'lrclib',
+      candidateKey: 'lrclib:7',
+    };
+    const strongT2 = {
+      ...candidate({
+        id: 9,
+        capability: { level: 'T2', partial: false },
+        compatibility: { t0: true, t1: true, t2: true },
+        matchBand: 'strong',
+      }),
+      providerId: 'netease',
+      candidateKey: 'netease:9',
+    };
+
+    expect(selectAutomaticLyricsCandidate([strongT2, exactT1])).toBe(exactT1);
+    expect(selectAutomaticLyricsCandidate([strongT2])).toBeNull();
   });
 
   it('does not merge a different recording version into the same group', () => {

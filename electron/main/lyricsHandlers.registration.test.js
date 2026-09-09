@@ -16,6 +16,7 @@ const EXPECTED_LYRICS_CHANNELS = [
   'lyrics:save-timing',
   'lyrics:search-candidates',
   'lyrics:search-provider-candidates',
+  'lyrics:set-preferred-source',
   'lyrics:set-reading-line',
   'lyrics:set-source-label',
   'lyrics:set-source-offset',

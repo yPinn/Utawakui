@@ -4,6 +4,10 @@ import path from 'path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createLyricsAcquisitionService } from './lyricsAcquisitionService.js';
 import { saveTrackLyricsText } from '../lib/library/lyrics.js';
+import {
+  computeLyricsSourceFingerprint,
+  saveTrackLyricsTiming,
+} from '../lib/library/lyricsTiming.js';
 import { fingerprintLrclibRecord } from '../lib/lrclib/record.js';
 
 function record(overrides = {}) {
@@ -22,7 +26,53 @@ function record(overrides = {}) {
   };
 }
 
-const track = { title: 'Song', artist: 'Artist', duration: 180 };
+const track = { id: 'track', title: 'Song', artist: 'Artist', duration: 180 };
+
+function unavailableNeteaseProvider(overrides = {}) {
+  return {
+    searchCandidates: vi.fn().mockResolvedValue({
+      provider: 'netease',
+      status: 'unavailable',
+      reason: 'not-found',
+      candidates: [],
+      groups: null,
+    }),
+    saveCandidate: vi.fn(),
+    ...overrides,
+  };
+}
+
+function saveFullT2Source(targetTrackDir, filename = 'netease-99.lrc') {
+  saveTrackLyricsText(
+    targetTrackDir,
+    { filename, language: 'und', kind: 'netease' },
+    '[00:01.000]Hello',
+  );
+  const sourceSha256 = computeLyricsSourceFingerprint(targetTrackDir, filename);
+  saveTrackLyricsTiming(targetTrackDir, filename, sourceSha256, {
+    schemaVersion: 1,
+    documentId: 'netease:99',
+    normalizerProfileId: 'lyrics-source-v2',
+    source: { filename, sha256: sourceSha256 },
+    granularity: 'T2',
+    lines: [
+      {
+        lineId: 'l1',
+        text: 'Hello',
+        startMs: 1000,
+        endMs: 2000,
+        segments: [
+          {
+            segmentId: 's1',
+            text: 'Hello',
+            startMs: 1000,
+            endMs: 2000,
+          },
+        ],
+      },
+    ],
+  });
+}
 
 function client(overrides = {}) {
   return {
@@ -48,6 +98,7 @@ describe('createLyricsAcquisitionService', () => {
     );
     trackDir = path.join(rootDir, 'tracks', 'track');
     fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'audio');
   });
 
   afterEach(() => {
@@ -265,6 +316,44 @@ describe('createLyricsAcquisitionService', () => {
     });
   });
 
+  it('contains an unexpected all-provider exception as a partial result', async () => {
+    const neteaseProvider = unavailableNeteaseProvider({
+      searchCandidates: vi.fn().mockRejectedValue(new Error('private path')),
+    });
+    const betterLyricsProvider = {
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'betterlyrics',
+        status: 'unavailable',
+        reason: 'cache-miss',
+        candidates: [],
+      }),
+      saveCandidate: vi.fn(),
+    };
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: client(),
+      neteaseProvider,
+      betterLyricsProvider,
+      logger: { warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+    });
+
+    await expect(
+      service.searchProviderCandidates('all', track),
+    ).resolves.toMatchObject({
+      provider: 'all',
+      status: 'ok',
+      partial: true,
+      providerStatuses: expect.arrayContaining([
+        {
+          provider: 'netease',
+          status: 'error',
+          reason: 'service-unavailable',
+        },
+      ]),
+    });
+  });
+
   it('reuses a short-lived successful discovery result', async () => {
     const provider = client({
       getExact: vi
@@ -441,7 +530,7 @@ describe('createLyricsAcquisitionService', () => {
       /gate closed/,
     );
     await expect(service.fetchRecord(42)).rejects.toThrow(/gate closed/);
-    await expect(service.saveIfAbsent(track, trackDir)).rejects.toThrow(
+    await expect(service.acquireBestIfNeeded(track, trackDir)).rejects.toThrow(
       /gate closed/,
     );
 
@@ -450,57 +539,110 @@ describe('createLyricsAcquisitionService', () => {
     expect(provider.getById).not.toHaveBeenCalled();
   });
 
-  it('skips the gate and network when the track already has an LRCLIB source', async () => {
-    saveTrackLyricsText(
-      trackDir,
-      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
-      '[00:01.000]Hello',
-    );
+  it('skips the gate and network when the track already has full T2 lyrics', async () => {
+    saveFullT2Source(trackDir);
     const requireFeatureGate = vi.fn();
     const provider = client();
+    const neteaseProvider = unavailableNeteaseProvider();
     const service = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: 'lyrics-flow',
       client: provider,
+      neteaseProvider,
     });
 
-    await expect(service.saveIfAbsent(track, trackDir)).resolves.toBe(false);
+    await expect(service.acquireBestIfNeeded(track, trackDir)).resolves.toEqual(
+      { status: 'skipped', reason: 'current-t2' },
+    );
     expect(requireFeatureGate).not.toHaveBeenCalled();
     expect(provider.getExact).not.toHaveBeenCalled();
+    expect(neteaseProvider.searchCandidates).not.toHaveBeenCalled();
   });
 
   it('can create its default client without starting provider work', async () => {
-    saveTrackLyricsText(
-      trackDir,
-      { filename: 'lrclib-42.lrc', language: 'und', kind: 'lrclib' },
-      '[00:01.000]Hello',
-    );
+    saveFullT2Source(trackDir);
     const requireFeatureGate = vi.fn();
     const service = createLyricsAcquisitionService({
       requireFeatureGate,
       featureId: 'lyrics-flow',
     });
 
-    await expect(service.saveIfAbsent(track, trackDir)).resolves.toBe(false);
+    await expect(service.acquireBestIfNeeded(track, trackDir)).resolves.toEqual(
+      { status: 'skipped', reason: 'current-t2' },
+    );
     expect(requireFeatureGate).not.toHaveBeenCalled();
   });
 
-  it('uses the shared client for bounded automatic acquisition and storage', async () => {
+  it('uses the shared client and save-time refetch for automatic acquisition', async () => {
     const provider = client();
+    const neteaseProvider = unavailableNeteaseProvider();
     const service = createLyricsAcquisitionService({
       requireFeatureGate: vi.fn(),
       featureId: 'lyrics-flow',
       client: provider,
+      neteaseProvider,
     });
 
-    await expect(service.saveIfAbsent(track, trackDir)).resolves.toBe(true);
+    await expect(
+      service.acquireBestIfNeeded(track, trackDir),
+    ).resolves.toMatchObject({
+      status: 'saved',
+      provider: 'lrclib',
+      source: { filename: 'lrclib-42.lrc' },
+    });
     expect(provider.getExact).toHaveBeenCalledOnce();
-    expect(provider.search).not.toHaveBeenCalled();
+    expect(provider.getById).toHaveBeenCalledOnce();
     expect(
       fs.existsSync(
         path.join(trackDir, 'lyrics', 'providers', 'lrclib-42.json'),
       ),
     ).toBe(true);
+  });
+
+  it('invokes the automatic save completion callback without provider payload', async () => {
+    const onSaved = vi.fn();
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: client(),
+      neteaseProvider: unavailableNeteaseProvider(),
+    });
+
+    await expect(
+      service.scheduleAutomaticAcquisition(track, trackDir, { onSaved }),
+    ).resolves.toMatchObject({ status: 'saved' });
+    expect(onSaved).toHaveBeenCalledOnce();
+    expect(onSaved).toHaveBeenCalledWith();
+  });
+
+  it('still reports a committed source when automatic preference persistence fails', async () => {
+    const onSaved = vi.fn();
+    const logger = { warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
+    const setAutomaticPreference = vi.fn(() => {
+      throw new Error('disk full at a private path');
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: client(),
+      neteaseProvider: unavailableNeteaseProvider(),
+      logger,
+      setAutomaticPreference,
+    });
+
+    await expect(
+      service.scheduleAutomaticAcquisition(track, trackDir, { onSaved }),
+    ).resolves.toMatchObject({ status: 'saved' });
+    expect(setAutomaticPreference).toHaveBeenCalledOnce();
+    expect(onSaved).toHaveBeenCalledOnce();
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[lyrics] automatic acquisition failed',
+      expect.any(Error),
+      { reason: 'preference-write-failed', retryable: true },
+    );
+    expect(JSON.stringify(logger.warn.mock.calls)).not.toContain(
+      'private path',
+    );
   });
 
   it('does not publish an automatic source when no safe match exists', async () => {
@@ -514,13 +656,324 @@ describe('createLyricsAcquisitionService', () => {
       requireFeatureGate: vi.fn(),
       featureId: 'lyrics-flow',
       client: provider,
+      neteaseProvider: unavailableNeteaseProvider(),
       logger,
     });
 
-    await expect(service.saveIfAbsent(track, trackDir)).resolves.toBe(false);
-    expect(provider.search).toHaveBeenCalledOnce();
+    await expect(service.acquireBestIfNeeded(track, trackDir)).resolves.toEqual(
+      { status: 'skipped', reason: 'no-exact-candidate' },
+    );
+    expect(provider.search).toHaveBeenCalled();
     expect(logger.warn).not.toHaveBeenCalled();
     expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('chooses NetEase full T2 over LRCLIB T1 and never queries Better Lyrics automatically', async () => {
+    const neteaseProvider = unavailableNeteaseProvider({
+      searchCandidates: vi.fn().mockResolvedValue({
+        provider: 'netease',
+        status: 'ok',
+        candidates: [
+          {
+            id: 9,
+            trackName: 'Song',
+            artistName: 'Artist',
+            albumName: '',
+            duration: 180,
+            capability: { level: 'T2', partial: false },
+            compatibility: { t0: true, t1: true, t2: true },
+            warnings: [],
+            previewFingerprint: 'b'.repeat(64),
+            matchBand: 'exact',
+          },
+        ],
+      }),
+      saveCandidate: vi.fn(async ({ trackDir: targetTrackDir }) => {
+        saveTrackLyricsText(
+          targetTrackDir,
+          {
+            filename: 'netease-9.lrc',
+            language: 'und',
+            kind: 'netease',
+          },
+          '[00:01.000]Hello',
+        );
+        return {
+          provider: 'netease',
+          status: 'saved',
+          source: {
+            filename: 'netease-9.lrc',
+            language: 'und',
+            kind: 'netease',
+          },
+        };
+      }),
+    });
+    const betterLyricsProvider = {
+      searchCandidates: vi.fn(),
+      saveCandidate: vi.fn(),
+    };
+    const provider = client();
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider,
+      betterLyricsProvider,
+    });
+
+    await expect(
+      service.acquireBestIfNeeded(track, trackDir),
+    ).resolves.toMatchObject({
+      status: 'saved',
+      provider: 'netease',
+      source: { filename: 'netease-9.lrc' },
+    });
+    expect(neteaseProvider.saveCandidate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        candidateId: 9,
+        expectedFingerprint: 'b'.repeat(64),
+      }),
+    );
+    expect(provider.getById).not.toHaveBeenCalled();
+    expect(betterLyricsProvider.searchCandidates).not.toHaveBeenCalled();
+    expect(
+      JSON.parse(
+        fs.readFileSync(path.join(trackDir, 'lyrics', 'lyrics.json'), 'utf8'),
+      ).preference,
+    ).toEqual({ filename: 'netease-9.lrc', origin: 'automatic' });
+  });
+
+  it('rechecks current T2 lyrics before committing an automatic save', async () => {
+    let resolveNetease;
+    const neteaseProvider = unavailableNeteaseProvider({
+      searchCandidates: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveNetease = resolve;
+          }),
+      ),
+      saveCandidate: vi.fn(),
+    });
+    const provider = client({
+      getExact: vi.fn().mockResolvedValue({
+        status: 'unavailable',
+        reason: 'not-found',
+      }),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider,
+    });
+
+    const pending = service.acquireBestIfNeeded(track, trackDir);
+    await vi.waitFor(() =>
+      expect(neteaseProvider.searchCandidates).toHaveBeenCalledOnce(),
+    );
+    saveFullT2Source(trackDir);
+    resolveNetease({
+      provider: 'netease',
+      status: 'ok',
+      candidates: [
+        {
+          id: 9,
+          trackName: 'Song',
+          artistName: 'Artist',
+          albumName: '',
+          duration: 180,
+          capability: { level: 'T2', partial: false },
+          compatibility: { t0: true, t1: true, t2: true },
+          warnings: [],
+          previewFingerprint: 'b'.repeat(64),
+          matchBand: 'exact',
+        },
+      ],
+    });
+
+    await expect(pending).resolves.toEqual({
+      status: 'skipped',
+      reason: 'current-t2',
+    });
+    expect(neteaseProvider.saveCandidate).not.toHaveBeenCalled();
+  });
+
+  it('rechecks current T2 lyrics after the save-time provider refetch', async () => {
+    let resolveRecord;
+    const provider = client({
+      getById: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveRecord = resolve;
+          }),
+      ),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider: unavailableNeteaseProvider(),
+    });
+
+    const pending = service.acquireBestIfNeeded(track, trackDir);
+    await vi.waitFor(() => expect(provider.getById).toHaveBeenCalledOnce());
+    saveFullT2Source(trackDir);
+    resolveRecord({ status: 'ok', record: record() });
+
+    await expect(pending).resolves.toEqual({
+      status: 'skipped',
+      reason: 'current-t2',
+    });
+    expect(fs.existsSync(path.join(trackDir, 'lyrics', 'lrclib-42.lrc'))).toBe(
+      false,
+    );
+  });
+
+  it('invalidates an in-flight save when a track is deleted and re-imported', async () => {
+    let resolveRecord;
+    const provider = client({
+      getById: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveRecord = resolve;
+          }),
+      ),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider: unavailableNeteaseProvider(),
+    });
+
+    const pending = service.acquireBestIfNeeded(
+      { title: 'Song', artist: 'Artist', duration: 180 },
+      trackDir,
+    );
+    await vi.waitFor(() => expect(provider.getById).toHaveBeenCalledOnce());
+    service.invalidateAutomaticAcquisition(track.id);
+    fs.rmSync(trackDir, { recursive: true, force: true });
+    fs.mkdirSync(trackDir, { recursive: true });
+    fs.writeFileSync(path.join(trackDir, 'audio.mp3'), 'replacement');
+    resolveRecord({ status: 'ok', record: record() });
+
+    await expect(pending).resolves.toEqual({
+      status: 'skipped',
+      reason: 'stale-track',
+    });
+    expect(fs.existsSync(path.join(trackDir, 'lyrics'))).toBe(false);
+  });
+
+  it('rejects unsafe or unbounded automatic invalidation keys', () => {
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: client(),
+    });
+
+    expect(service.invalidateAutomaticAcquisition(null)).toBe(false);
+    expect(service.invalidateAutomaticAcquisition({ id: 'track' })).toBe(false);
+    expect(service.invalidateAutomaticAcquisition('../track')).toBe(false);
+    expect(service.invalidateAutomaticAcquisition('x'.repeat(129))).toBe(false);
+  });
+
+  it('invalidates only cached searches belonging to the deleted track', async () => {
+    const provider = client();
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+    });
+    const otherTrack = { ...track, id: 'track-2', title: 'Second' };
+
+    await service.searchCandidates(track);
+    await service.searchCandidates(otherTrack);
+    const callsAfterWarmup = provider.getExact.mock.calls.length;
+
+    expect(service.invalidateAutomaticAcquisition(track.id)).toBe(true);
+    await service.searchCandidates(otherTrack);
+
+    expect(provider.getExact).toHaveBeenCalledTimes(callsAfterWarmup);
+  });
+
+  it('deduplicates concurrent automatic acquisition for the same track', async () => {
+    let resolveNetease;
+    const neteaseProvider = unavailableNeteaseProvider({
+      searchCandidates: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            resolveNetease = resolve;
+          }),
+      ),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: client({
+        getExact: vi.fn().mockResolvedValue({
+          status: 'unavailable',
+          reason: 'not-found',
+        }),
+      }),
+      neteaseProvider,
+    });
+
+    const first = service.acquireBestIfNeeded(track, trackDir);
+    const second = service.acquireBestIfNeeded(track, trackDir);
+    await vi.waitFor(() =>
+      expect(neteaseProvider.searchCandidates).toHaveBeenCalledOnce(),
+    );
+    resolveNetease({
+      provider: 'netease',
+      status: 'unavailable',
+      reason: 'not-found',
+      candidates: [],
+    });
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { status: 'skipped', reason: 'no-exact-candidate' },
+      { status: 'skipped', reason: 'no-exact-candidate' },
+    ]);
+    expect(neteaseProvider.searchCandidates).toHaveBeenCalledOnce();
+  });
+
+  it('bounds automatic acquisition concurrency across different tracks', async () => {
+    const exactResolvers = [];
+    const provider = client({
+      getExact: vi.fn(
+        () =>
+          new Promise((resolve) => {
+            exactResolvers.push(resolve);
+          }),
+      ),
+    });
+    const service = createLyricsAcquisitionService({
+      requireFeatureGate: vi.fn(),
+      featureId: 'lyrics-flow',
+      client: provider,
+      neteaseProvider: unavailableNeteaseProvider(),
+      automaticConcurrency: 1,
+    });
+    const secondTrackDir = path.join(rootDir, 'tracks', 'track-2');
+    fs.mkdirSync(secondTrackDir, { recursive: true });
+    fs.writeFileSync(path.join(secondTrackDir, 'audio.mp3'), 'audio');
+
+    const first = service.scheduleAutomaticAcquisition(track, trackDir);
+    const second = service.scheduleAutomaticAcquisition(
+      { ...track, id: 'track-2', title: 'Second' },
+      secondTrackDir,
+    );
+    await vi.waitFor(() => expect(provider.getExact).toHaveBeenCalledOnce());
+
+    exactResolvers[0]({ status: 'unavailable', reason: 'not-found' });
+    await vi.waitFor(() => expect(provider.getExact).toHaveBeenCalledTimes(2));
+    exactResolvers[1]({ status: 'unavailable', reason: 'not-found' });
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      { status: 'skipped', reason: 'no-exact-candidate' },
+      { status: 'skipped', reason: 'no-exact-candidate' },
+    ]);
   });
 
   it('reuses the same gated client for save re-fetch', async () => {

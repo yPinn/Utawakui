@@ -83,6 +83,23 @@ function compareUnifiedLyricsCandidates(first, second) {
   );
 }
 
+function isAutomaticLyricsCandidate(candidate) {
+  return (
+    candidate?.matchBand === 'exact' &&
+    candidate?.instrumental !== true &&
+    (candidate?.compatibility?.t2 === true ||
+      candidate?.compatibility?.t1 === true)
+  );
+}
+
+function selectAutomaticLyricsCandidate(candidates) {
+  return (
+    (Array.isArray(candidates) ? candidates : [])
+      .filter(isAutomaticLyricsCandidate)
+      .sort(compareUnifiedLyricsCandidates)[0] || null
+  );
+}
+
 function sameRecording(first, second) {
   if (
     normalizeForCompare(first.trackName) !==
@@ -227,4 +244,5 @@ function aggregateLyricsProviderResults(track, providerResults) {
 module.exports = {
   aggregateLyricsProviderResults,
   compareUnifiedLyricsCandidates,
+  selectAutomaticLyricsCandidate,
 };

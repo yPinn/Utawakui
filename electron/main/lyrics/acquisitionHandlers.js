@@ -6,6 +6,7 @@ const {
   loadTrackLyricsManifest,
   listTracks,
   resolveTrackDir,
+  setLyricsSourcePreference,
 } = require('../../lib/library');
 const {
   loadStoredBetterLyricsArtifactSummary,
@@ -260,6 +261,10 @@ function registerLyricsAcquisitionHandlers({
       });
       if (result.status !== 'saved') return result;
 
+      if (result.source?.filename) {
+        setLyricsSourcePreference(trackDir, result.source.filename, 'user');
+      }
+
       notifyLibraryUpdated();
       return { ...result, sources: getTrackLyricsState(trackDir).sources };
     },
@@ -299,6 +304,9 @@ function registerLyricsAcquisitionHandlers({
         },
       );
       if (result.status !== 'saved') return result;
+      if (result.source?.filename) {
+        setLyricsSourcePreference(trackDir, result.source.filename, 'user');
+      }
       notifyLibraryUpdated();
       return { ...result, sources: getTrackLyricsState(trackDir).sources };
     },
