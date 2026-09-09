@@ -302,6 +302,64 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     app.unmount();
   });
 
+  it('renders no empty-state prompt for a normal Better Lyrics miss', async () => {
+    vi.stubGlobal('Document', class Document {});
+    vi.stubGlobal('ShadowRoot', class ShadowRoot {});
+    const state = reactive({
+      candidateSearch: {
+        isLoading: false,
+        status: null,
+        reason: null,
+        error: null,
+        candidates: [],
+        groups: { best: [], related: [] },
+        recordingGroups: { best: [], related: [] },
+        providerStatuses: [],
+        partial: false,
+        invalidRecordCount: 0,
+      },
+      manualSave: { error: null },
+    });
+    const searchLyricsProviderCandidates = vi.fn(async () => {
+      state.candidateSearch.status = 'unavailable';
+      state.candidateSearch.reason = 'cache-miss';
+      return {
+        provider: 'betterlyrics',
+        status: 'unavailable',
+        reason: 'cache-miss',
+        candidates: [],
+      };
+    });
+    vi.doMock('../../composables/useLyrics.js', () => ({
+      useLyrics: () => ({
+        state,
+        selectedTrack: ref({ id: 'track-a', title: 'Song', artist: 'Artist' }),
+        clearCandidateSearch: vi.fn(),
+        searchLyricsProviderCandidates,
+        saveLyricsProviderCandidate: vi.fn(),
+      }),
+    }));
+
+    const Workspace = await loadWorkspaceComponent();
+    const { app, root } = mount(Workspace, {
+      providerId: 'betterlyrics',
+      providerLabel: 'Better Lyrics',
+    });
+    await vi.waitFor(() =>
+      expect(searchLyricsProviderCandidates).toHaveBeenCalledOnce(),
+    );
+    await vi.waitFor(() =>
+      expect(state.candidateSearch.status).toBe('unavailable'),
+    );
+    await nextTick();
+
+    expect(nodeText(root)).not.toContain('目前找不到可用的候選歌詞');
+    expect(nodeText(root)).not.toContain('沒有找到候選歌詞');
+    expect(nodeText(root)).not.toContain('公開快取');
+
+    app.unmount();
+  });
+
   it('reserves the partial-source warning for operational failures', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});

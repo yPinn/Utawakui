@@ -97,6 +97,19 @@ const sourceResultCount = computed(
   () => state.candidateSearch.candidates.length,
 );
 const hasResults = computed(() => sourceResultCount.value > 0);
+const SILENT_PROVIDER_MISS_REASONS = new Set([
+  'cache-miss',
+  'not-found',
+  'low-confidence-match',
+]);
+const silentProviderMiss = computed(
+  () =>
+    props.providerId === 'betterlyrics' &&
+    state.candidateSearch.status === 'unavailable' &&
+    SILENT_PROVIDER_MISS_REASONS.has(state.candidateSearch.reason) &&
+    !hasResults.value &&
+    !state.candidateSearch.error,
+);
 const canBroaden = computed(
   () =>
     hasSearched.value &&
@@ -125,6 +138,7 @@ const resultAnnouncement = computed(() => {
     return titleIsMissing.value ? '請輸入歌曲名稱後搜尋' : '準備搜尋';
   }
   if (state.candidateSearch.error) return '搜尋未完成';
+  if (silentProviderMiss.value) return '';
   return props.providerId === 'all'
     ? `找到 ${resultCount.value} 個錄音版本、${sourceResultCount.value} 個歌詞來源`
     : `找到 ${sourceResultCount.value} 筆候選歌詞`;
@@ -275,7 +289,9 @@ function toggleCandidate(candidate) {
     </form>
 
     <div class="lyrics-lrclib-search__result-meta">
-      <p aria-live="polite">{{ resultAnnouncement }}</p>
+      <p v-if="resultAnnouncement" aria-live="polite">
+        {{ resultAnnouncement }}
+      </p>
       <UiButton
         v-if="canBroaden"
         :disabled="isSearchDisabled"
@@ -330,6 +346,9 @@ function toggleCandidate(candidate) {
       <UiHint v-else-if="!hasSearched" padded>
         請輸入歌曲名稱後搜尋。輸入期間不會自動送出。
       </UiHint>
+      <template v-else-if="silentProviderMiss">
+        <!-- A normal Better Lyrics miss is intentionally silent. -->
+      </template>
       <UiHint v-else-if="state.candidateSearch.status === 'unavailable'" padded>
         目前找不到可用的候選歌詞。你可以調整查詢，或嘗試擴大搜尋。
       </UiHint>
