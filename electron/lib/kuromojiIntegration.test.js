@@ -3,32 +3,26 @@ import kuromoji from 'kuromoji';
 import wanakana from 'wanakana';
 import { buildReadingDoc } from './lyricsReading.js';
 import { getKuromojiDicPath } from './kuromojiDictionary.js';
+import { buildKuromojiTokenizer } from './japaneseReading/analyzers/kuromoji.js';
 
 // Exercises the real adapter shape lyricsReadingWorker.js uses (kuromoji token
-// fields fed straight into buildReadingDoc, wanakana.toRomaji as
+// fields mapped to the analyzer-neutral contract, wanakana.toRomaji as
 // kanaToRomaji) against the actual IPADIC dictionary — the one test in this
 // repo that would catch a kuromoji/wanakana version bump silently changing
 // token field names or dictionary content. No network dependency (the
 // dictionary ships with the npm package), so this isn't flaky, just slow —
 // dictionary loading takes a couple of seconds.
 function buildTokenizer() {
-  return new Promise((resolve, reject) => {
-    kuromoji
-      .builder({ dicPath: getKuromojiDicPath() })
-      .build((err, tokenizer) => {
-        if (err) reject(err);
-        else resolve(tokenizer);
-      });
-  });
+  return buildKuromojiTokenizer(kuromoji, getKuromojiDicPath());
 }
 
 describe('kuromoji + wanakana integration', () => {
   it('produces correct furigana segments and romaji for real Japanese lines', async () => {
-    const tokenizer = await buildTokenizer();
+    const tokenize = await buildTokenizer();
     const doc = buildReadingDoc(
       ['歌う声', 'こんにちは', '今日はいい天気です', '読み込む'],
       {
-        tokenize: (text) => tokenizer.tokenize(text),
+        tokenize,
         kanaToRomaji: (kana) => wanakana.toRomaji(kana),
       },
     );
@@ -81,12 +75,12 @@ describe('kuromoji + wanakana integration', () => {
   }, 20000);
 
   it('preserves a full-width source space exactly between two kanji compounds', async () => {
-    const tokenizer = await buildTokenizer();
+    const tokenize = await buildTokenizer();
     // Segment text is a canonical identity boundary. The analyzer may use
     // normalized input internally, but the stored segments must reconstruct
     // the untouched source line byte-for-byte.
     const doc = buildReadingDoc(['会議　資料'], {
-      tokenize: (text) => tokenizer.tokenize(text),
+      tokenize,
       kanaToRomaji: (kana) => wanakana.toRomaji(kana),
     });
 
@@ -102,13 +96,13 @@ describe('kuromoji + wanakana integration', () => {
   }, 20000);
 
   it('does not insert a presentation-only gap when the source has no separator', async () => {
-    const tokenizer = await buildTokenizer();
+    const tokenize = await buildTokenizer();
     // Same two nouns as above, back-to-back with zero whitespace in the
     // source — kuromoji still splits them into two tokens (no natural kana
     // buffer between them), so this should converge on the identical
     // segment shape the literal-full-width-space case produces above.
     const doc = buildReadingDoc(['会議資料'], {
-      tokenize: (text) => tokenizer.tokenize(text),
+      tokenize,
       kanaToRomaji: (kana) => wanakana.toRomaji(kana),
     });
 

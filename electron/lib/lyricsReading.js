@@ -4,8 +4,8 @@
 // (tokenize/kanaToRomaji) is injected, same DI convention as config.js and
 // systemFfmpeg.js. Stage 5a runs this against a fake analyzer in tests and
 // electron/main/lyricsHandlers.js; Stage 5b (see docs/adr/0003) swaps the
-// injected tokenize/kanaToRomaji for real kuromoji/wanakana calls inside
-// electron/lib/lyricsReadingWorker.js — nothing here changes.
+// injected tokenize/kanaToRomaji for a real analyzer adapter and wanakana
+// inside electron/lib/lyricsReadingWorker.js — nothing here changes.
 
 const KANJI_CHAR_RE = /[一-龯㐀-䶿]/;
 const RUN_SPLIT_RE = /([一-龯㐀-䶿]+)|([^一-龯㐀-䶿]+)/g;
@@ -129,10 +129,11 @@ function containsHangul(text) {
   return HANGUL_SYLLABLE_RE.test(String(text || ''));
 }
 
-// Builds a reading doc for a set of lyric lines. `tokenize(text)` must
-// return an array of `{ surface_form, reading }` (kuromoji's own token
-// shape — the fake analyzer used in tests/Stage 5a mirrors it so Stage 5b
-// is a drop-in swap). `kanaToRomaji(kana)` is optional; when supplied,
+// Builds a reading doc for a set of lyric lines. `tokenize(text)` must return
+// analyzer-neutral `{ surface, reading, ...optionalMetadata }` tokens.
+// Package-specific adapters own field mapping so a challenger can be measured
+// without changing this pure document builder. `kanaToRomaji(kana)` is
+// optional; when supplied,
 // each line's whole-line katakana reading is converted once at generation
 // time and stored, so rendering the romaji variant never needs the
 // converter again.
@@ -181,14 +182,14 @@ function buildReadingDoc(lines, options = {}) {
     // can still use token boundaries below without changing visible source text.
     const tokens = tokenize(text) || [];
     const segments = tokens.flatMap((token) =>
-      alignOkurigana(token.surface_form, token.reading),
+      alignOkurigana(token.surface, token.reading),
     );
     // Joined with a space per token boundary (kuromoji's own word
     // segmentation), not concatenated — wanakana passes the spaces through
     // untouched, so the romaji reads as separate words ("utau koe") instead
     // of one unbroken run ("utaukoe").
     const lineReadingKana = tokens
-      .map((token) => token.reading || token.surface_form)
+      .map((token) => token.reading || token.surface)
       .join(' ');
     const romaji =
       typeof kanaToRomaji === 'function' ? kanaToRomaji(lineReadingKana) : '';

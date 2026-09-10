@@ -21,16 +21,12 @@ const wanakana = require('wanakana');
 const koroman = require('koroman');
 const { buildReadingDoc, buildRomanizationDoc } = require('./lyricsReading');
 const { getKuromojiDicPath } = require('./kuromojiDictionary');
+const {
+  buildKuromojiTokenizer,
+} = require('./japaneseReading/analyzers/kuromoji');
 
 function buildTokenizer() {
-  return new Promise((resolve, reject) => {
-    kuromoji
-      .builder({ dicPath: getKuromojiDicPath() })
-      .build((err, tokenizer) => {
-        if (err) reject(err);
-        else resolve(tokenizer);
-      });
-  });
+  return buildKuromojiTokenizer(kuromoji, getKuromojiDicPath());
 }
 
 // koroman ships an `exports` map with no `./package.json` entry, so
@@ -49,9 +45,9 @@ function koromanVersion() {
 }
 
 async function buildJapaneseDoc(lines, onProgress) {
-  const tokenizer = await buildTokenizer();
+  const tokenize = await buildTokenizer();
   return buildReadingDoc(lines, {
-    tokenize: (text) => tokenizer.tokenize(text),
+    tokenize,
     kanaToRomaji: (kana) => wanakana.toRomaji(kana),
     analyzer: {
       id: 'kuromoji-wanakana',

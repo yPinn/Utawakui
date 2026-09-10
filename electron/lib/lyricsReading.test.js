@@ -84,7 +84,7 @@ describe('buildReadingDoc', () => {
     // One token per character, reading = the character itself uppercased
     // is meaningless for kanji, so tests supply per-call mocks instead —
     // this default is only used by tests that don't care about content.
-    return [{ surface_form: text, reading: text }];
+    return [{ surface: text, reading: text }];
   }
 
   it('requires a tokenize function', () => {
@@ -156,8 +156,8 @@ describe('buildReadingDoc', () => {
     const tokenize = vi.fn((text) => {
       if (text === '歌う声') {
         return [
-          { surface_form: '歌う', reading: 'ウタウ' },
-          { surface_form: '声', reading: 'コエ' },
+          { surface: '歌う', reading: 'ウタウ' },
+          { surface: '声', reading: 'コエ' },
         ];
       }
       return [];
@@ -174,7 +174,7 @@ describe('buildReadingDoc', () => {
   });
 
   it('computes romaji once per line via the injected kanaToRomaji', () => {
-    const tokenize = () => [{ surface_form: '歌う', reading: 'ウタウ' }];
+    const tokenize = () => [{ surface: '歌う', reading: 'ウタウ' }];
     const kanaToRomaji = vi.fn().mockReturnValue('utau');
 
     const doc = buildReadingDoc(['歌う'], { tokenize, kanaToRomaji });
@@ -184,7 +184,7 @@ describe('buildReadingDoc', () => {
   });
 
   it('leaves romaji empty when kanaToRomaji is not supplied', () => {
-    const tokenize = () => [{ surface_form: '歌う', reading: 'ウタウ' }];
+    const tokenize = () => [{ surface: '歌う', reading: 'ウタウ' }];
     const doc = buildReadingDoc(['歌う'], { tokenize });
     expect(doc.lines[0].romaji).toBe('');
   });
@@ -222,8 +222,8 @@ describe('buildReadingDoc', () => {
   describe('canonical segment text', () => {
     it('does not invent a gap between adjacent kanji tokens', () => {
       const tokenize = () => [
-        { surface_form: '会議', reading: 'カイギ' },
-        { surface_form: '資料', reading: 'シリョウ' },
+        { surface: '会議', reading: 'カイギ' },
+        { surface: '資料', reading: 'シリョウ' },
       ];
       const doc = buildReadingDoc(['会議資料'], { tokenize });
 
@@ -238,8 +238,8 @@ describe('buildReadingDoc', () => {
 
     it('does not insert a gap when a kana character already separates the tokens', () => {
       const tokenize = () => [
-        { surface_form: '歌う', reading: 'ウタウ' },
-        { surface_form: '声', reading: 'コエ' },
+        { surface: '歌う', reading: 'ウタウ' },
+        { surface: '声', reading: 'コエ' },
       ];
       const doc = buildReadingDoc(['歌う声'], { tokenize });
 
@@ -254,9 +254,9 @@ describe('buildReadingDoc', () => {
 
     it('does not double up when the source already had a literal space token there', () => {
       const tokenize = () => [
-        { surface_form: '会議', reading: 'カイギ' },
-        { surface_form: ' ' },
-        { surface_form: '資料', reading: 'シリョウ' },
+        { surface: '会議', reading: 'カイギ' },
+        { surface: ' ' },
+        { surface: '資料', reading: 'シリョウ' },
       ];
       const doc = buildReadingDoc(['会議 資料'], { tokenize });
 
@@ -269,9 +269,9 @@ describe('buildReadingDoc', () => {
 
     it('keeps every adjacent kanji boundary source-exact', () => {
       const tokenize = () => [
-        { surface_form: '何', reading: 'ナン' },
-        { surface_form: '十', reading: 'ジュウ' },
-        { surface_form: '回', reading: 'カイ' },
+        { surface: '何', reading: 'ナン' },
+        { surface: '十', reading: 'ジュウ' },
+        { surface: '回', reading: 'カイ' },
       ];
       const doc = buildReadingDoc(['何十回'], { tokenize });
 
