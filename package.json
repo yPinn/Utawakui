@@ -34,6 +34,8 @@
     "analysis:evaluate": "node scripts/music-analysis-evaluation.mjs",
     "lyrics:evaluate-providers": "node scripts/lyrics-provider-corpus-cli.mjs",
     "lyrics:evaluate-readings": "node scripts/lyrics-reading-evaluation.mjs",
+    "lyrics:prepare-reading-corpus": "node scripts/lyrics-reading-local-corpus.mjs",
+    "lyrics:review-readings": "node scripts/lyrics-reading-review-cli.mjs",
     "lyrics:netease-evaluation": "node scripts/lyrics-provider-netease-cli.mjs",
     "lyrics:prepare-provider-corpus": "node scripts/lyrics-provider-corpus-prepare-cli.mjs",
     "lyrics:review-provider-corpus": "node scripts/lyrics-provider-corpus-review-cli.mjs",
