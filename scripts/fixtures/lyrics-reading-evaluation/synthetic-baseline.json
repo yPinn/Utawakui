@@ -1,0 +1,113 @@
+{
+  "schemaVersion": 1,
+  "benchmarkId": "synthetic-japanese-reading-v1",
+  "baselineAnalyzerId": "kuromoji-wanakana",
+  "acceptance": {
+    "minimumCases": 5,
+    "requiredCohorts": [
+      "standard",
+      "proper-noun",
+      "mixed",
+      "jukujikun",
+      "song-specific"
+    ],
+    "minimumCanonicalIntegrityRate": 1,
+    "maximumAnalysisFailureRate": 0,
+    "maximumShadowFalsePositiveCount": 0
+  },
+  "shadowCorrectionPack": {
+    "schemaVersion": 1,
+    "packId": "synthetic-song-readings",
+    "version": "2026.09.10",
+    "license": "CC0-1.0",
+    "entries": [
+      {
+        "correctionId": "synthetic-uchu-sora",
+        "recordingIdentity": "synthetic:starlight:studio",
+        "line": {
+          "textSha256": "eda8157c4c7025af29b9fc0dcf1cde1e4ec3263125eaa4d298e762d127fbb5b9",
+          "occurrence": 0
+        },
+        "target": {
+          "surface": "宇宙",
+          "occurrence": 0,
+          "reading": "そら"
+        },
+        "evidence": {
+          "kind": "synthetic"
+        }
+      }
+    ]
+  },
+  "cases": [
+    {
+      "id": "standard-okurigana",
+      "cohort": "standard",
+      "analyzerAddressable": true,
+      "recordingIdentity": "synthetic:standard:studio",
+      "lines": ["歌う声"],
+      "targetLineIndex": 0,
+      "expectedKana": "うたうこえ",
+      "expectedSegments": [
+        { "t": "歌", "r": "うた" },
+        { "t": "う" },
+        { "t": "声", "r": "こえ" }
+      ],
+      "expectedShadowCorrectionIds": []
+    },
+    {
+      "id": "proper-noun-tokyo-tower",
+      "cohort": "proper-noun",
+      "analyzerAddressable": true,
+      "recordingIdentity": "synthetic:city:studio",
+      "lines": ["東京タワー"],
+      "targetLineIndex": 0,
+      "expectedKana": "とうきょうたわー",
+      "expectedSegments": [
+        { "t": "東京", "r": "とうきょう" },
+        { "t": "タワー" }
+      ],
+      "expectedShadowCorrectionIds": []
+    },
+    {
+      "id": "mixed-japanese-latin",
+      "cohort": "mixed",
+      "analyzerAddressable": true,
+      "recordingIdentity": "synthetic:mixed:studio",
+      "lines": ["夢を見る tonight"],
+      "targetLineIndex": 0,
+      "expectedKana": "ゆめをみる tonight",
+      "expectedSegments": [
+        { "t": "夢", "r": "ゆめ" },
+        { "t": "を" },
+        { "t": "見", "r": "み" },
+        { "t": "る" },
+        { "t": " " },
+        { "t": "tonight" }
+      ],
+      "expectedShadowCorrectionIds": []
+    },
+    {
+      "id": "jukujikun-today",
+      "cohort": "jukujikun",
+      "analyzerAddressable": true,
+      "recordingIdentity": "synthetic:today:studio",
+      "lines": ["今日"],
+      "targetLineIndex": 0,
+      "expectedKana": "きょう",
+      "expectedSegments": [{ "t": "今日", "r": "きょう" }],
+      "expectedShadowCorrectionIds": []
+    },
+    {
+      "id": "song-specific-uchu-sora",
+      "cohort": "song-specific",
+      "analyzerAddressable": false,
+      "recordingIdentity": "synthetic:starlight:studio",
+      "lines": ["宇宙"],
+      "targetLineIndex": 0,
+      "expectedKana": "そら",
+      "expectedSegments": [{ "t": "宇宙", "r": "そら" }],
+      "expectedShadowCorrectionIds": ["synthetic-uchu-sora"]
+    }
+  ]
+}
