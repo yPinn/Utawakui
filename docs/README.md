@@ -96,6 +96,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Lyrics：[Multi-source search](contracts/multi-source-lyrics-search-contract.md)、
   [LRCLIB acquisition](contracts/lrclib-acquisition-contract.md)、
   [timing](contracts/lyrics-timing-contract.md)、
+  [reading quality](contracts/lyrics-reading-quality-contract.md)、
   [provider evaluation corpus](contracts/lyrics-provider-evaluation-corpus.md)、
   [NetEase acquisition](contracts/netease-acquisition-contract.md)、
   [AMLL retired-source compatibility](contracts/amll-acquisition-contract.md)、

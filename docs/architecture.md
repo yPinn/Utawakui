@@ -41,6 +41,9 @@ Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實
 Reading sidecar v3 由 main 持有 `documentId`、normalizer profile、來源 fingerprint 與
 line identity。Renderer 載入時只送當前 canonical identity；main 對文字相容的 v1／v2
 sidecar 做原子 re-key 並保留人工修正，文字不相容或格式損壞才交回既有重新產生流程。
+日文 worker 先由 package adapter 將 kuromoji raw fields 轉成 analyzer-neutral token，再交給
+純 reading builder；quality evaluator 與 correction shadow resolver 只存在本機 benchmark
+路徑，尚不套用第三方修正、不改 sidecar，也不進 startup critical path。
 
 跨 runtime 的 presentation logic 位於 `shared/presentation/`。`overlay/shared/` 只保留
 Browser Source route adapters；Output server 以 exact allowlist 提供兩個目錄的必要檔案，

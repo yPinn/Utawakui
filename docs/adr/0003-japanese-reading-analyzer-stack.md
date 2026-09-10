@@ -9,6 +9,12 @@ this exact interface shape; Stage 5b swapped in the real `kuromoji`/
 IPC shape, sidecar format, or renderer code, confirming the drop-in design
 worked as intended.
 
+Re-evaluation milestone A landed on 2026-09-10 without changing the production
+choice. Raw kuromoji fields now terminate at a package adapter and the pure
+builder consumes analyzer-neutral tokens. A bounded local benchmark and
+correction-shadow contract can therefore compare challengers without changing
+saved readings or applying correction data to production.
+
 ## Context
 
 The Lyrics Workspace needs a reading-aid: furigana over kanji and a romaji
@@ -56,10 +62,15 @@ Rejected `kuroshiro`:
   between the app and `kuromoji` for no benefit once its only real feature —
   HTML formatting — isn't the shape this app wants.
 
-Rejected MeCab / Sudachi: both need a system install or native compilation,
-which conflicts with the zero-install, single-executable distribution model
-this app already commits to elsewhere (yt-dlp standalone binary, app-managed
-FFmpeg/UVR downloads — never "install X first").
+Rejected MeCab / Sudachi for the bundled baseline: both need a system install or
+native compilation, which conflicts with the zero-install, single-executable
+distribution model this app already commits to elsewhere (yt-dlp standalone
+binary, app-managed FFmpeg/UVR downloads — never "install X first"). This does
+not approve an app-managed Sudachi runtime. It only leaves that isolated,
+removable shape available as a future challenger after the quality, packaging,
+offline, capacity, and rollback gates in the
+[Lyrics Reading Quality Contract](../contracts/lyrics-reading-quality-contract.md)
+pass.
 
 Distribution: `kuromoji` and `wanakana` will be added as ordinary npm
 `dependencies` and packaged with the app (like `onnxruntime-node`,
@@ -86,14 +97,14 @@ one collapsed row.
 
 ## Consequences
 
-`electron/lib/lyricsReading.js`'s injected interface is shaped to match kuromoji's
-own token fields (`{ surface_form, reading }`, katakana) and wanakana's
-`toRomaji()` signature directly — Stage 5b replaces the injected
-`tokenize`/`kanaToRomaji` functions with the real libraries inside
-`electron/lib/lyricsReadingWorker.js` (never on the main process or at app
-startup — dictionary load is CPU/memory-heavy, same isolation reasoning as
-`onnxruntime-node` in `vocalSeparationWorker.js`). No IPC shape, sidecar
-format, or renderer code changes for that swap.
+`electron/lib/lyricsReading.js`'s injected interface consumes analyzer-neutral
+`{ surface, reading, partOfSpeech?, lemma?, outOfVocabulary? }` tokens plus
+wanakana's `toRomaji()` signature. The kuromoji adapter owns the raw
+`surface_form`, POS, lemma, and `word_type` mapping inside the worker boundary
+(never on the main process or at app startup — dictionary load is CPU/memory
+heavy, same isolation reasoning as `onnxruntime-node` in
+`vocalSeparationWorker.js`). The adapter extraction changed no IPC shape,
+sidecar format, analyzer id, or renderer code.
 
 **Packaging risk found and confirmed fixed, not assumed away**: worker
 threads don't get Electron's asar `fs` patch (same limitation
@@ -112,8 +123,8 @@ correct real furigana result for `歌う声` (`歌`→`うた`, `声`→`こえ`
 the worker's own `require('kuromoji')`/`require('wanakana')`/dictionary
 read all resolve correctly once physically unpacked.
 
-If `kuromoji` is ever abandoned upstream entirely (it already hasn't
-released since 2022), `@sglkc/kuromoji` is the maintained-fork fallback —
-smaller install base but an active repo, and API-compatible enough that the
-same `tokenize` adapter shape should still apply. Revisit only if the
-original package stops working on a supported Node/Electron version.
+If `kuromoji` stops working on a supported Node/Electron version, an
+API-compatible maintained fork remains the lowest-risk replacement candidate.
+A different analyzer such as Sudachi must instead pass the same representative
+corpus and packaged Windows gates before promotion; upstream freshness alone is
+not a reason to rewrite existing sidecars or change the default.
