@@ -1,4 +1,21 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(rtk grep *)",
+      "Bash(rtk prettier *)",
+      "Bash(rtk lint *)",
+      "Bash(rtk git *)",
+      "Bash(npm view *)",
+      "Bash(npm ls *)",
+      "Bash(npm update *)",
+      "Bash(npm install *)",
+      "Bash(git --no-pager diff *)"
+    ]
+  },
+  "enabledPlugins": {
+    "gsap-skills@gsap-skills": true,
+    "vue-skills-bundle@vue-skills": true
+  },
   "extraKnownMarketplaces": {
     "gsap-skills": {
       "source": {
@@ -12,9 +29,5 @@
         "repo": "vuejs-ai/skills"
       }
     }
-  },
-  "enabledPlugins": {
-    "gsap-skills@gsap-skills": true,
-    "vue-skills-bundle@vue-skills": true
   }
 }
