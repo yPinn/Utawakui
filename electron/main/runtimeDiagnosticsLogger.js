@@ -85,6 +85,15 @@ const EVENT_DEFINITIONS = new Map([
     },
   ],
   [
+    '[spout-output] Helper failure',
+    {
+      source: 'spout-output',
+      operation: 'helper',
+      code: 'SPOUT_OUTPUT_HELPER_FAILED',
+      message: 'Spout output helper failed',
+    },
+  ],
+  [
     '[lyrics] LRCLIB search failed',
     {
       source: 'lyrics',

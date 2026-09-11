@@ -62,7 +62,10 @@ function buildPythonYtdlpArgs(url, options = {}) {
       pushValueFlag(args, flag, options[key]);
     }
   }
-  args.push(url);
+  // `--` ends option parsing so the positional target (a main-built URL or
+  // `ytsearch:` query) can never be read as a flag, even if a future caller
+  // passes a value that begins with `-`.
+  args.push('--', url);
   return args;
 }
 

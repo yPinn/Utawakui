@@ -31,6 +31,30 @@ describe('runtime diagnostics logger', () => {
     });
   });
 
+  it('maps Spout output helper failures to a bounded categorical event', () => {
+    const failure = new Error('spawn C:\\Users\\name\\helper.exe ENOENT');
+    const service = { record: vi.fn(() => ({ ok: true })) };
+    const consoleTarget = { warn: vi.fn(), error: vi.fn() };
+    const logger = createRuntimeDiagnosticsLogger({ service, consoleTarget });
+
+    logger.error('[spout-output] Helper failure', failure);
+
+    expect(consoleTarget.error).toHaveBeenCalledWith(
+      '[spout-output] Helper failure',
+      failure,
+    );
+    expect(service.record).toHaveBeenCalledWith({
+      process: 'main',
+      level: 'error',
+      source: 'spout-output',
+      operation: 'helper',
+      code: 'SPOUT_OUTPUT_HELPER_FAILED',
+      message: 'Spout output helper failed',
+      error: failure,
+      context: { retryable: true },
+    });
+  });
+
   it('maps LRCLIB failures with bounded typed context', () => {
     const failure = new Error('LRCLIB search failed: http-error');
     const service = { record: vi.fn(() => ({ ok: true })) };

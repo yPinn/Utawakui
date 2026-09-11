@@ -80,8 +80,15 @@ describe('buildPythonYtdlpArgs', () => {
       'firefox',
       '--impersonate',
       'chrome',
+      '--',
       'https://www.youtube.com/watch?v=Sw2SuVkxw78',
     ]);
+  });
+
+  it('ends option parsing with `--` so the target can never be read as a flag', () => {
+    expect(buildPythonYtdlpArgs('- ~/.bashrc', { skipDownload: true })).toEqual(
+      ['-m', 'yt_dlp', '--skip-download', '--', '- ~/.bashrc'],
+    );
   });
 
   it('rejects unknown option keys instead of forwarding arbitrary yt-dlp flags', () => {
@@ -98,7 +105,7 @@ describe('buildPythonYtdlpArgs', () => {
         writeSubs: false,
         writeAutoSubs: false,
       }),
-    ).toEqual(['-m', 'yt_dlp', 'https://example.test/video']);
+    ).toEqual(['-m', 'yt_dlp', '--', 'https://example.test/video']);
   });
 
   it('repeats extractor-args when multiple extractor namespaces are configured', () => {
@@ -116,6 +123,7 @@ describe('buildPythonYtdlpArgs', () => {
       'youtube:player_client=mweb',
       '--extractor-args',
       'youtubepot-bgutilhttp:base_url=http://127.0.0.1:4417',
+      '--',
       'https://example.test/video',
     ]);
   });
