@@ -1,43 +1,23 @@
-const ALLOWED_VALUES = Object.freeze({
-  fontFamily: new Set(['sans', 'serif', 'rounded']),
-  fontScale: new Set(['small', 'medium', 'large']),
-  fontWeight: new Set(['regular', 'semibold', 'bold']),
-  alignment: new Set(['left', 'center', 'right']),
-  surface: new Set(['transparent', 'soft', 'solid']),
-  furigana: new Set(['auto', 'off']),
-  kineticMaterial: new Set([
-    'solid-outline',
-    'candy-rim',
-    'chromatic-depth',
-    'cycle',
-  ]),
-  kineticArrangement: new Set(['straight', 'subtle-offset']),
-});
+import {
+  normalizeOutputAppearance,
+  OUTPUT_APPEARANCE_DEFAULTS,
+  outputAppearanceOptionIds,
+} from '../../shared/outputAppearance.mjs';
 
-export const OVERLAY_APPEARANCE_DEFAULTS = Object.freeze({
-  fontFamily: 'sans',
-  fontScale: 'medium',
-  fontWeight: 'semibold',
-  alignment: 'left',
-  surface: 'transparent',
-  furigana: 'auto',
-  kineticMaterial: 'candy-rim',
-  kineticArrangement: 'straight',
-});
+export const OVERLAY_APPEARANCE_DEFAULTS = OUTPUT_APPEARANCE_DEFAULTS;
 
-export function normalizeOverlayAppearance(settings = {}) {
-  return Object.fromEntries(
-    Object.entries(OVERLAY_APPEARANCE_DEFAULTS).map(([key, fallback]) => [
-      key,
-      ALLOWED_VALUES[key].has(settings[key]) ? settings[key] : fallback,
-    ]),
-  );
+export function normalizeOverlayAppearance(settings = {}, options = {}) {
+  return normalizeOutputAppearance(settings, options);
 }
 
 export function applyOverlayAppearance(document, slot) {
   const root = document?.documentElement;
   if (!root) return;
-  const appearance = normalizeOverlayAppearance(slot?.settings);
+  const templateId = slot?.templateId ?? '';
+  const appearance = normalizeOverlayAppearance(slot?.settings, {
+    templateId,
+  });
+
   root.dataset.ovlFont = appearance.fontFamily;
   root.dataset.ovlScale = appearance.fontScale;
   root.dataset.ovlWeight = appearance.fontWeight;
@@ -46,11 +26,21 @@ export function applyOverlayAppearance(document, slot) {
   root.dataset.ovlFurigana = appearance.furigana;
   root.dataset.ovlKineticMaterial = appearance.kineticMaterial;
   root.dataset.ovlKineticArrangement = appearance.kineticArrangement;
-  root.dataset.ovlTemplate = slot?.templateId ?? '';
+  root.dataset.ovlPosition = appearance.positionAnchor;
+  root.dataset.ovlTemplate = templateId;
+
+  root.style?.setProperty?.('--ovl-user-text-color', appearance.textColor);
+  root.style?.setProperty?.('--ovl-user-accent-color', appearance.accentColor);
+  root.style?.setProperty?.(
+    '--ovl-user-position-x',
+    `${appearance.positionOffsetX}%`,
+  );
+  root.style?.setProperty?.(
+    '--ovl-user-position-y',
+    `${appearance.positionOffsetY}%`,
+  );
 }
 
 export function overlayAppearanceOptionIds() {
-  return Object.fromEntries(
-    Object.entries(ALLOWED_VALUES).map(([key, values]) => [key, [...values]]),
-  );
+  return outputAppearanceOptionIds();
 }

@@ -8,6 +8,12 @@
     --ovl-user-justify: start;
     --ovl-user-surface: transparent;
     --ovl-user-outline: transparent;
+    --ovl-user-text-color: var(--ovl-color-text-primary);
+    --ovl-user-accent-color: var(--ovl-color-current);
+    --ovl-user-position-inline: end;
+    --ovl-user-position-block: center;
+    --ovl-user-position-x: 0%;
+    --ovl-user-position-y: 0%;
   }
 
   :root[data-ovl-font='serif'] {
@@ -17,6 +23,17 @@
   :root[data-ovl-font='rounded'] {
     --ovl-user-font-family:
       'Arial Rounded MT Bold', 'Yu Gothic UI', 'Microsoft JhengHei', sans-serif;
+  }
+
+  :root[data-ovl-font='ornate'] {
+    --ovl-user-font-family:
+      'Utawakui Hina Mincho', 'Hina Mincho', 'Yu Mincho', 'Noto Serif CJK JP',
+      serif;
+  }
+
+  :root[data-ovl-font='antique'] {
+    --ovl-user-font-family:
+      'Utawakui GenEi Antique', 'Noto Serif CJK JP', 'Yu Mincho', serif;
   }
 
   :root[data-ovl-scale='small'] {
@@ -53,6 +70,42 @@
   :root[data-ovl-surface='solid'] {
     --ovl-user-surface: var(--ovl-color-surface);
     --ovl-user-outline: var(--ovl-color-outline);
+  }
+
+  :root[data-ovl-position='top-left'],
+  :root[data-ovl-position='center-left'],
+  :root[data-ovl-position='bottom-left'] {
+    --ovl-user-position-inline: start;
+  }
+
+  :root[data-ovl-position='top-center'],
+  :root[data-ovl-position='center'],
+  :root[data-ovl-position='bottom-center'] {
+    --ovl-user-position-inline: center;
+  }
+
+  :root[data-ovl-position='top-right'],
+  :root[data-ovl-position='center-right'],
+  :root[data-ovl-position='bottom-right'] {
+    --ovl-user-position-inline: end;
+  }
+
+  :root[data-ovl-position='top-left'],
+  :root[data-ovl-position='top-center'],
+  :root[data-ovl-position='top-right'] {
+    --ovl-user-position-block: start;
+  }
+
+  :root[data-ovl-position='center-left'],
+  :root[data-ovl-position='center'],
+  :root[data-ovl-position='center-right'] {
+    --ovl-user-position-block: center;
+  }
+
+  :root[data-ovl-position='bottom-left'],
+  :root[data-ovl-position='bottom-center'],
+  :root[data-ovl-position='bottom-right'] {
+    --ovl-user-position-block: end;
   }
 
   @media (max-width: 48rem) {

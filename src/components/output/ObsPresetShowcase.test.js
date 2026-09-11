@@ -54,6 +54,10 @@ const appearanceControlRowSource = readFileSync(
   fileURLToPath(new URL('./ObsAppearanceControlRow.vue', import.meta.url)),
   'utf8',
 );
+const appearanceFieldSource = readFileSync(
+  fileURLToPath(new URL('./ObsAppearanceField.vue', import.meta.url)),
+  'utf8',
+);
 const settingsSource = readFileSync(
   fileURLToPath(new URL('./ObsOutputSettings.vue', import.meta.url)),
   'utf8',
@@ -81,8 +85,8 @@ describe('OBS output workspace layout contract', () => {
   });
 
   it('routes page and kind selections through the session navigation owner', () => {
-    expect(workspaceSource).not.toContain('activePage.value =');
-    expect(workspaceSource).not.toContain('activeKind.value =');
+    expect(workspaceSource).not.toMatch(/activePage\.value\s*=(?!=)/u);
+    expect(workspaceSource).not.toMatch(/activeKind\.value\s*=(?!=)/u);
     expect(workspaceSource).toContain(
       'rememberKind(preset.kind, availableKindIds.value)',
     );
@@ -317,11 +321,14 @@ describe('OBS output workspace layout contract', () => {
     expect(compactSplitLayoutSource).toContain(
       'padding-inline: var(--ui-space-4) var(--ui-space-3)',
     );
-    expect(workbenchSource).toContain('ObsAppearanceControlRow');
-    expect(workbenchSource).toContain(
-      ':control-id="`output-appearance-${control.key}`"',
+    expect(workbenchSource).toContain('ObsAppearanceField');
+    expect(workbenchSource).toContain(':field="field"');
+    expect(appearanceFieldSource).toContain(
+      'const controlId = computed(() => `output-appearance-${props.field.key}`)',
     );
-    expect(workbenchSource).toContain('class="obs-slot-workbench__select"');
+    expect(appearanceFieldSource).toContain(
+      'class="obs-appearance-field__select"',
+    );
     expect(appearanceControlRowSource).toContain('<slot />');
     expect(compactAppearanceControlRowSource).toMatch(
       /grid-template-columns:\s*var\(--ui-output-setting-label-width-min\)\s*minmax\(\s*0,\s*1fr\s*\)/,
@@ -332,17 +339,32 @@ describe('OBS output workspace layout contract', () => {
     expect(appearanceControlRowSource).not.toContain('v-model');
   });
 
+  it('autosaves Appearance changes while keeping explicit template application', () => {
+    expect(workbenchSource).toContain("'changeSettings'");
+    expect(workbenchSource).toContain("'retrySave'");
+    expect(workbenchSource).toContain('updateAppearanceField(field, $event)');
+    expect(workbenchSource).toContain('updateCaptureSize');
+    expect(workbenchSource).toContain('role="status"');
+    expect(workbenchSource).not.toContain('@click="saveSettings"');
+    expect(workbenchSource).toContain("if (saveStatus !== 'saved') return;");
+    expect(workbenchSource).toContain('() => props.saveStatus');
+    expect(workspaceSource).toContain('useOutputAppearanceAutosave');
+    expect(workspaceSource).toContain('appearanceAutosave.schedule');
+    expect(workspaceSource).toContain('await appearanceAutosave.flush()');
+    expect(workspaceSource).toContain('@change-settings="queueAppearanceSave"');
+    expect(workspaceSource).toContain('@retry-save="appearanceAutosave.retry"');
+    expect(workspaceSource).toContain('@apply-preset="applyPreset"');
+  });
+
   it('separates workbench preview and URL copy from runtime settings', () => {
     expect(workbenchSource).toContain('ObsOverlayPreview');
     expect(splitLayoutSource).toContain(
       'var(--ui-output-workbench-inspector-width)',
     );
-    expect(workbenchSource.match(/<select/g)).toHaveLength(1);
-    expect(workbenchSource).toContain("key: 'fontFamily'");
-    expect(workbenchSource).toContain("key: 'fontScale'");
-    expect(workbenchSource).toContain("key: 'fontWeight'");
-    expect(workbenchSource).toContain("key: 'alignment'");
-    expect(workbenchSource).toContain("key: 'surface'");
+    expect(workbenchSource).not.toContain('<select');
+    expect(workbenchSource).toContain('appearanceFields');
+    expect(workbenchSource).toContain('sanitizeOutputAppearanceSetting');
+    expect(workbenchSource).toContain('appearanceFieldGroups');
     expect(workbenchSource).toContain('captureSize: draft.captureSize');
     expect(workbenchSource).toContain(
       'class="obs-slot-workbench__capture-guide"',

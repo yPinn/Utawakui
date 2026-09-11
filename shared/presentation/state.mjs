@@ -8,6 +8,11 @@ import {
   parseKtvDisplayPhrases,
 } from './lyricsPresentation.mjs';
 import { estimatedLyricsTextUnits } from './lyricsTimingUnits.mjs';
+import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
+import {
+  adaptOrnateVerticalLyricsPresentation,
+  createOrnateVerticalDocumentContext,
+} from './ornateVerticalPresentation.mjs';
 
 function text(value) {
   return typeof value === 'string' ? value.trim() : '';
@@ -1272,6 +1277,50 @@ function musicStructureDocument(snapshot) {
   return document;
 }
 
+export function selectLyricsRhythmFrame(snapshot, options = {}) {
+  const trackId = snapshot?.playback?.track?.id;
+  const lyrics = snapshot?.lyrics;
+  const lines = Array.isArray(lyrics?.lines) ? lyrics.lines : [];
+  const nowMs = options.nowMs ?? Date.now();
+  const lineIndex = Number.isSafeInteger(options.lineIndex)
+    ? options.lineIndex
+    : activeLyricIndex(snapshot, lines, nowMs);
+  const document = musicStructureDocument(snapshot);
+  if (
+    !trackId ||
+    lyrics?.trackId !== trackId ||
+    !document ||
+    !Number.isSafeInteger(lineIndex) ||
+    lineIndex < 0 ||
+    lineIndex >= lines.length
+  ) {
+    return null;
+  }
+
+  return createLyricsRhythmPresentation({
+    beats: document.beats,
+    lineEndMs: effectiveLineEnd(snapshot, lines, lineIndex),
+    lineStartMs: lines[lineIndex]?.startMs,
+    lyricsOffsetMs: lyricsOffsetMs(snapshot),
+    playbackRate: playbackRate(snapshot),
+    positionMs: lyricsPositionMs(snapshot, nowMs),
+    tempo: document.tempo,
+  });
+}
+
+function currentBeatIndexAtOrBefore(beats, positionMs) {
+  let low = 0;
+  let high = beats.length;
+  while (low < high) {
+    const middle = Math.floor((low + high) / 2);
+    const timeMs = beats[middle]?.timeMs;
+    if (!Number.isFinite(timeMs)) return -1;
+    if (timeMs <= positionMs) low = middle + 1;
+    else high = middle;
+  }
+  return low - 1;
+}
+
 export function selectMusicStructureFrame(snapshot, options = {}) {
   const document = musicStructureDocument(snapshot);
   if (!document) return null;
@@ -1295,19 +1344,7 @@ export function selectMusicStructureFrame(snapshot, options = {}) {
     : null;
 
   const beats = Array.isArray(document.beats) ? document.beats : [];
-  let currentBeatIndex = -1;
-  let currentBeatTimeMs = -Infinity;
-  for (let index = 0; index < beats.length; index += 1) {
-    const timeMs = beats[index]?.timeMs;
-    if (
-      Number.isFinite(timeMs) &&
-      timeMs <= positionMs &&
-      timeMs >= currentBeatTimeMs
-    ) {
-      currentBeatIndex = index;
-      currentBeatTimeMs = timeMs;
-    }
-  }
+  const currentBeatIndex = currentBeatIndexAtOrBefore(beats, positionMs);
   const beat = currentBeatIndex >= 0 ? beats[currentBeatIndex] : null;
   const currentBeat = beat
     ? {
@@ -1387,6 +1424,15 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
       { nowMs },
     );
     if (liveStageCaptionDelay !== null) delays.push(liveStageCaptionDelay);
+  }
+
+  const lyricsRhythm = selectLyricsRhythmFrame(snapshot, { nowMs });
+  if (
+    lyricsRhythm?.timingSource === 'beat-grid' &&
+    Number.isFinite(lyricsRhythm.nextBeat?.delayMs) &&
+    lyricsRhythm.nextBeat.delayMs > 0
+  ) {
+    delays.push(Math.max(1, Math.ceil(lyricsRhythm.nextBeat.delayMs)));
   }
 
   const document = musicStructureDocument(snapshot);
@@ -1484,12 +1530,11 @@ export function selectLyricsFrame(snapshot, options = {}) {
     Number.isFinite(lineEndMs)
       ? Math.max(0, (lineEndMs - positionMs) / playbackRate(snapshot))
       : null;
-  const templateId =
-    typeof options.templateId === 'string' ? options.templateId : null;
-  const musicStructure =
-    templateId === null || ['karaoke-stack', 'manga-frame'].includes(templateId)
-      ? selectMusicStructureFrame(snapshot, options)
-      : null;
+  const musicStructure = selectMusicStructureFrame(snapshot, options);
+  const lyricsRhythm = selectLyricsRhythmFrame(snapshot, {
+    lineIndex: activeIndex,
+    nowMs,
+  });
   return {
     revision: revision(snapshot),
     visible: Boolean(currentText || nextText),
@@ -1512,6 +1557,7 @@ export function selectLyricsFrame(snapshot, options = {}) {
         }
       : {}),
     ...(musicStructure ? { musicStructure } : {}),
+    ...(lyricsRhythm ? { lyricsRhythm } : {}),
   };
 }
 
@@ -1551,6 +1597,17 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           kineticMaterial: options.kineticMaterial,
         })
       : null;
+  const cachedOrnateLine =
+    options.presentationDocument?.lines?.[frame.lineIndex];
+  const ornateVertical =
+    templateId === 'ornate-vertical'
+      ? cachedOrnateLine?.sourceText === frame.currentText
+        ? cachedOrnateLine.presentation
+        : adaptOrnateVerticalLyricsPresentation(frame.currentText, {
+            documentContext: createOrnateVerticalDocumentContext(lines),
+            lineIndex: frame.lineIndex,
+          })
+      : null;
   return {
     ...frame,
     ...(snapshot?.playback?.status === 'seeking'
@@ -1559,6 +1616,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
     ...(needsSourceAnalysis ? { lyricsSourceAnalysis: sourceAnalysis } : {}),
     ...(mangaBubbleTiming ? { mangaBubbleTiming } : {}),
     ...(kineticPop ? { kineticPop } : {}),
+    ...(ornateVertical ? { ornateVertical } : {}),
     ...(legacyAllTemplates || templateId === 'karaoke-stack'
       ? {
           ktv: selectKtvLyricsFrame(

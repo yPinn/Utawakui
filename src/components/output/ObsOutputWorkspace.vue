@@ -1,7 +1,8 @@
 <script setup>
-import { computed, onMounted, reactive, watch } from 'vue';
+import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
 import { useOutputRuntimeContext } from '../../composables/useOutputRuntimeContext.js';
 import { useOutputWorkspaceNavigation } from '../../composables/useOutputWorkspaceNavigation.js';
+import { useOutputAppearanceAutosave } from '../../composables/output/useOutputAppearanceAutosave.js';
 import { useSpoutOutput } from '../../composables/output/useSpoutOutput.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputSettings from './ObsOutputSettings.vue';
@@ -15,7 +16,6 @@ const props = defineProps({
   previewScene: { type: Object, default: () => ({}) },
   slotDefinitions: { type: Array, default: () => [] },
   slotDefaults: { type: Object, default: () => ({}) },
-  appearanceOptions: { type: Object, default: () => ({}) },
 });
 
 const pages = [
@@ -38,7 +38,7 @@ const availableKindIds = computed(() =>
 const {
   activePage,
   activeKind,
-  selectPage,
+  selectPage: rememberPage,
   selectKind: rememberKind,
   ensureAvailableKind,
 } = useOutputWorkspaceNavigation();
@@ -62,6 +62,11 @@ const {
   saveTemplateSelection,
   updateSettings,
 } = useOutputRuntimeContext();
+const appearanceAutosave = useOutputAppearanceAutosave({
+  save: ({ kind, settings }) =>
+    saveSlotSettings(kind, settings, props.slotDefaults[kind]),
+});
+const appearanceSaveStatus = appearanceAutosave.status;
 const {
   state: spoutState,
   refresh: refreshSpoutStatus,
@@ -131,13 +136,27 @@ function selectPreset(id) {
   browsedPresetIds[preset.kind] = id;
 }
 
-function selectKind(kind) {
-  rememberKind(kind, availableKindIds.value);
+async function selectPage(page) {
+  if (page !== activePage.value && activePage.value === 'workbench') {
+    const flushed = await appearanceAutosave.flush();
+    if (!flushed) return false;
+  }
+  return rememberPage(page);
+}
+
+async function selectKind(kind) {
+  if (kind !== activeKind.value) {
+    const flushed = await appearanceAutosave.flush();
+    if (!flushed) return false;
+  }
+  return rememberKind(kind, availableKindIds.value);
 }
 
 async function applyPreset(id) {
   const preset = orderedPresets.value.find((candidate) => candidate.id === id);
   if (!preset || preset.availability?.available === false) return;
+  const flushed = await appearanceAutosave.flush();
+  if (!flushed) return;
   const saved = await saveTemplateSelection(
     preset.kind,
     preset.id,
@@ -146,11 +165,14 @@ async function applyPreset(id) {
   if (saved) browsedPresetIds[preset.kind] = id;
 }
 
-async function saveAppearance(settings) {
-  await saveSlotSettings(
-    activeKind.value,
-    settings,
-    props.slotDefaults[activeKind.value],
+function queueAppearanceSave(change) {
+  if (!change?.settings) return Promise.resolve(false);
+  return appearanceAutosave.schedule(
+    {
+      kind: activeKind.value,
+      settings: change.settings,
+    },
+    { immediate: change.mode === 'immediate' },
   );
 }
 
@@ -164,6 +186,10 @@ onMounted(async () => {
   await refreshSpoutStatus();
   await loadSlots(props.slotDefaults);
   await refreshProjection();
+});
+
+onBeforeUnmount(() => {
+  void appearanceAutosave.flush();
 });
 </script>
 
@@ -215,14 +241,14 @@ onMounted(async () => {
         :output-slot="activeSlot"
         :active-kind="activeKind"
         :slot-definitions="slotDefinitions"
-        :appearance-options="appearanceOptions"
         :output-status="outputState.status"
         :preview-url="workbenchUrls.previewUrl"
         :obs-url="workbenchUrls.obsUrl"
         :output-error="outputState.error"
-        :is-saving="outputState.isSavingSlot"
+        :save-status="appearanceSaveStatus"
         @update:active-kind="selectKind"
-        @save-settings="saveAppearance"
+        @change-settings="queueAppearanceSave"
+        @retry-save="appearanceAutosave.retry"
         @open-gallery="selectPage('gallery')"
         @refresh-projection="refreshProjection"
       />

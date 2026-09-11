@@ -37,6 +37,8 @@
     --ovl-primitive-color-kinetic-magenta: #f24e9b;
     --ovl-primitive-color-kinetic-candy-deep: #941361;
     --ovl-primitive-color-kinetic-candy-light: #f33a52;
+    --ovl-primitive-color-ornate-paper: #fff8ec;
+    --ovl-primitive-color-ornate-echo: rgb(255 255 255 / 18%);
     --ovl-primitive-space-1: 0.25rem;
     --ovl-primitive-space-2: 0.5rem;
     --ovl-primitive-space-3: 0.75rem;
@@ -50,6 +52,8 @@
     --ovl-primitive-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
     --ovl-primitive-text-shadow:
       0 0.08em 0.08em rgb(0 0 0 / 92%), 0 0.16em 0.45em rgb(0 0 0 / 72%);
+    --ovl-primitive-ornate-text-shadow:
+      0 0.018em 0.012em rgb(0 0 0 / 76%), 0 0.055em 0.1em rgb(0 0 0 / 34%);
     --ovl-primitive-mark-shadow: drop-shadow(
       0 0.18rem 0.12rem rgb(0 0 0 / 55%)
     );

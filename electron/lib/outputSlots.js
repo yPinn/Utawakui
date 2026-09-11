@@ -3,7 +3,11 @@
 const fs = require('fs');
 const path = require('path');
 const { atomicWriteJson, backupCorrupted } = require('./atomicWrite');
-const OUTPUT_APPEARANCE_VALUES = require('../../shared/outputAppearanceValues.json');
+const {
+  OUTPUT_APPEARANCE_DEFAULTS,
+  OUTPUT_SLOT_APPEARANCE_DEFAULTS,
+  sanitizeOutputAppearanceSetting,
+} = require('../../shared/outputAppearance.mjs');
 const OUTPUT_CAPTURE_VALUES = require('../../shared/outputCaptureValues.json');
 const OUTPUT_TEMPLATE_VALUES = require('../../shared/outputTemplateValues.json');
 
@@ -55,6 +59,11 @@ function sanitizeSettings(value) {
   for (const [key, setting] of Object.entries(value)) {
     if (entries.length >= MAX_SETTINGS) break;
     if (!SAFE_SETTING_KEY_RE.test(key) || key.length > MAX_ID_LENGTH) continue;
+    if (Object.hasOwn(OUTPUT_APPEARANCE_DEFAULTS, key)) {
+      const normalized = sanitizeOutputAppearanceSetting(key, setting);
+      if (normalized !== undefined) entries.push([key, normalized]);
+      continue;
+    }
     if (typeof setting === 'string') {
       entries.push([key, setting.slice(0, MAX_SETTING_STRING_LENGTH)]);
     } else if (typeof setting === 'boolean' || setting === null) {
@@ -117,8 +126,8 @@ function normalizeDocument(value) {
         templateId: slot.defaultTemplateId,
         styleSetIds: slot.defaultStyleSetIds,
         settings: {
-          ...(OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
-            OUTPUT_APPEARANCE_VALUES.defaultSettings),
+          ...(OUTPUT_SLOT_APPEARANCE_DEFAULTS[slot.id] ??
+            OUTPUT_APPEARANCE_DEFAULTS),
           captureSize: OUTPUT_CAPTURE_VALUES.slotDefaults[slot.id],
         },
       });

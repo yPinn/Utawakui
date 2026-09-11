@@ -1,0 +1,10 @@
+Hina Mincho Regular
+
+Upstream project: https://github.com/google/fonts/tree/main/ofl/hinamincho
+Source file: HinaMincho-Regular.ttf
+Downloaded from: https://raw.githubusercontent.com/google/fonts/main/ofl/hinamincho/HinaMincho-Regular.ttf
+Local file: HinaMincho-Regular.ttf
+SHA-256: 8395fafa0c2721b4b5c274031e1336fea0f703d908b175ee21f8ba2f1ad566a0
+License: SIL Open Font License 1.1; see OFL-HINA-MINCHO.txt.
+
+The local family name used by Utawakui CSS is "Utawakui Hina Mincho".

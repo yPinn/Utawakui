@@ -23,12 +23,32 @@ function createFixtureRoots() {
     '<main>Lyrics route</main>',
   );
   fs.writeFileSync(
+    path.join(overlayRoot, 'lyrics', 'ornateVertical.mjs'),
+    'export const ornateRenderer = true;',
+  );
+  fs.writeFileSync(
     path.join(sharedRoot, 'presentation', 'state.mjs'),
     'export const state = true;',
   );
   fs.writeFileSync(
     path.join(sharedRoot, 'presentation', 'lyricsTimingUnits.mjs'),
     'export const timingUnits = true;',
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'presentation', 'ornateVerticalMotion.mjs'),
+    'export const ornateMotion = true;',
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'presentation', 'ornateVerticalPresentation.mjs'),
+    'export const ornatePresentation = true;',
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'presentation', 'lyricsRhythm.mjs'),
+    'export const lyricsRhythm = true;',
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'outputAppearance.mjs'),
+    'export const appearanceSchema = true;',
   );
   fs.writeFileSync(
     path.join(sharedRoot, 'assets', 'fonts', 'jf-open-huninn-2.1.ttf'),
@@ -44,6 +64,10 @@ function createFixtureRoots() {
   );
   fs.writeFileSync(
     path.join(sharedRoot, 'assets', 'fonts', 'GenEiAntiqueNv6-M.ttf'),
+    Buffer.from([0, 1, 0, 0]),
+  );
+  fs.writeFileSync(
+    path.join(sharedRoot, 'assets', 'fonts', 'HinaMincho-Regular.ttf'),
     Buffer.from([0, 1, 0, 0]),
   );
   return { overlayRoot, root, sharedRoot };
@@ -181,6 +205,21 @@ describe('output HTTP delivery', () => {
     const timingUnits = await fetch(
       `${baseUrl}/shared/presentation/lyricsTimingUnits.mjs`,
     );
+    const ornateRenderer = await fetch(
+      `${baseUrl}/overlay/lyrics/ornateVertical.mjs`,
+    );
+    const ornateMotion = await fetch(
+      `${baseUrl}/shared/presentation/ornateVerticalMotion.mjs`,
+    );
+    const ornatePresentation = await fetch(
+      `${baseUrl}/shared/presentation/ornateVerticalPresentation.mjs`,
+    );
+    const lyricsRhythm = await fetch(
+      `${baseUrl}/shared/presentation/lyricsRhythm.mjs`,
+    );
+    const appearanceSchema = await fetch(
+      `${baseUrl}/shared/outputAppearance.mjs`,
+    );
     const font = await fetch(
       `${baseUrl}/shared/assets/fonts/jf-open-huninn-2.1.ttf`,
     );
@@ -193,6 +232,9 @@ describe('output HTTP delivery', () => {
     const mangaFont = await fetch(
       `${baseUrl}/shared/assets/fonts/GenEiAntiqueNv6-M.ttf`,
     );
+    const ornateFont = await fetch(
+      `${baseUrl}/shared/assets/fonts/HinaMincho-Regular.ttf`,
+    );
     const unknown = await fetch(`${baseUrl}/overlay/lyrics/private.txt`);
 
     expect(await overlay.text()).toBe('<main>Lyrics route</main>');
@@ -201,6 +243,13 @@ describe('output HTTP delivery', () => {
     );
     expect(await shared.text()).toBe('export const state = true;');
     expect(await timingUnits.text()).toBe('export const timingUnits = true;');
+    expect(await ornateRenderer.text()).toBe(
+      'export const ornateRenderer = true;',
+    );
+    expect(await ornateMotion.text()).toBe('export const ornateMotion = true;');
+    expect(await ornatePresentation.text()).toBe(
+      'export const ornatePresentation = true;',
+    );
     expect(font.status).toBe(200);
     expect(font.headers.get('content-type')).toBe('font/ttf');
     expect(Buffer.from(await font.arrayBuffer())).toEqual(
@@ -212,6 +261,18 @@ describe('output HTTP delivery', () => {
     expect(kineticPopFont.headers.get('content-type')).toBe('font/ttf');
     expect(mangaFont.status).toBe(200);
     expect(mangaFont.headers.get('content-type')).toBe('font/ttf');
+    expect(ornateFont.status).toBe(200);
+    expect(ornateFont.headers.get('content-type')).toBe('font/ttf');
+    expect(await lyricsRhythm.text()).toBe('export const lyricsRhythm = true;');
+    expect(lyricsRhythm.headers.get('content-type')).toBe(
+      'text/javascript; charset=utf-8',
+    );
+    expect(await appearanceSchema.text()).toBe(
+      'export const appearanceSchema = true;',
+    );
+    expect(appearanceSchema.headers.get('content-type')).toBe(
+      'text/javascript; charset=utf-8',
+    );
     expect(unknown.status).toBe(404);
   });
 

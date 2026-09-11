@@ -40,6 +40,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/lyrics/kineticPop.mjs': ['lyrics', 'kineticPop.mjs'],
   '/overlay/lyrics/liveStage.mjs': ['lyrics', 'liveStage.mjs'],
   '/overlay/lyrics/mangaFrame.mjs': ['lyrics', 'mangaFrame.mjs'],
+  '/overlay/lyrics/ornateVertical.mjs': ['lyrics', 'ornateVertical.mjs'],
   '/overlay/now-playing': ['now-playing', 'index.html'],
   '/overlay/now-playing/': ['now-playing', 'index.html'],
   '/overlay/now-playing/now-playing.css': ['now-playing', 'now-playing.css'],
@@ -83,6 +84,7 @@ const OVERLAY_VENDOR_ROUTES = Object.freeze({
   '/overlay/vendor/gsap.min.js': GSAP_BROWSER_ASSET,
 });
 const SHARED_STATIC_ROUTES = Object.freeze({
+  '/shared/outputAppearance.mjs': ['outputAppearance.mjs'],
   '/shared/assets/fonts/jf-open-huninn-2.1.ttf': [
     'assets',
     'fonts',
@@ -99,6 +101,11 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'fonts',
     'GenEiAntiqueNv6-M.ttf',
   ],
+  '/shared/assets/fonts/HinaMincho-Regular.ttf': [
+    'assets',
+    'fonts',
+    'HinaMincho-Regular.ttf',
+  ],
   '/shared/presentation/lyricsPresentation.mjs': [
     'presentation',
     'lyricsPresentation.mjs',
@@ -107,10 +114,19 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'presentation',
     'kineticPopMotion.mjs',
   ],
+  '/shared/presentation/ornateVerticalPresentation.mjs': [
+    'presentation',
+    'ornateVerticalPresentation.mjs',
+  ],
+  '/shared/presentation/ornateVerticalMotion.mjs': [
+    'presentation',
+    'ornateVerticalMotion.mjs',
+  ],
   '/shared/presentation/lyricsTimingUnits.mjs': [
     'presentation',
     'lyricsTimingUnits.mjs',
   ],
+  '/shared/presentation/lyricsRhythm.mjs': ['presentation', 'lyricsRhythm.mjs'],
   '/shared/presentation/mangaFrameContract.mjs': [
     'presentation',
     'mangaFrameContract.mjs',

@@ -385,6 +385,14 @@ describe('outputServer', () => {
     );
     expect(appearance.status).toBe(200);
 
+    const appearanceSchema = await fetch(
+      `${status.httpUrl}/shared/outputAppearance.mjs`,
+    );
+    expect(appearanceSchema.status).toBe(200);
+    expect(appearanceSchema.headers.get('content-type')).toContain(
+      'text/javascript',
+    );
+
     const mangaContract = await fetch(
       `${status.httpUrl}/overlay/shared/mangaFrameContract.mjs`,
     );
@@ -411,6 +419,10 @@ describe('outputServer', () => {
         'kineticPopBurstDelaySeconds',
       ],
       ['/shared/presentation/lyricsPresentation.mjs', 'analyzeLyricsSource'],
+      [
+        '/shared/presentation/lyricsRhythm.mjs',
+        'createLyricsRhythmPresentation',
+      ],
       ['/shared/presentation/mangaFrameContract.mjs', 'DEFAULT_MANGA_FRAME_ID'],
       ['/shared/presentation/state.mjs', 'selectLyricsFrame'],
     ]) {

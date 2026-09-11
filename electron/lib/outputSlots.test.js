@@ -191,6 +191,12 @@ describe('outputSlots', () => {
         settings: { captureSize: 'full' },
       }),
     ).not.toThrow();
+    expect(() =>
+      upsertOutputSlot(dir, 'lyrics', {
+        templateId: 'ornate-vertical',
+        settings: { captureSize: 'full' },
+      }),
+    ).not.toThrow();
   });
 
   it('persists the Kinetic Pop material selection', () => {
@@ -209,6 +215,34 @@ describe('outputSlots', () => {
         kineticMaterial: 'cycle',
         captureSize: 'full',
       },
+    });
+  });
+
+  it('validates and bounds recognized appearance settings at persistence', () => {
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'ornate-vertical',
+      settings: {
+        fontFamily: 'ornate',
+        fontScale: 'large',
+        textColor: '#FFF8EC',
+        accentColor: 'red; inset: 0',
+        positionAnchor: 'bottom-right',
+        positionOffsetX: 100,
+        positionOffsetY: -100,
+        showArtist: true,
+        captureSize: 'full',
+      },
+    });
+
+    expect(loadOutputSlots(dir).slots.lyrics.settings).toEqual({
+      fontFamily: 'ornate',
+      fontScale: 'large',
+      textColor: '#fff8ec',
+      positionAnchor: 'bottom-right',
+      positionOffsetX: 12,
+      positionOffsetY: -25,
+      showArtist: true,
+      captureSize: 'full',
     });
   });
 

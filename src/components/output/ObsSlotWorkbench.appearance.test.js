@@ -1,31 +1,150 @@
 import { renderToString } from '@vue/server-renderer';
 import { createSSRApp, h } from 'vue';
 import { describe, expect, it } from 'vitest';
+import { outputAppearanceFieldsForTemplate } from '../../../shared/outputAppearance.mjs';
+import { getOutputWorkbenchData } from '../../constants/outputTemplates.js';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
 
-const appearanceOptions = {
-  fontFamily: [{ id: 'sans', label: '無襯線' }],
-  fontScale: [{ id: 'medium', label: '標準' }],
-  fontWeight: [{ id: 'bold', label: '粗體' }],
-  alignment: [{ id: 'left', label: '靠左' }],
-  surface: [{ id: 'transparent', label: '透明' }],
-  furigana: [
-    { id: 'auto', label: '有資料時顯示' },
-    { id: 'off', label: '關閉' },
-  ],
-  kineticMaterial: [
-    { id: 'solid-outline', label: '樣式 1｜單色黑框' },
-    { id: 'candy-rim', label: '樣式 2｜漸層白框' },
-    { id: 'chromatic-depth', label: '樣式 3｜右下錯位' },
-    { id: 'cycle', label: '三款依句序切換' },
-  ],
-  kineticArrangement: [
-    { id: 'straight', label: '端正' },
-    { id: 'subtle-offset', label: '些微偏移' },
-  ],
-};
+async function renderRegisteredTemplate(templateId) {
+  const data = getOutputWorkbenchData();
+  const preset = data.templates.find((template) => template.id === templateId);
+  const outputSlot = {
+    ...data.slotDefaults[preset.kind],
+    templateId,
+  };
+
+  return renderToString(
+    createSSRApp({
+      render: () =>
+        h(ObsSlotWorkbench, {
+          preset,
+          activeKind: preset.kind,
+          outputSlot,
+        }),
+    }),
+  );
+}
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it.each([
+    [
+      'queue-board',
+      ['fontFamily', 'fontScale', 'fontWeight', 'alignment', 'surface'],
+      [],
+    ],
+    [
+      'now-next',
+      ['fontFamily', 'fontScale', 'fontWeight', 'alignment', 'surface'],
+      [],
+    ],
+    [
+      'art-card',
+      ['fontFamily', 'fontScale', 'fontWeight'],
+      ['alignment', 'surface'],
+    ],
+    [
+      'cover-player',
+      ['fontScale', 'fontWeight', 'surface'],
+      ['fontFamily', 'alignment'],
+    ],
+  ])(
+    'renders the effective %s appearance controls',
+    async (templateId, shown, hidden) => {
+      const html = await renderRegisteredTemplate(templateId);
+
+      for (const key of shown) {
+        expect(html, `${templateId} should render ${key}`).toContain(
+          `output-appearance-${key}`,
+        );
+      }
+      for (const key of hidden) {
+        expect(html, `${templateId} should hide ${key}`).not.toContain(
+          `output-appearance-${key}`,
+        );
+      }
+    },
+  );
+
+  it('hides appearance reset when a template has no appearance controls', async () => {
+    const html = await renderRegisteredTemplate('reading-aid');
+
+    expect(html).not.toContain('恢復模板預設');
+  });
+
+  it('shows saved state instead of requiring a manual Appearance save', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ObsSlotWorkbench, {
+            preset: {
+              id: 'focus-line',
+              name: '聚焦歌詞',
+              kind: 'lyrics',
+              appearanceFields: outputAppearanceFieldsForTemplate('focus-line'),
+            },
+            activeKind: 'lyrics',
+            saveStatus: 'saved',
+          }),
+      }),
+    );
+
+    expect(html).toContain('role="status"');
+    expect(html).toContain('aria-live="polite"');
+    expect(html).toContain('已儲存');
+    expect(html).not.toMatch(/<button[^>]*>\s*儲存\s*<\/button>/u);
+  });
+
+  it('offers an explicit retry only after autosave fails', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ObsSlotWorkbench, {
+            preset: {
+              id: 'focus-line',
+              name: '聚焦歌詞',
+              kind: 'lyrics',
+              appearanceFields: outputAppearanceFieldsForTemplate('focus-line'),
+            },
+            activeKind: 'lyrics',
+            saveStatus: 'error',
+          }),
+      }),
+    );
+
+    expect(html).toContain('儲存失敗');
+    expect(html).toContain('重試');
+  });
+
+  it('treats the existing Lyrics slot defaults as template defaults', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ObsSlotWorkbench, {
+            preset: {
+              id: 'focus-line',
+              name: '聚焦歌詞',
+              kind: 'lyrics',
+              appearanceFields: outputAppearanceFieldsForTemplate('focus-line'),
+            },
+            activeKind: 'lyrics',
+            outputSlot: {
+              templateId: 'focus-line',
+              settings: {
+                fontFamily: 'serif',
+                fontScale: 'medium',
+                fontWeight: 'bold',
+                alignment: 'left',
+                surface: 'transparent',
+                captureSize: 'full',
+              },
+            },
+          }),
+      }),
+    );
+
+    expect(html).toMatch(/obs-slot-workbench__reset" disabled/);
+  });
+
   it('hides controls that a fixed-identity template does not support', async () => {
     const html = await renderToString(
       createSSRApp({
@@ -36,6 +155,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
               name: 'Classic KTV',
               kind: 'lyrics',
               editableAppearanceKeys: ['fontScale'],
+              appearanceFields:
+                outputAppearanceFieldsForTemplate('karaoke-stack'),
             },
             activeKind: 'lyrics',
             outputSlot: {
@@ -49,7 +170,6 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 captureSize: 'full',
               },
             },
-            appearanceOptions,
           }),
       }),
     );
@@ -76,13 +196,14 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 'fontWeight',
                 'furigana',
               ],
+              appearanceFields:
+                outputAppearanceFieldsForTemplate('manga-frame'),
             },
             activeKind: 'lyrics',
             outputSlot: {
               templateId: 'manga-frame',
               settings: { furigana: 'auto', captureSize: 'full' },
             },
-            appearanceOptions,
           }),
       }),
     );
@@ -105,6 +226,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 'kineticMaterial',
                 'kineticArrangement',
               ],
+              appearanceFields:
+                outputAppearanceFieldsForTemplate('kinetic-pop'),
             },
             activeKind: 'lyrics',
             outputSlot: {
@@ -116,7 +239,6 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 captureSize: 'full',
               },
             },
-            appearanceOptions,
           }),
       }),
     );
@@ -124,13 +246,14 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('文字樣式');
     expect(html).toContain('output-appearance-kineticMaterial');
     expect(html).toMatch(
-      /<option value="candy-rim"[^>]*selected>樣式 2｜漸層白框<\/option>/,
+      /<select id="output-appearance-kineticMaterial"[^>]*value="candy-rim"/,
     );
+    expect(html).toContain('樣式 2｜漸層白框');
     expect(html).toContain('三款依句序切換');
     expect(html).toContain('文字排列');
     expect(html).toContain('output-appearance-kineticArrangement');
     expect(html).toMatch(
-      /<option value="straight"[^>]*selected>端正<\/option>/,
+      /<select id="output-appearance-kineticArrangement"[^>]*value="straight"/,
     );
     expect(html).toContain('些微偏移');
   });
@@ -151,6 +274,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                   'kineticMaterial',
                   'kineticArrangement',
                 ],
+                appearanceFields:
+                  outputAppearanceFieldsForTemplate('kinetic-pop'),
               },
               activeKind: 'lyrics',
               outputSlot: {
@@ -162,13 +287,12 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                   captureSize: 'full',
                 },
               },
-              appearanceOptions,
             }),
         }),
       );
 
       expect(html).toMatch(
-        /<option value="straight"[^>]*selected>端正<\/option>/,
+        /<select id="output-appearance-kineticArrangement"[^>]*value="straight"/,
       );
     },
   );
@@ -185,6 +309,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                 name: 'Kinetic Pop',
                 kind: 'lyrics',
                 editableAppearanceKeys: ['fontScale', 'kineticMaterial'],
+                appearanceFields:
+                  outputAppearanceFieldsForTemplate('kinetic-pop'),
               },
               activeKind: 'lyrics',
               outputSlot: {
@@ -195,14 +321,58 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
                   captureSize: 'full',
                 },
               },
-              appearanceOptions,
             }),
         }),
       );
 
       expect(html).toMatch(
-        /<option value="candy-rim"[^>]*selected>樣式 2｜漸層白框<\/option>/,
+        /<select id="output-appearance-kineticMaterial"[^>]*value="candy-rim"/,
       );
     },
   );
+
+  it('renders Ornate Vertical safe appearance controls from its schema', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ObsSlotWorkbench, {
+            preset: {
+              id: 'ornate-vertical',
+              name: '華綴直書',
+              kind: 'lyrics',
+              appearanceFields:
+                outputAppearanceFieldsForTemplate('ornate-vertical'),
+            },
+            activeKind: 'lyrics',
+            outputSlot: {
+              templateId: 'ornate-vertical',
+              settings: {
+                fontFamily: 'serif',
+                fontScale: 'medium',
+                textColor: '#fff8ec',
+                accentColor: '#ffffff',
+                positionAnchor: 'center-right',
+                positionOffsetX: 0,
+                positionOffsetY: 0,
+                captureSize: 'full',
+              },
+            },
+          }),
+      }),
+    );
+
+    expect(html).toContain('文字顏色');
+    expect(html).toContain('藝術墨影');
+    expect(html).toContain('顯示位置');
+    expect(html).toContain('水平微調');
+    expect(html).toContain('垂直微調');
+    expect(html).toContain('type="color"');
+    expect(html).toContain('type="range"');
+    expect(html).toContain('恢復模板預設');
+    expect(html).toMatch(
+      /<select id="output-appearance-fontFamily"[^>]*value="ornate"/,
+    );
+    expect(html).toContain('華麗明朝（Hina Mincho）');
+    expect(html).not.toContain('output-appearance-fontWeight');
+  });
 });

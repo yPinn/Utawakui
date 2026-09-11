@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   adaptLiveStageLyricsPresentation,
   analyzeLyricsSource,
+  compileLyricsPresentationDocument,
 } from './lyricsPresentation.mjs';
 import { normalizeLyricsDocument } from '../../src/utils/lyricsDocument.js';
 import { projectLyricsOutputDocument } from '../../src/utils/outputStreamProjection.js';
@@ -183,6 +184,66 @@ describe('overlay state selectors', () => {
     expect(fixedMaterial.kineticPop.material).toBe('chromatic-depth');
   });
 
+  it('projects one shared lyrics rhythm reference for every lyrics template', () => {
+    const base = snapshot();
+    const value = snapshot({
+      musicStructure: {
+        documentId: 'music-rhythm',
+        trackId: 'track-1',
+        sourceRevision: 'source-1',
+        sourceDurationMs: 180000,
+        level: 'M1',
+        tempo: { bpm: 120, confidence: 0.9 },
+        beats: Array.from({ length: 12 }, (_value, index) => ({
+          timeMs: 9000 + index * 500,
+          positionInBar: (index % 4) + 1,
+          downbeat: index % 4 === 0,
+          confidence: 0.9,
+        })),
+        sections: [],
+      },
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    for (const templateId of [
+      'focus-line',
+      'quiet-caption',
+      'karaoke-stack',
+      'kinetic-pop',
+      'ornate-vertical',
+      'manga-frame',
+      'live-stage',
+    ]) {
+      expect(
+        selectLyricsOverlayFrame(value, { nowMs, templateId }),
+      ).toMatchObject({
+        musicStructure: { level: 'M1' },
+        lyricsRhythm: {
+          timingSource: 'beat-grid',
+          beatDurationMs: 500,
+          lineBeatCount: 12,
+          lineBeatIndex: 6,
+          currentBeat: { beatIndex: 6, lyricsTimeMs: 12000 },
+          nextBeat: { beatIndex: 7, lyricsTimeMs: 12500, delayMs: 500 },
+        },
+      });
+    }
+
+    for (const templateId of [
+      'focus-line',
+      'quiet-caption',
+      'karaoke-stack',
+      'kinetic-pop',
+      'ornate-vertical',
+      'manga-frame',
+      'live-stage',
+    ]) {
+      expect(
+        nextPresentationBoundaryDelayMs(value, { nowMs, templateId }),
+      ).toBe(500);
+    }
+  });
+
   it('schedules the next lyric boundary for the kinetic template', () => {
     const value = snapshot();
     const nowMs = Date.parse(value.generatedAt);
@@ -193,6 +254,53 @@ describe('overlay state selectors', () => {
         templateId: 'kinetic-pop',
       }),
     ).toBe(3000);
+  });
+
+  it('projects the cached ornate vertical presentation for the active line', () => {
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 3000 },
+      lyrics: {
+        ...snapshot().lyrics,
+        source: { language: 'ja' },
+        activeLineIndex: 0,
+        documentId: 'ornate-state',
+        documentRevision: 3,
+        lines: [
+          {
+            text: '夜が明けるまで後悔を抱えて歩いていく',
+            startMs: 0,
+            endMs: 6000,
+          },
+          { text: '後悔ばかりが募って', startMs: 6000, endMs: 12000 },
+        ],
+      },
+    });
+    const presentationDocument = compileLyricsPresentationDocument(
+      {
+        documentId: value.lyrics.documentId,
+        documentRevision: value.lyrics.documentRevision,
+        language: value.lyrics.source.language,
+        lines: value.lyrics.lines,
+      },
+      { templateId: 'ornate-vertical' },
+    );
+
+    const frame = selectLyricsOverlayFrame(value, {
+      nowMs: Date.parse(value.generatedAt),
+      presentationDocument,
+      templateId: 'ornate-vertical',
+    });
+
+    expect(frame.ornateVertical).toMatchObject({
+      text: '夜が明けるまで後悔を抱えて歩いていく',
+      keyword: { index: 7, text: '後悔' },
+      placement: 'right',
+    });
+    expect(
+      frame.ornateVertical.segments.map((segment) => segment.text),
+    ).toEqual(['夜が明けるまで後悔を', '抱えて歩いていく']);
+    expect(frame).not.toHaveProperty('kineticPop');
+    expect(frame).not.toHaveProperty('lyricsSourceAnalysis');
   });
 
   it('selects and schedules authored Kinetic Pop phrases inside one timed line', () => {
@@ -2719,6 +2827,40 @@ describe('overlay state selectors', () => {
         nowMs: Date.parse(value.generatedAt),
       }),
     ).toBe(1);
+  });
+
+  it('selects the current music beat with bounded reads from a large grid', () => {
+    let indexedBeatReads = 0;
+    const beatValues = Array.from({ length: 130000 }, (_, index) => ({
+      timeMs: index + 1,
+      confidence: 0.9,
+    }));
+    const beats = new Proxy(beatValues, {
+      get(target, property, receiver) {
+        if (/^\d+$/.test(String(property))) indexedBeatReads += 1;
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    const value = snapshot({
+      playback: { ...snapshot().playback, positionMs: 12000 },
+      musicStructure: {
+        documentId: 'music-large-projection',
+        trackId: 'track-1',
+        sourceRevision: 'source-1',
+        sourceDurationMs: 180000,
+        level: 'M1',
+        tempo: null,
+        beats,
+        sections: [],
+      },
+    });
+
+    expect(
+      selectMusicStructureFrame(value, {
+        nowMs: Date.parse(value.generatedAt),
+      }).currentBeat,
+    ).toMatchObject({ beatIndex: 11999, timeMs: 12000 });
+    expect(indexedBeatReads).toBeLessThan(40);
   });
 
   it('projects a negative display compensation ahead while playing', () => {

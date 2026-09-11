@@ -18,6 +18,7 @@ import {
   parseKtvDisplayPhrases,
 } from '../../../shared/presentation/lyricsPresentation.mjs';
 import MangaFrameSvg from './MangaFrameSvg.vue';
+import OrnateVerticalPreview from './OrnateVerticalPreview.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -307,6 +308,10 @@ const mangaBubbles = computed(() => {
             </span>
           </strong>
         </span>
+      </template>
+
+      <template v-else-if="preset?.id === 'ornate-vertical'">
+        <OrnateVerticalPreview :animated="animated" :scene="lyrics.ornate" />
       </template>
 
       <template v-else-if="preset?.id === 'manga-frame'">
@@ -1966,6 +1971,27 @@ const mangaBubbles = computed(() => {
   .obs-template-mockup__content--lyrics {
   align-items: end;
   padding: 0 4% 6%;
+}
+
+.obs-template-mockup[data-template-id='ornate-vertical']
+  .obs-template-mockup__content--lyrics {
+  --ui-output-preview-ornate-font-size: var(
+    --ui-output-preview-ornate-detail-font-size
+  );
+
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  align-content: stretch;
+  inline-size: 100%;
+  padding: 0;
+}
+
+.obs-template-mockup[data-size='thumbnail'][data-template-id='ornate-vertical']
+  .obs-template-mockup__content--lyrics {
+  --ui-output-preview-ornate-font-size: var(
+    --ui-output-preview-ornate-thumbnail-font-size
+  );
 }
 
 .obs-template-mockup__kinetic-stage {

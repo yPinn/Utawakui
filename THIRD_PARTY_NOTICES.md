@@ -83,6 +83,8 @@ served to OBS only through one exact loopback Output allowlist route.
 | Keifont           | 2023-03-20 distribution | Apache License 2.0                                                 | Heavy Japanese pop-display TTF used by Kinetic Pop's gradient material; the pinned archive/font checksums, official source, and complete license ship under `shared/assets/fonts/`.                          |
 | GenEi Antique     | 6.0a                    | SIL Open Font License 1.1                                          | Normal-width Japanese manga-dialogue TTF bundled for Japanese Manga Frame lyrics and ruby; the pinned source, checksum, reserved font name, and complete upstream license ship under `shared/assets/fonts/`. |
 
+| Hina Mincho | Regular | SIL Open Font License 1.1 | Japanese Mincho display TTF bundled for the Ornate Vertical lyrics template; the official source, checksum, and complete upstream license ship under `shared/assets/fonts/`. |
+
 The renderer dependency closure also includes MIT/BSD/ISC packages such as
 `@babel/*`, `@jridgewell/sourcemap-codec`, `entities`, `estree-walker`,
 `magic-string`, `nanoid`, `picocolors`, `postcss`, and `source-map-js`.

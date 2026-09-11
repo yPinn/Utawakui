@@ -294,6 +294,12 @@
   --ui-output-preview-kinetic-magenta: #f24e9b;
   --ui-output-preview-kinetic-candy-deep: #941361;
   --ui-output-preview-kinetic-candy-light: #f33a52;
+  --ui-output-preview-ornate-paper: #fff8ec;
+  --ui-output-preview-ornate-echo: rgb(255 255 255 / 18%);
+  --ui-output-preview-ornate-shadow:
+    0 0.018em 0.012em rgb(0 0 0 / 76%), 0 0.055em 0.1em rgb(0 0 0 / 34%);
+  --ui-output-preview-ornate-detail-font-size: 0.9rem;
+  --ui-output-preview-ornate-thumbnail-font-size: 0.68rem;
   --ui-output-preview-kinetic-offset-start: -0.6em;
   --ui-output-preview-kinetic-offset-end: 0.7em;
   --ui-output-preview-manga-canvas: #e8e8e5;

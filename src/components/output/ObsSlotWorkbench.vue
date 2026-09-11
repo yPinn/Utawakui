@@ -1,13 +1,13 @@
 <script setup>
 import { computed, reactive, watch } from 'vue';
-import { Check, Palette } from '../../icons/index.js';
+import { Palette } from '../../icons/index.js';
+import { sanitizeOutputAppearanceSetting } from '../../../shared/outputAppearance.mjs';
 import {
   captureSizeForKind,
   normalizeCaptureSizeId,
   supportedCaptureSizeIdsForTemplate,
 } from '../../constants/outputCaptureSizes.js';
-import { OUTPUT_SLOT_DEFAULTS } from '../../constants/outputTemplates.js';
-import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
+import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
 import ObsOutputBrief from './ObsOutputBrief.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
@@ -19,79 +19,43 @@ const props = defineProps({
   outputSlot: { type: Object, default: null },
   activeKind: { type: String, default: null },
   slotDefinitions: { type: Array, default: () => [] },
-  appearanceOptions: { type: Object, default: () => ({}) },
   outputStatus: { type: Object, default: () => ({ running: false }) },
   previewUrl: { type: String, default: null },
   obsUrl: { type: String, default: null },
   outputError: { type: String, default: '' },
-  isSaving: { type: Boolean, default: false },
+  saveStatus: {
+    type: String,
+    default: 'saved',
+    validator: (value) =>
+      ['pending', 'saving', 'saved', 'error'].includes(value),
+  },
 });
 
 const emit = defineEmits([
   'update:activeKind',
-  'saveSettings',
+  'changeSettings',
+  'retrySave',
   'openGallery',
   'refreshProjection',
 ]);
 
-const draft = reactive({
-  fontFamily: 'sans',
-  fontScale: 'medium',
-  fontWeight: 'semibold',
-  alignment: 'center',
-  surface: 'transparent',
-  furigana: 'auto',
-  kineticMaterial: 'candy-rim',
-  kineticArrangement: 'straight',
-  captureSize: 'small',
-});
+const draft = reactive({ captureSize: 'small' });
 
-const controls = computed(() => [
-  {
-    key: 'fontFamily',
-    label: '字型',
-    options: props.appearanceOptions.fontFamily ?? [],
-  },
-  {
-    key: 'fontScale',
-    label: '字級',
-    options: props.appearanceOptions.fontScale ?? [],
-  },
-  {
-    key: 'fontWeight',
-    label: '字重',
-    options: props.appearanceOptions.fontWeight ?? [],
-  },
-  {
-    key: 'alignment',
-    label: '對齊',
-    options: props.appearanceOptions.alignment ?? [],
-  },
-  {
-    key: 'surface',
-    label: '背景',
-    options: props.appearanceOptions.surface ?? [],
-  },
-  {
-    key: 'furigana',
-    label: '假名標音',
-    options: props.appearanceOptions.furigana ?? [],
-  },
-  {
-    key: 'kineticMaterial',
-    label: '文字樣式',
-    options: props.appearanceOptions.kineticMaterial ?? [],
-  },
-  {
-    key: 'kineticArrangement',
-    label: '文字排列',
-    options: props.appearanceOptions.kineticArrangement ?? [],
-  },
-]);
-const editableControls = computed(() => {
-  const editableKeys = props.preset?.editableAppearanceKeys;
-  if (!Array.isArray(editableKeys)) return controls.value;
-  return controls.value.filter((control) => editableKeys.includes(control.key));
+const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
+const appearanceFieldGroups = computed(() => {
+  const groups = new Map();
+  for (const field of appearanceFields.value) {
+    const id = field.group ?? 'appearance';
+    if (!groups.has(id)) {
+      groups.set(id, {
+        id,
+        label: field.groupLabel ?? '外觀',
+        fields: [],
+      });
+    }
+    groups.get(id).fields.push(field);
+  }
+  return [...groups.values()];
 });
 const kindTabs = computed(() =>
   props.slotDefinitions.map((definition) => ({
@@ -105,38 +69,34 @@ const templateId = computed(
 const supportedCaptureSizes = computed(() =>
   supportedCaptureSizeIdsForTemplate(templateId.value, props.activeKind),
 );
+const saveStatusLabel = computed(() => {
+  if (props.saveStatus === 'error') return '儲存失敗';
+  if (props.saveStatus === 'pending' || props.saveStatus === 'saving') {
+    return '儲存中…';
+  }
+  return '已儲存';
+});
 
-function normalizedControlValue(control, settings, activeKind) {
-  const allowedValues = new Set(
-    control.options.map((option) => option.id).filter(Boolean),
+function normalizedControlValue(field, settings) {
+  const storedValue = sanitizeOutputAppearanceSetting(
+    field.key,
+    settings?.[field.key],
   );
-  const storedValue = settings?.[control.key];
-  if (allowedValues.has(storedValue)) return storedValue;
-
-  const defaultValue =
-    OUTPUT_SLOT_DEFAULTS[activeKind]?.settings?.[control.key];
-  if (allowedValues.has(defaultValue)) return defaultValue;
-
-  return control.options[0]?.id ?? '';
+  const allowedValues = Array.isArray(field.options)
+    ? new Set(field.options.map((option) => option.id))
+    : null;
+  if (
+    storedValue !== undefined &&
+    (!allowedValues || allowedValues.has(storedValue))
+  ) {
+    return storedValue;
+  }
+  return field.defaultValue;
 }
 
-const isDirty = computed(() =>
-  Boolean(
-    editableControls.value.some(
-      (control) =>
-        draft[control.key] !==
-        normalizedControlValue(
-          control,
-          props.outputSlot?.settings,
-          props.activeKind,
-        ),
-    ) ||
-    draft.captureSize !==
-      normalizeCaptureSizeId(
-        props.activeKind,
-        props.outputSlot?.settings?.captureSize,
-        templateId.value,
-      ),
+const isAppearanceAtDefaults = computed(() =>
+  appearanceFields.value.every(
+    (field) => draft[field.key] === field.defaultValue,
   ),
 );
 
@@ -146,14 +106,16 @@ const capturePreset = computed(() =>
 const isWidgetCapture = computed(() => props.activeKind !== 'lyrics');
 
 watch(
-  [() => props.activeKind, () => props.outputSlot, templateId],
-  ([activeKind, outputSlot, activeTemplateId]) => {
-    for (const control of controls.value) {
-      draft[control.key] = normalizedControlValue(
-        control,
-        outputSlot?.settings,
-        activeKind,
-      );
+  [
+    () => props.activeKind,
+    () => props.outputSlot,
+    templateId,
+    () => props.saveStatus,
+  ],
+  ([activeKind, outputSlot, activeTemplateId, saveStatus]) => {
+    if (saveStatus !== 'saved') return;
+    for (const field of appearanceFields.value) {
+      draft[field.key] = normalizedControlValue(field, outputSlot?.settings);
     }
     draft.captureSize = normalizeCaptureSizeId(
       activeKind,
@@ -164,12 +126,43 @@ watch(
   { immediate: true, deep: true },
 );
 
-function saveSettings() {
-  if (!isDirty.value || props.isSaving) return;
-  emit('saveSettings', {
-    ...Object.fromEntries(controls.value.map(({ key }) => [key, draft[key]])),
+function settingsSnapshot() {
+  return {
+    ...Object.fromEntries(
+      appearanceFields.value.map(({ key }) => [key, draft[key]]),
+    ),
     captureSize: draft.captureSize,
+  };
+}
+
+function emitSettingsChange(mode = 'debounced') {
+  emit('changeSettings', {
+    settings: settingsSnapshot(),
+    mode,
   });
+}
+
+function updateAppearanceField(field, value) {
+  if (draft[field.key] === value) return;
+  draft[field.key] = value;
+  emitSettingsChange(field.control === 'select' ? 'immediate' : 'debounced');
+}
+
+function updateCaptureSize(value) {
+  if (draft.captureSize === value) return;
+  draft.captureSize = value;
+  emitSettingsChange('immediate');
+}
+
+function commitSettings() {
+  emitSettingsChange('immediate');
+}
+
+function resetAppearance() {
+  for (const field of appearanceFields.value) {
+    draft[field.key] = field.defaultValue;
+  }
+  emitSettingsChange('immediate');
 }
 </script>
 
@@ -221,7 +214,7 @@ function saveSettings() {
             :supported-capture-sizes="supportedCaptureSizes"
             :preview-url="previewUrl"
             :obs-url="obsUrl"
-            @update:capture-size="draft.captureSize = $event"
+            @update:capture-size="updateCaptureSize"
             @refresh-projection="emit('refreshProjection')"
           />
         </div>
@@ -233,14 +226,14 @@ function saveSettings() {
         <h2 class="obs-slot-workbench__title">
           {{ preset?.name ?? '未選擇模板' }}
         </h2>
-        <UiButton
-          :icon="Check"
-          variant="accent"
-          :disabled="!isDirty || isSaving"
-          @click="saveSettings"
-        >
-          儲存
-        </UiButton>
+        <div class="obs-slot-workbench__save-state" :data-state="saveStatus">
+          <span role="status" aria-live="polite" aria-atomic="true">
+            {{ saveStatusLabel }}
+          </span>
+          <UiButton v-if="saveStatus === 'error'" @click="emit('retrySave')">
+            重試
+          </UiButton>
+        </div>
       </header>
 
       <ObsOutputBrief
@@ -249,31 +242,32 @@ function saveSettings() {
         :error="outputError"
       />
 
-      <section class="obs-slot-workbench__section">
-        <h3 class="obs-slot-workbench__section-title">文字與背景</h3>
+      <section
+        v-for="group in appearanceFieldGroups"
+        :key="group.id"
+        class="obs-slot-workbench__section"
+      >
+        <h3 class="obs-slot-workbench__section-title">{{ group.label }}</h3>
         <div class="obs-slot-workbench__fields">
-          <ObsAppearanceControlRow
-            v-for="control in editableControls"
-            :key="control.key"
-            :control-id="`output-appearance-${control.key}`"
-            :label="control.label"
-          >
-            <select
-              :id="`output-appearance-${control.key}`"
-              v-model="draft[control.key]"
-              class="obs-slot-workbench__select"
-            >
-              <option
-                v-for="option in control.options"
-                :key="option.id"
-                :value="option.id"
-              >
-                {{ option.label }}
-              </option>
-            </select>
-          </ObsAppearanceControlRow>
+          <ObsAppearanceField
+            v-for="field in group.fields"
+            :key="field.key"
+            :field="field"
+            :model-value="draft[field.key]"
+            @update:model-value="updateAppearanceField(field, $event)"
+            @commit="commitSettings"
+          />
         </div>
       </section>
+
+      <UiButton
+        v-if="appearanceFields.length > 0"
+        class="obs-slot-workbench__reset"
+        :disabled="isAppearanceAtDefaults"
+        @click="resetAppearance"
+      >
+        恢復模板預設
+      </UiButton>
     </template>
   </ObsOutputSplitLayout>
 </template>
@@ -294,11 +288,6 @@ function saveSettings() {
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-2);
-}
-
-.obs-slot-workbench__select:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 
 .obs-slot-workbench__stage {
@@ -349,8 +338,34 @@ function saveSettings() {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
+.obs-slot-workbench__reset {
+  justify-self: start;
+  margin-block-start: var(--ui-space-2);
+}
+
 .obs-slot-workbench__inspector-header {
   padding-block-start: 0;
+}
+
+.obs-slot-workbench__save-state {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
+  white-space: nowrap;
+}
+
+.obs-slot-workbench__save-state[data-state='pending'],
+.obs-slot-workbench__save-state[data-state='saving'] {
+  color: var(--ui-color-accent);
+}
+
+.obs-slot-workbench__save-state[data-state='error'] {
+  color: var(--ui-color-danger);
 }
 
 .obs-slot-workbench__section {
@@ -359,17 +374,9 @@ function saveSettings() {
   gap: var(--ui-space-1);
 }
 
-.obs-slot-workbench__section:last-child {
-  border-bottom: 0;
-}
-
 .obs-slot-workbench__title,
 .obs-slot-workbench__section-title {
   margin: 0;
-}
-
-.obs-slot-workbench__title,
-.obs-slot-workbench__section-title {
   color: var(--ui-color-text);
   font-weight: var(--ui-font-weight-strong);
   line-height: var(--ui-line-height-title);
@@ -395,21 +402,6 @@ function saveSettings() {
   line-height: var(--ui-line-height-title);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}
-
-.obs-slot-workbench__select {
-  width: 100%;
-  min-width: 0;
-  height: var(--ui-control-height);
-  padding-inline: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  cursor: pointer;
 }
 
 @container (width < 48rem) {

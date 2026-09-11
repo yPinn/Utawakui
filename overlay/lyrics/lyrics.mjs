@@ -13,12 +13,17 @@ import {
   nextPresentationBoundaryDelayMs,
   selectLyricsOverlayFrame,
 } from '../shared/state.mjs';
+import { scaleLyricsMotionDuration } from '../../shared/presentation/lyricsRhythm.mjs';
 import {
   adaptKtvLyricsPresentation,
   adaptMangaLyricsPresentation,
   analyzeLyricsSource,
   createLyricsPresentationDocumentCache,
 } from '../shared/lyricsPresentation.mjs';
+import {
+  adaptOrnateVerticalLyricsPresentation,
+  createOrnateVerticalDocumentContext,
+} from '../../shared/presentation/ornateVerticalPresentation.mjs';
 import {
   mangaFrameLengthTier,
   mangaFramePlacementForBubble,
@@ -37,7 +42,22 @@ import {
   renderKineticPopPresentation,
   stopKineticPopTransition,
 } from './kineticPop.mjs';
+import {
+  clearOrnateVerticalPresentation,
+  renderOrnateVerticalPresentation,
+  stopOrnateVerticalTransition,
+} from './ornateVertical.mjs';
 
+const PREVIEW_ORNATE_LINES = Object.freeze([
+  '夜が明けるまで言葉を残していく',
+  '言葉だけが残る',
+]);
+const PREVIEW_ORNATE_VERTICAL = Object.freeze(
+  adaptOrnateVerticalLyricsPresentation(PREVIEW_ORNATE_LINES[0], {
+    documentContext: createOrnateVerticalDocumentContext(PREVIEW_ORNATE_LINES),
+    lineIndex: 0,
+  }),
+);
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
   visible: true,
@@ -47,6 +67,7 @@ const PREVIEW_FRAME = Object.freeze({
   lineIndex: 0,
   currentVisibleLineIndex: 0,
   nextVisibleLineIndex: 1,
+  ornateVertical: PREVIEW_ORNATE_VERTICAL,
   liveStage: {
     active: true,
     cardVisible: true,
@@ -65,7 +86,6 @@ const PRESENTATION_SECTION_ROLES = new Set([
   'instrumental',
   'outro',
 ]);
-const SEGMENT_AWARE_TEMPLATE_IDS = new Set(['karaoke-stack', 'manga-frame']);
 const MANGA_FADE_OUT_DURATION_SECONDS = 0.14;
 const MANGA_FADE_IN_DURATION_SECONDS = 0.16;
 const MANGA_BUBBLE_EXIT_STAGGER_SECONDS = 0.06;
@@ -996,7 +1016,6 @@ function clearMangaLyrics(elements) {
 function renderLiveStageFrame(elements, frame, options) {
   clearMangaLyrics(elements);
   renderLiveStagePresentation(elements, frame, options);
-  applyMusicStructurePresentation(elements, frame, options);
 }
 
 function activeTemplateId(elements, options) {
@@ -1019,37 +1038,87 @@ function clearMusicPresentation(root) {
   delete root.dataset.musicLevel;
   delete root.dataset.musicSection;
   delete root.dataset.musicDownbeat;
+  delete root.dataset.lyricsRhythm;
+  delete root.dataset.lyricsBeat;
+  delete root.dataset.lyricsLineBeat;
+  delete root.dataset.lyricsLineBeatCount;
+  delete root.dataset.lyricsDownbeat;
+  root.style?.removeProperty?.('--ovl-lyrics-beat-duration');
+  root.style?.removeProperty?.('--ovl-lyrics-beat-progress');
+  root.style?.removeProperty?.('--ovl-lyrics-motion-scale');
 }
 
 function applyMusicStructurePresentation(elements, frame, options) {
   clearMusicPresentation(elements.root);
   const music = frame.musicStructure;
   const templateId = activeTemplateId(elements, options);
-  if (
-    !SEGMENT_AWARE_TEMPLATE_IDS.has(templateId) ||
-    !music ||
-    !['M1', 'M2'].includes(music.level)
-  ) {
-    return;
+  const validMusic = music && ['M1', 'M2'].includes(music.level) ? music : null;
+  if (validMusic) {
+    elements.root.dataset.musicLevel = validMusic.level;
+    const section = validMusic.activeSection;
+    if (confidentCue(section) && PRESENTATION_SECTION_ROLES.has(section.role)) {
+      elements.root.dataset.musicSection = section.role;
+    }
+
+    const beat = validMusic.currentBeat;
+    if (
+      confidentCue(beat) &&
+      Number.isFinite(beat.timeMs) &&
+      beat.downbeat === true
+    ) {
+      elements.root.dataset.musicDownbeat = 'true';
+    }
   }
 
-  elements.root.dataset.musicLevel = music.level;
-  const section = music.activeSection;
-  if (confidentCue(section) && PRESENTATION_SECTION_ROLES.has(section.role)) {
-    elements.root.dataset.musicSection = section.role;
+  const rhythm = frame.lyricsRhythm;
+  const validRhythm =
+    rhythm && ['beat-grid', 'tempo'].includes(rhythm.timingSource)
+      ? rhythm
+      : null;
+  if (validRhythm) {
+    elements.root.dataset.lyricsRhythm = validRhythm.timingSource;
+    if (Number.isSafeInteger(validRhythm.lineBeatCount)) {
+      elements.root.dataset.lyricsLineBeatCount = String(
+        validRhythm.lineBeatCount,
+      );
+    }
+    if (Number.isSafeInteger(validRhythm.lineBeatIndex)) {
+      elements.root.dataset.lyricsLineBeat = String(validRhythm.lineBeatIndex);
+    }
+    if (Number.isFinite(validRhythm.beatDurationMs)) {
+      elements.root.style?.setProperty?.(
+        '--ovl-lyrics-beat-duration',
+        `${validRhythm.beatDurationMs}ms`,
+      );
+    }
+    if (Number.isFinite(validRhythm.beatProgress)) {
+      elements.root.style?.setProperty?.(
+        '--ovl-lyrics-beat-progress',
+        String(validRhythm.beatProgress),
+      );
+    }
+    if (Number.isFinite(validRhythm.motionScale)) {
+      elements.root.style?.setProperty?.(
+        '--ovl-lyrics-motion-scale',
+        String(validRhythm.motionScale),
+      );
+    }
+    const lyricBeat = validRhythm.currentBeat;
+    if (confidentCue(lyricBeat) && Number.isSafeInteger(lyricBeat.beatIndex)) {
+      elements.root.dataset.lyricsBeat = String(lyricBeat.beatIndex);
+      if (lyricBeat.downbeat === true) {
+        elements.root.dataset.lyricsDownbeat = 'true';
+      }
+    }
   }
 
-  const beat = music.currentBeat;
-  const confidentBeat =
-    confidentCue(beat) && Number.isFinite(beat.timeMs) ? beat : null;
-  if (confidentBeat?.downbeat === true) {
-    elements.root.dataset.musicDownbeat = 'true';
-  }
+  if (!validMusic && !validRhythm) return;
   traceLyrics(options, 'music-cue', {
-    downbeat: confidentBeat?.downbeat === true,
-    level: music.level,
+    downbeat: elements.root.dataset.lyricsDownbeat === 'true',
+    level: validMusic?.level ?? null,
     motion: 'none',
     revision: frame.revision,
+    rhythm: validRhythm?.timingSource ?? null,
     section: elements.root.dataset.musicSection ?? null,
     templateId,
   });
@@ -1106,7 +1175,6 @@ function commitLyricsFrame(elements, frame, options, isMangaFrame) {
   elements.root.hidden = !frame.visible;
   elements.root.setAttribute('lang', frame.language || 'und');
   elements.root.dataset.revision = String(frame.revision);
-  applyMusicStructurePresentation(elements, frame, options);
 }
 
 function finiteKtvHostRect(element) {
@@ -1327,6 +1395,7 @@ function stopMangaAnimations(elements, options = {}, clearProps = false) {
 
 export function destroyLyricsAnimations(elements, options = {}) {
   stopKineticPopTransition(elements, options);
+  stopOrnateVerticalTransition(elements, options);
   stopMangaAnimations(elements, options, true);
   clearLyricsRenderState(elements.current, options);
   clearLyricsRenderState(elements.next, options);
@@ -1340,6 +1409,7 @@ export function destroyLyricsAnimations(elements, options = {}) {
   clearKtvLanePresentation(elements.root);
   clearLiveStagePresentation(elements, options);
   clearKineticPopPresentation(elements, options);
+  clearOrnateVerticalPresentation(elements, options);
 }
 
 export function renderLyricsFrame(elements, sourceFrame, options = {}) {
@@ -1363,6 +1433,8 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
   const isMangaFrame = templateId === 'manga-frame';
   const isLiveStage = templateId === 'live-stage';
   const isKineticPop = templateId === 'kinetic-pop';
+  const isOrnateVertical = templateId === 'ornate-vertical';
+  applyMusicStructurePresentation(elements, frame, renderOptions);
 
   if (templateId !== 'karaoke-stack') {
     clearKtvFallbackProgress(elements.current);
@@ -1371,6 +1443,7 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
 
   if (isLiveStage) {
     clearKineticPopPresentation(elements, renderOptions);
+    clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
     renderLiveStageFrame(elements, frame, renderOptions);
     return;
@@ -1380,6 +1453,7 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
     clearLiveStagePresentation(elements, renderOptions);
   }
   if (isKineticPop) {
+    clearOrnateVerticalPresentation(elements, renderOptions);
     stopMangaAnimations(elements, renderOptions, true);
     clearMangaLyrics(elements);
     clearLyricsRenderState(elements.current, renderOptions);
@@ -1390,10 +1464,22 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
     elements.root.hidden = !frame.visible;
     elements.root.setAttribute('lang', frame.language || 'und');
     elements.root.dataset.revision = String(frame.revision);
-    clearMusicPresentation(elements.root);
     return;
   }
   clearKineticPopPresentation(elements, renderOptions);
+  if (isOrnateVertical) {
+    stopMangaAnimations(elements, renderOptions, true);
+    clearMangaLyrics(elements);
+    clearLyricsRenderState(elements.current, renderOptions);
+    clearLyricsRenderState(elements.next, renderOptions);
+    clearKtvLanePresentation(elements.root);
+    renderOrnateVerticalPresentation(elements, frame, renderOptions);
+    elements.root.hidden = !frame.visible;
+    elements.root.setAttribute('lang', frame.language || 'und');
+    elements.root.dataset.revision = String(frame.revision);
+    return;
+  }
+  clearOrnateVerticalPresentation(elements, renderOptions);
   const lineChanged =
     previousText !== frame.currentText ||
     (isMangaFrame &&
@@ -1458,7 +1544,10 @@ export function renderLyricsFrame(elements, sourceFrame, options = {}) {
         { opacity: 0.35, transform: 'translateY(0.3em)' },
         { opacity: 1, transform: 'translateY(0)' },
       ],
-      { duration: 240, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      {
+        duration: scaleLyricsMotionDuration(240, frame.lyricsRhythm),
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
     );
   }
 }

@@ -1,5 +1,11 @@
 // Pure presentation projection shared across renderer and Browser Source.
 
+import {
+  adaptOrnateVerticalLyricsPresentation,
+  createOrnateVerticalDocumentContext,
+} from './ornateVerticalPresentation.mjs';
+import { outputAppearanceFieldKeysForTemplate } from '../outputAppearance.mjs';
+
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
 export const MAX_LIVE_STAGE_CAPTION_LINES = 2;
 export const MAX_LIVE_STAGE_CAPTION_PAGES = 2;
@@ -74,13 +80,6 @@ const KOREAN_PHRASE_END_WORDS = new Set([
   '조차',
   '마저',
 ]);
-const ALL_APPEARANCE_KEYS = Object.freeze([
-  'fontFamily',
-  'fontScale',
-  'fontWeight',
-  'alignment',
-  'surface',
-]);
 const KINETIC_POP_MATERIALS = Object.freeze([
   'solid-outline',
   'candy-rim',
@@ -102,46 +101,57 @@ const LYRICS_PRESENTATION_PROFILES = Object.freeze({
     id: 'generic-caption',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: true,
-    editableAppearanceKeys: ALL_APPEARANCE_KEYS,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('focus-line'),
+    ),
   }),
   'classic-ktv': Object.freeze({
     id: 'classic-ktv',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: true,
-    editableAppearanceKeys: Object.freeze(['fontScale']),
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('karaoke-stack'),
+    ),
   }),
   'kinetic-pop': Object.freeze({
     id: 'kinetic-pop',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: true,
-    editableAppearanceKeys: Object.freeze([
-      'fontScale',
-      'kineticMaterial',
-      'kineticArrangement',
-    ]),
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('kinetic-pop'),
+    ),
+  }),
+  'ornate-vertical': Object.freeze({
+    id: 'ornate-vertical',
+    version: LYRICS_PRESENTATION_PROFILE_VERSION,
+    available: true,
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('ornate-vertical'),
+    ),
   }),
   'manga-frame': Object.freeze({
     id: 'manga-frame',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: true,
-    editableAppearanceKeys: Object.freeze([
-      'fontFamily',
-      'fontScale',
-      'fontWeight',
-      'furigana',
-    ]),
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('manga-frame'),
+    ),
   }),
   'live-stage': Object.freeze({
     id: 'live-stage',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: true,
-    editableAppearanceKeys: Object.freeze(['fontFamily', 'fontScale']),
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('live-stage'),
+    ),
   }),
   'reading-aid': Object.freeze({
     id: 'reading-aid',
     version: LYRICS_PRESENTATION_PROFILE_VERSION,
     available: false,
-    editableAppearanceKeys: Object.freeze([]),
+    editableAppearanceKeys: Object.freeze(
+      outputAppearanceFieldKeysForTemplate('reading-aid'),
+    ),
   }),
 });
 const TEMPLATE_PROFILE_IDS = Object.freeze({
@@ -149,6 +159,7 @@ const TEMPLATE_PROFILE_IDS = Object.freeze({
   'quiet-caption': 'generic-caption',
   'karaoke-stack': 'classic-ktv',
   'kinetic-pop': 'kinetic-pop',
+  'ornate-vertical': 'ornate-vertical',
   'manga-frame': 'manga-frame',
   'live-stage': 'live-stage',
   'reading-aid': 'reading-aid',
@@ -1110,6 +1121,9 @@ function compileLinePresentation(sourceText, analysis, profile, options) {
   if (profile.id === 'kinetic-pop') {
     return adaptKineticPopLyricsPresentation(sourceText, options);
   }
+  if (profile.id === 'ornate-vertical') {
+    return adaptOrnateVerticalLyricsPresentation(sourceText, options);
+  }
   return { sourceText, text: sourceText };
 }
 
@@ -1117,6 +1131,10 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
   const profile = lyricsPresentationProfileForTemplate(options.templateId);
   const language = String(document.language ?? '');
   const lines = Array.isArray(document.lines) ? document.lines : [];
+  const ornateDocumentContext =
+    profile.id === 'ornate-vertical'
+      ? createOrnateVerticalDocumentContext(lines)
+      : null;
   return {
     documentId:
       typeof document.documentId === 'string' ? document.documentId : null,
@@ -1130,6 +1148,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
       const needsSemanticAnalysis = ![
         'generic-caption',
         'kinetic-pop',
+        'ornate-vertical',
         'reading-aid',
       ].includes(profile.id);
       const analysis = needsSemanticAnalysis
@@ -1143,6 +1162,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
           language,
           lineIndex: sourceLineIndex,
           kineticMaterial: options.kineticMaterial,
+          documentContext: ornateDocumentContext,
         }),
       };
     }),

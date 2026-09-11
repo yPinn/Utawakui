@@ -103,6 +103,7 @@ describe('lyrics presentation profiles', () => {
     ['quiet-caption', 'generic-caption', true],
     ['karaoke-stack', 'classic-ktv', true],
     ['kinetic-pop', 'kinetic-pop', true],
+    ['ornate-vertical', 'ornate-vertical', true],
     ['manga-frame', 'manga-frame', true],
     ['live-stage', 'live-stage', true],
     ['reading-aid', 'reading-aid', false],
@@ -160,6 +161,45 @@ describe('lyrics presentation profiles', () => {
     expect(manga.lines[0]).toHaveProperty('analysis');
     expect(liveStage.lines[0].presentation).toHaveProperty('pages');
     expect(liveStage.lines[0]).toHaveProperty('analysis');
+  });
+
+  it('compiles the ornate vertical document with shared repetition evidence', () => {
+    const compiled = compileLyricsPresentationDocument(
+      {
+        documentId: 'ornate-lyrics',
+        documentRevision: 2,
+        language: 'ja',
+        lines: [
+          { text: '後悔ばかりが募って' },
+          { text: '深い後悔だけ残る' },
+          { text: 'あしたまで' },
+          { text: '夜が明けるまで後悔を抱えて歩いていく' },
+        ],
+      },
+      { templateId: 'ornate-vertical' },
+    );
+
+    expect(compiled.profile).toMatchObject({
+      id: 'ornate-vertical',
+      version: 1,
+      available: true,
+    });
+    expect(compiled.lines[0].presentation).toMatchObject({
+      keyword: { index: 0, text: '後悔' },
+      placement: 'right',
+    });
+    expect(compiled.lines[1].presentation).toMatchObject({
+      keyword: { text: '後悔' },
+      placement: 'right',
+    });
+    expect(compiled.lines[2].presentation).toMatchObject({
+      keyword: null,
+      placement: 'right',
+    });
+    expect(
+      compiled.lines[3].presentation.segments.map((segment) => segment.text),
+    ).toEqual(['夜が明けるまで後悔を', '抱えて歩いていく']);
+    expect(compiled.lines[0]).not.toHaveProperty('analysis');
   });
 
   it('defaults kinetic lines to material two and supports fixed or sequential material selection', () => {

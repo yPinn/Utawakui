@@ -1,6 +1,8 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import {
+  OUTPUT_APPEARANCE_DEFAULTS,
+  outputAppearanceOptionIds,
+} from '../../shared/outputAppearance.mjs';
 import {
   applyOverlayAppearance,
   normalizeOverlayAppearance,
@@ -8,27 +10,13 @@ import {
   overlayAppearanceOptionIds,
 } from './appearance.mjs';
 
-const sharedValues = JSON.parse(
-  readFileSync(
-    fileURLToPath(
-      new URL('../../shared/outputAppearanceValues.json', import.meta.url),
-    ),
-    'utf8',
-  ),
-);
-
 describe('overlay appearance', () => {
   it('keeps browser mappings aligned with renderer option ids', () => {
-    const optionIds = overlayAppearanceOptionIds();
-    for (const [key, options] of Object.entries(
-      sharedValues.appearanceOptions,
-    )) {
-      expect(optionIds[key]).toEqual(options.map((option) => option.id));
-    }
+    expect(overlayAppearanceOptionIds()).toEqual(outputAppearanceOptionIds());
   });
 
   it('keeps browser fallbacks aligned with the shared appearance contract', () => {
-    expect(OVERLAY_APPEARANCE_DEFAULTS).toEqual(sharedValues.defaultSettings);
+    expect(OVERLAY_APPEARANCE_DEFAULTS).toEqual(OUTPUT_APPEARANCE_DEFAULTS);
   });
 
   it('falls back from unsupported values instead of exposing raw CSS', () => {
@@ -37,36 +25,53 @@ describe('overlay appearance', () => {
         fontFamily: 'url(https://example.com/font)',
         fontScale: 'large',
         alignment: 'fixed; inset: 0',
+        textColor: 'var(--private-value)',
+        positionOffsetX: 500,
       }),
     ).toEqual({
-      fontFamily: 'sans',
+      ...OUTPUT_APPEARANCE_DEFAULTS,
       fontScale: 'large',
-      fontWeight: 'semibold',
-      alignment: 'left',
-      surface: 'transparent',
-      furigana: 'auto',
-      kineticMaterial: 'candy-rim',
-      kineticArrangement: 'straight',
+      positionOffsetX: 12,
     });
   });
 
-  it('applies only normalized ids and the selected template to the root', () => {
-    const document = { documentElement: { dataset: {} } };
+  it('uses template-specific fallbacks for fixed-identity controls', () => {
+    expect(
+      normalizeOverlayAppearance(
+        { fontFamily: 'serif', positionAnchor: 'center' },
+        { templateId: 'ornate-vertical' },
+      ),
+    ).toMatchObject({
+      fontFamily: 'ornate',
+      positionAnchor: 'center-right',
+    });
+  });
+
+  it('applies only normalized ids and CSS values to the root', () => {
+    const setProperty = vi.fn();
+    const document = {
+      documentElement: { dataset: {}, style: { setProperty } },
+    };
     applyOverlayAppearance(document, {
-      templateId: 'karaoke-stack',
+      templateId: 'ornate-vertical',
       settings: {
-        fontFamily: 'serif',
+        fontFamily: 'antique',
         fontScale: 'large',
         fontWeight: 'bold',
         alignment: 'left',
         surface: 'soft',
         kineticMaterial: 'cycle',
         kineticArrangement: 'subtle-offset',
+        textColor: '#F6E5D3',
+        accentColor: 'linear-gradient(red, blue)',
+        positionAnchor: 'bottom-right',
+        positionOffsetX: 7,
+        positionOffsetY: -9,
       },
     });
 
     expect(document.documentElement.dataset).toEqual({
-      ovlFont: 'serif',
+      ovlFont: 'antique',
       ovlScale: 'large',
       ovlWeight: 'bold',
       ovlAlign: 'left',
@@ -74,7 +79,18 @@ describe('overlay appearance', () => {
       ovlFurigana: 'auto',
       ovlKineticMaterial: 'cycle',
       ovlKineticArrangement: 'subtle-offset',
-      ovlTemplate: 'karaoke-stack',
+      ovlPosition: 'bottom-right',
+      ovlTemplate: 'ornate-vertical',
     });
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-user-text-color',
+      '#f6e5d3',
+    );
+    expect(setProperty).toHaveBeenCalledWith(
+      '--ovl-user-accent-color',
+      '#ffffff',
+    );
+    expect(setProperty).toHaveBeenCalledWith('--ovl-user-position-x', '7%');
+    expect(setProperty).toHaveBeenCalledWith('--ovl-user-position-y', '-9%');
   });
 });

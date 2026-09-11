@@ -7,6 +7,7 @@ import {
   renderLyricsFrame,
   renderLyricsFrameSafely,
 } from './lyrics.mjs';
+import { ORNATE_VERTICAL_EXIT_DURATION_SECONDS } from '../../shared/presentation/ornateVerticalMotion.mjs';
 
 function gsapHarness() {
   const timelines = [];
@@ -17,20 +18,24 @@ function gsapHarness() {
     timeline: vi.fn((options = {}) => {
       const timeline = {
         additions: [],
+        additionPositions: [],
         labels: [],
+        labelPositions: [],
         options,
         tweens: [],
         kill: vi.fn(),
-        addLabel(label) {
+        addLabel(label, position) {
           this.labels.push(label);
+          this.labelPositions.push({ label, position });
           return this;
         },
         to(target, vars, position) {
           this.tweens.push({ position, target, vars });
           return this;
         },
-        add(callback) {
+        add(callback, position) {
           this.additions.push(callback);
+          this.additionPositions.push(position);
           return this;
         },
       };
@@ -133,6 +138,543 @@ function kineticLineUnits(line) {
 }
 
 describe('lyrics overlay renderer', () => {
+  it('exposes the same bounded rhythm reference to every lyrics template', () => {
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: 'current line',
+      nextText: 'next line',
+      language: 'en',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      musicStructure: {
+        documentId: 'music-rhythm',
+        level: 'M1',
+        activeSection: null,
+        currentBeat: {
+          beatIndex: 4,
+          timeMs: 11000,
+          elapsedMs: 250,
+          positionInBar: 1,
+          downbeat: true,
+          confidence: 0.9,
+        },
+      },
+      lyricsRhythm: {
+        timingSource: 'beat-grid',
+        bpm: 120,
+        beatDurationMs: 500,
+        beatProgress: 0.5,
+        lineBeatCount: 8,
+        lineBeatIndex: 4,
+        motionScale: 1,
+        currentBeat: {
+          beatIndex: 4,
+          lyricsTimeMs: 11000,
+          positionInBar: 1,
+          downbeat: true,
+          confidence: 0.9,
+        },
+        nextBeat: { beatIndex: 5, lyricsTimeMs: 11500, delayMs: 250 },
+      },
+    };
+
+    for (const templateId of [
+      'focus-line',
+      'quiet-caption',
+      'karaoke-stack',
+      'kinetic-pop',
+      'ornate-vertical',
+      'manga-frame',
+      'live-stage',
+    ]) {
+      const elements = domElements();
+      renderLyricsFrame(elements, frame, { reducedMotion: true, templateId });
+      expect(elements.root.dataset).toMatchObject({
+        lyricsRhythm: 'beat-grid',
+        lyricsBeat: '4',
+        lyricsLineBeat: '4',
+        lyricsLineBeatCount: '8',
+        lyricsDownbeat: 'true',
+        musicLevel: 'M1',
+        musicDownbeat: 'true',
+      });
+      expect(elements.root.style.values).toMatchObject({
+        '--ovl-lyrics-beat-duration': '500ms',
+        '--ovl-lyrics-beat-progress': '0.5',
+        '--ovl-lyrics-motion-scale': '1',
+      });
+    }
+  });
+
+  it('clears shared rhythm state and scales the generic line transition', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: 'slow line',
+      nextText: '',
+      language: 'en',
+      lineIndex: 0,
+      lyricsRhythm: {
+        timingSource: 'tempo',
+        bpm: 60,
+        beatDurationMs: 1000,
+        beatProgress: null,
+        lineBeatCount: 4,
+        lineBeatIndex: null,
+        motionScale: 1.35,
+        currentBeat: null,
+        nextBeat: null,
+      },
+    };
+
+    renderLyricsFrame(elements, frame, { templateId: 'focus-line' });
+    expect(elements.current.animate).toHaveBeenCalledWith(expect.any(Array), {
+      duration: 324,
+      easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+    });
+    expect(elements.root.dataset.lyricsRhythm).toBe('tempo');
+    expect(elements.root.dataset).not.toHaveProperty('lyricsBeat');
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, revision: 2, currentText: 'plain line', lyricsRhythm: null },
+      { reducedMotion: true, templateId: 'focus-line' },
+    );
+    expect(elements.root.dataset).not.toHaveProperty('lyricsRhythm');
+    expect(elements.root.style.values).not.toHaveProperty(
+      '--ovl-lyrics-beat-duration',
+    );
+    expect(elements.root.style.values).not.toHaveProperty(
+      '--ovl-lyrics-motion-scale',
+    );
+  });
+
+  it('updates a beat boundary without replaying the current line entrance', () => {
+    const elements = domElements();
+    const baseFrame = {
+      revision: 1,
+      visible: true,
+      currentText: 'same lyric line',
+      nextText: '',
+      language: 'en',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      lyricsRhythm: {
+        timingSource: 'beat-grid',
+        bpm: 120,
+        beatDurationMs: 500,
+        beatProgress: 0,
+        lineBeatCount: 8,
+        lineBeatIndex: 2,
+        motionScale: 1,
+        currentBeat: {
+          beatIndex: 2,
+          lyricsTimeMs: 1000,
+          downbeat: false,
+          confidence: 0.9,
+        },
+        nextBeat: { beatIndex: 3, lyricsTimeMs: 1500, delayMs: 500 },
+      },
+    };
+
+    renderLyricsFrame(elements, baseFrame, {
+      reducedMotion: true,
+      templateId: 'focus-line',
+    });
+    elements.current.animate.mockClear();
+    renderLyricsFrame(
+      elements,
+      {
+        ...baseFrame,
+        revision: 2,
+        lyricsRhythm: {
+          ...baseFrame.lyricsRhythm,
+          lineBeatIndex: 3,
+          currentBeat: {
+            beatIndex: 3,
+            lyricsTimeMs: 1500,
+            downbeat: false,
+            confidence: 0.9,
+          },
+          nextBeat: { beatIndex: 4, lyricsTimeMs: 2000, delayMs: 500 },
+        },
+      },
+      { templateId: 'focus-line' },
+    );
+
+    expect(elements.root.dataset.lyricsBeat).toBe('3');
+    expect(elements.root.dataset.lyricsLineBeat).toBe('3');
+    expect(elements.current.animate).not.toHaveBeenCalled();
+  });
+
+  it('renders Ornate Vertical as one accessible vertical run with typed reveal units', () => {
+    const elements = domElements();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: '後悔ばかり。',
+      nextText: '深い後悔だけ残る',
+      language: 'ja',
+      lineIndex: 0,
+      currentVisibleLineIndex: 0,
+      ornateVertical: {
+        text: '後悔ばかり。',
+        placement: 'right',
+        keyword: { index: 0, text: '後悔' },
+        segments: [
+          {
+            index: 0,
+            text: '後悔ばかり。',
+            units: [
+              {
+                index: 0,
+                kind: 'han',
+                text: '後悔',
+                reveal: 'group',
+                emphasis: 'keyword',
+              },
+              {
+                index: 1,
+                kind: 'kana',
+                text: 'ば',
+                reveal: 'character',
+                emphasis: 'normal',
+              },
+              {
+                index: 2,
+                kind: 'kana',
+                text: 'か',
+                reveal: 'character',
+                emphasis: 'normal',
+              },
+              {
+                index: 3,
+                kind: 'kana',
+                text: 'り。',
+                reveal: 'character',
+                emphasis: 'normal',
+              },
+            ],
+          },
+        ],
+        units: [
+          {
+            index: 0,
+            kind: 'han',
+            text: '後悔',
+            reveal: 'group',
+            emphasis: 'keyword',
+          },
+          {
+            index: 1,
+            kind: 'kana',
+            text: 'ば',
+            reveal: 'character',
+            emphasis: 'normal',
+          },
+          {
+            index: 2,
+            kind: 'kana',
+            text: 'か',
+            reveal: 'character',
+            emphasis: 'normal',
+          },
+          {
+            index: 3,
+            kind: 'kana',
+            text: 'り。',
+            reveal: 'character',
+            emphasis: 'normal',
+          },
+        ],
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      templateId: 'ornate-vertical',
+      reducedMotion: true,
+    });
+
+    expect(elements.root.dataset).toMatchObject({
+      ornatePlacement: 'right',
+      ornateVertical: 'true',
+    });
+    expect(elements.current.attributes['aria-label']).toBe('後悔ばかり。');
+    expect(elements.current.dataset.currentText).toBe('後悔ばかり。');
+    expect(elements.next.hidden).toBe(true);
+    const line = elements.current.children[0];
+    expect(line.className).toBe('lyrics-overlay__ornate-line');
+    expect(line.attributes['aria-hidden']).toBe('true');
+    expect(line.dataset.ornateSegmentCount).toBe('1');
+    const segment = line.children[0];
+    expect(segment.className).toBe('lyrics-overlay__ornate-segment');
+    expect(segment.dataset.ornateSegmentIndex).toBe('0');
+    expect(segment.children.map((unit) => unit.textContent)).toEqual([
+      '後悔',
+      'ば',
+      'か',
+      'り。',
+    ]);
+    expect(segment.children[0].dataset).toMatchObject({
+      ornateEmphasis: 'keyword',
+      ornateKind: 'han',
+      ornateReveal: 'group',
+      ornateText: '後悔',
+    });
+  });
+
+  it('renders a split Ornate Vertical line as right-to-left visual segments', () => {
+    const elements = domElements();
+    const units = (text, startIndex) =>
+      Array.from(text).map((character, offset) => ({
+        index: startIndex + offset,
+        kind: 'kana',
+        text: character,
+        reveal: 'character',
+        emphasis: 'normal',
+      }));
+    const rightUnits = units('夜まで', 0);
+    const leftUnits = units('君を待つ', rightUnits.length);
+
+    renderLyricsFrame(
+      elements,
+      {
+        revision: 2,
+        visible: true,
+        currentText: '夜まで君を待つ',
+        nextText: '',
+        language: 'ja',
+        lineIndex: 0,
+        currentVisibleLineIndex: 0,
+        ornateVertical: {
+          text: '夜まで君を待つ',
+          placement: 'right',
+          keyword: null,
+          units: [...rightUnits, ...leftUnits],
+          segments: [
+            { index: 0, text: '夜まで', units: rightUnits },
+            { index: 1, text: '君を待つ', units: leftUnits },
+          ],
+        },
+      },
+      { templateId: 'ornate-vertical', reducedMotion: true },
+    );
+
+    const line = elements.current.children[0];
+    expect(line.dataset.ornateSegmentCount).toBe('2');
+    expect(line.children.map((segment) => segment.dataset)).toEqual([
+      expect.objectContaining({
+        ornateSegmentIndex: '0',
+        ornateSegmentText: '夜まで',
+      }),
+      expect.objectContaining({
+        ornateSegmentIndex: '1',
+        ornateSegmentText: '君を待つ',
+      }),
+    ]);
+  });
+
+  it('hands off Ornate Vertical lines without keeping A and B visible together', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = (text, lineIndex) => ({
+      revision: lineIndex + 1,
+      visible: true,
+      currentText: text,
+      nextText: '',
+      language: 'ja',
+      lineIndex,
+      currentVisibleLineIndex: lineIndex,
+      ornateVertical: {
+        text,
+        placement: lineIndex === 0 ? 'right' : 'center',
+        keyword: { index: 0, text: '後悔' },
+        units: [
+          {
+            index: 0,
+            kind: 'han',
+            text: '後悔',
+            reveal: 'group',
+            emphasis: 'keyword',
+          },
+          {
+            index: 1,
+            kind: 'kana',
+            text: text.slice(2),
+            reveal: 'character',
+            emphasis: 'normal',
+          },
+        ],
+      },
+    });
+
+    renderLyricsFrame(elements, frame('後悔する', 0), {
+      gsap,
+      reducedMotion: true,
+      templateId: 'ornate-vertical',
+    });
+    const outgoing = elements.current.children[0];
+    renderLyricsFrame(elements, frame('後悔だけ', 1), {
+      gsap,
+      templateId: 'ornate-vertical',
+    });
+
+    expect(timelines).toHaveLength(1);
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0]).toBe(outgoing);
+    expect(gsap.set).toHaveBeenCalled();
+    expect(timelines[0].labelPositions).toEqual([
+      { label: 'swap', position: 0 },
+      {
+        label: 'enter',
+        position: `swap+=${ORNATE_VERTICAL_EXIT_DURATION_SECONDS}`,
+      },
+    ]);
+    expect(timelines[0].tweens[0].position).toBe('swap');
+    expect(
+      timelines[0].tweens
+        .slice(1)
+        .every((tween) => tween.position.startsWith('enter+=')),
+    ).toBe(true);
+    expect(timelines[0].additionPositions).toEqual(['enter']);
+    expect(elements.root.dataset.ornatePlacement).toBe('right');
+    for (const [, vars] of gsap.set.mock.calls) {
+      expect(vars).not.toHaveProperty('x');
+      expect(vars).not.toHaveProperty('y');
+      expect(vars).not.toHaveProperty('rotation');
+      expect(vars).not.toHaveProperty('scale');
+      expect(vars).not.toHaveProperty('transformOrigin');
+    }
+    for (const tween of timelines[0].tweens) {
+      expect(tween.vars).not.toHaveProperty('x');
+      expect(tween.vars).not.toHaveProperty('y');
+      expect(tween.vars).not.toHaveProperty('rotation');
+      expect(tween.vars).not.toHaveProperty('scale');
+    }
+    timelines[0].additions[0]();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
+    timelines[0].options.onComplete();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.ornateText).toBe('後悔だけ');
+  });
+
+  it('commits the pending Ornate line before an interrupted handoff', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = (text, lineIndex) => ({
+      revision: lineIndex + 1,
+      visible: true,
+      currentText: text,
+      nextText: '',
+      language: 'ja',
+      lineIndex,
+      currentVisibleLineIndex: lineIndex,
+      ornateVertical: {
+        text,
+        placement: 'right',
+        keyword: null,
+        segments: [
+          {
+            index: 0,
+            text,
+            units: [
+              {
+                index: 0,
+                kind: 'kana',
+                text,
+                reveal: 'character',
+                emphasis: 'normal',
+              },
+            ],
+          },
+        ],
+        units: [
+          {
+            index: 0,
+            kind: 'kana',
+            text,
+            reveal: 'character',
+            emphasis: 'normal',
+          },
+        ],
+      },
+    });
+
+    renderLyricsFrame(elements, frame('A', 0), {
+      gsap,
+      reducedMotion: true,
+      templateId: 'ornate-vertical',
+    });
+    renderLyricsFrame(elements, frame('B', 1), {
+      gsap,
+      templateId: 'ornate-vertical',
+    });
+    renderLyricsFrame(elements, frame('C', 2), {
+      gsap,
+      templateId: 'ornate-vertical',
+    });
+
+    expect(timelines).toHaveLength(2);
+    expect(timelines[0].kill).toHaveBeenCalledOnce();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.ornateText).toBe('B');
+    expect(gsap.set).toHaveBeenCalledWith(expect.any(Array), {
+      clearProps: 'clipPath,opacity,visibility',
+    });
+
+    timelines[1].additions[0]();
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.current.children[0].dataset.ornateText).toBe('C');
+  });
+
+  it('commits Ornate Vertical immediately for timeline discontinuity and clears it when switching templates', () => {
+    const elements = domElements();
+    const { gsap, timelines } = gsapHarness();
+    const frame = {
+      revision: 1,
+      visible: true,
+      currentText: 'あしたまで',
+      nextText: '',
+      language: 'ja',
+      lineIndex: 2,
+      timelineDiscontinuity: true,
+      ornateVertical: {
+        text: 'あしたまで',
+        placement: 'left',
+        keyword: null,
+        units: [
+          {
+            index: 0,
+            kind: 'kana',
+            text: 'あ',
+            reveal: 'character',
+            emphasis: 'normal',
+          },
+        ],
+      },
+    };
+
+    renderLyricsFrame(elements, frame, {
+      gsap,
+      templateId: 'ornate-vertical',
+    });
+    expect(timelines).toHaveLength(0);
+    expect(elements.current.children).toHaveLength(1);
+    expect(elements.root.dataset.ornatePlacement).toBe('right');
+
+    renderLyricsFrame(
+      elements,
+      { ...frame, currentText: '普通字幕', timelineDiscontinuity: false },
+      { templateId: 'focus-line', reducedMotion: true },
+    );
+    expect(elements.root.dataset.ornateVertical).toBeUndefined();
+    expect(elements.root.dataset.ornatePlacement).toBeUndefined();
+    expect(elements.next.hidden).toBe(false);
+  });
+
   it('renders Kinetic Pop as semantic text with three aria-hidden full-line layer tracks', () => {
     const elements = domElements();
     const frame = {

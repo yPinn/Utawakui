@@ -1,5 +1,9 @@
-import OUTPUT_APPEARANCE_VALUES from '../../shared/outputAppearanceValues.json';
 import OUTPUT_TEMPLATE_VALUES from '../../shared/outputTemplateValues.json';
+import {
+  OUTPUT_APPEARANCE_DEFAULTS,
+  OUTPUT_SLOT_APPEARANCE_DEFAULTS,
+  outputAppearanceFieldsForTemplate,
+} from '../../shared/outputAppearance.mjs';
 import { lyricsPresentationProfileForTemplate } from '../../shared/presentation/lyricsPresentation.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 
@@ -50,6 +54,10 @@ export const OUTPUT_PREVIEW_SCENE = Object.freeze({
     reading: '歌詞讀音',
     kinetic: Object.freeze({
       samples: Object.freeze(['選ばれる', 'すてっぷ', '美意識']),
+    }),
+    ornate: Object.freeze({
+      current: '夜が明けるまで言葉を残していく',
+      next: '言葉だけが残る',
     }),
     manga: Object.freeze({
       current: '地下鉄に飲み込まれる',
@@ -248,6 +256,35 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     ],
   },
   {
+    id: 'ornate-vertical',
+    kind: 'lyrics',
+    order: 28,
+    name: '華綴直書',
+    tone: 'lyrics',
+    availability: {
+      label: '可用',
+      tone: 'accent',
+      summary: '只需要逐行歌詞；日文漢字會自動成組。',
+    },
+    summary: '明朝直書讓漢字成組、假名逐字綴現。',
+    detail:
+      '以華麗明朝體直書，長句會在可信邊界拆成右起雙欄；可調整字色、大小與右側位置。',
+    preview: {
+      layoutLabel: '華麗直書',
+      motionLabel: '群字綴現',
+    },
+    tags: ['日文直書', '漢字群組', '墨色殘影'],
+    settings: [
+      { label: '顯示', value: '目前行' },
+      { label: '排版', value: '直書、固定右側' },
+      { label: '長句', value: '自動拆成至多兩欄' },
+      { label: '切換', value: '漢字成組、假名逐字' },
+      { label: '藝術字', value: '同尺寸輕墨層' },
+      { label: '字型', value: '日文明朝體' },
+      { label: '背景', value: '透明' },
+    ],
+  },
+  {
     id: 'live-stage',
     kind: 'lyrics',
     order: 20,
@@ -350,7 +387,10 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
 
 export const OUTPUT_TEMPLATES = Object.freeze(
   OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
-    if (template.kind !== 'lyrics') return Object.freeze(template);
+    const appearanceFields = outputAppearanceFieldsForTemplate(template.id);
+    if (template.kind !== 'lyrics') {
+      return Object.freeze({ ...template, appearanceFields });
+    }
     const presentationProfile = lyricsPresentationProfileForTemplate(
       template.id,
     );
@@ -361,6 +401,7 @@ export const OUTPUT_TEMPLATES = Object.freeze(
         available: presentationProfile.available,
       }),
       editableAppearanceKeys: [...presentationProfile.editableAppearanceKeys],
+      appearanceFields,
       presentationProfile,
     });
   }),
@@ -437,20 +478,12 @@ export const OUTPUT_SLOT_DEFAULTS = Object.freeze(
         templateId: slot.defaultTemplateId,
         styleSetIds: [...slot.defaultStyleSetIds],
         settings: {
-          ...(OUTPUT_APPEARANCE_VALUES.slotDefaultSettings[slot.id] ??
-            OUTPUT_APPEARANCE_VALUES.defaultSettings),
+          ...(OUTPUT_SLOT_APPEARANCE_DEFAULTS[slot.id] ??
+            OUTPUT_APPEARANCE_DEFAULTS),
           captureSize: defaultCaptureSizeIdForKind(slot.id),
         },
       },
     ]),
-  ),
-);
-
-export const OUTPUT_APPEARANCE_OPTIONS = Object.freeze(
-  Object.fromEntries(
-    Object.entries(OUTPUT_APPEARANCE_VALUES.appearanceOptions).map(
-      ([key, options]) => [key, options.map((option) => ({ ...option }))],
-    ),
   ),
 );
 
@@ -510,6 +543,5 @@ export function getOutputWorkbenchData() {
     styleSets: [...OUTPUT_STYLE_SETS],
     slotDefinitions: [...OUTPUT_SLOT_DEFINITIONS],
     slotDefaults: structuredClone(OUTPUT_SLOT_DEFAULTS),
-    appearanceOptions: structuredClone(OUTPUT_APPEARANCE_OPTIONS),
   };
 }

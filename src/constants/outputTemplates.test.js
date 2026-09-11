@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { outputAppearanceFieldKeysForTemplate } from '../../shared/outputAppearance.mjs';
 import {
   OUTPUT_PREVIEW_SCENE,
   OUTPUT_TEMPLATE_KINDS,
@@ -12,6 +13,7 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'karaoke-stack': '經典伴唱',
   'live-stage': '舞台轉播',
   'kinetic-pop': '霓彩跳字',
+  'ornate-vertical': '華綴直書',
   'manga-frame': '漫畫對白',
   'quiet-caption': '靜語雙行',
   'focus-line': '聚焦歌詞',
@@ -19,6 +21,47 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
   'art-card': '星染黑膠',
   'now-next': '浮光光碟',
   'cover-player': '封面播放卡',
+});
+
+const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
+  'queue-board': [
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+    'alignment',
+    'surface',
+  ],
+  'karaoke-stack': ['fontScale'],
+  'live-stage': ['fontFamily', 'fontScale'],
+  'kinetic-pop': ['fontScale', 'kineticMaterial', 'kineticArrangement'],
+  'ornate-vertical': [
+    'fontFamily',
+    'fontScale',
+    'textColor',
+    'accentColor',
+    'positionAnchor',
+    'positionOffsetX',
+    'positionOffsetY',
+  ],
+  'manga-frame': ['fontFamily', 'fontScale', 'fontWeight', 'furigana'],
+  'quiet-caption': [
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+    'alignment',
+    'surface',
+  ],
+  'focus-line': [
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+    'alignment',
+    'surface',
+  ],
+  'reading-aid': [],
+  'art-card': ['fontFamily', 'fontScale', 'fontWeight'],
+  'now-next': ['fontFamily', 'fontScale', 'fontWeight', 'alignment', 'surface'],
+  'cover-player': ['fontScale', 'fontWeight', 'surface'],
 });
 
 function graphemeCount(value) {
@@ -101,16 +144,16 @@ describe('output template registry', () => {
     expect(
       Object.values(data.slotDefaults).map((slot) => slot.settings.captureSize),
     ).toEqual(['large', 'full', 'small']);
-    expect(data.appearanceOptions.fontFamily).toHaveLength(3);
-    expect(data.appearanceOptions.kineticMaterial).toEqual([
+    const kineticFields = data.templates.find(
+      (template) => template.id === 'kinetic-pop',
+    ).appearanceFields;
+    expect(
+      kineticFields.find((field) => field.key === 'kineticMaterial').options,
+    ).toEqual([
       { id: 'solid-outline', label: '樣式 1｜單色黑框' },
       { id: 'candy-rim', label: '樣式 2｜漸層白框' },
       { id: 'chromatic-depth', label: '樣式 3｜右下錯位' },
       { id: 'cycle', label: '三款依句序切換' },
-    ]);
-    expect(data.appearanceOptions.kineticArrangement).toEqual([
-      { id: 'straight', label: '端正' },
-      { id: 'subtle-offset', label: '些微偏移' },
     ]);
     expect(
       Object.values(data.slotDefaults).map(
@@ -123,6 +166,26 @@ describe('output template registry', () => {
       ),
     ).toEqual(['straight', 'straight', 'straight']);
     expect(data.styleSets.length).toBeGreaterThan(0);
+  });
+
+  it('projects every template appearance contract into Workbench metadata', () => {
+    const templates = getOutputWorkbenchData().templates;
+
+    expect(
+      Object.fromEntries(
+        templates.map((template) => [
+          template.id,
+          template.appearanceFields?.map(({ key }) => key),
+        ]),
+      ),
+    ).toEqual(EXPECTED_TEMPLATE_APPEARANCE_KEYS);
+
+    for (const template of templates) {
+      expect(
+        outputAppearanceFieldKeysForTemplate(template.id),
+        template.id,
+      ).toEqual(EXPECTED_TEMPLATE_APPEARANCE_KEYS[template.id]);
+    }
   });
 
   it('describes the Kinetic Pop burst consistently for every visible phrase', () => {
@@ -215,6 +278,7 @@ describe('output template registry', () => {
       'karaoke-stack',
       'live-stage',
       'kinetic-pop',
+      'ornate-vertical',
       'manga-frame',
       'quiet-caption',
       'focus-line',
@@ -272,6 +336,11 @@ describe('output template registry', () => {
       'quiet-caption': { id: 'generic-caption', version: 1, available: true },
       'karaoke-stack': { id: 'classic-ktv', version: 1, available: true },
       'kinetic-pop': { id: 'kinetic-pop', version: 1, available: true },
+      'ornate-vertical': {
+        id: 'ornate-vertical',
+        version: 1,
+        available: true,
+      },
       'manga-frame': { id: 'manga-frame', version: 1, available: true },
       'live-stage': { id: 'live-stage', version: 1, available: true },
       'reading-aid': { id: 'reading-aid', version: 1, available: false },
@@ -297,6 +366,43 @@ describe('output template registry', () => {
         'kineticMaterial',
         'kineticArrangement',
       ],
+    });
+    expect(
+      lyricsGroup.templates.find(
+        (template) => template.id === 'ornate-vertical',
+      ),
+    ).toMatchObject({
+      id: 'ornate-vertical',
+      name: '華綴直書',
+      kind: 'lyrics',
+      preview: {
+        layoutLabel: '華麗直書',
+        motionLabel: '群字綴現',
+      },
+      detail:
+        '以華麗明朝體直書，長句會在可信邊界拆成右起雙欄；可調整字色、大小與右側位置。',
+      settings: expect.arrayContaining([
+        { label: '排版', value: '直書、固定右側' },
+        { label: '長句', value: '自動拆成至多兩欄' },
+        { label: '藝術字', value: '同尺寸輕墨層' },
+      ]),
+      editableAppearanceKeys: [
+        'fontFamily',
+        'fontScale',
+        'textColor',
+        'accentColor',
+        'positionAnchor',
+        'positionOffsetX',
+        'positionOffsetY',
+      ],
+      appearanceFields: expect.arrayContaining([
+        expect.objectContaining({
+          key: 'fontFamily',
+          defaultValue: 'ornate',
+        }),
+        expect.objectContaining({ key: 'textColor', control: 'color' }),
+        expect.objectContaining({ key: 'positionOffsetY', control: 'range' }),
+      ]),
     });
   });
 
@@ -344,6 +450,10 @@ describe('output template registry', () => {
       reading: '歌詞讀音',
       kinetic: {
         samples: ['選ばれる', 'すてっぷ', '美意識'],
+      },
+      ornate: {
+        current: '夜が明けるまで言葉を残していく',
+        next: '言葉だけが残る',
       },
       manga: {
         current: '地下鉄に飲み込まれる',

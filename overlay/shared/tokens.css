@@ -45,6 +45,8 @@
     --ovl-color-kinetic-candy-light: var(
       --ovl-primitive-color-kinetic-candy-light
     );
+    --ovl-color-ornate-paper: var(--ovl-primitive-color-ornate-paper);
+    --ovl-color-ornate-echo: var(--ovl-primitive-color-ornate-echo);
     --ovl-font-display-cjk: var(
       --ovl-font-display-cjk-custom,
       var(--ovl-fallback-font-display-cjk)
@@ -57,6 +59,7 @@
     --ovl-safe-inline: var(--ovl-primitive-space-8);
     --ovl-safe-block: var(--ovl-primitive-space-8);
     --ovl-text-shadow: var(--ovl-primitive-text-shadow);
+    --ovl-ornate-text-shadow: var(--ovl-primitive-ornate-text-shadow);
     --ovl-mark-shadow: var(--ovl-primitive-mark-shadow);
     --ovl-panel-shadow: var(--ovl-primitive-panel-shadow);
     --ovl-motion-line-duration: var(--ovl-primitive-motion-standard);

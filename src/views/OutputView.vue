@@ -8,7 +8,6 @@ const {
   previewScene,
   slotDefinitions,
   slotDefaults,
-  appearanceOptions,
 } = getOutputWorkbenchData();
 </script>
 
@@ -19,6 +18,5 @@ const {
     :preview-scene="previewScene"
     :slot-definitions="slotDefinitions"
     :slot-defaults="slotDefaults"
-    :appearance-options="appearanceOptions"
   />
 </template>

@@ -37,6 +37,14 @@
   font-weight: 500;
 }
 
+@font-face {
+  font-family: 'Utawakui Hina Mincho';
+  src: url('/shared/assets/fonts/HinaMincho-Regular.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 @layer ovl-template {
   .lyrics-workbench__backdrop,
   .lyrics-workbench__guide {
@@ -574,6 +582,114 @@
     .lyrics-overlay__kinetic-layer--fill {
     color: var(--ovl-color-kinetic-paper);
     -webkit-text-stroke: 0.045em var(--ovl-color-kinetic-ink);
+  }
+
+  :root[data-ovl-template='ornate-vertical'],
+  :root[data-ovl-template='ornate-vertical'] body {
+    background: transparent;
+  }
+
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay {
+    inset: max(var(--ovl-safe-block), 4%) max(var(--ovl-safe-inline), 4%);
+    inline-size: auto;
+    transform: none;
+    gap: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__current {
+    --ovl-ornate-font-size: 5.8vh;
+
+    position: relative;
+    display: grid;
+    align-items: center;
+    inline-size: 100%;
+    max-inline-size: none;
+    min-block-size: 100%;
+    overflow: visible;
+    color: var(--ovl-user-text-color);
+    font-family: var(--ovl-user-font-family);
+    font-size: clamp(2.45em, var(--ovl-ornate-font-size), 5.8em);
+    font-weight: 400;
+    line-height: 0.96;
+    text-align: start;
+    text-shadow: var(--ovl-ornate-text-shadow);
+  }
+
+  :root[data-ovl-template='ornate-vertical'][data-ovl-scale='small']
+    .lyrics-overlay__current {
+    --ovl-ornate-font-size: 4.93vh;
+  }
+
+  :root[data-ovl-template='ornate-vertical'][data-ovl-scale='large']
+    .lyrics-overlay__current {
+    --ovl-ornate-font-size: 6.96vh;
+  }
+
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__next,
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__ktv-count-in {
+    display: none;
+  }
+
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__ornate-line {
+    position: relative;
+    grid-area: 1 / 1;
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: center;
+    gap: 0.62em;
+    max-inline-size: 100%;
+    align-self: var(--ovl-user-position-block);
+    justify-self: var(--ovl-user-position-inline);
+    inset-inline-start: var(--ovl-user-position-x);
+    inset-block-start: var(--ovl-user-position-y);
+    overflow: visible;
+    line-height: inherit;
+  }
+
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__ornate-segment {
+    display: block;
+    flex: 0 0 auto;
+    line-height: inherit;
+    white-space: nowrap;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+  }
+
+  :root[data-ovl-template='ornate-vertical'] .lyrics-overlay__ornate-unit {
+    position: relative;
+    display: inline;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  :root[data-ovl-template='ornate-vertical']
+    .lyrics-overlay__ornate-unit[data-ornate-emphasis='keyword'] {
+    z-index: 0;
+    color: var(--ovl-user-text-color);
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  :root[data-ovl-template='ornate-vertical']
+    .lyrics-overlay__ornate-unit[data-ornate-emphasis='keyword']::before {
+    position: absolute;
+    z-index: -1;
+    inset: 0;
+    content: attr(data-ornate-text);
+    color: var(--ovl-user-accent-color);
+    opacity: 0.18;
+    text-shadow: none;
+    transform: translate(0.055em, 0.035em);
+  }
+
+  :root[data-ovl-template='ornate-vertical']
+    [data-ornate-motion='active']
+    .lyrics-overlay__ornate-unit {
+    will-change: clip-path, opacity;
   }
 
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay {
