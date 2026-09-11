@@ -588,6 +588,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 - **Overlay Latin Display Font:** `Playfair Display`, with practical serif fallbacks.
 - **Overlay KTV Display Font:** `Utawakui Open Huninn`.
 - **Overlay Kinetic Pop Display Fonts:** `Utawakui M PLUS Rounded 1c` for the flat／split-depth materials; `Utawakui Keifont` for the enlarged gradient material.
+- **Overlay Ornate Vertical Display Font:** `Utawakui Hina Mincho` for Japanese-first grouped-kanji vertical lyrics.
 - **Overlay Utility Font:** system sans.
 - **Label/Mono Font:** pending; only introduce mono if timestamps, technical metadata, or counters clearly benefit.
 
@@ -675,12 +676,46 @@ differences. It is a settled layout treatment rather than continuous jitter: the
 depth, rim, and fill copies of a glyph always share one pose, and the Gallery and
 Browser Source consume the same presentation motion contract.
 
+Workbench appearance edits use visible autosave instead of a manual save button.
+Select, capture-size, and reset actions persist immediately; continuous color and
+range input is coalesced for 350ms and its final change flushes immediately. Writes
+are serialized and keep only the latest pending snapshot, so controls remain
+editable while saving. The header exposes `儲存中…`, `已儲存`, or `儲存失敗` with
+an explicit retry after failure. Leaving the Workbench, changing output kind, or
+applying a template first flushes the draft; template application and Output
+runtime settings remain deliberate actions.
+
+Appearance controls are template-effective rather than slot-wide. `queue-board`
+and `now-next` expose font family, scale, weight, alignment, and surface because
+their layouts consume all five values. `art-card` exposes family, scale, and
+weight; `cover-player` exposes scale, weight, and surface. Controls fixed by those
+artwork layouts stay absent instead of presenting settings with no visible effect.
+Every registered template receives its appearance metadata from the shared schema;
+a template with no controls also omits the appearance reset action.
+
 The `manga-frame` template uses the bundled normal-width GenEi Antique 6.0a face
 under the local CSS family name `Utawakui GenEi Antique` when the projected line
 is Japanese. Ruby annotations inherit the same face so kanji and kana retain one
 comic-dialogue texture in vertical setting. Traditional Chinese and other content
 continue through the selected profile font stack; this exception does not alter
 the control panel or any other Output template.
+
+The `ornate-vertical` template defaults to bundled Hina Mincho Regular under the
+local CSS family name `Utawakui Hina Mincho`; the user may select bundled GenEi
+Antique as its only alternate. It is a Japanese-first Output exception, not a
+control-panel brand font: continuous kanji runs reveal as groups, kana reveal as
+graphemes, and punctuation remains attached to the preceding unit. One
+conservative kanji group may receive a restrained same-size ink echo; lines
+without a reliable candidate stay unaccented. Safe appearance controls expose one
+of three consistent type scales, the main／ink-echo colors, a right-side
+top／center／bottom safe-area anchor, and bounded X／Y offsets. A visually long line
+may split into at most two vertical columns at an authored break, punctuation,
+Japanese word, or particle boundary; unbalanced stubs and cuts through continuous
+kanji runs are rejected. The first segment stays in the right column and the
+second expands left, while both retain the canonical source line and timing. Swaps
+change only opacity and clip-path, so layout coordinates remain fixed. The Gallery
+mirrors the default shared presentation and motion rules without bundling any MV
+scene artwork.
 
 Each timed source line occupies one horizontal presentation row at any instant;
 Kinetic Pop never repairs an overlong source line by wrapping it into a second

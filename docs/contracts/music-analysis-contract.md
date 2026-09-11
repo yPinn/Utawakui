@@ -5,8 +5,8 @@
 Executable contract v1, implemented 2026-08-24. The bounded values live in
 `shared/musicStructureContractValues.json`; the main-process trust boundary is
 the pure validator in `electron/lib/musicStructureContract.js`, exercised by
-fixed JSON fixtures. Additive Output v3 cue transport and the first bounded
-`karaoke-stack` consumer are implemented. Atomic sidecar persistence/loading and
+fixed JSON fixtures. Additive Output v3 cue transport and a bounded
+template-neutral Lyrics rhythm consumer are implemented. Atomic sidecar persistence/loading and
 current-track renderer wiring are also implemented. The main-owned producer job,
 shared concurrency-one scheduling, fixed decode, bounded Python worker,
 cancellation, cleanup, and atomic publication are implemented. A real unpacked
@@ -82,6 +82,23 @@ The accepted product endpoint is:
 - M1 beat/downbeat timing can drive bounded rhythmic presentation changes; and
 - M2 section intervals can select reusable verse, chorus, bridge, intro, outro,
   or unknown visual variants.
+
+Every bundled Lyrics template receives the same bounded `lyricsRhythm`
+presentation projection. The projection uses actual beat timestamps only when a
+local four-beat window is consecutive, each cue has confidence at or above 0.5,
+and its intervals remain within 75%–125% of the local median. It then exposes only
+the current／next beat, line-relative beat index／count, beat progress, beat
+duration, and a motion scale clamped to 0.75–1.35. Line-relative counting is
+omitted when one lyric line spans more than 128 beat records, so runtime work
+remains bounded. If the grid check fails, a
+confident bounded BPM may provide cadence and an estimated line beat count, but
+never beat phase. Missing or low-confidence evidence produces no rhythm
+projection and preserves the existing template fallback.
+
+Beat boundaries cause a fresh presentation frame for every Lyrics template, but
+do not change the lyric identity and therefore do not replay line-entry motion.
+Playback rate changes the wall-clock delay to the next source cue; lyrics offset
+maps source beat timestamps into the lyrics clock without mutating either source.
 
 T2 remains the first implementation milestone and works through imported or
 manual timing without Music Analysis. Automatic music analysis is an optional,

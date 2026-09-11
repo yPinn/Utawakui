@@ -42,6 +42,13 @@ imported or manually authored with no analyzer installed. Music cues live in the
 separate [Music Analysis Contract](music-analysis-contract.md) and do not infer
 word boundaries or silently trigger vocal separation.
 
+All bundled Lyrics templates may consume the same optional `lyricsRhythm`
+presentation frame. It relates current-track M1 beat evidence to an existing
+canonical lyric line and exposes bounded cadence／phase hints only; it does not
+split text, create T2 segments, or persist inferred timing. T2 remains authoritative
+whenever it exists, and absent／rejected M1 evidence leaves template behavior
+unchanged.
+
 ## Storage and identity
 
 For an imported source at `tracks/<trackId>/lyrics/<sourceFilename>`, the derived

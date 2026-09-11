@@ -4,14 +4,16 @@
 
 Draft planning contract, 2026-08-23. It elaborates
 [ADR 0011](../adr/0011-overlay-instances-and-presentation-pack-delivery.md).
-The current app implements three fixed slots, placeholder `styleSetIds`, and an
-app-bundled fallback CSS cascade that keeps those routes independent from future
-pack installation. No remote Presentation Pack updater or User Variant import
-exists yet.
+The current app implements three fixed slots, placeholder `styleSetIds`, a
+cross-runtime schema for built-in template appearance fields, and an app-bundled
+fallback CSS cascade that keeps those routes independent from future pack
+installation. No remote Presentation Pack updater or User Variant import exists
+yet.
 
 This contract deliberately separates executable template runtime from declarative
-appearance content. Examples are illustrative until backed by JSON Schema
-2020-12, fixtures, and compatibility tests.
+appearance content. The built-in schema is executable application code with
+fixtures and compatibility tests; Presentation Pack and User Variant examples
+remain illustrative until backed by JSON Schema 2020-12.
 
 ## Domain objects
 
@@ -103,6 +105,16 @@ compatible template list, and user-facing label. Adjustment is classified as:
 The first User Variant delivery should prioritize safe appearance settings. A
 bounded motion/composition setting is added only when its extremes are tested in
 all compatible templates. Locked invariants are never exported or made editable.
+
+The current fixed-route implementation keeps that definition in
+`shared/outputAppearance.mjs`. Electron validates recognized persisted values at
+the storage boundary, the Renderer derives controls from each template's field
+list, and Browser Source normalizes again before projecting enum ids or validated
+colors and bounded offsets to `--ovl-*`. Ornate Vertical currently exposes two
+bundled font roles, three sizes, two colors, a right-side top／center／bottom anchor,
+and bounded X／Y offsets. Its source-line handoff, kanji／kana reveal units,
+two-column maximum, punctuation attachment, and non-positional animation remain
+locked.
 
 ## Presentation Pack manifest
 

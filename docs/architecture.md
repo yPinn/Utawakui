@@ -49,15 +49,33 @@ sidecar 做原子 re-key 並保留人工修正，文字不相容或格式損壞�
 Browser Source route adapters；Output server 以 exact allowlist 提供兩個目錄的必要檔案，
 不把 request path 轉成任意 filesystem path。
 
+Output 外觀欄位由 `shared/outputAppearance.mjs` 單一擁有型別、預設、選項、數值邊界與
+模板相容性。所有 template kind 都由 registry 投影這份欄位 metadata；Lyrics 再額外組合
+presentation profile 與 availability，非 Lyrics 不依賴該 profile。固定藝術版型只宣告其 CSS
+實際消費的欄位，避免無效 control。Electron 在 slot persistence boundary 驗證 recognized
+appearance key，Renderer 依模板欄位 metadata 建立 control，Browser Source 則在套用前再次 normalize；enum 只進
+root dataset，顏色只接受六位 hex，位置 offset clamp 後才進 `--ovl-*`。這層不依賴控制台
+Token v2，Overlay semantic token 也不回頭消費 `--ui-*`。
+Renderer 的 `useOutputAppearanceAutosave` 將 Workbench 完整 scalar snapshot 以 350ms
+debounce、single-flight 與 latest-wins 規則送入既有 slot persistence boundary；切頁、切換
+Output kind 或套用模板前必須 flush，失敗則保留本地 draft 與 retry payload。Persistence
+回傳只在狀態重新成為 saved 後同步經正規化的 slot，不得用較舊的 in-flight response 覆蓋
+較新的本地輸入。模板套用與 Output runtime settings 仍是明確操作。
+
 Lyrics presentation 分成兩層：第一層保留 canonical 原文與 T0／T1／T2 timing；只有有限
 T1 fallback 會經 `lyricsTimingUnits.mjs` 產生唯一共用、無語意標記的 `{ text, weight }`
 單元。原有換行、空白與標點無損附著，不在這層判斷斷句、角色或段落。
-第二層 `lyricsPresentation.mjs` 才依 versioned Generic／KTV／Kinetic Pop／Manga／Live Stage profile
+第二層 `lyricsPresentation.mjs` 才依 versioned Generic／KTV／Kinetic Pop／Ornate Vertical／Manga／Live Stage profile
 做模板客製化；Generic 是 identity，其他 profile 才可把換行、標點、speaker label、括號
 解讀成 phrase、role、bubble 或 caption page。Browser Source 以 document id、revision、
-language、profile id／version 快取靜態結果，`state.mjs` 只投影目前 template 的動態 frame
-與下一個 boundary；count-in、beat／section 判斷也只屬於對應模板。Raw LRC／VTT parser
-不進模板，模板分句不回寫 canonical timing，T2 永遠優先。獨立 Reading Aid profile
+language、profile id／version 快取靜態結果，`state.mjs` 投影目前 template 的動態 frame
+與下一個 boundary。所有 Lyrics profile 都取得同一個 bounded `lyricsRhythm`：它以當前行、
+lyrics offset 與 canonical playback clock 對照 current-track M1 cues；只在局部四拍連續、
+confidence 至少 0.5 且間距落在 median 的 75%–125% 時輸出 beat-grid phase，否則只以可信
+BPM 輸出無 phase cadence，再失敗便完全省略。Runtime 在每個可信 beat boundary 重投影，
+但相同歌詞 identity 不重播換句動畫；模板只讀 current／next beat、行內拍序、拍長與限制在
+0.75–1.35 的 motion scale，仍保有自己的視覺語彙。Raw LRC／VTT parser 不進模板，模板
+分句不回寫 canonical timing，T2 永遠優先。獨立 Reading Aid profile
 仍未開放給 Output；Manga Frame 則可從 `lyrics.document` 的 optional reading projection
 取得已存在、identity-matched 的日文 `{ text, reading }` segments。Publisher 只讀 sidecar，
 不因 OBS 啟動 reading worker，缺少或 stale 時維持純文字。
@@ -67,6 +85,20 @@ Manga Frame 的共享 layout contract 以 document language、實際假名或既
 GenEi Antique 6.0a 一般版；ruby `rt` 繼承相同字體，繁中與其他內容維持 profile font
 fallback。字型、固定來源 checksum 與 OFL 1.1 授權隨 `shared/assets/fonts/` 封裝，並只經
 Output server exact allowlist 提供，不依賴遠端 webfont。
+
+Ornate Vertical profile 同樣留在 Lyrics Output route 內。共享 adapter 以 grapheme
+邊界保留原文：連續漢字合成一個 reveal unit，假名逐字，標點附著前一單元，拉丁字母與數字
+成詞；整份 document context 只允許一個有足夠證據的漢字群組成為同尺寸藝術詞。視覺長句
+可依原文斷點、標點、日文 word／助詞邊界自動拆成至多兩欄，不切連續漢字，也不建立新的
+canonical／T2 timing；第一段留在右欄，第二段只向左展開。所有行使用右側安全區的
+上／中／下錨點，並只接受受限 X／Y 微調；字型可在封裝的 Hina Mincho 與 GenEi Antique
+間選擇，字級與主文字／同尺寸墨影色也由 safe appearance 設定提供。
+`ornateVerticalMotion.mjs` 提供 Browser Source 與 Gallery 共用的短
+stagger／裁切揭示，不使用位移、旋轉或縮放；換句以 outgoing 完整淡出作為單一 handoff，
+incoming 到達該點才進入 DOM，兩個 source line 不同時可見；seek、source discontinuity 與
+reduced motion 直接 commit。`overlay/lyrics/ornateVertical.mjs` 只擁有 DOM 與可中斷 GSAP swap，Hina Mincho、
+來源 checksum 與 OFL 1.1 授權隨 `shared/assets/fonts/` 封裝並經 exact allowlist 提供。
+模板不保存或載入 MV 場景素材。
 
 Kinetic Pop profile 保持在同一 Lyrics Output route 內：共享 projection 依 source line
 index 輪替三種材質，並以 grapheme-aware unit 判斷短句。每個已計時 source line 在任一時刻
