@@ -36,17 +36,6 @@ export function formatViewCount(value) {
   return `${INTEGER_FORMATTER.format(count)} 次觀看`;
 }
 
-export function platformLabel(candidate) {
-  if (candidate?.isSource) return '貼上的來源';
-  if (candidate?.availableProviders?.includes('yt-music')) return 'YT Music';
-  if (candidate?.searchProvider === 'yt-music') return 'YT Music';
-  if (candidate?.searchProvider === 'youtube') return 'YouTube';
-  if (candidate?.playbackKind?.startsWith('yt-music')) return 'YT Music';
-  return 'YouTube';
-}
-
-export { platformLabel as candidateSourceLabel };
-
 export function identityTitle(identity, fallback = '') {
   return identity?.title || fallback || '';
 }

@@ -22,4 +22,16 @@ describe('ProviderImportPanel discovery affordance', () => {
     expect(source).toContain('優先搜尋 YT Music 歌曲');
     expect(source).toContain('YouTube 補足其他版本');
   });
+
+  it('keeps idle quiet and renders an empty outcome without an error notice', () => {
+    expect(source).not.toContain('provider-empty-panel');
+    expect(source).toContain("state.statusType === 'empty'");
+    expect(source).toContain('role="status"');
+  });
+
+  it('does not invite an empty search or repeat provider provenance per result', () => {
+    expect(source).toContain('!state.input.trim()');
+    expect(source).toContain('playbackKindLabel');
+    expect(source).not.toContain('candidateSourceLabel');
+  });
 });

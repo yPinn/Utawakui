@@ -21,11 +21,11 @@ import { useImportSession } from '../../composables/useImportSession.js';
 import { useRovingRadioGroup } from '../../composables/useRovingRadioGroup.js';
 import {
   candidateId,
-  candidateSourceLabel,
   identityArtistLabel,
   identityStatusClass,
   identityStatusLabel,
   identityTitle,
+  playbackKindLabel,
 } from '../../utils/importCandidateDisplay.js';
 import {
   downloadFailureHint,
@@ -114,6 +114,10 @@ const selectedCandidate = computed(() => {
   );
 });
 const sourceCandidate = computed(() => singleResolution.value?.source ?? null);
+const selectedVersionLabel = computed(() => {
+  const kind = (selectedCandidate.value || state.singleTrack)?.playbackKind;
+  return kind ? playbackKindLabel(kind) : '';
+});
 const candidateOptions = computed(
   () => singleResolution.value?.candidates ?? [],
 );
@@ -223,7 +227,10 @@ function trackStatusIconLabel(track) {
         class="source-row__action"
         variant="accent"
         :disabled="
-          state.isResolving || state.isOpeningDiscovery || state.isImporting
+          !state.input.trim() ||
+          state.isResolving ||
+          state.isOpeningDiscovery ||
+          state.isImporting
         "
         @click="resolveSource"
       >
@@ -257,6 +264,13 @@ function trackStatusIconLabel(track) {
       :message="state.status"
       compact
     />
+    <UiHint
+      v-else-if="state.status && state.statusType === 'empty'"
+      tone="muted"
+      role="status"
+    >
+      {{ state.status }}
+    </UiHint>
     <UiHint
       v-else-if="state.status"
       :tone="statusTone"
@@ -308,12 +322,8 @@ function trackStatusIconLabel(track) {
             <h3 id="recommended-source" class="source-summary__title">
               準備下載
             </h3>
-            <div class="candidate-chips">
-              <UiChip>
-                {{
-                  candidateSourceLabel(selectedCandidate || state.singleTrack)
-                }}
-              </UiChip>
+            <div v-if="selectedVersionLabel" class="candidate-chips">
+              <UiChip>{{ selectedVersionLabel }}</UiChip>
             </div>
           </div>
 
@@ -533,10 +543,6 @@ function trackStatusIconLabel(track) {
         </UiButton>
       </div>
     </section>
-
-    <section v-else class="provider-empty-panel" aria-label="外部來源起始畫面">
-      <p>輸入歌曲名稱或貼上連結，選擇合適音源後再下載。</p>
-    </section>
   </section>
 </template>
 
@@ -596,8 +602,7 @@ function trackStatusIconLabel(track) {
 }
 
 .section-heading__meta,
-.preview-panel__meta,
-.provider-empty-panel {
+.preview-panel__meta {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
@@ -814,10 +819,6 @@ function trackStatusIconLabel(track) {
   height: var(--import-checkbox-size);
   margin: 0;
   accent-color: var(--ui-color-accent);
-}
-
-.provider-empty-panel p {
-  margin: 0;
 }
 
 .preview-footer {

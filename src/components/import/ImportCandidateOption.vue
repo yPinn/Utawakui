@@ -1,9 +1,7 @@
 <script setup>
 import { computed } from 'vue';
-import { ICON_SIZE, Music, Video } from '../../icons/index.js';
 import {
   candidateId,
-  candidateSourceLabel,
   formatViewCount,
   playbackKindLabel,
 } from '../../utils/importCandidateDisplay.js';
@@ -44,13 +42,6 @@ const durationLabel = computed(() =>
 const viewCountLabel = computed(() =>
   formatViewCount(props.candidate.viewCount),
 );
-const isMusicPlatform = computed(
-  () =>
-    props.candidate.availableProviders?.includes('yt-music') ||
-    props.candidate.searchProvider === 'yt-music' ||
-    props.candidate.playbackKind?.startsWith('yt-music'),
-);
-const platformIcon = computed(() => (isMusicPlatform.value ? Music : Video));
 const title = computed(() => props.candidate.title || '未命名歌曲');
 const versionLabel = computed(() =>
   playbackKindLabel(props.candidate.playbackKind),
@@ -66,7 +57,10 @@ const metaParts = computed(() =>
   <button
     type="button"
     class="candidate-option"
-    :class="{ 'candidate-option--selected': selected }"
+    :class="{
+      'candidate-option--selected': selected,
+      'candidate-option--with-source': candidate.isSource,
+    }"
     :aria-checked="selected"
     :disabled="disabled"
     :tabindex="tabindex"
@@ -80,14 +74,11 @@ const metaParts = computed(() =>
     />
 
     <UiChip
-      class="platform-badge"
+      v-if="candidate.isSource"
+      class="source-badge"
       background="var(--ui-color-surface)"
-      :color="isMusicPlatform ? 'var(--ui-color-accent)' : undefined"
     >
-      <component :is="platformIcon" :size="ICON_SIZE" aria-hidden="true" />
-      <span class="platform-badge__label">
-        {{ candidateSourceLabel(candidate) }}
-      </span>
+      貼上的來源
     </UiChip>
 
     <span class="candidate-option__main">
@@ -118,7 +109,7 @@ const metaParts = computed(() =>
 <style scoped>
 .candidate-option {
   display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--ui-space-2);
   width: 100%;
@@ -131,6 +122,10 @@ const metaParts = computed(() =>
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.candidate-option--with-source {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
 }
 
 .candidate-option:hover {
@@ -160,10 +155,6 @@ const metaParts = computed(() =>
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-caption);
-}
-
-.platform-badge__label {
-  min-width: 0;
 }
 
 .candidate-option__main {

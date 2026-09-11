@@ -155,8 +155,8 @@ describe('useImportSession', () => {
 
     expect(getFeatureConfirmationsMock).not.toHaveBeenCalled();
     expect(openYoutubeMusicSearchMock).not.toHaveBeenCalled();
-    expect(session.state.status).toBe('請先輸入要在 YT Music 尋找的歌曲或歌手');
-    expect(session.state.statusType).toBe('error');
+    expect(session.state.status).toBe('');
+    expect(session.state.statusType).toBe('idle');
   });
 
   it('routes discovery gate setup to Settings with its own operation', async () => {
@@ -398,6 +398,8 @@ describe('useImportSession', () => {
       recordingFit: 'release-recording',
     });
     expect(session.canConfirmImport.value).toBe(true);
+    expect(session.state.status).toBe('');
+    expect(session.state.statusType).toBe('idle');
   });
 
   it('keeps ambiguous search candidates visible without auto-selecting one', async () => {
@@ -432,7 +434,8 @@ describe('useImportSession', () => {
     expect(session.state.singleTrack).toBe(null);
     expect(session.state.selectedCandidateId).toBe(null);
     expect(session.canConfirmImport.value).toBe(false);
-    expect(session.state.status).toBe('找到 1 個候選，請選擇下載版本');
+    expect(session.state.status).toBe('');
+    expect(session.state.statusType).toBe('idle');
 
     session.selectImportCandidate('live1234567');
     expect(session.state.singleTrack).toMatchObject({ id: 'live1234567' });
@@ -515,7 +518,7 @@ describe('useImportSession', () => {
 
     expect(session.state.sourceKind).toBe('idle');
     expect(session.state.status).toBe('這個播放清單沒有可匯入的曲目');
-    expect(session.state.statusType).toBe('error');
+    expect(session.state.statusType).toBe('empty');
   });
 
   it.each([
@@ -552,10 +555,8 @@ describe('useImportSession', () => {
     await session.resolveSource();
 
     expect(session.state.sourceKind).toBe('idle');
-    expect(session.state.status).toBe(
-      '沒有搜尋到可用的 YT Music／YouTube 結果，可到 YT Music 手動尋找',
-    );
-    expect(session.state.statusType).toBe('error');
+    expect(session.state.status).toBe('沒有找到可用音源');
+    expect(session.state.statusType).toBe('empty');
   });
 
   it('distinguishes a provider search failure from a genuine empty result', async () => {
@@ -1012,15 +1013,45 @@ describe('useImportSession', () => {
     expect(session.state.activeFilter).toBe('all');
   });
 
-  it('shows an error and does not query the backend when the input is blank', async () => {
+  it('keeps a blank search quiet and does not query the backend', async () => {
     const session = await loadImportSession();
 
     session.setInput('   ');
     await session.resolveSource();
 
     expect(fetchYoutubePlaylistMock).not.toHaveBeenCalled();
-    expect(session.state.status).toBe('請貼上 YouTube 或 YouTube Music 連結');
-    expect(session.state.statusType).toBe('error');
+    expect(session.state.status).toBe('');
+    expect(session.state.statusType).toBe('idle');
+  });
+
+  it('clears the previous preview and outcome when the query changes', async () => {
+    window.Utawakui.resolveImportInput = resolveImportInputMock;
+    resolveImportInputMock.mockResolvedValueOnce({
+      kind: 'single',
+      resolution: {
+        source: null,
+        recommendedCandidate: {
+          playbackVideoId: 'topic000001',
+          title: 'Old Song',
+          artist: 'Artist',
+          duration: 211,
+          playbackKind: 'youtube-topic-audio',
+        },
+        candidates: [],
+      },
+    });
+    const session = await loadImportSession();
+
+    session.setInput('Old Song');
+    await session.resolveSource();
+    expect(session.state.sourceKind).toBe('single');
+
+    session.setInput('New Song');
+
+    expect(session.state.sourceKind).toBe('idle');
+    expect(session.state.singleTrack).toBe(null);
+    expect(session.state.status).toBe('');
+    expect(session.state.statusType).toBe('idle');
   });
 
   it('routes provider-flow setup to Settings before resolving a source', async () => {

@@ -75,7 +75,8 @@ export function useImportSourceResolution({
   async function resolveSource() {
     const input = state.input.trim();
     if (!input) {
-      setStatus('請貼上 YouTube 或 YouTube Music 連結', 'error');
+      clearPreview();
+      setStatus();
       return;
     }
     if (state.isResolving) return;
@@ -87,7 +88,7 @@ export function useImportSourceResolution({
     }
 
     clearPreview();
-    setStatus('搜尋可用音源中...', 'pending');
+    setStatus();
 
     try {
       if (typeof window.Utawakui.resolveImportInput === 'function') {
@@ -110,7 +111,7 @@ export function useImportSourceResolution({
         if (result?.kind === 'playlist') {
           const entries = result.entries || [];
           if (entries.length === 0) {
-            setStatus('這個播放清單沒有可匯入的曲目', 'error');
+            setStatus('這個播放清單沒有可匯入的曲目', 'empty');
             return;
           }
           state.sourceKind = 'playlist';
@@ -125,10 +126,7 @@ export function useImportSourceResolution({
             : null;
           state.collectionThumbnailUrl = result.thumbnailUrl || null;
           state.playlistTracks = entries.map(createPreviewTrack);
-          setStatus(
-            `已找到 ${entries.length} 首，請確認要下載的曲目`,
-            'success',
-          );
+          setStatus();
           return;
         }
         if (result?.kind === 'single' && result.resolution) {
@@ -137,24 +135,14 @@ export function useImportSourceResolution({
             resolution.recommendedCandidate || resolution.source || null;
           const candidateCount = resolution.candidates?.length || 0;
           if (!selectedCandidate && candidateCount === 0) {
-            setStatus(
-              '沒有搜尋到可用的 YT Music／YouTube 結果，可到 YT Music 手動尋找',
-              'error',
-            );
+            setStatus('沒有找到可用音源', 'empty');
             return;
           }
           state.sourceKind = 'single';
           state.singleResolution = resolution;
           state.selectedCandidateId = candidateId(selectedCandidate);
           state.singleTrack = createSingleTrackFromResolution(resolution);
-          if (!selectedCandidate) {
-            setStatus(
-              `找到 ${candidateCount} 個候選，請選擇下載版本`,
-              'pending',
-            );
-          } else {
-            setStatus('已找到歌曲，確認後開始下載', 'success');
-          }
+          setStatus();
           return;
         }
         throw new Error('invalid import resolution');
@@ -175,7 +163,7 @@ export function useImportSourceResolution({
           : null;
         state.collectionThumbnailUrl = playlistResult.thumbnailUrl || null;
         state.playlistTracks = entries.map(createPreviewTrack);
-        setStatus(`已找到 ${entries.length} 首，請確認要下載的曲目`, 'success');
+        setStatus();
         return;
       }
 
@@ -187,7 +175,7 @@ export function useImportSourceResolution({
           resolution.recommendedCandidate || resolution.source,
         );
         state.singleTrack = createSingleTrackFromResolution(resolution);
-        setStatus('已找到歌曲，確認後開始下載', 'success');
+        setStatus();
         return;
       }
 
@@ -208,7 +196,7 @@ export function useImportSourceResolution({
       const metadata = await window.Utawakui.fetchVideoMetadata(input);
       state.sourceKind = 'single';
       state.singleTrack = createPreviewTrack(metadata);
-      setStatus('已找到歌曲，確認後開始下載', 'success');
+      setStatus();
     } catch (error) {
       clearPreview();
       if (handleProviderSetupError(error)) return;
@@ -239,7 +227,7 @@ export function useImportSourceResolution({
   async function openYoutubeMusicSearch() {
     const query = state.input.trim();
     if (!query) {
-      setStatus('請先輸入要在 YT Music 尋找的歌曲或歌手', 'error');
+      setStatus();
       return false;
     }
     if (state.isOpeningDiscovery) return false;

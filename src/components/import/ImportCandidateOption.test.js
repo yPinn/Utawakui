@@ -7,8 +7,10 @@ const source = readFileSync(
 );
 
 describe('ImportCandidateOption compact disclosure', () => {
-  it('shows familiar source, version, duration and views metadata', () => {
-    expect(source).toContain('candidateSourceLabel');
+  it('shows pasted-source provenance and decision-useful version metadata', () => {
+    expect(source).toContain('v-if="candidate.isSource"');
+    expect(source).toContain('貼上的來源');
+    expect(source).not.toContain('candidateSourceLabel');
     expect(source).toContain('playbackKindLabel');
     expect(source).toContain('formatDuration');
     expect(source).toContain('formatViewCount');

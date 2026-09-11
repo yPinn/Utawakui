@@ -1,13 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   candidateId,
-  candidateSourceLabel,
   identityArtistLabel,
   identityStatusClass,
   identityStatusLabel,
   identityTitle,
   formatViewCount,
-  platformLabel,
   playbackKindLabel,
 } from './importCandidateDisplay.js';
 
@@ -24,13 +22,6 @@ describe('import candidate display helpers', () => {
     expect(playbackKindLabel('youtube-live')).toBe('Live');
     expect(playbackKindLabel('youtube-variant')).toBe('其他版本');
     expect(playbackKindLabel('unknown-kind')).toBe('來源');
-    expect(platformLabel({ searchProvider: 'yt-music' })).toBe('YT Music');
-    expect(platformLabel({ isSource: true })).toBe('貼上的來源');
-    expect(platformLabel({ playbackKind: 'yt-music-source' })).toBe('YT Music');
-    expect(platformLabel({ playbackKind: 'youtube-official-mv' })).toBe(
-      'YouTube',
-    );
-    expect(platformLabel({})).toBe('YouTube');
   });
 
   it('formats familiar compact YouTube view counts', () => {
@@ -39,34 +30,6 @@ describe('import candidate display helpers', () => {
     expect(formatViewCount(9876)).toBe('9,876 次觀看');
     expect(formatViewCount(123456)).toBe('12.3 萬次觀看');
     expect(formatViewCount(123456789)).toBe('1.2 億次觀看');
-  });
-
-  it('uses only the source name for candidate badges', () => {
-    expect(
-      candidateSourceLabel({
-        searchProvider: 'yt-music',
-        playbackKind: 'yt-music-song',
-      }),
-    ).toBe('YT Music');
-    expect(
-      candidateSourceLabel({
-        searchProvider: 'youtube',
-        playbackKind: 'youtube-official-mv',
-      }),
-    ).toBe('YouTube');
-    expect(
-      candidateSourceLabel({
-        searchProvider: 'youtube',
-        availableProviders: ['yt-music', 'youtube'],
-      }),
-    ).toBe('YT Music');
-    expect(
-      candidateSourceLabel({
-        isSource: true,
-        searchProvider: 'youtube',
-        availableProviders: ['yt-music', 'youtube'],
-      }),
-    ).toBe('貼上的來源');
   });
 
   it('formats track identity display for import rows', () => {

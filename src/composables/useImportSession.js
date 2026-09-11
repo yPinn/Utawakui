@@ -19,7 +19,7 @@ const { recordError } = useAppDiagnostics();
 const state = reactive({
   input: '',
   status: '',
-  statusType: 'idle', // 'idle' | 'pending' | 'success' | 'error'
+  statusType: 'idle', // 'idle' | 'empty' | 'pending' | 'success' | 'error'
   failureHint: '',
   downloadDir: '',
   isDefaultDir: true,
@@ -128,7 +128,7 @@ const canUseConfirmButton = computed(() =>
   state.isImporting ? state.sourceKind === 'playlist' : canConfirmImport.value,
 );
 
-function setStatus(message, type = 'idle') {
+function setStatus(message = '', type = 'idle') {
   state.status = message;
   state.statusType = type;
   // Failure sites set this back right after calling setStatus — resetting
@@ -182,7 +182,10 @@ async function ensureProviderFlow({
 // binds two-way (input/activeFilter directly, individual track.selected
 // checkboxes), so they're the only fields needing a setter.
 function setInput(value) {
+  if (value === state.input) return;
   state.input = value;
+  clearPreview();
+  setStatus();
 }
 
 function setActiveFilter(key) {

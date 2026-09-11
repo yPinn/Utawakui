@@ -117,6 +117,7 @@ const canBroaden = computed(
     activeMode.value === 'structured' &&
     state.candidateSearch.status === 'ok' &&
     !state.candidateSearch.error &&
+    providerFailureMessages.value.length === 0 &&
     state.candidateSearch.groups.best.length === 0 &&
     !draftDiffersFromResults.value,
 );
@@ -132,13 +133,28 @@ const providerFailureMessages = computed(() =>
     .filter((providerStatus) => providerStatus.status === 'error')
     .map(providerFailureMessage),
 );
+const showPartialProviderWarning = computed(
+  () =>
+    hasResults.value &&
+    !state.candidateSearch.error &&
+    providerFailureMessages.value.length > 0,
+);
+const showProviderFailureWithoutResults = computed(
+  () =>
+    hasSearched.value &&
+    !hasResults.value &&
+    !state.candidateSearch.error &&
+    providerFailureMessages.value.length > 0,
+);
 const resultAnnouncement = computed(() => {
-  if (isSearchPending.value) return `正在搜尋 ${props.providerLabel}`;
-  if (!hasSearched.value) {
-    return titleIsMissing.value ? '請輸入歌曲名稱後搜尋' : '準備搜尋';
+  if (
+    isSearchPending.value ||
+    !hasSearched.value ||
+    !hasResults.value ||
+    state.candidateSearch.error
+  ) {
+    return '';
   }
-  if (state.candidateSearch.error) return '搜尋未完成';
-  if (silentProviderMiss.value) return '';
   return props.providerId === 'all'
     ? `找到 ${resultCount.value} 個錄音版本、${sourceResultCount.value} 個歌詞來源`
     : `找到 ${sourceResultCount.value} 筆候選歌詞`;
@@ -289,7 +305,7 @@ function toggleCandidate(candidate) {
     </form>
 
     <div class="lyrics-lrclib-search__result-meta">
-      <p v-if="resultAnnouncement" aria-live="polite">
+      <p v-if="resultAnnouncement" class="visually-hidden" aria-live="polite">
         {{ resultAnnouncement }}
       </p>
       <UiButton
@@ -317,7 +333,7 @@ function toggleCandidate(candidate) {
         compact
       />
       <UiNotice
-        v-if="providerFailureMessages.length"
+        v-if="showPartialProviderWarning"
         tone="warning"
         title="部分來源未完成"
         :message="`${providerFailureMessages.join('；')}；目前顯示的其他來源仍可使用。`"
@@ -349,9 +365,15 @@ function toggleCandidate(candidate) {
       <template v-else-if="silentProviderMiss">
         <!-- A normal Better Lyrics miss is intentionally silent. -->
       </template>
-      <UiHint v-else-if="state.candidateSearch.status === 'unavailable'" padded>
-        目前找不到可用的候選歌詞。你可以調整查詢，或嘗試擴大搜尋。
-      </UiHint>
+      <UiNotice
+        v-else-if="showProviderFailureWithoutResults"
+        tone="warning"
+        title="歌詞搜尋未完成"
+        :message="`${providerFailureMessages.join('；')}。請稍後重試。`"
+        action-label="重試"
+        compact
+        @action="handleSearch(activeMode)"
+      />
       <UiNotice
         v-else-if="state.candidateSearch.invalidRecordCount > 0 && !hasResults"
         tone="warning"
@@ -359,8 +381,8 @@ function toggleCandidate(candidate) {
         :message="`${state.candidateSearch.invalidRecordCount} 筆來源資料不完整，已安全略過。請調整查詢後再試。`"
         compact
       />
-      <UiHint v-else-if="!hasResults" padded>
-        沒有找到候選歌詞。請檢查曲名與歌手，或嘗試擴大搜尋。
+      <UiHint v-else-if="!hasResults" role="status" padded>
+        沒有找到候選歌詞。
       </UiHint>
 
       <template v-else>
@@ -461,6 +483,18 @@ function toggleCandidate(candidate) {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .lyrics-lrclib-search__form {
