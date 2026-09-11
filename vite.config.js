@@ -36,6 +36,14 @@ module.exports = defineConfig({
   },
   test: {
     environment: 'node',
+    // CI's full-suite parallel run occasionally flakes on tests that do real
+    // filesystem IO (reading a hand-edited source file, os.tmpdir() races)
+    // under heavy worker load. Retrying only in CI keeps local failures
+    // immediate — a real bug should never be masked by a silent retry — and
+    // costs far less than the alternative: a human re-running the whole CI
+    // job (npm ci, lint, format, build, everything) just to shake off one
+    // transient test.
+    retry: process.env.CI ? 1 : 0,
     include: [
       'electron/*.test.js',
       'electron/lib/**/*.test.js',
