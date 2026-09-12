@@ -35,6 +35,8 @@ const emit = defineEmits(['click']);
   font-weight: inherit;
   line-height: inherit;
   text-align: start;
+  -webkit-user-select: none;
+  user-select: none;
   cursor: pointer;
 }
 

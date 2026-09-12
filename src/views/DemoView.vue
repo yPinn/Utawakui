@@ -25,8 +25,8 @@ const GROUP_REVIEW_STATUS = Object.freeze({
   inputs: 'reviewed',
   actions: 'reviewed',
   navigation: 'reviewed',
-  feedback: 'partial',
-  content: 'pending',
+  feedback: 'reviewed',
+  content: 'partial',
   overlays: 'pending',
 });
 
@@ -83,7 +83,7 @@ function scrollToGroup(key) {
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
           <dt>檢查範圍</dt>
-          <dd>Foundation → Inline Notice</dd>
+          <dd>Foundation → Track Thumb</dd>
         </div>
       </dl>
     </header>

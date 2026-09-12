@@ -69,8 +69,8 @@ describe('DemoNoticeAppearance', () => {
     expect(feedbackSource).not.toContain(
       "import UiNotice from '../ui/UiNotice.vue'",
     );
-    expect(feedbackSource).toContain(
-      '<div v-else-if="section.key === \'progress\'"',
+    expect(feedbackSource).toMatch(
+      /<DemoProgressAppearance\s+v-else-if="section\.key === 'progress'"\s*\/>/u,
     );
   });
 
@@ -617,7 +617,7 @@ describe('DemoNoticeAppearance', () => {
     expect(currentSource).not.toContain('demo-candidate-notice');
   });
 
-  it('records UiHint approval and a pending UiNotice checkpoint without opening Progress', () => {
+  it('preserves the completed UiNotice contract after opening Progress', () => {
     expect(reviewContract).toContain(
       '`runtime`、`sidecar`、`adapter`、`host`、`parent`、`token` 等實作名詞',
     );
@@ -628,7 +628,7 @@ describe('DemoNoticeAppearance', () => {
       '## 已完成階段：UiHint Candidate／Current 檢查',
     );
     expect(reviewContract).toContain(
-      '## 待 Owner 檢查階段：UiNotice Candidate／Current 標本',
+      '## 已完成階段：UiNotice Candidate／Current 檢查',
     );
     expect(reviewContract).toContain('Inline notice／結構化內嵌通知');
     expect(reviewContract).toContain(
@@ -650,8 +650,8 @@ describe('DemoNoticeAppearance', () => {
       '錯誤沿用既有 `useAppDiagnostics` 的 bounded public record',
     );
     expect(reviewContract).toContain('不新增 `UiAlert`、`UiCallout`');
-    expect(reviewContract).toMatch(
-      /在 owner 明確核准 UiNotice 前，不得開始\s+`UiProgress`/u,
+    expect(reviewContract).toContain(
+      '該 checkpoint 完成時，下一個可開始的元件只有 `UiProgress`',
     );
   });
 });

@@ -48,8 +48,8 @@ describe('DemoHintAppearance', () => {
     expect(feedbackSource).toMatch(
       /<DemoNoticeAppearance\s+v-else-if="section\.key === 'notices'"\s*\/>/u,
     );
-    expect(feedbackSource).toContain(
-      '<div v-else-if="section.key === \'progress\'"',
+    expect(feedbackSource).toMatch(
+      /<DemoProgressAppearance\s+v-else-if="section\.key === 'progress'"\s*\/>/u,
     );
   });
 

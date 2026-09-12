@@ -147,13 +147,23 @@ describe('DemoDensity', () => {
       compact,
       compactPx,
     ] of densityContracts) {
-      expect(tokenSource).toContain(`${token}: ${standard};`);
+      const sourceValue =
+        key === 'artwork' ? 'var(--ui-track-artwork-size-standard)' : standard;
+      expect(tokenSource).toContain(`${token}: ${sourceValue};`);
       expect(html).toMatch(
         new RegExp(
           `data-density-contract="${key}"[^>]*>[\\s\\S]*?${escapeRegExp(label)}[\\s\\S]*?${escapeRegExp(token)}[\\s\\S]*?${escapeRegExp(standard)}[\\s\\S]*?${standardPx} CSS px[\\s\\S]*?${escapeRegExp(compact)}[\\s\\S]*?${compactPx} CSS px[\\s\\S]*?</article>`,
           'u',
         ),
       );
+    }
+    for (const declaration of [
+      '--ui-track-artwork-size-dense: 2.25rem;',
+      '--ui-track-artwork-size-standard: 2.5rem;',
+      '--ui-track-artwork-size-prominent: 3rem;',
+      '--ui-track-artwork-size-preview: 4rem;',
+    ]) {
+      expect(tokenSource).toContain(declaration);
     }
     expect(html.match(/data-density-contract=/gu)).toHaveLength(10);
   });
@@ -219,7 +229,9 @@ describe('DemoDensity', () => {
 
     for (const [key, , token, , , compact] of densityContracts) {
       if (key === 'live' || key === 'emergency') continue;
-      expect(compactBlock).toContain(`${token}: ${compact};`);
+      const sourceValue =
+        key === 'artwork' ? 'var(--ui-track-artwork-size-dense)' : compact;
+      expect(compactBlock).toContain(`${token}: ${sourceValue};`);
     }
     expect(compactBlock).not.toContain('--ui-control-height-live');
     expect(compactBlock).not.toContain('--ui-control-height-emergency');

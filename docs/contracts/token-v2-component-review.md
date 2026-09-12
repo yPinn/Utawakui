@@ -25,42 +25,45 @@ F8 的展示順序遵守這個 gate。標本看起來完整不等於 production 
 
 F8 的 Candidate／Current、ARIA、尺寸與元件責任屬 owner 檢查所需資訊，必須與產品訊息分層呈現；型錄不能讓工程註記看起來像正式產品文案。產品訊息與 live-region 內容使用同一套使用者語言，並維持可獨立翻譯的完整句子。
 
-## 2026-09-12 階段快照
+## 2026-09-13 階段快照
 
-| 範圍                  | 已確認／已建立                                                                                                                                               | 仍屬候選或現行缺口                                                                                          |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
-| 系統預設色            | 中性低干擾 surface，以 Indigo 負責主題、選取、current 與 focus；內容類型／格式／來源預設維持 Neutral                                                         | production-wide semantic mapping 尚未採用                                                                   |
-| Folder 色             | Folder 可使用 Mosby Files 式高彩度強對比，與系統預設色分責                                                                                                   | F8 目前只有參考色票；正式 folder palette 與元件映射未定                                                     |
-| 狀態色                | Mildliner 作色相來源而非螢光筆材質；主要訊號用原色強度，soft 只作選用背景                                                                                    | Live 與 Danger 可同色但維持不同 token、形狀及標籤語法                                                       |
-| 字體與文字            | Electron 使用 Windows 原生字型堆疊；Display／Emphasis 暫定 28／700；長標題維持單行截斷                                                                       | Display 日後只有在具體強調情境出現時才重新評估                                                              |
-| 單位                  | 字體、spacing、radius、元件幾何及 CSS breakpoint 用 rem；hairline／focus／drag 用 CSS px；Electron window 用 DIP；raster／canvas backing 用 physical px      | 不得把 16px root 下的 CSS px 等值寫成 DIP                                                                   |
-| 核心尺寸              | 一般操作 hard floor 32、Primary transport 44、緊急 48 CSS px；windowed／restored 使用 Compact，maximize／fullscreen 使用 Standard                            | 既有 Candidate alias 仍名為 `control-height-live`；Icon Button 不將它解讀為所有 Live action 的通則          |
-| Icon Button           | active `sm` 已移除；`md` 32px、`lg` 44px，glyph 維持 16 unit；context-neutral primitive 與 parent-owned recipes 已分區並完成 owner 可視確認                  | Emergency 48px variant 未映射，Current Accent／Overlay 狀態不完整；production adoption 待後續               |
-| Text Action           | 預設如一般文字無底線，hover／focus-visible 顯示底線；維持 caller typography、intrinsic width、`click.stop` 與 `UiMarqueeText` overflow                       | Candidate 與 Current 的主行為已對齊；Candidate 另補 disabled 50%，production adoption 待後續                |
-| Field shell           | Candidate Standard 36px／Compact 32px；現行 30px；寬度由 parent 擁有，`min-width: 0`、無 component max；readonly quiet surface 已完成跨家族候選檢查          | Candidate label／disabled select-none 與 readonly surface 尚未採用到正式 Field                              |
-| Search Box            | Candidate 已定左右各 32px slot、16-unit glyph、兩側各 4px text gap、自訂 Clear、可清除互動及完整狀態標本                                                     | active 仍是 30px、缺整體 hover／disabled surface、Clear hit token，且 native cancel ownership 未正式落地    |
-| Text Field            | Candidate／Current 的尺寸、寬度、單行 anatomy、內容及七種狀態已檢查；readonly 採平面 quiet surface、完整文字對比與可選取／複製                               | active light placeholder 對比 4.23:1；readonly Candidate production adoption 待後續                         |
-| Textarea              | rows、hard floor、soft wrap、native overflow、vertical resize、內容與七種狀態已檢查；readonly 與 Text Field 共用 quiet surface 語法                          | active hard floor 60px；readonly Candidate production adoption 待後續                                       |
-| Validation feedback   | 上游 issue → form controller → localized `invalid + error` → UiField；required pristine 不報錯，blur／submit 後顯示，修正後移除；Error 取代 Hint             | `auto` 是現行預設；父層 `reserved` 只是一行空間候選；未新增 Zod、正式 prop、token 或產品表單流程            |
-| Select                | Candidate 36／32px、project-owned indicator、12px end inset、closed-lane ellipsis 與 overflow-only 完整值提示已完成 owner 視覺檢查                           | native popup 尺寸／option rendering 仍由 Chromium／Windows 擁有；production adoption 待後續                 |
-| Checkbox              | Candidate／Current、36／32px full-row target、16px indicator、多行首行對齊、Boolean／mixed、validation 與 ARIA 已完成 owner 視覺檢查                         | Candidate custom indicator、整列 disabled 與 `indeterminate` public contract 的 production adoption 待後續  |
-| Range                 | Candidate／Current、36／32px full-track target、6px Candidate track／fill、16px thumb、等距 stops、validation 與 ARIA 已完成 owner 視覺檢查                  | Candidate custom track／thumb／optional ticks、窄幅 value output reflow 與 production adoption 待後續       |
-| Button                | Candidate／Current 36／32／30px、Primary／Secondary／Ghost hierarchy、Field 同列、內容、狀態與 native／ARIA 已完成 owner 視覺檢查                            | Current 無獨立 Secondary、authored pressed，仍有 icon-only compatibility branch；production adoption 待後續 |
-| Tabs                  | Candidate／Current 36／32／30px、Panel／Bar、內容 overflow、狀態、automatic keyboard activation 與真實 tabpanel 關係已完成 owner 可視確認                    | 現行只管理 tab list、panel wiring 由 caller 擁有；Candidate 與 compound API 的 production adoption 待後續   |
-| Chip                  | Candidate Standard 24px／Compact 20px、靜態 badge／label 邊界、內容、8 semantic tones、recipes 與 ARIA ownership 已完成 owner 可視確認                       | Current 約 21.5px 且無邊界；`background`／`color` escape hatch 與 Candidate production adoption 待後續      |
-| Status Icon           | Candidate Standard 24px／Compact 20px、16-unit glyph、狀態／裝飾 ARIA 邊界、8 semantic tones、motion 與 recipes 已完成 owner 可視確認                        | Current 固定 24px；`text`／`highlight` compatibility tones 與 Candidate production adoption 待後續          |
-| Hint／supporting text | Candidate／Current、Field／Notice 邊界、14px caption、內容換行、7 tones、layout／ARIA ownership 已完成 owner checkpoint                                      | `UiHint` 仍是 compatibility wrapper；是否保留 Vue primitive 待 migration 比較 utility／owner recipe         |
-| Inline notice         | Candidate／Current 標本已建立；compound anatomy、Hint／Field／Modal／fixed host 邊界、密度、內容、tone、action、delivery 與 ARIA ownership 已納入 owner 檢查 | Candidate 與 demo-only fixed notification recipe 尚待 owner 可視確認；production API／adoption 未改         |
+| 範圍                  | 已確認／已建立                                                                                                                                          | 仍屬候選或現行缺口                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| 系統預設色            | 中性低干擾 surface，以 Indigo 負責主題、選取、current 與 focus；內容類型／格式／來源預設維持 Neutral                                                    | production-wide semantic mapping 尚未採用                                                                   |
+| Folder 色             | Folder 可使用 Mosby Files 式高彩度強對比，與系統預設色分責                                                                                              | F8 目前只有參考色票；正式 folder palette 與元件映射未定                                                     |
+| 狀態色                | Mildliner 作色相來源而非螢光筆材質；主要訊號用原色強度，soft 只作選用背景                                                                               | Live 與 Danger 可同色但維持不同 token、形狀及標籤語法                                                       |
+| 字體與文字            | Electron 使用 Windows 原生字型堆疊；Display／Emphasis 暫定 28／700；長標題維持單行截斷                                                                  | Display 日後只有在具體強調情境出現時才重新評估                                                              |
+| 單位                  | 字體、spacing、radius、元件幾何及 CSS breakpoint 用 rem；hairline／focus／drag 用 CSS px；Electron window 用 DIP；raster／canvas backing 用 physical px | 不得把 16px root 下的 CSS px 等值寫成 DIP                                                                   |
+| 核心尺寸              | 一般操作 hard floor 32、Primary transport 44、緊急 48 CSS px；windowed／restored 使用 Compact，maximize／fullscreen 使用 Standard                       | 既有 Candidate alias 仍名為 `control-height-live`；Icon Button 不將它解讀為所有 Live action 的通則          |
+| Icon Button           | active `sm` 已移除；`md` 32px、`lg` 44px，glyph 維持 16 unit；context-neutral primitive 與 parent-owned recipes 已分區並完成 owner 可視確認             | Emergency 48px variant 未映射，Current Accent／Overlay 狀態不完整；production adoption 待後續               |
+| Text Action           | 預設如一般文字無底線，hover／focus-visible 顯示底線；維持 caller typography、intrinsic width、`click.stop` 與 `UiMarqueeText` overflow                  | Candidate 與 Current 的主行為已對齊；Candidate 另補 disabled 50%，production adoption 待後續                |
+| Field shell           | Candidate Standard 36px／Compact 32px；現行 30px；寬度由 parent 擁有，`min-width: 0`、無 component max；readonly quiet surface 已完成跨家族候選檢查     | Candidate label／disabled select-none 與 readonly surface 尚未採用到正式 Field                              |
+| Search Box            | Candidate 已定左右各 32px slot、16-unit glyph、兩側各 4px text gap、自訂 Clear、可清除互動及完整狀態標本                                                | active 仍是 30px、缺整體 hover／disabled surface、Clear hit token，且 native cancel ownership 未正式落地    |
+| Text Field            | Candidate／Current 的尺寸、寬度、單行 anatomy、內容及七種狀態已檢查；readonly 採平面 quiet surface、完整文字對比與可選取／複製                          | active light placeholder 對比 4.23:1；readonly Candidate production adoption 待後續                         |
+| Textarea              | rows、hard floor、soft wrap、native overflow、vertical resize、內容與七種狀態已檢查；readonly 與 Text Field 共用 quiet surface 語法                     | active hard floor 60px；readonly Candidate production adoption 待後續                                       |
+| Validation feedback   | 上游 issue → form controller → localized `invalid + error` → UiField；required pristine 不報錯，blur／submit 後顯示，修正後移除；Error 取代 Hint        | `auto` 是現行預設；父層 `reserved` 只是一行空間候選；未新增 Zod、正式 prop、token 或產品表單流程            |
+| Select                | Candidate 36／32px、project-owned indicator、12px end inset、closed-lane ellipsis 與 overflow-only 完整值提示已完成 owner 視覺檢查                      | native popup 尺寸／option rendering 仍由 Chromium／Windows 擁有；production adoption 待後續                 |
+| Checkbox              | Candidate／Current、36／32px full-row target、16px indicator、多行首行對齊、Boolean／mixed、validation 與 ARIA 已完成 owner 視覺檢查                    | Candidate custom indicator、整列 disabled 與 `indeterminate` public contract 的 production adoption 待後續  |
+| Range                 | Candidate／Current、36／32px full-track target、6px Candidate track／fill、16px thumb、等距 stops、validation 與 ARIA 已完成 owner 視覺檢查             | Candidate custom track／thumb／optional ticks、窄幅 value output reflow 與 production adoption 待後續       |
+| Button                | Candidate／Current 36／32／30px、Primary／Secondary／Ghost hierarchy、Field 同列、內容、狀態與 native／ARIA 已完成 owner 視覺檢查                       | Current 無獨立 Secondary、authored pressed，仍有 icon-only compatibility branch；production adoption 待後續 |
+| Tabs                  | Candidate／Current 36／32／30px、Panel／Bar、內容 overflow、狀態、automatic keyboard activation 與真實 tabpanel 關係已完成 owner 可視確認               | 現行只管理 tab list、panel wiring 由 caller 擁有；Candidate 與 compound API 的 production adoption 待後續   |
+| Chip                  | Candidate Standard 24px／Compact 20px、靜態 badge／label 邊界、內容、8 semantic tones、recipes 與 ARIA ownership 已完成 owner 可視確認                  | Current 約 21.5px 且無邊界；`background`／`color` escape hatch 與 Candidate production adoption 待後續      |
+| Status Icon           | Candidate Standard 24px／Compact 20px、16-unit glyph、狀態／裝飾 ARIA 邊界、8 semantic tones、motion 與 recipes 已完成 owner 可視確認                   | Current 固定 24px；`text`／`highlight` compatibility tones 與 Candidate production adoption 待後續          |
+| Hint／supporting text | Candidate／Current、Field／Notice 邊界、14px caption、內容換行、7 tones、layout／ARIA ownership 已完成 owner checkpoint                                 | `UiHint` 仍是 compatibility wrapper；是否保留 Vue primitive 待 migration 比較 utility／owner recipe         |
+| Inline notice         | Candidate／Current、compound anatomy、Hint／Field／Modal／fixed host 邊界、密度、內容、tone、action、delivery 與 ARIA ownership 已完成 owner checkpoint | Candidate 與 demo-only fixed notification recipe 的 production API／adoption 未改                           |
+| Progress              | Candidate／Current、8px track、2px Candidate radius、determinate／indeterminate、內容、motion 與 ARIA ownership 已完成 owner checkpoint                 | Candidate production adoption 尚待後續；正式元件／consumer 未改                                             |
+| Marquee Text          | Candidate／Current、單行 overflow、user-controlled reveal、RTL、reduced motion、selection 與 parent recipes 已完成 owner checkpoint                     | Candidate production adoption 尚待後續；正式元件／consumer 未改                                             |
+| Track Thumb           | Candidate／Current、單曲方形封面、四圖預設 fallback、尺寸、裁切、內容、ARIA 與 compatibility contract 已完成 owner checkpoint                           | Candidate production adoption 尚待後續；正式元件／consumer 未改                                             |
 
 只有 Icon Button hard-floor 修正屬於這個 checkpoint 的正式 active 變更。
 其餘 Candidate 標本仍由 development-only F8 與 `tokens-v2.css` 隔離；
 production bundle 不含 F8 標本或 candidate token payload。
 
-F8 已將 Foundation 至 Inline Notice 的 23 個 comparison section 統一為
-Candidate／Current 對照；Feedback 的 Chip、Status Icon 與 Hint 已完成 owner
-確認，Inline Notice 標本待 owner 可視檢查，後續 section 維持待審查。共用比較層明確
-分離 Token v2 surface 與 active-token 快照，窄內容使用 container reflow，
-不改動 production component。
+F8 已將 Foundation 至 Track Thumb 的 26 個 comparison section 統一為
+Candidate／Current 對照；Feedback group 與 Content 至 Track Thumb 已完成
+owner 確認，Content 的 Collage Thumb／Track Row 及後續 section 維持待審查。
+共用比較層明確分離 Token v2 surface 與 active-token 快照，窄內容使用
+container reflow，不改動 production component。
 
 ## 已完成階段：Text Action（現行 UiTextButton）Candidate／Current 檢查
 
@@ -163,11 +166,12 @@ horizontal overflow 承接，兩者都沒有造成 F8 page-level horizontal over
 
 該 checkpoint 完成時，下一個可開始的元件只有 `UiNotice`。
 
-## 待 Owner 檢查階段：UiNotice Candidate／Current 標本
+## 已完成階段：UiNotice Candidate／Current 檢查
 
 `UiHint` 已完成 owner checkpoint；依 owner 指示只向下進入 Feedback 的
-`UiNotice`。F8 已建立本階段標本，但尚未完成 owner 可視確認，不代表
-production adoption，也沒有開始 `UiProgress`、Content、Overlay 或 F7 View：
+`UiNotice`。F8 建立標本並依後續回饋完成 Hint／Notice 分責、fixed notification
+尺寸與 lifecycle、action／close／swipe 及錯誤紀錄邊界；owner 以「繼續下個組件」
+完成本階段 checkpoint。這不代表 production adoption：
 
 1. Candidate 與 Current 分區；Current 使用 active token 快照，保留現行 `muted`／`info`／`success`／`warning`／`danger`、12／8px inset、30px action 與 tone-derived implicit role，不繼承 Candidate tone surface、36／32px action floor、container reflow 或 caller-owned announcement。
 2. 名稱保留 `UiNotice`，型錄角色描述為 Inline notice／結構化內嵌通知；不新增 `UiAlert`、`UiCallout`、Toast 或 Banner primitive。Decorative glyph、title／message 與 optional action 組成的 compound anatomy 是 shared ownership 的主要依據。Candidate compound 重用已審查的 `DemoCandidateStatusIcon`，後者封裝正式 `UiStatusIcon` 的 icon box、tone surface 與 decorative ARIA；不得在 compound 內另畫未封裝的 SVG lane。現行 35 個 production Vue consumer／49 個使用點橫跨 shell、Import、Lyrics、Analysis、Output、Playback、Playlists、Performer 與 Settings，只作共用需求佐證。Consumer count 不能單獨證明 component ownership；單一 feature 或只為型錄存在的 recipe 應回到其 owner infra。
@@ -212,60 +216,137 @@ fixed host 則依 delivery event 明確使用 polite／urgent；Current 如實�
 media query 重排，20／22／26rem clamp、touch／pen 72 CSS px swipe 與 viewport
 cap 只存在 F8 recipe，不進 production component。
 
+該 checkpoint 完成時，下一個可開始的元件只有 `UiProgress`。
+
+## 補充決定：Candidate 文字選取邊界
+
+Owner 在 UiProgress 階段回查已審查元件的文字選取行為；selection ownership 不由 tone 或 semantic color 推導，也不等同「所有 UI 文字皆不可選取」。Candidate 只在文字本身是操作標籤或短暫介面狀態時明確套用 `-webkit-user-select: none`／`user-select: none`：Button caption／loading label、Text Action、Tabs label、Checkbox／Field control label、Range label／value、系統產生的短 Chip，以及 Progress 的 label／value copy lane 為不可選取的介面狀態。Icon Button 與 Status Icon 沒有可見文字，不建立空泛的 selection rule。
+
+使用者輸入與可能需要引用、搜尋或回報的內容仍可選取：Text Field／Search／Textarea value、Readonly value、Hint／Error、Inline Notice、診斷內容，以及 Progress 外部的 milestone／terminal result 完整句子。Hint／Error、Inline Notice、Readonly 與診斷內容維持可選取；Notice action 只透過已審查 Candidate Button 繼承 action caption 的不可選取行為，不得把規則提升到 Notice root。Fixed notification host 因 touch／pen swipe 防誤選而整體不可選取，是既有且窄限於 host interaction 的例外。
+
+此矩陣只補強 development-only Candidate 的明確檢查契約；Current 繼續呈現 active truth，不因 Candidate CSS 被污染，也不代表 production adoption。未新增全域 utility、元件 prop 或底層 primitive。
+
+2026-09-12 Chromium 實測：深色與淺色 Compact root 下，Candidate Button、Text Action、Tabs、Chip、Checkbox label、Range label／value 與 Progress copy 的 computed `user-select` 均為 `none`；Hint、Inline Notice、Field support 與 Progress result 為 `auto`，Readonly input 為 `text`。Current Button、Tabs、Chip 與 Progress 保留 `auto`。雙擊 Hint 會產生可見選取高亮，雙擊 Progress label 不會；淺色頁面 `clientWidth`／`scrollWidth` 同為 1280 CSS px，console 無 warning／error。
+
+## 已完成階段：UiProgress Candidate／Current 檢查
+
+`UiNotice` 已完成 owner checkpoint；依 owner 指示只向下進入 Feedback 的
+`UiProgress`。F8 已建立標本，owner 以「繼續下一組件」完成本階段
+checkpoint；這不代表 production adoption，也沒有改動正式元件或 consumers：
+
+1. Candidate 與 Current 分區；Current 使用 active-token 快照，保留現行 8px pill track、Accent fill、單行 ellipsis label 與 indeterminate `aria-busy`，不繼承 Candidate 2px radius、Info fill、自然換行或 authored motion。
+2. 名稱保留 `UiProgress`；`UiProgress` 是有標籤的原子進度指示器。它只擁有 visible label、optional visible／accessible value text 與 native `<progress>` track；task start／pause／cancel／retry、完成／錯誤訊息、notification queue、timer、close 與 feature lifecycle 均由流程 owner 負責，不新增 Task Progress、Loader 或 Spinner primitive。
+3. 正式 `UiProgress` 目前沒有 production consumer；Analysis 與 Lyrics Provider 的既有 progress presentation 仍各由 feature 擁有，本階段不機械替換。這不否定 shared primitive 的資格：一致的 native progress semantics、label／value 關係與 indeterminate presentation 可跨 feature 共用；feature-only lifecycle recipe 與只服務型錄的 wrapper 留在各自 owner infra。
+4. Token v2 與 active token 都把 `--ui-progress-track-size` 映射到 `--ui-space-2`，因此 Candidate Standard／Compact 與 Current 都是 8 CSS px。Compact 沒有已核定的獨立 track remap，本階段不憑外觀偏好新增 4px 值；密度差異由 parent-owned surrounding layout 承接。Candidate 依 DESIGN 的 progress fill 規則使用 `--ui-radius-xs`／2 CSS px，Current 誠實保留 pill radius。
+5. 寬度維持 block available width、`min-inline-size: 0` 與 `max-inline-size: 100%`，不建立 component min／max width 或 fixed-notification 尺寸。Candidate copy lane 使用 label 加 optional value；label 可自然換行並以 `overflow-wrap: anywhere` 承接長 CJK／Latin、多語與無斷點檔名，value 使用 tabular numerals 且不與 label 重疊。Current 保留單行 ellipsis label 作 migration truth。
+6. Determinate 覆蓋 0、partial、complete 與非 100 total；`value`／`max` 保留 native relative progress semantics，`valueText` 只在 caller 有可讀替代內容時同時呈現並提供 `aria-valuetext`。Progress 不自行推導百分比、stage label 或 terminal result；complete 仍使用 neutral activity fill，另以可見完整句子說明結果。
+7. Indeterminate 省略 native `value`，也隱藏可能過期的 visible／accessible value text，不以 0% 假裝未知進度。Candidate 只在 track 內移動一段 Info fill；root `data-ui-motion="reduced"` 與 `prefers-reduced-motion` 都回到仍可辨識的靜態中段，不以移除 track 作 reduced-motion fallback。Current 無 authored indeterminate motion，照實保留。
+8. Candidate 使用 `--ui-color-info` 表達 loading／processing 的 neutral activity，不新增 tone prop，也不因 0／complete／error 自動切換 success／warning／danger。顏色只輔助掃描；visible label／value 與獨立 result message 必須完整說明工作及結果。
+9. Native `<progress>` 以 required `label` 取得 accessible name；determinate 由 native value／max 提供數值，不手寫 `aria-valuenow`，indeterminate 省略 value。region `aria-busy` 與 milestone announcement 由流程 owner 負責：busy 放在實際更新的區域，頻繁 value tick 不逐次建立 live announcement，重要階段或 terminal result 才由 owner 以完整、可翻譯的句子宣告。Candidate primitive 不自行設定 `role="status"`、`aria-live` 或 `aria-busy`；Current 的 indeterminate `aria-busy` 留作 production compatibility audit。
+10. Candidate／Current 都保留 native root attrs fallthrough 的現行 public boundary。Candidate 的 label／value copy lane 是不可選取的介面狀態；流程 owner 另行呈現的 milestone／terminal result 完整句子仍可選取。Current 保留 active truth，不因 Candidate selection rule 改變；Candidate primitive 也不套用 fixed notification host 的 root-level selection policy。不新增 task status、tone、size、width、close、cancel、retry、validation、permission、provider 或 feature-specific prop；正式 `UiProgress`、active tokens 與 production consumers 都不修改。
+
+## 已完成階段：UiMarqueeText Candidate／Current 檢查
+
+`UiProgress` 已完成 owner checkpoint；依 owner 指示只向下進入 Content 的
+`UiMarqueeText`。F8 已完成本階段 owner checkpoint；這不代表 production
+adoption，也不進入尚未開放的其他 Content、Overlay 或 F7 View：
+
+1. Candidate 與 Current 分區；Current 使用 active-token 快照，保留現行 overflow 後自動 infinite alternate motion、LTR travel、所有長短文字都設定 native title，以及 hover／focus 無 pause 的 active truth，不繼承 Candidate 的 interaction-only single reveal、overflow-only title 或 RTL travel。
+2. 名稱保留 `UiMarqueeText`，因為它準確描述既有單行溢位後平移的行為；不只為較泛化命名新增 `UiOverflowText`。`UiMarqueeText` 只擁有單行溢位量測與可控的內容移動；paragraph wrapping、button copy、status announcement 與持續更新不是它的用途。
+3. 既有 6 個 production direct consumer／7 個使用點涵蓋 track row、text action、queue、playlist、player bar 與 setlist table；shared ownership 來自一致的 ResizeObserver／font readiness／requestAnimationFrame cleanup、overflow threshold、travel geometry 與 reduced-motion lifecycle，不只來自 consumer count。Feature-only width／typography／interaction recipe 留在所在功能。
+4. Public contract 維持 `text: String／Number` 與 native root attrs fallthrough；不新增 speed、duration、density、tone、lines、active、paused、tooltip 或 live-region prop。Candidate 預設 `dir="auto"`，caller 明確提供的 `dir`／`lang`／data attrs 仍套用到 native root。
+5. 元件維持 block flow、`min-inline-size: 0` 與 `max-inline-size: 100%`，不建立固定 min／max width、高度或字級。Standard／Compact 只改變 parent-owned surrounding inset；所在畫面負責 available width、font、line-height、color、baseline 與相鄰間距。
+6. 只有超過可用寬度 1 CSS px 的單行內容進入 overflow state。Candidate 短文字保持靜態且不重複 native title；overflow 才以 title 補回完整值。長 CJK／Latin、多語、無斷點檔名與 RTL 都留在 bounded frame；RTL travel 使用相反方向，不讓整個 F8 page 水平溢出。
+7. Candidate 不在背景自動循環。Fine pointer 指向 overflow text 或 keyboard focus 位於明確的 interactive owner 時，才以 0.2s delay 進行一次 one-way reveal；移動時間依 travel distance 計算並限制在 1.8–5 秒。到達末端後停留，離開／失焦後回到開頭，再次進入／聚焦會重新播放，不把第二次 hover 解讀為 pause toggle。型錄另以 11rem 寬的明確預覽列說明觸發方式，避免靜態第一眼被誤認為沒有動畫。Pointer 按住文字時暫停現有動畫，放開後續播，以免移動干擾選取；touch／pen 與 standalone keyboard text 維持靜態 ellipsis，不為非互動文字新增 tab stop。
+8. Overflow 靜止時只淡出尚有內容的末端邊緣，移動中淡出兩側，到達末端後改淡出起始邊緣；LTR／RTL 對調方向，fade 只提示可見內容邊界，不承載語意。Root `data-ui-motion="reduced"` 與 `prefers-reduced-motion` 都強制停止 motion 與 mask，保留靜態 ellipsis 與 overflow-only full-value fallback。Motion 不是狀態、進度或唯一資訊來源，也不建立顏色語意。
+9. 可見完整文字保留原生 reading content；Marquee 不自行設定 `role`、`aria-label`、`aria-live` 或 tabindex。操作語意、focus target 與 dynamic announcement 由知道目的與更新時機的 owner 負責；focus owner 只作 parent recipe，不提升為 Marquee prop。
+10. Standalone Marquee 內容保持可選取，讓使用者複製曲目名或檔名；若文字位於 Button／Text Action 等操作 chrome，select-none 仍由互動 owner 套用。正式 `UiMarqueeText`、active tokens 與 consumers 都不修改；本階段已完成 owner 可視確認，production adoption 仍待後續 gate。
+
+## 已完成階段：UiTrackThumb Candidate／Current 檢查
+
+`UiMarqueeText` 已完成 owner checkpoint；依 owner 指示只向下進入 Content 的
+`UiTrackThumb`。F8 已完成本階段 owner checkpoint；這不代表 production
+adoption，本階段也未進入 `UiCollageThumb`、`UiTrackRow`、Overlay 或 F7 View：
+
+1. Candidate 與 Current 分區；Current 使用 active-token 快照與正式 `UiTrackThumb`，誠實保留 missing image 的曲名首字、載入失敗後的 broken-image 狀態及非裝飾模式未補 image role 的現況，不繼承 Candidate 的預設圖池、failure fallback、ARIA 補強或 surface。
+2. 名稱保留 `UiTrackThumb`。`UiTrackThumb` 表示單一曲目的方形封面或 identity fallback，只擁有媒體裁切、缺圖呈現與 thumbnail 內容邊界；collection collage、track metadata、row selection、播放／導覽與 action 都由 `UiCollageThumb`、`UiTrackRow` 或 feature owner 負責。
+3. 既有 7 個 production direct consumer／8 個使用點涵蓋 track row、player bar、metadata modal、import candidate、studio library、setlist 與 queue；共用 primitive 的理由是相同的 square geometry、cover crop、fallback、radius 及 decorative boundary，不把 consumer 各自的 spacing、selection、status 或 navigation 上提成 props。
+4. Public contract 維持 optional `track`、required caller-owned `size`、optional `radius`／`background`／`color`／`fontSize`／`uppercase`／`decorative`、native root attrs fallthrough，以及 default／overlay slots。`color`、`uppercase`、default slot 與 overlay slot 目前沒有 production consumer，但先保留 compatibility，留待 adoption gate 以 migration evidence 判斷，不在標本階段刪除或擴張。
+5. Current consumer 快照為 32／40／48／52／64px：import candidate 在 56px 選擇列使用 32px、track row 在 52px 最小列高使用 40px、queue 在約 56px 列高使用 48px、player bar 在 76px 高度使用 52px、metadata editor 使用 64px preview。Candidate 收斂為密集選擇 36px、標準曲目列 40px、播放操作 48px、封面檢查 64px；queue／player 共用 48px，不把相近用途保留成兩個 component variant。尺寸仍由 caller／layout recipe 指定，primitive 不建立 min／max、density、recipe 或 responsive prop；4px radius 與 `object-fit: cover` 維持所有尺寸及來源比例的一致裁切語法。
+6. 四張同系列方形圖是歌曲沒有可用封面時的預設 fallback 圖池，不是一般歌曲封面範例；素材以 PNG alpha 移除圓外白底，只保留中間圓形內容，使同一圖能落在深／淺 surface。Candidate 依 track identity 做 deterministic mapping，使同一首歌在 render、theme、density 與視覺回歸中維持同一張，同時讓不同歌曲分散使用四圖；不在 render／SSR 呼叫 `Math.random()`。Current 不接入此圖池。另以寬圖及複雜方圖作有效 `thumbnailUrl`，讓 Candidate／Current 共用來源驗證 center cover crop。
+7. 內容矩陣包含正常封面、缺少 URL、圖片解碼失敗、空標題、長 CJK、Latin、多語與無斷點字串。Candidate 的 fallback ladder 為有效 custom cover → stable default artwork → track initial／`?`；missing URL 直接顯示預設圖，custom cover 失敗後切到預設圖，只有預設圖本身也失敗才顯示首字。這是視覺韌性，不新增 remote retry、provider、loading、validation、fallback prop 或 feature-specific prop；Current 保留 missing initial 與 failed broken-image active truth。
+8. Thumbnail 本身不是操作按鈕，不新增 tabindex、hover action 或 gesture。圖片與 fallback identity 都是不可選取的介面識別，`img` 明確設為 non-draggable；row 或 button owner 仍負責整體 pointer／keyboard target、focus 與 select-none 範圍。
+9. 預設 `decorative` 維持 `aria-hidden="true"`；Candidate 在 `decorative="false"` 時補足 image semantics，accessible name 仍由 caller 以 `aria-label` 或其他 native attrs 提供。元件不自行從曲名推導可朗讀名稱，也不建立 live region、status、tooltip 或重複 announcement。
+10. Candidate 只存在 development-only F8；正式 `UiTrackThumb`、active tokens、production consumers 與圖片資料流程都不修改。本階段已完成 owner 可視確認；下一個可處理的元件只有 `UiCollageThumb`，但本次總結與提交不開始該元件，也不進入 `UiTrackRow`、Overlay 或 F7 View。
+
 ## 已記錄決定與後續 gate
 
-目前 gate 是 UiNotice owner 可視檢查。在 owner 明確核准 UiNotice 前，不得開始
-`UiProgress`、Content、Overlay 或 F7 View。
+UiTrackThumb owner checkpoint 已完成。下一個 gate 是 Content 的
+`UiCollageThumb`；在新階段明確開始前，本次總結與提交不進入其他 Content、
+Overlay 或 F7 View。
 
-| 決定                          | 建議基線                                                                                                                                                               | 決定時點                                                     |
-| ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| Select trailing indicator     | Candidate closed control 使用 project-owned ChevronDown 與 12px end inset；Current 保留 native indicator                                                               | Candidate 已核定；production adoption 待後續                 |
-| Selected value 過長           | Candidate closed lane 單行 ellipsis；確實溢位時在 hover／focus 顯示同寬靜態完整值提示，不使用 marquee；native popup 寬度仍由 UA 決定                                   | Candidate 已核定；production adoption 待後續                 |
-| Select readonly 替代          | 不增加假 readonly prop；不可編輯值用 disabled 或非表單文字，依產品語意選擇                                                                                             | Select public contract                                       |
-| Field readonly surface        | Candidate 的 Text Field／Textarea 使用較平 quiet surface、一般邊界、完整文字對比、可選取／複製與 focus ring；不加 lock／badge                                          | Candidate 已核定；production adoption 待後續                 |
-| Checkbox target／indicator    | Candidate 使用 36／32px full-row target、16px project-owned Check／Minus；多行 label 對齊第一行，native input 保留互動與語意                                           | Candidate 已核定；production adoption 待後續                 |
-| Checkbox mixed ownership      | `indeterminate` 是 caller-owned visual／ARIA projection；Boolean selection 後由 controller 清除，不建立 readonly 或 tri-state value                                    | Candidate 已核定；production adoption 待後續                 |
-| Range track／thumb ownership  | Candidate 使用 6px project-owned base／fill、16px Chromium thumb pseudo-element、2px canvas rim 與互動 halo／ring；單一 native input 保留所有輸入語意                  | Candidate 已核定；production adoption 待後續                 |
-| Range stops                   | 等距吸附維持 native step；3–7 個有意義 stops 可使用軌道內無標籤 ticks，不永久預留 marks row；具名／不規則 marks 延後至具體需求                                         | Candidate 已核定；production adoption 待後續                 |
-| Range target／output          | Candidate full-track target 為 36／32px；`valueText` 同時供 output／ARIA，窄幅時完整 reflow 而不壓縮 track                                                             | Candidate 已核定；production adoption 待後續                 |
-| Reserved support row          | 維持 layout-owned 候選，不進 `UiField` API；等真實同列表單證明重用需求                                                                                                 | 第一個產品表單 migration                                     |
-| Zod／required controller      | UI 只接收本地化 `invalid + error`；驗證時機與 issue mapping 由產品 form owner 負責                                                                                     | 實際表單 migration                                           |
-| Standard／Compact activation  | Electron `BrowserWindow` windowed／restored 投影 Compact，maximize／fullscreen 投影 Standard；root 永遠保留明確值，不依 viewport 或 sidebar 猜測                       | 已核定；目前只有 opt-in Token v2 surface 消費                |
-| Button pressed state          | Candidate Secondary 使用 active surface＋strong border、Accent 使用 `--ui-color-accent-active`；Current 無 authored `:active`，不假造 production style                 | Candidate 已核定；production adoption 待後續                 |
-| Button long label             | 一般動作文案優先保持精簡；受限 Candidate 單行 ellipsis、不跑馬燈，full-width 與可用寬度仍由 parent 擁有                                                                | Candidate 已核定；production adoption 待後續                 |
-| Field＋Button composition     | 同一 density scope 對齊 36／32／30px control box；外部 row gap 8px、內部 icon／label gap 4px，窄幅由 parent 堆疊與 full width                                          | Candidate 已核定；production adoption 待後續                 |
-| Button action hierarchy       | Candidate Primary 使用 Accent；Secondary 使用 neutral raised surface＋subtle border；Ghost 只供 contextual tertiary action                                             | Candidate 已核定；production adoption 待後續                 |
-| Button icon-only boundary     | 新用法交給 `UiIconButton`；現行 `UiButton` compatibility branch 暫不在 review 標本中擴張或移除                                                                         | 後續 production adoption                                     |
-| Icon Button target／glyph     | Candidate routine 為 36／32px、Primary transport 44px、glyph 固定 16 unit；Current 維持 32／44px hard floor；Emergency 48px 暫不映射                                   | Candidate 已核准；production adoption 待後續                 |
-| Icon Button context mapping   | Primitive 與 recipe 分責；toolbar／transport／artwork／stretch／title-bar 都由 parent 組合既有 size／shape／variant，不新增 context prop                               | Candidate 已核准；production adoption 待後續                 |
-| Icon Button pressed states    | Candidate Accent 使用 accent-active，Overlay 使用 theme-independent 55%／68%／78% scrim；Current 缺口維持可見                                                          | Candidate 已核准；production adoption 待後續                 |
-| Icon Button title-bar focus   | 36px target 位於 40px title bar 時由 parent 改用 inset focus offset；一般 surface 保留外擴 focus ring                                                                  | Candidate 已核准；production adoption 待後續                 |
-| Text Action role              | 現行元件仍為 native `button`，但 Candidate 視覺角色是可點擊文字；獨立動作用 `UiButton`，不以 button variant／size／full-width 擴張 primitive                           | Candidate 已核准；production adoption 待後續                 |
-| Text Action affordance        | Candidate Default 無底線，hover／focus-visible 顯示底線，pressed 沿用 hover，disabled 無底線並降至 50%；Current 主行為一致                                             | Candidate 已核准；production adoption 待後續                 |
-| Text Action overflow          | 沿用 `UiMarqueeText` 的 overflow-only marquee／title／reduced-motion ellipsis，不增加速度或開關 prop                                                                   | Candidate 已核准；production adoption 待後續                 |
-| Text Action recipes           | Track row、section heading、table cell 的 geometry、z-index、navigation 與可用寬度由 parent 擁有，recipe 不轉成 primitive prop                                         | Candidate 已核准；production adoption 待後續                 |
-| Tabs usage boundary           | `UiTabs` 只服務相鄰且互斥的 tabpanels；global navigation 維持專用 `nav`，單選 filter／mode switch 留給未來 segmented control                                           | Candidate 已核准；production adoption 待後續                 |
-| Tabs Panel／Bar               | Panel 使用 neutral shell＋tonal tile；Bar 使用 flat surface＋2px indicator；兩者只改 presentation，不改 tab／tabpanel 語意                                             | Candidate 已核准；production adoption 待後續                 |
-| Tabs size／overflow           | Candidate 36／32px、Current 30px；Panel intrinsic、Bar available width；長項目單行 ellipsis，多項超出以 native horizontal scroll 承接                                  | Candidate 已核准；production adoption 待後續                 |
-| Tabs panel ownership          | 目前 caller 提供 panels、visibility、ids 與雙向 ARIA 關係；production adoption 前再決定是否提升為完整 compound API                                                     | F8 owner 確認後的 architecture gate                          |
-| Chip role boundary            | `UiChip` 是非互動 system-generated badge／label；filter、dismiss、action、navigation 與 selection 使用其他互動元件                                                     | Candidate 已核准；production adoption 待後續                 |
-| Chip size／overflow           | Candidate 24／20px、Current 約 21.5px；intrinsic、max 100%、必要長值由 parent 限寬 ellipsis，group 以 8px gap wrap                                                     | Candidate 已核准；production adoption 待後續                 |
-| Chip tone／gated              | 八個 tone 維持文字語意＋色彩輔助；`gated` Candidate 顯示「需確認」，不代表權限、付費、法律或安全判定                                                                   | Candidate 已核准；production adoption 待後續                 |
-| Chip custom overrides         | Candidate 優先 semantic tone；現行 `background`／`color` compatibility escape hatch 是否收斂需先稽核既有 surface／selected 用法                                        | production migration audit                                   |
-| Status Icon naming／role      | 保留 `UiStatusIcon` 給純圖示狀態；可見文字 badge 用 `UiChip`，可互動內容用相符 native control                                                                          | Candidate 已核准；production adoption 待後續                 |
-| Status Icon size／tone        | Candidate 24／20px、Current 24px、glyph 固定 16 unit；`current` 用 Accent／Indigo，內容分類用 Neutral，Current 額外保留 `text`／`highlight`                            | Candidate 已核准；production adoption 待後續                 |
-| Status Icon ARIA／motion      | 獨立意義用 named image，重複文字用 decorative；parent 擁有 live region，spinning 只作用 glyph 並尊重 reduced motion                                                    | Candidate 已核准；production adoption 待後續                 |
-| Hint naming／role             | Production 保留 `UiHint` compatibility wrapper；跨 feature 使用只證明 reusable text role，是否保留 Vue primitive 待 utility／owner recipe 比較                         | Role checkpoint 已核准；component qualification 待 migration |
-| Hint typography／overflow     | Candidate／Current 皆為 14px caption；density 不改文字度量，Candidate 長識別字可 anywhere wrap，Current 保留 active truth                                              | Candidate 已核准；production adoption 待後續                 |
-| Hint layout／ARIA             | Parent 擁有 inset、alignment、empty-state placement 與 live region；`padded`／`center` 只作 Current compatibility，tone 不推導 role                                    | Candidate 已核准；production adoption 待後續                 |
-| Notice naming／ownership      | 保留 `UiNotice` 作 Inline notice；compound anatomy 支持 shared ownership，consumer count 只佐證需求；Field support、Hint、Modal、fixed host 分責                       | Candidate 標本待 owner 核准                                  |
-| Notice density／content       | Candidate Standard／Compact 為 12／8px inset 與 36／32px action；14px copy、16-unit glyph、窄幅 reflow 與 multilingual wrapping                                        | Candidate 標本待 owner 核准                                  |
-| Notice tone／ARIA             | Neutral default＋四個 semantic tones，色彩配合文案／glyph；Candidate announcement caller-owned，Current implicit status／alert 列為 migration audit                    | Candidate 標本待 owner 核准                                  |
-| Notice action hierarchy       | Candidate 使用 Secondary；>26rem 同列，≤26rem 移至正文下方靠 inline-end，缺席時不保留空列；Current Ghost／viewport query 保留作 active truth                           | Candidate 標本待 owner 核准                                  |
-| Fixed notification sizing     | Demo-only host 使用 20rem floor／22rem preferred／26rem max 與兩側各 1rem viewport cap；position／queue／dismissal／lifecycle 不進 `UiNotice` API                      | Candidate recipe 待 owner 核准                               |
-| Fixed notification lifecycle  | Host 明確管理 transient 6s pauseable timer、progress same-id replacement、persistent retention、32px Ghost close 與 touch／pen horizontal swipe；tone 不推導 lifecycle | Candidate recipe 待 owner 核准                               |
-| Notice diagnostics boundary   | 沿用 bounded public error 與既有錯誤紀錄；單一 action 在立即復原與查看紀錄間擇一，不顯示 raw diagnostic context，也不宣稱上傳回報                                      | 實際產品整合留待 focused migration                           |
-| Candidate production adoption | 僅凍結被實際 slice 證明的 token／component subset，不做全專案機械替換                                                                                                  | F8 元件與 F7 visible acceptance 完成後                       |
+| 決定                          | 建議基線                                                                                                                                                                    | 決定時點                                                     |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Select trailing indicator     | Candidate closed control 使用 project-owned ChevronDown 與 12px end inset；Current 保留 native indicator                                                                    | Candidate 已核定；production adoption 待後續                 |
+| Selected value 過長           | Candidate closed lane 單行 ellipsis；確實溢位時在 hover／focus 顯示同寬靜態完整值提示，不使用 marquee；native popup 寬度仍由 UA 決定                                        | Candidate 已核定；production adoption 待後續                 |
+| Select readonly 替代          | 不增加假 readonly prop；不可編輯值用 disabled 或非表單文字，依產品語意選擇                                                                                                  | Select public contract                                       |
+| Field readonly surface        | Candidate 的 Text Field／Textarea 使用較平 quiet surface、一般邊界、完整文字對比、可選取／複製與 focus ring；不加 lock／badge                                               | Candidate 已核定；production adoption 待後續                 |
+| Checkbox target／indicator    | Candidate 使用 36／32px full-row target、16px project-owned Check／Minus；多行 label 對齊第一行，native input 保留互動與語意                                                | Candidate 已核定；production adoption 待後續                 |
+| Checkbox mixed ownership      | `indeterminate` 是 caller-owned visual／ARIA projection；Boolean selection 後由 controller 清除，不建立 readonly 或 tri-state value                                         | Candidate 已核定；production adoption 待後續                 |
+| Range track／thumb ownership  | Candidate 使用 6px project-owned base／fill、16px Chromium thumb pseudo-element、2px canvas rim 與互動 halo／ring；單一 native input 保留所有輸入語意                       | Candidate 已核定；production adoption 待後續                 |
+| Range stops                   | 等距吸附維持 native step；3–7 個有意義 stops 可使用軌道內無標籤 ticks，不永久預留 marks row；具名／不規則 marks 延後至具體需求                                              | Candidate 已核定；production adoption 待後續                 |
+| Range target／output          | Candidate full-track target 為 36／32px；`valueText` 同時供 output／ARIA，窄幅時完整 reflow 而不壓縮 track                                                                  | Candidate 已核定；production adoption 待後續                 |
+| Reserved support row          | 維持 layout-owned 候選，不進 `UiField` API；等真實同列表單證明重用需求                                                                                                      | 第一個產品表單 migration                                     |
+| Zod／required controller      | UI 只接收本地化 `invalid + error`；驗證時機與 issue mapping 由產品 form owner 負責                                                                                          | 實際表單 migration                                           |
+| Standard／Compact activation  | Electron `BrowserWindow` windowed／restored 投影 Compact，maximize／fullscreen 投影 Standard；root 永遠保留明確值，不依 viewport 或 sidebar 猜測                            | 已核定；目前只有 opt-in Token v2 surface 消費                |
+| Button pressed state          | Candidate Secondary 使用 active surface＋strong border、Accent 使用 `--ui-color-accent-active`；Current 無 authored `:active`，不假造 production style                      | Candidate 已核定；production adoption 待後續                 |
+| Button long label             | 一般動作文案優先保持精簡；受限 Candidate 單行 ellipsis、不跑馬燈，full-width 與可用寬度仍由 parent 擁有                                                                     | Candidate 已核定；production adoption 待後續                 |
+| Field＋Button composition     | 同一 density scope 對齊 36／32／30px control box；外部 row gap 8px、內部 icon／label gap 4px，窄幅由 parent 堆疊與 full width                                               | Candidate 已核定；production adoption 待後續                 |
+| Button action hierarchy       | Candidate Primary 使用 Accent；Secondary 使用 neutral raised surface＋subtle border；Ghost 只供 contextual tertiary action                                                  | Candidate 已核定；production adoption 待後續                 |
+| Button icon-only boundary     | 新用法交給 `UiIconButton`；現行 `UiButton` compatibility branch 暫不在 review 標本中擴張或移除                                                                              | 後續 production adoption                                     |
+| Icon Button target／glyph     | Candidate routine 為 36／32px、Primary transport 44px、glyph 固定 16 unit；Current 維持 32／44px hard floor；Emergency 48px 暫不映射                                        | Candidate 已核准；production adoption 待後續                 |
+| Icon Button context mapping   | Primitive 與 recipe 分責；toolbar／transport／artwork／stretch／title-bar 都由 parent 組合既有 size／shape／variant，不新增 context prop                                    | Candidate 已核准；production adoption 待後續                 |
+| Icon Button pressed states    | Candidate Accent 使用 accent-active，Overlay 使用 theme-independent 55%／68%／78% scrim；Current 缺口維持可見                                                               | Candidate 已核准；production adoption 待後續                 |
+| Icon Button title-bar focus   | 36px target 位於 40px title bar 時由 parent 改用 inset focus offset；一般 surface 保留外擴 focus ring                                                                       | Candidate 已核准；production adoption 待後續                 |
+| Text Action role              | 現行元件仍為 native `button`，但 Candidate 視覺角色是可點擊文字；獨立動作用 `UiButton`，不以 button variant／size／full-width 擴張 primitive                                | Candidate 已核准；production adoption 待後續                 |
+| Text Action affordance        | Candidate Default 無底線，hover／focus-visible 顯示底線，pressed 沿用 hover，disabled 無底線並降至 50%；Current 主行為一致                                                  | Candidate 已核准；production adoption 待後續                 |
+| Text Action overflow          | 沿用 `UiMarqueeText` 的 overflow-only marquee／title／reduced-motion ellipsis，不增加速度或開關 prop                                                                        | Candidate 已核准；production adoption 待後續                 |
+| Text Action recipes           | Track row、section heading、table cell 的 geometry、z-index、navigation 與可用寬度由 parent 擁有，recipe 不轉成 primitive prop                                              | Candidate 已核准；production adoption 待後續                 |
+| Tabs usage boundary           | `UiTabs` 只服務相鄰且互斥的 tabpanels；global navigation 維持專用 `nav`，單選 filter／mode switch 留給未來 segmented control                                                | Candidate 已核准；production adoption 待後續                 |
+| Tabs Panel／Bar               | Panel 使用 neutral shell＋tonal tile；Bar 使用 flat surface＋2px indicator；兩者只改 presentation，不改 tab／tabpanel 語意                                                  | Candidate 已核准；production adoption 待後續                 |
+| Tabs size／overflow           | Candidate 36／32px、Current 30px；Panel intrinsic、Bar available width；長項目單行 ellipsis，多項超出以 native horizontal scroll 承接                                       | Candidate 已核准；production adoption 待後續                 |
+| Tabs panel ownership          | 目前 caller 提供 panels、visibility、ids 與雙向 ARIA 關係；production adoption 前再決定是否提升為完整 compound API                                                          | F8 owner 確認後的 architecture gate                          |
+| Chip role boundary            | `UiChip` 是非互動 system-generated badge／label；filter、dismiss、action、navigation 與 selection 使用其他互動元件                                                          | Candidate 已核准；production adoption 待後續                 |
+| Chip size／overflow           | Candidate 24／20px、Current 約 21.5px；intrinsic、max 100%、必要長值由 parent 限寬 ellipsis，group 以 8px gap wrap                                                          | Candidate 已核准；production adoption 待後續                 |
+| Chip tone／gated              | 八個 tone 維持文字語意＋色彩輔助；`gated` Candidate 顯示「需確認」，不代表權限、付費、法律或安全判定                                                                        | Candidate 已核准；production adoption 待後續                 |
+| Chip custom overrides         | Candidate 優先 semantic tone；現行 `background`／`color` compatibility escape hatch 是否收斂需先稽核既有 surface／selected 用法                                             | production migration audit                                   |
+| Status Icon naming／role      | 保留 `UiStatusIcon` 給純圖示狀態；可見文字 badge 用 `UiChip`，可互動內容用相符 native control                                                                               | Candidate 已核准；production adoption 待後續                 |
+| Status Icon size／tone        | Candidate 24／20px、Current 24px、glyph 固定 16 unit；`current` 用 Accent／Indigo，內容分類用 Neutral，Current 額外保留 `text`／`highlight`                                 | Candidate 已核准；production adoption 待後續                 |
+| Status Icon ARIA／motion      | 獨立意義用 named image，重複文字用 decorative；parent 擁有 live region，spinning 只作用 glyph 並尊重 reduced motion                                                         | Candidate 已核准；production adoption 待後續                 |
+| Hint naming／role             | Production 保留 `UiHint` compatibility wrapper；跨 feature 使用只證明 reusable text role，是否保留 Vue primitive 待 utility／owner recipe 比較                              | Role checkpoint 已核准；component qualification 待 migration |
+| Hint typography／overflow     | Candidate／Current 皆為 14px caption；density 不改文字度量，Candidate 長識別字可 anywhere wrap，Current 保留 active truth                                                   | Candidate 已核准；production adoption 待後續                 |
+| Hint layout／ARIA             | Parent 擁有 inset、alignment、empty-state placement 與 live region；`padded`／`center` 只作 Current compatibility，tone 不推導 role                                         | Candidate 已核准；production adoption 待後續                 |
+| Notice naming／ownership      | 保留 `UiNotice` 作 Inline notice；compound anatomy 支持 shared ownership，consumer count 只佐證需求；Field support、Hint、Modal、fixed host 分責                            | Candidate 已核准；production adoption 待後續                 |
+| Notice density／content       | Candidate Standard／Compact 為 12／8px inset 與 36／32px action；14px copy、16-unit glyph、窄幅 reflow 與 multilingual wrapping                                             | Candidate 已核准；production adoption 待後續                 |
+| Notice tone／ARIA             | Neutral default＋四個 semantic tones，色彩配合文案／glyph；Candidate announcement caller-owned，Current implicit status／alert 列為 migration audit                         | Candidate 已核准；production adoption 待後續                 |
+| Notice action hierarchy       | Candidate 使用 Secondary；>26rem 同列，≤26rem 移至正文下方靠 inline-end，缺席時不保留空列；Current Ghost／viewport query 保留作 active truth                                | Candidate 已核准；production adoption 待後續                 |
+| Fixed notification sizing     | Demo-only host 使用 20rem floor／22rem preferred／26rem max 與兩側各 1rem viewport cap；position／queue／dismissal／lifecycle 不進 `UiNotice` API                           | Candidate recipe 已核准；production adoption 待後續          |
+| Fixed notification lifecycle  | Host 明確管理 transient 6s pauseable timer、progress same-id replacement、persistent retention、32px Ghost close 與 touch／pen horizontal swipe；tone 不推導 lifecycle      | Candidate recipe 已核准；production adoption 待後續          |
+| Notice diagnostics boundary   | 沿用 bounded public error 與既有錯誤紀錄；單一 action 在立即復原與查看紀錄間擇一，不顯示 raw diagnostic context，也不宣稱上傳回報                                           | 實際產品整合留待 focused migration                           |
+| Text selection ownership      | Candidate 操作／狀態 chrome 明確不可選取；輸入、Readonly、Hint／Error、Inline Notice、診斷及流程結果句保持可選取；Current 保留 active truth                                 | Candidate 補強已完成；production adoption 待後續             |
+| Progress naming／ownership    | 保留 `UiProgress` 作有標籤的原子進度指示器；結果、task controls、region busy、milestone announcement 與 lifecycle 都由流程 owner 負責                                       | Candidate 已核准；production adoption 待後續                 |
+| Progress size／content        | Candidate／Current 皆為 8px track；Candidate 使用 2px radius、自然換行 label 與 tabular value，寬度由 parent 擁有                                                           | Candidate 已核准；production adoption 待後續                 |
+| Progress state／motion        | Determinate 覆蓋 0／partial／complete／custom max；indeterminate 省略 value 並以 reduced-motion-safe 的 Info segment 表示                                                   | Candidate 已核准；production adoption 待後續                 |
+| Progress ARIA                 | Native progress 擁有 name／value；Candidate 不自行設定 status／live／busy，Current indeterminate `aria-busy` 留作 compatibility audit                                       | Candidate 已核准；production adoption 待後續                 |
+| Marquee naming／ownership     | 保留 `UiMarqueeText` 作單行 overflow motion；量測／travel／reduced motion 歸 primitive，寬度／typography／interaction／announcement 歸 owner                                | Candidate 已核准；production adoption 待後續                 |
+| Marquee trigger／motion       | Candidate 以 11rem 預覽列明示觸發，fine-pointer hover／interactive owner focus 後 0.2s single reveal；1.8–5s 移至末端停留，離開重設、再次進入重播                           | Candidate 已核准；production adoption 待後續                 |
+| Marquee content／direction    | Overflow-only title、短字靜態、CJK／Latin／multilingual／unbroken／RTL bounded；靜止末端／移動雙側／完成起始側 fade 隨方向對調，Standard／Compact 只改 parent inset         | Candidate 已核准；production adoption 待後續                 |
+| Marquee selection／ARIA       | Standalone content 可選取；interactive chrome 由 owner select-none。元件不新增 tab stop、role、label 或 live region                                                         | Candidate 已核准；production adoption 待後續                 |
+| Track Thumb naming／ownership | 保留 `UiTrackThumb` 作單曲方形封面或 identity fallback；collection collage、metadata、row interaction 與 navigation 維持由專責 owner 承接                                   | Candidate 已核准；production adoption 待後續                 |
+| Track Thumb size／crop        | Current 為 32／40／48／52／64px；Candidate 用途收斂為 dense 36、row 40、playback 48、preview 64px；size 由 caller／layout recipe 擁有，4px radius 與 center cover crop 一致 | Candidate 已核准；production adoption 待後續                 |
+| Track Thumb fallback／content | 四張同系列圖只作 Candidate 預設 fallback pool；custom → default → initial ladder、missing／failed／empty、長 CJK／Latin／多語／無斷點與兩種 crop source 均納入              | Candidate 已核准；production adoption 待後續                 |
+| Track Thumb ARIA／contract    | Decorative 預設維持 aria-hidden；Candidate non-decorative 補 image role、名稱由 caller 提供；attrs、styling props 與兩種 slots 保留 compatibility                           | Candidate 已核准；production adoption 待後續                 |
+| Candidate production adoption | 僅凍結被實際 slice 證明的 token／component subset，不做全專案機械替換                                                                                                       | F8 元件與 F7 visible acceptance 完成後                       |
 
 ## 驗證與提交邊界
 

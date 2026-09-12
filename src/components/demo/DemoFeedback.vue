@@ -1,9 +1,9 @@
 <script setup>
-import UiProgress from '../ui/UiProgress.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 import DemoChipAppearance from './DemoChipAppearance.vue';
 import DemoHintAppearance from './DemoHintAppearance.vue';
 import DemoNoticeAppearance from './DemoNoticeAppearance.vue';
+import DemoProgressAppearance from './DemoProgressAppearance.vue';
 import DemoStatusIconAppearance from './DemoStatusIconAppearance.vue';
 
 defineProps({
@@ -15,6 +15,7 @@ const COMPARISON_SECTION_KEYS = new Set([
   'status-icons',
   'hints',
   'notices',
+  'progress',
 ]);
 </script>
 
@@ -36,16 +37,7 @@ const COMPARISON_SECTION_KEYS = new Set([
 
       <DemoNoticeAppearance v-else-if="section.key === 'notices'" />
 
-      <div v-else-if="section.key === 'progress'" class="demo-sample-grid">
-        <UiProgress label="匯入進度" :value="68" :max="100" value-text="68%" />
-        <UiProgress label="正在準備音訊模型" indeterminate />
-        <UiProgress
-          label="批次分析"
-          :value="12"
-          :max="12"
-          value-text="12／12"
-        />
-      </div>
+      <DemoProgressAppearance v-else-if="section.key === 'progress'" />
     </DemoCatalogueSection>
   </div>
 </template>

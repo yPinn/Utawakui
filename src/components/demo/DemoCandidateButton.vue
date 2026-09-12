@@ -70,6 +70,8 @@ defineProps({
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
+  -webkit-user-select: none;
+  user-select: none;
   cursor: pointer;
   transition:
     background-color var(--ui-motion-duration-feedback)

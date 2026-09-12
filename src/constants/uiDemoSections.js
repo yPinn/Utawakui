@@ -75,7 +75,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
   {
     key: 'feedback',
     title: '狀態與回饋',
-    description: '狀態標籤、圖示與內嵌通知；進度待審查。',
+    description: '狀態標籤、圖示、內嵌通知與進度指示。',
     sections: [
       { key: 'chips', title: '狀態標籤', components: ['UiChip'] },
       {

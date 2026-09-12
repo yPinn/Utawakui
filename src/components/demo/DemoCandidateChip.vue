@@ -56,6 +56,8 @@ const attrs = useAttrs();
   background: var(--demo-chip-tone-soft);
   color: var(--demo-chip-tone);
   vertical-align: middle;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .demo-candidate-chip__leading {

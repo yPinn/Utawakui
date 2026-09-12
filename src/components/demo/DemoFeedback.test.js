@@ -38,5 +38,14 @@ describe('DemoFeedback', () => {
     expect(feedbackSource).not.toContain(
       "import UiNotice from '../ui/UiNotice.vue';",
     );
+    expect(feedbackSource).toContain(
+      "import DemoProgressAppearance from './DemoProgressAppearance.vue';",
+    );
+    expect(feedbackSource).toMatch(
+      /<DemoProgressAppearance\s+v-else-if="section\.key === 'progress'"\s*\/>/u,
+    );
+    expect(feedbackSource).not.toContain(
+      "import UiProgress from '../ui/UiProgress.vue';",
+    );
   });
 });

@@ -82,6 +82,8 @@ const attrs = useAttrs();
   overflow: hidden;
   padding-inline: var(--ui-space-3);
   outline-offset: var(--ui-focus-offset-inset);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .demo-candidate-tabs__label {

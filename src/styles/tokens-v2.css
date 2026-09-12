@@ -137,7 +137,11 @@
   --ui-control-height-emergency: 3rem;
   --ui-track-row-min-height: 3.25rem;
   --ui-sidebar-row-min-height: 3.25rem;
-  --ui-track-artwork-size: 2.5rem;
+  --ui-track-artwork-size-dense: 2.25rem;
+  --ui-track-artwork-size-standard: 2.5rem;
+  --ui-track-artwork-size-prominent: 3rem;
+  --ui-track-artwork-size-preview: 4rem;
+  --ui-track-artwork-size: var(--ui-track-artwork-size-standard);
   --ui-list-header-height: 2.25rem;
   --ui-player-bar-height: 4.75rem;
   --ui-panel-inset: 1rem;
@@ -302,7 +306,7 @@
   --ui-control-height: 2rem;
   --ui-track-row-min-height: 2.75rem;
   --ui-sidebar-row-min-height: 3rem;
-  --ui-track-artwork-size: 2.25rem;
+  --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
   --ui-list-header-height: 2rem;
   --ui-player-bar-height: 4.25rem;
   --ui-panel-inset: 0.75rem;

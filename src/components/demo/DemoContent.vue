@@ -1,9 +1,9 @@
 <script setup>
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoMarqueeTextAppearance from './DemoMarqueeTextAppearance.vue';
+import DemoTrackThumbAppearance from './DemoTrackThumbAppearance.vue';
 
 defineProps({
   sections: { type: Array, default: () => [] },
@@ -20,6 +20,8 @@ const DEMO_TRACKS = [
     duration: 318,
   },
 ];
+
+const COMPARISON_SECTION_KEYS = new Set(['marquee-text', 'track-thumb']);
 </script>
 
 <template>
@@ -30,36 +32,10 @@ const DEMO_TRACKS = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
+      :reviewed="COMPARISON_SECTION_KEYS.has(section.key)"
     >
-      <div v-if="section.key === 'marquee-text'" class="demo-sample-stack">
-        <div class="demo-marquee-sample">
-          <UiMarqueeText
-            text="這是一段超過容器寬度後才會啟動的多語系曲目名稱 — 長い曲名 테스트"
-          />
-        </div>
-        <div class="demo-marquee-sample demo-marquee-sample--wide">
-          <UiMarqueeText text="短曲名不移動" />
-        </div>
-        <p class="demo-sample-caption">
-          只有實際溢位時才移動；滑鼠停留、鍵盤焦點與 reduced motion
-          都可保持閱讀。
-        </p>
-      </div>
-
-      <div v-else-if="section.key === 'track-thumb'" class="demo-sample-row">
-        <div class="demo-artwork-item">
-          <UiTrackThumb :track="DEMO_TRACKS[0]" :size="48" />
-          <span>首字佔位</span>
-        </div>
-        <div class="demo-artwork-item">
-          <UiTrackThumb :track="DEMO_TRACKS[1]" :size="64" />
-          <span>不同尺寸</span>
-        </div>
-        <div class="demo-artwork-item">
-          <UiTrackThumb :size="48">—</UiTrackThumb>
-          <span>無資料</span>
-        </div>
-      </div>
+      <DemoMarqueeTextAppearance v-if="section.key === 'marquee-text'" />
+      <DemoTrackThumbAppearance v-else-if="section.key === 'track-thumb'" />
 
       <div v-else-if="section.key === 'collage-thumb'" class="demo-sample-row">
         <div class="demo-artwork-item">
@@ -116,26 +92,6 @@ const DEMO_TRACKS = [
 </template>
 
 <style scoped>
-.demo-marquee-sample {
-  width: 14rem;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-}
-
-.demo-marquee-sample--wide {
-  width: min(24rem, 100%);
-}
-
-.demo-artwork-item {
-  display: grid;
-  justify-items: center;
-  gap: var(--ui-space-2);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
 .demo-track-list {
   display: grid;
   gap: var(--ui-space-1);

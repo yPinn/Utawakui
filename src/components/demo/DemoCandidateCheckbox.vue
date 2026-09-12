@@ -87,6 +87,7 @@ defineExpose({ focus });
   padding-block: max(0px, calc((var(--demo-checkbox-target-size) - 1lh) / 2));
   overflow-wrap: anywhere;
   cursor: pointer;
+  -webkit-user-select: none;
   user-select: none;
 }
 

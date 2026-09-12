@@ -143,6 +143,8 @@ defineExpose({ focus });
 .demo-candidate-range :deep(.ui-field__label) {
   min-width: 0;
   overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .demo-candidate-range__layout {
@@ -274,6 +276,8 @@ defineExpose({ focus });
   line-height: var(--ui-line-height-caption);
   text-align: end;
   overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @container (max-width: 18rem) {

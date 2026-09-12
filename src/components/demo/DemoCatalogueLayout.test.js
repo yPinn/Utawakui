@@ -23,6 +23,7 @@ const inputsSource = readSource('./DemoInputs.vue');
 const actionsSource = readSource('./DemoActions.vue');
 const navigationSource = readSource('./DemoNavigation.vue');
 const feedbackSource = readSource('./DemoFeedback.vue');
+const contentSource = readSource('./DemoContent.vue');
 
 const REVIEWED_APPEARANCE_SOURCES = [
   './DemoFieldAppearance.vue',
@@ -41,24 +42,27 @@ const REVIEWED_APPEARANCE_SOURCES = [
   './DemoStatusIconAppearance.vue',
   './DemoHintAppearance.vue',
   './DemoNoticeAppearance.vue',
+  './DemoProgressAppearance.vue',
+  './DemoMarqueeTextAppearance.vue',
+  './DemoTrackThumbAppearance.vue',
 ].map(readSource);
 
 describe('F8 reviewed catalogue layout', () => {
-  it('reports completed groups and the partially reviewed Feedback boundary', async () => {
+  it('reports completed groups and the partially reviewed Content boundary', async () => {
     const html = await renderToString(createSSRApp(DemoView));
 
-    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(4);
+    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(5);
     expect(html.match(/data-review-status="partial"/g)).toHaveLength(1);
-    expect(html.match(/data-review-status="pending"/g)).toHaveLength(2);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(23);
-    expect(html).toContain('Foundation → Inline Notice');
+    expect(html.match(/data-review-status="pending"/g)).toHaveLength(1);
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(26);
+    expect(html).toContain('Foundation → Track Thumb');
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
-    ).toHaveLength(4);
+    ).toHaveLength(5);
     expect(html).toMatch(/class="demo-group__status"[^>]*>\s*部分完成/);
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*待審查/g),
-    ).toHaveLength(2);
+    ).toHaveLength(1);
   });
 
   it('keeps reviewed sections flat and uses the comparison layers as surfaces', async () => {
@@ -96,6 +100,7 @@ describe('F8 reviewed catalogue layout', () => {
     expect(feedbackSource).toContain(
       'COMPARISON_SECTION_KEYS.has(section.key)',
     );
+    expect(contentSource).toContain('COMPARISON_SECTION_KEYS.has(section.key)');
 
     for (const source of [
       foundationsSource,
@@ -103,6 +108,7 @@ describe('F8 reviewed catalogue layout', () => {
       actionsSource,
       navigationSource,
       feedbackSource,
+      contentSource,
     ]) {
       expect(source).toMatch(/display:\s*grid;[^}]*gap:/s);
     }
@@ -137,7 +143,7 @@ describe('F8 reviewed catalogue layout', () => {
     )?.[0];
 
     expect(header).toContain('Candidate ≠ production adoption');
-    expect(header).toContain('Foundation → Inline Notice');
+    expect(header).toContain('Foundation → Track Thumb');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(1);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,
