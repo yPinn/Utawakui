@@ -42,6 +42,7 @@ describe('coverage policy', () => {
       'electron/performerPreload.js',
       'overlay/now-playing/now-playing.mjs',
       'shared/outputContract.js',
+      'src/components/demo/trackThumbFallback.js',
       'src/components/ui/fieldAttrs.js',
       'src/composables/usePlaylistActions.js',
       'src/composables/useMusicAnalysisSettings.js',
