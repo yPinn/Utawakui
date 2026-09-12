@@ -114,6 +114,26 @@ describe('LyricsWorkspace information hierarchy', () => {
     expect(documentPanelSource).toContain('tabindex="0"');
   });
 
+  it('keeps manual lyrics browsing separate from playback and offers one circular return action', () => {
+    expect(workspaceSource).toContain(
+      ':document-id="lyricsDocument.documentId"',
+    );
+    expect(documentPanelSource).toContain('isFollowingActiveLine');
+    expect(documentPanelSource).toContain(
+      '@wheel.passive="pauseActiveLineFollowing"',
+    );
+    expect(documentPanelSource).toContain(
+      '@touchmove.passive="pauseActiveLineFollowing"',
+    );
+    expect(documentPanelSource).toContain('@keydown="handleLyricsScrollKey"');
+    expect(documentPanelSource).toContain('@scroll="handleLyricsScroll"');
+    expect(documentPanelSource).toContain('<UiIconButton');
+    expect(documentPanelSource).toContain('label="回到目前歌詞"');
+    expect(documentPanelSource).toContain(':icon="LocateFixed"');
+    expect(documentPanelSource).toContain('size="lg"');
+    expect(documentPanelSource).toContain('shape="circle"');
+  });
+
   it('keys repeated lyric rows by canonical line identity', () => {
     expect(documentPanelSource).toContain(':key="line.lineId"');
     expect(documentPanelSource).not.toContain(

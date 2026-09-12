@@ -434,6 +434,7 @@ async function commitTimingDocument() {
         />
       </div>
       <LyricsDocumentPanel
+        :document-id="lyricsDocument.documentId"
         :error="state.error || ''"
         :is-loading="state.isLoading"
         :is-loading-lyrics="state.isLoadingLyrics"

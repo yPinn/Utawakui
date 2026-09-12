@@ -13,6 +13,7 @@ import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
@@ -42,6 +43,7 @@ attachClientRender(
 attachClientRender(UiButton, '../ui/UiButton.vue');
 attachClientRender(UiChip, '../ui/UiChip.vue');
 attachClientRender(UiHint, '../ui/UiHint.vue');
+attachClientRender(UiIconButton, '../ui/UiIconButton.vue');
 attachClientRender(UiNotice, '../ui/UiNotice.vue');
 
 function hostNode(type, text = '') {
@@ -155,6 +157,158 @@ describe('Lyrics workspace control contracts', () => {
       expect.objectContaining({ lineId: 'line_1' }),
     );
     expect(editTiming).toHaveBeenCalledWith('line_1');
+  });
+
+  it('lets manual scrolling pause line following until the return action resumes it', async () => {
+    const activeLineIndex = ref(0);
+    const documentId = ref('lyrics-document-1');
+    const lines = [
+      { lineId: 'line_1', start: 1, text: 'First line' },
+      { lineId: 'line_2', start: 2, text: 'Second line' },
+    ];
+    const harness = {
+      setup() {
+        return () =>
+          Vue.h(LyricsDocumentPanel, {
+            documentId: documentId.value,
+            lines,
+            trackCount: 1,
+            hasSelectedTrack: true,
+            lyricsStatus: 'available',
+            hasSelectedSource: true,
+            activeLineIndex: activeLineIndex.value,
+          });
+      },
+    };
+    const panel = mount(harness);
+    await nextTick();
+
+    const reader = findByProp(panel.root, 'aria-label', '歌詞內容');
+    const activeRow = {
+      getBoundingClientRect: () => ({ top: 620, height: 48 }),
+    };
+    const scrollTo = vi.fn();
+    reader.scrollTop = 160;
+    reader.clientHeight = 400;
+    reader.getBoundingClientRect = () => ({ top: 100 });
+    reader.querySelector = () => activeRow;
+    reader.scrollTo = scrollTo;
+
+    expect(
+      findByProp(panel.root, 'aria-label', '回到目前歌詞'),
+    ).toBeUndefined();
+
+    reader.props.onWheelPassive();
+    await nextTick();
+    const returnButton = findByProp(panel.root, 'aria-label', '回到目前歌詞');
+    expect(returnButton).toBeTruthy();
+
+    activeLineIndex.value = 1;
+    await nextTick();
+    expect(scrollTo).not.toHaveBeenCalled();
+
+    await returnButton.props.onClick();
+    expect(scrollTo).toHaveBeenCalledWith({
+      top: 536,
+      behavior: 'smooth',
+    });
+    await nextTick();
+    expect(
+      findByProp(panel.root, 'aria-label', '回到目前歌詞'),
+    ).toBeUndefined();
+
+    scrollTo.mockClear();
+    activeLineIndex.value = 0;
+    await nextTick();
+    await nextTick();
+    expect(scrollTo).toHaveBeenCalledOnce();
+  });
+
+  it('recognizes touch, keyboard, and scrollbar browsing and resets follow mode for a new document', async () => {
+    const documentId = ref('lyrics-document-1');
+    const harness = {
+      setup() {
+        return () =>
+          Vue.h(LyricsDocumentPanel, {
+            documentId: documentId.value,
+            lines: [{ lineId: 'line_1', start: 1, text: 'First line' }],
+            trackCount: 1,
+            hasSelectedTrack: true,
+            lyricsStatus: 'available',
+            hasSelectedSource: true,
+            activeLineIndex: 0,
+          });
+      },
+    };
+    const panel = mount(harness);
+    await nextTick();
+    const reader = findByProp(panel.root, 'aria-label', '歌詞內容');
+
+    reader.props.onTouchmovePassive();
+    await nextTick();
+    expect(findByProp(panel.root, 'aria-label', '回到目前歌詞')).toBeTruthy();
+
+    documentId.value = 'lyrics-document-2';
+    await nextTick();
+    expect(
+      findByProp(panel.root, 'aria-label', '回到目前歌詞'),
+    ).toBeUndefined();
+
+    reader.props.onKeydown({
+      key: 'PageDown',
+      target: reader,
+      currentTarget: reader,
+    });
+    await nextTick();
+    expect(findByProp(panel.root, 'aria-label', '回到目前歌詞')).toBeTruthy();
+
+    documentId.value = 'lyrics-document-3';
+    await nextTick();
+    reader.props.onPointerdown({ target: reader, currentTarget: reader });
+    reader.scrollTop = 120;
+    reader.props.onScroll();
+    await nextTick();
+    expect(findByProp(panel.root, 'aria-label', '回到目前歌詞')).toBeTruthy();
+  });
+
+  it('returns to the active line without smooth motion when reduced motion is requested', async () => {
+    vi.stubGlobal('matchMedia', () => ({ matches: true }));
+    try {
+      const panel = mount(LyricsDocumentPanel, {
+        documentId: 'lyrics-document-1',
+        lines: [{ lineId: 'line_1', start: 1, text: 'First line' }],
+        trackCount: 1,
+        hasSelectedTrack: true,
+        lyricsStatus: 'available',
+        hasSelectedSource: true,
+        activeLineIndex: 0,
+      });
+      await nextTick();
+      const reader = findByProp(panel.root, 'aria-label', '歌詞內容');
+      const scrollTo = vi.fn();
+      reader.scrollTop = 0;
+      reader.clientHeight = 200;
+      reader.getBoundingClientRect = () => ({ top: 0 });
+      reader.querySelector = () => ({
+        getBoundingClientRect: () => ({ top: 300, height: 40 }),
+      });
+      reader.scrollTo = scrollTo;
+
+      reader.props.onWheelPassive();
+      await nextTick();
+      await findByProp(
+        panel.root,
+        'aria-label',
+        '回到目前歌詞',
+      ).props.onClick();
+
+      expect(scrollTo).toHaveBeenCalledWith({
+        top: 236,
+        behavior: 'auto',
+      });
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
 
   it('emits global timing commands and reports compact draft progress', () => {

@@ -36,6 +36,7 @@ export {
   ListMusic,
   ListPlus,
   Loader2,
+  LocateFixed,
   Maximize2,
   MicVocal,
   Minus,

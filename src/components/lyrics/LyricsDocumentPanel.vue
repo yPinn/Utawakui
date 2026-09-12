@@ -1,12 +1,14 @@
 <script setup>
-import { nextTick, ref, watch } from 'vue';
-import { Check, Clock, Pencil, X } from '../../icons/index.js';
+import { computed, nextTick, shallowRef, useTemplateRef, watch } from 'vue';
+import { Check, Clock, LocateFixed, Pencil, X } from '../../icons/index.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
 const props = defineProps({
+  documentId: { type: String, default: '' },
   error: { type: String, default: '' },
   isLoading: { type: Boolean, default: false },
   isLoadingLyrics: { type: Boolean, default: false },
@@ -36,189 +38,303 @@ const emit = defineEmits([
   'cancel-reading-edit',
 ]);
 
-const panel = ref(null);
+const LYRICS_SCROLL_KEYS = new Set([
+  'ArrowDown',
+  'ArrowUp',
+  'End',
+  'Home',
+  'PageDown',
+  'PageUp',
+  ' ',
+]);
+
+const panel = useTemplateRef('panel');
+const isFollowingActiveLine = shallowRef(true);
+let pointerScrollStart = null;
+
+const activeLineId = computed(() => {
+  if (props.activeLineIndex < 0) return null;
+  return props.lines[props.activeLineIndex]?.lineId ?? null;
+});
+const showsReturnToActiveLine = computed(
+  () => Boolean(activeLineId.value) && !isFollowingActiveLine.value,
+);
 
 function canSeekLine(line) {
   return Number.isFinite(line?.start);
 }
 
 function shouldReduceMotion() {
-  return window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+  return Boolean(
+    globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches,
+  );
 }
 
 async function scrollActiveLineIntoView() {
   await nextTick();
-  const activeLine = panel.value?.querySelector('.lyrics-line--active');
-  if (!panel.value || !activeLine) return;
-  const containerRect = panel.value.getBoundingClientRect();
+  const scrollPanel = panel.value;
+  const activeLine = scrollPanel?.querySelector?.('.lyrics-line--active');
+  if (
+    !scrollPanel ||
+    !activeLine ||
+    typeof scrollPanel.getBoundingClientRect !== 'function' ||
+    typeof activeLine.getBoundingClientRect !== 'function' ||
+    typeof scrollPanel.scrollTo !== 'function'
+  ) {
+    return;
+  }
+  const containerRect = scrollPanel.getBoundingClientRect();
   const activeRect = activeLine.getBoundingClientRect();
-  panel.value.scrollTo({
+  scrollPanel.scrollTo({
     top: Math.max(
       0,
-      panel.value.scrollTop +
+      scrollPanel.scrollTop +
         activeRect.top -
         containerRect.top -
-        panel.value.clientHeight * 0.42 +
+        scrollPanel.clientHeight * 0.42 +
         activeRect.height / 2,
     ),
     behavior: shouldReduceMotion() ? 'auto' : 'smooth',
   });
 }
 
+function pauseActiveLineFollowing() {
+  if (!activeLineId.value) return;
+  pointerScrollStart = null;
+  isFollowingActiveLine.value = false;
+}
+
+function handleLyricsScrollKey(event) {
+  if (
+    event.target === event.currentTarget &&
+    LYRICS_SCROLL_KEYS.has(event.key)
+  ) {
+    pauseActiveLineFollowing();
+  }
+}
+
+function rememberPointerScrollStart(event) {
+  pointerScrollStart =
+    event.target === event.currentTarget ? event.currentTarget.scrollTop : null;
+}
+
+function handleLyricsScroll() {
+  if (
+    pointerScrollStart === null ||
+    panel.value?.scrollTop === pointerScrollStart
+  ) {
+    return;
+  }
+  pauseActiveLineFollowing();
+}
+
+function clearPointerScrollStart() {
+  pointerScrollStart = null;
+}
+
+async function resumeActiveLineFollowing() {
+  isFollowingActiveLine.value = true;
+  await scrollActiveLineIntoView();
+}
+
 watch(
-  () => props.activeLineIndex,
-  (index) => {
-    if (index >= 0) scrollActiveLineIntoView();
+  [() => props.documentId, activeLineId],
+  ([documentId, lineId], previous = []) => {
+    const [previousDocumentId] = previous;
+    if (documentId !== previousDocumentId) {
+      isFollowingActiveLine.value = true;
+    }
+    if (lineId && isFollowingActiveLine.value) {
+      scrollActiveLineIntoView();
+    }
   },
+  { immediate: true },
 );
 </script>
 
 <template>
-  <div
-    ref="panel"
-    class="lyrics-preview"
-    :class="fontSizeClass"
-    role="region"
-    aria-label="歌詞內容"
-    tabindex="0"
-  >
-    <UiNotice
-      v-if="error"
-      tone="danger"
-      title="歌詞讀取未完成"
-      :message="error"
-      compact
-    />
-    <UiHint v-else-if="isLoading" padded>載入中</UiHint>
-    <UiHint v-else-if="trackCount === 0" padded>
-      曲庫還沒有任何曲目。請先到 Import 匯入本機音訊。
-    </UiHint>
-    <UiHint v-else-if="!hasSelectedTrack" padded>請選擇歌詞曲目。</UiHint>
-    <UiHint v-else-if="isLoadingLyrics" padded>載入歌詞中</UiHint>
-    <UiHint v-else-if="lyricsStatus === 'missing'" padded
-      >目前沒有可用歌詞</UiHint
+  <div class="lyrics-document">
+    <div
+      id="lyrics-document-reader"
+      ref="panel"
+      class="lyrics-preview"
+      :class="fontSizeClass"
+      role="region"
+      aria-label="歌詞內容"
+      tabindex="0"
+      @wheel.passive="pauseActiveLineFollowing"
+      @touchmove.passive="pauseActiveLineFollowing"
+      @keydown="handleLyricsScrollKey"
+      @pointerdown="rememberPointerScrollStart"
+      @pointerup="clearPointerScrollStart"
+      @pointercancel="clearPointerScrollStart"
+      @scroll="handleLyricsScroll"
     >
-    <UiHint v-else-if="lyricsStatus === 'unchecked'" padded>
-      請按 reload 掃描歌詞來源
-    </UiHint>
-    <UiHint v-else-if="hasSelectedSource && lines.length === 0" padded>
-      歌詞檔無可顯示內容
-    </UiHint>
-    <ol v-else class="lyrics-lines">
-      <li
-        v-for="(line, index) in lines"
-        :key="line.lineId"
-        class="lyrics-line"
-        :class="{
-          'lyrics-line--active': index === activeLineIndex,
-          'lyrics-line--past': index < activeLineIndex,
-        }"
+      <UiNotice
+        v-if="error"
+        tone="danger"
+        title="歌詞讀取未完成"
+        :message="error"
+        compact
+      />
+      <UiHint v-else-if="isLoading" padded>載入中</UiHint>
+      <UiHint v-else-if="trackCount === 0" padded>
+        曲庫還沒有任何曲目。請先到 Import 匯入本機音訊。
+      </UiHint>
+      <UiHint v-else-if="!hasSelectedTrack" padded>請選擇歌詞曲目。</UiHint>
+      <UiHint v-else-if="isLoadingLyrics" padded>載入歌詞中</UiHint>
+      <UiHint v-else-if="lyricsStatus === 'missing'" padded
+        >目前沒有可用歌詞</UiHint
       >
-        <div
-          v-if="editingReadingLineIndex === index"
-          class="lyrics-line__edit-row"
+      <UiHint v-else-if="lyricsStatus === 'unchecked'" padded>
+        請按 reload 掃描歌詞來源
+      </UiHint>
+      <UiHint v-else-if="hasSelectedSource && lines.length === 0" padded>
+        歌詞檔無可顯示內容
+      </UiHint>
+      <ol v-else class="lyrics-lines">
+        <li
+          v-for="(line, index) in lines"
+          :key="line.lineId"
+          class="lyrics-line"
+          :class="{
+            'lyrics-line--active': index === activeLineIndex,
+            'lyrics-line--past': index < activeLineIndex,
+          }"
         >
-          <span class="lyrics-line__edit-field">
-            <span aria-hidden="true" />
-            <input
-              :value="readingLineDraft"
-              type="text"
-              class="lyrics-line__edit-input"
-              :placeholder="
-                lyricsScript === 'ko'
-                  ? '輸入這行的羅馬拼音'
-                  : '輸入這行的假名讀音'
-              "
-              @input="emit('update-reading-draft', $event.target.value)"
-              @keydown.enter="emit('commit-reading-edit', index)"
-              @keydown.esc="emit('cancel-reading-edit')"
-            />
-          </span>
-          <UiButton
-            :icon="Check"
-            title="儲存"
-            aria-label="儲存"
-            @click="emit('commit-reading-edit', index)"
-          />
-          <UiButton
-            :icon="X"
-            title="取消"
-            aria-label="取消"
-            @click="emit('cancel-reading-edit')"
-          />
-        </div>
-        <div class="lyrics-line__row">
-          <button
-            type="button"
-            class="lyrics-line__button"
-            :disabled="!canSeekLine(line)"
-            :aria-label="
-              canSeekLine(line)
-                ? `從 ${formatLyricTime(line.start)} 播放`
-                : '未同步歌詞'
-            "
-            @click="emit('seek-line', line)"
+          <div
+            v-if="editingReadingLineIndex === index"
+            class="lyrics-line__edit-row"
           >
-            <span class="lyrics-line__time">{{
-              formatLyricTime(line.start)
-            }}</span>
-            <span class="lyrics-line__text-group">
-              <span class="lyrics-line__text">
-                <template
-                  v-if="
-                    showsReadingAid &&
-                    readingVariant === 'furigana' &&
-                    readingLines[index]?.segments?.length
-                  "
-                >
-                  <template
-                    v-for="(segment, segmentIndex) in readingLines[index]
-                      .segments"
-                    :key="segmentIndex"
-                  >
-                    <ruby v-if="segment.r"
-                      >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
-                    >
-                    <template v-else>{{ segment.t }}</template>
-                  </template>
-                </template>
-                <template v-else>{{ line.text }}</template>
-              </span>
-              <span
-                v-if="showsReadingAid && readingVariant === 'romaji'"
-                class="lyrics-line__romaji"
-              >
-                {{ readingLines[index]?.romaji || '\u00A0' }}
-              </span>
+            <span class="lyrics-line__edit-field">
+              <span aria-hidden="true" />
+              <input
+                :value="readingLineDraft"
+                type="text"
+                class="lyrics-line__edit-input"
+                :placeholder="
+                  lyricsScript === 'ko'
+                    ? '輸入這行的羅馬拼音'
+                    : '輸入這行的假名讀音'
+                "
+                @input="emit('update-reading-draft', $event.target.value)"
+                @keydown.enter="emit('commit-reading-edit', index)"
+                @keydown.esc="emit('cancel-reading-edit')"
+              />
             </span>
-          </button>
-          <UiButton
-            v-if="canEditTiming && canSeekLine(line)"
-            class="lyrics-line__edit"
-            :icon="Clock"
-            :title="`編輯逐字時間：${line.text}`"
-            :aria-label="`編輯逐字時間：${line.text}`"
-            @click="emit('edit-timing', line.lineId)"
-          />
-          <UiButton
-            v-if="showsReadingAid && hasReadingDocument"
-            class="lyrics-line__edit"
-            :icon="Pencil"
-            title="修正這行讀音"
-            aria-label="修正這行讀音"
-            @click="emit('start-reading-edit', index)"
-          />
-        </div>
-      </li>
-    </ol>
+            <UiButton
+              :icon="Check"
+              title="儲存"
+              aria-label="儲存"
+              @click="emit('commit-reading-edit', index)"
+            />
+            <UiButton
+              :icon="X"
+              title="取消"
+              aria-label="取消"
+              @click="emit('cancel-reading-edit')"
+            />
+          </div>
+          <div class="lyrics-line__row">
+            <button
+              type="button"
+              class="lyrics-line__button"
+              :disabled="!canSeekLine(line)"
+              :aria-label="
+                canSeekLine(line)
+                  ? `從 ${formatLyricTime(line.start)} 播放`
+                  : '未同步歌詞'
+              "
+              @click="emit('seek-line', line)"
+            >
+              <span class="lyrics-line__time">{{
+                formatLyricTime(line.start)
+              }}</span>
+              <span class="lyrics-line__text-group">
+                <span class="lyrics-line__text">
+                  <template
+                    v-if="
+                      showsReadingAid &&
+                      readingVariant === 'furigana' &&
+                      readingLines[index]?.segments?.length
+                    "
+                  >
+                    <template
+                      v-for="(segment, segmentIndex) in readingLines[index]
+                        .segments"
+                      :key="segmentIndex"
+                    >
+                      <ruby v-if="segment.r"
+                        >{{ segment.t }}<rt>{{ segment.r }}</rt></ruby
+                      >
+                      <template v-else>{{ segment.t }}</template>
+                    </template>
+                  </template>
+                  <template v-else>{{ line.text }}</template>
+                </span>
+                <span
+                  v-if="showsReadingAid && readingVariant === 'romaji'"
+                  class="lyrics-line__romaji"
+                >
+                  {{ readingLines[index]?.romaji || '\u00A0' }}
+                </span>
+              </span>
+            </button>
+            <UiButton
+              v-if="canEditTiming && canSeekLine(line)"
+              class="lyrics-line__edit"
+              :icon="Clock"
+              :title="`編輯逐字時間：${line.text}`"
+              :aria-label="`編輯逐字時間：${line.text}`"
+              @click="emit('edit-timing', line.lineId)"
+            />
+            <UiButton
+              v-if="showsReadingAid && hasReadingDocument"
+              class="lyrics-line__edit"
+              :icon="Pencil"
+              title="修正這行讀音"
+              aria-label="修正這行讀音"
+              @click="emit('start-reading-edit', index)"
+            />
+          </div>
+        </li>
+      </ol>
+    </div>
+
+    <UiIconButton
+      v-if="showsReturnToActiveLine"
+      class="lyrics-preview__return"
+      variant="accent"
+      size="lg"
+      shape="circle"
+      :icon="LocateFixed"
+      label="回到目前歌詞"
+      aria-controls="lyrics-document-reader"
+      @click="resumeActiveLineFollowing"
+    />
   </div>
 </template>
 
 <style scoped>
+.lyrics-document {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+}
 .lyrics-preview {
+  height: 100%;
   min-height: 0;
   padding-bottom: var(--ui-lyrics-live-safe-area);
   overflow: auto;
+}
+.lyrics-preview__return {
+  position: absolute;
+  right: var(--ui-space-4);
+  bottom: calc(
+    var(--ui-space-4) + var(--ui-lyrics-live-control-height) + var(--ui-space-2)
+  );
+  z-index: var(--ui-z-dropdown);
+  box-shadow: var(--ui-shadow-overlay);
 }
 .lyrics-preview--font-compact .lyrics-line__button {
   font-size: var(--ui-lyrics-font-size-compact);
