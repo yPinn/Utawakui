@@ -110,6 +110,18 @@ const SHARED_STATIC_ROUTES = Object.freeze({
     'presentation',
     'lyricsPresentation.mjs',
   ],
+  '/shared/presentation/lyricsPresentationPolicies.mjs': [
+    'presentation',
+    'lyricsPresentationPolicies.mjs',
+  ],
+  '/shared/presentation/lyricsSourceMapping.mjs': [
+    'presentation',
+    'lyricsSourceMapping.mjs',
+  ],
+  '/shared/presentation/lyricsTemplateCapabilities.mjs': [
+    'presentation',
+    'lyricsTemplateCapabilities.mjs',
+  ],
   '/shared/presentation/kineticPopMotion.mjs': [
     'presentation',
     'kineticPopMotion.mjs',

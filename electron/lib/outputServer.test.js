@@ -81,6 +81,45 @@ function deepFreeze(value) {
   return Object.freeze(value);
 }
 
+const STATIC_MODULE_SPECIFIER_PATTERN =
+  /\b(?:import|export)\s+(?:[^'"]*?\s+from\s+)?['"]([^'"]+)['"]/gu;
+
+async function inspectServedModuleGraph(baseUrl, entryRoute) {
+  const pendingRoutes = [entryRoute];
+  const visitedRoutes = new Set();
+  const failures = [];
+
+  while (pendingRoutes.length > 0) {
+    const route = pendingRoutes.shift();
+    if (visitedRoutes.has(route)) continue;
+    visitedRoutes.add(route);
+
+    const response = await fetch(`${baseUrl}${route}`);
+    if (response.status !== 200) {
+      failures.push(`${route}: HTTP ${response.status}`);
+      continue;
+    }
+
+    const contentType = response.headers.get('content-type') ?? '';
+    if (!contentType.includes('text/javascript')) {
+      failures.push(`${route}: ${contentType || 'missing content type'}`);
+      continue;
+    }
+
+    const source = await response.text();
+    for (const match of source.matchAll(STATIC_MODULE_SPECIFIER_PATTERN)) {
+      const specifier = match[1];
+      if (!specifier.startsWith('.')) continue;
+      pendingRoutes.push(new URL(specifier, `${baseUrl}${route}`).pathname);
+    }
+  }
+
+  return {
+    failures,
+    routes: [...visitedRoutes],
+  };
+}
+
 function splitProjection(overrides = {}) {
   const dynamic = {
     generatedAt: '2026-08-23T00:00:00.000Z',
@@ -466,6 +505,21 @@ describe('outputServer', () => {
       `${status.httpUrl}/overlay/lyrics/lyrics.test.js`,
     );
     expect(unlistedFile.status).toBe(404);
+  });
+
+  it('serves a closed static module graph for the lyrics Browser Source', async () => {
+    const server = createServer();
+    const status = await server.start();
+
+    const graph = await inspectServedModuleGraph(
+      status.httpUrl,
+      '/overlay/lyrics/lyrics.mjs',
+    );
+
+    expect(graph.failures).toEqual([]);
+    expect(graph.routes).toContain(
+      '/shared/presentation/lyricsPresentation.mjs',
+    );
   });
 
   it('revalidates a changed allowlisted static asset instead of serving stale cache data', async () => {
