@@ -84,6 +84,40 @@ describe('loadReading', () => {
     expect(getLyricsReadingMock).not.toHaveBeenCalled();
   });
 
+  it('waits for a verifiable canonical identity before crossing IPC', async () => {
+    const reading = await loadReading();
+    const pendingDocument = {
+      ...lyricsDocument,
+      source: { sha256: null },
+    };
+
+    const result = await reading.loadReading('t1', 'ja.vtt', pendingDocument);
+
+    expect(result).toBeUndefined();
+    expect(getLyricsReadingMock).not.toHaveBeenCalled();
+    expect(reading.errorFor('t1', 'ja.vtt')).toBeNull();
+  });
+
+  it('coalesces concurrent reads for the same canonical identity', async () => {
+    let resolveLoad;
+    getLyricsReadingMock.mockReturnValue(
+      new Promise((resolve) => {
+        resolveLoad = resolve;
+      }),
+    );
+    const reading = await loadReading();
+
+    const firstLoad = reading.loadReading('t1', 'ja.vtt', lyricsDocument);
+    const secondLoad = reading.loadReading('t1', 'ja.vtt', lyricsDocument);
+
+    expect(getLyricsReadingMock).toHaveBeenCalledOnce();
+    resolveLoad(doc);
+    await expect(Promise.all([firstLoad, secondLoad])).resolves.toEqual([
+      doc,
+      doc,
+    ]);
+  });
+
   it('keeps the newest refresh when an older request resolves last', async () => {
     let resolveFirst;
     let resolveSecond;
@@ -95,11 +129,16 @@ describe('loadReading', () => {
     });
     const staleDoc = { ...doc, revision: 'stale' };
     const freshDoc = { ...doc, revision: 'fresh' };
+    const freshLyricsDocument = {
+      ...lyricsDocument,
+      documentId: 'lyr_document_fresh',
+      source: { sha256: 'b'.repeat(64) },
+    };
     getLyricsReadingMock.mockReturnValueOnce(first).mockReturnValueOnce(second);
     const reading = await loadReading();
 
     const firstLoad = reading.loadReading('t1', 'ja.vtt', lyricsDocument);
-    const secondLoad = reading.loadReading('t1', 'ja.vtt', lyricsDocument);
+    const secondLoad = reading.loadReading('t1', 'ja.vtt', freshLyricsDocument);
     resolveSecond(freshDoc);
     await secondLoad;
     resolveFirst(staleDoc);
@@ -123,6 +162,21 @@ describe('loadReading', () => {
 });
 
 describe('generateReading', () => {
+  it('does not start generation for an unverifiable document', async () => {
+    const reading = await loadReading();
+
+    const result = await reading.generateReading(
+      't1',
+      'ja.vtt',
+      { ...lyricsDocument, source: { sha256: null } },
+      'ja',
+    );
+
+    expect(result).toBeUndefined();
+    expect(generateLyricsReadingMock).not.toHaveBeenCalled();
+    expect(reading.isGenerating('t1', 'ja.vtt')).toBe(false);
+  });
+
   it('is a no-op while the same target is already generating', async () => {
     const reading = await loadReading();
     generateLyricsReadingMock.mockImplementation(() => new Promise(() => {}));
@@ -193,6 +247,21 @@ describe('generateReading', () => {
 });
 
 describe('setReadingLine', () => {
+  it('does not edit a line without a verifiable document identity', async () => {
+    const reading = await loadReading();
+
+    const result = await reading.setReadingLine(
+      't1',
+      'ja.vtt',
+      { ...lyricsDocument, source: { sha256: null } },
+      'line_1',
+      'です',
+    );
+
+    expect(result).toBeUndefined();
+    expect(setLyricsReadingLineMock).not.toHaveBeenCalled();
+  });
+
   it('forwards args and stores the returned doc', async () => {
     setLyricsReadingLineMock.mockResolvedValue(doc);
     const reading = await loadReading();
