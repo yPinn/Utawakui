@@ -39,6 +39,8 @@ const REVIEWED_APPEARANCE_SOURCES = [
   './DemoTabsAppearance.vue',
   './DemoChipAppearance.vue',
   './DemoStatusIconAppearance.vue',
+  './DemoHintAppearance.vue',
+  './DemoNoticeAppearance.vue',
 ].map(readSource);
 
 describe('F8 reviewed catalogue layout', () => {
@@ -48,8 +50,8 @@ describe('F8 reviewed catalogue layout', () => {
     expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(4);
     expect(html.match(/data-review-status="partial"/g)).toHaveLength(1);
     expect(html.match(/data-review-status="pending"/g)).toHaveLength(2);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(21);
-    expect(html).toContain('Foundation → Status Icon');
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(23);
+    expect(html).toContain('Foundation → Inline Notice');
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
     ).toHaveLength(4);
@@ -91,7 +93,9 @@ describe('F8 reviewed catalogue layout', () => {
     expect(inputsSource).toContain(':reviewed="true"');
     expect(actionsSource).toContain(':reviewed="true"');
     expect(navigationSource).toContain(':reviewed="true"');
-    expect(feedbackSource).toContain('REVIEWED_SECTION_KEYS.has(section.key)');
+    expect(feedbackSource).toContain(
+      'COMPARISON_SECTION_KEYS.has(section.key)',
+    );
 
     for (const source of [
       foundationsSource,
@@ -133,7 +137,7 @@ describe('F8 reviewed catalogue layout', () => {
     )?.[0];
 
     expect(header).toContain('Candidate ≠ production adoption');
-    expect(header).toContain('Foundation → Status Icon');
+    expect(header).toContain('Foundation → Inline Notice');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(1);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,

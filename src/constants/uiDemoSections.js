@@ -75,7 +75,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
   {
     key: 'feedback',
     title: '狀態與回饋',
-    description: '狀態標籤與圖示；其餘項目待審查。',
+    description: '狀態標籤、圖示與內嵌通知；進度待審查。',
     sections: [
       { key: 'chips', title: '狀態標籤', components: ['UiChip'] },
       {
@@ -83,8 +83,8 @@ export const UI_DEMO_GROUPS = Object.freeze([
         title: '狀態圖示',
         components: ['UiStatusIcon'],
       },
-      { key: 'hints', title: '提示文字', components: ['UiHint'] },
-      { key: 'notices', title: '通知訊息', components: ['UiNotice'] },
+      { key: 'hints', title: '輔助文字', components: ['UiHint'] },
+      { key: 'notices', title: '內嵌通知', components: ['UiNotice'] },
       { key: 'progress', title: '進度指示', components: ['UiProgress'] },
     ],
   },

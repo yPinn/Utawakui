@@ -82,8 +82,8 @@ function scrollToGroup(key) {
       </div>
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
-          <dt>已審查</dt>
-          <dd>Foundation → Status Icon</dd>
+          <dt>檢查範圍</dt>
+          <dd>Foundation → Inline Notice</dd>
         </div>
       </dl>
     </header>

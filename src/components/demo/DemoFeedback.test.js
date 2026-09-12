@@ -23,7 +23,20 @@ describe('DemoFeedback', () => {
     );
     expect(feedbackSource).not.toContain('const STATUS_TONES');
     expect(feedbackSource).toContain(
-      '<div v-else-if="section.key === \'hints\'"',
+      "import DemoHintAppearance from './DemoHintAppearance.vue';",
+    );
+    expect(feedbackSource).toMatch(
+      /<DemoHintAppearance\s+v-else-if="section\.key === 'hints'"\s*\/>/u,
+    );
+    expect(feedbackSource).not.toContain('const HINT_TONES');
+    expect(feedbackSource).toContain(
+      "import DemoNoticeAppearance from './DemoNoticeAppearance.vue';",
+    );
+    expect(feedbackSource).toMatch(
+      /<DemoNoticeAppearance\s+v-else-if="section\.key === 'notices'"\s*\/>/u,
+    );
+    expect(feedbackSource).not.toContain(
+      "import UiNotice from '../ui/UiNotice.vue';",
     );
   });
 });

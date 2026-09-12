@@ -42,7 +42,7 @@ describe('DemoStatusIconAppearance', () => {
     );
     expect(feedbackSource).not.toContain('const STATUS_TONES');
     expect(feedbackSource).toContain(
-      '<div v-else-if="section.key === \'hints\'"',
+      "import DemoHintAppearance from './DemoHintAppearance.vue';",
     );
   });
 
