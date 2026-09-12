@@ -1,12 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import lrcParsing from './lrcParsing.js';
-
-const {
+import {
   isLrcMetadataLine,
   lrcTimestamps,
   parseLrcTimestamp,
   stripLrcTimestampTags,
-} = lrcParsing;
+} from './lrcParsing.mjs';
 
 describe('shared LRC parsing primitives', () => {
   it('distinguishes timestamps, metadata, and authored bracket text', () => {

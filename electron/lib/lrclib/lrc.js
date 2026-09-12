@@ -4,7 +4,7 @@ const {
   lrcTimestamps,
   parseLrcTimestamp,
   stripLrcTimestampTags,
-} = require('../../../shared/lrcParsing');
+} = require('../../../shared/lrcParsing.mjs');
 
 function parseLrcLines(text) {
   if (typeof text !== 'string' || text.trim().length === 0) return [];

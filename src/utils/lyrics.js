@@ -1,6 +1,7 @@
-import lrcParsing from '../../shared/lrcParsing.js';
-
-const { isLrcMetadataLine, parseLrcTimestamp } = lrcParsing;
+import {
+  isLrcMetadataLine,
+  parseLrcTimestamp,
+} from '../../shared/lrcParsing.mjs';
 const TIME_RE = /(?:(\d+):)?(\d{2}):(\d{2})(?:[.,](\d{1,3}))?/;
 const LRC_SPEAKER_CUE_RE = /^\[[^\]\r\n]{1,40}\][ \t]*/u;
 const SOURCE_KIND_YOUTUBE_CC = 'youtube-cc';
