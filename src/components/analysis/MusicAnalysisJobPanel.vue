@@ -150,7 +150,7 @@ function runPrimaryAction() {
       "
       tone="muted"
     >
-      將下載 {{ capability?.modelName }} 與固定 runtime，約
+      將下載音樂分析所需檔案，約
       {{ formatMegabytes(capability?.downloadBytes) }} MB。
     </UiHint>
 
@@ -190,8 +190,8 @@ function runPrimaryAction() {
       </UiButton>
       <UiIconButton
         :icon="RefreshCw"
-        label="重新讀取 sidecar"
-        title="重新讀取 sidecar"
+        label="重新讀取分析結果"
+        title="重新讀取分析結果"
         :disabled="!selectedTrack || busy"
         @click="emit('reload')"
       />

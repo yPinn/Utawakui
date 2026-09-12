@@ -6,7 +6,7 @@ const STAGE_LABELS = Object.freeze({
   analyzing: '分析節拍與段落',
   validating: '驗證分析結果',
   complete: '分析完成',
-  checking: '檢查既有 sidecar',
+  checking: '檢查既有分析結果',
 });
 
 function publicErrorMessage(error) {
@@ -141,7 +141,7 @@ export function useMusicAnalysisJob(options = {}) {
       state.phase = 'idle';
       state.progress = null;
       state.notice =
-        '接手的分析工作已結束並重新讀取 sidecar；目前狀態 API 無法判定完成、失敗或取消。';
+        '分析工作已結束，已重新載入最新結果；若結果未更新，請再執行一次分析。';
       if (previousJob && state.selectedTrackId === previousJob.trackId) {
         await signalOwner.loadForTrack(previousJob.trackId);
       }
@@ -175,7 +175,7 @@ export function useMusicAnalysisJob(options = {}) {
         stage: 'complete',
         percent: 100,
       };
-      state.notice = '分析完成，sidecar 已更新。';
+      state.notice = '分析完成，結果已更新。';
       return result;
     } catch (error) {
       state.error = publicErrorMessage(error);
@@ -201,7 +201,7 @@ export function useMusicAnalysisJob(options = {}) {
         state.activeJob = null;
         state.progress = null;
         await signalOwner.loadForTrack(state.selectedTrackId);
-        state.notice = '分析工作已取消，已重新讀取目前 sidecar。';
+        state.notice = '分析工作已取消，已重新載入目前結果。';
       }
       return Boolean(result?.cancelled);
     } catch (error) {

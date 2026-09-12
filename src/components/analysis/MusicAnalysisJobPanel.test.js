@@ -22,7 +22,8 @@ describe('MusicAnalysisJobPanel', () => {
 
     expect(html).toContain('單曲分析');
     expect(html).toContain('開始分析');
-    expect(html).toContain('重新讀取 sidecar');
+    expect(html).toContain('重新讀取分析結果');
+    expect(html).not.toMatch(/sidecar|runtime/iu);
     expect(html).not.toContain('此頁只操作既有');
     expect(html).not.toContain('Analysis job');
     expect(html).not.toContain('Internal workbench');
@@ -47,6 +48,9 @@ describe('MusicAnalysisJobPanel', () => {
 
     expect(html).toContain('下載並安裝');
     expect(html).toContain('約 152 MB');
+    expect(html).toContain('將下載音樂分析所需檔案');
+    expect(html).not.toContain('Beat This! small0');
+    expect(html).not.toMatch(/sidecar|runtime/iu);
     expect(html).toContain('未安裝');
     expect(html).not.toContain('<progress');
     expect(html).not.toContain('尚未是正式產品功能');

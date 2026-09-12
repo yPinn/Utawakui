@@ -27,7 +27,7 @@ const M2_PRESENTATION = Object.freeze({
   'low-confidence': {
     level: 'M1',
     label: 'M1 降級',
-    message: '段落信心不足，正式 sidecar 會保留 BPM／節拍但不發布段落。',
+    message: '段落信心不足，正式分析結果會保留 BPM／節拍，但不顯示段落。',
     tone: 'warning',
   },
   incomplete: {

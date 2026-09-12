@@ -44,7 +44,7 @@ function setBatchSelection({ trackIds, selected }) {
 async function removeCapability() {
   const confirmed =
     typeof window === 'undefined' ||
-    window.confirm('移除本機音樂分析功能？歌曲、歌詞與既有 sidecar 都會保留。');
+    window.confirm('移除本機音樂分析功能？歌曲、歌詞與既有分析結果都會保留。');
   if (confirmed) await workbench.removeCapability();
 }
 

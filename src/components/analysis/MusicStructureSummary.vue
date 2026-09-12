@@ -21,26 +21,32 @@ const ROLE_LABELS = Object.freeze({
   unknown: '未分類',
 });
 
+const LEVEL_LABELS = Object.freeze({
+  M0: '尚無結果',
+  M1: '節拍',
+  M2: '段落',
+});
+
 const REASON_COPY = Object.freeze({
   missing: {
-    title: '尚未找到 analysis sidecar',
-    message: '目前以 M0 fallback 呈現；可在 activation 就緒後從上方開始分析。',
+    title: '尚無分析結果',
+    message: '安裝分析功能後，可從上方開始分析。',
   },
   invalid: {
-    title: 'Analysis sidecar 無效',
-    message: '資料未通過契約驗證，因此安全降級為 M0 fallback。',
+    title: '分析結果無法使用',
+    message: '資料未通過檢查，暫不顯示節拍或段落。請重新分析。',
   },
   stale: {
-    title: 'Analysis sidecar 已過期',
-    message: '來源音訊與 sidecar 不一致，因此安全降級為 M0 fallback。',
+    title: '分析結果需要更新',
+    message: '歌曲音訊已變更，請重新分析。',
   },
   'unavailable-source': {
     title: '來源音訊無法使用',
-    message: '找不到可驗證的本機音訊，因此維持 M0 fallback。',
+    message: '找不到可讀取的歌曲音訊，請確認檔案仍存在。',
   },
   'no-signal': {
-    title: '分析沒有產生可用訊號',
-    message: 'Sidecar 有效，但沒有節拍或段落證據，因此維持 M0 fallback。',
+    title: '未找到節拍或段落',
+    message: '這次分析沒有找到足夠資訊；可重新分析或改用其他音訊。',
   },
 });
 
@@ -52,14 +58,14 @@ const fallbackCopy = computed(
   () =>
     REASON_COPY[signals.value?.reason] ?? {
       title: '尚無音樂結構分析結果',
-      message: '選擇曲目後可讀取既有 sidecar。',
+      message: '選擇曲目後即可查看分析結果。',
     },
 );
 const SECTION_EMPTY_COPY = Object.freeze({
-  missing: '此 sidecar 只有 M1 節拍資料，尚無段落。',
-  'low-confidence': '段落信心不足，已安全保留 M1 節拍結果。',
-  incomplete: '段落沒有完整連續覆蓋曲長，已安全保留 M1 節拍結果。',
-  unknown: '段落語意尚未完整辨識，已安全保留 M1 節拍結果。',
+  missing: '已找到節拍，尚未辨識出段落。',
+  'low-confidence': '段落信心不足，目前只顯示節拍。',
+  incomplete: '段落未涵蓋完整歌曲，目前只顯示節拍。',
+  unknown: '部分段落仍無法分類，目前只顯示節拍。',
 });
 const sectionEmptyCopy = computed(
   () =>
@@ -108,7 +114,7 @@ function sectionLabel(role) {
           v-if="result"
           :icon="Info"
           label="查看來源資訊"
-          title="查看 sidecar 來源版本與音訊長度"
+          title="查看分析版本與音訊長度"
           :aria-expanded="showSourceDetails"
           @click="showSourceDetails = !showSourceDetails"
         />
@@ -116,13 +122,13 @@ function sectionLabel(role) {
           v-if="signals"
           :tone="signals.level === 'M0' ? 'muted' : 'success'"
         >
-          {{ signals.level }}
+          {{ LEVEL_LABELS[signals.level] ?? '結果' }}
         </UiChip>
       </div>
     </div>
 
     <p v-if="showSourceDetails" class="structure-summary__source">
-      Sidecar 來源 {{ sourceRevision }} · 音訊長度
+      分析版本 {{ sourceRevision }} · 音訊長度
       {{ formatTime(result?.sourceDurationMs) }}
     </p>
 

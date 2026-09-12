@@ -7,7 +7,7 @@ import { createMusicStructureSignals } from './useMusicStructureSignals.js';
 
 const PHASE_LABELS = Object.freeze({
   idle: '待命',
-  loading: '讀取 sidecar',
+  loading: '讀取分析結果',
   starting: '建立分析工作',
   analyzing: '分析中',
   cancelling: '正在取消',
@@ -180,7 +180,8 @@ export function useMusicAnalysisWorkbench(options = {}) {
       await library.initialize();
       if (disposed) return;
       if (!bridge) {
-        state.error = '目前不是 Electron renderer 環境，無法連接音樂結構分析。';
+        state.error =
+          '目前無法開啟音樂結構分析，請重新啟動應用程式後再試一次。';
         state.initialized = true;
         return;
       }

@@ -90,7 +90,7 @@ onMounted(library.initialize);
         <h2 id="benchmark-review-title" class="benchmark-review__title">
           M2 Benchmark Review
         </h2>
-        <UiHint>只讀檢視候選段落；不會寫入 sidecar。</UiHint>
+        <UiHint>只讀檢視候選段落；不會變更分析結果。</UiHint>
       </div>
       <UiButton
         variant="accent"

@@ -11,8 +11,12 @@ async function render(result) {
   );
 }
 
+function visibleText(html) {
+  return html.replace(/<[^>]*>/gu, ' ').replace(/\s+/gu, ' ');
+}
+
 describe('MusicStructureSummary', () => {
-  it('renders a compact M2 summary and section order', async () => {
+  it('renders a compact section summary without exposing internal tiers', async () => {
     const html = await render({
       trackId: 'track-1',
       sourceRevision: 'abcdef1234567890'.repeat(4),
@@ -37,7 +41,7 @@ describe('MusicStructureSummary', () => {
       },
     });
 
-    expect(html).toContain('M2');
+    expect(visibleText(html)).not.toContain('M2');
     expect(html).toContain('約 120 BPM');
     expect(html).toContain('2');
     expect(html).toContain('1');
@@ -71,10 +75,11 @@ describe('MusicStructureSummary', () => {
     expect(html).toContain('節拍信心 95%');
     expect(html).not.toContain('91.94 BPM');
     expect(html).toContain('段落信心不足');
-    expect(html).toContain('保留 M1');
+    expect(html).toContain('目前只顯示節拍');
+    expect(visibleText(html)).not.toContain('M1');
   });
 
-  it('teaches the missing-sidecar state instead of showing an empty panel', async () => {
+  it('explains missing results without exposing storage or fallback internals', async () => {
     const html = await render({
       trackId: 'track-1',
       sourceRevision: null,
@@ -88,7 +93,32 @@ describe('MusicStructureSummary', () => {
       },
     });
 
-    expect(html).toContain('尚未找到 analysis sidecar');
-    expect(html).toContain('M0 fallback');
+    expect(html).toContain('尚無分析結果');
+    expect(html).toContain('安裝分析功能後，可從上方開始分析。');
+    expect(html).not.toMatch(/sidecar|M0 fallback|analysis sidecar/iu);
   });
+
+  it.each([
+    ['invalid', '分析結果無法使用', '請重新分析'],
+    ['stale', '分析結果需要更新', '歌曲音訊已變更'],
+    ['unavailable-source', '來源音訊無法使用', '請確認檔案仍存在'],
+    ['no-signal', '未找到節拍或段落', '可重新分析或改用其他音訊'],
+  ])(
+    'gives a user-facing recovery for %s results',
+    async (reason, title, message) => {
+      const html = await render({
+        signals: {
+          level: 'M0',
+          reason,
+          tempo: null,
+          beats: [],
+          sections: [],
+        },
+      });
+
+      expect(html).toContain(title);
+      expect(html).toContain(message);
+      expect(html).not.toMatch(/sidecar|M0 fallback|狀態 API/iu);
+    },
+  );
 });

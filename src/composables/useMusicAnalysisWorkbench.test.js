@@ -379,9 +379,11 @@ describe('Music Analysis workbench', () => {
 
     expect(harness.workbench.state.activeJob).toBeNull();
     expect(harness.workbench.state.phase).toBe('idle');
+    expect(harness.workbench.state.notice).toContain('分析工作已結束');
     expect(harness.workbench.state.notice).toContain(
-      '無法判定完成、失敗或取消',
+      '若結果未更新，請再執行一次分析',
     );
+    expect(harness.workbench.state.notice).not.toMatch(/sidecar|狀態 API/iu);
     expect(harness.signalOwner.loadForTrack).toHaveBeenLastCalledWith(
       'track-2',
     );
@@ -520,6 +522,7 @@ describe('Music Analysis workbench', () => {
       stage: 'complete',
       percent: 100,
     });
+    expect(harness.workbench.state.notice).toBe('分析完成，結果已更新。');
   });
 
   it('cancels the active job and reloads the selected sidecar state', async () => {
@@ -542,6 +545,9 @@ describe('Music Analysis workbench', () => {
     );
     expect(harness.workbench.state.phase).toBe('idle');
     expect(harness.workbench.state.activeJob).toBeNull();
+    expect(harness.workbench.state.notice).toBe(
+      '分析工作已取消，已重新載入目前結果。',
+    );
   });
 
   it('explains unavailable activation without presenting it as a UI failure', async () => {
