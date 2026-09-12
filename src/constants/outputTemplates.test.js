@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { outputAppearanceFieldKeysForTemplate } from '../../shared/outputAppearance.mjs';
+import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import {
   OUTPUT_PREVIEW_SCENE,
   OUTPUT_TEMPLATE_KINDS,
@@ -188,6 +189,36 @@ describe('output template registry', () => {
     }
   });
 
+  it('projects presentation policy controls separately from appearance controls', () => {
+    const templates = getOutputWorkbenchData().templates;
+    const liveStage = templates.find(
+      (template) => template.id === 'live-stage',
+    );
+
+    expect(liveStage.appearanceFields.map(({ key }) => key)).toEqual([
+      'fontFamily',
+      'fontScale',
+    ]);
+    expect(liveStage.presentationFields).toEqual([
+      expect.objectContaining({
+        key: 'lyricsPresentationPolicyId',
+        label: '歌詞呈現策略',
+        groupLabel: '歌詞呈現',
+        defaultValue: 'broadcast-compact',
+        options: [
+          { id: 'broadcast-compact', label: '轉播精簡' },
+          { id: 'balanced', label: '平衡分行' },
+          { id: 'literal', label: '忠實原文' },
+        ],
+      }),
+    ]);
+    expect(
+      templates
+        .filter((template) => template.id !== 'live-stage')
+        .every((template) => template.presentationFields.length === 0),
+    ).toBe(true);
+  });
+
   it('describes the Kinetic Pop burst consistently for every visible phrase', () => {
     const kineticPop = getOutputWorkbenchData().templates.find(
       (template) => template.id === 'kinetic-pop',
@@ -345,6 +376,11 @@ describe('output template registry', () => {
       'live-stage': { id: 'live-stage', version: 1, available: true },
       'reading-aid': { id: 'reading-aid', version: 1, available: false },
     });
+    for (const template of lyricsGroup.templates) {
+      expect(template.lyricsCapabilities).toEqual(
+        lyricsTemplateCapabilities(template.id),
+      );
+    }
     expect(
       lyricsGroup.templates.find((template) => template.id === 'reading-aid'),
     ).toMatchObject({

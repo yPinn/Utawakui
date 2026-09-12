@@ -20,6 +20,7 @@ import {
   analyzeLyricsSource,
   createLyricsPresentationDocumentCache,
 } from '../shared/lyricsPresentation.mjs';
+import { normalizeLyricsPresentationPolicyId } from '../../shared/presentation/lyricsPresentationPolicies.mjs';
 import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
@@ -1603,6 +1604,10 @@ export function createLyricsFrameScheduler(options = {}) {
   let kineticMaterial = normalizeOverlayAppearance({
     kineticMaterial: options.kineticMaterial,
   }).kineticMaterial;
+  let lyricsPresentationPolicyId = normalizeLyricsPresentationPolicyId(
+    templateId,
+    options.lyricsPresentationPolicyId,
+  );
   const presentationCache =
     options.presentationCache ?? createLyricsPresentationDocumentCache();
 
@@ -1622,10 +1627,11 @@ export function createLyricsFrameScheduler(options = {}) {
         language: lyrics.source?.language,
         lines: lyrics.lines,
       },
-      { kineticMaterial, templateId },
+      { kineticMaterial, lyricsPresentationPolicyId, templateId },
     );
     const projectionOptions = {
       kineticMaterial,
+      lyricsPresentationPolicyId,
       nowMs,
       presentationDocument,
       templateId,
@@ -1673,20 +1679,34 @@ export function createLyricsFrameScheduler(options = {}) {
     const normalizedKineticMaterial = normalizeOverlayAppearance({
       kineticMaterial: nextSettings.kineticMaterial,
     }).kineticMaterial;
+    const nextPolicyValue = Object.hasOwn(
+      nextSettings,
+      'lyricsPresentationPolicyId',
+    )
+      ? nextSettings.lyricsPresentationPolicyId
+      : lyricsPresentationPolicyId;
+    const normalizedLyricsPresentationPolicyId =
+      normalizeLyricsPresentationPolicyId(
+        normalizedTemplateId,
+        nextPolicyValue,
+      );
     if (
       normalizedTemplateId === templateId &&
-      normalizedKineticMaterial === kineticMaterial
+      normalizedKineticMaterial === kineticMaterial &&
+      normalizedLyricsPresentationPolicyId === lyricsPresentationPolicyId
     ) {
       return;
     }
     templateId = normalizedTemplateId;
     kineticMaterial = normalizedKineticMaterial;
+    lyricsPresentationPolicyId = normalizedLyricsPresentationPolicyId;
     refresh();
   }
 
   function setTemplateId(nextTemplateId) {
     setPresentationSettings({
       kineticMaterial,
+      lyricsPresentationPolicyId,
       templateId: nextTemplateId,
     });
   }
@@ -1694,6 +1714,7 @@ export function createLyricsFrameScheduler(options = {}) {
   function setKineticMaterial(nextKineticMaterial) {
     setPresentationSettings({
       kineticMaterial: nextKineticMaterial,
+      lyricsPresentationPolicyId,
       templateId,
     });
   }
@@ -1776,6 +1797,7 @@ function boot() {
       frameScheduler.setPresentationSettings({
         kineticMaterial: normalizeOverlayAppearance(slot?.settings)
           .kineticMaterial,
+        lyricsPresentationPolicyId: slot?.settings?.lyricsPresentationPolicyId,
         templateId: slot?.templateId,
       });
     },

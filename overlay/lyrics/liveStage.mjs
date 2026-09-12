@@ -122,7 +122,11 @@ function renderCard(elements, stage, options) {
 function renderCaption(elements, frame) {
   const presentation = adaptLiveStageLyricsPresentation(
     frame.lyricsSourceAnalysis ?? analyzeLyricsSource(frame.currentText),
-    { lineProgress: frame.lineProgress },
+    {
+      lineProgress: frame.lineProgress,
+      lyricsPresentationPolicyId: frame.lyricsPresentationPolicyId,
+      pageIndex: frame.liveStagePageIndex,
+    },
   );
   const documentApi =
     elements.current.ownerDocument ?? elements.root.ownerDocument;

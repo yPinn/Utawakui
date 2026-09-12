@@ -4,6 +4,7 @@ import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
 } from './ornateVerticalPresentation.mjs';
+import { lyricsPresentationPolicyForTemplate } from './lyricsPresentationPolicies.mjs';
 import { outputAppearanceFieldKeysForTemplate } from '../outputAppearance.mjs';
 
 export const MAX_LYRICS_PRESENTATION_BUBBLES = 3;
@@ -20,6 +21,8 @@ const CJK_GLYPH_RE = /[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u;
 const HANGUL_RE = /[\uac00-\ud7af]/u;
 const KANA_RE = /[\u3040-\u30ff]/u;
 const HAN_RE = /[\u3400-\u9fff]/u;
+const CJK_LATIN_ADJACENCY_RE =
+  /(?:[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af](?=\p{Script=Latin})|\p{Script=Latin}(?=[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]))/u;
 const MANGA_BUBBLE_QUOTE_PAIRS = Object.freeze({
   '「': '」',
   '『': '』',
@@ -62,6 +65,126 @@ const KTV_GROUP_LABELS = new Set([
 ]);
 const LIVE_STAGE_ROW_WIDTHS = [7, 11, 7, 11];
 const LIVE_STAGE_MAX_ROW_WIDTH = Math.max(...LIVE_STAGE_ROW_WIDTHS);
+const LIVE_STAGE_VISUAL_WIDTH_SCALE = 20;
+const LIVE_STAGE_ROW_HIERARCHY_TOLERANCE = 2;
+const LIVE_STAGE_WORD_SEGMENTERS =
+  typeof Intl?.Segmenter === 'function'
+    ? Object.freeze({
+        ja: new Intl.Segmenter('ja', { granularity: 'word' }),
+        ko: new Intl.Segmenter('ko', { granularity: 'word' }),
+        zh: new Intl.Segmenter('zh-Hant', { granularity: 'word' }),
+      })
+    : null;
+const CHINESE_LINE_END_BINDERS = new Set([
+  '把',
+  '被',
+  '才',
+  '但',
+  '的',
+  '都',
+  '給',
+  '给',
+  '還',
+  '还',
+  '和',
+  '會',
+  '会',
+  '將',
+  '将',
+  '就',
+  '讓',
+  '让',
+  '仍',
+  '想',
+  '向',
+  '要',
+  '也',
+  '與',
+  '与',
+  '又',
+  '再',
+  '在',
+  '正',
+]);
+const CHINESE_LINE_START_PARTICLES = new Set(['的', '地', '得']);
+const CHINESE_PREFERRED_LINE_STARTS = new Set([
+  '把',
+  '被',
+  '但',
+  '還',
+  '还',
+  '會',
+  '会',
+  '將',
+  '将',
+  '就',
+  '讓',
+  '让',
+  '仍',
+  '想',
+  '要',
+  '再',
+  '真',
+  '真的',
+  '正',
+  '正在',
+]);
+const JAPANESE_LINE_START_BINDERS = new Set([
+  'が',
+  'から',
+  'けど',
+  'さ',
+  'しか',
+  'ぞ',
+  'だけ',
+  'だ',
+  'た',
+  'たい',
+  'って',
+  'て',
+  'で',
+  'と',
+  'な',
+  'に',
+  'ね',
+  'の',
+  'ので',
+  'のに',
+  'は',
+  'へ',
+  'まで',
+  'も',
+  'ます',
+  'ました',
+  'ない',
+  'なく',
+  'れる',
+  'られる',
+  'せる',
+  'させる',
+  'よ',
+  'より',
+  'を',
+  'か',
+  'っ',
+]);
+const JAPANESE_LINE_END_BINDERS = new Set(['と', 'な', 'の']);
+const JAPANESE_PRENOMINAL_MODIFIERS = new Set([
+  'あの',
+  'あんな',
+  'この',
+  'こんな',
+  'その',
+  'そんな',
+  'どの',
+  'どんな',
+  '小さな',
+  '大きな',
+  '新たな',
+]);
+const JAPANESE_FALLBACK_BREAKABLE_PARTICLES = new Set(['が', 'は', 'も', 'を']);
+const NON_BREAKING_INTERWORD_SYMBOL_RE = /^[\p{Dash_Punctuation}·・／/\\]+$/u;
+const CLOSING_PHRASE_PUNCTUATION_RE = /^[》〉」』】）)\u005d]+$/u;
 const KOREAN_GENITIVE_PRONOUNS = new Set([
   '나의',
   '너의',
@@ -432,20 +555,20 @@ function kineticPopVisualUnits(value) {
 }
 
 function kineticPopPhrases(text) {
-  return text
-    .split(/\s+/gu)
-    .filter(Boolean)
-    .map((phraseText) => {
-      const units = kineticPopVisualUnits(phraseText);
-      return {
-        text: phraseText,
-        units,
-        weight: Math.max(
-          1,
-          units.reduce((total, unit) => total + unit.weight, 0),
-        ),
-      };
-    });
+  return [...text.matchAll(/\S+/gu)].map((match) => {
+    const phraseText = match[0];
+    const units = kineticPopVisualUnits(phraseText);
+    return {
+      text: phraseText,
+      sourceStart: match.index,
+      sourceEnd: match.index + phraseText.length,
+      units,
+      weight: Math.max(
+        1,
+        units.reduce((total, unit) => total + unit.weight, 0),
+      ),
+    };
+  });
 }
 
 function kineticPopPhraseBreakProgresses(phrases) {
@@ -463,21 +586,27 @@ function kineticPopPhraseBreakProgresses(phrases) {
 
 export function adaptKineticPopLyricsPresentation(value, options = {}) {
   const sourceText = String(value ?? '');
-  const text = sourceText.trim().replace(/\s+/gu, ' ');
+  const trimmedText = sourceText.trim();
+  const text = trimmedText.replace(/\s+/gu, ' ');
   const sourceUnits = kineticPopVisualUnits(text);
-  const phrases = kineticPopPhrases(text);
+  const phrases = kineticPopPhrases(trimmedText);
   const phraseBreakProgresses = kineticPopPhraseBreakProgresses(phrases);
   const lineProgress = Number.isFinite(options.lineProgress)
     ? Math.min(1, Math.max(0, options.lineProgress))
     : null;
+  const authoredPhraseIndex =
+    phrases.length > 0 && Number.isSafeInteger(options.phraseIndex)
+      ? Math.min(phrases.length - 1, Math.max(0, options.phraseIndex))
+      : null;
   const phraseIndex =
-    lineProgress === null || phrases.length <= 1
+    authoredPhraseIndex ??
+    (lineProgress === null || phrases.length <= 1
       ? null
       : Math.min(
           phrases.length - 1,
           phraseBreakProgresses.filter((boundary) => lineProgress >= boundary)
             .length,
-        );
+        ));
   const displayPhrase =
     phraseIndex === null
       ? { text, units: sourceUnits }
@@ -503,6 +632,9 @@ export function adaptKineticPopLyricsPresentation(value, options = {}) {
     displayText: displayPhrase.text,
     phrases,
     phraseIndex,
+    ...(options.phraseTimingSource
+      ? { phraseTimingSource: options.phraseTimingSource }
+      : {}),
     phraseBreakProgresses,
     material:
       materialSetting === 'cycle'
@@ -777,12 +909,16 @@ function collapseRepeatedPhrase(value) {
 }
 
 function visualWidth(value) {
-  return Array.from(String(value ?? '')).reduce((total, character) => {
-    if (/\s/u.test(character)) return total + 0.35;
-    if (CJK_GLYPH_RE.test(character)) return total + 1;
-    if (/[,，、。！？!?;；:：()（）'’]/u.test(character)) return total + 0.35;
-    return total + 0.55;
-  }, 0);
+  const scaledWidth = Array.from(String(value ?? '')).reduce(
+    (total, character) => {
+      if (/\s/u.test(character)) return total + 7;
+      if (CJK_GLYPH_RE.test(character)) return total + 20;
+      if (/[,，、。！？!?;；:：()（）'’]/u.test(character)) return total + 7;
+      return total + 11;
+    },
+    0,
+  );
+  return scaledWidth / LIVE_STAGE_VISUAL_WIDTH_SCALE;
 }
 
 function wordScript(value) {
@@ -831,9 +967,13 @@ function isSubstantialScriptBoundary(words, end) {
   ) {
     rightEnd += 1;
   }
+  const leftWords = words.slice(leftStart, end);
+  const rightWords = words.slice(end, rightEnd);
+  const latinWords = leftScript === 'latin' ? leftWords : rightWords;
   return (
-    visualWidth(words.slice(leftStart, end).join(' ')) >= 3 &&
-    visualWidth(words.slice(end, rightEnd).join(' ')) >= 3
+    latinWords.length >= 2 &&
+    visualWidth(leftWords.join(' ')) >= 3 &&
+    visualWidth(rightWords.join(' ')) >= 3
   );
 }
 
@@ -844,8 +984,299 @@ function compareBreakPriority(left, right) {
   return 0;
 }
 
+function fallbackCjkCaptionBreakUnits(text) {
+  const japanese = KANA_RE.test(text);
+  const units = [];
+  const wordPattern =
+    /[\p{Script=Latin}\p{N}]+(?:['’][\p{Script=Latin}\p{N}]+)*|[\uac00-\ud7af]+|[\u3400-\u9fff]+|[\u30a0-\u30ff]+|[\u3040-\u309f]+/gu;
+
+  for (const match of text.matchAll(wordPattern)) {
+    const value = match[0];
+    const start = match.index;
+    if (japanese && /^[\u3040-\u309f]+$/u.test(value)) {
+      let offset = start;
+      for (const character of Array.from(value)) {
+        units.push({
+          end: offset + character.length,
+          fallback: true,
+          start: offset,
+          text: character,
+        });
+        offset += character.length;
+      }
+      continue;
+    }
+    if (
+      japanese &&
+      HAN_RE.test(value) &&
+      visualWidth(value) > LIVE_STAGE_ROW_WIDTHS[0]
+    ) {
+      let offset = start;
+      const characters = Array.from(value);
+      const chunkCount = Math.ceil(
+        visualWidth(value) / LIVE_STAGE_ROW_WIDTHS[0],
+      );
+      const chunkSize = Math.ceil(characters.length / chunkCount);
+      for (let index = 0; index < characters.length; index += chunkSize) {
+        const text = characters.slice(index, index + chunkSize).join('');
+        units.push({
+          end: offset + text.length,
+          fallback: true,
+          start: offset,
+          text,
+        });
+        offset += text.length;
+      }
+      continue;
+    }
+    if (!japanese && HAN_RE.test(value)) {
+      let offset = start;
+      for (const character of Array.from(value)) {
+        units.push({
+          end: offset + character.length,
+          fallback: true,
+          start: offset,
+          text: character,
+        });
+        offset += character.length;
+      }
+      continue;
+    }
+    units.push({
+      end: start + value.length,
+      fallback: true,
+      start,
+      text: value,
+    });
+  }
+
+  return units;
+}
+
+function segmentCjkCaptionUnits(text) {
+  if (!CJK_GLYPH_RE.test(text)) return [];
+  if (!LIVE_STAGE_WORD_SEGMENTERS) {
+    return fallbackCjkCaptionBreakUnits(text);
+  }
+  const segmenter = KANA_RE.test(text)
+    ? LIVE_STAGE_WORD_SEGMENTERS.ja
+    : HANGUL_RE.test(text)
+      ? LIVE_STAGE_WORD_SEGMENTERS.ko
+      : LIVE_STAGE_WORD_SEGMENTERS.zh;
+
+  return [...segmenter.segment(text)]
+    .filter(
+      (segment) => segment.isWordLike === true && /\S/u.test(segment.segment),
+    )
+    .map((segment) => ({
+      end: segment.index + segment.segment.length,
+      start: segment.index,
+      text: segment.segment,
+    }));
+}
+
+function cjkCaptionBreakUnits(text) {
+  const needsWordBoundaries =
+    CJK_GLYPH_RE.test(text) &&
+    (KANA_RE.test(text) ||
+      !/\s/u.test(text) ||
+      CJK_LATIN_ADJACENCY_RE.test(text));
+  return needsWordBoundaries ? segmentCjkCaptionUnits(text) : [];
+}
+
+function cjkCaptionBoundary(text, units, end) {
+  const left = units[end - 1];
+  const right = units[end];
+  if (!left || !right) return { blocked: false, index: text.length };
+  const gap = text.slice(left.end, right.start);
+  const visibleGap = gap.replace(/\s/gu, '');
+  return {
+    blocked:
+      visibleGap.length > 0 &&
+      NON_BREAKING_INTERWORD_SYMBOL_RE.test(visibleGap),
+    closesPhrase: CLOSING_PHRASE_PUNCTUATION_RE.test(visibleGap),
+    index: /^[《〈「『【（(\u005b]+$/u.test(visibleGap)
+      ? left.end
+      : right.start,
+  };
+}
+
+function isScriptBoundary(words, end) {
+  if (end <= 0 || end >= words.length) return false;
+  const leftScript = wordScript(words[end - 1]);
+  const rightScript = wordScript(words[end]);
+  return (
+    leftScript !== rightScript &&
+    leftScript !== 'other' &&
+    rightScript !== 'other'
+  );
+}
+
+function isChineseAttachedBoundary(text, units, end) {
+  if (KANA_RE.test(text) || HANGUL_RE.test(text)) return false;
+  return (
+    CHINESE_LINE_END_BINDERS.has(units[end - 1]?.text) ||
+    CHINESE_LINE_START_PARTICLES.has(units[end]?.text)
+  );
+}
+
+function isPreferredChineseLineStart(text, units, end) {
+  if (KANA_RE.test(text) || HANGUL_RE.test(text)) return false;
+  return CHINESE_PREFERRED_LINE_STARTS.has(units[end]?.text);
+}
+
+function isJapaneseNegativeClauseToBoundary(text, units, end) {
+  const particle = units[end - 1];
+  if (particle?.text !== 'と') return false;
+  const leftContext = text.slice(0, particle.start).trimEnd();
+  return /(?:ない|なかった|ません(?:でした)?|ぬ)$/u.test(leftContext);
+}
+
+function isJapaneseAttachedBoundary(text, units, end) {
+  if (!KANA_RE.test(text) || end <= 0 || end >= units.length) return false;
+  const gap = text.slice(units[end - 1]?.end ?? 0, units[end]?.start ?? 0);
+  if (/\s/u.test(gap)) return false;
+  const left = units[end - 1]?.text ?? '';
+  const right = units[end]?.text ?? '';
+  const remainder = text.slice(units[end]?.start ?? text.length);
+  if (remainder.startsWith('だから')) return false;
+  if (left === 'て' && remainder.startsWith('たどり')) return false;
+  if (isJapaneseNegativeClauseToBoundary(text, units, end)) return false;
+  if (
+    JAPANESE_LINE_END_BINDERS.has(left) ||
+    JAPANESE_PRENOMINAL_MODIFIERS.has(left) ||
+    left.endsWith('な') ||
+    JAPANESE_LINE_START_BINDERS.has(right)
+  ) {
+    return true;
+  }
+  if (/[\u3400-\u9fff]$/u.test(left) && /^[\u3040-\u309f]/u.test(right)) {
+    return true;
+  }
+  if (/^[\u3040-\u309f]$/u.test(left) && /^[\u3040-\u309f]$/u.test(right)) {
+    if (left === 'も' && right === 'う') return true;
+    if (JAPANESE_FALLBACK_BREAKABLE_PARTICLES.has(left)) return false;
+    if (left === 'で' && right === 'い') return false;
+    if (left === 'た' && /^(?:あの|この|その|どの)/u.test(remainder)) {
+      return false;
+    }
+    return true;
+  }
+  if (
+    units[end]?.fallback === true &&
+    /[\u3040-\u309f]$/u.test(left) &&
+    /^[\u3400-\u9fff]/u.test(right)
+  ) {
+    return !(
+      JAPANESE_FALLBACK_BREAKABLE_PARTICLES.has(left) ||
+      left === 'て' ||
+      left === 'で'
+    );
+  }
+  return false;
+}
+
+function splitCaptionRowsAtCjkWordBoundaries(text, rowCount, startRowIndex) {
+  const units = cjkCaptionBreakUnits(text);
+  if (units.length < rowCount) return [];
+
+  const words = units.map((unit) => unit.text);
+  const rows = [];
+  let unitIndex = 0;
+  let rowStart = 0;
+  for (let rowIndex = 0; rowIndex < rowCount - 1; rowIndex += 1) {
+    const remainingRows = rowCount - rowIndex;
+    const remainingText = text.slice(rowStart).trim();
+    const currentCapacity =
+      LIVE_STAGE_ROW_WIDTHS[
+        (startRowIndex + rowIndex) % LIVE_STAGE_ROW_WIDTHS.length
+      ];
+    const target = Math.min(
+      LIVE_STAGE_MAX_ROW_WIDTH,
+      visualWidth(remainingText) / remainingRows,
+    );
+    const futureCapacity = Array.from(
+      { length: remainingRows - 1 },
+      (_, index) =>
+        LIVE_STAGE_ROW_WIDTHS[
+          (startRowIndex + rowIndex + index + 1) % LIVE_STAGE_ROW_WIDTHS.length
+        ],
+    ).reduce((total, width) => total + width, 0);
+    const lastCandidate = units.length - (remainingRows - 1);
+    let bestEnd = unitIndex + 1;
+    let bestRowEnd = units[bestEnd]?.start ?? text.length;
+    let bestPriority = null;
+
+    for (let end = unitIndex + 1; end <= lastCandidate; end += 1) {
+      const boundary = cjkCaptionBoundary(text, units, end);
+      const candidate = text.slice(rowStart, boundary.index).trim();
+      const remainder = text.slice(boundary.index).trim();
+      const candidateWidth = visualWidth(candidate);
+      const remainderWidth = visualWidth(remainder);
+      const hardOverflow = Math.max(
+        0,
+        candidateWidth - LIVE_STAGE_MAX_ROW_WIDTH,
+      );
+      const remainderOverflow = Math.max(0, remainderWidth - futureCapacity);
+      const preferredOverflow = Math.max(0, candidateWidth - currentCapacity);
+      const trailingOrphan = remainingRows === 2 && remainderWidth <= 1 ? 1 : 0;
+      const reversedTwoRowHierarchy =
+        remainingRows === 2
+          ? Math.max(
+              0,
+              candidateWidth -
+                remainderWidth -
+                LIVE_STAGE_ROW_HIERARCHY_TOLERANCE,
+            )
+          : 0;
+      const scriptBoundary = isScriptBoundary(words, end);
+      const substantialScriptBoundary =
+        isSubstantialScriptBoundary(words, end) ||
+        (scriptBoundary && boundary.closesPhrase);
+      const weakScriptBoundary = scriptBoundary && !substantialScriptBoundary;
+      const preferredJapaneseNegativeBoundary =
+        isJapaneseNegativeClauseToBoundary(text, units, end);
+      const priority = [
+        hardOverflow + remainderOverflow,
+        trailingOrphan,
+        boundary.blocked || isJapaneseAttachedBoundary(text, units, end)
+          ? 1
+          : 0,
+        preferredJapaneseNegativeBoundary ? 0 : 1,
+        isChineseAttachedBoundary(text, units, end) ? 1 : 0,
+        isPreferredChineseLineStart(text, units, end) ? 0 : 1,
+        weakScriptBoundary ? 1 : 0,
+        substantialScriptBoundary ? 0 : 1,
+        reversedTwoRowHierarchy,
+        preferredOverflow,
+        Math.abs(candidateWidth - target),
+      ];
+      if (
+        bestPriority === null ||
+        compareBreakPriority(priority, bestPriority) < 0
+      ) {
+        bestPriority = priority;
+        bestEnd = end;
+        bestRowEnd = boundary.index;
+      }
+    }
+
+    rows.push(text.slice(rowStart, bestRowEnd).trim());
+    unitIndex = bestEnd;
+    rowStart = bestRowEnd;
+  }
+  rows.push(text.slice(rowStart).trim());
+  return rows.filter(Boolean);
+}
+
 function splitCaptionRows(text, rowCount, startRowIndex = 0) {
   if (rowCount <= 1) return text ? [text] : [];
+  const cjkRows = splitCaptionRowsAtCjkWordBoundaries(
+    text,
+    rowCount,
+    startRowIndex,
+  );
+  if (cjkRows.length === rowCount) return cjkRows;
   const words = text.split(/\s+/u).filter(Boolean);
   if (words.length > 1) {
     const rows = [];
@@ -909,7 +1340,7 @@ function splitCaptionRows(text, rowCount, startRowIndex = 0) {
   let offset = 0;
   for (let rowIndex = 0; rowIndex < rowCount; rowIndex += 1) {
     const remaining = glyphs.length - offset;
-    const take = Math.ceil(remaining / (rowCount - rowIndex));
+    const take = Math.floor(remaining / (rowCount - rowIndex));
     rows.push(glyphs.slice(offset, offset + take).join(''));
     offset += take;
   }
@@ -1001,11 +1432,42 @@ function liveStageDisplayEntries(analysis) {
   return entries;
 }
 
+function liveStageSourceContent(analysis) {
+  const sourceText = String(analysis?.sourceText ?? '');
+  const units = Array.isArray(analysis?.units) ? analysis.units : [];
+  const contentStart = analysis?.speaker
+    ? (units[0]?.sourceStart ?? sourceText.length)
+    : 0;
+  return sourceText.slice(contentStart).trim();
+}
+
+function literalLiveStageRows(analysis) {
+  return liveStageSourceContent(analysis)
+    .split(/\r?\n/gu)
+    .map((row) => row.trim())
+    .filter(Boolean);
+}
+
+function balancedLiveStageLayout(analysis) {
+  const text = liveStageSourceContent(analysis).replace(/\s+/gu, ' ').trim();
+  return text
+    ? planAutomaticCaptionLayout(text, true)
+    : { rows: [], pages: [] };
+}
+
 function splitLiveStageContractedLead(text) {
   const match = text.match(/^(I['’]m)\s+(.+)$/iu);
   if (!match) return [];
   const continuation = match[2].replace(/[,，]\s*$/u, '').trim();
   return continuation ? [match[1], continuation] : [];
+}
+
+function isSingleAutomaticMainEntry(entries) {
+  return (
+    entries.length === 1 &&
+    entries[0]?.kind === 'main' &&
+    entries[0]?.authored !== true
+  );
 }
 
 function captionRows(entries) {
@@ -1034,24 +1496,168 @@ function compactRows(rows, limit) {
   return [...rows.slice(0, limit - 1), rows.slice(limit - 1).join(' ')];
 }
 
-function captionPages(rows) {
+function captionPage(lines) {
+  return {
+    lines,
+    weight: Math.max(
+      1,
+      lines.reduce((total, line) => total + visualWidth(line), 0),
+    ),
+  };
+}
+
+function captionPages(rows, preferTrailingPair = false) {
   const pageCapacity = MAX_LIVE_STAGE_CAPTION_LINES;
   const boundedRows = compactRows(
     rows,
     pageCapacity * MAX_LIVE_STAGE_CAPTION_PAGES,
   );
-  const pages = [];
-  for (let index = 0; index < boundedRows.length; index += pageCapacity) {
-    const lines = boundedRows.slice(index, index + pageCapacity);
-    pages.push({
-      lines,
-      weight: Math.max(
-        1,
-        lines.reduce((total, line) => total + visualWidth(line), 0),
-      ),
+  const pageRows =
+    preferTrailingPair && boundedRows.length === 3
+      ? [boundedRows.slice(0, 1), boundedRows.slice(1)]
+      : Array.from(
+          { length: Math.ceil(boundedRows.length / pageCapacity) },
+          (_, index) =>
+            boundedRows.slice(index * pageCapacity, (index + 1) * pageCapacity),
+        );
+  return pageRows.map(captionPage);
+}
+
+function authoredCjkPageBreaks(text) {
+  const units = segmentCjkCaptionUnits(text);
+  const breaks = [];
+  for (let end = 1; end < units.length; end += 1) {
+    const left = units[end - 1];
+    const right = units[end];
+    const gap = text.slice(left.end, right.start);
+    if (
+      /\s/u.test(gap) &&
+      (CJK_GLYPH_RE.test(left.text) || CJK_GLYPH_RE.test(right.text))
+    ) {
+      const leftScript = wordScript(left.text);
+      const rightScript = wordScript(right.text);
+      breaks.push({
+        crossesScript:
+          leftScript !== rightScript &&
+          leftScript !== 'other' &&
+          rightScript !== 'other',
+        index: right.start,
+      });
+    }
+  }
+  return breaks;
+}
+
+function layoutPageBreaks(text, pages) {
+  const breaks = [];
+  let cursor = 0;
+  for (const page of pages.slice(0, -1)) {
+    for (const line of page.lines) {
+      const start = text.indexOf(line, cursor);
+      if (start === -1) return [];
+      cursor = start + line.length;
+    }
+    while (cursor < text.length && /\s/u.test(text[cursor])) cursor += 1;
+    breaks.push(cursor);
+  }
+  return breaks;
+}
+
+function automaticLayoutPriority(
+  text,
+  pages,
+  authoredBreaks,
+  preferKoreanPair,
+) {
+  const pageBreaks = layoutPageBreaks(text, pages);
+  const honoredAuthoredBreak = authoredBreaks.find(({ index }) =>
+    pageBreaks.includes(index),
+  );
+  const rows = pages.flatMap((page) => page.lines);
+  const hardOverflow = rows.reduce(
+    (total, row) =>
+      total + Math.max(0, visualWidth(row) - LIVE_STAGE_MAX_ROW_WIDTH),
+    0,
+  );
+  const pageWeights = pages.map((page) => page.weight);
+  let rowCountMismatch = 0;
+  if (honoredAuthoredBreak && !honoredAuthoredBreak.crossesScript) {
+    const boundaries = [0, ...pageBreaks, text.length];
+    pages.forEach((page, index) => {
+      const pageText = text
+        .slice(boundaries[index], boundaries[index + 1])
+        .trim();
+      rowCountMismatch += Math.abs(
+        Math.min(
+          MAX_LIVE_STAGE_CAPTION_LINES,
+          captionRowCount(pageText, 0, preferKoreanPair),
+        ) - page.lines.length,
+      );
     });
   }
-  return pages;
+  return [
+    hardOverflow,
+    authoredBreaks.length > 0 && pages.length > 1 && !honoredAuthoredBreak
+      ? 1
+      : 0,
+    pages.length > 1 &&
+    honoredAuthoredBreak &&
+    !honoredAuthoredBreak.crossesScript
+      ? 1
+      : 0,
+    rowCountMismatch,
+    rows.length,
+    Math.max(...pageWeights) - Math.min(...pageWeights),
+  ];
+}
+
+function pageRowsForAutomaticText(text, preferKoreanPair = false) {
+  const rowCount = captionRowCount(text, 0, preferKoreanPair);
+  if (rowCount > MAX_LIVE_STAGE_CAPTION_LINES) return [];
+  return splitCaptionRows(text, rowCount, 0);
+}
+
+function planAutomaticCaptionLayout(text, preferKoreanPair = false) {
+  const rowCount = captionRowCount(text, 0, preferKoreanPair);
+  const startRowIndex = rowCount === 3 ? 1 : 0;
+  const rows = splitCaptionRows(text, rowCount, startRowIndex);
+  const basePages = captionPages(rows, rowCount === 3);
+  const authoredBreaks = authoredCjkPageBreaks(text);
+  let best = {
+    pages: basePages,
+    priority: automaticLayoutPriority(
+      text,
+      basePages,
+      authoredBreaks,
+      preferKoreanPair,
+    ),
+  };
+
+  if (authoredBreaks.length > 0) {
+    for (const { index } of authoredBreaks) {
+      const left = text.slice(0, index).trim();
+      const right = text.slice(index).trim();
+      if (!left || !right) continue;
+      const leftRows = pageRowsForAutomaticText(left, preferKoreanPair);
+      const rightRows = pageRowsForAutomaticText(right, preferKoreanPair);
+      if (leftRows.length === 0 || rightRows.length === 0) continue;
+      const pages = [captionPage(leftRows), captionPage(rightRows)];
+      const priority = automaticLayoutPriority(
+        text,
+        pages,
+        authoredBreaks,
+        preferKoreanPair,
+      );
+      if (compareBreakPriority(priority, best.priority) < 0) {
+        best = { pages, priority };
+      }
+    }
+  }
+
+  return {
+    rows: best.pages.flatMap((page) => page.lines),
+    pages: best.pages,
+  };
 }
 
 function pageBreakProgresses(pages) {
@@ -1066,27 +1672,51 @@ function pageBreakProgresses(pages) {
 
 export function adaptLiveStageLyricsPresentation(analysis, options = {}) {
   const sourceText = String(analysis?.sourceText ?? '');
-  const entries = liveStageDisplayEntries(analysis);
-  const rows = captionRows(entries);
-  const pages = captionPages(rows);
+  const policy = lyricsPresentationPolicyForTemplate(
+    'live-stage',
+    options.lyricsPresentationPolicyId,
+  );
+  const presentationPolicy = { id: policy.id, version: policy.version };
+  let rows;
+  let pages;
+  if (policy.contentMode === 'literal') {
+    rows = literalLiveStageRows(analysis);
+    pages = captionPages(rows);
+  } else if (policy.contentMode === 'preserve') {
+    const layout = balancedLiveStageLayout(analysis);
+    rows = layout.rows;
+    pages = layout.pages;
+  } else {
+    const entries = liveStageDisplayEntries(analysis);
+    const automaticEntry = isSingleAutomaticMainEntry(entries);
+    const layout = automaticEntry
+      ? planAutomaticCaptionLayout(entries[0].text, true)
+      : null;
+    rows = layout?.rows ?? captionRows(entries);
+    pages = layout?.pages ?? captionPages(rows);
+  }
   const breaks = pageBreakProgresses(pages);
   const lineProgress = Number.isFinite(options.lineProgress)
     ? Math.min(1, Math.max(0, options.lineProgress))
     : null;
-  const pageIndex =
-    lineProgress === null
+  const pageIndex = Number.isSafeInteger(options.pageIndex)
+    ? Math.min(pages.length - 1, Math.max(0, options.pageIndex))
+    : lineProgress === null
       ? 0
       : Math.min(
           pages.length - 1,
           breaks.filter((boundary) => lineProgress >= boundary).length,
         );
   const lines =
-    lineProgress === null && pages.length > 1
+    lineProgress === null &&
+    !Number.isSafeInteger(options.pageIndex) &&
+    pages.length > 1
       ? compactRows(rows, MAX_LIVE_STAGE_CAPTION_LINES)
       : (pages[pageIndex]?.lines ?? []);
   return {
     sourceText,
     speaker: analysis?.speaker ?? '',
+    presentationPolicy,
     lines,
     pages,
     pageIndex: Math.max(0, pageIndex),
@@ -1129,6 +1759,10 @@ function compileLinePresentation(sourceText, analysis, profile, options) {
 
 export function compileLyricsPresentationDocument(document = {}, options = {}) {
   const profile = lyricsPresentationProfileForTemplate(options.templateId);
+  const presentationPolicy = lyricsPresentationPolicyForTemplate(
+    options.templateId,
+    options.lyricsPresentationPolicyId,
+  );
   const language = String(document.language ?? '');
   const lines = Array.isArray(document.lines) ? document.lines : [];
   const ornateDocumentContext =
@@ -1143,6 +1777,14 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
       : 0,
     language,
     profile,
+    ...(presentationPolicy
+      ? {
+          presentationPolicy: {
+            id: presentationPolicy.id,
+            version: presentationPolicy.version,
+          },
+        }
+      : {}),
     lines: lines.map((line, sourceLineIndex) => {
       const sourceText = String(line?.text ?? '');
       const needsSemanticAnalysis = ![
@@ -1162,6 +1804,7 @@ export function compileLyricsPresentationDocument(document = {}, options = {}) {
           language,
           lineIndex: sourceLineIndex,
           kineticMaterial: options.kineticMaterial,
+          lyricsPresentationPolicyId: presentationPolicy?.id,
           documentContext: ornateDocumentContext,
         }),
       };
@@ -1181,6 +1824,12 @@ function documentCacheKey(document, profile, options = {}) {
     String(document.language ?? ''),
     profile.id,
     profile.version,
+    profile.id === 'live-stage'
+      ? lyricsPresentationPolicyForTemplate(
+          'live-stage',
+          options.lyricsPresentationPolicyId,
+        ).id
+      : '',
     profile.id === 'kinetic-pop'
       ? KINETIC_POP_MATERIAL_SETTINGS.has(options.kineticMaterial)
         ? options.kineticMaterial

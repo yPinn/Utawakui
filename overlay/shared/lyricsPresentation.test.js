@@ -27,6 +27,52 @@ function liveStagePresentation(text, options = {}) {
   return adaptLiveStageLyricsPresentation(analyzeLyricsSource(text), options);
 }
 
+function liveStageVisualWidth(value) {
+  return Array.from(value).reduce((total, character) => {
+    if (/\s/u.test(character)) return total + 0.35;
+    if (/[\u3040-\u30ff\u3400-\u9fff\uac00-\ud7af]/u.test(character)) {
+      return total + 1;
+    }
+    if (/[,，、。！？!?;；:：()（）'’]/u.test(character)) {
+      return total + 0.35;
+    }
+    return total + 0.55;
+  }, 0);
+}
+
+const JAPANESE_NEGATIVE_TO_SAMPLES = [
+  {
+    name: 'Japanese negative clause and quotative particle',
+    source: '忘れられないと泣くくらいなら',
+    expected: ['忘れられないと', '泣くくらいなら'],
+  },
+  {
+    name: 'Japanese spaced negative clause and quotative particle',
+    source: '忘れられない と 泣くくらいなら',
+    expected: ['忘れられない と', '泣くくらいなら'],
+  },
+  {
+    name: 'Japanese past negative clause and quotative particle',
+    source: '忘れられなかったと泣くくらいなら',
+    expected: ['忘れられなかったと', '泣くくらいなら'],
+  },
+  {
+    name: 'Japanese polite negative clause and quotative particle',
+    source: '忘れられませんと泣くくらいなら',
+    expected: ['忘れられませんと', '泣くくらいなら'],
+  },
+  {
+    name: 'Japanese polite past negative clause and quotative particle',
+    source: '忘れられませんでしたと泣くくらいなら',
+    expected: ['忘れられませんでしたと', '泣くくらいなら'],
+  },
+  {
+    name: 'Japanese literary negative clause and quotative particle',
+    source: '忘れられぬと泣くくらいなら',
+    expected: ['忘れられぬと', '泣くくらいなら'],
+  },
+];
+
 function ktvPresentation(text) {
   return adaptKtvLyricsPresentation(analyzeLyricsSource(text));
 }
@@ -163,6 +209,27 @@ describe('lyrics presentation profiles', () => {
     expect(liveStage.lines[0]).toHaveProperty('analysis');
   });
 
+  it('compiles the selected Live Stage presentation policy without changing the source', () => {
+    const compact = compileLyricsPresentationDocument(document, {
+      templateId: 'live-stage',
+    });
+    const balanced = compileLyricsPresentationDocument(document, {
+      lyricsPresentationPolicyId: 'balanced',
+      templateId: 'live-stage',
+    });
+
+    expect(compact.presentationPolicy).toEqual({
+      id: 'broadcast-compact',
+      version: 1,
+    });
+    expect(balanced.presentationPolicy).toEqual({ id: 'balanced', version: 1 });
+    expect(balanced.lines[0].sourceText).toBe(document.lines[0].text);
+    expect(balanced.lines[0].presentation.presentationPolicy).toEqual({
+      id: 'balanced',
+      version: 1,
+    });
+  });
+
   it('compiles the ornate vertical document with shared repetition evidence', () => {
     const compiled = compileLyricsPresentationDocument(
       {
@@ -213,6 +280,8 @@ describe('lyrics presentation profiles', () => {
       displayText: 'すてっぷ！',
       phrases: [
         {
+          sourceStart: 0,
+          sourceEnd: 5,
           text: 'すてっぷ！',
           units: [
             { text: 'す', weight: 1 },
@@ -290,6 +359,10 @@ describe('lyrics presentation profiles', () => {
       { text: 'っ', weight: 1 },
       { text: 'ぷ。', weight: 1 },
     ]);
+
+    expect(
+      adaptKineticPopLyricsPresentation('', { phraseIndex: 0 }).phraseIndex,
+    ).toBeNull();
   });
 
   it('uses authored whitespace as sequential Kinetic Pop phrases while keeping one horizontal row', () => {
@@ -375,6 +448,28 @@ describe('lyrics presentation profiles', () => {
 
     expect(sameCandy).toBe(candy);
     expect(chromatic).not.toBe(candy);
+    expect(compile).toHaveBeenCalledTimes(2);
+  });
+
+  it('invalidates Live Stage compilation when the presentation policy changes', () => {
+    const compile = vi.fn(compileLyricsPresentationDocument);
+    const cache = createLyricsPresentationDocumentCache({ compile });
+
+    const compact = cache.get(document, {
+      lyricsPresentationPolicyId: 'broadcast-compact',
+      templateId: 'live-stage',
+    });
+    const sameCompact = cache.get(document, {
+      lyricsPresentationPolicyId: 'broadcast-compact',
+      templateId: 'live-stage',
+    });
+    const literal = cache.get(document, {
+      lyricsPresentationPolicyId: 'literal',
+      templateId: 'live-stage',
+    });
+
+    expect(sameCompact).toBe(compact);
+    expect(literal).not.toBe(compact);
     expect(compile).toHaveBeenCalledTimes(2);
   });
 
@@ -608,6 +703,35 @@ describe('lyrics presentation preprocessing', () => {
 });
 
 describe('Live Stage caption preprocessing', () => {
+  it('keeps content handling selectable without changing timing or source text', () => {
+    const sourceText = 'Oh, Kitsch, kitsch';
+    const compact = liveStagePresentation(sourceText);
+    const balanced = liveStagePresentation(sourceText, {
+      lyricsPresentationPolicyId: 'balanced',
+    });
+    const literal = liveStagePresentation('first\nsecond', {
+      lyricsPresentationPolicyId: 'literal',
+    });
+
+    expect(compact).toMatchObject({
+      sourceText,
+      lines: ['Kitsch'],
+      presentationPolicy: { id: 'broadcast-compact', version: 1 },
+    });
+    expect(balanced).toMatchObject({
+      sourceText,
+      presentationPolicy: { id: 'balanced', version: 1 },
+    });
+    expect(balanced.pages.flatMap((page) => page.lines).join(' ')).toBe(
+      sourceText,
+    );
+    expect(literal).toMatchObject({
+      sourceText: 'first\nsecond',
+      lines: ['first', 'second'],
+      presentationPolicy: { id: 'literal', version: 1 },
+    });
+  });
+
   it.each([
     {
       name: 'authored broadcast rows',
@@ -653,6 +777,112 @@ describe('Live Stage caption preprocessing', () => {
       name: 'mixed Korean and English modifier phrase',
       source: '[이서] 올려 대는 나의 Feed에는 like it',
       expected: ['올려 대는', '나의 Feed에는 like it'],
+    },
+    {
+      name: 'joined Traditional Chinese and English phrase',
+      source: '我從未改變想展現的maybe I know',
+      expected: ['我從未改變', '想展現的maybe I know'],
+    },
+    {
+      name: 'Traditional Chinese predicate phrase',
+      source: '初戀的香味就這樣被我們尋回',
+      expected: ['初戀的香味', '就這樣被我們尋回'],
+    },
+    {
+      name: 'Japanese words and attached particles',
+      source: '声も顔も不器用なとこも',
+      expected: ['声も顔も', '不器用なとこも'],
+    },
+    {
+      name: 'joined English and Traditional Chinese phrase',
+      source: 'Real love讓我們重新找回勇氣',
+      expected: ['Real love', '讓我們重新找回勇氣'],
+    },
+    {
+      name: 'short embedded Latin acronym within a Chinese phrase',
+      source: '今天最新MV公開真的太精彩了',
+      expected: ['今天最新MV公開', '真的太精彩了'],
+    },
+    {
+      name: 'embedded Latin word within a Chinese phrase',
+      source: '今天最新Hello公開真的太精彩了',
+      expected: ['今天最新Hello公開', '真的太精彩了'],
+    },
+    {
+      name: 'Chinese structural particle and predicate phrase',
+      source: '全新的AI時代正在慢慢到來',
+      expected: ['全新的AI時代', '正在慢慢到來'],
+    },
+    {
+      name: 'joined Korean and English phrase',
+      source: '너만의Universe를보여줘',
+      expected: ['너만의', 'Universe를보여줘'],
+    },
+    {
+      name: 'joined Korean and spaced English phrase',
+      source: '난아직도너를사랑해maybe I know',
+      expected: ['난아직도너를사랑해', 'maybe I know'],
+    },
+    {
+      name: 'Japanese inflection',
+      source: 'あなたと出会えて本当によかった',
+      expected: ['あなたと出会えて', '本当によかった'],
+    },
+    {
+      name: 'Japanese phrase with attached particles',
+      source: '不器用なところも全部好きだよ',
+      expected: ['不器用なところも', '全部好きだよ'],
+    },
+    {
+      name: 'Japanese past-tense inflection',
+      source: '夢を見ていたあの日の僕ら',
+      expected: ['夢を見ていた', 'あの日の僕ら'],
+    },
+    {
+      name: 'Japanese chained inflections',
+      source: '会いたくて会えなくて泣いていた',
+      expected: ['会いたくて', '会えなくて泣いていた'],
+    },
+    {
+      name: 'Japanese negative continuation',
+      source: '忘れないでいてほしいから',
+      expected: ['忘れないで', 'いてほしいから'],
+    },
+    ...JAPANESE_NEGATIVE_TO_SAMPLES,
+    {
+      name: 'Japanese genitive phrase',
+      source: '君のことが好きだから',
+      expected: ['君のことが', '好きだから'],
+    },
+    {
+      name: 'Japanese demonstrative phrase',
+      source: 'その笑顔をずっと守りたい',
+      expected: ['その笑顔を', 'ずっと守りたい'],
+    },
+    {
+      name: 'Japanese prenominal adjective phrase',
+      source: '小さな夢を胸に抱いている',
+      expected: ['小さな夢を', '胸に抱いている'],
+    },
+    {
+      name: 'Japanese compound verb',
+      source: '歩き続けてたどり着いた場所',
+      expected: ['歩き続けて', 'たどり着いた場所'],
+    },
+    {
+      name: 'Japanese independent continuation',
+      source: '君と僕の大切な思い出だから',
+      expected: ['君と僕の大切な思い出', 'だから'],
+    },
+    {
+      name: 'Japanese lexical mo prefix',
+      source: 'もう一度だけ君に会いたい',
+      expected: ['もう一度だけ', '君に会いたい'],
+    },
+    {
+      name: 'exact-capacity Chinese and English phrase',
+      source: '想看見天上璀璨的星光 sing it with me',
+      expected: ['想看見天上璀璨的星光', 'sing it with me'],
     },
     {
       name: 'short-first English phrase',
@@ -724,6 +954,7 @@ describe('Live Stage caption preprocessing', () => {
       '뭘',
       '더 바래',
     ]);
+    expect(liveStagePresentation('最新MV公開').lines).toEqual(['最新MV公開']);
   });
 
   it('keeps a short first row and a readable longer second row together', () => {
@@ -737,6 +968,271 @@ describe('Live Stage caption preprocessing', () => {
       pageBreakProgresses: [],
     });
     expect(result.pages).toHaveLength(1);
+  });
+
+  it.each([
+    {
+      name: 'spaced Japanese enumeration',
+      source: '物 金 愛 言 もう自己顕示飽きた',
+      expected: ['物 金 愛 言', 'もう自己顕示飽きた'],
+    },
+    {
+      name: 'Japanese predicate without an orphan glyph',
+      source: '中途半端だけは嫌',
+      expected: ['中途半端', 'だけは嫌'],
+    },
+  ])('selects a coherent complete-frame break for $name', (sample) => {
+    const result = liveStagePresentation(sample.source, {
+      lineProgress: 0.5,
+    });
+
+    expect(result.lines).toEqual(sample.expected);
+    expect(result.pages.map((page) => page.lines)).toEqual([sample.expected]);
+  });
+
+  it('selects a two-then-one layout when the semantic lead needs two rows', () => {
+    const sourceText = '遊びだけなら簡単で真剣交渉無茶苦茶 もう嫌';
+    const first = liveStagePresentation(sourceText, { lineProgress: 0.1 });
+    const second = liveStagePresentation(sourceText, { lineProgress: 0.9 });
+
+    expect(first.pages.map((page) => page.lines)).toEqual([
+      ['遊びだけなら', '簡単で真剣交渉無茶苦茶'],
+      ['もう嫌'],
+    ]);
+    expect(first.lines).toEqual(first.pages[0].lines);
+    expect(second.lines).toEqual(second.pages[1].lines);
+  });
+
+  it.each([
+    {
+      name: 'same-script Chinese',
+      source: '這是一段非常非常長的中文測試句子 好短',
+    },
+    {
+      name: 'cross-script Chinese',
+      source: '這是一段非常非常長的中文測試句子 OK now',
+    },
+    {
+      name: 'same-script Korean',
+      source: '이것은아주아주긴한국어테스트문장 짧아',
+    },
+    {
+      name: 'cross-script Korean',
+      source: '이것은아주아주긴한국어테스트문장 OK now',
+    },
+  ])('keeps every row within capacity for a $name 2/1 layout', (sample) => {
+    const result = liveStagePresentation(sample.source, {
+      lineProgress: 0.1,
+    });
+
+    expect(result.pages.map((page) => page.lines.length)).toEqual([2, 1]);
+    expect(
+      result.pages
+        .flatMap((page) => page.lines)
+        .every((line) => liveStageVisualWidth(line) <= 11),
+    ).toBe(true);
+    expect(result.pages.map((page) => page.lines.join('')).join(' ')).toBe(
+      sample.source,
+    );
+  });
+
+  it('selects a two-by-two layout for two long semantic phrases', () => {
+    const sourceText = '遊びだけなら簡単で 真剣交渉無茶苦茶で';
+    const first = liveStagePresentation(sourceText, { lineProgress: 0.1 });
+    const second = liveStagePresentation(sourceText, { lineProgress: 0.9 });
+
+    expect(first.pages.map((page) => page.lines)).toEqual([
+      ['遊びだけ', 'なら簡単で'],
+      ['真剣交渉', '無茶苦茶で'],
+    ]);
+    expect(first.lines).toEqual(first.pages[0].lines);
+    expect(second.lines).toEqual(second.pages[1].lines);
+  });
+
+  it('places a true three-row sentence on one then two lines without a trailing orphan', () => {
+    const sourceText = '想看見天上璀璨的星光 sing it with me tonight';
+    const first = liveStagePresentation(sourceText, { lineProgress: 0.1 });
+    const second = liveStagePresentation(sourceText, { lineProgress: 0.9 });
+
+    expect(first.pages.map((page) => page.lines)).toEqual([
+      ['想看見天上璀璨的星光'],
+      ['sing it', 'with me tonight'],
+    ]);
+    expect(first.lines).toEqual(['想看見天上璀璨的星光']);
+    expect(second.lines).toEqual(['sing it', 'with me tonight']);
+    expect(first.pages.flatMap((page) => page.lines).join(' ')).toBe(
+      sourceText,
+    );
+  });
+
+  it('uses a short-first fallback for a long unbreakable token', () => {
+    const sourceText = 'ABCDEFGHIJKLMNO';
+    const result = liveStagePresentation(sourceText, { lineProgress: 0.5 });
+
+    expect(result.lines).toEqual(['ABCDEFG', 'HIJKLMNO']);
+    expect(result.lines.join('')).toBe(sourceText);
+  });
+
+  it.each([
+    {
+      source: '❤️我真的愛你forever and ever',
+      expected: ['❤️我真的愛你', 'forever and ever'],
+    },
+    {
+      source: '中文foo—bar真的很長',
+      expected: ['中文foo—bar', '真的很長'],
+    },
+    {
+      source: '《Hello》世界依然美好',
+      expected: ['《Hello》', '世界依然美好'],
+    },
+  ])('preserves every visible symbol while splitting $source', (sample) => {
+    const result = liveStagePresentation(sample.source, {
+      lineProgress: 0.5,
+    });
+
+    expect(result.lines).toEqual(sample.expected);
+    expect(result.lines.join('')).toBe(sample.source);
+  });
+
+  it('keeps script-aware wrapping when Intl.Segmenter is unavailable', async () => {
+    const segmenterDescriptor = Object.getOwnPropertyDescriptor(
+      Intl,
+      'Segmenter',
+    );
+    vi.resetModules();
+    Object.defineProperty(Intl, 'Segmenter', {
+      configurable: true,
+      value: undefined,
+    });
+
+    try {
+      const fallbackPresentation =
+        await import('../../shared/presentation/lyricsPresentation.mjs?segmenter=fallback');
+      const samples = [
+        {
+          source: '我從未改變想展現的maybe I know',
+          expected: ['我從未改變', '想展現的maybe I know'],
+        },
+        {
+          source: '初戀的香味就這樣被我們尋回',
+          expected: ['初戀的香味', '就這樣被我們尋回'],
+        },
+        {
+          source: '声も顔も不器用なとこも',
+          expected: ['声も顔も', '不器用なとこも'],
+        },
+        {
+          source: 'Real love讓我們重新找回勇氣',
+          expected: ['Real love', '讓我們重新找回勇氣'],
+        },
+        {
+          source: '今天最新MV公開真的太精彩了',
+          expected: ['今天最新MV公開', '真的太精彩了'],
+        },
+        {
+          source: '今天最新Hello公開真的太精彩了',
+          expected: ['今天最新Hello公開', '真的太精彩了'],
+        },
+        {
+          source: '全新的AI時代正在慢慢到來',
+          expected: ['全新的AI時代', '正在慢慢到來'],
+        },
+        {
+          source: '너만의Universe를보여줘',
+          expected: ['너만의', 'Universe를보여줘'],
+        },
+        {
+          source: '난아직도너를사랑해maybe I know',
+          expected: ['난아직도너를사랑해', 'maybe I know'],
+        },
+        {
+          source: '夢を見ていたあの日の僕ら',
+          expected: ['夢を見ていた', 'あの日の僕ら'],
+        },
+        {
+          source: '会いたくて会えなくて泣いていた',
+          expected: ['会いたくて', '会えなくて泣いていた'],
+        },
+        {
+          source: '忘れないでいてほしいから',
+          expected: ['忘れないで', 'いてほしいから'],
+        },
+        ...JAPANESE_NEGATIVE_TO_SAMPLES.map(({ source, expected }) => ({
+          source,
+          expected,
+        })),
+        {
+          source: '君のことが好きだから',
+          expected: ['君のことが', '好きだから'],
+        },
+        {
+          source: 'その笑顔をずっと守りたい',
+          expected: ['その笑顔を', 'ずっと守りたい'],
+        },
+        {
+          source: '小さな夢を胸に抱いている',
+          expected: ['小さな夢を', '胸に抱いている'],
+        },
+        {
+          source: '歩き続けてたどり着いた場所',
+          expected: ['歩き続けて', 'たどり着いた場所'],
+        },
+        {
+          source: '君と僕の大切な思い出だから',
+          expected: ['君と僕の大切な思い出', 'だから'],
+        },
+        {
+          source: 'もう一度だけ君に会いたい',
+          expected: ['もう一度だけ', '君に会いたい'],
+        },
+        {
+          source: '物 金 愛 言 もう自己顕示飽きた',
+          expected: ['物 金 愛 言', 'もう自己顕示飽きた'],
+        },
+        {
+          source: '中途半端だけは嫌',
+          expected: ['中途半端', 'だけは嫌'],
+        },
+        {
+          source: '《Hello》世界依然美好',
+          expected: ['《Hello》', '世界依然美好'],
+        },
+      ];
+
+      for (const sample of samples) {
+        const result = fallbackPresentation.adaptLiveStageLyricsPresentation(
+          fallbackPresentation.analyzeLyricsSource(sample.source),
+          { lineProgress: 0.5 },
+        );
+        expect(result.lines).toEqual(sample.expected);
+      }
+
+      const planned = fallbackPresentation.adaptLiveStageLyricsPresentation(
+        fallbackPresentation.analyzeLyricsSource(
+          '遊びだけなら簡単で 真剣交渉無茶苦茶で',
+        ),
+        { lineProgress: 0.1 },
+      );
+      expect(planned.pages.map((page) => page.lines)).toEqual([
+        ['遊びだけ', 'なら簡単で'],
+        ['真剣交渉', '無茶苦茶で'],
+      ]);
+
+      const twoThenOne = fallbackPresentation.adaptLiveStageLyricsPresentation(
+        fallbackPresentation.analyzeLyricsSource(
+          '遊びだけなら簡単で真剣交渉無茶苦茶 もう嫌',
+        ),
+        { lineProgress: 0.1 },
+      );
+      expect(twoThenOne.pages.map((page) => page.lines.length)).toEqual([2, 1]);
+      expect(
+        twoThenOne.pages.map((page) => page.lines.join('')).join(' '),
+      ).toBe('遊びだけなら簡単で真剣交渉無茶苦茶 もう嫌');
+    } finally {
+      Object.defineProperty(Intl, 'Segmenter', segmenterDescriptor);
+      vi.resetModules();
+    }
   });
 
   it("uses the broadcast phrase boundary for I'm on my way before advancing to the next lyric", () => {

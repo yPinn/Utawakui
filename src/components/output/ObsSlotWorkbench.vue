@@ -2,6 +2,7 @@
 import { computed, reactive, watch } from 'vue';
 import { Palette } from '../../icons/index.js';
 import { sanitizeOutputAppearanceSetting } from '../../../shared/outputAppearance.mjs';
+import { normalizeLyricsPresentationPolicyId } from '../../../shared/presentation/lyricsPresentationPolicies.mjs';
 import {
   captureSizeForKind,
   normalizeCaptureSizeId,
@@ -42,9 +43,16 @@ const emit = defineEmits([
 const draft = reactive({ captureSize: 'small' });
 
 const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
-const appearanceFieldGroups = computed(() => {
+const presentationFields = computed(
+  () => props.preset?.presentationFields ?? [],
+);
+const configurationFields = computed(() => [
+  ...appearanceFields.value,
+  ...presentationFields.value,
+]);
+const configurationFieldGroups = computed(() => {
   const groups = new Map();
-  for (const field of appearanceFields.value) {
+  for (const field of configurationFields.value) {
     const id = field.group ?? 'appearance';
     if (!groups.has(id)) {
       groups.set(id, {
@@ -78,6 +86,12 @@ const saveStatusLabel = computed(() => {
 });
 
 function normalizedControlValue(field, settings) {
+  if (field.settingKind === 'lyrics-presentation') {
+    return normalizeLyricsPresentationPolicyId(
+      templateId.value,
+      settings?.[field.key],
+    );
+  }
   const storedValue = sanitizeOutputAppearanceSetting(
     field.key,
     settings?.[field.key],
@@ -94,8 +108,8 @@ function normalizedControlValue(field, settings) {
   return field.defaultValue;
 }
 
-const isAppearanceAtDefaults = computed(() =>
-  appearanceFields.value.every(
+const isConfigurationAtDefaults = computed(() =>
+  configurationFields.value.every(
     (field) => draft[field.key] === field.defaultValue,
   ),
 );
@@ -114,7 +128,7 @@ watch(
   ],
   ([activeKind, outputSlot, activeTemplateId, saveStatus]) => {
     if (saveStatus !== 'saved') return;
-    for (const field of appearanceFields.value) {
+    for (const field of configurationFields.value) {
       draft[field.key] = normalizedControlValue(field, outputSlot?.settings);
     }
     draft.captureSize = normalizeCaptureSizeId(
@@ -129,7 +143,7 @@ watch(
 function settingsSnapshot() {
   return {
     ...Object.fromEntries(
-      appearanceFields.value.map(({ key }) => [key, draft[key]]),
+      configurationFields.value.map(({ key }) => [key, draft[key]]),
     ),
     captureSize: draft.captureSize,
   };
@@ -159,7 +173,7 @@ function commitSettings() {
 }
 
 function resetAppearance() {
-  for (const field of appearanceFields.value) {
+  for (const field of configurationFields.value) {
     draft[field.key] = field.defaultValue;
   }
   emitSettingsChange('immediate');
@@ -168,8 +182,8 @@ function resetAppearance() {
 
 <template>
   <ObsOutputSplitLayout
-    aria-label="OBS 外觀工作台"
-    side-label="外觀設定"
+    aria-label="OBS 輸出工作台"
+    side-label="輸出設定"
     side-variant="inspector"
   >
     <template #main>
@@ -243,7 +257,7 @@ function resetAppearance() {
       />
 
       <section
-        v-for="group in appearanceFieldGroups"
+        v-for="group in configurationFieldGroups"
         :key="group.id"
         class="obs-slot-workbench__section"
       >
@@ -261,9 +275,9 @@ function resetAppearance() {
       </section>
 
       <UiButton
-        v-if="appearanceFields.length > 0"
+        v-if="configurationFields.length > 0"
         class="obs-slot-workbench__reset"
-        :disabled="isAppearanceAtDefaults"
+        :disabled="isConfigurationAtDefaults"
         @click="resetAppearance"
       >
         恢復模板預設

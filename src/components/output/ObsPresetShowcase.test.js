@@ -363,8 +363,9 @@ describe('OBS output workspace layout contract', () => {
     );
     expect(workbenchSource).not.toContain('<select');
     expect(workbenchSource).toContain('appearanceFields');
+    expect(workbenchSource).toContain('presentationFields');
     expect(workbenchSource).toContain('sanitizeOutputAppearanceSetting');
-    expect(workbenchSource).toContain('appearanceFieldGroups');
+    expect(workbenchSource).toContain('configurationFieldGroups');
     expect(workbenchSource).toContain('captureSize: draft.captureSize');
     expect(workbenchSource).toContain(
       'class="obs-slot-workbench__capture-guide"',

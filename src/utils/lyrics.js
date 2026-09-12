@@ -1,6 +1,7 @@
+import lrcParsing from '../../shared/lrcParsing.js';
+
+const { isLrcMetadataLine, parseLrcTimestamp } = lrcParsing;
 const TIME_RE = /(?:(\d+):)?(\d{2}):(\d{2})(?:[.,](\d{1,3}))?/;
-const LRC_TIME_RE = /^(\d{1,2}):(\d{2})(?:[.:](\d{1,3}))?$/;
-const LRC_METADATA_RE = /^\[(?:ar|ti|al|by|offset|length|re|ve):[^\]]*\]$/i;
 const LRC_SPEAKER_CUE_RE = /^\[[^\]\r\n]{1,40}\][ \t]*/u;
 const SOURCE_KIND_YOUTUBE_CC = 'youtube-cc';
 const SOURCE_KIND_LRCLIB = 'lrclib';
@@ -326,16 +327,6 @@ export function parseVtt(text, options = {}) {
   return dedupLyricCues(cues, options);
 }
 
-function parseLrcTimestamp(value) {
-  const match = LRC_TIME_RE.exec(String(value || '').trim());
-  if (!match) return null;
-  const minutes = Number(match[1]);
-  const seconds = Number(match[2]);
-  const fraction = match[3] || '';
-  const millis = fraction ? Number(fraction.padEnd(3, '0').slice(0, 3)) : 0;
-  return minutes * 60 + seconds + millis / 1000;
-}
-
 export function parseLrc(text) {
   return parseEnhancedLrc(text);
 }
@@ -414,7 +405,7 @@ export function parseEnhancedLrc(text) {
   if (starts.length === 0) {
     return rawLines
       .map((line) => line.trim())
-      .filter((line) => line && !LRC_METADATA_RE.test(line))
+      .filter((line) => line && !isLrcMetadataLine(line))
       .map((line) => ({
         start: Number.NaN,
         end: Number.NaN,
@@ -597,4 +588,11 @@ export function formatLyricsSourceOffset(offsetMs) {
 
 export function formatLyricsSourceTier(tier) {
   return ['T0', 'T1', 'T2'].includes(tier) ? tier : '—';
+}
+
+export function describeLyricsSourceTier(tier) {
+  if (tier === 'T0') return 'T0｜無時間資料，不能自動跟隨播放';
+  if (tier === 'T1') return 'T1｜逐行時間';
+  if (tier === 'T2') return 'T2｜行內片段時間；文件可能只有部分行具備';
+  return '時間層級未知';
 }

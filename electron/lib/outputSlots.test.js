@@ -199,6 +199,42 @@ describe('outputSlots', () => {
     ).not.toThrow();
   });
 
+  it('bounds the independent Live Stage presentation policy setting', () => {
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'live-stage',
+      settings: {
+        lyricsPresentationPolicyId: 'balanced',
+        captureSize: 'full',
+      },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).toMatchObject({
+      lyricsPresentationPolicyId: 'balanced',
+      captureSize: 'full',
+    });
+
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'live-stage',
+      settings: {
+        lyricsPresentationPolicyId: 'not-a-policy',
+        captureSize: 'full',
+      },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
+      'lyricsPresentationPolicyId',
+    );
+
+    upsertOutputSlot(dir, 'lyrics', {
+      templateId: 'focus-line',
+      settings: {
+        lyricsPresentationPolicyId: 'literal',
+        captureSize: 'full',
+      },
+    });
+    expect(loadOutputSlots(dir).slots.lyrics.settings).not.toHaveProperty(
+      'lyricsPresentationPolicyId',
+    );
+  });
+
   it('persists the Kinetic Pop material selection', () => {
     upsertOutputSlot(dir, 'lyrics', {
       templateId: 'kinetic-pop',

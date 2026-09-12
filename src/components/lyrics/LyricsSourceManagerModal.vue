@@ -3,6 +3,7 @@ import { computed, nextTick, ref, useTemplateRef, watch } from 'vue';
 import { Pencil, Plus, Trash2 } from '../../icons/index.js';
 import { useLyrics } from '../../composables/useLyrics.js';
 import {
+  describeLyricsSourceTier,
   formatLyricsSourceLabel,
   formatLyricsSourceOffset,
   formatLyricsSourceTier,
@@ -225,9 +226,14 @@ function sourceTierLabel(source) {
               </span>
               <span
                 class="lyrics-source-manager__row-meta"
-                :aria-label="`歌詞層級 ${sourceTierLabel(source)}，時間偏移 ${formatLyricsSourceOffset(sourceOffsetMs(source))}`"
+                :aria-label="`${describeLyricsSourceTier(sourceTiers.get(source.filename))}，時間偏移 ${formatLyricsSourceOffset(sourceOffsetMs(source))}`"
               >
-                <span class="lyrics-source-manager__row-tier">
+                <span
+                  class="lyrics-source-manager__row-tier"
+                  :title="
+                    describeLyricsSourceTier(sourceTiers.get(source.filename))
+                  "
+                >
                   {{ sourceTierLabel(source) }}
                 </span>
                 <span class="lyrics-source-manager__row-offset">

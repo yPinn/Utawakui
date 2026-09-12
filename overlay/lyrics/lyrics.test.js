@@ -4932,7 +4932,16 @@ describe('lyrics overlay renderer', () => {
 
     scheduler.setTemplateId('live-stage');
     expect(frames.at(-1).liveStage).toMatchObject({ active: true });
+    expect(frames.at(-1).lyricsPresentationPolicyId).toBe('broadcast-compact');
     expect(frames.at(-1)).not.toHaveProperty('ktv');
+
+    const framesBeforePolicyChange = frames.length;
+    scheduler.setPresentationSettings({
+      lyricsPresentationPolicyId: 'literal',
+      templateId: 'live-stage',
+    });
+    expect(frames).toHaveLength(framesBeforePolicyChange + 1);
+    expect(frames.at(-1).lyricsPresentationPolicyId).toBe('literal');
     scheduler.stop();
   });
 });

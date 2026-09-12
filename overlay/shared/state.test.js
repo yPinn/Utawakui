@@ -232,7 +232,6 @@ describe('overlay state selectors', () => {
     for (const templateId of [
       'focus-line',
       'quiet-caption',
-      'karaoke-stack',
       'kinetic-pop',
       'ornate-vertical',
       'manga-frame',
@@ -240,8 +239,14 @@ describe('overlay state selectors', () => {
     ]) {
       expect(
         nextPresentationBoundaryDelayMs(value, { nowMs, templateId }),
-      ).toBe(500);
+      ).not.toBe(500);
     }
+    expect(
+      nextPresentationBoundaryDelayMs(value, {
+        nowMs,
+        templateId: 'karaoke-stack',
+      }),
+    ).toBe(500);
   });
 
   it('schedules the next lyric boundary for the kinetic template', () => {
@@ -351,6 +356,63 @@ describe('overlay state selectors', () => {
         templateId: 'kinetic-pop',
       }),
     ).toBe(2000);
+  });
+
+  it('uses authored T2 boundaries for Kinetic Pop phrase changes', () => {
+    const base = snapshot();
+    const sourceText = 'first second';
+    const line = {
+      text: sourceText,
+      startMs: 9000,
+      endMs: 15000,
+      segments: [
+        {
+          segmentId: 'first',
+          text: 'first ',
+          startMs: 9000,
+          endMs: 10000,
+        },
+        {
+          segmentId: 'second',
+          text: 'second',
+          startMs: 13500,
+          endMs: 15000,
+        },
+      ],
+    };
+    const valueAt = (positionMs) => ({
+      ...base,
+      playback: { ...base.playback, positionMs },
+      lyrics: { ...base.lyrics, lines: [line] },
+    });
+    const nowMs = Date.parse(base.generatedAt);
+
+    expect(
+      selectLyricsOverlayFrame(valueAt(12000), {
+        nowMs,
+        templateId: 'kinetic-pop',
+      }).kineticPop,
+    ).toMatchObject({
+      displayText: 'first',
+      phraseIndex: 0,
+      phraseTimingSource: 't2',
+    });
+    expect(
+      selectLyricsOverlayFrame(valueAt(14000), {
+        nowMs,
+        templateId: 'kinetic-pop',
+      }).kineticPop,
+    ).toMatchObject({
+      displayText: 'second',
+      phraseIndex: 1,
+      phraseTimingSource: 't2',
+    });
+    expect(
+      nextPresentationBoundaryDelayMs(valueAt(12000), {
+        nowMs,
+        templateId: 'kinetic-pop',
+      }),
+    ).toBe(1500);
   });
 
   it('schedules only boundaries used by the active template', () => {
@@ -2040,6 +2102,75 @@ describe('overlay state selectors', () => {
     });
     expect(nextDelayMs).toBeGreaterThan(0);
     expect(nextDelayMs).toBeLessThanOrEqual(pageDelayMs);
+  });
+
+  it('uses an authored T2 source boundary for the next Live Stage page', () => {
+    const text =
+      '想看見天上璀璨的星光 sing it with me tonight beyond every doubt';
+    const secondPageStart = text.indexOf('tonight');
+    const line = {
+      text,
+      startMs: 9000,
+      endMs: 19000,
+      segments: [
+        {
+          segmentId: 'whole-line',
+          text,
+          startMs: 9000,
+          endMs: 19000,
+        },
+      ],
+    };
+    const base = snapshot({
+      lyrics: { ...snapshot().lyrics, lines: [line] },
+    });
+    const boundaryMs =
+      line.startMs +
+      ((line.endMs - line.startMs) * secondPageStart) / text.length;
+    const nowMs = Date.parse(base.generatedAt);
+    const before = {
+      ...base,
+      playback: { ...base.playback, positionMs: boundaryMs - 500 },
+    };
+    const after = {
+      ...base,
+      playback: { ...base.playback, positionMs: boundaryMs + 100 },
+    };
+
+    expect(
+      selectLyricsOverlayFrame(before, {
+        lyricsPresentationPolicyId: 'balanced',
+        nowMs,
+        templateId: 'live-stage',
+      }),
+    ).toMatchObject({
+      liveStagePageIndex: 0,
+      liveStagePageTimingSource: 't2',
+    });
+    expect(
+      selectLyricsOverlayFrame(after, {
+        lyricsPresentationPolicyId: 'balanced',
+        nowMs,
+        templateId: 'live-stage',
+      }),
+    ).toMatchObject({
+      liveStagePageIndex: 1,
+      liveStagePageTimingSource: 't2',
+    });
+    expect(
+      nextPresentationBoundaryDelayMs(before, {
+        lyricsPresentationPolicyId: 'balanced',
+        nowMs,
+        templateId: 'live-stage',
+      }),
+    ).toBe(500);
+    expect(
+      nextPresentationBoundaryDelayMs(after, {
+        lyricsPresentationPolicyId: 'balanced',
+        nowMs,
+        templateId: 'live-stage',
+      }),
+    ).toBe(Math.ceil(line.endMs - after.playback.positionMs));
   });
 
   it('hides lyrics that do not belong to the playing track', () => {

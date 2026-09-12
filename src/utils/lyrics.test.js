@@ -5,6 +5,7 @@ import {
   formatLyricsSourceLabel,
   formatLyricsSourceOffset,
   formatLyricsSourceTier,
+  describeLyricsSourceTier,
   formatLyricTime,
   inferPreferredLyricsLanguagePrefixes,
   isNonLyricCue,
@@ -328,6 +329,21 @@ Second line`);
       'First line',
       '[Verse]',
       'Second line',
+    ]);
+  });
+
+  it('filters common LRC metadata without treating authored bracket cues as metadata', () => {
+    const lines = parseLrc(`[la:ja]
+[tool:Lyrics Editor]
+[au:Composer]
+[Verse]
+[女]
+First line`);
+
+    expect(lines.map((line) => line.text)).toEqual([
+      '[Verse]',
+      '[女]',
+      'First line',
     ]);
   });
 
@@ -677,4 +693,16 @@ describe('formatLyricsSourceTier', () => {
   ])('formats source tier %s as %s', (tier, expected) => {
     expect(formatLyricsSourceTier(tier)).toBe(expected);
   });
+
+  it.each([
+    ['T0', 'T0｜無時間資料，不能自動跟隨播放'],
+    ['T1', 'T1｜逐行時間'],
+    ['T2', 'T2｜行內片段時間；文件可能只有部分行具備'],
+    [undefined, '時間層級未知'],
+  ])(
+    'describes source tier %s without implying a display style',
+    (tier, expected) => {
+      expect(describeLyricsSourceTier(tier)).toBe(expected);
+    },
+  );
 });

@@ -5,6 +5,11 @@ import {
   outputAppearanceFieldsForTemplate,
 } from '../../shared/outputAppearance.mjs';
 import { lyricsPresentationProfileForTemplate } from '../../shared/presentation/lyricsPresentation.mjs';
+import {
+  lyricsPresentationPolicyOptionsForTemplate,
+  normalizeLyricsPresentationPolicyId,
+} from '../../shared/presentation/lyricsPresentationPolicies.mjs';
+import { lyricsTemplateCapabilities } from '../../shared/presentation/lyricsTemplateCapabilities.mjs';
 import { defaultCaptureSizeIdForKind } from './outputCaptureSizes.js';
 
 export const OUTPUT_TEMPLATE_KINDS = Object.freeze(
@@ -293,10 +298,11 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     availability: {
       label: '可用',
       tone: 'muted',
-      summary: '只需要目前行；曲目資訊用於開場字卡。',
+      summary: '需要逐行時間；曲目資訊用於開場字卡。',
     },
     summary: '舞台轉播風格的歌詞與開場字卡。',
-    detail: '歌詞固定在左下，開場時於右下短暫亮出曲目字卡，保留現場轉播節奏。',
+    detail:
+      '歌詞固定在左下，可選轉播精簡、平衡分行或忠實原文；開場時於右下短暫亮出曲目字卡。',
     preview: {
       layoutLabel: '舞台雙行',
       motionLabel: '字卡進場',
@@ -304,6 +310,7 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     tags: ['轉播字幕', '開場字卡', '舞台識別'],
     settings: [
       { label: '歌詞', value: '左下、最多兩行' },
+      { label: '呈現', value: '精簡、平衡或忠實原文' },
       { label: '字卡', value: '右下、播放後四至八秒' },
       { label: '成員', value: '解析但不顯示' },
       { label: '品牌', value: 'Utawakui 舞台識別' },
@@ -385,11 +392,35 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
   },
 ];
 
+const EMPTY_PRESENTATION_FIELDS = Object.freeze([]);
+
+function presentationFieldsForTemplate(templateId) {
+  const options = lyricsPresentationPolicyOptionsForTemplate(templateId);
+  if (options.length === 0) return EMPTY_PRESENTATION_FIELDS;
+  return Object.freeze([
+    Object.freeze({
+      key: 'lyricsPresentationPolicyId',
+      label: '歌詞呈現策略',
+      control: 'select',
+      settingKind: 'lyrics-presentation',
+      group: 'lyrics-presentation',
+      groupLabel: '歌詞呈現',
+      defaultValue: normalizeLyricsPresentationPolicyId(templateId),
+      options: Object.freeze(options.map((option) => Object.freeze(option))),
+    }),
+  ]);
+}
+
 export const OUTPUT_TEMPLATES = Object.freeze(
   OUTPUT_TEMPLATE_DEFINITIONS.map((template) => {
     const appearanceFields = outputAppearanceFieldsForTemplate(template.id);
+    const presentationFields = presentationFieldsForTemplate(template.id);
     if (template.kind !== 'lyrics') {
-      return Object.freeze({ ...template, appearanceFields });
+      return Object.freeze({
+        ...template,
+        appearanceFields,
+        presentationFields,
+      });
     }
     const presentationProfile = lyricsPresentationProfileForTemplate(
       template.id,
@@ -402,6 +433,8 @@ export const OUTPUT_TEMPLATES = Object.freeze(
       }),
       editableAppearanceKeys: [...presentationProfile.editableAppearanceKeys],
       appearanceFields,
+      presentationFields,
+      lyricsCapabilities: lyricsTemplateCapabilities(template.id),
       presentationProfile,
     });
   }),

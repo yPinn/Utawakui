@@ -71,6 +71,19 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).not.toContain('恢復模板預設');
   });
 
+  it('renders Live Stage presentation policy separately from appearance controls', async () => {
+    const html = await renderRegisteredTemplate('live-stage');
+
+    expect(html).toContain('歌詞呈現');
+    expect(html).toContain('歌詞呈現策略');
+    expect(html).toMatch(
+      /<select id="output-appearance-lyricsPresentationPolicyId"[^>]*value="broadcast-compact"/,
+    );
+    expect(html).toContain('轉播精簡');
+    expect(html).toContain('平衡分行');
+    expect(html).toContain('忠實原文');
+  });
+
   it('shows saved state instead of requiring a manual Appearance save', async () => {
     const html = await renderToString(
       createSSRApp({

@@ -9,6 +9,12 @@ import {
 } from './lyricsPresentation.mjs';
 import { estimatedLyricsTextUnits } from './lyricsTimingUnits.mjs';
 import { createLyricsRhythmPresentation } from './lyricsRhythm.mjs';
+import { lyricsTemplateCapabilities } from './lyricsTemplateCapabilities.mjs';
+import { normalizeLyricsPresentationPolicyId } from './lyricsPresentationPolicies.mjs';
+import {
+  alignDisplayTextsToSourceRanges,
+  interpolateSourceTimeAtOffset,
+} from './lyricsSourceMapping.mjs';
 import {
   adaptOrnateVerticalLyricsPresentation,
   createOrnateVerticalDocumentContext,
@@ -272,23 +278,62 @@ function mangaBubbleStartMs(bubble, segments) {
       .filter(Number.isSafeInteger),
   );
   if (!Number.isFinite(sourceStart)) return null;
-  const segment = segments.find(
-    (candidate) =>
-      sourceStart >= candidate.sourceStart && sourceStart < candidate.sourceEnd,
+  return interpolateSourceTimeAtOffset(segments, sourceStart);
+}
+
+function kineticPopPhraseTimeline(snapshot, lines, lineIndex, presentation) {
+  const line = lines[lineIndex];
+  const displayText = displayableLyricsText(line?.text);
+  const segments = authoredSegmentsForDisplay(
+    line,
+    effectiveLineEnd(snapshot, lines, lineIndex),
+    displayText,
   );
-  if (!segment || !Number.isFinite(segment.startMs)) return null;
-  if (sourceStart <= segment.sourceStart) return segment.startMs;
-  if (
-    !Number.isFinite(segment.endMs) ||
-    segment.endMs <= segment.startMs ||
-    segment.sourceEnd <= segment.sourceStart
-  ) {
-    return null;
-  }
-  const progress =
-    (sourceStart - segment.sourceStart) /
-    (segment.sourceEnd - segment.sourceStart);
-  return segment.startMs + (segment.endMs - segment.startMs) * progress;
+  const phrases = Array.isArray(presentation?.phrases)
+    ? presentation.phrases
+    : [];
+  if (!segments || phrases.length <= 1) return null;
+  const timeline = phrases.map((phrase) => ({
+    startMs: interpolateSourceTimeAtOffset(segments, phrase.sourceStart),
+  }));
+  return timeline.every(({ startMs }) => Number.isFinite(startMs))
+    ? timeline
+    : null;
+}
+
+function liveStagePageTimeline(
+  snapshot,
+  lines,
+  lineIndex,
+  analysis,
+  lyricsPresentationPolicyId,
+) {
+  const line = lines[lineIndex];
+  const displayText = displayableLyricsText(line?.text);
+  const segments = authoredSegmentsForDisplay(
+    line,
+    effectiveLineEnd(snapshot, lines, lineIndex),
+    displayText,
+  );
+  if (!segments) return null;
+  const presentation = adaptLiveStageLyricsPresentation(
+    analysis?.sourceText === displayText
+      ? analysis
+      : analyzeLyricsSource(displayText),
+    { lyricsPresentationPolicyId },
+  );
+  if (presentation.pages.length <= 1) return null;
+  const sourceRanges = alignDisplayTextsToSourceRanges(
+    displayText,
+    presentation.pages.map((page) => page.lines.join(' ')),
+  );
+  if (!sourceRanges) return null;
+  const timeline = sourceRanges.map(({ sourceStart }) => ({
+    startMs: interpolateSourceTimeAtOffset(segments, sourceStart),
+  }));
+  return timeline.every(({ startMs }) => Number.isFinite(startMs))
+    ? timeline
+    : null;
 }
 
 function mangaBubbleTimeline(snapshot, lines, lineIndex, analysis, language) {
@@ -421,10 +466,31 @@ function nextLiveStageCaptionBoundaryDelayMs(snapshot, options = {}) {
 
   const positionMs = lyricsPositionMs(snapshot, nowMs);
   const lineProgress = boundedProgress(positionMs, line.startMs, lineEndMs);
-  const presentation = adaptLiveStageLyricsPresentation(
-    analyzeLyricsSource(text(line.text)),
-    { lineProgress },
+  const analysis = analyzeLyricsSource(text(line.text));
+  const exactTimeline = liveStagePageTimeline(
+    snapshot,
+    lines,
+    lineIndex,
+    analysis,
+    options.lyricsPresentationPolicyId,
   );
+  const nextExactBoundaryMs = exactTimeline
+    ?.map(({ startMs }) => startMs)
+    .find((startMs) => startMs > positionMs);
+  if (exactTimeline) {
+    return Number.isFinite(nextExactBoundaryMs)
+      ? Math.max(
+          1,
+          Math.ceil(
+            (nextExactBoundaryMs - positionMs) / playbackRate(snapshot),
+          ),
+        )
+      : null;
+  }
+  const presentation = adaptLiveStageLyricsPresentation(analysis, {
+    lineProgress,
+    lyricsPresentationPolicyId: options.lyricsPresentationPolicyId,
+  });
   const nextBoundary = presentation.pageBreakProgresses.find(
     (boundary) => boundary > lineProgress,
   );
@@ -463,6 +529,25 @@ function nextKineticPopPhraseBoundaryDelayMs(snapshot, options = {}) {
     displayableLyricsText(line.text),
     { lineProgress },
   );
+  const exactTimeline = kineticPopPhraseTimeline(
+    snapshot,
+    lines,
+    lineIndex,
+    presentation,
+  );
+  const nextExactBoundaryMs = exactTimeline
+    ?.map(({ startMs }) => startMs)
+    .find((startMs) => startMs > positionMs);
+  if (exactTimeline) {
+    return Number.isFinite(nextExactBoundaryMs)
+      ? Math.max(
+          1,
+          Math.ceil(
+            (nextExactBoundaryMs - positionMs) / playbackRate(snapshot),
+          ),
+        )
+      : null;
+  }
   const nextBoundary = presentation.phraseBreakProgresses.find(
     (boundary) => boundary > lineProgress,
   );
@@ -1380,34 +1465,44 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   const delays = [];
   const templateId =
     typeof options.templateId === 'string' ? options.templateId : null;
+  const lyricsPresentationPolicyId =
+    templateId === 'live-stage'
+      ? normalizeLyricsPresentationPolicyId(
+          templateId,
+          options.lyricsPresentationPolicyId,
+        )
+      : null;
   const legacyAllTemplates = templateId === null;
+  const schedulerCapabilities = legacyAllTemplates
+    ? null
+    : new Set(lyricsTemplateCapabilities(templateId).scheduler);
   if (
     legacyAllTemplates ||
-    ['focus-line', 'quiet-caption', 'kinetic-pop', 'manga-frame'].includes(
-      templateId,
-    )
+    schedulerCapabilities.has('lyrics-lines') ||
+    schedulerCapabilities.has('lyrics-segments')
   ) {
     const lyricsDelay = nextLyricsBoundaryDelayMs(snapshot, {
       nowMs,
-      includeSegments: templateId !== 'kinetic-pop',
+      includeSegments:
+        legacyAllTemplates || schedulerCapabilities.has('lyrics-segments'),
     });
     if (lyricsDelay !== null) delays.push(lyricsDelay);
   }
-  if (legacyAllTemplates || templateId === 'manga-frame') {
+  if (legacyAllTemplates || schedulerCapabilities.has('manga-bubbles')) {
     const mangaDelay = nextMangaBubbleBoundaryDelayMs(snapshot, {
       nowMs,
       presentationDocument: options.presentationDocument,
     });
     if (mangaDelay !== null) delays.push(mangaDelay);
   }
-  if (legacyAllTemplates || templateId === 'kinetic-pop') {
+  if (legacyAllTemplates || schedulerCapabilities.has('kinetic-phrases')) {
     const kineticPopPhraseDelay = nextKineticPopPhraseBoundaryDelayMs(
       snapshot,
       { nowMs },
     );
     if (kineticPopPhraseDelay !== null) delays.push(kineticPopPhraseDelay);
   }
-  if (legacyAllTemplates || templateId === 'karaoke-stack') {
+  if (legacyAllTemplates || schedulerCapabilities.has('ktv')) {
     const ktvDelay = nextKtvBoundaryDelayMs(
       snapshot,
       Array.isArray(snapshot?.lyrics?.lines) ? snapshot.lyrics.lines : [],
@@ -1416,18 +1511,21 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
     );
     if (ktvDelay !== null) delays.push(ktvDelay);
   }
-  if (legacyAllTemplates || templateId === 'live-stage') {
+  if (legacyAllTemplates || schedulerCapabilities.has('live-stage-card')) {
     const liveStageDelay = nextLiveStageBoundaryDelayMs(snapshot, { nowMs });
     if (liveStageDelay !== null) delays.push(liveStageDelay);
+  }
+  if (legacyAllTemplates || schedulerCapabilities.has('live-stage-captions')) {
     const liveStageCaptionDelay = nextLiveStageCaptionBoundaryDelayMs(
       snapshot,
-      { nowMs },
+      { lyricsPresentationPolicyId, nowMs },
     );
     if (liveStageCaptionDelay !== null) delays.push(liveStageCaptionDelay);
   }
 
   const lyricsRhythm = selectLyricsRhythmFrame(snapshot, { nowMs });
   if (
+    (legacyAllTemplates || schedulerCapabilities.has('beat-phase')) &&
     lyricsRhythm?.timingSource === 'beat-grid' &&
     Number.isFinite(lyricsRhythm.nextBeat?.delayMs) &&
     lyricsRhythm.nextBeat.delayMs > 0
@@ -1438,8 +1536,7 @@ export function nextPresentationBoundaryDelayMs(snapshot, options = {}) {
   const document = musicStructureDocument(snapshot);
   if (
     document &&
-    (legacyAllTemplates ||
-      ['karaoke-stack', 'manga-frame'].includes(templateId))
+    (legacyAllTemplates || schedulerCapabilities.has('music-sections'))
   ) {
     const positionMs = playbackPositionMs(snapshot, nowMs);
     let nextMusicBoundaryMs = Infinity;
@@ -1569,6 +1666,13 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
   const nowMs = options.nowMs ?? Date.now();
   const templateId =
     typeof options.templateId === 'string' ? options.templateId : null;
+  const lyricsPresentationPolicyId =
+    templateId === 'live-stage'
+      ? normalizeLyricsPresentationPolicyId(
+          templateId,
+          options.lyricsPresentationPolicyId,
+        )
+      : null;
   const legacyAllTemplates = templateId === null;
   const needsSourceAnalysis =
     legacyAllTemplates || ['manga-frame', 'live-stage'].includes(templateId);
@@ -1589,7 +1693,7 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           lyricsPositionMs(snapshot, nowMs),
         )
       : null;
-  const kineticPop =
+  const kineticPopBase =
     templateId === 'kinetic-pop'
       ? adaptKineticPopLyricsPresentation(frame.currentText, {
           lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex,
@@ -1597,6 +1701,50 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
           kineticMaterial: options.kineticMaterial,
         })
       : null;
+  const kineticPopTimeline =
+    kineticPopBase && frame.currentTimingSource === 't2'
+      ? kineticPopPhraseTimeline(
+          snapshot,
+          lines,
+          frame.lineIndex,
+          kineticPopBase,
+        )
+      : null;
+  const kineticPopPhraseIndex = kineticPopTimeline
+    ? Math.max(
+        0,
+        kineticPopTimeline.filter(
+          ({ startMs }) => startMs <= lyricsPositionMs(snapshot, nowMs),
+        ).length - 1,
+      )
+    : null;
+  const kineticPop =
+    kineticPopBase && kineticPopPhraseIndex !== null
+      ? adaptKineticPopLyricsPresentation(frame.currentText, {
+          lineIndex: frame.currentVisibleLineIndex ?? frame.lineIndex,
+          kineticMaterial: options.kineticMaterial,
+          phraseIndex: kineticPopPhraseIndex,
+          phraseTimingSource: 't2',
+        })
+      : kineticPopBase;
+  const liveStageTimeline =
+    templateId === 'live-stage' && frame.currentTimingSource === 't2'
+      ? liveStagePageTimeline(
+          snapshot,
+          lines,
+          frame.lineIndex,
+          sourceAnalysis,
+          lyricsPresentationPolicyId,
+        )
+      : null;
+  const liveStagePageIndex = liveStageTimeline
+    ? Math.max(
+        0,
+        liveStageTimeline.filter(
+          ({ startMs }) => startMs <= lyricsPositionMs(snapshot, nowMs),
+        ).length - 1,
+      )
+    : null;
   const cachedOrnateLine =
     options.presentationDocument?.lines?.[frame.lineIndex];
   const ornateVertical =
@@ -1614,6 +1762,13 @@ export function selectLyricsOverlayFrame(snapshot, options = {}) {
       ? { timelineDiscontinuity: true }
       : {}),
     ...(needsSourceAnalysis ? { lyricsSourceAnalysis: sourceAnalysis } : {}),
+    ...(lyricsPresentationPolicyId ? { lyricsPresentationPolicyId } : {}),
+    ...(liveStagePageIndex !== null
+      ? {
+          liveStagePageIndex,
+          liveStagePageTimingSource: 't2',
+        }
+      : {}),
     ...(mangaBubbleTiming ? { mangaBubbleTiming } : {}),
     ...(kineticPop ? { kineticPop } : {}),
     ...(ornateVertical ? { ornateVertical } : {}),

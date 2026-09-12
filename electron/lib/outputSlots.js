@@ -10,6 +10,9 @@ const {
 } = require('../../shared/outputAppearance.mjs');
 const OUTPUT_CAPTURE_VALUES = require('../../shared/outputCaptureValues.json');
 const OUTPUT_TEMPLATE_VALUES = require('../../shared/outputTemplateValues.json');
+const {
+  sanitizeLyricsPresentationPolicyId,
+} = require('../../shared/presentation/lyricsPresentationPolicies.mjs');
 
 const OUTPUT_SLOTS_FILENAME = 'overlays.json';
 const OUTPUT_SLOTS_VERSION = 2;
@@ -50,7 +53,7 @@ function safeId(value) {
   return SAFE_ID_RE.test(trimmed) ? trimmed : null;
 }
 
-function sanitizeSettings(value) {
+function sanitizeSettings(value, templateId) {
   if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     return {};
   }
@@ -59,6 +62,14 @@ function sanitizeSettings(value) {
   for (const [key, setting] of Object.entries(value)) {
     if (entries.length >= MAX_SETTINGS) break;
     if (!SAFE_SETTING_KEY_RE.test(key) || key.length > MAX_ID_LENGTH) continue;
+    if (key === 'lyricsPresentationPolicyId') {
+      const normalized = sanitizeLyricsPresentationPolicyId(
+        templateId,
+        setting,
+      );
+      if (normalized !== undefined) entries.push([key, normalized]);
+      continue;
+    }
     if (Object.hasOwn(OUTPUT_APPEARANCE_DEFAULTS, key)) {
       const normalized = sanitizeOutputAppearanceSetting(key, setting);
       if (normalized !== undefined) entries.push([key, normalized]);
@@ -97,7 +108,7 @@ function sanitizeOutputSlot(kindValue, value) {
     styleSetIds.push(styleSetId);
   }
 
-  const settings = sanitizeSettings(value.settings);
+  const settings = sanitizeSettings(value.settings, templateId);
   settings.captureSize = normalizeCaptureSize(
     kind,
     templateId,

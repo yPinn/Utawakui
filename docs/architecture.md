@@ -56,6 +56,9 @@ presentation profile 與 availability，非 Lyrics 不依賴該 profile。固定
 appearance key，Renderer 依模板欄位 metadata 建立 control，Browser Source 則在套用前再次 normalize；enum 只進
 root dataset，顏色只接受六位 hex，位置 offset clamp 後才進 `--ovl-*`。這層不依賴控制台
 Token v2，Overlay semantic token 也不回頭消費 `--ui-*`。
+歌詞呈現策略則由 `lyricsPresentationPolicies.mjs` 另行擁有；它不是 appearance 欄位，也不借用
+尚未實作的 Style Set。現行只有 Live Stage 宣告轉播精簡、平衡分行與忠實原文三個 bounded
+policy，slot persistence 依 template capability 驗證，Workbench 以獨立「歌詞呈現」群組顯示。
 Renderer 的 `useOutputAppearanceAutosave` 將 Workbench 完整 scalar snapshot 以 350ms
 debounce、single-flight 與 latest-wins 規則送入既有 slot persistence boundary；切頁、切換
 Output kind 或套用模板前必須 flush，失敗則保留本地 draft 與 retry payload。Persistence
@@ -69,16 +72,27 @@ T1 fallback 會經 `lyricsTimingUnits.mjs` 產生唯一共用、無語意標記�
 做模板客製化；Generic 是 identity，其他 profile 才可把換行、標點、speaker label、括號
 解讀成 phrase、role、bubble 或 caption page。Browser Source 以 document id、revision、
 language、profile id／version 快取靜態結果，`state.mjs` 投影目前 template 的動態 frame
-與下一個 boundary。所有 Lyrics profile 都取得同一個 bounded `lyricsRhythm`：它以當前行、
+與下一個 boundary。`lyricsTemplateCapabilities.mjs` 是各模板 T1／T2、source mapping、music cue
+consumer 與 scheduler wake 的唯一宣告；Workbench metadata 與 runtime 不另維護 template-id
+清單。所有 Lyrics profile 都取得同一個 bounded `lyricsRhythm`：它以當前行、
 lyrics offset 與 canonical playback clock 對照 current-track M1 cues；只在局部四拍連續、
 confidence 至少 0.5 且間距落在 median 的 75%–125% 時輸出 beat-grid phase，否則只以可信
 BPM 輸出無 phase cadence，再失敗便完全省略。Runtime 在每個可信 beat boundary 重投影，
 但相同歌詞 identity 不重播換句動畫；模板只讀 current／next beat、行內拍序、拍長與限制在
-0.75–1.35 的 motion scale，仍保有自己的視覺語彙。Raw LRC／VTT parser 不進模板，模板
+0.75–1.35 的 motion scale，仍保有自己的視覺語彙。Scheduler 只為 capability 宣告的 consumer
+喚醒；目前 beat phase／section boundary 只驅動 Classic KTV，Focus Line／Quiet Caption 只讀
+bounded cadence，不再讓未消費節拍的模板逐拍重投影。Raw LRC／VTT parser 不進模板，模板
 分句不回寫 canonical timing，T2 永遠優先。獨立 Reading Aid profile
 仍未開放給 Output；Manga Frame 則可從 `lyrics.document` 的 optional reading projection
 取得已存在、identity-matched 的日文 `{ text, reading }` segments。Publisher 只讀 sidecar，
 不因 OBS 啟動 reading worker，缺少或 stale 時維持純文字。
+
+Live Stage profile 在相同 adapter 中提供三個 presentation policy：轉播精簡可移除可判定的
+filler／連續重複與 CJK 顯示標點，平衡分行保留內容但重排 rows，忠實原文保留 authored rows。
+三者都維持 canonical `sourceText`，不改 line／segment identity。Caption layout 先枚舉完整
+1／2、2／1、2／2 候選，再以容量、作者邊界／跨語邊界、附著性與整體幾何選解；不以歌曲
+專名例外修補。多頁且有 validated T2 時，`lyricsSourceMapping.mjs` 先把顯示頁文字安全映回
+來源區間，再插值作者 segment 時間；映射失敗才使用 T1 視覺權重 page progress。
 
 Manga Frame 的共享 layout contract 以 document language、實際假名或既有 reading segment
 投影 `ja`／`other` 呈現提示。Browser Source 與 Renderer 預覽只在 `ja` bubble 套用封裝的
@@ -103,14 +117,15 @@ reduced motion 直接 commit。`overlay/lyrics/ornateVertical.mjs` 只擁有 DOM
 Kinetic Pop profile 保持在同一 Lyrics Output route 內：共享 projection 依 source line
 index 輪替三種材質，並以 grapheme-aware unit 判斷短句。每個已計時 source line 在任一時刻
 只輸出一個橫向 row；此日文優先模板會把來源行內的作者空白編譯成 sequential phrases，依各段視覺
-字重占比分配既有 `lineProgress`，先顯示前段再替換後段。這個顯示排程不建立或回寫 canonical／
+字重占比分配既有 `lineProgress`，先顯示前段再替換後段；有 validated T2 時則以共用的 source
+range mapping 對齊作者片段起點，只有安全映射失敗才回退到 T1 權重估算。這個顯示排程不建立或回寫 canonical／
 T2 timing；無空白的過長內容仍必須由上游 lyrics document／timing pipeline 斷成下一個 timed
 line，模板不以第二列掩蓋來源問題。Kinetic Pop 的 Overlay、line、row 與三個材質 track 使用同一
 份左右對稱 safe stage 寬度；glyph 群以完整輸出畫布為中心，背景圖不參與定位，超寬 `nowrap`
 內容則由中心向兩側等量溢出。Output scheduler 會把下一個 phrase progress boundary 納入
 喚醒時間。`overlay/lyrics/kineticPop.mjs` 只擁有 row／視覺字元 DOM 與 GSAP cross-swap；每個
-caption／punch 與 phrase 替換都沿用 presentation-owned grapheme units 做逐字進場，與 T2
-時間資料無關。
+caption／punch 與 phrase 替換都沿用 presentation-owned grapheme units 做逐字進場；T2 只決定
+phrase 何時替換，不改字元動畫語彙。
 DOM 以全行 depth／rim／fill track 分層，同一字的三個材質副本共用相同的 deterministic
 interleaved phase；`kineticPopMotion.mjs` 讓 Browser Source 與 Renderer Gallery 共用 28ms
 內重複的 burst delay contract。字元固定在最終水平排版位置，以奇偶相反的垂直位移、旋轉與縮放

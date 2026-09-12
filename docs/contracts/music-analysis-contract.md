@@ -95,8 +95,11 @@ confident bounded BPM may provide cadence and an estimated line beat count, but
 never beat phase. Missing or low-confidence evidence produces no rhythm
 projection and preserves the existing template fallback.
 
-Beat boundaries cause a fresh presentation frame for every Lyrics template, but
-do not change the lyric identity and therefore do not replay line-entry motion.
+The template capability registry controls whether beat boundaries cause a fresh
+presentation frame. Classic KTV currently consumes beat phase and sections;
+Focus Line and Quiet Caption consume bounded cadence without per-beat wakes; the
+remaining templates keep their timing-only fallback. A music wake never changes
+the lyric identity and therefore does not replay line-entry motion.
 Playback rate changes the wall-clock delay to the next source cue; lyrics offset
 maps source beat timestamps into the lyrics clock without mutating either source.
 
@@ -367,8 +370,8 @@ null reference and preserve the existing presentation. Templates interpolate
 against the canonical clock and stop during pause, buffering, seek, end,
 unavailable, or disconnect states.
 
-The first consumer is intentionally bounded to the Lyrics `karaoke-stack`
-template. Current beat and section state is derived locally from the canonical
+The beat-phase and section consumer is intentionally bounded to the Lyrics
+`karaoke-stack` template. Current beat and section state is derived locally from the canonical
 playback clock. Only canonical cues with confidence at or above `0.5` may select
 the section variant or downbeat pulse; missing/low confidence, `unknown`, reduced
 motion, and M0 retain the normal static presentation. T2 word progress remains a

@@ -16,9 +16,39 @@ startup plan that does not add lyrics/pack work to the first-window critical pat
 
 The contract normalizes untimed and line-timed sources and adds reusable segment
 timing without requiring templates to parse LRC, VTT, or provider-specific data.
-It does not define a complete lyrics editor, automatic alignment engine,
-M1/M2 music analysis, or song-specific choreography. Those cues are an accepted
-later endpoint, but remain a separate derived document and optional capability.
+It does not define a complete lyrics editor, automatic alignment engine, or
+song-specific choreography. M1/M2 music analysis remains a separate derived
+document and optional capability.
+
+## Terminology and independent axes
+
+The following terms are normative. They must not be used interchangeably:
+
+| Term                             | Meaning                                                                                                                                                                             |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Source document                  | The preserved LRC, VTT, TTML, YRC, or plain-text input. Mixed timed and untimed source rows remain recoverable here even when they cannot all enter one synchronized playback lane. |
+| Source-format parser             | Syntax decoding for one source format. It may project only valid timed cues for synchronized playback; it does not choose a visual template or rewrite the stored source.           |
+| Canonical normalizer             | Creates stable line／segment identities and validated T0／T1／T2 timing from parser output.                                                                                         |
+| Timing tier                      | The highest validated timing detail present: T0, T1, or T2. It is not a display style.                                                                                              |
+| Timing coverage                  | Whether that tier covers every applicable line (`complete`) or only some lines (`partial`). `granularity: T2` alone does not claim complete T2 coverage.                            |
+| Alignment                        | The mapping between canonical lyric timestamps and the playback clock, including the explicit lyrics offset. Display row or page breaks are not alignment.                          |
+| Estimated progress               | Ephemeral T1 interpolation used only for presentation. It is neither authored T2 nor automatic alignment.                                                                           |
+| Authored line break              | A newline preserved from the source text inside one timed cue.                                                                                                                      |
+| Display row                      | One visible text row selected by a presentation adapter. It does not create a canonical lyric line.                                                                                 |
+| Display page                     | One bounded group of display rows shown during a canonical line. A page boundary may use source-mapped T2 timing or a T1 estimate.                                                  |
+| Segment boundary                 | An authored T2 boundary inside a canonical line. It is not a display row or page boundary.                                                                                          |
+| Presentation profile             | Versioned, app-owned semantic adapter for one template family.                                                                                                                      |
+| Presentation policy              | A bounded user choice controlling content preservation and automatic layout inside a supporting profile. It never changes canonical text or timing.                                 |
+| Output template                  | Executable layout, typography, and motion behavior in the Browser Source.                                                                                                           |
+| Appearance setting／User Variant | Safe declarative visual parameters such as font, color, position, or material. It is not a parser, timing tier, or presentation policy.                                             |
+| Music cue tier                   | The independent M0／M1／M2 axis. BPM is tempo evidence; a beat grid adds beat phase; section intervals add structure. None create or shift lyric timing.                            |
+
+For issue reports and design discussion, avoid the unqualified word “斷句”. Use
+“source line”, “authored line break”, “display row”, “display page”, or “T2
+segment boundary”. Likewise, qualify “對齊” as “line timing”, “segment timing”,
+“lyrics offset”, or “beat choreography”. “Preset” must identify whether it means
+a presentation policy, an appearance variant, or an unrelated processing recipe.
+There is no “T0 presentation preset”: T0 describes missing timing only.
 
 ## Granularity model
 
@@ -29,8 +59,8 @@ Text timing and musical cues are separate axes:
 - `T2`: timed segments within lines;
 - `T3`: timed graphemes or syllables, reserved;
 - `M0`: no music cues;
-- `M1`: BPM plus beat/downbeat grid and bar position, planned after T2;
-- `M2`: section intervals or authored cues, planned after M1; and
+- `M1`: BPM plus beat/downbeat grid and bar position;
+- `M2`: section intervals or authored cues; and
 - `M3`: song-specific choreography, deferred.
 
 The implemented baseline accepts T0 and T1, persists partial or complete T2, and
@@ -42,12 +72,14 @@ imported or manually authored with no analyzer installed. Music cues live in the
 separate [Music Analysis Contract](music-analysis-contract.md) and do not infer
 word boundaries or silently trigger vocal separation.
 
-All bundled Lyrics templates may consume the same optional `lyricsRhythm`
-presentation frame. It relates current-track M1 beat evidence to an existing
-canonical lyric line and exposes bounded cadence／phase hints only; it does not
-split text, create T2 segments, or persist inferred timing. T2 remains authoritative
-whenever it exists, and absent／rejected M1 evidence leaves template behavior
-unchanged.
+All bundled Lyrics templates receive the same optional `lyricsRhythm`
+presentation frame, but the executable template capability registry declares
+which templates actually consume cadence, beat phase, or section cues. It relates
+current-track M1 evidence to an existing canonical lyric line and exposes bounded
+cadence／phase hints only; it does not split text, create T2 segments, or persist
+inferred timing. T2 remains authoritative whenever it exists, and absent／rejected
+M1 evidence leaves template behavior unchanged. The scheduler wakes on beat or
+section boundaries only for a template that declares that consumer capability.
 
 ## Storage and identity
 
@@ -169,7 +201,25 @@ punctuation, speaker labels, and parentheticals inside their own versioned profi
 Their source-mapped phrase／role／bubble／caption decisions affect display only: they
 cannot delete or rewrite canonical line text, replace authored T2, create persisted
 segments, or change `currentTimingSource`. Static profile results are cached by
-document id, document revision, language, profile id, and profile version.
+document id, document revision, language, profile id, profile version, and any
+supported presentation policy that changes compilation.
+
+The current executable capability matrix is:
+
+| Template                  | Minimum automatic timing | T1 behavior             | T2 behavior                  | Current music-cue consumer    | Presentation policy                              |
+| ------------------------- | ------------------------ | ----------------------- | ---------------------------- | ----------------------------- | ------------------------------------------------ |
+| Focus Line／Quiet Caption | T1                       | Estimated text segments | Exact segments               | Bounded cadence               | None                                             |
+| Classic KTV               | T1                       | Estimated phrases       | Source-mapped phrases        | Cadence, beat phase, sections | None                                             |
+| Manga Frame               | T1                       | Line entry              | Source-mapped bubble reveal  | None                          | None                                             |
+| Kinetic Pop               | T1                       | Weighted phrase changes | Source-mapped phrase changes | None                          | None                                             |
+| Ornate Vertical           | T1                       | Line entry              | Not consumed                 | None                          | None                                             |
+| Live Stage                | T1                       | Weighted caption pages  | Source-mapped caption pages  | None                          | Broadcast Compact／Balanced Rows／Literal Source |
+| Reading Aid               | T1                       | Line entry              | Exact segments               | None                          | Unavailable template                             |
+
+T0 can be imported, edited, and preserved, but it has no automatic current-line
+advance. A live Lyrics Output therefore requires at least T1. A presentation
+policy may change how an already selected line is shown; it must not fabricate the
+missing T1 clock.
 
 Beat grids, section roles, count-ins, and similar musical interpretation are also
 template-owned dynamic behavior. They are excluded from the base lyrics frame, the
