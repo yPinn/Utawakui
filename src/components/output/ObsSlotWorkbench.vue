@@ -46,10 +46,25 @@ const appearanceFields = computed(() => props.preset?.appearanceFields ?? []);
 const presentationFields = computed(
   () => props.preset?.presentationFields ?? [],
 );
-const configurationFields = computed(() => [
-  ...appearanceFields.value,
-  ...presentationFields.value,
-]);
+function configurationFieldRank(field, key, fallback) {
+  return Number.isFinite(field?.[key]) ? field[key] : fallback;
+}
+
+const configurationFields = computed(() =>
+  [...appearanceFields.value, ...presentationFields.value].sort(
+    (left, right) => {
+      const groupDelta =
+        configurationFieldRank(left, 'groupOrder', 100) -
+        configurationFieldRank(right, 'groupOrder', 100);
+      if (groupDelta !== 0) return groupDelta;
+      const fieldDelta =
+        configurationFieldRank(left, 'order', 100) -
+        configurationFieldRank(right, 'order', 100);
+      if (fieldDelta !== 0) return fieldDelta;
+      return String(left.key).localeCompare(String(right.key));
+    },
+  ),
+);
 const configurationFieldGroups = computed(() => {
   const groups = new Map();
   for (const field of configurationFields.value) {

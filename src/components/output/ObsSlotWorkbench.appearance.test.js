@@ -29,22 +29,37 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
   it.each([
     [
       'queue-board',
-      ['fontFamily', 'fontScale', 'fontWeight', 'alignment', 'surface'],
-      [],
+      [
+        'paletteId',
+        'fontFamily',
+        'fontScale',
+        'fontWeight',
+        'surface',
+        'spacingDensity',
+      ],
+      ['alignment'],
     ],
     [
       'now-next',
-      ['fontFamily', 'fontScale', 'fontWeight', 'alignment', 'surface'],
+      [
+        'paletteId',
+        'fontFamily',
+        'fontScale',
+        'fontWeight',
+        'alignment',
+        'surface',
+        'spacingDensity',
+      ],
       [],
     ],
     [
       'art-card',
-      ['fontFamily', 'fontScale', 'fontWeight'],
+      ['paletteId', 'fontFamily', 'fontScale', 'fontWeight'],
       ['alignment', 'surface'],
     ],
     [
       'cover-player',
-      ['fontScale', 'fontWeight', 'surface'],
+      ['paletteId', 'fontScale', 'fontWeight', 'surface'],
       ['fontFamily', 'alignment'],
     ],
   ])(
@@ -82,6 +97,48 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html).toContain('轉播精簡');
     expect(html).toContain('平衡分行');
     expect(html).toContain('忠實原文');
+  });
+
+  it('sorts configuration groups and fields by product order, not input order', async () => {
+    const appearanceFields = [
+      ...outputAppearanceFieldsForTemplate('focus-line'),
+    ].reverse();
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(ObsSlotWorkbench, {
+            preset: {
+              id: 'focus-line',
+              name: '聚焦歌詞',
+              kind: 'lyrics',
+              appearanceFields,
+              presentationFields: [
+                {
+                  key: 'lyricsPresentationPolicyId',
+                  label: '歌詞呈現策略',
+                  control: 'select',
+                  group: 'content',
+                  groupLabel: '內容顯示',
+                  groupOrder: 70,
+                  order: 10,
+                  defaultValue: 'balanced-lines',
+                  options: [{ id: 'balanced-lines', label: '平衡分行' }],
+                },
+              ],
+            },
+            activeKind: 'lyrics',
+          }),
+      }),
+    );
+    const labels = ['色彩', '文字', '可讀性', '背景', '版面', '內容顯示'];
+
+    for (let index = 1; index < labels.length; index += 1) {
+      expect(html.indexOf(`>${labels[index - 1]}</h3>`)).toBeLessThan(
+        html.indexOf(`>${labels[index]}</h3>`),
+      );
+    }
+    expect(html.indexOf('對齊')).toBeLessThan(html.indexOf('間距'));
+    expect(html.indexOf('間距')).toBeLessThan(html.indexOf('內容寬度'));
   });
 
   it('shows saved state instead of requiring a manual Appearance save', async () => {
@@ -256,7 +313,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       }),
     );
 
-    expect(html).toContain('文字樣式');
+    expect(html).toContain('可讀性');
+    expect(html).toContain('文字材質');
     expect(html).toContain('output-appearance-kineticMaterial');
     expect(html).toMatch(
       /<select id="output-appearance-kineticMaterial"[^>]*value="candy-rim"/,

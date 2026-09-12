@@ -14,7 +14,8 @@
     display: grid;
     grid-template-columns: repeat(10, minmax(0, 1fr));
     align-items: center;
-    padding: var(--ovl-primitive-space-4) var(--ovl-primitive-space-6);
+    padding: var(--ovl-user-widget-padding-block)
+      var(--ovl-user-widget-padding-inline);
     border: 1px solid var(--ovl-user-outline);
     border-radius: var(--ovl-primitive-radius-md);
     background: var(--ovl-user-surface);
@@ -242,13 +243,21 @@
 
       padding: var(--ovl-primitive-space-4);
     }
+
+    :root[data-ovl-density='compact'] .now-playing-overlay {
+      padding: var(--ovl-primitive-space-3);
+    }
+
+    :root[data-ovl-density='relaxed'] .now-playing-overlay {
+      padding: var(--ovl-primitive-space-6);
+    }
   }
 
   @media (max-width: 42rem) and (max-height: 48rem) {
     .now-playing-overlay {
       --ovl-template-now-playing-player-size: 9rem;
 
-      padding: var(--ovl-primitive-space-4);
+      padding: var(--ovl-user-widget-padding-block);
     }
   }
 
@@ -267,7 +276,7 @@
       --ovl-template-now-playing-title-size: 1.85em;
       --ovl-template-now-playing-player-size: 8.25rem;
 
-      padding: var(--ovl-primitive-space-4);
+      padding: var(--ovl-user-widget-padding-block);
     }
 
     .now-playing-overlay__information {

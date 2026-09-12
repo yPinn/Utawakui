@@ -1835,6 +1835,7 @@ export function selectSetlistFrame(snapshot) {
     const title = text(item?.track?.title);
     return title
       ? {
+          trackId: text(item?.track?.id),
           title,
           artist: text(item?.track?.artist),
         }
@@ -1844,8 +1845,7 @@ export function selectSetlistFrame(snapshot) {
   const history = items
     .filter((item) => item?.state === 'played')
     .map(projectTrack)
-    .filter(Boolean)
-    .slice(-8);
+    .filter(Boolean);
 
   return {
     revision: revision(snapshot),

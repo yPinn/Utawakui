@@ -22,13 +22,12 @@ describe('Setlist template mockup', () => {
     );
   });
 
-  it('mirrors the upper current 3／gap 1／lower completed 6 composition', () => {
-    expect(source).toContain('grid-template-rows: repeat(10, minmax(0, 1fr));');
+  it('mirrors the current 2／history 8 composition without a dead spacer row', () => {
     expect(source).toMatch(
-      /\.obs-template-mockup__setlist-current\s*{[^}]*grid-row:\s*1\s*\/\s*span 3;/s,
+      /\.obs-template-mockup__content--setlist\s*{[^}]*grid-template-rows:\s*minmax\(0, 2fr\) minmax\(0, 8fr\);[^}]*gap:\s*var\(--ui-space-3\);/s,
     );
-    expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history\s*{[^}]*grid-row:\s*5\s*\/\s*span 6;/s,
+    expect(source).not.toContain(
+      'grid-template-rows: repeat(10, minmax(0, 1fr));',
     );
   });
 
@@ -47,7 +46,47 @@ describe('Setlist template mockup', () => {
     );
   });
 
-  it('mirrors one downward column of separated completed-song rows', () => {
+  it('mirrors the readable role hierarchy while keeping thumbnail typography independent', () => {
+    const normalizedSource = source
+      .replace(/\s+/g, ' ')
+      .replace(/\(\s+/g, '(')
+      .replace(/\s+\)/g, ')');
+
+    for (const declaration of [
+      '--ui-setlist-preview-current-title-size: var(--ui-font-size-xl);',
+      '--ui-setlist-preview-history-title-size: var(--ui-font-size-md);',
+      '--ui-setlist-preview-current-artist-size: var(--ui-font-size-sm);',
+      '--ui-setlist-preview-history-artist-size: var(--ui-font-size-sm);',
+      '--ui-setlist-preview-label-size: var(--ui-font-size-sm);',
+      '--ui-setlist-preview-counter-size: var(--ui-font-size-sm);',
+    ]) {
+      expect(normalizedSource).toContain(declaration);
+    }
+
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-current-title\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-current-title-size\);/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__content--setlist\s+\.obs-template-mockup__queue-title\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-history-title-size\);/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-current-artist\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-current-artist-size\);/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-artist\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-history-artist-size\);/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-history-row\s+\.obs-template-mockup__queue-number\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-counter-size\);/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-label,\s*\.obs-template-mockup__setlist-caption,\s*\.obs-template-mockup__setlist-source\s*{[^}]*font-size:\s*var\(--ui-setlist-preview-label-size\);/s,
+    );
+    expect(normalizedSource).toMatch(
+      /\.obs-template-mockup\[data-size='thumbnail'\]\s+\.obs-template-mockup__content--setlist\s*{[^}]*--ui-setlist-preview-current-title-size:\s*var\(--ui-output-template-thumb-title-font-size\);[^}]*--ui-setlist-preview-label-size:\s*var\(--ui-output-template-thumb-caption-font-size\);/s,
+    );
+  });
+
+  it('mirrors title-over-artist rows with one shared content edge', () => {
     expect(source).toContain(
       'class="obs-template-mockup__setlist-history-list"',
     );
@@ -55,7 +94,16 @@ describe('Setlist template mockup', () => {
       /\.obs-template-mockup__setlist-history-list\s*{[^}]*display:\s*grid;[^}]*grid-template-columns:\s*minmax\(0, 1fr\);[^}]*align-content:\s*start;[^}]*row-gap:\s*var\(--ui-space-2\);/s,
     );
     expect(source).toMatch(
-      /\.obs-template-mockup__setlist-history-row\s*{[^}]*grid-template-columns:\s*1rem minmax\(0, 1fr\) minmax\(0, 34%\);[^}]*align-items:\s*center;/s,
+      /\.obs-template-mockup__setlist-history-row\s*{[^}]*grid-template-columns:\s*1rem minmax\(0, 1fr\);[^}]*grid-template-rows:\s*auto auto;[^}]*align-items:\s*start;/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-history-row\s+\.obs-template-mockup__queue-number\s*{[^}]*grid-row:\s*1\s*\/\s*span 2;[^}]*align-self:\s*center;/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__content--setlist\s+\.obs-template-mockup__queue-title\s*{[^}]*grid-column:\s*2;[^}]*grid-row:\s*1;/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-artist\s*{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2;/s,
     );
     expect(source).not.toContain(
       'class="obs-template-mockup__setlist-history-marquee"',
@@ -64,6 +112,15 @@ describe('Setlist template mockup', () => {
       'class="obs-template-mockup__setlist-history-sequence"',
     );
     expect(source).not.toContain('@keyframes obs-template-setlist-marquee');
+  });
+
+  it('mirrors two-line capture titles while keeping thumbnails single-line', () => {
+    expect(source).toMatch(
+      /\.obs-template-mockup__setlist-current-title,\s*\.obs-template-mockup__content--setlist\s+\.obs-template-mockup__queue-title\s*{[^}]*display:\s*-webkit-box;[^}]*overflow-wrap:\s*anywhere;[^}]*white-space:\s*normal;[^}]*-webkit-box-orient:\s*vertical;[^}]*-webkit-line-clamp:\s*2;/s,
+    );
+    expect(source).toMatch(
+      /\.obs-template-mockup\[data-size='thumbnail'\][\s\S]*\.obs-template-mockup__setlist-current-title,[\s\S]*\.obs-template-mockup__queue-title\s*{[^}]*display:\s*block;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/s,
+    );
   });
 
   it('measures Workbench overflow before enabling vertical history motion', () => {

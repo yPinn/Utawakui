@@ -629,6 +629,36 @@ The overlay default pairing is:
 
 Do not add these `--ovl-*` tokens to `src/styles/tokens.css`. They belong in `overlay/shared/tokens.css`, because OBS overlay and control panel are separate delivery paths.
 
+The `queue-board` Setlist template is a utility-output exception to the more
+ornate lyric templates. It keeps the Overlay utility sans stack so a viewer can
+scan song identity quickly. At the canonical 480×810 source capture, its
+small／standard／large setting is a bounded role scale rather than uniform page
+zoom:
+
+| Role                  | Small | Standard | Large | Treatment                   |
+| --------------------- | ----: | -------: | ----: | --------------------------- |
+| Current song title    |  28px |   29.6px |  34px | Primary, semibold, ≤2 lines |
+| Completed song title  |  16px |   16.8px |  18px | Repeated scan, ≤2 lines     |
+| Current artist        |  13px |   14.1px |  16px | Secondary identity          |
+| Completed artist      |  12px |   12.2px |  14px | Repeated metadata           |
+| Section／source label |  12px |     12px |  13px | Navigation metadata         |
+| Sequence number       |  11px |   11.2px |  12px | Tabular metadata            |
+
+These are source-canvas sizes. Long CJK／Latin titles receive up to two lines with
+anywhere wrapping before truncation. In completed rows, the artist stays on one
+secondary line directly below the title and shares its left edge; do not reserve a
+fixed trailing artist column that shortens the title. Short-height layouts preserve
+the role floors and use measured history overflow instead of shrinking metadata.
+Setlist consumes every played item retained by the bounded Output snapshot rather
+than trimming the projection to the visible row count. Overflow history rests for
+four seconds per row-aligned page, moves between pages in about 450ms, then fades
+before returning to the top. When a song changes, the current identity exits in
+about 160ms and its successor arrives in about 260ms; interrupted handoffs always
+commit the newest identity. Reduced motion replaces spatial movement with opacity
+handoffs while retaining readable page changes. Gallery detail previews mirror the
+static hierarchy, while compact thumbnails keep their dedicated single-line
+thumbnail treatment and are not evidence of final capture readability.
+
 First-version bundled overlay fonts should stay small:
 
 - Bundle `GenWanMin2 TW` for CJK display.
@@ -686,13 +716,25 @@ an explicit retry after failure. Leaving the Workbench, changing output kind, or
 applying a template first flushes the draft; template application and Output
 runtime settings remain deliberate actions.
 
-Appearance controls are template-effective rather than slot-wide. `queue-board`
-and `now-next` expose font family, scale, weight, alignment, and surface because
-their layouts consume all five values. `art-card` exposes family, scale, and
-weight; `cover-player` exposes scale, weight, and surface. Controls fixed by those
-artwork layouts stay absent instead of presenting settings with no visible effect.
-Every registered template receives its appearance metadata from the shared schema;
-a template with no controls also omits the appearance reset action.
+Appearance controls are template-effective rather than slot-wide. Every available
+template exposes a bounded semantic palette: Template Original, Warm Stage, Cool
+Stage, Monochrome, and High Contrast. The palette remaps the roles actually used by
+each template, including KTV role fills, Kinetic Pop materials, Manga ink／paper,
+and general text／surface colors; it is not a raw theme object. Ornate Vertical
+keeps its explicit text and ink-echo color pickers as advanced overrides, while a
+non-original palette supplies those roles whenever the colors remain at their
+template defaults.
+
+The inspector always orders fields as Color, Typography, Readability, Background,
+Layout, Motion, then Content Visibility, omitting empty groups. `queue-board` and
+`now-next` additionally expose spacing density; `quiet-caption` and `focus-line`
+expose text contrast, spacing density, and content width. Existing font, alignment,
+surface-opacity preset, furigana, Kinetic material／arrangement, and Ornate position
+controls remain available only where their CSS or runtime consumes them. Controls
+fixed by an artwork layout stay absent instead of presenting settings with no
+visible effect. Every registered template receives its appearance metadata from
+the shared schema; a template with no controls also omits the appearance reset
+action.
 
 The `manga-frame` template uses the bundled normal-width GenEi Antique 6.0a face
 under the local CSS family name `Utawakui GenEi Antique` when the projected line

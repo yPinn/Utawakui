@@ -291,7 +291,8 @@ describe('overlay CSS tokens', () => {
     );
     expect(nowPlaying).not.toContain('--ovl-template-now-playing-width: 20rem');
 
-    expect(setlist).toContain(
+    expect(setlist).toContain('@media (max-height: 36rem)');
+    expect(setlist).not.toContain(
       '@media (max-width: 42rem) and (max-height: 48rem)',
     );
     expect(setlist).toContain('block-size: calc(100% - 2 *');
@@ -395,14 +396,12 @@ describe('overlay CSS tokens', () => {
     );
 
     expect(setlist).toContain(
-      'grid-template-rows: repeat(10, minmax(0, 1fr));',
+      'grid-template-rows: minmax(9rem, auto) minmax(0, 1fr);',
     );
-    expect(setlist).toMatch(
-      /\.setlist-overlay__current\s*{[^}]*grid-row:\s*1\s*\/\s*span 3;/s,
+    expect(setlist).toContain(
+      'row-gap: calc(var(--ovl-user-panel-gap) + var(--ovl-user-panel-gap));',
     );
-    expect(setlist).toMatch(
-      /\.setlist-overlay__history\s*{[^}]*grid-row:\s*5\s*\/\s*span 6;/s,
-    );
+    expect(setlist).not.toContain('--ovl-primitive-space-7');
 
     expect(artCard).toMatch(
       /\.artwork-overlay__vinyl-stage\s*{[^}]*inline-size: min\(100%, 28rem\);[^}]*grid-template-columns: repeat\(2, minmax\(0, 1fr\)\);/s,
@@ -414,7 +413,9 @@ describe('overlay CSS tokens', () => {
     expect(coverPlayer).toMatch(
       /\.artwork-overlay__mark\s*{[^}]*max-inline-size: 100%;[^}]*inline-size: auto;[^}]*block-size: 100%;/s,
     );
-    expect(setlist).toContain('--ovl-template-setlist-scroll-duration:');
+    expect(setlist).toMatch(
+      /\.setlist-overlay__history-viewport\s*{[^}]*min-block-size:\s*0;[^}]*overflow:\s*hidden;/s,
+    );
     expect(artCard).toMatch(
       /\.artwork-overlay__copy\s*{[^}]*min-block-size: 0;[^}]*overflow: hidden;/s,
     );

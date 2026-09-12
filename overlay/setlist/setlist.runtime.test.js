@@ -1,43 +1,59 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { setlistHistoryScrollMetrics } from './setlist.mjs';
+import { setlistHistoryChange, setlistHistoryIdentity } from './setlist.mjs';
+import { setlistHistoryPageOffsets } from './setlistMotion.mjs';
 
 const runtime = readFileSync(new URL('./setlist.mjs', import.meta.url), 'utf8');
 
 describe('Setlist completed-song rendering', () => {
-  it('keeps a fitting history still', () => {
+  it('keeps a fitting history on one static page', () => {
     expect(
-      setlistHistoryScrollMetrics({
+      setlistHistoryPageOffsets({
         contentHeight: 320,
         viewportHeight: 320,
+        rowOffsets: [0, 64, 128, 192, 256],
       }),
-    ).toEqual({
-      distance: 0,
-      durationSeconds: 0,
-      overflow: false,
-    });
+    ).toEqual([0]);
   });
 
-  it('derives vertical travel from actual overflow', () => {
+  it('derives readable row-aligned pages from actual overflow', () => {
     expect(
-      setlistHistoryScrollMetrics({
-        contentHeight: 512.2,
-        viewportHeight: 320,
+      setlistHistoryPageOffsets({
+        contentHeight: 640,
+        viewportHeight: 200,
+        rowOffsets: [0, 64, 128, 192, 256, 320, 384, 448, 512, 576],
       }),
-    ).toEqual({
-      distance: 193,
-      durationSeconds: 14.8,
-      overflow: true,
-    });
+    ).toEqual([0, 128, 256, 384, 440]);
   });
 
-  it('renders history once and measures its viewport without a duplicate list', () => {
-    expect(
-      runtime.match(/renderHistory\(elements\.history, frame\.history\)/g),
-    ).toHaveLength(1);
-    expect(runtime).toContain('elements.historyViewport.scrollHeight');
-    expect(runtime).toContain('elements.historyViewport.clientHeight');
-    expect(runtime).toContain('dataset.historyOverflow');
+  it('uses stable track identity to avoid rebuilding unchanged history', () => {
+    const initial = [
+      { trackId: 'track-1', title: 'Song', artist: 'Singer' },
+      { trackId: 'track-2', title: 'Song', artist: 'Singer' },
+    ];
+    const advanced = [
+      ...initial,
+      { trackId: 'track-3', title: 'Song', artist: 'Singer' },
+    ];
+
+    expect(setlistHistoryIdentity(initial)).not.toBe(
+      setlistHistoryIdentity(advanced),
+    );
+    expect(setlistHistoryChange(initial, [...initial])).toEqual({
+      advanced: false,
+      changed: false,
+    });
+    expect(setlistHistoryChange([], initial)).toEqual({
+      advanced: false,
+      changed: true,
+    });
+    expect(setlistHistoryChange(initial, advanced)).toEqual({
+      advanced: true,
+      changed: true,
+    });
+    expect(runtime).toContain('if (historyChange.changed)');
+    expect(runtime).toContain('historyMeasurement.schedule');
+    expect(runtime).toContain('historyMotion.refresh');
     expect(runtime).toContain('ResizeObserver');
     expect(runtime).not.toContain('historyCopy');
   });

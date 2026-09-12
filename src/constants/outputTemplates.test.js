@@ -26,43 +26,72 @@ const EXPECTED_TEMPLATE_DISPLAY_NAMES = Object.freeze({
 
 const EXPECTED_TEMPLATE_APPEARANCE_KEYS = Object.freeze({
   'queue-board': [
+    'paletteId',
     'fontFamily',
     'fontScale',
     'fontWeight',
-    'alignment',
     'surface',
+    'spacingDensity',
   ],
-  'karaoke-stack': ['fontScale'],
-  'live-stage': ['fontFamily', 'fontScale'],
-  'kinetic-pop': ['fontScale', 'kineticMaterial', 'kineticArrangement'],
-  'ornate-vertical': [
-    'fontFamily',
+  'karaoke-stack': ['paletteId', 'fontScale'],
+  'live-stage': ['paletteId', 'fontFamily', 'fontScale', 'contrastStyle'],
+  'kinetic-pop': [
+    'paletteId',
     'fontScale',
+    'kineticMaterial',
+    'kineticArrangement',
+  ],
+  'ornate-vertical': [
+    'paletteId',
     'textColor',
     'accentColor',
+    'fontFamily',
+    'fontScale',
     'positionAnchor',
     'positionOffsetX',
     'positionOffsetY',
   ],
-  'manga-frame': ['fontFamily', 'fontScale', 'fontWeight', 'furigana'],
-  'quiet-caption': [
+  'manga-frame': [
+    'paletteId',
     'fontFamily',
     'fontScale',
     'fontWeight',
-    'alignment',
+    'furigana',
+  ],
+  'quiet-caption': [
+    'paletteId',
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+    'contrastStyle',
     'surface',
+    'alignment',
+    'spacingDensity',
+    'contentWidth',
   ],
   'focus-line': [
+    'paletteId',
     'fontFamily',
     'fontScale',
     'fontWeight',
-    'alignment',
+    'contrastStyle',
     'surface',
+    'alignment',
+    'spacingDensity',
+    'contentWidth',
   ],
   'reading-aid': [],
-  'art-card': ['fontFamily', 'fontScale', 'fontWeight'],
-  'now-next': ['fontFamily', 'fontScale', 'fontWeight', 'alignment', 'surface'],
-  'cover-player': ['fontScale', 'fontWeight', 'surface'],
+  'art-card': ['paletteId', 'fontFamily', 'fontScale', 'fontWeight'],
+  'now-next': [
+    'paletteId',
+    'fontFamily',
+    'fontScale',
+    'fontWeight',
+    'surface',
+    'alignment',
+    'spacingDensity',
+  ],
+  'cover-player': ['paletteId', 'fontScale', 'fontWeight', 'surface'],
 });
 
 function graphemeCount(value) {
@@ -169,6 +198,21 @@ describe('output template registry', () => {
     expect(data.styleSets.length).toBeGreaterThan(0);
   });
 
+  it('describes Setlist as a two-region layout without a dedicated spacer row', () => {
+    const styleSet = getOutputWorkbenchData().styleSets.find(
+      ({ id }) => id === 'setlist-layout',
+    );
+
+    expect(styleSet).toMatchObject({
+      summary: 'Simple Black B 以目前歌曲焦點區與彈性已唱紀錄構成。',
+      tokens: [
+        { label: '目前', value: '約 20%' },
+        { label: '間隔', value: '語意留白' },
+        { label: '歷史', value: '彈性填滿' },
+      ],
+    });
+  });
+
   it('projects every template appearance contract into Workbench metadata', () => {
     const templates = getOutputWorkbenchData().templates;
 
@@ -196,14 +240,17 @@ describe('output template registry', () => {
     );
 
     expect(liveStage.appearanceFields.map(({ key }) => key)).toEqual([
+      'paletteId',
       'fontFamily',
       'fontScale',
+      'contrastStyle',
     ]);
     expect(liveStage.presentationFields).toEqual([
       expect.objectContaining({
         key: 'lyricsPresentationPolicyId',
         label: '歌詞呈現策略',
-        groupLabel: '歌詞呈現',
+        groupLabel: '內容顯示',
+        groupOrder: 70,
         defaultValue: 'broadcast-compact',
         options: [
           { id: 'broadcast-compact', label: '轉播精簡' },
@@ -342,7 +389,7 @@ describe('output template registry', () => {
         layoutLabel: '錯位雙行',
         motionLabel: '逐字掃色',
       },
-      editableAppearanceKeys: ['fontScale'],
+      editableAppearanceKeys: ['paletteId', 'fontScale'],
       detail: expect.stringContaining('提示點先行倒數'),
       settings: expect.arrayContaining([
         { label: '顯示', value: '上列靠左、下列靠右' },
@@ -398,6 +445,7 @@ describe('output template registry', () => {
         motionLabel: '定點交錯',
       },
       editableAppearanceKeys: [
+        'paletteId',
         'fontScale',
         'kineticMaterial',
         'kineticArrangement',
@@ -423,10 +471,11 @@ describe('output template registry', () => {
         { label: '藝術字', value: '同尺寸輕墨層' },
       ]),
       editableAppearanceKeys: [
-        'fontFamily',
-        'fontScale',
+        'paletteId',
         'textColor',
         'accentColor',
+        'fontFamily',
+        'fontScale',
         'positionAnchor',
         'positionOffsetX',
         'positionOffsetY',

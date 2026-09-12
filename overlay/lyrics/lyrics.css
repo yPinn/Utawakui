@@ -111,8 +111,8 @@
     /* Template layer: override these per profile/style set later. */
     --ovl-template-lyrics-current-size: 3.5em;
     --ovl-template-lyrics-next-size: 1.75em;
-    --ovl-template-lyrics-line-width: 28ch;
-    --ovl-template-lyrics-panel-width: 64rem;
+    --ovl-template-lyrics-line-width: var(--ovl-user-line-width);
+    --ovl-template-lyrics-panel-width: var(--ovl-user-panel-width);
     --ovl-template-lyrics-bottom: 9%;
 
     position: fixed;
@@ -127,8 +127,9 @@
     );
     display: grid;
     transform: translateX(-50%);
-    gap: var(--ovl-primitive-space-3);
-    padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
+    gap: var(--ovl-user-panel-gap);
+    padding: var(--ovl-user-panel-padding-block)
+      var(--ovl-user-panel-padding-inline);
     border: 1px solid var(--ovl-user-outline);
     border-radius: var(--ovl-primitive-radius-md);
     background: var(--ovl-user-surface);
@@ -152,8 +153,9 @@
     font-size: var(--ovl-template-lyrics-current-size);
     font-weight: var(--ovl-user-font-weight);
     line-height: 1.22;
-    text-shadow: var(--ovl-text-shadow);
-    -webkit-text-stroke: 0.035em var(--ovl-color-stroke-strong);
+    text-shadow: var(--ovl-user-text-shadow);
+    -webkit-text-stroke: var(--ovl-user-current-stroke-width)
+      var(--ovl-user-stroke-strong);
     paint-order: stroke fill;
     transition: filter 180ms ease-out;
   }
@@ -195,8 +197,9 @@
     font-size: var(--ovl-template-lyrics-next-size);
     font-weight: var(--ovl-user-font-weight);
     line-height: 1.3;
-    text-shadow: var(--ovl-text-shadow);
-    -webkit-text-stroke: 0.025em var(--ovl-color-stroke-soft);
+    text-shadow: var(--ovl-user-text-shadow);
+    -webkit-text-stroke: var(--ovl-user-next-stroke-width)
+      var(--ovl-user-stroke-soft);
     paint-order: stroke fill;
   }
 
@@ -703,10 +706,46 @@
     padding: var(--ovl-primitive-space-2) var(--ovl-primitive-space-3);
   }
 
+  :root[data-ovl-template='quiet-caption'][data-ovl-content-width='narrow']
+    .lyrics-overlay {
+    --ovl-template-lyrics-line-width: 26ch;
+    --ovl-template-lyrics-panel-width: 50rem;
+  }
+
+  :root[data-ovl-template='quiet-caption'][data-ovl-content-width='wide']
+    .lyrics-overlay {
+    --ovl-template-lyrics-line-width: 40ch;
+    --ovl-template-lyrics-panel-width: 68rem;
+  }
+
+  :root[data-ovl-template='quiet-caption'][data-ovl-density='compact']
+    .lyrics-overlay {
+    gap: var(--ovl-primitive-space-1);
+    padding: var(--ovl-primitive-space-1) var(--ovl-primitive-space-2);
+  }
+
+  :root[data-ovl-template='quiet-caption'][data-ovl-density='relaxed']
+    .lyrics-overlay {
+    gap: var(--ovl-primitive-space-3);
+    padding: var(--ovl-primitive-space-3) var(--ovl-primitive-space-4);
+  }
+
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay__current,
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
-    text-shadow: var(--ovl-text-shadow);
+    text-shadow: var(--ovl-user-text-shadow);
     -webkit-text-stroke: 0;
+  }
+
+  :root[data-ovl-template='quiet-caption'][data-ovl-contrast='strong-outline']
+    .lyrics-overlay__current {
+    -webkit-text-stroke: var(--ovl-user-current-stroke-width)
+      var(--ovl-user-stroke-strong);
+  }
+
+  :root[data-ovl-template='quiet-caption'][data-ovl-contrast='strong-outline']
+    .lyrics-overlay__next {
+    -webkit-text-stroke: var(--ovl-user-next-stroke-width)
+      var(--ovl-user-stroke-soft);
   }
 
   :root[data-ovl-template='quiet-caption'] .lyrics-overlay__next {
@@ -788,7 +827,8 @@
     font-weight: 800;
     letter-spacing: -0.08em;
     line-height: 0.9;
-    -webkit-text-stroke: 0.08rem var(--ovl-color-stroke-strong);
+    -webkit-text-stroke: var(--ovl-user-channel-stroke-width)
+      var(--ovl-user-stroke-strong);
     paint-order: stroke fill;
   }
 
@@ -807,8 +847,9 @@
     font-weight: 700;
     line-height: 1.08;
     text-align: left;
-    text-shadow: var(--ovl-text-shadow);
-    -webkit-text-stroke: 0.065em var(--ovl-color-stroke-strong);
+    text-shadow: var(--ovl-user-text-shadow);
+    -webkit-text-stroke: var(--ovl-user-stage-stroke-width)
+      var(--ovl-user-stroke-strong);
     paint-order: stroke fill;
   }
 

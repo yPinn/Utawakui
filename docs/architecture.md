@@ -56,9 +56,15 @@ presentation profile 與 availability，非 Lyrics 不依賴該 profile。固定
 appearance key，Renderer 依模板欄位 metadata 建立 control，Browser Source 則在套用前再次 normalize；enum 只進
 root dataset，顏色只接受六位 hex，位置 offset clamp 後才進 `--ovl-*`。這層不依賴控制台
 Token v2，Overlay semantic token 也不回頭消費 `--ui-*`。
+所有可用模板都以 `paletteId` 取得同一組 bounded semantic palette 選項；Browser Source 的
+appearance layer 只重映射 text／surface／stroke／KTV／Kinetic／Manga／Ornate 等既有角色，不覆寫
+模板 DOM 或 timing。Workbench 依 `groupOrder`／`order` 固定以色彩、文字、可讀性、背景、版面、
+動態、內容顯示排序，空群組省略；間距密度、內容寬度與文字對比仍只在具有實際 CSS consumer 的
+模板公開。Ornate 的 raw hex 欄位是 palette 後的進階角色 override，不是全模板共用色票入口。
 歌詞呈現策略則由 `lyricsPresentationPolicies.mjs` 另行擁有；它不是 appearance 欄位，也不借用
 尚未實作的 Style Set。現行只有 Live Stage 宣告轉播精簡、平衡分行與忠實原文三個 bounded
-policy，slot persistence 依 template capability 驗證，Workbench 以獨立「歌詞呈現」群組顯示。
+policy，slot persistence 依 template capability 驗證，Workbench 將它排入「內容顯示」群組，
+仍與 appearance normalization 分開。
 Renderer 的 `useOutputAppearanceAutosave` 將 Workbench 完整 scalar snapshot 以 350ms
 debounce、single-flight 與 latest-wins 規則送入既有 slot persistence boundary；切頁、切換
 Output kind 或套用模板前必須 flush，失敗則保留本地 draft 與 retry payload。Persistence

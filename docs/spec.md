@@ -129,9 +129,10 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
   Cover Player 是 Now Playing 模板。Output Instance／Presentation Pack 是未來
   擴充方向，不應提前宣稱已完成。
 - Setlist 的基礎公開契約只顯示目前演唱曲目與已唱紀錄，不投影待唱佇列。預設
-  480×810 `Simple Black B` 模板在扣除安全邊界與內部 padding 後，以上方目前
-  `3`／中間留白 `1`／下方已唱 `6` 分配內容區；最近八首已唱紀錄依正常播放
-  順序向下排列，只有實際內容超出下方區域時才自動垂直滾動。
+  480×810 `Simple Black B` 模板以約兩成高度保留目前歌曲焦點區，已唱紀錄取得
+  其餘可用高度；兩區只以固定 spacing 分隔，不保留無語意的比例空白列。最近
+  八首已唱紀錄依正常播放順序向下排列，只有實際內容超出下方區域時才自動垂直
+  滾動。
 
 詳細 runtime ownership、依賴切分與 diagnostics flow 見
 [architecture.md](architecture.md)。

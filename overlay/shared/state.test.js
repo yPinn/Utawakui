@@ -3026,8 +3026,12 @@ describe('overlay state selectors', () => {
       revision: 8,
       visible: true,
       sourceName: 'Tonight',
-      current: { title: '海螺記', artist: '163braces' },
-      history: [{ title: 'Intro', artist: 'Singer' }],
+      current: {
+        trackId: 'track-1',
+        title: '海螺記',
+        artist: '163braces',
+      },
+      history: [{ trackId: 'track-0', title: 'Intro', artist: 'Singer' }],
     });
   });
 
@@ -3089,7 +3093,7 @@ describe('overlay state selectors', () => {
     },
   );
 
-  it('projects only the current song and recent completed history in playback order', () => {
+  it('projects the full bounded completed history in playback order', () => {
     const value = snapshot({
       queue: {
         sourceName: 'Tonight',
@@ -3117,6 +3121,8 @@ describe('overlay state selectors', () => {
     expect(selectSetlistFrame(value)).toMatchObject({
       current: { title: 'Current', artist: 'Singer' },
       history: [
+        { title: 'Played 1', artist: 'Singer' },
+        { title: 'Played 2', artist: 'Singer' },
         { title: 'Played 3', artist: 'Singer' },
         { title: 'Played 4', artist: 'Singer' },
         { title: 'Played 5', artist: 'Singer' },
@@ -3127,6 +3133,7 @@ describe('overlay state selectors', () => {
         { title: 'Played 10', artist: 'Singer' },
       ],
     });
+    expect(selectSetlistFrame(value).history).toHaveLength(10);
     expect(JSON.stringify(selectSetlistFrame(value))).not.toContain('Upcoming');
   });
 

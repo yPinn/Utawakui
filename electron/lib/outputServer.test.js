@@ -491,6 +491,17 @@ describe('outputServer', () => {
       'createArtworkMotionController',
     );
 
+    const setlistMotion = await fetch(
+      `${status.httpUrl}/overlay/setlist/setlistMotion.mjs`,
+    );
+    expect(setlistMotion.status).toBe(200);
+    expect(setlistMotion.headers.get('content-type')).toContain(
+      'text/javascript',
+    );
+    expect(await setlistMotion.text()).toContain(
+      'createSetlistCurrentMotionController',
+    );
+
     const gsap = await fetch(`${status.httpUrl}/overlay/vendor/gsap.min.js`);
     expect(gsap.status).toBe(200);
     expect(gsap.headers.get('content-type')).toContain('text/javascript');

@@ -110,11 +110,15 @@ The current fixed-route implementation keeps that definition in
 `shared/outputAppearance.mjs`. Electron validates recognized persisted values at
 the storage boundary, the Renderer derives controls from each template's field
 list, and Browser Source normalizes again before projecting enum ids or validated
-colors and bounded offsets to `--ovl-*`. Ornate Vertical currently exposes two
-bundled font roles, three sizes, two colors, a right-side top／center／bottom anchor,
-and bounded X／Y offsets. Its source-line handoff, kanji／kana reveal units,
-two-column maximum, punctuation attachment, and non-positional animation remain
-locked.
+colors and bounded offsets to `--ovl-*`. Every available built-in template exposes
+the same bounded semantic palette ids while retaining template-owned role mapping.
+Safe controls are ordered by Color, Typography, Readability, Background, Layout,
+Motion, and Content Visibility metadata; empty groups are not rendered. Spacing
+density, content width, and text contrast are exposed only by templates with a
+verified consumer. Ornate Vertical additionally exposes two bundled font roles,
+three sizes, two advanced role colors, a right-side top／center／bottom anchor, and
+bounded X／Y offsets. Its source-line handoff, kanji／kana reveal units, two-column
+maximum, punctuation attachment, and non-positional animation remain locked.
 
 ## Presentation Pack manifest
 

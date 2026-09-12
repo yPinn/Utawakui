@@ -14,6 +14,156 @@
     --ovl-user-position-block: center;
     --ovl-user-position-x: 0%;
     --ovl-user-position-y: 0%;
+    --ovl-user-text-shadow: var(--ovl-text-shadow);
+    --ovl-user-current-stroke-width: 0.035em;
+    --ovl-user-next-stroke-width: 0.025em;
+    --ovl-user-stage-stroke-width: 0.065em;
+    --ovl-user-channel-stroke-width: 0.08rem;
+    --ovl-user-stroke-strong: var(--ovl-color-stroke-strong);
+    --ovl-user-stroke-soft: var(--ovl-color-stroke-soft);
+    --ovl-user-panel-gap: var(--ovl-primitive-space-3);
+    --ovl-user-panel-padding-block: var(--ovl-primitive-space-3);
+    --ovl-user-panel-padding-inline: var(--ovl-primitive-space-4);
+    --ovl-user-widget-padding-block: var(--ovl-primitive-space-4);
+    --ovl-user-widget-padding-inline: var(--ovl-primitive-space-6);
+    --ovl-user-line-width: 28ch;
+    --ovl-user-panel-width: 64rem;
+  }
+
+  :root[data-ovl-palette='warm'] {
+    --ovl-color-ink: #211711;
+    --ovl-color-paper: #fff4df;
+    --ovl-color-text-primary: #fff4df;
+    --ovl-color-text-secondary: #e7caa8;
+    --ovl-color-current: #ff8b68;
+    --ovl-color-surface: rgb(33 23 17 / 94%);
+    --ovl-color-surface-soft: rgb(33 23 17 / 72%);
+    --ovl-color-outline: rgb(255 244 223 / 38%);
+    --ovl-color-divider: rgb(255 244 223 / 24%);
+    --ovl-color-current-surface: rgb(255 139 104 / 22%);
+    --ovl-color-mark-surface: rgb(255 244 223 / 14%);
+    --ovl-color-stroke-strong: #211711;
+    --ovl-color-stroke-soft: rgb(33 23 17 / 82%);
+    --ovl-color-ktv-fill-unsung: #fff4df;
+    --ovl-color-ktv-fill-solo: #ffba63;
+    --ovl-color-ktv-fill-male: #74c9ff;
+    --ovl-color-ktv-fill-female: #ff99b8;
+    --ovl-color-ktv-fill-group: #97e0aa;
+    --ovl-color-ktv-stroke-unsung: #211711;
+    --ovl-color-ktv-stroke-sung: #fff4df;
+    --ovl-color-kinetic-ink: #211711;
+    --ovl-color-kinetic-paper: #fff4df;
+    --ovl-color-kinetic-yellow: #ffc85a;
+    --ovl-color-kinetic-red: #ff725c;
+    --ovl-color-kinetic-ochre: #b86f2e;
+    --ovl-color-kinetic-cyan: #69d8df;
+    --ovl-color-kinetic-magenta: #ef7ca8;
+    --ovl-color-kinetic-candy-deep: #ff765f;
+    --ovl-color-kinetic-candy-light: #ffd37a;
+    --ovl-color-ornate-paper: #fff4df;
+    --ovl-color-ornate-echo: #c79f7e;
+  }
+
+  :root[data-ovl-palette='cool'] {
+    --ovl-color-ink: #0c1821;
+    --ovl-color-paper: #eef9ff;
+    --ovl-color-text-primary: #eef9ff;
+    --ovl-color-text-secondary: #bdd9e8;
+    --ovl-color-current: #66d8e8;
+    --ovl-color-surface: rgb(12 24 33 / 94%);
+    --ovl-color-surface-soft: rgb(12 24 33 / 72%);
+    --ovl-color-outline: rgb(238 249 255 / 38%);
+    --ovl-color-divider: rgb(238 249 255 / 24%);
+    --ovl-color-current-surface: rgb(102 216 232 / 22%);
+    --ovl-color-mark-surface: rgb(238 249 255 / 14%);
+    --ovl-color-stroke-strong: #0c1821;
+    --ovl-color-stroke-soft: rgb(12 24 33 / 82%);
+    --ovl-color-ktv-fill-unsung: #eef9ff;
+    --ovl-color-ktv-fill-solo: #76e4ee;
+    --ovl-color-ktv-fill-male: #70aaff;
+    --ovl-color-ktv-fill-female: #e293ff;
+    --ovl-color-ktv-fill-group: #75e2b3;
+    --ovl-color-ktv-stroke-unsung: #0c1821;
+    --ovl-color-ktv-stroke-sung: #eef9ff;
+    --ovl-color-kinetic-ink: #0c1821;
+    --ovl-color-kinetic-paper: #eef9ff;
+    --ovl-color-kinetic-yellow: #82e8f2;
+    --ovl-color-kinetic-red: #8a9eff;
+    --ovl-color-kinetic-ochre: #4c84b9;
+    --ovl-color-kinetic-cyan: #66d8e8;
+    --ovl-color-kinetic-magenta: #c18cf0;
+    --ovl-color-kinetic-candy-deep: #608de8;
+    --ovl-color-kinetic-candy-light: #8ce9ed;
+    --ovl-color-ornate-paper: #eef9ff;
+    --ovl-color-ornate-echo: #8bb8ce;
+  }
+
+  :root[data-ovl-palette='monochrome'] {
+    --ovl-color-ink: #0d0d0f;
+    --ovl-color-paper: #fafafa;
+    --ovl-color-text-primary: #fafafa;
+    --ovl-color-text-secondary: #d0d0d4;
+    --ovl-color-current: #b8b8be;
+    --ovl-color-surface: rgb(13 13 15 / 94%);
+    --ovl-color-surface-soft: rgb(13 13 15 / 72%);
+    --ovl-color-outline: rgb(250 250 250 / 40%);
+    --ovl-color-divider: rgb(250 250 250 / 25%);
+    --ovl-color-current-surface: rgb(250 250 250 / 18%);
+    --ovl-color-mark-surface: rgb(250 250 250 / 13%);
+    --ovl-color-stroke-strong: #0d0d0f;
+    --ovl-color-stroke-soft: rgb(13 13 15 / 84%);
+    --ovl-color-ktv-fill-unsung: #fafafa;
+    --ovl-color-ktv-fill-solo: #b8b8be;
+    --ovl-color-ktv-fill-male: #d8d8dc;
+    --ovl-color-ktv-fill-female: #a8a8ae;
+    --ovl-color-ktv-fill-group: #c4c4c9;
+    --ovl-color-ktv-stroke-unsung: #0d0d0f;
+    --ovl-color-ktv-stroke-sung: #fafafa;
+    --ovl-color-kinetic-ink: #0d0d0f;
+    --ovl-color-kinetic-paper: #fafafa;
+    --ovl-color-kinetic-yellow: #d8d8dc;
+    --ovl-color-kinetic-red: #a4a4aa;
+    --ovl-color-kinetic-ochre: #7d7d84;
+    --ovl-color-kinetic-cyan: #c8c8cd;
+    --ovl-color-kinetic-magenta: #9999a0;
+    --ovl-color-kinetic-candy-deep: #8c8c93;
+    --ovl-color-kinetic-candy-light: #dedee1;
+    --ovl-color-ornate-paper: #fafafa;
+    --ovl-color-ornate-echo: #9d9da3;
+  }
+
+  :root[data-ovl-palette='high-contrast'] {
+    --ovl-color-ink: #000000;
+    --ovl-color-paper: #ffffff;
+    --ovl-color-text-primary: #ffffff;
+    --ovl-color-text-secondary: #ffffff;
+    --ovl-color-current: #ffe100;
+    --ovl-color-surface: #000000;
+    --ovl-color-surface-soft: rgb(0 0 0 / 88%);
+    --ovl-color-outline: #ffffff;
+    --ovl-color-divider: rgb(255 255 255 / 58%);
+    --ovl-color-current-surface: rgb(255 225 0 / 28%);
+    --ovl-color-mark-surface: rgb(255 255 255 / 20%);
+    --ovl-color-stroke-strong: #000000;
+    --ovl-color-stroke-soft: #000000;
+    --ovl-color-ktv-fill-unsung: #ffffff;
+    --ovl-color-ktv-fill-solo: #ffe100;
+    --ovl-color-ktv-fill-male: #00d8ff;
+    --ovl-color-ktv-fill-female: #ff70d0;
+    --ovl-color-ktv-fill-group: #9cff57;
+    --ovl-color-ktv-stroke-unsung: #000000;
+    --ovl-color-ktv-stroke-sung: #000000;
+    --ovl-color-kinetic-ink: #000000;
+    --ovl-color-kinetic-paper: #ffffff;
+    --ovl-color-kinetic-yellow: #ffe100;
+    --ovl-color-kinetic-red: #ff6159;
+    --ovl-color-kinetic-ochre: #ff9d00;
+    --ovl-color-kinetic-cyan: #00d8ff;
+    --ovl-color-kinetic-magenta: #ff70d0;
+    --ovl-color-kinetic-candy-deep: #ff6159;
+    --ovl-color-kinetic-candy-light: #ffe100;
+    --ovl-color-ornate-paper: #ffffff;
+    --ovl-color-ornate-echo: #ffe100;
   }
 
   :root[data-ovl-font='serif'] {
@@ -70,6 +220,48 @@
   :root[data-ovl-surface='solid'] {
     --ovl-user-surface: var(--ovl-color-surface);
     --ovl-user-outline: var(--ovl-color-outline);
+  }
+
+  :root[data-ovl-contrast='clean'] {
+    --ovl-user-text-shadow: none;
+    --ovl-user-current-stroke-width: 0;
+    --ovl-user-next-stroke-width: 0;
+    --ovl-user-stage-stroke-width: 0;
+    --ovl-user-channel-stroke-width: 0;
+  }
+
+  :root[data-ovl-contrast='strong-outline'] {
+    --ovl-user-text-shadow: 0 0.08em 0.18em var(--ovl-color-ink);
+    --ovl-user-current-stroke-width: 0.055em;
+    --ovl-user-next-stroke-width: 0.04em;
+    --ovl-user-stage-stroke-width: 0.085em;
+    --ovl-user-channel-stroke-width: 0.11rem;
+  }
+
+  :root[data-ovl-density='compact'] {
+    --ovl-user-panel-gap: var(--ovl-primitive-space-2);
+    --ovl-user-panel-padding-block: var(--ovl-primitive-space-2);
+    --ovl-user-panel-padding-inline: var(--ovl-primitive-space-3);
+    --ovl-user-widget-padding-block: var(--ovl-primitive-space-3);
+    --ovl-user-widget-padding-inline: var(--ovl-primitive-space-4);
+  }
+
+  :root[data-ovl-density='relaxed'] {
+    --ovl-user-panel-gap: var(--ovl-primitive-space-4);
+    --ovl-user-panel-padding-block: var(--ovl-primitive-space-4);
+    --ovl-user-panel-padding-inline: var(--ovl-primitive-space-6);
+    --ovl-user-widget-padding-block: var(--ovl-primitive-space-6);
+    --ovl-user-widget-padding-inline: var(--ovl-primitive-space-8);
+  }
+
+  :root[data-ovl-content-width='narrow'] {
+    --ovl-user-line-width: 22ch;
+    --ovl-user-panel-width: 52rem;
+  }
+
+  :root[data-ovl-content-width='wide'] {
+    --ovl-user-line-width: 36ch;
+    --ovl-user-panel-width: 76rem;
   }
 
   :root[data-ovl-position='top-left'],

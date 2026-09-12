@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "deprecated": true,
   "schemaModule": "./outputAppearance.mjs"
 }

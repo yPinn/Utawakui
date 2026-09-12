@@ -58,6 +58,7 @@ const OVERLAY_STATIC_ROUTES = Object.freeze({
   '/overlay/setlist/': ['setlist', 'index.html'],
   '/overlay/setlist/setlist.css': ['setlist', 'setlist.css'],
   '/overlay/setlist/setlist.mjs': ['setlist', 'setlist.mjs'],
+  '/overlay/setlist/setlistMotion.mjs': ['setlist', 'setlistMotion.mjs'],
   '/overlay/shared/appearance.css': ['shared', 'appearance.css'],
   '/overlay/shared/appearance.mjs': ['shared', 'appearance.mjs'],
   '/overlay/shared/base.css': ['shared', 'base.css'],

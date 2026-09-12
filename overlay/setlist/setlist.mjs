@@ -6,49 +6,62 @@ import {
   withPreviewFallback,
 } from '../shared/preview.mjs';
 import { selectSetlistFrame } from '../shared/state.mjs';
+import {
+  createSetlistCurrentMotionController,
+  createSetlistHistoryMotionController,
+} from './setlistMotion.mjs';
 
 const PREVIEW_FRAME = Object.freeze({
   revision: 0,
   visible: true,
   sourceName: 'Tonight',
-  current: { title: '怪物', artist: 'YOASOBI' },
+  current: { trackId: 'preview-current', title: '怪物', artist: 'YOASOBI' },
   history: [
-    { title: '群青', artist: 'YOASOBI' },
-    { title: 'Stellar Stellar', artist: '星街すいせい' },
-    { title: '花に亡霊', artist: 'ヨルシカ' },
+    { trackId: 'preview-1', title: '群青', artist: 'YOASOBI' },
+    {
+      trackId: 'preview-2',
+      title: 'Stellar Stellar',
+      artist: '星街すいせい',
+    },
+    { trackId: 'preview-3', title: '花に亡霊', artist: 'ヨルシカ' },
   ],
 });
 
-const HISTORY_SCROLL_PX_PER_SECOND = 18;
-const HISTORY_SCROLL_HOLD_SECONDS = 4;
-const HISTORY_SCROLL_MIN_SECONDS = 12;
+function trackIdentity(track) {
+  return [track?.trackId, track?.title, track?.artist]
+    .map((value) => String(value ?? ''))
+    .join('\u001f');
+}
 
-export function setlistHistoryScrollMetrics({
-  contentHeight = 0,
-  viewportHeight = 0,
-} = {}) {
-  const safeContentHeight = Number.isFinite(contentHeight)
-    ? Math.max(0, contentHeight)
-    : 0;
-  const safeViewportHeight = Number.isFinite(viewportHeight)
-    ? Math.max(0, viewportHeight)
-    : 0;
-  const distance = Math.max(
-    0,
-    Math.ceil(safeContentHeight - safeViewportHeight),
-  );
-  if (distance === 0) {
-    return { distance: 0, durationSeconds: 0, overflow: false };
-  }
+export function setlistHistoryIdentity(history = []) {
+  return (Array.isArray(history) ? history : [])
+    .map(trackIdentity)
+    .join('\u001e');
+}
 
-  const durationSeconds = Math.max(
-    HISTORY_SCROLL_MIN_SECONDS,
-    Math.ceil(
-      (distance / HISTORY_SCROLL_PX_PER_SECOND + HISTORY_SCROLL_HOLD_SECONDS) *
-        10,
-    ) / 10,
-  );
-  return { distance, durationSeconds, overflow: true };
+export function setlistHistoryChange(previous = [], next = []) {
+  const safePrevious = Array.isArray(previous) ? previous : [];
+  const safeNext = Array.isArray(next) ? next : [];
+  const changed =
+    setlistHistoryIdentity(safePrevious) !== setlistHistoryIdentity(safeNext);
+  const previousLastIdentity = trackIdentity(safePrevious.at(-1));
+  const nextLastIdentity = trackIdentity(safeNext.at(-1));
+  const appended =
+    safePrevious.length > 0 &&
+    safeNext.length > safePrevious.length &&
+    safePrevious.every(
+      (track, index) => trackIdentity(track) === trackIdentity(safeNext[index]),
+    );
+  const rolledForward =
+    safePrevious.length > 0 &&
+    safeNext.length > 0 &&
+    previousLastIdentity !== nextLastIdentity &&
+    safeNext.some((track) => trackIdentity(track) === previousLastIdentity);
+
+  return {
+    advanced: changed && (appended || rolledForward),
+    changed,
+  };
 }
 
 function createHistoryRow(trackData) {
@@ -58,6 +71,7 @@ function createHistoryRow(trackData) {
   item.className = 'setlist-overlay__history-row';
   track.className = 'setlist-overlay__track';
   artist.className = 'setlist-overlay__artist';
+  if (trackData.trackId) item.dataset.trackId = trackData.trackId;
   track.textContent = trackData.title;
   artist.textContent = trackData.artist;
   artist.hidden = !trackData.artist;
@@ -69,16 +83,20 @@ function renderHistory(container, history) {
   container.replaceChildren(...history.map(createHistoryRow));
 }
 
-function renderFrame(elements, frame, scheduleHistoryMeasurement) {
+function renderFrame(elements, frame, renderState, scheduleHistoryMeasurement) {
+  const history = Array.isArray(frame.history) ? frame.history : [];
+  const historyChange = setlistHistoryChange(renderState.history, history);
   elements.root.hidden = !frame.visible;
   elements.root.dataset.revision = String(frame.revision);
-  elements.root.dataset.historyOverflow = 'false';
 
   elements.title.textContent = frame.sourceName;
   elements.title.hidden = !frame.sourceName;
-  renderHistory(elements.history, frame.history);
-  elements.historyViewport.hidden = frame.history.length === 0;
-  elements.historyEmpty.hidden = frame.history.length > 0;
+  if (historyChange.changed) {
+    renderHistory(elements.history, history);
+    renderState.history = history.map((track) => ({ ...track }));
+  }
+  elements.historyViewport.hidden = history.length === 0;
+  elements.historyEmpty.hidden = history.length > 0;
 
   const hasCurrent = Boolean(frame.current);
   elements.current.hidden = !hasCurrent;
@@ -86,31 +104,24 @@ function renderFrame(elements, frame, scheduleHistoryMeasurement) {
   elements.currentTitle.textContent = frame.current?.title ?? '';
   elements.currentArtist.textContent = frame.current?.artist ?? '';
   elements.currentArtist.hidden = !frame.current?.artist;
-  scheduleHistoryMeasurement();
+  if (historyChange.changed) {
+    scheduleHistoryMeasurement({ revealLatest: historyChange.advanced });
+  }
 }
 
-function createHistoryOverflowController(elements) {
+function createHistoryMeasurementController(elements, historyMotion) {
   let measurementFrame = null;
+  let revealLatest = false;
 
   const measure = () => {
     measurementFrame = null;
-    const metrics = setlistHistoryScrollMetrics({
-      contentHeight: elements.historyViewport.scrollHeight,
-      viewportHeight: elements.historyViewport.clientHeight,
-    });
-    elements.root.dataset.historyOverflow = String(metrics.overflow);
-    elements.root.style.setProperty(
-      '--ovl-template-setlist-scroll-distance',
-      `${metrics.distance}px`,
-    );
-    elements.root.style.setProperty(
-      '--ovl-template-setlist-scroll-duration',
-      `${metrics.durationSeconds}s`,
-    );
+    const shouldRevealLatest = revealLatest;
+    revealLatest = false;
+    historyMotion.refresh({ revealLatest: shouldRevealLatest });
   };
 
-  const schedule = () => {
-    elements.root.dataset.historyOverflow = 'false';
+  const schedule = (options = {}) => {
+    revealLatest ||= options.revealLatest === true;
     if (measurementFrame !== null) cancelAnimationFrame(measurementFrame);
     measurementFrame = requestAnimationFrame(measure);
   };
@@ -128,6 +139,13 @@ function createHistoryOverflowController(elements) {
   };
 }
 
+function setMotionSuspended(controllers, suspended) {
+  for (const controller of controllers) {
+    if (suspended) controller.suspend();
+    else controller.resume();
+  }
+}
+
 function boot() {
   const elements = {
     root: document.querySelector('#setlist-overlay'),
@@ -142,12 +160,56 @@ function boot() {
   };
   if (Object.values(elements).some((element) => !element)) return;
 
+  const gsap = globalThis.gsap ?? null;
   const previewMode = isPreviewMode(window.location);
-  const historyOverflow = createHistoryOverflowController(elements);
+  const renderState = { history: [] };
+  const historyMotion = createSetlistHistoryMotionController({
+    gsap,
+    list: elements.history,
+    root: elements.root,
+    viewport: elements.historyViewport,
+  });
+  const historyMeasurement = createHistoryMeasurementController(
+    elements,
+    historyMotion,
+  );
+  const currentMotion = createSetlistCurrentMotionController({
+    commitFrame: (frame) =>
+      renderFrame(elements, frame, renderState, historyMeasurement.schedule),
+    current: elements.current,
+    gsap,
+    root: elements.root,
+  });
+  const motionControllers = [currentMotion, historyMotion];
+  let connectionStatus = previewMode ? 'connected' : 'disconnected';
+  let reducedMotion = window.matchMedia(
+    '(prefers-reduced-motion: reduce)',
+  ).matches;
+  const motionMedia = gsap?.matchMedia?.() ?? null;
+  const applyReducedMotion = (value) => {
+    reducedMotion = value === true;
+    for (const controller of motionControllers) {
+      controller.setReducedMotion(reducedMotion);
+    }
+  };
+  applyReducedMotion(reducedMotion);
+  motionMedia?.add(
+    { reducedMotion: '(prefers-reduced-motion: reduce)' },
+    (context) => applyReducedMotion(context.conditions?.reducedMotion === true),
+  );
+  const syncMotionActivity = () => {
+    setMotionSuspended(
+      motionControllers,
+      document.hidden || (!previewMode && connectionStatus !== 'connected'),
+    );
+  };
+  const handleVisibilityChange = () => syncMotionActivity();
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+  syncMotionActivity();
+
   applyOverlayAppearance(document, null);
   applyPreviewCanvas(document, { previewMode, location: window.location });
-  if (previewMode)
-    renderFrame(elements, PREVIEW_FRAME, historyOverflow.schedule);
+  if (previewMode) currentMotion.update(PREVIEW_FRAME);
 
   const connection = createOverlayConnection({
     kind: 'setlist',
@@ -158,14 +220,22 @@ function boot() {
         PREVIEW_FRAME,
         previewMode,
       );
-      renderFrame(elements, frame, historyOverflow.schedule);
+      currentMotion.update(frame);
+    },
+    onStatus: (status) => {
+      connectionStatus = status;
+      syncMotionActivity();
     },
   });
   connection.start();
   window.addEventListener(
     'pagehide',
     () => {
-      historyOverflow.stop();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      motionMedia?.revert?.();
+      historyMeasurement.stop();
+      currentMotion.destroy();
+      historyMotion.destroy();
       connection.stop();
     },
     { once: true },

@@ -1060,12 +1060,18 @@ const mangaBubbles = computed(() => {
 }
 
 .obs-template-mockup__content--setlist {
-  grid-template-rows: repeat(10, minmax(0, 1fr));
-  gap: 0;
+  --ui-setlist-preview-current-title-size: var(--ui-font-size-xl);
+  --ui-setlist-preview-history-title-size: var(--ui-font-size-md);
+  --ui-setlist-preview-current-artist-size: var(--ui-font-size-sm);
+  --ui-setlist-preview-history-artist-size: var(--ui-font-size-sm);
+  --ui-setlist-preview-label-size: var(--ui-font-size-sm);
+  --ui-setlist-preview-counter-size: var(--ui-font-size-sm);
+
+  grid-template-rows: minmax(0, 2fr) minmax(0, 8fr);
+  gap: var(--ui-space-3);
 }
 
 .obs-template-mockup__setlist-history {
-  grid-row: 5 / span 6;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1115,7 +1121,7 @@ const mangaBubbles = computed(() => {
 .obs-template-mockup__setlist-source {
   flex: 0 0 auto;
   color: var(--obs-preview-muted);
-  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-size: var(--ui-setlist-preview-label-size);
   font-weight: var(--ui-font-weight-strong);
   letter-spacing: 0.06em;
   line-height: 1;
@@ -1135,30 +1141,42 @@ const mangaBubbles = computed(() => {
   min-width: 0;
   min-height: var(--ui-space-5);
   display: grid;
-  grid-template-columns: 1rem minmax(0, 1fr) minmax(0, 34%);
-  align-items: center;
+  grid-template-columns: 1rem minmax(0, 1fr);
+  grid-template-rows: auto auto;
+  align-items: start;
   column-gap: var(--ui-space-1);
+  padding-block: var(--ui-space-1);
   padding-inline: var(--ui-space-2);
   border-block-end: var(--ui-border-width) solid var(--ui-color-border);
   text-align: start;
 }
 
 .obs-template-mockup__setlist-history-row .obs-template-mockup__queue-number {
+  grid-row: 1 / span 2;
   align-self: center;
   color: var(--obs-preview-muted);
+  font-size: var(--ui-setlist-preview-counter-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.obs-template-mockup__content--setlist .obs-template-mockup__queue-title {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: var(--ui-setlist-preview-history-title-size);
 }
 
 .obs-template-mockup__setlist-artist {
+  grid-column: 2;
+  grid-row: 2;
   min-width: 0;
   overflow: hidden;
   color: var(--obs-preview-muted);
-  font-size: var(--ui-output-template-thumb-caption-font-size);
+  font-size: var(--ui-setlist-preview-history-artist-size);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .obs-template-mockup__setlist-current {
-  grid-row: 1 / span 3;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -1181,18 +1199,32 @@ const mangaBubbles = computed(() => {
 .obs-template-mockup__setlist-current-artist {
   min-width: 0;
   overflow: hidden;
+}
+
+.obs-template-mockup__setlist-current-title,
+.obs-template-mockup__content--setlist .obs-template-mockup__queue-title {
+  display: -webkit-box;
+  overflow-wrap: anywhere;
+  text-overflow: ellipsis;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.obs-template-mockup__setlist-current-artist,
+.obs-template-mockup__setlist-artist {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .obs-template-mockup__setlist-current-title {
-  font-size: var(--ui-font-size-xl);
+  font-size: var(--ui-setlist-preview-current-title-size);
   letter-spacing: -0.02em;
   line-height: var(--ui-line-height-title);
 }
 
 .obs-template-mockup__setlist-current-artist {
-  font-size: var(--ui-font-size-sm);
+  font-size: var(--ui-setlist-preview-current-artist-size);
 }
 
 .obs-template-mockup__content--artwork {
@@ -2351,6 +2383,25 @@ const mangaBubbles = computed(() => {
 
 .obs-template-mockup[data-size='thumbnail']
   .obs-template-mockup__content--setlist {
+  --ui-setlist-preview-current-title-size: var(
+    --ui-output-template-thumb-title-font-size
+  );
+  --ui-setlist-preview-history-title-size: var(
+    --ui-output-template-thumb-title-font-size
+  );
+  --ui-setlist-preview-current-artist-size: var(
+    --ui-output-template-thumb-caption-font-size
+  );
+  --ui-setlist-preview-history-artist-size: var(
+    --ui-output-template-thumb-caption-font-size
+  );
+  --ui-setlist-preview-label-size: var(
+    --ui-output-template-thumb-caption-font-size
+  );
+  --ui-setlist-preview-counter-size: var(
+    --ui-output-template-thumb-caption-font-size
+  );
+
   width: var(--ui-output-template-thumb-content-width);
   place-content: stretch;
   justify-items: stretch;
@@ -2381,8 +2432,13 @@ const mangaBubbles = computed(() => {
 }
 
 .obs-template-mockup[data-size='thumbnail']
-  .obs-template-mockup__setlist-current-title {
-  font-size: var(--ui-output-template-thumb-title-font-size);
+  .obs-template-mockup__setlist-current-title,
+.obs-template-mockup[data-size='thumbnail'] .obs-template-mockup__queue-title {
+  display: block;
+  overflow-wrap: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  -webkit-line-clamp: unset;
 }
 
 .obs-template-mockup[data-size='thumbnail']
@@ -2523,6 +2579,7 @@ const mangaBubbles = computed(() => {
 
 .obs-template-mockup[data-size='thumbnail']
   .obs-template-mockup__setlist-history-row {
+  grid-template-rows: auto;
   padding: 0 var(--ui-space-1);
 }
 

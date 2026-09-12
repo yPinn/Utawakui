@@ -10,10 +10,11 @@ describe('output appearance schema', () => {
     const fields = outputAppearanceFieldsForTemplate('ornate-vertical');
 
     expect(fields.map((field) => field.key)).toEqual([
-      'fontFamily',
-      'fontScale',
+      'paletteId',
       'textColor',
       'accentColor',
+      'fontFamily',
+      'fontScale',
       'positionAnchor',
       'positionOffsetX',
       'positionOffsetY',
@@ -67,7 +68,76 @@ describe('output appearance schema', () => {
     });
   });
 
+  it('ignores persisted settings that the active template does not expose', () => {
+    const preservedSlotSettings = {
+      fontFamily: 'rounded',
+      fontScale: 'large',
+      fontWeight: 'regular',
+      alignment: 'right',
+      surface: 'solid',
+      furigana: 'off',
+      kineticMaterial: 'chromatic-depth',
+      kineticArrangement: 'subtle-offset',
+      textColor: '#abcdef',
+      accentColor: '#fedcba',
+      positionAnchor: 'bottom-right',
+      positionOffsetX: 7,
+      positionOffsetY: -9,
+    };
+
+    expect(
+      normalizeOutputAppearance(preservedSlotSettings, {
+        templateId: 'karaoke-stack',
+      }),
+    ).toEqual({
+      paletteId: 'original',
+      fontFamily: 'sans',
+      fontScale: 'large',
+      fontWeight: 'semibold',
+      alignment: 'left',
+      surface: 'transparent',
+      furigana: 'auto',
+      kineticMaterial: 'candy-rim',
+      kineticArrangement: 'straight',
+      textColor: '#fff8ec',
+      accentColor: '#ffffff',
+      positionAnchor: 'center-right',
+      positionOffsetX: 0,
+      positionOffsetY: 0,
+      contrastStyle: 'balanced',
+      spacingDensity: 'normal',
+      contentWidth: 'standard',
+    });
+
+    expect(
+      normalizeOutputAppearance(preservedSlotSettings, {
+        templateId: 'ornate-vertical',
+      }),
+    ).toMatchObject({
+      fontFamily: 'ornate',
+      fontScale: 'large',
+      fontWeight: 'semibold',
+      alignment: 'left',
+      surface: 'transparent',
+      furigana: 'auto',
+      kineticMaterial: 'candy-rim',
+      kineticArrangement: 'straight',
+      textColor: '#abcdef',
+      accentColor: '#fedcba',
+      positionAnchor: 'bottom-right',
+      positionOffsetX: 7,
+      positionOffsetY: -9,
+    });
+  });
+
   it('validates recognized values without rejecting unrelated scalar settings', () => {
+    expect(sanitizeOutputAppearanceSetting('paletteId', 'cool')).toBe('cool');
+    expect(
+      sanitizeOutputAppearanceSetting('contrastStyle', 'strong-outline'),
+    ).toBe('strong-outline');
+    expect(sanitizeOutputAppearanceSetting('spacingDensity', 'dense')).toBe(
+      undefined,
+    );
     expect(sanitizeOutputAppearanceSetting('textColor', '#ABCDEF')).toBe(
       '#abcdef',
     );
@@ -112,28 +182,91 @@ describe('output appearance schema', () => {
       outputAppearanceFieldsForTemplate(templateId).map(({ key }) => key);
 
     expect(keysFor('queue-board')).toEqual([
+      'paletteId',
       'fontFamily',
       'fontScale',
       'fontWeight',
-      'alignment',
       'surface',
+      'spacingDensity',
     ]);
     expect(keysFor('now-next')).toEqual([
+      'paletteId',
       'fontFamily',
       'fontScale',
       'fontWeight',
-      'alignment',
       'surface',
+      'alignment',
+      'spacingDensity',
     ]);
     expect(keysFor('art-card')).toEqual([
+      'paletteId',
       'fontFamily',
       'fontScale',
       'fontWeight',
     ]);
     expect(keysFor('cover-player')).toEqual([
+      'paletteId',
       'fontScale',
       'fontWeight',
       'surface',
     ]);
+  });
+
+  it('keeps shared controls in a stable product-facing category order', () => {
+    const fields = outputAppearanceFieldsForTemplate('focus-line');
+
+    expect(fields.map(({ key }) => key)).toEqual([
+      'paletteId',
+      'fontFamily',
+      'fontScale',
+      'fontWeight',
+      'contrastStyle',
+      'surface',
+      'alignment',
+      'spacingDensity',
+      'contentWidth',
+    ]);
+    expect(fields.map(({ group }) => group)).toEqual([
+      'color',
+      'typography',
+      'typography',
+      'typography',
+      'readability',
+      'surface',
+      'layout',
+      'layout',
+      'layout',
+    ]);
+    expect(fields.map(({ groupOrder }) => groupOrder)).toEqual([
+      10, 20, 20, 20, 30, 40, 50, 50, 50,
+    ]);
+  });
+
+  it.each([
+    'now-next',
+    'art-card',
+    'cover-player',
+    'queue-board',
+    'quiet-caption',
+    'focus-line',
+    'karaoke-stack',
+    'kinetic-pop',
+    'ornate-vertical',
+    'manga-frame',
+    'live-stage',
+  ])('offers an effective semantic palette for %s', (templateId) => {
+    expect(outputAppearanceFieldsForTemplate(templateId)[0]).toMatchObject({
+      key: 'paletteId',
+      group: 'color',
+      groupLabel: '色彩',
+      defaultValue: 'original',
+      options: [
+        { id: 'original', label: '模板原色' },
+        { id: 'warm', label: '暖色舞台' },
+        { id: 'cool', label: '冷色舞台' },
+        { id: 'monochrome', label: '黑白' },
+        { id: 'high-contrast', label: '高對比' },
+      ],
+    });
   });
 });
