@@ -1,39 +1,14 @@
 <script setup>
-import { Music } from '../../icons/index.js';
-import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiProgress from '../ui/UiProgress.vue';
-import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
+import DemoChipAppearance from './DemoChipAppearance.vue';
+import DemoStatusIconAppearance from './DemoStatusIconAppearance.vue';
 
 defineProps({
   sections: { type: Array, default: () => [] },
 });
-
-const CHIP_TONES = [
-  { id: 'muted', label: '一般' },
-  { id: 'accent', label: '已選取' },
-  { id: 'current', label: '播放中' },
-  { id: 'info', label: '處理中' },
-  { id: 'success', label: '已完成' },
-  { id: 'warning', label: '需注意' },
-  { id: 'danger', label: '失敗' },
-  { id: 'gated', label: '需啟用' },
-];
-
-const STATUS_TONES = [
-  'muted',
-  'accent',
-  'info',
-  'success',
-  'warning',
-  'danger',
-  'current',
-  'gated',
-  'text',
-  'highlight',
-];
 
 const HINT_TONES = [
   { id: 'muted', label: '一般提示：這個設定只影響目前工作區。' },
@@ -44,6 +19,8 @@ const HINT_TONES = [
   { id: 'danger', label: '失敗：來源檔案目前無法讀取。' },
   { id: 'gated', label: '需啟用：公開輸出尚未開啟。' },
 ];
+
+const REVIEWED_SECTION_KEYS = new Set(['chips', 'status-icons']);
 </script>
 
 <template>
@@ -54,19 +31,11 @@ const HINT_TONES = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
+      :reviewed="REVIEWED_SECTION_KEYS.has(section.key)"
     >
-      <div v-if="section.key === 'chips'" class="demo-sample-row">
-        <UiChip v-for="tone in CHIP_TONES" :key="tone.id" :tone="tone.id">
-          {{ tone.label }}
-        </UiChip>
-      </div>
+      <DemoChipAppearance v-if="section.key === 'chips'" />
 
-      <div v-else-if="section.key === 'status-icons'" class="demo-status-grid">
-        <div v-for="tone in STATUS_TONES" :key="tone" class="demo-status-item">
-          <UiStatusIcon :icon="Music" :tone="tone" :label="tone" />
-          <code>{{ tone }}</code>
-        </div>
-      </div>
+      <DemoStatusIconAppearance v-else-if="section.key === 'status-icons'" />
 
       <div v-else-if="section.key === 'hints'" class="demo-sample-stack">
         <UiHint v-for="tone in HINT_TONES" :key="tone.id" :tone="tone.id">
@@ -124,25 +93,8 @@ const HINT_TONES = [
 </template>
 
 <style scoped>
-.demo-status-grid {
+.demo-feedback {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(6rem, 1fr));
-  gap: var(--ui-space-2);
-}
-
-.demo-status-item {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  min-height: var(--ui-control-height);
-  padding: var(--ui-space-2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
-}
-
-.demo-status-item code {
-  color: var(--ui-color-text-muted);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
+  gap: var(--ui-space-4);
 }
 </style>

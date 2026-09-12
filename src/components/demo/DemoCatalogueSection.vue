@@ -38,10 +38,8 @@ defineProps({
 }
 
 .demo-catalogue-section--reviewed {
-  padding: var(--ui-space-5);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
+  padding: var(--ui-space-6) 0;
+  background: transparent;
 }
 
 .demo-catalogue-section__header {
@@ -71,6 +69,58 @@ defineProps({
 
 .demo-catalogue-section__body {
   min-width: 0;
+}
+
+.demo-catalogue-section--reviewed
+  .demo-catalogue-section__body
+  :deep([data-demo-review-layer]) {
+  --demo-review-layer-background: var(--ui-color-surface-raised);
+  --demo-review-layer-border: var(--ui-color-border);
+
+  min-width: 0;
+  margin: 0;
+  padding: var(--ui-space-5);
+  border: var(--ui-border-width) solid var(--demo-review-layer-border);
+  border-radius: var(--ui-radius-lg);
+  background: var(--demo-review-layer-background);
+  container-type: inline-size;
+}
+
+.demo-catalogue-section--reviewed
+  .demo-catalogue-section__body
+  :deep([data-demo-review-layer='candidate']) {
+  --demo-review-layer-background: var(--ui-color-surface-raised);
+  --demo-review-layer-border: var(--ui-color-border);
+}
+
+.demo-catalogue-section--reviewed
+  .demo-catalogue-section__body
+  :deep([data-demo-review-layer='current']) {
+  --demo-review-layer-background: #30383e;
+  --demo-review-layer-border: #3c4749;
+}
+
+:global(
+  :root[data-ui-theme='light']
+    .demo-catalogue-section--reviewed
+    .demo-catalogue-section__body
+    [data-demo-review-layer='current']
+) {
+  --demo-review-layer-background: #fff;
+  --demo-review-layer-border: #d8ded9;
+}
+
+.demo-catalogue-section--reviewed
+  .demo-catalogue-section__body
+  :deep([data-demo-review-layer] > header:first-child) {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--ui-space-4);
+  padding: 0 0 var(--ui-space-3);
+  border-top: 0;
+  border-bottom: var(--ui-border-width) solid var(--demo-review-layer-border);
 }
 
 .demo-catalogue-section__body :deep(.demo-sample-row) {
@@ -127,6 +177,19 @@ defineProps({
   .demo-catalogue-section {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--ui-space-3);
+  }
+
+  .demo-catalogue-section--reviewed
+    .demo-catalogue-section__body
+    :deep([data-demo-review-layer]) {
+    padding: var(--ui-space-4);
+  }
+
+  .demo-catalogue-section--reviewed
+    .demo-catalogue-section__body
+    :deep([data-demo-review-layer] > header:first-child) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--ui-space-1);
   }
 }
 </style>

@@ -8,7 +8,7 @@ const LAYERS = [
   {
     key: 'candidate',
     title: 'Token v2 候選 Text Action',
-    note: '預設無底線；hover／focus-visible 顯示底線。Candidate 不代表 production adoption。',
+    note: '預設無底線；hover／focus-visible 顯示底線。',
     component: DemoCandidateTextButton,
     appearanceContract: '預設無底線 · hover／focus-visible underline',
     recipeProps: {},

@@ -45,9 +45,8 @@ const SELECT_OPTIONS = [
         <h4 id="demo-field-validation-title">驗證訊息與版面空間</h4>
       </div>
       <p>
-        Zod 僅是可能的上游來源；UI 不認
-        schema。先核定顯示責任、觸發時機與支援區空間，再決定是否納入正式元件
-        API。
+        UI 只呈現已 mapping 的 localized issue；controller 決定觸發，UiField
+        負責 layout 與 ARIA。
       </p>
     </header>
 
@@ -309,8 +308,8 @@ const SELECT_OPTIONS = [
         </div>
       </div>
       <p class="demo-validation-current__boundary">
-        尚未制定：blur／submit 觸發策略、Zod issue 對本地化文案的映射，以及父層
-        Reserved 版面 helper。
+        尚未制定：blur／submit 觸發策略、issue 對本地化文案的 mapping，以及父層
+        Reserved helper。
       </p>
     </section>
   </article>

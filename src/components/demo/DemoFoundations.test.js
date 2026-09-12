@@ -69,6 +69,15 @@ describe('DemoFoundations review', () => {
     expect(html).toContain('× 圖示＋訊息／操作');
   });
 
+  it('keeps content categories neutral and reserves semantic hues for state', async () => {
+    const html = await renderToString(
+      createSSRApp(DemoFoundations, { sections }),
+    );
+
+    expect(html).toContain('內容類型、格式與來源預設維持 Neutral');
+    expect(html).toContain('只有需要操作員判斷的狀態才使用 semantic tone');
+  });
+
   it('shows the exact review values without promoting folder samples', async () => {
     const html = await renderToString(
       createSSRApp(DemoFoundations, { sections }),

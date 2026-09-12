@@ -345,6 +345,6 @@ describe('DemoIconButtonAppearance', () => {
     expect(currentSource).not.toContain('demo-candidate-icon-btn');
     expect(activeTokensSource).not.toContain('overlay-scrim-hover');
     expect(activeTokensSource).not.toContain('data-icon-button-source');
-    expect(html).toContain('Candidate 不代表 production adoption');
+    expect(html).not.toContain('Candidate 不代表 production adoption');
   });
 });

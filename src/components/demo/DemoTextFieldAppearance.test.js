@@ -55,7 +55,9 @@ describe('DemoTextFieldAppearance', () => {
     expect(currentIndex).toBeGreaterThan(candidateIndex);
     expect(html).toContain('Token v2 候選 Text Field');
     expect(html).toContain('現行 UiTextField');
-    expect(html).toContain('Text Field 只擁有單行 input。');
+    expect(html).toContain(
+      'Text Field 只擁有單行輸入；Label、Hint／Error 沿用 Field。',
+    );
   });
 
   it('visualizes inherited heights and parent-owned widths without new component tokens', async () => {

@@ -318,12 +318,8 @@ function stateValueText(layer, state) {
 <template>
   <div class="demo-range-appearance">
     <p class="demo-range-appearance__intro">
-      <strong
-        >Range 是永遠具有 numeric value 的連續／離散調整 primitive。</strong
-      >
-      Candidate 擴大完整滑軌命中高度並明確分出 base／fill；Current 維持 Windows
-      native 外觀。Range 永遠有 numeric value；沒有 empty、required 或 readonly
-      state。
+      <strong>Range 是具 numeric value 的連續／離散調整。</strong>
+      沒有 empty、required 或 readonly state。
     </p>
 
     <section

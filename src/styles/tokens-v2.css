@@ -198,8 +198,8 @@
     var(--ui-color-accent)
   );
   --ui-color-focus: var(--ui-palette-indigo-300);
-  --ui-color-current: var(--ui-color-live);
-  --ui-color-current-soft: var(--ui-color-live-soft);
+  --ui-color-current: var(--ui-color-accent);
+  --ui-color-current-soft: var(--ui-color-accent-soft);
 
   --ui-color-neutral: var(--ui-palette-cool-gray-300);
   --ui-color-info: var(--ui-palette-sky-400);

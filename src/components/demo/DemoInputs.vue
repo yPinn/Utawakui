@@ -49,46 +49,4 @@ defineProps({
   display: grid;
   gap: var(--ui-space-4);
 }
-
-.demo-inputs :deep([data-demo-review-layer]) {
-  min-width: 0;
-  margin-top: 0;
-  padding-top: 0;
-  border-top: 0;
-}
-
-.demo-inputs :deep([data-demo-review-layer] > header:first-child) {
-  display: grid;
-  grid-template-columns: minmax(10rem, 14rem) minmax(0, 1fr);
-  gap: var(--ui-space-4);
-  align-items: baseline;
-  padding-block: var(--ui-space-3);
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
-  border-bottom: 0;
-}
-
-.demo-inputs :deep([data-demo-review-layer='current']) {
-  margin-top: var(--ui-space-2);
-}
-
-.demo-inputs :deep([data-demo-review-layer='current'] > header:first-child) {
-  padding-top: var(--ui-space-5);
-  border-top-color: var(--ui-color-border-strong);
-}
-
-.demo-inputs
-  :deep(.demo-search-appearance [data-demo-review-layer='candidate']) {
-  margin-top: var(--ui-space-5);
-}
-
-.demo-inputs :deep(.demo-search-appearance [data-demo-review-layer='current']) {
-  margin-top: var(--ui-space-6);
-}
-
-@media (max-width: 58rem) {
-  .demo-inputs :deep([data-demo-review-layer] > header:first-child) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--ui-space-1);
-  }
-}
 </style>

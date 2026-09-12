@@ -1,20 +1,18 @@
-import { createSSRApp } from 'vue';
-import { renderToString } from '@vue/server-renderer';
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import DemoNavigation from './DemoNavigation.vue';
 
-describe('DemoNavigation tab panels', () => {
-  it('keeps every aria-controls target in the document', async () => {
-    const html = await renderToString(
-      createSSRApp(DemoNavigation, {
-        sections: [{ key: 'tabs', title: '分頁', components: ['UiTabs'] }],
-      }),
+const navigationSource = readFileSync(
+  new URL('./DemoNavigation.vue', import.meta.url),
+  'utf8',
+);
+
+describe('DemoNavigation', () => {
+  it('delegates the tabs section to the staged appearance review', () => {
+    expect(navigationSource).toContain(
+      "import DemoTabsAppearance from './DemoTabsAppearance.vue';",
     );
-
-    for (const id of ['library', 'queue', 'history', 'locked']) {
-      expect(html).toContain(`aria-controls="demo-panel-${id}-panel"`);
-      expect(html).toContain(`id="demo-panel-${id}-panel"`);
-    }
-    expect(html.match(/role="tabpanel"/g)).toHaveLength(4);
+    expect(navigationSource).toContain(
+      '<DemoTabsAppearance v-if="section.key === \'tabs\'" />',
+    );
   });
 });

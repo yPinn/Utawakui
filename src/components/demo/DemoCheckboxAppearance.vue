@@ -267,9 +267,8 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-checkbox-appearance">
     <p class="demo-checkbox-appearance__intro">
-      <strong>Checkbox 是 Boolean／mixed selection primitive。</strong>
-      Candidate 擴大整列命中區但保留 native input；Current 維持 Windows native
-      外觀。Readonly 不屬於 checkbox contract。
+      <strong>Checkbox 支援 Boolean／mixed，且沒有 readonly。</strong>
+      Candidate 保留 native input，並擴大整列命中區。
     </p>
 
     <section

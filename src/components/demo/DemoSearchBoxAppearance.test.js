@@ -39,8 +39,10 @@ describe('DemoSearchBoxAppearance', () => {
     expect(currentIndex).toBeGreaterThan(candidateIndex);
     expect(html).toContain('Token v2 候選基礎');
     expect(html).toContain('現行 Search Box 基礎');
-    expect(html).toContain('Search Box 基礎已完成。');
-    expect(html).toContain('本輪依互動順序檢查輸入區與 Clear action 的狀態');
+    expect(html).toContain(
+      'Search Box 組合單行搜尋輸入與 Clear action；結果回饋由 caller 擁有。',
+    );
+    expect(html).not.toContain('本輪依互動順序');
   });
 
   it('visualizes inherited height and parent-owned width without inventing width tokens', async () => {

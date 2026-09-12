@@ -84,7 +84,9 @@ describe('DemoCoreMinimums', () => {
     expect(currentIndex).toBeGreaterThan(candidateIndex);
     expect(html).toContain('Token v2 新制定');
     expect(html).toContain('現有設定檔／組件契約');
-    expect(html).toContain('先核定 Token v2，再逐項檢查現有元件');
+    expect(html).toContain(
+      '比較 Token v2 hard floors 與 active implementation',
+    );
   });
 
   it('reduces the full matrix to four scan groups without losing hard floors', async () => {
@@ -144,7 +146,7 @@ describe('DemoCoreMinimums', () => {
       '一般符合 hard floor／Compact，Standard 尚待密度映射',
     );
     expect(html).toContain('現行吻合');
-    expect(html).toContain('部分落地，後續逐項審查');
+    expect(html).toContain('部分落地，逐項審查中');
   });
 
   it('derives the current layer from active tokens and their consumers', () => {
@@ -198,5 +200,11 @@ describe('DemoCoreMinimums', () => {
     expect(componentSource).not.toContain('max-width: 100%;');
     expect(componentSource).not.toContain('vw');
     expect(componentSource).not.toContain('clamp(');
+    expect(componentSource).toMatch(
+      /\.demo-core-minimums\s*\{[^}]*container-type:\s*inline-size;/s,
+    );
+    expect(componentSource).toContain('@container (max-width: 48rem)');
+    expect(componentSource).toContain('@container (max-width: 36rem)');
+    expect(componentSource).not.toContain('@media (max-width: 48rem)');
   });
 });

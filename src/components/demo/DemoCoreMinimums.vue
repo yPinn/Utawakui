@@ -73,14 +73,14 @@ const CURRENT_GROUPS = [
     ],
     contract:
       '曲目列 3.25rem · 封面 2.5rem · Sidebar 列 54px · Player 4.75rem；列表標頭無現行共用 token',
-    status: '部分落地，後續逐項審查',
+    status: '部分落地，逐項審查中',
   },
   {
     key: 'optical',
     label: '光學邊界',
     sources: ['src/styles/tokens.css'],
     contract: 'Focus 2 CSS px；Drag indicator 僅 Token v2 定義',
-    status: '部分落地，後續逐項審查',
+    status: '部分落地，逐項審查中',
   },
 ];
 </script>
@@ -88,9 +88,9 @@ const CURRENT_GROUPS = [
 <template>
   <div class="demo-core-minimums">
     <p class="demo-core-minimums__note">
-      <strong>本區只做規格與現況對照。</strong>
-      先核定 Token v2，再逐項檢查現有元件。視窗不足時先重排或收起次要內容，
-      不得降低 hard floor。數值以預設 16px 根字級與 100% Chromium zoom 為前提。
+      <strong>比較 Token v2 hard floors 與 active implementation。</strong>
+      視窗不足時先重排或收起次要內容，不得降低 hard floor；CSS px 等值以預設
+      16px 根字級與 100% Chromium zoom 為前提。
     </p>
 
     <section
@@ -105,7 +105,7 @@ const CURRENT_GROUPS = [
         </div>
         <p>
           <strong>Icon button hard floor 2rem／32 CSS px。</strong>
-          此區數值尚待逐項核定，不代表現有元件已全部採用。
+          其餘數值依元件審查狀態。
         </p>
       </header>
 
@@ -167,7 +167,7 @@ const CURRENT_GROUPS = [
           <p class="demo-core-minimums__eyebrow">現行實作</p>
           <h3 id="demo-core-current-title">現有設定檔／組件契約</h3>
         </div>
-        <p>只呈現目前程式實際來源，後續依同一順序逐組確認與調整。</p>
+        <p>列出目前程式來源與實際值。</p>
       </header>
 
       <div class="demo-core-minimums__current-groups">
@@ -199,6 +199,7 @@ const CURRENT_GROUPS = [
 .demo-core-minimums {
   display: grid;
   gap: var(--ui-space-4);
+  container-type: inline-size;
 }
 
 .demo-core-minimums__note {
@@ -406,7 +407,7 @@ const CURRENT_GROUPS = [
   color: var(--ui-color-text-muted);
 }
 
-@media (max-width: 48rem) {
+@container (max-width: 48rem) {
   .demo-core-minimums__layer-header,
   .demo-core-minimums__group {
     grid-template-columns: 1fr;
@@ -426,7 +427,7 @@ const CURRENT_GROUPS = [
   }
 }
 
-@media (max-width: 36rem) {
+@container (max-width: 36rem) {
   .demo-core-minimums__group dl {
     grid-template-columns: 1fr;
   }

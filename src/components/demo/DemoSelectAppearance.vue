@@ -296,10 +296,9 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-select-appearance">
     <p class="demo-select-appearance__intro">
-      <strong>Select 使用 Field family 的外框與驗證語法。</strong>
-      Candidate 接管 closed indicator 與文字層級；Current 保留 Windows Chromium
-      native indicator。兩者的 popup 都維持原生且不承諾與 control 同寬；Select
-      沒有 native readonly。
+      <strong>Select 沿用 Field，且沒有 readonly。</strong>
+      Closed indicator 可比較；原生 popup 寬度與選項呈現由 Chromium／Windows
+      擁有。
     </p>
 
     <section

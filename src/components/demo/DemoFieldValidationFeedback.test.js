@@ -50,7 +50,10 @@ describe('DemoFieldValidationFeedback', () => {
     }
 
     expect(feedbackSource).not.toMatch(/from\s+['"]zod['"]/u);
-    expect(html).toContain('Zod 僅是可能的上游來源');
+    expect(html).toContain(
+      'UI 只呈現已 mapping 的 localized issue；controller 決定觸發，UiField 負責 layout 與 ARIA。',
+    );
+    expect(html).not.toContain('Zod');
   });
 
   it('separates the candidate contract from current behavior', async () => {

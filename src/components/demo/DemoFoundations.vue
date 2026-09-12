@@ -234,6 +234,10 @@ const UNIT_RESPONSIBILITIES = [
           <div class="demo-status-role-review__intro">
             <strong>同色可以，語意不能混用。</strong>
             <span>
+              內容類型、格式與來源預設維持
+              Neutral；只有需要操作員判斷的狀態才使用 semantic tone。
+            </span>
+            <span>
               Current 使用 Indigo；Live 與 Danger 保留不同
               token，並以固定形狀與標籤區分。
             </span>

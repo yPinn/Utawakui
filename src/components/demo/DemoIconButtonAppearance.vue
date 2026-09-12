@@ -10,7 +10,7 @@ const LAYERS = [
   {
     key: 'candidate',
     title: 'Token v2 候選 Icon Button',
-    note: 'Routine target 隨 density 為 36／32px；44px lg 只用於明確的強調角色，例如 Primary transport。Candidate 不代表 production adoption。',
+    note: 'Routine target 隨 density 為 36／32px；44px lg 只用於 Primary transport 等明確強調角色。',
     component: DemoCandidateIconButton,
     actionComponent: DemoCandidateButton,
     actionVariant: 'secondary',

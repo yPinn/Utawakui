@@ -286,7 +286,7 @@ describe('DemoSelectAppearance', () => {
       ).toHaveLength(2);
     }
     expect(html.match(/data-select-coverage-matrix/gu)).toHaveLength(2);
-    expect(html).toContain('Select 沒有 native readonly');
+    expect(html).toContain('Select 沿用 Field，且沒有 readonly。');
     expect(selectSource).not.toContain('readonly');
     expect(componentSource).not.toContain(':readonly');
     expect(componentSource).toMatch(

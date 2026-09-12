@@ -17,6 +17,7 @@ defineProps({
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
+      :reviewed="true"
     >
       <DemoButtonAppearance v-if="section.key === 'buttons'" />
 
@@ -26,3 +27,10 @@ defineProps({
     </DemoCatalogueSection>
   </div>
 </template>
+
+<style scoped>
+.demo-actions {
+  display: grid;
+  gap: var(--ui-space-4);
+}
+</style>

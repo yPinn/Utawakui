@@ -386,9 +386,7 @@ describe('DemoTextButtonAppearance', () => {
     );
     expect(currentSource).not.toContain('demo-candidate-text-btn');
     expect(activeTokensSource).not.toContain('data-text-button-source');
-    expect(html.match(/Candidate 不代表 production adoption/gu)).toHaveLength(
-      1,
-    );
+    expect(html).not.toContain('Candidate 不代表 production adoption');
   });
 
   it('snapshots every active color consumed by the Current layer', () => {

@@ -205,7 +205,7 @@ const SEARCH_LAYERS = [
   {
     key: 'candidate',
     title: 'Token v2 候選基礎',
-    note: '沿用已核定的 Field 外框與 Search anatomy；本輪核對狀態外觀與覆蓋責任。',
+    note: '使用 Field 外框與 Search anatomy；比較狀態外觀與覆蓋責任。',
     sizes: [
       ['standard', 'Standard', 'Standard 36 CSS px'],
       ['compact', 'Compact', 'Compact 32 CSS px'],
@@ -303,9 +303,10 @@ function coverageFor(layer, state, index) {
 <template>
   <div class="demo-search-appearance">
     <p class="demo-search-appearance__intro">
-      <strong>Search Box 基礎已完成。</strong>
-      本輪依互動順序檢查輸入區與 Clear action
-      的狀態；非元件責任的搜尋結果回饋保持分離。
+      <strong
+        >Search Box 組合單行搜尋輸入與 Clear action；結果回饋由 caller
+        擁有。</strong
+      >
     </p>
 
     <section

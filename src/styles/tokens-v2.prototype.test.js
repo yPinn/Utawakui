@@ -178,6 +178,21 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(missing).toEqual([]);
   });
 
+  it('keeps current in the accent family without collapsing live and danger semantics', () => {
+    const dark = tokenBlock(":root[data-ui-system='v2']");
+    const light = tokenBlock(
+      ":root[data-ui-system='v2'][data-ui-theme='light']",
+    );
+
+    expect(dark['--ui-color-current']).toBe('var(--ui-color-accent)');
+    expect(dark['--ui-color-current-soft']).toBe('var(--ui-color-accent-soft)');
+    expect(dark['--ui-color-live']).toBe('var(--ui-palette-red-400)');
+    expect(dark['--ui-color-danger']).toBe('var(--ui-palette-red-400)');
+    expect(light['--ui-color-live']).toBe('var(--ui-palette-red-700)');
+    expect(light['--ui-color-danger']).toBe('var(--ui-palette-red-700)');
+    expect(tokens).not.toContain('--ui-color-current: var(--ui-color-live);');
+  });
+
   it('documents scalable, optical, window, and raster unit responsibilities separately', () => {
     for (const responsibility of [
       /\|\s*Scalable product geometry\s*\|\s*`rem`\s*\|/u,

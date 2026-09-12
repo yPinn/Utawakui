@@ -183,9 +183,8 @@ function coverageFor(layer, state, index) {
 <template>
   <div class="demo-field-appearance">
     <p class="demo-field-appearance__intro">
-      <strong>先核定共用 Field 外殼。</strong>
-      Search、Text Field、Textarea 與 Select
-      後續沿用同一套表面、邊界與狀態語法；此處不處理各元件的專屬結構。
+      <strong>Field 統一 Label、control、Hint／Error 的排列與狀態語法。</strong>
+      各輸入元件只補自己的 control 結構。
     </p>
 
     <section

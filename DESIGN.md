@@ -88,9 +88,10 @@ components:
 
 <!-- BASELINE: this is a first-pass scaffold. Replace palette character, final type choices, and component details after the visual direction is confirmed. -->
 
-> **Visual refresh status — 2026-09-07:** Token v2 is now reviewed in strict
+> **Visual refresh status — 2026-09-12:** Token v2 is reviewed in strict
 > Foundation → primitive／Field family → compound component → View order. The
-> current checkpoint and next owner decisions live in
+> current F8 checkpoint covers Foundation through Status Icon; its recorded
+> decisions and next gate live in
 > [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
 > F8 is the development-only Candidate／Current inspection surface; F7 remains a
 > later View candidate and cannot approve primitive values by implication.
@@ -100,9 +101,9 @@ The owner-selected replacement direction remains recorded in
 Direction B／Studio Library, Architectural Slate, semantic status signals, and the
 Controlled Dossier folder interior. Candidate values in
 `src/styles/tokens-v2.css` remain isolated from production until a separate
-adoption decision. The only active component change in the 2026-09-07 checkpoint
-is the Icon Button hard floor: `sm` is removed, `md` is 2rem／32 CSS px, and `lg`
-is 2.75rem／44 CSS px.
+adoption decision. The only active component change across this review remains
+the Icon Button hard floor: `sm` is removed, `md` is 2rem／32 CSS px, and `lg` is
+2.75rem／44 CSS px.
 
 ## Overview
 

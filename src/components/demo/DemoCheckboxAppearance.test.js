@@ -182,7 +182,7 @@ describe('DemoCheckboxAppearance', () => {
       ).toHaveLength(2);
     }
     expect(html.match(/data-checkbox-coverage-matrix/gu)).toHaveLength(2);
-    expect(html).toContain('Readonly 不屬於 checkbox contract');
+    expect(html).toContain('Checkbox 支援 Boolean／mixed，且沒有 readonly。');
     expect(componentSource).not.toContain(':readonly');
     expect(candidateSource).toMatch(
       /:focus-visible[\s\S]*?outline: var\(--ui-focus-width\) solid var\(--ui-color-focus\);/u,

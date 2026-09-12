@@ -261,9 +261,9 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-text-field-appearance">
     <p class="demo-text-field-appearance__intro">
-      <strong>Text Field 只擁有單行 input。</strong>
-      Label、Hint 與 Error 已由共用 Field 核定；以下說明全部置於標本外，不參與
-      control 幾何。
+      <strong
+        >Text Field 只擁有單行輸入；Label、Hint／Error 沿用 Field。</strong
+      >
     </p>
 
     <section

@@ -252,9 +252,9 @@ function coverageFor(layer, state) {
 <template>
   <div class="demo-textarea-appearance">
     <p class="demo-textarea-appearance__intro">
-      <strong>Textarea 與 Text Field 共用 Field 視覺語法。</strong>
-      Readonly 表面提案保留到整個 Field
-      家族看完再決定；本頁先確認多行文字特有行為。
+      <strong
+        >Textarea 沿用 Field，只增加多行高度與 resize／overflow 行為。</strong
+      >
     </p>
 
     <section

@@ -20,7 +20,21 @@ const GROUP_COMPONENTS = {
   overlays: DemoOverlays,
 };
 
-const REVIEWED_GROUP_KEYS = new Set(['foundations', 'inputs']);
+const GROUP_REVIEW_STATUS = Object.freeze({
+  foundations: 'reviewed',
+  inputs: 'reviewed',
+  actions: 'reviewed',
+  navigation: 'reviewed',
+  feedback: 'partial',
+  content: 'pending',
+  overlays: 'pending',
+});
+
+const GROUP_REVIEW_LABELS = Object.freeze({
+  reviewed: '已審查',
+  partial: '部分完成',
+  pending: '待審查',
+});
 
 let previousUiSystem;
 
@@ -62,18 +76,14 @@ function scrollToGroup(key) {
       <div class="demo-view__intro">
         <h1 id="demo-catalogue-title" class="demo-view__title">UI 元件目錄</h1>
         <p class="demo-view__summary">
-          F8 分階段比較 Token v2 Candidate 與 Current；先核定元件契約，
-          再決定是否採用。
+          F8 比較 Token v2 Candidate 與 Current；Candidate ≠ production
+          adoption，也不代表 View 核准。
         </p>
       </div>
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
-          <dt>已檢查</dt>
-          <dd>Foundation · Input</dd>
-        </div>
-        <div>
-          <dt>邊界</dt>
-          <dd>Candidate ≠ production adoption／不代表 View 核准</dd>
+          <dt>已審查</dt>
+          <dd>Foundation → Status Icon</dd>
         </div>
       </dl>
     </header>
@@ -96,15 +106,18 @@ function scrollToGroup(key) {
         :id="`demo-group-${group.key}`"
         :key="group.key"
         class="demo-group"
-        :data-review-status="
-          REVIEWED_GROUP_KEYS.has(group.key) ? 'reviewed' : 'pending'
-        "
+        :data-review-status="GROUP_REVIEW_STATUS[group.key]"
         :aria-labelledby="`demo-group-${group.key}-title`"
       >
         <header class="demo-group__header">
-          <h2 :id="`demo-group-${group.key}-title`" class="demo-group__title">
-            {{ group.title }}
-          </h2>
+          <div class="demo-group__heading">
+            <h2 :id="`demo-group-${group.key}-title`" class="demo-group__title">
+              {{ group.title }}
+            </h2>
+            <span class="demo-group__status">
+              {{ GROUP_REVIEW_LABELS[GROUP_REVIEW_STATUS[group.key]] }}
+            </span>
+          </div>
           <p class="demo-group__description">{{ group.description }}</p>
         </header>
         <component
@@ -149,7 +162,8 @@ function scrollToGroup(key) {
 .demo-view__meta dt,
 .demo-view__meta dd,
 .demo-group__title,
-.demo-group__description {
+.demo-group__description,
+.demo-group__status {
   margin: 0;
 }
 
@@ -169,9 +183,7 @@ function scrollToGroup(key) {
 }
 
 .demo-view__meta {
-  display: grid;
-  grid-template-columns: repeat(2, auto);
-  gap: var(--ui-space-5);
+  display: block;
 }
 
 .demo-view__meta div {
@@ -258,6 +270,14 @@ function scrollToGroup(key) {
   padding-bottom: var(--ui-space-3);
 }
 
+.demo-group__heading {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ui-space-2);
+}
+
 .demo-group__title {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-xl);
@@ -272,15 +292,23 @@ function scrollToGroup(key) {
   line-height: var(--ui-line-height-caption);
 }
 
+.demo-group__status {
+  flex: 0 0 auto;
+  padding: 0 var(--ui-space-2);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-surface-raised);
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
 @media (max-width: 64rem) {
   .demo-view__header {
     grid-template-columns: minmax(0, 1fr);
     align-items: start;
     gap: var(--ui-space-4);
-  }
-
-  .demo-view__meta {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .demo-view__meta dd {
@@ -298,11 +326,6 @@ function scrollToGroup(key) {
 @media (max-width: 42rem) {
   .demo-view__header {
     padding-top: var(--ui-space-5);
-  }
-
-  .demo-view__meta {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--ui-space-2);
   }
 
   .demo-view__meta div {

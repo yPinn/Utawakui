@@ -263,9 +263,7 @@ describe('DemoRangeAppearance', () => {
       ).toHaveLength(2);
     }
     expect(html.match(/data-range-coverage-matrix/gu)).toHaveLength(2);
-    expect(html).toContain(
-      'Range 永遠有 numeric value；沒有 empty、required 或 readonly state',
-    );
+    expect(html).toContain('沒有 empty、required 或 readonly state。');
     expect(componentSource).not.toContain(':required');
     expect(componentSource).not.toContain(':readonly');
     expect(candidateSource).toMatch(
