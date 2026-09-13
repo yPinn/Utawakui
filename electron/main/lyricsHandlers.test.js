@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { APP_ERROR_PREFIX } from '../lib/appError.js';
 import { saveAmllRecord } from '../lib/amll.js';
 import { saveLrclibRecord } from '../lib/lrclib.js';
 import { saveTrackLyricsText } from '../lib/library/lyrics.js';
@@ -28,6 +29,13 @@ function createIpcMain() {
     handlers,
     handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
   };
+}
+
+function parseAppErrorCode(error) {
+  const raw = String(error?.message || '');
+  const index = raw.indexOf(APP_ERROR_PREFIX);
+  expect(index).toBeGreaterThanOrEqual(0);
+  return JSON.parse(raw.slice(index + APP_ERROR_PREFIX.length)).code;
 }
 
 describe('lyrics timing IPC', () => {
@@ -206,33 +214,36 @@ describe('lyrics timing IPC', () => {
       lines: [{ lineId: 'line_01', text: 'Hello' }],
     };
 
-    await expect(
-      setLine(null, 'track-a', 'main.lrc', {
-        ...identity,
-        sourceFingerprint: 'a'.repeat(64),
-      }),
-    ).rejects.toThrow(/stale or invalid/);
-    await expect(
-      setLine(null, 'track-a', 'main.lrc', {
-        ...identity,
-        normalizerProfileId: 'lyrics-source-v1',
-      }),
-    ).rejects.toThrow(/stale or invalid/);
-    await expect(
-      setLine(null, 'track-a', 'main.lrc', {
-        ...identity,
-        lines: [
-          { lineId: 'line_01', text: 'Hello' },
-          { lineId: 'line_01', text: 'Again' },
-        ],
-      }),
-    ).rejects.toThrow(/lines are invalid/);
-    await expect(
-      setLine(null, 'track-a', 'main.lrc', {
-        ...identity,
-        targetLineId: 'missing_line',
-      }),
-    ).rejects.toThrow(/target line is invalid/);
+    // All four map to the same public LYRICS_READING_IDENTITY_STALE code —
+    // the renderer's view of this identity no longer matches main, and the
+    // specific internal reason (stale fingerprint, duplicate line id, etc.)
+    // stays a private diagnostic detail, not public message text.
+    const error1 = await setLine(null, 'track-a', 'main.lrc', {
+      ...identity,
+      sourceFingerprint: 'a'.repeat(64),
+    }).catch((err) => err);
+    expect(parseAppErrorCode(error1)).toBe('LYRICS_READING_IDENTITY_STALE');
+
+    const error2 = await setLine(null, 'track-a', 'main.lrc', {
+      ...identity,
+      normalizerProfileId: 'lyrics-source-v1',
+    }).catch((err) => err);
+    expect(parseAppErrorCode(error2)).toBe('LYRICS_READING_IDENTITY_STALE');
+
+    const error3 = await setLine(null, 'track-a', 'main.lrc', {
+      ...identity,
+      lines: [
+        { lineId: 'line_01', text: 'Hello' },
+        { lineId: 'line_01', text: 'Again' },
+      ],
+    }).catch((err) => err);
+    expect(parseAppErrorCode(error3)).toBe('LYRICS_READING_IDENTITY_STALE');
+
+    const error4 = await setLine(null, 'track-a', 'main.lrc', {
+      ...identity,
+      targetLineId: 'missing_line',
+    }).catch((err) => err);
+    expect(parseAppErrorCode(error4)).toBe('LYRICS_READING_IDENTITY_STALE');
   });
 
   it('returns bounded best and related LRCLIB summaries for an editable query', async () => {
@@ -953,12 +964,27 @@ describe('lyrics timing IPC', () => {
     };
     const generate = ipcMain.handlers.get('lyrics:generate-reading');
 
-    await expect(
-      generate(null, 'track-a', 'main.lrc', identity, 'en'),
-    ).rejects.toThrow(/unsupported reading script/i);
-    await expect(
-      generate(null, 'track-a', 'missing.lrc', identity, 'ja'),
-    ).rejects.toThrow(/unknown lyrics source/i);
+    const unsupportedScript = await generate(
+      null,
+      'track-a',
+      'main.lrc',
+      identity,
+      'en',
+    ).catch((err) => err);
+    expect(parseAppErrorCode(unsupportedScript)).toBe(
+      'LYRICS_READING_UNSUPPORTED_SCRIPT',
+    );
+
+    const unknownSource = await generate(
+      null,
+      'track-a',
+      'missing.lrc',
+      identity,
+      'ja',
+    ).catch((err) => err);
+    expect(parseAppErrorCode(unknownSource)).toBe(
+      'LYRICS_READING_UNKNOWN_SOURCE',
+    );
     expect(runReadingWorker).not.toHaveBeenCalled();
   });
 });
