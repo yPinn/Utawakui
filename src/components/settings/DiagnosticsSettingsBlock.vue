@@ -5,6 +5,7 @@ import {
   Ellipsis,
   FolderOpen,
   ListChecks,
+  MessageSquare,
   RefreshCw,
   Trash2,
 } from '../../icons/index.js';
@@ -25,6 +26,7 @@ const emit = defineEmits([
   'clear',
   'export',
   'noticeAction',
+  'reportIssue',
 ]);
 
 // Export is the one action most people actually reach for (sending records
@@ -50,6 +52,8 @@ const menuItems = computed(() => [
     danger: true,
     disabled: props.isLoading || props.recordCount === 0,
   },
+  { separator: true },
+  { value: 'report-issue', label: '回報問題', icon: MessageSquare },
 ]);
 
 function openMenu(event) {
@@ -69,6 +73,7 @@ function handleMenuSelect(actionId) {
   if (actionId === 'refresh') emit('refresh');
   else if (actionId === 'open-folder') emit('openFolder');
   else if (actionId === 'clear') emit('clear');
+  else if (actionId === 'report-issue') emit('reportIssue');
 }
 </script>
 

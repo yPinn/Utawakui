@@ -38,6 +38,7 @@ export {
   Loader2,
   LocateFixed,
   Maximize2,
+  MessageSquare,
   MicVocal,
   Minus,
   Minimize2,

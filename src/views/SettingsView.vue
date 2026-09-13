@@ -5,6 +5,8 @@ import AppUpdateSettingsRow from '../components/settings/AppUpdateSettingsRow.vu
 import AudioOutputSettingsBlock from '../components/settings/AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
 import DiagnosticsSettingsBlock from '../components/settings/DiagnosticsSettingsBlock.vue';
+import FeedbackReportModal from '../components/settings/FeedbackReportModal.vue';
+import FeedbackSettingsBlock from '../components/settings/FeedbackSettingsBlock.vue';
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
 import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
@@ -25,6 +27,7 @@ import { useFeatureDependencies } from '../composables/useFeatureDependencies.js
 import { useFeatureGateAccess } from '../composables/useFeatureGateAccess.js';
 import { useFeatureGatePresentation } from '../composables/useFeatureGatePresentation.js';
 import { useFeatureGates } from '../composables/useFeatureGates.js';
+import { useFeedbackReport } from '../composables/useFeedbackReport.js';
 import { useImportSession } from '../composables/useImportSession.js';
 import { useAppInfo } from '../composables/useAppInfo.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
@@ -49,7 +52,9 @@ const {
   openFolder: openDiagnosticsFolder,
   exportBundle: exportDiagnostics,
 } = usePersistentDiagnostics();
-const { recordError } = useAppDiagnostics();
+const { recordError, recentRecords: recentDiagnosticRecords } =
+  useAppDiagnostics();
+const feedback = useFeedbackReport();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
   state: appUpdateState,
@@ -266,6 +271,16 @@ function handleDiagnosticsNoticeAction(operation) {
   refreshDiagnostics();
 }
 
+// The diagnostics overflow menu's "回報問題" entry pre-selects a bug report
+// and hands the most recent renderer-caught error to the modal as a
+// starting point — the user can still edit or delete it before sending.
+function handleReportIssueFromDiagnostics() {
+  feedback.openReport({
+    kind: 'bug',
+    errorRecord: recentDiagnosticRecords.value?.[0],
+  });
+}
+
 async function refreshDependencyStatus() {
   await refreshDependencies();
   clearResolvedSetupRequest();
@@ -426,6 +441,8 @@ onUnmounted(musicAnalysisSettings.dispose);
           @close="isCaptureDeviceModalOpen = false"
         />
 
+        <FeedbackReportModal />
+
         <FfmpegSourceModal
           :open="isFfmpegSourceModalOpen"
           :initial-detection="systemFfmpegDetection"
@@ -463,8 +480,11 @@ onUnmounted(musicAnalysisSettings.dispose);
             @clear="handleClearDiagnostics"
             @export="exportDiagnostics"
             @notice-action="handleDiagnosticsNoticeAction"
+            @report-issue="handleReportIssueFromDiagnostics"
           />
         </SettingsBlock>
+
+        <FeedbackSettingsBlock @open="feedback.openReport()" />
       </section>
 
       <section
