@@ -32,7 +32,18 @@ const {
 // classification has to happen here. Only the sentinel code crosses the
 // boundary — the raw text may contain local file paths, so it's logged
 // here and never forwarded (same discipline as vocalSeparation.js).
-async function classifyingFailures(run) {
+//
+// This intentionally does NOT go through runDiagnosticIpcOperation /
+// createAppError: the classified DOWNLOAD_FAILURE_PREFIX sentinel is a
+// separate, pre-existing cross-runtime contract (shared/
+// downloadFailureValues.json) the renderer already parses for a richer
+// age-restricted/region-restricted/members-only UI. Swapping in a generic
+// AppError here would silently break that UI. Recording still happens —
+// recordSearchDiagnostic (used by the sibling classifyingProviderSearchFailures
+// path below) is reused here too — but the classified error keeps flowing to
+// the renderer completely unchanged. See docs/adr/ and
+// docs/operations/diagnostics-rollout.md's Batch 6 note on this decision.
+async function classifyingFailures(run, { recordDiagnostic } = {}) {
   try {
     return await run();
   } catch (err) {
@@ -44,6 +55,16 @@ async function classifyingFailures(run) {
       throw err;
     }
     console.error('[yt] request failed:', downloadErrorText(err));
+    const reason = classifyDownloadFailure(err);
+    recordSearchDiagnostic(recordDiagnostic, {
+      process: 'main',
+      level: 'error',
+      source: 'import',
+      operation: 'download',
+      code: 'DOWNLOAD_FAILED',
+      message: 'yt-dlp request failed',
+      context: { reason },
+    });
     throw toClassifiedDownloadError(err);
   }
 }
@@ -207,172 +228,187 @@ function registerImportHandlers({
 
   ipcMain.handle('import:resolve-source', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    return classifyingFailures(async () => {
-      const classified = classifyImportInput(input);
-      if (classified.kind === 'deferred-provider-url') {
-        return { kind: 'deferred', platform: classified.platform };
-      }
-      if (classified.kind === 'unsupported-url') {
-        return { kind: 'unsupported', reason: 'unsupported-url' };
-      }
-      if (classified.kind === 'invalid') {
-        return { kind: 'unsupported', reason: classified.reason };
-      }
+    return classifyingFailures(
+      async () => {
+        const classified = classifyImportInput(input);
+        if (classified.kind === 'deferred-provider-url') {
+          return { kind: 'deferred', platform: classified.platform };
+        }
+        if (classified.kind === 'unsupported-url') {
+          return { kind: 'unsupported', reason: 'unsupported-url' };
+        }
+        if (classified.kind === 'invalid') {
+          return { kind: 'unsupported', reason: classified.reason };
+        }
 
-      const runner = await getProviderRunner();
-      const { existingIds } = existingProviderIds();
-      if (
-        classified.kind === 'youtube-playlist' ||
-        classified.kind === 'youtube-music-album'
-      ) {
+        const runner = await getProviderRunner();
+        const { existingIds } = existingProviderIds();
+        if (
+          classified.kind === 'youtube-playlist' ||
+          classified.kind === 'youtube-music-album'
+        ) {
+          const { title, thumbnailUrl, entries } = await fetchPlaylistMetadata(
+            classified.playlistId,
+            { runner },
+          );
+          return {
+            kind: 'playlist',
+            title,
+            thumbnailUrl,
+            collectionKind:
+              classified.kind === 'youtube-music-album' ? 'album' : 'playlist',
+            source: {
+              platform:
+                classified.kind === 'youtube-music-album'
+                  ? 'yt-music'
+                  : 'youtube',
+              id: classified.playlistId,
+            },
+            entries: entries.map((entry) => ({
+              ...entry,
+              alreadyDownloaded: existingIds.has(entry.id),
+            })),
+          };
+        }
+
+        const resolution =
+          classified.kind === 'text-query'
+            ? await classifyingProviderSearchFailures(
+                () =>
+                  resolveYoutubeSearchQuery(classified.query, {
+                    searchPlaybackCandidates: (
+                      canonical,
+                      sourceMetadata,
+                      options = {},
+                    ) =>
+                      searchYoutubeCandidates(canonical, sourceMetadata, {
+                        ...options,
+                        runner,
+                        onSearchDiagnostics,
+                      }),
+                    existingIds,
+                  }),
+                { recordDiagnostic },
+              )
+            : await resolveSingleSource(classified.input, runner, existingIds);
+        return {
+          kind: 'single',
+          inputKind: classified.kind,
+          resolution,
+        };
+      },
+      { recordDiagnostic },
+    );
+  });
+
+  ipcMain.handle('yt:fetch-playlist', async (event, input) => {
+    requireFeatureGate(featureIds.PROVIDER_FLOW);
+    return classifyingFailures(
+      async () => {
+        const runner = await getProviderRunner();
+        const playlistId = extractPlaylistId(input);
+        if (!playlistId) return null; // not a playlist URL — not an error
+        const dir = resolveDownloadDir(getConfig());
+        const existingIds = new Set(
+          listLibraryTracks(dir).map((track) => track.id),
+        );
         const { title, thumbnailUrl, entries } = await fetchPlaylistMetadata(
-          classified.playlistId,
-          { runner },
+          playlistId,
+          {
+            runner,
+          },
         );
         return {
-          kind: 'playlist',
           title,
           thumbnailUrl,
-          collectionKind:
-            classified.kind === 'youtube-music-album' ? 'album' : 'playlist',
-          source: {
-            platform:
-              classified.kind === 'youtube-music-album'
-                ? 'yt-music'
-                : 'youtube',
-            id: classified.playlistId,
-          },
+          kind: classifyPlaylistKind(playlistId),
+          source: { platform: 'youtube', id: playlistId },
           entries: entries.map((entry) => ({
             ...entry,
             alreadyDownloaded: existingIds.has(entry.id),
           })),
         };
-      }
-
-      const resolution =
-        classified.kind === 'text-query'
-          ? await classifyingProviderSearchFailures(
-              () =>
-                resolveYoutubeSearchQuery(classified.query, {
-                  searchPlaybackCandidates: (
-                    canonical,
-                    sourceMetadata,
-                    options = {},
-                  ) =>
-                    searchYoutubeCandidates(canonical, sourceMetadata, {
-                      ...options,
-                      runner,
-                      onSearchDiagnostics,
-                    }),
-                  existingIds,
-                }),
-              { recordDiagnostic },
-            )
-          : await resolveSingleSource(classified.input, runner, existingIds);
-      return {
-        kind: 'single',
-        inputKind: classified.kind,
-        resolution,
-      };
-    });
-  });
-
-  ipcMain.handle('yt:fetch-playlist', async (event, input) => {
-    requireFeatureGate(featureIds.PROVIDER_FLOW);
-    return classifyingFailures(async () => {
-      const runner = await getProviderRunner();
-      const playlistId = extractPlaylistId(input);
-      if (!playlistId) return null; // not a playlist URL — not an error
-      const dir = resolveDownloadDir(getConfig());
-      const existingIds = new Set(
-        listLibraryTracks(dir).map((track) => track.id),
-      );
-      const { title, thumbnailUrl, entries } = await fetchPlaylistMetadata(
-        playlistId,
-        {
-          runner,
-        },
-      );
-      return {
-        title,
-        thumbnailUrl,
-        kind: classifyPlaylistKind(playlistId),
-        source: { platform: 'youtube', id: playlistId },
-        entries: entries.map((entry) => ({
-          ...entry,
-          alreadyDownloaded: existingIds.has(entry.id),
-        })),
-      };
-    });
+      },
+      { recordDiagnostic },
+    );
   });
 
   ipcMain.handle('yt:fetch-metadata', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    return classifyingFailures(async () => {
-      const runner = await getProviderRunner();
-      const videoId = extractVideoId(input);
-      if (!videoId) throw new Error('invalid video id or YouTube URL');
-      const metadata = await fetchYoutubeMetadata(videoId, { runner });
-      if (!metadata) throw new Error('unable to fetch video metadata');
-      const dir = resolveDownloadDir(getConfig());
-      const existingIds = new Set(
-        listLibraryTracks(dir).map((track) => track.id),
-      );
-      return {
-        id: videoId,
-        ...metadata,
-        alreadyDownloaded: existingIds.has(videoId),
-      };
-    });
+    return classifyingFailures(
+      async () => {
+        const runner = await getProviderRunner();
+        const videoId = extractVideoId(input);
+        if (!videoId) throw new Error('invalid video id or YouTube URL');
+        const metadata = await fetchYoutubeMetadata(videoId, { runner });
+        if (!metadata) throw new Error('unable to fetch video metadata');
+        const dir = resolveDownloadDir(getConfig());
+        const existingIds = new Set(
+          listLibraryTracks(dir).map((track) => track.id),
+        );
+        return {
+          id: videoId,
+          ...metadata,
+          alreadyDownloaded: existingIds.has(videoId),
+        };
+      },
+      { recordDiagnostic },
+    );
   });
 
   ipcMain.handle('yt:resolve-import-source', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    return classifyingFailures(async () => {
-      const runner = await getProviderRunner();
-      const dir = resolveDownloadDir(getConfig());
-      const existingIds = new Set(
-        listLibraryTracks(dir).map((track) => track.id),
-      );
-      return resolveSingleSource(input, runner, existingIds);
-    });
+    return classifyingFailures(
+      async () => {
+        const runner = await getProviderRunner();
+        const dir = resolveDownloadDir(getConfig());
+        const existingIds = new Set(
+          listLibraryTracks(dir).map((track) => track.id),
+        );
+        return resolveSingleSource(input, runner, existingIds);
+      },
+      { recordDiagnostic },
+    );
   });
 
   ipcMain.handle('yt:download-audio', async (event, input) => {
     requireFeatureGate(featureIds.PROVIDER_FLOW);
-    return classifyingFailures(async () => {
-      const runner = await getProviderRunner();
-      const videoId = extractVideoId(input);
-      if (!videoId) throw new Error('invalid video id or YouTube URL');
-      const destDir = resolveDownloadDir(getConfig());
-      const result = await downloadTrackAudio(videoId, destDir, { runner });
-      const trackDir = resolveTrackDir(destDir, videoId);
-      if (result.title) {
-        try {
-          saveIndexEntry(destDir, videoId, buildProviderIndexEntry(result));
-        } catch {
-          // The download itself succeeded and the file is playable — a
-          // failed index write (e.g. disk full) shouldn't be reported to
-          // the renderer as a failed download. The next background
-          // backfill pass will retry writing the title.
+    return classifyingFailures(
+      async () => {
+        const runner = await getProviderRunner();
+        const videoId = extractVideoId(input);
+        if (!videoId) throw new Error('invalid video id or YouTube URL');
+        const destDir = resolveDownloadDir(getConfig());
+        const result = await downloadTrackAudio(videoId, destDir, { runner });
+        const trackDir = resolveTrackDir(destDir, videoId);
+        if (result.title) {
+          try {
+            saveIndexEntry(destDir, videoId, buildProviderIndexEntry(result));
+          } catch {
+            // The download itself succeeded and the file is playable — a
+            // failed index write (e.g. disk full) shouldn't be reported to
+            // the renderer as a failed download. The next background
+            // backfill pass will retry writing the title.
+          }
         }
-      }
-      if (trackDir) {
-        scheduleOptionalLyricsAfterImport(
-          { ...result, id: videoId },
-          trackDir,
-          lyricsAcquisitionService,
-          () => notifyLibraryUpdated({ allowProviderBackfill: false }),
-        );
-      }
-      try {
-        enqueueMusicAnalysis(videoId);
-      } catch {
-        // Analysis is optional background work. A playable download remains
-        // successful even if queue admission fails unexpectedly.
-      }
-      return result;
-    });
+        if (trackDir) {
+          scheduleOptionalLyricsAfterImport(
+            { ...result, id: videoId },
+            trackDir,
+            lyricsAcquisitionService,
+            () => notifyLibraryUpdated({ allowProviderBackfill: false }),
+          );
+        }
+        try {
+          enqueueMusicAnalysis(videoId);
+        } catch {
+          // Analysis is optional background work. A playable download remains
+          // successful even if queue admission fails unexpectedly.
+        }
+        return result;
+      },
+      { recordDiagnostic },
+    );
   });
 }
 

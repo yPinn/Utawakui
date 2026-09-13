@@ -195,6 +195,38 @@ describe('generic import source resolution', () => {
     ).resolves.toEqual({ kind: 'unsupported', reason: 'unsupported-url' });
     expect(harness.getProviderRunner).not.toHaveBeenCalled();
   });
+
+  it('records a classified download failure without changing the classified error the renderer parses', async () => {
+    const privateError = new Error(
+      'getaddrinfo ENOTFOUND host at C:\\private\\cookies.txt',
+    );
+    const fetchYoutubeMetadata = vi.fn().mockRejectedValue(privateError);
+    const harness = registerDownload({ fetchYoutubeMetadata });
+
+    const promise = harness.handlers.get('yt:fetch-metadata')(
+      null,
+      'dQw4w9WgXcQ',
+    );
+
+    // The pre-existing shared/downloadFailureValues.json contract must be
+    // completely unaffected by adding diagnostics recording alongside it.
+    await expect(promise).rejects.toThrow(
+      'utawakui-download-failed:network-error',
+    );
+    await expect(promise).rejects.not.toThrow(/cookies\.txt/i);
+
+    expect(harness.recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'import',
+        operation: 'download',
+        code: 'DOWNLOAD_FAILED',
+        context: expect.objectContaining({ reason: 'network-error' }),
+      }),
+    );
+    expect(JSON.stringify(harness.recordDiagnostic.mock.calls)).not.toMatch(
+      /cookies\.txt/i,
+    );
+  });
 });
 
 describe('buildProviderIndexEntry', () => {
