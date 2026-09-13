@@ -59,13 +59,19 @@ describe('UI demo component order', () => {
     const registeredComponents = UI_DEMO_GROUPS.flatMap((group) =>
       group.sections.flatMap((section) => section.components ?? []),
     ).sort();
+    const registeredSharedComponents = registeredComponents
+      .map((name) => name.replace(/ (Candidate|Current)$/u, ''))
+      .filter((name) => name !== 'UiActionMenu')
+      .sort();
     const sharedComponents = fs
       .readdirSync(new URL('../components/ui/', import.meta.url))
       .filter((filename) => /^Ui.+\.vue$/.test(filename))
       .map((filename) => filename.replace(/\.vue$/, ''))
       .sort();
 
-    expect(registeredComponents).toEqual(sharedComponents);
+    expect(registeredSharedComponents).toEqual(sharedComponents);
+    expect(registeredComponents).toContain('UiActionMenu Candidate');
+    expect(registeredComponents).toContain('UiContextMenu Current');
     expect(new Set(registeredComponents).size).toBe(
       registeredComponents.length,
     );
@@ -114,7 +120,7 @@ describe('UI demo component order', () => {
       '曲目縮圖',
       '拼貼縮圖',
       '曲目資料列',
-      '快顯選單',
+      '動作選單',
       '對話框',
     ]);
   });

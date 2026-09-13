@@ -122,8 +122,8 @@ export const UI_DEMO_GROUPS = Object.freeze([
     sections: [
       {
         key: 'context-menu',
-        title: '快顯選單',
-        components: ['UiContextMenu'],
+        title: '動作選單',
+        components: ['UiActionMenu Candidate', 'UiContextMenu Current'],
       },
       { key: 'modal', title: '對話框', components: ['UiModal'] },
     ],

@@ -45,24 +45,27 @@ const REVIEWED_APPEARANCE_SOURCES = [
   './DemoProgressAppearance.vue',
   './DemoMarqueeTextAppearance.vue',
   './DemoTrackThumbAppearance.vue',
+  './DemoCollageThumbAppearance.vue',
+  './DemoTrackRowAppearance.vue',
+  './DemoActionMenuAppearance.vue',
 ].map(readSource);
 
 describe('F8 reviewed catalogue layout', () => {
-  it('reports completed groups and the partially reviewed Content boundary', async () => {
+  it('reports completed Content and the partially reviewed Overlay boundary', async () => {
     const html = await renderToString(createSSRApp(DemoView));
 
-    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(5);
+    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(6);
     expect(html.match(/data-review-status="partial"/g)).toHaveLength(1);
-    expect(html.match(/data-review-status="pending"/g)).toHaveLength(1);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(26);
-    expect(html).toContain('Foundation → Track Thumb');
+    expect(html.match(/data-review-status="pending"/g) ?? []).toHaveLength(0);
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(29);
+    expect(html).toContain('Foundation → Action Menu');
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
-    ).toHaveLength(5);
+    ).toHaveLength(6);
     expect(html).toMatch(/class="demo-group__status"[^>]*>\s*部分完成/);
     expect(
-      html.match(/class="demo-group__status"[^>]*>\s*待審查/g),
-    ).toHaveLength(1);
+      html.match(/class="demo-group__status"[^>]*>\s*待審查/g) ?? [],
+    ).toHaveLength(0);
   });
 
   it('keeps reviewed sections flat and uses the comparison layers as surfaces', async () => {
@@ -101,6 +104,10 @@ describe('F8 reviewed catalogue layout', () => {
       'COMPARISON_SECTION_KEYS.has(section.key)',
     );
     expect(contentSource).toContain('COMPARISON_SECTION_KEYS.has(section.key)');
+    const overlaysSource = readSource('./DemoOverlays.vue');
+    expect(overlaysSource).toContain(
+      'COMPARISON_SECTION_KEYS.has(section.key)',
+    );
 
     for (const source of [
       foundationsSource,
@@ -109,6 +116,7 @@ describe('F8 reviewed catalogue layout', () => {
       navigationSource,
       feedbackSource,
       contentSource,
+      overlaysSource,
     ]) {
       expect(source).toMatch(/display:\s*grid;[^}]*gap:/s);
     }
@@ -143,7 +151,7 @@ describe('F8 reviewed catalogue layout', () => {
     )?.[0];
 
     expect(header).toContain('Candidate ≠ production adoption');
-    expect(header).toContain('Foundation → Track Thumb');
+    expect(header).toContain('Foundation → Action Menu');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(1);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,
