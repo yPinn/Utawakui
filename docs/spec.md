@@ -66,6 +66,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 | OBS output        | MVP 已實作         | Loopback HTTP/WebSocket、三個固定 slot、Gallery、Workbench、URL copy、content/state split、Lyrics template capability registry、Live Stage 可選歌詞呈現策略與 source-mapped T2 顯示邊界已建立；Browser Source 仍是支援基線。                                                                                                                                                                                  |
 | Feature gates     | 已實作             | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                                                                                                                                                                                                                                        |
 | Diagnostics       | 已實作             | Main-owned persistence/redaction、renderer capture、Settings 控制、dependency IPC boundary 與顯式 redacted export（單一 JSON support bundle）已建立；dev-only F6 結構化檢視工作台與獨立單檔 HTML 檢視工具已提供；其他 domain wrappers 持續增量導入。                                                                                                                                                          |
+| 使用者回饋        | 已實作             | 錯誤回報／功能請求／使用體驗意見／內容問題共用一套預覽後送出流程，僅錯誤回報可選附最近錯誤紀錄；Settings 常駐入口與錯誤紀錄行動選單均可觸發。Relay 獨立部署於 Cloudflare、不隨 App 打包，需另行設定 Discord webhook 與 KV namespace 才能實際送達；送出前一律強制預覽，不做自動或背景上傳。                                                                                                                    |
 | Distribution      | 已實作基礎         | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                                                                                                                                                                                                                                                           |
 | Session／VOD mode | 規劃中             | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                                                                                                                                                                                                                                                              |
 | External adapters | 實驗性原型         | Windows x64 已有固定 `Utawakui.Lyrics` Spout2 sender；Browser Source 仍是支援基線，實機 receiver／alpha／GPU／安裝版驗收前不列為正式支援。其他控制 adapter 尚未成為產品能力。                                                                                                                                                                                                                                 |
@@ -133,6 +134,21 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
   其餘可用高度；兩區只以固定 spacing 分隔，不保留無語意的比例空白列。最近
   八首已唱紀錄依正常播放順序向下排列，只有實際內容超出下方區域時才自動垂直
   滾動。
+
+### 4.5 使用者回饋
+
+- 涵蓋錯誤回報、功能請求、使用體驗意見與內容／歌詞來源問題四類，共用同一套
+  預覽後送出流程；送出前一律強制顯示將送出的完整內容，不做自動或背景上傳。
+- 只有錯誤回報可選附最近診斷紀錄（最多 50 筆，非匯出用的完整 500 筆）；其餘
+  三類完全不夾帶診斷資料。使用者自行填寫的說明／聯絡方式／歌曲資訊只做長度
+  上限與控制字元過濾，不套用診斷紀錄的 URL／路徑遮蔽——因為使用者會在預覽
+  階段親自檢視，且內容問題經常需要引用來源連結才有意義。
+- 不受任何 feature gate 保護；每次送出前的強制預覽才是實際防護，理由見
+  [ADR 0016](adr/0016-user-feedback-intake.md)。
+- 送出對象是獨立部署的 relay（Cloudflare Worker），不隨 App 打包；relay 端會
+  重新驗證整個 payload，並依 IP 做速率限制後轉發成 Discord embed。
+- `environment` 固定包含 `appVersion`／`electronVersion`／`platform`／`locale`；
+  即使目前沒有 i18n，語言仍先納入使用情境以備未來需要。
 
 詳細 runtime ownership、依賴切分與 diagnostics flow 見
 [architecture.md](architecture.md)。

@@ -339,6 +339,20 @@ Spout2 重用 canonical Lyrics route。Main 推導固定 surface／loopback URL�
 5. Cross-runtime download-failure values 位於 `shared/downloadFailureValues.json`；main
    負責分類，renderer 負責顯示文案。
 
+使用者回饋建立在同一 diagnostics service 上，但不共用它的 IPC boundary：
+`electron/lib/feedback/{constants,payload,client}.js` 是純函式與注入式
+`fetch` client，`electron/main/feedbackHandlers.js` 才是唯一的 IPC 邊界，
+沿用 `diagnosticsHandlers.js` 的 `{ok, errorCode}` result object 慣例，不跨
+IPC throw。Payload 建構重用既有 `buildDiagnosticsSupportBundle` 與
+`service.listRecent`；只有錯誤回報可夾帶最近 50 筆事件，其餘三種回饋類別
+完全不夾帶。Renderer 端 `src/composables/useFeedbackReport.js` 是唯一
+module singleton，任何入口（錯誤通知的 action、Settings 常駐入口）都呼叫
+同一個 `openReport()`，不建立第二份草稿狀態。CSP 沒有 `connect-src`，所以
+上傳請求只能由 main 發出；relay（`services/feedback-relay/`）獨立部署，不
+在 `electron-builder.yml` 的封裝範圍內，也不受任何 feature gate 保護——
+每次送出前的強制預覽才是實際防護。決策細節見
+[ADR 0016](adr/0016-user-feedback-intake.md)。
+
 ## Packaging Boundary
 
 - `dist/` 是 Vite renderer output；`overlay/` 不進入 Vite bundle。

@@ -90,6 +90,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0013](adr/0013-external-integration-planes.md)                        | 部分實作             | Browser Source 是支援基線；Spout2 Lyrics sender 為 Windows x64 實驗性原型。                                                                   |
 | [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |
 | [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                   |
+| [0016](adr/0016-user-feedback-intake.md)                               | 已實作               | 錯誤回報／功能請求／體驗意見／內容問題共用一套預覽後送出流程；relay 獨立部署，不進封裝安裝檔。                                                |
 
 ## 常用文件
 
