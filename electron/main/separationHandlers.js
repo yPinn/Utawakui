@@ -24,6 +24,8 @@ const {
   createOnnxMdxJob,
 } = require('../lib/audioProcessing/engines/onnxMdxJob');
 const { MEDIA_SCHEME } = require('./mediaScheme');
+const { createAppError } = require('../lib/appError');
+const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 
 function registerSeparationHandlers({
   ipcMain,
@@ -34,28 +36,39 @@ function registerSeparationHandlers({
   requireFeatureGate,
   featureIds,
   heavyJobScheduler,
+  recordDiagnostic,
+  // Injectable overrides (not vi.mock) are this codebase's established seam
+  // for handler tests — same convention as libraryHandlers.js's
+  // `findLibraryTrackRecord = findTrackRecord` and importHandlers.js's
+  // `listLibraryTracks = listTracks`.
+  findSeparationTrackRecord = findTrackRecord,
+  resolveSeparationsOutputDir = resolveSeparationsDir,
+  resolveSeparationInputAudioPath = resolveTrackAudioPath,
+  selectStoredSeparationResult = selectSeparationResult,
+  getPreparedSeparationFfmpegPath = getPreparedFfmpegPath,
+  getPreparedSeparationModel = getPreparedSeparationModelPath,
 }) {
   const service = createAudioProcessingService({
     resolveRecipe,
     createJobId: randomUUID,
     prepareJob: async ({ trackId, recipe }) => {
       const dir = resolveDownloadDir(getConfig());
-      const track = findTrackRecord(dir, trackId);
+      const track = findSeparationTrackRecord(dir, trackId);
       if (!track) throw new Error(`unknown track id: ${trackId}`);
 
-      const outputDir = resolveSeparationsDir(dir, trackId);
+      const outputDir = resolveSeparationsOutputDir(dir, trackId);
       if (!outputDir) throw new Error('invalid track id');
-      const inputPath = resolveTrackAudioPath(dir, track.id);
+      const inputPath = resolveSeparationInputAudioPath(dir, track.id);
       if (!inputPath) throw new Error(`missing audio for track id: ${trackId}`);
 
       // Preparation remains an explicit Settings action. Runs only verify the
       // paths here, so starting a job never hides a download from a livestream.
       const userDataDir = app.getPath('userData');
-      const ffmpegPath = getPreparedFfmpegPath(
+      const ffmpegPath = getPreparedSeparationFfmpegPath(
         userDataDir,
         getConfig().systemFfmpegPath,
       );
-      const modelPath = getPreparedSeparationModelPath(
+      const modelPath = getPreparedSeparationModel(
         userDataDir,
         recipe.modelIds[0],
       );
@@ -104,21 +117,40 @@ function registerSeparationHandlers({
   ipcMain.handle('separation:run', async (event, trackId, recipeId) => {
     requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
     const resolvedRecipeId = recipeId ?? DEFAULT_RECIPE_ID;
-    await service.run({
-      trackId,
-      recipeId: resolvedRecipeId,
-      onProgress: (progress) => {
-        getMainWindow()?.webContents.send('separation:progress', progress);
+    return runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'separation',
+          operation: 'run',
+          code: 'SEPARATION_RUN_FAILED',
+          context: { presetId: resolvedRecipeId },
+        },
+        publicError: {
+          code: 'SEPARATION_RUN_FAILED',
+          title: '人聲分離未完成',
+          message: '人聲分離未完成，請再試一次。',
+          context: { presetId: resolvedRecipeId, retryable: true },
+        },
       },
-    });
+      async () => {
+        await service.run({
+          trackId,
+          recipeId: resolvedRecipeId,
+          onProgress: (progress) => {
+            getMainWindow()?.webContents.send('separation:progress', progress);
+          },
+        });
 
-    // Lets any subscriber pick up hasSeparation/stemsUrl even if the
-    // triggering component has since unmounted.
-    notifyLibraryUpdated();
+        // Lets any subscriber pick up hasSeparation/stemsUrl even if the
+        // triggering component has since unmounted.
+        notifyLibraryUpdated();
 
-    return {
-      stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedRecipeId)}.wav`,
-    };
+        return {
+          stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedRecipeId)}.wav`,
+        };
+      },
+    );
   });
 
   ipcMain.handle('separation:cancel', async () => ({
@@ -128,17 +160,30 @@ function registerSeparationHandlers({
   // Switches which already-produced result plays, without running any
   // DSP — a cheap metadata write, so unlike separation:run this is not
   // gated by separationInProgress and stays usable while a different
-  // track is separating.
+  // track is separating. Both throws below mean "the requested target no
+  // longer exists" (track/recipe removed out-of-band) — expected control
+  // flow, not an operational failure, so they stay outside the diagnostic
+  // boundary and are never persisted.
   ipcMain.handle('separation:select', async (event, trackId, recipeId) => {
     const dir = resolveDownloadDir(getConfig());
-    const separationsDir = resolveSeparationsDir(dir, trackId);
-    if (!separationsDir) throw new Error('invalid track id');
+    const separationsDir = resolveSeparationsOutputDir(dir, trackId);
+    if (!separationsDir) {
+      throw createAppError({
+        code: 'SEPARATION_INVALID_TRACK',
+        severity: 'warning',
+        title: '找不到這首歌曲',
+        message: '這首歌曲的分離結果目前無法使用。',
+      });
+    }
 
-    const selected = selectSeparationResult(separationsDir, recipeId);
+    const selected = selectStoredSeparationResult(separationsDir, recipeId);
     if (!selected) {
-      throw new Error(
-        `no separation result for recipe "${recipeId}" on track ${trackId}`,
-      );
+      throw createAppError({
+        code: 'SEPARATION_RESULT_MISSING',
+        severity: 'warning',
+        title: '找不到這個分離版本',
+        message: '這個分離版本目前無法使用，請重新產生。',
+      });
     }
 
     notifyLibraryUpdated();
