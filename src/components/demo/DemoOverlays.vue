@@ -1,48 +1,18 @@
 <script setup>
-import { ref, shallowRef } from 'vue';
-import { Pencil, Trash2 } from '../../icons/index.js';
+import { shallowRef } from 'vue';
 import UiButton from '../ui/UiButton.vue';
-import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiTextField from '../ui/UiTextField.vue';
+import DemoActionMenuAppearance from './DemoActionMenuAppearance.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 
 defineProps({
   sections: { type: Array, default: () => [] },
 });
 
-const contextMenu = ref({ open: false, x: 0, y: 0 });
 const showModal = shallowRef(false);
 const sceneName = shallowRef('歌回主畫面');
-
-const CONTEXT_MENU_ITEMS = [
-  { key: 'rename', label: '重新命名', icon: Pencil },
-  {
-    key: 'more',
-    label: '更多選項',
-    children: [
-      { key: 'duplicate', label: '建立副本' },
-      { key: 'export', label: '匯出設定' },
-    ],
-  },
-  { key: 'separator', separator: true },
-  { key: 'delete', label: '刪除', icon: Trash2, danger: true },
-  { key: 'disabled', label: '目前無法使用', disabled: true },
-];
-
-function openContextMenu(event) {
-  event.stopPropagation();
-  const rect = event.currentTarget.getBoundingClientRect();
-  contextMenu.value = {
-    open: true,
-    x: Math.round(rect.left),
-    y: Math.round(rect.bottom + 4),
-  };
-}
-
-function closeContextMenu() {
-  contextMenu.value = { ...contextMenu.value, open: false };
-}
+const COMPARISON_SECTION_KEYS = new Set(['context-menu']);
 </script>
 
 <template>
@@ -53,30 +23,9 @@ function closeContextMenu() {
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
+      :reviewed="COMPARISON_SECTION_KEYS.has(section.key)"
     >
-      <div v-if="section.key === 'context-menu'" class="demo-sample-stack">
-        <div class="demo-sample-row">
-          <UiButton
-            variant="ghost"
-            aria-haspopup="menu"
-            :aria-expanded="contextMenu.open"
-            @click="openContextMenu"
-          >
-            開啟快顯選單
-          </UiButton>
-        </div>
-        <p class="demo-sample-caption">
-          包含一般項目、子選單、分隔線、危險動作與停用狀態。
-        </p>
-        <UiContextMenu
-          :open="contextMenu.open"
-          :x="contextMenu.x"
-          :y="contextMenu.y"
-          :items="CONTEXT_MENU_ITEMS"
-          @select="closeContextMenu"
-          @close="closeContextMenu"
-        />
-      </div>
+      <DemoActionMenuAppearance v-if="section.key === 'context-menu'" />
 
       <div v-else-if="section.key === 'modal'" class="demo-sample-stack">
         <div class="demo-sample-row">

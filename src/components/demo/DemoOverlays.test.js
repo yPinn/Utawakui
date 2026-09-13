@@ -9,32 +9,24 @@ const source = readFileSync(
   'utf8',
 );
 
-describe('DemoOverlays context-menu trigger', () => {
-  it('does not let the opener click reach the window close listener', () => {
-    const openHandler = source.match(
-      /function openContextMenu\(event\) \{(?<body>[\s\S]*?)\n\}/,
-    )?.groups?.body;
-
-    expect(openHandler).toContain('event.stopPropagation()');
-    expect(openHandler.indexOf('event.stopPropagation()')).toBeLessThan(
-      openHandler.indexOf('contextMenu.value'),
-    );
-  });
-
-  it('announces the popup relationship and initial state', async () => {
+describe('DemoOverlays action-menu checkpoint', () => {
+  it('keeps the menu reviewed while the modal remains pending', async () => {
     const html = await renderToString(
       createSSRApp(DemoOverlays, {
         sections: [
           {
             key: 'context-menu',
-            title: '快顯選單',
-            components: ['UiContextMenu'],
+            title: '動作選單',
+            components: ['UiActionMenu Candidate', 'UiContextMenu Current'],
           },
+          { key: 'modal', title: '對話框', components: ['UiModal'] },
         ],
       }),
     );
 
-    expect(html).toContain('aria-haspopup="menu"');
-    expect(html).toContain('aria-expanded="false"');
+    expect(source).toContain("new Set(['context-menu'])");
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(1);
+    expect(html).toContain('UiActionMenu Candidate · UiContextMenu Current');
+    expect(html).toContain('兩種 caller trigger');
   });
 });
