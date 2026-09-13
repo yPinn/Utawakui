@@ -17,6 +17,7 @@ const {
 } = require('../lib/library');
 const { removeTrackFromAllPlaylists } = require('../lib/playlists');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
+const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 
 async function backfillTrackInfoWithLyricsFallback(
   videoId,
@@ -73,6 +74,10 @@ function registerLibraryHandlers({
   importAudioFiles = importLocalAudioFiles,
   findLibraryTrackRecord = findTrackRecord,
   deleteLibraryTrack = deleteTrack,
+  removeTrackFromPlaylists = removeTrackFromAllPlaylists,
+  updateLibraryTrackMetadata = updateTrackMetadata,
+  writeLibraryTrackArtworkFile = writeTrackArtworkFile,
+  deleteLibraryTrackArtworkFile = deleteTrackArtworkFile,
   enqueueMusicAnalysis = () => false,
   recordDiagnostic,
 }) {
@@ -127,14 +132,35 @@ function registerLibraryHandlers({
   // values that no longer match the previous provider projection, fills only a
   // missing/invalid duration, and refreshes album/year. It never fetches or
   // rewrites info.json; network-bound artwork/sidecar repair stays above.
-  ipcMain.handle('library:refresh-metadata', async () => {
-    const dir = resolveDownloadDir(getConfig());
-    const result = organizeLibraryMetadata(dir, readTrackInfoMaintenanceFields);
-    if (result.updated > 0) {
-      notifyLibraryUpdated({ allowProviderBackfill: false });
-    }
-    return result;
-  });
+  ipcMain.handle('library:refresh-metadata', async () =>
+    runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'library',
+          operation: 'refresh-metadata',
+          code: 'LIBRARY_REFRESH_METADATA_FAILED',
+        },
+        publicError: {
+          code: 'LIBRARY_REFRESH_METADATA_FAILED',
+          title: '曲庫重新整理未完成',
+          message: '曲庫重新整理未完成，請再試一次。',
+          context: { retryable: true },
+        },
+      },
+      () => {
+        const dir = resolveDownloadDir(getConfig());
+        const result = organizeLibraryMetadata(
+          dir,
+          readTrackInfoMaintenanceFields,
+        );
+        if (result.updated > 0) {
+          notifyLibraryUpdated({ allowProviderBackfill: false });
+        }
+        return result;
+      },
+    ),
+  );
 
   ipcMain.handle('library:import-audio-files', async () => {
     const result = await dialog.showOpenDialog(getMainWindow(), {
@@ -150,9 +176,22 @@ function registerLibraryHandlers({
       return { imported: [], skipped: [] };
     }
 
-    const imported = importAudioFiles(
-      resolveDownloadDir(getConfig()),
-      result.filePaths,
+    const imported = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'library',
+          operation: 'import-audio-files',
+          code: 'LIBRARY_IMPORT_AUDIO_FAILED',
+        },
+        publicError: {
+          code: 'LIBRARY_IMPORT_AUDIO_FAILED',
+          title: '本機匯入未完成',
+          message: '本機匯入未完成，請再試一次。',
+          context: { retryable: true },
+        },
+      },
+      () => importAudioFiles(resolveDownloadDir(getConfig()), result.filePaths),
     );
     if (imported.imported.length > 0) {
       notifyLibraryUpdated();
@@ -172,16 +211,35 @@ function registerLibraryHandlers({
     const dir = resolveDownloadDir(getConfig());
     if (!findLibraryTrackRecord(dir, trackId)) return false;
     lyricsAcquisitionService.invalidateAutomaticAcquisition?.(trackId);
-    const deleted = deleteLibraryTrack(dir, trackId);
-    if (deleted) {
-      // Cascades into any playlist that referenced this track — a
-      // playlist can otherwise end up pointing at a trackId that no
-      // longer has a file, which is harmless (see setPlaylistTracks's
-      // own comment) but pointless to leave behind when we already know
-      // exactly which id just disappeared.
-      removeTrackFromAllPlaylists(dir, trackId);
-      notifyLibraryUpdated();
-    }
+    const deleted = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'library',
+          operation: 'delete-track',
+          code: 'LIBRARY_DELETE_TRACK_FAILED',
+        },
+        publicError: {
+          code: 'LIBRARY_DELETE_TRACK_FAILED',
+          title: '歌曲無法刪除',
+          message: '這首歌曲無法刪除，請再試一次。',
+          context: { retryable: true },
+        },
+      },
+      () => {
+        const result = deleteLibraryTrack(dir, trackId);
+        if (result) {
+          // Cascades into any playlist that referenced this track — a
+          // playlist can otherwise end up pointing at a trackId that no
+          // longer has a file, which is harmless (see setPlaylistTracks's
+          // own comment) but pointless to leave behind when we already know
+          // exactly which id just disappeared.
+          removeTrackFromPlaylists(dir, trackId);
+        }
+        return result;
+      },
+    );
+    if (deleted) notifyLibraryUpdated();
     return deleted;
   });
 
@@ -189,7 +247,23 @@ function registerLibraryHandlers({
     'library:update-track-metadata',
     async (event, trackId, fields) => {
       const dir = resolveDownloadDir(getConfig());
-      const updated = updateTrackMetadata(dir, trackId, fields);
+      const updated = await runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'library',
+            operation: 'update-track-metadata',
+            code: 'LIBRARY_UPDATE_METADATA_FAILED',
+          },
+          publicError: {
+            code: 'LIBRARY_UPDATE_METADATA_FAILED',
+            title: '歌曲資訊無法更新',
+            message: '歌曲資訊無法更新，請再試一次。',
+            context: { retryable: true },
+          },
+        },
+        () => updateLibraryTrackMetadata(dir, trackId, fields),
+      );
       if (updated) notifyLibraryUpdated();
       return updated;
     },
@@ -197,7 +271,9 @@ function registerLibraryHandlers({
 
   ipcMain.handle('library:choose-track-artwork', async (event, trackId) => {
     const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((candidate) => candidate.id === trackId);
+    const track = listLibraryTracks(dir).find(
+      (candidate) => candidate.id === trackId,
+    );
     if (!track || track.sourceType !== 'local-file') return track ?? null;
 
     const result = await dialog.showOpenDialog(getMainWindow(), {
@@ -206,20 +282,62 @@ function registerLibraryHandlers({
     });
     if (result.canceled || !result.filePaths[0]) return track;
 
-    const filename = writeTrackArtworkFile(dir, trackId, result.filePaths[0]);
-    const updated =
-      filename && listTracks(dir).find((candidate) => candidate.id === trackId);
+    const updated = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'library',
+          operation: 'choose-track-artwork',
+          code: 'LIBRARY_CHOOSE_ARTWORK_FAILED',
+        },
+        publicError: {
+          code: 'LIBRARY_CHOOSE_ARTWORK_FAILED',
+          title: '封面無法更新',
+          message: '這首歌曲的封面無法更新，請再試一次。',
+          context: { retryable: true },
+        },
+      },
+      () => {
+        const filename = writeLibraryTrackArtworkFile(
+          dir,
+          trackId,
+          result.filePaths[0],
+        );
+        return (
+          filename &&
+          listLibraryTracks(dir).find((candidate) => candidate.id === trackId)
+        );
+      },
+    );
     if (updated) notifyLibraryUpdated();
     return updated || track;
   });
 
   ipcMain.handle('library:clear-track-artwork', async (event, trackId) => {
     const dir = resolveDownloadDir(getConfig());
-    const track = listTracks(dir).find((candidate) => candidate.id === trackId);
+    const track = listLibraryTracks(dir).find(
+      (candidate) => candidate.id === trackId,
+    );
     if (!track || track.sourceType !== 'local-file') return track ?? null;
 
-    const deleted = deleteTrackArtworkFile(dir, trackId);
-    const updated = listTracks(dir).find(
+    const deleted = await runDiagnosticIpcOperation(
+      {
+        recordDiagnostic,
+        diagnostic: {
+          source: 'library',
+          operation: 'clear-track-artwork',
+          code: 'LIBRARY_CLEAR_ARTWORK_FAILED',
+        },
+        publicError: {
+          code: 'LIBRARY_CLEAR_ARTWORK_FAILED',
+          title: '封面無法移除',
+          message: '這首歌曲的封面無法移除，請再試一次。',
+          context: { retryable: true },
+        },
+      },
+      () => deleteLibraryTrackArtworkFile(dir, trackId),
+    );
+    const updated = listLibraryTracks(dir).find(
       (candidate) => candidate.id === trackId,
     );
     if (deleted) notifyLibraryUpdated();

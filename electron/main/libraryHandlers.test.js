@@ -1,6 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
+import { APP_ERROR_PREFIX } from '../lib/appError.js';
 import { buildFeatureConfirmation, FEATURE_IDS } from '../lib/featureGates.js';
 import libraryHandlersModule from './libraryHandlers.js';
+
+function parseAppError(error) {
+  const raw = String(error?.message || '');
+  const index = raw.indexOf(APP_ERROR_PREFIX);
+  expect(index).toBeGreaterThanOrEqual(0);
+  return JSON.parse(raw.slice(index + APP_ERROR_PREFIX.length));
+}
 
 const { backfillTrackInfoWithLyricsFallback, registerLibraryHandlers } =
   libraryHandlersModule;
@@ -189,23 +197,152 @@ describe('library metadata maintenance handlers', () => {
 
   it('invalidates automatic lyrics work before a partial deletion can throw', async () => {
     const calls = [];
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
     const lyricsAcquisitionService = {
       scheduleAutomaticAcquisition: vi.fn(),
       invalidateAutomaticAcquisition: vi.fn(() => calls.push('invalidate')),
     };
     const handlers = registerHandlers({
+      recordDiagnostic,
       lyricsAcquisitionService,
       findLibraryTrackRecord: vi.fn().mockReturnValue({ id: 'track-1' }),
       deleteLibraryTrack: vi.fn(() => {
         calls.push('delete');
+        throw new Error('index write failed: /Users/someone/library.json');
+      }),
+    });
+
+    const error = await handlers
+      .get('library:delete-track')(null, 'track-1')
+      .catch((err) => err);
+
+    const payload = parseAppError(error);
+    expect(payload.code).toBe('LIBRARY_DELETE_TRACK_FAILED');
+    expect(payload.context.diagnosticRecorded).toBe(true);
+    expect(String(payload.message)).not.toMatch(/Users/);
+    expect(calls).toEqual(['invalidate', 'delete']);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({ source: 'library', operation: 'delete-track' }),
+    );
+  });
+
+  it('records a metadata refresh failure and rethrows a safe AppError', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const handlers = registerHandlers({
+      recordDiagnostic,
+      organizeLibraryMetadata: vi.fn(() => {
+        throw new Error('corrupt sidecar');
+      }),
+    });
+
+    const error = await handlers
+      .get('library:refresh-metadata')()
+      .catch((err) => err);
+
+    const payload = parseAppError(error);
+    expect(payload.code).toBe('LIBRARY_REFRESH_METADATA_FAILED');
+    expect(payload.context.diagnosticRecorded).toBe(true);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'library',
+        operation: 'refresh-metadata',
+      }),
+    );
+  });
+
+  it('records a local import failure and rethrows a safe AppError', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const handlers = registerHandlers({
+      recordDiagnostic,
+      dialog: {
+        showOpenDialog: vi.fn().mockResolvedValue({
+          canceled: false,
+          filePaths: ['one.mp3'],
+        }),
+      },
+      importAudioFiles: vi.fn(() => {
+        throw new Error('disk full');
+      }),
+    });
+
+    const error = await handlers
+      .get('library:import-audio-files')()
+      .catch((err) => err);
+
+    const payload = parseAppError(error);
+    expect(payload.code).toBe('LIBRARY_IMPORT_AUDIO_FAILED');
+    expect(payload.context.diagnosticRecorded).toBe(true);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'library',
+        operation: 'import-audio-files',
+      }),
+    );
+  });
+
+  it('records an update-track-metadata failure and rethrows a safe AppError', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const handlers = registerHandlers({
+      recordDiagnostic,
+      updateLibraryTrackMetadata: vi.fn(() => {
         throw new Error('index write failed');
       }),
     });
 
-    await expect(
-      handlers.get('library:delete-track')(null, 'track-1'),
-    ).rejects.toThrow(/index write failed/i);
-    expect(calls).toEqual(['invalidate', 'delete']);
+    const error = await handlers
+      .get('library:update-track-metadata')(null, 'track-1', { title: 'x' })
+      .catch((err) => err);
+
+    const payload = parseAppError(error);
+    expect(payload.code).toBe('LIBRARY_UPDATE_METADATA_FAILED');
+    expect(payload.context.diagnosticRecorded).toBe(true);
+  });
+
+  it('records a choose-track-artwork write failure and rethrows a safe AppError', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const handlers = registerHandlers({
+      recordDiagnostic,
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', sourceType: 'local-file' }]),
+      dialog: {
+        showOpenDialog: vi
+          .fn()
+          .mockResolvedValue({ canceled: false, filePaths: ['cover.jpg'] }),
+      },
+      writeLibraryTrackArtworkFile: vi.fn(() => {
+        throw new Error('disk full');
+      }),
+    });
+
+    const error = await handlers
+      .get('library:choose-track-artwork')(null, 'track-1')
+      .catch((err) => err);
+
+    const payload = parseAppError(error);
+    expect(payload.code).toBe('LIBRARY_CHOOSE_ARTWORK_FAILED');
+    expect(payload.context.diagnosticRecorded).toBe(true);
+  });
+
+  it('records a clear-track-artwork failure and rethrows a safe AppError', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const handlers = registerHandlers({
+      recordDiagnostic,
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', sourceType: 'local-file' }]),
+      deleteLibraryTrackArtworkFile: vi.fn(() => {
+        throw new Error('permission denied');
+      }),
+    });
+
+    const error = await handlers
+      .get('library:clear-track-artwork')(null, 'track-1')
+      .catch((err) => err);
+
+    const payload = parseAppError(error);
+    expect(payload.code).toBe('LIBRARY_CLEAR_ARTWORK_FAILED');
+    expect(payload.context.diagnosticRecorded).toBe(true);
   });
 });
 
