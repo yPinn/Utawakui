@@ -1,7 +1,7 @@
 <script setup>
-import { computed, shallowRef, useAttrs } from 'vue';
-import { getTrackInitial } from '../../utils/trackDisplay.js';
-import { getTrackThumbFallbackArtwork } from './trackThumbFallback.js';
+import { computed, useAttrs } from 'vue';
+import DemoCandidateArtworkEmpty from './DemoCandidateArtworkEmpty.vue';
+import DemoCandidateTrackArtwork from './DemoCandidateTrackArtwork.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -17,48 +17,12 @@ const props = defineProps({
 });
 
 const attrs = useAttrs();
-const failedCustomImageKey = shallowRef('');
-const failedFallbackImageKey = shallowRef('');
-const trackIdentity = computed(() =>
-  String(props.track?.id ?? props.track?.title ?? ''),
-);
-const customImageUrl = computed(() => props.track?.thumbnailUrl || '');
-const fallbackArtwork = computed(() =>
-  getTrackThumbFallbackArtwork(props.track),
-);
-const activeImage = computed(() => {
-  if (!props.track) return undefined;
-
-  const customKey = `custom:${trackIdentity.value}:${customImageUrl.value}`;
-  if (customImageUrl.value && failedCustomImageKey.value !== customKey) {
-    return { kind: 'custom', key: customKey, url: customImageUrl.value };
-  }
-
-  const fallbackUrl = fallbackArtwork.value?.url;
-  const fallbackKey = `fallback:${trackIdentity.value}:${fallbackUrl}`;
-  if (fallbackUrl && failedFallbackImageKey.value !== fallbackKey) {
-    return { kind: 'fallback', key: fallbackKey, url: fallbackUrl };
-  }
-
-  return undefined;
-});
 const semanticRole = computed(() =>
   props.decorative ? undefined : (attrs.role ?? 'img'),
 );
 
 function toCssLength(value) {
   return typeof value === 'number' ? `${value}px` : value;
-}
-
-function handleImageError() {
-  if (activeImage.value?.kind === 'custom') {
-    failedCustomImageKey.value = activeImage.value.key;
-    return;
-  }
-
-  if (activeImage.value?.kind === 'fallback') {
-    failedFallbackImageKey.value = activeImage.value.key;
-  }
 }
 </script>
 
@@ -75,22 +39,13 @@ function handleImageError() {
       '--ui-track-thumb-bg': background,
       '--ui-track-thumb-color': color,
       '--ui-track-thumb-font-size': fontSize,
-      '--ui-track-thumb-transform': uppercase ? 'uppercase' : 'none',
+      '--ui-track-artwork-transform': uppercase ? 'uppercase' : 'none',
     }"
   >
-    <img
-      v-if="activeImage"
-      :key="activeImage.key"
-      class="demo-candidate-track-thumb__image"
-      :src="activeImage.url"
-      alt=""
-      draggable="false"
-      @error="handleImageError"
-    />
-    <span v-else-if="track" class="demo-candidate-track-thumb__initial">
-      {{ getTrackInitial(track) }}
-    </span>
-    <slot v-else />
+    <DemoCandidateTrackArtwork v-if="track" :track="track" />
+    <slot v-else>
+      <DemoCandidateArtworkEmpty />
+    </slot>
     <slot name="overlay" />
   </span>
 </template>
@@ -108,17 +63,6 @@ function handleImageError() {
   color: var(--ui-track-thumb-color, var(--ui-color-text));
   font-size: var(--ui-track-thumb-font-size, var(--ui-font-size-sm));
   font-weight: var(--ui-font-weight-semibold);
-  text-transform: var(--ui-track-thumb-transform, uppercase);
-  -webkit-user-select: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-.demo-candidate-track-thumb__image {
-  width: 100%;
-  height: 100%;
-  display: block;
-  object-fit: cover;
   -webkit-user-select: none;
   user-select: none;
   -webkit-user-drag: none;

@@ -1,8 +1,9 @@
-# UiTrackThumb review artwork
+# Track artwork review assets
 
 These development-only assets support the Token v2 Candidate and Current
-specimens. The default fallback pool belongs only to the Candidate proposal;
-the crop sources are shared so both layers can be compared with the same covers.
+specimens. The default fallback pool belongs only to the Candidate proposal and
+is shared by Track Thumb and Collage Thumb member artwork; the crop sources let
+both layers compare the same covers.
 
 ## Default fallback artwork
 
@@ -13,11 +14,13 @@ the crop sources are shared so both layers can be compared with the same covers.
 | `track-thumb-fallback-red.png`    | 736 × 736   | Red member of the default artwork pool    |
 | `track-thumb-fallback-yellow.png` | 736 × 736   | Yellow member of the default artwork pool |
 
-These four images are not ordinary song-cover examples. Candidate uses one when a
-track has no custom cover or its custom cover fails to load. The track identity
-selects a stable member so repeated renders, themes and density specimens do not
-flicker or drift; do not call `Math.random()` during render or SSR. Current keeps
-the active initial-letter and broken-image behavior instead of importing this pool.
+These four images are not ordinary song-cover examples. Candidate Track Thumb and
+Candidate Collage Thumb member slots use one when a track has no custom cover or
+its custom cover fails to load. Both consume the same track-identity resolver, so
+the same track keeps the same fallback across single and collection contexts,
+repeated renders, themes and density specimens; do not call `Math.random()` during
+render or SSR. Current keeps the active initial-letter and broken-image behavior
+instead of importing this pool.
 Each PNG is transparent outside the circular artwork so the same asset sits cleanly
 on both dark and light theme surfaces without a baked-in white square.
 

@@ -2,6 +2,8 @@ import { existsSync, readFileSync } from 'node:fs';
 import { createSSRApp, nextTick } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
+import DemoCandidateArtworkEmpty from './DemoCandidateArtworkEmpty.vue';
+import DemoCandidateTrackArtwork from './DemoCandidateTrackArtwork.vue';
 import DemoCandidateTrackThumb from './DemoCandidateTrackThumb.vue';
 import DemoTrackThumbAppearance from './DemoTrackThumbAppearance.vue';
 import {
@@ -17,6 +19,16 @@ attachClientRender(
   './DemoCandidateTrackThumb.vue',
   import.meta.url,
 );
+attachClientRender(
+  DemoCandidateTrackArtwork,
+  './DemoCandidateTrackArtwork.vue',
+  import.meta.url,
+);
+attachClientRender(
+  DemoCandidateArtworkEmpty,
+  './DemoCandidateArtworkEmpty.vue',
+  import.meta.url,
+);
 
 const readSource = (relativePath) =>
   readFileSync(new URL(relativePath, import.meta.url), 'utf8');
@@ -25,6 +37,8 @@ const contentSource = readSource('./DemoContent.vue');
 const appearanceSource = readSource('./DemoTrackThumbAppearance.vue');
 const primitiveSource = readSource('./DemoTrackThumbPrimitive.vue');
 const candidateSource = readSource('./DemoCandidateTrackThumb.vue');
+const trackArtworkSource = readSource('./DemoCandidateTrackArtwork.vue');
+const artworkEmptySource = readSource('./DemoCandidateArtworkEmpty.vue');
 const fallbackSource = readSource('./trackThumbFallback.js');
 const artworkReadme = readSource('../../assets/demo/track-thumb/README.md');
 const currentSource = readSource('../ui/UiTrackThumb.vue');
@@ -142,7 +156,7 @@ describe('DemoTrackThumbAppearance', () => {
         html.match(new RegExp(`data-track-thumb-artwork="${artwork}"`, 'gu')),
       ).toHaveLength(2);
     }
-    expect(candidateSource).toContain('getTrackThumbFallbackArtwork');
+    expect(trackArtworkSource).toContain('getTrackThumbFallbackArtwork');
     expect(currentSource).not.toContain('track-thumb-fallback');
     expect(primitiveSource).not.toContain('Math.random');
     expect(fallbackSource).not.toMatch(/track-thumb-fallback-[^']+\.jpg/u);
@@ -207,7 +221,7 @@ describe('DemoTrackThumbAppearance', () => {
     expect(candidateSource).toContain(
       'border-radius: var(--ui-track-thumb-radius, var(--ui-radius-sm));',
     );
-    expect(candidateSource).toContain('object-fit: cover;');
+    expect(trackArtworkSource).toContain('object-fit: cover;');
     expect(candidateSource).not.toMatch(/minWidth|maxWidth|density/u);
   });
 
@@ -302,7 +316,10 @@ describe('DemoTrackThumbAppearance', () => {
     expect(html).toContain('S');
     expect(html).toContain('夜');
     expect(html).toContain('沒有曲目');
-    expect(candidateSource).toContain('@error="handleImageError"');
+    expect(trackArtworkSource).toContain('@error="handleImageError"');
+    expect(artworkEmptySource).toContain(
+      'data-artwork-placeholder="no-identity"',
+    );
   });
 
   it('keeps thumbnails non-interactive, non-selectable, and non-draggable', () => {
@@ -310,7 +327,7 @@ describe('DemoTrackThumbAppearance', () => {
       /\.demo-candidate-track-thumb\s*\{[\s\S]*?-webkit-user-select:\s*none;[\s\S]*?user-select:\s*none;/u,
     );
     expect(candidateSource).toContain('-webkit-user-drag: none;');
-    expect(candidateSource).toContain('draggable="false"');
+    expect(trackArtworkSource).toContain('draggable="false"');
     expect(candidateSource).not.toMatch(
       /tabindex|@click|@keydown|cursor:\s*pointer/u,
     );
@@ -372,7 +389,9 @@ describe('DemoTrackThumbAppearance', () => {
     ]) {
       expect(candidateSource).toContain(`${prop}:`);
     }
-    expect(candidateSource).toContain('<slot v-else />');
+    expect(candidateSource).toContain('<slot v-else>');
+    expect(candidateSource).toContain('<DemoCandidateArtworkEmpty />');
+    expect(candidateSource).toContain('<DemoCandidateTrackArtwork');
     expect(candidateSource).toContain('<slot name="overlay" />');
     expect(html).toContain('未使用的外觀覆寫與 overlay slot 保留相容');
     expect(html).toContain('互動操作應由外層控制項提供');

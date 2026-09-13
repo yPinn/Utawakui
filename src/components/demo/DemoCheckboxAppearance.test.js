@@ -109,8 +109,14 @@ describe('DemoCheckboxAppearance', () => {
     expect(componentSource).toContain(
       '.demo-checkbox-size--compact {\n  --demo-checkbox-target-size: 2rem;',
     );
+    expect(candidateSource).toMatch(
+      /--demo-checkbox-resolved-target-size:\s*var\(\s*--demo-checkbox-target-size,\s*var\(--ui-control-height\)\s*\);/u,
+    );
+    expect(candidateSource).not.toContain(
+      '--demo-checkbox-target-size: var(--ui-control-height);',
+    );
     expect(candidateSource).toContain(
-      'min-height: var(--demo-checkbox-target-size);',
+      'min-height: var(--demo-checkbox-resolved-target-size);',
     );
     expect(candidateSource).toContain('width: var(--ui-checkbox-size);');
     expect(candidateSource).toContain('height: var(--ui-checkbox-size);');
@@ -137,6 +143,25 @@ describe('DemoCheckboxAppearance', () => {
     expect(checkboxSource).not.toContain('appearance: none;');
   });
 
+  it('keeps an accessible square target when a compound owner hides the visible label', async () => {
+    const html = await renderToString(
+      createSSRApp(DemoCandidateCheckbox, {
+        id: 'track-row-selection',
+        label: '選取音樂分析候選',
+        labelHidden: true,
+        modelValue: true,
+      }),
+    );
+
+    expect(html).toContain('has-hidden-label');
+    expect(html).toContain('ui-field__label--hidden');
+    expect(html).toContain('for="track-row-selection"');
+    expect(html).toContain('選取音樂分析候選');
+    expect(candidateSource).toMatch(
+      /\.demo-candidate-checkbox\.has-hidden-label\s*\{[\s\S]*?width:\s*var\(--demo-checkbox-resolved-target-size\);/u,
+    );
+  });
+
   it('covers short, long CJK, long Latin, multilingual, and wrapped labels', async () => {
     const html = await renderToString(createSSRApp(DemoCheckboxAppearance));
 
@@ -155,10 +180,10 @@ describe('DemoCheckboxAppearance', () => {
     expect(candidateSource).toContain('overflow-wrap: anywhere;');
     expect(candidateSource).toContain('align-items: start;');
     expect(candidateSource).toContain(
-      'calc((var(--demo-checkbox-target-size) - 1lh) / 2)',
+      'calc((var(--demo-checkbox-resolved-target-size) - 1lh) / 2)',
     );
     expect(candidateSource).toContain(
-      '(var(--demo-checkbox-target-size) - var(--ui-checkbox-size)) / 2',
+      '(var(--demo-checkbox-resolved-target-size) - var(--ui-checkbox-size)) / 2',
     );
     expect(html).toContain('Label wraps · indicator stays 16px／top aligned');
   });

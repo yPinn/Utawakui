@@ -168,7 +168,20 @@ watch(displayText, async () => {
     both;
 }
 
+[data-marquee-focus-owner]:has(:focus-visible)
+  .demo-candidate-marquee--overflow
+  .demo-candidate-marquee__text {
+  animation: demo-marquee-scroll-ltr var(--demo-marquee-duration) linear 0.2s 1
+    both;
+}
+
 [data-marquee-focus-owner]:focus-visible
+  .demo-candidate-marquee--overflow:dir(rtl)
+  .demo-candidate-marquee__text {
+  animation-name: demo-marquee-scroll-rtl;
+}
+
+[data-marquee-focus-owner]:has(:focus-visible)
   .demo-candidate-marquee--overflow:dir(rtl)
   .demo-candidate-marquee__text {
   animation-name: demo-marquee-scroll-rtl;

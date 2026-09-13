@@ -25,7 +25,7 @@ const SECTIONS = [
 ];
 
 describe('DemoContent staged review boundary', () => {
-  it('delegates UiMarqueeText and UiTrackThumb to Candidate／Current comparisons', async () => {
+  it('delegates reviewed Content components to Candidate／Current comparisons', async () => {
     const html = await renderToString(
       createSSRApp(DemoContent, { sections: SECTIONS }),
     );
@@ -36,8 +36,14 @@ describe('DemoContent staged review boundary', () => {
     expect(contentSource).toContain(
       "import DemoTrackThumbAppearance from './DemoTrackThumbAppearance.vue';",
     );
+    expect(contentSource).toContain(
+      "import DemoCollageThumbAppearance from './DemoCollageThumbAppearance.vue';",
+    );
+    expect(contentSource).toContain(
+      "import DemoTrackRowAppearance from './DemoTrackRowAppearance.vue';",
+    );
     expect(contentSource).toMatch(
-      /const COMPARISON_SECTION_KEYS = new Set\(\[\s*'marquee-text',\s*'track-thumb'\s*\]\);/u,
+      /const COMPARISON_SECTION_KEYS = new Set\(\[\s*'marquee-text',\s*'track-thumb',\s*'collage-thumb',\s*'track-rows',?\s*\]\);/u,
     );
     expect(contentSource).toMatch(
       /<DemoMarqueeTextAppearance\s+v-if="section\.key === 'marquee-text'"\s*\/>/u,
@@ -45,21 +51,31 @@ describe('DemoContent staged review boundary', () => {
     expect(contentSource).toMatch(
       /<DemoTrackThumbAppearance\s+v-else-if="section\.key === 'track-thumb'"\s*\/>/u,
     );
-    expect(html.match(/data-review-section="reviewed"/gu)).toHaveLength(2);
+    expect(contentSource).toMatch(
+      /<DemoCollageThumbAppearance\s+v-else-if="section\.key === 'collage-thumb'"\s*\/>/u,
+    );
+    expect(contentSource).toMatch(
+      /<DemoTrackRowAppearance\s+v-else-if="section\.key === 'track-rows'"\s*\/>/u,
+    );
+    expect(html.match(/data-review-section="reviewed"/gu)).toHaveLength(4);
     expect(html).toContain('data-marquee-source="candidate"');
     expect(html).toContain('data-marquee-source="current"');
     expect(html).toContain('data-track-thumb-source="candidate"');
     expect(html).toContain('data-track-thumb-source="current"');
+    expect(html).toContain('data-collage-thumb-source="candidate"');
+    expect(html).toContain('data-collage-thumb-source="current"');
+    expect(html).toContain('data-track-row-source="candidate"');
+    expect(html).toContain('data-track-row-source="current"');
   });
 
-  it('leaves the remaining Content components pending and unchanged', () => {
+  it('leaves reviewed primitives and the Track Row production component untouched', () => {
     expect(contentSource).not.toContain(
       "import UiTrackThumb from '../ui/UiTrackThumb.vue';",
     );
-    expect(contentSource).toContain(
+    expect(contentSource).not.toContain(
       "import UiCollageThumb from '../ui/UiCollageThumb.vue';",
     );
-    expect(contentSource).toContain(
+    expect(contentSource).not.toContain(
       "import UiTrackRow from '../ui/UiTrackRow.vue';",
     );
     expect(contentSource).not.toContain(

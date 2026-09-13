@@ -210,8 +210,19 @@ const FALLBACK_EXAMPLES = TRACK_THUMB_FALLBACK_ARTWORK.map((_, index) => {
           />
         </article>
         <article data-track-thumb-state="empty">
-          <span class="demo-track-thumb-item__label">沒有曲目</span>
-          <component :is="layer.component" :size="48">
+          <span class="demo-track-thumb-item__label">
+            {{
+              layer.key === 'candidate'
+                ? '沒有曲目（共用空位置）'
+                : '沒有曲目（型錄插槽範例）'
+            }}
+          </span>
+          <component
+            :is="layer.component"
+            v-if="layer.key === 'candidate'"
+            :size="48"
+          />
+          <component :is="layer.component" v-else :size="48">
             <span class="demo-track-thumb-empty">—</span>
           </component>
         </article>
