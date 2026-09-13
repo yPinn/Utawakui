@@ -74,10 +74,16 @@ describe('AppUpdateSettingsRow', () => {
     const on = await renderRow({ phase: 'idle', autoCheckEnabled: true });
     const off = await renderRow({ enabled: false, phase: 'disabled' });
 
-    expect(on).toContain('自動檢查更新');
+    expect(on).toContain('自動檢查');
     expect(on).toContain('aria-label="啟動與定期自動檢查是否有新版本"');
     expect(on).toContain('checked');
     expect(off).toMatch(/id="app-update-auto-check"[^>]*disabled/);
+  });
+
+  it('discloses the default background version check before the toggle', async () => {
+    const html = await renderRow({ phase: 'idle' });
+
+    expect(html).toContain('自動檢查是否有新版本，只查詢，不會下載或安裝。');
   });
 
   it('surfaces a preference-save failure without a second update action', async () => {

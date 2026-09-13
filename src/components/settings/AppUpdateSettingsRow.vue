@@ -139,6 +139,7 @@ function handleAction() {
     <SettingsActionRow
       :icon="RefreshCw"
       title="Utawakui 版本"
+      description="自動檢查是否有新版本，只查詢，不會下載或安裝。"
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"
@@ -147,7 +148,7 @@ function handleAction() {
       <template #actions>
         <UiCheckbox
           id="app-update-auto-check"
-          label="自動檢查更新"
+          label="自動檢查"
           aria-label="啟動與定期自動檢查是否有新版本"
           :model-value="autoCheckEnabled"
           :disabled="!enabled || autoCheckBusy"
