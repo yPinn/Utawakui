@@ -1,0 +1,14 @@
+{
+  "name": "utawakui-feedback-relay",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker relay that forwards Utawakui in-app feedback reports to Discord. Deployed independently of the Electron app.",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "tail": "wrangler tail"
+  },
+  "devDependencies": {
+    "wrangler": "^3.90.0"
+  }
+}

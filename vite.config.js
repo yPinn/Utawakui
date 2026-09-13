@@ -50,6 +50,7 @@ module.exports = defineConfig({
       'electron/main/**/*.test.js',
       'overlay/**/*.test.js',
       'scripts/**/*.test.mjs',
+      'services/**/*.test.js',
       'shared/**/*.test.js',
       'src/**/*.test.js',
     ],

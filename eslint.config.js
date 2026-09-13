@@ -69,5 +69,14 @@ module.exports = [
       globals: globals.browser,
     },
   },
+  {
+    // Cloudflare Workers runtime: ES modules, web-standard globals (fetch,
+    // Request/Response, FormData, TextEncoder) — not Node, not a browser.
+    files: ['services/**/*.js'],
+    languageOptions: {
+      sourceType: 'module',
+      globals: globals.worker,
+    },
+  },
   eslintConfigPrettier,
 ];

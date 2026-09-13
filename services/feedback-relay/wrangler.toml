@@ -1,0 +1,22 @@
+# Cloudflare Workers config for the feedback relay. Deployed independently
+# of the Electron app — see electron-builder.yml's `files:` allowlist, which
+# never references this directory, so it can never end up in a packaged
+# build regardless of this config.
+name = "utawakui-feedback-relay"
+main = "src/index.js"
+compatibility_date = "2026-01-01"
+
+# Create with: npx wrangler kv namespace create RATE_LIMIT_KV
+# Then paste the returned id below. Omitting this binding disables rate
+# limiting entirely (index.js treats a missing env.RATE_LIMIT_KV as "skip"),
+# so do not deploy without it.
+kv_namespaces = [
+  { binding = "RATE_LIMIT_KV", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+]
+
+# Secrets — set with `npx wrangler secret put <NAME>`, never committed here:
+#   CLIENT_TOKEN         shared token echoed by the app's X-Utawakui-Feedback-Token
+#                         header; a speed bump against drive-by scanners, not a
+#                         real secret (see README.md).
+#   DISCORD_WEBHOOK_URL   the Discord webhook every report is currently routed
+#                         to (src/index.js's KIND_WEBHOOK_ENV table).
