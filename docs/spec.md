@@ -158,7 +158,9 @@ adapters 評估，目前不做 OBS native plugin。
 | `public-output-flow`    | 啟動 Output server 與發布狀態             | 內建 Overlay 不需外部 binary；stop／status 永遠可用於復原。 |
 
 Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 enabled 狀態。
-它不保存素材權利判斷，也不能成為 main trust boundary 的替代品。
+它不保存素材權利判斷，也不能成為 main trust boundary 的替代品。「Gate 內預設偏好」
+與「不受 gate 保護的預設背景行為」兩種易混淆狀態的定義與現有案例見
+[PRODUCT.md 的 Feature Gate 語意](../PRODUCT.md#feature-gate-語意)。
 
 ## 6. 方向與優先順序
 

@@ -290,6 +290,10 @@ sidecar currentness，並在手動 analysis／batch 結束後再執行。排入�
 | Audio Python capabilities              | Capability policy       | Immutable lock／generation     | 獨立 runtime family、scheduler 與 lease；不與 Provider 或 ONNX lifecycle 合併 |
 | OBS loopback output                    | `public-output-flow`    | Built-in Overlay assets        | Start／publish 受 gate；stop／status 保持可用以復原                           |
 
+BPM／beat analysis 的「依偏好」是 gate 內的預設開啟行為，不是獨立於 gate 之外；
+app update 的啟動時自動檢查則不受本表任何一個 gate 保護，兩者的定義與理由見
+[PRODUCT.md 的 Feature Gate 語意](../PRODUCT.md#feature-gate-語意)。
+
 Research-only reverse-provider validation runs from `scripts/` in an ignored,
 separately locked runtime and is not part of either product gate, Electron startup,
 packaging, preload, renderer acquisition, or the fixed lyrics-provider registry.
