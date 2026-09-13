@@ -6,15 +6,16 @@ contracts 與 tests 管理。
 
 ## Runtime Ownership
 
-| Runtime                               | 責任                                                                                        | 不可持有                                                        |
-| ------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| Electron main (`electron/main/`)      | Window lifecycle、IPC trust boundary、feature gate enforcement、local services、diagnostics | Renderer reactive state、client-provided filesystem paths       |
-| Pure main libraries (`electron/lib/`) | Filesystem、provider、processing、dependency、sidecar 與 protocol logic                     | BrowserWindow lifecycle、renderer presentation                  |
-| Preload (`electron/preload.js`)       | Intent-based、固定 channel 的窄 IPC bridge                                                  | Node API passthrough、任意 channel 或 path API                  |
-| Renderer (`src/`)                     | Vue UI、interaction、player／queue／lyrics owners                                           | Node／Electron import、dependency URL、model 或 executable path |
-| Shared (`shared/`)                    | Scalar JSON contracts 與純 cross-runtime presentation projections                           | Filesystem、Electron、browser globals、mutable service state    |
-| Browser Source (`overlay/`)           | OBS delivery adapters、DOM rendering 與獨立 visual tokens                                   | Control-panel tokens、canonical product-state ownership         |
-| Spout helper (`electron/entry.js`)    | Windows offscreen Lyrics surface、native Spout sender、texture release                      | Core state、renderer IPC、Spout receiver ownership              |
+| Runtime                                               | 責任                                                                                        | 不可持有                                                        |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| Electron main (`electron/main/`)                      | Window lifecycle、IPC trust boundary、feature gate enforcement、local services、diagnostics | Renderer reactive state、client-provided filesystem paths       |
+| Pure main libraries (`electron/lib/`)                 | Filesystem、provider、processing、dependency 與 sidecar logic                               | BrowserWindow lifecycle、renderer presentation                  |
+| Preload (`electron/preload.js`)                       | Intent-based、固定 channel 的窄 IPC bridge；部分 dev-only channel 依 flag 條件註冊          | Node API passthrough、任意 channel 或 path API                  |
+| Renderer (`src/`)                                     | Vue UI、interaction、player／queue／lyrics owners                                           | Node／Electron import、dependency URL、model 或 executable path |
+| Performer window (`electron/main/performerWindow.js`) | 第二個 sandboxed BrowserWindow：Self-View 呈現、獨立 preload、snapshot 讀取                 | Core playback／queue／lyrics 權威狀態                           |
+| Shared (`shared/`)                                    | Scalar JSON contracts 與純 cross-runtime presentation projections                           | Filesystem、Electron、browser globals、mutable service state    |
+| Browser Source (`overlay/`)                           | OBS delivery adapters、DOM rendering 與獨立 visual tokens                                   | Control-panel tokens、canonical product-state ownership         |
+| Spout helper (`electron/main/spoutHelperEntry.js`)    | Windows offscreen Lyrics surface、native Spout sender、texture release                      | Core state、renderer IPC、Spout receiver ownership              |
 
 `electron/main.js` 是 composition root：設定 app identity、註冊 privileged scheme、建立
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
@@ -26,6 +27,9 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 更新；`src/composables/useUiDensity.js` 驗證後寫入 document root。Renderer 不取得
 `BrowserWindow`、不依 viewport 猜測狀態。現行 active tokens 不消費 density attribute，
 只有 opt-in Token v2 surface 會改變尺寸，因此此投影不代表 production Token v2 adoption。
+該 surface 由 dev-only 型錄視圖（`DemoView.vue`／`VisualSystemView.vue`／
+`StudioLibraryPrototypeView.vue`）呈現；owner 檢查順序與現況見
+[Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
 
 Machine config、feature confirmation 與 external navigation 分別由獨立 handler registrar
 持有。Renderer 開啟固定說明頁面時只提交 allowlisted target id；provider discovery 則只提交
@@ -92,6 +96,10 @@ bounded cadence，不再讓未消費節拍的模板逐拍重投影。Raw LRC／V
 仍未開放給 Output；Manga Frame 則可從 `lyrics.document` 的 optional reading projection
 取得已存在、identity-matched 的日文 `{ text, reading }` segments。Publisher 只讀 sidecar，
 不因 OBS 啟動 reading worker，缺少或 stale 時維持純文字。
+
+Classic KTV 的 karaoke-stack 呈現封裝 `jf-open-huninn-2.1.ttf`（justfont open-huninn
+2.1，OFL 1.1）；字型、來源 checksum 與授權隨 `shared/assets/fonts/` 封裝並只經 Output
+server exact allowlist 提供，與其他模板字型共用同一分發邊界。
 
 Live Stage profile 在相同 adapter 中提供三個 presentation policy：轉播精簡可移除可判定的
 filler／連續重複與 CJK 顯示標點，平衡分行保留內容但重排 rows，忠實原文保留 authored rows。
@@ -166,9 +174,10 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent            |
 | Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments     |
 
-本機媒體經 `utawakui-media:` protocol 交付 renderer。Resolver 只接受 track id 與
-allowlisted asset names，並由 main 建立正確的 HTTP range response；renderer 不接觸
-absolute path。
+本機媒體經 `utawakui-media:` protocol 交付 renderer。Scheme 與 handler 註冊在
+`electron/main/mediaScheme.js`／`mediaProtocol.js`；`electron/lib/` 只提供其呼叫的
+path／range 工具函式。Resolver 只接受 track id 與 allowlisted asset names，並由 main
+建立正確的 HTTP range response；renderer 不接觸 absolute path。
 
 播放器的 renderer ownership 再分成兩層：`src/composables/usePlayer.js` 是模組單例、
 HTML audio event authority、transport actions 與既有 public composable facade；
@@ -298,19 +307,22 @@ Renderer 是 player／queue／lyrics 的來源，Main Projection Hub 則是所�
 收斂邊界。Envelope 使用 `bootId`、`sourceEpoch` 與 revision 排除 stale source；Output
 server 分開呈現 liveness、source readiness 與 content/state updates。
 
-Renderer Output ownership 分成控制與發布兩層：`src/composables/useOutputRuntime.js`
-保留唯一 public singleton facade，負責 status／settings、port recovery、start／stop、slot
+Renderer Output ownership 分成三層：`src/composables/useOutputRuntime.js` 保留唯一
+public singleton facade，負責 status／settings、port recovery、start／stop、slot
 persistence、diagnostics 與初始化組合；
 `src/composables/output/useOutputProjectionPublisher.js` 負責
 player／queue／lyrics／既有日文 reading／music structure projection、document-before-state
 envelope 排序、continuity／`sourceEpoch`、各 stream
-revision/reference 與 latest-only watcher publishing。Publisher 只透過具名 callbacks 取得
-bridge、gate 與 runtime status 邊界，不持有服務啟停、設定或 slot persistence。
+revision/reference 與 latest-only watcher publishing；
+`src/composables/useSpoutOutput.js` 只負責 Spout2 sender 的 status／FPS intent／
+start-stop renderer IPC，不持有 canonical projection。三者都只透過具名 callbacks 取得
+bridge、gate 與 runtime status 邊界，不持有服務啟停、設定或 slot persistence（除
+`useOutputRuntime.js` 本身）。
 
-Browser Source 只能讀取 canonical snapshot 與 allowlisted media。Now Playing 的封面
-模板由已公開的 track id 經 `/media/artwork/` 解析縮圖；snapshot 不包含
-`utawakui-media:` URL、absolute path 或 provider payload。Public WebSocket 不接受
-playback commands。
+Browser Source 只能讀取 canonical snapshot 與 allowlisted media，路由涵蓋
+`overlay/lyrics/`、`overlay/setlist/` 與 Now Playing。Now Playing 的封面模板由已公開
+的 track id 經 `/media/artwork/` 解析縮圖；snapshot 不包含 `utawakui-media:` URL、
+absolute path 或 provider payload。Public WebSocket 不接受 playback commands。
 
 App-owned Overlay choreography 透過 exact allowlist 提供的 GSAP browser asset 執行；
 GSAP recipe 持有可中斷的 playhead、sequencing、reduced-motion 與 lifecycle cleanup，
@@ -361,3 +373,8 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 - App-managed Provider、FFmpeg、models 與 Audio Python 存在 user data dependency root，
   不綁入 base installer，也不進入 app startup critical path。
 - 完整 package mapping 以 [release-inventory.md](operations/release-inventory.md) 為準。
+- App update 由 `electron/main/appUpdateService.js`／`appUpdateHandlers.js` 經
+  `electron-updater` 驅動，`shared/appUpdateValues.json` 提供 renderer 快照；
+  `src/composables/useAppUpdate.js` 是唯一 renderer owner。目前 `signExecutable`／
+  `verifyUpdateCodeSignature` 為 false，屬 unsigned updater runtime，尚無連續版本
+  update acceptance 驗證。

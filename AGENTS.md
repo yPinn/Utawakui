@@ -38,12 +38,19 @@ npm run build
 npm start
 npm run dist:dir
 npm run dist
+npm run dist:release
+npm run release:verify-version
+npm run release:verify-artifacts
 npm run lint
+npm run lint:fix
 npm run lint:md
+npm run format
 npm run format:check
 npm test
+npm run test:watch
 npm run test:coverage
 npm run perf:startup
+npm run license:inventory
 npm run clean
 ```
 
@@ -60,8 +67,10 @@ boundaries.
 
 - `electron/main.js` is the composition root. Domain IPC belongs in
   `electron/main/*Handlers.js`, with named dependencies.
-- Pure filesystem, provider, processing and protocol logic belongs in
-  `electron/lib/`; it must not own BrowserWindow lifecycle.
+- Pure filesystem, provider and processing logic belongs in `electron/lib/`; it
+  must not own BrowserWindow lifecycle. `utawakui-media:` scheme and handler
+  registration live in `electron/main/mediaScheme.js`／`mediaProtocol.js`; `lib/`
+  only supplies the path／range helpers they call.
 - Renderer code uses `electron/preload.js` only. Keep `contextIsolation: true`,
   `nodeIntegration: false` and `sandbox: true`.
 - Renderer intent must never provide filesystem paths, URLs, hashes, models,
@@ -126,13 +135,14 @@ boundaries.
 
 ## Packaging Rules
 
-- `dist/` is the Vue renderer bundle; `overlay/` is packaged separately.
-- Keep `electron-builder.yml`, `docs/operations/release-inventory.md` and packaging tests in
-  sync whenever runtime files, workers, shared assets or dependencies move.
+Full packaging/dependency boundary rules live in the
+[Packaging Boundary](docs/architecture.md#packaging-boundary) section of the
+architecture map. Two rules an agent must not violate while editing code:
+
+- Keep `electron-builder.yml`, `docs/operations/release-inventory.md` and packaging tests
+  in sync whenever runtime files, workers, shared assets or dependencies move.
 - The packaged executable filename intentionally remains `electron.exe`; installer
   product identity and AUMID are `Utawakui` / `com.utawakui.app`.
-- App-managed optional dependencies do not belong in the base installer or startup
-  critical path.
 
 ## UI Conventions
 

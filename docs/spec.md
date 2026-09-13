@@ -4,8 +4,6 @@
 [PRODUCT.md](../PRODUCT.md)，現行技術邊界見 [architecture.md](architecture.md)，
 決策狀態與其他文件入口見 [docs/README.md](README.md)。
 
-實作細節不在此重複；必要的不變量應落在架構文件、ADR、focused contract 或測試。
-
 ## 1. 產品定位
 
 Utawakui 是 Windows 桌面歌唱工作流控制台，協助使用者在 OBS 歌回、翻唱錄製與
@@ -36,8 +34,8 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 ### 2.2 可選工作流
 
 - **Lyrics**：外部歌詞查詢、同步資料、讀音、演出者視窗與 Lyrics Overlay。
-- **Audio processing**：pitch／tempo preview、分離 recipe、guide vocal 與未來
-  pre-render assets。
+- **Audio processing**：pitch／tempo preview、分離 recipe（含尚未實作的
+  backing-vocals）、guide vocal 與未來 pre-render assets。
 - **Public output**：Setlist、Lyrics、Now Playing Browser Sources；封面型模板歸入
   Now Playing。
 - **Provider assist**：候選搜尋、來源匯入、下載與 metadata backfill。
@@ -46,11 +44,8 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 
 ### 2.3 明確非目標
 
-- 內建商用曲庫、素材授權代理或權利管理服務。
-- 規避平台規則、存取控制或下載限制。
-- Twitch／YouTube chat 點歌與退款自動化。
-- 多使用者協作、雲端同步或使用者媒體上傳服務。
-- 目前不做 OBS native plugin；外部整合先以 Browser Source 與 adapters 評估。
+完整清單與理由見 [PRODUCT.md](../PRODUCT.md)。外部整合先以 Browser Source 與
+adapters 評估，目前不做 OBS native plugin。
 
 ## 3. 目前功能現況
 
@@ -65,7 +60,7 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 | Provider assist   | 核心路徑已實作     | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、YT Music Songs 優先＋一般 YouTube 補足的文字搜尋、評分後最多十二筆候選、弱化觀看數排序、release-only 自動選取、YouTube／YT Music URL 解析、recording-first import/backfill 與 main-owned YT Music 系統瀏覽器探索已連線，只能作為 gated advanced flow；這不是官方 YT Music API 整合，Spotify／Apple Music URL 轉換、內嵌帳號與帳號歌單仍未開放。 |
 | OBS output        | MVP 已實作         | Loopback HTTP/WebSocket、三個固定 slot、Gallery、Workbench、URL copy、content/state split、Lyrics template capability registry、Live Stage 可選歌詞呈現策略與 source-mapped T2 顯示邊界已建立；Browser Source 仍是支援基線。                                                                                                                                                                                  |
 | Feature gates     | 已實作             | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                                                                                                                                                                                                                                        |
-| Diagnostics       | 已實作             | Main-owned persistence/redaction、renderer capture、Settings 控制、dependency IPC boundary 與顯式 redacted export（單一 JSON support bundle）已建立；dev-only F6 結構化檢視工作台與獨立單檔 HTML 檢視工具已提供；其他 domain wrappers 持續增量導入。                                                                                                                                                          |
+| Diagnostics       | 已實作             | Main-owned persistence/redaction、renderer capture、Settings 控制、dependency IPC boundary 與顯式 redacted export（單一 JSON support bundle）已建立；dev-only F6 結構化檢視工作台（F5／F7／F8 為音樂分析、歌詞來源檢查與視覺系統型錄，皆同屬 dev-only）與獨立單檔 HTML 檢視工具已提供；其他 domain wrappers 持續增量導入。                                                                                    |
 | 使用者回饋        | 已實作             | 錯誤回報／功能請求／使用體驗意見／內容問題共用一套預覽後送出流程，僅錯誤回報可選附最近錯誤紀錄；Settings 常駐入口與錯誤紀錄行動選單均可觸發。Relay 獨立部署於 Cloudflare、不隨 App 打包，需另行設定 Discord webhook 與 KV namespace 才能實際送達；送出前一律強制預覽，不做自動或背景上傳。                                                                                                                    |
 | Distribution      | 已實作基礎         | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                                                                                                                                                                                                                                                           |
 | Session／VOD mode | 規劃中             | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                                                                                                                                                                                                                                                              |
@@ -126,14 +121,14 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 - 實驗性 Spout2 Lyrics sender 由獨立 helper 發布相同 Lyrics route；固定為 `Utawakui.Lyrics`、1920×1080、BGRA8／premultiplied alpha／sRGB SDR，提供 session-only 30／60 FPS 與顯式 start／stop，不取代 Browser Source。`sending` 只代表首幀已送入 sender，不代表接收端狀態。
 - Snapshot 不包含 filesystem path、provider payload 或任意 renderer HTML。
 - Artwork 只透過 public track id 解析 allowlisted thumbnail。
-- 現行三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；黑膠主題與
-  Cover Player 是 Now Playing 模板。Output Instance／Presentation Pack 是未來
-  擴充方向，不應提前宣稱已完成。
-- Setlist 的基礎公開契約只顯示目前演唱曲目與已唱紀錄，不投影待唱佇列。預設
-  480×810 `Simple Black B` 模板以約兩成高度保留目前歌曲焦點區，已唱紀錄取得
-  其餘可用高度；兩區只以固定 spacing 分隔，不保留無語意的比例空白列。最近
-  八首已唱紀錄依正常播放順序向下排列，只有實際內容超出下方區域時才自動垂直
-  滾動。
+- 現行三個固定 slot（Setlist／Lyrics／Now Playing）是 MVP 基線；Now Playing 提供
+  `now-next`（浮光光碟，預設）、`art-card`、`cover-player` 三個模板。Output
+  Instance／Presentation Pack 是未來擴充方向，不應提前宣稱已完成。
+- Setlist 的基礎公開契約只顯示目前演唱曲目與已唱紀錄，不投影待唱佇列，預設模板為
+  `queue-board`（黑幕歌單）。480×810 是 large widget 的擷取尺寸，非模板本身的固定
+  版面：模板以約兩成高度保留目前歌曲焦點區，已唱紀錄取得其餘可用高度；兩區只以
+  固定 spacing 分隔，不保留無語意的比例空白列。最近八首已唱紀錄依正常播放順序向下
+  排列，只有實際內容超出下方區域時才自動垂直滾動。
 
 ### 4.5 使用者回饋
 

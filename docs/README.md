@@ -32,15 +32,13 @@ docs/
 | `archive/`                                | 歸檔、不刪除 | Lyrics T2 plan 已完成；contract 才是現行規範，但 plan 仍解釋遷移順序。  |
 | `releases/`                               | 逐版本保留   | Release note 描述已發行 artifact，不能用目前 source tree 覆寫。         |
 
-本輪沒有刪除有意義的文件。只有重複段落被移除；過期內容透過 status、資料夾與本頁
-定位，不再放在 live root。
-
 ## 文件權責
 
 | 文件                        | 唯一責任                                               | 不應承擔                                   |
 | --------------------------- | ------------------------------------------------------ | ------------------------------------------ |
 | [Root README](../README.md) | 對使用者與 contributor 的產品／開發入口                | 完整 roadmap、低階架構或歷史決策           |
 | [PRODUCT](../PRODUCT.md)    | 穩定定位、承諾、原則、非目標與語氣                     | 隨實作變動的功能狀態                       |
+| [DESIGN](../DESIGN.md)      | Renderer 視覺系統、token 規則與元件慣例                | 產品範圍或功能完成度                       |
 | [產品規格](spec.md)         | 現行產品範圍、完成度、方向與 open decisions            | Module 級實作細節                          |
 | [架構圖](architecture.md)   | 現行 runtime ownership、資料、gate、依賴與 diagnostics | 未落地功能承諾                             |
 | [ADR](adr/)                 | 決策原因、取捨與採用狀態                               | 每次功能進度或操作手冊                     |
@@ -59,8 +57,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Local library、playback、queue、playlists 與 Windows shell integration 已是預設核心。
 - Lyrics canonical timing、provider acquisition、reading、Self-View 與 Overlay 主路徑
   已建立；剩餘重點是人工視覺驗收與操作 polish。
-- `quick`／`general` audio processing 可用；Refined 與 Music Analysis 尚未通過產品
-  activation gate。
+- `quick`／`general` audio processing 與 Music Analysis（BPM／節拍分析）已是產品能力；
+  Refined 與其他高品質可選包仍受 benchmark／dependency gate 限制。
 - OBS Browser Source MVP 已具備三個固定 slot、Gallery、Workbench、Projection Hub
   與 content/state convergence；instance／pack model 仍是後續方向。
 - Windows x64 已有手動啟動的實驗性 Spout2 Lyrics sender；Browser Source 仍是支援基線，正式支援尚待實機相容性驗收。
@@ -68,6 +66,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   advanced flow。
 - Installer、startup trace、diagnostics 與 unsigned updater runtime 已建立；公開簽章
   與連續版本 update acceptance 尚未完成。
+- 使用者回饋（錯誤回報／功能請求／體驗意見／內容問題）共用一套預覽後送出流程已實作；
+  relay 獨立部署，不進封裝安裝檔。
 
 更細的狀態只維護在 [產品規格](spec.md)。
 

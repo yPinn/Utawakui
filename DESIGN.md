@@ -915,7 +915,7 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 
 ### Don't
 
-- **Don't** treat the current dark-blue placeholder palette as the final brand.
+- **Don't** treat the current graphite/washed-teal palette as the final brand.
 - **Don't** use glow, glassmorphism, purple-blue gradients, beige/cream defaults, or decorative effects as the product identity.
 - **Don't** use nested cards as page structure.
 - **Don't** create hover-only controls that fail on touch.
