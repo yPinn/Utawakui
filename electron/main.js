@@ -568,6 +568,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       lyricsAcquisitionService,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
     registerMusicStructureHandlers({
@@ -592,6 +593,7 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
     registerImportHandlers({
@@ -604,6 +606,7 @@ if (!gotSingleInstanceLock) {
       lyricsAcquisitionService,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
     registerSeparationHandlers({
@@ -615,6 +618,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
     registerFeatureDependencyHandlers({

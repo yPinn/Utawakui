@@ -191,7 +191,7 @@ viewer":
   workbench cannot do (accepting a renderer-supplied file path is the ADR's
   own stop condition — see below).
 
-### Batch 6: Domain IPC wrapper and first migrations — started
+### Batch 6: Domain IPC wrapper and first migrations — complete for the listed domains
 
 The implemented helper is `electron/main/ipcErrorBoundary.js`. It must:
 
@@ -204,19 +204,51 @@ The implemented helper is `electron/main/ipcErrorBoundary.js`. It must:
 - prevent duplicate records when a worker and its parent handler describe the
   same failure.
 
-The dependency handler migration is complete. Separation and reading remain the
-next scoped migrations because they already have structured renderer diagnostics:
+Dependency handlers, separation, reading, library, and playlists are migrated
+(2026-09-13):
 
 1. `electron/main/separationHandlers.js`
 2. `electron/main/lyrics/readingHandlers.js`
+3. `electron/main/libraryHandlers.js`
+4. `electron/main/playlistsHandlers.js`
 
-Update their matching renderer composables so `useAppDiagnostics` remains the
-safe recovery/presentation surface and does not submit a duplicate persistent
-event after main has already recorded the operation.
+No renderer composable required any change: `useAppDiagnostics.recordError()`
+already skips re-forwarding to main whenever `context.diagnosticRecorded ===
+true`, and `runDiagnosticIpcOperation` already embeds that flag once main
+successfully records — this suppression was already in place before Batch 6
+resumed, just unexercised until a handler set the flag.
 
-Stop and review public error codes, duplicate rate, and recovery actions before
-migrating output/update, library/playlists/config, import/provider, or the
-remaining lyrics paths.
+Each migration draws the same line: throws that mean "the renderer's view of
+this id/identity/state no longer matches main" (unknown track, stale reading
+identity, "already generating", read-only album) are expected control flow —
+thrown as a direct `createAppError`, outside the wrapper, never recorded.
+Only throws that mean a real operation failed (disk I/O, corrupt sidecar,
+worker crash) go through `runDiagnosticIpcOperation`.
+
+**`electron/main/importHandlers.js` (`import:resolve-source`, `yt:*`) is
+deliberately NOT wrapped in `runDiagnosticIpcOperation`.** It already has a
+bespoke, pre-existing classified-error contract
+(`electron/lib/downloadFailure.js`'s `toClassifiedDownloadError()`, keyed by
+`shared/downloadFailureValues.json`'s `DOWNLOAD_FAILURE_PREFIX` — a different
+sentinel scheme than `UTAWAKUI_APP_ERROR:`) that the renderer parses for a
+richer age-restricted/region-restricted/members-only download-failure UI.
+Wrapping it in the generic boundary would silently replace that classified
+error and break the renderer's UI. Instead, `classifyingFailures`'s
+catch-all fallback branch now also calls `recordSearchDiagnostic` (the same
+helper `classifyingProviderSearchFailures` already used) before rethrowing
+the classified error unchanged — recording gained, public contract
+untouched. Do not "fix" this into a full `runDiagnosticIpcOperation` wrap
+without first migrating the renderer off the classified-error contract.
+
+Provider is otherwise already fully migrated
+(`providerDiscoveryHandlers.js`, `lyricsProviderCorpusReviewHandlers.js`).
+Playback has no invoke-based IPC domain to migrate — `player:state`/
+`player:command` are fire-and-forget `ipcMain.on`/`webContents.send`, not
+`ipcMain.handle`, so `runDiagnosticIpcOperation` does not apply; this is
+structurally not applicable, not deferred.
+
+Remaining: `config`, output/update, and the remaining lyrics paths
+(document/acquisition handlers).
 
 ### Batch 7: Corruption and recovery evidence
 
