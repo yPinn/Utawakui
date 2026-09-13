@@ -116,6 +116,9 @@ const {
 const { registerSpoutOutputHandlers } = require('./main/spoutOutputHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
+const { registerFeedbackHandlers } = require('./main/feedbackHandlers');
+const { createFeedbackClient } = require('./lib/feedback/client');
+const { resolveFeedbackEndpoint } = require('./lib/feedback/constants');
 const {
   registerAudioOutputPermissions,
 } = require('./main/audioOutputPermissions');
@@ -146,6 +149,9 @@ const diagnosticsService = createDiagnosticsService({
 });
 const runtimeDiagnosticsLogger = createRuntimeDiagnosticsLogger({
   service: diagnosticsService,
+});
+const feedbackClient = createFeedbackClient({
+  baseUrl: resolveFeedbackEndpoint(),
 });
 const startupTraceOptions = readStartupTraceOptions(process.argv);
 const startupTraceFilePath = startupTraceOptions.enabled
@@ -469,6 +475,16 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       appVersion: app.getVersion(),
       electronVersion: process.versions.electron,
+    });
+    registerFeedbackHandlers({
+      ipcMain,
+      service: diagnosticsService,
+      client: feedbackClient,
+      dialog,
+      getMainWindow: windowState.getMainWindow,
+      appVersion: app.getVersion(),
+      electronVersion: process.versions.electron,
+      locale: app.getLocale(),
     });
     registerStartupTraceHandler({
       ipcMain,
