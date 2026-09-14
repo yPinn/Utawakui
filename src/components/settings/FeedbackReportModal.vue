@@ -49,7 +49,12 @@ function handleNoticeAction(operation) {
 </script>
 
 <template>
-  <UiModal :open="state.open" title="意見回饋" @close="closeReport">
+  <UiModal
+    :open="state.open"
+    title="意見回饋"
+    size="notice"
+    @close="closeReport"
+  >
     <div class="feedback-report">
       <template v-if="state.step === 'compose'">
         <p class="feedback-report__intro">

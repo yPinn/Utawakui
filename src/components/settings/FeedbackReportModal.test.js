@@ -31,6 +31,13 @@ describe('FeedbackReportModal', () => {
     expect(html).not.toContain('歌曲資訊');
   });
 
+  it('uses the notice modal size for its multi-step compose/preview flow', async () => {
+    useFeedbackReport().openReport({ kind: 'bug' });
+    const html = await renderModal();
+
+    expect(html).toContain('ui-modal--notice');
+  });
+
   it('shows the track label field but not the diagnostics checkbox for a content report', async () => {
     useFeedbackReport().openReport({ kind: 'content' });
     const html = await renderModal();
