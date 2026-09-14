@@ -1,19 +1,18 @@
 import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import FeedbackSettingsBlock from './FeedbackSettingsBlock.vue';
+import FeedbackReportSettingsRow from './FeedbackReportSettingsRow.vue';
 
-async function renderBlock() {
+async function renderRow() {
   return renderToString(
-    createSSRApp({ render: () => h(FeedbackSettingsBlock) }),
+    createSSRApp({ render: () => h(FeedbackReportSettingsRow) }),
   );
 }
 
-describe('FeedbackSettingsBlock', () => {
+describe('FeedbackReportSettingsRow', () => {
   it('shows a single entry point for feedback', async () => {
-    const html = await renderBlock();
+    const html = await renderRow();
 
-    expect(html).toContain('意見回饋');
     expect(html).toContain('回報問題');
   });
 });

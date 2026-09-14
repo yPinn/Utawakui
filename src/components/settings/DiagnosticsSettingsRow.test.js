@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import DiagnosticsSettingsBlock from './DiagnosticsSettingsBlock.vue';
+import DiagnosticsSettingsRow from './DiagnosticsSettingsRow.vue';
 
-async function renderBlock(props = {}) {
+async function renderRow(props = {}) {
   return renderToString(
     createSSRApp({
       render: () =>
-        h(DiagnosticsSettingsBlock, {
+        h(DiagnosticsSettingsRow, {
           recordCount: 0,
           isLoading: false,
           notice: null,
@@ -22,9 +22,9 @@ function buttonTag(html, label) {
   return html.slice(start, html.indexOf('>', start));
 }
 
-describe('DiagnosticsSettingsBlock', () => {
+describe('DiagnosticsSettingsRow', () => {
   it('shows export as the one visible primary action plus an overflow menu trigger', async () => {
-    const html = await renderBlock({ recordCount: 4 });
+    const html = await renderRow({ recordCount: 4 });
 
     expect(html).toContain('錯誤紀錄');
     expect(html).toContain('有紀錄');
@@ -41,7 +41,7 @@ describe('DiagnosticsSettingsBlock', () => {
   });
 
   it('uses a concise two-row empty state', async () => {
-    const html = await renderBlock();
+    const html = await renderRow();
 
     expect(html).toContain('錯誤紀錄');
     expect(html).toContain('無紀錄');
@@ -50,20 +50,20 @@ describe('DiagnosticsSettingsBlock', () => {
   });
 
   it('disables export while a record request is in flight but not when empty', async () => {
-    const emptyHtml = await renderBlock({ recordCount: 0 });
+    const emptyHtml = await renderRow({ recordCount: 0 });
     expect(buttonTag(emptyHtml, '匯出錯誤紀錄')).not.toContain('disabled');
 
-    const loadingHtml = await renderBlock({ recordCount: 4, isLoading: true });
+    const loadingHtml = await renderRow({ recordCount: 4, isLoading: true });
     expect(buttonTag(loadingHtml, '匯出錯誤紀錄')).toContain('disabled');
   });
 
   it('keeps the overflow trigger enabled even while loading or empty', async () => {
-    const loadingHtml = await renderBlock({ recordCount: 0, isLoading: true });
+    const loadingHtml = await renderRow({ recordCount: 0, isLoading: true });
     expect(buttonTag(loadingHtml, '錯誤紀錄選項')).not.toContain('disabled');
   });
 
   it('renders safe notices without exposing diagnostic event details', async () => {
-    const html = await renderBlock({
+    const html = await renderRow({
       notice: {
         severity: 'error',
         title: '無法讀取錯誤紀錄',

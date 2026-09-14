@@ -4,9 +4,9 @@ import { Ellipsis, FolderOpen, RefreshCw, RotateCcw } from '../icons/index.js';
 import AppUpdateSettingsRow from '../components/settings/AppUpdateSettingsRow.vue';
 import AudioOutputSettingsBlock from '../components/settings/AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
-import DiagnosticsSettingsBlock from '../components/settings/DiagnosticsSettingsBlock.vue';
+import DiagnosticsSettingsRow from '../components/settings/DiagnosticsSettingsRow.vue';
 import FeedbackReportModal from '../components/settings/FeedbackReportModal.vue';
-import FeedbackSettingsBlock from '../components/settings/FeedbackSettingsBlock.vue';
+import FeedbackReportSettingsRow from '../components/settings/FeedbackReportSettingsRow.vue';
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
 import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
@@ -436,20 +436,7 @@ onUnmounted(musicAnalysisSettings.dispose);
           @select-device="isCaptureDeviceModalOpen = true"
         />
 
-        <CaptureDeviceModal
-          :open="isCaptureDeviceModalOpen"
-          @close="isCaptureDeviceModalOpen = false"
-        />
-
-        <FeedbackReportModal />
-
-        <FfmpegSourceModal
-          :open="isFfmpegSourceModalOpen"
-          :initial-detection="systemFfmpegDetection"
-          @close="isFfmpegSourceModalOpen = false"
-        />
-
-        <SettingsBlock title="維護">
+        <SettingsBlock title="版本與公告">
           <AppUpdateSettingsRow
             :current-version="
               appInfoState.currentVersion || appUpdateState.currentVersion
@@ -471,7 +458,11 @@ onUnmounted(musicAnalysisSettings.dispose);
             @set-auto-check="setAppUpdateAutoCheck"
           />
 
-          <DiagnosticsSettingsBlock
+          <FeedbackReportSettingsRow @open="feedback.openReport()" />
+        </SettingsBlock>
+
+        <SettingsBlock title="維護">
+          <DiagnosticsSettingsRow
             :record-count="persistentDiagnosticsState.recordCount"
             :is-loading="persistentDiagnosticsState.isLoading"
             :notice="persistentDiagnosticsState.notice"
@@ -484,7 +475,18 @@ onUnmounted(musicAnalysisSettings.dispose);
           />
         </SettingsBlock>
 
-        <FeedbackSettingsBlock @open="feedback.openReport()" />
+        <CaptureDeviceModal
+          :open="isCaptureDeviceModalOpen"
+          @close="isCaptureDeviceModalOpen = false"
+        />
+
+        <FeedbackReportModal />
+
+        <FfmpegSourceModal
+          :open="isFfmpegSourceModalOpen"
+          :initial-detection="systemFfmpegDetection"
+          @close="isFfmpegSourceModalOpen = false"
+        />
       </section>
 
       <section

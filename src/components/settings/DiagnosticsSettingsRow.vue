@@ -78,7 +78,7 @@ function handleMenuSelect(actionId) {
 </script>
 
 <template>
-  <div class="diagnostics-settings-block">
+  <div class="diagnostics-settings-row">
     <SettingsActionRow
       :icon="ListChecks"
       title="錯誤紀錄"
@@ -131,7 +131,7 @@ function handleMenuSelect(actionId) {
 </template>
 
 <style scoped>
-.diagnostics-settings-block {
+.diagnostics-settings-row {
   display: grid;
   gap: var(--ui-space-2);
 }
