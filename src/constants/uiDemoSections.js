@@ -53,9 +53,21 @@ export const UI_DEMO_GROUPS = Object.freeze([
       },
       { key: 'select', title: '選擇欄位', components: ['UiSelect'] },
       {
+        key: 'combobox',
+        title: '可搜尋選單',
+        components: ['UiCombobox'],
+        reviewed: false,
+      },
+      {
         key: 'checkbox',
         title: '核取方塊',
         components: ['UiCheckbox'],
+      },
+      {
+        key: 'switch',
+        title: '切換開關',
+        components: ['UiSwitch'],
+        reviewed: false,
       },
       { key: 'range', title: '範圍控制', components: ['UiRange'] },
       {
@@ -96,6 +108,12 @@ export const UI_DEMO_GROUPS = Object.freeze([
     description: '同一工作區內的分頁切換。',
     sections: [
       { key: 'tabs', title: '分頁導覽', components: ['UiTabs'] },
+      {
+        key: 'breadcrumb',
+        title: '路徑導覽',
+        components: ['UiBreadcrumb'],
+        reviewed: false,
+      },
       {
         key: 'segmented-control',
         title: '分段單選',

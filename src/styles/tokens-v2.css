@@ -285,6 +285,11 @@
   --ui-field-border-hover: var(--ui-color-border-strong);
   --ui-field-border-invalid: var(--ui-color-danger);
   --ui-checkbox-size: var(--ui-space-4);
+  --ui-switch-track-width: var(--ui-space-6);
+  --ui-switch-track-height: var(--ui-space-4);
+  --ui-switch-thumb-size: var(--ui-space-3);
+  --ui-switch-thumb-inset: 2px;
+  --ui-breadcrumb-segment-max-inline-size: 12rem;
   --ui-range-track-size: var(--ui-space-1);
   --ui-range-thumb-size: var(--ui-space-4);
   --ui-progress-track-size: var(--ui-space-2);

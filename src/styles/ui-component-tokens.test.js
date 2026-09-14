@@ -187,6 +187,7 @@ describe('shared UI component token contract', () => {
       'UiRadioGroup.vue',
       'UiSkeleton.vue',
       'UiStatusIcon.vue',
+      'UiSwitch.vue',
     ]) {
       const source = componentFiles.find((file) => file.name === name)?.source;
       expect(source, name).toContain('prefers-reduced-motion: reduce');

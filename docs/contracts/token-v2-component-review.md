@@ -90,19 +90,19 @@ Studio Library／Controlled Dossier 保持 View-level Candidate，不是第二�
 
 ## Shared component inventory and roadmap
 
-`src/components/ui/` 目前有 33 個 shared Vue components。`UiTrackRow`、
+`src/components/ui/` 目前有 36 個 shared Vue components。`UiTrackRow`、
 `UiContextMenu` 與 `UiModal` 雖有 compound anatomy，但播放、選取、menu action、
 確認流程與資料結果由 caller 擁有，因此仍屬無應用邏輯的 shared infra。
 
-| 分類       | 現有 shared infra                                                                                                          |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 版面       | `UiPageHeader`、`UiSeparator`                                                                                              |
-| 表單／輸入 | `UiField`、`UiSearchBox`、`UiTextField`、`UiTextarea`、`UiSelect`、`UiCheckbox`、`UiRange`、`UiColorField`、`UiRadioGroup` |
-| 操作       | `UiButton`、`UiIconButton`、`UiTextButton`、`UiKbd`                                                                        |
-| 導覽／選擇 | `UiTabs`、`UiSegmentedControl`、`UiDisclosure`                                                                             |
-| 狀態／回饋 | `UiChip`、`UiStatusIcon`、`UiHint`、`UiNotice`、`UiProgress`、`UiSkeleton`、`UiNotificationHost`                           |
-| 內容       | `UiMarqueeText`、`UiTrackThumb`、`UiCollageThumb`、`UiTrackRow`                                                            |
-| 浮層       | `UiContextMenu`（`UiActionMenu` 仍是待 adoption 的候選名稱）、`UiModal`、`UiTooltip`、`UiPopover`                          |
+| 分類       | 現有 shared infra                                                                                                                                    |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 版面       | `UiPageHeader`、`UiSeparator`                                                                                                                        |
+| 表單／輸入 | `UiField`、`UiSearchBox`、`UiTextField`、`UiTextarea`、`UiSelect`、`UiCheckbox`、`UiRange`、`UiColorField`、`UiRadioGroup`、`UiSwitch`、`UiCombobox` |
+| 操作       | `UiButton`、`UiIconButton`、`UiTextButton`、`UiKbd`                                                                                                  |
+| 導覽／選擇 | `UiTabs`、`UiSegmentedControl`、`UiDisclosure`、`UiBreadcrumb`                                                                                       |
+| 狀態／回饋 | `UiChip`、`UiStatusIcon`、`UiHint`、`UiNotice`、`UiProgress`、`UiSkeleton`、`UiNotificationHost`                                                     |
+| 內容       | `UiMarqueeText`、`UiTrackThumb`、`UiCollageThumb`、`UiTrackRow`                                                                                      |
+| 浮層       | `UiContextMenu`（`UiActionMenu` 仍是待 adoption 的候選名稱）、`UiModal`、`UiTooltip`、`UiPopover`                                                    |
 
 2026-09-14 owner 核准第一批 shared infra：`UiSeparator`、
 `UiSegmentedControl` 與 `UiColorField` 已建立底層契約與 focused tests，
@@ -135,6 +135,19 @@ gate 承接，不再以此阻止元件檔案存在。第二批七項同樣未修
 `UiTooltip`與`UiPopover`共用`floatingPosition.js`的token length解析、logical
 alignment、RTL與viewport clamp；現行`UiContextMenu`仍保持production truth，等其
 另案migration時才評估是否採用同一helper，第二批不順帶重寫Action Menu契約。
+
+2026-09-14 owner 再核准第三批 development-only shared infra：`UiSwitch`、
+`UiBreadcrumb`與`UiCombobox`沒有現行 production 對應物可比較，因此不走 F8
+Candidate／Current 對照流程，直接以 production `tokens.css`／`tokens-v2.css`
+雙邊 token 建立底層契約與 focused tests。同樣未修改任何現有 production
+consumer、未計入原本 30／30 F8 owner checkpoints，也不代表 active Token v2
+adoption；元件存在不等於任一 View 已採用：
+
+| 第三批 infra   | 契約                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `UiSwitch`     | 骨架比照 `UiCheckbox`：組合 `UiField`（inline）、native `input[type=checkbox][role=switch]`，維持 Space 鍵切換、label 關聯與原生 `disabled`／`required`；track／thumb 是純裝飾層，尺寸 token 全部是 `--ui-space-*` 別名，不新造魔術數字。即時生效的布林設定用途，不取代表單提交語意的 `UiCheckbox`。                                                                                                                                                                                                                                                                                                                                                                                                 |
+| `UiBreadcrumb` | Caller 提供 `items`（含 `id`／`label`／可選 `href`／`disabled`），陣列最後一項自動視為目前位置，渲染為不可互動的 `aria-current="page"`；其餘項目依是否提供 `href` 渲染 native `a` 或 `button`，導覽或 `select` intent 由 caller 擁有。尺寸與互動比照 `UiTextButton`（文字本身是次要目的地），不套用 `UiButton` 的 `--ui-control-height` 區塊 floor。中段省略號收合刻意不做——沒有既有 composable 可重用，超出寬度時與 `UiTabs`／`UiSegmentedControl` 一致改用 native 水平捲動，留待真的有 consumer 需要再補。                                                                                                                                                                                         |
+| `UiCombobox`   | 本專案第一個 `aria-activedescendant`／`role="listbox"` pattern；焦點全程留在 native text input，清單只用 pointer 或 `aria-activedescendant` 互動，不搬真實 DOM focus。範圍刻意收斂：只做「既有清單打字過濾＋選一個值」，不支援自由輸入新值、不做非同步搜尋。骨架比照 `UiSelect`（組合 `UiField`、`defineExpose({ focus })`）；下拉定位重用 `floatingPosition.js` 的 `anchoredFloatingPosition`，寬度對齊與可視高度收窄寫在元件內部，不改動共用 helper；單開協調重用既有 `useContextMenuGate`，與 ContextMenu／ActionMenu 共用同一個全域浮層閘門；清單選項高度重用 `--ui-menu-item-height`，與 `UiContextMenu` 同一個 token。失焦或 Escape 時若目前輸入文字未對應到已選值，還原成上次已提交的 label。 |
 
 外觀自訂的應用邏輯屬 feature composition，而不是 infra：
 

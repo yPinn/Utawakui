@@ -56,7 +56,10 @@ describe('new shared infra catalogue registration', () => {
   it.each([
     ['./DemoFoundations.vue', 'UiKbd', 'kbd'],
     ['./DemoInputs.vue', 'UiRadioGroup', 'radio-group'],
+    ['./DemoInputs.vue', 'UiSwitch', 'switch'],
+    ['./DemoInputs.vue', 'UiCombobox', 'combobox'],
     ['./DemoNavigation.vue', 'UiDisclosure', 'disclosure'],
+    ['./DemoNavigation.vue', 'UiBreadcrumb', 'breadcrumb'],
     ['./DemoFeedback.vue', 'UiSkeleton', 'skeleton'],
     ['./DemoFeedback.vue', 'UiNotificationHost', 'notification-host'],
     ['./DemoOverlays.vue', 'UiTooltip', 'tooltip'],
@@ -80,6 +83,9 @@ describe('new shared infra catalogue registration', () => {
       'UiTooltip',
       'UiPopover',
       'UiNotificationHost',
+      'UiSwitch',
+      'UiBreadcrumb',
+      'UiCombobox',
     ];
     const imports = productionSources(
       new URL('../../', import.meta.url),

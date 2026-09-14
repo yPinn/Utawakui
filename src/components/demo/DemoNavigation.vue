@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import UiBreadcrumb from '../ui/UiBreadcrumb.vue';
 import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
@@ -16,6 +17,11 @@ const sampleModes = [
   { id: 'general', label: '一般' },
   { id: 'unavailable', label: '尚未提供', disabled: true },
 ];
+const sampleTrail = [
+  { id: 'library', label: '曲庫', href: '#library' },
+  { id: 'import', label: '匯入紀錄', href: '#import' },
+  { id: 'candidate', label: '2026-09-10 候選批次' },
+];
 </script>
 
 <template>
@@ -29,6 +35,17 @@ const sampleModes = [
       :reviewed="section.reviewed !== false"
     >
       <DemoTabsAppearance v-if="section.key === 'tabs'" />
+
+      <div
+        v-else-if="section.key === 'breadcrumb'"
+        class="demo-breadcrumb-sample"
+      >
+        <UiBreadcrumb :items="sampleTrail" aria-label="匯入路徑" />
+        <p class="demo-sample-caption">
+          最後一項自動視為目前位置，不可互動；中段收合尚未實作，超出寬度時採
+          native 水平捲動，與 Tabs／Segmented Control 一致。
+        </p>
+      </div>
 
       <div
         v-else-if="section.key === 'segmented-control'"
@@ -66,7 +83,8 @@ const sampleModes = [
   gap: var(--ui-space-4);
 }
 
-.demo-segmented-sample {
+.demo-segmented-sample,
+.demo-breadcrumb-sample {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-3);

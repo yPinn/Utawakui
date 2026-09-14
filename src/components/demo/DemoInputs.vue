@@ -1,7 +1,9 @@
 <script setup>
 import { ref } from 'vue';
 import UiColorField from '../ui/UiColorField.vue';
+import UiCombobox from '../ui/UiCombobox.vue';
 import UiRadioGroup from '../ui/UiRadioGroup.vue';
+import UiSwitch from '../ui/UiSwitch.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 import DemoCheckboxAppearance from './DemoCheckboxAppearance.vue';
 import DemoFieldAppearance from './DemoFieldAppearance.vue';
@@ -17,6 +19,14 @@ defineProps({
 });
 
 const sampleColor = ref('#8296d0');
+const sampleAutoUpdate = ref(true);
+const sampleLyricsSource = ref('netease');
+const sampleLyricsSources = [
+  { value: 'lrclib', label: 'LRCLIB' },
+  { value: 'netease', label: 'NetEase' },
+  { value: 'musixmatch', label: 'Musixmatch（reserve）', disabled: true },
+  { value: 'better-lyrics', label: 'Better Lyrics' },
+];
 const sampleTheme = ref('system');
 const sampleThemes = [
   { id: 'system', label: '跟隨系統' },
@@ -48,7 +58,32 @@ const sampleThemes = [
 
       <DemoSelectAppearance v-else-if="section.key === 'select'" />
 
+      <div v-else-if="section.key === 'combobox'" class="demo-combobox-sample">
+        <UiCombobox
+          id="demo-combobox-lyrics-source"
+          v-model="sampleLyricsSource"
+          label="歌詞來源"
+          placeholder="輸入以過濾來源"
+          :items="sampleLyricsSources"
+        />
+        <p class="demo-sample-caption">
+          從既有清單打字過濾並選一個值；不支援自由輸入新值，也不做非同步搜尋。
+        </p>
+      </div>
+
       <DemoCheckboxAppearance v-else-if="section.key === 'checkbox'" />
+
+      <div v-else-if="section.key === 'switch'" class="demo-switch-sample">
+        <UiSwitch
+          id="demo-switch-auto-update"
+          v-model="sampleAutoUpdate"
+          label="自動更新"
+          hint="關閉時可在設定裡手動檢查更新。"
+        />
+        <p class="demo-sample-caption">
+          即時生效的布林設定；勾選方塊語意的表單提交值仍使用 UiCheckbox。
+        </p>
+      </div>
 
       <DemoRangeAppearance v-else-if="section.key === 'range'" />
 
@@ -96,7 +131,9 @@ const sampleThemes = [
   gap: var(--ui-space-3);
 }
 
-.demo-radio-sample {
+.demo-radio-sample,
+.demo-switch-sample,
+.demo-combobox-sample {
   width: min(28rem, 100%);
   display: grid;
   gap: var(--ui-space-3);

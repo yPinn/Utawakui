@@ -169,7 +169,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(254);
+    expect(uniqueNames.size).toBe(259);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
@@ -258,6 +258,7 @@ describe('Studio Library workspace prototype isolation', () => {
         '--ui-focus-offset-inset',
         '--ui-focus-width',
         '--ui-row-active-shadow',
+        '--ui-switch-thumb-inset',
       ].sort(),
     );
   });
