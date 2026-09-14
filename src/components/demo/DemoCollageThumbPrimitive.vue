@@ -2,6 +2,7 @@
 import { Play } from '../../icons/index.js';
 import trackThumbCropSquare from '../../assets/demo/track-thumb/track-thumb-crop-square.jpg';
 import trackThumbCropWide from '../../assets/demo/track-thumb/track-thumb-crop-wide.jpg';
+import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';
 
 defineProps({
   layer: { type: Object, required: true },
@@ -75,7 +76,7 @@ const IMAGE_CASES = [
     currentLabel: '現行成員壞圖維持壞圖位置',
     tracks: BASE_TRACKS.map((track, index) =>
       index === 0
-        ? { ...track, thumbnailUrl: 'data:image/gif;base64,broken' }
+        ? { ...track, thumbnailUrl: BROKEN_IMAGE_FIXTURE_URL }
         : track,
     ),
   },

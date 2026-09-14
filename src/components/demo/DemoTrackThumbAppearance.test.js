@@ -294,6 +294,26 @@ describe('DemoTrackThumbAppearance', () => {
     app.unmount();
   });
 
+  it('uses a shared same-origin decode-failure fixture without violating the renderer CSP', async () => {
+    const fixtureUrl = new URL('./demoImageFixtures.js', import.meta.url);
+
+    expect(existsSync(fixtureUrl)).toBe(true);
+    const fixtureSource = existsSync(fixtureUrl)
+      ? readFileSync(fixtureUrl, 'utf8')
+      : '';
+    expect(fixtureSource).toContain(
+      "export const BROKEN_IMAGE_FIXTURE_URL = './index.html';",
+    );
+    expect(primitiveSource).toContain(
+      "import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';",
+    );
+    expect(primitiveSource).toContain('thumbnailUrl: BROKEN_IMAGE_FIXTURE_URL');
+    expect(primitiveSource).not.toContain('data:image/');
+
+    const html = await renderToString(createSSRApp(DemoTrackThumbAppearance));
+    expect(html.match(/src="\.\/index\.html"/gu)).toHaveLength(2);
+  });
+
   it('covers image, initial, failed image, empty slot, and multilingual identity states', async () => {
     const html = await renderToString(createSSRApp(DemoTrackThumbAppearance));
 

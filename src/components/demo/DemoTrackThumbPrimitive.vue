@@ -1,6 +1,7 @@
 <script setup>
 import trackThumbCropSquare from '../../assets/demo/track-thumb/track-thumb-crop-square.jpg';
 import trackThumbCropWide from '../../assets/demo/track-thumb/track-thumb-crop-wide.jpg';
+import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';
 import {
   getTrackThumbFallbackArtwork,
   TRACK_THUMB_FALLBACK_ARTWORK,
@@ -204,7 +205,7 @@ const FALLBACK_EXAMPLES = TRACK_THUMB_FALLBACK_ARTWORK.map((_, index) => {
             :track="{
               id: 'broken',
               title: '失敗回退',
-              thumbnailUrl: 'data:image/gif;base64,broken',
+              thumbnailUrl: BROKEN_IMAGE_FIXTURE_URL,
             }"
             :size="48"
           />

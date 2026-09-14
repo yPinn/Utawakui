@@ -232,6 +232,17 @@ describe('DemoCollageThumbAppearance', () => {
     app.unmount();
   });
 
+  it('uses the CSP-safe shared decode-failure fixture for the broken member specimen', async () => {
+    expect(primitiveSource).toContain(
+      "import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';",
+    );
+    expect(primitiveSource).toContain('thumbnailUrl: BROKEN_IMAGE_FIXTURE_URL');
+    expect(primitiveSource).not.toContain('data:image/');
+
+    const html = await renderToString(createSSRApp(DemoCollageThumbAppearance));
+    expect(html.match(/src="\.\/index\.html"/gu)).toHaveLength(2);
+  });
+
   it('keeps the non-collage fallback to one member image, provided fallback, or empty state', async () => {
     const mounted = mount(DemoCandidateCollageThumb, {
       tracks: [TRACKS[0], TRACKS[1]],
