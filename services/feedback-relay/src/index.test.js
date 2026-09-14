@@ -1,13 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MAX_PAYLOAD_BYTES } from './constants.js';
 import worker from './index.js';
 
-function createRequest({ method = 'POST', body, token, contentLength } = {}) {
+const CLIENT_MARKER = 'utawakui-desktop-feedback-v1';
+
+function createRequest({
+  method = 'POST',
+  body,
+  marker = CLIENT_MARKER,
+  contentLength,
+  url = 'https://relay.example.test/feedback/submit',
+} = {}) {
   const headers = new Headers();
-  if (token !== undefined) headers.set('X-Utawakui-Feedback-Token', token);
+  headers.set('Content-Type', 'application/json');
+  if (marker !== null) headers.set('X-Utawakui-Client', marker);
   if (contentLength !== undefined) {
     headers.set('content-length', String(contentLength));
   }
-  return new Request('https://relay.example.test/submit', {
+  return new Request(url, {
     method,
     headers,
     body: body === undefined ? undefined : JSON.stringify(body),
@@ -37,45 +47,121 @@ function createKv() {
   };
 }
 
+function createEnv(overrides = {}) {
+  return {
+    CLIENT_MARKER,
+    DISCORD_WEBHOOK_URL: 'https://discord.example/webhook',
+    RATE_LIMIT_KV: createKv(),
+    ...overrides,
+  };
+}
+
 afterEach(() => {
   vi.unstubAllGlobals();
 });
 
 describe('feedback relay worker', () => {
+  it('rejects every path except the canonical submission path', async () => {
+    const response = await worker.fetch(
+      createRequest({
+        body: basePayload(),
+        url: 'https://relay.example.test/submit',
+      }),
+      createEnv(),
+    );
+    expect(response.status).toBe(404);
+  });
+
   it('rejects non-POST methods', async () => {
     const response = await worker.fetch(createRequest({ method: 'GET' }), {});
     expect(response.status).toBe(405);
+    expect(response.headers.get('allow')).toBe('POST');
   });
 
-  it('rejects a mismatched client token', async () => {
+  it('fails closed when the public client marker is not configured', async () => {
     const response = await worker.fetch(
-      createRequest({ body: basePayload(), token: 'wrong' }),
-      { CLIENT_TOKEN: 'shh' },
+      createRequest({ body: basePayload() }),
+      createEnv({ CLIENT_MARKER: undefined }),
     );
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(503);
+  });
+
+  it('fails closed when the rate-limit binding is missing', async () => {
+    const response = await worker.fetch(
+      createRequest({ body: basePayload() }),
+      createEnv({ RATE_LIMIT_KV: undefined }),
+    );
+    expect(response.status).toBe(503);
+  });
+
+  it.each([null, 'wrong'])(
+    'rejects a missing or mismatched public client marker',
+    async (marker) => {
+      const response = await worker.fetch(
+        createRequest({ body: basePayload(), marker }),
+        createEnv(),
+      );
+      expect(response.status).toBe(403);
+    },
+  );
+
+  it('returns non-cacheable JSON responses with sniffing disabled', async () => {
+    const response = await worker.fetch(
+      createRequest({ body: basePayload(), marker: 'wrong' }),
+      createEnv(),
+    );
+    expect(response.headers.get('content-type')).toBe(
+      'application/json; charset=utf-8',
+    );
+    expect(response.headers.get('cache-control')).toBe('no-store');
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+  });
+
+  it('rejects a non-JSON request body before parsing it', async () => {
+    const request = createRequest({ body: basePayload() });
+    request.headers.set('Content-Type', 'text/plain');
+    const response = await worker.fetch(request, createEnv());
+    expect(response.status).toBe(415);
   });
 
   it('rejects a payload larger than the declared content-length ceiling', async () => {
     const response = await worker.fetch(
       createRequest({ body: basePayload(), contentLength: 10_000_000 }),
-      {},
+      createEnv(),
     );
     expect(response.status).toBe(413);
   });
 
-  it('rejects malformed JSON', async () => {
-    const request = new Request('https://relay.example.test/submit', {
+  it('bounds the streamed body even when content-length is absent', async () => {
+    const request = new Request('https://relay.example.test/feedback/submit', {
       method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Utawakui-Client': CLIENT_MARKER,
+      },
+      body: 'x'.repeat(MAX_PAYLOAD_BYTES + 1),
+    });
+    const response = await worker.fetch(request, createEnv());
+    expect(response.status).toBe(413);
+  });
+
+  it('rejects malformed JSON', async () => {
+    const request = new Request('https://relay.example.test/feedback/submit', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Utawakui-Client': CLIENT_MARKER,
+      },
       body: 'not json',
     });
-    const response = await worker.fetch(request, {});
+    const response = await worker.fetch(request, createEnv());
     expect(response.status).toBe(400);
   });
 
   it('rejects a payload that fails validation', async () => {
     const response = await worker.fetch(
       createRequest({ body: basePayload({ kind: 'nonsense' }) }),
-      {},
+      createEnv(),
     );
     expect(response.status).toBe(400);
     expect(await response.json()).toEqual({ error: 'invalid-kind' });
@@ -84,14 +170,15 @@ describe('feedback relay worker', () => {
   it('returns relay-not-configured when no webhook URL is bound', async () => {
     const response = await worker.fetch(
       createRequest({ body: basePayload() }),
-      {},
+      createEnv({ DISCORD_WEBHOOK_URL: undefined }),
     );
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(503);
   });
 
   it('rate-limits repeated requests from the same client', async () => {
     const kv = createKv();
     const env = {
+      CLIENT_MARKER,
       DISCORD_WEBHOOK_URL: 'https://discord.example/webhook',
       RATE_LIMIT_KV: kv,
     };
@@ -119,7 +206,7 @@ describe('feedback relay worker', () => {
       .fn()
       .mockResolvedValue(new Response(null, { status: 204 }));
     vi.stubGlobal('fetch', fetchImpl);
-    const env = { DISCORD_WEBHOOK_URL: 'https://discord.example/webhook' };
+    const env = createEnv();
 
     const response = await worker.fetch(
       createRequest({ body: basePayload() }),
@@ -137,7 +224,7 @@ describe('feedback relay worker', () => {
       'fetch',
       vi.fn().mockResolvedValue(new Response(null, { status: 500 })),
     );
-    const env = { DISCORD_WEBHOOK_URL: 'https://discord.example/webhook' };
+    const env = createEnv();
 
     const response = await worker.fetch(
       createRequest({ body: basePayload() }),
@@ -145,5 +232,17 @@ describe('feedback relay worker', () => {
     );
 
     expect(response.status).toBe(502);
+  });
+
+  it('returns a bounded service error when the KV operation fails', async () => {
+    const kv = createKv();
+    kv.get.mockRejectedValue(new Error('private storage detail'));
+    const response = await worker.fetch(
+      createRequest({ body: basePayload() }),
+      createEnv({ RATE_LIMIT_KV: kv }),
+    );
+
+    expect(response.status).toBe(503);
+    expect(await response.json()).toEqual({ error: 'service-unavailable' });
   });
 });

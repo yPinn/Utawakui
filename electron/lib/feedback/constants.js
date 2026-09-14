@@ -36,7 +36,15 @@ const DIAGNOSTICS_EVENT_LIMIT = 50;
 // Hard ceiling on the serialized payload sent to the relay.
 const MAX_PAYLOAD_BYTES = 256 * 1024;
 
-const DEFAULT_FEEDBACK_ENDPOINT = 'https://feedback.utawakui.app/submit';
+const DEFAULT_FEEDBACK_ENDPOINT =
+  'https://api.utawakui.llazypilot.com/feedback/submit';
+
+// This marker is deliberately public: it is embedded in every distributed
+// desktop build and mirrored in the relay's committed Wrangler config. It is
+// only a versioned protocol marker that rejects generic drive-by POSTs; the
+// relay's mandatory KV rate limit is the actual abuse control.
+const FEEDBACK_CLIENT_MARKER_HEADER = 'X-Utawakui-Client';
+const FEEDBACK_CLIENT_MARKER = 'utawakui-desktop-feedback-v1';
 
 function resolveFeedbackEndpoint(env = process.env) {
   const override = env.UTAWAKUI_FEEDBACK_ENDPOINT;
@@ -57,5 +65,7 @@ module.exports = {
   DIAGNOSTICS_EVENT_LIMIT,
   MAX_PAYLOAD_BYTES,
   DEFAULT_FEEDBACK_ENDPOINT,
+  FEEDBACK_CLIENT_MARKER_HEADER,
+  FEEDBACK_CLIENT_MARKER,
   resolveFeedbackEndpoint,
 };

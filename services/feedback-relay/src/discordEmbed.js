@@ -1,3 +1,6 @@
+import { MAX_ENVIRONMENT_VALUE_LENGTH } from './constants.js';
+import { formatFeedbackReportReference } from '../../../shared/feedbackReference.mjs';
+
 // Discord embed limits (title 256, description 4096, field value 1024,
 // ≤25 fields, ≤6000 total characters): the app already bounds description
 // to 2000 chars, so these truncations are a defensive ceiling, not the
@@ -9,9 +12,94 @@ const KIND_PRESENTATION = Object.freeze({
   content: { label: '🎵 內容／歌詞來源問題', color: 0xe0a44d },
 });
 
+const PLATFORM_LABELS = Object.freeze({
+  win32: 'Windows',
+  darwin: 'macOS',
+  linux: 'Linux',
+});
+
+const UNKNOWN_VALUE = '未知';
+const ZERO_WIDTH_SPACE = String.fromCodePoint(0x200b);
+const BARE_URL_PATTERN = /https?:\/\/[^\s<>"']+/giu;
+const TRAILING_URL_PUNCTUATION = /[.,!?;:\]}]+$/u;
+
 function truncate(value, maxLength) {
   if (typeof value !== 'string') return '';
-  return value.length > maxLength ? `${value.slice(0, maxLength - 1)}…` : value;
+  if (value.length <= maxLength) return value;
+  let prefix = value.slice(0, maxLength - 1);
+  const trailingBackslashes = prefix.match(/\\+$/u)?.[0].length ?? 0;
+  if (trailingBackslashes % 2 === 1) prefix = prefix.slice(0, -1);
+  return `${prefix}…`;
+}
+
+function escapeDiscordMarkdownSegment(value) {
+  return value
+    .replace(/\\/gu, '\\\\')
+    .replace(/([`*_~|[\]()])/gu, '\\$1')
+    .replace(/(^|\n)([ \t]*)([>#])/gu, '$1$2\\$3')
+    .replace(/(^|\n)([ \t]*)-(?=#\s)/gu, '$1$2\\-')
+    .replace(/(^|\n)([ \t]*)([-+])(?=\s)/gu, '$1$2\\$3')
+    .replace(/(^|\n)([ \t]*)(\d+)\.(?=\s)/gu, '$1$2$3\\.')
+    .replace(/@(everyone|here)/giu, `@${ZERO_WIDTH_SPACE}$1`)
+    .replace(/<(?=[@#][!&]?\d+>)/gu, '\\<');
+}
+
+function getBareUrlTokenLength(candidate) {
+  let parenthesisDepth = 0;
+  let end = candidate.length;
+  for (let index = 0; index < candidate.length; index += 1) {
+    if (candidate[index] === '(') {
+      parenthesisDepth += 1;
+    } else if (candidate[index] === ')') {
+      if (parenthesisDepth === 0) {
+        end = index;
+        break;
+      }
+      parenthesisDepth -= 1;
+    }
+  }
+
+  const token = candidate.slice(0, end).replace(TRAILING_URL_PUNCTUATION, '');
+  return token.length;
+}
+
+// Keep pasted source URLs useful while rendering every other user-authored
+// character literally. Escaping the brackets around a masked link exposes
+// its actual URL instead of allowing a report to impersonate trusted copy.
+function escapeDiscordMarkdown(value) {
+  if (typeof value !== 'string') return '';
+  let escaped = '';
+  let cursor = 0;
+  for (const match of value.matchAll(BARE_URL_PATTERN)) {
+    const matchIndex = match.index ?? cursor;
+    const tokenLength = getBareUrlTokenLength(match[0]);
+    escaped += escapeDiscordMarkdownSegment(value.slice(cursor, matchIndex));
+    escaped += match[0].slice(0, tokenLength);
+    escaped += escapeDiscordMarkdownSegment(match[0].slice(tokenLength));
+    cursor = matchIndex + match[0].length;
+  }
+  return escaped + escapeDiscordMarkdownSegment(value.slice(cursor));
+}
+
+function escapeAndTruncate(value, maxLength) {
+  return truncate(escapeDiscordMarkdown(value), maxLength);
+}
+
+function formatEnvironmentValue(value) {
+  if (typeof value !== 'string') return UNKNOWN_VALUE;
+  const normalized = value.replace(/\s+/gu, ' ').trim();
+  if (!normalized) return UNKNOWN_VALUE;
+  return escapeAndTruncate(normalized, MAX_ENVIRONMENT_VALUE_LENGTH);
+}
+
+function formatPlatform(value) {
+  if (typeof value !== 'string') return UNKNOWN_VALUE;
+  const normalized = value.replace(/\s+/gu, ' ').trim();
+  if (!normalized) return UNKNOWN_VALUE;
+  return escapeAndTruncate(
+    PLATFORM_LABELS[normalized] ?? normalized,
+    MAX_ENVIRONMENT_VALUE_LENGTH,
+  );
 }
 
 // One embed per report, one Discord webhook body per embed — no per-kind
@@ -24,29 +112,14 @@ export function buildDiscordWebhookBody(payload) {
   };
   const environment = payload.environment || {};
 
-  const fields = [
-    { name: '回報編號', value: payload.reportId, inline: true },
-    { name: 'App 版本', value: environment.appVersion || '未知', inline: true },
-    {
-      name: 'Electron',
-      value: environment.electronVersion || '未知',
-      inline: true,
-    },
-    { name: '平台', value: environment.platform || '未知', inline: true },
-    { name: '語言', value: environment.locale || '未知', inline: true },
-  ];
-
-  if (payload.contact) {
-    fields.push({
-      name: '聯絡方式',
-      value: truncate(payload.contact, 1024),
-      inline: true,
-    });
-  }
+  // Discord owns the final width of inline fields. Variable user-authored
+  // content stays full-width; only the fixed pair of compact technical
+  // groups is eligible for a stable two-column row.
+  const fields = [];
   if (payload.trackLabel) {
     fields.push({
       name: '歌曲資訊',
-      value: truncate(payload.trackLabel, 1024),
+      value: escapeAndTruncate(payload.trackLabel, 1024),
       inline: false,
     });
   }
@@ -66,16 +139,40 @@ export function buildDiscordWebhookBody(payload) {
     });
   }
 
+  if (payload.contact) {
+    fields.push({
+      name: '聯絡方式',
+      value: escapeAndTruncate(payload.contact, 1024),
+      inline: false,
+    });
+  }
+
+  fields.push(
+    {
+      name: '版本',
+      value: `Utawakui ${formatEnvironmentValue(environment.appVersion)}\nElectron ${formatEnvironmentValue(environment.electronVersion)}`,
+      inline: true,
+    },
+    {
+      name: '環境',
+      value: `${formatPlatform(environment.platform)}\n${formatEnvironmentValue(environment.locale)}`,
+      inline: true,
+    },
+  );
+
   const embed = {
     title: truncate(presentation.label, 256),
     color: presentation.color,
-    description: truncate(payload.description, 3500),
+    description: escapeAndTruncate(payload.description, 3500),
     fields,
+    footer: {
+      text: `回報碼 · ${formatFeedbackReportReference(payload.reportId)}`,
+    },
     timestamp: payload.createdAt,
   };
 
   return {
-    payloadJson: { embeds: [embed] },
+    payloadJson: { allowed_mentions: { parse: [] }, embeds: [embed] },
     diagnosticsAttachment,
   };
 }

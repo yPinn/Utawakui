@@ -84,15 +84,14 @@ describe('FeedbackReportModal', () => {
     expect(html).not.toContain('{');
   });
 
-  it('renders the result step with the report id after a successful submission', async () => {
+  it('renders a compact report reference while retaining the full submitted id', async () => {
+    const reportId = 'aeb6ab26-f40b-4671-a3bc-996fd802503f';
     const feedback = useFeedbackReport();
     feedback.openReport({ kind: 'bug' });
     feedback.updateDraft({ description: '整首歌卡住' });
     vi.stubGlobal('window', {
       Utawakui: {
-        submitFeedback: vi
-          .fn()
-          .mockResolvedValue({ ok: true, reportId: 'r-42' }),
+        submitFeedback: vi.fn().mockResolvedValue({ ok: true, reportId }),
       },
     });
 
@@ -100,6 +99,8 @@ describe('FeedbackReportModal', () => {
     const html = await renderModal();
 
     expect(html).toContain('已收到你的回饋');
-    expect(html).toContain('r-42');
+    expect(html).toContain('回報碼：AEB6-AB26-F40B');
+    expect(html).not.toContain(reportId);
+    expect(feedback.state.reportId).toBe(reportId);
   });
 });

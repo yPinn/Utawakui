@@ -366,7 +366,11 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 同一個 `openReport()`，不建立第二份草稿狀態。CSP 沒有 `connect-src`，所以
 上傳請求只能由 main 發出；relay（`services/feedback-relay/`）獨立部署，不
 在 `electron-builder.yml` 的封裝範圍內，也不受任何 feature gate 保護——
-每次送出前的強制預覽才是實際防護。決策細節見
+每次送出前的強制預覽才是實際防護。Production client 固定送到
+`https://api.utawakui.llazypilot.com/feedback/submit`，並帶公開、版本化且不視為
+驗證秘密的 client marker；relay 只接受該 exact POST route，對 streamed body
+設上限，且在 KV binding 缺失或操作失敗時 fail closed。Wrangler 關閉平行的
+`workers.dev` route，Custom Domain 是唯一 production origin。決策細節見
 [ADR 0016](adr/0016-user-feedback-intake.md)。
 
 ## Packaging Boundary

@@ -66,22 +66,36 @@ backend of its own; this is the app's first user-initiated network upload.
 - `services/feedback-relay/` is a Cloudflare Worker deployed independently of
   the app — `electron-builder.yml`'s `files:` allowlist never references it,
   so it cannot end up in a packaged build regardless of this decision. It
+  accepts only `POST /feedback/submit`, bounds the streamed request body,
   re-validates the payload from scratch (never trusts the app client),
-  rate-limits by IP through a KV counter, and forwards the report to Discord
-  as a formatted embed, attaching the diagnostics bundle as a file when
-  present.
-- The `X-Utawakui-Feedback-Token` header the app sends is documented, not
-  assumed secret: any string embedded in a publicly distributed desktop app
-  can be extracted by anyone who decompiles it. It only raises the bar past
-  drive-by scanners. The actual abuse defense is the relay's own rate
-  limiter, which can be tightened or the token rotated at any time without an
-  app update.
+  rate-limits by IP through a mandatory KV counter, and forwards the report
+  to Discord as a formatted embed with mentions disabled. User-authored text
+  is escaped at this final presentation boundary so Discord renders Markdown
+  controls literally while leaving bare source URLs usable; this does not
+  alter the app preview or the payload retained in an opted-in diagnostics
+  attachment. The relay attaches that bundle only when present, and verifies
+  its event count against the same 50-event ceiling as the app. Missing or
+  failed KV access is a service failure; the relay never disables rate
+  limiting and continues delivery anyway.
+- The `X-Utawakui-Client` header the app sends contains the committed,
+  versioned `utawakui-desktop-feedback-v1` marker. It is explicitly public,
+  not authentication: any string embedded in a distributed desktop app can
+  be extracted by anyone who decompiles it. It only raises the bar past
+  drive-by scanners. The actual abuse defense is the relay's mandatory rate
+  limiter; changing the marker contract requires compatible app and relay
+  versions rather than secret rotation.
 - `environment.locale` (from `app.getLocale()`) is captured on every report
   even though the app has no i18n today, because language is already part of
   a report's usage context and will matter once i18n exists — see
   `docs/spec.md` §3. Adding it now cost one field, not a schema migration;
   `payload.schemaVersion` exists for the case where a field's _meaning_ ever
   needs to change instead.
+- `reportId` remains the complete main-generated UUID throughout the payload,
+  relay response, renderer state, and diagnostics attachment filename. Human
+  surfaces do not display all 36 characters: the App result state and Discord
+  footer use the same grouped uppercase prefix (`XXXX-XXXX-XXXX`, the first
+  12 UUID hex characters). This preserves a searchable 48-bit reference for
+  conversation without weakening or changing the canonical identifier.
 
 ## Rejected for this phase
 
@@ -98,15 +112,19 @@ backend of its own; this is the app's first user-initiated network upload.
   low-traffic personal relay backing abuse mitigation, not a hard cap — see
   `services/feedback-relay/README.md`. Worth revisiting only if real abuse
   shows up.
-- Per-install signed tokens in place of the one shared `CLIENT_TOKEN` —
+- Per-install signed tokens in place of the public `CLIENT_MARKER` —
   deferred; it would need its own provisioning flow and buys nothing while
   there is no evidence of abuse.
 
 ## Consequences
 
-- The relay must actually be deployed and configured (KV namespace,
-  `CLIENT_TOKEN`, `DISCORD_WEBHOOK_URL` secrets) before `feedback:submit` can
-  succeed. Until then every submission fails over to
+- The relay must actually be deployed at
+  `https://api.utawakui.llazypilot.com/feedback/submit` with its KV namespace
+  and `DISCORD_WEBHOOK_URL` secret before `feedback:submit` can succeed. The
+  public `CLIENT_MARKER` remains ordinary committed Worker configuration, not
+  a secret. The Wrangler contract disables the parallel `workers.dev` route
+  and owns the Worker Custom Domain so production has one canonical origin.
+  Until deployment every submission fails over to
   `feedback:export-fallback`'s local file save, which the user must send to
   the developer themselves.
 - Splitting a feedback kind onto its own Discord channel is a relay-only

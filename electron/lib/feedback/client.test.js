@@ -5,6 +5,10 @@ import { buildFeedbackUserAgent, createFeedbackClient } from './client.js';
 
 const require = createRequire(import.meta.url);
 const packageMetadata = require('../../../package.json');
+const {
+  FEEDBACK_CLIENT_MARKER,
+  FEEDBACK_CLIENT_MARKER_HEADER,
+} = require('./constants.js');
 
 const samplePayload = { reportId: 'report-1', kind: 'bug', description: 'x' };
 
@@ -27,7 +31,6 @@ describe('createFeedbackClient', () => {
     const client = createFeedbackClient({
       fetch,
       baseUrl: 'https://relay.example.test/submit',
-      clientToken: 'shh',
     });
 
     await expect(client.submit(samplePayload)).resolves.toEqual({
@@ -42,7 +45,26 @@ describe('createFeedbackClient', () => {
     expect(init.redirect).toBe('error');
     expect(init.body).toBe(JSON.stringify(samplePayload));
     expect(init.headers['Content-Type']).toBe('application/json');
-    expect(init.headers['X-Utawakui-Feedback-Token']).toBe('shh');
+    expect(init.headers[FEEDBACK_CLIENT_MARKER_HEADER]).toBe(
+      FEEDBACK_CLIENT_MARKER,
+    );
+  });
+
+  it('lets an explicit marker replace the production marker for isolated staging', async () => {
+    const fetch = vi
+      .fn()
+      .mockResolvedValue(new Response('{}', { status: 200 }));
+    const client = createFeedbackClient({
+      fetch,
+      baseUrl: 'https://relay.example.test/submit',
+      clientMarker: 'staging-marker',
+    });
+
+    await client.submit(samplePayload);
+
+    const [, init] = fetch.mock.calls[0];
+    expect(init.headers[FEEDBACK_CLIENT_MARKER_HEADER]).toBe('staging-marker');
+    expect(init.headers).not.toHaveProperty('X-Utawakui-Feedback-Token');
   });
 
   it('falls back to the payload reportId when the relay omits one', async () => {

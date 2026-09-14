@@ -5,18 +5,24 @@
 name = "utawakui-feedback-relay"
 main = "src/index.js"
 compatibility_date = "2026-01-01"
+workers_dev = false
 
-# Create with: npx wrangler kv namespace create RATE_LIMIT_KV
-# Then paste the returned id below. Omitting this binding disables rate
-# limiting entirely (index.js treats a missing env.RATE_LIMIT_KV as "skip"),
-# so do not deploy without it.
-kv_namespaces = [
-  { binding = "RATE_LIMIT_KV", id = "REPLACE_WITH_KV_NAMESPACE_ID" }
+# This hostname must not have a pre-existing DNS record. Cloudflare creates
+# and certificates the Worker Custom Domain during deploy.
+routes = [
+  { pattern = "api.utawakui.llazypilot.com", custom_domain = true }
 ]
 
-# Secrets — set with `npx wrangler secret put <NAME>`, never committed here:
-#   CLIENT_TOKEN         shared token echoed by the app's X-Utawakui-Feedback-Token
-#                         header; a speed bump against drive-by scanners, not a
-#                         real secret (see README.md).
-#   DISCORD_WEBHOOK_URL   the Discord webhook every report is currently routed
-#                         to (src/index.js's KIND_WEBHOOK_ENV table).
+# Production rate-limit namespace provisioned in Cloudflare. The Worker fails
+# closed while this binding is missing or unavailable.
+kv_namespaces = [
+  { binding = "RATE_LIMIT_KV", id = "9511a39e34b74370841c6a05a0e06713" }
+]
+
+# Public protocol marker, deliberately committed and embedded in the desktop
+# app. This is a scanner speed bump, not authentication or a secret.
+[vars]
+CLIENT_MARKER = "utawakui-desktop-feedback-v1"
+
+# The only runtime secret is set interactively after the first deployment:
+#   npx --yes wrangler@4.131.2 secret put DISCORD_WEBHOOK_URL

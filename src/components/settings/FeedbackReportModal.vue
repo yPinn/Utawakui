@@ -4,6 +4,8 @@
 // props, since useFeedbackReport() is a module singleton any entry point
 // (an error notice's action, this general Settings row) can already open
 // without prop drilling.
+import { computed } from 'vue';
+import { formatFeedbackReportReference } from '../../../shared/feedbackReference.mjs';
 import {
   DIAGNOSTICS_ALLOWED_KINDS,
   FEEDBACK_KIND_OPTIONS,
@@ -30,6 +32,10 @@ const {
   submitReport,
   exportFallback,
 } = useFeedbackReport();
+
+const reportReference = computed(() =>
+  formatFeedbackReportReference(state.reportId),
+);
 
 function kindLabel(kind) {
   return (
@@ -212,8 +218,8 @@ function handleNoticeAction(operation) {
 
       <template v-else-if="state.step === 'result'">
         <p class="feedback-report__intro">已收到你的回饋，謝謝！</p>
-        <p v-if="state.reportId" class="feedback-report__report-id">
-          回報編號：{{ state.reportId }}
+        <p v-if="reportReference" class="feedback-report__report-id">
+          回報碼：{{ reportReference }}
         </p>
 
         <div class="feedback-report__actions">

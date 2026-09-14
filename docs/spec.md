@@ -141,9 +141,17 @@ adapters 評估，目前不做 OBS native plugin。
 - 不受任何 feature gate 保護；每次送出前的強制預覽才是實際防護，理由見
   [ADR 0016](adr/0016-user-feedback-intake.md)。
 - 送出對象是獨立部署的 relay（Cloudflare Worker），不隨 App 打包；relay 端會
-  重新驗證整個 payload，並依 IP 做速率限制後轉發成 Discord embed。
+  在 `POST https://api.utawakui.llazypilot.com/feedback/submit` 重新驗證整個
+  payload，並依 IP 做必要的 KV 速率限制後轉發成 Discord embed；KV 缺失或
+  故障時 fail closed，不會略過限制繼續送出。Discord presentation 會把使用者
+  文字中的 Markdown 控制符號轉為 literal 顯示、保留 bare source URL，並停用
+  mention；App 內預覽與原始 payload 不因此被改寫。
 - `environment` 固定包含 `appVersion`／`electronVersion`／`platform`／`locale`；
   即使目前沒有 i18n，語言仍先納入使用情境以備未來需要。
+- 完整 `reportId` 維持 main-generated UUID，用於 payload、relay response、renderer
+  state 與 diagnostics filename；App 成功畫面與 Discord footer 只顯示其前
+  12 個 hex 字元組成的 `XXXX-XXXX-XXXX` 回報碼，作為人類可讀、
+  可搜尋的對照值。
 
 詳細 runtime ownership、依賴切分與 diagnostics flow 見
 [architecture.md](architecture.md)。

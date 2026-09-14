@@ -1,6 +1,10 @@
 'use strict';
 
 const packageMetadata = require('../../../package.json');
+const {
+  FEEDBACK_CLIENT_MARKER,
+  FEEDBACK_CLIENT_MARKER_HEADER,
+} = require('./constants');
 // readBoundedText is a generic streamed-response reader with no lrclib-
 // specific behavior; netease/client.js already imports it the same way
 // rather than duplicating the streaming logic.
@@ -45,7 +49,7 @@ function createFeedbackClient(options = {}) {
   const maxResponseBytes =
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;
   const userAgent = options.userAgent || buildFeedbackUserAgent();
-  const clientToken = options.clientToken;
+  const clientMarker = options.clientMarker ?? FEEDBACK_CLIENT_MARKER;
 
   async function submit(payload, requestOptions = {}) {
     if (typeof fetchFn !== 'function') {
@@ -67,7 +71,7 @@ function createFeedbackClient(options = {}) {
         headers: {
           'Content-Type': 'application/json',
           'User-Agent': userAgent,
-          ...(clientToken ? { 'X-Utawakui-Feedback-Token': clientToken } : {}),
+          [FEEDBACK_CLIENT_MARKER_HEADER]: clientMarker,
         },
         body: JSON.stringify(payload),
         redirect: 'error',
