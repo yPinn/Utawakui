@@ -6,8 +6,8 @@ to the F7 View candidate. Current status and the next Select phase are maintaine
 in [Token v2 Component Review](../contracts/token-v2-component-review.md).
 
 Status: implemented foundation candidate; a development-only real-library Setlist
-slice is active, while visible acceptance and production page migration remain
-pending.
+slice now supports Candidate selection, playback, and local reorder, while full
+visible acceptance and production page migration remain pending.
 
 This record defines the shared Electron renderer component boundary that must be
 accepted before Studio Library pages migrate. It changes the existing
@@ -17,13 +17,14 @@ entries until a later adoption decision.
 
 ## Phase Handoff Snapshot
 
-As of 2026-08-30, the component-foundation implementation is complete for the
+As of 2026-09-14, the component-foundation implementation is complete for the
 current development slice:
 
 - shared primitives were audited and corrected in place; no `V2` component fork
   was created;
 - the native F7 Controlled Dossier reuses real library／playlist projections, the
-  production Sidebar, and the production PlayerBar while remaining read-only;
+  production Sidebar, PlayerBar, queue, and player owners; its selection,
+  playback, and reorder behavior remains isolated to the development Candidate;
 - metadata is a conditional shell-level Context Inspector outside `AppInnerPage`,
   not a permanently reserved page column;
 - Inspector visibility has one session-scoped owner, while the rail icon, expanded
@@ -36,9 +37,10 @@ metadata fields are not a generic block API, the candidate token mappings are no
 a production contract, and production pages must not migrate. After acceptance,
 freeze only the component／token subset proven by this slice. The owner authorized
 an implementation snapshot commit on 2026-09-02; this records the candidate but
-does not waive visible acceptance. The next implementation slice should connect
-track selection and playback to the existing player／queue owners; it must not
-expand the shared component layer speculatively.
+does not waive visible acceptance. Track selection and playback now connect to the
+existing player／queue owners, and playlist reorder remains a local draft without
+persistence. The next slice must continue visible F7 review without expanding the
+shared component layer speculatively or implying production adoption.
 
 ## Architecture
 
@@ -224,5 +226,7 @@ legacy aliases remain only while untouched consumers still require them.
   offsets; expanded and collapsed states therefore share the same top／bottom
   boundary above PlayerBar.
 - Setlist is the first adoption slice. Its current F7 implementation is native Vue
-  and reads the real library, but remains read-only and development-only until the
-  component foundation and dossier receive visible and behavioral acceptance.
+  and reads the real library; Candidate selection／playback and local order editing
+  are wired, but the View remains development-only until the component foundation
+  and dossier receive visible and behavioral acceptance. Playlist persistence and
+  production migration remain separate gates.

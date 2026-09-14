@@ -232,6 +232,27 @@ const settingsAriaLabel = computed(() =>
   height: var(--ui-archive-tab-active-height);
 }
 
+/* The development-only Studio Library Candidate supplies the root marker.
+   Folder material remains authored here by the global-navigation owner,
+   instead of a child View reaching through this component's internals. */
+:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
+  .app-tabs__row::after,
+:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
+  .app-tabs__folder--active {
+  background: var(--ui-color-folder-primary);
+}
+
+:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
+  .app-tabs__folder--active {
+  color: var(--ui-color-text);
+}
+
+:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
+  .app-tabs {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
 .app-tabs__folder:focus-visible {
   z-index: 6;
   outline: var(--ui-focus-width) solid var(--ui-color-focus);

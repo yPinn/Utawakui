@@ -379,7 +379,7 @@ describe('DemoCollageThumbAppearance', () => {
     expect(candidateSource).not.toMatch(/tabindex|@click|@keydown/u);
   });
 
-  it('shows caller-owned density contexts and every current consumer size', async () => {
+  it('shows caller-owned density contexts and the approved current size snapshot', async () => {
     const html = await renderToString(createSSRApp(DemoCollageThumbAppearance));
 
     for (const density of ['standard', 'compact']) {
@@ -396,7 +396,10 @@ describe('DemoCollageThumbAppearance', () => {
     expect(dossierSource).toContain(':size="88"');
     expect(detailsModalSource).toContain(':size="120"');
     expect(setlistHeaderSource).toContain(':size="136"');
-    expect(inspectorSource).toContain(':size="280"');
+    // F8 retains the reviewed 280px comparison specimen. F7 no longer
+    // consumes a collection collage in the playback-context inspector.
+    expect(inspectorSource).not.toContain('UiCollageThumb');
+    expect(inspectorSource).toContain('UiTrackThumb');
     expect(activeTokenSource).toContain(
       '--ui-playlist-row-thumb-size: 2.75rem;',
     );

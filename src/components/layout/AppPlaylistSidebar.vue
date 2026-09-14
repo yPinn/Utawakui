@@ -4,7 +4,10 @@ import { useAppView } from '../../composables/useAppView.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSidebarResize } from '../../composables/useSidebarResize.js';
-import { useVisualSystemMode } from '../../composables/useVisualSystemMode.js';
+import {
+  isStudioLibraryComparisonMode,
+  useVisualSystemMode,
+} from '../../composables/useVisualSystemMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
@@ -29,7 +32,7 @@ const { isResizing, startResize } = useSidebarResize();
 function activateSetlistView() {
   const isViewingStudioLibrary =
     activeView.value === 'visual-system' &&
-    visualSystemMode.value === 'studio-library';
+    isStudioLibraryComparisonMode(visualSystemMode.value);
   if (!isViewingStudioLibrary) setActiveView('setlist');
 }
 </script>

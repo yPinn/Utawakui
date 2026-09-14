@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { useVisualSystemMode } from './useVisualSystemMode.js';
+import {
+  isStudioLibraryComparisonMode,
+  useVisualSystemMode,
+} from './useVisualSystemMode.js';
 
 describe('useVisualSystemMode', () => {
   it('defaults to the Demo sub-mode and shares state across every consumer', () => {
@@ -21,5 +24,18 @@ describe('useVisualSystemMode', () => {
     workbench.setMode('not-a-real-mode');
 
     expect(workbench.mode.value).toBe('demo');
+  });
+
+  it('keeps Candidate and Current inside one Studio Library comparison boundary', () => {
+    const workbench = useVisualSystemMode();
+
+    workbench.setMode('setlist-current');
+
+    expect(workbench.mode.value).toBe('setlist-current');
+    expect(isStudioLibraryComparisonMode('studio-library')).toBe(true);
+    expect(isStudioLibraryComparisonMode('setlist-current')).toBe(true);
+    expect(isStudioLibraryComparisonMode('demo')).toBe(false);
+
+    workbench.setMode('demo');
   });
 });

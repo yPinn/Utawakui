@@ -1,5 +1,4 @@
 <script setup>
-import { BadgeCheck, ICON_SIZE } from '../../icons/index.js';
 import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 
@@ -37,16 +36,9 @@ defineProps({
       </div>
     </div>
 
-    <div class="studio-dossier-header__context" aria-label="資料狀態">
-      <UiChip
-        class="studio-dossier-header__kind"
-        background="var(--ui-color-surface-raised)"
-      >
+    <div class="studio-dossier-header__context">
+      <UiChip class="studio-dossier-header__kind">
         {{ kindLabel }}
-      </UiChip>
-      <UiChip class="studio-dossier-header__status" tone="success">
-        <BadgeCheck :size="ICON_SIZE" aria-hidden="true" />
-        真實資料
       </UiChip>
     </div>
   </header>
@@ -61,7 +53,7 @@ defineProps({
   justify-content: space-between;
   gap: var(--ui-space-5);
   padding: var(--ui-space-4) var(--ui-panel-inset);
-  background: transparent;
+  background: var(--ui-color-surface);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
@@ -78,6 +70,13 @@ defineProps({
 
 .studio-dossier-header__copy {
   min-width: 0;
+}
+
+.studio-dossier-header__title,
+.studio-dossier-header__summary,
+.studio-dossier-header__description {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .studio-dossier-header__title {
@@ -116,6 +115,8 @@ defineProps({
 
 .studio-dossier-header__kind {
   border: var(--ui-border-width) solid var(--ui-color-border);
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 @container dossier (max-width: 45rem) {
@@ -132,7 +133,6 @@ defineProps({
 }
 
 @container dossier (max-width: 34rem) {
-  .studio-dossier-header__status,
   .studio-dossier-header__description {
     display: none;
   }

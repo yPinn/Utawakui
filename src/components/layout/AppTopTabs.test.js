@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
@@ -16,6 +17,26 @@ async function renderTabs(props = {}) {
 }
 
 describe('AppTopTabs', () => {
+  it('owns the development-only folder material recipe without changing its default state', () => {
+    const source = readFileSync(
+      new URL('./AppTopTabs.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      ":root[data-ui-system='v2'][data-ui-candidate-view='studio-library']",
+    );
+    expect(source).toMatch(
+      /data-ui-candidate-view='studio-library'[\s\S]*\.app-tabs__folder--active[\s\S]*background:\s*var\(--ui-color-folder-primary\)/u,
+    );
+    expect(source).toMatch(
+      /\.app-tabs__folder--active\s*\{[^}]*background:\s*var\(--ui-color-accent\)/u,
+    );
+    expect(source).toMatch(
+      /data-ui-candidate-view='studio-library'[\s\S]*\.app-tabs\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
+    );
+  });
+
   it('orders Output before Import in the workflow tabs', async () => {
     const html = await renderTabs();
 

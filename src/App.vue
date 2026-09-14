@@ -21,7 +21,10 @@ import { useWindowTitle } from './composables/useWindowTitle.js';
 import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
-import { useVisualSystemMode } from './composables/useVisualSystemMode.js';
+import {
+  isStudioLibraryComparisonMode,
+  useVisualSystemMode,
+} from './composables/useVisualSystemMode.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
@@ -191,12 +194,12 @@ function toggleActiveContext() {
 }
 // Studio Library is a development preview of the Setlist interior. Keep the
 // real Setlist folder visibly selected while the hidden preview component is
-// active so the shell still communicates the owning workflow. Only applies
-// to VisualSystemView's Studio Library sub-mode, not its Demo sub-mode.
+// active so the shell still communicates the owning workflow. This applies
+// to both Candidate and Current comparison panels, but not the component lab.
 const archiveTabView = internalWorkbenchesEnabled
   ? computed(() =>
       activeView.value === 'visual-system' &&
-      visualSystemMode.value === 'studio-library'
+      isStudioLibraryComparisonMode(visualSystemMode.value)
         ? 'setlist'
         : activeView.value,
     )

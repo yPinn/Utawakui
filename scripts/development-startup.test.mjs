@@ -68,8 +68,9 @@ describe('development startup contract', () => {
     expect(appSource).toContain("f6: 'diagnostics-workbench'");
     expect(appSource).toContain("f7: 'lyrics-provider-review'");
     expect(appSource).toContain("f8: 'visual-system'");
+    expect(appSource).toContain('isStudioLibraryComparisonMode');
     expect(appSource).toMatch(
-      /const archiveTabView = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?visualSystemMode\.value === 'studio-library'[\s\S]*?\? 'setlist'\s*:\s*activeView\.value/u,
+      /const archiveTabView = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?isStudioLibraryComparisonMode\(visualSystemMode\.value\)[\s\S]*?\? 'setlist'\s*:\s*activeView\.value/u,
     );
   });
 

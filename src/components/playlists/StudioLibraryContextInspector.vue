@@ -1,34 +1,50 @@
 <script setup>
+import { computed } from 'vue';
 import { PanelRightClose, PanelRightOpen, Volume2 } from '../../icons/index.js';
+import { formatDuration } from '../../utils/format.js';
+import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
 import UiChip from '../ui/UiChip.vue';
-import UiCollageThumb from '../ui/UiCollageThumb.vue';
+import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
-defineProps({
+const props = defineProps({
   open: { type: Boolean, required: true },
-  collectionTitle: { type: String, required: true },
-  coverUrl: { type: String, default: '' },
-  tracks: { type: Array, default: () => [] },
-  canCollage: { type: Boolean, default: true },
-  facts: {
-    type: Array,
-    default: () => [],
-    validator: (facts) =>
-      facts.every(
-        (fact) =>
-          fact &&
-          typeof fact.id === 'string' &&
-          fact.id.trim() !== '' &&
-          typeof fact.label === 'string' &&
-          fact.label.trim() !== '' &&
-          typeof fact.value === 'string',
-      ),
-  },
-  currentTrackTitle: { type: String, default: '' },
+  currentTrack: { type: Object, default: null },
+  queueSourceName: { type: String, default: '' },
+  upcomingTracks: { type: Array, default: () => [] },
 });
 
 const emit = defineEmits(['toggle']);
+
+const queueContextLabel = computed(() => {
+  if (props.queueSourceName) return props.queueSourceName;
+  if (props.currentTrack || props.upcomingTracks.length > 0) return '目前佇列';
+  return '尚未建立播放佇列';
+});
+
+const currentTrackFacts = computed(() => {
+  if (!props.currentTrack) return [];
+
+  const facts = [];
+  if (props.currentTrack.album) {
+    facts.push({ id: 'album', label: '專輯', value: props.currentTrack.album });
+  }
+  if (Number.isFinite(props.currentTrack.duration)) {
+    facts.push({
+      id: 'duration',
+      label: '長度',
+      value: formatDuration(props.currentTrack.duration),
+    });
+  }
+  facts.push({
+    id: 'source',
+    label: '來源',
+    value: formatStudioTrackSource(props.currentTrack),
+  });
+  return facts;
+});
 </script>
 
 <template>
@@ -38,7 +54,7 @@ const emit = defineEmits(['toggle']);
       'studio-context-inspector--open': open,
       'studio-context-inspector--collapsed': !open,
     }"
-    :aria-label="open ? '集合資料' : '集合資料（已摺疊）'"
+    :aria-label="open ? '播放資訊' : '播放資訊（已摺疊）'"
   >
     <div
       id="studio-library-inspector-content"
@@ -48,13 +64,13 @@ const emit = defineEmits(['toggle']);
     >
       <header class="studio-context-inspector__header">
         <div class="studio-context-inspector__identity">
-          <h2>集合資料</h2>
-          <p>{{ collectionTitle }}</p>
+          <h2>播放資訊</h2>
+          <p>{{ queueContextLabel }}</p>
         </div>
         <UiIconButton
           class="studio-context-inspector__collapse"
           :icon="PanelRightClose"
-          label="摺疊集合資料"
+          label="摺疊播放資訊"
           size="md"
           :aria-expanded="true"
           aria-controls="studio-library-inspector-content"
@@ -63,48 +79,86 @@ const emit = defineEmits(['toggle']);
       </header>
 
       <div class="studio-context-inspector__scroll">
-        <div class="studio-context-inspector__artwork-frame">
-          <UiCollageThumb
-            class="studio-context-inspector__artwork"
-            :cover-url="coverUrl"
-            :tracks="tracks"
-            :can-collage="canCollage"
-            :size="280"
-          />
-        </div>
-
-        <section class="studio-context-inspector__section">
+        <section
+          class="studio-context-inspector__section studio-context-inspector__current"
+          aria-labelledby="studio-context-current-heading"
+        >
           <div class="studio-context-inspector__section-heading">
-            <h3>檔案摘要</h3>
-            <UiChip>Local</UiChip>
+            <h3 id="studio-context-current-heading">目前播放</h3>
+            <UiStatusIcon
+              v-if="currentTrack"
+              :icon="Volume2"
+              tone="current"
+              :label="`目前播放：${currentTrack.title}`"
+              decorative
+            />
           </div>
-          <dl>
-            <div v-for="fact in facts" :key="fact.id">
-              <dt>{{ fact.label }}</dt>
-              <dd>{{ fact.value }}</dd>
+
+          <template v-if="currentTrack">
+            <div class="studio-context-inspector__current-identity">
+              <UiTrackThumb
+                class="studio-context-inspector__current-artwork"
+                :track="currentTrack"
+                size="var(--ui-track-artwork-size-preview)"
+              />
+              <div class="studio-context-inspector__current-copy">
+                <h4>{{ currentTrack.title }}</h4>
+                <p>{{ currentTrack.artist || '未知演出者' }}</p>
+              </div>
             </div>
-          </dl>
+
+            <dl v-if="currentTrackFacts.length > 0">
+              <div v-for="fact in currentTrackFacts" :key="fact.id">
+                <dt>{{ fact.label }}</dt>
+                <dd>{{ fact.value }}</dd>
+              </div>
+            </dl>
+          </template>
+          <UiHint v-else>目前沒有播放中的歌曲</UiHint>
         </section>
 
         <section
-          v-if="currentTrackTitle"
-          class="studio-context-inspector__section studio-context-inspector__current"
+          class="studio-context-inspector__section studio-context-inspector__queue"
+          aria-labelledby="studio-context-queue-heading"
         >
-          <UiStatusIcon
-            :icon="Volume2"
-            tone="current"
-            :label="`目前播放：${currentTrackTitle}`"
-            decorative
-          />
-          <div class="studio-context-inspector__current-copy">
-            <h3>目前播放</h3>
-            <p>{{ currentTrackTitle }}</p>
+          <div class="studio-context-inspector__section-heading">
+            <h3 id="studio-context-queue-heading">接下來</h3>
+            <UiChip v-if="upcomingTracks.length > 0" tone="neutral">
+              {{ upcomingTracks.length }} 首
+            </UiChip>
           </div>
-        </section>
 
-        <p class="studio-context-inspector__caption">
-          資料來自目前的本機曲庫，不代表公開 Output 狀態。
-        </p>
+          <UiHint v-if="upcomingTracks.length === 0">佇列中沒有下一首</UiHint>
+          <ol
+            v-else
+            class="studio-context-inspector__queue-list"
+            aria-label="接下來的播放佇列"
+          >
+            <li
+              v-for="(track, index) in upcomingTracks"
+              :key="track.id ?? `${track.title}-${index}`"
+              class="studio-context-inspector__queue-item"
+            >
+              <span
+                class="studio-context-inspector__queue-index"
+                aria-hidden="true"
+              >
+                {{ index + 1 }}
+              </span>
+              <UiTrackThumb
+                :track="track"
+                size="var(--ui-track-artwork-size-dense)"
+              />
+              <div class="studio-context-inspector__queue-copy">
+                <h4>{{ track.title }}</h4>
+                <p>{{ track.artist || '未知演出者' }}</p>
+              </div>
+              <span class="studio-context-inspector__queue-duration">
+                {{ formatDuration(track.duration) }}
+              </span>
+            </li>
+          </ol>
+        </section>
       </div>
     </div>
 
@@ -112,7 +166,7 @@ const emit = defineEmits(['toggle']);
       v-if="!open"
       class="studio-context-inspector__expand"
       :icon="PanelRightOpen"
-      label="展開集合資料"
+      label="展開播放資訊"
       :aria-expanded="false"
       aria-controls="studio-library-inspector-content"
       shape="inherit"
@@ -174,11 +228,12 @@ const emit = defineEmits(['toggle']);
 .studio-context-inspector__identity h2,
 .studio-context-inspector__identity p,
 .studio-context-inspector__section h3,
+.studio-context-inspector__section h4,
+.studio-context-inspector__section p,
 .studio-context-inspector__section dl,
 .studio-context-inspector__section dt,
 .studio-context-inspector__section dd,
-.studio-context-inspector__current p,
-.studio-context-inspector__caption {
+.studio-context-inspector__queue-list {
   margin: 0;
 }
 
@@ -201,16 +256,8 @@ const emit = defineEmits(['toggle']);
 .studio-context-inspector__scroll {
   min-height: 0;
   overflow-y: auto;
-}
-
-.studio-context-inspector__artwork-frame {
-  display: flex;
-  justify-content: center;
-  padding: var(--ui-space-4) var(--ui-space-4) 0;
-}
-
-.studio-context-inspector__artwork {
-  box-shadow: var(--ui-shadow-contact);
+  scrollbar-color: var(--ui-color-border-strong) transparent;
+  scrollbar-width: thin;
 }
 
 .studio-context-inspector__section {
@@ -226,7 +273,17 @@ const emit = defineEmits(['toggle']);
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-2);
-  margin-bottom: var(--ui-space-4);
+  margin-bottom: var(--ui-space-3);
+}
+
+.studio-context-inspector__section-heading :deep(.ui-chip) {
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.studio-context-inspector__section :deep(.ui-hint) {
+  -webkit-user-select: text;
+  user-select: text;
 }
 
 .studio-context-inspector__section h3 {
@@ -235,29 +292,59 @@ const emit = defineEmits(['toggle']);
   line-height: var(--ui-line-height-label);
 }
 
-.studio-context-inspector__section dl {
+.studio-context-inspector__current-identity {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
   gap: var(--ui-space-3);
 }
 
-.studio-context-inspector__section dl div {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: baseline;
-  gap: var(--ui-space-3);
+.studio-context-inspector__current-artwork {
+  box-shadow: var(--ui-shadow-contact);
 }
 
+.studio-context-inspector__current-copy,
+.studio-context-inspector__queue-copy {
+  min-width: 0;
+}
+
+.studio-context-inspector__current-copy h4 {
+  overflow: hidden;
+  font-size: var(--ui-font-size-md);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-context-inspector__current-copy p,
+.studio-context-inspector__queue-copy p,
+.studio-context-inspector__queue-duration,
+.studio-context-inspector__queue-index,
 .studio-context-inspector__section dt,
-.studio-context-inspector__section dd,
-.studio-context-inspector__current p,
-.studio-context-inspector__caption {
+.studio-context-inspector__section dd {
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
 }
 
+.studio-context-inspector__current-copy p,
+.studio-context-inspector__queue-copy p,
 .studio-context-inspector__section dt,
-.studio-context-inspector__caption {
+.studio-context-inspector__queue-index {
   color: var(--ui-color-text-muted);
+}
+
+.studio-context-inspector__current dl {
+  display: grid;
+  gap: var(--ui-space-3);
+  margin-top: var(--ui-space-4);
+}
+
+.studio-context-inspector__current dl div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: var(--ui-space-3);
 }
 
 .studio-context-inspector__section dd {
@@ -269,27 +356,55 @@ const emit = defineEmits(['toggle']);
   white-space: nowrap;
 }
 
-.studio-context-inspector__current {
+.studio-context-inspector__queue-list {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ui-space-1);
+  padding: 0;
+  list-style: none;
+}
+
+.studio-context-inspector__queue-item {
+  display: grid;
+  grid-template-columns: 1.5rem auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--ui-space-2);
+  min-height: var(--ui-track-row-min-height);
+  padding-block: var(--ui-space-1);
 }
 
-.studio-context-inspector__current-copy {
-  min-width: 0;
-}
-
-.studio-context-inspector__current p {
+.studio-context-inspector__queue-copy h4,
+.studio-context-inspector__queue-copy p {
   overflow: hidden;
-  margin-top: var(--ui-space-1);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.studio-context-inspector__caption {
-  padding: var(--ui-space-4);
-  border-top: var(--ui-border-width) solid var(--ui-color-border);
+.studio-context-inspector__queue-copy h4 {
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.studio-context-inspector__queue-duration,
+.studio-context-inspector__queue-index {
+  font-variant-numeric: tabular-nums;
+}
+
+.studio-context-inspector__identity p,
+.studio-context-inspector__current-copy,
+.studio-context-inspector__current dl dd,
+.studio-context-inspector__queue-copy {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
+.studio-context-inspector__identity h2,
+.studio-context-inspector__section h3,
+.studio-context-inspector__section dt,
+.studio-context-inspector__queue-duration,
+.studio-context-inspector__queue-index {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 /* Paired with AppArchiveFrame's temporary context plane. Keep the literal in

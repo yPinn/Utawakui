@@ -93,8 +93,9 @@ components:
 > development-only F8 component review now covers all 30 catalogue sections,
 > from Foundation through UiModal; its recorded decisions and next gate live in
 > [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
-> F7 remains a later View candidate and cannot approve Candidate production
-> adoption by implication.
+> F7 Studio Library／Controlled Dossier is now an active development-only View
+> candidate. Its current owner checkpoint still cannot approve Candidate
+> production adoption by implication.
 
 The owner-selected replacement direction remains recorded in
 [Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):

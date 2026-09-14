@@ -1,43 +1,76 @@
 <script setup>
-import { computed } from 'vue';
-import { useLibrary } from '../composables/useLibrary.js';
+import { computed, nextTick, onBeforeUnmount, onMounted, watch } from 'vue';
+import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePlayer } from '../composables/usePlayer.js';
-import { usePlaylists } from '../composables/usePlaylists.js';
 import { useStudioLibraryInspector } from '../composables/useStudioLibraryInspector.js';
 import StudioLibraryContextInspector from '../components/playlists/StudioLibraryContextInspector.vue';
-import { createStudioLibraryPresentation } from '../utils/studioLibraryPresentation.js';
 
-const { state: libraryState } = useLibrary();
-const { state: playlistState, selectedPlaylist } = usePlaylists();
 const { state: playerState } = usePlayer();
-const { isInspectorOpen, toggleInspector } = useStudioLibraryInspector();
+const {
+  state: queueState,
+  currentTrack: queueCurrentTrack,
+  upcomingTracks,
+} = usePlaybackQueue();
+const { isInspectorOpen, setInspectorOpen, toggleInspector } =
+  useStudioLibraryInspector();
+let returnFocusTarget = null;
 
-const presentation = computed(() =>
-  createStudioLibraryPresentation({
-    selectedPlaylist: selectedPlaylist.value,
-    libraryView: playlistState.libraryView,
-    tracks: libraryState.tracks,
-  }),
+// The audio element-backed player state is the currently playing authority.
+// Queue state supplies the same identity before playback starts and owns every
+// upcoming entry plus its source context.
+const currentTrack = computed(
+  () => playerState.track ?? queueCurrentTrack.value ?? null,
 );
-const currentCollectionTrackTitle = computed(() => {
-  const currentTrackId = playerState.track?.id;
-  if (!currentTrackId) return '';
-  return (
-    presentation.value.tracks.find((track) => track.id === currentTrackId)
-      ?.title ?? ''
-  );
+const queueSourceName = computed(() => queueState.sourceName || '');
+
+function restoreInspectorFocus() {
+  const requestedTarget = returnFocusTarget;
+  returnFocusTarget = null;
+  nextTick(() => {
+    const fallbackTarget = document.querySelector(
+      '[aria-controls="studio-library-inspector-content"][aria-expanded="false"]',
+    );
+    const target =
+      requestedTarget?.isConnected === false ? fallbackTarget : requestedTarget;
+    target?.focus?.();
+  });
+}
+
+watch(isInspectorOpen, (open, wasOpen) => {
+  if (open) {
+    returnFocusTarget = document.activeElement;
+  } else if (wasOpen) {
+    restoreInspectorFocus();
+  }
+});
+
+function handleDocumentKeydown(event) {
+  if (
+    event.key !== 'Escape' ||
+    event.defaultPrevented ||
+    !isInspectorOpen.value ||
+    event.target?.closest?.('dialog[open]')
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  setInspectorOpen(false);
+}
+
+onMounted(() => document.addEventListener('keydown', handleDocumentKeydown));
+onBeforeUnmount(() => {
+  document.removeEventListener('keydown', handleDocumentKeydown);
+  if (isInspectorOpen.value) setInspectorOpen(false);
 });
 </script>
 
 <template>
   <StudioLibraryContextInspector
     :open="isInspectorOpen"
-    :collection-title="presentation.title"
-    :cover-url="presentation.coverUrl"
-    :tracks="presentation.tracks"
-    :can-collage="presentation.canCollage"
-    :facts="presentation.facts"
-    :current-track-title="currentCollectionTrackTitle"
+    :current-track="currentTrack"
+    :queue-source-name="queueSourceName"
+    :upcoming-tracks="upcomingTracks"
     @toggle="toggleInspector"
   />
 </template>
