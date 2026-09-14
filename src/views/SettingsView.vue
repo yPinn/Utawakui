@@ -1,6 +1,12 @@
 <script setup>
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
-import { Ellipsis, FolderOpen, RefreshCw, RotateCcw } from '../icons/index.js';
+import {
+  Ellipsis,
+  FolderOpen,
+  Info,
+  RefreshCw,
+  RotateCcw,
+} from '../icons/index.js';
 import AppUpdateSettingsRow from '../components/settings/AppUpdateSettingsRow.vue';
 import AudioOutputSettingsBlock from '../components/settings/AudioOutputSettingsBlock.vue';
 import CaptureDeviceModal from '../components/settings/CaptureDeviceModal.vue';
@@ -13,6 +19,7 @@ import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettin
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
+import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiIconButton from '../components/ui/UiIconButton.vue';
@@ -29,6 +36,7 @@ import { useFeatureGatePresentation } from '../composables/useFeatureGatePresent
 import { useFeatureGates } from '../composables/useFeatureGates.js';
 import { useFeedbackReport } from '../composables/useFeedbackReport.js';
 import { useImportSession } from '../composables/useImportSession.js';
+import { useAppAnnouncement } from '../composables/useAppAnnouncement.js';
 import { useAppInfo } from '../composables/useAppInfo.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
@@ -55,6 +63,7 @@ const {
 const { recordError, recentRecords: recentDiagnosticRecords } =
   useAppDiagnostics();
 const feedback = useFeedbackReport();
+const announcement = useAppAnnouncement();
 const { state: appInfoState, refreshAppInfo } = useAppInfo();
 const {
   state: appUpdateState,
@@ -457,6 +466,19 @@ onUnmounted(musicAnalysisSettings.dispose);
             @install="installAppUpdate"
             @set-auto-check="setAppUpdateAutoCheck"
           />
+
+          <SettingsActionRow
+            :icon="Info"
+            title="重看公告"
+            :value="`v${announcement.version} · ${announcement.summary}`"
+            tooltip="重新打開這個版本的公告內容。"
+          >
+            <template #actions>
+              <UiButton variant="ghost" @click="announcement.reopen">
+                重看公告
+              </UiButton>
+            </template>
+          </SettingsActionRow>
 
           <FeedbackReportSettingsRow @open="feedback.openReport()" />
         </SettingsBlock>

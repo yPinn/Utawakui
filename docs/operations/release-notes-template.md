@@ -9,6 +9,13 @@ copying the commit log or describing how the software is built.
 
 - The versioned Chinese and English titles, their short summaries, and both
   installation sections are required.
+- Copy the Chinese short summary verbatim into `shared/releaseAnnouncement.json`'s
+  `summary` field, and bump its `version` to match. That file drives the in-app
+  "what's new" modal (see `src/composables/useAppAnnouncement.js`), so the first
+  thing a user reads after updating must match the top of this document — not a
+  second, independently drifting sentence. `shared/releaseAnnouncement.test.js`
+  fails the build if `version` falls out of sync with `package.json`, but it
+  cannot catch a `summary` that no longer matches this file's wording.
 - Prefer everyday language and short sentences. Avoid internal library, model,
   format, component, pipeline, lifecycle, and protocol names unless the term is
   visible in the product and helps the reader act.

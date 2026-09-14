@@ -55,6 +55,17 @@ describe('SettingsView version and maintenance sections', () => {
     expect(appUpdateIndex).toBeLessThan(feedbackRowIndex);
   });
 
+  it('places the re-open-announcement row between the update row and feedback reporting', () => {
+    const appUpdateIndex = versionSource.indexOf('<AppUpdateSettingsRow');
+    const reopenIndex = versionSource.indexOf('announcement.reopen');
+    const feedbackRowIndex = versionSource.indexOf(
+      '<FeedbackReportSettingsRow',
+    );
+
+    expect(reopenIndex).toBeGreaterThan(appUpdateIndex);
+    expect(reopenIndex).toBeLessThan(feedbackRowIndex);
+  });
+
   it('keeps error diagnostics under 維護, separate from the version block', () => {
     expect(versionSource).not.toContain('<DiagnosticsSettingsRow');
     expect(maintenanceSource).toContain('<DiagnosticsSettingsRow');

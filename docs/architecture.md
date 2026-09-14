@@ -382,3 +382,9 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
   `src/composables/useAppUpdate.js` 是唯一 renderer owner。目前 `signExecutable`／
   `verifyUpdateCodeSignature` 為 false，屬 unsigned updater runtime，尚無連續版本
   update acceptance 驗證。
+- 「有什麼新變化」公告內容隨版本內建於 `shared/releaseAnnouncement.json`
+  （`version`／`summary`），不在 runtime 解析或下載遠端 release notes；
+  `src/composables/useAppAnnouncement.js` 是唯一 renderer owner，比對 main 存的
+  `lastSeenAnnouncementVersion` 決定是否顯示一次。`shared/releaseAnnouncement.test.js`
+  斷言 `version` 與 `package.json` 同步；發版流程見
+  [release-notes-template.md](operations/release-notes-template.md)。

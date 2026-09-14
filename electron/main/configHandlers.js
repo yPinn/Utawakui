@@ -2,6 +2,7 @@
 
 const { createAppError } = require('../lib/appError');
 const {
+  ANNOUNCEMENT_VERSION_MAX_LENGTH,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
   SIDEBAR_WIDTH_MAX,
   SIDEBAR_WIDTH_MIN,
@@ -312,6 +313,49 @@ function registerConfigHandlers({
       },
     );
   });
+
+  ipcMain.handle('config:get-announcement-seen-version', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-announcement-seen-version',
+        code: 'ANNOUNCEMENT_SEEN_VERSION_READ_FAILED',
+        title: '無法讀取公告狀態',
+        message: '目前無法讀取公告狀態。',
+      },
+      () => getConfig().lastSeenAnnouncementVersion,
+    ),
+  );
+
+  ipcMain.handle(
+    'config:set-announcement-seen-version',
+    async (event, version) => {
+      if (
+        typeof version !== 'string' ||
+        version.length === 0 ||
+        version.length > ANNOUNCEMENT_VERSION_MAX_LENGTH
+      ) {
+        throw createValidationError(
+          'ANNOUNCEMENT_SEEN_VERSION_INVALID',
+          '無法儲存公告狀態',
+          '指定的版本號無效。',
+        );
+      }
+      return runConfigOperation(
+        {
+          recordDiagnostic,
+          operation: 'set-announcement-seen-version',
+          code: 'ANNOUNCEMENT_SEEN_VERSION_UPDATE_FAILED',
+          title: '無法儲存公告狀態',
+          message: '目前無法儲存公告狀態，請稍後再試。',
+        },
+        () => {
+          updateConfig({ lastSeenAnnouncementVersion: version });
+          return getConfig().lastSeenAnnouncementVersion;
+        },
+      );
+    },
+  );
 }
 
 module.exports = { registerConfigHandlers };

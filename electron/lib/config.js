@@ -19,6 +19,7 @@ const UI_THEMES = ['light', 'dark'];
 const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
 const SIDEBAR_WIDTH_MAX = 392; // 24.5rem
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
+const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
@@ -39,6 +40,11 @@ const DEFAULTS = {
   // "check" action working; it only stops the app from contacting the release
   // feed on its own.
   autoCheckAppUpdates: true,
+  // The last shared/releaseAnnouncement.json version the user has dismissed
+  // the "what's new" modal for. null on a fresh config means "show it once".
+  // Never fetched or written from anywhere but that bundled file's version
+  // and this preference — no network request is involved.
+  lastSeenAnnouncementVersion: null,
   // Absolute path to a system-installed FFmpeg the user opted into via
   // Settings (see electron/lib/systemFfmpeg.js's detectSystemFfmpeg()).
   // null means the app-managed Gyan download is used (the default). Only
@@ -150,6 +156,12 @@ function loadConfig(configPath) {
       typeof data.autoCheckAppUpdates === 'boolean'
         ? data.autoCheckAppUpdates
         : DEFAULTS.autoCheckAppUpdates,
+    lastSeenAnnouncementVersion:
+      typeof data.lastSeenAnnouncementVersion === 'string' &&
+      data.lastSeenAnnouncementVersion.length > 0 &&
+      data.lastSeenAnnouncementVersion.length <= ANNOUNCEMENT_VERSION_MAX_LENGTH
+        ? data.lastSeenAnnouncementVersion
+        : DEFAULTS.lastSeenAnnouncementVersion,
     systemFfmpegPath:
       typeof data.systemFfmpegPath === 'string'
         ? data.systemFfmpegPath
@@ -173,6 +185,7 @@ module.exports = {
   saveConfig,
   DEFAULTS,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
+  ANNOUNCEMENT_VERSION_MAX_LENGTH,
   SIDEBAR_WIDTH_MIN,
   SIDEBAR_WIDTH_MAX,
   OUTPUT_PORT_MIN,

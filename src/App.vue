@@ -11,6 +11,7 @@ import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
+import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
@@ -27,6 +28,7 @@ import { useAudioOutput } from './composables/useAudioOutput.js';
 import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
 import { useAppUpdate } from './composables/useAppUpdate.js';
+import { useAppAnnouncement } from './composables/useAppAnnouncement.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 
@@ -114,6 +116,12 @@ performerView.initialize();
 // unaffected.
 const { updateReady: appUpdateReady, refreshAppUpdateStatus } = useAppUpdate();
 onMounted(refreshAppUpdateStatus);
+
+// Same root-level reasoning as the update-ready marker above: the "what's
+// new" modal must be able to show up no matter which view the user lands
+// on first, not just when they happen to open Settings.
+const announcement = useAppAnnouncement();
+onMounted(announcement.initialize);
 
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).
@@ -234,6 +242,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
       @action="performerView.open"
     />
     <AppFeatureNoticeModal />
+    <AppAnnouncementModal />
   </div>
 </template>
 

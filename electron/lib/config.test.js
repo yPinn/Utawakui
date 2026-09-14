@@ -3,6 +3,7 @@ import os from 'os';
 import path from 'path';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
+  ANNOUNCEMENT_VERSION_MAX_LENGTH,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
   loadConfig,
   saveConfig,
@@ -32,6 +33,7 @@ describe('config', () => {
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
       autoCheckAppUpdates: true,
+      lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
       outputRuntime: {
         autoStart: true,
@@ -75,6 +77,7 @@ describe('config', () => {
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
       autoCheckAppUpdates: true,
+      lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
       outputRuntime: {
         autoStart: true,
@@ -211,6 +214,22 @@ describe('config', () => {
     (autoCheckAppUpdates) => {
       fs.writeFileSync(configPath, JSON.stringify({ autoCheckAppUpdates }));
       expect(loadConfig(configPath).autoCheckAppUpdates).toBe(true);
+    },
+  );
+
+  it('round-trips the last seen announcement version', () => {
+    saveConfig(configPath, { lastSeenAnnouncementVersion: '0.2.0' });
+    expect(loadConfig(configPath).lastSeenAnnouncementVersion).toBe('0.2.0');
+  });
+
+  it.each([null, 1, {}, '', 'x'.repeat(ANNOUNCEMENT_VERSION_MAX_LENGTH + 1)])(
+    'out-of-bounds lastSeenAnnouncementVersion falls back to null for %j',
+    (lastSeenAnnouncementVersion) => {
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify({ lastSeenAnnouncementVersion }),
+      );
+      expect(loadConfig(configPath).lastSeenAnnouncementVersion).toBe(null);
     },
   );
 

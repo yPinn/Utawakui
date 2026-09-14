@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { APP_ERROR_PREFIX } from '../lib/appError.js';
 import {
+  ANNOUNCEMENT_VERSION_MAX_LENGTH,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
   SIDEBAR_WIDTH_MAX,
   SIDEBAR_WIDTH_MIN,
@@ -24,6 +25,7 @@ function register(overrides = {}) {
     captureDeviceId: null,
     autoAnalyzeMusicStructure: true,
     autoCheckAppUpdates: true,
+    lastSeenAnnouncementVersion: null,
   };
   const getConfig = vi.fn(() => config);
   const updateConfig = vi.fn((patch) => {
@@ -89,6 +91,8 @@ describe('registerConfigHandlers', () => {
       'config:set-auto-music-analysis',
       'config:get-app-update-auto-check',
       'config:set-app-update-auto-check',
+      'config:get-announcement-seen-version',
+      'config:set-announcement-seen-version',
     ]);
   });
 
@@ -213,6 +217,9 @@ describe('registerConfigHandlers', () => {
     await expect(
       ipcMain.handlers.get('config:get-app-update-auto-check')(),
     ).resolves.toBe(true);
+    await expect(
+      ipcMain.handlers.get('config:get-announcement-seen-version')(),
+    ).resolves.toBeNull();
   });
 
   it('persists a valid theme and updates an available main window', async () => {
@@ -389,6 +396,35 @@ describe('registerConfigHandlers', () => {
       expect(updateConfig).not.toHaveBeenCalled();
       expect(recordDiagnostic).not.toHaveBeenCalled();
       expect(applyAppUpdateAutoCheck).not.toHaveBeenCalled();
+    },
+  );
+
+  it('persists the dismissed announcement version', async () => {
+    const { ipcMain, updateConfig } = register();
+
+    await expect(
+      ipcMain.handlers.get('config:set-announcement-seen-version')(
+        null,
+        '0.2.0',
+      ),
+    ).resolves.toBe('0.2.0');
+    expect(updateConfig).toHaveBeenCalledWith({
+      lastSeenAnnouncementVersion: '0.2.0',
+    });
+  });
+
+  it.each([null, 1, {}, '', 'x'.repeat(ANNOUNCEMENT_VERSION_MAX_LENGTH + 1)])(
+    'rejects invalid announcement version value %j',
+    async (version) => {
+      const { ipcMain, updateConfig, recordDiagnostic } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-announcement-seen-version')(null, version)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('ANNOUNCEMENT_SEEN_VERSION_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
+      expect(recordDiagnostic).not.toHaveBeenCalled();
     },
   );
 

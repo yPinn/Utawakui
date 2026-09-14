@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
+import { EXTERNAL_TARGETS } from '../electron/main/externalNavigationHandlers.js';
 
 const rootDirectory = path.resolve(import.meta.dirname, '..');
 
@@ -73,6 +74,18 @@ describe('release workflow', () => {
     });
     expect(builder.win.signExecutable).toBe(false);
     expect(builder.win.verifyUpdateCodeSignature).toBe(false);
+  });
+
+  it('keeps the release-notes external link pointed at the same public feed identity', () => {
+    const builder = readYaml('electron-builder.yml');
+
+    // externalNavigationHandlers.js hardcodes this URL as a fixed allowlist
+    // entry rather than deriving it from electron-builder.yml at runtime;
+    // this test is what keeps the two from silently drifting apart if the
+    // release repo is ever renamed or moved.
+    expect(EXTERNAL_TARGETS['release-notes']).toBe(
+      `https://github.com/${builder.publish.owner}/${builder.publish.repo}/releases`,
+    );
   });
 
   it('pins Node 24 actions and Gitleaks to immutable references', () => {

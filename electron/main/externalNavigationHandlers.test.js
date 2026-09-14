@@ -33,6 +33,7 @@ describe('registerExternalNavigationHandlers', () => {
 
     expect([...ipcMain.handlers.keys()]).toEqual(['shell:open-external']);
     expect(Object.keys(EXTERNAL_TARGETS).sort()).toEqual([
+      'release-notes',
       'vb-cable',
       'voicemeeter',
     ]);
@@ -41,6 +42,7 @@ describe('registerExternalNavigationHandlers', () => {
   it.each([
     ['vb-cable', 'https://vb-audio.com/Cable/'],
     ['voicemeeter', 'https://vb-audio.com/Voicemeeter/'],
+    ['release-notes', 'https://github.com/yPinn/Utawakui-Releases/releases'],
   ])('derives the %s vendor URL in main', async (targetId, expectedUrl) => {
     const { ipcMain, openExternal } = register();
 
