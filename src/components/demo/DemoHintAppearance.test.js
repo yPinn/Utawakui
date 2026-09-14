@@ -291,8 +291,5 @@ describe('DemoHintAppearance', () => {
     expect(reviewContract).toContain(
       '`padded`／`center` 只列為 Current layout compatibility',
     );
-    expect(reviewContract).toContain(
-      '該 checkpoint 完成時，下一個可開始的元件只有 `UiNotice`',
-    );
   });
 });

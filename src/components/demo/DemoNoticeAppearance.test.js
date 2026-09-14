@@ -650,8 +650,5 @@ describe('DemoNoticeAppearance', () => {
       '錯誤沿用既有 `useAppDiagnostics` 的 bounded public record',
     );
     expect(reviewContract).toContain('不新增 `UiAlert`、`UiCallout`');
-    expect(reviewContract).toContain(
-      '該 checkpoint 完成時，下一個可開始的元件只有 `UiProgress`',
-    );
   });
 });

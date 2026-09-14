@@ -212,7 +212,7 @@ describe('DemoStatusIconAppearance', () => {
     expect(currentSource).not.toContain('--demo-status-icon-size');
   });
 
-  it('records the owner-confirmed UiStatusIcon checkpoint and next gate', () => {
+  it('records the owner-confirmed UiStatusIcon checkpoint', () => {
     expect(reviewContract).toContain(
       '## 已完成階段：UiStatusIcon Candidate／Current 檢查',
     );
@@ -228,6 +228,5 @@ describe('DemoStatusIconAppearance', () => {
     expect(reviewContract).toContain(
       '`current` 統一使用 Accent／Indigo family；`live` 與 `danger` 保留獨立紅色 token',
     );
-    expect(reviewContract).toContain('下一個可開始的元件只有 `UiHint`');
   });
 });

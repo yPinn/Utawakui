@@ -88,13 +88,13 @@ components:
 
 <!-- BASELINE: this is a first-pass scaffold. Replace palette character, final type choices, and component details after the visual direction is confirmed. -->
 
-> **Visual refresh status — 2026-09-12:** Token v2 is reviewed in strict
+> **Visual refresh status — 2026-09-14:** Token v2 is reviewed in strict
 > Foundation → primitive／Field family → compound component → View order. The
-> current F8 checkpoint covers Foundation through Status Icon; its recorded
-> decisions and next gate live in
+> development-only F8 component review now covers all 30 catalogue sections,
+> from Foundation through UiModal; its recorded decisions and next gate live in
 > [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
-> F8 is the development-only Candidate／Current inspection surface; F7 remains a
-> later View candidate and cannot approve primitive values by implication.
+> F7 remains a later View candidate and cannot approve Candidate production
+> adoption by implication.
 
 The owner-selected replacement direction remains recorded in
 [Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):
