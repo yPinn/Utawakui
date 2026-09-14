@@ -139,6 +139,10 @@
   --ui-field-height: var(--ui-control-height);
   --ui-field-padding-block: var(--ui-space-1);
   --ui-field-padding-inline: var(--ui-space-2);
+  --ui-field-hex-value-inline-size: calc(
+    7ch + var(--ui-field-padding-inline) + var(--ui-field-padding-inline) +
+      var(--ui-border-width) + var(--ui-border-width)
+  );
   --ui-field-radius: var(--ui-radius-md);
   --ui-field-bg: var(--ui-color-surface-hover);
   --ui-field-bg-hover: var(--ui-color-surface-active);
@@ -151,6 +155,28 @@
   --ui-range-track-size: var(--ui-space-1);
   --ui-range-thumb-size: var(--ui-space-4);
   --ui-progress-track-size: var(--ui-space-2);
+  --ui-kbd-min-block-size: var(--ui-space-5);
+  --ui-kbd-padding-inline: var(--ui-space-2);
+  --ui-skeleton-text-block-size: var(--ui-space-3);
+  --ui-skeleton-block-min-block-size: var(--ui-control-height);
+  --ui-skeleton-circle-size: var(--ui-control-height);
+  --ui-skeleton-pulse-duration: 1.4s;
+  --ui-radio-size: var(--ui-space-4);
+  --ui-radio-dot-size: var(--ui-space-2);
+  --ui-floating-viewport-inset: var(--ui-space-2);
+  --ui-floating-gap: var(--ui-space-2);
+  --ui-tooltip-max-inline-size: 18rem;
+  --ui-popover-max-inline-size: 24rem;
+  --ui-notification-min-inline-size: 20rem;
+  --ui-notification-preferred-inline-size: 22rem;
+  --ui-notification-max-inline-size: 26rem;
+  --ui-notification-safe-inset: var(--ui-space-4);
+  --ui-notification-block-end-offset: calc(
+    var(--ui-player-bar-height) + var(--ui-notification-safe-inset)
+  );
+  --ui-notification-stack-gap: var(--ui-space-2);
+  --ui-notification-motion-offset: var(--ui-space-4);
+  --ui-notification-swipe-dismiss-distance: 4.5rem;
   --ui-separation-mode-min-width: 8.5rem; /* mode label + native select affordance */
   --ui-lyrics-live-control-height: 2.75rem; /* 44px urgent live action target */
   --ui-lyrics-live-action-width: 4.5rem;
@@ -429,6 +455,8 @@
   --ui-z-dropdown: 20;
   --ui-z-popover: 100;
   --ui-z-dialog: 200;
+  --ui-z-toast: 300;
+  --ui-z-tooltip: 400;
   --ui-z-context-menu: var(--ui-z-popover); /* legacy alias */
   --ui-z-context-menu-submenu: 101;
   --ui-z-modal: var(--ui-z-dialog); /* legacy alias */

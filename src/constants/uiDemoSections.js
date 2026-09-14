@@ -16,6 +16,18 @@ export const UI_DEMO_GROUPS = Object.freeze([
         title: '頁面標題列',
         components: ['UiPageHeader'],
       },
+      {
+        key: 'separator',
+        title: '分隔線',
+        components: ['UiSeparator'],
+        reviewed: false,
+      },
+      {
+        key: 'kbd',
+        title: '快捷鍵提示',
+        components: ['UiKbd'],
+        reviewed: false,
+      },
     ],
   },
   {
@@ -46,6 +58,18 @@ export const UI_DEMO_GROUPS = Object.freeze([
         components: ['UiCheckbox'],
       },
       { key: 'range', title: '範圍控制', components: ['UiRange'] },
+      {
+        key: 'color-field',
+        title: '色彩欄位',
+        components: ['UiColorField'],
+        reviewed: false,
+      },
+      {
+        key: 'radio-group',
+        title: '單選群組',
+        components: ['UiRadioGroup'],
+        reviewed: false,
+      },
     ],
   },
   {
@@ -70,7 +94,21 @@ export const UI_DEMO_GROUPS = Object.freeze([
     key: 'navigation',
     title: '導覽元件',
     description: '同一工作區內的分頁切換。',
-    sections: [{ key: 'tabs', title: '分頁導覽', components: ['UiTabs'] }],
+    sections: [
+      { key: 'tabs', title: '分頁導覽', components: ['UiTabs'] },
+      {
+        key: 'segmented-control',
+        title: '分段單選',
+        components: ['UiSegmentedControl'],
+        reviewed: false,
+      },
+      {
+        key: 'disclosure',
+        title: '展開區塊',
+        components: ['UiDisclosure'],
+        reviewed: false,
+      },
+    ],
   },
   {
     key: 'feedback',
@@ -86,6 +124,18 @@ export const UI_DEMO_GROUPS = Object.freeze([
       { key: 'hints', title: '輔助文字', components: ['UiHint'] },
       { key: 'notices', title: '內嵌通知', components: ['UiNotice'] },
       { key: 'progress', title: '進度指示', components: ['UiProgress'] },
+      {
+        key: 'skeleton',
+        title: '載入骨架',
+        components: ['UiSkeleton'],
+        reviewed: false,
+      },
+      {
+        key: 'notification-host',
+        title: '固定通知 Host',
+        components: ['UiNotificationHost'],
+        reviewed: false,
+      },
     ],
   },
   {
@@ -126,6 +176,18 @@ export const UI_DEMO_GROUPS = Object.freeze([
         components: ['UiActionMenu Candidate', 'UiContextMenu Current'],
       },
       { key: 'modal', title: '對話框', components: ['UiModal'] },
+      {
+        key: 'tooltip',
+        title: '工具提示',
+        components: ['UiTooltip'],
+        reviewed: false,
+      },
+      {
+        key: 'popover',
+        title: '錨定浮層',
+        components: ['UiPopover'],
+        reviewed: false,
+      },
     ],
   },
 ]);

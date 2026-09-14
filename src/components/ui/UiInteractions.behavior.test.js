@@ -80,6 +80,18 @@ describe('shared UI interaction contracts', () => {
     app.unmount();
   });
 
+  it('keeps notice title spacing on the shared spacing scale', () => {
+    const source = readFileSync(
+      new URL('./UiNotice.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      'margin-block-start: calc(var(--ui-space-1) / 2);',
+    );
+    expect(source).not.toContain('margin-block-start: 0.125rem;');
+  });
+
   it('keeps search labeling, native attributes, disabled state, and clearing explicit', () => {
     const update = vi.fn();
     const { app, root } = mount(UiSearchBox, {

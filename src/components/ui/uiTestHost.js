@@ -21,14 +21,61 @@ export function attachClientRender(component, filename, importMetaUrl) {
   component.render = new Function('Vue', code)(Vue);
 }
 
-function hostNode(type, text = '') {
+export function hostNode(type, text = '') {
+  const classNames = new Set();
   return {
+    __uiTestHostNode: true,
+    nodeType: type === 'text' ? 3 : type === 'comment' ? 8 : 1,
     type,
     text,
     props: {},
     children: [],
     parent: null,
+    style: {},
+    classList: {
+      add: (...names) => names.forEach((name) => classNames.add(name)),
+      contains: (name) => classNames.has(name),
+      remove: (...names) => names.forEach((name) => classNames.delete(name)),
+    },
     focus: vi.fn(),
+    appendChild(child) {
+      child.parent = this;
+      this.children.push(child);
+      return child;
+    },
+    removeChild(child) {
+      const index = this.children.indexOf(child);
+      if (index >= 0) this.children.splice(index, 1);
+      child.parent = null;
+      return child;
+    },
+    cloneNode() {
+      const clone = hostNode(type, text);
+      clone.props = { ...this.props };
+      for (const name of classNames) clone.classList.add(name);
+      return clone;
+    },
+    contains(candidate) {
+      let current = candidate;
+      while (current) {
+        if (current === this) return true;
+        current = current.parent;
+      }
+      return false;
+    },
+    getBoundingClientRect() {
+      return {
+        bottom: 0,
+        height: 0,
+        left: 0,
+        right: 0,
+        top: 0,
+        width: 0,
+      };
+    },
+    get parentNode() {
+      return this.parent;
+    },
   };
 }
 
@@ -69,12 +116,12 @@ const renderer = createRenderer({
     const siblings = node.parent?.children ?? [];
     return siblings[siblings.indexOf(node) + 1] ?? null;
   },
-  querySelector() {
-    return null;
+  querySelector(selector) {
+    return globalThis.document?.querySelector?.(selector) ?? null;
   },
   setScopeId() {},
   cloneNode(node) {
-    return { ...node, props: { ...node.props }, children: [...node.children] };
+    return node.cloneNode();
   },
   insertStaticContent(content, parent) {
     const node = hostNode('static', content);

@@ -87,6 +87,20 @@ describe('shared UI component token contract', () => {
     }
   });
 
+  it.each([
+    ['active', active],
+    ['candidate', candidate],
+  ])(
+    '%s system bounds the color value field to seven hex characters',
+    (_, css) => {
+      const value = declarations(css).get('--ui-field-hex-value-inline-size');
+
+      expect(value).toContain('7ch');
+      expect(value).toContain('var(--ui-field-padding-inline)');
+      expect(value).toContain('var(--ui-border-width)');
+    },
+  );
+
   it('keeps icon-button hit areas at or above the 2rem responsive floor', () => {
     const activeValues = declarations(active);
     const candidateValues = declarations(candidate);
@@ -167,7 +181,11 @@ describe('shared UI component token contract', () => {
   it('gives every continuously animated component OS and manual reduced-motion paths', () => {
     for (const name of [
       'UiButton.vue',
+      'UiDisclosure.vue',
       'UiMarqueeText.vue',
+      'UiNotificationHost.vue',
+      'UiRadioGroup.vue',
+      'UiSkeleton.vue',
       'UiStatusIcon.vue',
     ]) {
       const source = componentFiles.find((file) => file.name === name)?.source;

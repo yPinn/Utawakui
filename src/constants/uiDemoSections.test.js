@@ -27,6 +27,8 @@ describe('UI demo component order', () => {
       'core-minimums',
       'density',
       'page-header',
+      'separator',
+      'kbd',
       'field',
       'search-box',
       'text-field',
@@ -34,21 +36,29 @@ describe('UI demo component order', () => {
       'select',
       'checkbox',
       'range',
+      'color-field',
+      'radio-group',
       'buttons',
       'icon-buttons',
       'text-button',
       'tabs',
+      'segmented-control',
+      'disclosure',
       'chips',
       'status-icons',
       'hints',
       'notices',
       'progress',
+      'skeleton',
+      'notification-host',
       'marquee-text',
       'track-thumb',
       'collage-thumb',
       'track-rows',
       'context-menu',
       'modal',
+      'tooltip',
+      'popover',
     ]);
     expect(new Set(sections.map((section) => section.key)).size).toBe(
       sections.length,
@@ -75,6 +85,26 @@ describe('UI demo component order', () => {
     expect(new Set(registeredComponents).size).toBe(
       registeredComponents.length,
     );
+
+    for (const key of [
+      'separator',
+      'kbd',
+      'color-field',
+      'radio-group',
+      'segmented-control',
+      'disclosure',
+      'skeleton',
+      'notification-host',
+      'tooltip',
+      'popover',
+    ]) {
+      expect(
+        UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
+          (section) => section.key === key,
+        )?.reviewed,
+        key,
+      ).toBe(false);
+    }
   });
 
   it('uses Traditional Chinese display labels while preserving stable keys', () => {
@@ -100,6 +130,8 @@ describe('UI demo component order', () => {
       '核心最小尺寸',
       '密度與尺寸',
       '頁面標題列',
+      '分隔線',
+      '快捷鍵提示',
       '欄位共用外觀',
       '搜尋欄',
       '文字欄位',
@@ -107,21 +139,29 @@ describe('UI demo component order', () => {
       '選擇欄位',
       '核取方塊',
       '範圍控制',
+      '色彩欄位',
+      '單選群組',
       '按鈕',
       '圖示按鈕',
       '文字操作',
       '分頁導覽',
+      '分段單選',
+      '展開區塊',
       '狀態標籤',
       '狀態圖示',
       '輔助文字',
       '內嵌通知',
       '進度指示',
+      '載入骨架',
+      '固定通知 Host',
       '跑馬燈文字',
       '曲目縮圖',
       '拼貼縮圖',
       '曲目資料列',
       '動作選單',
       '對話框',
+      '工具提示',
+      '錨定浮層',
     ]);
   });
 });

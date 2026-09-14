@@ -44,6 +44,7 @@ describe('coverage policy', () => {
       'shared/outputContract.js',
       'src/components/demo/trackThumbFallback.js',
       'src/components/ui/fieldAttrs.js',
+      'src/components/ui/floatingPosition.js',
       'src/composables/usePlaylistActions.js',
       'src/composables/useMusicAnalysisSettings.js',
       'src/constants/featureGates.js',
@@ -90,6 +91,16 @@ describe('coverage policy', () => {
     expect(classifyAppSource(file)).toEqual({
       status: 'coverage-neutral',
       reason: 'test-infrastructure',
+    });
+    expect(coveragePolicy.exclude).toContain(file);
+  });
+
+  it('marks the static broken-image URL as a coverage-neutral fixture', () => {
+    const file = 'src/components/demo/demoImageFixtures.js';
+
+    expect(classifyAppSource(file)).toEqual({
+      status: 'coverage-neutral',
+      reason: 'static-fixture',
     });
     expect(coveragePolicy.exclude).toContain(file);
   });

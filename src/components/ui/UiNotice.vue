@@ -121,7 +121,7 @@ const role = computed(() =>
 }
 
 .ui-notice__icon {
-  margin-block-start: 0.125rem;
+  margin-block-start: calc(var(--ui-space-1) / 2);
   color: var(--ui-color-text-muted);
 }
 

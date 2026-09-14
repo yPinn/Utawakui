@@ -6,7 +6,9 @@ import {
 } from '../../constants/uiDemoPalette';
 import { CircleX, Play } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiKbd from '../ui/UiKbd.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 import DemoCoreMinimums from './DemoCoreMinimums.vue';
 import DemoDensity from './DemoDensity.vue';
@@ -139,7 +141,7 @@ const UNIT_RESPONSIBILITIES = [
       :key="section.key"
       :title="section.title"
       :component-label="section.components?.join(' · ')"
-      :reviewed="true"
+      :reviewed="section.reviewed !== false"
     >
       <div v-if="section.key === 'system-palette'" class="demo-review-block">
         <p class="demo-review-note">
@@ -423,6 +425,34 @@ const UNIT_RESPONSIBILITIES = [
         </UiPageHeader>
         <p class="demo-sample-caption">
           標題與動作保持同一基線；窄幅時仍保留清楚的操作名稱。
+        </p>
+      </div>
+
+      <div
+        v-else-if="section.key === 'separator'"
+        class="demo-separator-samples"
+      >
+        <div class="demo-separator-samples__horizontal">
+          <span>區段一</span>
+          <UiSeparator />
+          <span>區段二</span>
+        </div>
+        <div class="demo-separator-samples__vertical">
+          <span>左側</span>
+          <UiSeparator orientation="vertical" :decorative="false" />
+          <span>右側</span>
+        </div>
+        <p class="demo-sample-caption">
+          分隔線只擁有方向、邊界 token 與語意；外距由 caller layout 負責。
+        </p>
+      </div>
+
+      <div v-else-if="section.key === 'kbd'" class="demo-kbd-samples">
+        <span><UiKbd>F8</UiKbd> 開啟元件型錄</span>
+        <span><UiKbd>Esc</UiKbd> 關閉目前浮層</span>
+        <span><UiKbd>Ctrl</UiKbd> + <UiKbd>K</UiKbd> 快速操作範例</span>
+        <p class="demo-sample-caption">
+          只顯示caller提供的快捷鍵；command註冊、平台映射與可用狀態不屬於Kbd。
         </p>
       </div>
     </DemoCatalogueSection>
@@ -805,6 +835,28 @@ const UNIT_RESPONSIBILITIES = [
 
 .demo-sample-surface :deep(.ui-page-header) {
   margin-bottom: var(--ui-space-3);
+}
+
+.demo-separator-samples,
+.demo-separator-samples__horizontal {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.demo-separator-samples__vertical {
+  min-height: calc(var(--ui-control-height) * 2);
+  display: flex;
+  align-items: center;
+  gap: var(--ui-space-3);
+}
+
+.demo-kbd-samples {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-2);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-sm);
 }
 
 @media (max-width: 42rem) {

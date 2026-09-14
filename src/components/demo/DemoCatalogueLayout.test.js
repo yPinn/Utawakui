@@ -96,11 +96,15 @@ describe('F8 reviewed catalogue layout', () => {
     expect(reviewedRule).not.toMatch(/selected|accent|folder/);
   });
 
-  it('gives every completed section list a consistent block rhythm', () => {
-    expect(foundationsSource).toContain(':reviewed="true"');
-    expect(inputsSource).toContain(':reviewed="true"');
+  it('gives completed and pending section lists a consistent block rhythm', () => {
+    expect(foundationsSource).toContain(
+      ':reviewed="section.reviewed !== false"',
+    );
+    expect(inputsSource).toContain(':reviewed="section.reviewed !== false"');
     expect(actionsSource).toContain(':reviewed="true"');
-    expect(navigationSource).toContain(':reviewed="true"');
+    expect(navigationSource).toContain(
+      ':reviewed="section.reviewed !== false"',
+    );
     expect(feedbackSource).toContain(
       'COMPARISON_SECTION_KEYS.has(section.key)',
     );

@@ -169,11 +169,22 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(233);
+    expect(uniqueNames.size).toBe(254);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
+    expect(uniqueNames).toContain('--ui-kbd-min-block-size');
+    expect(uniqueNames).toContain('--ui-skeleton-text-block-size');
+    expect(uniqueNames).toContain('--ui-skeleton-pulse-duration');
+    expect(uniqueNames).toContain('--ui-radio-size');
+    expect(uniqueNames).toContain('--ui-tooltip-max-inline-size');
+    expect(uniqueNames).toContain('--ui-popover-max-inline-size');
+    expect(uniqueNames).toContain('--ui-notification-preferred-inline-size');
+    expect(uniqueNames).toContain('--ui-notification-block-end-offset');
+    expect(uniqueNames).toContain('--ui-notification-motion-offset');
+    expect(uniqueNames).toContain('--ui-notification-swipe-dismiss-distance');
     expect(uniqueNames).toContain('--ui-field-bg-hover-on-raised');
     expect(uniqueNames).toContain('--ui-field-bg-readonly-on-raised');
+    expect(uniqueNames).toContain('--ui-field-hex-value-inline-size');
     expect(uniqueNames).toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
