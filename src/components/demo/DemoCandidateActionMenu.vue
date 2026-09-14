@@ -656,7 +656,7 @@ onUnmounted(() => {
 .demo-action-menu__item {
   inline-size: 100%;
   min-inline-size: 0;
-  min-block-size: 2rem;
+  min-block-size: var(--ui-menu-item-height);
   display: grid;
   align-items: center;
   column-gap: var(--ui-space-2);
@@ -731,7 +731,7 @@ onUnmounted(() => {
 }
 
 .demo-action-menu__empty {
-  min-block-size: 2rem;
+  min-block-size: var(--ui-menu-item-height);
   display: flex;
   align-items: center;
   margin: 0;

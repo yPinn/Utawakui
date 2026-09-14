@@ -150,7 +150,7 @@ defineExpose({ focus });
   border: var(--ui-border-width) solid var(--ui-color-border-strong);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface-raised);
-  color: var(--ui-color-on-accent);
+  color: var(--ui-color-accent-contrast);
   pointer-events: none;
   transition:
     background-color var(--ui-motion-duration-feedback)

@@ -312,7 +312,7 @@
   --ui-notification-swipe-dismiss-distance: 4.5rem;
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: var(--ui-control-height-live);
-  --ui-menu-item-height: var(--ui-control-height);
+  --ui-menu-item-height: 2rem;
   --ui-modal-inline-size-small: 24rem;
   --ui-modal-inline-size-medium: 32rem;
   --ui-modal-inline-size-large: 48rem;

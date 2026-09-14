@@ -407,7 +407,7 @@ describe('DemoCandidateActionMenu behavior', () => {
     expect(source).toMatch(
       /max-block-size:\s*min\(20rem, calc\(100vh - 1rem\)\)/,
     );
-    expect(source).toMatch(/min-block-size:\s*2rem/);
+    expect(source).toMatch(/min-block-size:\s*var\(--ui-menu-item-height\)/);
     expect(source).not.toMatch(/max-block-size:\s*2rem/);
     expect(source).toMatch(
       /\.demo-action-menu\s*\{[^}]*padding:\s*var\(--ui-space-1\)/s,
