@@ -169,12 +169,26 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(220);
+    expect(uniqueNames.size).toBe(233);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
+    expect(uniqueNames).toContain('--ui-field-bg-on-raised');
+    expect(uniqueNames).toContain('--ui-field-bg-hover-on-raised');
+    expect(uniqueNames).toContain('--ui-field-bg-readonly-on-raised');
     expect(uniqueNames).toContain('--ui-inspector-width');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
+    for (const size of ['small', 'medium', 'large']) {
+      expect(uniqueNames).toContain(`--ui-modal-inline-size-${size}`);
+      expect(uniqueNames).toContain(`--ui-modal-max-block-size-${size}`);
+    }
+    expect(uniqueNames).toContain('--ui-modal-viewport-inset');
+    expect(uniqueNames).toContain('--ui-modal-content-inset');
+    expect(uniqueNames).toContain('--ui-modal-section-gap');
+    expect(uniqueNames).toContain('--ui-modal-footer-inset-block');
+    expect(uniqueNames).toContain('--ui-modal-width-default');
+    expect(uniqueNames).toContain('--ui-modal-width-notice');
+    expect(uniqueNames).toContain('--ui-modal-width-wide');
     for (const role of ['dense', 'standard', 'prominent', 'preview']) {
       expect(uniqueNames).toContain(`--ui-track-artwork-size-${role}`);
     }

@@ -272,6 +272,9 @@
   --ui-field-bg: var(--ui-color-surface-raised);
   --ui-field-bg-hover: var(--ui-color-surface-hover);
   --ui-field-bg-readonly: var(--ui-color-surface);
+  --ui-field-bg-on-raised: var(--ui-color-surface);
+  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
   --ui-field-fg: var(--ui-color-text);
   --ui-field-placeholder: var(--ui-color-text-muted);
   --ui-field-border: var(--ui-color-border);
@@ -284,9 +287,20 @@
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: var(--ui-control-height-live);
   --ui-menu-item-height: var(--ui-control-height);
-  --ui-modal-width-default: 26.25rem;
-  --ui-modal-width-notice: 40rem;
-  --ui-modal-width-wide: 45rem;
+  --ui-modal-inline-size-small: 24rem;
+  --ui-modal-inline-size-medium: 32rem;
+  --ui-modal-inline-size-large: 48rem;
+  --ui-modal-max-block-size-small: 35rem;
+  --ui-modal-max-block-size-medium: 45rem;
+  --ui-modal-max-block-size-large: 50rem;
+  --ui-modal-viewport-inset: var(--ui-space-5);
+  --ui-modal-content-inset: var(--ui-space-5);
+  --ui-modal-section-gap: var(--ui-space-4);
+  --ui-modal-footer-inset-block: var(--ui-space-3);
+  /* Migration aliases keep the active UiModal contract resolvable in v2. */
+  --ui-modal-width-default: var(--ui-modal-inline-size-small);
+  --ui-modal-width-notice: var(--ui-modal-inline-size-medium);
+  --ui-modal-width-wide: var(--ui-modal-inline-size-large);
   --ui-track-row-thumb-size: var(--ui-track-artwork-size);
   --ui-track-row-gap: var(--ui-space-2);
   --ui-track-row-padding-block: var(--ui-space-1);
@@ -311,6 +325,10 @@
   --ui-player-bar-height: 4.25rem;
   --ui-panel-inset: 0.75rem;
   --ui-shell-gutter: 0.5rem;
+  --ui-modal-viewport-inset: var(--ui-space-4);
+  --ui-modal-content-inset: var(--ui-space-4);
+  --ui-modal-section-gap: var(--ui-space-3);
+  --ui-modal-footer-inset-block: var(--ui-space-2);
 }
 
 /* A manual preference may only reduce motion; it cannot override the OS choice. */

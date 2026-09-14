@@ -48,6 +48,7 @@ const REVIEWED_APPEARANCE_SOURCES = [
   './DemoCollageThumbAppearance.vue',
   './DemoTrackRowAppearance.vue',
   './DemoActionMenuAppearance.vue',
+  './DemoModalAppearance.vue',
 ].map(readSource);
 
 describe('F8 reviewed catalogue layout', () => {
@@ -57,8 +58,8 @@ describe('F8 reviewed catalogue layout', () => {
     expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(6);
     expect(html.match(/data-review-status="partial"/g)).toHaveLength(1);
     expect(html.match(/data-review-status="pending"/g) ?? []).toHaveLength(0);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(29);
-    expect(html).toContain('Foundation → Action Menu');
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(30);
+    expect(html).toContain('Foundation → UiModal');
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
     ).toHaveLength(6);
@@ -151,7 +152,7 @@ describe('F8 reviewed catalogue layout', () => {
     )?.[0];
 
     expect(header).toContain('Candidate ≠ production adoption');
-    expect(header).toContain('Foundation → Action Menu');
+    expect(header).toContain('Foundation → UiModal');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(1);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,

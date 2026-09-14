@@ -83,7 +83,7 @@ function scrollToGroup(key) {
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
           <dt>檢查範圍</dt>
-          <dd>Foundation → Action Menu</dd>
+          <dd>Foundation → UiModal</dd>
         </div>
       </dl>
     </header>
