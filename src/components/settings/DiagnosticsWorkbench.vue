@@ -57,6 +57,9 @@ onMounted(workbench.refresh);
 <template>
   <div class="diagnostics-workbench">
     <UiPageHeader title="診斷工作台">
+      <template #description>
+        檢視執行期間記錄的診斷訊息，可依等級與關鍵字篩選。
+      </template>
       <template #actions>
         <UiButton
           :icon="RefreshCw"

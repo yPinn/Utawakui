@@ -3,7 +3,9 @@ import { computed, onMounted, onUnmounted, ref } from 'vue';
 import { useLyricsProviderCorpusReview } from '../../composables/useLyricsProviderCorpusReview.js';
 import { isEditableTarget } from '../../utils/dom.js';
 import UiButton from '../ui/UiButton.vue';
+import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiPageHeader from '../ui/UiPageHeader.vue';
 import LyricsProviderReviewCandidateList from './LyricsProviderReviewCandidateList.vue';
 import LyricsProviderReviewForm from './LyricsProviderReviewForm.vue';
 import LyricsProviderReviewStrata from './LyricsProviderReviewStrata.vue';
@@ -54,45 +56,49 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
 <template>
   <section class="lyrics-review" aria-labelledby="lyrics-review-title">
     <header class="lyrics-review__header">
-      <div class="lyrics-review__title-block">
-        <div class="lyrics-review__title-row">
-          <h1 id="lyrics-review-title">歌詞語料審核</h1>
-          <span class="lyrics-review__development">開發工具 · F8</span>
-        </div>
-        <div v-if="review.dataset.value" class="lyrics-review__progress">
-          <span>
-            已核准 {{ review.dataset.value.counts.approved }} /
-            {{ review.dataset.value.counts.total }}
-          </span>
-          <span
-            class="lyrics-review__progress-track"
-            role="progressbar"
-            aria-label="整體審核進度"
-            :aria-valuenow="review.dataset.value.counts.approved"
-            aria-valuemin="0"
-            :aria-valuemax="review.dataset.value.counts.total"
+      <UiPageHeader title="歌詞語料審核" title-id="lyrics-review-title">
+        <template #description>
+          逐筆審核歌詞來源候選並核准或退回，完成後可匯出評估用 corpus。
+        </template>
+        <template #actions>
+          <UiButton
+            v-if="review.dataset.value"
+            :variant="review.dataset.value.canExport ? 'accent' : 'ghost'"
+            :disabled="
+              review.exporting.value || !review.dataset.value.canExport
+            "
+            @click="review.exportCorpus"
           >
-            <span
-              class="lyrics-review__progress-value"
-              :style="{ width: `${progressPercent}%` }"
-            />
-          </span>
+            {{ review.exporting.value ? '匯出中…' : '匯出 corpus' }}
+          </UiButton>
+          <UiChip tone="gated">內部工具 · F7</UiChip>
+        </template>
+      </UiPageHeader>
+      <div v-if="review.dataset.value" class="lyrics-review__progress">
+        <span>
+          已核准 {{ review.dataset.value.counts.approved }} /
+          {{ review.dataset.value.counts.total }}
+        </span>
+        <span
+          class="lyrics-review__progress-track"
+          role="progressbar"
+          aria-label="整體審核進度"
+          :aria-valuenow="review.dataset.value.counts.approved"
+          aria-valuemin="0"
+          :aria-valuemax="review.dataset.value.counts.total"
+        >
           <span
-            v-if="review.dataset.value.counts.replacementNeeded"
-            class="lyrics-review__replacement"
-          >
-            待替換 {{ review.dataset.value.counts.replacementNeeded }}
-          </span>
-        </div>
+            class="lyrics-review__progress-value"
+            :style="{ width: `${progressPercent}%` }"
+          />
+        </span>
+        <span
+          v-if="review.dataset.value.counts.replacementNeeded"
+          class="lyrics-review__replacement"
+        >
+          待替換 {{ review.dataset.value.counts.replacementNeeded }}
+        </span>
       </div>
-      <UiButton
-        v-if="review.dataset.value"
-        :variant="review.dataset.value.canExport ? 'accent' : 'ghost'"
-        :disabled="review.exporting.value || !review.dataset.value.canExport"
-        @click="review.exportCorpus"
-      >
-        {{ review.exporting.value ? '匯出中…' : '匯出 corpus' }}
-      </UiButton>
     </header>
 
     <UiNotice
@@ -188,16 +194,17 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
 .lyrics-review__header {
   min-width: 0;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-4);
-  min-height: 3.5rem;
+  flex-direction: column;
+  gap: var(--ui-space-2);
   padding: var(--ui-space-2) var(--ui-space-3);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   background: var(--ui-color-canvas);
 }
 
-.lyrics-review__title-block,
+.lyrics-review__header :deep(.ui-page-header) {
+  margin-bottom: 0;
+}
+
 .lyrics-review__progress {
   min-width: 0;
   display: flex;
@@ -205,20 +212,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   gap: var(--ui-space-3);
 }
 
-.lyrics-review__title-row {
-  display: flex;
-  align-items: baseline;
-  gap: var(--ui-space-2);
-}
-
-.lyrics-review__header h1 {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-lg);
-  line-height: var(--ui-line-height-title);
-}
-
-.lyrics-review__development,
 .lyrics-review__progress,
 .lyrics-review__replacement {
   color: var(--ui-color-text-muted);

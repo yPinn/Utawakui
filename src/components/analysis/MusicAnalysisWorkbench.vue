@@ -61,6 +61,9 @@ watch(
 <template>
   <div class="analysis-workbench">
     <UiPageHeader title="音樂結構分析">
+      <template #description>
+        分析曲目的節奏與段落結構，並提供人工標註與 benchmark 比對工具。
+      </template>
       <template #actions>
         <div class="analysis-workbench__header-actions">
           <div
@@ -100,7 +103,7 @@ watch(
             title="模型、下載大小與維護資訊"
             @click="showCapabilityDetails = true"
           />
-          <UiChip tone="gated">內部工具 · F10</UiChip>
+          <UiChip tone="gated">內部工具 · F5</UiChip>
         </div>
       </template>
     </UiPageHeader>

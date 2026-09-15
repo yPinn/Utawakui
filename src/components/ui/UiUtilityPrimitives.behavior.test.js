@@ -4,6 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
 import UiDisclosure from './UiDisclosure.vue';
 import UiKbd from './UiKbd.vue';
+import UiPageHeader from './UiPageHeader.vue';
 import UiRadioGroup from './UiRadioGroup.vue';
 import UiSkeleton from './UiSkeleton.vue';
 import {
@@ -30,6 +31,35 @@ describe('UiKbd', () => {
     expect(html).toContain('<kbd');
     expect(html).toContain('Ctrl + K');
     expect(html).not.toContain('tabindex');
+  });
+});
+
+describe('UiPageHeader', () => {
+  it('binds titleId to the heading and omits the description paragraph when unslotted', async () => {
+    const html = await renderToString(
+      createSSRApp({ render: () => h(UiPageHeader, { title: '歌曲資料' }) }),
+    );
+
+    expect(html).toContain('<h1');
+    expect(html).not.toContain('id=');
+    expect(html).not.toContain('ui-page-header__description');
+  });
+
+  it('renders the description slot and the titleId attribute when provided', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            UiPageHeader,
+            { title: '歌詞語料審核', titleId: 'lyrics-review-title' },
+            { description: () => '逐筆審核歌詞來源候選並核准或退回。' },
+          ),
+      }),
+    );
+
+    expect(html).toContain('id="lyrics-review-title"');
+    expect(html).toContain('ui-page-header__description');
+    expect(html).toContain('逐筆審核歌詞來源候選並核准或退回。');
   });
 });
 

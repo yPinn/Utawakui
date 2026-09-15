@@ -187,7 +187,7 @@ function submitApproval() {
               {{ candidate.id }}
             </code>
           </div>
-          <p>只用於這批 F8 審核資料；可貼到上方搜尋欄定位同一筆。</p>
+          <p>只用於這批 F7 審核資料；可貼到上方搜尋欄定位同一筆。</p>
           <div class="review-form__lookup-actions">
             <UiButton
               :icon="Copy"

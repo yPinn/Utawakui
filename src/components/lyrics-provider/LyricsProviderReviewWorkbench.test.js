@@ -86,7 +86,7 @@ describe('lyrics provider corpus review workbench contract', () => {
 
     expect(form).toContain('查證輔助');
     expect(form).toContain('候選 ID（本批資料）');
-    expect(form).toContain('只用於這批 F8 審核資料');
+    expect(form).toContain('只用於這批 F7 審核資料');
     expect(form).toContain('Recording MBID（MusicBrainz 錄音 ID）');
     expect(form).toContain('開啟 MusicBrainz');
     expect(form).toContain('複製歌手＋歌名');
