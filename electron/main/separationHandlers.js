@@ -47,6 +47,8 @@ function registerSeparationHandlers({
   selectStoredSeparationResult = selectSeparationResult,
   getPreparedSeparationFfmpegPath = getPreparedFfmpegPath,
   getPreparedSeparationModel = getPreparedSeparationModelPath,
+  resolveUserDataDir = () => app.getPath('userData'),
+  createSeparationEngineJob = createOnnxMdxJob,
 }) {
   const service = createAudioProcessingService({
     resolveRecipe,
@@ -63,7 +65,7 @@ function registerSeparationHandlers({
 
       // Preparation remains an explicit Settings action. Runs only verify the
       // paths here, so starting a job never hides a download from a livestream.
-      const userDataDir = app.getPath('userData');
+      const userDataDir = resolveUserDataDir();
       const ffmpegPath = getPreparedSeparationFfmpegPath(
         userDataDir,
         getConfig().systemFfmpegPath,
@@ -80,6 +82,9 @@ function registerSeparationHandlers({
         engineRecipeId: recipe.engineRecipeId,
         profileId: recipe.profileId,
         modelId: recipe.modelIds[0],
+        // Boolean product intent read fresh per run, not a renderer-chosen
+        // execution-provider name — see ADR 0017/0009.
+        preferGpu: getConfig().separationGpuAcceleration !== false,
       };
     },
     createEngineJob: ({ jobId, engineId, prepared, emitProgress }) => {
@@ -90,7 +95,7 @@ function registerSeparationHandlers({
         result: heavyJobScheduler.schedule({
           jobId,
           start: () =>
-            createOnnxMdxJob({
+            createSeparationEngineJob({
               workerPath: path.join(
                 __dirname,
                 '..',
@@ -105,6 +110,7 @@ function registerSeparationHandlers({
                 recipeId: prepared.engineRecipeId,
                 profileId: prepared.profileId,
                 modelId: prepared.modelId,
+                preferGpu: prepared.preferGpu,
               },
               emitProgress,
             }),

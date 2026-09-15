@@ -24,6 +24,7 @@ function register(overrides = {}) {
     sidebarWidth: 256,
     captureDeviceId: null,
     autoAnalyzeMusicStructure: true,
+    separationGpuAcceleration: true,
     autoCheckAppUpdates: true,
     lastSeenAnnouncementVersion: null,
   };
@@ -89,6 +90,8 @@ describe('registerConfigHandlers', () => {
       'config:set-capture-device',
       'config:get-auto-music-analysis',
       'config:set-auto-music-analysis',
+      'config:get-separation-gpu-acceleration',
+      'config:set-separation-gpu-acceleration',
       'config:get-app-update-auto-check',
       'config:set-app-update-auto-check',
       'config:get-announcement-seen-version',
@@ -213,6 +216,9 @@ describe('registerConfigHandlers', () => {
     ).resolves.toBeNull();
     await expect(
       ipcMain.handlers.get('config:get-auto-music-analysis')(),
+    ).resolves.toBe(true);
+    await expect(
+      ipcMain.handlers.get('config:get-separation-gpu-acceleration')(),
     ).resolves.toBe(true);
     await expect(
       ipcMain.handlers.get('config:get-app-update-auto-check')(),
@@ -347,6 +353,38 @@ describe('registerConfigHandlers', () => {
         .catch((error) => error);
 
       expect(thrown.message).toContain('AUTO_MUSIC_ANALYSIS_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
+      expect(recordDiagnostic).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each([true, false])(
+    'persists separation GPU acceleration as %s',
+    async (enabled) => {
+      const { ipcMain, updateConfig } = register();
+
+      await expect(
+        ipcMain.handlers.get('config:set-separation-gpu-acceleration')(
+          null,
+          enabled,
+        ),
+      ).resolves.toBe(enabled);
+      expect(updateConfig).toHaveBeenCalledWith({
+        separationGpuAcceleration: enabled,
+      });
+    },
+  );
+
+  it.each([null, 0, 'true', {}])(
+    'rejects invalid separation GPU acceleration value %j',
+    async (enabled) => {
+      const { ipcMain, updateConfig, recordDiagnostic } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-separation-gpu-acceleration')(null, enabled)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('SEPARATION_GPU_ACCELERATION_INVALID');
       expect(updateConfig).not.toHaveBeenCalled();
       expect(recordDiagnostic).not.toHaveBeenCalled();
     },

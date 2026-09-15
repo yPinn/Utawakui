@@ -17,6 +17,7 @@ import FeedbackReportSettingsRow from '../components/settings/FeedbackReportSett
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
 import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
+import SeparationGpuSettingsRow from '../components/settings/SeparationGpuSettingsRow.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
@@ -44,6 +45,7 @@ import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibraryMetadataMaintenance } from '../composables/useLibraryMetadataMaintenance.js';
 import { useMusicAnalysisSettings } from '../composables/useMusicAnalysisSettings.js';
+import { useSeparationSettings } from '../composables/useSeparationSettings.js';
 import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
 import { usePlayer } from '../composables/usePlayer.js';
 
@@ -95,6 +97,7 @@ const {
   repairDependency,
 } = useFeatureDependencies();
 const musicAnalysisSettings = useMusicAnalysisSettings();
+const separationSettings = useSeparationSettings();
 
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
@@ -251,6 +254,7 @@ async function refreshSettingsState() {
   refreshDependencies();
   refreshDiagnostics();
   musicAnalysisSettings.initialize();
+  separationSettings.refreshPreference();
 }
 
 async function handleRemoveMusicAnalysis() {
@@ -602,6 +606,15 @@ onUnmounted(musicAnalysisSettings.dispose);
                 @prepare="musicAnalysisSettings.prepare"
                 @repair="musicAnalysisSettings.repair"
                 @remove="handleRemoveMusicAnalysis"
+              />
+              <SeparationGpuSettingsRow
+                v-if="
+                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
+                "
+                :gpu-acceleration="separationSettings.gpuAcceleration.value"
+                :preference-busy="separationSettings.preferenceBusy.value"
+                :preference-error="separationSettings.preferenceError.value"
+                @set-gpu-acceleration="separationSettings.setGpuAcceleration"
               />
             </template>
           </SettingsFeatureGateRow>

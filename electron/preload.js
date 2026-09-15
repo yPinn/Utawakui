@@ -104,6 +104,10 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-auto-music-analysis'),
   setAutoMusicAnalysis: (enabled) =>
     ipcRenderer.invoke('config:set-auto-music-analysis', enabled),
+  getSeparationGpuAcceleration: () =>
+    ipcRenderer.invoke('config:get-separation-gpu-acceleration'),
+  setSeparationGpuAcceleration: (enabled) =>
+    ipcRenderer.invoke('config:set-separation-gpu-acceleration', enabled),
   getAppUpdateAutoCheck: () =>
     ipcRenderer.invoke('config:get-app-update-auto-check'),
   setAppUpdateAutoCheck: (enabled) =>

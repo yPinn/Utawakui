@@ -19,6 +19,7 @@ const { separateTrack } = require('./vocalSeparation');
       recipeId,
       profileId,
       modelId,
+      preferGpu,
     } = workerData;
     const result = await separateTrack(
       inputPath,
@@ -31,6 +32,7 @@ const { separateTrack } = require('./vocalSeparation');
       recipeId,
       profileId,
       modelId,
+      { preferGpu },
     );
     parentPort.postMessage({ type: 'done', result });
   } catch (err) {

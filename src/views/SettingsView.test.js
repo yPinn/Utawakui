@@ -44,6 +44,21 @@ describe('SettingsView version and maintenance sections', () => {
     );
   });
 
+  it('nests the separation GPU acceleration row inside the audio-processing feature row', () => {
+    const gateRowStart = source.indexOf('<SettingsFeatureGateRow');
+    const gpuRow = source.indexOf('<SeparationGpuSettingsRow', gateRowStart);
+    const gateRowEnd = source.indexOf(
+      '</SettingsFeatureGateRow>',
+      gateRowStart,
+    );
+
+    expect(gpuRow).toBeGreaterThan(gateRowStart);
+    expect(gateRowEnd).toBeGreaterThan(gpuRow);
+    expect(source.slice(gpuRow, gateRowEnd)).toContain(
+      'gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled',
+    );
+  });
+
   it('groups app updates with feedback reporting under 版本與公告, ordered update-first', () => {
     const appUpdateIndex = versionSource.indexOf('<AppUpdateSettingsRow');
     const feedbackRowIndex = versionSource.indexOf(

@@ -32,6 +32,7 @@ describe('config', () => {
       sidebarWidth: 256,
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
+      separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
       lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
@@ -76,6 +77,7 @@ describe('config', () => {
       sidebarWidth: 256,
       captureDeviceId: null,
       autoAnalyzeMusicStructure: true,
+      separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
       lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
@@ -201,6 +203,22 @@ describe('config', () => {
         JSON.stringify({ autoAnalyzeMusicStructure }),
       );
       expect(loadConfig(configPath).autoAnalyzeMusicStructure).toBe(true);
+    },
+  );
+
+  it('round-trips the separation GPU acceleration preference', () => {
+    saveConfig(configPath, { separationGpuAcceleration: false });
+    expect(loadConfig(configPath).separationGpuAcceleration).toBe(false);
+  });
+
+  it.each([null, 1, 'true', {}])(
+    'falls back to separation GPU acceleration on for invalid value %j',
+    (separationGpuAcceleration) => {
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify({ separationGpuAcceleration }),
+      );
+      expect(loadConfig(configPath).separationGpuAcceleration).toBe(true);
     },
   );
 

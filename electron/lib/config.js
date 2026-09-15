@@ -35,6 +35,12 @@ const DEFAULTS = {
   // Product intent only. The main-owned import completion path still rechecks
   // the audio-processing gate and capability readiness before scheduling work.
   autoAnalyzeMusicStructure: true,
+  // Whether quick/general separation tries the DirectML execution provider
+  // before CPU. See ADR 0017 — this is a boolean product intent, not a
+  // renderer-chosen execution-provider name; main still owns the actual
+  // DirectML-then-CPU-fallback logic in vocalSeparation.js regardless of
+  // this value.
+  separationGpuAcceleration: true,
   // When true, the packaged Windows build runs the delayed startup update check
   // and the background recheck. Turning it off leaves the manual Settings
   // "check" action working; it only stops the app from contacting the release
@@ -152,6 +158,10 @@ function loadConfig(configPath) {
       typeof data.autoAnalyzeMusicStructure === 'boolean'
         ? data.autoAnalyzeMusicStructure
         : DEFAULTS.autoAnalyzeMusicStructure,
+    separationGpuAcceleration:
+      typeof data.separationGpuAcceleration === 'boolean'
+        ? data.separationGpuAcceleration
+        : DEFAULTS.separationGpuAcceleration,
     autoCheckAppUpdates:
       typeof data.autoCheckAppUpdates === 'boolean'
         ? data.autoCheckAppUpdates

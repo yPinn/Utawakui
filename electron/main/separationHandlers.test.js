@@ -8,9 +8,11 @@ import { APP_ERROR_PREFIX } from '../lib/appError.js';
 // separationHandlers.js's injectable defaults
 // (findSeparationTrackRecord, resolveSeparationsOutputDir, etc.), the same
 // convention libraryHandlers.js and importHandlers.js already use.
-vi.mock('electron', () => ({
-  app: { getPath: () => 'C:\\AppData\\Utawakui' },
+const mocks = vi.hoisted(() => ({
+  getPath: vi.fn(() => 'C:\\AppData\\Utawakui'),
 }));
+
+vi.mock('electron', () => ({ app: { getPath: mocks.getPath } }));
 
 import { registerSeparationHandlers } from './separationHandlers.js';
 
@@ -128,6 +130,41 @@ describe('registerSeparationHandlers', () => {
     expect(parseAppError(error).code).toBe('SEPARATION_RESULT_MISSING');
     expect(recordDiagnostic).not.toHaveBeenCalled();
   });
+
+  it.each([
+    [undefined, true], // no config value written yet -> default on
+    [true, true],
+    [false, false],
+  ])(
+    'threads the separationGpuAcceleration config value (%j) into the engine job as preferGpu (%j)',
+    async (configValue, expectedPreferGpu) => {
+      const createSeparationEngineJob = vi.fn(() => ({
+        result: Promise.resolve({ stemsPath: 'C:\\stems.wav' }),
+        cancel: vi.fn(),
+      }));
+      const heavyJobScheduler = {
+        schedule: vi.fn(({ start }) => start().result),
+        cancel: vi.fn(),
+      };
+      const handlers = register({
+        getConfig: () => ({ separationGpuAcceleration: configValue }),
+        heavyJobScheduler,
+        createSeparationEngineJob,
+        findSeparationTrackRecord: vi.fn(() => ({ id: 'track-1' })),
+        resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
+        resolveSeparationInputAudioPath: vi.fn(() => 'input.mp3'),
+        resolveUserDataDir: vi.fn(() => 'C:\\AppData\\Utawakui'),
+      });
+
+      await handlers.get('separation:run')(null, 'track-1', 'quick');
+
+      expect(createSeparationEngineJob).toHaveBeenCalledWith(
+        expect.objectContaining({
+          workerData: expect.objectContaining({ preferGpu: expectedPreferGpu }),
+        }),
+      );
+    },
+  );
 
   it('selects an existing result and notifies the library', async () => {
     const notifyLibraryUpdated = vi.fn();

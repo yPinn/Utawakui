@@ -272,9 +272,34 @@ function resolveExecutionPreset(presetId, expectedProfileId, expectedModelId) {
   return preset;
 }
 
-async function runInference(session, inputData, model) {
+// DirectML session creation is a code path that has never actually run
+// GPU inference before (the bundled DirectML.dll previously just sat
+// unused) — see ADR 0002 for the packaging-level crash history and
+// ADR 0017 for the Electron worker_thread-specific upstream issues this
+// fallback is guarding against (microsoft/onnxruntime#20084, #13086,
+// #17678). Injectable so vocalSeparation.test.js can simulate a DirectML
+// failure without mocking the onnxruntime-node module itself.
+async function createInferenceSession(
+  modelPath,
+  { preferGpu = true, onFallback, createSession } = {},
+) {
   // Lazy require — this file also loads in the main process, which must
   // never load onnxruntime-node/DirectML. See ADR 0002.
+  const ort = require('onnxruntime-node');
+  const create =
+    createSession ||
+    ((path, options) => ort.InferenceSession.create(path, options));
+  if (preferGpu) {
+    try {
+      return await create(modelPath, { executionProviders: ['dml'] });
+    } catch (err) {
+      onFallback?.(err);
+    }
+  }
+  return create(modelPath);
+}
+
+async function runInference(session, inputData, model) {
   const ort = require('onnxruntime-node');
   const inputTensor = new ort.Tensor('float32', inputData, [
     1,
@@ -575,6 +600,9 @@ async function separateTrack(
   presetId = DEFAULT_PRESET_ID,
   expectedProfileId,
   expectedModelId,
+  // Test/diagnostic seams only — production callers (vocalSeparationWorker.js)
+  // never pass these, so real runs always try DirectML then fall back to CPU.
+  { preferGpu = true, createSession, onGpuFallback } = {},
 ) {
   fs.mkdirSync(outputDir, { recursive: true });
   const preset = resolveExecutionPreset(
@@ -604,9 +632,16 @@ async function separateTrack(
   };
 
   onProgress?.({ stage: 'loading-model' });
-  // Lazy require — see runInference's require above.
-  const ort = require('onnxruntime-node');
-  const session = await ort.InferenceSession.create(modelPath);
+  const session = await createInferenceSession(modelPath, {
+    preferGpu,
+    createSession,
+    onFallback: (err) => {
+      console.warn(
+        `DirectML session creation failed, falling back to CPU: ${err.message}`,
+      );
+      onGpuFallback?.(err);
+    },
+  });
 
   onProgress?.({ stage: 'decoding' });
   const { left, right } = await decodeAudio(inputPath, ffmpegPath);
@@ -661,6 +696,7 @@ async function separateTrack(
 
 module.exports = {
   separateTrack,
+  createInferenceSession,
   encodeWav,
   MODELS,
   SEPARATION_PRESETS,

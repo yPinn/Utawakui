@@ -276,6 +276,45 @@ function registerConfigHandlers({
     );
   });
 
+  ipcMain.handle('config:get-separation-gpu-acceleration', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-separation-gpu-acceleration',
+        code: 'SEPARATION_GPU_ACCELERATION_READ_FAILED',
+        title: '無法讀取 GPU 加速設定',
+        message: '目前無法讀取 GPU 加速設定。',
+      },
+      () => getConfig().separationGpuAcceleration,
+    ),
+  );
+
+  ipcMain.handle(
+    'config:set-separation-gpu-acceleration',
+    async (event, enabled) => {
+      if (typeof enabled !== 'boolean') {
+        throw createValidationError(
+          'SEPARATION_GPU_ACCELERATION_INVALID',
+          '無法套用 GPU 加速設定',
+          '指定的 GPU 加速設定無效。',
+        );
+      }
+      return runConfigOperation(
+        {
+          recordDiagnostic,
+          operation: 'set-separation-gpu-acceleration',
+          code: 'SEPARATION_GPU_ACCELERATION_UPDATE_FAILED',
+          title: '無法套用 GPU 加速設定',
+          message: '目前無法套用 GPU 加速設定，請稍後再試。',
+        },
+        () => {
+          updateConfig({ separationGpuAcceleration: enabled });
+          return getConfig().separationGpuAcceleration;
+        },
+      );
+    },
+  );
+
   ipcMain.handle('config:get-app-update-auto-check', async () =>
     runConfigOperation(
       {

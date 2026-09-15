@@ -1,11 +1,75 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
   encodeWav,
   resolveExecutionPreset,
   resolvePreset,
   SEPARATION_PRESETS,
   MODELS,
+  createInferenceSession,
 } from './vocalSeparation.js';
+
+// createInferenceSession's own fallback logic is pure and injectable (no
+// real onnxruntime-node/model file needed), unlike separateTrack()'s full
+// STFT/ONNX path above — see ADR 0017 for why this specific seam exists.
+describe('createInferenceSession', () => {
+  it('returns the DirectML session when creation succeeds', async () => {
+    const dmlSession = { id: 'dml' };
+    const createSession = vi.fn(async (_path, options) => {
+      expect(options).toEqual({ executionProviders: ['dml'] });
+      return dmlSession;
+    });
+    const onFallback = vi.fn();
+
+    const session = await createInferenceSession('model.onnx', {
+      preferGpu: true,
+      createSession,
+      onFallback,
+    });
+
+    expect(session).toBe(dmlSession);
+    expect(onFallback).not.toHaveBeenCalled();
+    expect(createSession).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back to a CPU (no execution provider) session when DirectML creation throws', async () => {
+    const cpuSession = { id: 'cpu' };
+    const dmlError = new Error('no available backend found');
+    const createSession = vi.fn(async (_path, options) => {
+      if (options) throw dmlError;
+      return cpuSession;
+    });
+    const onFallback = vi.fn();
+
+    const session = await createInferenceSession('model.onnx', {
+      preferGpu: true,
+      createSession,
+      onFallback,
+    });
+
+    expect(session).toBe(cpuSession);
+    expect(onFallback).toHaveBeenCalledExactlyOnceWith(dmlError);
+    expect(createSession).toHaveBeenCalledTimes(2);
+  });
+
+  it('skips DirectML entirely when preferGpu is false', async () => {
+    const cpuSession = { id: 'cpu' };
+    const createSession = vi.fn(async (_path, options) => {
+      expect(options).toBeUndefined();
+      return cpuSession;
+    });
+    const onFallback = vi.fn();
+
+    const session = await createInferenceSession('model.onnx', {
+      preferGpu: false,
+      createSession,
+      onFallback,
+    });
+
+    expect(session).toBe(cpuSession);
+    expect(onFallback).not.toHaveBeenCalled();
+    expect(createSession).toHaveBeenCalledTimes(1);
+  });
+});
 
 // Only the pure, deterministic piece gets automated coverage — the
 // STFT/ONNX inference path stays untested here for the same reason
