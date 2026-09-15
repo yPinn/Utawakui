@@ -403,7 +403,9 @@ describe('ensureFfmpegDependency', () => {
     expect(
       fs.readFileSync(path.join(paths.installDir, 'SOURCE.txt'), 'utf8'),
     ).toContain(dependency.sourceUrl);
-    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl);
+    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl, {
+      signal: expect.any(AbortSignal),
+    });
     expect(extractArchive).toHaveBeenCalledTimes(1);
   });
 
@@ -481,9 +483,15 @@ describe('ensureFfmpegDependency', () => {
       installedAt: '2026-08-21T00:00:00.000Z',
       executableRelativePath: dependency.executableRelativePath,
     });
-    expect(fetchImpl).toHaveBeenNthCalledWith(1, dependency.versionUrl);
-    expect(fetchImpl).toHaveBeenNthCalledWith(2, dependency.sha256Url);
-    expect(fetchImpl).toHaveBeenNthCalledWith(3, dependency.downloadUrl);
+    expect(fetchImpl).toHaveBeenNthCalledWith(1, dependency.versionUrl, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(fetchImpl).toHaveBeenNthCalledWith(2, dependency.sha256Url, {
+      signal: expect.any(AbortSignal),
+    });
+    expect(fetchImpl).toHaveBeenNthCalledWith(3, dependency.downloadUrl, {
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it('returns an existing managed binary without downloading again', async () => {
@@ -1243,7 +1251,9 @@ describe('model feature dependencies', () => {
       fileRelativePath: dependency.fileRelativePath,
       modelId: dependency.modelId,
     });
-    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl);
+    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl, {
+      signal: expect.any(AbortSignal),
+    });
   });
 
   it('migrates a verified legacy model into the managed dependency folder', async () => {
@@ -1404,7 +1414,9 @@ describe('model feature dependencies', () => {
       fetchImpl,
     });
 
-    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl);
+    expect(fetchImpl).toHaveBeenCalledWith(dependency.downloadUrl, {
+      signal: expect.any(AbortSignal),
+    });
     expect(fs.readFileSync(paths.filePath)).toEqual(modelBuffer);
     expect(status).toMatchObject({
       id: dependency.id,
