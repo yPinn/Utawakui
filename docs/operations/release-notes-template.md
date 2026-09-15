@@ -39,6 +39,10 @@ copying the commit log or describing how the software is built.
   in every public-test note. State each disclosure once, briefly, with its
   practical effect or next action — the unsigned-publisher disclosure belongs in
   Known Limitations; the other four belong in Before Installing.
+- Include the community Discord invite (`https://discord.gg/yJKddEtpNt`) in
+  Before Installing so the public release page carries the same
+  announcements/feedback channel as the in-app Settings entry. This is a
+  recommended inclusion, not a required disclosure like the five above.
 
 Conventional Commit types are source evidence, not release-note copy:
 
@@ -103,6 +107,7 @@ Translate source evidence into reader outcomes. For example:
 - <更新是否自動，以及哪些步驟需要明確操作。>
 - <覆蓋安裝、設定、曲庫與自備素材的保留／備份說明。>
 - <使用者自備素材的權利責任。>
+- 加入 [Discord](https://discord.gg/yJKddEtpNt) 社群，查看公告或回饋想法。
 
 ---
 
@@ -152,4 +157,6 @@ Translate source evidence into reader outcomes. For example:
 - <Update behavior and steps that require explicit action.>
 - <Installation, settings, library, and user-media retention or backup guidance.>
 - <User responsibility for rights to supplied media.>
+- Join the [Discord](https://discord.gg/yJKddEtpNt) community for announcements
+  and feedback.
 ```
