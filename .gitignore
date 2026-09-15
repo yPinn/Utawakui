@@ -24,3 +24,7 @@ uv-cache/
 .claude/settings.local.json
 .env
 .env.local
+
+# Dev-only update-signing private key (docs/adr/0018-signed-update-manifest.md).
+# Never commit a private key, dev or production.
+tools/update-signing/.local/

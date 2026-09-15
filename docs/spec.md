@@ -62,7 +62,7 @@ adapters 評估，目前不做 OBS native plugin。
 | Feature gates     | 已實作             | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                                                                                                                                                                                                                                        |
 | Diagnostics       | 已實作             | Main-owned persistence/redaction、renderer capture、Settings 控制、dependency IPC boundary 與顯式 redacted export（單一 JSON support bundle）已建立；dev-only F6 結構化檢視工作台（F5／F7／F8 為音樂分析、歌詞來源檢查與視覺系統型錄，皆同屬 dev-only）與獨立單檔 HTML 檢視工具已提供；其他 domain wrappers 持續增量導入。                                                                                    |
 | 使用者回饋        | 已實作             | 錯誤回報／功能請求／使用體驗意見／內容問題共用一套預覽後送出流程，僅錯誤回報可選附最近錯誤紀錄；Settings 常駐入口與錯誤紀錄行動選單均可觸發。Relay 獨立部署於 Cloudflare、不隨 App 打包，需另行設定 Discord webhook 與 KV namespace 才能實際送達；送出前一律強制預覽，不做自動或背景上傳。                                                                                                                    |
-| Distribution      | 已實作基礎         | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；受信任簽章與連續版本 update acceptance 尚未完成。                                                                                                                                                                                                                                                                           |
+| Distribution      | 已實作基礎         | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；獨立 manifest 簽章驗證機制（`electron-updater` 之外的第二層完整性檢查）已實作並通過單元測試，見 [ADR 0018](adr/0018-signed-update-manifest.md)——目前僅開發自簽金鑰，尚未接進真正發布流程，等同尚未變成使用者可感知的產品能力；受信任 Authenticode 簽章與連續版本 update acceptance 仍未完成。                               |
 | Session／VOD mode | 規劃中             | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                                                                                                                                                                                                                                                              |
 | External adapters | 實驗性原型         | Windows x64 已有固定 `Utawakui.Lyrics` Spout2 sender；Browser Source 仍是支援基線，實機 receiver／alpha／GPU／安裝版驗收前不列為正式支援。其他控制 adapter 尚未成為產品能力。                                                                                                                                                                                                                                 |
 
@@ -204,28 +204,27 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
 3. Official Presentation Pack 與 User Variant 的版本、簽章與分享邊界如何落地？
 4. Refined 的固定品質與容量門檻達到多少才可進產品 catalog？
 5. 哪一個外部 adapter 有足夠真實需求，值得新增 credential 與 command trust boundary？
-6. Updater 是否要補上非對稱簽章＋artifact hash 雙層驗證？這是目前唯二兩個持續開發中的
-   競品都已落地、而 `docs/architecture.md` 明確列為缺口（`signExecutable`／
-   `verifyUpdateCodeSignature` 為 false）的項目；尚待決定簽章金鑰管理流程與是否採用類似
-   manifest／artifact 兩層驗證的形狀。見
-   [競品調查 §9.3](research/competitive-research.md#93-兩個競品的更新簽章系統都比-utawakui-完整)。
-7. Pitch／tempo 是否要在既有 SoundTouch／WSOLA 之外，另加一條頻域（如 Signalsmith
+6. Pitch／tempo 是否要在既有 SoundTouch／WSOLA 之外，另加一條頻域（如 Signalsmith
    Stretch，MIT）路徑？公開評測顯示極端變速時頻域演算法音質優於 WSOLA，且此路徑不涉及
    GPU 或原生程式碼授權疑慮，風險層級低於本節其他項目；尚待決定是否值得投入與如何與現有
    `usePlayerAudioGraph.js` 的 SoundTouch pitch processing 共存或取代。見
    [競品調查 §5.3](research/competitive-research.md#53-對-utawakui-的啟發第三輪更新)。
-8. 是否要投入原生 OBS 音訊輸出（例如自製 libobs plugin），做為 Browser Source／系統音訊
+7. 是否要投入原生 OBS 音訊輸出（例如自製 libobs plugin），做為 Browser Source／系統音訊
    裝置之外的第三條輸出路徑？這是目前三個產品中唯一「別人有、Utawakui 與 EliteSand Pro
    都沒有」的能力，但需要一併評估 libobs（GPL-2.0-or-later）的散布條件、崩潰風險模型
    與 Browser Source 不同（原生行程內程式碼，非獨立 CEF 沙箱），以及是否要比照競品做
    VST3／ASIO 類第三方原生程式碼的獨立行程隔離設計。見
    [競品調查 §5.3](research/competitive-research.md#53-對-utawakui-的啟發第三輪更新) 與
    [§7 合法性疑慮對照](research/competitive-research.md#7-合法性疑慮對照)。
-9. 是否要加入「無伴奏演出」項目，讓清唱／自彈自唱不需要假媒體檔就能進入 now
+8. 是否要加入「無伴奏演出」項目，讓清唱／自彈自唱不需要假媒體檔就能進入 now
    playing／待播／已唱？這是低風險的資料模型補洞，與現有 library／queue 設計相容；尚待
    決定 track 的最小必要欄位（時長估計、手動結束 vs. 計時自動結束）與是否影響現有
    playback／queue 契約。見
    [競品調查 §5.3](research/competitive-research.md#53-對-utawakui-的啟發第三輪更新)。
+
+Updater 非對稱簽章＋artifact hash 雙層驗證已決定並實作簽章／驗證架構，詳見
+[ADR 0018](adr/0018-signed-update-manifest.md)與上方 §3 狀態表；正式金鑰存放位置與
+是否接進真正發布流程仍是 ADR 0018 記錄的未決問題，尚未變成產品可用能力。
 
 ### 7.2 系統與環境整合
 

@@ -1,5 +1,13 @@
 'use strict';
 
+const { createUpdateManifestClient } = require('../lib/updateManifestClient');
+const { verifyManifest } = require('../lib/updateManifestVerification');
+const {
+  publicKeyHex: DEFAULT_PUBLIC_KEY_HEX,
+} = require('../../shared/updateSigningPublicKey.json');
+
+const MANIFEST_ERROR_MESSAGE = '更新驗證失敗，請稍後再試。';
+
 const UPDATE_PHASES = new Set([
   'disabled',
   'idle',
@@ -82,6 +90,13 @@ function createAppUpdateService({
   schedule = setTimeout,
   scheduleInterval = setInterval,
   logger = console,
+  // Independent integrity layer — see docs/adr/0018-signed-update-manifest.md.
+  // Injectable so tests never perform a real network request; production
+  // never passes these, so real runs always fetch+verify against the
+  // committed dev/production public key.
+  manifestClient = createUpdateManifestClient(),
+  verifyManifestFn = verifyManifest,
+  publicKeyHex = DEFAULT_PUBLIC_KEY_HEX,
 } = {}) {
   const enabled = Boolean(isPackaged && isWindows && runtimeEnabled);
   let autoChecksAllowed = Boolean(autoCheckEnabled);
@@ -114,15 +129,37 @@ function createAppUpdateService({
     return getStatus();
   }
 
-  function fail(operation, error) {
+  function fail(operation, error, message = '無法完成更新操作，請稍後再試。') {
     logger.error?.(`[update] ${operation} failed`, error);
     return setStatus({
       phase: 'error',
       progress: null,
       downloadBytesPerSecond: null,
       downloadEtaSeconds: null,
-      error: '無法完成更新操作，請稍後再試。',
+      error: message,
     });
+  }
+
+  // Independent of electron-updater's own latest.yml/SHA-512 check (which
+  // stays fully intact and unmodified — see ADR 0007). This closes the
+  // specific residual risk ADR 0007 already documented: latest.yml and the
+  // installer are produced by the same publish credential, so SHA-512 alone
+  // can't tell a compromised publish from a legitimate one. A signature made
+  // with a key independent of that credential can. Fails closed: any
+  // fetch/parse/signature/version problem blocks the download rather than
+  // silently falling back to electron-updater's weaker guarantee alone.
+  async function verifyAvailableUpdateManifest(version) {
+    const response = await manifestClient.fetchManifest(version);
+    if (response.status !== 'ok') {
+      return { ok: false, reason: response.reason || 'fetch-failed' };
+    }
+    const manifest = response.value;
+    if (boundedString(manifest?.version) !== version) {
+      return { ok: false, reason: 'version-mismatch' };
+    }
+    const verification = verifyManifestFn(manifest, publicKeyHex);
+    if (!verification.ok) return verification;
+    return { ok: true, manifest };
   }
 
   function initialize() {
@@ -217,6 +254,7 @@ function createAppUpdateService({
       status.phase === 'available' ||
       (status.phase === 'error' && Boolean(status.availableVersion));
     if (!enabled || !canDownload) return getStatus();
+    const targetVersion = status.availableVersion;
 
     initialize();
     setStatus({
@@ -226,6 +264,16 @@ function createAppUpdateService({
       downloadEtaSeconds: null,
       error: null,
     });
+
+    const verification = await verifyAvailableUpdateManifest(targetVersion);
+    if (!verification.ok) {
+      return fail(
+        'Manifest verification',
+        new Error(`update manifest check failed: ${verification.reason}`),
+        MANIFEST_ERROR_MESSAGE,
+      );
+    }
+
     try {
       await updater.downloadUpdate();
     } catch (error) {

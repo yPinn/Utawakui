@@ -12,6 +12,21 @@ function createUpdater() {
   return updater;
 }
 
+// Fake for the independent manifest-signing layer (ADR 0018) — most tests
+// here are about electron-updater's own state machine and don't care about
+// manifest verification, so they inject a client that always reports the
+// requested version as valid, matching the shape
+// electron/lib/updateManifestClient.js's fetchManifest() returns on success.
+function passingManifestClient() {
+  return {
+    fetchManifest: vi.fn(async (version) => ({
+      status: 'ok',
+      value: { version, signature: 'stub' },
+    })),
+  };
+}
+const passingVerifyManifestFn = () => ({ ok: true });
+
 function createIntervalSchedule() {
   const calls = [];
   const schedule = vi.fn((callback, intervalMs) => {
@@ -147,6 +162,8 @@ describe('app update service', () => {
       runtimeEnabled: true,
       updaterFactory: () => updater,
       schedule,
+      manifestClient: passingManifestClient(),
+      verifyManifestFn: passingVerifyManifestFn,
     });
 
     expect(service.scheduleStartupCheck(15000)).toBe(true);
@@ -222,6 +239,8 @@ describe('app update service', () => {
       runtimeEnabled: true,
       updaterFactory: () => updater,
       logger,
+      manifestClient: passingManifestClient(),
+      verifyManifestFn: passingVerifyManifestFn,
     });
     service.initialize();
 
@@ -298,6 +317,112 @@ describe('app update service', () => {
     tick();
     await Promise.resolve();
     expect(updater.checkForUpdates).toHaveBeenCalledTimes(2);
+  });
+
+  it('blocks the download and fails closed when the signed manifest cannot be fetched', async () => {
+    const updater = createUpdater();
+    const manifestClient = {
+      fetchManifest: vi
+        .fn()
+        .mockResolvedValue({ status: 'error', reason: 'offline' }),
+    };
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      manifestClient,
+    });
+    service.initialize();
+    updater.emit('update-available', { version: '0.2.0' });
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'error',
+      error: '更新驗證失敗，請稍後再試。',
+    });
+    expect(manifestClient.fetchManifest).toHaveBeenCalledWith('0.2.0');
+    expect(updater.downloadUpdate).not.toHaveBeenCalled();
+  });
+
+  it('blocks the download when the manifest signature does not verify', async () => {
+    const updater = createUpdater();
+    const manifestClient = {
+      fetchManifest: vi.fn().mockResolvedValue({
+        status: 'ok',
+        value: { version: '0.2.0', signature: 'forged' },
+      }),
+    };
+    const verifyManifestFn = vi.fn(() => ({
+      ok: false,
+      reason: 'signature-mismatch',
+    }));
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      manifestClient,
+      verifyManifestFn,
+    });
+    service.initialize();
+    updater.emit('update-available', { version: '0.2.0' });
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'error',
+      error: '更新驗證失敗，請稍後再試。',
+    });
+    expect(updater.downloadUpdate).not.toHaveBeenCalled();
+  });
+
+  it('blocks the download when the manifest declares a different version than electron-updater reported', async () => {
+    const updater = createUpdater();
+    const manifestClient = {
+      // A stale/wrong manifest for a different release — must not be
+      // accepted just because *some* validly-signed manifest exists.
+      fetchManifest: vi.fn().mockResolvedValue({
+        status: 'ok',
+        value: { version: '0.1.9', signature: 'stub' },
+      }),
+    };
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      manifestClient,
+      verifyManifestFn: passingVerifyManifestFn,
+    });
+    service.initialize();
+    updater.emit('update-available', { version: '0.2.0' });
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'error',
+      error: '更新驗證失敗，請稍後再試。',
+    });
+    expect(updater.downloadUpdate).not.toHaveBeenCalled();
+  });
+
+  it('proceeds to download once the signed manifest matches and verifies', async () => {
+    const updater = createUpdater();
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      manifestClient: passingManifestClient(),
+      verifyManifestFn: passingVerifyManifestFn,
+    });
+    service.initialize();
+    updater.emit('update-available', { version: '0.2.0' });
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'downloading',
+    });
+    expect(updater.downloadUpdate).toHaveBeenCalledOnce();
   });
 
   it('lets the auto-check preference gate the automatic paths without touching manual actions', async () => {

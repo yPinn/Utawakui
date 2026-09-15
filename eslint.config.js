@@ -35,7 +35,7 @@ module.exports = [
     },
   },
   {
-    files: ['scripts/**/*.mjs'],
+    files: ['scripts/**/*.mjs', 'tools/**/*.mjs'],
     languageOptions: {
       sourceType: 'module',
       globals: globals.node,
