@@ -43,6 +43,19 @@ function kindLabel(kind) {
   );
 }
 
+const DESCRIPTION_PLACEHOLDER_BY_KIND = {
+  [FEEDBACK_KINDS.BUG]: '發生了什麼事？你原本想做什麼、實際上看到什麼？',
+  [FEEDBACK_KINDS.FEATURE]: '你想要什麼樣的功能？它能解決什麼問題？',
+  [FEEDBACK_KINDS.EXPERIENCE]: '哪個部分讓你用起來不順手，或有什麼想法？',
+  [FEEDBACK_KINDS.CONTENT]: '這首歌或這個歌詞來源有什麼問題？',
+};
+
+const descriptionPlaceholder = computed(
+  () =>
+    DESCRIPTION_PLACEHOLDER_BY_KIND[state.kind] ||
+    DESCRIPTION_PLACEHOLDER_BY_KIND[FEEDBACK_KINDS.BUG],
+);
+
 function handleNoticeAction(operation) {
   if (operation === 'preview') {
     goToPreview();
@@ -81,7 +94,7 @@ function handleNoticeAction(operation) {
           :model-value="state.description"
           :maxlength="MAX_DESCRIPTION_LENGTH"
           :rows="6"
-          placeholder="發生了什麼事？你原本想做什麼、實際上看到什麼？"
+          :placeholder="descriptionPlaceholder"
           required
           @update:model-value="(value) => updateDraft({ description: value })"
         />

@@ -10,7 +10,7 @@ const emit = defineEmits(['open']);
   <SettingsActionRow
     :icon="MessageSquare"
     title="回報問題"
-    tooltip="回報問題、提出功能請求，或告訴我們使用上的想法。"
+    tooltip="回報問題、提出功能請求、告訴我們使用上的想法，或反映內容／歌詞來源問題。"
   >
     <template #actions>
       <UiButton variant="ghost" @click="emit('open')">回報問題</UiButton>
