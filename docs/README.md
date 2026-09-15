@@ -127,6 +127,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、
   [Visual System Foundation](research/visual-system-foundation-2026-08-28.md)、
   [UI Component Foundation](research/ui-component-foundation-2026-08-28.md)、
+  [Apple HIG Alignment Review](research/apple-hig-alignment-review-2026-09-15.md)、
   [LRCLIB T2 validation](research/lrclib-t2-live-validation-2026-08-24.md)、
   [NetEase isolated validation report](research/netease-isolated-technical-validation-2026-08-28.md)
   與其他
