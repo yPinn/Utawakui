@@ -2,11 +2,11 @@
 
 ## Status
 
-Proposed (2026-09-15). Code and unit-test coverage are implemented; the
-packaged-build verification required before this can move to Accepted has
-not been run (see Consequences). Amended same-day: the renderer GPU toggle
-originally rejected below (see "Rejected for this phase") was reconsidered
-and implemented — see that section for the reasoning.
+Accepted (2026-09-15). Code, unit-test coverage, packaged Windows x64
+execution, CPU／GPU output comparison, and automatic CPU fallback have been
+verified. Amended same-day: the renderer GPU toggle originally rejected below
+(see "Rejected for this phase") was reconsidered and implemented — see that
+section for the reasoning.
 
 ## Context
 
@@ -144,31 +144,36 @@ after all — see the note after the "Rejected for this phase" bullet below.)
    `npm run lint:md`, `npm run format:check`, `npm run license:inventory`
    all clean.
 
-### Not verified — required before Accepted
+### Packaged-build acceptance
 
-`docs/adr/0002-packaged-exe-kept-as-electron-exe.md` documents a packaging-
-level Chromium GPU-process crash correlated with `onnxruntime-node`/DirectML
-being bundled, triggered specifically by renaming the packaged exe away from
-`electron.exe` — a condition Utawakui's build avoids by keeping
-`executableName: electron`. That workaround predates this ADR and should
-still hold. What is genuinely new and unverified is _actually invoking_
-DirectML inference in a **packaged** (non-`npm run dev`) build for the first
-time — the DLL was previously bundled but never loaded into an active
-session. This requires:
+`docs/adr/0002-packaged-exe-kept-as-electron-exe.md` documents a packaging-level
+Chromium GPU-process crash correlated with `onnxruntime-node`／DirectML being
+bundled when the packaged executable was renamed away from `electron.exe`.
+The current build continues to use `executableName: electron`. Acceptance was
+therefore performed against a fresh v0.3.0 Windows x64 `dist:dir` package, not
+against Vite development mode or an older artifact.
 
-1. `npm run dist:dir`, confirm the exe is still literally named
-   `electron.exe`.
-2. Trigger a real `separation:run` in that packaged build and confirm no GPU
-   process FATAL or network-service crash loop of the kind ADR 0002
-   describes.
-3. Compare CPU-path vs. DirectML-path output for the same track/recipe to
-   confirm the (expected, small) floating-point differences stay within an
-   acceptable listening/measurement tolerance.
+1. The package retained `electron.exe` and included only the win32／x64 ONNX
+   native binding. `DirectML.dll`, `dxcompiler.dll`, `dxil.dll`,
+   `onnxruntime.dll`, and `onnxruntime_binding.node` were present together in
+   the unpacked runtime.
+2. Cold start, Settings access, a real renderer-to-main `separation:run`, and
+   normal shutdown completed without a GPU-process FATAL, network-service
+   restart loop, or orphaned process. The packaged Settings preference was
+   readable and enabled by default.
+3. The same 67.94-second local track completed through both CPU and GPU paths
+   for `quick` and `general`. GPU runs were approximately 2.19x and 3.45x
+   faster on the acceptance machine. All four outputs had the same duration,
+   channel count, sample rate, and bit depth; CPU／GPU samples differed by at
+   most one signed 16-bit least-significant bit, with SNR above 100 dB.
+4. A forced DirectML session-creation failure attempted DirectML once, invoked
+   the fallback once, and successfully created the CPU session.
 
-This needs a real Windows machine with a DirectX 12 GPU and cannot be done
-from this agent session. Until it is done and reported back, this ADR stays
-Proposed rather than Accepted, and `docs/spec.md` should reflect that GPU
-acceleration is implemented but pending packaged-build sign-off.
+These results accept the implementation and packaging boundary on the tested
+Windows x64 configuration. They are not a claim that every GPU, driver, or
+Windows configuration has been exhaustively certified; incompatible or failed
+DirectML initialization continues to fall back to CPU, and the Settings toggle
+remains the user-facing escape hatch.
 
 ## Rejected for this phase
 

@@ -60,7 +60,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Lyrics canonical timing、provider acquisition、reading、Self-View 與 Overlay 主路徑
   已建立；剩餘重點是人工視覺驗收與操作 polish。
 - `quick`／`general` audio processing 與 Music Analysis（BPM／節拍分析）已是產品能力；
-  Refined 與其他高品質可選包仍受 benchmark／dependency gate 限制。
+  Windows x64 封裝版已驗收 DirectML GPU acceleration 與 CPU fallback，Refined 與其他
+  高品質可選包仍受 benchmark／dependency gate 限制。
 - OBS Browser Source MVP 已具備三個固定 slot、Gallery、Workbench、Projection Hub
   與 content/state convergence；instance／pack model 仍是後續方向。
 - Windows x64 已有手動啟動的實驗性 Spout2 Lyrics sender；Browser Source 仍是支援基線，正式支援尚待實機相容性驗收。
@@ -93,6 +94,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |
 | [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                   |
 | [0016](adr/0016-user-feedback-intake.md)                               | 已實作               | 錯誤回報／功能請求／體驗意見／內容問題共用一套預覽後送出流程；relay 獨立部署，不進封裝安裝檔。                                                |
+| [0017](adr/0017-directml-execution-provider-for-mdx-separation.md)     | 已接受／已實作       | `quick`／`general` 預設嘗試 DirectML GPU acceleration，失敗時自動改走 CPU；Windows x64 封裝版驗收已完成。                                     |
 
 ## 常用文件
 

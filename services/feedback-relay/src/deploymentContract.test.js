@@ -1,5 +1,5 @@
 import { createRequire } from 'node:module';
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 import { describe, expect, it } from 'vitest';
 import {
@@ -61,5 +61,15 @@ describe('feedback production deployment contract', () => {
     expect(relayPackage.devDependencies.wrangler).toBe('4.131.2');
     expect(relayReadme).toContain('wrangler@4.131.2');
     expect(relayReadme).not.toContain('wrangler@3.90.0');
+  });
+
+  it('keeps an independent lockfile for reproducible Worker deployment', () => {
+    const lockUrl = new URL('../package-lock.json', import.meta.url);
+    expect(existsSync(lockUrl)).toBe(true);
+
+    const lock = JSON.parse(readFileSync(lockUrl, 'utf8'));
+    expect(lock.lockfileVersion).toBe(3);
+    expect(lock.packages[''].devDependencies.wrangler).toBe('4.131.2');
+    expect(lock.packages['node_modules/wrangler'].version).toBe('4.131.2');
   });
 });

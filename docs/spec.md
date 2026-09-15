@@ -56,7 +56,7 @@ adapters 評估，目前不做 OBS native plugin。
 | Playback／queue   | 已實作             | Audio element 是 timing 權威；queue、pitch／tempo preview、Windows shell controls 已連線。                                                                                                                                                                                                                                                                                                                    |
 | Playlists／albums | 已實作             | Collections 可排序；來源型 album 維持 read-only membership。                                                                                                                                                                                                                                                                                                                                                  |
 | Lyrics            | 主路徑已實作       | T0／T1／T2、LRCLIB／實驗性 NetEase／Better Lyrics 公開快取多來源平行搜尋、來源中立排序與同錄音來源替代、LRCLIB＋NetEase exact-only 背景自動取得、持久化來源偏好、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；provider-authored timing 皆只在完整驗證通過時標示逐字同步。Better Lyrics 維持手動，既有 AMLL 來源仍可讀取與刪除但不再提供線上搜尋。                                              |
-| Audio processing  | 基礎產品能力已實作 | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；`quick`／`general` 已加上 DirectML execution provider（自動 CPU fallback、Settings 內「GPU 加速」勾選項預設開啟，見 [ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md)），封裝版驗收前狀態為 Proposed；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。            |
+| Audio processing  | 基礎產品能力已實作 | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；`quick`／`general` 已採用 DirectML GPU acceleration（預設開啟、自動 CPU fallback，見 [ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md)），並已通過 Windows x64 封裝版執行與 CPU／GPU 輸出驗收；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。                   |
 | Provider assist   | 核心路徑已實作     | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、YT Music Songs 優先＋一般 YouTube 補足的文字搜尋、評分後最多十二筆候選、弱化觀看數排序、release-only 自動選取、YouTube／YT Music URL 解析、recording-first import/backfill 與 main-owned YT Music 系統瀏覽器探索已連線，只能作為 gated advanced flow；這不是官方 YT Music API 整合，Spotify／Apple Music URL 轉換、內嵌帳號與帳號歌單仍未開放。 |
 | OBS output        | MVP 已實作         | Loopback HTTP/WebSocket、三個固定 slot、Gallery、Workbench、URL copy、content/state split、Lyrics template capability registry、Live Stage 可選歌詞呈現策略與 source-mapped T2 顯示邊界已建立；Browser Source 仍是支援基線。                                                                                                                                                                                  |
 | Feature gates     | 已實作             | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                                                                                                                                                                                                                                        |
@@ -289,6 +289,7 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
    設定或 API）、套用範圍（Self-View、Overlay 是否都套用）、以及是否提供 App 內
    獨立開關以覆寫系統設定。
 
-`quick`／`general` separation 的 DirectML execution provider 已決定並實作完成，不再是
-待決事項，詳見 [ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md)
-與上方 §3 狀態表；封裝版崩潰風險驗收前，ADR 狀態維持 Proposed。
+`quick`／`general` separation 的 DirectML execution provider 已決定、實作並通過
+Windows x64 封裝版驗收，不再是待決事項。GPU 不可用或初始化失敗時會自動改走 CPU，
+使用者也能在 Settings 關閉 GPU 加速；詳見
+[ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md) 與上方 §3 狀態表。

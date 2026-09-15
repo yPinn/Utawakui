@@ -27,15 +27,17 @@ literal 顯示，同時保留 bare source URL；`allowed_mentions` 在 JSON 與 
 
 Production KV namespace 已透過 `wrangler.toml` 的 `RATE_LIMIT_KV` binding
 固定；如果日後重建 namespace，必須同步更新該 id 與 deployment contract test。
-不要在 `services/feedback-relay/` 執行 `npm install` 產生第二份 lockfile；使用
-固定版本的 Wrangler 執行部署：
+Worker 是獨立部署單位，自己的 `package-lock.json` 固定 Wrangler 及其 deployment
+toolchain；先以 repo 指定的 npm 版本執行 `npm ci`，再使用本機安裝的
+`wrangler@4.131.2`：
 
 ```bash
 cd services/feedback-relay
-npx --yes wrangler@4.131.2 login
-npx --yes wrangler@4.131.2 whoami
-npx --yes wrangler@4.131.2 deploy
-npx --yes wrangler@4.131.2 secret put DISCORD_WEBHOOK_URL
+npm ci
+npm exec -- wrangler login
+npm exec -- wrangler whoami
+npm run deploy
+npm exec -- wrangler secret put DISCORD_WEBHOOK_URL
 ```
 
 第一次 `deploy` 會依 `wrangler.toml` 自動建立 `utawakui-feedback-relay`，並把
