@@ -86,7 +86,11 @@ components:
     padding: '1rem'
 ---
 
-<!-- BASELINE: this is a first-pass scaffold. Replace palette character, final type choices, and component details after the visual direction is confirmed. -->
+<!-- BASELINE: this is a first-pass scaffold and remains the current production
+     baseline. A successor direction (Studio Library／Architectural Slate) has
+     already been owner-approved as a development candidate — see the status
+     callout below — but has not been adopted here. Replace palette character,
+     final type choices, and component details once that adoption happens. -->
 
 > **Visual refresh status — 2026-09-14:** Token v2 is reviewed in strict
 > Foundation → primitive／Field family → compound component → View order. The
@@ -110,7 +114,7 @@ the Icon Button hard floor: `sm` is removed, `md` is 2rem／32 CSS px, and `lg` 
 
 Utawakui is a product UI for live operation. The design system should support a calm desktop control panel first, then extend to responsive and OBS overlay surfaces without assuming that all surfaces share the same tokens.
 
-This scaffold started with a restrained, neutral product baseline: stable rem-based scales, semantic states, predictable components, visible focus, and responsive constraints. The current visual direction now adds a more specific identity layer: a local-media card sleeve, a quiet cat-card presence, and a restrained graphite / teal / paper / coral palette.
+This scaffold started with a restrained, neutral product baseline: stable rem-based scales, semantic states, predictable components, visible focus, and responsive constraints. It also carries a more specific identity layer that remains the current production baseline: a local-media card sleeve, a quiet cat-card presence, and a restrained graphite / teal / paper / coral palette. An owner-approved successor direction already exists as a development candidate (see the status callout above) but has not replaced this baseline in production.
 
 **Key Characteristics:**
 
@@ -188,6 +192,13 @@ Rejected icon directions:
 | Monochrome / Mask | installer, system fallback | Keep sleeve contour and voice line only. |
 
 ## Color Direction
+
+This section documents the palette currently shipping in production
+(`src/styles/tokens.css`). The owner-approved successor — Architectural Slate's
+indigo accent and folder-material roles, with the Clear Pastel status-color
+system — is recorded as a development candidate in
+[Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md)
+and is not reflected below until it is adopted.
 
 The brand should not be locked to folder blue. Use graphite, washed teal, paper, and coral as a restrained base.
 
@@ -577,7 +588,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 
 ### Color Rules
 
-**The Placeholder Color Rule.** These colors are structural placeholders. Do not treat the current teal accent or dark neutral surface as final brand identity.
+**The Placeholder Color Rule.** These colors are structural placeholders. Do not treat the current teal accent or dark neutral surface as final brand identity — a successor palette (Architectural Slate) is already an owner-approved development candidate; see the status callout at the top of this document.
 
 **The One Accent Rule.** A screen should have one primary accent role. Do not introduce competing highlight colors for decoration.
 
@@ -916,7 +927,7 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 
 ### Don't
 
-- **Don't** treat the current graphite/washed-teal palette as the final brand.
+- **Don't** treat the current graphite/washed-teal palette as the final brand — the approved successor (Architectural Slate) is a development candidate, not yet adopted.
 - **Don't** use glow, glassmorphism, purple-blue gradients, beige/cream defaults, or decorative effects as the product identity.
 - **Don't** use nested cards as page structure.
 - **Don't** create hover-only controls that fail on touch.
