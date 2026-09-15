@@ -208,6 +208,67 @@ describe('app update service', () => {
     );
   });
 
+  it('resolves to an error instead of hanging in "checking" forever when the check stalls', async () => {
+    const updater = createUpdater();
+    updater.checkForUpdates.mockReturnValue(new Promise(() => {})); // never settles
+    const logger = { error: vi.fn() };
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      logger,
+      checkTimeoutMs: 10,
+    });
+
+    await expect(service.check()).resolves.toMatchObject({
+      phase: 'error',
+      error: '無法完成更新操作，請稍後再試。',
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      '[update] Check failed',
+      expect.objectContaining({
+        message: expect.stringContaining('timed out'),
+      }),
+    );
+    // Recovered to 'error', not stuck — a retry is possible without restarting
+    // the app, unlike the bug this timeout replaces.
+    expect(service.getStatus().phase).not.toBe('checking');
+  });
+
+  it('still applies a late update-available result after the check already timed out', async () => {
+    const updater = createUpdater();
+    let resolveCheck;
+    updater.checkForUpdates.mockReturnValue(
+      new Promise((resolve) => {
+        resolveCheck = resolve;
+      }),
+    );
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      checkTimeoutMs: 10,
+    });
+
+    await expect(service.check()).resolves.toMatchObject({ phase: 'error' });
+
+    // electron-updater's real result arrives through its own event, not the
+    // promise this timeout raced against — that event must still land even
+    // though check() already gave up and reported an error.
+    updater.emit('update-available', { version: '0.2.0' });
+    resolveCheck(undefined);
+    await Promise.resolve();
+
+    expect(service.getStatus()).toMatchObject({
+      phase: 'available',
+      availableVersion: '0.2.0',
+    });
+  });
+
   it('contains updater initialization failures inside the safe status boundary', async () => {
     const logger = { error: vi.fn() };
     const service = createAppUpdateService({

@@ -30,6 +30,35 @@ const RECHECKABLE_PHASES = new Set(['idle', 'not-available', 'error']);
 // multi-day countdown.
 const MAX_ETA_SECONDS = 24 * 60 * 60;
 
+// electron-updater's checkForUpdates() has no built-in request timeout: a
+// stalled network path previously left `phase` stuck at 'checking' forever,
+// recoverable only by restarting the whole app (there was no way back to
+// 'idle'/'error' from inside the renderer). Racing it here is safe even
+// though the call can't actually be cancelled — electron-updater
+// deduplicates concurrent checkForUpdates() calls internally, so a slow
+// check that eventually settles after this timeout still delivers its real
+// result through the normal event listeners in initialize() below.
+const DEFAULT_CHECK_TIMEOUT_MS = 30_000;
+
+function raceWithTimeout(promise, timeoutMs, message) {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => {
+      reject(Object.assign(new Error(message), { name: 'TimeoutError' }));
+    }, timeoutMs);
+    timer?.unref?.();
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (error) => {
+        clearTimeout(timer);
+        reject(error);
+      },
+    );
+  });
+}
+
 function boundedString(value, maxLength = 80) {
   if (typeof value !== 'string') return null;
   const trimmed = value.trim();
@@ -97,6 +126,7 @@ function createAppUpdateService({
   manifestClient = createUpdateManifestClient(),
   verifyManifestFn = verifyManifest,
   publicKeyHex = DEFAULT_PUBLIC_KEY_HEX,
+  checkTimeoutMs = DEFAULT_CHECK_TIMEOUT_MS,
 } = {}) {
   const enabled = Boolean(isPackaged && isWindows && runtimeEnabled);
   let autoChecksAllowed = Boolean(autoCheckEnabled);
@@ -242,7 +272,11 @@ function createAppUpdateService({
       error: null,
     });
     try {
-      await updater.checkForUpdates();
+      await raceWithTimeout(
+        updater.checkForUpdates(),
+        checkTimeoutMs,
+        'update check timed out',
+      );
     } catch (error) {
       return fail('Check', error);
     }
