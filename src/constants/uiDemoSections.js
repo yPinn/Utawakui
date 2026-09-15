@@ -23,6 +23,18 @@ export const UI_DEMO_GROUPS = Object.freeze([
         reviewed: false,
       },
       {
+        key: 'stack',
+        title: '版面容器',
+        components: ['UiStack'],
+        reviewed: false,
+      },
+      {
+        key: 'surface',
+        title: '面板外觀',
+        components: ['UiSurface'],
+        reviewed: false,
+      },
+      {
         key: 'kbd',
         title: '快捷鍵提示',
         components: ['UiKbd'],

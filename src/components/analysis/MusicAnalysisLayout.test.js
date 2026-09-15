@@ -81,7 +81,7 @@ describe('Music Analysis scroll layout', () => {
       /<MusicAnalysisBenchmarkReview\s+v-else-if="workbenchMode === 'benchmark'"/,
     );
     expect(workbenchSource).toMatch(
-      /<div\s+v-else\s+class="analysis-workbench__layout">/,
+      /<UiSurface\s+v-else\s+class="analysis-workbench__layout"/,
     );
   });
 

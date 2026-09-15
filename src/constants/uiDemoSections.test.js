@@ -28,6 +28,8 @@ describe('UI demo component order', () => {
       'density',
       'page-header',
       'separator',
+      'stack',
+      'surface',
       'kbd',
       'field',
       'search-box',
@@ -91,6 +93,8 @@ describe('UI demo component order', () => {
 
     for (const key of [
       'separator',
+      'stack',
+      'surface',
       'kbd',
       'color-field',
       'radio-group',
@@ -137,6 +141,8 @@ describe('UI demo component order', () => {
       '密度與尺寸',
       '頁面標題列',
       '分隔線',
+      '版面容器',
+      '面板外觀',
       '快捷鍵提示',
       '欄位共用外觀',
       '搜尋欄',

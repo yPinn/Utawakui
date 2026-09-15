@@ -4,6 +4,7 @@ import { Copy, ExternalLink } from '../../icons/index.js';
 import { useClipboardFeedback } from '../../composables/useClipboardFeedback.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiStack from '../ui/UiStack.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
 const props = defineProps({
@@ -145,7 +146,7 @@ function submitApproval() {
           {{ candidate.reference.artist }} — {{ candidate.reference.title }}
         </h2>
       </div>
-      <div class="review-form__header-status">
+      <UiStack class="review-form__header-status" gap="2">
         <UiChip
           :tone="candidate.catalogReach === 'mainstream' ? 'accent' : 'warning'"
         >
@@ -168,16 +169,16 @@ function submitApproval() {
                 : '待審'
           }}
         </UiChip>
-      </div>
+      </UiStack>
     </header>
 
     <section class="review-form__lookup" aria-labelledby="review-lookup-title">
-      <div class="review-form__lookup-heading">
+      <UiStack class="review-form__lookup-heading" align="baseline" gap="2">
         <h3 id="review-lookup-title" class="review-form__lookup-title">
           查證輔助
         </h3>
         <span>先確認錄音版本，再決定是否核准。</span>
-      </div>
+      </UiStack>
 
       <div class="review-form__lookup-list">
         <div class="review-form__lookup-row">
@@ -188,7 +189,7 @@ function submitApproval() {
             </code>
           </div>
           <p>只用於這批 F7 審核資料；可貼到上方搜尋欄定位同一筆。</p>
-          <div class="review-form__lookup-actions">
+          <UiStack class="review-form__lookup-actions" wrap gap="1">
             <UiButton
               :icon="Copy"
               title="複製本批資料的候選 ID"
@@ -197,7 +198,7 @@ function submitApproval() {
             >
               複製候選 ID
             </UiButton>
-          </div>
+          </UiStack>
         </div>
 
         <div class="review-form__lookup-row">
@@ -208,7 +209,7 @@ function submitApproval() {
             </code>
           </div>
           <p>用來查同一首歌的特定錄音版本、演出者與發行資料。</p>
-          <div class="review-form__lookup-actions">
+          <UiStack class="review-form__lookup-actions" wrap gap="1">
             <UiButton
               :icon="Copy"
               title="複製 MusicBrainz Recording MBID"
@@ -225,7 +226,7 @@ function submitApproval() {
             >
               開啟 MusicBrainz
             </UiButton>
-          </div>
+          </UiStack>
         </div>
 
         <div class="review-form__lookup-row">
@@ -239,7 +240,7 @@ function submitApproval() {
             </code>
           </div>
           <p>貼到音源平台或搜尋引擎，交叉確認同名曲、現場版與翻唱版。</p>
-          <div class="review-form__lookup-actions">
+          <UiStack class="review-form__lookup-actions" wrap gap="1">
             <UiButton
               :icon="Copy"
               title="複製歌手與歌名供外部查詢"
@@ -248,7 +249,7 @@ function submitApproval() {
             >
               複製歌手＋歌名
             </UiButton>
-          </div>
+          </UiStack>
         </div>
       </div>
       <p
@@ -542,8 +543,6 @@ function submitApproval() {
 
 .review-form__header-status {
   flex: 0 0 auto;
-  display: flex;
-  gap: var(--ui-space-2);
 }
 
 .review-form__lookup {
@@ -553,12 +552,6 @@ function submitApproval() {
   padding: var(--ui-space-2) var(--ui-space-4);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   background: var(--ui-color-surface-raised);
-}
-
-.review-form__lookup-heading {
-  display: flex;
-  align-items: baseline;
-  gap: var(--ui-space-2);
 }
 
 .review-form .review-form__lookup-title {
@@ -617,10 +610,7 @@ function submitApproval() {
 }
 
 .review-form__lookup-actions {
-  display: flex;
-  flex-wrap: wrap;
   justify-content: flex-end;
-  gap: var(--ui-space-1);
 }
 
 .review-form__copy-feedback {

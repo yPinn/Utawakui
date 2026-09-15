@@ -7,6 +7,8 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import UiStack from '../ui/UiStack.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
 import MusicAnalysisBenchmarkReview from './MusicAnalysisBenchmarkReview.vue';
 import MusicAnalysisCapabilityModal from './MusicAnalysisCapabilityModal.vue';
@@ -59,15 +61,20 @@ watch(
 </script>
 
 <template>
-  <div class="analysis-workbench">
+  <UiStack class="analysis-workbench" direction="column" gap="4">
     <UiPageHeader title="音樂結構分析">
       <template #description>
         分析曲目的節奏與段落結構，並提供人工標註與 benchmark 比對工具。
       </template>
       <template #actions>
-        <div class="analysis-workbench__header-actions">
-          <div
+        <UiStack
+          class="analysis-workbench__header-actions"
+          align="center"
+          gap="2"
+        >
+          <UiSurface
             class="analysis-workbench__mode-switch"
+            tone="raised"
             role="group"
             aria-label="音樂分析工具模式"
           >
@@ -95,7 +102,7 @@ watch(
             >
               Benchmark Review
             </UiButton>
-          </div>
+          </UiSurface>
           <UiIconButton
             v-if="workbenchMode === 'analysis'"
             :icon="Info"
@@ -104,7 +111,7 @@ watch(
             @click="showCapabilityDetails = true"
           />
           <UiChip tone="gated">內部工具 · F5</UiChip>
-        </div>
+        </UiStack>
       </template>
     </UiPageHeader>
 
@@ -118,7 +125,7 @@ watch(
 
     <MusicAnalysisBenchmarkReview v-else-if="workbenchMode === 'benchmark'" />
 
-    <div v-else class="analysis-workbench__layout">
+    <UiSurface v-else class="analysis-workbench__layout" radius="lg">
       <aside class="analysis-workbench__tracks">
         <MusicAnalysisTrackPicker
           :tracks="workbench.tracks.value"
@@ -142,7 +149,7 @@ watch(
         />
       </aside>
 
-      <div class="analysis-workbench__detail">
+      <UiStack class="analysis-workbench__detail" direction="column" gap="5">
         <MusicAnalysisBatchPanel
           v-if="analysisMode === 'batch'"
           :selected-count="workbench.batch.selectedTrackIds.value.length"
@@ -188,8 +195,8 @@ watch(
           />
           <MusicStructureSummary :result="workbench.structure.value" />
         </template>
-      </div>
-    </div>
+      </UiStack>
+    </UiSurface>
 
     <MusicAnalysisCapabilityModal
       :open="showCapabilityDetails"
@@ -203,16 +210,13 @@ watch(
       @repair="workbench.repairCapability"
       @remove="removeCapability"
     />
-  </div>
+  </UiStack>
 </template>
 
 <style scoped>
 .analysis-workbench {
   height: 100%;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-4);
   user-select: none;
 }
 
@@ -220,19 +224,10 @@ watch(
   margin-bottom: 0;
 }
 
-.analysis-workbench__header-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-}
-
 .analysis-workbench__mode-switch {
   display: inline-flex;
   align-items: center;
   padding: calc(var(--ui-space-1) / 2);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
-  background: var(--ui-color-surface-raised);
 }
 
 .analysis-workbench__mode-switch :deep(.ui-btn) {
@@ -244,9 +239,6 @@ watch(
   flex: 1;
   display: grid;
   grid-template-columns: minmax(16rem, 21rem) minmax(0, 1fr);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-surface);
   overflow: hidden;
 }
 
@@ -268,9 +260,6 @@ watch(
 }
 
 .analysis-workbench__detail {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-5);
   overflow-y: auto;
   overscroll-behavior: contain;
 }

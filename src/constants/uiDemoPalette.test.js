@@ -10,6 +10,10 @@ const componentSource = readFileSync(
   new URL('../components/demo/DemoFoundations.vue', import.meta.url),
   'utf8',
 );
+const statusPaletteSource = readFileSync(
+  new URL('../components/demo/DemoStatusPalette.vue', import.meta.url),
+  'utf8',
+);
 const tokenSource = readFileSync(
   new URL('../styles/tokens-v2.css', import.meta.url),
   'utf8',
@@ -102,11 +106,11 @@ describe('F9 palette review contrast', () => {
   });
 
   it('renders the primary status specimens at full strength', () => {
-    expect(componentSource).toMatch(
+    expect(statusPaletteSource).toMatch(
       /\.demo-status-swatch__color[\s\S]*?background: var\(--demo-status-color\)/,
     );
-    expect(componentSource).not.toContain('demo-status-swatch__marker');
-    expect(componentSource).not.toContain('--demo-status-soft: color-mix');
+    expect(statusPaletteSource).not.toContain('demo-status-swatch__marker');
+    expect(statusPaletteSource).not.toContain('--demo-status-soft: color-mix');
   });
 
   it('keeps live and danger identical until the owner chooses whether to split them', () => {

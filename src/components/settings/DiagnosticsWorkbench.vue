@@ -8,6 +8,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiStack from '../ui/UiStack.vue';
 
 const LEVELS = ['error', 'warning', 'info', 'debug'];
 const LEVEL_LABELS = {
@@ -55,7 +56,7 @@ onMounted(workbench.refresh);
 </script>
 
 <template>
-  <div class="diagnostics-workbench">
+  <UiStack class="diagnostics-workbench" direction="column" gap="4">
     <UiPageHeader title="診斷工作台">
       <template #description>
         檢視執行期間記錄的診斷訊息，可依等級與關鍵字篩選。
@@ -76,17 +77,19 @@ onMounted(workbench.refresh);
       {{ workbench.state.error }}
     </UiHint>
 
-    <div
+    <UiStack
       class="diagnostics-workbench__summary"
+      wrap
+      gap="2"
       role="group"
       aria-label="依等級分組計數"
     >
       <UiChip v-for="level in LEVELS" :key="level" :tone="LEVEL_TONES[level]">
         {{ LEVEL_LABELS[level] }} {{ levelCounts[level] }}
       </UiChip>
-    </div>
+    </UiStack>
 
-    <div class="diagnostics-workbench__filters">
+    <UiStack class="diagnostics-workbench__filters" wrap align="center" gap="3">
       <UiSearchBox
         v-model="query"
         label="搜尋錯誤紀錄"
@@ -99,7 +102,7 @@ onMounted(workbench.refresh);
         v-model="activeLevels[level]"
         :label="LEVEL_LABELS[level]"
       />
-    </div>
+    </UiStack>
 
     <ul class="diagnostics-workbench__list">
       <li
@@ -133,33 +136,17 @@ onMounted(workbench.refresh);
     <p v-if="filteredEvents.length === 0" class="diagnostics-workbench__empty">
       沒有符合條件的紀錄
     </p>
-  </div>
+  </UiStack>
 </template>
 
 <style scoped>
 .diagnostics-workbench {
   height: 100%;
   min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-4);
 }
 
 .diagnostics-workbench :deep(.ui-page-header) {
   margin-bottom: 0;
-}
-
-.diagnostics-workbench__summary {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--ui-space-2);
-}
-
-.diagnostics-workbench__filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--ui-space-3);
 }
 
 .diagnostics-workbench__filters :deep(.ui-search-box) {
