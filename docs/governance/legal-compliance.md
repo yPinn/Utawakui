@@ -3,6 +3,13 @@
 > 本文件是 Utawakui 的產品與工程合規參考，不構成法律意見。正式發布、散布、
 > 商業化、直播/錄製流程或特定國家營運，仍應由熟悉該司法管轄區的法律專業人士
 > 確認。
+>
+> **2026-09-15 更新範圍：** 本次只在 §3、§9 補入 NetEase 歌詞來源、Spout2
+> Lyrics sender、使用者回饋 relay 對外連線與 Music Analysis／BPM 本機處理這幾項
+> 已實作／實驗性功能的**事實描述**（做了什麼、資料流向哪裡），不新增風險等級
+> 判斷或法律結論；這些新增內容仍待人工複核，不因本次文件更新視為已完成法遵
+> 審查。其餘章節（含 §5–§8、§11 Release Checklist）尚未逐項核對是否涵蓋這幾項
+> 功能，仍以其原有內容為準。
 
 ## 1. 快速結論
 
@@ -59,16 +66,19 @@ Utawakui 可以定位成「本機桌面工具」，但不能把「取得軟體�
 建議以「操作行為」分段，不以創作者身份分段。同一個人可以只是本機練習，也可以同時
 串流、錄影、顯示歌詞並保存 VOD；風險應依實際輸出決定。
 
-| 操作行為               | 對應功能/情境                         | 主要風險                           | 建議控制                                                     |
-| ---------------------- | ------------------------------------- | ---------------------------------- | ------------------------------------------------------------ |
-| 匯入與整理素材         | 本機檔案匯入、playlist metadata       | 檔案來源、provider API 條款。      | 預設入口；只保存必要 metadata，不宣稱取得音樂權利。          |
-| 查找候選來源           | Provider candidate search             | 使用者誤以為找到來源就等於有授權。 | 文案使用「候選來源」或「比對結果」，不使用「合法來源」字眼。 |
-| 下載或快取媒體         | Provider download path、sidecar cache | 平台條款、重製、來源合法性。       | 非預設、feature gate、不得提供規避手段。                     |
-| 本機播放與練習         | Library playback、pitch/tempo preview | 播放內容權利不明、處理後副本。     | 本機限定；公開輸出前另行確認授權。                           |
-| 產生加工素材           | Vocal separation、stems、render cache | 產生新的媒體副本或加工版本。       | 本機工作流；不要包裝成可公開散布素材。                       |
-| OBS 畫面輸出           | Browser Source、歌詞/封面 overlay     | 歌詞、封面、MV、譜面的公開展示。   | 純 UI overlay 低風險；第三方視覺素材分開 gate。              |
-| 串流音訊               | YouTube/Twitch live output            | 公開演出/公開傳輸、平台政策。      | 開播前提示平台與權利人授權需求。                             |
-| 錄影、VOD、clips、精華 | Recording / archived live / clips     | 重製、同步、存檔、後續散布。       | 與 live 分開確認；VOD/recording 作為獨立 gate。              |
+| 操作行為               | 對應功能/情境                                                                      | 主要風險                                                             | 建議控制                                                                                                                                            |
+| ---------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 匯入與整理素材         | 本機檔案匯入、playlist metadata                                                    | 檔案來源、provider API 條款。                                        | 預設入口；只保存必要 metadata，不宣稱取得音樂權利。                                                                                                 |
+| 查找候選來源           | Provider candidate search                                                          | 使用者誤以為找到來源就等於有授權。                                   | 文案使用「候選來源」或「比對結果」，不使用「合法來源」字眼。                                                                                        |
+| 下載或快取媒體         | Provider download path、sidecar cache                                              | 平台條款、重製、來源合法性。                                         | 非預設、feature gate、不得提供規避手段。                                                                                                            |
+| 本機播放與練習         | Library playback、pitch/tempo preview                                              | 播放內容權利不明、處理後副本。                                       | 本機限定；公開輸出前另行確認授權。                                                                                                                  |
+| 產生加工素材           | Vocal separation、stems、render cache                                              | 產生新的媒體副本或加工版本。                                         | 本機工作流；不要包裝成可公開散布素材。                                                                                                              |
+| OBS 畫面輸出           | Browser Source；實驗性 Spout2 Lyrics sender 是同一 Lyrics 內容的另一種本機傳輸路徑 | 歌詞、封面、MV、譜面的公開展示。                                     | 純 UI overlay 低風險；第三方視覺素材分開 gate。                                                                                                     |
+| 串流音訊               | YouTube/Twitch live output                                                         | 公開演出/公開傳輸、平台政策。                                        | 開播前提示平台與權利人授權需求。                                                                                                                    |
+| 錄影、VOD、clips、精華 | Recording / archived live / clips                                                  | 重製、同步、存檔、後續散布。                                         | 與 live 分開確認；VOD/recording 作為獨立 gate。                                                                                                     |
+| 查詢外部歌詞來源       | LRCLIB／NetEase（實驗性）／Better Lyrics 等多來源歌詞比對與同步資料取得            | 歌詞文字著作權、來源平台條款。                                       | `lyrics-flow` gate；多來源候選並列，不稱合法來源。                                                                                                  |
+| 傳送使用者意見回饋     | 錯誤回報／功能請求／體驗意見／內容問題，強制預覽後送出至獨立部署的 relay           | 使用者輸入文字，以及僅錯誤回報可選附的最近診斷紀錄，對外傳輸的範圍。 | 不受任何 feature gate 保護；每次送出前的強制預覽才是實際防護，relay 獨立部署且不隨 App 打包（見 [ADR 0016](../adr/0016-user-feedback-intake.md)）。 |
+| 本機音樂結構／BPM 分析 | Music Analysis／BPM／節拍分析                                                      | 風險低，屬本機運算，不對外連線。                                     | `audio-processing-flow` gate 內的預設「匯入後自動分析」偏好。                                                                                       |
 
 ## 4. 影片內容驗證與勘誤
 
@@ -474,13 +484,19 @@ Utawakui 的功能會碰到公開音樂使用實務中的灰色地帶。產品�
 ### 9.5 工程與文件
 
 - 媒體檔案維持本機、使用者控制。
-- 預設不將使用者媒體上傳到專案伺服器。
+- 預設不將使用者媒體上傳到專案伺服器。使用者主動觸發並預覽後送出的意見回饋
+  文字（與僅錯誤回報可選附的診斷紀錄）會傳送至獨立部署的 relay，這不是媒體
+  上傳，但仍是本文件應揭露的對外連線範圍（見 §3、ADR 0016）。
 - Media protocol 不暴露任意本機路徑。
 - Provider module 保持可分離，讓高風險 workflow 可停用、移除或獨立散布。
 - 高風險細節留在本文件，不放在 public quickstart 主流程。
 - Release build 維護 license report。
 
 ## 10. 使用者檢查清單
+
+> 範圍澄清：以下段落用詞是寫給終端使用者看的白話語言草稿，供未來設計使用者
+> 可讀頁面或提示文案時參考；本節本身位於內部合規文件中，不是使用者會直接看到
+> 的頁面。
 
 以下清單以操作行為分段。使用者不需要先判斷自己的身份類型，只需要確認本次實際會
 使用哪些輸入、處理與輸出。
@@ -537,6 +553,11 @@ OBS 畫面輸出：
 
 ## 11. Release Checklist
 
+本節只涵蓋法律與合規面向；安裝檔／更新機制的技術驗收見
+[Windows release runbook](../operations/release-runbook.md)，功能與視覺驗收見
+[manual acceptance checklist](../operations/manual-acceptance.md)。三份清單分工
+不同，缺一不能視為完整的發布前驗收。
+
 公開發布前：
 
 - [ ] 確認 provider-backed acquisition 預設關閉。
@@ -545,7 +566,8 @@ OBS 畫面輸出：
 - [ ] 確認 app 不附帶受著作權保護的 sample media。
 - [ ] 執行 `npm run license:inventory`，核對並隨附 `THIRD_PARTY_NOTICES.md`。
 - [ ] 檢視 app-managed FFmpeg / UVR model 下載來源、hash、授權顯示與 notice 保存。
-- [ ] 另行處理 `onnxruntime-node` audit remediation。
+- [ ] 確認 `onnxruntime-node` 與其 archive helper 沒有未處理的 high／critical audit
+      advisory。
 - [ ] 若加入官方 provider API，確認 privacy/data handling。
 - [ ] 確認 packaging 與公開產品頁不暗示與 YouTube、Spotify、OBS、權利人或其他
       provider 有 affiliation，也不把 provider flow 表述為已授權曲庫服務。

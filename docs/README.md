@@ -54,6 +54,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 
 ## 目前產品快照
 
+詳細與最新狀態以 [產品規格](spec.md) 完整表格為準，以下僅供快速定位。
+
 - Local library、playback、queue、playlists 與 Windows shell integration 已是預設核心。
 - Lyrics canonical timing、provider acquisition、reading、Self-View 與 Overlay 主路徑
   已建立；剩餘重點是人工視覺驗收與操作 polish。
