@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, shallowRef } from 'vue';
 import {
   Ellipsis,
+  ExternalLink,
   FolderOpen,
   Info,
   RefreshCw,
@@ -115,6 +116,10 @@ const downloadDirMenuItems = computed(() => [
     disabled: importState.isDefaultDir,
   },
 ]);
+
+function openCommunityDiscord() {
+  window.Utawakui?.openExternalTarget?.('community-discord');
+}
 
 function openDownloadDirMenu(event) {
   event.stopPropagation();
@@ -476,6 +481,22 @@ onUnmounted(musicAnalysisSettings.dispose);
             <template #actions>
               <UiButton variant="ghost" @click="announcement.reopen">
                 重看公告
+              </UiButton>
+            </template>
+          </SettingsActionRow>
+
+          <SettingsActionRow
+            :icon="ExternalLink"
+            title="社群 Discord"
+            tooltip="在 Discord 查看公告、分享心得，或直接和開發者討論使用回饋。"
+          >
+            <template #actions>
+              <UiButton
+                variant="ghost"
+                :icon="ExternalLink"
+                @click="openCommunityDiscord"
+              >
+                加入 Discord
               </UiButton>
             </template>
           </SettingsActionRow>

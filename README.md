@@ -76,6 +76,11 @@ scripts/    驗證、benchmark、release 與 startup 工具
 - [Release inventory](docs/operations/release-inventory.md)：打包內容、依賴與 feature 對照。
 - [Release runbook](docs/operations/release-runbook.md)：未簽章公開測試與發行流程。
 
+## 社群
+
+加入作者的 [Discord](https://discord.gg/yJKddEtpNt) 查看公告、分享使用心得，
+或直接回饋想法給開發者。應用程式內的「設定」→「版本與公告」也提供同一個連結。
+
 ## 授權
 
 Utawakui 是**可免費使用的專有軟體**，可用於個人、內容創作，以及營利直播與錄製。
