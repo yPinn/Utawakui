@@ -1,5 +1,4 @@
-import { SoundTouchNode } from '@soundtouchjs/audio-worklet';
-import pitchWorkletUrl from '@soundtouchjs/audio-worklet/processor?url';
+import SignalsmithStretch from 'signalsmith-stretch';
 
 const GAIN_RAMP_SECONDS = 0.03;
 
@@ -19,6 +18,17 @@ export const PLAYER_AUDIO_DEFAULTS = Object.freeze({
 
 function clamp(value, range) {
   return Math.min(range.max, Math.max(range.min, value));
+}
+
+// SoundTouchNode exposed two independent AudioParams (pitchSemitones,
+// pitch-as-ratio) that combined additively. Signalsmith Stretch's
+// .schedule() takes a single `semitones` field instead, so both user
+// controls (coarse transpose + fine cents) collapse into one value here.
+// Pure/DOM-independent — the one piece of this file that unit tests can
+// actually exercise (see usePlayerAudioGraph.pitch.test.js and ADR 0019 for
+// why the rest of this file's Web Audio behavior isn't automatable).
+export function combinedSemitones(transposeSemitones, pitchCents) {
+  return transposeSemitones + pitchCents / 100;
 }
 
 export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
@@ -68,8 +78,6 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   let pitchProcessingError = null;
   let capturePitchProcessingError = null;
   let isUsingSeparatedAudioGraph = false;
-
-  const workletRegistrations = new WeakMap();
 
   function rampGain(context, audioParam, target) {
     audioParam.setTargetAtTime(target, context.currentTime, GAIN_RAMP_SECONDS);
@@ -239,20 +247,6 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     applyCaptureGuideVocalGain();
   }
 
-  function ensureWorkletRegistered(context) {
-    let registration = workletRegistrations.get(context);
-    if (!registration) {
-      registration = SoundTouchNode.register(context, pitchWorkletUrl).catch(
-        (error) => {
-          workletRegistrations.delete(context);
-          throw error;
-        },
-      );
-      workletRegistrations.set(context, registration);
-    }
-    return registration;
-  }
-
   function reportPitchProcessingError(error) {
     pitchProcessingError = reportPlayerError(
       error,
@@ -284,13 +278,20 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     capturePitchProcessingError = null;
   }
 
+  // Signalsmith Stretch caches its AudioWorklet module-registration promise
+  // directly on the AudioContext object, and never clears it on failure —
+  // unlike the SoundTouchNode registration this replaced, a rejection here
+  // is permanent for this AudioContext's lifetime; re-attempting against the
+  // same audioCtx will keep re-throwing the same error (confirmed by reading
+  // the library source, not assumed). See ADR 0019 for why this is accepted
+  // rather than worked around: the main graph's audioCtx is created once per
+  // app session, so this mainly matters for capture (below), where recovery
+  // means reselecting the output device to get a fresh AudioContext.
   async function ensurePitchNode() {
     if (pitchNode) return pitchNode;
     if (!pitchNodeReady) {
       pitchNodeReady = (async () => {
-        await ensureWorkletRegistered(audioCtx);
-        const node = new SoundTouchNode({
-          context: audioCtx,
+        const node = await SignalsmithStretch(audioCtx, {
           outputChannelCount: 2,
         });
         masterGain.connect(node);
@@ -310,12 +311,10 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     if (graph.pitchNode) return graph.pitchNode;
     if (!graph.pitchNodeReady) {
       graph.pitchNodeReady = (async () => {
-        await ensureWorkletRegistered(graph.context);
-        if (!isCaptureGraphReady(graph)) return null;
-        const node = new SoundTouchNode({
-          context: graph.context,
+        const node = await SignalsmithStretch(graph.context, {
           outputChannelCount: 2,
         });
+        if (!isCaptureGraphReady(graph)) return null;
         graph.mix.connect(node);
         node.connect(graph.wet);
         graph.pitchNode = node;
@@ -343,8 +342,10 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   }
 
   function syncPitchNodeToCurrentState(node) {
-    node.pitchSemitones.value = state.transposeSemitones;
-    node.pitch.value = 2 ** (state.pitchCents / 1200);
+    node.schedule({
+      active: true,
+      semitones: combinedSemitones(state.transposeSemitones, state.pitchCents),
+    });
   }
 
   async function syncCaptureChainToCurrentState(graph = captureGraph) {
@@ -360,10 +361,10 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     return true;
   }
 
-  async function applyToCapturePitchNode(apply) {
+  async function applyToCapturePitchNode() {
     const graph = captureGraph;
     if (graph?.pitchNode) {
-      apply(graph.pitchNode);
+      syncPitchNodeToCurrentState(graph.pitchNode);
       clearCapturePitchProcessingError();
       return;
     }
@@ -391,10 +392,10 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     const next = clamp(Math.round(semitones), TRANSPOSE_SEMITONES_RANGE);
     state.transposeSemitones = next;
     if (pitchNode) {
-      pitchNode.pitchSemitones.value = next;
+      syncPitchNodeToCurrentState(pitchNode);
     } else if (next !== PLAYER_AUDIO_DEFAULTS.transposeSemitones) {
       try {
-        (await ensurePitchNode()).pitchSemitones.value = next;
+        syncPitchNodeToCurrentState(await ensurePitchNode());
       } catch (error) {
         if (state.transposeSemitones === next) {
           state.transposeSemitones = PLAYER_AUDIO_DEFAULTS.transposeSemitones;
@@ -404,21 +405,18 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
       }
     }
     clearPitchProcessingError();
-    await applyToCapturePitchNode((node) => {
-      node.pitchSemitones.value = next;
-    });
+    await applyToCapturePitchNode();
     updatePitchBypass();
   }
 
   async function setPitchCents(cents) {
     const next = clamp(Math.round(cents), PITCH_CENTS_RANGE);
     state.pitchCents = next;
-    const ratio = 2 ** (next / 1200);
     if (pitchNode) {
-      pitchNode.pitch.value = ratio;
+      syncPitchNodeToCurrentState(pitchNode);
     } else if (next !== PLAYER_AUDIO_DEFAULTS.pitchCents) {
       try {
-        (await ensurePitchNode()).pitch.value = ratio;
+        syncPitchNodeToCurrentState(await ensurePitchNode());
       } catch (error) {
         if (state.pitchCents === next) {
           state.pitchCents = PLAYER_AUDIO_DEFAULTS.pitchCents;
@@ -428,9 +426,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
       }
     }
     clearPitchProcessingError();
-    await applyToCapturePitchNode((node) => {
-      node.pitch.value = ratio;
-    });
+    await applyToCapturePitchNode();
     updatePitchBypass();
   }
 

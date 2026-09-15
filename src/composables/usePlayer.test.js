@@ -1,30 +1,40 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@soundtouchjs/audio-worklet', () => ({
-  SoundTouchNode: class {
+// Mirrors signalsmith-stretch's real behavior (confirmed by reading the
+// package source, see ADR 0019): the AudioWorklet module-registration
+// promise is cached directly on the AudioContext object and never cleared
+// on rejection, so a transient addModule failure is permanent for that
+// context's whole lifetime — retrying against the same context keeps
+// re-throwing the same error instead of recovering.
+vi.mock('signalsmith-stretch', () => {
+  const registrationByContext = new WeakMap();
+
+  class MockPitchNode {
     static instances = [];
 
-    static register = vi.fn((context, processorUrl) =>
-      context.audioWorklet.addModule(processorUrl),
-    );
-
-    constructor({ context }) {
-      if (!context.workletRegistered) {
-        throw new Error(
-          'SoundTouch processor is not registered in this context',
-        );
-      }
+    constructor(context) {
       this.context = context;
-      this.pitchSemitones = { value: 0 };
-      this.pitch = { value: 1 };
+      this.schedule = vi.fn();
+      this.connect = vi.fn();
       this.constructor.instances.push(this);
     }
 
-    connect() {}
-
     disconnect() {}
-  },
-}));
+  }
+
+  const SignalsmithStretch = vi.fn(async (context) => {
+    if (!registrationByContext.has(context)) {
+      registrationByContext.set(
+        context,
+        context.audioWorklet.addModule('signalsmith-stretch-processor'),
+      );
+    }
+    await registrationByContext.get(context);
+    return new MockPitchNode(context);
+  });
+
+  return { default: SignalsmithStretch, MockPitchNode };
+});
 
 class MockAudioParam {
   constructor(value = 0) {
@@ -68,7 +78,6 @@ class MockAudioContext {
     this.destination = new MockAudioNode();
     this.sinkId = options.sinkId ?? '';
     this.state = 'suspended';
-    this.workletRegistered = false;
     this.failWorkletRegistration = false;
     this.failSetSinkId = false;
     this.listeners = new Map();
@@ -102,7 +111,6 @@ class MockAudioContext {
         if (this.failWorkletRegistration) {
           throw new Error('worklet registration failed');
         }
-        this.workletRegistered = true;
       }),
     };
     MockAudioContext.instances.push(this);
@@ -201,9 +209,8 @@ afterEach(() => {
 });
 
 async function loadPlayer() {
-  const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
-  SoundTouchNode.instances.length = 0;
-  SoundTouchNode.register.mockClear();
+  const { MockPitchNode } = await import('signalsmith-stretch');
+  MockPitchNode.instances.length = 0;
   const { usePlayer } = await import('./usePlayer.js');
   return usePlayer();
 }
@@ -758,7 +765,7 @@ describe('capture device lifecycle', () => {
 });
 
 describe('transpose AudioWorklet routing', () => {
-  it('rolls back monitor state when registration fails and retries later', async () => {
+  it('keeps monitor state rolled back if registration fails, and does not recover on retry', async () => {
     const player = await loadPlayer();
     const monitorContext = MockAudioContext.instances[0];
     monitorContext.failWorkletRegistration = true;
@@ -769,18 +776,22 @@ describe('transpose AudioWorklet routing', () => {
     expect(pitchCrossfade(monitorContext)).toEqual({ dry: 1, wet: 0 });
     expect(player.state.error).toBe('音高調整暫時無法使用。');
 
+    // signalsmith-stretch caches the failed registration promise on
+    // monitorContext permanently (see ADR 0019) — addModule is never
+    // retried, so the monitor pitch path stays broken for the rest of this
+    // AudioContext's lifetime even though registration would now succeed.
     monitorContext.failWorkletRegistration = false;
     await player.setTransposeSemitones(2);
 
-    expect(monitorContext.audioWorklet.addModule).toHaveBeenCalledTimes(2);
-    expect(player.state.transposeSemitones).toBe(2);
-    expect(pitchCrossfade(monitorContext)).toEqual({ dry: 0, wet: 1 });
-    expect(player.state.error).toBeNull();
+    expect(monitorContext.audioWorklet.addModule).toHaveBeenCalledOnce();
+    expect(player.state.transposeSemitones).toBe(0);
+    expect(pitchCrossfade(monitorContext)).toEqual({ dry: 1, wet: 0 });
+    expect(player.state.error).toBe('音高調整暫時無法使用。');
   });
 
-  it('registers and activates SoundTouch in both monitor and capture contexts', async () => {
+  it('registers and activates the pitch node in both monitor and capture contexts', async () => {
     const player = await loadPlayer();
-    const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
+    const { MockPitchNode } = await import('signalsmith-stretch');
 
     await player.applyCaptureDevice('capture-device');
     await player.setTransposeSemitones(2);
@@ -788,9 +799,11 @@ describe('transpose AudioWorklet routing', () => {
     const [monitorContext, captureContext] = MockAudioContext.instances;
     expect(monitorContext.audioWorklet.addModule).toHaveBeenCalledOnce();
     expect(captureContext.audioWorklet.addModule).toHaveBeenCalledOnce();
-    expect(SoundTouchNode.instances).toHaveLength(2);
+    expect(MockPitchNode.instances).toHaveLength(2);
     expect(
-      SoundTouchNode.instances.map((node) => node.pitchSemitones.value),
+      MockPitchNode.instances.map(
+        (node) => node.schedule.mock.calls.at(-1)[0].semitones,
+      ),
     ).toEqual([2, 2]);
     expect(pitchCrossfade(monitorContext)).toEqual({ dry: 0, wet: 1 });
     expect(pitchCrossfade(captureContext)).toEqual({ dry: 0, wet: 1 });
@@ -799,17 +812,17 @@ describe('transpose AudioWorklet routing', () => {
 
   it('syncs an existing transpose when capture is selected later', async () => {
     const player = await loadPlayer();
-    const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
+    const { MockPitchNode } = await import('signalsmith-stretch');
 
     await player.setTransposeSemitones(-3);
     await player.applyCaptureDevice('capture-device');
 
     const captureContext = MockAudioContext.instances[1];
-    const capturePitchNode = SoundTouchNode.instances.find(
+    const capturePitchNode = MockPitchNode.instances.find(
       (node) => node.context === captureContext,
     );
     expect(captureContext.audioWorklet.addModule).toHaveBeenCalledOnce();
-    expect(capturePitchNode.pitchSemitones.value).toBe(-3);
+    expect(capturePitchNode.schedule.mock.calls.at(-1)[0].semitones).toBe(-3);
     expect(pitchCrossfade(captureContext)).toEqual({ dry: 0, wet: 1 });
     expect(player.state.captureDeviceId).toBe('capture-device');
     expect(player.state.captureError).toBeNull();
@@ -817,7 +830,7 @@ describe('transpose AudioWorklet routing', () => {
 
   it('does not connect a stale pitch worklet into a replacement graph', async () => {
     const player = await loadPlayer();
-    const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
+    const { MockPitchNode } = await import('signalsmith-stretch');
     await player.setTransposeSemitones(2);
     const firstWorklet = createDeferred();
     MockAudioContext.workletDeferredBySinkId.set('first-device', firstWorklet);
@@ -832,17 +845,24 @@ describe('transpose AudioWorklet routing', () => {
     firstWorklet.resolve();
     await firstSelection;
 
+    // Signalsmith Stretch resolves registration and node construction in a
+    // single call, so a node for the stale first-device graph is still
+    // constructed once its deferred registration resolves — it just must
+    // never be wired (connect()ed) into the graph once superseded.
     const secondContext = MockAudioContext.instances[2];
-    const capturePitchNodes = SoundTouchNode.instances.filter(
+    const capturePitchNodes = MockPitchNode.instances.filter(
       (node) => node.context !== MockAudioContext.instances[0],
     );
-    expect(capturePitchNodes).toHaveLength(1);
-    expect(capturePitchNodes[0].context).toBe(secondContext);
+    const connectedCaptureNodes = capturePitchNodes.filter(
+      (node) => node.connect.mock.calls.length > 0,
+    );
+    expect(connectedCaptureNodes).toHaveLength(1);
+    expect(connectedCaptureNodes[0].context).toBe(secondContext);
     expect(player.state.captureDeviceId).toBe('second-device');
     expect(player.state.captureError).toBeNull();
   });
 
-  it('keeps monitor transpose active if capture worklet registration fails', async () => {
+  it('keeps monitor transpose active if capture worklet registration fails, and capture pitch does not recover on retry', async () => {
     const player = await loadPlayer();
 
     await player.applyCaptureDevice('capture-device');
@@ -861,31 +881,34 @@ describe('transpose AudioWorklet routing', () => {
     expect(player.state.captureError).toBeNull();
     expect(captureContext.audioWorklet.addModule).toHaveBeenCalledOnce();
 
+    // signalsmith-stretch caches the failed registration on captureContext
+    // permanently (see ADR 0019) — flipping failWorkletRegistration back off
+    // and retrying does not recover; only reselecting the output device
+    // (which creates a fresh AudioContext) would.
     captureContext.failWorkletRegistration = false;
     await player.setTransposeSemitones(5);
 
-    expect(captureContext.audioWorklet.addModule).toHaveBeenCalledTimes(2);
-    expect(pitchCrossfade(captureContext)).toEqual({ dry: 0, wet: 1 });
-    expect(player.state.captureError).toBeNull();
+    expect(captureContext.audioWorklet.addModule).toHaveBeenCalledOnce();
+    expect(pitchCrossfade(captureContext)).toEqual({ dry: 1, wet: 0 });
+    expect(player.state.captureError).toBe('擷取輸出的音高調整暫時無法使用。');
   });
 
-  it('hydrates transpose and fine pitch together when capture retries', async () => {
+  it('hydrates transpose and fine pitch together into a single schedule() call when capture is selected', async () => {
     const player = await loadPlayer();
-    const { SoundTouchNode } = await import('@soundtouchjs/audio-worklet');
+    const { MockPitchNode } = await import('signalsmith-stretch');
 
-    await player.applyCaptureDevice('capture-device');
-    const captureContext = MockAudioContext.instances[1];
-    captureContext.failWorkletRegistration = true;
-    await player.setPitchCents(12);
-
-    captureContext.failWorkletRegistration = false;
     await player.setTransposeSemitones(2);
+    await player.setPitchCents(12);
+    await player.applyCaptureDevice('capture-device');
 
-    const capturePitchNode = SoundTouchNode.instances.find(
+    const captureContext = MockAudioContext.instances[1];
+    const capturePitchNode = MockPitchNode.instances.find(
       (node) => node.context === captureContext,
     );
-    expect(capturePitchNode.pitchSemitones.value).toBe(2);
-    expect(capturePitchNode.pitch.value).toBeCloseTo(2 ** (12 / 1200));
+    expect(capturePitchNode.schedule).toHaveBeenLastCalledWith({
+      active: true,
+      semitones: 2 + 12 / 100,
+    });
     expect(pitchCrossfade(captureContext)).toEqual({ dry: 0, wet: 1 });
     expect(player.state.captureError).toBeNull();
   });

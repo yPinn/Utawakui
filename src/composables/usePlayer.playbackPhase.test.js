@@ -1,18 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-vi.mock('@soundtouchjs/audio-worklet', () => ({
-  SoundTouchNode: class {
-    static register = vi.fn().mockResolvedValue();
-
-    constructor() {
-      this.pitchSemitones = { value: 0 };
-      this.pitch = { value: 1 };
-    }
-
-    connect() {}
-
-    disconnect() {}
-  },
+vi.mock('signalsmith-stretch', () => ({
+  default: vi.fn(async () => ({
+    schedule: vi.fn(),
+    connect: vi.fn(),
+    disconnect: vi.fn(),
+  })),
 }));
 
 class MockAudioParam {

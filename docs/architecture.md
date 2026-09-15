@@ -182,8 +182,8 @@ path／range 工具函式。Resolver 只接受 track id 與 allowlisted asset na
 播放器的 renderer ownership 再分成兩層：`src/composables/usePlayer.js` 是模組單例、
 HTML audio event authority、transport actions 與既有 public composable facade；
 `src/composables/player/usePlayerAudioGraph.js` 是由 facade 建立的 Web Audio resource
-owner，負責四聲道 accompaniment／guide-vocal routing、monitor／capture mix、SoundTouch
-pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media timing events，
+owner，負責四聲道 accompaniment／guide-vocal routing、monitor／capture mix、Signalsmith
+Stretch pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media timing events，
 也不直接建立第二份 playback state；所有播放時間與 phase 仍只由 HTML audio events
 更新。
 
