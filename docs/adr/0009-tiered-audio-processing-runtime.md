@@ -280,6 +280,10 @@ Readers and result selection accept these aliases:
 | `inst-hq3`                  | `general`           | No                   |
 | `recording-enhanced`        | `refined`           | No                   |
 
+`shared/audioProcessingRecipes.json`'s `resultAliases` is the executable source
+of truth for this mapping; this table mirrors it for readability and must be
+corrected here first if the two ever disagree.
+
 Aliases are read/select compatibility only. New job intent must use canonical
 ids. `high-quality` remains a separate non-runnable legacy result. Unknown,
 well-formed legacy entries remain available for recovery but cannot become new

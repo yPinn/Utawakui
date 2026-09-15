@@ -232,7 +232,9 @@ timing do not belong in the authored document.
 ## Canonical section roles
 
 Templates consume the app-owned v1 allowlist: `intro`, `verse`, `pre-chorus`,
-`chorus`, `bridge`, `instrumental`, `outro`, and `unknown`. Raw analyzer labels
+`chorus`, `bridge`, `instrumental`, `outro`, and `unknown` — the executable
+source of truth is `shared/musicStructureContractValues.json`'s
+`canonicalSectionRoles`; this list mirrors it for readability. Raw analyzer labels
 remain bounded provenance and never become CSS classes, template ids, commands,
 or trusted selectors.
 
