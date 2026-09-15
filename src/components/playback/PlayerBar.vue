@@ -20,6 +20,7 @@ import {
 import { useAppView } from '../../composables/useAppView.js';
 import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
 import { useMetronome } from '../../composables/useMetronome.js';
+import { useMetronomeTrackTempo } from '../../composables/useMetronomeTrackTempo.js';
 import { useAlbumNavigation } from '../../composables/useAlbumNavigation.js';
 import { useAudioOutput } from '../../composables/useAudioOutput.js';
 import { useSeparation } from '../../composables/useSeparation.js';
@@ -80,6 +81,9 @@ const {
   toggleShuffle,
 } = usePlaybackQueue();
 const { state: metronomeState } = useMetronome();
+// PlayerBar is mounted exactly once for the app's lifetime, making this the
+// natural single place to wire the metronome to whatever track is loaded.
+useMetronomeTrackTempo();
 const { setActiveView } = useAppView();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();

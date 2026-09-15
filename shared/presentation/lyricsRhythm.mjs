@@ -24,7 +24,7 @@ function confident(value) {
   );
 }
 
-function confidentTempo(rawTempo) {
+export function confidentTempo(rawTempo) {
   const bpm = rawTempo?.bpm;
   return Number.isFinite(bpm) &&
     bpm >= MIN_BPM &&

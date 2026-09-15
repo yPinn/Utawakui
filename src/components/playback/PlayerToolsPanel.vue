@@ -10,6 +10,8 @@ import {
   Play,
   Plus,
   RotateCcw,
+  Volume2,
+  VolumeX,
 } from '../../icons/index.js';
 import { useMetronome } from '../../composables/useMetronome.js';
 import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
@@ -55,6 +57,7 @@ const {
   adjustBeatsPerBar,
   tapTempo,
   resetTaps,
+  toggleSound,
 } = useMetronome();
 
 const tabItems = [
@@ -68,6 +71,14 @@ const metronomeSummary = computed(
 );
 const tapStatusLabel = computed(() =>
   metronome.tapCount > 0 ? `已點擊 ${metronome.tapCount} 次` : '依節奏點擊',
+);
+function formatConfidence(value) {
+  return Number.isFinite(value) ? `${Math.round(value * 100)}%` : '—';
+}
+const trackTempoHint = computed(() =>
+  metronome.bpmSource === 'track-estimate'
+    ? `已套用曲目估算 BPM · 節拍信心 ${formatConfidence(metronome.bpmSourceConfidence)}`
+    : '',
 );
 const panelStatus = computed(() => {
   if (props.activeTab === 'adjust') {
@@ -124,6 +135,18 @@ function handleSeparationPresetChange(presetId) {
           <UiChip :tone="metronome.isRunning ? 'accent' : 'muted'">
             {{ metronome.isRunning ? 'On' : 'Off' }}
           </UiChip>
+          <UiButton
+            :icon="metronome.soundEnabled ? Volume2 : VolumeX"
+            :active="metronome.soundEnabled"
+            :aria-label="
+              metronome.soundEnabled ? '關閉節拍器音效' : '開啟節拍器音效'
+            "
+            :aria-pressed="metronome.soundEnabled"
+            :title="
+              metronome.soundEnabled ? '關閉節拍器音效' : '開啟節拍器音效'
+            "
+            @click="toggleSound"
+          />
           <UiButton
             :icon="RotateCcw"
             aria-label="重設節拍器"
@@ -205,6 +228,10 @@ function handleSeparationPresetChange(presetId) {
             </div>
           </div>
         </div>
+
+        <p v-if="trackTempoHint" class="player-tools__description">
+          {{ trackTempoHint }}
+        </p>
 
         <div class="player-tools__tap-row">
           <div class="player-tools__row-header">

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  confidentTempo,
   createLyricsRhythmPresentation,
   scaleLyricsMotionDuration,
 } from './lyricsRhythm.mjs';
@@ -175,5 +176,31 @@ describe('shared lyrics rhythm presentation', () => {
     expect(scaleLyricsMotionDuration(0.3, slow)).toBe(0.405);
     expect(scaleLyricsMotionDuration(240, null)).toBe(240);
     expect(scaleLyricsMotionDuration('240', slow)).toBe(0);
+  });
+
+  describe('confidentTempo', () => {
+    it('returns the BPM when confidence meets the presentation gate', () => {
+      expect(confidentTempo({ bpm: 128, confidence: 0.5 })).toBe(128);
+      expect(confidentTempo({ bpm: 128, confidence: 0.82 })).toBe(128);
+    });
+
+    it('rejects tempo below the confidence gate', () => {
+      expect(confidentTempo({ bpm: 128, confidence: 0.49 })).toBeNull();
+      expect(confidentTempo({ bpm: 128, confidence: 0 })).toBeNull();
+      expect(confidentTempo({ bpm: 128 })).toBeNull();
+    });
+
+    it('rejects a BPM outside the 20-400 contract range', () => {
+      expect(confidentTempo({ bpm: 19, confidence: 0.9 })).toBeNull();
+      expect(confidentTempo({ bpm: 401, confidence: 0.9 })).toBeNull();
+      expect(confidentTempo({ bpm: 20, confidence: 0.9 })).toBe(20);
+      expect(confidentTempo({ bpm: 400, confidence: 0.9 })).toBe(400);
+    });
+
+    it('rejects a non-finite or missing BPM', () => {
+      expect(confidentTempo({ bpm: NaN, confidence: 0.9 })).toBeNull();
+      expect(confidentTempo(null)).toBeNull();
+      expect(confidentTempo(undefined)).toBeNull();
+    });
   });
 });

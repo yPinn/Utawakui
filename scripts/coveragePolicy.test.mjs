@@ -105,6 +105,16 @@ describe('coverage policy', () => {
     expect(coveragePolicy.exclude).toContain(file);
   });
 
+  it('excludes the metronome click engine as untestable Web Audio, same posture as ADR 0019', () => {
+    const file = 'src/utils/metronomeClickEngine.js';
+
+    expect(classifyAppSource(file)).toEqual({
+      status: 'coverage-neutral',
+      reason: 'untestable-web-audio',
+    });
+    expect(coveragePolicy.exclude).toContain(file);
+  });
+
   it('shares include, exclude, and global thresholds with Vitest', () => {
     expect(viteConfig.test.coverage.include).toEqual(coveragePolicy.include);
     expect(viteConfig.test.coverage.exclude).toEqual(coveragePolicy.exclude);

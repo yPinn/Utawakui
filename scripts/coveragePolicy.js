@@ -19,6 +19,13 @@ const COVERAGE_NEUTRAL_SOURCES = new Map([
   ['src/components/demo/demoImageFixtures.js', 'static-fixture'],
   ['src/icons/index.js', 're-export-only'],
   ['src/components/ui/uiTestHost.js', 'test-infrastructure'],
+  // Node/vitest has no real Web Audio implementation (same posture as
+  // usePlayerAudioGraph.js's untested half, see ADR 0019 and ADR 0020):
+  // node creation, gain envelopes, and currentTime-based scheduling here
+  // cannot be exercised without a hand-rolled mock that would just assert
+  // against itself. All decision logic (which beat fires when, accent vs
+  // regular) lives in the tested pure module metronomeSchedule.js instead.
+  ['src/utils/metronomeClickEngine.js', 'untestable-web-audio'],
 ]);
 
 const coveragePolicy = Object.freeze({
