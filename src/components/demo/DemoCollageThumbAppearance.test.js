@@ -396,9 +396,16 @@ describe('DemoCollageThumbAppearance', () => {
     expect(dossierSource).toContain(':size="88"');
     expect(detailsModalSource).toContain(':size="120"');
     expect(setlistHeaderSource).toContain(':size="136"');
-    // F8 retains the reviewed 280px comparison specimen. F7 no longer
-    // consumes a collection collage in the playback-context inspector.
-    expect(inspectorSource).not.toContain('UiCollageThumb');
+    // F8 retains the reviewed 280px comparison specimen. The playback-context
+    // inspector now shows the source playlist's own cover, scaled between
+    // the dossier header (88) and details modal (120) sizes as the panel's
+    // own draggable width changes — the only UiCollageThumb consumer whose
+    // container is user-resizable, so unlike every other call site it isn't
+    // one fixed number.
+    expect(inspectorSource).toContain('UiCollageThumb');
+    expect(inspectorSource).toContain(':size="collectionCoverSize"');
+    expect(inspectorSource).toContain('COLLECTION_COVER_MIN = 88;');
+    expect(inspectorSource).toContain('COLLECTION_COVER_MAX = 120;');
     expect(inspectorSource).toContain('UiTrackThumb');
     expect(activeTokenSource).toContain(
       '--ui-playlist-row-thumb-size: 2.75rem;',

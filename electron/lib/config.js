@@ -17,7 +17,7 @@ const UI_THEMES = ['light', 'dark'];
 // Keep in sync with --ui-playlist-sidebar-width-min/-max in
 // src/styles/tokens.css — main process can't read CSS.
 const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
-const SIDEBAR_WIDTH_MAX = 392; // 24.5rem
+const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
 const DEFAULTS = {

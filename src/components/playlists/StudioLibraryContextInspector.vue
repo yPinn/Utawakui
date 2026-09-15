@@ -1,9 +1,15 @@
 <script setup>
 import { computed } from 'vue';
 import { PanelRightClose, PanelRightOpen, Volume2 } from '../../icons/index.js';
+import {
+  INSPECTOR_WIDTH_MAX,
+  INSPECTOR_WIDTH_MIN,
+  useStudioLibraryInspectorWidth,
+} from '../../composables/useStudioLibraryInspectorWidth.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
 import UiChip from '../ui/UiChip.vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
@@ -14,9 +20,42 @@ const props = defineProps({
   currentTrack: { type: Object, default: null },
   queueSourceName: { type: String, default: '' },
   upcomingTracks: { type: Array, default: () => [] },
+  // The playlist/album playback started from — only local data (name,
+  // description, cover). null when playing from the general library view
+  // (no specific collection to show), not merely "loading".
+  collection: { type: Object, default: null },
 });
 
 const emit = defineEmits(['toggle']);
+
+const inspectorWidth = useStudioLibraryInspectorWidth();
+
+// Only overrides --ui-inspector-width while open — collapsed uses the
+// separate, fixed --ui-inspector-rail-width and isn't draggable.
+const rootStyle = computed(() =>
+  props.open
+    ? { '--ui-inspector-width': `${inspectorWidth.width.value}px` }
+    : undefined,
+);
+
+// Unlike every other UiCollageThumb consumer (dossier header, details modal,
+// setlist header), this one lives in a container the user can actually
+// resize — so instead of one fixed number, the cover scales linearly across
+// the panel's own draggable range. Endpoints reuse already-reviewed sizes
+// (88 = StudioLibraryDossierHeader.vue, 120 = PlaylistDetailsModal.vue)
+// rather than inventing new ones.
+const COLLECTION_COVER_MIN = 88;
+const COLLECTION_COVER_MAX = 120;
+const collectionCoverSize = computed(() => {
+  const range = INSPECTOR_WIDTH_MAX - INSPECTOR_WIDTH_MIN;
+  const progress =
+    range > 0 ? (inspectorWidth.width.value - INSPECTOR_WIDTH_MIN) / range : 0;
+  const clampedProgress = Math.min(1, Math.max(0, progress));
+  return Math.round(
+    COLLECTION_COVER_MIN +
+      (COLLECTION_COVER_MAX - COLLECTION_COVER_MIN) * clampedProgress,
+  );
+});
 
 const queueContextLabel = computed(() => {
   if (props.queueSourceName) return props.queueSourceName;
@@ -54,6 +93,7 @@ const currentTrackFacts = computed(() => {
       'studio-context-inspector--open': open,
       'studio-context-inspector--collapsed': !open,
     }"
+    :style="rootStyle"
     :aria-label="open ? '播放資訊' : '播放資訊（已摺疊）'"
   >
     <div
@@ -79,6 +119,22 @@ const currentTrackFacts = computed(() => {
       </header>
 
       <div class="studio-context-inspector__scroll">
+        <section
+          v-if="collection"
+          class="studio-context-inspector__section studio-context-inspector__collection"
+          aria-labelledby="studio-context-collection-heading"
+        >
+          <UiCollageThumb
+            class="studio-context-inspector__collection-cover"
+            :cover-url="collection.coverUrl"
+            :tracks="collection.tracks"
+            :can-collage="collection.canCollage"
+            :size="collectionCoverSize"
+          />
+          <h3 id="studio-context-collection-heading">{{ collection.name }}</h3>
+          <p v-if="collection.description">{{ collection.description }}</p>
+        </section>
+
         <section
           class="studio-context-inspector__section studio-context-inspector__current"
           aria-labelledby="studio-context-current-heading"
@@ -139,23 +195,17 @@ const currentTrackFacts = computed(() => {
               :key="track.id ?? `${track.title}-${index}`"
               class="studio-context-inspector__queue-item"
             >
-              <span
-                class="studio-context-inspector__queue-index"
-                aria-hidden="true"
-              >
-                {{ index + 1 }}
-              </span>
               <UiTrackThumb
                 :track="track"
                 size="var(--ui-track-artwork-size-dense)"
               />
               <div class="studio-context-inspector__queue-copy">
                 <h4>{{ track.title }}</h4>
-                <p>{{ track.artist || '未知演出者' }}</p>
+                <p>
+                  {{ track.artist || '未知演出者' }} ·
+                  {{ formatDuration(track.duration) }}
+                </p>
               </div>
-              <span class="studio-context-inspector__queue-duration">
-                {{ formatDuration(track.duration) }}
-              </span>
             </li>
           </ol>
         </section>
@@ -173,11 +223,24 @@ const currentTrackFacts = computed(() => {
       stretch
       @click="emit('toggle')"
     />
+
+    <button
+      v-if="open"
+      type="button"
+      class="studio-context-inspector__handle"
+      :class="{
+        'studio-context-inspector__handle--active':
+          inspectorWidth.isResizing.value,
+      }"
+      aria-label="調整播放資訊寬度"
+      @pointerdown="inspectorWidth.startResize"
+    ></button>
   </aside>
 </template>
 
 <style scoped>
 .studio-context-inspector {
+  position: relative;
   min-width: 0;
   min-height: 0;
   overflow: hidden;
@@ -292,6 +355,37 @@ const currentTrackFacts = computed(() => {
   line-height: var(--ui-line-height-label);
 }
 
+.studio-context-inspector__collection {
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-1);
+}
+
+.studio-context-inspector__collection-cover {
+  margin-bottom: var(--ui-space-2);
+  box-shadow: var(--ui-shadow-contact);
+}
+
+.studio-context-inspector__collection h3 {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--ui-font-size-md);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-title);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.studio-context-inspector__collection p {
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .studio-context-inspector__current-identity {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -319,8 +413,6 @@ const currentTrackFacts = computed(() => {
 
 .studio-context-inspector__current-copy p,
 .studio-context-inspector__queue-copy p,
-.studio-context-inspector__queue-duration,
-.studio-context-inspector__queue-index,
 .studio-context-inspector__section dt,
 .studio-context-inspector__section dd {
   font-size: var(--ui-font-size-sm);
@@ -329,8 +421,7 @@ const currentTrackFacts = computed(() => {
 
 .studio-context-inspector__current-copy p,
 .studio-context-inspector__queue-copy p,
-.studio-context-inspector__section dt,
-.studio-context-inspector__queue-index {
+.studio-context-inspector__section dt {
   color: var(--ui-color-text-muted);
 }
 
@@ -365,9 +456,9 @@ const currentTrackFacts = computed(() => {
 
 .studio-context-inspector__queue-item {
   display: grid;
-  grid-template-columns: 1.5rem auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   align-items: center;
-  gap: var(--ui-space-2);
+  gap: var(--ui-space-3);
   min-height: var(--ui-track-row-min-height);
   padding-block: var(--ui-space-1);
 }
@@ -385,14 +476,10 @@ const currentTrackFacts = computed(() => {
   line-height: var(--ui-line-height-label);
 }
 
-.studio-context-inspector__queue-duration,
-.studio-context-inspector__queue-index {
-  font-variant-numeric: tabular-nums;
-}
-
 .studio-context-inspector__identity p,
 .studio-context-inspector__current-copy,
 .studio-context-inspector__current dl dd,
+.studio-context-inspector__collection p,
 .studio-context-inspector__queue-copy {
   -webkit-user-select: text;
   user-select: text;
@@ -400,11 +487,55 @@ const currentTrackFacts = computed(() => {
 
 .studio-context-inspector__identity h2,
 .studio-context-inspector__section h3,
-.studio-context-inspector__section dt,
-.studio-context-inspector__queue-duration,
-.studio-context-inspector__queue-index {
+.studio-context-inspector__section dt {
   -webkit-user-select: none;
   user-select: none;
+}
+
+.studio-context-inspector__handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  /* Flush to the inner edge (not straddling it like
+     AppPlaylistSidebar.vue's handle does) — the parent rule above sets
+     overflow: hidden, so a negative offset here would clip the hit area
+     and the accent line outside the visible box. */
+  left: 0;
+  width: 6px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: col-resize;
+  z-index: 1;
+  touch-action: none;
+}
+
+.studio-context-inspector__handle::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 2px;
+  background: transparent;
+  transition: background-color var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
+}
+
+.studio-context-inspector__handle:hover::after,
+.studio-context-inspector__handle--active::after {
+  background: var(--ui-color-accent);
+}
+
+:global(:root[data-ui-motion='reduced'])
+  .studio-context-inspector__handle::after {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-context-inspector__handle::after {
+    transition: none;
+  }
 }
 
 /* Paired with AppArchiveFrame's temporary context plane. Keep the literal in

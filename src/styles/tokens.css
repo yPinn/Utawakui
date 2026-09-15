@@ -209,7 +209,7 @@
   --ui-playlist-sidebar-padding-inline: var(--ui-space-2);
   /* Fixed rem, not viewport-relative, so the cap stays the same regardless
      of window size — only vw would make it grow with the window. */
-  --ui-playlist-sidebar-width-max: 24.5rem;
+  --ui-playlist-sidebar-width-max: 17.5rem;
   /* Below this, PlaylistSidebarRow.vue/PlaylistSidebar.vue's @container
      rules hide row labels entirely — kept in sync by hand with the literal
      rem value in those rules, since @container conditions can't reference

@@ -474,7 +474,7 @@ describe('registerConfigHandlers', () => {
     const { ipcMain, recordDiagnostic } = register({ updateConfig });
 
     const thrown = await ipcMain.handlers
-      .get('config:set-sidebar-width')(null, 300)
+      .get('config:set-sidebar-width')(null, 200)
       .catch((error) => error);
 
     expect(recordDiagnostic).toHaveBeenCalledWith(

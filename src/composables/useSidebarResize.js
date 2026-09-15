@@ -1,4 +1,5 @@
 import { ref } from 'vue';
+import { useResizeDrag } from './useResizeDrag.js';
 import { SIDEBAR_WIDTH_MIN, useSidebarWidth } from './useSidebarWidth.js';
 
 // Keep in sync with --ui-playlist-sidebar-compact-threshold in
@@ -14,24 +15,13 @@ const COMPACT_RESIST_DISTANCE = 80; // 5rem
 
 const { width, setWidth, commitWidth } = useSidebarWidth();
 
-// True only while a drag is in progress — lets AppPlaylistSidebar.vue give
-// the handle a distinct "actively dragging" look, not just :hover.
-const isResizing = ref(false);
+// Captured at drag start so onMove's delta (relative to the drag's own
+// origin) can be added back onto the width the drag began from.
+const startWidth = ref(0);
 
-// pointerdown handler for the resize handle. Genuinely new plumbing in this
-// app — useDragReorder.js is HTML5 dataTransfer-based (no continuous
-// coordinate stream) and isn't reusable for a resize drag; this uses
-// pointermove/setPointerCapture instead.
-function startResize(event) {
-  event.preventDefault();
-  const target = event.currentTarget;
-  const startX = event.clientX;
-  const startWidth = width.value;
-  isResizing.value = true;
-  target.setPointerCapture(event.pointerId);
-
-  function onMove(moveEvent) {
-    const next = startWidth + (moveEvent.clientX - startX);
+const { isResizing, startResize: startDrag } = useResizeDrag({
+  onMove: (delta) => {
+    const next = startWidth.value + delta;
     if (next >= COMPACT_THRESHOLD) {
       setWidth(next);
     } else if (next >= COMPACT_THRESHOLD - COMPACT_RESIST_DISTANCE) {
@@ -42,18 +32,13 @@ function startResize(event) {
       // than a gradual squeeze.
       setWidth(SIDEBAR_WIDTH_MIN);
     }
-  }
+  },
+  onCommit: commitWidth,
+});
 
-  function onUp() {
-    target.releasePointerCapture(event.pointerId);
-    target.removeEventListener('pointermove', onMove);
-    target.removeEventListener('pointerup', onUp);
-    isResizing.value = false;
-    commitWidth();
-  }
-
-  target.addEventListener('pointermove', onMove);
-  target.addEventListener('pointerup', onUp);
+function startResize(event) {
+  startWidth.value = width.value;
+  startDrag(event);
 }
 
 export function useSidebarResize() {

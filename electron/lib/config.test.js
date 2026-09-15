@@ -157,8 +157,8 @@ describe('config', () => {
   });
 
   it('round-trips sidebarWidth through save/load', () => {
-    saveConfig(configPath, { sidebarWidth: 320 });
-    expect(loadConfig(configPath).sidebarWidth).toBe(320);
+    saveConfig(configPath, { sidebarWidth: 200 });
+    expect(loadConfig(configPath).sidebarWidth).toBe(200);
   });
 
   it('out-of-range sidebarWidth falls back to the default', () => {
