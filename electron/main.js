@@ -2,6 +2,7 @@
 
 const crypto = require('node:crypto');
 const fs = require('node:fs/promises');
+const os = require('node:os');
 const path = require('node:path');
 const { performance } = require('node:perf_hooks');
 
@@ -85,6 +86,8 @@ const {
 const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
+const { registerSystemUsageHandlers } = require('./main/systemUsageHandlers');
+const { createSystemUsageService } = require('./main/systemUsageService');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
 const {
   registerMusicStructureHandlers,
@@ -195,6 +198,7 @@ let performerWindowManager = null;
 let outputRuntimeController = null;
 let spoutOutputRuntimeController = null;
 let heavyJobScheduler = null;
+let systemUsageService = null;
 const startupTraceProbe = startupTrace.enabled
   ? createStartupTraceProbe({ BrowserWindow })
   : null;
@@ -258,6 +262,8 @@ function createConfiguredMainWindow() {
     { startupTraceEnabled: startupTrace.enabled },
   );
   performerWindowManager?.attachMainWindow(mainWindow);
+  systemUsageService?.start();
+  mainWindow.once('closed', () => systemUsageService?.stop());
   return mainWindow;
 }
 registerDiagnosticsLifecycle({
@@ -462,6 +468,26 @@ if (!gotSingleInstanceLock) {
           }),
       },
     });
+    systemUsageService = createSystemUsageService({
+      os,
+      publishStatus: (status) => {
+        const mainWindow = windowState.getMainWindow();
+        if (!mainWindow?.isDestroyed()) {
+          mainWindow.webContents.send('system-usage:status', status);
+        }
+      },
+      logger: {
+        error: (_message, error) =>
+          diagnosticsService.record({
+            level: 'error',
+            source: 'system-usage',
+            operation: 'service',
+            code: 'SYSTEM_USAGE_SERVICE_FAILED',
+            message: 'System usage sampling failed',
+            error,
+          }),
+      },
+    });
 
     registerAppInfoHandlers({
       ipcMain,
@@ -492,6 +518,7 @@ if (!gotSingleInstanceLock) {
       getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
     });
     registerAppUpdateHandlers({ ipcMain, service: appUpdateService });
+    registerSystemUsageHandlers({ ipcMain, service: systemUsageService });
 
     registerMediaProtocol({
       protocol,

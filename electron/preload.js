@@ -81,6 +81,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.on('app-update:status', listener);
     return () => ipcRenderer.removeListener('app-update:status', listener);
   },
+  getSystemUsage: () => ipcRenderer.invoke('system-usage:get-status'),
+  onSystemUsage: (callback) => {
+    const listener = (event, status) => callback(status);
+    ipcRenderer.on('system-usage:status', listener);
+    return () => ipcRenderer.removeListener('system-usage:status', listener);
+  },
   initialUiTheme: readInitialUiTheme(),
   initialUiDensity: readInitialUiDensity(),
   onUiDensityChanged: (callback) => {

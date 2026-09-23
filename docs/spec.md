@@ -237,10 +237,18 @@ Stretch（MIT），程式碼與可自動化的單元測試（`combinedSemitones(
    輪詢、預設關閉或最小化 UI 佔用，而非常駐即時圖表。若要讓監測產生實際產品效益，
    也應一併評估是否讓結果具備行動力——例如偵測到 GPU／CPU 已被 OBS 編碼佔滿時，
    自動延後或降低背景人聲分離等本機運算工作的優先權，而不只是顯示數字；但這需要
-   謹慎判斷何時介入，避免誤判使用者本來就在進行的一般高負載情境。尚待決定監測
-   範圍（是否含 GPU，以及如何在無獨立顯卡或多 GPU 環境下取得可靠讀數）、更新頻率
-   與呈現位置（Settings 內、獨立浮動面板或 tray tooltip／icon），以及是否要做到
-   主動調解資源競爭。
+   謹慎判斷何時介入，避免誤判使用者本來就在進行的一般高負載情境。呈現位置已決定：
+   AppTitleBar 常駐窄 row（`AppTitleBar.vue` 的 `.app-title-bar__resources`），
+   非 Settings／獨立浮動面板／tray——最初考慮放進 PlayerBar，但 PlayerBar 底部已無
+   多餘空間，改採頂部標題列。CPU／RAM 已實作：`electron/main/systemUsageService.js`
+   用 Node `os` 模組每 3 秒採樣系統層級使用率，經 IPC 推播到
+   `src/composables/useSystemUsage.js`。GPU 決定不做，也不在版面保留欄位——GPU
+   使用率只有在特定 GPU engine 實際被寫入時才有意義（Windows 自己的 GPU 效能計數器
+   也只會替開機後真正用過的 engine 建立 instance），本機的 GPU 重度使用場景僅限
+   DirectML 人聲分離與 OBS 編碼那類間歇性動作，多數時間會是恆定接近 0 的死欄位；
+   若之後 OBS／編碼衝突的偵測動機夠強，屆時再重新評估要不要做（含 PowerShell
+   `Get-Counter` 的 subprocess 開銷），不預先保留 UI 版面。更新頻率、是否要做到主動
+   調解資源競爭仍是未決事項。
 2. 是否要支援縮小到 Windows 系統工作列（system tray）並在背景持續執行？這是 Windows
    桌面應用的通用慣例，多款主流應用（例如即時通訊、音樂與串流輔助軟體）都提供關閉
    視窗時縮小到 tray、而非直接結束程序的選項，對長時間直播情境有實際好處（誤按關閉
