@@ -214,7 +214,9 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
     :style="{ '--ui-playlist-sidebar-width': `${sidebarWidth}px` }"
   >
     <AppTitleBar class="shell__titlebar" />
-    <AppPlaylistSidebar class="shell__sidebar" />
+    <div class="shell__sidebar">
+      <AppPlaylistSidebar />
+    </div>
     <main class="shell__main">
       <AppArchiveFrame
         v-model:active-view="activeView"
@@ -260,12 +262,25 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      column so an out-of-range persisted/runtime value (e.g. from an older
      config.json) can't push the grid column past useSidebarWidth.js's own
      min/max. useSidebarResize.js already clamps during a live drag; this
-     is the CSS-side backstop for values that arrive some other way. */
+     is the CSS-side backstop for values that arrive some other way.
+     Plus --ui-space-2: .shell__sidebar's own padding-left (the sidebar's
+     outer margin from the window edge) below eats into whatever this track
+     hands it — without the extra space here, that padding would shrink
+     AppPlaylistSidebar.vue's own rendered width below its calibrated
+     min/max/compact-threshold values instead of just shifting it right.
+     Must match .shell__sidebar's padding-left exactly, or the resize
+     drag's tracked width (useSidebarWidth.js) and the actual DOM width the
+     @container query measures (PlaylistSidebar.vue/PlaylistSidebarRow.vue)
+     drift apart, desyncing the collapsed/expanded snap point from the drag
+     position. */
   grid-template-columns:
-    clamp(
-      var(--ui-playlist-sidebar-width-min),
-      var(--ui-playlist-sidebar-width),
-      var(--ui-playlist-sidebar-width-max)
+    calc(
+      clamp(
+          var(--ui-playlist-sidebar-width-min),
+          var(--ui-playlist-sidebar-width),
+          var(--ui-playlist-sidebar-width-max)
+        ) +
+        var(--ui-space-2)
     )
     1fr;
   grid-template-rows: var(--ui-titlebar-height) 1fr auto;
@@ -280,6 +295,11 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
 
 .shell__sidebar {
   grid-area: sidebar;
+  /* A plain, unstyled wrapper, like .shell__main owning AppInnerPage's card
+     below — AppPlaylistSidebar.vue's own root paints --ui-color-surface
+     across its full box, so padding placed directly on it (via class
+     fallthrough) just got filled by that same background instead of
+     revealing the canvas behind it. */
   /* Same fix as .shell__main below — without this, a grid item's default
      min-height:auto refuses to shrink below its content's natural height,
      so a long playlist list stretches the whole 1fr row taller than the
@@ -288,6 +308,21 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      already owns its own internal scroll — this just lets it actually be
      bounded to the row instead of forcing the row to grow around it. */
   min-height: 0;
+  /* AppTopTabs only sits above the main column, so without this the sidebar
+     starts flush at the row's very top while the tabbed column's actual
+     card begins --ui-archive-content-inset lower — see that token's own
+     comment in tokens.css for the exact derivation. */
+  padding-top: var(--ui-archive-content-inset);
+  /* Matches .shell__main's own padding-bottom below, so the sidebar and the
+     main/context column end at the same baseline above the player bar
+     instead of the sidebar running flush to it while the other column
+     stops short. */
+  padding-bottom: var(--ui-space-3);
+  /* Matches .shell__main's own padding-right below — both are the shell's
+     outermost edge insets (window edge to sidebar/main+context), kept to
+     the same smaller value so the app doesn't run flush to the window but
+     the inset still reads as tighter than the wider gaps between blocks. */
+  padding-left: var(--ui-space-2);
 }
 
 .shell__main {
@@ -296,7 +331,15 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      this just needs to shrink to its grid row instead of growing with
      content, so that scroll actually has a bounded box to work within. */
   min-height: 0;
-  padding: 0 var(--ui-space-3) var(--ui-space-3);
+  /* Split, not the padding shorthand — left is the gap opened up between
+     this column and the sidebar (matches .app-archive-frame--with-context's
+     own inter-block gap below), while right is the shell's outer edge inset
+     (matches .shell__sidebar's own padding-left above). The two are
+     different distances on purpose, not a shorthand that happens to cover
+     both. */
+  padding-bottom: var(--ui-space-3);
+  padding-left: var(--ui-space-3);
+  padding-right: var(--ui-space-2);
 }
 
 .shell__player {

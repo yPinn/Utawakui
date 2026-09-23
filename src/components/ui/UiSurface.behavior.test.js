@@ -11,7 +11,11 @@ import {
 attachClientRender(UiSurface, './UiSurface.vue', import.meta.url);
 
 function root(mounted) {
-  return findAll(mounted.root, (node) => node.type === 'div')[0];
+  return findAll(mounted.root, (node) =>
+    String(node.props?.class ?? '')
+      .split(/\s+/)
+      .includes('ui-surface'),
+  )[0];
 }
 
 function hasClass(node, name) {
@@ -55,13 +59,29 @@ describe('UiSurface', () => {
   });
 
   it('applies each radius value', () => {
-    for (const radius of ['md', 'lg']) {
+    for (const radius of ['sm', 'md', 'lg']) {
       const mounted = mount(UiSurface, { radius }, { default: () => 'x' });
       const node = root(mounted);
 
       expect(hasClass(node, `ui-surface--radius-${radius}`)).toBe(true);
       mounted.app.unmount();
     }
+  });
+
+  it('defaults to a div and renders a caller-chosen tag when given one', () => {
+    const defaultMounted = mount(UiSurface, {}, { default: () => 'x' });
+    expect(root(defaultMounted).type).toBe('div');
+    defaultMounted.app.unmount();
+
+    const asideMounted = mount(
+      UiSurface,
+      { tag: 'aside' },
+      { default: () => 'x' },
+    );
+    const asideNode = root(asideMounted);
+    expect(asideNode.type).toBe('aside');
+    expect(hasClass(asideNode, 'ui-surface')).toBe(true);
+    asideMounted.app.unmount();
   });
 
   it('uses only shared border/color/radius tokens, no raw hex/rgba colors', () => {
@@ -76,6 +96,7 @@ describe('UiSurface', () => {
       '--ui-color-canvas',
       '--ui-color-surface',
       '--ui-color-surface-raised',
+      '--ui-radius-sm',
       '--ui-radius-md',
       '--ui-radius-lg',
     ]) {

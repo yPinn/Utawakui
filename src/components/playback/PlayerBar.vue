@@ -715,8 +715,13 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
-  padding: var(--ui-player-bar-padding-block)
-    var(--ui-player-bar-padding-inline);
+  padding-block: var(--ui-player-bar-padding-block);
+  /* Asymmetric — see --ui-player-bar-padding-inline-start's own comment in
+     tokens.css: only the artwork needs to shift, to stay centered on the
+     sidebar rail axis now that the rail itself sits --ui-space-2 further
+     right than the (still flush) edge of this bar. */
+  padding-inline-start: var(--ui-player-bar-padding-inline-start);
+  padding-inline-end: var(--ui-player-bar-padding-inline);
   background: var(--ui-color-surface);
   border-top: var(--ui-border-width) solid var(--ui-color-border);
   /* Otherwise dragging a slider triggers native text selection, which can

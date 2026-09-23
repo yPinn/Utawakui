@@ -167,7 +167,7 @@ describe('DemoCoreMinimums', () => {
       expect(activeTokenSource).toContain(source);
     }
     expect(activeTokenSource).toContain('54px: expanded and compact rows');
-    expect(activeTokenSource).toContain('76px: 52px artwork');
+    expect(activeTokenSource).toContain('84px: 52px artwork');
     expect(activeTokenSource).not.toContain('--ui-list-header-height');
     expect(activeTokenSource).not.toContain('--ui-drag-indicator-width');
 

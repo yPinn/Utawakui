@@ -214,11 +214,12 @@ const CURRENT_MAPPINGS = [
   {
     key: 'shell-gutter',
     label: 'Shell gutter',
-    sources: [
-      'src/styles/tokens.css',
-      'src/components/layout/AppArchiveFrame.vue',
-    ],
+    sources: ['src/styles/tokens.css', 'src/views/DemoView.vue'],
     value: 'Shell gutter 尚無 active token',
+    // AppArchiveFrame.vue (production) briefly referenced this candidate
+    // token without a real v1/v2 contract — fixed to use --ui-space-3
+    // instead; DemoView.vue is this token's actual, correctly-gated
+    // consumer.
     status: 'consumer 已引用候選 token，目前只在 F8 生效',
     shape: 'space',
     samples: [],

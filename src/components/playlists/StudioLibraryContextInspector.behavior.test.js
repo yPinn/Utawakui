@@ -11,6 +11,7 @@ import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import {
   attachClientRender,
@@ -27,6 +28,7 @@ for (const [component, filename] of [
   [UiHint, '../ui/UiHint.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
+  [UiSurface, '../ui/UiSurface.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -359,6 +361,20 @@ describe('Studio Library Context Inspector', () => {
     )[0];
 
     expect(heading).toBeUndefined();
+    app.unmount();
+  });
+
+  it('renders its UiSurface-backed block as an <aside> landmark, not a downgraded <div>', () => {
+    const { app, root } = mountInspector(true);
+    const aside = findAll(root, (node) => node.type === 'aside')[0];
+
+    expect(aside).toBeTruthy();
+    expect(String(aside.props.class)).toContain('ui-surface');
+    expect(String(aside.props.class)).toContain('ui-surface--tone-surface');
+    expect(String(aside.props.class)).toContain('ui-surface--radius-sm');
+    expect(
+      findAll(root, (node) => node.type === 'div' && node === aside),
+    ).toHaveLength(0);
     app.unmount();
   });
 });

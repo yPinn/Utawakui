@@ -79,7 +79,7 @@ const LAYERS = [
         id: 'player-current-52',
         label: '播放器 · 52px',
         size: 52,
-        note: '加上上下各 12px 間距，填滿 76px 播放列。',
+        note: '加上上下各 16px 間距，填滿 84px 播放列。',
       },
       {
         id: 'metadata-current-64',

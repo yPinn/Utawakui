@@ -86,6 +86,10 @@ function activateSetlistView() {
   box-sizing: border-box;
   height: 100%;
   background: var(--ui-color-surface);
+  /* Matches AppInnerPage/StudioLibraryContextInspector's own --ui-radius-sm
+     card corners. Safe alongside the container-type below — unlike a real
+     border, radius doesn't change the content-box size. */
+  border-radius: var(--ui-radius-sm);
   /* An inset box-shadow, not border-right — this element is also the size
      container query root below, and a real border shrinks its content-box
      just enough to falsely trigger the compact-mode @container rule at the

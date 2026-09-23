@@ -201,6 +201,16 @@
   --ui-archive-tab-height: 3.5rem;
   --ui-archive-tab-active-height: 4.25rem;
   --ui-archive-tab-gap: var(--ui-space-2);
+  /* How far the shared content baseline sits below the "sidebar main" grid
+     row's own top edge — the active tab's height (the row's tallest child,
+     since AppTopTabs.vue bottom-aligns its tabs) minus the rail overlap
+     AppInnerPage tucks under. App.vue's .shell__sidebar uses this as its
+     own top padding so the sidebar and the tabbed main column start at the
+     same visual baseline instead of the sidebar running flush to the row
+     top with nothing above it to match the tab row. */
+  --ui-archive-content-inset: calc(
+    var(--ui-archive-tab-active-height) - var(--ui-archive-rail-size)
+  );
 
   /* --- Sizing: playlist sidebar & rows --- */
   --ui-playlist-sidebar-width: 16rem; /* default/CSS fallback — App.vue overrides live via useSidebarWidth.js */
@@ -387,10 +397,25 @@
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
   --ui-track-list-gap: var(--ui-space-1); /* gap between rows */
-  --ui-player-bar-padding-block: var(--ui-space-3);
+  /* space-4, not space-3 — gives the 44px Primary transport button (the
+     contract's hard floor, see token-v2-component-review.md's 核心尺寸 row)
+     real breathing room inside the bar instead of sitting nearly flush top
+     and bottom. */
+  --ui-player-bar-padding-block: var(--ui-space-4);
   --ui-player-bar-padding-inline: calc(
     var(--ui-playlist-row-artwork-centerline) - 1.625rem
   ); /* 10px: 52px artwork centered on the 36px rail axis */
+  /* The rail axis above assumes the sidebar starts flush at the window
+     edge. App.vue's .shell__sidebar now opens a --ui-space-2 margin there
+     instead (the shell's outer-edge inset — see .shell__sidebar's own
+     comment), shifting the rail right by that much — so the artwork's own
+     start-side inset needs the same addition to stay centered on it. Only
+     the start side: the player bar's own left/right edges stay flush
+     (App.vue's .shell__player isn't margined), this only re-centers the
+     artwork inside it. */
+  --ui-player-bar-padding-inline-start: calc(
+    var(--ui-player-bar-padding-inline) + var(--ui-space-2)
+  );
   --ui-player-bar-artwork-size: var(
     --ui-track-row-min-height
   ); /* 52px: keep in sync with PLAYER_BAR_ARTWORK_SIZE */
@@ -401,7 +426,7 @@
   --ui-player-bar-height: calc(
     var(--ui-player-bar-artwork-size) + var(--ui-player-bar-padding-block) +
       var(--ui-player-bar-padding-block)
-  ); /* 76px: 52px artwork + 2x space-3 padding for transport/progress breathing room */
+  ); /* 84px: 52px artwork + 2x space-4 padding for transport/progress breathing room */
   --ui-player-bar-panel-edge-offset: var(--ui-space-3);
   /* One step tighter than the space-4 default — shared by every player-bar
      panel (PlayerToolsPanel.vue, QueuePanel.vue via PlayerBarPanel.vue), so

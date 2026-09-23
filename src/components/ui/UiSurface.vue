@@ -4,6 +4,11 @@ import { computed } from 'vue';
 const props = defineProps({
   tone: { type: String, default: 'surface' },
   radius: { type: String, default: 'md' },
+  // Lets a caller preserve its own semantic/landmark tag (<aside>,
+  // <section>, ...) instead of silently downgrading to <div> — added once
+  // that genuinely blocked more than one migration this session, not
+  // speculatively.
+  tag: { type: String, default: 'div' },
 });
 
 const modifierClasses = computed(() => [
@@ -13,9 +18,9 @@ const modifierClasses = computed(() => [
 </script>
 
 <template>
-  <div class="ui-surface" :class="modifierClasses">
+  <component :is="tag" class="ui-surface" :class="modifierClasses">
     <slot />
-  </div>
+  </component>
 </template>
 
 <style scoped>
@@ -33,6 +38,10 @@ const modifierClasses = computed(() => [
 
 .ui-surface--tone-raised {
   background: var(--ui-color-surface-raised);
+}
+
+.ui-surface--radius-sm {
+  border-radius: var(--ui-radius-sm);
 }
 
 .ui-surface--radius-md {

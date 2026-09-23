@@ -24,7 +24,7 @@ const consumerSources = [
   '../playlists/StudioLibraryTrackTable.vue',
   '../playback/PlayerBar.vue',
   '../playlists/StudioLibraryDossier.vue',
-  '../layout/AppArchiveFrame.vue',
+  '../../views/DemoView.vue',
 ].map((filename) => ({
   filename,
   source: readFileSync(new URL(filename, import.meta.url), 'utf8'),
@@ -301,8 +301,11 @@ describe('DemoDensity', () => {
     expect(sourceByName.get('../playlists/StudioLibraryDossier.vue')).toContain(
       'padding: var(--ui-panel-inset)',
     );
-    expect(sourceByName.get('../layout/AppArchiveFrame.vue')).toContain(
-      'gap: var(--ui-shell-gutter)',
+    // AppArchiveFrame.vue is production and no longer references this
+    // Candidate-only token (see its own comment) — DemoView.vue is the
+    // real, correctly v2-gated consumer instead.
+    expect(sourceByName.get('../../views/DemoView.vue')).toContain(
+      'padding: var(--ui-shell-gutter)',
     );
   });
 });

@@ -1,9 +1,13 @@
+<script setup>
+import UiSurface from '../ui/UiSurface.vue';
+</script>
+
 <template>
-  <section class="app-inner-page">
+  <UiSurface tag="section" class="app-inner-page" tone="surface" radius="sm">
     <div class="app-inner-page__content">
       <slot />
     </div>
-  </section>
+  </UiSurface>
 </template>
 
 <style scoped>
@@ -17,9 +21,15 @@
   height: 100%;
   overflow-x: hidden;
   overflow-y: auto;
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: 0 var(--ui-radius-sm) var(--ui-radius-sm) var(--ui-radius-sm);
-  background: var(--ui-color-surface);
+}
+
+/* AppTopTabs.vue tucks under this corner (negative margin + z-index overlap,
+   see AppArchiveFrame.vue's .app-archive-frame__tabs) — a rounded top-left
+   corner would show a gap/seam where the tabs meet the page. The two-class
+   selector (specificity 0,2,0) reliably beats UiSurface's own single-class
+   .ui-surface--radius-sm modifier (0,1,0) regardless of CSS bundle order. */
+.ui-surface.app-inner-page {
+  border-start-start-radius: 0;
 }
 
 .app-inner-page__content {

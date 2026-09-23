@@ -13,6 +13,7 @@ import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiSurface from '../ui/UiSurface.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
@@ -87,12 +88,15 @@ const currentTrackFacts = computed(() => {
 </script>
 
 <template>
-  <aside
+  <UiSurface
+    tag="aside"
     class="studio-context-inspector"
     :class="{
       'studio-context-inspector--open': open,
       'studio-context-inspector--collapsed': !open,
     }"
+    tone="surface"
+    radius="sm"
     :style="rootStyle"
     :aria-label="open ? '播放資訊' : '播放資訊（已摺疊）'"
   >
@@ -235,7 +239,7 @@ const currentTrackFacts = computed(() => {
       aria-label="調整播放資訊寬度"
       @pointerdown="inspectorWidth.startResize"
     ></button>
-  </aside>
+  </UiSurface>
 </template>
 
 <style scoped>
@@ -245,9 +249,6 @@ const currentTrackFacts = computed(() => {
   min-height: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  background: var(--ui-color-surface-raised);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
 }
 
 .studio-context-inspector--open {
