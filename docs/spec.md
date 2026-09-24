@@ -240,15 +240,34 @@ Stretch（MIT），程式碼與可自動化的單元測試（`combinedSemitones(
    謹慎判斷何時介入，避免誤判使用者本來就在進行的一般高負載情境。呈現位置已決定：
    AppTitleBar 常駐窄 row（`AppTitleBar.vue` 的 `.app-title-bar__resources`），
    非 Settings／獨立浮動面板／tray——最初考慮放進 PlayerBar，但 PlayerBar 底部已無
-   多餘空間，改採頂部標題列。CPU／RAM 已實作：`electron/main/systemUsageService.js`
-   用 Node `os` 模組每 3 秒採樣系統層級使用率，經 IPC 推播到
-   `src/composables/useSystemUsage.js`。GPU 決定不做，也不在版面保留欄位——GPU
+   多餘空間，改採頂部標題列。CPU／RAM 已實作，但監測範圍已從系統層級改為僅
+   Utawakui 自身：Windows 工作管理員本身就能看到整台電腦的數字，標題列這一列改為
+   只回答「Utawakui 自己吃了多少資源」。`electron/main/appUsageService.js`
+   每 3 秒採樣一次：平時只讀 `app.getAppMetrics()`（Electron 的
+   browser／renderer／GPU／utility process，用 `cumulativeCPUUsage` 秒數與前一次
+   採樣的差值除以〔經過時間 × 核心數〕換算成佔整機的百分比，跟工作管理員同一個
+   基準），零額外 subprocess 成本；只有在 `heavyJobScheduler.isBusy()`（人聲分離
+   執行中）為真時，才額外透過 `electron/main/childProcessUsageSampler.js` 跑一次
+   PowerShell `Get-CimInstance Win32_Process` 查詢完整程序表，篩出 Python／FFmpeg
+   等子孫程序疊加進讀數——平時掛機不產生任何 PowerShell subprocess。yt-dlp 下載
+   不經過 heavyJobScheduler，因此不會被補量（下載以網路等待為主，此限制可接受）。
+   CPU／RAM 皆顯示到小數點後 1 位——App 本身的 RAM 通常遠低於整機 1%，取整數百分比
+   會恆為 0，沒有資訊量，但第 2 位小數（0.52% vs 0.53%）也不具行動力，1 位已足夠。
+   警示閾值已從系統層級的 60／80 改為 App 層級：CPU 25／50；RAM 維持相對整機的
+   百分比（同一份 RAM 佔用在較小記憶體的機器上更值得在意，這正是這一列想回答的
+   問題），以 16GB 作為代表性消費級配置校準為 8／16——8GB 現在算是邊緣案例，不
+   以它為主要校準對象。Electron 閒置基線（browser／renderer／GPU 三個 process
+   疊起來）約佔 16GB 的 2%，遠低於警示值；人聲分離執行中疊加模型與音訊緩衝，
+   估計約 2GB，約佔 16GB 的 12.5%（超過警示、未達危險，符合「16GB 上單一 heavy
+   job 仍有餘裕」的判斷，危險值保留給更極端的情況，例如洩漏或多個 heavy job
+   疊加）。這組數字放到 8GB 上依然合理（閒置仍低於警示，單一 heavy job 會超過
+   危險值，這點在 8GB 上是準確的換頁風險），只是不是校準的主要對象。GPU 決定
+   不做，也不在版面保留欄位——GPU
    使用率只有在特定 GPU engine 實際被寫入時才有意義（Windows 自己的 GPU 效能計數器
    也只會替開機後真正用過的 engine 建立 instance），本機的 GPU 重度使用場景僅限
    DirectML 人聲分離與 OBS 編碼那類間歇性動作，多數時間會是恆定接近 0 的死欄位；
-   若之後 OBS／編碼衝突的偵測動機夠強，屆時再重新評估要不要做（含 PowerShell
-   `Get-Counter` 的 subprocess 開銷），不預先保留 UI 版面。更新頻率、是否要做到主動
-   調解資源競爭仍是未決事項。
+   若之後 OBS／編碼衝突的偵測動機夠強，屆時再重新評估要不要做，不預先保留 UI 版面。
+   更新頻率、是否要做到主動調解資源競爭仍是未決事項。
 2. 是否要支援縮小到 Windows 系統工作列（system tray）並在背景持續執行？這是 Windows
    桌面應用的通用慣例，多款主流應用（例如即時通訊、音樂與串流輔助軟體）都提供關閉
    視窗時縮小到 tray、而非直接結束程序的選項，對長時間直播情境有實際好處（誤按關閉

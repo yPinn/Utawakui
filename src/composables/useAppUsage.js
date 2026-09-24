@@ -27,23 +27,23 @@ function applyStatus(status) {
 }
 
 function ensureSubscription() {
-  if (unsubscribe || !hasBridge('onSystemUsage')) return;
-  unsubscribe = window.Utawakui.onSystemUsage(applyStatus);
+  if (unsubscribe || !hasBridge('onAppUsage')) return;
+  unsubscribe = window.Utawakui.onAppUsage(applyStatus);
 }
 
 // Best-effort: on failure, the titlebar just keeps showing the last known
 // value (or the initial placeholder) instead of throwing.
-async function refreshSystemUsage() {
+async function refreshAppUsage() {
   ensureSubscription();
-  if (!hasBridge('getSystemUsage')) return;
+  if (!hasBridge('getAppUsage')) return;
   try {
-    applyStatus(await window.Utawakui.getSystemUsage());
+    applyStatus(await window.Utawakui.getAppUsage());
   } catch {
     // no-op
   }
 }
 
-export function useSystemUsage() {
+export function useAppUsage() {
   ensureSubscription();
-  return { state: readonly(state), refreshSystemUsage };
+  return { state: readonly(state), refreshAppUsage };
 }

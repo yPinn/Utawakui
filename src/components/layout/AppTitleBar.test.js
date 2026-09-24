@@ -12,25 +12,28 @@ describe('AppTitleBar', () => {
     expect(source).toContain('padding-right: var(--ui-space-2)');
   });
 
-  it('sources CPU/RAM from useSystemUsage and has no GPU field', () => {
+  it('sources CPU/RAM from useAppUsage and has no GPU field', () => {
     expect(source).toContain(
-      "import { useSystemUsage } from '../../composables/useSystemUsage.js'",
+      "import { useAppUsage } from '../../composables/useAppUsage.js'",
     );
-    expect(source).toContain(
-      'formatResourcePercent(systemUsageState.cpuPercent)',
-    );
-    expect(source).toContain(
-      'formatResourcePercent(systemUsageState.ramPercent)',
-    );
+    expect(source).toContain('formatResourcePercent(appUsageState.cpuPercent)');
+    expect(source).toContain('formatResourcePercent(appUsageState.ramPercent)');
+    expect(source).toContain('value.toFixed(1)');
     expect(source).not.toContain('gpuPercent');
     expect(source).not.toContain('<Gpu');
   });
 
-  it('colors CPU/RAM values by threshold, well below "system is unusable"', () => {
-    expect(source).toContain('RESOURCE_WARNING_PERCENT = 60');
-    expect(source).toContain('RESOURCE_DANGER_PERCENT = 80');
-    expect(source).toContain('resourceToneClass(systemUsageState.cpuPercent)');
-    expect(source).toContain('resourceToneClass(systemUsageState.ramPercent)');
+  it('colors CPU/RAM values against app-scoped (not whole-machine) thresholds', () => {
+    expect(source).toContain('CPU_WARNING_PERCENT = 25');
+    expect(source).toContain('CPU_DANGER_PERCENT = 50');
+    expect(source).toContain('RAM_WARNING_PERCENT = 8');
+    expect(source).toContain('RAM_DANGER_PERCENT = 16');
+    expect(source).toMatch(
+      /resourceToneClass\(\s*appUsageState\.cpuPercent,\s*CPU_WARNING_PERCENT,\s*CPU_DANGER_PERCENT,/,
+    );
+    expect(source).toMatch(
+      /resourceToneClass\(\s*appUsageState\.ramPercent,\s*RAM_WARNING_PERCENT,\s*RAM_DANGER_PERCENT,/,
+    );
     expect(source).toContain(
       '.app-title-bar__resource-value--warning {\n  color: var(--ui-color-warning);',
     );

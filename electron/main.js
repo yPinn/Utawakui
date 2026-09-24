@@ -86,8 +86,9 @@ const {
 const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
-const { registerSystemUsageHandlers } = require('./main/systemUsageHandlers');
-const { createSystemUsageService } = require('./main/systemUsageService');
+const { registerAppUsageHandlers } = require('./main/appUsageHandlers');
+const { createAppUsageService } = require('./main/appUsageService');
+const { queryProcessTree } = require('./main/childProcessUsageSampler');
 const { registerLyricsHandlers } = require('./main/lyricsHandlers');
 const {
   registerMusicStructureHandlers,
@@ -198,7 +199,7 @@ let performerWindowManager = null;
 let outputRuntimeController = null;
 let spoutOutputRuntimeController = null;
 let heavyJobScheduler = null;
-let systemUsageService = null;
+let appUsageService = null;
 const startupTraceProbe = startupTrace.enabled
   ? createStartupTraceProbe({ BrowserWindow })
   : null;
@@ -262,8 +263,8 @@ function createConfiguredMainWindow() {
     { startupTraceEnabled: startupTrace.enabled },
   );
   performerWindowManager?.attachMainWindow(mainWindow);
-  systemUsageService?.start();
-  mainWindow.once('closed', () => systemUsageService?.stop());
+  appUsageService?.start();
+  mainWindow.once('closed', () => appUsageService?.stop());
   return mainWindow;
 }
 registerDiagnosticsLifecycle({
@@ -468,22 +469,42 @@ if (!gotSingleInstanceLock) {
           }),
       },
     });
-    systemUsageService = createSystemUsageService({
-      os,
+    appUsageService = createAppUsageService({
+      getAppMetrics: () => app.getAppMetrics(),
+      cpuCount: os.cpus().length,
+      totalMemoryBytes: os.totalmem(),
+      isHeavyJobActive: () => heavyJobScheduler?.isBusy() ?? false,
+      sampleChildProcessTree:
+        process.platform === 'win32'
+          ? () =>
+              queryProcessTree({
+                logger: {
+                  error: (message, error) =>
+                    diagnosticsService.record({
+                      level: 'error',
+                      source: 'app-usage',
+                      operation: 'child-process-query',
+                      code: 'APP_USAGE_CHILD_QUERY_FAILED',
+                      message,
+                      error,
+                    }),
+                },
+              })
+          : undefined,
       publishStatus: (status) => {
         const mainWindow = windowState.getMainWindow();
         if (!mainWindow?.isDestroyed()) {
-          mainWindow.webContents.send('system-usage:status', status);
+          mainWindow.webContents.send('app-usage:status', status);
         }
       },
       logger: {
         error: (_message, error) =>
           diagnosticsService.record({
             level: 'error',
-            source: 'system-usage',
+            source: 'app-usage',
             operation: 'service',
-            code: 'SYSTEM_USAGE_SERVICE_FAILED',
-            message: 'System usage sampling failed',
+            code: 'APP_USAGE_SERVICE_FAILED',
+            message: 'App usage sampling failed',
             error,
           }),
       },
@@ -518,7 +539,7 @@ if (!gotSingleInstanceLock) {
       getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
     });
     registerAppUpdateHandlers({ ipcMain, service: appUpdateService });
-    registerSystemUsageHandlers({ ipcMain, service: systemUsageService });
+    registerAppUsageHandlers({ ipcMain, service: appUsageService });
 
     registerMediaProtocol({
       protocol,

@@ -110,7 +110,11 @@ function createHeavyJobScheduler() {
     await completion;
   }
 
-  return { schedule, cancel, shutdown };
+  function isBusy() {
+    return active !== null;
+  }
+
+  return { schedule, cancel, shutdown, isBusy };
 }
 
 module.exports = { createHeavyJobScheduler };

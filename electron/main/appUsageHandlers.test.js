@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
-import { registerSystemUsageHandlers } from './systemUsageHandlers.js';
+import { registerAppUsageHandlers } from './appUsageHandlers.js';
 
-describe('system usage handlers', () => {
+describe('app usage handlers', () => {
   it('registers only the fixed get-status intent, delegating to the service', async () => {
     const handlers = new Map();
     const ipcMain = {
@@ -14,10 +14,10 @@ describe('system usage handlers', () => {
       })),
     };
 
-    registerSystemUsageHandlers({ ipcMain, service });
+    registerAppUsageHandlers({ ipcMain, service });
 
-    expect([...handlers.keys()]).toEqual(['system-usage:get-status']);
-    await expect(handlers.get('system-usage:get-status')()).resolves.toEqual({
+    expect([...handlers.keys()]).toEqual(['app-usage:get-status']);
+    await expect(handlers.get('app-usage:get-status')()).resolves.toEqual({
       cpuPercent: 12,
       ramPercent: 34,
     });

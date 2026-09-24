@@ -16,6 +16,7 @@ describe('HeavyJobScheduler', () => {
     const first = deferred();
     const order = [];
     const scheduler = createHeavyJobScheduler();
+    expect(scheduler.isBusy()).toBe(false);
     const firstResult = scheduler.schedule({
       jobId: 'job-1',
       start: () => {
@@ -32,10 +33,12 @@ describe('HeavyJobScheduler', () => {
     });
 
     await vi.waitFor(() => expect(order).toEqual(['job-1']));
+    expect(scheduler.isBusy()).toBe(true);
     first.resolve('first');
     await expect(firstResult).resolves.toBe('first');
     await expect(secondResult).resolves.toBe('second');
     expect(order).toEqual(['job-1', 'job-2']);
+    expect(scheduler.isBusy()).toBe(false);
   });
 
   it('cancels queued and active jobs without starting cancelled work', async () => {
