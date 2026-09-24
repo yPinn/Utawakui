@@ -41,6 +41,13 @@ function createOutputRuntime({
   resolveArtworkAsset = () => null,
   featureId = 'public-output-flow',
   onMilestone = () => undefined,
+  // Fires on every projection update, not just track changes — see
+  // sessionHistoryService.js, the only current consumer, for how it derives
+  // a track-change signal from this. Kept as a second callback rather than
+  // a new IPC channel or event emitter: the projection is already computed
+  // here on every update, so this is just handing the existing value to
+  // another local listener.
+  onProjectionChange = () => undefined,
   recordOverlayMilestone = null,
   beforeStop = () => undefined,
   logger = console,
@@ -60,6 +67,7 @@ function createOutputRuntime({
       if (projection.sourceSynchronization === 'ready') {
         onMilestone('source-synchronized');
       }
+      onProjectionChange(projection);
     },
   });
 

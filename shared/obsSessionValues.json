@@ -1,0 +1,5 @@
+{
+  "defaultSkipThresholdMs": 10000,
+  "minSkipThresholdMs": 0,
+  "maxSkipThresholdMs": 300000
+}

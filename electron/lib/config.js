@@ -11,6 +11,11 @@ const {
   minDisplayDelayMs: OUTPUT_DISPLAY_DELAY_MIN,
   maxDisplayDelayMs: OUTPUT_DISPLAY_DELAY_MAX,
 } = require('../../shared/outputRuntimeValues.json');
+const {
+  defaultSkipThresholdMs: DEFAULT_OBS_SKIP_THRESHOLD_MS,
+  minSkipThresholdMs: OBS_SKIP_THRESHOLD_MIN,
+  maxSkipThresholdMs: OBS_SKIP_THRESHOLD_MAX,
+} = require('../../shared/obsSessionValues.json');
 
 const CURRENT_VERSION = 2;
 const UI_THEMES = ['light', 'dark'];
@@ -20,6 +25,11 @@ const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
 const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
+// obs-websocket 5's own documented default port.
+const DEFAULT_OBS_PORT = 4455;
+const OBS_PORT_MIN = 1;
+const OBS_PORT_MAX = 65535;
+const OBS_HOST_MAX_LENGTH = 253; // max DNS hostname length
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
@@ -63,6 +73,20 @@ const DEFAULTS = {
     port: DEFAULT_OUTPUT_PORT,
     displayDelayMs: DEFAULT_OUTPUT_DISPLAY_DELAY_MS,
   }),
+  // Connection-only intent — the WebSocket password never lives here (see
+  // electron/main/obsCredentialStore.js's platform-backed secure storage,
+  // per ADR 0013). enabled false means the adapter never opens a socket.
+  obsIntegration: Object.freeze({
+    enabled: false,
+    host: '127.0.0.1',
+    port: DEFAULT_OBS_PORT,
+    // "略過門檻" (spec.md's Phase 4 decision) — a track played shorter than
+    // this before the next one starts is dropped from session history as a
+    // likely misclick, not a real performance. 0 disables the feature
+    // entirely (every track kept regardless of duration). See
+    // sessionHistoryService.js's maybeRetractShortTrack().
+    skipThresholdMs: DEFAULT_OBS_SKIP_THRESHOLD_MS,
+  }),
 };
 
 function isValidOutputRuntime(value) {
@@ -78,6 +102,34 @@ function isValidOutputRuntime(value) {
     value.displayDelayMs >= OUTPUT_DISPLAY_DELAY_MIN &&
     value.displayDelayMs <= OUTPUT_DISPLAY_DELAY_MAX,
   );
+}
+
+function isValidObsIntegration(value) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof value.enabled === 'boolean' &&
+    typeof value.host === 'string' &&
+    value.host.length > 0 &&
+    value.host.length <= OBS_HOST_MAX_LENGTH &&
+    Number.isSafeInteger(value.port) &&
+    value.port >= OBS_PORT_MIN &&
+    value.port <= OBS_PORT_MAX &&
+    Number.isSafeInteger(value.skipThresholdMs) &&
+    value.skipThresholdMs >= OBS_SKIP_THRESHOLD_MIN &&
+    value.skipThresholdMs <= OBS_SKIP_THRESHOLD_MAX,
+  );
+}
+
+function normalizeObsIntegration(value) {
+  if (!isValidObsIntegration(value)) return { ...DEFAULTS.obsIntegration };
+  return {
+    enabled: value.enabled,
+    host: value.host,
+    port: value.port,
+    skipThresholdMs: value.skipThresholdMs,
+  };
 }
 
 function normalizeOutputRuntime(value) {
@@ -177,6 +229,7 @@ function loadConfig(configPath) {
         ? data.systemFfmpegPath
         : DEFAULTS.systemFfmpegPath,
     outputRuntime: normalizeOutputRuntime(data.outputRuntime),
+    obsIntegration: normalizeObsIntegration(data.obsIntegration),
   };
 }
 
@@ -200,6 +253,13 @@ module.exports = {
   SIDEBAR_WIDTH_MAX,
   OUTPUT_PORT_MIN,
   OUTPUT_PORT_MAX,
+  OBS_PORT_MIN,
+  OBS_PORT_MAX,
+  OBS_HOST_MAX_LENGTH,
+  OBS_SKIP_THRESHOLD_MIN,
+  OBS_SKIP_THRESHOLD_MAX,
   isValidOutputRuntime,
   normalizeOutputRuntime,
+  isValidObsIntegration,
+  normalizeObsIntegration,
 };

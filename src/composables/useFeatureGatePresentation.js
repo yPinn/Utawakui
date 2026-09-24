@@ -47,6 +47,7 @@ export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
     'lyrics-flow': '歌詞來源',
     'audio-processing-flow': '音訊處理',
     'public-output-flow': '對外輸出',
+    'obs-integration': 'OBS 連線',
   };
 
   const DEPENDENCY_ADVANCED_ACTIONS = Object.freeze({

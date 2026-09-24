@@ -18,6 +18,8 @@ const {
   screen,
   shell,
   clipboard,
+  safeStorage,
+  powerSaveBlocker,
 } = require('electron');
 
 const APP_NAME = 'Utawakui';
@@ -118,6 +120,11 @@ const {
   createSpoutOutputRuntime,
 } = require('./main/spoutOutputRuntime');
 const { registerSpoutOutputHandlers } = require('./main/spoutOutputHandlers');
+const { createObsAdapter } = require('./main/obsAdapter');
+const { createObsCredentialStore } = require('./main/obsCredentialStore');
+const { registerObsHandlers } = require('./main/obsHandlers');
+const { createObsPowerSaveBlocker } = require('./main/obsPowerSaveBlocker');
+const { createSessionHistoryService } = require('./main/sessionHistoryService');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
 const { registerFeedbackHandlers } = require('./main/feedbackHandlers');
@@ -198,12 +205,15 @@ startupTrace.record('process-start', { atUnixMs: performance.timeOrigin });
 let performerWindowManager = null;
 let outputRuntimeController = null;
 let spoutOutputRuntimeController = null;
+let obsAdapterController = null;
 let heavyJobScheduler = null;
 let appUsageService = null;
 const startupTraceProbe = startupTrace.enabled
   ? createStartupTraceProbe({ BrowserWindow })
   : null;
 let startupTraceCompletion = null;
+
+const obsPowerSaveBlockerSync = createObsPowerSaveBlocker({ powerSaveBlocker });
 
 function completeStartupTrace() {
   if (!startupTrace.enabled || startupTraceCompletion) {
@@ -402,6 +412,36 @@ if (!gotSingleInstanceLock) {
       featureId: FEATURE_IDS.LYRICS_FLOW,
       logger: runtimeDiagnosticsLogger,
     });
+    const obsCredentialStore = createObsCredentialStore({
+      app,
+      safeStorage,
+      logger: runtimeDiagnosticsLogger,
+    });
+    obsAdapterController = createObsAdapter({
+      requireFeatureGate,
+      featureId: FEATURE_IDS.OBS_INTEGRATION,
+      getPassword: async () => obsCredentialStore.loadPassword(),
+      onStatusChange: (status) => {
+        const mainWindow = windowState.getMainWindow();
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('obs:status', status);
+        }
+        obsPowerSaveBlockerSync.sync(status);
+      },
+      logger: runtimeDiagnosticsLogger,
+    });
+    // Created before outputRuntimeController below so its
+    // handleProjectionChange can be wired into createOutputRuntime's
+    // onProjectionChange option at construction time — no separate
+    // subscribe step, and no new IPC channel (see the service's own header
+    // comment for why the existing projection stream is enough).
+    const sessionHistoryService = createSessionHistoryService({
+      obsAdapter: obsAdapterController,
+      userDataDir: app.getPath('userData'),
+      logger: runtimeDiagnosticsLogger,
+      getSkipThresholdMs: () =>
+        configState.getConfig().obsIntegration.skipThresholdMs,
+    });
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
@@ -412,6 +452,7 @@ if (!gotSingleInstanceLock) {
         ),
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
       onMilestone: recordMainMilestone,
+      onProjectionChange: sessionHistoryService.handleProjectionChange,
       recordOverlayMilestone: startupTrace.enabled
         ? recordOverlayMilestone
         : null,
@@ -441,6 +482,19 @@ if (!gotSingleInstanceLock) {
       server: outputRuntimeController,
       logger: runtimeDiagnosticsLogger,
     });
+    // Lazy per ADR 0013: only opens a socket (and only then requires the
+    // obs-websocket-js SDK) when the user previously enabled it — same
+    // fire-and-forget startup posture as appUpdateService's scheduled
+    // checks below, not awaited so it never delays interactive app shell.
+    const initialObsIntegration = configState.getConfig().obsIntegration;
+    if (initialObsIntegration.enabled) {
+      obsAdapterController.configure(initialObsIntegration).catch((error) => {
+        runtimeDiagnosticsLogger.error?.(
+          '[obs-adapter] Startup connect failed',
+          error,
+        );
+      });
+    }
     const providerRunnerManager = createProviderRunnerManager({
       app,
       userDataDir: app.getPath('userData'),
@@ -563,6 +617,17 @@ if (!gotSingleInstanceLock) {
       runtime: spoutOutputRuntimeController,
       requireFeatureGate,
       featureId: FEATURE_IDS.PUBLIC_OUTPUT_FLOW,
+    });
+    registerObsHandlers({
+      ipcMain,
+      adapter: obsAdapterController,
+      credentialStore: obsCredentialStore,
+      sessionHistoryService,
+      requireFeatureGate,
+      featureId: FEATURE_IDS.OBS_INTEGRATION,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+      writeClipboardText: (value) => clipboard.writeText(value),
     });
 
     performerWindowManager = createPerformerWindowManager({

@@ -7,6 +7,10 @@ export function useClipboardFeedback({
   writeText = null,
   scheduleReset = (callback) => globalThis.setTimeout(callback, 1800),
   cancelReset = (timer) => globalThis.clearTimeout(timer),
+  // Overridable per caller — the default suits short labels/URLs, but a
+  // generated text blob (e.g. a YouTube chapter list) scales with content
+  // length rather than being bounded like those.
+  maxLength = MAX_COPY_LENGTH,
 } = {}) {
   const state = shallowRef(IDLE_STATE);
   let resetTimer = null;
@@ -32,7 +36,7 @@ export function useClipboardFeedback({
     if (
       typeof value !== 'string' ||
       value.length === 0 ||
-      value.length > MAX_COPY_LENGTH
+      value.length > maxLength
     ) {
       state.value = {
         tone: 'error',

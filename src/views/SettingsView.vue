@@ -17,6 +17,8 @@ import FeedbackReportSettingsRow from '../components/settings/FeedbackReportSett
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
 import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
+import ObsIntegrationSettingsBlock from '../components/settings/ObsIntegrationSettingsBlock.vue';
+import ObsSessionExportModal from '../components/settings/ObsSessionExportModal.vue';
 import SeparationGpuSettingsRow from '../components/settings/SeparationGpuSettingsRow.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
@@ -45,6 +47,8 @@ import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibraryMetadataMaintenance } from '../composables/useLibraryMetadataMaintenance.js';
 import { useMusicAnalysisSettings } from '../composables/useMusicAnalysisSettings.js';
+import { useObsIntegrationSettings } from '../composables/useObsIntegrationSettings.js';
+import { useObsSessionExport } from '../composables/useObsSessionExport.js';
 import { useSeparationSettings } from '../composables/useSeparationSettings.js';
 import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
 import { usePlayer } from '../composables/usePlayer.js';
@@ -98,6 +102,8 @@ const {
 } = useFeatureDependencies();
 const musicAnalysisSettings = useMusicAnalysisSettings();
 const separationSettings = useSeparationSettings();
+const obsIntegrationSettings = useObsIntegrationSettings();
+const obsSessionExport = useObsSessionExport();
 
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
@@ -255,6 +261,7 @@ async function refreshSettingsState() {
   refreshDiagnostics();
   musicAnalysisSettings.initialize();
   separationSettings.refreshPreference();
+  obsIntegrationSettings.refreshSettings();
 }
 
 async function handleRemoveMusicAnalysis() {
@@ -529,6 +536,8 @@ onUnmounted(musicAnalysisSettings.dispose);
 
         <FeedbackReportModal />
 
+        <ObsSessionExportModal />
+
         <FfmpegSourceModal
           :open="isFfmpegSourceModalOpen"
           :initial-detection="systemFfmpegDetection"
@@ -615,6 +624,32 @@ onUnmounted(musicAnalysisSettings.dispose);
                 :preference-busy="separationSettings.preferenceBusy.value"
                 :preference-error="separationSettings.preferenceError.value"
                 @set-gpu-acceleration="separationSettings.setGpuAcceleration"
+              />
+              <ObsIntegrationSettingsBlock
+                v-if="gate.id === FEATURE_IDS.OBS_INTEGRATION && gate.enabled"
+                :status="obsIntegrationSettings.status"
+                :host="obsIntegrationSettings.host.value"
+                :port="obsIntegrationSettings.port.value"
+                :password="obsIntegrationSettings.password.value"
+                :skip-threshold-seconds="
+                  obsIntegrationSettings.skipThresholdSeconds.value
+                "
+                :has-stored-password="
+                  obsIntegrationSettings.hasStoredPassword.value
+                "
+                :is-saving="obsIntegrationSettings.isSaving.value"
+                :error="obsIntegrationSettings.error.value"
+                @update:host="obsIntegrationSettings.host.value = $event"
+                @update:port="obsIntegrationSettings.port.value = $event"
+                @update:password="
+                  obsIntegrationSettings.password.value = $event
+                "
+                @update:skip-threshold-seconds="
+                  obsIntegrationSettings.skipThresholdSeconds.value = $event
+                "
+                @save="obsIntegrationSettings.save"
+                @retry-connect="obsIntegrationSettings.retryConnect"
+                @export-chapters="obsSessionExport.open()"
               />
             </template>
           </SettingsFeatureGateRow>

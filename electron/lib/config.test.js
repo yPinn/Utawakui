@@ -41,6 +41,12 @@ describe('config', () => {
         port: 8700,
         displayDelayMs: 0,
       },
+      obsIntegration: {
+        enabled: false,
+        host: '127.0.0.1',
+        port: 4455,
+        skipThresholdMs: 10000,
+      },
     });
   });
 
@@ -85,6 +91,12 @@ describe('config', () => {
         autoStart: true,
         port: 8700,
         displayDelayMs: 0,
+      },
+      obsIntegration: {
+        enabled: false,
+        host: '127.0.0.1',
+        port: 4455,
+        skipThresholdMs: 10000,
       },
     });
 
@@ -336,6 +348,62 @@ describe('config', () => {
       autoStart: false,
       port: 8702,
       displayDelayMs: 0,
+    });
+  });
+
+  it('round-trips valid OBS integration settings', () => {
+    saveConfig(configPath, {
+      obsIntegration: {
+        enabled: true,
+        host: '192.168.1.5',
+        port: 4456,
+        skipThresholdMs: 5000,
+      },
+    });
+
+    expect(loadConfig(configPath).obsIntegration).toEqual({
+      enabled: true,
+      host: '192.168.1.5',
+      port: 4456,
+      skipThresholdMs: 5000,
+    });
+  });
+
+  it.each([
+    [{ enabled: 'yes', host: '127.0.0.1', port: 4455, skipThresholdMs: 10000 }],
+    [{ enabled: true, host: '', port: 4455, skipThresholdMs: 10000 }],
+    [{ enabled: true, host: '127.0.0.1', port: 0, skipThresholdMs: 10000 }],
+    [{ enabled: true, host: '127.0.0.1', port: 65536, skipThresholdMs: 10000 }],
+    [
+      {
+        enabled: true,
+        host: '127.0.0.1',
+        port: 4455.5,
+        skipThresholdMs: 10000,
+      },
+    ],
+    [{ enabled: true, host: '127.0.0.1', port: 4455, skipThresholdMs: -1 }],
+    [
+      {
+        enabled: true,
+        host: '127.0.0.1',
+        port: 4455,
+        skipThresholdMs: 300_001,
+      },
+    ],
+    [{ enabled: true, host: '127.0.0.1', port: 4455, skipThresholdMs: 'ten' }],
+    [null],
+  ])('falls back when OBS integration settings are invalid: %j', (value) => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({ version: 2, obsIntegration: value }),
+    );
+
+    expect(loadConfig(configPath).obsIntegration).toEqual({
+      enabled: false,
+      host: '127.0.0.1',
+      port: 4455,
+      skipThresholdMs: 10000,
     });
   });
 

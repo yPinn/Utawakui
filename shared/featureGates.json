@@ -54,6 +54,19 @@
         "平台未提出限制不代表已取得授權。",
         "Utawakui 不會驗證素材授權；啟用紀錄僅保存在本機。"
       ]
+    },
+    {
+      "id": "obs-integration",
+      "title": "啟用 OBS 連線",
+      "category": "obs-integration",
+      "confirmLabel": "啟用連線",
+      "cancelLabel": "取消",
+      "summary": "透過 OBS WebSocket 讀取直播／錄影狀態與時間戳，用於場次記錄。",
+      "body": [
+        "需要在 OBS 開啟 WebSocket 伺服器並設定密碼；密碼僅加密保存於本機安全儲存區。",
+        "此功能僅讀取狀態，不會建立、變更或控制 OBS 場景。",
+        "Utawakui 不會驗證素材授權；啟用紀錄僅保存在本機。"
+      ]
     }
   ]
 }

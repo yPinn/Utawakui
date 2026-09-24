@@ -7,6 +7,7 @@ const FEATURE_IDS = Object.freeze({
   LYRICS_FLOW: 'lyrics-flow',
   AUDIO_PROCESSING_FLOW: 'audio-processing-flow',
   PUBLIC_OUTPUT_FLOW: 'public-output-flow',
+  OBS_INTEGRATION: 'obs-integration',
 });
 
 const FEATURE_GATES = Object.freeze(

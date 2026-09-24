@@ -17,10 +17,16 @@ vi.mock('./usePlayer.js', () => ({
   }),
 }));
 
+const addMarkerMock = vi.hoisted(() => vi.fn());
+vi.mock('./useObsIntegration.js', () => ({
+  useObsIntegration: () => ({ addMarker: addMarkerMock }),
+}));
+
 let keydownListener;
 
 beforeEach(() => {
   keydownListener = null;
+  addMarkerMock.mockClear();
   vi.stubGlobal('window', {
     addEventListener: vi.fn((type, listener) => {
       if (type === 'keydown') keydownListener = listener;
@@ -130,5 +136,13 @@ describe('useKeyboardShortcuts', () => {
     const f8PreventDefault = dispatchKey('F8');
     expect(activeView.value).toBe('setlist');
     expect(f8PreventDefault).not.toHaveBeenCalled();
+  });
+
+  it('maps K to adding an OBS session marker', async () => {
+    await setupShortcuts();
+
+    dispatchKey('k');
+
+    expect(addMarkerMock).toHaveBeenCalledOnce();
   });
 });

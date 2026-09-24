@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   formatDuration,
+  formatElapsedClock,
   formatLongDuration,
   formatAddedDate,
 } from './format.js';
@@ -54,6 +55,28 @@ describe('formatDuration', () => {
   it("garbles negative input, which can't happen in practice", () => {
     expect(formatDuration(-5)).toBe('-1:-5');
   });
+});
+
+describe('formatElapsedClock', () => {
+  it('always shows HH:MM:SS, even under an hour', () => {
+    expect(formatElapsedClock(83_000)).toBe('00:01:23');
+  });
+
+  it('formats zero', () => {
+    expect(formatElapsedClock(0)).toBe('00:00:00');
+  });
+
+  it('pads the hour once past single digits, not just minutes/seconds', () => {
+    expect(formatElapsedClock(3_723_000)).toBe('01:02:03');
+    expect(formatElapsedClock(36_305_000)).toBe('10:05:05');
+  });
+
+  it.each([null, undefined, NaN, -1, 'x'])(
+    'returns an empty string for invalid input %j',
+    (value) => {
+      expect(formatElapsedClock(value)).toBe('');
+    },
+  );
 });
 
 describe('formatLongDuration', () => {

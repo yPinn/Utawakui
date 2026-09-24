@@ -6,6 +6,23 @@ export function formatDuration(seconds, fallback = '--:--') {
   return `${minutes}:${remaining}`;
 }
 
+// Always HH:MM:SS, fully zero-padded — deliberately not formatDuration's
+// unpadded-leading-unit style. Matches OBS's own outputTimecode convention
+// (obs-websocket's "00:12:34.567") and keeps a fixed 8-character width so a
+// live-ticking session clock (e.g. the titlebar's OBS LIVE／REC badge) never
+// changes digit count as hours roll over. Not for track playback position —
+// that stays formatDuration's M:SS.
+export function formatElapsedClock(milliseconds) {
+  if (!Number.isFinite(milliseconds) || milliseconds < 0) return '';
+  const totalSeconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':');
+}
+
 export function formatLongDuration(seconds) {
   if (!Number.isFinite(seconds) || seconds <= 0) return '';
   const totalMinutes = Math.max(1, Math.round(seconds / 60));

@@ -86,7 +86,7 @@ describe('featureGates', () => {
   it('keeps declaration copy concise and consistent across every gate', () => {
     const gates = Object.values(FEATURE_GATES);
 
-    expect(gates).toHaveLength(4);
+    expect(gates).toHaveLength(5);
     for (const gate of gates) {
       expect(gate.noticeVersion).toBe('feature-notice-v3');
       expect(gate.cancelLabel).toBe('取消');

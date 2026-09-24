@@ -9,6 +9,7 @@ defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
   modelValue: { type: String, default: '' },
+  type: { type: String, default: 'text' },
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
   placeholder: { type: String, default: '' },
@@ -51,7 +52,7 @@ defineExpose({ focus });
         :id="id"
         ref="input"
         class="ui-text-field"
-        type="text"
+        :type="type"
         :value="modelValue"
         :placeholder="placeholder"
         :maxlength="maxlength"

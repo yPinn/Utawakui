@@ -160,6 +160,20 @@ contextBridge.exposeInMainWorld('Utawakui', {
   },
   publishOutputSnapshot: (snapshot) =>
     ipcRenderer.invoke('output:publish', snapshot),
+  getObsStatus: () => ipcRenderer.invoke('obs:get-status'),
+  onObsStatus: (callback) => {
+    const listener = (_event, status) => callback(status);
+    ipcRenderer.on('obs:status', listener);
+    return () => ipcRenderer.removeListener('obs:status', listener);
+  },
+  getObsSettings: () => ipcRenderer.invoke('obs:get-settings'),
+  updateObsSettings: (settings) =>
+    ipcRenderer.invoke('obs:update-settings', settings),
+  connectObs: () => ipcRenderer.invoke('obs:connect'),
+  disconnectObs: () => ipcRenderer.invoke('obs:disconnect'),
+  addObsMarker: (label) => ipcRenderer.invoke('obs:add-marker', label),
+  getObsLatestSession: () => ipcRenderer.invoke('obs:get-latest-session'),
+  copyObsText: (value) => ipcRenderer.invoke('obs:copy-text', value),
   copyOutputUrl: (kind) => ipcRenderer.invoke('output:copy-url', kind),
   openPerformerView: (snapshot) =>
     ipcRenderer.invoke('performer-view:open', snapshot),

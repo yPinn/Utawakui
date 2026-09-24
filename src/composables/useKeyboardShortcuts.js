@@ -1,4 +1,5 @@
 import { onUnmounted } from 'vue';
+import { useObsIntegration } from './useObsIntegration.js';
 import { usePlayer } from './usePlayer.js';
 import { isEditableTarget } from '../utils/dom.js';
 
@@ -45,6 +46,7 @@ export function useKeyboardShortcuts(
     setTransposeSemitones,
     setTempoRate,
   } = usePlayer();
+  const { addMarker: addObsMarker } = useObsIntegration();
 
   function adjustVolume(delta) {
     const next = Math.min(1, Math.max(0, state.volume + delta));
@@ -104,6 +106,17 @@ export function useKeyboardShortcuts(
         break;
       case 'g':
         toggleCaptureGuideVocal();
+        break;
+      case 'k':
+        // Placeholder binding — the owner is doing one unified keybinding
+        // review later rather than deciding each shortcut as it lands.
+        // Fire-and-forget from a keydown handler, so a rejection (e.g. the
+        // OBS feature gate isn't enabled) must be swallowed here rather
+        // than left as an unhandled promise rejection. Wrapped in
+        // Promise.resolve() since addObsMarker is always async in
+        // production, but test doubles for useObsIntegration() aren't
+        // guaranteed to return a thenable.
+        Promise.resolve(addObsMarker()).catch(() => {});
         break;
       case 'arrowup':
         // Otherwise scrolls the active view's scroll container

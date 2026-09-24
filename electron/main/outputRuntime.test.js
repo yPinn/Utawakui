@@ -243,6 +243,40 @@ describe('outputRuntime controller', () => {
     ]);
   });
 
+  it('hands every projection update to onProjectionChange, same value as setProjectionState', async () => {
+    const { factory, servers } = createServerFactory();
+    const onProjectionChange = vi.fn();
+    const runtime = createOutputRuntime({
+      bootId: 'boot-projection-change',
+      serverFactory: factory,
+      getConfig: () => ({
+        outputRuntime: { autoStart: true, port: 8700 },
+      }),
+      requireFeatureGate: vi.fn(),
+      onProjectionChange,
+    });
+    const source = { id: 10 };
+
+    await runtime.startConfigured();
+    runtime.connectSource(source);
+    runtime.publish(
+      {
+        contractVersion: 3,
+        bootId: 'boot-projection-change',
+        sourceEpoch: 'epoch-projection-change',
+        kind: 'full',
+        revision: 1,
+        payload: createEmptyOutputSnapshot({ revision: 1 }),
+      },
+      source,
+    );
+
+    expect(onProjectionChange).toHaveBeenCalled();
+    expect(onProjectionChange.mock.calls.at(-1)[0]).toEqual(
+      servers[0].setProjectionState.mock.calls.at(-1)[0],
+    );
+  });
+
   it('marks the projection unavailable when the attached renderer reloads, crashes, or closes', () => {
     const { factory } = createServerFactory();
     const runtime = createOutputRuntime({

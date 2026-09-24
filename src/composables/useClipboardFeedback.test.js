@@ -95,6 +95,20 @@ describe('useClipboardFeedback', () => {
     },
   );
 
+  it('accepts a longer value when maxLength is overridden', async () => {
+    const writeText = vi.fn(async () => {});
+    const feedback = useClipboardFeedback({
+      writeText,
+      scheduleReset: vi.fn(() => 1),
+      cancelReset: vi.fn(),
+      maxLength: 2000,
+    });
+    const longValue = 'x'.repeat(1500);
+
+    await expect(feedback.copy(longValue, '章節清單')).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith(longValue);
+  });
+
   it('cancels the pending reset when disposed', async () => {
     const cancelReset = vi.fn();
     const feedback = useClipboardFeedback({
