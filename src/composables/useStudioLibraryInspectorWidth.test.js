@@ -33,12 +33,12 @@ describe('useStudioLibraryInspectorWidth', () => {
     vi.resetModules();
   });
 
-  it('defaults to 240px (deliberately narrower than the fixed --ui-inspector-width token, tuned for a 1280px window)', async () => {
+  it('defaults to the max of its draggable range (280px)', async () => {
     const { useStudioLibraryInspectorWidth } =
       await import('./useStudioLibraryInspectorWidth.js');
     const { width, isResizing } = useStudioLibraryInspectorWidth();
 
-    expect(width.value).toBe(240);
+    expect(width.value).toBe(280);
     expect(isResizing.value).toBe(false);
   });
 
@@ -46,12 +46,18 @@ describe('useStudioLibraryInspectorWidth', () => {
     const { useStudioLibraryInspectorWidth } =
       await import('./useStudioLibraryInspectorWidth.js');
     const { width, startResize } = useStudioLibraryInspectorWidth();
-    const event = makeEvent({ clientX: 200 });
 
-    startResize(event);
-    moveHandlerFrom(event.currentTarget)({ clientX: 170 }); // dragged left 30px
+    // Width opens at its max, so shrink first to leave headroom to grow into.
+    const shrinkEvent = makeEvent({ clientX: 200 });
+    startResize(shrinkEvent);
+    moveHandlerFrom(shrinkEvent.currentTarget)({ clientX: 240 }); // dragged right 40px
+    expect(width.value).toBe(240);
 
-    expect(width.value).toBe(270);
+    const growEvent = makeEvent({ clientX: 200 });
+    startResize(growEvent);
+    moveHandlerFrom(growEvent.currentTarget)({ clientX: 180 }); // dragged left 20px
+
+    expect(width.value).toBe(260);
   });
 
   it('shrinks when the handle is dragged right', async () => {
@@ -63,7 +69,7 @@ describe('useStudioLibraryInspectorWidth', () => {
     startResize(event);
     moveHandlerFrom(event.currentTarget)({ clientX: 210 }); // dragged right 10px
 
-    expect(width.value).toBe(230);
+    expect(width.value).toBe(270);
   });
 
   it('clamps to the minimum width', async () => {

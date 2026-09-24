@@ -16,9 +16,10 @@ import { useResizeDrag } from './useResizeDrag.js';
 // overrides it locally (see StudioLibraryContextInspector.vue).
 export const INSPECTOR_WIDTH_MIN = 224; // 14rem
 export const INSPECTOR_WIDTH_MAX = 280; // 17.5rem
-const DEFAULT_WIDTH = 240; // 15rem
 
-const width = ref(DEFAULT_WIDTH);
+// Opens at the top of its own draggable range rather than some narrower
+// in-between value — the user drags it down from there if they want less.
+const width = ref(INSPECTOR_WIDTH_MAX);
 
 function clamp(px) {
   return Math.min(INSPECTOR_WIDTH_MAX, Math.max(INSPECTOR_WIDTH_MIN, px));

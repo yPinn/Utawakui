@@ -284,10 +284,12 @@ describe('Studio Library Context Inspector', () => {
 
     expect(textContent(heading)).toBe('深夜練唱清單');
     expect(textContent(root)).toContain('睡前放鬆用的慢歌');
-    // Default panel width (240px, 15rem) sits 28.6% across the 224–280
-    // draggable range, so the cover interpolates the same fraction between
-    // its own 88–120px endpoints.
-    expect(cover.props.style).toMatchObject({ width: '97px', height: '97px' });
+    // Panel opens at the max of its 224–280 draggable range, so the cover
+    // opens at its own range's max (120px) too.
+    expect(cover.props.style).toMatchObject({
+      width: '120px',
+      height: '120px',
+    });
     app.unmount();
   });
 
