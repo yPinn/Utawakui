@@ -430,8 +430,10 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 - App update 由 `electron/main/appUpdateService.js`／`appUpdateHandlers.js` 經
   `electron-updater` 驅動，`shared/appUpdateValues.json` 提供 renderer 快照；
   `src/composables/useAppUpdate.js` 是唯一 renderer owner。目前 `signExecutable`／
-  `verifyUpdateCodeSignature` 為 false，屬 unsigned updater runtime，尚無連續版本
-  update acceptance 驗證。
+  `verifyUpdateCodeSignature` 為 false，屬 unsigned updater runtime。Ordinary CI 使用
+  官方 v0.3.0 installer，對候選版執行 same-root 覆蓋安裝、資料保留、installed startup
+  與 uninstall cleanup gate；production stable-feed 應用內跨版本更新仍須等候選版
+  公開後取得實際證據。
 - `electron/lib/updateManifestClient.js`、`updateManifestVerification.js` 與
   `tools/update-signing/` 提供 app-level signed manifest foundation。Main-private
   descriptor 將 installer basename／size／SHA-512 exact-bind 到

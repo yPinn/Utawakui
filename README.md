@@ -79,7 +79,8 @@ scripts/    驗證、benchmark、release 與 startup 工具
 ## 社群
 
 加入作者的 [Discord](https://discord.gg/yJKddEtpNt) 查看公告、分享使用心得，
-或直接回饋想法給開發者。應用程式內的「設定」→「版本與公告」也提供同一個連結。
+或直接回饋想法給開發者。應用程式內的「設定」→「支援與維護」→「社群 Discord」
+也提供同一個連結。
 
 ## 授權
 
