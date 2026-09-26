@@ -100,7 +100,15 @@ function Get-UtawakuiRegistryEntries {
     Get-ItemProperty -Path $uninstallPaths -ErrorAction SilentlyContinue |
       Where-Object {
         $displayName = $_.PSObject.Properties['DisplayName']
-        $null -ne $displayName -and $displayName.Value -eq 'Utawakui'
+        $displayVersion = $_.PSObject.Properties['DisplayVersion']
+        $isVersionedProductName =
+          $null -ne $displayName -and
+          $null -ne $displayVersion -and
+          $displayName.Value -eq "Utawakui $($displayVersion.Value)"
+        $null -ne $displayName -and (
+          $displayName.Value -eq 'Utawakui' -or
+          $isVersionedProductName
+        )
       }
   )
 }

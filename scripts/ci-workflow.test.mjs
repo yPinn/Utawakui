@@ -180,6 +180,9 @@ describe('ordinary CI workflow', () => {
     expect(installedAcceptance).toContain('Get-CimInstance Win32_Process');
     expect(installedAcceptance).toContain('Get-AuthenticodeSignature');
     expect(installedAcceptance).toContain(
+      '"Utawakui $($displayVersion.Value)"',
+    );
+    expect(installedAcceptance).toContain(
       'does not match package.json version',
     );
     expect(installedAcceptance).toContain('startup-performance.mjs');
