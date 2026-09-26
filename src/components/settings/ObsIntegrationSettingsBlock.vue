@@ -6,9 +6,13 @@ import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import SettingsActionRow from './SettingsActionRow.vue';
+import obsConnectionValues from '../../../shared/obsConnectionValues.json';
+
+const MAX_PASSWORD_LENGTH = obsConnectionValues.maxPasswordLength;
 
 const props = defineProps({
   status: { type: Object, required: true },
+  featureEnabled: { type: Boolean, default: true },
   host: { type: String, default: '127.0.0.1' },
   port: { type: String, default: '4455' },
   password: { type: String, default: '' },
@@ -24,6 +28,7 @@ const emit = defineEmits([
   'update:password',
   'update:skipThresholdSeconds',
   'save',
+  'clearPassword',
   'retryConnect',
   'exportChapters',
 ]);
@@ -62,7 +67,10 @@ const statusLabel = computed(
 const statusTone = computed(() => LIFECYCLE_TONES[lifecycle.value] ?? 'muted');
 const isEnabled = computed(() => props.status?.desired?.enabled === true);
 const canRetry = computed(
-  () => isEnabled.value && RETRYABLE_LIFECYCLES.includes(lifecycle.value),
+  () =>
+    props.featureEnabled &&
+    isEnabled.value &&
+    RETRYABLE_LIFECYCLES.includes(lifecycle.value),
 );
 
 const outputSummary = computed(() => {
@@ -100,6 +108,7 @@ const outputSummary = computed(() => {
           重試連線
         </UiButton>
         <UiCheckbox
+          v-if="featureEnabled"
           id="obs-integration-enabled"
           label="啟用"
           aria-label="啟用 OBS 連線"
@@ -110,7 +119,24 @@ const outputSummary = computed(() => {
       </template>
     </SettingsActionRow>
 
-    <div v-if="isEnabled" class="obs-integration-settings-block__form">
+    <div
+      v-if="(!featureEnabled || !isEnabled) && hasStoredPassword"
+      class="obs-integration-settings-block__stored-credential"
+    >
+      <span>這台電腦已儲存 OBS 密碼</span>
+      <UiButton
+        variant="ghost"
+        :disabled="isSaving"
+        @click="emit('clearPassword')"
+      >
+        移除已儲存密碼
+      </UiButton>
+    </div>
+
+    <div
+      v-if="featureEnabled && isEnabled"
+      class="obs-integration-settings-block__form"
+    >
       <div class="obs-integration-settings-block__connection">
         <UiTextField
           id="obs-integration-host"
@@ -132,16 +158,28 @@ const outputSummary = computed(() => {
         />
       </div>
 
-      <UiTextField
-        id="obs-integration-password"
-        label="密碼"
-        type="password"
-        :model-value="password"
-        :placeholder="hasStoredPassword ? '已設定，留空表示不變更' : ''"
-        autocomplete="off"
-        :disabled="isSaving"
-        @update:model-value="emit('update:password', $event)"
-      />
+      <div class="obs-integration-settings-block__credential">
+        <UiTextField
+          id="obs-integration-password"
+          class="obs-integration-settings-block__password"
+          label="密碼"
+          type="password"
+          :model-value="password"
+          :placeholder="hasStoredPassword ? '已設定，留空表示不變更' : ''"
+          :maxlength="MAX_PASSWORD_LENGTH"
+          autocomplete="off"
+          :disabled="isSaving"
+          @update:model-value="emit('update:password', $event)"
+        />
+        <UiButton
+          v-if="hasStoredPassword"
+          variant="ghost"
+          :disabled="isSaving"
+          @click="emit('clearPassword')"
+        >
+          移除已儲存密碼
+        </UiButton>
+      </div>
 
       <UiTextField
         id="obs-integration-skip-threshold"
@@ -202,6 +240,15 @@ const outputSummary = computed(() => {
   padding-inline-start: var(--ui-space-2);
 }
 
+.obs-integration-settings-block__stored-credential {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-2);
+  padding-inline-start: var(--ui-space-2);
+  color: var(--ui-text-muted);
+}
+
 .obs-integration-settings-block__connection {
   /* Host and port stay tightly paired (--ui-space-2) — they're one address,
      not two unrelated fields. */
@@ -220,6 +267,17 @@ const outputSummary = computed(() => {
      match the host field — equal-width columns for unequal content is the
      "monotonous grid" this replaces. */
   flex: 0 0 6.5rem;
+}
+
+.obs-integration-settings-block__credential {
+  display: flex;
+  align-items: end;
+  gap: var(--ui-space-2);
+}
+
+.obs-integration-settings-block__password {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .obs-integration-settings-block__submit {

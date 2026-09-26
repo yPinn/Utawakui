@@ -1,0 +1,10 @@
+{
+  "defaultHost": "127.0.0.1",
+  "defaultPort": 4455,
+  "minPort": 1,
+  "maxPort": 65535,
+  "maxHostLength": 253,
+  "maxPasswordLength": 1024,
+  "connectTimeoutMs": 10000,
+  "requestTimeoutMs": 5000
+}

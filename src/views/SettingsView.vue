@@ -28,6 +28,7 @@ import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiIconButton from '../components/ui/UiIconButton.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
+import WindowsBackgroundSettingsRow from '../components/settings/WindowsBackgroundSettingsRow.vue';
 import {
   FEATURE_DEPENDENCY_IDS,
   getFeatureDependencies,
@@ -52,6 +53,7 @@ import { useObsSessionExport } from '../composables/useObsSessionExport.js';
 import { useSeparationSettings } from '../composables/useSeparationSettings.js';
 import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
 import { usePlayer } from '../composables/usePlayer.js';
+import { useWindowsIntegrationSettings } from '../composables/useWindowsIntegrationSettings.js';
 
 const {
   state: importState,
@@ -104,6 +106,7 @@ const musicAnalysisSettings = useMusicAnalysisSettings();
 const separationSettings = useSeparationSettings();
 const obsIntegrationSettings = useObsIntegrationSettings();
 const obsSessionExport = useObsSessionExport();
+const windowsIntegrationSettings = useWindowsIntegrationSettings();
 
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
@@ -262,6 +265,7 @@ async function refreshSettingsState() {
   musicAnalysisSettings.initialize();
   separationSettings.refreshPreference();
   obsIntegrationSettings.refreshSettings();
+  windowsIntegrationSettings.refreshPreference();
 }
 
 async function handleRemoveMusicAnalysis() {
@@ -271,6 +275,13 @@ async function handleRemoveMusicAnalysis() {
   if (!confirmed) return;
 
   await musicAnalysisSettings.remove();
+}
+
+async function handleClearObsPassword() {
+  const confirmed =
+    typeof window === 'undefined' ||
+    window.confirm('移除這台電腦上已儲存的 OBS 密碼？');
+  if (confirmed) await obsIntegrationSettings.clearPassword();
 }
 
 async function handleClearDiagnostics() {
@@ -461,6 +472,15 @@ onUnmounted(musicAnalysisSettings.dispose);
           @select-device="isCaptureDeviceModalOpen = true"
         />
 
+        <SettingsBlock title="Windows">
+          <WindowsBackgroundSettingsRow
+            :behavior="windowsIntegrationSettings.windowCloseBehavior.value"
+            :busy="windowsIntegrationSettings.preferenceBusy.value"
+            :error="windowsIntegrationSettings.preferenceError.value"
+            @set-behavior="windowsIntegrationSettings.setWindowCloseBehavior"
+          />
+        </SettingsBlock>
+
         <SettingsBlock title="版本與公告">
           <AppUpdateSettingsRow
             :current-version="
@@ -626,8 +646,13 @@ onUnmounted(musicAnalysisSettings.dispose);
                 @set-gpu-acceleration="separationSettings.setGpuAcceleration"
               />
               <ObsIntegrationSettingsBlock
-                v-if="gate.id === FEATURE_IDS.OBS_INTEGRATION && gate.enabled"
+                v-if="
+                  gate.id === FEATURE_IDS.OBS_INTEGRATION &&
+                  (gate.enabled ||
+                    obsIntegrationSettings.hasStoredPassword.value)
+                "
                 :status="obsIntegrationSettings.status"
+                :feature-enabled="gate.enabled"
                 :host="obsIntegrationSettings.host.value"
                 :port="obsIntegrationSettings.port.value"
                 :password="obsIntegrationSettings.password.value"
@@ -648,6 +673,7 @@ onUnmounted(musicAnalysisSettings.dispose);
                   obsIntegrationSettings.skipThresholdSeconds.value = $event
                 "
                 @save="obsIntegrationSettings.save"
+                @clear-password="handleClearObsPassword"
                 @retry-connect="obsIntegrationSettings.retryConnect"
                 @export-chapters="obsSessionExport.open()"
               />

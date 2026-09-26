@@ -7,6 +7,9 @@ const {
   SIDEBAR_WIDTH_MAX,
   SIDEBAR_WIDTH_MIN,
 } = require('../lib/config');
+const {
+  isWindowCloseBehavior,
+} = require('../../shared/windowCloseBehaviorContract.mjs');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 
 function createValidationError(code, title, message) {
@@ -39,6 +42,7 @@ function registerConfigHandlers({
   recordDiagnostic,
   titlebarColors,
   applyAppUpdateAutoCheck = () => undefined,
+  applyWindowCloseBehavior = () => undefined,
 }) {
   ipcMain.handle('config:get', async () =>
     runConfigOperation(
@@ -352,6 +356,64 @@ function registerConfigHandlers({
       },
     );
   });
+
+  ipcMain.handle('config:get-window-close-behavior', async () =>
+    runConfigOperation(
+      {
+        recordDiagnostic,
+        operation: 'get-window-close-behavior',
+        code: 'WINDOW_CLOSE_BEHAVIOR_READ_FAILED',
+        title: '無法讀取關閉行為',
+        message: '目前無法讀取關閉行為。',
+      },
+      () => getConfig().windowCloseBehavior,
+    ),
+  );
+
+  ipcMain.handle(
+    'config:set-window-close-behavior',
+    async (event, behavior) => {
+      if (!isWindowCloseBehavior(behavior)) {
+        throw createValidationError(
+          'WINDOW_CLOSE_BEHAVIOR_INVALID',
+          '無法套用關閉行為',
+          '指定的關閉行為無效。',
+        );
+      }
+      return runConfigOperation(
+        {
+          recordDiagnostic,
+          operation: 'set-window-close-behavior',
+          code: 'WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED',
+          title: '無法套用關閉行為',
+          message: '目前無法套用關閉行為，請稍後再試。',
+        },
+        () => {
+          const previous = getConfig().windowCloseBehavior;
+          let liveStateApplied = false;
+          try {
+            // Tray creation can fail for native-shell reasons. Apply first so
+            // a failed enable is never persisted as if background mode were
+            // live.
+            applyWindowCloseBehavior(behavior);
+            liveStateApplied = true;
+            updateConfig({ windowCloseBehavior: behavior });
+            return behavior;
+          } catch (error) {
+            if (liveStateApplied) {
+              try {
+                applyWindowCloseBehavior(previous);
+              } catch {
+                // Preserve the persistence failure as the primary diagnostic.
+                // The rollback path only changes this app-owned Tray policy.
+              }
+            }
+            throw error;
+          }
+        },
+      );
+    },
+  );
 
   ipcMain.handle('config:get-announcement-seen-version', async () =>
     runConfigOperation(

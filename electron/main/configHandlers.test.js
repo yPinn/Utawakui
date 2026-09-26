@@ -26,6 +26,7 @@ function register(overrides = {}) {
     autoAnalyzeMusicStructure: true,
     separationGpuAcceleration: true,
     autoCheckAppUpdates: true,
+    windowCloseBehavior: 'ask',
     lastSeenAnnouncementVersion: null,
   };
   const getConfig = vi.fn(() => config);
@@ -51,6 +52,7 @@ function register(overrides = {}) {
   const notifyLibraryUpdated = vi.fn();
   const recordDiagnostic = vi.fn(() => ({ ok: true }));
   const applyAppUpdateAutoCheck = vi.fn();
+  const applyWindowCloseBehavior = vi.fn();
   const titlebarColors = {
     dark: { color: '#101010', symbolColor: '#ffffff' },
     light: { color: '#ffffff', symbolColor: '#101010' },
@@ -66,6 +68,7 @@ function register(overrides = {}) {
     notifyLibraryUpdated,
     recordDiagnostic,
     applyAppUpdateAutoCheck,
+    applyWindowCloseBehavior,
     titlebarColors,
     ...overrides,
   };
@@ -94,6 +97,8 @@ describe('registerConfigHandlers', () => {
       'config:set-separation-gpu-acceleration',
       'config:get-app-update-auto-check',
       'config:set-app-update-auto-check',
+      'config:get-window-close-behavior',
+      'config:set-window-close-behavior',
       'config:get-announcement-seen-version',
       'config:set-announcement-seen-version',
     ]);
@@ -223,6 +228,9 @@ describe('registerConfigHandlers', () => {
     await expect(
       ipcMain.handlers.get('config:get-app-update-auto-check')(),
     ).resolves.toBe(true);
+    await expect(
+      ipcMain.handlers.get('config:get-window-close-behavior')(),
+    ).resolves.toBe('ask');
     await expect(
       ipcMain.handlers.get('config:get-announcement-seen-version')(),
     ).resolves.toBeNull();
@@ -436,6 +444,136 @@ describe('registerConfigHandlers', () => {
       expect(applyAppUpdateAutoCheck).not.toHaveBeenCalled();
     },
   );
+
+  it.each(['ask', 'tray', 'quit'])(
+    'applies and persists window close behavior %s',
+    async (behavior) => {
+      const calls = [];
+      const applyWindowCloseBehavior = vi.fn((value) =>
+        calls.push(`apply:${value}`),
+      );
+      const updateConfig = vi.fn((patch) =>
+        calls.push(`save:${patch.windowCloseBehavior}`),
+      );
+      const getConfig = vi.fn(() => ({ windowCloseBehavior: 'ask' }));
+      const { ipcMain } = register({
+        applyWindowCloseBehavior,
+        getConfig,
+        updateConfig,
+      });
+
+      await expect(
+        ipcMain.handlers.get('config:set-window-close-behavior')(
+          null,
+          behavior,
+        ),
+      ).resolves.toBe(behavior);
+      expect(calls).toEqual([`apply:${behavior}`, `save:${behavior}`]);
+    },
+  );
+
+  it('persists window close behavior without requiring a live apply callback', async () => {
+    const { ipcMain, updateConfig } = register({
+      applyWindowCloseBehavior: undefined,
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:set-window-close-behavior')(null, 'tray'),
+    ).resolves.toBe('tray');
+    expect(updateConfig).toHaveBeenCalledWith({ windowCloseBehavior: 'tray' });
+  });
+
+  it.each([null, 0, true, {}, 'close'])(
+    'rejects invalid window close behavior %j',
+    async (behavior) => {
+      const {
+        ipcMain,
+        updateConfig,
+        applyWindowCloseBehavior,
+        recordDiagnostic,
+      } = register();
+
+      const thrown = await ipcMain.handlers
+        .get('config:set-window-close-behavior')(null, behavior)
+        .catch((error) => error);
+
+      expect(thrown.message).toContain('WINDOW_CLOSE_BEHAVIOR_INVALID');
+      expect(updateConfig).not.toHaveBeenCalled();
+      expect(applyWindowCloseBehavior).not.toHaveBeenCalled();
+      expect(recordDiagnostic).not.toHaveBeenCalled();
+    },
+  );
+
+  it('rolls the live window close behavior back when persistence fails', async () => {
+    const privateError = new Error('failed E:\\private\\config.json');
+    const updateConfig = vi.fn(() => {
+      throw privateError;
+    });
+    const { ipcMain, applyWindowCloseBehavior, recordDiagnostic } = register({
+      updateConfig,
+    });
+
+    const thrown = await ipcMain.handlers
+      .get('config:set-window-close-behavior')(null, 'tray')
+      .catch((error) => error);
+
+    expect(applyWindowCloseBehavior.mock.calls).toEqual([['tray'], ['ask']]);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'config',
+        operation: 'set-window-close-behavior',
+        code: 'WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED',
+        error: privateError,
+      }),
+    );
+    expect(thrown.message).toContain('WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED');
+    expect(thrown.message).not.toContain('private');
+  });
+
+  it('does not persist tray behavior when native tray creation fails', async () => {
+    const privateError = new Error('private shell icon failure');
+    const applyWindowCloseBehavior = vi.fn(() => {
+      throw privateError;
+    });
+    const { ipcMain, updateConfig, recordDiagnostic } = register({
+      applyWindowCloseBehavior,
+    });
+
+    const thrown = await ipcMain.handlers
+      .get('config:set-window-close-behavior')(null, 'tray')
+      .catch((error) => error);
+
+    expect(updateConfig).not.toHaveBeenCalled();
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({ error: privateError }),
+    );
+    expect(thrown.message).not.toContain('private shell');
+  });
+
+  it('keeps the persistence error primary when live rollback also fails', async () => {
+    const privateError = new Error('failed E:\\private\\config.json');
+    const updateConfig = vi.fn(() => {
+      throw privateError;
+    });
+    const applyWindowCloseBehavior = vi.fn((behavior) => {
+      if (behavior === 'ask') throw new Error('private rollback failure');
+    });
+    const { ipcMain, recordDiagnostic } = register({
+      applyWindowCloseBehavior,
+      updateConfig,
+    });
+
+    const thrown = await ipcMain.handlers
+      .get('config:set-window-close-behavior')(null, 'tray')
+      .catch((error) => error);
+
+    expect(applyWindowCloseBehavior.mock.calls).toEqual([['tray'], ['ask']]);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({ error: privateError }),
+    );
+    expect(thrown.message).toContain('WINDOW_CLOSE_BEHAVIOR_UPDATE_FAILED');
+    expect(thrown.message).not.toContain('rollback');
+  });
 
   it('persists the dismissed announcement version', async () => {
     const { ipcMain, updateConfig } = register();

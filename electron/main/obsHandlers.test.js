@@ -25,6 +25,7 @@ function createCredentialStore() {
   return {
     hasPassword: vi.fn(() => false),
     savePassword: vi.fn(() => true),
+    clearPassword: vi.fn(() => true),
   };
 }
 
@@ -61,6 +62,7 @@ describe('obs handlers', () => {
       'obs:get-status',
       'obs:get-settings',
       'obs:update-settings',
+      'obs:clear-password',
       'obs:connect',
       'obs:disconnect',
       'obs:add-marker',
@@ -168,6 +170,71 @@ describe('obs handlers', () => {
     expect(credentialStore.savePassword).not.toHaveBeenCalled();
   });
 
+  it('update-settings fails closed when secure credential storage cannot save the password', async () => {
+    const ipcMain = createIpcMain();
+    const adapter = createAdapter();
+    const credentialStore = createCredentialStore();
+    credentialStore.savePassword.mockReturnValue(false);
+    const updateConfig = vi.fn();
+    registerObsHandlers({
+      ipcMain,
+      adapter,
+      credentialStore,
+      sessionHistoryService: createSessionHistoryService(),
+      requireFeatureGate: vi.fn(),
+      featureId: 'obs-integration',
+      getConfig: () => ({
+        obsIntegration: { enabled: false, host: '127.0.0.1', port: 4455 },
+      }),
+      updateConfig,
+    });
+
+    await expect(
+      ipcMain.handlers.get('obs:update-settings')(null, {
+        enabled: true,
+        host: '127.0.0.1',
+        port: 4455,
+        skipThresholdMs: 10000,
+        password: 'hunter2',
+      }),
+    ).rejects.toThrow('OBS credential storage unavailable');
+    expect(updateConfig).not.toHaveBeenCalled();
+    expect(adapter.configure).not.toHaveBeenCalled();
+  });
+
+  it.each([1234, null, 'x'.repeat(1025)])(
+    'update-settings rejects an invalid password intent: %j',
+    async (password) => {
+      const ipcMain = createIpcMain();
+      const adapter = createAdapter();
+      const credentialStore = createCredentialStore();
+      registerObsHandlers({
+        ipcMain,
+        adapter,
+        credentialStore,
+        sessionHistoryService: createSessionHistoryService(),
+        requireFeatureGate: vi.fn(),
+        featureId: 'obs-integration',
+        getConfig: () => ({
+          obsIntegration: { enabled: false, host: '127.0.0.1', port: 4455 },
+        }),
+        updateConfig: vi.fn(),
+      });
+
+      await expect(
+        ipcMain.handlers.get('obs:update-settings')(null, {
+          enabled: true,
+          host: '127.0.0.1',
+          port: 4455,
+          skipThresholdMs: 10000,
+          password,
+        }),
+      ).rejects.toThrow('invalid OBS password');
+      expect(credentialStore.savePassword).not.toHaveBeenCalled();
+      expect(adapter.configure).not.toHaveBeenCalled();
+    },
+  );
+
   it('update-settings omitting password leaves any stored credential untouched', async () => {
     const ipcMain = createIpcMain();
     const credentialStore = createCredentialStore();
@@ -192,6 +259,50 @@ describe('obs handlers', () => {
     });
 
     expect(credentialStore.savePassword).not.toHaveBeenCalled();
+  });
+
+  it('clear-password removes the credential without echoing it or requiring a connection', async () => {
+    const ipcMain = createIpcMain();
+    const credentialStore = createCredentialStore();
+    registerObsHandlers({
+      ipcMain,
+      adapter: createAdapter(),
+      credentialStore,
+      sessionHistoryService: createSessionHistoryService(),
+      requireFeatureGate: vi.fn(),
+      featureId: 'obs-integration',
+      getConfig: () => ({
+        obsIntegration: { enabled: false, host: '127.0.0.1', port: 4455 },
+      }),
+      updateConfig: vi.fn(),
+    });
+
+    await expect(ipcMain.handlers.get('obs:clear-password')()).resolves.toEqual(
+      { hasPassword: false },
+    );
+    expect(credentialStore.clearPassword).toHaveBeenCalledOnce();
+  });
+
+  it('clear-password reports failure instead of claiming the credential was removed', async () => {
+    const ipcMain = createIpcMain();
+    const credentialStore = createCredentialStore();
+    credentialStore.clearPassword.mockReturnValue(false);
+    registerObsHandlers({
+      ipcMain,
+      adapter: createAdapter(),
+      credentialStore,
+      sessionHistoryService: createSessionHistoryService(),
+      requireFeatureGate: vi.fn(),
+      featureId: 'obs-integration',
+      getConfig: () => ({
+        obsIntegration: { enabled: false, host: '127.0.0.1', port: 4455 },
+      }),
+      updateConfig: vi.fn(),
+    });
+
+    await expect(ipcMain.handlers.get('obs:clear-password')()).rejects.toThrow(
+      'OBS credential removal failed',
+    );
   });
 
   it('connect and disconnect delegate to the adapter, only connect is gated', async () => {

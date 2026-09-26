@@ -29,6 +29,7 @@ const MAIN_INVOKE_CHANNELS = [
   'config:get-auto-music-analysis',
   'config:get-separation-gpu-acceleration',
   'config:get-app-update-auto-check',
+  'config:get-window-close-behavior',
   'config:get-announcement-seen-version',
   'config:open-download-dir',
   'config:reset-download-dir',
@@ -38,6 +39,7 @@ const MAIN_INVOKE_CHANNELS = [
   'config:set-auto-music-analysis',
   'config:set-separation-gpu-acceleration',
   'config:set-app-update-auto-check',
+  'config:set-window-close-behavior',
   'config:set-announcement-seen-version',
   'diagnostics:clear',
   'diagnostics:export',
@@ -96,6 +98,7 @@ const MAIN_INVOKE_CHANNELS = [
   'music-structure:save-reference-annotation',
   'music-structure:start-batch',
   'obs:add-marker',
+  'obs:clear-password',
   'obs:connect',
   'obs:copy-text',
   'obs:disconnect',
@@ -137,6 +140,8 @@ const MAIN_INVOKE_CHANNELS = [
   'spout-output:set-frame-rate-profile',
   'spout-output:start',
   'spout-output:stop',
+  'window-close:present',
+  'window-close:respond',
   'yt:download-audio',
   'yt:fetch-metadata',
   'yt:fetch-playlist',
@@ -144,6 +149,7 @@ const MAIN_INVOKE_CHANNELS = [
 ].sort();
 
 const MAIN_EVENT_CHANNELS = [
+  'app:navigate',
   'app-update:status',
   'app-usage:status',
   'feature-dependencies:progress',
@@ -160,6 +166,8 @@ const MAIN_EVENT_CHANNELS = [
   'separation:progress',
   'spout-output:status',
   'ui-density:changed',
+  'window-close:dismiss',
+  'window-close:request',
 ].sort();
 
 async function loadBridge(modulePath, worldName, args = []) {
@@ -385,6 +393,66 @@ describe('main preload bridge', () => {
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'separation:progress',
       listener,
+    );
+  });
+
+  it('shapes close decisions and forwards only fixed shell navigation events', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+    const requestCallback = vi.fn();
+    const dismissCallback = vi.fn();
+    const navigationCallback = vi.fn();
+    bridge.onWindowCloseRequest(requestCallback);
+    bridge.onWindowCloseDismiss(dismissCallback);
+    bridge.onAppNavigation(navigationCallback);
+
+    const listeners = new Map(
+      electron.ipcRenderer.on.mock.calls.map(([channel, listener]) => [
+        channel,
+        listener,
+      ]),
+    );
+    listeners.get('window-close:request')(
+      { sender: 'private' },
+      { requestId: 'invalid' },
+    );
+    listeners.get('window-close:request')(
+      { sender: 'private' },
+      { requestId: '11111111-1111-4111-8111-111111111111' },
+    );
+    listeners.get('window-close:dismiss')(
+      { sender: 'private' },
+      { requestId: '11111111-1111-4111-8111-111111111111' },
+    );
+    listeners.get('app:navigate')({ sender: 'private' }, 'library');
+    listeners.get('app:navigate')({ sender: 'private' }, 'settings');
+
+    expect(requestCallback).toHaveBeenCalledTimes(1);
+    expect(dismissCallback).toHaveBeenCalledTimes(1);
+    expect(navigationCallback).toHaveBeenCalledWith('settings');
+
+    await bridge.presentWindowCloseRequest(
+      '11111111-1111-4111-8111-111111111111',
+      'ignored',
+    );
+    await bridge.respondWindowCloseRequest(
+      '11111111-1111-4111-8111-111111111111',
+      {
+        action: 'tray',
+        remember: true,
+        privatePath: 'E:\\private',
+      },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'window-close:present',
+      '11111111-1111-4111-8111-111111111111',
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'window-close:respond',
+      {
+        requestId: '11111111-1111-4111-8111-111111111111',
+        action: 'tray',
+        remember: true,
+      },
     );
   });
 

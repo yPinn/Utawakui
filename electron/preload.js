@@ -39,6 +39,19 @@ const startupTraceEnabled = process.argv.includes('--startup-trace-enabled=1');
 const internalWorkbenchesEnabled = process.argv.includes(
   '--internal-workbenches-enabled=1',
 );
+const WINDOW_CLOSE_REQUEST_ID =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+
+function isWindowCloseRequest(value) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    Object.keys(value).length === 1 &&
+    typeof value.requestId === 'string' &&
+    WINDOW_CLOSE_REQUEST_ID.test(value.requestId),
+  );
+}
 
 contextBridge.exposeInMainWorld('Utawakui', {
   startupTraceEnabled,
@@ -118,6 +131,39 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('config:get-app-update-auto-check'),
   setAppUpdateAutoCheck: (enabled) =>
     ipcRenderer.invoke('config:set-app-update-auto-check', enabled),
+  getWindowCloseBehavior: () =>
+    ipcRenderer.invoke('config:get-window-close-behavior'),
+  setWindowCloseBehavior: (behavior) =>
+    ipcRenderer.invoke('config:set-window-close-behavior', behavior),
+  presentWindowCloseRequest: (requestId) =>
+    ipcRenderer.invoke('window-close:present', requestId),
+  respondWindowCloseRequest: (requestId, decision) =>
+    ipcRenderer.invoke('window-close:respond', {
+      requestId,
+      action: decision?.action,
+      remember: decision?.remember,
+    }),
+  onWindowCloseRequest: (callback) => {
+    const listener = (event, payload) => {
+      if (isWindowCloseRequest(payload)) callback(payload);
+    };
+    ipcRenderer.on('window-close:request', listener);
+    return () => ipcRenderer.removeListener('window-close:request', listener);
+  },
+  onWindowCloseDismiss: (callback) => {
+    const listener = (event, payload) => {
+      if (isWindowCloseRequest(payload)) callback(payload);
+    };
+    ipcRenderer.on('window-close:dismiss', listener);
+    return () => ipcRenderer.removeListener('window-close:dismiss', listener);
+  },
+  onAppNavigation: (callback) => {
+    const listener = (event, view) => {
+      if (view === 'settings') callback(view);
+    };
+    ipcRenderer.on('app:navigate', listener);
+    return () => ipcRenderer.removeListener('app:navigate', listener);
+  },
   getAnnouncementSeenVersion: () =>
     ipcRenderer.invoke('config:get-announcement-seen-version'),
   setAnnouncementSeenVersion: (version) =>
@@ -169,6 +215,7 @@ contextBridge.exposeInMainWorld('Utawakui', {
   getObsSettings: () => ipcRenderer.invoke('obs:get-settings'),
   updateObsSettings: (settings) =>
     ipcRenderer.invoke('obs:update-settings', settings),
+  clearObsPassword: () => ipcRenderer.invoke('obs:clear-password'),
   connectObs: () => ipcRenderer.invoke('obs:connect'),
   disconnectObs: () => ipcRenderer.invoke('obs:disconnect'),
   addObsMarker: (label) => ipcRenderer.invoke('obs:add-marker', label),

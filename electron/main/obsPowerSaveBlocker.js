@@ -1,8 +1,8 @@
 'use strict';
 
-// spec.md §7.2 item 3 left "what triggers prevent-sleep" undecided; this
-// answers it with OBS's own streaming/recording.active read instead of a
-// manual toggle or a guess. Pure-ish wrapper around Electron's
+// Prevent sleep only while OBS reports active streaming or recording, rather
+// than relying on a manual toggle or Output-server state. Pure-ish wrapper
+// around Electron's
 // powerSaveBlocker (injected) so the on/off decision is unit testable
 // without a real Electron process. Symmetric start/stop, never a stacked
 // counter — each obsAdapter status update carries the complete current

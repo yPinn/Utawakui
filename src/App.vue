@@ -3,6 +3,7 @@ import {
   computed,
   defineAsyncComponent,
   onMounted,
+  onUnmounted,
   provide,
   shallowRef,
   watch,
@@ -12,6 +13,7 @@ import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
+import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import SetlistView from './views/SetlistView.vue';
@@ -32,6 +34,8 @@ import { useOutputRuntime } from './composables/useOutputRuntime.js';
 import { usePerformerSelfView } from './composables/usePerformerSelfView.js';
 import { useAppUpdate } from './composables/useAppUpdate.js';
 import { useAppAnnouncement } from './composables/useAppAnnouncement.js';
+import { useWindowCloseDecision } from './composables/useWindowCloseDecision.js';
+import { useTrayNavigation } from './composables/useTrayNavigation.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 
@@ -100,6 +104,12 @@ useWindowTitle();
 useMediaSession();
 useTheme();
 useUiDensity();
+const closeDecision = useWindowCloseDecision();
+const trayNavigation = useTrayNavigation();
+onUnmounted(() => {
+  closeDecision.dispose();
+  trayNavigation.dispose();
+});
 // Restores the persisted capture device (see usePlayer.js's capture chain)
 // before any track can play — same "kick off the module-load side effect
 // once" reasoning as useTheme() above.
@@ -248,6 +258,16 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
     />
     <AppFeatureNoticeModal />
     <AppAnnouncementModal />
+    <WindowCloseDecisionModal
+      :open="closeDecision.state.open"
+      :remember="closeDecision.state.remember"
+      :is-responding="closeDecision.state.isResponding"
+      :pending-action="closeDecision.state.pendingAction"
+      :error="closeDecision.state.error"
+      @close="closeDecision.cancel"
+      @decision="closeDecision.respond"
+      @update:remember="closeDecision.setRemember"
+    />
   </div>
 </template>
 

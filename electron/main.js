@@ -10,6 +10,7 @@ const {
   app,
   BrowserWindow,
   Menu,
+  Tray,
   session,
   ipcMain,
   dialog,
@@ -88,6 +89,10 @@ const {
 const { registerAppInfoHandlers } = require('./main/appInfoHandlers');
 const { registerAppUpdateHandlers } = require('./main/appUpdateHandlers');
 const { createAppUpdateService } = require('./main/appUpdateService');
+const { createWindowsTrayController } = require('./main/windowsTrayController');
+const {
+  createWindowCloseDecisionBridge,
+} = require('./main/windowCloseDecisionBridge');
 const { registerAppUsageHandlers } = require('./main/appUsageHandlers');
 const { createAppUsageService } = require('./main/appUsageService');
 const { queryProcessTree } = require('./main/childProcessUsageSampler');
@@ -143,6 +148,7 @@ const {
 const { createProviderRunnerManager } = require('./main/providerRunner');
 const {
   runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
+  signedManifestEnabled: APP_UPDATE_SIGNED_MANIFEST_ENABLED,
   startupCheckDelayMs: APP_UPDATE_STARTUP_DELAY_MS,
   recheckIntervalMs: APP_UPDATE_RECHECK_INTERVAL_MS,
 } = require('../shared/appUpdateValues.json');
@@ -208,6 +214,8 @@ let spoutOutputRuntimeController = null;
 let obsAdapterController = null;
 let heavyJobScheduler = null;
 let appUsageService = null;
+let windowsTrayController = null;
+let windowCloseDecisionBridge = null;
 const startupTraceProbe = startupTrace.enabled
   ? createStartupTraceProbe({ BrowserWindow })
   : null;
@@ -272,6 +280,7 @@ function createConfiguredMainWindow() {
     config.captureDeviceId,
     { startupTraceEnabled: startupTrace.enabled },
   );
+  windowsTrayController?.attachWindow(mainWindow);
   performerWindowManager?.attachMainWindow(mainWindow);
   appUsageService?.start();
   mainWindow.once('closed', () => appUsageService?.stop());
@@ -308,9 +317,11 @@ if (!gotSingleInstanceLock) {
   app.quit();
 } else {
   app.on('second-instance', () => {
+    if (windowsTrayController?.showWindow()) return;
     const mainWindow = windowState.getMainWindow();
     if (mainWindow) {
       if (mainWindow.isMinimized()) mainWindow.restore();
+      mainWindow.show();
       mainWindow.focus();
     }
   });
@@ -327,6 +338,26 @@ if (!gotSingleInstanceLock) {
       getAllowedSender: () => windowState.getMainWindow()?.webContents ?? null,
     });
     configState.loadInitialConfig();
+    windowCloseDecisionBridge = createWindowCloseDecisionBridge({
+      ipcMain,
+      getAllowedWindow: windowState.getMainWindow,
+      createRequestId: () => crypto.randomUUID(),
+    });
+    windowsTrayController = createWindowsTrayController({
+      app,
+      Tray,
+      Menu,
+      dialog,
+      iconPath: windowState.getAppIconPath(),
+      appName: APP_NAME,
+      initialBehavior: configState.getConfig().windowCloseBehavior,
+      requestCloseDecision: (mainWindow) =>
+        windowCloseDecisionBridge.requestDecision(mainWindow),
+      persistWindowCloseBehavior: (behavior) =>
+        configState.updateConfig({ windowCloseBehavior: behavior }),
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+    });
+    app.once('will-quit', () => windowCloseDecisionBridge?.destroy());
     recordMainMilestone('config-ready');
     const { requireFeatureGate } = configState;
     heavyJobScheduler = createHeavyJobScheduler();
@@ -504,7 +535,9 @@ if (!gotSingleInstanceLock) {
       isPackaged: isPackagedRuntime,
       isWindows: process.platform === 'win32',
       runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
+      signedManifestEnabled: APP_UPDATE_SIGNED_MANIFEST_ENABLED,
       autoCheckEnabled: configState.getConfig().autoCheckAppUpdates,
+      beforeInstall: () => windowsTrayController.beginQuit(),
       publishStatus: (status) => {
         const mainWindow = windowState.getMainWindow();
         if (!mainWindow?.isDestroyed()) {
@@ -757,6 +790,8 @@ if (!gotSingleInstanceLock) {
       titlebarColors: windowState.TITLEBAR_COLORS,
       applyAppUpdateAutoCheck: (enabled) =>
         appUpdateService.setAutoCheckEnabled(enabled),
+      applyWindowCloseBehavior: (behavior) =>
+        windowsTrayController.setCloseBehavior(behavior),
     });
 
     registerFeatureGateHandlers({

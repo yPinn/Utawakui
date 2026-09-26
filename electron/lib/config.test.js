@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   ANNOUNCEMENT_VERSION_MAX_LENGTH,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
+  isValidObsHost,
   loadConfig,
   saveConfig,
 } from './config.js';
@@ -34,6 +35,7 @@ describe('config', () => {
       autoAnalyzeMusicStructure: true,
       separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
+      windowCloseBehavior: 'ask',
       lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
       outputRuntime: {
@@ -85,6 +87,7 @@ describe('config', () => {
       autoAnalyzeMusicStructure: true,
       separationGpuAcceleration: true,
       autoCheckAppUpdates: true,
+      windowCloseBehavior: 'ask',
       lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
       outputRuntime: {
@@ -247,6 +250,32 @@ describe('config', () => {
     },
   );
 
+  it.each(['ask', 'tray', 'quit'])(
+    'round-trips the window close behavior %s',
+    (windowCloseBehavior) => {
+      saveConfig(configPath, { windowCloseBehavior });
+      expect(loadConfig(configPath).windowCloseBehavior).toBe(
+        windowCloseBehavior,
+      );
+    },
+  );
+
+  it.each([null, 1, true, {}, 'close'])(
+    'falls back to asking for invalid window close behavior %j',
+    (windowCloseBehavior) => {
+      fs.writeFileSync(configPath, JSON.stringify({ windowCloseBehavior }));
+      expect(loadConfig(configPath).windowCloseBehavior).toBe('ask');
+    },
+  );
+
+  it('migrates the unreleased close-to-tray preference without losing opt-in', () => {
+    fs.writeFileSync(configPath, JSON.stringify({ closeToTray: true }));
+    expect(loadConfig(configPath).windowCloseBehavior).toBe('tray');
+
+    fs.writeFileSync(configPath, JSON.stringify({ closeToTray: false }));
+    expect(loadConfig(configPath).windowCloseBehavior).toBe('ask');
+  });
+
   it('round-trips the last seen announcement version', () => {
     saveConfig(configPath, { lastSeenAnnouncementVersion: '0.2.0' });
     expect(loadConfig(configPath).lastSeenAnnouncementVersion).toBe('0.2.0');
@@ -367,6 +396,33 @@ describe('config', () => {
       port: 4456,
       skipThresholdMs: 5000,
     });
+  });
+
+  it.each([
+    '127.0.0.1',
+    '::1',
+    '192.168.1.5',
+    'localhost',
+    'obs-studio.local',
+    'DESKTOP-ABC123',
+  ])('accepts a bounded IP or DNS OBS host: %s', (host) => {
+    expect(isValidObsHost(host)).toBe(true);
+  });
+
+  it.each([
+    '',
+    ' 127.0.0.1 ',
+    'bad host',
+    'ws://127.0.0.1',
+    '127.0.0.1/path',
+    'user@host',
+    'host:4455',
+    '-bad-host',
+    'bad-host-',
+    'bad..host',
+    '999.999.999.999',
+  ])('rejects an OBS host that is not one bounded host scalar: %j', (host) => {
+    expect(isValidObsHost(host)).toBe(false);
   });
 
   it.each([

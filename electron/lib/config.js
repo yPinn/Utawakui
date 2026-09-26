@@ -16,6 +16,19 @@ const {
   minSkipThresholdMs: OBS_SKIP_THRESHOLD_MIN,
   maxSkipThresholdMs: OBS_SKIP_THRESHOLD_MAX,
 } = require('../../shared/obsSessionValues.json');
+const {
+  defaultHost: DEFAULT_OBS_HOST,
+  defaultPort: DEFAULT_OBS_PORT,
+  minPort: OBS_PORT_MIN,
+  maxPort: OBS_PORT_MAX,
+  maxHostLength: OBS_HOST_MAX_LENGTH,
+} = require('../../shared/obsConnectionValues.json');
+const {
+  isValidObsHost: isValidBoundedObsHost,
+} = require('../../shared/obsConnectionContract.mjs');
+const {
+  isWindowCloseBehavior,
+} = require('../../shared/windowCloseBehaviorContract.mjs');
 
 const CURRENT_VERSION = 2;
 const UI_THEMES = ['light', 'dark'];
@@ -25,11 +38,6 @@ const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
 const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
-// obs-websocket 5's own documented default port.
-const DEFAULT_OBS_PORT = 4455;
-const OBS_PORT_MIN = 1;
-const OBS_PORT_MAX = 65535;
-const OBS_HOST_MAX_LENGTH = 253; // max DNS hostname length
 const DEFAULTS = {
   version: CURRENT_VERSION,
   downloadDir: null,
@@ -56,6 +64,9 @@ const DEFAULTS = {
   // "check" action working; it only stops the app from contacting the release
   // feed on its own.
   autoCheckAppUpdates: true,
+  // Main-owned X-button behavior. Fresh installs ask; a remembered answer or
+  // Settings choice can always run in the tray or quit without prompting.
+  windowCloseBehavior: 'ask',
   // The last shared/releaseAnnouncement.json version the user has dismissed
   // the "what's new" modal for. null on a fresh config means "show it once".
   // Never fetched or written from anywhere but that bundled file's version
@@ -78,7 +89,7 @@ const DEFAULTS = {
   // per ADR 0013). enabled false means the adapter never opens a socket.
   obsIntegration: Object.freeze({
     enabled: false,
-    host: '127.0.0.1',
+    host: DEFAULT_OBS_HOST,
     port: DEFAULT_OBS_PORT,
     // "略過門檻" (spec.md's Phase 4 decision) — a track played shorter than
     // this before the next one starts is dropped from session history as a
@@ -88,6 +99,10 @@ const DEFAULTS = {
     skipThresholdMs: DEFAULT_OBS_SKIP_THRESHOLD_MS,
   }),
 };
+
+function isValidObsHost(value) {
+  return isValidBoundedObsHost(value, OBS_HOST_MAX_LENGTH);
+}
 
 function isValidOutputRuntime(value) {
   return Boolean(
@@ -110,9 +125,7 @@ function isValidObsIntegration(value) {
     typeof value === 'object' &&
     !Array.isArray(value) &&
     typeof value.enabled === 'boolean' &&
-    typeof value.host === 'string' &&
-    value.host.length > 0 &&
-    value.host.length <= OBS_HOST_MAX_LENGTH &&
+    isValidObsHost(value.host) &&
     Number.isSafeInteger(value.port) &&
     value.port >= OBS_PORT_MIN &&
     value.port <= OBS_PORT_MAX &&
@@ -158,6 +171,16 @@ function normalizeOutputRuntime(value) {
     port: value.port,
     displayDelayMs: value.displayDelayMs,
   };
+}
+
+function normalizeWindowCloseBehavior(data) {
+  if (isWindowCloseBehavior(data.windowCloseBehavior)) {
+    return data.windowCloseBehavior;
+  }
+  // Compatibility for development configs written before the three-state
+  // close contract replaced the unreleased closeToTray boolean.
+  if (data.closeToTray === true) return 'tray';
+  return DEFAULTS.windowCloseBehavior;
 }
 
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
@@ -218,6 +241,7 @@ function loadConfig(configPath) {
       typeof data.autoCheckAppUpdates === 'boolean'
         ? data.autoCheckAppUpdates
         : DEFAULTS.autoCheckAppUpdates,
+    windowCloseBehavior: normalizeWindowCloseBehavior(data),
     lastSeenAnnouncementVersion:
       typeof data.lastSeenAnnouncementVersion === 'string' &&
       data.lastSeenAnnouncementVersion.length > 0 &&
@@ -258,6 +282,7 @@ module.exports = {
   OBS_HOST_MAX_LENGTH,
   OBS_SKIP_THRESHOLD_MIN,
   OBS_SKIP_THRESHOLD_MAX,
+  isValidObsHost,
   isValidOutputRuntime,
   normalizeOutputRuntime,
   isValidObsIntegration,

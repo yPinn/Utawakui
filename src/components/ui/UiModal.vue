@@ -1,3 +1,8 @@
+<script>
+// Shared by every UiModal instance in this renderer.
+const openModalStack = [];
+</script>
+
 <script setup>
 // Generic modal shell — first one in this app (see docs/spec.md's inline-
 // editing precedent for why one wasn't built sooner: it was only ever one
@@ -9,6 +14,10 @@ import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
 import UiIconButton from './UiIconButton.vue';
 
+// Multiple app-level workflows can legitimately overlap (for example, the
+// close decision arriving while an announcement is open). Keep keyboard
+// ownership with the last-opened modal so one Escape press never dismisses
+// two independent drafts or decisions.
 const props = defineProps({
   open: { type: Boolean, default: false },
   title: { type: String, required: true },
@@ -22,11 +31,27 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close']);
+const modalIdentity = Symbol('ui-modal');
 
 // Teleport moves the element elsewhere in the DOM, not out of this
 // component's own template-ref tracking, so this still resolves correctly.
 const dialogRef = useTemplateRef('dialog');
 let previouslyFocused = null;
+
+function registerOpenModal() {
+  const existingIndex = openModalStack.indexOf(modalIdentity);
+  if (existingIndex >= 0) openModalStack.splice(existingIndex, 1);
+  openModalStack.push(modalIdentity);
+}
+
+function unregisterOpenModal() {
+  const index = openModalStack.indexOf(modalIdentity);
+  if (index >= 0) openModalStack.splice(index, 1);
+}
+
+function isTopModal() {
+  return openModalStack.at(-1) === modalIdentity;
+}
 
 function close() {
   emit('close');
@@ -61,7 +86,7 @@ function trapTabFocus(event) {
 }
 
 function onWindowKeydown(event) {
-  if (!props.open) return;
+  if (!props.open || !isTopModal()) return;
   if (event.key === 'Escape') {
     close();
   } else if (event.key === 'Tab') {
@@ -82,6 +107,7 @@ watch(
   (isOpen) => {
     if (typeof window === 'undefined') return;
     if (isOpen) {
+      registerOpenModal();
       previouslyFocused = document.activeElement;
       window.requestAnimationFrame(() => {
         const field = dialogRef.value?.querySelector('input, textarea, select');
@@ -89,6 +115,7 @@ watch(
       });
       return;
     }
+    unregisterOpenModal();
     const focusTarget = previouslyFocused;
     previouslyFocused = null;
     nextTick(() => {
@@ -99,11 +126,13 @@ watch(
 
 onMounted(() => {
   if (typeof window === 'undefined') return;
+  if (props.open) registerOpenModal();
   window.addEventListener('keydown', onWindowKeydown);
 });
 
 onUnmounted(() => {
   if (typeof window === 'undefined') return;
+  unregisterOpenModal();
   window.removeEventListener('keydown', onWindowKeydown);
 });
 </script>

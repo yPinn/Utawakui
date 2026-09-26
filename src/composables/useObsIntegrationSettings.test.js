@@ -11,6 +11,16 @@ async function loadSettings() {
   return useObsIntegrationSettings();
 }
 
+function deferred() {
+  let resolve;
+  let reject;
+  const promise = new Promise((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
+
 describe('useObsIntegrationSettings', () => {
   it('loads existing settings and reports whether a password is already stored', async () => {
     vi.stubGlobal('window', {
@@ -37,6 +47,78 @@ describe('useObsIntegrationSettings', () => {
     expect(settings.port.value).toBe('4456');
     expect(settings.hasStoredPassword.value).toBe(true);
     expect(settings.status.observed.lifecycle).toBe('ready');
+  });
+
+  it('does not let a stale settings refresh overwrite a newer successful save', async () => {
+    const pendingRefresh = deferred();
+    const updateObsSettings = vi.fn().mockResolvedValue({
+      desired: { enabled: true, host: 'new-obs.local', port: 4456 },
+      observed: { lifecycle: 'ready', streaming: {}, recording: {} },
+      error: null,
+    });
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        getObsSettings: vi.fn(() => pendingRefresh.promise),
+        getObsStatus: vi.fn(),
+        updateObsSettings,
+      },
+    });
+    const settings = await loadSettings();
+
+    const refresh = settings.refreshSettings();
+    settings.host.value = 'new-obs.local';
+    settings.port.value = '4456';
+    await expect(settings.save({ enabled: true })).resolves.toBe(true);
+
+    pendingRefresh.resolve({
+      enabled: true,
+      host: 'stale-obs.local',
+      port: 4457,
+      skipThresholdMs: 5000,
+      hasPassword: true,
+    });
+    await expect(refresh).resolves.toBe(false);
+
+    expect(settings.host.value).toBe('new-obs.local');
+    expect(settings.port.value).toBe('4456');
+    expect(settings.hasStoredPassword.value).toBe(false);
+    expect(settings.isLoading.value).toBe(false);
+  });
+
+  it('can disable the connection with the last committed values while drafts are invalid', async () => {
+    const updateObsSettings = vi.fn().mockResolvedValue({
+      desired: { enabled: false, host: '192.168.1.5', port: 4456 },
+      observed: { lifecycle: 'disabled', streaming: {}, recording: {} },
+      error: null,
+    });
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        getObsSettings: vi.fn().mockResolvedValue({
+          enabled: true,
+          host: '192.168.1.5',
+          port: 4456,
+          skipThresholdMs: 5000,
+          hasPassword: false,
+        }),
+        getObsStatus: vi.fn(),
+        updateObsSettings,
+      },
+    });
+    const settings = await loadSettings();
+    await settings.refreshSettings();
+    settings.host.value = 'ws://invalid';
+    settings.port.value = 'invalid';
+
+    await expect(settings.save({ enabled: false })).resolves.toBe(true);
+
+    expect(updateObsSettings).toHaveBeenCalledWith({
+      enabled: false,
+      host: '192.168.1.5',
+      port: 4456,
+      skipThresholdMs: 5000,
+    });
   });
 
   it('save() sends the password only when the user typed one, then clears the draft', async () => {
@@ -67,30 +149,32 @@ describe('useObsIntegrationSettings', () => {
     expect(settings.hasStoredPassword.value).toBe(true);
   });
 
-  it('save() falls back to 127.0.0.1/4455 for blank or non-numeric input', async () => {
-    const updateObsSettings = vi.fn().mockResolvedValue({
-      desired: { enabled: true, host: '127.0.0.1', port: 4455 },
-      observed: { lifecycle: 'ready', streaming: {}, recording: {} },
-      error: null,
-    });
-    vi.stubGlobal('window', {
-      Utawakui: { onObsStatus: vi.fn(() => vi.fn()), updateObsSettings },
-    });
-    const settings = await loadSettings();
-    settings.host.value = '   ';
-    settings.port.value = 'not-a-port';
+  it.each([
+    ['host', '   ', '請輸入有效的 OBS 主機名稱或 IP 位址。'],
+    ['host', 'ws://127.0.0.1', '請輸入有效的 OBS 主機名稱或 IP 位址。'],
+    ['port', 'not-a-port', 'OBS 連接埠必須是 1 到 65535 的整數。'],
+    ['port', '4455junk', 'OBS 連接埠必須是 1 到 65535 的整數。'],
+    ['port', '65536', 'OBS 連接埠必須是 1 到 65535 的整數。'],
+    ['skipThresholdSeconds', '301', '略過門檻必須是 0 到 300 的整數秒。'],
+    ['skipThresholdSeconds', '1.5', '略過門檻必須是 0 到 300 的整數秒。'],
+  ])(
+    'save() rejects invalid %s input instead of silently changing it',
+    async (field, value, message) => {
+      const updateObsSettings = vi.fn();
+      vi.stubGlobal('window', {
+        Utawakui: { onObsStatus: vi.fn(() => vi.fn()), updateObsSettings },
+      });
+      const settings = await loadSettings();
+      settings[field].value = value;
 
-    await settings.save({ enabled: true });
+      await expect(settings.save({ enabled: true })).resolves.toBe(false);
 
-    expect(updateObsSettings).toHaveBeenCalledWith({
-      enabled: true,
-      host: '127.0.0.1',
-      port: 4455,
-      skipThresholdMs: 10000,
-    });
-  });
+      expect(updateObsSettings).not.toHaveBeenCalled();
+      expect(settings.error.value).toBe(message);
+    },
+  );
 
-  it('save() loads, clamps, and converts the skip threshold to/from whole seconds', async () => {
+  it('save() loads and converts a valid skip threshold to/from whole seconds', async () => {
     const updateObsSettings = vi.fn().mockResolvedValue({
       desired: { enabled: true, host: '127.0.0.1', port: 4455 },
       observed: { lifecycle: 'ready', streaming: {}, recording: {} },
@@ -114,19 +198,87 @@ describe('useObsIntegrationSettings', () => {
     await settings.refreshSettings();
     expect(settings.skipThresholdSeconds.value).toBe('5');
 
-    settings.skipThresholdSeconds.value = '400'; // above the 300s max
+    settings.skipThresholdSeconds.value = '30';
     await settings.save({ enabled: true });
     expect(updateObsSettings).toHaveBeenCalledWith(
-      expect.objectContaining({ skipThresholdMs: 300_000 }),
+      expect.objectContaining({ skipThresholdMs: 30_000 }),
     );
-    expect(settings.skipThresholdSeconds.value).toBe('300');
+    expect(settings.skipThresholdSeconds.value).toBe('30');
+  });
 
-    settings.skipThresholdSeconds.value = 'not-a-number';
-    await settings.save({ enabled: true });
-    expect(updateObsSettings).toHaveBeenLastCalledWith(
-      expect.objectContaining({ skipThresholdMs: 10_000 }),
+  it('save() rejects an oversized password without crossing IPC', async () => {
+    const updateObsSettings = vi.fn();
+    vi.stubGlobal('window', {
+      Utawakui: { onObsStatus: vi.fn(() => vi.fn()), updateObsSettings },
+    });
+    const settings = await loadSettings();
+    settings.password.value = 'x'.repeat(1025);
+
+    await expect(settings.save({ enabled: true })).resolves.toBe(false);
+
+    expect(updateObsSettings).not.toHaveBeenCalled();
+    expect(settings.error.value).toBe('OBS 密碼不可超過 1024 個字元。');
+  });
+
+  it('keeps save single-flight so a second action cannot race the pending request', async () => {
+    const pending = deferred();
+    const updateObsSettings = vi.fn(() => pending.promise);
+    const connectObs = vi.fn();
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        updateObsSettings,
+        connectObs,
+      },
+    });
+    const settings = await loadSettings();
+
+    const firstSave = settings.save({ enabled: true });
+    await expect(settings.save({ enabled: true })).resolves.toBe(false);
+    await expect(settings.retryConnect()).resolves.toBe(false);
+    expect(updateObsSettings).toHaveBeenCalledOnce();
+    expect(connectObs).not.toHaveBeenCalled();
+    expect(settings.isSaving.value).toBe(true);
+
+    pending.resolve({
+      desired: { enabled: true, host: '127.0.0.1', port: 4455 },
+      observed: { lifecycle: 'ready', streaming: {}, recording: {} },
+      error: null,
+    });
+    await expect(firstSave).resolves.toBe(true);
+    expect(settings.isSaving.value).toBe(false);
+  });
+
+  it('clearPassword updates stored state only after the bridge confirms removal', async () => {
+    const clearObsPassword = vi.fn().mockResolvedValue({ hasPassword: false });
+    vi.stubGlobal('window', {
+      Utawakui: { onObsStatus: vi.fn(() => vi.fn()), clearObsPassword },
+    });
+    const settings = await loadSettings();
+    settings.hasStoredPassword.value = true;
+
+    await expect(settings.clearPassword()).resolves.toBe(true);
+
+    expect(clearObsPassword).toHaveBeenCalledOnce();
+    expect(settings.hasStoredPassword.value).toBe(false);
+  });
+
+  it('clearPassword preserves stored state and shows a bounded failure', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        clearObsPassword: vi.fn().mockRejectedValue(new Error('private path')),
+      },
+    });
+    const settings = await loadSettings();
+    settings.hasStoredPassword.value = true;
+
+    await expect(settings.clearPassword()).resolves.toBe(false);
+
+    expect(settings.hasStoredPassword.value).toBe(true);
+    expect(settings.error.value).toBe(
+      '目前無法移除已儲存的 OBS 密碼，請再試一次。',
     );
-    expect(settings.skipThresholdSeconds.value).toBe('10');
   });
 
   it('surfaces a bounded error and keeps the draft when saving fails', async () => {

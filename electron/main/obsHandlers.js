@@ -1,6 +1,9 @@
 'use strict';
 
 const { isValidObsIntegration } = require('../lib/config');
+const {
+  maxPasswordLength: OBS_PASSWORD_MAX_LENGTH,
+} = require('../../shared/obsConnectionValues.json');
 
 const MAX_MARKER_LABEL_LENGTH = 200;
 // A generated chapter list scales with setlist length, not a short label —
@@ -35,11 +38,30 @@ function registerObsHandlers({
     if (!isValidObsIntegration(connectionSettings)) {
       throw new Error('invalid OBS integration settings');
     }
-    if (typeof password === 'string' && password.length > 0) {
-      credentialStore.savePassword(password);
+    const hasPasswordIntent = Object.hasOwn(value ?? {}, 'password');
+    if (
+      hasPasswordIntent &&
+      (typeof password !== 'string' ||
+        password.length === 0 ||
+        password.length > OBS_PASSWORD_MAX_LENGTH)
+    ) {
+      throw new Error('invalid OBS password');
+    }
+    if (hasPasswordIntent && !credentialStore.savePassword(password)) {
+      throw new Error('OBS credential storage unavailable');
     }
     updateConfig({ obsIntegration: connectionSettings });
     return adapter.configure(connectionSettings);
+  });
+
+  // Credential deletion is a recovery/privacy action like disconnect: it stays
+  // available even when the feature gate is later disabled. The operation is
+  // explicit instead of overloading an empty password in update-settings.
+  ipcMain.handle('obs:clear-password', async () => {
+    if (!credentialStore.clearPassword()) {
+      throw new Error('OBS credential removal failed');
+    }
+    return { hasPassword: false };
   });
 
   ipcMain.handle('obs:connect', async () => {

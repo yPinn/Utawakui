@@ -105,6 +105,14 @@ afterEach(() => {
 });
 
 describe('windowState security boundary', () => {
+  it('exposes the single packaged app icon path for native shell integrations', async () => {
+    const { module } = await loadWindowState();
+
+    expect(module.getAppIconPath()).toMatch(
+      /public[\\/]assets[\\/]icons[\\/]app-icon\.ico$/,
+    );
+  });
+
   it('creates a sandboxed hidden window with bounded startup arguments', async () => {
     const { electron, module, windowDouble } = await loadWindowState();
 

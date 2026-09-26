@@ -1,10 +1,30 @@
 import { computed, reactive, shallowRef } from 'vue';
 import { useObsIntegration } from './useObsIntegration.js';
+import { isValidObsHost } from '../../shared/obsConnectionContract.mjs';
+import OBS_CONNECTION_VALUES from '../../shared/obsConnectionValues.json';
 import {
   defaultSkipThresholdMs as DEFAULT_SKIP_THRESHOLD_MS,
   minSkipThresholdMs as SKIP_THRESHOLD_MIN_MS,
   maxSkipThresholdMs as SKIP_THRESHOLD_MAX_MS,
 } from '../../shared/obsSessionValues.json';
+
+const {
+  defaultHost: DEFAULT_HOST,
+  defaultPort: DEFAULT_PORT,
+  minPort: MIN_PORT,
+  maxPort: MAX_PORT,
+  maxHostLength: MAX_HOST_LENGTH,
+  maxPasswordLength: MAX_PASSWORD_LENGTH,
+} = OBS_CONNECTION_VALUES;
+
+function parseBoundedInteger(value, minimum, maximum) {
+  const normalized = String(value).trim();
+  if (!/^\d+$/.test(normalized)) return null;
+  const parsed = Number(normalized);
+  return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum
+    ? parsed
+    : null;
+}
 
 // Row-specific wrapper around the module-scope useObsIntegration() state,
 // same split as useSeparationSettings.js/useMusicAnalysisSettings.js: the
@@ -14,8 +34,8 @@ import {
 export function useObsIntegrationSettings() {
   const obs = useObsIntegration();
 
-  const host = shallowRef('127.0.0.1');
-  const port = shallowRef('4455');
+  const host = shallowRef(DEFAULT_HOST);
+  const port = shallowRef(String(DEFAULT_PORT));
   const password = shallowRef('');
   const hasStoredPassword = shallowRef(false);
   // Shown to the user in whole seconds, not raw milliseconds — converted at
@@ -29,12 +49,21 @@ export function useObsIntegrationSettings() {
     isSaving: false,
     error: '',
   });
+  let settingsGeneration = 0;
+  let committedSettings = {
+    host: DEFAULT_HOST,
+    port: DEFAULT_PORT,
+    skipThresholdMs: DEFAULT_SKIP_THRESHOLD_MS,
+  };
 
   async function refreshSettings() {
+    if (state.isLoading || state.isSaving) return false;
+    const generation = ++settingsGeneration;
     state.isLoading = true;
     state.error = '';
     try {
       const settings = await obs.getObsSettings();
+      if (settingsGeneration !== generation) return false;
       if (settings) {
         host.value = settings.host ?? host.value;
         port.value = String(settings.port ?? port.value);
@@ -44,46 +73,89 @@ export function useObsIntegrationSettings() {
             Math.round(settings.skipThresholdMs / 1000),
           );
         }
+        committedSettings = {
+          host: host.value,
+          port: Number(port.value),
+          skipThresholdMs: Number.isFinite(settings.skipThresholdMs)
+            ? settings.skipThresholdMs
+            : DEFAULT_SKIP_THRESHOLD_MS,
+        };
       }
       await obs.refreshObsStatus();
+      return settingsGeneration === generation;
     } catch {
-      state.error = '目前無法讀取 OBS 連線設定，請再試一次。';
+      if (settingsGeneration === generation) {
+        state.error = '目前無法讀取 OBS 連線設定，請再試一次。';
+      }
+      return false;
     } finally {
-      state.isLoading = false;
+      if (settingsGeneration === generation) state.isLoading = false;
     }
   }
 
   async function save({ enabled }) {
-    state.isSaving = true;
+    if (state.isSaving) return false;
     state.error = '';
-    try {
-      const trimmedHost = host.value.trim() || '127.0.0.1';
-      const parsedPort = Number.parseInt(port.value, 10);
-      const nextPort = Number.isFinite(parsedPort) ? parsedPort : 4455;
-      const parsedThresholdSeconds = Number.parseInt(
+    const shouldEnable = enabled === true;
+    let connectionSettings;
+    if (shouldEnable) {
+      const trimmedHost = host.value.trim();
+      if (!isValidObsHost(trimmedHost, MAX_HOST_LENGTH)) {
+        state.error = '請輸入有效的 OBS 主機名稱或 IP 位址。';
+        return false;
+      }
+      const nextPort = parseBoundedInteger(port.value, MIN_PORT, MAX_PORT);
+      if (nextPort === null) {
+        state.error = `OBS 連接埠必須是 ${MIN_PORT} 到 ${MAX_PORT} 的整數。`;
+        return false;
+      }
+      const minimumSeconds = SKIP_THRESHOLD_MIN_MS / 1000;
+      const maximumSeconds = SKIP_THRESHOLD_MAX_MS / 1000;
+      const nextThresholdSeconds = parseBoundedInteger(
         skipThresholdSeconds.value,
-        10,
+        minimumSeconds,
+        maximumSeconds,
       );
-      const nextSkipThresholdMs = Number.isFinite(parsedThresholdSeconds)
-        ? Math.min(
-            SKIP_THRESHOLD_MAX_MS,
-            Math.max(SKIP_THRESHOLD_MIN_MS, parsedThresholdSeconds * 1000),
-          )
-        : DEFAULT_SKIP_THRESHOLD_MS;
-      await obs.updateObsSettings({
-        enabled,
+      if (nextThresholdSeconds === null) {
+        state.error = `略過門檻必須是 ${minimumSeconds} 到 ${maximumSeconds} 的整數秒。`;
+        return false;
+      }
+      if (password.value.length > MAX_PASSWORD_LENGTH) {
+        state.error = `OBS 密碼不可超過 ${MAX_PASSWORD_LENGTH} 個字元。`;
+        return false;
+      }
+      connectionSettings = {
+        enabled: true,
         host: trimmedHost,
         port: nextPort,
-        skipThresholdMs: nextSkipThresholdMs,
-        ...(password.value ? { password: password.value } : {}),
+        skipThresholdMs: nextThresholdSeconds * 1000,
+      };
+    } else {
+      connectionSettings = { enabled: false, ...committedSettings };
+    }
+
+    settingsGeneration += 1;
+    state.isLoading = false;
+    state.isSaving = true;
+    try {
+      await obs.updateObsSettings({
+        ...connectionSettings,
+        ...(shouldEnable && password.value ? { password: password.value } : {}),
       });
-      if (password.value) hasStoredPassword.value = true;
-      password.value = '';
-      host.value = trimmedHost;
-      port.value = String(nextPort);
-      skipThresholdSeconds.value = String(
-        Math.round(nextSkipThresholdMs / 1000),
-      );
+      if (shouldEnable) {
+        if (password.value) hasStoredPassword.value = true;
+        password.value = '';
+        host.value = connectionSettings.host;
+        port.value = String(connectionSettings.port);
+        skipThresholdSeconds.value = String(
+          Math.round(connectionSettings.skipThresholdMs / 1000),
+        );
+        committedSettings = {
+          host: connectionSettings.host,
+          port: connectionSettings.port,
+          skipThresholdMs: connectionSettings.skipThresholdMs,
+        };
+      }
       return true;
     } catch {
       state.error = '目前無法儲存 OBS 連線設定，請再試一次。';
@@ -94,6 +166,7 @@ export function useObsIntegrationSettings() {
   }
 
   async function retryConnect() {
+    if (state.isSaving) return false;
     state.isSaving = true;
     state.error = '';
     try {
@@ -102,6 +175,26 @@ export function useObsIntegrationSettings() {
     } catch {
       state.error =
         '目前無法連線至 OBS，請確認 OBS 已開啟並啟用 WebSocket 伺服器。';
+      return false;
+    } finally {
+      state.isSaving = false;
+    }
+  }
+
+  async function clearPassword() {
+    if (state.isSaving) return false;
+    settingsGeneration += 1;
+    state.isLoading = false;
+    state.isSaving = true;
+    state.error = '';
+    try {
+      const result = await obs.clearObsPassword();
+      if (result?.hasPassword !== false) throw new Error('removal unconfirmed');
+      hasStoredPassword.value = false;
+      password.value = '';
+      return true;
+    } catch {
+      state.error = '目前無法移除已儲存的 OBS 密碼，請再試一次。';
       return false;
     } finally {
       state.isSaving = false;
@@ -121,5 +214,6 @@ export function useObsIntegrationSettings() {
     refreshSettings,
     save,
     retryConnect,
+    clearPassword,
   };
 }

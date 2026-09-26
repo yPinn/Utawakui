@@ -105,6 +105,29 @@ describe('SettingsView version and maintenance sections', () => {
     expect(source).toContain('refreshAppUpdateAutoCheck();');
   });
 
+  it('wires the Windows close behavior through its dedicated owner', () => {
+    expect(source).toContain(
+      "import WindowsBackgroundSettingsRow from '../components/settings/WindowsBackgroundSettingsRow.vue';",
+    );
+    expect(source).toContain(
+      "import { useWindowsIntegrationSettings } from '../composables/useWindowsIntegrationSettings.js';",
+    );
+    expect(source).toContain('<SettingsBlock title="Windows">');
+    expect(source).toContain(
+      ':behavior="windowsIntegrationSettings.windowCloseBehavior.value"',
+    );
+    expect(source).toContain(
+      ':busy="windowsIntegrationSettings.preferenceBusy.value"',
+    );
+    expect(source).toContain(
+      ':error="windowsIntegrationSettings.preferenceError.value"',
+    );
+    expect(source).toContain(
+      '@set-behavior="windowsIntegrationSettings.setWindowCloseBehavior"',
+    );
+    expect(source).toContain('windowsIntegrationSettings.refreshPreference();');
+  });
+
   it('describes the destructive confirmation as clearing error records', () => {
     expect(source).toContain("window.confirm('清除這台電腦上的錯誤紀錄？')");
   });
@@ -114,5 +137,16 @@ describe('SettingsView version and maintenance sections', () => {
       "window.confirm('移除 BPM 分析元件？歌曲與既有分析資料都會保留。')",
     );
     expect(source).toContain('@remove="handleRemoveMusicAnalysis"');
+  });
+
+  it('requires confirmation before removing the stored OBS password', () => {
+    expect(source).toContain(
+      "window.confirm('移除這台電腦上已儲存的 OBS 密碼？')",
+    );
+    expect(source).toContain(':feature-enabled="gate.enabled"');
+    expect(source).toMatch(
+      /gate\.enabled \|\|\s+obsIntegrationSettings\.hasStoredPassword\.value/,
+    );
+    expect(source).toContain('@clear-password="handleClearObsPassword"');
   });
 });

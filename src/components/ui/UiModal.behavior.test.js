@@ -108,8 +108,17 @@ describe('UiModal behavior', () => {
     animationFrames = [];
     focusOrigin = { isConnected: true, focus: vi.fn() };
     vi.stubGlobal('window', {
-      addEventListener: vi.fn((name, handler) => listeners.set(name, handler)),
-      removeEventListener: vi.fn((name) => listeners.delete(name)),
+      addEventListener: vi.fn((name, handler) => {
+        listeners.set(name, [...(listeners.get(name) ?? []), handler]);
+      }),
+      removeEventListener: vi.fn((name, handler) => {
+        listeners.set(
+          name,
+          (listeners.get(name) ?? []).filter(
+            (registered) => registered !== handler,
+          ),
+        );
+      }),
       requestAnimationFrame: vi.fn((callback) =>
         animationFrames.push(callback),
       ),
@@ -139,7 +148,7 @@ describe('UiModal behavior', () => {
     open.value = true;
     await nextTick();
     animationFrames.splice(0).forEach((callback) => callback());
-    listeners.get('keydown')({ key: 'Escape' });
+    listeners.get('keydown')[0]({ key: 'Escape' });
     await nextTick();
     await nextTick();
 
@@ -182,10 +191,42 @@ describe('UiModal behavior', () => {
     dialog.querySelectorAll.mockReturnValue([first, last]);
     dialog.contains = vi.fn(() => false);
     const tabEvent = { key: 'Tab', shiftKey: false, preventDefault: vi.fn() };
-    listeners.get('keydown')(tabEvent);
+    listeners.get('keydown')[0](tabEvent);
     expect(tabEvent.preventDefault).toHaveBeenCalledOnce();
     expect(first.focus).toHaveBeenCalledOnce();
 
+    app.unmount();
+  });
+
+  it('lets only the top-most modal handle Escape when dialogs overlap', async () => {
+    const closeFirst = vi.fn();
+    const closeSecond = vi.fn();
+    const Root = {
+      setup: () => () => [
+        h(UiModal, {
+          open: true,
+          title: '底層視窗',
+          onClose: closeFirst,
+        }),
+        h(UiModal, {
+          open: true,
+          title: '頂層視窗',
+          onClose: closeSecond,
+        }),
+      ],
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.mount(root);
+    await nextTick();
+
+    for (const listener of listeners.get('keydown')) {
+      listener({ key: 'Escape' });
+    }
+
+    expect(closeFirst).not.toHaveBeenCalled();
+    expect(closeSecond).toHaveBeenCalledOnce();
     app.unmount();
   });
 });

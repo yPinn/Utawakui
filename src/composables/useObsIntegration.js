@@ -66,6 +66,11 @@ async function updateObsSettings(settings) {
   return status;
 }
 
+async function clearObsPassword() {
+  if (!hasBridge('clearObsPassword')) return null;
+  return window.Utawakui.clearObsPassword();
+}
+
 async function connectObs() {
   if (!hasBridge('connectObs')) return null;
   const status = await window.Utawakui.connectObs();
@@ -104,6 +109,7 @@ export function useObsIntegration() {
     refreshObsStatus,
     getObsSettings,
     updateObsSettings,
+    clearObsPassword,
     connectObs,
     disconnectObs,
     addMarker,

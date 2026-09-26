@@ -122,6 +122,20 @@ describe('useObsIntegration', () => {
     await expect(obs.connectObs()).resolves.toBeNull();
     await expect(obs.disconnectObs()).resolves.toBeNull();
     await expect(obs.getObsSettings()).resolves.toBeNull();
+    await expect(obs.clearObsPassword()).resolves.toBeNull();
+  });
+
+  it('clearObsPassword forwards the bounded credential-removal intent', async () => {
+    const clearObsPassword = vi.fn().mockResolvedValue({ hasPassword: false });
+    vi.stubGlobal('window', {
+      Utawakui: { onObsStatus: vi.fn(() => vi.fn()), clearObsPassword },
+    });
+    const obs = await loadObsIntegration();
+
+    await expect(obs.clearObsPassword()).resolves.toEqual({
+      hasPassword: false,
+    });
+    expect(clearObsPassword).toHaveBeenCalledOnce();
   });
 
   it('addMarker forwards the label to the bridge and leaves connection state untouched', async () => {

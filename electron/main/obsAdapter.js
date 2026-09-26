@@ -7,15 +7,19 @@
 //
 // Lifecycle mirrors spoutOutputRuntime.js's desired/observed status shape
 // and mutual-exclusion pattern, adapted for a socket instead of a child
-// process. Staleness after configure()/disconnect() is guarded by comparing
-// the module-scope `client` against the closed-over `nextClient` a given
-// connect() attempt created — disconnect() always nulls `client` in the same
-// synchronous call that tears everything else down, so that identity check
-// alone is sufficient; a separate epoch counter would be redundant.
+// process. Client identity prevents a retired transport from mutating state;
+// operationEpoch also prevents an older configure()/disconnect() sequence from
+// winning after a newer operation has started.
 
 const DEFAULT_RECONNECT_BASE_MS = 1000;
 const DEFAULT_RECONNECT_MAX_MS = 30_000;
 const RECONNECT_JITTER_RATIO = 0.2;
+const {
+  connectTimeoutMs: DEFAULT_CONNECT_TIMEOUT_MS,
+  defaultHost: DEFAULT_OBS_HOST,
+  defaultPort: DEFAULT_OBS_PORT,
+  requestTimeoutMs: DEFAULT_REQUEST_TIMEOUT_MS,
+} = require('../../shared/obsConnectionValues.json');
 // obs-websocket protocol WebSocketCloseCode.AuthenticationFailed — the one
 // close code worth distinguishing from a generic connect failure, since it
 // means "check the password" rather than "check the host/port/OBS is open".
@@ -23,14 +27,16 @@ const OBS_WEBSOCKET_AUTH_FAILED_CODE = 4009;
 
 const PUBLIC_ERROR_MESSAGES = Object.freeze({
   OBS_CONNECT_FAILED: '無法連線至 OBS。',
+  OBS_CONNECT_TIMEOUT: 'OBS 連線逾時。',
   OBS_AUTH_FAILED: 'OBS WebSocket 密碼錯誤或未設定。',
   OBS_REQUEST_FAILED: '無法讀取 OBS 狀態。',
+  OBS_REQUEST_TIMEOUT: '讀取 OBS 狀態逾時。',
   OBS_ADAPTER_INTERNAL: 'OBS 連線發生未預期錯誤。',
 });
 
 function createInitialStatus() {
   return {
-    desired: { enabled: false, host: '127.0.0.1', port: 4455 },
+    desired: { enabled: false, host: DEFAULT_OBS_HOST, port: DEFAULT_OBS_PORT },
     observed: {
       lifecycle: 'disabled', // disabled|disconnected|connecting|authenticating|ready|degraded|error
       obsWebSocketVersion: null,
@@ -80,12 +86,17 @@ function createObsAdapter({
   onStatusChange = () => {},
   reconnectBaseMs = DEFAULT_RECONNECT_BASE_MS,
   reconnectMaxMs = DEFAULT_RECONNECT_MAX_MS,
+  connectTimeoutMs = DEFAULT_CONNECT_TIMEOUT_MS,
+  requestTimeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
 } = {}) {
   const status = createInitialStatus();
   let client = null;
   let reconnectAttempt = 0;
   let reconnectTimer = null;
   let connectPromise = null;
+  let cancelPendingConnect = null;
+  const pendingRequestCancels = new Set();
+  let operationEpoch = 0;
 
   function getStatus() {
     return cloneStatus(status);
@@ -112,6 +123,94 @@ function createObsAdapter({
     client = null;
   }
 
+  function cancelConnectAttempt() {
+    const cancel = cancelPendingConnect;
+    cancelPendingConnect = null;
+    cancel?.();
+  }
+
+  function cancelRequestAttempts() {
+    const cancels = [...pendingRequestCancels];
+    pendingRequestCancels.clear();
+    for (const cancel of cancels) cancel();
+  }
+
+  async function connectWithDeadline(nextClient, url, password) {
+    let settled = false;
+    let deadlineTimer = null;
+    let rejectCancellation;
+    const cancellation = new Promise((_resolve, reject) => {
+      rejectCancellation = reject;
+    });
+    const cancel = () => {
+      if (settled) return;
+      const error = new Error('OBS connect cancelled');
+      error.code = 'OBS_CONNECT_CANCELLED';
+      rejectCancellation(error);
+    };
+    cancelPendingConnect = cancel;
+
+    const deadline = new Promise((_resolve, reject) => {
+      deadlineTimer = scheduleTimeout(() => {
+        if (settled) return;
+        const error = new Error('OBS connect timeout');
+        error.code = 'OBS_CONNECT_TIMEOUT';
+        reject(error);
+      }, connectTimeoutMs);
+      deadlineTimer?.unref?.();
+    });
+
+    try {
+      return await Promise.race([
+        nextClient.connect(url, password),
+        deadline,
+        cancellation,
+      ]);
+    } finally {
+      settled = true;
+      if (cancelPendingConnect === cancel) cancelPendingConnect = null;
+      if (deadlineTimer) clearTimeoutFn(deadlineTimer);
+    }
+  }
+
+  async function callWithDeadline(activeClient, requestType) {
+    let settled = false;
+    let deadlineTimer = null;
+    let rejectCancellation;
+    const cancellation = new Promise((_resolve, reject) => {
+      rejectCancellation = reject;
+    });
+    const cancel = () => {
+      if (settled) return;
+      const error = new Error('OBS request cancelled');
+      error.code = 'OBS_REQUEST_CANCELLED';
+      rejectCancellation(error);
+    };
+    pendingRequestCancels.add(cancel);
+
+    const deadline = new Promise((_resolve, reject) => {
+      deadlineTimer = scheduleTimeout(() => {
+        if (settled) return;
+        const error = new Error('OBS request timeout');
+        error.code = 'OBS_REQUEST_TIMEOUT';
+        reject(error);
+      }, requestTimeoutMs);
+      deadlineTimer?.unref?.();
+    });
+
+    try {
+      return await Promise.race([
+        activeClient.call(requestType),
+        deadline,
+        cancellation,
+      ]);
+    } finally {
+      settled = true;
+      pendingRequestCancels.delete(cancel);
+      if (deadlineTimer) clearTimeoutFn(deadlineTimer);
+    }
+  }
+
   function scheduleReconnect() {
     if (!status.desired.enabled) return;
     clearReconnectTimer();
@@ -130,6 +229,8 @@ function createObsAdapter({
 
   function handleDisconnected(code) {
     detachClient();
+    cancelConnectAttempt();
+    cancelRequestAttempts();
     if (!status.desired.enabled) {
       status.observed.lifecycle = 'disabled';
       status.error = null;
@@ -152,11 +253,22 @@ function createObsAdapter({
     scheduleReconnect();
   }
 
-  async function refreshOutputSnapshots() {
+  async function refreshOutputSnapshots(activeClient, activeEpoch) {
     const [streamResult, recordResult] = await Promise.allSettled([
-      client.call('GetStreamStatus'),
-      client.call('GetRecordStatus'),
+      callWithDeadline(activeClient, 'GetStreamStatus'),
+      callWithDeadline(activeClient, 'GetRecordStatus'),
     ]);
+    if (client !== activeClient || operationEpoch !== activeEpoch) {
+      return { ok: false, stale: true };
+    }
+    if (
+      (streamResult.status === 'rejected' &&
+        streamResult.reason?.code === 'OBS_REQUEST_TIMEOUT') ||
+      (recordResult.status === 'rejected' &&
+        recordResult.reason?.code === 'OBS_REQUEST_TIMEOUT')
+    ) {
+      return { ok: false, timedOut: true };
+    }
     if (streamResult.status === 'fulfilled') {
       status.observed.streaming = {
         active: streamResult.value.outputActive,
@@ -188,6 +300,8 @@ function createObsAdapter({
       return getStatus();
     }
 
+    const activeEpoch = operationEpoch;
+    const desired = { ...status.desired };
     const attempt = (async () => {
       requireFeatureGate(featureId);
       clearReconnectTimer();
@@ -228,14 +342,20 @@ function createObsAdapter({
       } catch (error) {
         logger.error?.('[obs-adapter] Failed to load stored password', error);
       }
-      if (client !== nextClient) return getStatus();
+      if (client !== nextClient || operationEpoch !== activeEpoch) {
+        return getStatus();
+      }
 
       try {
-        const hello = await nextClient.connect(
-          `ws://${status.desired.host}:${status.desired.port}`,
+        const formattedHost = desired.host.includes(':')
+          ? `[${desired.host}]`
+          : desired.host;
+        const hello = await connectWithDeadline(
+          nextClient,
+          `ws://${formattedHost}:${desired.port}`,
           password || undefined,
         );
-        if (client !== nextClient) {
+        if (client !== nextClient || operationEpoch !== activeEpoch) {
           nextClient.disconnect().catch(() => {});
           return getStatus();
         }
@@ -244,20 +364,43 @@ function createObsAdapter({
           hello.negotiatedRpcVersion ?? null;
         reconnectAttempt = 0;
 
-        const snapshot = await refreshOutputSnapshots();
-        if (client !== nextClient) return getStatus();
+        const snapshot = await refreshOutputSnapshots(nextClient, activeEpoch);
+        if (
+          snapshot.stale ||
+          client !== nextClient ||
+          operationEpoch !== activeEpoch
+        ) {
+          return getStatus();
+        }
+        if (snapshot.timedOut) {
+          const error = new Error('OBS request timeout');
+          error.code = 'OBS_REQUEST_TIMEOUT';
+          throw error;
+        }
         status.observed.lifecycle = snapshot.ok ? 'ready' : 'degraded';
         status.error = snapshot.ok ? null : toPublicError('OBS_REQUEST_FAILED');
         publishStatus();
         return getStatus();
       } catch (error) {
-        if (client !== nextClient) return getStatus();
+        if (client !== nextClient || operationEpoch !== activeEpoch) {
+          return getStatus();
+        }
         logger.error?.('[obs-adapter] Connect failed', error);
         handleDisconnected(
-          error?.code === OBS_WEBSOCKET_AUTH_FAILED_CODE
-            ? 'OBS_AUTH_FAILED'
-            : 'OBS_CONNECT_FAILED',
+          error?.code === 'OBS_CONNECT_TIMEOUT'
+            ? 'OBS_CONNECT_TIMEOUT'
+            : error?.code === 'OBS_REQUEST_TIMEOUT'
+              ? 'OBS_REQUEST_TIMEOUT'
+              : error?.code === OBS_WEBSOCKET_AUTH_FAILED_CODE
+                ? 'OBS_AUTH_FAILED'
+                : 'OBS_CONNECT_FAILED',
         );
+        if (
+          error?.code === 'OBS_CONNECT_TIMEOUT' ||
+          error?.code === 'OBS_REQUEST_TIMEOUT'
+        ) {
+          nextClient.disconnect().catch(() => {});
+        }
         throw new Error('Failed to connect to OBS', { cause: error });
       }
     })();
@@ -273,7 +416,7 @@ function createObsAdapter({
     }
   }
 
-  async function disconnect() {
+  async function disconnectClient() {
     clearReconnectTimer();
     reconnectAttempt = 0;
     // Unblocks connect()'s `if (connectPromise) return connectPromise;`
@@ -283,6 +426,8 @@ function createObsAdapter({
     connectPromise = null;
     const activeClient = client;
     detachClient();
+    cancelConnectAttempt();
+    cancelRequestAttempts();
     status.observed.lifecycle = status.desired.enabled
       ? 'disconnected'
       : 'disabled';
@@ -308,9 +453,16 @@ function createObsAdapter({
     return getStatus();
   }
 
+  async function disconnect() {
+    operationEpoch += 1;
+    return disconnectClient();
+  }
+
   async function configure(desiredConfig) {
     requireFeatureGate(featureId);
-    await disconnect();
+    const configureEpoch = ++operationEpoch;
+    await disconnectClient();
+    if (operationEpoch !== configureEpoch) return getStatus();
     status.desired = {
       enabled: Boolean(desiredConfig?.enabled),
       host:
@@ -362,7 +514,26 @@ function createObsAdapter({
   async function requestStreamSnapshot() {
     requireFeatureGate(featureId);
     requireConnected();
-    const value = await client.call('GetStreamStatus');
+    const activeClient = client;
+    const activeEpoch = operationEpoch;
+    let value;
+    try {
+      value = await callWithDeadline(activeClient, 'GetStreamStatus');
+    } catch (error) {
+      if (client !== activeClient || operationEpoch !== activeEpoch) {
+        throw new Error('OBS connection changed', { cause: error });
+      }
+      if (error?.code === 'OBS_REQUEST_TIMEOUT') {
+        logger.error?.('[obs-adapter] Stream status request timed out', error);
+        handleDisconnected('OBS_REQUEST_TIMEOUT');
+        activeClient.disconnect().catch(() => {});
+        throw new Error('OBS request timed out', { cause: error });
+      }
+      throw error;
+    }
+    if (client !== activeClient || operationEpoch !== activeEpoch) {
+      throw new Error('OBS connection changed');
+    }
     status.observed.streaming = {
       active: value.outputActive,
       timecode: value.outputTimecode,
@@ -375,7 +546,26 @@ function createObsAdapter({
   async function requestRecordSnapshot() {
     requireFeatureGate(featureId);
     requireConnected();
-    const value = await client.call('GetRecordStatus');
+    const activeClient = client;
+    const activeEpoch = operationEpoch;
+    let value;
+    try {
+      value = await callWithDeadline(activeClient, 'GetRecordStatus');
+    } catch (error) {
+      if (client !== activeClient || operationEpoch !== activeEpoch) {
+        throw new Error('OBS connection changed', { cause: error });
+      }
+      if (error?.code === 'OBS_REQUEST_TIMEOUT') {
+        logger.error?.('[obs-adapter] Record status request timed out', error);
+        handleDisconnected('OBS_REQUEST_TIMEOUT');
+        activeClient.disconnect().catch(() => {});
+        throw new Error('OBS request timed out', { cause: error });
+      }
+      throw error;
+    }
+    if (client !== activeClient || operationEpoch !== activeEpoch) {
+      throw new Error('OBS connection changed');
+    }
     status.observed.recording = {
       active: value.outputActive,
       timecode: value.outputTimecode,
@@ -386,9 +576,13 @@ function createObsAdapter({
   }
 
   function destroy() {
+    operationEpoch += 1;
     clearReconnectTimer();
+    connectPromise = null;
     const activeClient = client;
     detachClient();
+    cancelConnectAttempt();
+    cancelRequestAttempts();
     activeClient?.disconnect().catch(() => {});
   }
 

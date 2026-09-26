@@ -66,6 +66,10 @@ function getMainWindow() {
   return mainWindow;
 }
 
+function getAppIconPath() {
+  return iconPath;
+}
+
 function sendBackfillStatus(payload) {
   if (!mainWindow) return;
   mainWindow.webContents.send('library:backfill-status', payload);
@@ -268,6 +272,7 @@ module.exports = {
   APP_NAME,
   isDev,
   TITLEBAR_COLORS,
+  getAppIconPath,
   getAppUserModelId,
   createMainWindow,
   getMainWindow,
