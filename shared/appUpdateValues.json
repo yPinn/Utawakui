@@ -1,5 +1,6 @@
 {
   "runtimeEnabled": true,
+  "signedManifestEnabled": false,
   "startupCheckDelayMs": 15000,
   "recheckIntervalMs": 21600000
 }

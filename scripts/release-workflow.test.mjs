@@ -37,28 +37,42 @@ function readText(filename) {
 }
 
 describe('release workflow', () => {
-  it('keeps the built-in token read-only and public publishing behind the release environment', () => {
+  it('separates package, signing, and publishing credentials by job', () => {
     const workflow = readWorkflow();
     const packageJob = workflow.jobs.package;
+    const signJob = workflow.jobs.sign;
+    const publishJob = workflow.jobs.publish;
 
     expect(workflow.permissions).toEqual({ contents: 'read' });
-    expect(packageJob.environment).toBe('release');
-    expect(packageJob.env).not.toHaveProperty('GH_TOKEN');
+    expect(packageJob).not.toHaveProperty('environment');
+    expect(JSON.stringify(packageJob)).not.toContain('secrets.');
 
-    const credentialStep = packageJob.steps.find(
-      (step) => step.name === 'Require release credentials',
+    expect(signJob.environment).toBe('update-signing');
+    expect(signJob.needs).toEqual(['validate', 'package']);
+    expect(JSON.stringify(signJob)).toContain(
+      'secrets.UPDATE_MANIFEST_PRIVATE_KEY_B64',
     );
-    const accessStep = packageJob.steps.find(
+    expect(JSON.stringify(signJob)).toContain(
+      'secrets.UPDATE_MANIFEST_RETIRING_PRIVATE_KEY_B64',
+    );
+    expect(JSON.stringify(signJob)).not.toContain('PUBLIC_RELEASE_TOKEN');
+
+    expect(publishJob.environment).toBe('release');
+    expect(publishJob.needs).toEqual(['validate', 'package', 'sign']);
+    const accessStep = publishJob.steps.find(
       (step) => step.name === 'Verify public release access',
     );
-    const publishStep = packageJob.steps.find(
+    const publishStep = publishJob.steps.find(
       (step) => step.name === 'Create or update public draft release',
     );
 
-    expect(JSON.stringify(credentialStep)).not.toContain('WINDOWS_CERTIFICATE');
-    expect(JSON.stringify(packageJob.steps)).not.toContain('CSC_');
+    expect(JSON.stringify(workflow.jobs)).not.toContain('WINDOWS_CERTIFICATE');
+    expect(JSON.stringify(workflow.jobs)).not.toContain('CSC_');
     expect(accessStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
     expect(publishStep.env.GH_TOKEN).toContain('secrets.PUBLIC_RELEASE_TOKEN');
+    expect(JSON.stringify(publishJob)).not.toContain(
+      'UPDATE_MANIFEST_PRIVATE_KEY_B64',
+    );
   });
 
   it('enables packaged updates while explicitly disabling publisher verification', () => {
@@ -66,6 +80,7 @@ describe('release workflow', () => {
     const builder = readYaml('electron-builder.yml');
 
     expect(updateValues.runtimeEnabled).toBe(true);
+    expect(updateValues.signedManifestEnabled).toBe(false);
     expect(builder.publish).toMatchObject({
       provider: 'github',
       owner: 'yPinn',
@@ -124,6 +139,14 @@ describe('release workflow', () => {
         true,
       );
     }
+
+    const releaseWorkflowText = fs.readFileSync(
+      path.join(rootDirectory, '.github/workflows/release.yml'),
+      'utf8',
+    );
+    expect(releaseWorkflowText).toMatch(
+      /uses:\s+actions\/download-artifact@[a-f0-9]{40}\s+# v8/u,
+    );
   });
 
   it('avoids ambiguous PowerShell variable interpolation before colons', () => {
@@ -142,6 +165,7 @@ describe('release workflow', () => {
   it('builds without builder publishing and only creates a reviewed public draft', () => {
     const workflow = readWorkflow();
     const packageCommands = JSON.stringify(workflow.jobs.package.steps);
+    const publishCommands = JSON.stringify(workflow.jobs.publish.steps);
     const packageJson = JSON.parse(
       fs.readFileSync(path.join(rootDirectory, 'package.json'), 'utf8'),
     );
@@ -160,14 +184,75 @@ describe('release workflow', () => {
       'scripts/release-contract-cli.mjs artifacts',
     );
     expect(packageVerifier).toContain('SHA256SUMS.txt');
-    expect(packageCommands).toContain('gh release create');
-    expect(packageCommands).toContain('--draft');
-    expect(packageCommands).toContain(
+    expect(packageCommands).not.toContain('gh release');
+    expect(publishCommands).toContain('gh release create');
+    expect(publishCommands).toContain('--draft');
+    expect(publishCommands).toContain(
       'Refusing to modify an already published release',
     );
     expect(packageVerifier).toContain('LICENSE.md');
     expect(packageVerifier).toContain('THIRD_PARTY_NOTICES.md');
     expect(packageCommands).not.toContain('--publish always');
+  });
+
+  it('moves one package artifact through optional signing and mandatory pre-publish verification', () => {
+    const workflow = readWorkflow();
+    const packageSteps = workflow.jobs.package.steps;
+    const signSteps = workflow.jobs.sign.steps;
+    const publishSteps = workflow.jobs.publish.steps;
+    const packageUpload = packageSteps.find(
+      (step) => step.name === 'Upload verified updater bundle',
+    );
+    const signDownload = signSteps.find(
+      (step) => step.name === 'Download verified updater bundle',
+    );
+    const manifestUpload = signSteps.find(
+      (step) => step.name === 'Upload signed update manifest',
+    );
+    const publishDownload = publishSteps.find(
+      (step) => step.name === 'Download verified updater bundle',
+    );
+    const verifyStep = publishSteps.find(
+      (step) => step.name === 'Verify signed update manifest',
+    );
+    const bundleVerifyStep = publishSteps.find(
+      (step) => step.name === 'Verify downloaded updater bundle',
+    );
+    const signVerifyStep = signSteps.find(
+      (step) => step.name === 'Verify signed update manifest',
+    );
+
+    expect(packageUpload.with.name).toContain('needs.validate.outputs.version');
+    expect(signDownload.with.name).toBe(packageUpload.with.name);
+    expect(publishDownload.with.name).toBe(packageUpload.with.name);
+    expect(manifestUpload.with.path).toContain('update-manifest.json');
+    expect(JSON.stringify(verifyStep)).toContain(
+      'tools/update-signing/verify-manifest.mjs',
+    );
+    expect(JSON.stringify(verifyStep)).toContain('ACTIVE_KEY_ID');
+    expect(JSON.stringify(verifyStep)).toContain('RETIRING_KEY_ID');
+    expect(JSON.stringify(signVerifyStep)).toContain('--required-key-id');
+    expect(JSON.stringify(signVerifyStep)).toContain('RETIRING_KEY_ID');
+    expect(bundleVerifyStep.run).toContain(
+      'release-contract-cli.mjs artifacts',
+    );
+    expect(bundleVerifyStep.run).toContain('sha256sum --check');
+    expect(JSON.stringify(publishSteps)).toContain('npm ci --ignore-scripts');
+    expect(workflow.jobs.publish.env.ACTIVE_KEY_ID).toContain('active_key_id');
+    expect(workflow.jobs.publish.env.RETIRING_KEY_ID).toContain(
+      'retiring_key_id',
+    );
+    expect(workflow.jobs.validate.outputs.retiring_key_id).toContain(
+      'retiring_key_id',
+    );
+
+    const requireCredential = signSteps.find(
+      (step) => step.name === 'Require signing credentials',
+    );
+    expect(JSON.stringify(requireCredential)).toContain('RETIRING_KEY_ID');
+    expect(JSON.stringify(requireCredential)).toContain(
+      'UPDATE_MANIFEST_RETIRING_PRIVATE_KEY_B64',
+    );
   });
 
   it('keeps public releases manual and routes tags to unsigned review builds', () => {
@@ -232,14 +317,14 @@ describe('release workflow', () => {
     }
 
     const releaseWorkflow = readWorkflow();
-    const packageSteps = releaseWorkflow.jobs.package.steps;
-    const publishIndex = packageSteps.findIndex(
+    const publishSteps = releaseWorkflow.jobs.publish.steps;
+    const publishIndex = publishSteps.findIndex(
       (step) => step.name === 'Create or update public draft release',
     );
-    const recoveryIndex = packageSteps.findIndex(
+    const recoveryIndex = publishSteps.findIndex(
       (step) => step.name === 'Upload failed release recovery bundle',
     );
-    const recoveryStep = packageSteps[recoveryIndex];
+    const recoveryStep = publishSteps[recoveryIndex];
 
     expect(recoveryIndex).toBeGreaterThan(publishIndex);
     expect(recoveryStep.if).toContain('failure()');

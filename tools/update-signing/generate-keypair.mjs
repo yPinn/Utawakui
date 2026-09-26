@@ -5,14 +5,14 @@
 // update-manifest.json (see docs/adr/0018-signed-update-manifest.md).
 // The private key never leaves this machine's disk — it is written under
 // tools/update-signing/.local/, which is gitignored. The public key is
-// printed so it can be pasted into shared/updateSigningPublicKey.json.
+// printed so it can be pasted into shared/updateSigningKeys.json.
 //
 // This script only ever produces a `dev` keyId. Generating a `production`
 // key and deciding where its private key is custodied (a separate GitHub
 // Actions secret, an offline machine, etc.) is a deliberately deferred
-// operational decision — see the ADR's "尚待決定" section.
+// operational decision — see the ADR's rotation and recovery section.
 
-import { generateKeyPairSync } from 'node:crypto';
+import { createHash, generateKeyPairSync } from 'node:crypto';
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
@@ -42,8 +42,13 @@ writeFileSync(
 const publicKeyHex = publicKey
   .export({ type: 'spki', format: 'der' })
   .toString('hex');
+const keyId = createHash('sha256')
+  .update(Buffer.from(publicKeyHex, 'hex'))
+  .digest('hex');
 
 console.log(`Private key written to: ${privateKeyPath}`);
 console.log('');
-console.log('Public key (paste into shared/updateSigningPublicKey.json):');
+console.log('Public key (paste into shared/updateSigningKeys.json):');
 console.log(publicKeyHex);
+console.log('Derived SHA-256 keyId:');
+console.log(keyId);

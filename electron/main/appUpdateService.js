@@ -1,10 +1,12 @@
 'use strict';
 
 const { createUpdateManifestClient } = require('../lib/updateManifestClient');
-const { verifyManifest } = require('../lib/updateManifestVerification');
 const {
-  publicKeyHex: DEFAULT_PUBLIC_KEY_HEX,
-} = require('../../shared/updateSigningPublicKey.json');
+  createUpdateDescriptor,
+  matchManifestToUpdateDescriptor,
+  verifyManifest,
+} = require('../lib/updateManifestVerification');
+const DEFAULT_TRUSTED_KEY_REGISTRY = require('../../shared/updateSigningKeys.json');
 
 const MANIFEST_ERROR_MESSAGE = '更新驗證失敗，請稍後再試。';
 
@@ -113,6 +115,7 @@ function createAppUpdateService({
   isPackaged,
   isWindows = process.platform === 'win32',
   runtimeEnabled = false,
+  signedManifestEnabled = false,
   autoCheckEnabled = true,
   updaterFactory = () => require('electron-updater').autoUpdater,
   publishStatus = () => undefined,
@@ -121,12 +124,14 @@ function createAppUpdateService({
   logger = console,
   // Independent integrity layer — see docs/adr/0018-signed-update-manifest.md.
   // Injectable so tests never perform a real network request; production
-  // never passes these, so real runs always fetch+verify against the
-  // committed dev/production public key.
+  // never passes these, so enabled real runs fetch+verify against the
+  // committed production key registry. The gate remains explicitly off
+  // while that registry contains development keys only.
   manifestClient = createUpdateManifestClient(),
   verifyManifestFn = verifyManifest,
-  publicKeyHex = DEFAULT_PUBLIC_KEY_HEX,
+  trustedKeyRegistry = DEFAULT_TRUSTED_KEY_REGISTRY,
   checkTimeoutMs = DEFAULT_CHECK_TIMEOUT_MS,
+  beforeInstall = () => undefined,
 } = {}) {
   const enabled = Boolean(isPackaged && isWindows && runtimeEnabled);
   let autoChecksAllowed = Boolean(autoCheckEnabled);
@@ -134,6 +139,7 @@ function createAppUpdateService({
   let initialized = false;
   let startupCheckScheduled = false;
   let recheckScheduled = false;
+  let availableUpdateDescriptor = null;
   let status = {
     enabled,
     phase: enabled ? 'idle' : 'disabled',
@@ -179,16 +185,27 @@ function createAppUpdateService({
   // fetch/parse/signature/version problem blocks the download rather than
   // silently falling back to electron-updater's weaker guarantee alone.
   async function verifyAvailableUpdateManifest(version) {
+    if (!availableUpdateDescriptor?.ok) {
+      return {
+        ok: false,
+        reason:
+          availableUpdateDescriptor?.reason || 'missing-update-descriptor',
+      };
+    }
     const response = await manifestClient.fetchManifest(version);
     if (response.status !== 'ok') {
       return { ok: false, reason: response.reason || 'fetch-failed' };
     }
     const manifest = response.value;
-    if (boundedString(manifest?.version) !== version) {
-      return { ok: false, reason: 'version-mismatch' };
-    }
-    const verification = verifyManifestFn(manifest, publicKeyHex);
+    const verification = verifyManifestFn(manifest, trustedKeyRegistry, {
+      requiredEnvironment: 'production',
+    });
     if (!verification.ok) return verification;
+    const binding = matchManifestToUpdateDescriptor(
+      manifest,
+      availableUpdateDescriptor.value,
+    );
+    if (!binding.ok) return binding;
     return { ok: true, manifest };
   }
 
@@ -206,6 +223,7 @@ function createAppUpdateService({
         setStatus({ phase: 'checking', progress: null, error: null });
       });
       updater.on('update-available', (info) => {
+        availableUpdateDescriptor = createUpdateDescriptor(info);
         setStatus({
           phase: 'available',
           availableVersion: boundedString(info?.version),
@@ -217,6 +235,7 @@ function createAppUpdateService({
         });
       });
       updater.on('update-not-available', () => {
+        availableUpdateDescriptor = null;
         setStatus({
           phase: 'not-available',
           availableVersion: null,
@@ -271,6 +290,7 @@ function createAppUpdateService({
       downloadEtaSeconds: null,
       error: null,
     });
+    availableUpdateDescriptor = null;
     try {
       await raceWithTimeout(
         updater.checkForUpdates(),
@@ -299,13 +319,15 @@ function createAppUpdateService({
       error: null,
     });
 
-    const verification = await verifyAvailableUpdateManifest(targetVersion);
-    if (!verification.ok) {
-      return fail(
-        'Manifest verification',
-        new Error(`update manifest check failed: ${verification.reason}`),
-        MANIFEST_ERROR_MESSAGE,
-      );
+    if (signedManifestEnabled) {
+      const verification = await verifyAvailableUpdateManifest(targetVersion);
+      if (!verification.ok) {
+        return fail(
+          'Manifest verification',
+          new Error(`update manifest check failed: ${verification.reason}`),
+          MANIFEST_ERROR_MESSAGE,
+        );
+      }
     }
 
     try {
@@ -319,6 +341,9 @@ function createAppUpdateService({
   function install() {
     if (!enabled || status.phase !== 'downloaded') return getStatus();
     try {
+      // electron-updater may close BrowserWindows before app.before-quit.
+      // Flip the window-close prompt/tray quit guard synchronously first.
+      beforeInstall();
       updater.quitAndInstall(false, true);
     } catch (error) {
       return fail('Install', error);

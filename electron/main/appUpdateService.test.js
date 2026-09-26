@@ -4,6 +4,27 @@ import appUpdateServiceModule from './appUpdateService.js';
 
 const { createAppUpdateService } = appUpdateServiceModule;
 
+const INSTALLER_SHA512_BYTES = Buffer.alloc(64, 0xab);
+const INSTALLER_SHA512_BASE64 = INSTALLER_SHA512_BYTES.toString('base64');
+const INSTALLER_SHA512_HEX = INSTALLER_SHA512_BYTES.toString('hex');
+
+function updateInfo(version = '0.2.0', overrides = {}) {
+  const filename = `Utawakui-Setup-${version}.exe`;
+  return {
+    version,
+    path: filename,
+    sha512: INSTALLER_SHA512_BASE64,
+    files: [
+      {
+        url: filename,
+        size: 12345,
+        sha512: INSTALLER_SHA512_BASE64,
+      },
+    ],
+    ...overrides,
+  };
+}
+
 function createUpdater() {
   const updater = new EventEmitter();
   updater.checkForUpdates = vi.fn().mockResolvedValue(undefined);
@@ -21,7 +42,25 @@ function passingManifestClient() {
   return {
     fetchManifest: vi.fn(async (version) => ({
       status: 'ok',
-      value: { version, signature: 'stub' },
+      value: {
+        schemaVersion: 2,
+        version,
+        releaseDate: '2026-10-01T00:00:00.000Z',
+        files: [
+          {
+            name: `Utawakui-Setup-${version}.exe`,
+            size: 12345,
+            sha512: INSTALLER_SHA512_HEX,
+          },
+        ],
+        signatures: [
+          {
+            keyId: 'ab'.repeat(32),
+            algorithm: 'ed25519',
+            signature: 'stub',
+          },
+        ],
+      },
     })),
   };
 }
@@ -87,6 +126,11 @@ describe('app update service', () => {
   it('configures stable explicit update behavior and projects bounded events', async () => {
     const updater = createUpdater();
     const published = [];
+    const installCalls = [];
+    const beforeInstall = vi.fn(() => installCalls.push('begin-quit'));
+    updater.quitAndInstall.mockImplementation(() =>
+      installCalls.push('quit-and-install'),
+    );
     const service = createAppUpdateService({
       currentVersion: '0.1.0',
       isPackaged: true,
@@ -94,6 +138,7 @@ describe('app update service', () => {
       runtimeEnabled: true,
       updaterFactory: () => updater,
       publishStatus: (status) => published.push(status),
+      beforeInstall,
     });
 
     service.initialize();
@@ -144,7 +189,9 @@ describe('app update service', () => {
     });
 
     expect(service.install()).toMatchObject({ phase: 'downloaded' });
+    expect(beforeInstall).toHaveBeenCalledOnce();
     expect(updater.quitAndInstall).toHaveBeenCalledWith(false, true);
+    expect(installCalls).toEqual(['begin-quit', 'quit-and-install']);
   });
 
   it('checks once on the delayed startup schedule and keeps manual actions phase-bound', async () => {
@@ -177,7 +224,7 @@ describe('app update service', () => {
     await Promise.resolve();
     expect(updater.checkForUpdates).toHaveBeenCalledOnce();
 
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
     await service.download();
     expect(updater.downloadUpdate).toHaveBeenCalledOnce();
   });
@@ -259,7 +306,7 @@ describe('app update service', () => {
     // electron-updater's real result arrives through its own event, not the
     // promise this timeout raced against — that event must still land even
     // though check() already gave up and reported an error.
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
     resolveCheck(undefined);
     await Promise.resolve();
 
@@ -310,7 +357,7 @@ describe('app update service', () => {
     updater.emit('update-not-available');
     expect(service.getStatus().phase).toBe('not-available');
 
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
     updater.downloadUpdate.mockRejectedValueOnce(
       new Error('download failed at C:\\private\\update.exe'),
     );
@@ -364,7 +411,7 @@ describe('app update service', () => {
     await Promise.resolve();
     expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
 
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
     tick();
     await Promise.resolve();
     expect(updater.checkForUpdates).toHaveBeenCalledTimes(1);
@@ -392,11 +439,12 @@ describe('app update service', () => {
       isPackaged: true,
       isWindows: true,
       runtimeEnabled: true,
+      signedManifestEnabled: true,
       updaterFactory: () => updater,
       manifestClient,
     });
     service.initialize();
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
@@ -423,12 +471,13 @@ describe('app update service', () => {
       isPackaged: true,
       isWindows: true,
       runtimeEnabled: true,
+      signedManifestEnabled: true,
       updaterFactory: () => updater,
       manifestClient,
       verifyManifestFn,
     });
     service.initialize();
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
@@ -452,12 +501,13 @@ describe('app update service', () => {
       isPackaged: true,
       isWindows: true,
       runtimeEnabled: true,
+      signedManifestEnabled: true,
       updaterFactory: () => updater,
       manifestClient,
       verifyManifestFn: passingVerifyManifestFn,
     });
     service.initialize();
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
@@ -473,16 +523,84 @@ describe('app update service', () => {
       isPackaged: true,
       isWindows: true,
       runtimeEnabled: true,
+      signedManifestEnabled: true,
       updaterFactory: () => updater,
       manifestClient: passingManifestClient(),
       verifyManifestFn: passingVerifyManifestFn,
     });
     service.initialize();
-    updater.emit('update-available', { version: '0.2.0' });
+    updater.emit('update-available', updateInfo());
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'downloading',
     });
+    expect(updater.downloadUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('blocks a validly signed manifest that does not match updater metadata', async () => {
+    const updater = createUpdater();
+    const manifestClient = passingManifestClient();
+    manifestClient.fetchManifest.mockResolvedValueOnce({
+      status: 'ok',
+      value: {
+        schemaVersion: 2,
+        version: '0.2.0',
+        releaseDate: '2026-10-01T00:00:00.000Z',
+        files: [
+          {
+            name: 'Utawakui-Setup-0.2.0.exe',
+            size: 12345,
+            sha512: 'cd'.repeat(64),
+          },
+        ],
+        signatures: [
+          {
+            keyId: 'ab'.repeat(32),
+            algorithm: 'ed25519',
+            signature: 'valid-but-for-a-different-installer',
+          },
+        ],
+      },
+    });
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      signedManifestEnabled: true,
+      updaterFactory: () => updater,
+      manifestClient,
+      verifyManifestFn: passingVerifyManifestFn,
+    });
+    service.initialize();
+    updater.emit('update-available', updateInfo());
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'error',
+      error: '更新驗證失敗，請稍後再試。',
+    });
+    expect(updater.downloadUpdate).not.toHaveBeenCalled();
+  });
+
+  it('keeps the independent manifest gate off until production keys are provisioned', async () => {
+    const updater = createUpdater();
+    const manifestClient = { fetchManifest: vi.fn() };
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      signedManifestEnabled: false,
+      updaterFactory: () => updater,
+      manifestClient,
+    });
+    service.initialize();
+    updater.emit('update-available', updateInfo());
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'downloading',
+    });
+    expect(manifestClient.fetchManifest).not.toHaveBeenCalled();
     expect(updater.downloadUpdate).toHaveBeenCalledOnce();
   });
 
