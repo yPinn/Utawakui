@@ -37,6 +37,15 @@ describe('CI changed-path policy', () => {
       },
     },
     {
+      name: 'installed acceptance changes require the Windows package',
+      paths: ['scripts/windows-installed-acceptance.ps1'],
+      expected: {
+        dependencyAudit: false,
+        quality: true,
+        windowsPackage: true,
+      },
+    },
+    {
       name: 'dependency changes fail fast through audit and packaging',
       paths: ['package-lock.json'],
       expected: {

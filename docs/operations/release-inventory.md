@@ -55,12 +55,17 @@ Windows packaging is configured in `electron-builder.yml`.
   for manual runs and package-sensitive changes.
   `scripts/verify-unsigned-windows-package.ps1` is the shared verifier for PR,
   tag-review, and public-draft packaging; it checks `NotSigned` status, packaged
-  version/notices, blockmap, and `latest.yml`. PR packages are ephemeral and are
-  neither uploaded nor published; tag/release workflows additionally use the
-  verifier to write `SHA256SUMS.txt`. Public-test bundles expire after 7 days. The
-  release workflow uses a 3-day artifact to pass the package into isolated sign／
-  publish jobs; failed recovery bundles also expire after 3 days. The sign job is
-  skipped while the production signed-manifest gate is disabled.
+  version/notices, blockmap, and `latest.yml`.
+  `scripts/windows-installed-acceptance.ps1` then uses the pinned official v0.3.0
+  installer on the ephemeral runner to prove a same-root candidate upgrade,
+  registry／shortcut identity, retained isolated sentinels, cold／warm installed
+  startup, and uninstall cleanup. PR packages remain ephemeral and are neither
+  uploaded nor published; only bounded installed-acceptance evidence is retained
+  for 7 days. Tag/release workflows additionally use the verifier to write
+  `SHA256SUMS.txt`. Public-test bundles expire after 7 days. The release workflow
+  uses a 3-day artifact to pass the package into isolated sign／publish jobs;
+  failed recovery bundles also expire after 3 days. The sign job is skipped while
+  the production signed-manifest gate is disabled.
 
 The `electron.exe` filename is intentional. See
 `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`.
@@ -339,6 +344,10 @@ After changing gates or dependencies:
 - Run `scripts/verify-unsigned-windows-package.ps1 -Version <version>` after an
   unsigned full build. Add `-WriteChecksum` only for a tag-review or public-draft
   bundle that will retain `SHA256SUMS.txt` alongside the installer.
+- Run `npm run release:verify-installed -- -ToVersion <version> -PlanOnly` for a
+  local read-only guard preview. The real installed upgrade is expected to run on
+  the ephemeral ordinary CI Windows job; local mutation needs explicit opt-in and
+  is refused whenever existing Utawakui state is detected.
 - Before publishing the first updater-enabled baseline, verify `latest.yml`
   SHA-512 rejection, blockmap/full-download fallback, explicit restart, and
   app-data/library preservation across two installed versions. Use the

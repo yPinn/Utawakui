@@ -180,9 +180,9 @@ describe('release workflow', () => {
     );
     expect(packageCommands).toContain('-WriteChecksum');
     expect(packageVerifier).toContain('NotSigned');
-    expect(packageVerifier).toContain(
-      'scripts/release-contract-cli.mjs artifacts',
-    );
+    expect(packageVerifier).toContain('scripts/release-contract-cli.mjs');
+    expect(packageVerifier).toContain('artifacts');
+    expect(packageVerifier).toContain('--directory $releaseDirectory');
     expect(packageVerifier).toContain('SHA256SUMS.txt');
     expect(packageCommands).not.toContain('gh release');
     expect(publishCommands).toContain('gh release create');

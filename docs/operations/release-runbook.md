@@ -44,9 +44,23 @@ builds the full NSIS/update bundle with `npm run dist` and calls
 `scripts/verify-unsigned-windows-package.ps1`, which fails unless the installer
 and packaged executable are both `NotSigned`, the packaged version matches,
 required legal notices are in ASAR, and the installer/blockmap/`latest.yml`
-contract is valid. The job has a 20-minute timeout and does not read secrets,
-upload its package, contact the public release repository, or retain a
-downloadable PR installer.
+contract is valid. It then calls `scripts/windows-installed-acceptance.ps1` on
+the ephemeral runner. That script verifies the pinned public v0.3.0 installer
+checksum, installs it into an isolated temporary root, upgrades the same install
+to the current candidate, checks version／registry／shortcut／data-retention
+evidence, runs cold and warm installed startup traces, and uninstalls it. The job
+has a 30-minute timeout, does not read secrets or publish anything, and retains
+only bounded JSON／startup evidence for 7 days; it never uploads a downloadable
+PR installer.
+
+The installed-acceptance script runs by default only when both `CI=true` and
+`GITHUB_ACTIONS=true` identify an ephemeral runner. Local mutation requires the
+explicit `-AllowLocalMachineMutation` switch and still fails closed if it finds
+an existing Utawakui process, uninstall entry, data directory, install directory,
+or shortcut. Use `-PlanOnly` to inspect the resolved candidate, baseline and
+guards without installing or deleting anything. A CI-installed smoke proves
+candidate installer parity and same-root data retention, but it does not prove a
+production-feed update until the candidate is published on the stable feed.
 
 This gate does not require an Authenticode certificate, signing account, or a
 project-managed Windows machine. The hosted runner is CI infrastructure only;
@@ -93,6 +107,15 @@ The workflow:
 
 Use this artifact for installed-package, startup, data-retention and update-metadata
 review before creating a public draft.
+
+For a local read-only preview of the ordinary CI installation plan:
+
+```powershell
+npm run release:verify-installed -- -ToVersion <version> -PlanOnly
+```
+
+Do not add `-AllowLocalMachineMutation` on a developer workstation that contains
+real Utawakui state. The ordinary CI runner is the supported mutation surface.
 
 ## Public Draft Workflow
 
@@ -178,6 +201,9 @@ local feed as production-feed evidence.
 
 - verify installer, Start Menu identity, optional desktop shortcut and uninstall
   retention／cleanup choices;
+- review the ordinary CI installed-acceptance evidence for the pinned public
+  baseline, same-root candidate upgrade, retained sentinels, installed startup,
+  and cleanup;
 - verify cold and warm installed startup with startup trace and no orphan process;
 - verify local library, playback, Output server and core-gate behavior without any
   optional dependency installed;

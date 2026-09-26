@@ -6,6 +6,8 @@ param(
 
   [switch]$WriteChecksum,
 
+  [string]$ReleaseDirectory,
+
   [string]$NodeExecutable = 'node'
 )
 
@@ -13,7 +15,13 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $projectRoot = Split-Path -Parent $PSScriptRoot
-$releaseDirectory = Join-Path $projectRoot 'release'
+$releaseDirectory = if ([string]::IsNullOrWhiteSpace($ReleaseDirectory)) {
+  Join-Path $projectRoot 'release'
+} elseif ([System.IO.Path]::IsPathRooted($ReleaseDirectory)) {
+  [System.IO.Path]::GetFullPath($ReleaseDirectory)
+} else {
+  [System.IO.Path]::GetFullPath((Join-Path $projectRoot $ReleaseDirectory))
+}
 $installerName = "Utawakui-Setup-$Version.exe"
 $installer = Join-Path $releaseDirectory $installerName
 $executable = Join-Path $releaseDirectory 'win-unpacked/electron.exe'
@@ -53,7 +61,11 @@ try {
     }
   }
 
-  & $NodeExecutable scripts/release-contract-cli.mjs artifacts --version $Version
+  & $NodeExecutable `
+    scripts/release-contract-cli.mjs `
+    artifacts `
+    --version $Version `
+    --directory $releaseDirectory
   if ($LASTEXITCODE -ne 0) {
     throw 'Unsigned update artifact contract failed'
   }
@@ -63,10 +75,11 @@ try {
 
 if ($WriteChecksum) {
   $hash = (Get-FileHash -LiteralPath $installer -Algorithm SHA256).Hash.ToLowerInvariant()
-  Set-Content `
-    -LiteralPath (Join-Path $releaseDirectory 'SHA256SUMS.txt') `
-    -Value "$hash  $installerName" `
-    -Encoding utf8NoBOM
+  [System.IO.File]::WriteAllText(
+    (Join-Path $releaseDirectory 'SHA256SUMS.txt'),
+    "$hash  $installerName`n",
+    [System.Text.UTF8Encoding]::new($false)
+  )
 }
 
 Write-Host "Verified unsigned Windows package for Utawakui $Version"

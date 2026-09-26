@@ -37,6 +37,7 @@ const WINDOWS_PACKAGE_PATTERNS = [
   /^(?:LICENSE|THIRD_PARTY_NOTICES)\.md$/u,
   /^scripts\/release-contract(?:-cli|\.test)?\.mjs$/u,
   /^scripts\/verify-unsigned-windows-package\.ps1$/u,
+  /^scripts\/windows-installed-acceptance\.ps1$/u,
 ];
 
 const QUALITY_ONLY_PATTERNS = [

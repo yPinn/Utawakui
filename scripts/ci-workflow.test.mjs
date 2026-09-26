@@ -6,10 +6,16 @@ import { describe, expect, it } from 'vitest';
 
 const rootDirectory = path.resolve(import.meta.dirname, '..');
 const workflowPath = path.join(rootDirectory, '.github', 'workflows', 'ci.yml');
+const packageJsonPath = path.join(rootDirectory, 'package.json');
 const packageVerifierPath = path.join(
   rootDirectory,
   'scripts',
   'verify-unsigned-windows-package.ps1',
+);
+const installedAcceptancePath = path.join(
+  rootDirectory,
+  'scripts',
+  'windows-installed-acceptance.ps1',
 );
 
 function readWorkflow() {
@@ -123,14 +129,14 @@ describe('ordinary CI workflow', () => {
     expect(serializedSteps).toContain('github.event.pull_request.head.sha');
   });
 
-  it('builds and verifies an ephemeral unsigned Windows updater bundle', () => {
+  it('builds and verifies an ephemeral installed Windows upgrade', () => {
     const workflow = readWorkflow();
     const packageJob = workflow.jobs['windows-package'];
 
     expect(packageJob).toBeDefined();
     expect(packageJob?.needs).toBe('build');
     expect(packageJob?.['runs-on']).toBe('windows-latest');
-    expect(packageJob?.['timeout-minutes']).toBeLessThanOrEqual(20);
+    expect(packageJob?.['timeout-minutes']).toBeLessThanOrEqual(30);
     expect(packageJob?.if).toContain(
       "needs.build.outputs.windows-package == 'true'",
     );
@@ -142,7 +148,17 @@ describe('ordinary CI workflow', () => {
     expect(serializedJob).toContain(
       'scripts/verify-unsigned-windows-package.ps1',
     );
+    expect(serializedJob).toContain('scripts/windows-installed-acceptance.ps1');
     expect(serializedJob).not.toContain('-WriteChecksum');
+    expect(serializedJob).toContain('-FromVersion 0.3.0');
+    expect(serializedJob).toContain('-EvidenceDirectory release-evidence');
+
+    const evidenceUpload = packageJob.steps.find((step) =>
+      step.uses?.startsWith('actions/upload-artifact@'),
+    );
+    expect(evidenceUpload?.if).toBe('always()');
+    expect(evidenceUpload?.with?.path).toBe('release-evidence/');
+    expect(evidenceUpload?.with?.['retention-days']).toBe(7);
 
     const verifier = fs.readFileSync(packageVerifierPath, 'utf8');
     expect(verifier).toContain('Get-AuthenticodeSignature');
@@ -150,10 +166,45 @@ describe('ordinary CI workflow', () => {
     expect(verifier).toContain('ProductVersion');
     expect(verifier).toContain('LICENSE.md');
     expect(verifier).toContain('THIRD_PARTY_NOTICES.md');
-    expect(verifier).toContain('scripts/release-contract-cli.mjs artifacts');
+    expect(verifier).toContain('scripts/release-contract-cli.mjs');
+    expect(verifier).toContain('artifacts');
+    expect(verifier).toContain('--directory $releaseDirectory');
+
+    const installedAcceptance = fs.readFileSync(
+      installedAcceptancePath,
+      'utf8',
+    );
+    expect(installedAcceptance).toContain('AllowLocalMachineMutation');
+    expect(installedAcceptance).toContain('PlanOnly');
+    expect(installedAcceptance).toContain('GITHUB_ACTIONS');
+    expect(installedAcceptance).toContain('Get-CimInstance Win32_Process');
+    expect(installedAcceptance).toContain('Get-AuthenticodeSignature');
+    expect(installedAcceptance).toContain(
+      'does not match package.json version',
+    );
+    expect(installedAcceptance).toContain('startup-performance.mjs');
+    expect(installedAcceptance).toContain('update-acceptance-evidence.mjs');
+    expect(installedAcceptance).toContain(
+      'https://github.com/yPinn/Utawakui-Releases/releases/download/v0.3.0/Utawakui-Setup-0.3.0.exe',
+    );
+    expect(installedAcceptance).toContain(
+      '42449127cf39401e4272d4dcd39b5c8a004c3fa5a968ab46e12fbb3dadb8386e',
+    );
+    expect(installedAcceptance).toContain('Invoke-WebRequest');
+    expect(installedAcceptance).toContain('Stop-Process -Id');
+    expect(installedAcceptance).toContain(
+      'Remove-Item -LiteralPath $TemporaryRoot',
+    );
+    expect(installedAcceptance).not.toContain('taskkill');
+    expect(installedAcceptance).not.toMatch(/Stop-Process\s+-Name/iu);
+
+    const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+    expect(packageJson.scripts['release:verify-installed']).toContain(
+      'windows-installed-acceptance.ps1',
+    );
   });
 
-  it('does not sign, publish, retain, or grant secrets to PR packages', () => {
+  it('does not sign, publish, retain installers, or grant secrets to PR packages', () => {
     const packageJob = readWorkflow().jobs['windows-package'];
     const serializedJob = JSON.stringify(packageJob);
 
@@ -162,6 +213,7 @@ describe('ordinary CI workflow', () => {
     expect(serializedJob).not.toContain('WIN_CSC');
     expect(serializedJob).not.toContain('gh release');
     expect(serializedJob).not.toContain('--publish always');
-    expect(serializedJob).not.toContain('actions/upload-artifact');
+    expect(serializedJob).not.toContain('release/*.exe');
+    expect(serializedJob).not.toContain('release/**/*.exe');
   });
 });

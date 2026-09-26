@@ -107,7 +107,7 @@ jobs:
     needs: build
     if: needs.build.result == 'success' && needs.build.outputs.windows-package == 'true'
     runs-on: windows-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
 
@@ -126,3 +126,21 @@ jobs:
         run: |
           $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
           ./scripts/verify-unsigned-windows-package.ps1 -Version $version
+
+      - name: Verify installed upgrade from the public baseline
+        shell: pwsh
+        run: |
+          $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
+          ./scripts/windows-installed-acceptance.ps1 `
+            -FromVersion 0.3.0 `
+            -ToVersion $version `
+            -EvidenceDirectory release-evidence
+
+      - name: Upload installed acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: windows-installed-acceptance-${{ github.run_id }}-${{ github.run_attempt }}
+          path: release-evidence/
+          if-no-files-found: warn
+          retention-days: 7
