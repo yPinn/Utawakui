@@ -1,11 +1,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { spawnSync } from 'node:child_process';
 
 import * as yaml from 'js-yaml';
 import { describe, expect, it } from 'vitest';
 import { EXTERNAL_TARGETS } from '../electron/main/externalNavigationHandlers.js';
 
 const rootDirectory = path.resolve(import.meta.dirname, '..');
+const itWithBash = process.platform === 'win32' ? it.skip : it;
 
 function readWorkflow(filename = 'release.yml') {
   return yaml.load(
@@ -193,6 +195,20 @@ describe('release workflow', () => {
     expect(packageVerifier).toContain('LICENSE.md');
     expect(packageVerifier).toContain('THIRD_PARTY_NOTICES.md');
     expect(packageCommands).not.toContain('--publish always');
+  });
+
+  itWithBash('keeps the public draft step valid Bash', () => {
+    const publishStep = readWorkflow().jobs.publish.steps.find(
+      (step) => step.name === 'Create or update public draft release',
+    );
+    const result = spawnSync('bash', ['-n'], {
+      input: publishStep.run,
+      encoding: 'utf8',
+    });
+
+    expect(result.error).toBeUndefined();
+    expect(result.stderr).toBe('');
+    expect(result.status).toBe(0);
   });
 
   it('moves one package artifact through optional signing and mandatory pre-publish verification', () => {
