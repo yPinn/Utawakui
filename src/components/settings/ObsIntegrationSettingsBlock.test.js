@@ -20,6 +20,13 @@ async function renderBlock(props = {}) {
 }
 
 describe('ObsIntegrationSettingsBlock', () => {
+  it('names the reusable session export by its time-marker data, not one destination format', async () => {
+    const html = await renderBlock();
+
+    expect(html).toContain('匯出時間標記');
+    expect(html).not.toContain('匯出 YouTube 章節');
+  });
+
   it('offers explicit credential removal only when a password is stored', async () => {
     const stored = await renderBlock({ hasStoredPassword: true });
     const empty = await renderBlock({ hasStoredPassword: false });

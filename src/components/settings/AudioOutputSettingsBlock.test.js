@@ -22,7 +22,10 @@ describe('AudioOutputSettingsBlock', () => {
     const html = await renderBlock();
 
     expect(html).toContain('音訊輸出');
-    expect(html).toContain('將伴奏送至 OBS 擷取裝置');
+    expect(html).toContain('將伴奏送至獨立的擷取裝置');
+    expect(html).toContain('直播或錄影軟體使用的虛擬音效裝置');
+    expect(html).not.toContain('OBS 擷取裝置');
+    expect(html).not.toContain('OBS 用的虛擬音效裝置');
     expect(html).toContain('未啟用');
     expect(html).toContain('未選擇');
     expect(html).toContain('aria-label="選擇擷取輸出裝置"');

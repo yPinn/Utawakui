@@ -197,7 +197,7 @@ function resetAppearance() {
 
 <template>
   <ObsOutputSplitLayout
-    aria-label="OBS 輸出工作台"
+    aria-label="輸出工作台"
     side-label="輸出設定"
     side-variant="inspector"
   >
@@ -220,10 +220,10 @@ function resetAppearance() {
         <div class="obs-slot-workbench__stage">
           <section
             class="obs-slot-workbench__capture-guide"
-            aria-label="OBS 擷取尺寸建議"
+            aria-label="Browser Source 尺寸建議"
           >
             <span class="obs-slot-workbench__capture-guide-label">
-              OBS 擷取建議
+              Browser Source 尺寸建議
             </span>
             <strong class="obs-slot-workbench__capture-dimensions">
               {{ capturePreset.width }} × {{ capturePreset.height }} px

@@ -44,7 +44,8 @@ function openDownload(targetId) {
   >
     <div class="virtual-cable-guide">
       <p class="virtual-cable-guide__intro">
-        虛擬音效裝置讓 Utawakui 把伴奏直接送給 OBS 擷取，不需要實體接線。
+        虛擬音效裝置讓 Utawakui
+        把伴奏直接送給直播或錄影軟體擷取，不需要實體接線。
       </p>
 
       <ul class="virtual-cable-guide__list">

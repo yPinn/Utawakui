@@ -113,7 +113,7 @@ function choose(deviceId) {
     <div class="capture-device-modal">
       <div class="capture-device-modal__intro">
         <p class="capture-device-modal__description">
-          選擇一個虛擬音效裝置,讓 OBS 擷取到獨立於耳機的伴奏混音。
+          選擇一個虛擬音效裝置，讓直播或錄影軟體擷取到獨立於耳機的伴奏混音。
         </p>
         <UiButton
           class="capture-device-modal__guide-btn"

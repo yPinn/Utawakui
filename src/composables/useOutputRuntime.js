@@ -250,7 +250,7 @@ async function start() {
   const enabled = await requireFeatureGate(FEATURE_IDS.PUBLIC_OUTPUT_FLOW, {
     source: 'output',
     operation: 'start',
-    message: '請先到設定啟用對外輸出，再建立 OBS Browser Source。',
+    message: '請先到設定啟用對外輸出，再啟動 Browser Source 輸出。',
   });
   if (!enabled) return false;
 

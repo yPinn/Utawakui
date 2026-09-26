@@ -160,6 +160,30 @@ describe('useObsSessionExport', () => {
 
     expect(copyObsText).toHaveBeenCalledWith('0:00 Song A\n0:30 Song B');
     expect(exportState.copyState.value.tone).toBe('success');
+    expect(exportState.copyState.value.message).toBe('已複製章節文字');
+  });
+
+  it('names the chapter-text recovery when clipboard copying fails', async () => {
+    vi.stubGlobal('window', {
+      Utawakui: {
+        onObsStatus: vi.fn(() => vi.fn()),
+        getObsLatestSession: vi.fn().mockResolvedValue({
+          id: 'sess_1',
+          startedAt: '2026-09-24T12:00:00.000Z',
+          entries: [trackEntry()],
+        }),
+        copyObsText: vi.fn().mockRejectedValue(new Error('clipboard failed')),
+      },
+    });
+    const exportState = await loadExport();
+    await exportState.open();
+
+    await expect(exportState.copyChapters()).resolves.toBe(false);
+
+    expect(exportState.copyState.value.tone).toBe('error');
+    expect(exportState.copyState.value.message).toBe(
+      '無法複製章節文字，請手動選取文字',
+    );
   });
 
   it('surfaces a bounded error when loading the session fails', async () => {

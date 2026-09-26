@@ -199,7 +199,7 @@ onBeforeUnmount(() => {
       <ObsOutputTabs
         :items="pages"
         :active-id="activePage"
-        aria-label="OBS 輸出頁面"
+        aria-label="輸出頁面"
         tab-id-prefix="obs-output"
         panel-id-prefix="obs-output"
         variant="panel"

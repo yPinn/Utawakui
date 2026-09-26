@@ -30,7 +30,7 @@ const hasSession = computed(
 <template>
   <UiModal
     :open="exportState.isOpen.value"
-    title="匯出 YouTube 章節"
+    title="匯出場次時間軸"
     size="wide"
     @close="exportState.close()"
   >
@@ -51,7 +51,7 @@ const hasSession = computed(
 
       <p v-else-if="!hasSession" class="obs-session-export-modal__status">
         尚無可匯出的場次紀錄。連上 OBS
-        並開始直播／錄影後，播放的歌曲才會累積時間戳。
+        並開始直播／錄影後，曲目切換與手動標記才會記錄時間戳。
       </p>
 
       <template v-else>
@@ -87,7 +87,7 @@ const hasSession = computed(
 
         <UiTextarea
           id="obs-session-export-text"
-          label="章節清單"
+          label="YouTube 章節文字"
           :model-value="exportState.result.value.text"
           :rows="10"
           disabled
@@ -95,7 +95,7 @@ const hasSession = computed(
 
         <div class="obs-session-export-modal__actions">
           <UiButton variant="accent" @click="exportState.copyChapters()">
-            複製到剪貼簿
+            複製章節文字
           </UiButton>
           <span
             v-if="exportState.copyState.value.message"

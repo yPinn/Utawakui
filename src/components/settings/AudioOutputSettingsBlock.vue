@@ -17,7 +17,7 @@ const emit = defineEmits(['selectDevice']);
 <template>
   <SettingsBlock
     title="音訊輸出"
-    summary="將伴奏送至 OBS 擷取裝置"
+    summary="將伴奏送至獨立的擷取裝置"
     :status="enabled ? '已啟用' : '未啟用'"
     :status-tone="enabled ? 'success' : 'muted'"
   >
@@ -25,7 +25,7 @@ const emit = defineEmits(['selectDevice']);
       :icon="Headphones"
       title="擷取輸出裝置"
       :value="deviceLabel"
-      tooltip="選擇 OBS 用的虛擬音效裝置。"
+      tooltip="選擇直播或錄影軟體使用的虛擬音效裝置。"
     >
       <template #actions>
         <UiIconButton

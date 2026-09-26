@@ -26,6 +26,16 @@ async function renderRegisteredTemplate(templateId) {
 }
 
 describe('ObsSlotWorkbench template appearance compatibility', () => {
+  it('uses destination-neutral workbench and Browser Source sizing labels', async () => {
+    const html = await renderRegisteredTemplate('queue-board');
+
+    expect(html).toContain('aria-label="輸出工作台"');
+    expect(html).toContain('aria-label="Browser Source 尺寸建議"');
+    expect(html).toContain('Browser Source 尺寸建議');
+    expect(html).not.toContain('OBS 輸出工作台');
+    expect(html).not.toContain('OBS 擷取建議');
+  });
+
   it.each([
     [
       'queue-board',

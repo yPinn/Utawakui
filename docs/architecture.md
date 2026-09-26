@@ -64,8 +64,8 @@ config，密碼只由 Electron `safeStorage` 加密後寫入獨立 credential fi
 時優先拒絕設定變更，Settings 另提供明確的密碼移除動作。密碼不進 config、preset、
 renderer state 或 diagnostics。
 `sessionHistoryService.js` 消費既有 Output projection 的曲目變更，在 OBS 活動時向 adapter
-取得當下時間戳並原子保存本機 session JSON；Renderer 只取得 public projection 並在本機
-產生章節文字。OBS 顯示直播或錄影中時，`obsPowerSaveBlocker.js` 才啟用
+取得當下時間戳並原子保存本機 session JSON；Renderer 只取得 public projection，並在本機
+將場次時間標記投影為 YouTube 章節文字。OBS 顯示直播或錄影中時，`obsPowerSaveBlocker.js` 才啟用
 `prevent-display-sleep`，兩者都停止後立即解除。
 
 Titlebar resource projection 由 `appUsageService.js` 每 3 秒發布一次。平時只讀
@@ -211,7 +211,7 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent            |
 | Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments     |
 | OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent           |
-| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並匯出章節文字            |
+| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記        |
 | App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection     |
 
 本機媒體經 `utawakui-media:` protocol 交付 renderer。Scheme 與 handler 註冊在

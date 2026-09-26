@@ -193,7 +193,7 @@ const outputSummary = computed(() => {
 
       <div class="obs-integration-settings-block__submit">
         <UiButton variant="ghost" @click="emit('exportChapters')">
-          匯出 YouTube 章節
+          匯出時間標記
         </UiButton>
         <UiButton
           variant="accent"

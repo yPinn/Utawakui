@@ -15,6 +15,8 @@ describe('VirtualCableGuideModal', () => {
 
     expect(html).toContain('VB-CABLE');
     expect(html).toContain('VoiceMeeter');
+    expect(html).toContain('直播或錄影軟體擷取');
+    expect(html).not.toContain('送給 OBS 擷取');
     expect(html).toContain('前往官網下載');
     expect(html).not.toContain('https://');
   });
