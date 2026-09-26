@@ -5,24 +5,34 @@ const source = readFileSync(
   new URL('./SettingsView.vue', import.meta.url),
   'utf8',
 );
-const versionSectionStart = source.indexOf(
-  '<SettingsBlock title="版本與公告">',
+const applicationSectionStart = source.indexOf(
+  '<SettingsBlock title="應用程式">',
 );
-const versionSource = source.slice(
-  versionSectionStart,
-  source.indexOf('</SettingsBlock>', versionSectionStart) +
+const applicationSource = source.slice(
+  applicationSectionStart,
+  source.indexOf('</SettingsBlock>', applicationSectionStart) +
     '</SettingsBlock>'.length,
 );
-const maintenanceSource = source.slice(
-  source.indexOf('<SettingsBlock title="維護">'),
+const supportSectionStart = source.indexOf(
+  '<SettingsBlock title="支援與維護">',
+);
+const supportSource = source.slice(
+  supportSectionStart,
+  source.indexOf('</SettingsBlock>', supportSectionStart) +
+    '</SettingsBlock>'.length,
 );
 
 describe('SettingsView version and maintenance sections', () => {
+  it('uses one page heading without repeating column headings', () => {
+    expect(source).toContain('<h1 class="settings-view__title">設定</h1>');
+    expect(source).not.toContain('settings-view__column-header');
+    expect(source).not.toContain('本機設定');
+    expect(source).not.toContain('功能與下載項目');
+  });
+
   it('describes optional downloads in user-facing terms', () => {
-    expect(source).toContain('功能與下載項目');
-    expect(source).toContain(
-      '啟用前會說明用途與需要的額外下載；之後可隨時移除。',
-    );
+    expect(source).toMatch(/<SettingsBlock\s+title="功能與下載"/);
+    expect(source).toContain('只啟用需要的工作流程；額外元件會按需準備。');
     expect(source).not.toContain('工具與模型會列在下方');
     expect(source).toContain('<MusicAnalysisSettingsRow');
     expect(source).toContain('FEATURE_IDS.AUDIO_PROCESSING_FLOW');
@@ -59,38 +69,33 @@ describe('SettingsView version and maintenance sections', () => {
     );
   });
 
-  it('groups app updates with feedback reporting under 版本與公告, ordered update-first', () => {
-    const appUpdateIndex = versionSource.indexOf('<AppUpdateSettingsRow');
-    const feedbackRowIndex = versionSource.indexOf(
-      '<FeedbackReportSettingsRow',
-    );
-
-    expect(appUpdateIndex).toBeGreaterThan(-1);
-    expect(feedbackRowIndex).toBeGreaterThan(-1);
-    expect(appUpdateIndex).toBeLessThan(feedbackRowIndex);
+  it('groups Windows behavior and updates under 應用程式', () => {
+    expect(applicationSectionStart).toBeGreaterThan(-1);
+    expect(applicationSource).toContain('<WindowsBackgroundSettingsRow');
+    expect(applicationSource).toContain('<AppUpdateSettingsRow');
+    expect(applicationSource).not.toContain('<FeedbackReportSettingsRow');
   });
 
-  it('places the re-open-announcement row between the update row and feedback reporting', () => {
-    const appUpdateIndex = versionSource.indexOf('<AppUpdateSettingsRow');
-    const reopenIndex = versionSource.indexOf('announcement.reopen');
-    const feedbackRowIndex = versionSource.indexOf(
-      '<FeedbackReportSettingsRow',
-    );
-
-    expect(reopenIndex).toBeGreaterThan(appUpdateIndex);
-    expect(reopenIndex).toBeLessThan(feedbackRowIndex);
+  it('keeps low-frequency support and maintenance entries together', () => {
+    expect(supportSectionStart).toBeGreaterThan(-1);
+    expect(supportSource).toContain('announcement.reopen');
+    expect(supportSource).toContain('openCommunityDiscord');
+    expect(supportSource).toContain('<FeedbackReportSettingsRow');
+    expect(supportSource).toContain('<DiagnosticsSettingsRow');
   });
 
-  it('keeps error diagnostics under 維護, separate from the version block', () => {
-    expect(versionSource).not.toContain('<DiagnosticsSettingsRow');
-    expect(maintenanceSource).toContain('<DiagnosticsSettingsRow');
-    expect(maintenanceSource).not.toContain('<AppUpdateSettingsRow');
+  it('keeps support copy concise without repeating the announcement summary', () => {
+    expect(supportSource).toContain(':value="`v${announcement.version}`"');
+    expect(supportSource).toContain(':tooltip="announcement.summary"');
+    expect(supportSource).not.toContain(
+      ':value="`v${announcement.version} · ${announcement.summary}`"',
+    );
   });
 
   it('wires the app-update row to download telemetry and the auto-check toggle', () => {
-    const rowStart = versionSource.indexOf('<AppUpdateSettingsRow');
-    const rowEnd = versionSource.indexOf('/>', rowStart);
-    const row = versionSource.slice(rowStart, rowEnd);
+    const rowStart = applicationSource.indexOf('<AppUpdateSettingsRow');
+    const rowEnd = applicationSource.indexOf('/>', rowStart);
+    const row = applicationSource.slice(rowStart, rowEnd);
 
     expect(row).toContain(
       ':download-bytes-per-second="appUpdateState.downloadBytesPerSecond"',
@@ -112,7 +117,8 @@ describe('SettingsView version and maintenance sections', () => {
     expect(source).toContain(
       "import { useWindowsIntegrationSettings } from '../composables/useWindowsIntegrationSettings.js';",
     );
-    expect(source).toContain('<SettingsBlock title="Windows">');
+    expect(source).not.toContain('<SettingsBlock title="Windows">');
+    expect(source).toContain('<SettingsBlock title="應用程式">');
     expect(source).toContain(
       ':behavior="windowsIntegrationSettings.windowCloseBehavior.value"',
     );

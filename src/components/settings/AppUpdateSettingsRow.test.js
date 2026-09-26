@@ -83,7 +83,7 @@ describe('AppUpdateSettingsRow', () => {
   it('discloses the default background version check before the toggle', async () => {
     const html = await renderRow({ phase: 'idle' });
 
-    expect(html).toContain('自動檢查是否有新版本，只查詢，不會下載或安裝。');
+    expect(html).toContain('啟動後只檢查版本；下載與安裝仍由你決定。');
   });
 
   it('surfaces a preference-save failure without a second update action', async () => {

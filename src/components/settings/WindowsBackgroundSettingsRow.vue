@@ -28,7 +28,7 @@ const closeBehaviorItems = Object.freeze([
     <SettingsActionRow
       :icon="Minimize2"
       title="關閉主視窗時"
-      description="預設按 X 時會詢問。選擇背景執行後，播放、OBS 連線與輸出仍會繼續；可從系統匣再次開啟或完整結束。"
+      description="按 X 時可詢問、留在系統匣，或直接結束。背景執行時播放、OBS 連線與輸出會繼續。"
       tooltip="最小化按鈕仍會照常縮到 Windows 工作列。"
     >
       <template #actions>

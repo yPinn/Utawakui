@@ -139,7 +139,7 @@ function handleAction() {
     <SettingsActionRow
       :icon="RefreshCw"
       title="Utawakui 版本"
-      description="自動檢查是否有新版本，只查詢，不會下載或安裝。"
+      description="啟動後只檢查版本；下載與安裝仍由你決定。"
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"

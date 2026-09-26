@@ -23,7 +23,6 @@ import SeparationGpuSettingsRow from '../components/settings/SeparationGpuSettin
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
 import SettingsFeatureGateRow from '../components/settings/SettingsFeatureGateRow.vue';
-import UiButton from '../components/ui/UiButton.vue';
 import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiIconButton from '../components/ui/UiIconButton.vue';
@@ -395,18 +394,13 @@ onUnmounted(musicAnalysisSettings.dispose);
 
 <template>
   <div class="settings-view">
-    <div class="settings-view__grid">
-      <section
-        class="settings-view__column"
-        aria-labelledby="settings-content-title"
-      >
-        <header class="settings-view__column-header">
-          <h2 id="settings-content-title" class="settings-view__column-title">
-            本機設定
-          </h2>
-        </header>
+    <header class="settings-view__header">
+      <h1 class="settings-view__title">設定</h1>
+    </header>
 
-        <SettingsBlock title="本機曲庫">
+    <div class="settings-view__grid">
+      <section class="settings-view__column" aria-label="一般設定">
+        <SettingsBlock title="曲庫">
           <SettingsActionRow
             :icon="FolderOpen"
             title="曲庫位置"
@@ -472,16 +466,13 @@ onUnmounted(musicAnalysisSettings.dispose);
           @select-device="isCaptureDeviceModalOpen = true"
         />
 
-        <SettingsBlock title="Windows">
+        <SettingsBlock title="應用程式">
           <WindowsBackgroundSettingsRow
             :behavior="windowsIntegrationSettings.windowCloseBehavior.value"
             :busy="windowsIntegrationSettings.preferenceBusy.value"
             :error="windowsIntegrationSettings.preferenceError.value"
             @set-behavior="windowsIntegrationSettings.setWindowCloseBehavior"
           />
-        </SettingsBlock>
-
-        <SettingsBlock title="版本與公告">
           <AppUpdateSettingsRow
             :current-version="
               appInfoState.currentVersion || appUpdateState.currentVersion
@@ -502,17 +493,21 @@ onUnmounted(musicAnalysisSettings.dispose);
             @install="installAppUpdate"
             @set-auto-check="setAppUpdateAutoCheck"
           />
+        </SettingsBlock>
 
+        <SettingsBlock title="支援與維護">
           <SettingsActionRow
             :icon="Info"
-            title="重看公告"
-            :value="`v${announcement.version} · ${announcement.summary}`"
-            tooltip="重新打開這個版本的公告內容。"
+            title="版本公告"
+            :value="`v${announcement.version}`"
+            :tooltip="announcement.summary"
           >
             <template #actions>
-              <UiButton variant="ghost" @click="announcement.reopen">
-                重看公告
-              </UiButton>
+              <UiIconButton
+                :icon="Info"
+                label="查看版本公告"
+                @click="announcement.reopen"
+              />
             </template>
           </SettingsActionRow>
 
@@ -522,20 +517,15 @@ onUnmounted(musicAnalysisSettings.dispose);
             tooltip="在 Discord 查看公告、分享心得，或直接和開發者討論使用回饋。"
           >
             <template #actions>
-              <UiButton
-                variant="ghost"
+              <UiIconButton
                 :icon="ExternalLink"
+                label="開啟社群 Discord"
                 @click="openCommunityDiscord"
-              >
-                加入 Discord
-              </UiButton>
+              />
             </template>
           </SettingsActionRow>
 
           <FeedbackReportSettingsRow @open="feedback.openReport()" />
-        </SettingsBlock>
-
-        <SettingsBlock title="維護">
           <DiagnosticsSettingsRow
             :record-count="persistentDiagnosticsState.recordCount"
             :is-loading="persistentDiagnosticsState.isLoading"
@@ -548,39 +538,12 @@ onUnmounted(musicAnalysisSettings.dispose);
             @report-issue="handleReportIssueFromDiagnostics"
           />
         </SettingsBlock>
-
-        <CaptureDeviceModal
-          :open="isCaptureDeviceModalOpen"
-          @close="isCaptureDeviceModalOpen = false"
-        />
-
-        <FeedbackReportModal />
-
-        <ObsSessionExportModal />
-
-        <FfmpegSourceModal
-          :open="isFfmpegSourceModalOpen"
-          :initial-detection="systemFfmpegDetection"
-          @close="isFfmpegSourceModalOpen = false"
-        />
       </section>
 
-      <section
-        class="settings-view__column"
-        aria-labelledby="settings-status-title"
-      >
-        <header class="settings-view__column-header">
-          <h2 id="settings-status-title" class="settings-view__column-title">
-            功能與下載項目
-          </h2>
-          <p class="settings-view__column-summary">
-            選擇需要的功能，並管理額外下載
-          </p>
-        </header>
-
+      <section class="settings-view__column" aria-label="功能與下載">
         <SettingsBlock
-          title="選用功能"
-          summary="啟用前會說明用途與需要的額外下載；之後可隨時移除。"
+          title="功能與下載"
+          summary="只啟用需要的工作流程；額外元件會按需準備。"
           :status="`${enabledGateCount} / ${featureGateRows.length}`"
           status-tone="gated"
         >
@@ -697,6 +660,21 @@ onUnmounted(musicAnalysisSettings.dispose);
         </SettingsBlock>
       </section>
     </div>
+
+    <CaptureDeviceModal
+      :open="isCaptureDeviceModalOpen"
+      @close="isCaptureDeviceModalOpen = false"
+    />
+
+    <FeedbackReportModal />
+
+    <ObsSessionExportModal />
+
+    <FfmpegSourceModal
+      :open="isFfmpegSourceModalOpen"
+      :initial-detection="systemFfmpegDetection"
+      @close="isFfmpegSourceModalOpen = false"
+    />
   </div>
 </template>
 
@@ -704,11 +682,27 @@ onUnmounted(musicAnalysisSettings.dispose);
 .settings-view {
   height: 100%;
   min-height: 0;
+  display: grid;
+  align-content: start;
+  gap: var(--ui-space-4);
   overflow: auto;
 }
 
+.settings-view__header {
+  min-width: 0;
+}
+
+.settings-view__title {
+  margin: 0;
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-xl);
+  font-weight: var(--ui-font-weight-heavy);
+  line-height: var(--ui-line-height-headline);
+  text-wrap: balance;
+}
+
 .settings-view__grid {
-  min-height: 100%;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(
     auto-fit,
@@ -723,31 +717,5 @@ onUnmounted(musicAnalysisSettings.dispose);
   display: grid;
   align-content: start;
   gap: var(--ui-settings-column-gap);
-}
-
-.settings-view__column-header {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-settings-column-header-gap);
-}
-
-.settings-view__column-title,
-.settings-view__column-summary {
-  margin: 0;
-}
-
-.settings-view__column-title {
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
-  text-wrap: balance;
-}
-
-.settings-view__column-summary {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
 }
 </style>

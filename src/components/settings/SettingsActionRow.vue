@@ -67,9 +67,11 @@ const resolvedTitleTag = computed(
   --settings-action-row-title-size: var(--ui-font-size-md);
   --settings-action-row-value-size: var(--ui-font-size-sm);
   --settings-action-row-value-color: var(--ui-color-text);
-  --settings-action-row-background: var(--ui-color-canvas);
-  --settings-action-row-border-color: var(--ui-color-border);
-  --settings-action-row-icon-background: var(--ui-color-accent-soft);
+  --settings-action-row-background: transparent;
+  --settings-action-row-feature-background: var(--ui-color-surface-raised);
+  --settings-action-row-divider-color: var(--ui-color-border);
+  --settings-action-row-radius: 0;
+  --settings-action-row-icon-background: transparent;
   --settings-action-row-icon-color: var(--ui-color-accent);
 
   min-width: 0;
@@ -80,14 +82,18 @@ const resolvedTitleTag = computed(
   gap: var(--ui-space-2);
   padding: var(--settings-action-row-padding-block)
     var(--settings-action-row-padding-inline);
-  border: var(--ui-border-width) solid var(--settings-action-row-border-color);
-  border-radius: var(--ui-radius);
+  border-block-end: var(--ui-border-width) solid
+    var(--settings-action-row-divider-color);
+  border-radius: var(--settings-action-row-radius);
   background: var(--settings-action-row-background);
 }
 
 .settings-action-row--feature {
-  --settings-action-row-background: var(--ui-color-surface-raised);
-  --settings-action-row-border-color: var(--ui-color-border-strong);
+  --settings-action-row-background: var(
+    --settings-action-row-feature-background
+  );
+  --settings-action-row-divider-color: transparent;
+  --settings-action-row-radius: var(--ui-radius);
   --settings-action-row-icon-background: var(--ui-color-accent-soft);
   --settings-action-row-icon-color: var(--ui-color-info);
   --settings-action-row-padding-block: var(--ui-space-2);
@@ -95,7 +101,7 @@ const resolvedTitleTag = computed(
 
 .settings-action-row--subtle {
   --settings-action-row-background: transparent;
-  --settings-action-row-border-color: transparent;
+  --settings-action-row-divider-color: transparent;
   --settings-action-row-icon-size: var(--ui-icon-button-size-md);
   --settings-action-row-padding-block: var(--ui-space-1);
   --settings-action-row-title-size: var(--ui-font-size-sm);

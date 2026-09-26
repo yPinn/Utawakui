@@ -14,5 +14,6 @@ describe('FeedbackReportSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('回報問題');
+    expect(html.match(/>回報問題</gu)).toHaveLength(1);
   });
 });
