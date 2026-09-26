@@ -20,6 +20,13 @@ not by adding completed history here.
       Workbench dimensions match the copied OBS guidance.
 - [ ] Verify Settings capture geometry, dependency actions, diagnostics controls,
       version, and update status at normal and minimum sizes.
+- [ ] Run the audible metronome against an independent metronome for 2–3 minutes;
+      verify the accented downbeat, no drift, no glitch on BPM change, standalone
+      use without a loaded track, confident track-BPM application, and manual
+      override until reset.
+- [ ] Verify titlebar CPU／RAM reflects Utawakui rather than whole-system usage,
+      remains inexpensive while idle, and includes separation descendants during
+      a heavy job without leaving a PowerShell process behind.
 
 The 30-song M2 corpus, independent annotation, privacy fields, and activation
 thresholds belong to the
@@ -51,6 +58,22 @@ not this UI checklist.
       including Now／Next, Art Card, Simple Black B, and Cover Player fallbacks.
 - [ ] When M1／M2 analysis is available, verify Lyrics cues without regressing M0,
       pause, seek, reconnect, or reduced-motion fallback.
+- [ ] Enable the OBS integration against an authenticated OBS WebSocket 5 instance;
+      verify disabled／connecting／ready／degraded states, strict host／port／
+      threshold validation, live／recording clocks, prevent-sleep start／stop, and
+      that no scene or source is changed.
+- [ ] Point the OBS integration at an unreachable or deliberately stalled endpoint;
+      verify connecting settles within the 10-second handshake deadline, a stalled
+      status read settles within 5 seconds, the failed socket is closed, and bounded
+      reconnect continues without a stale status overwrite.
+- [ ] Save an authenticated OBS password, restart the packaged app, disable the
+      connection and feature gate, then use the still-available explicit removal
+      action. Confirm the stored-password indicator clears only after success and
+      that an empty password is not treated as implicit deletion.
+- [ ] During an active stream or recording, change tracks, add a manual marker,
+      exercise the short-play skip threshold, then export YouTube chapters. Confirm
+      the local session survives OBS stop, contains no credential, and uses the
+      correct stream／record timecode.
 
 ## Spout2
 
@@ -70,6 +93,26 @@ not this UI checklist.
 
 - [ ] Verify cold and warm installed launch, Self-View／Output lifecycle, and no
       orphan Electron or loopback process after closing.
+- [ ] With the default `ask` behavior, press X repeatedly and verify only one app-
+      styled modal appears with background, full exit, cancel, and an unchecked
+      remember choice. If another app modal is already open, Escape must dismiss only
+      the close modal. Cancel must keep the same window visible. Choosing background without
+      remembering must hide the existing window while playback, SMTC, OBS status,
+      Browser Source／Spout Output and heavy jobs continue; restoring it must make the
+      next X ask again. Verify minimize still uses the taskbar.
+- [ ] Repeat the prompt with remember enabled for both background and full exit.
+      Restart after each choice and verify it no longer asks. In Settings, switch
+      among ask／tray／quit, verify each takes effect immediately, and return to ask.
+      Restore the same hidden window through tray open, tray double-click, and a
+      second app launch. Use the tray Settings action and verify it restores the
+      existing window directly on Settings.
+- [ ] During early startup and with a deliberately unresponsive Renderer, press X and
+      verify the bounded Windows native fallback still offers background, full exit,
+      cancel, and remember without accepting a stale app-modal response afterward.
+- [ ] Inspect the tray icon at 100%／125%／150%／200% DPI in light and dark Windows
+      themes. From a hidden window, verify tray exit releases Output ports,
+      sockets, helpers and sleep blockers; also verify update installation and
+      Windows shutdown／logoff are not intercepted as background hiding.
 - [ ] Verify updater current／available／download／offline／retry／restart states and
       explicit download/install actions, that the download row shows rate and
       remaining time, and that the Settings navigation tab shows the update dot
@@ -83,4 +126,5 @@ not this UI checklist.
       independently.
 
 The release-level artifact and update matrix remains in the
-[Windows release runbook](release-runbook.md).
+[Windows release runbook](release-runbook.md). Record consecutive-version results
+with the [update acceptance evidence template](update-acceptance-template.md).

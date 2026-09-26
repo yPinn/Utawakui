@@ -2,10 +2,12 @@
 
 ## Status
 
-Accepted on 2026-08-23 and amended on 2026-09-08. OBS Browser Source remains the
-supported baseline. Windows x64 now has an explicitly started experimental
-Spout2 Lyrics sender; receiver, alpha, GPU, recovery, and installed acceptance
-remain required before support. No external control adapter is added here.
+Accepted on 2026-08-23; amended on 2026-09-08 and 2026-09-24. OBS Browser Source
+remains the supported presentation baseline. A main-owned, read-only OBS WebSocket
+adapter now observes streaming／recording state and timestamps for local session
+history; no scene／source write or transport control capability is exposed. Windows
+x64 also has an explicitly started experimental Spout2 Lyrics sender; receiver,
+alpha, GPU, recovery, and installed acceptance remain required before support.
 
 ## Context
 
@@ -78,14 +80,19 @@ Utawakui continues to send visual output to OBS through stable Browser Source
 URLs. OBS WebSocket is an optional first-party automation adapter, not a
 requirement for normal overlays. It may:
 
-- create or update an explicitly selected Browser Source;
-- manage visibility or a user-authored scene cue after confirmation; and
-- observe scene, streaming, and recording state.
+- observe OBS／obs-websocket versions and negotiated RPC version;
+- observe streaming and recording state; and
+- request a fresh stream／record timecode when a track or manual marker boundary
+  needs to be recorded.
 
-It does not silently redesign scenes or enable an unauthenticated OBS endpoint.
-OBS WebSocket 5 is built into OBS 28 and newer and recommends password
-authentication. The candidate client is `obs-websocket-js`, wrapped behind the
-adapter port rather than exposed to application code.
+The adopted first slice is read-only. Scene enumeration, Browser Source creation／
+update, visibility changes, scene cues, and player transport remain deferred
+write capabilities that require separate capability and applied-state contracts.
+The adapter never disables OBS authentication. `obs-websocket-js` is lazy-loaded
+behind the main-owned port; its password is stored only through Electron
+`safeStorage`, never in config, presets, renderer state, diagnostics, or URLs.
+Track changes reuse the canonical Output projection, but their timestamp history
+is a private local file rather than a new public projection stream.
 
 ### Add VTube Studio as a low-frequency cue/event adapter
 
@@ -172,8 +179,8 @@ The evolving port, lifecycle, event, and command contract lives in
   contracts.
 - Automation requires explicit authentication, capability, and command-result
   semantics in addition to the existing feature gate.
-- OBS and VTube Studio are the first plausible adapters, but neither blocks core
-  Lyrics or Overlay use.
+- The read-only OBS adapter is optional and does not block core Lyrics or Overlay
+  use; write-capable OBS and VTube Studio integrations remain deferred.
 - VBridger works through coexistence rather than competing tracking ownership.
 - Shoost parallel composition remains supported through OBS; the experimental
   Spout2 plane is isolated and evidence-gated until real receiver acceptance.

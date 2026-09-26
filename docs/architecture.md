@@ -31,10 +31,47 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 `StudioLibraryPrototypeView.vue`）呈現；owner 檢查順序與現況見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
 
+Windows notification-area lifecycle 由 main-owned
+`electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主
+`BrowserWindow` owner。`windowCloseBehavior` 是 `ask`／`tray`／`quit` 三態 machine config，
+預設 `ask`；Renderer 只經固定 config IPC 提交 allowlisted intent。`ask` 由 main 產生一次性
+request id，再透過 `electron/main/windowCloseDecisionBridge.js` 請 Renderer 以 production
+`UiModal` 呈現背景執行、完全結束、取消與記住選擇。Bridge 只接受目前主視窗 sender、目前
+request id、`tray`／`quit`／`cancel` 與 boolean；Renderer 只負責呈現，Tray、config、hide 與
+quit 仍由 main 執行。若 Renderer 未在期限內確認已呈現、失去回應或已毀損，才退回 main-owned
+Windows 原生 dialog，避免關閉流程因 UI runtime 故障而鎖死。背景執行先確保 Tray 可建立，再
+隱藏同一個主視窗，因此 renderer-owned 播放／queue／lyrics 與 OBS／Output service 不會重建；
+未記住的一次性 Tray 在視窗還原後銷毀。最小化行為不變。Tray 開啟、設定、雙擊與
+second-instance 都 restore／show／focus 同一視窗；設定動作另送固定 `settings` 導頁事件，
+不接受任意 route。Close prompt 維持 single-flight；記住選擇的 config write 或 Tray 建立失敗
+時保持視窗可見並顯示 bounded error。
+Tray 完整退出、app update install、正常 `before-quit` 及 Windows
+`query-session-end`／`session-end` 會先同步設定 sticky quitting state，close handler 才放行；
+這讓 updater 先關閉視窗、prompt 延遲完成及 Windows 關機／登出不發 `before-quit` 的路徑
+都不會被誤攔為背景隱藏。
+
 Machine config、feature confirmation 與 external navigation 分別由獨立 handler registrar
 持有。Renderer 開啟固定說明頁面時只提交 allowlisted target id；provider discovery 則只提交
 bounded query，由 `providerDiscoveryHandlers.js` 在 main 建立固定 YT Music search URL 並重查
 `provider-flow` gate。Vendor origin／path 均固定在 main，preload 不提供任意 URL API。
+
+OBS WebSocket integration 由 main-owned `obsAdapter.js` 持有。SDK 只在
+`obs-integration` 已啟用且 desired state 開啟時 lazy-load；adapter 只讀取版本、直播／錄影
+狀態與按需時間戳。連線握手與狀態請求各有期限，逾時會淘汰 transport 再以
+bounded backoff 重連；disconnect／reconfigure 會取消進行中工作，舊連線完成不能回寫新狀態。
+它不提供任意 OBS request 或 scene／source 寫入。Endpoint scalar 驗證後保存在 machine
+config，密碼只由 Electron `safeStorage` 加密後寫入獨立 credential file；OS 加密不可用
+時優先拒絕設定變更，Settings 另提供明確的密碼移除動作。密碼不進 config、preset、
+renderer state 或 diagnostics。
+`sessionHistoryService.js` 消費既有 Output projection 的曲目變更，在 OBS 活動時向 adapter
+取得當下時間戳並原子保存本機 session JSON；Renderer 只取得 public projection 並在本機
+產生章節文字。OBS 顯示直播或錄影中時，`obsPowerSaveBlocker.js` 才啟用
+`prevent-display-sleep`，兩者都停止後立即解除。
+
+Titlebar resource projection 由 `appUsageService.js` 每 3 秒發布一次。平時只讀
+`app.getAppMetrics()`；只有 `heavyJobScheduler` 忙碌時才透過 Windows process tree 補量
+Python／FFmpeg 等 descendants。Renderer 只顯示 bounded CPU／RAM 百分比，不取得程序表，
+也不把這份觀測值當成排程或播放權威。
 
 Lyrics IPC 由 `electron/main/lyricsHandlers.js` 保留穩定註冊 facade；實際 channel 依責任
 分在 `electron/main/lyrics/`：`documentHandlers.js` 只處理本機歌詞／timing，
@@ -173,6 +210,9 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent          |
 | Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent            |
 | Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments     |
+| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent           |
+| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並匯出章節文字            |
+| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection     |
 
 本機媒體經 `utawakui-media:` protocol 交付 renderer。Scheme 與 handler 註冊在
 `electron/main/mediaScheme.js`／`mediaProtocol.js`；`electron/lib/` 只提供其呼叫的
@@ -186,6 +226,11 @@ owner，負責四聲道 accompaniment／guide-vocal routing、monitor／capture 
 Stretch pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media timing events，
 也不直接建立第二份 playback state；所有播放時間與 phase 仍只由 HTML audio events
 更新。
+
+節拍器由 `useMetronome.js` 擁有 session state，並以獨立 AudioContext 與 lookahead
+scheduler 發聲，不接入 player monitor／capture graph。`useMetronomeTrackTempo.js` 是唯一
+曲目分析接線：只接受既有 confidence gate 通過的 tempo，且在節拍器停止、使用者尚未
+手動覆寫時套用；它不回寫 analysis sidecar 或播放 tempo。
 
 Lyrics renderer 同樣維持單一 public owner：`src/composables/useLyrics.js` 保留 library／
 playlist scope、選曲、HTML audio playback projection、watchers 與 `useLyrics()` facade；
@@ -280,15 +325,16 @@ sidecar currentness，並在手動 analysis／batch 結束後再執行。排入�
 
 ## Feature Gates 與最小依賴單位
 
-| 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                            |
-| -------------------------------------- | ----------------------- | ------------------------------ | ----------------------------------------------------------------------------- |
-| Local import、library、playback        | 無                      | 無                             | 永遠可用，不等待 optional service                                             |
-| Provider acquisition／search／backfill | `provider-flow`         | `yt-dlp-provider-tool` runtime | Embedded Python、yt-dlp wheel、provider 與 plugin 原子驗證／啟用              |
-| External lyrics lookup                 | `lyrics-flow`           | 無 installed binary            | 每次 external request 檢查；provider failure 不回滾已成功的本機工作           |
-| Quick／general separation              | `audio-processing-flow` | FFmpeg + selected model        | FFmpeg 與每個 model 可獨立 install／repair／remove                            |
-| BPM／beat analysis                     | `audio-processing-flow` | Beat This! `small0` capability | Settings 管理 lifecycle；ready 後新匯入依偏好進入 main-owned 單工佇列         |
-| Audio Python capabilities              | Capability policy       | Immutable lock／generation     | 獨立 runtime family、scheduler 與 lease；不與 Provider 或 ONNX lifecycle 合併 |
-| OBS loopback output                    | `public-output-flow`    | Built-in Overlay assets        | Start／publish 受 gate；stop／status 保持可用以復原                           |
+| 產品動作                               | Gate                    | 最小 managed unit              | Lifecycle boundary                                                                            |
+| -------------------------------------- | ----------------------- | ------------------------------ | --------------------------------------------------------------------------------------------- |
+| Local import、library、playback        | 無                      | 無                             | 永遠可用，不等待 optional service                                                             |
+| Provider acquisition／search／backfill | `provider-flow`         | `yt-dlp-provider-tool` runtime | Embedded Python、yt-dlp wheel、provider 與 plugin 原子驗證／啟用                              |
+| External lyrics lookup                 | `lyrics-flow`           | 無 installed binary            | 每次 external request 檢查；provider failure 不回滾已成功的本機工作                           |
+| Quick／general separation              | `audio-processing-flow` | FFmpeg + selected model        | FFmpeg 與每個 model 可獨立 install／repair／remove                                            |
+| BPM／beat analysis                     | `audio-processing-flow` | Beat This! `small0` capability | Settings 管理 lifecycle；ready 後新匯入依偏好進入 main-owned 單工佇列                         |
+| Audio Python capabilities              | Capability policy       | Immutable lock／generation     | 獨立 runtime family、scheduler 與 lease；不與 Provider 或 ONNX lifecycle 合併                 |
+| OBS loopback output                    | `public-output-flow`    | Built-in Overlay assets        | Start／publish 受 gate；stop／status 保持可用以復原                                           |
+| OBS status／session timestamps         | `obs-integration`       | `obs-websocket-js`             | Main-owned lazy adapter、encrypted credential、bounded connect／request／reconnect；read-only |
 
 BPM／beat analysis 的「依偏好」是 gate 內的預設開啟行為，不是獨立於 gate 之外；
 app update 的啟動時自動檢查則不受本表任何一個 gate 保護，兩者的定義與理由見
@@ -386,6 +432,17 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
   `src/composables/useAppUpdate.js` 是唯一 renderer owner。目前 `signExecutable`／
   `verifyUpdateCodeSignature` 為 false，屬 unsigned updater runtime，尚無連續版本
   update acceptance 驗證。
+- `electron/lib/updateManifestClient.js`、`updateManifestVerification.js` 與
+  `tools/update-signing/` 提供 app-level signed manifest foundation。Main-private
+  descriptor 將 installer basename／size／SHA-512 exact-bind 到
+  `electron-updater` 的 `UpdateInfo`；schema v2 使用 Ed25519 多簽章、SPKI SHA-256
+  key id 與 RFC 8785 相容 canonical bytes，可讓 active／retiring key 在跳版 client
+  間重疊驗證。Release workflow 已拆成無 secret package、protected sign 與 protected
+  publish jobs。`signedManifestEnabled` 目前仍為 false，registry 只有 development key，
+  因此尚未改變已發布版本的安全邊界。Installer 維持 owner 明確接受、目前不規劃購買
+  Authenticode 憑證的 unsigned channel。
+- `obs-websocket-js` 隨 production dependency closure 封裝，但 disabled adapter 不在
+  startup 載入 SDK，也不開 socket 或 timer。
 - 「有什麼新變化」公告內容隨版本內建於 `shared/releaseAnnouncement.json`
   （`version`／`summary`），不在 runtime 解析或下載遠端 release notes；
   `src/composables/useAppAnnouncement.js` 是唯一 renderer owner，比對 main 存的

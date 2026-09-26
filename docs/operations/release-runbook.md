@@ -14,7 +14,7 @@ describe already published artifacts and may differ from the current source tree
 - Current channel: unsigned; Windows may show Unknown publisher.
 - Public feed: `yPinn/Utawakui-Releases`, fixed in electron-builder metadata.
 - Update integrity: HTTPS plus the installer SHA-512 recorded in `latest.yml`.
-- Missing guarantee: no Authenticode publisher identity or signature verification.
+- Missing guarantee: no Authenticode publisher identity verification.
 - Update UX: packaged Windows builds check after startup, but download and install
   both require explicit user actions.
 
@@ -22,9 +22,10 @@ This unsigned boundary is an explicit product decision, not equivalent to a sign
 release. Release notes must disclose it and direct users to the official repository
 and `SHA256SUMS.txt`.
 
-Published v0.1.1 predates the updater metadata bundle. Existing v0.1.1 users need
-one manual installation of the first updater-enabled release; only later versions
-can prove the in-app update path.
+Published v0.1.1 predates the updater metadata bundle. v0.3.0 is the first
+published updater-enabled release, so existing v0.1.1 users need one manual
+installation of v0.3.0; only a version published after v0.3.0 can prove the
+in-app update path across two public releases.
 
 ## Pull Request And Main CI
 
@@ -95,8 +96,9 @@ review before creating a public draft.
 
 ## Public Draft Workflow
 
-`.github/workflows/release.yml` is manual-only and uses the GitHub Actions `release`
-environment. It requires one secret:
+`.github/workflows/release.yml` is manual-only. It separates validation, packaging,
+optional manifest signing and publishing so one job never receives both a signing
+key and the public-repository token.
 
 | Name                   | Scope                                                                                        |
 | ---------------------- | -------------------------------------------------------------------------------------------- |
@@ -107,18 +109,61 @@ from** and enter that same tag in the `tag` input. The first validation step rej
 `main`, a branch, or a mismatched tag before checkout, dependency installation or
 packaging consumes additional runner time.
 
-The workflow repeats validation, creates the same unsigned updater bundle, verifies
-all artifacts, and creates or updates a **draft** stable release containing:
+The no-secret Windows package job repeats validation, creates the same unsigned
+updater bundle and uploads it as a 3-day workflow artifact. The protected `release`
+job downloads and re-verifies that exact bundle, then creates or updates a **draft**
+stable release containing:
 
 - `Utawakui-Setup-<version>.exe`;
 - installer blockmap;
 - `latest.yml`;
 - `SHA256SUMS.txt`.
 
+When `signedManifestEnabled` is true, a separate protected `update-signing` job
+adds `update-manifest.json` before publish. The current registry has no production
+key and the flag is false, so this job is skipped and the existing unsigned draft
+path remains operational.
+
 It refuses to modify a published release or use a prerelease as the stable updater
-feed. The workflow never publishes the draft automatically. A successful public
-draft is not duplicated in Actions artifact storage. If public draft creation or
-upload fails after packaging, a recovery bundle is retained for at most 3 days.
+feed. The workflow never publishes the draft automatically. Package-transfer and
+failed-recovery artifacts are retained for at most 3 days.
+
+## Signed Manifest Activation And Rotation
+
+Production activation is a separate credential operation. Do not generate or commit
+a production private key as part of an ordinary source change.
+
+1. Create an Ed25519 active key and preferably a separate offline recovery key in
+   the chosen custody system. Add only their SPKI public keys and SHA-256 fingerprint
+   ids to `shared/updateSigningKeys.json`.
+2. Set the active entry to `production`／`active`, set
+   `activeProductionKeyId`, and keep any recovery entry as
+   `production`／`recovery`.
+3. Create a protected GitHub `update-signing` environment restricted to release
+   tags, require review and prevent self-review. Store the Base64 PKCS#8 active key
+   as `UPDATE_MANIFEST_PRIVATE_KEY_B64`. This environment must not contain
+   `PUBLIC_RELEASE_TOKEN`.
+4. Change `signedManifestEnabled` to true in the reviewed release source. The
+   validation job refuses activation unless the active public-key contract is valid.
+5. Confirm the draft contains `update-manifest.json`, then run
+   `node tools/update-signing/verify-manifest.mjs` against the downloaded installer,
+   committed registry, expected version and active key id before publication. During
+   rotation, also pass the declared retiring key with `--required-key-id`.
+
+For normal rotation, commit the new key as `active`, mark the old key `retiring`,
+and temporarily store the old private key as
+`UPDATE_MANIFEST_RETIRING_PRIVATE_KEY_B64`. The sign job emits both signatures.
+Keep the retiring signature until the minimum supported updater version already
+trusts the new key; otherwise users who skipped the transition release cannot update.
+If the active private key is lost, promote a pretrusted recovery key to `active`,
+revoke the lost key, and use the promoted recovery key for a recovery release that
+embeds a replacement public key. Promote that replacement in the following release
+and dual-sign with the recovery key as `retiring`. If no trusted
+active／retiring／recovery private key remains, recovery requires a manual installer.
+
+The first version that enables this gate can be downloaded by v0.3.0 only through
+the existing `latest.yml` SHA-512 path because v0.3.0 contains no manifest verifier.
+That newly installed version enforces the signed manifest on its next update.
 
 ## Acceptance Before Publish
 
@@ -126,7 +171,10 @@ Before manually publishing the draft:
 
 Complete the cross-feature
 [manual acceptance checklist](manual-acceptance.md) in addition to the release
-boundary checks below.
+boundary checks below. Use the
+[consecutive update acceptance template](update-acceptance-template.md) and its
+read-only evidence collector for the installed update path; do not treat a draft or
+local feed as production-feed evidence.
 
 - verify installer, Start Menu identity, optional desktop shortcut and uninstall
   retention／cleanup choices;
@@ -136,6 +184,8 @@ boundary checks below.
 - verify prepared Provider, FFmpeg and model units remain independent and repairable;
 - verify Settings shows the running version and correct updater phase;
 - verify installer SHA-256 against `SHA256SUMS.txt` and `latest.yml` artifact contract;
+- when the production manifest gate is enabled, verify the public manifest signature,
+  active key fingerprint and exact installer name／size／SHA-512 binding;
 - for the second and later updater-enabled versions, verify check, explicit download,
   explicit install/restart, data retention and rollback guidance from the previous
   public version.
@@ -143,10 +193,13 @@ boundary checks below.
 Two consecutive updater-enabled public versions must pass this installed matrix
 before the update path is treated as fully accepted.
 
-## Future Authenticode Signing
+## Authenticode Policy
 
 `npm run dist:release` exposes the signing-capable package configuration, but the
-current public workflow deliberately builds unsigned artifacts. Adopting a trusted
-certificate requires a separate credential, timestamp, subject-verification and
-rotation design. Self-signing is not a substitute for a publicly trusted publisher
-identity.
+current public workflow deliberately builds unsigned artifacts. The owner accepts
+this as the current product boundary and has no plan to purchase a trusted
+Authenticode certificate; it is not a release blocker or an incomplete roadmap
+item. Release notes must continue to disclose Unknown publisher behavior and point
+users to the official repository and checksum. Any later reconsideration requires a
+separate product and credential decision. App-level signed update manifests are a
+different integrity layer and do not change Windows publisher identity.

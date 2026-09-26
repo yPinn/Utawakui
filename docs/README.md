@@ -56,7 +56,9 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 
 詳細與最新狀態以 [產品規格](spec.md) 完整表格為準，以下僅供快速定位。
 
-- Local library、playback、queue、playlists 與 Windows shell integration 已是預設核心。
+- Local library、playback、queue、playlists、可發聲節拍器、App CPU／RAM 顯示與
+  Windows shell integration 已是預設核心；首次按 X 會詢問背景執行或退出，且可記住選擇，
+  Settings 也能改回每次詢問。
 - Lyrics canonical timing、provider acquisition、reading、Self-View 與 Overlay 主路徑
   已建立；剩餘重點是人工視覺驗收與操作 polish。
 - `quick`／`general` audio processing 與 Music Analysis（BPM／節拍分析）已是產品能力；
@@ -64,11 +66,15 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   高品質可選包仍受 benchmark／dependency gate 限制。
 - OBS Browser Source MVP 已具備三個固定 slot、Gallery、Workbench、Projection Hub
   與 content/state convergence；instance／pack model 仍是後續方向。
+- 唯讀 OBS WebSocket 連線已可取得直播／錄影狀態與時間戳，並依曲目變更保存本機
+  session history、匯出 YouTube 章節；它不控制 scene／source，也不取代 Browser Source。
 - Windows x64 已有手動啟動的實驗性 Spout2 Lyrics sender；Browser Source 仍是支援基線，正式支援尚待實機相容性驗收。
 - Provider assist 已改為 app-managed Python `yt-dlp` runtime，且只存在於明確啟用的
   advanced flow。
-- Installer、startup trace、diagnostics 與 unsigned updater runtime 已建立；公開簽章
-  與連續版本 update acceptance 尚未完成。
+- Installer、startup trace、diagnostics 與 unsigned updater runtime 已建立；unsigned
+  channel 是現行接受邊界。App-level signed manifest 的 exact binding、可輪替多簽章
+  契約與分權 workflow 已完成，但 production key 尚未配置、gate 仍關閉；連續版本
+  update acceptance 尚未完成。
 - 使用者回饋（錯誤回報／功能請求／體驗意見／內容問題）共用一套預覽後送出流程已實作；
   relay 獨立部署，不進封裝安裝檔。
 
@@ -76,25 +82,28 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 
 ## ADR 現況對照
 
-| ADR                                                                    | 目前效力             | 現況／方向                                                                                                                                    |
-| ---------------------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| [0001](adr/0001-standalone-ytdlp-no-plugin-support.md)                 | 已被 0005 取代       | Standalone executable 限制仍是有效證據；產品已改用 app-managed Python。                                                                       |
-| [0002](adr/0002-packaged-exe-kept-as-electron-exe.md)                  | 現行                 | Executable 維持 `electron.exe`，產品 identity 由 installer／AUMID 提供。                                                                      |
-| [0003](adr/0003-japanese-reading-analyzer-stack.md)                    | 已實作               | 日文 reading 使用 kuromoji + wanakana。                                                                                                       |
-| [0004](adr/0004-korean-romanization-package.md)                        | 已實作               | 韓文 romanization 使用 koroman。                                                                                                              |
-| [0005](adr/0005-python-ytdlp-provider-engine.md)                       | 已實作               | Provider runtime、plugin 與 sidecar 由 app 原子準備和驗證。                                                                                   |
-| [0006](adr/0006-loopback-output-websocket-runtime.md)                  | 已實作               | Loopback HTTP + `ws` 是目前 Browser Source transport。                                                                                        |
-| [0007](adr/0007-public-release-app-updates.md)                         | 已實作基礎           | Public feed、updater 與 unsigned metadata flow 已建立；簽章與連續版本 acceptance 未完成。                                                     |
-| [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 主路徑已實作         | Main diagnostics、Settings 控制與顯式 redacted export 已建立；F6 dev workbench 與獨立單檔 HTML 檢視工具已提供；domain wrappers 持續增量導入。 |
-| [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作             | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                                                                               |
-| [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作         | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                              |
-| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中               | 現行仍是三個固定 slot；instance／pack model 尚未交付。                                                                                        |
-| [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作           | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                         |
-| [0013](adr/0013-external-integration-planes.md)                        | 部分實作             | Browser Source 是支援基線；Spout2 Lyrics sender 為 Windows x64 實驗性原型。                                                                   |
-| [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |
-| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作               | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                   |
-| [0016](adr/0016-user-feedback-intake.md)                               | 已實作               | 錯誤回報／功能請求／體驗意見／內容問題共用一套預覽後送出流程；relay 獨立部署，不進封裝安裝檔。                                                |
-| [0017](adr/0017-directml-execution-provider-for-mdx-separation.md)     | 已接受／已實作       | `quick`／`general` 預設嘗試 DirectML GPU acceleration，失敗時自動改走 CPU；Windows x64 封裝版驗收已完成。                                     |
+| ADR                                                                    | 目前效力                         | 現況／方向                                                                                                                                    |
+| ---------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| [0001](adr/0001-standalone-ytdlp-no-plugin-support.md)                 | 已被 0005 取代                   | Standalone executable 限制仍是有效證據；產品已改用 app-managed Python。                                                                       |
+| [0002](adr/0002-packaged-exe-kept-as-electron-exe.md)                  | 現行                             | Executable 維持 `electron.exe`，產品 identity 由 installer／AUMID 提供。                                                                      |
+| [0003](adr/0003-japanese-reading-analyzer-stack.md)                    | 已實作                           | 日文 reading 使用 kuromoji + wanakana。                                                                                                       |
+| [0004](adr/0004-korean-romanization-package.md)                        | 已實作                           | 韓文 romanization 使用 koroman。                                                                                                              |
+| [0005](adr/0005-python-ytdlp-provider-engine.md)                       | 已實作                           | Provider runtime、plugin 與 sidecar 由 app 原子準備和驗證。                                                                                   |
+| [0006](adr/0006-loopback-output-websocket-runtime.md)                  | 已實作                           | Loopback HTTP + `ws` 是目前 Browser Source transport。                                                                                        |
+| [0007](adr/0007-public-release-app-updates.md)                         | 已實作                           | Public feed、updater 與 owner 明確接受的 unsigned boundary 已建立；連續版本 acceptance 尚待下一版。                                           |
+| [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 主路徑已實作                     | Main diagnostics、Settings 控制與顯式 redacted export 已建立；F6 dev workbench 與獨立單檔 HTML 檢視工具已提供；domain wrappers 持續增量導入。 |
+| [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作                         | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                                                                               |
+| [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作                     | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                              |
+| [0011](adr/0011-overlay-instances-and-presentation-pack-delivery.md)   | 規劃中                           | 現行仍是三個固定 slot；instance／pack model 尚未交付。                                                                                        |
+| [0012](adr/0012-state-convergence-and-startup-phases.md)               | 核心已實作                       | Projection Hub、source identity、liveness 與 startup budgets 已落地。                                                                         |
+| [0013](adr/0013-external-integration-planes.md)                        | 部分實作                         | Browser Source 是支援基線；唯讀 OBS WebSocket adapter 已實作，Spout2 Lyrics sender 為 Windows x64 實驗性原型；寫入式 automation 尚未開放。    |
+| [0014](adr/0014-audio-python-runtime-family.md)                        | Foundation／research             | Host、scheduler 與 workbench 已建立；沒有 Refined product activation。                                                                        |
+| [0015](adr/0015-recording-first-provider-discovery.md)                 | 已實作                           | YT Music Songs 優先、YouTube 補足，依發行錄音適用性排序並由使用者確認下載。                                                                   |
+| [0016](adr/0016-user-feedback-intake.md)                               | 已實作                           | 錯誤回報／功能請求／體驗意見／內容問題共用一套預覽後送出流程；relay 獨立部署，不進封裝安裝檔。                                                |
+| [0017](adr/0017-directml-execution-provider-for-mdx-separation.md)     | 已接受／已實作                   | `quick`／`general` 預設嘗試 DirectML GPU acceleration，失敗時自動改走 CPU；Windows x64 封裝版驗收已完成。                                     |
+| [0018](adr/0018-signed-update-manifest.md)                             | 已接受／待 production activation | Exact artifact binding、多簽章 rotation 與 package／sign／publish 分權已完成；目前僅有 development public key，production gate 明確關閉。     |
+| [0019](adr/0019-signalsmith-stretch-pitch-transpose.md)                | Proposed／已實作                 | Pitch transpose 已改用 Signalsmith Stretch；程式與單元測試完成，仍待實際聽感驗收。                                                            |
+| [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                              |
 
 ## 常用文件
 
@@ -122,10 +131,11 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [startup baseline](operations/startup-performance-baseline.md)、
   [CI usage policy](operations/ci-usage.md)、
   [manual acceptance](operations/manual-acceptance.md)、
+  [consecutive update evidence](operations/update-acceptance-template.md)、
   [release inventory](operations/release-inventory.md)、
   [release runbook](operations/release-runbook.md)。
 - Governance：[legal compliance](governance/legal-compliance.md)。
-- Research：[競品調查](research/competitive-research.md)、
+- Research：[競品調查（2026-09-25）](research/competitive-research.md)、
   [BPM normalization study](research/music-analysis-bpm-normalization-2026-08-28.md)、
   [Visual System Discovery](research/visual-system-discovery-2026-08-25.md)、
   [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、

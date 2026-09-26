@@ -2,11 +2,12 @@
 
 ## Status
 
-Proposed (2026-09-15). Code and unit-test coverage for the parts that can be
-automated are implemented; **audible timing accuracy and click quality are
-not automatable and have not been verified by the assistant** — see
-Consequences. Whether this ships as-is depends on the user actually
-listening to it against a real external metronome.
+Proposed (2026-09-15; amended 2026-09-25). Code and unit-test coverage for the
+lookahead scheduler, synthesized clicks, manual BPM ownership, and confident
+track-BPM application are implemented; **audible timing accuracy and click
+quality are not automatable and have not been verified by the assistant** — see
+Consequences. Whether this ships as-is depends on the user listening to it
+against a real external metronome.
 
 ## Context
 
@@ -117,6 +118,17 @@ default, toggled from the existing "演出" tab header row). The visual-only
 behavior that existed before this change remains the default; sound is
 additive.
 
+### Apply confident track BPM without overriding manual intent
+
+`useMetronomeTrackTempo.js` connects the current track's music-structure result
+to the standalone metronome without making `useMetronome.js` depend on the player
+or analyzer. It reuses `confidentTempo()` from the shared lyrics-rhythm contract:
+confidence must be at least 0.5 and BPM must remain within 20–400. A value applies
+only while the metronome is stopped and `bpmSource` is not `manual`; stepper and
+Tap Tempo input both claim manual ownership until reset. Track changes while the
+metronome is running never interrupt the current schedule, and analyzed BPM is
+never written back to the track, player tempo, or analysis sidecar.
+
 ## Rejected alternatives
 
 - **Routing the click through `usePlayerAudioGraph`'s `masterGain`.**
@@ -131,15 +143,6 @@ additive.
   round — `environment: 'node'` in `vite.config.js` has no `rAF`, and the
   25ms poll tick already gives comparable visual responsiveness while
   keeping the whole scheduler unit-testable under fake timers.
-- **Syncing metronome BPM to the analyzed music-structure BPM**
-  (`docs/contracts/music-analysis-contract.md`). Out of scope for this
-  round. The contract imposes real constraints a future sync feature would
-  need to satisfy: a confidence gate of 0.5, a beat-grid consecutiveness
-  check before any downbeat-phase claim, a ban on silently
-  halving/doubling a detected BPM, and a hard rule that "changing player
-  tempo does not rewrite analyzed source BPM" — the metronome's user-set BPM
-  must stay a distinct, unpersisted value, never written back into the
-  analyzer document.
 - **Persisting `soundEnabled`/volume across app restarts.** Out of scope for
   this round, left as a follow-up; BPM/beats-per-bar already don't persist
   today (`reset()` always restores 120/4), so adding persistence for sound
@@ -157,8 +160,9 @@ additive.
   `metronomeSchedule.js` instead, including a 1000-beat regression test
   asserting the schedule's anchor time does not erode.
 - `useMetronome()` gains `state.soundEnabled`, `setSoundEnabled()`, and
-  `toggleSound()`. Existing consumers (`PlayerToolsPanel.vue`,
-  `PlayerBar.vue`) are unaffected since these are additive.
+  `toggleSound()`, plus `bpmSource` and `applyTrackTempo()` for the bounded
+  analysis handoff. `PlayerBar.vue` installs the single track-tempo watcher;
+  `PlayerToolsPanel.vue` identifies an applied estimate and its confidence.
 - Fixed a latent bug in the same change: the old `setBpm()` called
   `scheduleNextBeat()` unconditionally, which restarted the timer from "now"
   — adjusting BPM while running discarded whatever remained of the current
@@ -182,7 +186,10 @@ additive.
 4. Adjust BPM while running; confirm no glitch/skipped beat and no restart
    of the current beat's timing.
 5. Confirm the metronome produces sound with no track loaded at all.
-6. If an OBS/capture output device is selected in Settings, confirm the
+6. Load a track with a confident BPM estimate, confirm it applies while stopped,
+   then change BPM manually and verify later track changes do not overwrite it
+   until reset.
+7. If an OBS/capture output device is selected in Settings, confirm the
    click is **not** present in that captured output.
 
 ## References

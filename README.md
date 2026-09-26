@@ -11,14 +11,14 @@ Utawakui 將本機曲庫、歌單、播放、歌詞、音訊處理與 OBS Browse
 
 ## 已有能力
 
-| 範圍           | 現況                                                                                                                        |
-| -------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| 本機曲庫與播放 | 結構化 track storage、歌單、待播佇列、播放控制與 Windows shell integration **已可用**。                                     |
-| 練習與音訊     | Pitch/tempo 即時預覽、`quick`／`general` 分離與 guide vocal **已可用**；pre-render 與 Refined recipe **尚未成為產品能力**。 |
-| 歌詞           | 本機匯入、provider lookup、時間軸／讀音、演出者視窗與 Lyrics Overlay 主路徑**已建立**，仍持續做視覺驗收與操作整理。         |
-| OBS 輸出       | 本機 HTTP/WebSocket runtime、三類 Browser Source、Gallery、Workbench 與 URL 複製**已完成 MVP**。                            |
-| 進階來源       | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。                    |
-| 發布與維護     | NSIS installer、啟動量測、local diagnostics 與 updater runtime **已建立**；公開測試版**仍為未簽章發行**。                   |
+| 範圍           | 現況                                                                                                                                      |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 本機曲庫與播放 | 結構化 track storage、歌單、待播佇列、播放控制與 Windows shell integration **已可用**；按 X 可選背景執行或完整退出並記住選擇。            |
+| 練習與音訊     | Pitch/tempo 即時預覽、可發聲節拍器、`quick`／`general` 分離與 guide vocal **已可用**；pre-render 與 Refined recipe **尚未成為產品能力**。 |
+| 歌詞           | 本機匯入、provider lookup、時間軸／讀音、演出者視窗與 Lyrics Overlay 主路徑**已建立**，仍持續做視覺驗收與操作整理。                       |
+| OBS 輸出與連線 | 三類 Browser Source、Gallery、Workbench 與 URL 複製**已完成 MVP**；另可選擇唯讀連線 OBS，記錄逐曲時間戳並匯出章節。                       |
+| 進階來源       | 經 `provider-flow` 啟用後，可準備 app-managed `yt-dlp` runtime，進行候選搜尋、匯入與 metadata backfill。                                  |
+| 發布與維護     | NSIS installer、啟動量測、local diagnostics 與 updater runtime **已建立**；公開測試版**採未簽章發行**。                                   |
 
 完整的已實作／部分完成／規劃中對照，以
 [產品規格](docs/spec.md) 為準；技術邊界請見
@@ -38,20 +38,20 @@ npm run dev
 
 常用指令：
 
-| 指令                    | 用途                                                   |
-| ----------------------- | ------------------------------------------------------ |
-| `npm run dev`           | 啟動 Vite 與 Electron；關閉視窗會一併結束 dev server。 |
-| `npm run dev:tools`     | 啟動開發環境並開啟 Chromium DevTools。                 |
-| `npm run build`         | 建立 renderer production build。                       |
-| `npm start`             | Build 後以 production-like `loadFile` 路徑啟動。       |
-| `npm run dist:dir`      | 建立未壓縮的 packaged app，供快速驗證。                |
-| `npm run dist`          | 建立未簽章 NSIS installer 與 updater metadata。        |
-| `npm run lint`          | 執行 ESLint。                                          |
-| `npm run lint:md`       | 執行 Markdownlint。                                    |
-| `npm run format:check`  | 檢查 Prettier 格式。                                   |
-| `npm test`              | 執行完整 Vitest suite。                                |
-| `npm run test:coverage` | 執行測試並產生 coverage。                              |
-| `npm run perf:startup`  | 量測 packaged startup milestones。                     |
+| 指令                    | 用途                                                                                 |
+| ----------------------- | ------------------------------------------------------------------------------------ |
+| `npm run dev`           | 啟動 Vite 與 Electron；若選擇系統匣背景執行，需從系統匣完整結束才會停止 dev server。 |
+| `npm run dev:tools`     | 啟動開發環境並開啟 Chromium DevTools。                                               |
+| `npm run build`         | 建立 renderer production build。                                                     |
+| `npm start`             | Build 後以 production-like `loadFile` 路徑啟動。                                     |
+| `npm run dist:dir`      | 建立未壓縮的 packaged app，供快速驗證。                                              |
+| `npm run dist`          | 建立未簽章 NSIS installer 與 updater metadata。                                      |
+| `npm run lint`          | 執行 ESLint。                                                                        |
+| `npm run lint:md`       | 執行 Markdownlint。                                                                  |
+| `npm run format:check`  | 檢查 Prettier 格式。                                                                 |
+| `npm test`              | 執行完整 Vitest suite。                                                              |
+| `npm run test:coverage` | 執行測試並產生 coverage。                                                            |
+| `npm run perf:startup`  | 量測 packaged startup milestones。                                                   |
 
 ## 專案結構
 

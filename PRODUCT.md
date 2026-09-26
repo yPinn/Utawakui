@@ -31,8 +31,8 @@ Utawakui 讓使用者在同一套本機工作流中完成：
 1. **Local-first by default**：本機匯入、曲庫與播放永遠是預設核心。
 2. **Workflow over identity**：依資料與輸出行為切分功能，不依使用者標籤切分。
 3. **Public output is explicit**：進入 OBS、直播、錄影或 VOD 的內容必須有明確狀態。
-4. **Advanced flows are separable**：Provider、歌詞服務、音訊處理與公開輸出各自
-   gate、各自準備依賴，不能成為啟動核心的前置條件。
+4. **Advanced flows are separable**：Provider、歌詞服務、音訊處理、公開輸出與
+   外部應用連線各自 gate、各自準備依賴，不能成為啟動核心的前置條件。
 5. **One source of truth**：播放器、佇列與歌詞只保有一份權威狀態；視窗與 Overlay
    只接收投影。
 6. **Operational clarity first**：介面優先支援檢查、切換、復原與低注意力操作。
@@ -41,13 +41,14 @@ Utawakui 讓使用者在同一套本機工作流中完成：
 
 ## Feature Gate 語意
 
-Feature gate 表示使用者已看過提示並選擇啟用某個流程，不是授權資料庫。現行四個
+Feature gate 表示使用者已看過提示並選擇啟用某個流程，不是授權資料庫。現行五個
 產品 gate 為：
 
 - `provider-flow`：外部候選搜尋、匯入、下載與 metadata backfill。
 - `lyrics-flow`：外部歌詞查詢與保存；純本機歌詞操作不需 gate。
 - `audio-processing-flow`：分離與未來的音訊 pre-render。
 - `public-output-flow`：啟動或發布 OBS Browser Source 狀態。
+- `obs-integration`：以唯讀 OBS WebSocket 連線取得直播／錄影狀態與時間戳。
 
 「無 gate」與「已啟用某個 gate」之間還有兩種容易混淆的狀態，需要分開理解：
 
@@ -56,13 +57,13 @@ Feature gate 表示使用者已看過提示並選擇啟用某個流程，不是�
   （`autoAnalyzeMusicStructure`）預設為 true，但每次觸發前仍會重新檢查
   `audio-processing-flow` 是否已啟用、分析元件是否就緒；使用者從未啟用該 gate
   或元件未安裝時，這個預設偏好不會生效。
-- **不受四個 gate 保護的預設背景行為**：極少數與素材權利無關、純屬應用程式
+- **不受五個 gate 保護的預設背景行為**：極少數不引入使用者素材、外部應用
+  credential 或可變 endpoint，純屬應用程式
   維護性質的行為，預設開啟且不經過上述任何一個 gate。目前只有「啟動時自動
   檢查應用程式更新」（`autoCheckAppUpdates`）屬於這類：它只主動連線 release
   feed 查詢版本，範圍明確止於「查詢」，下載與安裝仍是使用者在 Settings 的
-  另一個明確動作。這類行為之所以不進入 gate 模型，是因為 gate 存在的理由是
-  提示素材與平台權利風險，而不是「任何預設連外行為都必須有提示」；是否應該
-  納入額外提示，留待後續產品決策，不在此文件預先認定。
+  另一個明確動作。Gate 用來揭露素材／平台權利風險，或建立 external credential
+  與 trust boundary；它不是「任何固定端點的版本查詢都必須有提示」的總開關。
 
 ## 非目標
 

@@ -249,8 +249,8 @@ remains the user-facing escape hatch.
 
 - `docs/adr/0002-packaged-exe-kept-as-electron-exe.md`
 - `docs/adr/0009-tiered-audio-processing-runtime.md`
-- `docs/research/competitive-research.md` §4.3, §5.2 (competitor GPU
-  separation architectures), §9.1
+- `docs/research/competitive-research.md` §3.2, §3.3 and §4 (competitor GPU
+  separation products and the current comparison matrix)
 - [microsoft/onnxruntime#20084](https://github.com/microsoft/onnxruntime/issues/20084),
   [#13086](https://github.com/microsoft/onnxruntime/issues/13086),
   [#17678](https://github.com/microsoft/onnxruntime/issues/17678)

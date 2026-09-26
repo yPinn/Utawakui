@@ -4,12 +4,14 @@
 
 Accepted and implemented (2026-08-23; recheck interval, `autoCheckAppUpdates`
 preference, download rate/ETA projection, and the passive navigation marker
-added 2026-09-04), with packaged verification pending. The runtime version
-boundary, main-process update service, fixed IPC intents, Settings
-status/actions, public feed configuration, release-only public repository,
-unsigned draft-release workflow, and proprietary product license are
-implemented. The current product decision accepts an unsigned automatic update
-channel instead of paying for a trusted publisher identity.
+added 2026-09-04). v0.3.0 completed packaged verification and became the first
+published updater-enabled bundle on 2026-09-15; a real update from v0.3.0 to a
+later public version remains pending. The runtime version boundary, main-process
+update service, fixed IPC intents, Settings status/actions, public feed
+configuration, release-only public repository, unsigned draft-release workflow,
+and proprietary product license are implemented. The current product decision
+accepts an unsigned automatic update channel instead of paying for a trusted
+publisher identity.
 
 ## Context
 

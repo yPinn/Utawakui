@@ -2,10 +2,12 @@
 
 ## Status and scope
 
-Active planning and experimental contract, amended 2026-09-08. It elaborates
+Active contract, amended 2026-09-24. It elaborates
 [ADR 0013](../adr/0013-external-integration-planes.md). OBS Browser Source remains
-the supported integration. The fixed Spout2 Lyrics sender described below is an
-implemented Windows x64 prototype, not yet a supported receiver integration.
+the supported presentation integration. The read-only OBS WebSocket profile is
+implemented for state／timestamp observation and local session history; write
+capabilities remain planning-only. The fixed Spout2 Lyrics sender described below
+is an implemented Windows x64 prototype, not yet a supported receiver integration.
 
 ## Architectural boundary
 
@@ -131,16 +133,28 @@ responses cannot update current state.
 
 ## OBS adapter profile
 
-Candidate transport: OBS WebSocket 5 through a thin `obs-websocket-js` wrapper.
+Current transport: OBS WebSocket 5 through a thin, main-owned
+`obs-websocket-js` wrapper that is loaded only while the adapter is enabled.
 
-Initial read capabilities:
+Implemented read capabilities:
 
-- OBS/obs-websocket versions and negotiated requests;
-- current program scene;
-- streaming/recording state; and
-- explicitly subscribed scene/source events.
+- OBS／obs-websocket versions and negotiated RPC version;
+- streaming／recording state events; and
+- on-demand stream／record timecodes at track or manual marker boundaries.
 
-Initial write capabilities, each opt-in:
+The adapter validates endpoint scalars before storing them in machine config and
+stores the password only in an Electron `safeStorage`-encrypted file. Credential
+writes fail closed when OS encryption is unavailable, and Settings exposes an
+explicit removal action instead of treating an empty password as deletion. The
+connection handshake has a 10-second deadline and each status request has a
+5-second deadline. Either timeout retires the transport before bounded
+exponential-backoff reconnect; disconnect and reconfigure cancel pending work so
+stale completions cannot replace newer status. The adapter never forwards vendor
+payloads to renderer state and exposes no generic request channel. Local session
+history is derived from canonical track-change projections plus fresh OBS
+timecodes and can be exported as YouTube chapter text.
+
+Deferred write capabilities, each requiring a separate opt-in contract:
 
 - create or update a named Browser Source selected by the user;
 - update its Utawakui URL and dimensions;

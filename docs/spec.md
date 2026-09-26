@@ -39,6 +39,8 @@ Utawakui 不是曲庫、授權服務、素材權利管理工具或串流平台�
 - **Public output**：Setlist、Lyrics、Now Playing Browser Sources；封面型模板歸入
   Now Playing。
 - **Provider assist**：候選搜尋、來源匯入、下載與 metadata backfill。
+- **External integrations**：唯讀 OBS WebSocket 連線、直播／錄影時間戳與本機
+  session history；不影響 Browser Source 或預設播放流程。
 
 每個可選工作流都必須在對應 gate 關閉或依賴缺失時，讓預設核心繼續可用。
 
@@ -49,22 +51,24 @@ adapters 評估，目前不做 OBS native plugin。
 
 ## 3. 目前功能現況
 
-| 領域              | 現況               | 邊界與剩餘工作                                                                                                                                                                                                                                                                                                                                                                                                |
-| ----------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Desktop shell     | 已實作             | Electron、Vite、Vue、secure preload、single instance 與 production `loadFile` 路徑已建立。                                                                                                                                                                                                                                                                                                                    |
-| Local library     | 已實作             | Structured track folders、metadata index、local import、legacy migration 與 media protocol 已建立。                                                                                                                                                                                                                                                                                                           |
-| Playback／queue   | 已實作             | Audio element 是 timing 權威；queue、pitch／tempo preview、Windows shell controls 已連線。                                                                                                                                                                                                                                                                                                                    |
-| Playlists／albums | 已實作             | Collections 可排序；來源型 album 維持 read-only membership。                                                                                                                                                                                                                                                                                                                                                  |
-| Lyrics            | 主路徑已實作       | T0／T1／T2、LRCLIB／實驗性 NetEase／Better Lyrics 公開快取多來源平行搜尋、來源中立排序與同錄音來源替代、LRCLIB＋NetEase exact-only 背景自動取得、持久化來源偏好、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；provider-authored timing 皆只在完整驗證通過時標示逐字同步。Better Lyrics 維持手動，既有 AMLL 來源仍可讀取與刪除但不再提供線上搜尋。                                              |
-| Audio processing  | 基礎產品能力已實作 | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；`quick`／`general` 已採用 DirectML GPU acceleration（預設開啟、自動 CPU fallback，見 [ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md)），並已通過 Windows x64 封裝版執行與 CPU／GPU 輸出驗收；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。                   |
-| Provider assist   | 核心路徑已實作     | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、YT Music Songs 優先＋一般 YouTube 補足的文字搜尋、評分後最多十二筆候選、弱化觀看數排序、release-only 自動選取、YouTube／YT Music URL 解析、recording-first import/backfill 與 main-owned YT Music 系統瀏覽器探索已連線，只能作為 gated advanced flow；這不是官方 YT Music API 整合，Spotify／Apple Music URL 轉換、內嵌帳號與帳號歌單仍未開放。 |
-| OBS output        | MVP 已實作         | Loopback HTTP/WebSocket、三個固定 slot、Gallery、Workbench、URL copy、content/state split、Lyrics template capability registry、Live Stage 可選歌詞呈現策略與 source-mapped T2 顯示邊界已建立；Browser Source 仍是支援基線。                                                                                                                                                                                  |
-| Feature gates     | 已實作             | Renderer 提示與 main enforcement 共用 registry；local core 不需 gate。                                                                                                                                                                                                                                                                                                                                        |
-| Diagnostics       | 已實作             | Main-owned persistence/redaction、renderer capture、Settings 控制、dependency IPC boundary 與顯式 redacted export（單一 JSON support bundle）已建立；dev-only F6 結構化檢視工作台（F5／F7／F8 為音樂分析、歌詞來源檢查與視覺系統型錄，皆同屬 dev-only）與獨立單檔 HTML 檢視工具已提供；其他 domain wrappers 持續增量導入。                                                                                    |
-| 使用者回饋        | 已實作             | 錯誤回報／功能請求／使用體驗意見／內容問題共用一套預覽後送出流程，僅錯誤回報可選附最近錯誤紀錄；Settings 常駐入口與錯誤紀錄行動選單均可觸發。Relay 獨立部署於 Cloudflare、不隨 App 打包，需另行設定 Discord webhook 與 KV namespace 才能實際送達；送出前一律強制預覽，不做自動或背景上傳。                                                                                                                    |
-| Distribution      | 已實作基礎         | NSIS、AUMID、package contracts、startup trace 與 unsigned updater runtime 已建立；獨立 manifest 簽章驗證機制（`electron-updater` 之外的第二層完整性檢查）已實作並通過單元測試，見 [ADR 0018](adr/0018-signed-update-manifest.md)——目前僅開發自簽金鑰，尚未接進真正發布流程，等同尚未變成使用者可感知的產品能力；受信任 Authenticode 簽章與連續版本 update acceptance 仍未完成。                               |
-| Session／VOD mode | 規劃中             | 尚未提供每次 session 的 live、recording、VOD 與 clips 狀態管理。                                                                                                                                                                                                                                                                                                                                              |
-| External adapters | 實驗性原型         | Windows x64 已有固定 `Utawakui.Lyrics` Spout2 sender；Browser Source 仍是支援基線，實機 receiver／alpha／GPU／安裝版驗收前不列為正式支援。其他控制 adapter 尚未成為產品能力。                                                                                                                                                                                                                                 |
+| 領域                   | 現況               | 邊界與剩餘工作                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Desktop shell          | 已實作             | Electron、Vite、Vue、secure preload、single instance、production `loadFile` 與 Windows system tray 背景執行已建立。預設按 X 會以 App 內共用 Modal 詢問背景執行、完全結束或取消，並可記住選擇；Renderer 無法呈現時才退回 Windows 原生對話框。Settings 可改為每次詢問、固定背景執行或固定退出。背景執行只隱藏既有主視窗，最小化仍進工作列，雙擊／第二次啟動可還原；Tray menu 提供開啟、設定與完整退出，不含登入自動啟動或 Tray 播放控制。                               |
+| Resource monitor       | 已實作             | Titlebar 每 3 秒顯示 Utawakui 自身 CPU／RAM；平時讀 Electron app metrics，只有人聲分離等 heavy job 執行時才補量子程序。它不顯示整機或 GPU 使用率，yt-dlp 下載程序目前不計入。                                                                                                                                                                                                                                                                                         |
+| Local library          | 已實作             | Structured track folders、metadata index、local import、legacy migration 與 media protocol 已建立。                                                                                                                                                                                                                                                                                                                                                                   |
+| Playback／queue        | 已實作             | Audio element 是 timing 權威；queue、Signalsmith pitch／tempo preview、Windows shell controls 已連線。節拍器以獨立 AudioContext 與 lookahead scheduler 發聲，會在未手動覆寫且停止時套用可信的曲目分析 BPM；實際音質與長時間 drift 仍待人工聽感驗收。                                                                                                                                                                                                                  |
+| Playlists／albums      | 已實作             | Collections 可排序；來源型 album 維持 read-only membership。                                                                                                                                                                                                                                                                                                                                                                                                          |
+| Lyrics                 | 主路徑已實作       | T0／T1／T2、LRCLIB／實驗性 NetEase／Better Lyrics 公開快取多來源平行搜尋、來源中立排序與同錄音來源替代、LRCLIB＋NetEase exact-only 背景自動取得、持久化來源偏好、讀音、authoring、Self-View 與 segment-aware Overlay 已建立；provider-authored timing 皆只在完整驗證通過時標示逐字同步。Better Lyrics 維持手動，既有 AMLL 來源仍可讀取與刪除但不再提供線上搜尋。                                                                                                      |
+| Audio processing       | 基礎產品能力已實作 | `quick`／`general` recipe、獨立 FFmpeg／model lifecycle、guide vocal 與本機 BPM／節拍分析可用；`quick`／`general` 已採用 DirectML GPU acceleration（預設開啟、自動 CPU fallback，見 [ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md)），並已通過 Windows x64 封裝版執行與 CPU／GPU 輸出驗收；Refined、pre-render 與高品質可選包仍受 benchmark／dependency gate 限制。                                                                           |
+| Provider assist        | 核心路徑已實作     | App-managed Python `yt-dlp` runtime、plugin/provider sidecar、YT Music Songs 優先＋一般 YouTube 補足的文字搜尋、評分後最多十二筆候選、弱化觀看數排序、release-only 自動選取、YouTube／YT Music URL 解析、recording-first import/backfill 與 main-owned YT Music 系統瀏覽器探索已連線，只能作為 gated advanced flow；這不是官方 YT Music API 整合，Spotify／Apple Music URL 轉換、內嵌帳號與帳號歌單仍未開放。                                                         |
+| OBS output             | MVP 已實作         | Loopback HTTP/WebSocket、三個固定 slot、Gallery、Workbench、URL copy、content/state split、Lyrics template capability registry、Live Stage 可選歌詞呈現策略與 source-mapped T2 顯示邊界已建立；Browser Source 仍是支援基線。                                                                                                                                                                                                                                          |
+| Feature gates          | 已實作             | Renderer 提示與 main enforcement 共用五個 gate 的 registry；local core 不需 gate。                                                                                                                                                                                                                                                                                                                                                                                    |
+| Diagnostics            | 已實作             | Main-owned persistence/redaction、renderer capture、Settings 控制、dependency IPC boundary 與顯式 redacted export（單一 JSON support bundle）已建立；dev-only F6 結構化檢視工作台（F5／F7／F8 為音樂分析、歌詞來源檢查與視覺系統型錄，皆同屬 dev-only）與獨立單檔 HTML 檢視工具已提供；其他 domain wrappers 持續增量導入。                                                                                                                                            |
+| 使用者回饋             | 已實作             | 錯誤回報／功能請求／使用體驗意見／內容問題共用一套預覽後送出流程，僅錯誤回報可選附最近錯誤紀錄；Settings 常駐入口與錯誤紀錄行動選單均可觸發。Relay 獨立部署於 Cloudflare、不隨 App 打包，需另行設定 Discord webhook 與 KV namespace 才能實際送達；送出前一律強制預覽，不做自動或背景上傳。                                                                                                                                                                            |
+| Distribution           | 已公開測試         | v0.3.0 已於 2026-09-15 發布至公開 stable feed，提供 installer、blockmap、`latest.yml` 與 `SHA256SUMS.txt`。Unsigned channel 是 owner 明確接受的現行產品邊界，目前沒有購買 Authenticode 憑證的規劃，也不是待完成 gate。App-level signed manifest 已完成 installer metadata exact binding、可輪替多簽章與 package／sign／publish 分權，但目前只有 development public key，production gate 明確關閉；從 v0.3.0 到下一個公開版本的連續版本 update acceptance 也仍待完成。 |
+| OBS integration        | 初始唯讀路徑已實作 | `obs-integration` 啟用後可連線 OBS WebSocket 5，讀取直播／錄影狀態與時間戳；連線與狀態請求均有期限，逾時後會淘汰 transport 並重連。密碼由 OS-backed secure storage 保存，不可用時設定會失敗，並可由 Settings 明確移除。曲目切換與手動 marker 會寫入本機 session history，可匯出 YouTube 章節；OBS 活動期間會防止系統休眠。尚未提供 scene／source 寫入或遠端播放控制。                                                                                                 |
+| VOD／clip rights state | 規劃中             | OBS session history 只記錄時間戳，不代表已確認錄影、VOD、clips 或精華的素材權利；仍未提供每個 session 的權利狀態與輸出 review。                                                                                                                                                                                                                                                                                                                                       |
+| Native adapters        | 實驗性原型         | Windows x64 已有固定 `Utawakui.Lyrics` Spout2 sender；Browser Source 仍是支援基線，實機 receiver／alpha／GPU／安裝版驗收前不列為正式支援。                                                                                                                                                                                                                                                                                                                            |
 
 ## 4. 產品與資料邊界
 
@@ -102,6 +106,8 @@ adapters 評估，目前不做 OBS native plugin。
 - Main Projection Hub 只接受版本化、受驗證的投影；Self-View 與 Overlay 不建立
   第二份播放狀態。
 - Browser Source WebSocket 為唯讀輸出通道，不能傳入播放命令。
+- 節拍器是 renderer-owned session state，使用獨立 AudioContext，不接入歌曲的
+  monitor／capture graph；曲目 BPM 只作可信估算值，使用者手動調整後不再自動覆寫。
 
 ### 4.3 音訊處理
 
@@ -129,6 +135,10 @@ adapters 評估，目前不做 OBS native plugin。
   版面：模板以約兩成高度保留目前歌曲焦點區，已唱紀錄取得其餘可用高度；兩區只以
   固定 spacing 分隔，不保留無語意的比例空白列。最近八首已唱紀錄依正常播放順序向下
   排列，只有實際內容超出下方區域時才自動垂直滾動。
+- OBS WebSocket integration 是獨立、可停用的唯讀 adapter。Main 持有 endpoint、
+  credential、request deadlines、reconnect、狀態與本機 session history；Renderer 只提交 bounded
+  enable／設定／marker／export intents。它不經 Browser Source 公開 WebSocket，也不
+  取得任意 OBS request 能力。
 
 ### 4.5 使用者回饋
 
@@ -158,12 +168,13 @@ adapters 評估，目前不做 OBS native plugin。
 
 ## 5. Feature Gates 與依賴
 
-| Gate                    | 保護的產品動作                            | 依賴原則                                                    |
-| ----------------------- | ----------------------------------------- | ----------------------------------------------------------- |
-| `provider-flow`         | 外部候選、下載、來源匯入與 backfill       | Provider runtime 四個 artifact 原子準備；不得阻擋本機匯入。 |
-| `lyrics-flow`           | 外部歌詞查詢與保存                        | 每次 external request 都在 main 再檢查；不需要安裝 binary。 |
-| `audio-processing-flow` | Separation、本機音樂分析與未來 pre-render | FFmpeg 與 active model 各自管理；缺一項只影響該能力。       |
-| `public-output-flow`    | 啟動 Output server 與發布狀態             | 內建 Overlay 不需外部 binary；stop／status 永遠可用於復原。 |
+| Gate                    | 保護的產品動作                            | 依賴原則                                                            |
+| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------- |
+| `provider-flow`         | 外部候選、下載、來源匯入與 backfill       | Provider runtime 四個 artifact 原子準備；不得阻擋本機匯入。         |
+| `lyrics-flow`           | 外部歌詞查詢與保存                        | 每次 external request 都在 main 再檢查；不需要安裝 binary。         |
+| `audio-processing-flow` | Separation、本機音樂分析與未來 pre-render | FFmpeg 與 active model 各自管理；缺一項只影響該能力。               |
+| `public-output-flow`    | 啟動 Output server 與發布狀態             | 內建 Overlay 不需外部 binary；stop／status 永遠可用於復原。         |
+| `obs-integration`       | 連線 OBS 並讀取直播／錄影狀態與時間戳     | `obs-websocket-js` 隨 App 提供；密碼只進 OS-backed secure storage。 |
 
 Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 enabled 狀態。
 它不保存素材權利判斷，也不能成為 main trust boundary 的替代品。「Gate 內預設偏好」
@@ -172,17 +183,19 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
 
 ## 6. 方向與優先順序
 
-### 6.1 近期：穩定公開測試核心
+### 6.1 近期：公開測試發布後的穩定與安全
 
 - 持續量測 dev、production-like、unpacked 與 installed startup。
-- 完成 installer／updater 的連續版本 acceptance 與 unsigned-channel 操作驗證。
+- 持續稽核 v0.3.0 公開資產、update metadata、checksum、secret、dependency 與 license 邊界；已發布版本不可覆寫，發現問題時以更高版本修復。
+- App-level signed manifest 的程式與 workflow foundation 已完成；production activation 前仍須由 owner 配置 active／recovery key、protected `update-signing` environment 與 signing secrets，並以 public draft 驗證多簽章資產。
+- 下一個公開版本必須完成從 v0.3.0 升級的連續版本 acceptance、應用內更新／手動 installer parity 與 unsigned-channel 操作驗證。
 - 補齊 Lyrics、Self-View、Workbench 與 OBS 的人工視覺 walkthrough。
 - 擴大 diagnostics domain coverage、匯出與可恢復錯誤狀態。
 - 完成缺檔、corrupt sidecar、dependency repair 與 library maintenance UX。
 
 ### 6.2 中期：完整演出操作
 
-- Recording／VOD session mode 與 source output review。
+- 在既有 OBS session history 上補齊 VOD／clip 權利狀態與 source output review。
 - Pitch／tempo pre-render cache 與 preset export／import。
 - Output Instance 與受限 Presentation Pack／User Variant 模型。
 - 在既有 source convergence 上補齊 readiness 與 activation hardening。
@@ -191,131 +204,42 @@ Gate confirmation 只保存 `featureId`、notice version、confirmed time 與 en
 
 - Music Analysis 持續補強 offline、容量、失敗復原與人工驗收證據；Refined runtime
   仍須通過 license、offline、wheel、容量與固定歌曲品質驗證後才可啟用。
-- 只有明確 workflow 需求成立後，才加入 OBS WebSocket、VTube Studio、Stream Deck
-  或 native transport adapters。
+- 只有明確 workflow 需求成立後，才加入 OBS scene／source 寫入、VTube Studio、
+  Stream Deck 或其他有 command trust boundary 的 adapters。
 - Provider 模組與官方 metadata integrations 保持 optional，不改變 local-first 入口。
 
 ## 7. 尚待產品決策
 
 ### 7.1 產品範圍決策
 
-1. Recording／VOD gate 應每次 session 確認，或保存可見但可重用的 session preset？
+1. VOD／clip 權利狀態應每次 session 確認，或保存可見但可重用的 session preset？
+   既有 OBS session history 只記錄時間戳，不代表完成此確認。
 2. Preset 匯入遇到缺曲時，採提示、略過或 track remapping？
 3. Official Presentation Pack 與 User Variant 的版本、簽章與分享邊界如何落地？
 4. Refined 的固定品質與容量門檻達到多少才可進產品 catalog？
-5. 哪一個外部 adapter 有足夠真實需求，值得新增 credential 與 command trust boundary？
+5. 哪一個 write-capable external adapter 有足夠真實需求，值得新增 command
+   capability、credential 與 applied-state confirmation？
 6. 是否要投入原生 OBS 音訊輸出（例如自製 libobs plugin），做為 Browser Source／系統音訊
-   裝置之外的第三條輸出路徑？這是目前三個產品中唯一「別人有、Utawakui 與 EliteSand Pro
-   都沒有」的能力，但需要一併評估 libobs（GPL-2.0-or-later）的散布條件、崩潰風險模型
-   與 Browser Source 不同（原生行程內程式碼，非獨立 CEF 沙箱），以及是否要比照競品做
-   VST3／ASIO 類第三方原生程式碼的獨立行程隔離設計。見
-   [競品調查 §5.3](research/competitive-research.md#53-對-utawakui-的啟發第三輪更新) 與
-   [§7 合法性疑慮對照](research/competitive-research.md#7-合法性疑慮對照)。
+   裝置之外的第三條輸出路徑？這需要一併評估 libobs（GPL-2.0-or-later）的散布條件、
+   行程內崩潰風險，以及第三方原生程式碼是否應隔離。見
+   [競品調查 §5.2](research/competitive-research.md#52-原生-obs-音訊仍是高成本候選不是追趕項目) 與
+   [§6 權利、平台與隱私邊界](research/competitive-research.md#6-權利平台與隱私邊界)。
 7. 是否要加入「無伴奏演出」項目，讓清唱／自彈自唱不需要假媒體檔就能進入 now
-   playing／待播／已唱？這是低風險的資料模型補洞，與現有 library／queue 設計相容；尚待
-   決定 track 的最小必要欄位（時長估計、手動結束 vs. 計時自動結束）與是否影響現有
-   playback／queue 契約。見
-   [競品調查 §5.3](research/competitive-research.md#53-對-utawakui-的啟發第三輪更新)。
-
-Updater 非對稱簽章＋artifact hash 雙層驗證已決定並實作簽章／驗證架構，詳見
-[ADR 0018](adr/0018-signed-update-manifest.md)與上方 §3 狀態表；正式金鑰存放位置與
-是否接進真正發布流程仍是 ADR 0018 記錄的未決問題，尚未變成產品可用能力。
-
-Pitch 移調（transpose／pitch cents）已從 SoundTouchJS／WSOLA 換成頻域的 Signalsmith
-Stretch（MIT），程式碼與可自動化的單元測試（`combinedSemitones()`）已完成，詳見
-[ADR 0019](adr/0019-signalsmith-stretch-pitch-transpose.md)；但實際移調音質無法自動化
-驗證，需使用者親自試聽確認後才能視為完成，目前狀態為「已實作，待聽感驗收」。
+   playing／待播／已唱？仍需決定 track 的最小必要欄位與手動／計時結束方式。見
+   [競品調查 §5.1](research/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
+8. 是否要加入獨立 BGM standby lane，在演唱開始時淡出／暫停、停止或唱完後恢復？
+   兩個完整工作流競品都已採用此模式，但仍需先決定它與演唱 queue／history／chapter 的
+   ownership、手動介入與失敗恢復，不因競品採用就直接列入 roadmap。見
+   [競品調查 §5.1](research/competitive-research.md#51-bgm-lane-與無伴奏項目已形成重複需求訊號)。
 
 ### 7.2 系統與環境整合
 
-1. 是否要加入本機資源監測（CPU／GPU／RAM 使用率）？這類監測在效能導向的桌面軟體中是
-   常見做法，並非單一競品獨有——OBS 本身內建 Stats dock（顯示 CPU／掉幀／編碼耗時）、
-   MSI Afterburner／RivaTuner Statistics Server 提供疊圖式硬體監測、Windows工作管理員
-   效能分頁與工作列縮圖也都是使用者已熟悉的參照點。核心動機是 Utawakui 常與 OBS
-   這類重度佔用 CPU／GPU 的軟體同時執行，讓使用者能及早發現資源競爭（例如編碼與
-   音訊分離同時搶 GPU）。監測本身也要避免造成額外負擔：若要投入，建議走低頻率
-   輪詢、預設關閉或最小化 UI 佔用，而非常駐即時圖表。若要讓監測產生實際產品效益，
-   也應一併評估是否讓結果具備行動力——例如偵測到 GPU／CPU 已被 OBS 編碼佔滿時，
-   自動延後或降低背景人聲分離等本機運算工作的優先權，而不只是顯示數字；但這需要
-   謹慎判斷何時介入，避免誤判使用者本來就在進行的一般高負載情境。呈現位置已決定：
-   AppTitleBar 常駐窄 row（`AppTitleBar.vue` 的 `.app-title-bar__resources`），
-   非 Settings／獨立浮動面板／tray——最初考慮放進 PlayerBar，但 PlayerBar 底部已無
-   多餘空間，改採頂部標題列。CPU／RAM 已實作，但監測範圍已從系統層級改為僅
-   Utawakui 自身：Windows 工作管理員本身就能看到整台電腦的數字，標題列這一列改為
-   只回答「Utawakui 自己吃了多少資源」。`electron/main/appUsageService.js`
-   每 3 秒採樣一次：平時只讀 `app.getAppMetrics()`（Electron 的
-   browser／renderer／GPU／utility process，用 `cumulativeCPUUsage` 秒數與前一次
-   採樣的差值除以〔經過時間 × 核心數〕換算成佔整機的百分比，跟工作管理員同一個
-   基準），零額外 subprocess 成本；只有在 `heavyJobScheduler.isBusy()`（人聲分離
-   執行中）為真時，才額外透過 `electron/main/childProcessUsageSampler.js` 跑一次
-   PowerShell `Get-CimInstance Win32_Process` 查詢完整程序表，篩出 Python／FFmpeg
-   等子孫程序疊加進讀數——平時掛機不產生任何 PowerShell subprocess。yt-dlp 下載
-   不經過 heavyJobScheduler，因此不會被補量（下載以網路等待為主，此限制可接受）。
-   CPU／RAM 皆顯示到小數點後 1 位——App 本身的 RAM 通常遠低於整機 1%，取整數百分比
-   會恆為 0，沒有資訊量，但第 2 位小數（0.52% vs 0.53%）也不具行動力，1 位已足夠。
-   警示閾值已從系統層級的 60／80 改為 App 層級：CPU 25／50；RAM 維持相對整機的
-   百分比（同一份 RAM 佔用在較小記憶體的機器上更值得在意，這正是這一列想回答的
-   問題），以 16GB 作為代表性消費級配置校準為 8／16——8GB 現在算是邊緣案例，不
-   以它為主要校準對象。Electron 閒置基線（browser／renderer／GPU 三個 process
-   疊起來）約佔 16GB 的 2%，遠低於警示值；人聲分離執行中疊加模型與音訊緩衝，
-   估計約 2GB，約佔 16GB 的 12.5%（超過警示、未達危險，符合「16GB 上單一 heavy
-   job 仍有餘裕」的判斷，危險值保留給更極端的情況，例如洩漏或多個 heavy job
-   疊加）。這組數字放到 8GB 上依然合理（閒置仍低於警示，單一 heavy job 會超過
-   危險值，這點在 8GB 上是準確的換頁風險），只是不是校準的主要對象。GPU 決定
-   不做，也不在版面保留欄位——GPU
-   使用率只有在特定 GPU engine 實際被寫入時才有意義（Windows 自己的 GPU 效能計數器
-   也只會替開機後真正用過的 engine 建立 instance），本機的 GPU 重度使用場景僅限
-   DirectML 人聲分離與 OBS 編碼那類間歇性動作，多數時間會是恆定接近 0 的死欄位；
-   若之後 OBS／編碼衝突的偵測動機夠強，屆時再重新評估要不要做，不預先保留 UI 版面。
-   更新頻率、是否要做到主動調解資源競爭仍是未決事項。
-2. 是否要支援縮小到 Windows 系統工作列（system tray）並在背景持續執行？這是 Windows
-   桌面應用的通用慣例，多款主流應用（例如即時通訊、音樂與串流輔助軟體）都提供關閉
-   視窗時縮小到 tray、而非直接結束程序的選項，對長時間直播情境有實際好處（誤按關閉
-   不中斷播放／OBS 連線）；歌回救星等競品也有對應的 tray／背景模式，但這只是眾多
-   桌面軟體共通做法之一，不是唯一或最佳參照。尚待決定：關閉視窗鈕的預設行為（縮小到
-   tray vs. 直接結束，是否可設定）、tray icon 的最小操作集（顯示／隱藏、結束，是否
-   納入播放控制）以及首次縮小時是否需要一次性提示說明行為。
-3. 是否要在使用中（尤其背景執行／縮小到 tray 期間）呼叫 Electron `powerSaveBlocker`
-   防止系統休眠或關閉螢幕？長時間背景執行若沒有這項保護，系統自動休眠會直接中斷
-   OBS 錄製／直播與 Utawakui 本身的播放，這是媒體／串流輔助軟體常見的標準配套，
-   與上一項背景執行是搭配關係——只做背景執行而不防休眠，背景執行的實際效益會
-   打折。尚待決定：是否預設開啟、是否只在偵測到播放中或 OBS 連線中才啟用（避免
-   不必要地阻止系統休眠），以及是否要讓使用者在 Settings 手動關閉。
-4. 是否要在直播期間抑制系統層級的通知彈窗（類似 Windows「專注輔助」整合，或
-   App 內建 Do Not Disturb 開關）？App 背景執行時若跳出訊息通知（例如回饋送出
-   結果、更新提示），在畫面擷取情境下有被 OBS 錄進畫面的風險，這是背景執行／
-   資源監測之外容易被忽略的隱私與觀感問題。尚待決定：判斷「直播中」狀態的依據
-   （Output server 是否啟用、OBS WebSocket 連線狀態，或使用者手動切換）、抑制
-   範圍（僅 App 自身通知，或嘗試呼叫 Windows 專注輔助 API 影響全系統通知）。
-5. 是否要偵測 OS 語言／地區（locale），作為未來 i18n 的依據？目前 §4.5 使用者回饋的
-   `environment` 已固定收集 `locale` 備用，但尚未真正用於切換介面語言；多語系介面
-   （繁中／簡中／日／韓／英）是歌回救星、EliteSand Pro 等同類軟體的常見基礎功能，
-   非特殊需求。尚待決定：是否啟動完整 i18n 專案（字串抽取、翻譯流程與維護成本），
-   或先以 OS locale 做單一次要功能（例如僅切換數字／日期格式）的低成本起點。
-6. 是否要偵測系統已安裝字型，供歌詞／Overlay 模板挑選？OBS 歌詞疊層常見痛點是套用
-   的字型缺少日文假名／韓文／生僻字字形而顯示成方框（tofu）；偵測可用系統字型、
-   讓使用者從中挑選套用到歌詞模板，或在選到的字型缺字時提醒，是歌詞類軟體常見但
-   容易被忽略的細節。尚待決定：偵測範圍（僅列出常見 CJK 字型，或列出全部已安裝
-   字型）、是否需要隨附至少一款保底 CJK 字型（例如 Noto Sans CJK）以避免完全依賴
-   使用者系統字型庫，以及 Browser Source（CEF）實際能存取哪些系統字型需要先實機
-   驗證。
-7. 是否要偵測 Windows 深色／淺色模式，讓 App 介面主題跟隨系統？這是現代 Windows
-   桌面軟體（含多數 Electron App）的標準做法，成本低，對長時間操作控制台的情境
-   有實際舒適度差異。尚待決定：是否提供跟隨系統／手動覆寫兩種模式，以及是否連動
-   到 Self-View／Workbench 等其他視窗。
-8. 是否要處理 DPI／多螢幕縮放感知？歌回情境常見雙螢幕（控制台一台、OBS／直播畫面
-   一台），不同螢幕 DPI 縮放比例不同時，若沒處理好視窗與 Overlay 的定位／字體大小
-   會跑掉。尚待決定：是否需要針對 per-monitor DPI awareness 做額外的 Electron／
-   Windows API 處理，以及 Self-View／Workbench 視窗在跨螢幕搬移時是否需要重新
-   計算版面。
-9. 是否要偵測 Windows「顯示動畫效果」／減少動態效果等輔助設定，讓有動暈敏感需求的
-   使用者自動退回較靜態的歌詞呈現？現有多款動態歌詞樣式（例如 Kinetic Pop）預設皆有
-   進場／滾動動畫；比照網頁 `prefers-reduced-motion` 的精神，讀取 Windows 對應設定
-   可以讓使用者不必每個模板各自手動關動畫。尚待決定：偵測依據（對應的 Windows 系統
-   設定或 API）、套用範圍（Self-View、Overlay 是否都套用）、以及是否提供 App 內
-   獨立開關以覆寫系統設定。
-
-`quick`／`general` separation 的 DirectML execution provider 已決定、實作並通過
-Windows x64 封裝版驗收，不再是待決事項。GPU 不可用或初始化失敗時會自動改走 CPU，
-使用者也能在 Settings 關閉 GPU 加速；詳見
-[ADR 0017](adr/0017-directml-execution-provider-for-mdx-separation.md) 與上方 §3 狀態表。
+1. 是否要在直播期間抑制 App 或系統通知？OBS read-only adapter 已可提供直播／錄影
+   狀態，但仍需決定觸發條件、抑制範圍與使用者覆寫方式。
+2. 是否啟動完整 i18n，或先只依 OS locale 處理數字／日期格式？目前 locale 只收在
+   使用者回饋的 environment。
+3. 是否偵測系統字型供 Lyrics／Overlay 選擇，並提供 CJK 缺字檢查或保底字型？
+4. 是否讓控制台主題跟隨 Windows 深色／淺色模式，並提供手動覆寫？
+5. 是否需要額外處理 per-monitor DPI awareness，以及 Self-View／Workbench 跨螢幕
+   移動時的版面重算？
+6. 是否把 Windows 減少動態效果設定投影到 Self-View／Overlay，並提供 App 內覆寫？
