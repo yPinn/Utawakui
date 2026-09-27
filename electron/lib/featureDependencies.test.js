@@ -609,7 +609,7 @@ describe('getPreparedFfmpegPath', () => {
       throw new Error('expected missing dependency to throw');
     } catch (err) {
       expect(err.message).toContain(APP_ERROR_PREFIX);
-      expect(err.message).toContain('請先到設定頁準備');
+      expect(err.message).toContain('請到設定準備');
       expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
     }
   });
@@ -747,7 +747,7 @@ describe('yt-dlp feature dependency', () => {
       throw new Error('expected missing dependency to throw');
     } catch (err) {
       expect(err.message).toContain(APP_ERROR_PREFIX);
-      expect(err.message).toContain('請先到設定頁準備');
+      expect(err.message).toContain('請到設定準備');
       expect(err.message).toContain('外部來源');
       expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
     }
@@ -1385,7 +1385,7 @@ describe('model feature dependencies', () => {
       throw new Error('expected missing dependency to throw');
     } catch (err) {
       expect(err.message).toContain(APP_ERROR_PREFIX);
-      expect(err.message).toContain('請先到設定頁準備');
+      expect(err.message).toContain('請到設定準備');
       expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
     }
   });
