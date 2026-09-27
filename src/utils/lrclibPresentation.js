@@ -11,11 +11,7 @@ const WARNING_LABELS = Object.freeze({
   'overlapping-lines': '逐行時間有重疊，將保留來源但不直接套用',
   'overlapping-words': '逐字時間有重疊，將保留來源但不直接套用',
   'unsupported-lyricsfile-version': '逐字格式版本尚未支援',
-  'invalid-lyricsfile': '逐字資料無法安全讀取',
-  'unsupported-lyricsfile-version-fallback':
-    '逐字格式版本尚未支援，已改用逐行或純文字歌詞',
-  'invalid-lyricsfile-fallback': '逐字資料無法安全讀取，已改用逐行或純文字歌詞',
-  'invalid-yrc': '網易逐字資料無法安全讀取，已改用逐行或純文字歌詞',
+  'invalid-lyricsfile': '逐字同步資料無法使用',
   'normalized-boundary-jitter': '來源有 1ms 邊界誤差，已對齊相鄰逐字時間',
   'version-mismatch': '可能是不同版本',
   'instrumental-record': '這筆資料標示為純音樂',
@@ -38,8 +34,28 @@ export function candidateImportMessage(candidate) {
   return null;
 }
 
-export function warningLabels(warnings) {
+function fallbackCapabilityLabel(capability) {
+  if (capability?.level === 'T1') return '逐行同步歌詞';
+  if (capability?.level === 'T0') return '純文字歌詞';
+  return '其他可用歌詞';
+}
+
+function warningLabel(warning, capability) {
+  const fallback = fallbackCapabilityLabel(capability);
+  if (warning === 'unsupported-lyricsfile-version-fallback') {
+    return `逐字格式版本尚未支援；仍可儲存${fallback}`;
+  }
+  if (warning === 'invalid-lyricsfile-fallback') {
+    return `逐字同步資料無法使用；仍可儲存${fallback}`;
+  }
+  if (warning === 'invalid-yrc') {
+    return `網易逐字同步資料無法使用；仍可儲存${fallback}`;
+  }
+  return WARNING_LABELS[warning];
+}
+
+export function warningLabels(warnings, capability = null) {
   return [...new Set(Array.isArray(warnings) ? warnings : [])]
-    .map((warning) => WARNING_LABELS[warning])
+    .map((warning) => warningLabel(warning, capability))
     .filter(Boolean);
 }

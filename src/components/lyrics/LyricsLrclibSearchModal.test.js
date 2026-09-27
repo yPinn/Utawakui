@@ -111,9 +111,16 @@ describe('online lyrics search modal contract', () => {
     expect(workspace).toContain('searchLyricsProviderCandidates');
     expect(workspace).toContain('saveLyricsProviderCandidate');
     expect(workspace).toContain('props.providerId');
-    expect(workspace).not.toContain('只搜尋，不會修改曲目資訊');
+    expect(workspace).toContain(
+      '可輸入原文、羅馬字或常用譯名；只會影響本次搜尋，不修改曲目資料。',
+    );
     expect(workspace).toContain('歌曲名稱');
-    expect(workspace).toContain('歌手');
+    expect(workspace).toContain('演唱者（選填）');
+    expect(workspace).not.toContain('label="歌手"');
+    expect(
+      workspace.match(/:aria-describedby="`\$\{providerId\}-query-help`"/g),
+    ).toHaveLength(2);
+    expect(workspace).toContain(':id="`${providerId}-query-help`"');
     expect(workspace.match(/<UiTextField/g)).toHaveLength(2);
     expect(workspace).not.toContain('<input');
     expect(workspace).toContain('擴大搜尋');
@@ -128,8 +135,9 @@ describe('online lyrics search modal contract', () => {
     const row = source('./LyricsLrclibCandidateRow.vue');
     const group = source('./LyricsProviderRecordingGroup.vue');
 
-    expect(workspace).toContain('最佳符合');
-    expect(workspace).toContain('相近結果');
+    expect(workspace).toContain('較符合的錄音版本');
+    expect(workspace).toContain('其他可能版本');
+    expect(workspace).not.toContain('最佳符合');
     expect(workspace).toContain('<LyricsProviderRecordingGroup');
     expect(workspace).toContain(':key="group.recordingKey"');
     expect(group).toContain('recommendedCandidateKey');
@@ -217,9 +225,11 @@ describe('online lyrics search modal contract', () => {
       'v-if="!expanded && presentedCandidate.previewLines?.[0]"',
     );
     expect(row).toContain('class="lyrics-lrclib-candidate-row__saved-status"');
-    expect(row).toContain('<UiChip tone="success">已保存</UiChip>');
+    expect(row).toContain('<UiChip tone="success">已儲存</UiChip>');
     expect(row).toContain('class="lyrics-lrclib-candidate-row__metadata"');
-    expect(row).toContain("recommended ? '，推薦' : ''");
+    expect(row).toContain("recommended ? '，建議來源' : ''");
+    expect(row).toContain('建議來源');
+    expect(row).not.toMatch(/>\s*推薦\s*</);
     expect(row).toContain('aria-hidden="true"');
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__title-row\s*\{[^}]*min-width:\s*0;[^}]*display:\s*flex;[^}]*align-items:\s*flex-start;[^}]*gap:\s*var\(--ui-space-2\);/s,
@@ -246,7 +256,7 @@ describe('online lyrics search modal contract', () => {
       /\.lyrics-lrclib-candidate-row__duration--divided\s*\{[^}]*border-inline-start:\s*var\(--ui-border-width\) solid var\(--ui-color-border\);/s,
     );
     expect(row).toMatch(
-      /\.lyrics-lrclib-candidate-row\s*\{[^}]*--ui-lyrics-provider-slot-width:\s*5\.5rem;[^}]*--ui-lyrics-duration-slot-width:\s*5\.5rem;/s,
+      /\.lyrics-lrclib-candidate-row\s*\{[^}]*--ui-lyrics-provider-slot-width:\s*5\.5rem;[^}]*--ui-lyrics-duration-slot-width:\s*7\.5rem;/s,
     );
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__preview-row\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--ui-space-2\);/s,
@@ -257,7 +267,8 @@ describe('online lyrics search modal contract', () => {
     expect(row).toMatch(
       /\.lyrics-lrclib-candidate-row__metadata\s*\{[^}]*display:\s*flex;[^}]*align-items:\s*center;[^}]*gap:\s*var\(--ui-space-2\);[^}]*margin-inline-start:\s*auto;/s,
     );
-    expect(row).toContain('v-else-if="candidate.alreadySaved"');
+    expect(row).not.toContain('v-else-if="candidate.alreadySaved"');
+    expect(row).not.toContain('已保存');
   });
 
   it('prevents accidental chrome selection while keeping text fields selectable', () => {

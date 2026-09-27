@@ -133,11 +133,23 @@ const providerFailureMessages = computed(() =>
     .filter((providerStatus) => providerStatus.status === 'error')
     .map(providerFailureMessage),
 );
-const showPartialProviderWarning = computed(
+const partialResultsMessage = computed(() => {
+  const details = [...providerFailureMessages.value];
+  const invalidCount = state.candidateSearch.invalidRecordCount || 0;
+  if (invalidCount > 0) {
+    details.push(
+      `${providerFailureMessages.value.length ? '另有 ' : ''}${invalidCount} 筆結果缺少必要資料`,
+    );
+  }
+  return details.length
+    ? `${details.join('；')}。以下已載入結果仍可檢視；可用來源仍可儲存。`
+    : '';
+});
+const showPartialResultsWarning = computed(
   () =>
     hasResults.value &&
     !state.candidateSearch.error &&
-    providerFailureMessages.value.length > 0,
+    partialResultsMessage.value.length > 0,
 );
 const showProviderFailureWithoutResults = computed(
   () =>
@@ -285,13 +297,15 @@ function toggleCandidate(candidate) {
         ref="titleInput"
         v-model="titleDraft"
         label="歌曲名稱"
+        :aria-describedby="`${providerId}-query-help`"
         :maxlength="256"
         required
       />
       <UiTextField
         :id="`${providerId}-artist-name`"
         v-model="artistDraft"
-        label="歌手"
+        label="演唱者（選填）"
+        :aria-describedby="`${providerId}-query-help`"
         :maxlength="256"
       />
       <UiButton
@@ -302,6 +316,12 @@ function toggleCandidate(candidate) {
       >
         {{ isSearchPending ? '搜尋中…' : '搜尋' }}
       </UiButton>
+      <p
+        :id="`${providerId}-query-help`"
+        class="lyrics-lrclib-search__query-help"
+      >
+        可輸入原文、羅馬字或常用譯名；只會影響本次搜尋，不修改曲目資料。
+      </p>
     </form>
 
     <div class="lyrics-lrclib-search__result-meta">
@@ -322,7 +342,7 @@ function toggleCandidate(candidate) {
         v-if="draftDiffersFromResults"
         tone="info"
         title="目前顯示上次查詢結果"
-        message="再次按下搜尋，才會使用剛修改的曲名與歌手。"
+        message="再次按下搜尋，才會使用剛修改的歌曲名稱與演唱者。"
         compact
       />
       <UiNotice
@@ -333,10 +353,10 @@ function toggleCandidate(candidate) {
         compact
       />
       <UiNotice
-        v-if="showPartialProviderWarning"
+        v-if="showPartialResultsWarning"
         tone="warning"
-        title="部分來源未完成"
-        :message="`${providerFailureMessages.join('；')}；目前顯示的其他來源仍可使用。`"
+        title="部分線上結果未載入"
+        :message="partialResultsMessage"
         compact
       />
       <UiNotice
@@ -386,15 +406,8 @@ function toggleCandidate(candidate) {
       </UiHint>
 
       <template v-else>
-        <UiNotice
-          v-if="state.candidateSearch.invalidRecordCount > 0"
-          tone="warning"
-          title="部分候選未顯示"
-          :message="`${state.candidateSearch.invalidRecordCount} 筆來源資料不完整，已安全略過。`"
-          compact
-        />
         <UiHint v-if="resultRecordingGroups.best.length === 0" padded>
-          沒有高度符合的結果；以下相近結果可能是不同版本，請先確認。
+          沒有較符合的版本；以下結果可能是不同版本，請先確認。
         </UiHint>
 
         <section
@@ -403,7 +416,7 @@ function toggleCandidate(candidate) {
           :aria-labelledby="`${providerId}-best-results`"
         >
           <h3 :id="`${providerId}-best-results`">
-            最佳符合
+            較符合的錄音版本
             <span>{{ resultRecordingGroups.best.length }}</span>
           </h3>
           <ul class="lyrics-lrclib-search__list">
@@ -430,7 +443,7 @@ function toggleCandidate(candidate) {
           :aria-labelledby="`${providerId}-related-results`"
         >
           <h3 :id="`${providerId}-related-results`">
-            相近結果
+            其他可能版本
             <span>{{ resultRecordingGroups.related.length }}</span>
           </h3>
           <ul class="lyrics-lrclib-search__list">
@@ -506,6 +519,14 @@ function toggleCandidate(candidate) {
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-canvas);
+}
+
+.lyrics-lrclib-search__query-help {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
 }
 
 .lyrics-lrclib-search__results {

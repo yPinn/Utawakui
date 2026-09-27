@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { Check, ChevronRight } from '../../icons/index.js';
+import { ChevronRight } from '../../icons/index.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatLyricTime } from '../../utils/lyrics.js';
 import {
@@ -29,7 +29,10 @@ const presentedCandidate = computed(
   () => props.changedCandidate || props.candidate,
 );
 const visibleWarnings = computed(() =>
-  warningLabels(presentedCandidate.value.warnings),
+  warningLabels(
+    presentedCandidate.value.warnings,
+    presentedCandidate.value.capability,
+  ),
 );
 const importMessage = computed(() =>
   candidateImportMessage(presentedCandidate.value),
@@ -50,15 +53,15 @@ const accessibleIdentity = computed(() =>
     .join('，'),
 );
 
-function formatSignedDelta(delta) {
-  if (delta === 0) return '0s';
-  return delta > 0 ? `+${delta}s` : `${delta}s`;
+function formatDurationDifference(delta) {
+  if (delta === 0) return '相同';
+  return delta > 0 ? `多 ${delta} 秒` : `少 ${Math.abs(delta)} 秒`;
 }
 
 function durationLabel(candidate) {
   if (!Number.isFinite(candidate.duration)) return null;
   const delta = Number.isFinite(candidate.durationDeltaSigned)
-    ? `（${formatSignedDelta(candidate.durationDeltaSigned)}）`
+    ? ` · ${formatDurationDifference(candidate.durationDeltaSigned)}`
     : '';
   return `${formatDuration(candidate.duration)}${delta}`;
 }
@@ -78,7 +81,7 @@ function previewLineHasTiming(line) {
         type="button"
         class="lyrics-lrclib-candidate-row__toggle"
         :aria-expanded="expanded"
-        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，推薦' : ''}`"
+        :aria-label="`${expanded ? '收合' : '展開'} ${accessibleIdentity}${recommended ? '，建議來源' : ''}`"
         @click="emit('toggle')"
       >
         <ChevronRight
@@ -99,7 +102,7 @@ function previewLineHasTiming(line) {
               tone="accent"
               aria-hidden="true"
             >
-              推薦
+              建議來源
             </UiChip>
           </span>
           <span class="lyrics-lrclib-candidate-row__subtitle" dir="auto">
@@ -148,7 +151,7 @@ function previewLineHasTiming(line) {
           v-if="candidate.alreadySaved"
           class="lyrics-lrclib-candidate-row__saved-status"
         >
-          <UiChip tone="success">已保存</UiChip>
+          <UiChip tone="success">已儲存</UiChip>
         </div>
         <UiChip
           v-if="candidate.saveState === 'update-available'"
@@ -207,7 +210,10 @@ function previewLineHasTiming(line) {
         {{ importMessage }}
       </p>
 
-      <div v-else class="lyrics-lrclib-candidate-row__footer">
+      <div
+        v-else-if="changedCandidate || !candidate.alreadySaved"
+        class="lyrics-lrclib-candidate-row__footer"
+      >
         <template v-if="changedCandidate">
           <UiButton @click="emit('cancelChanged')">取消</UiButton>
           <UiButton
@@ -215,30 +221,22 @@ function previewLineHasTiming(line) {
             :disabled="saveDisabled"
             @click="emit('confirmChanged')"
           >
-            {{ saving ? '保存中…' : '改用更新內容' }}
+            {{ saving ? '儲存中…' : '改用更新內容' }}
           </UiButton>
         </template>
-        <UiButton
-          v-else-if="candidate.alreadySaved"
-          :icon="Check"
-          disabled
-          :aria-label="`${accessibleIdentity} 已保存`"
-        >
-          已保存
-        </UiButton>
         <UiButton
           v-else
           variant="accent"
           :disabled="saveDisabled"
-          :aria-label="`${candidate.saveState === 'update-available' ? '更新' : '保存'} ${accessibleIdentity}`"
+          :aria-label="`${candidate.saveState === 'update-available' ? '更新' : '儲存'} ${accessibleIdentity}`"
           @click="emit('save')"
         >
           {{
             saving
-              ? '保存中…'
+              ? '儲存中…'
               : candidate.saveState === 'update-available'
                 ? '更新'
-                : '保存'
+                : '儲存'
           }}
         </UiButton>
       </div>
@@ -408,7 +406,7 @@ function previewLineHasTiming(line) {
 
 .lyrics-lrclib-candidate-row {
   --ui-lyrics-provider-slot-width: 5.5rem;
-  --ui-lyrics-duration-slot-width: 5.5rem;
+  --ui-lyrics-duration-slot-width: 7.5rem;
 
   padding: var(--ui-space-2) var(--ui-space-3);
   border: 0;

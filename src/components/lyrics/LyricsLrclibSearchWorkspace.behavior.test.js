@@ -176,8 +176,10 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       compatibility: { t0: true, t1: true, t2: true },
       previewLines: [{ start: 1, text: 'Word timed' }],
       warnings: [],
-      saveState: 'unsaved',
-      alreadySaved: false,
+      duration: 185,
+      durationDeltaSigned: 0,
+      saveState: 'saved',
+      alreadySaved: true,
     };
     const lrclib = {
       ...netease,
@@ -186,6 +188,8 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       capability: { level: 'T1', partial: false },
       compatibility: { t0: true, t1: true, t2: false },
       previewLines: [{ start: 1, text: 'Line timed' }],
+      duration: 187,
+      durationDeltaSigned: 2,
     };
     const recordingGroup = {
       recordingKey: 'recording:one',
@@ -239,7 +243,12 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     expect(nodeText(root)).toContain('LRCLIB');
     expect(nodeText(root)).not.toContain('顯示其他');
-    expect(nodeText(root).match(/推薦/g)).toHaveLength(1);
+    expect(nodeText(root).match(/建議來源/g)).toHaveLength(1);
+    expect(nodeText(root)).toContain('3:05 · 相同');
+    expect(nodeText(root)).toContain('3:07 · 多 2 秒');
+    expect(nodeText(root)).toContain('已儲存');
+    expect(findButtonByText(root, '已儲存')).toBeUndefined();
+    expect(nodeText(root)).not.toContain('已保存');
 
     app.unmount();
   });
@@ -419,7 +428,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     app.unmount();
   });
 
-  it('shows a partial-source warning only when usable results remain', async () => {
+  it('merges partial-source and invalid-record details without promising unusable results can be saved', async () => {
     vi.stubGlobal('Document', class Document {});
     vi.stubGlobal('ShadowRoot', class ShadowRoot {});
     const candidate = {
@@ -429,10 +438,10 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       trackName: 'Song',
       artistName: 'Artist',
       matchBand: 'exact',
-      capability: { level: 'T2', partial: false },
-      compatibility: { t0: true, t1: true, t2: true },
-      previewLines: [{ start: 1, text: 'Word timed' }],
-      warnings: [],
+      capability: { level: 'unsupported', partial: false },
+      compatibility: { t0: false, t1: false, t2: false },
+      previewLines: [],
+      warnings: ['invalid-lyricsfile'],
       saveState: 'unsaved',
       alreadySaved: false,
     };
@@ -455,6 +464,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       state.candidateSearch.candidates = [candidate];
       state.candidateSearch.groups.best = [candidate];
       state.candidateSearch.partial = true;
+      state.candidateSearch.invalidRecordCount = 1;
       state.candidateSearch.providerStatuses = [
         { provider: 'netease', status: 'ok' },
         { provider: 'lrclib', status: 'error', reason: 'offline' },
@@ -476,9 +486,19 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
       providerId: 'all',
       providerLabel: '所有線上來源',
     });
-    await vi.waitFor(() => expect(nodeText(root)).toContain('部分來源未完成'));
+    await vi.waitFor(() =>
+      expect(nodeText(root)).toContain('部分線上結果未載入'),
+    );
 
     expect(nodeText(root)).toContain('LRCLIB 無法連線');
+    expect(nodeText(root)).toContain('另有 1 筆結果缺少必要資料');
+    expect(nodeText(root)).toContain(
+      '以下已載入結果仍可檢視；可用來源仍可儲存',
+    );
+    expect(findByProp(root, 'aria-label', '儲存 Song，Artist')).toBeUndefined();
+    expect(nodeText(root).match(/部分線上結果未載入/g)).toHaveLength(1);
+    expect(nodeText(root)).not.toContain('部分候選未顯示');
+    expect(nodeText(root)).not.toContain('部分來源未完成');
     expect(nodeText(root)).not.toContain('歌詞搜尋未完成');
     app.unmount();
   });
@@ -589,6 +609,8 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     const titleInput = findByProp(root, 'id', 'lrclib-track-title');
     const artistInput = findByProp(root, 'id', 'lrclib-artist-name');
+    expect(titleInput.props['aria-describedby']).toBe('lrclib-query-help');
+    expect(artistInput.props['aria-describedby']).toBe('lrclib-query-help');
     expect(titleInput.focus).toHaveBeenCalledOnce();
     titleInput.props.onInput({ target: { value: 'Edited title' } });
     artistInput.props.onInput({ target: { value: 'Edited artist' } });
@@ -773,7 +795,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const saveButton = findByProp(
       root,
       'aria-label',
-      '保存 Candidate 1，Artist',
+      '儲存 Candidate 1，Artist',
     );
     const firstSave = saveButton.props.onClick();
     saveButton.props.onClick();
@@ -795,7 +817,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     await findByProp(
       root,
       'aria-label',
-      '保存 Candidate 1，Artist',
+      '儲存 Candidate 1，Artist',
     ).props.onClick();
     await nextTick();
 
@@ -922,7 +944,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
     const plainSaveButton = findByProp(
       root,
       'aria-label',
-      '保存 Plain lyrics，Artist',
+      '儲存 Plain lyrics，Artist',
     );
     expect(plainSaveButton).toBeDefined();
     expect(String(plainSaveButton.props.class)).toContain('ui-btn--accent');
@@ -936,7 +958,7 @@ describe('LyricsLrclibSearchWorkspace behavior', () => {
 
     expect(nodeText(root)).toContain('這筆來源格式目前不支援，無法安全匯入。');
     expect(
-      findByProp(root, 'aria-label', '保存 Unsupported lyrics，Artist'),
+      findByProp(root, 'aria-label', '儲存 Unsupported lyrics，Artist'),
     ).toBeUndefined();
     app.unmount();
   });

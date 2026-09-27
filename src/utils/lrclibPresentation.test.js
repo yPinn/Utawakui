@@ -35,28 +35,37 @@ describe('LRCLIB candidate presentation', () => {
 
   it('maps bounded warnings to user-facing labels', () => {
     expect(
-      warningLabels([
-        'partial-word-timing',
-        'overlapping-words',
-        'unsupported-lyricsfile-version',
-        'invalid-lyricsfile',
-        'unsupported-lyricsfile-version-fallback',
-        'invalid-lyricsfile-fallback',
-        'invalid-yrc',
-        'normalized-boundary-jitter',
-        'version-mismatch',
-        'lyricsfile-missing',
-      ]),
+      warningLabels(
+        [
+          'partial-word-timing',
+          'overlapping-words',
+          'unsupported-lyricsfile-version',
+          'invalid-lyricsfile',
+          'unsupported-lyricsfile-version-fallback',
+          'invalid-lyricsfile-fallback',
+          'invalid-yrc',
+          'normalized-boundary-jitter',
+          'version-mismatch',
+          'lyricsfile-missing',
+        ],
+        { level: 'T1' },
+      ),
     ).toEqual([
       '部分歌詞缺少逐字時間',
       '逐字時間有重疊，將保留來源但不直接套用',
       '逐字格式版本尚未支援',
-      '逐字資料無法安全讀取',
-      '逐字格式版本尚未支援，已改用逐行或純文字歌詞',
-      '逐字資料無法安全讀取，已改用逐行或純文字歌詞',
-      '網易逐字資料無法安全讀取，已改用逐行或純文字歌詞',
+      '逐字同步資料無法使用',
+      '逐字格式版本尚未支援；仍可儲存逐行同步歌詞',
+      '逐字同步資料無法使用；仍可儲存逐行同步歌詞',
+      '網易逐字同步資料無法使用；仍可儲存逐行同步歌詞',
       '來源有 1ms 邊界誤差，已對齊相鄰逐字時間',
       '可能是不同版本',
     ]);
+  });
+
+  it('names the usable fallback capability instead of a generic downgrade', () => {
+    expect(
+      warningLabels(['invalid-lyricsfile-fallback'], { level: 'T0' }),
+    ).toEqual(['逐字同步資料無法使用；仍可儲存純文字歌詞']);
   });
 });
