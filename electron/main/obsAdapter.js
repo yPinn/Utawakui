@@ -26,9 +26,12 @@ const {
 const OBS_WEBSOCKET_AUTH_FAILED_CODE = 4009;
 
 const PUBLIC_ERROR_MESSAGES = Object.freeze({
-  OBS_CONNECT_FAILED: '無法連線至 OBS。',
-  OBS_CONNECT_TIMEOUT: 'OBS 連線逾時。',
-  OBS_AUTH_FAILED: 'OBS WebSocket 密碼錯誤或未設定。',
+  OBS_CONNECT_FAILED: '無法連線。請檢查 OBS 設定。',
+  OBS_CONNECTION_REFUSED: 'OBS 未啟動，或 WebSocket 連接埠不正確。',
+  OBS_HOST_NOT_FOUND: '找不到 OBS 主機。請檢查主機名稱或 IP。',
+  OBS_CONNECT_TIMEOUT: '連線逾時。請檢查 OBS、防火牆或網路。',
+  OBS_AUTH_FAILED: 'OBS 密碼錯誤或未設定。',
+  OBS_INCOMPATIBLE_SERVER: '這不是相容的 OBS WebSocket 5 服務。',
   OBS_REQUEST_FAILED: '無法讀取 OBS 狀態。',
   OBS_REQUEST_TIMEOUT: '讀取 OBS 狀態逾時。',
   OBS_ADAPTER_INTERNAL: 'OBS 連線發生未預期錯誤。',
@@ -66,6 +69,67 @@ function toPublicError(code) {
     message:
       PUBLIC_ERROR_MESSAGES[code] ?? PUBLIC_ERROR_MESSAGES.OBS_ADAPTER_INTERNAL,
   };
+}
+
+function collectErrorSignals(error) {
+  const codes = [];
+  const signals = [];
+  const visited = new Set();
+  let current = error;
+  for (
+    let depth = 0;
+    depth < 4 && current && typeof current === 'object';
+    depth += 1
+  ) {
+    if (visited.has(current)) break;
+    visited.add(current);
+    for (const value of [current.code, current.errno]) {
+      if (typeof value === 'string' || typeof value === 'number') {
+        const normalized = String(value).toUpperCase();
+        codes.push(normalized);
+        signals.push(normalized);
+      }
+    }
+    for (const value of [current.name, current.message]) {
+      if (typeof value === 'string' || typeof value === 'number') {
+        signals.push(String(value).toUpperCase());
+      }
+    }
+    current = current.cause;
+  }
+  return { codes, signals };
+}
+
+function classifyConnectionError(error) {
+  const { codes, signals } = collectErrorSignals(error);
+  const hasCode = (...needles) =>
+    needles.some((needle) => codes.includes(needle));
+  const hasSignal = (...needles) =>
+    needles.some((needle) =>
+      signals.some((signal) => signal === needle || signal.includes(needle)),
+    );
+
+  if (hasCode(String(OBS_WEBSOCKET_AUTH_FAILED_CODE))) {
+    return 'OBS_AUTH_FAILED';
+  }
+  if (hasSignal('OBS_CONNECT_TIMEOUT', 'ETIMEDOUT', 'ESOCKETTIMEDOUT')) {
+    return 'OBS_CONNECT_TIMEOUT';
+  }
+  if (hasSignal('ECONNREFUSED')) return 'OBS_CONNECTION_REFUSED';
+  if (hasSignal('ENOTFOUND', 'EAI_AGAIN')) return 'OBS_HOST_NOT_FOUND';
+  if (
+    hasCode('4010') ||
+    hasSignal(
+      'UNSUPPORTED RPC VERSION',
+      'UNSUPPORTED PROTOCOL',
+      'NO SUBPROTOCOL',
+      'INVALID SUBPROTOCOL',
+      'UNEXPECTED SERVER RESPONSE',
+    )
+  ) {
+    return 'OBS_INCOMPATIBLE_SERVER';
+  }
+  return 'OBS_CONNECT_FAILED';
 }
 
 function defaultCreateClient() {
@@ -319,11 +383,7 @@ function createObsAdapter({
       });
       nextClient.on('ConnectionClosed', (error) => {
         if (client !== nextClient) return;
-        handleDisconnected(
-          error?.code === OBS_WEBSOCKET_AUTH_FAILED_CODE
-            ? 'OBS_AUTH_FAILED'
-            : 'OBS_CONNECT_FAILED',
-        );
+        handleDisconnected(classifyConnectionError(error));
       });
       nextClient.on('StreamStateChanged', (event) => {
         if (client !== nextClient) return;
@@ -387,13 +447,9 @@ function createObsAdapter({
         }
         logger.error?.('[obs-adapter] Connect failed', error);
         handleDisconnected(
-          error?.code === 'OBS_CONNECT_TIMEOUT'
-            ? 'OBS_CONNECT_TIMEOUT'
-            : error?.code === 'OBS_REQUEST_TIMEOUT'
-              ? 'OBS_REQUEST_TIMEOUT'
-              : error?.code === OBS_WEBSOCKET_AUTH_FAILED_CODE
-                ? 'OBS_AUTH_FAILED'
-                : 'OBS_CONNECT_FAILED',
+          error?.code === 'OBS_REQUEST_TIMEOUT'
+            ? 'OBS_REQUEST_TIMEOUT'
+            : classifyConnectionError(error),
         );
         if (
           error?.code === 'OBS_CONNECT_TIMEOUT' ||

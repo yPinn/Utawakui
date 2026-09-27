@@ -28,7 +28,9 @@ function updateInfo(version = '0.2.0', overrides = {}) {
 function createUpdater() {
   const updater = new EventEmitter();
   updater.checkForUpdates = vi.fn().mockResolvedValue(undefined);
-  updater.downloadUpdate = vi.fn().mockResolvedValue(undefined);
+  updater.downloadUpdate = vi.fn(async () => {
+    updater.emit('update-downloaded', { version: '0.2.0' });
+  });
   updater.quitAndInstall = vi.fn();
   return updater;
 }
@@ -194,6 +196,25 @@ describe('app update service', () => {
     expect(installCalls).toEqual(['begin-quit', 'quit-and-install']);
   });
 
+  it('activates electron-updater with the production config when Electron misclassifies the packaged runtime', () => {
+    const updater = createUpdater();
+    const packagedUpdateConfigPath =
+      'C:\\Program Files\\Utawakui\\resources\\app-update.yml';
+    const service = createAppUpdateService({
+      currentVersion: '0.4.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      packagedUpdateConfigPath,
+    });
+
+    service.initialize();
+
+    expect(updater.forceDevUpdateConfig).toBe(true);
+    expect(updater.updateConfigPath).toBe(packagedUpdateConfigPath);
+  });
+
   it('checks once on the delayed startup schedule and keeps manual actions phase-bound', async () => {
     const updater = createUpdater();
     let scheduledCallback;
@@ -246,7 +267,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '無法完成更新操作，請稍後再試。',
+      error: '更新失敗，請再試一次。',
     });
     expect(service.getStatus().error).not.toContain('token');
     expect(logger.error).toHaveBeenCalledWith(
@@ -271,7 +292,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '無法完成更新操作，請稍後再試。',
+      error: '更新失敗，請再試一次。',
     });
     expect(logger.error).toHaveBeenCalledWith(
       '[update] Check failed',
@@ -282,6 +303,32 @@ describe('app update service', () => {
     // Recovered to 'error', not stuck — a retry is possible without restarting
     // the app, unlike the bug this timeout replaces.
     expect(service.getStatus().phase).not.toBe('checking');
+  });
+
+  it('fails closed when electron-updater resolves without publishing a terminal check event', async () => {
+    const updater = createUpdater();
+    updater.checkForUpdates.mockResolvedValue(null);
+    const logger = { error: vi.fn() };
+    const service = createAppUpdateService({
+      currentVersion: '0.4.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      logger,
+    });
+
+    await expect(service.check()).resolves.toMatchObject({
+      phase: 'error',
+      error: '更新失敗，請再試一次。',
+    });
+    expect(service.getStatus().phase).not.toBe('checking');
+    expect(logger.error).toHaveBeenCalledWith(
+      '[update] Check failed',
+      expect.objectContaining({
+        message: expect.stringContaining('terminal status'),
+      }),
+    );
   });
 
   it('still applies a late update-available result after the check already timed out', async () => {
@@ -331,7 +378,7 @@ describe('app update service', () => {
 
     await expect(service.check()).resolves.toMatchObject({
       phase: 'error',
-      error: '無法完成更新操作，請稍後再試。',
+      error: '更新失敗，請再試一次。',
     });
     expect(service.scheduleStartupCheck(15000)).toBe(false);
     expect(service.getStatus().error).not.toContain('private');
@@ -364,7 +411,7 @@ describe('app update service', () => {
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
       availableVersion: '0.2.0',
-      error: '無法完成更新操作，請稍後再試。',
+      error: '更新失敗，請再試一次。',
     });
 
     updater.emit('update-downloaded', { version: '0.2.0' });
@@ -373,7 +420,7 @@ describe('app update service', () => {
     });
     expect(service.install()).toMatchObject({
       phase: 'error',
-      error: '無法完成更新操作，請稍後再試。',
+      error: '更新失敗，請再試一次。',
     });
     expect(logger.error).toHaveBeenCalledWith(
       '[update] Download failed',
@@ -448,7 +495,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請稍後再試。',
+      error: '更新驗證失敗，請再試一次。',
     });
     expect(manifestClient.fetchManifest).toHaveBeenCalledWith('0.2.0');
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
@@ -481,7 +528,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請稍後再試。',
+      error: '更新驗證失敗，請再試一次。',
     });
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
   });
@@ -511,7 +558,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請稍後再試。',
+      error: '更新驗證失敗，請再試一次。',
     });
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
   });
@@ -532,7 +579,7 @@ describe('app update service', () => {
     updater.emit('update-available', updateInfo());
 
     await expect(service.download()).resolves.toMatchObject({
-      phase: 'downloading',
+      phase: 'downloaded',
     });
     expect(updater.downloadUpdate).toHaveBeenCalledOnce();
   });
@@ -577,7 +624,7 @@ describe('app update service', () => {
 
     await expect(service.download()).resolves.toMatchObject({
       phase: 'error',
-      error: '更新驗證失敗，請稍後再試。',
+      error: '更新驗證失敗，請再試一次。',
     });
     expect(updater.downloadUpdate).not.toHaveBeenCalled();
   });
@@ -598,10 +645,114 @@ describe('app update service', () => {
     updater.emit('update-available', updateInfo());
 
     await expect(service.download()).resolves.toMatchObject({
-      phase: 'downloading',
+      phase: 'downloaded',
     });
     expect(manifestClient.fetchManifest).not.toHaveBeenCalled();
     expect(updater.downloadUpdate).toHaveBeenCalledOnce();
+  });
+
+  it('fails closed when downloadUpdate resolves without a downloaded event', async () => {
+    const updater = createUpdater();
+    updater.downloadUpdate.mockResolvedValueOnce(undefined);
+    const logger = { error: vi.fn() };
+    const service = createAppUpdateService({
+      currentVersion: '0.1.0',
+      isPackaged: true,
+      isWindows: true,
+      runtimeEnabled: true,
+      updaterFactory: () => updater,
+      logger,
+    });
+    service.initialize();
+    updater.emit('update-available', updateInfo());
+
+    await expect(service.download()).resolves.toMatchObject({
+      phase: 'error',
+      availableVersion: '0.2.0',
+      error: '更新失敗，請再試一次。',
+    });
+    expect(logger.error).toHaveBeenCalledWith(
+      '[update] Download failed',
+      expect.any(Error),
+    );
+  });
+
+  it('cancels and terminates a download after an idle timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const updater = createUpdater();
+      updater.downloadUpdate.mockImplementationOnce(
+        () => new Promise(() => {}),
+      );
+      const cancellationToken = { cancel: vi.fn() };
+      const service = createAppUpdateService({
+        currentVersion: '0.1.0',
+        isPackaged: true,
+        isWindows: true,
+        runtimeEnabled: true,
+        updaterFactory: () => updater,
+        cancellationTokenFactory: () => cancellationToken,
+        downloadIdleTimeoutMs: 1_000,
+      });
+      service.initialize();
+      updater.emit('update-available', updateInfo());
+
+      const pending = service.download();
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await expect(pending).resolves.toMatchObject({ phase: 'error' });
+      expect(cancellationToken.cancel).toHaveBeenCalledOnce();
+      expect(updater.downloadUpdate).toHaveBeenCalledWith(cancellationToken);
+
+      updater.emit('download-progress', {
+        percent: 50,
+        bytesPerSecond: 1,
+        transferred: 1,
+        total: 2,
+      });
+      expect(service.getStatus()).toMatchObject({ phase: 'error' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('extends the download idle deadline whenever progress arrives', async () => {
+    vi.useFakeTimers();
+    try {
+      const updater = createUpdater();
+      updater.downloadUpdate.mockImplementationOnce(
+        () => new Promise(() => {}),
+      );
+      const cancellationToken = { cancel: vi.fn() };
+      const service = createAppUpdateService({
+        currentVersion: '0.1.0',
+        isPackaged: true,
+        isWindows: true,
+        runtimeEnabled: true,
+        updaterFactory: () => updater,
+        cancellationTokenFactory: () => cancellationToken,
+        downloadIdleTimeoutMs: 1_000,
+      });
+      service.initialize();
+      updater.emit('update-available', updateInfo());
+
+      const pending = service.download();
+      await vi.advanceTimersByTimeAsync(900);
+      updater.emit('download-progress', {
+        percent: 25,
+        bytesPerSecond: 1,
+        transferred: 1,
+        total: 4,
+      });
+      await vi.advanceTimersByTimeAsync(900);
+      expect(cancellationToken.cancel).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(100);
+      await expect(pending).resolves.toMatchObject({ phase: 'error' });
+      expect(cancellationToken.cancel).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('lets the auto-check preference gate the automatic paths without touching manual actions', async () => {

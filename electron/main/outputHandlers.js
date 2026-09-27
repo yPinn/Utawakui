@@ -52,7 +52,15 @@ function registerOutputHandlers({
     return document;
   }
 
-  syncOutputSlots();
+  try {
+    syncOutputSlots();
+  } catch (error) {
+    // Output slots are optional library-owned state. An offline custom
+    // library must not prevent handler registration or the main window from
+    // being created; the explicit list/upsert calls still surface the
+    // bounded library-location error so the UI can offer recovery.
+    logger.warn?.('[output] Initial slot synchronization skipped', error);
+  }
 
   ipcMain.handle('output:get-status', async () => server.getStatus());
 

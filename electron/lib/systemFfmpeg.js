@@ -11,6 +11,7 @@ const { spawn } = require('child_process');
 const SAMPLE_RATE = 44100;
 const CHANNELS = 2;
 const SMOKE_TEST_FRAMES = 4410; // 0.1s at SAMPLE_RATE
+const DEFAULT_PROCESS_TIMEOUT_MS = 15_000;
 
 function resolveWhereExePath() {
   const systemRoot = process.env.SystemRoot || 'C:\\Windows';
@@ -18,7 +19,12 @@ function resolveWhereExePath() {
   return fs.existsSync(wherePath) ? wherePath : 'where';
 }
 
-function runProcess(spawnImpl, command, args) {
+function runProcess(
+  spawnImpl,
+  command,
+  args,
+  timeoutMs = DEFAULT_PROCESS_TIMEOUT_MS,
+) {
   return new Promise((resolve) => {
     let proc;
     try {
@@ -29,15 +35,39 @@ function runProcess(spawnImpl, command, args) {
     }
     const chunks = [];
     let stderr = '';
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      try {
+        proc.kill();
+      } catch {
+        // The timeout status remains authoritative.
+      }
+      resolve({
+        ok: false,
+        stdout: Buffer.alloc(0),
+        stderr: 'process timed out',
+      });
+    }, timeoutMs);
+    timer.unref?.();
+
+    function finish(result) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      resolve(result);
+    }
+
     proc.stdout?.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
     proc.stderr?.on('data', (chunk) => {
       stderr += chunk;
     });
     proc.on('error', (err) => {
-      resolve({ ok: false, stdout: Buffer.alloc(0), stderr: String(err) });
+      finish({ ok: false, stdout: Buffer.alloc(0), stderr: String(err) });
     });
     proc.on('close', (code) => {
-      resolve({ ok: code === 0, stdout: Buffer.concat(chunks), stderr });
+      finish({ ok: code === 0, stdout: Buffer.concat(chunks), stderr });
     });
   });
 }
@@ -46,7 +76,12 @@ function runProcess(spawnImpl, command, args) {
 // .bat/.cmd shim); the first line is the one Windows would actually launch.
 async function resolveSystemFfmpegPath(options = {}) {
   const spawnImpl = options.spawnImpl || spawn;
-  const result = await runProcess(spawnImpl, resolveWhereExePath(), ['ffmpeg']);
+  const result = await runProcess(
+    spawnImpl,
+    resolveWhereExePath(),
+    ['ffmpeg'],
+    options.processTimeoutMs,
+  );
   if (!result.ok) return null;
   const firstLine = result.stdout
     .toString('utf8')
@@ -63,7 +98,12 @@ function parseFfmpegVersion(versionOutput) {
 
 async function getFfmpegVersion(ffmpegPath, options = {}) {
   const spawnImpl = options.spawnImpl || spawn;
-  const result = await runProcess(spawnImpl, ffmpegPath, ['-version']);
+  const result = await runProcess(
+    spawnImpl,
+    ffmpegPath,
+    ['-version'],
+    options.processTimeoutMs,
+  );
   if (!result.ok) return null;
   return parseFfmpegVersion(result.stdout.toString('utf8'));
 }
@@ -122,7 +162,12 @@ async function runSmokeTestDecode(ffmpegPath, options = {}) {
       'f32le',
       '-',
     ];
-    const result = await runProcess(spawnImpl, ffmpegPath, args);
+    const result = await runProcess(
+      spawnImpl,
+      ffmpegPath,
+      args,
+      options.processTimeoutMs,
+    );
     if (!result.ok) {
       return { ok: false, reason: 'FFmpeg 解碼測試失敗' };
     }

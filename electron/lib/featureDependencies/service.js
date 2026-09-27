@@ -18,7 +18,7 @@ const {
   readInstalledVersion,
 } = require('./manifests');
 const { ensureYtdlpDependency } = require('./providerRuntime');
-const { ensureFfmpegDependency } = require('./ffmpeg');
+const { ensureFfmpegDependency, resolveFfmpegRuntime } = require('./ffmpeg');
 const { ensureModelDependency, isModelFileValid } = require('./models');
 
 function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
@@ -45,7 +45,8 @@ function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
     // presence — separationHandlers.js resolves the same way (see
     // getPreparedFfmpegPath above), so the Settings row must agree with
     // what a separation run would actually use.
-    if (systemFfmpegPath && fs.existsSync(systemFfmpegPath)) {
+    const runtime = resolveFfmpegRuntime(userDataDir, systemFfmpegPath);
+    if (runtime.source === 'system') {
       return {
         ...dependency,
         installed: true,
@@ -57,7 +58,7 @@ function buildDependencyStatus(userDataDir, dependency, systemFfmpegPath) {
     }
 
     const paths = getFfmpegPaths(userDataDir, dependency);
-    const installed = fs.existsSync(paths.executablePath);
+    const installed = Boolean(runtime.path);
     const installedVersion = installed
       ? readInstalledVersion(paths.manifestPath)
       : null;

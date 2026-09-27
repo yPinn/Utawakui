@@ -75,7 +75,7 @@ const canRetry = computed(
 
 const outputSummary = computed(() => {
   if (!CONNECTED_LIFECYCLES.includes(lifecycle.value)) {
-    return '連線至 OBS 以讀取直播／錄影時間戳';
+    return '連線後顯示直播與錄影狀態';
   }
   const streaming = props.status?.observed?.streaming;
   const recording = props.status?.observed?.recording;
@@ -95,7 +95,7 @@ const outputSummary = computed(() => {
       :value="outputSummary"
       :status="statusLabel"
       :status-tone="statusTone"
-      tooltip="僅讀取 OBS 直播／錄影狀態與時間戳，不會建立或變更場景。"
+      tooltip="只讀取直播、錄影狀態與時間戳，不會變更場景。"
       variant="subtle"
     >
       <template #actions>
@@ -123,13 +123,13 @@ const outputSummary = computed(() => {
       v-if="(!featureEnabled || !isEnabled) && hasStoredPassword"
       class="obs-integration-settings-block__stored-credential"
     >
-      <span>這台電腦已儲存 OBS 密碼</span>
+      <span>已儲存 OBS 密碼</span>
       <UiButton
         variant="ghost"
         :disabled="isSaving"
         @click="emit('clearPassword')"
       >
-        移除已儲存密碼
+        移除密碼
       </UiButton>
     </div>
 
@@ -165,7 +165,7 @@ const outputSummary = computed(() => {
           label="密碼"
           type="password"
           :model-value="password"
-          :placeholder="hasStoredPassword ? '已設定，留空表示不變更' : ''"
+          :placeholder="hasStoredPassword ? '已設定；留空不變更' : ''"
           :maxlength="MAX_PASSWORD_LENGTH"
           autocomplete="off"
           :disabled="isSaving"
@@ -177,7 +177,7 @@ const outputSummary = computed(() => {
           :disabled="isSaving"
           @click="emit('clearPassword')"
         >
-          移除已儲存密碼
+          移除密碼
         </UiButton>
       </div>
 
@@ -186,7 +186,7 @@ const outputSummary = computed(() => {
         label="略過門檻（秒）"
         :model-value="skipThresholdSeconds"
         placeholder="10"
-        hint="曲目播放短於此秒數就換下一首，不記錄進場次歷史；設為 0 停用。"
+        hint="短於此秒數就換下一首，且不記錄；0 表示停用。"
         :disabled="isSaving"
         @update:model-value="emit('update:skipThresholdSeconds', $event)"
       />
@@ -208,14 +208,15 @@ const outputSummary = computed(() => {
     <UiNotice
       v-if="error"
       tone="danger"
-      title="OBS 連線設定未儲存"
+      title="OBS 設定發生問題"
       :message="error"
       compact
     />
     <UiNotice
       v-else-if="status?.error"
       tone="warning"
-      :title="status.error.message"
+      title="OBS 連線失敗"
+      :message="status.error.message"
       compact
     />
   </div>

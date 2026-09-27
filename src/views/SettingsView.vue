@@ -109,6 +109,11 @@ const windowsIntegrationSettings = useWindowsIntegrationSettings();
 
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
+const downloadDirUnavailableMessage = computed(() =>
+  importState.isDefaultDir
+    ? '無法建立預設資料夾。請選擇其他位置。'
+    : '設定已保留。請重新連接磁碟，或選擇其他位置。',
+);
 
 // Overflow menu for the less-frequent 曲庫位置 actions — same
 // open/position/select shape as SettingsDependencyActions.vue's menu,
@@ -359,9 +364,7 @@ async function handleWorkflowItemAdvancedAction({ item, action }) {
     const itemTitle = item.title || item.name;
     const confirmed =
       typeof window === 'undefined' ||
-      window.confirm(
-        `移除「${itemTitle}」的本機準備項目？之後需要時可以再重新準備。`,
-      );
+      window.confirm(`移除「${itemTitle}」？需要時可重新準備。`);
     if (!confirmed) return;
     await removeDependency(item.id);
     await refreshDependencyStatus();
@@ -405,14 +408,27 @@ onUnmounted(musicAnalysisSettings.dispose);
             :icon="FolderOpen"
             title="曲庫位置"
             :value="importState.downloadDir || '讀取中'"
-            :status="importState.isDefaultDir ? '預設' : '自訂'"
-            :status-tone="importState.isDefaultDir ? 'muted' : 'accent'"
-            tooltip="下載與本機匯入的曲目都會整理到這個資料夾。"
+            :status="
+              !importState.isDownloadDirAvailable
+                ? '無法使用'
+                : importState.isDefaultDir
+                  ? '預設'
+                  : '自訂'
+            "
+            :status-tone="
+              !importState.isDownloadDirAvailable
+                ? 'danger'
+                : importState.isDefaultDir
+                  ? 'muted'
+                  : 'accent'
+            "
+            tooltip="下載與匯入的曲目會存放在這裡。"
           >
             <template #actions>
               <UiIconButton
                 :icon="FolderOpen"
                 label="開啟曲庫資料夾"
+                :disabled="!importState.isDownloadDirAvailable"
                 @click="openDownloadDir"
               />
               <UiIconButton
@@ -435,6 +451,16 @@ onUnmounted(musicAnalysisSettings.dispose);
               />
             </template>
           </SettingsActionRow>
+
+          <UiNotice
+            v-if="!importState.isDownloadDirAvailable"
+            tone="danger"
+            title="曲庫位置無法使用"
+            :message="downloadDirUnavailableMessage"
+            action-label="選擇其他資料夾"
+            compact
+            @action="chooseDownloadDir"
+          />
 
           <LibraryMetadataSettingsRow
             :is-running="libraryMetadataMaintenanceState.isRunning"
@@ -543,7 +569,7 @@ onUnmounted(musicAnalysisSettings.dispose);
       <section class="settings-view__column" aria-label="功能與下載">
         <SettingsBlock
           title="功能與下載"
-          summary="只啟用需要的工作流程；額外元件會按需準備。"
+          summary="額外元件只在需要時下載。"
           :status="`${enabledGateCount} / ${featureGateRows.length}`"
           status-tone="gated"
         >

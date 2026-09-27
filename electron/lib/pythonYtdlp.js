@@ -2,6 +2,8 @@
 
 const { spawn } = require('child_process');
 
+const DEFAULT_YTDLP_IDLE_TIMEOUT_MS = 120_000;
+
 const OPTION_FLAGS = Object.freeze([
   ['dumpSingleJson', '--dump-single-json', 'boolean'],
   ['skipDownload', '--skip-download', 'boolean'],
@@ -125,6 +127,10 @@ function createPythonYtdlpRunner(runtime) {
   const spawnImpl = runtime.spawnImpl || spawn;
   const pythonPath = runtime.pythonPath || 'python';
   const remoteComponents = runtime.remoteComponents || 'ejs:github';
+  const idleTimeoutMs =
+    Number.isSafeInteger(runtime.idleTimeoutMs) && runtime.idleTimeoutMs > 0
+      ? runtime.idleTimeoutMs
+      : DEFAULT_YTDLP_IDLE_TIMEOUT_MS;
 
   return function runPythonYtdlp(url, options = {}) {
     return new Promise((resolve, reject) => {
@@ -145,26 +151,66 @@ function createPythonYtdlpRunner(runtime) {
 
       let stdout = '';
       let stderr = '';
+      let settled = false;
+      let idleTimer = null;
+
+      function clearIdleTimer() {
+        clearTimeout(idleTimer);
+        idleTimer = null;
+      }
+
+      function armIdleTimer() {
+        clearIdleTimer();
+        idleTimer = setTimeout(() => {
+          if (settled) return;
+          settled = true;
+          const error = Object.assign(
+            new Error('yt-dlp process stopped making progress'),
+            { code: 'YTDLP_PROCESS_TIMEOUT', name: 'TimeoutError' },
+          );
+          try {
+            child.kill();
+          } catch {
+            // The timeout remains the primary failure.
+          }
+          reject(error);
+        }, idleTimeoutMs);
+        idleTimer.unref?.();
+      }
+
+      function finish(callback) {
+        if (settled) return false;
+        settled = true;
+        clearIdleTimer();
+        callback();
+        return true;
+      }
+
       child.stdout?.on('data', (chunk) => {
         stdout += chunk;
+        armIdleTimer();
       });
       child.stderr?.on('data', (chunk) => {
         stderr += chunk;
+        armIdleTimer();
       });
-      child.on('error', reject);
+      child.on('error', (error) => finish(() => reject(error)));
       child.on('close', (code) => {
-        if (code !== 0) {
-          reject(createYtdlpError(code, stdout, stderr));
-          return;
-        }
-        try {
-          resolve(options.dumpSingleJson ? parseJsonOutput(stdout) : stdout);
-        } catch (err) {
-          err.stdout = stdout;
-          err.stderr = stderr;
-          reject(err);
-        }
+        finish(() => {
+          if (code !== 0) {
+            reject(createYtdlpError(code, stdout, stderr));
+            return;
+          }
+          try {
+            resolve(options.dumpSingleJson ? parseJsonOutput(stdout) : stdout);
+          } catch (err) {
+            err.stdout = stdout;
+            err.stderr = stderr;
+            reject(err);
+          }
+        });
       });
+      armIdleTimer();
     });
   };
 }

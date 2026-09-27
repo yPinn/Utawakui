@@ -37,6 +37,13 @@ function register(overrides = {}) {
   const resolveDownloadDir = vi.fn(
     (value) => value.downloadDir || 'C:\\Users\\Singer\\Music\\Utawakui',
   );
+  const getDownloadDirStatus = vi.fn((value) => ({
+    downloadDir: value.downloadDir || 'C:\\Users\\Singer\\Music\\Utawakui',
+    isDefault: !value.downloadDir,
+    available: true,
+    reason: null,
+  }));
+  const validateDownloadDir = vi.fn();
   const dialog = {
     showOpenDialog: vi.fn().mockResolvedValue({
       canceled: false,
@@ -64,6 +71,8 @@ function register(overrides = {}) {
     getConfig,
     updateConfig,
     resolveDownloadDir,
+    getDownloadDirStatus,
+    validateDownloadDir,
     getMainWindow,
     notifyLibraryUpdated,
     recordDiagnostic,
@@ -105,19 +114,96 @@ describe('registerConfigHandlers', () => {
   });
 
   it('projects the resolved default and custom download directories', async () => {
-    const { ipcMain, getConfig, resolveDownloadDir } = register();
+    const { ipcMain, getConfig, getDownloadDirStatus } = register();
     const get = ipcMain.handlers.get('config:get');
 
     await expect(get()).resolves.toEqual({
       downloadDir: 'C:\\Users\\Singer\\Music\\Utawakui',
       isDefault: true,
+      available: true,
+      reason: null,
     });
     getConfig.mockReturnValue({ downloadDir: 'D:\\Music' });
-    resolveDownloadDir.mockReturnValue('D:\\Music');
+    getDownloadDirStatus.mockReturnValue({
+      downloadDir: 'D:\\Music',
+      isDefault: false,
+      available: false,
+      reason: 'missing',
+    });
     await expect(get()).resolves.toEqual({
       downloadDir: 'D:\\Music',
       isDefault: false,
+      available: false,
+      reason: 'missing',
     });
+  });
+
+  it('keeps the legacy resolver defaults safe when status helpers are omitted', async () => {
+    const { ipcMain, getConfig } = register({
+      getDownloadDirStatus: undefined,
+      validateDownloadDir: undefined,
+    });
+    const get = ipcMain.handlers.get('config:get');
+
+    await expect(get()).resolves.toEqual({
+      downloadDir: 'C:\\Users\\Singer\\Music\\Utawakui',
+      isDefault: true,
+      available: true,
+      reason: null,
+    });
+
+    getConfig.mockReturnValue({ downloadDir: 'D:\\Music' });
+    await expect(get()).resolves.toEqual({
+      downloadDir: 'D:\\Music',
+      isDefault: false,
+      available: true,
+      reason: null,
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:choose-download-dir')(),
+    ).resolves.toBe('D:\\Music\\Utawakui');
+  });
+
+  it('keeps the legacy resolver defaults safe when status helpers are omitted', async () => {
+    const { ipcMain, getConfig } = register({
+      getDownloadDirStatus: undefined,
+      validateDownloadDir: undefined,
+    });
+    const get = ipcMain.handlers.get('config:get');
+
+    await expect(get()).resolves.toEqual({
+      downloadDir: 'C:\\Users\\Singer\\Music\\Utawakui',
+      isDefault: true,
+      available: true,
+      reason: null,
+    });
+
+    getConfig.mockReturnValue({ downloadDir: 'D:\\Music' });
+    await expect(get()).resolves.toEqual({
+      downloadDir: 'D:\\Music',
+      isDefault: false,
+      available: true,
+      reason: null,
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:choose-download-dir')(),
+    ).resolves.toBe('D:\\Music\\Utawakui');
+  });
+
+  it('validates a selected directory before persisting it', async () => {
+    const failure = new Error('selected directory is not writable');
+    const { ipcMain, validateDownloadDir, updateConfig } = register();
+    validateDownloadDir.mockImplementationOnce(() => {
+      throw failure;
+    });
+
+    await expect(
+      ipcMain.handlers.get('config:choose-download-dir')(),
+    ).rejects.toThrow(APP_ERROR_PREFIX);
+    expect(validateDownloadDir).toHaveBeenCalledWith('D:\\Music\\Utawakui');
+    expect(updateConfig).not.toHaveBeenCalled();
   });
 
   it.each([

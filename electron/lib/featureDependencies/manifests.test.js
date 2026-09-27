@@ -155,13 +155,9 @@ describe('dependency manifests and notices', () => {
   });
 
   it.each([
-    [FEATURE_IDS.PROVIDER_FLOW, '需要先準備外部來源工具', '再使用外部來源'],
-    [
-      FEATURE_IDS.AUDIO_PROCESSING_FLOW,
-      '需要先準備音訊處理項目',
-      '再執行這項音訊處理',
-    ],
-  ])('creates bounded public errors for %s', (featureId, title, message) => {
+    [FEATURE_IDS.PROVIDER_FLOW, '尚未準備外部來源工具'],
+    [FEATURE_IDS.AUDIO_PROCESSING_FLOW, '尚未準備音訊處理項目'],
+  ])('creates bounded public errors for %s', (featureId, title) => {
     const error = createMissingDependencyError(
       baseDependency({ featureId, name: 'Managed tool' }),
     );
@@ -176,7 +172,7 @@ describe('dependency manifests and notices', () => {
         dependencyId: FFMPEG_DEPENDENCY_ID,
       },
     });
-    expect(error.publicMessage).toContain(message);
+    expect(error.publicMessage).toBe('請到設定準備「Managed tool」。');
     expect(error.message).not.toContain('https://example.test');
   });
 });

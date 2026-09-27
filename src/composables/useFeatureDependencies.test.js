@@ -161,6 +161,8 @@ describe('useFeatureDependencies', () => {
       code: 'FEATURE_DEPENDENCY_STATUS_FAILED',
       operation: 'refresh',
       source: 'feature-dependencies',
+      title: '無法讀取準備狀態',
+      message: '請再試一次。',
     });
     expect(dependencies.state.error.message).not.toContain('private-runtime');
   });
@@ -175,6 +177,7 @@ describe('useFeatureDependencies', () => {
       code: 'BRIDGE_UNAVAILABLE',
       operation: 'refresh',
       severity: 'warning',
+      message: '請重新啟動 Utawakui 後再試。',
     });
     expect(dependencies.state.isLoading).toBe(false);
   });
@@ -222,6 +225,8 @@ describe('useFeatureDependencies', () => {
       code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
       operation: 'prepare',
       context: { dependencyId: DEPENDENCY_ID },
+      title: '準備失敗',
+      message: '請再試一次。',
     });
     expect(dependencies.state.error.message).not.toContain('private.test');
   });

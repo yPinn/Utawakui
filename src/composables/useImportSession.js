@@ -23,6 +23,8 @@ const state = reactive({
   failureHint: '',
   downloadDir: '',
   isDefaultDir: true,
+  isDownloadDirAvailable: true,
+  downloadDirIssue: null,
   sourceKind: 'idle', // 'idle' | 'playlist' | 'single' — input source shape
   singleTrack: null,
   singleResolution: null,
@@ -282,6 +284,8 @@ async function refreshConfig() {
     const config = await window.Utawakui.getConfig();
     state.downloadDir = config.downloadDir;
     state.isDefaultDir = config.isDefault;
+    state.isDownloadDirAvailable = config.available !== false;
+    state.downloadDirIssue = config.reason || null;
     return true;
   } catch (error) {
     reportImportError(error, 'read-settings', '目前無法讀取匯入設定。');

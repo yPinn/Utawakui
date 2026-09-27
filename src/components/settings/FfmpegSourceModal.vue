@@ -106,7 +106,7 @@ const systemSourceDetail = computed(() => {
     .join(' · ');
 });
 const managedSourceCaption = computed(
-  () => managedProgressLabel.value || '由 Utawakui 下載並保存於本機',
+  () => managedProgressLabel.value || '由 Utawakui 下載並管理',
 );
 const managedSourceDetail = computed(() =>
   [
@@ -133,7 +133,7 @@ async function chooseSystem() {
     switchError.value = recordError(err, {
       code: 'FFMPEG_SOURCE_SWITCH_FAILED',
       title: 'FFmpeg 來源未切換',
-      message: '目前無法切換版本，請再試一次。',
+      message: '請再試一次。',
       source: 'settings',
       operation: 'set-ffmpeg-source',
       context: { retryable: true },
@@ -157,7 +157,7 @@ async function chooseManaged() {
     switchError.value = recordError(err, {
       code: 'FFMPEG_SOURCE_SWITCH_FAILED',
       title: 'FFmpeg 來源未切換',
-      message: '目前無法切換版本，請再試一次。',
+      message: '請再試一次。',
       source: 'settings',
       operation: 'set-ffmpeg-source',
       context: { retryable: true },
@@ -172,7 +172,7 @@ async function chooseManaged() {
   <UiModal :open="open" title="FFmpeg 來源" size="wide" @close="emit('close')">
     <div class="ffmpeg-source-modal">
       <p class="ffmpeg-source-modal__description">
-        選擇讓 Utawakui 使用系統已安裝的 FFmpeg,或下載內建管理的版本。
+        選擇系統 FFmpeg，或由 Utawakui 下載管理。
       </p>
 
       <ul class="ffmpeg-source-modal__list">
@@ -189,9 +189,7 @@ async function chooseManaged() {
           >
             <Settings :size="ICON_SIZE" aria-hidden="true" />
             <span class="ffmpeg-source-modal__label-group">
-              <span class="ffmpeg-source-modal__label"
-                >使用系統安裝的 FFmpeg</span
-              >
+              <span class="ffmpeg-source-modal__label">使用系統 FFmpeg</span>
               <span class="ffmpeg-source-modal__caption">
                 {{ systemSourceCaption }}
               </span>
@@ -249,7 +247,7 @@ async function chooseManaged() {
 
       <div class="ffmpeg-source-modal__actions">
         <UiButton :icon="RefreshCw" :disabled="isDetecting" @click="redetect">
-          重新偵測系統 FFmpeg
+          重新檢查
         </UiButton>
       </div>
 

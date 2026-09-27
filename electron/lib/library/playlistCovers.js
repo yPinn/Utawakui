@@ -23,6 +23,8 @@ const ALLOWED_THUMBNAIL_HOSTS = new Set([
   'yt3.ggpht.com',
   'yt3.googleusercontent.com',
 ]);
+const DEFAULT_PLAYLIST_COVER_TIMEOUT_MS = 15_000;
+const MAX_PLAYLIST_COVER_BYTES = 10 * 1024 * 1024;
 
 function isPlaylistCoverFilename(filename) {
   if (typeof filename !== 'string' || filename.length === 0) return false;
@@ -92,7 +94,12 @@ function deletePlaylistCoverDir(dir, playlistId) {
 // any failure (network, non-2xx, unrecognized content type) just returns
 // null rather than throwing, so a flaky fetch never blocks the album import
 // itself, which is the part the user actually asked for.
-async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
+async function writePlaylistCoverFromUrl(
+  dir,
+  playlistId,
+  imageUrl,
+  options = {},
+) {
   if (!isSafeTrackId(playlistId)) return null;
   if (typeof imageUrl !== 'string' || imageUrl.length === 0) return null;
 
@@ -105,32 +112,70 @@ async function writePlaylistCoverFromUrl(dir, playlistId, imageUrl) {
     if (parsedUrl.protocol !== 'https:') return null;
     if (!ALLOWED_THUMBNAIL_HOSTS.has(parsedUrl.hostname)) return null;
 
-    const response = await fetch(imageUrl);
-    if (!response.ok) return null;
+    const fetchImpl = options.fetchImpl || fetch;
+    const timeoutMs =
+      Number.isSafeInteger(options.timeoutMs) && options.timeoutMs > 0
+        ? options.timeoutMs
+        : DEFAULT_PLAYLIST_COVER_TIMEOUT_MS;
+    const controller = new AbortController();
+    let rejectDeadline;
+    const deadline = new Promise((_, reject) => {
+      rejectDeadline = reject;
+    });
+    const timeout = setTimeout(() => {
+      const error = Object.assign(new Error('playlist cover timed out'), {
+        name: 'TimeoutError',
+      });
+      controller.abort(error);
+      rejectDeadline(error);
+    }, timeoutMs);
+    timeout.unref?.();
 
-    const contentType = response.headers
-      .get('content-type')
-      ?.split(';')[0]
-      ?.trim();
-    const urlExt = path.extname(parsedUrl.pathname).toLowerCase();
-    const ext =
-      EXTENSION_BY_IMAGE_MIME_TYPE[contentType] ||
-      (IMAGE_EXTENSIONS.has(urlExt) ? urlExt : null);
-    if (!ext) return null;
+    try {
+      const response = await Promise.race([
+        fetchImpl(imageUrl, { signal: controller.signal }),
+        deadline,
+      ]);
+      if (!response.ok) return null;
 
-    const buffer = Buffer.from(await response.arrayBuffer());
+      const declaredLength = Number(response.headers.get('content-length'));
+      if (
+        Number.isFinite(declaredLength) &&
+        declaredLength > MAX_PLAYLIST_COVER_BYTES
+      ) {
+        await response.body?.cancel?.().catch(() => undefined);
+        return null;
+      }
 
-    const coverDir = path.resolve(dir, PLAYLIST_COVERS_DIRNAME, playlistId);
-    fs.mkdirSync(coverDir, { recursive: true });
+      const contentType = response.headers
+        .get('content-type')
+        ?.split(';')[0]
+        ?.trim();
+      const urlExt = path.extname(parsedUrl.pathname).toLowerCase();
+      const ext =
+        EXTENSION_BY_IMAGE_MIME_TYPE[contentType] ||
+        (IMAGE_EXTENSIONS.has(urlExt) ? urlExt : null);
+      if (!ext) return null;
 
-    const existing = findPlaylistCoverFilename(coverDir);
-    const filename = `${PLAYLIST_COVER_BASENAME}${ext}`;
-    if (existing && existing !== filename) {
-      fs.rmSync(path.join(coverDir, existing), { force: true });
+      const buffer = Buffer.from(
+        await Promise.race([response.arrayBuffer(), deadline]),
+      );
+      if (buffer.length > MAX_PLAYLIST_COVER_BYTES) return null;
+
+      const coverDir = path.resolve(dir, PLAYLIST_COVERS_DIRNAME, playlistId);
+      fs.mkdirSync(coverDir, { recursive: true });
+
+      const existing = findPlaylistCoverFilename(coverDir);
+      const filename = `${PLAYLIST_COVER_BASENAME}${ext}`;
+      if (existing && existing !== filename) {
+        fs.rmSync(path.join(coverDir, existing), { force: true });
+      }
+      const targetPath = path.join(coverDir, filename);
+      atomicWriteBuffer(targetPath, buffer);
+      return filename;
+    } finally {
+      clearTimeout(timeout);
     }
-    const targetPath = path.join(coverDir, filename);
-    atomicWriteBuffer(targetPath, buffer);
-    return filename;
   } catch {
     return null;
   }

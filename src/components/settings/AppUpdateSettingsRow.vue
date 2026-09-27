@@ -46,9 +46,9 @@ const availableVersionLabel = computed(() =>
 const updatePresentation = computed(() => {
   switch (props.phase) {
     case 'idle':
-      return { value: '可檢查是否有新版本', status: '待命', tone: 'muted' };
+      return { value: '尚未檢查更新', status: '待命', tone: 'muted' };
     case 'checking':
-      return { value: '正在檢查公開發行版本', status: '檢查中', tone: 'info' };
+      return { value: '正在檢查更新', status: '檢查中', tone: 'info' };
     case 'available':
       return {
         value: `可下載 ${availableVersionLabel.value}`,
@@ -56,7 +56,7 @@ const updatePresentation = computed(() => {
         tone: 'warning',
       };
     case 'not-available':
-      return { value: '目前已是最新版本', status: '最新', tone: 'success' };
+      return { value: '已是最新版本', status: '最新', tone: 'success' };
     case 'downloading':
       return {
         value: formatDownloadProgress({
@@ -69,13 +69,13 @@ const updatePresentation = computed(() => {
       };
     case 'downloaded':
       return {
-        value: `${availableVersionLabel.value} 已準備完成`,
-        status: '待重新啟動',
+        value: `${availableVersionLabel.value} 已下載`,
+        status: '可安裝',
         tone: 'success',
       };
     case 'error':
       return {
-        value: props.error || '更新操作未完成',
+        value: props.error || '更新失敗，請再試一次。',
         status: '需重試',
         tone: 'warning',
       };
@@ -139,17 +139,17 @@ function handleAction() {
     <SettingsActionRow
       :icon="RefreshCw"
       title="Utawakui 版本"
-      description="啟動後只檢查版本；下載與安裝仍由你決定。"
+      description="啟動時只檢查；下載與安裝由你決定。"
       :value="rowPresentation.value"
       :status="rowPresentation.status"
       :status-tone="rowPresentation.tone"
-      :tooltip="infoError || '顯示目前安裝版本與公開發行版本的更新狀態。'"
+      :tooltip="infoError || '查看目前版本與更新狀態。'"
     >
       <template #actions>
         <UiCheckbox
           id="app-update-auto-check"
           label="自動檢查"
-          aria-label="啟動與定期自動檢查是否有新版本"
+          aria-label="自動檢查更新"
           :model-value="autoCheckEnabled"
           :disabled="!enabled || autoCheckBusy"
           @update:model-value="emit('setAutoCheck', $event)"
@@ -180,7 +180,7 @@ function handleAction() {
     <UiNotice
       v-if="autoCheckError"
       tone="danger"
-      title="自動檢查更新設定未儲存"
+      title="自動檢查設定未儲存"
       :message="autoCheckError"
       compact
     />

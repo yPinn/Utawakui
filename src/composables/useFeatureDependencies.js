@@ -50,13 +50,13 @@ function clearDependencyProgress(dependencyId) {
 
 async function refreshDependencies() {
   if (!hasBridge()) {
-    state.error = recordError('需要重新啟動應用程式才能讀取功能準備狀態。', {
+    state.error = recordError('請重新啟動 Utawakui 後再試。', {
       code: 'BRIDGE_UNAVAILABLE',
       severity: 'warning',
       title: '需要重新啟動',
       source: 'feature-dependencies',
       operation: 'refresh',
-      message: '請重新啟動應用程式後再試。',
+      message: '請重新啟動 Utawakui 後再試。',
     });
     return;
   }
@@ -68,11 +68,11 @@ async function refreshDependencies() {
   } catch (err) {
     state.error = recordError(err, {
       code: 'FEATURE_DEPENDENCY_STATUS_FAILED',
-      title: '讀取功能準備狀態失敗',
+      title: '無法讀取準備狀態',
       source: 'feature-dependencies',
       operation: 'refresh',
       actionLabel: '重新讀取',
-      message: '目前無法讀取功能準備狀態，請再試一次。',
+      message: '請再試一次。',
     });
   } finally {
     state.isLoading = false;
@@ -95,12 +95,12 @@ async function prepareDependency(dependencyId) {
   } catch (err) {
     state.error = recordError(err, {
       code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
-      title: '準備項目失敗',
+      title: '準備失敗',
       source: 'feature-dependencies',
       operation: 'prepare',
       actionLabel: '重試',
       context: { dependencyId },
-      message: '準備項目未完成，請再試一次。',
+      message: '請再試一次。',
     });
   } finally {
     state.preparingIds.delete(dependencyId);
@@ -117,13 +117,13 @@ async function runDependencyAction({
   actionLabel,
 }) {
   if (!hasDependencyActionBridge(bridgeMethod)) {
-    state.error = recordError('需要重新啟動應用程式才能使用這個維護動作。', {
+    state.error = recordError('請重新啟動 Utawakui 後再試。', {
       code: 'BRIDGE_UNAVAILABLE',
       severity: 'warning',
       title: '需要重新啟動',
       source: 'feature-dependencies',
       operation,
-      message: '請重新啟動應用程式後再試。',
+      message: '請重新啟動 Utawakui 後再試。',
     });
     return;
   }
@@ -148,7 +148,7 @@ async function runDependencyAction({
       operation,
       actionLabel,
       context: { dependencyId },
-      message: '維護操作未完成，請再試一次。',
+      message: '請再試一次。',
     });
   } finally {
     state.actionIds.delete(actionKey);

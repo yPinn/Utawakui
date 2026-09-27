@@ -5,6 +5,8 @@ const path = require('path');
 const { spawn } = require('child_process');
 const { dependencyDownloadLabel } = require('./download');
 
+const DEFAULT_ARCHIVE_EXTRACTION_TIMEOUT_MS = 5 * 60_000;
+
 function zipEntrySegments(entryName) {
   return String(entryName).replaceAll('\\', '/').split('/').filter(Boolean);
 }
@@ -169,20 +171,50 @@ function expandZipArchive(
       destinationDir,
     ]);
     let stderr = '';
+    let settled = false;
+    const timeoutMs =
+      Number.isSafeInteger(options.timeoutMs) && options.timeoutMs > 0
+        ? options.timeoutMs
+        : DEFAULT_ARCHIVE_EXTRACTION_TIMEOUT_MS;
+    const timer = setTimeout(() => {
+      settled = true;
+      try {
+        proc.kill();
+      } catch {
+        // The timeout remains the primary failure.
+      }
+      reject(
+        Object.assign(
+          new Error('feature dependency archive extraction timed out'),
+          { name: 'TimeoutError' },
+        ),
+      );
+    }, timeoutMs);
+    timer.unref?.();
+
+    function finish(callback) {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      callback();
+    }
+
     proc.stderr.on('data', (chunk) => {
       stderr += chunk;
     });
-    proc.on('error', reject);
+    proc.on('error', (error) => finish(() => reject(error)));
     proc.on('close', (code) => {
-      if (code !== 0) {
-        reject(
-          new Error(
-            `failed to extract feature dependency archive (code ${code}): ${stderr}`,
-          ),
-        );
-        return;
-      }
-      resolve();
+      finish(() => {
+        if (code !== 0) {
+          reject(
+            new Error(
+              `failed to extract feature dependency archive (code ${code}): ${stderr}`,
+            ),
+          );
+          return;
+        }
+        resolve();
+      });
     });
   });
 }

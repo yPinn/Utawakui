@@ -30,6 +30,7 @@ const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
 function registerSeparationHandlers({
   ipcMain,
   getConfig,
+  updateConfig = () => undefined,
   resolveDownloadDir,
   getMainWindow,
   notifyLibraryUpdated,
@@ -69,6 +70,9 @@ function registerSeparationHandlers({
       const ffmpegPath = getPreparedSeparationFfmpegPath(
         userDataDir,
         getConfig().systemFfmpegPath,
+        {
+          onStaleSystemPath: () => updateConfig({ systemFfmpegPath: null }),
+        },
       );
       const modelPath = getPreparedSeparationModel(
         userDataDir,

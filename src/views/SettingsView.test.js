@@ -32,10 +32,16 @@ describe('SettingsView version and maintenance sections', () => {
 
   it('describes optional downloads in user-facing terms', () => {
     expect(source).toMatch(/<SettingsBlock\s+title="功能與下載"/);
-    expect(source).toContain('只啟用需要的工作流程；額外元件會按需準備。');
+    expect(source).toContain('額外元件只在需要時下載。');
     expect(source).not.toContain('工具與模型會列在下方');
     expect(source).toContain('<MusicAnalysisSettingsRow');
     expect(source).toContain('FEATURE_IDS.AUDIO_PROCESSING_FLOW');
+  });
+
+  it('keeps library location recovery copy short and actionable', () => {
+    expect(source).toContain('無法建立預設資料夾。請選擇其他位置。');
+    expect(source).toContain('設定已保留。請重新連接磁碟，或選擇其他位置。');
+    expect(source).toContain('下載與匯入的曲目會存放在這裡。');
   });
 
   it('nests BPM controls inside the audio-processing feature row', () => {

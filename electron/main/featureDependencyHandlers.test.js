@@ -7,6 +7,7 @@ const mocks = vi.hoisted(() => ({
     id: 'ffmpeg-gyan-essentials',
     featureId: 'audio-processing-flow',
   })),
+  resolveFfmpegRuntime: vi.fn(),
   list: vi.fn(),
   prepare: vi.fn(),
   remove: vi.fn(),
@@ -17,6 +18,7 @@ const mocks = vi.hoisted(() => ({
 vi.mock('electron', () => ({ app: { getPath: mocks.getPath } }));
 vi.mock('../lib/featureDependencies', () => ({
   getFfmpegDependency: mocks.getFfmpegDependency,
+  resolveFfmpegRuntime: mocks.resolveFfmpegRuntime,
   listFeatureDependencyStatuses: mocks.list,
   prepareFeatureDependency: mocks.prepare,
   removeFeatureDependency: mocks.remove,
@@ -58,6 +60,7 @@ function register(overrides = {}) {
       repairFeatureDependency: mocks.repair,
     },
     detectSystemFfmpegImpl: mocks.detect,
+    resolveFfmpegRuntimeImpl: mocks.resolveFfmpegRuntime,
     resourcesPath: null,
     ...overrides,
   };
@@ -79,6 +82,13 @@ beforeEach(() => {
     id: 'ffmpeg-gyan-essentials',
     featureId: 'audio-processing-flow',
   });
+  mocks.resolveFfmpegRuntime.mockImplementation(
+    (_userDataDir, systemFfmpegPath) => ({
+      path: systemFfmpegPath,
+      source: systemFfmpegPath ? 'system' : 'managed',
+      staleSystemPath: false,
+    }),
+  );
   mocks.list.mockReturnValue([
     {
       id: 'ffmpeg-gyan-essentials',
@@ -145,6 +155,27 @@ describe('feature dependency handlers', () => {
       'C:\\Tools\\ffmpeg.exe',
     );
     expect(requireFeatureGate).not.toHaveBeenCalled();
+  });
+
+  it('clears a stale system FFmpeg preference before listing managed status', async () => {
+    const getConfig = vi.fn(() => ({
+      systemFfmpegPath: 'C:\\Tools\\removed-ffmpeg.exe',
+    }));
+    mocks.resolveFfmpegRuntime.mockReturnValueOnce({
+      path: 'C:\\AppData\\Utawakui\\dependencies\\ffmpeg\\ffmpeg.exe',
+      source: 'managed',
+      staleSystemPath: true,
+    });
+    const { ipcMain, updateConfig } = register({ getConfig });
+
+    await ipcMain.handlers.get('feature-dependencies:list')();
+
+    expect(updateConfig).toHaveBeenCalledWith({ systemFfmpegPath: null });
+    expect(mocks.list).toHaveBeenCalledWith(
+      'C:\\AppData\\Utawakui',
+      undefined,
+      null,
+    );
   });
 
   it('prepares after gating and publishes bounded progress and fresh status', async () => {

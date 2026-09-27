@@ -66,7 +66,7 @@ function applyStatus(status) {
     typeof status.releaseDate === 'string' ? status.releaseDate : null;
   state.error =
     typeof status.error === 'string' && status.error
-      ? '目前無法完成更新操作，請稍後再試。'
+      ? '更新失敗，請再試一次。'
       : null;
 }
 
@@ -78,7 +78,7 @@ function ensureSubscription() {
 async function invoke(method) {
   ensureSubscription();
   if (!hasBridge(method)) {
-    state.error = '需要重新啟動應用程式才能使用更新功能。';
+    state.error = '請重新啟動 Utawakui 後再試。';
     return;
   }
   try {
@@ -86,8 +86,8 @@ async function invoke(method) {
   } catch (error) {
     state.error = recordError(error, {
       code: 'APP_UPDATE_ACTION_FAILED',
-      title: '更新操作失敗',
-      message: '目前無法完成更新操作，請稍後再試。',
+      title: '更新失敗',
+      message: '更新失敗，請再試一次。',
       source: 'app-update',
       operation: method,
     }).message;
@@ -117,7 +117,7 @@ async function refreshAppUpdateAutoCheck() {
       (await window.Utawakui.getAppUpdateAutoCheck()) !== false;
     state.autoCheckError = null;
   } catch {
-    state.autoCheckError = '目前無法讀取自動檢查更新設定，請重新啟動後再試。';
+    state.autoCheckError = '無法讀取自動檢查設定。請重新啟動後再試。';
   }
   return state.autoCheckEnabled;
 }
@@ -140,7 +140,7 @@ async function setAppUpdateAutoCheck(enabled) {
     return true;
   } catch {
     state.autoCheckEnabled = previous;
-    state.autoCheckError = '目前無法儲存自動檢查更新設定，請再試一次。';
+    state.autoCheckError = '請再試一次。';
     return false;
   } finally {
     state.autoCheckBusy = false;

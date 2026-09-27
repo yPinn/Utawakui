@@ -43,7 +43,15 @@ function registerMediaProtocol({
 }) {
   protocol.handle(MEDIA_SCHEME, (request) => {
     const url = new URL(request.url);
-    const dir = resolveDownloadDir(getConfig());
+    let dir;
+    try {
+      dir = resolveDownloadDir(getConfig());
+    } catch {
+      // An unavailable custom library is an expected recoverable state. Do
+      // not let every artwork/audio request become an unhandled protocol
+      // rejection while the user reconnects or changes the location.
+      return notFoundResponse();
+    }
     const segments = decodePathSegments(url.pathname);
     if (!segments) return notFoundResponse();
 

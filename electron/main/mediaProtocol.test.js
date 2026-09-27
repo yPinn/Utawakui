@@ -144,6 +144,21 @@ describe('registerMediaProtocol', () => {
     expect(library.buildRangeResponse).not.toHaveBeenCalled();
   });
 
+  it('returns 404 while the configured library location is unavailable', () => {
+    const { handler, resolveDownloadDir } = setup();
+    resolveDownloadDir.mockImplementation(() => {
+      throw new Error('library unavailable');
+    });
+
+    const response = handler(
+      request('utawakui-media://track/track-a/audio.wav'),
+    );
+
+    expect(response.status).toBe(404);
+    expect(library.resolveTrackAssetPath).not.toHaveBeenCalled();
+    expect(library.buildRangeResponse).not.toHaveBeenCalled();
+  });
+
   it('turns a deleted-file race into a logged 404 response', () => {
     const error = new Error('ENOENT');
     library.buildRangeResponse.mockImplementation(() => {

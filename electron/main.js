@@ -30,9 +30,17 @@ const APP_NAME = 'Utawakui';
 app.setName(APP_NAME);
 app.setAppLogsPath();
 
-const { detectPackagedRuntime } = require('./main/runtimeEnvironment');
+const {
+  detectPackagedRuntime,
+  resolvePackagedUpdateConfigPath,
+} = require('./main/runtimeEnvironment');
 const isPackagedRuntime = detectPackagedRuntime({
   appPath: app.getAppPath(),
+  resourcesPath: process.resourcesPath,
+});
+const packagedUpdateConfigPath = resolvePackagedUpdateConfigPath({
+  isPackagedRuntime,
+  isElectronPackaged: app.isPackaged,
   resourcesPath: process.resourcesPath,
 });
 
@@ -385,6 +393,10 @@ if (!gotSingleInstanceLock) {
           ffmpegPath: getPreparedFfmpegPath(
             app.getPath('userData'),
             config.systemFfmpegPath,
+            {
+              onStaleSystemPath: () =>
+                configState.updateConfig({ systemFfmpegPath: null }),
+            },
           ),
         };
       },
@@ -537,6 +549,7 @@ if (!gotSingleInstanceLock) {
       runtimeEnabled: APP_UPDATE_RUNTIME_ENABLED,
       signedManifestEnabled: APP_UPDATE_SIGNED_MANIFEST_ENABLED,
       autoCheckEnabled: configState.getConfig().autoCheckAppUpdates,
+      packagedUpdateConfigPath,
       beforeInstall: () => windowsTrayController.beginQuit(),
       publishStatus: (status) => {
         const mainWindow = windowState.getMainWindow();
@@ -698,6 +711,8 @@ if (!gotSingleInstanceLock) {
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       sendBackfillStatus: windowState.sendBackfillStatus,
       featureIds: FEATURE_IDS,
+      requireFeatureGate,
+      openExternal: (url) => shell.openExternal(url),
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
@@ -758,6 +773,7 @@ if (!gotSingleInstanceLock) {
     registerSeparationHandlers({
       ipcMain,
       getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
       getMainWindow: windowState.getMainWindow,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
@@ -784,6 +800,8 @@ if (!gotSingleInstanceLock) {
       getConfig: configState.getConfig,
       updateConfig: configState.updateConfig,
       resolveDownloadDir: configState.resolveDownloadDir,
+      getDownloadDirStatus: configState.getDownloadDirStatus,
+      validateDownloadDir: configState.validateDownloadDir,
       getMainWindow: windowState.getMainWindow,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       recordDiagnostic: (event) => diagnosticsService.record(event),

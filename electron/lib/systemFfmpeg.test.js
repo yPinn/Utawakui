@@ -71,6 +71,31 @@ describe('parseFfmpegVersion', () => {
 });
 
 describe('detectSystemFfmpeg', () => {
+  it('bounds a system FFmpeg probe whose child process never exits', async () => {
+    vi.useFakeTimers();
+    try {
+      const proc = new EventEmitter();
+      proc.stdout = new EventEmitter();
+      proc.stderr = new EventEmitter();
+      proc.kill = vi.fn();
+
+      const pending = detectSystemFfmpeg({
+        allowNonWindows: true,
+        spawnImpl: vi.fn(() => proc),
+        processTimeoutMs: 1_000,
+      });
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await expect(pending).resolves.toMatchObject({
+        ok: false,
+        available: false,
+      });
+      expect(proc.kill).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('reports unavailable when where.exe finds nothing', async () => {
     const spawnImpl = makeSpawnImpl({ whereCode: 1 });
 

@@ -27,6 +27,7 @@ const {
 const {
   ensureFfmpegDependency,
   getPreparedFfmpegPath,
+  resolveFfmpegRuntime,
 } = require('./featureDependencies/ffmpeg');
 const {
   ensureModelDependency,
@@ -59,6 +60,7 @@ module.exports = {
   ensureModelDependency,
   getPreparedYtdlpPath,
   getPreparedFfmpegPath,
+  resolveFfmpegRuntime,
   getPreparedSeparationModelPath,
   prepareFeatureDependency,
   removeFeatureDependency,

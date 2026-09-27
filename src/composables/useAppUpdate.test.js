@@ -113,9 +113,7 @@ describe('useAppUpdate', () => {
 
     await appUpdate.setAppUpdateAutoCheck(false);
     expect(appUpdate.state.autoCheckEnabled).toBe(true);
-    expect(appUpdate.state.autoCheckError).toBe(
-      '目前無法儲存自動檢查更新設定，請再試一次。',
-    );
+    expect(appUpdate.state.autoCheckError).toBe('請再試一次。');
   });
 
   it('routes fixed check, download, and install actions through preload', async () => {
@@ -155,9 +153,7 @@ describe('useAppUpdate', () => {
 
     await appUpdate.refreshAppUpdateStatus();
 
-    expect(appUpdate.state.error).toBe(
-      '需要重新啟動應用程式才能使用更新功能。',
-    );
+    expect(appUpdate.state.error).toBe('請重新啟動 Utawakui 後再試。');
   });
 
   it('ignores unrecognized status phases', async () => {
@@ -190,6 +186,6 @@ describe('useAppUpdate', () => {
 
     await appUpdate.checkForAppUpdate();
 
-    expect(appUpdate.state.error).toBe('目前無法完成更新操作，請稍後再試。');
+    expect(appUpdate.state.error).toBe('更新失敗，請再試一次。');
   });
 });

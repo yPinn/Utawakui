@@ -37,6 +37,13 @@ function registerConfigHandlers({
   getConfig,
   updateConfig,
   resolveDownloadDir,
+  getDownloadDirStatus = (config) => ({
+    downloadDir: resolveDownloadDir(config),
+    isDefault: !config.downloadDir,
+    available: true,
+    reason: null,
+  }),
+  validateDownloadDir = () => undefined,
   getMainWindow,
   notifyLibraryUpdated,
   recordDiagnostic,
@@ -53,13 +60,7 @@ function registerConfigHandlers({
         title: '無法讀取下載位置',
         message: '目前無法讀取下載位置，請稍後再試。',
       },
-      () => {
-        const config = getConfig();
-        return {
-          downloadDir: resolveDownloadDir(config),
-          isDefault: !config.downloadDir,
-        };
-      },
+      () => getDownloadDirStatus(getConfig()),
     ),
   );
 
@@ -77,8 +78,9 @@ function registerConfigHandlers({
           properties: ['openDirectory', 'createDirectory'],
         });
         if (result.canceled || !result.filePaths[0]) {
-          return resolveDownloadDir(getConfig());
+          return getDownloadDirStatus(getConfig()).downloadDir;
         }
+        validateDownloadDir(result.filePaths[0]);
         updateConfig({ downloadDir: result.filePaths[0] });
         // Invalidates both renderer library state and the module-scope playlist
         // cache before either can write against the newly selected directory.
@@ -98,9 +100,13 @@ function registerConfigHandlers({
         message: '目前無法重設下載位置，請稍後再試。',
       },
       () => {
+        const defaultDir = resolveDownloadDir({
+          ...getConfig(),
+          downloadDir: null,
+        });
         updateConfig({ downloadDir: null });
         notifyLibraryUpdated();
-        return resolveDownloadDir(getConfig());
+        return defaultDir;
       },
     ),
   );

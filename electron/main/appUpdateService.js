@@ -8,7 +8,7 @@ const {
 } = require('../lib/updateManifestVerification');
 const DEFAULT_TRUSTED_KEY_REGISTRY = require('../../shared/updateSigningKeys.json');
 
-const MANIFEST_ERROR_MESSAGE = '更新驗證失敗，請稍後再試。';
+const MANIFEST_ERROR_MESSAGE = '更新驗證失敗，請再試一次。';
 
 const UPDATE_PHASES = new Set([
   'disabled',
@@ -41,6 +41,7 @@ const MAX_ETA_SECONDS = 24 * 60 * 60;
 // check that eventually settles after this timeout still delivers its real
 // result through the normal event listeners in initialize() below.
 const DEFAULT_CHECK_TIMEOUT_MS = 30_000;
+const DEFAULT_DOWNLOAD_IDLE_TIMEOUT_MS = 60_000;
 
 function raceWithTimeout(promise, timeoutMs, message) {
   return new Promise((resolve, reject) => {
@@ -59,6 +60,42 @@ function raceWithTimeout(promise, timeoutMs, message) {
       },
     );
   });
+}
+
+function createIdleTimeoutRace(timeoutMs, onTimeout, message) {
+  let timer = null;
+  let rejectTimeout;
+  const timeoutPromise = new Promise((_, reject) => {
+    rejectTimeout = reject;
+  });
+
+  function touch() {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      try {
+        onTimeout?.();
+      } finally {
+        rejectTimeout(
+          Object.assign(new Error(message), { name: 'TimeoutError' }),
+        );
+      }
+    }, timeoutMs);
+    timer?.unref?.();
+  }
+
+  function dispose() {
+    clearTimeout(timer);
+    timer = null;
+  }
+
+  return {
+    dispose,
+    touch,
+    race(promise) {
+      touch();
+      return Promise.race([promise, timeoutPromise]).finally(dispose);
+    },
+  };
 }
 
 function boundedString(value, maxLength = 80) {
@@ -131,6 +168,12 @@ function createAppUpdateService({
   verifyManifestFn = verifyManifest,
   trustedKeyRegistry = DEFAULT_TRUSTED_KEY_REGISTRY,
   checkTimeoutMs = DEFAULT_CHECK_TIMEOUT_MS,
+  downloadIdleTimeoutMs = DEFAULT_DOWNLOAD_IDLE_TIMEOUT_MS,
+  cancellationTokenFactory = () => {
+    const { CancellationToken } = require('builder-util-runtime');
+    return new CancellationToken();
+  },
+  packagedUpdateConfigPath = null,
   beforeInstall = () => undefined,
 } = {}) {
   const enabled = Boolean(isPackaged && isWindows && runtimeEnabled);
@@ -140,6 +183,7 @@ function createAppUpdateService({
   let startupCheckScheduled = false;
   let recheckScheduled = false;
   let availableUpdateDescriptor = null;
+  let activeDownloadActivity = null;
   let status = {
     enabled,
     phase: enabled ? 'idle' : 'disabled',
@@ -165,7 +209,7 @@ function createAppUpdateService({
     return getStatus();
   }
 
-  function fail(operation, error, message = '無法完成更新操作，請稍後再試。') {
+  function fail(operation, error, message = '更新失敗，請再試一次。') {
     logger.error?.(`[update] ${operation} failed`, error);
     return setStatus({
       phase: 'error',
@@ -214,6 +258,10 @@ function createAppUpdateService({
 
     try {
       updater = updaterFactory();
+      if (packagedUpdateConfigPath) {
+        updater.forceDevUpdateConfig = true;
+        updater.updateConfigPath = packagedUpdateConfigPath;
+      }
       updater.autoDownload = false;
       updater.autoInstallOnAppQuit = false;
       updater.allowPrerelease = false;
@@ -247,6 +295,8 @@ function createAppUpdateService({
         });
       });
       updater.on('download-progress', (progress) => {
+        if (!['available', 'downloading'].includes(status.phase)) return;
+        activeDownloadActivity?.();
         setStatus({
           phase: 'downloading',
           ...projectDownloadProgress(progress),
@@ -297,6 +347,12 @@ function createAppUpdateService({
         checkTimeoutMs,
         'update check timed out',
       );
+      if (status.phase === 'checking') {
+        return fail(
+          'Check',
+          new Error('update check resolved without a terminal status'),
+        );
+      }
     } catch (error) {
       return fail('Check', error);
     }
@@ -331,7 +387,27 @@ function createAppUpdateService({
     }
 
     try {
-      await updater.downloadUpdate();
+      const cancellationToken = cancellationTokenFactory();
+      const idleTimeout = createIdleTimeoutRace(
+        downloadIdleTimeoutMs,
+        () => cancellationToken.cancel(),
+        'update download timed out',
+      );
+      activeDownloadActivity = idleTimeout.touch;
+      try {
+        await idleTimeout.race(updater.downloadUpdate(cancellationToken));
+      } finally {
+        idleTimeout.dispose();
+        if (activeDownloadActivity === idleTimeout.touch) {
+          activeDownloadActivity = null;
+        }
+      }
+      if (status.phase === 'downloading') {
+        return fail(
+          'Download',
+          new Error('update download resolved without a terminal status'),
+        );
+      }
     } catch (error) {
       return fail('Download', error);
     }

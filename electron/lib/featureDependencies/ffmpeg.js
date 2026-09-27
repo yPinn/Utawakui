@@ -218,26 +218,38 @@ async function ensureFfmpegDependency(userDataDir, options = {}) {
 // file can still have vanished since (uninstalled, PATH changed) without
 // the app restarting, so existence is still checked at call time exactly
 // like the managed path below.
-function getPreparedFfmpegPath(userDataDir, systemFfmpegPath = null) {
-  if (systemFfmpegPath) {
-    if (!fs.existsSync(systemFfmpegPath)) {
-      throw createMissingDependencyError({
-        ...getFfmpegDependency(),
-        name: '系統 FFmpeg',
-      });
-    }
-    return systemFfmpegPath;
+function resolveFfmpegRuntime(userDataDir, systemFfmpegPath = null) {
+  if (systemFfmpegPath && fs.existsSync(systemFfmpegPath)) {
+    return {
+      path: systemFfmpegPath,
+      source: 'system',
+      staleSystemPath: false,
+    };
   }
-
   const dependency = getFfmpegDependency();
   const { executablePath } = getFfmpegPaths(userDataDir, dependency);
-  if (!fs.existsSync(executablePath)) {
-    throw createMissingDependencyError(dependency);
+  return {
+    path: fs.existsSync(executablePath) ? executablePath : null,
+    source: 'managed',
+    staleSystemPath: Boolean(systemFfmpegPath),
+  };
+}
+
+function getPreparedFfmpegPath(
+  userDataDir,
+  systemFfmpegPath = null,
+  options = {},
+) {
+  const resolved = resolveFfmpegRuntime(userDataDir, systemFfmpegPath);
+  if (resolved.staleSystemPath) {
+    options.onStaleSystemPath?.(systemFfmpegPath);
   }
-  return executablePath;
+  if (resolved.path) return resolved.path;
+  throw createMissingDependencyError(getFfmpegDependency());
 }
 
 module.exports = {
   ensureFfmpegDependency,
   getPreparedFfmpegPath,
+  resolveFfmpegRuntime,
 };

@@ -1440,6 +1440,8 @@ describe('useImportSession', () => {
       getConfigMock.mockResolvedValueOnce({
         downloadDir: '/music/utawakui',
         isDefault: false,
+        available: false,
+        reason: 'missing',
       });
       const session = await loadImportSession();
 
@@ -1447,6 +1449,8 @@ describe('useImportSession', () => {
 
       expect(session.state.downloadDir).toBe('/music/utawakui');
       expect(session.state.isDefaultDir).toBe(false);
+      expect(session.state.isDownloadDirAvailable).toBe(false);
+      expect(session.state.downloadDirIssue).toBe('missing');
     });
 
     it('chooseDownloadDir opens the picker and refreshes config afterward', async () => {

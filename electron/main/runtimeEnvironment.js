@@ -19,6 +19,28 @@ function detectPackagedRuntime({ appPath, resourcesPath } = {}) {
   return path.relative(expectedAppPath, appPath) === '';
 }
 
+// electron-updater independently gates checks on Electron's app.isPackaged.
+// Our retained electron.exe filename makes that heuristic false in a real
+// builder artifact, so opt into its development-config escape hatch only for
+// the exact mismatch that detectPackagedRuntime() has already authenticated.
+// Pinning the path to the builder-owned production config prevents source or
+// ordinary development launches from contacting the public release feed.
+function resolvePackagedUpdateConfigPath({
+  isPackagedRuntime,
+  isElectronPackaged,
+  resourcesPath,
+} = {}) {
+  if (
+    !isPackagedRuntime ||
+    isElectronPackaged ||
+    typeof resourcesPath !== 'string' ||
+    !path.isAbsolute(resourcesPath)
+  ) {
+    return null;
+  }
+  return path.join(resourcesPath, 'app-update.yml');
+}
+
 function readDeveloperOptions(argv = []) {
   const values = Array.isArray(argv) ? argv : [];
   const isDev = values.includes('--dev');
@@ -28,4 +50,8 @@ function readDeveloperOptions(argv = []) {
   };
 }
 
-module.exports = { detectPackagedRuntime, readDeveloperOptions };
+module.exports = {
+  detectPackagedRuntime,
+  readDeveloperOptions,
+  resolvePackagedUpdateConfigPath,
+};

@@ -67,6 +67,7 @@ function createProcessDouble() {
 }
 
 afterEach(() => {
+  vi.useRealTimers();
   vi.restoreAllMocks();
 });
 
@@ -89,6 +90,7 @@ describe('validateZipArchiveBuffer', () => {
     '..\\escape.txt',
     '/absolute.txt',
     'C:\\absolute.txt',
+    'D:drive-relative.txt',
   ])('rejects unsafe entry name %j', (name) => {
     const archive = createStoredZip([{ name, data: 'unsafe' }]);
 
@@ -128,6 +130,48 @@ describe('validateZipArchiveBuffer', () => {
 });
 
 describe('expandZipArchive', () => {
+  it('kills and rejects an extraction process that exceeds its deadline', async () => {
+    vi.useFakeTimers();
+    const proc = createProcessDouble();
+    proc.kill = vi.fn();
+    const pending = expandZipArchive(
+      'archive.zip',
+      'destination',
+      dependency(),
+      { spawnImpl: () => proc, timeoutMs: 1_000 },
+    );
+    const rejection = expect(pending).rejects.toMatchObject({
+      name: 'TimeoutError',
+    });
+
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    await rejection;
+    expect(proc.kill).toHaveBeenCalledOnce();
+  });
+
+  it('keeps the timeout primary when terminating the process throws', async () => {
+    vi.useFakeTimers();
+    const proc = createProcessDouble();
+    proc.kill = vi.fn(() => {
+      throw new Error('already gone');
+    });
+    const pending = expandZipArchive(
+      'archive.zip',
+      'destination',
+      dependency(),
+      { spawnImpl: () => proc, timeoutMs: 1_000 },
+    );
+    const rejection = expect(pending).rejects.toMatchObject({
+      name: 'TimeoutError',
+    });
+
+    await vi.advanceTimersByTimeAsync(1_000);
+
+    await rejection;
+    expect(proc.kill).toHaveBeenCalledOnce();
+  });
+
   it('passes paths as named PowerShell parameters and resolves on success', async () => {
     const proc = createProcessDouble();
     const spawnImpl = vi.fn(() => proc);
@@ -206,5 +250,7 @@ describe('expandZipArchive', () => {
     proc.emit('error', failure);
 
     await expect(pending).rejects.toBe(failure);
+
+    proc.emit('close', 0);
   });
 });

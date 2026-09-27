@@ -204,6 +204,57 @@ describe('writePlaylistCoverFromUrl', () => {
     expect(filename).toBe(null);
   });
 
+  it('aborts a cover request that does not make progress before the deadline', async () => {
+    vi.useFakeTimers();
+    try {
+      const fetchImpl = vi.fn(
+        (_url, { signal }) =>
+          new Promise((_resolve, reject) => {
+            signal.addEventListener('abort', () => reject(signal.reason));
+          }),
+      );
+      const pending = writePlaylistCoverFromUrl(
+        dir,
+        'album-1',
+        'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+        { fetchImpl, timeoutMs: 1_000 },
+      );
+
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await expect(pending).resolves.toBe(null);
+      expect(fetchImpl.mock.calls[0][1].signal.aborted).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('rejects an oversized cover before reading its body', async () => {
+    const arrayBuffer = vi.fn();
+    const fetchImpl = vi.fn().mockResolvedValue({
+      ok: true,
+      headers: {
+        get: (name) =>
+          name === 'content-type'
+            ? 'image/jpeg'
+            : name === 'content-length'
+              ? String(11 * 1024 * 1024)
+              : null,
+      },
+      arrayBuffer,
+    });
+
+    await expect(
+      writePlaylistCoverFromUrl(
+        dir,
+        'album-1',
+        'https://i.ytimg.com/vi/xyz/hqdefault.jpg',
+        { fetchImpl },
+      ),
+    ).resolves.toBe(null);
+    expect(arrayBuffer).not.toHaveBeenCalled();
+  });
+
   it('rejects a non-allowlisted host without calling fetch', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

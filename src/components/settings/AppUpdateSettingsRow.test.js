@@ -21,7 +21,7 @@ describe('AppUpdateSettingsRow', () => {
   it('shows the installed version and a manual check action while idle', async () => {
     const html = await renderRow();
 
-    expect(html).toContain('v0.1.1 · 可檢查是否有新版本');
+    expect(html).toContain('v0.1.1 · 尚未檢查更新');
     expect(html).toContain('aria-label="檢查更新"');
     expect(html).toContain('title="檢查更新 Utawakui"');
     expect(html).not.toContain('>檢查更新<');
@@ -41,7 +41,8 @@ describe('AppUpdateSettingsRow', () => {
     expect(available).toContain('可下載 v0.2.0');
     expect(available).toContain('aria-label="下載"');
     expect(available).not.toContain('>下載<');
-    expect(downloaded).toContain('v0.2.0 已準備完成');
+    expect(downloaded).toContain('v0.2.0 已下載');
+    expect(downloaded).toContain('可安裝');
     expect(downloaded).toContain('>重新啟動並安裝<');
   });
 
@@ -75,7 +76,7 @@ describe('AppUpdateSettingsRow', () => {
     const off = await renderRow({ enabled: false, phase: 'disabled' });
 
     expect(on).toContain('自動檢查');
-    expect(on).toContain('aria-label="啟動與定期自動檢查是否有新版本"');
+    expect(on).toContain('aria-label="自動檢查更新"');
     expect(on).toContain('checked');
     expect(off).toMatch(/id="app-update-auto-check"[^>]*disabled/);
   });
@@ -83,23 +84,24 @@ describe('AppUpdateSettingsRow', () => {
   it('discloses the default background version check before the toggle', async () => {
     const html = await renderRow({ phase: 'idle' });
 
-    expect(html).toContain('啟動後只檢查版本；下載與安裝仍由你決定。');
+    expect(html).toContain('啟動時只檢查；下載與安裝由你決定。');
   });
 
   it('surfaces a preference-save failure without a second update action', async () => {
     const html = await renderRow({
       phase: 'idle',
-      autoCheckError: '目前無法儲存自動檢查更新設定，請再試一次。',
+      autoCheckError: '請再試一次。',
     });
 
-    expect(html).toContain('自動檢查更新設定未儲存');
+    expect(html).toContain('自動檢查設定未儲存');
+    expect(html).toContain('請再試一次。');
   });
 
   it('shows the disabled and safe error states without remote details', async () => {
     const disabled = await renderRow({ enabled: false, phase: 'disabled' });
     const failed = await renderRow({
       phase: 'error',
-      error: '無法完成更新操作，請稍後再試。',
+      error: '更新失敗，請再試一次。',
     });
 
     expect(disabled).toContain('開發版不支援自動更新');
@@ -107,7 +109,7 @@ describe('AppUpdateSettingsRow', () => {
     expect(disabled).toContain('aria-label="檢查更新"');
     expect(disabled).not.toContain('>檢查更新<');
     expect(disabled).toContain('disabled');
-    expect(failed).toContain('無法完成更新操作，請稍後再試。');
+    expect(failed).toContain('更新失敗，請再試一次。');
     expect(failed).toContain('aria-label="檢查更新"');
     expect(failed).not.toContain('>檢查更新<');
   });

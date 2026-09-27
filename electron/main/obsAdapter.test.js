@@ -190,6 +190,61 @@ describe('obsAdapter', () => {
     expect(scheduleTimeout).toHaveBeenCalled();
   });
 
+  it.each([
+    {
+      error: Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:4455'), {
+        code: 'ECONNREFUSED',
+      }),
+      code: 'OBS_CONNECTION_REFUSED',
+      message: 'OBS 未啟動，或 WebSocket 連接埠不正確。',
+    },
+    {
+      error: Object.assign(new Error('connect ECONNREFUSED 127.0.0.1:4009'), {
+        code: 'ECONNREFUSED',
+      }),
+      code: 'OBS_CONNECTION_REFUSED',
+      message: 'OBS 未啟動，或 WebSocket 連接埠不正確。',
+    },
+    {
+      error: Object.assign(new Error('getaddrinfo ENOTFOUND private-host'), {
+        code: 'ENOTFOUND',
+      }),
+      code: 'OBS_HOST_NOT_FOUND',
+      message: '找不到 OBS 主機。請檢查主機名稱或 IP。',
+    },
+    {
+      error: Object.assign(new Error('Unsupported protocol'), { code: -1 }),
+      code: 'OBS_INCOMPATIBLE_SERVER',
+      message: '這不是相容的 OBS WebSocket 5 服務。',
+    },
+    {
+      error: Object.assign(new Error('socket hang up'), { code: -1 }),
+      code: 'OBS_CONNECT_FAILED',
+      message: '無法連線。請檢查 OBS 設定。',
+    },
+  ])('classifies $code without exposing transport details', async (fixture) => {
+    const client = new FakeObsClient();
+    client.connect.mockRejectedValue(fixture.error);
+    const scheduleTimeout = vi.fn(() => ({ unref: () => {} }));
+    const adapter = createObsAdapter({
+      createClient: () => client,
+      scheduleTimeout,
+    });
+
+    const status = await adapter.configure({
+      enabled: true,
+      host: '127.0.0.1',
+      port: 4455,
+    });
+
+    expect(status.error).toEqual({
+      code: fixture.code,
+      message: fixture.message,
+    });
+    expect(JSON.stringify(status.error)).not.toContain('private-host');
+    expect(JSON.stringify(status.error)).not.toContain('127.0.0.1:4455');
+  });
+
   it('bounds a stalled connection, closes its transport, and schedules one retry', async () => {
     const client = new FakeObsClient();
     client.connect.mockReturnValue(new Promise(() => {}));

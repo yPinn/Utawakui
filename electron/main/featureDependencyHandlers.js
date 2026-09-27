@@ -3,6 +3,7 @@
 const { app } = require('electron');
 const {
   getFfmpegDependency,
+  resolveFfmpegRuntime,
   listFeatureDependencyStatuses,
   prepareFeatureDependency,
   removeFeatureDependency,
@@ -16,32 +17,32 @@ const OPERATION_PUBLIC_ERRORS = Object.freeze({
   list: Object.freeze({
     code: 'FEATURE_DEPENDENCY_LIST_FAILED',
     title: '無法讀取準備狀態',
-    message: '目前無法讀取功能項目狀態，請稍後再試。',
+    message: '請再試一次。',
   }),
   prepare: Object.freeze({
     code: 'FEATURE_DEPENDENCY_PREPARE_FAILED',
     title: '準備失敗',
-    message: '無法準備這個項目，請稍後再試。',
+    message: '請再試一次。',
   }),
   remove: Object.freeze({
     code: 'FEATURE_DEPENDENCY_REMOVE_FAILED',
     title: '移除失敗',
-    message: '無法移除這個項目，請稍後再試。',
+    message: '請再試一次。',
   }),
   repair: Object.freeze({
     code: 'FEATURE_DEPENDENCY_REPAIR_FAILED',
     title: '修復失敗',
-    message: '無法修復這個項目，請稍後再試。',
+    message: '請再試一次。',
   }),
   detect: Object.freeze({
     code: 'SYSTEM_FFMPEG_DETECTION_FAILED',
     title: '偵測失敗',
-    message: '目前無法偵測系統 FFmpeg，請稍後再試。',
+    message: '請再試一次。',
   }),
   'set-ffmpeg-source': Object.freeze({
     code: 'FFMPEG_SOURCE_UPDATE_FAILED',
-    title: '無法更新 FFmpeg 來源',
-    message: '目前無法更新 FFmpeg 來源，請稍後再試。',
+    title: 'FFmpeg 來源未更新',
+    message: '請再試一次。',
   }),
 });
 
@@ -134,16 +135,27 @@ function registerFeatureDependencyHandlers({
     repairFeatureDependency,
   },
   detectSystemFfmpegImpl = detectSystemFfmpeg,
+  resolveFfmpegRuntimeImpl = resolveFfmpegRuntime,
   resourcesPath = null,
 }) {
   ipcMain.handle('feature-dependencies:list', async () =>
-    runDependencyOperation('list', null, recordDiagnostic, () =>
-      dependencyService.listFeatureDependencyStatuses(
-        getUserDataDir(),
+    runDependencyOperation('list', null, recordDiagnostic, () => {
+      const userDataDir = getUserDataDir();
+      const configuredPath = getConfig().systemFfmpegPath;
+      let activeSystemPath = configuredPath;
+      if (configuredPath) {
+        const runtime = resolveFfmpegRuntimeImpl(userDataDir, configuredPath);
+        if (runtime.staleSystemPath) {
+          updateConfig({ systemFfmpegPath: null });
+          activeSystemPath = null;
+        }
+      }
+      return dependencyService.listFeatureDependencyStatuses(
+        userDataDir,
         undefined,
-        getConfig().systemFfmpegPath,
-      ),
-    ),
+        activeSystemPath,
+      );
+    }),
   );
 
   ipcMain.handle(

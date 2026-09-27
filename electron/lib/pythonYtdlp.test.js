@@ -130,6 +130,34 @@ describe('buildPythonYtdlpArgs', () => {
 });
 
 describe('createPythonYtdlpRunner', () => {
+  it('kills and rejects a provider process that stays idle', async () => {
+    vi.useFakeTimers();
+    try {
+      const proc = new EventEmitter();
+      proc.stdout = new EventEmitter();
+      proc.stderr = new EventEmitter();
+      proc.kill = vi.fn();
+      const runner = createPythonYtdlpRunner({
+        pythonPath: 'python.exe',
+        spawnImpl: vi.fn(() => proc),
+        idleTimeoutMs: 1_000,
+      });
+
+      const pending = runner('https://example.test/video', {
+        skipDownload: true,
+      });
+      const rejection = expect(pending).rejects.toMatchObject({
+        code: 'YTDLP_PROCESS_TIMEOUT',
+      });
+      await vi.advanceTimersByTimeAsync(1_000);
+
+      await rejection;
+      expect(proc.kill).toHaveBeenCalledOnce();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('runs python -m yt_dlp with isolated env and parses dumpSingleJson output', async () => {
     const spawnImpl = vi.fn(() =>
       makeProcess({

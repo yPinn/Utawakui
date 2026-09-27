@@ -119,10 +119,8 @@ function createMissingDependencyError(dependency) {
   return createAppError({
     code: 'FEATURE_DEPENDENCY_MISSING',
     severity: 'warning',
-    title: isProviderTool ? '需要先準備外部來源工具' : '需要先準備音訊處理項目',
-    message: isProviderTool
-      ? `請先到設定頁準備「${dependency.name}」，再使用外部來源。`
-      : `請先到設定頁準備「${dependency.name}」，再執行這項音訊處理。`,
+    title: isProviderTool ? '尚未準備外部來源工具' : '尚未準備音訊處理項目',
+    message: `請到設定準備「${dependency.name}」。`,
     actionLabel: '前往設定',
     context: {
       featureId: dependency.featureId,

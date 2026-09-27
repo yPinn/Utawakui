@@ -21,6 +21,7 @@ import {
 import {
   ensureFfmpegDependency,
   getPreparedFfmpegPath,
+  resolveFfmpegRuntime,
 } from './featureDependencies/ffmpeg.js';
 import {
   ensureModelDependency,
@@ -622,20 +623,37 @@ describe('getPreparedFfmpegPath', () => {
     expect(getPreparedFfmpegPath(userDataDir, systemPath)).toBe(systemPath);
   });
 
-  it('throws a setup prompt naming the system FFmpeg when the configured path no longer exists', () => {
+  it('falls back to a verified managed executable when the configured system path disappeared', () => {
     const userDataDir = makeTempDir();
+    const { executablePath } = getFfmpegPaths(userDataDir);
+    fs.mkdirSync(path.dirname(executablePath), { recursive: true });
+    fs.writeFileSync(executablePath, 'managed');
     const missingSystemPath = path.join(
       userDataDir,
       'does-not-exist',
       'ffmpeg.exe',
     );
 
+    expect(getPreparedFfmpegPath(userDataDir, missingSystemPath)).toBe(
+      executablePath,
+    );
+    expect(resolveFfmpegRuntime(userDataDir, missingSystemPath)).toEqual({
+      path: executablePath,
+      source: 'managed',
+      staleSystemPath: true,
+    });
+  });
+
+  it('reports one generic setup prompt when a stale system path has no managed fallback', () => {
+    const userDataDir = makeTempDir();
+    const missingSystemPath = path.join(userDataDir, 'missing', 'ffmpeg.exe');
+
     try {
       getPreparedFfmpegPath(userDataDir, missingSystemPath);
       throw new Error('expected missing dependency to throw');
     } catch (err) {
       expect(err.message).toContain(APP_ERROR_PREFIX);
-      expect(err.message).toContain('系統 FFmpeg');
+      expect(err.message).not.toContain('系統 FFmpeg');
       expect(err.code).toBe('FEATURE_DEPENDENCY_MISSING');
     }
   });

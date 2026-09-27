@@ -2,8 +2,11 @@ import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import runtimeEnvironmentModule from './runtimeEnvironment.js';
 
-const { detectPackagedRuntime, readDeveloperOptions } =
-  runtimeEnvironmentModule;
+const {
+  detectPackagedRuntime,
+  readDeveloperOptions,
+  resolvePackagedUpdateConfigPath,
+} = runtimeEnvironmentModule;
 
 describe('packaged runtime detection', () => {
   it('recognizes the builder-owned app.asar even when Electron calls itself a default app', () => {
@@ -49,6 +52,39 @@ describe('packaged runtime detection', () => {
         resourcesPath,
       }),
     ).toBe(false);
+  });
+
+  it('uses the packaged update config only for the known Electron heuristic mismatch', () => {
+    const resourcesPath = path.resolve('release', 'win-unpacked', 'resources');
+
+    expect(
+      resolvePackagedUpdateConfigPath({
+        isPackagedRuntime: true,
+        isElectronPackaged: false,
+        resourcesPath,
+      }),
+    ).toBe(path.join(resourcesPath, 'app-update.yml'));
+    expect(
+      resolvePackagedUpdateConfigPath({
+        isPackagedRuntime: false,
+        isElectronPackaged: false,
+        resourcesPath,
+      }),
+    ).toBeNull();
+    expect(
+      resolvePackagedUpdateConfigPath({
+        isPackagedRuntime: true,
+        isElectronPackaged: true,
+        resourcesPath,
+      }),
+    ).toBeNull();
+    expect(
+      resolvePackagedUpdateConfigPath({
+        isPackagedRuntime: true,
+        isElectronPackaged: false,
+        resourcesPath: 'relative/resources',
+      }),
+    ).toBeNull();
   });
 });
 

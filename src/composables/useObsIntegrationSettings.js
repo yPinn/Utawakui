@@ -85,7 +85,7 @@ export function useObsIntegrationSettings() {
       return settingsGeneration === generation;
     } catch {
       if (settingsGeneration === generation) {
-        state.error = '目前無法讀取 OBS 連線設定，請再試一次。';
+        state.error = '無法讀取設定，請再試一次。';
       }
       return false;
     } finally {
@@ -101,12 +101,12 @@ export function useObsIntegrationSettings() {
     if (shouldEnable) {
       const trimmedHost = host.value.trim();
       if (!isValidObsHost(trimmedHost, MAX_HOST_LENGTH)) {
-        state.error = '請輸入有效的 OBS 主機名稱或 IP 位址。';
+        state.error = '請輸入有效的主機名稱或 IP。';
         return false;
       }
       const nextPort = parseBoundedInteger(port.value, MIN_PORT, MAX_PORT);
       if (nextPort === null) {
-        state.error = `OBS 連接埠必須是 ${MIN_PORT} 到 ${MAX_PORT} 的整數。`;
+        state.error = `連接埠必須是 ${MIN_PORT} 到 ${MAX_PORT} 的整數。`;
         return false;
       }
       const minimumSeconds = SKIP_THRESHOLD_MIN_MS / 1000;
@@ -121,7 +121,7 @@ export function useObsIntegrationSettings() {
         return false;
       }
       if (password.value.length > MAX_PASSWORD_LENGTH) {
-        state.error = `OBS 密碼不可超過 ${MAX_PASSWORD_LENGTH} 個字元。`;
+        state.error = `密碼不可超過 ${MAX_PASSWORD_LENGTH} 個字元。`;
         return false;
       }
       connectionSettings = {
@@ -158,7 +158,7 @@ export function useObsIntegrationSettings() {
       }
       return true;
     } catch {
-      state.error = '目前無法儲存 OBS 連線設定，請再試一次。';
+      state.error = '無法儲存設定，請再試一次。';
       return false;
     } finally {
       state.isSaving = false;
@@ -173,8 +173,10 @@ export function useObsIntegrationSettings() {
       await obs.connectObs();
       return true;
     } catch {
-      state.error =
-        '目前無法連線至 OBS，請確認 OBS 已開啟並啟用 WebSocket 伺服器。';
+      await obs.refreshObsStatus();
+      if (!obs.state.error) {
+        state.error = '無法連線。請確認 OBS 已啟動 WebSocket。';
+      }
       return false;
     } finally {
       state.isSaving = false;
@@ -194,7 +196,7 @@ export function useObsIntegrationSettings() {
       password.value = '';
       return true;
     } catch {
-      state.error = '目前無法移除已儲存的 OBS 密碼，請再試一次。';
+      state.error = '無法移除密碼，請再試一次。';
       return false;
     } finally {
       state.isSaving = false;

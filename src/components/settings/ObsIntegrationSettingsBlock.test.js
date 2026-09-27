@@ -31,8 +31,8 @@ describe('ObsIntegrationSettingsBlock', () => {
     const stored = await renderBlock({ hasStoredPassword: true });
     const empty = await renderBlock({ hasStoredPassword: false });
 
-    expect(stored).toContain('移除已儲存密碼');
-    expect(empty).not.toContain('移除已儲存密碼');
+    expect(stored).toContain('移除密碼');
+    expect(empty).not.toContain('移除密碼');
   });
 
   it('keeps stored credential removal reachable while the feature and connection are disabled', async () => {
@@ -55,8 +55,8 @@ describe('ObsIntegrationSettingsBlock', () => {
     });
 
     for (const html of [featureDisabled, connectionDisabled]) {
-      expect(html).toContain('這台電腦已儲存 OBS 密碼');
-      expect(html).toContain('移除已儲存密碼');
+      expect(html).toContain('已儲存 OBS 密碼');
+      expect(html).toContain('移除密碼');
       expect(html).not.toContain('id="obs-integration-password"');
     }
     expect(featureDisabled).not.toContain('aria-label="啟用 OBS 連線"');
@@ -70,7 +70,30 @@ describe('ObsIntegrationSettingsBlock', () => {
     });
 
     expect(html).toMatch(/id="obs-integration-password"[^>]*maxlength="1024"/);
-    expect(html).toContain('移除已儲存密碼');
+    expect(html).toContain('移除密碼');
     expect(html).toContain('disabled');
+  });
+
+  it('shows the classified OBS connection reason under a stable failure title', async () => {
+    const html = await renderBlock({
+      status: {
+        desired: { enabled: true },
+        observed: { lifecycle: 'error' },
+        error: {
+          code: 'OBS_AUTH_FAILED',
+          message: 'OBS 密碼錯誤或未設定。',
+        },
+      },
+    });
+
+    expect(html).toContain('OBS 連線失敗');
+    expect(html).toContain('OBS 密碼錯誤或未設定。');
+  });
+
+  it('uses a neutral settings title so the message can name the exact problem', async () => {
+    const html = await renderBlock({ error: '無法移除密碼，請再試一次。' });
+
+    expect(html).toContain('OBS 設定發生問題');
+    expect(html).toContain('無法移除密碼，請再試一次。');
   });
 });

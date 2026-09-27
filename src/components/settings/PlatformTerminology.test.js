@@ -31,8 +31,13 @@ describe('platform terminology', () => {
     expect(outputRuntime).toContain('再啟動 Browser Source 輸出');
     expect(outputRuntime).not.toContain('建立 OBS Browser Source');
     expect(captureDeviceModal).toContain(
-      '讓直播或錄影軟體擷取到獨立於耳機的伴奏混音',
+      '選擇要送到直播或錄影軟體的虛擬音效裝置',
     );
+    expect(captureDeviceModal).toContain('如何選擇虛擬音效裝置？');
+    expect(captureDeviceModal).toContain(
+      '找不到輸出裝置。請先安裝虛擬音效裝置。',
+    );
+    expect(captureDeviceModal).not.toContain('不知道要裝哪套');
     expect(captureDeviceModal).not.toContain('讓 OBS 擷取');
     expect(virtualCableGuide).toContain('直播或錄影軟體擷取');
     expect(virtualCableGuide).not.toContain('送給 OBS 擷取');

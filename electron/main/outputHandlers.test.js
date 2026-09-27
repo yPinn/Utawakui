@@ -25,6 +25,34 @@ describe('output handlers', () => {
     fs.rmSync(dir, { recursive: true, force: true });
   });
 
+  it('contains an unavailable library during startup registration', () => {
+    const ipcMain = createIpcMain();
+    const logger = { warn: vi.fn() };
+    const failure = new Error('library unavailable');
+    const server = { setOverlaySlots: vi.fn() };
+
+    expect(() =>
+      registerOutputHandlers({
+        ipcMain,
+        server,
+        requireFeatureGate: vi.fn(),
+        featureIds: { PUBLIC_OUTPUT_FLOW: 'public-output-flow' },
+        getConfig: () => ({ downloadDir: 'X:\\offline' }),
+        resolveDownloadDir: () => {
+          throw failure;
+        },
+        logger,
+      }),
+    ).not.toThrow();
+
+    expect(logger.warn).toHaveBeenCalledWith(
+      '[output] Initial slot synchronization skipped',
+      failure,
+    );
+    expect(server.setOverlaySlots).not.toHaveBeenCalled();
+    expect(ipcMain.handlers.has('output-slots:list')).toBe(true);
+  });
+
   it('gates start and publish while source connect, status, and stop stay recoverable', async () => {
     const ipcMain = createIpcMain();
     const requireFeatureGate = vi.fn();
