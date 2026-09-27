@@ -21,7 +21,8 @@ const LAYERS = [
         size: 'var(--ui-track-artwork-size-dense)',
       },
     ],
-    recipeSummary: '四個尺寸依閱讀距離與所在區域分工；佇列與播放器共用 48px。',
+    recipeSummary:
+      '四個尺寸依閱讀距離與所在區域分工；48px 只用於左下 PlayerBar。',
     recipes: [
       {
         id: 'dense-selection-36',
@@ -39,7 +40,7 @@ const LAYERS = [
         id: 'playback-48',
         label: '播放操作 · 48px',
         size: 'var(--ui-track-artwork-size-prominent)',
-        note: '佇列約 56px 高；播放器 76px 高，兩處共用同一尺寸。',
+        note: '左下 PlayerBar 專用；Queue 改用 40px 標準曲目列。',
       },
       {
         id: 'metadata-64',
@@ -55,7 +56,8 @@ const LAYERS = [
     note: '保留現行封面、首字、空內容與圖片失敗行為，不套用候選版修正。',
     component: UiTrackThumb,
     densities: [{ id: 'active', label: 'Current · 40 CSS px', size: 40 }],
-    recipeSummary: '目前仍有五個尺寸；播放器 52px 與佇列 48px 的用途最接近。',
+    recipeSummary:
+      '目前收斂為四個尺寸；Queue 已併入 40px 標準曲目列，48px 只留給 PlayerBar。',
     recipes: [
       {
         id: 'import-current-32',
@@ -65,21 +67,15 @@ const LAYERS = [
       },
       {
         id: 'track-row-current-40',
-        label: '曲目列 · 40px',
+        label: '曲目列／佇列 · 40px',
         size: 40,
-        note: '位於 52px 最小高度的資料列。',
+        note: 'UiTrackRow 的 52px 最小列高，Queue 也直接沿用。',
       },
       {
-        id: 'queue-current-48',
-        label: '佇列 · 48px',
+        id: 'player-current-48',
+        label: '播放器 · 48px',
         size: 48,
-        note: '封面加上下間距後，單列約 56px。',
-      },
-      {
-        id: 'player-current-52',
-        label: '播放器 · 52px',
-        size: 52,
-        note: '加上上下各 16px 間距，填滿 84px 播放列。',
+        note: '左下 PlayerBar 專用，加上上下各 16px 間距後為 80px 高。',
       },
       {
         id: 'metadata-current-64',

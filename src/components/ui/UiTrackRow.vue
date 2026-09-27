@@ -1,7 +1,7 @@
 <script setup>
 // `lead`/`trail` slots cover what differs between callers (a checkbox, a
 // status label) without forking the CSS per caller.
-import { computed, ref } from 'vue';
+import { computed } from 'vue';
 import { formatDuration } from '../../utils/format.js';
 import UiMarqueeText from './UiMarqueeText.vue';
 import UiTextButton from './UiTextButton.vue';
@@ -16,8 +16,8 @@ const props = defineProps({
   artist: { type: String, default: undefined },
   active: { type: Boolean, default: false },
   // Currently playing — deliberately separate from `active` (selected).
-  // Title-only coral cue, same treatment as QueueTrackButton.vue's
-  // .queue-track--current, not the filled surface-selected background.
+  // Title-only coral cue shared by standard rows and Queue, not the filled
+  // surface-selected background.
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
   // Lets a caller show its own duration inside #trail (e.g. after other
@@ -27,9 +27,31 @@ const props = defineProps({
   // jump to source album — see useAlbumNavigation.js for caller-side logic).
   titleClickable: { type: Boolean, default: false },
   titleAriaLabel: { type: String, default: undefined },
+  // An explicit artwork destination stays separate from the row action.
+  // Queue uses it for playback; other consumers may keep artwork decorative.
+  artworkClickable: { type: Boolean, default: false },
+  artworkAriaLabel: { type: String, default: undefined },
+  // Split keyboard semantics for selection-oriented rows: Space follows the
+  // row click contract while Enter performs the caller's primary action.
+  activateOnEnter: { type: Boolean, default: false },
+  overflow: {
+    type: String,
+    default: 'marquee',
+    validator: (value) => ['marquee', 'ellipsis'].includes(value),
+  },
+  thumbLoading: {
+    type: String,
+    default: 'eager',
+    validator: (value) => ['eager', 'lazy'].includes(value),
+  },
+  thumbDecoding: {
+    type: String,
+    default: 'auto',
+    validator: (value) => ['auto', 'sync', 'async'].includes(value),
+  },
 });
 
-const emit = defineEmits(['titleClick']);
+const emit = defineEmits(['titleClick', 'artworkClick', 'activate']);
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
@@ -42,23 +64,24 @@ const thumbTrack = computed(() => ({
   thumbnailUrl: props.track?.thumbnailUrl,
 }));
 
-const rootEl = ref(null);
-
 // `@click` is caller-bound attrs fallthrough, not a declared emit, so
 // replaying a real click is simpler than adding a parallel event contract.
 function handleKeydown(event) {
   if (!props.interactive) return;
-  // Skip nested interactive children (titleClickable, lead/trail slots).
-  if (event.target !== rootEl.value) return;
+  // Skip nested interactive children (artwork/title actions, lead/trail slots).
+  if (event.target !== event.currentTarget) return;
   if (event.key !== 'Enter' && event.key !== ' ') return;
   event.preventDefault();
-  rootEl.value?.click();
+  if (event.key === 'Enter' && props.activateOnEnter) {
+    emit('activate', event);
+    return;
+  }
+  event.currentTarget.click();
 }
 </script>
 
 <template>
   <li
-    ref="rootEl"
     class="ui-track"
     :class="{
       'ui-track--active': active,
@@ -67,13 +90,35 @@ function handleKeydown(event) {
     }"
     :tabindex="interactive ? 0 : undefined"
     :role="interactive ? 'button' : undefined"
+    :aria-pressed="interactive ? active : undefined"
+    :aria-current="current ? 'true' : undefined"
     @keydown="handleKeydown"
   >
     <slot name="lead" />
+    <button
+      v-if="artworkClickable"
+      type="button"
+      class="ui-track__artwork-action"
+      :aria-label="artworkAriaLabel"
+      @click.stop="emit('artworkClick', $event)"
+      @dblclick.stop
+    >
+      <UiTrackThumb
+        class="ui-track__thumb"
+        :track="thumbTrack"
+        size="var(--ui-track-row-thumb-size)"
+        :loading="thumbLoading"
+        :decoding="thumbDecoding"
+      />
+      <slot name="artworkOverlay" />
+    </button>
     <UiTrackThumb
+      v-else
       class="ui-track__thumb"
       :track="thumbTrack"
       size="var(--ui-track-row-thumb-size)"
+      :loading="thumbLoading"
+      :decoding="thumbDecoding"
     />
     <div class="ui-track__info">
       <UiTextButton
@@ -81,9 +126,21 @@ function handleKeydown(event) {
         class="ui-track__title"
         :text="displayTitle"
         :aria-label="titleAriaLabel"
+        :overflow="overflow"
         @click="emit('titleClick')"
       />
-      <UiMarqueeText v-else class="ui-track__title" :text="displayTitle" />
+      <UiMarqueeText
+        v-else-if="overflow === 'marquee'"
+        class="ui-track__title"
+        :text="displayTitle"
+      />
+      <span
+        v-else
+        class="ui-track__title ui-track__title-text"
+        :title="displayTitle"
+      >
+        {{ displayTitle }}
+      </span>
       <span v-if="displayArtist" class="ui-track__artist">{{
         displayArtist
       }}</span>
@@ -125,6 +182,25 @@ function handleKeydown(event) {
   outline-offset: var(--ui-focus-offset-inset);
 }
 
+.ui-track__artwork-action {
+  position: relative;
+  width: var(--ui-track-row-thumb-size);
+  height: var(--ui-track-row-thumb-size);
+  flex: 0 0 var(--ui-track-row-thumb-size);
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  border-radius: var(--ui-radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ui-track__artwork-action:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
 .ui-track__info {
   flex: 1;
   min-width: 0;
@@ -135,6 +211,15 @@ function handleKeydown(event) {
 .ui-track__title {
   color: inherit;
   font-weight: var(--ui-font-weight-semibold);
+}
+
+.ui-track__title-text {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ui-track--current .ui-track__title {

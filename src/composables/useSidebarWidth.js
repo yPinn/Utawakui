@@ -6,7 +6,7 @@ import { ref } from 'vue';
 // Keep in sync with --ui-playlist-sidebar-width-min/-max in
 // src/styles/tokens.css and electron/lib/config.js's SIDEBAR_WIDTH_MIN/MAX
 // — neither CSS nor the main process can read these from one shared source.
-export const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
+export const SIDEBAR_WIDTH_MIN = 64; // 4rem
 export const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
 
 const width = ref(window.Utawakui?.initialSidebarWidth ?? 256);

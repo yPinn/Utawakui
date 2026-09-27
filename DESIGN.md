@@ -241,7 +241,7 @@ Implemented in `src/styles/tokens.css` (`:root[data-ui-theme='light']`):
 --ui-color-accent-contrast: #fffdfa;
 --ui-color-focus: #d26a45;
 
---ui-color-current: #d26a45;
+--ui-color-current: #9f4629;
 --ui-color-current-soft: #f1d9cc;
 --ui-color-info: #4d8793;
 --ui-color-success: #5f9a72;
@@ -276,7 +276,7 @@ Implemented in `src/styles/tokens.css` (`:root`, the default):
 --ui-color-accent-contrast: #102326;
 --ui-color-focus: #dd7a64;
 
---ui-color-current: #dd7a64;
+--ui-color-current: #f39a85;
 --ui-color-current-soft: #4a332e;
 --ui-color-info: #7fb8bd;
 --ui-color-success: #7bbd8b;
@@ -325,10 +325,18 @@ The control panel should combine Spotify-like music workflow efficiency with mac
 ### Layout
 
 - Preserve the app shell model: playlist sidebar + top section tabs + main workspace + persistent player.
-- Keep the persistent playlist sidebar inset `0.75rem` from the shell content row's top and bottom in both the current production UI and Token v2; it is an independent navigation plane, not a continuation of the tabbed main-workspace baseline.
-- Treat production Queue and Token v2 playback metadata as surfaces in one `.shell__main` right Dock rather than page columns or PlayerBar popovers. Reserve its `17.5rem` desktop bay, pin the `2.5rem` collapsed rail and expanded panel to the shell's right edge with the same `0.75rem` block inset as Sidebar, and let its resize axis double-click bidirectionally between collapsed and the last expanded width. Queue may replace metadata in the foreground while retaining metadata as its fallback; closing Queue reveals that fallback, and activating the player artwork while Queue is visible cancels Queue and navigates directly to metadata. Only a Dock with no visible surface folds automatically.
+- Keep the persistent playlist sidebar inset `1rem` from the shell content row's top and bottom in both the current production UI and Token v2; it is an independent navigation plane, not a continuation of the tabbed main-workspace baseline.
+- Treat production Queue and Token v2 playback metadata as surfaces in one `.shell__main` right Dock rather than page columns or PlayerBar popovers. Reserve its `17.5rem` desktop bay, pin the `2.5rem` collapsed rail and expanded panel to the shell's right edge with the same `1rem` block inset as Sidebar, and let its resize axis double-click bidirectionally between collapsed and the last expanded width. Queue may replace metadata in the foreground while retaining metadata as its fallback; closing Queue reveals that fallback, and activating the player artwork while Queue is visible cancels Queue and navigates directly to metadata. Only a Dock with no visible surface folds automatically.
 - Use the sidebar for collections and music-management context; primary section navigation (Setlist/Appearance/Lyrics/Import) lives in the top tabs above the workspace, not the sidebar.
+- Align Sidebar collection rows and standard track rows to the same 3.25rem／2.5rem rhythm. Sidebar keeps collection semantics: one click selects, a double-click or the artwork control starts playback.
 - Keep track rows dense, aligned, and easy to scan.
+- Queue rows reuse the standard `UiTrackRow` 3.25rem／2.5rem geometry; single-click selects, double-click or artwork activation plays, duration is hidden, and track titles remain plain text. The 3rem artwork recipe belongs only to the bottom-left PlayerBar.
+- Keep Queue and Recently Played as two true tabpanels inside the same Right Dock surface. Reuse `UiTabs` with the flat Bar presentation; the caller owns panel ids, visibility, and scrolling rather than turning the labels into ad-hoc buttons.
+- Keep the Queue tab／close chrome sticky within the content scroller. At scroll origin it remains flat; after content passes beneath it, use the shared Right Dock translucent background, blur, and theme-aware shadow tokens. Do not copy Spotify brand green, gradients, or bespoke row anatomy.
+- Recently Played reuses the Queue `UiTrackRow` adapter and its selection／activation contract. It does not add timestamps, durations, or a history-specific row primitive unless a later workflow proves those fields necessary.
+- Keep Queue and Recently Played as two true tabpanels inside the same Right Dock surface. Reuse `UiTabs` with the flat Bar presentation; the caller owns panel ids, visibility, and scrolling rather than turning the labels into ad-hoc buttons.
+- Keep the Queue tab／close chrome sticky within the content scroller. At scroll origin it remains flat; after content passes beneath it, use the shared Right Dock translucent background, blur, and theme-aware shadow tokens. Do not copy Spotify brand green, gradients, or bespoke row anatomy.
+- Recently Played reuses the Queue `UiTrackRow` adapter and its selection／activation contract. It does not add timestamps, durations, or a history-specific row primitive unless a later workflow proves those fields necessary.
 - Playlist and album headers can show cover and metadata, but should remain operational rather than heroic.
 - Do not use oversized marketing heroes or nested page cards.
 

@@ -34,7 +34,8 @@ const CURRENT_VERSION = 2;
 const UI_THEMES = ['light', 'dark'];
 // Keep in sync with --ui-playlist-sidebar-width-min/-max in
 // src/styles/tokens.css — main process can't read CSS.
-const SIDEBAR_WIDTH_MIN = 72; // 4.5rem
+const SIDEBAR_WIDTH_MIN = 64; // 4rem
+const LEGACY_SIDEBAR_WIDTH_MINS = new Set([68, 72]);
 const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
 const CAPTURE_DEVICE_ID_MAX_LENGTH = 512;
 const ANNOUNCEMENT_VERSION_MAX_LENGTH = 32;
@@ -99,6 +100,15 @@ const DEFAULTS = {
     skipThresholdMs: DEFAULT_OBS_SKIP_THRESHOLD_MS,
   }),
 };
+
+function normalizeSidebarWidth(value) {
+  if (LEGACY_SIDEBAR_WIDTH_MINS.has(value)) return SIDEBAR_WIDTH_MIN;
+  return Number.isFinite(value) &&
+    value >= SIDEBAR_WIDTH_MIN &&
+    value <= SIDEBAR_WIDTH_MAX
+    ? value
+    : DEFAULTS.sidebarWidth;
+}
 
 function isValidObsHost(value) {
   return isValidBoundedObsHost(value, OBS_HOST_MAX_LENGTH);
@@ -217,12 +227,7 @@ function loadConfig(configPath) {
       data.featureConfirmations,
     ),
     uiTheme: UI_THEMES.includes(data.uiTheme) ? data.uiTheme : DEFAULTS.uiTheme,
-    sidebarWidth:
-      Number.isFinite(data.sidebarWidth) &&
-      data.sidebarWidth >= SIDEBAR_WIDTH_MIN &&
-      data.sidebarWidth <= SIDEBAR_WIDTH_MAX
-        ? data.sidebarWidth
-        : DEFAULTS.sidebarWidth,
+    sidebarWidth: normalizeSidebarWidth(data.sidebarWidth),
     captureDeviceId:
       typeof data.captureDeviceId === 'string' &&
       data.captureDeviceId.length > 0 &&

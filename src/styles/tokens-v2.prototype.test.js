@@ -169,7 +169,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(262);
+    expect(uniqueNames.size).toBe(266);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
@@ -192,6 +192,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
+    expect(uniqueNames).toContain('--ui-opacity-dragging');
     for (const size of ['small', 'medium', 'large']) {
       expect(uniqueNames).toContain(`--ui-modal-inline-size-${size}`);
       expect(uniqueNames).toContain(`--ui-modal-max-block-size-${size}`);
@@ -215,12 +216,13 @@ describe('Studio Library workspace prototype isolation', () => {
       ":root[data-ui-system='v2'][data-ui-theme='light']",
     );
 
-    expect(dark['--ui-color-current']).toBe('var(--ui-color-accent)');
+    expect(dark['--ui-color-current']).toBe('var(--ui-palette-indigo-300)');
     expect(dark['--ui-color-current-soft']).toBe('var(--ui-color-accent-soft)');
     expect(dark['--ui-color-live']).toBe('var(--ui-palette-red-400)');
     expect(dark['--ui-color-danger']).toBe('var(--ui-palette-red-400)');
     expect(light['--ui-color-live']).toBe('var(--ui-palette-red-700)');
     expect(light['--ui-color-danger']).toBe('var(--ui-palette-red-700)');
+    expect(light['--ui-color-current']).toBe('var(--ui-color-accent)');
     expect(tokens).not.toContain('--ui-color-current: var(--ui-color-live);');
   });
 
@@ -301,11 +303,13 @@ describe('Studio Library workspace prototype isolation', () => {
     );
   });
 
-  it('keeps the 12px Sidebar block inset in the shared production shell', () => {
+  it('keeps the shared 16px shell panel inset owned by the production token layer', () => {
     expect(app).toMatch(
-      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-space-3\);[^}]*\}/su,
+      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
     );
     expect(tokens).not.toContain('--ui-shell-sidebar-inset-block');
+    expect(tokens).not.toContain('--ui-shell-panel-inset-block');
+    expect(designGuide).toContain('same `1rem` block inset as Sidebar');
   });
 
   it('offers a dossier-only embed without leaking candidate tokens into Vue', () => {
@@ -346,6 +350,9 @@ describe('Studio Library workspace prototype isolation', () => {
       ['--ui-color-text-muted', '--ui-color-canvas'],
       ['--ui-color-text-muted', '--ui-color-surface'],
       ['--ui-color-text-muted', '--ui-color-surface-selected'],
+      ['--ui-color-current', '--ui-color-surface'],
+      ['--ui-color-current', '--ui-color-surface-hover'],
+      ['--ui-color-current', '--ui-color-surface-selected'],
       ['--ui-color-accent-contrast', '--ui-color-accent'],
       ['--ui-color-paper-text', '--ui-color-paper'],
     ];

@@ -148,6 +148,13 @@
   --ui-right-dock-width: 17.5rem;
   --ui-right-dock-rail-width: 2.5rem;
   --ui-right-dock-content-inset: var(--ui-panel-inset);
+  --ui-right-dock-sticky-background: color-mix(
+    in srgb,
+    var(--ui-color-surface) 88%,
+    transparent
+  );
+  --ui-right-dock-sticky-blur: 0.75rem;
+  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
   --ui-inspector-width: var(--ui-right-dock-width);
   --ui-inspector-rail-width: var(--ui-right-dock-rail-width);
   --ui-shell-gutter: 0.75rem;
@@ -205,7 +212,7 @@
     var(--ui-color-accent)
   );
   --ui-color-focus: var(--ui-palette-indigo-300);
-  --ui-color-current: var(--ui-color-accent);
+  --ui-color-current: var(--ui-palette-indigo-300);
   --ui-color-current-soft: var(--ui-color-accent-soft);
 
   --ui-color-neutral: var(--ui-palette-cool-gray-300);
@@ -264,6 +271,7 @@
   /* Shared interaction semantics and exact focus boundaries. */
   --ui-opacity-disabled: 0.5;
   --ui-opacity-muted: 0.72;
+  --ui-opacity-dragging: 0.45;
   --ui-focus-offset: 2px;
   --ui-focus-offset-inset: -2px;
 
@@ -400,6 +408,7 @@
   --ui-shadow-contact: 0 0.125rem 0.375rem rgb(39 41 40 / 10%);
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(39 41 40 / 18%);
   --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
+  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(39 41 40 / 24%);
 
   --ui-color-canvas: var(--ui-palette-warm-neutral-200);
   --ui-color-surface: var(--ui-palette-warm-neutral-100);
@@ -421,6 +430,7 @@
   --ui-color-accent-soft: var(--ui-palette-indigo-100);
   --ui-color-accent-contrast: var(--ui-palette-warm-neutral-100);
   --ui-color-focus: var(--ui-palette-indigo-600);
+  --ui-color-current: var(--ui-color-accent);
 
   --ui-color-neutral: var(--ui-palette-neutral-600);
   --ui-color-info: var(--ui-palette-sky-700);

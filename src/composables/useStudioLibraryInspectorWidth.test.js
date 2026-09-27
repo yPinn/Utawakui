@@ -96,13 +96,16 @@ describe('useStudioLibraryInspectorWidth', () => {
     expect(width.value).toBe(280);
   });
 
-  it('sets isResizing true during the drag', async () => {
+  it('sets isResizing only after the pointer crosses the drag threshold', async () => {
     const { useStudioLibraryInspectorWidth } =
       await import('./useStudioLibraryInspectorWidth.js');
     const { isResizing, startResize } = useStudioLibraryInspectorWidth();
     const event = makeEvent();
 
     startResize(event);
+    expect(isResizing.value).toBe(false);
+
+    moveHandlerFrom(event.currentTarget)({ clientX: 5 });
 
     expect(isResizing.value).toBe(true);
   });

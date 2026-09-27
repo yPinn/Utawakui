@@ -200,11 +200,11 @@ describe('DemoDensity', () => {
       '2.5rem',
       '4.75rem',
       '4.25rem',
+      '5rem',
       '1rem',
       '0.75rem',
       '0.5rem',
       '1.875rem',
-      '3.375rem',
     ]) {
       expect(html).toContain(`--demo-density-size:${size}`);
     }
@@ -248,7 +248,7 @@ describe('DemoDensity', () => {
     expect(html.match(/data-current-density-mapping=/gu)).toHaveLength(10);
     expect(html).toContain('一般控制 1.875rem／30 CSS px');
     expect(html).toContain('Icon Button 另有 2rem／32 CSS px 下限');
-    expect(html).toContain('Sidebar 列 54 CSS px');
+    expect(html).toContain('Sidebar 列 52 CSS px');
     expect(html).toContain('列表標頭尚無 active token');
     expect(html).toContain('Panel inset 1rem／16 CSS px');
     expect(html).toContain(

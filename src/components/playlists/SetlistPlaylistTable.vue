@@ -346,7 +346,7 @@ function handleRowKeydown(track, event) {
 }
 
 /* Currently playing — title-only coral cue, matching
-   QueueTrackButton.vue's .queue-track--current treatment. Deliberately not
+   UiTrackRow's shared current-title treatment. Deliberately not
    the filled background Selected uses elsewhere (UiTrackRow's --active):
    playing and selected are distinct states (DESIGN.md's Common States
    table). */

@@ -385,12 +385,12 @@ describe('DemoCollageThumbAppearance', () => {
     for (const density of ['standard', 'compact']) {
       expect(html).toContain(`data-collage-density="${density}"`);
     }
-    for (const recipe of ['44', '88', '120', '136', '280']) {
+    for (const recipe of ['40', '88', '120', '136', '280']) {
       expect(html).toContain(`data-collage-size="${recipe}"`);
     }
     expect(candidateSource).not.toMatch(/minWidth|maxWidth|density/u);
     expect(uiConstantsSource).toContain(
-      'export const PLAYLIST_ROW_THUMB_SIZE = 44;',
+      'export const PLAYLIST_ROW_THUMB_SIZE = 40;',
     );
     expect(sidebarRowSource).toContain(':size="PLAYLIST_ROW_THUMB_SIZE"');
     expect(dossierSource).toContain(':size="88"');
@@ -407,9 +407,8 @@ describe('DemoCollageThumbAppearance', () => {
     expect(inspectorSource).toContain('COLLECTION_COVER_MIN = 88;');
     expect(inspectorSource).toContain('COLLECTION_COVER_MAX = 120;');
     expect(inspectorSource).toContain('UiTrackThumb');
-    expect(activeTokenSource).toContain(
-      '--ui-playlist-row-thumb-size: 2.75rem;',
-    );
+    expect(activeTokenSource).toContain('--ui-playlist-row-thumb-size: var(');
+    expect(activeTokenSource).toContain('--ui-track-row-thumb-size');
   });
 
   it('separates square output geometry from source aspect ratio and future crop selection', async () => {
@@ -547,7 +546,7 @@ describe('DemoCollageThumbAppearance', () => {
       '`UiCollageThumb` 表示一個集合的封面位置與 optional 2×2 collage',
     );
     expect(reviewContract).toContain(
-      'Current consumer 尺寸為 44／88／120／136／280px',
+      'Current consumer 尺寸為 40／88／120／136／280px',
     );
     expect(reviewContract).toContain(
       '共用同一個 track-identity fallback artwork resolver',

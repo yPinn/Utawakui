@@ -420,7 +420,7 @@ describe('DemoTrackThumbAppearance', () => {
     );
   });
 
-  it('separates the converged Candidate recipes from the five Current consumer snapshots', async () => {
+  it('separates the converged Candidate recipes from the four Current consumer snapshots', async () => {
     const html = await renderToString(createSSRApp(DemoTrackThumbAppearance));
     const candidate = html.match(
       /<section[^>]*data-track-thumb-source="candidate"[\s\S]*?(?=<section[^>]*data-track-thumb-source=)/u,
@@ -440,16 +440,15 @@ describe('DemoTrackThumbAppearance', () => {
     }
     for (const recipe of [
       ['import-current-32', '匯入候選 · 32px'],
-      ['track-row-current-40', '曲目列 · 40px'],
-      ['queue-current-48', '佇列 · 48px'],
-      ['player-current-52', '播放器 · 52px'],
+      ['track-row-current-40', '曲目列／佇列 · 40px'],
+      ['player-current-48', '播放器 · 48px'],
       ['metadata-current-64', '封面編輯 · 64px'],
     ]) {
       expect(current).toContain(`data-track-thumb-recipe="${recipe[0]}"`);
       expect(current).toContain(recipe[1]);
     }
-    expect(candidate).toContain('佇列與播放器共用');
-    expect(current).toContain('目前仍有五個尺寸');
+    expect(candidate).toContain('48px 只用於左下 PlayerBar');
+    expect(current).toContain('Queue 已併入 40px 標準曲目列');
     expect(current).not.toContain('--ui-track-artwork-size-dense');
     expect(candidateSource).not.toMatch(/recipe|variant|context/u);
   });
@@ -464,15 +463,16 @@ describe('DemoTrackThumbAppearance', () => {
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
     expect(activeTokenSource).toContain('--ui-track-row-min-height: 3.25rem;');
     expect(activeTokenSource).toContain('--ui-track-row-thumb-size: 2.5rem;');
-    expect(queueTrackSource).toContain(':size="QUEUE_TRACK_THUMB_SIZE"');
-    expect(uiConstantsSource).toContain(
-      'export const QUEUE_TRACK_THUMB_SIZE = 48;',
-    );
-    expect(activeTokenSource).toContain('--ui-queue-track-thumb-size: 3rem;');
+    expect(queueTrackSource).toContain('import UiTrackRow');
+    expect(queueTrackSource).toContain('<UiTrackRow');
+    expect(queueTrackSource).not.toContain('QUEUE_TRACK_THUMB_SIZE');
+    expect(uiConstantsSource).not.toContain('QUEUE_TRACK_THUMB_SIZE');
+    expect(activeTokenSource).not.toContain('--ui-queue-track-thumb-size');
     expect(playerArtworkSource).toContain(':size="PLAYER_BAR_ARTWORK_SIZE"');
     expect(uiConstantsSource).toContain(
-      'export const PLAYER_BAR_ARTWORK_SIZE = 52;',
+      'export const PLAYER_BAR_ARTWORK_SIZE = 48;',
     );
+    expect(activeTokenSource).toContain('--ui-player-bar-artwork-size: 3rem;');
     expect(playerBarSource).toContain('height: var(--ui-player-bar-height);');
     expect(activeTokenSource).toContain('--ui-player-bar-height: calc(');
     expect(metadataSource).toContain('size="var(--ui-space-8)"');
@@ -524,7 +524,7 @@ describe('DemoTrackThumbAppearance', () => {
       'Public contract 維持 optional `track`、required caller-owned `size`',
     );
     expect(reviewContract).toContain(
-      'Current consumer 快照為 32／40／48／52／64px',
+      'Current consumer 快照收斂為 32／40／48／64px',
     );
     expect(reviewContract).toContain(
       'Candidate 收斂為密集選擇 36px、標準曲目列 40px、播放操作 48px、封面檢查 64px',
@@ -534,7 +534,7 @@ describe('DemoTrackThumbAppearance', () => {
     );
     expect(reviewContract).toContain('下一個可處理的元件只有 `UiCollageThumb`');
     expect(reviewContract).toContain(
-      '本次總結與提交不開始該元件，也不進入 `UiTrackRow`、Overlay 或 F7 View',
+      'Queue 已採用正式 `UiTrackRow` 的 Standard 52／40px recipe',
     );
   });
 });

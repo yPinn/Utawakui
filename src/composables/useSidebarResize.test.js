@@ -20,8 +20,8 @@ describe('useSidebarResize', () => {
     sidebarWidth.setWidth(280);
     await toggleSidebarCollapse();
 
-    expect(sidebarWidth.width.value).toBe(72);
-    expect(window.Utawakui.setSidebarWidth).toHaveBeenCalledWith(72);
+    expect(sidebarWidth.width.value).toBe(64);
+    expect(window.Utawakui.setSidebarWidth).toHaveBeenCalledWith(64);
 
     await toggleSidebarCollapse();
 
@@ -30,7 +30,7 @@ describe('useSidebarResize', () => {
   });
 
   it('restores the standard expanded width when the app starts compact', async () => {
-    window.Utawakui.initialSidebarWidth = 72;
+    window.Utawakui.initialSidebarWidth = 64;
     const { useSidebarWidth } = await import('./useSidebarWidth.js');
     const { useSidebarResize } = await import('./useSidebarResize.js');
 

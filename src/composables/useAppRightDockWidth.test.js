@@ -46,9 +46,10 @@ describe('useAppRightDockWidth', () => {
     });
     expect(preventDefault).toHaveBeenCalledOnce();
     expect(target.setPointerCapture).toHaveBeenCalledWith(7);
-    expect(dockWidth.isResizing.value).toBe(true);
+    expect(dockWidth.isResizing.value).toBe(false);
 
     listeners.get('pointermove')({ clientX: 80 });
+    expect(dockWidth.isResizing.value).toBe(true);
     expect(dockWidth.width.value).toBe(260);
 
     listeners.get('pointerup')();

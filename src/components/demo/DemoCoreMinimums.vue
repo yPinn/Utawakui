@@ -72,7 +72,7 @@ const CURRENT_GROUPS = [
       'src/components/playback/PlayerBar.vue',
     ],
     contract:
-      '曲目列 3.25rem · 封面 2.5rem · Sidebar 列 54px · Player 4.75rem；列表標頭無現行共用 token',
+      '曲目列／Sidebar 列 3.25rem（52px）· 封面 2.5rem · Player 5rem；列表標頭無現行共用 token',
     status: '部分落地，逐項審查中',
   },
   {

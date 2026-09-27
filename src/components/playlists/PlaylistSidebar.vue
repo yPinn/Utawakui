@@ -346,21 +346,32 @@ function startDrag(playlist, event) {
 <template>
   <nav class="playlist-sidebar" aria-label="播放清單篩選與集合">
     <div class="playlist-sidebar__toolbar">
-      <div class="playlist-sidebar__search" title="搜尋歌單、專輯或曲目">
-        <span class="playlist-sidebar__search-icon-slot" aria-hidden="true">
-          <Search class="playlist-sidebar__search-icon" :size="ICON_SIZE" />
-        </span>
-        <input
-          v-model="searchQuery"
-          class="playlist-sidebar__search-input"
-          type="search"
-          aria-label="搜尋歌單、專輯或曲目"
-          placeholder="搜尋"
-        />
+      <div class="playlist-sidebar__toolbar-expanded">
+        <div class="playlist-sidebar__search" title="搜尋歌單、專輯或曲目">
+          <span class="playlist-sidebar__search-icon-slot" aria-hidden="true">
+            <Search class="playlist-sidebar__search-icon" :size="ICON_SIZE" />
+          </span>
+          <input
+            v-model="searchQuery"
+            class="playlist-sidebar__search-input"
+            type="search"
+            aria-label="搜尋歌單、專輯或曲目"
+            placeholder="搜尋"
+          />
+        </div>
+        <button
+          type="button"
+          class="playlist-sidebar__toolbar-action"
+          aria-label="新增歌單"
+          title="新增歌單"
+          @click="createPlaylist"
+        >
+          <Plus :size="ICON_SIZE" aria-hidden="true" />
+        </button>
       </div>
       <button
         type="button"
-        class="playlist-sidebar__toolbar-action"
+        class="playlist-sidebar__toolbar-action playlist-sidebar__toolbar-action--compact"
         aria-label="新增歌單"
         title="新增歌單"
         @click="createPlaylist"
@@ -550,13 +561,24 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__toolbar {
+  position: relative;
+  block-size: var(--ui-playlist-toolbar-height);
+  min-height: var(--ui-playlist-toolbar-height);
+  overflow: hidden;
+}
+
+.playlist-sidebar__toolbar-expanded {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   gap: var(--ui-playlist-toolbar-gap);
-  block-size: var(--ui-playlist-toolbar-height);
-  min-height: var(--ui-playlist-toolbar-height);
+  min-width: 0;
   padding: var(--ui-playlist-toolbar-padding-block)
     var(--ui-playlist-toolbar-padding-inline);
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
 }
 
 .playlist-sidebar__search {
@@ -646,6 +668,40 @@ function startDrag(playlist, event) {
   -webkit-user-select: none;
 }
 
+.playlist-sidebar__toolbar-expanded,
+.playlist-sidebar__toolbar-action--compact {
+  transition:
+    opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    visibility 0s linear 0s;
+}
+
+.playlist-sidebar__toolbar-expanded {
+  transition:
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    visibility 0s linear 0s;
+}
+
+.playlist-sidebar__toolbar-action--compact {
+  position: absolute;
+  inset-block-start: calc(
+    (
+        var(--ui-playlist-toolbar-height) -
+          var(--ui-playlist-toolbar-control-size)
+      ) /
+      2
+  );
+  /* In expanded geometry the toolbar begins 2px farther right than the
+     compact 52px lane. Offset against the row's border-aware inset here,
+     then override below inside the compact query, so this fading control
+     keeps the artwork centerline instead of jumping by those 2px. */
+  inset-inline-start: calc(
+    var(--ui-playlist-row-padding-inline) + var(--ui-border-width)
+  );
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .playlist-sidebar__toolbar-action:hover {
   border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
@@ -706,11 +762,15 @@ function startDrag(playlist, event) {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    visibility 0s linear 0s;
 }
 
-/* Only for the plain-text default rows — the two dynamic
-   name rows render through PlaylistSidebarRow, which uses UiMarqueeText
-   and owns its own overflow/text-overflow/animation internally. */
+/* Only for the plain-text default rows — the dynamic collection rows own
+   the same stable ellipsis contract in PlaylistSidebarRow.vue. */
 .playlist-sidebar__label {
   overflow: hidden;
   text-overflow: ellipsis;
@@ -740,7 +800,15 @@ function startDrag(playlist, event) {
   }
 
   .playlist-sidebar__info {
-    display: none;
+    flex: 0 0 0;
+    inline-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+      visibility 0s linear var(--ui-motion-duration-fast);
   }
 
   .playlist-sidebar__empty {
@@ -749,16 +817,31 @@ function startDrag(playlist, event) {
 
   .playlist-sidebar__toolbar {
     align-self: center;
-    justify-content: center;
-    gap: 0;
     inline-size: var(--ui-playlist-row-min-height);
     block-size: var(--ui-playlist-toolbar-height);
     min-height: var(--ui-playlist-toolbar-height);
-    padding: var(--ui-playlist-row-padding-block);
   }
 
-  .playlist-sidebar__search {
-    display: none;
+  .playlist-sidebar__toolbar-expanded {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .playlist-sidebar__toolbar-action--compact {
+    inset-inline-start: calc(
+      (
+          var(--ui-playlist-row-min-height) -
+            var(--ui-playlist-toolbar-control-size)
+        ) /
+        2
+    );
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transition:
+      opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+      visibility 0s linear 0s;
   }
 
   .playlist-sidebar__item--active {
@@ -769,6 +852,21 @@ function startDrag(playlist, event) {
 
   .playlist-sidebar__item--active .playlist-sidebar__thumb {
     box-shadow: 0 0 0 var(--ui-focus-width) var(--ui-color-accent);
+  }
+}
+
+:global(:root[data-ui-motion='reduced']) .playlist-sidebar__toolbar-expanded,
+:global(:root[data-ui-motion='reduced'])
+  .playlist-sidebar__toolbar-action--compact,
+:global(:root[data-ui-motion='reduced']) .playlist-sidebar__info {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playlist-sidebar__toolbar-expanded,
+  .playlist-sidebar__toolbar-action--compact,
+  .playlist-sidebar__info {
+    transition: none;
   }
 }
 </style>

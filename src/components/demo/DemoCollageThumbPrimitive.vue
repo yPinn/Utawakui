@@ -101,7 +101,7 @@ const DENSITY_CONTEXTS = [
 ];
 
 const CONSUMER_SIZES = [
-  { size: 44, label: 'Sidebar · 44px' },
+  { size: 40, label: 'Sidebar · 40px' },
   { size: 88, label: 'Dossier · 88px' },
   { size: 120, label: 'Details modal · 120px' },
   { size: 136, label: 'Setlist header · 136px' },

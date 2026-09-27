@@ -84,6 +84,7 @@ describe('DemoTrackRowAppearance', () => {
       '整列由 li 的 button role 承接；標題與尾端按鈕仍巢狀其中。',
     );
     expect(html).toContain('目前播放僅以曲名顏色提示，停用列改為非互動。');
+    expect(html).toContain('Queue 單擊選取，雙擊或縮圖播放。');
   });
 
   it('reuses the reviewed UI component layer instead of redrawing child controls', () => {
@@ -533,7 +534,7 @@ describe('DemoTrackRowAppearance', () => {
     expect(currentLayer).toContain('aria-label="前往專輯：可前往專輯的曲目"');
   });
 
-  it('documents the UiTrackRow owner checkpoint without adopting production', () => {
+  it('documents the UiTrackRow owner checkpoint and bounded Queue adoption', () => {
     expect(reviewContract).toContain(
       '## 已完成階段：UiTrackRow Candidate／Current 檢查',
     );
@@ -548,7 +549,7 @@ describe('DemoTrackRowAppearance', () => {
       'current cue也不因Status Icon已審查就強制組合圓形wrapper',
     );
     expect(reviewContract).toContain(
-      '正式 `UiTrackRow`、consumers 與 active tokens 均未修改',
+      'Queue 已採用正式 `UiTrackRow` 的 Standard 52／40px recipe',
     );
     expect(reviewContract).toContain('不能讓滑鼠右鍵成為唯一入口');
   });

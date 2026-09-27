@@ -8,7 +8,6 @@ import { Pause, Play } from '../../icons/index.js';
 import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
 
 const props = defineProps({
   playlist: { type: Object, required: true },
@@ -40,6 +39,14 @@ const selectLabel = computed(() => `選取 ${playlistDisplayName.value}`);
 const playbackLabel = computed(
   () => `${props.playing ? '暫停' : '播放'} ${playlistDisplayName.value}`,
 );
+
+function toggleFromArtwork(event) {
+  // A double-click dispatches two click events before dblclick. The artwork
+  // is already a single-click action, so ignore the second click instead of
+  // immediately undoing the first play/pause transition.
+  if (event.detail > 1) return;
+  emit('togglePlayback', event);
+}
 </script>
 
 <template>
@@ -55,6 +62,7 @@ const playbackLabel = computed(
     :draggable="draggable"
     :title="playlistDisplayName"
     @click="emit('select')"
+    @dblclick="emit('togglePlayback', $event)"
     @contextmenu="emit('contextmenu', $event)"
     @dragstart="emit('dragStart', $event)"
     @dragover="emit('dragOver', $event)"
@@ -69,6 +77,7 @@ const playbackLabel = computed(
       :aria-label="selectLabel"
       :title="playlistDisplayName"
       @click.stop="emit('select')"
+      @dblclick.stop="emit('togglePlayback', $event)"
     />
     <UiCollageThumb
       class="playlist-sidebar-row__thumb"
@@ -89,15 +98,15 @@ const playbackLabel = computed(
           fill
           shape="inherit"
           variant="overlay"
-          @click.stop="emit('togglePlayback', $event)"
+          @click.stop="toggleFromArtwork"
+          @dblclick.stop
         />
       </template>
     </UiCollageThumb>
     <span class="playlist-sidebar-row__info">
-      <UiMarqueeText
-        class="playlist-sidebar-row__name"
-        :text="playlist.name || '(未命名歌單)'"
-      />
+      <span class="playlist-sidebar-row__name">
+        {{ playlist.name || '(未命名歌單)' }}
+      </span>
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
   </div>
@@ -225,9 +234,19 @@ const playbackLabel = computed(
   display: flex;
   flex-direction: column;
   min-width: 0;
+  opacity: 1;
+  visibility: visible;
+  transition:
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    visibility 0s linear 0s;
 }
 
 .playlist-sidebar-row__name {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   color: var(--ui-color-text);
   font-weight: var(--ui-font-weight-strong);
   line-height: var(--ui-line-height-label);
@@ -271,7 +290,15 @@ const playbackLabel = computed(
   }
 
   .playlist-sidebar-row__info {
-    display: none;
+    flex: 0 0 0;
+    inline-size: 0;
+    overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition:
+      opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+      visibility 0s linear var(--ui-motion-duration-fast);
   }
 
   .playlist-sidebar-row__play {
@@ -300,6 +327,18 @@ const playbackLabel = computed(
     border-radius: var(--ui-radius-pill);
     background: var(--ui-color-current);
     box-shadow: 0 0 0 var(--ui-border-width) var(--ui-color-surface);
+  }
+}
+
+:global(:root[data-ui-motion='reduced']) .playlist-sidebar-row__info,
+:global(:root[data-ui-motion='reduced']) .playlist-sidebar-row__play {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .playlist-sidebar-row__info,
+  .playlist-sidebar-row__play {
+    transition: none;
   }
 }
 </style>

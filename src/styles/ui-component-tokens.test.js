@@ -62,6 +62,15 @@ const metadataFeatureFiles = [
   source: fs.readFileSync(new URL(filename, import.meta.url), 'utf8'),
 }));
 
+const queueFeatureFiles = filesUnder(
+  new URL('../components/queue/', import.meta.url),
+)
+  .filter((file) => file.pathname.endsWith('.vue'))
+  .map((file) => ({
+    name: file.pathname,
+    source: fs.readFileSync(file, 'utf8'),
+  }));
+
 describe('shared UI component token contract', () => {
   it('maps both systems onto one density-aware Right Dock token contract', () => {
     const activeValues = declarations(active);
@@ -78,6 +87,14 @@ describe('shared UI component token contract', () => {
     expect(candidateValues.get('--ui-right-dock-content-inset')).toBe(
       'var(--ui-panel-inset)',
     );
+    for (const name of [
+      '--ui-right-dock-sticky-background',
+      '--ui-right-dock-sticky-blur',
+      '--ui-right-dock-sticky-shadow',
+    ]) {
+      expect(activeValues.has(name), `active ${name}`).toBe(true);
+      expect(candidateValues.has(name), `candidate ${name}`).toBe(true);
+    }
     expect(candidateValues.get('--ui-inspector-width')).toBe(
       'var(--ui-right-dock-width)',
     );
@@ -86,6 +103,45 @@ describe('shared UI component token contract', () => {
     );
     expect(candidate).toMatch(
       /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{[^}]*--ui-panel-inset:\s*0\.75rem;[^}]*\}/su,
+    );
+  });
+
+  it('uses Standard Track Row geometry in Queue and reserves 48px for PlayerBar artwork', () => {
+    const activeValues = declarations(active);
+
+    expect(activeValues.get('--ui-track-row-min-height')).toBe('3.25rem');
+    expect(activeValues.get('--ui-track-row-thumb-size')).toBe('2.5rem');
+    expect(activeValues.has('--ui-queue-track-thumb-size')).toBe(false);
+    expect(activeValues.get('--ui-player-bar-artwork-size')).toBe('3rem');
+  });
+
+  it('centers the standard compact Sidebar row in a tighter rail and keeps PlayerBar artwork on the same axis', () => {
+    const activeValues = declarations(active);
+
+    expect(activeValues.get('--ui-shell-panel-inset-block')).toMatch(
+      /^var\(\s*--ui-space-4\s*\)$/u,
+    );
+    expect(activeValues.get('--ui-playlist-sidebar-width-min')).toBe('4rem');
+    expect(activeValues.get('--ui-playlist-sidebar-padding-inline')).toBe(
+      'var(--ui-space-2)',
+    );
+    expect(
+      activeValues.get('--ui-playlist-sidebar-padding-inline-compact'),
+    ).toBe('0.375rem');
+    expect(activeValues.get('--ui-playlist-row-compact-hit-size')).toBe(
+      'var(\n    --ui-track-row-min-height\n  )',
+    );
+    expect(activeValues.get('--ui-playlist-row-artwork-centerline')).toBe(
+      '2rem',
+    );
+    expect(activeValues.get('--ui-player-bar-padding-inline')).toContain(
+      'var(--ui-playlist-row-artwork-centerline) - 1.5rem',
+    );
+    expect(activeValues.get('--ui-player-bar-padding-inline-start')).toContain(
+      'var(--ui-player-bar-padding-inline) + var(--ui-space-2)',
+    );
+    expect(activeValues.get('--ui-playlist-list-gap')).toBe(
+      'var(--ui-space-1)',
     );
   });
 
@@ -163,6 +219,26 @@ describe('shared UI component token contract', () => {
         .filter((token) => !globalNames.has(token))
         .map((token) => `${name}: ${token}`),
     );
+
+    expect(missing).toEqual([]);
+  });
+
+  it.each([
+    ['active', active],
+    ['candidate', candidate],
+  ])('%s tokens satisfy every Queue feature reference', (_, css) => {
+    const globalNames = new Set(declarations(css).keys());
+    const missing = queueFeatureFiles.flatMap(({ name, source }) => {
+      const localNames = new Set(
+        [...source.matchAll(/(--ui-[\w-]+)['"]?\s*:/g)].map(
+          (match) => match[1],
+        ),
+      );
+      return [...source.matchAll(/var\((--ui-[\w-]+)\)/g)]
+        .map((match) => match[1])
+        .filter((token) => !globalNames.has(token) && !localNames.has(token))
+        .map((token) => `${name}: ${token}`);
+    });
 
     expect(missing).toEqual([]);
   });

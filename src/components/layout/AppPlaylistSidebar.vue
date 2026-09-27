@@ -109,6 +109,12 @@ function activateSetlistView() {
     var(--ui-playlist-sidebar-padding-inline);
 }
 
+@container (width < 256px) {
+  .app-playlist-sidebar__scroll {
+    padding-inline: var(--ui-playlist-sidebar-padding-inline-compact);
+  }
+}
+
 .app-playlist-sidebar__handle {
   position: absolute;
   top: 0;

@@ -5,6 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
   ANNOUNCEMENT_VERSION_MAX_LENGTH,
   CAPTURE_DEVICE_ID_MAX_LENGTH,
+  SIDEBAR_WIDTH_MIN,
   isValidObsHost,
   loadConfig,
   saveConfig,
@@ -175,6 +176,19 @@ describe('config', () => {
     saveConfig(configPath, { sidebarWidth: 200 });
     expect(loadConfig(configPath).sidebarWidth).toBe(200);
   });
+
+  it.each([68, 72])(
+    'uses the 64px compact Sidebar boundary and migrates the legacy %spx rail',
+    (legacyWidth) => {
+      expect(SIDEBAR_WIDTH_MIN).toBe(64);
+
+      fs.writeFileSync(
+        configPath,
+        JSON.stringify({ version: 2, sidebarWidth: legacyWidth }),
+      );
+      expect(loadConfig(configPath).sidebarWidth).toBe(64);
+    },
+  );
 
   it('out-of-range sidebarWidth falls back to the default', () => {
     fs.writeFileSync(

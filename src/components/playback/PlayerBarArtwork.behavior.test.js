@@ -33,8 +33,13 @@ describe('PlayerBar artwork context action', () => {
       onActivate,
     });
     const buttons = findAll(root, (node) => node.type === 'button');
+    const artwork = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes('ui-track-thumb'),
+    )[0];
 
     expect(buttons).toHaveLength(1);
+    expect(artwork.props.style.width).toBe('48px');
+    expect(artwork.props.style.height).toBe('48px');
     expect(buttons[0].props.type).toBe('button');
     expect(buttons[0].props['aria-label']).toBe('展開目前歌曲資料');
     expect(buttons[0].props['aria-expanded']).toBe(false);

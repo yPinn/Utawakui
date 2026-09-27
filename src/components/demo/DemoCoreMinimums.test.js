@@ -144,8 +144,9 @@ describe('DemoCoreMinimums', () => {
     expect(html).toContain('src/components/playlists/PlaylistSidebarRow.vue');
     expect(html).toContain('src/components/playback/PlayerBar.vue');
     expect(html).toContain('src/components/layout/AppRightDock.vue');
-    expect(html).toContain('Sidebar 列 54px');
+    expect(html).toContain('Sidebar 列 3.25rem（52px）');
     expect(html).toContain('列表標頭無現行共用 token');
+    expect(html).toContain('Player 5rem');
     expect(html).toContain('Checkbox／Range thumb 1rem');
     expect(html).toContain(
       '一般符合 hard floor／Compact，Standard 尚待密度映射',
@@ -163,7 +164,7 @@ describe('DemoCoreMinimums', () => {
       '--ui-icon-button-size-lg: 2.75rem;',
       '--ui-checkbox-size: var(--ui-space-4);',
       '--ui-range-thumb-size: var(--ui-space-4);',
-      '--ui-playlist-row-thumb-size: 2.75rem;',
+      '--ui-playlist-row-thumb-size: var(',
       '--ui-playlist-row-min-height: var(',
       '--ui-track-row-min-height: 3.25rem;',
       '--ui-track-row-thumb-size: 2.5rem;',
@@ -173,8 +174,10 @@ describe('DemoCoreMinimums', () => {
     ]) {
       expect(activeTokenSource).toContain(source);
     }
-    expect(activeTokenSource).toContain('54px: expanded and compact rows');
-    expect(activeTokenSource).toContain('84px: 52px artwork');
+    expect(activeTokenSource).toContain(
+      '52px: expanded and compact rows align to the standard Track Row',
+    );
+    expect(activeTokenSource).toContain('80px: 48px artwork');
     expect(activeTokenSource).not.toContain('--ui-list-header-height');
     expect(rightDockSource).toContain(
       'inline-size: var(--ui-drag-indicator-width)',

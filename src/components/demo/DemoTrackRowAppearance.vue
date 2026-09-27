@@ -10,7 +10,7 @@ const LAYERS = [
   {
     key: 'current',
     title: '現行 UiTrackRow',
-    note: '正式 Ui* 與 active-token 快照；52／40px。',
+    note: '正式 Ui* 與 active-token 快照；52／40px。Queue 單擊選取，雙擊或縮圖播放。',
   },
 ];
 </script>
