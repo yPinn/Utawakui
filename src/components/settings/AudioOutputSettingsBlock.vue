@@ -17,7 +17,7 @@ const emit = defineEmits(['selectDevice']);
 <template>
   <SettingsBlock
     title="音訊輸出"
-    summary="將伴奏送至獨立的擷取裝置"
+    summary="將伴奏送到直播或錄影軟體"
     :status="enabled ? '已啟用' : '未啟用'"
     :status-tone="enabled ? 'success' : 'muted'"
   >

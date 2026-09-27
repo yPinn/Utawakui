@@ -81,6 +81,7 @@ const audioGraph = usePlayerAudioGraph({
 
 const {
   applyCaptureDevice,
+  prepareCaptureDevice,
   resetPitchTempo,
   resetTrackAudioControls,
   restoreCaptureGuideVocalState,
@@ -381,6 +382,7 @@ export function usePlayer() {
     setCaptureGuideVocalValue,
     setGuideVocalOn,
     setCaptureGuideVocalOn,
+    prepareCaptureDevice,
     applyCaptureDevice,
     setTransposeSemitones,
     setPitchCents,

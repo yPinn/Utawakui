@@ -32,52 +32,79 @@ export function combinedSemitones(transposeSemitones, pitchCents) {
 }
 
 export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
-  const audioCtx = new AudioContext();
-  const sourceNode = audioCtx.createMediaElementSource(audio);
-  const splitter = audioCtx.createChannelSplitter(4);
-
-  const mergerInst = audioCtx.createChannelMerger(2);
-  const mergerVoc = audioCtx.createChannelMerger(2);
-  splitter.connect(mergerInst, 0, 0);
-  splitter.connect(mergerInst, 1, 1);
-  splitter.connect(mergerVoc, 2, 0);
-  splitter.connect(mergerVoc, 3, 1);
-
-  const vocalGain = audioCtx.createGain();
-  vocalGain.gain.value = PLAYER_AUDIO_DEFAULTS.monitorGuideVocalLevel;
-  mergerVoc.connect(vocalGain);
-
-  const masterGain = audioCtx.createGain();
-  masterGain.gain.value = PLAYER_AUDIO_DEFAULTS.volume;
-  sourceNode.connect(masterGain);
-  mergerInst.connect(masterGain);
-  vocalGain.connect(masterGain);
-
-  const dryGain = audioCtx.createGain();
-  const wetGain = audioCtx.createGain();
-  dryGain.gain.value = 1;
-  wetGain.gain.value = 0;
-  masterGain.connect(dryGain);
-  dryGain.connect(audioCtx.destination);
-  wetGain.connect(audioCtx.destination);
-
-  // The monitor and OBS capture chains need independent native destinations.
-  // Bridge the decoded accompaniment and guide-vocal streams before the
-  // capture-only mix so each AudioContext can target its own output device.
-  const instBridgeDest = audioCtx.createMediaStreamDestination();
-  const vocBridgeDest = audioCtx.createMediaStreamDestination();
-  mergerInst.connect(instBridgeDest);
-  mergerVoc.connect(vocBridgeDest);
-  sourceNode.connect(instBridgeDest);
+  let audioCtx = null;
+  let sourceNode = null;
+  let splitter = null;
+  let mergerInst = null;
+  let mergerVoc = null;
+  let vocalGain = null;
+  let masterGain = null;
+  let dryGain = null;
+  let wetGain = null;
+  let instBridgeDest = null;
+  let vocBridgeDest = null;
 
   let captureGraph = null;
+  let desiredCaptureDeviceId = null;
   let captureSelectionRevision = 0;
   let isDisposed = false;
   let pitchNode = null;
   let pitchNodeReady = null;
   let pitchProcessingError = null;
   let capturePitchProcessingError = null;
-  let isUsingSeparatedAudioGraph = false;
+  let usesSeparatedAudioGraph = false;
+
+  function connectSourceNode() {
+    sourceNode.disconnect();
+    if (usesSeparatedAudioGraph) {
+      sourceNode.connect(splitter);
+      return;
+    }
+    sourceNode.connect(masterGain);
+    sourceNode.connect(instBridgeDest);
+  }
+
+  function ensureMonitorGraph() {
+    if (audioCtx) return audioCtx;
+    if (isDisposed) return null;
+
+    audioCtx = new AudioContext();
+    sourceNode = audioCtx.createMediaElementSource(audio);
+    splitter = audioCtx.createChannelSplitter(4);
+    mergerInst = audioCtx.createChannelMerger(2);
+    mergerVoc = audioCtx.createChannelMerger(2);
+    splitter.connect(mergerInst, 0, 0);
+    splitter.connect(mergerInst, 1, 1);
+    splitter.connect(mergerVoc, 2, 0);
+    splitter.connect(mergerVoc, 3, 1);
+
+    vocalGain = audioCtx.createGain();
+    vocalGain.gain.value = state.guideVocalOn ? state.guideVocalValue : 0;
+    mergerVoc.connect(vocalGain);
+
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = state.isMuted ? 0 : state.volume;
+    mergerInst.connect(masterGain);
+    vocalGain.connect(masterGain);
+
+    dryGain = audioCtx.createGain();
+    wetGain = audioCtx.createGain();
+    dryGain.gain.value = 1;
+    wetGain.gain.value = 0;
+    masterGain.connect(dryGain);
+    dryGain.connect(audioCtx.destination);
+    wetGain.connect(audioCtx.destination);
+
+    // The monitor and capture chains need independent native destinations.
+    // These bridges are created with the monitor graph, never during app
+    // startup, so a persisted optional sink cannot open WebAudio early.
+    instBridgeDest = audioCtx.createMediaStreamDestination();
+    vocBridgeDest = audioCtx.createMediaStreamDestination();
+    mergerInst.connect(instBridgeDest);
+    mergerVoc.connect(vocBridgeDest);
+    connectSourceNode();
+    return audioCtx;
+  }
 
   function rampGain(context, audioParam, target) {
     audioParam.setTargetAtTime(target, context.currentTime, GAIN_RAMP_SECONDS);
@@ -89,6 +116,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   }
 
   function createCaptureGraph(deviceId) {
+    if (!ensureMonitorGraph()) return null;
     const context = new AudioContext({ sinkId: deviceId });
     const graph = {
       deviceId,
@@ -141,6 +169,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   function invalidateCaptureGraph(graph, message) {
     graph.invalidated = true;
     if (captureGraph !== graph) return;
+    desiredCaptureDeviceId = null;
     state.captureError = message;
     state.captureDeviceId = null;
     void disposeCaptureGraph(graph);
@@ -204,6 +233,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   }
 
   function applyMonitorGuideVocalGain() {
+    if (!audioCtx) return;
     rampGain(
       audioCtx,
       vocalGain.gain,
@@ -223,6 +253,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
 
   function setGuideVocalOn(on) {
     state.guideVocalOn = on;
+    if (!audioCtx) return;
     if (on) applyMonitorGuideVocalGain();
     else hardStopGain(audioCtx, vocalGain.gain);
   }
@@ -288,6 +319,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   // app session, so this mainly matters for capture (below), where recovery
   // means reselecting the output device to get a fresh AudioContext.
   async function ensurePitchNode() {
+    if (!ensureMonitorGraph()) return null;
     if (pitchNode) return pitchNode;
     if (!pitchNodeReady) {
       pitchNodeReady = (async () => {
@@ -331,8 +363,10 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     const active =
       state.transposeSemitones !== PLAYER_AUDIO_DEFAULTS.transposeSemitones ||
       state.pitchCents !== PLAYER_AUDIO_DEFAULTS.pitchCents;
-    rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
-    rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
+    if (audioCtx) {
+      rampGain(audioCtx, dryGain.gain, active ? 0 : 1);
+      rampGain(audioCtx, wetGain.gain, active ? 1 : 0);
+    }
     const graph = captureGraph;
     if (graph) {
       const captureActive = active && Boolean(graph.pitchNode);
@@ -450,24 +484,20 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
   }
 
   function routeAudioGraph(usesSeparatedAudio) {
-    if (isUsingSeparatedAudioGraph === usesSeparatedAudio) return;
-    sourceNode.disconnect();
-    if (usesSeparatedAudio) {
-      sourceNode.connect(splitter);
-    } else {
-      sourceNode.connect(masterGain);
-      sourceNode.connect(instBridgeDest);
-    }
-    isUsingSeparatedAudioGraph = usesSeparatedAudio;
+    if (usesSeparatedAudioGraph === usesSeparatedAudio) return;
+    usesSeparatedAudioGraph = usesSeparatedAudio;
+    if (audioCtx) connectSourceNode();
   }
 
   function setVolume(volume) {
     state.volume = volume;
+    if (!audioCtx) return;
     rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : volume);
   }
 
   function toggleMute() {
     state.isMuted = !state.isMuted;
+    if (!audioCtx) return;
     rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : state.volume);
   }
 
@@ -475,8 +505,17 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     setCaptureGuideVocalOn(!state.captureGuideVocalOn);
   }
 
+  function prepareCaptureDevice(deviceId) {
+    if (isDisposed) return false;
+    desiredCaptureDeviceId = deviceId || null;
+    state.captureDeviceId = desiredCaptureDeviceId;
+    state.captureError = null;
+    return true;
+  }
+
   async function applyCaptureDevice(deviceId) {
     if (isDisposed) return;
+    desiredCaptureDeviceId = deviceId || null;
     const selectionRevision = ++captureSelectionRevision;
     state.captureError = null;
     state.captureDeviceId = null;
@@ -501,6 +540,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
           selectionRevision === captureSelectionRevision &&
           !state.captureError
         ) {
+          desiredCaptureDeviceId = null;
           state.captureError = '擷取輸出裝置無法使用。';
         }
         return;
@@ -519,32 +559,49 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     } catch {
       await disposeCaptureGraph(graph);
       if (isDisposed || selectionRevision !== captureSelectionRevision) return;
+      desiredCaptureDeviceId = null;
       state.captureDeviceId = null;
       state.captureError = '擷取輸出裝置無法使用。';
     }
   }
 
+  async function resume() {
+    const context = ensureMonitorGraph();
+    if (!context) return;
+    await context.resume();
+    if (desiredCaptureDeviceId && !captureGraph) {
+      const deviceId = desiredCaptureDeviceId;
+      void applyCaptureDevice(deviceId).catch(() => {
+        if (isDisposed || desiredCaptureDeviceId !== deviceId) return;
+        desiredCaptureDeviceId = null;
+        state.captureDeviceId = null;
+        state.captureError = '擷取輸出裝置無法使用。';
+      });
+    }
+  }
+
   function cleanup() {
     isDisposed = true;
+    desiredCaptureDeviceId = null;
     captureSelectionRevision += 1;
     state.captureDeviceId = null;
-    sourceNode.disconnect();
-    splitter.disconnect();
-    mergerInst.disconnect();
-    mergerVoc.disconnect();
-    vocalGain.disconnect();
-    masterGain.disconnect();
-    dryGain.disconnect();
-    wetGain.disconnect();
+    sourceNode?.disconnect();
+    splitter?.disconnect();
+    mergerInst?.disconnect();
+    mergerVoc?.disconnect();
+    vocalGain?.disconnect();
+    masterGain?.disconnect();
+    dryGain?.disconnect();
+    wetGain?.disconnect();
     pitchNode?.disconnect();
-    instBridgeDest.disconnect();
-    vocBridgeDest.disconnect();
+    instBridgeDest?.disconnect();
+    vocBridgeDest?.disconnect();
     void disposeCaptureGraph();
-    audioCtx.close();
+    void audioCtx?.close();
   }
 
   return {
-    resume: () => audioCtx.resume(),
+    resume,
     routeAudioGraph,
     resetTrackAudioControls,
     restoreGuideVocalState,
@@ -560,6 +617,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     setVolume,
     toggleMute,
     toggleCaptureGuideVocal,
+    prepareCaptureDevice,
     applyCaptureDevice,
     cleanup,
   };

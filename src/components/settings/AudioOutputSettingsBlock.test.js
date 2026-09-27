@@ -22,7 +22,7 @@ describe('AudioOutputSettingsBlock', () => {
     const html = await renderBlock();
 
     expect(html).toContain('音訊輸出');
-    expect(html).toContain('將伴奏送至獨立的擷取裝置');
+    expect(html).toContain('將伴奏送到直播或錄影軟體');
     expect(html).toContain('直播或錄影軟體使用的虛擬音效裝置');
     expect(html).not.toContain('OBS 擷取裝置');
     expect(html).not.toContain('OBS 用的虛擬音效裝置');
@@ -38,16 +38,16 @@ describe('AudioOutputSettingsBlock', () => {
     const html = await renderBlock({
       errorNotice: {
         severity: 'error',
-        title: '擷取輸出裝置無法使用',
-        message: '先前的擷取輸出裝置已無法使用，已關閉擷取輸出。',
-        actionLabel: '重新選擇裝置',
+        title: '擷取輸出已關閉',
+        message: '先前的裝置無法使用。',
+        actionLabel: '選擇裝置',
       },
     });
 
     expect(html).toContain('ui-notice');
     expect(html).toContain('role="alert"');
-    expect(html).toContain('擷取輸出裝置無法使用');
-    expect(html).toContain('重新選擇裝置');
+    expect(html).toContain('擷取輸出已關閉');
+    expect(html).toContain('選擇裝置');
     expect(html).not.toContain('setSinkId');
     expect(html).not.toContain('deviceId');
   });
