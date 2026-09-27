@@ -150,7 +150,12 @@ connection handshake has a 10-second deadline and each status request has a
 5-second deadline. Either timeout retires the transport before bounded
 exponential-backoff reconnect; disconnect and reconfigure cancel pending work so
 stale completions cannot replace newer status. The adapter never forwards vendor
-payloads to renderer state and exposes no generic request channel. Local session
+payloads to renderer state and exposes no generic request channel. Connection
+failures cross IPC only as bounded reason codes and fixed copy for authentication,
+connection refusal, host lookup, timeout, incompatible protocol, or an unknown
+failure. A refusal intentionally groups OBS-not-running, WebSocket-not-listening,
+and wrong-port cases because the transport cannot distinguish them reliably; raw
+hosts, URLs, credentials, and vendor error text remain main-private. Local session
 history is derived from canonical track-change projections plus fresh OBS
 timecodes and can be exported as YouTube chapter text.
 

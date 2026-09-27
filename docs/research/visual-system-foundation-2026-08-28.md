@@ -379,11 +379,15 @@ scale correction, not a new folder direction:
 - Inactive tabs retain material identity but reduce their visible color weight;
   selection, focus, status, and action emphasis remain separate.
 - The Context Inspector is conditional and contains stable contextual facts only.
-  Its expanded desktop target is `18rem` to `22rem`; its collapsed desktop rail is
-  approximately `2.5rem` and is itself the explicit expand control. The whole rail
-  uses the shared icon-button hover／pressed／focus contract; there is no smaller
-  nested hit target. Collapsing releases the remaining width to the primary
-  workspace.
+  The current wide Candidate reserves a `17.5rem` context bay before expansion;
+  its Inspector opens at that width and can be reduced to `14rem` inside the bay.
+  The collapsed desktop rail is approximately `2.5rem` and remains pinned to the
+  shell's right edge as the explicit expand control. The whole rail uses the shared
+  icon-button hover／pressed／focus contract; there is no smaller nested hit target.
+  The reserved remainder deliberately stays quiet between the dossier and the
+  right-edge rail when collapsed, so opening the Inspector does not reflow the
+  dossier. Its resize axis can also be double-clicked to toggle between the
+  collapsed rail and the last expanded width.
 - Transient Session／Output readiness stays in the bounded header instead of the
   Inspector. The Inspector owns a separate scroll region above PlayerBar, preserves
   its session open state across page changes, and never opens automatically because
@@ -395,11 +399,11 @@ scale correction, not a new folder direction:
   instead of exposing a dead control.
 - At the `960 × 650` target the Inspector becomes a temporary right-side panel when
   explicitly open; when closed its full-height edge rail overlays the context edge
-  without reserving a persistent metadata column. Both states use the Archive
-  Frame's shell-level top／bottom gutter. The Archive Frame and Inspector currently
-  enter that projection at the same authored `70rem` breakpoint. A behavior
-  contract keeps both literals synchronized; do not disguise the media condition
-  as a CSS token that cannot be consumed there.
+  without reserving a persistent metadata column. Both states use the shell main's
+  `0.75rem` top／bottom inset. The shell main and Inspector currently enter that
+  projection at the same authored `70rem` breakpoint. A behavior contract keeps
+  both literals synchronized; do not disguise the media condition as a CSS token
+  that cannot be consumed there.
 - Use one neutral in-flow note module with a hairline boundary and restrained
   material tint. Folder plum／olive must not become competing information or
   warning fills; real warning content uses the semantic warning family.
@@ -818,12 +822,15 @@ sorting, editing, and deletion remain in the existing Setlist until their accept
 Spotify-informed behavior contracts are connected and tested separately.
 
 The native slice also corrects the prototype's containment model. `AppInnerPage`
-wraps only the primary Dossier; `AppArchiveFrame` owns an optional `context` slot
-beside that page. The feature-owned Inspector renders through the slot as an
-external rail spanning the Archive Frame rather than as a second card inside the
-folder page. Pages without context content create neither a wrapper nor reserved
-space. At the compact target, the same rail leaves normal flow and becomes a
-temporary overlay while the primary page keeps its full width.
+wraps only the primary Dossier and `AppArchiveFrame` owns only tabs plus that
+primary workspace. `App.vue`'s `.shell__main` mounts the feature-owned Inspector as
+a right-edge sibling, rather than as a second card inside the folder page. Pages
+without context content create neither a wrapper nor reserved space. When context
+exists at the wide target, shell main reserves the Token v2 `17.5rem` bay even
+while the child is only its collapsed rail; the panel itself stays pinned right
+with the same `0.75rem` block inset as Sidebar. At the compact target, the same rail
+leaves normal flow and becomes a temporary right-edge overlay while the primary
+page keeps its full width.
 
 ### Next Decisions
 

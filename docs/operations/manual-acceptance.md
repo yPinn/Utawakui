@@ -66,6 +66,11 @@ not this UI checklist.
       verify connecting settles within the 10-second handshake deadline, a stalled
       status read settles within 5 seconds, the failed socket is closed, and bounded
       reconnect continues without a stale status overwrite.
+- [ ] Verify the Settings failure notice distinguishes an incorrect password, an
+      unknown host, a handshake timeout, and an incompatible WebSocket service.
+      With OBS stopped, WebSocket disabled, or the port wrong, verify the honest
+      grouped "OBS／WebSocket 未監聽" reason appears; no host, URL, password, or raw
+      transport error may appear in the notice.
 - [ ] Save an authenticated OBS password, restart the packaged app, disable the
       connection and feature gate, then use the still-available explicit removal
       action. Confirm the stored-password indicator clears only after success and
@@ -116,14 +121,25 @@ not this UI checklist.
 - [ ] Verify updater current／available／download／offline／retry／restart states and
       explicit download/install actions, that the download row shows rate and
       remaining time, and that the Settings navigation tab shows the update dot
-      from `available` until install.
+      from `available` until install. Interrupt the network after download begins
+      and verify the idle transfer is cancelled into a retryable error instead of
+      remaining in `downloading`.
 - [ ] Verify the "自動檢查更新" toggle: off stops the startup check and the
       background recheck while the manual check still works; on resumes both.
+- [ ] In an installed build that retains `electron.exe`, press the manual update
+      check against a published same-version stable feed and verify it settles on
+      "目前已是最新版本" instead of remaining in "檢查中". Repeat offline and verify
+      the check settles on a retryable bounded error.
 - [ ] Verify installer paths, Start Menu and optional desktop shortcuts, AUMID／SMTC
       identity, launch, uninstall retention, cleanup opt-in, locked files, and UAC.
 - [ ] Verify a dependency-free install still supports local import, library, and
       playback; then prepare, repair, and remove Provider, FFmpeg, and model units
       independently.
+- [ ] Choose a custom library on a removable drive, close the app, disconnect the
+      drive, and relaunch. Verify the window still opens, existing data is not shown
+      as an empty library, Settings retains the custom path with an unavailable
+      status, and reconnect／retry or choose／reset restores access without writing
+      tracks into the default Music folder.
 
 The release-level artifact and update matrix remains in the
 [Windows release runbook](release-runbook.md). Record consecutive-version results

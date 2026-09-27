@@ -325,6 +325,8 @@ The control panel should combine Spotify-like music workflow efficiency with mac
 ### Layout
 
 - Preserve the app shell model: playlist sidebar + top section tabs + main workspace + persistent player.
+- Keep the persistent playlist sidebar inset `0.75rem` from the shell content row's top and bottom in both the current production UI and Token v2; it is an independent navigation plane, not a continuation of the tabbed main-workspace baseline.
+- Treat production Queue and Token v2 playback metadata as surfaces in one `.shell__main` right Dock rather than page columns or PlayerBar popovers. Reserve its `17.5rem` desktop bay, pin the `2.5rem` collapsed rail and expanded panel to the shell's right edge with the same `0.75rem` block inset as Sidebar, and let its resize axis double-click bidirectionally between collapsed and the last expanded width. Queue may replace metadata in the foreground while retaining metadata as its fallback; closing Queue reveals that fallback, and activating the player artwork while Queue is visible cancels Queue and navigates directly to metadata. Only a Dock with no visible surface folds automatically.
 - Use the sidebar for collections and music-management context; primary section navigation (Setlist/Appearance/Lyrics/Import) lives in the top tabs above the workspace, not the sidebar.
 - Keep track rows dense, aligned, and easy to scan.
 - Playlist and album headers can show cover and metadata, but should remain operational rather than heroic.

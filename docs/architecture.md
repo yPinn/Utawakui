@@ -31,6 +31,15 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 `StudioLibraryPrototypeView.vue`）呈現；owner 檢查順序與現況見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
 
+主視窗右側 Dock 由 `App.vue` 與 `useAppRightDock.js` 共同擁有 shell geometry、
+surface stack 與 foreground navigation，不接管播放或佇列資料。Token v2 Studio
+Library metadata 可作為 retained fallback，production Queue 可顯示在前景；關閉 Queue
+會回到仍存在的 metadata，而 PlayerBar 縮圖是 direct metadata intent，Queue 在前景時會先
+取消 Queue 再顯示 metadata。`QueuePanel.vue` 與
+`StudioLibraryContextInspector.vue` 各自只呈現 feature content；queue authority 仍由
+`usePlaybackQueue.js` 持有。共用 resize width、desktop reserved bay、compact overlay、
+Escape 與 focus restoration 屬於 shell，不得回流到 PlayerBar 或 playlist component。
+
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主
 `BrowserWindow` owner。`windowCloseBehavior` 是 `ask`／`tray`／`quit` 三態 machine config，
@@ -59,6 +68,9 @@ OBS WebSocket integration 由 main-owned `obsAdapter.js` 持有。SDK 只在
 `obs-integration` 已啟用且 desired state 開啟時 lazy-load；adapter 只讀取版本、直播／錄影
 狀態與按需時間戳。連線握手與狀態請求各有期限，逾時會淘汰 transport 再以
 bounded backoff 重連；disconnect／reconfigure 會取消進行中工作，舊連線完成不能回寫新狀態。
+Transport failures 在 main 分類為 bounded public reasons：驗證失敗、連線遭拒、主機查找
+失敗、逾時、協定不相容或未知錯誤。TCP refusal 無法證明是 OBS 未啟動、WebSocket 未啟用
+或連接埠錯誤，因此 renderer 以同一個可操作提示呈現，不公開 endpoint 或底層例外文字。
 它不提供任意 OBS request 或 scene／source 寫入。Endpoint scalar 驗證後保存在 machine
 config，密碼只由 Electron `safeStorage` 加密後寫入獨立 credential file；OS 加密不可用
 時優先拒絕設定變更，Settings 另提供明確的密碼移除動作。密碼不進 config、preset、
@@ -214,10 +226,37 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記        |
 | App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection     |
 
+Lyrics、provider import、artwork discovery 與未來 artist／album organization 共用
+`electron/lib/musicIdentity/` 的 provider-neutral observations 與逐軸 evidence。這個純 domain
+不執行網路、檔案或 IPC，也不擁有 feature 總分、自動保存或 canonical artist entity；
+`musicTitle.js`／`trackIdentity.js` 保留相容 API，各 provider 與 consumer 繼續擁有自己的
+query lifecycle、候選排序與套用 policy。Comparison key、artist split hints 與
+`trackIdentityKey()` 都是可重新計算的 discovery／cache 資料，不是 persistent identity。
+Identity profiles 與 query variants 保留 alias kind／source／confidence，採原文優先、有限去重
+與硬上限，且不做 alias Cartesian product；romanization／fuzzy 必須由 consumer 明示開啟。
+Lyrics 由 `electron/lib/lyricsProviders/recordingPolicy.js` 將逐軸 evidence 映射成現有 lexical
+scale 與 band；各 provider 仍自行定義門檻、capability、request 與 persistence guard。
+Import 由 `electron/lib/importRecordingPolicy.js` 建立 observed tracks 並映射原有 field weights；
+`importResolver.js` 仍擁有 playback kind、view count、candidate order 與 download recommendation。
+Artwork discovery 由 `musicbrainz/`／`coverArtArchive/` provider adapters、
+`artwork/discoveryService.js` 的短期 opaque candidate sessions 與
+`artwork/releasePolicy.js` 的 release-level policy 組成。Main 擁有節流、快取、timeout、redirect
+allowlist、圖片 bytes／MIME／magic／尺寸／總像素驗證與 apply；Renderer 只提交 bounded search edits、
+track id 與 candidate id，且候選預覽只使用驗證後 bytes 的 `blob:`，不直接 hotlink。使用者確認後，
+library owner 才 atomic 取代 `thumbnail.<ext>` 並寫入最小 `artwork.json` provenance；自動 backfill
+不得覆寫既有封面。第一版沒有自動套用或 metadata side effect。
+完整邊界見 [Music Identity／Evidence 契約](contracts/music-identity-evidence-contract.md)。
+
 本機媒體經 `utawakui-media:` protocol 交付 renderer。Scheme 與 handler 註冊在
 `electron/main/mediaScheme.js`／`mediaProtocol.js`；`electron/lib/` 只提供其呼叫的
 path／range 工具函式。Resolver 只接受 track id 與 allowlisted asset names，並由 main
 建立正確的 HTTP range response；renderer 不接觸 absolute path。
+
+曲庫位置由 `electron/main/configState.js` 的 guarded resolver 統一驗證。預設 Music
+位置可由 main 建立；使用者選擇的自訂位置若消失、不是目錄或無法讀寫，設定仍保留且不
+改寫到 fallback，所有 library consumer 暫停讀寫並回傳 bounded unavailable error。
+`config:get` 另投影 available／reason 供 Settings 顯示復原入口；Output slots 的啟動同步與
+`utawakui-media:` request 會在各自邊界內降級，不能阻止主視窗建立或把失效位置投影成空曲庫。
 
 播放器的 renderer ownership 再分成兩層：`src/composables/usePlayer.js` 是模組單例、
 HTML audio event authority、transport actions 與既有 public composable facade；
@@ -225,7 +264,11 @@ HTML audio event authority、transport actions 與既有 public composable facad
 owner，負責四聲道 accompaniment／guide-vocal routing、monitor／capture mix、Signalsmith
 Stretch pitch processing、capture sink 與 graph cleanup。Audio graph 不註冊 media timing events，
 也不直接建立第二份 playback state；所有播放時間與 phase 仍只由 HTML audio events
-更新。
+更新。Monitor graph 採 lazy initialization，Renderer module startup 不建立 native
+`AudioContext`；已儲存的 capture device 必須先由 `useAudioOutput.js` 成功列舉並驗證，只保存為
+待啟用 intent，第一次播放才建立 capture context。裝置缺失、sink loss 或 native render error
+一律關閉 capture、清除 persisted device id 並保留 monitor playback；capture 不得 fallback 到
+系統預設喇叭。
 
 節拍器由 `useMetronome.js` 擁有 session state，並以獨立 AudioContext 與 lookahead
 scheduler 發聲，不接入 player monitor／capture graph。`useMetronomeTrackTempo.js` 是唯一
@@ -350,6 +393,11 @@ download、safe archive、manifests、provider runtime、FFmpeg、models 與 lif
 Registry-derived id、version 與 relative asset path 必須在 main 驗證後才能解析到
 `userData/dependencies`；remove 以 dependency family root 為單位清除既有版本、暫存與
 legacy model，不接受 renderer path，也不觸碰曲庫或已產生的分離結果。
+系統與 managed FFmpeg 共用 `resolveFfmpegRuntime()`；失效的 system intent 只在已驗證的
+managed executable 存在時降級，Settings status 與 processing runtime 不得各自重做來源
+判斷。Dependency HTTP transfer 使用 connect／idle deadline，PowerShell archive extraction
+另有 hard deadline；yt-dlp provider 子程序以 stdout／stderr activity 重設 idle deadline，
+失去進度時終止 child。下載 URL、實際路徑、stderr 與 cancellation token 都留在 main。
 
 ## Output Boundary
 
@@ -433,7 +481,17 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
   `verifyUpdateCodeSignature` 為 false，屬 unsigned updater runtime。Ordinary CI 使用
   官方 v0.3.0 installer，對候選版執行 same-root 覆蓋安裝、資料保留、installed startup
   與 uninstall cleanup gate；production stable-feed 應用內跨版本更新仍須等候選版
-  公開後取得實際證據。
+  公開後取得實際證據。封裝檔名依 ADR 0002 保留 `electron.exe`，Electron 43 的
+  `app.isPackaged` 因而可能為 false；只有 `detectPackagedRuntime()` 已由 exact
+  `resources/app.asar` 確認為正式 artifact、且 Electron heuristic 不一致時，composition
+  root 才為 `electron-updater` 啟用 override，並把 config path 固定到 builder-owned
+  `resources/app-update.yml`。Source／普通 development launch 不會因此接觸公開 feed。
+  每次 check 在 upstream resolve 後仍須已收到 available／not-available／error terminal
+  event；沒有事件（包含 updater inactive 回傳 `null`）一律轉為可重試 error，不能停在
+  `checking`。Installer 下載位置由 `electron-updater` 的 app cache／`pending` 目錄持有，
+  renderer 不提供目的路徑；每次下載使用 cancellation token 與 progress-reset idle deadline，
+  upstream resolve 後若未收到 `update-downloaded`／error terminal event 也一律 fail closed，
+  不能停在 `downloading`。
 - `electron/lib/updateManifestClient.js`、`updateManifestVerification.js` 與
   `tools/update-signing/` 提供 app-level signed manifest foundation。Main-private
   descriptor 將 installer basename／size／SHA-512 exact-bind 到

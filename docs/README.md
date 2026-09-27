@@ -128,6 +128,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [BPM runtime-smoke config](contracts/music-analysis-bpm-smoke-run-config-template.json)、
   [M2 quality gate](contracts/music-analysis-m2-quality-gate.md)。
 - Integrations：[adapter contract](contracts/integration-adapter-contract.md)。
+- Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。
 - Operations：[diagnostics rollout](operations/diagnostics-rollout.md)、
   [startup baseline](operations/startup-performance-baseline.md)、
@@ -138,6 +139,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [release runbook](operations/release-runbook.md)。
 - Governance：[legal compliance](governance/legal-compliance.md)。
 - Research：[競品調查（2026-09-25）](research/competitive-research.md)、
+  [線上封面來源與跨語言 identity 評估（2026-09-27）](research/online-artwork-provider-evaluation-2026-09-27.md)、
   [BPM normalization study](research/music-analysis-bpm-normalization-2026-08-28.md)、
   [Visual System Discovery](research/visual-system-discovery-2026-08-25.md)、
   [Visual Direction Options](research/visual-direction-options-2026-08-25.md)、
