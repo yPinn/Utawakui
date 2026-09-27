@@ -1,12 +1,18 @@
 'use strict';
 
+// Compatibility owner for source-specific metadata trust and search hints.
+
 const {
   extractTitleDerivedSearchParts,
   looksLikeChannelArtist,
   normalizeForCompare,
-  normalizeText,
   stripTrackDecorations,
 } = require('./musicTitle.js');
+const { normalizeText } = require('./musicIdentity/text.js');
+const {
+  firstText,
+  normalizeIsrc,
+} = require('./musicIdentity/observedTrack.js');
 
 const TRACK_PLATFORMS = new Set([
   'spotify',
@@ -18,22 +24,9 @@ const TRACK_PLATFORMS = new Set([
   'yt-music',
 ]);
 
-function firstText(values) {
-  return (Array.isArray(values) ? values : [values]).find(
-    (value) => normalizeText(value).length > 0,
-  );
-}
-
 function secondsFromDuration(value) {
   if (!Number.isFinite(value)) return undefined;
   return value > 1000 ? Math.round(value / 1000) : Math.round(value);
-}
-
-function normalizeIsrc(value) {
-  const isrc = normalizeText(value)
-    .replace(/[^A-Za-z0-9]/gu, '')
-    .toUpperCase();
-  return /^[A-Z]{2}[A-Z0-9]{3}\d{7}$/u.test(isrc) ? isrc : undefined;
 }
 
 function normalizeSourcePlatform(value) {
@@ -54,6 +47,8 @@ function normalizeSourceType(value, sourcePlatform) {
   return TRACK_PLATFORMS.has(sourcePlatform) ? 'track' : 'unknown';
 }
 
+// This produces search hints, not persistent artist entities. Separators can
+// be part of a legal group name, so callers must retain the credited string.
 function splitArtistNames(value) {
   const parts = [];
   const values = Array.isArray(value) ? value : [value];

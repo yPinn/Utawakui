@@ -78,6 +78,8 @@ describe('library metadata maintenance handlers', () => {
       notifyLibraryUpdated: vi.fn(),
       sendBackfillStatus: vi.fn(),
       featureIds: FEATURE_IDS,
+      requireFeatureGate: vi.fn(),
+      openExternal: vi.fn(),
       getProviderRunner: vi.fn(),
       lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
       listLibraryTracks: vi.fn().mockReturnValue([]),
@@ -116,6 +118,20 @@ describe('library metadata maintenance handlers', () => {
     });
     expect(listLibraryTracks).toHaveBeenCalledWith('library-dir');
     expect(runLibraryBackfill).not.toHaveBeenCalled();
+  });
+
+  it('does not project an unavailable library as an empty track list', async () => {
+    const failure = new Error('library unavailable');
+    const listLibraryTracks = vi.fn().mockReturnValue([]);
+    const handlers = registerHandlers({
+      resolveDownloadDir: () => {
+        throw failure;
+      },
+      listLibraryTracks,
+    });
+
+    await expect(handlers.get('library:list')()).rejects.toBe(failure);
+    expect(listLibraryTracks).not.toHaveBeenCalled();
   });
 
   it('records a failed background backfill server-side without pushing the raw error to the renderer', async () => {
@@ -343,6 +359,128 @@ describe('library metadata maintenance handlers', () => {
     const payload = parseAppError(error);
     expect(payload.code).toBe('LIBRARY_CLEAR_ARTWORK_FAILED');
     expect(payload.context.diagnosticRecorded).toBe(true);
+  });
+
+  it('allows a provider-backed managed track to use the local artwork picker', async () => {
+    const writeLibraryTrackArtworkFile = vi
+      .fn()
+      .mockReturnValue('thumbnail.jpg');
+    const listLibraryTracks = vi
+      .fn()
+      .mockReturnValueOnce([{ id: 'track-1', sourceType: 'provider' }])
+      .mockReturnValueOnce([
+        {
+          id: 'track-1',
+          sourceType: 'provider',
+          thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
+        },
+      ]);
+    const handlers = registerHandlers({
+      listLibraryTracks,
+      writeLibraryTrackArtworkFile,
+      dialog: {
+        showOpenDialog: vi.fn().mockResolvedValue({
+          canceled: false,
+          filePaths: ['cover.jpg'],
+        }),
+      },
+    });
+
+    await expect(
+      handlers.get('library:choose-track-artwork')(null, 'track-1'),
+    ).resolves.toMatchObject({
+      id: 'track-1',
+      thumbnailUrl: expect.any(String),
+    });
+    expect(writeLibraryTrackArtworkFile).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+      'cover.jpg',
+    );
+  });
+
+  it('rechecks the provider gate and delegates bounded artwork search to the main-owned service', async () => {
+    const requireFeatureGate = vi.fn();
+    const artworkDiscoveryService = {
+      search: vi.fn().mockResolvedValue({ status: 'ok', candidates: [] }),
+    };
+    const track = { id: 'track-1', title: 'Song', artist: 'Artist' };
+    const handlers = registerHandlers({
+      requireFeatureGate,
+      artworkDiscoveryService,
+      listLibraryTracks: vi.fn().mockReturnValue([track]),
+    });
+
+    await expect(
+      handlers.get('library:search-track-artwork')(null, 'track-1', {
+        title: 'Edited query',
+        artist: 'Artist',
+      }),
+    ).resolves.toEqual({ status: 'ok', candidates: [] });
+    expect(requireFeatureGate).toHaveBeenCalledWith(FEATURE_IDS.PROVIDER_FLOW);
+    expect(artworkDiscoveryService.search).toHaveBeenCalledWith(track, {
+      title: 'Edited query',
+      artist: 'Artist',
+    });
+  });
+
+  it('applies only an opaque candidate id, refreshes the library, and opens only the resolved MusicBrainz page', async () => {
+    const requireFeatureGate = vi.fn();
+    const notifyLibraryUpdated = vi.fn();
+    const openExternal = vi.fn().mockResolvedValue(undefined);
+    const updated = {
+      id: 'track-1',
+      thumbnailUrl: 'utawakui-media://track/track-1/thumbnail.jpg',
+    };
+    const artworkDiscoveryService = {
+      apply: vi.fn().mockResolvedValue({
+        status: 'ok',
+        filename: 'thumbnail.jpg',
+      }),
+      sourcePage: vi
+        .fn()
+        .mockReturnValue(
+          'https://musicbrainz.org/release-group/11111111-1111-4111-8111-111111111111',
+        ),
+    };
+    const listLibraryTracks = vi
+      .fn()
+      .mockReturnValueOnce([{ id: 'track-1', title: 'Song' }])
+      .mockReturnValueOnce([updated])
+      .mockReturnValueOnce([{ id: 'track-1', title: 'Song' }]);
+    const handlers = registerHandlers({
+      requireFeatureGate,
+      notifyLibraryUpdated,
+      openExternal,
+      artworkDiscoveryService,
+      listLibraryTracks,
+    });
+
+    await expect(
+      handlers.get('library:apply-track-artwork')(
+        null,
+        'track-1',
+        'candidate-1',
+      ),
+    ).resolves.toEqual({ status: 'ok', track: updated });
+    expect(artworkDiscoveryService.apply).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+      'candidate-1',
+    );
+    expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
+
+    await expect(
+      handlers.get('library:open-track-artwork-source')(
+        null,
+        'track-1',
+        'candidate-1',
+      ),
+    ).resolves.toBe(true);
+    expect(openExternal).toHaveBeenCalledWith(
+      'https://musicbrainz.org/release-group/11111111-1111-4111-8111-111111111111',
+    );
+    expect(requireFeatureGate).toHaveBeenCalledTimes(2);
   });
 });
 

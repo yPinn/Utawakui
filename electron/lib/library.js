@@ -93,6 +93,7 @@ const {
 } = require('./library/tracks');
 const {
   writeTrackArtworkFile,
+  writeTrackArtworkBuffer,
   deleteTrackArtworkFile,
 } = require('./library/trackArtwork');
 const { importLocalAudioFiles } = require('./library/importLocal');
@@ -158,6 +159,7 @@ module.exports = {
   writePlaylistCoverFile,
   writePlaylistCoverFromUrl,
   writeTrackArtworkFile,
+  writeTrackArtworkBuffer,
   resolveTrackLyricsPath,
   resolveSeparationsDir,
   resolveSeparationResultPath,

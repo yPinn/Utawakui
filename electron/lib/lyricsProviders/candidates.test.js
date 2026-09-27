@@ -281,6 +281,15 @@ describe('unified lyrics provider candidates', () => {
     expect(aggregated.candidates[0].matchBand).toBe('strong');
   });
 
+  it('preserves the legacy no-artist fallback for decoration-only metadata', () => {
+    const aggregated = aggregateLyricsProviderResults(
+      { trackName: 'Song', artistName: 'Official', duration: 180 },
+      [result('lrclib', [candidate()])],
+    );
+
+    expect(aggregated.candidates[0].matchBand).toBe('strong');
+  });
+
   it('bounds invalid counts and ignores malformed provider outcomes', () => {
     const aggregated = aggregateLyricsProviderResults(track, [
       null,

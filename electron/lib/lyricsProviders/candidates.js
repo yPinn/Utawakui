@@ -3,10 +3,10 @@
 const crypto = require('crypto');
 const { normalizeForCompare } = require('../musicTitle.js');
 const {
-  durationDelta,
-  textMatchScore,
-  versionMismatchPenalty,
-} = require('../lrclib/matching.js');
+  classifyLyricsMatch,
+  compareLyricsRecordingIdentity,
+  isAutomaticLyricsCandidate,
+} = require('./recordingPolicy.js');
 
 const BAND_ORDER = Object.freeze({ exact: 0, strong: 1, related: 2 });
 const CAPABILITY_ORDER = Object.freeze({
@@ -17,6 +17,15 @@ const CAPABILITY_ORDER = Object.freeze({
   unsupported: 5,
 });
 const MAX_INVALID_RECORD_COUNT = 1_000;
+const UNIFIED_MATCH_RULES = Object.freeze({
+  exact: {
+    title: 1,
+    artist: 1,
+    duration: 4,
+    requiresArtist: true,
+  },
+  strong: { title: 0.82, artist: 0.8, duration: 45 },
+});
 
 function trackIdentity(track) {
   return {
@@ -29,33 +38,17 @@ function trackIdentity(track) {
 
 function unifiedMatchBand(track, candidate) {
   const identity = trackIdentity(track);
-  const titleScore = textMatchScore(identity.trackName, candidate.trackName);
-  const hasArtist = normalizeForCompare(identity.artistName).length > 0;
-  const artistScore = hasArtist
-    ? textMatchScore(identity.artistName, candidate.artistName)
-    : 1;
-  const delta = durationDelta(identity.duration, candidate.duration);
-  const versionMismatch =
-    versionMismatchPenalty(identity.trackName, candidate) > 0;
-
-  if (
-    titleScore === 1 &&
-    hasArtist &&
-    artistScore === 1 &&
-    (delta === null || delta <= 4) &&
-    !versionMismatch
-  ) {
-    return 'exact';
-  }
-  if (
-    titleScore >= 0.82 &&
-    artistScore >= 0.8 &&
-    (delta === null || delta <= 45) &&
-    !versionMismatch
-  ) {
-    return 'strong';
-  }
-  return 'related';
+  const evidence = compareLyricsRecordingIdentity(identity, candidate);
+  return classifyLyricsMatch(
+    {
+      ...evidence,
+      scores: {
+        ...evidence.scores,
+        artist: evidence.hasArtist ? evidence.scores.artist : 1,
+      },
+    },
+    UNIFIED_MATCH_RULES,
+  );
 }
 
 function capabilityOrder(candidate) {
@@ -83,15 +76,6 @@ function compareUnifiedLyricsCandidates(first, second) {
   );
 }
 
-function isAutomaticLyricsCandidate(candidate) {
-  return (
-    candidate?.matchBand === 'exact' &&
-    candidate?.instrumental !== true &&
-    (candidate?.compatibility?.t2 === true ||
-      candidate?.compatibility?.t1 === true)
-  );
-}
-
 function selectAutomaticLyricsCandidate(candidates) {
   return (
     (Array.isArray(candidates) ? candidates : [])
@@ -101,20 +85,14 @@ function selectAutomaticLyricsCandidate(candidates) {
 }
 
 function sameRecording(first, second) {
-  if (
-    normalizeForCompare(first.trackName) !==
-    normalizeForCompare(second.trackName)
-  ) {
+  const evidence = compareLyricsRecordingIdentity(first, second);
+  const reverseEvidence = compareLyricsRecordingIdentity(second, first);
+  if (!evidence.title.exact) return false;
+  if (evidence.scores.artist < 0.82) return false;
+  if (evidence.versionMismatch || reverseEvidence.versionMismatch) {
     return false;
   }
-  if (textMatchScore(first.artistName, second.artistName) < 0.82) return false;
-  if (
-    versionMismatchPenalty(first.trackName, second) > 0 ||
-    versionMismatchPenalty(second.trackName, first) > 0
-  ) {
-    return false;
-  }
-  const delta = durationDelta(first.duration, second.duration);
+  const delta = evidence.duration.delta;
   return delta === null || delta <= 4;
 }
 

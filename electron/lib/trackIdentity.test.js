@@ -193,4 +193,17 @@ describe('track identity helpers', () => {
       'espresso|sabrina carpenter|175|USUM72401994',
     );
   });
+
+  it('characterizes split artist names as hints rather than stable entities', () => {
+    const identity = buildTrackIdentity({
+      title: 'Song',
+      artist: 'AC/DC',
+      platform: 'spotify',
+    });
+
+    expect(identity).toMatchObject({
+      artists: ['AC', 'DC'],
+      artist: 'AC, DC',
+    });
+  });
 });

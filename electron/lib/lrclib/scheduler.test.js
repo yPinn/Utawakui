@@ -25,6 +25,26 @@ describe('createLrclibRequestScheduler', () => {
     expect(waitCalls).toEqual([250, 250]);
   });
 
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, '500'])(
+    'preserves the legacy 250ms fallback for invalid interval %p',
+    async (intervalMs) => {
+      let currentTime = 0;
+      const wait = vi.fn(async (delayMs) => {
+        currentTime += delayMs;
+      });
+      const scheduler = createLrclibRequestScheduler({
+        intervalMs,
+        now: () => currentTime,
+        wait,
+      });
+
+      await scheduler.schedule(async () => undefined);
+      await scheduler.schedule(async () => undefined);
+
+      expect(wait).toHaveBeenCalledWith(250);
+    },
+  );
+
   it('holds the shared queue until a provider retry window expires', async () => {
     let currentTime = 100;
     const wait = vi.fn(async (delayMs) => {

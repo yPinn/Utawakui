@@ -1,5 +1,10 @@
 'use strict';
 
+const {
+  normalizeForCompare: normalizeLexicalKey,
+  normalizeText,
+} = require('./musicIdentity/text.js');
+
 const DECORATION_WORD_PATTERN = String.raw`official|music\s+video|mv|lyrics?|audio|visualizer|official\s+audio|official\s+lyrics?`;
 const COMPARE_DECORATION_WORD_PATTERN = String.raw`official|music|video|mv|lyrics?|audio|visualizer|live|session`;
 const CHANNEL_ARTIST_PATTERN = [
@@ -31,22 +36,14 @@ const TITLE_BRACKET_PAIRS = [
   ['\\u300c', '\\u300d'],
 ];
 
-function normalizeText(value) {
-  return typeof value === 'string' ? value.trim() : '';
-}
-
 function normalizeForCompare(value) {
-  return normalizeText(value)
+  const withoutDecorations = normalizeText(value)
     .normalize('NFKC')
     .replace(
       new RegExp(String.raw`\b(${COMPARE_DECORATION_WORD_PATTERN})\b`, 'giu'),
       ' ',
-    )
-    .replace(/[()[\]{}|/\\]+/gu, ' ')
-    .replace(/[^\p{Letter}\p{Number}\s]+/gu, ' ')
-    .replace(/\s+/g, ' ')
-    .trim()
-    .toLocaleLowerCase();
+    );
+  return normalizeLexicalKey(withoutDecorations);
 }
 
 function stripTrackDecorations(value) {

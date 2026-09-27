@@ -4,10 +4,13 @@ const { parseLrcLines } = require('./lrc.js');
 const { parseLyricsfile } = require('./lyricsfile.js');
 const { fingerprintLrclibRecord } = require('./record.js');
 const {
+  classifyLyricsMatch,
+  compareLyricsRecordingIdentity,
+} = require('../lyricsProviders/recordingPolicy.js');
+const {
   durationDelta,
   signedDurationDelta,
   textMatchScore,
-  versionMismatchPenalty,
 } = require('./matching.js');
 
 const BAND_ORDER = Object.freeze({ exact: 0, strong: 1, related: 2 });
@@ -23,6 +26,10 @@ const PREVIEW_LINE_TEXT_LIMIT = 240;
 const PREVIEW_TOTAL_TEXT_LIMIT = 800;
 const PROVIDER_DURATION_CONFLICT_TOLERANCE_SECONDS = 15;
 const LANGUAGE_TAG_RE = /^[A-Za-z]{2,8}(?:-[A-Za-z0-9]{1,8})*$/;
+const LRCLIB_MATCH_RULES = Object.freeze({
+  exact: { title: 1, artist: 1, duration: 4 },
+  strong: { title: 1, artist: 0.8, duration: 45 },
+});
 
 function boundedSummaryText(value, maxLength) {
   if (typeof value !== 'string') return value;
@@ -213,29 +220,33 @@ function buildMatchReasons(identity, record, scores) {
 }
 
 function evaluateLrclibCandidate(identity, record) {
-  const titleScore = titleMatchScore(identity, record);
-  const artistScore = textMatchScore(identity.artistName, record.artistName);
-  const albumScore = textMatchScore(identity.albumName, record.albumName);
+  const recordingEvidence = compareLyricsRecordingIdentity(identity, record);
+  const titleScore = Math.max(
+    recordingEvidence.scores.title,
+    titleMatchScore(identity, record),
+  );
+  const artistScore = recordingEvidence.scores.artist;
+  const albumScore = recordingEvidence.scores.album;
   const analysis = analyzeLrclibRecord(record);
   const duration = durationEvidence(identity, record, analysis.timingEnd);
   const delta = duration.providerDelta;
-  const versionMismatch =
-    versionMismatchPenalty(identity.trackName, record) > 0;
-  const exactDuration =
-    duration.effectiveDurationDelta === null ||
-    duration.effectiveDurationDelta <= 4;
-  const strongDuration =
-    duration.effectiveDurationDelta === null ||
-    duration.effectiveDurationDelta <= 45;
-  const band =
-    titleScore === 1 && artistScore === 1 && exactDuration && !versionMismatch
-      ? 'exact'
-      : titleScore === 1 &&
-          artistScore >= 0.8 &&
-          strongDuration &&
-          !versionMismatch
-        ? 'strong'
-        : 'related';
+  const versionMismatch = recordingEvidence.versionMismatch;
+  const band = classifyLyricsMatch(
+    {
+      ...recordingEvidence,
+      scores: {
+        ...recordingEvidence.scores,
+        title: titleScore,
+        artist: artistScore,
+        album: albumScore,
+      },
+      duration: {
+        ...recordingEvidence.duration,
+        delta: duration.effectiveDurationDelta,
+      },
+    },
+    LRCLIB_MATCH_RULES,
+  );
   const warnings = [
     ...analysis.warnings,
     ...(duration.providerDurationInconsistent

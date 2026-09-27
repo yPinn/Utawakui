@@ -546,6 +546,25 @@ describe('finalizeDownloadedTrackFiles', () => {
     });
   });
 
+  it('preserves confirmed artwork when a backfill thumbnail finishes later', () => {
+    fs.writeFileSync(path.join(dir, 'audio.mp3'), 'audio');
+    fs.writeFileSync(path.join(dir, 'audio.webp'), 'automatic-image');
+    fs.writeFileSync(path.join(dir, 'thumbnail.jpg'), 'confirmed-image');
+    fs.writeFileSync(
+      path.join(dir, 'artwork.json'),
+      JSON.stringify({ source: 'cover-art-archive' }),
+    );
+
+    expect(finalizeDownloadedTrackFiles(dir)).toMatchObject({
+      thumbnailFilename: 'thumbnail.jpg',
+    });
+    expect(fs.readFileSync(path.join(dir, 'thumbnail.jpg'), 'utf8')).toBe(
+      'confirmed-image',
+    );
+    expect(fs.existsSync(path.join(dir, 'audio.webp'))).toBe(false);
+    expect(fs.existsSync(path.join(dir, 'artwork.json'))).toBe(true);
+  });
+
   it('normalizes yt-dlp VTT subtitles and records lyrics as checked', () => {
     fs.writeFileSync(path.join(dir, 'audio.mp3'), 'audio');
     fs.writeFileSync(path.join(dir, 'audio.ja.vtt'), 'WEBVTT');

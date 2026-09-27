@@ -1,6 +1,14 @@
 'use strict';
 
-const { normalizeForCompare, normalizeText } = require('../musicTitle.js');
+const {
+  durationDelta,
+  signedDurationDelta,
+} = require('../musicIdentity/recordingEvidence.js');
+const {
+  compareLyricsRecordingIdentity,
+  lyricsTextMatchScore,
+} = require('../lyricsProviders/recordingPolicy.js');
+const { normalizeText } = require('../musicIdentity/text.js');
 const { parseLrcLines } = require('./lrc.js');
 const {
   artistConfidenceFor,
@@ -10,47 +18,16 @@ const {
 
 const AUTO_CONFIDENCE_THRESHOLD = 0.82;
 const VERSION_MISMATCH_PENALTY = 0.18;
-const VERSION_WORD_PATTERN = String.raw`\b(?:live|remix|acoustic|cover|karaoke|instrumental|sped|slowed|demo|edit|version|session|first\s+take)\b`;
-
-function tokenSet(value) {
-  return new Set(normalizeForCompare(value).split(/\s+/u).filter(Boolean));
-}
-
-function tokenOverlap(first, second) {
-  const firstTokens = tokenSet(first);
-  const secondTokens = tokenSet(second);
-  if (firstTokens.size === 0 || secondTokens.size === 0) return 0;
-  let overlap = 0;
-  for (const token of firstTokens) {
-    if (secondTokens.has(token)) overlap += 1;
-  }
-  return overlap / Math.max(firstTokens.size, secondTokens.size);
-}
 
 function textMatchScore(expected, actual) {
-  const expectedText = normalizeForCompare(expected);
-  const actualText = normalizeForCompare(actual);
-  if (!expectedText || !actualText) return 0;
-  if (expectedText === actualText) return 1;
-  if (expectedText.includes(actualText) || actualText.includes(expectedText)) {
-    return 0.82;
-  }
-  const overlap = tokenOverlap(expectedText, actualText);
-  return overlap >= 0.75 ? overlap : 0;
+  return lyricsTextMatchScore(expected, actual);
 }
 
-function durationDelta(trackDuration, candidateDuration) {
-  if (!Number.isFinite(trackDuration) || !Number.isFinite(candidateDuration)) {
-    return null;
-  }
-  return Math.abs(Math.round(trackDuration) - Math.round(candidateDuration));
-}
-
-function signedDurationDelta(trackDuration, candidateDuration) {
-  if (!Number.isFinite(trackDuration) || !Number.isFinite(candidateDuration)) {
-    return null;
-  }
-  return Math.round(candidateDuration) - Math.round(trackDuration);
+function versionMismatchPenalty(trackTitle, candidate) {
+  return compareLyricsRecordingIdentity({ title: trackTitle }, candidate)
+    .versionMismatch
+    ? VERSION_MISMATCH_PENALTY
+    : 0;
 }
 
 function durationMatchScore(delta) {
@@ -59,27 +36,6 @@ function durationMatchScore(delta) {
   if (delta <= 15) return 0.85;
   if (delta <= 45) return 0.55;
   if (delta <= 90) return 0.25;
-  return 0;
-}
-
-function versionTerms(value) {
-  const normalized = normalizeText(value).normalize('NFKC');
-  return new Set(
-    [...normalized.matchAll(new RegExp(VERSION_WORD_PATTERN, 'giu'))].map(
-      (match) => match[0].toLocaleLowerCase(),
-    ),
-  );
-}
-
-function versionMismatchPenalty(trackTitle, candidate) {
-  const sourceTerms = versionTerms(trackTitle);
-  const candidateTerms = new Set([
-    ...versionTerms(candidate?.trackName),
-    ...versionTerms(candidate?.albumName),
-  ]);
-  for (const term of candidateTerms) {
-    if (!sourceTerms.has(term)) return VERSION_MISMATCH_PENALTY;
-  }
   return 0;
 }
 

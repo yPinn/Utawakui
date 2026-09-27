@@ -227,18 +227,22 @@ function finalizeDownloadedTrackFiles(trackDir, { resetLyrics = false } = {}) {
   }
 
   let thumbnailFilename;
+  const existingThumbnail = filenames.find(isArtworkFilename);
   const thumbnailSource = filenames.find((name) => {
     const ext = path.extname(name);
     return name === `audio${ext}` && isArtworkFilename(`thumbnail${ext}`);
   });
-  if (thumbnailSource) {
+  if (existingThumbnail) {
+    thumbnailFilename = existingThumbnail;
+    if (thumbnailSource) {
+      fs.rmSync(path.join(trackDir, thumbnailSource), { force: true });
+    }
+  } else if (thumbnailSource) {
     thumbnailFilename = `thumbnail${path.extname(thumbnailSource).toLowerCase()}`;
     replaceFile(
       path.join(trackDir, thumbnailSource),
       path.join(trackDir, thumbnailFilename),
     );
-  } else {
-    thumbnailFilename = filenames.find(isArtworkFilename);
   }
 
   if (resetLyrics) clearExistingLyrics(trackDir);

@@ -2,13 +2,12 @@
 
 const {
   extractTitleDerivedSearchParts,
-  normalizeForCompare,
   normalizeText,
   OFFICIAL_MV_TITLE_RE,
   stripTrackDecorations,
 } = require('./musicTitle.js');
+const { scoreImportRecording } = require('./importRecordingPolicy.js');
 const { buildTrackIdentity } = require('./trackIdentity.js');
-const { durationDelta } = require('./lrclib.js');
 
 // Prioritizes audio-native sources over MVs for lyrics reliability. A
 // `yt-music-song` is evidence from YT Music's explicit Songs search section;
@@ -35,14 +34,6 @@ const MAX_VISIBLE_CANDIDATES = 12;
 const MAX_VIEW_COUNT_SCORE = 6;
 const VIEW_COUNT_SCORE_FLOOR = 10_000;
 
-function durationScore(delta) {
-  if (delta === null) return 0;
-  if (delta <= 4) return 14;
-  if (delta <= 15) return 10;
-  if (delta <= 45) return 4;
-  return -18;
-}
-
 function confidenceForScore(score) {
   return score >= 90 ? 'high' : score >= 62 ? 'medium' : 'low';
 }
@@ -55,15 +46,6 @@ function viewCountScore(viewCount) {
     MAX_VIEW_COUNT_SCORE,
     Math.max(1, Math.floor(Math.log10(viewCount)) - 3),
   );
-}
-
-function textScore(expected, actual) {
-  const left = normalizeForCompare(expected);
-  const right = normalizeForCompare(actual);
-  if (!left || !right) return 0;
-  if (left === right) return 14;
-  if (left.includes(right) || right.includes(left)) return 8;
-  return 0;
 }
 
 function isYoutubeMusicInput(input) {
@@ -232,12 +214,20 @@ function buildCandidate(candidate, context) {
     classifyPlaybackKind(candidate, context.input);
   const title = normalizeText(candidate.title) || context.canonicalTitle;
   const artist = normalizeText(candidate.artist) || context.canonicalArtist;
-  const delta = durationDelta(context.canonicalDuration, candidate.duration);
+  const recording = scoreImportRecording(context.canonicalRecording, {
+    title,
+    artist,
+    duration: candidate.duration,
+    sourceProvider: candidate.searchProvider,
+    sourceType: playbackKind,
+    sourceId: playbackVideoId,
+  });
+  const delta = recording.durationDelta;
   const score =
     (AUDIO_KIND_SCORES[playbackKind] ?? AUDIO_KIND_SCORES['youtube-other']) +
-    textScore(context.canonicalTitle, title) +
-    textScore(context.canonicalArtist, artist) +
-    durationScore(delta) +
+    recording.titleScore +
+    recording.artistScore +
+    recording.durationScore +
     viewCountScore(candidate.viewCount) +
     (candidate.isSource ? 0 : 5);
 
@@ -289,7 +279,7 @@ async function resolveYoutubeSearchQuery(query, options) {
     sourceVideoId: null,
     canonicalTitle: canonical.title,
     canonicalArtist: '',
-    canonicalDuration: undefined,
+    canonicalRecording: canonical,
     existingIds,
   };
   const rankedCandidates = playbackCandidates
@@ -341,7 +331,7 @@ function buildImportResolution({
     sourceVideoId,
     canonicalTitle: canonical.title,
     canonicalArtist: canonical.artist,
-    canonicalDuration: canonical.duration,
+    canonicalRecording: canonical,
     existingIds: normalizedExistingIds,
   };
   const sourceCandidate = buildCandidate(

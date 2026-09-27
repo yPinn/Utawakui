@@ -60,6 +60,7 @@ const FUNCTION_EXPORTS = [
   'resolvePlaylistCoverPath',
   'writePlaylistCoverFile',
   'writePlaylistCoverFromUrl',
+  'writeTrackArtworkBuffer',
   'writeTrackArtworkFile',
   'resolveTrackLyricsPath',
   'resolveSeparationsDir',
@@ -95,7 +96,7 @@ const CONSTANT_EXPORTS = [
 ];
 
 describe('library.js barrel', () => {
-  it('re-exports exactly the 72 names its consumers expect', () => {
+  it('re-exports exactly the 73 names its consumers expect', () => {
     const expected = [...FUNCTION_EXPORTS, ...CONSTANT_EXPORTS].sort();
     expect(exportedNames.sort()).toEqual(expected);
   });

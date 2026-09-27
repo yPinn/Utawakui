@@ -1,19 +1,19 @@
 'use strict';
 
 const crypto = require('crypto');
-const OpenCCSimplified = require('opencc-js/t2cn');
-const OpenCCTraditional = require('opencc-js/cn2t');
 const {
-  durationDelta,
-  signedDurationDelta,
-  textMatchScore,
-  versionMismatchPenalty,
-} = require('../lrclib/matching.js');
+  classifyLyricsMatch,
+  compareLyricsRecordingIdentity,
+  lyricsTextMatchScore,
+} = require('../lyricsProviders/recordingPolicy.js');
 const { parseLrcLines } = require('../lrclib/lrc.js');
+const { chineseScriptForms } = require('../musicIdentity/queryVariants.js');
 const { analyzeNeteaseLyrics } = require('./yrc.js');
 
-const toSimplified = OpenCCSimplified.Converter({ from: 'tw', to: 'cn' });
-const toTraditional = OpenCCTraditional.Converter({ from: 'cn', to: 'tw' });
+const NETEASE_MATCH_RULES = Object.freeze({
+  exact: { title: 1, artist: 1, album: 1, duration: 4 },
+  strong: { title: 0.82, artist: 0.8, duration: 15 },
+});
 
 function stableRecord(record) {
   return {
@@ -40,11 +40,13 @@ function fingerprintNeteaseRecord(record) {
 function bestTextScore(expected, values) {
   return Math.max(
     0,
-    ...values.flatMap((value) => [
-      textMatchScore(expected, value),
-      textMatchScore(toSimplified(expected), toSimplified(value)),
-      textMatchScore(toTraditional(expected), toTraditional(value)),
-    ]),
+    ...values.flatMap((value) => {
+      const expectedForms = chineseScriptForms(expected);
+      const valueForms = chineseScriptForms(value);
+      return ['original', 'simplified', 'traditional'].map((form) =>
+        lyricsTextMatchScore(expectedForms[form], valueForms[form]),
+      );
+    }),
   );
 }
 
@@ -52,7 +54,6 @@ function evaluateNeteaseMetadata(track, record) {
   const expectedTitle = track?.title ?? track?.trackName;
   const expectedArtist = track?.artist ?? track?.artistName;
   const expectedAlbum = track?.album ?? track?.albumName;
-  const expectedDuration = track?.duration;
   const titleScore = bestTextScore(expectedTitle, [
     record.trackName,
     ...record.aliases,
@@ -60,29 +61,29 @@ function evaluateNeteaseMetadata(track, record) {
   ]);
   const artistScore = bestTextScore(expectedArtist, record.artists);
   const albumScore = expectedAlbum
-    ? textMatchScore(expectedAlbum, record.albumName)
+    ? lyricsTextMatchScore(expectedAlbum, record.albumName)
     : 1;
-  const delta = durationDelta(expectedDuration, record.duration);
-  const versionPenalty = versionMismatchPenalty(expectedTitle, record);
+  const recordingEvidence = compareLyricsRecordingIdentity(track, record);
+  const delta = recordingEvidence.duration.delta;
   if (
     titleScore < 0.75 ||
     artistScore < 0.35 ||
     (delta !== null && delta > 90) ||
-    versionPenalty > 0
+    recordingEvidence.versionMismatch
   ) {
     return null;
   }
-  const matchBand =
-    titleScore === 1 &&
-    artistScore === 1 &&
-    albumScore === 1 &&
-    (delta === null || delta <= 4)
-      ? 'exact'
-      : titleScore >= 0.82 &&
-          artistScore >= 0.8 &&
-          (delta === null || delta <= 15)
-        ? 'strong'
-        : 'related';
+  const matchBand = classifyLyricsMatch(
+    {
+      ...recordingEvidence,
+      scores: {
+        title: titleScore,
+        artist: artistScore,
+        album: albumScore,
+      },
+    },
+    NETEASE_MATCH_RULES,
+  );
   const score =
     titleScore * 0.55 +
     artistScore * 0.2 +
@@ -93,7 +94,7 @@ function evaluateNeteaseMetadata(track, record) {
     matchBand,
     score,
     durationDelta: delta,
-    durationDeltaSigned: signedDurationDelta(expectedDuration, record.duration),
+    durationDeltaSigned: recordingEvidence.duration.signedDelta,
     titleScore,
     artistScore,
   };

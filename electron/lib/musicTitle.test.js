@@ -17,6 +17,10 @@ describe('normalizeForCompare', () => {
       'espresso',
     );
   });
+
+  it('characterizes live and session as lexical decorations, not identity proof', () => {
+    expect(normalizeForCompare('Song (Live Session)')).toBe('song');
+  });
 });
 
 describe('stripTrackDecorations', () => {

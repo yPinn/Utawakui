@@ -27,6 +27,7 @@ const DUPLICATES_DIRNAME = '.duplicates';
 const LEGACY_SEPARATED_DIRNAME = '.separated';
 const STRUCTURED_AUDIO_BASENAME = 'audio';
 const ARTWORK_BASENAME = 'thumbnail';
+const ARTWORK_PROVENANCE_FILENAME = 'artwork.json';
 // User-chosen playlist/album cover images. Lives at the download-dir root
 // (sibling of tracks/), not inside tracks/<id>/, since a cover belongs to a
 // playlist id, not a track id.
@@ -67,6 +68,7 @@ module.exports = {
   LEGACY_SEPARATED_DIRNAME,
   STRUCTURED_AUDIO_BASENAME,
   ARTWORK_BASENAME,
+  ARTWORK_PROVENANCE_FILENAME,
   PLAYLIST_COVERS_DIRNAME,
   PLAYLIST_COVER_BASENAME,
   LYRICS_DIRNAME,

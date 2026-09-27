@@ -2,14 +2,28 @@
 
 const crypto = require('crypto');
 const {
-  durationDelta,
-  signedDurationDelta,
-  textMatchScore,
-  versionMismatchPenalty,
-} = require('../lrclib/matching.js');
+  classifyLyricsMatch,
+  compareLyricsRecordingIdentity,
+  lyricsTextMatchScore,
+} = require('../lyricsProviders/recordingPolicy.js');
 const { analyzeAmllTtml } = require('../amll/ttml.js');
 
 const MINIMUM_MATCH_SCORE = 80;
+const BETTER_LYRICS_MATCH_RULES = Object.freeze({
+  exact: {
+    title: 1,
+    artist: 1,
+    album: 1,
+    duration: 4,
+    durationRequired: true,
+  },
+  strong: {
+    title: 0.82,
+    artist: 0.8,
+    duration: 4,
+    durationRequired: true,
+  },
+});
 
 function stableRecord(record) {
   return {
@@ -36,25 +50,26 @@ function evaluateBetterLyricsCandidate(track, record) {
   ) {
     return null;
   }
-  const titleScore = textMatchScore(
+  const titleScore = lyricsTextMatchScore(
     track?.title ?? track?.trackName ?? '',
     record.trackName,
   );
-  const artistScore = textMatchScore(
+  const artistScore = lyricsTextMatchScore(
     track?.artist ?? track?.artistName ?? '',
     record.artistName,
   );
   const albumScore =
     (track?.album ?? track?.albumName)
-      ? textMatchScore(track.album ?? track.albumName, record.albumName)
+      ? lyricsTextMatchScore(track.album ?? track.albumName, record.albumName)
       : 1;
-  const delta = durationDelta(track?.duration, record.duration);
+  const recordingEvidence = compareLyricsRecordingIdentity(track, record);
+  const delta = recordingEvidence.duration.delta;
   if (
     titleScore < 0.82 ||
     artistScore < 0.8 ||
     delta === null ||
     delta > 4 ||
-    versionMismatchPenalty(track?.title ?? track?.trackName ?? '', record) > 0
+    recordingEvidence.versionMismatch
   ) {
     return null;
   }
@@ -63,12 +78,19 @@ function evaluateBetterLyricsCandidate(track, record) {
   return {
     record,
     analysis,
-    matchBand:
-      titleScore === 1 && artistScore === 1 && albumScore === 1
-        ? 'exact'
-        : 'strong',
+    matchBand: classifyLyricsMatch(
+      {
+        ...recordingEvidence,
+        scores: {
+          title: titleScore,
+          artist: artistScore,
+          album: albumScore,
+        },
+      },
+      BETTER_LYRICS_MATCH_RULES,
+    ),
     durationDelta: delta,
-    durationDeltaSigned: signedDurationDelta(track?.duration, record.duration),
+    durationDeltaSigned: recordingEvidence.duration.signedDelta,
   };
 }
 

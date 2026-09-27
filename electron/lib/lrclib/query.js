@@ -9,12 +9,12 @@ const {
   stripTrackDecorations,
 } = require('../musicTitle.js');
 const { buildLyricsMetadataProfiles } = require('../metadataEnrichment.js');
+const {
+  crossScriptTitleVariants: buildCrossScriptTitleVariants,
+} = require('../musicIdentity/queryVariants.js');
 const { LRCLIB_API_BASE_URL } = require('./client.js');
 
 const MAX_SEARCH_QUERIES = 6;
-const EAST_ASIAN_SCRIPT_RE =
-  /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
-const LATIN_SCRIPT_RE = /\p{Script=Latin}/u;
 
 function buildLrclibUrl(endpoint, params, baseUrl = LRCLIB_API_BASE_URL) {
   const url = new URL(`${String(baseUrl).replace(/\/+$/u, '')}${endpoint}`);
@@ -125,48 +125,16 @@ function validProviderDuration(value) {
   return Number.isFinite(value) && value >= 1 && value <= 3600;
 }
 
-function hasCrossScriptIdentity(first, second) {
-  const firstHasEastAsian = EAST_ASIAN_SCRIPT_RE.test(first);
-  const secondHasEastAsian = EAST_ASIAN_SCRIPT_RE.test(second);
-  const firstHasLatin = LATIN_SCRIPT_RE.test(first);
-  const secondHasLatin = LATIN_SCRIPT_RE.test(second);
-  return (
-    (firstHasEastAsian && secondHasLatin && !secondHasEastAsian) ||
-    (secondHasEastAsian && firstHasLatin && !firstHasEastAsian)
-  );
+function crossScriptTitleVariants(value) {
+  return buildCrossScriptTitleVariants(value).map((variant) => variant.value);
 }
 
 function addUniqueText(values, value) {
   const text = normalizeText(value);
   const key = normalizeForCompare(text);
-  if (
-    !key ||
-    values.some((existing) => normalizeForCompare(existing) === key)
-  ) {
+  if (!key || values.some((existing) => normalizeForCompare(existing) === key))
     return;
-  }
   values.push(text);
-}
-
-function crossScriptTitleVariants(value) {
-  const title = normalizeText(value);
-  const variants = [];
-  const dashMatch = /^(.+?)\s[-\u2013\u2014]\s(.+)$/u.exec(title);
-  if (dashMatch && hasCrossScriptIdentity(dashMatch[1], dashMatch[2])) {
-    addUniqueText(variants, dashMatch[1]);
-    addUniqueText(variants, dashMatch[2]);
-  }
-
-  const parentheticalMatch =
-    /^(.+?)\s*[(\uFF08]([^()\uFF08\uFF09]+)[)\uFF09]\s*$/u.exec(title);
-  if (
-    parentheticalMatch &&
-    hasCrossScriptIdentity(parentheticalMatch[1], parentheticalMatch[2])
-  ) {
-    addUniqueText(variants, parentheticalMatch[1]);
-    addUniqueText(variants, parentheticalMatch[2]);
-  }
-  return variants;
 }
 
 function pushStructuredQuery(queries, trackName, artistName) {

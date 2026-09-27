@@ -17,7 +17,23 @@ const {
 } = require('../lib/library');
 const { removeTrackFromAllPlaylists } = require('../lib/playlists');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
+const {
+  createArtworkDiscoveryService,
+} = require('../lib/artwork/discoveryService');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+
+function isMusicBrainzSourcePage(value) {
+  try {
+    const url = new URL(value);
+    return (
+      url.protocol === 'https:' &&
+      url.hostname === 'musicbrainz.org' &&
+      /^\/(?:recording|release-group|release)\/[0-9a-f-]+$/iu.test(url.pathname)
+    );
+  } catch {
+    return false;
+  }
+}
 
 async function backfillTrackInfoWithLyricsFallback(
   videoId,
@@ -66,6 +82,8 @@ function registerLibraryHandlers({
   notifyLibraryUpdated,
   sendBackfillStatus,
   featureIds,
+  requireFeatureGate = () => {},
+  openExternal = async () => {},
   getProviderRunner,
   lyricsAcquisitionService,
   listLibraryTracks = listTracks,
@@ -78,6 +96,7 @@ function registerLibraryHandlers({
   updateLibraryTrackMetadata = updateTrackMetadata,
   writeLibraryTrackArtworkFile = writeTrackArtworkFile,
   deleteLibraryTrackArtworkFile = deleteTrackArtworkFile,
+  artworkDiscoveryService = createArtworkDiscoveryService(),
   enqueueMusicAnalysis = () => false,
   recordDiagnostic,
 }) {
@@ -274,7 +293,7 @@ function registerLibraryHandlers({
     const track = listLibraryTracks(dir).find(
       (candidate) => candidate.id === trackId,
     );
-    if (!track || track.sourceType !== 'local-file') return track ?? null;
+    if (!track) return null;
 
     const result = await dialog.showOpenDialog(getMainWindow(), {
       properties: ['openFile'],
@@ -318,7 +337,7 @@ function registerLibraryHandlers({
     const track = listLibraryTracks(dir).find(
       (candidate) => candidate.id === trackId,
     );
-    if (!track || track.sourceType !== 'local-file') return track ?? null;
+    if (!track) return null;
 
     const deleted = await runDiagnosticIpcOperation(
       {
@@ -343,10 +362,138 @@ function registerLibraryHandlers({
     if (deleted) notifyLibraryUpdated();
     return updated || track;
   });
+
+  ipcMain.handle(
+    'library:search-track-artwork',
+    async (event, trackId, edits = {}) => {
+      requireFeatureGate(featureIds.PROVIDER_FLOW);
+      const dir = resolveDownloadDir(getConfig());
+      const track = listLibraryTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      if (!track) return { status: 'error', reason: 'track-unavailable' };
+      return runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'artwork',
+            operation: 'search',
+            code: 'ARTWORK_SEARCH_FAILED',
+          },
+          publicError: {
+            code: 'ARTWORK_SEARCH_FAILED',
+            title: '無法搜尋線上封面',
+            message: '目前無法搜尋線上封面，請稍後再試。',
+            context: { retryable: true },
+          },
+        },
+        () => artworkDiscoveryService.search(track, edits),
+      );
+    },
+  );
+
+  ipcMain.handle(
+    'library:load-track-artwork-preview',
+    async (event, trackId, candidateId) => {
+      requireFeatureGate(featureIds.PROVIDER_FLOW);
+      const dir = resolveDownloadDir(getConfig());
+      const track = listLibraryTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      if (!track) return { status: 'error', reason: 'track-unavailable' };
+      return runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'artwork',
+            operation: 'load-preview',
+            code: 'ARTWORK_PREVIEW_FAILED',
+          },
+          publicError: {
+            code: 'ARTWORK_PREVIEW_FAILED',
+            title: '封面預覽無法載入',
+            message: '封面預覽無法載入，請再試一次。',
+            context: { retryable: true },
+          },
+        },
+        () => artworkDiscoveryService.loadPreview(trackId, candidateId),
+      );
+    },
+  );
+
+  ipcMain.handle(
+    'library:apply-track-artwork',
+    async (event, trackId, candidateId) => {
+      requireFeatureGate(featureIds.PROVIDER_FLOW);
+      const dir = resolveDownloadDir(getConfig());
+      const track = listLibraryTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      if (!track) return { status: 'error', reason: 'track-unavailable' };
+      const result = await runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'artwork',
+            operation: 'apply',
+            code: 'ARTWORK_APPLY_FAILED',
+          },
+          publicError: {
+            code: 'ARTWORK_APPLY_FAILED',
+            title: '封面無法更新',
+            message: '線上封面未套用，請再試一次。',
+            context: { retryable: true },
+          },
+        },
+        () => artworkDiscoveryService.apply(dir, trackId, candidateId),
+      );
+      if (result.status !== 'ok') return result;
+      const updated = listLibraryTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      notifyLibraryUpdated();
+      return { status: 'ok', track: updated || track };
+    },
+  );
+
+  ipcMain.handle(
+    'library:open-track-artwork-source',
+    async (event, trackId, candidateId) => {
+      requireFeatureGate(featureIds.PROVIDER_FLOW);
+      const dir = resolveDownloadDir(getConfig());
+      const track = listLibraryTracks(dir).find(
+        (candidate) => candidate.id === trackId,
+      );
+      if (!track) return false;
+      const sourcePage = artworkDiscoveryService.sourcePage(
+        trackId,
+        candidateId,
+      );
+      if (!isMusicBrainzSourcePage(sourcePage)) return false;
+      await runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'artwork',
+            operation: 'open-source',
+            code: 'ARTWORK_SOURCE_OPEN_FAILED',
+          },
+          publicError: {
+            code: 'ARTWORK_SOURCE_OPEN_FAILED',
+            title: '無法開啟 MusicBrainz',
+            message: '目前無法開啟來源頁面，請稍後再試。',
+          },
+        },
+        () => openExternal(sourcePage),
+      );
+      return true;
+    },
+  );
 }
 
 module.exports = {
   registerLibraryHandlers,
   backfillTrackInfoWithLyricsFallback,
   createProviderBackfillTrackInfo,
+  isMusicBrainzSourcePage,
 };

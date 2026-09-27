@@ -398,6 +398,22 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('library:choose-track-artwork', trackId),
   clearTrackArtwork: (trackId) =>
     ipcRenderer.invoke('library:clear-track-artwork', trackId),
+  searchTrackArtwork: (trackId, edits) =>
+    ipcRenderer.invoke('library:search-track-artwork', trackId, edits),
+  loadTrackArtworkPreview: (trackId, candidateId) =>
+    ipcRenderer.invoke(
+      'library:load-track-artwork-preview',
+      trackId,
+      candidateId,
+    ),
+  applyTrackArtwork: (trackId, candidateId) =>
+    ipcRenderer.invoke('library:apply-track-artwork', trackId, candidateId),
+  openTrackArtworkSource: (trackId, candidateId) =>
+    ipcRenderer.invoke(
+      'library:open-track-artwork-source',
+      trackId,
+      candidateId,
+    ),
   // Every mutation below resolves to the FULL updated playlist array, so
   // callers never need a separate refetch.
   listPlaylists: () => ipcRenderer.invoke('playlists:list'),

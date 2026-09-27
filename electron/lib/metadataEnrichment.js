@@ -2,6 +2,10 @@
 
 const { normalizeForCompare, normalizeText } = require('./musicTitle.js');
 const {
+  MAX_IDENTITY_PROFILES,
+  buildIdentityProfiles,
+} = require('./musicIdentity/profiles.js');
+const {
   firstText,
   normalizeIsrc,
   secondsFromDuration,
@@ -140,26 +144,39 @@ function normalizeMetadataCandidate(candidate) {
   };
 }
 
-function profileKey(profile) {
-  return [
-    normalizeForCompare(profile.title),
-    normalizeForCompare(profile.artist),
-    normalizeForCompare(profile.album),
-    profile.duration ?? '',
-    profile.isrc || '',
-  ].join('|');
+function legacyProfileObservation(profile) {
+  return {
+    title: profile.title,
+    artistCredit: profile.artist,
+    album: profile.album,
+    durationSeconds: profile.duration,
+    isrc: profile.isrc,
+    source: {
+      provider: profile.source,
+      platform: profile.platform,
+    },
+    confidence: {
+      title: profile.confidence,
+      artist: profile.confidence,
+      album: profile.confidence,
+    },
+  };
 }
 
-function pushUniqueProfile(profiles, profile) {
-  if (!profile) return;
-  const key = profileKey(profile);
-  if (!key.split('|')[0]) return;
-  if (profiles.some((existing) => profileKey(existing) === key)) return;
-  profiles.push(profile);
+function legacyProfileProjection(profile) {
+  return {
+    title: profile.title,
+    artist: profile.artistCredit || '',
+    album: profile.album || '',
+    duration: profile.duration,
+    isrc: profile.isrc,
+    platform: profile.source.platform || '',
+    source: profile.source.provider || 'metadata',
+    confidence: profile.confidence.title === 'medium' ? 'medium' : 'high',
+  };
 }
 
 function buildLyricsMetadataProfiles(track, enrichments = [], options = {}) {
-  const profiles = [];
   const providedEnrichments = [
     ...(Array.isArray(track?.metadataCandidates)
       ? track.metadataCandidates
@@ -167,29 +184,30 @@ function buildLyricsMetadataProfiles(track, enrichments = [], options = {}) {
     ...(Array.isArray(enrichments) ? enrichments : []),
   ];
 
-  providedEnrichments
+  const observations = providedEnrichments
     .map(normalizeMetadataCandidate)
     .filter(Boolean)
     .sort((first, second) => {
       if (first.confidence === second.confidence) return 0;
       return first.confidence === 'high' ? -1 : 1;
     })
-    .forEach((profile) => pushUniqueProfile(profiles, profile));
+    .map(legacyProfileObservation);
 
   if (options.includeTrackFallback !== false) {
-    pushUniqueProfile(
-      profiles,
-      normalizeMetadataCandidate({
-        title: track?.title,
-        artist: track?.artist,
-        duration: track?.duration,
-        source: 'track-metadata',
-        confidence: 'medium',
-      }),
-    );
+    const fallback = normalizeMetadataCandidate({
+      title: track?.title,
+      artist: track?.artist,
+      duration: track?.duration,
+      source: 'track-metadata',
+      confidence: 'medium',
+    });
+    if (fallback) observations.push(legacyProfileObservation(fallback));
   }
 
-  return profiles;
+  return buildIdentityProfiles(observations, {
+    comparisonKey: normalizeForCompare,
+    maxProfiles: options.maxProfiles ?? MAX_IDENTITY_PROFILES,
+  }).map(legacyProfileProjection);
 }
 
 module.exports = {
