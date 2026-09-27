@@ -121,6 +121,10 @@ function moveFocus(item, event) {
   background: var(--ui-color-canvas);
 }
 
+.ui-tabs--bar {
+  gap: var(--ui-space-4);
+}
+
 .ui-tabs__tab {
   min-height: var(--ui-control-height);
   display: inline-flex;
@@ -161,5 +165,28 @@ function moveFocus(item, event) {
 .ui-tabs__tab.is-active {
   background: var(--ui-color-surface-selected);
   color: var(--ui-color-accent);
+}
+
+.ui-tabs--bar .ui-tabs__tab {
+  position: relative;
+  padding-inline: 0;
+  border-radius: 0;
+}
+
+.ui-tabs--bar .ui-tabs__tab:hover:not(:disabled),
+.ui-tabs--bar .ui-tabs__tab.is-active {
+  background: transparent;
+  color: var(--ui-color-text);
+}
+
+.ui-tabs--bar .ui-tabs__tab.is-active::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: var(--ui-drag-indicator-width);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-accent);
 }
 </style>

@@ -47,6 +47,7 @@ const state = reactive({
   track: null,
   isPlaying: false,
   playbackPhase: 'idle',
+  playbackRevision: 0,
   // Output identity advances from audio-element discontinuity events; it is
   // not a second playback clock.
   continuityRevision: 0,
@@ -95,12 +96,15 @@ const {
   setTempoRate,
   setTransposeSemitones,
   setVolume,
+  setMuted,
   toggleCaptureGuideVocal,
   toggleMute,
 } = audioGraph;
 
 const endedListeners = new Set();
+const playbackProgressListeners = new Set();
 let lastObservedCurrentTime = 0;
+let pendingRestorePosition = null;
 
 function handlePlay() {
   state.isPlaying = true;
@@ -115,10 +119,16 @@ function handlePause() {
 }
 
 function handleEnded() {
+  const endedEvent = state.track
+    ? {
+        trackId: state.track.id,
+        playbackRevision: state.playbackRevision,
+      }
+    : null;
   state.isPlaying = false;
   state.currentTime = audio.currentTime || state.currentTime;
   state.playbackPhase = 'ended';
-  endedListeners.forEach((listener) => listener());
+  endedListeners.forEach((listener) => listener(endedEvent));
 }
 
 function handlePlaying() {
@@ -136,6 +146,7 @@ function handleSeeking() {
   if (!state.track) return;
   state.continuityRevision += 1;
   state.currentTime = audio.currentTime || 0;
+  lastObservedCurrentTime = state.currentTime;
   state.playbackPhase = 'seeking';
 }
 
@@ -156,9 +167,10 @@ function isRepeatOneLoopWrap(previousTime, nextTime) {
 }
 
 function handleTimeUpdate() {
+  const previousTime = lastObservedCurrentTime;
   const nextTime = audio.currentTime;
-  const didAdvance = nextTime !== lastObservedCurrentTime;
-  if (isRepeatOneLoopWrap(lastObservedCurrentTime, nextTime)) {
+  const didAdvance = nextTime !== previousTime;
+  if (isRepeatOneLoopWrap(previousTime, nextTime)) {
     resetTrackAudioControls();
   }
   lastObservedCurrentTime = nextTime;
@@ -166,10 +178,26 @@ function handleTimeUpdate() {
   if (state.isPlaying && didAdvance && state.playbackPhase !== 'seeking') {
     state.playbackPhase = 'playing';
   }
+  if (state.isPlaying && nextTime > previousTime && state.track) {
+    const progressEvent = {
+      trackId: state.track.id,
+      playbackRevision: state.playbackRevision,
+      deltaSeconds: nextTime - previousTime,
+    };
+    playbackProgressListeners.forEach((listener) => listener(progressEvent));
+  }
 }
 
 function handleLoadedMetadata() {
   state.duration = audio.duration;
+  if (pendingRestorePosition !== null) {
+    const restoredPosition = Math.min(
+      pendingRestorePosition,
+      Number.isFinite(audio.duration) ? audio.duration : pendingRestorePosition,
+    );
+    pendingRestorePosition = null;
+    audio.currentTime = restoredPosition;
+  }
   state.currentTime = audio.currentTime || 0;
   lastObservedCurrentTime = audio.currentTime || 0;
 }
@@ -199,6 +227,7 @@ audio.addEventListener('error', handleError);
 async function playTrack(track) {
   state.error = null;
   state.track = track;
+  state.playbackRevision += 1;
   state.currentTime = 0;
   state.duration = 0;
   lastObservedCurrentTime = 0;
@@ -215,6 +244,32 @@ async function playTrack(track) {
       '目前無法播放這首曲目，請再試一次。',
     );
   }
+}
+
+function restorePlaybackState({
+  track,
+  positionSeconds = 0,
+  volume = PLAYER_AUDIO_DEFAULTS.volume,
+  isMuted = false,
+  playbackMode = PLAYBACK_MODES.sequence,
+} = {}) {
+  if (!track) return false;
+  state.error = null;
+  state.track = track;
+  state.playbackRevision += 1;
+  state.isPlaying = false;
+  state.playbackPhase = 'paused';
+  state.currentTime = 0;
+  state.duration = 0;
+  lastObservedCurrentTime = 0;
+  pendingRestorePosition = Math.max(0, Number(positionSeconds) || 0);
+  resetTrackAudioControls();
+  routeAudioGraph(Boolean(track.usesSeparatedAudio));
+  setVolume(Number(volume));
+  setMuted(Boolean(isMuted));
+  setPlaybackMode(playbackMode);
+  audio.src = track.url;
+  return true;
 }
 
 async function play() {
@@ -338,6 +393,11 @@ function onEnded(listener) {
   return () => endedListeners.delete(listener);
 }
 
+function onPlaybackProgress(listener) {
+  playbackProgressListeners.add(listener);
+  return () => playbackProgressListeners.delete(listener);
+}
+
 function cleanupPlayerResources() {
   audio.removeEventListener('play', handlePlay);
   audio.removeEventListener('playing', handlePlaying);
@@ -351,6 +411,7 @@ function cleanupPlayerResources() {
   audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
   audio.removeEventListener('error', handleError);
   endedListeners.clear();
+  playbackProgressListeners.clear();
   unsubscribeLibraryUpdated?.();
   audio.pause();
   audio.removeAttribute('src');
@@ -366,6 +427,7 @@ export function usePlayer() {
   return {
     state: readonly(state),
     playTrack,
+    restorePlaybackState,
     play,
     pause,
     toggle,
@@ -389,5 +451,6 @@ export function usePlayer() {
     setTempoRate,
     resetPitchTempo,
     onEnded,
+    onPlaybackProgress,
   };
 }

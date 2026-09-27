@@ -495,10 +495,14 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : volume);
   }
 
-  function toggleMute() {
-    state.isMuted = !state.isMuted;
+  function setMuted(muted) {
+    state.isMuted = Boolean(muted);
     if (!audioCtx) return;
     rampGain(audioCtx, masterGain.gain, state.isMuted ? 0 : state.volume);
+  }
+
+  function toggleMute() {
+    setMuted(!state.isMuted);
   }
 
   function toggleCaptureGuideVocal() {
@@ -615,6 +619,7 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     setTempoRate,
     resetPitchTempo,
     setVolume,
+    setMuted,
     toggleMute,
     toggleCaptureGuideVocal,
     prepareCaptureDevice,

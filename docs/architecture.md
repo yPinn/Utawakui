@@ -39,6 +39,10 @@ Library metadata 可作為 retained fallback，production Queue 可顯示在前�
 `StudioLibraryContextInspector.vue` 各自只呈現 feature content；queue authority 仍由
 `usePlaybackQueue.js` 持有。共用 resize width、desktop reserved bay、compact overlay、
 Escape 與 focus restoration 屬於 shell，不得回流到 PlayerBar 或 playlist component。
+Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
+tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
+只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow
+semantic tokens。最近播放列繼續組合 `QueueTrackButton → UiTrackRow`，不建立另一套 row。
 
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主
@@ -214,17 +218,19 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 
 ## 權威狀態與資料
 
-| 資料                                  | 權威 owner                        | 投影／持久化                                      |
-| ------------------------------------- | --------------------------------- | ------------------------------------------------- |
-| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata               |
-| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影      |
-| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費 |
-| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent          |
-| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent            |
-| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments     |
-| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent           |
-| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記        |
-| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection     |
+| 資料                                  | 權威 owner                        | 投影／持久化                                         |
+| ------------------------------------- | --------------------------------- | ---------------------------------------------------- |
+| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                  |
+| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影         |
+| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費    |
+| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids |
+| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate         |
+| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent             |
+| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent               |
+| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments        |
+| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent              |
+| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記           |
+| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection        |
 
 Lyrics、provider import、artwork discovery 與未來 artist／album organization 共用
 `electron/lib/musicIdentity/` 的 provider-neutral observations 與逐軸 evidence。這個純 domain
@@ -257,6 +263,17 @@ path／range 工具函式。Resolver 只接受 track id 與 allowlisted asset na
 改寫到 fallback，所有 library consumer 暫停讀寫並回傳 bounded unavailable error。
 `config:get` 另投影 available／reason 供 Settings 顯示復原入口；Output slots 的啟動同步與
 `utawakui-media:` request 會在各自邊界內降級，不能阻止主視窗建立或把失效位置投影成空曲庫。
+
+最近播放與啟動恢復由 `electron/lib/playbackPersistence.js` 保存到 app user data，並由
+`playbackPersistenceHandlers.js`／preload 的固定 channels 暴露 bounded intent。History 只接受
+track id 與 source context，時間由 main 產生；resume 只接受 ids、position、volume、mute、
+playback mode 與 Queue scalar state。Renderer 的 `usePlaybackHistory.js` 依 HTML audio progress／
+ended 判定 qualified event；`useRecentPlaybackActivation.js` 只協調目前 library／playlist／
+Queue owners，以現行來源歌單重建 Queue，來源失效才降級為單曲 interrupt；
+`usePlaybackResume.js` 只投影／rehydrate owner state。啟動先以目前 library 過濾缺檔，再恢復為
+paused；corrupt 或失效 current track 會降級並清除 snapshot。
+完整 schema 與 UI 邊界見
+[播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)。
 
 播放器的 renderer ownership 再分成兩層：`src/composables/usePlayer.js` 是模組單例、
 HTML audio event authority、transport actions 與既有 public composable facade；

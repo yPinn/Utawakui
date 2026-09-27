@@ -1,3 +1,4 @@
+import { h } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import AppRightDockHeader from './AppRightDockHeader.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
@@ -50,6 +51,32 @@ describe('AppRightDockHeader', () => {
 
     expect(findAll(root, (node) => node.type === 'p')).toHaveLength(0);
     expect(textContent(root)).toContain('佇列');
+    app.unmount();
+  });
+
+  it('accepts caller-owned identity chrome while preserving the shared close action', () => {
+    const onClose = vi.fn();
+    const { app, root } = mount(
+      AppRightDockHeader,
+      {
+        title: '播放清單',
+        closeLabel: '關閉播放清單',
+        onClose,
+      },
+      {
+        identity: () => h('div', { role: 'tablist' }, '佇列 最近播放'),
+      },
+    );
+    const tablist = findAll(root, (node) => node.props.role === 'tablist')[0];
+    const close = findAll(
+      root,
+      (node) => node.props['aria-label'] === '關閉播放清單',
+    )[0];
+
+    expect(textContent(tablist)).toBe('佇列 最近播放');
+    expect(findAll(root, (node) => node.type === 'h2')).toHaveLength(0);
+    trigger(close, 'onClick');
+    expect(onClose).toHaveBeenCalledOnce();
     app.unmount();
   });
 });

@@ -215,6 +215,89 @@ function clearQueuedTracks() {
   state.queuedTracks = [];
 }
 
+function interruptWithTrack(track) {
+  const normalized = normalizeTrack(track);
+  if (!normalized) return null;
+  const current = currentTrack.value;
+  if (current?.id === normalized.id) {
+    setActiveTrack(normalized, { source: state.currentIsSource });
+    return normalized;
+  }
+  if (current) {
+    state.historyEntries = [
+      ...state.historyEntries,
+      { track: current, source: state.currentIsSource },
+    ];
+  }
+  state.queuedTracks = state.queuedTracks.filter(
+    (queuedTrack) => queuedTrack.id !== normalized.id,
+  );
+  setActiveTrack(normalized, { source: false });
+  return normalized;
+}
+
+function serializeResumeState() {
+  return {
+    sourceTrackIds: state.tracks.map((track) => track.id),
+    queuedTrackIds: state.queuedTracks.map((track) => track.id),
+    historyEntries: state.historyEntries.map((entry) => ({
+      trackId: entry.track.id,
+      source: entry.source,
+    })),
+    currentIsSource: state.currentIsSource,
+    lastSourceTrackId: state.lastSourceTrackId,
+    sourceName: state.sourceName,
+    sourceId: state.sourceId,
+    isShuffle: state.isShuffle,
+    orderIds: [...state.orderIds],
+  };
+}
+
+function restoreResumeState(snapshot, currentTrackId, libraryTracks) {
+  const library = new Map(
+    normalizeTracks(libraryTracks).map((track) => [track.id, track]),
+  );
+  const resolveIds = (ids) =>
+    Array.isArray(ids)
+      ? ids.map((trackId) => library.get(trackId)).filter(Boolean)
+      : [];
+  const sourceTracks = resolveIds(snapshot?.sourceTrackIds);
+  const sourceIds = new Set(sourceTracks.map((track) => track.id));
+  const orderIds = Array.isArray(snapshot?.orderIds)
+    ? snapshot.orderIds.filter((trackId) => sourceIds.has(trackId))
+    : [];
+  for (const track of sourceTracks) {
+    if (!orderIds.includes(track.id)) orderIds.push(track.id);
+  }
+
+  state.tracks = sourceTracks;
+  state.queuedTracks = resolveIds(snapshot?.queuedTrackIds);
+  state.historyEntries = Array.isArray(snapshot?.historyEntries)
+    ? snapshot.historyEntries
+        .map((entry) => ({
+          track: library.get(entry?.trackId),
+          source: Boolean(entry?.source),
+        }))
+        .filter((entry) => Boolean(entry.track))
+    : [];
+  state.sourceName =
+    typeof snapshot?.sourceName === 'string' ? snapshot.sourceName : '';
+  state.sourceId =
+    typeof snapshot?.sourceId === 'string' ? snapshot.sourceId : null;
+  state.isShuffle = Boolean(snapshot?.isShuffle);
+  state.orderIds = orderIds;
+  const restoredCurrent = library.get(currentTrackId) ?? null;
+  setActiveTrack(restoredCurrent, {
+    source: Boolean(snapshot?.currentIsSource && sourceIds.has(currentTrackId)),
+  });
+  state.lastSourceTrackId = sourceIds.has(snapshot?.lastSourceTrackId)
+    ? snapshot.lastSourceTrackId
+    : state.currentIsSource
+      ? currentTrackId
+      : null;
+  return restoredCurrent;
+}
+
 function reorderQueuedTrack(draggedId, targetId, position = 'before') {
   if (!draggedId || !targetId || draggedId === targetId) return false;
 
@@ -370,6 +453,7 @@ export function usePlaybackQueue() {
     setQueue,
     setCurrentTrack,
     enqueueTrack,
+    interruptWithTrack,
     clearQueuedTracks,
     reorderQueuedTrack,
     reorderSourceTrack,
@@ -378,5 +462,7 @@ export function usePlaybackQueue() {
     previousTrack,
     toggleShuffle,
     removeTrack,
+    serializeResumeState,
+    restoreResumeState,
   };
 }

@@ -124,6 +124,11 @@ const MAIN_INVOKE_CHANNELS = [
   'performer-view:get-status',
   'performer-view:open',
   'performer-view:publish',
+  'playback-history:clear',
+  'playback-history:get',
+  'playback-history:record',
+  'playback-resume:get',
+  'playback-resume:save',
   'playlists:choose-cover',
   'playlists:clear-cover',
   'playlists:create',
@@ -478,6 +483,67 @@ describe('main preload bridge', () => {
       ['feature-dependencies:detect-system-ffmpeg'],
       ['feature-dependencies:set-ffmpeg-source', true],
     ]);
+  });
+
+  it('shapes playback history and resume intents without private media fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.recordRecentPlayback(
+      'track-a',
+      {
+        sourceId: 'playlist-1',
+        sourceName: '深夜練唱',
+        privatePath: 'E:\\private.wav',
+      },
+      'ignored',
+    );
+    bridge.savePlaybackResumeSnapshot({
+      currentTrackId: 'track-a',
+      positionSeconds: 12,
+      volume: 0.5,
+      isMuted: false,
+      playbackMode: 'sequence',
+      privateUrl: 'file:///private.wav',
+      queue: {
+        sourceTrackIds: ['track-a'],
+        queuedTrackIds: [],
+        historyEntries: [],
+        currentIsSource: true,
+        lastSourceTrackId: 'track-a',
+        sourceName: '深夜練唱',
+        sourceId: 'playlist-1',
+        isShuffle: false,
+        orderIds: ['track-a'],
+        privatePath: 'E:\\private.wav',
+      },
+    });
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'playback-history:record',
+      'track-a',
+      { sourceId: 'playlist-1', sourceName: '深夜練唱' },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'playback-resume:save',
+      {
+        currentTrackId: 'track-a',
+        positionSeconds: 12,
+        volume: 0.5,
+        isMuted: false,
+        playbackMode: 'sequence',
+        queue: {
+          sourceTrackIds: ['track-a'],
+          queuedTrackIds: [],
+          historyEntries: [],
+          currentIsSource: true,
+          lastSourceTrackId: 'track-a',
+          sourceName: '深夜練唱',
+          sourceId: 'playlist-1',
+          isShuffle: false,
+          orderIds: ['track-a'],
+        },
+      },
+    );
   });
 
   it('forwards only the feature id and notice version for gate confirmation', async () => {

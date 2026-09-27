@@ -53,6 +53,35 @@ function isWindowCloseRequest(value) {
   );
 }
 
+function playbackSourceIntent(value) {
+  return {
+    sourceId: value?.sourceId ?? null,
+    sourceName: value?.sourceName ?? null,
+  };
+}
+
+function playbackResumeIntent(value) {
+  if (value === null) return null;
+  return {
+    currentTrackId: value?.currentTrackId,
+    positionSeconds: value?.positionSeconds,
+    volume: value?.volume,
+    isMuted: value?.isMuted,
+    playbackMode: value?.playbackMode,
+    queue: {
+      sourceTrackIds: value?.queue?.sourceTrackIds,
+      queuedTrackIds: value?.queue?.queuedTrackIds,
+      historyEntries: value?.queue?.historyEntries,
+      currentIsSource: value?.queue?.currentIsSource,
+      lastSourceTrackId: value?.queue?.lastSourceTrackId,
+      sourceName: value?.queue?.sourceName,
+      sourceId: value?.queue?.sourceId,
+      isShuffle: value?.queue?.isShuffle,
+      orderIds: value?.queue?.orderIds,
+    },
+  };
+}
+
 contextBridge.exposeInMainWorld('Utawakui', {
   startupTraceEnabled,
   recordStartupMilestone: (milestone) => {
@@ -85,6 +114,18 @@ contextBridge.exposeInMainWorld('Utawakui', {
   exportFeedbackFallback: (input) =>
     ipcRenderer.invoke('feedback:export-fallback', input),
   getAppVersion: () => ipcRenderer.invoke('app:get-version'),
+  getRecentPlaybackHistory: () => ipcRenderer.invoke('playback-history:get'),
+  recordRecentPlayback: (trackId, sourceContext) =>
+    ipcRenderer.invoke(
+      'playback-history:record',
+      trackId,
+      playbackSourceIntent(sourceContext),
+    ),
+  clearRecentPlaybackHistory: () =>
+    ipcRenderer.invoke('playback-history:clear'),
+  getPlaybackResumeSnapshot: () => ipcRenderer.invoke('playback-resume:get'),
+  savePlaybackResumeSnapshot: (snapshot) =>
+    ipcRenderer.invoke('playback-resume:save', playbackResumeIntent(snapshot)),
   getAppUpdateStatus: () => ipcRenderer.invoke('app-update:get-status'),
   checkForAppUpdate: () => ipcRenderer.invoke('app-update:check'),
   downloadAppUpdate: () => ipcRenderer.invoke('app-update:download'),

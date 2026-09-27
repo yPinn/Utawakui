@@ -15,12 +15,18 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('#context');
   });
 
-  it('reserves the shared desktop bay and right-aligns it with a 12px top inset', () => {
+  it('reserves the shared desktop bay and reuses the 16px shell panel inset', () => {
     expect(source).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );
     expect(source).toMatch(
-      /\.shell__dock\s*\{[^}]*justify-content:\s*flex-end;[^}]*padding-top:\s*var\(--ui-space-3\);[^}]*\}/su,
+      /\.shell__dock\s*\{[^}]*justify-content:\s*flex-end;[^}]*padding-top:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+    );
+    expect(source).toMatch(
+      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+    );
+    expect(source).toMatch(
+      /\.shell__main\s*\{[^}]*padding-bottom:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
     );
   });
 

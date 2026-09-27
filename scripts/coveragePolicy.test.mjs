@@ -76,6 +76,7 @@ describe('coverage policy', () => {
     'overlay/shared/lyricsPresentation.mjs',
     'overlay/shared/mangaFrameContract.mjs',
     'overlay/shared/state.mjs',
+    'src/composables/useStudioLibraryInspectorWidth.js',
     'src/icons/index.js',
   ])('marks re-export-only module %s as coverage-neutral', (file) => {
     expect(classifyAppSource(file)).toEqual({

@@ -18,8 +18,10 @@ function closeDock() {
 <template>
   <header class="app-right-dock-header">
     <div class="app-right-dock-header__identity">
-      <h2>{{ title }}</h2>
-      <p v-if="subtitle">{{ subtitle }}</p>
+      <slot name="identity">
+        <h2>{{ title }}</h2>
+        <p v-if="subtitle">{{ subtitle }}</p>
+      </slot>
     </div>
     <UiIconButton
       class="app-right-dock-header__close"

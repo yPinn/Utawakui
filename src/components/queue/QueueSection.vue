@@ -11,13 +11,12 @@ defineProps({
   titlePrefix: { type: String, default: '' },
   tracks: { type: Array, default: () => [] },
   emptyText: { type: String, default: '' },
+  selectedTrackId: { type: String, default: null },
   currentTrackId: { type: String, default: null },
   draggableItems: { type: Boolean, default: false },
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
   dropPosition: { type: String, default: null },
-  // See QueueTrackButton.vue's `jumpable` prop / useAlbumNavigation.js.
-  jumpableTrackIds: { type: Set, default: () => new Set() },
   // Whether the section's own heading (not a track row) should jump to a
   // playlist/album — distinct from a per-track jump, so this section
   // represents a single known source rather than a per-row lookup.
@@ -30,7 +29,7 @@ defineProps({
 
 const emit = defineEmits([
   'selectTrack',
-  'titleClick',
+  'activateTrack',
   'sectionTitleClick',
   'trackDragStart',
   'trackDragOver',
@@ -68,7 +67,7 @@ const emit = defineEmits([
       {{ emptyText }}
     </UiHint>
     <ul v-else class="queue-section__list">
-      <li
+      <QueueTrackButton
         v-for="track in tracks"
         :key="track.id"
         class="queue-section__item"
@@ -80,21 +79,18 @@ const emit = defineEmits([
             dropTargetTrackId === track.id && dropPosition === 'after',
           'queue-section__item--draggable': draggableItems,
         }"
-      >
-        <QueueTrackButton
-          :track="track"
-          :current="track.id === currentTrackId"
-          :draggable="draggableItems"
-          :jumpable="jumpableTrackIds.has(track.id)"
-          @select="emit('selectTrack', $event)"
-          @title-click="emit('titleClick', $event)"
-          @drag-start="emit('trackDragStart', track, $event)"
-          @drag-over="emit('trackDragOver', track, $event)"
-          @drag-leave="emit('trackDragLeave', track, $event)"
-          @drop="emit('trackDrop', track, $event)"
-          @drag-end="emit('trackDragEnd')"
-        />
-      </li>
+        :track="track"
+        :active="track.id === selectedTrackId"
+        :current="track.id === currentTrackId"
+        :draggable="draggableItems"
+        @select="emit('selectTrack', $event)"
+        @activate="emit('activateTrack', $event)"
+        @drag-start="emit('trackDragStart', track, $event)"
+        @drag-over="emit('trackDragOver', track, $event)"
+        @drag-leave="emit('trackDragLeave', track, $event)"
+        @drop="emit('trackDrop', track, $event)"
+        @drag-end="emit('trackDragEnd')"
+      />
     </ul>
   </section>
 </template>
@@ -154,9 +150,7 @@ const emit = defineEmits([
 
   position: relative;
   content-visibility: auto;
-  contain-intrinsic-block-size: calc(
-    var(--ui-queue-track-thumb-size) + 2 * var(--ui-space-1)
-  );
+  contain-intrinsic-block-size: var(--ui-track-row-min-height);
 }
 
 .queue-section__item--draggable {

@@ -27,6 +27,92 @@ async function loadQueue() {
 }
 
 describe('usePlaybackQueue', () => {
+  it('serializes only ids and bounded source state for playback resume', async () => {
+    const {
+      setQueue,
+      enqueueTrack,
+      nextTrack,
+      serializeResumeState,
+      toggleShuffle,
+    } = await loadQueue();
+
+    setQueue(tracks, 'a', { sourceName: 'playlist #1', sourceId: 'p1' });
+    enqueueTrack(interruptTracks[0]);
+    nextTrack();
+    toggleShuffle();
+
+    expect(serializeResumeState()).toEqual({
+      sourceTrackIds: ['a', 'b', 'c'],
+      queuedTrackIds: [],
+      historyEntries: [{ trackId: 'a', source: true }],
+      currentIsSource: false,
+      lastSourceTrackId: 'a',
+      sourceName: 'playlist #1',
+      sourceId: 'p1',
+      isShuffle: true,
+      orderIds: expect.arrayContaining(['a', 'b', 'c']),
+    });
+    expect(JSON.stringify(serializeResumeState())).not.toContain('title');
+  });
+
+  it('restores a queue snapshot against current library tracks and filters missing ids', async () => {
+    const {
+      state,
+      currentTrack,
+      queuedTracks,
+      sourceUpcomingTracks,
+      restoreResumeState,
+      previousTrack,
+    } = await loadQueue();
+
+    restoreResumeState(
+      {
+        sourceTrackIds: ['a', 'missing', 'b', 'c'],
+        queuedTrackIds: ['x', 'missing'],
+        historyEntries: [
+          { trackId: 'a', source: true },
+          { trackId: 'missing', source: false },
+        ],
+        currentIsSource: true,
+        lastSourceTrackId: 'b',
+        sourceName: 'restored playlist',
+        sourceId: 'p-restored',
+        isShuffle: false,
+        orderIds: ['a', 'missing', 'b', 'c'],
+      },
+      'b',
+      [...tracks, ...interruptTracks],
+    );
+
+    expect(currentTrack.value?.id).toBe('b');
+    expect(state.currentTrackId).toBe('b');
+    expect(state.sourceName).toBe('restored playlist');
+    expect(state.sourceId).toBe('p-restored');
+    expect(queuedTracks.value.map((track) => track.id)).toEqual(['x']);
+    expect(sourceUpcomingTracks.value.map((track) => track.id)).toEqual(['c']);
+    expect(previousTrack()?.id).toBe('a');
+  });
+
+  it('plays a recent-history track as an interrupt without replacing the source queue', async () => {
+    const {
+      state,
+      currentTrack,
+      sourceUpcomingTracks,
+      setQueue,
+      interruptWithTrack,
+      previousTrack,
+    } = await loadQueue();
+
+    setQueue(tracks, 'b', { sourceName: 'playlist #1', sourceId: 'p1' });
+    interruptWithTrack(interruptTracks[0]);
+
+    expect(currentTrack.value?.id).toBe('x');
+    expect(state.currentIsSource).toBe(false);
+    expect(state.sourceName).toBe('playlist #1');
+    expect(sourceUpcomingTracks.value.map((track) => track.id)).toEqual(['c']);
+    expect(previousTrack()?.id).toBe('b');
+  });
+
   it('builds one deterministic track index for Queue projections', async () => {
     const { buildQueueTrackIndex } = await import('./usePlaybackQueue.js');
     const current = { id: 'shared', title: 'current' };

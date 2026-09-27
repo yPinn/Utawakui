@@ -1,20 +1,17 @@
 <script setup>
-import { QUEUE_TRACK_THUMB_SIZE } from '../../constants/ui.js';
-import UiTextButton from '../ui/UiTextButton.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import { ICON_SIZE, Play } from '../../icons/index.js';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 
 defineProps({
   track: { type: Object, required: true },
+  active: { type: Boolean, default: false },
   current: { type: Boolean, default: false },
   draggable: { type: Boolean, default: false },
-  // Whether the title should jump to the track's source album (see
-  // useAlbumNavigation.js). Owned by the parent — this component only renders.
-  jumpable: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
   'select',
-  'titleClick',
+  'activate',
   'dragStart',
   'dragOver',
   'dragLeave',
@@ -24,145 +21,68 @@ const emit = defineEmits([
 </script>
 
 <template>
-  <!-- Stretched-sibling layout: a nested title button isn't valid inside a
-       <button>, so .queue-track__select covers the row and the title button
-       re-surfaces above it (see z-index below) as its own target. -->
-  <div
+  <UiTrackRow
     class="queue-track"
-    :class="{ 'queue-track--current': current }"
+    :track="track"
+    :active="active"
+    :current="current"
+    interactive
+    activate-on-enter
     :draggable="draggable"
+    artwork-clickable
+    :artwork-aria-label="`播放：${track.title}`"
+    hide-duration
+    overflow="ellipsis"
+    thumb-loading="lazy"
+    thumb-decoding="async"
+    @click="emit('select', track)"
+    @dblclick="emit('activate', track)"
+    @activate="emit('activate', track)"
+    @artwork-click="emit('activate', track)"
     @dragstart="emit('dragStart', $event)"
     @dragover="emit('dragOver', $event)"
     @dragleave="emit('dragLeave', $event)"
     @drop="emit('drop', $event)"
     @dragend="emit('dragEnd', $event)"
   >
-    <button
-      type="button"
-      class="queue-track__select"
-      :aria-label="`播放 ${track.title}`"
-      @click="emit('select', track)"
-    ></button>
-
-    <UiTrackThumb
-      class="queue-track__cover"
-      :track="track"
-      :size="QUEUE_TRACK_THUMB_SIZE"
-      background="var(--ui-color-canvas)"
-      font-size="var(--ui-font-size-lg)"
-      loading="lazy"
-      decoding="async"
-    />
-    <span class="queue-track__copy">
-      <UiTextButton
-        v-if="jumpable"
-        class="queue-track__title"
-        :text="track.title"
-        :aria-label="`前往專輯：${track.title}`"
-        overflow="ellipsis"
-        @click="emit('titleClick', track)"
-      />
-      <span
-        v-else
-        class="queue-track__title queue-track__title--static"
-        :title="track.title"
-      >
-        {{ track.title }}
+    <template #artworkOverlay>
+      <span class="queue-track__artwork-cue" aria-hidden="true">
+        <Play :size="ICON_SIZE" class="queue-track__artwork-icon" />
       </span>
-      <span v-if="track.artist" class="queue-track__artist">
-        {{ track.artist }}
-      </span>
-    </span>
-  </div>
+    </template>
+  </UiTrackRow>
 </template>
 
 <style scoped>
-.queue-track {
-  --queue-track-cover-size: var(--ui-queue-track-thumb-size);
-
-  position: relative;
-  display: grid;
-  grid-template-columns: var(--queue-track-cover-size) minmax(0, 1fr);
-  gap: var(--ui-space-2);
-  align-items: center;
-  width: 100%;
-  min-width: 0;
-  padding: var(--ui-space-1);
-  border-radius: var(--ui-radius-md);
-  color: var(--ui-color-text);
-  font-size: inherit;
-  line-height: var(--ui-line-height-label);
-}
-
-.queue-track:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.queue-track[draggable='true'] {
-  cursor: grab;
-}
-
-.queue-track[draggable='true']:active {
-  cursor: grabbing;
-}
-
-/* Covers the row; the title button opts back out via its own z-index. */
-.queue-track__select {
+.queue-track__artwork-cue {
   position: absolute;
   inset: 0;
-  z-index: 0;
-  padding: 0;
-  border: 0;
+  display: grid;
+  place-items: center;
   border-radius: inherit;
-  background: transparent;
-  cursor: pointer;
+  background: var(--ui-color-overlay-scrim);
+  color: var(--ui-color-overlay-contrast);
+  opacity: 0;
+  transition: opacity var(--ui-motion-duration-feedback)
+    var(--ui-motion-easing-standard);
 }
 
-.queue-track__select:focus-visible {
-  /* Inset offset avoids clipping against the adjacent row. */
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
+.queue-track__artwork-icon {
+  fill: currentColor;
 }
 
-.queue-track--current .queue-track__title {
-  color: var(--ui-color-current);
+.queue-track:hover .queue-track__artwork-cue,
+.queue-track:focus-within .queue-track__artwork-cue {
+  opacity: 1;
 }
 
-.queue-track__copy {
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
+:global(:root[data-ui-motion='reduced']) .queue-track__artwork-cue {
+  transition: none;
 }
 
-.queue-track__artist {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.queue-track__title {
-  /* Stacks above .queue-track__select. */
-  position: relative;
-  z-index: 1;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-}
-
-.queue-track__title--static {
-  display: block;
-  max-width: 100%;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.queue-track__artist {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+@media (prefers-reduced-motion: reduce) {
+  .queue-track__artwork-cue {
+    transition: none;
+  }
 }
 </style>

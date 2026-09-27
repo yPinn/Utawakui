@@ -17,6 +17,7 @@ const COVERAGE_NEUTRAL_SOURCES = new Map([
   ['overlay/shared/mangaFrameContract.mjs', 're-export-only'],
   ['overlay/shared/state.mjs', 're-export-only'],
   ['src/components/demo/demoImageFixtures.js', 'static-fixture'],
+  ['src/composables/useStudioLibraryInspectorWidth.js', 're-export-only'],
   ['src/icons/index.js', 're-export-only'],
   ['src/components/ui/uiTestHost.js', 'test-infrastructure'],
   // Node/vitest has no real Web Audio implementation (same posture as

@@ -138,6 +138,10 @@ const { createObsCredentialStore } = require('./main/obsCredentialStore');
 const { registerObsHandlers } = require('./main/obsHandlers');
 const { createObsPowerSaveBlocker } = require('./main/obsPowerSaveBlocker');
 const { createSessionHistoryService } = require('./main/sessionHistoryService');
+const { createPlaybackPersistence } = require('./lib/playbackPersistence');
+const {
+  registerPlaybackPersistenceHandlers,
+} = require('./main/playbackPersistenceHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
 const { registerFeedbackHandlers } = require('./main/feedbackHandlers');
@@ -485,6 +489,9 @@ if (!gotSingleInstanceLock) {
       getSkipThresholdMs: () =>
         configState.getConfig().obsIntegration.skipThresholdMs,
     });
+    const playbackPersistence = createPlaybackPersistence({
+      userDataDir: app.getPath('userData'),
+    });
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
@@ -640,6 +647,10 @@ if (!gotSingleInstanceLock) {
     });
     registerAppUpdateHandlers({ ipcMain, service: appUpdateService });
     registerAppUsageHandlers({ ipcMain, service: appUsageService });
+    registerPlaybackPersistenceHandlers({
+      ipcMain,
+      service: playbackPersistence,
+    });
 
     registerMediaProtocol({
       protocol,

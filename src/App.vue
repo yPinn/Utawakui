@@ -38,6 +38,8 @@ import { useAppUpdate } from './composables/useAppUpdate.js';
 import { useAppAnnouncement } from './composables/useAppAnnouncement.js';
 import { useWindowCloseDecision } from './composables/useWindowCloseDecision.js';
 import { useTrayNavigation } from './composables/useTrayNavigation.js';
+import { usePlaybackHistory } from './composables/usePlaybackHistory.js';
+import { usePlaybackResume } from './composables/usePlaybackResume.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
@@ -110,9 +112,14 @@ useTheme();
 useUiDensity();
 const closeDecision = useWindowCloseDecision();
 const trayNavigation = useTrayNavigation();
+const playbackHistory = usePlaybackHistory();
+const playbackResume = usePlaybackResume();
+Promise.all([playbackResume.initialize(), playbackHistory.initialize()]);
 onUnmounted(() => {
   closeDecision.dispose();
   trayNavigation.dispose();
+  playbackResume.dispose();
+  playbackHistory.dispose();
 });
 // Validate and stage the persisted capture device before playback. The capture
 // AudioContext itself stays closed until the first explicit play action.
@@ -463,9 +470,9 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      bounded to the row instead of forcing the row to grow around it. */
   min-height: 0;
   /* The Sidebar is its own inset plane rather than a continuation of the
-     tabbed dossier baseline. Equal 12px block insets keep it clear of both
-     the titlebar row and PlayerBar in production and Token v2 alike. */
-  padding-block: var(--ui-space-3);
+     tabbed dossier baseline. The shared shell-panel token keeps its block
+     breathing room aligned with Right Dock in production and Token v2. */
+  padding-block: var(--ui-shell-panel-inset-block);
   /* Matches .shell__main's own padding-right below — both are the shell's
      outermost edge insets (window edge to sidebar/main+context), kept to
      the same smaller value so the app doesn't run flush to the window but
@@ -489,7 +496,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      (matches .shell__sidebar's own padding-left above). The two are
      different distances on purpose, not a shorthand that happens to cover
      both. */
-  padding-bottom: var(--ui-space-3);
+  padding-bottom: var(--ui-shell-panel-inset-block);
   padding-left: var(--ui-space-3);
   padding-right: var(--ui-space-2);
 }
@@ -512,10 +519,10 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
   justify-content: flex-end;
   min-width: 0;
   min-height: 0;
-  /* The shell's shared bottom padding already leaves 12px above PlayerBar.
-     This matching top inset makes the right plane independent of the
-     workspace's taller archive-tab baseline, just like the Sidebar. */
-  padding-top: var(--ui-space-3);
+  /* The shell's shared bottom padding already leaves the panel inset above
+     PlayerBar. This matching top inset makes the right plane independent of
+     the workspace's taller archive-tab baseline, just like the Sidebar. */
+  padding-top: var(--ui-shell-panel-inset-block);
 }
 
 .shell__dock-surface {
@@ -563,7 +570,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
   .shell__dock {
     position: absolute;
     z-index: var(--ui-z-sticky);
-    inset-block: 0 var(--ui-space-3);
+    inset-block: 0 var(--ui-shell-panel-inset-block);
     inset-inline-end: var(--ui-space-2);
   }
 }

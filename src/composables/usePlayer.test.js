@@ -249,12 +249,14 @@ describe('guide vocal defaults', () => {
         'clearTrack',
         'cyclePlaybackMode',
         'onEnded',
+        'onPlaybackProgress',
         'pause',
         'play',
         'playTrack',
         'prepareCaptureDevice',
         'resetPitchTempo',
         'restartTrack',
+        'restorePlaybackState',
         'seek',
         'setCaptureGuideVocalOn',
         'setCaptureGuideVocalValue',
@@ -614,6 +616,115 @@ describe('library synchronization', () => {
     expect(player.state.captureGuideVocalOn).toBe(true);
     expect(player.state.captureGuideVocalValue).toBe(0.3);
     expect(MockAudio.latest.play).toHaveBeenCalledOnce();
+  });
+});
+
+describe('playback persistence events', () => {
+  it('publishes bounded progress deltas with a new revision for each explicit play', async () => {
+    const player = await loadPlayer();
+    const onProgress = vi.fn();
+    const unsubscribe = player.onPlaybackProgress(onProgress);
+    const track = {
+      id: 'track-history',
+      title: 'History',
+      url: 'utawakui-media://track/track-history/audio.wav',
+    };
+
+    await player.playTrack(track);
+    MockAudio.latest.dispatch('playing');
+    MockAudio.latest.currentTime = 1.25;
+    MockAudio.latest.dispatch('timeupdate');
+
+    expect(onProgress).toHaveBeenCalledWith({
+      trackId: 'track-history',
+      playbackRevision: 1,
+      deltaSeconds: 1.25,
+    });
+
+    await player.playTrack(track);
+    MockAudio.latest.dispatch('playing');
+    MockAudio.latest.currentTime = 0.5;
+    MockAudio.latest.dispatch('timeupdate');
+
+    expect(onProgress).toHaveBeenLastCalledWith({
+      trackId: 'track-history',
+      playbackRevision: 2,
+      deltaSeconds: 0.5,
+    });
+    unsubscribe();
+  });
+
+  it('restores a track and transport settings paused without autoplay', async () => {
+    const player = await loadPlayer();
+    MockAudio.latest.play.mockClear();
+
+    player.restorePlaybackState({
+      track: {
+        id: 'track-restored',
+        title: 'Restored',
+        url: 'utawakui-media://track/track-restored/audio.wav',
+      },
+      positionSeconds: 37.25,
+      volume: 0.72,
+      isMuted: true,
+      playbackMode: 'repeat-list',
+    });
+
+    expect(player.state.track?.id).toBe('track-restored');
+    expect(player.state.isPlaying).toBe(false);
+    expect(player.state.playbackPhase).toBe('paused');
+    expect(player.state.volume).toBe(0.72);
+    expect(player.state.isMuted).toBe(true);
+    expect(player.state.playbackMode).toBe('repeat-list');
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+
+    MockAudio.latest.duration = 120;
+    MockAudio.latest.dispatch('loadedmetadata');
+    expect(MockAudio.latest.currentTime).toBe(37.25);
+    expect(player.state.currentTime).toBe(37.25);
+  });
+
+  it('uses safe paused defaults when restoring without optional transport values', async () => {
+    const player = await loadPlayer();
+    expect(player.restorePlaybackState()).toBe(false);
+
+    expect(
+      player.restorePlaybackState({
+        track: {
+          id: 'track-defaults',
+          title: 'Defaults',
+          url: 'utawakui-media://track/track-defaults/audio.wav',
+        },
+      }),
+    ).toBe(true);
+
+    MockAudio.latest.duration = Number.POSITIVE_INFINITY;
+    MockAudio.latest.dispatch('loadedmetadata');
+
+    expect(MockAudio.latest.currentTime).toBe(0);
+    expect(player.state.volume).toBe(0.5);
+    expect(player.state.isMuted).toBe(false);
+    expect(player.state.playbackMode).toBe('sequence');
+    expect(MockAudio.latest.play).not.toHaveBeenCalled();
+  });
+
+  it('publishes the ended track identity before queue listeners advance', async () => {
+    const player = await loadPlayer();
+    const onEnded = vi.fn();
+    player.onEnded(onEnded);
+    await player.playTrack({
+      id: 'track-short',
+      title: 'Short',
+      url: 'utawakui-media://track/track-short/audio.wav',
+    });
+    MockAudio.latest.currentTime = 4;
+
+    MockAudio.latest.dispatch('ended');
+
+    expect(onEnded).toHaveBeenCalledWith({
+      trackId: 'track-short',
+      playbackRevision: 1,
+    });
   });
 });
 

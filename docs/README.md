@@ -128,6 +128,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [BPM runtime-smoke config](contracts/music-analysis-bpm-smoke-run-config-template.json)、
   [M2 quality gate](contracts/music-analysis-m2-quality-gate.md)。
 - Integrations：[adapter contract](contracts/integration-adapter-contract.md)。
+- Playback：[播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)。
 - Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。
 - Operations：[diagnostics rollout](operations/diagnostics-rollout.md)、
