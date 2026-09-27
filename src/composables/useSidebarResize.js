@@ -14,6 +14,9 @@ const COMPACT_THRESHOLD = 256; // 16rem — equal to the default sidebar width
 const COMPACT_RESIST_DISTANCE = 80; // 5rem
 
 const { width, setWidth, commitWidth } = useSidebarWidth();
+const lastExpandedWidth = ref(
+  width.value > SIDEBAR_WIDTH_MIN ? width.value : COMPACT_THRESHOLD,
+);
 
 // Captured at drag start so onMove's delta (relative to the drag's own
 // origin) can be added back onto the width the drag began from.
@@ -24,9 +27,11 @@ const { isResizing, startResize: startDrag } = useResizeDrag({
     const next = startWidth.value + delta;
     if (next >= COMPACT_THRESHOLD) {
       setWidth(next);
+      lastExpandedWidth.value = width.value;
     } else if (next >= COMPACT_THRESHOLD - COMPACT_RESIST_DISTANCE) {
       // Resistance zone: hold at the threshold width instead of shrinking.
       setWidth(COMPACT_THRESHOLD);
+      lastExpandedWidth.value = width.value;
     } else {
       // Past the resistance zone — collapse straight to icon-only rather
       // than a gradual squeeze.
@@ -41,6 +46,16 @@ function startResize(event) {
   startDrag(event);
 }
 
+async function toggleSidebarCollapse() {
+  if (width.value <= SIDEBAR_WIDTH_MIN) {
+    setWidth(lastExpandedWidth.value);
+  } else {
+    lastExpandedWidth.value = width.value;
+    setWidth(SIDEBAR_WIDTH_MIN);
+  }
+  await commitWidth();
+}
+
 export function useSidebarResize() {
-  return { isResizing, startResize };
+  return { isResizing, startResize, toggleSidebarCollapse };
 }

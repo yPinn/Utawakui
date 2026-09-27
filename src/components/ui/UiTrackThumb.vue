@@ -14,6 +14,16 @@ defineProps({
   // False when the root shouldn't be aria-hidden — e.g. it wraps a real
   // interactive overlay control.
   decorative: { type: Boolean, default: true },
+  loading: {
+    type: String,
+    default: 'eager',
+    validator: (value) => value === 'eager' || value === 'lazy',
+  },
+  decoding: {
+    type: String,
+    default: 'auto',
+    validator: (value) => ['auto', 'sync', 'async'].includes(value),
+  },
 });
 
 function toCssLength(value) {
@@ -40,6 +50,8 @@ function toCssLength(value) {
       class="ui-track-thumb__image"
       :src="track.thumbnailUrl"
       alt=""
+      :loading="loading"
+      :decoding="decoding"
       draggable="false"
     />
     <span v-else-if="track">{{ getTrackInitial(track) }}</span>

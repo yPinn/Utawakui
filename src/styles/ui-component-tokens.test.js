@@ -63,6 +63,32 @@ const metadataFeatureFiles = [
 }));
 
 describe('shared UI component token contract', () => {
+  it('maps both systems onto one density-aware Right Dock token contract', () => {
+    const activeValues = declarations(active);
+    const candidateValues = declarations(candidate);
+
+    expect(activeValues.get('--ui-panel-inset')).toBe('var(--ui-space-4)');
+    expect(activeValues.get('--ui-right-dock-content-inset')).toBe(
+      'var(--ui-panel-inset)',
+    );
+    expect(activeValues.get('--ui-drag-indicator-width')).toBe('2px');
+
+    expect(candidateValues.get('--ui-right-dock-width')).toBe('17.5rem');
+    expect(candidateValues.get('--ui-right-dock-rail-width')).toBe('2.5rem');
+    expect(candidateValues.get('--ui-right-dock-content-inset')).toBe(
+      'var(--ui-panel-inset)',
+    );
+    expect(candidateValues.get('--ui-inspector-width')).toBe(
+      'var(--ui-right-dock-width)',
+    );
+    expect(candidateValues.get('--ui-inspector-rail-width')).toBe(
+      'var(--ui-right-dock-rail-width)',
+    );
+    expect(candidate).toMatch(
+      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{[^}]*--ui-panel-inset:\s*0\.75rem;[^}]*\}/su,
+    );
+  });
+
   it.each([
     ['active', active],
     ['candidate', candidate],

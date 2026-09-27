@@ -38,6 +38,10 @@ const playerBarSource = readFileSync(
   new URL('../components/playback/PlayerBar.vue', import.meta.url),
   'utf8',
 );
+const rightDockSource = readFileSync(
+  new URL('../components/layout/AppRightDock.vue', import.meta.url),
+  'utf8',
+);
 const topTabsSource = readFileSync(
   new URL('../components/layout/AppTopTabs.vue', import.meta.url),
   'utf8',
@@ -126,12 +130,14 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(sidebarSource).toContain("setActiveView('setlist')");
   });
 
-  it('keeps the primary page playlist-owned and projects playback context through the shell slot', () => {
+  it('keeps the primary page playlist-owned and projects playback context as a shell-main sibling', () => {
     expect(source).not.toContain('useStudioLibraryInspector');
     expect(source).not.toContain('StudioLibraryContextInspector');
-    expect(contextSource).toContain('useStudioLibraryInspector');
+    expect(contextSource).not.toContain('useStudioLibraryInspector');
     expect(contextSource).toContain('usePlaybackQueue');
     expect(contextSource).toContain('<StudioLibraryContextInspector');
+    expect(contextSource).toContain("const emit = defineEmits(['close'])");
+    expect(contextSource).toContain('@close="emit(\'close\')"');
     expect(contextSource).toContain(':current-track="currentTrack"');
     expect(contextSource).toContain(':queue-source-name="queueSourceName"');
     expect(contextSource).toContain(':upcoming-tracks="upcomingTracks"');
@@ -141,15 +147,23 @@ describe('StudioLibraryPrototypeView development integration', () => {
       /collection-title|cover-url|can-collage|:facts=/u,
     );
     expect(appSource).toContain('internalContextDefinitions');
-    expect(appSource).toContain('#context');
-    expect(archiveFrameSource).toContain('<slot name="context" />');
-    expect(archiveFrameSource).toContain('app-archive-frame__context');
+    expect(appSource).toContain('class="shell__workspace"');
+    expect(appSource).toContain('class="shell__dock"');
+    expect(appSource).toContain('<AppRightDock');
+    expect(appSource).toContain(':is="activeContextView"');
+    expect(appSource).toContain(
+      '@close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"',
+    );
+    expect(appSource).not.toContain('#context');
+    expect(archiveFrameSource).not.toContain('<slot name="context" />');
+    expect(archiveFrameSource).not.toContain('app-archive-frame__context');
     expect(dossierSource).not.toContain('StudioLibraryMetadataRail');
   });
 
   it('keeps the compact context plane temporary while preserving a full-height collapsed rail', () => {
-    expect(archiveFrameSource).toContain('position: absolute');
-    expect(archiveFrameSource).toContain('@media (max-width: 70rem)');
+    expect(appSource).toContain('position: absolute');
+    expect(appSource).toContain('@media (max-width: 70rem)');
+    expect(archiveFrameSource).not.toContain('@media (max-width: 70rem)');
     expect(contextSource).toContain('StudioLibraryContextInspector');
     const inspectorSource = readFileSync(
       new URL(
@@ -158,7 +172,11 @@ describe('StudioLibraryPrototypeView development integration', () => {
       ),
       'utf8',
     );
-    expect(inspectorSource).toContain('.studio-context-inspector--collapsed');
+    expect(rightDockSource).toContain('.app-right-dock--collapsed');
+    expect(rightDockSource).toContain('var(--ui-right-dock-rail-width)');
+    expect(inspectorSource).not.toContain(
+      '.studio-context-inspector--collapsed',
+    );
     expect(inspectorSource).not.toContain('margin-block: auto');
   });
 
@@ -166,12 +184,10 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(playerBarSource).toContain('PlayerBarArtwork');
     expect(playerBarSource).toContain("'artworkActivate'");
     expect(appSource).toContain(':artwork-expandable="activeContextAvailable"');
-    expect(appSource).toContain(':artwork-expanded="activeContextExpanded"');
-    expect(appSource).toContain(':artwork-controls="activeContextControlId"');
-    expect(appSource).toContain('@artwork-activate="toggleActiveContext"');
-    expect(appSource).toMatch(
-      /loadController:\s*\(\) =>\s*import\('\.\/composables\/useStudioLibraryInspector\.js'\)/u,
-    );
+    expect(appSource).toContain(':artwork-expanded="metadataExpanded"');
+    expect(appSource).toContain(':artwork-controls="RIGHT_DOCK_CONTENT_ID"');
+    expect(appSource).toContain('@artwork-activate="toggleMetadataSurface"');
+    expect(appSource).toContain('useAppRightDock');
     expect(appSource).not.toContain(
       "import { useStudioLibraryInspector } from './composables/useStudioLibraryInspector.js';",
     );
@@ -179,17 +195,15 @@ describe('StudioLibraryPrototypeView development integration', () => {
   });
 
   it('dismisses the temporary Inspector with Escape and returns focus to its opener', () => {
-    expect(contextSource).toContain("event.key !== 'Escape'");
-    expect(contextSource).toContain('document.activeElement');
-    expect(contextSource).toContain('returnFocusTarget');
-    expect(contextSource).toContain('setInspectorOpen(false)');
-    expect(contextSource).toContain('nextTick');
-    expect(contextSource).toContain(
-      "removeEventListener('keydown', handleDocumentKeydown)",
+    expect(appSource).toContain("event.key !== 'Escape'");
+    expect(appSource).toContain('document.activeElement');
+    expect(appSource).toContain('returnFocusTarget');
+    expect(appSource).toContain('closeTopDockSurface()');
+    expect(appSource).toContain('nextTick');
+    expect(appSource).toContain(
+      "removeEventListener('keydown', handleRightDockKeydown)",
     );
-    expect(contextSource).toMatch(
-      /onBeforeUnmount\([\s\S]*?isInspectorOpen\.value[\s\S]*?setInspectorOpen\(false\)/u,
-    );
+    expect(contextSource).not.toContain("event.key !== 'Escape'");
   });
 
   it('keeps View selection protection narrow and leaves image fallback to reviewed components', () => {

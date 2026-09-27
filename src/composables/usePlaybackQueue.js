@@ -64,14 +64,47 @@ function currentSourceOrderIds() {
     : orderedIdsForTracks(state.tracks);
 }
 
+export function buildQueueTrackIndex({
+  queuedTracks = [],
+  tracks = [],
+  historyEntries = [],
+  currentTrack = null,
+} = {}) {
+  const index = new Map();
+
+  if (currentTrack?.id) index.set(currentTrack.id, currentTrack);
+
+  // trackById historically preferred the first matching history entry. Build
+  // this layer in reverse so the first entry is the final write for that id.
+  for (
+    let entryIndex = historyEntries.length - 1;
+    entryIndex >= 0;
+    entryIndex -= 1
+  ) {
+    const track = historyEntries[entryIndex]?.track;
+    if (track?.id) index.set(track.id, track);
+  }
+  for (const track of tracks) {
+    if (track?.id) index.set(track.id, track);
+  }
+  for (const track of queuedTracks) {
+    if (track?.id) index.set(track.id, track);
+  }
+
+  return index;
+}
+
+const trackIndex = computed(() =>
+  buildQueueTrackIndex({
+    queuedTracks: state.queuedTracks,
+    tracks: state.tracks,
+    historyEntries: state.historyEntries,
+    currentTrack: state.currentTrack,
+  }),
+);
+
 function trackById(trackId) {
-  return (
-    state.queuedTracks.find((track) => track.id === trackId) ??
-    state.tracks.find((track) => track.id === trackId) ??
-    state.historyEntries.find((entry) => entry.track.id === trackId)?.track ??
-    (state.currentTrack?.id === trackId ? state.currentTrack : null) ??
-    null
-  );
+  return trackIndex.value.get(trackId) ?? null;
 }
 
 function sourceCursorId() {
@@ -108,7 +141,9 @@ const sourceUpcomingTracks = computed(() => {
   const orderIds = currentSourceOrderIds();
   const index = sourceCursorIndex();
   const upcomingIds = index === -1 ? orderIds : orderIds.slice(index + 1);
-  return upcomingIds.map(trackById).filter(Boolean);
+  return upcomingIds
+    .map((trackId) => trackIndex.value.get(trackId))
+    .filter(Boolean);
 });
 
 const queuedTracks = computed(() => state.queuedTracks);

@@ -1,6 +1,5 @@
 <script setup>
 import { QUEUE_TRACK_THUMB_SIZE } from '../../constants/ui.js';
-import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
@@ -51,6 +50,8 @@ const emit = defineEmits([
       :size="QUEUE_TRACK_THUMB_SIZE"
       background="var(--ui-color-canvas)"
       font-size="var(--ui-font-size-lg)"
+      loading="lazy"
+      decoding="async"
     />
     <span class="queue-track__copy">
       <UiTextButton
@@ -58,9 +59,16 @@ const emit = defineEmits([
         class="queue-track__title"
         :text="track.title"
         :aria-label="`前往專輯：${track.title}`"
+        overflow="ellipsis"
         @click="emit('titleClick', track)"
       />
-      <UiMarqueeText v-else class="queue-track__title" :text="track.title" />
+      <span
+        v-else
+        class="queue-track__title queue-track__title--static"
+        :title="track.title"
+      >
+        {{ track.title }}
+      </span>
       <span v-if="track.artist" class="queue-track__artist">
         {{ track.artist }}
       </span>
@@ -80,9 +88,10 @@ const emit = defineEmits([
   width: 100%;
   min-width: 0;
   padding: var(--ui-space-1);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   color: var(--ui-color-text);
   font-size: inherit;
+  line-height: var(--ui-line-height-label);
 }
 
 .queue-track:hover {
@@ -137,7 +146,17 @@ const emit = defineEmits([
   z-index: 1;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.queue-track__title--static {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .queue-track__artist {

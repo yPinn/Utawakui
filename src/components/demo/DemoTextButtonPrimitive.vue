@@ -143,7 +143,7 @@ const COVERAGE = {
     <section class="demo-text-button-subsection">
       <header class="demo-text-button-subsection__header">
         <h6>Content＋overflow</h6>
-        <p>溢位沿用 UiMarqueeText；reduced motion 回到單行省略。</p>
+        <p>{{ layer.overflowNote }}</p>
       </header>
       <div class="demo-text-button-content-grid">
         <article
@@ -226,7 +226,7 @@ const COVERAGE = {
         </div>
         <div>
           <dt>Overflow</dt>
-          <dd>UiMarqueeText owns overflow／title／reduced motion</dd>
+          <dd>{{ layer.overflowContract }}</dd>
         </div>
         <div>
           <dt>Appearance</dt>

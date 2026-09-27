@@ -205,11 +205,14 @@ const CURRENT_MAPPINGS = [
     sources: [
       'src/styles/tokens.css',
       'src/components/playlists/StudioLibraryDossier.vue',
+      'src/components/layout/AppRightDockHeader.vue',
+      'src/components/queue/QueuePanel.vue',
     ],
-    value: 'Panel inset 尚無 active token',
-    status: 'consumer 已引用候選 token，目前只在 F8 生效',
+    value: 'Panel inset 1rem／16 CSS px',
+    status:
+      'Standard 已映射；Compact 由 Token v2 density scope 覆寫為 0.75rem／12 CSS px',
     shape: 'space',
-    samples: [],
+    samples: [{ label: 'Standard', size: '1rem', px: 16 }],
   },
   {
     key: 'shell-gutter',

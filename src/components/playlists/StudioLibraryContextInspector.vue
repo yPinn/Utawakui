@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue';
-import { PanelRightClose, PanelRightOpen, Volume2 } from '../../icons/index.js';
+import { Volume2 } from '../../icons/index.js';
 import {
   INSPECTOR_WIDTH_MAX,
   INSPECTOR_WIDTH_MIN,
@@ -8,16 +8,14 @@ import {
 } from '../../composables/useStudioLibraryInspectorWidth.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
+import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
-import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
-import UiSurface from '../ui/UiSurface.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const props = defineProps({
-  open: { type: Boolean, required: true },
   currentTrack: { type: Object, default: null },
   queueSourceName: { type: String, default: '' },
   upcomingTracks: { type: Array, default: () => [] },
@@ -27,16 +25,17 @@ const props = defineProps({
   collection: { type: Object, default: null },
 });
 
-const emit = defineEmits(['toggle']);
+const emit = defineEmits(['close']);
 
 const inspectorWidth = useStudioLibraryInspectorWidth();
-
-// Only overrides --ui-inspector-width while open — collapsed uses the
-// separate, fixed --ui-inspector-rail-width and isn't draggable.
-const rootStyle = computed(() =>
-  props.open
-    ? { '--ui-inspector-width': `${inspectorWidth.width.value}px` }
-    : undefined,
+const METADATA_QUEUE_PREVIEW_LIMIT = 3;
+const upcomingPreviewTracks = computed(() =>
+  props.upcomingTracks.slice(0, METADATA_QUEUE_PREVIEW_LIMIT),
+);
+const queuePreviewLabel = computed(() =>
+  props.upcomingTracks.length > METADATA_QUEUE_PREVIEW_LIMIT
+    ? `接下來的播放佇列，顯示前 ${METADATA_QUEUE_PREVIEW_LIMIT} 首，共 ${props.upcomingTracks.length} 首`
+    : '接下來的播放佇列',
 );
 
 // Unlike every other UiCollageThumb consumer (dossier header, details modal,
@@ -88,209 +87,121 @@ const currentTrackFacts = computed(() => {
 </script>
 
 <template>
-  <UiSurface
-    tag="aside"
-    class="studio-context-inspector"
-    :class="{
-      'studio-context-inspector--open': open,
-      'studio-context-inspector--collapsed': !open,
-    }"
-    tone="surface"
-    radius="sm"
-    :style="rootStyle"
-    :aria-label="open ? '播放資訊' : '播放資訊（已摺疊）'"
-  >
-    <div
-      id="studio-library-inspector-content"
-      class="studio-context-inspector__content"
-      :hidden="!open"
-      :aria-hidden="!open"
-    >
-      <header class="studio-context-inspector__header">
-        <div class="studio-context-inspector__identity">
-          <h2>播放資訊</h2>
-          <p>{{ queueContextLabel }}</p>
-        </div>
-        <UiIconButton
-          class="studio-context-inspector__collapse"
-          :icon="PanelRightClose"
-          label="摺疊播放資訊"
-          size="md"
-          :aria-expanded="true"
-          aria-controls="studio-library-inspector-content"
-          @click="emit('toggle')"
-        />
-      </header>
-
-      <div class="studio-context-inspector__scroll">
-        <section
-          v-if="collection"
-          class="studio-context-inspector__section studio-context-inspector__collection"
-          aria-labelledby="studio-context-collection-heading"
-        >
-          <UiCollageThumb
-            class="studio-context-inspector__collection-cover"
-            :cover-url="collection.coverUrl"
-            :tracks="collection.tracks"
-            :can-collage="collection.canCollage"
-            :size="collectionCoverSize"
-          />
-          <h3 id="studio-context-collection-heading">{{ collection.name }}</h3>
-          <p v-if="collection.description">{{ collection.description }}</p>
-        </section>
-
-        <section
-          class="studio-context-inspector__section studio-context-inspector__current"
-          aria-labelledby="studio-context-current-heading"
-        >
-          <div class="studio-context-inspector__section-heading">
-            <h3 id="studio-context-current-heading">目前播放</h3>
-            <UiStatusIcon
-              v-if="currentTrack"
-              :icon="Volume2"
-              tone="current"
-              :label="`目前播放：${currentTrack.title}`"
-              decorative
-            />
-          </div>
-
-          <template v-if="currentTrack">
-            <div class="studio-context-inspector__current-identity">
-              <UiTrackThumb
-                class="studio-context-inspector__current-artwork"
-                :track="currentTrack"
-                size="var(--ui-track-artwork-size-preview)"
-              />
-              <div class="studio-context-inspector__current-copy">
-                <h4>{{ currentTrack.title }}</h4>
-                <p>{{ currentTrack.artist || '未知演出者' }}</p>
-              </div>
-            </div>
-
-            <dl v-if="currentTrackFacts.length > 0">
-              <div v-for="fact in currentTrackFacts" :key="fact.id">
-                <dt>{{ fact.label }}</dt>
-                <dd>{{ fact.value }}</dd>
-              </div>
-            </dl>
-          </template>
-          <UiHint v-else>目前沒有播放中的歌曲</UiHint>
-        </section>
-
-        <section
-          class="studio-context-inspector__section studio-context-inspector__queue"
-          aria-labelledby="studio-context-queue-heading"
-        >
-          <div class="studio-context-inspector__section-heading">
-            <h3 id="studio-context-queue-heading">接下來</h3>
-            <UiChip v-if="upcomingTracks.length > 0" tone="neutral">
-              {{ upcomingTracks.length }} 首
-            </UiChip>
-          </div>
-
-          <UiHint v-if="upcomingTracks.length === 0">佇列中沒有下一首</UiHint>
-          <ol
-            v-else
-            class="studio-context-inspector__queue-list"
-            aria-label="接下來的播放佇列"
-          >
-            <li
-              v-for="(track, index) in upcomingTracks"
-              :key="track.id ?? `${track.title}-${index}`"
-              class="studio-context-inspector__queue-item"
-            >
-              <UiTrackThumb
-                :track="track"
-                size="var(--ui-track-artwork-size-dense)"
-              />
-              <div class="studio-context-inspector__queue-copy">
-                <h4>{{ track.title }}</h4>
-                <p>
-                  {{ track.artist || '未知演出者' }} ·
-                  {{ formatDuration(track.duration) }}
-                </p>
-              </div>
-            </li>
-          </ol>
-        </section>
-      </div>
-    </div>
-
-    <UiIconButton
-      v-if="!open"
-      class="studio-context-inspector__expand"
-      :icon="PanelRightOpen"
-      label="展開播放資訊"
-      :aria-expanded="false"
-      aria-controls="studio-library-inspector-content"
-      shape="inherit"
-      stretch
-      @click="emit('toggle')"
+  <section class="studio-context-inspector" aria-label="播放資訊">
+    <AppRightDockHeader
+      title="播放資訊"
+      :subtitle="queueContextLabel"
+      close-label="關閉播放資訊"
+      @close="emit('close')"
     />
 
-    <button
-      v-if="open"
-      type="button"
-      class="studio-context-inspector__handle"
-      :class="{
-        'studio-context-inspector__handle--active':
-          inspectorWidth.isResizing.value,
-      }"
-      aria-label="調整播放資訊寬度"
-      @pointerdown="inspectorWidth.startResize"
-    ></button>
-  </UiSurface>
+    <div class="studio-context-inspector__scroll">
+      <section
+        v-if="collection"
+        class="studio-context-inspector__section studio-context-inspector__collection"
+        aria-labelledby="studio-context-collection-heading"
+      >
+        <UiCollageThumb
+          class="studio-context-inspector__collection-cover"
+          :cover-url="collection.coverUrl"
+          :tracks="collection.tracks"
+          :can-collage="collection.canCollage"
+          :size="collectionCoverSize"
+        />
+        <h3 id="studio-context-collection-heading">{{ collection.name }}</h3>
+        <p v-if="collection.description">{{ collection.description }}</p>
+      </section>
+
+      <section
+        class="studio-context-inspector__section studio-context-inspector__current"
+        aria-labelledby="studio-context-current-heading"
+      >
+        <div class="studio-context-inspector__section-heading">
+          <h3 id="studio-context-current-heading">目前播放</h3>
+          <UiStatusIcon
+            v-if="currentTrack"
+            :icon="Volume2"
+            tone="current"
+            :label="`目前播放：${currentTrack.title}`"
+            decorative
+          />
+        </div>
+
+        <template v-if="currentTrack">
+          <div class="studio-context-inspector__current-identity">
+            <UiTrackThumb
+              class="studio-context-inspector__current-artwork"
+              :track="currentTrack"
+              size="var(--ui-track-artwork-size-preview)"
+            />
+            <div class="studio-context-inspector__current-copy">
+              <h4>{{ currentTrack.title }}</h4>
+              <p>{{ currentTrack.artist || '未知演出者' }}</p>
+            </div>
+          </div>
+
+          <dl v-if="currentTrackFacts.length > 0">
+            <div v-for="fact in currentTrackFacts" :key="fact.id">
+              <dt>{{ fact.label }}</dt>
+              <dd>{{ fact.value }}</dd>
+            </div>
+          </dl>
+        </template>
+        <UiHint v-else>目前沒有播放中的歌曲</UiHint>
+      </section>
+
+      <section
+        class="studio-context-inspector__section studio-context-inspector__queue"
+        aria-labelledby="studio-context-queue-heading"
+      >
+        <div class="studio-context-inspector__section-heading">
+          <h3 id="studio-context-queue-heading">接下來</h3>
+          <UiChip v-if="upcomingTracks.length > 0" tone="muted">
+            {{ upcomingTracks.length }} 首
+          </UiChip>
+        </div>
+
+        <UiHint v-if="upcomingTracks.length === 0">佇列中沒有下一首</UiHint>
+        <ol
+          v-else
+          class="studio-context-inspector__queue-list"
+          :aria-label="queuePreviewLabel"
+        >
+          <li
+            v-for="(track, index) in upcomingPreviewTracks"
+            :key="track.id ?? `${track.title}-${index}`"
+            class="studio-context-inspector__queue-item"
+          >
+            <UiTrackThumb
+              :track="track"
+              size="var(--ui-track-artwork-size-dense)"
+              loading="lazy"
+              decoding="async"
+            />
+            <div class="studio-context-inspector__queue-copy">
+              <h4>{{ track.title }}</h4>
+              <p>
+                {{ track.artist || '未知演出者' }} ·
+                {{ formatDuration(track.duration) }}
+              </p>
+            </div>
+          </li>
+        </ol>
+      </section>
+    </div>
+  </section>
 </template>
 
 <style scoped>
 .studio-context-inspector {
-  position: relative;
+  display: flex;
   min-width: 0;
   min-height: 0;
-  overflow: hidden;
+  height: 100%;
+  flex-direction: column;
   color: var(--ui-color-text);
 }
 
-.studio-context-inspector--open {
-  display: flex;
-  flex-direction: column;
-  width: var(--ui-inspector-width);
-  height: 100%;
-}
-
-.studio-context-inspector--collapsed {
-  display: grid;
-  width: var(--ui-inspector-rail-width);
-  height: 100%;
-}
-
-.studio-context-inspector__content {
-  display: flex;
-  min-width: 0;
-  min-height: 0;
-  flex: 1;
-  flex-direction: column;
-}
-
-.studio-context-inspector__content[hidden] {
-  display: none;
-}
-
-.studio-context-inspector__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-4);
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-}
-
-.studio-context-inspector__identity {
-  min-width: 0;
-}
-
-.studio-context-inspector__identity h2,
-.studio-context-inspector__identity p,
 .studio-context-inspector__section h3,
 .studio-context-inspector__section h4,
 .studio-context-inspector__section p,
@@ -301,22 +212,6 @@ const currentTrackFacts = computed(() => {
   margin: 0;
 }
 
-.studio-context-inspector__identity h2 {
-  font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
-}
-
-.studio-context-inspector__identity p {
-  overflow: hidden;
-  margin-top: var(--ui-space-1);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .studio-context-inspector__scroll {
   min-height: 0;
   overflow-y: auto;
@@ -325,7 +220,7 @@ const currentTrackFacts = computed(() => {
 }
 
 .studio-context-inspector__section {
-  padding: var(--ui-space-4);
+  padding: var(--ui-right-dock-content-inset);
 }
 
 .studio-context-inspector__section + .studio-context-inspector__section {
@@ -477,7 +372,6 @@ const currentTrackFacts = computed(() => {
   line-height: var(--ui-line-height-label);
 }
 
-.studio-context-inspector__identity p,
 .studio-context-inspector__current-copy,
 .studio-context-inspector__current dl dd,
 .studio-context-inspector__collection p,
@@ -486,69 +380,9 @@ const currentTrackFacts = computed(() => {
   user-select: text;
 }
 
-.studio-context-inspector__identity h2,
 .studio-context-inspector__section h3,
 .studio-context-inspector__section dt {
   -webkit-user-select: none;
   user-select: none;
-}
-
-.studio-context-inspector__handle {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  /* Flush to the inner edge (not straddling it like
-     AppPlaylistSidebar.vue's handle does) — the parent rule above sets
-     overflow: hidden, so a negative offset here would clip the hit area
-     and the accent line outside the visible box. */
-  left: 0;
-  width: 6px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  cursor: col-resize;
-  z-index: 1;
-  touch-action: none;
-}
-
-.studio-context-inspector__handle::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 2px;
-  background: transparent;
-  transition: background-color var(--ui-motion-duration-fast)
-    var(--ui-motion-easing-standard);
-}
-
-.studio-context-inspector__handle:hover::after,
-.studio-context-inspector__handle--active::after {
-  background: var(--ui-color-accent);
-}
-
-:global(:root[data-ui-motion='reduced'])
-  .studio-context-inspector__handle::after {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .studio-context-inspector__handle::after {
-    transition: none;
-  }
-}
-
-/* Paired with AppArchiveFrame's temporary context plane. Keep the literal in
-   sync through AppArchiveFrame.behavior.test.js rather than inventing a token
-   that CSS media queries cannot consume. */
-@media (max-width: 70rem) {
-  .studio-context-inspector--open {
-    width: min(
-      var(--ui-inspector-width),
-      calc(100vw - var(--ui-inspector-rail-width))
-    );
-    box-shadow: var(--ui-shadow-overlay);
-  }
 }
 </style>

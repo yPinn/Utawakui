@@ -12,10 +12,7 @@ const emit = defineEmits(['update:activeView']);
 </script>
 
 <template>
-  <section
-    class="app-archive-frame"
-    :class="{ 'app-archive-frame--with-context': $slots.context }"
-  >
+  <section class="app-archive-frame">
     <div class="app-archive-frame__primary">
       <AppTopTabs
         class="app-archive-frame__tabs"
@@ -26,9 +23,6 @@ const emit = defineEmits(['update:activeView']);
       <AppInnerPage class="app-archive-frame__page">
         <slot />
       </AppInnerPage>
-    </div>
-    <div v-if="$slots.context" class="app-archive-frame__context">
-      <slot name="context" />
     </div>
   </section>
 </template>
@@ -44,19 +38,6 @@ const emit = defineEmits(['update:activeView']);
      height instead of "grow to fit content." */
   height: 100%;
   min-height: 0;
-}
-
-.app-archive-frame--with-context {
-  grid-template-columns: minmax(0, 1fr) auto;
-  /* Not --ui-shell-gutter — that token only exists in the Token v2 sheet,
-     and this file is production (always loaded, not gated behind
-     data-ui-system='v2'). It happened to resolve today only because the
-     context slot itself is currently Studio Library Candidate-only, which
-     always runs alongside v2. --ui-space-3 matches .shell__main's own gap
-     to the sidebar (see App.vue), so primary-to-context and sidebar-to-main
-     read as the same distance instead of one silently depending on a
-     token this file has no contract with. */
-  gap: var(--ui-space-3);
 }
 
 .app-archive-frame__primary {
@@ -79,38 +60,5 @@ const emit = defineEmits(['update:activeView']);
   position: relative;
   z-index: 1;
   min-height: 0;
-}
-
-.app-archive-frame__context {
-  display: flex;
-  min-width: 0;
-  min-height: 0;
-  /* AppTopTabs only sits above .app-archive-frame__primary, not this
-     column — so the top inset has to match that column's actual card
-     start (--ui-archive-content-inset), not a plain symmetric gutter, for
-     the context plane to share .shell__sidebar's/.shell__main's baseline.
-     See --ui-archive-content-inset's own comment in tokens.css. Deliberately
-     no bottom padding here — .shell__main already wraps this whole frame
-     (both columns) in its own bottom gutter, so adding another one here
-     would double it up and leave this column's bottom edge higher than the
-     primary one's. */
-  padding-top: var(--ui-archive-content-inset);
-}
-
-/* Paired with StudioLibraryContextInspector's compact projection. CSS custom
-   properties cannot drive media-query conditions, so the behavior test keeps
-   these two authored breakpoints synchronized. */
-@media (max-width: 70rem) {
-  .app-archive-frame--with-context {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
-
-  .app-archive-frame__context {
-    position: absolute;
-    z-index: var(--ui-z-sticky);
-    inset-block: 0;
-    inset-inline-end: 0;
-  }
 }
 </style>

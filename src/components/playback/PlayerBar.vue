@@ -40,7 +40,6 @@ import { shortenDeviceLabel } from '../../utils/audioDeviceLabel.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlayerToolsPanel from './PlayerToolsPanel.vue';
 import PlayerBarArtwork from './PlayerBarArtwork.vue';
-import QueuePanel from '../queue/QueuePanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
@@ -50,9 +49,11 @@ defineProps({
   artworkExpandable: { type: Boolean, default: false },
   artworkExpanded: { type: Boolean, default: false },
   artworkControls: { type: String, default: undefined },
+  queueExpanded: { type: Boolean, default: false },
+  queueControls: { type: String, default: undefined },
 });
 
-const emit = defineEmits(['artworkActivate']);
+const emit = defineEmits(['artworkActivate', 'queueActivate']);
 
 const {
   state,
@@ -96,7 +97,6 @@ const {
   selectPreset,
 } = useSeparation();
 
-const isQueueOpen = ref(false);
 const isPlayerToolsOpen = ref(false);
 const activeToolTab = ref('adjust');
 
@@ -480,16 +480,13 @@ function generateSeparation() {
   separate(track, selectedSeparationPresetId.value);
 }
 
-// Both panels float in the same spot (position: fixed below), so only one
-// can be open at a time.
 function toggleQueuePanel() {
-  isQueueOpen.value = !isQueueOpen.value;
-  if (isQueueOpen.value) isPlayerToolsOpen.value = false;
+  emit('queueActivate');
+  isPlayerToolsOpen.value = false;
 }
 
 function togglePlayerToolsPanel() {
   isPlayerToolsOpen.value = !isPlayerToolsOpen.value;
-  if (isPlayerToolsOpen.value) isQueueOpen.value = false;
 }
 
 let unsubscribeEnded;
@@ -652,9 +649,11 @@ onUnmounted(() => {
 
       <UiButton
         :icon="ListMusic"
-        :active="isQueueOpen"
-        :aria-label="isQueueOpen ? '關閉播放佇列' : '開啟播放佇列'"
-        :aria-pressed="isQueueOpen"
+        :active="queueExpanded"
+        :aria-label="queueExpanded ? '關閉播放佇列' : '開啟播放佇列'"
+        :aria-pressed="queueExpanded"
+        :aria-expanded="queueExpanded"
+        :aria-controls="queueControls"
         title="播放佇列"
         @click="toggleQueuePanel"
       />
@@ -679,8 +678,6 @@ onUnmounted(() => {
         <span class="player-bar__volume-value">{{ volumePercent }}%</span>
       </div>
     </div>
-
-    <QueuePanel :open="isQueueOpen" @close="isQueueOpen = false" />
 
     <PlayerToolsPanel
       v-model:active-tab="activeToolTab"

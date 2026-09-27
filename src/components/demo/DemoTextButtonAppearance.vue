@@ -11,6 +11,8 @@ const LAYERS = [
     note: '預設無底線；hover／focus-visible 顯示底線。',
     component: DemoCandidateTextButton,
     appearanceContract: '預設無底線 · hover／focus-visible underline',
+    overflowNote: '溢位沿用 UiMarqueeText；reduced motion 回到單行省略。',
+    overflowContract: 'UiMarqueeText owns overflow／title／reduced motion',
     recipeProps: {},
     stateNote:
       'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',
@@ -21,6 +23,10 @@ const LAYERS = [
     note: '現行同樣是 Default 無底線，hover／focus-visible 顯示底線。',
     component: UiTextButton,
     appearanceContract: '僅 hover／focus-visible 顯示底線',
+    overflowNote:
+      '預設沿用 UiMarqueeText；高列數 caller 可明確選用 static ellipsis。',
+    overflowContract:
+      'UiMarqueeText is default；overflow="ellipsis" skips observer／motion work',
     recipeProps: {},
     stateNote:
       'Default 無底線；hover／focus 顯示底線；pressed／disabled 沒有獨立樣式。',

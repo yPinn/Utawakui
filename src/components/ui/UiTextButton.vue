@@ -1,14 +1,23 @@
 <script setup>
-// Wraps UiMarqueeText in a real <button> so a caller can make marqueeing
-// text its own click target, separate from a row's own click handler.
+// Wraps overflow text in a real <button> so a caller can make it its own
+// click target, separate from a row's primary action. Marquee remains the
+// default; high-volume surfaces can opt into static ellipsis to avoid one
+// ResizeObserver and animation lane per row.
+import { computed } from 'vue';
 import UiMarqueeText from './UiMarqueeText.vue';
 
-defineProps({
+const props = defineProps({
   text: { type: [String, Number], default: '' },
   ariaLabel: { type: String, default: undefined },
+  overflow: {
+    type: String,
+    default: 'marquee',
+    validator: (value) => ['marquee', 'ellipsis'].includes(value),
+  },
 });
 
 const emit = defineEmits(['click']);
+const displayText = computed(() => String(props.text ?? ''));
 </script>
 
 <template>
@@ -18,7 +27,10 @@ const emit = defineEmits(['click']);
     :aria-label="ariaLabel"
     @click.stop="emit('click', $event)"
   >
-    <UiMarqueeText :text="text" />
+    <UiMarqueeText v-if="overflow === 'marquee'" :text="displayText" />
+    <span v-else class="ui-text-btn__text" :title="displayText">
+      {{ displayText }}
+    </span>
   </button>
 </template>
 
@@ -49,10 +61,20 @@ const emit = defineEmits(['click']);
   cursor: pointer;
 }
 
+.ui-text-btn__text {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* Targets UiMarqueeText's own text span directly — it's inline-block, and
    text-decoration set on this button wouldn't paint into it otherwise. */
 .ui-text-btn:hover :deep(.ui-marquee__text),
-.ui-text-btn:focus-visible :deep(.ui-marquee__text) {
+.ui-text-btn:focus-visible :deep(.ui-marquee__text),
+.ui-text-btn:hover .ui-text-btn__text,
+.ui-text-btn:focus-visible .ui-text-btn__text {
   text-decoration: underline;
 }
 

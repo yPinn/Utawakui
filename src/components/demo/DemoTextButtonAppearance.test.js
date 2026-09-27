@@ -332,6 +332,24 @@ describe('DemoTextButtonAppearance', () => {
     }
   });
 
+  it('lets high-volume callers choose static ellipsis without mounting marquee work', () => {
+    const mounted = mount(UiTextButton, {
+      text: 'A deliberately long queue title',
+      overflow: 'ellipsis',
+    });
+    const marquee = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-marquee'),
+    );
+    const staticText = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('ui-text-btn__text'),
+    )[0];
+
+    expect(marquee).toHaveLength(0);
+    expect(textContent(staticText)).toBe('A deliberately long queue title');
+    expect(staticText.props.title).toBe('A deliberately long queue title');
+    mounted.app.unmount();
+  });
+
   it('lists real destination recipes separately and leaves geometry and navigation with parents', async () => {
     const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
 
@@ -370,6 +388,9 @@ describe('DemoTextButtonAppearance', () => {
     expect(html).toContain('click event · propagation stopped at root');
     expect(html).toContain(
       'UiMarqueeText owns overflow／title／reduced motion',
+    );
+    expect(html).toContain(
+      'overflow=&quot;ellipsis&quot; skips observer／motion work',
     );
     expect(html).toContain('預設無底線 · hover／focus-visible underline');
     expect(html).toContain('僅 hover／focus-visible 顯示底線');

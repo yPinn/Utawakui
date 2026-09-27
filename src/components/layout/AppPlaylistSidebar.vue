@@ -27,7 +27,7 @@ const {
   clearCover,
   handlePlaylistMenuAction,
 } = usePlaylistActions();
-const { isResizing, startResize } = useSidebarResize();
+const { isResizing, startResize, toggleSidebarCollapse } = useSidebarResize();
 
 function activateSetlistView() {
   const isViewingStudioLibrary =
@@ -57,8 +57,9 @@ function activateSetlistView() {
       type="button"
       class="app-playlist-sidebar__handle"
       :class="{ 'app-playlist-sidebar__handle--active': isResizing }"
-      aria-label="調整側欄寬度"
+      aria-label="調整側欄寬度，雙擊切換摺疊"
       @pointerdown="startResize"
+      @dblclick="toggleSidebarCollapse"
     ></button>
 
     <!-- Independent of which playlist/album is currently selected/viewed —

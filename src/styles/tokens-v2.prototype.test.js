@@ -169,7 +169,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(259);
+    expect(uniqueNames.size).toBe(262);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
@@ -186,6 +186,9 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-field-bg-readonly-on-raised');
     expect(uniqueNames).toContain('--ui-field-hex-value-inline-size');
     expect(uniqueNames).toContain('--ui-inspector-width');
+    expect(uniqueNames).toContain('--ui-right-dock-width');
+    expect(uniqueNames).toContain('--ui-right-dock-rail-width');
+    expect(uniqueNames).toContain('--ui-right-dock-content-inset');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
@@ -287,6 +290,22 @@ describe('Studio Library workspace prototype isolation', () => {
 
   it('keeps the folder perimeter restrained because the interior owns the material color', () => {
     expect(tokens).toContain('--ui-folder-perimeter: 0.25rem;');
+  });
+
+  it('keeps the desktop Inspector bay aligned with the current draggable maximum', () => {
+    const candidate = tokenBlock(":root[data-ui-system='v2']");
+
+    expect(candidate['--ui-right-dock-width']).toBe('17.5rem');
+    expect(candidate['--ui-inspector-width']).toBe(
+      'var(--ui-right-dock-width)',
+    );
+  });
+
+  it('keeps the 12px Sidebar block inset in the shared production shell', () => {
+    expect(app).toMatch(
+      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-space-3\);[^}]*\}/su,
+    );
+    expect(tokens).not.toContain('--ui-shell-sidebar-inset-block');
   });
 
   it('offers a dossier-only embed without leaking candidate tokens into Vue', () => {

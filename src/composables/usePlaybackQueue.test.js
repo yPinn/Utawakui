@@ -1,4 +1,10 @@
+import { readFileSync } from 'node:fs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const source = readFileSync(
+  new URL('./usePlaybackQueue.js', import.meta.url),
+  'utf8',
+);
 
 const tracks = [
   { id: 'a', title: 'A' },
@@ -21,6 +27,31 @@ async function loadQueue() {
 }
 
 describe('usePlaybackQueue', () => {
+  it('builds one deterministic track index for Queue projections', async () => {
+    const { buildQueueTrackIndex } = await import('./usePlaybackQueue.js');
+    const current = { id: 'shared', title: 'current' };
+    const firstHistory = { id: 'history', title: 'first history' };
+    const index = buildQueueTrackIndex({
+      currentTrack: current,
+      historyEntries: [
+        { track: firstHistory },
+        { track: { id: 'history', title: 'later history' } },
+      ],
+      tracks: [
+        { id: 'source', title: 'source' },
+        { id: 'shared', title: 'source wins current' },
+      ],
+      queuedTracks: [{ id: 'shared', title: 'queued wins all' }],
+    });
+
+    expect(index.get('history')).toBe(firstHistory);
+    expect(index.get('source')?.title).toBe('source');
+    expect(index.get('shared')?.title).toBe('queued wins all');
+    expect(source).toContain('const trackIndex = computed');
+    expect(source).toContain('trackIndex.value.get(trackId)');
+    expect(source).not.toContain('upcomingIds.map(trackById)');
+  });
+
   it('stores a source queue snapshot with source metadata', async () => {
     const { state, currentTrack, sourceUpcomingTracks, setQueue } =
       await loadQueue();

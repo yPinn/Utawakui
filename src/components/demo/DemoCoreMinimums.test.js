@@ -44,6 +44,10 @@ const playerBarSource = readFileSync(
   new URL('../playback/PlayerBar.vue', import.meta.url),
   'utf8',
 );
+const rightDockSource = readFileSync(
+  new URL('../layout/AppRightDock.vue', import.meta.url),
+  'utf8',
+);
 
 const groupedContracts = [
   ['readability', '文字與符號', 'Label 14 · Body 16 · Glyph／控制標記 16'],
@@ -139,6 +143,7 @@ describe('DemoCoreMinimums', () => {
     expect(html).toContain('src/components/ui/UiTrackRow.vue');
     expect(html).toContain('src/components/playlists/PlaylistSidebarRow.vue');
     expect(html).toContain('src/components/playback/PlayerBar.vue');
+    expect(html).toContain('src/components/layout/AppRightDock.vue');
     expect(html).toContain('Sidebar 列 54px');
     expect(html).toContain('列表標頭無現行共用 token');
     expect(html).toContain('Checkbox／Range thumb 1rem');
@@ -146,6 +151,7 @@ describe('DemoCoreMinimums', () => {
       '一般符合 hard floor／Compact，Standard 尚待密度映射',
     );
     expect(html).toContain('現行吻合');
+    expect(html).toContain('Focus 2 CSS px；Drag indicator 2 CSS px');
     expect(html).toContain('部分落地，逐項審查中');
   });
 
@@ -163,13 +169,16 @@ describe('DemoCoreMinimums', () => {
       '--ui-track-row-thumb-size: 2.5rem;',
       '--ui-player-bar-height: calc(',
       '--ui-focus-width: 2px;',
+      '--ui-drag-indicator-width: 2px;',
     ]) {
       expect(activeTokenSource).toContain(source);
     }
     expect(activeTokenSource).toContain('54px: expanded and compact rows');
     expect(activeTokenSource).toContain('84px: 52px artwork');
     expect(activeTokenSource).not.toContain('--ui-list-header-height');
-    expect(activeTokenSource).not.toContain('--ui-drag-indicator-width');
+    expect(rightDockSource).toContain(
+      'inline-size: var(--ui-drag-indicator-width)',
+    );
 
     expect(iconButtonSource).toContain(
       '--ui-icon-btn-size: var(--ui-icon-button-size-md)',

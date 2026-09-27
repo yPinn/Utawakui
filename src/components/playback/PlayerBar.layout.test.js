@@ -39,4 +39,18 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(artistRule).toMatch(/text-overflow:\s*ellipsis/);
     expect(artistRule).toMatch(/white-space:\s*nowrap/);
   });
+
+  it('delegates Queue visibility to the shell-owned right Dock', () => {
+    expect(componentSource).toContain(
+      "const emit = defineEmits(['artworkActivate', 'queueActivate']);",
+    );
+    expect(componentSource).toContain(
+      'queueExpanded: { type: Boolean, default: false }',
+    );
+    expect(componentSource).toContain(':active="queueExpanded"');
+    expect(componentSource).toContain(':aria-controls="queueControls"');
+    expect(componentSource).toContain("emit('queueActivate')");
+    expect(componentSource).not.toContain('isQueueOpen');
+    expect(componentSource).not.toContain('<QueuePanel');
+  });
 });

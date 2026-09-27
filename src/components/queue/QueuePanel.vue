@@ -7,13 +7,13 @@ import { usePlayer } from '../../composables/usePlayer.js';
 import { albumPlaylistByTrackId } from '../../utils/albumMembership.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
-import PlayerBarPanel from '../playback/PlayerBarPanel.vue';
+import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
 import QueueSection from './QueueSection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 
 defineProps({
-  open: { type: Boolean, default: false },
+  active: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close']);
@@ -119,80 +119,94 @@ const {
 </script>
 
 <template>
-  <PlayerBarPanel
-    :open="open"
-    title="佇列"
-    aria-label="播放佇列"
-    close-label="關閉佇列"
-    @close="emit('close')"
-  >
-    <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
+  <section class="queue-panel" aria-label="播放佇列">
+    <AppRightDockHeader
+      title="佇列"
+      close-label="關閉播放佇列"
+      @close="emit('close')"
+    />
 
-    <div v-else class="queue-panel__sections">
-      <QueueSection
-        title="現正播放"
-        :tracks="currentTracks"
-        :current-track-id="state.currentTrackId"
-        :jumpable-track-ids="jumpableTrackIds"
-        @select-track="playCurrentTrack"
-        @title-click="jumpFromQueue"
-      />
+    <div class="queue-panel__scroll">
+      <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
 
-      <QueueSection
-        v-if="queuedTracks.length > 0"
-        title="佇列中下一首"
-        :tracks="queuedTracks"
-        :draggable-items="queuedTracks.length > 1"
-        :dragging-track-id="draggingQueuedTrackId"
-        :drop-target-track-id="dropTargetQueuedTrackId"
-        :drop-position="queuedDropPosition"
-        :jumpable-track-ids="jumpableTrackIds"
-        @select-track="playQueuedTrack($event, { source: false })"
-        @title-click="jumpFromQueue"
-        @track-drag-start="startQueuedDrag"
-        @track-drag-over="updateQueuedDropTarget"
-        @track-drag-leave="leaveQueuedDropTarget"
-        @track-drop="dropQueuedTrack"
-        @track-drag-end="clearQueuedDragState"
-      >
-        <template #actions>
-          <UiButton @click="clearQueuedTracks">清除佇列</UiButton>
-        </template>
-      </QueueSection>
+      <div v-else class="queue-panel__sections">
+        <QueueSection
+          title="現正播放"
+          :tracks="currentTracks"
+          :current-track-id="state.currentTrackId"
+          :jumpable-track-ids="jumpableTrackIds"
+          @select-track="playCurrentTrack"
+          @title-click="jumpFromQueue"
+        />
 
-      <QueueSection
-        title-prefix="下一首來自："
-        :title="upcomingSourceLabel"
-        :tracks="sourceUpcomingTracks"
-        :draggable-items="sourceUpcomingTracks.length > 1"
-        :dragging-track-id="draggingSourceTrackId"
-        :drop-target-track-id="dropTargetSourceTrackId"
-        :drop-position="sourceDropPosition"
-        :jumpable-track-ids="jumpableTrackIds"
-        :title-jumpable="Boolean(upcomingSourcePlaylist)"
-        :title-link-aria-label="upcomingSourceLinkLabel"
-        empty-text="沒有下一首"
-        @select-track="playQueuedTrack($event, { source: true })"
-        @title-click="jumpFromQueue"
-        @section-title-click="jumpToUpcomingSource"
-        @track-drag-start="startSourceDrag"
-        @track-drag-over="updateSourceDropTarget"
-        @track-drag-leave="leaveSourceDropTarget"
-        @track-drop="dropSourceTrack"
-        @track-drag-end="clearSourceDragState"
-      />
+        <QueueSection
+          v-if="queuedTracks.length > 0"
+          title="佇列中下一首"
+          :tracks="queuedTracks"
+          :draggable-items="queuedTracks.length > 1"
+          :dragging-track-id="draggingQueuedTrackId"
+          :drop-target-track-id="dropTargetQueuedTrackId"
+          :drop-position="queuedDropPosition"
+          :jumpable-track-ids="jumpableTrackIds"
+          @select-track="playQueuedTrack($event, { source: false })"
+          @title-click="jumpFromQueue"
+          @track-drag-start="startQueuedDrag"
+          @track-drag-over="updateQueuedDropTarget"
+          @track-drag-leave="leaveQueuedDropTarget"
+          @track-drop="dropQueuedTrack"
+          @track-drag-end="clearQueuedDragState"
+        >
+          <template #actions>
+            <UiButton @click="clearQueuedTracks">清除佇列</UiButton>
+          </template>
+        </QueueSection>
+
+        <QueueSection
+          title-prefix="下一首來自："
+          :title="upcomingSourceLabel"
+          :tracks="sourceUpcomingTracks"
+          :draggable-items="sourceUpcomingTracks.length > 1"
+          :dragging-track-id="draggingSourceTrackId"
+          :drop-target-track-id="dropTargetSourceTrackId"
+          :drop-position="sourceDropPosition"
+          :jumpable-track-ids="jumpableTrackIds"
+          :title-jumpable="Boolean(upcomingSourcePlaylist)"
+          :title-link-aria-label="upcomingSourceLinkLabel"
+          empty-text="沒有下一首"
+          @select-track="playQueuedTrack($event, { source: true })"
+          @title-click="jumpFromQueue"
+          @section-title-click="jumpToUpcomingSource"
+          @track-drag-start="startSourceDrag"
+          @track-drag-over="updateSourceDropTarget"
+          @track-drag-leave="leaveSourceDropTarget"
+          @track-drop="dropSourceTrack"
+          @track-drag-end="clearSourceDragState"
+        />
+      </div>
     </div>
-  </PlayerBarPanel>
+  </section>
 </template>
 
 <style scoped>
-/* Caps the combined height of all three sections together (not each one
-   individually), so the panel shows roughly --ui-queue-panel-max-height's
-   worth of rows total across whichever mix of "現正播放"/"佇列中下一首"/
-   "下一首來自" happen to be populated, then scrolls the whole set together
-   beyond that. */
-.queue-panel__sections {
-  max-height: var(--ui-queue-panel-max-height);
+.queue-panel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+}
+
+.queue-panel__scroll {
+  min-height: 0;
+  flex: 1;
   overflow-y: auto;
+  padding: var(--ui-right-dock-content-inset);
+  scrollbar-color: var(--ui-color-border-strong) transparent;
+  scrollbar-width: thin;
+}
+
+.queue-panel__scroll :deep(.ui-hint) {
+  -webkit-user-select: text;
+  user-select: text;
 }
 </style>

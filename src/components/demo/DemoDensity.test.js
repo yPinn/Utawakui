@@ -24,6 +24,8 @@ const consumerSources = [
   '../playlists/StudioLibraryTrackTable.vue',
   '../playback/PlayerBar.vue',
   '../playlists/StudioLibraryDossier.vue',
+  '../layout/AppRightDockHeader.vue',
+  '../queue/QueuePanel.vue',
   '../../views/DemoView.vue',
 ].map((filename) => ({
   filename,
@@ -177,10 +179,10 @@ describe('DemoDensity', () => {
     ];
 
     expect(stages).toHaveLength(20);
-    expect(html.match(/data-density-specimen=/gu)).toHaveLength(27);
+    expect(html.match(/data-density-specimen=/gu)).toHaveLength(28);
     expect(html.match(/data-density-specimen="standard"/gu)).toHaveLength(10);
     expect(html.match(/data-density-specimen="compact"/gu)).toHaveLength(10);
-    expect(html.match(/data-density-specimen="current"/gu)).toHaveLength(7);
+    expect(html.match(/data-density-specimen="current"/gu)).toHaveLength(8);
     expect(componentSource).toContain("'--demo-density-size': sample.size");
     expect(componentSource).toContain('height: var(--demo-density-size)');
     expect(componentSource).toContain('inline-size: var(--demo-density-size)');
@@ -210,7 +212,7 @@ describe('DemoDensity', () => {
     for (const shape of ['square', 'height', 'space']) {
       expect(html).toContain(`data-density-shape="${shape}"`);
     }
-    expect(html.match(/data-density-unmapped="true"/gu)).toHaveLength(4);
+    expect(html.match(/data-density-unmapped="true"/gu)).toHaveLength(3);
   });
 
   it('reflows from its own available width without undefined typography tokens', () => {
@@ -248,7 +250,10 @@ describe('DemoDensity', () => {
     expect(html).toContain('Icon Button 另有 2rem／32 CSS px 下限');
     expect(html).toContain('Sidebar 列 54 CSS px');
     expect(html).toContain('列表標頭尚無 active token');
-    expect(html).toContain('Panel inset 尚無 active token');
+    expect(html).toContain('Panel inset 1rem／16 CSS px');
+    expect(html).toContain(
+      'Standard 已映射；Compact 由 Token v2 density scope 覆寫為 0.75rem／12 CSS px',
+    );
     expect(html).toContain('Shell gutter 尚無 active token');
     expect(html).toContain('尚未映射');
     expect(html).toContain('部分映射');
@@ -263,6 +268,8 @@ describe('DemoDensity', () => {
       '--ui-track-row-thumb-size: 2.5rem;',
       '--ui-playlist-row-min-height: var(',
       '--ui-player-bar-height: calc(',
+      '--ui-panel-inset: var(--ui-space-4);',
+      '--ui-right-dock-content-inset: var(--ui-panel-inset);',
     ]) {
       expect(activeTokenSource).toContain(declaration);
     }
@@ -271,7 +278,6 @@ describe('DemoDensity', () => {
       '--ui-sidebar-row-min-height',
       '--ui-track-artwork-size',
       '--ui-list-header-height',
-      '--ui-panel-inset',
       '--ui-shell-gutter',
     ]) {
       expect(activeTokenSource).not.toContain(missing);
@@ -300,6 +306,12 @@ describe('DemoDensity', () => {
     );
     expect(sourceByName.get('../playlists/StudioLibraryDossier.vue')).toContain(
       'padding: var(--ui-panel-inset)',
+    );
+    expect(sourceByName.get('../layout/AppRightDockHeader.vue')).toContain(
+      'padding: var(--ui-right-dock-content-inset)',
+    );
+    expect(sourceByName.get('../queue/QueuePanel.vue')).toContain(
+      'padding: var(--ui-right-dock-content-inset)',
     );
     // AppArchiveFrame.vue is production and no longer references this
     // Candidate-only token (see its own comment) — DemoView.vue is the

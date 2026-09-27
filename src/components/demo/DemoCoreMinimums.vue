@@ -78,9 +78,12 @@ const CURRENT_GROUPS = [
   {
     key: 'optical',
     label: '光學邊界',
-    sources: ['src/styles/tokens.css'],
-    contract: 'Focus 2 CSS px；Drag indicator 僅 Token v2 定義',
-    status: '部分落地，逐項審查中',
+    sources: [
+      'src/styles/tokens.css',
+      'src/components/layout/AppRightDock.vue',
+    ],
+    contract: 'Focus 2 CSS px；Drag indicator 2 CSS px',
+    status: '現行吻合',
   },
 ];
 </script>

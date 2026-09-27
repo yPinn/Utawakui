@@ -6,12 +6,12 @@ import {
   useStudioLibraryInspectorWidth,
 } from '../../composables/useStudioLibraryInspectorWidth.js';
 import StudioLibraryContextInspector from './StudioLibraryContextInspector.vue';
+import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
-import UiSurface from '../ui/UiSurface.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import {
   attachClientRender,
@@ -23,12 +23,12 @@ import {
 
 for (const [component, filename] of [
   [StudioLibraryContextInspector, './StudioLibraryContextInspector.vue'],
+  [AppRightDockHeader, '../layout/AppRightDockHeader.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
-  [UiSurface, '../ui/UiSurface.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -61,37 +61,25 @@ const upcomingTracks = [
   },
 ];
 
-function mountInspector(open, overrides = {}) {
-  const onToggle = vi.fn();
+function mountInspector(overrides = {}) {
+  const onClose = vi.fn();
   const mounted = mount(StudioLibraryContextInspector, {
-    open,
     currentTrack,
     queueSourceName: '深夜練唱清單',
     upcomingTracks,
-    onToggle,
+    onClose,
     ...overrides,
   });
-  return { ...mounted, onToggle };
+  return { ...mounted, onClose };
 }
 
 describe('Studio Library Context Inspector', () => {
-  it('keeps collapsed content hidden even when component layout styles are loaded', () => {
-    const source = readFileSync(
-      new URL('./StudioLibraryContextInspector.vue', import.meta.url),
-      'utf8',
-    );
-
-    expect(source).toMatch(
-      /\.studio-context-inspector__content\[hidden\]\s*{\s*display:\s*none;/,
-    );
-  });
-
   it('shows current-track metadata from the playback context without repeating playlist facts', () => {
-    const { app, root, onToggle } = mountInspector(true);
-    const aside = findAll(root, (node) => node.type === 'aside')[0];
-    const collapse = findAll(
+    const { app, root, onClose } = mountInspector();
+    const section = findAll(root, (node) => node.type === 'section')[0];
+    const close = findAll(
       root,
-      (node) => node.props['aria-label'] === '摺疊播放資訊',
+      (node) => node.props['aria-label'] === '關閉播放資訊',
     )[0];
     const artwork = findAll(root, (node) =>
       String(node.props?.class ?? '').includes(
@@ -108,7 +96,7 @@ describe('Studio Library Context Inspector', () => {
       String(node.props?.class ?? '').includes('ui-status-icon'),
     )[0];
 
-    expect(aside.props['aria-label']).toBe('播放資訊');
+    expect(section.props['aria-label']).toBe('播放資訊');
     expect(textContent(root)).toContain('深夜練唱清單');
     expect(textContent(root)).toContain('目前播放的歌曲');
     expect(textContent(root)).toContain('真實演出者');
@@ -123,20 +111,17 @@ describe('Studio Library Context Inspector', () => {
       width: 'var(--ui-track-artwork-size-preview)',
       height: 'var(--ui-track-artwork-size-preview)',
     });
-    expect(String(collapse.props.class)).toContain('ui-icon-btn');
-    expect(String(collapse.props.class)).toContain(
-      'studio-context-inspector__collapse',
-    );
+    expect(String(close.props.class)).toContain('ui-icon-btn');
+    expect(String(close.props.class)).toContain('app-right-dock-header__close');
     expect(currentStatus.props['aria-hidden']).toBe('true');
     expect(currentStatus.props['aria-label']).toBeUndefined();
-    expect(collapse.props['aria-expanded']).toBe(true);
-    trigger(collapse, 'onClick');
-    expect(onToggle).toHaveBeenCalledOnce();
+    trigger(close, 'onClick');
+    expect(onClose).toHaveBeenCalledOnce();
     app.unmount();
   });
 
   it('projects the upcoming queue in playback order without adding queue-management controls', () => {
-    const { app, root } = mountInspector(true);
+    const { app, root } = mountInspector();
     const text = textContent(root);
     const firstIndex = text.indexOf('下一首歌曲');
     const secondIndex = text.indexOf('その次の曲');
@@ -156,18 +141,47 @@ describe('Studio Library Context Inspector', () => {
     // by list order in this glance panel, not a reorderable track table.
     expect(text).toContain('演出者二 · 3:01');
     expect(text).toContain('演出者三 · 3:59');
-    // Collapse button + resize handle only — no per-queue-item controls.
-    expect(buttons).toHaveLength(2);
-    expect(buttons.map((button) => button.props['aria-label'])).toEqual([
-      '摺疊播放資訊',
-      '調整播放資訊寬度',
-    ]);
+    // The content layer owns only its close action. Shared fold/resize chrome
+    // belongs to AppRightDock, and queue rows remain read-only here.
+    expect(buttons).toHaveLength(1);
+    expect(buttons[0].props['aria-label']).toBe('關閉播放資訊');
+    app.unmount();
+  });
+
+  it('bounds the metadata preview while preserving the full queue count', () => {
+    const longQueue = Array.from({ length: 1000 }, (_, index) => ({
+      id: `track-${index + 10}`,
+      title: `Queue track ${index + 1}`,
+      artist: '演出者',
+      duration: 180,
+      thumbnailUrl: `utawakui-media://track/${index + 10}/thumbnail.jpg`,
+    }));
+    const { app, root } = mountInspector({ upcomingTracks: longQueue });
+    const items = findAll(root, (node) =>
+      String(node.props?.class ?? '').includes(
+        'studio-context-inspector__queue-item',
+      ),
+    );
+    const lazyImages = findAll(
+      root,
+      (node) => node.type === 'img' && node.props.loading === 'lazy',
+    );
+    const text = textContent(root);
+
+    expect(items).toHaveLength(3);
+    expect(lazyImages).toHaveLength(3);
+    expect(lazyImages.every((image) => image.props.decoding === 'async')).toBe(
+      true,
+    );
+    expect(text).toContain('1000 首');
+    expect(text).toContain('Queue track 1');
+    expect(text).toContain('Queue track 3');
+    expect(text).not.toContain('Queue track 4');
     app.unmount();
   });
 
   it('shows independent empty states when playback or the upcoming queue is absent', () => {
     const { app, root } = mount(StudioLibraryContextInspector, {
-      open: true,
       currentTrack: null,
       queueSourceName: '',
       upcomingTracks: [],
@@ -179,32 +193,13 @@ describe('Studio Library Context Inspector', () => {
     app.unmount();
   });
 
-  it('turns the entire collapsed rail into one explicit expand control', () => {
-    const { app, root, onToggle } = mountInspector(false);
-    const aside = findAll(root, (node) => node.type === 'aside')[0];
-    const content = findAll(
-      root,
-      (node) => node.props.id === 'studio-library-inspector-content',
-    )[0];
-    const expand = findAll(
-      root,
-      (node) => node.props['aria-label'] === '展開播放資訊',
-    )[0];
-
-    expect(aside.props['aria-label']).toBe('播放資訊（已摺疊）');
-    expect(content.props.hidden).toBe(true);
-    expect(content.props['aria-hidden']).toBe(true);
-    expect(expand.props['aria-expanded']).toBe(false);
-    expect(String(expand.props.class)).toContain('ui-icon-btn');
-    expect(String(expand.props.class)).toContain('ui-icon-btn--stretch');
-    trigger(expand, 'onClick');
-    expect(onToggle).toHaveBeenCalledOnce();
-    app.unmount();
-  });
-
   it('keeps queue chrome protected while current and upcoming metadata remain selectable', () => {
     const source = readFileSync(
       new URL('./StudioLibraryContextInspector.vue', import.meta.url),
+      'utf8',
+    );
+    const headerSource = readFileSync(
+      new URL('../layout/AppRightDockHeader.vue', import.meta.url),
       'utf8',
     );
 
@@ -214,14 +209,20 @@ describe('Studio Library Context Inspector', () => {
     expect(source).not.toMatch(
       /\.studio-context-inspector\s*\{[^}]*user-select:\s*none;/su,
     );
+    expect(headerSource).toMatch(
+      /\.app-right-dock-header p\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/su,
+    );
     expect(source).toMatch(
-      /\.studio-context-inspector__identity p,[\s\S]*?\.studio-context-inspector__queue-copy\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
+      /\.studio-context-inspector__current-copy,[\s\S]*?\.studio-context-inspector__queue-copy\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
     );
     expect(source).toMatch(
       /\.studio-context-inspector__section\s+:deep\(\.ui-hint\)\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/su,
     );
+    expect(headerSource).toMatch(
+      /\.app-right-dock-header h2\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
+    );
     expect(source).toMatch(
-      /\.studio-context-inspector__identity h2,[\s\S]*?\.studio-context-inspector__section dt\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
+      /\.studio-context-inspector__section h3,[\s\S]*?\.studio-context-inspector__section dt\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
     );
     // UiCollageThumb is the collection-level cover (matches the same
     // component SetlistPlaylistHeader.vue/StudioLibraryDossierHeader.vue use
@@ -237,35 +238,8 @@ describe('Studio Library Context Inspector', () => {
     expect(source).not.toContain('queue-duration');
   });
 
-  it('offers a drag handle to resize the panel while open', () => {
-    const { app, root } = mountInspector(true);
-    const handle = findAll(
-      root,
-      (node) => node.props?.['aria-label'] === '調整播放資訊寬度',
-    )[0];
-
-    expect(handle).toBeTruthy();
-    expect(handle.type).toBe('button');
-    expect(String(handle.props.class)).toContain(
-      'studio-context-inspector__handle',
-    );
-    expect(typeof handle.props.onPointerdown).toBe('function');
-    app.unmount();
-  });
-
-  it('has no resize handle while collapsed', () => {
-    const { app, root } = mountInspector(false);
-    const handle = findAll(
-      root,
-      (node) => node.props?.['aria-label'] === '調整播放資訊寬度',
-    )[0];
-
-    expect(handle).toBeUndefined();
-    app.unmount();
-  });
-
   it('shows the source playlist as a cover, name, and description card', () => {
-    const { app, root } = mountInspector(true, {
+    const { app, root } = mountInspector({
       collection: {
         name: '深夜練唱清單',
         description: '睡前放鬆用的慢歌',
@@ -305,7 +279,7 @@ describe('Studio Library Context Inspector', () => {
     };
 
     inspectorWidth.width.value = INSPECTOR_WIDTH_MIN;
-    const atMin = mountInspector(true, { collection });
+    const atMin = mountInspector({ collection });
     const coverAtMin = findAll(atMin.root, (node) =>
       String(node.props?.class ?? '').includes('ui-collage-thumb'),
     )[0];
@@ -316,7 +290,7 @@ describe('Studio Library Context Inspector', () => {
     atMin.app.unmount();
 
     inspectorWidth.width.value = INSPECTOR_WIDTH_MAX;
-    const atMax = mountInspector(true, { collection });
+    const atMax = mountInspector({ collection });
     const coverAtMax = findAll(atMax.root, (node) =>
       String(node.props?.class ?? '').includes('ui-collage-thumb'),
     )[0];
@@ -330,7 +304,7 @@ describe('Studio Library Context Inspector', () => {
   });
 
   it('passes canCollage through to the cover (album sources never collage)', () => {
-    const { app, root } = mountInspector(true, {
+    const { app, root } = mountInspector({
       collection: {
         name: 'AIR·艾熱',
         description: '',
@@ -356,7 +330,7 @@ describe('Studio Library Context Inspector', () => {
   });
 
   it('omits the collection card entirely when playing from the general library view', () => {
-    const { app, root } = mountInspector(true, { collection: null });
+    const { app, root } = mountInspector({ collection: null });
     const heading = findAll(
       root,
       (node) => node.props?.id === 'studio-context-collection-heading',
@@ -366,17 +340,17 @@ describe('Studio Library Context Inspector', () => {
     app.unmount();
   });
 
-  it('renders its UiSurface-backed block as an <aside> landmark, not a downgraded <div>', () => {
-    const { app, root } = mountInspector(true);
-    const aside = findAll(root, (node) => node.type === 'aside')[0];
+  it('renders as feature content while AppRightDock owns the aside surface', () => {
+    const { app, root } = mountInspector();
+    const section = findAll(
+      root,
+      (node) =>
+        node.type === 'section' && node.props['aria-label'] === '播放資訊',
+    )[0];
 
-    expect(aside).toBeTruthy();
-    expect(String(aside.props.class)).toContain('ui-surface');
-    expect(String(aside.props.class)).toContain('ui-surface--tone-surface');
-    expect(String(aside.props.class)).toContain('ui-surface--radius-sm');
-    expect(
-      findAll(root, (node) => node.type === 'div' && node === aside),
-    ).toHaveLength(0);
+    expect(section).toBeTruthy();
+    expect(String(section.props.class)).toContain('studio-context-inspector');
+    expect(String(section.props.class)).not.toContain('ui-surface');
     app.unmount();
   });
 });

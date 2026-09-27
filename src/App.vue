@@ -2,20 +2,22 @@
 import {
   computed,
   defineAsyncComponent,
+  nextTick,
   onMounted,
   onUnmounted,
   provide,
-  shallowRef,
   watch,
 } from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
+import AppRightDock from './components/layout/AppRightDock.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
+import QueuePanel from './components/queue/QueuePanel.vue';
 import SetlistView from './views/SetlistView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
@@ -36,8 +38,15 @@ import { useAppUpdate } from './composables/useAppUpdate.js';
 import { useAppAnnouncement } from './composables/useAppAnnouncement.js';
 import { useWindowCloseDecision } from './composables/useWindowCloseDecision.js';
 import { useTrayNavigation } from './composables/useTrayNavigation.js';
+import {
+  RIGHT_DOCK_SURFACE_METADATA,
+  RIGHT_DOCK_SURFACE_QUEUE,
+  useAppRightDock,
+} from './composables/useAppRightDock.js';
+import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
+import { measureInteractionToNextPaint } from './utils/interactionPerformance.js';
 
 // Setlist is the only initial view. Keep inactive workflows out of Vite's first
 // renderer graph so a new dev server can show the working shell immediately.
@@ -77,11 +86,6 @@ const internalContextDefinitions = internalWorkbenchesEnabled
         component: defineAsyncComponent(
           () => import('./views/StudioLibraryContextView.vue'),
         ),
-        controlId: 'studio-library-inspector-content',
-        loadController: () =>
-          import('./composables/useStudioLibraryInspector.js').then(
-            ({ useStudioLibraryInspector }) => useStudioLibraryInspector(),
-          ),
       },
     }
   : {};
@@ -110,9 +114,8 @@ onUnmounted(() => {
   closeDecision.dispose();
   trayNavigation.dispose();
 });
-// Restores the persisted capture device (see usePlayer.js's capture chain)
-// before any track can play — same "kick off the module-load side effect
-// once" reasoning as useTheme() above.
+// Validate and stage the persisted capture device before playback. The capture
+// AudioContext itself stays closed until the first explicit play action.
 useAudioOutput().restoreInitialDevice();
 const outputRuntime = useOutputRuntime();
 provide(OUTPUT_RUNTIME_KEY, outputRuntime);
@@ -139,6 +142,9 @@ onMounted(announcement.initialize);
 // Live-updated by AppPlaylistSidebar.vue's resize handle (useSidebarResize.js
 // writes into the same useSidebarWidth.js singleton this reads).
 const { width: sidebarWidth } = useSidebarWidth();
+const { width: rightDockWidth } = useAppRightDockWidth();
+const rightDock = useAppRightDock();
+const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
@@ -167,41 +173,128 @@ const activeContextDefinition = computed(() => {
 const activeContextView = computed(
   () => activeContextDefinition.value?.component ?? null,
 );
-const activeContextController = shallowRef(null);
-let activeContextRequest = 0;
+const activeContextAvailable = computed(() => Boolean(activeContextView.value));
+const metadataSurfaceActive = computed(
+  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_METADATA,
+);
+const queueSurfaceActive = computed(
+  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_QUEUE,
+);
+const metadataExpanded = computed(
+  () => rightDock.isExpanded.value && metadataSurfaceActive.value,
+);
+const queueExpanded = computed(
+  () => rightDock.isExpanded.value && queueSurfaceActive.value,
+);
+const rightDockExpanded = computed(
+  () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
+);
+const restorableDockSurface = computed(
+  () =>
+    rightDock.topSurface.value ??
+    rightDock.lastSurface.value ??
+    (activeContextAvailable.value
+      ? RIGHT_DOCK_SURFACE_METADATA
+      : RIGHT_DOCK_SURFACE_QUEUE),
+);
+const rightDockLabel = computed(() =>
+  restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE
+    ? '播放佇列'
+    : '播放資訊',
+);
+const rightDockExpandLabel = computed(() => `展開${rightDockLabel.value}`);
+
+let returnFocusTarget = null;
+
+function rememberRightDockTrigger() {
+  returnFocusTarget = document.activeElement;
+}
+
+function restoreRightDockFocus() {
+  const requestedTarget = returnFocusTarget;
+  returnFocusTarget = null;
+  nextTick(() => {
+    const fallbackTarget = document.querySelector(
+      `[aria-controls="${RIGHT_DOCK_CONTENT_ID}"][aria-expanded="false"]`,
+    );
+    const target =
+      requestedTarget?.isConnected === false ? fallbackTarget : requestedTarget;
+    target?.focus?.();
+  });
+}
+
+function toggleMetadataSurface() {
+  rememberRightDockTrigger();
+  rightDock.toggleSurface(RIGHT_DOCK_SURFACE_METADATA);
+}
+
+function toggleQueueSurface() {
+  rememberRightDockTrigger();
+  measureInteractionToNextPaint('utawakui:right-dock:queue-toggle', () =>
+    rightDock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE),
+  );
+}
+
+function closeDockSurface(surface) {
+  rememberRightDockTrigger();
+  rightDock.hideSurface(surface);
+}
+
+function expandRightDock() {
+  rememberRightDockTrigger();
+  if (rightDock.hasSurfaces.value) {
+    rightDock.setExpanded(true);
+  } else {
+    rightDock.showSurface(restorableDockSurface.value);
+  }
+}
+
+function toggleRightDockExpanded() {
+  if (rightDockExpanded.value) {
+    rememberRightDockTrigger();
+    rightDock.setExpanded(false);
+  } else {
+    expandRightDock();
+  }
+}
+
+function closeTopDockSurface() {
+  if (rightDock.topSurface.value) {
+    closeDockSurface(rightDock.topSurface.value);
+  }
+}
+
+function handleRightDockKeydown(event) {
+  if (
+    event.key !== 'Escape' ||
+    event.defaultPrevented ||
+    !rightDockExpanded.value ||
+    event.target?.closest?.('dialog[open]')
+  ) {
+    return;
+  }
+
+  event.preventDefault();
+  closeTopDockSurface();
+}
 
 watch(
-  [activeView, visualSystemMode],
-  async () => {
-    const request = ++activeContextRequest;
-    const definition = activeContextDefinition.value;
-    activeContextController.value = null;
-    if (!definition) return;
-
-    const controller = await definition.loadController();
-    if (request !== activeContextRequest) return;
-    activeContextController.value = controller;
+  activeContextAvailable,
+  (available) => {
+    if (!available) rightDock.forgetSurface(RIGHT_DOCK_SURFACE_METADATA);
   },
   { immediate: true },
 );
 
-const activeContextControlId = computed(
-  () => activeContextDefinition.value?.controlId,
-);
-const activeContextAvailable = computed(() =>
-  Boolean(
-    activeContextView.value &&
-    activeContextController.value &&
-    activeContextControlId.value,
-  ),
-);
-const activeContextExpanded = computed(
-  () => activeContextController.value?.isInspectorOpen.value ?? false,
+watch(rightDock.isExpanded, (expanded, wasExpanded) => {
+  if (!expanded && wasExpanded) restoreRightDockFocus();
+});
+
+onMounted(() => document.addEventListener('keydown', handleRightDockKeydown));
+onUnmounted(() =>
+  document.removeEventListener('keydown', handleRightDockKeydown),
 );
 
-function toggleActiveContext() {
-  activeContextController.value?.toggleInspector();
-}
 // Studio Library is a development preview of the Setlist interior. Keep the
 // real Setlist folder visibly selected while the hidden preview component is
 // active so the shell still communicates the owning workflow. This applies
@@ -221,30 +314,71 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
 <template>
   <div
     class="shell"
-    :style="{ '--ui-playlist-sidebar-width': `${sidebarWidth}px` }"
+    :style="{
+      '--ui-playlist-sidebar-width': `${sidebarWidth}px`,
+      '--ui-right-dock-width': `${rightDockWidth}px`,
+    }"
   >
     <AppTitleBar class="shell__titlebar" />
     <div class="shell__sidebar">
       <AppPlaylistSidebar />
     </div>
-    <main class="shell__main">
-      <AppArchiveFrame
-        v-model:active-view="activeView"
-        :tab-active-view="archiveTabView"
-        :update-available="appUpdateReady"
-      >
-        <component :is="views[activeView]" />
-        <template v-if="activeContextView" #context>
-          <component :is="activeContextView" />
-        </template>
-      </AppArchiveFrame>
+    <main class="shell__main shell__main--with-dock">
+      <div class="shell__workspace">
+        <AppArchiveFrame
+          v-model:active-view="activeView"
+          :tab-active-view="archiveTabView"
+          :update-available="appUpdateReady"
+        >
+          <component :is="views[activeView]" />
+        </AppArchiveFrame>
+      </div>
+      <div class="shell__dock">
+        <AppRightDock
+          :expanded="rightDockExpanded"
+          :label="rightDockLabel"
+          :expand-label="rightDockExpandLabel"
+          :content-id="RIGHT_DOCK_CONTENT_ID"
+          @expand="expandRightDock"
+          @toggle-expanded="toggleRightDockExpanded"
+        >
+          <component
+            :is="activeContextView"
+            v-if="
+              activeContextView &&
+              rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_METADATA]
+            "
+            class="shell__dock-surface"
+            :class="{
+              'shell__dock-surface--active': metadataSurfaceActive,
+            }"
+            :aria-hidden="!metadataExpanded"
+            :inert="!metadataExpanded"
+            @close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"
+          />
+          <QueuePanel
+            v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_QUEUE]"
+            class="shell__dock-surface"
+            :class="{
+              'shell__dock-surface--active': queueSurfaceActive,
+            }"
+            :active="queueExpanded"
+            :aria-hidden="!queueExpanded"
+            :inert="!queueExpanded"
+            @close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"
+          />
+        </AppRightDock>
+      </div>
     </main>
     <PlayerBar
       class="shell__player"
       :artwork-expandable="activeContextAvailable"
-      :artwork-expanded="activeContextExpanded"
-      :artwork-controls="activeContextControlId"
-      @artwork-activate="toggleActiveContext"
+      :artwork-expanded="metadataExpanded"
+      :artwork-controls="RIGHT_DOCK_CONTENT_ID"
+      :queue-expanded="queueExpanded"
+      :queue-controls="RIGHT_DOCK_CONTENT_ID"
+      @artwork-activate="toggleMetadataSurface"
+      @queue-activate="toggleQueueSurface"
     />
     <UiNotice
       v-if="performerView.state.error"
@@ -328,16 +462,10 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      already owns its own internal scroll — this just lets it actually be
      bounded to the row instead of forcing the row to grow around it. */
   min-height: 0;
-  /* AppTopTabs only sits above the main column, so without this the sidebar
-     starts flush at the row's very top while the tabbed column's actual
-     card begins --ui-archive-content-inset lower — see that token's own
-     comment in tokens.css for the exact derivation. */
-  padding-top: var(--ui-archive-content-inset);
-  /* Matches .shell__main's own padding-bottom below, so the sidebar and the
-     main/context column end at the same baseline above the player bar
-     instead of the sidebar running flush to it while the other column
-     stops short. */
-  padding-bottom: var(--ui-space-3);
+  /* The Sidebar is its own inset plane rather than a continuation of the
+     tabbed dossier baseline. Equal 12px block insets keep it clear of both
+     the titlebar row and PlayerBar in production and Token v2 alike. */
+  padding-block: var(--ui-space-3);
   /* Matches .shell__main's own padding-right below — both are the shell's
      outermost edge insets (window edge to sidebar/main+context), kept to
      the same smaller value so the app doesn't run flush to the window but
@@ -347,19 +475,97 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
 
 .shell__main {
   grid-area: main;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   /* AppInnerPage now owns the card-internal scroll (see its own CSS) —
      this just needs to shrink to its grid row instead of growing with
      content, so that scroll actually has a bounded box to work within. */
+  min-width: 0;
   min-height: 0;
   /* Split, not the padding shorthand — left is the gap opened up between
-     this column and the sidebar (matches .app-archive-frame--with-context's
-     own inter-block gap below), while right is the shell's outer edge inset
+     this column and the sidebar (matching the Inspector bay's own
+     inter-block gap below), while right is the shell's outer edge inset
      (matches .shell__sidebar's own padding-left above). The two are
      different distances on purpose, not a shorthand that happens to cover
      both. */
   padding-bottom: var(--ui-space-3);
   padding-left: var(--ui-space-3);
   padding-right: var(--ui-space-2);
+}
+
+.shell__main--with-dock {
+  /* Queue and metadata are surfaces in one shell-owned plane. Reserve the
+     complete desktop bay so foreground changes and folding never reflow the
+     active workspace. */
+  grid-template-columns: minmax(0, 1fr) var(--ui-right-dock-width);
+  gap: var(--ui-space-3);
+}
+
+.shell__workspace {
+  min-width: 0;
+  min-height: 0;
+}
+
+.shell__dock {
+  display: flex;
+  justify-content: flex-end;
+  min-width: 0;
+  min-height: 0;
+  /* The shell's shared bottom padding already leaves 12px above PlayerBar.
+     This matching top inset makes the right plane independent of the
+     workspace's taller archive-tab baseline, just like the Sidebar. */
+  padding-top: var(--ui-space-3);
+}
+
+.shell__dock-surface {
+  position: absolute;
+  inset: 0;
+  min-width: 0;
+  min-height: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(var(--ui-space-2));
+  pointer-events: none;
+  transition:
+    opacity var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    transform var(--ui-motion-duration-fast) var(--ui-motion-easing-exit),
+    visibility 0s linear var(--ui-motion-duration-fast);
+}
+
+.shell__dock-surface--active {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+  pointer-events: auto;
+  transition:
+    opacity var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    transform var(--ui-motion-duration-standard) var(--ui-motion-easing-enter),
+    visibility 0s linear 0s;
+}
+
+:global(:root[data-ui-motion='reduced']) .shell__dock-surface {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shell__dock-surface {
+    transition: none;
+  }
+}
+
+@media (max-width: 70rem) {
+  .shell__main--with-dock {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .shell__dock {
+    position: absolute;
+    z-index: var(--ui-z-sticky);
+    inset-block: 0 var(--ui-space-3);
+    inset-inline-end: var(--ui-space-2);
+  }
 }
 
 .shell__player {

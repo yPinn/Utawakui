@@ -55,6 +55,7 @@ const emit = defineEmits([
             v-if="titleJumpable"
             :text="title"
             :aria-label="titleLinkAriaLabel || `前往：${title}`"
+            overflow="ellipsis"
             @click="emit('sectionTitleClick')"
           />
           <template v-else>{{ title }}</template>
@@ -118,7 +119,8 @@ const emit = defineEmits([
   min-width: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
 }
 
 /* Static label, not part of the CTA — must not shrink/truncate before the
@@ -151,6 +153,10 @@ const emit = defineEmits([
   );
 
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-block-size: calc(
+    var(--ui-queue-track-thumb-size) + 2 * var(--ui-space-1)
+  );
 }
 
 .queue-section__item--draggable {
