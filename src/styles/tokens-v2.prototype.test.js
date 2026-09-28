@@ -169,7 +169,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(266);
+    expect(uniqueNames.size).toBe(283);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
@@ -177,6 +177,16 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-skeleton-pulse-duration');
     expect(uniqueNames).toContain('--ui-radio-size');
     expect(uniqueNames).toContain('--ui-tooltip-max-inline-size');
+    expect(uniqueNames).toContain('--ui-tooltip-font-size');
+    expect(uniqueNames).toContain('--ui-tooltip-font-weight');
+    expect(uniqueNames).toContain('--ui-tooltip-line-height');
+    expect(uniqueNames).toContain('--ui-tooltip-background');
+    expect(uniqueNames).toContain('--ui-tooltip-text');
+    expect(uniqueNames).toContain('--ui-tooltip-detail-text');
+    expect(uniqueNames).toContain('--ui-tooltip-border');
+    expect(uniqueNames).toContain('--ui-right-dock-track-row-min-height');
+    expect(uniqueNames).toContain('--ui-right-dock-track-artwork-size');
+    expect(uniqueNames).toContain('--ui-tooltip-shadow');
     expect(uniqueNames).toContain('--ui-popover-max-inline-size');
     expect(uniqueNames).toContain('--ui-notification-preferred-inline-size');
     expect(uniqueNames).toContain('--ui-notification-block-end-offset');
@@ -189,6 +199,17 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-right-dock-width');
     expect(uniqueNames).toContain('--ui-right-dock-rail-width');
     expect(uniqueNames).toContain('--ui-right-dock-content-inset');
+    expect(uniqueNames).toContain('--ui-right-dock-track-row-padding-inline');
+    expect(uniqueNames).toContain(
+      '--ui-right-dock-track-row-state-surface-outset-inline',
+    );
+    expect(uniqueNames).toContain('--ui-track-row-state-surface-outset-inline');
+    expect(uniqueNames).toContain('--ui-shell-edge-inset-inline');
+    expect(uniqueNames).toContain('--ui-shell-leading-artwork-centerline');
+    expect(uniqueNames).toContain('--ui-sidebar-artwork-size');
+    expect(uniqueNames).toContain(
+      '--ui-playlist-row-state-surface-outset-inline',
+    );
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-hover');
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');

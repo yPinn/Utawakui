@@ -24,6 +24,8 @@ const consumerSources = [
   '../playlists/StudioLibraryTrackTable.vue',
   '../playback/PlayerBar.vue',
   '../playlists/StudioLibraryDossier.vue',
+  '../playlists/StudioLibraryContextInspector.vue',
+  '../layout/AppRightDock.vue',
   '../layout/AppRightDockHeader.vue',
   '../queue/QueuePanel.vue',
   '../../views/DemoView.vue',
@@ -67,8 +69,17 @@ const densityContracts = [
     '--ui-sidebar-row-min-height',
     '3.25rem',
     52,
-    '3rem',
-    48,
+    '3.25rem',
+    52,
+  ],
+  [
+    'sidebar-artwork',
+    '側欄封面',
+    '--ui-sidebar-artwork-size',
+    '2.5rem',
+    40,
+    '2.5rem',
+    40,
   ],
   [
     'artwork',
@@ -78,6 +89,24 @@ const densityContracts = [
     40,
     '2.25rem',
     36,
+  ],
+  [
+    'right-dock-track-row',
+    'Right Dock 曲目列',
+    '--ui-right-dock-track-row-min-height',
+    '3.25rem',
+    52,
+    '3.25rem',
+    52,
+  ],
+  [
+    'right-dock-artwork',
+    'Right Dock 封面',
+    '--ui-right-dock-track-artwork-size',
+    '2.5rem',
+    40,
+    '2.5rem',
+    40,
   ],
   [
     'list-header',
@@ -98,6 +127,15 @@ const densityContracts = [
     68,
   ],
   ['panel-inset', 'Panel inset', '--ui-panel-inset', '1rem', 16, '0.75rem', 12],
+  [
+    'right-dock-inset',
+    'Right Dock 內容邊距',
+    '--ui-right-dock-content-inset',
+    '0.5rem',
+    8,
+    '0.5rem',
+    8,
+  ],
   [
     'shell-gutter',
     'Shell gutter',
@@ -150,7 +188,11 @@ describe('DemoDensity', () => {
       compactPx,
     ] of densityContracts) {
       const sourceValue =
-        key === 'artwork' ? 'var(--ui-track-artwork-size-standard)' : standard;
+        key === 'artwork' || key === 'sidebar-artwork'
+          ? 'var(--ui-track-artwork-size-standard)'
+          : key === 'right-dock-inset'
+            ? 'var(--ui-space-2)'
+            : standard;
       expect(tokenSource).toContain(`${token}: ${sourceValue};`);
       expect(html).toMatch(
         new RegExp(
@@ -167,7 +209,7 @@ describe('DemoDensity', () => {
     ]) {
       expect(tokenSource).toContain(declaration);
     }
-    expect(html.match(/data-density-contract=/gu)).toHaveLength(10);
+    expect(html.match(/data-density-contract=/gu)).toHaveLength(14);
   });
 
   it('renders one-to-one geometry while keeping copy outside every stage', async () => {
@@ -178,11 +220,11 @@ describe('DemoDensity', () => {
       ),
     ];
 
-    expect(stages).toHaveLength(20);
-    expect(html.match(/data-density-specimen=/gu)).toHaveLength(28);
-    expect(html.match(/data-density-specimen="standard"/gu)).toHaveLength(10);
-    expect(html.match(/data-density-specimen="compact"/gu)).toHaveLength(10);
-    expect(html.match(/data-density-specimen="current"/gu)).toHaveLength(8);
+    expect(stages).toHaveLength(28);
+    expect(html.match(/data-density-specimen=/gu)).toHaveLength(40);
+    expect(html.match(/data-density-specimen="standard"/gu)).toHaveLength(14);
+    expect(html.match(/data-density-specimen="compact"/gu)).toHaveLength(14);
+    expect(html.match(/data-density-specimen="current"/gu)).toHaveLength(12);
     expect(componentSource).toContain("'--demo-density-size': sample.size");
     expect(componentSource).toContain('height: var(--demo-density-size)');
     expect(componentSource).toContain('inline-size: var(--demo-density-size)');
@@ -230,11 +272,23 @@ describe('DemoDensity', () => {
     )?.[1];
 
     for (const [key, , token, , , compact] of densityContracts) {
-      if (key === 'live' || key === 'emergency') continue;
+      if (
+        key === 'live' ||
+        key === 'emergency' ||
+        key === 'sidebar-row' ||
+        key === 'sidebar-artwork' ||
+        key === 'right-dock-track-row' ||
+        key === 'right-dock-artwork' ||
+        key === 'right-dock-inset'
+      ) {
+        continue;
+      }
       const sourceValue =
         key === 'artwork' ? 'var(--ui-track-artwork-size-dense)' : compact;
       expect(compactBlock).toContain(`${token}: ${sourceValue};`);
     }
+    expect(compactBlock).not.toContain('--ui-sidebar-row-min-height');
+    expect(compactBlock).not.toContain('--ui-sidebar-artwork-size');
     expect(compactBlock).not.toContain('--ui-control-height-live');
     expect(compactBlock).not.toContain('--ui-control-height-emergency');
   });
@@ -245,7 +299,7 @@ describe('DemoDensity', () => {
     for (const [key] of densityContracts) {
       expect(html).toContain(`data-current-density-mapping="${key}"`);
     }
-    expect(html.match(/data-current-density-mapping=/gu)).toHaveLength(10);
+    expect(html.match(/data-current-density-mapping=/gu)).toHaveLength(14);
     expect(html).toContain('一般控制 1.875rem／30 CSS px');
     expect(html).toContain('Icon Button 另有 2rem／32 CSS px 下限');
     expect(html).toContain('Sidebar 列 52 CSS px');
@@ -253,6 +307,12 @@ describe('DemoDensity', () => {
     expect(html).toContain('Panel inset 1rem／16 CSS px');
     expect(html).toContain(
       'Standard 已映射；Compact 由 Token v2 density scope 覆寫為 0.75rem／12 CSS px',
+    );
+    expect(html).toContain('Right Dock 曲目列固定 3.25rem／52 CSS px');
+    expect(html).toContain('Right Dock 封面固定 2.5rem／40 CSS px');
+    expect(html).toContain('Right Dock 內容邊距固定 0.5rem／8 CSS px');
+    expect(html).toContain(
+      'Standard／Compact 固定；曲目內容再內縮 4px，狀態底板向外延伸 4px',
     );
     expect(html).toContain('Shell gutter 尚無 active token');
     expect(html).toContain('尚未映射');
@@ -266,16 +326,17 @@ describe('DemoDensity', () => {
       '--ui-icon-button-size-lg: 2.75rem;',
       '--ui-track-row-min-height: 3.25rem;',
       '--ui-track-row-thumb-size: 2.5rem;',
+      '--ui-sidebar-row-min-height: 3.25rem;',
+      '--ui-sidebar-artwork-size: 2.5rem;',
       '--ui-playlist-row-min-height: var(',
       '--ui-player-bar-height: calc(',
       '--ui-panel-inset: var(--ui-space-4);',
-      '--ui-right-dock-content-inset: var(--ui-panel-inset);',
+      '--ui-right-dock-content-inset: var(--ui-space-2);',
     ]) {
       expect(activeTokenSource).toContain(declaration);
     }
     for (const missing of [
       '--ui-control-height-emergency',
-      '--ui-sidebar-row-min-height',
       '--ui-track-artwork-size',
       '--ui-list-header-height',
       '--ui-shell-gutter',
@@ -307,12 +368,21 @@ describe('DemoDensity', () => {
     expect(sourceByName.get('../playlists/StudioLibraryDossier.vue')).toContain(
       'padding: var(--ui-panel-inset)',
     );
+    expect(sourceByName.get('../layout/AppRightDock.vue')).toContain(
+      '--ui-track-row-min-height: var(--ui-right-dock-track-row-min-height)',
+    );
+    expect(sourceByName.get('../layout/AppRightDock.vue')).toContain(
+      '--ui-track-row-thumb-size: var(--ui-right-dock-track-artwork-size)',
+    );
     expect(sourceByName.get('../layout/AppRightDockHeader.vue')).toContain(
       'padding: var(--ui-right-dock-content-inset)',
     );
     expect(sourceByName.get('../queue/QueuePanel.vue')).toContain(
       'padding: var(--ui-right-dock-content-inset)',
     );
+    expect(
+      sourceByName.get('../playlists/StudioLibraryContextInspector.vue'),
+    ).toContain('padding: var(--ui-right-dock-content-inset)');
     // AppArchiveFrame.vue is production and no longer references this
     // Candidate-only token (see its own comment) — DemoView.vue is the
     // real, correctly v2-gated consumer instead.

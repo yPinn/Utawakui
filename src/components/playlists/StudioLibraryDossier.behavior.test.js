@@ -11,6 +11,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -30,6 +31,7 @@ for (const [component, filename] of [
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiSearchBox, '../ui/UiSearchBox.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -373,7 +375,8 @@ describe('Studio Library native Controlled Dossier', () => {
     });
     const firstHandle = findAll(
       root,
-      (node) => node.props?.['aria-label'] === '調整順序：第一首歌',
+      (node) =>
+        node.type === 'button' && textContent(node) === '調整順序：第一首歌',
     )[0];
 
     expect(firstHandle).toBeDefined();
@@ -414,8 +417,10 @@ describe('Studio Library native Controlled Dossier', () => {
 
     trigger(titleSort, 'onClick');
     await nextTick();
-    let handles = findAll(root, (node) =>
-      String(node.props?.['aria-label'] || '').startsWith('調整順序：'),
+    let handles = findAll(
+      root,
+      (node) =>
+        node.type === 'button' && textContent(node).startsWith('調整順序：'),
     );
     expect(handles).toHaveLength(2);
     expect(handles.every((handle) => handle.props.disabled)).toBe(true);
@@ -424,8 +429,10 @@ describe('Studio Library native Controlled Dossier', () => {
     trigger(titleSort, 'onClick');
     trigger(input, 'onInput', { target: { value: '第一首' } });
     await nextTick();
-    handles = findAll(root, (node) =>
-      String(node.props?.['aria-label'] || '').startsWith('調整順序：'),
+    handles = findAll(
+      root,
+      (node) =>
+        node.type === 'button' && textContent(node).startsWith('調整順序：'),
     );
     expect(handles).toHaveLength(1);
     expect(handles[0].props.disabled).toBe(true);
@@ -437,8 +444,10 @@ describe('Studio Library native Controlled Dossier', () => {
 
     expect(textContent(root)).not.toContain('編輯順序');
     expect(
-      findAll(root, (node) =>
-        node.props?.['aria-label']?.startsWith('調整順序：'),
+      findAll(
+        root,
+        (node) =>
+          node.type === 'button' && textContent(node).startsWith('調整順序：'),
       ),
     ).toHaveLength(0);
     app.unmount();

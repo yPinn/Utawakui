@@ -15,6 +15,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
 
@@ -45,6 +46,7 @@ attachClientRender(UiChip, '../ui/UiChip.vue');
 attachClientRender(UiHint, '../ui/UiHint.vue');
 attachClientRender(UiIconButton, '../ui/UiIconButton.vue');
 attachClientRender(UiNotice, '../ui/UiNotice.vue');
+attachClientRender(UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue');
 
 function hostNode(type, text = '') {
   return { type, text, props: {}, children: [], parent: null };
@@ -119,7 +121,12 @@ function findAll(node, predicate, matches = []) {
 }
 
 function findByProp(root, key, value) {
-  return findAll(root, (node) => node.props?.[key] === value)[0];
+  const direct = findAll(root, (node) => node.props?.[key] === value)[0];
+  if (direct || key !== 'aria-label') return direct;
+  return findAll(
+    root,
+    (node) => node.type === 'button' && nodeText(node).includes(value),
+  )[0];
 }
 
 function findByType(root, type) {

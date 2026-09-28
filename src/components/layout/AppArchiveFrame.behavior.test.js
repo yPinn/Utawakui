@@ -52,4 +52,21 @@ describe('AppArchiveFrame primary workspace', () => {
     expect(source).not.toContain('app-archive-frame--with-context');
     expect(source).not.toContain('app-archive-frame__context');
   });
+
+  it('keeps the inner page content inset equal on all four sides', () => {
+    const source = readFileSync(
+      new URL('./AppInnerPage.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toMatch(
+      /\.app-inner-page__content\s*\{[\s\S]*?padding:\s*var\(--ui-space-4\);/u,
+    );
+    expect(source).toMatch(
+      /@media \(max-width: 760px\)[\s\S]*?\.app-inner-page__content\s*\{[\s\S]*?padding:\s*var\(--ui-space-3\);/u,
+    );
+    expect(source).not.toMatch(
+      /\.app-inner-page__content\s*\{[\s\S]*?padding:[^;]*--ui-archive-rail-size/u,
+    );
+  });
 });

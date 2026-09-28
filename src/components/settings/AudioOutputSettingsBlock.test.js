@@ -28,9 +28,12 @@ describe('AudioOutputSettingsBlock', () => {
     expect(html).not.toContain('OBS 用的虛擬音效裝置');
     expect(html).toContain('未啟用');
     expect(html).toContain('未選擇');
-    expect(html).toContain('aria-label="選擇擷取輸出裝置"');
-    expect(html).toContain('title="選擇擷取輸出裝置"');
-    expect(html).not.toContain('>選擇裝置<');
+    expect(html).toMatch(
+      /class="ui-visually-hidden"[^>]*>選擇擷取輸出裝置<\/span>/u,
+    );
+    expect(html).not.toContain('aria-label="選擇擷取輸出裝置"');
+    expect(html).not.toContain('aria-describedby="ui-tooltip-');
+    expect(html).not.toContain('title="選擇擷取輸出裝置"');
     expect(html).not.toContain('僅透過');
   });
 

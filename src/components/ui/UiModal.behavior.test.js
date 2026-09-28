@@ -5,6 +5,7 @@ import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiIconButton from './UiIconButton.vue';
 import UiModal from './UiModal.vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 
 const { createRenderer, h, nextTick, ref, ssrContextKey } = Vue;
 
@@ -22,6 +23,7 @@ function attachClientRender(component, filename) {
 
 attachClientRender(UiIconButton, './UiIconButton.vue');
 attachClientRender(UiModal, './UiModal.vue');
+attachClientRender(UiTooltipSurface, './tooltip/UiTooltipSurface.vue');
 
 function hostNode(type, text = '') {
   return {
@@ -95,6 +97,12 @@ function findAll(node, predicate, matches = []) {
   if (predicate(node)) matches.push(node);
   for (const child of node.children ?? []) findAll(child, predicate, matches);
   return matches;
+}
+
+function textContent(node) {
+  return node.type === 'text'
+    ? node.text
+    : (node.children ?? []).map(textContent).join('');
 }
 
 describe('UiModal behavior', () => {
@@ -180,7 +188,7 @@ describe('UiModal behavior', () => {
 
     const closeButton = findAll(
       body,
-      (node) => node.props?.['aria-label'] === '關閉',
+      (node) => node.type === 'button' && textContent(node) === '關閉',
     )[0];
     closeButton.props.onClick();
     expect(close).toHaveBeenCalledOnce();

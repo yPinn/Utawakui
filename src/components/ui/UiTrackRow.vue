@@ -30,7 +30,7 @@ const props = defineProps({
   // An explicit artwork destination stays separate from the row action.
   // Queue uses it for playback; other consumers may keep artwork decorative.
   artworkClickable: { type: Boolean, default: false },
-  artworkAriaLabel: { type: String, default: undefined },
+  artworkLabel: { type: String, default: undefined },
   // Split keyboard semantics for selection-oriented rows: Space follows the
   // row click contract while Enter performs the caller's primary action.
   activateOnEnter: { type: Boolean, default: false },
@@ -99,10 +99,10 @@ function handleKeydown(event) {
       v-if="artworkClickable"
       type="button"
       class="ui-track__artwork-action"
-      :aria-label="artworkAriaLabel"
       @click.stop="emit('artworkClick', $event)"
       @dblclick.stop
     >
+      <span class="ui-visually-hidden">{{ artworkLabel }}</span>
       <UiTrackThumb
         class="ui-track__thumb"
         :track="thumbTrack"
@@ -154,6 +154,8 @@ function handleKeydown(event) {
 
 <style scoped>
 .ui-track {
+  position: relative;
+  isolation: isolate;
   display: flex;
   align-items: center;
   gap: var(--ui-track-row-gap);
@@ -163,17 +165,31 @@ function handleKeydown(event) {
   font-size: var(--ui-font-size-sm);
 }
 
+.ui-track::before {
+  content: '';
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc(-1 * var(--ui-track-row-state-surface-outset-inline));
+  z-index: -1;
+  border-radius: inherit;
+  background: transparent;
+  pointer-events: none;
+}
+
 .ui-track--interactive {
   cursor: pointer;
 }
 
-.ui-track--interactive:hover {
+.ui-track--interactive:hover::before {
   background: var(--ui-color-surface-hover);
 }
 
 .ui-track--active {
-  background: var(--ui-color-surface-selected);
   color: var(--ui-color-text);
+}
+
+.ui-track--active::before {
+  background: var(--ui-color-surface-selected);
   box-shadow: var(--ui-row-active-shadow);
 }
 
@@ -211,6 +227,7 @@ function handleKeydown(event) {
 .ui-track__title {
   color: inherit;
   font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
 }
 
 .ui-track__title-text {
@@ -228,6 +245,8 @@ function handleKeydown(event) {
 
 .ui-track__artist {
   color: var(--ui-color-text-muted);
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-caption);
 }
 
 .ui-track__duration {

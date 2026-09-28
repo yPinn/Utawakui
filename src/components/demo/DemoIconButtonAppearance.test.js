@@ -4,6 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import { Play, Repeat } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { attachClientRender, findAll, mount } from '../ui/uiTestHost.js';
 import DemoCandidateIconButton from './DemoCandidateIconButton.vue';
 import DemoIconButtonAppearance from './DemoIconButtonAppearance.vue';
@@ -41,6 +42,7 @@ for (const [component, filename] of [
   [DemoIconButtonAppearance, './DemoIconButtonAppearance.vue'],
   [DemoCandidateIconButton, './DemoCandidateIconButton.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

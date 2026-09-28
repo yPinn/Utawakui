@@ -22,9 +22,10 @@ describe('AppUpdateSettingsRow', () => {
     const html = await renderRow();
 
     expect(html).toContain('v0.1.1 · 尚未檢查更新');
-    expect(html).toContain('aria-label="檢查更新"');
-    expect(html).toContain('title="檢查更新 Utawakui"');
-    expect(html).not.toContain('>檢查更新<');
+    expect(html).toMatch(/class="ui-visually-hidden"[^>]*>檢查更新<\/span>/u);
+    expect(html).not.toContain('aria-label="檢查更新"');
+    expect(html).not.toContain('aria-describedby="ui-tooltip-');
+    expect(html).not.toContain('title="檢查更新 Utawakui"');
   });
 
   it('shows explicit download and restart actions for the update lifecycle', async () => {
@@ -39,8 +40,7 @@ describe('AppUpdateSettingsRow', () => {
     });
 
     expect(available).toContain('可下載 v0.2.0');
-    expect(available).toContain('aria-label="下載"');
-    expect(available).not.toContain('>下載<');
+    expect(available).toMatch(/class="ui-visually-hidden"[^>]*>下載<\/span>/u);
     expect(downloaded).toContain('v0.2.0 已下載');
     expect(downloaded).toContain('可安裝');
     expect(downloaded).toContain('>重新啟動並安裝<');
@@ -105,12 +105,13 @@ describe('AppUpdateSettingsRow', () => {
     });
 
     expect(disabled).toContain('開發版不支援自動更新');
-    expect(disabled).toContain('正式安裝版才可使用');
-    expect(disabled).toContain('aria-label="檢查更新"');
-    expect(disabled).not.toContain('>檢查更新<');
+    expect(disabled).toMatch(
+      /class="ui-visually-hidden"[^>]*>檢查更新<\/span>/u,
+    );
+    expect(disabled).not.toContain('aria-describedby="ui-tooltip-');
+    expect(disabled).not.toContain('title="正式安裝版才可使用"');
     expect(disabled).toContain('disabled');
     expect(failed).toContain('更新失敗，請再試一次。');
-    expect(failed).toContain('aria-label="檢查更新"');
-    expect(failed).not.toContain('>檢查更新<');
+    expect(failed).toMatch(/class="ui-visually-hidden"[^>]*>檢查更新<\/span>/u);
   });
 });

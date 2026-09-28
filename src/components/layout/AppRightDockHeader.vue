@@ -70,6 +70,7 @@ function closeDock() {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-caption);
   text-overflow: ellipsis;
   white-space: nowrap;

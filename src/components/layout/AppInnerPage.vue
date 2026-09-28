@@ -44,14 +44,14 @@ import UiSurface from '../ui/UiSurface.vue';
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: calc(var(--ui-archive-rail-size) + var(--ui-space-4))
-    var(--ui-space-4) var(--ui-space-4);
+  /* The archive rail overlap belongs to AppArchiveFrame. Content keeps one
+     measurable perimeter from the page surface on every side. */
+  padding: var(--ui-space-4);
 }
 
 @media (max-width: 760px) {
   .app-inner-page__content {
-    padding: calc(var(--ui-archive-rail-size) + var(--ui-space-3))
-      var(--ui-space-3) var(--ui-space-3);
+    padding: var(--ui-space-3);
   }
 }
 </style>

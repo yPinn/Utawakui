@@ -8,12 +8,15 @@ import { Pause, Play } from '../../icons/index.js';
 import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import { useTooltip } from '../ui/useTooltip.js';
 
 const props = defineProps({
   playlist: { type: Object, required: true },
   coverUrl: { type: String, default: '' },
   coverTracks: { type: Array, default: () => [] },
   subtitle: { type: String, required: true },
+  compact: { type: Boolean, default: false },
   active: { type: Boolean, default: false },
   activeSource: { type: Boolean, default: false },
   playing: { type: Boolean, default: false },
@@ -39,6 +42,18 @@ const selectLabel = computed(() => `選取 ${playlistDisplayName.value}`);
 const playbackLabel = computed(
   () => `${props.playing ? '暫停' : '播放'} ${playlistDisplayName.value}`,
 );
+const {
+  open: collectionTooltipOpen,
+  position: collectionTooltipPosition,
+  setTooltip: setCollectionTooltip,
+  tooltipId: collectionTooltipId,
+  triggerProps: collectionTooltipTriggerProps,
+} = useTooltip({
+  text: playlistDisplayName,
+  placement: 'end',
+  disabled: computed(() => !props.compact),
+  describedBy: false,
+});
 
 function toggleFromArtwork(event) {
   // A double-click dispatches two click events before dblclick. The artwork
@@ -51,6 +66,7 @@ function toggleFromArtwork(event) {
 
 <template>
   <div
+    v-bind="collectionTooltipTriggerProps"
     class="playlist-sidebar-row"
     :class="{
       'playlist-sidebar-row--active': active,
@@ -60,7 +76,6 @@ function toggleFromArtwork(event) {
       'playlist-sidebar-row--drop-after': dropAfter,
     }"
     :draggable="draggable"
-    :title="playlistDisplayName"
     @click="emit('select')"
     @dblclick="emit('togglePlayback', $event)"
     @contextmenu="emit('contextmenu', $event)"
@@ -70,15 +85,16 @@ function toggleFromArtwork(event) {
     @drop="emit('drop', $event)"
     @dragend="emit('dragEnd')"
   >
+    <span class="playlist-sidebar-row__state-surface" aria-hidden="true"></span>
     <button
       type="button"
       class="playlist-sidebar-row__select"
       :aria-current="active ? 'page' : undefined"
-      :aria-label="selectLabel"
-      :title="playlistDisplayName"
       @click.stop="emit('select')"
       @dblclick.stop="emit('togglePlayback', $event)"
-    />
+    >
+      <span class="ui-visually-hidden">{{ selectLabel }}</span>
+    </button>
     <UiCollageThumb
       class="playlist-sidebar-row__thumb"
       :cover-url="coverUrl"
@@ -94,7 +110,6 @@ function toggleFromArtwork(event) {
           :icon="playing ? Pause : Play"
           class="playlist-sidebar-row__play"
           :label="playbackLabel"
-          :title="playbackLabel"
           fill
           shape="inherit"
           variant="overlay"
@@ -109,6 +124,15 @@ function toggleFromArtwork(event) {
       </span>
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
+    <UiTooltipSurface
+      :open="collectionTooltipOpen"
+      :text="playlistDisplayName"
+      :detail="subtitle"
+      :tooltip-id="collectionTooltipId"
+      :position="collectionTooltipPosition"
+      placement="end"
+      :set-element="setCollectionTooltip"
+    />
   </div>
 </template>
 
@@ -145,6 +169,17 @@ function toggleFromArtwork(event) {
   cursor: inherit;
 }
 
+.playlist-sidebar-row__state-surface {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc(-1 * var(--ui-playlist-row-state-surface-outset-inline));
+  z-index: 0;
+  border: var(--ui-border-width) solid transparent;
+  border-radius: inherit;
+  background: transparent;
+  pointer-events: none;
+}
+
 .playlist-sidebar-row[draggable='true'] {
   cursor: grab;
 }
@@ -177,7 +212,7 @@ function toggleFromArtwork(event) {
   bottom: -3px;
 }
 
-.playlist-sidebar-row:hover {
+.playlist-sidebar-row:hover .playlist-sidebar-row__state-surface {
   border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
 }
@@ -188,9 +223,12 @@ function toggleFromArtwork(event) {
 }
 
 .playlist-sidebar-row--active {
+  color: var(--ui-color-text);
+}
+
+.playlist-sidebar-row--active .playlist-sidebar-row__state-surface {
   border-color: transparent;
   background: var(--ui-playlist-row-selected-background);
-  color: var(--ui-color-text);
 }
 
 .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
@@ -301,13 +339,17 @@ function toggleFromArtwork(event) {
       visibility 0s linear var(--ui-motion-duration-fast);
   }
 
+  .playlist-sidebar-row__state-surface {
+    inset-inline: 0;
+  }
+
   .playlist-sidebar-row__play {
     display: none;
   }
 
   /* Compact rail selection sits on the artwork itself. A left-edge row
      indicator has no useful text column to anchor to here. */
-  .playlist-sidebar-row--active {
+  .playlist-sidebar-row--active .playlist-sidebar-row__state-surface {
     border-color: transparent;
     background: transparent;
     box-shadow: none;

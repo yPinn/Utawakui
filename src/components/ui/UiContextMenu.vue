@@ -4,6 +4,7 @@ import {
   onMounted,
   onUnmounted,
   ref,
+  useSlots,
   useTemplateRef,
   watch,
 } from 'vue';
@@ -21,6 +22,7 @@ const props = defineProps({
     validator: (value) => ['left', 'right'].includes(value),
   },
   emptyText: { type: String, default: '' },
+  ariaLabel: { type: String, default: '操作選單' },
   // Item shape: { key?, label, value?, icon?, status?, danger?, disabled?,
   // separator?, children? }. `separator` renders a divider (ignores every
   // other field); `children` nests a submenu instead of emitting 'select'.
@@ -28,6 +30,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['select', 'close']);
+const slots = useSlots();
 const { claim, release } = useContextMenuGate();
 
 const MAX_MENU_HEIGHT_REM = 20;
@@ -36,9 +39,13 @@ const VIEWPORT_MARGIN_REM = 0.5;
 const SUBMENU_GAP_REM = 0.25;
 
 const menuRef = useTemplateRef('menu');
+const submenuRef = useTemplateRef('submenu');
 const position = ref({ x: props.x, y: props.y });
 const activeSubmenuKey = ref(null);
+const menuScrollTop = ref(0);
 const menuWidth = computed(() => props.width);
+const rootItemRefs = new Map();
+let focusOrigin = null;
 
 const menuStyle = computed(() => ({
   left: `${position.value.x}px`,
@@ -85,13 +92,27 @@ const activeSubmenuItem = computed(
     ) ?? null,
 );
 
-const activeSubmenuIndex = computed(() =>
-  activeSubmenuItem.value ? props.items.indexOf(activeSubmenuItem.value) : -1,
-);
-
 const activeSubmenuWidth = computed(
   () => activeSubmenuItem.value?.submenuWidth ?? menuWidth.value,
 );
+
+function measuredRect(element) {
+  const rect = element?.getBoundingClientRect?.();
+  return rect && (rect.width > 0 || rect.height > 0) ? rect : null;
+}
+
+function submenuFallbackTop(scrollTop) {
+  const menuInset = customLengthPixels('--ui-space-1', 0.25);
+  const separatorHeight =
+    customLengthPixels('--ui-border-width', 0.0625) + menuInset * 2;
+  let offset = menuInset;
+
+  for (const item of props.items) {
+    if (itemKey(item) === activeSubmenuKey.value) break;
+    offset += item.separator ? separatorHeight : menuRowHeightPixels();
+  }
+  return position.value.y + offset - scrollTop;
+}
 
 const submenuStyle = computed(() => {
   if (!activeSubmenuItem.value) return {};
@@ -105,27 +126,53 @@ const submenuStyle = computed(() => {
 
   const margin = remPixels(VIEWPORT_MARGIN_REM);
   const gap = remPixels(SUBMENU_GAP_REM);
-  const rowOffset =
-    remPixels(SUBMENU_GAP_REM) +
-    Math.max(0, activeSubmenuIndex.value) * menuRowHeightPixels();
-  const submenuHeight = estimateSubmenuHeight(activeSubmenuItem.value);
-  const rightX = position.value.x + menuWidth.value + gap;
-  const leftX = position.value.x - activeSubmenuWidth.value - gap;
-  const x =
-    rightX + activeSubmenuWidth.value + margin <= window.innerWidth
-      ? rightX
-      : Math.max(margin, leftX);
+  const scrollTop = menuScrollTop.value;
+  const rootRect = measuredRect(menuRef.value);
+  const parentRect = measuredRect(
+    rootItemRefs.get(itemKey(activeSubmenuItem.value)),
+  );
+  const submenuRect = measuredRect(submenuRef.value);
+  const submenuHeight =
+    submenuRect?.height ?? estimateSubmenuHeight(activeSubmenuItem.value);
+  const rootLeft = rootRect?.left ?? position.value.x;
+  const rootRight = rootRect?.right ?? position.value.x + menuWidth.value;
+  const desiredWidth = activeSubmenuWidth.value;
+  const rightAvailable = Math.max(
+    0,
+    window.innerWidth - margin - rootRight - gap,
+  );
+  const leftAvailable = Math.max(0, rootLeft - margin - gap);
+  let width = desiredWidth;
+  let x = rootRight + gap;
+
+  if (desiredWidth <= rightAvailable) {
+    x = rootRight + gap;
+  } else if (desiredWidth <= leftAvailable) {
+    x = rootLeft - gap - desiredWidth;
+  } else if (leftAvailable >= rightAvailable) {
+    width = Math.min(desiredWidth, leftAvailable);
+    x = rootLeft - gap - width;
+  } else {
+    width = Math.min(desiredWidth, rightAvailable);
+  }
   const maxY = window.innerHeight - submenuHeight - margin;
+  const anchorY = parentRect?.top ?? submenuFallbackTop(scrollTop);
 
   return {
     left: `${x}px`,
-    top: `${Math.max(margin, Math.min(position.value.y + rowOffset, maxY))}px`,
-    width: `${activeSubmenuWidth.value}px`,
+    top: `${Math.max(margin, Math.min(anchorY, maxY))}px`,
+    width: `${width}px`,
   };
 });
 
 function itemKey(item) {
   return item.key ?? item.label ?? item.value;
+}
+
+function setRootItemRef(item, element) {
+  const key = itemKey(item);
+  if (element) rootItemRefs.set(key, element);
+  else rootItemRefs.delete(key);
 }
 
 function estimateMenuHeight() {
@@ -137,10 +184,14 @@ function estimateMenuHeight() {
 }
 
 function estimateSubmenuHeight(item) {
+  const slotRows =
+    Number(Boolean(slots['submenu-leading'])) +
+    Number(Boolean(slots['submenu-trailing']));
   return Math.min(
     remPixels(MAX_MENU_HEIGHT_REM),
     remPixels(MENU_PADDING_BLOCK_REM) +
-      Math.max(1, item.children?.length ?? 0) * menuRowHeightPixels(),
+      Math.max(1, (item.children?.length ?? 0) + slotRows) *
+        menuRowHeightPixels(),
   );
 }
 
@@ -170,6 +221,7 @@ function clampPosition() {
 
 function scheduleClamp() {
   activeSubmenuKey.value = null;
+  menuScrollTop.value = 0;
   position.value = { x: preferredX(menuWidth.value), y: props.y };
   if (!props.open) return;
 
@@ -185,6 +237,16 @@ function close() {
   emit('close');
 }
 
+function restoreFocusOrigin() {
+  if (focusOrigin?.isConnected !== false) focusOrigin?.focus?.();
+}
+
+function requestClose({ restoreFocus = false } = {}) {
+  activeSubmenuKey.value = null;
+  if (restoreFocus) restoreFocusOrigin();
+  close();
+}
+
 // Keeps at most one UiContextMenu open app-wide (see useContextMenuGate.js).
 // Right-click doesn't fire 'click', so onWindowClick below never sees a
 // right-click elsewhere as a reason to close.
@@ -192,11 +254,14 @@ watch(
   () => props.open,
   (isOpen) => {
     if (isOpen) {
+      focusOrigin =
+        typeof document === 'undefined' ? null : document.activeElement;
       claim(close);
     } else {
       release(close);
     }
   },
+  { immediate: true },
 );
 
 function onWindowClick(event) {
@@ -206,11 +271,35 @@ function onWindowClick(event) {
 }
 
 function onWindowKeydown(event) {
-  if (props.open && event.key === 'Escape') close();
+  if (!props.open) return;
+  if (event.key === 'Escape') {
+    event.preventDefault?.();
+    event.stopPropagation?.();
+    requestClose({ restoreFocus: true });
+  }
 }
 
-function onWindowScroll() {
-  if (props.open) close();
+function onWindowScroll(event) {
+  if (!props.open) return;
+  const target = event?.target;
+  const targetClasses = String(
+    target?.className ?? target?.props?.class ?? '',
+  ).split(/\s+/);
+  const targetIsMenu = targetClasses.includes('ui-context-menu');
+  const targetIsRootMenu =
+    targetIsMenu && !targetClasses.includes('ui-context-menu--submenu');
+  if (
+    target &&
+    (menuRef.value?.contains(target) ||
+      target?.closest?.('.ui-context-menu') ||
+      targetIsMenu)
+  ) {
+    if (target === menuRef.value || targetIsRootMenu) {
+      menuScrollTop.value = Number(target.scrollTop) || 0;
+    }
+    return;
+  }
+  close();
 }
 
 function selectItem(item) {
@@ -221,6 +310,7 @@ function selectItem(item) {
   }
   if (item.disabled) return;
   emit('select', item.value ?? item, item);
+  requestClose({ restoreFocus: true });
 }
 
 function showSubmenu(item) {
@@ -229,18 +319,16 @@ function showSubmenu(item) {
 }
 
 watch(
-  () => [
-    props.open,
-    props.x,
-    props.y,
-    props.width,
-    props.alignX,
-    props.items.length,
+  [
+    () => props.open,
+    () => props.x,
+    () => props.y,
+    () => props.width,
+    () => props.alignX,
+    () => props.items.length,
   ],
   scheduleClamp,
-  {
-    immediate: true,
-  },
+  { immediate: true },
 );
 
 onMounted(() => {
@@ -267,6 +355,7 @@ onUnmounted(() => {
       class="ui-context-menu"
       :style="menuStyle"
       role="menu"
+      :aria-label="ariaLabel"
       @click.stop
       @contextmenu.prevent
     >
@@ -281,6 +370,7 @@ onUnmounted(() => {
         />
         <button
           v-else
+          :ref="(element) => setRootItemRef(item, element)"
           type="button"
           class="ui-context-menu__item"
           :class="{
@@ -326,12 +416,15 @@ onUnmounted(() => {
 
       <div
         v-if="activeSubmenuItem"
+        ref="submenu"
         class="ui-context-menu ui-context-menu--submenu"
         :style="submenuStyle"
         role="menu"
+        :aria-label="`${activeSubmenuItem.label}目的地`"
         @click.stop
         @contextmenu.prevent
       >
+        <slot name="submenu-leading" :item="activeSubmenuItem" />
         <template
           v-for="child in activeSubmenuItem.children"
           :key="itemKey(child)"
@@ -367,6 +460,7 @@ onUnmounted(() => {
             <span class="ui-context-menu__chevron-slot" aria-hidden="true" />
           </button>
         </template>
+        <slot name="submenu-trailing" :item="activeSubmenuItem" />
       </div>
     </div>
   </Teleport>

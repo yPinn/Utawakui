@@ -142,12 +142,21 @@
   --ui-track-artwork-size-prominent: 3rem;
   --ui-track-artwork-size-preview: 4rem;
   --ui-track-artwork-size: var(--ui-track-artwork-size-standard);
+  --ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);
   --ui-list-header-height: 2.25rem;
   --ui-player-bar-height: 4.75rem;
   --ui-panel-inset: 1rem;
+  --ui-shell-edge-inset-inline: var(--ui-space-2);
+  --ui-shell-leading-artwork-centerline: calc(
+    var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
+  );
   --ui-right-dock-width: 17.5rem;
   --ui-right-dock-rail-width: 2.5rem;
-  --ui-right-dock-content-inset: var(--ui-panel-inset);
+  --ui-right-dock-content-inset: var(--ui-space-2);
+  --ui-right-dock-track-row-min-height: 3.25rem;
+  --ui-right-dock-track-artwork-size: 2.5rem;
+  --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
+  --ui-right-dock-track-row-state-surface-outset-inline: var(--ui-space-1);
   --ui-right-dock-sticky-background: color-mix(
     in srgb,
     var(--ui-color-surface) 88%,
@@ -314,6 +323,22 @@
   --ui-radio-dot-size: var(--ui-space-2);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
+  --ui-tooltip-font-size: var(--ui-font-size-sm);
+  --ui-tooltip-font-weight: var(--ui-font-weight-regular);
+  --ui-tooltip-line-height: var(--ui-line-height-caption);
+  --ui-tooltip-background: var(--ui-palette-neutral-900);
+  --ui-tooltip-text: var(--ui-palette-warm-neutral-50);
+  --ui-tooltip-detail-text: color-mix(
+    in srgb,
+    var(--ui-palette-warm-neutral-50) 72%,
+    transparent
+  );
+  --ui-tooltip-border: color-mix(
+    in srgb,
+    var(--ui-palette-warm-neutral-50) 12%,
+    transparent
+  );
+  --ui-tooltip-shadow: var(--ui-shadow-overlay);
   --ui-tooltip-max-inline-size: 18rem;
   --ui-popover-max-inline-size: 24rem;
   --ui-notification-min-inline-size: 20rem;
@@ -347,7 +372,9 @@
   --ui-track-row-gap: var(--ui-space-2);
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
+  --ui-track-row-state-surface-outset-inline: 0;
   --ui-row-active-shadow: inset 2px 0 0 var(--ui-color-accent);
+  --ui-playlist-row-state-surface-outset-inline: var(--ui-space-1);
 
   --ui-folder-bg: var(--ui-color-folder-primary);
   --ui-folder-bg-secondary: var(--ui-color-folder-secondary);
@@ -361,7 +388,6 @@
 :root[data-ui-system='v2'][data-ui-density='compact'] {
   --ui-control-height: 2rem;
   --ui-track-row-min-height: 2.75rem;
-  --ui-sidebar-row-min-height: 3rem;
   --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
   --ui-list-header-height: 2rem;
   --ui-player-bar-height: 4.25rem;

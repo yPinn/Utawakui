@@ -406,7 +406,7 @@ describe('DemoCollageThumbAppearance', () => {
     expect(inspectorSource).toContain(':size="collectionCoverSize"');
     expect(inspectorSource).toContain('COLLECTION_COVER_MIN = 88;');
     expect(inspectorSource).toContain('COLLECTION_COVER_MAX = 120;');
-    expect(inspectorSource).toContain('UiTrackThumb');
+    expect(inspectorSource).toContain('UiTrackRow');
     expect(activeTokenSource).toContain('--ui-playlist-row-thumb-size: var(');
     expect(activeTokenSource).toContain('--ui-track-row-thumb-size');
   });

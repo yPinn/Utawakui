@@ -34,6 +34,7 @@ const props = defineProps({
   // Passed from SetlistView to avoid a duplicate library subscription.
   tracksById: { type: Map, default: () => new Map() },
   libraryView: { type: String, default: 'all' },
+  compact: { type: Boolean, default: false },
 });
 
 const { state, select, create, reorderPlaylist } = usePlaylists();
@@ -395,6 +396,10 @@ function startDrag(playlist, event) {
       @click="selectLibraryView('all')"
     >
       <span
+        class="playlist-sidebar__item-state-surface"
+        aria-hidden="true"
+      ></span>
+      <span
         class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
         aria-hidden="true"
       >
@@ -422,6 +427,10 @@ function startDrag(playlist, event) {
       @click="selectLibraryView('local')"
     >
       <span
+        class="playlist-sidebar__item-state-surface"
+        aria-hidden="true"
+      ></span>
+      <span
         class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
         aria-hidden="true"
       >
@@ -445,6 +454,7 @@ function startDrag(playlist, event) {
       :cover-url="playlist.coverUrl"
       :cover-tracks="coverTracksFor(playlist)"
       :subtitle="subtitleFor(playlist)"
+      :compact="compact"
       :active="playlist.id === state.selectedId"
       :active-source="isActiveSource(playlist)"
       :playing="isPlayingThis(playlist)"
@@ -478,6 +488,7 @@ function startDrag(playlist, event) {
       :cover-url="playlist.coverUrl"
       :cover-tracks="coverTracksFor(playlist)"
       :subtitle="subtitleFor(playlist)"
+      :compact="compact"
       :active="playlist.id === state.selectedId"
       :active-source="isActiveSource(playlist)"
       :playing="isPlayingThis(playlist)"
@@ -544,7 +555,18 @@ function startDrag(playlist, event) {
   -webkit-user-select: none;
 }
 
-.playlist-sidebar__item:hover {
+.playlist-sidebar__item-state-surface {
+  position: absolute;
+  inset-block: 0;
+  inset-inline: calc(-1 * var(--ui-playlist-row-state-surface-outset-inline));
+  z-index: 0;
+  border: var(--ui-border-width) solid transparent;
+  border-radius: inherit;
+  background: transparent;
+  pointer-events: none;
+}
+
+.playlist-sidebar__item:hover .playlist-sidebar__item-state-surface {
   border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
 }
@@ -555,9 +577,12 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__item--active {
+  color: var(--ui-color-text);
+}
+
+.playlist-sidebar__item--active .playlist-sidebar__item-state-surface {
   border-color: transparent;
   background: var(--ui-playlist-row-selected-background);
-  color: var(--ui-color-text);
 }
 
 .playlist-sidebar__toolbar {
@@ -715,6 +740,7 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__thumb {
   position: relative;
+  z-index: 1;
   display: flex;
   flex-shrink: 0;
   align-items: center;
@@ -758,6 +784,8 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__info {
+  position: relative;
+  z-index: 1;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -811,6 +839,10 @@ function startDrag(playlist, event) {
       visibility 0s linear var(--ui-motion-duration-fast);
   }
 
+  .playlist-sidebar__item-state-surface {
+    inset-inline: 0;
+  }
+
   .playlist-sidebar__empty {
     display: none;
   }
@@ -844,7 +876,7 @@ function startDrag(playlist, event) {
       visibility 0s linear 0s;
   }
 
-  .playlist-sidebar__item--active {
+  .playlist-sidebar__item--active .playlist-sidebar__item-state-surface {
     border-color: transparent;
     background: transparent;
     box-shadow: none;

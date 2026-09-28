@@ -1,11 +1,20 @@
 <script setup>
-import { computed } from 'vue';
+import { computed, mergeProps, useAttrs } from 'vue';
 import { ICON_SIZE } from '../../icons/index.js';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
+import { isTooltipPlacement, useTooltip } from './useTooltip.js';
+
+defineOptions({ inheritAttrs: false });
 
 const props = defineProps({
   icon: { type: [Object, Function], required: true },
   label: { type: String, required: true },
   title: { type: String, default: undefined },
+  tooltipPlacement: {
+    type: String,
+    default: 'top',
+    validator: isTooltipPlacement,
+  },
   variant: {
     type: String,
     default: 'ghost',
@@ -26,11 +35,30 @@ const props = defineProps({
   fill: { type: Boolean, default: false },
 });
 
+const attrs = useAttrs();
 const titleText = computed(() => props.title ?? props.label);
+const {
+  open: tooltipOpen,
+  position: tooltipPosition,
+  setTooltip,
+  tooltipId,
+  triggerProps,
+} = useTooltip({
+  text: titleText,
+  placement: computed(() => props.tooltipPlacement),
+  describedBy: false,
+});
+
+function buttonAttrs(triggerProps) {
+  const forwardedAttrs = { ...attrs };
+  Reflect.deleteProperty(forwardedAttrs, 'aria-label');
+  return mergeProps(forwardedAttrs, triggerProps);
+}
 </script>
 
 <template>
   <button
+    v-bind="buttonAttrs(triggerProps)"
     type="button"
     class="ui-icon-btn"
     :class="[
@@ -42,14 +70,21 @@ const titleText = computed(() => props.title ?? props.label);
         'ui-icon-btn--stretch': stretch,
       },
     ]"
-    :aria-label="label"
-    :title="titleText"
   >
     <component
       :is="icon"
       :size="ICON_SIZE"
       :fill="fill ? 'currentColor' : 'none'"
       aria-hidden="true"
+    />
+    <span class="ui-visually-hidden">{{ label }}</span>
+    <UiTooltipSurface
+      :open="tooltipOpen"
+      :text="titleText"
+      :tooltip-id="tooltipId"
+      :position="tooltipPosition"
+      :placement="tooltipPlacement"
+      :set-element="setTooltip"
     />
   </button>
 </template>

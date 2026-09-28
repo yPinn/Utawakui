@@ -17,4 +17,10 @@ describe('AppPlaylistSidebar resize handle', () => {
       /@container \(width < 256px\)\s*\{[^}]*\.app-playlist-sidebar__scroll\s*\{[^}]*padding-inline:\s*var\(--ui-playlist-sidebar-padding-inline-compact\);/su,
     );
   });
+
+  it('derives the collection interaction mode from the shell-owned sidebar width', () => {
+    expect(source).toContain('SIDEBAR_COMPACT_THRESHOLD');
+    expect(source).toContain('const sidebarCompact = computed(');
+    expect(source).toContain(':compact="sidebarCompact"');
+  });
 });

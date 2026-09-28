@@ -713,10 +713,8 @@ onUnmounted(() => {
   gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
   padding-block: var(--ui-player-bar-padding-block);
-  /* Asymmetric — see --ui-player-bar-padding-inline-start's own comment in
-     tokens.css: only the artwork needs to shift, to stay centered on the
-     sidebar rail axis now that the rail itself sits --ui-space-2 further
-     right than the (still flush) edge of this bar. */
+  /* Asymmetric — the artwork consumes the shell-owned leading axis while
+     the end side keeps the shared window-edge gutter. */
   padding-inline-start: var(--ui-player-bar-padding-inline-start);
   padding-inline-end: var(--ui-player-bar-padding-inline);
   background: var(--ui-color-surface);

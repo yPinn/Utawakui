@@ -1,9 +1,14 @@
 <script setup>
+import { computed } from 'vue';
 import { useLibrary } from '../../composables/useLibrary.js';
 import { useAppView } from '../../composables/useAppView.js';
 import { usePlaylistActions } from '../../composables/usePlaylistActions.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSidebarResize } from '../../composables/useSidebarResize.js';
+import {
+  SIDEBAR_COMPACT_THRESHOLD,
+  useSidebarWidth,
+} from '../../composables/useSidebarWidth.js';
 import {
   isStudioLibraryComparisonMode,
   useVisualSystemMode,
@@ -28,6 +33,10 @@ const {
   handlePlaylistMenuAction,
 } = usePlaylistActions();
 const { isResizing, startResize, toggleSidebarCollapse } = useSidebarResize();
+const { width: sidebarWidth } = useSidebarWidth();
+const sidebarCompact = computed(
+  () => sidebarWidth.value < SIDEBAR_COMPACT_THRESHOLD,
+);
 
 function activateSetlistView() {
   const isViewingStudioLibrary =
@@ -47,6 +56,7 @@ function activateSetlistView() {
       <PlaylistSidebar
         :tracks-by-id="tracksById"
         :library-view="playlistState.libraryView"
+        :compact="sidebarCompact"
         @library-view-select="setLibraryView"
         @activate-setlist="activateSetlistView"
         @playlist-action="handlePlaylistMenuAction"

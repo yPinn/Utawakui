@@ -13,7 +13,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
-import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 
 const props = defineProps({
   currentTrack: { type: Object, default: null },
@@ -84,6 +84,12 @@ const currentTrackFacts = computed(() => {
   });
   return facts;
 });
+
+function formatUpcomingTrackMetadata(track) {
+  const artist = track.artist || '未知演出者';
+  if (!Number.isFinite(track.duration)) return artist;
+  return `${artist} · ${formatDuration(track.duration)}`;
+}
 </script>
 
 <template>
@@ -128,17 +134,16 @@ const currentTrackFacts = computed(() => {
         </div>
 
         <template v-if="currentTrack">
-          <div class="studio-context-inspector__current-identity">
-            <UiTrackThumb
-              class="studio-context-inspector__current-artwork"
+          <ul class="studio-context-inspector__track-list">
+            <UiTrackRow
+              class="studio-context-inspector__current-track"
               :track="currentTrack"
-              size="var(--ui-track-artwork-size-preview)"
+              :artist="currentTrack.artist || '未知演出者'"
+              current
+              hide-duration
+              overflow="ellipsis"
             />
-            <div class="studio-context-inspector__current-copy">
-              <h4>{{ currentTrack.title }}</h4>
-              <p>{{ currentTrack.artist || '未知演出者' }}</p>
-            </div>
-          </div>
+          </ul>
 
           <dl v-if="currentTrackFacts.length > 0">
             <div v-for="fact in currentTrackFacts" :key="fact.id">
@@ -167,25 +172,17 @@ const currentTrackFacts = computed(() => {
           class="studio-context-inspector__queue-list"
           :aria-label="queuePreviewLabel"
         >
-          <li
+          <UiTrackRow
             v-for="(track, index) in upcomingPreviewTracks"
             :key="track.id ?? `${track.title}-${index}`"
             class="studio-context-inspector__queue-item"
-          >
-            <UiTrackThumb
-              :track="track"
-              size="var(--ui-track-artwork-size-dense)"
-              loading="lazy"
-              decoding="async"
-            />
-            <div class="studio-context-inspector__queue-copy">
-              <h4>{{ track.title }}</h4>
-              <p>
-                {{ track.artist || '未知演出者' }} ·
-                {{ formatDuration(track.duration) }}
-              </p>
-            </div>
-          </li>
+            :track="track"
+            :artist="formatUpcomingTrackMetadata(track)"
+            hide-duration
+            overflow="ellipsis"
+            thumb-loading="lazy"
+            thumb-decoding="async"
+          />
         </ol>
       </section>
     </div>
@@ -203,7 +200,6 @@ const currentTrackFacts = computed(() => {
 }
 
 .studio-context-inspector__section h3,
-.studio-context-inspector__section h4,
 .studio-context-inspector__section p,
 .studio-context-inspector__section dl,
 .studio-context-inspector__section dt,
@@ -273,50 +269,22 @@ const currentTrackFacts = computed(() => {
 }
 
 .studio-context-inspector__collection p {
-  max-width: 100%;
-  overflow: hidden;
+  max-inline-size: 32ch;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-caption);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-weight: var(--ui-font-weight-regular);
+  line-height: var(--ui-line-height-body);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
 }
 
-.studio-context-inspector__current-identity {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ui-space-3);
-}
-
-.studio-context-inspector__current-artwork {
-  box-shadow: var(--ui-shadow-contact);
-}
-
-.studio-context-inspector__current-copy,
-.studio-context-inspector__queue-copy {
-  min-width: 0;
-}
-
-.studio-context-inspector__current-copy h4 {
-  overflow: hidden;
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.studio-context-inspector__current-copy p,
-.studio-context-inspector__queue-copy p,
 .studio-context-inspector__section dt,
 .studio-context-inspector__section dd {
   font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-regular);
   line-height: var(--ui-line-height-caption);
 }
 
-.studio-context-inspector__current-copy p,
-.studio-context-inspector__queue-copy p,
 .studio-context-inspector__section dt {
   color: var(--ui-color-text-muted);
 }
@@ -325,6 +293,7 @@ const currentTrackFacts = computed(() => {
   display: grid;
   gap: var(--ui-space-3);
   margin-top: var(--ui-space-4);
+  padding-inline: var(--ui-track-row-padding-inline);
 }
 
 .studio-context-inspector__current dl div {
@@ -343,39 +312,19 @@ const currentTrackFacts = computed(() => {
   white-space: nowrap;
 }
 
+.studio-context-inspector__track-list,
 .studio-context-inspector__queue-list {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: var(--ui-space-1);
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.studio-context-inspector__queue-item {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: var(--ui-space-3);
-  min-height: var(--ui-track-row-min-height);
-  padding-block: var(--ui-space-1);
-}
-
-.studio-context-inspector__queue-copy h4,
-.studio-context-inspector__queue-copy p {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.studio-context-inspector__queue-copy h4 {
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
-}
-
-.studio-context-inspector__current-copy,
+.studio-context-inspector__track-list :deep(.ui-track__info),
 .studio-context-inspector__current dl dd,
-.studio-context-inspector__collection p,
-.studio-context-inspector__queue-copy {
+.studio-context-inspector__collection p {
   -webkit-user-select: text;
   user-select: text;
 }

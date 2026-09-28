@@ -12,7 +12,9 @@ import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -29,7 +31,9 @@ for (const [component, filename] of [
   [UiHint, '../ui/UiHint.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
+  [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -74,16 +78,55 @@ function mountInspector(overrides = {}) {
 }
 
 describe('Studio Library Context Inspector', () => {
+  it('uses the shared Right Dock Track Row recipe for current and upcoming identities', () => {
+    const source = readFileSync(
+      new URL('./StudioLibraryContextInspector.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain("import UiTrackRow from '../ui/UiTrackRow.vue';");
+    expect(source.match(/<UiTrackRow/gu)).toHaveLength(2);
+    expect(source).toContain('class="studio-context-inspector__current-track"');
+    expect(source).toContain('class="studio-context-inspector__queue-item"');
+    expect(source).toContain('hide-duration');
+    expect(source).toContain('overflow="ellipsis"');
+    expect(source).not.toContain('UiTrackThumb');
+    expect(source).not.toContain('--ui-track-artwork-size-preview');
+    expect(source).not.toContain('--ui-track-artwork-size-dense');
+    expect(source).not.toContain('grid-template-columns: auto minmax(0, 1fr)');
+  });
+
+  it('assigns semantic tiers to headings, metadata, and prose', () => {
+    const source = readFileSync(
+      new URL('./StudioLibraryContextInspector.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toMatch(
+      /\.studio-context-inspector__section h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+    );
+    expect(source).toMatch(
+      /\.studio-context-inspector__collection h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-md\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,
+    );
+    expect(source).toMatch(
+      /\.studio-context-inspector__collection p\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*line-height:\s*var\(--ui-line-height-body\);[^}]*text-wrap:\s*pretty;[^}]*overflow-wrap:\s*anywhere;/su,
+    );
+    expect(source).not.toMatch(
+      /\.studio-context-inspector__collection p\s*\{[^}]*white-space:\s*nowrap;/su,
+    );
+    expect(source).not.toMatch(/font-size:\s*(?:\d|\.)+(?:px|rem)/u);
+  });
+
   it('shows current-track metadata from the playback context without repeating playlist facts', () => {
     const { app, root, onClose } = mountInspector();
     const section = findAll(root, (node) => node.type === 'section')[0];
     const close = findAll(
       root,
-      (node) => node.props['aria-label'] === '關閉播放資訊',
+      (node) => node.type === 'button' && textContent(node) === '關閉播放資訊',
     )[0];
-    const artwork = findAll(root, (node) =>
+    const currentRow = findAll(root, (node) =>
       String(node.props?.class ?? '').includes(
-        'studio-context-inspector__current-artwork',
+        'studio-context-inspector__current-track',
       ),
     )[0];
     const renderedArtwork = findAll(
@@ -106,10 +149,11 @@ describe('Studio Library Context Inspector', () => {
     expect(textContent(root)).not.toMatch(
       /檔案摘要|曲目\s*12 首|總長|集合類型/u,
     );
-    expect(artwork).toBeTruthy();
+    expect(currentRow.type).toBe('li');
+    expect(String(currentRow.props.class)).toContain('ui-track--current');
     expect(renderedArtwork.props.style).toMatchObject({
-      width: 'var(--ui-track-artwork-size-preview)',
-      height: 'var(--ui-track-artwork-size-preview)',
+      width: 'var(--ui-track-row-thumb-size)',
+      height: 'var(--ui-track-row-thumb-size)',
     });
     expect(String(close.props.class)).toContain('ui-icon-btn');
     expect(String(close.props.class)).toContain('app-right-dock-header__close');
@@ -144,7 +188,8 @@ describe('Studio Library Context Inspector', () => {
     // The content layer owns only its close action. Shared fold/resize chrome
     // belongs to AppRightDock, and queue rows remain read-only here.
     expect(buttons).toHaveLength(1);
-    expect(buttons[0].props['aria-label']).toBe('關閉播放資訊');
+    expect(buttons[0].props['aria-label']).toBeUndefined();
+    expect(textContent(buttons[0])).toBe('關閉播放資訊');
     app.unmount();
   });
 
@@ -213,7 +258,7 @@ describe('Studio Library Context Inspector', () => {
       /\.app-right-dock-header p\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/su,
     );
     expect(source).toMatch(
-      /\.studio-context-inspector__current-copy,[\s\S]*?\.studio-context-inspector__queue-copy\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
+      /\.studio-context-inspector__track-list\s+:deep\(\.ui-track__info\),[\s\S]*?\.studio-context-inspector__collection p\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
     );
     expect(source).toMatch(
       /\.studio-context-inspector__section\s+:deep\(\.ui-hint\)\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/su,
@@ -224,16 +269,13 @@ describe('Studio Library Context Inspector', () => {
     expect(source).toMatch(
       /\.studio-context-inspector__section h3,[\s\S]*?\.studio-context-inspector__section dt\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
     );
-    // UiCollageThumb is the collection-level cover (matches the same
-    // component SetlistPlaylistHeader.vue/StudioLibraryDossierHeader.vue use
-    // for "what does this playlist look like"); per-track artwork in the
-    // current-track and queue sections stays UiTrackThumb — a single track
-    // is never rendered as a collage of itself.
+    // UiCollageThumb remains the collection-level summary. Current and
+    // upcoming identities consume UiTrackRow, which owns the single-track
+    // thumb and shared Right Dock 52/40 recipe.
     expect(source).toContain('UiCollageThumb');
-    expect(source).toContain('UiTrackThumb');
-    // Queue items are a thumbnail + stacked title/artist tile (matching the
-    // current-track pattern), not a table row — no dedicated index or
-    // duration column competing with the flexible title/artist column.
+    expect(source).toContain('UiTrackRow');
+    // Queue rows remain a glanceable title/metadata identity rather than a
+    // table — no dedicated index or duration column competes with copy.
     expect(source).not.toContain('queue-index');
     expect(source).not.toContain('queue-duration');
   });

@@ -106,6 +106,16 @@ function handleResizeKeydown(event) {
 
 <style scoped>
 .app-right-dock {
+  /* The Dock is a fixed-density content boundary. Keep the generic Track
+     Row mapping available everywhere else while Queue, Recent, and Metadata
+     share 52/40 geometry plus the Sidebar-aligned 4px row inset/state plate. */
+  --ui-track-row-min-height: var(--ui-right-dock-track-row-min-height);
+  --ui-track-row-thumb-size: var(--ui-right-dock-track-artwork-size);
+  --ui-track-row-padding-inline: var(--ui-right-dock-track-row-padding-inline);
+  --ui-track-row-state-surface-outset-inline: var(
+    --ui-right-dock-track-row-state-surface-outset-inline
+  );
+
   position: relative;
   display: flex;
   width: var(--ui-right-dock-rail-width);

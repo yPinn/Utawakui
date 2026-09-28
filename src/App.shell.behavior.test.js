@@ -70,7 +70,7 @@ describe('App shell right Dock', () => {
       /@media \(max-width: 70rem\)[\s\S]*\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\);[^}]*gap:\s*0;[^}]*\}/u,
     );
     expect(source).toMatch(
-      /@media \(max-width: 70rem\)[\s\S]*\.shell__dock\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*var\(--ui-space-2\);[^}]*\}/u,
+      /@media \(max-width: 70rem\)[\s\S]*\.shell__dock\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*var\(--ui-shell-edge-inset-inline\);[^}]*\}/u,
     );
   });
 });

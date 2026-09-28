@@ -72,20 +72,46 @@ const queueFeatureFiles = filesUnder(
   }));
 
 describe('shared UI component token contract', () => {
-  it('maps both systems onto one density-aware Right Dock token contract', () => {
+  it('maps both systems onto one fixed-density Right Dock token contract', () => {
     const activeValues = declarations(active);
     const candidateValues = declarations(candidate);
 
     expect(activeValues.get('--ui-panel-inset')).toBe('var(--ui-space-4)');
     expect(activeValues.get('--ui-right-dock-content-inset')).toBe(
-      'var(--ui-panel-inset)',
+      'var(--ui-space-2)',
+    );
+    expect(activeValues.get('--ui-right-dock-track-row-padding-inline')).toBe(
+      'var(--ui-space-1)',
+    );
+    expect(
+      activeValues.get('--ui-right-dock-track-row-state-surface-outset-inline'),
+    ).toBe('var(--ui-space-1)');
+    expect(activeValues.get('--ui-right-dock-track-row-min-height')).toBe(
+      '3.25rem',
+    );
+    expect(activeValues.get('--ui-right-dock-track-artwork-size')).toBe(
+      '2.5rem',
     );
     expect(activeValues.get('--ui-drag-indicator-width')).toBe('2px');
 
     expect(candidateValues.get('--ui-right-dock-width')).toBe('17.5rem');
     expect(candidateValues.get('--ui-right-dock-rail-width')).toBe('2.5rem');
     expect(candidateValues.get('--ui-right-dock-content-inset')).toBe(
-      'var(--ui-panel-inset)',
+      'var(--ui-space-2)',
+    );
+    expect(
+      candidateValues.get('--ui-right-dock-track-row-padding-inline'),
+    ).toBe('var(--ui-space-1)');
+    expect(
+      candidateValues.get(
+        '--ui-right-dock-track-row-state-surface-outset-inline',
+      ),
+    ).toBe('var(--ui-space-1)');
+    expect(candidateValues.get('--ui-right-dock-track-row-min-height')).toBe(
+      '3.25rem',
+    );
+    expect(candidateValues.get('--ui-right-dock-track-artwork-size')).toBe(
+      '2.5rem',
     );
     for (const name of [
       '--ui-right-dock-sticky-background',
@@ -104,6 +130,18 @@ describe('shared UI component token contract', () => {
     expect(candidate).toMatch(
       /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{[^}]*--ui-panel-inset:\s*0\.75rem;[^}]*\}/su,
     );
+    const compactBlock = candidate.match(
+      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+    )?.[1];
+    expect(compactBlock).not.toContain('--ui-right-dock-content-inset');
+    expect(compactBlock).not.toContain('--ui-right-dock-track-row-min-height');
+    expect(compactBlock).not.toContain('--ui-right-dock-track-artwork-size');
+    expect(compactBlock).not.toContain(
+      '--ui-right-dock-track-row-padding-inline',
+    );
+    expect(compactBlock).not.toContain(
+      '--ui-right-dock-track-row-state-surface-outset-inline',
+    );
   });
 
   it('uses Standard Track Row geometry in Queue and reserves 48px for PlayerBar artwork', () => {
@@ -117,9 +155,19 @@ describe('shared UI component token contract', () => {
 
   it('centers the standard compact Sidebar row in a tighter rail and keeps PlayerBar artwork on the same axis', () => {
     const activeValues = declarations(active);
+    const candidateValues = declarations(candidate);
+    const candidateCompactBlock = candidate.match(
+      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+    )?.[1];
 
     expect(activeValues.get('--ui-shell-panel-inset-block')).toMatch(
       /^var\(\s*--ui-space-4\s*\)$/u,
+    );
+    expect(activeValues.get('--ui-shell-edge-inset-inline')).toMatch(
+      /^var\(\s*--ui-space-2\s*\)$/u,
+    );
+    expect(activeValues.get('--ui-shell-leading-artwork-centerline')).toContain(
+      'var(--ui-shell-edge-inset-inline) + var(--ui-space-6)',
     );
     expect(activeValues.get('--ui-playlist-sidebar-width-min')).toBe('4rem');
     expect(activeValues.get('--ui-playlist-sidebar-padding-inline')).toBe(
@@ -128,17 +176,37 @@ describe('shared UI component token contract', () => {
     expect(
       activeValues.get('--ui-playlist-sidebar-padding-inline-compact'),
     ).toBe('0.375rem');
+    expect(activeValues.get('--ui-sidebar-row-min-height')).toBe('3.25rem');
+    expect(activeValues.get('--ui-sidebar-artwork-size')).toBe('2.5rem');
     expect(activeValues.get('--ui-playlist-row-compact-hit-size')).toBe(
-      'var(\n    --ui-track-row-min-height\n  )',
+      'var(--ui-sidebar-row-min-height)',
     );
-    expect(activeValues.get('--ui-playlist-row-artwork-centerline')).toBe(
-      '2rem',
+    expect(activeValues.get('--ui-playlist-row-thumb-size')).toBe(
+      'var(--ui-sidebar-artwork-size)',
     );
-    expect(activeValues.get('--ui-player-bar-padding-inline')).toContain(
-      'var(--ui-playlist-row-artwork-centerline) - 1.5rem',
+    expect(activeValues.get('--ui-playlist-row-artwork-centerline')).toContain(
+      'var(--ui-shell-leading-artwork-centerline)',
     );
     expect(activeValues.get('--ui-player-bar-padding-inline-start')).toContain(
-      'var(--ui-player-bar-padding-inline) + var(--ui-space-2)',
+      'var(--ui-shell-leading-artwork-centerline) - 1.5rem',
+    );
+    expect(
+      activeValues.get('--ui-player-bar-padding-inline-start'),
+    ).not.toContain('--ui-playlist-row');
+    expect(
+      activeValues.get('--ui-playlist-row-state-surface-outset-inline'),
+    ).toMatch(/^var\(\s*--ui-space-1\s*\)$/u);
+    expect(candidateValues.get('--ui-sidebar-row-min-height')).toBe('3.25rem');
+    expect(candidateValues.get('--ui-sidebar-artwork-size')).toBe(
+      'var(--ui-track-artwork-size-standard)',
+    );
+    expect(
+      candidateValues.get('--ui-playlist-row-state-surface-outset-inline'),
+    ).toBe('var(--ui-space-1)');
+    expect(candidateCompactBlock).not.toContain('--ui-sidebar-row-min-height');
+    expect(candidateCompactBlock).not.toContain('--ui-sidebar-artwork-size');
+    expect(candidateCompactBlock).not.toContain(
+      '--ui-playlist-row-state-surface-outset-inline',
     );
     expect(activeValues.get('--ui-playlist-list-gap')).toBe(
       'var(--ui-space-1)',
@@ -206,6 +274,30 @@ describe('shared UI component token contract', () => {
     for (const source of consumerSources) {
       expect(source).not.toMatch(/\bsize\s*=\s*(?:"sm"|'sm'|"'sm'"|'"sm"')/u);
     }
+  });
+
+  it.each([
+    ['active', active],
+    ['candidate', candidate],
+  ])('%s assigns Tooltip to the caption typography role', (_, css) => {
+    const values = declarations(css);
+
+    expect(values.get('--ui-tooltip-font-size')).toBe('var(--ui-font-size-sm)');
+    expect(values.get('--ui-tooltip-font-weight')).toBe(
+      'var(--ui-font-weight-regular)',
+    );
+    expect(values.get('--ui-tooltip-line-height')).toBe(
+      'var(--ui-line-height-caption)',
+    );
+    expect(values.get('--ui-tooltip-background')).toBeTruthy();
+    expect(values.get('--ui-tooltip-text')).toBeTruthy();
+    expect(values.get('--ui-tooltip-detail-text')).toBeTruthy();
+    expect(values.get('--ui-tooltip-border')).toBeTruthy();
+    expect(values.get('--ui-tooltip-shadow')).toBe('var(--ui-shadow-overlay)');
+    expect(values.get('--ui-tooltip-background')).not.toBe(
+      'var(--ui-color-text)',
+    );
+    expect(values.get('--ui-tooltip-text')).not.toBe('var(--ui-color-canvas)');
   });
 
   it('satisfies Metadata feature references through the effective candidate cascade', () => {

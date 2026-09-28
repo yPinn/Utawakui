@@ -27,7 +27,7 @@ const CORE_GROUPS = [
     label: '內容結構',
     floor: '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 48 · Player 68',
     standard: '封面 40 · 標頭 36 · 曲目列 52 · 側欄列 52 · Player 76',
-    compact: '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 48 · Player 68',
+    compact: '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 52 · Player 68',
     response: '先隱藏次要欄位，再重排面板。',
   },
   {

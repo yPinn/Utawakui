@@ -49,4 +49,20 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
       expect(componentSource).toContain('prefers-reduced-motion: reduce');
     }
   });
+
+  it('keeps row content aligned while expanding the hover and selected surface only', () => {
+    expect(source).toContain('playlist-sidebar__item-state-surface');
+    expect(rowSource).toContain('playlist-sidebar-row__state-surface');
+    for (const componentSource of [source, rowSource]) {
+      expect(componentSource).toContain(
+        'var(--ui-playlist-row-state-surface-outset-inline)',
+      );
+      expect(componentSource).toMatch(
+        /inset-inline:\s*calc\(\s*-1\s*\*\s*var\(--ui-playlist-row-state-surface-outset-inline\)\s*\)/u,
+      );
+      expect(componentSource).toMatch(
+        /@container \(width < 256px\)[\s\S]*?inset-inline:\s*0;/u,
+      );
+    }
+  });
 });

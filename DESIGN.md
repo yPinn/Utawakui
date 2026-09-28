@@ -328,12 +328,9 @@ The control panel should combine Spotify-like music workflow efficiency with mac
 - Keep the persistent playlist sidebar inset `1rem` from the shell content row's top and bottom in both the current production UI and Token v2; it is an independent navigation plane, not a continuation of the tabbed main-workspace baseline.
 - Treat production Queue and Token v2 playback metadata as surfaces in one `.shell__main` right Dock rather than page columns or PlayerBar popovers. Reserve its `17.5rem` desktop bay, pin the `2.5rem` collapsed rail and expanded panel to the shell's right edge with the same `1rem` block inset as Sidebar, and let its resize axis double-click bidirectionally between collapsed and the last expanded width. Queue may replace metadata in the foreground while retaining metadata as its fallback; closing Queue reveals that fallback, and activating the player artwork while Queue is visible cancels Queue and navigates directly to metadata. Only a Dock with no visible surface folds automatically.
 - Use the sidebar for collections and music-management context; primary section navigation (Setlist/Appearance/Lyrics/Import) lives in the top tabs above the workspace, not the sidebar.
-- Align Sidebar collection rows and standard track rows to the same 3.25rem／2.5rem rhythm. Sidebar keeps collection semantics: one click selects, a double-click or the artwork control starts playback.
+- Align Sidebar collection rows and standard track rows to the same 3.25rem／2.5rem rhythm. Sidebar keeps this 52px／40px geometry in both Standard and Compact window density because its collection content is fixed; only the Sidebar's own width changes between expanded and icon-rail states. Sidebar keeps collection semantics: one click selects, a double-click or the artwork control starts playback.
 - Keep track rows dense, aligned, and easy to scan.
-- Queue rows reuse the standard `UiTrackRow` 3.25rem／2.5rem geometry; single-click selects, double-click or artwork activation plays, duration is hidden, and track titles remain plain text. The 3rem artwork recipe belongs only to the bottom-left PlayerBar.
-- Keep Queue and Recently Played as two true tabpanels inside the same Right Dock surface. Reuse `UiTabs` with the flat Bar presentation; the caller owns panel ids, visibility, and scrolling rather than turning the labels into ad-hoc buttons.
-- Keep the Queue tab／close chrome sticky within the content scroller. At scroll origin it remains flat; after content passes beneath it, use the shared Right Dock translucent background, blur, and theme-aware shadow tokens. Do not copy Spotify brand green, gradients, or bespoke row anatomy.
-- Recently Played reuses the Queue `UiTrackRow` adapter and its selection／activation contract. It does not add timestamps, durations, or a history-specific row primitive unless a later workflow proves those fields necessary.
+- Right Dock track identities reuse `UiTrackRow` through a Dock-scoped fixed-density recipe: Queue, Recently Played, and playback-metadata current／upcoming rows remain 3.25rem／2.5rem (52px／40px) in both Standard and Compact. Its inline rhythm mirrors the expanded Sidebar without coupling the two features: an 0.5rem panel perimeter, 0.25rem row content inset, and 0.25rem state-surface outset place state paint／section content／artwork at 4／8／12px from the Dock edge. The resizable Dock width and window density are separate state axes; Compact may still remap generic Track Rows outside the Dock to 44px／36px. Queue single-click selects, double-click or artwork activation plays, duration is hidden, and track titles remain plain text. The Queue scroll surface protects tabs, headings, empty cues, row whitespace, and actions from drag selection while explicitly restoring text selection only for track title／artist metadata. The 3rem artwork recipe belongs only to the bottom-left PlayerBar.
 - Keep Queue and Recently Played as two true tabpanels inside the same Right Dock surface. Reuse `UiTabs` with the flat Bar presentation; the caller owns panel ids, visibility, and scrolling rather than turning the labels into ad-hoc buttons.
 - Keep the Queue tab／close chrome sticky within the content scroller. At scroll origin it remains flat; after content passes beneath it, use the shared Right Dock translucent background, blur, and theme-aware shadow tokens. Do not copy Spotify brand green, gradients, or bespoke row anatomy.
 - Recently Played reuses the Queue `UiTrackRow` adapter and its selection／activation contract. It does not add timestamps, durations, or a history-specific row primitive unless a later workflow proves those fields necessary.
@@ -636,6 +633,18 @@ The control-panel default is:
 
 This matches the current `src/styles/tokens.css` direction. Keep this stack compatible and local-first; do not bundle brand fonts into the Electron control panel.
 
+Right Dock uses the same fixed type scale in Queue and playback metadata:
+
+| Role                             | Size | Weight | Line height |
+| -------------------------------- | ---: | -----: | ----------- |
+| Dock title                       | 18px |    600 | Title       |
+| Collection／entity title         | 16px |    600 | Title       |
+| Section／tab／track title        | 14px |    600 | Label       |
+| Artist／metadata／header context | 14px |    400 | Caption     |
+| Multiline description            | 14px |    400 | Body        |
+
+Single-line identities use the owning component's ellipsis rule. Descriptions are prose: they use `text-wrap: pretty`, allow long unbroken metadata to wrap, and must not inherit label-style `white-space: nowrap`.
+
 The overlay default pairing is:
 
 ```css
@@ -837,6 +846,8 @@ Custom font settings should not affect control panel UI. The control panel shoul
 - **Body** (400, `1rem`, 1.5): Standard UI copy and readable prose.
 - **Label** (600, `0.875rem`, 1.25): Buttons, tabs, metadata labels, compact controls.
 - **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14 CSS px control vs. a quiet 14 CSS px description at the default root).
+
+Tooltip copy uses the Caption role through the shared `--ui-tooltip-font-*` component aliases. Its dark floating material is explicit through `--ui-tooltip-background`, `--ui-tooltip-text`, `--ui-tooltip-detail-text`, `--ui-tooltip-border` and `--ui-tooltip-shadow`, and remains dark in both app themes instead of being derived by swapping page text and canvas colors. Icon-only actions keep an accessible name through visually hidden button text, while the tooltip remains a regular-weight visible hint rather than a second ARIA label. Placement is owned by the semantic trigger (`top` by default; logical `start`／`end` only when the object-level rail context requires it) and must still pass viewport collision handling. A collection-information tooltip may add one secondary detail line; that detail belongs to the collection object, while a playback tooltip remains owned by the playback button.
 
 Naming here is this project's own semantic roles, not a literal port of any platform's type-style names. In particular, Apple's HIG `Headline` style (small, bold, body-adjacent emphasis) is not what this document's `Headline` means (a big view/modal title, closer to HIG's `Title 1`/`Title 2`) — don't assume HIG familiarity carries over to these names.
 

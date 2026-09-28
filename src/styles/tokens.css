@@ -173,6 +173,16 @@
   --ui-radio-dot-size: var(--ui-space-2);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
+  --ui-tooltip-font-size: var(--ui-font-size-sm);
+  --ui-tooltip-font-weight: var(--ui-font-weight-regular);
+  --ui-tooltip-line-height: var(--ui-line-height-caption);
+  /* Tooltip stays a dark floating material in both themes instead of
+     inverting text/canvas and becoming a bright block in dark mode. */
+  --ui-tooltip-background: rgb(18 21 23 / 96%);
+  --ui-tooltip-text: #ffffff;
+  --ui-tooltip-detail-text: rgb(255 255 255 / 72%);
+  --ui-tooltip-border: rgb(255 255 255 / 12%);
+  --ui-tooltip-shadow: var(--ui-shadow-overlay);
   --ui-tooltip-max-inline-size: 18rem;
   --ui-popover-max-inline-size: 24rem;
   --ui-notification-min-inline-size: 20rem;
@@ -217,6 +227,12 @@
   --ui-shell-panel-inset-block: var(
     --ui-space-4
   ); /* 16px: shared breathing room above/below Sidebar and Right Dock */
+  --ui-shell-edge-inset-inline: var(
+    --ui-space-2
+  ); /* 8px: shared window-edge gutter for Sidebar and the main/right plane */
+  --ui-shell-leading-artwork-centerline: calc(
+    var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
+  ); /* 40px from the window edge: shared Sidebar/PlayerBar artwork axis */
   --ui-playlist-sidebar-width: 16rem; /* default/CSS fallback — App.vue overrides live via useSidebarWidth.js */
   --ui-playlist-sidebar-width-min: 4rem; /* 64px: tighter icon-only rail */
   --ui-playlist-sidebar-padding-block: var(--ui-space-2);
@@ -233,7 +249,15 @@
      with no continuously-resizable zone in between (useSidebarResize.js
      adds a drag-resistance deadzone at this value first). */
   --ui-playlist-sidebar-compact-threshold: 16rem;
-  --ui-playlist-row-artwork-centerline: 2rem; /* 32px: center of the compact sidebar rail */
+  /* Sidebar content is fixed-density. Only the Sidebar's own width changes
+     between expanded and icon-rail states; window density must not introduce
+     a second 52/40 -> 48/36 geometry transition. */
+  --ui-sidebar-row-min-height: 3.25rem;
+  --ui-sidebar-artwork-size: 2.5rem;
+  --ui-playlist-row-artwork-centerline: calc(
+    var(--ui-shell-leading-artwork-centerline) -
+      var(--ui-shell-edge-inset-inline)
+  ); /* 32px inside the Sidebar panel; shell owns the global 40px axis */
   --ui-playlist-row-gap: var(--ui-space-2);
   --ui-playlist-row-padding-block: var(--ui-space-1);
   --ui-playlist-row-padding-inline: calc(
@@ -241,18 +265,15 @@
       var(--ui-playlist-sidebar-padding-inline) - var(--ui-border-width) -
       1.25rem
   ); /* 3px: border-aware inset keeps the 40px thumb on the 32px rail axis */
-  --ui-playlist-row-thumb-size: var(
-    --ui-track-row-thumb-size
-  ); /* 40px: align collection rows to the standard Track Row; keep in sync with PLAYLIST_ROW_THUMB_SIZE */
-  --ui-playlist-row-compact-hit-size: var(
-    --ui-track-row-min-height
-  ); /* 52px: expanded and compact rows align to the standard Track Row */
+  --ui-playlist-row-thumb-size: var(--ui-sidebar-artwork-size);
+  --ui-playlist-row-compact-hit-size: var(--ui-sidebar-row-min-height);
+  --ui-playlist-row-state-surface-outset-inline: var(
+    --ui-space-1
+  ); /* 4px: expands hover/selected paint to an 8px visual artwork inset without moving content */
   --ui-playlist-row-selected-background: var(
     --ui-color-surface-active
   ); /* neutral selected row, distinct from accent-tinted page selection */
-  --ui-playlist-row-min-height: var(
-    --ui-playlist-row-compact-hit-size
-  ); /* 52px: one stable block rhythm in expanded and compact Sidebar */
+  --ui-playlist-row-min-height: var(--ui-sidebar-row-min-height);
   --ui-playlist-toolbar-gap: var(--ui-space-2);
   --ui-playlist-toolbar-height: var(--ui-playlist-row-min-height);
   --ui-playlist-toolbar-padding-block: 0;
@@ -277,7 +298,15 @@
   --ui-panel-inset: var(--ui-space-4);
   --ui-right-dock-width: 17.5rem;
   --ui-right-dock-rail-width: 2.5rem;
-  --ui-right-dock-content-inset: var(--ui-panel-inset);
+  /* Right Dock follows the Sidebar's cumulative inline rhythm: the panel
+     owns an 8px perimeter, while Track Row content and state paint own
+     separate 4px deltas below. Window density must not compact this plane a
+     second time. */
+  --ui-right-dock-content-inset: var(--ui-space-2);
+  --ui-right-dock-track-row-min-height: 3.25rem; /* 52px */
+  --ui-right-dock-track-artwork-size: 2.5rem; /* 40px */
+  --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
+  --ui-right-dock-track-row-state-surface-outset-inline: var(--ui-space-1);
   --ui-right-dock-sticky-background: color-mix(
     in srgb,
     var(--ui-color-surface) 88%,
@@ -414,25 +443,18 @@
   --ui-track-row-gap: var(--ui-space-2); /* gap inside a row */
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
+  --ui-track-row-state-surface-outset-inline: 0;
   --ui-track-list-gap: var(--ui-space-1); /* gap between rows */
   /* space-4, not space-3 — gives the 44px Primary transport button (the
      contract's hard floor, see token-v2-component-review.md's 核心尺寸 row)
      real breathing room inside the bar instead of sitting nearly flush top
      and bottom. */
   --ui-player-bar-padding-block: var(--ui-space-4);
-  --ui-player-bar-padding-inline: calc(
-    var(--ui-playlist-row-artwork-centerline) - 1.5rem
-  ); /* 8px: 48px artwork centered on the 32px rail axis */
-  /* The rail axis above assumes the sidebar starts flush at the window
-     edge. App.vue's .shell__sidebar now opens a --ui-space-2 margin there
-     instead (the shell's outer-edge inset — see .shell__sidebar's own
-     comment), shifting the rail right by that much — so the artwork's own
-     start-side inset needs the same addition to stay centered on it. Only
-     the start side: the player bar's own left/right edges stay flush
-     (App.vue's .shell__player isn't margined), this only re-centers the
-     artwork inside it. */
+  --ui-player-bar-padding-inline: var(--ui-shell-edge-inset-inline);
+  /* PlayerBar consumes the shell-owned global axis directly. Sidebar row
+     geometry can now evolve without becoming a PlayerBar dependency. */
   --ui-player-bar-padding-inline-start: calc(
-    var(--ui-player-bar-padding-inline) + var(--ui-space-2)
+    var(--ui-shell-leading-artwork-centerline) - 1.5rem
   );
   --ui-player-bar-artwork-size: 3rem; /* 48px: PlayerBar-only recipe; keep in sync with PLAYER_BAR_ARTWORK_SIZE */
   --ui-player-bar-track-width: 15rem; /* 240px: stable now-playing region at common desktop widths */

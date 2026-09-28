@@ -104,6 +104,9 @@ describe('DemoCoreMinimums', () => {
     expect(html.match(/data-core-minimum-group=/gu)).toHaveLength(4);
     expect(html).toContain('Standard');
     expect(html).toContain('Compact');
+    expect(html).toContain(
+      '封面 36 · 標頭 32 · 曲目列 44 · 側欄列 52 · Player 68',
+    );
     expect(html).not.toContain('<table');
   });
 
@@ -175,7 +178,7 @@ describe('DemoCoreMinimums', () => {
       expect(activeTokenSource).toContain(source);
     }
     expect(activeTokenSource).toContain(
-      '52px: expanded and compact rows align to the standard Track Row',
+      "Sidebar content is fixed-density. Only the Sidebar's own width changes",
     );
     expect(activeTokenSource).toContain('80px: 48px artwork');
     expect(activeTokenSource).not.toContain('--ui-list-header-height');

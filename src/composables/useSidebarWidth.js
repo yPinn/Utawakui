@@ -8,6 +8,9 @@ import { ref } from 'vue';
 // — neither CSS nor the main process can read these from one shared source.
 export const SIDEBAR_WIDTH_MIN = 64; // 4rem
 export const SIDEBAR_WIDTH_MAX = 280; // 17.5rem
+// Keep in sync with --ui-playlist-sidebar-compact-threshold and the
+// @container (width < 256px) rules in the Sidebar components.
+export const SIDEBAR_COMPACT_THRESHOLD = 256; // 16rem
 
 const width = ref(window.Utawakui?.initialSidebarWidth ?? 256);
 

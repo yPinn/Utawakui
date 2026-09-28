@@ -424,7 +424,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      config.json) can't push the grid column past useSidebarWidth.js's own
      min/max. useSidebarResize.js already clamps during a live drag; this
      is the CSS-side backstop for values that arrive some other way.
-     Plus --ui-space-2: .shell__sidebar's own padding-left (the sidebar's
+     Plus --ui-shell-edge-inset-inline: .shell__sidebar's own padding-left (the sidebar's
      outer margin from the window edge) below eats into whatever this track
      hands it — without the extra space here, that padding would shrink
      AppPlaylistSidebar.vue's own rendered width below its calibrated
@@ -441,7 +441,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
           var(--ui-playlist-sidebar-width),
           var(--ui-playlist-sidebar-width-max)
         ) +
-        var(--ui-space-2)
+        var(--ui-shell-edge-inset-inline)
     )
     1fr;
   grid-template-rows: var(--ui-titlebar-height) 1fr auto;
@@ -477,7 +477,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      outermost edge insets (window edge to sidebar/main+context), kept to
      the same smaller value so the app doesn't run flush to the window but
      the inset still reads as tighter than the wider gaps between blocks. */
-  padding-left: var(--ui-space-2);
+  padding-left: var(--ui-shell-edge-inset-inline);
 }
 
 .shell__main {
@@ -498,7 +498,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
      both. */
   padding-bottom: var(--ui-shell-panel-inset-block);
   padding-left: var(--ui-space-3);
-  padding-right: var(--ui-space-2);
+  padding-right: var(--ui-shell-edge-inset-inline);
 }
 
 .shell__main--with-dock {
@@ -571,7 +571,7 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
     position: absolute;
     z-index: var(--ui-z-sticky);
     inset-block: 0 var(--ui-shell-panel-inset-block);
-    inset-inline-end: var(--ui-space-2);
+    inset-inline-end: var(--ui-shell-edge-inset-inline);
   }
 }
 

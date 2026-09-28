@@ -1,9 +1,12 @@
 import { readFileSync } from 'node:fs';
-import { h, nextTick } from 'vue';
+import { h, nextTick, shallowRef } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RefreshCw } from '../../icons/index.js';
 import UiButton from './UiButton.vue';
+import UiIconButton from './UiIconButton.vue';
 import UiPopover from './UiPopover.vue';
 import UiTooltip from './UiTooltip.vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -17,11 +20,17 @@ const popoverSource = readFileSync(
   new URL('./UiPopover.vue', import.meta.url),
   'utf8',
 );
+const iconButtonSource = readFileSync(
+  new URL('./UiIconButton.vue', import.meta.url),
+  'utf8',
+);
 
 for (const [component, filename] of [
   [UiButton, './UiButton.vue'],
+  [UiIconButton, './UiIconButton.vue'],
   [UiPopover, './UiPopover.vue'],
   [UiTooltip, './UiTooltip.vue'],
+  [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -74,25 +83,31 @@ describe('UiTooltip', () => {
           h(UiButton, { ...triggerProps }, () => '重新整理'),
       },
     );
-    const anchor = findAll(
-      mounted.root,
-      (node) => node.props.class === 'ui-tooltip__anchor',
-    )[0];
     const button = findAll(mounted.root, (node) => node.type === 'button')[0];
 
     expect(button.props['aria-describedby']).toBeTruthy();
+    expect(button.props.onPointerenter).toBeTypeOf('function');
+    expect(
+      findAll(
+        mounted.root,
+        (node) => node.props.class === 'ui-tooltip__anchor',
+      ),
+    ).toHaveLength(0);
     expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
       0,
     );
 
-    trigger(anchor, 'onPointerenter', { pointerType: 'mouse' });
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
     await vi.advanceTimersByTimeAsync(300);
     await nextTick();
     expect(
       textContent(findAll(body, (node) => node.props.role === 'tooltip')[0]),
     ).toBe('重新整理資料');
 
-    trigger(anchor, 'onKeydown', { key: 'Escape', stopPropagation: vi.fn() });
+    trigger(button, 'onKeydown', {
+      key: 'Escape',
+      stopPropagation: vi.fn(),
+    });
     await nextTick();
     expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
       0,
@@ -107,22 +122,50 @@ describe('UiTooltip', () => {
         trigger: ({ triggerProps }) => h('button', triggerProps, '開啟'),
       },
     );
-    const anchor = findAll(
-      mounted.root,
-      (node) => node.props.class === 'ui-tooltip__anchor',
-    )[0];
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
 
-    trigger(anchor, 'onPointerenter', { pointerType: 'touch' });
+    trigger(button, 'onPointerenter', { pointerType: 'touch' });
     await vi.runAllTimersAsync();
     expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
       0,
     );
 
-    trigger(anchor, 'onFocusin');
+    trigger(button, 'onFocusin');
     await nextTick();
     expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
       1,
     );
+  });
+
+  it('renders optional collection detail as a separate secondary line', async () => {
+    const mounted = mount(
+      UiTooltip,
+      {
+        text: '青見＋Piin',
+        detail: '專輯・Spotify',
+        placement: 'end',
+      },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '青見＋Piin'),
+      },
+    );
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    trigger(button, 'onFocusin');
+    await nextTick();
+
+    const tooltip = findAll(body, (node) => node.props.role === 'tooltip')[0];
+    const label = findAll(
+      tooltip,
+      (node) => node.props.class === 'ui-tooltip__label',
+    )[0];
+    const detail = findAll(
+      tooltip,
+      (node) => node.props.class === 'ui-tooltip__detail',
+    )[0];
+    expect(textContent(label)).toBe('青見＋Piin');
+    expect(textContent(detail)).toBe('專輯・Spotify');
+    mounted.app.unmount();
   });
 
   it('does not publish a dangling description when disabled', () => {
@@ -136,6 +179,93 @@ describe('UiTooltip', () => {
     const button = findAll(mounted.root, (node) => node.type === 'button')[0];
 
     expect(button.props['aria-describedby']).toBeUndefined();
+  });
+
+  it('closes an open tooltip when its interaction owner becomes disabled', async () => {
+    const disabled = shallowRef(false);
+    const mounted = mount({
+      setup: () => () =>
+        h(
+          UiTooltip,
+          { text: '集合資訊', disabled: disabled.value },
+          {
+            trigger: ({ triggerProps }) =>
+              h('button', triggerProps, '集合資訊'),
+          },
+        ),
+    });
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    trigger(button, 'onFocusin');
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      1,
+    );
+
+    disabled.value = true;
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    mounted.app.unmount();
+  });
+});
+
+describe('UiIconButton tooltip composition', () => {
+  it('keeps the real button as its single root and separates the accessible name from the tooltip', async () => {
+    const onClick = vi.fn();
+    const mounted = mount(UiIconButton, {
+      icon: RefreshCw,
+      label: '重新整理',
+      title: '重新整理型錄資料',
+      tooltipPlacement: 'end',
+      class: 'catalogue-refresh',
+      'data-control': 'catalogue-refresh',
+      'aria-describedby': 'catalogue-help',
+      onClick,
+    });
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    expect(String(button.props.class)).toContain('catalogue-refresh');
+    expect(button.props).toMatchObject({
+      type: 'button',
+      'data-control': 'catalogue-refresh',
+    });
+    expect(button.props['aria-label']).toBeUndefined();
+    expect(button.props.title).toBeUndefined();
+    expect(button.props['aria-describedby']).toBe('catalogue-help');
+    expect(textContent(button)).toContain('重新整理');
+    expect(iconButtonSource).toMatch(/<template>\s*<button\b/u);
+
+    trigger(button, 'onClick');
+    expect(onClick).toHaveBeenCalledOnce();
+
+    trigger(button, 'onFocusin');
+    await nextTick();
+    const tooltip = findAll(body, (node) => node.props.role === 'tooltip')[0];
+    expect(textContent(tooltip)).toBe('重新整理型錄資料');
+    expect(tooltip.props['data-placement']).toBe('end');
+    mounted.app.unmount();
+  });
+
+  it('uses the accessible label as fallback tooltip text for disabled buttons', async () => {
+    const mounted = mount(UiIconButton, {
+      icon: RefreshCw,
+      label: '重新整理',
+      disabled: true,
+    });
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    expect(button.props.disabled).toBe(true);
+    expect(button.props['aria-label']).toBeUndefined();
+    expect(textContent(button)).toContain('重新整理');
+    trigger(button, 'onPointerenter', { pointerType: 'mouse' });
+    await vi.advanceTimersByTimeAsync(500);
+    await nextTick();
+    expect(
+      textContent(findAll(body, (node) => node.props.role === 'tooltip')[0]),
+    ).toBe('重新整理');
+    mounted.app.unmount();
   });
 });
 

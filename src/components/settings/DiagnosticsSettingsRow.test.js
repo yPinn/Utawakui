@@ -18,8 +18,9 @@ async function renderRow(props = {}) {
 }
 
 function buttonTag(html, label) {
-  const start = html.indexOf(`aria-label="${label}"`);
-  return html.slice(start, html.indexOf('>', start));
+  const labelStart = html.indexOf(`>${label}</span>`);
+  const buttonStart = html.lastIndexOf('<button', labelStart);
+  return html.slice(buttonStart, html.indexOf('>', labelStart));
 }
 
 describe('DiagnosticsSettingsRow', () => {
@@ -29,9 +30,15 @@ describe('DiagnosticsSettingsRow', () => {
     expect(html).toContain('錯誤紀錄');
     expect(html).toContain('有紀錄');
     expect(html).toContain('4 筆近期錯誤');
-    expect(html).toContain('aria-label="匯出錯誤紀錄"');
-    expect(html).toContain('title="匯出錯誤紀錄"');
-    expect(html).toContain('aria-label="錯誤紀錄選項"');
+    expect(html).toMatch(
+      /class="ui-visually-hidden"[^>]*>匯出錯誤紀錄<\/span>/u,
+    );
+    expect(html).not.toContain('aria-label="匯出錯誤紀錄"');
+    expect(html).not.toContain('aria-describedby="ui-tooltip-');
+    expect(html).not.toContain('title="匯出錯誤紀錄"');
+    expect(html).toMatch(
+      /class="ui-visually-hidden"[^>]*>錯誤紀錄選項<\/span>/u,
+    );
     expect(html).toContain('aria-haspopup="menu"');
     // Refresh/open-folder/clear move behind the overflow menu instead of
     // sitting as their own always-visible icon buttons.

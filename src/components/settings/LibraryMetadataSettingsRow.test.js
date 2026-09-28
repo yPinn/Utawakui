@@ -24,7 +24,9 @@ describe('LibraryMetadataSettingsRow', () => {
     expect(html).toContain('曲目資訊整理');
     expect(html).toContain('整理名稱、歌手、專輯與年份');
     expect(html).toContain('從已保存的來源資訊');
-    expect(html).toContain('aria-label="整理曲目資訊"');
+    expect(html).toMatch(
+      /class="ui-visually-hidden"[^>]*>整理曲目資訊<\/span>/u,
+    );
   });
 
   it('shows stable running and successful result states', async () => {

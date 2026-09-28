@@ -8,6 +8,7 @@ import {
 } from '../../composables/useAppRightDockWidth.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -20,11 +21,20 @@ const source = readFileSync(
   new URL('./AppRightDock.vue', import.meta.url),
   'utf8',
 );
+const activeTokenSource = readFileSync(
+  new URL('../../styles/tokens.css', import.meta.url),
+  'utf8',
+);
+const v2TokenSource = readFileSync(
+  new URL('../../styles/tokens-v2.css', import.meta.url),
+  'utf8',
+);
 
 for (const [component, filename] of [
   [AppRightDock, './AppRightDock.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -70,7 +80,7 @@ describe('AppRightDock', () => {
     )[0];
     const expand = findAll(
       root,
-      (node) => node.props['aria-label'] === '展開播放佇列',
+      (node) => node.type === 'button' && textContent(node) === '展開播放佇列',
     )[0];
 
     expect(aside.props['aria-label']).toBe('播放佇列（已摺疊）');
@@ -184,5 +194,52 @@ describe('AppRightDock', () => {
     expect(source).toContain('inline-size: var(--ui-drag-indicator-width);');
     expect(source).not.toContain('width: 6px;');
     expect(source).not.toContain('width: 2px;');
+  });
+
+  it('owns a fixed-density 52/40 row with Sidebar-aligned 8/4/4 insets', () => {
+    for (const tokenSource of [activeTokenSource, v2TokenSource]) {
+      expect(tokenSource).toContain(
+        '--ui-right-dock-content-inset: var(--ui-space-2);',
+      );
+      expect(tokenSource).toContain(
+        '--ui-right-dock-track-row-min-height: 3.25rem;',
+      );
+      expect(tokenSource).toContain(
+        '--ui-right-dock-track-artwork-size: 2.5rem;',
+      );
+      expect(tokenSource).toContain(
+        '--ui-right-dock-track-row-padding-inline: var(--ui-space-1);',
+      );
+      expect(tokenSource).toContain(
+        '--ui-right-dock-track-row-state-surface-outset-inline: var(--ui-space-1);',
+      );
+    }
+
+    const compactBlock = v2TokenSource.match(
+      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+    )?.[1];
+    expect(compactBlock).not.toContain('--ui-right-dock-content-inset');
+    expect(compactBlock).not.toContain('--ui-right-dock-track-row-min-height');
+    expect(compactBlock).not.toContain('--ui-right-dock-track-artwork-size');
+    expect(compactBlock).not.toContain(
+      '--ui-right-dock-track-row-padding-inline',
+    );
+    expect(compactBlock).not.toContain(
+      '--ui-right-dock-track-row-state-surface-outset-inline',
+    );
+  });
+
+  it('scopes the fixed Track Row recipe to Right Dock descendants', () => {
+    expect(source).toMatch(
+      /\.app-right-dock\s*\{[^}]*--ui-track-row-min-height:\s*var\(--ui-right-dock-track-row-min-height\);[^}]*--ui-track-row-thumb-size:\s*var\(--ui-right-dock-track-artwork-size\);/su,
+    );
+    expect(source).toMatch(
+      /--ui-track-row-padding-inline:\s*var\(\s*--ui-right-dock-track-row-padding-inline\s*\);/su,
+    );
+    expect(source).toMatch(
+      /--ui-track-row-state-surface-outset-inline:\s*var\(\s*--ui-right-dock-track-row-state-surface-outset-inline\s*\);/su,
+    );
+    expect(source).not.toContain('--ui-sidebar-row-min-height');
+    expect(source).not.toContain('--ui-sidebar-artwork-size');
   });
 });

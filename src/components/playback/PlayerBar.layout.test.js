@@ -30,6 +30,16 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(trackRule).not.toContain('--ui-playlist-sidebar-width');
   });
 
+  it('aligns artwork to a shell-owned axis without consuming Playlist geometry', () => {
+    expect(tokenSource).toContain('--ui-shell-leading-artwork-centerline:');
+    expect(tokenSource).toMatch(
+      /--ui-player-bar-padding-inline-start:\s*calc\([\s\S]*?var\(--ui-shell-leading-artwork-centerline\)[\s\S]*?\);/u,
+    );
+    expect(tokenSource).not.toMatch(
+      /--ui-player-bar-padding-inline(?:-start)?:\s*[^;]*--ui-playlist-row/u,
+    );
+  });
+
   it('keeps secondary metadata on one clipped line', () => {
     const copyRule = cssRule(componentSource, '.player-bar__track-copy');
     const artistRule = cssRule(componentSource, '.player-bar__track-artist');

@@ -5,11 +5,13 @@ import UiButton from './UiButton.vue';
 import UiIconButton from './UiIconButton.vue';
 import UiNotificationHost from './UiNotificationHost.vue';
 import UiNotice from './UiNotice.vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
   hostNode,
   mount,
+  textContent,
   trigger,
 } from './uiTestHost.js';
 
@@ -18,6 +20,7 @@ for (const [component, filename] of [
   [UiIconButton, './UiIconButton.vue'],
   [UiNotice, './UiNotice.vue'],
   [UiNotificationHost, './UiNotificationHost.vue'],
+  [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -41,6 +44,8 @@ beforeEach(() => {
     return 0;
   });
   vi.stubGlobal('window', {
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
     getComputedStyle: () => ({
       animationDelay: '0s',
       animationDuration: '0s',
@@ -234,7 +239,7 @@ describe('UiNotificationHost', () => {
     expect(notice.props.role).toBe('presentation');
     expect(notice.props['aria-live']).toBe('off');
     trigger(
-      buttons.find((button) => !button.props['aria-label']),
+      buttons.find((button) => textContent(button).includes('重試')),
       'onClick',
     );
     expect(onAction).toHaveBeenCalledWith('retry');
@@ -259,8 +264,7 @@ describe('UiNotificationHost', () => {
     const item = notifications()[0];
     const close = findAll(
       item,
-      (node) =>
-        node.type === 'button' && node.props['aria-label'] === '關閉通知',
+      (node) => node.type === 'button' && textContent(node) === '關閉通知',
     )[0];
 
     trigger(close, 'onClick');

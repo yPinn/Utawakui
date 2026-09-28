@@ -7,6 +7,7 @@ import UiNotice from './UiNotice.vue';
 import UiSearchBox from './UiSearchBox.vue';
 import UiStatusIcon from './UiStatusIcon.vue';
 import UiTabs from './UiTabs.vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { Volume2 } from '../../icons/index.js';
 import {
   attachClientRender,
@@ -23,6 +24,7 @@ for (const [component, filename] of [
   [UiSearchBox, './UiSearchBox.vue'],
   [UiStatusIcon, './UiStatusIcon.vue'],
   [UiTabs, './UiTabs.vue'],
+  [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -51,7 +53,8 @@ describe('shared UI interaction contracts', () => {
     const button = findAll(root, (node) => node.type === 'button')[0];
 
     expect(String(button.props.class)).toContain('ui-icon-btn--stretch');
-    expect(button.props['aria-label']).toBe('展開集合資料');
+    expect(button.props['aria-label']).toBeUndefined();
+    expect(textContent(button)).toContain('展開集合資料');
 
     const source = readFileSync(
       new URL('./UiIconButton.vue', import.meta.url),
