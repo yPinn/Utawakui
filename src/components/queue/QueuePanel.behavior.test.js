@@ -86,10 +86,53 @@ describe('QueuePanel shared Dock content', () => {
       'min-height: var(--ui-track-row-min-height)',
     );
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
+    expect(trackRowSource).toMatch(
+      /\.ui-track__title\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+    );
+    expect(trackRowSource).toMatch(
+      /\.ui-track__artist\s*\{[^}]*color:\s*var\(--ui-color-text-muted\);[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*line-height:\s*var\(--ui-line-height-caption\);/su,
+    );
     expect(trackRowSource).toContain('ui-track--interactive');
     expect(trackRowSource).toContain('ui-track--current');
     expect(rowSource).not.toContain('queue-track__select');
     expect(rowSource).not.toContain('queue-track__cover');
+  });
+
+  it('owns section line rhythm without child margins defining content boundaries', () => {
+    expect(sectionSource).toMatch(
+      /\.queue-section\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-space-3\);/su,
+    );
+    expect(sectionSource).toMatch(
+      /\.queue-section \+ \.queue-section\s*\{[^}]*margin-top:\s*var\(--ui-space-5\);/su,
+    );
+    expect(sectionSource).not.toMatch(
+      /\.queue-section__header\s*\{[^}]*margin-bottom:/su,
+    );
+  });
+
+  it('protects Queue chrome from drag selection while preserving track metadata', () => {
+    expect(source).toMatch(
+      /\.queue-panel__scroll\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
+    );
+    expect(source).toMatch(
+      /\.queue-panel__content :deep\(\.ui-track__title\),[\s\S]*?\.queue-panel__content :deep\(\.ui-track__artist\)\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
+    );
+    expect(source).not.toMatch(
+      /\.queue-panel__scroll :deep\(\.ui-hint\)\s*\{[^}]*user-select:\s*text;/su,
+    );
+  });
+
+  it('separates Track Row content inset from its hover and selected surface', () => {
+    expect(trackRowSource).toContain('isolation: isolate;');
+    expect(trackRowSource).toMatch(
+      /\.ui-track::before\s*\{[^}]*inset-inline:\s*calc\(\s*-1\s*\*\s*var\(--ui-track-row-state-surface-outset-inline\)\s*\);[^}]*z-index:\s*-1;/su,
+    );
+    expect(trackRowSource).toMatch(
+      /\.ui-track--interactive:hover::before\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
+    );
+    expect(trackRowSource).toMatch(
+      /\.ui-track--active::before\s*\{[^}]*background:\s*var\(--ui-color-surface-selected\);[^}]*box-shadow:\s*var\(--ui-row-active-shadow\);/su,
+    );
   });
 
   it('separates selection from playback and keeps track metadata non-navigational', () => {
@@ -117,5 +160,32 @@ describe('QueuePanel shared Dock content', () => {
       'const { activateRecentEntry } = useRecentPlaybackActivation();',
     );
     expect(source).not.toContain('interruptWithTrack(entry.track)');
+  });
+
+  it('owns one shared track action dispatch for queue and recent rows', () => {
+    expect(source).toContain(
+      "import TrackActionMenu from '../track/TrackActionMenu.vue';",
+    );
+    expect(source).toContain('const trackMenu = shallowRef(null);');
+    expect(source).toContain('function openTrackMenu(payload)');
+    expect(source).toContain('@open-track-menu="openTrackMenu"');
+    expect(source).toContain(':open-menu-key="openTrackMenuKey"');
+    expect(source).toContain('<TrackActionMenu');
+    expect(source).toContain(':context="trackMenu?.context ?? \'default\'"');
+    expect(source).toContain(':playlists="playlistState.playlists"');
+    expect(source).toContain('@select="handleTrackMenuSelect"');
+    expect(source).toContain('TRACK_MENU_ACTIONS.removeFromQueue');
+    expect(source).toContain('removeQueuedTrack(track.id)');
+  });
+
+  it('keeps menu intent in feature owners rather than the shared track primitive', () => {
+    expect(rowSource).toContain(
+      "import UiIconButton from '../ui/UiIconButton.vue';",
+    );
+    expect(rowSource).toContain(':icon="Ellipsis"');
+    expect(rowSource).toContain("'openMenu'");
+    expect(sectionSource).toContain("'openTrackMenu'");
+    expect(trackRowSource).not.toContain('UiContextMenu');
+    expect(trackRowSource).not.toContain('menuItems');
   });
 });

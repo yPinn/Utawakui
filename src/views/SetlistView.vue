@@ -1,14 +1,6 @@
 <script setup>
 import { computed, onMounted, ref, watch } from 'vue';
-import {
-  Disc3,
-  ListEnd,
-  ListMinus,
-  ListPlus,
-  Pencil,
-  Plus,
-  Trash2,
-} from '../icons/index.js';
+import { Trash2 } from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
@@ -21,8 +13,8 @@ import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
 import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
+import TrackActionMenu from '../components/track/TrackActionMenu.vue';
 import UiButton from '../components/ui/UiButton.vue';
-import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
 import UiPageHeader from '../components/ui/UiPageHeader.vue';
@@ -30,8 +22,8 @@ import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatLongDuration } from '../utils/format.js';
 import {
+  TRACK_MENU_ACTIONS,
   playlistDisplayName,
-  addToPlaylistTargets,
 } from '../utils/playlistMenu.js';
 import {
   sortPlaylistEntries,
@@ -76,14 +68,6 @@ const searchQuery = ref('');
 const addMenu = ref(null);
 const playlistSort = ref({ key: null, direction: 'asc' });
 
-const TRACK_MENU_ACTIONS = {
-  addToQueue: 'add-to-queue',
-  addToPlaylist: 'add-to-playlist',
-  createPlaylist: 'create-playlist',
-  editMetadata: 'edit-metadata',
-  removeFromPlaylist: 'remove-from-playlist',
-  goToAlbum: 'go-to-album',
-};
 const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
 
 const mode = computed(() => {
@@ -183,107 +167,26 @@ const playlistMeta = computed(() => {
   return byline ? `${byline} · ${countLine}` : countLine;
 });
 
-const isAddMenuOpen = computed(() => Boolean(addMenu.value));
-const addMenuX = computed(() => addMenu.value?.x ?? 0);
-const addMenuY = computed(() => addMenu.value?.y ?? 0);
 const canDragPlaylistRows = computed(
   () => playlistSort.value.key === null && !isAlbumSelected.value,
 );
-const addMenuItems = computed(() => {
+const queuedTrackIds = computed(() =>
+  queueState.queuedTracks.map((track) => track.id),
+);
+const addMenuRemoveFromPlaylistId = computed(() => {
   const track = addMenu.value?.track;
-  const isAlreadyQueued = track
-    ? state.track?.id === track.id ||
-      queueState.queuedTracks.some((queuedTrack) => queuedTrack.id === track.id)
-    : false;
-  const playlistChildren = [
-    {
-      key: 'create-playlist',
-      label: '建立新歌單',
-      icon: Plus,
-      value: { action: TRACK_MENU_ACTIONS.createPlaylist },
-    },
-  ];
-
-  const availablePlaylists = addToPlaylistTargets(playlistState.playlists, {
-    excludeTrackId: track?.id,
-  });
-
-  if (availablePlaylists.length > 0) {
-    playlistChildren.push({ key: 'playlist-divider', separator: true });
-  }
-
-  playlistChildren.push(
-    ...availablePlaylists.map((playlist) => ({
-      key: playlist.id,
-      label: playlistDisplayName(playlist),
-      value: {
-        action: TRACK_MENU_ACTIONS.addToPlaylist,
-        playlistId: playlist.id,
-      },
-    })),
-  );
-
-  const items = [
-    {
-      key: 'add-to-queue',
-      label: '新增至佇列',
-      icon: ListEnd,
-      status: isAlreadyQueued ? '已在佇列' : '',
-      disabled: isAlreadyQueued,
-      value: { action: TRACK_MENU_ACTIONS.addToQueue },
-    },
-    { key: 'queue-divider', separator: true },
-    {
-      key: 'add-to-playlist',
-      label: '新增至播放清單',
-      icon: ListPlus,
-      children: playlistChildren,
-      submenuWidth: 240,
-    },
-  ];
-
-  if (track?.sourceType === 'local-file') {
-    items.push(
-      { key: 'edit-divider', separator: true },
-      {
-        key: 'edit-metadata',
-        label: '編輯資訊',
-        icon: Pencil,
-        value: { action: TRACK_MENU_ACTIONS.editMetadata },
-      },
-    );
-  }
-
   if (
     track &&
     !isAlbumSelected.value &&
     selectedPlaylist.value?.trackIds.includes(track.id)
   ) {
-    items.push({
-      key: 'remove-from-playlist',
-      label: '從此播放清單中移除',
-      icon: ListMinus,
-      value: {
-        action: TRACK_MENU_ACTIONS.removeFromPlaylist,
-        playlistId: selectedPlaylist.value.id,
-      },
-    });
+    return selectedPlaylist.value.id;
   }
-
-  // Same guard as jumpableTrackIds above.
-  if (track && !isAlbumSelected.value && albumForTrack(track)) {
-    items.push(
-      { key: 'album-divider', separator: true },
-      {
-        key: 'go-to-album',
-        label: '前往專輯',
-        icon: Disc3,
-        value: { action: TRACK_MENU_ACTIONS.goToAlbum },
-      },
-    );
-  }
-
-  return items;
+  return '';
+});
+const addMenuCanGoToAlbum = computed(() => {
+  const track = addMenu.value?.track;
+  return Boolean(track && !isAlbumSelected.value && albumForTrack(track));
 });
 
 const pageTitle = computed(() =>
@@ -611,12 +514,16 @@ onMounted(async () => {
         </template>
       </template>
 
-      <UiContextMenu
-        :open="isAddMenuOpen"
-        :x="addMenuX"
-        :y="addMenuY"
-        empty-text="先新增歌單"
-        :items="addMenuItems"
+      <TrackActionMenu
+        :open="Boolean(addMenu)"
+        :x="addMenu?.x ?? 0"
+        :y="addMenu?.y ?? 0"
+        :track="addMenu?.track ?? null"
+        :playlists="playlistState.playlists"
+        :current-track-id="state.track?.id ?? ''"
+        :queued-track-ids="queuedTrackIds"
+        :remove-from-playlist-id="addMenuRemoveFromPlaylistId"
+        :can-go-to-album="addMenuCanGoToAlbum"
         @select="handleTrackMenuSelect"
         @close="closeAddMenu"
       />

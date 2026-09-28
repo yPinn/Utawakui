@@ -3,10 +3,13 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it, vi } from 'vitest';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
   mount,
+  textContent,
   trigger,
 } from '../ui/uiTestHost.js';
 import QueueTrackButton from './QueueTrackButton.vue';
@@ -15,6 +18,8 @@ for (const [component, filename] of [
   [QueueTrackButton, './QueueTrackButton.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
+  [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -55,17 +60,22 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     expect(html).not.toContain('ui-marquee');
     expect(html).not.toContain('ui-track__duration');
     expect(html).not.toContain('2:23');
+    expect(html).toContain(`${track.title}的更多選項`);
+    expect(html).toContain('aria-haspopup="menu"');
+    expect(html).toContain('aria-expanded="false"');
   });
 
-  it('selects on one click and activates on double-click, artwork, or Enter', () => {
+  it('keeps selection and playback separate from the trailing action menu', () => {
     const select = vi.fn();
     const activate = vi.fn();
+    const openMenu = vi.fn();
     const mounted = mount(QueueTrackButton, {
       track,
       active: true,
       draggable: true,
       onSelect: select,
       onActivate: activate,
+      onOpenMenu: openMenu,
     });
     const row = findAll(mounted.root, (node) =>
       String(node.props?.class ?? '').includes('queue-track'),
@@ -74,6 +84,9 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     const artworkButton = buttons.find((node) =>
       String(node.props?.class ?? '').includes('ui-track__artwork-action'),
     );
+    const menuButton = buttons.find(
+      (node) => textContent(node) === `${track.title}的更多選項`,
+    );
     const stopPropagation = vi.fn();
     const preventDefault = vi.fn();
 
@@ -81,8 +94,11 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     expect(row.props.role).toBe('button');
     expect(row.props.draggable).toBe(true);
     expect(String(row.props.class)).toContain('ui-track--active');
-    expect(buttons).toHaveLength(1);
-    expect(artworkButton.props['aria-label']).toBe(`播放：${track.title}`);
+    expect(buttons).toHaveLength(2);
+    expect(artworkButton.props['aria-label']).toBeUndefined();
+    expect(textContent(artworkButton)).toContain(`播放：${track.title}`);
+    expect(menuButton.props['aria-haspopup']).toBe('menu');
+    expect(menuButton.props['aria-expanded']).toBe('false');
 
     trigger(row, 'onClick', { type: 'click' });
     expect(select).toHaveBeenCalledWith(track);
@@ -103,6 +119,44 @@ describe('QueueTrackButton standard Track Row adapter', () => {
     expect(activate).toHaveBeenNthCalledWith(3, track);
     expect(stopPropagation).toHaveBeenCalledOnce();
     expect(preventDefault).toHaveBeenCalledOnce();
+
+    const menuEvent = {
+      type: 'click',
+      currentTarget: menuButton,
+      stopPropagation: vi.fn(),
+    };
+    trigger(menuButton, 'onClick', menuEvent);
+    expect(openMenu).toHaveBeenCalledWith({ track, event: menuEvent });
+    expect(menuEvent.stopPropagation).toHaveBeenCalledOnce();
+    expect(select).toHaveBeenCalledOnce();
+    expect(activate).toHaveBeenCalledTimes(3);
+    mounted.app.unmount();
+  });
+
+  it('opens the same menu intent from the row context menu', () => {
+    const openMenu = vi.fn();
+    const mounted = mount(QueueTrackButton, {
+      track,
+      menuOpen: true,
+      onOpenMenu: openMenu,
+    });
+    const row = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('queue-track'),
+    )[0];
+    const menuButton = findAll(row, (node) => node.type === 'button').find(
+      (node) => textContent(node) === `${track.title}的更多選項`,
+    );
+    const event = {
+      type: 'contextmenu',
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    };
+
+    expect(menuButton.props['aria-expanded']).toBe('true');
+    trigger(row, 'onContextmenu', event);
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(event.stopPropagation).toHaveBeenCalledOnce();
+    expect(openMenu).toHaveBeenCalledWith({ track, event });
     mounted.app.unmount();
   });
 });

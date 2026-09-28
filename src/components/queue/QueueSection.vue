@@ -3,7 +3,7 @@ import UiHint from '../ui/UiHint.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 import QueueTrackButton from './QueueTrackButton.vue';
 
-defineProps({
+const props = defineProps({
   title: { type: String, required: true },
   // Static, non-interactive text rendered before title — e.g. "下一首來自："
   // — so that when titleJumpable is true, only the actual destination name
@@ -25,6 +25,8 @@ defineProps({
   // compound string (e.g. "下一首來自：海螺記"), so the caller can supply a
   // cleaner label naming just the destination.
   titleLinkAriaLabel: { type: String, default: '' },
+  menuContext: { type: String, required: true },
+  openMenuKey: { type: String, default: '' },
 });
 
 const emit = defineEmits([
@@ -36,7 +38,17 @@ const emit = defineEmits([
   'trackDragLeave',
   'trackDrop',
   'trackDragEnd',
+  'openTrackMenu',
 ]);
+
+function openTrackMenu(track, payload) {
+  emit('openTrackMenu', {
+    ...payload,
+    track,
+    context: props.menuContext,
+    key: `${props.menuContext}:${track.id}`,
+  });
+}
 </script>
 
 <template>
@@ -83,8 +95,10 @@ const emit = defineEmits([
         :active="track.id === selectedTrackId"
         :current="track.id === currentTrackId"
         :draggable="draggableItems"
+        :menu-open="openMenuKey === `${menuContext}:${track.id}`"
         @select="emit('selectTrack', $event)"
         @activate="emit('activateTrack', $event)"
+        @open-menu="openTrackMenu(track, $event)"
         @drag-start="emit('trackDragStart', track, $event)"
         @drag-over="emit('trackDragOver', track, $event)"
         @drag-leave="emit('trackDragLeave', track, $event)"
@@ -96,6 +110,11 @@ const emit = defineEmits([
 </template>
 
 <style scoped>
+.queue-section {
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
 .queue-section + .queue-section {
   margin-top: var(--ui-space-5);
 }
@@ -105,7 +124,6 @@ const emit = defineEmits([
   align-items: center;
   justify-content: space-between;
   gap: var(--ui-space-3);
-  margin-bottom: var(--ui-space-3);
 }
 
 .queue-section__title {

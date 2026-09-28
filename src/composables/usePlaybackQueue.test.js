@@ -310,6 +310,29 @@ describe('usePlaybackQueue', () => {
     ]);
   });
 
+  it('removes one interrupt queued track without changing source order', async () => {
+    const {
+      state,
+      sourceUpcomingTracks,
+      setQueue,
+      enqueueTrack,
+      removeQueuedTrack,
+    } = await loadQueue();
+
+    setQueue(tracks, 'a');
+    enqueueTrack(interruptTracks[0]);
+    enqueueTrack(interruptTracks[1]);
+
+    expect(removeQueuedTrack('x')).toBe(true);
+    expect(state.queuedTracks.map((track) => track.id)).toEqual(['y']);
+    expect(sourceUpcomingTracks.value.map((track) => track.id)).toEqual([
+      'b',
+      'c',
+    ]);
+    expect(removeQueuedTrack('b')).toBe(false);
+    expect(removeQueuedTrack('missing')).toBe(false);
+  });
+
   it('reorders interrupt queued tracks without changing source order', async () => {
     const {
       state,

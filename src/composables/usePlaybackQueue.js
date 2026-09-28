@@ -215,6 +215,13 @@ function clearQueuedTracks() {
   state.queuedTracks = [];
 }
 
+function removeQueuedTrack(trackId) {
+  const next = state.queuedTracks.filter((track) => track.id !== trackId);
+  if (next.length === state.queuedTracks.length) return false;
+  state.queuedTracks = next;
+  return true;
+}
+
 function interruptWithTrack(track) {
   const normalized = normalizeTrack(track);
   if (!normalized) return null;
@@ -455,6 +462,7 @@ export function usePlaybackQueue() {
     enqueueTrack,
     interruptWithTrack,
     clearQueuedTracks,
+    removeQueuedTrack,
     reorderQueuedTrack,
     reorderSourceTrack,
     restartSourceQueue,

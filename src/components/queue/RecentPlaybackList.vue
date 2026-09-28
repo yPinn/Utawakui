@@ -10,9 +10,24 @@ defineProps({
   error: { type: String, default: '' },
   selectedEntryKey: { type: String, default: null },
   currentTrackId: { type: String, default: null },
+  openMenuKey: { type: String, default: '' },
 });
 
-const emit = defineEmits(['selectEntry', 'activateEntry', 'clear']);
+const emit = defineEmits([
+  'selectEntry',
+  'activateEntry',
+  'openTrackMenu',
+  'clear',
+]);
+
+function openTrackMenu(entry, payload) {
+  emit('openTrackMenu', {
+    ...payload,
+    track: entry.track,
+    context: 'recent',
+    key: `recent:${entry.key}`,
+  });
+}
 </script>
 
 <template>
@@ -39,8 +54,10 @@ const emit = defineEmits(['selectEntry', 'activateEntry', 'clear']);
         :track="entry.track"
         :active="entry.key === selectedEntryKey"
         :current="entry.track.id === currentTrackId"
+        :menu-open="openMenuKey === `recent:${entry.key}`"
         @select="emit('selectEntry', entry)"
         @activate="emit('activateEntry', entry)"
+        @open-menu="openTrackMenu(entry, $event)"
       />
     </ul>
   </div>

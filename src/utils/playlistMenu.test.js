@@ -1,8 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import {
   PLAYLIST_MENU_ACTIONS,
+  TRACK_MENU_ACTIONS,
   playlistDisplayName,
   addToPlaylistTargets,
+  filterPlaylistTargets,
 } from './playlistMenu.js';
 
 describe('playlistDisplayName', () => {
@@ -70,6 +72,27 @@ describe('addToPlaylistTargets', () => {
   });
 });
 
+describe('filterPlaylistTargets', () => {
+  const playlists = [
+    { id: 'p1', name: 'Night Shift' },
+    { id: 'p2', name: '夜間歌單' },
+    { id: 'p3', name: 'Focus' },
+  ];
+
+  it('matches normalized playlist names without changing source order', () => {
+    expect(
+      filterPlaylistTargets(playlists, ' night ').map((item) => item.id),
+    ).toEqual(['p1']);
+    expect(
+      filterPlaylistTargets(playlists, ' 夜間 ').map((item) => item.id),
+    ).toEqual(['p2']);
+  });
+
+  it('returns all targets when the query is blank', () => {
+    expect(filterPlaylistTargets(playlists, '  ')).toEqual(playlists);
+  });
+});
+
 describe('PLAYLIST_MENU_ACTIONS', () => {
   it('has stable string values for cross-file dispatch', () => {
     expect(PLAYLIST_MENU_ACTIONS).toEqual({
@@ -81,6 +104,20 @@ describe('PLAYLIST_MENU_ACTIONS', () => {
       createFolder: 'create-folder',
       convertKind: 'convert-kind',
       download: 'download',
+    });
+  });
+});
+
+describe('TRACK_MENU_ACTIONS', () => {
+  it('shares one stable vocabulary across library and Right Dock callers', () => {
+    expect(TRACK_MENU_ACTIONS).toEqual({
+      addToQueue: 'add-to-queue',
+      removeFromQueue: 'remove-from-queue',
+      addToPlaylist: 'add-to-playlist',
+      createPlaylist: 'create-playlist',
+      editMetadata: 'edit-metadata',
+      removeFromPlaylist: 'remove-from-playlist',
+      goToAlbum: 'go-to-album',
     });
   });
 });

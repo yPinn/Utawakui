@@ -13,6 +13,19 @@ export const PLAYLIST_MENU_ACTIONS = {
   download: 'download',
 };
 
+// Track action vocabulary is shared by SetlistView and caller-owned track
+// menus such as QueuePanel. The menu surface stays trigger-neutral; callers
+// still decide which actions are available in their own product context.
+export const TRACK_MENU_ACTIONS = {
+  addToQueue: 'add-to-queue',
+  removeFromQueue: 'remove-from-queue',
+  addToPlaylist: 'add-to-playlist',
+  createPlaylist: 'create-playlist',
+  editMetadata: 'edit-metadata',
+  removeFromPlaylist: 'remove-from-playlist',
+  goToAlbum: 'go-to-album',
+};
+
 export function playlistDisplayName(playlist) {
   return playlist?.name || '(未命名歌單)';
 }
@@ -34,4 +47,15 @@ export function addToPlaylistTargets(
     }
     return true;
   });
+}
+
+export function filterPlaylistTargets(playlists, query) {
+  const normalizedQuery = String(query ?? '')
+    .trim()
+    .toLocaleLowerCase();
+  if (!normalizedQuery) return playlists;
+
+  return playlists.filter((playlist) =>
+    playlistDisplayName(playlist).toLocaleLowerCase().includes(normalizedQuery),
+  );
 }

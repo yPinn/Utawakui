@@ -1,5 +1,6 @@
 <script setup>
-import { ICON_SIZE, Play } from '../../icons/index.js';
+import { Ellipsis, ICON_SIZE, Play } from '../../icons/index.js';
+import UiIconButton from '../ui/UiIconButton.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
 defineProps({
@@ -7,11 +8,13 @@ defineProps({
   active: { type: Boolean, default: false },
   current: { type: Boolean, default: false },
   draggable: { type: Boolean, default: false },
+  menuOpen: { type: Boolean, default: false },
 });
 
 const emit = defineEmits([
   'select',
   'activate',
+  'openMenu',
   'dragStart',
   'dragOver',
   'dragLeave',
@@ -30,7 +33,7 @@ const emit = defineEmits([
     activate-on-enter
     :draggable="draggable"
     artwork-clickable
-    :artwork-aria-label="`播放：${track.title}`"
+    :artwork-label="`播放：${track.title}`"
     hide-duration
     overflow="ellipsis"
     thumb-loading="lazy"
@@ -39,6 +42,7 @@ const emit = defineEmits([
     @dblclick="emit('activate', track)"
     @activate="emit('activate', track)"
     @artwork-click="emit('activate', track)"
+    @contextmenu.prevent.stop="emit('openMenu', { track, event: $event })"
     @dragstart="emit('dragStart', $event)"
     @dragover="emit('dragOver', $event)"
     @dragleave="emit('dragLeave', $event)"
@@ -49,6 +53,15 @@ const emit = defineEmits([
       <span class="queue-track__artwork-cue" aria-hidden="true">
         <Play :size="ICON_SIZE" class="queue-track__artwork-icon" />
       </span>
+    </template>
+    <template #trail>
+      <UiIconButton
+        :icon="Ellipsis"
+        :label="`${track.title}的更多選項`"
+        aria-haspopup="menu"
+        :aria-expanded="menuOpen ? 'true' : 'false'"
+        @click.stop="emit('openMenu', { track, event: $event })"
+      />
     </template>
   </UiTrackRow>
 </template>
