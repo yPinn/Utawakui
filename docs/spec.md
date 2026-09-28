@@ -104,8 +104,8 @@ adapters 評估，目前不做 OBS native plugin。
 
 - HTML audio element 是播放時間、播放狀態與錯誤的唯一權威。
 - Queue、playing track 與 lyrics 狀態由 renderer owner 管理。
-- 全系統最近播放只在實際播放累計達 10 秒或正常 ended 後寫入；重複播放保留為不同
-  事件。它與 Queue previous stack、OBS session history 分離，並可由使用者清除；從紀錄
+- 全系統最近播放只在實際播放累計達 10 秒或正常 ended 後寫入；同一曲目只保留最新
+  一筆，再次播放會更新時間、來源並移到最前。它與 Queue previous stack、OBS session history 分離，並可由使用者清除；從紀錄
   啟動曲目時會以來源 id 重建該歌單的目前版本，來源失效才退回單曲插播。
 - 啟動恢復只保存 bounded ids／scalar snapshot；完整重啟時過濾缺檔曲目並保持 paused，
   不把持久化資料升格為第二個播放權威。完整契約見

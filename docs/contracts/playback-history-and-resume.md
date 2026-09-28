@@ -5,12 +5,14 @@ session history 或 Queue 的 previous stack 合併。
 
 ## 最近播放
 
-- 一筆紀錄代表一次 qualified playback event；相同曲目重複播放會形成不同事件。
+- 一個 `trackId` 最多保留一筆最近播放紀錄。每次 qualified playback 仍會更新紀錄，但
+  同曲重播會以最新 `playedAt`／來源脈絡取代舊 entry 並移到最前；讀取舊檔時也以檔案
+  順序中的第一筆有效 entry 去重。
 - HTML audio 的連續實際進度累計達 10 秒時寫入；正常 `ended` 的短曲也寫入。Seek
   跳躍、只載入、播放失敗或快速誤點不計入。
 - Renderer 只提交 `trackId` 與 bounded `sourceId`／`sourceName`。Main 產生
   `playedAt`，以原子寫入保存到 user data 的 `playback-history.json`。
-- 介面不承諾固定顯示數量；main 目前保留最近 50 筆作為儲存防線。顯示時以
+- 介面不承諾固定顯示數量；main 目前保留最近 50 首 unique tracks 作為儲存防線。顯示時以
   `trackId` 向目前曲庫解析 metadata，已刪除曲目不顯示。
 - 使用者可明確清除最近播放。這不清空 Queue、OBS session history 或診斷紀錄。
 
@@ -43,7 +45,7 @@ session history 或 Queue 的 previous stack 合併。
 
 ## 驗證界線
 
-- Main tests 覆蓋 schema、上限、重複事件、corrupt recovery、atomic persistence 與 IPC
+- Main tests 覆蓋 schema、上限、同曲 upsert、舊檔去重、corrupt recovery、atomic persistence 與 IPC
   registration。
 - Renderer tests 覆蓋 10 秒 qualification、seek exclusion、normal ended、source context、
   source playlist rehydrate／fallback、missing-track filtering、paused restore、tabs／ARIA、

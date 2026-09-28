@@ -65,6 +65,7 @@ function uniqueTrackIds(value) {
 function normalizeHistoryEntries(value) {
   if (!Array.isArray(value)) return [];
   const entries = [];
+  const seenTrackIds = new Set();
   for (const entry of value.slice(0, PLAYBACK_HISTORY_LIMIT)) {
     if (
       !entry ||
@@ -77,12 +78,15 @@ function normalizeHistoryEntries(value) {
       continue;
     }
     try {
-      entries.push({
+      const normalizedEntry = {
         trackId: entry.trackId,
         playedAt: new Date(entry.playedAt).toISOString(),
         sourceId: optionalBoundedText(entry.sourceId),
         sourceName: optionalBoundedText(entry.sourceName),
-      });
+      };
+      if (seenTrackIds.has(normalizedEntry.trackId)) continue;
+      seenTrackIds.add(normalizedEntry.trackId);
+      entries.push(normalizedEntry);
     } catch {
       // One stale/corrupt event must not hide every valid event around it.
     }
@@ -230,10 +234,12 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
       playedAt: now().toISOString(),
       ...normalizeSourceContext(sourceContext),
     };
-    const entries = [entry, ...getRecentHistory()].slice(
-      0,
-      PLAYBACK_HISTORY_LIMIT,
-    );
+    const entries = [
+      entry,
+      ...getRecentHistory().filter(
+        (existingEntry) => existingEntry.trackId !== entry.trackId,
+      ),
+    ].slice(0, PLAYBACK_HISTORY_LIMIT);
     writeHistory(entries);
     return entries;
   }

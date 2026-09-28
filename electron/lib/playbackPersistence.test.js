@@ -32,11 +32,16 @@ describe('playbackPersistence', () => {
     expect(service.getResumeSnapshot()).toBe(null);
   });
 
-  it('records newest-first playback events and preserves duplicate plays', () => {
+  it('moves a replayed track to the front and keeps only its latest context', () => {
     service.recordRecentPlayback('track-a', {
       sourceId: 'playlist-1',
       sourceName: '深夜練唱',
       privatePath: 'E:\\music\\private.wav',
+    });
+    clockMs += 1_000;
+    service.recordRecentPlayback('track-b', {
+      sourceId: 'playlist-2',
+      sourceName: '晨間播放',
     });
     clockMs += 1_000;
     service.recordRecentPlayback('track-a', {
@@ -47,15 +52,73 @@ describe('playbackPersistence', () => {
     expect(service.getRecentHistory()).toEqual([
       {
         trackId: 'track-a',
-        playedAt: '2026-09-27T12:00:01.000Z',
+        playedAt: '2026-09-27T12:00:02.000Z',
         sourceId: null,
         sourceName: null,
       },
       {
+        trackId: 'track-b',
+        playedAt: '2026-09-27T12:00:01.000Z',
+        sourceId: 'playlist-2',
+        sourceName: '晨間播放',
+      },
+    ]);
+    expect(
+      JSON.parse(
+        fs.readFileSync(
+          path.join(userDataDir, 'playback-history.json'),
+          'utf8',
+        ),
+      ).entries,
+    ).toEqual(service.getRecentHistory());
+  });
+
+  it('deduplicates legacy history while keeping the first valid newest entry', () => {
+    fs.writeFileSync(
+      path.join(userDataDir, 'playback-history.json'),
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            trackId: 'track-a',
+            playedAt: '2026-09-27T12:00:03.000Z',
+            sourceId: 'playlist-latest',
+            sourceName: '最新來源',
+          },
+          {
+            trackId: 'track-a',
+            playedAt: '2026-09-27T12:00:02.000Z',
+            sourceId: 'playlist-old',
+            sourceName: '舊來源',
+          },
+          {
+            trackId: 'track-b',
+            playedAt: '2026-09-27T12:00:01.000Z',
+            sourceId: 'x'.repeat(300),
+            sourceName: '損壞來源',
+          },
+          {
+            trackId: 'track-b',
+            playedAt: '2026-09-27T12:00:00.000Z',
+            sourceId: null,
+            sourceName: null,
+          },
+        ],
+      }),
+    );
+
+    expect(service.getRecentHistory()).toEqual([
+      {
         trackId: 'track-a',
+        playedAt: '2026-09-27T12:00:03.000Z',
+        sourceId: 'playlist-latest',
+        sourceName: '最新來源',
+      },
+      {
+        trackId: 'track-b',
         playedAt: '2026-09-27T12:00:00.000Z',
-        sourceId: 'playlist-1',
-        sourceName: '深夜練唱',
+        sourceId: null,
+        sourceName: null,
       },
     ]);
   });
