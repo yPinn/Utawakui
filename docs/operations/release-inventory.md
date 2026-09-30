@@ -18,6 +18,13 @@ Windows packaging is configured in `electron-builder.yml`.
 - Default per-user install directory: `%LOCALAPPDATA%\Programs\Utawakui`.
 - User-facing product name: `Utawakui`.
 - App id / AUMID: `com.utawakui.app`.
+- Electron runtime: 43.7.7, pinned in both the npm lock and
+  `electron-builder.yml` so packaging cannot silently reuse an older local
+  distribution.
+- Packaged fuses: Node options environment and Node CLI inspect disabled;
+  embedded ASAR integrity and only-load-from-ASAR enabled. Run-as-Node remains
+  enabled only for the ADR 0005 yt-dlp EJS runtime, and file-protocol extra
+  privileges remain enabled only while the main renderer loads from `file://`.
 - Renderer output: `dist/`, loaded by `electron/main/windowState.js`.
 - Main/preload/runtime JS: `electron/`, packaged into `app.asar`.
 - Cross-runtime JSON contracts and pure presentation projections: `shared/`,
@@ -296,6 +303,11 @@ After changing gates or dependencies:
     target and version emit it;
   - `release/win-unpacked/resources/app.asar`
   - `release/win-unpacked/resources/app.asar.unpacked`
+- Read the packaged executable with
+  `node node_modules/@electron/fuses/dist/bin.js read --app release/win-unpacked/electron.exe`.
+  Confirm Node options environment and Node CLI inspect are disabled, embedded
+  ASAR integrity and only-load-from-ASAR are enabled, and the two documented
+  compatibility fuses remain enabled until their replacement migrations land.
 - Confirm `app.asar` no longer contains renderer-only packages as runtime
   `node_modules` after moving them to `devDependencies`.
 - Confirm `LICENSE.md` and `THIRD_PARTY_NOTICES.md` are present in `app.asar`, and rerun

@@ -59,6 +59,10 @@ runtime:
 - Reuse Electron's packaged binary as the Node runtime for EJS:
   set `ELECTRON_RUN_AS_NODE=1` for the yt-dlp child environment and pass
   `--js-runtimes node:<path-to-electron.exe>`.
+- This dependency is the sole approved reason the packaged `RunAsNode` fuse
+  remains enabled. Node options environment and Node CLI inspect stay disabled;
+  a future dedicated app-managed Node runtime must replace this path before the
+  Run-as-Node fuse can be disabled.
 - Enable yt-dlp EJS remote components initially with
   `--remote-components ejs:github`, but cache them under Utawakui's managed
   provider runtime directory and surface failure as "線上來源工具需要更新/重新準備",

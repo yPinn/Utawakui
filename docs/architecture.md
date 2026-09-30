@@ -21,6 +21,27 @@ contracts 與 tests 管理。
 services，再將具名 dependency 注入各 domain handler。Handler 不以共享 context blob
 隱藏依賴，也不彼此直接協調；跨 domain 流程由 composition root 建立的 service 負責。
 
+`electron/entry.js` 保持 dependency-free process dispatcher；main composition root 與 Spout
+helper bootstrap 各自在 ready／建立任何 `BrowserWindow` 前呼叫 `app.enableSandbox()`。
+各 `BrowserWindow` 仍須明確宣告 `sandbox: true`、`contextIsolation: true` 與
+`nodeIntegration: false`。主視窗、Performer、startup trace probe 及 Spout offscreen window
+都透過 `electron/main/webContentsSecurity.js` 拒絕 popup，並只允許各 owner 的 exact
+navigation URL；main-frame navigation 與 redirect 都採相同 fail-closed policy。這些是
+固定 runtime invariant，不是 Settings 可切換的產品偏好。
+
+四種 window 都明確設定 `navigateOnDragDrop: false`、`webSecurity: true`、
+`allowRunningInsecureContent: false` 與 `webviewTag: false`。因此 feature-level Queue／Folder
+拖曳不會被 Chromium 升級成頁面 navigation，HTTP loopback Overlay 也不取得 insecure
+content 例外；DevTools 只在 main／Performer 的明確 development launch 啟用，startup probe
+與 Spout helper 永遠關閉。這些同樣是 shell invariant，不建立一般使用者 toggle。
+
+Raw Electron `ipcMain` 只在 composition root 交給
+`electron/main/ipcSenderPolicy.js`。所有未特別列出的 channel 預設只接受目前主視窗的
+main frame；Performer 只獲得自身 window controls，snapshot／status 與 renderer diagnostic
+三組明確 shared capability。驗證同時比對 `event.sender`、`event.senderFrame` 與 owner
+`webContents.mainFrame`，所以同一視窗內的 subframe 也不繼承 preload capability。拒絕事件
+只記錄一次 bounded channel／capability／kind，不跨 IPC 暴露 URL 或 frame details。
+
 主視窗 density 由 `electron/main/windowState.js` 的原生 `BrowserWindow` 狀態擁有：
 windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`。初始 bounded 值
 經 `additionalArguments` 同步提供給 preload，後續只透過固定 `ui-density:changed` channel
@@ -487,6 +508,14 @@ Spout2 重用 canonical Lyrics route。Main 推導固定 surface／loopback URL�
 5. Cross-runtime download-failure values 位於 `shared/downloadFailureValues.json`；main
    負責分類，renderer 負責顯示文案。
 
+`electron/main/diagnosticsLifecycle.js` 仍是 process／webContents failure recorder；只有目前
+主視窗的 fatal renderer exit、main-frame load／preload failure 或 unresponsive 會轉交
+`rendererRecovery.js`。Recovery 在每個 main process 最多開啟一個原生 dialog，只提供
+「重新啟動 Utawakui／退出」；選擇重新啟動時由 main 執行 `app.relaunch()` 後進入正常
+quit lifecycle，dialog 本身失敗則記錄 bounded code 並退出。Performer、startup probe、
+Spout helper 與 Chromium child-process failure 仍由各自 owner／Chromium recovery 處理，
+不會彈出重複 recovery dialog。
+
 使用者回饋建立在同一 diagnostics service 上，但不共用它的 IPC boundary：
 `electron/lib/feedback/{constants,payload,client}.js` 是純函式與注入式
 `fetch` client，`electron/main/feedbackHandlers.js` 才是唯一的 IPC 邊界，
@@ -508,6 +537,10 @@ module singleton，任何入口（錯誤通知的 action、Settings 常駐入口
 ## Packaging Boundary
 
 - `dist/` 是 Vite renderer output；`overlay/` 不進入 Vite bundle。
+- 封裝固定使用 Electron 43.7.7，並關閉 Node options environment 與 Node CLI inspect
+  fuses、開啟 embedded ASAR integrity 與 only-load-from-ASAR。`RunAsNode` 暫時保留給
+  ADR 0005 的 yt-dlp EJS runtime；`GrantFileProtocolExtraPrivileges` 暫時保留給主
+  renderer 的 `file://` 載入。兩者都要在替代 runtime／app-owned scheme 完成後才能關閉。
 - `electron/`、`shared/` 與內建 resources 進入 `app.asar`，需要外部解析或執行的檔案
   由明確 `asarUnpack`／`extraResources` 規則交付。
 - App-managed Provider、FFmpeg、models 與 Audio Python 存在 user data dependency root，
