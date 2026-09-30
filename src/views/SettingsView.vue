@@ -398,18 +398,14 @@ onUnmounted(musicAnalysisSettings.dispose);
 
 <template>
   <div class="settings-view">
-    <header class="settings-view__header">
-      <h1 class="settings-view__title">設定</h1>
-    </header>
-
     <UiScrollRegion
       class="settings-view__scroll"
       axis="vertical"
       viewport-class="settings-view__viewport"
     >
       <div class="settings-view__grid">
-        <section class="settings-view__column" aria-label="一般設定">
-          <SettingsBlock title="曲庫">
+        <div class="settings-view__column">
+          <SettingsBlock title="曲庫與儲存">
             <SettingsActionRow
               :icon="FolderOpen"
               title="曲庫位置"
@@ -570,11 +566,11 @@ onUnmounted(musicAnalysisSettings.dispose);
               @report-issue="handleReportIssueFromDiagnostics"
             />
           </SettingsBlock>
-        </section>
+        </div>
 
-        <section class="settings-view__column" aria-label="功能與下載">
+        <div class="settings-view__column">
           <SettingsBlock
-            title="功能與下載"
+            title="功能與相依能力"
             summary="額外元件只在需要時下載。"
             :status="`${enabledGateCount} / ${featureGateRows.length}`"
             status-tone="gated"
@@ -696,7 +692,7 @@ onUnmounted(musicAnalysisSettings.dispose);
               @action="handleFeatureDependencyNoticeAction"
             />
           </SettingsBlock>
-        </section>
+        </div>
       </div>
     </UiScrollRegion>
 
@@ -722,25 +718,11 @@ onUnmounted(musicAnalysisSettings.dispose);
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--ui-space-4);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .settings-view__scroll {
   min-height: 0;
-}
-
-.settings-view__header {
-  min-width: 0;
-}
-
-.settings-view__title {
-  margin: 0;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
-  text-wrap: balance;
 }
 
 .settings-view__grid {

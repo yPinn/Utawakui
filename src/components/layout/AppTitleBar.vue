@@ -8,6 +8,7 @@ import {
   MemoryStick,
   MonitorUp,
   Moon,
+  Settings,
   Sun,
 } from '../../icons/index.js';
 import { useObsIntegration } from '../../composables/useObsIntegration.js';
@@ -16,6 +17,13 @@ import { usePerformerSelfView } from '../../composables/usePerformerSelfView.js'
 import { useAppUsage } from '../../composables/useAppUsage.js';
 import { useTheme } from '../../composables/useTheme.js';
 import { formatElapsedClock } from '../../utils/format.js';
+
+const props = defineProps({
+  settingsActive: { type: Boolean, default: false },
+  updateAvailable: { type: Boolean, default: false },
+});
+
+const emit = defineEmits(['openSettings']);
 
 const { theme, toggleTheme } = useTheme();
 const { state: performerState, open: openPerformerView } =
@@ -67,6 +75,9 @@ const label = computed(() =>
 );
 const performerLabel = computed(() =>
   performerState.open ? '切換到表演者畫面' : '開啟表演者畫面',
+);
+const settingsLabel = computed(() =>
+  props.updateAvailable ? '設定（有可用更新）' : '設定',
 );
 
 function formatResourcePercent(value) {
@@ -217,6 +228,24 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
           size="md"
           @click="toggleTheme"
         />
+        <span class="app-title-bar__settings">
+          <UiIconButton
+            class="app-title-bar__settings-trigger"
+            data-app-settings-trigger
+            :icon="Settings"
+            :label="settingsLabel"
+            variant="ghost"
+            size="md"
+            :active="settingsActive"
+            :aria-current="settingsActive ? 'page' : undefined"
+            @click="emit('openSettings')"
+          />
+          <span
+            v-if="updateAvailable"
+            class="app-title-bar__settings-marker"
+            aria-hidden="true"
+          ></span>
+        </span>
       </div>
     </div>
   </header>
@@ -384,5 +413,22 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
+}
+
+.app-title-bar__settings {
+  position: relative;
+  display: inline-flex;
+}
+
+.app-title-bar__settings-marker {
+  position: absolute;
+  top: var(--ui-space-1);
+  right: var(--ui-space-1);
+  width: var(--ui-space-2);
+  height: var(--ui-space-2);
+  border: var(--ui-border-width) solid var(--ui-color-canvas);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-info);
+  pointer-events: none;
 }
 </style>

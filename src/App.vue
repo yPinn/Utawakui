@@ -12,12 +12,14 @@ import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppRightDock from './components/layout/AppRightDock.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
+import AppUtilityFrame from './components/layout/AppUtilityFrame.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
+import SeparationQueuePanel from './components/separation/SeparationQueuePanel.vue';
 import SetlistView from './views/SetlistView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
@@ -43,6 +45,7 @@ import { usePlaybackResume } from './composables/usePlaybackResume.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
+  RIGHT_DOCK_SURFACE_SEPARATION,
   useAppRightDock,
 } from './composables/useAppRightDock.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
@@ -159,12 +162,35 @@ const views = {
   output: OutputView,
   lyrics: LyricsView,
   import: ImportView,
-  settings: SettingsView,
   ...internalViews,
 };
 
 // Singleton (see useAppView.js) so deeper components can switch tabs too.
-const { activeView } = useAppView();
+const {
+  activeView,
+  returnView,
+  isSettingsView,
+  setActiveView,
+  openSettings,
+  returnFromSettings,
+} = useAppView();
+const workflowViewLabels = {
+  setlist: '歌單',
+  lyrics: '歌詞',
+  output: '輸出',
+  import: '匯入',
+};
+const settingsBackLabel = computed(() => {
+  const label = workflowViewLabels[returnView.value];
+  return label ? `返回${label}` : '返回先前頁面';
+});
+
+function leaveSettings() {
+  returnFromSettings();
+  nextTick(() => {
+    document.querySelector('[data-app-settings-trigger]')?.focus?.();
+  });
+}
 // The Studio Library inspector only makes sense while VisualSystemView is
 // actually showing its Studio Library sub-mode, not its Demo sub-mode.
 const { mode: visualSystemMode } = useVisualSystemMode();
@@ -187,11 +213,17 @@ const metadataSurfaceActive = computed(
 const queueSurfaceActive = computed(
   () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_QUEUE,
 );
+const separationSurfaceActive = computed(
+  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_SEPARATION,
+);
 const metadataExpanded = computed(
   () => rightDock.isExpanded.value && metadataSurfaceActive.value,
 );
 const queueExpanded = computed(
   () => rightDock.isExpanded.value && queueSurfaceActive.value,
+);
+const separationExpanded = computed(
+  () => rightDock.isExpanded.value && separationSurfaceActive.value,
 );
 const rightDockExpanded = computed(
   () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
@@ -204,11 +236,14 @@ const restorableDockSurface = computed(
       ? RIGHT_DOCK_SURFACE_METADATA
       : RIGHT_DOCK_SURFACE_QUEUE),
 );
-const rightDockLabel = computed(() =>
-  restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE
+const rightDockLabel = computed(() => {
+  if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_SEPARATION) {
+    return '伴奏處理';
+  }
+  return restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE
     ? '播放佇列'
-    : '播放資訊',
-);
+    : '播放資訊';
+});
 const rightDockExpandLabel = computed(() => `展開${rightDockLabel.value}`);
 
 let returnFocusTarget = null;
@@ -239,6 +274,13 @@ function toggleQueueSurface() {
   rememberRightDockTrigger();
   measureInteractionToNextPaint('utawakui:right-dock:queue-toggle', () =>
     rightDock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE),
+  );
+}
+
+function toggleSeparationSurface() {
+  rememberRightDockTrigger();
+  measureInteractionToNextPaint('utawakui:right-dock:separation-toggle', () =>
+    rightDock.toggleSurface(RIGHT_DOCK_SURFACE_SEPARATION),
   );
 }
 
@@ -314,8 +356,7 @@ const archiveTabView = internalWorkbenchesEnabled
         : activeView.value,
     )
   : activeView;
-// Pass the ref so global shortcuts can read and update the active view.
-useKeyboardShortcuts(activeView, { internalViewShortcuts });
+useKeyboardShortcuts({ internalViewShortcuts });
 </script>
 
 <template>
@@ -326,16 +367,34 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
       '--ui-right-dock-width': `${rightDockWidth}px`,
     }"
   >
-    <AppTitleBar class="shell__titlebar" />
+    <AppTitleBar
+      class="shell__titlebar"
+      :settings-active="isSettingsView"
+      :update-available="appUpdateReady"
+      @open-settings="openSettings"
+    />
     <div class="shell__sidebar">
       <AppPlaylistSidebar />
     </div>
     <main class="shell__main shell__main--with-dock">
-      <div class="shell__workspace">
+      <div
+        class="shell__workspace"
+        :class="{ 'shell__workspace--utility': isSettingsView }"
+      >
+        <AppUtilityFrame
+          v-if="isSettingsView"
+          title="設定"
+          description="管理曲庫、音訊、進階功能與應用程式行為。"
+          :back-label="settingsBackLabel"
+          @back="leaveSettings"
+        >
+          <SettingsView />
+        </AppUtilityFrame>
         <AppArchiveFrame
-          v-model:active-view="activeView"
+          v-else
+          :active-view="activeView"
           :tab-active-view="archiveTabView"
-          :update-available="appUpdateReady"
+          @update:active-view="setActiveView"
         >
           <component :is="views[activeView]" />
         </AppArchiveFrame>
@@ -374,6 +433,17 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
             :inert="!queueExpanded"
             @close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"
           />
+          <SeparationQueuePanel
+            v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_SEPARATION]"
+            class="shell__dock-surface"
+            :class="{
+              'shell__dock-surface--active': separationSurfaceActive,
+            }"
+            :active="separationExpanded"
+            :aria-hidden="!separationExpanded"
+            :inert="!separationExpanded"
+            @close="closeDockSurface(RIGHT_DOCK_SURFACE_SEPARATION)"
+          />
         </AppRightDock>
       </div>
     </main>
@@ -384,8 +454,11 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
       :artwork-controls="RIGHT_DOCK_CONTENT_ID"
       :queue-expanded="queueExpanded"
       :queue-controls="RIGHT_DOCK_CONTENT_ID"
+      :separation-expanded="separationExpanded"
+      :separation-controls="RIGHT_DOCK_CONTENT_ID"
       @artwork-activate="toggleMetadataSurface"
       @queue-activate="toggleQueueSurface"
+      @separation-activate="toggleSeparationSurface"
     />
     <UiNotice
       v-if="performerView.state.error"
@@ -512,6 +585,13 @@ useKeyboardShortcuts(activeView, { internalViewShortcuts });
 .shell__workspace {
   min-width: 0;
   min-height: 0;
+}
+
+.shell__workspace--utility {
+  /* Neutral destinations share the Sidebar／Right Dock top boundary.
+     Folder workflows intentionally remain flush to the row top because
+     their tabs and cover rail own a separate silhouette above the page. */
+  padding-top: var(--ui-shell-panel-inset-block);
 }
 
 .shell__dock {

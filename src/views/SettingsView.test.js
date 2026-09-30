@@ -23,15 +23,26 @@ const supportSource = source.slice(
 );
 
 describe('SettingsView version and maintenance sections', () => {
-  it('uses one page heading without repeating column headings', () => {
-    expect(source).toContain('<h1 class="settings-view__title">設定</h1>');
+  it('delegates the page heading to the utility frame and keeps five flat categories', () => {
+    expect(source).not.toContain('<h1 class="settings-view__title">設定</h1>');
+    expect(source).not.toContain('settings-view__header');
     expect(source).not.toContain('settings-view__column-header');
+    expect(source).not.toContain(
+      '<section class="settings-view__column" aria-label=',
+    );
+    expect(source).not.toContain('aria-label="一般設定"');
+    expect(source).not.toContain('aria-label="功能與下載"');
     expect(source).not.toContain('本機設定');
     expect(source).not.toContain('功能與下載項目');
+    expect(source).toContain('<SettingsBlock title="曲庫與儲存">');
+    expect(source).toContain('<AudioOutputSettingsBlock');
+    expect(source).toContain('<SettingsBlock title="應用程式">');
+    expect(source).toContain('<SettingsBlock title="支援與維護">');
+    expect(source).toMatch(/<SettingsBlock\s+title="功能與相依能力"/u);
   });
 
   it('describes optional downloads in user-facing terms', () => {
-    expect(source).toMatch(/<SettingsBlock\s+title="功能與下載"/);
+    expect(source).toMatch(/<SettingsBlock\s+title="功能與相依能力"/);
     expect(source).toContain('額外元件只在需要時下載。');
     expect(source).not.toContain('工具與模型會列在下方');
     expect(source).toContain('<MusicAnalysisSettingsRow');

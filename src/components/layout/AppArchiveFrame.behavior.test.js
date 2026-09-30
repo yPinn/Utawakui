@@ -55,6 +55,17 @@ describe('AppArchiveFrame primary workspace', () => {
     expect(source).not.toContain('app-archive-frame__context');
   });
 
+  it('delegates only workflow destination changes to the Folder tabs', () => {
+    const source = readFileSync(
+      new URL('./AppArchiveFrame.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).not.toContain('updateAvailable');
+    expect(source).not.toContain(':update-available');
+    expect(source).toContain("const emit = defineEmits(['update:activeView'])");
+  });
+
   it('keeps the inner page content inset equal on all four sides', () => {
     const source = readFileSync(
       new URL('./AppInnerPage.vue', import.meta.url),

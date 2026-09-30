@@ -118,6 +118,7 @@ describe('UiScrollRegion production migration', () => {
   it('preserves padding and layout on explicit viewport classes', () => {
     const sidebarSource = batchOneConsumers[1].source;
     const settingsSource = batchOneConsumers[5].source;
+    const utilitySource = readSource('../layout/AppUtilityFrame.vue');
 
     expect(sidebarSource).toContain(
       'viewport-class="app-playlist-sidebar__scroll-viewport"',
@@ -129,7 +130,10 @@ describe('UiScrollRegion production migration', () => {
       'viewport-class="settings-view__viewport"',
     );
     expect(settingsSource).toMatch(
-      /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
+      /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*minmax\(0, 1fr\);/su,
+    );
+    expect(utilitySource).toMatch(
+      /\.app-utility-frame\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
     );
   });
 
@@ -152,6 +156,7 @@ describe('UiScrollRegion production migration', () => {
     const popoverSource = batchTwoConsumers[3].source;
     const queueSource = batchOneConsumers[2].source;
     const settingsSource = batchOneConsumers[5].source;
+    const utilitySource = readSource('../layout/AppUtilityFrame.vue');
     const trackTableSource = batchOneConsumers[3].source;
 
     expect(modalSource.indexOf('class="ui-modal__header"')).toBeLessThan(
@@ -163,9 +168,10 @@ describe('UiScrollRegion production migration', () => {
     expect(queueSource.indexOf('class="queue-panel__chrome"')).toBeLessThan(
       queueSource.indexOf('class="queue-panel__scroll"'),
     );
+    expect(settingsSource).not.toContain('class="settings-view__header"');
     expect(
-      settingsSource.indexOf('class="settings-view__header"'),
-    ).toBeLessThan(settingsSource.indexOf('class="settings-view__scroll"'));
+      utilitySource.indexOf('class="app-utility-frame__header"'),
+    ).toBeLessThan(utilitySource.indexOf('class="app-utility-frame__body"'));
     expect(
       trackTableSource.indexOf('class="studio-track-table__header"'),
     ).toBeLessThan(

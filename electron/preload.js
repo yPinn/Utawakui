@@ -478,6 +478,24 @@ contextBridge.exposeInMainWorld('Utawakui', {
   runSeparation: (trackId, recipeId) =>
     ipcRenderer.invoke('separation:run', trackId, recipeId),
   cancelSeparation: () => ipcRenderer.invoke('separation:cancel'),
+  getSeparationQueueStatus: () =>
+    ipcRenderer.invoke('separation:get-queue-status'),
+  enqueueSeparations: (trackIds, recipeId, regenerate) =>
+    ipcRenderer.invoke('separation:enqueue', {
+      trackIds,
+      recipeId,
+      regenerate,
+    }),
+  pauseSeparationQueue: () => ipcRenderer.invoke('separation:pause-queue'),
+  resumeSeparationQueue: () => ipcRenderer.invoke('separation:resume-queue'),
+  moveSeparationQueueItem: (itemId, direction) =>
+    ipcRenderer.invoke('separation:move-queue-item', itemId, direction),
+  removeSeparationQueueItem: (itemId) =>
+    ipcRenderer.invoke('separation:remove-queue-item', itemId),
+  retrySeparationQueueItem: (itemId) =>
+    ipcRenderer.invoke('separation:retry-queue-item', itemId),
+  clearCompletedSeparations: () =>
+    ipcRenderer.invoke('separation:clear-completed'),
   selectSeparationResult: (trackId, recipeId) =>
     ipcRenderer.invoke('separation:select', trackId, recipeId),
   // Fires zero or more times before runSeparation()'s promise settles.
@@ -488,6 +506,12 @@ contextBridge.exposeInMainWorld('Utawakui', {
     const listener = (event, payload) => callback(payload);
     ipcRenderer.on('separation:progress', listener);
     return () => ipcRenderer.removeListener('separation:progress', listener);
+  },
+  onSeparationQueueProgress: (callback) => {
+    const listener = (event, payload) => callback(payload);
+    ipcRenderer.on('separation:queue-progress', listener);
+    return () =>
+      ipcRenderer.removeListener('separation:queue-progress', listener);
   },
   onLibraryUpdated: (callback) => {
     const listener = (event, options) => callback(options);

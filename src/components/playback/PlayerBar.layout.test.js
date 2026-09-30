@@ -52,7 +52,7 @@ describe('PlayerBar responsive metadata layout', () => {
 
   it('delegates Queue visibility to the shell-owned right Dock', () => {
     expect(componentSource).toContain(
-      "const emit = defineEmits(['artworkActivate', 'queueActivate']);",
+      "const emit = defineEmits([\n  'artworkActivate',\n  'queueActivate',\n  'separationActivate',\n]);",
     );
     expect(componentSource).toContain(
       'queueExpanded: { type: Boolean, default: false }',
@@ -60,6 +60,12 @@ describe('PlayerBar responsive metadata layout', () => {
     expect(componentSource).toContain(':active="queueExpanded"');
     expect(componentSource).toContain(':aria-controls="queueControls"');
     expect(componentSource).toContain("emit('queueActivate')");
+    expect(componentSource).toContain(
+      'separationExpanded: { type: Boolean, default: false }',
+    );
+    expect(componentSource).toContain(':active="separationExpanded"');
+    expect(componentSource).toContain(':aria-controls="separationControls"');
+    expect(componentSource).toContain("emit('separationActivate')");
     expect(componentSource).not.toContain('isQueueOpen');
     expect(componentSource).not.toContain('<QueuePanel');
   });

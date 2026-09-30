@@ -2,18 +2,22 @@ import { computed, reactive, readonly, shallowRef } from 'vue';
 
 export const RIGHT_DOCK_SURFACE_METADATA = 'metadata';
 export const RIGHT_DOCK_SURFACE_QUEUE = 'queue';
+export const RIGHT_DOCK_SURFACE_SEPARATION = 'separation';
 
 const SURFACE_PRIORITY = [
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
+  RIGHT_DOCK_SURFACE_SEPARATION,
 ];
 const surfaces = reactive({
   [RIGHT_DOCK_SURFACE_METADATA]: false,
   [RIGHT_DOCK_SURFACE_QUEUE]: false,
+  [RIGHT_DOCK_SURFACE_SEPARATION]: false,
 });
 const mountedSurfaces = reactive({
   [RIGHT_DOCK_SURFACE_METADATA]: false,
   [RIGHT_DOCK_SURFACE_QUEUE]: false,
+  [RIGHT_DOCK_SURFACE_SEPARATION]: false,
 });
 const isExpanded = shallowRef(false);
 const lastSurface = shallowRef(null);
@@ -83,12 +87,28 @@ function toggleSurface(surface) {
   // Queue or needs to be added now.
   if (
     surface === RIGHT_DOCK_SURFACE_METADATA &&
-    topSurface.value === RIGHT_DOCK_SURFACE_QUEUE
+    topSurface.value !== RIGHT_DOCK_SURFACE_METADATA
   ) {
     mountedSurfaces[RIGHT_DOCK_SURFACE_METADATA] = true;
     surfaces[RIGHT_DOCK_SURFACE_METADATA] = true;
     surfaces[RIGHT_DOCK_SURFACE_QUEUE] = false;
+    surfaces[RIGHT_DOCK_SURFACE_SEPARATION] = false;
     lastSurface.value = RIGHT_DOCK_SURFACE_METADATA;
+    isExpanded.value = true;
+    return;
+  }
+
+  // Playback and accompaniment are sibling operator tools. Activating the
+  // lower-priority playback list must replace the accompaniment foreground;
+  // metadata may remain underneath either one.
+  if (
+    surface === RIGHT_DOCK_SURFACE_QUEUE &&
+    topSurface.value === RIGHT_DOCK_SURFACE_SEPARATION
+  ) {
+    mountedSurfaces[RIGHT_DOCK_SURFACE_QUEUE] = true;
+    surfaces[RIGHT_DOCK_SURFACE_QUEUE] = true;
+    surfaces[RIGHT_DOCK_SURFACE_SEPARATION] = false;
+    lastSurface.value = RIGHT_DOCK_SURFACE_QUEUE;
     isExpanded.value = true;
     return;
   }

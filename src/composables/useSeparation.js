@@ -16,7 +16,7 @@ import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
 
-const SETUP_REQUIRED_MESSAGE = '請先到設定準備音訊處理項目';
+const SETUP_REQUIRED_MESSAGE = '請先到設定完成伴奏功能的初次準備';
 
 const state = reactive({
   // trackId -> { stage, percent? }, only for tracks currently separating.
@@ -104,13 +104,13 @@ function describe(trackId) {
   if (!progress) return '準備中';
   switch (progress.stage) {
     case 'loading-model':
-      return '載入模型中';
+      return '準備中';
     case 'decoding':
-      return '解碼中';
+      return '讀取歌曲中';
     case 'separating':
-      return `分離中 ${progress.percent ?? 0}%`;
+      return `處理中 ${progress.percent ?? 0}%`;
     case 'writing':
-      return '寫入中';
+      return '快完成了';
     default:
       return '準備中';
   }
@@ -122,18 +122,20 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
   state.selectedPresets.set(track.id, presetId);
   state.errors.delete(track.id);
   const enabled = await requireFeatureGate(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
+    label: '伴奏功能',
+    title: '需要啟用伴奏功能',
     source: 'separation',
     operation: 'run',
-    message: '請先到設定啟用音訊處理，並準備需要的工具與模型後再產生分離結果。',
+    message: '請先到設定啟用伴奏功能，再回來準備歌曲。',
   });
   if (!enabled) {
-    const appError = recordError('請先到設定啟用音訊處理', {
+    const appError = recordError('請先到設定啟用伴奏功能', {
       code: 'FEATURE_GATE_REQUIRED',
       severity: 'warning',
-      title: '需要啟用音訊處理',
+      title: '需要啟用伴奏功能',
       source: 'separation',
       operation: 'run',
-      message: '請先到設定啟用音訊處理。',
+      message: '請先到設定啟用伴奏功能。',
       context: { trackId: track.id, presetId },
     });
     state.errors.set(track.id, appError.message);
@@ -148,8 +150,8 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
     await window.Utawakui.runSeparation(track.id, presetId);
   } catch (err) {
     const appError = recordError(err, {
-      title: `${track.title} 分離失敗`,
-      message: '人聲分離未完成，請再試一次。',
+      title: `${track.title} 伴奏未完成`,
+      message: '伴奏還沒準備好，請再試一次。',
       source: 'separation',
       operation: 'run',
       context: { trackId: track.id, presetId },
@@ -159,7 +161,8 @@ async function separate(track, presetId = DEFAULT_SEPARATION_PRESET_ID) {
       appError.context.featureId === FEATURE_IDS.AUDIO_PROCESSING_FLOW
     ) {
       requestFeatureSetup(FEATURE_IDS.AUDIO_PROCESSING_FLOW, {
-        title: '需要準備音訊處理項目',
+        label: '伴奏功能',
+        title: '需要完成伴奏功能的初次準備',
         message: SETUP_REQUIRED_MESSAGE,
         source: 'separation',
         operation: 'run',
@@ -193,7 +196,7 @@ async function selectResult(track, presetId) {
   } catch (err) {
     const appError = recordError(err, {
       title: `${track.title} 切換失敗`,
-      message: '分離版本未切換，請再試一次。',
+      message: '伴奏版本未切換，請再試一次。',
       source: 'separation',
       operation: 'select-result',
       context: { trackId: track.id, presetId },

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { createSSRApp, h, shallowRef } from 'vue';
+import { createSSRApp, h, nextTick } from 'vue';
 import { renderToString } from '@vue/server-renderer';
+import { useAppView } from './useAppView.js';
 
 vi.mock('./usePlayer.js', () => ({
   usePlayer: () => ({
@@ -37,22 +38,24 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  useAppView().setActiveView('setlist');
 });
 
 async function setupShortcuts(options) {
-  const activeView = shallowRef('setlist');
+  const appView = useAppView();
+  appView.setActiveView('setlist');
   const { useKeyboardShortcuts } = await import('./useKeyboardShortcuts.js');
 
   await renderToString(
     createSSRApp({
       setup() {
-        useKeyboardShortcuts(activeView, options);
+        useKeyboardShortcuts(options);
         return () => h('div');
       },
     }),
   );
 
-  return activeView;
+  return appView;
 }
 
 function dispatchKey(key) {
@@ -70,27 +73,54 @@ function dispatchKey(key) {
 
 describe('useKeyboardShortcuts', () => {
   it('maps F3/F4 to the visible Output/Import tab order', async () => {
-    const activeView = await setupShortcuts();
+    const appView = await setupShortcuts();
 
     const f3PreventDefault = dispatchKey('F3');
-    expect(activeView.value).toBe('output');
+    expect(appView.activeView.value).toBe('output');
     expect(f3PreventDefault).toHaveBeenCalled();
 
     const f4PreventDefault = dispatchKey('F4');
-    expect(activeView.value).toBe('import');
+    expect(appView.activeView.value).toBe('import');
     expect(f4PreventDefault).toHaveBeenCalled();
   });
 
-  it('maps F9 to Settings even with no internal workbenches injected', async () => {
-    const activeView = await setupShortcuts();
+  it('maps F9 to Settings and preserves the workflow return context', async () => {
+    const appView = await setupShortcuts();
+    appView.setActiveView('output');
 
     const f9PreventDefault = dispatchKey('F9');
-    expect(activeView.value).toBe('settings');
+    expect(appView.activeView.value).toBe('settings');
+    expect(appView.returnView.value).toBe('output');
     expect(f9PreventDefault).toHaveBeenCalled();
   });
 
+  it('moves focus to the selected workflow destination when an F-key leaves Settings', async () => {
+    const workflowTrigger = {
+      focus: vi.fn(() => {
+        document.activeElement = workflowTrigger;
+      }),
+    };
+    vi.stubGlobal('document', {
+      activeElement: null,
+      querySelector: vi.fn((selector) =>
+        selector === '[data-app-workflow-trigger="lyrics"]'
+          ? workflowTrigger
+          : null,
+      ),
+    });
+    const appView = await setupShortcuts();
+    appView.openSettings();
+
+    dispatchKey('F2');
+    await nextTick();
+
+    expect(appView.activeView.value).toBe('lyrics');
+    expect(workflowTrigger.focus).toHaveBeenCalledOnce();
+    expect(document.activeElement).toBe(workflowTrigger);
+  });
+
   it('maps F5-F8 to the hidden Music Analysis, Diagnostics, Lyrics Provider Review, and Visual System workbenches', async () => {
-    const activeView = await setupShortcuts({
+    const appView = await setupShortcuts({
       internalViewShortcuts: {
         f5: 'music-analysis',
         f6: 'diagnostics-workbench',
@@ -100,41 +130,41 @@ describe('useKeyboardShortcuts', () => {
     });
 
     const f5PreventDefault = dispatchKey('F5');
-    expect(activeView.value).toBe('music-analysis');
+    expect(appView.activeView.value).toBe('music-analysis');
     expect(f5PreventDefault).toHaveBeenCalled();
 
     const f6PreventDefault = dispatchKey('F6');
-    expect(activeView.value).toBe('diagnostics-workbench');
+    expect(appView.activeView.value).toBe('diagnostics-workbench');
     expect(f6PreventDefault).toHaveBeenCalled();
 
     const f7PreventDefault = dispatchKey('F7');
-    expect(activeView.value).toBe('lyrics-provider-review');
+    expect(appView.activeView.value).toBe('lyrics-provider-review');
     expect(f7PreventDefault).toHaveBeenCalled();
 
     const f8PreventDefault = dispatchKey('F8');
-    expect(activeView.value).toBe('visual-system');
+    expect(appView.activeView.value).toBe('visual-system');
     expect(f8PreventDefault).toHaveBeenCalled();
   });
 
   it('leaves F5-F8 unused when internal workbenches are disabled', async () => {
-    const activeView = await setupShortcuts({
+    const appView = await setupShortcuts({
       internalViewShortcuts: {},
     });
 
     const f5PreventDefault = dispatchKey('F5');
-    expect(activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('setlist');
     expect(f5PreventDefault).not.toHaveBeenCalled();
 
     const f6PreventDefault = dispatchKey('F6');
-    expect(activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('setlist');
     expect(f6PreventDefault).not.toHaveBeenCalled();
 
     const f7PreventDefault = dispatchKey('F7');
-    expect(activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('setlist');
     expect(f7PreventDefault).not.toHaveBeenCalled();
 
     const f8PreventDefault = dispatchKey('F8');
-    expect(activeView.value).toBe('setlist');
+    expect(appView.activeView.value).toBe('setlist');
     expect(f8PreventDefault).not.toHaveBeenCalled();
   });
 

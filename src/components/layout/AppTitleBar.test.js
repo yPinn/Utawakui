@@ -7,9 +7,32 @@ const source = fs.readFileSync(
 );
 
 describe('AppTitleBar', () => {
-  it('separates performer and theme actions with the shared control gap', () => {
+  it('separates global utility actions with the shared control gap', () => {
     expect(source).toContain('gap: var(--ui-space-2)');
     expect(source).toContain('padding-right: var(--ui-space-2)');
+  });
+
+  it('exposes Settings as a current-page destination with the update marker attached', () => {
+    expect(source).toContain('Settings,');
+    expect(source).toContain(
+      'settingsActive: { type: Boolean, default: false }',
+    );
+    expect(source).toContain(
+      'updateAvailable: { type: Boolean, default: false }',
+    );
+    expect(source).toContain("const emit = defineEmits(['openSettings'])");
+    expect(source).toContain(':active="settingsActive"');
+    expect(source).toContain(
+      ':aria-current="settingsActive ? \'page\' : undefined"',
+    );
+    expect(source).toContain('data-app-settings-trigger');
+    expect(source).toContain('@click="emit(\'openSettings\')"');
+    expect(source).toContain('v-if="updateAvailable"');
+    expect(source).toContain('class="app-title-bar__settings-marker"');
+    expect(source).toContain('aria-hidden="true"');
+    expect(source).toContain('設定（有可用更新）');
+    expect(source).not.toContain('aria-pressed');
+    expect(source).not.toContain('aria-expanded');
   });
 
   it('sources CPU/RAM from useAppUsage and has no GPU field', () => {

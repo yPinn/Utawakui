@@ -142,6 +142,14 @@ const MAIN_INVOKE_CHANNELS = [
   'playlists:upsert-album',
   'provider-discovery:open-youtube-music-search',
   'separation:cancel',
+  'separation:clear-completed',
+  'separation:enqueue',
+  'separation:get-queue-status',
+  'separation:move-queue-item',
+  'separation:pause-queue',
+  'separation:remove-queue-item',
+  'separation:resume-queue',
+  'separation:retry-queue-item',
   'separation:run',
   'separation:select',
   'shell:open-external',
@@ -173,6 +181,7 @@ const MAIN_EVENT_CHANNELS = [
   'performer-view:status',
   'player:command',
   'separation:progress',
+  'separation:queue-progress',
   'spout-output:status',
   'ui-density:changed',
   'window-close:dismiss',
@@ -377,6 +386,27 @@ describe('main preload bridge', () => {
       { trackIds: ['track-1'], force: true },
     );
 
+    bridge.enqueueSeparations(
+      ['track-1', 'track-2'],
+      'general',
+      true,
+      'E:\\private',
+    );
+    bridge.moveSeparationQueueItem('item-1', -1, 'ignored');
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'separation:enqueue',
+      {
+        trackIds: ['track-1', 'track-2'],
+        recipeId: 'general',
+        regenerate: true,
+      },
+    );
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'separation:move-queue-item',
+      'item-1',
+      -1,
+    );
+
     bridge.openMusicAnalysisReferenceAnnotation('E:\\untrusted\\run.json');
     bridge.saveMusicAnalysisReferenceAnnotation(
       { sessionId: 'session-1', cases: [] },
@@ -398,7 +428,21 @@ describe('main preload bridge', () => {
     listener({ sender: 'private-web-contents' }, { progress: 0.5 });
     expect(callback).toHaveBeenCalledWith({ progress: 0.5 });
 
+    const queueCallback = vi.fn();
+    const cleanupQueue = bridge.onSeparationQueueProgress(queueCallback);
+    const queueListener = electron.ipcRenderer.on.mock.calls.find(
+      ([channel]) => channel === 'separation:queue-progress',
+    )[1];
+    queueListener(
+      { sender: 'private-web-contents' },
+      { queue: { status: 'running', items: [] } },
+    );
+    expect(queueCallback).toHaveBeenCalledWith({
+      queue: { status: 'running', items: [] },
+    });
+
     cleanup();
+    cleanupQueue();
     expect(electron.ipcRenderer.removeListener).toHaveBeenCalledWith(
       'separation:progress',
       listener,

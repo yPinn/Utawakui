@@ -8,6 +8,8 @@ const {
   resolveTrackAudioPath,
   selectSeparationResult,
   findTrackRecord,
+  loadSeparationManifest,
+  hasSeparationResultFile,
 } = require('../lib/library');
 const {
   getPreparedFfmpegPath,
@@ -20,6 +22,9 @@ const {
 const {
   createAudioProcessingService,
 } = require('../lib/audioProcessing/service');
+const {
+  createSeparationQueueService,
+} = require('../lib/audioProcessing/separationQueueService');
 const {
   createOnnxMdxJob,
 } = require('../lib/audioProcessing/engines/onnxMdxJob');
@@ -50,6 +55,9 @@ function registerSeparationHandlers({
   getPreparedSeparationModel = getPreparedSeparationModelPath,
   resolveUserDataDir = () => app.getPath('userData'),
   createSeparationEngineJob = createOnnxMdxJob,
+  createSeparationQueue = createSeparationQueueService,
+  loadStoredSeparationManifest = loadSeparationManifest,
+  hasStoredSeparationResultFile = hasSeparationResultFile,
 }) {
   const service = createAudioProcessingService({
     resolveRecipe,
@@ -124,47 +132,121 @@ function registerSeparationHandlers({
     },
   });
 
+  const queueService = createSeparationQueue({
+    resolveRecipe,
+    createItemId: randomUUID,
+    hasCurrentResult: ({ trackId, recipeId }) => {
+      const recipe = resolveRecipe(recipeId);
+      const dir = resolveDownloadDir(getConfig());
+      const separationsDir = resolveSeparationsOutputDir(dir, trackId);
+      if (!separationsDir) return false;
+      const result =
+        loadStoredSeparationManifest(separationsDir).results[recipe.id];
+      return Boolean(
+        result?.profileId === recipe.profileId &&
+        hasStoredSeparationResultFile(separationsDir, result.artifactFilename),
+      );
+    },
+    runTrack: async ({ trackId, recipeId, onProgress }) => {
+      // A queue item can start long after it was added. Recheck the gate at
+      // the execution boundary, but keep this expected control flow outside
+      // the operational diagnostic wrapper.
+      requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+      return runDiagnosticIpcOperation(
+        {
+          recordDiagnostic,
+          diagnostic: {
+            source: 'separation',
+            operation: 'run',
+            code: 'SEPARATION_RUN_FAILED',
+            context: { presetId: recipeId },
+          },
+          publicError: {
+            code: 'SEPARATION_RUN_FAILED',
+            title: '伴奏準備未完成',
+            message: '伴奏還沒準備好，請再試一次。',
+            context: { presetId: recipeId, retryable: true },
+          },
+        },
+        async () => {
+          const result = await service.run({
+            trackId,
+            recipeId,
+            onProgress: (progress) => {
+              getMainWindow()?.webContents.send(
+                'separation:progress',
+                progress,
+              );
+              onProgress(progress);
+            },
+          });
+          notifyLibraryUpdated();
+          return result;
+        },
+      );
+    },
+    cancelActiveTrack: () => service.cancelActiveJob(),
+    onUpdate: (status) => {
+      getMainWindow()?.webContents.send('separation:queue-progress', status);
+    },
+  });
+
   ipcMain.handle('separation:run', async (event, trackId, recipeId) => {
     requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
     const resolvedRecipeId = recipeId ?? DEFAULT_RECIPE_ID;
-    return runDiagnosticIpcOperation(
-      {
-        recordDiagnostic,
-        diagnostic: {
-          source: 'separation',
-          operation: 'run',
-          code: 'SEPARATION_RUN_FAILED',
-          context: { presetId: resolvedRecipeId },
-        },
-        publicError: {
-          code: 'SEPARATION_RUN_FAILED',
-          title: '人聲分離未完成',
-          message: '人聲分離未完成，請再試一次。',
-          context: { presetId: resolvedRecipeId, retryable: true },
-        },
-      },
-      async () => {
-        await service.run({
-          trackId,
-          recipeId: resolvedRecipeId,
-          onProgress: (progress) => {
-            getMainWindow()?.webContents.send('separation:progress', progress);
-          },
-        });
-
-        // Lets any subscriber pick up hasSeparation/stemsUrl even if the
-        // triggering component has since unmounted.
-        notifyLibraryUpdated();
-
-        return {
-          stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedRecipeId)}.wav`,
-        };
-      },
-    );
+    const queued = queueService.enqueue({
+      trackIds: [trackId],
+      recipeId: resolvedRecipeId,
+      regenerate: true,
+    });
+    await queueService.waitForItem(queued.itemIds[0]);
+    return {
+      stemsUrl: `${MEDIA_SCHEME}://track/${encodeURIComponent(trackId)}/separations/${encodeURIComponent(resolvedRecipeId)}.wav`,
+    };
   });
 
   ipcMain.handle('separation:cancel', async () => ({
-    cancelled: await service.cancelActiveJob(),
+    cancelled: await queueService.cancelActive(),
+  }));
+
+  ipcMain.handle('separation:get-queue-status', async () =>
+    queueService.getStatus(),
+  );
+
+  ipcMain.handle('separation:enqueue', async (event, payload) => {
+    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    return queueService.enqueue({
+      trackIds: payload?.trackIds,
+      recipeId: payload?.recipeId ?? DEFAULT_RECIPE_ID,
+      regenerate: payload?.regenerate ?? false,
+    });
+  });
+
+  ipcMain.handle('separation:pause-queue', async () => queueService.pause());
+
+  ipcMain.handle('separation:resume-queue', async () => {
+    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    return queueService.resume();
+  });
+
+  ipcMain.handle(
+    'separation:move-queue-item',
+    async (event, itemId, direction) => ({
+      moved: queueService.move(itemId, direction),
+    }),
+  );
+
+  ipcMain.handle('separation:remove-queue-item', async (event, itemId) => ({
+    removed: queueService.remove(itemId),
+  }));
+
+  ipcMain.handle('separation:retry-queue-item', async (event, itemId) => {
+    requireFeatureGate(featureIds.AUDIO_PROCESSING_FLOW);
+    return { retried: queueService.retry(itemId) };
+  });
+
+  ipcMain.handle('separation:clear-completed', async () => ({
+    removed: queueService.clearCompleted(),
   }));
 
   // Switches which already-produced result plays, without running any
@@ -182,7 +264,7 @@ function registerSeparationHandlers({
         code: 'SEPARATION_INVALID_TRACK',
         severity: 'warning',
         title: '找不到這首歌曲',
-        message: '這首歌曲的分離結果目前無法使用。',
+        message: '這首歌曲的伴奏目前無法使用。',
       });
     }
 
@@ -191,8 +273,8 @@ function registerSeparationHandlers({
       throw createAppError({
         code: 'SEPARATION_RESULT_MISSING',
         severity: 'warning',
-        title: '找不到這個分離版本',
-        message: '這個分離版本目前無法使用，請重新產生。',
+        title: '找不到這個伴奏版本',
+        message: '這個伴奏版本目前無法使用，請重新準備。',
       });
     }
 

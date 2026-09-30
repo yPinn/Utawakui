@@ -1,12 +1,12 @@
 import { useAppView } from './useAppView.js';
 
 export function useTrayNavigation() {
-  const { setActiveView } = useAppView();
+  const { openSettings } = useAppView();
   let disposed = false;
   const unsubscribe =
     typeof window !== 'undefined' && window.Utawakui?.onAppNavigation
       ? window.Utawakui.onAppNavigation((view) => {
-          if (!disposed && view === 'settings') setActiveView('settings');
+          if (!disposed && view === 'settings') openSettings();
         })
       : () => undefined;
 

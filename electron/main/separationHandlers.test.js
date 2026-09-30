@@ -54,14 +54,186 @@ function register(overrides = {}) {
   return ipcMain.handlers;
 }
 
+function createQueueHarness() {
+  const queue = {
+    enqueue: vi.fn(() => ({
+      queue: {
+        status: 'running',
+        items: [
+          {
+            itemId: 'item-1',
+            trackId: 'track-1',
+            recipeId: 'general',
+            status: 'pending',
+          },
+        ],
+      },
+      itemIds: ['item-1'],
+    })),
+    waitForItem: vi.fn(() =>
+      Promise.resolve({ itemId: 'item-1', status: 'completed' }),
+    ),
+    getStatus: vi.fn(() => ({ queue: null })),
+    pause: vi.fn(() => ({ queue: { status: 'paused', items: [] } })),
+    resume: vi.fn(() => ({ queue: { status: 'running', items: [] } })),
+    move: vi.fn(() => true),
+    remove: vi.fn(() => true),
+    retry: vi.fn(() => true),
+    clearCompleted: vi.fn(() => 2),
+    cancelActive: vi.fn(() => Promise.resolve(true)),
+  };
+  return {
+    queue,
+    createSeparationQueue: vi.fn(() => queue),
+  };
+}
+
 describe('registerSeparationHandlers', () => {
-  it('registers exactly the three separation intents', () => {
+  it('registers the fixed separation and queue intents', () => {
     const handlers = register();
     expect([...handlers.keys()]).toEqual([
       'separation:run',
       'separation:cancel',
+      'separation:get-queue-status',
+      'separation:enqueue',
+      'separation:pause-queue',
+      'separation:resume-queue',
+      'separation:move-queue-item',
+      'separation:remove-queue-item',
+      'separation:retry-queue-item',
+      'separation:clear-completed',
       'separation:select',
     ]);
+  });
+
+  it('routes single-track and batch requests through the same queue', async () => {
+    const { queue, createSeparationQueue } = createQueueHarness();
+    const requireFeatureGate = vi.fn();
+    const handlers = register({ createSeparationQueue, requireFeatureGate });
+
+    await expect(
+      handlers.get('separation:run')(null, 'track-1', 'quick'),
+    ).resolves.toEqual({
+      stemsUrl: 'utawakui-media://track/track-1/separations/quick.wav',
+    });
+    expect(queue.enqueue).toHaveBeenNthCalledWith(1, {
+      trackIds: ['track-1'],
+      recipeId: 'quick',
+      regenerate: true,
+    });
+    expect(queue.waitForItem).toHaveBeenCalledWith('item-1');
+
+    await expect(
+      handlers.get('separation:enqueue')(null, {
+        trackIds: ['track-2', 'track-3'],
+        recipeId: 'general',
+        regenerate: false,
+        privatePath: 'E:\\private',
+      }),
+    ).resolves.toMatchObject({ itemIds: ['item-1'] });
+    expect(queue.enqueue).toHaveBeenNthCalledWith(2, {
+      trackIds: ['track-2', 'track-3'],
+      recipeId: 'general',
+      regenerate: false,
+    });
+    expect(requireFeatureGate).toHaveBeenCalledWith('audio-processing-flow');
+  });
+
+  it('exposes queue controls without accepting renderer execution details', async () => {
+    const { queue, createSeparationQueue } = createQueueHarness();
+    const requireFeatureGate = vi.fn();
+    const handlers = register({ createSeparationQueue, requireFeatureGate });
+
+    await expect(
+      handlers.get('separation:get-queue-status')(),
+    ).resolves.toEqual({ queue: null });
+    await expect(
+      handlers.get('separation:pause-queue')(),
+    ).resolves.toMatchObject({ queue: { status: 'paused' } });
+    await expect(
+      handlers.get('separation:resume-queue')(),
+    ).resolves.toMatchObject({ queue: { status: 'running' } });
+    await expect(
+      handlers.get('separation:move-queue-item')(null, 'item-1', -1, 'ignored'),
+    ).resolves.toEqual({ moved: true });
+    await expect(
+      handlers.get('separation:remove-queue-item')(null, 'item-1'),
+    ).resolves.toEqual({ removed: true });
+    await expect(
+      handlers.get('separation:retry-queue-item')(null, 'item-1'),
+    ).resolves.toEqual({ retried: true });
+    await expect(handlers.get('separation:clear-completed')()).resolves.toEqual(
+      { removed: 2 },
+    );
+    await expect(handlers.get('separation:cancel')()).resolves.toEqual({
+      cancelled: true,
+    });
+
+    expect(queue.move).toHaveBeenCalledWith('item-1', -1);
+    expect(queue.remove).toHaveBeenCalledWith('item-1');
+    expect(queue.retry).toHaveBeenCalledWith('item-1');
+    expect(requireFeatureGate).toHaveBeenCalledTimes(2);
+  });
+
+  it('publishes queue progress and detects only a current on-disk result', () => {
+    const onUpdate = vi.fn();
+    const hasCurrentResult = vi.fn();
+    const createSeparationQueue = vi.fn((dependencies) => {
+      onUpdate.mockImplementation(dependencies.onUpdate);
+      hasCurrentResult.mockImplementation(dependencies.hasCurrentResult);
+      return createQueueHarness().queue;
+    });
+    const send = vi.fn();
+    register({
+      createSeparationQueue,
+      getMainWindow: () => ({ webContents: { send } }),
+      resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
+      loadStoredSeparationManifest: vi.fn(() => ({
+        results: {
+          general: {
+            profileId: 'mdx-inst-hq4-v1',
+            artifactFilename: 'general.wav',
+          },
+        },
+      })),
+      hasStoredSeparationResultFile: vi.fn(() => true),
+    });
+
+    const status = { queue: { status: 'running', items: [] } };
+    onUpdate(status);
+    expect(send).toHaveBeenCalledWith('separation:queue-progress', status);
+    expect(hasCurrentResult({ trackId: 'track-1', recipeId: 'general' })).toBe(
+      true,
+    );
+    expect(hasCurrentResult({ trackId: 'track-1', recipeId: 'quick' })).toBe(
+      false,
+    );
+  });
+
+  it('treats a gate disabled before a queued item starts as expected flow', async () => {
+    let runTrack;
+    const createSeparationQueue = vi.fn((dependencies) => {
+      runTrack = dependencies.runTrack;
+      return createQueueHarness().queue;
+    });
+    const recordDiagnostic = vi.fn();
+    const handlers = register({
+      createSeparationQueue,
+      recordDiagnostic,
+      requireFeatureGate: vi.fn(() => {
+        throw new Error('feature gate required');
+      }),
+    });
+
+    expect(handlers.has('separation:enqueue')).toBe(true);
+    await expect(
+      runTrack({
+        trackId: 'track-1',
+        recipeId: 'general',
+        onProgress: vi.fn(),
+      }),
+    ).rejects.toThrow('feature gate required');
+    expect(recordDiagnostic).not.toHaveBeenCalled();
   });
 
   it('enforces the audio-processing-flow gate before running', async () => {

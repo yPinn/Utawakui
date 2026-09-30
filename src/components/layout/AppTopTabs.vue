@@ -1,16 +1,16 @@
 <script setup>
-import { computed } from 'vue';
-import { ICON_SIZE, Settings } from '../../icons/index.js';
+import { useId } from 'vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
-const props = defineProps({
+defineProps({
   activeView: { type: String, required: true },
-  // Passive marker: a released update is waiting in Settings. Kept low-noise —
-  // one dot, no animation, meaning carried in the button's aria-label.
-  updateAvailable: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:activeView']);
+const tabShapeId = `app-tab-shape-${useId()}`;
+const tabShapeStyle = {
+  '--ui-app-tab-shape': `url("#${tabShapeId}")`,
+};
 
 // Flat list — every tab shares one resting look and one active look (see
 // .app-tabs__folder / --active below). No per-tab color data: distinct
@@ -24,22 +24,23 @@ const workflowItems = [
   { key: 'import', label: 'Import' },
 ];
 
-const utilityItems = [{ key: 'settings', ariaLabel: '設定' }];
-
-const settingsAriaLabel = computed(() =>
-  props.updateAvailable ? '設定（有可用更新）' : '設定',
-);
+function revealTab(event) {
+  event.currentTarget?.scrollIntoView({
+    block: 'nearest',
+    inline: 'nearest',
+  });
+}
 </script>
 
 <template>
-  <nav class="app-tabs" aria-label="主要功能">
+  <nav class="app-tabs" aria-label="主要功能" :style="tabShapeStyle">
     <!-- Shared curve, referenced by every tab's clip-path below.
          clipPathUnits="objectBoundingBox" makes the 0-1 coordinates
          fractions of each button's own box, so one definition scales to
          any tab size (including the taller active state). -->
     <svg width="0" height="0" aria-hidden="true" focusable="false">
       <defs>
-        <clipPath id="app-tab-shape" clipPathUnits="objectBoundingBox">
+        <clipPath :id="tabShapeId" clipPathUnits="objectBoundingBox">
           <path
             d="M0.18,0 L0.82,0 C0.93,0 0.97,1 1,1 L0,1 C0.03,1 0.07,0 0.18,0 Z"
           />
@@ -59,43 +60,15 @@ const settingsAriaLabel = computed(() =>
           type="button"
           class="app-tabs__folder"
           :class="{ 'app-tabs__folder--active': item.key === activeView }"
+          :data-app-workflow-trigger="item.key"
           :aria-current="item.key === activeView ? 'page' : undefined"
+          @focus="revealTab"
           @click="emit('update:activeView', item.key)"
         >
-          <span class="app-tabs__label">{{ item.label }}</span>
+          <span class="app-tabs__content app-tabs__label">
+            {{ item.label }}
+          </span>
         </button>
-      </div>
-      <div class="app-tabs__group app-tabs__group--utility">
-        <span
-          v-for="item in utilityItems"
-          :key="item.key"
-          class="app-tabs__utility-slot"
-        >
-          <button
-            type="button"
-            class="app-tabs__folder app-tabs__folder--utility"
-            :class="{ 'app-tabs__folder--active': item.key === activeView }"
-            :aria-current="item.key === activeView ? 'page' : undefined"
-            :aria-label="
-              item.key === 'settings' ? settingsAriaLabel : item.ariaLabel
-            "
-            :title="
-              item.key === 'settings' ? settingsAriaLabel : item.ariaLabel
-            "
-            @click="emit('update:activeView', item.key)"
-          >
-            <Settings
-              class="app-tabs__icon"
-              :size="ICON_SIZE"
-              aria-hidden="true"
-            />
-          </button>
-          <span
-            v-if="item.key === 'settings' && updateAvailable"
-            class="app-tabs__update-dot"
-            aria-hidden="true"
-          />
-        </span>
       </div>
     </UiScrollRegion>
   </nav>
@@ -132,11 +105,9 @@ const settingsAriaLabel = computed(() =>
 .app-tabs__row :deep(.app-tabs__row-viewport)::after {
   content: '';
   position: absolute;
-  /* z-index:auto would paint on top of the folder buttons — ::after is
-     ordered last in tree order, which is what decides paint order among
-     equal-context positioned siblings. .app-tabs__folder sets an explicit
-     z-index below specifically to win regardless of DOM order. */
-  z-index: 0;
+  /* The rail is the Folder's front lip: it covers resting tab bottoms while
+     the current destination rises above it and joins the page perimeter. */
+  z-index: 2;
   left: 0;
   right: 0;
   bottom: 0;
@@ -156,42 +127,15 @@ const settingsAriaLabel = computed(() =>
   flex: 0 1 auto;
 }
 
-.app-tabs__group--utility {
-  flex: 0 0 auto;
-  margin-left: auto;
-}
-
-/* Wrapper so the dot escapes .app-tabs__folder's clip-path (which would
-   otherwise cut a corner-pinned child). */
-.app-tabs__utility-slot {
-  position: relative;
-  display: inline-flex;
-}
-
-.app-tabs__update-dot {
-  position: absolute;
-  top: var(--ui-space-2);
-  inset-inline-end: var(--ui-space-4);
-  inline-size: var(--ui-space-2);
-  block-size: var(--ui-space-2);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-warning);
-  /* Keeps the dot legible on both the resting surface and the accent fill of
-     the active Settings tab. */
-  box-shadow: 0 0 0 0.125rem var(--ui-color-surface-raised);
-  pointer-events: none;
-}
-
 /* One shape on one element via clip-path, not a multi-piece
    cap/middle/cap composition — a single element has no seam to have. */
 .app-tabs__folder {
   position: relative;
   isolation: isolate;
-  /* Beats .app-tabs__list::after's z-index: 0 — see that rule's comment.
-     --active goes higher still (5) to clear its resting neighbors. */
+  /* Resting tabs sit behind the cover rail; current and focus rise above it. */
   z-index: 1;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   height: var(--ui-archive-tab-active-height);
   min-width: var(--ui-archive-tab-min-width);
@@ -213,30 +157,41 @@ const settingsAriaLabel = computed(() =>
   position: absolute;
   z-index: -1;
   inset: 0;
-  clip-path: url(#app-tab-shape);
+  clip-path: var(--ui-app-tab-shape);
   background: var(--ui-color-surface-raised);
-  transform: translateY(
-    calc(var(--ui-archive-tab-active-height) - var(--ui-archive-tab-height))
-  );
+  transform: translateY(var(--ui-archive-tab-rest-offset));
   transition:
     transform var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard);
 }
 
-.app-tabs__folder--utility {
-  min-width: var(--ui-archive-tab-active-height);
-  padding: 0 var(--ui-space-4);
-}
-
 .app-tabs__folder--active {
-  z-index: 5;
+  z-index: 3;
   color: var(--ui-color-accent-contrast);
 }
 
 .app-tabs__folder--active::before {
   background: var(--ui-color-accent);
   transform: translateY(0);
+}
+
+.app-tabs__content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  max-width: 100%;
+  block-size: var(--ui-archive-tab-label-block-size);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(var(--ui-archive-tab-label-rest-offset));
+  transition: transform var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
+}
+
+.app-tabs__folder--active .app-tabs__content {
+  transform: translateY(var(--ui-archive-tab-label-optical-offset));
 }
 
 /* The development-only Studio Library Candidate supplies the root marker.
@@ -261,7 +216,7 @@ const settingsAriaLabel = computed(() =>
 }
 
 .app-tabs__folder:focus-visible {
-  z-index: 6;
+  z-index: 4;
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
@@ -282,10 +237,6 @@ const settingsAriaLabel = computed(() =>
   white-space: nowrap;
 }
 
-.app-tabs__icon {
-  flex: 0 0 auto;
-}
-
 @media (max-width: 760px) {
   .app-tabs {
     padding: var(--ui-space-3) var(--ui-space-3) 0;
@@ -295,20 +246,29 @@ const settingsAriaLabel = computed(() =>
     min-width: 6rem;
     padding: 0 var(--ui-space-3);
   }
+}
 
-  .app-tabs__folder--utility {
-    min-width: var(--ui-archive-tab-active-height);
-    padding: 0 var(--ui-space-3);
+@media (forced-colors: active) {
+  .app-tabs__row :deep(.app-tabs__row-viewport)::after {
+    background: Highlight;
   }
 
-  .app-tabs__group--utility {
-    margin-left: var(--ui-archive-tab-gap);
+  .app-tabs__folder--active {
+    color: HighlightText;
+    forced-color-adjust: none;
+  }
+
+  .app-tabs__folder--active::before {
+    box-sizing: border-box;
+    border: var(--ui-border-width) solid Highlight;
+    background: Highlight;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .app-tabs__folder,
-  .app-tabs__folder::before {
+  .app-tabs__folder::before,
+  .app-tabs__content {
     transition: none;
   }
 }

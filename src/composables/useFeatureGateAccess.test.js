@@ -51,6 +51,7 @@ describe('useFeatureGateAccess', () => {
       },
     });
     const { access, appView } = await loadAccess();
+    appView.setActiveView('import');
 
     const allowed = await access.requireFeatureGate('provider-flow', {
       source: 'import',
@@ -60,6 +61,7 @@ describe('useFeatureGateAccess', () => {
 
     expect(allowed).toBe(false);
     expect(appView.activeView.value).toBe('settings');
+    expect(appView.returnView.value).toBe('import');
     expect(access.state.request).toMatchObject({
       featureId: 'provider-flow',
       title: '需要啟用外部來源匯入',
@@ -80,6 +82,7 @@ describe('useFeatureGateAccess', () => {
       },
     });
     const { access, appView } = await loadAccess();
+    appView.setActiveView('lyrics');
 
     access.requestFeatureSetup('provider-flow', {
       title: '需要準備外部來源工具',
@@ -90,6 +93,7 @@ describe('useFeatureGateAccess', () => {
     });
 
     expect(appView.activeView.value).toBe('settings');
+    expect(appView.returnView.value).toBe('lyrics');
     expect(access.state.request).toMatchObject({
       featureId: 'provider-flow',
       kind: 'setup',

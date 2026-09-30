@@ -1,5 +1,6 @@
-import { onUnmounted } from 'vue';
+import { nextTick, onUnmounted } from 'vue';
 import { useObsIntegration } from './useObsIntegration.js';
+import { useAppView } from './useAppView.js';
 import { usePlayer } from './usePlayer.js';
 import { isEditableTarget } from '../utils/dom.js';
 
@@ -22,22 +23,24 @@ const TEMPO_STEP = 0.05;
 
 // F1-F4 match AppTopTabs.vue's left-to-right workflow-tab order — F-key
 // position mirrors tab position so the mapping stays obvious without a
-// legend. Settings sits in AppTopTabs' separate utility slot (a lone gear
-// icon, not part of that tab row), so its shortcut isn't part of that
-// contiguous run either — F5-F8 are reserved for internal dev-only
-// workbenches (see App.vue's internalViewShortcuts), so Settings uses F9.
-const VIEW_SHORTCUTS = {
+// legend. Settings sits in the Titlebar's utility controls, so its shortcut
+// isn't part of that contiguous run either — F5-F8 are reserved for internal
+// dev-only workbenches (see App.vue's internalViewShortcuts), so Settings uses
+// F9.
+const WORKFLOW_VIEW_SHORTCUTS = {
   f1: 'setlist',
   f2: 'lyrics',
   f3: 'output',
   f4: 'import',
+};
+const VIEW_SHORTCUTS = {
+  ...WORKFLOW_VIEW_SHORTCUTS,
   f9: 'settings',
 };
+const WORKFLOW_VIEWS = new Set(Object.values(WORKFLOW_VIEW_SHORTCUTS));
 
-export function useKeyboardShortcuts(
-  activeView,
-  { internalViewShortcuts = {} } = {},
-) {
+export function useKeyboardShortcuts({ internalViewShortcuts = {} } = {}) {
+  const { isSettingsView, openSettings, setActiveView } = useAppView();
   const {
     state,
     setVolume,
@@ -87,14 +90,26 @@ export function useKeyboardShortcuts(
 
     if (event.altKey || event.metaKey) return;
 
-    // F1-F5 tab switching fires even while typing (e.g. the Setlist search
+    // App destination switching fires even while typing (e.g. the Setlist search
     // box) — F-keys don't insert characters, and this is a global app-level
     // shortcut a performer needs mid-stream regardless of focus. Every
     // other shortcut below stays gated behind isEditableTarget.
     const shortcutView = VIEW_SHORTCUTS[key] ?? internalViewShortcuts[key];
     if (shortcutView) {
       event.preventDefault();
-      if (activeView) activeView.value = shortcutView;
+      if (shortcutView === 'settings') openSettings();
+      else {
+        const leavingSettingsForWorkflow =
+          isSettingsView.value && WORKFLOW_VIEWS.has(shortcutView);
+        setActiveView(shortcutView);
+        if (leavingSettingsForWorkflow && typeof document !== 'undefined') {
+          nextTick(() => {
+            document
+              .querySelector(`[data-app-workflow-trigger="${shortcutView}"]`)
+              ?.focus?.();
+          });
+        }
+      }
       return;
     }
 

@@ -4,6 +4,7 @@ import {
   Cable,
   Captions,
   Headphones,
+  ListChecks,
   ListMusic,
   MicVocal,
   Pause,
@@ -51,9 +52,15 @@ defineProps({
   artworkControls: { type: String, default: undefined },
   queueExpanded: { type: Boolean, default: false },
   queueControls: { type: String, default: undefined },
+  separationExpanded: { type: Boolean, default: false },
+  separationControls: { type: String, default: undefined },
 });
 
-const emit = defineEmits(['artworkActivate', 'queueActivate']);
+const emit = defineEmits([
+  'artworkActivate',
+  'queueActivate',
+  'separationActivate',
+]);
 
 const {
   state,
@@ -485,6 +492,11 @@ function toggleQueuePanel() {
   isPlayerToolsOpen.value = false;
 }
 
+function toggleSeparationPanel() {
+  emit('separationActivate');
+  isPlayerToolsOpen.value = false;
+}
+
 function togglePlayerToolsPanel() {
   isPlayerToolsOpen.value = !isPlayerToolsOpen.value;
 }
@@ -645,6 +657,17 @@ onUnmounted(() => {
         aria-label="查看目前曲目歌詞"
         title="歌詞"
         @click="showCurrentTrackLyrics"
+      />
+
+      <UiButton
+        :icon="ListChecks"
+        :active="separationExpanded"
+        :aria-label="separationExpanded ? '關閉伴奏處理' : '開啟伴奏處理'"
+        :aria-pressed="separationExpanded"
+        :aria-expanded="separationExpanded"
+        :aria-controls="separationControls"
+        title="伴奏處理"
+        @click="toggleSeparationPanel"
       />
 
       <UiButton

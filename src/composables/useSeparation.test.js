@@ -64,11 +64,11 @@ describe('describe()', () => {
   it('maps each known stage to its label', async () => {
     const { describe: describeStage } = await loadSeparation();
     progressCallback({ trackId: 't1', stage: 'loading-model' });
-    expect(describeStage('t1')).toBe('載入模型中');
+    expect(describeStage('t1')).toBe('準備中');
     progressCallback({ trackId: 't1', stage: 'decoding' });
-    expect(describeStage('t1')).toBe('解碼中');
+    expect(describeStage('t1')).toBe('讀取歌曲中');
     progressCallback({ trackId: 't1', stage: 'writing' });
-    expect(describeStage('t1')).toBe('寫入中');
+    expect(describeStage('t1')).toBe('快完成了');
   });
 
   it('does not present dependency downloads as separation run stages', async () => {
@@ -82,9 +82,9 @@ describe('describe()', () => {
   it('includes the percent for the separating stage and preserves the latest value', async () => {
     const { describe: describeStage } = await loadSeparation();
     progressCallback({ trackId: 't1', stage: 'separating', percent: 42 });
-    expect(describeStage('t1')).toBe('分離中 42%');
+    expect(describeStage('t1')).toBe('處理中 42%');
     progressCallback({ trackId: 't1', stage: 'separating' });
-    expect(describeStage('t1')).toBe('分離中 42%');
+    expect(describeStage('t1')).toBe('處理中 42%');
   });
 
   it('falls back to 準備中 for an unrecognized stage', async () => {
@@ -277,7 +277,7 @@ describe('separate()', () => {
     await separate(track);
 
     expect(isSeparating('t1')).toBe(false);
-    expect(state.errors.get('t1')).toBe('人聲分離未完成，請再試一次。');
+    expect(state.errors.get('t1')).toBe('伴奏還沒準備好，請再試一次。');
   });
 
   it('forwards the recipe id to window.Utawakui.runSeparation', async () => {
@@ -339,8 +339,8 @@ describe('separate()', () => {
     expect(useFeatureGateAccess().state.request).toMatchObject({
       featureId: 'audio-processing-flow',
       kind: 'setup',
-      title: '需要準備音訊處理項目',
-      message: '請先到設定準備音訊處理項目',
+      title: '需要完成伴奏功能的初次準備',
+      message: '請先到設定完成伴奏功能的初次準備',
       actionLabel: '查看準備項目',
       source: 'separation',
       operation: 'run',
@@ -350,7 +350,7 @@ describe('separate()', () => {
         dependencyId: 'ffmpeg-gyan-essentials',
       },
     });
-    expect(state.errors.get('t1')).toBe('請先到設定準備音訊處理項目');
+    expect(state.errors.get('t1')).toBe('請先到設定完成伴奏功能的初次準備');
   });
 
   it('does not start separation when audio-processing-flow is not enabled', async () => {
@@ -370,7 +370,7 @@ describe('separate()', () => {
       source: 'separation',
       operation: 'run',
     });
-    expect(state.errors.get('t1')).toBe('請先到設定啟用音訊處理。');
+    expect(state.errors.get('t1')).toBe('請先到設定啟用伴奏功能。');
   });
 });
 
@@ -392,7 +392,7 @@ describe('selectResult()', () => {
 
     await selectResult(track, 'inst-hq3');
 
-    expect(state.errors.get('t1')).toBe('分離版本未切換，請再試一次。');
+    expect(state.errors.get('t1')).toBe('伴奏版本未切換，請再試一次。');
   });
 
   it('clears a previous error for the track on success', async () => {

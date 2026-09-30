@@ -1112,11 +1112,19 @@ describe('useImportSession', () => {
     );
     const session = await loadImportSession();
     const { useAppView } = await import('./useAppView.js');
+    const { useFeatureGateAccess } = await import('./useFeatureGateAccess.js');
 
     session.setInput('playlist-id');
     await session.resolveSource();
 
     expect(useAppView().activeView.value).toBe('settings');
+    expect(useFeatureGateAccess().state.request).toMatchObject({
+      featureId: 'provider-flow',
+      kind: 'setup',
+      source: 'import',
+      operation: 'provider-tool',
+      context: { dependencyId: 'yt-dlp-provider-tool' },
+    });
     expect(session.state.status).toBe('請到設定完成外部來源準備。');
     expect(session.state.statusType).toBe('pending');
     expect(session.state.failureHint).toBe(

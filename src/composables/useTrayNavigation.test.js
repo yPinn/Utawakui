@@ -19,11 +19,13 @@ describe('useTrayNavigation', () => {
         }),
       },
     });
+    useAppView().setActiveView('output');
     const bridge = useTrayNavigation();
 
     listener('settings');
 
     expect(useAppView().activeView.value).toBe('settings');
+    expect(useAppView().returnView.value).toBe('output');
     bridge.dispose();
     expect(unsubscribe).toHaveBeenCalledOnce();
   });

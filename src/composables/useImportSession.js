@@ -9,11 +9,9 @@ import { normalizeAppError } from '../utils/appErrors.js';
 import { FEATURE_IDS } from '../constants/featureGates.js';
 import { useImportExecution } from './import/useImportExecution.js';
 import { useImportSourceResolution } from './import/useImportSourceResolution.js';
-import { useAppView } from './useAppView.js';
 import { useAppDiagnostics } from './useAppDiagnostics.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
-const { requireFeatureGate } = useFeatureGateAccess();
-const { setActiveView } = useAppView();
+const { requireFeatureGate, requestFeatureSetup } = useFeatureGateAccess();
 const { recordError } = useAppDiagnostics();
 
 const state = reactive({
@@ -159,7 +157,15 @@ function handleProviderSetupError(err) {
     source: 'import',
     operation: 'provider-tool',
   });
-  setActiveView('settings');
+  requestFeatureSetup(FEATURE_IDS.PROVIDER_FLOW, {
+    title: '需要準備外部來源工具',
+    message: '請到設定完成外部來源準備。',
+    source: 'import',
+    operation: 'provider-tool',
+    context: {
+      dependencyId: appError.context.dependencyId,
+    },
+  });
   setStatus(notice.message, 'pending');
   state.failureHint = '請在設定的「進階功能」中準備外部來源工具。';
   return true;

@@ -37,7 +37,7 @@ async function requireFeatureGate(featureId, options = {}) {
   if (isFeatureEnabled(featureId)) return true;
 
   state.request = buildRequest(featureId, options);
-  useAppView().setActiveView('settings');
+  useAppView().openSettings();
   return false;
 }
 
@@ -50,7 +50,7 @@ function requestFeatureSetup(featureId, options = {}) {
     kind: 'setup',
     actionLabel: options.actionLabel || '查看準備項目',
   });
-  useAppView().setActiveView('settings');
+  useAppView().openSettings();
 }
 
 function clearFeatureGateRequest(featureId = null) {
