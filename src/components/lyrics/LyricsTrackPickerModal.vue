@@ -16,6 +16,7 @@ import { usePlaylists } from '../../composables/usePlaylists.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
@@ -156,7 +157,13 @@ function handleTrackSelect(track) {
         找不到符合的曲目。
       </UiHint>
 
-      <ul v-else class="lyrics-track-picker__list">
+      <UiScrollRegion
+        v-else
+        class="lyrics-track-picker__list"
+        axis="both"
+        viewport-tag="ul"
+        viewport-class="lyrics-track-picker__list-viewport"
+      >
         <UiTrackRow
           v-for="track in visibleTracks"
           :key="track.id"
@@ -186,7 +193,7 @@ function handleTrackSelect(track) {
             </div>
           </template>
         </UiTrackRow>
-      </ul>
+      </UiScrollRegion>
     </div>
   </UiModal>
 </template>
@@ -258,12 +265,16 @@ function handleTrackSelect(track) {
 }
 
 .lyrics-track-picker__list {
+  max-height: min(52vh, 520px);
+}
+
+.lyrics-track-picker__list :deep(.lyrics-track-picker__list-viewport) {
+  block-size: auto;
+  max-block-size: inherit;
   display: grid;
   gap: var(--ui-space-1);
-  max-height: min(52vh, 520px);
   margin: 0;
   padding: 0;
-  overflow: auto;
   list-style: none;
 }
 

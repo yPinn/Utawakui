@@ -3,8 +3,10 @@ import { compile } from '@vue/compiler-dom';
 import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import DemoCandidateIconButton from './DemoCandidateIconButton.vue';
 import DemoCandidateModal from './DemoCandidateModal.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 
 const { createRenderer, h, nextTick, shallowRef, ssrContextKey } = Vue;
 
@@ -20,8 +22,10 @@ function attachClientRender(component, filename) {
   component.render = new Function('Vue', code)(Vue);
 }
 
-attachClientRender(DemoCandidateIconButton, './DemoCandidateIconButton.vue');
+attachClientRender(UiIconButton, '../ui/UiIconButton.vue');
 attachClientRender(DemoCandidateModal, './DemoCandidateModal.vue');
+attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue');
+attachClientRender(UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue');
 
 function findAll(node, predicate, matches = []) {
   if (predicate(node)) matches.push(node);
@@ -148,7 +152,10 @@ describe('DemoCandidateModal behavior', () => {
   beforeEach(() => {
     body = hostNode('body');
     focusOrigin = { isConnected: true, focus: vi.fn() };
-    vi.stubGlobal('window', {});
+    vi.stubGlobal('window', {
+      addEventListener: vi.fn(),
+      removeEventListener: vi.fn(),
+    });
     vi.stubGlobal('document', { activeElement: focusOrigin });
   });
 
@@ -241,7 +248,9 @@ describe('DemoCandidateModal behavior', () => {
 
     const closeButton = findAll(
       body,
-      (node) => node.props?.['aria-label'] === '關閉',
+      (node) =>
+        node.type === 'button' &&
+        String(node.props?.class ?? '').includes('demo-candidate-modal__close'),
     )[0];
     closeButton.props.onClick();
     expect(close).toHaveBeenCalledTimes(2);
@@ -319,9 +328,10 @@ describe('DemoCandidateModal behavior', () => {
     app.provide(ssrContextKey, { modules: new Set() });
     app.mount(root);
 
-    const scrollBody = findAll(
-      body,
-      (node) => node.props?.class === 'demo-candidate-modal__body',
+    const scrollBody = findAll(body, (node) =>
+      String(node.props?.class ?? '').includes(
+        'demo-candidate-modal__body-viewport',
+      ),
     )[0];
     scrollBody.scrollTop = 144;
 

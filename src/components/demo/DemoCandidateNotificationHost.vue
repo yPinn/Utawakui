@@ -1,7 +1,7 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, shallowRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
-import DemoCandidateIconButton from './DemoCandidateIconButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
 import DemoCandidateNotice from './DemoCandidateNotice.vue';
 
 const props = defineProps({
@@ -203,7 +203,7 @@ onBeforeUnmount(() => {
       :action-label="actionLabel"
       @action="emit('action')"
     />
-    <DemoCandidateIconButton
+    <UiIconButton
       v-if="dismissible"
       class="demo-candidate-notification-host__close"
       :icon="X"
@@ -241,7 +241,7 @@ onBeforeUnmount(() => {
 }
 
 .demo-candidate-notification-host__close {
-  --demo-icon-button-size: var(--ui-icon-button-size-md);
+  --ui-icon-button-size-override: var(--ui-icon-button-size-md);
 
   position: absolute;
   inset-block-start: var(--ui-space-2);

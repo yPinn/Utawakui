@@ -62,6 +62,8 @@ const lightBlock = css.match(
 //   accent/accent-contrast, both of which are redefined.
 const EXEMPT = [
   '--ui-color-overlay-scrim',
+  '--ui-color-overlay-scrim-hover',
+  '--ui-color-overlay-scrim-active',
   '--ui-color-overlay-contrast',
   '--ui-color-accent-contrast-muted',
 ];
@@ -114,6 +116,28 @@ describe('tokens.css theme parity', () => {
             resolveColor(background, definitions),
           ),
           `--ui-color-current on ${background}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    },
+  );
+
+  it.each([
+    ['dark', declarationsIn(darkBlock)],
+    ['light', { ...declarationsIn(darkBlock), ...declarationsIn(lightBlock) }],
+  ])(
+    'keeps active %s button copy at WCAG AA across accent feedback states',
+    (_, definitions) => {
+      for (const background of [
+        '--ui-color-accent',
+        '--ui-color-accent-hover',
+        '--ui-color-accent-active',
+      ]) {
+        expect(
+          contrastRatio(
+            resolveColor('--ui-color-accent-contrast', definitions),
+            resolveColor(background, definitions),
+          ),
+          `--ui-color-accent-contrast on ${background}`,
         ).toBeGreaterThanOrEqual(4.5);
       }
     },

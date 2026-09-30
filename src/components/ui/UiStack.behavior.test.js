@@ -21,6 +21,19 @@ function hasClass(node, name) {
 }
 
 describe('UiStack', () => {
+  it('bounds public layout values to the documented token-backed contract', () => {
+    expect(UiStack.props.direction.validator('row')).toBe(true);
+    expect(UiStack.props.direction.validator('grid')).toBe(false);
+    expect(UiStack.props.gap.validator(0)).toBe(true);
+    expect(UiStack.props.gap.validator(8)).toBe(true);
+    expect(UiStack.props.gap.validator('2')).toBe(false);
+    expect(UiStack.props.gap.validator(9)).toBe(false);
+    expect(UiStack.props.align.validator('baseline')).toBe(true);
+    expect(UiStack.props.align.validator('space-between')).toBe(false);
+    expect(UiStack.props.justify.validator('space-between')).toBe(true);
+    expect(UiStack.props.justify.validator('baseline')).toBe(false);
+  });
+
   it('renders a flex container and merges caller class via attrs fallthrough', () => {
     const mounted = mount(
       UiStack,

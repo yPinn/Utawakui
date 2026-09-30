@@ -232,7 +232,8 @@ describe('DemoMarqueeTextAppearance', () => {
     expect(primitiveSource).toMatch(
       /\.demo-marquee-frame--motion-preview\s*\{[\s\S]*?width:\s*min\(11rem, 100%\);/u,
     );
-    expect(primitiveSource).toContain('overflow-x: auto;');
+    expect(primitiveSource).toContain('<UiScrollRegion');
+    expect(primitiveSource).toContain('axis="horizontal"');
     expect(html).toContain('data-marquee-recipe="motion-preview"');
     expect(html).toContain('將游標移到曲名上即可預覽');
     expect(html).toContain('所在區域決定可用寬度與文字樣式');

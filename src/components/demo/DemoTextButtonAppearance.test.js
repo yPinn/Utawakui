@@ -10,7 +10,6 @@ import {
   mount,
   textContent,
 } from '../ui/uiTestHost.js';
-import DemoCandidateTextButton from './DemoCandidateTextButton.vue';
 import DemoTextButtonAppearance from './DemoTextButtonAppearance.vue';
 
 const actionsSource = readFileSync(
@@ -34,7 +33,7 @@ const recipesSource = readFileSync(
   'utf8',
 );
 const candidateSource = readFileSync(
-  new URL('./DemoCandidateTextButton.vue', import.meta.url),
+  new URL('../ui/UiTextButton.vue', import.meta.url),
   'utf8',
 );
 const currentSource = readFileSync(
@@ -52,7 +51,6 @@ const activeTokensSource = readFileSync(
 
 for (const [component, filename] of [
   [DemoTextButtonAppearance, './DemoTextButtonAppearance.vue'],
-  [DemoCandidateTextButton, './DemoCandidateTextButton.vue'],
   [UiTextButton, '../ui/UiTextButton.vue'],
   [UiMarqueeText, '../ui/UiMarqueeText.vue'],
 ]) {
@@ -168,7 +166,9 @@ describe('DemoTextButtonAppearance', () => {
     expect(html).toContain('visible text 是預設 accessible name');
     expect(html).toContain('ariaLabel · optional override');
     expect(html).toContain('UiMarqueeText · overflow owner');
-    expect(candidateSource).toContain('<UiMarqueeText :text="text" />');
+    expect(candidateSource).toContain(
+      '<UiMarqueeText v-if="overflow === \'marquee\'" :text="displayText" />',
+    );
   });
 
   it('covers real multilingual content while preserving the existing overflow contract', async () => {
@@ -201,11 +201,11 @@ describe('DemoTextButtonAppearance', () => {
   it('summarizes the interaction-only underline without a duplicate variation section', async () => {
     const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
 
-    expect(html).toContain('Token v2 候選 Text Action');
-    expect(html).toContain('現行 UiTextButton · Text Action baseline');
+    expect(html).toContain('Token v2／已遷移 UiTextButton');
+    expect(html).toContain('Active token compatibility');
     expect(html).toContain('預設無底線；hover／focus-visible 顯示底線。');
     expect(html).toContain(
-      '現行同樣是 Default 無底線，hover／focus-visible 顯示底線。',
+      '同一正式元件維持 Default 無底線，hover／focus-visible 顯示底線。',
     );
     expect(html).not.toContain('data-text-action-affordance-sample');
     expect(html).not.toContain('Default · persistent quiet underline');
@@ -220,7 +220,7 @@ describe('DemoTextButtonAppearance', () => {
     expect(candidateSource).not.toContain('var(--ui-color-accent) 70%');
     expect(candidateSource).toContain('text-underline-offset: 0.18em;');
     expect(candidateSource).toMatch(
-      /\.demo-candidate-text-btn:not\(:disabled\):hover[\s\S]*?\.demo-candidate-text-btn:focus-visible[\s\S]*?\{[^}]*text-decoration:\s*underline;/su,
+      /\.ui-text-btn:not\(:disabled\):hover[\s\S]*?\.ui-text-btn:focus-visible[\s\S]*?\{[^}]*text-decoration:\s*underline;/su,
     );
     expect(candidateSource).not.toMatch(
       /\.demo-candidate-text-btn\s+:deep\(\.ui-marquee__text\)[\s\S]*?\{[^}]*text-decoration-line:\s*underline;/su,
@@ -229,7 +229,7 @@ describe('DemoTextButtonAppearance', () => {
     expect(candidateSource).not.toMatch(/dotted|dashed|reveal/u);
   });
 
-  it('shows an interaction-only underline in Candidate and keeps Current gaps truthful', async () => {
+  it('shows the adopted interaction-only underline in both token scopes', async () => {
     const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
 
     for (const state of ['default', 'hover', 'pressed', 'focus', 'disabled']) {
@@ -239,10 +239,7 @@ describe('DemoTextButtonAppearance', () => {
     }
     expect(html.match(/data-text-button-coverage-matrix/gu)).toHaveLength(2);
     expect(html).toContain(
-      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；disabled 50%。',
-    );
-    expect(html).toContain(
-      'Default 無底線；hover／focus 顯示底線；pressed／disabled 沒有獨立樣式。',
+      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；Token v2 disabled 50%。',
     );
     expect(html).not.toContain('Current · underline only on hover／focus');
     expect(candidateSource).toContain(':not(:disabled):hover');
@@ -252,17 +249,17 @@ describe('DemoTextButtonAppearance', () => {
     for (const state of ['hover', 'pressed', 'focus']) {
       expect(primitiveSource).toMatch(
         new RegExp(
-          `data-text-button-state='${state}'[\\s\\S]*?demo-candidate-text-btn[\\s\\S]*?\\{[^}]*text-decoration:\\s*underline;`,
+          `data-text-button-state='${state}'[\\s\\S]*?ui-text-btn[\\s\\S]*?\\{[^}]*text-decoration:\\s*underline;`,
           'su',
         ),
       );
     }
     expect(currentSource).not.toContain(':active');
-    expect(currentSource).not.toContain(':disabled');
+    expect(currentSource).toContain(':disabled');
   });
 
   it('preserves native attributes, visible-name fallback, and stopped click propagation', () => {
-    for (const Component of [DemoCandidateTextButton, UiTextButton]) {
+    for (const Component of [UiTextButton]) {
       const hostClick = vi.fn();
       const mounted = mount(Component, {
         text: '海螺記',
@@ -284,8 +281,8 @@ describe('DemoTextButtonAppearance', () => {
     }
   });
 
-  it('keeps Candidate appearance prop-free while preserving Current native attrs', () => {
-    const candidate = mount(DemoCandidateTextButton, {
+  it('keeps the adopted appearance prop-free while preserving native attrs', () => {
+    const candidate = mount(UiTextButton, {
       text: '前往來源專輯',
       'data-contract': 'candidate-affordance',
     });
@@ -298,7 +295,7 @@ describe('DemoTextButtonAppearance', () => {
       'data-contract': 'candidate-affordance',
     });
     expect(candidateButton.props['data-text-action-emphasis']).toBeUndefined();
-    expect(candidateButton.props.class).toBe('demo-candidate-text-btn');
+    expect(candidateButton.props.class).toBe('ui-text-btn');
     candidate.app.unmount();
 
     const current = mount(UiTextButton, {
@@ -318,7 +315,7 @@ describe('DemoTextButtonAppearance', () => {
   });
 
   it('keeps click.stop and the optional ariaLabel override in the bounded API', () => {
-    for (const Component of [DemoCandidateTextButton, UiTextButton]) {
+    for (const Component of [UiTextButton]) {
       const mounted = mount(Component, {
         text: '海螺記',
         ariaLabel: '前往專輯：海螺記',
@@ -374,7 +371,7 @@ describe('DemoTextButtonAppearance', () => {
     expect(componentSource.match(/recipeProps: \{\}/gu)).toHaveLength(2);
   });
 
-  it('documents a narrow public contract and isolates Candidate styling', async () => {
+  it('documents a narrow public contract and isolates token scopes', async () => {
     const html = await renderToString(createSSRApp(DemoTextButtonAppearance));
 
     expect(html).toContain('text · String／Number');

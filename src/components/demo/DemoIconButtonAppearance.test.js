@@ -6,7 +6,6 @@ import { Play, Repeat } from '../../icons/index.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { attachClientRender, findAll, mount } from '../ui/uiTestHost.js';
-import DemoCandidateIconButton from './DemoCandidateIconButton.vue';
 import DemoIconButtonAppearance from './DemoIconButtonAppearance.vue';
 
 const actionsSource = readFileSync(
@@ -26,7 +25,7 @@ const recipesSource = readFileSync(
   'utf8',
 );
 const candidateSource = readFileSync(
-  new URL('./DemoCandidateIconButton.vue', import.meta.url),
+  new URL('../ui/UiIconButton.vue', import.meta.url),
   'utf8',
 );
 const currentSource = readFileSync(
@@ -40,7 +39,6 @@ const activeTokensSource = readFileSync(
 
 for (const [component, filename] of [
   [DemoIconButtonAppearance, './DemoIconButtonAppearance.vue'],
-  [DemoCandidateIconButton, './DemoCandidateIconButton.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
@@ -73,8 +71,8 @@ describe('DemoIconButtonAppearance', () => {
 
     expect(candidateIndex).toBeGreaterThanOrEqual(0);
     expect(currentIndex).toBeGreaterThan(candidateIndex);
-    expect(html).toContain('Token v2 候選 Icon Button');
-    expect(html).toContain('現行 UiIconButton');
+    expect(html).toContain('Token v2／已遷移 UiIconButton');
+    expect(html).toContain('Active token compatibility');
 
     expect(html.match(/data-icon-button-group="primitive"/gu)).toHaveLength(2);
     expect(html.match(/data-icon-button-group="recipes"/gu)).toHaveLength(2);
@@ -121,16 +119,16 @@ describe('DemoIconButtonAppearance', () => {
     }
     expect(html).toContain('Standard routine · 36 CSS px');
     expect(html).toContain('Compact routine · 32 CSS px');
-    expect(html).toContain('Candidate Primary transport · 44 CSS px');
+    expect(html).toContain('Token v2 Primary transport · 44 CSS px');
     expect(html).toContain('Current md · 32 CSS px');
     expect(html).toContain('Current lg · 44 CSS px');
     expect(html).toContain('Glyph · fixed 16 units');
     expect(html).toContain('48px emergency · 尚未映射');
     expect(primitiveSource).toContain(
-      '.demo-icon-button-size--standard {\n  --demo-icon-button-size: 2.25rem;',
+      '.demo-icon-button-size--standard {\n  --ui-icon-button-size-override: 2.25rem;',
     );
     expect(primitiveSource).toContain(
-      '.demo-icon-button-size--compact {\n  --demo-icon-button-size: 2rem;',
+      '.demo-icon-button-size--compact {\n  --ui-icon-button-size-override: 2rem;',
     );
     expect(candidateSource).toContain(':size="ICON_SIZE"');
     expect(candidateSource).not.toMatch(/\['md', 'lg', 'xl'\]/u);
@@ -156,7 +154,7 @@ describe('DemoIconButtonAppearance', () => {
     expect(html).toContain('inherit＋stretch · parent-owned hit area');
     expect(html).toContain('fill 只控制 glyph rendering，不代表 selected');
     expect(candidateSource).toContain("['square', 'circle', 'inherit']");
-    expect(candidateSource).toContain('demo-candidate-icon-btn--stretch');
+    expect(candidateSource).toContain('ui-icon-btn--stretch');
   });
 
   it('covers multilingual accessible names without changing geometry', async () => {
@@ -179,11 +177,12 @@ describe('DemoIconButtonAppearance', () => {
     );
     expect(html).toContain('繁體中文／日本語／한국어／English');
     expect(html).toContain('套用 120 BPM');
-    expect(html).toContain('label／title 不參與 target geometry');
-    expect(html).toContain('不在 primitive phase 建立自訂 tooltip');
+    expect(html).toContain(
+      'label／title 與共用 tooltip 都不參與 target geometry',
+    );
   });
 
-  it('covers the complete state matrix while keeping Current truthful', async () => {
+  it('covers the complete state matrix in both token scopes', async () => {
     const html = await renderToString(createSSRApp(DemoIconButtonAppearance));
     const states = [
       'default',
@@ -201,20 +200,22 @@ describe('DemoIconButtonAppearance', () => {
     }
     expect(html.match(/data-icon-button-coverage-matrix/gu)).toHaveLength(2);
     expect(html).toContain('Ghost／Accent／Overlay');
-    expect(html).toContain('Current Accent／Overlay 無 authored pressed');
-    expect(candidateSource).toContain(
-      '.demo-candidate-icon-btn--overlay:not(:disabled):hover',
+    expect(html).toContain(
+      'Ghost／Accent／Overlay 保持完整 hover 與 pressed contract。',
     );
     expect(candidateSource).toContain(
-      '.demo-candidate-icon-btn--overlay:not(:disabled):active',
+      '.ui-icon-btn--overlay:not(:disabled):hover',
     );
     expect(candidateSource).toContain(
-      '.demo-candidate-icon-btn--accent:not(:disabled):active',
-    );
-    expect(currentSource).not.toContain(
       '.ui-icon-btn--overlay:not(:disabled):active',
     );
-    expect(currentSource).not.toContain(
+    expect(candidateSource).toContain(
+      '.ui-icon-btn--accent:not(:disabled):active',
+    );
+    expect(currentSource).toContain(
+      '.ui-icon-btn--overlay:not(:disabled):active',
+    );
+    expect(currentSource).toContain(
       '.ui-icon-btn--accent:not(:disabled):active',
     );
   });
@@ -250,13 +251,13 @@ describe('DemoIconButtonAppearance', () => {
       `${componentSource}${primitiveSource}${recipesSource}`,
     ).not.toContain("variant: 'live'");
     expect(recipesSource).toMatch(
-      /\.demo-icon-button-titlebar--candidate[^}]*--demo-icon-button-size:\s*2\.25rem;[^}]*--demo-icon-focus-offset:\s*var\(--ui-focus-offset-inset\);/su,
+      /\.demo-icon-button-titlebar--candidate[^}]*--ui-icon-button-size-override:\s*2\.25rem;[^}]*--demo-icon-focus-offset:\s*var\(--ui-focus-offset-inset\);/su,
     );
     expect(recipesSource).toContain('@container (max-width: 42rem)');
   });
 
   it('keeps native button semantics and caller-owned ARIA state', () => {
-    const fallbackTitle = mount(DemoCandidateIconButton, {
+    const fallbackTitle = mount(UiIconButton, {
       icon: Play,
       label: '播放目前曲目',
       disabled: true,
@@ -271,10 +272,10 @@ describe('DemoIconButtonAppearance', () => {
       type: 'button',
       disabled: true,
       name: 'transport-action',
-      'aria-label': '播放目前曲目',
-      title: '播放目前曲目',
       'data-contract': 'native-forwarding',
     });
+    expect(fallbackButton.props['aria-label']).toBeUndefined();
+    expect(fallbackButton.props.title).toBeUndefined();
     const fallbackIcon = findAll(
       fallbackButton,
       (node) => node.props?.['aria-hidden'] === 'true',
@@ -282,7 +283,7 @@ describe('DemoIconButtonAppearance', () => {
     expect(fallbackIcon).toBeTruthy();
     fallbackTitle.app.unmount();
 
-    const toggle = mount(DemoCandidateIconButton, {
+    const toggle = mount(UiIconButton, {
       icon: Repeat,
       label: '重複播放',
       title: '重複播放 (R)',
@@ -293,13 +294,9 @@ describe('DemoIconButtonAppearance', () => {
       toggle.root,
       (node) => node.type === 'button',
     )[0];
-    expect(toggleButton.props).toMatchObject({
-      title: '重複播放 (R)',
-      'aria-pressed': true,
-    });
-    expect(String(toggleButton.props.class)).toContain(
-      'demo-candidate-icon-btn--active',
-    );
+    expect(toggleButton.props.title).toBeUndefined();
+    expect(toggleButton.props['aria-pressed']).toBe(true);
+    expect(String(toggleButton.props.class)).toContain('ui-icon-btn--active');
     toggle.app.unmount();
   });
 
@@ -325,7 +322,7 @@ describe('DemoIconButtonAppearance', () => {
     expect(candidateSource).not.toMatch(/readonly|loading|permission/u);
   });
 
-  it('isolates Candidate styling from Current and active tokens', async () => {
+  it('isolates token scopes while sharing one formal implementation', async () => {
     const html = await renderToString(createSSRApp(DemoIconButtonAppearance));
     const currentLayer = componentSource.match(
       /\.demo-icon-button-layer--current\s*\{([\s\S]*?)\n\}/u,
@@ -345,7 +342,7 @@ describe('DemoIconButtonAppearance', () => {
     expect(currentLayer).toContain('--ui-motion-easing-standard: ease-out;');
     expect(currentLayer).toContain('--ui-color-overlay-contrast: #fff;');
     expect(currentSource).not.toContain('demo-candidate-icon-btn');
-    expect(activeTokensSource).not.toContain('overlay-scrim-hover');
+    expect(activeTokensSource).toContain('--ui-color-overlay-scrim-hover:');
     expect(activeTokensSource).not.toContain('data-icon-button-source');
     expect(html).not.toContain('Candidate 不代表 production adoption');
   });

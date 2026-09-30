@@ -7,6 +7,7 @@ import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
@@ -112,11 +113,14 @@ function applyPreset(preset) {
             @update:active-id="selectKind"
           />
 
-          <section
+          <UiScrollRegion
             v-if="activeGroup"
             :id="`output-kind-${activeGroup.kind}-panel`"
             :key="activeGroup.kind"
             class="obs-template-gallery__group"
+            axis="both"
+            viewport-tag="section"
+            viewport-class="obs-template-gallery__group-viewport"
             role="tabpanel"
             :aria-labelledby="`output-kind-${activeGroup.kind}-tab`"
           >
@@ -159,17 +163,17 @@ function applyPreset(preset) {
                 </div>
               </button>
             </div>
-          </section>
+          </UiScrollRegion>
         </div>
       </template>
 
-      <template #side>
+      <template #side-header>
         <ObsTemplatePreviewStage
           :preset="selectedPreset"
           :scene="previewScene"
         />
 
-        <div class="obs-template-gallery__detail-copy">
+        <div class="obs-template-gallery__detail-header">
           <span class="obs-template-gallery__detail-index">
             {{ selectedIndex + 1 }} / {{ activeGroup?.templates.length ?? 0 }}
           </span>
@@ -179,6 +183,11 @@ function applyPreset(preset) {
             </h2>
             <UiChip v-if="isApplied" tone="accent">使用中</UiChip>
           </div>
+        </div>
+      </template>
+
+      <template #side>
+        <div class="obs-template-gallery__detail-copy">
           <p class="obs-template-gallery__detail-summary">
             {{ selectedPreset.detail }}
           </p>
@@ -195,7 +204,9 @@ function applyPreset(preset) {
             </UiChip>
           </div>
         </div>
+      </template>
 
+      <template #side-footer>
         <div class="obs-template-gallery__actions">
           <UiButton @click="emit('openWorkbench')">前往工作台</UiButton>
           <UiButton
@@ -237,7 +248,6 @@ function applyPreset(preset) {
 .obs-template-gallery__group {
   min-height: 0;
   min-width: 0;
-  overflow: auto;
 }
 
 .obs-template-gallery__grid {
@@ -324,11 +334,21 @@ function applyPreset(preset) {
   white-space: nowrap;
 }
 
+.obs-template-gallery__detail-header,
 .obs-template-gallery__detail-copy {
   min-width: 0;
   display: grid;
   align-content: start;
   gap: var(--ui-space-2);
+}
+
+.obs-template-gallery__detail-header {
+  gap: var(--ui-space-3);
+  padding-block-end: var(--ui-space-3);
+}
+
+.obs-template-gallery__actions {
+  padding-block-start: var(--ui-space-3);
 }
 
 .obs-template-gallery__heading {

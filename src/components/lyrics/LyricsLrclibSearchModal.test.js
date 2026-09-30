@@ -305,6 +305,9 @@ describe('online lyrics search modal contract', () => {
 
     expect(workspace).toContain('@media (max-width: 680px)');
     expect(row).toContain('@media (max-width: 680px)');
-    expect(workspace).toContain('overflow-y: auto');
+    expect(workspace).toContain('<UiScrollRegion');
+    expect(workspace).toContain(
+      'viewport-class="lyrics-lrclib-search__results-viewport"',
+    );
   });
 });

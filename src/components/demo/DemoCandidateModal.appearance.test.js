@@ -110,7 +110,11 @@ describe('DemoCandidateModal appearance contract', () => {
   it('keeps header and footer persistent while only the body scrolls', () => {
     expect(source).toContain('grid-template-rows: auto minmax(0, 1fr) auto');
     expect(source).toMatch(
-      /\.demo-candidate-modal__body\s*\{[^}]*min-block-size:\s*0;[^}]*overflow-x:\s*clip;[^}]*overflow-y:\s*auto;/s,
+      /\.demo-candidate-modal__body\s*\{[^}]*min-block-size:\s*0;/s,
+    );
+    expect(source).toContain('<UiScrollRegion');
+    expect(source).toContain(
+      'viewport-class="demo-candidate-modal__body-viewport"',
     );
     expect(source).toContain('<header class="demo-candidate-modal__header">');
     expect(source).toContain('<footer');
@@ -129,9 +133,9 @@ describe('DemoCandidateModal appearance contract', () => {
     expect(source).toContain('ref="body"');
   });
 
-  it('uses the native modal layer and the reviewed candidate close control', () => {
+  it('uses the native modal layer and the adopted formal close control', () => {
     expect(source).toContain(
-      "import DemoCandidateIconButton from './DemoCandidateIconButton.vue'",
+      "import UiIconButton from '../ui/UiIconButton.vue'",
     );
     expect(source).toContain('<dialog');
     expect(source).toContain('dialog.showModal()');

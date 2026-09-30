@@ -4,6 +4,7 @@ import { Copy, ExternalLink } from '../../icons/index.js';
 import { useClipboardFeedback } from '../../composables/useClipboardFeedback.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -146,7 +147,7 @@ function submitApproval() {
           {{ candidate.reference.artist }} — {{ candidate.reference.title }}
         </h2>
       </div>
-      <UiStack class="review-form__header-status" gap="2">
+      <UiStack class="review-form__header-status" :gap="2">
         <UiChip
           :tone="candidate.catalogReach === 'mainstream' ? 'accent' : 'warning'"
         >
@@ -173,7 +174,7 @@ function submitApproval() {
     </header>
 
     <section class="review-form__lookup" aria-labelledby="review-lookup-title">
-      <UiStack class="review-form__lookup-heading" align="baseline" gap="2">
+      <UiStack class="review-form__lookup-heading" align="baseline" :gap="2">
         <h3 id="review-lookup-title" class="review-form__lookup-title">
           查證輔助
         </h3>
@@ -189,7 +190,7 @@ function submitApproval() {
             </code>
           </div>
           <p>只用於這批 F7 審核資料；可貼到上方搜尋欄定位同一筆。</p>
-          <UiStack class="review-form__lookup-actions" wrap gap="1">
+          <UiStack class="review-form__lookup-actions" wrap :gap="1">
             <UiButton
               :icon="Copy"
               title="複製本批資料的候選 ID"
@@ -209,7 +210,7 @@ function submitApproval() {
             </code>
           </div>
           <p>用來查同一首歌的特定錄音版本、演出者與發行資料。</p>
-          <UiStack class="review-form__lookup-actions" wrap gap="1">
+          <UiStack class="review-form__lookup-actions" wrap :gap="1">
             <UiButton
               :icon="Copy"
               title="複製 MusicBrainz Recording MBID"
@@ -240,7 +241,7 @@ function submitApproval() {
             </code>
           </div>
           <p>貼到音源平台或搜尋引擎，交叉確認同名曲、現場版與翻唱版。</p>
-          <UiStack class="review-form__lookup-actions" wrap gap="1">
+          <UiStack class="review-form__lookup-actions" wrap :gap="1">
             <UiButton
               :icon="Copy"
               title="複製歌手與歌名供外部查詢"
@@ -268,36 +269,42 @@ function submitApproval() {
         aria-labelledby="review-source-title"
       >
         <h3 id="review-source-title">候選資料（來源）</h3>
-        <dl class="review-form__selectable">
-          <div>
-            <dt>歌名</dt>
-            <dd dir="auto">{{ candidate.reference.title }}</dd>
-          </div>
-          <div>
-            <dt>歌手</dt>
-            <dd dir="auto">{{ candidate.reference.artist }}</dd>
-          </div>
-          <div>
-            <dt>專輯</dt>
-            <dd dir="auto">{{ candidate.reference.album || '—' }}</dd>
-          </div>
-          <div>
-            <dt>時長</dt>
-            <dd>{{ formatDuration(candidate.reference.durationSeconds) }}</dd>
-          </div>
-          <div>
-            <dt>來源語言</dt>
-            <dd>
-              {{
-                languageLabels[candidate.languageTag] || candidate.languageTag
-              }}
-            </dd>
-          </div>
-          <div>
-            <dt>首次發行</dt>
-            <dd>{{ candidate.reference.firstReleaseDate || '—' }}</dd>
-          </div>
-        </dl>
+        <UiScrollRegion
+          class="review-form__comparison-scroll review-form__source-scroll"
+          axis="vertical"
+          viewport-class="review-form__source-body"
+        >
+          <dl class="review-form__selectable">
+            <div>
+              <dt>歌名</dt>
+              <dd dir="auto">{{ candidate.reference.title }}</dd>
+            </div>
+            <div>
+              <dt>歌手</dt>
+              <dd dir="auto">{{ candidate.reference.artist }}</dd>
+            </div>
+            <div>
+              <dt>專輯</dt>
+              <dd dir="auto">{{ candidate.reference.album || '—' }}</dd>
+            </div>
+            <div>
+              <dt>時長</dt>
+              <dd>{{ formatDuration(candidate.reference.durationSeconds) }}</dd>
+            </div>
+            <div>
+              <dt>來源語言</dt>
+              <dd>
+                {{
+                  languageLabels[candidate.languageTag] || candidate.languageTag
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>首次發行</dt>
+              <dd>{{ candidate.reference.firstReleaseDate || '—' }}</dd>
+            </div>
+          </dl>
+        </UiScrollRegion>
       </section>
 
       <section
@@ -305,123 +312,132 @@ function submitApproval() {
         aria-labelledby="review-confirmation-title"
       >
         <h3 id="review-confirmation-title">確認資料</h3>
-        <UiTextField
-          id="lyrics-review-title"
-          label="歌名"
-          :model-value="modelValue.title"
-          :maxlength="256"
-          required
-          :invalid="approvalField === 'title'"
-          :disabled="saving"
-          @update:model-value="update('title', $event)"
-        />
-        <UiTextField
-          id="lyrics-review-artist"
-          label="歌手"
-          :model-value="modelValue.artist"
-          :maxlength="256"
-          required
-          :invalid="approvalField === 'artist'"
-          :disabled="saving"
-          @update:model-value="update('artist', $event)"
-        />
-        <UiTextField
-          id="lyrics-review-album"
-          label="專輯（選填）"
-          :model-value="modelValue.album"
-          :maxlength="256"
-          :disabled="saving"
-          @update:model-value="update('album', $event)"
-        />
-        <label class="review-form__field" for="lyrics-review-duration">
-          <span>時長（秒）</span>
-          <input
-            id="lyrics-review-duration"
-            type="number"
-            min="1"
-            max="86400"
-            step="1"
+        <UiScrollRegion
+          class="review-form__comparison-scroll review-form__confirmation-scroll"
+          axis="vertical"
+          viewport-class="review-form__confirmation-body"
+        >
+          <UiTextField
+            id="lyrics-review-title"
+            label="歌名"
+            :model-value="modelValue.title"
+            :maxlength="256"
             required
-            :class="{
-              'review-form__control--invalid':
-                approvalField === 'durationSeconds',
-            }"
-            :aria-invalid="
-              approvalField === 'durationSeconds' ? 'true' : undefined
-            "
-            :value="modelValue.durationSeconds"
+            :invalid="approvalField === 'title'"
             :disabled="saving"
-            @input="update('durationSeconds', Number($event.target.value))"
+            @update:model-value="update('title', $event)"
           />
-        </label>
-        <label class="review-form__field" for="lyrics-review-language">
-          <span>語言</span>
-          <select
-            id="lyrics-review-language"
-            :class="{
-              'review-form__control--invalid': approvalField === 'languageTag',
-            }"
-            :aria-invalid="approvalField === 'languageTag' ? 'true' : undefined"
-            :value="modelValue.languageTag"
+          <UiTextField
+            id="lyrics-review-artist"
+            label="歌手"
+            :model-value="modelValue.artist"
+            :maxlength="256"
+            required
+            :invalid="approvalField === 'artist'"
             :disabled="saving"
-            @change="update('languageTag', $event.target.value)"
-          >
-            <option
-              v-for="language in languageOptions"
-              :key="language"
-              :value="language"
-            >
-              {{ languageLabels[language] }}
-            </option>
-          </select>
-        </label>
-        <label class="review-form__field" for="lyrics-review-version">
-          <span>版本</span>
-          <select
-            id="lyrics-review-version"
-            :class="{
-              'review-form__control--invalid': approvalField === 'version',
-            }"
-            :aria-invalid="approvalField === 'version' ? 'true' : undefined"
-            :value="modelValue.version"
-            :disabled="saving"
-            @change="update('version', $event.target.value)"
-          >
-            <option
-              v-for="option in versionOptions"
-              :key="option[0]"
-              :value="option[0]"
-            >
-              {{ option[1] }}
-            </option>
-          </select>
-        </label>
-        <label class="review-form__field" for="lyrics-review-era">
-          <span>確認為 2010 年或之後發行</span>
-          <select
-            id="lyrics-review-era"
-            class="review-form__era-control"
-            :class="{
-              'review-form__control--invalid': approvalField === 'eraTag',
-            }"
-            :aria-invalid="approvalField === 'eraTag' ? 'true' : undefined"
-            :value="modelValue.eraTag || ''"
-            :disabled="saving"
-            @change="update('eraTag', $event.target.value || null)"
-          >
-            <option value="">請確認</option>
-            <option value="recent-release">已確認為 2010 年或之後</option>
-          </select>
-        </label>
-        <label class="review-form__checkbox">
-          <input
-            type="checkbox"
-            :checked="modelValue.versionTrap"
-            :disabled="saving"
-            @change="update('versionTrap', $event.target.checked)"
+            @update:model-value="update('artist', $event)"
           />
-          <span>這筆是容易配錯的版本陷阱</span>
-        </label>
+          <UiTextField
+            id="lyrics-review-album"
+            label="專輯（選填）"
+            :model-value="modelValue.album"
+            :maxlength="256"
+            :disabled="saving"
+            @update:model-value="update('album', $event)"
+          />
+          <label class="review-form__field" for="lyrics-review-duration">
+            <span>時長（秒）</span>
+            <input
+              id="lyrics-review-duration"
+              type="number"
+              min="1"
+              max="86400"
+              step="1"
+              required
+              :class="{
+                'review-form__control--invalid':
+                  approvalField === 'durationSeconds',
+              }"
+              :aria-invalid="
+                approvalField === 'durationSeconds' ? 'true' : undefined
+              "
+              :value="modelValue.durationSeconds"
+              :disabled="saving"
+              @input="update('durationSeconds', Number($event.target.value))"
+            />
+          </label>
+          <label class="review-form__field" for="lyrics-review-language">
+            <span>語言</span>
+            <select
+              id="lyrics-review-language"
+              :class="{
+                'review-form__control--invalid':
+                  approvalField === 'languageTag',
+              }"
+              :aria-invalid="
+                approvalField === 'languageTag' ? 'true' : undefined
+              "
+              :value="modelValue.languageTag"
+              :disabled="saving"
+              @change="update('languageTag', $event.target.value)"
+            >
+              <option
+                v-for="language in languageOptions"
+                :key="language"
+                :value="language"
+              >
+                {{ languageLabels[language] }}
+              </option>
+            </select>
+          </label>
+          <label class="review-form__field" for="lyrics-review-version">
+            <span>版本</span>
+            <select
+              id="lyrics-review-version"
+              :class="{
+                'review-form__control--invalid': approvalField === 'version',
+              }"
+              :aria-invalid="approvalField === 'version' ? 'true' : undefined"
+              :value="modelValue.version"
+              :disabled="saving"
+              @change="update('version', $event.target.value)"
+            >
+              <option
+                v-for="option in versionOptions"
+                :key="option[0]"
+                :value="option[0]"
+              >
+                {{ option[1] }}
+              </option>
+            </select>
+          </label>
+          <label class="review-form__field" for="lyrics-review-era">
+            <span>確認為 2010 年或之後發行</span>
+            <select
+              id="lyrics-review-era"
+              class="review-form__era-control"
+              :class="{
+                'review-form__control--invalid': approvalField === 'eraTag',
+              }"
+              :aria-invalid="approvalField === 'eraTag' ? 'true' : undefined"
+              :value="modelValue.eraTag || ''"
+              :disabled="saving"
+              @change="update('eraTag', $event.target.value || null)"
+            >
+              <option value="">請確認</option>
+              <option value="recent-release">已確認為 2010 年或之後</option>
+            </select>
+          </label>
+          <label class="review-form__checkbox">
+            <input
+              type="checkbox"
+              :checked="modelValue.versionTrap"
+              :disabled="saving"
+              @change="update('versionTrap', $event.target.checked)"
+            />
+            <span>這筆是容易配錯的版本陷阱</span>
+          </label>
+        </UiScrollRegion>
       </section>
     </div>
 
@@ -634,13 +650,29 @@ function submitApproval() {
   min-height: 0;
   display: grid;
   grid-template-columns: minmax(12rem, 0.9fr) minmax(18rem, 1.1fr);
-  overflow-y: auto;
 }
 
 .review-form__source,
 .review-form__confirmation {
   min-width: 0;
-  padding: var(--ui-space-4);
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.review-form__source > h3,
+.review-form__confirmation > h3 {
+  margin: 0;
+  padding: var(--ui-space-4) var(--ui-space-4) var(--ui-space-3);
+}
+
+.review-form__comparison-scroll {
+  min-height: 0;
+}
+
+.review-form__comparison-scroll :deep(.review-form__source-body),
+.review-form__comparison-scroll :deep(.review-form__confirmation-body) {
+  padding: 0 var(--ui-space-4) var(--ui-space-4);
 }
 
 .review-form__source {
@@ -682,15 +714,15 @@ function submitApproval() {
   font-size: var(--ui-font-size-sm);
 }
 
-.review-form__confirmation {
+.review-form__confirmation-scroll :deep(.review-form__confirmation-body) {
   display: grid;
   align-content: start;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--ui-space-3);
 }
 
-.review-form__confirmation h3,
-.review-form__confirmation > :nth-child(-n + 4) {
+.review-form__confirmation-scroll
+  :deep(.review-form__confirmation-body > :nth-child(-n + 3)) {
   grid-column: 1 / -1;
 }
 
@@ -830,6 +862,7 @@ function submitApproval() {
 
   .review-form__comparison {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(12rem, 0.8fr) minmax(18rem, 1.2fr);
   }
 
   .review-form__source {

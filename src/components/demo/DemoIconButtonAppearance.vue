@@ -1,18 +1,16 @@
 <script setup>
 import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
-import DemoCandidateButton from './DemoCandidateButton.vue';
-import DemoCandidateIconButton from './DemoCandidateIconButton.vue';
 import DemoIconButtonPrimitive from './DemoIconButtonPrimitive.vue';
 import DemoIconButtonRecipes from './DemoIconButtonRecipes.vue';
 
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Icon Button',
+    title: 'Token v2／已遷移 UiIconButton',
     note: 'Routine target 隨 density 為 36／32px；44px lg 只用於 Primary transport 等明確強調角色。',
-    component: DemoCandidateIconButton,
-    actionComponent: DemoCandidateButton,
+    component: UiIconButton,
+    actionComponent: UiButton,
     actionVariant: 'secondary',
     fieldNote: 'Candidate 同列 control boxes · 36／32px',
     stateNote: 'Ghost／Accent／Overlay 皆有 authored hover 與 pressed。',
@@ -23,20 +21,19 @@ const LAYERS = [
         'candidate-primary-transport',
         'primary-transport',
         'lg',
-        'Candidate Primary transport · 44 CSS px',
+        'Token v2 Primary transport · 44 CSS px',
       ],
     ],
   },
   {
     key: 'current',
-    title: '現行 UiIconButton',
-    note: 'Active token 快照保持 md 32px／lg 44px；不繼承 Candidate 的 routine 尺寸、focus 色或互動補強。',
+    title: 'Active token compatibility',
+    note: '同一正式元件在 active token 快照維持 md 32px／lg 44px；既有頁面不會被強制切換 Token v2 尺寸與色彩。',
     component: UiIconButton,
     actionComponent: UiButton,
     actionVariant: 'ghost',
     fieldNote: 'Current icon 32px／Field＋Button 30px',
-    stateNote:
-      'Current Accent／Overlay 無 authored pressed；Overlay 亦無獨立 hover。',
+    stateNote: 'Ghost／Accent／Overlay 保持完整 hover 與 pressed contract。',
     sizes: [
       ['current-md', 'current-md', 'md', 'Current md · 32 CSS px'],
       ['current-lg', 'current-lg', 'lg', 'Current lg · 44 CSS px'],

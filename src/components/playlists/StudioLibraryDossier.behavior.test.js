@@ -10,6 +10,7 @@ import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
@@ -30,6 +31,7 @@ for (const [component, filename] of [
   [UiHint, '../ui/UiHint.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
   [UiSearchBox, '../ui/UiSearchBox.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {

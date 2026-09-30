@@ -39,20 +39,24 @@ describe('QueuePanel shared Dock content', () => {
       /\.queue-panel\s*\{[^}]*min-height:\s*0;[^}]*height:\s*100%;[^}]*flex-direction:\s*column;/su,
     );
     expect(source).toMatch(
-      /\.queue-panel__scroll\s*\{[^}]*min-height:\s*0;[^}]*flex:\s*1;[^}]*overflow-y:\s*auto;/su,
+      /\.queue-panel__scroll\s*\{[^}]*min-height:\s*0;[^}]*flex:\s*1;/su,
+    );
+    expect(source).toContain('<UiScrollRegion');
+    expect(source).not.toMatch(
+      /\.queue-panel__scroll\s*\{[^}]*overflow-y:\s*auto;/su,
     );
     expect(source).not.toContain('--ui-queue-panel-max-height');
   });
 
-  it('uses true Queue and Recently Played tabpanels under sticky shared chrome', () => {
+  it('keeps true Queue and Recently Played tabpanels below fixed shared chrome', () => {
     expect(source).toContain("import UiTabs from '../ui/UiTabs.vue';");
     expect(source).toContain("const activeTab = shallowRef('queue');");
     expect(source).toContain('variant="bar"');
     expect(source).toContain('role="tabpanel"');
     expect(source).toContain('queue-panel__chrome--scrolled');
     expect(source).toContain('@scroll="updateScrollState"');
-    expect(source).toMatch(
-      /\.queue-panel__chrome\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;[^}]*z-index:\s*var\(--ui-z-sticky\);/su,
+    expect(source.indexOf('class="queue-panel__chrome"')).toBeLessThan(
+      source.indexOf('class="queue-panel__scroll"'),
     );
     expect(source).toMatch(
       /\.queue-panel__chrome--scrolled\s*\{[^}]*backdrop-filter:\s*blur\(var\(--ui-right-dock-sticky-blur\)\);[^}]*box-shadow:\s*var\(--ui-right-dock-sticky-shadow\);/su,

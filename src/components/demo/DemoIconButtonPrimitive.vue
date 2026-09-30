@@ -7,6 +7,7 @@ import {
   Repeat,
   Settings,
 } from '../../icons/index.js';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineProps({
   layer: { type: Object, required: true },
@@ -171,10 +172,7 @@ function stateProps(state, variant) {
     <section class="demo-icon-button-subsection">
       <header class="demo-icon-button-subsection__header">
         <h6>內容與 accessible name</h6>
-        <p>
-          label／title 不參與 target geometry；不在 primitive phase 建立自訂
-          tooltip。
-        </p>
+        <p>label／title 與共用 tooltip 都不參與 target geometry。</p>
       </header>
       <div class="demo-icon-button-content-grid">
         <article
@@ -224,8 +222,9 @@ function stateProps(state, variant) {
           </div>
         </article>
       </div>
-      <div
+      <UiScrollRegion
         class="demo-icon-button-coverage"
+        axis="horizontal"
         data-icon-button-coverage-matrix
         tabindex="0"
         aria-label="Icon Button 狀態覆蓋表"
@@ -248,7 +247,7 @@ function stateProps(state, variant) {
             </tr>
           </tbody>
         </table>
-      </div>
+      </UiScrollRegion>
     </section>
 
     <section class="demo-icon-button-subsection">
@@ -411,20 +410,20 @@ function stateProps(state, variant) {
 }
 
 .demo-icon-button-size--standard {
-  --demo-icon-button-size: 2.25rem;
+  --ui-icon-button-size-override: 2.25rem;
 }
 
 .demo-icon-button-size--compact {
-  --demo-icon-button-size: 2rem;
+  --ui-icon-button-size-override: 2rem;
 }
 
 .demo-icon-button-size--primary-transport,
 .demo-icon-button-size--current-lg {
-  --demo-icon-button-size: 2.75rem;
+  --ui-icon-button-size-override: 2.75rem;
 }
 
 .demo-icon-button-size--current-md {
-  --demo-icon-button-size: 2rem;
+  --ui-icon-button-size-override: 2rem;
 }
 
 .demo-icon-button-anatomy {
@@ -492,20 +491,18 @@ function stateProps(state, variant) {
 }
 
 .demo-icon-button-state[data-icon-button-state='hover']
-  :deep(.demo-candidate-icon-btn--ghost) {
+  :deep(.ui-icon-btn--ghost) {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
 }
 
-.demo-icon-button-state[data-icon-button-state='hover']
-  :deep(.demo-candidate-icon-btn--accent),
 .demo-icon-button-state[data-icon-button-state='hover']
   :deep(.ui-icon-btn--accent) {
   background: var(--ui-color-accent-hover);
 }
 
 .demo-icon-button-state[data-icon-button-state='hover']
-  :deep(.demo-candidate-icon-btn--overlay) {
+  :deep(.ui-icon-btn--overlay) {
   background: var(--ui-color-overlay-scrim-hover);
 }
 
@@ -516,20 +513,18 @@ function stateProps(state, variant) {
 }
 
 .demo-icon-button-state[data-icon-button-state='pressed']
-  :deep(.demo-candidate-icon-btn--ghost),
-.demo-icon-button-state[data-icon-button-state='pressed']
   :deep(.ui-icon-btn--ghost) {
   background: var(--ui-color-surface-active);
   color: var(--ui-color-text);
 }
 
 .demo-icon-button-state[data-icon-button-state='pressed']
-  :deep(.demo-candidate-icon-btn--accent) {
+  :deep(.ui-icon-btn--accent) {
   background: var(--ui-color-accent-active);
 }
 
 .demo-icon-button-state[data-icon-button-state='pressed']
-  :deep(.demo-candidate-icon-btn--overlay) {
+  :deep(.ui-icon-btn--overlay) {
   background: var(--ui-color-overlay-scrim-active);
 }
 
@@ -546,7 +541,6 @@ function stateProps(state, variant) {
 
 .demo-icon-button-coverage {
   min-width: 0;
-  overflow-x: auto;
   outline: none;
 }
 

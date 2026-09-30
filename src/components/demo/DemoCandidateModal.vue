@@ -9,7 +9,8 @@ import {
   watch,
 } from 'vue';
 import { X } from '../../icons/index.js';
-import DemoCandidateIconButton from './DemoCandidateIconButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -169,7 +170,7 @@ onBeforeUnmount(() => {
         >
           {{ title }}
         </h2>
-        <DemoCandidateIconButton
+        <UiIconButton
           class="demo-candidate-modal__close"
           :icon="X"
           label="關閉"
@@ -177,9 +178,14 @@ onBeforeUnmount(() => {
         />
       </header>
 
-      <div ref="body" class="demo-candidate-modal__body">
+      <UiScrollRegion
+        ref="body"
+        class="demo-candidate-modal__body"
+        axis="vertical"
+        viewport-class="demo-candidate-modal__body-viewport"
+      >
         <slot />
-      </div>
+      </UiScrollRegion>
 
       <footer v-if="slots.footer" class="demo-candidate-modal__footer">
         <slot name="footer" />
@@ -278,15 +284,16 @@ onBeforeUnmount(() => {
 .demo-candidate-modal__body {
   min-inline-size: 0;
   min-block-size: 0;
-  padding: 0 var(--ui-modal-content-inset) var(--ui-modal-content-inset);
-  overflow-x: clip;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
 }
 
-.demo-candidate-modal--with-footer .demo-candidate-modal__body {
+.demo-candidate-modal__body :deep(.demo-candidate-modal__body-viewport) {
+  padding: 0 var(--ui-modal-content-inset) var(--ui-modal-content-inset);
+  overscroll-behavior: contain;
+}
+
+.demo-candidate-modal--with-footer
+  .demo-candidate-modal__body
+  :deep(.demo-candidate-modal__body-viewport) {
   padding-block-end: var(--ui-modal-section-gap);
 }
 

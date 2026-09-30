@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiSegmentedControl from './UiSegmentedControl.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import {
   attachClientRender,
   findAll,
@@ -15,6 +16,7 @@ attachClientRender(
   './UiSegmentedControl.vue',
   import.meta.url,
 );
+attachClientRender(UiScrollRegion, './UiScrollRegion.vue', import.meta.url);
 
 const ITEMS = [
   { id: 'library', label: '曲庫' },
@@ -212,8 +214,9 @@ describe('UiSegmentedControl', () => {
     expect(source).toMatch(
       /\.ui-segmented-control__option--selected\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-bold\);/su,
     );
-    expect(source).toMatch(
-      /\.ui-segmented-control--horizontal\s*\{[^}]*max-width:\s*100%;[^}]*overflow-x:\s*auto;/su,
+    expect(source).toContain('<UiScrollRegion');
+    expect(source).toContain(
+      "orientation === 'horizontal' ? 'auto' : 'hidden'",
     );
     expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(|hsla?\(/iu);
   });

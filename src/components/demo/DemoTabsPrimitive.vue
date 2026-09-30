@@ -58,7 +58,7 @@ const WIDTH_CASES = [
   },
   {
     key: 'narrow-scroll',
-    label: 'Narrow · native horizontal scroll',
+    label: 'Narrow · overlay horizontal scroll',
     variant: 'bar',
     items: OVERFLOW_ITEMS,
   },
@@ -173,8 +173,8 @@ function variantNote(variant) {
         }}</span>
         <span>{{
           layerText(
-            'Overflow · native horizontal scroll／no marquee',
-            'Overflow · native horizontal scroll／no tab truncation',
+            'Overflow · overlay horizontal scroll／no marquee',
+            'Overflow · overlay horizontal scroll／no tab truncation',
           )
         }}</span>
       </div>
@@ -636,10 +636,6 @@ function variantNote(variant) {
 
 .demo-tabs-width--narrow-scroll {
   width: min(16rem, 100%);
-}
-
-.demo-tabs-width--narrow-scroll :deep(.ui-tabs) {
-  overflow-x: auto;
 }
 
 .demo-tabs-panel {

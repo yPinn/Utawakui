@@ -37,6 +37,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
@@ -481,7 +482,12 @@ function trackStatusIconLabel(track) {
         </div>
       </div>
 
-      <ul class="preview-tracks">
+      <UiScrollRegion
+        class="preview-tracks"
+        axis="vertical"
+        viewport-tag="ul"
+        viewport-class="preview-tracks__viewport"
+      >
         <UiTrackRow
           v-for="track in visiblePlaylistTracks"
           :key="track.id"
@@ -519,7 +525,7 @@ function trackStatusIconLabel(track) {
             />
           </template>
         </UiTrackRow>
-      </ul>
+      </UiScrollRegion>
 
       <UiHint v-if="visiblePlaylistTracks.length === 0" padded center>
         沒有符合目前篩選的曲目
@@ -791,11 +797,15 @@ function trackStatusIconLabel(track) {
 }
 
 .preview-tracks {
+  max-height: var(--import-preview-list-max-height);
+}
+
+.preview-tracks :deep(.preview-tracks__viewport) {
+  block-size: auto;
+  max-block-size: inherit;
   list-style: none;
   margin: 0;
   padding: var(--ui-space-1) 0;
-  max-height: var(--import-preview-list-max-height);
-  overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-1);

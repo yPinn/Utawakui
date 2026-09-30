@@ -1,6 +1,6 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
-import DemoCandidateButton from './DemoCandidateButton.vue';
+import UiButton from '../ui/UiButton.vue';
 import DemoCandidateNotificationHost from './DemoCandidateNotificationHost.vue';
 
 const props = defineProps({
@@ -120,7 +120,7 @@ function handleAction() {
       class="demo-notification-recipe__controls"
       aria-label="切換通知類型"
     >
-      <DemoCandidateButton
+      <UiButton
         v-for="option in lifecycleOptions"
         :key="option.key"
         variant="secondary"
@@ -129,7 +129,7 @@ function handleAction() {
         @click="showLifecycle(option.key)"
       >
         {{ option.label }}
-      </DemoCandidateButton>
+      </UiButton>
     </div>
 
     <div class="demo-notification-recipe__viewport">
@@ -164,13 +164,13 @@ function handleAction() {
           message="下次開啟輸出時會套用目前的版面與字幕設定。"
           data-notification-card="preferred"
         />
-        <DemoCandidateButton
+        <UiButton
           v-else
           variant="secondary"
           @click="showLifecycle(selectedLifecycle)"
         >
           再次顯示通知
-        </DemoCandidateButton>
+        </UiButton>
       </aside>
     </div>
 

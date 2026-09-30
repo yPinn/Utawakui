@@ -1,5 +1,6 @@
 <script setup>
 import { Play } from '../../icons/index.js';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import trackThumbCropSquare from '../../assets/demo/track-thumb/track-thumb-crop-square.jpg';
 import trackThumbCropWide from '../../assets/demo/track-thumb/track-thumb-crop-wide.jpg';
 import { BROKEN_IMAGE_FIXTURE_URL } from './demoImageFixtures.js';
@@ -296,13 +297,16 @@ const LANGUAGE_TRACKS = [
           :key="recipe.size"
           :data-collage-size="recipe.size"
         >
-          <div class="demo-collage-thumb-size-list__frame">
+          <UiScrollRegion
+            class="demo-collage-thumb-size-list__frame"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               :tracks="BASE_TRACKS"
               :size="recipe.size"
             />
-          </div>
+          </UiScrollRegion>
           <span>{{ recipe.label }}</span>
         </article>
       </div>
@@ -503,10 +507,6 @@ const LANGUAGE_TRACKS = [
 
 .demo-collage-thumb-size-list__frame {
   max-width: 100%;
-  overflow-x: auto;
-  overflow-y: hidden;
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
 }
 
 .demo-collage-thumb-language-list article {

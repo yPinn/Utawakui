@@ -13,6 +13,7 @@ import {
   anchoredFloatingPosition,
   customLengthPixels,
 } from './floatingPosition.js';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -91,11 +92,7 @@ function handleKeydown(event) {
 }
 
 function handleScroll(event) {
-  if (
-    !props.open ||
-    event.target === panelRef.value ||
-    panelRef.value?.contains(event.target)
-  ) {
+  if (!props.open || panelRef.value?.contains(event.target)) {
     return;
   }
   requestClose('external-scroll');
@@ -144,9 +141,15 @@ onBeforeUnmount(() => {
       <header v-if="$slots.header" class="ui-popover__header">
         <slot name="header" />
       </header>
-      <div v-if="$slots.default" class="ui-popover__body">
-        <slot />
-      </div>
+      <UiScrollRegion
+        v-if="$slots.default"
+        class="ui-popover__scroll"
+        axis="both"
+      >
+        <div class="ui-popover__body">
+          <slot />
+        </div>
+      </UiScrollRegion>
       <footer v-if="$slots.footer" class="ui-popover__footer">
         <slot name="footer" />
       </footer>
@@ -170,9 +173,9 @@ onBeforeUnmount(() => {
   );
   max-block-size: calc(100vh - (2 * var(--ui-floating-viewport-inset)));
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   padding: 0;
-  overflow: auto;
-  overscroll-behavior: contain;
+  overflow: hidden;
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface-raised);
   box-shadow: var(--ui-shadow-overlay);
@@ -180,8 +183,11 @@ onBeforeUnmount(() => {
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
+}
+
+.ui-popover__scroll {
+  min-block-size: 0;
+  overscroll-behavior: contain;
 }
 
 .ui-popover__header {

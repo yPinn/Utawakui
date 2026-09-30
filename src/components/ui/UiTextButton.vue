@@ -57,8 +57,13 @@ const displayText = computed(() => String(props.text ?? ''));
   font-family: inherit;
   font-size: inherit;
   line-height: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
+}
+
+:global(:root[data-ui-system='v2'] .ui-text-btn) {
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 .ui-text-btn__text {
@@ -71,11 +76,17 @@ const displayText = computed(() => String(props.text ?? ''));
 
 /* Targets UiMarqueeText's own text span directly — it's inline-block, and
    text-decoration set on this button wouldn't paint into it otherwise. */
-.ui-text-btn:hover :deep(.ui-marquee__text),
+.ui-text-btn:not(:disabled):hover :deep(.ui-marquee__text),
 .ui-text-btn:focus-visible :deep(.ui-marquee__text),
-.ui-text-btn:hover .ui-text-btn__text,
+.ui-text-btn:not(:disabled):hover .ui-text-btn__text,
 .ui-text-btn:focus-visible .ui-text-btn__text {
   text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+:global(:root[data-ui-system='v2'] .ui-text-btn:disabled) {
+  opacity: var(--ui-opacity-disabled);
+  cursor: default;
 }
 
 .ui-text-btn:focus-visible {

@@ -23,6 +23,7 @@ import {
 } from './floatingPosition.js';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -51,6 +52,8 @@ const query = shallowRef('');
 const isOpen = shallowRef(false);
 const highlightedIndex = shallowRef(-1);
 const position = shallowRef({ left: '0px', top: '0px', width: '0px' });
+const listboxRoot = () => listboxRef.value?.root;
+const listboxViewport = () => listboxRef.value?.viewport;
 
 let frameId = 0;
 
@@ -106,7 +109,7 @@ function scheduleFrame(callback) {
 function updatePosition() {
   if (!isOpen.value || typeof window === 'undefined') return;
   const anchor = inputRef.value?.getBoundingClientRect();
-  const surface = listboxRef.value?.getBoundingClientRect();
+  const surface = listboxRoot()?.getBoundingClientRect();
   if (!anchor || !surface) return;
 
   const { left, top } = anchoredFloatingPosition({
@@ -233,7 +236,7 @@ function onOutsidePointer(event) {
   if (!isOpen.value) return;
   if (
     inputRef.value?.contains(event.target) ||
-    listboxRef.value?.contains(event.target)
+    listboxRoot()?.contains(event.target)
   ) {
     return;
   }
@@ -243,8 +246,8 @@ function onOutsidePointer(event) {
 function onOutsideScroll(event) {
   if (!isOpen.value) return;
   if (
-    event.target === listboxRef.value ||
-    listboxRef.value?.contains(event.target)
+    event.target === listboxViewport() ||
+    listboxRoot()?.contains(event.target)
   ) {
     return;
   }
@@ -325,11 +328,14 @@ onBeforeUnmount(() => {
   </UiField>
 
   <Teleport to="body">
-    <ul
+    <UiScrollRegion
       v-if="isOpen"
       :id="listboxId"
       ref="listbox"
       class="ui-combobox__listbox"
+      axis="vertical"
+      viewport-tag="ul"
+      viewport-class="ui-combobox__listbox-viewport"
       role="listbox"
       :aria-label="label"
       :style="position"
@@ -360,7 +366,7 @@ onBeforeUnmount(() => {
       >
         {{ item.label }}
       </li>
-    </ul>
+    </UiScrollRegion>
   </Teleport>
 </template>
 
@@ -432,18 +438,19 @@ onBeforeUnmount(() => {
     16rem,
     calc(100vh - (2 * var(--ui-floating-viewport-inset)))
   );
-  margin: 0;
-  padding: var(--ui-space-1);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  list-style: none;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-field-radius);
   background: var(--ui-color-surface-raised);
   box-shadow: var(--ui-shadow-overlay);
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
+}
+
+.ui-combobox__listbox :deep(.ui-combobox__listbox-viewport) {
+  block-size: auto;
+  max-block-size: inherit;
+  margin: 0;
+  padding: var(--ui-space-1);
+  overscroll-behavior: contain;
+  list-style: none;
 }
 
 .ui-combobox__option {

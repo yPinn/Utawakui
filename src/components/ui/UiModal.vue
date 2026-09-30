@@ -13,6 +13,7 @@ const openModalStack = [];
 import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
 import UiIconButton from './UiIconButton.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 // Multiple app-level workflows can legitimately overlap (for example, the
 // close decision arriving while an announcement is open). Keep keyboard
@@ -58,9 +59,10 @@ function close() {
 }
 
 function getFocusableElements() {
-  if (!dialogRef.value) return [];
+  const dialog = dialogRef.value;
+  if (!dialog) return [];
   return Array.from(
-    dialogRef.value.querySelectorAll(
+    dialog.querySelectorAll(
       'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])',
     ),
   );
@@ -110,8 +112,9 @@ watch(
       registerOpenModal();
       previouslyFocused = document.activeElement;
       window.requestAnimationFrame(() => {
-        const field = dialogRef.value?.querySelector('input, textarea, select');
-        (field || dialogRef.value)?.focus();
+        const dialog = dialogRef.value;
+        const field = dialog?.querySelector('input, textarea, select');
+        (field || dialog)?.focus();
       });
       return;
     }
@@ -153,7 +156,13 @@ onUnmounted(() => {
           <h2 class="ui-modal__title">{{ title }}</h2>
           <UiIconButton :icon="X" label="關閉" @click="close" />
         </div>
-        <slot />
+        <UiScrollRegion
+          class="ui-modal__body"
+          axis="vertical"
+          viewport-class="ui-modal__body-viewport"
+        >
+          <slot />
+        </UiScrollRegion>
       </div>
     </div>
   </Teleport>
@@ -174,12 +183,21 @@ onUnmounted(() => {
 .ui-modal {
   width: min(var(--ui-modal-width-default), 100%);
   max-height: calc(100vh - var(--ui-space-8));
-  overflow-y: auto;
-  padding: var(--ui-space-5);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   box-shadow: var(--ui-shadow-overlay);
+}
+
+.ui-modal__body {
+  min-height: 0;
+}
+
+.ui-modal__body :deep(.ui-modal__body-viewport) {
+  padding: 0 var(--ui-space-5) var(--ui-space-5);
 }
 
 .ui-modal--notice {
@@ -196,6 +214,7 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: var(--ui-space-3);
   margin-bottom: var(--ui-space-4);
+  padding: var(--ui-space-5) var(--ui-space-5) 0;
 }
 
 /* Headline tier — DESIGN.md names modal titles explicitly. */

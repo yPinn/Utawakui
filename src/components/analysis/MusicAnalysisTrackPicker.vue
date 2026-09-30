@@ -5,6 +5,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import MusicAnalysisSelectionToolbar from './MusicAnalysisSelectionToolbar.vue';
 
@@ -154,7 +155,13 @@ function batchStatus(trackId) {
         tracks.length === 0 ? '曲庫目前沒有可分析曲目。' : '沒有符合的曲目。'
       }}
     </UiHint>
-    <ul v-else class="analysis-picker__list">
+    <UiScrollRegion
+      v-else
+      class="analysis-picker__list"
+      axis="vertical"
+      viewport-tag="ul"
+      viewport-class="analysis-picker__list-viewport"
+    >
       <UiTrackRow
         v-for="track in visibleTracks"
         :key="track.id"
@@ -197,7 +204,7 @@ function batchStatus(trackId) {
           </UiChip>
         </template>
       </UiTrackRow>
-    </ul>
+    </UiScrollRegion>
   </section>
 </template>
 
@@ -275,7 +282,9 @@ function batchStatus(trackId) {
 .analysis-picker__list {
   min-height: 0;
   flex: 1;
-  overflow-y: auto;
+}
+
+.analysis-picker__list :deep(.analysis-picker__list-viewport) {
   overscroll-behavior: contain;
   display: flex;
   flex-direction: column;

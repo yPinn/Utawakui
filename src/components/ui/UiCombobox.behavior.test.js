@@ -3,6 +3,7 @@ import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiCombobox from './UiCombobox.vue';
 import UiField from './UiField.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import {
   attachClientRender,
   findAll,
@@ -13,6 +14,7 @@ import {
 
 for (const [component, filename] of [
   [UiField, './UiField.vue'],
+  [UiScrollRegion, './UiScrollRegion.vue'],
   [UiCombobox, './UiCombobox.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);

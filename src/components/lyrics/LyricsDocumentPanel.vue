@@ -6,6 +6,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   documentId: { type: String, default: '' },
@@ -60,6 +61,10 @@ const showsReturnToActiveLine = computed(
   () => Boolean(activeLineId.value) && !isFollowingActiveLine.value,
 );
 
+function panelViewport() {
+  return panel.value?.viewport ?? panel.value;
+}
+
 function canSeekLine(line) {
   return Number.isFinite(line?.start);
 }
@@ -72,7 +77,7 @@ function shouldReduceMotion() {
 
 async function scrollActiveLineIntoView() {
   await nextTick();
-  const scrollPanel = panel.value;
+  const scrollPanel = panelViewport();
   const activeLine = scrollPanel?.querySelector?.('.lyrics-line--active');
   if (
     !scrollPanel ||
@@ -121,7 +126,7 @@ function rememberPointerScrollStart(event) {
 function handleLyricsScroll() {
   if (
     pointerScrollStart === null ||
-    panel.value?.scrollTop === pointerScrollStart
+    panelViewport()?.scrollTop === pointerScrollStart
   ) {
     return;
   }
@@ -154,11 +159,13 @@ watch(
 
 <template>
   <div class="lyrics-document">
-    <div
+    <UiScrollRegion
       id="lyrics-document-reader"
       ref="panel"
       class="lyrics-preview"
       :class="fontSizeClass"
+      axis="both"
+      viewport-class="lyrics-preview__viewport"
       role="region"
       aria-label="歌詞內容"
       tabindex="0"
@@ -299,7 +306,7 @@ watch(
           </div>
         </li>
       </ol>
-    </div>
+    </UiScrollRegion>
 
     <UiIconButton
       v-if="showsReturnToActiveLine"
@@ -324,8 +331,9 @@ watch(
 .lyrics-preview {
   height: 100%;
   min-height: 0;
+}
+.lyrics-preview :deep(.lyrics-preview__viewport) {
   padding-bottom: var(--ui-lyrics-live-safe-area);
-  overflow: auto;
 }
 .lyrics-preview__return {
   position: absolute;

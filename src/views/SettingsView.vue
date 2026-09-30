@@ -27,6 +27,7 @@ import UiContextMenu from '../components/ui/UiContextMenu.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiIconButton from '../components/ui/UiIconButton.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
+import UiScrollRegion from '../components/ui/UiScrollRegion.vue';
 import WindowsBackgroundSettingsRow from '../components/settings/WindowsBackgroundSettingsRow.vue';
 import {
   FEATURE_DEPENDENCY_IDS,
@@ -401,291 +402,303 @@ onUnmounted(musicAnalysisSettings.dispose);
       <h1 class="settings-view__title">設定</h1>
     </header>
 
-    <div class="settings-view__grid">
-      <section class="settings-view__column" aria-label="一般設定">
-        <SettingsBlock title="曲庫">
-          <SettingsActionRow
-            :icon="FolderOpen"
-            title="曲庫位置"
-            :value="importState.downloadDir || '讀取中'"
-            :status="
-              !importState.isDownloadDirAvailable
-                ? '無法使用'
-                : importState.isDefaultDir
-                  ? '預設'
-                  : '自訂'
-            "
-            :status-tone="
-              !importState.isDownloadDirAvailable
-                ? 'danger'
-                : importState.isDefaultDir
-                  ? 'muted'
-                  : 'accent'
-            "
-            tooltip="下載與匯入的曲目會存放在這裡。"
-          >
-            <template #actions>
-              <UiIconButton
-                :icon="FolderOpen"
-                label="開啟曲庫資料夾"
-                :disabled="!importState.isDownloadDirAvailable"
-                @click="openDownloadDir"
-              />
-              <UiIconButton
-                :icon="Ellipsis"
-                label="曲庫位置其他操作"
-                aria-haspopup="menu"
-                :aria-expanded="isDownloadDirMenuOpen ? 'true' : 'false'"
-                @click="openDownloadDirMenu"
-              />
-              <UiContextMenu
-                :open="isDownloadDirMenuOpen"
-                :x="downloadDirMenuX"
-                :y="downloadDirMenuY"
-                :width="184"
-                align-x="right"
-                :items="downloadDirMenuItems"
-                empty-text="沒有可用的操作"
-                @select="handleDownloadDirMenuSelect"
-                @close="closeDownloadDirMenu"
-              />
-            </template>
-          </SettingsActionRow>
+    <UiScrollRegion
+      class="settings-view__scroll"
+      axis="vertical"
+      viewport-class="settings-view__viewport"
+    >
+      <div class="settings-view__grid">
+        <section class="settings-view__column" aria-label="一般設定">
+          <SettingsBlock title="曲庫">
+            <SettingsActionRow
+              :icon="FolderOpen"
+              title="曲庫位置"
+              :value="importState.downloadDir || '讀取中'"
+              :status="
+                !importState.isDownloadDirAvailable
+                  ? '無法使用'
+                  : importState.isDefaultDir
+                    ? '預設'
+                    : '自訂'
+              "
+              :status-tone="
+                !importState.isDownloadDirAvailable
+                  ? 'danger'
+                  : importState.isDefaultDir
+                    ? 'muted'
+                    : 'accent'
+              "
+              tooltip="下載與匯入的曲目會存放在這裡。"
+            >
+              <template #actions>
+                <UiIconButton
+                  :icon="FolderOpen"
+                  label="開啟曲庫資料夾"
+                  :disabled="!importState.isDownloadDirAvailable"
+                  @click="openDownloadDir"
+                />
+                <UiIconButton
+                  :icon="Ellipsis"
+                  label="曲庫位置其他操作"
+                  aria-haspopup="menu"
+                  :aria-expanded="isDownloadDirMenuOpen ? 'true' : 'false'"
+                  @click="openDownloadDirMenu"
+                />
+                <UiContextMenu
+                  :open="isDownloadDirMenuOpen"
+                  :x="downloadDirMenuX"
+                  :y="downloadDirMenuY"
+                  :width="184"
+                  align-x="right"
+                  :items="downloadDirMenuItems"
+                  empty-text="沒有可用的操作"
+                  @select="handleDownloadDirMenuSelect"
+                  @close="closeDownloadDirMenu"
+                />
+              </template>
+            </SettingsActionRow>
 
-          <UiNotice
-            v-if="!importState.isDownloadDirAvailable"
-            tone="danger"
-            title="曲庫位置無法使用"
-            :message="downloadDirUnavailableMessage"
-            action-label="選擇其他資料夾"
-            compact
-            @action="chooseDownloadDir"
-          />
-
-          <LibraryMetadataSettingsRow
-            :is-running="libraryMetadataMaintenanceState.isRunning"
-            :message="libraryMetadataMaintenanceMessage"
-            :error="libraryMetadataMaintenanceState.error"
-            @run="runLibraryMetadataMaintenance"
-          />
-
-          <UiNotice
-            v-if="maintenanceMessage && maintenanceTone === 'danger'"
-            tone="danger"
-            title="維護操作未完成"
-            :message="maintenanceMessage"
-            compact
-          />
-          <UiHint
-            v-else-if="maintenanceMessage"
-            :tone="maintenanceTone"
-            role="status"
-          >
-            {{ maintenanceMessage }}
-          </UiHint>
-        </SettingsBlock>
-
-        <AudioOutputSettingsBlock
-          :enabled="Boolean(playerState.captureDeviceId)"
-          :device-label="captureDeviceLabel"
-          :error-notice="captureErrorNotice"
-          @select-device="isCaptureDeviceModalOpen = true"
-        />
-
-        <SettingsBlock title="應用程式">
-          <WindowsBackgroundSettingsRow
-            :behavior="windowsIntegrationSettings.windowCloseBehavior.value"
-            :busy="windowsIntegrationSettings.preferenceBusy.value"
-            :error="windowsIntegrationSettings.preferenceError.value"
-            @set-behavior="windowsIntegrationSettings.setWindowCloseBehavior"
-          />
-          <AppUpdateSettingsRow
-            :current-version="
-              appInfoState.currentVersion || appUpdateState.currentVersion
-            "
-            :enabled="appUpdateState.enabled"
-            :phase="appUpdateState.phase"
-            :available-version="appUpdateState.availableVersion"
-            :progress="appUpdateState.progress"
-            :download-bytes-per-second="appUpdateState.downloadBytesPerSecond"
-            :download-eta-seconds="appUpdateState.downloadEtaSeconds"
-            :error="appUpdateState.error"
-            :info-error="appInfoState.error"
-            :auto-check-enabled="appUpdateState.autoCheckEnabled"
-            :auto-check-busy="appUpdateState.autoCheckBusy"
-            :auto-check-error="appUpdateState.autoCheckError"
-            @check="checkForAppUpdate"
-            @download="downloadAppUpdate"
-            @install="installAppUpdate"
-            @set-auto-check="setAppUpdateAutoCheck"
-          />
-        </SettingsBlock>
-
-        <SettingsBlock title="支援與維護">
-          <SettingsActionRow
-            :icon="Info"
-            title="版本公告"
-            :value="`v${announcement.version}`"
-            :tooltip="announcement.summary"
-          >
-            <template #actions>
-              <UiIconButton
-                :icon="Info"
-                label="查看版本公告"
-                @click="announcement.reopen"
-              />
-            </template>
-          </SettingsActionRow>
-
-          <SettingsActionRow
-            :icon="ExternalLink"
-            title="社群 Discord"
-            tooltip="在 Discord 查看公告、分享心得，或直接和開發者討論使用回饋。"
-          >
-            <template #actions>
-              <UiIconButton
-                :icon="ExternalLink"
-                label="開啟社群 Discord"
-                @click="openCommunityDiscord"
-              />
-            </template>
-          </SettingsActionRow>
-
-          <FeedbackReportSettingsRow @open="feedback.openReport()" />
-          <DiagnosticsSettingsRow
-            :record-count="persistentDiagnosticsState.recordCount"
-            :is-loading="persistentDiagnosticsState.isLoading"
-            :notice="persistentDiagnosticsState.notice"
-            @refresh="refreshDiagnostics"
-            @open-folder="openDiagnosticsFolder"
-            @clear="handleClearDiagnostics"
-            @export="exportDiagnostics"
-            @notice-action="handleDiagnosticsNoticeAction"
-            @report-issue="handleReportIssueFromDiagnostics"
-          />
-        </SettingsBlock>
-      </section>
-
-      <section class="settings-view__column" aria-label="功能與下載">
-        <SettingsBlock
-          title="功能與下載"
-          summary="額外元件只在需要時下載。"
-          :status="`${enabledGateCount} / ${featureGateRows.length}`"
-          status-tone="gated"
-        >
-          <template #actions>
-            <UiIconButton
-              :icon="RefreshCw"
-              :disabled="featureGateState.isLoading"
-              label="重新讀取功能狀態"
-              @click="refreshConfirmations"
+            <UiNotice
+              v-if="!importState.isDownloadDirAvailable"
+              tone="danger"
+              title="曲庫位置無法使用"
+              :message="downloadDirUnavailableMessage"
+              action-label="選擇其他資料夾"
+              compact
+              @action="chooseDownloadDir"
             />
-          </template>
 
-          <UiNotice
-            v-if="featureGateRequestNotice"
-            tone="warning"
-            :title="featureGateRequestNotice.title"
-            :message="featureGateRequestNotice.message"
-            :action-label="featureGateRequestNotice.actionLabel"
-            compact
-            @action="handleFeatureGateRequestAction"
+            <LibraryMetadataSettingsRow
+              :is-running="libraryMetadataMaintenanceState.isRunning"
+              :message="libraryMetadataMaintenanceMessage"
+              :error="libraryMetadataMaintenanceState.error"
+              @run="runLibraryMetadataMaintenance"
+            />
+
+            <UiNotice
+              v-if="maintenanceMessage && maintenanceTone === 'danger'"
+              tone="danger"
+              title="維護操作未完成"
+              :message="maintenanceMessage"
+              compact
+            />
+            <UiHint
+              v-else-if="maintenanceMessage"
+              :tone="maintenanceTone"
+              role="status"
+            >
+              {{ maintenanceMessage }}
+            </UiHint>
+          </SettingsBlock>
+
+          <AudioOutputSettingsBlock
+            :enabled="Boolean(playerState.captureDeviceId)"
+            :device-label="captureDeviceLabel"
+            :error-notice="captureErrorNotice"
+            @select-device="isCaptureDeviceModalOpen = true"
           />
 
-          <SettingsFeatureGateRow
-            v-for="gate in featureGateRows"
-            :key="gate.id"
-            :gate="gate"
-            :items="gate.items"
-            :highlighted="
-              featureGateAccessState.request?.featureId === gate.id &&
-              (featureGateAccessState.request?.kind === 'setup' ||
-                !gate.enabled)
-            "
-            :action-label="gateActionLabel(gate)"
-            :disable-enable-action="isGateActionDisabled(gate)"
-            @enable="enableFeature"
-            @item-action="handleWorkflowItemAction"
-            @item-advanced-action="handleWorkflowItemAdvancedAction"
+          <SettingsBlock title="應用程式">
+            <WindowsBackgroundSettingsRow
+              :behavior="windowsIntegrationSettings.windowCloseBehavior.value"
+              :busy="windowsIntegrationSettings.preferenceBusy.value"
+              :error="windowsIntegrationSettings.preferenceError.value"
+              @set-behavior="windowsIntegrationSettings.setWindowCloseBehavior"
+            />
+            <AppUpdateSettingsRow
+              :current-version="
+                appInfoState.currentVersion || appUpdateState.currentVersion
+              "
+              :enabled="appUpdateState.enabled"
+              :phase="appUpdateState.phase"
+              :available-version="appUpdateState.availableVersion"
+              :progress="appUpdateState.progress"
+              :download-bytes-per-second="appUpdateState.downloadBytesPerSecond"
+              :download-eta-seconds="appUpdateState.downloadEtaSeconds"
+              :error="appUpdateState.error"
+              :info-error="appInfoState.error"
+              :auto-check-enabled="appUpdateState.autoCheckEnabled"
+              :auto-check-busy="appUpdateState.autoCheckBusy"
+              :auto-check-error="appUpdateState.autoCheckError"
+              @check="checkForAppUpdate"
+              @download="downloadAppUpdate"
+              @install="installAppUpdate"
+              @set-auto-check="setAppUpdateAutoCheck"
+            />
+          </SettingsBlock>
+
+          <SettingsBlock title="支援與維護">
+            <SettingsActionRow
+              :icon="Info"
+              title="版本公告"
+              :value="`v${announcement.version}`"
+              :tooltip="announcement.summary"
+            >
+              <template #actions>
+                <UiIconButton
+                  :icon="Info"
+                  label="查看版本公告"
+                  @click="announcement.reopen"
+                />
+              </template>
+            </SettingsActionRow>
+
+            <SettingsActionRow
+              :icon="ExternalLink"
+              title="社群 Discord"
+              tooltip="在 Discord 查看公告、分享心得，或直接和開發者討論使用回饋。"
+            >
+              <template #actions>
+                <UiIconButton
+                  :icon="ExternalLink"
+                  label="開啟社群 Discord"
+                  @click="openCommunityDiscord"
+                />
+              </template>
+            </SettingsActionRow>
+
+            <FeedbackReportSettingsRow @open="feedback.openReport()" />
+            <DiagnosticsSettingsRow
+              :record-count="persistentDiagnosticsState.recordCount"
+              :is-loading="persistentDiagnosticsState.isLoading"
+              :notice="persistentDiagnosticsState.notice"
+              @refresh="refreshDiagnostics"
+              @open-folder="openDiagnosticsFolder"
+              @clear="handleClearDiagnostics"
+              @export="exportDiagnostics"
+              @notice-action="handleDiagnosticsNoticeAction"
+              @report-issue="handleReportIssueFromDiagnostics"
+            />
+          </SettingsBlock>
+        </section>
+
+        <section class="settings-view__column" aria-label="功能與下載">
+          <SettingsBlock
+            title="功能與下載"
+            summary="額外元件只在需要時下載。"
+            :status="`${enabledGateCount} / ${featureGateRows.length}`"
+            status-tone="gated"
           >
-            <template #items>
-              <MusicAnalysisSettingsRow
-                v-if="
-                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
-                "
-                :capability="musicAnalysisSettings.capability.value"
-                :auto-analyze="musicAnalysisSettings.autoAnalyze.value"
-                :capability-busy="musicAnalysisSettings.capabilityBusy.value"
-                :preference-busy="musicAnalysisSettings.preferenceBusy.value"
-                :stage-label="musicAnalysisSettings.stageLabel.value"
-                :capability-error="musicAnalysisSettings.capabilityError.value"
-                :preference-error="musicAnalysisSettings.preferenceError.value"
-                @set-auto-analyze="musicAnalysisSettings.setAutoAnalyze"
-                @prepare="musicAnalysisSettings.prepare"
-                @repair="musicAnalysisSettings.repair"
-                @remove="handleRemoveMusicAnalysis"
-              />
-              <SeparationGpuSettingsRow
-                v-if="
-                  gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled
-                "
-                :gpu-acceleration="separationSettings.gpuAcceleration.value"
-                :preference-busy="separationSettings.preferenceBusy.value"
-                :preference-error="separationSettings.preferenceError.value"
-                @set-gpu-acceleration="separationSettings.setGpuAcceleration"
-              />
-              <ObsIntegrationSettingsBlock
-                v-if="
-                  gate.id === FEATURE_IDS.OBS_INTEGRATION &&
-                  (gate.enabled ||
-                    obsIntegrationSettings.hasStoredPassword.value)
-                "
-                :status="obsIntegrationSettings.status"
-                :feature-enabled="gate.enabled"
-                :host="obsIntegrationSettings.host.value"
-                :port="obsIntegrationSettings.port.value"
-                :password="obsIntegrationSettings.password.value"
-                :skip-threshold-seconds="
-                  obsIntegrationSettings.skipThresholdSeconds.value
-                "
-                :has-stored-password="
-                  obsIntegrationSettings.hasStoredPassword.value
-                "
-                :is-saving="obsIntegrationSettings.isSaving.value"
-                :error="obsIntegrationSettings.error.value"
-                @update:host="obsIntegrationSettings.host.value = $event"
-                @update:port="obsIntegrationSettings.port.value = $event"
-                @update:password="
-                  obsIntegrationSettings.password.value = $event
-                "
-                @update:skip-threshold-seconds="
-                  obsIntegrationSettings.skipThresholdSeconds.value = $event
-                "
-                @save="obsIntegrationSettings.save"
-                @clear-password="handleClearObsPassword"
-                @retry-connect="obsIntegrationSettings.retryConnect"
-                @export-chapters="obsSessionExport.open()"
+            <template #actions>
+              <UiIconButton
+                :icon="RefreshCw"
+                :disabled="featureGateState.isLoading"
+                label="重新讀取功能狀態"
+                @click="refreshConfirmations"
               />
             </template>
-          </SettingsFeatureGateRow>
 
-          <UiNotice
-            v-if="featureGateState.error"
-            tone="danger"
-            title="功能啟用失敗"
-            :message="featureGateState.error"
-            compact
-          />
+            <UiNotice
+              v-if="featureGateRequestNotice"
+              tone="warning"
+              :title="featureGateRequestNotice.title"
+              :message="featureGateRequestNotice.message"
+              :action-label="featureGateRequestNotice.actionLabel"
+              compact
+              @action="handleFeatureGateRequestAction"
+            />
 
-          <UiNotice
-            v-if="featureDependencyState.error"
-            :notice="featureDependencyState.error"
-            compact
-            @action="handleFeatureDependencyNoticeAction"
-          />
-        </SettingsBlock>
-      </section>
-    </div>
+            <SettingsFeatureGateRow
+              v-for="gate in featureGateRows"
+              :key="gate.id"
+              :gate="gate"
+              :items="gate.items"
+              :highlighted="
+                featureGateAccessState.request?.featureId === gate.id &&
+                (featureGateAccessState.request?.kind === 'setup' ||
+                  !gate.enabled)
+              "
+              :action-label="gateActionLabel(gate)"
+              :disable-enable-action="isGateActionDisabled(gate)"
+              @enable="enableFeature"
+              @item-action="handleWorkflowItemAction"
+              @item-advanced-action="handleWorkflowItemAdvancedAction"
+            >
+              <template #items>
+                <MusicAnalysisSettingsRow
+                  v-if="
+                    gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
+                    gate.enabled
+                  "
+                  :capability="musicAnalysisSettings.capability.value"
+                  :auto-analyze="musicAnalysisSettings.autoAnalyze.value"
+                  :capability-busy="musicAnalysisSettings.capabilityBusy.value"
+                  :preference-busy="musicAnalysisSettings.preferenceBusy.value"
+                  :stage-label="musicAnalysisSettings.stageLabel.value"
+                  :capability-error="
+                    musicAnalysisSettings.capabilityError.value
+                  "
+                  :preference-error="
+                    musicAnalysisSettings.preferenceError.value
+                  "
+                  @set-auto-analyze="musicAnalysisSettings.setAutoAnalyze"
+                  @prepare="musicAnalysisSettings.prepare"
+                  @repair="musicAnalysisSettings.repair"
+                  @remove="handleRemoveMusicAnalysis"
+                />
+                <SeparationGpuSettingsRow
+                  v-if="
+                    gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW &&
+                    gate.enabled
+                  "
+                  :gpu-acceleration="separationSettings.gpuAcceleration.value"
+                  :preference-busy="separationSettings.preferenceBusy.value"
+                  :preference-error="separationSettings.preferenceError.value"
+                  @set-gpu-acceleration="separationSettings.setGpuAcceleration"
+                />
+                <ObsIntegrationSettingsBlock
+                  v-if="
+                    gate.id === FEATURE_IDS.OBS_INTEGRATION &&
+                    (gate.enabled ||
+                      obsIntegrationSettings.hasStoredPassword.value)
+                  "
+                  :status="obsIntegrationSettings.status"
+                  :feature-enabled="gate.enabled"
+                  :host="obsIntegrationSettings.host.value"
+                  :port="obsIntegrationSettings.port.value"
+                  :password="obsIntegrationSettings.password.value"
+                  :skip-threshold-seconds="
+                    obsIntegrationSettings.skipThresholdSeconds.value
+                  "
+                  :has-stored-password="
+                    obsIntegrationSettings.hasStoredPassword.value
+                  "
+                  :is-saving="obsIntegrationSettings.isSaving.value"
+                  :error="obsIntegrationSettings.error.value"
+                  @update:host="obsIntegrationSettings.host.value = $event"
+                  @update:port="obsIntegrationSettings.port.value = $event"
+                  @update:password="
+                    obsIntegrationSettings.password.value = $event
+                  "
+                  @update:skip-threshold-seconds="
+                    obsIntegrationSettings.skipThresholdSeconds.value = $event
+                  "
+                  @save="obsIntegrationSettings.save"
+                  @clear-password="handleClearObsPassword"
+                  @retry-connect="obsIntegrationSettings.retryConnect"
+                  @export-chapters="obsSessionExport.open()"
+                />
+              </template>
+            </SettingsFeatureGateRow>
+
+            <UiNotice
+              v-if="featureGateState.error"
+              tone="danger"
+              title="功能啟用失敗"
+              :message="featureGateState.error"
+              compact
+            />
+
+            <UiNotice
+              v-if="featureDependencyState.error"
+              :notice="featureDependencyState.error"
+              compact
+              @action="handleFeatureDependencyNoticeAction"
+            />
+          </SettingsBlock>
+        </section>
+      </div>
+    </UiScrollRegion>
 
     <CaptureDeviceModal
       :open="isCaptureDeviceModalOpen"
@@ -709,9 +722,12 @@ onUnmounted(musicAnalysisSettings.dispose);
   height: 100%;
   min-height: 0;
   display: grid;
-  align-content: start;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: var(--ui-space-4);
-  overflow: auto;
+}
+
+.settings-view__scroll {
+  min-height: 0;
 }
 
 .settings-view__header {

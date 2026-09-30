@@ -9,6 +9,7 @@ import { formatDuration } from '../../utils/format.js';
 import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
 import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 
 const SORT_COLUMNS = {
@@ -109,8 +110,11 @@ function sortLabel({ key, label }) {
       </button>
     </div>
 
-    <ul
-      class="studio-track-table__body"
+    <UiScrollRegion
+      class="studio-track-table__body-scroll"
+      axis="vertical"
+      viewport-tag="ul"
+      viewport-class="studio-track-table__body"
       :aria-label="`${title}曲目`"
       role="list"
     >
@@ -189,7 +193,7 @@ function sortLabel({ key, label }) {
           {{ formatDuration(track.duration) }}
         </span>
       </li>
-    </ul>
+    </UiScrollRegion>
   </div>
 </template>
 
@@ -197,7 +201,12 @@ function sortLabel({ key, label }) {
 .studio-track-table {
   min-width: 0;
   min-height: 0;
-  overflow-y: auto;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+}
+
+.studio-track-table__body-scroll {
+  min-height: 0;
 }
 
 .studio-track-table__header,
@@ -317,7 +326,7 @@ function sortLabel({ key, label }) {
   transform: rotate(180deg);
 }
 
-.studio-track-table__body {
+.studio-track-table__body-scroll :deep(.studio-track-table__body) {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-1);

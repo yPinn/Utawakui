@@ -1,6 +1,7 @@
 <script setup>
 import { X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineProps({
   open: { type: Boolean, default: false },
@@ -32,7 +33,9 @@ const emit = defineEmits(['close']);
       />
     </header>
 
-    <slot />
+    <UiScrollRegion class="player-bar-panel__body" axis="both">
+      <slot />
+    </UiScrollRegion>
   </aside>
 </template>
 
@@ -55,12 +58,22 @@ const emit = defineEmits(['close']);
     var(--ui-player-bar-panel-max-height),
     calc(100vh - var(--ui-player-bar-panel-viewport-offset))
   );
-  overflow: auto;
-  padding: var(--ui-player-bar-panel-padding);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface);
   box-shadow: var(--ui-shadow-overlay);
+}
+
+.player-bar-panel__body {
+  min-height: 0;
+}
+
+.player-bar-panel__body :deep(.ui-scroll-region__viewport) {
+  padding: 0 var(--ui-player-bar-panel-padding)
+    var(--ui-player-bar-panel-padding);
 }
 
 .player-bar-panel__header {
@@ -69,6 +82,8 @@ const emit = defineEmits(['close']);
   justify-content: space-between;
   gap: var(--ui-space-3);
   margin-bottom: var(--ui-space-3);
+  padding: var(--ui-player-bar-panel-padding) var(--ui-player-bar-panel-padding)
+    0;
 }
 
 .player-bar-panel__heading {

@@ -5,6 +5,7 @@ import { RefreshCw } from '../../icons/index.js';
 import UiButton from './UiButton.vue';
 import UiIconButton from './UiIconButton.vue';
 import UiPopover from './UiPopover.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import UiTooltip from './UiTooltip.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import {
@@ -29,6 +30,7 @@ for (const [component, filename] of [
   [UiButton, './UiButton.vue'],
   [UiIconButton, './UiIconButton.vue'],
   [UiPopover, './UiPopover.vue'],
+  [UiScrollRegion, './UiScrollRegion.vue'],
   [UiTooltip, './UiTooltip.vue'],
   [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {

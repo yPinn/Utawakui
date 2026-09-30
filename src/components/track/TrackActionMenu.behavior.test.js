@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { nextTick } from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import TrackActionMenu from './TrackActionMenu.vue';
 import {
@@ -16,6 +17,7 @@ import {
 for (const [component, filename] of [
   [UiSearchBox, '../ui/UiSearchBox.vue'],
   [UiContextMenu, '../ui/UiContextMenu.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [TrackActionMenu, './TrackActionMenu.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -89,6 +91,14 @@ function menuButtons() {
   return findAll(body, (node) => node.type === 'button');
 }
 
+function menuSurfaces() {
+  return findAll(body, (node) =>
+    String(node.props?.class ?? '')
+      .split(/\s+/u)
+      .includes('ui-context-menu'),
+  );
+}
+
 function buttonByText(label) {
   return menuButtons().find((button) => textContent(button).includes(label));
 }
@@ -147,7 +157,7 @@ describe('TrackActionMenu behavior model', () => {
       track,
       playlists,
     });
-    const rootMenu = findAll(body, (node) => node.props.role === 'menu')[0];
+    const rootMenu = menuSurfaces()[0];
     const parentItem = buttonByText('加入播放清單');
     rootMenu.getBoundingClientRect = () => ({
       left: 260,
@@ -168,12 +178,16 @@ describe('TrackActionMenu behavior model', () => {
 
     trigger(parentItem, 'onMouseenter');
     await nextTick();
-    const submenu = findAll(body, (node) => node.props.role === 'menu')[1];
+    const submenu = menuSurfaces()[1];
 
     expect(submenu.props.style.left).toBe('36px');
     expect(submenu.props.style.top).toBe('78px');
 
-    rootMenu.scrollTop = 16;
+    const rootMenuViewport = findAll(
+      body,
+      (node) => node.props.role === 'menu',
+    )[0];
+    rootMenuViewport.scrollTop = 16;
     parentItem.getBoundingClientRect = () => ({
       left: 264,
       top: 62,
@@ -182,7 +196,7 @@ describe('TrackActionMenu behavior model', () => {
       width: 212,
       height: 32,
     });
-    windowListeners.get('scroll')?.({ target: rootMenu });
+    windowListeners.get('scroll')?.({ target: rootMenuViewport });
     await nextTick();
 
     expect(submenu.props.style.top).toBe('62px');
@@ -198,7 +212,7 @@ describe('TrackActionMenu behavior model', () => {
       track,
       playlists,
     });
-    const rootMenu = findAll(body, (node) => node.props.role === 'menu')[0];
+    const rootMenu = menuSurfaces()[0];
     const parentItem = buttonByText('加入播放清單');
     rootMenu.getBoundingClientRect = () => ({
       left: 196,
@@ -219,7 +233,7 @@ describe('TrackActionMenu behavior model', () => {
 
     trigger(parentItem, 'onMouseenter');
     await nextTick();
-    const submenu = findAll(body, (node) => node.props.role === 'menu')[1];
+    const submenu = menuSurfaces()[1];
 
     expect(submenu.props.style.left).toBe('8px');
     expect(submenu.props.style.width).toBe('184px');

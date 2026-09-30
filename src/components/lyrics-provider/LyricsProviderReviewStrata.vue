@@ -1,5 +1,6 @@
 <script setup>
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineProps({
   strata: { type: Array, default: () => [] },
@@ -32,7 +33,13 @@ const reachOptions = Object.freeze([
 
 <template>
   <div class="review-strata">
-    <div class="review-strata__tabs" role="tablist" aria-label="歌詞語料分層">
+    <UiScrollRegion
+      class="review-strata__tabs-scroll"
+      axis="horizontal"
+      viewport-class="review-strata__tabs"
+      role="tablist"
+      aria-label="歌詞語料分層"
+    >
       <button
         v-for="stratum in strata"
         :id="`lyrics-review-tab-${stratum.id}`"
@@ -53,7 +60,7 @@ const reachOptions = Object.freeze([
           {{ stratum.counts.approved }}/{{ stratum.counts.total }}
         </span>
       </button>
-    </div>
+    </UiScrollRegion>
 
     <div class="review-strata__filters">
       <fieldset class="review-strata__filter-group">
@@ -109,12 +116,14 @@ const reachOptions = Object.freeze([
   background: var(--ui-color-canvas);
 }
 
-.review-strata__tabs {
+.review-strata__tabs-scroll {
   min-width: 0;
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.review-strata__tabs-scroll :deep(.review-strata__tabs) {
   display: grid;
   grid-template-columns: repeat(5, minmax(7rem, 1fr));
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  overflow-x: auto;
 }
 
 .review-strata__tab {

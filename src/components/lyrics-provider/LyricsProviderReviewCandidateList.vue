@@ -1,5 +1,6 @@
 <script setup>
 import UiChip from '../ui/UiChip.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineProps({
   candidates: { type: Array, default: () => [] },
@@ -39,7 +40,13 @@ function catalogReachLabel(candidate) {
       <strong>候選清單</strong>
       <span>{{ candidates.length }} 筆</span>
     </div>
-    <ol v-if="candidates.length" class="review-candidates__list">
+    <UiScrollRegion
+      v-if="candidates.length"
+      class="review-candidates__list"
+      axis="vertical"
+      viewport-tag="ol"
+      viewport-class="review-candidates__list-viewport"
+    >
       <li v-for="(candidate, index) in candidates" :key="candidate.id">
         <button
           type="button"
@@ -69,7 +76,7 @@ function catalogReachLabel(candidate) {
           </UiChip>
         </button>
       </li>
-    </ol>
+    </UiScrollRegion>
     <div v-else class="review-candidates__empty" role="status">
       目前篩選條件沒有候選項目。
     </div>
@@ -103,9 +110,11 @@ function catalogReachLabel(candidate) {
 
 .review-candidates__list {
   min-height: 0;
+}
+
+.review-candidates__list :deep(.review-candidates__list-viewport) {
   padding: 0;
   margin: 0;
-  overflow-y: auto;
   list-style: none;
 }
 

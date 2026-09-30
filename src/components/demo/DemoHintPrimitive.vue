@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 defineProps({
   layer: { type: Object, required: true },
 });
@@ -149,7 +151,7 @@ const TONE_ITEMS = [
           class="demo-hint-content__item"
         >
           <span class="demo-hint-item__label">{{ item.id }}</span>
-          <div class="demo-hint-content__frame">
+          <UiScrollRegion class="demo-hint-content__frame" axis="horizontal">
             <component
               :is="layer.component"
               :tone="item.tone"
@@ -159,7 +161,7 @@ const TONE_ITEMS = [
             >
               {{ item.label }}
             </component>
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
     </section>
@@ -412,7 +414,6 @@ const TONE_ITEMS = [
 .demo-hint-content__frame {
   min-width: 0;
   width: min(18rem, 100%);
-  overflow-x: auto;
   padding: var(--ui-space-2);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface);

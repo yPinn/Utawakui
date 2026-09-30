@@ -12,6 +12,7 @@ import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 
@@ -101,7 +102,7 @@ function formatUpcomingTrackMetadata(track) {
       @close="emit('close')"
     />
 
-    <div class="studio-context-inspector__scroll">
+    <UiScrollRegion class="studio-context-inspector__scroll" axis="vertical">
       <section
         v-if="collection"
         class="studio-context-inspector__section studio-context-inspector__collection"
@@ -185,7 +186,7 @@ function formatUpcomingTrackMetadata(track) {
           />
         </ol>
       </section>
-    </div>
+    </UiScrollRegion>
   </section>
 </template>
 
@@ -210,9 +211,6 @@ function formatUpcomingTrackMetadata(track) {
 
 .studio-context-inspector__scroll {
   min-height: 0;
-  overflow-y: auto;
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
 }
 
 .studio-context-inspector__section {

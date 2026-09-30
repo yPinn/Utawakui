@@ -1,5 +1,6 @@
 <script setup>
 import { ref } from 'vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   layer: { type: Object, required: true },
@@ -184,7 +185,10 @@ function recordAction(label) {
           :data-notice-density="density.id"
         >
           <h6>{{ density.label }}</h6>
-          <div class="demo-notice-frame demo-notice-frame--narrow">
+          <UiScrollRegion
+            class="demo-notice-frame demo-notice-frame--narrow"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               v-bind="densityProps(density)"
@@ -193,7 +197,7 @@ function recordAction(label) {
               message="完成後會自動更新。"
               action-label="查看"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
 
@@ -204,7 +208,10 @@ function recordAction(label) {
           :data-notice-anatomy="item.id"
         >
           <span class="demo-notice-item__label">{{ item.id }}</span>
-          <div class="demo-notice-frame demo-notice-frame--narrow">
+          <UiScrollRegion
+            class="demo-notice-frame demo-notice-frame--narrow"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               :tone="noticeTone(item.tone)"
@@ -213,7 +220,7 @@ function recordAction(label) {
               :action-label="item.actionLabel"
               @action="recordAction(item.actionLabel)"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
     </section>
@@ -231,7 +238,10 @@ function recordAction(label) {
       <div class="demo-notice-content-list">
         <article v-for="item in CONTENT_ITEMS" :key="item.id">
           <span class="demo-notice-item__label">{{ item.id }}</span>
-          <div class="demo-notice-frame demo-notice-frame--narrow">
+          <UiScrollRegion
+            class="demo-notice-frame demo-notice-frame--narrow"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               :tone="noticeTone()"
@@ -241,7 +251,7 @@ function recordAction(label) {
               :lang="item.lang"
               :dir="item.dir"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
     </section>
@@ -258,7 +268,7 @@ function recordAction(label) {
       <div class="demo-notice-tone-list">
         <article v-for="item in TONE_ITEMS" :key="item.id">
           <span class="demo-notice-item__label">{{ item.id }}</span>
-          <div class="demo-notice-frame">
+          <UiScrollRegion class="demo-notice-frame" axis="horizontal">
             <component
               :is="layer.component"
               :tone="noticeTone(item.id)"
@@ -266,7 +276,7 @@ function recordAction(label) {
               :message="item.message"
               :data-notice-tone="item.id"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
     </section>
@@ -281,7 +291,10 @@ function recordAction(label) {
 
       <div class="demo-notice-action-list">
         <article>
-          <div class="demo-notice-frame demo-notice-frame--narrow">
+          <UiScrollRegion
+            class="demo-notice-frame demo-notice-frame--narrow"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               :tone="noticeTone('danger')"
@@ -291,17 +304,20 @@ function recordAction(label) {
               data-notice-action="retry"
               @action="recordAction('重試讀取')"
             />
-          </div>
+          </UiScrollRegion>
         </article>
         <article>
-          <div class="demo-notice-frame demo-notice-frame--narrow">
+          <UiScrollRegion
+            class="demo-notice-frame demo-notice-frame--narrow"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               v-bind="contractProps()"
               data-notice-action="details"
               @action="recordAction('查看說明')"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
       <p
@@ -326,18 +342,18 @@ function recordAction(label) {
       <div class="demo-notice-aria-list">
         <article data-notice-aria="static">
           <strong>靜態內容</strong>
-          <div class="demo-notice-frame">
+          <UiScrollRegion class="demo-notice-frame" axis="horizontal">
             <component
               :is="layer.component"
               :tone="noticeTone()"
               title="本機內容"
               message="靜態內容不需要重新宣告。"
             />
-          </div>
+          </UiScrollRegion>
         </article>
         <article data-notice-aria="polite">
           <strong>非緊急狀態更新</strong>
-          <div class="demo-notice-frame">
+          <UiScrollRegion class="demo-notice-frame" axis="horizontal">
             <component
               :is="layer.component"
               v-bind="ariaProps('polite')"
@@ -345,11 +361,11 @@ function recordAction(label) {
               title="檢查完成"
               message="需要的功能已可使用。"
             />
-          </div>
+          </UiScrollRegion>
         </article>
         <article data-notice-aria="urgent">
           <strong>需立即處理的失敗</strong>
-          <div class="demo-notice-frame">
+          <UiScrollRegion class="demo-notice-frame" axis="horizontal">
             <component
               :is="layer.component"
               v-bind="ariaProps('urgent')"
@@ -357,11 +373,11 @@ function recordAction(label) {
               title="播放已中止"
               message="請重新選擇可讀取的檔案。"
             />
-          </div>
+          </UiScrollRegion>
         </article>
         <article data-notice-aria="language">
           <strong>語言與文字方向</strong>
-          <div class="demo-notice-frame">
+          <UiScrollRegion class="demo-notice-frame" axis="horizontal">
             <component
               :is="layer.component"
               :tone="noticeTone()"
@@ -370,7 +386,7 @@ function recordAction(label) {
               lang="ja"
               dir="auto"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
 
@@ -503,7 +519,6 @@ function recordAction(label) {
   min-width: 0;
   max-width: 100%;
   container-type: inline-size;
-  overflow-x: auto;
 }
 
 .demo-notice-frame--narrow {

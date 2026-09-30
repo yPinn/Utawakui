@@ -5,8 +5,8 @@ function read(relativePath) {
   return readFileSync(new URL(relativePath, import.meta.url), 'utf8');
 }
 
-const candidateButtonSource = read('./DemoCandidateButton.vue');
-const candidateTextButtonSource = read('./DemoCandidateTextButton.vue');
+const adoptedButtonSource = read('../ui/UiButton.vue');
+const adoptedTextButtonSource = read('../ui/UiTextButton.vue');
 const candidateTabsSource = read('./DemoCandidateTabs.vue');
 const candidateChipSource = read('./DemoCandidateChip.vue');
 const candidateCheckboxSource = read('./DemoCandidateCheckbox.vue');
@@ -21,8 +21,6 @@ const fieldAppearanceSource = read('./DemoFieldAppearance.vue');
 const uiTextFieldSource = read('../ui/UiTextField.vue');
 const uiTextareaSource = read('../ui/UiTextarea.vue');
 const currentSources = [
-  read('../ui/UiButton.vue'),
-  read('../ui/UiTextButton.vue'),
   read('../ui/UiTabs.vue'),
   read('../ui/UiChip.vue'),
   read('../ui/UiRange.vue'),
@@ -40,10 +38,22 @@ function expectNoneRule(source, selector) {
   expect(rule?.[1]).toContain('user-select: none;');
 }
 
+function expectV2NoneRule(source, selector) {
+  const rule = source.match(
+    new RegExp(
+      `:global\\(:root\\[data-ui-system='v2'\\]\\s+${selector}\\)\\s*\\{([^}]*)\\}`,
+      'su',
+    ),
+  );
+
+  expect(rule?.[1]).toContain('-webkit-user-select: none;');
+  expect(rule?.[1]).toContain('user-select: none;');
+}
+
 describe('Token v2 Candidate text selection contract', () => {
   it('makes action and state chrome explicitly non-selectable', () => {
-    expectNoneRule(candidateButtonSource, '\\.demo-candidate-btn');
-    expectNoneRule(candidateTextButtonSource, '\\.demo-candidate-text-btn');
+    expectV2NoneRule(adoptedButtonSource, '\\.ui-btn');
+    expectV2NoneRule(adoptedTextButtonSource, '\\.ui-text-btn');
     expectNoneRule(
       candidateTabsSource,
       '\\.demo-candidate-tabs :deep\\(\\.ui-tabs__tab\\)',
@@ -82,11 +92,11 @@ describe('Token v2 Candidate text selection contract', () => {
       '\\.demo-candidate-notification-host',
     );
     expect(candidateNoticeSource).not.toContain('user-select: none');
-    expect(candidateButtonSource).not.toContain('pointer-events: none');
-    expect(candidateTextButtonSource).not.toContain('pointer-events: none');
+    expect(adoptedButtonSource).not.toContain('pointer-events: none');
+    expect(adoptedTextButtonSource).not.toContain('pointer-events: none');
   });
 
-  it('leaves Current production components as active truth', () => {
+  it('leaves non-adopted production components as active truth', () => {
     for (const source of currentSources) {
       expect(source).not.toContain('-webkit-user-select: none;');
       expect(source).not.toContain('user-select: none;');

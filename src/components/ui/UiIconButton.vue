@@ -109,12 +109,22 @@ function buttonAttrs(triggerProps) {
     opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
+:global(:root[data-ui-system='v2'] .ui-icon-btn) {
+  box-sizing: border-box;
+}
+
 .ui-icon-btn--md {
-  --ui-icon-btn-size: var(--ui-icon-button-size-md);
+  --ui-icon-btn-size: var(
+    --ui-icon-button-size-override,
+    var(--ui-icon-button-size-md)
+  );
 }
 
 .ui-icon-btn--lg {
-  --ui-icon-btn-size: var(--ui-icon-button-size-lg);
+  --ui-icon-btn-size: var(
+    --ui-icon-button-size-override,
+    var(--ui-icon-button-size-lg)
+  );
 }
 
 .ui-icon-btn--square {
@@ -130,8 +140,8 @@ function buttonAttrs(triggerProps) {
 }
 
 .ui-icon-btn--stretch {
-  min-width: var(--ui-icon-button-size-md);
-  min-height: var(--ui-icon-button-size-md);
+  min-width: var(--ui-icon-btn-size);
+  min-height: var(--ui-icon-btn-size);
   width: 100%;
   height: 100%;
   flex: 1 1 auto;
@@ -167,9 +177,23 @@ function buttonAttrs(triggerProps) {
   background: var(--ui-color-accent-hover);
 }
 
+:global(:root[data-ui-system='v2'] .ui-icon-btn--accent:not(:disabled):active) {
+  background: var(--ui-color-accent-active);
+}
+
 .ui-icon-btn--overlay {
   background: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
+}
+
+:global(:root[data-ui-system='v2'] .ui-icon-btn--overlay:not(:disabled):hover) {
+  background: var(--ui-color-overlay-scrim-hover);
+}
+
+:global(
+  :root[data-ui-system='v2'] .ui-icon-btn--overlay:not(:disabled):active
+) {
+  background: var(--ui-color-overlay-scrim-active);
 }
 
 .ui-icon-btn:disabled,

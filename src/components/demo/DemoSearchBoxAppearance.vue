@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue';
 import { ICON_SIZE, Search, X } from '../../icons/index.js';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 
 const SEARCH_WIDTH_TESTS = [
@@ -482,8 +483,9 @@ function coverageFor(layer, state, index) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-search-coverage"
+          axis="horizontal"
           data-search-coverage-matrix="true"
           tabindex="0"
           aria-label="Search Box 狀態樣式覆蓋矩陣"
@@ -517,7 +519,7 @@ function coverageFor(layer, state, index) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
         <p class="demo-search-state-review__boundary">
           Loading、結果、無結果與搜尋錯誤由使用 Search Box 的 consumer 呈現。
         </p>
@@ -872,7 +874,6 @@ function coverageFor(layer, state, index) {
 .demo-search-coverage {
   max-width: 100%;
   margin-top: var(--ui-space-4);
-  overflow-x: auto;
   outline-offset: var(--ui-focus-offset-inset);
 }
 

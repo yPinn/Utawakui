@@ -1,7 +1,7 @@
 <script setup>
 import { computed, useAttrs } from 'vue';
 import { Check, CircleAlert, CircleX, Info } from '../../icons/index.js';
-import DemoCandidateButton from './DemoCandidateButton.vue';
+import UiButton from '../ui/UiButton.vue';
 import DemoCandidateStatusIcon from './DemoCandidateStatusIcon.vue';
 
 defineOptions({ inheritAttrs: false });
@@ -62,14 +62,14 @@ const iconTone = computed(() =>
         {{ message }}
       </p>
     </div>
-    <DemoCandidateButton
+    <UiButton
       v-if="actionLabel"
       class="demo-candidate-notice__action"
       variant="secondary"
       @click="emit('action')"
     >
       {{ actionLabel }}
-    </DemoCandidateButton>
+    </UiButton>
   </div>
 </template>
 

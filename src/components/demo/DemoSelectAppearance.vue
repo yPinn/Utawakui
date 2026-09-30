@@ -1,5 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import DemoCandidateSelect from './DemoCandidateSelect.vue';
 
@@ -521,8 +522,9 @@ function coverageFor(layer, state) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-select-coverage"
+          axis="horizontal"
           data-select-coverage-matrix
           tabindex="0"
           aria-label="Select 狀態樣式覆蓋矩陣"
@@ -554,7 +556,7 @@ function coverageFor(layer, state) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
 
       <section class="demo-select-validation">
@@ -904,7 +906,6 @@ function coverageFor(layer, state) {
 .demo-select-coverage {
   min-width: 0;
   margin-top: var(--ui-space-4);
-  overflow-x: auto;
   outline: none;
 }
 

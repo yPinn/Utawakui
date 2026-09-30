@@ -2,6 +2,7 @@
 import { computed, shallowRef, watch } from 'vue';
 import { Clock, Minus, Plus } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   draft: { type: Object, required: true },
@@ -92,7 +93,13 @@ function nudgeSelected(deltaMs) {
 
 <template>
   <div class="lyrics-segment-editor" aria-label="逐字片段編輯器">
-    <ol class="lyrics-segment-editor__sequence" aria-label="逐字起點順序">
+    <UiScrollRegion
+      class="lyrics-segment-editor__sequence"
+      axis="horizontal"
+      viewport-tag="ol"
+      viewport-class="lyrics-segment-editor__sequence-viewport"
+      aria-label="逐字起點順序"
+    >
       <li
         v-for="(segment, index) in draft.segments"
         :key="segment.segmentId"
@@ -129,7 +136,7 @@ function nudgeSelected(deltaMs) {
           </span>
         </button>
       </li>
-    </ol>
+    </UiScrollRegion>
 
     <div v-if="nextBoundaryIndex > 0" class="lyrics-segment-editor__workflow">
       <div class="lyrics-segment-editor__workflow-copy">
@@ -197,13 +204,16 @@ function nudgeSelected(deltaMs) {
 }
 
 .lyrics-segment-editor__sequence {
+  min-width: 0;
+}
+
+.lyrics-segment-editor__sequence
+  :deep(.lyrics-segment-editor__sequence-viewport) {
   display: flex;
   align-items: stretch;
   gap: var(--ui-space-1);
-  min-width: 0;
   margin: 0;
   padding: var(--ui-space-1) 0;
-  overflow-x: auto;
   list-style: none;
 }
 

@@ -5,6 +5,7 @@ import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiIconButton from './UiIconButton.vue';
 import UiModal from './UiModal.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 
 const { createRenderer, h, nextTick, ref, ssrContextKey } = Vue;
@@ -23,6 +24,7 @@ function attachClientRender(component, filename) {
 
 attachClientRender(UiIconButton, './UiIconButton.vue');
 attachClientRender(UiModal, './UiModal.vue');
+attachClientRender(UiScrollRegion, './UiScrollRegion.vue');
 attachClientRender(UiTooltipSurface, './tooltip/UiTooltipSurface.vue');
 
 function hostNode(type, text = '') {

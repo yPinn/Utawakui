@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 const SPACING_STEPS = [
   { value: '0.25rem', dip: 4, token: '--ui-space-1' },
   { value: '0.5rem', dip: 8, token: '--ui-space-2' },
@@ -73,7 +75,11 @@ const UNIT_RESPONSIBILITIES = [
             :aria-label="`${step.value} spacing`"
           />
         </div>
-        <div class="demo-scale-reference-wrap" data-demo-reference="spacing">
+        <UiScrollRegion
+          class="demo-scale-reference-wrap"
+          axis="horizontal"
+          data-demo-reference="spacing"
+        >
           <table class="demo-scale-reference">
             <caption>
               Spacing token 參考值
@@ -101,7 +107,7 @@ const UNIT_RESPONSIBILITIES = [
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
       <section class="demo-scale-group" aria-labelledby="demo-radius-title">
         <h4 id="demo-radius-title" class="demo-scale-group__title">Radius</h4>
@@ -118,7 +124,11 @@ const UNIT_RESPONSIBILITIES = [
             :aria-label="`${radius.value} radius`"
           />
         </div>
-        <div class="demo-scale-reference-wrap" data-demo-reference="radius">
+        <UiScrollRegion
+          class="demo-scale-reference-wrap"
+          axis="horizontal"
+          data-demo-reference="radius"
+        >
           <table class="demo-scale-reference">
             <caption>
               Radius token 參考值
@@ -146,7 +156,7 @@ const UNIT_RESPONSIBILITIES = [
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
     </div>
   </div>
@@ -257,7 +267,6 @@ const UNIT_RESPONSIBILITIES = [
 
 .demo-scale-reference-wrap {
   min-width: 0;
-  overflow-x: auto;
 }
 
 .demo-scale-reference {

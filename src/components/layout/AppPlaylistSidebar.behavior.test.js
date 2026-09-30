@@ -14,7 +14,7 @@ describe('AppPlaylistSidebar resize handle', () => {
 
   it('tightens only the compact scroll inset so the standard row fits the narrower rail', () => {
     expect(source).toMatch(
-      /@container \(width < 256px\)\s*\{[^}]*\.app-playlist-sidebar__scroll\s*\{[^}]*padding-inline:\s*var\(--ui-playlist-sidebar-padding-inline-compact\);/su,
+      /@container \(width < 256px\)\s*\{[^}]*\.app-playlist-sidebar__scroll\s+:deep\(\.app-playlist-sidebar__scroll-viewport\)\s*\{[^}]*padding-inline:\s*var\(--ui-playlist-sidebar-padding-inline-compact\);/su,
     );
   });
 

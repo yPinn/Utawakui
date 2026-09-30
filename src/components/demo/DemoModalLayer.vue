@@ -7,7 +7,6 @@ import UiModal from '../ui/UiModal.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
-import DemoCandidateButton from './DemoCandidateButton.vue';
 import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
 import DemoCandidateHint from './DemoCandidateHint.vue';
 import DemoCandidateModal from './DemoCandidateModal.vue';
@@ -118,9 +117,7 @@ const isCandidate = computed(() => props.layer.key === 'candidate');
 const modalComponent = computed(() =>
   isCandidate.value ? DemoCandidateModal : UiModal,
 );
-const buttonComponent = computed(() =>
-  isCandidate.value ? DemoCandidateButton : UiButton,
-);
+const buttonComponent = computed(() => UiButton);
 const checkboxComponent = computed(() =>
   isCandidate.value ? DemoCandidateCheckbox : UiCheckbox,
 );
@@ -377,12 +374,8 @@ onUnmounted(() => setCurrentMarker(false));
       </div>
 
       <template v-if="isCandidate && hasFooter" #footer>
-        <DemoCandidateButton variant="secondary" @click="closeModal">
-          取消
-        </DemoCandidateButton>
-        <DemoCandidateButton variant="accent" @click="finishAction">
-          完成
-        </DemoCandidateButton>
+        <UiButton variant="secondary" @click="closeModal"> 取消 </UiButton>
+        <UiButton variant="accent" @click="finishAction"> 完成 </UiButton>
       </template>
     </component>
   </div>

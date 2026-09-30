@@ -258,14 +258,14 @@ defineProps({
 }
 
 .demo-icon-button-field-row--standard {
-  --demo-icon-button-size: 2.25rem;
+  --ui-icon-button-size-override: 2.25rem;
   --demo-button-height: 2.25rem;
   --ui-control-height: 2.25rem;
   --ui-field-height: 2.25rem;
 }
 
 .demo-icon-button-field-row--compact {
-  --demo-icon-button-size: 2rem;
+  --ui-icon-button-size-override: 2rem;
   --demo-button-height: 2rem;
   --ui-control-height: 2rem;
   --ui-field-height: 2rem;
@@ -341,7 +341,7 @@ defineProps({
 }
 
 .demo-icon-button-titlebar--candidate {
-  --demo-icon-button-size: 2.25rem;
+  --ui-icon-button-size-override: 2.25rem;
   --demo-icon-focus-offset: var(--ui-focus-offset-inset);
 }
 
@@ -372,8 +372,7 @@ defineProps({
     grid-template-columns: minmax(0, 1fr) auto;
   }
 
-  .demo-icon-button-field-row :deep(.ui-btn),
-  .demo-icon-button-field-row :deep(.demo-candidate-btn) {
+  .demo-icon-button-field-row :deep(.ui-btn) {
     grid-column: 1 / -1;
     width: 100%;
   }
@@ -392,8 +391,7 @@ defineProps({
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .demo-icon-button-field-row :deep(.ui-icon-btn),
-  .demo-icon-button-field-row :deep(.demo-candidate-icon-btn) {
+  .demo-icon-button-field-row :deep(.ui-icon-btn) {
     justify-self: end;
   }
 }

@@ -351,7 +351,10 @@ describe('DemoDensity', () => {
       'min-height: var(--ui-control-height)',
     );
     expect(sourceByName.get('../ui/UiIconButton.vue')).toContain(
-      '--ui-icon-btn-size: var(--ui-icon-button-size-md)',
+      '--ui-icon-button-size-override',
+    );
+    expect(sourceByName.get('../ui/UiIconButton.vue')).toContain(
+      'var(--ui-icon-button-size-md)',
     );
     expect(sourceByName.get('../ui/UiTrackRow.vue')).toContain(
       'min-height: var(--ui-track-row-min-height)',

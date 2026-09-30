@@ -1,13 +1,13 @@
 <script setup>
 import { Download, Repeat } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
-import DemoCandidateButton from './DemoCandidateButton.vue';
 
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Button',
+    title: 'Token v2／已遷移 UiButton',
     note: '一般文字動作使用穩定單行與 36／32px target；純圖示操作仍由 UiIconButton 擁有。',
     overflowNote: '受限寬度採靜態單行 ellipsis；按鈕文案不使用 marquee。',
     secondaryVariant: 'secondary',
@@ -15,10 +15,10 @@ const LAYERS = [
     statePair: 'Secondary／Accent',
     appearanceContract: 'variant · secondary／ghost／accent',
     publicNote:
-      'Candidate 將可辨識的 Secondary 與 contextual Ghost 分責，但仍不加入產品領域語意。',
+      '正式元件將可辨識的 Secondary 與 contextual Ghost 分責，但不加入產品領域語意。',
     iconBoundary: '純圖示操作 → UiIconButton',
     contractBoundary: 'No size prop · No readonly · No destructive variant',
-    component: DemoCandidateButton,
+    component: UiButton,
     sizes: [
       ['standard', 'Standard · 36 CSS px'],
       ['compact', 'Compact · 32 CSS px'],
@@ -26,16 +26,15 @@ const LAYERS = [
   },
   {
     key: 'current',
-    title: '現行 UiButton',
-    note: '以 active token 快照顯示 30px control；不繼承 Candidate 的尺寸與色彩。',
+    title: 'Active token compatibility',
+    note: '同一正式元件以 active token 快照顯示 30px control，確認既有頁面不會被強制切換 Token v2 尺寸與色彩。',
     overflowNote:
-      '沒有元件級 truncation；受限標本只裁掉溢出區域，保留 Current 真值。',
-    secondaryVariant: 'ghost',
-    secondaryLabel: 'Ghost',
-    statePair: 'Current Ghost／Accent',
-    appearanceContract: 'variant · ghost／accent',
-    publicNote:
-      '記錄現行 bounded API；Current 尚未提供靜止可辨識的 Secondary。',
+      '同一單行 ellipsis contract；幾何仍由 active token scope 決定。',
+    secondaryVariant: 'secondary',
+    secondaryLabel: 'Secondary',
+    statePair: 'Secondary／Accent',
+    appearanceContract: 'variant · secondary／ghost／accent',
+    publicNote: '同一 bounded API 在 active token scope 下維持可用。',
     iconBoundary:
       '現行仍含 icon-only compatibility branch；新用法 → UiIconButton',
     contractBoundary:
@@ -53,7 +52,8 @@ const HIERARCHY = {
   ],
   current: [
     ['accent', 'Primary · Accent fill', '主要動作'],
-    ['ghost', 'Current 沒有獨立 Secondary', '次要動作（現行 Ghost）'],
+    ['secondary', 'Secondary · 靜止可辨識', '次要動作'],
+    ['ghost', 'Ghost · toolbar／tertiary context', '第三層動作'],
   ],
 };
 
@@ -101,9 +101,9 @@ const COVERAGE = {
     ['loading', 'Spinner＋label', 'Spinner＋label', 'disabled＋aria-busy'],
   ],
   current: [
-    ['default', 'Transparent／muted', 'Accent fill', 'Native button'],
-    ['hover', 'Hover surface／text', 'Accent hover', 'Pointer'],
-    ['pressed', 'Same as hover', 'Same as hover', 'No authored :active'],
+    ['default', 'Raised＋subtle border', 'Accent fill', 'Native button'],
+    ['hover', 'Hover＋strong border', 'Accent hover', 'Pointer'],
+    ['pressed', 'Active＋strong border', 'Accent active', ':active'],
     ['focus-visible', 'Coral ring', 'Coral ring', 'Keyboard'],
     [
       'active toggle',
@@ -342,8 +342,9 @@ function stateProps(state, variant) {
             </div>
           </article>
         </div>
-        <div
+        <UiScrollRegion
           class="demo-button-coverage"
+          axis="horizontal"
           data-button-coverage-matrix
           tabindex="0"
           aria-label="Button 狀態覆蓋矩陣"
@@ -366,7 +367,7 @@ function stateProps(state, variant) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
 
       <section class="demo-button-subsection">
@@ -548,10 +549,12 @@ function stateProps(state, variant) {
 
 .demo-button-size--standard {
   --demo-button-height: 2.25rem;
+  --ui-control-height: 2.25rem;
 }
 
 .demo-button-size--compact {
   --demo-button-height: 2rem;
+  --ui-control-height: 2rem;
 }
 
 .demo-button-size--active {
@@ -593,8 +596,7 @@ function stateProps(state, variant) {
   width: 100%;
 }
 
-.demo-button-width--fluid :deep(.ui-btn),
-.demo-button-width--fluid :deep(.demo-candidate-btn) {
+.demo-button-width--fluid :deep(.ui-btn) {
   width: 100%;
 }
 
@@ -644,8 +646,7 @@ function stateProps(state, variant) {
   gap: var(--ui-space-2);
 }
 
-.demo-button-state[data-button-state='hover']
-  :deep(.demo-candidate-btn--secondary) {
+.demo-button-state[data-button-state='hover'] :deep(.ui-btn--secondary) {
   border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
@@ -656,35 +657,18 @@ function stateProps(state, variant) {
   color: var(--ui-color-text);
 }
 
-.demo-button-state[data-button-state='hover']
-  :deep(.demo-candidate-btn--accent),
 .demo-button-state[data-button-state='hover'] :deep(.ui-btn--accent) {
   background: var(--ui-color-accent-hover);
 }
 
-.demo-button-state[data-button-state='pressed']
-  :deep(.demo-candidate-btn--secondary) {
+.demo-button-state[data-button-state='pressed'] :deep(.ui-btn--secondary) {
   border-color: var(--ui-color-border-strong);
   background: var(--ui-color-surface-active);
   color: var(--ui-color-text);
 }
 
-.demo-button-state[data-button-state='pressed']
-  :deep(.demo-candidate-btn--accent) {
+.demo-button-state[data-button-state='pressed'] :deep(.ui-btn--accent) {
   background: var(--ui-color-accent-active);
-}
-
-.demo-button-layer--current
-  .demo-button-state[data-button-state='pressed']
-  :deep(.ui-btn--ghost) {
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-}
-
-.demo-button-layer--current
-  .demo-button-state[data-button-state='pressed']
-  :deep(.ui-btn--accent) {
-  background: var(--ui-color-accent-hover);
 }
 
 .demo-button-state[data-button-state='focus'] :deep(button) {
@@ -694,7 +678,6 @@ function stateProps(state, variant) {
 
 .demo-button-coverage {
   min-width: 0;
-  overflow-x: auto;
   outline: none;
 }
 
@@ -817,8 +800,7 @@ function stateProps(state, variant) {
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .demo-button-field-row :deep(.ui-btn),
-  .demo-button-field-row :deep(.demo-candidate-btn) {
+  .demo-button-field-row :deep(.ui-btn) {
     width: 100%;
   }
 }

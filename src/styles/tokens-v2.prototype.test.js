@@ -169,13 +169,15 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(283);
+    expect(uniqueNames.size).toBe(303);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
     expect(uniqueNames).toContain('--ui-skeleton-text-block-size');
     expect(uniqueNames).toContain('--ui-skeleton-pulse-duration');
     expect(uniqueNames).toContain('--ui-radio-size');
+    expect(uniqueNames).toContain('--ui-folder-tab-min-inline-size');
+    expect(uniqueNames).toContain('--ui-folder-tab-min-inline-size-narrow');
     expect(uniqueNames).toContain('--ui-tooltip-max-inline-size');
     expect(uniqueNames).toContain('--ui-tooltip-font-size');
     expect(uniqueNames).toContain('--ui-tooltip-font-weight');
@@ -214,6 +216,15 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-color-overlay-scrim-active');
     expect(uniqueNames).toContain('--ui-inspector-rail-width');
     expect(uniqueNames).toContain('--ui-opacity-dragging');
+    expect(uniqueNames).toContain('--ui-scrollbar-lane-size');
+    expect(uniqueNames).toContain('--ui-scrollbar-thumb-inset');
+    expect(uniqueNames).toContain('--ui-scrollbar-thumb-min-length');
+    expect(uniqueNames).toContain('--ui-scrollbar-edge-inset');
+    expect(uniqueNames).toContain('--ui-scrollbar-thumb');
+    expect(uniqueNames).toContain('--ui-scrollbar-thumb-hover');
+    expect(uniqueNames).toContain('--ui-scrollbar-thumb-active');
+    expect(uniqueNames).toContain('--ui-scrollbar-track');
+    expect(uniqueNames).toContain('--ui-scrollbar-radius');
     for (const size of ['small', 'medium', 'large']) {
       expect(uniqueNames).toContain(`--ui-modal-inline-size-${size}`);
       expect(uniqueNames).toContain(`--ui-modal-max-block-size-${size}`);
@@ -311,8 +322,9 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(html).toContain('<dialog class="details-dialog"');
   });
 
-  it('keeps the folder perimeter restrained because the interior owns the material color', () => {
-    expect(tokens).toContain('--ui-folder-perimeter: 0.25rem;');
+  it('keeps enough folder material around the inset document to read as a folder', () => {
+    expect(tokens).toContain('--ui-folder-perimeter: var(--ui-space-4);');
+    expect(tokens).toContain('--ui-folder-tab-cover-size: var(--ui-space-2);');
   });
 
   it('keeps the desktop Inspector bay aligned with the current draggable maximum', () => {
@@ -401,4 +413,35 @@ describe('Studio Library workspace prototype isolation', () => {
       ).toBeGreaterThanOrEqual(4.5);
     }
   });
+
+  it.each([
+    ['dark', ":root[data-ui-system='v2']"],
+    ['light', ":root[data-ui-system='v2'][data-ui-theme='light']"],
+  ])(
+    'keeps the default %s scrollbar thumb distinguishable from app surfaces',
+    (_, selector) => {
+      const definitions = {
+        ...tokenBlock(":root[data-ui-system='v2']"),
+        ...(selector.includes("data-ui-theme='light'")
+          ? tokenBlock(selector)
+          : {}),
+      };
+
+      expect(definitions['--ui-scrollbar-thumb']).toBe(
+        'var(--ui-color-text-subtle)',
+      );
+      for (const background of [
+        '--ui-color-surface',
+        '--ui-color-surface-raised',
+      ]) {
+        expect(
+          contrastRatio(
+            resolveColor('--ui-scrollbar-thumb', definitions),
+            resolveColor(background, definitions),
+          ),
+          `--ui-scrollbar-thumb on ${background}`,
+        ).toBeGreaterThanOrEqual(3);
+      }
+    },
+  );
 });

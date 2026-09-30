@@ -92,11 +92,19 @@ components:
      callout below — but has not been adopted here. Replace palette character,
      final type choices, and component details once that adoption happens. -->
 
-> **Visual refresh status — 2026-09-14:** Token v2 is reviewed in strict
+> **Visual refresh status — 2026-09-30:** Token v2 is reviewed in strict
 > Foundation → primitive／Field family → compound component → View order. The
 > development-only F8 component review now covers all 30 catalogue sections,
 > from Foundation through UiModal; its recorded decisions and next gate live in
 > [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
+> The later Scrollbar appearance checkpoint is now approved and adopted as the
+> shared production `UiScrollRegion`. The first controlled production baseline
+> also freezes `UiSeparator`、`UiStack`、`UiSurface` and
+> `UiSegmentedControl` after their real consumers proved the shared contracts.
+> The page-action baseline now also migrates `UiButton`、`UiIconButton` and
+> `UiTextButton`: F8 renders the same formal components in Token v2 and active
+> token scopes instead of maintaining parallel action implementations.
+> These adoptions do not authorize a production-wide Token v2 palette switch.
 > F7 Studio Library／Controlled Dossier is now an active development-only View
 > candidate. Its current owner checkpoint still cannot approve Candidate
 > production adoption by implication.
@@ -106,9 +114,10 @@ The owner-selected replacement direction remains recorded in
 Direction B／Studio Library, Architectural Slate, semantic status signals, and the
 Controlled Dossier folder interior. Candidate values in
 `src/styles/tokens-v2.css` remain isolated from production until a separate
-adoption decision. The only active component change across this review remains
-the Icon Button hard floor: `sm` is removed, `md` is 2rem／32 CSS px, and `lg` is
-2.75rem／44 CSS px.
+page or global adoption decision. The active shared adoption subset is
+`UiScrollRegion`, the four token-compatible baseline primitives named above,
+and the three formal action primitives; the Architectural Slate palette itself
+remains opt-in.
 
 ## Overview
 
@@ -489,6 +498,7 @@ Global renderer CSS lives in `src/styles/` and is imported from `src/main.js`, s
 
 - `tokens.css`: control-panel design tokens and documented breakpoint values.
 - `base.css`: document-level reset, `body`, `#app`, focus-adjacent element baselines, and native control defaults.
+- `UiScrollRegion.vue`: component-scoped overlay scrollbar behavior and paint. Native scrollbar suppression must remain local to its viewport rather than returning to `base.css`.
 
 Add new global CSS files only when the purpose is real and shared. Likely future names are `themes.css` for light/dark token overrides and `utilities.css` for a small set of cross-component utilities.
 
@@ -928,6 +938,17 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 - **Menus:** render above layout stacking contexts and group actions by intent.
 - **Modals:** use only when interruption is necessary; prefer inline or progressive disclosure first.
 
+### Scroll Regions
+
+- **Appearance:** use a transparent `0.75rem` overlay hit lane with a visually narrower `0.375rem` pill thumb. Default, hover, and active increase neutral contrast; Accent and status colors are not scrollbar states.
+- **Density:** Standard and Compact keep the same lane geometry so a window-density change does not alter the drag target.
+- **Thumb length:** derive length from the native viewport／content ratio, then clamp it to `2rem`／32px–`4.5rem`／72px. The cap avoids a long border-like thumb while the remaining rail travel still communicates scroll position and range.
+- **Ownership:** the overlay Scroll Region keeps its native overflow viewport as the wheel／keyboard／touch and scroll-position authority. The wrapper measures overflow, projects the thumb, and maps pointer drag back to native `scrollTop`／`scrollLeft`; the caller declares the axis and still owns content, overscroll, and scroll-driven dismissal behavior.
+- **Range boundary:** Header、Tabs、Toolbar and table headings stay outside the Scroll Region. Only the body／list that actually changes scroll position owns the rail, so the thumb never appears to cross fixed titles.
+- **Visibility:** a feature may hide only the overlay chrome while retaining native scroll authority when its interaction shape requires it. The Playlist Sidebar does this in collapsed compact mode and restores automatic overflow chrome when fully expanded.
+- **Layout:** the rail is absolutely overlaid at the scrollport edge, does not participate in content sizing, and is absent when that axis does not overflow. `scrollbar-gutter: stable` belongs only to an explicitly native, non-overlay consumer that has a demonstrated geometry-stability requirement; it is not the overlay default.
+- **Accessibility:** the viewport remains keyboard-focusable, the visual rail is `aria-hidden`, and forced-colors uses system `Canvas`／`CanvasText`. Hiding native chrome is permitted only inside this local component because the visible overlay thumb preserves the overflow affordance.
+
 ### Sliders / Transport Controls
 
 - **Sliders:** use for continuous values such as volume, pitch cents, and tempo rate.
@@ -945,6 +966,7 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 - **Do** separate control-panel tokens from OBS overlay tokens.
 - **Do** design safe-area and keyboard-inset behavior for responsive or mobile-like surfaces.
 - **Do** verify contrast and text fit with Japanese, Korean, Traditional Chinese, and English metadata.
+- **Do** keep scroll position discoverable on mouse-operated desktop surfaces; derive overlay scrollbar chrome from the same semantic palette as other controls while preserving native scrolling as the authority.
 
 ### Don't
 
@@ -952,6 +974,7 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 - **Don't** use glow, glassmorphism, purple-blue gradients, beige/cream defaults, or decorative effects as the product identity.
 - **Don't** use nested cards as page structure.
 - **Don't** create hover-only controls that fail on touch.
+- **Don't** hide every scrollbar globally once the shared Scroll Region appearance is adopted; keep hidden-scrollbar behavior explicit and local.
 - **Don't** use viewport-fluid heading scales for dense product UI.
 - **Don't** merge `--ovl-*` overlay tokens with control-panel `--ui-*` tokens.
 - **Don't** reinvent iOS or Android native conventions if a future native surface is created.

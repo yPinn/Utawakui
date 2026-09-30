@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 defineProps({
   layer: { type: Object, required: true },
 });
@@ -43,7 +45,7 @@ const COVERAGE = {
     ['hover', 'Underline', 'Inherit', ':hover'],
     ['pressed', 'Same as hover', 'Inherit', 'No authored :active'],
     ['focus-visible', 'Underline', '2px inset ring', 'Keyboard'],
-    ['disabled', 'Same as default', 'None', 'No authored appearance'],
+    ['disabled', 'No underline／50%', 'None', 'Native disabled'],
   ],
 };
 </script>
@@ -177,8 +179,9 @@ const COVERAGE = {
           />
         </article>
       </div>
-      <div
+      <UiScrollRegion
         class="demo-text-button-coverage"
+        axis="horizontal"
         data-text-button-coverage-matrix
         tabindex="0"
         aria-label="Text Action 狀態覆蓋表"
@@ -201,7 +204,7 @@ const COVERAGE = {
             </tr>
           </tbody>
         </table>
-      </div>
+      </UiScrollRegion>
     </section>
 
     <section class="demo-text-button-subsection demo-text-button-api">
@@ -386,12 +389,6 @@ const COVERAGE = {
 }
 
 .demo-text-button-state[data-text-button-state='hover']
-  :deep(.demo-candidate-text-btn .ui-marquee__text),
-.demo-text-button-state[data-text-button-state='focus']
-  :deep(.demo-candidate-text-btn .ui-marquee__text),
-.demo-text-button-state[data-text-button-state='pressed']
-  :deep(.demo-candidate-text-btn .ui-marquee__text),
-.demo-text-button-state[data-text-button-state='hover']
   :deep(.ui-text-btn .ui-marquee__text),
 .demo-text-button-state[data-text-button-state='focus']
   :deep(.ui-text-btn .ui-marquee__text),
@@ -410,7 +407,6 @@ const COVERAGE = {
 
 .demo-text-button-coverage {
   min-width: 0;
-  overflow-x: auto;
   outline: none;
 }
 

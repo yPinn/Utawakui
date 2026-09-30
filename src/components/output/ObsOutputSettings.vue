@@ -16,6 +16,7 @@ import SettingsActionRow from '../settings/SettingsActionRow.vue';
 import SettingsBlock from '../settings/SettingsBlock.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import { describeOutputRuntimeStatus } from '../../utils/outputRuntimeStatus.js';
 import ObsSpoutOutputSettings from './ObsSpoutOutputSettings.vue';
 
@@ -142,7 +143,13 @@ function chooseSuggestedPort(port) {
 </script>
 
 <template>
-  <section class="obs-output-settings" aria-label="輸出設定">
+  <UiScrollRegion
+    class="obs-output-settings__scroll"
+    axis="vertical"
+    viewport-tag="section"
+    viewport-class="obs-output-settings"
+    aria-label="輸出設定"
+  >
     <div class="obs-output-settings__grid">
       <SettingsBlock
         title="本機輸出服務"
@@ -288,7 +295,7 @@ function chooseSuggestedPort(port) {
       :message="error"
       compact
     />
-  </section>
+  </UiScrollRegion>
 </template>
 
 <style scoped>
@@ -304,15 +311,17 @@ function chooseSuggestedPort(port) {
   border: 0;
 }
 
-.obs-output-settings {
+.obs-output-settings__scroll {
   width: 100%;
   height: 100%;
   min-width: 0;
   min-height: 0;
+}
+
+.obs-output-settings__scroll :deep(.obs-output-settings) {
   display: grid;
   align-content: start;
   gap: var(--ui-space-4);
-  overflow: auto;
 }
 
 .obs-output-settings__grid {

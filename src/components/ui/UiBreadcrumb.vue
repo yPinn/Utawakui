@@ -1,9 +1,10 @@
 <script setup>
 // A navigation trail, not a second Tabs. Overflow is intentionally left to
-// native horizontal scroll (matching UiTabs/UiSegmentedControl) — no
+// the shared horizontal Scroll Region (matching UiTabs/UiSegmentedControl) — no
 // ellipsis-collapse of middle items is implemented because no real consumer
 // needs it yet; add that behavior only once one does.
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -19,7 +20,12 @@ function isCurrent(index) {
 
 <template>
   <nav class="ui-breadcrumb" :aria-label="ariaLabel">
-    <ol class="ui-breadcrumb__list">
+    <UiScrollRegion
+      class="ui-breadcrumb__scroll"
+      axis="horizontal"
+      viewport-tag="ol"
+      viewport-class="ui-breadcrumb__list"
+    >
       <li
         v-for="(item, index) in items"
         :key="item.id"
@@ -54,7 +60,7 @@ function isCurrent(index) {
           {{ item.label }}
         </button>
       </li>
-    </ol>
+    </UiScrollRegion>
   </nav>
 </template>
 
@@ -64,18 +70,18 @@ function isCurrent(index) {
   max-width: 100%;
 }
 
-.ui-breadcrumb__list {
+.ui-breadcrumb__scroll {
   min-width: 0;
   max-width: 100%;
+}
+
+.ui-breadcrumb__scroll :deep(.ui-breadcrumb__list) {
   display: flex;
   align-items: center;
   margin: 0;
   padding: 0;
   list-style: none;
-  overflow-x: auto;
   overscroll-behavior-inline: contain;
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
 }
 
 .ui-breadcrumb__item {

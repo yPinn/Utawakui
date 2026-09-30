@@ -2,12 +2,32 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-  direction: { type: String, default: 'row' },
+  direction: {
+    type: String,
+    default: 'row',
+    validator: (value) => ['row', 'column'].includes(value),
+  },
   // 0 = no gap declared at all (native flex default), matching the many
   // consumers that only needed align/justify without spacing between items.
-  gap: { type: Number, default: 0 },
-  align: { type: String, default: undefined },
-  justify: { type: String, default: undefined },
+  gap: {
+    type: Number,
+    default: 0,
+    validator: (value) => Number.isInteger(value) && value >= 0 && value <= 8,
+  },
+  align: {
+    type: String,
+    default: undefined,
+    validator: (value) =>
+      ['start', 'center', 'end', 'stretch', 'baseline'].includes(value),
+  },
+  justify: {
+    type: String,
+    default: undefined,
+    validator: (value) =>
+      ['start', 'center', 'end', 'space-between', 'space-around'].includes(
+        value,
+      ),
+  },
   wrap: { type: Boolean, default: false },
 });
 

@@ -2,8 +2,16 @@
 import { computed } from 'vue';
 
 const props = defineProps({
-  tone: { type: String, default: 'surface' },
-  radius: { type: String, default: 'md' },
+  tone: {
+    type: String,
+    default: 'surface',
+    validator: (value) => ['canvas', 'surface', 'raised'].includes(value),
+  },
+  radius: {
+    type: String,
+    default: 'md',
+    validator: (value) => ['sm', 'md', 'lg'].includes(value),
+  },
   // Lets a caller preserve its own semantic/landmark tag (<aside>,
   // <section>, ...) instead of silently downgrading to <div> — added once
   // that genuinely blocked more than one migration this session, not

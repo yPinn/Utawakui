@@ -13,6 +13,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import MusicAnalysisReferenceEditor from './MusicAnalysisReferenceEditor.vue';
 
 const annotation = useMusicAnalysisReferenceAnnotation();
@@ -249,7 +250,12 @@ onUnmounted(structureSignals.clear);
           </UiChip>
         </div>
 
-        <ol>
+        <UiScrollRegion
+          class="reference-annotation__case-list"
+          axis="vertical"
+          viewport-tag="ol"
+          viewport-class="reference-annotation__case-list-viewport"
+        >
           <li
             v-for="referenceCase in annotation.dataset.value.cases"
             :key="referenceCase.id"
@@ -275,7 +281,7 @@ onUnmounted(structureSignals.clear);
               </UiChip>
             </button>
           </li>
-        </ol>
+        </UiScrollRegion>
       </aside>
 
       <article
@@ -306,26 +312,36 @@ onUnmounted(structureSignals.clear);
           </div>
         </header>
 
-        <UiNotice v-if="playbackError" :notice="playbackError" tone="warning" />
+        <UiScrollRegion
+          class="reference-annotation__detail-scroll"
+          axis="vertical"
+          viewport-class="reference-annotation__detail-viewport"
+        >
+          <UiNotice
+            v-if="playbackError"
+            :notice="playbackError"
+            tone="warning"
+          />
 
-        <MusicAnalysisReferenceEditor
-          :annotation-case="annotation.selectedCase.value"
-          :allowed-roles="annotation.dataset.value.allowedRoles"
-          :current-time-ms="currentTimeMs"
-          :is-current-track="isCurrentTrack"
-          :beats="m1Beats"
-          :snap-to-downbeats="snapToDownbeats"
-          @add-boundary="addBoundary"
-          @add-boundary-with-role="addBoundaryWithRole"
-          @move-boundary="moveBoundary"
-          @next-incomplete="selectNextIncomplete"
-          @remove-boundary="removeBoundary"
-          @save="annotation.save"
-          @seek="seekTo"
-          @update:snap-to-downbeats="updateSnapToDownbeats"
-          @update-bpm="updateBpm"
-          @update-role="updateRole"
-        />
+          <MusicAnalysisReferenceEditor
+            :annotation-case="annotation.selectedCase.value"
+            :allowed-roles="annotation.dataset.value.allowedRoles"
+            :current-time-ms="currentTimeMs"
+            :is-current-track="isCurrentTrack"
+            :beats="m1Beats"
+            :snap-to-downbeats="snapToDownbeats"
+            @add-boundary="addBoundary"
+            @add-boundary-with-role="addBoundaryWithRole"
+            @move-boundary="moveBoundary"
+            @next-incomplete="selectNextIncomplete"
+            @remove-boundary="removeBoundary"
+            @save="annotation.save"
+            @seek="seekTo"
+            @update:snap-to-downbeats="updateSnapToDownbeats"
+            @update-bpm="updateBpm"
+            @update-role="updateRole"
+          />
+        </UiScrollRegion>
       </article>
     </div>
   </section>
@@ -438,12 +454,15 @@ onUnmounted(structureSignals.clear);
   overflow-wrap: anywhere;
 }
 
-.reference-annotation__cases ol {
+.reference-annotation__case-list {
   min-height: 0;
   flex: 1;
+}
+
+.reference-annotation__case-list
+  :deep(.reference-annotation__case-list-viewport) {
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
   overscroll-behavior: contain;
 }
@@ -499,11 +518,21 @@ onUnmounted(structureSignals.clear);
 }
 
 .reference-annotation__detail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--ui-space-5);
+  padding: var(--ui-space-4);
+}
+
+.reference-annotation__detail-scroll {
+  min-height: 0;
+}
+
+.reference-annotation__detail-scroll
+  :deep(.reference-annotation__detail-viewport) {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-5);
-  padding: var(--ui-space-4);
-  overflow-y: auto;
   overscroll-behavior: contain;
 }
 

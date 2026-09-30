@@ -12,6 +12,7 @@ import { useLyrics } from '../../composables/useLyrics.js';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import LyricsProviderRecordingGroup from './LyricsProviderRecordingGroup.vue';
 
@@ -337,7 +338,11 @@ function toggleCandidate(candidate) {
       </UiButton>
     </div>
 
-    <div class="lyrics-lrclib-search__results">
+    <UiScrollRegion
+      class="lyrics-lrclib-search__results"
+      axis="vertical"
+      viewport-class="lyrics-lrclib-search__results-viewport"
+    >
       <UiNotice
         v-if="draftDiffersFromResults"
         tone="info"
@@ -464,7 +469,7 @@ function toggleCandidate(candidate) {
           </ul>
         </section>
       </template>
-    </div>
+    </UiScrollRegion>
   </div>
 </template>
 
@@ -531,10 +536,12 @@ function toggleCandidate(candidate) {
 
 .lyrics-lrclib-search__results {
   min-height: calc(var(--ui-space-8) + var(--ui-space-8) + var(--ui-space-8));
+}
+
+.lyrics-lrclib-search__results :deep(.lyrics-lrclib-search__results-viewport) {
   display: grid;
   align-content: start;
   gap: var(--ui-space-3);
-  overflow-y: auto;
   overscroll-behavior: contain;
   padding-right: var(--ui-space-1);
 }

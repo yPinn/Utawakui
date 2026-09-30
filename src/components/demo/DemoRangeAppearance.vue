@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue';
 import UiRange from '../ui/UiRange.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import DemoCandidateRange from './DemoCandidateRange.vue';
 
 function formatPercent(value) {
@@ -530,8 +531,9 @@ function stateValueText(layer, state) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-range-coverage"
+          axis="horizontal"
           data-range-coverage-matrix
           tabindex="0"
           aria-label="Range 狀態樣式覆蓋矩陣"
@@ -563,7 +565,7 @@ function stateValueText(layer, state) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
 
       <section class="demo-range-validation">
@@ -872,7 +874,6 @@ function stateValueText(layer, state) {
 
 .demo-range-coverage {
   min-width: 0;
-  overflow-x: auto;
   border: var(--ui-border-width) solid var(--ui-color-border);
 }
 

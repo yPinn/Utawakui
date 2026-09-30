@@ -15,6 +15,7 @@ import {
 } from '../../composables/useVisualSystemMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
@@ -52,7 +53,14 @@ function activateSetlistView() {
          handle below is a sibling positioned against the root instead, so
          it stays pinned to the visible right edge instead of scrolling
          away with a long playlist list. -->
-    <div class="app-playlist-sidebar__scroll">
+    <UiScrollRegion
+      class="app-playlist-sidebar__scroll"
+      axis="vertical"
+      viewport-class="app-playlist-sidebar__scroll-viewport"
+      :scrollbar-visibility="sidebarCompact ? 'hidden' : 'auto'"
+      tabindex="0"
+      aria-label="播放清單內容"
+    >
       <PlaylistSidebar
         :tracks-by-id="tracksById"
         :library-view="playlistState.libraryView"
@@ -61,7 +69,7 @@ function activateSetlistView() {
         @activate-setlist="activateSetlistView"
         @playlist-action="handlePlaylistMenuAction"
       />
-    </div>
+    </UiScrollRegion>
 
     <button
       type="button"
@@ -112,15 +120,17 @@ function activateSetlistView() {
 }
 
 .app-playlist-sidebar__scroll {
-  box-sizing: border-box;
   height: 100%;
-  overflow-y: auto;
+}
+
+.app-playlist-sidebar__scroll :deep(.app-playlist-sidebar__scroll-viewport) {
+  box-sizing: border-box;
   padding: var(--ui-playlist-sidebar-padding-block)
     var(--ui-playlist-sidebar-padding-inline);
 }
 
 @container (width < 256px) {
-  .app-playlist-sidebar__scroll {
+  .app-playlist-sidebar__scroll :deep(.app-playlist-sidebar__scroll-viewport) {
     padding-inline: var(--ui-playlist-sidebar-padding-inline-compact);
   }
 }

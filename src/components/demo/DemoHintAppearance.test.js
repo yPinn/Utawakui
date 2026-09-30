@@ -159,7 +159,8 @@ describe('DemoHintAppearance', () => {
     expect(candidateSource).toContain('white-space: normal;');
     expect(candidateSource).toContain('overflow-wrap: anywhere;');
     expect(primitiveSource).toContain('width: min(18rem, 100%);');
-    expect(primitiveSource).toContain('overflow-x: auto;');
+    expect(primitiveSource).toContain('<UiScrollRegion');
+    expect(primitiveSource).toContain('axis="horizontal"');
   });
 
   it('uses concise state sentences instead of fixed prefixes or color-only meaning', async () => {

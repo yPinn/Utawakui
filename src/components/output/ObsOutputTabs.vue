@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import UiChip from '../ui/UiChip.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -38,7 +39,13 @@ function selectItem(item) {
 </script>
 
 <template>
-  <div :class="listClasses" role="tablist" :aria-label="ariaLabel">
+  <UiScrollRegion
+    class="obs-output-tabs-scroll"
+    axis="horizontal"
+    :viewport-class="listClasses"
+    role="tablist"
+    :aria-label="ariaLabel"
+  >
     <button
       v-for="item in items"
       :id="tabId(item)"
@@ -59,18 +66,20 @@ function selectItem(item) {
         {{ item.count }}
       </UiChip>
     </button>
-  </div>
+  </UiScrollRegion>
 </template>
 
 <style scoped>
-.obs-output-tabs {
+.obs-output-tabs-scroll {
   min-width: 0;
-  display: flex;
-  gap: var(--ui-space-1);
-  overflow-x: auto;
 }
 
-.obs-output-tabs--panel {
+.obs-output-tabs-scroll :deep(.obs-output-tabs) {
+  display: flex;
+  gap: var(--ui-space-1);
+}
+
+.obs-output-tabs-scroll :deep(.obs-output-tabs--panel) {
   display: inline-flex;
   padding: var(--ui-space-1);
   border: var(--ui-border-width) solid var(--ui-color-border);

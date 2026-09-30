@@ -41,7 +41,7 @@ describe('lyrics provider corpus review workbench contract', () => {
   it('renders a keyboard-selectable dense queue with textual status labels', () => {
     const list = source('./LyricsProviderReviewCandidateList.vue');
 
-    expect(list).toContain('<ol');
+    expect(list).toContain('viewport-tag="ol"');
     expect(list).toContain('<button');
     expect(list).toContain(':aria-pressed=');
     expect(list).toContain('candidate.reference.artist');
@@ -105,7 +105,8 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(workbench).toContain('container-type: inline-size');
     expect(workbench).toContain('@container (max-width: 900px)');
     expect(workbench).toMatch(/grid-template-columns:\s*minmax\(18rem, 38%\)/);
-    expect(list).toContain('overflow-y: auto');
+    expect(list).toContain('<UiScrollRegion');
+    expect(list).toContain('viewport-tag="ol"');
     expect(form).toMatch(
       /\.review-form__header > div:first-child\s*\{[^}]*min-width:\s*0;/s,
     );

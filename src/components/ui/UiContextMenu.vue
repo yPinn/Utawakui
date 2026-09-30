@@ -10,6 +10,7 @@ import {
 } from 'vue';
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -46,6 +47,10 @@ const menuScrollTop = ref(0);
 const menuWidth = computed(() => props.width);
 const rootItemRefs = new Map();
 let focusOrigin = null;
+
+const menuRoot = () => menuRef.value?.root;
+const menuViewport = () => menuRef.value?.viewport;
+const submenuRoot = () => submenuRef.value?.root;
 
 const menuStyle = computed(() => ({
   left: `${position.value.x}px`,
@@ -127,11 +132,11 @@ const submenuStyle = computed(() => {
   const margin = remPixels(VIEWPORT_MARGIN_REM);
   const gap = remPixels(SUBMENU_GAP_REM);
   const scrollTop = menuScrollTop.value;
-  const rootRect = measuredRect(menuRef.value);
+  const rootRect = measuredRect(menuRoot());
   const parentRect = measuredRect(
     rootItemRefs.get(itemKey(activeSubmenuItem.value)),
   );
-  const submenuRect = measuredRect(submenuRef.value);
+  const submenuRect = measuredRect(submenuRoot());
   const submenuHeight =
     submenuRect?.height ?? estimateSubmenuHeight(activeSubmenuItem.value);
   const rootLeft = rootRect?.left ?? position.value.x;
@@ -205,7 +210,7 @@ function clampPosition() {
     return;
   }
 
-  const rect = menuRef.value?.getBoundingClientRect();
+  const rect = menuRoot()?.getBoundingClientRect();
   const width = rect?.width ?? menuWidth.value;
   const menuHeight = rect?.height ?? estimateMenuHeight();
   const margin = remPixels(VIEWPORT_MARGIN_REM);
@@ -266,7 +271,7 @@ watch(
 
 function onWindowClick(event) {
   if (!props.open) return;
-  if (menuRef.value?.contains(event.target)) return;
+  if (menuRoot()?.contains(event.target)) return;
   close();
 }
 
@@ -288,13 +293,24 @@ function onWindowScroll(event) {
   const targetIsMenu = targetClasses.includes('ui-context-menu');
   const targetIsRootMenu =
     targetIsMenu && !targetClasses.includes('ui-context-menu--submenu');
+  const targetIsMenuViewport =
+    target?.getAttribute?.('role') === 'menu' || target?.props?.role === 'menu';
   if (
     target &&
-    (menuRef.value?.contains(target) ||
+    (menuRoot()?.contains(target) ||
+      submenuRoot()?.contains(target) ||
       target?.closest?.('.ui-context-menu') ||
-      targetIsMenu)
+      targetIsMenu ||
+      targetIsMenuViewport)
   ) {
-    if (target === menuRef.value || targetIsRootMenu) {
+    if (
+      target === menuViewport() ||
+      target === menuRoot() ||
+      targetIsRootMenu ||
+      (targetIsMenuViewport &&
+        (target?.getAttribute?.('aria-label') ??
+          target?.props?.['aria-label']) === props.ariaLabel)
+    ) {
       menuScrollTop.value = Number(target.scrollTop) || 0;
     }
     return;
@@ -349,10 +365,12 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div
+    <UiScrollRegion
       v-if="open"
       ref="menu"
       class="ui-context-menu"
+      axis="vertical"
+      viewport-class="ui-context-menu__viewport"
       :style="menuStyle"
       role="menu"
       :aria-label="ariaLabel"
@@ -414,10 +432,12 @@ onUnmounted(() => {
         </button>
       </template>
 
-      <div
+      <UiScrollRegion
         v-if="activeSubmenuItem"
         ref="submenu"
         class="ui-context-menu ui-context-menu--submenu"
+        axis="vertical"
+        viewport-class="ui-context-menu__viewport"
         :style="submenuStyle"
         role="menu"
         :aria-label="`${activeSubmenuItem.label}目的地`"
@@ -461,8 +481,8 @@ onUnmounted(() => {
           </button>
         </template>
         <slot name="submenu-trailing" :item="activeSubmenuItem" />
-      </div>
-    </div>
+      </UiScrollRegion>
+    </UiScrollRegion>
   </Teleport>
 </template>
 
@@ -472,12 +492,16 @@ onUnmounted(() => {
   z-index: var(--ui-z-popover);
   /* Keep 20rem aligned with MAX_MENU_HEIGHT_REM in the script block. */
   max-height: min(20rem, calc(100vh - 1rem));
-  overflow-y: auto;
-  padding: var(--ui-space-1);
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   box-shadow: var(--ui-shadow-overlay);
+}
+
+.ui-context-menu :deep(.ui-context-menu__viewport) {
+  block-size: auto;
+  max-block-size: inherit;
+  padding: var(--ui-space-1);
 }
 
 .ui-context-menu--submenu {

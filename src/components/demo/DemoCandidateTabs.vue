@@ -57,10 +57,6 @@ const attrs = useAttrs();
 .demo-candidate-tabs :deep(.ui-tabs) {
   box-sizing: border-box;
   max-width: 100%;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
 }
 
 .demo-candidate-tabs :deep(.ui-tabs--panel) {

@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 const TARGET_SPECIMENS = [
   { key: 'routine-target', size: '2rem' },
   { key: 'live-target', size: '2.75rem' },
@@ -112,8 +114,10 @@ const CURRENT_GROUPS = [
         </p>
       </header>
 
-      <div
-        class="demo-core-minimums__preview"
+      <UiScrollRegion
+        class="demo-core-minimums__preview-scroll"
+        axis="horizontal"
+        viewport-class="demo-core-minimums__preview"
         data-core-minimum-preview="targets"
         aria-hidden="true"
       >
@@ -128,7 +132,7 @@ const CURRENT_GROUPS = [
             :style="{ '--demo-core-minimum-size': specimen.size }"
           />
         </span>
-      </div>
+      </UiScrollRegion>
 
       <div
         class="demo-core-minimums__groups"
@@ -258,16 +262,18 @@ const CURRENT_GROUPS = [
   font-weight: var(--ui-font-weight-semibold);
 }
 
-.demo-core-minimums__preview {
+.demo-core-minimums__preview-scroll {
+  min-width: 0;
+  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.demo-core-minimums__preview-scroll :deep(.demo-core-minimums__preview) {
   display: grid;
   grid-template-columns: repeat(3, minmax(3rem, max-content));
   align-items: end;
   justify-content: start;
   gap: var(--ui-space-3);
-  min-width: 0;
   padding-block: var(--ui-space-2) var(--ui-space-4);
-  overflow-x: auto;
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
 .demo-core-minimums__specimen-slot {

@@ -9,6 +9,7 @@ import {
   trigger,
 } from '../ui/uiTestHost.js';
 import UiTabs from '../ui/UiTabs.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import DemoCandidateTabs from './DemoCandidateTabs.vue';
 import DemoTabsAppearance from './DemoTabsAppearance.vue';
 
@@ -36,6 +37,7 @@ const currentSource = readFileSync(
 for (const [component, filename] of [
   [DemoCandidateTabs, './DemoCandidateTabs.vue'],
   [UiTabs, '../ui/UiTabs.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -120,11 +122,12 @@ describe('DemoTabsAppearance', () => {
     }
     expect(html).toContain('Panel · intrinsic／max 100%');
     expect(html).toContain('Bar · available width／100%');
-    expect(html).toContain('Narrow · native horizontal scroll');
+    expect(html).toContain('Narrow · overlay horizontal scroll');
     expect(candidateSource).toContain('min-width: 0;');
     expect(candidateSource).toContain('max-width: 100%;');
     expect(candidateSource).toContain('width: fit-content;');
-    expect(candidateSource).toContain('overflow-x: auto;');
+    expect(currentSource).toContain('<UiScrollRegion');
+    expect(candidateSource).not.toContain('overflow-x: auto;');
     expect(candidateSource).not.toMatch(/max-width:\s*\d+(?:\.\d+)?rem/u);
   });
 

@@ -167,9 +167,23 @@
   --ui-inspector-width: var(--ui-right-dock-width);
   --ui-inspector-rail-width: var(--ui-right-dock-rail-width);
   --ui-shell-gutter: 0.75rem;
-  --ui-folder-perimeter: 0.25rem;
+  --ui-folder-perimeter: var(--ui-space-4);
+  --ui-folder-tab-cover-size: var(--ui-space-2);
+  --ui-folder-tab-min-inline-size: 8rem;
+  --ui-folder-tab-min-inline-size-narrow: 5rem;
   --ui-folder-tab-height: 2.5rem;
   --ui-folder-tab-height-active: 2.75rem;
+  --ui-folder-tab-rest-offset: calc(
+    (var(--ui-folder-tab-height-active) - var(--ui-folder-tab-height))
+  );
+  --ui-folder-tab-label-block-size: calc(
+    var(--ui-folder-tab-height-active) - var(--ui-folder-tab-cover-size)
+  );
+  --ui-folder-tab-label-rest-offset: calc(var(--ui-folder-tab-rest-offset) / 2);
+  --ui-folder-document-inset: var(--ui-space-5);
+  --ui-folder-document-block-end-inset: var(--ui-space-6);
+  --ui-folder-section-gap: var(--ui-space-4);
+  --ui-folder-heading-gap: var(--ui-space-1);
 
   /* Flat archival elevation: shadows indicate real overlap only. */
   --ui-shadow-contact: none;
@@ -321,6 +335,16 @@
   --ui-skeleton-pulse-duration: 1.4s;
   --ui-radio-size: var(--ui-space-4);
   --ui-radio-dot-size: var(--ui-space-2);
+  --ui-scrollbar-lane-size: var(--ui-space-3);
+  --ui-scrollbar-thumb-inset: calc(var(--ui-border-width) * 3);
+  --ui-scrollbar-thumb-min-length: var(--ui-space-6);
+  --ui-scrollbar-thumb-max-length: 4.5rem;
+  --ui-scrollbar-edge-inset: var(--ui-space-1);
+  --ui-scrollbar-thumb: var(--ui-color-text-subtle);
+  --ui-scrollbar-thumb-hover: var(--ui-color-text-muted);
+  --ui-scrollbar-thumb-active: var(--ui-color-text);
+  --ui-scrollbar-track: transparent;
+  --ui-scrollbar-radius: var(--ui-radius-pill);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
   --ui-tooltip-font-size: var(--ui-font-size-sm);
@@ -493,7 +517,7 @@
     transparent
   );
 
-  --ui-color-folder-primary: var(--ui-palette-indigo-300);
+  --ui-color-folder-primary: var(--ui-palette-indigo-400);
   --ui-color-folder-secondary: var(--ui-palette-plum-200);
   --ui-color-folder-tertiary: var(--ui-palette-olive-200);
   --ui-color-paper: var(--ui-palette-warm-neutral-50);

@@ -55,8 +55,8 @@ describe('SettingsView version and maintenance sections', () => {
     expect(gateRowStart).toBeGreaterThan(-1);
     expect(bpmRow).toBeGreaterThan(gateRowStart);
     expect(gateRowEnd).toBeGreaterThan(bpmRow);
-    expect(source.slice(bpmRow, gateRowEnd)).toContain(
-      'gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled',
+    expect(source.slice(bpmRow, gateRowEnd)).toMatch(
+      /gate\.id\s*===\s*FEATURE_IDS\.AUDIO_PROCESSING_FLOW\s*&&\s*gate\.enabled/u,
     );
   });
 
@@ -70,8 +70,8 @@ describe('SettingsView version and maintenance sections', () => {
 
     expect(gpuRow).toBeGreaterThan(gateRowStart);
     expect(gateRowEnd).toBeGreaterThan(gpuRow);
-    expect(source.slice(gpuRow, gateRowEnd)).toContain(
-      'gate.id === FEATURE_IDS.AUDIO_PROCESSING_FLOW && gate.enabled',
+    expect(source.slice(gpuRow, gateRowEnd)).toMatch(
+      /gate\.id\s*===\s*FEATURE_IDS\.AUDIO_PROCESSING_FLOW\s*&&\s*gate\.enabled/u,
     );
   });
 

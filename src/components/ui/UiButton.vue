@@ -13,7 +13,7 @@ defineProps({
   variant: {
     type: String,
     default: 'ghost',
-    validator: (value) => ['ghost', 'accent'].includes(value),
+    validator: (value) => ['ghost', 'secondary', 'accent'].includes(value),
   },
   active: { type: Boolean, default: false }, // toggle state, e.g. repeat-on
   disabled: { type: Boolean, default: false },
@@ -46,11 +46,12 @@ defineProps({
     <component
       :is="icon"
       v-else-if="icon"
+      class="ui-btn__icon"
       :size="ICON_SIZE"
       aria-hidden="true"
     />
-    <span v-if="loading">{{ loadingLabel }}</span>
-    <span v-else-if="$slots.default"><slot /></span>
+    <span v-if="loading" class="ui-btn__label">{{ loadingLabel }}</span>
+    <span v-else-if="$slots.default" class="ui-btn__label"><slot /></span>
   </button>
 </template>
 
@@ -71,7 +72,31 @@ defineProps({
   transition:
     background-color var(--ui-motion-duration-feedback)
       var(--ui-motion-easing-standard),
-    color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
+    color var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard),
+    opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
+}
+
+:global(:root[data-ui-system='v2'] .ui-btn) {
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: center;
+  padding: var(--ui-space-1) var(--ui-space-3);
+  border: var(--ui-border-width) solid transparent;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.ui-btn__icon,
+.ui-btn__spinner {
+  flex: 0 0 auto;
+}
+
+:global(:root[data-ui-system='v2'] .ui-btn__label) {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ui-btn--icon-only {
@@ -92,10 +117,40 @@ defineProps({
   color: var(--ui-color-text);
 }
 
+:global(
+  :root[data-ui-system='v2']
+    .ui-btn--ghost:not(:disabled):not([aria-disabled='true']):active
+) {
+  background: var(--ui-color-surface-active);
+  color: var(--ui-color-text);
+}
+
 /* Background fill, not just icon color — an active toggle (repeat, guide
    vocal) needs a non-color signal too, for users who can't rely on hue
    alone to tell it apart from the off state. */
 .ui-btn--ghost.ui-btn--active {
+  background: var(--ui-color-surface-selected);
+  color: var(--ui-color-accent);
+}
+
+.ui-btn--secondary {
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  background: var(--ui-color-surface-raised);
+  color: var(--ui-color-text);
+}
+
+.ui-btn--secondary:not(:disabled):not([aria-disabled='true']):hover {
+  border-color: var(--ui-color-border-strong);
+  background: var(--ui-color-surface-hover);
+}
+
+:global(:root[data-ui-system='v2'] .ui-btn--secondary:not(:disabled):active) {
+  border-color: var(--ui-color-border-strong);
+  background: var(--ui-color-surface-active);
+}
+
+.ui-btn--secondary.ui-btn--active {
+  border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-selected);
   color: var(--ui-color-accent);
 }
@@ -109,6 +164,10 @@ defineProps({
   background: var(--ui-color-accent-hover);
 }
 
+:global(:root[data-ui-system='v2'] .ui-btn--accent:not(:disabled):active) {
+  background: var(--ui-color-accent-active);
+}
+
 .ui-btn:disabled,
 .ui-btn[aria-disabled='true'] {
   opacity: var(--ui-opacity-disabled);
@@ -116,7 +175,9 @@ defineProps({
 }
 
 .ui-btn--ghost:disabled,
-.ui-btn--ghost[aria-disabled='true'] {
+.ui-btn--ghost[aria-disabled='true'],
+.ui-btn--secondary:disabled,
+.ui-btn--secondary[aria-disabled='true'] {
   color: var(--ui-color-text-muted);
 }
 

@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 defineProps({
   ariaLabel: { type: String, required: true },
   mainVariant: {
@@ -35,7 +37,19 @@ defineProps({
       class="obs-output-split-layout__side"
       :aria-label="sideLabel"
     >
-      <slot name="side" />
+      <div class="obs-output-split-layout__side-header">
+        <slot name="side-header" />
+      </div>
+      <UiScrollRegion
+        class="obs-output-split-layout__side-scroll"
+        axis="vertical"
+        viewport-class="obs-output-split-layout__side-viewport"
+      >
+        <slot name="side" />
+      </UiScrollRegion>
+      <div class="obs-output-split-layout__side-footer">
+        <slot name="side-footer" />
+      </div>
     </aside>
   </section>
 </template>
@@ -75,18 +89,27 @@ defineProps({
 
 .obs-output-split-layout__side {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
   padding-inline: var(--ui-space-4) var(--ui-space-3);
   border-inline-start: var(--ui-border-width) solid var(--ui-color-border);
-  overflow: auto;
 }
 
-.obs-output-split-layout--side-detail .obs-output-split-layout__side {
-  grid-template-rows: auto minmax(0, 1fr) auto;
+.obs-output-split-layout__side-scroll {
+  min-height: 0;
+}
+
+.obs-output-split-layout--side-detail
+  .obs-output-split-layout__side-scroll
+  :deep(.obs-output-split-layout__side-viewport) {
+  display: grid;
   align-content: start;
   gap: var(--ui-space-3);
 }
 
-.obs-output-split-layout--side-inspector .obs-output-split-layout__side {
+.obs-output-split-layout--side-inspector
+  .obs-output-split-layout__side-scroll
+  :deep(.obs-output-split-layout__side-viewport) {
+  display: grid;
   align-content: start;
   gap: 0;
 }
@@ -94,7 +117,6 @@ defineProps({
 @container (width < 48rem) {
   .obs-output-split-layout {
     grid-template-columns: 1fr;
-    overflow: auto;
   }
 
   .obs-output-split-layout__side {
@@ -102,7 +124,6 @@ defineProps({
     padding-inline: 0;
     border-block-start: var(--ui-border-width) solid var(--ui-color-border);
     border-inline-start: 0;
-    overflow: visible;
   }
 }
 </style>

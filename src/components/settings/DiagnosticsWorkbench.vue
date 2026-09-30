@@ -8,6 +8,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStack from '../ui/UiStack.vue';
 
 const LEVELS = ['error', 'warning', 'info', 'debug'];
@@ -56,7 +57,7 @@ onMounted(workbench.refresh);
 </script>
 
 <template>
-  <UiStack class="diagnostics-workbench" direction="column" gap="4">
+  <UiStack class="diagnostics-workbench" direction="column" :gap="4">
     <UiPageHeader title="診斷工作台">
       <template #description>
         檢視執行期間記錄的診斷訊息，可依等級與關鍵字篩選。
@@ -80,7 +81,7 @@ onMounted(workbench.refresh);
     <UiStack
       class="diagnostics-workbench__summary"
       wrap
-      gap="2"
+      :gap="2"
       role="group"
       aria-label="依等級分組計數"
     >
@@ -89,7 +90,12 @@ onMounted(workbench.refresh);
       </UiChip>
     </UiStack>
 
-    <UiStack class="diagnostics-workbench__filters" wrap align="center" gap="3">
+    <UiStack
+      class="diagnostics-workbench__filters"
+      wrap
+      align="center"
+      :gap="3"
+    >
       <UiSearchBox
         v-model="query"
         label="搜尋錯誤紀錄"
@@ -104,7 +110,12 @@ onMounted(workbench.refresh);
       />
     </UiStack>
 
-    <ul class="diagnostics-workbench__list">
+    <UiScrollRegion
+      class="diagnostics-workbench__list"
+      axis="vertical"
+      viewport-tag="ul"
+      viewport-class="diagnostics-workbench__list-viewport"
+    >
       <li
         v-for="event in filteredEvents"
         :key="event.id"
@@ -131,7 +142,7 @@ onMounted(workbench.refresh);
           }}</pre>
         </details>
       </li>
-    </ul>
+    </UiScrollRegion>
 
     <p v-if="filteredEvents.length === 0" class="diagnostics-workbench__empty">
       沒有符合條件的紀錄
@@ -156,13 +167,15 @@ onMounted(workbench.refresh);
 .diagnostics-workbench__list {
   min-height: 0;
   flex: 1;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  overflow-y: auto;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-lg);
   background: var(--ui-color-surface);
+}
+
+.diagnostics-workbench__list :deep(.diagnostics-workbench__list-viewport) {
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .diagnostics-workbench__row + .diagnostics-workbench__row {

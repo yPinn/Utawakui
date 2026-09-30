@@ -11,7 +11,6 @@ import {
   textContent,
 } from '../ui/uiTestHost.js';
 import DemoButtonAppearance from './DemoButtonAppearance.vue';
-import DemoCandidateButton from './DemoCandidateButton.vue';
 
 const actionsSource = readFileSync(
   new URL('./DemoActions.vue', import.meta.url),
@@ -22,7 +21,7 @@ const componentSource = readFileSync(
   'utf8',
 );
 const candidateSource = readFileSync(
-  new URL('./DemoCandidateButton.vue', import.meta.url),
+  new URL('../ui/UiButton.vue', import.meta.url),
   'utf8',
 );
 const currentSource = readFileSync(
@@ -32,7 +31,6 @@ const currentSource = readFileSync(
 
 for (const [component, filename] of [
   [DemoButtonAppearance, './DemoButtonAppearance.vue'],
-  [DemoCandidateButton, './DemoCandidateButton.vue'],
   [UiButton, '../ui/UiButton.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -64,8 +62,8 @@ describe('DemoButtonAppearance', () => {
 
     expect(candidateIndex).toBeGreaterThanOrEqual(0);
     expect(currentIndex).toBeGreaterThan(candidateIndex);
-    expect(html).toContain('Token v2 候選 Button');
-    expect(html).toContain('現行 UiButton');
+    expect(html).toContain('Token v2／已遷移 UiButton');
+    expect(html).toContain('Active token compatibility');
 
     const sequence = [
       '尺寸與寬度',
@@ -110,7 +108,8 @@ describe('DemoButtonAppearance', () => {
     expect(componentSource).toContain(
       '.demo-button-size--active {\n  --demo-button-height: 1.875rem;',
     );
-    expect(candidateSource).toContain('min-height: var(--demo-button-height');
+    expect(componentSource).toContain('--ui-control-height: 2.25rem;');
+    expect(componentSource).toContain('--ui-control-height: 2rem;');
   });
 
   it('keeps intrinsic sizing and lets the parent own constrained or full width', async () => {
@@ -132,7 +131,7 @@ describe('DemoButtonAppearance', () => {
     );
   });
 
-  it('separates discoverable Secondary from contextual Ghost in Candidate only', async () => {
+  it('separates discoverable Secondary from contextual Ghost in both token scopes', async () => {
     const html = await renderToString(createSSRApp(DemoButtonAppearance));
     const candidateLayer = html.match(
       /<section[^>]*data-button-source="candidate"[\s\S]*?(?=<section[^>]*data-button-source="current")/u,
@@ -146,32 +145,30 @@ describe('DemoButtonAppearance', () => {
     }
     expect(currentLayer).toContain('data-button-hierarchy="accent"');
     expect(currentLayer).toContain('data-button-hierarchy="ghost"');
-    expect(currentLayer).not.toContain('data-button-hierarchy="secondary"');
+    expect(currentLayer).toContain('data-button-hierarchy="secondary"');
     expect(candidateLayer).toContain('Secondary · 靜止可辨識');
     expect(candidateLayer).toContain('Ghost · 只供 toolbar／tertiary context');
-    expect(currentLayer).toContain('Current 沒有獨立 Secondary');
+    expect(currentLayer).toContain('Secondary · 靜止可辨識');
     expect(candidateLayer).toMatch(
-      /data-button-field-row="standard"[\s\S]*?demo-candidate-btn--secondary/u,
+      /data-button-field-row="standard"[\s\S]*?ui-btn--secondary/u,
     );
     expect(currentLayer).toMatch(
-      /data-button-field-row="active"[\s\S]*?ui-btn--ghost/u,
+      /data-button-field-row="active"[\s\S]*?ui-btn--secondary/u,
     );
     expect(candidateSource).toContain(
       "['ghost', 'secondary', 'accent'].includes(value)",
     );
     expect(candidateSource).toMatch(
-      /\.demo-candidate-btn--secondary\s*\{[^}]*border-color:\s*var\(--ui-color-border\);[^}]*background:\s*var\(--ui-color-surface-raised\);/su,
+      /\.ui-btn--secondary\s*\{[^}]*border:[^;]*var\(--ui-color-border\);[^}]*background:\s*var\(--ui-color-surface-raised\);/su,
     );
+    expect(candidateSource).toContain('.ui-btn--secondary:not(:disabled)');
     expect(candidateSource).toContain(
-      '.demo-candidate-btn--secondary:not(:disabled):hover',
-    );
-    expect(candidateSource).toContain(
-      '.demo-candidate-btn--secondary:not(:disabled):active',
+      '.ui-btn--secondary:not(:disabled):active',
     );
     expect(candidateSource).toContain(
       'border: var(--ui-border-width) solid transparent;',
     );
-    expect(currentSource).not.toContain('ui-btn--secondary');
+    expect(currentSource).toContain('ui-btn--secondary');
   });
 
   it('aligns real Field and Button controls through one density scope', async () => {
@@ -221,7 +218,7 @@ describe('DemoButtonAppearance', () => {
       '現行仍含 icon-only compatibility branch；新用法 → UiIconButton',
     );
     expect(candidateSource).toContain(':size="ICON_SIZE"');
-    expect(candidateSource).not.toContain('ui-btn--icon-only');
+    expect(candidateSource).toContain('ui-btn--icon-only');
     expect(currentSource).toContain('ui-btn--icon-only');
   });
 
@@ -245,7 +242,7 @@ describe('DemoButtonAppearance', () => {
     );
     expect(html).toContain('繁體中文／日本語／한국어／English');
     expect(html).toContain('套用 120 BPM');
-    expect(html).toContain('沒有元件級 truncation');
+    expect(html).toContain('同一單行 ellipsis contract');
     expect(candidateSource).toContain('text-overflow: ellipsis;');
     expect(candidateSource).toContain('white-space: nowrap;');
     expect(componentSource).not.toContain('UiMarqueeText');
@@ -271,21 +268,20 @@ describe('DemoButtonAppearance', () => {
     }
     expect(html.match(/data-button-coverage-matrix/gu)).toHaveLength(2);
     expect(html).toContain('Secondary／Accent');
-    expect(html).toContain('Current Ghost／Accent');
+    expect(html.match(/Secondary／Accent/gu)).toHaveLength(2);
     expect(candidateSource).toMatch(
-      /\.demo-candidate-btn--ghost[^}]*background:\s*transparent/su,
+      /\.ui-btn--ghost[^}]*background:\s*transparent/su,
     );
     expect(candidateSource).toContain(':not(:disabled):hover');
     expect(candidateSource).toContain(':not(:disabled):active');
     expect(candidateSource).toContain(':focus-visible');
-    expect(candidateSource).toContain('.demo-candidate-btn--active');
-    expect(html).toContain('No authored :active');
-    expect(currentSource).not.toContain(':not(:disabled):active');
+    expect(candidateSource).toContain('.ui-btn--active');
+    expect(currentSource).toContain(':not(:disabled):active');
   });
 
   it('keeps async and toggle semantics explicit on the native button', () => {
     const loading = mount(
-      DemoCandidateButton,
+      UiButton,
       {
         type: 'submit',
         loading: true,
@@ -311,7 +307,7 @@ describe('DemoButtonAppearance', () => {
     loading.app.unmount();
 
     const toggle = mount(
-      DemoCandidateButton,
+      UiButton,
       { icon: Download, active: true, 'aria-pressed': true },
       { default: () => '自動匯出' },
     );
@@ -320,18 +316,15 @@ describe('DemoButtonAppearance', () => {
       (node) => node.type === 'button',
     )[0];
     expect(toggleButton.props['aria-pressed']).toBe(true);
-    expect(String(toggleButton.props.class)).toContain(
-      'demo-candidate-btn--active',
-    );
+    expect(String(toggleButton.props.class)).toContain('ui-btn--active');
     toggle.app.unmount();
   });
 
-  it('documents the bounded public contract and isolates Candidate styling', async () => {
+  it('documents the bounded public contract and isolates token scopes', async () => {
     const html = await renderToString(createSSRApp(DemoButtonAppearance));
 
     expect(html).toContain('type · button／submit／reset');
-    expect(html).toContain('variant · ghost／accent');
-    expect(html).toContain('variant · secondary／ghost／accent');
+    expect(html.match(/variant · secondary／ghost／accent/gu)).toHaveLength(2);
     expect(html).toContain(
       'active · visual state；toggle caller supplies aria-pressed',
     );

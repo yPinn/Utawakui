@@ -1,12 +1,15 @@
 <script setup>
 import UiSurface from '../ui/UiSurface.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 </script>
 
 <template>
   <UiSurface tag="section" class="app-inner-page" tone="surface" radius="sm">
-    <div class="app-inner-page__content">
-      <slot />
-    </div>
+    <UiScrollRegion class="app-inner-page__scroll" axis="vertical">
+      <div class="app-inner-page__content">
+        <slot />
+      </div>
+    </UiScrollRegion>
   </UiSurface>
 </template>
 
@@ -14,13 +17,12 @@ import UiSurface from '../ui/UiSurface.vue';
 .app-inner-page {
   position: relative;
   min-width: 0;
-  /* Clamped (not min-height) — this is now the card's own scroll boundary,
-     not a box that just grows with its content. Vertical overflow scrolls
-     inside this box; horizontal stays clipped to preserve the rounded
-     corners. */
   height: 100%;
-  overflow-x: hidden;
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+.app-inner-page__scroll {
+  height: 100%;
 }
 
 /* AppTopTabs.vue tucks under this corner (negative margin + z-index overlap,

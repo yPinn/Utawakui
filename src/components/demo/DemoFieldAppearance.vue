@@ -1,5 +1,6 @@
 <script setup>
 import DemoFieldValidationFeedback from './DemoFieldValidationFeedback.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
 const FIELD_WIDTH_TESTS = [
@@ -335,8 +336,9 @@ function coverageFor(layer, state, index) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-field-coverage"
+          axis="horizontal"
           data-field-coverage-matrix="true"
           tabindex="0"
           aria-label="Field 狀態樣式覆蓋矩陣"
@@ -368,7 +370,7 @@ function coverageFor(layer, state, index) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
         <p class="demo-field-coverage__pending">{{ layer.pendingNote }}</p>
       </section>
 
@@ -645,7 +647,6 @@ function coverageFor(layer, state, index) {
 .demo-field-coverage {
   max-width: 100%;
   margin-top: var(--ui-space-4);
-  overflow-x: auto;
   outline-offset: var(--ui-focus-offset-inset);
 }
 

@@ -1,5 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
 const WIDTH_TESTS = [
@@ -426,8 +427,9 @@ function coverageFor(layer, state) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-text-field-coverage"
+          axis="horizontal"
           data-text-field-coverage-matrix
           tabindex="0"
           aria-label="Text Field 狀態樣式覆蓋矩陣"
@@ -459,7 +461,7 @@ function coverageFor(layer, state) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
 
       <section class="demo-text-field-api">
@@ -745,7 +747,6 @@ function coverageFor(layer, state) {
 .demo-text-field-coverage {
   min-width: 0;
   margin-top: var(--ui-space-4);
-  overflow-x: auto;
   outline: none;
 }
 

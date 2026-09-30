@@ -6,6 +6,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import LyricsProviderReviewCandidateList from './LyricsProviderReviewCandidateList.vue';
 import LyricsProviderReviewForm from './LyricsProviderReviewForm.vue';
 import LyricsProviderReviewStrata from './LyricsProviderReviewStrata.vue';
@@ -142,7 +143,11 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
         @update:query="review.setQuery"
       />
 
-      <div class="lyrics-review__workspace">
+      <UiScrollRegion
+        class="lyrics-review__workspace-scroll"
+        axis="vertical"
+        viewport-class="lyrics-review__workspace"
+      >
         <LyricsProviderReviewCandidateList
           :candidates="review.visibleCandidates.value"
           :selected-candidate-id="review.selectedCandidateId.value"
@@ -170,7 +175,7 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
         >
           目前篩選條件沒有可審核項目。切換狀態或曲庫篩選以檢視其他候選。
         </div>
-      </div>
+      </UiScrollRegion>
     </template>
   </section>
 </template>
@@ -259,7 +264,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   margin: 0;
 }
 
-.lyrics-review__workspace {
+.lyrics-review__workspace-scroll {
+  min-width: 0;
+  min-height: 0;
+}
+
+.lyrics-review__workspace-scroll :deep(.lyrics-review__workspace) {
   min-width: 0;
   min-height: 0;
   display: grid;
@@ -274,11 +284,10 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
     gap: var(--ui-space-1);
   }
 
-  .lyrics-review__workspace {
+  .lyrics-review__workspace-scroll :deep(.lyrics-review__workspace) {
     min-height: 56rem;
     grid-template-columns: 1fr;
     grid-template-rows: minmax(16rem, 35vh) minmax(40rem, auto);
-    overflow-y: auto;
   }
 }
 

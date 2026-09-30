@@ -41,17 +41,6 @@ textarea {
   font-family: inherit;
 }
 
-* {
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-}
-
-*::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-  display: none;
-}
-
 input[type='range'] {
   accent-color: var(--ui-color-accent);
 }

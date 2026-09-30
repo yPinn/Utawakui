@@ -18,6 +18,7 @@ import QueueSection from './QueueSection.vue';
 import RecentPlaybackList from './RecentPlaybackList.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTabs from '../ui/UiTabs.vue';
 
 defineProps({
@@ -156,7 +157,7 @@ function selectTab(tabId) {
   closeTrackMenu();
   activeTab.value = tabId;
   nextTick(() => {
-    if (scrollElement.value) scrollElement.value.scrollTop = 0;
+    scrollElement.value?.scrollTo({ top: 0 });
     hasScrolled.value = false;
   });
 }
@@ -248,30 +249,35 @@ const {
       @update-artist="trackMetadataEditor.setArtistDraft"
     />
 
-    <div ref="scroll" class="queue-panel__scroll" @scroll="updateScrollState">
-      <div
-        class="queue-panel__chrome"
-        :class="{ 'queue-panel__chrome--scrolled': hasScrolled }"
+    <div
+      class="queue-panel__chrome"
+      :class="{ 'queue-panel__chrome--scrolled': hasScrolled }"
+    >
+      <AppRightDockHeader
+        title="播放清單"
+        close-label="關閉播放佇列"
+        @close="emit('close')"
       >
-        <AppRightDockHeader
-          title="播放清單"
-          close-label="關閉播放佇列"
-          @close="emit('close')"
-        >
-          <template #identity>
-            <UiTabs
-              :items="tabs"
-              :active-id="activeTab"
-              aria-label="播放清單檢視"
-              tab-id-prefix="queue-panel"
-              panel-id-prefix="queue-panel"
-              variant="bar"
-              @update:active-id="selectTab"
-            />
-          </template>
-        </AppRightDockHeader>
-      </div>
+        <template #identity>
+          <UiTabs
+            :items="tabs"
+            :active-id="activeTab"
+            aria-label="播放清單檢視"
+            tab-id-prefix="queue-panel"
+            panel-id-prefix="queue-panel"
+            variant="bar"
+            @update:active-id="selectTab"
+          />
+        </template>
+      </AppRightDockHeader>
+    </div>
 
+    <UiScrollRegion
+      ref="scroll"
+      class="queue-panel__scroll"
+      axis="vertical"
+      @scroll="updateScrollState"
+    >
       <div
         v-show="activeTab === 'queue'"
         id="queue-panel-queue-panel"
@@ -368,7 +374,7 @@ const {
           @clear="clearRecentPlayback"
         />
       </div>
-    </div>
+    </UiScrollRegion>
 
     <TrackActionMenu
       :open="Boolean(trackMenu)"
@@ -402,16 +408,12 @@ const {
   position: relative;
   min-height: 0;
   flex: 1;
-  overflow-y: auto;
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
   -webkit-user-select: none;
   user-select: none;
 }
 
 .queue-panel__chrome {
-  position: sticky;
-  top: 0;
+  position: relative;
   z-index: var(--ui-z-sticky);
   background: var(--ui-right-dock-sticky-background);
   transition:

@@ -7,6 +7,7 @@ import UiNotice from './UiNotice.vue';
 import UiSearchBox from './UiSearchBox.vue';
 import UiStatusIcon from './UiStatusIcon.vue';
 import UiTabs from './UiTabs.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import { Volume2 } from '../../icons/index.js';
 import {
@@ -24,6 +25,7 @@ for (const [component, filename] of [
   [UiSearchBox, './UiSearchBox.vue'],
   [UiStatusIcon, './UiStatusIcon.vue'],
   [UiTabs, './UiTabs.vue'],
+  [UiScrollRegion, './UiScrollRegion.vue'],
   [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -61,8 +63,9 @@ describe('shared UI interaction contracts', () => {
       'utf8',
     );
     expect(source).toMatch(
-      /\.ui-icon-btn--stretch\s*\{[^}]*min-width:\s*var\(--ui-icon-button-size-md\);[^}]*min-height:\s*var\(--ui-icon-button-size-md\);[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
+      /\.ui-icon-btn--stretch\s*\{[^}]*min-width:\s*var\(--ui-icon-btn-size\);[^}]*min-height:\s*var\(--ui-icon-btn-size\);[^}]*width:\s*100%;[^}]*height:\s*100%;/su,
     );
+    expect(source).toContain('--ui-icon-button-size-override');
     expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):hover');
     expect(source).toContain('.ui-icon-btn--ghost:not(:disabled):active');
     app.unmount();

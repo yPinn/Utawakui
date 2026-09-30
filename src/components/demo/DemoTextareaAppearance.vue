@@ -1,5 +1,6 @@
 <script setup>
 import { reactive } from 'vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
 
 const WIDTH_CASES = [
@@ -430,8 +431,9 @@ function coverageFor(layer, state) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-textarea-coverage"
+          axis="horizontal"
           data-textarea-coverage-matrix
           tabindex="0"
           aria-label="Textarea 狀態樣式覆蓋矩陣"
@@ -463,7 +465,7 @@ function coverageFor(layer, state) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
 
       <section class="demo-textarea-api">
@@ -751,7 +753,6 @@ function coverageFor(layer, state) {
 .demo-textarea-coverage {
   min-width: 0;
   margin-top: var(--ui-space-4);
-  overflow-x: auto;
   outline: none;
 }
 

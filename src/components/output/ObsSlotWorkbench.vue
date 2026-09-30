@@ -14,6 +14,7 @@ import ObsOutputBrief from './ObsOutputBrief.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
 import ObsOutputTabs from './ObsOutputTabs.vue';
 import UiButton from '../ui/UiButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -217,7 +218,11 @@ function resetAppearance() {
           </UiButton>
         </header>
 
-        <div class="obs-slot-workbench__stage">
+        <UiScrollRegion
+          class="obs-slot-workbench__stage"
+          axis="both"
+          viewport-class="obs-slot-workbench__stage-viewport"
+        >
           <section
             class="obs-slot-workbench__capture-guide"
             aria-label="Browser Source 尺寸建議"
@@ -246,11 +251,11 @@ function resetAppearance() {
             @update:capture-size="updateCaptureSize"
             @refresh-projection="emit('refreshProjection')"
           />
-        </div>
+        </UiScrollRegion>
       </main>
     </template>
 
-    <template #side>
+    <template #side-header>
       <header class="obs-slot-workbench__inspector-header">
         <h2 class="obs-slot-workbench__title">
           {{ preset?.name ?? '未選擇模板' }}
@@ -264,7 +269,9 @@ function resetAppearance() {
           </UiButton>
         </div>
       </header>
+    </template>
 
+    <template #side>
       <ObsOutputBrief
         :preset="preset"
         :output-status="outputStatus"
@@ -322,12 +329,14 @@ function resetAppearance() {
 .obs-slot-workbench__stage {
   min-height: 0;
   min-width: 0;
+}
+
+.obs-slot-workbench__stage :deep(.obs-slot-workbench__stage-viewport) {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   align-items: stretch;
   justify-items: center;
   gap: var(--ui-space-3);
-  overflow: auto;
 }
 
 .obs-slot-workbench__capture-guide {
@@ -434,10 +443,6 @@ function resetAppearance() {
 }
 
 @container (width < 48rem) {
-  .obs-slot-workbench__stage {
-    overflow: visible;
-  }
-
   .obs-slot-workbench__capture-guide {
     align-items: flex-start;
     flex-wrap: wrap;

@@ -11,6 +11,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
@@ -30,6 +31,7 @@ for (const [component, filename] of [
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],

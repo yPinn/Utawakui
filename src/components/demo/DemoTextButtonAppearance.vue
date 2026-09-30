@@ -1,15 +1,14 @@
 <script setup>
 import UiTextButton from '../ui/UiTextButton.vue';
-import DemoCandidateTextButton from './DemoCandidateTextButton.vue';
 import DemoTextButtonPrimitive from './DemoTextButtonPrimitive.vue';
 import DemoTextButtonRecipes from './DemoTextButtonRecipes.vue';
 
 const LAYERS = [
   {
     key: 'candidate',
-    title: 'Token v2 候選 Text Action',
+    title: 'Token v2／已遷移 UiTextButton',
     note: '預設無底線；hover／focus-visible 顯示底線。',
-    component: DemoCandidateTextButton,
+    component: UiTextButton,
     appearanceContract: '預設無底線 · hover／focus-visible underline',
     overflowNote: '溢位沿用 UiMarqueeText；reduced motion 回到單行省略。',
     overflowContract: 'UiMarqueeText owns overflow／title／reduced motion',
@@ -19,8 +18,8 @@ const LAYERS = [
   },
   {
     key: 'current',
-    title: '現行 UiTextButton · Text Action baseline',
-    note: '現行同樣是 Default 無底線，hover／focus-visible 顯示底線。',
+    title: 'Active token compatibility',
+    note: '同一正式元件維持 Default 無底線，hover／focus-visible 顯示底線。',
     component: UiTextButton,
     appearanceContract: '僅 hover／focus-visible 顯示底線',
     overflowNote:
@@ -29,7 +28,7 @@ const LAYERS = [
       'UiMarqueeText is default；overflow="ellipsis" skips observer／motion work',
     recipeProps: {},
     stateNote:
-      'Default 無底線；hover／focus 顯示底線；pressed／disabled 沒有獨立樣式。',
+      'Default 無底線；hover／focus-visible 顯示底線；pressed 沿用 hover；Token v2 disabled 50%。',
   },
 ];
 </script>

@@ -7,6 +7,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
@@ -61,7 +62,7 @@ watch(
 </script>
 
 <template>
-  <UiStack class="analysis-workbench" direction="column" gap="4">
+  <UiStack class="analysis-workbench" direction="column" :gap="4">
     <UiPageHeader title="音樂結構分析">
       <template #description>
         分析曲目的節奏與段落結構，並提供人工標註與 benchmark 比對工具。
@@ -70,7 +71,7 @@ watch(
         <UiStack
           class="analysis-workbench__header-actions"
           align="center"
-          gap="2"
+          :gap="2"
         >
           <UiSurface
             class="analysis-workbench__mode-switch"
@@ -149,53 +150,59 @@ watch(
         />
       </aside>
 
-      <UiStack class="analysis-workbench__detail" direction="column" gap="5">
-        <MusicAnalysisBatchPanel
-          v-if="analysisMode === 'batch'"
-          :selected-count="workbench.batch.selectedTrackIds.value.length"
-          :batch="workbench.batch.batch.value"
-          :active="workbench.batch.active.value"
-          :capability-ready="workbench.capabilityReady.value"
-          :disabled="
-            workbench.isBusy.value ||
-            workbench.capabilityBusy.value ||
-            Boolean(workbench.state.activeJob)
-          "
-          :error="workbench.batch.error.value"
-          :summary="workbench.batch.summary.value"
-          @start="workbench.startBatchAnalysis"
-          @cancel="workbench.cancelBatchAnalysis"
-        />
-        <template v-else>
-          <MusicAnalysisJobPanel
-            :selected-track="workbench.selectedTrack.value"
-            :active-job="workbench.state.activeJob"
-            :error="workbench.state.error"
-            :notice="workbench.state.notice"
-            :phase-label="workbench.phaseLabel.value"
-            :stage-label="workbench.stageLabel.value"
-            :progress-percent="workbench.progressPercent.value"
-            :busy="workbench.isBusy.value"
-            :can-analyze="workbench.canAnalyze.value"
-            :can-cancel="
-              workbench.canCancel.value && !workbench.batch.active.value
+      <UiScrollRegion
+        class="analysis-workbench__detail"
+        axis="vertical"
+        viewport-class="analysis-workbench__detail-viewport"
+      >
+        <UiStack direction="column" :gap="5">
+          <MusicAnalysisBatchPanel
+            v-if="analysisMode === 'batch'"
+            :selected-count="workbench.batch.selectedTrackIds.value.length"
+            :batch="workbench.batch.batch.value"
+            :active="workbench.batch.active.value"
+            :capability-ready="workbench.capabilityReady.value"
+            :disabled="
+              workbench.isBusy.value ||
+              workbench.capabilityBusy.value ||
+              Boolean(workbench.state.activeJob)
             "
-            :capability="workbench.capability.value"
-            :capability-stage-label="workbench.capabilityStageLabel.value"
-            :capability-progress-percent="
-              workbench.capabilityProgressPercent.value
-            "
-            :capability-busy="workbench.capabilityBusy.value"
-            :capability-error="workbench.state.capabilityError"
-            @analyze="workbench.analyzeSelectedTrack"
-            @cancel="workbench.cancelAnalysis"
-            @reload="workbench.refreshSelectedTrack"
-            @prepare="workbench.prepareCapability"
-            @repair="workbench.repairCapability"
+            :error="workbench.batch.error.value"
+            :summary="workbench.batch.summary.value"
+            @start="workbench.startBatchAnalysis"
+            @cancel="workbench.cancelBatchAnalysis"
           />
-          <MusicStructureSummary :result="workbench.structure.value" />
-        </template>
-      </UiStack>
+          <template v-else>
+            <MusicAnalysisJobPanel
+              :selected-track="workbench.selectedTrack.value"
+              :active-job="workbench.state.activeJob"
+              :error="workbench.state.error"
+              :notice="workbench.state.notice"
+              :phase-label="workbench.phaseLabel.value"
+              :stage-label="workbench.stageLabel.value"
+              :progress-percent="workbench.progressPercent.value"
+              :busy="workbench.isBusy.value"
+              :can-analyze="workbench.canAnalyze.value"
+              :can-cancel="
+                workbench.canCancel.value && !workbench.batch.active.value
+              "
+              :capability="workbench.capability.value"
+              :capability-stage-label="workbench.capabilityStageLabel.value"
+              :capability-progress-percent="
+                workbench.capabilityProgressPercent.value
+              "
+              :capability-busy="workbench.capabilityBusy.value"
+              :capability-error="workbench.state.capabilityError"
+              @analyze="workbench.analyzeSelectedTrack"
+              @cancel="workbench.cancelAnalysis"
+              @reload="workbench.refreshSelectedTrack"
+              @prepare="workbench.prepareCapability"
+              @repair="workbench.repairCapability"
+            />
+            <MusicStructureSummary :result="workbench.structure.value" />
+          </template>
+        </UiStack>
+      </UiScrollRegion>
     </UiSurface>
 
     <MusicAnalysisCapabilityModal
@@ -246,10 +253,10 @@ watch(
 .analysis-workbench__detail {
   min-width: 0;
   min-height: 0;
-  padding: var(--ui-space-4);
 }
 
 .analysis-workbench__tracks {
+  padding: var(--ui-space-4);
   overflow: hidden;
   border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
   background: color-mix(
@@ -259,8 +266,8 @@ watch(
   );
 }
 
-.analysis-workbench__detail {
-  overflow-y: auto;
+.analysis-workbench__detail :deep(.analysis-workbench__detail-viewport) {
+  padding: var(--ui-space-4);
   overscroll-behavior: contain;
 }
 

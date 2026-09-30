@@ -12,6 +12,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import MusicAnalysisBenchmarkTimeline from './MusicAnalysisBenchmarkTimeline.vue';
 
 const review = useMusicAnalysisBenchmarkReview();
@@ -145,7 +146,12 @@ onMounted(library.initialize);
           </UiChip>
         </div>
 
-        <ol class="benchmark-review__case-list">
+        <UiScrollRegion
+          class="benchmark-review__case-list"
+          axis="vertical"
+          viewport-tag="ol"
+          viewport-class="benchmark-review__case-list-viewport"
+        >
           <li
             v-for="benchmarkCase in review.dataset.value.cases"
             :key="benchmarkCase.id"
@@ -173,7 +179,7 @@ onMounted(library.initialize);
               </UiChip>
             </button>
           </li>
-        </ol>
+        </UiScrollRegion>
       </aside>
 
       <article
@@ -193,52 +199,64 @@ onMounted(library.initialize);
           }}</UiChip>
         </header>
 
-        <UiNotice v-if="playbackError" :notice="playbackError" tone="warning" />
+        <UiScrollRegion
+          class="benchmark-review__detail-scroll"
+          axis="vertical"
+          viewport-class="benchmark-review__detail-viewport"
+        >
+          <UiNotice
+            v-if="playbackError"
+            :notice="playbackError"
+            tone="warning"
+          />
 
-        <dl class="benchmark-review__metrics">
-          <div>
-            <dt>BPM</dt>
-            <dd>
-              {{
-                selectedEstimate?.status === 'completed'
-                  ? (selectedEstimate.bpm ?? '—')
-                  : '—'
-              }}
-            </dd>
-          </div>
-          <div>
-            <dt>段落</dt>
-            <dd>{{ selectedSections.length }}</dd>
-          </div>
-          <div>
-            <dt>曲長</dt>
-            <dd>
-              {{ formatBenchmarkTime(review.selectedCase.value.durationMs) }}
-            </dd>
-          </div>
-          <div>
-            <dt>CPU 分析</dt>
-            <dd>{{ (review.selectedCase.value.wallMs / 1000).toFixed(1) }}s</dd>
-          </div>
-        </dl>
+          <dl class="benchmark-review__metrics">
+            <div>
+              <dt>BPM</dt>
+              <dd>
+                {{
+                  selectedEstimate?.status === 'completed'
+                    ? (selectedEstimate.bpm ?? '—')
+                    : '—'
+                }}
+              </dd>
+            </div>
+            <div>
+              <dt>段落</dt>
+              <dd>{{ selectedSections.length }}</dd>
+            </div>
+            <div>
+              <dt>曲長</dt>
+              <dd>
+                {{ formatBenchmarkTime(review.selectedCase.value.durationMs) }}
+              </dd>
+            </div>
+            <div>
+              <dt>CPU 分析</dt>
+              <dd>
+                {{ (review.selectedCase.value.wallMs / 1000).toFixed(1) }}s
+              </dd>
+            </div>
+          </dl>
 
-        <MusicAnalysisBenchmarkTimeline
-          :duration-ms="review.selectedCase.value.durationMs"
-          :current-time-ms="currentTimeMs"
-          :m2-status="review.selectedCase.value.m2Status"
-          :sections="selectedSections"
-          @seek="seekTo"
-        />
+          <MusicAnalysisBenchmarkTimeline
+            :duration-ms="review.selectedCase.value.durationMs"
+            :current-time-ms="currentTimeMs"
+            :m2-status="review.selectedCase.value.m2Status"
+            :sections="selectedSections"
+            @seek="seekTo"
+          />
 
-        <footer class="benchmark-review__provenance">
-          <span
-            >{{ review.dataset.value.analyzer.id }} v{{
-              review.dataset.value.analyzer.version
-            }}</span
-          >
-          <span>{{ review.dataset.value.analyzer.profileId }}</span>
-          <span>{{ review.dataset.value.analyzer.modelId }}</span>
-        </footer>
+          <footer class="benchmark-review__provenance">
+            <span
+              >{{ review.dataset.value.analyzer.id }} v{{
+                review.dataset.value.analyzer.version
+              }}</span
+            >
+            <span>{{ review.dataset.value.analyzer.profileId }}</span>
+            <span>{{ review.dataset.value.analyzer.modelId }}</span>
+          </footer>
+        </UiScrollRegion>
       </article>
     </div>
   </section>
@@ -348,9 +366,11 @@ onMounted(library.initialize);
 .benchmark-review__case-list {
   min-height: 0;
   flex: 1;
+}
+
+.benchmark-review__case-list :deep(.benchmark-review__case-list-viewport) {
   margin: 0;
   padding: 0;
-  overflow-y: auto;
   list-style: none;
   overscroll-behavior: contain;
 }
@@ -406,11 +426,20 @@ onMounted(library.initialize);
 }
 
 .benchmark-review__detail {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--ui-space-5);
+  padding: var(--ui-space-4);
+}
+
+.benchmark-review__detail-scroll {
+  min-height: 0;
+}
+
+.benchmark-review__detail-scroll :deep(.benchmark-review__detail-viewport) {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-5);
-  padding: var(--ui-space-4);
-  overflow-y: auto;
   overscroll-behavior: contain;
 }
 

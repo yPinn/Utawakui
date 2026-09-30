@@ -26,11 +26,14 @@
   /* Floating-control scrim over arbitrary artwork/video — deliberately
      theme-independent, like a photo lightbox. */
   --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
+  --ui-color-overlay-scrim-hover: rgb(0 0 0 / 68%);
+  --ui-color-overlay-scrim-active: rgb(0 0 0 / 78%);
   --ui-color-overlay-contrast: #fff;
 
   /* --- Color: accent --- */
   --ui-color-accent: #55a2a7;
   --ui-color-accent-hover: #6ab4b8;
+  --ui-color-accent-active: #49969a;
   --ui-color-accent-soft: var(--ui-color-surface-selected);
   /* Text/icon color on accent-filled surfaces — own token, not a canvas
      alias, for light-theme safety. */
@@ -171,6 +174,21 @@
   --ui-skeleton-pulse-duration: 1.4s;
   --ui-radio-size: var(--ui-space-4);
   --ui-radio-dot-size: var(--ui-space-2);
+  /* Overlay Scroll Region geometry stays density-invariant. */
+  --ui-scrollbar-lane-size: var(--ui-space-3);
+  --ui-scrollbar-thumb-inset: calc(var(--ui-border-width) * 3);
+  --ui-scrollbar-thumb-min-length: var(--ui-space-6);
+  --ui-scrollbar-thumb-max-length: 4.5rem;
+  --ui-scrollbar-edge-inset: var(--ui-space-1);
+  --ui-scrollbar-thumb: var(--ui-color-text-muted);
+  --ui-scrollbar-thumb-hover: color-mix(
+    in srgb,
+    var(--ui-color-text-muted) 55%,
+    var(--ui-color-text)
+  );
+  --ui-scrollbar-thumb-active: var(--ui-color-text);
+  --ui-scrollbar-track: transparent;
+  --ui-scrollbar-radius: var(--ui-radius-pill);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
   --ui-tooltip-font-size: var(--ui-font-size-sm);
@@ -212,6 +230,25 @@
   --ui-archive-tab-height: 3.5rem;
   --ui-archive-tab-active-height: 4.25rem;
   --ui-archive-tab-gap: var(--ui-space-2);
+
+  /* --- Sizing: reusable folder pages --- */
+  --ui-folder-perimeter: var(--ui-space-4);
+  --ui-folder-tab-cover-size: var(--ui-space-2);
+  --ui-folder-tab-min-inline-size: 8rem;
+  --ui-folder-tab-min-inline-size-narrow: 5rem;
+  --ui-folder-tab-height: 2.5rem;
+  --ui-folder-tab-height-active: 2.75rem;
+  --ui-folder-tab-rest-offset: calc(
+    (var(--ui-folder-tab-height-active) - var(--ui-folder-tab-height))
+  );
+  --ui-folder-tab-label-block-size: calc(
+    var(--ui-folder-tab-height-active) - var(--ui-folder-tab-cover-size)
+  );
+  --ui-folder-tab-label-rest-offset: calc(var(--ui-folder-tab-rest-offset) / 2);
+  --ui-folder-document-inset: var(--ui-space-5);
+  --ui-folder-document-block-end-inset: var(--ui-space-6);
+  --ui-folder-section-gap: var(--ui-space-4);
+  --ui-folder-heading-gap: var(--ui-space-1);
   /* How far the shared content baseline sits below the "sidebar main" grid
      row's own top edge — the active tab's height (the row's tallest child,
      since AppTopTabs.vue bottom-aligns its tabs) minus the rail overlap
@@ -548,6 +585,7 @@
   /* --- Color: accent --- */
   --ui-color-accent: #327a7f;
   --ui-color-accent-hover: #286a6e;
+  --ui-color-accent-active: #20585c;
   --ui-color-accent-soft: var(--ui-color-surface-selected);
   --ui-color-accent-contrast: #fffdfa;
   /* accent-contrast-muted omitted: its color-mix() formula above recomputes

@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 defineProps({
   layer: { type: Object, required: true },
 });
@@ -194,7 +196,10 @@ function densityProps(layer, density) {
       <div class="demo-progress-content-list">
         <article v-for="item in CONTENT_ITEMS" :key="item.id">
           <span class="demo-progress-item__label">{{ item.id }}</span>
-          <div class="demo-progress-content__frame">
+          <UiScrollRegion
+            class="demo-progress-content__frame"
+            axis="horizontal"
+          >
             <component
               :is="layer.component"
               :data-progress-content="item.id"
@@ -205,7 +210,7 @@ function densityProps(layer, density) {
               :lang="item.lang"
               :dir="item.dir"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
     </section>
@@ -426,7 +431,6 @@ function densityProps(layer, density) {
 .demo-progress-content__frame {
   min-width: 0;
   width: min(18rem, 100%);
-  overflow-x: auto;
   padding: var(--ui-space-2);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface);

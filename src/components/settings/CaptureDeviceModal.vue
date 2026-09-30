@@ -19,6 +19,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import VirtualCableGuideModal from './VirtualCableGuideModal.vue';
@@ -124,7 +125,12 @@ function choose(deviceId) {
         </UiButton>
       </div>
 
-      <ul class="capture-device-modal__list">
+      <UiScrollRegion
+        class="capture-device-modal__list"
+        axis="both"
+        viewport-tag="ul"
+        viewport-class="capture-device-modal__list-viewport"
+      >
         <li>
           <button
             type="button"
@@ -186,7 +192,7 @@ function choose(deviceId) {
             </button>
           </li>
         </template>
-      </ul>
+      </UiScrollRegion>
 
       <UiHint v-if="devices.length === 0" padded>
         找不到輸出裝置。請先安裝虛擬音效裝置。
@@ -234,12 +240,16 @@ function choose(deviceId) {
 }
 
 .capture-device-modal__list {
+  max-height: min(52vh, 420px);
+}
+
+.capture-device-modal__list :deep(.capture-device-modal__list-viewport) {
+  block-size: auto;
+  max-block-size: inherit;
   display: grid;
   gap: var(--ui-space-1);
-  max-height: min(52vh, 420px);
   margin: 0;
   padding: 0;
-  overflow: auto;
   list-style: none;
 }
 

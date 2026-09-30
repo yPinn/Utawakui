@@ -1,6 +1,7 @@
 <script setup>
 import { reactive } from 'vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
 
 const CONTENT_CASES = [
@@ -421,8 +422,9 @@ function coverageFor(layer, state) {
           </article>
         </div>
 
-        <div
+        <UiScrollRegion
           class="demo-checkbox-coverage"
+          axis="horizontal"
           data-checkbox-coverage-matrix
           tabindex="0"
           aria-label="Checkbox 狀態樣式覆蓋矩陣"
@@ -454,7 +456,7 @@ function coverageFor(layer, state) {
               </tr>
             </tbody>
           </table>
-        </div>
+        </UiScrollRegion>
       </section>
 
       <section class="demo-checkbox-validation">
@@ -704,7 +706,6 @@ function coverageFor(layer, state) {
 
 .demo-checkbox-coverage {
   min-width: 0;
-  overflow-x: auto;
   border: var(--ui-border-width) solid var(--ui-color-border);
 }
 

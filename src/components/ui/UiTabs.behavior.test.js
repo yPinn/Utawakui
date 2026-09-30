@@ -1,6 +1,7 @@
 import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import UiTabs from './UiTabs.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import {
   attachClientRender,
   findAll,
@@ -10,6 +11,7 @@ import {
 } from './uiTestHost.js';
 
 attachClientRender(UiTabs, './UiTabs.vue', import.meta.url);
+attachClientRender(UiScrollRegion, './UiScrollRegion.vue', import.meta.url);
 
 const items = [
   { id: 'queue', label: '佇列' },

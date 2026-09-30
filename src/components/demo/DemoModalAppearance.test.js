@@ -54,9 +54,7 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
   });
 
   it('reuses reviewed components in Candidate and production truth in Current', () => {
-    expect(layerSource).toContain(
-      "import DemoCandidateButton from './DemoCandidateButton.vue'",
-    );
+    expect(layerSource).not.toContain('DemoCandidateButton');
     expect(layerSource).toContain(
       "import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue'",
     );
@@ -67,6 +65,7 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
       "import DemoCandidateSelect from './DemoCandidateSelect.vue'",
     );
     expect(layerSource).toContain("import UiButton from '../ui/UiButton.vue'");
+    expect(layerSource).toContain('<UiButton variant="secondary"');
     expect(layerSource).toContain(
       "import UiCheckbox from '../ui/UiCheckbox.vue'",
     );

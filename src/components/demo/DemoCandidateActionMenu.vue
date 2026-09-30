@@ -12,6 +12,7 @@ import {
 } from 'vue';
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -41,6 +42,9 @@ const TYPEAHEAD_RESET_MS = 500;
 
 const menuRef = useTemplateRef('menu');
 const submenuRef = useTemplateRef('submenu');
+const menuRoot = () => menuRef.value?.root ?? menuRef.value;
+const menuViewport = () => menuRef.value?.viewport ?? menuRef.value;
+const submenuRoot = () => submenuRef.value?.root ?? submenuRef.value;
 const position = shallowRef({ x: props.x, y: props.y });
 const submenuPosition = shallowRef({ x: props.x, y: props.y });
 const activeRootIndex = shallowRef(0);
@@ -158,13 +162,13 @@ function preferredX(width) {
 function menuDirection() {
   return typeof window === 'undefined'
     ? 'ltr'
-    : window.getComputedStyle(menuRef.value).direction;
+    : window.getComputedStyle(menuViewport()).direction;
 }
 
 function clampRootPosition() {
   if (!props.open || typeof window === 'undefined') return;
   const margin = remPixels(VIEWPORT_MARGIN_REM);
-  const rect = menuRef.value?.getBoundingClientRect();
+  const rect = menuRoot()?.getBoundingClientRect();
   const width = rect?.width ?? desiredMenuWidth.value;
   const height = rect?.height ?? 0;
   const maxX = Math.max(margin, window.innerWidth - width - margin);
@@ -182,9 +186,9 @@ function clampSubmenuPosition() {
 
   const margin = remPixels(VIEWPORT_MARGIN_REM);
   const gap = remPixels(SUBMENU_GAP_REM);
-  const menuRect = menuRef.value?.getBoundingClientRect();
+  const menuRect = menuRoot()?.getBoundingClientRect();
   const parentRect = parent.getBoundingClientRect();
-  const submenuRect = submenuRef.value?.getBoundingClientRect();
+  const submenuRect = submenuRoot()?.getBoundingClientRect();
   const width = submenuRect?.width ?? desiredSubmenuWidth.value;
   const height = submenuRect?.height ?? 0;
   const rightX = (menuRect?.right ?? parentRect.right) + gap;
@@ -217,7 +221,7 @@ function focusAt(scope, index) {
   const refs = scope === 'child' ? childItemRefs : rootItemRefs;
   const items = scope === 'child' ? childItems.value : rootItems.value;
   if (!items.length) {
-    menuRef.value?.focus();
+    menuViewport()?.focus();
     return;
   }
 
@@ -404,20 +408,20 @@ function showSubmenu(entry) {
 }
 
 function onOutsidePointer(event) {
-  if (!props.open || menuRef.value?.contains(event.target)) return;
+  if (!props.open || menuRoot()?.contains(event.target)) return;
   requestClose();
 }
 
 function onOutsideContextMenu(event) {
-  if (!props.open || menuRef.value?.contains(event.target)) return;
+  if (!props.open || menuRoot()?.contains(event.target)) return;
   requestClose();
 }
 
 function onViewportScroll(event) {
   if (!props.open) return;
   const target = event?.target;
-  if (target && menuRef.value?.contains(target)) {
-    if (target === menuRef.value && activeSubmenuEntry.value) {
+  if (target && menuRoot()?.contains(target)) {
+    if (target === menuViewport() && activeSubmenuEntry.value) {
       scheduleFrame(clampSubmenuPosition);
     }
     return;
@@ -488,11 +492,13 @@ onUnmounted(() => {
 
 <template>
   <Teleport to="body">
-    <div
+    <UiScrollRegion
       v-if="open"
       v-bind="attrs"
       ref="menu"
       class="demo-action-menu"
+      axis="vertical"
+      viewport-class="demo-action-menu__viewport"
       :class="layoutClasses(rootLayout)"
       :style="menuStyle"
       role="menu"
@@ -566,11 +572,13 @@ onUnmounted(() => {
         </button>
       </template>
 
-      <div
+      <UiScrollRegion
         v-if="activeSubmenuEntry"
         :id="submenuId"
         ref="submenu"
         class="demo-action-menu demo-action-menu--submenu"
+        axis="vertical"
+        viewport-class="demo-action-menu__viewport"
         :class="layoutClasses(childLayout)"
         :style="submenuStyle"
         role="menu"
@@ -621,8 +629,8 @@ onUnmounted(() => {
             />
           </button>
         </template>
-      </div>
-    </div>
+      </UiScrollRegion>
+    </UiScrollRegion>
   </Teleport>
 </template>
 
@@ -634,19 +642,18 @@ onUnmounted(() => {
   min-inline-size: 0;
   max-inline-size: calc(100vw - 1rem);
   max-block-size: min(20rem, calc(100vh - 1rem));
-  padding: var(--ui-space-1);
-  overflow-x: hidden;
-  overflow-y: auto;
-  overscroll-behavior: contain;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface-raised);
   box-shadow: var(--ui-shadow-overlay);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
   user-select: none;
+}
+
+.demo-action-menu :deep(.demo-action-menu__viewport) {
+  padding: var(--ui-space-1);
+  overscroll-behavior: contain;
 }
 
 .demo-action-menu--submenu {

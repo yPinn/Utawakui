@@ -181,7 +181,8 @@ describe('DemoProgressAppearance', () => {
     expect(candidateSource).toContain('overflow-wrap: anywhere;');
     expect(candidateSource).toContain('font-variant-numeric: tabular-nums;');
     expect(primitiveSource).toContain('width: min(18rem, 100%);');
-    expect(primitiveSource).toContain('overflow-x: auto;');
+    expect(primitiveSource).toContain('<UiScrollRegion');
+    expect(primitiveSource).toContain('axis="horizontal"');
     expect(candidateSource).toMatch(
       /\.demo-candidate-progress__copy\s*\{[\s\S]*?-webkit-user-select:\s*none;[\s\S]*?user-select:\s*none;/u,
     );

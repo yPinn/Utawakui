@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, useTemplateRef } from 'vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -82,46 +83,59 @@ function moveFocus(item, event) {
     role="tablist"
     :aria-label="ariaLabel"
   >
-    <button
-      v-for="item in items"
-      :id="tabId(item)"
-      :key="item.id"
-      ref="tabs"
-      type="button"
-      class="ui-tabs__tab"
-      :class="{ 'is-active': item.id === activeId }"
-      role="tab"
-      :aria-selected="item.id === activeId"
-      :aria-controls="panelId(item)"
-      :disabled="item.disabled"
-      :aria-disabled="item.disabled || undefined"
-      :tabindex="item.id === focusId ? 0 : -1"
-      @click="select(item)"
-      @keydown="moveFocus(item, $event)"
+    <UiScrollRegion
+      class="ui-tabs__scroll"
+      axis="horizontal"
+      viewport-class="ui-tabs__list"
     >
-      <slot name="label" :item="item">{{ item.label }}</slot>
-      <slot name="after" :item="item" />
-    </button>
+      <button
+        v-for="item in items"
+        :id="tabId(item)"
+        :key="item.id"
+        ref="tabs"
+        type="button"
+        class="ui-tabs__tab"
+        :class="{ 'is-active': item.id === activeId }"
+        role="tab"
+        :aria-selected="item.id === activeId"
+        :aria-controls="panelId(item)"
+        :disabled="item.disabled"
+        :aria-disabled="item.disabled || undefined"
+        :tabindex="item.id === focusId ? 0 : -1"
+        @click="select(item)"
+        @keydown="moveFocus(item, $event)"
+      >
+        <slot name="label" :item="item">{{ item.label }}</slot>
+        <slot name="after" :item="item" />
+      </button>
+    </UiScrollRegion>
   </div>
 </template>
 
 <style scoped>
 .ui-tabs {
   min-width: 0;
+  max-width: 100%;
+}
+
+.ui-tabs__scroll {
+  max-width: 100%;
+}
+
+.ui-tabs__scroll :deep(.ui-tabs__list) {
   display: flex;
   gap: var(--ui-space-1);
-  overflow-x: auto;
 }
 
 .ui-tabs--panel {
-  display: inline-flex;
+  display: inline-block;
   padding: var(--ui-space-1);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
-.ui-tabs--bar {
+.ui-tabs--bar .ui-tabs__scroll :deep(.ui-tabs__list) {
   gap: var(--ui-space-4);
 }
 

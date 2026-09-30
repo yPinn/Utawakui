@@ -8,7 +8,12 @@ import {
   mount,
   trigger,
 } from '../ui/uiTestHost.js';
+import UiButton from '../ui/UiButton.vue';
+import UiIconButton from '../ui/UiIconButton.vue';
+import UiStatusIcon from '../ui/UiStatusIcon.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import DemoCandidateNotice from './DemoCandidateNotice.vue';
+import DemoCandidateStatusIcon from './DemoCandidateStatusIcon.vue';
 import DemoNoticeAppearance from './DemoNoticeAppearance.vue';
 
 const readSource = (relativePath) =>
@@ -33,6 +38,17 @@ const currentSource = readSource('../ui/UiNotice.vue');
 const reviewContract = readSource(
   '../../../docs/contracts/token-v2-component-review.md',
 );
+
+for (const [component, filename] of [
+  [DemoCandidateNotice, './DemoCandidateNotice.vue'],
+  [DemoCandidateStatusIcon, './DemoCandidateStatusIcon.vue'],
+  [UiButton, '../ui/UiButton.vue'],
+  [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiStatusIcon, '../ui/UiStatusIcon.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+]) {
+  attachClientRender(component, filename, import.meta.url);
+}
 
 function layerHtml(html, source) {
   const start = html.indexOf(`data-notice-source="${source}"`);
@@ -167,7 +183,7 @@ describe('DemoNoticeAppearance', () => {
       "import DemoCandidateNotice from './DemoCandidateNotice.vue';",
     );
     expect(candidateNotificationHostSource).toContain(
-      "import DemoCandidateIconButton from './DemoCandidateIconButton.vue';",
+      "import UiIconButton from '../ui/UiIconButton.vue';",
     );
     expect(candidateNotificationHostSource).toContain(
       "import { X } from '../../icons/index.js';",
@@ -175,7 +191,7 @@ describe('DemoNoticeAppearance', () => {
     expect(candidateNotificationHostSource).toContain('variant="ghost"');
     expect(candidateNotificationHostSource).not.toContain('variant="overlay"');
     expect(candidateNotificationHostSource).toContain(
-      '--demo-icon-button-size: var(--ui-icon-button-size-md);',
+      '--ui-icon-button-size-override: var(--ui-icon-button-size-md);',
     );
   });
 
@@ -194,7 +210,7 @@ describe('DemoNoticeAppearance', () => {
       }),
     );
 
-    expect(withAction).toContain('demo-candidate-btn--secondary');
+    expect(withAction).toContain('ui-btn--secondary');
     expect(withAction).toContain('重試讀取');
     expect(withoutAction).not.toContain('demo-candidate-notice__action');
     expect(candidateSource).toContain('variant="secondary"');
@@ -525,7 +541,8 @@ describe('DemoNoticeAppearance', () => {
     );
     expect(candidateSource).toContain('overflow-wrap: anywhere;');
     expect(primitiveSource).toContain('width: min(20rem, 100%);');
-    expect(primitiveSource).toContain('overflow-x: auto;');
+    expect(primitiveSource).toContain('<UiScrollRegion');
+    expect(primitiveSource).toContain('axis="horizontal"');
     expect(candidateSource).toContain('@container (max-width: 26rem)');
   });
 

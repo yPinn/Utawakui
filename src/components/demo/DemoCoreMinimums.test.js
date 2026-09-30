@@ -73,9 +73,7 @@ describe('DemoCoreMinimums', () => {
     expect(preview).toContain('data-core-minimum-specimen="routine-target"');
     expect(preview).toContain('data-core-minimum-specimen="live-target"');
     expect(preview).toContain('data-core-minimum-specimen="emergency-target"');
-    expect(html).toMatch(
-      /data-core-minimum-preview="targets"[^>]*aria-hidden="true"/u,
-    );
+    expect(preview).toContain('aria-hidden="true"');
     expect(html).toContain('data-core-minimum-reference="groups"');
   });
 
@@ -186,9 +184,9 @@ describe('DemoCoreMinimums', () => {
       'inline-size: var(--ui-drag-indicator-width)',
     );
 
-    expect(iconButtonSource).toContain(
-      '--ui-icon-btn-size: var(--ui-icon-button-size-md)',
-    );
+    expect(iconButtonSource).toContain('--ui-icon-button-size-override');
+    expect(iconButtonSource).toContain('var(--ui-icon-button-size-md)');
+    expect(iconButtonSource).toContain('min-width: var(--ui-icon-btn-size)');
     expect(checkboxSource).toContain('width: var(--ui-checkbox-size)');
     expect(rangeSource).toContain('width: var(--ui-range-thumb-size)');
     expect(trackRowSource).toContain(
@@ -210,8 +208,9 @@ describe('DemoCoreMinimums', () => {
     expect(html).not.toContain('WCAG');
     expect(html).not.toContain('Windows touchable');
     expect(componentSource).toMatch(
-      /\.demo-core-minimums__preview\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(3rem, max-content\)\);[\s\S]*?overflow-x:\s*auto;/u,
+      /\.demo-core-minimums__preview-scroll[\s\S]*?:deep\(\.demo-core-minimums__preview\)\s*\{[\s\S]*?grid-template-columns:\s*repeat\(3, minmax\(3rem, max-content\)\);/u,
     );
+    expect(componentSource).toContain('<UiScrollRegion');
     expect(componentSource).not.toContain('max-width: 100%;');
     expect(componentSource).not.toContain('vw');
     expect(componentSource).not.toContain('clamp(');

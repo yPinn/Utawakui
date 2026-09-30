@@ -25,6 +25,13 @@ function hasClass(node, name) {
 }
 
 describe('UiSurface', () => {
+  it('bounds tone and radius to the documented material contract', () => {
+    expect(UiSurface.props.tone.validator('surface')).toBe(true);
+    expect(UiSurface.props.tone.validator('accent')).toBe(false);
+    expect(UiSurface.props.radius.validator('lg')).toBe(true);
+    expect(UiSurface.props.radius.validator('pill')).toBe(false);
+  });
+
   it('renders a bordered container and merges caller class via attrs fallthrough', () => {
     const mounted = mount(
       UiSurface,

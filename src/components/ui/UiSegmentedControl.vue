@@ -1,5 +1,6 @@
 <script setup>
 import { computed, nextTick, useTemplateRef } from 'vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 
 const props = defineProps({
   items: { type: Array, default: () => [] },
@@ -109,51 +110,67 @@ function moveFocus(item, event) {
     :aria-orientation="orientation"
     :dir="dir === 'auto' ? undefined : dir"
   >
-    <button
-      v-for="item in items"
-      :key="item.id"
-      ref="options"
-      type="button"
-      class="ui-segmented-control__option"
-      :class="{
-        'ui-segmented-control__option--selected': Object.is(
-          item.id,
-          modelValue,
-        ),
-      }"
-      role="radio"
-      :aria-checked="Object.is(item.id, modelValue)"
-      :aria-disabled="itemDisabled(item) || undefined"
-      :disabled="itemDisabled(item)"
-      :tabindex="Object.is(item.id, focusId) ? 0 : -1"
-      @click="select(item)"
-      @keydown="moveFocus(item, $event)"
+    <UiScrollRegion
+      class="ui-segmented-control__scroll"
+      :axis="orientation === 'horizontal' ? 'horizontal' : 'vertical'"
+      viewport-class="ui-segmented-control__options"
+      :scrollbar-visibility="orientation === 'horizontal' ? 'auto' : 'hidden'"
     >
-      <slot name="label" :item="item">{{ item.label }}</slot>
-      <slot name="after" :item="item" />
-    </button>
+      <button
+        v-for="item in items"
+        :key="item.id"
+        ref="options"
+        type="button"
+        class="ui-segmented-control__option"
+        :class="{
+          'ui-segmented-control__option--selected': Object.is(
+            item.id,
+            modelValue,
+          ),
+        }"
+        role="radio"
+        :aria-checked="Object.is(item.id, modelValue)"
+        :aria-disabled="itemDisabled(item) || undefined"
+        :disabled="itemDisabled(item)"
+        :tabindex="Object.is(item.id, focusId) ? 0 : -1"
+        @click="select(item)"
+        @keydown="moveFocus(item, $event)"
+      >
+        <slot name="label" :item="item">{{ item.label }}</slot>
+        <slot name="after" :item="item" />
+      </button>
+    </UiScrollRegion>
   </div>
 </template>
 
 <style scoped>
 .ui-segmented-control {
   min-width: 0;
-  display: inline-flex;
-  align-items: stretch;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
+  display: inline-block;
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
-.ui-segmented-control--vertical {
+.ui-segmented-control__scroll {
+  max-width: 100%;
+}
+
+.ui-segmented-control__scroll :deep(.ui-segmented-control__options) {
+  display: flex;
+  align-items: stretch;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-1);
+}
+
+.ui-segmented-control--vertical
+  .ui-segmented-control__scroll
+  :deep(.ui-segmented-control__options) {
   flex-direction: column;
 }
 
 .ui-segmented-control--horizontal {
   max-width: 100%;
-  overflow-x: auto;
 }
 
 .ui-segmented-control__option {

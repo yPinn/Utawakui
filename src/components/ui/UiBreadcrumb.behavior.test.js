@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it, vi } from 'vitest';
 import UiBreadcrumb from './UiBreadcrumb.vue';
+import UiScrollRegion from './UiScrollRegion.vue';
 import {
   attachClientRender,
   findAll,
@@ -10,6 +11,7 @@ import {
 } from './uiTestHost.js';
 
 attachClientRender(UiBreadcrumb, './UiBreadcrumb.vue', import.meta.url);
+attachClientRender(UiScrollRegion, './UiScrollRegion.vue', import.meta.url);
 
 const ITEMS = [
   { id: 'library', label: '曲庫' },
@@ -116,7 +118,7 @@ describe('UiBreadcrumb', () => {
     ]) {
       expect(source).toContain(`var(${token})`);
     }
-    expect(source).toMatch(/overflow-x:\s*auto;/u);
+    expect(source).toContain('viewport-tag="ol"');
     expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(|hsla?\(/iu);
   });
 });

@@ -1,4 +1,6 @@
 <script setup>
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
 defineProps({
   layer: { type: Object, required: true },
 });
@@ -111,7 +113,7 @@ const CONTENT_ITEMS = [
       <div class="demo-marquee-content-list">
         <article v-for="item in CONTENT_ITEMS" :key="item.id">
           <span class="demo-marquee-item__label">{{ item.id }}</span>
-          <div class="demo-marquee-frame">
+          <UiScrollRegion class="demo-marquee-frame" axis="horizontal">
             <component
               :is="layer.component"
               :data-marquee-content="item.id"
@@ -119,7 +121,7 @@ const CONTENT_ITEMS = [
               :lang="item.lang"
               :dir="item.dir"
             />
-          </div>
+          </UiScrollRegion>
         </article>
       </div>
     </section>
@@ -332,7 +334,6 @@ const CONTENT_ITEMS = [
 }
 
 .demo-marquee-content-list .demo-marquee-frame {
-  overflow-x: auto;
   padding: var(--ui-space-2);
 }
 

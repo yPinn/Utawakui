@@ -5,6 +5,7 @@ import AppArchiveFrame from './AppArchiveFrame.vue';
 import AppInnerPage from './AppInnerPage.vue';
 import AppTopTabs from './AppTopTabs.vue';
 import UiSurface from '../ui/UiSurface.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import {
   attachClientRender,
   findAll,
@@ -17,6 +18,7 @@ for (const [component, filename] of [
   [AppInnerPage, './AppInnerPage.vue'],
   [AppTopTabs, './AppTopTabs.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
+  [UiScrollRegion, '../ui/UiScrollRegion.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

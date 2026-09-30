@@ -15,6 +15,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 
 const { createRenderer, nextTick, reactive, ref, ssrContextKey } = Vue;
@@ -46,6 +47,7 @@ attachClientRender(UiChip, '../ui/UiChip.vue');
 attachClientRender(UiHint, '../ui/UiHint.vue');
 attachClientRender(UiIconButton, '../ui/UiIconButton.vue');
 attachClientRender(UiNotice, '../ui/UiNotice.vue');
+attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue');
 attachClientRender(UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue');
 
 function hostNode(type, text = '') {
@@ -273,7 +275,7 @@ describe('Lyrics workspace control contracts', () => {
     await nextTick();
     reader.props.onPointerdown({ target: reader, currentTarget: reader });
     reader.scrollTop = 120;
-    reader.props.onScroll();
+    for (const handler of [reader.props.onScroll].flat()) handler();
     await nextTick();
     expect(findByProp(panel.root, 'aria-label', '回到目前歌詞')).toBeTruthy();
   });

@@ -4,6 +4,7 @@ import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import DemoCandidateActionMenu from './DemoCandidateActionMenu.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const { createRenderer, h, nextTick, ssrContextKey } = Vue;
 
@@ -20,6 +21,7 @@ function attachClientRender(component, filename) {
 }
 
 attachClientRender(DemoCandidateActionMenu, './DemoCandidateActionMenu.vue');
+attachClientRender(UiScrollRegion, '../ui/UiScrollRegion.vue');
 
 let activeElement;
 
@@ -109,6 +111,16 @@ function textContent(node) {
   return node.type === 'text'
     ? node.text
     : (node.children ?? []).map(textContent).join('');
+}
+
+function hasClass(node, className) {
+  return String(node.props?.class ?? '')
+    .split(' ')
+    .includes(className);
+}
+
+function menuRoots() {
+  return findAll(body, (node) => hasClass(node, 'demo-action-menu'));
 }
 
 function keyEvent(key, overrides = {}) {
@@ -326,7 +338,8 @@ describe('DemoCandidateActionMenu behavior', () => {
         },
       ],
     });
-    const rootMenu = findAll(body, (node) => node.props.role === 'menu')[0];
+    const rootMenu = menuRoots()[0];
+    const rootViewport = findAll(body, (node) => node.props.role === 'menu')[0];
     const parentItem = findAll(
       rootMenu,
       (node) => node.props.role === 'menuitem',
@@ -350,7 +363,7 @@ describe('DemoCandidateActionMenu behavior', () => {
 
     parentItem.props.onKeydown(keyEvent('ArrowRight'));
     await nextTick();
-    const submenu = findAll(body, (node) => node.props.role === 'menu')[1];
+    const submenu = menuRoots()[1];
     submenu.rect = {
       left: 0,
       top: 0,
@@ -386,7 +399,7 @@ describe('DemoCandidateActionMenu behavior', () => {
       width: 210,
       height: 32,
     };
-    listeners.get('scroll')({ target: rootMenu });
+    listeners.get('scroll')({ target: rootViewport });
     expect(close).not.toHaveBeenCalled();
     expect(animationFrames).toHaveLength(1);
     animationFrames.splice(0).forEach((callback) => callback());
@@ -410,7 +423,7 @@ describe('DemoCandidateActionMenu behavior', () => {
     expect(source).toMatch(/min-block-size:\s*var\(--ui-menu-item-height\)/);
     expect(source).not.toMatch(/max-block-size:\s*2rem/);
     expect(source).toMatch(
-      /\.demo-action-menu\s*\{[^}]*padding:\s*var\(--ui-space-1\)/s,
+      /\.demo-action-menu\s+:deep\(\.demo-action-menu__viewport\)\s*\{[^}]*padding:\s*var\(--ui-space-1\)/s,
     );
     expect(source).toMatch(
       /\.demo-action-menu__item\s*\{[^}]*column-gap:\s*var\(--ui-space-2\)[^}]*padding:\s*var\(--ui-space-1\) var\(--ui-space-2\)/s,
@@ -435,7 +448,7 @@ describe('DemoCandidateActionMenu behavior', () => {
         },
       ],
     });
-    const menu = findAll(body, (node) => node.props.role === 'menu')[0];
+    const menu = menuRoots()[0];
     const items = findAll(menu, (node) => node.props.role === 'menuitem');
     const itemText = items.map(textContent);
 
@@ -508,7 +521,7 @@ describe('DemoCandidateActionMenu behavior', () => {
       ],
     });
     let items = findAll(body, (node) => node.props.role === 'menuitem');
-    const rootMenu = findAll(body, (node) => node.props.role === 'menu')[0];
+    const rootMenu = menuRoots()[0];
     rootMenu.rect = {
       left: 300,
       top: 96,
@@ -529,7 +542,7 @@ describe('DemoCandidateActionMenu behavior', () => {
     const open = keyEvent('ArrowLeft');
     items[0].props.onKeydown(open);
     await nextTick();
-    const submenu = findAll(body, (node) => node.props.role === 'menu')[1];
+    const submenu = menuRoots()[1];
     submenu.rect = {
       left: 0,
       top: 0,
@@ -556,7 +569,7 @@ describe('DemoCandidateActionMenu behavior', () => {
 
   it('clamps the actual menu box inside every viewport edge', async () => {
     const { app } = await mountMenu({ x: 310, y: 230, width: 220 });
-    const menu = findAll(body, (node) => node.props.role === 'menu')[0];
+    const menu = menuRoots()[0];
 
     expect(menu.props.style.left).toBe('92px');
     expect(menu.props.style.top).toBe('200px');

@@ -49,13 +49,15 @@ describe('Music Analysis scroll layout', () => {
       /\.analysis-picker\s*\{[^}]*height:\s*100%;[^}]*min-height:\s*0;/s,
     );
     expect(pickerSource).toMatch(
-      /\.analysis-picker__list\s*\{[^}]*flex:\s*1;[^}]*overflow-y:\s*auto;/s,
+      /\.analysis-picker__list\s*\{[^}]*flex:\s*1;/s,
     );
+    expect(pickerSource).toContain('<UiScrollRegion');
   });
 
   it('gives the result pane its own vertical scroll boundary', () => {
-    expect(workbenchSource).toMatch(
-      /\.analysis-workbench__detail\s*\{[^}]*overflow-y:\s*auto;/s,
+    expect(workbenchSource).toContain('class="analysis-workbench__detail"');
+    expect(workbenchSource).toContain(
+      'viewport-class="analysis-workbench__detail-viewport"',
     );
   });
 
