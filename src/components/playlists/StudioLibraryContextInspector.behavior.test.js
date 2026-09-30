@@ -5,7 +5,7 @@ import {
   INSPECTOR_WIDTH_MIN,
   useStudioLibraryInspectorWidth,
 } from '../../composables/useStudioLibraryInspectorWidth.js';
-import StudioLibraryContextInspector from './StudioLibraryContextInspector.vue';
+import TrackContextPanel from './TrackContextPanel.vue';
 import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
@@ -16,6 +16,7 @@ import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import UiTrackThumb from '../ui/UiTrackThumb.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import TrackContextBlock from './TrackContextBlock.vue';
 import {
   attachClientRender,
   findAll,
@@ -25,7 +26,7 @@ import {
 } from '../ui/uiTestHost.js';
 
 for (const [component, filename] of [
-  [StudioLibraryContextInspector, './StudioLibraryContextInspector.vue'],
+  [TrackContextPanel, './TrackContextPanel.vue'],
   [AppRightDockHeader, '../layout/AppRightDockHeader.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
@@ -36,6 +37,7 @@ for (const [component, filename] of [
   [UiTrackRow, '../ui/UiTrackRow.vue'],
   [UiTrackThumb, '../ui/UiTrackThumb.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
+  [TrackContextBlock, './TrackContextBlock.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
@@ -67,12 +69,35 @@ const upcomingTracks = [
   },
 ];
 
+const lyricsPreview = {
+  sourceLabel: '手動匯入 / 演出修訂版',
+  lines: [
+    { id: 'line-1', text: '正在播放的歌詞', active: true },
+    { id: 'line-2', text: '接下來的一行', active: false },
+  ],
+};
+
+const artistSummary = {
+  name: '真實演出者',
+  trackCount: 4,
+  albumCount: 2,
+  tracks: [currentTrack],
+};
+
+const readiness = [
+  { id: 'lyrics', label: '歌詞可用', tone: 'success' },
+  { id: 'separation', label: '尚無分離素材', tone: 'muted' },
+];
+
 function mountInspector(overrides = {}) {
   const onClose = vi.fn();
-  const mounted = mount(StudioLibraryContextInspector, {
+  const mounted = mount(TrackContextPanel, {
     currentTrack,
     queueSourceName: '深夜練唱清單',
     upcomingTracks,
+    lyricsPreview,
+    artistSummary,
+    readiness,
     onClose,
     ...overrides,
   });
@@ -80,43 +105,52 @@ function mountInspector(overrides = {}) {
 }
 
 describe('Studio Library Context Inspector', () => {
-  it('uses the shared Right Dock Track Row recipe for current and upcoming identities', () => {
+  it('uses a hero identity for the current track and the shared Track Row for queue entries', () => {
     const source = readFileSync(
-      new URL('./StudioLibraryContextInspector.vue', import.meta.url),
+      new URL('./TrackContextPanel.vue', import.meta.url),
       'utf8',
     );
 
     expect(source).toContain("import UiTrackRow from '../ui/UiTrackRow.vue';");
-    expect(source.match(/<UiTrackRow/gu)).toHaveLength(2);
-    expect(source).toContain('class="studio-context-inspector__current-track"');
+    expect(source.match(/<UiTrackRow/gu)).toHaveLength(1);
+    expect(source).toContain('class="studio-context-inspector__now-artwork"');
     expect(source).toContain('class="studio-context-inspector__queue-item"');
     expect(source).toContain('hide-duration');
     expect(source).toContain('overflow="ellipsis"');
     expect(source).not.toContain('UiTrackThumb');
     expect(source).not.toContain('--ui-track-artwork-size-preview');
     expect(source).not.toContain('--ui-track-artwork-size-dense');
-    expect(source).not.toContain('grid-template-columns: auto minmax(0, 1fr)');
+    expect(source).toContain('UiCollageThumb');
   });
 
   it('assigns semantic tiers to headings, metadata, and prose', () => {
     const source = readFileSync(
-      new URL('./StudioLibraryContextInspector.vue', import.meta.url),
+      new URL('./TrackContextPanel.vue', import.meta.url),
+      'utf8',
+    );
+    const blockSource = readFileSync(
+      new URL('./TrackContextBlock.vue', import.meta.url),
       'utf8',
     );
 
-    expect(source).toMatch(
-      /\.studio-context-inspector__section h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+    expect(blockSource).toMatch(
+      /\.track-context-block__header h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
     );
     expect(source).toMatch(
-      /\.studio-context-inspector__collection h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-md\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,
+      /\.studio-context-inspector__collection h4,[\s\S]*?\{[^}]*font-size:\s*var\(--ui-font-size-md\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/u,
     );
     expect(source).toMatch(
-      /\.studio-context-inspector__collection p\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*line-height:\s*var\(--ui-line-height-body\);[^}]*text-wrap:\s*pretty;[^}]*overflow-wrap:\s*anywhere;/su,
+      /\.studio-context-inspector__now-copy p,[\s\S]*?\.studio-context-inspector__collection p,[\s\S]*?\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*line-height:\s*var\(--ui-line-height-body\);/u,
+    );
+    expect(source).toMatch(
+      /\.studio-context-inspector__collection p\s*\{[^}]*font-weight:\s*var\(--ui-font-weight-regular\);[^}]*text-wrap:\s*pretty;[^}]*overflow-wrap:\s*anywhere;/su,
     );
     expect(source).not.toMatch(
       /\.studio-context-inspector__collection p\s*\{[^}]*white-space:\s*nowrap;/su,
     );
-    expect(source).not.toMatch(/font-size:\s*(?:\d|\.)+(?:px|rem)/u);
+    expect(`${source}\n${blockSource}`).not.toMatch(
+      /font-size:\s*(?:\d|\.)+(?:px|rem)/u,
+    );
   });
 
   it('shows current-track metadata from the playback context without repeating playlist facts', () => {
@@ -126,16 +160,16 @@ describe('Studio Library Context Inspector', () => {
       root,
       (node) => node.type === 'button' && textContent(node) === '關閉播放資訊',
     )[0];
-    const currentRow = findAll(root, (node) =>
+    const currentIdentity = findAll(root, (node) =>
       String(node.props?.class ?? '').includes(
-        'studio-context-inspector__current-track',
+        'studio-context-inspector__now-identity',
       ),
     )[0];
     const renderedArtwork = findAll(
       root,
       (node) =>
         node.type === 'span' &&
-        String(node.props?.class ?? '').includes('ui-track-thumb'),
+        String(node.props?.class ?? '').includes('ui-collage-thumb'),
     )[0];
     const currentStatus = findAll(root, (node) =>
       String(node.props?.class ?? '').includes('ui-status-icon'),
@@ -151,11 +185,10 @@ describe('Studio Library Context Inspector', () => {
     expect(textContent(root)).not.toMatch(
       /檔案摘要|曲目\s*12 首|總長|集合類型/u,
     );
-    expect(currentRow.type).toBe('li');
-    expect(String(currentRow.props.class)).toContain('ui-track--current');
+    expect(currentIdentity).toBeDefined();
     expect(renderedArtwork.props.style).toMatchObject({
-      width: 'var(--ui-track-row-thumb-size)',
-      height: 'var(--ui-track-row-thumb-size)',
+      width: '248px',
+      height: '248px',
     });
     expect(String(close.props.class)).toContain('ui-icon-btn');
     expect(String(close.props.class)).toContain('app-right-dock-header__close');
@@ -227,31 +260,77 @@ describe('Studio Library Context Inspector', () => {
     app.unmount();
   });
 
-  it('shows independent empty states when playback or the upcoming queue is absent', () => {
-    const { app, root } = mount(StudioLibraryContextInspector, {
+  it('shows one empty playback state and omits unavailable optional blocks', () => {
+    const { app, root } = mount(TrackContextPanel, {
       currentTrack: null,
       queueSourceName: '',
       upcomingTracks: [],
     });
 
     expect(textContent(root)).toContain('目前沒有播放中的歌曲');
-    expect(textContent(root)).toContain('佇列中沒有下一首');
+    expect(textContent(root)).not.toContain('歌詞預覽');
+    expect(textContent(root)).not.toContain('接下來');
     expect(textContent(root)).not.toContain('集合資料');
+    app.unmount();
+  });
+
+  it('orders truthful blocks by playback priority', () => {
+    const { app, root } = mountInspector({
+      collection: {
+        name: '深夜練唱清單',
+        description: '睡前放鬆用的慢歌',
+        coverUrl: '',
+        canCollage: true,
+        tracks: [],
+      },
+    });
+    const orderedHeadings = [
+      '目前播放',
+      '歌詞預覽',
+      '播放來源',
+      '本機藝人',
+      '接下來',
+      '曲目資訊',
+    ];
+
+    const renderedHeadings = findAll(root, (node) => node.type === 'h3').map(
+      textContent,
+    );
+
+    expect(renderedHeadings).toEqual(orderedHeadings);
+    app.unmount();
+  });
+
+  it('shows projected lyric, local artist, and readiness information without Spotify-only claims', () => {
+    const { app, root } = mountInspector();
+    const text = textContent(root);
+
+    expect(text).toContain('正在播放的歌詞');
+    expect(text).toContain('接下來的一行');
+    expect(text).toContain('手動匯入 / 演出修訂版');
+    expect(text).toContain('本機收錄 4 首 · 2 張專輯');
+    expect(text).toContain('歌詞可用');
+    expect(text).toContain('尚無分離素材');
+    expect(text).not.toMatch(/追蹤|粉絲|Biography|Follow|製作人|作曲/u);
     app.unmount();
   });
 
   it('keeps queue chrome protected while current and upcoming metadata remain selectable', () => {
     const source = readFileSync(
-      new URL('./StudioLibraryContextInspector.vue', import.meta.url),
+      new URL('./TrackContextPanel.vue', import.meta.url),
       'utf8',
     );
     const headerSource = readFileSync(
       new URL('../layout/AppRightDockHeader.vue', import.meta.url),
       'utf8',
     );
+    const blockSource = readFileSync(
+      new URL('./TrackContextBlock.vue', import.meta.url),
+      'utf8',
+    );
 
     expect(source).toMatch(
-      /\.studio-context-inspector__section-heading\s+:deep\(\.ui-chip\)\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
+      /\.studio-context-inspector__section :deep\(\.ui-chip\),[\s\S]*?\.studio-context-inspector__section :deep\(\.ui-status-icon\)\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
     );
     expect(source).not.toMatch(
       /\.studio-context-inspector\s*\{[^}]*user-select:\s*none;/su,
@@ -260,16 +339,19 @@ describe('Studio Library Context Inspector', () => {
       /\.app-right-dock-header p\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/su,
     );
     expect(source).toMatch(
-      /\.studio-context-inspector__track-list\s+:deep\(\.ui-track__info\),[\s\S]*?\.studio-context-inspector__collection p\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
+      /\.studio-context-inspector__now-copy,[\s\S]*?\.studio-context-inspector__queue-list :deep\(\.ui-track__info\),[\s\S]*?\.studio-context-inspector__details dd\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
     );
     expect(source).toMatch(
-      /\.studio-context-inspector__section\s+:deep\(\.ui-hint\)\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/su,
+      /\.studio-context-inspector__section :deep\(\.ui-hint\),[\s\S]*?\.studio-context-inspector__details dd\s*\{[^}]*-webkit-user-select:\s*text;[^}]*user-select:\s*text;/u,
     );
     expect(headerSource).toMatch(
       /\.app-right-dock-header h2\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
     );
+    expect(blockSource).toMatch(
+      /\.track-context-block__header h3\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
+    );
     expect(source).toMatch(
-      /\.studio-context-inspector__section h3,[\s\S]*?\.studio-context-inspector__section dt\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
+      /\.studio-context-inspector__details dt\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/su,
     );
     // UiCollageThumb remains the collection-level summary. Current and
     // upcoming identities consume UiTrackRow, which owns the single-track
@@ -294,10 +376,12 @@ describe('Studio Library Context Inspector', () => {
     });
     const heading = findAll(
       root,
-      (node) => node.props?.id === 'studio-context-collection-heading',
+      (node) => node.type === 'h4' && textContent(node) === '深夜練唱清單',
     )[0];
     const cover = findAll(root, (node) =>
-      String(node.props?.class ?? '').includes('ui-collage-thumb'),
+      String(node.props?.class ?? '').includes(
+        'studio-context-inspector__collection-cover',
+      ),
     )[0];
 
     expect(textContent(heading)).toBe('深夜練唱清單');
@@ -325,7 +409,9 @@ describe('Studio Library Context Inspector', () => {
     inspectorWidth.width.value = INSPECTOR_WIDTH_MIN;
     const atMin = mountInspector({ collection });
     const coverAtMin = findAll(atMin.root, (node) =>
-      String(node.props?.class ?? '').includes('ui-collage-thumb'),
+      String(node.props?.class ?? '').includes(
+        'studio-context-inspector__collection-cover',
+      ),
     )[0];
     expect(coverAtMin.props.style).toMatchObject({
       width: '88px',
@@ -336,7 +422,9 @@ describe('Studio Library Context Inspector', () => {
     inspectorWidth.width.value = INSPECTOR_WIDTH_MAX;
     const atMax = mountInspector({ collection });
     const coverAtMax = findAll(atMax.root, (node) =>
-      String(node.props?.class ?? '').includes('ui-collage-thumb'),
+      String(node.props?.class ?? '').includes(
+        'studio-context-inspector__collection-cover',
+      ),
     )[0];
     expect(coverAtMax.props.style).toMatchObject({
       width: '120px',
@@ -363,7 +451,9 @@ describe('Studio Library Context Inspector', () => {
       },
     });
     const cover = findAll(root, (node) =>
-      String(node.props?.class ?? '').includes('ui-collage-thumb'),
+      String(node.props?.class ?? '').includes(
+        'studio-context-inspector__collection-cover',
+      ),
     )[0];
 
     // canCollage:false + no coverUrl falls back to a single-track image, not
@@ -377,7 +467,7 @@ describe('Studio Library Context Inspector', () => {
     const { app, root } = mountInspector({ collection: null });
     const heading = findAll(
       root,
-      (node) => node.props?.id === 'studio-context-collection-heading',
+      (node) => node.type === 'h4' && textContent(node) === '深夜練唱清單',
     )[0];
 
     expect(heading).toBeUndefined();

@@ -135,7 +135,7 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(source).not.toContain('StudioLibraryContextInspector');
     expect(contextSource).not.toContain('useStudioLibraryInspector');
     expect(contextSource).toContain('usePlaybackQueue');
-    expect(contextSource).toContain('<StudioLibraryContextInspector');
+    expect(contextSource).toContain('<TrackContextPanel');
     expect(contextSource).toContain("const emit = defineEmits(['close'])");
     expect(contextSource).toContain('@close="emit(\'close\')"');
     expect(contextSource).toContain(':current-track="currentTrack"');
@@ -164,12 +164,9 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(appSource).toContain('position: absolute');
     expect(appSource).toContain('@media (max-width: 70rem)');
     expect(archiveFrameSource).not.toContain('@media (max-width: 70rem)');
-    expect(contextSource).toContain('StudioLibraryContextInspector');
+    expect(contextSource).toContain('TrackContextPanel');
     const inspectorSource = readFileSync(
-      new URL(
-        '../components/playlists/StudioLibraryContextInspector.vue',
-        import.meta.url,
-      ),
+      new URL('../components/playlists/TrackContextPanel.vue', import.meta.url),
       'utf8',
     );
     expect(rightDockSource).toContain('.app-right-dock--collapsed');
