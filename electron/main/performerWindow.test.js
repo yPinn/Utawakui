@@ -73,7 +73,18 @@ describe('performer window manager', () => {
 
     expect(FakeWindow.instances).toHaveLength(1);
     const window = FakeWindow.instances[0];
+    expect(manager.getWebContents()).toBe(window.webContents);
     expect(window.focus).toHaveBeenCalled();
+    expect(window.options.webPreferences).toMatchObject({
+      sandbox: true,
+      contextIsolation: true,
+      nodeIntegration: false,
+      navigateOnDragDrop: false,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false,
+      devTools: true,
+    });
     window.webContents.emit('did-finish-load');
     expect(window.webContents.send).toHaveBeenCalledWith(
       'performer-view:snapshot',

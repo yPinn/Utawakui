@@ -4,6 +4,7 @@ const {
   createEmptyPerformerSnapshot,
   parsePerformerSnapshot,
 } = require('../lib/performerSnapshot');
+const { hardenWebContentsNavigation } = require('./webContentsSecurity');
 
 const DEFAULT_BOUNDS = Object.freeze({ width: 960, height: 460 });
 const MIN_BOUNDS = Object.freeze({ width: 800, height: 360 });
@@ -112,6 +113,11 @@ function createPerformerWindowManager(options) {
         nodeIntegration: false,
         sandbox: true,
         backgroundThrottling: false,
+        navigateOnDragDrop: false,
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        webviewTag: false,
+        devTools: isDev,
         additionalArguments: [`--ui-theme=${initialTheme}`],
       },
     });
@@ -130,9 +136,8 @@ function createPerformerWindowManager(options) {
       sendLatestSnapshot();
       emitStatus();
     });
-    window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-    window.webContents.on('will-navigate', (event, url) => {
-      if (url !== window.webContents.getURL()) event.preventDefault();
+    hardenWebContentsNavigation(window.webContents, {
+      isAllowedNavigation: (url) => url === window.webContents.getURL(),
     });
     window.on('move', rememberBounds);
     window.on('resize', rememberBounds);
@@ -203,6 +208,7 @@ function createPerformerWindowManager(options) {
     close,
     getSnapshot: () => latestSnapshot,
     getStatus,
+    getWebContents: () => liveWindow()?.webContents ?? null,
     minimize,
     open,
     publish,

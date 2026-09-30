@@ -5,6 +5,7 @@ const {
   isSpoutConfigureMessage,
   isSpoutStopMessage,
 } = require('../../shared/spoutOutputContract');
+const { hardenWebContentsNavigation } = require('./webContentsSecurity');
 
 const DEFAULT_MAX_CONSECUTIVE_PAINT_DEFECTS = 30;
 
@@ -132,6 +133,11 @@ function createSpoutHelperController({
           nodeIntegration: false,
           sandbox: true,
           backgroundThrottling: false,
+          navigateOnDragDrop: false,
+          webSecurity: true,
+          allowRunningInsecureContent: false,
+          webviewTag: false,
+          devTools: false,
           partition: 'spout-helper',
           offscreen: {
             useSharedTexture: true,
@@ -144,17 +150,13 @@ function createSpoutHelperController({
 
       const { webContents } = outputWindow;
       webContents.setFrameRate(surface.framesPerSecond);
-      webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+      hardenWebContentsNavigation(webContents, {
+        isAllowedNavigation: (url) => url === configuration.outputUrl,
+      });
       webContents.session.setPermissionCheckHandler(() => false);
       webContents.session.setPermissionRequestHandler(
         (_webContents, _permission, callback) => callback(false),
       );
-      webContents.on('will-navigate', (event, targetUrl) => {
-        if (targetUrl !== configuration.outputUrl) event.preventDefault();
-      });
-      webContents.on('will-redirect', (event, targetUrl) => {
-        if (targetUrl !== configuration.outputUrl) event.preventDefault();
-      });
       webContents.once('render-process-gone', (_event, details) => {
         failAndStop('SPOUT_RENDERER_FAILED', details);
       });
@@ -221,6 +223,7 @@ function createSpoutHelperController({
 
 function runSpoutHelper() {
   const { app, BrowserWindow } = require('electron');
+  app.enableSandbox();
   if (typeof process.send !== 'function') {
     app.quit();
     return;

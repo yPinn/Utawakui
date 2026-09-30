@@ -12,7 +12,7 @@ const {
   Menu,
   Tray,
   session,
-  ipcMain,
+  ipcMain: electronIpcMain,
   dialog,
   protocol,
   nativeTheme,
@@ -24,6 +24,9 @@ const {
 } = require('electron');
 
 const APP_NAME = 'Utawakui';
+// Apply Chromium sandboxing before ready and before any BrowserWindow can be
+// created. The helper process repeats the same invariant in its own bootstrap.
+app.enableSandbox();
 // Must run before app.getPath('userData') is read below (and before any
 // require of a lib that reads it), or userData resolves to Electron's
 // default app name instead of ours.
@@ -144,6 +147,8 @@ const {
 } = require('./main/playbackPersistenceHandlers');
 const { registerDiagnosticsHandlers } = require('./main/diagnosticsHandlers');
 const { registerDiagnosticsLifecycle } = require('./main/diagnosticsLifecycle');
+const { createTrustedIpcMain } = require('./main/ipcSenderPolicy');
+const { createRendererRecoveryController } = require('./main/rendererRecovery');
 const { registerFeedbackHandlers } = require('./main/feedbackHandlers');
 const { createFeedbackClient } = require('./lib/feedback/client');
 const { resolveFeedbackEndpoint } = require('./lib/feedback/constants');
@@ -233,6 +238,34 @@ const startupTraceProbe = startupTrace.enabled
   : null;
 let startupTraceCompletion = null;
 
+const ipcMain = createTrustedIpcMain({
+  ipcMain: electronIpcMain,
+  getMainWebContents: () => windowState.getMainWindow()?.webContents ?? null,
+  getPerformerWebContents: () =>
+    performerWindowManager?.getWebContents() ?? null,
+  onRejected: ({ channel, capability, kind }) =>
+    diagnosticsService.record({
+      process: 'main',
+      level: 'warning',
+      source: 'ipc',
+      operation: 'sender-rejected',
+      code: 'IPC_SENDER_UNTRUSTED',
+      message: 'Rejected an untrusted IPC sender',
+      context: { channel, capability, kind },
+    }),
+});
+
+const rendererRecoveryController = createRendererRecoveryController({
+  dialog,
+  getMainWindow: windowState.getMainWindow,
+  restartApp: () => {
+    app.relaunch();
+    app.quit();
+  },
+  quitApp: () => app.quit(),
+  recordDiagnostic: (event) => diagnosticsService.record(event),
+});
+
 const obsPowerSaveBlockerSync = createObsPowerSaveBlocker({ powerSaveBlocker });
 
 function completeStartupTrace() {
@@ -302,6 +335,8 @@ registerDiagnosticsLifecycle({
   app,
   processTarget: process,
   service: diagnosticsService,
+  getMainWebContents: () => windowState.getMainWindow()?.webContents ?? null,
+  requestRendererRecovery: rendererRecoveryController.requestRecovery,
 });
 
 // Also removes Electron's default Ctrl+0/+/- zoom accelerators, which let

@@ -40,13 +40,20 @@ describe('registerDiagnosticsLifecycle', () => {
 
   it('records renderer and child process termination without URLs or command lines', () => {
     const { app, processTarget, record } = createTargets();
+    const mainWebContents = {};
+    const requestRendererRecovery = vi.fn();
     registerDiagnosticsLifecycle({
       app,
       processTarget,
       service: { record },
+      getMainWebContents: () => mainWebContents,
+      requestRendererRecovery,
     });
 
-    app.emit('render-process-gone', {}, {}, { reason: 'crashed', exitCode: 9 });
+    app.emit('render-process-gone', {}, mainWebContents, {
+      reason: 'crashed',
+      exitCode: 9,
+    });
     app.emit(
       'child-process-gone',
       {},
@@ -82,15 +89,20 @@ describe('registerDiagnosticsLifecycle', () => {
         exitCode: 12,
       },
     });
+    expect(requestRendererRecovery).toHaveBeenCalledOnce();
+    expect(requestRendererRecovery).toHaveBeenCalledWith('renderer-crashed');
   });
 
   it('attaches bounded webContents lifecycle listeners', () => {
     const { app, processTarget, record } = createTargets();
     const webContents = new EventEmitter();
+    const requestRendererRecovery = vi.fn();
     registerDiagnosticsLifecycle({
       app,
       processTarget,
       service: { record },
+      getMainWebContents: () => webContents,
+      requestRendererRecovery,
     });
     app.emit('web-contents-created', {}, webContents);
 
@@ -136,6 +148,11 @@ describe('registerDiagnosticsLifecycle', () => {
       code: 'PRELOAD_FAILED',
       error: preloadError,
     });
+    expect(requestRendererRecovery.mock.calls).toEqual([
+      ['renderer-load-failed'],
+      ['renderer-unresponsive'],
+      ['renderer-preload-failed'],
+    ]);
   });
 
   it('removes every installed listener during cleanup', () => {
@@ -190,6 +207,33 @@ describe('registerDiagnosticsLifecycle', () => {
 
     expect(record).toHaveBeenCalledOnce();
     expect(record.mock.calls[0][0].context.fatal).toBe(false);
+  });
+
+  it('does not recover companion renderers or nonfatal main exits', () => {
+    const { app, processTarget, record } = createTargets();
+    const mainWebContents = new EventEmitter();
+    const performerWebContents = new EventEmitter();
+    const requestRendererRecovery = vi.fn();
+    registerDiagnosticsLifecycle({
+      app,
+      processTarget,
+      service: { record },
+      getMainWebContents: () => mainWebContents,
+      requestRendererRecovery,
+    });
+
+    app.emit('render-process-gone', {}, mainWebContents, {
+      reason: 'clean-exit',
+      exitCode: 0,
+    });
+    app.emit('render-process-gone', {}, performerWebContents, {
+      reason: 'crashed',
+      exitCode: 9,
+    });
+    app.emit('web-contents-created', {}, performerWebContents);
+    performerWebContents.emit('unresponsive');
+
+    expect(requestRendererRecovery).not.toHaveBeenCalled();
   });
 
   it('tolerates missing Electron termination details', () => {

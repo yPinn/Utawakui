@@ -1,3 +1,4 @@
+import { EventEmitter } from 'node:events';
 import { describe, expect, it, vi } from 'vitest';
 import startupTraceProbeModule from './startupTraceProbe.js';
 
@@ -12,7 +13,8 @@ describe('startup trace overlay probe', () => {
         this.loadURL = vi.fn();
         this.destroy = vi.fn();
         this.isDestroyed = vi.fn(() => false);
-        this.webContents = { setWindowOpenHandler: vi.fn() };
+        this.webContents = new EventEmitter();
+        this.webContents.setWindowOpenHandler = vi.fn();
         windows.push(this);
       }
     }
@@ -28,6 +30,11 @@ describe('startup trace overlay probe', () => {
         contextIsolation: true,
         nodeIntegration: false,
         backgroundThrottling: false,
+        navigateOnDragDrop: false,
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        webviewTag: false,
+        devTools: false,
       },
     });
     expect(windows[0].loadURL).toHaveBeenCalledWith(
@@ -36,6 +43,24 @@ describe('startup trace overlay probe', () => {
     expect(
       windows[0].webContents.setWindowOpenHandler.mock.calls[0][0](),
     ).toEqual({ action: 'deny' });
+
+    for (const eventName of ['will-navigate', 'will-redirect']) {
+      const blockedEvent = { preventDefault: vi.fn() };
+      windows[0].webContents.emit(
+        eventName,
+        blockedEvent,
+        'https://example.com/',
+      );
+      expect(blockedEvent.preventDefault).toHaveBeenCalledOnce();
+
+      const allowedEvent = { preventDefault: vi.fn() };
+      windows[0].webContents.emit(
+        eventName,
+        allowedEvent,
+        'http://127.0.0.1:8700/overlay/lyrics?startupTrace=1',
+      );
+      expect(allowedEvent.preventDefault).not.toHaveBeenCalled();
+    }
 
     probe.stop();
     expect(windows[0].destroy).toHaveBeenCalledOnce();

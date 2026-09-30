@@ -1,3 +1,5 @@
+const { hardenWebContentsNavigation } = require('./webContentsSecurity');
+
 function parseLoopbackRuntimeUrl(value) {
   let parsed;
 
@@ -41,13 +43,19 @@ function createStartupTraceProbe({ BrowserWindow }) {
         contextIsolation: true,
         nodeIntegration: false,
         backgroundThrottling: false,
+        navigateOnDragDrop: false,
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        webviewTag: false,
+        devTools: false,
       },
     });
 
-    probeWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-    Promise.resolve(
-      probeWindow.loadURL(`${runtimeOrigin}/overlay/lyrics?startupTrace=1`),
-    ).catch(() => {});
+    const probeUrl = `${runtimeOrigin}/overlay/lyrics?startupTrace=1`;
+    hardenWebContentsNavigation(probeWindow.webContents, {
+      isAllowedNavigation: (url) => url === probeUrl,
+    });
+    Promise.resolve(probeWindow.loadURL(probeUrl)).catch(() => {});
     return true;
   }
 

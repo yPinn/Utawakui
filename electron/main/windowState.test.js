@@ -135,6 +135,11 @@ describe('windowState security boundary', () => {
         nodeIntegration: false,
         sandbox: true,
         backgroundThrottling: false,
+        navigateOnDragDrop: false,
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        webviewTag: false,
+        devTools: false,
         additionalArguments: [
           '--ui-theme=light',
           '--ui-density=compact',

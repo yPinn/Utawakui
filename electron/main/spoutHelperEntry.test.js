@@ -113,6 +113,11 @@ describe('Spout helper controller', () => {
         nodeIntegration: false,
         sandbox: true,
         backgroundThrottling: false,
+        navigateOnDragDrop: false,
+        webSecurity: true,
+        allowRunningInsecureContent: false,
+        webviewTag: false,
+        devTools: false,
         partition: 'spout-helper',
         offscreen: {
           useSharedTexture: true,

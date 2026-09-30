@@ -30,6 +30,12 @@ describe('Spout output composition boundary', () => {
     expect(main).not.toContain('@napolab/texture-bridge-core');
     expect(runtime).not.toContain('@napolab/texture-bridge-core');
     expect(helper).toContain("require('@napolab/texture-bridge-core')");
+    expect(main.indexOf('app.enableSandbox();')).toBeLessThan(
+      main.indexOf('app.setName(APP_NAME);'),
+    );
+    expect(helper.indexOf('app.enableSandbox();')).toBeLessThan(
+      helper.indexOf("if (typeof process.send !== 'function')"),
+    );
   });
 
   it('ships the Windows native package outside ASAR', () => {

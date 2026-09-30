@@ -7,8 +7,23 @@ const FATAL_RENDERER_REASONS = new Set([
   'oom',
 ]);
 
-function registerDiagnosticsLifecycle({ app, processTarget, service }) {
+function registerDiagnosticsLifecycle({
+  app,
+  processTarget,
+  service,
+  getMainWebContents = () => null,
+  requestRendererRecovery = () => {},
+}) {
   const webContentsCleanups = new Set();
+
+  const recoverMainRenderer = (webContents, reason) => {
+    if (!webContents || webContents !== getMainWebContents()) return;
+    try {
+      Promise.resolve(requestRendererRecovery(reason)).catch(() => {});
+    } catch {
+      // Diagnostics remain available even if the recovery host fails.
+    }
+  };
 
   const onUncaughtExceptionMonitor = (error, origin) => {
     service.record({
@@ -23,6 +38,7 @@ function registerDiagnosticsLifecycle({ app, processTarget, service }) {
   };
 
   const onRenderProcessGone = (event, webContents, details = {}) => {
+    const fatal = FATAL_RENDERER_REASONS.has(details.reason);
     service.record({
       process: 'main',
       level: 'error',
@@ -31,11 +47,12 @@ function registerDiagnosticsLifecycle({ app, processTarget, service }) {
       code: 'RENDER_PROCESS_GONE',
       message: 'Renderer process terminated unexpectedly',
       context: {
-        fatal: FATAL_RENDERER_REASONS.has(details.reason),
+        fatal,
         reason: details.reason,
         exitCode: details.exitCode,
       },
     });
+    if (fatal) recoverMainRenderer(webContents, 'renderer-crashed');
   };
 
   const onChildProcessGone = (event, details = {}) => {
@@ -73,6 +90,9 @@ function registerDiagnosticsLifecycle({ app, processTarget, service }) {
         message: 'Renderer failed to load',
         context: { errorCode, reason: errorDescription },
       });
+      if (errorCode !== -3) {
+        recoverMainRenderer(webContents, 'renderer-load-failed');
+      }
     };
 
     const onUnresponsive = () => {
@@ -84,6 +104,7 @@ function registerDiagnosticsLifecycle({ app, processTarget, service }) {
         code: 'RENDERER_UNRESPONSIVE',
         message: 'Renderer became unresponsive',
       });
+      recoverMainRenderer(webContents, 'renderer-unresponsive');
     };
 
     const onPreloadError = (preloadEvent, preloadPath, error) => {
@@ -95,6 +116,7 @@ function registerDiagnosticsLifecycle({ app, processTarget, service }) {
         code: 'PRELOAD_FAILED',
         error,
       });
+      recoverMainRenderer(webContents, 'renderer-preload-failed');
     };
 
     const cleanupWebContents = () => {

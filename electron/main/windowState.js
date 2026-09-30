@@ -11,6 +11,7 @@ const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../lib/thumbarIcons');
 const { readDeveloperOptions } = require('./runtimeEnvironment');
+const { hardenWebContentsNavigation } = require('./webContentsSecurity');
 
 // Must equal APP_NAME in electron/main.js (that copy feeds app.setName(),
 // which has to run before any lib require reads app.getPath('userData') —
@@ -189,6 +190,11 @@ function createMainWindow(
       nodeIntegration: false,
       sandbox: true,
       backgroundThrottling: false,
+      navigateOnDragDrop: false,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      webviewTag: false,
+      devTools: isDev,
       // Lets preload's initialUiTheme/initialSidebarWidth/
       // initialCaptureDeviceId/initialUiDensity read these synchronously, so
       // the first frame paints the right palette, dimensions and sidebar
@@ -255,10 +261,8 @@ function createMainWindow(
     updateThumbar();
   });
 
-  mainWindow.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
-
-  mainWindow.webContents.on('will-navigate', (event, url) => {
-    if (url !== mainWindow.webContents.getURL()) event.preventDefault();
+  hardenWebContentsNavigation(mainWindow.webContents, {
+    isAllowedNavigation: (url) => url === mainWindow.webContents.getURL(),
   });
 
   mainWindow.on('closed', () => {
