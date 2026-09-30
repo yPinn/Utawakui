@@ -50,6 +50,28 @@ describe('runtime configuration boundaries', () => {
     );
   });
 
+  it('locks the supported Electron 43 patch and hardens packaged fuses', () => {
+    const packageJson = JSON.parse(read('package.json'));
+    const packageLock = JSON.parse(read('package-lock.json'));
+    const builder = yaml.load(read('electron-builder.yml'), {
+      schema: yaml.JSON_SCHEMA,
+    });
+
+    expect(packageJson.devDependencies.electron).toBe('^43.7.7');
+    expect(packageLock.packages['node_modules/electron'].version).toBe(
+      '43.7.7',
+    );
+    expect(builder.electronVersion).toBe('43.7.7');
+    expect(builder.electronFuses).toEqual({
+      runAsNode: true,
+      enableNodeOptionsEnvironmentVariable: false,
+      enableNodeCliInspectArguments: false,
+      enableEmbeddedAsarIntegrityValidation: true,
+      onlyLoadAppFromAsar: true,
+      grantFileProtocolExtraPrivileges: true,
+    });
+  });
+
   it('requires a normalized marked library path before recursive uninstall cleanup', () => {
     const installer = read('build/installer.nsh');
     const sidecar = read('electron/main/libraryPathSidecar.js');

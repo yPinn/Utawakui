@@ -10,6 +10,9 @@ appId: com.utawakui.app
 # shortcut's AUMID won't match the running app's, and the SMTC card keeps
 # showing "未知的應用程式" even after installing.
 productName: Utawakui
+# Keep packaging deterministic even if a developer checkout has an older
+# Electron distribution locked by a running dev session.
+electronVersion: 43.7.7
 # Must equal APP_NAME / app.setName() in electron/main.js — this is the
 # folder name under app.getPath('userData'). A mismatch here silently moves
 # config.json and the downloaded .onnx models out from under an existing
@@ -19,6 +22,19 @@ directories:
   output: release
   # Not "dist" — that's Vite's build output, which electron/main.js's
   # loadFile() reads directly.
+
+# Fixed runtime invariants, applied to every packaged executable. The app still
+# loads its main renderer from file://, so GrantFileProtocolExtraPrivileges must
+# remain enabled until that UI moves behind an app-owned custom scheme.
+electronFuses:
+  # Approved compatibility exception: ADR 0005 provider EJS uses the packaged
+  # executable as its managed Node runtime until that dependency is migrated.
+  runAsNode: true
+  enableNodeOptionsEnvironmentVariable: false
+  enableNodeCliInspectArguments: false
+  enableEmbeddedAsarIntegrityValidation: true
+  onlyLoadAppFromAsar: true
+  grantFileProtocolExtraPrivileges: true
 
 # This only writes the public feed identity into packaged update metadata.
 # Local dist commands and the release build both use --publish never. The
