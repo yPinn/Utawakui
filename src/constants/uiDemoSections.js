@@ -12,27 +12,38 @@ export const UI_DEMO_GROUPS = Object.freeze([
       { key: 'core-minimums', title: '核心最小尺寸' },
       { key: 'density', title: '密度與尺寸' },
       {
+        key: 'scrollbar',
+        title: '捲動條外觀',
+        components: ['UiScrollRegion'],
+        adopted: true,
+      },
+      {
         key: 'page-header',
         title: '頁面標題列',
         components: ['UiPageHeader'],
       },
       {
+        key: 'page-layout',
+        title: '頁面版型',
+        reviewed: false,
+      },
+      {
         key: 'separator',
         title: '分隔線',
         components: ['UiSeparator'],
-        reviewed: false,
+        adopted: true,
       },
       {
         key: 'stack',
         title: '版面容器',
         components: ['UiStack'],
-        reviewed: false,
+        adopted: true,
       },
       {
         key: 'surface',
         title: '面板外觀',
         components: ['UiSurface'],
-        reviewed: false,
+        adopted: true,
       },
       {
         key: 'kbd',
@@ -101,16 +112,23 @@ export const UI_DEMO_GROUPS = Object.freeze([
     title: '操作元件',
     description: '按鈕、圖示與文字操作。',
     sections: [
-      { key: 'buttons', title: '按鈕', components: ['UiButton'] },
+      {
+        key: 'buttons',
+        title: '按鈕',
+        components: ['UiButton'],
+        adopted: true,
+      },
       {
         key: 'icon-buttons',
         title: '圖示按鈕',
         components: ['UiIconButton'],
+        adopted: true,
       },
       {
         key: 'text-button',
         title: '文字操作',
         components: ['UiTextButton'],
+        adopted: true,
       },
     ],
   },
@@ -130,7 +148,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'segmented-control',
         title: '分段單選',
         components: ['UiSegmentedControl'],
-        reviewed: false,
+        adopted: true,
       },
       {
         key: 'disclosure',
@@ -221,3 +239,27 @@ export const UI_DEMO_GROUPS = Object.freeze([
     ],
   },
 ]);
+
+export const UI_DEMO_GROUP_REVIEW_STATUS = Object.freeze(
+  Object.fromEntries(
+    UI_DEMO_GROUPS.map((group) => {
+      const reviewedCount = group.sections.filter(
+        (section) => section.reviewed !== false,
+      ).length;
+      const status =
+        reviewedCount === group.sections.length
+          ? 'reviewed'
+          : reviewedCount === 0
+            ? 'pending'
+            : 'partial';
+
+      return [group.key, status];
+    }),
+  ),
+);
+
+export const UI_DEMO_ADOPTED_SECTION_KEYS = Object.freeze(
+  UI_DEMO_GROUPS.flatMap((group) => group.sections)
+    .filter((section) => section.adopted === true)
+    .map((section) => section.key),
+);

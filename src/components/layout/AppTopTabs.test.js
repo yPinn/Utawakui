@@ -17,6 +17,36 @@ async function renderTabs(props = {}) {
 }
 
 describe('AppTopTabs', () => {
+  it('keeps selection lift inside a fixed tab envelope without moving the page', () => {
+    const source = readFileSync(
+      new URL('./AppTopTabs.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain('scrollbar-visibility="hidden"');
+    expect(source).toMatch(
+      /\.app-tabs__row\s*\{[^}]*block-size:\s*var\(--ui-archive-tab-active-height\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-tabs__folder\s*\{[^}]*height:\s*var\(--ui-archive-tab-active-height\);[^}]*overflow:\s*hidden;/su,
+    );
+    expect(source).toMatch(
+      /\.app-tabs__folder::before\s*\{[^}]*transform:\s*translateY\(\s*calc\(\s*var\(--ui-archive-tab-active-height\)\s*-\s*var\(--ui-archive-tab-height\)\s*\)\s*\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-tabs__folder--active::before\s*\{[^}]*transform:\s*translateY\(0\);/su,
+    );
+    expect(source).toMatch(
+      /transition:\s*transform\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\)/u,
+    );
+    expect(source).not.toMatch(/transition:\s*height/u);
+    expect(source).not.toContain('@keyframes app-tabs-reveal');
+    expect(source).not.toContain('animation-delay');
+    expect(source).toMatch(
+      /\.app-tabs__folder:focus-visible\s*\{[^}]*outline-offset:\s*var\(--ui-focus-offset-inset\);/su,
+    );
+  });
+
   it('owns the development-only folder material recipe without changing its default state', () => {
     const source = readFileSync(
       new URL('./AppTopTabs.vue', import.meta.url),
@@ -30,7 +60,7 @@ describe('AppTopTabs', () => {
       /data-ui-candidate-view='studio-library'[\s\S]*\.app-tabs__folder--active[\s\S]*background:\s*var\(--ui-color-folder-primary\)/u,
     );
     expect(source).toMatch(
-      /\.app-tabs__folder--active\s*\{[^}]*background:\s*var\(--ui-color-accent\)/u,
+      /\.app-tabs__folder--active::before\s*\{[^}]*background:\s*var\(--ui-color-accent\)/u,
     );
     expect(source).toMatch(
       /data-ui-candidate-view='studio-library'[\s\S]*\.app-tabs\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,

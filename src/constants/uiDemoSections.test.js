@@ -1,6 +1,9 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { UI_DEMO_GROUPS } from './uiDemoSections.js';
+import {
+  UI_DEMO_GROUP_REVIEW_STATUS,
+  UI_DEMO_GROUPS,
+} from './uiDemoSections.js';
 
 describe('UI demo component order', () => {
   it('uses the conventional foundations-to-overlays order', () => {
@@ -26,7 +29,9 @@ describe('UI demo component order', () => {
       'spacing-shape',
       'core-minimums',
       'density',
+      'scrollbar',
       'page-header',
+      'page-layout',
       'separator',
       'stack',
       'surface',
@@ -92,13 +97,9 @@ describe('UI demo component order', () => {
     );
 
     for (const key of [
-      'separator',
-      'stack',
-      'surface',
       'kbd',
       'color-field',
       'radio-group',
-      'segmented-control',
       'disclosure',
       'skeleton',
       'notification-host',
@@ -115,6 +116,27 @@ describe('UI demo component order', () => {
         key,
       ).toBe(false);
     }
+
+    for (const key of ['separator', 'stack', 'surface', 'segmented-control']) {
+      expect(
+        UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
+          (section) => section.key === key,
+        )?.reviewed,
+        key,
+      ).not.toBe(false);
+    }
+  });
+
+  it('derives group review status from section truth', () => {
+    expect(UI_DEMO_GROUP_REVIEW_STATUS).toEqual({
+      foundations: 'partial',
+      inputs: 'partial',
+      actions: 'reviewed',
+      navigation: 'partial',
+      feedback: 'partial',
+      content: 'reviewed',
+      overlays: 'partial',
+    });
   });
 
   it('uses Traditional Chinese display labels while preserving stable keys', () => {
@@ -139,7 +161,9 @@ describe('UI demo component order', () => {
       '間距與形狀',
       '核心最小尺寸',
       '密度與尺寸',
+      '捲動條外觀',
       '頁面標題列',
+      '頁面版型',
       '分隔線',
       '版面容器',
       '面板外觀',

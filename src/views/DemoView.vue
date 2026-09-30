@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, useTemplateRef } from 'vue';
 import DemoActions from '../components/demo/DemoActions.vue';
 import DemoContent from '../components/demo/DemoContent.vue';
 import DemoFeedback from '../components/demo/DemoFeedback.vue';
@@ -7,7 +7,12 @@ import DemoFoundations from '../components/demo/DemoFoundations.vue';
 import DemoInputs from '../components/demo/DemoInputs.vue';
 import DemoNavigation from '../components/demo/DemoNavigation.vue';
 import DemoOverlays from '../components/demo/DemoOverlays.vue';
-import { UI_DEMO_GROUPS } from '../constants/uiDemoSections.js';
+import UiScrollRegion from '../components/ui/UiScrollRegion.vue';
+import {
+  UI_DEMO_ADOPTED_SECTION_KEYS,
+  UI_DEMO_GROUP_REVIEW_STATUS,
+  UI_DEMO_GROUPS,
+} from '../constants/uiDemoSections.js';
 import '../styles/tokens-v2.css';
 
 const GROUP_COMPONENTS = {
@@ -20,16 +25,6 @@ const GROUP_COMPONENTS = {
   overlays: DemoOverlays,
 };
 
-const GROUP_REVIEW_STATUS = Object.freeze({
-  foundations: 'reviewed',
-  inputs: 'reviewed',
-  actions: 'reviewed',
-  navigation: 'reviewed',
-  feedback: 'reviewed',
-  content: 'reviewed',
-  overlays: 'partial',
-});
-
 const GROUP_REVIEW_LABELS = Object.freeze({
   reviewed: '已審查',
   partial: '部分完成',
@@ -37,6 +32,7 @@ const GROUP_REVIEW_LABELS = Object.freeze({
 });
 
 let previousUiSystem;
+const scrollRegion = useTemplateRef('scrollRegion');
 
 onMounted(() => {
   const root = document.documentElement;
@@ -52,19 +48,13 @@ onUnmounted(() => {
 
 function scrollToGroup(key) {
   const target = document.getElementById(`demo-group-${key}`);
-  const scrollContainer = target?.closest('.demo-view');
+  const scrollContainer = scrollRegion.value?.viewport;
   if (!target || !scrollContainer) return;
 
   const targetRect = target.getBoundingClientRect();
   const containerRect = scrollContainer.getBoundingClientRect();
-  const stickyIndex = document.querySelector('.demo-view__index');
-  const stickyOffset = stickyIndex?.getBoundingClientRect().height ?? 0;
   scrollContainer.scrollTo({
-    top:
-      scrollContainer.scrollTop +
-      targetRect.top -
-      containerRect.top -
-      stickyOffset,
+    top: scrollContainer.scrollTop + targetRect.top - containerRect.top,
     behavior: 'auto',
   });
 }
@@ -76,19 +66,29 @@ function scrollToGroup(key) {
       <div class="demo-view__intro">
         <h1 id="demo-catalogue-title" class="demo-view__title">UI 元件目錄</h1>
         <p class="demo-view__summary">
-          F8 比較 Token v2 Candidate 與 Current；Candidate ≠ production
-          adoption，也不代表 View 核准。
+          F8 將待遷移元件維持 Candidate／Current 對照；已遷移元件則以同一正式
+          Ui* 實作檢查 Token v2／active scope。兩者都不代表 View 核准。
         </p>
       </div>
       <dl class="demo-view__meta" aria-label="展示頁資訊">
         <div>
           <dt>檢查範圍</dt>
-          <dd>Foundation → UiModal</dd>
+          <dd>Foundation → UiModal＋UiScrollRegion</dd>
+        </div>
+        <div>
+          <dt>正式遷移</dt>
+          <dd>{{ UI_DEMO_ADOPTED_SECTION_KEYS.length }} 個 section</dd>
         </div>
       </dl>
     </header>
 
-    <nav class="demo-view__index" aria-label="元件目錄分類">
+    <UiScrollRegion
+      class="demo-view__index-scroll"
+      axis="horizontal"
+      viewport-tag="nav"
+      viewport-class="demo-view__index"
+      aria-label="元件目錄分類"
+    >
       <button
         v-for="group in UI_DEMO_GROUPS"
         :key="group.key"
@@ -98,15 +98,20 @@ function scrollToGroup(key) {
       >
         {{ group.title }}
       </button>
-    </nav>
+    </UiScrollRegion>
 
-    <div class="demo-view__body">
+    <UiScrollRegion
+      ref="scrollRegion"
+      class="demo-view__scroll"
+      axis="vertical"
+      viewport-class="demo-view__body"
+    >
       <section
         v-for="group in UI_DEMO_GROUPS"
         :id="`demo-group-${group.key}`"
         :key="group.key"
         class="demo-group"
-        :data-review-status="GROUP_REVIEW_STATUS[group.key]"
+        :data-review-status="UI_DEMO_GROUP_REVIEW_STATUS[group.key]"
         :aria-labelledby="`demo-group-${group.key}-title`"
       >
         <header class="demo-group__header">
@@ -115,7 +120,7 @@ function scrollToGroup(key) {
               {{ group.title }}
             </h2>
             <span class="demo-group__status">
-              {{ GROUP_REVIEW_LABELS[GROUP_REVIEW_STATUS[group.key]] }}
+              {{ GROUP_REVIEW_LABELS[UI_DEMO_GROUP_REVIEW_STATUS[group.key]] }}
             </span>
           </div>
           <p class="demo-group__description">{{ group.description }}</p>
@@ -125,7 +130,7 @@ function scrollToGroup(key) {
           :sections="group.sections"
         />
       </section>
-    </div>
+    </UiScrollRegion>
   </section>
 </template>
 
@@ -133,11 +138,10 @@ function scrollToGroup(key) {
 .demo-view {
   min-height: 100%;
   height: 100%;
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
   padding: var(--ui-shell-gutter);
-  overflow-x: clip;
-  overflow-y: auto;
+  overflow: hidden;
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
@@ -206,20 +210,16 @@ function scrollToGroup(key) {
   white-space: nowrap;
 }
 
-.demo-view__index {
-  position: sticky;
-  z-index: var(--ui-z-sticky);
-  top: 0;
-  display: flex;
-  flex: 0 0 auto;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-2) var(--ui-panel-inset);
-  overflow-x: auto;
-  overflow-y: hidden;
+.demo-view__index-scroll {
+  min-width: 0;
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   background: var(--ui-color-surface);
-  scrollbar-color: var(--ui-color-border-strong) transparent;
-  scrollbar-width: thin;
+}
+
+.demo-view__index-scroll :deep(.demo-view__index) {
+  display: flex;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-2) var(--ui-panel-inset);
 }
 
 .demo-view__index-button {
@@ -253,7 +253,11 @@ function scrollToGroup(key) {
   outline-offset: var(--ui-focus-offset-inset);
 }
 
-.demo-view__body {
+.demo-view__scroll {
+  min-height: 0;
+}
+
+.demo-view__scroll :deep(.demo-view__body) {
   padding: 0 var(--ui-panel-inset) var(--ui-space-6);
 }
 

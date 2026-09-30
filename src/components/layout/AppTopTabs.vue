@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import { ICON_SIZE, Settings } from '../../icons/index.js';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const props = defineProps({
   activeView: { type: String, required: true },
@@ -45,7 +46,12 @@ const settingsAriaLabel = computed(() =>
         </clipPath>
       </defs>
     </svg>
-    <div class="app-tabs__row">
+    <UiScrollRegion
+      class="app-tabs__row"
+      axis="horizontal"
+      scrollbar-visibility="hidden"
+      viewport-class="app-tabs__row-viewport"
+    >
       <div class="app-tabs__group app-tabs__group--workflow">
         <button
           v-for="item in workflowItems"
@@ -91,7 +97,7 @@ const settingsAriaLabel = computed(() =>
           />
         </span>
       </div>
-    </div>
+    </UiScrollRegion>
   </nav>
 </template>
 
@@ -109,16 +115,21 @@ const settingsAriaLabel = computed(() =>
 .app-tabs__row {
   position: relative;
   z-index: 1;
+  min-width: 0;
+  width: 100%;
+  block-size: var(--ui-archive-tab-active-height);
+}
+
+.app-tabs__row :deep(.app-tabs__row-viewport) {
+  position: relative;
+  block-size: 100%;
   display: flex;
   justify-content: space-between;
   align-items: end;
   gap: var(--ui-archive-tab-gap);
-  min-width: 0;
-  width: 100%;
-  overflow-x: auto;
 }
 
-.app-tabs__row::after {
+.app-tabs__row :deep(.app-tabs__row-viewport)::after {
   content: '';
   position: absolute;
   /* z-index:auto would paint on top of the folder buttons — ::after is
@@ -182,19 +193,35 @@ const settingsAriaLabel = computed(() =>
   display: flex;
   align-items: center;
   justify-content: center;
-  height: var(--ui-archive-tab-height);
+  height: var(--ui-archive-tab-active-height);
   min-width: var(--ui-archive-tab-min-width);
   max-width: 28vw;
   margin: 0;
   padding: 0 var(--ui-space-5);
+  overflow: hidden;
   border: 0;
-  clip-path: url(#app-tab-shape);
-  background: var(--ui-color-surface-raised);
+  background: transparent;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
   cursor: pointer;
-  transition: height var(--ui-motion-fast) var(--ui-motion-ease);
-  animation: app-tabs-reveal var(--ui-motion-slow) var(--ui-motion-ease) both;
+  transition: color var(--ui-motion-duration-feedback)
+    var(--ui-motion-easing-standard);
+}
+
+.app-tabs__folder::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  clip-path: url(#app-tab-shape);
+  background: var(--ui-color-surface-raised);
+  transform: translateY(
+    calc(var(--ui-archive-tab-active-height) - var(--ui-archive-tab-height))
+  );
+  transition:
+    transform var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
+    background-color var(--ui-motion-duration-feedback)
+      var(--ui-motion-easing-standard);
 }
 
 .app-tabs__folder--utility {
@@ -202,34 +229,14 @@ const settingsAriaLabel = computed(() =>
   padding: 0 var(--ui-space-4);
 }
 
-.app-tabs__group--workflow .app-tabs__folder:nth-child(2) {
-  animation-delay: 40ms;
-}
-
-.app-tabs__group--workflow .app-tabs__folder:nth-child(3) {
-  animation-delay: 80ms;
-}
-
-.app-tabs__group--workflow .app-tabs__folder:nth-child(4) {
-  animation-delay: 120ms;
-}
-
-.app-tabs__group--utility .app-tabs__folder {
-  animation-delay: 120ms;
-}
-
-@keyframes app-tabs-reveal {
-  from {
-    opacity: 0;
-    transform: translateY(0.4rem);
-  }
-}
-
 .app-tabs__folder--active {
   z-index: 5;
-  background: var(--ui-color-accent);
   color: var(--ui-color-accent-contrast);
-  height: var(--ui-archive-tab-active-height);
+}
+
+.app-tabs__folder--active::before {
+  background: var(--ui-color-accent);
+  transform: translateY(0);
 }
 
 /* The development-only Studio Library Candidate supplies the root marker.
@@ -238,7 +245,7 @@ const settingsAriaLabel = computed(() =>
 :global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
   .app-tabs__row::after,
 :global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
-  .app-tabs__folder--active {
+  .app-tabs__folder--active::before {
   background: var(--ui-color-folder-primary);
 }
 
@@ -256,7 +263,7 @@ const settingsAriaLabel = computed(() =>
 .app-tabs__folder:focus-visible {
   z-index: 6;
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 /* Title tier, not DESIGN.md's literal Label-tier "tabs" wording — these
@@ -300,9 +307,9 @@ const settingsAriaLabel = computed(() =>
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-tabs__folder {
+  .app-tabs__folder,
+  .app-tabs__folder::before {
     transition: none;
-    animation: none;
   }
 }
 </style>

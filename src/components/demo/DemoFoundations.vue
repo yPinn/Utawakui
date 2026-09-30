@@ -9,6 +9,8 @@ import UiSurface from '../ui/UiSurface.vue';
 import DemoCatalogueSection from './DemoCatalogueSection.vue';
 import DemoCoreMinimums from './DemoCoreMinimums.vue';
 import DemoDensity from './DemoDensity.vue';
+import DemoPageLayoutAppearance from './DemoPageLayoutAppearance.vue';
+import DemoScrollbarAppearance from './DemoScrollbarAppearance.vue';
 import DemoSpacingShape from './DemoSpacingShape.vue';
 import DemoStatusPalette from './DemoStatusPalette.vue';
 import DemoTypography from './DemoTypography.vue';
@@ -175,6 +177,10 @@ const SYSTEM_COLOR_SWATCHES = [
 
       <DemoDensity v-else-if="section.key === 'density'" />
 
+      <DemoScrollbarAppearance v-else-if="section.key === 'scrollbar'" />
+
+      <DemoPageLayoutAppearance v-else-if="section.key === 'page-layout'" />
+
       <div
         v-else-if="section.key === 'page-header'"
         class="demo-sample-surface"
@@ -209,12 +215,12 @@ const SYSTEM_COLOR_SWATCHES = [
       </div>
 
       <div v-else-if="section.key === 'stack'" class="demo-stack-samples">
-        <UiStack class="demo-sample-surface" direction="column" gap="2">
+        <UiStack class="demo-sample-surface" direction="column" :gap="2">
           <span>第一行</span>
           <span>第二行</span>
           <span>第三行</span>
         </UiStack>
-        <UiStack class="demo-sample-surface" wrap gap="2">
+        <UiStack class="demo-sample-surface" wrap :gap="2">
           <span>標籤一</span>
           <span>標籤二</span>
           <span>標籤三</span>

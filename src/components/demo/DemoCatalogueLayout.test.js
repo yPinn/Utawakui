@@ -52,18 +52,20 @@ const REVIEWED_APPEARANCE_SOURCES = [
 ].map(readSource);
 
 describe('F8 reviewed catalogue layout', () => {
-  it('reports completed Content and the partially reviewed Overlay boundary', async () => {
+  it('reports the completed core groups and remaining overlay boundary', async () => {
     const html = await renderToString(createSSRApp(DemoView));
 
-    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(6);
-    expect(html.match(/data-review-status="partial"/g)).toHaveLength(1);
+    expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(2);
+    expect(html.match(/data-review-status="partial"/g)).toHaveLength(5);
     expect(html.match(/data-review-status="pending"/g) ?? []).toHaveLength(0);
-    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(30);
-    expect(html).toContain('Foundation → UiModal');
+    expect(html.match(/data-review-section="reviewed"/g)).toHaveLength(35);
+    expect(html).toContain('Foundation → UiModal＋UiScrollRegion');
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*已審查/g),
-    ).toHaveLength(6);
-    expect(html).toMatch(/class="demo-group__status"[^>]*>\s*部分完成/);
+    ).toHaveLength(2);
+    expect(
+      html.match(/class="demo-group__status"[^>]*>\s*部分完成/g),
+    ).toHaveLength(5);
     expect(
       html.match(/class="demo-group__status"[^>]*>\s*待審查/g) ?? [],
     ).toHaveLength(0);
@@ -155,9 +157,12 @@ describe('F8 reviewed catalogue layout', () => {
       /<header class="demo-view__header"[\s\S]*?<\/header>/u,
     )?.[0];
 
-    expect(header).toContain('Candidate ≠ production adoption');
-    expect(header).toContain('Foundation → UiModal');
-    expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(1);
+    expect(header).toContain(
+      '待遷移元件維持 Candidate／Current 對照；已遷移元件則以同一正式 Ui* 實作',
+    );
+    expect(header).toContain('Foundation → UiModal＋UiScrollRegion');
+    expect(header).toContain('8 個 section');
+    expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(2);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,
     );
