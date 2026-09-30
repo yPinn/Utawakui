@@ -229,6 +229,17 @@
   --ui-archive-tab-min-width: 8.5rem;
   --ui-archive-tab-height: 3.5rem;
   --ui-archive-tab-active-height: 4.25rem;
+  --ui-archive-tab-rest-offset: calc(
+    var(--ui-archive-tab-active-height) - var(--ui-archive-tab-height)
+  );
+  --ui-archive-tab-label-block-size: calc(
+    var(--ui-archive-tab-active-height) - var(--ui-archive-rail-size)
+  );
+  --ui-archive-tab-label-optical-offset: 1px;
+  --ui-archive-tab-label-rest-offset: calc(
+    var(--ui-archive-tab-rest-offset) / 2 +
+      var(--ui-archive-tab-label-optical-offset)
+  );
   --ui-archive-tab-gap: var(--ui-space-2);
 
   /* --- Sizing: reusable folder pages --- */
@@ -244,11 +255,46 @@
   --ui-folder-tab-label-block-size: calc(
     var(--ui-folder-tab-height-active) - var(--ui-folder-tab-cover-size)
   );
-  --ui-folder-tab-label-rest-offset: calc(var(--ui-folder-tab-rest-offset) / 2);
+  --ui-folder-tab-label-optical-offset: 1px;
+  --ui-folder-tab-label-rest-offset: calc(
+    var(--ui-folder-tab-rest-offset) / 2 +
+      var(--ui-folder-tab-label-optical-offset)
+  );
   --ui-folder-document-inset: var(--ui-space-5);
   --ui-folder-document-block-end-inset: var(--ui-space-6);
   --ui-folder-section-gap: var(--ui-space-4);
   --ui-folder-heading-gap: var(--ui-space-1);
+  --ui-folder-artifact-canvas-min-height: 24rem;
+  --ui-folder-artifact-safe-inset: calc(
+    var(--ui-focus-width) + var(--ui-focus-offset) + var(--ui-border-width)
+  );
+  --ui-folder-artifact-canvas-bg: var(--ui-color-surface);
+  --ui-folder-artifact-sheet-bg: var(--ui-color-canvas);
+  --ui-folder-artifact-sheet-inset-inline: var(--ui-space-7);
+  --ui-folder-artifact-sheet-inset-block: var(--ui-space-5);
+  --ui-folder-artifact-photo-width: 17rem;
+  --ui-folder-artifact-stack-width: 20rem;
+  --ui-folder-artifact-stack-block-size: calc(
+    var(--ui-folder-artifact-stack-width) / 4 * 3 + var(--ui-space-5)
+  );
+  --ui-folder-artifact-note-width: 18rem;
+  --ui-folder-artifact-note-min-height: 11rem;
+  --ui-folder-artifact-photo-frame: var(--ui-space-2);
+  --ui-folder-artifact-photo-bg: var(--ui-color-surface-raised);
+  --ui-folder-artifact-note-bg: color-mix(
+    in srgb,
+    var(--ui-color-accent-soft) 32%,
+    var(--ui-color-surface-raised)
+  );
+  --ui-folder-artifact-note-bg-translucent: color-mix(
+    in srgb,
+    var(--ui-folder-artifact-note-bg) 84%,
+    transparent
+  );
+  --ui-folder-artifact-shadow: 0 0.75rem 1.5rem -0.75rem rgb(0 0 0 / 38%);
+  --ui-folder-artifact-drag-shadow: 0 0.75rem 1rem rgb(0 0 0 / 28%);
+  --ui-folder-artifact-drag-scale: 1.0125;
+  --ui-folder-artifact-z-active: 100;
   /* How far the shared content baseline sits below the "sidebar main" grid
      row's own top edge — the active tab's height (the row's tallest child,
      since AppTopTabs.vue bottom-aligns its tabs) minus the rail overlap

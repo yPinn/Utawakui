@@ -1,6 +1,17 @@
 <script setup>
-import { computed, shallowRef } from 'vue';
+import { computed, shallowRef, useId } from 'vue';
+import artCardThumbnail from '../../assets/output-template-thumbnails/art-card.jpg';
+import karaokeStackThumbnail from '../../assets/output-template-thumbnails/karaoke-stack.jpg';
+import liveStageThumbnail from '../../assets/output-template-thumbnails/live-stage.jpg';
+import trackThumbCropWide from '../../assets/demo/track-thumb/track-thumb-crop-wide.jpg';
+import { RotateCcw } from '../../icons/index.js';
+import {
+  nextFolderArtifactStackIndex,
+  previousFolderArtifactStackIndex,
+} from '../../utils/folderArtifactStack.js';
 import UiButton from '../ui/UiButton.vue';
+import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
+import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -8,6 +19,18 @@ import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 const previewMode = shallowRef('wide');
 const contentMode = shallowRef('overflow');
 const activeFolderId = shallowRef('setlist');
+const stackImageIndex = shallowRef(0);
+const artifactCanvas = shallowRef(null);
+const instanceId = useId();
+const folderTabShapeId = `demo-folder-tab-shape-${instanceId}`;
+const specimenTitleId = `demo-page-layout-specimen-title-${instanceId}`;
+const overviewTitleId = `demo-page-layout-overview-title-${instanceId}`;
+const materialsTitleId = `demo-page-layout-materials-title-${instanceId}`;
+const nextTitleId = `demo-page-layout-next-title-${instanceId}`;
+const notesTitleId = `demo-page-layout-notes-title-${instanceId}`;
+const folderTabShapeStyle = {
+  '--demo-folder-tab-shape': `url("#${folderTabShapeId}")`,
+};
 
 const previewModes = [
   { id: 'wide', label: '寬版' },
@@ -53,6 +76,39 @@ const materialRows = [
   { name: '同步歌詞', detail: 'LRC · 繁體中文', state: '已完成' },
   { name: '封面影像', detail: 'PNG · 3000 × 3000', state: '需補充' },
 ];
+const artifactDefinitions = [
+  {
+    id: 'session-photo',
+    kind: 'photo',
+    label: '不透明照片：直播舞台構圖',
+    initialX: 0.04,
+    initialY: 0.08,
+    rotation: -2.5,
+  },
+  {
+    id: 'session-stack',
+    kind: 'stack',
+    label: '重疊照片：封面與現場參考',
+    activatable: true,
+    activationLabel: '切換照片',
+    initialX: 0.38,
+    initialY: 0.03,
+    rotation: 1.5,
+  },
+  {
+    id: 'session-note',
+    kind: 'note',
+    label: '半透明便條：錄製前確認事項',
+    initialX: 0.66,
+    initialY: 0.54,
+    rotation: -1,
+  },
+];
+const stackImages = [
+  { src: artCardThumbnail, alt: '幾何封面版型參考' },
+  { src: trackThumbCropWide, alt: '寬幅曲目縮圖參考' },
+  { src: karaokeStackThumbnail, alt: '卡拉 OK 堆疊版型參考' },
+];
 
 const previewClasses = computed(() => ({
   'demo-page-layout__preview--narrow': previewMode.value === 'narrow',
@@ -73,6 +129,33 @@ function revealFolderTab(event) {
 function selectFolder(pageId, event) {
   activeFolderId.value = pageId;
   revealFolderTab(event);
+}
+
+function resetArtifacts() {
+  artifactCanvas.value?.reset();
+}
+
+function activateArtifact(artifactId, intent) {
+  if (artifactId !== 'session-stack') return;
+  if (intent === 'previous') {
+    showPreviousStackImage();
+    return;
+  }
+  showNextStackImage();
+}
+
+function showPreviousStackImage() {
+  stackImageIndex.value = previousFolderArtifactStackIndex(
+    stackImageIndex.value,
+    stackImages.length,
+  );
+}
+
+function showNextStackImage() {
+  stackImageIndex.value = nextFolderArtifactStackIndex(
+    stackImageIndex.value,
+    stackImages.length,
+  );
 }
 </script>
 
@@ -114,14 +197,12 @@ function selectFolder(pageId, event) {
         :data-preview-width="previewMode"
         :data-content-mode="contentMode"
         :data-folder-view="activeFolder.id"
-        aria-labelledby="demo-page-layout-specimen-title"
+        :aria-labelledby="specimenTitleId"
+        :style="folderTabShapeStyle"
       >
         <svg width="0" height="0" aria-hidden="true" focusable="false">
           <defs>
-            <clipPath
-              id="demo-folder-tab-shape"
-              clipPathUnits="objectBoundingBox"
-            >
+            <clipPath :id="folderTabShapeId" clipPathUnits="objectBoundingBox">
               <path
                 d="M0.16,0 L0.84,0 C0.9,0 0.92,0.18 0.95,0.42 L1,1 L0,1 L0.05,0.42 C0.08,0.18 0.1,0 0.16,0 Z"
               />
@@ -133,6 +214,7 @@ function selectFolder(pageId, event) {
           class="demo-page-layout__folder-tabs"
           axis="horizontal"
           scrollbar-visibility="hidden"
+          viewport-tag="nav"
           viewport-class="demo-page-layout__folder-tabs-viewport"
           aria-label="Folder 頁面"
         >
@@ -160,7 +242,7 @@ function selectFolder(pageId, event) {
             <header class="demo-page-layout__header">
               <UiPageHeader
                 :title="activeFolder.title"
-                title-id="demo-page-layout-specimen-title"
+                :title-id="specimenTitleId"
               >
                 <template #description>
                   {{ activeFolder.description }}
@@ -178,19 +260,64 @@ function selectFolder(pageId, event) {
               axis="vertical"
               viewport-class="demo-page-layout__body"
               :aria-label="activeFolder.title + '內容'"
+              role="region"
+              tabindex="0"
             >
               <div class="demo-page-layout__sections">
                 <section
                   class="demo-page-layout__section"
-                  aria-labelledby="demo-page-layout-overview-title"
+                  :aria-labelledby="overviewTitleId"
                 >
                   <header class="demo-page-layout__section-heading">
-                    <h3 id="demo-page-layout-overview-title">工作集概覽</h3>
+                    <h3 :id="overviewTitleId">工作集概覽</h3>
                     <p>
                       Folder shell
                       負責識別與邊界，文件內容維持中性且可快速掃描。
                     </p>
                   </header>
+                  <div class="demo-page-layout__artifact-heading">
+                    <span>可移動參考物件</span>
+                    <UiButton
+                      :icon="RotateCcw"
+                      variant="secondary"
+                      @click="resetArtifacts"
+                    >
+                      重設物件位置
+                    </UiButton>
+                  </div>
+                  <UiFolderArtifactCanvas
+                    ref="artifactCanvas"
+                    :artifacts="artifactDefinitions"
+                    label="工作集可移動物件"
+                    @activate="activateArtifact"
+                  >
+                    <template #default="{ artifact }">
+                      <UiFolderArtifact
+                        v-if="artifact.kind === 'photo'"
+                        kind="photo"
+                        :src="liveStageThumbnail"
+                        alt="直播舞台版型參考"
+                        caption="不透明照片 · 舞台構圖"
+                      />
+                      <UiFolderArtifact
+                        v-else-if="artifact.kind === 'stack'"
+                        kind="stack"
+                        :images="stackImages"
+                        :active-index="stackImageIndex"
+                        title="重疊照片"
+                        @previous="showPreviousStackImage"
+                        @next="showNextStackImage"
+                      />
+                      <UiFolderArtifact
+                        v-else
+                        kind="note"
+                        material="translucent"
+                        eyebrow="錄製前確認"
+                        title="半透明便條"
+                        body="確認封面、歌詞時間軸與輸出場景；物件可以越過中間紙張，但不會跑出 Folder 操作邊界。"
+                      />
+                    </template>
+                  </UiFolderArtifactCanvas>
                   <dl class="demo-page-layout__facts">
                     <div>
                       <dt>目前階段</dt>
@@ -210,10 +337,10 @@ function selectFolder(pageId, event) {
                 <section
                   v-if="contentMode === 'overflow'"
                   class="demo-page-layout__section"
-                  aria-labelledby="demo-page-layout-materials-title"
+                  :aria-labelledby="materialsTitleId"
                 >
                   <header class="demo-page-layout__section-heading">
-                    <h3 id="demo-page-layout-materials-title">素材狀態</h3>
+                    <h3 :id="materialsTitleId">素材狀態</h3>
                     <p>以列表與分隔線呈現，不在文件裡再堆疊卡片。</p>
                   </header>
                   <ul class="demo-page-layout__material-list">
@@ -232,10 +359,10 @@ function selectFolder(pageId, event) {
                 <section
                   v-if="contentMode === 'overflow'"
                   class="demo-page-layout__section"
-                  aria-labelledby="demo-page-layout-next-title"
+                  :aria-labelledby="nextTitleId"
                 >
                   <header class="demo-page-layout__section-heading">
-                    <h3 id="demo-page-layout-next-title">接續工作</h3>
+                    <h3 :id="nextTitleId">接續工作</h3>
                     <p>保留下一次操作需要的明確狀態與順序。</p>
                   </header>
                   <ol class="demo-page-layout__steps">
@@ -248,10 +375,10 @@ function selectFolder(pageId, event) {
                 <section
                   v-if="contentMode === 'overflow'"
                   class="demo-page-layout__section"
-                  aria-labelledby="demo-page-layout-notes-title"
+                  :aria-labelledby="notesTitleId"
                 >
                   <header class="demo-page-layout__section-heading">
-                    <h3 id="demo-page-layout-notes-title">備註</h3>
+                    <h3 :id="notesTitleId">備註</h3>
                     <p>
                       長內容只在文件 body 內捲動；Folder tabs、彩色
                       perimeter、頁面標題與主要操作都維持固定。
@@ -410,7 +537,7 @@ function selectFolder(pageId, event) {
   position: absolute;
   z-index: -1;
   inset: 0;
-  clip-path: url(#demo-folder-tab-shape);
+  clip-path: var(--demo-folder-tab-shape);
   background: var(--ui-color-surface-raised);
   transform: translateY(var(--ui-folder-tab-rest-offset));
   transition: transform var(--ui-motion-duration-fast)
@@ -453,9 +580,12 @@ function selectFolder(pageId, event) {
 }
 
 .demo-page-layout__folder-tab--active::before,
-.demo-page-layout__folder-tab--active:hover::before,
-.demo-page-layout__folder-tab--active .demo-page-layout__folder-tab-label {
+.demo-page-layout__folder-tab--active:hover::before {
   transform: translateY(0);
+}
+
+.demo-page-layout__folder-tab--active .demo-page-layout__folder-tab-label {
+  transform: translateY(var(--ui-folder-tab-label-optical-offset));
 }
 
 .demo-page-layout__folder-tab:focus-visible {
@@ -557,6 +687,21 @@ function selectFolder(pageId, event) {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   border-block: var(--ui-border-width) solid var(--ui-color-border);
+}
+
+.demo-page-layout__artifact-heading {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ui-space-3);
+}
+
+.demo-page-layout__artifact-heading > span {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
 }
 
 .demo-page-layout__facts div {
@@ -700,6 +845,17 @@ function selectFolder(pageId, event) {
   .demo-page-layout__folder-tab::before,
   .demo-page-layout__folder-tab-label {
     transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .demo-page-layout__folder-tab--active {
+    color: HighlightText;
+  }
+
+  .demo-page-layout__folder-tab--active::before {
+    border: var(--ui-border-width) solid Highlight;
+    background: Highlight;
   }
 }
 </style>

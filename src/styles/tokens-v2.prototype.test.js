@@ -169,7 +169,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(303);
+    expect(uniqueNames.size).toBe(323);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
@@ -178,6 +178,16 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(uniqueNames).toContain('--ui-radio-size');
     expect(uniqueNames).toContain('--ui-folder-tab-min-inline-size');
     expect(uniqueNames).toContain('--ui-folder-tab-min-inline-size-narrow');
+    expect(uniqueNames).toContain('--ui-folder-artifact-canvas-min-height');
+    expect(uniqueNames).toContain('--ui-folder-artifact-safe-inset');
+    expect(tokens).toMatch(
+      /--ui-folder-artifact-safe-inset:\s*calc\(\s*var\(--ui-focus-width\)\s*\+\s*var\(--ui-focus-offset\)\s*\+\s*var\(--ui-border-width\)\s*\);/u,
+    );
+    expect(uniqueNames).toContain('--ui-folder-artifact-note-bg-translucent');
+    expect(tokens).toMatch(
+      /--ui-folder-artifact-stack-block-size:\s*calc\(\s*var\(--ui-folder-artifact-stack-width\)\s*\/\s*4\s*\*\s*3\s*\+\s*var\(--ui-space-5\)\s*\);/u,
+    );
+    expect(uniqueNames).not.toContain('--ui-folder-artifact-note-blur');
     expect(uniqueNames).toContain('--ui-tooltip-max-inline-size');
     expect(uniqueNames).toContain('--ui-tooltip-font-size');
     expect(uniqueNames).toContain('--ui-tooltip-font-weight');
@@ -294,6 +304,7 @@ describe('Studio Library workspace prototype isolation', () => {
         '--ui-focus-offset',
         '--ui-focus-offset-inset',
         '--ui-focus-width',
+        '--ui-folder-tab-label-optical-offset',
         '--ui-row-active-shadow',
         '--ui-switch-thumb-inset',
       ].sort(),

@@ -1,5 +1,5 @@
 import { readFileSync } from 'node:fs';
-import { createSSRApp } from 'vue';
+import { createSSRApp, h } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import DemoPageLayoutAppearance from './DemoPageLayoutAppearance.vue';
@@ -37,12 +37,67 @@ describe('DemoPageLayoutAppearance', () => {
     expect(html).toContain('demo-page-layout__body');
   });
 
-  it('keeps every specimen landmark id unique when embedded in the catalogue', async () => {
+  it('demonstrates bounded photo, note, and stack artifacts with an explicit reset', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
+
+    expect(source).toContain(
+      "import UiFolderArtifact from '../ui/UiFolderArtifact.vue';",
+    );
+    expect(source).toContain(
+      "import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';",
+    );
+    expect(html).toContain('aria-label="工作集可移動物件"');
+    expect(html).toContain('重設物件位置');
+    expect(html).toContain('半透明便條');
+    expect(html).toContain('不透明照片');
+    expect(html).toContain('重疊照片');
+    expect(source).toContain('artifactCanvas.value?.reset()');
+  });
+
+  it('navigates the photo stack in both directions as session-only page state', async () => {
+    const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
+
+    expect(source).toContain('const stackImageIndex = shallowRef(0);');
+    expect(source).toContain('nextFolderArtifactStackIndex');
+    expect(source).toContain('previousFolderArtifactStackIndex');
+    expect(source).toContain('function activateArtifact(artifactId, intent)');
+    expect(source).toContain("if (intent === 'previous')");
+    expect(source).toContain('function showPreviousStackImage()');
+    expect(source).toContain('function showNextStackImage()');
+    expect(source).toContain('@activate="activateArtifact"');
+    expect(source).toContain('@previous="showPreviousStackImage"');
+    expect(source).toContain('@next="showNextStackImage"');
+    expect(source).toContain(':active-index="stackImageIndex"');
+    expect(source).not.toContain('localStorage');
+    expect(html).toContain('1 / 3');
+  });
+
+  it('lets artifact kind own material without exposing appearance state', async () => {
+    const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
+
+    expect(source).not.toContain('appearance:');
+    expect(source).not.toContain(':appearance=');
+    expect(source).not.toContain('@appearance-change');
+    expect(source).not.toContain('changeArtifactAppearance');
+    expect(html).not.toContain('更多操作');
+    expect(source).not.toContain('localStorage');
+  });
+
+  it('keeps every specimen landmark id unique when embedded in the catalogue', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h('div', [h(DemoPageLayoutAppearance), h(DemoPageLayoutAppearance)]),
+      }),
+    );
     const ids = [...html.matchAll(/\sid="([^"]+)"/gu)].map((match) => match[1]);
 
     expect(new Set(ids).size).toBe(ids.length);
-    expect(ids).toContain('demo-page-layout-specimen-title');
+    expect(
+      ids.some((id) => id.startsWith('demo-page-layout-specimen-title-')),
+    ).toBe(true);
+    expect(source).toContain('useId');
+    expect(source).toContain('--demo-folder-tab-shape');
   });
 
   it('offers explicit wide and narrow previews without coupling to window density', async () => {
@@ -75,6 +130,22 @@ describe('DemoPageLayoutAppearance', () => {
     );
     expect(source).toContain('container-type: inline-size');
     expect(source).toContain('container-name: demo-page-layout');
+    expect(source).toMatch(
+      /class="demo-page-layout__body-scroll"[\s\S]*?role="region"[\s\S]*?tabindex="0"/u,
+    );
+  });
+
+  it('treats folder choices as global page navigation instead of local tabpanels', async () => {
+    const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
+
+    expect(source).toMatch(
+      /class="demo-page-layout__folder-tabs"[\s\S]*?viewport-tag="nav"/u,
+    );
+    expect(html).toContain('<nav aria-label="Folder 頁面"');
+    expect(html).toContain('aria-current="page"');
+    expect(html).not.toContain('role="tablist"');
+    expect(html).not.toContain('role="tab"');
+    expect(html).not.toContain('role="tabpanel"');
   });
 
   it('keeps the folder material colored while the document stays neutral', async () => {
@@ -135,7 +206,7 @@ describe('DemoPageLayoutAppearance', () => {
       /\.demo-page-layout__folder-tab-label\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-label-block-size\);[^}]*transform:\s*translateY\(var\(--ui-folder-tab-label-rest-offset\)\);[^}]*transition:\s*transform\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\);/su,
     );
     expect(source).toMatch(
-      /\.demo-page-layout__folder-tab--active\s+\.demo-page-layout__folder-tab-label[^{]*\{[^}]*transform:\s*translateY\(0\);/su,
+      /\.demo-page-layout__folder-tab--active\s+\.demo-page-layout__folder-tab-label[^{]*\{[^}]*transform:\s*translateY\(var\(--ui-folder-tab-label-optical-offset\)\);/su,
     );
     expect(source).toMatch(
       /transition:\s*transform\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\)/u,
@@ -144,6 +215,29 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).not.toMatch(/transition:\s*(?:[^;]*,\s*)?height/u);
     expect(source).toMatch(
       /\.demo-page-layout__folder-tab:focus-visible\s*\{[^}]*outline-offset:\s*var\(--ui-focus-offset-inset\);/su,
+    );
+  });
+
+  it('keeps active and resting labels one optical pixel below the visible surface center', () => {
+    const activeHeight = 44;
+    const restingHeight = 40;
+    const coverSize = 8;
+    const opticalOffset = 1;
+    const restOffset = activeHeight - restingHeight;
+    const labelBlockSize = activeHeight - coverSize;
+    const activeVisibleCenter = labelBlockSize / 2;
+    const restingVisibleCenter = (restOffset + activeHeight - coverSize) / 2;
+
+    expect(activeVisibleCenter).toBe(18);
+    expect(restingVisibleCenter).toBe(20);
+    expect(labelBlockSize / 2 + opticalOffset).toBe(19);
+    expect(labelBlockSize / 2 + restOffset / 2 + opticalOffset).toBe(21);
+    expect(source).toContain('--ui-folder-tab-label-optical-offset');
+    expect(source).toContain(
+      'block-size: var(--ui-folder-tab-label-block-size);',
+    );
+    expect(source).toContain(
+      'transform: translateY(var(--ui-folder-tab-label-rest-offset));',
     );
   });
 
@@ -184,13 +278,22 @@ describe('DemoPageLayoutAppearance', () => {
   it('uses scalable curved shoulders instead of a sharp polygon approximation', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(html).toContain('id="demo-folder-tab-shape"');
+    expect(html).toMatch(/id="demo-folder-tab-shape-[^"]+"/u);
     expect(html).toMatch(
-      /<clipPath[^>]*id="demo-folder-tab-shape"[^>]*clipPathUnits="objectBoundingBox"/u,
+      /<clipPath[^>]*id="demo-folder-tab-shape-[^"]+"[^>]*clipPathUnits="objectBoundingBox"/u,
     );
     expect(html).toMatch(/<path[^>]*d="[^"]*C[^"]*L1,1 L0,1[^"]*"/u);
-    expect(source).toContain('clip-path: url(#demo-folder-tab-shape);');
+    expect(source).toContain('clip-path: var(--demo-folder-tab-shape);');
     expect(source).not.toContain('clip-path: polygon(');
+  });
+
+  it('keeps the active folder identifiable when forced colors replace material fills', () => {
+    expect(source).toMatch(
+      /@media \(forced-colors: active\)[\s\S]*\.demo-page-layout__folder-tab--active::before[\s\S]*border:\s*var\(--ui-border-width\) solid Highlight;/u,
+    );
+    expect(source).toMatch(
+      /@media \(forced-colors: active\)[\s\S]*\.demo-page-layout__folder-tab--active\s*\{[^}]*color:\s*HighlightText;/u,
+    );
   });
 
   it('layers inactive tabs behind a folder-colored cover rail and the active tab', () => {
@@ -223,8 +326,9 @@ describe('DemoPageLayoutAppearance', () => {
       expect(tokens).toContain(
         '--ui-folder-tab-label-block-size: calc(\n    var(--ui-folder-tab-height-active) - var(--ui-folder-tab-cover-size)\n  );',
       );
+      expect(tokens).toContain('--ui-folder-tab-label-optical-offset: 1px;');
       expect(tokens).toContain(
-        '--ui-folder-tab-label-rest-offset: calc(var(--ui-folder-tab-rest-offset) / 2);',
+        '--ui-folder-tab-label-rest-offset: calc(\n    var(--ui-folder-tab-rest-offset) / 2 +\n      var(--ui-folder-tab-label-optical-offset)\n  );',
       );
       expect(tokens).toContain('--ui-folder-perimeter: var(--ui-space-4);');
     }

@@ -98,6 +98,34 @@ describe('F8 reviewed catalogue layout', () => {
     expect(reviewedRule).not.toMatch(/selected|accent|folder/);
   });
 
+  it('lets page-level specimens use the full catalogue width', async () => {
+    const html = await renderToString(
+      createSSRApp({
+        render: () =>
+          h(
+            DemoCatalogueSection,
+            {
+              id: 'page-fixture',
+              title: 'Page fixture',
+              fullWidth: true,
+            },
+            () => 'Page evidence',
+          ),
+      }),
+    );
+
+    expect(html).toContain('demo-catalogue-section--full-width');
+    expect(catalogueSource).toMatch(
+      /\.demo-catalogue-section--full-width\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\);/s,
+    );
+    expect(catalogueSource).toMatch(
+      /\.demo-catalogue-section--full-width\s+\.demo-catalogue-section__header\s*\{[^}]*grid-template-columns:\s*auto minmax\(0, 1fr\);/s,
+    );
+    expect(foundationsSource).toContain(
+      ':full-width="section.key === \'page-layout\'"',
+    );
+  });
+
   it('gives completed and pending section lists a consistent block rhythm', () => {
     expect(foundationsSource).toContain(
       ':reviewed="section.reviewed !== false"',

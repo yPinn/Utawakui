@@ -4,13 +4,17 @@ defineProps({
   title: { type: String, required: true },
   componentLabel: { type: String, default: '' },
   reviewed: { type: Boolean, default: false },
+  fullWidth: { type: Boolean, default: false },
 });
 </script>
 
 <template>
   <section
     class="demo-catalogue-section"
-    :class="{ 'demo-catalogue-section--reviewed': reviewed }"
+    :class="{
+      'demo-catalogue-section--reviewed': reviewed,
+      'demo-catalogue-section--full-width': fullWidth,
+    }"
     :data-review-section="reviewed ? 'reviewed' : undefined"
     :aria-labelledby="`${id}-title`"
   >
@@ -40,6 +44,16 @@ defineProps({
 .demo-catalogue-section--reviewed {
   padding: var(--ui-space-6) 0;
   background: transparent;
+}
+
+.demo-catalogue-section--full-width {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.demo-catalogue-section--full-width .demo-catalogue-section__header {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: var(--ui-space-3);
 }
 
 .demo-catalogue-section__header {

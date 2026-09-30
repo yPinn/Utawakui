@@ -110,6 +110,7 @@ const SYSTEM_COLOR_SWATCHES = [
       :title="section.title"
       :component-label="section.components?.join(' · ')"
       :reviewed="section.reviewed !== false"
+      :full-width="section.key === 'page-layout'"
     >
       <div v-if="section.key === 'system-palette'" class="demo-review-block">
         <p class="demo-review-note">

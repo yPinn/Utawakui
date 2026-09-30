@@ -25,6 +25,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'page-layout',
         title: '頁面版型',
+        components: ['UiFolderArtifact', 'UiFolderArtifactCanvas'],
         reviewed: false,
       },
       {
