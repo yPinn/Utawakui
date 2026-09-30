@@ -336,7 +336,7 @@ The control panel should combine Spotify-like music workflow efficiency with mac
 - Preserve the app shell model: playlist sidebar + top section tabs + main workspace + persistent player.
 - Keep the persistent playlist sidebar inset `1rem` from the shell content row's top and bottom in both the current production UI and Token v2; it is an independent navigation plane, not a continuation of the tabbed main-workspace baseline.
 - Treat production Queue and Token v2 playback metadata as surfaces in one `.shell__main` right Dock rather than page columns or PlayerBar popovers. Reserve its `17.5rem` desktop bay, pin the `2.5rem` collapsed rail and expanded panel to the shell's right edge with the same `1rem` block inset as Sidebar, and let its resize axis double-click bidirectionally between collapsed and the last expanded width. Queue may replace metadata in the foreground while retaining metadata as its fallback; closing Queue reveals that fallback, and activating the player artwork while Queue is visible cancels Queue and navigates directly to metadata. Only a Dock with no visible surface folds automatically.
-- Use the sidebar for collections and music-management context; primary section navigation (Setlist/Appearance/Lyrics/Import) lives in the top tabs above the workspace, not the sidebar.
+- Use the sidebar for collections and music-management context; primary section navigation (Setlist/Lyrics/Output/Import) lives in the top folders above the workspace. Settings is a direct global utility destination in the Titlebar, not a Folder or sidebar item.
 - Align Sidebar collection rows and standard track rows to the same 3.25rem／2.5rem rhythm. Sidebar keeps this 52px／40px geometry in both Standard and Compact window density because its collection content is fixed; only the Sidebar's own width changes between expanded and icon-rail states. Sidebar keeps collection semantics: one click selects, a double-click or the artwork control starts playback.
 - Keep track rows dense, aligned, and easy to scan.
 - Right Dock track identities reuse `UiTrackRow` through a Dock-scoped fixed-density recipe: Queue, Recently Played, and playback-metadata current／upcoming rows remain 3.25rem／2.5rem (52px／40px) in both Standard and Compact. Its inline rhythm mirrors the expanded Sidebar without coupling the two features: an 0.5rem panel perimeter, 0.25rem row content inset, and 0.25rem state-surface outset place state paint／section content／artwork at 4／8／12px from the Dock edge. The resizable Dock width and window density are separate state axes; Compact may still remap generic Track Rows outside the Dock to 44px／36px. Queue single-click selects, double-click or artwork activation plays, duration is hidden, and track titles remain plain text. The Queue scroll surface protects tabs, headings, empty cues, row whitespace, and actions from drag selection while explicitly restoring text selection only for track title／artist metadata. The 3rem artwork recipe belongs only to the bottom-left PlayerBar.
@@ -381,6 +381,25 @@ Limits:
 - Do not turn every panel into a file folder.
 - Folder styling must never reduce list density or make repeated rows harder to scan.
 - The reference should inform organization and materiality, while Spotify still governs music-list efficiency.
+
+### Folder Page Layout
+
+- **Navigation semantics:** the upper Folder choices are application destinations, so use one `nav` landmark with native buttons and `aria-current="page"`. Do not apply `tablist`／`tab`／`tabpanel` unless one local surface actually controls a set of related panels without changing the application view.
+- **Single owner:** the shell-level layout owns the Folder tabs, colored perimeter, neutral document, fixed page header, and body scroll slot. A feature supplies header／toolbar／body content and must not add a second Folder perimeter or a nested page scroll owner.
+- **Fixed envelope:** every tab keeps the active-height hit box mounted. Selection moves the clipped surface and its independent content wrapper inside that envelope; it must not transition button height or move the document origin.
+- **Optical center:** derive label placement from the visible material above the cover rail, not from the full hit box. The mathematical active center is `(active height - cover size) / 2`; the resting center adds half of `(active height - resting height)`. Then apply the shared 1 CSS px downward optical offset to both states, balancing the extra visual weight of the Folder-colored lower rail without letting surface and label drift independently.
+- **Layering:** inactive surfaces remain behind the Folder-colored cover rail; the current destination sits in front and visually joins the perimeter. Focus rises above both without changing geometry. A repeated component instance must own a unique SVG clip-path id.
+- **Overflow:** narrow layouts compress to the defined minimum before using horizontal overflow. Keyboard／programmatic focus reveals the destination with nearest-edge scrolling; labels remain single-line ellipsis. The first and last destinations retain the same inline inset as the Folder perimeter.
+- **Content boundary:** page title, description, primary action, tabs, and Folder identity stay fixed. Only the neutral document body is a keyboard-focusable `UiScrollRegion`; its scrollbar must not cross the header.
+- **State ownership:** view selection is controlled by the application owner. The layout emits destination intent but does not own routing, unsaved-change guards, persistence, or post-navigation focus restoration. The fixed first version does not support closeable, reorderable, user-created, vertically oriented, or per-tab semantic-color variants.
+- **Accessibility:** forced-colors must preserve a system-highlight current destination and visible focus. Shape and color are supplemental; the current page remains exposed through `aria-current`.
+
+### Global Utility Destinations
+
+- Settings is a full destination reached from a direct Titlebar gear. It uses `aria-current="page"` while active and carries the passive update marker; it is not a toggle, popover, profile menu, or Folder tab.
+- Settings uses a neutral shell utility frame with one explicit return action, one page heading, and one description. The frame restores context without persisting navigation history across restarts and does not become a drag target.
+- Keep Settings as one page with flat, scan-friendly sections: Library and Storage, Audio Output, Features and Dependencies, Application, and Support and Maintenance. Do not add a second sidebar until section count or findability demonstrates the need.
+- The utility frame owns heading and return focus only. Settings content owns its body Scroll Region, feature request highlighting, dependency lifecycle, notices, and dialogs; never nest another page-level Scroll Region around it.
 
 ### Shape And Density
 

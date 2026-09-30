@@ -6,7 +6,9 @@ Accepted for implementation (2026-08-22). Product naming, default selection,
 and model candidates were revised after local listening feedback and community
 model review on 2026-08-23. Inst HQ4 was accepted later that day as the new
 versioned implementation behind `general`; optional community runtimes and
-model artifacts remain benchmark-gated and are not selected for release.
+model artifacts remain benchmark-gated and are not selected for release. The
+main-owned serial preparation queue was added on 2026-09-30 without changing
+the recipe, runtime, or artifact contracts below.
 
 ## Context
 
@@ -158,6 +160,32 @@ AudioProcessingService
 
 A broad plugin framework is not introduced. The service supports only engines
 required by accepted product recipes.
+
+### Preparation queue boundary
+
+Single-track preparation and multi-track preparation share one main-owned,
+in-memory `SeparationQueueService`. Renderer can submit at most 500 bounded
+track ids, one allowlisted recipe id, and a boolean regenerate intent. It
+cannot submit paths, URLs, models, executables, engine settings, or IPC channel
+names.
+
+The queue runs serially and keeps the global heavy-job scheduler as the final
+cross-capability execution arbiter. Open work is deduplicated by track and
+recipe. Before each item starts, main rechecks the feature gate, dependencies,
+source availability, and whether the manifest already contains the current
+profile and artifact. Existing current results are skipped unless regenerate
+was explicitly requested. A per-item failure is recorded with private context
+in main, projected as a bounded public reason, and does not stop later items.
+
+The public control contract supports status restore after renderer remount,
+pause after the active item, active cancellation, pending reordering and
+removal, retry from the beginning, and clearing successful history. The
+Renderer presents this in the shared Right Dock using ordinary preparation
+language; the playback queue supplies initial order but never becomes the
+processing-state owner. Queue state is session-only. The separation manifest
+remains authoritative for durable results, and app-restart persistence,
+parallel separation, time estimates, notifications, and worker/model reuse
+remain separate future decisions.
 
 ### Runtime and dependency policy
 

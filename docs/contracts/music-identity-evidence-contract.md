@@ -193,6 +193,10 @@ opaque candidate id、release 顯示資料、confidence 與 reason codes。Previ
 都以 `trackId + candidateId` 回 main 解析；Renderer 不能傳 image URL 或 MusicBrainz URL，候選預覽
 也由 main 下載驗證後以 bytes 交付，不 hotlink 遠端圖片。
 
+Provider transport failure 只在 main diagnostics 保存有界的 stage、reason、HTTP status 與次數；
+不保存 query、URL、MBID、曲名或 track id。Renderer 仍只接收 coarse `provider-unavailable` reason，
+使用者介面只說明目前無法搜尋與稍後重試，不揭露 provider、protocol 或 transport 分類。
+
 圖片下載只允許 HTTPS CAA／Internet Archive host，手動檢查每次 redirect，並限制 timeout、
 preview／full byte size、JPEG／PNG／WebP magic、declared MIME、寬高、總像素與 aspect ratio。Preview
 最多 4 Mi pixels，套用原圖最多 25 M pixels；Renderer CSP 只開放 main 驗證 bytes 所建立的 `blob:`，

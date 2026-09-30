@@ -120,8 +120,8 @@ not this UI checklist.
       Windows shutdown／logoff are not intercepted as background hiding.
 - [ ] Verify updater current／available／download／offline／retry／restart states and
       explicit download/install actions, that the download row shows rate and
-      remaining time, and that the Settings navigation tab shows the update dot
-      from `available` until install. Interrupt the network after download begins
+      remaining time, and that the Titlebar Settings gear shows the update dot
+      from `available` until install with an accessible update-ready name. Interrupt the network after download begins
       and verify the idle transfer is cancelled into a retryable error instead of
       remaining in `downloading`.
 - [ ] Verify the "自動檢查更新" toggle: off stops the startup check and the

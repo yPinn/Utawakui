@@ -32,17 +32,25 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
 
 主視窗右側 Dock 由 `App.vue` 與 `useAppRightDock.js` 共同擁有 shell geometry、
-surface stack 與 foreground navigation，不接管播放或佇列資料。Token v2 Studio
-Library metadata 可作為 retained fallback，production Queue 可顯示在前景；關閉 Queue
-會回到仍存在的 metadata，而 PlayerBar 縮圖是 direct metadata intent，Queue 在前景時會先
-取消 Queue 再顯示 metadata。`QueuePanel.vue` 與
-`StudioLibraryContextInspector.vue` 各自只呈現 feature content；queue authority 仍由
-`usePlaybackQueue.js` 持有。共用 resize width、desktop reserved bay、compact overlay、
+surface stack 與 foreground navigation，不接管播放或處理資料。Token v2 Studio
+Library metadata 可作為 retained fallback，production Queue 與「伴奏處理」可依觸發順序
+顯示在前景；PlayerBar 縮圖是 direct metadata intent，會先取消其他前景 surface 再顯示
+metadata。`QueuePanel.vue`、`SeparationQueuePanel.vue` 與
+`StudioLibraryContextInspector.vue` 各自只呈現 feature content；播放 queue authority 仍由
+`usePlaybackQueue.js` 持有，伴奏處理狀態則由 main-owned separation queue 持有。共用 resize width、desktop reserved bay、compact overlay、
 Escape 與 focus restoration 屬於 shell，不得回流到 PlayerBar 或 playlist component。
 Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
 tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
 只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow
 semantic tokens。最近播放列繼續組合 `QueueTrackButton → UiTrackRow`，不建立另一套 row。
+
+Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
+Lyrics／Output／Import 進入 `AppArchiveFrame` 的 Folder workflow branch；Settings 由
+Titlebar direct action 進入 shell-level `AppUtilityFrame`，不屬於 Folder destination。
+`openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
+view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
+Utility frame 只擁有返回、頁名與焦點，`SettingsView` 繼續擁有內容 lifecycle 與唯一的
+body Scroll Region。
 
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主
@@ -246,9 +254,12 @@ Import 由 `electron/lib/importRecordingPolicy.js` 建立 observed tracks 並映
 `importResolver.js` 仍擁有 playback kind、view count、candidate order 與 download recommendation。
 Artwork discovery 由 `musicbrainz/`／`coverArtArchive/` provider adapters、
 `artwork/discoveryService.js` 的短期 opaque candidate sessions 與
-`artwork/releasePolicy.js` 的 release-level policy 組成。Main 擁有節流、快取、timeout、redirect
-allowlist、圖片 bytes／MIME／magic／尺寸／總像素驗證與 apply；Renderer 只提交 bounded search edits、
-track id 與 candidate id，且候選預覽只使用驗證後 bytes 的 `blob:`，不直接 hotlink。使用者確認後，
+`artwork/releasePolicy.js` 的 release-level policy 組成。Discovery 先查 original recording，
+不足時才依序補 release group 與有限文字 variants；Cover Art metadata 使用 bounded concurrency
+與 early stop，排序後再以 canonical image identity 去重。Main 擁有節流、快取、timeout、redirect
+allowlist、圖片 bytes／MIME／magic／尺寸／總像素驗證與 apply；Renderer 只提交目前 metadata draft、
+選填 album filter、track id 與 candidate id，收到文字候選後即呈現，再以有界併發漸進載入經驗證
+bytes 的 `blob:` 預覽，不直接 hotlink。使用者確認後，
 library owner 才 atomic 取代 `thumbnail.<ext>` 並寫入最小 `artwork.json` provenance；自動 backfill
 不得覆寫既有封面。第一版沒有自動套用或 metadata side effect。
 完整邊界見 [Music Identity／Evidence 契約](contracts/music-identity-evidence-contract.md)。
@@ -382,6 +393,16 @@ capability owner 的組合，`MusicAnalysisSettingsRow.vue` 只呈現用途、�
 track id；佇列重新檢查自動分析偏好、`audio-processing-flow`、capability readiness 與
 sidecar currentness，並在手動 analysis／batch 結束後再執行。排入、檢查或分析失敗均
 不得回滾已成功的下載或本地匯入。
+
+`electron/lib/audioProcessing/separationQueueService.js` 是另一個 domain-specific、main-owned
+記憶體佇列；它不與播放 Queue 或 Music Analysis batch 共用產品狀態。既有單曲產生與
+播放清單批次加入都經過同一 owner，依序執行並以 open `(trackId, recipeId)` 去重；每首開始前
+重新檢查 gate、依賴、來源與目前 profile 結果，預設略過已存在的 current result，只有明確
+重新準備 intent 才覆寫。Main 提供 bounded status query／progress event、pause-after-current、
+active cancel、pending move／remove、failed retry／dismiss 與 successful-history clear；Renderer 只提交
+track ids、allowlisted product intent 與 boolean override。Queue status 只代表本次 App session
+的操作進度，manifest 仍是結果存在與可播放的權威；重啟持久化、平行處理、ETA、完成通知與
+worker／model reuse 不屬於第一階段。
 
 ## Feature Gates 與最小依賴單位
 
