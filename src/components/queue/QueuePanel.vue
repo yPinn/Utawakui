@@ -244,7 +244,6 @@ const {
       @search-artwork="trackMetadataEditor.searchArtwork"
       @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
       @apply-artwork="trackMetadataEditor.applySelectedArtwork"
-      @open-artwork-source="trackMetadataEditor.openArtworkSource"
       @update-title="trackMetadataEditor.setTitleDraft"
       @update-artist="trackMetadataEditor.setArtistDraft"
     />

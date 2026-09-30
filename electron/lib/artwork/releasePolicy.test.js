@@ -118,4 +118,55 @@ describe('artwork release policy', () => {
     expect(evaluated.reasons).toContain('isrc-exact');
     expect(evaluated.reasons).not.toContain('isrc-conflict');
   });
+
+  it('deduplicates the same canonical artwork after ranking and keeps the strongest source', () => {
+    const sharedImage =
+      'https://coverartarchive.org/release/shared/front-original.jpg';
+    const ranked = rankArtworkCandidates(expected, [
+      candidate({
+        entityId: '44444444-4444-4444-8444-444444444444',
+        status: 'Pseudo-Release',
+        front: { imageUrl: sharedImage },
+      }),
+      candidate({
+        entityId: '55555555-5555-4555-8555-555555555555',
+        front: { imageUrl: sharedImage },
+      }),
+      candidate({
+        entityId: '66666666-6666-4666-8666-666666666666',
+        artistCredit: 'Someone Else',
+        front: {
+          imageUrl:
+            'https://coverartarchive.org/release/alternate/front-original.jpg',
+        },
+      }),
+    ]);
+
+    expect(ranked.map((item) => item.entityId)).toEqual([
+      '55555555-5555-4555-8555-555555555555',
+      '66666666-6666-4666-8666-666666666666',
+    ]);
+    expect(ranked[0]).toMatchObject({ recommended: true, automatic: false });
+  });
+
+  it('keeps different artwork from the same release group', () => {
+    const ranked = rankArtworkCandidates(expected, [
+      candidate({
+        entityId: '44444444-4444-4444-8444-444444444444',
+        front: {
+          imageUrl:
+            'https://coverartarchive.org/release/first/front-original.jpg',
+        },
+      }),
+      candidate({
+        entityId: '55555555-5555-4555-8555-555555555555',
+        front: {
+          imageUrl:
+            'https://coverartarchive.org/release/second/front-original.jpg',
+        },
+      }),
+    ]);
+
+    expect(ranked).toHaveLength(2);
+  });
 });

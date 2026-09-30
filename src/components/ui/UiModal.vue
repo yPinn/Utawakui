@@ -6,10 +6,11 @@ const openModalStack = [];
 <script setup>
 // Generic modal shell — first one in this app (see docs/spec.md's inline-
 // editing precedent for why one wasn't built sooner: it was only ever one
-// field at a time). Content lives entirely in the default slot; this
-// component owns only the overlay mechanics (teleport, locked backdrop,
-// Escape, focus). The backdrop is deliberately inert because modal content
-// can contain drafts; only explicit close controls may discard that work.
+// field at a time). Scrollable content lives in the default slot, while an
+// optional footer slot keeps primary actions outside that scrollport. This
+// component otherwise owns only the overlay mechanics (teleport, locked
+// backdrop, Escape, focus). The backdrop is deliberately inert because modal
+// content can contain drafts; only explicit close controls may discard them.
 import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
 import UiIconButton from './UiIconButton.vue';
@@ -29,6 +30,7 @@ const props = defineProps({
     default: 'default',
     validator: (value) => ['default', 'notice', 'wide'].includes(value),
   },
+  fixedHeight: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['close']);
@@ -146,7 +148,10 @@ onUnmounted(() => {
       <div
         ref="dialog"
         class="ui-modal"
-        :class="`ui-modal--${size}`"
+        :class="[
+          `ui-modal--${size}`,
+          { 'ui-modal--fixed-height': fixedHeight },
+        ]"
         role="dialog"
         tabindex="-1"
         aria-modal="true"
@@ -163,6 +168,9 @@ onUnmounted(() => {
         >
           <slot />
         </UiScrollRegion>
+        <div v-if="$slots.footer" class="ui-modal__footer">
+          <slot name="footer" />
+        </div>
       </div>
     </div>
   </Teleport>
@@ -184,7 +192,7 @@ onUnmounted(() => {
   width: min(var(--ui-modal-width-default), 100%);
   max-height: calc(100vh - var(--ui-space-8));
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
@@ -200,12 +208,26 @@ onUnmounted(() => {
   padding: 0 var(--ui-space-5) var(--ui-space-5);
 }
 
+.ui-modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-5) var(--ui-space-4);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
+  background: var(--ui-color-surface);
+}
+
 .ui-modal--notice {
   width: min(var(--ui-modal-width-notice), 100%);
 }
 
 .ui-modal--wide {
   width: min(var(--ui-modal-width-wide), 100%);
+}
+
+.ui-modal--fixed-height {
+  height: min(44rem, calc(100dvh - var(--ui-space-8)));
 }
 
 .ui-modal__header {

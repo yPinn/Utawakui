@@ -51,6 +51,7 @@ const queueTrackSource = readSource('../queue/QueueTrackButton.vue');
 const playerArtworkSource = readSource('../playback/PlayerBarArtwork.vue');
 const playerBarSource = readSource('../playback/PlayerBar.vue');
 const metadataSource = readSource('../library/TrackMetadataModal.vue');
+const metadataPreviewSource = readSource('../library/ArtworkPreviewPane.vue');
 const reviewContract = readSource(
   '../../../docs/contracts/token-v2-component-review.md',
 );
@@ -475,9 +476,14 @@ describe('DemoTrackThumbAppearance', () => {
     expect(activeTokenSource).toContain('--ui-player-bar-artwork-size: 3rem;');
     expect(playerBarSource).toContain('height: var(--ui-player-bar-height);');
     expect(activeTokenSource).toContain('--ui-player-bar-height: calc(');
-    expect(metadataSource).toContain('size="var(--ui-space-8)"');
+    expect(metadataPreviewSource).toContain(
+      'size="var(--track-metadata-preview-size)"',
+    );
+    expect(metadataPreviewSource).toContain(
+      '--track-metadata-preview-size: 13rem;',
+    );
     expect(metadataSource).toContain(
-      'grid-template-columns: var(--ui-space-8) minmax(0, 1fr);',
+      'grid-template-columns: minmax(13rem, 15rem) minmax(0, 1fr);',
     );
   });
 

@@ -10,7 +10,10 @@ const {
 } = require('../musicIdentity/queryVariants.js');
 const { normalizeText } = require('../musicIdentity/text.js');
 const { downloadValidatedArtwork } = require('./image.js');
-const { rankArtworkCandidates } = require('./releasePolicy.js');
+const {
+  rankArtworkCandidates,
+  rankArtworkProposals,
+} = require('./releasePolicy.js');
 
 const DEFAULT_SESSION_TTL_MS = 10 * 60 * 1000;
 const MAX_SESSIONS = 8;
@@ -18,8 +21,25 @@ const MAX_QUERY_CHARS = 200;
 const MAX_QUERY_VARIANTS = 3;
 const TARGET_CANDIDATE_COUNT = 4;
 const MAX_RAW_PROPOSALS = 24;
+const MAX_PROPOSALS_PER_STAGE = 8;
+const COVER_LOOKUP_CONCURRENCY = 2;
 const MAX_PREVIEW_BYTES = 2 * 1024 * 1024;
 const MAX_PREVIEW_PIXELS = 4 * 1024 * 1024;
+const PROVIDER_FAILURE_REASONS = new Set([
+  'fetch-unavailable',
+  'http-error',
+  'invalid-json',
+  'invalid-redirect',
+  'invalid-request',
+  'offline',
+  'rate-limited',
+  'redirect-not-allowed',
+  'response-too-large',
+  'service-unavailable',
+  'timeout',
+  'too-many-redirects',
+  'unexpected-error',
+]);
 
 function containsControlCharacter(value) {
   for (const character of value) {
@@ -160,6 +180,31 @@ function publicCandidate(candidate) {
   };
 }
 
+function proposalIdentity(candidate) {
+  return `${candidate?.entityType || ''}:${candidate?.entityId || ''}`;
+}
+
+function releaseGroupIdentity(candidate) {
+  return candidate?.releaseGroupId || proposalIdentity(candidate);
+}
+
+function diverseProposalOrder(expected, proposals) {
+  const groups = new Map();
+  for (const candidate of rankArtworkProposals(expected, proposals)) {
+    const key = releaseGroupIdentity(candidate);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(candidate);
+  }
+  const ordered = [];
+  while (groups.size > 0) {
+    for (const [key, candidates] of groups) {
+      ordered.push(candidates.shift());
+      if (candidates.length === 0) groups.delete(key);
+    }
+  }
+  return ordered;
+}
+
 function createArtworkDiscoveryService(options = {}) {
   const musicBrainzClient =
     options.musicBrainzClient || createMusicBrainzClient();
@@ -170,6 +215,10 @@ function createArtworkDiscoveryService(options = {}) {
   const now = options.now || Date.now;
   const randomId = options.randomId || randomUUID;
   const sessionTtlMs = options.sessionTtlMs ?? DEFAULT_SESSION_TTL_MS;
+  const onProviderFailure =
+    typeof options.onProviderFailure === 'function'
+      ? options.onProviderFailure
+      : null;
   const sessions = new Map();
 
   function cleanSessions() {
@@ -192,91 +241,148 @@ function createArtworkDiscoveryService(options = {}) {
     return null;
   }
 
-  async function hydrateFronts(proposals, signal) {
-    const results = await Promise.all(
-      proposals.map(async (proposal) => {
-        try {
-          const front = await coverArtClient.lookupFront(
-            proposal.entityType,
-            proposal.entityId,
-            { signal },
-          );
-          return {
-            proposal:
-              front.status === 'ok'
-                ? { ...proposal, front: front.front }
-                : null,
-            providerError: front.status === 'error',
-          };
-        } catch {
-          return { proposal: null, providerError: true };
-        }
-      }),
-    );
-    return {
-      proposals: results.map((result) => result.proposal).filter(Boolean),
-      providerError: results.some((result) => result.providerError),
-    };
-  }
-
   async function search(track, edits = {}, requestOptions = {}) {
     const expected = normalizeQuery(track, edits);
     if (!expected) return { status: 'error', reason: 'invalid-query' };
     const variants = queryPlan(expected);
     const proposalKeys = new Set();
     const proposals = [];
+    let coverLookupCount = 0;
     let sawProviderError = false;
+    let firstProviderFailure = null;
+    let providerFailureCount = 0;
 
-    for (const variant of variants) {
+    function noteProviderFailure(stage, result) {
+      sawProviderError = true;
+      providerFailureCount = Math.min(
+        MAX_RAW_PROPOSALS + 2,
+        providerFailureCount + 1,
+      );
+      if (firstProviderFailure) return;
+      const reason = PROVIDER_FAILURE_REASONS.has(result?.reason)
+        ? result.reason
+        : 'unexpected-error';
+      const httpStatus = Number(result?.httpStatus);
+      firstProviderFailure = {
+        stage,
+        reason,
+        ...(Number.isInteger(httpStatus) &&
+        httpStatus >= 100 &&
+        httpStatus <= 599
+          ? { httpStatus }
+          : {}),
+      };
+    }
+
+    function notifyProviderFailure() {
+      if (!onProviderFailure || !firstProviderFailure) return;
+      try {
+        onProviderFailure({
+          ...firstProviderFailure,
+          failureCount: providerFailureCount,
+        });
+      } catch {
+        // Diagnostics are fail-open and must not replace the user operation.
+      }
+    }
+
+    function rankedCandidates() {
+      return rankArtworkCandidates(expected, proposals, {
+        limit: TARGET_CANDIDATE_COUNT,
+      });
+    }
+
+    function targetReached() {
+      return rankedCandidates().length >= TARGET_CANDIDATE_COUNT;
+    }
+
+    async function hydrateStage(stageProposals) {
+      const queue = [];
+      for (const proposal of diverseProposalOrder(expected, stageProposals)) {
+        const key = proposalIdentity(proposal);
+        if (proposalKeys.has(key)) continue;
+        proposalKeys.add(key);
+        queue.push(proposal);
+        if (queue.length >= MAX_PROPOSALS_PER_STAGE) break;
+      }
+      let nextIndex = 0;
+      async function worker() {
+        while (
+          nextIndex < queue.length &&
+          coverLookupCount < MAX_RAW_PROPOSALS &&
+          !targetReached()
+        ) {
+          const proposal = queue[nextIndex];
+          nextIndex += 1;
+          coverLookupCount += 1;
+          try {
+            const front = await coverArtClient.lookupFront(
+              proposal.entityType,
+              proposal.entityId,
+              { signal: requestOptions.signal },
+            );
+            if (front.status === 'ok') {
+              proposals.push({ ...proposal, front: front.front });
+            } else if (front.status === 'error') {
+              noteProviderFailure('cover-art-lookup', front);
+            }
+          } catch {
+            noteProviderFailure('cover-art-lookup', {
+              reason: 'unexpected-error',
+            });
+          }
+        }
+      }
+      await Promise.all(
+        Array.from(
+          { length: Math.min(COVER_LOOKUP_CONCURRENCY, queue.length) },
+          () => worker(),
+        ),
+      );
+    }
+
+    variantLoop: for (const variant of variants) {
       const query = {
         title: variant.title.value,
         artist: variant.artist?.value,
         album: expected.album,
       };
-      const [releaseGroups, recordings] = await Promise.all([
-        musicBrainzClient.searchReleaseGroups(query, requestOptions),
-        musicBrainzClient.searchRecordings(query, requestOptions),
-      ]);
-      if (releaseGroups.status === 'error' || recordings.status === 'error') {
-        sawProviderError = true;
-      }
-      if (releaseGroups.status === 'error' && recordings.status === 'error') {
-        break;
-      }
-      const round = [
-        ...(releaseGroups.status === 'ok'
-          ? releaseGroups.records.map((record) =>
-              releaseGroupProposal(record, variant),
-            )
-          : []),
-        ...(recordings.status === 'ok'
-          ? recordings.records.flatMap((record) =>
-              recordingProposals(record, variant),
-            )
-          : []),
+      let endpointErrors = 0;
+      const stages = [
+        {
+          failureStage: 'musicbrainz-recording-search',
+          search: () =>
+            musicBrainzClient.searchRecordings(query, requestOptions),
+          proposals: (records) =>
+            records.flatMap((record) => recordingProposals(record, variant)),
+        },
+        {
+          failureStage: 'musicbrainz-release-group-search',
+          search: () =>
+            musicBrainzClient.searchReleaseGroups(query, requestOptions),
+          proposals: (records) =>
+            records.map((record) => releaseGroupProposal(record, variant)),
+        },
       ];
-      const uniqueRound = [];
-      for (const proposal of round) {
-        const key = `${proposal.entityType}:${proposal.entityId}`;
-        if (proposalKeys.has(key) || proposalKeys.size >= MAX_RAW_PROPOSALS) {
+      for (const stage of stages) {
+        if (targetReached() || coverLookupCount >= MAX_RAW_PROPOSALS) {
+          break variantLoop;
+        }
+        const result = await stage.search();
+        if (result.status === 'error') {
+          noteProviderFailure(stage.failureStage, result);
+          endpointErrors += 1;
+          if (endpointErrors === stages.length) break variantLoop;
           continue;
         }
-        proposalKeys.add(key);
-        uniqueRound.push(proposal);
+        await hydrateStage(stage.proposals(result.records));
       }
-      const hydrated = await hydrateFronts(uniqueRound, requestOptions.signal);
-      proposals.push(...hydrated.proposals);
-      sawProviderError ||= hydrated.providerError;
-      if (
-        proposals.length >= TARGET_CANDIDATE_COUNT ||
-        proposalKeys.size >= MAX_RAW_PROPOSALS
-      ) {
-        break;
-      }
+      if (rankedCandidates().length > 0) break variantLoop;
     }
 
-    const ranked = rankArtworkCandidates(expected, proposals);
+    const ranked = rankedCandidates();
     if (ranked.length === 0 && sawProviderError) {
+      notifyProviderFailure();
       return { status: 'error', reason: 'provider-unavailable' };
     }
 

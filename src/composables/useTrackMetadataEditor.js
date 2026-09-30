@@ -10,7 +10,7 @@ const { requireFeatureGate } = useFeatureGateAccess();
 
 const ARTWORK_FAILURE_MESSAGES = Object.freeze({
   'invalid-query': '請輸入 200 字以內的歌曲名稱、演唱者或專輯。',
-  'provider-unavailable': 'MusicBrainz 或 Cover Art Archive 暫時無法使用。',
+  'provider-unavailable': '目前無法搜尋封面，請稍後再試。',
   'candidate-expired': '這批封面候選已過期，請重新搜尋。',
   'track-unavailable': '找不到這首歌曲。',
 });
@@ -27,6 +27,7 @@ function reportMetadataError(error, operation, message) {
 }
 
 export function useTrackMetadataEditor({ refresh = null } = {}) {
+  let artworkPreviewGeneration = 0;
   const state = reactive({
     track: null,
     titleDraft: '',
@@ -36,7 +37,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     isArtworkSearching: false,
     artworkSearchOpen: false,
     artworkSearchCompleted: false,
-    artworkQuery: { title: '', artist: '', album: '' },
+    artworkQuery: { album: '' },
     artworkCandidates: [],
     selectedArtworkCandidateId: null,
     error: null,
@@ -53,13 +54,18 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     }
   }
 
-  function resetArtworkSearch() {
+  function invalidateArtworkResults() {
+    artworkPreviewGeneration += 1;
     revokeArtworkPreviews();
-    state.artworkSearchOpen = false;
     state.artworkSearchCompleted = false;
-    state.artworkQuery = { title: '', artist: '', album: '' };
     state.artworkCandidates = [];
     state.selectedArtworkCandidateId = null;
+  }
+
+  function resetArtworkSearch() {
+    invalidateArtworkResults();
+    state.artworkSearchOpen = false;
+    state.artworkQuery = { album: '' };
     state.isArtworkSearching = false;
   }
 
@@ -78,6 +84,7 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     state.titleDraft = track?.title ?? '';
     state.artistDraft = track?.artist ?? '';
     state.error = null;
+    if (track && !track.thumbnailUrl) openArtworkSearch();
   }
 
   function close() {
@@ -88,26 +95,26 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function setTitleDraft(value) {
-    state.titleDraft = value;
+    const nextValue = String(value ?? '');
+    if (state.titleDraft === nextValue) return;
+    state.titleDraft = nextValue;
+    if (state.artworkSearchOpen) invalidateArtworkResults();
   }
 
   function setArtistDraft(value) {
-    state.artistDraft = value;
+    const nextValue = String(value ?? '');
+    if (state.artistDraft === nextValue) return;
+    state.artistDraft = nextValue;
+    if (state.artworkSearchOpen) invalidateArtworkResults();
   }
 
   function openArtworkSearch() {
     if (!state.track) return;
-    revokeArtworkPreviews();
+    invalidateArtworkResults();
     state.artworkSearchOpen = true;
-    state.artworkSearchCompleted = false;
     state.artworkQuery = {
-      title: state.track.title ?? '',
-      artist: state.track.artist ?? '',
       album: state.track.album ?? '',
     };
-    state.artworkCandidates = [];
-    state.selectedArtworkCandidateId = null;
-    state.artworkSearchCompleted = false;
     state.error = null;
   }
 
@@ -117,8 +124,11 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
   }
 
   function setArtworkQueryField(field, value) {
-    if (!['title', 'artist', 'album'].includes(field)) return;
-    state.artworkQuery[field] = String(value ?? '');
+    if (field !== 'album') return;
+    const nextValue = String(value ?? '');
+    if (state.artworkQuery.album === nextValue) return;
+    state.artworkQuery.album = nextValue;
+    invalidateArtworkResults();
   }
 
   function artworkFailure(result, fallback) {
@@ -146,22 +156,62 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     );
   }
 
-  async function loadArtworkPreviews(trackId, candidates) {
-    if (typeof window.Utawakui?.loadTrackArtworkPreview !== 'function') {
-      return candidates;
+  async function loadArtworkPreviews(trackId, candidates, generation) {
+    const loadPreview = window.Utawakui?.loadTrackArtworkPreview;
+    if (typeof loadPreview !== 'function') return;
+    const pending = new Map(
+      candidates.map((candidate) => [candidate.id, candidate]),
+    );
+
+    function takeNextCandidate() {
+      const priorityIds = [
+        state.selectedArtworkCandidateId,
+        candidates.find((candidate) => candidate.recommended)?.id,
+      ];
+      for (const candidateId of priorityIds) {
+        if (!candidateId || !pending.has(candidateId)) continue;
+        const candidate = pending.get(candidateId);
+        pending.delete(candidateId);
+        return candidate;
+      }
+      const next = pending.entries().next();
+      if (next.done) return null;
+      const [candidateId, candidate] = next.value;
+      pending.delete(candidateId);
+      return candidate;
     }
-    return Promise.all(
-      candidates.map(async (candidate) => {
+
+    async function worker() {
+      while (pending.size > 0) {
+        const candidate = takeNextCandidate();
+        if (!candidate) return;
+        let previewUrl = '';
         try {
-          const result = await window.Utawakui.loadTrackArtworkPreview(
-            trackId,
-            candidate.id,
-          );
-          return { ...candidate, previewUrl: previewObjectUrl(result) };
+          const result = await loadPreview(trackId, candidate.id);
+          previewUrl = previewObjectUrl(result);
         } catch {
-          return { ...candidate, previewUrl: '' };
+          // Keep the text candidate available when its preview cannot load.
         }
-      }),
+        if (generation !== artworkPreviewGeneration) {
+          if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+          continue;
+        }
+        const candidateIndex = state.artworkCandidates.findIndex(
+          (current) => current.id === candidate.id,
+        );
+        if (candidateIndex < 0) {
+          if (previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+          continue;
+        }
+        state.artworkCandidates[candidateIndex] = {
+          ...state.artworkCandidates[candidateIndex],
+          previewUrl,
+          previewLoading: false,
+        };
+      }
+    }
+    await Promise.all(
+      Array.from({ length: Math.min(2, pending.size) }, () => worker()),
     );
   }
 
@@ -177,19 +227,17 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     const enabled = await requireFeatureGate(FEATURE_IDS.PROVIDER_FLOW, {
       source: 'artwork',
       operation: 'search',
-      message: '請先到設定啟用外部來源，才能搜尋 MusicBrainz 封面。',
+      message: '請先到設定啟用外部來源，才能線上搜尋封面。',
     });
     if (!enabled) return null;
 
     state.isArtworkSearching = true;
     state.error = null;
-    revokeArtworkPreviews();
-    state.artworkCandidates = [];
-    state.selectedArtworkCandidateId = null;
+    invalidateArtworkResults();
     try {
       const result = await window.Utawakui.searchTrackArtwork(state.track.id, {
-        title: state.artworkQuery.title,
-        artist: state.artworkQuery.artist,
+        title: state.titleDraft,
+        artist: state.artistDraft,
         album: state.artworkQuery.album,
       });
       if (result?.status !== 'ok') {
@@ -199,14 +247,25 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
         );
         return null;
       }
-      state.artworkCandidates = await loadArtworkPreviews(
-        state.track.id,
-        Array.isArray(result.candidates) ? result.candidates : [],
-      );
+      const canLoadPreviews =
+        typeof window.Utawakui?.loadTrackArtworkPreview === 'function';
+      state.artworkCandidates = (
+        Array.isArray(result.candidates) ? result.candidates : []
+      ).map((candidate) => ({
+        ...candidate,
+        previewUrl: '',
+        previewLoading: canLoadPreviews,
+      }));
       state.selectedArtworkCandidateId =
         state.artworkCandidates.find((candidate) => candidate.recommended)
           ?.id || null;
       state.artworkSearchCompleted = true;
+      const generation = artworkPreviewGeneration;
+      void loadArtworkPreviews(
+        state.track.id,
+        state.artworkCandidates,
+        generation,
+      );
       return state.artworkCandidates;
     } catch (err) {
       state.error = reportMetadataError(
@@ -262,17 +321,6 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     } finally {
       state.isArtworkSaving = false;
     }
-  }
-
-  async function openArtworkSource(candidateId) {
-    if (
-      !state.track ||
-      typeof window === 'undefined' ||
-      typeof window.Utawakui?.openTrackArtworkSource !== 'function'
-    ) {
-      return false;
-    }
-    return window.Utawakui.openTrackArtworkSource(state.track.id, candidateId);
   }
 
   async function save() {
@@ -405,7 +453,6 @@ export function useTrackMetadataEditor({ refresh = null } = {}) {
     searchArtwork,
     selectArtworkCandidate,
     applySelectedArtwork,
-    openArtworkSource,
     setTitleDraft,
     setArtistDraft,
   };

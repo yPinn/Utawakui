@@ -239,4 +239,65 @@ describe('UiModal behavior', () => {
     expect(closeSecond).toHaveBeenCalledOnce();
     app.unmount();
   });
+
+  it('applies fixed workspace height only when explicitly requested', async () => {
+    const Root = {
+      setup: () => () => [
+        h(UiModal, {
+          open: true,
+          title: '內容高度視窗',
+        }),
+        h(UiModal, {
+          open: true,
+          title: '固定高度視窗',
+          fixedHeight: true,
+        }),
+      ],
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.mount(root);
+    await nextTick();
+
+    const dialogs = findAll(body, (node) => node.props?.role === 'dialog');
+    expect(String(dialogs[0].props.class)).not.toContain(
+      'ui-modal--fixed-height',
+    );
+    expect(String(dialogs[1].props.class)).toContain('ui-modal--fixed-height');
+
+    app.unmount();
+  });
+
+  it('renders an optional footer outside the body scroll region', async () => {
+    const Root = {
+      setup: () => () =>
+        h(
+          UiModal,
+          { open: true, title: '固定操作視窗' },
+          {
+            default: () => h('p', { id: 'modal-content' }, '可捲動內容'),
+            footer: () => h('button', { id: 'modal-action' }, '儲存'),
+          },
+        ),
+    };
+    const root = hostNode('root');
+    const app = renderer.createApp(Root);
+    app.provide(ssrContextKey, { modules: new Set() });
+    app.mount(root);
+    await nextTick();
+
+    const scrollRegion = findAll(body, (node) =>
+      String(node.props?.class || '').includes('ui-modal__body'),
+    )[0];
+    const footer = findAll(body, (node) =>
+      String(node.props?.class || '').includes('ui-modal__footer'),
+    )[0];
+
+    expect(footer).toBeDefined();
+    expect(footer.parent).toBe(scrollRegion.parent);
+    expect(findAll(scrollRegion, (node) => node === footer)).toHaveLength(0);
+
+    app.unmount();
+  });
 });

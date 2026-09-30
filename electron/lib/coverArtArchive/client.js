@@ -2,9 +2,6 @@
 
 const packageMetadata = require('../../../package.json');
 const { readBoundedText } = require('../lrclib/client.js');
-const {
-  createProviderRequestScheduler,
-} = require('../providerRequestScheduler.js');
 
 const COVER_ART_ARCHIVE_BASE_URL = 'https://coverartarchive.org';
 const DEFAULT_REQUEST_TIMEOUT_MS = 10_000;
@@ -16,8 +13,19 @@ const MAX_REDIRECTS = 3;
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const MBID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
-const sharedCoverArtScheduler = createProviderRequestScheduler({
-  intervalMs: 100,
+const directScheduler = Object.freeze({
+  schedule(operation, options = {}) {
+    if (options.signal?.aborted) {
+      return Promise.reject(
+        options.signal.reason instanceof Error
+          ? options.signal.reason
+          : Object.assign(new Error('operation aborted'), {
+              name: 'AbortError',
+            }),
+      );
+    }
+    return operation();
+  },
 });
 
 function isAllowedCoverArtUrl(value) {
@@ -98,7 +106,7 @@ function createCoverArtArchiveClient(options = {}) {
   const fetchFn = Object.hasOwn(options, 'fetch')
     ? options.fetch
     : globalThis.fetch;
-  const scheduler = options.scheduler || sharedCoverArtScheduler;
+  const scheduler = options.scheduler || directScheduler;
   const timeoutMs = options.timeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
   const maxResponseBytes =
     options.maxResponseBytes ?? DEFAULT_MAX_RESPONSE_BYTES;

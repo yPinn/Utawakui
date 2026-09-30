@@ -96,10 +96,38 @@ function registerLibraryHandlers({
   updateLibraryTrackMetadata = updateTrackMetadata,
   writeLibraryTrackArtworkFile = writeTrackArtworkFile,
   deleteLibraryTrackArtworkFile = deleteTrackArtworkFile,
-  artworkDiscoveryService = createArtworkDiscoveryService(),
+  artworkDiscoveryService,
+  createArtworkService = createArtworkDiscoveryService,
   enqueueMusicAnalysis = () => false,
   recordDiagnostic,
 }) {
+  const resolvedArtworkDiscoveryService =
+    artworkDiscoveryService ??
+    createArtworkService({
+      onProviderFailure(failure) {
+        try {
+          recordDiagnostic?.({
+            process: 'main',
+            level: 'warning',
+            source: 'artwork',
+            operation: 'provider-search',
+            code: 'ARTWORK_PROVIDER_UNAVAILABLE',
+            message: 'Artwork provider search failed',
+            context: {
+              stage: failure.stage,
+              reason: failure.reason,
+              ...(Number.isInteger(failure.httpStatus)
+                ? { httpStatus: failure.httpStatus }
+                : {}),
+              failureCount: failure.failureCount,
+              retryable: true,
+            },
+          });
+        } catch {
+          // Diagnostics are fail-open and must not block artwork search.
+        }
+      },
+    });
   const fetchBackfillTrackInfo = createProviderBackfillTrackInfo(
     getProviderRunner,
     lyricsAcquisitionService,
@@ -387,7 +415,7 @@ function registerLibraryHandlers({
             context: { retryable: true },
           },
         },
-        () => artworkDiscoveryService.search(track, edits),
+        () => resolvedArtworkDiscoveryService.search(track, edits),
       );
     },
   );
@@ -416,7 +444,7 @@ function registerLibraryHandlers({
             context: { retryable: true },
           },
         },
-        () => artworkDiscoveryService.loadPreview(trackId, candidateId),
+        () => resolvedArtworkDiscoveryService.loadPreview(trackId, candidateId),
       );
     },
   );
@@ -445,7 +473,7 @@ function registerLibraryHandlers({
             context: { retryable: true },
           },
         },
-        () => artworkDiscoveryService.apply(dir, trackId, candidateId),
+        () => resolvedArtworkDiscoveryService.apply(dir, trackId, candidateId),
       );
       if (result.status !== 'ok') return result;
       const updated = listLibraryTracks(dir).find(
@@ -465,7 +493,7 @@ function registerLibraryHandlers({
         (candidate) => candidate.id === trackId,
       );
       if (!track) return false;
-      const sourcePage = artworkDiscoveryService.sourcePage(
+      const sourcePage = resolvedArtworkDiscoveryService.sourcePage(
         trackId,
         candidateId,
       );

@@ -238,24 +238,52 @@ function evaluateArtworkCandidate(expected, candidate) {
   };
 }
 
-function rankArtworkCandidates(expected, candidates, options = {}) {
-  const limit = Number.isInteger(options.limit)
-    ? Math.min(16, Math.max(1, options.limit))
-    : 12;
+function compareEvaluatedCandidates(first, second) {
+  return (
+    second.score - first.score ||
+    String(first.entityId).localeCompare(String(second.entityId))
+  );
+}
+
+function rankArtworkProposals(expected, candidates) {
   const seen = new Set();
   const ranked = [];
   for (const candidate of Array.isArray(candidates) ? candidates : []) {
     const key = `${candidate?.entityType || ''}:${candidate?.entityId || ''}`;
-    if (!candidate?.front || seen.has(key)) continue;
+    if (!candidate || seen.has(key)) continue;
     seen.add(key);
     ranked.push(evaluateArtworkCandidate(expected, candidate));
   }
-  ranked.sort(
-    (first, second) =>
-      second.score - first.score ||
-      String(first.entityId).localeCompare(String(second.entityId)),
-  );
-  const result = ranked.slice(0, limit);
+  ranked.sort(compareEvaluatedCandidates);
+  return ranked;
+}
+
+function canonicalArtworkIdentity(candidate) {
+  const value = candidate?.front?.imageUrl;
+  if (typeof value !== 'string' || !value.trim()) return null;
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    return url.href;
+  } catch {
+    return value.trim();
+  }
+}
+
+function rankArtworkCandidates(expected, candidates, options = {}) {
+  const limit = Number.isInteger(options.limit)
+    ? Math.min(16, Math.max(1, options.limit))
+    : 12;
+  const artworkSeen = new Set();
+  const result = [];
+  for (const candidate of rankArtworkProposals(expected, candidates)) {
+    if (!candidate.front) continue;
+    const artworkIdentity = canonicalArtworkIdentity(candidate);
+    if (artworkIdentity && artworkSeen.has(artworkIdentity)) continue;
+    if (artworkIdentity) artworkSeen.add(artworkIdentity);
+    result.push(candidate);
+    if (result.length >= limit) break;
+  }
   if (
     result[0]?.confidence === 'high' &&
     (!result[1] || result[0].score - result[1].score >= 10)
@@ -266,6 +294,8 @@ function rankArtworkCandidates(expected, candidates, options = {}) {
 }
 
 module.exports = {
+  canonicalArtworkIdentity,
   evaluateArtworkCandidate,
   rankArtworkCandidates,
+  rankArtworkProposals,
 };

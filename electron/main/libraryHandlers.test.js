@@ -424,6 +424,58 @@ describe('library metadata maintenance handlers', () => {
     });
   });
 
+  it('records private provider context while returning only the coarse public reason', async () => {
+    const recordDiagnostic = vi.fn(() => ({ ok: true }));
+    const createArtworkService = vi.fn(({ onProviderFailure }) => ({
+      search: vi.fn(async () => {
+        onProviderFailure({
+          stage: 'musicbrainz-recording-search',
+          reason: 'service-unavailable',
+          httpStatus: 503,
+          failureCount: 2,
+        });
+        return { status: 'error', reason: 'provider-unavailable' };
+      }),
+    }));
+    const handlers = registerHandlers({
+      artworkDiscoveryService: null,
+      createArtworkService,
+      recordDiagnostic,
+      listLibraryTracks: vi
+        .fn()
+        .mockReturnValue([{ id: 'track-1', title: 'Song' }]),
+    });
+
+    const result = await handlers.get('library:search-track-artwork')(
+      null,
+      'track-1',
+      { title: 'Song' },
+    );
+
+    expect(result).toEqual({
+      status: 'error',
+      reason: 'provider-unavailable',
+    });
+    expect(JSON.stringify(result)).not.toMatch(
+      /musicbrainz|service-unavailable|503/iu,
+    );
+    expect(recordDiagnostic).toHaveBeenCalledWith({
+      process: 'main',
+      level: 'warning',
+      source: 'artwork',
+      operation: 'provider-search',
+      code: 'ARTWORK_PROVIDER_UNAVAILABLE',
+      message: 'Artwork provider search failed',
+      context: {
+        stage: 'musicbrainz-recording-search',
+        reason: 'service-unavailable',
+        httpStatus: 503,
+        failureCount: 2,
+        retryable: true,
+      },
+    });
+  });
+
   it('applies only an opaque candidate id, refreshes the library, and opens only the resolved MusicBrainz page', async () => {
     const requireFeatureGate = vi.fn();
     const notifyLibraryUpdated = vi.fn();

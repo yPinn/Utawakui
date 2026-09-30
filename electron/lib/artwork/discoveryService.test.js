@@ -22,6 +22,92 @@ const releaseGroup = {
 };
 
 describe('artwork discovery service', () => {
+  it('stops after the original recording search yields four unique covers', async () => {
+    const releases = Array.from({ length: 6 }, (_, index) => ({
+      id: `40000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+      title: `我等你 ${index + 1}`,
+      artistCredit: '劉若英',
+      status: 'Official',
+      date: '1999-11-01',
+      releaseGroup: {
+        id: `50000000-0000-4000-8000-${String(index).padStart(12, '0')}`,
+        firstReleaseDate: '1999-11-01',
+        primaryType: 'Album',
+        secondaryTypes: [],
+      },
+    }));
+    const searchRecordings = vi.fn().mockResolvedValue({
+      status: 'ok',
+      records: [
+        {
+          entityType: 'recording',
+          id: '33333333-3333-4333-8333-333333333333',
+          title: '後來',
+          artistCredit: '劉若英',
+          duration: 341,
+          releases,
+          score: 100,
+        },
+      ],
+    });
+    const searchReleaseGroups = vi
+      .fn()
+      .mockResolvedValue({ status: 'ok', records: [] });
+    const lookupFront = vi.fn(async (_entityType, entityId) => ({
+      status: 'ok',
+      front: {
+        imageUrl: `https://coverartarchive.org/release/${entityId}/front.jpg`,
+        previewUrl: `https://coverartarchive.org/release/${entityId}/front-250.jpg`,
+        applyUrl: `https://coverartarchive.org/release/${entityId}/front-1200.jpg`,
+      },
+    }));
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: { searchRecordings, searchReleaseGroups },
+      coverArtClient: { lookupFront },
+    });
+
+    const result = await service.search(track);
+
+    expect(result.status).toBe('ok');
+    expect(result.candidates).toHaveLength(4);
+    expect(searchRecordings).toHaveBeenCalledOnce();
+    expect(searchReleaseGroups).not.toHaveBeenCalled();
+    expect(lookupFront.mock.calls.length).toBeLessThanOrEqual(5);
+  });
+
+  it('falls back to release-group search only when recording candidates are insufficient', async () => {
+    const searchRecordings = vi
+      .fn()
+      .mockResolvedValue({ status: 'ok', records: [] });
+    const searchReleaseGroups = vi
+      .fn()
+      .mockResolvedValue({ status: 'ok', records: [releaseGroup] });
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: { searchRecordings, searchReleaseGroups },
+      coverArtClient: {
+        lookupFront: vi.fn().mockResolvedValue({
+          status: 'ok',
+          front: {
+            imageUrl: 'https://coverartarchive.org/release-group/x/front.jpg',
+            previewUrl:
+              'https://coverartarchive.org/release-group/x/front-250.jpg',
+            applyUrl:
+              'https://coverartarchive.org/release-group/x/front-1200.jpg',
+          },
+        }),
+      },
+    });
+
+    const result = await service.search(track);
+
+    expect(result.candidates).toHaveLength(1);
+    expect(searchRecordings).toHaveBeenCalledOnce();
+    expect(searchReleaseGroups).toHaveBeenCalledOnce();
+    expect(searchRecordings.mock.invocationCallOrder[0]).toBeLessThan(
+      searchReleaseGroups.mock.invocationCallOrder[0],
+    );
+  });
+
   it('runs bounded staged identity queries, hydrates CAA fronts, and exposes no remote URL', async () => {
     const searchReleaseGroups = vi
       .fn()
@@ -122,6 +208,7 @@ describe('artwork discovery service', () => {
   });
 
   it('reports provider unavailable when CAA fails after MusicBrainz succeeds', async () => {
+    const onProviderFailure = vi.fn();
     const service = createArtworkDiscoveryService({
       musicBrainzClient: {
         searchReleaseGroups: vi
@@ -136,25 +223,43 @@ describe('artwork discovery service', () => {
           .fn()
           .mockResolvedValue({ status: 'error', reason: 'timeout' }),
       },
+      onProviderFailure,
     });
 
-    await expect(service.search(track)).resolves.toEqual({
+    const result = await service.search(track);
+
+    expect(result).toEqual({
       status: 'error',
       reason: 'provider-unavailable',
     });
+    expect(onProviderFailure).toHaveBeenCalledOnce();
+    expect(onProviderFailure).toHaveBeenCalledWith({
+      stage: 'cover-art-lookup',
+      reason: 'timeout',
+      failureCount: 1,
+    });
+    expect(JSON.stringify(result)).not.toMatch(
+      /cover-art-lookup|timeout|httpStatus/iu,
+    );
   });
 
   it('stops fallback variants when both MusicBrainz endpoints fail', async () => {
-    const searchReleaseGroups = vi
-      .fn()
-      .mockResolvedValue({ status: 'error', reason: 'timeout' });
-    const searchRecordings = vi
-      .fn()
-      .mockResolvedValue({ status: 'error', reason: 'timeout' });
+    const onProviderFailure = vi.fn();
+    const searchReleaseGroups = vi.fn().mockResolvedValue({
+      status: 'error',
+      reason: 'service-unavailable',
+      httpStatus: 503,
+    });
+    const searchRecordings = vi.fn().mockResolvedValue({
+      status: 'error',
+      reason: 'service-unavailable',
+      httpStatus: 503,
+    });
     const lookupFront = vi.fn();
     const service = createArtworkDiscoveryService({
       musicBrainzClient: { searchReleaseGroups, searchRecordings },
       coverArtClient: { lookupFront },
+      onProviderFailure,
     });
 
     await expect(service.search(track)).resolves.toEqual({
@@ -164,6 +269,36 @@ describe('artwork discovery service', () => {
     expect(searchReleaseGroups).toHaveBeenCalledOnce();
     expect(searchRecordings).toHaveBeenCalledOnce();
     expect(lookupFront).not.toHaveBeenCalled();
+    expect(onProviderFailure).toHaveBeenCalledWith({
+      stage: 'musicbrainz-recording-search',
+      reason: 'service-unavailable',
+      httpStatus: 503,
+      failureCount: 2,
+    });
+  });
+
+  it('keeps a provider failure public result stable when diagnostics fail', async () => {
+    const service = createArtworkDiscoveryService({
+      musicBrainzClient: {
+        searchRecordings: vi.fn().mockResolvedValue({
+          status: 'error',
+          reason: 'offline',
+        }),
+        searchReleaseGroups: vi.fn().mockResolvedValue({
+          status: 'error',
+          reason: 'offline',
+        }),
+      },
+      coverArtClient: { lookupFront: vi.fn() },
+      onProviderFailure: vi.fn(() => {
+        throw new Error('diagnostics unavailable');
+      }),
+    });
+
+    await expect(service.search(track)).resolves.toEqual({
+      status: 'error',
+      reason: 'provider-unavailable',
+    });
   });
 
   it('matches any MusicBrainz recording ISRC instead of only the first', async () => {

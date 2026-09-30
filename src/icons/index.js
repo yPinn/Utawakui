@@ -4,6 +4,7 @@
 export { ICON_SIZE } from '../constants/ui.js';
 
 export {
+  ArrowLeft,
   ArrowDownToLine,
   BadgeCheck,
   Cable,
@@ -11,6 +12,7 @@ export {
   Check,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   CircleAlert,
   CircleDashed,
   CircleX,
