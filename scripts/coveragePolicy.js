@@ -63,6 +63,7 @@ const coveragePolicy = Object.freeze({
     'scripts/lyrics-provider-probe-registry.mjs',
     'scripts/release-contract.mjs',
     'src/composables/**/*.js',
+    'src/components/separation/*.js',
     'src/components/demo/trackThumbFallback.js',
     'src/components/ui/*.js',
     'src/constants/*.js',
@@ -554,6 +555,7 @@ function classifyAppSource(filePath) {
       /^electron\/(?:lib|main)\/.+\.js$/.test(normalized) ||
       /^overlay\/.+\.mjs$/.test(normalized) ||
       /^shared\/.+\.(?:js|mjs)$/.test(normalized) ||
+      /^src\/components\/separation\/.+\.js$/.test(normalized) ||
       normalized === 'src/components/demo/trackThumbFallback.js' ||
       /^src\/components\/ui\/.+\.js$/.test(normalized) ||
       /^src\/(?:composables|constants|icons|utils)\/.+\.js$/.test(

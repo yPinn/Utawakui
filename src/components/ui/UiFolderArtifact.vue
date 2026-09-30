@@ -273,7 +273,7 @@ function handleStackLayerKeydown(layer, event) {
   border-radius: var(--ui-radius-xs);
   background-color: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-caption);

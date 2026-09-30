@@ -43,6 +43,7 @@ describe('coverage policy', () => {
       'overlay/now-playing/now-playing.mjs',
       'shared/outputContract.js',
       'src/components/demo/trackThumbFallback.js',
+      'src/components/separation/separationQueuePresentation.js',
       'src/components/ui/fieldAttrs.js',
       'src/components/ui/floatingPosition.js',
       'src/composables/usePlaylistActions.js',

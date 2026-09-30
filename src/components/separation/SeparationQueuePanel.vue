@@ -476,7 +476,7 @@ onUnmounted(dispose);
 .separation-queue-panel__order {
   min-width: var(--ui-space-5);
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
