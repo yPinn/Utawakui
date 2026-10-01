@@ -78,9 +78,9 @@ function revealTab(event) {
 .app-tabs {
   position: relative;
   min-width: 0;
-  /* Horizontal padding matches .app-inner-page__content's --ui-space-4 —
-     the first tab's left edge lines up with the page panel's content
-     edge below it. */
+  /* Horizontal padding matches AppInnerPage's scroll-layout start inset —
+     the first tab's left edge lines up with the page panel's content edge
+     below it. */
   padding: var(--ui-space-4) var(--ui-space-4) 0;
   background: transparent;
 }

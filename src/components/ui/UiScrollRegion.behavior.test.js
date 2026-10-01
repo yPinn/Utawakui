@@ -119,6 +119,12 @@ describe('UiScrollRegion production contract', () => {
     expect(componentSource).toMatch(
       /\.ui-scroll-region__rail\s*\{[\s\S]*?position:\s*absolute;/u,
     );
+    expect(componentSource).toMatch(
+      /\.ui-scroll-region__viewport\s*\{[^}]*position:\s*relative;[^}]*z-index:\s*0;/su,
+    );
+    expect(componentSource).toMatch(
+      /\.ui-scroll-region__rail\s*\{[^}]*position:\s*absolute;[^}]*z-index:\s*1;/su,
+    );
     expect(componentSource).not.toContain('scrollbar-gutter');
     expect(componentSource).not.toMatch(/accent|success|warning|danger|live/u);
     expect(componentSource).toContain(

@@ -1,4 +1,5 @@
 <script setup>
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const LAYERS = Object.freeze([
@@ -118,16 +119,17 @@ const regionClasses = (layer) => [
         aria-labelledby="demo-scrollbar-overlay-proof-title"
       >
         <header class="demo-scrollbar-layout-proof__header">
-          <h5 id="demo-scrollbar-overlay-proof-title">Overlay geometry</h5>
+          <h5 id="demo-scrollbar-overlay-proof-title">Layout reserve</h5>
           <p>
-            無溢位時不顯示，也不預留 lane；有溢位時 thumb 疊在同一內容寬度上。
+            無溢位時 rail 不顯示，但 layout 仍保留
+            lane；有溢位時內容座標維持不變。
           </p>
         </header>
 
         <div class="demo-scrollbar-layout-proof__grid">
           <figure class="demo-scrollbar-sample">
             <figcaption>內容未溢位</figcaption>
-            <UiScrollRegion
+            <UiScrollLayout
               class="demo-scrollbar-region demo-scrollbar-region--proof"
               axis="vertical"
               data-scrollbar-overflow="none"
@@ -139,12 +141,12 @@ const regionClasses = (layer) => [
                   {{ item }}
                 </li>
               </ol>
-            </UiScrollRegion>
+            </UiScrollLayout>
           </figure>
 
           <figure class="demo-scrollbar-sample">
             <figcaption>內容已溢位</figcaption>
-            <UiScrollRegion
+            <UiScrollLayout
               class="demo-scrollbar-region demo-scrollbar-region--proof"
               axis="vertical"
               data-scrollbar-overflow="present"
@@ -156,7 +158,7 @@ const regionClasses = (layer) => [
                   {{ item }}
                 </li>
               </ol>
-            </UiScrollRegion>
+            </UiScrollLayout>
           </figure>
         </div>
       </section>
@@ -261,7 +263,7 @@ const regionClasses = (layer) => [
   outline-offset: var(--ui-focus-offset);
 }
 
-.demo-scrollbar-region:has(.ui-overlay-scroll-region__viewport:focus-visible) {
+.demo-scrollbar-region:has(.ui-scroll-region__viewport:focus-visible) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }

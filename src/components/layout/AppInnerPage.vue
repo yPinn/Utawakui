@@ -1,15 +1,19 @@
 <script setup>
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiSurface from '../ui/UiSurface.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
 </script>
 
 <template>
   <UiSurface tag="section" class="app-inner-page" tone="surface" radius="sm">
-    <UiScrollRegion class="app-inner-page__scroll" axis="vertical">
+    <UiScrollLayout
+      class="app-inner-page__scroll"
+      axis="vertical"
+      content-style="block-size: 100%"
+    >
       <div class="app-inner-page__content">
         <slot />
       </div>
-    </UiScrollRegion>
+    </UiScrollLayout>
   </UiSurface>
 </template>
 
@@ -22,6 +26,11 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
 }
 
 .app-inner-page__scroll {
+  --ui-scroll-layout-padding-block-start: var(--ui-space-4);
+  --ui-scroll-layout-padding-block-end: var(--ui-space-4);
+  --ui-scroll-layout-padding-inline-start: var(--ui-space-4);
+  --ui-scroll-layout-padding-inline-end: var(--ui-space-4);
+
   height: 100%;
 }
 
@@ -46,14 +55,14 @@ import UiScrollRegion from '../ui/UiScrollRegion.vue';
   height: 100%;
   display: flex;
   flex-direction: column;
-  /* The archive rail overlap belongs to AppArchiveFrame. Content keeps one
-     measurable perimeter from the page surface on every side. */
-  padding: var(--ui-space-4);
 }
 
 @media (max-width: 760px) {
-  .app-inner-page__content {
-    padding: var(--ui-space-3);
+  .app-inner-page__scroll {
+    --ui-scroll-layout-padding-block-start: var(--ui-space-3);
+    --ui-scroll-layout-padding-block-end: var(--ui-space-3);
+    --ui-scroll-layout-padding-inline-start: var(--ui-space-3);
+    --ui-scroll-layout-padding-inline-end: var(--ui-space-3);
   }
 }
 </style>

@@ -14,7 +14,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'scrollbar',
         title: '捲動條外觀',
-        components: ['UiScrollRegion'],
+        components: ['UiScrollLayout', 'UiScrollRegion'],
         adopted: true,
       },
       {

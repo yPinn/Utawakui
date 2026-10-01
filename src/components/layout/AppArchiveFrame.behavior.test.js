@@ -5,6 +5,7 @@ import AppArchiveFrame from './AppArchiveFrame.vue';
 import AppInnerPage from './AppInnerPage.vue';
 import AppTopTabs from './AppTopTabs.vue';
 import UiSurface from '../ui/UiSurface.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import {
   attachClientRender,
@@ -18,6 +19,7 @@ for (const [component, filename] of [
   [AppInnerPage, './AppInnerPage.vue'],
   [AppTopTabs, './AppTopTabs.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
@@ -66,20 +68,39 @@ describe('AppArchiveFrame primary workspace', () => {
     expect(source).toContain("const emit = defineEmits(['update:activeView'])");
   });
 
-  it('keeps the inner page content inset equal on all four sides', () => {
+  it('maps the inner page perimeter into the shared scroll layout', () => {
     const source = readFileSync(
       new URL('./AppInnerPage.vue', import.meta.url),
       'utf8',
     );
 
+    expect(source).toContain(
+      "import UiScrollLayout from '../ui/UiScrollLayout.vue';",
+    );
+    expect(source).toContain('<UiScrollLayout');
+    expect(source).not.toContain('<UiScrollRegion');
+    expect(source).toContain('content-style="block-size: 100%"');
+    for (const edge of [
+      'block-start',
+      'block-end',
+      'inline-start',
+      'inline-end',
+    ]) {
+      expect(source).toMatch(
+        new RegExp(
+          `--ui-scroll-layout-padding-${edge}:\\s*var\\(--ui-space-4\\);`,
+          'u',
+        ),
+      );
+    }
     expect(source).toMatch(
-      /\.app-inner-page__content\s*\{[\s\S]*?padding:\s*var\(--ui-space-4\);/u,
+      /@media \(max-width: 760px\)[\s\S]*?\.app-inner-page__scroll\s*\{[\s\S]*?--ui-scroll-layout-padding-block-start:\s*var\(--ui-space-3\);/u,
     );
     expect(source).toMatch(
-      /@media \(max-width: 760px\)[\s\S]*?\.app-inner-page__content\s*\{[\s\S]*?padding:\s*var\(--ui-space-3\);/u,
+      /\.app-inner-page__content\s*\{[\s\S]*?height:\s*100%;/u,
     );
     expect(source).not.toMatch(
-      /\.app-inner-page__content\s*\{[\s\S]*?padding:[^;]*--ui-archive-rail-size/u,
+      /\.app-inner-page__content\s*\{[^}]*padding(?:-|:)/su,
     );
   });
 });

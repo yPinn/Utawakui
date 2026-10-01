@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import DemoScrollbarAppearance from './DemoScrollbarAppearance.vue';
 
@@ -134,8 +135,23 @@ describe('Token v2 scrollbar appearance checkpoint', () => {
     expect(html).toContain('data-scrollbar-layout-proof="overlay"');
     expect(html).toContain('data-scrollbar-overflow="none"');
     expect(html).toContain('data-scrollbar-overflow="present"');
-    expect(html).toContain('無溢位時不顯示，也不預留 lane');
+    expect(html).toContain('無溢位時 rail 不顯示，但 layout 仍保留 lane');
+    expect(componentSource.match(/<UiScrollLayout/gu)).toHaveLength(2);
     expect(componentSource).not.toContain('regionClasses(layer, true)');
+  });
+
+  it('renders the reusable layout composition over the behavior primitive', async () => {
+    const html = await renderToString(
+      createSSRApp(UiScrollLayout, {
+        axis: 'vertical',
+        tabindex: 0,
+        'aria-label': '安全邊界捲動區域',
+      }),
+    );
+
+    expect(html).toContain('ui-scroll-layout');
+    expect(html).toContain('ui-scroll-region');
+    expect(html).toContain('aria-label="安全邊界捲動區域"');
   });
 
   it('uses the shared overlay contract for both token layers', () => {
@@ -159,6 +175,9 @@ describe('Token v2 scrollbar appearance checkpoint', () => {
   });
 
   it('uses the production primitive without a separate demo-only stylesheet', () => {
+    expect(componentSource).toContain(
+      "import UiScrollLayout from '../ui/UiScrollLayout.vue'",
+    );
     expect(componentSource).toContain(
       "import UiScrollRegion from '../ui/UiScrollRegion.vue'",
     );

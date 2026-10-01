@@ -383,6 +383,8 @@ watch(
 }
 
 .ui-scroll-region__viewport {
+  position: relative;
+  z-index: 0;
   min-inline-size: 0;
   min-block-size: 0;
   inline-size: 100%;
