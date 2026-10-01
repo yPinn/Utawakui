@@ -300,9 +300,6 @@ export function useMusicAnalysisWorkbench(options = {}) {
     refreshSelectedTrack,
     retryLibrary,
     refreshCapabilityStatus: capabilityOwner.refreshStatus,
-    prepareCapability: capabilityOwner.prepare,
-    repairCapability: capabilityOwner.repair,
-    removeCapability: capabilityOwner.remove,
     dispose,
   };
 }

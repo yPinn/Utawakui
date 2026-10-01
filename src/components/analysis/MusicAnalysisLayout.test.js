@@ -5,6 +5,10 @@ const workbenchSource = fs.readFileSync(
   new URL('./MusicAnalysisWorkbench.vue', import.meta.url),
   'utf8',
 );
+const evaluationWorkbenchSource = fs.readFileSync(
+  new URL('./MusicAnalysisEvaluationWorkbench.vue', import.meta.url),
+  'utf8',
+);
 const pickerSource = fs.readFileSync(
   new URL('./MusicAnalysisTrackPicker.vue', import.meta.url),
   'utf8',
@@ -71,25 +75,28 @@ describe('Music Analysis scroll layout', () => {
     );
   });
 
-  it('keeps benchmark review separate from sidecar-producing analysis', () => {
-    expect(workbenchSource).toContain("workbenchMode = shallowRef('analysis')");
-    expect(workbenchSource).toContain('正式分析');
-    expect(workbenchSource).toContain('Benchmark Review');
-    expect(workbenchSource).toContain('人工標註');
-    expect(workbenchSource).toMatch(
-      /<MusicAnalysisReferenceAnnotation\s+v-if="workbenchMode === 'annotation'"/,
+  it('keeps operations separate from annotation and benchmark evaluation', () => {
+    expect(workbenchSource).toContain('Music Analysis 作業');
+    expect(workbenchSource).not.toContain('MusicAnalysisReferenceAnnotation');
+    expect(workbenchSource).not.toContain('MusicAnalysisBenchmarkReview');
+    expect(workbenchSource).not.toContain('MusicAnalysisCapabilityModal');
+    expect(evaluationWorkbenchSource).toContain(
+      '<MusicAnalysisReferenceAnnotation',
     );
-    expect(workbenchSource).toMatch(
-      /<MusicAnalysisBenchmarkReview\s+v-else-if="workbenchMode === 'benchmark'"/,
+    expect(evaluationWorkbenchSource).toContain(
+      '<MusicAnalysisBenchmarkReview',
     );
-    expect(workbenchSource).toMatch(
-      /<UiSurface\s+v-else\s+class="analysis-workbench__layout"/,
-    );
+    expect(evaluationWorkbenchSource).toContain('<UiSegmentedControl');
   });
 
-  it('keeps storage and runtime internals out of product-facing analysis copy', () => {
-    expect(workbenchSource).toContain('歌曲、歌詞與既有分析結果都會保留。');
-    expect(jobPanelSource).toContain('將下載音樂分析所需檔案');
+  it('keeps capability lifecycle in Settings and internals out of analysis copy', () => {
+    expect(workbenchSource).toContain('@open-settings="openSettings"');
+    expect(workbenchSource).not.toMatch(
+      /prepareCapability|repairCapability|removeCapability/u,
+    );
+    expect(jobPanelSource).toContain('請到設定準備或修復 BPM 分析');
+    expect(jobPanelSource).toContain("'openSettings'");
+    expect(jobPanelSource).not.toContain('將下載音樂分析所需檔案');
     expect(jobPanelSource).toContain('label="重新讀取分析結果"');
     expect(summarySource).toContain("title: '分析結果需要更新'");
     expect(summarySource).toContain('分析版本 {{ sourceRevision }}');
@@ -103,6 +110,7 @@ describe('Music Analysis scroll layout', () => {
 
     for (const source of [
       workbenchSource,
+      evaluationWorkbenchSource,
       summarySource,
       benchmarkSource,
       workbenchComposableSource,

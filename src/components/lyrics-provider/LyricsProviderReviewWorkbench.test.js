@@ -10,7 +10,8 @@ describe('lyrics provider corpus review workbench contract', () => {
     const view = source('../../views/LyricsProviderReviewView.vue');
     const workbench = source('./LyricsProviderReviewWorkbench.vue');
 
-    expect(view).toContain('<LyricsProviderReviewWorkbench');
+    expect(view).toContain('<InternalToolsView');
+    expect(view).toContain('active-tool-id="lyrics-provider-review"');
     expect(workbench).toContain('useLyricsProviderCorpusReview');
     expect(workbench).toContain('<LyricsProviderReviewStrata');
     expect(workbench).toContain('<LyricsProviderReviewCandidateList');
@@ -21,13 +22,19 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(workbench).toContain(':approval-field="review.approvalField.value"');
     expect(workbench).toContain('onMounted(review.load)');
     expect(workbench).toContain('aria-live="polite"');
+    expect(workbench).toContain('title="Lyrics Provider Corpus"');
+    expect(workbench).toContain('研究評估 · F7');
+    expect(workbench).toContain('<UiProgress');
+    expect(workbench).not.toContain('lyrics-review__progress-track');
   });
 
   it('uses five label-led strata plus explicit decision and reach filters', () => {
     const strata = source('./LyricsProviderReviewStrata.vue');
 
-    expect(strata).toContain('role="tablist"');
-    expect(strata).toContain(':aria-selected=');
+    expect(strata).toContain('<UiTabs');
+    expect(strata).toContain('<UiSegmentedControl');
+    expect(strata).toContain('aria-label="審核狀態"');
+    expect(strata).toContain('aria-label="曲庫觸及"');
     expect(strata).toContain('待審');
     expect(strata).toContain('已核准');
     expect(strata).toContain('已拒絕');
@@ -35,6 +42,7 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(strata).toContain('長尾');
     expect(strata).toContain('<UiSearchBox');
     expect(strata).toContain('placeholder="搜尋歌名、歌手或 ID"');
+    expect(strata).not.toMatch(/<button(?:\s|>)/u);
     expect(strata).not.toMatch(/stratum--(?:red|blue|green|yellow|purple)/i);
   });
 
@@ -42,12 +50,14 @@ describe('lyrics provider corpus review workbench contract', () => {
     const list = source('./LyricsProviderReviewCandidateList.vue');
 
     expect(list).toContain('viewport-tag="ol"');
-    expect(list).toContain('<button');
-    expect(list).toContain(':aria-pressed=');
+    expect(list).toContain('<UiTrackRow');
+    expect(list).toContain(':active=');
+    expect(list).toContain('@row-click=');
     expect(list).toContain('candidate.reference.artist');
     expect(list).toContain('candidate.reference.title');
     expect(list).toContain('decisionLabel');
     expect(list).toContain('catalogReachLabel');
+    expect(list).not.toMatch(/<button(?:\s|>)/u);
   });
 
   it('compares source and confirmed metadata, collapses evidence, and exposes only bounded decisions', () => {
@@ -55,8 +65,11 @@ describe('lyrics provider corpus review workbench contract', () => {
 
     expect(form).toContain('候選資料（來源）');
     expect(form).toContain('確認資料');
-    expect(form).toContain('<details');
-    expect(form).toContain('<summary>來源證據</summary>');
+    expect(form).toContain('<UiDisclosure');
+    expect(form).toContain('label="來源證據"');
+    expect(form).toContain('<UiSelect');
+    expect(form).toContain('<UiCheckbox');
+    expect(form).toContain('<UiTextField');
     expect(form).toContain('MBID');
     expect(form).toContain('拒絕並下一首');
     expect(form).toContain('核准並下一首');
@@ -68,7 +81,7 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(form).toContain('ref="review-form"');
     expect(form).toContain('@submit.prevent="submitApproval"');
     expect(form).toContain('control?.focus()');
-    expect(form).toContain('review-form__control--invalid');
+    expect(form).toContain(':invalid="approvalField');
     expect(form).toContain('前往未完成欄位');
     expect(form).toContain(':disabled="saving"');
     expect(form).not.toContain('saving || !canApprove');
@@ -79,6 +92,9 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(form).not.toContain('v-html');
     expect(form).not.toContain('path');
     expect(form).not.toContain('providerId');
+    expect(form).not.toMatch(/<input(?:\s|>)/u);
+    expect(form).not.toMatch(/<select(?:\s|>)/u);
+    expect(form).not.toMatch(/<details(?:\s|>)/u);
   });
 
   it('explains internal and external IDs and exposes fixed lookup actions', () => {
@@ -97,7 +113,7 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(form).not.toContain('navigator.clipboard');
   });
 
-  it('stacks at the established narrow breakpoint and preserves reduced motion', () => {
+  it('stacks at the established narrow breakpoint and delegates motion to shared primitives', () => {
     const workbench = source('./LyricsProviderReviewWorkbench.vue');
     const list = source('./LyricsProviderReviewCandidateList.vue');
     const form = source('./LyricsProviderReviewForm.vue');
@@ -110,6 +126,6 @@ describe('lyrics provider corpus review workbench contract', () => {
     expect(form).toMatch(
       /\.review-form__header > div:first-child\s*\{[^}]*min-width:\s*0;/s,
     );
-    expect(workbench).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(workbench).not.toContain('transition: width');
   });
 });

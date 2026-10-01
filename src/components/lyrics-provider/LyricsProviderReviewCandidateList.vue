@@ -1,14 +1,15 @@
 <script setup>
 import UiChip from '../ui/UiChip.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 
-defineProps({
+const props = defineProps({
   candidates: { type: Array, default: () => [] },
   selectedCandidateId: { type: String, default: null },
   saving: { type: Boolean, default: false },
 });
 
-defineEmits(['select']);
+const emit = defineEmits(['select']);
 
 const decisionLabels = Object.freeze({
   pending: '待審',
@@ -32,6 +33,10 @@ function decisionTone(candidate) {
 function catalogReachLabel(candidate) {
   return candidate.catalogReach === 'mainstream' ? '主流' : '長尾';
 }
+
+function selectCandidate(candidateId) {
+  if (!props.saving) emit('select', candidateId);
+}
 </script>
 
 <template>
@@ -47,23 +52,22 @@ function catalogReachLabel(candidate) {
       viewport-tag="ol"
       viewport-class="review-candidates__list-viewport"
     >
-      <li v-for="(candidate, index) in candidates" :key="candidate.id">
-        <button
-          type="button"
-          class="review-candidates__row"
-          :class="{
-            'review-candidates__row--selected':
-              selectedCandidateId === candidate.id,
-          }"
-          :aria-pressed="selectedCandidateId === candidate.id"
-          :disabled="saving"
-          @click="$emit('select', candidate.id)"
-        >
+      <UiTrackRow
+        v-for="(candidate, index) in candidates"
+        :key="candidate.id"
+        :title="candidate.reference.title"
+        :artist="candidate.reference.artist"
+        :active="selectedCandidateId === candidate.id"
+        :interactive="!saving"
+        :action-label="`審核 ${candidate.reference.artist} — ${candidate.reference.title}`"
+        hide-duration
+        overflow="ellipsis"
+        @row-click="selectCandidate(candidate.id)"
+      >
+        <template #lead>
           <span class="review-candidates__index">{{ index + 1 }}</span>
-          <span class="review-candidates__identity">
-            <strong dir="auto">{{ candidate.reference.artist }}</strong>
-            <span dir="auto">{{ candidate.reference.title }}</span>
-          </span>
+        </template>
+        <template #trail>
           <UiChip
             :tone="
               candidate.catalogReach === 'mainstream' ? 'accent' : 'warning'
@@ -74,8 +78,8 @@ function catalogReachLabel(candidate) {
           <UiChip :tone="decisionTone(candidate)">
             {{ decisionLabel(candidate) }}
           </UiChip>
-        </button>
-      </li>
+        </template>
+      </UiTrackRow>
     </UiScrollRegion>
     <div v-else class="review-candidates__empty" role="status">
       目前篩選條件沒有候選項目。
@@ -97,7 +101,7 @@ function catalogReachLabel(candidate) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  min-height: 2.5rem;
+  min-height: var(--ui-control-height);
   padding: var(--ui-space-2) var(--ui-space-3);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
@@ -113,71 +117,16 @@ function catalogReachLabel(candidate) {
 }
 
 .review-candidates__list :deep(.review-candidates__list-viewport) {
-  padding: 0;
+  padding: var(--ui-space-1) var(--ui-space-2);
   margin: 0;
   list-style: none;
 }
 
-.review-candidates__row {
-  position: relative;
-  width: 100%;
-  min-width: 0;
-  min-height: 3rem;
-  display: grid;
-  grid-template-columns: 2rem minmax(7rem, 1fr) auto auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: 0;
-  border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.review-candidates__row:hover:not(:disabled) {
-  background: var(--ui-color-surface-hover);
-}
-
-.review-candidates__row--selected {
-  background: var(--ui-color-surface-selected);
-  box-shadow: inset 2px 0 0 var(--ui-color-current);
-}
-
-.review-candidates__row:focus-visible {
-  z-index: 1;
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
 .review-candidates__index {
+  min-width: var(--ui-space-5);
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
-}
-
-.review-candidates__identity {
-  min-width: 0;
-  display: grid;
-  gap: 0.125rem;
-}
-
-.review-candidates__identity strong,
-.review-candidates__identity span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.review-candidates__identity strong {
-  font-size: var(--ui-font-size-sm);
-}
-
-.review-candidates__identity span {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
 }
 
 .review-candidates__empty {

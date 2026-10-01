@@ -2,6 +2,12 @@ import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import MusicAnalysisBatchPanel from './MusicAnalysisBatchPanel.vue';
+import fs from 'node:fs';
+
+const source = fs.readFileSync(
+  new URL('./MusicAnalysisBatchPanel.vue', import.meta.url),
+  'utf8',
+);
 
 describe('MusicAnalysisBatchPanel', () => {
   it('shows compact default batch controls', async () => {
@@ -18,6 +24,8 @@ describe('MusicAnalysisBatchPanel', () => {
     expect(html).toContain('重新分析已有結果');
     expect(html).toContain('預設略過已有 M1／M2 結果的曲目');
     expect(html).not.toContain('此頁只操作既有');
+    expect(source).toContain('<UiCheckbox');
+    expect(source).not.toMatch(/<input\b/gu);
   });
 
   it('shows aggregate progress and a single batch cancel action', async () => {
@@ -45,5 +53,6 @@ describe('MusicAnalysisBatchPanel', () => {
     expect(html).toContain('批次分析總進度');
     expect(html).toContain('取消批次');
     expect(html).not.toContain('分析已選曲目');
+    expect(source).toContain('<UiProgress');
   });
 });

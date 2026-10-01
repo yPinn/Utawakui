@@ -1,17 +1,12 @@
 <script setup>
 import { computed } from 'vue';
-import {
-  Download,
-  Play,
-  RefreshCw,
-  Square,
-  Wrench,
-} from '../../icons/index.js';
+import { Play, RefreshCw, Settings, Square } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiProgress from '../ui/UiProgress.vue';
 
 const props = defineProps({
   selectedTrack: { type: Object, default: null },
@@ -31,7 +26,7 @@ const props = defineProps({
   capabilityError: { type: String, default: '' },
 });
 
-const emit = defineEmits(['analyze', 'cancel', 'reload', 'prepare', 'repair']);
+const emit = defineEmits(['analyze', 'cancel', 'reload', 'openSettings']);
 
 const capabilityReady = computed(
   () =>
@@ -50,28 +45,15 @@ const displayProgressPercent = computed(() =>
 );
 
 const primaryAction = computed(() => {
-  if (!props.capability) {
-    return { label: '讀取分析功能', icon: Download, event: 'prepare' };
-  }
-  if (props.capability.status === 'unavailable') {
-    return { label: '目前無法安裝', icon: Download, event: 'prepare' };
-  }
   if (capabilityReady.value) {
     return { label: '開始分析', icon: Play, event: 'analyze' };
   }
-  if (props.capability?.status === 'damaged') {
-    return { label: '修復分析功能', icon: Wrench, event: 'repair' };
-  }
-  return { label: '下載並安裝', icon: Download, event: 'prepare' };
+  return { label: '前往設定', icon: Settings, event: 'openSettings' };
 });
 
 const primaryDisabled = computed(() => {
-  if (props.capabilityBusy) return true;
   if (primaryAction.value.event === 'analyze') return !props.canAnalyze;
-  if (primaryAction.value.event === 'repair') {
-    return props.capability?.canRepair !== true;
-  }
-  return props.capability?.canPrepare !== true;
+  return false;
 });
 
 const statusTone = computed(() => {
@@ -87,7 +69,7 @@ const statusLabel = computed(() => {
   if (!props.capability) return '讀取中';
   if (props.capability.status === 'unavailable') return '不可用';
   if (props.capability?.status === 'damaged') return '需修復';
-  if (!capabilityReady.value) return '未安裝';
+  if (!capabilityReady.value) return '未準備';
   return '待命';
 });
 
@@ -98,11 +80,6 @@ const showRuntimeProgress = computed(
     props.activeJob !== null ||
     displayProgressPercent.value !== null,
 );
-
-function formatMegabytes(bytes) {
-  if (!Number.isFinite(bytes) || bytes <= 0) return null;
-  return Math.ceil(bytes / 1024 / 1024);
-}
 
 function runPrimaryAction() {
   emit(primaryAction.value.event);
@@ -142,16 +119,8 @@ function runPrimaryAction() {
       {{ notice }}
     </UiHint>
 
-    <UiHint
-      v-if="
-        !capabilityReady &&
-        !capabilityBusy &&
-        formatMegabytes(capability?.downloadBytes)
-      "
-      tone="muted"
-    >
-      將下載音樂分析所需檔案，約
-      {{ formatMegabytes(capability?.downloadBytes) }} MB。
+    <UiHint v-if="!capabilityReady && !capabilityBusy" tone="warning">
+      請到設定準備或修復 BPM 分析，再回到這裡執行重跑。
     </UiHint>
 
     <div
@@ -160,20 +129,16 @@ function runPrimaryAction() {
       role="status"
       aria-live="polite"
     >
-      <div class="analysis-job__runtime-copy">
-        <span>{{ displayStageLabel }}</span>
-        <span v-if="displayProgressPercent !== null"
-          >{{ Math.round(displayProgressPercent) }}%</span
-        >
-      </div>
-      <progress
-        v-if="displayProgressPercent !== null"
-        class="analysis-job__progress"
-        max="100"
-        :value="displayProgressPercent"
-        :aria-label="capabilityBusy ? '分析功能安裝進度' : '音樂結構分析進度'"
+      <UiProgress
+        :label="displayStageLabel"
+        :value="displayProgressPercent ?? 0"
+        :value-text="
+          displayProgressPercent === null
+            ? ''
+            : `${Math.round(displayProgressPercent)}%`
+        "
+        :indeterminate="displayProgressPercent === null"
       />
-      <div v-else class="analysis-job__progress analysis-job__progress--idle" />
     </div>
 
     <div class="analysis-job__actions">
@@ -234,8 +199,7 @@ function runPrimaryAction() {
 }
 
 .analysis-job__status,
-.analysis-job__actions,
-.analysis-job__runtime-copy {
+.analysis-job__actions {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
@@ -244,26 +208,6 @@ function runPrimaryAction() {
 .analysis-job__runtime {
   display: grid;
   gap: var(--ui-space-1);
-}
-
-.analysis-job__runtime-copy {
-  justify-content: space-between;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-variant-numeric: tabular-nums;
-}
-
-.analysis-job__progress {
-  width: 100%;
-  height: var(--ui-space-2);
-  border: 0;
-  border-radius: var(--ui-radius-pill);
-  overflow: hidden;
-  accent-color: var(--ui-color-accent);
-}
-
-.analysis-job__progress--idle {
-  background: var(--ui-color-surface-hover);
 }
 
 .analysis-job__actions {

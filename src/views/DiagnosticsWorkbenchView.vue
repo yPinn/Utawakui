@@ -1,7 +1,7 @@
 <script setup>
-import DiagnosticsWorkbench from '../components/settings/DiagnosticsWorkbench.vue';
+import InternalToolsView from './InternalToolsView.vue';
 </script>
 
 <template>
-  <DiagnosticsWorkbench />
+  <InternalToolsView active-tool-id="diagnostics-workbench" />
 </template>

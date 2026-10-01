@@ -2,6 +2,12 @@ import { createSSRApp } from 'vue';
 import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import MusicAnalysisTrackPicker from './MusicAnalysisTrackPicker.vue';
+import fs from 'node:fs';
+
+const source = fs.readFileSync(
+  new URL('./MusicAnalysisTrackPicker.vue', import.meta.url),
+  'utf8',
+);
 
 describe('MusicAnalysisTrackPicker', () => {
   it('keeps single-track browsing free of batch selection controls', async () => {
@@ -20,6 +26,7 @@ describe('MusicAnalysisTrackPicker', () => {
     expect(html).not.toContain('type="checkbox"');
     expect(html).not.toContain('批次已選');
     expect(html).not.toContain('role="button"');
+    expect(source).toContain('<UiSegmentedControl');
   });
 
   it('renders batch selection controls without completed-row chip noise', async () => {
@@ -46,6 +53,8 @@ describe('MusicAnalysisTrackPicker', () => {
     expect(html).not.toContain('role="button"');
     expect(html).not.toContain('>完成<');
     expect(html).toContain('失敗');
+    expect(source).toContain('<UiCheckbox');
+    expect(source).not.toMatch(/<input\b/gu);
   });
 
   it('keeps batch entry unavailable until the analysis capability is ready', async () => {
@@ -56,7 +65,6 @@ describe('MusicAnalysisTrackPicker', () => {
       }),
     );
 
-    expect(html).toContain('請先下載並安裝分析功能');
-    expect(html).toMatch(/disabled[^>]*title="請先下載並安裝分析功能"/);
+    expect(html).toContain('請先到設定準備 BPM 分析');
   });
 });

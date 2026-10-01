@@ -8,8 +8,11 @@ import {
   snapReferenceBoundary,
 } from '../../utils/musicAnalysisReferenceAnnotation.js';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiTextField from '../ui/UiTextField.vue';
 
 const props = defineProps({
   annotationCase: { type: Object, required: true },
@@ -64,6 +67,13 @@ const roleShortcuts = computed(() =>
     label: referenceRoleLabel(role),
   })),
 );
+const roleOptions = computed(() => [
+  { value: '', label: '未標註' },
+  ...props.allowedRoles.map((role) => ({
+    value: role,
+    label: referenceRoleLabel(role),
+  })),
+]);
 const projectedSections = computed(() =>
   props.annotationCase.referenceSections.map((section, index) => ({
     ...section,
@@ -100,12 +110,12 @@ const playheadPercent = computed(() =>
   ),
 );
 
-function handleBpm(event) {
-  emit('update-bpm', event.target.value);
+function handleBpm(value) {
+  emit('update-bpm', value);
 }
 
-function handleRole(index, event) {
-  emit('update-role', index, event.target.value || null);
+function handleRole(index, value) {
+  emit('update-role', index, value || null);
 }
 
 function setActiveRole(role) {
@@ -187,18 +197,18 @@ onUnmounted(() => {
     @keydown="handleShortcut"
   >
     <div class="reference-editor__controls">
-      <label class="reference-editor__bpm">
-        <span>BPM</span>
-        <input
-          type="number"
-          min="20"
-          max="400"
-          step="0.1"
-          inputmode="decimal"
-          :value="annotationCase.referenceBpm ?? ''"
-          @change="handleBpm"
-        />
-      </label>
+      <UiTextField
+        id="music-analysis-reference-bpm"
+        class="reference-editor__bpm"
+        label="BPM"
+        type="number"
+        min="20"
+        max="400"
+        step="0.1"
+        inputmode="decimal"
+        :model-value="annotationCase.referenceBpm ?? ''"
+        @update:model-value="handleBpm"
+      />
       <UiButton
         :icon="Plus"
         :disabled="!boundaryAvailable"
@@ -206,15 +216,14 @@ onUnmounted(() => {
       >
         在 {{ formatReferenceTime(candidateBoundaryMs) }} 新增邊界 · B
       </UiButton>
-      <label class="reference-editor__snap">
-        <input
-          type="checkbox"
-          :checked="snapToDownbeats"
-          :disabled="downbeatCount === 0"
-          @change="emit('update:snap-to-downbeats', $event.target.checked)"
-        />
-        <span>強拍吸附</span>
-      </label>
+      <UiCheckbox
+        id="music-analysis-reference-snap"
+        class="reference-editor__snap"
+        label="強拍吸附"
+        :model-value="snapToDownbeats"
+        :disabled="downbeatCount === 0"
+        @update:model-value="emit('update:snap-to-downbeats', $event)"
+      />
       <UiChip tone="muted">M1 節拍 {{ beats.length }}</UiChip>
       <UiChip :tone="annotationCase.complete ? 'success' : 'warning'">
         {{ annotationCase.complete ? '已完成' : '待完成' }}
@@ -288,25 +297,24 @@ onUnmounted(() => {
             section.index === activeSectionIndex,
         }"
       >
-        <button
-          type="button"
+        <UiButton
+          variant="ghost"
           class="reference-editor__time"
           @click="emit('seek', section.startMs)"
         >
           {{ formatReferenceTime(section.startMs) }}–{{
             formatReferenceTime(section.endMs)
           }}
-        </button>
-        <select
-          :value="section.role ?? ''"
-          :aria-label="formatReferenceTime(section.startMs) + ' 開始的段落角色'"
-          @change="handleRole(section.index, $event)"
-        >
-          <option value="">未標註</option>
-          <option v-for="role in allowedRoles" :key="role" :value="role">
-            {{ referenceRoleLabel(role) }}
-          </option>
-        </select>
+        </UiButton>
+        <UiSelect
+          :id="`music-analysis-reference-role-${section.index}`"
+          class="reference-editor__role"
+          :label="`${formatReferenceTime(section.startMs)} 開始的段落角色`"
+          label-hidden
+          :model-value="section.role ?? ''"
+          :options="roleOptions"
+          @update:model-value="handleRole(section.index, $event)"
+        />
         <div
           v-if="section.index > 0"
           class="reference-editor__boundary-actions"
@@ -361,26 +369,14 @@ onUnmounted(() => {
 }
 
 .reference-editor__bpm {
-  display: grid;
-  gap: var(--ui-space-1);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
+  width: 7rem;
 }
 
-.reference-editor__snap,
 .reference-editor__quick-roles,
 .reference-editor__boundary-actions {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-}
-
-.reference-editor__snap {
-  min-height: var(--ui-control-height);
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
 }
 
 .reference-editor__quick-roles {
@@ -391,22 +387,6 @@ onUnmounted(() => {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
-}
-
-.reference-editor__bpm input,
-.reference-editor__sections select {
-  min-height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-color-border-strong);
-  border-radius: var(--ui-radius-md);
-  background: var(--ui-color-surface-raised);
-  color: var(--ui-color-text);
-  font: inherit;
-}
-
-.reference-editor__bpm input {
-  width: 7rem;
-  padding-inline: var(--ui-space-2);
-  font-variant-numeric: tabular-nums;
 }
 
 .reference-editor__timeline {
@@ -458,10 +438,7 @@ onUnmounted(() => {
   color: var(--ui-color-warning);
 }
 
-.reference-editor__segment:focus-visible,
-.reference-editor__time:focus-visible,
-.reference-editor__bpm input:focus-visible,
-.reference-editor__sections select:focus-visible {
+.reference-editor__segment:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
 }
@@ -502,20 +479,12 @@ onUnmounted(() => {
 }
 
 .reference-editor__time {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--ui-color-text-muted);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
+  justify-content: flex-start;
   font-variant-numeric: tabular-nums;
-  text-align: start;
-  cursor: pointer;
 }
 
-.reference-editor__sections select {
+.reference-editor__role {
   width: 100%;
-  padding-inline: var(--ui-space-2);
 }
 
 @media (max-width: 720px) {
@@ -523,7 +492,7 @@ onUnmounted(() => {
     grid-template-columns: minmax(6rem, 1fr) minmax(8rem, 2fr);
   }
 
-  .reference-editor__sections :deep(.ui-btn) {
+  .reference-editor__boundary-actions {
     grid-column: 2;
     justify-self: start;
   }

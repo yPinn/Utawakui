@@ -1,6 +1,7 @@
 <script setup>
-import { computed, useTemplateRef, watchEffect } from 'vue';
+import { computed } from 'vue';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 
 const props = defineProps({
   visibleCount: { type: Number, default: 0 },
@@ -11,20 +12,12 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['setVisible', 'clear']);
-const toggleRef = useTemplateRef('toggle');
 const mixed = computed(
   () => props.someVisibleSelected && !props.allVisibleSelected,
-);
-const ariaChecked = computed(() =>
-  mixed.value ? 'mixed' : String(props.allVisibleSelected),
 );
 const filteredActionLabel = computed(() =>
   props.someVisibleSelected ? '取消選取搜尋結果' : '全選搜尋結果',
 );
-
-watchEffect(() => {
-  if (toggleRef.value) toggleRef.value.indeterminate = mixed.value;
-});
 
 function toggleVisible() {
   emit('setVisible', !props.someVisibleSelected);
@@ -33,17 +26,15 @@ function toggleVisible() {
 
 <template>
   <div class="analysis-selection-toolbar">
-    <label class="analysis-selection-toolbar__filtered">
-      <input
-        ref="toggle"
-        type="checkbox"
-        :checked="allVisibleSelected"
-        :aria-checked="ariaChecked"
-        :disabled="disabled || visibleCount === 0"
-        @change="toggleVisible"
-      />
-      <span>{{ filteredActionLabel }}</span>
-    </label>
+    <UiCheckbox
+      id="music-analysis-visible-selection"
+      class="analysis-selection-toolbar__filtered"
+      :model-value="allVisibleSelected"
+      :indeterminate="mixed"
+      :label="filteredActionLabel"
+      :disabled="disabled || visibleCount === 0"
+      @update:model-value="toggleVisible"
+    />
     <span class="analysis-selection-toolbar__count">
       批次已選 {{ selectedCount }} 首
     </span>
@@ -62,29 +53,6 @@ function toggleVisible() {
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
-}
-
-.analysis-selection-toolbar__filtered {
-  min-height: var(--ui-control-height);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  cursor: pointer;
-}
-
-.analysis-selection-toolbar__filtered input {
-  width: var(--ui-space-4);
-  height: var(--ui-space-4);
-  margin: 0;
-  accent-color: var(--ui-color-accent);
-}
-
-.analysis-selection-toolbar__filtered:has(input:disabled) {
-  opacity: var(--ui-opacity-disabled);
-  cursor: default;
 }
 
 .analysis-selection-toolbar__count {

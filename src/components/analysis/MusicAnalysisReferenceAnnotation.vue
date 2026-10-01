@@ -14,6 +14,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 import MusicAnalysisReferenceEditor from './MusicAnalysisReferenceEditor.vue';
 
 const annotation = useMusicAnalysisReferenceAnnotation();
@@ -256,31 +257,24 @@ onUnmounted(structureSignals.clear);
           viewport-tag="ol"
           viewport-class="reference-annotation__case-list-viewport"
         >
-          <li
+          <UiTrackRow
             v-for="referenceCase in annotation.dataset.value.cases"
             :key="referenceCase.id"
+            :title="caseTitle(referenceCase)"
+            :artist="caseArtist(referenceCase)"
+            :active="annotation.selectedCaseId.value === referenceCase.id"
+            interactive
+            :action-label="`標註 ${caseTitle(referenceCase)}`"
+            hide-duration
+            overflow="ellipsis"
+            @row-click="selectCase(referenceCase.id)"
           >
-            <button
-              type="button"
-              class="reference-annotation__case"
-              :class="{
-                'reference-annotation__case--selected':
-                  annotation.selectedCaseId.value === referenceCase.id,
-              }"
-              :aria-pressed="
-                annotation.selectedCaseId.value === referenceCase.id
-              "
-              @click="selectCase(referenceCase.id)"
-            >
-              <span class="reference-annotation__case-copy">
-                <strong>{{ caseTitle(referenceCase) }}</strong>
-                <span>{{ caseArtist(referenceCase) }}</span>
-              </span>
+            <template #trail>
               <UiChip :tone="referenceCase.complete ? 'success' : 'muted'">
                 {{ referenceCase.complete ? '完成' : '待標' }}
               </UiChip>
-            </button>
-          </li>
+            </template>
+          </UiTrackRow>
         </UiScrollRegion>
       </aside>
 
@@ -462,56 +456,10 @@ onUnmounted(structureSignals.clear);
 .reference-annotation__case-list
   :deep(.reference-annotation__case-list-viewport) {
   margin: 0;
-  padding: 0;
+  padding: var(--ui-space-1) var(--ui-space-2);
   list-style: none;
   overscroll-behavior: contain;
 }
-
-.reference-annotation__case {
-  width: 100%;
-  min-height: var(--ui-track-row-min-height);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: 0;
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.reference-annotation__case:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.reference-annotation__case--selected {
-  background: var(--ui-color-surface-selected);
-  box-shadow: inset var(--ui-focus-width) 0 0 var(--ui-color-current);
-}
-
-.reference-annotation__case:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
-.reference-annotation__case-copy {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.reference-annotation__case-copy strong,
-.reference-annotation__case-copy span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.reference-annotation__case-copy span,
 .reference-annotation__case-header p {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);

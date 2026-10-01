@@ -75,6 +75,9 @@ const internalViews = internalWorkbenchesEnabled
       'lyrics-provider-review': defineAsyncComponent(
         () => import('./views/LyricsProviderReviewView.vue'),
       ),
+      'music-analysis-evaluation': defineAsyncComponent(
+        () => import('./views/MusicAnalysisEvaluationView.vue'),
+      ),
       // Demo and Studio Library are both facets of the same not-yet-adopted
       // visual-refresh exploration — see VisualSystemView.vue's internal
       // mode toggle instead of two separate global shortcuts.

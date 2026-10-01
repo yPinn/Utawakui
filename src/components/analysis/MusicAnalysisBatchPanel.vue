@@ -2,9 +2,11 @@
 import { computed, shallowRef } from 'vue';
 import { ListChecks, Square } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiProgress from '../ui/UiProgress.vue';
 
 const props = defineProps({
   selectedCount: { type: Number, default: 0 },
@@ -70,29 +72,28 @@ function startBatch() {
     />
 
     <template v-if="active">
-      <div class="analysis-batch__runtime" role="status" aria-live="polite">
-        <div class="analysis-batch__runtime-copy">
-          <span>{{ summary }}</span>
-          <span v-if="progressPercent !== null"
-            >{{ Math.round(progressPercent) }}%</span
-          >
-        </div>
-        <progress
-          v-if="progressPercent !== null"
-          class="analysis-batch__progress"
-          max="100"
-          :value="progressPercent"
-          aria-label="批次分析總進度"
-        />
-      </div>
+      <UiProgress
+        label="批次分析總進度"
+        :value="progressPercent ?? 0"
+        :value-text="
+          progressPercent === null
+            ? summary
+            : `${summary} · ${Math.round(progressPercent)}%`
+        "
+        :indeterminate="progressPercent === null"
+        role="status"
+        aria-live="polite"
+      />
       <UiButton :icon="Square" @click="emit('cancel')">取消批次</UiButton>
     </template>
 
     <template v-else>
-      <label class="analysis-batch__force">
-        <input v-model="force" type="checkbox" :disabled="disabled" />
-        <span>重新分析已有結果</span>
-      </label>
+      <UiCheckbox
+        id="music-analysis-batch-force"
+        v-model="force"
+        label="重新分析已有結果"
+        :disabled="disabled"
+      />
       <UiHint tone="muted">
         預設略過已有 M1／M2 結果的曲目；失敗曲目不會中止其餘工作。
       </UiHint>
@@ -125,7 +126,6 @@ function startBatch() {
 }
 
 .analysis-batch__heading-row,
-.analysis-batch__runtime-copy,
 .analysis-batch__actions,
 .analysis-batch__force {
   display: flex;
@@ -133,8 +133,7 @@ function startBatch() {
   gap: var(--ui-space-2);
 }
 
-.analysis-batch__heading-row,
-.analysis-batch__runtime-copy {
+.analysis-batch__heading-row {
   justify-content: space-between;
 }
 
@@ -151,43 +150,10 @@ function startBatch() {
 }
 
 .analysis-batch__selection,
-.analysis-batch__runtime-copy,
 .analysis-batch__summary {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
-}
-
-.analysis-batch__force {
-  width: fit-content;
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  cursor: pointer;
-}
-
-.analysis-batch__force input {
-  width: var(--ui-space-4);
-  height: var(--ui-space-4);
-  margin: 0;
-  accent-color: var(--ui-color-accent);
-}
-
-.analysis-batch__runtime {
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.analysis-batch__runtime-copy {
-  font-variant-numeric: tabular-nums;
-}
-
-.analysis-batch__progress {
-  width: 100%;
-  height: var(--ui-space-2);
-  border: 0;
-  border-radius: var(--ui-radius-pill);
-  overflow: hidden;
-  accent-color: var(--ui-color-accent);
 }
 
 .analysis-batch__actions {

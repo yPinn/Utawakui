@@ -1,7 +1,7 @@
 <script setup>
-import MusicAnalysisWorkbench from '../components/analysis/MusicAnalysisWorkbench.vue';
+import InternalToolsView from './InternalToolsView.vue';
 </script>
 
 <template>
-  <MusicAnalysisWorkbench />
+  <InternalToolsView active-tool-id="music-analysis" />
 </template>

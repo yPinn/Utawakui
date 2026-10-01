@@ -1,11 +1,12 @@
 <script setup>
-import { computed, onMounted, onUnmounted, ref } from 'vue';
+import { onMounted, onUnmounted, ref } from 'vue';
 import { useLyricsProviderCorpusReview } from '../../composables/useLyricsProviderCorpusReview.js';
 import { isEditableTarget } from '../../utils/dom.js';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
+import UiProgress from '../ui/UiProgress.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import LyricsProviderReviewCandidateList from './LyricsProviderReviewCandidateList.vue';
 import LyricsProviderReviewForm from './LyricsProviderReviewForm.vue';
@@ -13,12 +14,6 @@ import LyricsProviderReviewStrata from './LyricsProviderReviewStrata.vue';
 
 const review = useLyricsProviderCorpusReview();
 const rejectionReason = ref('');
-
-const progressPercent = computed(() => {
-  const counts = review.dataset.value?.counts;
-  if (!counts?.total) return 0;
-  return Math.round((counts.approved / counts.total) * 100);
-});
 
 async function approve() {
   if (await review.approveAndNext()) rejectionReason.value = '';
@@ -57,7 +52,10 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
 <template>
   <section class="lyrics-review" aria-labelledby="lyrics-review-title">
     <header class="lyrics-review__header">
-      <UiPageHeader title="歌詞語料審核" title-id="lyrics-review-title">
+      <UiPageHeader
+        title="Lyrics Provider Corpus"
+        title-id="lyrics-review-title"
+      >
         <template #description>
           逐筆審核歌詞來源候選並核准或退回，完成後可匯出評估用 corpus。
         </template>
@@ -72,33 +70,23 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
           >
             {{ review.exporting.value ? '匯出中…' : '匯出 corpus' }}
           </UiButton>
-          <UiChip tone="gated">內部工具 · F7</UiChip>
+          <UiChip tone="warning">研究評估 · F7</UiChip>
         </template>
       </UiPageHeader>
       <div v-if="review.dataset.value" class="lyrics-review__progress">
-        <span>
-          已核准 {{ review.dataset.value.counts.approved }} /
-          {{ review.dataset.value.counts.total }}
-        </span>
-        <span
-          class="lyrics-review__progress-track"
-          role="progressbar"
-          aria-label="整體審核進度"
-          :aria-valuenow="review.dataset.value.counts.approved"
-          aria-valuemin="0"
-          :aria-valuemax="review.dataset.value.counts.total"
-        >
-          <span
-            class="lyrics-review__progress-value"
-            :style="{ width: `${progressPercent}%` }"
-          />
-        </span>
-        <span
-          v-if="review.dataset.value.counts.replacementNeeded"
-          class="lyrics-review__replacement"
+        <UiProgress
+          class="lyrics-review__progress-control"
+          label="整體審核進度"
+          :value="review.dataset.value.counts.approved"
+          :max="review.dataset.value.counts.total"
+          :value-text="`已核准 ${review.dataset.value.counts.approved} / ${review.dataset.value.counts.total}`"
+        />
+        <UiChip
+          v-if="review.dataset.value.counts.replacementNeeded > 0"
+          tone="danger"
         >
           待替換 {{ review.dataset.value.counts.replacementNeeded }}
-        </span>
+        </UiChip>
       </div>
     </header>
 
@@ -213,34 +201,12 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
 .lyrics-review__progress {
   min-width: 0;
   display: flex;
-  align-items: center;
+  align-items: end;
   gap: var(--ui-space-3);
 }
 
-.lyrics-review__progress,
-.lyrics-review__replacement {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
-.lyrics-review__progress-track {
-  width: clamp(8rem, 18vw, 18rem);
-  height: var(--ui-space-1);
-  overflow: hidden;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-surface-raised);
-}
-
-.lyrics-review__progress-value {
-  display: block;
-  height: 100%;
-  border-radius: inherit;
-  background: var(--ui-color-accent);
-  transition: width var(--ui-motion-slow) var(--ui-motion-ease);
-}
-
-.lyrics-review__replacement {
-  color: var(--ui-color-danger);
+.lyrics-review__progress-control {
+  width: min(100%, 24rem);
 }
 
 .lyrics-review__notice {
@@ -288,12 +254,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
     min-height: 56rem;
     grid-template-columns: 1fr;
     grid-template-rows: minmax(16rem, 35vh) minmax(40rem, auto);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .lyrics-review__progress-value {
-    transition: none;
   }
 }
 </style>

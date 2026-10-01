@@ -177,12 +177,9 @@ describe('Music Analysis workbench', () => {
         'isBusy',
         'libraryState',
         'phaseLabel',
-        'prepareCapability',
         'progressPercent',
         'refreshCapabilityStatus',
         'refreshSelectedTrack',
-        'removeCapability',
-        'repairCapability',
         'retryLibrary',
         'selectTrack',
         'selectedTrack',
@@ -230,73 +227,6 @@ describe('Music Analysis workbench', () => {
     expect(harness.unsubscribe).toHaveBeenCalledOnce();
   });
 
-  it('prepares a missing capability and exposes bounded download progress', async () => {
-    const harness = createHarness();
-    const missing = {
-      status: 'missing',
-      installed: false,
-      busy: false,
-      canPrepare: true,
-      canRepair: false,
-      canRemove: false,
-      modelName: 'Beat This! small0',
-      modelVersion: '1.1.0',
-      downloadBytes: 159368729,
-      installedBytesEstimate: 557000000,
-    };
-    const ready = { ...missing, status: 'ready', installed: true };
-    harness.bridge.getMusicStructureCapabilityStatus.mockResolvedValue(missing);
-    harness.bridge.prepareMusicStructureCapability.mockImplementation(
-      async () => {
-        harness.capabilityProgress({
-          stage: 'downloading-environment',
-          percent: 52,
-        });
-        return ready;
-      },
-    );
-    await harness.workbench.initialize();
-
-    expect(harness.workbench.canAnalyze.value).toBe(false);
-    const preparation = harness.workbench.prepareCapability();
-    expect(harness.workbench.capabilityBusy.value).toBe(true);
-    await preparation;
-
-    expect(harness.workbench.capability.value).toEqual(ready);
-    expect(harness.workbench.capabilityStageLabel.value).toBe('分析功能已就緒');
-    expect(harness.workbench.canAnalyze.value).toBe(true);
-  });
-
-  it('keeps setup failures concise and supports repair and removal', async () => {
-    const harness = createHarness();
-    harness.bridge.repairMusicStructureCapability.mockRejectedValue(
-      new Error('EPERM C:\\Users\\private\\runtime'),
-    );
-    harness.bridge.removeMusicStructureCapability.mockResolvedValue({
-      status: 'missing',
-      installed: false,
-      busy: false,
-      canPrepare: true,
-      canRepair: false,
-      canRemove: false,
-      modelName: 'Beat This! small0',
-      modelVersion: '1.1.0',
-      downloadBytes: 159368729,
-      installedBytesEstimate: 557000000,
-    });
-    await harness.workbench.initialize();
-
-    await harness.workbench.repairCapability();
-    expect(harness.workbench.state.capabilityError).toBe(
-      '分析功能修復未完成，請再試一次。',
-    );
-    expect(harness.workbench.state.capabilityError).not.toContain('Users');
-
-    await harness.workbench.removeCapability();
-    expect(harness.workbench.capability.value.status).toBe('missing');
-    expect(harness.workbench.state.capabilityProgress).toBeNull();
-  });
-
   it('ignores invalid progress and clamps bounded progress projections', async () => {
     const harness = createHarness();
     await harness.workbench.initialize();
@@ -319,24 +249,6 @@ describe('Music Analysis workbench', () => {
 
     expect(harness.workbench.state.progress?.percent).toBe(100);
     expect(harness.workbench.state.capabilityProgress?.percent).toBe(0);
-  });
-
-  it('prevents concurrent capability preparation requests', async () => {
-    const harness = createHarness();
-    const preparation = deferred();
-    harness.bridge.prepareMusicStructureCapability.mockReturnValue(
-      preparation.promise,
-    );
-    await harness.workbench.initialize();
-
-    const first = harness.workbench.prepareCapability();
-    await expect(harness.workbench.prepareCapability()).resolves.toBeNull();
-
-    expect(
-      harness.bridge.prepareMusicStructureCapability,
-    ).toHaveBeenCalledOnce();
-    preparation.resolve({ status: 'ready', installed: true });
-    await first;
   });
 
   it('uses a bounded unavailable capability when its bridge is absent', async () => {

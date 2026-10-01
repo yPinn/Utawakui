@@ -29,7 +29,7 @@ describe('MusicAnalysisJobPanel', () => {
     expect(html).not.toContain('Internal workbench');
   });
 
-  it('uses installation as the primary action when the capability is missing', async () => {
+  it('directs capability recovery to Settings when analysis is not ready', async () => {
     const html = await renderToString(
       createSSRApp(MusicAnalysisJobPanel, {
         selectedTrack: { id: 'track-1', title: '測試歌曲', artist: '歌手' },
@@ -46,13 +46,13 @@ describe('MusicAnalysisJobPanel', () => {
       }),
     );
 
-    expect(html).toContain('下載並安裝');
-    expect(html).toContain('約 152 MB');
-    expect(html).toContain('將下載音樂分析所需檔案');
+    expect(html).toContain('前往設定');
+    expect(html).toContain('請到設定準備或修復 BPM 分析');
+    expect(html).not.toContain('下載並安裝');
+    expect(html).not.toContain('約 152 MB');
     expect(html).not.toContain('Beat This! small0');
     expect(html).not.toMatch(/sidecar|runtime/iu);
-    expect(html).toContain('未安裝');
-    expect(html).not.toContain('<progress');
+    expect(html).toContain('未準備');
     expect(html).not.toContain('尚未是正式產品功能');
     expect(html).not.toContain('benchmark-only');
   });

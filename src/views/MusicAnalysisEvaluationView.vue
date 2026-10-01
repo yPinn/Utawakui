@@ -3,5 +3,5 @@ import InternalToolsView from './InternalToolsView.vue';
 </script>
 
 <template>
-  <InternalToolsView active-tool-id="lyrics-provider-review" />
+  <InternalToolsView active-tool-id="music-analysis-evaluation" />
 </template>

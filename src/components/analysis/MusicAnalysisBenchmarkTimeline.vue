@@ -1,5 +1,6 @@
 <script setup>
 import { computed } from 'vue';
+import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import {
   benchmarkM2Presentation,
@@ -88,9 +89,9 @@ function seekTo(section) {
 
     <ol v-if="projectedSections.length" class="benchmark-timeline__list">
       <li v-for="section in projectedSections" :key="`row-${section.key}`">
-        <button
+        <UiButton
           class="benchmark-timeline__row"
-          type="button"
+          variant="ghost"
           :aria-label="`跳到${section.ariaLabel}`"
           @click="seekTo(section)"
         >
@@ -106,7 +107,7 @@ function seekTo(section) {
             {{ section.confidencePercent }}%
           </span>
           <UiChip v-if="section.lowConfidence" tone="warning">低信心</UiChip>
-        </button>
+        </UiButton>
       </li>
     </ol>
   </section>
@@ -183,8 +184,7 @@ function seekTo(section) {
   filter: brightness(1.12);
 }
 
-.benchmark-timeline__segment:focus-visible,
-.benchmark-timeline__row:focus-visible {
+.benchmark-timeline__segment:focus-visible {
   z-index: 3;
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
@@ -260,24 +260,18 @@ function seekTo(section) {
 }
 
 .benchmark-timeline__row {
-  display: grid;
-  grid-template-columns: minmax(7rem, 1fr) auto 3.5rem auto;
-  gap: var(--ui-space-3);
-  align-items: center;
   width: 100%;
-  min-height: var(--ui-menu-item-height);
-  padding: 0 var(--ui-space-2);
-  border: 0;
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
-  background: transparent;
   color: var(--ui-color-text-muted);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
 }
 
-.benchmark-timeline__row:hover {
-  background: var(--ui-color-surface-hover);
+.benchmark-timeline__row :deep(.ui-btn__label) {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(7rem, 1fr) auto 3.5rem auto;
+  align-items: center;
+  gap: var(--ui-space-3);
+  text-align: start;
 }
 
 .benchmark-timeline__role {
@@ -295,7 +289,7 @@ function seekTo(section) {
 }
 
 @media (max-width: 720px) {
-  .benchmark-timeline__row {
+  .benchmark-timeline__row :deep(.ui-btn__label) {
     grid-template-columns: minmax(0, 1fr) auto;
   }
 

@@ -1,11 +1,12 @@
 <script setup>
 import { computed, shallowRef } from 'vue';
 import { rangeTrackIds } from '../../utils/musicAnalysisSelection.js';
-import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
 import MusicAnalysisSelectionToolbar from './MusicAnalysisSelectionToolbar.vue';
 
@@ -39,8 +40,20 @@ const BATCH_STATUS = Object.freeze({
   failed: { label: '失敗', tone: 'danger' },
   cancelled: { label: '已取消', tone: 'warning' },
 });
+const ANALYSIS_MODES = Object.freeze([
+  { id: 'single', label: '單曲' },
+  { id: 'batch', label: '批次選取' },
+]);
 
 const batchMode = computed(() => props.mode === 'batch');
+const modeItems = computed(() =>
+  ANALYSIS_MODES.map((item) => ({
+    ...item,
+    disabled:
+      props.disabled ||
+      (item.id === 'batch' && !props.batchAvailable && !batchMode.value),
+  })),
+);
 
 const visibleTracks = computed(() => {
   const normalized = query.value.trim().toLocaleLowerCase();
@@ -111,32 +124,20 @@ function batchStatus(trackId) {
         </h2>
         <p class="analysis-picker__count">{{ tracks.length }} 首本機曲目</p>
       </div>
-      <div class="analysis-picker__mode" role="group" aria-label="分析模式">
-        <UiButton
-          :active="mode === 'single'"
-          :aria-pressed="mode === 'single'"
-          :disabled="disabled"
-          @click="changeMode('single')"
-        >
-          單曲
-        </UiButton>
-        <UiButton
-          :active="batchMode"
-          :aria-pressed="batchMode"
-          :disabled="disabled || (!batchAvailable && !batchMode)"
-          :title="
-            batchAvailable || batchMode
-              ? '選取多首曲目進行分析'
-              : '請先下載並安裝分析功能'
-          "
-          @click="changeMode('batch')"
-        >
-          批次選取
-        </UiButton>
-      </div>
+      <UiSegmentedControl
+        class="analysis-picker__mode"
+        :items="modeItems"
+        :model-value="mode"
+        aria-label="分析模式"
+        @update:model-value="changeMode"
+      />
     </div>
 
     <UiSearchBox v-model="query" placeholder="搜尋可分析曲目" />
+
+    <UiHint v-if="!batchAvailable && !batchMode" tone="warning">
+      請先到設定準備 BPM 分析，才能使用批次重跑。
+    </UiHint>
 
     <MusicAnalysisSelectionToolbar
       v-if="batchMode"
@@ -173,24 +174,23 @@ function batchStatus(trackId) {
           batchMode ? isBatchSelected(track.id) : track.id === selectedTrackId
         "
         :interactive="!disabled && !batchMode"
+        :action-label="`選取：${track.title ?? track.id}`"
         :hide-duration="batchMode"
         :aria-current="
           !batchMode && track.id === selectedTrackId ? 'true' : undefined
         "
-        :aria-pressed="
-          !disabled && !batchMode ? track.id === selectedTrackId : undefined
-        "
         :aria-disabled="disabled || undefined"
-        @click="activateTrack(track.id, $event)"
+        @row-click="activateTrack(track.id, $event)"
       >
         <template #lead>
           <span v-if="batchMode" class="analysis-picker__checkbox-control">
-            <input
+            <UiCheckbox
+              :id="`music-analysis-batch-track-${track.id}`"
               class="analysis-picker__checkbox"
-              type="checkbox"
-              :checked="isBatchSelected(track.id)"
+              :model-value="isBatchSelected(track.id)"
               :disabled="disabled"
-              :aria-label="`選取${track.title ?? track.id}進行批次分析`"
+              :label="`選取${track.title ?? track.id}進行批次分析`"
+              label-hidden
               @click.stop.prevent="activateTrack(track.id, $event)"
             />
           </span>
@@ -248,12 +248,7 @@ function batchStatus(trackId) {
 }
 
 .analysis-picker__mode {
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-1);
-  padding: var(--ui-space-1);
-  border-radius: var(--ui-radius-lg);
-  background: var(--ui-color-canvas);
+  max-width: 16rem;
 }
 
 .analysis-picker__checkbox-control {
@@ -264,11 +259,9 @@ function batchStatus(trackId) {
   place-items: center;
 }
 
-.analysis-picker__checkbox {
-  width: var(--ui-space-4);
-  height: var(--ui-space-4);
-  margin: 0;
-  accent-color: var(--ui-color-accent);
+.analysis-picker__checkbox :deep(.ui-field__control) {
+  display: inline-grid;
+  place-items: center;
 }
 
 .analysis-picker__batch-row {

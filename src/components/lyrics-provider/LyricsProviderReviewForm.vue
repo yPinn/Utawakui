@@ -3,8 +3,11 @@ import { computed, onBeforeUnmount, useTemplateRef } from 'vue';
 import { Copy, ExternalLink } from '../../icons/index.js';
 import { useClipboardFeedback } from '../../composables/useClipboardFeedback.js';
 import UiButton from '../ui/UiButton.vue';
+import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiDisclosure from '../ui/UiDisclosure.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiStack from '../ui/UiStack.vue';
 import UiTextField from '../ui/UiTextField.vue';
 
@@ -40,22 +43,26 @@ const languageLabels = Object.freeze({
   multilingual: '多語',
 });
 const versionOptions = Object.freeze([
-  ['studio', '錄音室版'],
-  ['live', '現場版'],
-  ['remaster', '重製版'],
-  ['cover', '翻唱版'],
-  ['remix', '混音版'],
-  ['acoustic', '不插電版'],
+  { value: 'studio', label: '錄音室版' },
+  { value: 'live', label: '現場版' },
+  { value: 'remaster', label: '重製版' },
+  { value: 'cover', label: '翻唱版' },
+  { value: 'remix', label: '混音版' },
+  { value: 'acoustic', label: '不插電版' },
 ]);
 const rejectionOptions = Object.freeze([
-  ['language-mismatch', '語言不符'],
-  ['genre-mismatch', '曲風不符'],
-  ['credit-mismatch', '演出者／作品不符'],
-  ['version-ambiguous', '版本無法確認'],
-  ['metadata-insufficient', '資料不足'],
-  ['duplicate-recording', '重複錄音'],
-  ['release-before-2010', '實際首發早於 2010 年'],
-  ['other', '其他受控原因'],
+  { value: 'language-mismatch', label: '語言不符' },
+  { value: 'genre-mismatch', label: '曲風不符' },
+  { value: 'credit-mismatch', label: '演出者／作品不符' },
+  { value: 'version-ambiguous', label: '版本無法確認' },
+  { value: 'metadata-insufficient', label: '資料不足' },
+  { value: 'duplicate-recording', label: '重複錄音' },
+  { value: 'release-before-2010', label: '實際首發早於 2010 年' },
+  { value: 'other', label: '其他受控原因' },
+]);
+const eraOptions = Object.freeze([
+  { value: '', label: '請確認' },
+  { value: 'recent-release', label: '已確認為 2010 年或之後' },
 ]);
 const approvalControlIds = Object.freeze({
   title: 'lyrics-review-title',
@@ -69,6 +76,12 @@ const reviewForm = useTemplateRef('review-form');
 
 const languageOptions = computed(
   () => languageOptionsByStratum[props.candidate.stratum] ?? [],
+);
+const languageSelectOptions = computed(() =>
+  languageOptions.value.map((value) => ({
+    value,
+    label: languageLabels[value],
+  })),
 );
 const lookupQuery = computed(
   () =>
@@ -345,104 +358,63 @@ function submitApproval() {
             :disabled="saving"
             @update:model-value="update('album', $event)"
           />
-          <label class="review-form__field" for="lyrics-review-duration">
-            <span>時長（秒）</span>
-            <input
-              id="lyrics-review-duration"
-              type="number"
-              min="1"
-              max="86400"
-              step="1"
-              required
-              :class="{
-                'review-form__control--invalid':
-                  approvalField === 'durationSeconds',
-              }"
-              :aria-invalid="
-                approvalField === 'durationSeconds' ? 'true' : undefined
-              "
-              :value="modelValue.durationSeconds"
-              :disabled="saving"
-              @input="update('durationSeconds', Number($event.target.value))"
-            />
-          </label>
-          <label class="review-form__field" for="lyrics-review-language">
-            <span>語言</span>
-            <select
-              id="lyrics-review-language"
-              :class="{
-                'review-form__control--invalid':
-                  approvalField === 'languageTag',
-              }"
-              :aria-invalid="
-                approvalField === 'languageTag' ? 'true' : undefined
-              "
-              :value="modelValue.languageTag"
-              :disabled="saving"
-              @change="update('languageTag', $event.target.value)"
-            >
-              <option
-                v-for="language in languageOptions"
-                :key="language"
-                :value="language"
-              >
-                {{ languageLabels[language] }}
-              </option>
-            </select>
-          </label>
-          <label class="review-form__field" for="lyrics-review-version">
-            <span>版本</span>
-            <select
-              id="lyrics-review-version"
-              :class="{
-                'review-form__control--invalid': approvalField === 'version',
-              }"
-              :aria-invalid="approvalField === 'version' ? 'true' : undefined"
-              :value="modelValue.version"
-              :disabled="saving"
-              @change="update('version', $event.target.value)"
-            >
-              <option
-                v-for="option in versionOptions"
-                :key="option[0]"
-                :value="option[0]"
-              >
-                {{ option[1] }}
-              </option>
-            </select>
-          </label>
-          <label class="review-form__field" for="lyrics-review-era">
-            <span>確認為 2010 年或之後發行</span>
-            <select
-              id="lyrics-review-era"
-              class="review-form__era-control"
-              :class="{
-                'review-form__control--invalid': approvalField === 'eraTag',
-              }"
-              :aria-invalid="approvalField === 'eraTag' ? 'true' : undefined"
-              :value="modelValue.eraTag || ''"
-              :disabled="saving"
-              @change="update('eraTag', $event.target.value || null)"
-            >
-              <option value="">請確認</option>
-              <option value="recent-release">已確認為 2010 年或之後</option>
-            </select>
-          </label>
-          <label class="review-form__checkbox">
-            <input
-              type="checkbox"
-              :checked="modelValue.versionTrap"
-              :disabled="saving"
-              @change="update('versionTrap', $event.target.checked)"
-            />
-            <span>這筆是容易配錯的版本陷阱</span>
-          </label>
+          <UiTextField
+            id="lyrics-review-duration"
+            label="時長（秒）"
+            type="number"
+            :model-value="modelValue.durationSeconds"
+            min="1"
+            max="86400"
+            step="1"
+            required
+            :invalid="approvalField === 'durationSeconds'"
+            :disabled="saving"
+            @update:model-value="update('durationSeconds', Number($event))"
+          />
+          <UiSelect
+            id="lyrics-review-language"
+            label="語言"
+            :model-value="modelValue.languageTag"
+            :options="languageSelectOptions"
+            required
+            :invalid="approvalField === 'languageTag'"
+            :disabled="saving"
+            @update:model-value="update('languageTag', $event)"
+          />
+          <UiSelect
+            id="lyrics-review-version"
+            label="版本"
+            :model-value="modelValue.version"
+            :options="versionOptions"
+            required
+            :invalid="approvalField === 'version'"
+            :disabled="saving"
+            @update:model-value="update('version', $event)"
+          />
+          <UiSelect
+            id="lyrics-review-era"
+            class="review-form__era-control"
+            label="確認為 2010 年或之後發行"
+            :model-value="modelValue.eraTag || ''"
+            :options="eraOptions"
+            required
+            :invalid="approvalField === 'eraTag'"
+            :disabled="saving"
+            @update:model-value="update('eraTag', $event || null)"
+          />
+          <UiCheckbox
+            id="lyrics-review-version-trap"
+            class="review-form__checkbox"
+            label="這筆是容易配錯的版本陷阱"
+            :model-value="modelValue.versionTrap"
+            :disabled="saving"
+            @update:model-value="update('versionTrap', $event)"
+          />
         </UiScrollRegion>
       </section>
     </div>
 
-    <details class="review-form__evidence">
-      <summary>來源證據</summary>
+    <UiDisclosure class="review-form__evidence" label="來源證據">
       <dl class="review-form__selectable">
         <div>
           <dt>MBID</dt>
@@ -461,7 +433,7 @@ function submitApproval() {
           <dd>{{ candidate.reference.firstReleaseDate || '—' }}</dd>
         </div>
       </dl>
-    </details>
+    </UiDisclosure>
 
     <footer class="review-form__actions">
       <p
@@ -473,24 +445,16 @@ function submitApproval() {
       >
         {{ approvalBlocker }}
       </p>
-      <label class="review-form__reject-reason" for="lyrics-review-rejection">
-        <span>拒絕原因</span>
-        <select
-          id="lyrics-review-rejection"
-          :value="rejectionReason"
-          :disabled="saving"
-          @change="emit('update:rejectionReason', $event.target.value)"
-        >
-          <option value="">請選擇</option>
-          <option
-            v-for="option in rejectionOptions"
-            :key="option[0]"
-            :value="option[0]"
-          >
-            {{ option[1] }}
-          </option>
-        </select>
-      </label>
+      <UiSelect
+        id="lyrics-review-rejection"
+        class="review-form__reject-reason"
+        label="拒絕原因"
+        :model-value="rejectionReason"
+        :options="rejectionOptions"
+        placeholder="請選擇"
+        :disabled="saving"
+        @update:model-value="emit('update:rejectionReason', $event)"
+      />
       <UiButton
         class="review-form__reject"
         :disabled="saving || !rejectionReason"
@@ -605,7 +569,7 @@ function submitApproval() {
 
 .review-form__lookup-identity > span {
   color: var(--ui-color-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-strong);
 }
 
@@ -613,7 +577,7 @@ function submitApproval() {
   min-width: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-size: 0.75rem;
+  font-size: var(--ui-font-size-sm);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -621,7 +585,7 @@ function submitApproval() {
 .review-form__lookup-row > p {
   margin: 0;
   color: var(--ui-color-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-body);
 }
 
@@ -630,11 +594,11 @@ function submitApproval() {
 }
 
 .review-form__copy-feedback {
-  min-height: 1rem;
+  min-height: var(--ui-space-4);
   margin: 0;
   color: var(--ui-color-success);
-  font-size: 0.75rem;
-  line-height: 1rem;
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
   text-align: end;
 }
 
@@ -726,81 +690,20 @@ function submitApproval() {
   grid-column: 1 / -1;
 }
 
-.review-form__field {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.review-form__field > span,
-.review-form__reject-reason > span {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-}
-
-.review-form input[type='number'],
-.review-form select {
-  width: 100%;
-  min-width: 0;
-  min-height: var(--ui-control-height);
-  padding: var(--ui-space-1) var(--ui-space-2);
-  border: 0;
-  border-radius: var(--ui-radius);
-  outline: var(--ui-border-width) solid var(--ui-color-border);
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-  font: inherit;
-  font-size: var(--ui-font-size-sm);
-}
-
-.review-form input:focus-visible,
-.review-form select:focus-visible,
-.review-form summary:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.review-form .review-form__control--invalid {
-  box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-danger);
-}
-
 .review-form__checkbox {
   grid-column: 1 / -1;
-  display: flex;
-  align-items: center;
-  gap: var(--ui-space-2);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-}
-
-.review-form__checkbox input {
-  width: 1rem;
-  height: 1rem;
-  accent-color: var(--ui-color-accent);
 }
 
 .review-form__evidence {
   margin: 0 var(--ui-space-4) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
   background: var(--ui-color-canvas);
 }
 
-.review-form__evidence summary {
-  padding: var(--ui-space-2) var(--ui-space-3);
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
-  cursor: pointer;
-}
-
-.review-form__evidence dl {
+.review-form__evidence :deep(dl) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 0 var(--ui-space-3) var(--ui-space-3);
 }
 
-.review-form__evidence dl > div {
+.review-form__evidence :deep(dl > div) {
   grid-template-columns: 1fr;
   gap: var(--ui-space-1);
 }
@@ -825,7 +728,7 @@ function submitApproval() {
   grid-column: 1 / -1;
   margin: 0;
   color: var(--ui-color-warning);
-  font-size: 0.75rem;
+  font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-medium);
 }
 
@@ -837,7 +740,7 @@ function submitApproval() {
 .review-form__key,
 .review-form__save-note {
   color: var(--ui-color-text-muted);
-  font-size: 0.75rem;
+  font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
 }
 

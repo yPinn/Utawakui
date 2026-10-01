@@ -13,6 +13,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTrackRow from '../ui/UiTrackRow.vue';
 import MusicAnalysisBenchmarkTimeline from './MusicAnalysisBenchmarkTimeline.vue';
 
 const review = useMusicAnalysisBenchmarkReview();
@@ -152,24 +153,19 @@ onMounted(library.initialize);
           viewport-tag="ol"
           viewport-class="benchmark-review__case-list-viewport"
         >
-          <li
+          <UiTrackRow
             v-for="benchmarkCase in review.dataset.value.cases"
             :key="benchmarkCase.id"
+            :title="caseTitle(benchmarkCase)"
+            :artist="caseArtist(benchmarkCase)"
+            :active="review.selectedCaseId.value === benchmarkCase.id"
+            interactive
+            :action-label="`檢視 ${caseTitle(benchmarkCase)} benchmark`"
+            hide-duration
+            overflow="ellipsis"
+            @row-click="selectCase(benchmarkCase.id)"
           >
-            <button
-              class="benchmark-review__case"
-              :class="{
-                'benchmark-review__case--selected':
-                  review.selectedCaseId.value === benchmarkCase.id,
-              }"
-              type="button"
-              :aria-pressed="review.selectedCaseId.value === benchmarkCase.id"
-              @click="selectCase(benchmarkCase.id)"
-            >
-              <span class="benchmark-review__case-copy">
-                <strong>{{ caseTitle(benchmarkCase) }}</strong>
-                <span>{{ caseArtist(benchmarkCase) }}</span>
-              </span>
+            <template #trail>
               <UiChip
                 :tone="
                   benchmarkCase.m2Status === 'current' ? 'success' : 'warning'
@@ -177,8 +173,8 @@ onMounted(library.initialize);
               >
                 {{ benchmarkCase.m2Status === 'current' ? 'M2' : 'M1' }}
               </UiChip>
-            </button>
-          </li>
+            </template>
+          </UiTrackRow>
         </UiScrollRegion>
       </aside>
 
@@ -370,56 +366,10 @@ onMounted(library.initialize);
 
 .benchmark-review__case-list :deep(.benchmark-review__case-list-viewport) {
   margin: 0;
-  padding: 0;
+  padding: var(--ui-space-1) var(--ui-space-2);
   list-style: none;
   overscroll-behavior: contain;
 }
-
-.benchmark-review__case {
-  width: 100%;
-  min-height: var(--ui-track-row-min-height);
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: var(--ui-space-2);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: 0;
-  border-block-end: var(--ui-border-width) solid var(--ui-color-border);
-  background: transparent;
-  color: var(--ui-color-text);
-  font: inherit;
-  text-align: start;
-  cursor: pointer;
-}
-
-.benchmark-review__case:hover {
-  background: var(--ui-color-surface-hover);
-}
-
-.benchmark-review__case--selected {
-  background: var(--ui-color-surface-selected);
-  box-shadow: inset var(--ui-focus-width) 0 0 var(--ui-color-current);
-}
-
-.benchmark-review__case:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
-}
-
-.benchmark-review__case-copy {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.benchmark-review__case-copy strong,
-.benchmark-review__case-copy span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.benchmark-review__case-copy span,
 .benchmark-review__case-header p {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
