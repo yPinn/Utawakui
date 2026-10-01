@@ -9,6 +9,7 @@ export function useWindowCloseDecision() {
     remember: false,
     isResponding: false,
     pendingAction: '',
+    activeWork: '',
     error: '',
   });
   const bridge =
@@ -27,6 +28,7 @@ export function useWindowCloseDecision() {
     state.remember = false;
     state.isResponding = false;
     state.pendingAction = '';
+    state.activeWork = '';
     state.error = '';
   }
 
@@ -59,6 +61,7 @@ export function useWindowCloseDecision() {
     presentingRequestId = null;
     if (!accepted) return;
     activeRequestId = requestId;
+    state.activeWork = payload?.activeWork === 'separation' ? 'separation' : '';
     state.remember = false;
     state.isResponding = false;
     state.pendingAction = '';
@@ -79,7 +82,7 @@ export function useWindowCloseDecision() {
   }
 
   function setRemember(value) {
-    if (!state.open || state.isResponding) return;
+    if (!state.open || state.isResponding || state.activeWork) return;
     state.remember = value === true;
   }
 
@@ -94,7 +97,8 @@ export function useWindowCloseDecision() {
       return false;
     }
     const requestId = activeRequestId;
-    const remember = action === 'cancel' ? false : state.remember;
+    const remember =
+      action === 'cancel' || state.activeWork ? false : state.remember;
     state.isResponding = true;
     state.pendingAction = action;
     state.error = '';

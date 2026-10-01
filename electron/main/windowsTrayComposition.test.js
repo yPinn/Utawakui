@@ -16,7 +16,10 @@ describe('Windows tray main-process composition', () => {
       'windowsTrayController?.attachWindow(mainWindow);',
     );
     expect(source).toContain(
-      'windowCloseDecisionBridge.requestDecision(mainWindow)',
+      'getActiveBackgroundWork: windowState.getActiveBackgroundWork,',
+    );
+    expect(source).toContain(
+      'windowCloseDecisionBridge.requestDecision(mainWindow, options)',
     );
   });
 

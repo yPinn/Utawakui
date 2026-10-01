@@ -84,6 +84,24 @@ describe('useWindowCloseDecision', () => {
     );
   });
 
+  it('keeps an active-work decision one-shot even if remember is requested', async () => {
+    const harness = createBridge();
+    const controller = await loadDecisionController(harness.bridge);
+    await harness.request({
+      requestId: REQUEST_ID,
+      activeWork: 'separation',
+    });
+
+    expect(controller.state.activeWork).toBe('separation');
+    controller.setRemember(true);
+    await controller.respond('quit');
+
+    expect(harness.bridge.respondWindowCloseRequest).toHaveBeenCalledWith(
+      REQUEST_ID,
+      { action: 'quit', remember: false },
+    );
+  });
+
   it('keeps the modal open with bounded recovery copy when response fails', async () => {
     const harness = createBridge({
       respondWindowCloseRequest: vi

@@ -475,6 +475,13 @@ describe('main preload bridge', () => {
       { sender: 'private' },
       { requestId: '11111111-1111-4111-8111-111111111111' },
     );
+    listeners.get('window-close:request')(
+      { sender: 'private' },
+      {
+        requestId: '22222222-2222-4222-8222-222222222222',
+        activeWork: 'separation',
+      },
+    );
     listeners.get('window-close:dismiss')(
       { sender: 'private' },
       { requestId: '11111111-1111-4111-8111-111111111111' },
@@ -482,7 +489,11 @@ describe('main preload bridge', () => {
     listeners.get('app:navigate')({ sender: 'private' }, 'library');
     listeners.get('app:navigate')({ sender: 'private' }, 'settings');
 
-    expect(requestCallback).toHaveBeenCalledTimes(1);
+    expect(requestCallback).toHaveBeenCalledTimes(2);
+    expect(requestCallback).toHaveBeenLastCalledWith({
+      requestId: '22222222-2222-4222-8222-222222222222',
+      activeWork: 'separation',
+    });
     expect(dismissCallback).toHaveBeenCalledTimes(1);
     expect(navigationCallback).toHaveBeenCalledWith('settings');
 

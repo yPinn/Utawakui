@@ -170,7 +170,7 @@ describe('useSeparationQueue', () => {
 
     await harness.separationQueue.pause();
     await harness.separationQueue.resume();
-    await harness.separationQueue.move('item-3', -1);
+    await harness.separationQueue.move('item-3', -2);
     await harness.separationQueue.remove('item-3');
     await harness.separationQueue.retry('item-2');
     await harness.separationQueue.clearCompleted();
@@ -180,7 +180,7 @@ describe('useSeparationQueue', () => {
     expect(harness.bridge.resumeSeparationQueue).toHaveBeenCalledOnce();
     expect(harness.bridge.moveSeparationQueueItem).toHaveBeenCalledWith(
       'item-3',
-      -1,
+      -2,
     );
     expect(harness.bridge.removeSeparationQueueItem).toHaveBeenCalledWith(
       'item-3',
@@ -191,6 +191,15 @@ describe('useSeparationQueue', () => {
     expect(harness.bridge.clearCompletedSeparations).toHaveBeenCalledOnce();
     expect(harness.bridge.cancelSeparation).toHaveBeenCalledOnce();
     expect(harness.bridge.getSeparationQueueStatus).toHaveBeenCalledTimes(5);
+  });
+
+  it('rejects zero, fractional, and out-of-range reorder offsets', () => {
+    const harness = createHarness();
+
+    expect(harness.separationQueue.move('item-3', 0)).toBe(false);
+    expect(harness.separationQueue.move('item-3', 1.5)).toBe(false);
+    expect(harness.separationQueue.move('item-3', 500)).toBe(false);
+    expect(harness.bridge.moveSeparationQueueItem).not.toHaveBeenCalled();
   });
 
   it('uses short recovery text and drops malformed main snapshots', async () => {

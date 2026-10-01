@@ -45,4 +45,17 @@ describe('WindowCloseDecisionModal', () => {
     expect(html).toContain('目前無法完成關閉操作，請再試一次。');
     expect(html).toContain('disabled');
   });
+
+  it('makes stopping active accompaniment work explicit and one-shot', async () => {
+    const html = await renderModal({
+      open: true,
+      activeWork: 'separation',
+      remember: true,
+    });
+
+    expect(html).toContain('伴奏處理中');
+    expect(html).toContain('停止並結束');
+    expect(html).toContain('在背景繼續');
+    expect(html).not.toContain('記住我的選擇');
+  });
 });

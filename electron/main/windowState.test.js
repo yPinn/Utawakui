@@ -28,6 +28,7 @@ function createWindowDouble() {
     once: vi.fn((event, callback) => windowListeners.set(event, callback)),
     setAppDetails: vi.fn(),
     setBackgroundColor: vi.fn(),
+    setProgressBar: vi.fn(),
     setThumbarButtons: vi.fn(),
     setTitleBarOverlay: vi.fn(),
     show: vi.fn(),
@@ -271,9 +272,19 @@ describe('windowState playback projection', () => {
     );
     expect(windowDouble.win.setThumbarButtons).toHaveBeenCalledTimes(1);
     expect(renderGlyphPng).toHaveBeenCalledTimes(6);
+    expect(module.getCurrentPlaybackTrackId()).toBeNull();
 
-    playerStateListener({}, { isPlaying: 'yes', hasTrack: 1 });
+    playerStateListener(
+      {},
+      {
+        isPlaying: 'yes',
+        hasTrack: 1,
+        trackId: 'track-a',
+        privatePath: 'E:\\private.wav',
+      },
+    );
     expect(windowDouble.win.setThumbarButtons).toHaveBeenCalledTimes(2);
+    expect(module.getCurrentPlaybackTrackId()).toBe('track-a');
     const buttons = windowDouble.win.setThumbarButtons.mock.calls.at(-1)[0];
     expect(buttons[1]).toMatchObject({
       tooltip: '暫停',
@@ -286,9 +297,27 @@ describe('windowState playback projection', () => {
       'toggle',
     );
 
-    playerStateListener({}, { isPlaying: true, hasTrack: true });
+    playerStateListener(
+      {},
+      {
+        isPlaying: true,
+        hasTrack: true,
+        trackId: 'track-b',
+      },
+    );
     expect(windowDouble.win.setThumbarButtons).toHaveBeenCalledTimes(2);
     expect(renderGlyphPng).toHaveBeenCalledTimes(8);
+    expect(module.getCurrentPlaybackTrackId()).toBe('track-b');
+
+    playerStateListener(
+      {},
+      {
+        isPlaying: true,
+        hasTrack: true,
+        trackId: '..\\unsafe',
+      },
+    );
+    expect(module.getCurrentPlaybackTrackId()).toBeNull();
   });
 
   it('projects library notifications only while a window exists', async () => {
@@ -310,5 +339,51 @@ describe('windowState playback projection', () => {
       'library:backfill-status',
       { running: true },
     );
+  });
+});
+
+describe('windowState separation projection', () => {
+  it('projects main-owned queue progress and exposes only active work kind', async () => {
+    const { module, windowDouble } = await loadWindowState();
+    module.createMainWindow();
+
+    module.setSeparationQueueStatus({
+      queue: {
+        status: 'running',
+        total: 2,
+        done: 0,
+        failed: 0,
+        cancelled: 0,
+        activeItemId: 'active',
+        items: [
+          { itemId: 'active', status: 'running', percent: 50 },
+          { itemId: 'pending', status: 'pending' },
+        ],
+      },
+    });
+
+    expect(windowDouble.win.setProgressBar).toHaveBeenLastCalledWith(0.25, {
+      mode: 'normal',
+    });
+    expect(module.getActiveBackgroundWork()).toBe('separation');
+
+    module.setSeparationQueueStatus({
+      queue: {
+        status: 'idle',
+        total: 2,
+        done: 2,
+        failed: 0,
+        cancelled: 0,
+        activeItemId: null,
+        items: [
+          { itemId: 'one', status: 'completed' },
+          { itemId: 'two', status: 'completed' },
+        ],
+      },
+    });
+    expect(windowDouble.win.setProgressBar).toHaveBeenLastCalledWith(-1, {
+      mode: 'none',
+    });
+    expect(module.getActiveBackgroundWork()).toBeNull();
   });
 });

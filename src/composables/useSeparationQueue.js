@@ -245,9 +245,12 @@ export function useSeparationQueue({ bridge = window.Utawakui } = {}) {
 
   const pause = () => applyStatusAction('pauseSeparationQueue');
   const resume = () => applyStatusAction('resumeSeparationQueue');
-  const move = (itemId, direction) =>
-    safeId(itemId, 128) && [1, -1].includes(direction)
-      ? applyRefreshAction('moveSeparationQueueItem', itemId, direction)
+  const move = (itemId, offset) =>
+    safeId(itemId, 128) &&
+    Number.isSafeInteger(offset) &&
+    offset !== 0 &&
+    Math.abs(offset) < MAX_QUEUE_ITEMS
+      ? applyRefreshAction('moveSeparationQueueItem', itemId, offset)
       : false;
   const remove = (itemId) =>
     safeId(itemId, 128)

@@ -402,8 +402,9 @@ if (!gotSingleInstanceLock) {
       iconPath: windowState.getAppIconPath(),
       appName: APP_NAME,
       initialBehavior: configState.getConfig().windowCloseBehavior,
-      requestCloseDecision: (mainWindow) =>
-        windowCloseDecisionBridge.requestDecision(mainWindow),
+      getActiveBackgroundWork: windowState.getActiveBackgroundWork,
+      requestCloseDecision: (mainWindow, options) =>
+        windowCloseDecisionBridge.requestDecision(mainWindow, options),
       persistWindowCloseBehavior: (behavior) =>
         configState.updateConfig({ windowCloseBehavior: behavior }),
       recordDiagnostic: (event) => diagnosticsService.record(event),
@@ -859,6 +860,7 @@ if (!gotSingleInstanceLock) {
       requireFeatureGate,
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
+      onQueueUpdate: windowState.setSeparationQueueStatus,
       recordDiagnostic: (event) => diagnosticsService.record(event),
       enforceLibraryStoragePolicy,
     });

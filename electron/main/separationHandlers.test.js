@@ -177,6 +177,7 @@ describe('registerSeparationHandlers', () => {
 
   it('publishes queue progress and detects only a current on-disk result', () => {
     const onUpdate = vi.fn();
+    const onQueueUpdate = vi.fn();
     const hasCurrentResult = vi.fn();
     const createSeparationQueue = vi.fn((dependencies) => {
       onUpdate.mockImplementation(dependencies.onUpdate);
@@ -186,6 +187,7 @@ describe('registerSeparationHandlers', () => {
     const send = vi.fn();
     register({
       createSeparationQueue,
+      onQueueUpdate,
       getMainWindow: () => ({ webContents: { send } }),
       resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
       loadStoredSeparationManifest: vi.fn(() => ({
@@ -202,11 +204,41 @@ describe('registerSeparationHandlers', () => {
     const status = { queue: { status: 'running', items: [] } };
     onUpdate(status);
     expect(send).toHaveBeenCalledWith('separation:queue-progress', status);
+    expect(onQueueUpdate).toHaveBeenCalledWith(status);
     expect(hasCurrentResult({ trackId: 'track-1', recipeId: 'general' })).toBe(
       true,
     );
     expect(hasCurrentResult({ trackId: 'track-1', recipeId: 'quick' })).toBe(
       false,
+    );
+  });
+
+  it('keeps queue progress available when the taskbar projection fails', () => {
+    let onUpdate;
+    const createSeparationQueue = vi.fn((dependencies) => {
+      onUpdate = dependencies.onUpdate;
+      return createQueueHarness().queue;
+    });
+    const send = vi.fn();
+    const recordDiagnostic = vi.fn();
+    register({
+      createSeparationQueue,
+      onQueueUpdate: vi.fn(() => {
+        throw new Error('native progress unavailable');
+      }),
+      getMainWindow: () => ({ webContents: { send } }),
+      recordDiagnostic,
+    });
+
+    const status = { queue: { status: 'running', items: [] } };
+    expect(() => onUpdate(status)).not.toThrow();
+    expect(send).toHaveBeenCalledWith('separation:queue-progress', status);
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'separation',
+        operation: 'project-taskbar-progress',
+        code: 'SEPARATION_TASKBAR_PROGRESS_FAILED',
+      }),
     );
   });
 
@@ -337,6 +369,113 @@ describe('registerSeparationHandlers', () => {
       );
     },
   );
+
+  it('enforces the library storage policy after a completed separation without failing the job', async () => {
+    const enforceLibraryStoragePolicy = vi.fn().mockResolvedValue(undefined);
+    const handlers = register({
+      enforceLibraryStoragePolicy,
+      createSeparationEngineJob: vi.fn(() => ({
+        result: Promise.resolve({ stemsPath: 'C:\\stems.wav' }),
+        cancel: vi.fn(),
+      })),
+      heavyJobScheduler: {
+        schedule: vi.fn(({ start }) => start().result),
+        cancel: vi.fn(),
+      },
+      findSeparationTrackRecord: vi.fn(() => ({ id: 'track-1' })),
+      resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
+      resolveSeparationInputAudioPath: vi.fn(() => 'input.mp3'),
+      resolveUserDataDir: vi.fn(() => 'C:\\AppData\\Utawakui'),
+    });
+
+    await expect(
+      handlers.get('separation:run')(null, 'track-1', 'quick'),
+    ).resolves.toEqual({
+      stemsUrl: 'utawakui-media://track/track-1/separations/quick.wav',
+    });
+    expect(enforceLibraryStoragePolicy).toHaveBeenCalledWith({
+      protectedTrackIds: ['track-1'],
+    });
+  });
+
+  it('protects pending separation tracks while enforcing storage policy', async () => {
+    let runTrack;
+    const queue = createQueueHarness().queue;
+    queue.getStatus.mockReturnValue({
+      queue: {
+        items: [
+          { trackId: 'track-1', status: 'running' },
+          { trackId: 'track-2', status: 'pending' },
+          { trackId: 'track-3', status: 'completed' },
+        ],
+      },
+    });
+    const enforceLibraryStoragePolicy = vi.fn().mockResolvedValue(undefined);
+    register({
+      createSeparationQueue: vi.fn((dependencies) => {
+        runTrack = dependencies.runTrack;
+        return queue;
+      }),
+      enforceLibraryStoragePolicy,
+      createSeparationEngineJob: vi.fn(() => ({
+        result: Promise.resolve({ stemsPath: 'C:\\stems.wav' }),
+        cancel: vi.fn(),
+      })),
+      heavyJobScheduler: {
+        schedule: vi.fn(({ start }) => start().result),
+        cancel: vi.fn(),
+      },
+      findSeparationTrackRecord: vi.fn(() => ({ id: 'track-1' })),
+      resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
+      resolveSeparationInputAudioPath: vi.fn(() => 'input.mp3'),
+      resolveUserDataDir: vi.fn(() => 'C:\\AppData\\Utawakui'),
+    });
+
+    await runTrack({
+      trackId: 'track-1',
+      recipeId: 'quick',
+      onProgress: vi.fn(),
+    });
+
+    expect(enforceLibraryStoragePolicy).toHaveBeenCalledWith({
+      protectedTrackIds: ['track-1', 'track-2'],
+    });
+  });
+
+  it('records an automatic storage-cleanup failure without hiding a completed separation', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const handlers = register({
+      recordDiagnostic,
+      enforceLibraryStoragePolicy: vi
+        .fn()
+        .mockRejectedValue(new Error('E:\\private')),
+      createSeparationEngineJob: vi.fn(() => ({
+        result: Promise.resolve({ stemsPath: 'C:\\stems.wav' }),
+        cancel: vi.fn(),
+      })),
+      heavyJobScheduler: {
+        schedule: vi.fn(({ start }) => start().result),
+        cancel: vi.fn(),
+      },
+      findSeparationTrackRecord: vi.fn(() => ({ id: 'track-1' })),
+      resolveSeparationsOutputDir: vi.fn(() => 'separations-dir'),
+      resolveSeparationInputAudioPath: vi.fn(() => 'input.mp3'),
+      resolveUserDataDir: vi.fn(() => 'C:\\AppData\\Utawakui'),
+    });
+
+    await expect(
+      handlers.get('separation:run')(null, 'track-1', 'quick'),
+    ).resolves.toEqual({
+      stemsUrl: 'utawakui-media://track/track-1/separations/quick.wav',
+    });
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'library-storage',
+        operation: 'auto-cleanup',
+        code: 'LIBRARY_STORAGE_AUTO_CLEANUP_FAILED',
+      }),
+    );
+  });
 
   it('selects an existing result and notifies the library', async () => {
     const notifyLibraryUpdated = vi.fn();

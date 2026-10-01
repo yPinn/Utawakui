@@ -24,6 +24,7 @@ function createWindowsTrayController({
   appName = 'Utawakui',
   initialBehavior = 'ask',
   requestCloseDecision = null,
+  getActiveBackgroundWork = () => null,
   persistWindowCloseBehavior = async () => undefined,
   recordDiagnostic = () => undefined,
 }) {
@@ -167,18 +168,24 @@ function createWindowsTrayController({
     }
   }
 
-  async function showNativeClosePrompt(sourceWindow) {
+  async function showNativeClosePrompt(sourceWindow, activeWork = null) {
+    const hasActiveSeparation = activeWork === 'separation';
     try {
       const result = await dialog.showMessageBox(sourceWindow, {
         type: 'question',
         title: appName,
-        message: '要讓 Utawakui 在背景繼續執行嗎？',
-        detail:
-          '背景執行會保留播放、OBS 連線與輸出；你可以從系統匣再次開啟或完整結束。',
-        buttons: ['在背景執行', '完全結束', '取消'],
+        message: hasActiveSeparation
+          ? '伴奏處理中'
+          : `要讓 ${appName} 在背景繼續執行嗎？`,
+        detail: hasActiveSeparation
+          ? '停止並結束會取消目前歌曲，未處理的順序不會保留。'
+          : '背景執行會保留播放、OBS 連線與輸出；你可以從系統匣再次開啟或完整結束。',
+        buttons: hasActiveSeparation
+          ? ['在背景繼續', '停止並結束', '取消']
+          : ['在背景執行', '完全結束', '取消'],
         defaultId: CLOSE_RESPONSE.TRAY,
         cancelId: CLOSE_RESPONSE.CANCEL,
-        checkboxLabel: '記住我的選擇',
+        checkboxLabel: hasActiveSeparation ? undefined : '記住我的選擇',
         checkboxChecked: false,
         noLink: true,
       });
@@ -190,7 +197,10 @@ function createWindowsTrayController({
             : 'cancel';
       return {
         action,
-        remember: action === 'cancel' ? false : result.checkboxChecked === true,
+        remember:
+          action === 'cancel' || hasActiveSeparation
+            ? false
+            : result.checkboxChecked === true,
       };
     } catch (error) {
       recordDiagnostic({
@@ -203,11 +213,13 @@ function createWindowsTrayController({
     }
   }
 
-  async function resolveClosePrompt(sourceWindow) {
+  async function resolveClosePrompt(sourceWindow, activeWork = null) {
     let result = null;
     if (typeof requestCloseDecision === 'function') {
       try {
-        result = await requestCloseDecision(sourceWindow);
+        result = activeWork
+          ? await requestCloseDecision(sourceWindow, { activeWork })
+          : await requestCloseDecision(sourceWindow);
       } catch (error) {
         recordDiagnostic({
           source: 'window-close',
@@ -223,10 +235,11 @@ function createWindowsTrayController({
       !['tray', 'quit', 'cancel'].includes(result.action) ||
       typeof result.remember !== 'boolean'
     ) {
-      result = await showNativeClosePrompt(sourceWindow);
+      result = await showNativeClosePrompt(sourceWindow, activeWork);
     }
 
     if (!result || !canActOnPrompt(sourceWindow)) return;
+    if (activeWork) result.remember = false;
     if (result.action === 'cancel') return;
 
     if (result.action === 'tray') {
@@ -265,7 +278,10 @@ function createWindowsTrayController({
   }
 
   function handleWindowClose(event) {
-    if (quitting || behavior === 'quit') return;
+    if (quitting) return;
+    const activeWork =
+      getActiveBackgroundWork() === 'separation' ? 'separation' : null;
+    if (behavior === 'quit' && !activeWork) return;
     event.preventDefault();
     if (behavior === 'tray') {
       mainWindow?.hide();
@@ -273,7 +289,7 @@ function createWindowsTrayController({
     }
     if (pendingClosePrompt) return;
     const sourceWindow = mainWindow;
-    const prompt = resolveClosePrompt(sourceWindow);
+    const prompt = resolveClosePrompt(sourceWindow, activeWork);
     pendingClosePrompt = prompt;
     void prompt.finally(() => {
       if (pendingClosePrompt === prompt) pendingClosePrompt = null;

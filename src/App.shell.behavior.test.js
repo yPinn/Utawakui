@@ -30,16 +30,16 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('settings: SettingsView');
   });
 
-  it('owns playback, accompaniment, and metadata surfaces beside the primary archive workspace', () => {
+  it('owns playback and metadata surfaces beside the primary archive workspace', () => {
     expect(source).toContain('class="shell__main shell__main--with-dock"');
     expect(source).toContain('class="shell__workspace"');
     expect(source).toContain('class="shell__dock"');
     expect(source).toContain('<AppRightDock');
     expect(source).toContain('<QueuePanel');
-    expect(source).toContain('<SeparationQueuePanel');
     expect(source).toContain('RIGHT_DOCK_SURFACE_METADATA');
     expect(source).toContain('RIGHT_DOCK_SURFACE_QUEUE');
-    expect(source).toContain('RIGHT_DOCK_SURFACE_SEPARATION');
+    expect(source).not.toContain('<SeparationQueuePanel');
+    expect(source).not.toContain('RIGHT_DOCK_SURFACE_SEPARATION');
     expect(source).not.toContain('#context');
   });
 
@@ -65,21 +65,21 @@ describe('App shell right Dock', () => {
     expect(source).not.toMatch(/\.shell__workspace\s*\{[^}]*padding-top:/su);
   });
 
-  it('routes artwork and Queue triggers into the same Dock content target', () => {
+  it('routes playback triggers to the Dock while accompaniment stays in the titlebar', () => {
     expect(source).toContain(':artwork-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).toContain(':queue-controls="RIGHT_DOCK_CONTENT_ID"');
-    expect(source).toContain(':separation-controls="RIGHT_DOCK_CONTENT_ID"');
     expect(source).toContain('@artwork-activate="toggleMetadataSurface"');
     expect(source).toContain('@queue-activate="toggleQueueSurface"');
-    expect(source).toContain('@separation-activate="toggleSeparationSurface"');
+    expect(source).not.toContain(':separation-expanded');
+    expect(source).not.toContain('@open-separation');
+    expect(source).not.toContain('openSeparationSurface');
+    expect(source).not.toContain(':separation-controls=');
+    expect(source).not.toContain('@separation-activate=');
     expect(source).toContain(
       '@close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"',
     );
     expect(source).toContain(
       '@close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"',
-    );
-    expect(source).toContain(
-      '@close="closeDockSurface(RIGHT_DOCK_SURFACE_SEPARATION)"',
     );
   });
 

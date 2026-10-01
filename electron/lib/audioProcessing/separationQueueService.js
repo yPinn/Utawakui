@@ -329,18 +329,37 @@ function createSeparationQueueService({
     return value;
   }
 
-  function move(itemId, direction) {
-    if (![1, -1].includes(direction)) return false;
+  function move(itemId, offset) {
+    if (
+      !Number.isSafeInteger(offset) ||
+      offset === 0 ||
+      Math.abs(offset) >= MAX_QUEUE_ITEMS
+    ) {
+      return false;
+    }
     const entry = findEntry(itemId);
     if (entry?.status !== 'pending') return false;
     const pending = items.filter(({ status }) => status === 'pending');
     const pendingIndex = pending.indexOf(entry);
-    const target = pending[pendingIndex + direction];
+    const targetIndex = pendingIndex + offset;
+    const target = pending[targetIndex];
     if (!target) return false;
-    const entryIndex = items.indexOf(entry);
-    const targetIndex = items.indexOf(target);
-    items[entryIndex] = target;
-    items[targetIndex] = entry;
+
+    const step = Math.sign(offset);
+    for (
+      let currentIndex = pendingIndex;
+      currentIndex !== targetIndex;
+      currentIndex += step
+    ) {
+      const current = pending[currentIndex];
+      const adjacent = pending[currentIndex + step];
+      const currentItemIndex = items.indexOf(current);
+      const adjacentItemIndex = items.indexOf(adjacent);
+      items[currentItemIndex] = adjacent;
+      items[adjacentItemIndex] = current;
+      pending[currentIndex] = adjacent;
+      pending[currentIndex + step] = current;
+    }
     emitUpdate();
     return true;
   }

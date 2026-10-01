@@ -1,13 +1,14 @@
 <script setup>
 import { computed, onMounted } from 'vue';
+import SeparationToolbarPopover from '../separation/SeparationToolbarPopover.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import {
   Cpu,
   ICON_SIZE,
   MemoryStick,
-  MonitorUp,
   Moon,
+  PictureInPicture2,
   Settings,
   Sun,
 } from '../../icons/index.js';
@@ -74,7 +75,7 @@ const label = computed(() =>
   isLight.value ? '切換為深色主題' : '切換為淺色主題',
 );
 const performerLabel = computed(() =>
-  performerState.open ? '切換到表演者畫面' : '開啟表演者畫面',
+  performerState.open ? '切換到提詞視窗' : '開啟提詞視窗',
 );
 const settingsLabel = computed(() =>
   props.updateAvailable ? '設定（有可用更新）' : '設定',
@@ -213,18 +214,19 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
 
       <div class="app-title-bar__controls">
         <UiIconButton
-          :icon="MonitorUp"
+          :icon="PictureInPicture2"
           :label="performerLabel"
-          variant="overlay"
+          variant="ghost"
           size="md"
           :active="performerState.open"
           :disabled="performerState.isOpening"
           @click="openPerformerView"
         />
+        <SeparationToolbarPopover />
         <UiIconButton
           :icon="isLight ? Moon : Sun"
           :label="label"
-          variant="overlay"
+          variant="ghost"
           size="md"
           @click="toggleTheme"
         />

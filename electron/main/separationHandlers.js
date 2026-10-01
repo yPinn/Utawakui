@@ -31,6 +31,9 @@ const {
 const { MEDIA_SCHEME } = require('./mediaScheme');
 const { createAppError } = require('../lib/appError');
 const { runDiagnosticIpcOperation } = require('./ipcErrorBoundary');
+const {
+  enforceLibraryStoragePolicySafely,
+} = require('./libraryStorageHandlers');
 
 function registerSeparationHandlers({
   ipcMain,
@@ -43,6 +46,7 @@ function registerSeparationHandlers({
   featureIds,
   heavyJobScheduler,
   recordDiagnostic,
+  onQueueUpdate = () => undefined,
   // Injectable overrides (not vi.mock) are this codebase's established seam
   // for handler tests — same convention as libraryHandlers.js's
   // `findLibraryTrackRecord = findTrackRecord` and importHandlers.js's
@@ -58,6 +62,7 @@ function registerSeparationHandlers({
   createSeparationQueue = createSeparationQueueService,
   loadStoredSeparationManifest = loadSeparationManifest,
   hasStoredSeparationResultFile = hasSeparationResultFile,
+  enforceLibraryStoragePolicy = async () => undefined,
 }) {
   const service = createAudioProcessingService({
     resolveRecipe,
@@ -180,6 +185,20 @@ function registerSeparationHandlers({
               onProgress(progress);
             },
           });
+          const protectedTrackIds =
+            queueService
+              .getStatus()
+              .queue?.items.filter(({ status }) =>
+                ['pending', 'checking', 'running'].includes(status),
+              )
+              .map(({ trackId: queuedTrackId }) => queuedTrackId) ?? [];
+          await enforceLibraryStoragePolicySafely({
+            enforceLibraryStoragePolicy,
+            options: {
+              protectedTrackIds: [...new Set([trackId, ...protectedTrackIds])],
+            },
+            recordDiagnostic,
+          });
           notifyLibraryUpdated();
           return result;
         },
@@ -187,6 +206,16 @@ function registerSeparationHandlers({
     },
     cancelActiveTrack: () => service.cancelActiveJob(),
     onUpdate: (status) => {
+      try {
+        onQueueUpdate(status);
+      } catch (error) {
+        recordDiagnostic({
+          source: 'separation',
+          operation: 'project-taskbar-progress',
+          code: 'SEPARATION_TASKBAR_PROGRESS_FAILED',
+          error,
+        });
+      }
       getMainWindow()?.webContents.send('separation:queue-progress', status);
     },
   });
@@ -231,8 +260,8 @@ function registerSeparationHandlers({
 
   ipcMain.handle(
     'separation:move-queue-item',
-    async (event, itemId, direction) => ({
-      moved: queueService.move(itemId, direction),
+    async (event, itemId, offset) => ({
+      moved: queueService.move(itemId, offset),
     }),
   );
 

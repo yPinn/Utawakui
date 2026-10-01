@@ -37,6 +37,16 @@ export function estimateSeparationOutput(tracks = []) {
   };
 }
 
+export function separationPlanSummary(tracks = []) {
+  const count = `${tracks.length} 首`;
+  if (tracks.length === 0) return count;
+  const estimate = estimateSeparationOutput(tracks);
+  if (!estimate.label || estimate.knownTracks !== estimate.totalTracks) {
+    return count;
+  }
+  return `${count} · 最多新增${estimate.label}`;
+}
+
 export function separationItemLabel(item) {
   switch (item?.status) {
     case 'pending':
@@ -61,16 +71,32 @@ export function separationItemLabel(item) {
 }
 
 export function separationQueueSummary(queue) {
-  if (!queue) return '依播放順序逐首準備';
+  if (!queue) return '依播放順序準備';
+  if (queue.status === 'pausing') return '這首完成後暫停';
   if (queue.status === 'paused') {
-    return `已暫停 · ${queue.pending ?? 0} 首等候中`;
+    return `已暫停 · ${queue.pending ?? 0} 首待處理`;
   }
-  if (['running', 'pausing'].includes(queue.status)) {
+  if (queue.status === 'running') {
     return `已處理 ${queue.done} / ${queue.total} 首`;
   }
   const unfinished = (queue.failed ?? 0) + (queue.cancelled ?? 0);
   const finished = Math.max(0, queue.total - unfinished);
   return unfinished > 0
-    ? `${finished} 首已完成 · ${unfinished} 首未完成`
-    : `${finished} 首已完成`;
+    ? `${finished} 首完成 · ${unfinished} 首未完成`
+    : `${finished} 首完成`;
+}
+
+export function separationQueueIndicator(queue) {
+  if (!queue) return { state: 'idle', label: '伴奏處理' };
+  if (['running', 'pausing'].includes(queue.status)) {
+    return { state: 'running', label: separationQueueSummary(queue) };
+  }
+  if (queue.status === 'paused') {
+    return { state: 'paused', label: separationQueueSummary(queue) };
+  }
+  const unfinished = (queue.failed ?? 0) + (queue.cancelled ?? 0);
+  if (unfinished > 0) {
+    return { state: 'attention', label: `${unfinished} 首未完成` };
+  }
+  return { state: 'idle', label: separationQueueSummary(queue) };
 }

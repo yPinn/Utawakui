@@ -17,6 +17,7 @@ export function useTaskbarControls() {
     window.Utawakui.setPlaybackState({
       isPlaying: state.isPlaying,
       hasTrack: state.track !== null,
+      trackId: state.track?.id ?? null,
     });
   });
 

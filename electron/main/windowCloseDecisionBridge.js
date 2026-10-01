@@ -3,6 +3,7 @@
 const { randomUUID } = require('node:crypto');
 
 const CLOSE_ACTIONS = new Set(['tray', 'quit', 'cancel']);
+const ACTIVE_WORKS = new Set(['separation']);
 const PRESENT_CHANNEL = 'window-close:present';
 const RESPOND_CHANNEL = 'window-close:respond';
 const REQUEST_CHANNEL = 'window-close:request';
@@ -102,7 +103,11 @@ function createWindowCloseDecisionBridge({
 
   ipcMain.handle(RESPOND_CHANNEL, (event, payload) => {
     if (!isCloseDecisionPayload(payload)) return false;
-    if (!isCurrentSender(event, payload.requestId) || !pending.presented) {
+    if (
+      !isCurrentSender(event, payload.requestId) ||
+      !pending.presented ||
+      (pending.activeWork && payload.remember)
+    ) {
       return false;
     }
     const request = pending;
@@ -112,7 +117,7 @@ function createWindowCloseDecisionBridge({
     return true;
   });
 
-  function requestDecision(sourceWindow) {
+  function requestDecision(sourceWindow, options = {}) {
     if (destroyed) {
       return Promise.reject(bridgeError('WINDOW_CLOSE_BRIDGE_DESTROYED'));
     }
@@ -132,6 +137,9 @@ function createWindowCloseDecisionBridge({
     }
 
     const requestId = createRequestId();
+    const activeWork = ACTIVE_WORKS.has(options?.activeWork)
+      ? options.activeWork
+      : null;
     const webContents = sourceWindow.webContents;
     let resolve;
     let reject;
@@ -141,6 +149,7 @@ function createWindowCloseDecisionBridge({
     });
     const request = {
       requestId,
+      activeWork,
       sourceWindow,
       webContents,
       promise,
@@ -164,7 +173,10 @@ function createWindowCloseDecisionBridge({
     );
 
     try {
-      webContents.send(REQUEST_CHANNEL, { requestId });
+      webContents.send(REQUEST_CHANNEL, {
+        requestId,
+        ...(activeWork ? { activeWork } : {}),
+      });
     } catch {
       rejectPending('WINDOW_CLOSE_RENDERER_UNAVAILABLE');
     }

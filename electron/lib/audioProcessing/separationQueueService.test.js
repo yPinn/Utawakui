@@ -211,23 +211,24 @@ describe('separation queue service', () => {
   it('moves and removes pending items without mutating active work', async () => {
     const harness = createHarness();
     harness.service.enqueue({
-      trackIds: ['track-1', 'track-2', 'track-3'],
+      trackIds: ['track-1', 'track-2', 'track-3', 'track-4'],
       recipeId: 'general',
     });
     await flush();
 
-    expect(harness.service.move('item-3', -1)).toBe(true);
+    expect(harness.service.move('item-4', -2)).toBe(true);
     expect(
       harness.service
         .getStatus()
         .queue.items.filter(({ status }) => status === 'pending')
         .map(({ trackId }) => trackId),
-    ).toEqual(['track-3', 'track-2']);
+    ).toEqual(['track-4', 'track-2', 'track-3']);
+    expect(harness.service.move('item-4', -500)).toBe(false);
     expect(harness.service.remove('item-1')).toBe(false);
     expect(harness.service.remove('item-2')).toBe(true);
     expect(
       harness.service.getStatus().queue.items.map(({ trackId }) => trackId),
-    ).toEqual(['track-1', 'track-3']);
+    ).toEqual(['track-1', 'track-4', 'track-3']);
   });
 
   it('retries failed work and clears only successful terminal items', async () => {

@@ -19,7 +19,6 @@ import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionMod
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
-import SeparationQueuePanel from './components/separation/SeparationQueuePanel.vue';
 import SetlistView from './views/SetlistView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
@@ -45,7 +44,6 @@ import { usePlaybackResume } from './composables/usePlaybackResume.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
-  RIGHT_DOCK_SURFACE_SEPARATION,
   useAppRightDock,
 } from './composables/useAppRightDock.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
@@ -213,17 +211,11 @@ const metadataSurfaceActive = computed(
 const queueSurfaceActive = computed(
   () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_QUEUE,
 );
-const separationSurfaceActive = computed(
-  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_SEPARATION,
-);
 const metadataExpanded = computed(
   () => rightDock.isExpanded.value && metadataSurfaceActive.value,
 );
 const queueExpanded = computed(
   () => rightDock.isExpanded.value && queueSurfaceActive.value,
-);
-const separationExpanded = computed(
-  () => rightDock.isExpanded.value && separationSurfaceActive.value,
 );
 const rightDockExpanded = computed(
   () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
@@ -237,9 +229,6 @@ const restorableDockSurface = computed(
       : RIGHT_DOCK_SURFACE_QUEUE),
 );
 const rightDockLabel = computed(() => {
-  if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_SEPARATION) {
-    return '伴奏處理';
-  }
   return restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE
     ? '播放佇列'
     : '播放資訊';
@@ -248,8 +237,8 @@ const rightDockExpandLabel = computed(() => `展開${rightDockLabel.value}`);
 
 let returnFocusTarget = null;
 
-function rememberRightDockTrigger() {
-  returnFocusTarget = document.activeElement;
+function rememberRightDockTrigger(target = document.activeElement) {
+  returnFocusTarget = target;
 }
 
 function restoreRightDockFocus() {
@@ -274,13 +263,6 @@ function toggleQueueSurface() {
   rememberRightDockTrigger();
   measureInteractionToNextPaint('utawakui:right-dock:queue-toggle', () =>
     rightDock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE),
-  );
-}
-
-function toggleSeparationSurface() {
-  rememberRightDockTrigger();
-  measureInteractionToNextPaint('utawakui:right-dock:separation-toggle', () =>
-    rightDock.toggleSurface(RIGHT_DOCK_SURFACE_SEPARATION),
   );
 }
 
@@ -433,17 +415,6 @@ useKeyboardShortcuts({ internalViewShortcuts });
             :inert="!queueExpanded"
             @close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"
           />
-          <SeparationQueuePanel
-            v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_SEPARATION]"
-            class="shell__dock-surface"
-            :class="{
-              'shell__dock-surface--active': separationSurfaceActive,
-            }"
-            :active="separationExpanded"
-            :aria-hidden="!separationExpanded"
-            :inert="!separationExpanded"
-            @close="closeDockSurface(RIGHT_DOCK_SURFACE_SEPARATION)"
-          />
         </AppRightDock>
       </div>
     </main>
@@ -454,11 +425,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
       :artwork-controls="RIGHT_DOCK_CONTENT_ID"
       :queue-expanded="queueExpanded"
       :queue-controls="RIGHT_DOCK_CONTENT_ID"
-      :separation-expanded="separationExpanded"
-      :separation-controls="RIGHT_DOCK_CONTENT_ID"
       @artwork-activate="toggleMetadataSurface"
       @queue-activate="toggleQueueSurface"
-      @separation-activate="toggleSeparationSurface"
     />
     <UiNotice
       v-if="performerView.state.error"
@@ -477,6 +445,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
       :remember="closeDecision.state.remember"
       :is-responding="closeDecision.state.isResponding"
       :pending-action="closeDecision.state.pendingAction"
+      :active-work="closeDecision.state.activeWork"
       :error="closeDecision.state.error"
       @close="closeDecision.cancel"
       @decision="closeDecision.respond"

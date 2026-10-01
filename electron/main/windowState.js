@@ -10,6 +10,10 @@ const path = require('path');
 const fs = require('fs');
 const { app, BrowserWindow, nativeImage, nativeTheme } = require('electron');
 const { renderGlyphPng } = require('../lib/thumbarIcons');
+const { isSafeTrackId } = require('../lib/library/paths');
+const {
+  projectSeparationTaskbarProgress,
+} = require('./separationTaskbarProgress');
 const { readDeveloperOptions } = require('./runtimeEnvironment');
 const { hardenWebContentsNavigation } = require('./webContentsSecurity');
 
@@ -85,7 +89,40 @@ function notifyLibraryUpdated(options) {
 }
 
 // Renderer-reported mirror; usePlayer.js remains the playback source of truth.
-let playbackState = { isPlaying: false, hasTrack: false };
+let playbackState = { isPlaying: false, hasTrack: false, trackId: null };
+let separationTaskbarProgress = projectSeparationTaskbarProgress({
+  queue: null,
+});
+
+function normalizePlaybackTrackId(value) {
+  if (!isSafeTrackId(value) || value.length > 255) return null;
+  const hasControlCharacter = [...value].some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint <= 0x1f || codePoint === 0x7f;
+  });
+  return hasControlCharacter ? null : value;
+}
+
+function getCurrentPlaybackTrackId() {
+  return playbackState.trackId;
+}
+
+function updateSeparationTaskbarProgress() {
+  if (process.platform !== 'win32' || !mainWindow?.setProgressBar) return;
+  mainWindow.setProgressBar(separationTaskbarProgress.value, {
+    mode: separationTaskbarProgress.mode,
+  });
+}
+
+function setSeparationQueueStatus(status) {
+  separationTaskbarProgress = projectSeparationTaskbarProgress(status);
+  updateSeparationTaskbarProgress();
+  return separationTaskbarProgress;
+}
+
+function getActiveBackgroundWork() {
+  return separationTaskbarProgress.active ? 'separation' : null;
+}
 
 // Match the Windows taskbar theme, not the app theme.
 const THUMBAR_ICON_LIGHT = { r: 255, g: 255, b: 255 };
@@ -146,17 +183,17 @@ function updateThumbar() {
 // Fire-and-forget; thumbar redraw has no renderer-visible result.
 function registerPlayerStateHandler(ipcMain) {
   ipcMain.on('player:state', (event, state) => {
+    const hasTrack = Boolean(state && state.hasTrack);
     const next = {
       isPlaying: Boolean(state && state.isPlaying),
-      hasTrack: Boolean(state && state.hasTrack),
+      hasTrack,
+      trackId: hasTrack ? normalizePlaybackTrackId(state?.trackId) : null,
     };
-    if (
+    const thumbarUnchanged =
       next.isPlaying === playbackState.isPlaying &&
-      next.hasTrack === playbackState.hasTrack
-    ) {
-      return;
-    }
+      next.hasTrack === playbackState.hasTrack;
     playbackState = next;
+    if (thumbarUnchanged) return;
     updateThumbar();
   });
 }
@@ -279,9 +316,12 @@ module.exports = {
   getAppIconPath,
   getAppUserModelId,
   createMainWindow,
+  getActiveBackgroundWork,
+  getCurrentPlaybackTrackId,
   getMainWindow,
   notifyLibraryUpdated,
   sendBackfillStatus,
+  setSeparationQueueStatus,
   updateThumbar,
   registerPlayerStateHandler,
 };

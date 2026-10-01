@@ -7,9 +7,69 @@ const source = fs.readFileSync(
 );
 
 describe('AppTitleBar', () => {
+  it('places the accompaniment work list second in the right-side icon group', () => {
+    expect(source).toContain(
+      "import SeparationToolbarPopover from '../separation/SeparationToolbarPopover.vue'",
+    );
+    expect(source).toContain("const emit = defineEmits(['openSettings'])");
+    expect(source).toContain('<SeparationToolbarPopover />');
+    expect(source).not.toContain('separationExpanded');
+    expect(source).not.toContain('openSeparation');
+
+    const controlsStart = source.indexOf('class="app-title-bar__controls"');
+    const controlsEnd = source.indexOf('</div>', controlsStart);
+    const controlsSource = source.slice(controlsStart, controlsEnd);
+    const performerIndex = controlsSource.indexOf(':icon="PictureInPicture2"');
+    const toolbarIndex = controlsSource.indexOf('<SeparationToolbarPopover');
+    const themeIndex = controlsSource.indexOf(':icon="isLight ? Moon : Sun"');
+    const resourcesIndex = source.indexOf('class="app-title-bar__resources"');
+
+    expect(controlsStart).toBeGreaterThan(-1);
+    expect(performerIndex).toBeGreaterThan(-1);
+    expect(toolbarIndex).toBeGreaterThan(performerIndex);
+    expect(themeIndex).toBeGreaterThan(toolbarIndex);
+    expect(toolbarIndex).toBeGreaterThan(-1);
+    expect(resourcesIndex).toBeGreaterThan(-1);
+    expect(source.slice(0, controlsStart)).not.toContain(
+      '<SeparationToolbarPopover',
+    );
+    expect(source).not.toContain('class="app-title-bar__status-cluster"');
+  });
+
   it('separates global utility actions with the shared control gap', () => {
     expect(source).toContain('gap: var(--ui-space-2)');
     expect(source).toContain('padding-right: var(--ui-space-2)');
+  });
+
+  it('orders global utilities by performer, accompaniment, appearance, then destination', () => {
+    const performerIndex = source.indexOf(':icon="PictureInPicture2"');
+    const separationIndex = source.indexOf('<SeparationToolbarPopover');
+    const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
+    const settingsIndex = source.indexOf(':icon="Settings"');
+
+    expect(performerIndex).toBeGreaterThan(-1);
+    expect(separationIndex).toBeGreaterThan(performerIndex);
+    expect(themeIndex).toBeGreaterThan(separationIndex);
+    expect(settingsIndex).toBeGreaterThan(themeIndex);
+    expect(source.match(/variant="ghost"/gu)).toHaveLength(3);
+    expect(source).not.toContain('variant="overlay"');
+  });
+
+  it('keeps open-window, momentary action, and current-destination semantics distinct', () => {
+    expect(source).toContain('PictureInPicture2,');
+    expect(source).not.toContain('Captions,');
+    expect(source).toContain(
+      "performerState.open ? '切換到提詞視窗' : '開啟提詞視窗'",
+    );
+    expect(source).not.toContain('MonitorUp,');
+    expect(source).not.toContain('表演者畫面');
+    expect(source).toContain(':active="performerState.open"');
+    expect(source).toContain(':disabled="performerState.isOpening"');
+    expect(source).toContain(':active="settingsActive"');
+    expect(source).toContain(
+      ':aria-current="settingsActive ? \'page\' : undefined"',
+    );
+    expect(source).not.toContain('aria-pressed');
   });
 
   it('exposes Settings as a current-page destination with the update marker attached', () => {

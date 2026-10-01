@@ -101,6 +101,33 @@ describe('windowCloseDecisionBridge', () => {
     ).resolves.toBe(false);
   });
 
+  it('sends only a bounded active-work context to the renderer', async () => {
+    const { bridge, ipcMain, win } = createHarness();
+    const decisionPromise = bridge.requestDecision(win, {
+      activeWork: 'separation',
+      privatePath: 'E:\\private',
+    });
+
+    expect(win.webContents.send).toHaveBeenCalledWith('window-close:request', {
+      requestId: REQUEST_ID,
+      activeWork: 'separation',
+    });
+    await ipcMain.invoke(
+      'window-close:present',
+      { sender: win.webContents },
+      REQUEST_ID,
+    );
+    await ipcMain.invoke(
+      'window-close:respond',
+      { sender: win.webContents },
+      { requestId: REQUEST_ID, action: 'quit', remember: false },
+    );
+    await expect(decisionPromise).resolves.toEqual({
+      action: 'quit',
+      remember: false,
+    });
+  });
+
   it('falls back when the renderer does not acknowledge presentation in time', async () => {
     vi.useFakeTimers();
     const { bridge, ipcMain, win } = createHarness();

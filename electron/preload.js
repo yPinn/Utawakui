@@ -43,13 +43,16 @@ const WINDOW_CLOSE_REQUEST_ID =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 function isWindowCloseRequest(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const keys = Object.keys(value).sort();
+  const hasExpectedKeys =
+    (keys.length === 1 && keys[0] === 'requestId') ||
+    (keys.length === 2 && keys[0] === 'activeWork' && keys[1] === 'requestId');
   return Boolean(
-    value &&
-    typeof value === 'object' &&
-    !Array.isArray(value) &&
-    Object.keys(value).length === 1 &&
+    hasExpectedKeys &&
     typeof value.requestId === 'string' &&
-    WINDOW_CLOSE_REQUEST_ID.test(value.requestId),
+    WINDOW_CLOSE_REQUEST_ID.test(value.requestId) &&
+    (value.activeWork === undefined || value.activeWork === 'separation'),
   );
 }
 
@@ -510,8 +513,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     }),
   pauseSeparationQueue: () => ipcRenderer.invoke('separation:pause-queue'),
   resumeSeparationQueue: () => ipcRenderer.invoke('separation:resume-queue'),
-  moveSeparationQueueItem: (itemId, direction) =>
-    ipcRenderer.invoke('separation:move-queue-item', itemId, direction),
+  moveSeparationQueueItem: (itemId, offset) =>
+    ipcRenderer.invoke('separation:move-queue-item', itemId, offset),
   removeSeparationQueueItem: (itemId) =>
     ipcRenderer.invoke('separation:remove-queue-item', itemId),
   retrySeparationQueueItem: (itemId) =>

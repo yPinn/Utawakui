@@ -1,38 +1,50 @@
 <script setup>
+import { computed } from 'vue';
 import UiButton from '../ui/UiButton.vue';
 import UiCheckbox from '../ui/UiCheckbox.vue';
 import UiModal from '../ui/UiModal.vue';
 import UiNotice from '../ui/UiNotice.vue';
 
-defineProps({
+const props = defineProps({
   open: { type: Boolean, default: false },
   remember: { type: Boolean, default: false },
   isResponding: { type: Boolean, default: false },
   pendingAction: { type: String, default: '' },
+  activeWork: { type: String, default: '' },
   error: { type: String, default: '' },
 });
 
 const emit = defineEmits(['close', 'decision', 'update:remember']);
+const hasActiveSeparation = computed(() => props.activeWork === 'separation');
 </script>
 
 <template>
   <UiModal
     :open="open"
-    title="關閉 Utawakui"
+    :title="hasActiveSeparation ? '伴奏處理中' : '關閉 Utawakui'"
     size="notice"
     @close="emit('close')"
   >
     <div class="window-close-decision">
       <div class="window-close-decision__copy">
         <p class="window-close-decision__question">
-          要讓 Utawakui 在背景繼續執行嗎？
+          {{
+            hasActiveSeparation
+              ? '要讓處理在背景繼續嗎？'
+              : '要讓 Utawakui 在背景繼續執行嗎？'
+          }}
         </p>
         <p class="window-close-decision__detail">
-          背景執行會保留播放、OBS 連線與輸出；你可以從系統匣再次開啟或完整結束。
+          {{
+            hasActiveSeparation
+              ? '停止並結束會取消目前歌曲，未處理的順序不會保留。'
+              : '背景執行會保留播放、OBS 連線與輸出；你可以從系統匣再次開啟或完整結束。'
+          }}
         </p>
       </div>
 
       <UiCheckbox
+        v-if="!hasActiveSeparation"
         id="window-close-remember"
         :model-value="remember"
         label="記住我的選擇"
@@ -58,7 +70,7 @@ const emit = defineEmits(['close', 'decision', 'update:remember']);
           loading-label="結束中"
           @click="emit('decision', 'quit')"
         >
-          完全結束
+          {{ hasActiveSeparation ? '停止並結束' : '完全結束' }}
         </UiButton>
         <UiButton
           variant="accent"
@@ -67,7 +79,7 @@ const emit = defineEmits(['close', 'decision', 'update:remember']);
           loading-label="處理中"
           @click="emit('decision', 'tray')"
         >
-          在背景執行
+          {{ hasActiveSeparation ? '在背景繼續' : '在背景執行' }}
         </UiButton>
       </div>
     </div>

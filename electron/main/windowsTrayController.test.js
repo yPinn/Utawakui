@@ -393,6 +393,49 @@ describe('windowsTrayController', () => {
     expect(Tray).not.toHaveBeenCalled();
   });
 
+  it('protects active accompaniment work even in remembered quit mode', async () => {
+    const requestCloseDecision = vi
+      .fn()
+      .mockResolvedValue({ action: 'cancel', remember: false });
+    const { controller, dialog } = createHarness({
+      initialBehavior: 'quit',
+      getActiveBackgroundWork: () => 'separation',
+      requestCloseDecision,
+    });
+    const win = createWindowDouble();
+    controller.attachWindow(win);
+
+    const event = closeEvent();
+    win.emit('close', event);
+    await flushCloseDecision();
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(requestCloseDecision).toHaveBeenCalledWith(win, {
+      activeWork: 'separation',
+    });
+    expect(dialog.showMessageBox).not.toHaveBeenCalled();
+  });
+
+  it('uses one-shot destructive copy in the native active-work fallback', async () => {
+    const { controller, dialog } = createHarness({
+      getActiveBackgroundWork: () => 'separation',
+    });
+    const win = createWindowDouble();
+    controller.attachWindow(win);
+
+    win.emit('close', closeEvent());
+    await flushCloseDecision();
+
+    expect(dialog.showMessageBox).toHaveBeenCalledWith(
+      win,
+      expect.objectContaining({
+        message: '伴奏處理中',
+        buttons: ['在背景繼續', '停止並結束', '取消'],
+        checkboxLabel: undefined,
+      }),
+    );
+  });
+
   it('restores, shows, and focuses the same window from the tray and API', () => {
     const { controller, getMenuTemplate, getTray } = createHarness();
     const win = createWindowDouble({ minimized: true });
