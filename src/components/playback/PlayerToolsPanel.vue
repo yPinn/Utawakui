@@ -380,7 +380,7 @@ function handleSeparationPresetChange(presetId) {
             <MicVocal :size="ICON_SIZE" aria-hidden="true" />
             伴奏分離
           </span>
-          <UiChip tone="gated">Gate</UiChip>
+          <UiChip tone="gated">進階功能</UiChip>
         </div>
 
         <p class="player-tools__description player-tools__process-track">
