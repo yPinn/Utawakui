@@ -1,7 +1,9 @@
 # Consecutive Update Acceptance Evidence
 
-Use one copy of this template for the first public update from v0.3.0 and for each
-later release until two consecutive updater-enabled public versions have passed.
+Use one copy of this template for each public update, starting with v0.3.0 →
+v0.4.0, until two consecutive updater-enabled public versions have passed.
+Regenerate the evidence JSON from the public assets; a local build's hashes differ
+from the published installer.
 A draft, local feed or manual installer cannot substitute for the production-feed
 update result.
 

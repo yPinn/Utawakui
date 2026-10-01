@@ -24,8 +24,9 @@ and `SHA256SUMS.txt`.
 
 Published v0.1.1 predates the updater metadata bundle. v0.3.0 is the first
 published updater-enabled release, so existing v0.1.1 users need one manual
-installation of v0.3.0; only a version published after v0.3.0 can prove the
-in-app update path across two public releases.
+installation of v0.3.0. v0.4.0 is the first version that can prove the in-app
+update path from a published updater-enabled release; its production-feed update
+evidence is still pending (see the acceptance template).
 
 ## Pull Request And Main CI
 
@@ -45,7 +46,10 @@ builds the full NSIS/update bundle with `npm run dist` and calls
 and packaged executable are both `NotSigned`, the packaged version matches,
 required legal notices are in ASAR, and the installer/blockmap/`latest.yml`
 contract is valid. It then calls `scripts/windows-installed-acceptance.ps1` on
-the ephemeral runner. That script verifies the pinned public v0.3.0 installer
+the ephemeral runner. Once per entry in
+`scripts/release-baselines.json` (add each newly published version there; entries
+not older than the candidate are skipped, and entries with `everyRun: false`
+run only on manual diagnostics), it verifies the pinned public installer
 checksum, installs it into an isolated temporary root, upgrades the same install
 to the current candidate, checks version／registry／shortcut／data-retention
 evidence, runs cold and warm installed startup traces, and uninstalls it. The job
@@ -184,9 +188,10 @@ embeds a replacement public key. Promote that replacement in the following relea
 and dual-sign with the recovery key as `retiring`. If no trusted
 active／retiring／recovery private key remains, recovery requires a manual installer.
 
-The first version that enables this gate can be downloaded by v0.3.0 only through
-the existing `latest.yml` SHA-512 path because v0.3.0 contains no manifest verifier.
-That newly installed version enforces the signed manifest on its next update.
+The first version that enables this gate can be downloaded by v0.3.0 and v0.4.0
+only through the existing `latest.yml` SHA-512 path because neither contains a
+manifest verifier. That newly installed version enforces the signed manifest on
+its next update.
 
 ## Acceptance Before Publish
 

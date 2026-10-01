@@ -75,8 +75,8 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Installer、startup trace、diagnostics 與 unsigned updater runtime 已建立；unsigned
   channel 是現行接受邊界。App-level signed manifest 的 exact binding、可輪替多簽章
   契約與分權 workflow 已完成，但 production key 尚未配置、gate 仍關閉。Ordinary CI
-  已有從官方 v0.3.0 installer 覆蓋安裝候選版的驗證 gate；production stable feed 的
-  應用內跨版本更新仍須等候選版公開後驗證。
+  已有從 `scripts/release-baselines.json` 釘選的已發布 installer 覆蓋安裝候選版的
+  驗證 gate；v0.4.0 已公開，經 production stable feed 的應用內更新證據仍待補齊。
 - 使用者回饋（錯誤回報／功能請求／體驗意見／內容問題）共用一套預覽後送出流程已實作；
   relay 獨立部署，不進封裝安裝檔。
 
@@ -92,7 +92,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0004](adr/0004-korean-romanization-package.md)                        | 已實作                           | 韓文 romanization 使用 koroman。                                                                                                                  |
 | [0005](adr/0005-python-ytdlp-provider-engine.md)                       | 已實作                           | Provider runtime、plugin 與 sidecar 由 app 原子準備和驗證。                                                                                       |
 | [0006](adr/0006-loopback-output-websocket-runtime.md)                  | 已實作                           | Loopback HTTP + `ws` 是目前 Browser Source transport。                                                                                            |
-| [0007](adr/0007-public-release-app-updates.md)                         | 已實作                           | Public feed、updater 與 unsigned boundary 已建立；候選版 installed-upgrade CI gate 已有，production-feed 跨版本 acceptance 仍待下一版公開後完成。 |
+| [0007](adr/0007-public-release-app-updates.md)                         | 已實作                           | Public feed、updater 與 unsigned boundary 已建立；installed-upgrade CI gate 已有；v0.4.0 已公開，production-feed 應用內更新 acceptance 仍待補齊。 |
 | [0008](adr/0008-local-diagnostics-and-error-handling.md)               | 主路徑已實作                     | Main diagnostics、Settings 控制與顯式 redacted export 已建立；F6 dev workbench 與獨立單檔 HTML 檢視工具已提供；domain wrappers 持續增量導入。     |
 | [0009](adr/0009-tiered-audio-processing-runtime.md)                    | 部分實作                         | `quick`／`general` 可執行；Refined 與其他品質包仍受 gate 限制。                                                                                   |
 | [0010](adr/0010-lyrics-timing-granularity-and-output-content-split.md) | 主路徑已實作                     | T0／T1／T2、content/state split 與 fallback 已建立；人工視覺 acceptance 待完成。                                                                  |

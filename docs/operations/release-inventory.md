@@ -63,8 +63,8 @@ Windows packaging is configured in `electron-builder.yml`.
   `scripts/verify-unsigned-windows-package.ps1` is the shared verifier for PR,
   tag-review, and public-draft packaging; it checks `NotSigned` status, packaged
   version/notices, blockmap, and `latest.yml`.
-  `scripts/windows-installed-acceptance.ps1` then uses the pinned official v0.3.0
-  installer on the ephemeral runner to prove a same-root candidate upgrade,
+  `scripts/windows-installed-acceptance.ps1` then uses each official installer pinned in
+  `scripts/release-baselines.json` on the ephemeral runner to prove a same-root candidate upgrade,
   registry／shortcut identity, retained isolated sentinels, cold／warm installed
   startup, and uninstall cleanup. PR packages remain ephemeral and are neither
   uploaded nor published; only bounded installed-acceptance evidence is retained
