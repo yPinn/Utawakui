@@ -1,15 +1,11 @@
-// Pure string classification for MediaDeviceInfo labels — no DOM/Electron
-// API access, so it's plain-Node testable per this repo's coverage
-// convention (see CaptureDeviceModal.vue for the one caller).
+// Pure string classification for MediaDeviceInfo labels; no DOM/Electron access,
+// so it is plain-Node testable (sole caller: CaptureDeviceModal.vue).
 //
-// The browser's enumerateDevices() only ever exposes a free-text label, not
-// Windows' underlying EndpointFormFactor (Headphones/Speakers/etc.) — that
-// property never crosses the Web Audio API boundary. So there is no
-// reliable way to tell a real headset apart from real speakers here; don't
-// try. Virtual audio cable software is different: VB-CABLE and VoiceMeeter
-// ship with fixed, distinctive product names, so name matching is a
-// reliable (if not exhaustive) signal for the one device category this
-// feature actually cares about.
+// enumerateDevices() exposes only a free-text label, never Windows'
+// EndpointFormFactor, so headsets cannot be told from speakers; don't try. Virtual
+// cable software is different: VB-CABLE and VoiceMeeter ship fixed product names,
+// so name matching is a reliable (not exhaustive) signal for the one category
+// this feature cares about.
 const VIRTUAL_CABLE_PATTERNS = [
   /vb-audio/i,
   /voicemeeter/i,
@@ -22,14 +18,12 @@ export function isVirtualCableDevice(label) {
   return VIRTUAL_CABLE_PATTERNS.some((pattern) => pattern.test(label));
 }
 
-// Windows prefixes playback endpoints with a device-role label ("Default -"/
-// "Communications -") and Chromium appends the endpoint's raw USB VID:PID in
-// parentheses for USB audio devices. The USB id is useful for disambiguating
-// in a full device picker (CaptureDeviceModal.vue keeps it), but the role
-// prefix reads better pulled out into its own badge there instead of left
-// inline (see deviceRoleBadgeLabel) — both are too noisy for a compact
-// inline label (PlayerBar.vue's guide-vocal slider rows), where
-// shortenDeviceLabel strips both.
+// Windows prefixes playback endpoints with a role label ("Default -"/
+// "Communications -") and Chromium appends a USB VID:PID in parentheses for USB
+// devices. The full picker (CaptureDeviceModal.vue) keeps the USB id and shows the
+// role as a badge (see deviceRoleBadgeLabel); both are too noisy for compact
+// labels such as PlayerBar.vue's guide-vocal slider rows, where shortenDeviceLabel
+// strips them.
 const ROLE_PREFIX_PATTERN = /^(?:Default|Communications)\s*-\s*/i;
 const USB_ID_SUFFIX_PATTERN = /\s*\([0-9a-f]{4}:[0-9a-f]{4}\)\s*$/i;
 

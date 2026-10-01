@@ -424,16 +424,13 @@ function removeTrackFromAllPlaylists(dir, trackId) {
   return next;
 }
 
-// One-time migration for collections that predate the kind field:
-// classifies each by its members' album metadata
-// (electron/lib/albumClassifier.js) and stamps kind: 'album' | 'playlist'
-// accordingly. Gated on the raw on-disk version — loadPlaylists doesn't
-// track version at all, so this reads the file directly, same pattern as
-// electron/lib/library/metadataIndex.js's migrateTrackAlbumMetadata. Backs up the pre-migration file
-// first: not corruption, but a schema change to unrecoverable user data
-// deserves the same safety net as backupCorrupted. classify is injected
-// (classifyCollectionKind) so this module stays free of any
-// album-detection knowledge of its own.
+// One-time migration for collections that predate the kind field: stamps
+// kind: 'album' | 'playlist' from each collection's members' album metadata.
+// Gated on the raw on-disk version (loadPlaylists does not track it), the same
+// pattern as migrateTrackAlbumMetadata in library/metadataIndex.js. Backs up the
+// file first: not corruption, but a schema change to unrecoverable user data
+// deserves the backupCorrupted safety net. `classify` is injected
+// (classifyCollectionKind) so this module holds no album-detection knowledge.
 function migratePlaylistKinds(dir, tracksById, classify) {
   const filePath = path.join(dir, PLAYLISTS_FILENAME);
   let raw;

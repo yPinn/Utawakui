@@ -15,7 +15,7 @@ const tabShapeStyle = {
 // Flat list — every tab shares one resting look and one active look (see
 // .app-tabs__folder / --active below). No per-tab color data: distinct
 // per-tab hues read as competing accents on an operational tool meant to
-// stay calm and low-noise (CLAUDE.md's Design Principles), and this app's
+// stay calm and low-noise (see DESIGN.md), and this app's
 // color identity isn't decided yet besides.
 const workflowItems = [
   { key: 'setlist', label: 'Setlist' },

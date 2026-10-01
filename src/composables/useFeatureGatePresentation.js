@@ -18,19 +18,15 @@ import { useFeatureDependencies } from './useFeatureDependencies.js';
 import { useFeatureGateAccess } from './useFeatureGateAccess.js';
 import { useFeatureGates } from './useFeatureGates.js';
 
-// Feature-gate/dependency row presentation for SettingsView.vue — pure
-// data-shaping (labels, status/tone, workflow-item assembly) that has no
-// template ref or lifecycle dependency, split out of the view so the view
-// stays interaction/template glue. A per-call factory, not a module-scope
-// singleton like useFeatureDependencies.js — those own IPC subscriptions
-// that must survive view unmount, this is per-view UI state and SettingsView
-// unmounts on every tab switch (see CLAUDE.md's App shell section), so a
-// singleton here would be the wrong lifetime.
-// systemFfmpegDetection is a caller-supplied ref holding the last result of
-// window.Utawakui.detectSystemFfmpeg() (SettingsView.vue runs one probe on
-// mount). It only feeds the compact row's "可用系統版本" hint; the full
-// detection detail (path, smoke-test failure reason, a manual re-detect)
-// lives in FfmpegSourceModal.vue's own local state, not here.
+// Feature-gate/dependency row presentation for SettingsView.vue: pure
+// data-shaping (labels, status/tone, workflow items) with no template ref or
+// lifecycle dependency, so the view stays interaction/template glue. A per-call
+// factory, not a singleton like useFeatureDependencies.js: those own IPC
+// subscriptions that must outlive the view, while this is per-view state and
+// SettingsView unmounts on every tab switch.
+// systemFfmpegDetection is a caller-supplied ref with the last
+// window.Utawakui.detectSystemFfmpeg() result; it only feeds the compact row's
+// "可用系統版本" hint. Detection detail lives in FfmpegSourceModal.vue.
 export function useFeatureGatePresentation({ systemFfmpegDetection } = {}) {
   const {
     state: featureGateState,

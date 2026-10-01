@@ -4,18 +4,12 @@ import { useAppView } from './useAppView.js';
 import { usePlayer } from './usePlayer.js';
 import { isEditableTarget } from '../utils/dom.js';
 
-// Global keyboard shortcuts — instantiated once in App.vue, which lives
-// for the app's whole lifetime. The listener is still removed on unmount
-// (via onUnmounted) rather than left to leak: in prod App.vue never
-// unmounts so this is a no-op, but under `npm run dev` Vite HMR re-runs
-// this composable's setup on every edit without a real unmount, and
-// without this cleanup each reload stacks another 'keydown' listener —
-// e.g. a single arrow-key press bumping volume by 30% instead of 10%
-// after two hot reloads.
-// Ignored while typing in an editable field. Alt/Cmd+<key> are still
-// reserved for future shortcuts; Ctrl+<key> now covers transpose/tempo
-// below. Pitch (cents) is mouse/panel-only — a fine-adjust control, not
-// core enough to claim more modifier space.
+// Global keyboard shortcuts, instantiated once in App.vue. The listener is still
+// removed on unmount: a no-op in prod, but Vite HMR re-runs setup on every edit
+// without a real unmount, and each reload would stack another 'keydown' listener
+// (two reloads made one arrow press change volume by 30% instead of 10%).
+// Ignored while typing in an editable field. Alt/Cmd+<key> stay reserved; Ctrl+<key>
+// covers transpose/tempo. Pitch (cents) is mouse/panel-only, a fine-adjust control.
 
 const VOLUME_STEP = 0.1;
 // Matches PlayerBar.vue's stepper click increment.

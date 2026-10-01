@@ -239,15 +239,11 @@ function adjustTempo(delta) {
   setTempoRate(Math.round((state.tempoRate + delta) * 20) / 20);
 }
 
-// Five quick-jump stops plus a fine-grained slider below them — the stops
-// alone can't cover it: the "right" level is a mix/hardware-dependent
-// judgment call (too loud/too quiet at an exact stop is a real, expected
-// case), so fine adjustment still needs to exist. The stops stay coarser
-// (25%) than the slider's own step (5%) — they're for fast
-// jump-to-known-position, not for replacing the drag. Plain percentages,
-// no named-scenario copy (抓Key/對唱/背景音樂 etc.) — the number is
-// self-explanatory for a mix control and doesn't need a tooltip to justify
-// it.
+// Five quick-jump stops plus a fine slider: the right level is a mix- and
+// hardware-dependent judgment call, so stops alone cannot cover it. The stops are
+// coarser (25%) than the slider step (5%); they jump to known positions, they do
+// not replace dragging. Plain percentages with no named-scenario copy (抓Key/對唱/
+// 背景音樂): the number is self-explanatory for a mix control.
 const GUIDE_VOCAL_STOPS = [
   { value: 0, label: '0%' },
   { value: 0.25, label: '25%' },

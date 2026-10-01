@@ -39,26 +39,17 @@ function splitRuns(text) {
   return runs;
 }
 
-// Splits one token's surface form + katakana reading (kuromoji's own field
-// shape: surface_form/reading) into ruby-annotatable segments
-// [{ t: text, r?: hiraganaReading }].
+// Splits one kuromoji token (surface_form + katakana reading) into
+// ruby-annotatable segments [{ t: text, r?: hiraganaReading }].
 //
-// Kana runs in `surface` are matched literally against the reading
-// (converted to hiragana), walking right-to-left: okurigana is never
-// sound-shifted in standard Japanese orthography, so each kana run's text
-// appears verbatim in the reading, and anchoring from the right edge
-// inward correctly resolves trailing okurigana (the common case — 歌う,
-// 高い, 食べる) and interior kana (読み込む) alike, leaving each kanji run
-// whatever reading is left between two anchors.
+// Kana runs in `surface` are matched literally against the hiragana reading,
+// right to left: okurigana is never sound-shifted, so anchoring from the right
+// resolves trailing okurigana (歌う, 食べる) and interior kana (読み込む) alike,
+// and each kanji run gets whatever reading lies between two anchors. A lone
+// kanji run (e.g. jukujikun 今日->きょう) takes the whole reading.
 //
-// A single kanji run with no surrounding kana (jukujikun/熟字訓 compounds
-// like 今日->きょう, or any plain kanji word) is unambiguous by
-// construction — the whole reading belongs to it, no matching needed.
-//
-// Alignment fails closed: if a kana run's text can't be found in the
-// reading at all, or a kanji run would end up with zero reading characters
-// between two anchors, this returns one atomic segment covering the whole
-// surface with the whole reading, rather than guessing a wrong split.
+// Fails closed: if a kana run is not found, or a kanji run would get an empty
+// reading, return one atomic segment instead of guessing a wrong split.
 function alignOkurigana(surface, reading) {
   const text = String(surface || '');
   if (!text) return [];
@@ -148,22 +139,13 @@ function buildReadingDoc(lines, options = {}) {
     onProgress?.({ stage: 'line', index, total: sourceLines.length });
     const text = typeof rawText === 'string' ? rawText : '';
     if (!text || !containsKanji(text)) {
-      // No kanji doesn't mean no romaji: an all-kana line (だから, ああ,
-      // なくなった) has nothing to annotate with ruby, but its surface text
-      // already IS its own reading — feeding it straight to kanaToRomaji
-      // gives the correct romaji with no tokenizer/alignment step needed.
-      // Skipping romaji entirely here (as an earlier version of this
-      // function did) silently drops the romaji line for every all-kana
-      // lyric line, which is common, not an edge case.
+      // No kanji does not mean no romaji: an all-kana line (だから, ああ) needs no
+      // ruby, but its surface text already is its reading, so kanaToRomaji can convert
+      // it directly. Skipping it would drop the romaji row for every all-kana line.
       //
-      // Gated on containsKana, not just "no kanji": a line that's already
-      // pure Latin/symbols (an English hook line, "123", punctuation) has
-      // no Japanese phonetic content to convert at all — kanaToRomaji
-      // would just hand the same text back unchanged (wanakana passes
-      // non-kana text through untouched), producing a redundant "romaji"
-      // row identical to the line above it. Same reasoning
-      // buildRomanizationDoc's containsHangul gate already applies to
-      // Korean's all-Latin lines.
+      // Gated on containsKana: pure Latin/symbol lines (English hooks, "123") have no
+      // Japanese phonetics, and wanakana would echo them back as a redundant romaji
+      // row. buildRomanizationDoc's containsHangul gate does the same for Korean.
       const romaji =
         text && containsKana(text) && typeof kanaToRomaji === 'function'
           ? kanaToRomaji(text.replace(/\s+/g, ' '))
@@ -200,17 +182,13 @@ function buildReadingDoc(lines, options = {}) {
   return { analyzer, lines: resultLines };
 }
 
-// Korean counterpart to buildReadingDoc above, deliberately kept as its
-// own function rather than a branch inside buildReadingDoc: Korean needs
-// none of that function's machinery (tokenizing, okurigana alignment,
-// kanji word-gap insertion) — 한글 is already phonetic and already
-// space-separated (띄어쓰기), so there's no ruby to build. `romanize(text)`
-// is expected to return the whole line's romanization already, applying
-// its own pronunciation-assimilation rules (see docs/adr/0004) — this
-// function's only job is the same per-line skip/shape bookkeeping
-// buildReadingDoc does. `segments` is always a single plain `{ t: text }`
-// (never a `r` reading), so the existing <ruby> rendering path in
-// LyricsWorkspace.vue naturally renders Korean lines as plain text.
+// Korean counterpart to buildReadingDoc, kept separate because Korean needs none
+// of its machinery (tokenizing, okurigana alignment, kanji gap insertion): 한글 is
+// already phonetic and space-separated, so there is no ruby. `romanize(text)` must
+// return the whole line's romanization with its own assimilation rules (see
+// docs/adr/0004); this function only does the per-line skip/shape bookkeeping.
+// `segments` is always a single plain `{ t: text }`, so the existing <ruby>
+// rendering path in LyricsWorkspace.vue renders Korean as plain text.
 function buildRomanizationDoc(lines, options = {}) {
   const { romanize, analyzer = null, onProgress } = options;
   if (typeof romanize !== 'function') {

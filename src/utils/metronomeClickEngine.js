@@ -4,18 +4,15 @@ const CLICK_GAIN = 0.4;
 const ACCENT_FREQUENCY_HZ = 1500;
 const REGULAR_FREQUENCY_HZ = 900;
 
-// Synthesized, not sampled: a shipped audio asset would need the same
-// source-URL/SHA-256/license paperwork this repo requires for every bundled
-// font (see shared/assets/fonts/SOURCE-*.txt) and a legal-compliance.md
-// §8.2/§11 entry. An OscillatorNode click needs none of that.
+// Synthesized, not sampled: a shipped audio asset would need the source/SHA-256/
+// license paperwork required for every bundled font (shared/assets/fonts/SOURCE-*.txt)
+// and a legal-compliance.md §8.2/§11 entry. An OscillatorNode click needs none.
 //
-// Owns an independent AudioContext connected straight to `destination` —
-// deliberately never wired into usePlayerAudioGraph.js's monitor/capture
-// graph, so a metronome click can never be picked up by the app's capture
-// (OBS sinkId) output, and never inherits player volume/mute/pitch
-// processing. The context is created lazily on first use (never at module
-// load, where Node/vitest has no AudioContext) and only from a user gesture
-// (the metronome's own start/toggle), satisfying autoplay policy.
+// Owns an independent AudioContext connected straight to `destination`, never to
+// usePlayerAudioGraph.js's monitor/capture graph, so clicks cannot reach the
+// capture (OBS sinkId) output or inherit player volume/mute/pitch. The context is
+// created lazily on a user gesture (the metronome's start/toggle): not at module
+// load (no AudioContext under Node/vitest), and to satisfy autoplay policy.
 export function createMetronomeClickEngine({
   AudioContextImpl = typeof AudioContext === 'function' ? AudioContext : null,
 } = {}) {

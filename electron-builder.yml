@@ -1,9 +1,8 @@
 # electron-builder config for Windows packaging.
 #
 # YAML, not electron-builder.config.js — electron/**/*.js in this repo is
-# CommonJS and src/**/*.js is ESM (see CLAUDE.md's Module system note); YAML
-# sidesteps the question of which convention a root-level *.config.js should
-# follow.
+# CommonJS and src/**/*.js is ESM; YAML sidesteps
+# the question of which convention a root-level *.config.js should follow.
 
 appId: com.utawakui.app
 # Must equal BASE_APP_USER_MODEL_ID in electron/main.js, or the Start Menu
@@ -60,8 +59,7 @@ files:
   - package.json
   # onnxruntime-node ships native binaries for every platform in one
   # tarball; only win32/x64 is used here (thumbar/SMTC/DirectML are all
-  # Windows-only features per CLAUDE.md), so the rest is dead weight in the
-  # installer.
+  # Windows-only features), so the rest is dead weight in the installer.
   - '!node_modules/onnxruntime-node/bin/napi-v6/darwin/**/*'
   - '!node_modules/onnxruntime-node/bin/napi-v6/linux/**/*'
   - '!node_modules/onnxruntime-node/bin/napi-v6/win32/arm64/**/*'

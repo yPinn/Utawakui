@@ -10,22 +10,17 @@ const {
 
 const SESSIONS_DIRNAME = 'obs-sessions';
 
-// Detects a track change from the renderer's own output projection (the
-// same stream outputRuntime.js already forwards to the Browser Source — see
-// its onProjectionChange option) and, only while OBS reports an active
-// stream/recording, asks obsAdapter.js for a fresh on-demand timecode at
-// that exact moment. No new IPC channel and no continuous OBS polling:
-// this is the "reacts to semantic boundaries" pull the whole adapter was
-// designed around (see obsAdapter.js's own header comment).
+// Detects a track change from the renderer's output projection (the stream
+// outputRuntime.js already forwards to the Browser Source) and, only while OBS
+// reports an active stream/recording, asks obsAdapter.js for an on-demand
+// timecode at that moment. No new IPC channel and no continuous OBS polling,
+// matching the adapter's "react to semantic boundaries" design.
 //
-// Session boundary (a deliberately simple first cut — see spec.md §7.1's
-// still-open "how is a session bounded" question): a session starts on the
-// first track recorded while at least one output is active, and ends
-// (in-memory) the next time a track change is observed with both outputs
-// inactive. A stream/recording stopping with no further track change in
-// between leaves the last-written file as the complete record, which is
-// the common case; it just means a stop that isn't followed by another
-// song doesn't get its own explicit "session closed" marker in the file.
+// Session boundary (a simple first cut; spec.md §7.1 leaves it open): a session
+// starts on the first track recorded while an output is active and ends
+// (in-memory) on the next track change with both outputs inactive. A stop with no
+// later track change leaves the last-written file as the complete record, without
+// an explicit "session closed" marker.
 function createSessionHistoryService({
   obsAdapter,
   userDataDir,

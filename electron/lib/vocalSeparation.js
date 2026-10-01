@@ -580,17 +580,15 @@ function writeWavAtomic(filePath, channels, sampleRate) {
   }
 }
 
-// Writes a single 4-channel <recipeId>.wav (0/1 accompaniment L/R, 2/3
-// vocals L/R — see electron/lib/library/constants.js's SEPARATIONS_DIRNAME
-// comment) into
-// outputDir, one file per preset so switching presets never has to
-// overwrite whichever file is currently open for playback. One file per
-// result, not two, so playback stays sample-accurate: two independently-
-// decoded files drifting out of sync produces audible comb filtering.
+// Writes one 4-channel <recipeId>.wav (0/1 accompaniment L/R, 2/3 vocals L/R; see
+// SEPARATIONS_DIRNAME in library/constants.js) into outputDir, one file per preset
+// so switching presets never overwrites the file open for playback. One file per
+// result, not two, keeps playback sample-accurate: two separately decoded files
+// drifting apart cause audible comb filtering.
 //
-// onProgress stages fire in pipeline order: loading-model (the ~50MB ONNX
-// session, built fresh every call from the Settings-prepared model file) ->
-// decoding -> separating (per-chunk) -> writing.
+// onProgress stages fire in pipeline order: loading-model (the ~50MB ONNX session,
+// built fresh each call from the Settings-prepared model) -> decoding ->
+// separating (per chunk) -> writing.
 async function separateTrack(
   inputPath,
   outputDir,

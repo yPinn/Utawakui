@@ -358,14 +358,11 @@ function startDrag(track, event) {
   startDragReorder(track, event);
 }
 
-// Fetching + the onLibraryUpdated subscription now live in useLibrary.js
-// (shared with useLyrics.js, not duplicated per view — see that module).
-// This re-fetch on every mount is still needed on top of that: listTracks()
-// enumerates the filesystem, which is how it picks up files the user
-// dropped into the library folder by hand — no library:updated event fires
-// for those, so without this, manually-added files wouldn't appear until
-// something else happened to trigger a refresh. refresh() doesn't reset
-// isLoading, so this doesn't flash "載入中" on every tab switch back here.
+// Fetching and the onLibraryUpdated subscription live in useLibrary.js (shared
+// with useLyrics.js). The re-fetch on every mount is still needed: listTracks()
+// enumerates the filesystem and so picks up files the user dropped into the
+// library folder by hand, for which no library:updated event fires. refresh()
+// does not reset isLoading, so tab switches do not flash "載入中".
 onMounted(async () => {
   const wasInitialized = libraryState.isInitialized;
   await initializeLibrary();

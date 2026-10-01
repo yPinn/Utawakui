@@ -7,16 +7,14 @@ import { shallowRef } from 'vue';
 // width twice before the dblclick action runs.
 const RESIZE_DRAG_ACTIVATION_DISTANCE = 4;
 
-// Generic pointer-drag-to-resize lifecycle, factored out of
-// useSidebarResize.js so a second resize handle (the Studio Library
-// Context Inspector) can reuse the same pointer plumbing without inheriting
-// the sidebar's specific "resist then snap to icon-only" width math — that
-// stays caller-owned via onMove, same split as UiStack/UiSurface (primitive
-// owns the mechanism, caller owns the semantics).
+// Generic pointer-drag-to-resize lifecycle, factored out of useSidebarResize.js
+// so another resize handle (the Studio Library Context Inspector) can reuse the
+// pointer plumbing without the sidebar's "resist then snap to icon-only" width
+// math, which stays caller-owned via onMove (the primitive owns the mechanism,
+// the caller owns the semantics, as with UiStack/UiSurface).
 //
-// Listeners attach to event.currentTarget (the handle itself, captured via
-// setPointerCapture) rather than window/document — matches the prior
-// sidebar-only implementation this replaces.
+// Listeners attach to event.currentTarget (the handle, via setPointerCapture)
+// rather than window/document, as the original sidebar-only code did.
 export function useResizeDrag({ onMove, onCommit, invert = false }) {
   const isResizing = shallowRef(false);
 

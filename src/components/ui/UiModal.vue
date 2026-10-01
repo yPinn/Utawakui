@@ -98,14 +98,11 @@ function onWindowKeydown(event) {
   }
 }
 
-// Autofocus the first focusable field on open — the caller's form fields
-// aren't known to this generic shell, so this targets whatever the slot
-// renders rather than a specific element. Deliberately excludes buttons
-// from this query (a plain fallback selector would match the header's own
-// close button, which sits first in DOM order ahead of any slot content —
-// autofocusing it would mean an Enter keypress right after opening closes
-// the modal and discards the draft, exactly the Enter-driven fragility this
-// modal exists to replace).
+// Autofocus the first focusable field on open. The generic shell does not know
+// the caller's fields, so it targets whatever the slot renders. Buttons are
+// deliberately excluded: a fallback selector would match the header's close
+// button (first in DOM order), and an Enter right after opening would close the
+// modal and discard the draft, the Enter-driven fragility this modal replaces.
 watch(
   () => props.open,
   (isOpen) => {

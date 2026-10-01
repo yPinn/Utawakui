@@ -220,14 +220,12 @@ function createAppUpdateService({
     });
   }
 
-  // Independent of electron-updater's own latest.yml/SHA-512 check (which
-  // stays fully intact and unmodified — see ADR 0007). This closes the
-  // specific residual risk ADR 0007 already documented: latest.yml and the
-  // installer are produced by the same publish credential, so SHA-512 alone
-  // can't tell a compromised publish from a legitimate one. A signature made
-  // with a key independent of that credential can. Fails closed: any
-  // fetch/parse/signature/version problem blocks the download rather than
-  // silently falling back to electron-updater's weaker guarantee alone.
+  // Independent of electron-updater's own latest.yml/SHA-512 check (unmodified;
+  // ADR 0007). It closes the residual risk ADR 0007 documents: latest.yml and the
+  // installer come from the same publish credential, so SHA-512 alone cannot tell a
+  // compromised publish from a legitimate one, while a signature from an independent
+  // key can. Fails closed: any fetch/parse/signature/version problem blocks the
+  // download instead of falling back to the weaker guarantee.
   async function verifyAvailableUpdateManifest(version) {
     if (!availableUpdateDescriptor?.ok) {
       return {

@@ -50,19 +50,14 @@ const offOptionLabel = computed(
 
 const isGuideOpen = shallowRef(false);
 
-// Virtual-cable devices sort first with their own icon/heading — that's
-// the one category this feature actually cares about, and name-matching
-// against VB-CABLE/VoiceMeeter's fixed product names is reliable (see
-// audioDeviceLabel.js). Everything else keeps a generic headphones icon:
-// enumerateDevices() never exposes Windows' real headphone-vs-speaker
-// classification (EndpointFormFactor doesn't cross the Web Audio API
-// boundary), so a genuine per-device icon split there isn't groundable —
-// don't fake one.
+// Virtual-cable devices sort first with their own icon/heading: that is the one
+// category this feature cares about, and VB-CABLE/VoiceMeeter names are reliable
+// to match (audioDeviceLabel.js). Everything else gets a generic icon, since
+// enumerateDevices() cannot tell headphones from speakers.
 //
-// groupDevicesByIdentity() runs first so the Default/Communications role
-// pseudo-devices collapse onto the one physical device they're aliasing
-// instead of drawing three near-identical rows — see its own comment for
-// why the merge key is the label, not deviceId.
+// groupDevicesByIdentity() runs first so the Default/Communications pseudo-devices
+// collapse onto the physical device they alias (merge key is the label, not
+// deviceId; see its comment).
 const deviceRows = computed(() => {
   const virtual = [];
   const other = [];

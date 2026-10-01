@@ -1,13 +1,9 @@
 <script setup>
-// The single "編輯詳細資料" entry point — replaces the old inline hero
-// rename-input and inline description-textarea, both of which relied
-// entirely on Enter/blur to confirm with no explicit save affordance. Name
-// and description are drafted locally and only committed on Save; a cover
-// change (choose/clear) still commits immediately on click, same as it did
-// inline, since that's already an async IPC round-trip independent of this
-// form's Save button. Album fields stay read-only here too — see
-// SetlistPlaylistHeader.vue's own comment for why (source-normalized
-// metadata, not user-authored).
+// The single "編輯詳細資料" entry point. Name and description are drafted locally
+// and committed only on Save, instead of relying on Enter/blur. A cover change
+// (choose/clear) still commits immediately, since it is an independent async IPC
+// round-trip. Album fields stay read-only here (source-normalized metadata, not
+// user-authored; see SetlistPlaylistHeader.vue).
 import { ref, watch } from 'vue';
 import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';

@@ -235,13 +235,11 @@ function findPlaylist(id) {
 }
 
 // Shared by addTrack/removeTrack/moveTrack: mutates the local array
-// synchronously (so the UI reflects the click immediately and a second
-// rapid click computes off the first click's result, not stale state),
-// then enqueues the actual persist + re-sync from the authoritative
-// response onto the `pending` chain. A no-op computeNext (returns the
-// same array reference back) skips both the local write and the IPC call
-// entirely — this is what makes addTrack on an existing member a true
-// no-op instead of a wasted round trip.
+// synchronously (the UI reflects the click at once and a rapid second click
+// computes from the first's result), then enqueues the persist and the re-sync
+// from the authoritative response on the `pending` chain. A no-op computeNext
+// (same array reference back) skips both the local write and the IPC call, so
+// addTrack on an existing member costs no round trip.
 function mutateTracks(playlistId, computeNext) {
   const playlist = findPlaylist(playlistId);
   if (!playlist) return Promise.resolve(false);

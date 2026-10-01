@@ -7,7 +7,7 @@ import { buildRomanizationDoc } from './lyricsReading.js';
 // one test in this repo that would catch a koroman version bump silently
 // changing its pronunciation-rule output. No network dependency (koroman
 // has zero runtime deps and does everything in-process), so this isn't
-// flaky. Generic vocabulary only, never real song lyrics — see CLAUDE.md.
+// flaky. Generic vocabulary only, never real song lyrics.
 describe('koroman integration', () => {
   it('applies real assimilation rules, not a naive per-syllable transliteration', () => {
     const doc = buildRomanizationDoc(['신라', '학문', '좋아요'], {

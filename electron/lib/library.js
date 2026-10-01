@@ -1,8 +1,8 @@
 'use strict';
 
 // Re-export-only barrel for electron/lib/library/ — no logic lives here.
-// See CLAUDE.md's Architecture section for the module map and dependency
-// direction. Do not add electron/lib/library/index.js: Node resolves
+// See docs/architecture.md for the module map and dependency direction.
+// Do not add electron/lib/library/index.js: Node resolves
 // require('./library') to this file first if both exist, which is exactly
 // the ambiguity that would create. Nothing under library/ may
 // require('../library') — that would create a load-time cycle back into

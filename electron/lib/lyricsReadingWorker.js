@@ -1,19 +1,13 @@
 'use strict';
 
-// Runs buildReadingDoc()/buildRomanizationDoc() off the main thread,
-// mirroring vocalSeparationWorker.js's shape exactly. Building the
-// kuromoji tokenizer loads its IPADIC dictionary (CPU/memory heavy,
-// ~1-3s) — this must never happen on the main process or at startup, same
-// reasoning as onnxruntime-node in vocalSeparationWorker.js.
+// Runs buildReadingDoc()/buildRomanizationDoc() off the main thread, mirroring
+// vocalSeparationWorker.js. Building the kuromoji tokenizer loads the IPADIC
+// dictionary (CPU/memory heavy, ~1-3s), which must never happen on the main
+// process or at startup.
 //
-// Messages are `type`-discriminated (not an `ok` boolean): zero+
-// 'progress', then one 'done'/'error'.
-//
-// Dispatches on `workerData.script` ('ja' | 'ko') before doing any
-// script-specific work — in particular, buildTokenizer() (the expensive
-// dictionary load) only ever runs for 'ja'. Korean has no dictionary to
-// load at all (see docs/adr/0004), so a 'ko' request must never pay that
-// cost.
+// Messages are `type`-discriminated: zero or more 'progress', then one
+// 'done'/'error'. Dispatches on `workerData.script` ('ja' | 'ko') first so the
+// dictionary load only happens for 'ja'; Korean needs none (docs/adr/0004).
 
 const { parentPort, workerData } = require('worker_threads');
 const kuromoji = require('kuromoji');

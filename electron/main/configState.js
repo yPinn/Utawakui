@@ -25,7 +25,7 @@ let lastWrittenLibraryPath = null;
 // JSON — UTF-16LE with no BOM/trailing newline is what NSIS's
 // FileReadUTF16LE reads directly, and survives CJK paths regardless of the
 // installer machine's ANSI codepage. Same machine-local, never-in-a-preset
-// status as config.json itself (see CLAUDE.md).
+// status as config.json itself.
 function writeLibraryPathSidecar(config) {
   const libraryDir = path.resolve(resolveConfiguredDownloadDir(config));
   if (libraryDir === lastWrittenLibraryPath) return;
@@ -37,8 +37,7 @@ function writeLibraryPathSidecar(config) {
 }
 
 function loadInitialConfig() {
-  // Machine-local settings only, never exported/shared — see CLAUDE.md's
-  // config.json convention.
+  // Machine-local settings only, never exported or shared.
   configPath = path.join(app.getPath('userData'), 'config.json');
   cachedConfig = loadConfig(configPath);
   writeLibraryPathSidecar(cachedConfig);

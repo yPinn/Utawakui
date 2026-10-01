@@ -265,20 +265,14 @@ function deleteTrackReading(trackDir, sourceFilename) {
   }
 }
 
-// Manual per-line correction. Branches on the doc's own stored `script`:
+// Manual per-line correction. Branches on the doc's stored `script`:
+// - 'ja': `readingValue` is a whole-line kana string; re-running alignOkurigana
+//   on the line text handles multi-kanji-run lines, so automatic generation and
+//   manual correction share one segment-construction path.
+// - otherwise (Korean): there is no ruby step, so `readingValue` is the corrected
+//   romaji itself and segments stay the single plain `{ t: line.text }`.
 //
-// - 'ja': `readingValue` is a whole-line kana string (not per-segment) —
-//   re-running alignOkurigana against the line's own text generalizes
-//   correctly to multi-kanji-run lines (see lyricsReading.js's right-to-left
-//   matching), so there's only one segment-construction path for both
-//   automatic generation and manual correction.
-// - anything else (Korean, per Stage 5c): there's no kana-to-ruby step to
-//   redo — 한글 lyrics never produce ruby segments — so `readingValue` IS
-//   the corrected romaji string directly, and segments stay the same
-//   single plain `{ t: line.text }` buildRomanizationDoc always produces.
-//
-// Returns the updated doc, or null if there's no existing doc / the line
-// index is out of range.
+// Returns the updated doc, or null if there is no doc or the index is out of range.
 function setReadingLine(
   trackDir,
   sourceFilename,

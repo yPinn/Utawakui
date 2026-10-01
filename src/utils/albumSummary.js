@@ -1,11 +1,9 @@
 // Derives album-level display fields (artist, releaseYear) from an album
-// collection's member tracks — not stored separately (see CLAUDE.md's
-// library.json bullet: it's scalar-text-only, and duplicating this would
-// be a second, driftable source of truth). Picks the most common non-empty
-// value among members rather than requiring unanimity: verified against a
-// real library where one album's tracks split 6/11 vs. scattered
-// alternate-credit artist strings, and the majority value is still the
-// right one to show.
+// collection's member tracks. Not stored separately: library.json is
+// scalar-only, and a copy would be a second, driftable source of truth.
+// Picks the most common non-empty value rather than requiring unanimity: in a
+// real library one album's tracks split 6/11 across alternate-credit artist
+// strings, and the majority value was still the right one to show.
 function pickMostCommon(values) {
   const counts = new Map();
   for (const value of values) {

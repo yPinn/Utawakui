@@ -44,14 +44,11 @@ const isObsRecording = computed(
   () => isObsConnected.value && obsState.observed.recording.active,
 );
 
-// Local wall-clock extrapolation from OBS's own outputDuration reading, not
-// a re-poll of OBS — see useElapsedClock.js. obsAdapter.js only refreshes
-// the source value at a connect or an on-demand snapshot (never a ticking
-// poll, per integration-adapter-contract.md's "reacts to semantic
-// boundaries" principle); this interpolates smoothly between those points
-// instead of visibly freezing. Called once here, not inside a computed —
-// useElapsedClock is itself a composable (onMounted/onUnmounted/watch) and
-// must run exactly once at setup, same as any other composable call.
+// Local clock extrapolated from OBS's outputDuration reading rather than
+// re-polling OBS (see useElapsedClock.js; obsAdapter.js refreshes the value only
+// on connect or on-demand snapshot). Called once here, not inside a computed:
+// useElapsedClock is a composable (onMounted/onUnmounted/watch) and must run
+// exactly once at setup.
 const liveElapsedMs = useElapsedClock(() =>
   isObsLive.value ? obsState.observed.streaming.durationMs : null,
 );
@@ -93,21 +90,14 @@ function formatResourcePercent(value) {
 // system-wide 60/80 thresholds this used to share.
 const CPU_WARNING_PERCENT = 25;
 const CPU_DANGER_PERCENT = 50;
-// RAM stays a percent-of-total (not an absolute MB figure) on purpose: the
-// same footprint matters more on a smaller machine, and that's exactly the
-// headroom question this row exists to answer. Calibrated against 16GB as
-// the representative consumer tier (8GB is enough of an edge case now that
-// it isn't worth designing the thresholds around): idle overhead (Electron's
-// browser/renderer/GPU processes with nothing else running) is roughly 2% of
-// 16GB, comfortably under warning; an active vocal-separation job pulling
-// roughly 2GB (model + audio buffers on top of the Electron baseline) is
-// ~12.5% of 16GB — past warning, under danger, which is the right read since
-// a single heavy job still leaves real headroom on 16GB. Danger is reserved
-// for something past a normal heavy job (e.g. a leak, or piling multiple
-// heavy jobs at once). These same numbers still behave sanely on 8GB (idle
-// stays under warning, one heavy job now crosses into danger, which is
-// accurate — 8GB has real paging risk at that point) without being the
-// machine they were tuned for.
+// RAM stays a percent of total (not absolute MB) on purpose: the same footprint
+// matters more on a smaller machine, which is the headroom question this row
+// answers. Calibrated on 16GB as the representative tier: idle Electron overhead
+// is ~2% (under warning); an active vocal-separation job (~2GB) is ~12.5%, past
+// warning but under danger because one heavy job still leaves real headroom.
+// Danger is for beyond a normal heavy job (a leak, several heavy jobs at once).
+// On 8GB the same numbers still hold: idle stays calm, one heavy job reaches
+// danger, which matches the real paging risk.
 const RAM_WARNING_PERCENT = 8;
 const RAM_DANGER_PERCENT = 16;
 function resourceToneClass(value, warningPercent, dangerPercent) {

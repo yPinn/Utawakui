@@ -45,22 +45,16 @@ function chapterLabel(entry) {
   return entry.artist ? `${entry.title} - ${entry.artist}` : entry.title;
 }
 
-// entries: sessionHistoryService.js's session.entries (track + marker
-// entries mixed). source: 'stream' | 'record' — which output's timecode to
-// project; entries missing that output (never active, or a failed
-// snapshot) are silently dropped, not shown as broken rows. offsetMs
-// corrects for a VOD's own start point differing from OBS's raw output
-// duration (e.g. stream setup time trimmed off before upload) — subtracted
-// from every timestamp, never rewriting the stored entries.
+// entries: session.entries from sessionHistoryService.js (track + marker
+// entries). source: 'stream' | 'record' selects which output's timecode to
+// project; entries lacking it are dropped, not shown as broken rows. offsetMs
+// shifts every timestamp when the VOD start differs from OBS's output start;
+// stored entries are never rewritten.
 //
-// Deliberately does NOT force the first chapter's displayed time to 0:00 —
-// if the real first song starts a few minutes into the video (e.g. after
-// pre-stream chat), silently relabeling it "0:00" would just be a wrong
-// timestamp. When the first entry isn't already at 0 (because offsetMs was
-// set precisely, or an entry genuinely sits there), this surfaces a
-// first-chapter-not-zero issue instead — the fix is a real 0:00 marker
-// (see sessionHistoryService.js's addMarker(), wired to the same session)
-// or a corrected offset, not a silent rewrite.
+// Deliberately does NOT force the first chapter to 0:00: relabeling a song that
+// really starts minutes in would be a wrong timestamp. A non-zero first chapter
+// surfaces an issue instead; fix it with a real 0:00 marker (addMarker() in
+// sessionHistoryService.js) or a corrected offset.
 export function projectYoutubeChapters(
   entries,
   { offsetMs = 0, source = 'stream' } = {},

@@ -30,22 +30,16 @@ const {
   manifestHasSelectedResult,
 } = require('./separationManifest');
 
-// Manual, repeatable counterpart to migrateTrackAlbumMetadata (metadataIndex.js)
-// — not version-gated, so it can run again any time a user asks (e.g. after
-// yt:download-audio wrote a track without album/releaseYear, a bug fixed
-// separately). Walks the filesystem-truth track list (listTrackRecords),
-// not just existing index entries, so it also covers ids library.json has
-// never seen. Never does a network refetch: readTrackInfo only reads the
-// info.json already on disk, so a track with no sidecar or a sidecar that
-// genuinely lacks album/year is left untouched.
+// Manual, repeatable counterpart to migrateTrackAlbumMetadata (metadataIndex.js);
+// not version-gated, so it can rerun any time (e.g. after yt:download-audio wrote
+// a track without album/releaseYear). Walks listTrackRecords (filesystem truth),
+// so it also covers ids library.json has never seen. No network refetch:
+// readTrackInfo only reads the info.json already on disk.
 //
-// Only ever assigns the two fields it exists to fix, onto a copy of the
-// existing entry — never spreads readTrackInfo's whole return value. That
-// return value always carries title/artist/duration keys (undefined when
-// absent) plus an optional thumbnailUrl; a blind spread would blank out
-// already-good title/artist/duration whenever a sidecar happens to lack
-// them, and would write thumbnailUrl into library.json, which CLAUDE.md's
-// library.json section reserves for scalar text/number fields only.
+// Assigns only the two fields it fixes, onto a copy of the existing entry. A
+// blind spread of readTrackInfo's result would blank good title/artist/duration
+// when a sidecar lacks them and write thumbnailUrl into library.json, which
+// AGENTS.md reserves for scalar metadata.
 function refreshTrackMetadataFromSidecars(dir, readTrackInfo) {
   const index = loadIndex(dir);
   let updatedCount = 0;

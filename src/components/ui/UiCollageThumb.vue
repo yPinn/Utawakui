@@ -1,13 +1,10 @@
 <script setup>
-// Collection cover: a set coverUrl always wins. Otherwise, playlists tile
-// up to 4 member tracks into a 2x2 collage — but albums never do (one
-// release, one cover; see canCollage below), falling back to a single
-// full-size image of the first track instead. This is the single shared
-// source of truth for "what does this playlist/album look like" —
-// SetlistPlaylistHeader.vue (136px hero) and PlaylistSidebarRow.vue (40px
-// nav row) both render through this component instead of each computing
-// their own version, which is exactly how they drifted apart before (hero
-// showed a 4-track collage, sidebar showed only the first track).
+// Collection cover: a set coverUrl always wins. Otherwise playlists tile up to 4
+// member tracks into a 2x2 collage, but albums never do (one release, one cover;
+// see canCollage below) and show the first track full-size. The single source of
+// truth for how a playlist/album looks: SetlistPlaylistHeader.vue (136px hero)
+// and PlaylistSidebarRow.vue (40px row) both render through it, since separate
+// implementations had drifted apart.
 import { computed } from 'vue';
 import { Music2 } from '../../icons/index.js';
 import { getTrackInitial } from '../../utils/trackDisplay.js';

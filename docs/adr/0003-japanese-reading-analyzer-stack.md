@@ -50,8 +50,7 @@ Rejected `kuroshiro`:
 - Its furigana mode returns an **HTML string**
   (`<ruby>漢字<rp>(</rp><rt>かんじ</rt><rp>)</rp></ruby>`), but this codebase
   renders ruby exclusively via literal `<ruby>`/`<rt>` elements and never
-  uses `v-html` (see CLAUDE.md's CSS/component conventions — the same
-  "never inject markup as a string" posture applies here). Using kuroshiro
+  uses `v-html`, so injecting markup as a string would break that pattern. Using kuroshiro
   would mean re-parsing its HTML output back into structured
   `{ text, reading }` segments — strictly more code than aligning the
   kuromoji token directly, for a worse starting shape.

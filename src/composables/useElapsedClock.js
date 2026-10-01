@@ -1,13 +1,12 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue';
 
-// Extrapolates a periodically-refreshed duration reading (e.g. OBS's own
-// outputDuration, captured at connect time or a later on-demand snapshot —
-// see obsAdapter.js) into a smoothly ticking local clock. One local
-// setInterval, pure arithmetic — this never re-requests the source value.
-// The source only ever advances when a real snapshot arrives (matching
-// integration-adapter-contract.md's "reacts to semantic boundaries, not a
-// generic clock flood" principle); this composable only interpolates
-// between those points so a titlebar/UI clock doesn't visibly freeze.
+// Extrapolates a periodically refreshed duration reading (e.g. OBS's
+// outputDuration from a connect-time or on-demand snapshot, see obsAdapter.js)
+// into a smoothly ticking local clock: one setInterval, pure arithmetic, never
+// re-requesting the source. The source advances only when a real snapshot arrives
+// (integration-adapter-contract.md: "reacts to semantic boundaries, not a generic
+// clock flood"); this only interpolates between snapshots so the UI clock does
+// not freeze.
 export function useElapsedClock(
   durationMsSource,
   { tickMs = 1000, now = () => Date.now() } = {},

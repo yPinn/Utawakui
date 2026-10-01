@@ -61,15 +61,12 @@ function measure() {
 onMounted(() => {
   if (typeof ResizeObserver === 'function') {
     resizeObserver = new ResizeObserver(measure);
-    // Only the root, not the text span: text's own rendered size changes
-    // *as a result of* isOverflowing toggling (.ui-marquee--overflow flips
-    // its max-width/padding), so observing it too turns this into a
-    // feedback loop — measure() flips isOverflowing on, which resizes the
-    // text, which the observer reports back as a resize, which flips it
-    // off again, forever, faster than the animation's 0.8s start delay
-    // ever completes. The text's only two legitimate size inputs (content
-    // change, font swap) are already covered by the displayText watcher
-    // below and the document.fonts.ready hook.
+    // Observe only the root, not the text span: the text's size changes *because*
+    // isOverflowing toggles (.ui-marquee--overflow flips its max-width/padding), so
+    // observing it would loop (measure() sets overflow, the resize re-fires, it
+    // flips back off) faster than the 0.8s start delay completes. The text's real
+    // size inputs (content change, font swap) are covered by the displayText watcher
+    // below and document.fonts.ready.
     if (rootRef.value) resizeObserver.observe(rootRef.value);
   }
   measure();

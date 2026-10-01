@@ -309,14 +309,11 @@ export function usePlayerAudioGraph({ audio, state, reportPlayerError }) {
     capturePitchProcessingError = null;
   }
 
-  // Signalsmith Stretch caches its AudioWorklet module-registration promise
-  // directly on the AudioContext object, and never clears it on failure —
-  // unlike the SoundTouchNode registration this replaced, a rejection here
-  // is permanent for this AudioContext's lifetime; re-attempting against the
-  // same audioCtx will keep re-throwing the same error (confirmed by reading
-  // the library source, not assumed). See ADR 0019 for why this is accepted
-  // rather than worked around: the main graph's audioCtx is created once per
-  // app session, so this mainly matters for capture (below), where recovery
+  // Signalsmith Stretch caches its AudioWorklet registration promise on the
+  // AudioContext and never clears it on failure, so a rejection is permanent for
+  // that AudioContext's lifetime (confirmed in the library source). ADR 0019
+  // accepts this rather than working around it: the main graph's audioCtx is
+  // created once per session, so it mainly affects capture (below), where recovery
   // means reselecting the output device to get a fresh AudioContext.
   async function ensurePitchNode() {
     if (!ensureMonitorGraph()) return null;

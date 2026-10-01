@@ -31,21 +31,17 @@ const {
   enforceLibraryStoragePolicySafely,
 } = require('./libraryStorageHandlers');
 
-// error.stderr never survives ipcMain.handle's serialization, so
-// classification has to happen here. Only the sentinel code crosses the
-// boundary — the raw text may contain local file paths, so it's logged
-// here and never forwarded (same discipline as vocalSeparation.js).
+// error.stderr does not survive ipcMain.handle serialization, so classification
+// happens here. Only the sentinel code crosses the boundary; the raw text may
+// contain local paths, so it is logged here and never forwarded (same as
+// vocalSeparation.js).
 //
-// This intentionally does NOT go through runDiagnosticIpcOperation /
-// createAppError: the classified DOWNLOAD_FAILURE_PREFIX sentinel is a
-// separate, pre-existing cross-runtime contract (shared/
-// downloadFailureValues.json) the renderer already parses for a richer
-// age-restricted/region-restricted/members-only UI. Swapping in a generic
-// AppError here would silently break that UI. Recording still happens —
-// recordSearchDiagnostic (used by the sibling classifyingProviderSearchFailures
-// path below) is reused here too — but the classified error keeps flowing to
-// the renderer completely unchanged. See docs/adr/ and
-// docs/operations/diagnostics-rollout.md's Batch 6 note on this decision.
+// Intentionally bypasses runDiagnosticIpcOperation/createAppError: the
+// DOWNLOAD_FAILURE_PREFIX sentinel is a cross-runtime contract
+// (shared/downloadFailureValues.json) the renderer parses for its
+// age/region/members-only UI, and a generic AppError would break it. Diagnostics
+// are still recorded via recordSearchDiagnostic. See
+// docs/operations/diagnostics-rollout.md (Batch 6).
 async function classifyingFailures(run, { recordDiagnostic } = {}) {
   try {
     return await run();
