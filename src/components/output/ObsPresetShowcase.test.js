@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
 
 const componentSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateGallery.vue', import.meta.url)),
@@ -26,10 +27,7 @@ const widgetCapturePreviewSource = readFileSync(
   fileURLToPath(new URL('./ObsWidgetCapturePreview.vue', import.meta.url)),
   'utf8',
 );
-const mockupSource = readFileSync(
-  fileURLToPath(new URL('./ObsTemplateMockup.vue', import.meta.url)),
-  'utf8',
-);
+const mockupSource = readObsTemplateMockupSource();
 const thumbnailSource = readFileSync(
   fileURLToPath(new URL('./ObsTemplateThumbnail.vue', import.meta.url)),
   'utf8',

@@ -3,15 +3,13 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
 
 describe('Ornate Vertical gallery mockup', () => {
   it('keeps the parent mockup as a composition surface', () => {
-    const source = fs.readFileSync(
-      path.join(directory, 'ObsTemplateMockup.vue'),
-      'utf8',
-    );
+    const source = readObsTemplateMockupSource();
 
     expect(source).toContain(
       "import OrnateVerticalPreview from './OrnateVerticalPreview.vue';",
@@ -73,10 +71,7 @@ describe('Ornate Vertical gallery mockup', () => {
   });
 
   it('bounds the ornate child to the preview canvas instead of intrinsic text height', () => {
-    const source = fs.readFileSync(
-      path.join(directory, 'ObsTemplateMockup.vue'),
-      'utf8',
-    );
+    const source = readObsTemplateMockupSource();
 
     expect(source).toMatch(
       /data-template-id='ornate-vertical'[\s\S]*?\.obs-template-mockup__content--lyrics\s*\{[^}]*position:\s*relative;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/,

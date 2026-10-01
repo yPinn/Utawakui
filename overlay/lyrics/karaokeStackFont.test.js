@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from '../../src/components/output/obsTemplateMockupSource.mjs';
 
 const lyricsDirectory = path.dirname(fileURLToPath(import.meta.url));
 const rootDirectory = path.resolve(lyricsDirectory, '..', '..');
@@ -37,16 +38,7 @@ describe('Classic KTV bundled typeface contract', () => {
       path.join(lyricsDirectory, 'index.html'),
       'utf8',
     );
-    const mockup = fs.readFileSync(
-      path.join(
-        rootDirectory,
-        'src',
-        'components',
-        'output',
-        'ObsTemplateMockup.vue',
-      ),
-      'utf8',
-    );
+    const mockup = readObsTemplateMockupSource();
     const notices = fs.readFileSync(
       path.join(rootDirectory, 'THIRD_PARTY_NOTICES.md'),
       'utf8',

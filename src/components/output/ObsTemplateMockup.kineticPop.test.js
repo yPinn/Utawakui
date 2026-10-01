@@ -1,16 +1,9 @@
-import fs from 'node:fs';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
-
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
 
 describe('Kinetic Pop gallery mockup', () => {
   it('previews the default second material in one animated lyric stage', () => {
-    const directory = path.dirname(fileURLToPath(import.meta.url));
-    const source = fs.readFileSync(
-      path.join(directory, 'ObsTemplateMockup.vue'),
-      'utf8',
-    );
+    const source = readObsTemplateMockupSource();
 
     const kineticMarkup = source.match(
       /<template v-else-if="preset\?\.id === 'kinetic-pop'">([\s\S]*?)<\/template>/,
@@ -95,11 +88,7 @@ describe('Kinetic Pop gallery mockup', () => {
   });
 
   it('centers the lyric row against the complete gallery stage', () => {
-    const directory = path.dirname(fileURLToPath(import.meta.url));
-    const source = fs.readFileSync(
-      path.join(directory, 'ObsTemplateMockup.vue'),
-      'utf8',
-    );
+    const source = readObsTemplateMockupSource();
     const stageRule = source.match(
       /\.obs-template-mockup__kinetic-stage\s*{([^}]*)}/,
     )?.[1];

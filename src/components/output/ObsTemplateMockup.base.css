@@ -1,0 +1,101 @@
+@font-face {
+  font-family: 'Utawakui Open Huninn';
+  src: url('../../../shared/assets/fonts/jf-open-huninn-2.1.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: 'Utawakui M PLUS Rounded 1c';
+  src: url('../../../shared/assets/fonts/MPLUSRounded1c-ExtraBold.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 800;
+}
+
+@font-face {
+  font-family: 'Utawakui Keifont';
+  src: url('../../../shared/assets/fonts/Keifont.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 900;
+}
+
+@font-face {
+  font-family: 'Utawakui GenEi Antique';
+  src: url('../../../shared/assets/fonts/GenEiAntiqueNv6-M.ttf')
+    format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 500;
+}
+
+.obs-template-mockup {
+  --obs-preview-bg: var(--ui-output-preview-canvas);
+  --obs-preview-surface: var(--ui-output-preview-surface);
+  --obs-preview-ink: var(--ui-output-preview-text);
+  --obs-preview-muted: var(--ui-output-preview-text-muted);
+  --obs-preview-accent: var(--ui-output-preview-accent);
+
+  width: 100%;
+  aspect-ratio: var(--ui-output-preview-aspect-ratio);
+  min-width: 0;
+  overflow: hidden;
+  display: grid;
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-sm);
+  background: var(--obs-preview-bg);
+  color: var(--obs-preview-ink);
+  contain: layout paint;
+}
+
+.obs-template-mockup[data-size='detail'] {
+  max-inline-size: var(--ui-output-gallery-preview-max-width);
+  justify-self: center;
+}
+
+.obs-template-mockup[data-tone='stage'] {
+  --obs-preview-bg: var(--ui-output-preview-stage-canvas);
+  --obs-preview-accent: var(--ui-output-preview-stage-accent);
+}
+
+.obs-template-mockup[data-template-id='karaoke-stack'] {
+  --obs-preview-bg: var(--ui-output-preview-ktv-canvas);
+}
+
+.obs-template-mockup[data-template-id='kinetic-pop'] {
+  --obs-preview-bg: var(--ui-output-preview-canvas);
+}
+
+.obs-template-mockup[data-tone='lyrics'] {
+  --obs-preview-bg: var(--ui-output-preview-lyrics-canvas);
+  --obs-preview-surface: var(--ui-output-preview-lyrics-surface);
+}
+
+.obs-template-mockup[data-template-id='reading-aid'] {
+  --obs-preview-bg: var(--ui-output-preview-reading-canvas);
+  --obs-preview-accent: var(--ui-output-preview-reading-accent);
+}
+
+.obs-template-mockup[data-tone='manga'] {
+  --obs-preview-bg: var(--ui-output-preview-manga-canvas);
+  --obs-preview-ink: var(--ui-output-preview-manga-ink);
+  --obs-preview-muted: var(--ui-output-preview-manga-ink);
+}
+
+.obs-template-mockup__content {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-3);
+  text-align: left;
+}
+
+.obs-template-mockup__content--now-playing {
+  grid-template-columns: repeat(10, minmax(0, 1fr));
+  align-items: center;
+  gap: 0;
+}

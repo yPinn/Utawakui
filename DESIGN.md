@@ -564,6 +564,15 @@ Add new global CSS files only when the purpose is real and shared. Likely future
 
 Component-specific styling stays inside Vue SFC `<style scoped>` blocks unless it becomes a reusable primitive or global rule.
 
+A component whose CSS outgrows its SFC may split it into sibling files imported with `<style scoped src="./Name.part.css">`, as `ObsTemplateMockup.vue` does. Keep the files beside the SFC (relative `url()` paths stay valid) and follow these rules:
+
+- Each file owns one template's BEM prefix (`obs-template-mockup__<template>-*`), plus a `base` file for classes shared by every template.
+- A rule that targets another template's class uses `[data-template-id]` and lives in the file that owns the template being styled.
+- Order is the cascade: files import in the order of the original stylesheet. `thumbnail` (size variant), `keyframes` and `reduced-motion` come last, in that order.
+- `@keyframes` go in an unscoped `<style src>` block with component-unique names. Vue only renames an `animation` reference when its keyframes sit in the same scoped block, so split scoped keyframes silently stop animating.
+- Prove a CSS-only split by comparing compiled output before and after (normalize `data-v-*`). Source-contract tests read the combined text through `readObsTemplateMockupSource()`.
+- Do not add a shared mixin or utility layer for template CSS. Measured duplication is about 5% of rules (6 repeated blocks); prefer CSS custom properties if template size variants are ever consolidated.
+
 ### Token Namespace Contract
 
 CSS token namespaces are surface-specific. Do not share one token namespace across the Electron control panel and OBS overlay.

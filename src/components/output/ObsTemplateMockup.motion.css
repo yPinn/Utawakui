@@ -1,0 +1,38 @@
+.obs-template-mockup__progress {
+  height: var(--ui-space-1);
+  overflow: hidden;
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-output-preview-surface-muted);
+}
+
+.obs-template-mockup__progress-fill {
+  width: 62%;
+  height: 100%;
+  display: block;
+  border-radius: inherit;
+  background: var(--obs-preview-accent);
+  transform-origin: left;
+}
+
+.obs-template-mockup[data-motion='playing']
+  .obs-template-mockup__animated-primary {
+  animation: obs-preview-line-cycle var(--ui-output-preview-cycle-duration)
+    var(--ui-output-preview-cycle-ease) infinite;
+}
+
+.obs-template-mockup[data-motion='playing']
+  .obs-template-mockup__progress-fill {
+  animation: obs-preview-progress-cycle var(--ui-output-preview-cycle-duration)
+    linear infinite;
+}
+
+.obs-template-mockup[data-motion='playing']
+  .obs-template-mockup__ktv-line-fill {
+  animation: obs-preview-ktv-fill var(--ui-output-preview-cycle-duration) linear
+    infinite;
+}
+
+.obs-template-mockup[data-motion='playing'] .obs-template-mockup__ktv-count-in {
+  animation: obs-preview-ktv-count-in var(--ui-output-preview-cycle-duration)
+    step-end infinite;
+}

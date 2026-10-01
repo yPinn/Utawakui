@@ -1,11 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
 
-const mockupSource = readFileSync(
-  fileURLToPath(new URL('./ObsTemplateMockup.vue', import.meta.url)),
-  'utf8',
-);
+const mockupSource = readObsTemplateMockupSource();
 const templateRegistrySource = readFileSync(
   fileURLToPath(new URL('../../constants/outputTemplates.js', import.meta.url)),
   'utf8',

@@ -1,12 +1,7 @@
-import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
-
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
 
-const source = readFileSync(
-  fileURLToPath(new URL('./ObsTemplateMockup.vue', import.meta.url)),
-  'utf8',
-);
+const source = readObsTemplateMockupSource();
 
 describe('Classic KTV gallery mockup', () => {
   it('replaces the old panel and progress bar with two outlined lyric lanes', () => {

@@ -1,10 +1,7 @@
-import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from './obsTemplateMockupSource.mjs';
 
-const source = readFileSync(
-  new URL('./ObsTemplateMockup.vue', import.meta.url),
-  'utf8',
-);
+const source = readObsTemplateMockupSource();
 
 describe('Setlist template mockup', () => {
   it('orders current song before completed history as distinct regions', () => {

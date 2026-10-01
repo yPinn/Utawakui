@@ -1,0 +1,120 @@
+@keyframes obs-preview-vinyl-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@keyframes obs-template-setlist-scroll {
+  0%,
+  10% {
+    transform: translateY(0);
+  }
+
+  90%,
+  100% {
+    transform: translateY(calc(-1 * var(--ui-setlist-scroll-distance, 0px)));
+  }
+}
+
+@keyframes obs-preview-kinetic-unit-cycle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: translate(
+        var(--kinetic-preview-enter-x),
+        var(--kinetic-preview-enter-y)
+      )
+      scale(var(--kinetic-preview-enter-scale))
+      rotate(var(--kinetic-preview-enter-rotation));
+  }
+
+  2.6% {
+    opacity: 1;
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(1.07) rotate(var(--kinetic-rest-rotation));
+  }
+
+  4.2%,
+  78%,
+  90% {
+    opacity: 1;
+    transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+      scale(var(--kinetic-rest-scale)) rotate(var(--kinetic-rest-rotation));
+  }
+
+  93%,
+  99% {
+    opacity: 0;
+    transform: translate(0, var(--kinetic-preview-exit-y))
+      scale(var(--kinetic-preview-exit-scale))
+      rotate(var(--kinetic-preview-exit-rotation));
+  }
+}
+
+@keyframes obs-preview-line-cycle {
+  0%,
+  12% {
+    opacity: 0.45;
+    transform: translateY(var(--ui-space-1));
+  }
+
+  24%,
+  76% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  90%,
+  100% {
+    opacity: 0.72;
+    transform: translateY(calc(var(--ui-space-1) / -2));
+  }
+}
+
+@keyframes obs-preview-progress-cycle {
+  0%,
+  12% {
+    transform: scaleX(0.08);
+  }
+
+  76%,
+  100% {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes obs-preview-ktv-fill {
+  0%,
+  12% {
+    clip-path: inset(-0.2em 92% -0.2em 0);
+  }
+
+  76%,
+  100% {
+    clip-path: inset(-0.2em 0 -0.2em 0);
+  }
+}
+
+@keyframes obs-preview-ktv-count-in {
+  0%,
+  10% {
+    clip-path: inset(0 0 0 0);
+  }
+
+  20% {
+    clip-path: inset(0 25% 0 0);
+  }
+
+  30% {
+    clip-path: inset(0 50% 0 0);
+  }
+
+  40% {
+    clip-path: inset(0 75% 0 0);
+  }
+
+  50%,
+  100% {
+    clip-path: inset(0 100% 0 0);
+  }
+}

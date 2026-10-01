@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from '../../src/components/output/obsTemplateMockupSource.mjs';
 
 const publicMarkup = readFileSync(
   fileURLToPath(new URL('./index.html', import.meta.url)),
@@ -10,15 +11,7 @@ const publicStyles = readFileSync(
   fileURLToPath(new URL('./artwork.css', import.meta.url)),
   'utf8',
 );
-const workbenchSource = readFileSync(
-  fileURLToPath(
-    new URL(
-      '../../src/components/output/ObsTemplateMockup.vue',
-      import.meta.url,
-    ),
-  ),
-  'utf8',
-);
+const workbenchSource = readObsTemplateMockupSource();
 
 const publicParts = [
   'tonearm-pivot-edge',

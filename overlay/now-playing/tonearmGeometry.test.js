@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readObsTemplateMockupSource } from '../../src/components/output/obsTemplateMockupSource.mjs';
 
 const publicHtml = readFileSync(
   new URL('./index.html', import.meta.url),
@@ -9,10 +10,7 @@ const publicStyles = readFileSync(
   new URL('./artwork.css', import.meta.url),
   'utf8',
 );
-const workbenchSource = readFileSync(
-  new URL('../../src/components/output/ObsTemplateMockup.vue', import.meta.url),
-  'utf8',
-);
+const workbenchSource = readObsTemplateMockupSource();
 
 const CONTACT_TOLERANCE = 0.005;
 

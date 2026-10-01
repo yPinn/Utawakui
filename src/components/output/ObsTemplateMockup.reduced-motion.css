@@ -1,0 +1,22 @@
+@media (prefers-reduced-motion: reduce) {
+  .obs-template-mockup__setlist-history-viewport[data-history-overflow='true'][data-history-motion='running']
+    .obs-template-mockup__setlist-history-list,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__animated-primary,
+  .obs-template-mockup__vinyl-record,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__ktv-line-fill,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__ktv-count-in,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__progress-fill,
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__kinetic-unit {
+    animation: none;
+  }
+
+  .obs-template-mockup[data-motion='playing']
+    .obs-template-mockup__kinetic-line {
+    opacity: 1;
+  }
+}

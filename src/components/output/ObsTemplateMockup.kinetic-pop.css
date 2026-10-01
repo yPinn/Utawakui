@@ -1,0 +1,139 @@
+.obs-template-mockup__kinetic-stage {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  min-width: 0;
+  font-family:
+    'Utawakui M PLUS Rounded 1c', 'M PLUS Rounded 1c', 'Noto Sans CJK JP',
+    sans-serif;
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  text-align: center;
+}
+
+.obs-template-mockup__kinetic-line {
+  position: relative;
+  grid-area: 1 / 1;
+  display: grid;
+  justify-items: center;
+  inline-size: 100%;
+  row-gap: 0.02em;
+  color: var(--ui-output-preview-kinetic-yellow);
+  line-height: 0.96;
+  opacity: 1;
+}
+
+.obs-template-mockup__kinetic-row {
+  display: flex;
+  justify-content: center;
+  inline-size: 100%;
+  white-space: nowrap;
+}
+
+.obs-template-mockup__kinetic-unit {
+  --kinetic-preview-enter-x: 0;
+  --kinetic-preview-enter-y: 0.22em;
+  --kinetic-preview-enter-rotation: -5deg;
+  --kinetic-preview-enter-scale: 0.78;
+  --kinetic-preview-exit-y: -0.14em;
+  --kinetic-preview-exit-rotation: 5deg;
+  --kinetic-preview-exit-scale: 1.08;
+
+  display: inline-block;
+  color: inherit;
+  paint-order: stroke fill;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-arrangement='subtle-offset']
+  .obs-template-mockup__kinetic-unit {
+  transform: translate(var(--kinetic-rest-x), var(--kinetic-rest-y))
+    scale(var(--kinetic-rest-scale)) rotate(var(--kinetic-rest-rotation));
+}
+
+.obs-template-mockup__kinetic-unit:nth-child(even) {
+  --kinetic-preview-enter-x: 0;
+  --kinetic-preview-enter-y: -0.18em;
+  --kinetic-preview-enter-rotation: 5deg;
+  --kinetic-preview-enter-scale: 1.14;
+  --kinetic-preview-exit-y: 0.12em;
+  --kinetic-preview-exit-rotation: -5deg;
+  --kinetic-preview-exit-scale: 0.9;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='solid-outline']
+  .obs-template-mockup__kinetic-unit {
+  color: var(--ui-output-preview-kinetic-yellow);
+  -webkit-text-stroke: 0.085em var(--ui-output-preview-kinetic-ink);
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim'] {
+  font-family:
+    'Utawakui Keifont', 'Utawakui M PLUS Rounded 1c', 'Noto Sans CJK JP',
+    sans-serif;
+  font-size: 1.18em;
+  font-weight: 900;
+  line-height: 1.12;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit {
+  position: relative;
+  isolation: isolate;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0;
+  text-shadow: none;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::before,
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::after {
+  position: absolute;
+  inset: 0;
+  display: block;
+  content: attr(data-text);
+  pointer-events: none;
+  white-space: pre;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::before {
+  z-index: 0;
+  color: var(--ui-output-preview-kinetic-paper);
+  -webkit-text-fill-color: var(--ui-output-preview-kinetic-paper);
+  -webkit-text-stroke: 0.03em var(--ui-output-preview-kinetic-paper);
+  paint-order: fill stroke;
+  text-shadow: 0.07em 0.09em 0 var(--ui-output-preview-kinetic-ink);
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='candy-rim']
+  .obs-template-mockup__kinetic-unit::after {
+  z-index: 1;
+  color: var(--ui-output-preview-kinetic-red);
+  background: linear-gradient(
+    to bottom left,
+    var(--ui-output-preview-kinetic-candy-deep),
+    var(--ui-output-preview-kinetic-candy-light)
+  );
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-text-stroke: 0.0125em var(--ui-output-preview-kinetic-paper);
+  paint-order: fill stroke;
+}
+
+.obs-template-mockup__kinetic-line[data-kinetic-material='chromatic-depth']
+  .obs-template-mockup__kinetic-unit {
+  color: var(--ui-output-preview-kinetic-paper);
+  -webkit-text-stroke: 0.045em var(--ui-output-preview-kinetic-ink);
+  text-shadow:
+    0.065em 0.075em 0 var(--ui-output-preview-kinetic-cyan),
+    0.12em 0.14em 0 var(--ui-output-preview-kinetic-magenta);
+}
+
+.obs-template-mockup[data-motion='playing'] .obs-template-mockup__kinetic-unit {
+  animation: obs-preview-kinetic-unit-cycle 3.2s cubic-bezier(0.16, 1, 0.3, 1)
+    infinite both;
+  animation-delay: var(--kinetic-unit-delay);
+}
