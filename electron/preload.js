@@ -82,6 +82,21 @@ function playbackResumeIntent(value) {
   };
 }
 
+function playbackStateIntent(value) {
+  return {
+    isPlaying: value?.isPlaying,
+    hasTrack: value?.hasTrack,
+    trackId: value?.trackId,
+  };
+}
+
+function libraryStoragePolicyIntent(value) {
+  return {
+    autoManageSeparation: value?.autoManageSeparation,
+    separationLimitBytes: value?.separationLimitBytes,
+  };
+}
+
 contextBridge.exposeInMainWorld('Utawakui', {
   startupTraceEnabled,
   recordStartupMilestone: (milestone) => {
@@ -292,6 +307,13 @@ contextBridge.exposeInMainWorld('Utawakui', {
   resetDownloadDir: () => ipcRenderer.invoke('config:reset-download-dir'),
   openDownloadDir: () => ipcRenderer.invoke('config:open-download-dir'),
   listTracks: (options) => ipcRenderer.invoke('library:list', options),
+  getLibraryStorage: () => ipcRenderer.invoke('library-storage:get'),
+  setLibraryStoragePolicy: (policy) =>
+    ipcRenderer.invoke(
+      'library-storage:set-policy',
+      libraryStoragePolicyIntent(policy),
+    ),
+  cleanupLibraryStorage: () => ipcRenderer.invoke('library-storage:cleanup'),
   importLocalAudioFiles: () => ipcRenderer.invoke('library:import-audio-files'),
   refreshLibraryMetadata: () => ipcRenderer.invoke('library:refresh-metadata'),
   getTrackLyrics: (trackId, filename) =>
@@ -536,7 +558,8 @@ contextBridge.exposeInMainWorld('Utawakui', {
     return () =>
       ipcRenderer.removeListener('feature-dependencies:progress', listener);
   },
-  setPlaybackState: (state) => ipcRenderer.send('player:state', state),
+  setPlaybackState: (state) =>
+    ipcRenderer.send('player:state', playbackStateIntent(state)),
   // Relays a thumbar click; the renderer stays the sole owner of the
   // <audio> element (see usePlayer.js), main never touches playback itself.
   onPlayerCommand: (callback) => {

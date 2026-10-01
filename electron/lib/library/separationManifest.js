@@ -211,6 +211,38 @@ function selectSeparationResult(separationsDir, recipeId) {
   return true;
 }
 
+function removeSeparationResult(separationsDir, recipeId) {
+  const manifest = loadSeparationManifest(separationsDir);
+  const canonicalRecipeId = canonicalizeResultRecipeId(recipeId);
+  const result = manifest.results[canonicalRecipeId];
+  if (!result) return null;
+
+  const artifactPath = path.join(separationsDir, result.artifactFilename);
+  fs.rmSync(artifactPath, { force: true });
+  delete manifest.results[canonicalRecipeId];
+
+  if (manifest.selectedRecipeId === canonicalRecipeId) {
+    manifest.selectedRecipeId =
+      Object.entries(manifest.results)
+        .filter(([, entry]) =>
+          hasSeparationResultFile(separationsDir, entry.artifactFilename),
+        )
+        .sort(([, left], [, right]) =>
+          String(right.completedAt).localeCompare(String(left.completedAt)),
+        )[0]?.[0] ?? null;
+  }
+
+  atomicWriteJson(
+    path.join(separationsDir, SEPARATION_MANIFEST_FILENAME),
+    manifest,
+  );
+  return {
+    recipeId: canonicalRecipeId,
+    artifactFilename: result.artifactFilename,
+    selectedRecipeId: manifest.selectedRecipeId,
+  };
+}
+
 function hasSeparationResultFile(separationsDir, artifactFilename) {
   return (
     SAFE_ARTIFACT_FILENAME_RE.test(artifactFilename) &&
@@ -258,6 +290,7 @@ module.exports = {
   resolveSeparationsDir,
   loadSeparationManifest,
   recordSeparationResult,
+  removeSeparationResult,
   selectSeparationResult,
   hasSeparationResultFile,
   manifestHasSelectedResult,

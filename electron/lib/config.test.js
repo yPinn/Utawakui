@@ -10,6 +10,7 @@ import {
   loadConfig,
   saveConfig,
 } from './config.js';
+import storageValues from '../../shared/libraryStorageValues.json';
 
 describe('config', () => {
   let dir;
@@ -27,7 +28,7 @@ describe('config', () => {
   it('missing file falls back to defaults', () => {
     const config = loadConfig(configPath);
     expect(config).toEqual({
-      version: 2,
+      version: 3,
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'dark',
@@ -39,6 +40,10 @@ describe('config', () => {
       windowCloseBehavior: 'ask',
       lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
+      libraryStorage: {
+        autoManageSeparation: false,
+        separationLimitBytes: storageValues.defaultSeparationLimitBytes,
+      },
       outputRuntime: {
         autoStart: true,
         port: 8700,
@@ -79,7 +84,7 @@ describe('config', () => {
     fs.writeFileSync(configPath, JSON.stringify(null));
     const config = loadConfig(configPath);
     expect(config).toEqual({
-      version: 2,
+      version: 3,
       downloadDir: null,
       featureConfirmations: {},
       uiTheme: 'dark',
@@ -91,6 +96,10 @@ describe('config', () => {
       windowCloseBehavior: 'ask',
       lastSeenAnnouncementVersion: null,
       systemFfmpegPath: null,
+      libraryStorage: {
+        autoManageSeparation: false,
+        separationLimitBytes: storageValues.defaultSeparationLimitBytes,
+      },
       outputRuntime: {
         autoStart: true,
         port: 8700,
@@ -240,6 +249,51 @@ describe('config', () => {
     expect(loadConfig(configPath).separationGpuAcceleration).toBe(false);
   });
 
+  it('round-trips the library separation-storage policy', () => {
+    saveConfig(configPath, {
+      libraryStorage: {
+        autoManageSeparation: true,
+        separationLimitBytes: 53687091200,
+      },
+    });
+    expect(loadConfig(configPath).libraryStorage).toEqual({
+      autoManageSeparation: true,
+      separationLimitBytes: 53687091200,
+    });
+  });
+
+  it.each([
+    null,
+    {},
+    { autoManageSeparation: 'yes', separationLimitBytes: 26843545600 },
+    { autoManageSeparation: true, separationLimitBytes: 123 },
+  ])(
+    'falls back for an invalid library storage policy %#',
+    (libraryStorage) => {
+      fs.writeFileSync(configPath, JSON.stringify({ libraryStorage }));
+      expect(loadConfig(configPath).libraryStorage).toEqual({
+        autoManageSeparation: false,
+        separationLimitBytes: storageValues.defaultSeparationLimitBytes,
+      });
+    },
+  );
+
+  it('accepts unlimited separation storage as an explicit policy', () => {
+    fs.writeFileSync(
+      configPath,
+      JSON.stringify({
+        libraryStorage: {
+          autoManageSeparation: true,
+          separationLimitBytes: null,
+        },
+      }),
+    );
+    expect(loadConfig(configPath).libraryStorage).toEqual({
+      autoManageSeparation: true,
+      separationLimitBytes: null,
+    });
+  });
+
   it.each([null, 1, 'true', {}])(
     'falls back to separation GPU acceleration on for invalid value %j',
     (separationGpuAcceleration) => {
@@ -336,7 +390,7 @@ describe('config', () => {
     );
 
     expect(loadConfig(configPath)).toMatchObject({
-      version: 2,
+      version: 3,
       downloadDir: '/existing-library',
       outputRuntime: {
         autoStart: true,

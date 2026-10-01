@@ -115,6 +115,10 @@ const {
   createLyricsAcquisitionService,
 } = require('./main/lyricsAcquisitionService');
 const { registerLibraryHandlers } = require('./main/libraryHandlers');
+const {
+  registerLibraryStorageHandlers,
+} = require('./main/libraryStorageHandlers');
+const { createLibraryStorageService } = require('./lib/library/storage');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
@@ -527,6 +531,26 @@ if (!gotSingleInstanceLock) {
     const playbackPersistence = createPlaybackPersistence({
       userDataDir: app.getPath('userData'),
     });
+    const libraryStorageService = createLibraryStorageService({
+      resolveLibraryDir: () =>
+        configState.resolveDownloadDir(configState.getConfig()),
+      getLastPlayedAtByTrackId: playbackPersistence.getLastPlayedAtByTrackId,
+      getProtectedTrackIds: () => {
+        const snapshot = playbackPersistence.getResumeSnapshot();
+        return [
+          windowState.getCurrentPlaybackTrackId(),
+          snapshot?.currentTrackId,
+          ...(snapshot?.queue?.sourceTrackIds || []),
+          ...(snapshot?.queue?.queuedTrackIds || []),
+        ].filter(Boolean);
+      },
+      notifyLibraryUpdated: windowState.notifyLibraryUpdated,
+    });
+    const enforceLibraryStoragePolicy = (options) => {
+      const policy = configState.getConfig().libraryStorage;
+      if (!policy.autoManageSeparation) return undefined;
+      return libraryStorageService.enforcePolicy(policy, options);
+    };
     outputRuntimeController = createOutputRuntime({
       getConfig: configState.getConfig,
       requireFeatureGate,
@@ -686,6 +710,13 @@ if (!gotSingleInstanceLock) {
       ipcMain,
       service: playbackPersistence,
     });
+    registerLibraryStorageHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      updateConfig: configState.updateConfig,
+      storage: libraryStorageService,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+    });
 
     registerMediaProtocol({
       protocol,
@@ -762,6 +793,7 @@ if (!gotSingleInstanceLock) {
       getProviderRunner: providerRunnerManager.getRunner,
       lyricsAcquisitionService,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
+      enforceLibraryStoragePolicy,
       recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
@@ -813,6 +845,7 @@ if (!gotSingleInstanceLock) {
       lyricsAcquisitionService,
       notifyLibraryUpdated: windowState.notifyLibraryUpdated,
       enqueueMusicAnalysis: structureAnalysisAutoQueue.enqueue,
+      enforceLibraryStoragePolicy,
       recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 
@@ -827,6 +860,7 @@ if (!gotSingleInstanceLock) {
       featureIds: FEATURE_IDS,
       heavyJobScheduler,
       recordDiagnostic: (event) => diagnosticsService.record(event),
+      enforceLibraryStoragePolicy,
     });
 
     registerFeatureDependencyHandlers({

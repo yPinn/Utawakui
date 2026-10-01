@@ -27,6 +27,9 @@ const {
   resolveTrackDir,
   saveIndexEntry,
 } = require('../lib/library');
+const {
+  enforceLibraryStoragePolicySafely,
+} = require('./libraryStorageHandlers');
 
 // error.stderr never survives ipcMain.handle's serialization, so
 // classification has to happen here. Only the sentinel code crosses the
@@ -180,6 +183,7 @@ function registerImportHandlers({
   lyricsAcquisitionService,
   notifyLibraryUpdated = () => {},
   enqueueMusicAnalysis = () => false,
+  enforceLibraryStoragePolicy = async () => undefined,
   downloadTrackAudio = downloadAudio,
   fetchPlaylistMetadata = fetchPlaylist,
   fetchYoutubeMetadata = fetchMetadata,
@@ -405,6 +409,11 @@ function registerImportHandlers({
           // Analysis is optional background work. A playable download remains
           // successful even if queue admission fails unexpectedly.
         }
+        await enforceLibraryStoragePolicySafely({
+          enforceLibraryStoragePolicy,
+          options: { protectedTrackIds: [videoId] },
+          recordDiagnostic,
+        });
         return result;
       },
       { recordDiagnostic },

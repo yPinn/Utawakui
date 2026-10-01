@@ -8,6 +8,14 @@ const source = readFileSync(
 const applicationSectionStart = source.indexOf(
   '<SettingsBlock title="應用程式">',
 );
+const librarySectionStart = source.indexOf(
+  '<SettingsBlock title="曲庫與儲存">',
+);
+const librarySource = source.slice(
+  librarySectionStart,
+  source.indexOf('</SettingsBlock>', librarySectionStart) +
+    '</SettingsBlock>'.length,
+);
 const applicationSource = source.slice(
   applicationSectionStart,
   source.indexOf('</SettingsBlock>', applicationSectionStart) +
@@ -53,6 +61,40 @@ describe('SettingsView version and maintenance sections', () => {
     expect(source).toContain('無法建立預設資料夾。請選擇其他位置。');
     expect(source).toContain('設定已保留。請重新連接磁碟，或選擇其他位置。');
     expect(source).toContain('下載與匯入的曲目會存放在這裡。');
+  });
+
+  it('owns playback-history clearing under library and storage settings', () => {
+    expect(source).toContain(
+      "import PlaybackHistorySettingsRow from '../components/settings/PlaybackHistorySettingsRow.vue';",
+    );
+    expect(source).toContain(
+      "import { usePlaybackHistory } from '../composables/usePlaybackHistory.js';",
+    );
+    expect(librarySource).toContain('<PlaybackHistorySettingsRow');
+    expect(librarySource).toContain(':record-count="recentItems.length"');
+    expect(librarySource).toContain('@clear="handleClearPlaybackHistory"');
+    expect(source).toContain('initializePlaybackHistory();');
+    expect(source).toContain('window.confirm(');
+    expect(source).toContain(
+      '清除這台電腦上的最近播放紀錄？這不會影響播放佇列、歌單、OBS 場次紀錄或錯誤紀錄。',
+    );
+  });
+
+  it('composes one concise library-storage row under library and storage settings', () => {
+    expect(source).toContain(
+      "import LibraryStorageSettingsRow from '../components/settings/LibraryStorageSettingsRow.vue';",
+    );
+    expect(source).toContain(
+      "import { useLibraryStorage } from '../composables/useLibraryStorage.js';",
+    );
+    expect(librarySource).toContain('<LibraryStorageSettingsRow');
+    expect(librarySource).toContain(':storage="libraryStorage.storage.value"');
+    expect(librarySource).toContain(':policy="libraryStorage.policy.value"');
+    expect(librarySource).toContain('@set-policy="libraryStorage.setPolicy"');
+    expect(librarySource).toContain('@cleanup="handleCleanupLibraryStorage"');
+    expect(source).toContain('libraryStorage.initialize();');
+    expect(source).toContain('libraryStorage.dispose');
+    expect(source).toContain('清理去人聲版本？歌曲保留。');
   });
 
   it('nests BPM controls inside the audio-processing feature row', () => {

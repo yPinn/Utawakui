@@ -29,8 +29,9 @@ const {
 const {
   isWindowCloseBehavior,
 } = require('../../shared/windowCloseBehaviorContract.mjs');
+const storageValues = require('../../shared/libraryStorageValues.json');
 
-const CURRENT_VERSION = 2;
+const CURRENT_VERSION = 3;
 const UI_THEMES = ['light', 'dark'];
 // Keep in sync with --ui-playlist-sidebar-width-min/-max in
 // src/styles/tokens.css — main process can't read CSS.
@@ -80,6 +81,10 @@ const DEFAULTS = {
   // the path — the renderer never supplies a path directly, same
   // untrusted-input posture as captureDeviceId's id-not-path role above.
   systemFfmpegPath: null,
+  libraryStorage: Object.freeze({
+    autoManageSeparation: storageValues.defaultAutoManageSeparation,
+    separationLimitBytes: storageValues.defaultSeparationLimitBytes,
+  }),
   outputRuntime: Object.freeze({
     autoStart: true,
     port: DEFAULT_OUTPUT_PORT,
@@ -193,6 +198,28 @@ function normalizeWindowCloseBehavior(data) {
   return DEFAULTS.windowCloseBehavior;
 }
 
+function isValidLibraryStoragePolicy(value) {
+  return Boolean(
+    value &&
+    typeof value === 'object' &&
+    !Array.isArray(value) &&
+    typeof value.autoManageSeparation === 'boolean' &&
+    storageValues.separationLimitOptionsBytes.includes(
+      value.separationLimitBytes,
+    ),
+  );
+}
+
+function normalizeLibraryStoragePolicy(value) {
+  if (!isValidLibraryStoragePolicy(value)) {
+    return { ...DEFAULTS.libraryStorage };
+  }
+  return {
+    autoManageSeparation: value.autoManageSeparation,
+    separationLimitBytes: value.separationLimitBytes,
+  };
+}
+
 // Tolerant load: missing file, corrupted JSON, and wrong-typed fields all
 // degrade to defaults rather than throwing — this is machine-local settings
 // that can be hand-edited or clobbered by a sync tool, not exceptional input.
@@ -257,6 +284,7 @@ function loadConfig(configPath) {
       typeof data.systemFfmpegPath === 'string'
         ? data.systemFfmpegPath
         : DEFAULTS.systemFfmpegPath,
+    libraryStorage: normalizeLibraryStoragePolicy(data.libraryStorage),
     outputRuntime: normalizeOutputRuntime(data.outputRuntime),
     obsIntegration: normalizeObsIntegration(data.obsIntegration),
   };
@@ -292,4 +320,6 @@ module.exports = {
   normalizeOutputRuntime,
   isValidObsIntegration,
   normalizeObsIntegration,
+  isValidLibraryStoragePolicy,
+  normalizeLibraryStoragePolicy,
 };

@@ -16,9 +16,11 @@ import FeedbackReportModal from '../components/settings/FeedbackReportModal.vue'
 import FeedbackReportSettingsRow from '../components/settings/FeedbackReportSettingsRow.vue';
 import FfmpegSourceModal from '../components/settings/FfmpegSourceModal.vue';
 import LibraryMetadataSettingsRow from '../components/settings/LibraryMetadataSettingsRow.vue';
+import LibraryStorageSettingsRow from '../components/settings/LibraryStorageSettingsRow.vue';
 import MusicAnalysisSettingsRow from '../components/settings/MusicAnalysisSettingsRow.vue';
 import ObsIntegrationSettingsBlock from '../components/settings/ObsIntegrationSettingsBlock.vue';
 import ObsSessionExportModal from '../components/settings/ObsSessionExportModal.vue';
+import PlaybackHistorySettingsRow from '../components/settings/PlaybackHistorySettingsRow.vue';
 import SeparationGpuSettingsRow from '../components/settings/SeparationGpuSettingsRow.vue';
 import SettingsActionRow from '../components/settings/SettingsActionRow.vue';
 import SettingsBlock from '../components/settings/SettingsBlock.vue';
@@ -47,11 +49,13 @@ import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
 import { useAppUpdate } from '../composables/useAppUpdate.js';
 import { useAudioOutput } from '../composables/useAudioOutput.js';
 import { useLibraryMetadataMaintenance } from '../composables/useLibraryMetadataMaintenance.js';
+import { useLibraryStorage } from '../composables/useLibraryStorage.js';
 import { useMusicAnalysisSettings } from '../composables/useMusicAnalysisSettings.js';
 import { useObsIntegrationSettings } from '../composables/useObsIntegrationSettings.js';
 import { useObsSessionExport } from '../composables/useObsSessionExport.js';
 import { useSeparationSettings } from '../composables/useSeparationSettings.js';
 import { usePersistentDiagnostics } from '../composables/usePersistentDiagnostics.js';
+import { usePlaybackHistory } from '../composables/usePlaybackHistory.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { useWindowsIntegrationSettings } from '../composables/useWindowsIntegrationSettings.js';
 
@@ -103,13 +107,21 @@ const {
   repairDependency,
 } = useFeatureDependencies();
 const musicAnalysisSettings = useMusicAnalysisSettings();
+const libraryStorage = useLibraryStorage();
 const separationSettings = useSeparationSettings();
 const obsIntegrationSettings = useObsIntegrationSettings();
 const obsSessionExport = useObsSessionExport();
 const windowsIntegrationSettings = useWindowsIntegrationSettings();
+const {
+  state: playbackHistoryState,
+  recentItems,
+  initialize: initializePlaybackHistory,
+  clear: clearPlaybackHistory,
+} = usePlaybackHistory();
 
 const maintenanceMessage = shallowRef('');
 const maintenanceTone = shallowRef('muted');
+const isClearingPlaybackHistory = shallowRef(false);
 const downloadDirUnavailableMessage = computed(() =>
   importState.isDefaultDir
     ? '無法建立預設資料夾。請選擇其他位置。'
@@ -267,6 +279,8 @@ async function refreshSettingsState() {
   refreshConfirmations();
   refreshDependencies();
   refreshDiagnostics();
+  initializePlaybackHistory();
+  libraryStorage.initialize();
   musicAnalysisSettings.initialize();
   separationSettings.refreshPreference();
   obsIntegrationSettings.refreshSettings();
@@ -294,6 +308,29 @@ async function handleClearDiagnostics() {
     typeof window === 'undefined' ||
     window.confirm('清除這台電腦上的錯誤紀錄？');
   if (confirmed) await clearDiagnostics();
+}
+
+async function handleClearPlaybackHistory() {
+  const confirmed =
+    typeof window === 'undefined' ||
+    window.confirm(
+      '清除這台電腦上的最近播放紀錄？這不會影響播放佇列、歌單、OBS 場次紀錄或錯誤紀錄。',
+    );
+  if (!confirmed) return;
+
+  isClearingPlaybackHistory.value = true;
+  try {
+    await clearPlaybackHistory();
+  } finally {
+    isClearingPlaybackHistory.value = false;
+  }
+}
+
+async function handleCleanupLibraryStorage() {
+  const confirmed =
+    typeof window === 'undefined' ||
+    window.confirm('清理去人聲版本？歌曲保留。');
+  if (confirmed) await libraryStorage.cleanup();
 }
 
 function handleDiagnosticsNoticeAction(operation) {
@@ -393,7 +430,10 @@ function handleFeatureGateRequestAction() {
 }
 
 onMounted(refreshSettingsState);
-onUnmounted(musicAnalysisSettings.dispose);
+onUnmounted(() => {
+  libraryStorage.dispose();
+  musicAnalysisSettings.dispose();
+});
 </script>
 
 <template>
@@ -464,11 +504,31 @@ onUnmounted(musicAnalysisSettings.dispose);
               @action="chooseDownloadDir"
             />
 
+            <LibraryStorageSettingsRow
+              :storage="libraryStorage.storage.value"
+              :policy="libraryStorage.policy.value"
+              :loading="libraryStorage.loading.value"
+              :saving="libraryStorage.saving.value"
+              :cleaning="libraryStorage.cleaning.value"
+              :error="libraryStorage.error.value"
+              :last-cleanup="libraryStorage.lastCleanup.value"
+              @set-policy="libraryStorage.setPolicy"
+              @cleanup="handleCleanupLibraryStorage"
+            />
+
             <LibraryMetadataSettingsRow
               :is-running="libraryMetadataMaintenanceState.isRunning"
               :message="libraryMetadataMaintenanceMessage"
               :error="libraryMetadataMaintenanceState.error"
               @run="runLibraryMetadataMaintenance"
+            />
+
+            <PlaybackHistorySettingsRow
+              :record-count="recentItems.length"
+              :is-loading="!playbackHistoryState.isInitialized"
+              :is-clearing="isClearingPlaybackHistory"
+              :error="playbackHistoryState.error ?? ''"
+              @clear="handleClearPlaybackHistory"
             />
 
             <UiNotice

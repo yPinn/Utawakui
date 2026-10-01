@@ -14,6 +14,7 @@ const MAX_RESUME_POSITION_SECONDS = 7 * 24 * 60 * 60;
 const PLAYBACK_MODES = new Set(['sequence', 'repeat-list', 'repeat-one']);
 const HISTORY_FILENAME = 'playback-history.json';
 const RESUME_FILENAME = 'playback-resume.json';
+const USAGE_FILENAME = 'playback-usage.json';
 
 function hasControlCharacters(value) {
   return [...value].some((character) => {
@@ -201,6 +202,7 @@ function loadDocument(filePath, fallback, normalize) {
 function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
   const historyPath = path.join(userDataDir, HISTORY_FILENAME);
   const resumePath = path.join(userDataDir, RESUME_FILENAME);
+  const usagePath = path.join(userDataDir, USAGE_FILENAME);
 
   function ensureDirectory() {
     fs.mkdirSync(userDataDir, { recursive: true });
@@ -228,6 +230,43 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     });
   }
 
+  function getLastPlayedAtByTrackId() {
+    return loadDocument(usagePath, {}, (document) => {
+      if (
+        !document ||
+        typeof document !== 'object' ||
+        Array.isArray(document) ||
+        document.version !== PLAYBACK_PERSISTENCE_VERSION ||
+        !document.lastPlayedAtByTrackId ||
+        typeof document.lastPlayedAtByTrackId !== 'object' ||
+        Array.isArray(document.lastPlayedAtByTrackId)
+      ) {
+        throw new Error('invalid playback usage document');
+      }
+      const result = {};
+      for (const [trackId, playedAt] of Object.entries(
+        document.lastPlayedAtByTrackId,
+      )) {
+        if (
+          isBoundedTrackId(trackId) &&
+          typeof playedAt === 'string' &&
+          !Number.isNaN(Date.parse(playedAt))
+        ) {
+          result[trackId] = new Date(playedAt).toISOString();
+        }
+      }
+      return result;
+    });
+  }
+
+  function writeUsage(lastPlayedAtByTrackId) {
+    ensureDirectory();
+    atomicWriteJson(usagePath, {
+      version: PLAYBACK_PERSISTENCE_VERSION,
+      lastPlayedAtByTrackId,
+    });
+  }
+
   function recordRecentPlayback(trackId, sourceContext) {
     const entry = {
       trackId: validateTrackId(trackId),
@@ -241,6 +280,10 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
       ),
     ].slice(0, PLAYBACK_HISTORY_LIMIT);
     writeHistory(entries);
+    writeUsage({
+      ...getLastPlayedAtByTrackId(),
+      [entry.trackId]: entry.playedAt,
+    });
     return entries;
   }
 
@@ -278,6 +321,7 @@ function createPlaybackPersistence({ userDataDir, now = () => new Date() }) {
     getRecentHistory,
     recordRecentPlayback,
     clearRecentHistory,
+    getLastPlayedAtByTrackId,
     getResumeSnapshot,
     saveResumeSnapshot,
   };

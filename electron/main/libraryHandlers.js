@@ -15,6 +15,9 @@ const {
   updateTrackMetadata,
   writeTrackArtworkFile,
 } = require('../lib/library');
+const {
+  enforceLibraryStoragePolicySafely,
+} = require('./libraryStorageHandlers');
 const { removeTrackFromAllPlaylists } = require('../lib/playlists');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
 const {
@@ -99,6 +102,7 @@ function registerLibraryHandlers({
   artworkDiscoveryService,
   createArtworkService = createArtworkDiscoveryService,
   enqueueMusicAnalysis = () => false,
+  enforceLibraryStoragePolicy = async () => undefined,
   recordDiagnostic,
 }) {
   const resolvedArtworkDiscoveryService =
@@ -242,6 +246,13 @@ function registerLibraryHandlers({
     );
     if (imported.imported.length > 0) {
       notifyLibraryUpdated();
+      await enforceLibraryStoragePolicySafely({
+        enforceLibraryStoragePolicy,
+        options: {
+          protectedTrackIds: imported.imported.map((track) => track.id),
+        },
+        recordDiagnostic,
+      });
       for (const track of imported.imported) {
         try {
           enqueueMusicAnalysis(track.id);

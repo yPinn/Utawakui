@@ -69,6 +69,9 @@ const MAIN_INVOKE_CHANNELS = [
   'library:refresh-metadata',
   'library:search-track-artwork',
   'library:update-track-metadata',
+  'library-storage:cleanup',
+  'library-storage:get',
+  'library-storage:set-policy',
   'lyrics:backfill-source-labels',
   'lyrics:delete-reading',
   'lyrics:delete-source',
@@ -532,6 +535,12 @@ describe('main preload bridge', () => {
   it('shapes playback history and resume intents without private media fields', async () => {
     const bridge = await loadBridge('./preload.js', 'Utawakui');
 
+    bridge.setPlaybackState({
+      isPlaying: true,
+      hasTrack: true,
+      trackId: 'track-a',
+      privatePath: 'E:\\private.wav',
+    });
     bridge.recordRecentPlayback(
       'track-a',
       {
@@ -588,6 +597,35 @@ describe('main preload bridge', () => {
         },
       },
     );
+    expect(electron.ipcRenderer.send).toHaveBeenCalledWith('player:state', {
+      isPlaying: true,
+      hasTrack: true,
+      trackId: 'track-a',
+    });
+  });
+
+  it('shapes library storage policy without accepting paths or arbitrary limits', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.getLibraryStorage('E:\\private');
+    bridge.setLibraryStoragePolicy({
+      autoManageSeparation: true,
+      separationLimitBytes: 26843545600,
+      privatePath: 'E:\\private',
+    });
+    bridge.cleanupLibraryStorage('E:\\private');
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['library-storage:get'],
+      [
+        'library-storage:set-policy',
+        {
+          autoManageSeparation: true,
+          separationLimitBytes: 26843545600,
+        },
+      ],
+      ['library-storage:cleanup'],
+    ]);
   });
 
   it('forwards only the feature id and notice version for gate confirmation', async () => {

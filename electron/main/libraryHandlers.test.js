@@ -543,6 +543,7 @@ describe('local import automatic music analysis', () => {
       handle: vi.fn((channel, handler) => handlers.set(channel, handler)),
     };
     const enqueueMusicAnalysis = vi.fn(() => true);
+    const enforceLibraryStoragePolicy = vi.fn().mockResolvedValue(undefined);
     const importAudioFiles = vi.fn().mockReturnValue({
       imported: [
         { id: 'local-1', title: 'One' },
@@ -567,10 +568,16 @@ describe('local import automatic music analysis', () => {
       getProviderRunner: vi.fn(),
       lyricsAcquisitionService: { scheduleAutomaticAcquisition: vi.fn() },
       enqueueMusicAnalysis,
+      enforceLibraryStoragePolicy,
       importAudioFiles,
       ...overrides,
     });
-    return { handlers, enqueueMusicAnalysis, importAudioFiles };
+    return {
+      handlers,
+      enqueueMusicAnalysis,
+      enforceLibraryStoragePolicy,
+      importAudioFiles,
+    };
   }
 
   it('enqueues every successfully imported local track', async () => {
@@ -585,6 +592,9 @@ describe('local import automatic music analysis', () => {
       ['local-1'],
       ['local-2'],
     ]);
+    expect(harness.enforceLibraryStoragePolicy).toHaveBeenCalledWith({
+      protectedTrackIds: ['local-1', 'local-2'],
+    });
   });
 
   it('keeps the import result when optional enqueueing throws', async () => {
@@ -599,5 +609,28 @@ describe('local import automatic music analysis', () => {
     ).resolves.toMatchObject({
       imported: [{ id: 'local-1' }, { id: 'local-2' }],
     });
+  });
+
+  it('keeps a successful import when automatic storage cleanup fails', async () => {
+    const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+    const harness = registerLocalImport({
+      recordDiagnostic,
+      enforceLibraryStoragePolicy: vi
+        .fn()
+        .mockRejectedValue(new Error('private cleanup failure')),
+    });
+
+    await expect(
+      harness.handlers.get('library:import-audio-files')(),
+    ).resolves.toMatchObject({
+      imported: [{ id: 'local-1' }, { id: 'local-2' }],
+    });
+    expect(recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'library-storage',
+        operation: 'auto-cleanup',
+        code: 'LIBRARY_STORAGE_AUTO_CLEANUP_FAILED',
+      }),
+    );
   });
 });

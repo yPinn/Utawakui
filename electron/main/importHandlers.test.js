@@ -21,6 +21,7 @@ function registerDownload(overrides = {}) {
   const requireFeatureGate = vi.fn();
   const notifyLibraryUpdated = vi.fn();
   const recordDiagnostic = vi.fn().mockReturnValue({ ok: true });
+  const enforceLibraryStoragePolicy = vi.fn().mockResolvedValue(undefined);
   const getProviderRunner = vi.fn().mockResolvedValue({ run: true });
   registerImportHandlers({
     ipcMain,
@@ -33,6 +34,7 @@ function registerDownload(overrides = {}) {
     enqueueMusicAnalysis,
     notifyLibraryUpdated,
     recordDiagnostic,
+    enforceLibraryStoragePolicy,
     downloadTrackAudio,
     ...overrides,
   });
@@ -43,6 +45,7 @@ function registerDownload(overrides = {}) {
     getProviderRunner,
     requireFeatureGate,
     recordDiagnostic,
+    enforceLibraryStoragePolicy,
     notifyLibraryUpdated,
   };
 }
@@ -352,6 +355,9 @@ describe('provider download automatic music analysis', () => {
       harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ'),
     ).resolves.toMatchObject({ title: 'Song' });
     expect(harness.enqueueMusicAnalysis).toHaveBeenCalledWith('dQw4w9WgXcQ');
+    expect(harness.enforceLibraryStoragePolicy).toHaveBeenCalledWith({
+      protectedTrackIds: ['dQw4w9WgXcQ'],
+    });
   });
 
   it('keeps a successful download when optional enqueueing throws', async () => {
@@ -363,5 +369,23 @@ describe('provider download automatic music analysis', () => {
     await expect(
       harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ'),
     ).resolves.toMatchObject({ title: 'Song' });
+  });
+
+  it('keeps a successful download when automatic storage cleanup fails', async () => {
+    const enforceLibraryStoragePolicy = vi
+      .fn()
+      .mockRejectedValue(new Error('private cleanup failure'));
+    const harness = registerDownload({ enforceLibraryStoragePolicy });
+
+    await expect(
+      harness.handlers.get('yt:download-audio')(null, 'dQw4w9WgXcQ'),
+    ).resolves.toMatchObject({ title: 'Song' });
+    expect(harness.recordDiagnostic).toHaveBeenCalledWith(
+      expect.objectContaining({
+        source: 'library-storage',
+        operation: 'auto-cleanup',
+        code: 'LIBRARY_STORAGE_AUTO_CLEANUP_FAILED',
+      }),
+    );
   });
 });

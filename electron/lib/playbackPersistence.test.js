@@ -135,6 +135,20 @@ describe('playbackPersistence', () => {
     expect(history.at(-1).trackId).toBe('track-7');
   });
 
+  it('keeps a complete private last-played index beyond the recent UI limit', () => {
+    for (let index = 0; index < PLAYBACK_HISTORY_LIMIT + 7; index += 1) {
+      clockMs += 1_000;
+      service.recordRecentPlayback(`track-${index}`);
+    }
+
+    const usage = service.getLastPlayedAtByTrackId();
+    expect(Object.keys(usage)).toHaveLength(PLAYBACK_HISTORY_LIMIT + 7);
+    expect(usage['track-0']).toBe('2026-09-27T12:00:01.000Z');
+    expect(usage[`track-${PLAYBACK_HISTORY_LIMIT + 6}`]).toBe(
+      `2026-09-27T12:00:${String(PLAYBACK_HISTORY_LIMIT + 7).padStart(2, '0')}.000Z`,
+    );
+  });
+
   it('rejects unsafe renderer history payloads before writing', () => {
     expect(() => service.recordRecentPlayback('../escape')).toThrow(
       /track id/i,
@@ -275,5 +289,8 @@ describe('playbackPersistence', () => {
     expect(service.clearRecentHistory()).toEqual([]);
     expect(service.getRecentHistory()).toEqual([]);
     expect(service.getResumeSnapshot()?.currentTrackId).toBe('track-a');
+    expect(service.getLastPlayedAtByTrackId()).toEqual({
+      'track-a': '2026-09-27T12:00:00.000Z',
+    });
   });
 });

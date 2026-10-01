@@ -1,0 +1,15 @@
+{
+  "defaultAutoManageSeparation": false,
+  "defaultSeparationLimitBytes": 26843545600,
+  "separationLimitOptionsBytes": [
+    10737418240,
+    26843545600,
+    53687091200,
+    107374182400,
+    null
+  ],
+  "cleanupTargetRatio": 0.85,
+  "minimumReserveBytes": 10737418240,
+  "maximumReserveBytes": 53687091200,
+  "reserveVolumeRatio": 0.05
+}
