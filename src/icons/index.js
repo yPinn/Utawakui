@@ -6,6 +6,7 @@ export { ICON_SIZE } from '../constants/ui.js';
 export {
   ArrowLeft,
   ArrowDownToLine,
+  AudioWaveform,
   BadgeCheck,
   Cable,
   Captions,
@@ -54,6 +55,7 @@ export {
   PanelRightOpen,
   Pause,
   Pencil,
+  PictureInPicture2,
   Pin,
   Play,
   Plus,

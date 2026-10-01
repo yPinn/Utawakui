@@ -205,6 +205,11 @@
   --ui-folder-artifact-note-min-height: 11rem;
   --ui-folder-artifact-photo-frame: var(--ui-space-2);
   --ui-folder-artifact-photo-bg: var(--ui-color-surface-raised);
+  --ui-folder-artifact-photo-bg-back: color-mix(
+    in srgb,
+    var(--ui-folder-artifact-photo-bg) 90%,
+    var(--ui-color-canvas)
+  );
   --ui-folder-artifact-note-bg: color-mix(
     in srgb,
     var(--ui-folder-bg) 32%,

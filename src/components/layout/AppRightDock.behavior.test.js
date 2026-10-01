@@ -239,6 +239,9 @@ describe('AppRightDock', () => {
     expect(source).toMatch(
       /--ui-track-row-state-surface-outset-inline:\s*var\(\s*--ui-right-dock-track-row-state-surface-outset-inline\s*\);/su,
     );
+    expect(source).toContain('--ui-track-row-selected-surface: color-mix(');
+    expect(source).toContain('var(--ui-color-text) 8%');
+    expect(source).toContain('--ui-track-row-active-shadow: none;');
     expect(source).not.toContain('--ui-sidebar-row-min-height');
     expect(source).not.toContain('--ui-sidebar-artwork-size');
   });

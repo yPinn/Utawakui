@@ -12,10 +12,21 @@ function productionSources(directory) {
       directory,
     );
     if (entry.isDirectory()) {
-      if (child.pathname.endsWith('/components/demo/')) return [];
+      if (
+        child.pathname.endsWith('/components/demo/') ||
+        child.pathname.endsWith('/components/internal-tools/') ||
+        child.pathname.endsWith('/components/lyrics-provider/')
+      ) {
+        return [];
+      }
       return productionSources(child);
     }
     if (!/\.(?:js|vue)$/u.test(entry.name) || entry.name.endsWith('.test.js')) {
+      return [];
+    }
+    if (
+      child.pathname.endsWith('/components/settings/DiagnosticsWorkbench.vue')
+    ) {
       return [];
     }
     return [[child, readFileSync(child, 'utf8')]];
@@ -63,7 +74,6 @@ describe('new shared infra catalogue registration', () => {
     ['./DemoFeedback.vue', 'UiSkeleton', 'skeleton'],
     ['./DemoFeedback.vue', 'UiNotificationHost', 'notification-host'],
     ['./DemoOverlays.vue', 'UiTooltip', 'tooltip'],
-    ['./DemoOverlays.vue', 'UiPopover', 'popover'],
   ])('renders %s in its pending catalogue section', (file, component, key) => {
     const source = readSource(file);
 
@@ -81,7 +91,6 @@ describe('new shared infra catalogue registration', () => {
       'UiDisclosure',
       'UiRadioGroup',
       'UiTooltip',
-      'UiPopover',
       'UiNotificationHost',
       'UiSwitch',
       'UiBreadcrumb',
@@ -104,5 +113,13 @@ describe('new shared infra catalogue registration', () => {
     expect(source).toContain('<template #header>');
     expect(source).toContain('<template #footer>');
     expect(source).toContain('class="demo-popover-content"');
+  });
+
+  it('records UiPopover as reviewed production infrastructure', () => {
+    const source = readSource('../../constants/uiDemoSections.js');
+
+    expect(source).toMatch(
+      /key: 'popover',[\s\S]*?components: \['UiPopover'\],[\s\S]*?adopted: true,/u,
+    );
   });
 });

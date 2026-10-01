@@ -1,21 +1,15 @@
 <script setup>
 import { computed } from 'vue';
 import { Volume2 } from '../../icons/index.js';
-import {
-  INSPECTOR_WIDTH_MAX,
-  INSPECTOR_WIDTH_MIN,
-  useStudioLibraryInspectorWidth,
-} from '../../composables/useStudioLibraryInspectorWidth.js';
 import { formatDuration } from '../../utils/format.js';
 import { formatStudioTrackSource } from '../../utils/studioLibraryPresentation.js';
-import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
+import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
+import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
-import TrackContextBlock from './TrackContextBlock.vue';
 
 const props = defineProps({
   currentTrack: { type: Object, default: null },
@@ -29,12 +23,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close']);
 
-const inspectorWidth = useStudioLibraryInspectorWidth();
 const METADATA_QUEUE_PREVIEW_LIMIT = 3;
-const NOW_PLAYING_COVER_MIN = 192;
-const NOW_PLAYING_COVER_MAX = 248;
-const COLLECTION_COVER_MIN = 88;
-const COLLECTION_COVER_MAX = 120;
+const COLLECTION_COVER_SIZE = 120;
 const ARTIST_COVER_SIZE = 64;
 
 const upcomingPreviewTracks = computed(() =>
@@ -44,21 +34,6 @@ const queuePreviewLabel = computed(() =>
   props.upcomingTracks.length > METADATA_QUEUE_PREVIEW_LIMIT
     ? `接下來的播放佇列，顯示前 ${METADATA_QUEUE_PREVIEW_LIMIT} 首，共 ${props.upcomingTracks.length} 首`
     : '接下來的播放佇列',
-);
-
-function scaleWithInspectorWidth(minimum, maximum) {
-  const range = INSPECTOR_WIDTH_MAX - INSPECTOR_WIDTH_MIN;
-  const progress =
-    range > 0 ? (inspectorWidth.width.value - INSPECTOR_WIDTH_MIN) / range : 0;
-  const clampedProgress = Math.min(1, Math.max(0, progress));
-  return Math.round(minimum + (maximum - minimum) * clampedProgress);
-}
-
-const nowPlayingCoverSize = computed(() =>
-  scaleWithInspectorWidth(NOW_PLAYING_COVER_MIN, NOW_PLAYING_COVER_MAX),
-);
-const collectionCoverSize = computed(() =>
-  scaleWithInspectorWidth(COLLECTION_COVER_MIN, COLLECTION_COVER_MAX),
 );
 
 const queueContextLabel = computed(() => {
@@ -113,187 +88,158 @@ function formatUpcomingTrackMetadata(track) {
 </script>
 
 <template>
-  <section class="studio-context-inspector" aria-label="播放資訊">
-    <AppRightDockHeader
-      title="播放資訊"
-      :subtitle="queueContextLabel"
-      close-label="關閉播放資訊"
-      @close="emit('close')"
-    />
+  <AppRightDockPanel
+    class="studio-context-inspector"
+    title="播放資訊"
+    :subtitle="queueContextLabel"
+    close-label="關閉播放資訊"
+    aria-label="播放資訊"
+    @close="emit('close')"
+  >
+    <AppRightDockSection
+      class="studio-context-inspector__section studio-context-inspector__now"
+      heading="目前播放"
+    >
+      <template #trailing>
+        <UiStatusIcon
+          v-if="currentTrack"
+          :icon="Volume2"
+          tone="current"
+          :label="`目前播放：${currentTrack.title}`"
+          decorative
+        />
+      </template>
 
-    <UiScrollRegion class="studio-context-inspector__scroll" axis="vertical">
-      <div class="studio-context-inspector__blocks">
-        <TrackContextBlock
-          class="studio-context-inspector__section studio-context-inspector__now"
-          heading="目前播放"
-          tone="plain"
+      <ul v-if="currentTrack" class="studio-context-inspector__identity-list">
+        <UiTrackRow
+          class="studio-context-inspector__now-identity"
+          :track="currentTrack"
+          current
+          hide-duration
+          overflow="ellipsis"
+        />
+      </ul>
+      <UiHint v-else>目前沒有播放中的歌曲</UiHint>
+    </AppRightDockSection>
+
+    <AppRightDockSection
+      v-if="lyricsPreview?.lines?.length"
+      class="studio-context-inspector__section studio-context-inspector__lyrics"
+      heading="歌詞預覽"
+      divided
+    >
+      <div class="studio-context-inspector__lyrics-lines">
+        <p
+          v-for="line in lyricsPreview.lines"
+          :key="line.id"
+          :class="{
+            'studio-context-inspector__lyrics-line--active': line.active,
+          }"
         >
-          <template #trailing>
-            <UiStatusIcon
-              v-if="currentTrack"
-              :icon="Volume2"
-              tone="current"
-              :label="`目前播放：${currentTrack.title}`"
-              decorative
-            />
-          </template>
-
-          <div
-            v-if="currentTrack"
-            class="studio-context-inspector__now-identity"
-          >
-            <UiCollageThumb
-              class="studio-context-inspector__now-artwork"
-              :tracks="[currentTrack]"
-              :can-collage="false"
-              :size="nowPlayingCoverSize"
-              radius="var(--ui-radius-md)"
-            />
-            <div class="studio-context-inspector__now-copy">
-              <h4>{{ currentTrack.title }}</h4>
-              <p>{{ currentTrack.artist || '未知演出者' }}</p>
-            </div>
-          </div>
-          <UiHint v-else>目前沒有播放中的歌曲</UiHint>
-        </TrackContextBlock>
-
-        <TrackContextBlock
-          v-if="lyricsPreview?.lines?.length"
-          class="studio-context-inspector__section studio-context-inspector__lyrics"
-          heading="歌詞預覽"
-          tone="accent"
-        >
-          <div class="studio-context-inspector__lyrics-lines">
-            <p
-              v-for="line in lyricsPreview.lines"
-              :key="line.id"
-              :class="{
-                'studio-context-inspector__lyrics-line--active': line.active,
-              }"
-            >
-              {{ line.text }}
-            </p>
-          </div>
-          <p
-            v-if="lyricsPreview.sourceLabel"
-            class="studio-context-inspector__lyrics-source"
-          >
-            {{ lyricsPreview.sourceLabel }}
-          </p>
-        </TrackContextBlock>
-
-        <TrackContextBlock
-          v-if="collection"
-          class="studio-context-inspector__section studio-context-inspector__collection"
-          heading="播放來源"
-        >
-          <UiCollageThumb
-            class="studio-context-inspector__collection-cover"
-            :cover-url="collection.coverUrl"
-            :tracks="collection.tracks"
-            :can-collage="collection.canCollage"
-            :size="collectionCoverSize"
-          />
-          <div class="studio-context-inspector__collection-copy">
-            <h4>{{ collection.name }}</h4>
-            <p v-if="collection.description">{{ collection.description }}</p>
-          </div>
-        </TrackContextBlock>
-
-        <TrackContextBlock
-          v-if="artistSummary"
-          class="studio-context-inspector__section studio-context-inspector__artist"
-          heading="本機藝人"
-        >
-          <div class="studio-context-inspector__artist-summary">
-            <UiCollageThumb
-              :tracks="artistSummary.tracks"
-              :can-collage="false"
-              :size="ARTIST_COVER_SIZE"
-              radius="var(--ui-radius-pill)"
-            />
-            <div>
-              <h4>{{ artistSummary.name }}</h4>
-              <p>{{ artistSummaryText }}</p>
-            </div>
-          </div>
-        </TrackContextBlock>
-
-        <TrackContextBlock
-          v-if="upcomingTracks.length > 0"
-          class="studio-context-inspector__section studio-context-inspector__queue"
-          heading="接下來"
-        >
-          <template #trailing>
-            <UiChip tone="muted">{{ upcomingTracks.length }} 首</UiChip>
-          </template>
-          <ol
-            class="studio-context-inspector__queue-list"
-            :aria-label="queuePreviewLabel"
-          >
-            <UiTrackRow
-              v-for="(track, index) in upcomingPreviewTracks"
-              :key="track.id ?? `${track.title}-${index}`"
-              class="studio-context-inspector__queue-item"
-              :track="track"
-              :artist="formatUpcomingTrackMetadata(track)"
-              hide-duration
-              overflow="ellipsis"
-              thumb-loading="lazy"
-              thumb-decoding="async"
-            />
-          </ol>
-        </TrackContextBlock>
-
-        <TrackContextBlock
-          v-if="currentTrackFacts.length > 0 || readiness.length > 0"
-          class="studio-context-inspector__section studio-context-inspector__details"
-          heading="曲目資訊"
-        >
-          <dl v-if="currentTrackFacts.length > 0">
-            <div v-for="fact in currentTrackFacts" :key="fact.id">
-              <dt>{{ fact.label }}</dt>
-              <dd>{{ fact.value }}</dd>
-            </div>
-          </dl>
-          <ul
-            v-if="readiness.length > 0"
-            class="studio-context-inspector__readiness"
-            aria-label="素材狀態"
-          >
-            <li v-for="item in readiness" :key="item.id">
-              <UiChip :tone="item.tone">{{ item.label }}</UiChip>
-            </li>
-          </ul>
-        </TrackContextBlock>
+          {{ line.text }}
+        </p>
       </div>
-    </UiScrollRegion>
-  </section>
+      <p
+        v-if="lyricsPreview.sourceLabel"
+        class="studio-context-inspector__lyrics-source"
+      >
+        {{ lyricsPreview.sourceLabel }}
+      </p>
+    </AppRightDockSection>
+
+    <AppRightDockSection
+      v-if="collection"
+      class="studio-context-inspector__section studio-context-inspector__collection"
+      heading="播放來源"
+      divided
+    >
+      <UiCollageThumb
+        class="studio-context-inspector__collection-cover"
+        :cover-url="collection.coverUrl"
+        :tracks="collection.tracks"
+        :can-collage="collection.canCollage"
+        :size="COLLECTION_COVER_SIZE"
+      />
+      <div class="studio-context-inspector__collection-copy">
+        <h4>{{ collection.name }}</h4>
+        <p v-if="collection.description">{{ collection.description }}</p>
+      </div>
+    </AppRightDockSection>
+
+    <AppRightDockSection
+      v-if="artistSummary"
+      class="studio-context-inspector__section studio-context-inspector__artist"
+      heading="本機藝人"
+      divided
+    >
+      <div class="studio-context-inspector__artist-summary">
+        <UiCollageThumb
+          :tracks="artistSummary.tracks"
+          :can-collage="false"
+          :size="ARTIST_COVER_SIZE"
+          radius="var(--ui-radius-pill)"
+        />
+        <div>
+          <h4>{{ artistSummary.name }}</h4>
+          <p>{{ artistSummaryText }}</p>
+        </div>
+      </div>
+    </AppRightDockSection>
+
+    <AppRightDockSection
+      v-if="upcomingTracks.length > 0"
+      class="studio-context-inspector__section studio-context-inspector__queue"
+      heading="接下來"
+      divided
+    >
+      <template #trailing>
+        <UiChip tone="muted">{{ upcomingTracks.length }} 首</UiChip>
+      </template>
+      <ol
+        class="studio-context-inspector__queue-list"
+        :aria-label="queuePreviewLabel"
+      >
+        <UiTrackRow
+          v-for="(track, index) in upcomingPreviewTracks"
+          :key="track.id ?? `${track.title}-${index}`"
+          class="studio-context-inspector__queue-item"
+          :track="track"
+          :artist="formatUpcomingTrackMetadata(track)"
+          hide-duration
+          overflow="ellipsis"
+          thumb-loading="lazy"
+          thumb-decoding="async"
+        />
+      </ol>
+    </AppRightDockSection>
+
+    <AppRightDockSection
+      v-if="currentTrackFacts.length > 0 || readiness.length > 0"
+      class="studio-context-inspector__section studio-context-inspector__details"
+      heading="曲目資訊"
+      divided
+    >
+      <dl v-if="currentTrackFacts.length > 0">
+        <div v-for="fact in currentTrackFacts" :key="fact.id">
+          <dt>{{ fact.label }}</dt>
+          <dd>{{ fact.value }}</dd>
+        </div>
+      </dl>
+      <ul
+        v-if="readiness.length > 0"
+        class="studio-context-inspector__readiness"
+        aria-label="素材狀態"
+      >
+        <li v-for="item in readiness" :key="item.id">
+          <UiChip :tone="item.tone">{{ item.label }}</UiChip>
+        </li>
+      </ul>
+    </AppRightDockSection>
+  </AppRightDockPanel>
 </template>
 
 <style scoped>
-.studio-context-inspector {
-  display: flex;
-  min-width: 0;
-  min-height: 0;
-  height: 100%;
-  flex-direction: column;
-  color: var(--ui-color-text);
-}
-
-.studio-context-inspector__scroll {
-  min-height: 0;
-}
-
-.studio-context-inspector__blocks {
-  min-width: 0;
-  display: grid;
-  gap: var(--ui-space-2);
-  padding: var(--ui-right-dock-content-inset);
-}
-
-.studio-context-inspector__now-identity,
-.studio-context-inspector__now-copy,
+.studio-context-inspector__identity-list,
 .studio-context-inspector__lyrics-lines,
 .studio-context-inspector__collection,
 .studio-context-inspector__collection-copy,
@@ -301,24 +247,6 @@ function formatUpcomingTrackMetadata(track) {
   min-width: 0;
 }
 
-.studio-context-inspector__now-identity {
-  display: grid;
-  justify-items: start;
-  gap: var(--ui-space-3);
-}
-
-.studio-context-inspector__now-artwork {
-  max-width: 100%;
-  box-shadow: var(--ui-shadow-overlay);
-}
-
-.studio-context-inspector__now-copy {
-  display: grid;
-  gap: var(--ui-space-1);
-}
-
-.studio-context-inspector__now-copy h4,
-.studio-context-inspector__now-copy p,
 .studio-context-inspector__lyrics-lines p,
 .studio-context-inspector__lyrics-source,
 .studio-context-inspector__collection h4,
@@ -333,16 +261,6 @@ function formatUpcomingTrackMetadata(track) {
   margin: 0;
 }
 
-.studio-context-inspector__now-copy h4 {
-  overflow: hidden;
-  font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.studio-context-inspector__now-copy p,
 .studio-context-inspector__collection p,
 .studio-context-inspector__artist p {
   color: var(--ui-color-text-muted);
@@ -375,7 +293,8 @@ function formatUpcomingTrackMetadata(track) {
   line-height: var(--ui-line-height-caption);
 }
 
-.studio-context-inspector__collection {
+.studio-context-inspector__collection :deep(.app-right-dock-section__body) {
+  display: grid;
   justify-items: start;
 }
 
@@ -419,8 +338,10 @@ function formatUpcomingTrackMetadata(track) {
   min-width: 0;
 }
 
+.studio-context-inspector__identity-list,
 .studio-context-inspector__queue-list,
 .studio-context-inspector__readiness {
+  margin: 0;
   padding: 0;
   list-style: none;
 }
@@ -474,7 +395,7 @@ function formatUpcomingTrackMetadata(track) {
 }
 
 .studio-context-inspector__section :deep(.ui-hint),
-.studio-context-inspector__now-copy,
+.studio-context-inspector__identity-list :deep(.ui-track__info),
 .studio-context-inspector__lyrics-lines,
 .studio-context-inspector__lyrics-source,
 .studio-context-inspector__collection-copy,

@@ -13,6 +13,16 @@ export function previousFolderArtifactStackIndex(index, total) {
   return normalizeFolderArtifactStackIndex(index - 1, total);
 }
 
+const FOLDER_ARTIFACT_STACK_LAYOUT_VARIANTS = 4;
+
+export function getFolderArtifactStackLayoutVariant(index, total) {
+  if (total <= 1) return 0;
+  return (
+    normalizeFolderArtifactStackIndex(index, total) %
+    FOLDER_ARTIFACT_STACK_LAYOUT_VARIANTS
+  );
+}
+
 export function getFolderArtifactStackLayers(images, activeIndex = 0) {
   if (!Array.isArray(images) || images.length === 0) return [];
 

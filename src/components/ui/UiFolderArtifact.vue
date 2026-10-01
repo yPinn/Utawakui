@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import {
+  getFolderArtifactStackLayoutVariant,
   getFolderArtifactStackLayers,
   normalizeFolderArtifactStackIndex,
 } from '../../utils/folderArtifactStack.js';
@@ -33,6 +34,12 @@ const normalizedStackIndex = computed(() =>
 );
 const stackLayers = computed(() =>
   getFolderArtifactStackLayers(props.images, normalizedStackIndex.value),
+);
+const stackLayoutVariant = computed(() =>
+  getFolderArtifactStackLayoutVariant(
+    normalizedStackIndex.value,
+    props.images.length,
+  ),
 );
 const stackPositionLabel = computed(() =>
   props.images.length > 0
@@ -80,6 +87,7 @@ function handleStackLayerKeydown(layer, event) {
         tag="div"
         name="ui-folder-artifact-stack"
         class="ui-folder-artifact__stack-layers"
+        :data-stack-layout="stackLayoutVariant"
       >
         <figure
           v-for="entry in stackLayers"
@@ -232,6 +240,42 @@ function handleStackLayerKeydown(layer, event) {
   inset: var(--ui-space-2);
 }
 
+.ui-folder-artifact__stack-layers[data-stack-layout='0'] {
+  --ui-folder-artifact-stack-back-x: 0%;
+  --ui-folder-artifact-stack-back-y: 1%;
+  --ui-folder-artifact-stack-back-rotation: -5deg;
+  --ui-folder-artifact-stack-front-x: 24%;
+  --ui-folder-artifact-stack-front-y: 27%;
+  --ui-folder-artifact-stack-front-rotation: 2.75deg;
+}
+
+.ui-folder-artifact__stack-layers[data-stack-layout='1'] {
+  --ui-folder-artifact-stack-back-x: 2%;
+  --ui-folder-artifact-stack-back-y: 0%;
+  --ui-folder-artifact-stack-back-rotation: 4deg;
+  --ui-folder-artifact-stack-front-x: 23%;
+  --ui-folder-artifact-stack-front-y: 25%;
+  --ui-folder-artifact-stack-front-rotation: -3.25deg;
+}
+
+.ui-folder-artifact__stack-layers[data-stack-layout='2'] {
+  --ui-folder-artifact-stack-back-x: -1%;
+  --ui-folder-artifact-stack-back-y: 2%;
+  --ui-folder-artifact-stack-back-rotation: -3.25deg;
+  --ui-folder-artifact-stack-front-x: 26%;
+  --ui-folder-artifact-stack-front-y: 26%;
+  --ui-folder-artifact-stack-front-rotation: 4.25deg;
+}
+
+.ui-folder-artifact__stack-layers[data-stack-layout='3'] {
+  --ui-folder-artifact-stack-back-x: 1%;
+  --ui-folder-artifact-stack-back-y: -1%;
+  --ui-folder-artifact-stack-back-rotation: 5deg;
+  --ui-folder-artifact-stack-front-x: 25%;
+  --ui-folder-artifact-stack-front-y: 28%;
+  --ui-folder-artifact-stack-front-rotation: -2.5deg;
+}
+
 .ui-folder-artifact__stack-layer {
   position: absolute;
   z-index: 1;
@@ -253,12 +297,23 @@ function handleStackLayerKeydown(layer, event) {
 }
 
 .ui-folder-artifact__stack-layer--back {
-  transform: translate3d(0, 0, 0) rotate(-4deg) scale(0.98);
+  background-color: var(--ui-folder-artifact-photo-bg-back);
+  transform: translate3d(
+      var(--ui-folder-artifact-stack-back-x),
+      var(--ui-folder-artifact-stack-back-y),
+      0
+    )
+    rotate(var(--ui-folder-artifact-stack-back-rotation)) scale(0.98);
 }
 
 .ui-folder-artifact__stack-layer--front {
   z-index: 2;
-  transform: translate3d(22%, 24%, 0) rotate(3deg);
+  transform: translate3d(
+      var(--ui-folder-artifact-stack-front-x),
+      var(--ui-folder-artifact-stack-front-y),
+      0
+    )
+    rotate(var(--ui-folder-artifact-stack-front-rotation));
 }
 
 .ui-folder-artifact--stack img {

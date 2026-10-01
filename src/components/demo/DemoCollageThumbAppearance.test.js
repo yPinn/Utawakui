@@ -51,9 +51,7 @@ const trackCandidateSource = readSource('./DemoCandidateTrackThumb.vue');
 const trackFallbackSource = readSource('./trackThumbFallback.js');
 const activeTokenSource = readSource('../../styles/tokens.css');
 const dossierSource = readSource('../playlists/StudioLibraryDossierHeader.vue');
-const inspectorSource = readSource(
-  '../playlists/StudioLibraryContextInspector.vue',
-);
+const inspectorSource = readSource('../playlists/TrackContextPanel.vue');
 const setlistHeaderSource = readSource(
   '../playlists/SetlistPlaylistHeader.vue',
 );
@@ -397,15 +395,12 @@ describe('DemoCollageThumbAppearance', () => {
     expect(detailsModalSource).toContain(':size="120"');
     expect(setlistHeaderSource).toContain(':size="136"');
     // F8 retains the reviewed 280px comparison specimen. The playback-context
-    // inspector now shows the source playlist's own cover, scaled between
-    // the dossier header (88) and details modal (120) sizes as the panel's
-    // own draggable width changes — the only UiCollageThumb consumer whose
-    // container is user-resizable, so unlike every other call site it isn't
-    // one fixed number.
+    // panel uses the established details-modal cover size; shell resizing no
+    // longer changes child component recipes.
     expect(inspectorSource).toContain('UiCollageThumb');
-    expect(inspectorSource).toContain(':size="collectionCoverSize"');
-    expect(inspectorSource).toContain('COLLECTION_COVER_MIN = 88;');
-    expect(inspectorSource).toContain('COLLECTION_COVER_MAX = 120;');
+    expect(inspectorSource).toContain(':size="COLLECTION_COVER_SIZE"');
+    expect(inspectorSource).toContain('COLLECTION_COVER_SIZE = 120;');
+    expect(inspectorSource).not.toContain('useStudioLibraryInspectorWidth');
     expect(inspectorSource).toContain('UiTrackRow');
     expect(activeTokenSource).toContain('--ui-playlist-row-thumb-size: var(');
     expect(activeTokenSource).toContain('--ui-track-row-thumb-size');

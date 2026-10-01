@@ -17,19 +17,9 @@ const batchOneConsumers = [
     marker: 'class="app-playlist-sidebar__scroll"',
   },
   {
-    name: 'queue',
-    source: readSource('../queue/QueuePanel.vue'),
-    marker: 'class="queue-panel__scroll"',
-  },
-  {
     name: 'studio track table',
     source: readSource('../playlists/StudioLibraryTrackTable.vue'),
     marker: 'class="studio-track-table"',
-  },
-  {
-    name: 'studio context inspector',
-    source: readSource('../playlists/StudioLibraryContextInspector.vue'),
-    marker: 'class="studio-context-inspector__scroll"',
   },
   {
     name: 'settings',
@@ -77,10 +67,6 @@ const batchThreeConsumers = [
     source: readSource('../lyrics-provider/LyricsProviderReviewForm.vue'),
   },
   {
-    name: 'lyrics provider strata',
-    source: readSource('../lyrics-provider/LyricsProviderReviewStrata.vue'),
-  },
-  {
     name: 'output settings',
     source: readSource('../output/ObsOutputSettings.vue'),
   },
@@ -117,7 +103,7 @@ describe('UiScrollRegion production migration', () => {
 
   it('preserves padding and layout on explicit viewport classes', () => {
     const sidebarSource = batchOneConsumers[1].source;
-    const settingsSource = batchOneConsumers[5].source;
+    const settingsSource = batchOneConsumers[3].source;
     const utilitySource = readSource('../layout/AppUtilityFrame.vue');
 
     expect(sidebarSource).toContain(
@@ -146,18 +132,20 @@ describe('UiScrollRegion production migration', () => {
   });
 
   it('uses the exposed scroll API when Queue changes tabs', () => {
-    const queueSource = batchOneConsumers[2].source;
+    const queueSource = readSource('../queue/QueuePanel.vue');
+    const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
 
-    expect(queueSource).toContain('scrollElement.value?.scrollTo({ top: 0 })');
+    expect(queueSource).toContain('dockPanel.value?.scrollTo({ top: 0 })');
+    expect(dockPanelSource).toContain('defineExpose({ scrollTo })');
   });
 
   it('keeps headings outside each content scroll range', () => {
     const modalSource = batchTwoConsumers[0].source;
     const popoverSource = batchTwoConsumers[3].source;
-    const queueSource = batchOneConsumers[2].source;
-    const settingsSource = batchOneConsumers[5].source;
+    const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
+    const settingsSource = batchOneConsumers[3].source;
     const utilitySource = readSource('../layout/AppUtilityFrame.vue');
-    const trackTableSource = batchOneConsumers[3].source;
+    const trackTableSource = batchOneConsumers[2].source;
 
     expect(modalSource.indexOf('class="ui-modal__header"')).toBeLessThan(
       modalSource.indexOf('class="ui-modal__body"'),
@@ -165,8 +153,10 @@ describe('UiScrollRegion production migration', () => {
     expect(popoverSource.indexOf('class="ui-popover__header"')).toBeLessThan(
       popoverSource.indexOf('class="ui-popover__scroll"'),
     );
-    expect(queueSource.indexOf('class="queue-panel__chrome"')).toBeLessThan(
-      queueSource.indexOf('class="queue-panel__scroll"'),
+    expect(
+      dockPanelSource.indexOf('class="app-right-dock-panel__chrome"'),
+    ).toBeLessThan(
+      dockPanelSource.indexOf('class="app-right-dock-panel__scroll"'),
     );
     expect(settingsSource).not.toContain('class="settings-view__header"');
     expect(
@@ -177,6 +167,20 @@ describe('UiScrollRegion production migration', () => {
     ).toBeLessThan(
       trackTableSource.indexOf('class="studio-track-table__body-scroll"'),
     );
+  });
+
+  it('centralizes Right Dock scrolling in the shared panel compound', () => {
+    const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
+    const featureSources = [
+      readSource('../queue/QueuePanel.vue'),
+      readSource('../playlists/TrackContextPanel.vue'),
+    ];
+
+    expect(dockPanelSource).toContain('<UiScrollRegion');
+    for (const source of featureSources) {
+      expect(source).toContain('AppRightDockPanel');
+      expect(source).not.toContain('<UiScrollRegion');
+    }
   });
 
   it.each(batchTwoConsumers)(
@@ -216,8 +220,8 @@ describe('UiScrollRegion production migration', () => {
     const referenceSource = batchThreeConsumers[1].source;
     const benchmarkSource = batchThreeConsumers[2].source;
     const providerFormSource = batchThreeConsumers[5].source;
-    const splitLayoutSource = batchThreeConsumers[11].source;
-    const demoSource = batchThreeConsumers[12].source;
+    const splitLayoutSource = batchThreeConsumers[10].source;
+    const demoSource = batchThreeConsumers[11].source;
 
     expect(
       referenceSource.indexOf('class="reference-annotation__case-header"'),
@@ -240,6 +244,15 @@ describe('UiScrollRegion production migration', () => {
     expect(demoSource.indexOf('class="demo-view__index"')).toBeLessThan(
       demoSource.indexOf('class="demo-view__scroll"'),
     );
+  });
+
+  it('delegates lyrics provider strata overflow to the shared tabs primitive', () => {
+    const strataSource = readSource(
+      '../lyrics-provider/LyricsProviderReviewStrata.vue',
+    );
+
+    expect(strataSource).toContain('<UiTabs');
+    expect(strataSource).not.toMatch(/overflow(?:-x|-y)?:\s*(?:auto|scroll);/u);
   });
 
   it('limits native scrollbar suppression to the shared viewport', () => {

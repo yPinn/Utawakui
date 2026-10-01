@@ -2,9 +2,7 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue';
 import {
   Cable,
-  Captions,
   Headphones,
-  ListChecks,
   ListMusic,
   MicVocal,
   Pause,
@@ -52,15 +50,9 @@ defineProps({
   artworkControls: { type: String, default: undefined },
   queueExpanded: { type: Boolean, default: false },
   queueControls: { type: String, default: undefined },
-  separationExpanded: { type: Boolean, default: false },
-  separationControls: { type: String, default: undefined },
 });
 
-const emit = defineEmits([
-  'artworkActivate',
-  'queueActivate',
-  'separationActivate',
-]);
+const emit = defineEmits(['artworkActivate', 'queueActivate']);
 
 const {
   state,
@@ -92,7 +84,7 @@ const { state: metronomeState } = useMetronome();
 // PlayerBar is mounted exactly once for the app's lifetime, making this the
 // natural single place to wire the metronome to whatever track is loaded.
 useMetronomeTrackTempo();
-const { setActiveView } = useAppView();
+const { activeView, setActiveView } = useAppView();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const { devices: audioOutputDevices, monitorDeviceLabel } = useAudioOutput();
 const {
@@ -103,7 +95,6 @@ const {
   separate,
   selectPreset,
 } = useSeparation();
-
 const isPlayerToolsOpen = ref(false);
 const activeToolTab = ref('adjust');
 
@@ -208,9 +199,8 @@ const currentSeparationError = computed(() =>
 const selectedSeparationHasResult = computed(() =>
   Boolean(currentSeparationResults.value[selectedSeparationPresetId.value]),
 );
-const playerToolsActive = computed(
+const playerToolsEngaged = computed(
   () =>
-    isPlayerToolsOpen.value ||
     state.transposeSemitones !== 0 ||
     state.pitchCents !== 0 ||
     state.tempoRate !== 1 ||
@@ -223,7 +213,17 @@ const playerToolsActive = computed(
     isCurrentTrackSeparating.value ||
     metronomeState.isRunning,
 );
-
+const playerToolsLabel = computed(() => {
+  if (isPlayerToolsOpen.value) return '關閉演出工具';
+  return playerToolsEngaged.value
+    ? '開啟演出工具（功能啟用中）'
+    : '開啟演出工具';
+});
+const playerToolsTitle = computed(() =>
+  playerToolsEngaged.value && !isPlayerToolsOpen.value
+    ? '演出工具 · 啟用中'
+    : '演出工具',
+);
 function adjustTranspose(delta) {
   setTransposeSemitones(state.transposeSemitones + delta);
 }
@@ -492,11 +492,6 @@ function toggleQueuePanel() {
   isPlayerToolsOpen.value = false;
 }
 
-function toggleSeparationPanel() {
-  emit('separationActivate');
-  isPlayerToolsOpen.value = false;
-}
-
 function togglePlayerToolsPanel() {
   isPlayerToolsOpen.value = !isPlayerToolsOpen.value;
 }
@@ -626,67 +621,71 @@ onUnmounted(() => {
     </div>
 
     <div class="player-bar__extras">
-      <UiButton
-        :icon="MicVocal"
+      <UiIconButton
+        :icon="Cable"
         :active="state.captureGuideVocalOn"
         :disabled="!canQuickToggleCaptureGuideVocal"
         :class="{
           'player-bar__extras-slot--hidden': !canQuickToggleCaptureGuideVocal,
         }"
         :aria-hidden="!canQuickToggleCaptureGuideVocal"
-        :aria-label="
-          state.captureGuideVocalOn ? '關閉導唱(擷取)' : '開啟導唱(擷取)'
-        "
+        :label="state.captureGuideVocalOn ? '關閉導唱輸出' : '開啟導唱輸出'"
         :aria-pressed="state.captureGuideVocalOn"
-        title="快速開關導唱(擷取) (G)"
+        title="導唱輸出"
+        tooltip-suffix=" (G)"
         @click="toggleCaptureGuideVocal"
       />
 
-      <UiButton
-        :icon="SlidersHorizontal"
-        :active="playerToolsActive"
-        :aria-label="isPlayerToolsOpen ? '關閉演出工具' : '開啟演出工具'"
-        :aria-pressed="isPlayerToolsOpen"
-        title="演出工具"
-        @click="togglePlayerToolsPanel"
-      />
+      <div
+        class="player-bar__context-actions"
+        role="group"
+        aria-label="播放資訊"
+      >
+        <UiIconButton
+          :icon="MicVocal"
+          :disabled="!state.track"
+          label="查看目前歌曲歌詞"
+          title="歌詞"
+          :active="activeView === 'lyrics'"
+          :aria-current="activeView === 'lyrics' ? 'page' : undefined"
+          @click="showCurrentTrackLyrics"
+        />
 
-      <UiButton
-        :icon="Captions"
-        :disabled="!state.track"
-        aria-label="查看目前曲目歌詞"
-        title="歌詞"
-        @click="showCurrentTrackLyrics"
-      />
+        <UiIconButton
+          :icon="ListMusic"
+          :active="queueExpanded"
+          :label="queueExpanded ? '關閉播放佇列' : '開啟播放佇列'"
+          :aria-expanded="queueExpanded"
+          :aria-controls="queueControls"
+          title="播放佇列"
+          @click="toggleQueuePanel"
+        />
+      </div>
 
-      <UiButton
-        :icon="ListChecks"
-        :active="separationExpanded"
-        :aria-label="separationExpanded ? '關閉伴奏處理' : '開啟伴奏處理'"
-        :aria-pressed="separationExpanded"
-        :aria-expanded="separationExpanded"
-        :aria-controls="separationControls"
-        title="伴奏處理"
-        @click="toggleSeparationPanel"
-      />
-
-      <UiButton
-        :icon="ListMusic"
-        :active="queueExpanded"
-        :aria-label="queueExpanded ? '關閉播放佇列' : '開啟播放佇列'"
-        :aria-pressed="queueExpanded"
-        :aria-expanded="queueExpanded"
-        :aria-controls="queueControls"
-        title="播放佇列"
-        @click="toggleQueuePanel"
-      />
+      <div class="player-bar__performance-actions">
+        <UiIconButton
+          :icon="SlidersHorizontal"
+          :active="isPlayerToolsOpen"
+          :label="playerToolsLabel"
+          :aria-expanded="isPlayerToolsOpen"
+          aria-controls="player-tools-panel"
+          :title="playerToolsTitle"
+          @click="togglePlayerToolsPanel"
+        />
+        <span
+          v-if="playerToolsEngaged && !isPlayerToolsOpen"
+          class="player-bar__tools-marker"
+          aria-hidden="true"
+        />
+      </div>
 
       <div class="player-bar__volume">
-        <UiButton
+        <UiIconButton
           :icon="state.isMuted || state.volume === 0 ? VolumeX : Volume2"
-          :aria-label="state.isMuted ? '取消靜音' : '靜音'"
+          :label="state.isMuted ? '取消靜音' : '靜音'"
           :aria-pressed="state.isMuted"
-          title="靜音 / 取消靜音 (M)"
+          :title="state.isMuted ? '取消靜音' : '靜音'"
+          tooltip-suffix=" (M)"
           @click="toggleMute"
         />
         <input
@@ -698,11 +697,11 @@ onUnmounted(() => {
           aria-label="音量"
           :aria-valuetext="`${volumePercent}%`"
         />
-        <span class="player-bar__volume-value">{{ volumePercent }}%</span>
       </div>
     </div>
 
     <PlayerToolsPanel
+      id="player-tools-panel"
       v-model:active-tab="activeToolTab"
       :selected-separation-preset-id="selectedSeparationPresetId"
       :open="isPlayerToolsOpen"
@@ -895,14 +894,40 @@ onUnmounted(() => {
 }
 
 .player-bar__extras {
+  --ui-icon-button-size-override: var(--ui-player-bar-action-size);
+
   display: flex;
   align-items: center;
-  gap: var(--ui-space-1);
+  gap: var(--ui-player-bar-group-gap);
   /* Fixed to its own content width, like .player-bar__track — icon
      buttons and a volume slider have nothing to truncate, so this side
      must never be squeezed narrower than it needs. */
   flex: 0 0 auto;
   justify-content: flex-end;
+}
+
+.player-bar__context-actions,
+.player-bar__performance-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-player-bar-action-gap);
+}
+
+.player-bar__performance-actions {
+  position: relative;
+}
+
+.player-bar__tools-marker {
+  position: absolute;
+  top: 0;
+  right: 0;
+  box-sizing: border-box;
+  width: var(--ui-space-2);
+  height: var(--ui-space-2);
+  pointer-events: none;
+  border: var(--ui-border-width) solid var(--ui-color-surface);
+  border-radius: var(--ui-radius-pill);
+  background: var(--ui-color-accent);
 }
 
 /* visibility:hidden, not display:none — keeps the slot's layout box so
@@ -915,18 +940,18 @@ onUnmounted(() => {
 .player-bar__volume {
   display: flex;
   align-items: center;
-  gap: var(--ui-space-1);
+  gap: var(--ui-player-bar-action-gap);
 }
 
 .player-bar__volume input {
   width: var(--ui-player-bar-volume-slider-width);
+  margin: 0;
 }
 
-.player-bar__volume-value {
-  flex-shrink: 0;
-  width: 4ch;
-  text-align: right;
-  font-size: var(--ui-font-size-sm);
-  font-variant-numeric: tabular-nums;
+@media (forced-colors: active) {
+  .player-bar__tools-marker {
+    border-color: Canvas;
+    background: Highlight;
+  }
 }
 </style>

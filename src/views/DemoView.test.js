@@ -61,7 +61,7 @@ describe('DemoView scroll layout', () => {
     expect(header).toContain('同一正式 Ui* 實作');
     expect(header).toContain('不代表 View 核准');
     expect(header).toContain('正式遷移');
-    expect(header).toContain('8 個 section');
+    expect(header).toContain('9 個 section');
     expect(html.match(/data-review-status="reviewed"/g)).toHaveLength(2);
     expect(html.match(/data-review-status="partial"/g)).toHaveLength(5);
   });

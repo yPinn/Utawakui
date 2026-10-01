@@ -71,6 +71,24 @@ describe('shared UI interaction contracts', () => {
     app.unmount();
   });
 
+  it('preserves feedback for an actionable selected icon button and exposes the state in forced colors', () => {
+    const source = readFileSync(
+      new URL('./UiIconButton.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain(
+      '.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):hover',
+    );
+    expect(source).toContain(
+      '.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):active',
+    );
+    expect(source).toContain('@media (forced-colors: active)');
+    expect(source).toMatch(
+      /@media \(forced-colors: active\)[\s\S]*\.ui-icon-btn--active\s*\{[^}]*outline:[^;]*Highlight;/u,
+    );
+  });
+
   it('uses the semantic information glyph for informational notices', () => {
     const { app, root } = mount(UiNotice, {
       tone: 'info',

@@ -235,7 +235,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
         key: 'popover',
         title: '錨定浮層',
         components: ['UiPopover'],
-        reviewed: false,
+        adopted: true,
       },
     ],
   },

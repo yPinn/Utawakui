@@ -189,6 +189,24 @@ describe('shared field accessibility and data flow', () => {
     rangeMount.app.unmount();
   });
 
+  it('projects a mixed checkbox state without losing its accessible label', () => {
+    const checkboxMount = mount(UiCheckbox, {
+      id: 'select-visible',
+      label: '選取搜尋結果',
+      modelValue: false,
+      indeterminate: true,
+      labelHidden: true,
+    });
+    const checkbox = findAll(
+      checkboxMount.root,
+      (node) => node.type === 'input' && node.props.type === 'checkbox',
+    )[0];
+
+    expect(checkbox.props['aria-checked']).toBe('mixed');
+    expect(checkbox.props['aria-label']).toBe('選取搜尋結果');
+    checkboxMount.app.unmount();
+  });
+
   it('renders determinate and indeterminate progress with accessible names', () => {
     const determinate = mount(UiProgress, {
       label: '匯入進度',

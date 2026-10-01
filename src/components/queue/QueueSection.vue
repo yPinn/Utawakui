@@ -13,6 +13,8 @@ const props = defineProps({
   emptyText: { type: String, default: '' },
   selectedTrackId: { type: String, default: null },
   currentTrackId: { type: String, default: null },
+  playingTrackId: { type: String, default: null },
+  playerPlaying: { type: Boolean, default: false },
   draggableItems: { type: Boolean, default: false },
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
@@ -32,6 +34,7 @@ const props = defineProps({
 const emit = defineEmits([
   'selectTrack',
   'activateTrack',
+  'toggleTrackPlayback',
   'sectionTitleClick',
   'trackDragStart',
   'trackDragOver',
@@ -64,6 +67,7 @@ function openTrackMenu(track, payload) {
         <span class="queue-section__title-text">
           <UiTextButton
             v-if="titleJumpable"
+            class="queue-section__source-link"
             :text="title"
             :aria-label="titleLinkAriaLabel || `前往：${title}`"
             overflow="ellipsis"
@@ -84,20 +88,19 @@ function openTrackMenu(track, payload) {
         :key="track.id"
         class="queue-section__item"
         :class="{
-          'queue-section__item--dragging': draggingTrackId === track.id,
-          'queue-section__item--drop-before':
-            dropTargetTrackId === track.id && dropPosition === 'before',
-          'queue-section__item--drop-after':
-            dropTargetTrackId === track.id && dropPosition === 'after',
           'queue-section__item--draggable': draggableItems,
+          'queue-section__item--dragging': draggingTrackId === track.id,
         }"
         :track="track"
         :active="track.id === selectedTrackId"
         :current="track.id === currentTrackId"
+        :playing="playerPlaying && track.id === playingTrackId"
         :draggable="draggableItems"
         :menu-open="openMenuKey === `${menuContext}:${track.id}`"
+        :drop-position="dropTargetTrackId === track.id ? dropPosition : null"
         @select="emit('selectTrack', $event)"
         @activate="emit('activateTrack', $event)"
+        @toggle-playback="emit('toggleTrackPlayback', $event)"
         @open-menu="openTrackMenu(track, $event)"
         @drag-start="emit('trackDragStart', track, $event)"
         @drag-over="emit('trackDragOver', track, $event)"
@@ -152,55 +155,42 @@ function openTrackMenu(track, payload) {
   white-space: nowrap;
 }
 
+.queue-section__source-link :deep(.ui-text-btn__text) {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
 .queue-section__list {
   list-style: none;
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-1);
+  min-inline-size: 0;
   margin: 0;
   padding: 0;
 }
 
 .queue-section__item {
-  --queue-section-drop-indicator-offset: calc(
-    -1 * (var(--ui-focus-width) + var(--ui-border-width))
-  );
-
   position: relative;
+  inline-size: 100%;
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  box-sizing: border-box;
+}
+
+.queue-section__item:not(.queue-section__item--draggable) {
   content-visibility: auto;
   contain-intrinsic-block-size: var(--ui-track-row-min-height);
 }
 
-.queue-section__item--draggable {
+.queue-section__item--draggable.queue-track {
   cursor: grab;
+  -webkit-user-select: none;
   user-select: none;
 }
 
-.queue-section__item--draggable:active {
+.queue-section__item--dragging.queue-track {
   cursor: grabbing;
-}
-
-.queue-section__item--dragging {
   opacity: var(--ui-opacity-dragging);
-}
-
-.queue-section__item--drop-before::before,
-.queue-section__item--drop-after::after {
-  content: '';
-  position: absolute;
-  left: var(--ui-space-1);
-  right: var(--ui-space-1);
-  height: var(--ui-focus-width);
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-accent);
-  pointer-events: none;
-}
-
-.queue-section__item--drop-before::before {
-  top: var(--queue-section-drop-indicator-offset);
-}
-
-.queue-section__item--drop-after::after {
-  bottom: var(--queue-section-drop-indicator-offset);
 }
 </style>

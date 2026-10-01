@@ -56,7 +56,7 @@ const componentFiles = fs
 const metadataFeatureFiles = [
   '../components/layout/AppArchiveFrame.vue',
   '../components/playback/PlayerBarArtwork.vue',
-  '../components/playlists/StudioLibraryContextInspector.vue',
+  '../components/playlists/TrackContextPanel.vue',
 ].map((filename) => ({
   name: filename,
   source: fs.readFileSync(new URL(filename, import.meta.url), 'utf8'),

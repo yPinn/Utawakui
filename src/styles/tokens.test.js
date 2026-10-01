@@ -52,7 +52,7 @@ function contrastRatio(foreground, background) {
 // explicit theme-variant shadow tokens) are expected to differ between themes.
 const darkBlock = css.match(/:root\s*\{([\s\S]*?)\n\}/)[1];
 const lightBlock = css.match(
-  /\[data-ui-theme='light'\][\s\S]*?\{([\s\S]*?)\n\}/,
+  /:root\[data-ui-theme='light'\],\s*\.ui-theme-light\s*\{([\s\S]*?)\n\}/,
 )[1];
 
 // Deliberately theme-invariant, see the comments in tokens.css:

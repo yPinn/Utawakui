@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  getFolderArtifactStackLayoutVariant,
   getFolderArtifactStackLayers,
   nextFolderArtifactStackIndex,
   normalizeFolderArtifactStackIndex,
@@ -37,6 +38,17 @@ describe('folderArtifactStack', () => {
       { image: images[0], index: 0, layer: 'back' },
       { image: images[1], index: 1, layer: 'front' },
     ]);
+  });
+
+  it('assigns a stable layout variant from the normalized active image', () => {
+    expect(getFolderArtifactStackLayoutVariant(0, 4)).toBe(0);
+    expect(getFolderArtifactStackLayoutVariant(1, 4)).toBe(1);
+    expect(getFolderArtifactStackLayoutVariant(2, 4)).toBe(2);
+    expect(getFolderArtifactStackLayoutVariant(3, 4)).toBe(3);
+    expect(getFolderArtifactStackLayoutVariant(4, 4)).toBe(0);
+    expect(getFolderArtifactStackLayoutVariant(-1, 4)).toBe(3);
+    expect(getFolderArtifactStackLayoutVariant(8, 1)).toBe(0);
+    expect(getFolderArtifactStackLayoutVariant(0, 0)).toBe(0);
   });
 
   it('handles empty and single-photo stacks without duplicate layers', () => {

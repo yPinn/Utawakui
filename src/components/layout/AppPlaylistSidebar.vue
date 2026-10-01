@@ -105,7 +105,7 @@ function activateSetlistView() {
   box-sizing: border-box;
   height: 100%;
   background: var(--ui-color-surface);
-  /* Matches AppInnerPage/StudioLibraryContextInspector's own --ui-radius-sm
+  /* Matches AppInnerPage/TrackContextPanel's own --ui-radius-sm
      card corners. Safe alongside the container-type below — unlike a real
      border, radius doesn't change the content-box size. */
   border-radius: var(--ui-radius-sm);

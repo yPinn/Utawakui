@@ -33,7 +33,7 @@ function vueSources(directoryUrl) {
   });
 }
 
-describe('Token v2 action primitive adoption', () => {
+describe('Token v2 shared primitive adoption', () => {
   it('records review and production adoption as separate truths', () => {
     expect(UI_DEMO_ADOPTED_SECTION_KEYS).toEqual([
       'scrollbar',
@@ -44,6 +44,7 @@ describe('Token v2 action primitive adoption', () => {
       'icon-buttons',
       'text-button',
       'segmented-control',
+      'popover',
     ]);
   });
 

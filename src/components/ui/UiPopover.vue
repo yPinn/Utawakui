@@ -29,6 +29,16 @@ const props = defineProps({
     default: 'dialog',
     validator: (value) => ['dialog', 'region'].includes(value),
   },
+  panelStyle: {
+    type: [String, Array, Object],
+    default: undefined,
+  },
+  scrollAxis: {
+    type: String,
+    default: 'both',
+    validator: (value) => ['vertical', 'horizontal', 'both'].includes(value),
+  },
+  scrollAriaLabel: { type: String, default: '' },
 });
 
 const emit = defineEmits(['update:open', 'close']);
@@ -73,11 +83,16 @@ function requestClose(reason) {
   if (returnFocus?.focus) nextTick(() => returnFocus.focus());
 }
 
+function isRelatedFloatingSurface(target) {
+  return Boolean(target?.closest?.('.ui-context-menu'));
+}
+
 function handleOutsidePointer(event) {
   if (
     !props.open ||
     anchorRef.value?.contains(event.target) ||
-    panelRef.value?.contains(event.target)
+    panelRef.value?.contains(event.target) ||
+    isRelatedFloatingSurface(event.target)
   ) {
     return;
   }
@@ -85,14 +100,24 @@ function handleOutsidePointer(event) {
 }
 
 function handleKeydown(event) {
-  if (!props.open || event.key !== 'Escape') return;
+  if (
+    !props.open ||
+    event.key !== 'Escape' ||
+    isRelatedFloatingSurface(event.target)
+  ) {
+    return;
+  }
   event.preventDefault?.();
   event.stopPropagation?.();
   requestClose('escape');
 }
 
 function handleScroll(event) {
-  if (!props.open || panelRef.value?.contains(event.target)) {
+  if (
+    !props.open ||
+    panelRef.value?.contains(event.target) ||
+    isRelatedFloatingSurface(event.target)
+  ) {
     return;
   }
   requestClose('external-scroll');
@@ -136,7 +161,7 @@ onBeforeUnmount(() => {
       :role="props.role"
       :aria-label="props.ariaLabel"
       :aria-modal="props.role === 'dialog' ? 'false' : undefined"
-      :style="position"
+      :style="[props.panelStyle, position]"
     >
       <header v-if="$slots.header" class="ui-popover__header">
         <slot name="header" />
@@ -144,7 +169,9 @@ onBeforeUnmount(() => {
       <UiScrollRegion
         v-if="$slots.default"
         class="ui-popover__scroll"
-        axis="both"
+        :axis="props.scrollAxis"
+        :aria-label="props.scrollAriaLabel || undefined"
+        :tabindex="props.scrollAriaLabel ? 0 : undefined"
       >
         <div class="ui-popover__body">
           <slot />

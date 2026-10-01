@@ -5,6 +5,15 @@ describe('useAppRightDock', () => {
     vi.resetModules();
   });
 
+  it('limits the Dock to playback and metadata surfaces', async () => {
+    const module = await import('./useAppRightDock.js');
+    const dock = module.useAppRightDock();
+
+    expect(module).not.toHaveProperty('RIGHT_DOCK_SURFACE_SEPARATION');
+    expect(Object.keys(dock.surfaces)).toEqual(['metadata', 'queue']);
+    expect(Object.keys(dock.mountedSurfaces)).toEqual(['metadata', 'queue']);
+  });
+
   it('keeps metadata below queue and reveals it when queue is removed', async () => {
     const {
       RIGHT_DOCK_SURFACE_METADATA,
@@ -25,41 +34,6 @@ describe('useAppRightDock', () => {
     dock.hideSurface(RIGHT_DOCK_SURFACE_QUEUE);
     expect(dock.isExpanded.value).toBe(true);
     expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_METADATA);
-  });
-
-  it('keeps the accompaniment list above playback queue and reveals playback when closed', async () => {
-    const {
-      RIGHT_DOCK_SURFACE_QUEUE,
-      RIGHT_DOCK_SURFACE_SEPARATION,
-      useAppRightDock,
-    } = await import('./useAppRightDock.js');
-    const dock = useAppRightDock();
-
-    dock.showSurface(RIGHT_DOCK_SURFACE_QUEUE);
-    dock.showSurface(RIGHT_DOCK_SURFACE_SEPARATION);
-
-    expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_SEPARATION);
-    expect(dock.mountedSurfaces.separation).toBe(true);
-
-    dock.hideSurface(RIGHT_DOCK_SURFACE_SEPARATION);
-    expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_QUEUE);
-    expect(dock.isExpanded.value).toBe(true);
-  });
-
-  it('lets the playback trigger replace an open accompaniment list', async () => {
-    const {
-      RIGHT_DOCK_SURFACE_QUEUE,
-      RIGHT_DOCK_SURFACE_SEPARATION,
-      useAppRightDock,
-    } = await import('./useAppRightDock.js');
-    const dock = useAppRightDock();
-
-    dock.showSurface(RIGHT_DOCK_SURFACE_QUEUE);
-    dock.showSurface(RIGHT_DOCK_SURFACE_SEPARATION);
-    dock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE);
-
-    expect(dock.surfaces.separation).toBe(false);
-    expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_QUEUE);
   });
 
   it('collapses only after the final surface is removed', async () => {
@@ -194,24 +168,5 @@ describe('useAppRightDock', () => {
     expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_QUEUE);
     expect(dock.lastSurface.value).toBe(RIGHT_DOCK_SURFACE_QUEUE);
     expect(dock.isExpanded.value).toBe(true);
-  });
-
-  it('treats artwork as direct metadata navigation from the accompaniment list', async () => {
-    const {
-      RIGHT_DOCK_SURFACE_METADATA,
-      RIGHT_DOCK_SURFACE_QUEUE,
-      RIGHT_DOCK_SURFACE_SEPARATION,
-      useAppRightDock,
-    } = await import('./useAppRightDock.js');
-    const dock = useAppRightDock();
-
-    dock.showSurface(RIGHT_DOCK_SURFACE_QUEUE);
-    dock.showSurface(RIGHT_DOCK_SURFACE_SEPARATION);
-    dock.toggleSurface(RIGHT_DOCK_SURFACE_METADATA);
-
-    expect(dock.surfaces.metadata).toBe(true);
-    expect(dock.surfaces.queue).toBe(false);
-    expect(dock.surfaces.separation).toBe(false);
-    expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_METADATA);
   });
 });

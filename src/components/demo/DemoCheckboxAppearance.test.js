@@ -298,6 +298,8 @@ describe('DemoCheckboxAppearance', () => {
     );
     expect(componentSource).toContain('@container (max-width: 48rem)');
     expect(checkboxSource).not.toContain('data-checkbox-state');
-    expect(checkboxSource).not.toContain('indeterminate:');
+    expect(checkboxSource).toContain('indeterminate:');
+    expect(checkboxSource).toContain('labelHidden:');
+    expect(checkboxSource).toContain("indeterminate ? 'mixed'");
   });
 });

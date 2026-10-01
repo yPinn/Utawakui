@@ -301,8 +301,9 @@ const CURRENT_MAPPINGS = [
     sources: [
       'src/styles/tokens.css',
       'src/components/layout/AppRightDockHeader.vue',
+      'src/components/layout/AppRightDockPanel.vue',
       'src/components/queue/QueuePanel.vue',
-      'src/components/playlists/StudioLibraryContextInspector.vue',
+      'src/components/playlists/TrackContextPanel.vue',
     ],
     value: 'Right Dock 內容邊距固定 0.5rem／8 CSS px',
     status: 'Standard／Compact 固定；曲目內容再內縮 4px，狀態底板向外延伸 4px',

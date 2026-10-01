@@ -45,6 +45,15 @@ describe('UiSeparator', () => {
     app.unmount();
   });
 
+  it('offers an accent tone without changing separator geometry', () => {
+    const { app, root } = mount(UiSeparator, { tone: 'accent' });
+    const separator = separatorRoot(root);
+
+    expect(String(separator.props.class)).toContain('ui-separator--accent');
+    expect(String(separator.props.class)).toContain('ui-separator--horizontal');
+    app.unmount();
+  });
+
   it('uses existing semantic geometry and color tokens without owning spacing', () => {
     const source = readFileSync(
       new URL('./UiSeparator.vue', import.meta.url),
@@ -53,6 +62,9 @@ describe('UiSeparator', () => {
 
     expect(source).toContain('var(--ui-border-width)');
     expect(source).toContain('var(--ui-color-border)');
+    expect(source).toMatch(
+      /\.ui-separator--accent\s*\{[^}]*background:\s*var\(--ui-color-accent\);/su,
+    );
     expect(source).not.toMatch(/#[\da-f]{3,8}\b|rgba?\(|hsla?\(/iu);
     expect(source).not.toMatch(/margin(?:-\w+)?:/u);
     expect(source).not.toContain('@click');

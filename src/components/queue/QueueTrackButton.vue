@@ -1,19 +1,28 @@
 <script setup>
-import { Ellipsis, ICON_SIZE, Play } from '../../icons/index.js';
-import UiIconButton from '../ui/UiIconButton.vue';
+import { computed } from 'vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
+import RightDockTrackArtworkCue from './RightDockTrackArtworkCue.vue';
+import RightDockTrackMenuButton from './RightDockTrackMenuButton.vue';
 
-defineProps({
+const props = defineProps({
   track: { type: Object, required: true },
   active: { type: Boolean, default: false },
   current: { type: Boolean, default: false },
   draggable: { type: Boolean, default: false },
   menuOpen: { type: Boolean, default: false },
+  playing: { type: Boolean, default: false },
+  dropPosition: {
+    type: String,
+    default: null,
+    validator: (value) => value === null || ['before', 'after'].includes(value),
+  },
 });
 
 const emit = defineEmits([
   'select',
   'activate',
+  'togglePlayback',
   'openMenu',
   'dragStart',
   'dragOver',
@@ -21,81 +30,108 @@ const emit = defineEmits([
   'drop',
   'dragEnd',
 ]);
+
+const artworkActionLabel = computed(
+  () => `${props.playing ? '暫停' : '播放'}：${props.track.title}`,
+);
+
+const DRAG_EXCLUDED_ACTIONS = '.ui-icon-btn, .ui-track__artwork-action';
+let dragStartedFromAction = false;
+
+function isExcludedDragTarget(target) {
+  return Boolean(target?.closest?.(DRAG_EXCLUDED_ACTIONS));
+}
+
+function handlePointerDown(event) {
+  dragStartedFromAction = isExcludedDragTarget(event.target);
+}
+
+function resetDragOrigin() {
+  dragStartedFromAction = false;
+}
+
+function handleDragStart(event) {
+  if (dragStartedFromAction || isExcludedDragTarget(event.target)) {
+    event.preventDefault();
+    resetDragOrigin();
+    return;
+  }
+  emit('dragStart', event);
+}
+
+function handleDragEnd(event) {
+  resetDragOrigin();
+  emit('dragEnd', event);
+}
 </script>
 
 <template>
   <UiTrackRow
-    class="queue-track"
+    class="queue-track right-dock-track"
+    :class="{ 'right-dock-track--menu-open': menuOpen }"
     :track="track"
     :active="active"
     :current="current"
     interactive
     activate-on-enter
-    :draggable="draggable"
+    :action-label="`選取：${track.title}`"
     artwork-clickable
-    :artwork-label="`播放：${track.title}`"
+    :artwork-label="artworkActionLabel"
     hide-duration
     overflow="ellipsis"
     thumb-loading="lazy"
     thumb-decoding="async"
-    @click="emit('select', track)"
-    @dblclick="emit('activate', track)"
+    :draggable="draggable"
+    @row-click="emit('select', track)"
+    @row-dblclick="emit('activate', track)"
     @activate="emit('activate', track)"
-    @artwork-click="emit('activate', track)"
+    @artwork-click="emit('togglePlayback', track)"
     @contextmenu.prevent.stop="emit('openMenu', { track, event: $event })"
-    @dragstart="emit('dragStart', $event)"
+    @pointerdown="handlePointerDown"
+    @pointerup="resetDragOrigin"
+    @pointercancel="resetDragOrigin"
+    @dragstart="handleDragStart"
     @dragover="emit('dragOver', $event)"
     @dragleave="emit('dragLeave', $event)"
     @drop="emit('drop', $event)"
-    @dragend="emit('dragEnd', $event)"
+    @dragend="handleDragEnd"
   >
     <template #artworkOverlay>
-      <span class="queue-track__artwork-cue" aria-hidden="true">
-        <Play :size="ICON_SIZE" class="queue-track__artwork-icon" />
-      </span>
+      <RightDockTrackArtworkCue :playing="playing" />
     </template>
     <template #trail>
-      <UiIconButton
-        :icon="Ellipsis"
-        :label="`${track.title}的更多選項`"
-        aria-haspopup="menu"
-        :aria-expanded="menuOpen ? 'true' : 'false'"
-        @click.stop="emit('openMenu', { track, event: $event })"
+      <RightDockTrackMenuButton
+        :track-title="track.title"
+        :menu-open="menuOpen"
+        @open="emit('openMenu', { track, event: $event })"
+      />
+    </template>
+    <template #overlay>
+      <UiSeparator
+        v-if="dropPosition"
+        tone="accent"
+        class="queue-track__drop-indicator"
+        :class="`queue-track__drop-indicator--${dropPosition}`"
       />
     </template>
   </UiTrackRow>
 </template>
 
 <style scoped>
-.queue-track__artwork-cue {
+.queue-track__drop-indicator {
   position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  border-radius: inherit;
-  background: var(--ui-color-overlay-scrim);
-  color: var(--ui-color-overlay-contrast);
-  opacity: 0;
-  transition: opacity var(--ui-motion-duration-feedback)
-    var(--ui-motion-easing-standard);
+  inset-inline: 0;
+  z-index: 2;
+  pointer-events: none;
 }
 
-.queue-track__artwork-icon {
-  fill: currentColor;
+.queue-track__drop-indicator--before {
+  inset-block-start: calc(-0.5 * var(--ui-space-1));
+  transform: translateY(-50%);
 }
 
-.queue-track:hover .queue-track__artwork-cue,
-.queue-track:focus-within .queue-track__artwork-cue {
-  opacity: 1;
-}
-
-:global(:root[data-ui-motion='reduced']) .queue-track__artwork-cue {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .queue-track__artwork-cue {
-    transition: none;
-  }
+.queue-track__drop-indicator--after {
+  inset-block-end: calc(-0.5 * var(--ui-space-1));
+  transform: translateY(50%);
 }
 </style>

@@ -25,6 +25,10 @@ const iconButtonSource = readFileSync(
   new URL('./UiIconButton.vue', import.meta.url),
   'utf8',
 );
+const tooltipSurfaceSource = readFileSync(
+  new URL('./tooltip/UiTooltipSurface.vue', import.meta.url),
+  'utf8',
+);
 
 for (const [component, filename] of [
   [UiButton, './UiButton.vue'],
@@ -76,6 +80,15 @@ afterEach(() => {
 });
 
 describe('UiTooltip', () => {
+  it('sizes to its content before applying the shared maximum and viewport clamp', () => {
+    expect(tooltipSurfaceSource).toMatch(
+      /\.ui-tooltip\s*\{[^}]*inline-size:\s*max-content;[^}]*max-inline-size:\s*min\(/su,
+    );
+    expect(tooltipSurfaceSource).toMatch(
+      /\.ui-tooltip\s*\{[^}]*box-sizing:\s*border-box;/su,
+    );
+  });
+
   it('opens from hover after its delay, exposes describedby, and closes on Escape', async () => {
     const mounted = mount(
       UiTooltip,
@@ -269,9 +282,74 @@ describe('UiIconButton tooltip composition', () => {
     ).toBe('重新整理');
     mounted.app.unmount();
   });
+
+  it('keeps a caller-owned trailing action phrase intact while the title may wrap', async () => {
+    const mounted = mount(UiIconButton, {
+      icon: RefreshCw,
+      label: 'FAKE LOVE的更多選項',
+      title: 'FAKE LOVE',
+      tooltipSuffix: '的更多選項',
+    });
+    const button = findAll(mounted.root, (node) => node.type === 'button')[0];
+
+    trigger(button, 'onFocusin');
+    await nextTick();
+
+    const tooltip = findAll(body, (node) => node.props.role === 'tooltip')[0];
+    const suffix = findAll(
+      tooltip,
+      (node) => node.props.class === 'ui-tooltip__no-break',
+    )[0];
+    expect(textContent(tooltip)).toBe('FAKE LOVE的更多選項');
+    expect(textContent(suffix)).toBe('的更多選項');
+    expect(tooltipSurfaceSource).toMatch(
+      /\.ui-tooltip__no-break\s*\{[^}]*white-space:\s*nowrap;/su,
+    );
+    mounted.app.unmount();
+  });
 });
 
 describe('UiPopover', () => {
+  it('accepts bounded panel geometry and exposes one labelled vertical scroll body', async () => {
+    const panelStyle = {
+      minInlineSize: '20rem',
+      maxInlineSize: '24rem',
+      minBlockSize: '18rem',
+      maxBlockSize: '34rem',
+    };
+    mount(
+      UiPopover,
+      {
+        open: true,
+        ariaLabel: '伴奏處理',
+        panelStyle,
+        scrollAxis: 'vertical',
+        scrollAriaLabel: '伴奏處理清單',
+      },
+      {
+        trigger: ({ triggerProps }) => h('button', triggerProps, '伴奏'),
+        header: () => '固定操作',
+        default: () => h('div', '可捲動項目'),
+        footer: () => '固定底部',
+      },
+    );
+    await nextTick();
+
+    const panel = findAll(body, (node) => node.props.role === 'dialog')[0];
+    const scrollViewport = findAll(
+      body,
+      (node) => node.props.class === 'ui-scroll-region__viewport',
+    )[0];
+
+    expect(panel.props.style).toMatchObject(panelStyle);
+    expect(scrollViewport.props['aria-label']).toBe('伴奏處理清單');
+    expect(scrollViewport.props.tabindex).toBe(0);
+    expect(popoverSource).toContain(':axis="props.scrollAxis"');
+    expect(popoverSource).toContain(
+      "validator: (value) => ['vertical', 'horizontal', 'both'].includes(value)",
+    );
+  });
+
   it('provides interactive-panel header, body, and end-aligned footer regions', async () => {
     mount(
       UiPopover,

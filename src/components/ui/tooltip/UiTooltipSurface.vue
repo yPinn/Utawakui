@@ -2,6 +2,7 @@
 defineProps({
   open: { type: Boolean, default: false },
   text: { type: String, required: true },
+  suffix: { type: String, default: '' },
   detail: { type: String, default: '' },
   tooltipId: { type: String, required: true },
   position: { type: Object, required: true },
@@ -20,7 +21,12 @@ defineProps({
       :data-placement="placement"
       :style="position"
     >
-      <span class="ui-tooltip__label">{{ text }}</span>
+      <span class="ui-tooltip__label"
+        >{{ text
+        }}<span v-if="suffix" class="ui-tooltip__no-break">{{
+          suffix
+        }}</span></span
+      >
       <span v-if="detail" class="ui-tooltip__detail">{{ detail }}</span>
     </span>
   </Teleport>
@@ -30,6 +36,8 @@ defineProps({
 .ui-tooltip {
   position: fixed;
   z-index: var(--ui-z-tooltip);
+  box-sizing: border-box;
+  inline-size: max-content;
   max-inline-size: min(
     var(--ui-tooltip-max-inline-size),
     calc(100vw - (2 * var(--ui-floating-viewport-inset)))
@@ -53,6 +61,10 @@ defineProps({
 .ui-tooltip__label,
 .ui-tooltip__detail {
   display: block;
+}
+
+.ui-tooltip__no-break {
+  white-space: nowrap;
 }
 
 .ui-tooltip__detail {

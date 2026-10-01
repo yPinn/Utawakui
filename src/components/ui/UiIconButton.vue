@@ -10,6 +10,7 @@ const props = defineProps({
   icon: { type: [Object, Function], required: true },
   label: { type: String, required: true },
   title: { type: String, default: undefined },
+  tooltipSuffix: { type: String, default: '' },
   tooltipPlacement: {
     type: String,
     default: 'top',
@@ -81,6 +82,7 @@ function buttonAttrs(triggerProps) {
     <UiTooltipSurface
       :open="tooltipOpen"
       :text="titleText"
+      :suffix="tooltipSuffix"
       :tooltip-id="tooltipId"
       :position="tooltipPosition"
       :placement="tooltipPlacement"
@@ -168,6 +170,16 @@ function buttonAttrs(triggerProps) {
   color: var(--ui-color-accent);
 }
 
+.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):hover {
+  background: var(--ui-color-surface-hover);
+  color: var(--ui-color-accent);
+}
+
+.ui-icon-btn--ghost.ui-icon-btn--active:not(:disabled):active {
+  background: var(--ui-color-surface-active);
+  color: var(--ui-color-accent);
+}
+
 .ui-icon-btn--accent {
   background: var(--ui-color-accent);
   color: var(--ui-color-accent-contrast);
@@ -225,5 +237,20 @@ function buttonAttrs(triggerProps) {
 
 .ui-icon-btn--stretch:focus-visible {
   outline-offset: var(--ui-focus-offset-inset);
+}
+
+@media (forced-colors: active) {
+  .ui-icon-btn--active {
+    outline: var(--ui-border-width) solid Highlight;
+    outline-offset: var(--ui-focus-offset-inset);
+  }
+
+  .ui-icon-btn:focus-visible {
+    outline-color: Highlight;
+  }
+
+  .ui-icon-btn--active:focus-visible {
+    outline-width: var(--ui-focus-width);
+  }
 }
 </style>

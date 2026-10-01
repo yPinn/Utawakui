@@ -281,6 +281,11 @@
   --ui-folder-artifact-note-min-height: 11rem;
   --ui-folder-artifact-photo-frame: var(--ui-space-2);
   --ui-folder-artifact-photo-bg: var(--ui-color-surface-raised);
+  --ui-folder-artifact-photo-bg-back: color-mix(
+    in srgb,
+    var(--ui-folder-artifact-photo-bg) 90%,
+    var(--ui-color-canvas)
+  );
   --ui-folder-artifact-note-bg: color-mix(
     in srgb,
     var(--ui-color-accent-soft) 32%,
@@ -543,7 +548,16 @@
   --ui-player-bar-track-width: 15rem; /* 240px: stable now-playing region at common desktop widths */
   --ui-player-bar-track-width-min: 11rem; /* 176px: artwork plus readable one-line metadata */
   --ui-player-bar-center-max-width: 28rem; /* 448px: stable scrubber width at common desktop sizes */
-  --ui-player-bar-volume-slider-width: 5rem; /* 80px: compact desktop volume control */
+  --ui-player-bar-action-size: var(
+    --ui-space-6
+  ); /* 32px compact trailing action */
+  --ui-player-bar-action-gap: var(
+    --ui-space-1
+  ); /* 4px within a related control group */
+  --ui-player-bar-group-gap: var(
+    --ui-space-1
+  ); /* 4px between adjacent trailing controls */
+  --ui-player-bar-volume-slider-width: 5rem; /* 80px compact desktop volume control */
   --ui-player-bar-height: calc(
     var(--ui-player-bar-artwork-size) + var(--ui-player-bar-padding-block) +
       var(--ui-player-bar-padding-block)
@@ -601,6 +615,19 @@
   --ui-z-context-menu: var(--ui-z-popover); /* legacy alias */
   --ui-z-context-menu-submenu: 101;
   --ui-z-modal: var(--ui-z-dialog); /* legacy alias */
+}
+
+/* PlayerBar trailing controls explicitly adopt the saved density preference.
+   Keep this narrow: global control and row geometry remains fixed until each
+   surface has its own reviewed compact contract. */
+:root[data-ui-density='standard'] {
+  --ui-player-bar-action-size: 2.25rem; /* 36px */
+  --ui-player-bar-volume-slider-width: 6rem; /* 96px */
+}
+
+:root[data-ui-density='compact'] {
+  --ui-player-bar-action-size: var(--ui-space-6); /* 32px */
+  --ui-player-bar-volume-slider-width: 5rem; /* 80px */
 }
 
 /* Light theme: only color tokens are redefined — spacing, typography,

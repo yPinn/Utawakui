@@ -5,6 +5,11 @@ defineProps({
     default: 'horizontal',
     validator: (value) => ['horizontal', 'vertical'].includes(value),
   },
+  tone: {
+    type: String,
+    default: 'neutral',
+    validator: (value) => ['neutral', 'accent'].includes(value),
+  },
   decorative: { type: Boolean, default: true },
 });
 </script>
@@ -12,7 +17,7 @@ defineProps({
 <template>
   <span
     class="ui-separator"
-    :class="`ui-separator--${orientation}`"
+    :class="[`ui-separator--${orientation}`, `ui-separator--${tone}`]"
     :role="decorative ? undefined : 'separator'"
     :aria-hidden="decorative ? 'true' : undefined"
     :aria-orientation="decorative ? undefined : orientation"
@@ -36,5 +41,9 @@ defineProps({
   align-self: stretch;
   inline-size: var(--ui-border-width);
   block-size: auto;
+}
+
+.ui-separator--accent {
+  background: var(--ui-color-accent);
 }
 </style>

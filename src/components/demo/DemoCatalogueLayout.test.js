@@ -189,7 +189,7 @@ describe('F8 reviewed catalogue layout', () => {
       '待遷移元件維持 Candidate／Current 對照；已遷移元件則以同一正式 Ui* 實作',
     );
     expect(header).toContain('Foundation → UiModal＋UiScrollRegion');
-    expect(header).toContain('8 個 section');
+    expect(header).toContain('9 個 section');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(2);
     expect(viewSource).toMatch(
       /@media \(max-width: 58rem\)[\s\S]*\.demo-group__header\s*\{[^}]*grid-template-columns:\s*minmax\(0, 1fr\)/,

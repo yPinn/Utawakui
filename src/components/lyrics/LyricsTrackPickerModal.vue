@@ -171,10 +171,11 @@ function handleTrackSelect(track) {
           :active="track.id === state.selectedTrackId"
           :current="track.id === currentTrackId"
           interactive
+          :action-label="`選取：${track.title}`"
           hide-duration
           :title-clickable="jumpableTrackIds.has(track.id)"
           :title-aria-label="`前往專輯：${track.title}`"
-          @click="handleTrackSelect(track)"
+          @row-click="handleTrackSelect(track)"
           @title-click="jumpToAlbum(track)"
         >
           <template #trail>

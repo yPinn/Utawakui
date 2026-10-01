@@ -78,10 +78,31 @@ describe('useUiDensity', () => {
     expect(appSource).toContain('useUiDensity();');
   });
 
-  it('keeps density remapping isolated to the opt-in Token v2 system', () => {
+  it('limits production density adoption to PlayerBar trailing geometry', () => {
     expect(candidateTokensSource).toContain(
       ":root[data-ui-system='v2'][data-ui-density='compact']",
     );
-    expect(activeTokensSource).not.toContain('[data-ui-density=');
+
+    const standardBlock = activeTokensSource.match(
+      /:root\[data-ui-density='standard'\]\s*\{([^}]*)\}/su,
+    )?.[1];
+    const compactBlock = activeTokensSource.match(
+      /:root\[data-ui-density='compact'\]\s*\{([^}]*)\}/su,
+    )?.[1];
+
+    expect(standardBlock).toContain('--ui-player-bar-action-size: 2.25rem');
+    expect(standardBlock).toContain(
+      '--ui-player-bar-volume-slider-width: 6rem',
+    );
+    expect(compactBlock).toContain(
+      '--ui-player-bar-action-size: var(--ui-space-6)',
+    );
+    expect(compactBlock).toContain('--ui-player-bar-volume-slider-width: 5rem');
+
+    for (const block of [standardBlock, compactBlock]) {
+      expect(block).not.toContain('--ui-control-height:');
+      expect(block).not.toContain('--ui-row-height:');
+      expect(block).not.toContain('--ui-player-bar-height:');
+    }
   });
 });

@@ -3,7 +3,7 @@ import { renderToString } from '@vue/server-renderer';
 import { describe, expect, it } from 'vitest';
 import AppRightDock from './AppRightDock.vue';
 import AppRightDockHeader from './AppRightDockHeader.vue';
-import StudioLibraryContextInspector from '../playlists/StudioLibraryContextInspector.vue';
+import TrackContextPanel from '../playlists/TrackContextPanel.vue';
 import UiTextButton from '../ui/UiTextButton.vue';
 
 function render(component, props = {}, slots = {}) {
@@ -54,7 +54,7 @@ describe('Right Dock compiled render contracts', () => {
   });
 
   it('renders populated, minimal, and empty metadata projections', async () => {
-    const populated = await render(StudioLibraryContextInspector, {
+    const populated = await render(TrackContextPanel, {
       currentTrack: {
         id: 'current',
         title: '目前歌曲',
@@ -78,7 +78,7 @@ describe('Right Dock compiled render contracts', () => {
         duration: 180,
       })),
     });
-    const minimal = await render(StudioLibraryContextInspector, {
+    const minimal = await render(TrackContextPanel, {
       currentTrack: {
         id: 'minimal',
         title: '無附加資料',
@@ -94,7 +94,7 @@ describe('Right Dock compiled render contracts', () => {
       },
       upcomingTracks: [],
     });
-    const empty = await render(StudioLibraryContextInspector, {
+    const empty = await render(TrackContextPanel, {
       currentTrack: null,
       queueSourceName: '',
       collection: null,
@@ -108,7 +108,8 @@ describe('Right Dock compiled render contracts', () => {
     expect(minimal).toContain('無附加資料');
     expect(minimal).not.toContain('睡前慢歌');
     expect(empty).toContain('目前沒有播放中的歌曲');
-    expect(empty).toContain('佇列中沒有下一首');
+    expect(empty).toContain('尚未建立播放佇列');
+    expect(empty).not.toContain('接下來');
   });
 
   it('renders both Text Action overflow recipes', async () => {

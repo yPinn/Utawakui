@@ -104,7 +104,6 @@ describe('UI demo component order', () => {
       'skeleton',
       'notification-host',
       'tooltip',
-      'popover',
       'switch',
       'breadcrumb',
       'combobox',
@@ -117,7 +116,13 @@ describe('UI demo component order', () => {
       ).toBe(false);
     }
 
-    for (const key of ['separator', 'stack', 'surface', 'segmented-control']) {
+    for (const key of [
+      'separator',
+      'stack',
+      'surface',
+      'segmented-control',
+      'popover',
+    ]) {
       expect(
         UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
           (section) => section.key === key,

@@ -69,6 +69,7 @@ const candidateProductionReferences = filesUnder(
     (file) => !file.pathname.endsWith('/views/StudioLibraryPrototypeView.vue'),
   )
   .filter((file) => !file.pathname.endsWith('/views/DemoView.vue'))
+  .filter((file) => !file.pathname.endsWith('/views/InternalToolsView.vue'))
   .filter((file) => readFileSync(file, 'utf8').includes('tokens-v2.css'))
   .map((file) => file.pathname);
 
@@ -131,6 +132,12 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(visualSystemView).toContain(
       "import DemoView from './DemoView.vue';",
     );
+    expect(
+      readFileSync(
+        new URL('../views/InternalToolsView.vue', import.meta.url),
+        'utf8',
+      ),
+    ).toContain("import '../styles/tokens-v2.css'");
   });
 
   it('covers the approved theme, density, motion, and state matrix', () => {
@@ -169,7 +176,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(323);
+    expect(uniqueNames.size).toBe(324);
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');

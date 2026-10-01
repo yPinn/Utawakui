@@ -24,9 +24,10 @@ const consumerSources = [
   '../playlists/StudioLibraryTrackTable.vue',
   '../playback/PlayerBar.vue',
   '../playlists/StudioLibraryDossier.vue',
-  '../playlists/StudioLibraryContextInspector.vue',
+  '../playlists/TrackContextPanel.vue',
   '../layout/AppRightDock.vue',
   '../layout/AppRightDockHeader.vue',
+  '../layout/AppRightDockPanel.vue',
   '../queue/QueuePanel.vue',
   '../../views/DemoView.vue',
 ].map((filename) => ({
@@ -380,12 +381,21 @@ describe('DemoDensity', () => {
     expect(sourceByName.get('../layout/AppRightDockHeader.vue')).toContain(
       'padding: var(--ui-right-dock-content-inset)',
     );
-    expect(sourceByName.get('../queue/QueuePanel.vue')).toContain(
-      'padding: var(--ui-right-dock-content-inset)',
+    expect(sourceByName.get('../layout/AppRightDockPanel.vue')).toContain(
+      'padding-block: var(--ui-right-dock-content-inset)',
+    );
+    expect(sourceByName.get('../layout/AppRightDockPanel.vue')).toContain(
+      'padding-inline-start: var(--ui-right-dock-content-inset)',
+    );
+    expect(sourceByName.get('../layout/AppRightDockPanel.vue')).toContain(
+      'padding-inline-end: calc(',
+    );
+    expect(sourceByName.get('../queue/QueuePanel.vue')).not.toContain(
+      '--ui-right-dock-',
     );
     expect(
-      sourceByName.get('../playlists/StudioLibraryContextInspector.vue'),
-    ).toContain('padding: var(--ui-right-dock-content-inset)');
+      sourceByName.get('../playlists/TrackContextPanel.vue'),
+    ).not.toContain('--ui-right-dock-');
     // AppArchiveFrame.vue is production and no longer references this
     // Candidate-only token (see its own comment) — DemoView.vue is the
     // real, correctly v2-gated consumer instead.

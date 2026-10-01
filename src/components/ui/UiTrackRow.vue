@@ -20,6 +20,7 @@ const props = defineProps({
   // surface-selected background.
   current: { type: Boolean, default: false },
   interactive: { type: Boolean, default: false },
+  actionLabel: { type: String, default: undefined },
   // Lets a caller show its own duration inside #trail (e.g. after other
   // trailing badges) instead of the default duration-then-trail order.
   hideDuration: { type: Boolean, default: false },
@@ -51,11 +52,20 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(['titleClick', 'artworkClick', 'activate']);
+const emit = defineEmits([
+  'titleClick',
+  'artworkClick',
+  'rowClick',
+  'rowDblclick',
+  'activate',
+]);
 
 const displayTitle = computed(() => props.title ?? props.track?.title);
 const displayArtist = computed(() => props.artist ?? props.track?.artist);
 const displayDuration = computed(() => props.track?.duration);
+const resolvedActionLabel = computed(
+  () => props.actionLabel || displayTitle.value || undefined,
+);
 // title/artist props can override the track's own fields, so the thumb
 // initial must derive from displayTitle, not track.title directly.
 const thumbTrack = computed(() => ({
@@ -64,19 +74,17 @@ const thumbTrack = computed(() => ({
   thumbnailUrl: props.track?.thumbnailUrl,
 }));
 
-// `@click` is caller-bound attrs fallthrough, not a declared emit, so
-// replaying a real click is simpler than adding a parallel event contract.
-function handleKeydown(event) {
+function activateFromRowContent(event) {
   if (!props.interactive) return;
-  // Skip nested interactive children (artwork/title actions, lead/trail slots).
-  if (event.target !== event.currentTarget) return;
-  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const selection = event.view?.getSelection?.();
+  if (selection && !selection.isCollapsed) return;
+  emit('rowClick', event);
+}
+
+function handleActionKeydown(event) {
+  if (event.key !== 'Enter' || !props.activateOnEnter) return;
   event.preventDefault();
-  if (event.key === 'Enter' && props.activateOnEnter) {
-    emit('activate', event);
-    return;
-  }
-  event.currentTarget.click();
+  emit('activate', event);
 }
 </script>
 
@@ -88,13 +96,25 @@ function handleKeydown(event) {
       'ui-track--current': current,
       'ui-track--interactive': interactive,
     }"
-    :tabindex="interactive ? 0 : undefined"
-    :role="interactive ? 'button' : undefined"
-    :aria-pressed="interactive ? active : undefined"
     :aria-current="current ? 'true' : undefined"
-    @keydown="handleKeydown"
   >
-    <slot name="lead" />
+    <button
+      v-if="interactive"
+      type="button"
+      class="ui-track__action"
+      :aria-label="resolvedActionLabel"
+      @click="emit('rowClick', $event)"
+      @dblclick="emit('rowDblclick', $event)"
+      @keydown="handleActionKeydown"
+    ></button>
+    <span
+      v-if="$slots.lead"
+      class="ui-track__lead"
+      @click="activateFromRowContent"
+      @dblclick="emit('rowDblclick', $event)"
+    >
+      <slot name="lead" />
+    </span>
     <button
       v-if="artworkClickable"
       type="button"
@@ -120,14 +140,19 @@ function handleKeydown(event) {
       :loading="thumbLoading"
       :decoding="thumbDecoding"
     />
-    <div class="ui-track__info">
+    <div
+      class="ui-track__info"
+      @click="activateFromRowContent"
+      @dblclick="emit('rowDblclick', $event)"
+    >
       <UiTextButton
         v-if="titleClickable"
         class="ui-track__title"
         :text="displayTitle"
         :aria-label="titleAriaLabel"
         :overflow="overflow"
-        @click="emit('titleClick')"
+        @click.stop="emit('titleClick')"
+        @dblclick.stop
       />
       <UiMarqueeText
         v-else-if="overflow === 'marquee'"
@@ -148,7 +173,15 @@ function handleKeydown(event) {
     <span v-if="displayDuration && !hideDuration" class="ui-track__duration">{{
       formatDuration(displayDuration)
     }}</span>
-    <slot name="trail" />
+    <span
+      v-if="$slots.trail"
+      class="ui-track__trail"
+      @click="activateFromRowContent"
+      @dblclick="emit('rowDblclick', $event)"
+    >
+      <slot name="trail" />
+    </span>
+    <slot name="overlay" />
   </li>
 </template>
 
@@ -180,22 +213,59 @@ function handleKeydown(event) {
   cursor: pointer;
 }
 
-.ui-track--interactive:hover::before {
-  background: var(--ui-color-surface-hover);
-}
-
 .ui-track--active {
   color: var(--ui-color-text);
 }
 
 .ui-track--active::before {
-  background: var(--ui-color-surface-selected);
-  box-shadow: var(--ui-row-active-shadow);
+  background: var(
+    --ui-track-row-selected-surface,
+    var(--ui-color-surface-selected)
+  );
+  box-shadow: var(--ui-track-row-active-shadow, var(--ui-row-active-shadow));
 }
 
-.ui-track--interactive:focus-visible {
+.ui-track__action {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.ui-track--interactive:not(.ui-track--active) .ui-track__action:hover {
+  background: var(--ui-color-surface-hover);
+}
+
+.ui-track__action:active {
+  background: var(--ui-color-surface-active);
+}
+
+.ui-track__action:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset-inset);
+}
+
+.ui-track__lead,
+.ui-track__artwork-action,
+.ui-track__thumb,
+.ui-track__info,
+.ui-track__duration,
+.ui-track__trail {
+  position: relative;
+  z-index: 1;
+}
+
+.ui-track__lead,
+.ui-track__trail {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ui-space-1);
 }
 
 .ui-track__artwork-action {
@@ -253,5 +323,10 @@ function handleKeydown(event) {
   flex-shrink: 0;
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
+}
+
+.ui-track--interactive .ui-track__thumb,
+.ui-track--interactive .ui-track__duration {
+  pointer-events: none;
 }
 </style>

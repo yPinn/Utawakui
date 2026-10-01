@@ -1,11 +1,11 @@
 <script setup>
-import { useAttrs, useTemplateRef } from 'vue';
+import { useAttrs, useTemplateRef, watchEffect } from 'vue';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
 
 defineOptions({ inheritAttrs: false });
 
-defineProps({
+const props = defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
   modelValue: { type: Boolean, default: false },
@@ -14,11 +14,19 @@ defineProps({
   required: { type: Boolean, default: false },
   disabled: { type: Boolean, default: false },
   invalid: { type: Boolean, default: false },
+  indeterminate: { type: Boolean, default: false },
+  labelHidden: { type: Boolean, default: false },
 });
 
 const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
 const checkboxRef = useTemplateRef('checkbox');
+
+watchEffect(() => {
+  if (checkboxRef.value) {
+    checkboxRef.value.indeterminate = props.indeterminate;
+  }
+});
 
 function focus() {
   checkboxRef.value?.focus();
@@ -38,6 +46,7 @@ defineExpose({ focus });
     :described-by="attrs['aria-describedby']"
     :required="required"
     :invalid="invalid"
+    :label-hidden="labelHidden"
     inline
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
@@ -48,6 +57,8 @@ defineExpose({ focus });
         class="ui-checkbox"
         type="checkbox"
         :checked="modelValue"
+        :aria-checked="indeterminate ? 'mixed' : undefined"
+        :aria-label="attrs['aria-label'] || (labelHidden ? label : undefined)"
         :required="required"
         :disabled="disabled"
         :aria-describedby="describedBy"

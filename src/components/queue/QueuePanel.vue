@@ -12,13 +12,12 @@ import { toPlayableTrack } from '../../utils/playableTrack.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { TRACK_MENU_ACTIONS } from '../../utils/playlistMenu.js';
 import TrackMetadataModal from '../library/TrackMetadataModal.vue';
-import AppRightDockHeader from '../layout/AppRightDockHeader.vue';
+import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
 import TrackActionMenu from '../track/TrackActionMenu.vue';
 import QueueSection from './QueueSection.vue';
 import RecentPlaybackList from './RecentPlaybackList.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiHint from '../ui/UiHint.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTabs from '../ui/UiTabs.vue';
 
 defineProps({
@@ -27,7 +26,11 @@ defineProps({
 
 const emit = defineEmits(['close']);
 
-const { playTrack } = usePlayer();
+const {
+  state: playerState,
+  playTrack,
+  toggle: togglePlayerPlayback,
+} = usePlayer();
 const {
   state,
   currentTrack,
@@ -48,22 +51,17 @@ const {
 const { refresh: refreshLibrary } = useLibrary();
 const { albumForTrack, jumpToAlbum, jumpToPlaylist } = useAlbumNavigation();
 const trackMetadataEditor = useTrackMetadataEditor({ refresh: refreshLibrary });
-const {
-  state: playbackHistoryState,
-  recentItems,
-  clear: clearRecentPlayback,
-} = usePlaybackHistory();
+const { state: playbackHistoryState, recentItems } = usePlaybackHistory();
 const { activateRecentEntry } = useRecentPlaybackActivation();
 const tabs = [
   { id: 'queue', label: '佇列' },
   { id: 'recent', label: '最近播放' },
 ];
 const activeTab = shallowRef('queue');
-const hasScrolled = shallowRef(false);
 const selectedTrackId = shallowRef(null);
 const selectedRecentEntryKey = shallowRef(null);
 const trackMenu = shallowRef(null);
-const scrollElement = useTemplateRef('scroll');
+const dockPanel = useTemplateRef('dockPanel');
 
 const currentTracks = computed(() =>
   currentTrack.value ? [currentTrack.value] : [],
@@ -157,13 +155,8 @@ function selectTab(tabId) {
   closeTrackMenu();
   activeTab.value = tabId;
   nextTick(() => {
-    scrollElement.value?.scrollTo({ top: 0 });
-    hasScrolled.value = false;
+    dockPanel.value?.scrollTo({ top: 0 });
   });
-}
-
-function updateScrollState(event) {
-  hasScrolled.value = event.currentTarget.scrollTop > 0;
 }
 
 function playCurrentTrack(track) {
@@ -173,6 +166,32 @@ function playCurrentTrack(track) {
 function playQueuedTrack(track, options = {}) {
   setCurrentTrack(track.id, options);
   playTrack(toPlayableTrack(track));
+}
+
+function toggleTrackPlayback(track, activateTrack) {
+  if (playerState.track?.id === track.id) {
+    togglePlayerPlayback();
+    return;
+  }
+  activateTrack(track);
+}
+
+function toggleCurrentTrackPlayback(track) {
+  toggleTrackPlayback(track, playCurrentTrack);
+}
+
+function toggleQueuedTrackPlayback(track, options = {}) {
+  toggleTrackPlayback(track, (nextTrack) =>
+    playQueuedTrack(nextTrack, options),
+  );
+}
+
+function toggleRecentEntryPlayback(entry) {
+  if (playerState.track?.id === entry.track.id) {
+    togglePlayerPlayback();
+    return;
+  }
+  activateRecentEntry(entry);
 }
 
 function jumpToUpcomingSource() {
@@ -215,220 +234,196 @@ const {
 </script>
 
 <template>
-  <section class="queue-panel" aria-label="播放清單">
-    <TrackMetadataModal
-      :open="trackMetadataEditor.isOpen.value"
-      :title="trackMetadataEditor.state.titleDraft"
-      :artist="trackMetadataEditor.state.artistDraft"
-      :thumbnail-url="trackMetadataEditor.state.track?.thumbnailUrl ?? ''"
-      :saving="trackMetadataEditor.state.isSaving"
-      :artwork-saving="trackMetadataEditor.state.isArtworkSaving"
-      :artwork-searching="trackMetadataEditor.state.isArtworkSearching"
-      :artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"
-      :artwork-search-completed="
-        trackMetadataEditor.state.artworkSearchCompleted
-      "
-      :artwork-query="trackMetadataEditor.state.artworkQuery"
-      :artwork-candidates="trackMetadataEditor.state.artworkCandidates"
-      :selected-artwork-candidate-id="
-        trackMetadataEditor.state.selectedArtworkCandidateId
-      "
-      :error="trackMetadataEditor.state.error ?? ''"
-      @close="trackMetadataEditor.close"
-      @save="trackMetadataEditor.save"
-      @choose-thumbnail="trackMetadataEditor.chooseThumbnail"
-      @clear-thumbnail="trackMetadataEditor.clearThumbnail"
-      @open-artwork-search="trackMetadataEditor.openArtworkSearch"
-      @close-artwork-search="trackMetadataEditor.closeArtworkSearch"
-      @update-artwork-query="trackMetadataEditor.setArtworkQueryField"
-      @search-artwork="trackMetadataEditor.searchArtwork"
-      @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
-      @apply-artwork="trackMetadataEditor.applySelectedArtwork"
-      @update-title="trackMetadataEditor.setTitleDraft"
-      @update-artist="trackMetadataEditor.setArtistDraft"
-    />
+  <AppRightDockPanel
+    ref="dockPanel"
+    class="queue-panel"
+    title="播放清單"
+    close-label="關閉播放佇列"
+    aria-label="播放清單"
+    @close="emit('close')"
+  >
+    <template #overlay>
+      <TrackMetadataModal
+        :open="trackMetadataEditor.isOpen.value"
+        :title="trackMetadataEditor.state.titleDraft"
+        :artist="trackMetadataEditor.state.artistDraft"
+        :thumbnail-url="trackMetadataEditor.state.track?.thumbnailUrl ?? ''"
+        :saving="trackMetadataEditor.state.isSaving"
+        :artwork-saving="trackMetadataEditor.state.isArtworkSaving"
+        :artwork-searching="trackMetadataEditor.state.isArtworkSearching"
+        :artwork-search-open="trackMetadataEditor.state.artworkSearchOpen"
+        :artwork-search-completed="
+          trackMetadataEditor.state.artworkSearchCompleted
+        "
+        :artwork-query="trackMetadataEditor.state.artworkQuery"
+        :artwork-candidates="trackMetadataEditor.state.artworkCandidates"
+        :selected-artwork-candidate-id="
+          trackMetadataEditor.state.selectedArtworkCandidateId
+        "
+        :error="trackMetadataEditor.state.error ?? ''"
+        @close="trackMetadataEditor.close"
+        @save="trackMetadataEditor.save"
+        @choose-thumbnail="trackMetadataEditor.chooseThumbnail"
+        @clear-thumbnail="trackMetadataEditor.clearThumbnail"
+        @open-artwork-search="trackMetadataEditor.openArtworkSearch"
+        @close-artwork-search="trackMetadataEditor.closeArtworkSearch"
+        @update-artwork-query="trackMetadataEditor.setArtworkQueryField"
+        @search-artwork="trackMetadataEditor.searchArtwork"
+        @select-artwork-candidate="trackMetadataEditor.selectArtworkCandidate"
+        @apply-artwork="trackMetadataEditor.applySelectedArtwork"
+        @update-title="trackMetadataEditor.setTitleDraft"
+        @update-artist="trackMetadataEditor.setArtistDraft"
+      />
+
+      <TrackActionMenu
+        :open="Boolean(trackMenu)"
+        :x="trackMenu?.x ?? 0"
+        :y="trackMenu?.y ?? 0"
+        :align-x="trackMenu?.alignX ?? 'left'"
+        :track="trackMenu?.track ?? null"
+        :context="trackMenu?.context ?? 'default'"
+        :playlists="playlistState.playlists"
+        :current-track-id="state.currentTrackId ?? ''"
+        :queued-track-ids="queuedTrackIds"
+        :can-go-to-album="
+          Boolean(trackMenu?.track && albumForTrack(trackMenu.track))
+        "
+        @select="handleTrackMenuSelect"
+        @close="closeTrackMenu"
+      />
+    </template>
+
+    <template #identity>
+      <UiTabs
+        :items="tabs"
+        :active-id="activeTab"
+        aria-label="播放清單檢視"
+        tab-id-prefix="queue-panel"
+        panel-id-prefix="queue-panel"
+        variant="bar"
+        @update:active-id="selectTab"
+      />
+    </template>
 
     <div
-      class="queue-panel__chrome"
-      :class="{ 'queue-panel__chrome--scrolled': hasScrolled }"
+      v-show="activeTab === 'queue'"
+      id="queue-panel-queue-panel"
+      class="queue-panel__content"
+      role="tabpanel"
+      aria-labelledby="queue-panel-queue-tab"
+      tabindex="0"
     >
-      <AppRightDockHeader
-        title="播放清單"
-        close-label="關閉播放佇列"
-        @close="emit('close')"
-      >
-        <template #identity>
-          <UiTabs
-            :items="tabs"
-            :active-id="activeTab"
-            aria-label="播放清單檢視"
-            tab-id-prefix="queue-panel"
-            panel-id-prefix="queue-panel"
-            variant="bar"
-            @update:active-id="selectTab"
-          />
-        </template>
-      </AppRightDockHeader>
-    </div>
+      <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
 
-    <UiScrollRegion
-      ref="scroll"
-      class="queue-panel__scroll"
-      axis="vertical"
-      @scroll="updateScrollState"
-    >
-      <div
-        v-show="activeTab === 'queue'"
-        id="queue-panel-queue-panel"
-        class="queue-panel__content"
-        role="tabpanel"
-        aria-labelledby="queue-panel-queue-tab"
-        tabindex="0"
-      >
-        <UiHint v-if="!hasQueue">尚未建立播放佇列</UiHint>
-
-        <div v-else class="queue-panel__sections">
-          <QueueSection
-            title="現正播放"
-            menu-context="current"
-            :tracks="currentTracks"
-            :selected-track-id="selectedTrackId"
-            :current-track-id="state.currentTrackId"
-            :open-menu-key="openTrackMenuKey"
-            @select-track="selectQueueTrack"
-            @activate-track="playCurrentTrack"
-            @open-track-menu="openTrackMenu"
-          />
-
-          <QueueSection
-            v-if="queuedTracks.length > 0"
-            title="佇列中下一首"
-            menu-context="queued"
-            :tracks="queuedTracks"
-            :selected-track-id="selectedTrackId"
-            :open-menu-key="openTrackMenuKey"
-            :draggable-items="queuedTracks.length > 1"
-            :dragging-track-id="draggingQueuedTrackId"
-            :drop-target-track-id="dropTargetQueuedTrackId"
-            :drop-position="queuedDropPosition"
-            @select-track="selectQueueTrack"
-            @activate-track="playQueuedTrack($event, { source: false })"
-            @open-track-menu="openTrackMenu"
-            @track-drag-start="startQueuedDrag"
-            @track-drag-over="updateQueuedDropTarget"
-            @track-drag-leave="leaveQueuedDropTarget"
-            @track-drop="dropQueuedTrack"
-            @track-drag-end="clearQueuedDragState"
-          >
-            <template #actions>
-              <UiButton @click="clearQueuedTracks">清除佇列</UiButton>
-            </template>
-          </QueueSection>
-
-          <QueueSection
-            title-prefix="下一首來自："
-            :title="upcomingSourceLabel"
-            menu-context="source"
-            :tracks="sourceUpcomingTracks"
-            :selected-track-id="selectedTrackId"
-            :open-menu-key="openTrackMenuKey"
-            :draggable-items="sourceUpcomingTracks.length > 1"
-            :dragging-track-id="draggingSourceTrackId"
-            :drop-target-track-id="dropTargetSourceTrackId"
-            :drop-position="sourceDropPosition"
-            :title-jumpable="Boolean(upcomingSourcePlaylist)"
-            :title-link-aria-label="upcomingSourceLinkLabel"
-            empty-text="沒有下一首"
-            @select-track="selectQueueTrack"
-            @activate-track="playQueuedTrack($event, { source: true })"
-            @open-track-menu="openTrackMenu"
-            @section-title-click="jumpToUpcomingSource"
-            @track-drag-start="startSourceDrag"
-            @track-drag-over="updateSourceDropTarget"
-            @track-drag-leave="leaveSourceDropTarget"
-            @track-drop="dropSourceTrack"
-            @track-drag-end="clearSourceDragState"
-          />
-        </div>
-      </div>
-
-      <div
-        v-show="activeTab === 'recent'"
-        id="queue-panel-recent-panel"
-        class="queue-panel__content"
-        role="tabpanel"
-        aria-labelledby="queue-panel-recent-tab"
-        tabindex="0"
-      >
-        <RecentPlaybackList
-          :entries="recentItems"
-          :loading="!playbackHistoryState.isInitialized"
-          :error="playbackHistoryState.error"
-          :selected-entry-key="selectedRecentEntryKey"
+      <div v-else class="queue-panel__sections">
+        <QueueSection
+          title="現正播放"
+          menu-context="current"
+          :tracks="currentTracks"
+          :selected-track-id="selectedTrackId"
           :current-track-id="state.currentTrackId"
+          :playing-track-id="playerState.track?.id ?? null"
+          :player-playing="playerState.isPlaying"
           :open-menu-key="openTrackMenuKey"
-          @select-entry="selectRecentEntry"
-          @activate-entry="activateRecentEntry"
+          @select-track="selectQueueTrack"
+          @activate-track="playCurrentTrack"
+          @toggle-track-playback="toggleCurrentTrackPlayback"
           @open-track-menu="openTrackMenu"
-          @clear="clearRecentPlayback"
+        />
+
+        <QueueSection
+          v-if="queuedTracks.length > 0"
+          title="佇列中下一首"
+          menu-context="queued"
+          :tracks="queuedTracks"
+          :selected-track-id="selectedTrackId"
+          :open-menu-key="openTrackMenuKey"
+          :playing-track-id="playerState.track?.id ?? null"
+          :player-playing="playerState.isPlaying"
+          :draggable-items="queuedTracks.length > 1"
+          :dragging-track-id="draggingQueuedTrackId"
+          :drop-target-track-id="dropTargetQueuedTrackId"
+          :drop-position="queuedDropPosition"
+          @select-track="selectQueueTrack"
+          @activate-track="playQueuedTrack($event, { source: false })"
+          @toggle-track-playback="
+            toggleQueuedTrackPlayback($event, { source: false })
+          "
+          @open-track-menu="openTrackMenu"
+          @track-drag-start="startQueuedDrag"
+          @track-drag-over="updateQueuedDropTarget"
+          @track-drag-leave="leaveQueuedDropTarget"
+          @track-drop="dropQueuedTrack"
+          @track-drag-end="clearQueuedDragState"
+        >
+          <template #actions>
+            <UiButton @click="clearQueuedTracks">清除佇列</UiButton>
+          </template>
+        </QueueSection>
+
+        <QueueSection
+          title-prefix="下一首來自："
+          :title="upcomingSourceLabel"
+          menu-context="source"
+          :tracks="sourceUpcomingTracks"
+          :selected-track-id="selectedTrackId"
+          :open-menu-key="openTrackMenuKey"
+          :playing-track-id="playerState.track?.id ?? null"
+          :player-playing="playerState.isPlaying"
+          :draggable-items="sourceUpcomingTracks.length > 1"
+          :dragging-track-id="draggingSourceTrackId"
+          :drop-target-track-id="dropTargetSourceTrackId"
+          :drop-position="sourceDropPosition"
+          :title-jumpable="Boolean(upcomingSourcePlaylist)"
+          :title-link-aria-label="upcomingSourceLinkLabel"
+          empty-text="沒有下一首"
+          @select-track="selectQueueTrack"
+          @activate-track="playQueuedTrack($event, { source: true })"
+          @toggle-track-playback="
+            toggleQueuedTrackPlayback($event, { source: true })
+          "
+          @open-track-menu="openTrackMenu"
+          @section-title-click="jumpToUpcomingSource"
+          @track-drag-start="startSourceDrag"
+          @track-drag-over="updateSourceDropTarget"
+          @track-drag-leave="leaveSourceDropTarget"
+          @track-drop="dropSourceTrack"
+          @track-drag-end="clearSourceDragState"
         />
       </div>
-    </UiScrollRegion>
+    </div>
 
-    <TrackActionMenu
-      :open="Boolean(trackMenu)"
-      :x="trackMenu?.x ?? 0"
-      :y="trackMenu?.y ?? 0"
-      :align-x="trackMenu?.alignX ?? 'left'"
-      :track="trackMenu?.track ?? null"
-      :context="trackMenu?.context ?? 'default'"
-      :playlists="playlistState.playlists"
-      :current-track-id="state.currentTrackId ?? ''"
-      :queued-track-ids="queuedTrackIds"
-      :can-go-to-album="
-        Boolean(trackMenu?.track && albumForTrack(trackMenu.track))
-      "
-      @select="handleTrackMenuSelect"
-      @close="closeTrackMenu"
-    />
-  </section>
+    <div
+      v-show="activeTab === 'recent'"
+      id="queue-panel-recent-panel"
+      class="queue-panel__content"
+      role="tabpanel"
+      aria-labelledby="queue-panel-recent-tab"
+      tabindex="0"
+    >
+      <RecentPlaybackList
+        :entries="recentItems"
+        :loading="!playbackHistoryState.isInitialized"
+        :error="playbackHistoryState.error"
+        :current-track-id="state.currentTrackId"
+        :playing-track-id="playerState.track?.id ?? null"
+        :player-playing="playerState.isPlaying"
+        :open-menu-key="openTrackMenuKey"
+        :selected-entry-key="selectedRecentEntryKey"
+        @select-entry="selectRecentEntry"
+        @activate-entry="activateRecentEntry"
+        @toggle-entry-playback="toggleRecentEntryPlayback"
+        @open-track-menu="openTrackMenu"
+      />
+    </div>
+  </AppRightDockPanel>
 </template>
 
 <style scoped>
-.queue-panel {
-  display: flex;
+.queue-panel__content {
   min-width: 0;
-  min-height: 0;
-  height: 100%;
-  flex-direction: column;
-}
-
-.queue-panel__scroll {
-  position: relative;
-  min-height: 0;
-  flex: 1;
   -webkit-user-select: none;
   user-select: none;
-}
-
-.queue-panel__chrome {
-  position: relative;
-  z-index: var(--ui-z-sticky);
-  background: var(--ui-right-dock-sticky-background);
-  transition:
-    box-shadow var(--ui-motion-duration-fast) var(--ui-motion-easing-standard),
-    backdrop-filter var(--ui-motion-duration-fast)
-      var(--ui-motion-easing-standard);
-}
-
-.queue-panel__chrome--scrolled {
-  -webkit-backdrop-filter: blur(var(--ui-right-dock-sticky-blur));
-  backdrop-filter: blur(var(--ui-right-dock-sticky-blur));
-  box-shadow: var(--ui-right-dock-sticky-shadow);
-}
-
-.queue-panel__content {
-  padding: var(--ui-right-dock-content-inset);
 }
 
 .queue-panel__content:focus-visible {
@@ -436,19 +431,9 @@ const {
   outline-offset: calc(-1 * var(--ui-focus-width));
 }
 
-.queue-panel__content :deep(.ui-track__title),
-.queue-panel__content :deep(.ui-track__artist) {
-  -webkit-user-select: text;
-  user-select: text;
-}
-
-:global(:root[data-ui-motion='reduced']) .queue-panel__chrome {
-  transition: none;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .queue-panel__chrome {
-    transition: none;
-  }
+.queue-panel :deep(.right-dock-track:not(.ui-track--active):hover)::before,
+.queue-panel
+  :deep(.right-dock-track:not(.ui-track--active):focus-within)::before {
+  background: var(--ui-color-surface-hover);
 }
 </style>

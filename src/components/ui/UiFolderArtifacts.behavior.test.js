@@ -17,6 +17,10 @@ const activeTokensSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
+const v2TokensSource = readFileSync(
+  new URL('../../styles/tokens-v2.css', import.meta.url),
+  'utf8',
+);
 
 const artifacts = [
   {
@@ -313,12 +317,14 @@ describe('UiFolderArtifact', () => {
     expect(html).toContain('目前為第二張參考照片，顯示下一張照片');
     expect(html).toContain('data-artifact-activate="previous"');
     expect(html).toContain('data-artifact-activate="next"');
+    expect(html).toContain('data-stack-layout="1"');
     expect(html).toContain('aria-live="polite"');
     expect(html).toMatch(
       /ui-folder-artifact__stack-layer--back[\s\S]*ui-folder-artifact__stack-position[\s\S]*<\/figure>[\s\S]*ui-folder-artifact__stack-layer--front/u,
     );
     expect(html).toContain('ui-folder-artifact__stack-status');
     expect(artifactSource).toContain('getFolderArtifactStackLayers');
+    expect(artifactSource).toContain('getFolderArtifactStackLayoutVariant');
     expect(artifactSource).toContain("defineEmits(['previous', 'next'])");
     expect(artifactSource).toContain("emit('previous')");
     expect(artifactSource).toContain("emit('next')");
@@ -334,6 +340,32 @@ describe('UiFolderArtifact', () => {
     );
     expect(artifactSource).toMatch(
       /\.ui-folder-artifact__stack-layers\s*\{[^}]*inset:\s*var\(--ui-space-2\);/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layers\[data-stack-layout='0'\]\s*\{[^}]*--ui-folder-artifact-stack-back-rotation:\s*-5deg;[^}]*--ui-folder-artifact-stack-front-x:\s*24%;[^}]*--ui-folder-artifact-stack-front-y:\s*27%;[^}]*--ui-folder-artifact-stack-front-rotation:\s*2\.75deg;/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layers\[data-stack-layout='1'\]\s*\{[^}]*--ui-folder-artifact-stack-back-rotation:\s*4deg;[^}]*--ui-folder-artifact-stack-front-x:\s*23%;[^}]*--ui-folder-artifact-stack-front-y:\s*25%;[^}]*--ui-folder-artifact-stack-front-rotation:\s*-3\.25deg;/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layers\[data-stack-layout='2'\]\s*\{[^}]*--ui-folder-artifact-stack-back-rotation:\s*-3\.25deg;[^}]*--ui-folder-artifact-stack-front-x:\s*26%;[^}]*--ui-folder-artifact-stack-front-y:\s*26%;[^}]*--ui-folder-artifact-stack-front-rotation:\s*4\.25deg;/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layers\[data-stack-layout='3'\]\s*\{[^}]*--ui-folder-artifact-stack-back-rotation:\s*5deg;[^}]*--ui-folder-artifact-stack-front-x:\s*25%;[^}]*--ui-folder-artifact-stack-front-y:\s*28%;[^}]*--ui-folder-artifact-stack-front-rotation:\s*-2\.5deg;/su,
+    );
+    for (const tokensSource of [activeTokensSource, v2TokensSource]) {
+      expect(tokensSource).toMatch(
+        /--ui-folder-artifact-photo-bg-back:\s*color-mix\(\s*in srgb,\s*var\(--ui-folder-artifact-photo-bg\) 90%,\s*var\(--ui-color-canvas\)\s*\);/u,
+      );
+    }
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layer--back\s*\{[^}]*background-color:\s*var\(--ui-folder-artifact-photo-bg-back\);/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layer--back\s*\{[^}]*translate3d\(\s*var\(--ui-folder-artifact-stack-back-x\),\s*var\(--ui-folder-artifact-stack-back-y\),\s*0\s*\)[^}]*rotate\(var\(--ui-folder-artifact-stack-back-rotation\)\)/su,
+    );
+    expect(artifactSource).toMatch(
+      /\.ui-folder-artifact__stack-layer--front\s*\{[^}]*translate3d\(\s*var\(--ui-folder-artifact-stack-front-x\),\s*var\(--ui-folder-artifact-stack-front-y\),\s*0\s*\)[^}]*rotate\(var\(--ui-folder-artifact-stack-front-rotation\)\)/su,
     );
     expect(artifactSource).toMatch(
       /\.ui-folder-artifact__stack-layer\s*\{[^}]*transition:[^}]*transform\s+var\(--ui-motion-duration-standard\)\s+var\(--ui-motion-easing-enter\)[^}]*opacity\s+var\(--ui-motion-duration-fast\)/su,

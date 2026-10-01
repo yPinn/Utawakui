@@ -8,7 +8,7 @@ defineOptions({ inheritAttrs: false });
 defineProps({
   id: { type: String, required: true },
   label: { type: String, required: true },
-  modelValue: { type: String, default: '' },
+  modelValue: { type: [String, Number], default: '' },
   type: { type: String, default: 'text' },
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
