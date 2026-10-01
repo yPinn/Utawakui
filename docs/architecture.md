@@ -49,21 +49,49 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 `BrowserWindow`、不依 viewport 猜測狀態。現行 active tokens 不消費 density attribute，
 只有 opt-in Token v2 surface 會改變尺寸，因此此投影不代表 production Token v2 adoption。
 該 surface 由 dev-only 型錄視圖（`DemoView.vue`／`VisualSystemView.vue`／
-`StudioLibraryPrototypeView.vue`）呈現；owner 檢查順序與現況見
+`StudioLibraryPrototypeView.vue`）與內部工具 composition surface
+`InternalToolsView.vue` 呈現；owner 檢查順序與現況見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
+
+`InternalToolsView.vue` 以純資料 `constants/internalTools.js` 將工具分成兩個平面：
+Operations 是可重複的產品／支援操作（F5 Music Analysis、F6 Live Diagnostics），
+Evaluation 是有明確品質 gate 與結束條件的研究工作（Music M2、F7 Lyrics Provider
+Corpus）。F5／F6／F7 仍直達各自工具；Music M2 只由分類導覽進入。四個 View 都是薄
+wrapper，唯一 active workbench 才會 mount；composition surface 在 mount 時套用
+`data-ui-system="v2"`，unmount 時還原原值。這個 dev-only route graph 不改變產品 feature
+gate、IPC trust boundary 或正式 workflow ownership。
 
 主視窗右側 Dock 由 `App.vue` 與 `useAppRightDock.js` 共同擁有 shell geometry、
 surface stack 與 foreground navigation，不接管播放或處理資料。Token v2 Studio
-Library metadata 可作為 retained fallback，production Queue 與「伴奏處理」可依觸發順序
-顯示在前景；PlayerBar 縮圖是 direct metadata intent，會先取消其他前景 surface 再顯示
-metadata。`QueuePanel.vue`、`SeparationQueuePanel.vue` 與
-`StudioLibraryContextInspector.vue` 各自只呈現 feature content；播放 queue authority 仍由
-`usePlaybackQueue.js` 持有，伴奏處理狀態則由 main-owned separation queue 持有。共用 resize width、desktop reserved bay、compact overlay、
-Escape 與 focus restoration 屬於 shell，不得回流到 PlayerBar 或 playlist component。
+Library metadata 可作為 retained fallback，production Queue 可顯示在前景；PlayerBar 縮圖是
+direct metadata intent，會先取消其他前景 surface 再顯示 metadata。`QueuePanel.vue` 與
+`TrackContextPanel.vue` 各自只呈現 feature content，並透過 `AppRightDockPanel.vue` 共用
+header、單一 scroll owner 與 content inset；播放 queue authority 仍由
+`usePlaybackQueue.js` 持有。伴奏處理改由 Titlebar 的 `SeparationToolbarPopover.vue` 作為
+唯一 surface；它消費 `useUiDensity.js` 的 native compact／standard 投影、維持 viewport
+有界尺寸與清單內單一 scroll owner，並將排序、移除、重試與清除紀錄收在同一清單。Pending
+列重用 `useDragReorder.js` 的整列拖曳與 `UiSeparator` drop feedback；ellipsis 與右鍵開啟同一
+`UiContextMenu`，但不繼承播放 Queue 的選取、播放或 artwork action。一次 drop 只送出 bounded
+整數 offset，main-owned queue 在單次更新內依相鄰 Pending 項目完成移動。伴奏處理狀態仍由
+main-owned separation queue 持有，實際進度與錯誤權威不移入 Renderer。工具列模式的名稱、順序
+與預設值由 Lyrics 同用的 `separationPresets.js` recipe catalog 投影；批次完成數屬於 header 摘要，
+目前歌曲百分比只由鄰接的單曲 progress 顯示一次。Right
+Dock 的共用 resize width、desktop reserved bay、compact overlay、Escape 與 focus restoration
+屬於 shell，不得回流到 PlayerBar 或 playlist component。
 Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
 tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
 只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow
-semantic tokens。最近播放列繼續組合 `QueueTrackButton → UiTrackRow`，不建立另一套 row。
+semantic tokens。Queue reorder 的 pointer drag 由整個 `QueueTrackButton` row 啟動且不提供
+獨立 drag icon；artwork 與 `…` action 會排除 drag start。Queue 與 Recently Played 共用
+Right Dock artwork cue／overflow action recipe：row hover／focus 顯示由 HTML audio state 投影的播放／暫停 cue，`…` 保留固定 trail
+lane 以避免 layout shift，僅在 row hover、selected、focus-within 或 menu open 時顯示。`…`
+tooltip 允許曲名依 viewport 換行，但將「的更多選項」保留為不可拆 suffix。Before／after 插入線
+在相鄰 row gap 內組合實際 `UiSeparator`，不使用 row border／shadow；row inline size、
+`select-none`、排序與 drag lifecycle 仍由 Queue feature owner 持有；可拖曳 row 不使用會裁切 gap overflow 的
+paint containment，非拖曳 row 才可保留 `content-visibility` optimization。
+shared `UiTrackRow` 不持有排序 semantics。最近播放由 feature adapter 直接
+組合 `UiTrackRow`，保留 52／40px recipe，但不繼承 Queue selection、reorder、drop target
+或整列 activation。
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppArchiveFrame` 的 Folder workflow branch；Settings 由
@@ -79,8 +107,11 @@ Windows notification-area lifecycle 由 main-owned
 預設 `ask`；Renderer 只經固定 config IPC 提交 allowlisted intent。`ask` 由 main 產生一次性
 request id，再透過 `electron/main/windowCloseDecisionBridge.js` 請 Renderer 以 production
 `UiModal` 呈現背景執行、完全結束、取消與記住選擇。Bridge 只接受目前主視窗 sender、目前
-request id、`tray`／`quit`／`cancel` 與 boolean；Renderer 只負責呈現，Tray、config、hide 與
-quit 仍由 main 執行。若 Renderer 未在期限內確認已呈現、失去回應或已毀損，才退回 main-owned
+request id、`tray`／`quit`／`cancel`、boolean 與可選且 allowlisted 的 active-work kind；Renderer
+只負責呈現，Tray、config、hide 與 quit 仍由 main 執行。伴奏處理尚在執行或暫停時，即使既有
+偏好為固定退出，也改用一次性確認；該確認不能記住 destructive choice，背景繼續會保留記憶體
+queue，停止並結束則取消目前工作且未處理順序不跨重啟保留。若 Renderer 未在期限內確認已呈現、
+失去回應或已毀損，才退回 main-owned
 Windows 原生 dialog，避免關閉流程因 UI runtime 故障而鎖死。背景執行先確保 Tray 可建立，再
 隱藏同一個主視窗，因此 renderer-owned 播放／queue／lyrics 與 OBS／Output service 不會重建；
 未記住的一次性 Tray 在視窗還原後銷毀。最小化行為不變。Tray 開啟、設定、雙擊與
@@ -253,9 +284,11 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 | Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影         |
 | Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費    |
 | Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids |
+| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用   |
 | Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate         |
 | Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent             |
 | Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent               |
+| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy     |
 | Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments        |
 | OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent              |
 | OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記           |
@@ -296,14 +329,26 @@ path／range 工具函式。Resolver 只接受 track id 與 allowlisted asset na
 `config:get` 另投影 available／reason 供 Settings 顯示復原入口；Output slots 的啟動同步與
 `utawakui-media:` request 會在各自邊界內降級，不能阻止主視窗建立或把失效位置投影成空曲庫。
 
+曲庫容量由 `electron/lib/library/storage.js` 依 allowlisted 結構掃描實際檔案大小，分類為
+歌曲、去人聲與其他；未知檔案只能計入其他。`electron/main/libraryStorageHandlers.js` 擁有固定
+inspect／set-policy／cleanup IPC，renderer 不提供 path、候選 track ids 或刪除目標。
+`libraryStorage` machine config 只保存 boolean 自動管理 intent 與 allowlisted 去人聲上限；
+自動管理預設關閉。清理只透過 separation manifest 移除可重新產生的 artifact，先處理非
+selected recipe，再依 main-private 完整 last-played index 做 LRU；目前播放、Queue 與處理中
+track ids 由 main 組合成保護集合。歌曲本體、其他 sidecar 與未知檔案不屬於候選。
+容量與淘汰契約見
+[曲庫空間管理契約](contracts/library-storage-management.md)。
+
 最近播放與啟動恢復由 `electron/lib/playbackPersistence.js` 保存到 app user data，並由
 `playbackPersistenceHandlers.js`／preload 的固定 channels 暴露 bounded intent。History 只接受
 track id 與 source context，時間由 main 產生；resume 只接受 ids、position、volume、mute、
 playback mode 與 Queue scalar state。Renderer 的 `usePlaybackHistory.js` 依 HTML audio progress／
-ended 判定 qualified event；`useRecentPlaybackActivation.js` 只協調目前 library／playlist／
-Queue owners，以現行來源歌單重建 Queue，來源失效才降級為單曲 interrupt；
+ended 判定 qualified event；`useRecentPlaybackActivation.js` 只協調 Queue／Player owners，
+將明確選取的歷史曲目作為單曲 interrupt 播放，不重建來源 Queue；
 `usePlaybackResume.js` 只投影／rehydrate owner state。啟動先以目前 library 過濾缺檔，再恢復為
 paused；corrupt 或失效 current track 會降級並清除 snapshot。
+同一 qualified event 另更新 main-private `playback-usage.json`；它不受最近 50 首顯示上限或
+清除最近播放操作影響，只提供全曲庫去人聲 LRU 的 durable `lastPlayedAt`，且不跨 IPC。
 完整 schema 與 UI 邊界見
 [播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)。
 
@@ -403,9 +448,10 @@ analysis progress、status polling、run／cancel 與 sidecar reconciliation。�
 一般使用者的 Music Analysis lifecycle 位於 Settings：
 `src/composables/useMusicAnalysisSettings.js` 負責 boolean-only 自動分析偏好與既有
 capability owner 的組合，`MusicAnalysisSettingsRow.vue` 只呈現用途、安裝狀態與
-準備／修復／移除 intent。F5 Workbench 保留單曲強制執行、批次重跑與診斷，不再是
-新曲分析的必要入口。F5 的 M2 `人工標註` 由
-`useMusicAnalysisReferenceAnnotation.js` 單獨擁有 renderer draft；main 以 opaque session
+準備／修復／移除 intent。F5 Operations Workbench 只保留單曲強制執行、批次重跑與結果
+診斷；capability 未準備或受損時只導向 Settings，不再重複 lifecycle action，也不是新曲
+分析的必要入口。Evaluation 的 Music M2 Workbench 組合人工標註與 Benchmark Review；
+`useMusicAnalysisReferenceAnnotation.js` 單獨擁有 renderer draft，main 以 opaque session
 鎖定已驗證的 run config 與固定 `reference-worklist.json`，renderer 不提供路徑，且該路徑
 不讀 prediction、不寫歌曲 sidecar。
 
@@ -423,7 +469,11 @@ sidecar currentness，並在手動 analysis／batch 結束後再執行。排入�
 active cancel、pending move／remove、failed retry／dismiss 與 successful-history clear；Renderer 只提交
 track ids、allowlisted product intent 與 boolean override。Queue status 只代表本次 App session
 的操作進度，manifest 仍是結果存在與可播放的權威；重啟持久化、平行處理、ETA、完成通知與
-worker／model reuse 不屬於第一階段。
+worker／model reuse 不屬於第一階段。`separationHandlers.js` 將同一 bounded status 送往
+`windowState.js`；Windows taskbar 以已完成首數加目前單曲百分比投影 aggregate progress，百分比
+未知時使用 indeterminate、暫停時使用 paused、仍有失敗或取消項目時使用 error，idle／完成後清除。
+伴奏工作清單的容量提示只在所有計畫歌曲都有可靠時長時顯示「最多新增」上限，不能冒充曲庫總占用；
+曲庫實際分類容量與管理上限仍只由 Settings 的 storage owner 顯示。
 
 ## Feature Gates 與最小依賴單位
 

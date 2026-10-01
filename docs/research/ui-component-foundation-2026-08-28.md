@@ -83,7 +83,7 @@ a decorative glyph whose adjacent copy already carries the meaning; `UiSearchBox
 `UiCollageThumb`, and `UiTrackThumb` keep their established contracts. The Dossier
 header and track table remain feature compositions. `AppArchiveFrame` owns an
 optional shell-level `context` slot;
-`StudioLibraryContextInspector` remains feature-owned but renders through that
+`TrackContextPanel` remains feature-owned but renders through that
 slot, outside `AppInnerPage`. In particular, the track table keeps its aligned
 number／track／source／duration columns instead of forcing them into `UiTrackRow`'s
 flex-row contract. Candidate-token scoping changes token values, not component

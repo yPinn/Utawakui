@@ -12,9 +12,13 @@ session history 或 Queue 的 previous stack 合併。
   跳躍、只載入、播放失敗或快速誤點不計入。
 - Renderer 只提交 `trackId` 與 bounded `sourceId`／`sourceName`。Main 產生
   `playedAt`，以原子寫入保存到 user data 的 `playback-history.json`。
+- 同一 qualified event 另以原子寫入更新 main-private `playback-usage.json`，保存完整曲庫的
+  `trackId → lastPlayedAt` 索引。它只供去人聲容量管理的 LRU policy 使用，不跨 IPC，也不受
+  最近 50 首顯示上限或「清除最近播放」影響。
 - 介面不承諾固定顯示數量；main 目前保留最近 50 首 unique tracks 作為儲存防線。顯示時以
   `trackId` 向目前曲庫解析 metadata，已刪除曲目不顯示。
-- 使用者可明確清除最近播放。這不清空 Queue、OBS session history 或診斷紀錄。
+- 使用者可在 Settings「曲庫與儲存」明確清除最近播放；操作位於 danger overflow
+  action 並要求確認。這不清空 Queue、歌單、OBS session history 或診斷紀錄。
 
 ## 啟動恢復
 
@@ -36,18 +40,21 @@ session history 或 Queue 的 previous stack 合併。
   只擁有 tab semantics／keyboard；`QueuePanel` 擁有 panel ids、顯示狀態與 scroll。
 - Sticky header 的背景、blur 與 shadow 使用共用 Right Dock semantic tokens；只有內容
   離開頂端後顯示 elevation，且 reduced motion 下不轉場。
-- 最近播放沿用 `QueueTrackButton → UiTrackRow` 的標準 52／40px recipe，不建立
-  history-specific row primitive。單擊選取，雙擊或 artwork 啟動。
-- 有 `sourceId` 的紀錄會向目前 playlists state 解析同一來源；來源仍存在且該曲仍是
-  成員時，依歌單目前成員、排序與名稱重建 Queue，再由該曲續播。來源已刪除、該曲已
-  移出來源或原事件沒有來源時，才作為單曲 interrupt 插入現有播放脈絡。History 本身不
-  成為另一個 queue source，也不復原事件發生當時的過期歌單快照。
+- 最近播放由 feature adapter 直接組合 `UiTrackRow` 的標準 52／40px recipe，不建立
+  history-specific primitive，也不繼承 `QueueTrackButton` 的 selection、double-click、
+  reorder、drop target 或 drag attributes。清單順序只反映 main-owned chronological truth。
+- 每列只提供 current cue、明確的 artwork replay 與歌曲更多選項。Replay 將該曲作為
+  單曲 interrupt 播放，不重建來源 Queue 並保留其餘 Queue 結構；紀錄內的
+  `sourceId`／`sourceName` 是歷史脈絡，不構成重建來源歌單的隱含命令。
+- Right Dock 不提供 list-level clear。Settings 的播放紀錄 row 顯示目前可解析的紀錄數，
+  empty／loading／clearing／error 狀態由同一 `usePlaybackHistory` owner 投影。
 
 ## 驗證界線
 
 - Main tests 覆蓋 schema、上限、同曲 upsert、舊檔去重、corrupt recovery、atomic persistence 與 IPC
   registration。
 - Renderer tests 覆蓋 10 秒 qualification、seek exclusion、normal ended、source context、
-  source playlist rehydrate／fallback、missing-track filtering、paused restore、tabs／ARIA、
-  sticky scroll state 與 shared component reuse。另以真實 player progress event 接到 main
-  persistence service 的暫存目錄，驗證 qualified event 實際建立 history JSON。
+  direct replay preserves Queue、missing-track filtering、paused restore、tabs／ARIA、
+  read-only Recent row、Settings clear confirmation 與 sticky scroll state。另以真實 player
+  progress event 接到 main persistence service 的暫存目錄，驗證 qualified event 實際建立
+  history JSON。

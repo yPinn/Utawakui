@@ -168,8 +168,28 @@ migrated」拆成兩條真值。`UiButton`、`UiIconButton`、`UiTextButton` 已
 Token v2／active token scope 做回歸。新版幾何、pressed、selection 與 disabled
 補強由 `data-ui-system="v2"` 啟用，因此不會暗中改動尚未進入 pilot 的既有頁面；
 active tokens 只補齊共用元件所需且具 WCAG AA 驗證的 accent pressed 與
-theme-independent overlay scrim states。expanded catalogue 的 review 數仍是
-35／46；正式遷移另由八個 adopted section 記錄，不再以 review badge 代替。
+theme-independent overlay scrim states。expanded catalogue 的 review 數仍由
+registry 計算；正式遷移另由 adopted section 記錄，不再以 review badge 代替。
+
+2026-10-01 `UiPopover` 由頂部伴奏工作清單完成第一個 production adoption。
+primitive 繼續只擁有錨定、viewport collision、dismissal、Escape focus return 與
+固定 header／scroll body／footer anatomy；新增的 `panelStyle`、`scrollAxis` 與
+`scrollAriaLabel` 讓 caller 制定有界尺寸及單一可及 scroll owner，不內建伴奏
+狀態、queue action 或 Right Dock 導覽。伴奏 feature 的 panel 直接消費既有 native
+density 投影：compact／windowed 採 17–20rem 寬、14–21rem 高；standard／maximized／
+full-screen 採 20–24rem 寬、18–32rem 高。兩者都受 viewport inset 限制，只有中間
+清單捲動。Pending 列在 feature owner 重用 `useDragReorder`、`UiSeparator` 與
+`UiContextMenu`：整列拖曳、ellipsis 與右鍵共用選單，但不把播放 Queue 的選取／播放語意
+上提到 primitive。Teleport menu 屬於父 Popover 的相關浮層；menu 內 pointer、scroll 與
+Escape 先由 menu 消化，不會誤關父 Popover。
+
+PlayerBar 尾端控制為第二個 production density opt-in，但不啟用整體 Token v2。
+Standard／maximized／full-screen 使用 36px icon action 與 96px Volume range；
+Compact／windowed 使用 32px icon action 與 80px range。所有相鄰尾端控制統一為
+4px gap；Volume 不顯示常駐百分比，但保留 slider 的精確 `aria-valuetext`。Queue 與演出工具只以 open state 投影 selected paint 與
+`aria-expanded`／`aria-controls`；演出工具關閉後若仍有作用中的功能或調整，改以
+獨立 passive marker 與簡短 tooltip 表示，不將 engaged state 偽裝為面板
+selected state。
 
 | 第一批 infra         | 契約                                                                                                                                                                                                                                                     |
 | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -188,7 +208,7 @@ gate 承接，不再以此阻止元件檔案存在。第二批七項同樣未修
 | `UiSkeleton`         | 提供 text／block／circle placeholder、有限 line count 與 uniform／staggered pattern；caller 明確提供 loading accessible name並擁有 fetch lifecycle、真實內容 layout與何時卸載。                                                                                                                                                                                      |
 | `UiDisclosure`       | 以 native `details`／`summary` 擁有 open semantics、keyboard、focus與 reduced-motion indicator；summary是單一trigger，不嵌套 `UiIconButton`，body內容與資料由caller擁有。                                                                                                                                                                                            |
 | `UiRadioGroup`       | 以 native `fieldset`／`legend`／radio保留form與Arrow semantics；caller提供name、items與controlled value，primitive只emit typed selection，不複製Segmented Control的button anatomy。                                                                                                                                                                                  |
-| `UiTooltip`          | Trigger仍是caller-owned control，透過scoped `triggerProps`建立`aria-describedby`；只顯示無互動描述，hover延遲、focus立即顯示、touch hover忽略、Escape關閉，並以共用geometry helper處理viewport collision。                                                                                                                                                           |
+| `UiTooltip`          | Trigger仍是caller-owned control，透過scoped `triggerProps`建立`aria-describedby`；只顯示無互動描述，hover延遲、focus立即顯示、touch hover忽略、Escape關閉，並以共用geometry helper處理viewport collision。長文字依共用max-inline-size換行；caller可提供不可拆的短suffix，避免CJK操作詞在字內斷行。                                                                   |
 | `UiPopover`          | Controlled、non-modal anchored panel；擁有Teleport、logical placement、RTL／viewport clamp、outside pointer／Escape／external scroll dismissal、Escape focus return，以及optional header／body／footer的compact interactive-panel anatomy；footer actions靠inline-end。Caller仍擁有各區內容，不帶Notice status／tone、menu semantics、focus trap或background inert。 |
 | `UiNotificationHost` | Caller控制items與identity；host擁有bottom-end bounded queue、避開persistent PlayerBar的block-end offset、bounded enter／leave／move motion、transient／progress／persistent lifecycle、hover／focus／document-hidden pause、manual close與touch／pen swipe，並組合`UiNotice`／`UiIconButton`；不從tone推導lifecycle或announcement。                                  |
 
@@ -270,6 +290,33 @@ consumer。正式 `UiTabs` 的 Bar 只採用已審查的平面文字＋2 CSS px 
 36／32px density 或 compound panel API。Queue header 的 sticky background／blur／shadow
 新增 active 與 Token v2 同名 semantic aliases，深淺色各自映射；這些是 Right Dock chrome
 token，不是 Tabs anatomy。最近播放仍經 `QueueTrackButton` 重用正式 `UiTrackRow`。
+
+2026-10-01 behavior refinement：最近播放透過 `QueueTrackButton` 重用正式
+`UiTrackRow` 的 Right Dock interactive recipe。它保留 52／40px geometry、current cue、單擊選取、
+double-click／Enter activation、明確 artwork replay 與 per-track overflow；row capability 只移除
+reorder、drop target 與 drag lifecycle。清單順序仍由 history owner 決定，清除移至 Settings
+「曲庫與儲存」並要求確認。
+
+同一輪 Queue reorder refinement 保留整列作 HTML drag authority，且不再顯示獨立 drag icon；
+artwork 與 `…` track action 會排除 drag start，避免播放／選單 intent 誤啟排序。Queue 與 Recent
+共用 Right Dock artwork cue／overflow action recipe：row hover／focus 顯示播放 cue，`…` 保留固定
+trail lane，預設隱藏，僅在 row hover、selected、focus-within 或 menu open 時顯示。Tooltip 先依
+內容取得 intrinsic width，再以 viewport／max-inline-size 作上限；「的更多選項」是不可拆 suffix。
+Before／after indicator 在相鄰
+row gap 內組合實際 `UiSeparator`；primitive 保留 thickness，Queue 以正式 accent tone 表達 drop
+feedback，不再把一般灰色 boundary 當成落點，也不畫 row boundary。Right Dock selected 由 Dock scope
+映射成文字色 8% 的中性 surface 並移除 accent edge；Queue 與 Recent 都維持 `select-none`，兩者的
+neutral hover／focus surface、artwork cue 與 overflow disclosure 同步。Inline size、drop target、drag
+lifecycle 與實際排序仍由 Queue section／queue owner 負責；Recent adapter 明確傳入
+`draggable=false`，不組合排序或 drop 行為。Queue 與 Recent 各自的 feature root／list 都必須允許
+inline shrink，caller-owned item class 則以 border-box 100% 上限約束 row；共用 adapter 不會自動補齊
+caller 的 containing-block contract。
+
+Right Dock 的共用 scroll body 在 inline-end 永久保留 `--ui-scrollbar-lane-size`，加在既有
+content inset 外側。overlay rail 不再覆蓋 selected／hover surface 或 `…` trail action；無 overflow
+時仍保留同一 gutter，避免 scrollbar 出現後 metadata 與 action lane 水平跳動。這是
+`AppRightDockPanel` 的 consumer geometry，不改寫通用 `UiScrollRegion`；它與 feature-local 的
+`min-inline-size: 0`／row 100% 上限是兩個都必須成立的獨立邊界。
 
 ## 已完成階段：UiChip Candidate／Current 檢查
 
@@ -469,10 +516,10 @@ Owner 在 UiProgress 階段回查已審查元件的文字選取行為；selectio
 6. Standard 使用 52px min row／40px TrackThumb；Compact 使用 44px／36px。Row inline-size填滿 caller並保證`min-width: 0`／`max-width: 100%`，不建立固定min／max width；52／44px是block-size floor，不設會裁掉字體縮放或caller slot的hard `max-height`。Candidate 不新增`size`、density、responsive、playlist type、provider、lyrics、analysis或feature-specific prop；Current不受F8 density切換污染，維持active-token 52／40px truth。
 7. Title 使用已核准的單行 overflow reveal，artist 使用 static ellipsis，duration 只在 finite positive value 時顯示，並在 Candidate DOM／視覺順序固定排於 status trail之後。Trail只示範最多兩個具一致語意的 Badge，實際數量與優先順序仍由 caller收斂，不能無上限擠壓identity。型錄把長 CJK／Latin／無斷點檔名與多語合併為一列，再以窄 RTL 一列代表另一方向；缺 artist／duration、trail 擠壓與完整排列由 focused tests 承接，row 與 page 不得產生水平 overflow。
 8. Stretched primary action、控制與狀態chrome維持select-none；title／artist user metadata在static與interactive row都保持可選取。Interactive metadata、lead與trail lane以明確z-index位於stretched action上層：selection非collapsed時不轉送row action，一般 metadata、非互動 lead／trail內容與空白仍轉送整列播放；Checkbox、artwork destination與尾端控制各自stop propagation，只執行自己的選取、導覽或操作。F8可操作標本不得把事件接到`NOOP`：整列播放、Checkbox、縮圖導覽與Current尾端操作合併以一個可見`aria-live="polite"`結果列回寫，拖選文字不改寫結果。Artwork action的target恰好等於caller提供的36／40px TrackThumb box；沒有destination時渲染普通縮圖，不保留dead button。Square crop、fallback、non-draggable image與select-none仍由TrackThumb擁有；Row不新增圖片重試、fallback selector、crop selector、drag或selection prop。
-9. 五個 direct production consumer 為 `ProviderImportPanel`、`LyricsTrackPickerModal`、`MusicAnalysisTrackPicker`、`QueueTrackButton` 與 `StudioLibraryContextInspector`。F8 以一個單欄full-width可操作recipe組合已審查child primitives：Candidate同一列包含Checkbox輔助選取、整列播放、artwork destination、兩個一致的status Badge與最右時長；Current另保留正式title destination與Icon Button，誠實顯示現行垃圾桶仍占用尾端。Checkbox只切換`selected`，不播放；Candidate曲名與一般metadata都屬整列播放範圍，有來源Album且不在Album情境時只有縮圖導覽且不播放。在Album內容列中，縮圖與曲名都不重複導向Album；未來只讓實際Artist文字在destination可用時成為sibling CTA，但不預先新增artist-specific prop。Playlist／collection identity不是單曲Row；需要持續顯示「播放中」等集合狀態時，可由Playlist caller在自己的status slot組合具文字的`UiChip`，不把Playlist status上提為Track Row prop。PlayerBar也是另一個owner，不使用Track Row的stretched action；其長期對應可分為縮圖→Metadata、曲名→Album、Artist→Artist info，而現行Utawakui仍是縮圖切換Studio context inspector、曲名→Album、Artist普通文字，差異只記為後續adoption audit。Candidate的row checkbox沿用`DemoCandidateCheckbox`，視覺label隱藏但保留具體accessible name；Row recipe只為16px indicator保留16px inline optical lane，36／32px native hit target依density完整置中覆蓋該lane，indicator再置中於target。Compact實測visible indicator與Row左緣、artwork皆保持12px視覺距離，完整target仍保留且不與artwork重疊。Current保留正式`UiCheckbox`可見label與intrinsic target作active truth。其餘consumer排列由focused tests與本契約記錄，不在Candidate／Current各自重鋪完整矩陣。標本不修改consumer event、資料投影或產品流程；`QueueTrackButton`仍是 Queue feature adapter，`StudioLibraryContextInspector` 只投影非互動 current／upcoming identity，五欄`SetlistPlaylistTable`則維持獨立owner。
+9. 六個 production integration point 為 `ProviderImportPanel`、`LyricsTrackPickerModal`、`MusicAnalysisTrackPicker`、`QueueTrackButton`、`RecentPlaybackList` 與 `TrackContextPanel`。F8 以一個單欄full-width可操作recipe組合已審查child primitives：Candidate同一列包含Checkbox輔助選取、整列播放、artwork destination、兩個一致的status Badge與最右時長；Current另保留正式title destination與Icon Button，誠實顯示現行垃圾桶仍占用尾端。Checkbox只切換`selected`，不播放；Candidate曲名與一般metadata都屬整列播放範圍，有來源Album且不在Album情境時只有縮圖導覽且不播放。在Album內容列中，縮圖與曲名都不重複導向Album；未來只讓實際Artist文字在destination可用時成為sibling CTA，但不預先新增artist-specific prop。Playlist／collection identity不是單曲Row；需要持續顯示「播放中」等集合狀態時，可由Playlist caller在自己的status slot組合具文字的`UiChip`，不把Playlist status上提為Track Row prop。PlayerBar也是另一個owner，不使用Track Row的stretched action；其長期對應可分為縮圖→Metadata、曲名→Album、Artist→Artist info，而現行Utawakui仍是縮圖切換Studio context inspector、曲名→Album、Artist普通文字，差異只記為後續adoption audit。Candidate的row checkbox沿用`DemoCandidateCheckbox`，視覺label隱藏但保留具體accessible name；Row recipe只為16px indicator保留16px inline optical lane，36／32px native hit target依density完整置中覆蓋該lane，indicator再置中於target。Compact實測visible indicator與Row左緣、artwork皆保持12px視覺距離，完整target仍保留且不與artwork重疊。Current保留正式`UiCheckbox`可見label與intrinsic target作active truth。其餘consumer排列由focused tests與本契約記錄，不在Candidate／Current各自重鋪完整矩陣。標本不修改consumer event、資料投影或產品流程；`QueueTrackButton`是 shared Right Dock interactive adapter，`RecentPlaybackList`以 history entry identity 重用它並只關閉 drag／drop，`TrackContextPanel` 只投影非互動 current／upcoming identity，五欄`SetlistPlaylistTable`則維持獨立owner。
 10. 正式 `SetlistView` 已有 caller-owned `UiContextMenu`，但目前選單沒有「刪除曲目」，刪除仍由 row trail 的常駐 Icon Button呼叫既有確認流程；選單開啟也只有 pointer `contextmenu`。Candidate採用「status在時長左側、時長固定最右」的版面方向，但不在本 checkpoint 偽造 context-menu adoption。未來若移除常駐刪除按鈕，caller必須把具明確文字與danger語意的刪除項目接回既有確認流程，並同時提供 ContextMenu key／Shift+F10 或可見且可聚焦的更多操作入口，不能讓滑鼠右鍵成為唯一入口；Row不新增menu items／actions prop。
 11. 型錄資訊順序固定為邊界、尺寸、靜態狀態、單一合併可操作範例與內容壓力；靜態狀態不渲染虛假的 action target，只有可操作範例提供控制與結果回饋。Candidate 只存在 development-only F8；名稱先作既有 contract label 保留；是否留在 `components/ui` 或移至 domain-owned shared component，須等更廣泛的 production migration 以真實 ownership evidence 另案決定。
-12. Queue 已採用正式 `UiTrackRow` 的 Standard 52／40px recipe，並沿用同一 anatomy、keyboard focus、selected／current 分責與 drag attrs。Queue 的 caller-owned recipe 為單擊選取、雙擊或縮圖播放、Enter 播放／Space 選取、隱藏 duration、曲名與 artist 純文字；只有 section 的已知來源名稱可作 destination。正式元件提供 bounded `overflow`、`thumbLoading`、`thumbDecoding`、artwork action 與 Enter activation 邊界；既有 consumer 的 marquee、eager loading、auto decoding 與互動預設不變，Queue 才明確使用 ellipsis、lazy loading 與 async decoding。Queue scroll boundary 對 tabs、heading、empty cue、row 空白與 actions 套用 `select-none`，再只對 title／artist metadata 恢復 `text`；這個 production adoption 保持在 feature owner，不改寫 `UiTabs`、`UiHint` 或 `UiTrackRow` 的通用 selection policy。這是已由真實 Right Dock consumer 證明的最小 production adoption，不把 Queue selection、playback、reorder 或來源導覽責任上提到 shared row。
+12. Queue 已採用正式 `UiTrackRow` 的 Standard 52／40px recipe，並沿用同一 anatomy、keyboard focus 與 selected／current 分責。Queue 與 Recently Played 的 caller-owned row recipe 都是單擊選取、雙擊播放、縮圖切換播放／暫停、Enter 播放／Space 選取、隱藏 duration、曲名與 artist 純文字；只有 Queue section 的已知來源名稱可作 destination，並以常態底線而非 hover-only affordance 呈現。Right Dock selected 由 Dock scope 將 shared row 映射為文字色 8% 的中性 surface 並取消 accent edge，不使用未核准的品牌藍填色。兩者共用 Right Dock row hover、artwork cue 與 overflow action recipe：neutral row hover／focus 顯示由 HTML audio authority 投影的 Play cue，同一首歌曲實際播放時顯示 Pause；`…` 保留固定 trail lane 以避免 layout shift，預設隱藏，僅在 row hover、selected、focus-within 或 menu open 時顯示。Tooltip 先以內容寬度排版，再以 max-inline-size／viewport 作上限，並將「的更多選項」保留為不可拆 suffix。只有可排序 Queue row 整列帶 native draggable，不顯示獨立 drag icon；artwork 與 `…` action 排除 drag start。Recently Played 明確傳入 `draggable=false`，不接 drag／drop events，也不提供 drop indicator。Before／after indicator 在相鄰 row gap 內組合實際 `UiSeparator`，primitive 保留共用 thickness，Queue caller 使用 accent tone 作明確 drop feedback；不畫 row boundary。row inline size 受 Right Dock 約束。因 `content-visibility: auto` 的 paint containment 會裁切 row gap overflow，可拖曳 row 不套用該 optimization，非拖曳 row 才保留。排序 intent、drop target 與 drag lifecycle 留在 Queue feature owner，shared Row 不擁有排序。正式元件提供 bounded `overflow`、`thumbLoading`、`thumbDecoding`、artwork action 與 Enter activation 邊界；既有 consumer 的 marquee、eager loading、auto decoding 與互動預設不變，Right Dock adapter 才明確使用 ellipsis、lazy loading 與 async decoding。Queue 與 Recently Played 的 scroll boundary 都對 tabs、heading、empty cue、row 空白、metadata 與 actions 套用 `select-none`，避免拖曳或 disclosure 操作時產生原生文字 selection 藍底。這個 production adoption 保持在 feature owner，不改寫 `UiTabs`、`UiHint` 或 `UiTrackRow` 的通用 selection policy。這是已由真實 Right Dock consumer 證明的最小 production adoption，不把 selection、playback、reorder 或來源導覽責任上提到 shared row。
 13. Right Dock 由 `AppRightDock` boundary 將內部 `UiTrackRow` 映射到固定 52／40px；inline 邊界使用 8px panel perimeter、4px row content inset 與 4px state-surface outset，因此 state paint／section content／artwork 分別位於 Dock edge 的 4／8／12px。這是 shell surface 密度契約，不改寫 generic Compact Row，也不依賴 Sidebar feature token。Playback Metadata 的 current／upcoming identity 使用正式 `UiTrackRow`：current 使用 `current` cue，兩者都使用 ellipsis 並隱藏獨立 duration column，upcoming 將時長合併進 artist metadata line。這些 row 是非互動投影，不繼承 Queue 的選取、播放、拖曳與 menu intent。Collection cover／名稱／description 仍屬 collection summary，不併入 Track Row；description 使用 14px Body line-height 及可換行 prose 規則。
 
 ## 已完成階段：UiActionMenu／UiContextMenu Candidate／Current 檢查

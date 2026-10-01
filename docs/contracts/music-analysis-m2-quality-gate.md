@@ -112,10 +112,11 @@ are accepted only when a SHA-256 fingerprint still matches the source audio,
 worker, model artifacts, and case contract. `--case <opaque-id>` runs one case;
 `--force` deliberately ignores a valid cache.
 
-### Annotating references in F5
+### Annotating references in Evaluation／Music M2
 
-Press F5, switch from **正式分析** to **人工標註**, and choose the ignored run
-config before opening Benchmark Review. This blind workspace never reads
+Press F5, use the Internal Tools navigation to switch to **Evaluation**／
+**Music M2**, select **人工標註**, and choose the ignored run config before
+opening Benchmark Review. This blind workspace never reads
 `predictions.json`. It maps each opaque case back to the current library for
 playback, then records only manually entered BPM, contiguous boundaries, and
 canonical roles in `<outputRoot>/reference-worklist.json`. Incomplete drafts can
@@ -137,10 +138,11 @@ id, and accepts only bounded case references on save. The worklist contains no
 track ids, source paths, model fields, or predictions and never writes song
 sidecars.
 
-### Reviewing predictions in F5
+### Reviewing predictions in Evaluation／Music M2
 
-Press F5, switch from **正式分析** to **Benchmark Review**, and choose the
-ignored run config used for inference. The read-only review workspace shows the
+Press F5, use the Internal Tools navigation to switch to **Evaluation**／
+**Music M2**, select **Benchmark Review**, and choose the ignored run config
+used for inference. The read-only review workspace shows the
 mapped library track, BPM, runtime, M1/M2 contract result, proportional semantic
 timeline, per-section confidence, and analyzer provenance. Clicking a timeline
 segment or its detail row loads the matching library track in the existing

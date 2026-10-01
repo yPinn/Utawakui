@@ -171,13 +171,15 @@ viewer":
 
 - `src/composables/useDiagnosticsWorkbench.js` +
   `src/components/settings/DiagnosticsWorkbench.vue` +
-  `src/views/DiagnosticsWorkbenchView.vue` — an F6, dev-build-only workbench
+  `src/views/DiagnosticsWorkbenchView.vue` — the F6 Live Diagnostics
+  dev-build-only workbench in Internal Tools／Operations
   (same `import.meta.env.DEV` tree-shake mechanism as the F5/F7/F8 internal
   workbenches in `src/App.vue`). Reads the full event list via the existing
   `listRecentDiagnostics` IPC — no new IPC channel, no new preload method.
-  Level filter, text search, per-level counts, native `<details>` disclosure
-  per row for full JSON (including `stack`, which the Settings projection
-  never exposes).
+  Level filter, text search, per-level counts, loading／empty／error states and
+  shared `UiDisclosure` rows expose full JSON (including `stack`, which the
+  Settings projection never exposes). This live reader adds no export action;
+  explicit support-bundle export remains Settings-owned.
 - `scripts/diagnostics-viewer.html` — a single static HTML file, no
   dependencies, no build step, never packaged (electron-builder's `files:`
   allowlist does not list `scripts/`) and invisible to ESLint/Vitest/

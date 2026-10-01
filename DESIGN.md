@@ -104,8 +104,14 @@ components:
 > The page-action baseline now also migrates `UiButton`、`UiIconButton` and
 > `UiTextButton`: F8 renders the same formal components in Token v2 and active
 > token scopes instead of maintaining parallel action implementations.
+> `InternalToolsView` is the first multi-workbench consumer that mounts the
+> Token v2 root scope for its full lifetime: Operations contains F5 Music
+> Analysis and F6 Live Diagnostics; Evaluation contains Music M2 and F7 Lyrics
+> Provider Corpus. These dev-only workbenches use the same `Ui*` primitives,
+> restore the prior root scope when leaving, and do not authorize a
+> production-wide Token v2 switch.
 > These adoptions do not authorize a production-wide Token v2 palette switch.
-> F7 Studio Library／Controlled Dossier is now an active development-only View
+> F8 Studio Library／Controlled Dossier is now an active development-only View
 > candidate. Its current owner checkpoint still cannot approve Candidate
 > production adoption by implication.
 
@@ -319,6 +325,10 @@ Selected and currently-playing states are intentionally separate. A row can be s
 
 Feature-gated flows should not use danger red. A gate means "available behind an explicit decision," not "broken." Use warm muted gated colors, short copy, and secondary actions.
 
+Persistent background-work entries use accent for active work, warning for paused work, and danger only when a failed or cancelled item still needs attention. A status dot is supplemental: the control must expose the same state through its accessible label and tooltip. Do not turn ordinary processing or downloading into a red alert, and do not add a second badge to the Windows notification-area icon when taskbar progress already communicates the active job.
+
+Capacity next to an action describes that action only. For accompaniment preparation, show an upper-bound added-size estimate only when every planned track has reliable duration; otherwise show the track count alone. Whole-library usage and cleanup limits belong in Settings, not in a playlist- or album-scoped work panel.
+
 ### Palette Rules
 
 - Coral is not a large action-button color and must not be used as a recording dot.
@@ -339,10 +349,11 @@ The control panel should combine Spotify-like music workflow efficiency with mac
 - Use the sidebar for collections and music-management context; primary section navigation (Setlist/Lyrics/Output/Import) lives in the top folders above the workspace. Settings is a direct global utility destination in the Titlebar, not a Folder or sidebar item.
 - Align Sidebar collection rows and standard track rows to the same 3.25rem／2.5rem rhythm. Sidebar keeps this 52px／40px geometry in both Standard and Compact window density because its collection content is fixed; only the Sidebar's own width changes between expanded and icon-rail states. Sidebar keeps collection semantics: one click selects, a double-click or the artwork control starts playback.
 - Keep track rows dense, aligned, and easy to scan.
-- Right Dock track identities reuse `UiTrackRow` through a Dock-scoped fixed-density recipe: Queue, Recently Played, and playback-metadata current／upcoming rows remain 3.25rem／2.5rem (52px／40px) in both Standard and Compact. Its inline rhythm mirrors the expanded Sidebar without coupling the two features: an 0.5rem panel perimeter, 0.25rem row content inset, and 0.25rem state-surface outset place state paint／section content／artwork at 4／8／12px from the Dock edge. The resizable Dock width and window density are separate state axes; Compact may still remap generic Track Rows outside the Dock to 44px／36px. Queue single-click selects, double-click or artwork activation plays, duration is hidden, and track titles remain plain text. The Queue scroll surface protects tabs, headings, empty cues, row whitespace, and actions from drag selection while explicitly restoring text selection only for track title／artist metadata. The 3rem artwork recipe belongs only to the bottom-left PlayerBar.
+- Right Dock track identities reuse `UiTrackRow` through a Dock-scoped fixed-density recipe: Queue, Recently Played, and playback-metadata current／upcoming rows remain 3.25rem／2.5rem (52px／40px) in both Standard and Compact. Its inline rhythm mirrors the expanded Sidebar without coupling the two features: an 0.5rem panel perimeter, 0.25rem row content inset, and 0.25rem state-surface outset place state paint／section content／artwork at 4／8／12px from the Dock edge. The resizable Dock width and window density are separate state axes; Compact may still remap generic Track Rows outside the Dock to 44px／36px. Queue and Recently Played single-click select with a neutral text-color 8% surface and no accent edge, double-click or artwork activation plays, duration is hidden, and track titles remain plain text. They share one Right Dock interaction recipe: the neutral row hover／focus surface reveals an artwork Play cue, the matching current audio track switches that cue to Pause, and the action keeps a fixed trail lane to avoid layout shift while staying visually hidden until row hover, selection, focus-within, or menu open. Reorderable Queue rows use the whole row as the native pointer drag source without a dedicated drag icon; artwork and the independent `…` track-action button never start reorder. Before／after drop guidance composes the actual `UiSeparator` between adjacent rows: the primitive keeps its shared thickness while the Queue caller chooses its accent tone, instead of painting a row border or state-surface shadow. Queue remains the sole reorder owner and shared `UiTrackRow` stays ordering-agnostic. Both Queue and Recently Played are interaction surfaces and keep row chrome plus metadata `select-none`; source names that are real destinations remain distinct, persistently underlined Text Actions. The row boundary is constrained to the Right Dock inline size, and the 3rem artwork recipe belongs only to the bottom-left PlayerBar.
+- Right Dock vertical scrolling uses an overlay rail, so `AppRightDockPanel` permanently adds one scrollbar lane to its inline-end content inset. Row state surfaces and trail actions must stop before that lane; reserving it even when overflow is absent prevents the `…` target and metadata from shifting when the scrollbar appears. This gutter does not replace descendant shrinkability: each feature root and list propagates `min-inline-size: 0`, while each caller-owned row class uses a border-box `inline-size`／`max-inline-size` of 100% so intrinsic title or trail content cannot widen the row beyond the Dock content boundary.
 - Keep Queue and Recently Played as two true tabpanels inside the same Right Dock surface. Reuse `UiTabs` with the flat Bar presentation; the caller owns panel ids, visibility, and scrolling rather than turning the labels into ad-hoc buttons.
 - Keep the Queue tab／close chrome sticky within the content scroller. At scroll origin it remains flat; after content passes beneath it, use the shared Right Dock translucent background, blur, and theme-aware shadow tokens. Do not copy Spotify brand green, gradients, or bespoke row anatomy.
-- Recently Played reuses the Queue `UiTrackRow` adapter and its selection／activation contract. It does not add timestamps, durations, or a history-specific row primitive unless a later workflow proves those fields necessary.
+- Recently Played reuses `QueueTrackButton` as the shared interactive Right Dock row adapter. It preserves the Dock 52／40px geometry, current cue, single-click selection, double-click／Enter activation, explicit artwork replay, and the same hover／focus artwork cue plus conditionally visible per-track overflow action as Queue. Its row-level capability delta is only ordering: it passes `draggable=false` and owns no drag, drop-target, separator, or reorder contract. Chronological membership remains main-owned, and list-level clearing stays under Settings「曲庫與儲存」with confirmation rather than becoming a row action. It does not add timestamps, durations, or a history-specific primitive unless a later workflow proves those fields necessary.
 - Playlist and album headers can show cover and metadata, but should remain operational rather than heroic.
 - Do not use oversized marketing heroes or nested page cards.
 
@@ -401,6 +412,17 @@ Limits:
 - Keep Settings as one page with flat, scan-friendly sections: Library and Storage, Audio Output, Features and Dependencies, Application, and Support and Maintenance. Do not add a second sidebar until section count or findability demonstrates the need.
 - The utility frame owns heading and return focus only. Settings content owns its body Scroll Region, feature request highlighting, dependency lifecycle, notices, and dialogs; never nest another page-level Scroll Region around it.
 
+### Titlebar Status And Feedback
+
+- Keep three stable titlebar zones: start-side passive app health, a flexible draggable reserve, and end-side persistent session state followed by global utilities. Session state may grow toward the center, but the utility buttons remain right-anchored and never shift when OBS connects or a value changes.
+- Global utilities are ordered by scope: operational companion window, accompaniment work list, appearance preference, then the Settings destination at the terminal edge. They share the Ghost app-surface recipe; open-window／current states add selected paint without turning one-shot actions into toggles.
+- Global utility icons describe the function rather than its container: the live current／next lyric companion window uses `PictureInPicture2` with「提詞視窗」copy, while accompaniment work uses `AudioWaveform`. Do not substitute screen-upload or checklist icons that make these controls read as casting or a second playback Queue.
+- PlayerBar trailing actions follow the listening-flow sequence: optional guide output (`Cable`), current-song Lyrics (`MicVocal`) then Queue (`ListMusic`), performance tools (`SlidersHorizontal`), and Volume. Preserve the optional guide action as a reserved edge slot so capability changes do not shift the centered transport; use the shared icon-button primitive and a uniform 4px gap across adjacent trailing controls without decorative separators. Queue and performance tools are disclosure controls: selected paint means their surface is open, while a separate passive marker and concise tooltip may indicate an active performance function.
+- The accompaniment work list uses a compact, viewport-bounded Popover with one internal Scroll Region. Its header owns aggregate completed／total count; the active song row keeps identity plus the overflow action, while its adjacent `UiProgress` owns the single visible item percentage. Mode options, order, and default reuse the same separation recipe catalog as Lyrics; feature surfaces must not substitute near-synonym labels.
+- A titlebar status must be global across feature pages, continuously valid, glanceable without sentence-level reading, and useful during live operation. OBS LIVE／REC qualifies. CPU／RAM may remain a muted app-health projection with semantic color only at thresholds; normal samples do not generate notifications.
+- Use fixed notifications for transient completion, failure, retry, or cross-page attention; use an inline Notice for feedback owned by the visible task; keep multi-item progress in its owning panel or Right Dock. Do not place arbitrary feature copy, progress logs, success messages, or recoverable errors in the titlebar.
+- A passive capability marker may attach to its owning utility destination, as the update marker attaches to Settings. It must not become a second notification channel or replace an actionable notice when the user needs to make a decision.
+
 ### Shape And Density
 
 Utawakui should split shape language by job:
@@ -433,10 +455,29 @@ The desktop shell projects one explicit density value onto the document root.
 A restored／windowed `BrowserWindow` uses `data-ui-density="compact"`; maximized
 and full-screen states use `data-ui-density="standard"`. Electron native window
 state is authoritative: manual resizing does not switch density, and CSS viewport
-or media queries must not guess it. The active production tokens intentionally do
-not consume this attribute yet; only Token v2 surfaces that explicitly opt into
-`data-ui-system="v2"` remap their dimensions. Content-driven responsive reflow
-remains a separate parent-layout responsibility.
+or media queries must not guess it. Active production tokens consume this
+attribute only for explicitly reviewed surfaces; Token v2 surfaces that opt into
+`data-ui-system="v2"` may remap their broader dimensions. Content-driven
+responsive reflow remains a separate parent-layout responsibility.
+
+The accompaniment toolbar popover is an explicit production opt-in to this native
+density projection. Compact／windowed uses 17–20rem by 14–21rem;
+standard／maximized／full-screen uses 20–24rem by 18–32rem. Both remain
+viewport-clamped and keep one internal scroll owner. This is native-state
+adaptation, not viewport inference.
+
+PlayerBar trailing controls are the second explicit production opt-in. Standard／
+maximized／full-screen uses 36px icon actions and a 96px Volume range;
+Compact／windowed uses 32px icon actions and an 80px range. Adjacent controls use
+a uniform 4px gap. Volume keeps its exact percentage in `aria-valuetext` but does
+not render a persistent numeric label; the recovered width lengthens the range
+while reducing the trailing region's total footprint.
+
+Pending accompaniment rows reuse Queue's list interaction grammar: the whole
+row is draggable, an Accent `UiSeparator` marks the before／after destination,
+and Ellipsis plus pointer context-menu open the same concise action menu. The
+menu trigger is excluded from drag start. This reuse does not import Queue's
+selection, double-click playback, or artwork-control semantics.
 
 | Surface                     | Direction | Rule                                                        |
 | --------------------------- | --------- | ----------------------------------------------------------- |
@@ -876,7 +917,7 @@ Custom font settings should not affect control panel UI. The control panel shoul
 - **Label** (600, `0.875rem`, 1.25): Buttons, tabs, metadata labels, compact controls.
 - **Caption** (400, `0.875rem`, 1.4): Secondary/metadata text — artist lines, row subtitles, hints, empty/status messages. Shares Label's size but stays regular weight; the two exist specifically to be told apart (a bold 14 CSS px control vs. a quiet 14 CSS px description at the default root).
 
-Tooltip copy uses the Caption role through the shared `--ui-tooltip-font-*` component aliases. Its dark floating material is explicit through `--ui-tooltip-background`, `--ui-tooltip-text`, `--ui-tooltip-detail-text`, `--ui-tooltip-border` and `--ui-tooltip-shadow`, and remains dark in both app themes instead of being derived by swapping page text and canvas colors. Icon-only actions keep an accessible name through visually hidden button text, while the tooltip remains a regular-weight visible hint rather than a second ARIA label. Placement is owned by the semantic trigger (`top` by default; logical `start`／`end` only when the object-level rail context requires it) and must still pass viewport collision handling. A collection-information tooltip may add one secondary detail line; that detail belongs to the collection object, while a playback tooltip remains owned by the playback button.
+Tooltip copy uses the Caption role through the shared `--ui-tooltip-font-*` component aliases. Its dark floating material is explicit through `--ui-tooltip-background`, `--ui-tooltip-text`, `--ui-tooltip-detail-text`, `--ui-tooltip-border` and `--ui-tooltip-shadow`, and remains dark in both app themes instead of being derived by swapping page text and canvas colors. Icon-only actions keep an accessible name through visually hidden button text, while the tooltip remains a regular-weight visible hint rather than a second ARIA label. Placement is owned by the semantic trigger (`top` by default; logical `start`／`end` only when the object-level rail context requires it) and must still pass viewport collision handling. The surface uses intrinsic content width first; the shared max-inline-size and viewport inset are upper bounds rather than a fixed text column. Long labels wrap only after reaching those bounds, while a caller-owned short action suffix may be marked as one non-breaking phrase so CJK operation words such as「的更多選項」do not split mid-word. A collection-information tooltip may add one secondary detail line; that detail belongs to the collection object, while a playback tooltip remains owned by the playback button.
 
 Naming here is this project's own semantic roles, not a literal port of any platform's type-style names. In particular, Apple's HIG `Headline` style (small, bold, body-adjacent emphasis) is not what this document's `Headline` means (a big view/modal title, closer to HIG's `Title 1`/`Title 2`) — don't assume HIG familiarity carries over to these names.
 
@@ -915,6 +956,8 @@ Component folders are grouped by product role, not by current visual style. Exis
 - `src/components/import/`: source import, candidate preview, provider flow, and gated acquisition UI.
 - `src/components/lyrics/`: lyrics workspace, synced-line display, lyric editing and timing surfaces.
 - `src/components/analysis/`: Music Analysis selection, capability, batch, benchmark, and Music Structure result surfaces.
+- `src/components/internal-tools/`: dev-only Operations／Evaluation navigation and composition shell; domain state remains in each feature owner.
+- `src/components/lyrics-provider/`: private provider-corpus review surfaces; not the ordinary Lyrics product workflow.
 - `src/components/output/`: OBS Output Gallery, Workbench, preview, slot, and appearance surfaces.
 - `src/components/performer/`: Performer Self-View stage, lyric cue, and window toolbar surfaces.
 - `src/components/separation/`: vocal-separation recipe and result controls that are not persistent playback chrome.
