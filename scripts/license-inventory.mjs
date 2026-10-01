@@ -4,9 +4,9 @@ import process from 'node:process';
 
 const browserRuntimeRoots = Object.freeze([
   '@lucide/vue',
-  '@soundtouchjs/audio-worklet',
   'gsap',
   'opencc-js',
+  'signalsmith-stretch',
   'vue',
 ]);
 
@@ -107,6 +107,12 @@ const productionRows = Object.entries(lockPackages)
 
 const browserRuntimeSeen = new Set();
 for (const packageName of browserRuntimeRoots) {
+  // A stale root would silently drop a bundled package from the report.
+  if (!findPackagePath(lockPackages, packageName)) {
+    throw new Error(
+      `browserRuntimeRoots entry not in lockfile: ${packageName}`,
+    );
+  }
   walkDependencyClosure(lockPackages, packageName, browserRuntimeSeen);
 }
 
