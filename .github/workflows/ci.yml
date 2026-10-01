@@ -127,14 +127,19 @@ jobs:
           $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
           ./scripts/verify-unsigned-windows-package.ps1 -Version $version
 
-      - name: Verify installed upgrade from the public baseline
+      - name: Verify installed upgrade from each public baseline
         shell: pwsh
         run: |
           $version = (Get-Content -LiteralPath 'package.json' -Raw | ConvertFrom-Json).version
-          ./scripts/windows-installed-acceptance.ps1 `
-            -FromVersion 0.3.0 `
-            -ToVersion $version `
-            -EvidenceDirectory release-evidence
+          foreach ($baseline in (Get-Content -LiteralPath 'scripts/release-baselines.json' -Raw | ConvertFrom-Json)) {
+            # Older baselines run only on manual diagnostics to bound CI time.
+            if (-not $baseline.everyRun -and $env:GITHUB_EVENT_NAME -ne 'workflow_dispatch') { continue }
+            ./scripts/windows-installed-acceptance.ps1 `
+              -FromVersion $baseline.version `
+              -ToVersion $version `
+              -SkipIfNotNewer `
+              -EvidenceDirectory "release-evidence/from-$($baseline.version)"
+          }
 
       - name: Upload installed acceptance evidence
         if: always()

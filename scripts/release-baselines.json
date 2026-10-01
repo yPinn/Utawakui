@@ -1,0 +1,12 @@
+[
+  {
+    "version": "0.3.0",
+    "sha256": "42449127cf39401e4272d4dcd39b5c8a004c3fa5a968ab46e12fbb3dadb8386e",
+    "everyRun": false
+  },
+  {
+    "version": "0.4.0",
+    "sha256": "08f2fbc4d84b1a6097331ec225abfa91b19898d461742aa869beeb467a3255a6",
+    "everyRun": true
+  }
+]

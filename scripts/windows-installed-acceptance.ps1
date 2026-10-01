@@ -11,16 +11,22 @@ param(
 
   [string]$EvidenceDirectory = 'release-evidence',
 
-  [uri]$BaselineUri = 'https://github.com/yPinn/Utawakui-Releases/releases/download/v0.3.0/Utawakui-Setup-0.3.0.exe',
+  # Default to the official release asset for FromVersion.
+  [uri]$BaselineUri,
 
+  # Default to the pinned hash for FromVersion in scripts/release-baselines.json.
   [ValidatePattern('^[a-fA-F0-9]{64}$')]
-  [string]$BaselineSha256 = '42449127cf39401e4272d4dcd39b5c8a004c3fa5a968ab46e12fbb3dadb8386e',
+  [string]$BaselineSha256,
 
   [string]$NodeExecutable = 'node',
 
   [switch]$AllowLocalMachineMutation,
 
-  [switch]$PlanOnly
+  [switch]$PlanOnly,
+
+  # Exit successfully when FromVersion is not older than ToVersion, so CI can
+  # loop over every pinned baseline without special-casing the current release.
+  [switch]$SkipIfNotNewer
 )
 
 Set-StrictMode -Version Latest
@@ -35,7 +41,23 @@ if ($ToVersion -ne $packageVersion) {
   throw "ToVersion $ToVersion does not match package.json version $packageVersion"
 }
 if ([version]$FromVersion -ge [version]$ToVersion) {
+  if ($SkipIfNotNewer) {
+    Write-Host "Skipping baseline ${FromVersion}: not older than candidate $ToVersion"
+    exit 0
+  }
   throw 'FromVersion must be lower than ToVersion'
+}
+if (-not $BaselineUri) {
+  $BaselineUri = [uri]"https://github.com/yPinn/Utawakui-Releases/releases/download/v$FromVersion/Utawakui-Setup-$FromVersion.exe"
+}
+if (-not $BaselineSha256) {
+  $pinnedBaselines = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'release-baselines.json') -Raw |
+    ConvertFrom-Json
+  $pinnedBaseline = $pinnedBaselines | Where-Object { $_.version -eq $FromVersion }
+  if (-not $pinnedBaseline) {
+    throw "No pinned baseline for $FromVersion in scripts/release-baselines.json"
+  }
+  $BaselineSha256 = $pinnedBaseline.sha256
 }
 $candidateDirectoryPath = if ([System.IO.Path]::IsPathRooted($CandidateDirectory)) {
   [System.IO.Path]::GetFullPath($CandidateDirectory)

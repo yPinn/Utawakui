@@ -38,7 +38,10 @@ describe('CI changed-path policy', () => {
     },
     {
       name: 'installed acceptance changes require the Windows package',
-      paths: ['scripts/windows-installed-acceptance.ps1'],
+      paths: [
+        'scripts/windows-installed-acceptance.ps1',
+        'scripts/release-baselines.json',
+      ],
       expected: {
         dependencyAudit: false,
         quality: true,

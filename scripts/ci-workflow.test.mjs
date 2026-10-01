@@ -150,8 +150,10 @@ describe('ordinary CI workflow', () => {
     );
     expect(serializedJob).toContain('scripts/windows-installed-acceptance.ps1');
     expect(serializedJob).not.toContain('-WriteChecksum');
-    expect(serializedJob).toContain('-FromVersion 0.3.0');
-    expect(serializedJob).toContain('-EvidenceDirectory release-evidence');
+    expect(serializedJob).toContain('scripts/release-baselines.json');
+    expect(serializedJob).toContain('-SkipIfNotNewer');
+    expect(serializedJob).toContain('everyRun');
+    expect(serializedJob).toContain('release-evidence/from-');
 
     const evidenceUpload = packageJob.steps.find((step) =>
       step.uses?.startsWith('actions/upload-artifact@'),
@@ -188,11 +190,24 @@ describe('ordinary CI workflow', () => {
     expect(installedAcceptance).toContain('startup-performance.mjs');
     expect(installedAcceptance).toContain('update-acceptance-evidence.mjs');
     expect(installedAcceptance).toContain(
-      'https://github.com/yPinn/Utawakui-Releases/releases/download/v0.3.0/Utawakui-Setup-0.3.0.exe',
+      'https://github.com/yPinn/Utawakui-Releases/releases/download/v$FromVersion/',
     );
-    expect(installedAcceptance).toContain(
-      '42449127cf39401e4272d4dcd39b5c8a004c3fa5a968ab46e12fbb3dadb8386e',
+    expect(installedAcceptance).toContain('release-baselines.json');
+
+    const baselines = JSON.parse(
+      fs.readFileSync(
+        new URL('./release-baselines.json', import.meta.url),
+        'utf8',
+      ),
     );
+    expect(baselines.map((entry) => entry.version)).toEqual(
+      expect.arrayContaining(['0.3.0', '0.4.0']),
+    );
+    for (const entry of baselines) {
+      expect(entry.version).toMatch(/^\d+\.\d+\.\d+$/u);
+      expect(entry.sha256).toMatch(/^[a-f0-9]{64}$/u);
+      expect(typeof entry.everyRun).toBe('boolean');
+    }
     expect(installedAcceptance).toContain('Invoke-WebRequest');
     expect(installedAcceptance).toContain('Stop-Process -Id');
     expect(installedAcceptance).toContain(
