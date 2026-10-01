@@ -118,5 +118,7 @@ describe('RecentPlaybackList', () => {
     expect(source).toMatch(
       /\.recent-playback__item\s*\{[^}]*inline-size:\s*100%;[^}]*min-inline-size:\s*0;[^}]*max-inline-size:\s*100%;[^}]*box-sizing:\s*border-box;/su,
     );
+    expect(source).not.toMatch(/content-visibility:\s*auto;/u);
+    expect(source).not.toMatch(/contain-intrinsic-(?:block-)?size:/u);
   });
 });

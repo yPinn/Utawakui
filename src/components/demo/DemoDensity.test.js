@@ -130,7 +130,7 @@ const densityContracts = [
   ['panel-inset', 'Panel inset', '--ui-panel-inset', '1rem', 16, '0.75rem', 12],
   [
     'right-dock-inset',
-    'Right Dock 內容邊距',
+    'Side panel 基準邊距',
     '--ui-right-dock-content-inset',
     '0.5rem',
     8,
@@ -192,7 +192,7 @@ describe('DemoDensity', () => {
         key === 'artwork' || key === 'sidebar-artwork'
           ? 'var(--ui-track-artwork-size-standard)'
           : key === 'right-dock-inset'
-            ? 'var(--ui-space-2)'
+            ? 'var(--ui-side-panel-content-inset)'
             : standard;
       expect(tokenSource).toContain(`${token}: ${sourceValue};`);
       expect(html).toMatch(
@@ -311,9 +311,9 @@ describe('DemoDensity', () => {
     );
     expect(html).toContain('Right Dock 曲目列固定 3.25rem／52 CSS px');
     expect(html).toContain('Right Dock 封面固定 2.5rem／40 CSS px');
-    expect(html).toContain('Right Dock 內容邊距固定 0.5rem／8 CSS px');
+    expect(html).toContain('Side panel 基準邊距固定 0.5rem／8 CSS px');
     expect(html).toContain(
-      'Standard／Compact 固定；曲目內容再內縮 4px，狀態底板向外延伸 4px',
+      'Scroll body 尾端保留 12px rail lane；row 停在 16px、狀態底板切齊 12px lane 邊界',
     );
     expect(html).toContain('Shell gutter 尚無 active token');
     expect(html).toContain('尚未映射');
@@ -332,7 +332,7 @@ describe('DemoDensity', () => {
       '--ui-playlist-row-min-height: var(',
       '--ui-player-bar-height: calc(',
       '--ui-panel-inset: var(--ui-space-4);',
-      '--ui-right-dock-content-inset: var(--ui-space-2);',
+      '--ui-right-dock-content-inset: var(--ui-side-panel-content-inset);',
     ]) {
       expect(activeTokenSource).toContain(declaration);
     }
@@ -382,13 +382,13 @@ describe('DemoDensity', () => {
       'padding: var(--ui-right-dock-content-inset)',
     );
     expect(sourceByName.get('../layout/AppRightDockPanel.vue')).toContain(
-      'padding-block: var(--ui-right-dock-content-inset)',
+      '--ui-scroll-layout-padding-block-start: var(',
     );
     expect(sourceByName.get('../layout/AppRightDockPanel.vue')).toContain(
-      'padding-inline-start: var(--ui-right-dock-content-inset)',
+      '--ui-scroll-layout-padding-inline-start: var(',
     );
     expect(sourceByName.get('../layout/AppRightDockPanel.vue')).toContain(
-      'padding-inline-end: calc(',
+      '--ui-scroll-layout-padding-inline-end: var(',
     );
     expect(sourceByName.get('../queue/QueuePanel.vue')).not.toContain(
       '--ui-right-dock-',

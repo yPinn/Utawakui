@@ -54,6 +54,36 @@ async function toggleSidebarCollapse() {
   await commitWidth();
 }
 
+async function resizeTo(nextWidth) {
+  if (!Number.isFinite(nextWidth)) return;
+
+  setWidth(
+    nextWidth > SIDEBAR_WIDTH_MIN && nextWidth < SIDEBAR_COMPACT_THRESHOLD
+      ? SIDEBAR_WIDTH_MIN
+      : nextWidth,
+  );
+  if (width.value > SIDEBAR_WIDTH_MIN) {
+    lastExpandedWidth.value = width.value;
+  }
+  await commitWidth();
+}
+
+async function resizeBy(delta) {
+  if (!Number.isFinite(delta)) return;
+
+  if (width.value <= SIDEBAR_WIDTH_MIN && delta > 0) {
+    await resizeTo(SIDEBAR_COMPACT_THRESHOLD);
+    return;
+  }
+  await resizeTo(width.value + delta);
+}
+
 export function useSidebarResize() {
-  return { isResizing, startResize, toggleSidebarCollapse };
+  return {
+    isResizing,
+    startResize,
+    resizeBy,
+    resizeTo,
+    toggleSidebarCollapse,
+  };
 }

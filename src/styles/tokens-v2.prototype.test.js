@@ -176,7 +176,12 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(324);
+    expect(uniqueNames.size).toBe(339);
+    expect(uniqueNames).toContain('--ui-resize-handle-hit-size');
+    expect(uniqueNames).toContain('--ui-side-panel-content-inset');
+    expect(uniqueNames).toContain('--ui-side-panel-section-gap');
+    expect(uniqueNames).toContain('--ui-side-panel-content-gap');
+    expect(uniqueNames).toContain('--ui-side-panel-list-gap');
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');

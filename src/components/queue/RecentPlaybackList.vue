@@ -88,7 +88,5 @@ function openTrackMenu(entry, payload) {
   min-inline-size: 0;
   max-inline-size: 100%;
   box-sizing: border-box;
-  content-visibility: auto;
-  contain-intrinsic-block-size: var(--ui-track-row-min-height);
 }
 </style>

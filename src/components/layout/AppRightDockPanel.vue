@@ -1,7 +1,7 @@
 <script setup>
 import { shallowRef, useTemplateRef } from 'vue';
 import AppRightDockHeader from './AppRightDockHeader.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 
 const props = defineProps({
   title: { type: String, required: true },
@@ -54,7 +54,7 @@ defineExpose({ scrollTo });
       </AppRightDockHeader>
     </div>
 
-    <UiScrollRegion
+    <UiScrollLayout
       ref="scrollRegion"
       class="app-right-dock-panel__scroll"
       axis="vertical"
@@ -63,7 +63,7 @@ defineExpose({ scrollTo });
       <div class="app-right-dock-panel__body">
         <slot />
       </div>
-    </UiScrollRegion>
+    </UiScrollLayout>
   </section>
 </template>
 
@@ -94,6 +94,13 @@ defineExpose({ scrollTo });
 }
 
 .app-right-dock-panel__scroll {
+  --ui-scroll-layout-padding-block-start: var(--ui-right-dock-content-inset);
+  --ui-scroll-layout-padding-block-end: var(--ui-right-dock-content-inset);
+  --ui-scroll-layout-padding-inline-start: var(--ui-right-dock-content-inset);
+  --ui-scroll-layout-padding-inline-end: var(
+    --ui-right-dock-track-row-state-surface-outset-inline
+  );
+
   position: relative;
   min-block-size: 0;
   flex: 1;
@@ -101,13 +108,9 @@ defineExpose({ scrollTo });
 
 .app-right-dock-panel__body {
   min-inline-size: 0;
-  display: grid;
-  gap: var(--ui-space-5);
-  padding-block: var(--ui-right-dock-content-inset);
-  padding-inline-start: var(--ui-right-dock-content-inset);
-  padding-inline-end: calc(
-    var(--ui-right-dock-content-inset) + var(--ui-scrollbar-lane-size)
-  );
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-right-dock-section-gap);
 }
 
 :global(:root[data-ui-motion='reduced']) .app-right-dock-panel__chrome {

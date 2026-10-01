@@ -134,7 +134,7 @@ const DENSITY_CONTRACTS = [
   },
   {
     key: 'right-dock-inset',
-    label: 'Right Dock 內容邊距',
+    label: 'Side panel 基準邊距',
     token: '--ui-right-dock-content-inset',
     standard: '0.5rem',
     standardPx: 8,
@@ -297,7 +297,7 @@ const CURRENT_MAPPINGS = [
   },
   {
     key: 'right-dock-inset',
-    label: 'Right Dock 內容邊距',
+    label: 'Side panel 基準邊距',
     sources: [
       'src/styles/tokens.css',
       'src/components/layout/AppRightDockHeader.vue',
@@ -305,8 +305,9 @@ const CURRENT_MAPPINGS = [
       'src/components/queue/QueuePanel.vue',
       'src/components/playlists/TrackContextPanel.vue',
     ],
-    value: 'Right Dock 內容邊距固定 0.5rem／8 CSS px',
-    status: 'Standard／Compact 固定；曲目內容再內縮 4px，狀態底板向外延伸 4px',
+    value: 'Side panel 基準邊距固定 0.5rem／8 CSS px',
+    status:
+      'Scroll body 尾端保留 12px rail lane；row 停在 16px、狀態底板切齊 12px lane 邊界',
     shape: 'space',
     samples: [{ label: '現行', size: '0.5rem', px: 8 }],
   },

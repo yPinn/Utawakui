@@ -123,6 +123,7 @@
   --ui-border-width: 1px;
   --ui-focus-width: 2px;
   --ui-drag-indicator-width: 2px;
+  --ui-resize-handle-hit-size: var(--ui-space-3);
 
   /* Restrained shape scale: literal 0 is used for structural seams. */
   --ui-radius-xs: 0.125rem;
@@ -152,11 +153,27 @@
   );
   --ui-right-dock-width: 17.5rem;
   --ui-right-dock-rail-width: 2.5rem;
-  --ui-right-dock-content-inset: var(--ui-space-2);
+  --ui-side-panel-content-inset: var(--ui-space-2);
+  --ui-side-panel-section-gap: var(--ui-space-4);
+  --ui-side-panel-content-gap: var(--ui-space-2);
+  --ui-side-panel-list-gap: var(--ui-space-1);
+  --ui-side-panel-row-state-surface-outset-inline: var(--ui-space-1);
+  --ui-side-panel-row-radius: var(--ui-radius-sm);
+  --ui-playlist-sidebar-padding-block: var(--ui-side-panel-content-inset);
+  --ui-playlist-sidebar-padding-inline: var(--ui-side-panel-content-inset);
+  --ui-playlist-sidebar-padding-inline-compact: 0.375rem;
+  --ui-playlist-section-gap: var(--ui-side-panel-content-gap);
+  --ui-playlist-list-gap: var(--ui-side-panel-list-gap);
+  --ui-right-dock-content-inset: var(--ui-side-panel-content-inset);
+  --ui-right-dock-section-gap: var(--ui-side-panel-section-gap);
+  --ui-right-dock-content-gap: var(--ui-side-panel-content-gap);
   --ui-right-dock-track-row-min-height: 3.25rem;
   --ui-right-dock-track-artwork-size: 2.5rem;
   --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
-  --ui-right-dock-track-row-state-surface-outset-inline: var(--ui-space-1);
+  --ui-right-dock-track-row-state-surface-outset-inline: var(
+    --ui-side-panel-row-state-surface-outset-inline
+  );
+  --ui-right-dock-track-row-radius: var(--ui-side-panel-row-radius);
   --ui-right-dock-sticky-background: color-mix(
     in srgb,
     var(--ui-color-surface) 88%,
@@ -438,7 +455,9 @@
   --ui-track-row-padding-inline: var(--ui-space-3);
   --ui-track-row-state-surface-outset-inline: 0;
   --ui-row-active-shadow: inset 2px 0 0 var(--ui-color-accent);
-  --ui-playlist-row-state-surface-outset-inline: var(--ui-space-1);
+  --ui-playlist-row-state-surface-outset-inline: var(
+    --ui-side-panel-row-state-surface-outset-inline
+  );
 
   --ui-folder-bg: var(--ui-color-folder-primary);
   --ui-folder-bg-secondary: var(--ui-color-folder-secondary);

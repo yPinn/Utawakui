@@ -132,6 +132,7 @@
   /* --- Borders --- */
   --ui-border-width: 1px;
   --ui-drag-indicator-width: 2px;
+  --ui-resize-handle-hit-size: var(--ui-space-3);
 
   /* --- Sizing: chrome & buttons --- */
   --ui-titlebar-height: 2.5rem; /* 40px */
@@ -189,6 +190,15 @@
   --ui-scrollbar-thumb-active: var(--ui-color-text);
   --ui-scrollbar-track: transparent;
   --ui-scrollbar-radius: var(--ui-radius-pill);
+  /* Sidebar and Right Dock share content rhythm only. UiScrollLayout owns
+     the axis-aware scrollbar lane; feature layouts map these content roles
+     into its logical padding contract. */
+  --ui-side-panel-content-inset: var(--ui-space-2);
+  --ui-side-panel-section-gap: var(--ui-space-4);
+  --ui-side-panel-content-gap: var(--ui-space-2);
+  --ui-side-panel-list-gap: var(--ui-space-1);
+  --ui-side-panel-row-state-surface-outset-inline: var(--ui-space-1);
+  --ui-side-panel-row-radius: var(--ui-radius-sm);
   --ui-floating-viewport-inset: var(--ui-space-2);
   --ui-floating-gap: var(--ui-space-2);
   --ui-tooltip-font-size: var(--ui-font-size-sm);
@@ -323,8 +333,8 @@
   ); /* 40px from the window edge: shared Sidebar/PlayerBar artwork axis */
   --ui-playlist-sidebar-width: 16rem; /* default/CSS fallback — App.vue overrides live via useSidebarWidth.js */
   --ui-playlist-sidebar-width-min: 4rem; /* 64px: tighter icon-only rail */
-  --ui-playlist-sidebar-padding-block: var(--ui-space-2);
-  --ui-playlist-sidebar-padding-inline: var(--ui-space-2);
+  --ui-playlist-sidebar-padding-block: var(--ui-side-panel-content-inset);
+  --ui-playlist-sidebar-padding-inline: var(--ui-side-panel-content-inset);
   --ui-playlist-sidebar-padding-inline-compact: 0.375rem; /* 6px: 64px rail minus the 52px standard hit area */
   /* Fixed rem, not viewport-relative, so the cap stays the same regardless
      of window size — only vw would make it grow with the window. */
@@ -356,7 +366,7 @@
   --ui-playlist-row-thumb-size: var(--ui-sidebar-artwork-size);
   --ui-playlist-row-compact-hit-size: var(--ui-sidebar-row-min-height);
   --ui-playlist-row-state-surface-outset-inline: var(
-    --ui-space-1
+    --ui-side-panel-row-state-surface-outset-inline
   ); /* 4px: expands hover/selected paint to an 8px visual artwork inset without moving content */
   --ui-playlist-row-selected-background: var(
     --ui-color-surface-active
@@ -376,8 +386,8 @@
   ); /* aligns search text start to row labels: icon slot + toolbar gap */
   --ui-playlist-search-separator-inset-block: var(--ui-space-2);
   --ui-playlist-search-input-padding-inline-end: var(--ui-space-2);
-  --ui-playlist-section-gap: var(--ui-space-2);
-  --ui-playlist-list-gap: var(--ui-space-1); /* gap between rows */
+  --ui-playlist-section-gap: var(--ui-side-panel-content-gap);
+  --ui-playlist-list-gap: var(--ui-side-panel-list-gap); /* gap between rows */
 
   /* --- Sizing: shell right Dock --- */
   /* Queue and the Token v2 metadata Inspector share one shell-owned plane.
@@ -390,11 +400,16 @@
      owns an 8px perimeter, while Track Row content and state paint own
      separate 4px deltas below. Window density must not compact this plane a
      second time. */
-  --ui-right-dock-content-inset: var(--ui-space-2);
+  --ui-right-dock-content-inset: var(--ui-side-panel-content-inset);
+  --ui-right-dock-section-gap: var(--ui-side-panel-section-gap);
+  --ui-right-dock-content-gap: var(--ui-side-panel-content-gap);
   --ui-right-dock-track-row-min-height: 3.25rem; /* 52px */
   --ui-right-dock-track-artwork-size: 2.5rem; /* 40px */
   --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
-  --ui-right-dock-track-row-state-surface-outset-inline: var(--ui-space-1);
+  --ui-right-dock-track-row-state-surface-outset-inline: var(
+    --ui-side-panel-row-state-surface-outset-inline
+  );
+  --ui-right-dock-track-row-radius: var(--ui-side-panel-row-radius);
   --ui-right-dock-sticky-background: color-mix(
     in srgb,
     var(--ui-color-surface) 88%,

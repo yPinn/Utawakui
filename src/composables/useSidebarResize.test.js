@@ -38,4 +38,26 @@ describe('useSidebarResize', () => {
 
     expect(useSidebarWidth().width.value).toBe(256);
   });
+
+  it('supports bounded keyboard resizing without leaving an oversized compact rail', async () => {
+    const { SIDEBAR_WIDTH_MAX, useSidebarWidth } =
+      await import('./useSidebarWidth.js');
+    const { useSidebarResize } = await import('./useSidebarResize.js');
+    const sidebarWidth = useSidebarWidth();
+    const { resizeBy, resizeTo } = useSidebarResize();
+
+    sidebarWidth.setWidth(280);
+    await resizeBy(-8);
+    expect(sidebarWidth.width.value).toBe(272);
+
+    await resizeTo(256);
+    await resizeBy(-8);
+    expect(sidebarWidth.width.value).toBe(64);
+
+    await resizeTo(SIDEBAR_WIDTH_MAX + 80);
+    expect(sidebarWidth.width.value).toBe(SIDEBAR_WIDTH_MAX);
+    expect(window.Utawakui.setSidebarWidth).toHaveBeenLastCalledWith(
+      SIDEBAR_WIDTH_MAX,
+    );
+  });
 });

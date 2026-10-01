@@ -426,12 +426,16 @@ const {
   user-select: none;
 }
 
+.queue-panel__sections {
+  display: grid;
+  gap: var(--ui-side-panel-section-gap);
+}
+
 .queue-panel__content:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: calc(-1 * var(--ui-focus-width));
 }
 
-.queue-panel :deep(.right-dock-track:not(.ui-track--active):hover)::before,
 .queue-panel
   :deep(.right-dock-track:not(.ui-track--active):focus-within)::before {
   background: var(--ui-color-surface-hover);

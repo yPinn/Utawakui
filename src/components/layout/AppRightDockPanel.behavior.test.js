@@ -5,6 +5,7 @@ import AppRightDockHeader from './AppRightDockHeader.vue';
 import AppRightDockPanel from './AppRightDockPanel.vue';
 import AppRightDockSection from './AppRightDockSection.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
@@ -20,12 +21,17 @@ const panelSource = readFileSync(
   new URL('./AppRightDockPanel.vue', import.meta.url),
   'utf8',
 );
+const sectionSource = readFileSync(
+  new URL('./AppRightDockSection.vue', import.meta.url),
+  'utf8',
+);
 
 for (const [component, filename] of [
   [AppRightDockPanel, './AppRightDockPanel.vue'],
   [AppRightDockSection, './AppRightDockSection.vue'],
   [AppRightDockHeader, './AppRightDockHeader.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiSeparator, '../ui/UiSeparator.vue'],
   [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
@@ -34,12 +40,30 @@ for (const [component, filename] of [
 }
 
 describe('AppRightDockPanel', () => {
-  it('reserves the overlay scrollbar lane outside the Dock content boundary', () => {
+  it('maps Dock content insets into the shared scroll-layout boundary', () => {
+    for (const [layoutRole, featureRole] of [
+      ['block-start', 'content-inset'],
+      ['block-end', 'content-inset'],
+      ['inline-start', 'content-inset'],
+      ['inline-end', 'track-row-state-surface-outset-inline'],
+    ]) {
+      expect(panelSource).toMatch(
+        new RegExp(
+          `--ui-scroll-layout-padding-${layoutRole}:\\s*var\\(\\s*--ui-right-dock-${featureRole}\\s*\\);`,
+          'u',
+        ),
+      );
+    }
+    expect(panelSource).toContain(
+      "import UiScrollLayout from '../ui/UiScrollLayout.vue';",
+    );
+    expect(panelSource).toContain('<UiScrollLayout');
+    expect(panelSource).not.toContain('<UiScrollRegion');
     expect(panelSource).toMatch(
-      /\.app-right-dock-panel__body\s*\{[^}]*padding-block:\s*var\(--ui-right-dock-content-inset\);[^}]*padding-inline-start:\s*var\(--ui-right-dock-content-inset\);[^}]*padding-inline-end:\s*calc\(\s*var\(--ui-right-dock-content-inset\)\s*\+\s*var\(--ui-scrollbar-lane-size\)\s*\);/su,
+      /\.app-right-dock-panel__body\s*\{[^}]*display:\s*(?:flex|grid);[^}]*gap:\s*var\(--ui-right-dock-section-gap\);/su,
     );
     expect(panelSource).not.toMatch(
-      /\.app-right-dock-panel__body\s*\{[^}]*padding:\s*var\(--ui-right-dock-content-inset\);/su,
+      /\.app-right-dock-panel__body\s*\{[^}]*padding(?:-|:)/su,
     );
   });
 
@@ -123,5 +147,17 @@ describe('AppRightDockSection', () => {
     expect(separator.props['aria-hidden']).toBe('true');
     expect(String(section.props.class)).not.toContain('ui-surface');
     app.unmount();
+  });
+
+  it('owns header/body rhythm while the parent owns spacing between sections', () => {
+    expect(sectionSource).toMatch(
+      /\.app-right-dock-section\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-right-dock-content-gap\);/su,
+    );
+    expect(sectionSource).toMatch(
+      /\.app-right-dock-section__body\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-right-dock-content-gap\);/su,
+    );
+    expect(sectionSource).not.toMatch(
+      /\.app-right-dock-section__divider\s*\{[^}]*margin/u,
+    );
   });
 });

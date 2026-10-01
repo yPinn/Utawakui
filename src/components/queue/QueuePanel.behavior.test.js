@@ -82,7 +82,7 @@ describe('QueuePanel shared Dock content', () => {
     expect(source).toContain('ref="dockPanel"');
     expect(source).toContain('dockPanel.value?.scrollTo({ top: 0 })');
     expect(source).not.toContain('<UiScrollRegion');
-    expect(dockPanelSource).toContain('<UiScrollRegion');
+    expect(dockPanelSource).toContain('<UiScrollLayout');
     expect(dockPanelSource).toMatch(
       /\.app-right-dock-panel__scroll\s*\{[^}]*min-block-size:\s*0;[^}]*flex:\s*1;/su,
     );
@@ -101,7 +101,7 @@ describe('QueuePanel shared Dock content', () => {
     );
   });
 
-  it('keeps long Queue rows cheap until their pixels are needed', () => {
+  it('keeps Queue row media lazy without changing row paint geometry', () => {
     expect(rowSource).not.toContain('UiMarqueeText');
     expect(rowSource).toContain('UiTrackRow');
     expect(rowSource).toContain('overflow="ellipsis"');
@@ -110,9 +110,6 @@ describe('QueuePanel shared Dock content', () => {
     expect(rowSource).toContain('thumb-decoding="async"');
     expect(rowSource).toContain('hide-duration');
     expect(rowSource).toContain('artwork-clickable');
-    expect(sectionSource).toContain('content-visibility: auto');
-    expect(sectionSource).toContain('contain-intrinsic-block-size');
-    expect(sectionSource).toContain('var(--ui-track-row-min-height)');
     expect(sectionSource).not.toContain('--ui-queue-track-thumb-size');
   });
 
@@ -144,12 +141,13 @@ describe('QueuePanel shared Dock content', () => {
   });
 
   it('owns section line rhythm without child margins defining content boundaries', () => {
-    expect(sectionSource).toMatch(
-      /\.queue-section\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-space-3\);/su,
+    expect(source).toMatch(
+      /\.queue-panel__sections\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-side-panel-section-gap\);/su,
     );
     expect(sectionSource).toMatch(
-      /\.queue-section \+ \.queue-section\s*\{[^}]*margin-top:\s*var\(--ui-space-5\);/su,
+      /\.queue-section\s*\{[^}]*display:\s*grid;[^}]*gap:\s*var\(--ui-side-panel-content-gap\);/su,
     );
+    expect(sectionSource).not.toMatch(/\.queue-section \+ \.queue-section/u);
     expect(sectionSource).not.toMatch(
       /\.queue-section__header\s*\{[^}]*margin-bottom:/su,
     );
@@ -172,12 +170,12 @@ describe('QueuePanel shared Dock content', () => {
       /\.ui-track::before\s*\{[^}]*inset-inline:\s*calc\(\s*-1\s*\*\s*var\(--ui-track-row-state-surface-outset-inline\)\s*\);[^}]*z-index:\s*-1;/su,
     );
     expect(trackRowSource).toMatch(
-      /\.ui-track--interactive:not\(\.ui-track--active\) \.ui-track__action:hover\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
+      /\.ui-track--interactive:not\(\.ui-track--active\):hover::before\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
     );
     expect(trackRowSource).toMatch(
       /\.ui-track--active::before\s*\{[^}]*background:\s*var\(\s*--ui-track-row-selected-surface,\s*var\(--ui-color-surface-selected\)\s*\);[^}]*box-shadow:\s*var\(\s*--ui-track-row-active-shadow,\s*var\(--ui-row-active-shadow\)\s*\);/su,
     );
-    expect(panelCss).toMatch(
+    expect(panelCss).not.toMatch(
       /\.queue-panel[^{}]*\.right-dock-track:not\(\.ui-track--active\):hover::before/u,
     );
     expect(panelCss).toMatch(
@@ -413,14 +411,8 @@ describe('QueuePanel shared Dock content', () => {
     expect(trackRowSource).toContain('<slot name="overlay" />');
   });
 
-  it('does not paint-contain a draggable row whose separator lives in the row gap', () => {
-    const contentVisibilityRule = sectionCss.match(
-      /([^{}]+)\{[^{}]*content-visibility:\s*auto;[^{}]*\}/u,
-    );
-
-    expect(contentVisibilityRule).not.toBeNull();
-    expect(contentVisibilityRule[1]).toMatch(
-      /\.queue-section__item(?:\[data-v-[^\]]+\])?:not\(\.queue-section__item--draggable\)/u,
-    );
+  it('does not paint-contain any Queue row state surface based on reorder capability', () => {
+    expect(sectionCss).not.toMatch(/content-visibility:\s*auto;/u);
+    expect(sectionCss).not.toMatch(/contain-intrinsic-(?:block-)?size:/u);
   });
 });

@@ -8,6 +8,7 @@ import UiChip from '../ui/UiChip.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSeparator from '../ui/UiSeparator.vue';
 import UiStatusIcon from '../ui/UiStatusIcon.vue';
@@ -31,6 +32,7 @@ for (const [component, filename] of [
   [UiCollageThumb, '../ui/UiCollageThumb.vue'],
   [UiHint, '../ui/UiHint.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
+  [UiScrollLayout, '../ui/UiScrollLayout.vue'],
   [UiScrollRegion, '../ui/UiScrollRegion.vue'],
   [UiSeparator, '../ui/UiSeparator.vue'],
   [UiStatusIcon, '../ui/UiStatusIcon.vue'],
@@ -121,6 +123,17 @@ describe('TrackContextPanel', () => {
     expect(source).not.toContain('TrackContextBlock');
     expect(source).not.toContain('useStudioLibraryInspectorWidth');
     expect(source).not.toContain('--ui-right-dock-');
+  });
+
+  it('lets the shared section body own subgroup spacing instead of stacking child margins', () => {
+    const source = readFileSync(
+      new URL('./TrackContextPanel.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).not.toMatch(
+      /\.studio-context-inspector__(?:lyrics-source|collection-cover|readiness)\s*\{[^}]*margin-(?:top|bottom):/su,
+    );
   });
 
   it('uses Track Row for single-track identities and Collage Thumb only for grouped identities', () => {

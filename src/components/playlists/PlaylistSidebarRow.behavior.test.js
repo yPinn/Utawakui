@@ -150,6 +150,54 @@ describe('PlaylistSidebarRow aligned collection interaction', () => {
     mounted.app.unmount();
   });
 
+  it('keeps playback actions out of row reorder drag initiation', () => {
+    const dragStart = vi.fn();
+    const mounted = mount(PlaylistSidebarRow, {
+      playlist,
+      subtitle: '播放清單',
+      draggable: true,
+      onDragStart: dragStart,
+    });
+    const row = findAll(mounted.root, (node) =>
+      String(node.props?.class ?? '').includes('playlist-sidebar-row'),
+    )[0];
+    const actionTarget = {
+      closest: vi.fn((selector) =>
+        selector.includes('.ui-icon-btn') ? actionTarget : null,
+      ),
+    };
+    const rowTarget = { closest: vi.fn(() => null) };
+    const blockedDrag = {
+      target: rowTarget,
+      preventDefault: vi.fn(),
+    };
+    const allowedDrag = {
+      target: rowTarget,
+      preventDefault: vi.fn(),
+    };
+
+    trigger(row, 'onPointerdown', { target: actionTarget });
+    trigger(row, 'onDragstart', blockedDrag);
+    expect(blockedDrag.preventDefault).toHaveBeenCalledOnce();
+    expect(dragStart).not.toHaveBeenCalled();
+
+    trigger(row, 'onPointerdown', { target: rowTarget });
+    trigger(row, 'onDragstart', allowedDrag);
+    expect(allowedDrag.preventDefault).not.toHaveBeenCalled();
+    expect(dragStart).toHaveBeenCalledOnce();
+    mounted.app.unmount();
+  });
+
+  it('uses the shared separator primitive for before and after drop feedback', () => {
+    expect(source).toContain("import UiSeparator from '../ui/UiSeparator.vue'");
+    expect(source).toContain('class="playlist-sidebar-row__drop-indicator"');
+    expect(source).toContain(
+      ':class="`playlist-sidebar-row__drop-indicator--${dropPosition}`"',
+    );
+    expect(source).not.toContain('.playlist-sidebar-row--drop-before::before');
+    expect(source).not.toContain('.playlist-sidebar-row--drop-after::after');
+  });
+
   it('binds compact collection information to the whole item and places it on the logical end side', async () => {
     const mounted = mount(PlaylistSidebarRow, {
       playlist: {

@@ -115,11 +115,7 @@ function openTrackMenu(track, payload) {
 <style scoped>
 .queue-section {
   display: grid;
-  gap: var(--ui-space-3);
-}
-
-.queue-section + .queue-section {
-  margin-top: var(--ui-space-5);
+  gap: var(--ui-side-panel-content-gap);
 }
 
 .queue-section__header {
@@ -176,11 +172,6 @@ function openTrackMenu(track, payload) {
   min-inline-size: 0;
   max-inline-size: 100%;
   box-sizing: border-box;
-}
-
-.queue-section__item:not(.queue-section__item--draggable) {
-  content-visibility: auto;
-  contain-intrinsic-block-size: var(--ui-track-row-min-height);
 }
 
 .queue-section__item--draggable.queue-track {

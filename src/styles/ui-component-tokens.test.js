@@ -34,6 +34,13 @@ function declarations(css) {
   );
 }
 
+function normalizedValue(value) {
+  return value
+    ?.replace(/\s+/gu, ' ')
+    .replace(/\(\s+/gu, '(')
+    .replace(/\s+\)/gu, ')');
+}
+
 function filesUnder(directory) {
   return fs.readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
     const child = new URL(
@@ -72,20 +79,87 @@ const queueFeatureFiles = filesUnder(
   }));
 
 describe('shared UI component token contract', () => {
+  it('derives both side panels from shared content rhythm without owning scrollbar geometry', () => {
+    for (const css of [active, candidate]) {
+      const values = declarations(css);
+
+      expect(values.get('--ui-side-panel-content-inset')).toBe(
+        'var(--ui-space-2)',
+      );
+      expect(values.get('--ui-side-panel-section-gap')).toBe(
+        'var(--ui-space-4)',
+      );
+      expect(values.get('--ui-side-panel-content-gap')).toBe(
+        'var(--ui-space-2)',
+      );
+      expect(values.get('--ui-side-panel-list-gap')).toBe('var(--ui-space-1)');
+      expect(
+        values.has('--ui-side-panel-scroll-content-inset-inline-end'),
+      ).toBe(false);
+      expect(
+        values.get('--ui-side-panel-row-state-surface-outset-inline'),
+      ).toBe('var(--ui-space-1)');
+      expect(values.get('--ui-side-panel-row-radius')).toBe(
+        'var(--ui-radius-sm)',
+      );
+      expect(values.get('--ui-playlist-sidebar-padding-inline')).toBe(
+        'var(--ui-side-panel-content-inset)',
+      );
+      expect(values.get('--ui-playlist-section-gap')).toBe(
+        'var(--ui-side-panel-content-gap)',
+      );
+      expect(values.get('--ui-playlist-list-gap')).toBe(
+        'var(--ui-side-panel-list-gap)',
+      );
+      expect(
+        values.has('--ui-playlist-sidebar-scroll-padding-inline-end'),
+      ).toBe(false);
+      expect(
+        normalizedValue(
+          values.get('--ui-playlist-row-state-surface-outset-inline'),
+        ),
+      ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
+      expect(values.get('--ui-right-dock-content-inset')).toBe(
+        'var(--ui-side-panel-content-inset)',
+      );
+      expect(values.get('--ui-right-dock-section-gap')).toBe(
+        'var(--ui-side-panel-section-gap)',
+      );
+      expect(values.get('--ui-right-dock-content-gap')).toBe(
+        'var(--ui-side-panel-content-gap)',
+      );
+      expect(
+        values.has('--ui-right-dock-scroll-content-inset-inline-end'),
+      ).toBe(false);
+      expect(
+        normalizedValue(
+          values.get('--ui-right-dock-track-row-state-surface-outset-inline'),
+        ),
+      ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
+      expect(values.get('--ui-right-dock-track-row-radius')).toBe(
+        'var(--ui-side-panel-row-radius)',
+      );
+    }
+  });
+
   it('maps both systems onto one fixed-density Right Dock token contract', () => {
     const activeValues = declarations(active);
     const candidateValues = declarations(candidate);
 
     expect(activeValues.get('--ui-panel-inset')).toBe('var(--ui-space-4)');
     expect(activeValues.get('--ui-right-dock-content-inset')).toBe(
-      'var(--ui-space-2)',
+      'var(--ui-side-panel-content-inset)',
     );
     expect(activeValues.get('--ui-right-dock-track-row-padding-inline')).toBe(
       'var(--ui-space-1)',
     );
     expect(
-      activeValues.get('--ui-right-dock-track-row-state-surface-outset-inline'),
-    ).toBe('var(--ui-space-1)');
+      normalizedValue(
+        activeValues.get(
+          '--ui-right-dock-track-row-state-surface-outset-inline',
+        ),
+      ),
+    ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
     expect(activeValues.get('--ui-right-dock-track-row-min-height')).toBe(
       '3.25rem',
     );
@@ -97,16 +171,18 @@ describe('shared UI component token contract', () => {
     expect(candidateValues.get('--ui-right-dock-width')).toBe('17.5rem');
     expect(candidateValues.get('--ui-right-dock-rail-width')).toBe('2.5rem');
     expect(candidateValues.get('--ui-right-dock-content-inset')).toBe(
-      'var(--ui-space-2)',
+      'var(--ui-side-panel-content-inset)',
     );
     expect(
       candidateValues.get('--ui-right-dock-track-row-padding-inline'),
     ).toBe('var(--ui-space-1)');
     expect(
-      candidateValues.get(
-        '--ui-right-dock-track-row-state-surface-outset-inline',
+      normalizedValue(
+        candidateValues.get(
+          '--ui-right-dock-track-row-state-surface-outset-inline',
+        ),
       ),
-    ).toBe('var(--ui-space-1)');
+    ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
     expect(candidateValues.get('--ui-right-dock-track-row-min-height')).toBe(
       '3.25rem',
     );
@@ -171,7 +247,7 @@ describe('shared UI component token contract', () => {
     );
     expect(activeValues.get('--ui-playlist-sidebar-width-min')).toBe('4rem');
     expect(activeValues.get('--ui-playlist-sidebar-padding-inline')).toBe(
-      'var(--ui-space-2)',
+      'var(--ui-side-panel-content-inset)',
     );
     expect(
       activeValues.get('--ui-playlist-sidebar-padding-inline-compact'),
@@ -195,21 +271,25 @@ describe('shared UI component token contract', () => {
     ).not.toContain('--ui-playlist-row');
     expect(
       activeValues.get('--ui-playlist-row-state-surface-outset-inline'),
-    ).toMatch(/^var\(\s*--ui-space-1\s*\)$/u);
+    ).toMatch(
+      /^var\(\s*--ui-side-panel-row-state-surface-outset-inline\s*\)$/u,
+    );
     expect(candidateValues.get('--ui-sidebar-row-min-height')).toBe('3.25rem');
     expect(candidateValues.get('--ui-sidebar-artwork-size')).toBe(
       'var(--ui-track-artwork-size-standard)',
     );
     expect(
-      candidateValues.get('--ui-playlist-row-state-surface-outset-inline'),
-    ).toBe('var(--ui-space-1)');
+      normalizedValue(
+        candidateValues.get('--ui-playlist-row-state-surface-outset-inline'),
+      ),
+    ).toBe('var(--ui-side-panel-row-state-surface-outset-inline)');
     expect(candidateCompactBlock).not.toContain('--ui-sidebar-row-min-height');
     expect(candidateCompactBlock).not.toContain('--ui-sidebar-artwork-size');
     expect(candidateCompactBlock).not.toContain(
       '--ui-playlist-row-state-surface-outset-inline',
     );
     expect(activeValues.get('--ui-playlist-list-gap')).toBe(
-      'var(--ui-space-1)',
+      'var(--ui-side-panel-list-gap)',
     );
   });
 

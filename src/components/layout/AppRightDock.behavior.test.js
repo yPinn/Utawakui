@@ -21,6 +21,10 @@ const source = readFileSync(
   new URL('./AppRightDock.vue', import.meta.url),
   'utf8',
 );
+const trackRowSource = readFileSync(
+  new URL('../ui/UiTrackRow.vue', import.meta.url),
+  'utf8',
+);
 const activeTokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
@@ -58,6 +62,7 @@ describe('AppRightDock', () => {
 
     expect(aside.props['aria-label']).toBe('播放佇列');
     expect(String(aside.props.class)).toContain('app-right-dock--expanded');
+    expect(String(aside.props.class)).toContain('ui-surface--stroke-inset');
     expect(content.props.inert).toBe(false);
     expect(content.props['aria-hidden']).toBe(false);
     expect(textContent(content)).toContain('Queue content');
@@ -190,16 +195,30 @@ describe('AppRightDock', () => {
   });
 
   it('uses shared optical and spacing tokens for the resize axis', () => {
-    expect(source).toContain('inline-size: var(--ui-space-3);');
+    for (const tokenSource of [activeTokenSource, v2TokenSource]) {
+      expect(tokenSource).toContain(
+        '--ui-resize-handle-hit-size: var(--ui-space-3);',
+      );
+    }
+    expect(source).toContain('inline-size: var(--ui-resize-handle-hit-size);');
     expect(source).toContain('inline-size: var(--ui-drag-indicator-width);');
     expect(source).not.toContain('width: 6px;');
     expect(source).not.toContain('width: 2px;');
   });
 
-  it('owns a fixed-density 52/40 row with Sidebar-aligned 8/4/4 insets', () => {
+  it('owns a fixed-density 52/40 row with the shared side-panel boundary', () => {
     for (const tokenSource of [activeTokenSource, v2TokenSource]) {
       expect(tokenSource).toContain(
-        '--ui-right-dock-content-inset: var(--ui-space-2);',
+        '--ui-right-dock-content-inset: var(--ui-side-panel-content-inset);',
+      );
+      expect(tokenSource).toContain(
+        '--ui-right-dock-section-gap: var(--ui-side-panel-section-gap);',
+      );
+      expect(tokenSource).toContain(
+        '--ui-right-dock-content-gap: var(--ui-side-panel-content-gap);',
+      );
+      expect(tokenSource).not.toContain(
+        '--ui-right-dock-scroll-content-inset-inline-end',
       );
       expect(tokenSource).toContain(
         '--ui-right-dock-track-row-min-height: 3.25rem;',
@@ -210,8 +229,11 @@ describe('AppRightDock', () => {
       expect(tokenSource).toContain(
         '--ui-right-dock-track-row-padding-inline: var(--ui-space-1);',
       );
+      expect(tokenSource).toMatch(
+        /--ui-right-dock-track-row-state-surface-outset-inline:\s*var\(\s*--ui-side-panel-row-state-surface-outset-inline\s*\);/u,
+      );
       expect(tokenSource).toContain(
-        '--ui-right-dock-track-row-state-surface-outset-inline: var(--ui-space-1);',
+        '--ui-right-dock-track-row-radius: var(--ui-side-panel-row-radius);',
       );
     }
 
@@ -227,6 +249,7 @@ describe('AppRightDock', () => {
     expect(compactBlock).not.toContain(
       '--ui-right-dock-track-row-state-surface-outset-inline',
     );
+    expect(compactBlock).not.toContain('--ui-right-dock-track-row-radius');
   });
 
   it('scopes the fixed Track Row recipe to Right Dock descendants', () => {
@@ -239,10 +262,28 @@ describe('AppRightDock', () => {
     expect(source).toMatch(
       /--ui-track-row-state-surface-outset-inline:\s*var\(\s*--ui-right-dock-track-row-state-surface-outset-inline\s*\);/su,
     );
+    expect(source).toMatch(
+      /--ui-track-row-radius:\s*var\(\s*--ui-right-dock-track-row-radius\s*\);/su,
+    );
+    expect(trackRowSource).toContain(
+      'border-radius: var(--ui-track-row-radius, var(--ui-radius-md));',
+    );
     expect(source).toContain('--ui-track-row-selected-surface: color-mix(');
     expect(source).toContain('var(--ui-color-text) 8%');
     expect(source).toContain('--ui-track-row-active-shadow: none;');
     expect(source).not.toContain('--ui-sidebar-row-min-height');
     expect(source).not.toContain('--ui-sidebar-artwork-size');
+  });
+
+  it('paints hover and pressed feedback on the same state surface as selection', () => {
+    expect(trackRowSource).toMatch(
+      /\.ui-track--interactive:not\(\.ui-track--active\):hover::before\s*\{[^}]*background:\s*var\(--ui-color-surface-hover\);/su,
+    );
+    expect(trackRowSource).toMatch(
+      /\.ui-track--interactive:has\(\.ui-track__action:active\)::before\s*\{[^}]*background:\s*var\(--ui-color-surface-active\);/su,
+    );
+    expect(trackRowSource).not.toMatch(
+      /\.ui-track__action:(?:hover|active)\s*\{[^}]*background:/su,
+    );
   });
 });

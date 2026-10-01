@@ -46,6 +46,8 @@ function closeDock() {
 
 .app-right-dock-header__identity {
   min-width: 0;
+  display: grid;
+  gap: var(--ui-side-panel-list-gap);
 }
 
 .app-right-dock-header h2,
@@ -67,7 +69,6 @@ function closeDock() {
 
 .app-right-dock-header p {
   overflow: hidden;
-  margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);

@@ -10,21 +10,25 @@ const batchOneConsumers = [
     name: 'inner page',
     source: readSource('../layout/AppInnerPage.vue'),
     marker: 'class="app-inner-page__scroll"',
+    component: 'UiScrollLayout',
   },
   {
     name: 'playlist sidebar',
-    source: readSource('../layout/AppPlaylistSidebar.vue'),
-    marker: 'class="app-playlist-sidebar__scroll"',
+    source: readSource('../playlists/PlaylistSidebar.vue'),
+    marker: 'class="playlist-sidebar__scroll"',
+    component: 'UiScrollLayout',
   },
   {
     name: 'studio track table',
     source: readSource('../playlists/StudioLibraryTrackTable.vue'),
     marker: 'class="studio-track-table"',
+    component: 'UiScrollRegion',
   },
   {
     name: 'settings',
     source: readSource('../../views/SettingsView.vue'),
     marker: 'class="settings-view"',
+    component: 'UiScrollRegion',
   },
 ];
 
@@ -92,26 +96,31 @@ const batchThreeConsumers = [
 describe('UiScrollRegion production migration', () => {
   it.each(batchOneConsumers)(
     'migrates the $name scroll owner without keeping native scrollbar paint',
-    ({ source, marker }) => {
-      expect(source).toContain('UiScrollRegion');
-      expect(source).toContain('<UiScrollRegion');
+    ({ source, marker, component }) => {
+      expect(source).toContain(component);
+      expect(source).toContain(`<${component}`);
       expect(source).toContain(marker);
       expect(source).not.toContain('scrollbar-color:');
       expect(source).not.toContain('scrollbar-width:');
     },
   );
 
-  it('preserves padding and layout on explicit viewport classes', () => {
+  it('preserves padding and layout at the composition layer or explicit viewport', () => {
+    const innerPageSource = batchOneConsumers[0].source;
     const sidebarSource = batchOneConsumers[1].source;
     const settingsSource = batchOneConsumers[3].source;
     const utilitySource = readSource('../layout/AppUtilityFrame.vue');
 
-    expect(sidebarSource).toContain(
-      'viewport-class="app-playlist-sidebar__scroll-viewport"',
+    expect(innerPageSource).toMatch(
+      /\.app-inner-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
+    );
+    expect(innerPageSource).not.toMatch(
+      /\.app-inner-page__content\s*\{[^}]*padding(?:-|:)/su,
     );
     expect(sidebarSource).toMatch(
-      /\.app-playlist-sidebar__scroll\s+:deep\(\.app-playlist-sidebar__scroll-viewport\)\s*\{[^}]*padding:/su,
+      /\.playlist-sidebar__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
     );
+    expect(sidebarSource).not.toContain('playlist-sidebar__scroll-viewport');
     expect(settingsSource).toContain(
       'viewport-class="settings-view__viewport"',
     );
@@ -127,7 +136,7 @@ describe('UiScrollRegion production migration', () => {
     const sidebarSource = batchOneConsumers[1].source;
 
     expect(sidebarSource).toContain(
-      ":scrollbar-visibility=\"sidebarCompact ? 'hidden' : 'auto'\"",
+      ":scrollbar-visibility=\"compact ? 'hidden' : 'auto'\"",
     );
   });
 
@@ -176,7 +185,10 @@ describe('UiScrollRegion production migration', () => {
       readSource('../playlists/TrackContextPanel.vue'),
     ];
 
-    expect(dockPanelSource).toContain('<UiScrollRegion');
+    const scrollLayoutSource = readSource('./UiScrollLayout.vue');
+
+    expect(dockPanelSource).toContain('<UiScrollLayout');
+    expect(scrollLayoutSource).toContain('<UiScrollRegion');
     for (const source of featureSources) {
       expect(source).toContain('AppRightDockPanel');
       expect(source).not.toContain('<UiScrollRegion');

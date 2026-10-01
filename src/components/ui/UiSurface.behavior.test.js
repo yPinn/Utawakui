@@ -25,11 +25,13 @@ function hasClass(node, name) {
 }
 
 describe('UiSurface', () => {
-  it('bounds tone and radius to the documented material contract', () => {
+  it('bounds tone, radius, and stroke to the documented material contract', () => {
     expect(UiSurface.props.tone.validator('surface')).toBe(true);
     expect(UiSurface.props.tone.validator('accent')).toBe(false);
     expect(UiSurface.props.radius.validator('lg')).toBe(true);
     expect(UiSurface.props.radius.validator('pill')).toBe(false);
+    expect(UiSurface.props.stroke.validator('inset')).toBe(true);
+    expect(UiSurface.props.stroke.validator('outline')).toBe(false);
   });
 
   it('renders a bordered container and merges caller class via attrs fallthrough', () => {
@@ -52,6 +54,32 @@ describe('UiSurface', () => {
 
     expect(hasClass(node, 'ui-surface--tone-surface')).toBe(true);
     expect(hasClass(node, 'ui-surface--radius-md')).toBe(true);
+    expect(hasClass(node, 'ui-surface--stroke-border')).toBe(true);
+    mounted.app.unmount();
+  });
+
+  it('can paint an inset stroke without consuming content-box geometry', () => {
+    const mounted = mount(
+      UiSurface,
+      { stroke: 'inset' },
+      { default: () => 'x' },
+    );
+    const node = root(mounted);
+    const source = readFileSync(
+      new URL('./UiSurface.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(hasClass(node, 'ui-surface--stroke-inset')).toBe(true);
+    expect(source).toMatch(
+      /\.ui-surface--stroke-inset\s*\{[^}]*position:\s*relative;[^}]*border:\s*0;/su,
+    );
+    expect(source).toMatch(
+      /\.ui-surface--stroke-inset::after\s*\{[^}]*position:\s*absolute;[^}]*inset:\s*0;[^}]*border:\s*var\(--ui-border-width\) solid var\(--ui-color-border\);[^}]*border-radius:\s*inherit;[^}]*pointer-events:\s*none;/su,
+    );
+    expect(source).not.toMatch(
+      /\.ui-surface--stroke-inset\s*\{[^}]*box-shadow:/su,
+    );
     mounted.app.unmount();
   });
 

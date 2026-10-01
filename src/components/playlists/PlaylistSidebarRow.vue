@@ -8,6 +8,7 @@ import { Pause, Play } from '../../icons/index.js';
 import { PLAYLIST_ROW_THUMB_SIZE } from '../../constants/ui.js';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import UiSeparator from '../ui/UiSeparator.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import { useTooltip } from '../ui/useTooltip.js';
 
@@ -42,6 +43,41 @@ const selectLabel = computed(() => `選取 ${playlistDisplayName.value}`);
 const playbackLabel = computed(
   () => `${props.playing ? '暫停' : '播放'} ${playlistDisplayName.value}`,
 );
+const dropPosition = computed(() => {
+  if (props.dropBefore) return 'before';
+  if (props.dropAfter) return 'after';
+  return '';
+});
+
+const DRAG_EXCLUDED_ACTIONS = '.ui-icon-btn';
+let dragStartedFromAction = false;
+
+function isExcludedDragTarget(target) {
+  return Boolean(target?.closest?.(DRAG_EXCLUDED_ACTIONS));
+}
+
+function handlePointerDown(event) {
+  dragStartedFromAction = isExcludedDragTarget(event.target);
+}
+
+function resetDragOrigin() {
+  dragStartedFromAction = false;
+}
+
+function handleDragStart(event) {
+  if (dragStartedFromAction || isExcludedDragTarget(event.target)) {
+    event.preventDefault();
+    resetDragOrigin();
+    return;
+  }
+  emit('dragStart', event);
+}
+
+function handleDragEnd(event) {
+  resetDragOrigin();
+  emit('dragEnd', event);
+}
+
 const {
   open: collectionTooltipOpen,
   position: collectionTooltipPosition,
@@ -79,11 +115,14 @@ function toggleFromArtwork(event) {
     @click="emit('select')"
     @dblclick="emit('togglePlayback', $event)"
     @contextmenu="emit('contextmenu', $event)"
-    @dragstart="emit('dragStart', $event)"
+    @pointerdown="handlePointerDown"
+    @pointerup="resetDragOrigin"
+    @pointercancel="resetDragOrigin"
+    @dragstart="handleDragStart"
     @dragover="emit('dragOver', $event)"
     @dragleave="emit('dragLeave', $event)"
     @drop="emit('drop', $event)"
-    @dragend="emit('dragEnd')"
+    @dragend="handleDragEnd"
   >
     <span class="playlist-sidebar-row__state-surface" aria-hidden="true"></span>
     <button
@@ -124,6 +163,12 @@ function toggleFromArtwork(event) {
       </span>
       <span class="playlist-sidebar-row__kind">{{ subtitle }}</span>
     </span>
+    <UiSeparator
+      v-if="dropPosition"
+      tone="accent"
+      class="playlist-sidebar-row__drop-indicator"
+      :class="`playlist-sidebar-row__drop-indicator--${dropPosition}`"
+    />
     <UiTooltipSurface
       :open="collectionTooltipOpen"
       :text="playlistDisplayName"
@@ -147,7 +192,7 @@ function toggleFromArtwork(event) {
   padding: var(--ui-playlist-row-padding-block)
     var(--ui-playlist-row-padding-inline);
   border: var(--ui-border-width) solid transparent;
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-side-panel-row-radius);
   background: transparent;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
@@ -192,28 +237,24 @@ function toggleFromArtwork(event) {
   opacity: var(--ui-opacity-dragging);
 }
 
-.playlist-sidebar-row--drop-before::before,
-.playlist-sidebar-row--drop-after::after {
-  content: '';
+.playlist-sidebar-row__drop-indicator {
   position: absolute;
-  left: var(--ui-space-2);
-  right: var(--ui-space-2);
-  height: 2px;
-  border-radius: var(--ui-radius-pill);
-  background: var(--ui-color-accent);
+  inset-inline: 0;
+  z-index: 3;
   pointer-events: none;
 }
 
-.playlist-sidebar-row--drop-before::before {
-  top: -3px;
+.playlist-sidebar-row__drop-indicator--before {
+  inset-block-start: calc(-0.5 * var(--ui-space-1));
+  transform: translateY(-50%);
 }
 
-.playlist-sidebar-row--drop-after::after {
-  bottom: -3px;
+.playlist-sidebar-row__drop-indicator--after {
+  inset-block-end: calc(-0.5 * var(--ui-space-1));
+  transform: translateY(50%);
 }
 
 .playlist-sidebar-row:hover .playlist-sidebar-row__state-surface {
-  border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
 }
 
@@ -229,6 +270,11 @@ function toggleFromArtwork(event) {
 .playlist-sidebar-row--active .playlist-sidebar-row__state-surface {
   border-color: transparent;
   background: var(--ui-playlist-row-selected-background);
+}
+
+.playlist-sidebar-row:has(.playlist-sidebar-row__select:active)
+  .playlist-sidebar-row__state-surface {
+  background: var(--ui-color-surface-active);
 }
 
 .playlist-sidebar-row--active .playlist-sidebar-row__thumb {
@@ -251,13 +297,12 @@ function toggleFromArtwork(event) {
   transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
 }
 
-/* :focus-visible, not :focus-within — the hidden select button can keep
-   focus after mouse selection. :focus-visible only matches keyboard-driven
-   focus, which is the actual accessibility case this is for. */
-.playlist-sidebar-row__thumb:hover .playlist-sidebar-row__play,
-.playlist-sidebar-row__select:focus-visible
-  ~ .playlist-sidebar-row__thumb
-  .playlist-sidebar-row__play {
+/* The whole row reveals the playback affordance on pointer hover, matching
+   Right Dock rows. Keyboard focus reveals it only when the playback button
+   itself owns focus: focusing the select action must not imply that Enter
+   will play. */
+.playlist-sidebar-row:hover .playlist-sidebar-row__play,
+.playlist-sidebar-row__play:focus-visible {
   opacity: 1;
 }
 

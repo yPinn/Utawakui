@@ -33,11 +33,7 @@ const headingId = `app-right-dock-section-heading-${useId()}`;
 .app-right-dock-section {
   min-inline-size: 0;
   display: grid;
-  gap: var(--ui-space-3);
-}
-
-.app-right-dock-section__divider {
-  margin-block-end: var(--ui-space-2);
+  gap: var(--ui-right-dock-content-gap);
 }
 
 .app-right-dock-section__header {
@@ -65,5 +61,7 @@ const headingId = `app-right-dock-section-heading-${useId()}`;
 
 .app-right-dock-section__body {
   min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-right-dock-content-gap);
 }
 </style>

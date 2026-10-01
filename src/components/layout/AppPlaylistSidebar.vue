@@ -7,6 +7,9 @@ import { usePlaylists } from '../../composables/usePlaylists.js';
 import { useSidebarResize } from '../../composables/useSidebarResize.js';
 import {
   SIDEBAR_COMPACT_THRESHOLD,
+  SIDEBAR_WIDTH_KEYBOARD_STEP,
+  SIDEBAR_WIDTH_MAX,
+  SIDEBAR_WIDTH_MIN,
   useSidebarWidth,
 } from '../../composables/useSidebarWidth.js';
 import {
@@ -15,7 +18,6 @@ import {
 } from '../../composables/useVisualSystemMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
-import UiScrollRegion from '../ui/UiScrollRegion.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
@@ -33,7 +35,8 @@ const {
   clearCover,
   handlePlaylistMenuAction,
 } = usePlaylistActions();
-const { isResizing, startResize, toggleSidebarCollapse } = useSidebarResize();
+const { isResizing, startResize, resizeBy, resizeTo, toggleSidebarCollapse } =
+  useSidebarResize();
 const { width: sidebarWidth } = useSidebarWidth();
 const sidebarCompact = computed(
   () => sidebarWidth.value < SIDEBAR_COMPACT_THRESHOLD,
@@ -45,39 +48,62 @@ function activateSetlistView() {
     isStudioLibraryComparisonMode(visualSystemMode.value);
   if (!isViewingStudioLibrary) setActiveView('setlist');
 }
+
+async function handleResizeKeydown(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    await toggleSidebarCollapse();
+    return;
+  }
+  if (sidebarCompact.value) return;
+
+  const handlers = {
+    ArrowLeft: () => resizeBy(-SIDEBAR_WIDTH_KEYBOARD_STEP),
+    ArrowRight: () => resizeBy(SIDEBAR_WIDTH_KEYBOARD_STEP),
+    Home: () => resizeTo(SIDEBAR_WIDTH_MIN),
+    End: () => resizeTo(SIDEBAR_WIDTH_MAX),
+  };
+  const handler = handlers[event.key];
+  if (!handler) return;
+  event.preventDefault();
+  await handler();
+}
 </script>
 
 <template>
   <nav class="app-playlist-sidebar" aria-label="播放清單">
-    <!-- Scroll lives on this inner wrapper, not the root — the resize
-         handle below is a sibling positioned against the root instead, so
-         it stays pinned to the visible right edge instead of scrolling
-         away with a long playlist list. -->
-    <UiScrollRegion
-      class="app-playlist-sidebar__scroll"
-      axis="vertical"
-      viewport-class="app-playlist-sidebar__scroll-viewport"
-      :scrollbar-visibility="sidebarCompact ? 'hidden' : 'auto'"
-      tabindex="0"
-      aria-label="播放清單內容"
-    >
-      <PlaylistSidebar
-        :tracks-by-id="tracksById"
-        :library-view="playlistState.libraryView"
-        :compact="sidebarCompact"
-        @library-view-select="setLibraryView"
-        @activate-setlist="activateSetlistView"
-        @playlist-action="handlePlaylistMenuAction"
-      />
-    </UiScrollRegion>
+    <PlaylistSidebar
+      id="app-playlist-sidebar-content"
+      class="app-playlist-sidebar__content"
+      :tracks-by-id="tracksById"
+      :library-view="playlistState.libraryView"
+      :compact="sidebarCompact"
+      @library-view-select="setLibraryView"
+      @activate-setlist="activateSetlistView"
+      @playlist-action="handlePlaylistMenuAction"
+    />
 
     <button
       type="button"
       class="app-playlist-sidebar__handle"
       :class="{ 'app-playlist-sidebar__handle--active': isResizing }"
-      aria-label="調整側欄寬度，雙擊切換摺疊"
+      role="separator"
+      tabindex="0"
+      aria-orientation="vertical"
+      :aria-valuemin="SIDEBAR_WIDTH_MIN"
+      :aria-valuemax="SIDEBAR_WIDTH_MAX"
+      :aria-valuenow="sidebarWidth"
+      :aria-valuetext="`${sidebarWidth} 像素`"
+      aria-controls="app-playlist-sidebar-content"
+      :aria-expanded="!sidebarCompact"
+      :aria-label="
+        sidebarCompact
+          ? '展開播放清單側欄；Enter、空白鍵或雙擊'
+          : '調整播放清單側欄寬度；方向鍵調整，Enter、空白鍵或雙擊切換摺疊'
+      "
       @pointerdown="startResize"
       @dblclick="toggleSidebarCollapse"
+      @keydown="handleResizeKeydown"
     ></button>
 
     <!-- Independent of which playlist/album is currently selected/viewed —
@@ -109,38 +135,31 @@ function activateSetlistView() {
      card corners. Safe alongside the container-type below — unlike a real
      border, radius doesn't change the content-box size. */
   border-radius: var(--ui-radius-sm);
-  /* An inset box-shadow, not border-right — this element is also the size
+  /* An inset box-shadow, not a border — this element is also the size
      container query root below, and a real border shrinks its content-box
      just enough to falsely trigger the compact-mode @container rule at the
      sidebar's default width (see tokens.css's compact-threshold token). */
-  box-shadow: inset calc(-1 * var(--ui-border-width)) 0 0 var(--ui-color-border);
+  box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
   /* Lets PlaylistSidebar.vue/PlaylistSidebarRow.vue's @container rules
      query this element's own width instead of the viewport. */
   container-type: inline-size;
 }
 
-.app-playlist-sidebar__scroll {
+.app-playlist-sidebar__content {
   height: 100%;
-}
-
-.app-playlist-sidebar__scroll :deep(.app-playlist-sidebar__scroll-viewport) {
-  box-sizing: border-box;
-  padding: var(--ui-playlist-sidebar-padding-block)
-    var(--ui-playlist-sidebar-padding-inline);
-}
-
-@container (width < 256px) {
-  .app-playlist-sidebar__scroll :deep(.app-playlist-sidebar__scroll-viewport) {
-    padding-inline: var(--ui-playlist-sidebar-padding-inline-compact);
-  }
+  min-height: 0;
 }
 
 .app-playlist-sidebar__handle {
   position: absolute;
-  top: 0;
-  bottom: 0;
-  right: -3px;
-  width: 6px;
+  inset-block: 0;
+  /* Keep only the rail's transparent 3px edge under the handle. The rest of
+     the 12px target extends into the shell-owned panel gap, so it cannot
+     intercept the visible scrollbar thumb on this shared right boundary. */
+  inset-inline-end: calc(
+    (var(--ui-resize-handle-hit-size) - var(--ui-scrollbar-thumb-inset)) / -1
+  );
+  inline-size: var(--ui-resize-handle-hit-size);
   padding: 0;
   border: none;
   background: transparent;
@@ -155,10 +174,11 @@ function activateSetlistView() {
 .app-playlist-sidebar__handle::after {
   content: '';
   position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 2px;
-  width: 2px;
+  inset-block: 0;
+  inset-inline-start: calc(
+    var(--ui-scrollbar-thumb-inset) - var(--ui-drag-indicator-width) / 2
+  );
+  inline-size: var(--ui-drag-indicator-width);
   background: transparent;
   transition: background-color var(--ui-motion-fast) var(--ui-motion-ease);
 }
@@ -166,6 +186,14 @@ function activateSetlistView() {
 .app-playlist-sidebar__handle:hover::after,
 .app-playlist-sidebar__handle--active::after {
   background: var(--ui-color-accent);
+}
+
+.app-playlist-sidebar__handle:focus-visible {
+  outline: none;
+}
+
+.app-playlist-sidebar__handle:focus-visible::after {
+  background: var(--ui-color-focus);
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -194,7 +194,7 @@ function handleActionKeydown(event) {
   gap: var(--ui-track-row-gap);
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
-  border-radius: var(--ui-radius-md);
+  border-radius: var(--ui-track-row-radius, var(--ui-radius-md));
   font-size: var(--ui-font-size-sm);
 }
 
@@ -237,11 +237,11 @@ function handleActionKeydown(event) {
   cursor: pointer;
 }
 
-.ui-track--interactive:not(.ui-track--active) .ui-track__action:hover {
+.ui-track--interactive:not(.ui-track--active):hover::before {
   background: var(--ui-color-surface-hover);
 }
 
-.ui-track__action:active {
+.ui-track--interactive:has(.ui-track__action:active)::before {
   background: var(--ui-color-surface-active);
 }
 

@@ -29,6 +29,7 @@ import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
 import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
+import UiScrollLayout from '../ui/UiScrollLayout.vue';
 
 const props = defineProps({
   // Passed from SetlistView to avoid a duplicate library subscription.
@@ -381,128 +382,140 @@ function startDrag(playlist, event) {
       </button>
     </div>
 
-    <button
-      type="button"
-      class="playlist-sidebar__item"
-      aria-label="全部曲目"
-      :class="{
-        'playlist-sidebar__item--active':
-          state.selectedId === null && libraryView === 'all',
-      }"
-      :aria-current="
-        state.selectedId === null && libraryView === 'all' ? 'page' : undefined
-      "
-      title="全部曲目"
-      @click="selectLibraryView('all')"
+    <UiScrollLayout
+      class="playlist-sidebar__scroll"
+      axis="vertical"
+      :scrollbar-visibility="compact ? 'hidden' : 'auto'"
+      tabindex="0"
+      aria-label="播放清單內容"
     >
-      <span
-        class="playlist-sidebar__item-state-surface"
-        aria-hidden="true"
-      ></span>
-      <span
-        class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
-        aria-hidden="true"
-      >
-        <Library :size="ICON_SIZE" aria-hidden="true" />
-      </span>
-      <span class="playlist-sidebar__info">
-        <span class="playlist-sidebar__label">全部曲目</span>
-      </span>
-    </button>
+      <div class="playlist-sidebar__list">
+        <button
+          type="button"
+          class="playlist-sidebar__item"
+          aria-label="全部曲目"
+          :class="{
+            'playlist-sidebar__item--active':
+              state.selectedId === null && libraryView === 'all',
+          }"
+          :aria-current="
+            state.selectedId === null && libraryView === 'all'
+              ? 'page'
+              : undefined
+          "
+          title="全部曲目"
+          @click="selectLibraryView('all')"
+        >
+          <span
+            class="playlist-sidebar__item-state-surface"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
+            aria-hidden="true"
+          >
+            <Library :size="ICON_SIZE" aria-hidden="true" />
+          </span>
+          <span class="playlist-sidebar__info">
+            <span class="playlist-sidebar__label">全部曲目</span>
+          </span>
+        </button>
 
-    <button
-      type="button"
-      class="playlist-sidebar__item"
-      aria-label="本機曲目"
-      :class="{
-        'playlist-sidebar__item--active':
-          state.selectedId === null && libraryView === 'local',
-      }"
-      :aria-current="
-        state.selectedId === null && libraryView === 'local'
-          ? 'page'
-          : undefined
-      "
-      title="本機曲目"
-      @click="selectLibraryView('local')"
-    >
-      <span
-        class="playlist-sidebar__item-state-surface"
-        aria-hidden="true"
-      ></span>
-      <span
-        class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
-        aria-hidden="true"
-      >
-        <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
-      </span>
-      <span class="playlist-sidebar__info">
-        <span class="playlist-sidebar__label">本機曲目</span>
-      </span>
-    </button>
+        <button
+          type="button"
+          class="playlist-sidebar__item"
+          aria-label="本機曲目"
+          :class="{
+            'playlist-sidebar__item--active':
+              state.selectedId === null && libraryView === 'local',
+          }"
+          :aria-current="
+            state.selectedId === null && libraryView === 'local'
+              ? 'page'
+              : undefined
+          "
+          title="本機曲目"
+          @click="selectLibraryView('local')"
+        >
+          <span
+            class="playlist-sidebar__item-state-surface"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="playlist-sidebar__thumb playlist-sidebar__thumb--accent"
+            aria-hidden="true"
+          >
+            <FolderOpen :size="ICON_SIZE" aria-hidden="true" />
+          </span>
+          <span class="playlist-sidebar__info">
+            <span class="playlist-sidebar__label">本機曲目</span>
+          </span>
+        </button>
 
-    <hr
-      v-if="hasVisibleCollectionItems"
-      class="playlist-sidebar__divider"
-      aria-hidden="true"
-    />
+        <hr
+          v-if="hasVisibleCollectionItems"
+          class="playlist-sidebar__divider"
+          aria-hidden="true"
+        />
 
-    <PlaylistSidebarRow
-      v-for="playlist in visiblePlaylistItems"
-      :key="playlist.id"
-      :playlist="playlist"
-      :cover-url="playlist.coverUrl"
-      :cover-tracks="coverTracksFor(playlist)"
-      :subtitle="subtitleFor(playlist)"
-      :compact="compact"
-      :active="playlist.id === state.selectedId"
-      :active-source="isActiveSource(playlist)"
-      :playing="isPlayingThis(playlist)"
-      :draggable="canDragPlaylistItem()"
-      :dragging="draggingPlaylistId === playlist.id"
-      :drop-before="
-        dropTargetPlaylistId === playlist.id && dropPosition === 'before'
-      "
-      :drop-after="
-        dropTargetPlaylistId === playlist.id && dropPosition === 'after'
-      "
-      @select="selectPlaylist(playlist.id)"
-      @contextmenu="openPlaylistMenu(playlist, $event)"
-      @toggle-playback="togglePlayback(playlist, $event)"
-      @drag-start="startDrag(playlist, $event)"
-      @drag-over="updateDropTarget(playlist, $event)"
-      @drag-leave="leaveDropTarget(playlist, $event)"
-      @drop="dropPlaylist(playlist, $event)"
-      @drag-end="clearDragState"
-    />
+        <PlaylistSidebarRow
+          v-for="playlist in visiblePlaylistItems"
+          :key="playlist.id"
+          :playlist="playlist"
+          :cover-url="playlist.coverUrl"
+          :cover-tracks="coverTracksFor(playlist)"
+          :subtitle="subtitleFor(playlist)"
+          :compact="compact"
+          :active="playlist.id === state.selectedId"
+          :active-source="isActiveSource(playlist)"
+          :playing="isPlayingThis(playlist)"
+          :draggable="canDragPlaylistItem()"
+          :dragging="draggingPlaylistId === playlist.id"
+          :drop-before="
+            dropTargetPlaylistId === playlist.id && dropPosition === 'before'
+          "
+          :drop-after="
+            dropTargetPlaylistId === playlist.id && dropPosition === 'after'
+          "
+          @select="selectPlaylist(playlist.id)"
+          @contextmenu="openPlaylistMenu(playlist, $event)"
+          @toggle-playback="togglePlayback(playlist, $event)"
+          @drag-start="startDrag(playlist, $event)"
+          @drag-over="updateDropTarget(playlist, $event)"
+          @drag-leave="leaveDropTarget(playlist, $event)"
+          @drop="dropPlaylist(playlist, $event)"
+          @drag-end="clearDragState"
+        />
 
-    <hr
-      v-if="visiblePlaylistItems.length > 0 && visibleAlbumItems.length > 0"
-      class="playlist-sidebar__divider"
-    />
+        <hr
+          v-if="visiblePlaylistItems.length > 0 && visibleAlbumItems.length > 0"
+          class="playlist-sidebar__divider"
+        />
 
-    <PlaylistSidebarRow
-      v-for="playlist in visibleAlbumItems"
-      :key="playlist.id"
-      :playlist="playlist"
-      :cover-url="playlist.coverUrl"
-      :cover-tracks="coverTracksFor(playlist)"
-      :subtitle="subtitleFor(playlist)"
-      :compact="compact"
-      :active="playlist.id === state.selectedId"
-      :active-source="isActiveSource(playlist)"
-      :playing="isPlayingThis(playlist)"
-      @select="selectPlaylist(playlist.id)"
-      @contextmenu="openPlaylistMenu(playlist, $event)"
-      @toggle-playback="togglePlayback(playlist, $event)"
-    />
+        <PlaylistSidebarRow
+          v-for="playlist in visibleAlbumItems"
+          :key="playlist.id"
+          :playlist="playlist"
+          :cover-url="playlist.coverUrl"
+          :cover-tracks="coverTracksFor(playlist)"
+          :subtitle="subtitleFor(playlist)"
+          :compact="compact"
+          :active="playlist.id === state.selectedId"
+          :active-source="isActiveSource(playlist)"
+          :playing="isPlayingThis(playlist)"
+          @select="selectPlaylist(playlist.id)"
+          @contextmenu="openPlaylistMenu(playlist, $event)"
+          @toggle-playback="togglePlayback(playlist, $event)"
+        />
 
-    <p
-      v-if="hasSearchQuery && !hasVisibleCollectionItems"
-      class="playlist-sidebar__empty"
-    >
-      沒有符合的集合
-    </p>
+        <p
+          v-if="hasSearchQuery && !hasVisibleCollectionItems"
+          class="playlist-sidebar__empty"
+        >
+          沒有符合的集合
+        </p>
+      </div>
+    </UiScrollLayout>
 
     <UiContextMenu
       :open="isMenuOpen"
@@ -517,13 +530,42 @@ function startDrag(playlist, event) {
 
 <style scoped>
 .playlist-sidebar {
+  box-sizing: border-box;
   display: flex;
+  min-height: 0;
+  height: 100%;
+  flex-direction: column;
+  padding-block-start: var(--ui-playlist-sidebar-padding-block);
+}
+
+.playlist-sidebar__scroll {
+  --ui-scroll-layout-padding-block-start: var(--ui-playlist-list-gap);
+  --ui-scroll-layout-padding-block-end: var(
+    --ui-playlist-sidebar-padding-block
+  );
+  --ui-scroll-layout-padding-inline-start: var(
+    --ui-playlist-sidebar-padding-inline
+  );
+  --ui-scroll-layout-padding-inline-end: var(
+    --ui-playlist-row-state-surface-outset-inline
+  );
+
+  min-height: 0;
+  flex: 1;
+}
+
+.playlist-sidebar__list {
+  display: flex;
+  min-width: 0;
   flex-direction: column;
   gap: var(--ui-playlist-list-gap);
 }
 
 .playlist-sidebar__divider {
-  margin: var(--ui-playlist-section-gap) 0;
+  margin-block: calc(
+    var(--ui-playlist-section-gap) - var(--ui-playlist-list-gap)
+  );
+  margin-inline: 0;
   border: none;
   border-top: var(--ui-border-width) solid var(--ui-color-border);
 }
@@ -544,7 +586,7 @@ function startDrag(playlist, event) {
   padding: var(--ui-playlist-row-padding-block)
     var(--ui-playlist-row-padding-inline);
   border: var(--ui-border-width) solid transparent;
-  border-radius: var(--ui-radius-sm);
+  border-radius: var(--ui-side-panel-row-radius);
   background: transparent;
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
@@ -567,7 +609,6 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__item:hover .playlist-sidebar__item-state-surface {
-  border-color: var(--ui-color-border);
   background: var(--ui-color-surface-hover);
 }
 
@@ -585,8 +626,13 @@ function startDrag(playlist, event) {
   background: var(--ui-playlist-row-selected-background);
 }
 
+.playlist-sidebar__item:active .playlist-sidebar__item-state-surface {
+  background: var(--ui-color-surface-active);
+}
+
 .playlist-sidebar__toolbar {
   position: relative;
+  margin-inline: var(--ui-playlist-sidebar-padding-inline);
   block-size: var(--ui-playlist-toolbar-height);
   min-height: var(--ui-playlist-toolbar-height);
   overflow: hidden;
@@ -807,7 +853,8 @@ function startDrag(playlist, event) {
 }
 
 .playlist-sidebar__empty {
-  margin: var(--ui-space-1) var(--ui-playlist-row-padding-inline);
+  margin: 0;
+  padding: var(--ui-space-1) var(--ui-playlist-row-padding-inline);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-body);
@@ -817,6 +864,15 @@ function startDrag(playlist, event) {
    .playlist-sidebar-row__info rule — see that file's comment for why the
    threshold is a literal px value instead of a custom property. */
 @container (width < 256px) {
+  .playlist-sidebar__scroll {
+    --ui-scroll-layout-padding-inline-start: var(
+      --ui-playlist-sidebar-padding-inline-compact
+    );
+    --ui-scroll-layout-padding-inline-end: var(
+      --ui-playlist-sidebar-padding-inline-compact
+    );
+  }
+
   .playlist-sidebar__item {
     align-self: center;
     justify-content: center;
@@ -849,6 +905,7 @@ function startDrag(playlist, event) {
 
   .playlist-sidebar__toolbar {
     align-self: center;
+    margin-inline: var(--ui-playlist-sidebar-padding-inline-compact);
     inline-size: var(--ui-playlist-row-min-height);
     block-size: var(--ui-playlist-toolbar-height);
     min-height: var(--ui-playlist-toolbar-height);

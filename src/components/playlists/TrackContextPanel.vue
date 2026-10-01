@@ -287,19 +287,16 @@ function formatUpcomingTrackMetadata(track) {
 }
 
 .studio-context-inspector__lyrics-source {
-  margin-top: var(--ui-space-3);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
 }
 
 .studio-context-inspector__collection :deep(.app-right-dock-section__body) {
-  display: grid;
   justify-items: start;
 }
 
 .studio-context-inspector__collection-cover {
-  margin-bottom: var(--ui-space-2);
   box-shadow: var(--ui-shadow-contact);
 }
 
@@ -385,7 +382,6 @@ function formatUpcomingTrackMetadata(track) {
   display: flex;
   flex-wrap: wrap;
   gap: var(--ui-space-2);
-  margin-top: var(--ui-space-3);
 }
 
 .studio-context-inspector__section :deep(.ui-chip),

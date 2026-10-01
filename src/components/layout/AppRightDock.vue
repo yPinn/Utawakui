@@ -54,6 +54,7 @@ function handleResizeKeydown(event) {
     }"
     tone="surface"
     radius="sm"
+    stroke="inset"
     :style="rootStyle"
     :aria-label="expanded ? label : `${label}（已摺疊）`"
   >
@@ -115,6 +116,7 @@ function handleResizeKeydown(event) {
   --ui-track-row-state-surface-outset-inline: var(
     --ui-right-dock-track-row-state-surface-outset-inline
   );
+  --ui-track-row-radius: var(--ui-right-dock-track-row-radius);
   /* Right Dock selection is a quiet disclosure state, not a brand fill. */
   --ui-track-row-selected-surface: color-mix(
     in srgb,
@@ -174,8 +176,8 @@ function handleResizeKeydown(event) {
   position: absolute;
   z-index: 1;
   inset-block: 0;
-  inset-inline-start: calc(var(--ui-space-3) / -2);
-  inline-size: var(--ui-space-3);
+  inset-inline-start: calc(var(--ui-resize-handle-hit-size) / -2);
+  inline-size: var(--ui-resize-handle-hit-size);
   background: transparent;
   cursor: col-resize;
   touch-action: none;
