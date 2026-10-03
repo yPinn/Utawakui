@@ -68,7 +68,7 @@ describe('Persistent App Shell Token v2 cutover', () => {
   it('provides conventional shell, Sidebar, and Player component tokens', () => {
     const tokens = readSource('./tokens-v2.css');
     for (const token of [
-      '--ui-shell-titlebar-block-size',
+      '--ui-window-titlebar-block-size',
       '--ui-shell-content-inset-block',
       '--ui-shell-navigation-inline-size',
       '--ui-shell-navigation-inline-size-min',

@@ -572,7 +572,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
         var(--ui-shell-edge-inset-inline)
     )
     1fr;
-  grid-template-rows: var(--ui-shell-titlebar-block-size) 1fr auto;
+  grid-template-rows: var(--ui-window-titlebar-block-size) 1fr auto;
   height: 100%;
   /* Prevent 1fr content from forcing the fixed shell wider than viewport. */
   min-width: 0;

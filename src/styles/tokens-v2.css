@@ -141,7 +141,7 @@
   --ui-list-header-height: 2.25rem;
   --ui-player-bar-height: 4.75rem;
   --ui-panel-inset: 1rem;
-  --ui-shell-titlebar-block-size: 2.5rem;
+  --ui-window-titlebar-block-size: 2.5rem;
   --ui-shell-content-inset-block: var(--ui-panel-inset);
   --ui-shell-edge-inset-inline: var(--ui-space-2);
   --ui-shell-leading-artwork-centerline: calc(

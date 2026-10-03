@@ -212,7 +212,7 @@ function createMainWindow(
     minHeight: 650,
     backgroundColor: titlebarColors.color,
     titleBarStyle: 'hidden',
-    // Keep in sync with --ui-shell-titlebar-block-size in tokens-v2.css.
+    // Keep in sync with --ui-window-titlebar-block-size in tokens-v2.css.
     titleBarOverlay: {
       color: titlebarColors.color,
       symbolColor: titlebarColors.symbolColor,
