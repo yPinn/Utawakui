@@ -73,8 +73,26 @@ describe('renderer surface registry', () => {
     });
   });
 
-  it('keeps uncut Folder features in complete registered v1 surfaces', () => {
-    for (const surfaceId of ['setlist', 'lyrics', 'output', 'import']) {
+  it('registers Setlist and its overlay as one complete v2 surface', () => {
+    expect(UI_SURFACE_REGISTRY.setlist).toMatchObject({
+      entryOwner: 'src/App.vue',
+      migrationStatus: 'registered-v2',
+      overlayHostId: 'setlist-overlay',
+      parentSurfaceId: 'app-folder',
+      renderer: 'main',
+      surfaceId: 'setlist',
+      system: 'v2',
+    });
+    expect(registeredOverlayHostAttributes('setlist')).toMatchObject({
+      id: 'setlist-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'setlist-overlay',
+      'data-ui-system': 'v2',
+    });
+  });
+
+  it('keeps later Folder features in complete registered v1 surfaces', () => {
+    for (const surfaceId of ['lyrics', 'output', 'import']) {
       expect(UI_SURFACE_REGISTRY[surfaceId]).toMatchObject({
         entryOwner: 'src/App.vue',
         migrationStatus: 'registered-v1',
@@ -91,6 +109,26 @@ describe('renderer surface registry', () => {
         'data-ui-system': 'v1',
       });
     }
+  });
+
+  it('keeps the uncut Performance Session workspace in a registered v1 child surface', () => {
+    expect(UI_SURFACE_REGISTRY['performance-session-workspace']).toMatchObject({
+      entryOwner: 'src/views/SetlistView.vue',
+      migrationStatus: 'registered-v1',
+      overlayHostId: 'performance-session-workspace-overlay',
+      parentSurfaceId: 'setlist',
+      renderer: 'main',
+      surfaceId: 'performance-session-workspace',
+      system: 'v1',
+    });
+    expect(
+      registeredOverlayHostAttributes('performance-session-workspace'),
+    ).toMatchObject({
+      id: 'performance-session-workspace-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'performance-session-workspace-overlay',
+      'data-ui-system': 'v1',
+    });
   });
 
   it('registers review surfaces and their local overlay hosts as explicit boundaries', () => {

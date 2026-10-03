@@ -483,12 +483,14 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已完成 Phase 2。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已進入 Phase 3.1。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
 Phase 1 已把 Main `app-shell`、global overlay host、Titlebar、Sidebar navigation、Right Dock、PlayerBar、BGM placement 與 Electron main native background／titlebar palette 同批切為 v2。Utility content 仍是有同 system overlay host 的完整 registered-v1 child surface，等待 Phase 4。
 
-Phase 2 已以 `AppFolderLayout`／`AppFolderPage` 完整接手 Folder navigation、material、perimeter 與 document／workspace body mode；舊三件組、candidate-root override、`--ui-archive-*` 與 candidate Folder aliases 已同批刪除。F8 使用相同正式元件，只保留 specimen data／controls／content。Setlist／Lyrics／Output／Import 仍各自是完整 registered-v1 child surface並擁有 local overlay host，因此 feature visual 與 portal 不會被 v2 parent 半套繼承。
+Phase 2 已以 `AppFolderLayout`／`AppFolderPage` 完整接手 Folder navigation、material、perimeter 與 document／workspace body mode；舊三件組、candidate-root override、`--ui-archive-*` 與 candidate Folder aliases 已同批刪除。F8 使用相同正式元件，只保留 specimen data／controls／content。
 
-Canonical generator 現在鎖定 T1 331／T2 407／T1-only 87 unique declarations、39 個 production-consumed legacy names與 122 個 file-token pairs；Phase 2 相較 Phase 1 移除 8 個 production names／10 個 pairs。下一個 atomic implementation slice 依 phase order 是 Sidebar／Playlist family，不回頭保留任何 Folder compatibility wrapper。
+Phase 3.1 已將 Setlist 與 `setlist-overlay` 原子切為 v2，保留 `AppFolderPage` 的 `document` mode 與 page-level scroll owner；Header／Table 改用既有正式 v2 weight／radius／motion names，F8 Studio Library selected row 回到已核准的中性文字色 8% surface recipe，沒有 compatibility alias或 feature anatomy 變更。尚未進入下一階段的場次準備 workspace 已成為完整 registered-v1 `performance-session-workspace` child surface並擁有 local overlay host；Shell 內的 `PerformanceSessionPanel` 是既有 v2 Right Dock projection，不穿過該 child boundary。Lyrics／Output／Import 仍各自是完整 registered-v1 surface。
+
+Canonical generator 現在鎖定 T1 331／T2 407／T1-only 87 unique declarations、38 個 production-consumed legacy names與 115 個 file-token pairs；Phase 3.1 相較 Phase 2 移除 1 個 production name／7 個 pairs。下一個 atomic implementation slice 依 phase order 是 Performance Session domain rename、workspace mode與 Right Dock projection boundary，不保留 Setlist legacy fallback。

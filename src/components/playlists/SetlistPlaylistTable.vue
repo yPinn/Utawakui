@@ -193,7 +193,7 @@ function handleRowKeydown(track, event) {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -220,7 +220,7 @@ function handleRowKeydown(track, event) {
 .playlist-table__sort:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 
 .playlist-table__sort--duration {
@@ -258,7 +258,7 @@ function handleRowKeydown(track, event) {
   position: relative;
   min-height: var(--ui-track-row-min-height);
   padding: var(--ui-track-row-padding-block) var(--ui-track-row-padding-inline);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-label);
@@ -342,7 +342,7 @@ function handleRowKeydown(track, event) {
 }
 
 .playlist-track__title {
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 /* Currently playing — title-only coral cue, matching

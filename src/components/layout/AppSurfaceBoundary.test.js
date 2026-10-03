@@ -33,10 +33,29 @@ describe('AppSurfaceBoundary', () => {
     )[0];
     const probe = findAll(root, (node) => node.props?.['data-overlay-host'])[0];
 
-    expect(boundary.props['data-ui-system']).toBe('v1');
+    expect(boundary.props['data-ui-system']).toBe('v2');
     expect(host.props['data-ui-surface']).toBe('setlist-overlay');
-    expect(host.props['data-ui-system']).toBe('v1');
+    expect(host.props['data-ui-system']).toBe('v2');
     expect(probe.props['data-overlay-host']).toBe('#setlist-overlay');
+    app.unmount();
+  });
+
+  it('can preserve an uncut feature as a complete v1 child surface', () => {
+    const { app, root } = mount(AppSurfaceBoundary, {
+      surfaceId: 'performance-session-workspace',
+    });
+    const boundary = findAll(
+      root,
+      (node) =>
+        node.props?.['data-ui-surface'] === 'performance-session-workspace',
+    )[0];
+    const host = findAll(
+      root,
+      (node) => node.props?.id === 'performance-session-workspace-overlay',
+    )[0];
+
+    expect(boundary.props['data-ui-system']).toBe('v1');
+    expect(host.props['data-ui-system']).toBe('v1');
     app.unmount();
   });
 });

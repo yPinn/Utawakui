@@ -6,44 +6,9 @@
     "v2": 407
   },
   "production": {
-    "files": 57,
-    "pairs": 122,
+    "files": 54,
+    "pairs": 115,
     "references": [
-      {
-        "file": "src/components/playlists/SetlistPlaylistHeader.vue",
-        "surface": "library-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/playlists/SetlistPlaylistHeader.vue",
-        "surface": "library-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/playlists/SetlistPlaylistHeader.vue",
-        "surface": "library-feature",
-        "token": "--ui-motion-ease"
-      },
-      {
-        "file": "src/components/playlists/SetlistPlaylistHeader.vue",
-        "surface": "library-feature",
-        "token": "--ui-motion-fast"
-      },
-      {
-        "file": "src/components/playlists/SetlistPlaylistTable.vue",
-        "surface": "library-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/playlists/SetlistPlaylistTable.vue",
-        "surface": "library-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/playlists/StudioLibraryTrackTable.vue",
-        "surface": "library-feature",
-        "token": "--ui-playlist-row-selected-background"
-      },
       {
         "file": "src/components/lyrics/LyricsDocumentPanel.vue",
         "surface": "lyrics-feature",
@@ -620,7 +585,7 @@
         "token": "--ui-line-height-headline"
       }
     ],
-    "tokens": 39
+    "tokens": 38
   },
   "legacyTokens": [
     "--ui-color-surface-playing",

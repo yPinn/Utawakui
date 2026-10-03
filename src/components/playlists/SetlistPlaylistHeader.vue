@@ -146,7 +146,8 @@ const emit = defineEmits([
   right: var(--ui-space-2);
   bottom: var(--ui-space-2);
   opacity: 0;
-  transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .playlist-cover:hover .playlist-cover__edit,
@@ -167,7 +168,7 @@ const emit = defineEmits([
   margin: 0 0 var(--ui-space-2);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -178,7 +179,7 @@ const emit = defineEmits([
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-2xl);
   line-height: var(--ui-line-height-display);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   overflow-wrap: anywhere;
 }
 

@@ -12,6 +12,7 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
+import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
 import SessionPreparationWorkspace from '../components/playlists/SessionPreparationWorkspace.vue';
@@ -413,11 +414,17 @@ onMounted(async () => {
     />
 
     <div class="setlist-view__main">
-      <SessionPreparationWorkspace
+      <AppSurfaceBoundary
         v-if="performanceSessionWorkspace.isOpen.value"
-        :tracks="libraryState.tracks"
-        @close="performanceSessionWorkspace.close"
-      />
+        surface-id="performance-session-workspace"
+        class="setlist-view__session-boundary"
+        tag="div"
+      >
+        <SessionPreparationWorkspace
+          :tracks="libraryState.tracks"
+          @close="performanceSessionWorkspace.close"
+        />
+      </AppSurfaceBoundary>
 
       <template v-else>
         <SetlistPlaylistHeader
@@ -563,6 +570,14 @@ onMounted(async () => {
 
 .setlist-view__main {
   min-width: 0;
+}
+
+.setlist-view__session-boundary {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
 }
 
 .row-actions {

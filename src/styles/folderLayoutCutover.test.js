@@ -68,15 +68,18 @@ describe('Folder layout family cutover', () => {
     expect(tokens).not.toContain('--ui-folder-selected-ring');
   });
 
-  it('keeps every uncut feature behind a registered v1 surface and overlay host', () => {
+  it('keeps every later feature behind a registered v1 surface and overlay host', () => {
     const registry = readSource('../utils/rendererSurfaceRegistry.js');
     const app = readSource('../App.vue');
 
-    for (const surfaceId of ['setlist', 'lyrics', 'output', 'import']) {
+    for (const surfaceId of ['lyrics', 'output', 'import']) {
       expect(registry).toContain(`surfaceId: '${surfaceId}'`);
       expect(registry).toContain(`overlayHostId: '${surfaceId}-overlay'`);
       expect(app).toContain(`${surfaceId}: '${surfaceId}'`);
     }
+    expect(registry).toContain("surfaceId: 'setlist'");
+    expect(registry).toContain("surfaceId: 'setlist-overlay'");
+    expect(registry).toContain("surfaceId: 'performance-session-workspace'");
     expect(registry).toContain("parentSurfaceId: 'app-folder'");
   });
 });
