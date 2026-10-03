@@ -385,9 +385,15 @@ const documentFolderViews = new Set(['setlist', 'import']);
 const activeFolderFeatureSurface = computed(
   () => folderFeatureSurfaces[activeView.value] ?? '',
 );
-const folderPageMode = computed(() =>
-  documentFolderViews.has(activeView.value) ? 'document' : 'workspace',
-);
+const folderPageMode = computed(() => {
+  if (
+    activeView.value === 'setlist' &&
+    performanceSessionWorkspace.isOpen.value
+  ) {
+    return 'workspace';
+  }
+  return documentFolderViews.has(activeView.value) ? 'document' : 'workspace';
+});
 
 // Studio Library reviews the Setlist interior. Keep the production Setlist
 // destination selected while the development-only review surface is active.

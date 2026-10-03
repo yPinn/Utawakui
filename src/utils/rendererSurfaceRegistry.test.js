@@ -111,15 +111,15 @@ describe('renderer surface registry', () => {
     }
   });
 
-  it('keeps the uncut Performance Session workspace in a registered v1 child surface', () => {
+  it('registers the Performance Session workspace and overlay as v2', () => {
     expect(UI_SURFACE_REGISTRY['performance-session-workspace']).toMatchObject({
       entryOwner: 'src/views/SetlistView.vue',
-      migrationStatus: 'registered-v1',
+      migrationStatus: 'registered-v2',
       overlayHostId: 'performance-session-workspace-overlay',
       parentSurfaceId: 'setlist',
       renderer: 'main',
       surfaceId: 'performance-session-workspace',
-      system: 'v1',
+      system: 'v2',
     });
     expect(
       registeredOverlayHostAttributes('performance-session-workspace'),
@@ -127,7 +127,7 @@ describe('renderer surface registry', () => {
       id: 'performance-session-workspace-overlay',
       'data-ui-renderer': 'main',
       'data-ui-surface': 'performance-session-workspace-overlay',
-      'data-ui-system': 'v1',
+      'data-ui-system': 'v2',
     });
   });
 

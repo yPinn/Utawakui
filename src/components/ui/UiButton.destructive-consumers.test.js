@@ -27,9 +27,9 @@ describe('UiButton destructive consumers', () => {
     ],
     [
       'session draft clearing',
-      '../playlists/SessionPreparationWorkspace.vue',
+      '../performance-session/PerformanceSessionWorkspace.vue',
       '@click="clearDraft"',
-      '../playlists/SessionPreparationWorkspace.vue',
+      '../performance-session/PerformanceSessionWorkspace.vue',
     ],
   ])(
     'marks %s without changing its confirmation owner',

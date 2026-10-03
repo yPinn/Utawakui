@@ -25,15 +25,21 @@ function create() {
 </script>
 
 <template>
-  <section class="session-manual" aria-labelledby="session-manual-title">
-    <UiScrollRegion class="session-manual__body-scroll">
-      <div class="session-manual__body">
-        <header class="session-manual__header">
-          <p class="session-manual__eyebrow">其他音訊來源</p>
-          <h2 id="session-manual-title" class="session-manual__title">
+  <section
+    class="performance-session-manual"
+    aria-labelledby="performance-session-manual-title"
+  >
+    <UiScrollRegion class="performance-session-manual__body-scroll">
+      <div class="performance-session-manual__body">
+        <header class="performance-session-manual__header">
+          <p class="performance-session-manual__eyebrow">其他音訊來源</p>
+          <h2
+            id="performance-session-manual-title"
+            class="performance-session-manual__title"
+          >
             新增手動項目
           </h2>
-          <p class="session-manual__description">
+          <p class="performance-session-manual__description">
             適用自行伴奏或外部播放；若由 Utawakui 播放，請先匯入曲庫。
           </p>
         </header>
@@ -46,9 +52,9 @@ function create() {
           compact
         />
 
-        <form class="session-manual__form" @submit.prevent="create">
+        <form class="performance-session-manual__form" @submit.prevent="create">
           <UiTextField
-            id="session-manual-display-title"
+            id="performance-session-manual-display-title"
             v-model="displayTitle"
             label="曲名／項目名稱"
             hint="只用於本場顯示，不會建立曲庫歌曲。"
@@ -56,7 +62,7 @@ function create() {
             required
           />
           <UiTextField
-            id="session-manual-display-artist"
+            id="performance-session-manual-display-artist"
             v-model="displayArtist"
             label="第二行（選填）"
             hint="可填原唱、演出者或版本資訊；留空則不顯示。"
@@ -66,7 +72,7 @@ function create() {
       </div>
     </UiScrollRegion>
 
-    <div class="session-manual__actions">
+    <div class="performance-session-manual__actions">
       <UiButton :disabled="saving" @click="emit('cancel')">取消</UiButton>
       <UiButton
         :icon="Plus"
@@ -81,7 +87,7 @@ function create() {
 </template>
 
 <style scoped>
-.session-manual {
+.performance-session-manual {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -89,52 +95,52 @@ function create() {
   min-height: 0;
 }
 
-.session-manual__body-scroll {
+.performance-session-manual__body-scroll {
   flex: 1;
   min-height: 0;
 }
 
-.session-manual__body {
+.performance-session-manual__body {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
   padding: var(--ui-space-4);
 }
 
-.session-manual__eyebrow,
-.session-manual__title,
-.session-manual__description {
+.performance-session-manual__eyebrow,
+.performance-session-manual__title,
+.performance-session-manual__description {
   margin: 0;
 }
 
-.session-manual__eyebrow,
-.session-manual__description {
+.performance-session-manual__eyebrow,
+.performance-session-manual__description {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
 }
 
-.session-manual__eyebrow {
+.performance-session-manual__eyebrow {
   font-weight: var(--ui-font-weight-semibold);
 }
 
-.session-manual__title {
+.performance-session-manual__title {
   margin-top: var(--ui-space-1);
   font-size: var(--ui-font-size-lg);
   line-height: var(--ui-line-height-heading);
 }
 
-.session-manual__description {
+.performance-session-manual__description {
   margin-top: var(--ui-space-2);
   line-height: var(--ui-line-height-body);
 }
 
-.session-manual__form {
+.performance-session-manual__form {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
 }
 
-.session-manual__actions {
+.performance-session-manual__actions {
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;

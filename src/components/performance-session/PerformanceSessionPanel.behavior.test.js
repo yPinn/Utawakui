@@ -29,8 +29,8 @@ describe('PerformanceSessionPanel', () => {
     );
     expect(source).toContain("emit('openPreparation')");
     expect(source).toContain('AppRightDockPanel');
-    expect(source).not.toContain('SessionPreparationWorkspace');
-    expect(source).not.toContain('SessionPlanReviewEditor');
+    expect(source).not.toContain('PerformanceSessionWorkspace');
+    expect(source).not.toContain('PerformanceSessionPlanEditor');
   });
 
   it('contains no BGM player, plan, library search, or transport ownership', () => {

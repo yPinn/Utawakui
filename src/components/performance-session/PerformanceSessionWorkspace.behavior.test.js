@@ -2,19 +2,19 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 const workspaceSource = readFileSync(
-  new URL('./SessionPreparationWorkspace.vue', import.meta.url),
+  new URL('./PerformanceSessionWorkspace.vue', import.meta.url),
   'utf8',
 );
 const reviewSource = readFileSync(
-  new URL('./SessionPlanReviewEditor.vue', import.meta.url),
+  new URL('./PerformanceSessionPlanEditor.vue', import.meta.url),
   'utf8',
 );
 const manualSource = readFileSync(
-  new URL('./SessionManualItemForm.vue', import.meta.url),
+  new URL('./PerformanceSessionManualItemForm.vue', import.meta.url),
   'utf8',
 );
 const planListSource = readFileSync(
-  new URL('./SessionPlanList.vue', import.meta.url),
+  new URL('./PerformanceSessionPlanList.vue', import.meta.url),
   'utf8',
 );
 const setlistSource = readFileSync(
@@ -22,7 +22,7 @@ const setlistSource = readFileSync(
   'utf8',
 );
 
-describe('SessionPreparationWorkspace fast path and viewport layout', () => {
+describe('PerformanceSessionWorkspace fast path and viewport layout', () => {
   it('keeps library search as the fixed primary entry and manual creation secondary', () => {
     expect(workspaceSource).toContain('v-model="librarySearchQuery"');
     expect(workspaceSource).toContain('搜尋曲庫並加入');
@@ -38,20 +38,20 @@ describe('SessionPreparationWorkspace fast path and viewport layout', () => {
       "'setlist-view--session': performanceSessionWorkspace.isOpen.value",
     );
     expect(workspaceSource).toMatch(
-      /\.session-workspace\s*\{[^}]*flex:\s*1[^}]*overflow:\s*hidden/su,
+      /\.performance-session-workspace\s*\{[^}]*flex:\s*1[^}]*overflow:\s*hidden/su,
     );
     expect(workspaceSource).toMatch(
-      /\.session-workspace__grid\s*\{[^}]*flex:\s*1[^}]*min-height:\s*0/su,
+      /\.performance-session-workspace__grid\s*\{[^}]*flex:\s*1[^}]*min-height:\s*0/su,
     );
     expect(workspaceSource).not.toContain('min-height: 560px');
     expect(workspaceSource).not.toContain('calc(100vh - 230px)');
   });
 
   it('keeps review actions outside the scrolling details body and removes mandatory verification copy', () => {
-    expect(reviewSource).toContain('session-review__body-scroll');
-    expect(reviewSource.indexOf('session-review__body-scroll')).toBeLessThan(
-      reviewSource.indexOf('session-review__actions'),
-    );
+    expect(reviewSource).toContain('performance-session-editor__body-scroll');
+    expect(
+      reviewSource.indexOf('performance-session-editor__body-scroll'),
+    ).toBeLessThan(reviewSource.indexOf('performance-session-editor__actions'));
     expect(reviewSource).toContain('調整本場顯示');
     expect(reviewSource).not.toContain('確認本首');
     expect(reviewSource).not.toContain('確認並下一首');

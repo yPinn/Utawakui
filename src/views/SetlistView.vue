@@ -15,7 +15,7 @@ import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
 import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
-import SessionPreparationWorkspace from '../components/playlists/SessionPreparationWorkspace.vue';
+import PerformanceSessionWorkspace from '../components/performance-session/PerformanceSessionWorkspace.vue';
 import TrackActionMenu from '../components/track/TrackActionMenu.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
@@ -420,7 +420,7 @@ onMounted(async () => {
         class="setlist-view__session-boundary"
         tag="div"
       >
-        <SessionPreparationWorkspace
+        <PerformanceSessionWorkspace
           :tracks="libraryState.tracks"
           @close="performanceSessionWorkspace.close"
         />

@@ -133,32 +133,33 @@ watch(
 </script>
 
 <template>
-  <ol class="session-plan-list" aria-label="待唱順序">
+  <ol class="performance-session-plan-list" aria-label="待唱順序">
     <li
       v-for="(item, index) in props.items"
       :key="item.itemId"
-      class="session-plan-row"
+      class="performance-session-plan-row"
       :class="{
-        'session-plan-row--selected': item.itemId === selectedItemId,
+        'performance-session-plan-row--selected':
+          item.itemId === selectedItemId,
       }"
     >
       <button
         type="button"
-        class="session-plan-row__select"
+        class="performance-session-plan-row__select"
         :aria-label="`檢查第 ${index + 1} 首：${item.displayTitle}`"
         :aria-current="item.itemId === selectedItemId ? 'true' : undefined"
         aria-keyshortcuts="Alt+ArrowUp Alt+ArrowDown"
         @click="emit('select', item.itemId)"
         @keydown="handleRowKeydown($event, item, index)"
       >
-        <span class="session-plan-row__index">{{ index + 1 }}</span>
-        <span class="session-plan-row__copy">
-          <span class="session-plan-row__title" dir="auto">
+        <span class="performance-session-plan-row__index">{{ index + 1 }}</span>
+        <span class="performance-session-plan-row__copy">
+          <span class="performance-session-plan-row__title" dir="auto">
             {{ item.displayTitle }}
           </span>
           <span
             v-if="item.displayArtist"
-            class="session-plan-row__artist"
+            class="performance-session-plan-row__artist"
             dir="auto"
           >
             {{ item.displayArtist }}
@@ -172,7 +173,7 @@ watch(
         </UiChip>
       </button>
 
-      <div class="session-plan-row__actions">
+      <div class="performance-session-plan-row__actions">
         <UiIconButton
           :icon="Ellipsis"
           :label="`第 ${index + 1} 首「${item.displayTitle}」的更多操作`"
@@ -203,7 +204,7 @@ watch(
 </template>
 
 <style scoped>
-.session-plan-list {
+.performance-session-plan-list {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-2);
@@ -213,7 +214,7 @@ watch(
   list-style: none;
 }
 
-.session-plan-row {
+.performance-session-plan-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: var(--ui-space-2);
@@ -224,12 +225,12 @@ watch(
   background: var(--ui-color-surface);
 }
 
-.session-plan-row--selected {
+.performance-session-plan-row--selected {
   border-color: var(--ui-color-accent);
   background: var(--ui-color-surface-selected);
 }
 
-.session-plan-row__select {
+.performance-session-plan-row__select {
   display: grid;
   grid-template-columns: 3ch minmax(0, 1fr) auto;
   gap: var(--ui-space-2);
@@ -245,44 +246,44 @@ watch(
   cursor: pointer;
 }
 
-.session-plan-row__select:hover {
+.performance-session-plan-row__select:hover {
   background: var(--ui-color-surface-hover);
 }
 
-.session-plan-row__select:focus-visible {
+.performance-session-plan-row__select:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
 
-.session-plan-row__index {
+.performance-session-plan-row__index {
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
 }
 
-.session-plan-row__copy {
+.performance-session-plan-row__copy {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
-.session-plan-row__title,
-.session-plan-row__artist {
+.performance-session-plan-row__title,
+.performance-session-plan-row__artist {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.session-plan-row__title {
+.performance-session-plan-row__title {
   font-weight: var(--ui-font-weight-semibold);
 }
 
-.session-plan-row__artist {
+.performance-session-plan-row__artist {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
 }
 
-.session-plan-row__actions {
+.performance-session-plan-row__actions {
   display: flex;
   align-items: center;
 }

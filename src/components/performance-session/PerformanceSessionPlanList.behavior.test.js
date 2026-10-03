@@ -12,10 +12,10 @@ import UiChip from '../ui/UiChip.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import SessionPlanList from './SessionPlanList.vue';
+import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 
 for (const [component, filename] of [
-  [SessionPlanList, './SessionPlanList.vue'],
+  [PerformanceSessionPlanList, './PerformanceSessionPlanList.vue'],
   [UiChip, '../ui/UiChip.vue'],
   [UiContextMenu, '../ui/UiContextMenu.vue'],
   [UiIconButton, '../ui/UiIconButton.vue'],
@@ -101,16 +101,16 @@ async function openItemMenu(root, label) {
   return opener;
 }
 
-describe('SessionPlanList', () => {
+describe('PerformanceSessionPlanList', () => {
   it('renders occurrence order and truthful preparation states', () => {
-    const mounted = mount(SessionPlanList, {
+    const mounted = mount(PerformanceSessionPlanList, {
       items,
       selectedItemId: 'item-2',
     });
     const rows = findAll(mounted.root, (node) =>
       String(node.props?.class ?? '')
         .split(/\s+/u)
-        .includes('session-plan-row'),
+        .includes('performance-session-plan-row'),
     );
 
     expect(rows).toHaveLength(3);
@@ -120,7 +120,9 @@ describe('SessionPlanList', () => {
     expect(textContent(mounted.root)).toContain('手動');
     expect(textContent(mounted.root)).toContain('音檔缺少');
     expect(
-      String(rows[1].props.class).includes('session-plan-row--selected'),
+      String(rows[1].props.class).includes(
+        'performance-session-plan-row--selected',
+      ),
     ).toBe(true);
     mounted.app.unmount();
   });
@@ -130,7 +132,7 @@ describe('SessionPlanList', () => {
     const onMove = vi.fn();
     const onDuplicate = vi.fn();
     const onRemove = vi.fn();
-    const mounted = mount(SessionPlanList, {
+    const mounted = mount(PerformanceSessionPlanList, {
       items,
       selectedItemId: 'item-1',
       onSelect,
@@ -162,7 +164,7 @@ describe('SessionPlanList', () => {
   });
 
   it('disables impossible boundary moves in the menu', async () => {
-    const mounted = mount(SessionPlanList, {
+    const mounted = mount(PerformanceSessionPlanList, {
       items,
       selectedItemId: 'item-1',
     });
@@ -178,7 +180,7 @@ describe('SessionPlanList', () => {
 
   it('keeps keyboard reordering without making the row draggable', () => {
     const onMove = vi.fn();
-    const mounted = mount(SessionPlanList, {
+    const mounted = mount(PerformanceSessionPlanList, {
       items,
       selectedItemId: 'item-2',
       onMove,

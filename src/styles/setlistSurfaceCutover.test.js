@@ -27,7 +27,7 @@ describe('Setlist Token v2 surface cutover', () => {
     );
   });
 
-  it('preserves the uncut Performance Session workspace as one v1 child boundary', () => {
+  it('hands the migrated Performance Session workspace to one v2 child boundary', () => {
     expect(setlistSource).toContain(
       "import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue'",
     );
@@ -35,7 +35,7 @@ describe('Setlist Token v2 surface cutover', () => {
       /<AppSurfaceBoundary\s+v-if="performanceSessionWorkspace\.isOpen\.value"\s+surface-id="performance-session-workspace"/u,
     );
     expect(setlistSource).toMatch(
-      /<AppSurfaceBoundary[\s\S]*?<SessionPreparationWorkspace[\s\S]*?<\/AppSurfaceBoundary>/u,
+      /<AppSurfaceBoundary[\s\S]*?<PerformanceSessionWorkspace[\s\S]*?<\/AppSurfaceBoundary>/u,
     );
     expect(setlistSource).toMatch(
       /\.setlist-view__session-boundary\s*\{[^}]*display:\s*flex;[^}]*min-height:\s*0;[^}]*flex:\s*1;[^}]*flex-direction:\s*column;/su,

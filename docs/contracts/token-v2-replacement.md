@@ -234,10 +234,10 @@ Public Output 繼續只使用 `--ovl-*`。控制台 Output preview 可以保留�
 | `AppInnerPage`                | `AppFolderPage`                                                              | Folder family cutover 時 rename，禁止 compatibility wrapper            |
 | `UiPageHeader`                | Retain                                                                       | 作為內容 primitive，由 `AppFolderPage` 擁有 placement                  |
 | `AppUtilityFrame`             | `AppUtilityPage`                                                             | Utility surface cutover；不提前 cosmetic rename                        |
-| `SessionPreparationWorkspace` | `PerformanceSessionWorkspace`                                                | Performance Session cutover，連同 folder ownership 移轉                |
-| `SessionPlanList`             | `PerformanceSessionPlanList`                                                 | Performance Session cutover                                            |
-| `SessionPlanReviewEditor`     | `PerformanceSessionPlanEditor`                                               | Performance Session cutover                                            |
-| `SessionManualItemForm`       | `PerformanceSessionManualItemForm`                                           | Performance Session cutover                                            |
+| `SessionPreparationWorkspace` | `PerformanceSessionWorkspace`                                                | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
+| `SessionPlanList`             | `PerformanceSessionPlanList`                                                 | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
+| `SessionPlanReviewEditor`     | `PerformanceSessionPlanEditor`                                               | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
+| `SessionManualItemForm`       | `PerformanceSessionManualItemForm`                                           | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
 | `PerformanceSessionPanel`     | Retain                                                                       | 名稱與 domain owner 已一致                                             |
 | `useVisualSystemMode`         | `useVisualReviewMode`                                                        | F8 review infrastructure slice；不得成為 production runtime API        |
 | `StudioLibraryDossier*`       | Development-only retain until candidate disposition                          | 不得直接 promotion 到 production；adoption 時改用正式 owner 名稱或刪除 |
@@ -483,7 +483,7 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已進入 Phase 3.1。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已進入 Phase 3.2。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
@@ -491,6 +491,8 @@ Phase 1 已把 Main `app-shell`、global overlay host、Titlebar、Sidebar navig
 
 Phase 2 已以 `AppFolderLayout`／`AppFolderPage` 完整接手 Folder navigation、material、perimeter 與 document／workspace body mode；舊三件組、candidate-root override、`--ui-archive-*` 與 candidate Folder aliases 已同批刪除。F8 使用相同正式元件，只保留 specimen data／controls／content。
 
-Phase 3.1 已將 Setlist 與 `setlist-overlay` 原子切為 v2，保留 `AppFolderPage` 的 `document` mode 與 page-level scroll owner；Header／Table 改用既有正式 v2 weight／radius／motion names，F8 Studio Library selected row 回到已核准的中性文字色 8% surface recipe，沒有 compatibility alias或 feature anatomy 變更。尚未進入下一階段的場次準備 workspace 已成為完整 registered-v1 `performance-session-workspace` child surface並擁有 local overlay host；Shell 內的 `PerformanceSessionPanel` 是既有 v2 Right Dock projection，不穿過該 child boundary。Lyrics／Output／Import 仍各自是完整 registered-v1 surface。
+Phase 3.1 已將 Setlist 與 `setlist-overlay` 原子切為 v2，保留一般瀏覽時 `AppFolderPage` 的 `document` mode 與 page-level scroll owner；Header／Table 改用既有正式 v2 weight／radius／motion names，F8 Studio Library selected row 回到已核准的中性文字色 8% surface recipe，沒有 compatibility alias 或 feature anatomy 變更。
 
-Canonical generator 現在鎖定 T1 331／T2 407／T1-only 87 unique declarations、38 個 production-consumed legacy names與 115 個 file-token pairs；Phase 3.1 相較 Phase 2 移除 1 個 production name／7 個 pairs。下一個 atomic implementation slice 依 phase order 是 Performance Session domain rename、workspace mode與 Right Dock projection boundary，不保留 Setlist legacy fallback。
+Phase 3.2 已將 `performance-session-workspace` 與 local overlay host 原子切為 v2；場次開啟時 Folder page 動態切為 `workspace` mode，由 workspace 內兩個具名 pane 擁有 scroll。四個舊 `Session*` components／tests 已移入 `components/performance-session/` 並改為完整 `PerformanceSession*` domain names，舊檔、舊 CSS selector、compatibility wrapper 與雙 import 路徑皆移除。Shell 內的 `PerformanceSessionPanel` 維持既有 v2 Right Dock projection，不嵌入 workspace editor，也不新增 feature boundary。Feature anatomy、互動與資料 authority 均未變更；Lyrics／Output／Import 仍各自是完整 registered-v1 surface。
+
+Canonical generator 現在鎖定 T1 331／T2 407／T1-only 87 unique declarations、38 個 production-consumed legacy names與 115 個 file-token pairs；Performance Session 本來已無 production T1-only reference，因此 Phase 3.2 不改 token 計數，只收斂 surface ownership、layout mode 與 domain naming。下一個 atomic implementation slice 依 phase order 是 Import 的 document flow cutover。

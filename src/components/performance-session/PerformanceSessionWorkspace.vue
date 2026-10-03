@@ -10,9 +10,9 @@ import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiTrackRow from '../ui/UiTrackRow.vue';
-import SessionManualItemForm from './SessionManualItemForm.vue';
-import SessionPlanList from './SessionPlanList.vue';
-import SessionPlanReviewEditor from './SessionPlanReviewEditor.vue';
+import PerformanceSessionManualItemForm from './PerformanceSessionManualItemForm.vue';
+import PerformanceSessionPlanEditor from './PerformanceSessionPlanEditor.vue';
+import PerformanceSessionPlanList from './PerformanceSessionPlanList.vue';
 
 const props = defineProps({
   tracks: { type: Array, default: () => [] },
@@ -138,8 +138,10 @@ function clearDraft() {
 
 <template>
   <section
-    class="session-workspace"
-    :class="{ 'session-workspace--reviewing': mobilePane === 'review' }"
+    class="performance-session-workspace"
+    :class="{
+      'performance-session-workspace--reviewing': mobilePane === 'review',
+    }"
     aria-label="待唱安排"
   >
     <UiPageHeader title="待唱安排">
@@ -159,7 +161,7 @@ function clearDraft() {
       </template>
     </UiPageHeader>
 
-    <div class="session-workspace__summary" aria-label="待唱狀態">
+    <div class="performance-session-workspace__summary" aria-label="待唱狀態">
       <UiChip tone="accent">{{ state.plan.summary.total }} 首</UiChip>
       <UiChip
         v-if="hasItems && state.plan.summary.needsAttention === 0"
@@ -172,7 +174,7 @@ function clearDraft() {
       </UiChip>
       <span
         v-if="state.isSaving"
-        class="session-workspace__saving"
+        class="performance-session-workspace__saving"
         role="status"
       >
         儲存中…
@@ -194,9 +196,12 @@ function clearDraft() {
       compact
     />
 
-    <div class="session-workspace__grid">
-      <section class="session-workspace__list-pane" aria-label="待唱清單">
-        <div class="session-workspace__composer">
+    <div class="performance-session-workspace__grid">
+      <section
+        class="performance-session-workspace__list-pane"
+        aria-label="待唱清單"
+      >
+        <div class="performance-session-workspace__composer">
           <UiSearchBox
             v-model="librarySearchQuery"
             label="搜尋曲庫並加入待唱"
@@ -223,12 +228,12 @@ function clearDraft() {
 
         <UiScrollRegion
           v-if="isSearching"
-          class="session-workspace__list-scroll"
+          class="performance-session-workspace__list-scroll"
           aria-label="曲庫搜尋結果"
         >
           <ul
             v-if="filteredTracks.length"
-            class="session-workspace__search-results"
+            class="performance-session-workspace__search-results"
           >
             <UiTrackRow
               v-for="track in filteredTracks"
@@ -244,10 +249,10 @@ function clearDraft() {
 
         <UiScrollRegion
           v-else-if="hasItems"
-          class="session-workspace__list-scroll"
+          class="performance-session-workspace__list-scroll"
           aria-label="待唱清單"
         >
-          <SessionPlanList
+          <PerformanceSessionPlanList
             :items="state.plan.items"
             :selected-item-id="state.plan.reviewCursorItemId"
             :saving="state.isSaving"
@@ -263,22 +268,25 @@ function clearDraft() {
         </UiHint>
       </section>
 
-      <section class="session-workspace__review-pane" aria-label="待唱項目設定">
+      <section
+        class="performance-session-workspace__review-pane"
+        aria-label="待唱項目設定"
+      >
         <UiButton
-          class="session-workspace__mobile-back"
+          class="performance-session-workspace__mobile-back"
           :icon="ArrowLeft"
           @click="mobilePane = 'list'"
         >
           返回待唱清單
         </UiButton>
-        <SessionManualItemForm
+        <PerformanceSessionManualItemForm
           v-if="creatingManualItem"
           :saving="state.isSaving"
           :validation-error="reviewValidationError"
           @cancel="creatingManualItem = false"
           @create="createManualItem"
         />
-        <SessionPlanReviewEditor
+        <PerformanceSessionPlanEditor
           v-else
           :item="selectedItem"
           :tracks="tracks"
@@ -293,7 +301,7 @@ function clearDraft() {
 </template>
 
 <style scoped>
-.session-workspace {
+.performance-session-workspace {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -302,7 +310,7 @@ function clearDraft() {
   overflow: hidden;
 }
 
-.session-workspace__summary {
+.performance-session-workspace__summary {
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;
@@ -311,12 +319,12 @@ function clearDraft() {
   margin-bottom: var(--ui-space-3);
 }
 
-.session-workspace__saving {
+.performance-session-workspace__saving {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
 }
 
-.session-workspace__grid {
+.performance-session-workspace__grid {
   display: grid;
   flex: 1;
   grid-template-columns: minmax(360px, 1.2fr) minmax(320px, 0.8fr);
@@ -327,8 +335,8 @@ function clearDraft() {
   background: var(--ui-color-surface);
 }
 
-.session-workspace__list-pane,
-.session-workspace__review-pane {
+.performance-session-workspace__list-pane,
+.performance-session-workspace__review-pane {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -336,13 +344,13 @@ function clearDraft() {
   overflow: hidden;
 }
 
-.session-workspace__list-pane {
+.performance-session-workspace__list-pane {
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
   border-inline-end: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.session-workspace__composer {
+.performance-session-workspace__composer {
   display: grid;
   flex: 0 0 auto;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -352,12 +360,12 @@ function clearDraft() {
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.session-workspace__list-scroll {
+.performance-session-workspace__list-scroll {
   flex: 1;
   min-height: 0;
 }
 
-.session-workspace__search-results {
+.performance-session-workspace__search-results {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-1);
@@ -366,40 +374,42 @@ function clearDraft() {
   list-style: none;
 }
 
-.session-workspace__mobile-back {
+.performance-session-workspace__mobile-back {
   display: none;
   align-self: flex-start;
   margin: var(--ui-space-3) var(--ui-space-3) 0;
 }
 
 @media (max-width: 780px) {
-  .session-workspace__grid {
+  .performance-session-workspace__grid {
     display: block;
   }
 
-  .session-workspace__list-pane,
-  .session-workspace__review-pane {
+  .performance-session-workspace__list-pane,
+  .performance-session-workspace__review-pane {
     height: 100%;
   }
 
-  .session-workspace__list-pane {
+  .performance-session-workspace__list-pane {
     border-inline-end: 0;
   }
 
-  .session-workspace__review-pane {
+  .performance-session-workspace__review-pane {
     display: none;
   }
 
-  .session-workspace--reviewing .session-workspace__list-pane {
+  .performance-session-workspace--reviewing
+    .performance-session-workspace__list-pane {
     display: none;
   }
 
-  .session-workspace--reviewing .session-workspace__review-pane,
-  .session-workspace__mobile-back {
+  .performance-session-workspace--reviewing
+    .performance-session-workspace__review-pane,
+  .performance-session-workspace__mobile-back {
     display: flex;
   }
 
-  .session-workspace__composer {
+  .performance-session-workspace__composer {
     grid-template-columns: minmax(0, 1fr);
   }
 }

@@ -112,23 +112,26 @@ function cancelEditing() {
 </script>
 
 <template>
-  <section class="session-review" aria-labelledby="session-review-title">
-    <UiScrollRegion class="session-review__body-scroll">
-      <div v-if="item" class="session-review__body">
-        <header class="session-review__header">
-          <p class="session-review__eyebrow">
+  <section
+    class="performance-session-editor"
+    aria-labelledby="performance-session-editor-title"
+  >
+    <UiScrollRegion class="performance-session-editor__body-scroll">
+      <div v-if="item" class="performance-session-editor__body">
+        <header class="performance-session-editor__header">
+          <p class="performance-session-editor__eyebrow">
             {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
           </p>
           <h2
-            id="session-review-title"
-            class="session-review__title"
+            id="performance-session-editor-title"
+            class="performance-session-editor__title"
             dir="auto"
           >
             {{ item.displayTitle }}
           </h2>
           <p
             v-if="item.displayArtist"
-            class="session-review__artist"
+            class="performance-session-editor__artist"
             dir="auto"
           >
             {{ item.displayArtist }}
@@ -166,17 +169,19 @@ function cancelEditing() {
 
         <div
           v-if="item.linkedTrack && !showForm"
-          class="session-review__source"
+          class="performance-session-editor__source"
         >
-          <span class="session-review__source-label">曲庫資料（唯讀）</span>
-          <dl class="session-review__source-details">
-            <div class="session-review__source-row">
+          <span class="performance-session-editor__source-label"
+            >曲庫資料（唯讀）</span
+          >
+          <dl class="performance-session-editor__source-details">
+            <div class="performance-session-editor__source-row">
               <dt>曲庫曲名</dt>
               <dd dir="auto">{{ item.linkedTrack.title }}</dd>
             </div>
             <div
               v-if="item.linkedTrack.artist"
-              class="session-review__source-row"
+              class="performance-session-editor__source-row"
             >
               <dt>歌手／藝人</dt>
               <dd dir="auto">{{ item.linkedTrack.artist }}</dd>
@@ -184,9 +189,13 @@ function cancelEditing() {
           </dl>
         </div>
 
-        <form v-if="showForm" class="session-review__form" @submit.prevent>
+        <form
+          v-if="showForm"
+          class="performance-session-editor__form"
+          @submit.prevent
+        >
           <UiTextField
-            id="session-plan-display-title"
+            id="performance-session-display-title"
             v-model="displayTitle"
             label="顯示曲名"
             hint="只用於本場輸出，不會修改曲庫曲名。"
@@ -194,7 +203,7 @@ function cancelEditing() {
             required
           />
           <UiTextField
-            id="session-plan-display-artist"
+            id="performance-session-display-artist"
             v-model="displayArtist"
             label="第二行（選填）"
             hint="可填原唱、演出者或版本資訊；留空則不顯示。"
@@ -202,13 +211,13 @@ function cancelEditing() {
           />
           <template v-if="needsTrackRecovery">
             <UiTextField
-              id="session-plan-track-filter"
+              id="performance-session-track-filter"
               v-model="trackFilter"
               label="搜尋曲庫"
               placeholder="曲名、演出者或 track id"
             />
             <UiSelect
-              id="session-plan-track-link"
+              id="performance-session-track-link"
               v-model="trackId"
               label="曲庫歌曲"
               :options="trackOptions"
@@ -220,12 +229,12 @@ function cancelEditing() {
         </form>
       </div>
 
-      <UiHint v-else id="session-review-title" padded center>
+      <UiHint v-else id="performance-session-editor-title" padded center>
         選擇一首曲目查看設定。
       </UiHint>
     </UiScrollRegion>
 
-    <div v-if="item" class="session-review__actions">
+    <div v-if="item" class="performance-session-editor__actions">
       <template v-if="showForm">
         <UiButton
           v-if="!needsTrackRecovery && item.mode !== 'manual'"
@@ -252,7 +261,7 @@ function cancelEditing() {
 </template>
 
 <style scoped>
-.session-review {
+.performance-session-editor {
   display: flex;
   flex: 1;
   flex-direction: column;
@@ -260,35 +269,35 @@ function cancelEditing() {
   min-height: 0;
 }
 
-.session-review__body-scroll {
+.performance-session-editor__body-scroll {
   flex: 1;
   min-height: 0;
 }
 
-.session-review__body {
+.performance-session-editor__body {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-4);
   padding: var(--ui-space-4);
 }
 
-.session-review__header {
+.performance-session-editor__header {
   min-width: 0;
 }
 
-.session-review__eyebrow,
-.session-review__title,
-.session-review__artist {
+.performance-session-editor__eyebrow,
+.performance-session-editor__title,
+.performance-session-editor__artist {
   margin: 0;
 }
 
-.session-review__eyebrow {
+.performance-session-editor__eyebrow {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
 }
 
-.session-review__title {
+.performance-session-editor__title {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
@@ -296,13 +305,13 @@ function cancelEditing() {
   overflow-wrap: anywhere;
 }
 
-.session-review__artist {
+.performance-session-editor__artist {
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   overflow-wrap: anywhere;
 }
 
-.session-review__source {
+.performance-session-editor__source {
   display: grid;
   gap: var(--ui-space-1);
   padding: var(--ui-space-3);
@@ -311,43 +320,43 @@ function cancelEditing() {
   background: var(--ui-color-surface-raised);
 }
 
-.session-review__source-label {
+.performance-session-editor__source-label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
 }
 
-.session-review__source-details {
+.performance-session-editor__source-details {
   display: grid;
   gap: var(--ui-space-1);
   margin: 0;
 }
 
-.session-review__source-row {
+.performance-session-editor__source-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
   gap: var(--ui-space-2);
   align-items: baseline;
 }
 
-.session-review__source-row dt {
+.performance-session-editor__source-row dt {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
 }
 
-.session-review__source-row dd {
+.performance-session-editor__source-row dd {
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
 }
 
-.session-review__form {
+.performance-session-editor__form {
   display: flex;
   flex-direction: column;
   gap: var(--ui-space-3);
 }
 
-.session-review__actions {
+.performance-session-editor__actions {
   display: flex;
   flex: 0 0 auto;
   flex-wrap: wrap;
