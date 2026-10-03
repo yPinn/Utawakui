@@ -328,7 +328,7 @@ function applyPreset(preset) {
   overflow: hidden;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -360,7 +360,7 @@ function applyPreset(preset) {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 

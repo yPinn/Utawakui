@@ -104,7 +104,7 @@
 }
 
 .obs-template-mockup__title--quiet {
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .obs-template-mockup[data-template-id='kinetic-pop']

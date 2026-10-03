@@ -222,7 +222,7 @@
   background: var(--ui-output-preview-vinyl-sleeve-paper);
   color: var(--ui-output-preview-vinyl-copy-ink);
   font-size: var(--ui-output-template-thumb-caption-font-size);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   letter-spacing: 0.08em;
 }
 
@@ -448,7 +448,7 @@
   background: var(--ui-output-preview-vinyl-sleeve-paper);
   color: var(--ui-output-preview-vinyl-copy-muted);
   font-size: var(--ui-font-size-2xl);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .obs-template-mockup__vinyl-copy {
@@ -547,7 +547,7 @@
   overflow: hidden;
   color: var(--obs-preview-ink);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   letter-spacing: var(--ui-space-1);
   text-align: center;
   white-space: nowrap;
@@ -562,7 +562,7 @@
   background: var(--obs-preview-accent);
   color: var(--ui-output-preview-accent-contrast);
   font-size: var(--ui-font-size-2xl);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .obs-template-mockup__metadata {
@@ -591,7 +591,7 @@
 .obs-template-mockup__section-title {
   min-width: 0;
   overflow: hidden;
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

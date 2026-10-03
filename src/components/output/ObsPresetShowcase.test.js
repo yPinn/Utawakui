@@ -20,9 +20,7 @@ const tokenSource = readFileSync(
   'utf8',
 );
 const previewTokenSource = readFileSync(
-  fileURLToPath(
-    new URL('../../styles/features/output-preview.css', import.meta.url),
-  ),
+  fileURLToPath(new URL('../../styles/features/output.css', import.meta.url)),
   'utf8',
 );
 const previewSource = readFileSync(
@@ -115,16 +113,28 @@ describe('OBS output workspace layout contract', () => {
     const compactComponentSource = compactWhitespace(componentSource);
     const compactSplitLayoutSource = compactWhitespace(splitLayoutSource);
 
-    expect(tokenSource).toContain('--ui-output-gallery-detail-width: clamp(');
-    expect(tokenSource).toContain('--ui-output-gallery-detail-width-max');
-    expect(tokenSource).toContain('--ui-output-gallery-preview-max-width');
-    expect(tokenSource).toContain('--ui-output-workbench-inspector-width');
-    expect(tokenSource).toContain('--ui-output-workbench-stage-max-width');
-    expect(tokenSource).toContain('--ui-output-gallery-tile-min-width');
-    expect(tokenSource).toContain('--ui-output-template-thumb-title-font-size');
-    expect(tokenSource).toContain('22vw');
-    expect(tokenSource).not.toContain('34cqi');
-    expect(tokenSource).toContain('--ui-output-setting-label-width-min');
+    expect(previewTokenSource).toContain(
+      '--ui-output-gallery-detail-width: clamp(',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-gallery-detail-width-max',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-gallery-preview-max-width',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-workbench-inspector-width',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-workbench-stage-max-width',
+    );
+    expect(previewTokenSource).toContain('--ui-output-gallery-tile-min-width');
+    expect(previewTokenSource).toContain(
+      '--ui-output-template-thumb-title-font-size',
+    );
+    expect(previewTokenSource).toContain('22vw');
+    expect(previewTokenSource).not.toContain('34cqi');
+    expect(previewTokenSource).toContain('--ui-output-setting-label-width-min');
     expect(componentSource).not.toContain('--ui-font-size-xs');
     expect(componentSource).toContain('container-type: inline-size');
     expect(compactComponentSource).toContain(
@@ -257,11 +267,15 @@ describe('OBS output workspace layout contract', () => {
       '--ui-output-preview-ktv-stroke-sung:',
     );
     expect(previewTokenSource).not.toContain('--ui-output-preview-ktv-shadow:');
-    expect(tokenSource).toContain(
+    expect(previewTokenSource).toContain(
       '--ui-output-template-thumb-caption-font-size:',
     );
-    expect(tokenSource).toContain('--ui-output-template-thumb-artwork-size:');
-    expect(tokenSource).toContain('--ui-output-template-thumb-content-width:');
+    expect(previewTokenSource).toContain(
+      '--ui-output-template-thumb-artwork-size:',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-template-thumb-content-width:',
+    );
     expect(mockupSource).toContain('var(--ui-output-preview-canvas)');
     expect(mockupSource).toContain('var(--ui-output-preview-cycle-duration)');
     expect(mockupSource).toContain('var(--ui-output-preview-cycle-ease)');
@@ -325,7 +339,9 @@ describe('OBS output workspace layout contract', () => {
     expect(widgetCapturePreviewSource).toContain(
       "emit('selectSize', option.id)",
     );
-    expect(tokenSource).toContain('--ui-output-gallery-detail-width: clamp(');
+    expect(previewTokenSource).toContain(
+      '--ui-output-gallery-detail-width: clamp(',
+    );
   });
 
   it('keeps inspector fields inset and replaceable without owning their data', () => {
@@ -432,14 +448,23 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).toContain('SettingsActionRow');
     expect(settingsSource).toContain('UiNotice');
     expect(settingsSource).not.toContain('obs-output-settings__row');
-    expect(settingsSource).toContain('var(--ui-settings-column-min-width)');
+    expect(settingsSource).toContain(
+      'var(--ui-output-settings-column-min-width)',
+    );
     expect(settingsViewSource).toContain('var(--ui-settings-column-min-width)');
-    expect(settingsSource).toContain('var(--ui-settings-checkbox-size)');
+    expect(settingsSource).toContain('var(--ui-checkbox-size)');
     expect(tokenSource).toContain('--ui-settings-column-min-width: 22rem');
     expect(tokenSource).toContain('--ui-settings-checkbox-size:');
     expect(settingsSource).toContain('可用 Port');
-    expect(tokenSource).toContain('--ui-output-port-input-width: 4.75rem');
-    expect(tokenSource).toContain('--ui-output-settings-command-button-width:');
+    expect(previewTokenSource).toContain(
+      '--ui-output-settings-column-min-width: 22rem',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-port-input-width: 4.75rem',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-settings-command-button-width:',
+    );
     expect(settingsSource).toContain('obs-output-settings__command');
     expect(settingsSource).not.toContain('v-model="copyKind"');
     expect(settingsSource).not.toContain('title="OBS URL"');

@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; Phase 1 Persistent App Shell active; replacement in progress.
+Status: replacement direction and migration architecture frozen; Phase 3 primary feature surfaces active; replacement in progress.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -182,7 +182,7 @@ Folder 第一版使用 `--ui-color-folder-primary` 作 semantic source、`--ui-f
 
 ### Feature-token layer
 
-Lyrics、Output preview 與 Performer 的特殊字級、舞台色與 presentation geometry 移至各自載入的 feature styles，例如 `styles/features/lyrics.css`、`output-preview.css` 與 `performer.css`。新名稱使用 feature namespace，不從 T1 alias，也不反向供 core component 消費。
+Lyrics、Output preview 與 Performer 的特殊字級、舞台色與 presentation geometry 移至各自載入的 feature styles，例如 `styles/features/lyrics.css`、`output.css` 與 `performer.css`。新名稱使用 feature namespace，不從 T1 alias，也不反向供 core component 消費。
 
 Public Output 繼續只使用 `--ovl-*`。控制台 Output preview 可以保留其藝術方向，但不得匯入 public Overlay stylesheet 或把 preview palette 提升成控制台品牌 palette。
 
@@ -483,7 +483,7 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已進入 Phase 3.4。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已完成 Phase 3.5，下一個階段是 Utility／specialist surfaces。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
@@ -497,6 +497,8 @@ Phase 3.2 已將 `performance-session-workspace` 與 local overlay host 原子�
 
 Phase 3.3 已將 Import 與 `import-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `document` mode 與 page-level scroll owner；只有 playlist preview 的 track list 保留 bounded internal scroll。`ImportView`、`ProviderImportPanel`、`ImportCandidateOption` 名稱已符合 page／domain panel／option 結構，因此沒有 cosmetic rename；本機匯入、provider resolution、single／playlist preview、progress、error、retry、completion anatomy 與資料 authority 均未變更。
 
-Phase 3.4 已將 Lyrics 與 `lyrics-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `workspace` mode；Folder page 不建立 document scroll，reader、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。13 個 production Lyrics consumers 的 20 個 legacy file-token pairs 已改為正式 radius、typography、motion 與 popover layer names；選歌、來源管理、LRCLIB 搜尋、手動匯入、逐行閱讀／編輯、timing 與 live offset anatomy／authority 均未變更。既有 component names 已清楚表達 domain 與角色，因此沒有 cosmetic rename；`components/lyrics-provider/` 的 Internal Tools review surface 明確留在 Phase 4。Output 是 Folder workflow 最後一個 registered-v1 feature surface。
+Phase 3.4 已將 Lyrics 與 `lyrics-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `workspace` mode；Folder page 不建立 document scroll，reader、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。13 個 production Lyrics consumers 的 20 個 legacy file-token pairs 已改為正式 radius、typography、motion 與 popover layer names；選歌、來源管理、LRCLIB 搜尋、手動匯入、逐行閱讀／編輯、timing 與 live offset anatomy／authority 均未變更。既有 component names 已清楚表達 domain 與角色，因此沒有 cosmetic rename；`components/lyrics-provider/` 的 Internal Tools review surface 明確留在 Phase 4。
 
-Canonical generator 現在鎖定 T1 331／T2 407／T1-only 87 unique declarations、37 個 production-consumed legacy names、38 個 files 與 89 個 file-token pairs；Phase 3.4 移除 Lyrics 的 20 pairs，並使 `--ui-line-height-headline` 不再被 production 消費。下一個 atomic implementation slice 依 phase order 是 Output control panel cutover。
+Phase 3.5 已將 Output control panel 與 `output-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `workspace` mode 與 Workbench stage／inspector、Gallery grid／detail、runtime Settings 的 bounded scroll owners。19 個 Output 專屬 geometry declarations 已從 T1 core 移入改名後的 `styles/features/output.css`，generic consumers 改用正式 v2 radius／weight／motion／checkbox semantics；stage fallback 保留原深／淺色值。Output render graph 共用的 `SettingsBlock`／`SettingsActionRow` 亦納入 no-T1 gate，7 個只服務這兩個 compound 的 global declarations 已原值收斂成 foundation／component-local recipe。Workbench、template artwork／motion、Browser Source preview、Spout settings 與 runtime／projection authority均未變更，public `overlay/` 仍只使用獨立 `--ovl-*`。
+
+Canonical generator 現在鎖定 T1 305／T2 407／T1-only 61 unique declarations、11 個 production-consumed legacy names、20 個 files 與 33 個 file-token pairs；Phase 3.5 移除 Output 自有的 45 pairs／19 個 feature declarations，以及 transitive shared compounds 的 11 pairs／7 個 global declarations。所有 primary Folder features 已完成 cutover；下一個 atomic implementation slice 依 phase order是 Utility／specialist surfaces。

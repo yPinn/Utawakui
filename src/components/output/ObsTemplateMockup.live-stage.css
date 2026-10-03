@@ -28,7 +28,7 @@
   align-items: center;
   gap: var(--ui-space-1);
   font-size: var(--ui-output-template-thumb-caption-font-size);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   line-height: 1;
 }
 
@@ -83,7 +83,7 @@
   background: var(--obs-preview-accent);
   color: var(--ui-output-preview-accent-contrast);
   font-size: var(--ui-output-template-thumb-caption-font-size);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
 }
 
 .obs-template-mockup__live-stage-card-copy {

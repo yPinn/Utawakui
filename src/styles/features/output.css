@@ -1,4 +1,37 @@
 [data-ui-system] {
+  /* Output control-panel geometry belongs to this feature, not either core
+     token system. Keep these values stable while v1 and v2 surfaces coexist. */
+  --ui-output-gallery-column-min: 22rem; /* room for multiple compact template tiles before stacking */
+  --ui-output-gallery-detail-width-min: 18rem; /* stable support column without competing with the gallery */
+  --ui-output-gallery-detail-width-max: 21rem; /* preview/support cap, independent of sidebar width */
+  --ui-output-gallery-detail-width: clamp(
+    var(--ui-output-gallery-detail-width-min),
+    22vw,
+    var(--ui-output-gallery-detail-width-max)
+  ); /* tracks window width, so sidebar drags do not resize the preview */
+  --ui-output-gallery-preview-max-width: 19.5rem; /* medium template demo, not the editing canvas */
+  --ui-output-gallery-tile-min-width: 10rem; /* dense media-browser tile with readable names */
+  --ui-output-workbench-inspector-width: clamp(
+    18rem,
+    22vw,
+    21rem
+  ); /* stable information rail */
+  --ui-output-workbench-stage-max-width: 64rem; /* large 16:9 preview without indefinite upscaling */
+  --ui-output-port-input-width: 4.75rem; /* five port digits plus compact padding */
+  --ui-output-settings-column-min-width: 22rem; /* two-column settings floor before stacking */
+  --ui-output-settings-command-button-width: 4.5rem; /* stable icon-and-verb command width */
+  --ui-output-template-thumb-min-height: 4.5rem; /* row target around a small 16:9 preview */
+  --ui-output-template-thumb-title-font-size: 0.75rem; /* thumbnail-only label */
+  --ui-output-template-thumb-caption-font-size: 0.625rem; /* secondary compact preview cue */
+  --ui-output-template-thumb-content-width: 86%; /* optically centered comparison composition */
+  --ui-output-template-thumb-artwork-size: 2.5rem; /* balances artwork at the tile minimum */
+  --ui-output-template-thumb-content-padding: var(--ui-space-2);
+  --ui-output-template-thumb-tight-gap: var(--ui-space-1);
+  --ui-output-template-thumb-group-gap: var(--ui-space-2);
+  --ui-output-setting-label-width-min: 4rem; /* compact setting label column */
+
+  /* Gallery mockups and iframe-failure states remain feature-owned artwork. */
+  --ui-output-preview-stage-fallback: #4a332e;
   --ui-output-preview-canvas: #14191d;
   --ui-output-preview-stage-canvas: #19252a;
   --ui-output-preview-lyrics-canvas: #162426;
@@ -62,4 +95,8 @@
   --ui-output-preview-aspect-ratio: 16 / 9;
   --ui-output-preview-cycle-duration: 4.8s;
   --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+:root[data-ui-theme='light'] [data-ui-system] {
+  --ui-output-preview-stage-fallback: #f1d9cc;
 }

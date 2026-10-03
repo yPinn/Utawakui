@@ -132,7 +132,7 @@ const clientStatus = computed(() =>
 
 .obs-output-brief__signal-value {
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   white-space: nowrap;
 }
 </style>

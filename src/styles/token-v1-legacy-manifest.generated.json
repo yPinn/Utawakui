@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "declarations": {
-    "v1": 331,
-    "v1Only": 87,
+    "v1": 305,
+    "v1Only": 61,
     "v2": 407
   },
   "production": {
-    "files": 38,
-    "pairs": 89,
+    "files": 20,
+    "pairs": 33,
     "references": [
       {
         "file": "src/components/analysis/MusicAnalysisBatchPanel.vue",
@@ -135,61 +135,6 @@
         "token": "--ui-font-weight-strong"
       },
       {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-row-copy-gap"
-      },
-      {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-row-icon-size"
-      },
-      {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-row-min-height"
-      },
-      {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-row-padding-block"
-      },
-      {
-        "file": "src/components/settings/SettingsActionRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-row-padding-inline"
-      },
-      {
-        "file": "src/components/settings/SettingsBlock.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/settings/SettingsBlock.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-block-body-gap"
-      },
-      {
-        "file": "src/components/settings/SettingsBlock.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-block-gap"
-      },
-      {
-        "file": "src/components/settings/SettingsBlock.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-block-padding"
-      },
-      {
         "file": "src/components/settings/SettingsFeatureGateRow.vue",
         "surface": "other-feature",
         "token": "--ui-motion-fast"
@@ -203,231 +148,6 @@
         "file": "src/components/settings/VirtualCableGuideModal.vue",
         "surface": "other-feature",
         "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/output/ObsAppearanceControlRow.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-setting-label-width-min"
-      },
-      {
-        "file": "src/components/output/ObsOutputBrief.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsOutputSettings.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsOutputSettings.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-port-input-width"
-      },
-      {
-        "file": "src/components/output/ObsOutputSettings.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-settings-command-button-width"
-      },
-      {
-        "file": "src/components/output/ObsOutputSettings.vue",
-        "surface": "output-feature",
-        "token": "--ui-settings-checkbox-size"
-      },
-      {
-        "file": "src/components/output/ObsOutputSettings.vue",
-        "surface": "output-feature",
-        "token": "--ui-settings-column-min-width"
-      },
-      {
-        "file": "src/components/output/ObsOutputSplitLayout.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-gallery-column-min"
-      },
-      {
-        "file": "src/components/output/ObsOutputSplitLayout.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-gallery-detail-width"
-      },
-      {
-        "file": "src/components/output/ObsOutputSplitLayout.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-workbench-inspector-width"
-      },
-      {
-        "file": "src/components/output/ObsOutputTabs.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsOutputTabs.vue",
-        "surface": "output-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/output/ObsOverlayPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-color-surface-playing"
-      },
-      {
-        "file": "src/components/output/ObsOverlayPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/output/ObsOverlayPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsOverlayPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-workbench-stage-max-width"
-      },
-      {
-        "file": "src/components/output/ObsOverlayPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/output/ObsSlotWorkbench.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsSlotWorkbench.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-workbench-stage-max-width"
-      },
-      {
-        "file": "src/components/output/ObsTemplateGallery.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsTemplateGallery.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-gallery-tile-min-width"
-      },
-      {
-        "file": "src/components/output/ObsTemplateGallery.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-min-height"
-      },
-      {
-        "file": "src/components/output/ObsTemplateGallery.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-title-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-gallery-preview-max-width"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-caption-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-tight-gap"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-title-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.live-stage.css",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.live-stage.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-caption-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.now-playing.css",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.now-playing.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-caption-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.setlist.css",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-artwork-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-caption-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-content-padding"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-content-width"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-group-gap"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-tight-gap"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.thumbnail.css",
-        "surface": "output-feature",
-        "token": "--ui-output-template-thumb-title-font-size"
-      },
-      {
-        "file": "src/components/output/ObsWidgetCapturePreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsWidgetCapturePreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-motion-ease"
-      },
-      {
-        "file": "src/components/output/ObsWidgetCapturePreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-motion-fast"
       },
       {
         "file": "src/views/SettingsView.vue",
@@ -455,7 +175,7 @@
         "token": "--ui-line-height-headline"
       }
     ],
-    "tokens": 37
+    "tokens": 11
   },
   "legacyTokens": [
     "--ui-color-surface-playing",
@@ -466,25 +186,6 @@
     "--ui-motion-fast",
     "--ui-motion-slow",
     "--ui-motion-spin",
-    "--ui-output-gallery-column-min",
-    "--ui-output-gallery-detail-width",
-    "--ui-output-gallery-detail-width-max",
-    "--ui-output-gallery-detail-width-min",
-    "--ui-output-gallery-preview-max-width",
-    "--ui-output-gallery-tile-min-width",
-    "--ui-output-port-input-width",
-    "--ui-output-setting-label-width-min",
-    "--ui-output-settings-command-button-width",
-    "--ui-output-template-thumb-artwork-size",
-    "--ui-output-template-thumb-caption-font-size",
-    "--ui-output-template-thumb-content-padding",
-    "--ui-output-template-thumb-content-width",
-    "--ui-output-template-thumb-group-gap",
-    "--ui-output-template-thumb-min-height",
-    "--ui-output-template-thumb-tight-gap",
-    "--ui-output-template-thumb-title-font-size",
-    "--ui-output-workbench-inspector-width",
-    "--ui-output-workbench-stage-max-width",
     "--ui-player-bar-action-gap",
     "--ui-player-bar-action-size",
     "--ui-player-bar-artwork-size",
@@ -527,18 +228,11 @@
     "--ui-playlist-toolbar-padding-inline",
     "--ui-radius",
     "--ui-separation-mode-min-width",
-    "--ui-settings-block-body-gap",
-    "--ui-settings-block-gap",
-    "--ui-settings-block-padding",
     "--ui-settings-checkbox-size",
     "--ui-settings-column-gap",
     "--ui-settings-column-header-gap",
     "--ui-settings-column-min-width",
     "--ui-settings-row-copy-gap",
-    "--ui-settings-row-icon-size",
-    "--ui-settings-row-min-height",
-    "--ui-settings-row-padding-block",
-    "--ui-settings-row-padding-inline",
     "--ui-shell-panel-inset-block",
     "--ui-titlebar-height",
     "--ui-z-context-menu",

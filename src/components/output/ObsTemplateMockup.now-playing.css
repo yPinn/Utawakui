@@ -94,7 +94,7 @@
   background: var(--obs-preview-bg);
   color: var(--obs-preview-ink);
   font-size: var(--ui-output-template-thumb-caption-font-size);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   letter-spacing: -0.03em;
 }
 

@@ -282,7 +282,7 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__frame[data-tone='stage'] .obs-overlay-preview__fallback {
-  background: var(--ui-color-surface-playing);
+  background: var(--ui-output-preview-stage-fallback);
 }
 
 .obs-overlay-preview__frame[data-tone='lyrics'] .obs-overlay-preview__fallback {
@@ -292,7 +292,7 @@ onBeforeUnmount(() => {
 .obs-overlay-preview__fallback-title {
   color: var(--ui-color-overlay-contrast);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-title);
 }
 
@@ -304,7 +304,7 @@ onBeforeUnmount(() => {
   background: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
   gap: var(--ui-space-1);
   padding: var(--ui-space-1);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 

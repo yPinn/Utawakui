@@ -83,7 +83,7 @@ function selectItem(item) {
   display: inline-flex;
   padding: var(--ui-space-1);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
@@ -99,7 +99,7 @@ function selectItem(item) {
   color: var(--ui-color-text-muted);
   font: inherit;
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   white-space: nowrap;
   cursor: pointer;

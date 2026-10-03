@@ -360,7 +360,7 @@ function resetAppearance() {
 }
 
 .obs-slot-workbench__capture-guide-label {
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   white-space: nowrap;
 }
 
@@ -416,7 +416,7 @@ function resetAppearance() {
 .obs-slot-workbench__section-title {
   margin: 0;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 
@@ -436,7 +436,7 @@ function resetAppearance() {
 .obs-slot-workbench__capture-dimensions {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;

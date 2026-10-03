@@ -61,9 +61,10 @@ const resolvedTitleTag = computed(
 
 <style scoped>
 .settings-action-row {
-  --settings-action-row-icon-size: var(--ui-settings-row-icon-size);
-  --settings-action-row-padding-block: var(--ui-settings-row-padding-block);
-  --settings-action-row-padding-inline: var(--ui-settings-row-padding-inline);
+  --settings-action-row-icon-size: 2.75rem;
+  --settings-action-row-min-height: 3.375rem;
+  --settings-action-row-padding-block: var(--ui-space-1);
+  --settings-action-row-padding-inline: var(--ui-space-2);
   --settings-action-row-title-size: var(--ui-font-size-md);
   --settings-action-row-value-size: var(--ui-font-size-sm);
   --settings-action-row-value-color: var(--ui-color-text);
@@ -75,7 +76,7 @@ const resolvedTitleTag = computed(
   --settings-action-row-icon-color: var(--ui-color-accent);
 
   min-width: 0;
-  min-height: var(--ui-settings-row-min-height);
+  min-height: var(--settings-action-row-min-height);
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
@@ -93,7 +94,7 @@ const resolvedTitleTag = computed(
     --settings-action-row-feature-background
   );
   --settings-action-row-divider-color: transparent;
-  --settings-action-row-radius: var(--ui-radius);
+  --settings-action-row-radius: var(--ui-radius-md);
   --settings-action-row-icon-background: var(--ui-color-accent-soft);
   --settings-action-row-icon-color: var(--ui-color-info);
   --settings-action-row-padding-block: var(--ui-space-2);
@@ -124,7 +125,7 @@ const resolvedTitleTag = computed(
 .settings-action-row__copy {
   min-width: 0;
   display: grid;
-  gap: var(--ui-settings-row-copy-gap);
+  gap: var(--ui-space-1);
 }
 
 .settings-action-row__heading,
@@ -148,7 +149,7 @@ const resolvedTitleTag = computed(
 .settings-action-row__title {
   color: var(--ui-color-text);
   font-size: var(--settings-action-row-title-size);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 

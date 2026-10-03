@@ -38,8 +38,8 @@ const headingId = computed(
 .settings-block {
   min-width: 0;
   display: grid;
-  gap: var(--ui-settings-block-gap);
-  padding-block-start: var(--ui-settings-block-padding);
+  gap: var(--ui-space-3);
+  padding-block-start: var(--ui-space-3);
   border-block-start: var(--ui-border-width) solid var(--ui-color-border);
 }
 
@@ -66,7 +66,7 @@ const headingId = computed(
 .settings-block__title {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 
@@ -86,7 +86,7 @@ const headingId = computed(
 .settings-block__body {
   min-width: 0;
   display: grid;
-  gap: var(--ui-settings-block-body-gap);
+  gap: var(--ui-space-2);
 }
 
 @media (max-width: 680px) {

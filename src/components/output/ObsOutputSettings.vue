@@ -328,7 +328,7 @@ function chooseSuggestedPort(port) {
   display: grid;
   grid-template-columns: repeat(
     auto-fit,
-    minmax(min(100%, var(--ui-settings-column-min-width)), 1fr)
+    minmax(min(100%, var(--ui-output-settings-column-min-width)), 1fr)
   );
   gap: var(--ui-space-5);
   align-items: start;
@@ -353,14 +353,14 @@ function chooseSuggestedPort(port) {
 .obs-output-settings__toggle {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   cursor: pointer;
 }
 
 .obs-output-settings__toggle input {
-  width: var(--ui-settings-checkbox-size);
-  height: var(--ui-settings-checkbox-size);
+  width: var(--ui-checkbox-size);
+  height: var(--ui-checkbox-size);
   accent-color: var(--ui-color-accent);
 }
 
