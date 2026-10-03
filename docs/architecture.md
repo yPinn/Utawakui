@@ -63,9 +63,10 @@ renderer entry 同時載入 scoped v1／v2 token entries 與 generated invalidat
 system-neutral mount fallback，registered surface 才承接 canvas／text／font。Shared component
 recipe 由最近的 registered boundary 決定，production Teleport 進入同 system overlay host，F8 與
 isolated prototypes 也只登記自己的 v2 surface，不再寫 document root。Cross-version Lyrics／
-Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Folder workflow 與 Utility
-content 目前各自是完整 `registered-v1` child surface，包含同 system overlay host；外層 v2 Shell
-不向內補值。Electron main native background／titlebar palette 已隨 Phase 1 同步換為 v2，
+Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Output 與 Utility content
+目前各自是完整 `registered-v1` child surface，包含同 system overlay host；已切換的 Folder layout、
+Setlist、Performance Session、Import 與 Lyrics 則各自維持完整 v2 boundary，外層 Shell 不向任何
+child 補值。Electron main native background／titlebar palette 已隨 Phase 1 同步換為 v2，
 Performer native background 仍維持 v1，留待其 renderer atomic cutover。
 
 `InternalToolsView.vue` 以純資料 `constants/internalTools.js` 將工具分成兩個平面：
@@ -122,14 +123,15 @@ Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live�
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
-layout family 是 registered-v2 surface。Setlist、Performance Session workspace、Import 與各自
-local overlay host 已是完整 registered-v2 surface；Lyrics／Output 仍各自維持有獨立 overlay host
-的 registered-v1 child surface。Import 維持 document mode 與 Folder page 的唯一 page scroll，
+layout family 是 registered-v2 surface。Setlist、Performance Session workspace、Import、Lyrics 與
+各自 local overlay host 已是完整 registered-v2 surface；Output 仍維持有獨立 overlay host 的
+registered-v1 child surface。Import 維持 document mode 與 Folder page 的唯一 page scroll，
 provider preview 只有 track list 使用 bounded internal scroll。Setlist 開啟場次準備時，`AppFolderPage` 由 document mode 切為
 workspace mode，再進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
 與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
 `PerformanceSessionPanel` 維持 Right Dock 的 v2 projection recipe，不嵌入 workspace editor 或形成
-重複 feature boundary。Settings 由
+重複 feature boundary。Lyrics 固定使用 workspace mode，Folder page 不建立 document scroll；
+`LyricsDocumentPanel`、timing editor 與來源搜尋只在各自 bounded 區域內擁有必要 scroll。Settings 由
 Titlebar direct action 進入 shell-level `AppUtilityFrame`，不屬於 Folder destination。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。

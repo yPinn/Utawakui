@@ -68,7 +68,7 @@ describe('Folder layout family cutover', () => {
     expect(tokens).not.toContain('--ui-folder-selected-ring');
   });
 
-  it('keeps every later feature behind a registered v1 surface and overlay host', () => {
+  it('keeps every feature behind a registered surface and overlay host', () => {
     const registry = readSource('../utils/rendererSurfaceRegistry.js');
     const app = readSource('../App.vue');
 

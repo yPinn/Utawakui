@@ -228,7 +228,7 @@ function nudgeSelected(deltaMs) {
   height: 100%;
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);

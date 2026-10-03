@@ -341,7 +341,7 @@ watch(
   bottom: calc(
     var(--ui-space-4) + var(--ui-lyrics-live-control-height) + var(--ui-space-2)
   );
-  z-index: var(--ui-z-dropdown);
+  z-index: var(--ui-z-popover);
   box-shadow: var(--ui-shadow-overlay);
 }
 .lyrics-preview--font-compact .lyrics-line__button {
@@ -363,7 +363,7 @@ watch(
 .lyrics-line {
   display: grid;
   gap: var(--ui-space-1);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   color: var(--ui-color-text-muted);
 }
 .lyrics-line__row,
@@ -374,7 +374,7 @@ watch(
 }
 .lyrics-line__row {
   padding: var(--ui-space-2) var(--ui-space-3);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 .lyrics-line__button {
   flex: 1;
@@ -414,7 +414,7 @@ watch(
   height: var(--ui-control-height);
   padding: 0 var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);

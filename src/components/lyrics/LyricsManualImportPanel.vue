@@ -119,7 +119,7 @@ async function handleFileImport() {
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface);
 }
 
@@ -134,7 +134,7 @@ async function handleFileImport() {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-body);
 }
 
@@ -153,7 +153,7 @@ async function handleFileImport() {
 .lyrics-manual-import-panel__label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -162,7 +162,7 @@ async function handleFileImport() {
   width: 100%;
   min-width: 0;
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);

@@ -44,7 +44,7 @@ defineProps({
   justify-content: center;
   border: var(--ui-border-width) solid
     color-mix(in srgb, currentColor 35%, transparent);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: color-mix(in srgb, currentColor 10%, transparent);
   color: var(--ui-color-text-muted);
 }

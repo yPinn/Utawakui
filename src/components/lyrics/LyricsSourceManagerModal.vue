@@ -325,7 +325,7 @@ function sourceTierLabel(source) {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 
@@ -346,7 +346,7 @@ function sourceTierLabel(source) {
   gap: var(--ui-space-2);
   padding: var(--ui-space-2) var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
@@ -381,7 +381,7 @@ function sourceTierLabel(source) {
   align-items: center;
   overflow: hidden;
   color: var(--ui-color-text-muted);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   font-variant-numeric: tabular-nums;
   text-align: start;
   text-overflow: ellipsis;
@@ -414,7 +414,7 @@ function sourceTierLabel(source) {
   height: var(--ui-control-height);
   padding: 0 var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);

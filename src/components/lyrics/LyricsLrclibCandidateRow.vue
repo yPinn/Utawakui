@@ -294,7 +294,7 @@ function previewLineHasTiming(line) {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-body);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -347,7 +347,7 @@ function previewLineHasTiming(line) {
   display: block;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -448,7 +448,8 @@ function previewLineHasTiming(line) {
   flex: 0 0 var(--ui-space-4);
   margin-top: var(--ui-space-1);
   color: var(--ui-color-text-muted);
-  transition: transform var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: transform var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .lyrics-lrclib-candidate-row__chevron--expanded {

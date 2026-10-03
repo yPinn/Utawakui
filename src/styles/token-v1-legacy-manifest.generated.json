@@ -6,109 +6,9 @@
     "v2": 407
   },
   "production": {
-    "files": 51,
-    "pairs": 109,
+    "files": 38,
+    "pairs": 89,
     "references": [
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-z-dropdown"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLiveControls.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-z-dropdown"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLrclibCandidateRow.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLrclibCandidateRow.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-motion-ease"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLrclibCandidateRow.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-motion-fast"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLrclibSearchPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLrclibSearchWorkspace.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/lyrics/LyricsManualImportPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/lyrics/LyricsManualImportPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsPreparationBar.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/lyrics/LyricsPreparationBar.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsProviderIcon.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsSegmentEditor.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsSourceManagerModal.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/lyrics/LyricsSourceManagerModal.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsTrackPickerModal.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsWorkspace.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/lyrics/LyricsWorkspaceHeader.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/lyrics/LyricsWorkspaceHeader.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-line-height-headline"
-      },
       {
         "file": "src/components/analysis/MusicAnalysisBatchPanel.vue",
         "surface": "other-feature",
@@ -555,7 +455,7 @@
         "token": "--ui-line-height-headline"
       }
     ],
-    "tokens": 38
+    "tokens": 37
   },
   "legacyTokens": [
     "--ui-color-surface-playing",

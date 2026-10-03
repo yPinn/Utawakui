@@ -184,7 +184,7 @@ function handleLyricsTextVariantChange(event) {
   flex: 0 0 auto;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -192,7 +192,7 @@ function handleLyricsTextVariantChange(event) {
   height: var(--ui-control-height);
   min-width: 96px;
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
@@ -229,7 +229,7 @@ function handleLyricsTextVariantChange(event) {
   display: inline-flex;
   overflow: hidden;
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 
 .lyrics-preparation__stepper :deep(.ui-btn) {

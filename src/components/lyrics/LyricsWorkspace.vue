@@ -498,7 +498,7 @@ async function commitTimingDocument() {
   min-width: 0;
   min-height: 0;
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface);
 }
 

@@ -144,8 +144,8 @@ function lyricsStatusOverrides() {
   overflow: hidden;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-bold);
+  line-height: var(--ui-line-height-heading);
   text-overflow: ellipsis;
   white-space: nowrap;
 }
