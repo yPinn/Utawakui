@@ -8,8 +8,7 @@ const read = (path) => readFileSync(new URL(path, import.meta.url), 'utf8');
 const buttonSource = read('./UiButton.vue');
 const iconButtonSource = read('./UiIconButton.vue');
 const textButtonSource = read('./UiTextButton.vue');
-const activeTokensSource = read('../../styles/tokens.css');
-const v2TokensSource = read('../../styles/tokens-v2.css');
+const tokensSource = read('../../styles/tokens.css');
 
 function compileScopedStyle(source, filename) {
   const descriptor = parse(source, { filename }).descriptor;
@@ -102,14 +101,13 @@ describe('Token v2 shared primitive adoption', () => {
     }
   });
 
-  it('defines every new interaction token in active and v2 scopes', () => {
+  it('defines every adopted interaction token in the production scope', () => {
     for (const token of [
       '--ui-color-accent-active',
       '--ui-color-overlay-scrim-hover',
       '--ui-color-overlay-scrim-active',
     ]) {
-      expect(activeTokensSource, `${token} active`).toContain(`${token}:`);
-      expect(v2TokensSource, `${token} v2`).toContain(`${token}:`);
+      expect(tokensSource, token).toContain(`${token}:`);
     }
   });
 

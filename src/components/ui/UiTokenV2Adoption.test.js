@@ -30,18 +30,14 @@ function vueFiles(root) {
   });
 }
 
-describe('Token v2 first production adoption batch', () => {
-  it('resolves every adopted primitive token in active and v2 scopes', () => {
-    const activeTokens = source('../../styles/tokens.css');
-    const v2Tokens = source('../../styles/tokens-v2.css');
+describe('adopted token primitive batch', () => {
+  it('resolves every adopted primitive token in the production scope', () => {
+    const tokens = source('../../styles/tokens.css');
 
     for (const component of UI_COMPONENTS) {
       const componentSource = source(`./${component}`);
       for (const token of new Set(tokenNames(componentSource))) {
-        expect(activeTokens, `${component} active ${token}`).toContain(
-          `${token}:`,
-        );
-        expect(v2Tokens, `${component} v2 ${token}`).toContain(`${token}:`);
+        expect(tokens, `${component} ${token}`).toContain(`${token}:`);
       }
     }
   });

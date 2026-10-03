@@ -56,8 +56,8 @@ describe('DemoView scroll layout', () => {
     );
     expect(header).toContain('F8');
     expect(header).not.toContain('F9');
-    expect(header).toContain('Candidate／Current 對照');
-    expect(header).toContain('同一正式 Ui* 實作');
+    expect(header).toContain('F8 保留研究標本與正式元件回歸');
+    expect(header).toContain('Candidate 不進入 production');
     expect(header).toContain('不代表 View 核准');
     expect(header).toContain('正式遷移');
     expect(header).toContain('10 個 section');

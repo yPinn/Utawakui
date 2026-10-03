@@ -15,10 +15,9 @@ const visualReviewAttributes = registeredSurfaceAttributes('visual-review');
 const visualReviewOverlayHostAttributes =
   registeredOverlayHostAttributes('visual-review');
 
-// Demo and Studio Library are both facets of the same not-yet-adopted
-// tokens-v2 visual-refresh exploration (see DESIGN.md's "Visual refresh
-// status" note) — one F-key switching between them internally instead of
-// two separate global shortcuts.
+// Demo and Studio Library are development-only review facets over the adopted
+// token system. Candidate specimens remain visual evidence, not production
+// implementations or extra destinations.
 const { mode, setMode } = useVisualReviewMode();
 
 const PANELS = [

@@ -303,8 +303,8 @@ function updatePosition(value) {
 
 .bgm-transport__phase :deep(svg),
 .bgm-transport__restore :deep(svg) {
-  width: var(--ui-icon-size-sm);
-  height: var(--ui-icon-size-sm);
+  width: var(--ui-space-4);
+  height: var(--ui-space-4);
 }
 
 .bgm-transport__meter,

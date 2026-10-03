@@ -185,9 +185,8 @@ describe('F8 reviewed catalogue layout', () => {
       /<header class="demo-view__header"[\s\S]*?<\/header>/u,
     )?.[0];
 
-    expect(header).toContain(
-      '待遷移元件維持 Candidate／Current 對照；已遷移元件則以同一正式 Ui* 實作',
-    );
+    expect(header).toContain('F8 保留研究標本與正式元件回歸');
+    expect(header).toContain('Candidate 不進入 production');
     expect(header).toContain('Foundation → UiModal＋UiScrollRegion');
     expect(header).toContain('10 個 section');
     expect(header?.match(/<dt(?:\s|>)/g)).toHaveLength(2);

@@ -5,10 +5,6 @@ import { describe, expect, it } from 'vitest';
 import DemoCoreMinimums from './DemoCoreMinimums.vue';
 
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
-  'utf8',
-);
-const activeTokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
@@ -157,29 +153,26 @@ describe('DemoCoreMinimums', () => {
     expect(html).toContain('部分落地，逐項審查中');
   });
 
-  it('derives the current layer from active tokens and their consumers', () => {
+  it('anchors adopted minimums to the stable token entry and real consumers', () => {
     for (const source of [
       '--ui-font-size-sm: 0.875rem;',
       '--ui-font-size-md: 1rem;',
-      '--ui-icon-button-size-md: var(--ui-space-6);',
-      '--ui-icon-button-size-lg: 2.75rem;',
+      '--ui-control-height: 2.25rem;',
+      '--ui-control-height-live: 2.75rem;',
+      '--ui-control-height-emergency: 3rem;',
+      '--ui-icon-button-size-md: var(--ui-control-height);',
+      '--ui-icon-button-size-lg: var(--ui-control-height-live);',
       '--ui-checkbox-size: var(--ui-space-4);',
       '--ui-range-thumb-size: var(--ui-space-4);',
-      '--ui-playlist-row-thumb-size: var(',
-      '--ui-playlist-row-min-height: var(',
       '--ui-track-row-min-height: 3.25rem;',
-      '--ui-track-row-thumb-size: 2.5rem;',
-      '--ui-player-bar-height: calc(',
+      '--ui-list-header-height: 2.25rem;',
+      '--ui-track-row-thumb-size: var(--ui-track-artwork-size);',
+      '--ui-player-bar-height: 4.75rem;',
       '--ui-focus-width: 2px;',
       '--ui-drag-indicator-width: 2px;',
     ]) {
-      expect(activeTokenSource).toContain(source);
+      expect(tokenSource).toContain(source);
     }
-    expect(activeTokenSource).toContain(
-      "Sidebar content is fixed-density. Only the Sidebar's own width changes",
-    );
-    expect(activeTokenSource).toContain('80px: 48px artwork');
-    expect(activeTokenSource).not.toContain('--ui-list-header-height');
     expect(rightDockSource).toContain(
       'inline-size: var(--ui-drag-indicator-width)',
     );

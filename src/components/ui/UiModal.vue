@@ -189,7 +189,7 @@ onUnmounted(() => {
 }
 
 .ui-modal {
-  width: min(var(--ui-modal-width-default), 100%);
+  width: min(var(--ui-modal-inline-size-small), 100%);
   max-height: calc(100vh - var(--ui-space-8));
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
@@ -219,11 +219,11 @@ onUnmounted(() => {
 }
 
 .ui-modal--notice {
-  width: min(var(--ui-modal-width-notice), 100%);
+  width: min(var(--ui-modal-inline-size-medium), 100%);
 }
 
 .ui-modal--wide {
-  width: min(var(--ui-modal-width-wide), 100%);
+  width: min(var(--ui-modal-inline-size-large), 100%);
 }
 
 .ui-modal--fixed-height {

@@ -11,13 +11,10 @@ const toolbarSource = readSource(
 );
 const stageSource = readSource('../components/performer/PerformerStage.vue');
 const cueSource = readSource('../components/performer/PerformerLyricCue.vue');
-const tokenV1Source = readSource('./tokens.css');
+const tokenSource = readSource('./tokens.css');
 const performerFeatureSource = readSource('./features/performer.css');
 const performerWindowSource = readSource(
   '../../electron/main/performerWindow.js',
-);
-const legacyManifest = JSON.parse(
-  readSource('./token-v1-legacy-manifest.generated.json'),
 );
 
 const performerConsumerSources = [
@@ -33,17 +30,15 @@ const retiredPerformerAliases = [
   '--ui-titlebar-height',
 ];
 
-const forbiddenLegacyTokens = [
-  ...new Set([...legacyManifest.legacyTokens, ...retiredPerformerAliases]),
-];
+const forbiddenLegacyTokens = retiredPerformerAliases;
 
 describe('Performer renderer Token v2 cutover', () => {
   it('registers Performer and its overlay as one v2 renderer surface', () => {
     expect(registrySource).toMatch(
-      /performer:\s*createSurfaceDefinition\(\{(?=[^}]*migrationStatus:\s*'registered-v2')(?=[^}]*overlayHostId:\s*'performer-overlay')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
+      /performer:\s*createSurfaceDefinition\(\{(?=[^}]*overlayHostId:\s*'performer-overlay')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
     );
     expect(registrySource).toMatch(
-      /'performer-overlay':\s*createSurfaceDefinition\(\{(?=[^}]*migrationStatus:\s*'registered-v2')(?=[^}]*parentSurfaceId:\s*'performer')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
+      /'performer-overlay':\s*createSurfaceDefinition\(\{(?=[^}]*parentSurfaceId:\s*'performer')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
     );
     expect(performerAppSource).toContain("provideUiOverlayHost('performer')");
   });
@@ -56,9 +51,7 @@ describe('Performer renderer Token v2 cutover', () => {
     }
 
     for (const token of retiredPerformerAliases) {
-      expect(tokenV1Source, token).not.toMatch(
-        new RegExp(`${token}\\s*:`, 'u'),
-      );
+      expect(tokenSource, token).not.toMatch(new RegExp(`${token}\\s*:`, 'u'));
     }
   });
 

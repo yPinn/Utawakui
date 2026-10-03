@@ -15,7 +15,7 @@ const splitLayoutSource = readSource(
 const workbenchSource = readSource('../components/output/ObsSlotWorkbench.vue');
 const gallerySource = readSource('../components/output/ObsTemplateGallery.vue');
 const settingsSource = readSource('../components/output/ObsOutputSettings.vue');
-const tokenV1Source = readSource('./tokens.css');
+const tokenSource = readSource('./tokens.css');
 const outputFeaturePath = new URL('./features/output.css', import.meta.url);
 const legacyFeaturePath = new URL(
   './features/output-preview.css',
@@ -131,9 +131,7 @@ describe('Output Token v2 surface cutover', () => {
       expect(outputFeatureSource, token).toMatch(
         new RegExp(`${token}\\s*:`, 'u'),
       );
-      expect(tokenV1Source, token).not.toMatch(
-        new RegExp(`${token}\\s*:`, 'u'),
-      );
+      expect(tokenSource, token).not.toMatch(new RegExp(`${token}\\s*:`, 'u'));
     }
   });
 
@@ -164,9 +162,7 @@ describe('Output Token v2 surface cutover', () => {
     }
 
     for (const token of localizedSharedComponentTokens) {
-      expect(tokenV1Source, token).not.toMatch(
-        new RegExp(`${token}\\s*:`, 'u'),
-      );
+      expect(tokenSource, token).not.toMatch(new RegExp(`${token}\\s*:`, 'u'));
     }
 
     expect(readSource(outputSharedComponentPaths[0])).toContain(

@@ -4,7 +4,7 @@ import { ref } from 'vue';
 // applies to the whole shell, not per-component state.
 
 // Keep in sync with --ui-shell-navigation-inline-size-min/-max in
-// src/styles/tokens-v2.css and electron/lib/config.js's SIDEBAR_WIDTH_MIN/MAX
+// src/styles/tokens.css and electron/lib/config.js's SIDEBAR_WIDTH_MIN/MAX
 // — neither CSS nor the main process can read these from one shared source.
 export const SIDEBAR_WIDTH_MIN = 64; // 4rem
 export const SIDEBAR_WIDTH_MAX = 280; // 17.5rem

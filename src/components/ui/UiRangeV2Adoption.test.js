@@ -10,8 +10,7 @@ const playerBarSource = read('../playback/PlayerBar.vue');
 const playerToolsSource = read('../playback/PlayerToolsPanel.vue');
 const obsAppearanceSource = read('../output/ObsAppearanceField.vue');
 const demoSource = read('../demo/DemoRangeAppearance.vue');
-const activeTokensSource = read('../../styles/tokens.css');
-const v2TokensSource = read('../../styles/tokens-v2.css');
+const tokensSource = read('../../styles/tokens.css');
 
 describe('Token v2 Range formal adoption', () => {
   it('promotes one formal control primitive and removes the parallel Candidate implementation', () => {
@@ -26,7 +25,7 @@ describe('Token v2 Range formal adoption', () => {
     expect(UI_DEMO_ADOPTED_SECTION_KEYS).toContain('range');
   });
 
-  it('keeps authored appearance aliases exclusive to Token v2', () => {
+  it('keeps the adopted authored appearance aliases in the production graph', () => {
     for (const token of [
       '--ui-range-track:',
       '--ui-range-fill:',
@@ -39,8 +38,7 @@ describe('Token v2 Range formal adoption', () => {
       '--ui-range-stop:',
       '--ui-range-value:',
     ]) {
-      expect(v2TokensSource, token).toContain(token);
-      expect(activeTokensSource, token).not.toContain(token);
+      expect(tokensSource, token).toContain(token);
     }
   });
 

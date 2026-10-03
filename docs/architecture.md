@@ -46,29 +46,23 @@ main frame；Performer 只獲得自身 window controls，snapshot／status 與 r
 windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`。初始 bounded 值
 經 `additionalArguments` 同步提供給 preload，後續只透過固定 `ui-density:changed` channel
 更新；`src/composables/useUiDensity.js` 驗證後寫入 document root。Renderer 不取得
-`BrowserWindow`、不依 viewport 猜測狀態。現行 active tokens 不消費 density attribute，
-只有 opt-in Token v2 surface 會改變尺寸，因此此投影不代表 production Token v2 adoption。
-該 surface 由 dev-only 型錄視圖（`DemoView.vue`／`VisualSystemView.vue`／
-`StudioLibraryPrototypeView.vue`）與內部工具 composition surface
-`InternalToolsView.vue` 呈現；owner 檢查順序與現況見
+`BrowserWindow`、不依 viewport 猜測狀態。唯一 production token entry 只對明列的
+geometry roles 套用 compact remap；內容 reflow 仍由各 layout owner 決定。Dev-only 型錄
+視圖（`DemoView.vue`／`VisualSystemView.vue`／`StudioLibraryPrototypeView.vue`）保留歷史
+比較標本與 View candidate；owner 檢查順序與現況見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
-已鎖定且正分段實作的 production replacement boundary 見
-[Token v2 完整替換契約](contracts/token-v2-replacement.md)：它要求以登記的完整 surface
-原子切換、fail-closed scope、legacy ratchet 與 no-T1 harness 消除無聲 fallback；這項
-目標架構以完整 registered surface 分段替換，不允許同一 surface 無聲混用。
-Phase 0.1 已把 Main 與 Performer 的 `#app` 在 Vue mount 前登記為 full-viewport renderer
-surface；Phase 5 後 Main `app-shell` 與 Performer 均為 `registered-v2`。Phase 0.3 已完成 scope foundation 原子切換：兩個
-renderer entry 同時載入 scoped v1／v2 token entries 與 generated invalidation，document root 只
-投影 theme／density／motion／language metadata 與 literal platform `color-scheme`，`body` 只保留
-system-neutral mount fallback，registered surface 才承接 canvas／text／font。Shared component
-recipe 由最近的 registered boundary 決定，production Teleport 進入同 system overlay host，F8 與
-isolated prototypes 也只登記自己的 v2 surface，不再寫 document root。Cross-version Lyrics／
-Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Settings Utility、Folder
-layout、Setlist、Performance Session、Import、Lyrics、Output 與 development-only Internal Tools
-workbenches 都維持完整 v2 boundary 與同 system overlay host，外層 Shell 不向任何 child 補值。
-Analysis／provider review 與 Performer render graph 已移除 T1-only references，production legacy
-consumer inventory 為零。Electron main native background／titlebar palette 已隨 Phase 1 同步換為
-v2；Performer native background 也已在 Phase 5 與 renderer canvas 同批切換。
+已完成的 production replacement boundary 見
+[Token v2 完整替換契約](contracts/token-v2-replacement.md)。Main 與 Performer 的 `#app`
+在 Vue mount 前登記為 full-viewport v2 surface；兩個 renderer entry 只載入
+`src/styles/tokens.css`。Document root 只投影 theme／density／motion／language metadata與
+literal platform `color-scheme`，`body` 只保留 system-neutral mount fallback，registered
+surface 承接 canvas／text／font。Shared recipe 由最近的 registered boundary 決定，production
+Teleport 進入同 system overlay host，F8 與 isolated prototypes 也只登記自己的 surface。
+Token v1 stylesheet、generated invalidation／manifest、migration generator、雙 entry import與
+registry migration status均已移除；permanent source gate禁止 v1 scope／payload回流，並檢查
+所有 production `--ui-*` reference都有正式或 component-owned declaration。Cross-feature
+geometry／palette仍由 feature styles持有，public `overlay/` 繼續只使用獨立 `--ovl-*`。
+Electron main／Performer native background與renderer canvas皆使用相同 adopted palette。
 
 `InternalToolsView.vue` 以純資料 `constants/internalTools.js` 將工具分成兩個平面：
 Operations 是可重複的產品／支援操作（F5 Music Analysis、F6 Live Diagnostics），
@@ -124,8 +118,8 @@ Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live�
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
-layout family 是 registered-v2 surface。Setlist、Performance Session workspace、Import、Lyrics、
-Output 與各自 local overlay host 已是完整 registered-v2 surface。Import 維持 document mode 與 Folder page 的唯一 page scroll，
+layout family 是 registered v2 surface。Setlist、Performance Session workspace、Import、Lyrics、
+Output 與各自 local overlay host 使用完整 v2 boundary。Import 維持 document mode 與 Folder page 的唯一 page scroll，
 provider preview 只有 track list 使用 bounded internal scroll。Setlist 開啟場次準備時，`AppFolderPage` 由 document mode 切為
 workspace mode，再進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
 與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
@@ -138,7 +132,7 @@ workspace mode，再進入 `performance-session-workspace` boundary；`Performan
 Titlebar direct action 進入 shell-level `AppUtilityPage`，不屬於 Folder destination。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
-Utility frame 是 registered-v2 surface，只擁有返回、頁名、焦點與 local overlay host；
+Utility page 是 registered v2 surface，只擁有返回、頁名、焦點與 local overlay host；
 `SettingsView` 繼續擁有內容 lifecycle 與唯一的 body Scroll Region。雙欄與 Separation select 的
 特殊 geometry由各自 component-local custom property 擁有，不回填 core token graph。
 

@@ -50,8 +50,8 @@ defineProps({
 }
 
 .bgm-current-source__artwork :deep(svg) {
-  width: var(--ui-icon-size-lg);
-  height: var(--ui-icon-size-lg);
+  width: var(--ui-space-5);
+  height: var(--ui-space-5);
   color: var(--ui-color-text-muted);
 }
 </style>

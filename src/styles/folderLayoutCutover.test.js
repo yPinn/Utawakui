@@ -54,7 +54,7 @@ describe('Folder layout family cutover', () => {
   });
 
   it('uses the formal Folder aliases and removes candidate aliases', () => {
-    const tokens = readSource('./tokens-v2.css');
+    const tokens = readSource('./tokens.css');
 
     expect(tokens).toContain(
       '--ui-folder-layout-background: var(--ui-color-folder-primary)',

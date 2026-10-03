@@ -336,9 +336,11 @@ describe('DemoIconButtonAppearance', () => {
       ":global(:root[data-ui-theme='light'] .demo-icon-button-layer--current)",
     );
     expect(activeTokensSource).toContain(
-      '--ui-motion-easing-standard: ease-out;',
+      '--ui-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);',
     );
-    expect(activeTokensSource).toContain('--ui-color-overlay-contrast: #fff;');
+    expect(activeTokensSource).toContain(
+      '--ui-color-overlay-contrast: var(--ui-palette-warm-neutral-50);',
+    );
     expect(currentLayer).toContain('--ui-motion-easing-standard: ease-out;');
     expect(currentLayer).toContain('--ui-color-overlay-contrast: #fff;');
     expect(currentSource).not.toContain('demo-candidate-icon-btn');

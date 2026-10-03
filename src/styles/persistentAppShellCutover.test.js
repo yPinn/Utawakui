@@ -66,7 +66,7 @@ const retiredShellTokens = [
 
 describe('Persistent App Shell Token v2 cutover', () => {
   it('provides conventional shell, Sidebar, and Player component tokens', () => {
-    const tokens = readSource('./tokens-v2.css');
+    const tokens = readSource('./tokens.css');
     for (const token of [
       '--ui-window-titlebar-block-size',
       '--ui-shell-content-inset-block',

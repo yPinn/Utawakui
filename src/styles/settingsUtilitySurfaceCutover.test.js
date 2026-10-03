@@ -19,7 +19,7 @@ const utilityPageSource = readFileSync(
 );
 const settingsViewSource = readSource('../views/SettingsView.vue');
 const registrySource = readSource('../utils/rendererSurfaceRegistry.js');
-const tokenV1Source = readSource('./tokens.css');
+const tokenSource = readSource('./tokens.css');
 
 const settingsRenderGraphPaths = [
   '../components/separation/SeparationPresetControl.vue',
@@ -67,10 +67,10 @@ describe('Settings Utility Token v2 surface cutover', () => {
 
   it('registers app-utility and its local overlay host as one v2 surface', () => {
     expect(registrySource).toMatch(
-      /'app-utility':\s*createSurfaceDefinition\(\{(?=[^}]*migrationStatus:\s*'registered-v2')(?=[^}]*overlayHostId:\s*'app-utility-overlay')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
+      /'app-utility':\s*createSurfaceDefinition\(\{(?=[^}]*overlayHostId:\s*'app-utility-overlay')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
     );
     expect(registrySource).toMatch(
-      /'app-utility-overlay':\s*createSurfaceDefinition\(\{(?=[^}]*migrationStatus:\s*'registered-v2')(?=[^}]*parentSurfaceId:\s*'app-utility')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
+      /'app-utility-overlay':\s*createSurfaceDefinition\(\{(?=[^}]*parentSurfaceId:\s*'app-utility')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
     );
     expect(utilityPageSource).toContain("provideUiOverlayHost('app-utility')");
     expect(utilityPageSource).toContain(
@@ -106,9 +106,7 @@ describe('Settings Utility Token v2 surface cutover', () => {
     }
 
     for (const token of retiredSettingsDeclarations) {
-      expect(tokenV1Source, token).not.toMatch(
-        new RegExp(`${token}\\s*:`, 'u'),
-      );
+      expect(tokenSource, token).not.toMatch(new RegExp(`${token}\\s*:`, 'u'));
     }
   });
 

@@ -10,8 +10,7 @@ const transportSource = read('./BgmPlayerTransport.vue');
 const currentSource = read('./BgmCurrentSource.vue');
 const pickerSource = read('./BgmTrackPicker.vue');
 const movableSource = read('../../composables/useBoundedMovableSurface.js');
-const currentTokensSource = read('../../styles/tokens.css');
-const v2TokensSource = read('../../styles/tokens-v2.css');
+const tokensSource = read('../../styles/tokens.css');
 
 function expectNoneRule(source, selectorPattern) {
   const rule = source.match(
@@ -55,28 +54,17 @@ describe('BGM player Token v2 layout contract', () => {
     );
     expect(playerRule).toContain('overflow: hidden;');
     expect(playerRule).not.toMatch(/100v[wh]/u);
-    expect(currentTokensSource).toContain(
-      '--ui-bgm-player-min-inline-size: 18rem;',
-    );
-    expect(currentTokensSource).toContain(
-      '--ui-bgm-player-inline-size: 20rem;',
-    );
-    expect(currentTokensSource).toContain(
-      '--ui-bgm-player-max-inline-size: 22rem;',
-    );
-    expect(currentTokensSource).toContain(
-      '--ui-bgm-player-max-block-size: 28rem;',
-    );
-    expect(currentTokensSource).not.toMatch(
+    expect(tokensSource).toContain('--ui-bgm-player-min-inline-size: 18rem;');
+    expect(tokensSource).toContain('--ui-bgm-player-inline-size: 20rem;');
+    expect(tokensSource).toContain('--ui-bgm-player-max-inline-size: 22rem;');
+    expect(tokensSource).toContain('--ui-bgm-player-max-block-size: 28rem;');
+    expect(tokensSource).not.toMatch(
       /--ui-bgm-player-[^:]+:\s*var\(--ui-player-bar-panel-/u,
     );
-    expect(v2TokensSource).toContain('--ui-bgm-player-inline-size: 20rem;');
-    expect(currentTokensSource).not.toContain(
+    expect(tokensSource).not.toContain(
       '--ui-bgm-player-viewport-inline-offset',
     );
-    expect(currentTokensSource).not.toContain(
-      '--ui-bgm-player-viewport-block-offset',
-    );
+    expect(tokensSource).not.toContain('--ui-bgm-player-viewport-block-offset');
   });
 
   it('reclamps after either the player or its safe boundary changes size', () => {
@@ -116,18 +104,14 @@ describe('BGM player Token v2 layout contract', () => {
   });
 
   it('reserves stable identity, status, restore, and time slots', () => {
-    for (const tokenSource of [currentTokensSource, v2TokensSource]) {
-      expect(tokenSource).toContain(
-        '--ui-bgm-player-session-status-inline-size:',
-      );
-      expect(tokenSource).toContain(
-        '--ui-bgm-player-phase-status-inline-size:',
-      );
-      expect(tokenSource).toContain(
-        '--ui-bgm-player-restore-status-inline-size:',
-      );
-      expect(tokenSource).toContain('--ui-bgm-player-time-inline-size:');
-    }
+    expect(tokensSource).toContain(
+      '--ui-bgm-player-session-status-inline-size:',
+    );
+    expect(tokensSource).toContain('--ui-bgm-player-phase-status-inline-size:');
+    expect(tokensSource).toContain(
+      '--ui-bgm-player-restore-status-inline-size:',
+    );
+    expect(tokensSource).toContain('--ui-bgm-player-time-inline-size:');
     expect(playerSource).toMatch(
       /\.bgm-player__session-status\s*\{[^}]*inline-size:\s*var\(--ui-bgm-player-session-status-inline-size\);/su,
     );
@@ -165,7 +149,7 @@ describe('BGM player Token v2 layout contract', () => {
       /\.bgm-player\s*\{[^}]*gap:\s*var\(--ui-space-2\);[^}]*padding:\s*var\(--ui-space-3\);/su,
     );
     expect(currentSource).not.toContain('margin:');
-    expect(v2TokensSource).toContain('--ui-track-list-gap: var(--ui-space-1);');
+    expect(tokensSource).toContain('--ui-track-list-gap: var(--ui-space-1);');
   });
 
   it('guards draggable and status chrome without blocking useful text', () => {

@@ -1,6 +1,5 @@
 import { createApp } from 'vue';
-import '../../../src/styles/tokens-v2.css';
-import '../../../src/styles/token-v1-invalidation.generated.css';
+import '../../../src/styles/tokens.css';
 import '../../../src/styles/base.css';
 import './lab.css';
 import App from './App.vue';

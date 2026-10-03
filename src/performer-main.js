@@ -3,8 +3,6 @@ import PerformerApp from './performer/PerformerApp.vue';
 import { installRendererDiagnostics } from './utils/rendererDiagnostics.js';
 import { registerRendererSurfaceRoot } from './utils/rendererSurfaceRegistry.js';
 import './styles/tokens.css';
-import './styles/tokens-v2.css';
-import './styles/token-v1-invalidation.generated.css';
 import './styles/base.css';
 
 document.documentElement.dataset.uiTheme =

@@ -11,7 +11,7 @@ const readSource = (relativePath) =>
 
 const componentSource = readSource('./DemoScrollbarAppearance.vue');
 const candidateSource = readSource('../ui/UiScrollRegion.vue');
-const tokenSource = readSource('../../styles/tokens-v2.css');
+const tokenSource = readSource('../../styles/tokens.css');
 const demoViewSource = readSource('../../views/DemoView.vue');
 const productionMainSource = readSource('../../main.js');
 const performerMainSource = readSource('../../performer-main.js');

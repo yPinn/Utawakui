@@ -42,8 +42,7 @@ const artworkEmptySource = readSource('./DemoCandidateArtworkEmpty.vue');
 const fallbackSource = readSource('./trackThumbFallback.js');
 const artworkReadme = readSource('../../assets/demo/track-thumb/README.md');
 const currentSource = readSource('../ui/UiTrackThumb.vue');
-const tokenSource = readSource('../../styles/tokens-v2.css');
-const activeTokenSource = readSource('../../styles/tokens.css');
+const tokenSource = readSource('../../styles/tokens.css');
 const uiConstantsSource = readSource('../../constants/ui.js');
 const importCandidateSource = readSource('../import/ImportCandidateOption.vue');
 const trackRowSource = readSource('../ui/UiTrackRow.vue');
@@ -462,20 +461,22 @@ describe('DemoTrackThumbAppearance', () => {
       'min-height: calc(var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2))',
     );
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
-    expect(activeTokenSource).toContain('--ui-track-row-min-height: 3.25rem;');
-    expect(activeTokenSource).toContain('--ui-track-row-thumb-size: 2.5rem;');
+    expect(tokenSource).toContain('--ui-track-row-min-height: 3.25rem;');
+    expect(tokenSource).toContain(
+      '--ui-track-row-thumb-size: var(--ui-track-artwork-size);',
+    );
     expect(queueTrackSource).toContain('import UiTrackRow');
     expect(queueTrackSource).toContain('<UiTrackRow');
     expect(queueTrackSource).not.toContain('QUEUE_TRACK_THUMB_SIZE');
     expect(uiConstantsSource).not.toContain('QUEUE_TRACK_THUMB_SIZE');
-    expect(activeTokenSource).not.toContain('--ui-queue-track-thumb-size');
+    expect(tokenSource).not.toContain('--ui-queue-track-thumb-size');
     expect(playerArtworkSource).toContain(':size="PLAYER_BAR_ARTWORK_SIZE"');
     expect(uiConstantsSource).toContain(
       'export const PLAYER_BAR_ARTWORK_SIZE = 48;',
     );
-    expect(activeTokenSource).toContain('--ui-player-bar-artwork-size: 3rem;');
+    expect(tokenSource).toContain('--ui-track-artwork-size-prominent: 3rem;');
     expect(playerBarSource).toContain('height: var(--ui-player-bar-height);');
-    expect(activeTokenSource).toContain('--ui-player-bar-height: calc(');
+    expect(tokenSource).toContain('--ui-player-bar-height: 4.75rem;');
     expect(metadataPreviewSource).toContain(
       'size="var(--track-metadata-preview-size)"',
     );

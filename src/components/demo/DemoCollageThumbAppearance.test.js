@@ -402,8 +402,12 @@ describe('DemoCollageThumbAppearance', () => {
     expect(inspectorSource).toContain('COLLECTION_COVER_SIZE = 120;');
     expect(inspectorSource).not.toContain('useStudioLibraryInspectorWidth');
     expect(inspectorSource).toContain('UiTrackRow');
-    expect(activeTokenSource).toContain('--ui-playlist-row-thumb-size: var(');
-    expect(activeTokenSource).toContain('--ui-track-row-thumb-size');
+    expect(activeTokenSource).toContain(
+      '--ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);',
+    );
+    expect(activeTokenSource).toContain(
+      '--ui-track-row-thumb-size: var(--ui-track-artwork-size);',
+    );
   });
 
   it('separates square output geometry from source aspect ratio and future crop selection', async () => {

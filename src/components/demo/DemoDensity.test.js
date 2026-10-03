@@ -5,10 +5,6 @@ import { describe, expect, it } from 'vitest';
 import DemoDensity from './DemoDensity.vue';
 
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
-  'utf8',
-);
-const activeTokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
@@ -320,29 +316,25 @@ describe('DemoDensity', () => {
     expect(html).toContain('部分映射');
   });
 
-  it('anchors current mappings to active tokens and real consumers', () => {
+  it('anchors adopted density contracts to stable tokens and real consumers', () => {
     for (const declaration of [
-      '--ui-control-height: 1.875rem;',
-      '--ui-icon-button-size-md: var(--ui-space-6);',
-      '--ui-icon-button-size-lg: 2.75rem;',
+      '--ui-control-height: 2.25rem;',
+      '--ui-control-height-live: 2.75rem;',
+      '--ui-control-height-emergency: 3rem;',
+      '--ui-icon-button-size-md: var(--ui-control-height);',
+      '--ui-icon-button-size-lg: var(--ui-control-height-live);',
       '--ui-track-row-min-height: 3.25rem;',
-      '--ui-track-row-thumb-size: 2.5rem;',
+      '--ui-track-row-thumb-size: var(--ui-track-artwork-size);',
       '--ui-sidebar-row-min-height: 3.25rem;',
-      '--ui-sidebar-artwork-size: 2.5rem;',
-      '--ui-playlist-row-min-height: var(',
-      '--ui-player-bar-height: calc(',
-      '--ui-panel-inset: var(--ui-space-4);',
+      '--ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);',
+      '--ui-track-artwork-size: var(--ui-track-artwork-size-standard);',
+      '--ui-list-header-height: 2.25rem;',
+      '--ui-player-bar-height: 4.75rem;',
+      '--ui-panel-inset: 1rem;',
       '--ui-right-dock-content-inset: var(--ui-side-panel-content-inset);',
+      '--ui-shell-gutter: 0.75rem;',
     ]) {
-      expect(activeTokenSource).toContain(declaration);
-    }
-    for (const missing of [
-      '--ui-control-height-emergency',
-      '--ui-track-artwork-size',
-      '--ui-list-header-height',
-      '--ui-shell-gutter',
-    ]) {
-      expect(activeTokenSource).not.toContain(missing);
+      expect(tokenSource).toContain(declaration);
     }
 
     const sourceByName = new Map(

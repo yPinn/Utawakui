@@ -729,7 +729,7 @@ function submitApproval() {
   margin: 0;
   color: var(--ui-color-warning);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-medium);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .review-form__reject.ui-btn {

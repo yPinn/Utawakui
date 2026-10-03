@@ -6,7 +6,6 @@ const readSource = (relativePath) =>
 
 const baseStyles = readSource('./base.css');
 const tokens = readSource('./tokens.css');
-const tokensV2 = readSource('./tokens-v2.css');
 const mainEntry = readSource('../main.js');
 const performerEntry = readSource('../performer-main.js');
 const mainHtml = readSource('../../index.html');
@@ -42,10 +41,8 @@ describe('renderer viewport boundary', () => {
       expect(source).toContain('app.mount(surfaceRoot);');
       expect(source).not.toContain('document.documentElement.dataset.uiSystem');
       expect(source).toContain("import './styles/tokens.css';");
-      expect(source).toContain("import './styles/tokens-v2.css';");
-      expect(source).toContain(
-        "import './styles/token-v1-invalidation.generated.css';",
-      );
+      expect(source).not.toContain('tokens-v2.css');
+      expect(source).not.toContain('token-v1-invalidation');
     },
   );
 
@@ -65,8 +62,8 @@ describe('renderer viewport boundary', () => {
     const rootBlock = cssBlock(':root');
     const lightRootBlock = cssBlock(":root[data-ui-theme='light']");
     const bodyBlock = cssBlock('body');
-    const v1SurfaceBlock = tokens.match(
-      /^\[data-ui-system='v1'\]\s*\{([\s\S]*?)\n\}/mu,
+    const surfaceBlock = tokens.match(
+      /^\[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/mu,
     )?.[1];
 
     expect(rootBlock).toContain('color-scheme: dark');
@@ -76,33 +73,33 @@ describe('renderer viewport boundary', () => {
     expect(bodyBlock).toContain('color: CanvasText');
     expect(bodyBlock).not.toContain('var(--ui-');
     expect(baseStyles).not.toContain('var(--ui-');
-    expect(v1SurfaceBlock).toContain('background: var(--ui-color-canvas)');
-    expect(v1SurfaceBlock).toContain('color: var(--ui-color-text)');
-    expect(v1SurfaceBlock).toContain('font-family: var(--ui-font-family-base)');
-    expect(v1SurfaceBlock).toContain('font-size: var(--ui-font-size-md)');
+    expect(surfaceBlock).toContain('background: var(--ui-color-canvas)');
+    expect(surfaceBlock).toContain('color: var(--ui-color-text)');
+    expect(surfaceBlock).toContain('font-family: var(--ui-font-family-base)');
+    expect(surfaceBlock).toContain('font-size: var(--ui-font-size-md)');
   });
 
   it('keeps each native window substrate synchronized with its registered renderer canvas', () => {
-    const mainDarkCanvas = tokensV2.match(
+    const mainDarkCanvas = tokens.match(
       /--ui-palette-neutral-950:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const mainLightCanvas = tokensV2.match(
+    const mainLightCanvas = tokens.match(
       /--ui-palette-warm-neutral-200:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const mainDarkText = tokensV2.match(
+    const mainDarkText = tokens.match(
       /--ui-palette-warm-neutral-100:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const mainLightText = tokensV2.match(
+    const mainLightText = tokens.match(
       /--ui-palette-neutral-900:\s*(#[\da-f]{6});/iu,
     )?.[1];
     expect(mainDarkCanvas).toBe('#191a1e');
     expect(mainLightCanvas).toBe('#e8e4dd');
     expect(mainDarkText).toBe('#f3f1ec');
     expect(mainLightText).toBe('#272928');
-    expect(tokensV2).toContain(
+    expect(tokens).toContain(
       '--ui-color-canvas: var(--ui-palette-neutral-950)',
     );
-    expect(tokensV2).toMatch(
+    expect(tokens).toMatch(
       /:root\[data-ui-theme='light'\] \[data-ui-system='v2'\][\s\S]*?--ui-color-canvas:\s*var\(--ui-palette-warm-neutral-200\);/u,
     );
     expect(windowState).toContain(

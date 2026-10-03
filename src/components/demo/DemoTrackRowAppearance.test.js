@@ -40,8 +40,7 @@ const candidateSource = readSource('./DemoCandidateTrackRow.vue');
 const candidateMarqueeSource = readSource('./DemoCandidateMarqueeText.vue');
 const contentSource = readSource('./DemoContent.vue');
 const currentSource = readSource('../ui/UiTrackRow.vue');
-const tokenSource = readSource('../../styles/tokens-v2.css');
-const activeTokenSource = readSource('../../styles/tokens.css');
+const tokenSource = readSource('../../styles/tokens.css');
 const reviewContract = readSource(
   '../../../docs/contracts/token-v2-component-review.md',
 );
@@ -472,7 +471,7 @@ describe('DemoTrackRowAppearance', () => {
     expect(currentLayer).toContain('刪除曲目');
   });
 
-  it('maps Standard／Compact geometry while Current remains an active-token snapshot', () => {
+  it('maps Standard／Compact geometry while preserving the review snapshot', () => {
     expect(tokenSource).toContain('--ui-track-row-min-height: 3.25rem;');
     expect(tokenSource).toContain(
       '--ui-track-row-thumb-size: var(--ui-track-artwork-size);',
@@ -480,8 +479,6 @@ describe('DemoTrackRowAppearance', () => {
     expect(tokenSource).toMatch(
       /data-ui-density='compact'[\s\S]*--ui-track-row-min-height:\s*2\.75rem;[\s\S]*--ui-track-artwork-size:\s*var\(--ui-track-artwork-size-dense\);/u,
     );
-    expect(activeTokenSource).toContain('--ui-track-row-min-height: 3.25rem;');
-    expect(activeTokenSource).toContain('--ui-track-row-thumb-size: 2.5rem;');
     expect(candidateSource).toContain(
       ':size="\'var(--ui-track-row-thumb-size)\'"',
     );

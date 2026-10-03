@@ -1,18 +1,17 @@
 # Token v2 元件檢查契約
 
-Status: F8 original component review complete; Scrollbar, the first live
-shared-infra baseline and the formal action baseline adopted for scoped Token v2
-use; F7 Studio Library View candidate active in development only; Folder page
-layout target anatomy frozen for replacement planning. None of these checkpoints
-authorizes production-wide token adoption.
+Status: historical F8 component review complete; Token v2 replacement is now
+production-wide and uses the sole stable `src/styles/tokens.css` entry. F8 and
+Studio Library Candidate remain development-only visual evidence and do not
+authorize a new View or alternate component implementation.
 
-本文件保存 Token v2 視覺重新設計的現行檢查順序、已確認範圍與下一個
-owner decision。F8 預設開啟精簡的 page／layout 最終決策板，另保留
+本文件保存 Token v2 視覺重新設計的檢查順序、當時已確認範圍與後續
+owner decisions。F8 預設開啟精簡的 page／layout 最終決策板，另保留
 Studio Library live Candidate 與完整元件回歸目錄；已移除 Setlist Current
 比較頁。完整 catalogue 仍負責元件回歸證據，不得取代 View-level owner decision。
-Production 的完整 surface 替換順序、fail-closed scope、legacy ratchet 與 T1 deletion
-gate 另由 [Token v2 完整替換契約](token-v2-replacement.md) 管理；本文件不建立
-compatibility fallback。
+Production surface 替換、fail-closed scope、legacy ratchet 與 final deletion 的完成紀錄
+由 [Token v2 完整替換契約](token-v2-replacement.md) 管理；本文件不再作 migration
+status source，也不建立 compatibility fallback。
 
 ## 核准順序
 
@@ -33,6 +32,11 @@ F8 的展示順序遵守這個 gate。標本看起來完整不等於 production 
 F8 的 Candidate／Current、ARIA、尺寸與元件責任屬 owner 檢查所需資訊，必須與產品訊息分層呈現；型錄不能讓工程註記看起來像正式產品文案。產品訊息與 live-region 內容使用同一套使用者語言，並維持可獨立翻譯的完整句子。
 
 ## 2026-09-29 階段快照
+
+下表保留 owner checkpoint 當時的 Candidate／Current 判斷；「尚未採用」、
+「active／v1」與 production gap 欄位是歷史狀態，不覆蓋 2026-10-03 已完成的
+production-wide replacement。仍有效的是元件 anatomy、variant、accessibility與
+未另案核准的 View-level產品決策。
 
 | 範圍                  | 已確認／已建立                                                                                                                                                                                                                                                                             | 仍屬候選或現行缺口                                                                                                                                |
 | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -69,16 +73,17 @@ F8 的 Candidate／Current、ARIA、尺寸與元件責任屬 owner 檢查所需�
 | Scrollbar appearance  | `UiScrollRegion` 行為 primitive 與 `UiScrollLayout` layout composition 已採用；vertical／horizontal／both-axis、9px visual safe reserve、12px overlay hit lane、6px visual thumb、32–72px proportional thumb、native scroll projection／drag、collapsed visibility 與 forced-colors 已建立 | Sidebar／Right Dock／AppFolderPage 已遷移；其餘 production scroll owners 依各自內容邊界逐案採用，不能把 feature padding 下沉到 behavior primitive |
 | F7 View               | Studio Library／Controlled Dossier 已接入真實 Library／Playlist／Player／Queue 投影；Candidate 為唯一 View-level live panel，playlist workspace 與 queue metadata 分責、local search／sort／reorder、單擊選取與雙擊播放已建立                                                              | 仍待完整 owner visible acceptance；local order 不持久化，不代表正式 Setlist 或任何 Candidate component adoption                                   |
 
-只有 Icon Button hard-floor 修正屬於這個 checkpoint 的正式 active 變更。
-其餘 Candidate 標本仍由 development-only F8 與 `tokens-v2.css` 隔離；
-production bundle 不含 F8 標本或 candidate token payload。
+這個 checkpoint 當時只有 Icon Button hard-floor 修正屬於正式 active 變更。
+Phase 6 後 Candidate 標本仍完整保留在 development-only F8，但使用同一 stable
+token entry；source-boundary gate禁止 `DemoCandidate*` 進入production graph，
+因此標本不是替代實作，也不形成第二份 token payload。
 
 F8 已將 Foundation 至 UiModal 的 30 個 comparison section 統一為
 Candidate／Current 對照；所有 component group 都已完成 owner checkpoint。
 這只收束 development component review。F7 已由 owner 另行啟動為
 development-only View checkpoint，但仍不啟動 production adoption。共用比較層
-明確分離 Token v2 surface 與 active-token 快照，窄內容使用 container reflow，
-不改動 production component。
+標示 Candidate與凍結的pre-adoption Current快照，窄內容使用container reflow；
+快照只屬於specimen，不再作production token truth。
 
 Scrollbar 是 30-section checkpoint 完成後由 owner 另行要求加入的瀏覽器外觀
 契約。追加標本已完成可視核准並提升為正式 primitive；原 30 個 comparison
@@ -265,10 +270,9 @@ alignment、RTL與viewport clamp；現行`UiContextMenu`仍保持production trut
 
 2026-09-14 owner 再核准第三批 development-only shared infra：`UiSwitch`、
 `UiBreadcrumb`與`UiCombobox`沒有現行 production 對應物可比較，因此不走 F8
-Candidate／Current 對照流程，直接以 production `tokens.css`／`tokens-v2.css`
-雙邊 token 建立底層契約與 focused tests。同樣未修改任何現有 production
-consumer、未計入原本 30／30 F8 owner checkpoints，也不代表 active Token v2
-adoption；元件存在不等於任一 View 已採用：
+Candidate／Current 對照流程，直接建立底層契約與 focused tests。它們未計入
+原本 30／30 F8 owner checkpoints；元件存在不等於任一 View 已採用。Phase 6 後
+這些元件只讀 stable `tokens.css`：
 
 | 第三批 infra   | 契約                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 | -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

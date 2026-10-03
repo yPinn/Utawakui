@@ -9,11 +9,7 @@ const componentSource = readFileSync(
   new URL('./DemoFieldReadonlyAppearance.vue', import.meta.url),
   'utf8',
 );
-const candidateTokens = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
-  'utf8',
-);
-const activeTokens = readFileSync(
+const tokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
@@ -119,7 +115,7 @@ describe('DemoFieldReadonlyAppearance', () => {
       createSSRApp(DemoFieldReadonlyAppearance),
     );
 
-    expect(candidateTokens).toContain(
+    expect(tokenSource).toContain(
       '--ui-field-bg-readonly: var(--ui-color-surface);',
     );
     expect(componentSource).toMatch(
@@ -138,13 +134,13 @@ describe('DemoFieldReadonlyAppearance', () => {
     expect(html).toContain('Focus-visible 保留');
   });
 
-  it('uses an explicit active-token snapshot for Current instead of the Candidate readonly alias', () => {
+  it('keeps the pre-adoption Current snapshot local to the specimen', () => {
     for (const declaration of [
-      '--ui-field-bg: var(--ui-color-surface-hover);',
+      '--ui-field-bg: var(--ui-color-surface-raised);',
       '--ui-field-border: var(--ui-color-border);',
       '--ui-field-fg: var(--ui-color-text);',
     ]) {
-      expect(activeTokens).toContain(declaration);
+      expect(tokenSource).toContain(declaration);
     }
     expect(componentSource).toContain('.demo-field-readonly-layer--current {');
     expect(componentSource).toContain('--ui-field-bg: #344046;');

@@ -1,254 +1,237 @@
-/* --ui-* control-panel tokens only. Public overlay tokens live separately in
-   overlay/shared/tokens.css and never inherit this theme. */
-[data-ui-system='v1'] {
-  /* Dark is default; light overrides are in the [data-ui-theme='light']
-     block below — only --ui-color-* tokens differ by theme. */
+/* Scoped control-panel token system. OBS Overlay tokens remain independent in
+ * overlay/shared/tokens.css. */
 
-  /* --- Color: surfaces --- */
-  --ui-color-canvas: #1f2328;
-  --ui-color-surface: #292f35;
-  --ui-color-surface-raised: #30383e;
-  --ui-color-surface-hover: #344046;
-  --ui-color-surface-active: #3a464c;
-  --ui-color-surface-selected: #25474a;
-  --ui-color-surface-playing: #4a332e;
+[data-ui-system='v2'] {
+  /* Primitive colors: value-based names only. */
+  --ui-palette-neutral-50: #f3f3f4;
+  --ui-palette-neutral-100: #e2e2e4;
+  --ui-palette-neutral-200: #c7c8cc;
+  --ui-palette-neutral-300: #a7a9af;
+  --ui-palette-neutral-400: #85888f;
+  --ui-palette-neutral-500: #70737b;
+  --ui-palette-neutral-600: #50535b;
+  --ui-palette-neutral-700: #3c3e46;
+  --ui-palette-neutral-800: #2d2f35;
+  --ui-palette-neutral-900: #272928;
+  --ui-palette-neutral-950: #191a1e;
 
-  /* --- Color: text --- */
-  --ui-color-text: #f7f1e7;
-  --ui-color-text-muted: #aeb8b6;
+  --ui-palette-indigo-50: #f1f3fa;
+  --ui-palette-indigo-100: #e0e5f3;
+  --ui-palette-indigo-200: #c4cee7;
+  --ui-palette-indigo-300: #a5b3d8;
+  --ui-palette-indigo-400: #8296d0;
+  --ui-palette-indigo-500: #667db8;
+  --ui-palette-indigo-600: #50679f;
+  --ui-palette-indigo-700: #3d578e;
+  --ui-palette-indigo-800: #334873;
+  --ui-palette-indigo-900: #293a5b;
+  --ui-palette-indigo-950: #202c43;
 
-  /* --- Color: borders --- */
-  --ui-color-border: #3c4749;
-  --ui-color-border-strong: #586568;
+  --ui-palette-plum-50: #f9f1f5;
+  --ui-palette-plum-100: #f1dee7;
+  --ui-palette-plum-200: #e3bccf;
+  --ui-palette-plum-300: #d496b2;
+  --ui-palette-plum-400: #bd748f;
+  --ui-palette-plum-500: #9d5f79;
+  --ui-palette-plum-600: #7f4f68;
+  --ui-palette-plum-700: #694d64;
+  --ui-palette-plum-800: #4d384a;
+  --ui-palette-plum-900: #382a36;
+  --ui-palette-plum-950: #271e26;
 
-  /* --- Color: shadow & overlay scrim --- */
-  --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 28%);
-  /* Floating-control scrim over arbitrary artwork/video — deliberately
-     theme-independent, like a photo lightbox. */
-  --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
-  --ui-color-overlay-scrim-hover: rgb(0 0 0 / 68%);
-  --ui-color-overlay-scrim-active: rgb(0 0 0 / 78%);
-  --ui-color-overlay-contrast: #fff;
+  --ui-palette-olive-50: #f8f5e9;
+  --ui-palette-olive-100: #eee8d0;
+  --ui-palette-olive-200: #ded39f;
+  --ui-palette-olive-300: #cfbd75;
+  --ui-palette-olive-400: #bfab68;
+  --ui-palette-olive-500: #9d8d58;
+  --ui-palette-olive-600: #80754b;
+  --ui-palette-olive-700: #69634e;
+  --ui-palette-olive-800: #4d493a;
+  --ui-palette-olive-900: #37352d;
+  --ui-palette-olive-950: #272620;
 
-  /* --- Color: accent --- */
-  --ui-color-accent: #55a2a7;
-  --ui-color-accent-hover: #6ab4b8;
-  --ui-color-accent-active: #49969a;
-  --ui-color-accent-soft: var(--ui-color-surface-selected);
-  /* Text/icon color on accent-filled surfaces — own token, not a canvas
-     alias, for light-theme safety. */
-  --ui-color-accent-contrast: #102326;
-  --ui-color-accent-contrast-muted: color-mix(
-    in srgb,
-    var(--ui-color-accent-contrast) 75%,
-    var(--ui-color-accent)
-  );
+  --ui-palette-warm-neutral-50: #fbfaf7;
+  --ui-palette-warm-neutral-100: #f3f1ec;
+  --ui-palette-warm-neutral-200: #e8e4dd;
+  --ui-palette-warm-neutral-300: #dad7d0;
+  --ui-palette-warm-neutral-400: #c6c2ba;
+  --ui-palette-warm-neutral-500: #aaa69f;
+  --ui-palette-warm-neutral-600: #88857f;
+  --ui-palette-warm-neutral-700: #66645f;
+  --ui-palette-warm-neutral-800: #464641;
+  --ui-palette-warm-neutral-900: #2f302d;
+  --ui-palette-warm-neutral-950: #222320;
 
-  /* --- Color: focus ring & now-playing indicator --- */
-  --ui-color-focus: #dd7a64;
-  --ui-color-current: #f39a85;
-  --ui-color-current-soft: var(--ui-color-surface-playing);
+  /* Clear Pastel signal primitives. These are independent of brand materials. */
+  --ui-palette-cool-gray-200: #bec5cc;
+  --ui-palette-cool-gray-300: #b2b8bf;
+  --ui-palette-sky-300: #86d7fd;
+  --ui-palette-sky-400: #7ec9ed;
+  --ui-palette-sky-700: #1d6888;
+  --ui-palette-green-300: #9fdda0;
+  --ui-palette-green-400: #95cf96;
+  --ui-palette-green-700: #2f6f45;
+  --ui-palette-amber-300: #f7d37b;
+  --ui-palette-amber-400: #ebc669;
+  --ui-palette-amber-800: #705500;
+  --ui-palette-red-300: #ffa9a8;
+  --ui-palette-red-400: #f79494;
+  --ui-palette-red-700: #a33f43;
 
-  /* --- Color: status --- */
-  --ui-color-info: #7fb8bd;
-  --ui-color-info-soft: color-mix(
-    in srgb,
-    var(--ui-color-info) 18%,
-    transparent
-  );
-  --ui-color-success: #7bbd8b;
-  --ui-color-success-soft: color-mix(
-    in srgb,
-    var(--ui-color-success) 18%,
-    transparent
-  );
-  --ui-color-warning: #d6a84f;
-  --ui-color-warning-soft: color-mix(
-    in srgb,
-    var(--ui-color-warning) 18%,
-    transparent
-  );
-  --ui-color-danger: #dd7078;
-  --ui-color-danger-soft: color-mix(
-    in srgb,
-    var(--ui-color-danger) 18%,
-    transparent
-  );
-  /* Text/icon color on danger-filled surfaces — own token, not borrowed
-     from --ui-color-accent-contrast, since the two hues diverge. */
-  --ui-color-danger-contrast: #2a0f11;
-  --ui-color-gated: #d6a84f;
-  --ui-color-gated-bg: #3a3226;
-
-  /* Drives native form-control rendering (e.g. <input type="range">). */
-  --ui-color-scheme: dark;
-
-  /* --- Spacing scale --- */
-  --ui-space-1: 0.25rem; /* 4px */
-  --ui-space-2: 0.5rem; /* 8px */
-  --ui-space-3: 0.75rem; /* 12px */
-  --ui-space-4: 1rem; /* 16px */
-  --ui-space-5: 1.5rem; /* 24px */
-  --ui-space-6: 2rem; /* 32px */
-  --ui-space-7: 3rem; /* 48px */
-  --ui-space-8: 4rem; /* 64px */
-
-  /* --- Typography --- */
-  /* Control panel uses one family for every hierarchy level — DESIGN.md's
-     typography hierarchy has no serif step; serif is --ovl-* only. */
+  /* Typography foundation: fixed rem scale for product UI. */
   --ui-font-family-base:
-    'Segoe UI', 'Microsoft JhengHei UI', 'Microsoft JhengHei', system-ui,
-    -apple-system, sans-serif;
-  /* Sizes map to DESIGN.md's 5-level hierarchy: label/body/title/headline/
-     display. */
-  --ui-font-size-sm: 0.875rem; /* 14px — label */
-  --ui-font-size-md: 1rem; /* 16px — body */
-  --ui-font-size-lg: 1.125rem; /* 18px — title */
-  --ui-font-size-xl: 1.5rem; /* 24px — headline */
-  --ui-font-size-2xl: 2rem; /* 32px — display */
-  --ui-font-weight-regular: 400; /* body */
-  --ui-font-weight-semibold: 600; /* title, label */
-  --ui-font-weight-bold: 650; /* display, headline */
+    'Segoe UI Variable Text', 'Segoe UI', 'Microsoft JhengHei UI',
+    'Microsoft JhengHei', system-ui, sans-serif;
+
+  --ui-font-size-sm: 0.875rem;
+  --ui-font-size-md: 1rem;
+  --ui-font-size-lg: 1.125rem;
+  --ui-font-size-xl: 1.5rem;
+  --ui-font-size-2xl: 1.75rem;
+
+  --ui-font-weight-regular: 400;
+  --ui-font-weight-semibold: 600;
+  --ui-font-weight-bold: 700;
+
   --ui-line-height-display: 1.15;
   --ui-line-height-heading: 1.2;
   --ui-line-height-title: 1.3;
   --ui-line-height-body: 1.5;
   --ui-line-height-label: 1.25;
-  /* Caption: secondary/metadata text (artist lines, hints, empty states).
-     Shares font-size-sm with Label but stays font-weight-regular. */
   --ui-line-height-caption: 1.4;
 
-  /* --- Radius --- */
-  --ui-radius-xs: 0.125rem; /* 2px */
-  --ui-radius-sm: 0.25rem; /* 4px */
-  --ui-radius-md: 0.375rem; /* 6px */
-  --ui-radius-lg: 0.5rem; /* 8px */
-  --ui-radius-pill: 999rem;
+  /* Spacing foundation: 4px-equivalent rhythm at the default rem basis. */
+  --ui-space-0: 0;
+  --ui-space-1: 0.25rem;
+  --ui-space-2: 0.5rem;
+  --ui-space-3: 0.75rem;
+  --ui-space-4: 1rem;
+  --ui-space-5: 1.5rem;
+  --ui-space-6: 2rem;
+  --ui-space-7: 3rem;
+  --ui-space-8: 4rem;
 
-  /* --- Borders --- */
+  /* Exact optical boundaries are intentional px exceptions. */
   --ui-border-width: 1px;
+  --ui-focus-width: 2px;
   --ui-drag-indicator-width: 2px;
   --ui-resize-handle-hit-size: var(--ui-space-3);
 
-  /* --- Sizing: chrome & buttons --- */
-  --ui-control-height: 1.875rem; /* 30px */
-  --ui-menu-item-height: 2rem; /* 32px */
-  --ui-icon-button-size-md: var(--ui-space-6); /* 32px hard floor */
-  --ui-icon-button-size-lg: 2.75rem; /* 44px Live action */
-  /* --- Shared field component contract --- */
-  --ui-field-height: var(--ui-control-height);
-  --ui-field-padding-block: var(--ui-space-1);
-  --ui-field-padding-inline: var(--ui-space-2);
-  --ui-field-hex-value-inline-size: calc(
-    7ch + var(--ui-field-padding-inline) + var(--ui-field-padding-inline) +
-      var(--ui-border-width) + var(--ui-border-width)
+  /* Restrained shape scale: literal 0 is used for structural seams. */
+  --ui-radius-xs: 0.125rem;
+  --ui-radius-sm: 0.25rem;
+  --ui-radius-md: 0.375rem;
+  --ui-radius-lg: 0.5rem;
+  --ui-radius-pill: 999rem;
+
+  /* Standard density and stable safety floors. */
+  --ui-control-height: 2.25rem;
+  --ui-control-height-live: 2.75rem;
+  --ui-control-height-emergency: 3rem;
+  --ui-control-track-size-md: 0.375rem;
+  --ui-track-row-min-height: 3.25rem;
+  --ui-sidebar-row-min-height: 3.25rem;
+  --ui-track-artwork-size-dense: 2.25rem;
+  --ui-track-artwork-size-standard: 2.5rem;
+  --ui-track-artwork-size-prominent: 3rem;
+  --ui-track-artwork-size-preview: 4rem;
+  --ui-track-artwork-size: var(--ui-track-artwork-size-standard);
+  --ui-sidebar-artwork-size: var(--ui-track-artwork-size-standard);
+  --ui-list-header-height: 2.25rem;
+  --ui-player-bar-height: 4.75rem;
+  --ui-panel-inset: 1rem;
+  --ui-window-titlebar-block-size: 2.5rem;
+  --ui-shell-content-inset-block: var(--ui-panel-inset);
+  --ui-shell-edge-inset-inline: var(--ui-space-2);
+  --ui-shell-leading-artwork-centerline: calc(
+    var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
   );
-  --ui-field-radius: var(--ui-radius-md);
-  --ui-field-bg: var(--ui-color-surface-hover);
-  --ui-field-bg-hover: var(--ui-color-surface-active);
-  --ui-field-fg: var(--ui-color-text);
-  --ui-field-placeholder: var(--ui-color-text-muted);
-  --ui-field-border: var(--ui-color-border);
-  --ui-field-border-hover: var(--ui-color-border-strong);
-  --ui-field-border-invalid: var(--ui-color-danger);
-  --ui-button-danger-text: var(--ui-color-danger);
-  --ui-button-danger-border: var(--ui-color-danger);
-  --ui-button-danger-surface-hover: var(--ui-color-danger-soft);
-  --ui-button-danger-surface-active: color-mix(
-    in srgb,
-    var(--ui-color-danger) 24%,
-    var(--ui-color-surface)
-  );
-  --ui-button-danger-fill: var(--ui-color-danger);
-  --ui-button-danger-fill-hover: color-mix(
-    in srgb,
-    var(--ui-color-danger) 94%,
-    var(--ui-color-danger-contrast)
-  );
-  --ui-button-danger-fill-active: color-mix(
-    in srgb,
-    var(--ui-color-danger) 88%,
-    var(--ui-color-danger-contrast)
-  );
-  --ui-button-danger-contrast: var(--ui-color-danger-contrast);
-  --ui-button-danger-contrast-muted: color-mix(
-    in srgb,
-    var(--ui-color-danger-contrast) 75%,
-    var(--ui-color-danger)
-  );
-  --ui-checkbox-size: var(--ui-space-4);
-  --ui-switch-track-width: var(--ui-space-6); /* 32px */
-  --ui-switch-track-height: var(
-    --ui-space-4
-  ); /* 16px, matches checkbox/radio */
-  --ui-switch-thumb-size: var(--ui-space-3); /* 12px */
-  --ui-switch-thumb-inset: 2px; /* exact optical boundary, like --ui-focus-width */
-  --ui-breadcrumb-segment-max-inline-size: 12rem;
-  --ui-range-track-size: var(--ui-space-1);
-  --ui-range-thumb-size: var(--ui-space-4);
-  --ui-progress-track-size: var(--ui-space-2);
-  --ui-kbd-min-block-size: var(--ui-space-5);
-  --ui-kbd-padding-inline: var(--ui-space-2);
-  --ui-skeleton-text-block-size: var(--ui-space-3);
-  --ui-skeleton-block-min-block-size: var(--ui-control-height);
-  --ui-skeleton-circle-size: var(--ui-control-height);
-  --ui-skeleton-pulse-duration: 1.4s;
-  --ui-radio-size: var(--ui-space-4);
-  --ui-radio-dot-size: var(--ui-space-2);
-  /* Overlay Scroll Region geometry stays density-invariant. */
-  --ui-scrollbar-lane-size: var(--ui-space-3);
-  --ui-scrollbar-thumb-inset: calc(var(--ui-border-width) * 3);
-  --ui-scrollbar-thumb-min-length: var(--ui-space-6);
-  --ui-scrollbar-thumb-max-length: 4.5rem;
-  --ui-scrollbar-edge-inset: var(--ui-space-1);
-  --ui-scrollbar-thumb: var(--ui-color-text-muted);
-  --ui-scrollbar-thumb-hover: color-mix(
-    in srgb,
-    var(--ui-color-text-muted) 55%,
-    var(--ui-color-text)
-  );
-  --ui-scrollbar-thumb-active: var(--ui-color-text);
-  --ui-scrollbar-track: transparent;
-  --ui-scrollbar-radius: var(--ui-radius-pill);
-  /* Sidebar and Right Dock share content rhythm only. UiScrollLayout owns
-     the axis-aware scrollbar lane; feature layouts map these content roles
-     into its logical padding contract. */
+  --ui-shell-navigation-inline-size: 16rem;
+  --ui-shell-navigation-inline-size-min: 4rem;
+  --ui-shell-navigation-inline-size-max: 17.5rem;
+  --ui-sidebar-compact-threshold: 16rem;
+  --ui-right-dock-width: 17.5rem;
+  --ui-right-dock-rail-width: 2.5rem;
   --ui-side-panel-content-inset: var(--ui-space-2);
   --ui-side-panel-section-gap: var(--ui-space-4);
   --ui-side-panel-content-gap: var(--ui-space-2);
   --ui-side-panel-list-gap: var(--ui-space-1);
   --ui-side-panel-row-state-surface-outset-inline: var(--ui-space-1);
   --ui-side-panel-row-radius: var(--ui-radius-sm);
-  --ui-floating-viewport-inset: var(--ui-space-2);
-  --ui-floating-gap: var(--ui-space-2);
-  --ui-tooltip-font-size: var(--ui-font-size-sm);
-  --ui-tooltip-font-weight: var(--ui-font-weight-regular);
-  --ui-tooltip-line-height: var(--ui-line-height-caption);
-  /* Tooltip stays a dark floating material in both themes instead of
-     inverting text/canvas and becoming a bright block in dark mode. */
-  --ui-tooltip-background: rgb(18 21 23 / 96%);
-  --ui-tooltip-text: #ffffff;
-  --ui-tooltip-detail-text: rgb(255 255 255 / 72%);
-  --ui-tooltip-border: rgb(255 255 255 / 12%);
-  --ui-tooltip-shadow: var(--ui-shadow-overlay);
-  --ui-tooltip-max-inline-size: 18rem;
-  --ui-popover-max-inline-size: 24rem;
-  --ui-notification-min-inline-size: 20rem;
-  --ui-notification-preferred-inline-size: 22rem;
-  --ui-notification-max-inline-size: 26rem;
-  --ui-notification-safe-inset: var(--ui-space-4);
-  --ui-notification-block-end-offset: calc(
-    var(--ui-player-bar-height) + var(--ui-notification-safe-inset)
+  --ui-playlist-sidebar-padding-block: var(--ui-side-panel-content-inset);
+  --ui-playlist-sidebar-padding-inline: var(--ui-side-panel-content-inset);
+  --ui-playlist-sidebar-padding-inline-compact: 0.375rem;
+  --ui-playlist-section-gap: var(--ui-side-panel-content-gap);
+  --ui-playlist-list-gap: var(--ui-side-panel-list-gap);
+  --ui-sidebar-row-gap: var(--ui-space-2);
+  --ui-sidebar-row-padding-block: var(--ui-space-1);
+  --ui-sidebar-artwork-centerline: calc(
+    var(--ui-shell-leading-artwork-centerline) -
+      var(--ui-shell-edge-inset-inline)
   );
-  --ui-notification-stack-gap: var(--ui-space-2);
-  --ui-notification-motion-offset: var(--ui-space-4);
-  --ui-notification-swipe-dismiss-distance: 4.5rem;
-  /* --- Sizing: overlays --- */
-  --ui-modal-width-default: 26.25rem; /* 420px: short forms */
-  --ui-modal-width-notice: 40rem; /* 640px: confirmation copy with bullets */
-  --ui-modal-width-wide: 45rem; /* 720px: row lists and multi-column content */
-
-  /* --- Sizing: reusable folder pages --- */
+  --ui-sidebar-row-padding-inline: calc(
+    var(--ui-sidebar-artwork-centerline) -
+      var(--ui-playlist-sidebar-padding-inline) - var(--ui-border-width) -
+      1.25rem
+  );
+  --ui-sidebar-row-compact-hit-size: var(--ui-sidebar-row-min-height);
+  --ui-sidebar-row-selected-bg: var(--ui-color-surface-selected);
+  --ui-sidebar-toolbar-gap: var(--ui-space-2);
+  --ui-sidebar-toolbar-block-size: var(--ui-sidebar-row-min-height);
+  --ui-sidebar-toolbar-padding-block: 0;
+  --ui-sidebar-toolbar-padding-inline: var(--ui-sidebar-row-padding-inline);
+  --ui-sidebar-toolbar-control-size: var(--ui-sidebar-artwork-size);
+  --ui-sidebar-search-padding-block: 0;
+  --ui-sidebar-search-padding-inline: 0;
+  --ui-sidebar-search-icon-inline-size: var(--ui-sidebar-toolbar-control-size);
+  --ui-sidebar-search-separator-inset-block: var(--ui-space-2);
+  --ui-sidebar-search-input-padding-inline-end: var(--ui-space-2);
+  --ui-right-dock-content-inset: var(--ui-side-panel-content-inset);
+  --ui-right-dock-section-gap: var(--ui-side-panel-section-gap);
+  --ui-right-dock-content-gap: var(--ui-side-panel-content-gap);
+  --ui-right-dock-track-row-min-height: 3.25rem;
+  --ui-right-dock-track-artwork-size: 2.5rem;
+  --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
+  --ui-right-dock-track-row-state-surface-outset-inline: var(
+    --ui-side-panel-row-state-surface-outset-inline
+  );
+  --ui-right-dock-track-row-radius: var(--ui-side-panel-row-radius);
+  --ui-right-dock-sticky-background: color-mix(
+    in srgb,
+    var(--ui-color-surface) 88%,
+    transparent
+  );
+  --ui-right-dock-sticky-blur: 0.75rem;
+  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 52%);
+  --ui-inspector-width: var(--ui-right-dock-width);
+  --ui-inspector-rail-width: var(--ui-right-dock-rail-width);
+  --ui-shell-gutter: 0.75rem;
+  --ui-player-padding-block: calc(
+    (var(--ui-player-bar-height) - var(--ui-track-artwork-size-prominent)) / 2
+  );
+  --ui-player-padding-inline: var(--ui-shell-edge-inset-inline);
+  --ui-player-leading-padding-inline: calc(
+    var(--ui-shell-leading-artwork-centerline) - 1.5rem
+  );
+  --ui-player-track-inline-size: 15rem;
+  --ui-player-track-min-inline-size: 11rem;
+  --ui-player-center-max-inline-size: 28rem;
+  --ui-player-action-size: var(--ui-control-height);
+  --ui-player-action-gap: var(--ui-space-1);
+  --ui-player-group-gap: var(--ui-space-1);
+  --ui-player-volume-inline-size: 6rem;
+  --ui-player-panel-edge-offset: var(--ui-space-3);
+  --ui-player-panel-padding: var(--ui-space-3);
+  --ui-player-panel-inline-size: 22.5rem;
+  --ui-player-panel-max-block-size: 40rem;
+  --ui-player-panel-viewport-offset: calc(
+    var(--ui-player-bar-height) + var(--ui-space-7)
+  );
+  --ui-player-tools-beat-block-size: var(--ui-space-1);
+  --ui-player-tools-meter-control-block-size: 3.5rem;
+  --ui-folder-layout-background: var(--ui-color-folder-primary);
+  --ui-folder-page-background: var(--ui-color-surface);
   --ui-folder-perimeter: var(--ui-space-4);
   --ui-folder-tab-cover-size: var(--ui-space-2);
   --ui-folder-tab-min-inline-size: 8rem;
@@ -294,7 +277,7 @@
   );
   --ui-folder-artifact-note-bg: color-mix(
     in srgb,
-    var(--ui-color-accent-soft) 32%,
+    var(--ui-folder-layout-background) 32%,
     var(--ui-color-surface-raised)
   );
   --ui-folder-artifact-note-bg-translucent: color-mix(
@@ -306,155 +289,235 @@
   --ui-folder-artifact-drag-shadow: 0 0.75rem 1rem rgb(0 0 0 / 28%);
   --ui-folder-artifact-drag-scale: 1.0125;
   --ui-folder-artifact-z-active: 100;
-  /* --- Sizing: shell inset planes, playlist sidebar & rows --- */
-  --ui-shell-panel-inset-block: var(
-    --ui-space-4
-  ); /* 16px: shared breathing room above/below Sidebar and Right Dock */
-  --ui-shell-edge-inset-inline: var(
-    --ui-space-2
-  ); /* 8px: shared window-edge gutter for Sidebar and the main/right plane */
-  --ui-shell-leading-artwork-centerline: calc(
-    var(--ui-shell-edge-inset-inline) + var(--ui-space-6)
-  ); /* 40px from the window edge: shared Sidebar/PlayerBar artwork axis */
-  --ui-playlist-sidebar-width: 16rem; /* default/CSS fallback — App.vue overrides live via useSidebarWidth.js */
-  --ui-playlist-sidebar-width-min: 4rem; /* 64px: tighter icon-only rail */
-  --ui-playlist-sidebar-padding-block: var(--ui-side-panel-content-inset);
-  --ui-playlist-sidebar-padding-inline: var(--ui-side-panel-content-inset);
-  --ui-playlist-sidebar-padding-inline-compact: 0.375rem; /* 6px: 64px rail minus the 52px standard hit area */
-  /* Fixed rem, not viewport-relative, so the cap stays the same regardless
-     of window size — only vw would make it grow with the window. */
-  --ui-playlist-sidebar-width-max: 17.5rem;
-  /* Below this, PlaylistSidebarRow.vue/PlaylistSidebar.vue's @container
-     rules hide row labels entirely — kept in sync by hand with the literal
-     rem value in those rules, since @container conditions can't reference
-     custom properties. Equal to --ui-playlist-sidebar-width above:
-     dragging any narrower than default collapses straight to icon-only,
-     with no continuously-resizable zone in between (useSidebarResize.js
-     adds a drag-resistance deadzone at this value first). */
-  --ui-playlist-sidebar-compact-threshold: 16rem;
-  /* Sidebar content is fixed-density. Only the Sidebar's own width changes
-     between expanded and icon-rail states; window density must not introduce
-     a second 52/40 -> 48/36 geometry transition. */
-  --ui-sidebar-row-min-height: 3.25rem;
-  --ui-sidebar-artwork-size: 2.5rem;
-  --ui-playlist-row-artwork-centerline: calc(
-    var(--ui-shell-leading-artwork-centerline) -
-      var(--ui-shell-edge-inset-inline)
-  ); /* 32px inside the Sidebar panel; shell owns the global 40px axis */
-  --ui-playlist-row-gap: var(--ui-space-2);
-  --ui-playlist-row-padding-block: var(--ui-space-1);
-  --ui-playlist-row-padding-inline: calc(
-    var(--ui-playlist-row-artwork-centerline) -
-      var(--ui-playlist-sidebar-padding-inline) - var(--ui-border-width) -
-      1.25rem
-  ); /* 3px: border-aware inset keeps the 40px thumb on the 32px rail axis */
-  --ui-playlist-row-thumb-size: var(--ui-sidebar-artwork-size);
-  --ui-playlist-row-compact-hit-size: var(--ui-sidebar-row-min-height);
-  --ui-playlist-row-state-surface-outset-inline: var(
-    --ui-side-panel-row-state-surface-outset-inline
-  ); /* 4px: expands hover/selected paint to an 8px visual artwork inset without moving content */
-  --ui-playlist-row-selected-background: var(
-    --ui-color-surface-active
-  ); /* neutral selected row, distinct from accent-tinted page selection */
-  --ui-playlist-row-min-height: var(--ui-sidebar-row-min-height);
-  --ui-playlist-toolbar-gap: var(--ui-space-2);
-  --ui-playlist-toolbar-height: var(--ui-playlist-row-min-height);
-  --ui-playlist-toolbar-padding-block: 0;
-  --ui-playlist-toolbar-padding-inline: var(--ui-playlist-row-padding-inline);
-  --ui-playlist-toolbar-control-size: var(
-    --ui-playlist-row-thumb-size
-  ); /* 40px: visible search field and create tile inside the stable toolbar row */
-  --ui-playlist-search-padding-block: 0;
-  --ui-playlist-search-padding-inline: 0;
-  --ui-playlist-search-icon-slot-size: var(
-    --ui-playlist-toolbar-control-size
-  ); /* aligns search text start to row labels: icon slot + toolbar gap */
-  --ui-playlist-search-separator-inset-block: var(--ui-space-2);
-  --ui-playlist-search-input-padding-inline-end: var(--ui-space-2);
-  --ui-playlist-section-gap: var(--ui-side-panel-content-gap);
-  --ui-playlist-list-gap: var(--ui-side-panel-list-gap); /* gap between rows */
 
-  /* --- Sizing: shell right Dock --- */
-  /* Queue and the Token v2 metadata Inspector share one shell-owned plane.
-     The live pixel value is projected by useAppRightDockWidth.js while the
-     rem values remain the stable CSS fallback and collapsed rail contract. */
-  --ui-panel-inset: var(--ui-space-4);
-  --ui-right-dock-width: 17.5rem;
-  --ui-right-dock-rail-width: 2.5rem;
-  /* Right Dock follows the Sidebar's cumulative inline rhythm: the panel
-     owns an 8px perimeter, while Track Row content and state paint own
-     separate 4px deltas below. Window density must not compact this plane a
-     second time. */
-  --ui-right-dock-content-inset: var(--ui-side-panel-content-inset);
-  --ui-right-dock-section-gap: var(--ui-side-panel-section-gap);
-  --ui-right-dock-content-gap: var(--ui-side-panel-content-gap);
-  --ui-right-dock-track-row-min-height: 3.25rem; /* 52px */
-  --ui-right-dock-track-artwork-size: 2.5rem; /* 40px */
-  --ui-right-dock-track-row-padding-inline: var(--ui-space-1);
-  --ui-right-dock-track-row-state-surface-outset-inline: var(
-    --ui-side-panel-row-state-surface-outset-inline
-  );
-  --ui-right-dock-track-row-radius: var(--ui-side-panel-row-radius);
-  --ui-right-dock-sticky-background: color-mix(
+  /* Flat archival elevation: shadows indicate real overlap only. */
+  --ui-shadow-contact: none;
+  --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(0 0 0 / 32%);
+  --ui-shadow-dialog: 0 1rem 2.5rem rgb(0 0 0 / 42%);
+
+  /* Global semantic layers; component internals use local 0/1/2 values. */
+  --ui-z-sticky: 10;
+  --ui-z-popover: 20;
+  --ui-z-backdrop: 30;
+  --ui-z-dialog: 40;
+  --ui-z-toast: 50;
+  --ui-z-tooltip: 60;
+  --ui-z-drag: 70;
+
+  /* Purpose-based motion timing; components map behavior without aliasing it. */
+  --ui-motion-duration-feedback: 100ms;
+  --ui-motion-duration-fast: 140ms;
+  --ui-motion-duration-standard: 200ms;
+  --ui-motion-duration-slow: 280ms;
+  --ui-motion-easing-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ui-motion-easing-enter: cubic-bezier(0.22, 1, 0.36, 1);
+  --ui-motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
+
+  /* Semantic colors: components should prefer these purpose-based aliases. */
+  --ui-color-scheme: dark;
+  --ui-color-canvas: var(--ui-palette-neutral-950);
+  --ui-color-surface: var(--ui-palette-neutral-900);
+  --ui-color-surface-raised: var(--ui-palette-neutral-800);
+  --ui-color-surface-hover: var(--ui-palette-neutral-700);
+  --ui-color-surface-active: var(--ui-palette-neutral-600);
+  --ui-color-surface-selected: var(--ui-palette-indigo-900);
+
+  --ui-color-text: var(--ui-palette-warm-neutral-100);
+  --ui-color-text-muted: var(--ui-palette-neutral-300);
+  --ui-color-text-subtle: var(--ui-palette-neutral-400);
+
+  --ui-color-border: var(--ui-palette-neutral-700);
+  --ui-color-border-strong: var(--ui-palette-neutral-500);
+
+  --ui-color-accent: var(--ui-palette-indigo-400);
+  --ui-color-accent-hover: var(--ui-palette-indigo-300);
+  --ui-color-accent-active: var(--ui-palette-indigo-500);
+  --ui-color-accent-soft: var(--ui-palette-indigo-900);
+  --ui-color-accent-contrast: var(--ui-palette-neutral-950);
+  --ui-color-accent-contrast-muted: color-mix(
     in srgb,
-    var(--ui-color-surface) 88%,
+    var(--ui-color-accent-contrast) 75%,
+    var(--ui-color-accent)
+  );
+  --ui-color-focus: var(--ui-palette-indigo-300);
+  --ui-color-current: var(--ui-palette-indigo-300);
+  --ui-color-current-soft: var(--ui-color-accent-soft);
+
+  --ui-color-neutral: var(--ui-palette-cool-gray-300);
+  --ui-color-info: var(--ui-palette-sky-400);
+  --ui-color-success: var(--ui-palette-green-400);
+  --ui-color-warning: var(--ui-palette-amber-400);
+  --ui-color-live: var(--ui-palette-red-400);
+  --ui-color-danger: var(--ui-palette-red-400);
+  --ui-color-danger-contrast: var(--ui-palette-neutral-950);
+  --ui-color-status-contrast: var(--ui-palette-neutral-950);
+  --ui-color-status-outline: var(--ui-color-text);
+
+  --ui-color-neutral-soft: color-mix(
+    in srgb,
+    var(--ui-color-neutral) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-info-soft: color-mix(
+    in srgb,
+    var(--ui-color-info) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-success-soft: color-mix(
+    in srgb,
+    var(--ui-color-success) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-warning-soft: color-mix(
+    in srgb,
+    var(--ui-color-warning) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-live-soft: color-mix(
+    in srgb,
+    var(--ui-color-live) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-danger-soft: color-mix(
+    in srgb,
+    var(--ui-color-danger) 16%,
+    var(--ui-color-surface)
+  );
+  --ui-color-gated: var(--ui-color-warning);
+  --ui-color-gated-bg: var(--ui-color-warning-soft);
+  --ui-color-overlay-scrim: rgb(0 0 0 / 55%);
+  --ui-color-overlay-scrim-hover: rgb(0 0 0 / 68%);
+  --ui-color-overlay-scrim-active: rgb(0 0 0 / 78%);
+  --ui-color-overlay-contrast: var(--ui-palette-warm-neutral-50);
+
+  /* Semantic materials: color does not imply status or feature level. */
+  --ui-color-folder-primary: var(--ui-palette-indigo-700);
+  --ui-color-folder-secondary: var(--ui-palette-plum-700);
+  --ui-color-folder-tertiary: var(--ui-palette-olive-700);
+  --ui-color-paper: var(--ui-palette-warm-neutral-300);
+  --ui-color-paper-text: var(--ui-palette-neutral-900);
+
+  /* Shared interaction semantics and exact focus boundaries. */
+  --ui-opacity-disabled: 0.5;
+  --ui-opacity-muted: 0.72;
+  --ui-opacity-dragging: 0.45;
+  --ui-focus-offset: 2px;
+  --ui-focus-offset-inset: -2px;
+
+  /* Component aliases exist only where the component owns a real contract. */
+  --ui-field-height: var(--ui-control-height);
+  --ui-field-padding-block: var(--ui-space-1);
+  --ui-field-padding-inline: var(--ui-space-2);
+  --ui-field-hex-value-inline-size: calc(
+    7ch + var(--ui-field-padding-inline) + var(--ui-field-padding-inline) +
+      var(--ui-border-width) + var(--ui-border-width)
+  );
+  --ui-field-radius: var(--ui-radius-md);
+  --ui-field-bg: var(--ui-color-surface-raised);
+  --ui-field-bg-hover: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly: var(--ui-color-surface);
+  --ui-field-bg-on-raised: var(--ui-color-surface);
+  --ui-field-bg-hover-on-raised: var(--ui-color-surface-hover);
+  --ui-field-bg-readonly-on-raised: var(--ui-color-surface-raised);
+  --ui-field-fg: var(--ui-color-text);
+  --ui-field-placeholder: var(--ui-color-text-muted);
+  --ui-field-border: var(--ui-color-border);
+  --ui-field-border-hover: var(--ui-color-border-strong);
+  --ui-field-border-invalid: var(--ui-color-danger);
+  --ui-button-danger-text: var(--ui-color-danger);
+  --ui-button-danger-border: var(--ui-color-danger);
+  --ui-button-danger-surface-hover: var(--ui-color-danger-soft);
+  --ui-button-danger-surface-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 24%,
+    var(--ui-color-surface)
+  );
+  --ui-button-danger-fill: var(--ui-color-danger);
+  --ui-button-danger-fill-hover: color-mix(
+    in srgb,
+    var(--ui-color-danger) 94%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-fill-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 88%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-contrast: var(--ui-color-danger-contrast);
+  --ui-button-danger-contrast-muted: color-mix(
+    in srgb,
+    var(--ui-color-danger-contrast) 75%,
+    var(--ui-color-danger)
+  );
+  --ui-checkbox-size: var(--ui-space-4);
+  --ui-switch-track-width: var(--ui-space-6);
+  --ui-switch-track-height: var(--ui-space-4);
+  --ui-switch-thumb-size: var(--ui-space-3);
+  --ui-switch-thumb-inset: 2px;
+  --ui-breadcrumb-segment-max-inline-size: 12rem;
+  --ui-range-track-size: var(--ui-control-track-size-md);
+  --ui-range-thumb-size: var(--ui-space-4);
+  --ui-range-track: var(--ui-color-text-subtle);
+  --ui-range-fill: var(--ui-color-text);
+  --ui-range-fill-hover: var(--ui-color-accent);
+  --ui-range-fill-active: var(--ui-color-accent-active);
+  --ui-range-thumb: var(--ui-color-text);
+  --ui-range-thumb-border: var(--ui-color-canvas);
+  --ui-range-focus: var(--ui-color-focus);
+  --ui-range-invalid: var(--ui-color-danger);
+  --ui-range-stop: var(--ui-color-canvas);
+  --ui-range-value: var(--ui-color-text-muted);
+  --ui-progress-track-size: var(--ui-space-2);
+  --ui-kbd-min-block-size: var(--ui-space-5);
+  --ui-kbd-padding-inline: var(--ui-space-2);
+  --ui-skeleton-text-block-size: var(--ui-space-3);
+  --ui-skeleton-block-min-block-size: var(--ui-control-height);
+  --ui-skeleton-circle-size: var(--ui-control-height);
+  --ui-skeleton-pulse-duration: 1.4s;
+  --ui-radio-size: var(--ui-space-4);
+  --ui-radio-dot-size: var(--ui-space-2);
+  --ui-scrollbar-lane-size: var(--ui-space-3);
+  --ui-scrollbar-thumb-inset: calc(var(--ui-border-width) * 3);
+  --ui-scrollbar-thumb-min-length: var(--ui-space-6);
+  --ui-scrollbar-thumb-max-length: 4.5rem;
+  --ui-scrollbar-edge-inset: var(--ui-space-1);
+  --ui-scrollbar-thumb: var(--ui-color-text-subtle);
+  --ui-scrollbar-thumb-hover: var(--ui-color-text-muted);
+  --ui-scrollbar-thumb-active: var(--ui-color-text);
+  --ui-scrollbar-track: transparent;
+  --ui-scrollbar-radius: var(--ui-radius-pill);
+  --ui-floating-viewport-inset: var(--ui-space-2);
+  --ui-floating-gap: var(--ui-space-2);
+  --ui-tooltip-font-size: var(--ui-font-size-sm);
+  --ui-tooltip-font-weight: var(--ui-font-weight-regular);
+  --ui-tooltip-line-height: var(--ui-line-height-caption);
+  --ui-tooltip-background: var(--ui-palette-neutral-900);
+  --ui-tooltip-text: var(--ui-palette-warm-neutral-50);
+  --ui-tooltip-detail-text: color-mix(
+    in srgb,
+    var(--ui-palette-warm-neutral-50) 72%,
     transparent
   );
-  --ui-right-dock-sticky-blur: 0.75rem;
-  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 48%);
-
-  /* --- Sizing: track rows & player bar --- */
-  --ui-track-row-min-height: 3.25rem; /* 52px */
-  --ui-track-row-thumb-size: 2.5rem; /* 40px */
-  --ui-track-row-gap: var(--ui-space-2); /* gap inside a row */
-  --ui-track-row-padding-block: var(--ui-space-1);
-  --ui-track-row-padding-inline: var(--ui-space-3);
-  --ui-track-row-state-surface-outset-inline: 0;
-  --ui-track-list-gap: var(--ui-space-1); /* gap between rows */
-  /* space-4, not space-3 — gives the 44px Primary transport button (the
-     contract's hard floor, see token-v2-component-review.md's 核心尺寸 row)
-     real breathing room inside the bar instead of sitting nearly flush top
-     and bottom. */
-  --ui-player-bar-padding-block: var(--ui-space-4);
-  --ui-player-bar-padding-inline: var(--ui-shell-edge-inset-inline);
-  /* PlayerBar consumes the shell-owned global axis directly. Sidebar row
-     geometry can now evolve without becoming a PlayerBar dependency. */
-  --ui-player-bar-padding-inline-start: calc(
-    var(--ui-shell-leading-artwork-centerline) - 1.5rem
+  --ui-tooltip-border: color-mix(
+    in srgb,
+    var(--ui-palette-warm-neutral-50) 12%,
+    transparent
   );
-  --ui-player-bar-artwork-size: 3rem; /* 48px: PlayerBar-only recipe; keep in sync with PLAYER_BAR_ARTWORK_SIZE */
-  --ui-player-bar-track-width: 15rem; /* 240px: stable now-playing region at common desktop widths */
-  --ui-player-bar-track-width-min: 11rem; /* 176px: artwork plus readable one-line metadata */
-  --ui-player-bar-center-max-width: 28rem; /* 448px: stable scrubber width at common desktop sizes */
-  --ui-player-bar-action-size: var(
-    --ui-space-6
-  ); /* 32px compact trailing action */
-  --ui-player-bar-action-gap: var(
-    --ui-space-1
-  ); /* 4px within a related control group */
-  --ui-player-bar-group-gap: var(
-    --ui-space-1
-  ); /* 4px between adjacent trailing controls */
-  --ui-player-bar-volume-slider-width: 5rem; /* 80px compact desktop volume control */
-  --ui-player-bar-height: calc(
-    var(--ui-player-bar-artwork-size) + var(--ui-player-bar-padding-block) +
-      var(--ui-player-bar-padding-block)
-  ); /* 80px: 48px artwork + 2x space-4 padding for transport/progress breathing room */
-  --ui-player-bar-panel-edge-offset: var(--ui-space-3);
-  /* PlayerToolsPanel remains a transient player-bar overlay. Queue now uses
-     the shell-owned right Dock instead of this floating panel contract. */
-  --ui-player-bar-panel-padding: var(--ui-space-3);
-  --ui-player-bar-panel-width: 22.5rem; /* 360px: between playlist sidebar default and max */
-  /* Generic viewport-safety ceiling shared by every player-bar panel. Panels
-     size to their own content by default — this only stops one from running
-     off the top of a short window, so it's deliberately generous rather than
-     tuned to any one panel's content (e.g. queue rows; see
-     --ui-queue-panel-max-height for that panel's own, tighter budget). */
-  --ui-player-bar-panel-max-height: 40rem; /* 640px */
-  --ui-player-bar-panel-viewport-offset: calc(
-    var(--ui-player-bar-height) + var(--ui-space-7)
+  --ui-tooltip-shadow: var(--ui-shadow-overlay);
+  --ui-tooltip-max-inline-size: 18rem;
+  --ui-popover-max-inline-size: 24rem;
+  --ui-notification-min-inline-size: 20rem;
+  --ui-notification-preferred-inline-size: 22rem;
+  --ui-notification-max-inline-size: 26rem;
+  --ui-notification-safe-inset: var(--ui-space-4);
+  --ui-notification-block-end-offset: calc(
+    var(--ui-player-bar-height) + var(--ui-notification-safe-inset)
   );
-  /* BGM is a shell-level floating player with its own object envelope. */
+  --ui-notification-stack-gap: var(--ui-space-2);
+  --ui-notification-motion-offset: var(--ui-space-4);
+  --ui-notification-swipe-dismiss-distance: 4.5rem;
+  --ui-icon-button-size-md: var(--ui-control-height);
+  --ui-icon-button-size-lg: var(--ui-control-height-live);
   --ui-bgm-player-min-inline-size: 18rem;
   --ui-bgm-player-inline-size: 20rem;
   --ui-bgm-player-max-inline-size: 22rem;
@@ -466,43 +529,27 @@
   --ui-bgm-player-restore-status-inline-size: 4rem;
   --ui-bgm-player-time-inline-size: 4.5rem;
   --ui-search-clear-hit-size: var(--ui-field-height);
-  --ui-player-tools-meter-control-height: 3.5rem; /* 56px: prominent but still compact */
-  --ui-player-tools-beat-height: var(--ui-space-1);
-  /* --- Shadow: row indicator --- */
-  /* Selected-row indicator shared by UiTrackRow and the playlist sidebars. */
-  --ui-row-active-shadow: inset 3px 0 0 var(--ui-color-accent);
-
-  /* --- Opacity --- */
-  --ui-opacity-disabled: 0.5;
-  --ui-opacity-dragging: 0.45;
-  --ui-opacity-muted: 0.72; /* non-accent muted text */
-
-  /* --- Focus ring --- */
-  --ui-focus-width: 2px;
-  --ui-focus-offset: 2px;
-  --ui-focus-offset-inset: -2px; /* for clipped row surfaces */
-
-  /* --- Motion --- */
-  --ui-motion-duration-feedback: 100ms;
-  --ui-motion-duration-fast: 120ms;
-  --ui-motion-duration-standard: 220ms;
-  --ui-motion-duration-slow: 280ms;
-  --ui-motion-easing-enter: cubic-bezier(0.22, 1, 0.36, 1);
-  --ui-motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
-  --ui-motion-easing-standard: ease-out;
-  --ui-motion-slow: var(--ui-motion-duration-standard); /* legacy alias */
-  --ui-motion-spin: 1s linear;
-
-  /* --- Z-index --- */
-  --ui-z-sticky: 10;
-  --ui-z-dropdown: 20;
-  --ui-z-popover: 100;
-  --ui-z-dialog: 200;
-  --ui-z-toast: 300;
-  --ui-z-tooltip: 400;
-  --ui-z-context-menu: var(--ui-z-popover); /* legacy alias */
-  --ui-z-context-menu-submenu: 101;
-  --ui-z-modal: var(--ui-z-dialog); /* legacy alias */
+  --ui-menu-item-height: 2rem;
+  --ui-modal-inline-size-small: 24rem;
+  --ui-modal-inline-size-medium: 32rem;
+  --ui-modal-inline-size-large: 48rem;
+  --ui-modal-max-block-size-small: 35rem;
+  --ui-modal-max-block-size-medium: 45rem;
+  --ui-modal-max-block-size-large: 50rem;
+  --ui-modal-viewport-inset: var(--ui-space-5);
+  --ui-modal-content-inset: var(--ui-space-5);
+  --ui-modal-section-gap: var(--ui-space-4);
+  --ui-modal-footer-inset-block: var(--ui-space-3);
+  --ui-track-row-thumb-size: var(--ui-track-artwork-size);
+  --ui-track-row-gap: var(--ui-space-2);
+  --ui-track-row-padding-block: var(--ui-space-1);
+  --ui-track-row-padding-inline: var(--ui-space-3);
+  --ui-track-row-state-surface-outset-inline: 0;
+  --ui-track-list-gap: var(--ui-space-1);
+  --ui-row-active-shadow: inset 2px 0 0 var(--ui-color-accent);
+  --ui-playlist-row-state-surface-outset-inline: var(
+    --ui-side-panel-row-state-surface-outset-inline
+  );
 
   color-scheme: var(--ui-color-scheme);
   background: var(--ui-color-canvas);
@@ -511,88 +558,120 @@
   font-size: var(--ui-font-size-md);
 }
 
-/* PlayerBar trailing controls explicitly adopt the saved density preference.
-   Keep this narrow: global control and row geometry remains fixed until each
-   surface has its own reviewed compact contract. */
-:root[data-ui-density='standard'] [data-ui-system='v1'] {
-  --ui-player-bar-action-size: 2.25rem; /* 36px */
-  --ui-player-bar-volume-slider-width: 6rem; /* 96px */
+/* Compact is a discrete remap, not a multiplier or a smaller type ramp. */
+:root[data-ui-density='compact'] [data-ui-system='v2'] {
+  --ui-control-height: 2rem;
+  --ui-track-row-min-height: 2.75rem;
+  --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
+  --ui-list-header-height: 2rem;
+  --ui-player-bar-height: 4.25rem;
+  --ui-player-volume-inline-size: 5rem;
+  --ui-panel-inset: 0.75rem;
+  --ui-shell-gutter: 0.5rem;
+  --ui-modal-viewport-inset: var(--ui-space-4);
+  --ui-modal-content-inset: var(--ui-space-4);
+  --ui-modal-section-gap: var(--ui-space-3);
+  --ui-modal-footer-inset-block: var(--ui-space-2);
 }
 
-:root[data-ui-density='compact'] [data-ui-system='v1'] {
-  --ui-player-bar-action-size: var(--ui-space-6); /* 32px */
-  --ui-player-bar-volume-slider-width: 5rem; /* 80px */
+/* A manual preference may only reduce motion; it cannot override the OS choice. */
+:root[data-ui-motion='reduced'] [data-ui-system='v2'] {
+  --ui-motion-duration-fast: 0ms;
+  --ui-motion-duration-standard: 0ms;
+  --ui-motion-duration-slow: 0ms;
 }
 
-/* Light theme: only color tokens are redefined — spacing, typography,
-   radius, opacity, motion, and z-index stay shared across themes. */
-:root[data-ui-theme='light'] [data-ui-system='v1'] {
-  /* --- Color: surfaces --- */
-  --ui-color-canvas: #f7f1e7;
-  --ui-color-surface: #fffdfa;
-  --ui-color-surface-raised: #ffffff;
-  --ui-color-surface-hover: #edf2ef;
-  --ui-color-surface-active: #e4ece8;
-  --ui-color-surface-selected: #dceee9;
-  --ui-color-surface-playing: #f1d9cc;
+@media (prefers-reduced-motion: reduce) {
+  [data-ui-system='v2'] {
+    --ui-motion-duration-fast: 0ms;
+    --ui-motion-duration-standard: 0ms;
+    --ui-motion-duration-slow: 0ms;
+  }
+}
 
-  /* --- Color: text --- */
-  --ui-color-text: #1f2328;
-  --ui-color-text-muted: #69747a;
+/* Language-aware Windows fallbacks keep one semantic UI-family token. */
+[data-ui-system='v2']:lang(ja),
+[data-ui-system='v2'] :lang(ja) {
+  --ui-font-family-base:
+    'Yu Gothic UI', 'Meiryo UI', 'Segoe UI Variable Text', 'Segoe UI',
+    system-ui, sans-serif;
+}
 
-  /* --- Color: borders --- */
-  --ui-color-border: #d8ded9;
-  --ui-color-border-strong: #b9c4c0;
+[data-ui-system='v2']:lang(ko),
+[data-ui-system='v2'] :lang(ko) {
+  --ui-font-family-base:
+    'Malgun Gothic', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+}
 
-  /* --- Color: shadow --- */
-  --ui-shadow-overlay: 0 1rem 2.375rem rgb(31 35 40 / 16%);
-  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(31 35 40 / 24%);
+/* Light is a semantic remap of the same primitives, not a color inversion. */
+:root[data-ui-theme='light'] [data-ui-system='v2'] {
+  --ui-color-scheme: light;
+  --ui-shadow-contact: 0 0.125rem 0.375rem rgb(39 41 40 / 10%);
+  --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(39 41 40 / 18%);
+  --ui-shadow-dialog: 0 1rem 2.5rem rgb(39 41 40 / 24%);
+  --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(39 41 40 / 24%);
 
-  /* --- Color: accent --- */
-  --ui-color-accent: #327a7f;
-  --ui-color-accent-hover: #286a6e;
-  --ui-color-accent-active: #20585c;
-  --ui-color-accent-soft: var(--ui-color-surface-selected);
-  --ui-color-accent-contrast: #fffdfa;
-  /* accent-contrast-muted omitted: its color-mix() formula above recomputes
-     from these redefined inputs. */
+  --ui-color-canvas: var(--ui-palette-warm-neutral-200);
+  --ui-color-surface: var(--ui-palette-warm-neutral-100);
+  --ui-color-surface-raised: var(--ui-palette-warm-neutral-50);
+  --ui-color-surface-hover: var(--ui-palette-neutral-100);
+  --ui-color-surface-active: var(--ui-palette-neutral-200);
+  --ui-color-surface-selected: var(--ui-palette-indigo-100);
 
-  /* --- Color: focus ring & now-playing indicator --- */
-  --ui-color-focus: #d26a45;
-  --ui-color-current: #9f4629;
-  --ui-color-current-soft: var(--ui-color-surface-playing);
+  --ui-color-text: var(--ui-palette-neutral-900);
+  --ui-color-text-muted: var(--ui-palette-neutral-600);
+  --ui-color-text-subtle: var(--ui-palette-neutral-500);
 
-  /* --- Color: status --- */
-  --ui-color-info: #4d8793;
+  --ui-color-border: var(--ui-palette-neutral-200);
+  --ui-color-border-strong: var(--ui-palette-neutral-400);
+
+  --ui-color-accent: var(--ui-palette-indigo-700);
+  --ui-color-accent-hover: var(--ui-palette-indigo-800);
+  --ui-color-accent-active: var(--ui-palette-indigo-900);
+  --ui-color-accent-soft: var(--ui-palette-indigo-100);
+  --ui-color-accent-contrast: var(--ui-palette-warm-neutral-100);
+  --ui-color-focus: var(--ui-palette-indigo-600);
+  --ui-color-current: var(--ui-color-accent);
+
+  --ui-color-neutral: var(--ui-palette-neutral-600);
+  --ui-color-info: var(--ui-palette-sky-700);
+  --ui-color-success: var(--ui-palette-green-700);
+  --ui-color-warning: var(--ui-palette-amber-800);
+  --ui-color-live: var(--ui-palette-red-700);
+  --ui-color-danger: var(--ui-palette-red-700);
+  --ui-color-danger-contrast: var(--ui-palette-warm-neutral-50);
+  --ui-color-status-contrast: var(--ui-palette-neutral-900);
+
+  /* Pastel identity remains in soft fills; foreground roles stay accessible. */
+  --ui-color-neutral-soft: color-mix(
+    in srgb,
+    var(--ui-palette-cool-gray-200) 28%,
+    transparent
+  );
   --ui-color-info-soft: color-mix(
     in srgb,
-    var(--ui-color-info) 18%,
+    var(--ui-palette-sky-300) 28%,
     transparent
   );
-  --ui-color-success: #5f9a72;
   --ui-color-success-soft: color-mix(
     in srgb,
-    var(--ui-color-success) 18%,
+    var(--ui-palette-green-300) 28%,
     transparent
   );
-  --ui-color-warning: #b78336;
   --ui-color-warning-soft: color-mix(
     in srgb,
-    var(--ui-color-warning) 18%,
+    var(--ui-palette-amber-300) 28%,
     transparent
   );
-  --ui-color-danger: #bd5961;
   --ui-color-danger-soft: color-mix(
     in srgb,
-    var(--ui-color-danger) 18%,
+    var(--ui-palette-red-300) 28%,
     transparent
   );
-  --ui-color-danger-contrast: #fffdfa;
-  --ui-color-gated: #9a6b45;
-  --ui-color-gated-bg: #f3eadc;
 
-  --ui-color-scheme: light;
+  --ui-color-folder-primary: var(--ui-palette-indigo-400);
+  --ui-color-folder-secondary: var(--ui-palette-plum-200);
+  --ui-color-folder-tertiary: var(--ui-palette-olive-200);
+  --ui-color-paper: var(--ui-palette-warm-neutral-50);
+  --ui-color-paper-text: var(--ui-palette-neutral-900);
 }
-
-/* Breakpoints: narrow 680px (stacked), medium 900px (sidebar/panel
-   collapse) — hardcoded, custom properties can't be used in media queries. */

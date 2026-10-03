@@ -52,8 +52,8 @@ function scrollToGroup(key) {
       <div class="demo-view__intro">
         <h1 id="demo-catalogue-title" class="demo-view__title">UI 元件目錄</h1>
         <p class="demo-view__summary">
-          F8 將待遷移元件維持 Candidate／Current 對照；已遷移元件則以同一正式
-          Ui* 實作檢查 Token v2／active scope。兩者都不代表 View 核准。
+          F8 保留研究標本與正式元件回歸；Candidate 不進入 production，也不代表
+          View 核准。
         </p>
       </div>
       <dl class="demo-view__meta" aria-label="展示頁資訊">

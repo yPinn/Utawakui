@@ -5,11 +5,7 @@ import { describe, expect, it } from 'vitest';
 import DemoFieldAppearance from './DemoFieldAppearance.vue';
 import DemoInputs from './DemoInputs.vue';
 
-const candidateTokens = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
-  'utf8',
-);
-const activeTokens = readFileSync(
+const tokenSource = readFileSync(
   new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
@@ -164,9 +160,9 @@ describe('DemoFieldAppearance', () => {
     ]) {
       expect(html).toContain(label);
     }
-    expect(candidateTokens).not.toContain('--ui-field-min-width');
-    expect(candidateTokens).not.toContain('--ui-field-max-width');
-    expect(candidateTokens).not.toContain('--ui-field-default-width');
+    expect(tokenSource).not.toContain('--ui-field-min-width');
+    expect(tokenSource).not.toContain('--ui-field-max-width');
+    expect(tokenSource).not.toContain('--ui-field-default-width');
 
     for (const [id, label] of [
       ['demo-field-candidate-size-standard', 'Standard 高度檢查'],
@@ -265,7 +261,7 @@ describe('DemoFieldAppearance', () => {
       '--ui-focus-width: 2px;',
       '--ui-focus-offset: 2px;',
     ]) {
-      expect(candidateTokens).toContain(declaration);
+      expect(tokenSource).toContain(declaration);
     }
 
     for (const value of [
@@ -283,17 +279,8 @@ describe('DemoFieldAppearance', () => {
     }
   });
 
-  it('uses an explicit active-token snapshot instead of inheriting the F8 candidate palette', async () => {
+  it('keeps the pre-adoption Current palette as an explicit local snapshot', async () => {
     const html = await renderToString(createSSRApp(DemoFieldAppearance));
-
-    for (const declaration of [
-      '--ui-control-height: 1.875rem;',
-      '--ui-field-bg: var(--ui-color-surface-hover);',
-      '--ui-field-bg-hover: var(--ui-color-surface-active);',
-      '--ui-color-focus: #dd7a64;',
-    ]) {
-      expect(activeTokens).toContain(declaration);
-    }
 
     expect(componentSource).toContain('--demo-current-field-height: 1.875rem;');
     expect(componentSource).toContain('--demo-current-field-bg: #344046;');
@@ -306,15 +293,7 @@ describe('DemoFieldAppearance', () => {
     expect(html).toContain('Light 4.23:1 · 未達 4.5:1');
   });
 
-  it('locks every current dark and light snapshot value to its active token', () => {
-    const activeDark = declarationsFor(activeTokens, "[data-ui-system='v1'] {");
-    const activeLight = {
-      ...activeDark,
-      ...declarationsFor(
-        activeTokens,
-        ":root[data-ui-theme='light'] [data-ui-system='v1'] {",
-      ),
-    };
+  it('locks every pre-adoption Current snapshot value in the specimen', () => {
     const snapshotDark = declarationsFor(
       componentSource,
       '.demo-field-layer--current {',
@@ -326,27 +305,39 @@ describe('DemoFieldAppearance', () => {
         ":global(:root[data-ui-theme='light'] .demo-field-layer--current)",
       ),
     };
-    const mappings = [
-      ['--demo-current-field-height', '--ui-field-height'],
-      ['--demo-current-field-bg', '--ui-field-bg'],
-      ['--demo-current-field-bg-hover', '--ui-field-bg-hover'],
-      ['--demo-current-field-fg', '--ui-field-fg'],
-      ['--demo-current-field-placeholder', '--ui-field-placeholder'],
-      ['--demo-current-field-border', '--ui-field-border'],
-      ['--demo-current-field-border-hover', '--ui-field-border-hover'],
-      ['--demo-current-field-invalid', '--ui-field-border-invalid'],
-      ['--demo-current-focus', '--ui-color-focus'],
-    ];
+    const expectedSnapshots = {
+      dark: {
+        '--demo-current-field-height': '1.875rem',
+        '--demo-current-field-bg': '#344046',
+        '--demo-current-field-bg-hover': '#3a464c',
+        '--demo-current-field-fg': '#f7f1e7',
+        '--demo-current-field-placeholder': '#aeb8b6',
+        '--demo-current-field-border': '#3c4749',
+        '--demo-current-field-border-hover': '#586568',
+        '--demo-current-field-invalid': '#dd7078',
+        '--demo-current-focus': '#dd7a64',
+      },
+      light: {
+        '--demo-current-field-height': '1.875rem',
+        '--demo-current-field-bg': '#edf2ef',
+        '--demo-current-field-bg-hover': '#e4ece8',
+        '--demo-current-field-fg': '#1f2328',
+        '--demo-current-field-placeholder': '#69747a',
+        '--demo-current-field-border': '#d8ded9',
+        '--demo-current-field-border-hover': '#b9c4c0',
+        '--demo-current-field-invalid': '#bd5961',
+        '--demo-current-focus': '#d26a45',
+      },
+    };
 
-    for (const [theme, snapshot, active] of [
-      ['dark', snapshotDark, activeDark],
-      ['light', snapshotLight, activeLight],
+    for (const [theme, snapshot] of [
+      ['dark', snapshotDark],
+      ['light', snapshotLight],
     ]) {
-      for (const [snapshotName, activeName] of mappings) {
-        expect(
-          resolveVariable(snapshotName, snapshot),
-          `${theme} ${snapshotName}`,
-        ).toBe(resolveVariable(activeName, active));
+      for (const [name, expected] of Object.entries(expectedSnapshots[theme])) {
+        expect(resolveVariable(name, snapshot), `${theme} ${name}`).toBe(
+          expected,
+        );
       }
     }
   });
@@ -354,30 +345,33 @@ describe('DemoFieldAppearance', () => {
   it('derives every displayed placeholder contrast ratio from its token layer', async () => {
     const html = await renderToString(createSSRApp(DemoFieldAppearance));
     const candidateDark = declarationsFor(
-      candidateTokens,
+      tokenSource,
       "[data-ui-system='v2'] {",
     );
     const candidateLight = {
       ...candidateDark,
       ...declarationsFor(
-        candidateTokens,
+        tokenSource,
         ":root[data-ui-theme='light'] [data-ui-system='v2'] {",
       ),
     };
-    const activeDark = declarationsFor(activeTokens, "[data-ui-system='v1'] {");
-    const activeLight = {
-      ...activeDark,
+    const currentDark = declarationsFor(
+      componentSource,
+      '.demo-field-layer--current {',
+    );
+    const currentLight = {
+      ...currentDark,
       ...declarationsFor(
-        activeTokens,
-        ":root[data-ui-theme='light'] [data-ui-system='v1'] {",
+        componentSource,
+        ":global(:root[data-ui-theme='light'] .demo-field-layer--current)",
       ),
     };
 
     for (const [label, tokens] of [
       ['Dark 5.69:1', candidateDark],
       ['Light 7.37:1 · AA', candidateLight],
-      ['Dark 5.25:1', activeDark],
-      ['Light 4.23:1 · 未達 4.5:1', activeLight],
+      ['Dark 5.25:1', currentDark],
+      ['Light 4.23:1 · 未達 4.5:1', currentLight],
     ]) {
       const ratio = contrastRatio(
         resolveVariable('--ui-field-placeholder', tokens),

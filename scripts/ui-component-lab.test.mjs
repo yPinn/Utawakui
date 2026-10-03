@@ -19,12 +19,11 @@ const productionMain = readFileSync(
 );
 
 describe('isolated shared UI component lab', () => {
-  it('loads scoped candidate tokens and real shared components', () => {
-    expect(main).toContain('styles/tokens-v2.css');
-    expect(main).toContain('token-v1-invalidation.generated.css');
-    expect(main).not.toContain('styles/tokens.css');
-    expect(productionMain).toContain('tokens-v2.css');
-    expect(productionMain).toContain('token-v1-invalidation.generated.css');
+  it('loads the adopted scoped tokens and real shared components', () => {
+    expect(main).toContain('styles/tokens.css');
+    expect(main).not.toContain('token-v1-invalidation');
+    expect(productionMain).toContain('tokens.css');
+    expect(productionMain).not.toContain('token-v1-invalidation');
     expect(app).toContain("registeredSurfaceAttributes('component-lab')");
     expect(config).toContain('root: __dirname');
 

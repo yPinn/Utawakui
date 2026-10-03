@@ -40,11 +40,7 @@
 .obs-template-mockup__manga-bubble {
   position: relative;
   box-sizing: border-box;
-  height: min(
-    max(36%, var(--ui-manga-frame-required-block-size)),
-    56%,
-    var(--ui-output-template-detail-artwork-size)
-  );
+  height: min(max(36%, var(--ui-manga-frame-required-block-size)), 56%);
   max-width: 100%;
   aspect-ratio: 2 / 3;
   justify-self: center;

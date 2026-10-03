@@ -1,6 +1,5 @@
 const createSurfaceDefinition = ({
   entryOwner,
-  migrationStatus,
   overlayHostId = null,
   parentSurfaceId = null,
   renderer,
@@ -9,7 +8,6 @@ const createSurfaceDefinition = ({
 }) =>
   Object.freeze({
     entryOwner,
-    migrationStatus,
     overlayHostId,
     parentSurfaceId,
     renderer,
@@ -20,7 +18,6 @@ const createSurfaceDefinition = ({
 export const UI_SURFACE_REGISTRY = Object.freeze({
   'app-shell': createSurfaceDefinition({
     entryOwner: 'src/main.js',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'app-shell-overlay',
     renderer: 'main',
     surfaceId: 'app-shell',
@@ -28,7 +25,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'app-shell-overlay': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'app-shell',
     renderer: 'main',
     surfaceId: 'app-shell-overlay',
@@ -36,7 +32,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'app-folder': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'app-folder-overlay',
     parentSurfaceId: 'app-shell',
     renderer: 'main',
@@ -45,7 +40,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'app-folder-overlay': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
     surfaceId: 'app-folder-overlay',
@@ -53,7 +47,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   setlist: createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'setlist-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -62,7 +55,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'setlist-overlay': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'setlist',
     renderer: 'main',
     surfaceId: 'setlist-overlay',
@@ -70,7 +62,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'performance-session-workspace': createSurfaceDefinition({
     entryOwner: 'src/views/SetlistView.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'performance-session-workspace-overlay',
     parentSurfaceId: 'setlist',
     renderer: 'main',
@@ -79,7 +70,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'performance-session-workspace-overlay': createSurfaceDefinition({
     entryOwner: 'src/views/SetlistView.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'performance-session-workspace',
     renderer: 'main',
     surfaceId: 'performance-session-workspace-overlay',
@@ -87,7 +77,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   lyrics: createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'lyrics-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -96,7 +85,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'lyrics-overlay': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'lyrics',
     renderer: 'main',
     surfaceId: 'lyrics-overlay',
@@ -104,7 +92,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   output: createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'output-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -113,7 +100,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'output-overlay': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'output',
     renderer: 'main',
     surfaceId: 'output-overlay',
@@ -121,7 +107,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   import: createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'import-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -130,7 +115,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'import-overlay': createSurfaceDefinition({
     entryOwner: 'src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'import',
     renderer: 'main',
     surfaceId: 'import-overlay',
@@ -138,7 +122,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'app-utility': createSurfaceDefinition({
     entryOwner: 'src/components/layout/AppUtilityPage.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'app-utility-overlay',
     parentSurfaceId: 'app-shell',
     renderer: 'main',
@@ -147,7 +130,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'app-utility-overlay': createSurfaceDefinition({
     entryOwner: 'src/components/layout/AppUtilityPage.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'app-utility',
     renderer: 'main',
     surfaceId: 'app-utility-overlay',
@@ -155,7 +137,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   performer: createSurfaceDefinition({
     entryOwner: 'src/performer-main.js',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'performer-overlay',
     renderer: 'performer',
     surfaceId: 'performer',
@@ -163,7 +144,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'performer-overlay': createSurfaceDefinition({
     entryOwner: 'src/performer/PerformerApp.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'performer',
     renderer: 'performer',
     surfaceId: 'performer-overlay',
@@ -171,7 +151,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'visual-review': createSurfaceDefinition({
     entryOwner: 'src/views/VisualSystemView.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'visual-review-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -180,7 +159,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'visual-review-overlay': createSurfaceDefinition({
     entryOwner: 'src/views/VisualSystemView.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'visual-review',
     renderer: 'main',
     surfaceId: 'visual-review-overlay',
@@ -188,7 +166,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'internal-tools': createSurfaceDefinition({
     entryOwner: 'src/views/InternalToolsView.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'internal-tools-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -197,7 +174,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'internal-tools-overlay': createSurfaceDefinition({
     entryOwner: 'src/views/InternalToolsView.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'internal-tools',
     renderer: 'main',
     surfaceId: 'internal-tools-overlay',
@@ -205,7 +181,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'component-lab': createSurfaceDefinition({
     entryOwner: 'prototypes/ui-component-lab/src/App.vue',
-    migrationStatus: 'registered-v2',
     overlayHostId: 'component-lab-overlay',
     renderer: 'prototype',
     surfaceId: 'component-lab',
@@ -213,7 +188,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'component-lab-overlay': createSurfaceDefinition({
     entryOwner: 'prototypes/ui-component-lab/src/App.vue',
-    migrationStatus: 'registered-v2',
     parentSurfaceId: 'component-lab',
     renderer: 'prototype',
     surfaceId: 'component-lab-overlay',
@@ -221,7 +195,6 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   'studio-library-prototype': createSurfaceDefinition({
     entryOwner: 'prototypes/studio-library-workspace/index.html',
-    migrationStatus: 'registered-v2',
     renderer: 'prototype',
     surfaceId: 'studio-library-prototype',
     system: 'v2',

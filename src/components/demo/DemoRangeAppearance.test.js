@@ -33,7 +33,7 @@ const rangeSource = readFileSync(
   'utf8',
 );
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
+  new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
 

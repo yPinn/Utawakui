@@ -332,8 +332,8 @@ function handleEscape(event) {
 }
 
 .bgm-player__feature-status :deep(svg) {
-  width: var(--ui-icon-size-sm);
-  height: var(--ui-icon-size-sm);
+  width: var(--ui-space-4);
+  height: var(--ui-space-4);
 }
 
 .bgm-player__session-status {

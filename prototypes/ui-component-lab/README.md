@@ -1,7 +1,7 @@
 # UI Component Lab
 
 This isolated Vite entry renders the real `src/components/ui/` Vue components
-under `tokens-v2.css`. It does not change the production renderer entry or connect
+under the production `tokens.css`. It does not connect
 to Electron preload, player, queue, library, or filesystem state.
 
 From the repository root:

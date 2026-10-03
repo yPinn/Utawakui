@@ -2,12 +2,8 @@ import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const appSource = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');
-const activeTokensSource = readFileSync(
+const tokensSource = readFileSync(
   new URL('../styles/tokens.css', import.meta.url),
-  'utf8',
-);
-const candidateTokensSource = readFileSync(
-  new URL('../styles/tokens-v2.css', import.meta.url),
   'utf8',
 );
 
@@ -78,31 +74,21 @@ describe('useUiDensity', () => {
     expect(appSource).toContain('useUiDensity();');
   });
 
-  it('limits production density adoption to PlayerBar trailing geometry', () => {
-    expect(candidateTokensSource).toContain(
+  it('uses one compact geometry remap without creating another type ramp', () => {
+    expect(tokensSource).toContain(
       ":root[data-ui-density='compact'] [data-ui-system='v2']",
     );
 
-    const standardBlock = activeTokensSource.match(
-      /:root\[data-ui-density='standard'\] \[data-ui-system='v1'\]\s*\{([^}]*)\}/su,
-    )?.[1];
-    const compactBlock = activeTokensSource.match(
-      /:root\[data-ui-density='compact'\] \[data-ui-system='v1'\]\s*\{([^}]*)\}/su,
+    const compactBlock = tokensSource.match(
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([^}]*)\}/su,
     )?.[1];
 
-    expect(standardBlock).toContain('--ui-player-bar-action-size: 2.25rem');
-    expect(standardBlock).toContain(
-      '--ui-player-bar-volume-slider-width: 6rem',
-    );
-    expect(compactBlock).toContain(
-      '--ui-player-bar-action-size: var(--ui-space-6)',
-    );
-    expect(compactBlock).toContain('--ui-player-bar-volume-slider-width: 5rem');
-
-    for (const block of [standardBlock, compactBlock]) {
-      expect(block).not.toContain('--ui-control-height:');
-      expect(block).not.toContain('--ui-row-height:');
-      expect(block).not.toContain('--ui-player-bar-height:');
-    }
+    expect(compactBlock).toContain('--ui-control-height: 2rem');
+    expect(compactBlock).toContain('--ui-track-row-min-height: 2.75rem');
+    expect(compactBlock).toContain('--ui-player-bar-height: 4.25rem');
+    expect(compactBlock).toContain('--ui-player-volume-inline-size: 5rem');
+    expect(compactBlock).not.toContain('--ui-font-size-');
+    expect(compactBlock).not.toContain('--ui-line-height-');
+    expect(tokensSource).not.toContain("[data-ui-system='v1']");
   });
 });

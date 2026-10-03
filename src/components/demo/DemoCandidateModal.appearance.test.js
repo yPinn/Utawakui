@@ -6,7 +6,7 @@ const source = readFileSync(
   'utf8',
 );
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
+  new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
 
@@ -28,15 +28,9 @@ describe('DemoCandidateModal appearance contract', () => {
     expect(tokenSource).toContain('--ui-modal-max-block-size-small: 35rem');
     expect(tokenSource).toContain('--ui-modal-max-block-size-medium: 45rem');
     expect(tokenSource).toContain('--ui-modal-max-block-size-large: 50rem');
-    expect(tokenSource).toContain(
-      '--ui-modal-width-default: var(--ui-modal-inline-size-small)',
-    );
-    expect(tokenSource).toContain(
-      '--ui-modal-width-notice: var(--ui-modal-inline-size-medium)',
-    );
-    expect(tokenSource).toContain(
-      '--ui-modal-width-wide: var(--ui-modal-inline-size-large)',
-    );
+    expect(tokenSource).not.toContain('--ui-modal-width-default');
+    expect(tokenSource).not.toContain('--ui-modal-width-notice');
+    expect(tokenSource).not.toContain('--ui-modal-width-wide');
     expect(source).toContain(
       '--demo-candidate-modal-inline-size: var(--ui-modal-inline-size-small)',
     );

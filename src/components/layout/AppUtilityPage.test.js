@@ -27,7 +27,7 @@ const source = readFileSync(
 );
 
 describe('AppUtilityPage', () => {
-  it('owns the complete registered-v2 Utility boundary and its overlay host', () => {
+  it('owns the complete Utility surface boundary and its overlay host', () => {
     expect(source).toContain("provideUiOverlayHost('app-utility')");
     expect(source).toContain("registeredSurfaceAttributes('app-utility')");
     expect(source).toContain("registeredOverlayHostAttributes('app-utility')");

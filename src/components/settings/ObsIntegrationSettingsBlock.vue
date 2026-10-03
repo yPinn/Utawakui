@@ -247,7 +247,7 @@ const outputSummary = computed(() => {
   justify-content: space-between;
   gap: var(--ui-space-2);
   padding-inline-start: var(--ui-space-2);
-  color: var(--ui-text-muted);
+  color: var(--ui-color-text-muted);
 }
 
 .obs-integration-settings-block__connection {

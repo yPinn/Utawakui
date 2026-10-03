@@ -27,7 +27,6 @@ describe('renderer surface registry', () => {
     expect(RENDERER_SURFACE_REGISTRY).toEqual({
       main: {
         entryOwner: 'src/main.js',
-        migrationStatus: 'registered-v2',
         overlayHostId: 'app-shell-overlay',
         parentSurfaceId: null,
         renderer: 'main',
@@ -36,7 +35,6 @@ describe('renderer surface registry', () => {
       },
       performer: {
         entryOwner: 'src/performer-main.js',
-        migrationStatus: 'registered-v2',
         overlayHostId: 'performer-overlay',
         parentSurfaceId: null,
         renderer: 'performer',
@@ -52,7 +50,6 @@ describe('renderer surface registry', () => {
   it('registers the Folder layout and Utility as sibling v2 surfaces', () => {
     expect(UI_SURFACE_REGISTRY['app-folder']).toMatchObject({
       entryOwner: 'src/App.vue',
-      migrationStatus: 'registered-v2',
       parentSurfaceId: 'app-shell',
       renderer: 'main',
       surfaceId: 'app-folder',
@@ -65,7 +62,6 @@ describe('renderer surface registry', () => {
       'data-ui-system': 'v2',
     });
     expect(UI_SURFACE_REGISTRY['app-utility']).toMatchObject({
-      migrationStatus: 'registered-v2',
       parentSurfaceId: 'app-shell',
       renderer: 'main',
       surfaceId: 'app-utility',
@@ -82,7 +78,6 @@ describe('renderer surface registry', () => {
   it('registers Setlist and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.setlist).toMatchObject({
       entryOwner: 'src/App.vue',
-      migrationStatus: 'registered-v2',
       overlayHostId: 'setlist-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
@@ -100,7 +95,6 @@ describe('renderer surface registry', () => {
   it('registers Output and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.output).toMatchObject({
       entryOwner: 'src/App.vue',
-      migrationStatus: 'registered-v2',
       overlayHostId: 'output-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
@@ -118,7 +112,6 @@ describe('renderer surface registry', () => {
   it('registers Lyrics and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.lyrics).toMatchObject({
       entryOwner: 'src/App.vue',
-      migrationStatus: 'registered-v2',
       overlayHostId: 'lyrics-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
@@ -136,7 +129,6 @@ describe('renderer surface registry', () => {
   it('registers Import and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.import).toMatchObject({
       entryOwner: 'src/App.vue',
-      migrationStatus: 'registered-v2',
       overlayHostId: 'import-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
@@ -154,7 +146,6 @@ describe('renderer surface registry', () => {
   it('registers the Performance Session workspace and overlay as v2', () => {
     expect(UI_SURFACE_REGISTRY['performance-session-workspace']).toMatchObject({
       entryOwner: 'src/views/SetlistView.vue',
-      migrationStatus: 'registered-v2',
       overlayHostId: 'performance-session-workspace-overlay',
       parentSurfaceId: 'setlist',
       renderer: 'main',

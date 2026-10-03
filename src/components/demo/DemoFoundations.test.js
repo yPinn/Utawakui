@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 import DemoFoundations from './DemoFoundations.vue';
 
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens-v2.css', import.meta.url),
+  new URL('../../styles/tokens.css', import.meta.url),
   'utf8',
 );
 

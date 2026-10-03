@@ -8,7 +8,7 @@
 
 .obs-template-mockup__now-player-shell {
   position: relative;
-  width: min(100%, var(--ui-output-template-detail-artwork-size));
+  width: 100%;
   aspect-ratio: 1;
   overflow: hidden;
   display: grid;

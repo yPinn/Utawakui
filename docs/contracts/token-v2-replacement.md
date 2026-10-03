@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; Phase 5 complete; Phase 6 final deletion next.
+Status: complete; Token v2 is the sole control-panel token system and Phase 6 final deletion is verified.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -16,14 +16,14 @@ Public Browser Source `overlay/` 維持獨立 `--ovl-*` 視覺系統，不參與
 - `AppFolderPage` 統一 header、body mode、focus 與 scroll ownership，feature 只負責內容與其內部 workspace。
 - Component、file、CSS、token、surface id 與測試名稱在各自 surface cutover 時同步收斂，不留下雙名稱。
 - Production 只以完整 registered surface 原子切換；Main、所有 child surfaces 與 Performer renderer 現已全數為 v2。
-- 最終只有在 legacy manifest 歸零、無 v1 scope／import／payload、無 migration alias 且所有 surface 通過 no-T1 驗證後刪除 Token v1。
+- Final deletion gate 已通過：legacy manifest／invalidation、v1 scope／import／payload、migration alias 與 registry status 均已移除。
 
 ## 範圍與非目標
 
 ### 本次範圍
 
 - Renderer App Shell、Folder page family、主要 feature pages、utility／specialist surfaces 與 Performer renderer。
-- Token scope、surface registry、legacy invalidation、migration manifest 與 no-T1 harness。
+- Token scope、stable surface registry、legacy migration infrastructure 的退役與 permanent no-v1 harness。
 - 正式 `Ui*` component consolidation、layout ownership 與 surface 內的命名收斂。
 - Dark／light、standard／compact、responsive、keyboard、focus、forced-colors、reduced-motion 與 Windows scaling acceptance。
 
@@ -55,7 +55,7 @@ Token v2 foundation 已足以開始 replacement infrastructure。現有 palette�
 
 主要缺口是正式 component consolidation、Shell／Folder ownership、fail-closed migration boundary、少量真實 consumer token 與命名一致性，不是 foundation 規模。
 
-Baseline 是 2026-10-03 由 `tasks/token-v1-gap-audit.mjs` 與 stylesheet declaration inventory 重算的 Phase 0 起點；Phase 0.3 至 Phase 2 數字由 `scripts/token-v2-migration-inventory.mjs` 產生的 checked-in manifest 驗證。Migration gate 只引用去重後的 `--ui-*` declared name 與 production `surface／file／token` pair；raw declarations只用來解釋 theme override 等重複來源。`tokens-v2.prototype.test.js` 的 pinned unique-name baseline 現為 407，後續數字只能由同一 canonical audit 更新。
+上表是 2026-10-03 Phase 0–2 的歷史 migration audit；當時由 `tasks/token-v1-gap-audit.mjs` 與已退役的 canonical generator／manifest 驗證。Phase 6 將採用 graph 收斂為唯一 `src/styles/tokens.css`，再移除三個只為舊 `UiModal` width contract 存在的 migration aliases，最終為 404 個 unique `--ui-*` names。永久 gate 不再保存 T1 名單，而是直接要求零 v1 runtime syntax、零 migration artifact、所有 registry entry 為 v2、所有 production `var(--ui-*)` 有正式或 component-owned declaration，並將 `DemoCandidate*` 隔離於 production graph 之外。
 
 ## 設計方向
 
@@ -334,7 +334,7 @@ Vue Teleport 保留 logical component tree，因此 surface provider 可以用 p
 
 Host resolver 由 renderer／surface composition 提供，primitive 內部解析，不要求每個 caller 傳 DOM selector。Host 必須在 overlay 開啟前存在，帶有自己的 `data-ui-surface`／`data-ui-system` registry identity，並保留 viewport escape、focus trap／return、dismissal、stack order 與既有 module-level modal ordering。Production primitive 不得在 host 缺失時靜默回退 `body`；測試 harness 如需 fallback，必須顯式註冊。Global shell notification／menu 與 feature modal 可以使用不同 host，但同一 overlay stack 的 z-order 規則只有一份。
 
-## Migration infrastructure
+## Migration infrastructure（歷史，Phase 6 已退役）
 
 切換 production 前先完成 scoped token entries、surface registry 與兩個機械 gate。V1／V2 各有明確 stylesheet entry 與 selector scope；production 預設仍為 v1，cross-version feature tokens 從 T1 core 抽離，不以 shared file 形成隱性 fallback。
 
@@ -366,7 +366,7 @@ Checked-in manifest 記錄每一個 T1-only `surface／file／token` pair 與 su
 
 Manifest 與 invalidation 名單都由同一 canonical token inventory 產生，不手抄第二份清單。Invalidation 只包含當下尚存的 T1-only names；已正式抽到 feature layer、正式跨系統 shared contract 或 T2 owner 的名稱不得被誤 poison。
 
-正式 generator 是 `scripts/token-v2-migration-inventory.mjs`；checked-in truth 為 `src/styles/token-v1-legacy-manifest.generated.json` 與 `src/styles/token-v1-invalidation.generated.css`。`npm run tokens:v2:check` 只檢查 byte-for-byte reproducibility，`npm run tokens:v2:generate` 才更新 artifacts。Phase 0.3 起兩個 renderer entry 都載入 generated invalidation；後續 surface cutover 必須靠它讓殘留 T1-only reference fail closed。
+遷移期間的 generator 是 `scripts/token-v2-migration-inventory.mjs`；checked-in truth 為 `src/styles/token-v1-legacy-manifest.generated.json` 與 `src/styles/token-v1-invalidation.generated.css`。`npm run tokens:v2:check` 檢查 byte-for-byte reproducibility，`npm run tokens:v2:generate` 更新 artifacts。這些 script、artifacts、commands 與 renderer invalidation import 已在 Phase 6 通過 final gate 後同批刪除；目前由 `tokenSystemFinalization.test.js` 提供 permanent source boundary。
 
 ### No-T1 harness
 
@@ -430,6 +430,8 @@ Surface 只有在以下條件全部成立後才可標記完成：
 |     5 | Performer renderer           | Performer entry、window chrome、stage 與 feature tokens 整面切換                                                                                                       | None                                                                         |
 |     6 | Final deletion               | Root defaults、development catalogue cleanup、T1 stylesheet／scope／payload removal                                                                                    | Public `overlay/` remains independent and unchanged                          |
 
+Phase 0–6 均已完成。表內 `Cutover`／`V2Adoption` 測試檔名保留為歷史 regression 分類，不是 runtime component、CSS、surface 或 token 的並存名稱；production contract 只有 stable v2 names。
+
 Studio Library Candidate remains evidence for layout and data density; it is not an extra production destination. Feature photos、stack、notes、template artwork and other approved visual work stay inside their feature surface and are not deleted by shell／page replacement.
 
 ### Primary feature order
@@ -465,17 +467,17 @@ Offscreen capture 與 DOM／CSS assertion 只能作 supporting evidence，不能
 
 ## Final deletion gate
 
-Token v1 can be deleted only when all conditions are machine-verifiable:
+Token v1 deletion completed after all conditions became machine-verifiable:
 
-- Legacy manifest and every surface allowlist are empty.
-- Production entries no longer import or package `tokens.css`.
-- No `[data-ui-system='v1']` scope、legacy invalidation entry or migration alias remains.
-- No T1 token consumer、舊 component import、舊 selector或雙名稱 wrapper remains.
-- No `DemoCandidate*` remains as an implementation truth; F8 uses formal components only.
-- Production bundle contains no T1 token payload.
+- Legacy manifest、invalidation、generator、npm commands 與 registry migration status 已刪除。
+- Production entries只載入 stable `tokens.css`，不再 import／package `tokens-v2.css` 或 invalidation entry。
+- No `[data-ui-system='v1']` scope、T1 token consumer、migration alias、舊 component import、舊 selector或雙名稱 wrapper remains。
+- `DemoCandidate*` visual specimens完整保留在 F8，但不得被 production graph import，也不是 implementation truth。
+- Stable token entry、feature styles與 component-local declarations覆蓋所有 production `var(--ui-*)` references。
+- Production bundle contains no T1 token payload；Main／Performer registry entries全為 v2。
 - Main renderer and Performer pass full automated and visible acceptance; public Output remains green under its independent tests.
 
-在此之前，狀態只能寫成「replacement in progress」，不得宣稱「Token v2 production-ready」或「migration complete」。
+`tokenSystemFinalization.test.js` 將上述 source boundary留在 CI；任何 v1 scope、migration file、未宣告 production token reference 或 Candidate production import 回流都會失敗。
 
 ## 當前狀態與下一步
 
@@ -483,7 +485,7 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已完成 Phase 5 Performer renderer，下一個 slice 是 Phase 6 final deletion。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已完成 Phase 6 final deletion。Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry只載入唯一 stable token entry。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font由 registered surface承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
@@ -507,4 +509,4 @@ Phase 4.2 已清理 `internal-tools` 內 Music Analysis 與 Lyrics Provider Revi
 
 Phase 5 已將 `performer`、`performer-overlay`、window toolbar、stage、lyric cue 與 Electron native substrate 原子切為 v2。最後 3 個 production-consumed legacy names／4 files／5 pairs 已清除；40px toolbar 改用正式 `--ui-window-titlebar-block-size`，字重改用 `semibold`／`bold`，native dark／light background同步為 `#191a1e`／`#e8e4dd`。Self-View snapshot authority、window controls、track／lyrics／reading／next-track anatomy與三個 Performer feature geometry names均未變更，既有 component names 已符合 renderer／role 結構，因此沒有 cosmetic rename。
 
-Canonical generator 現在鎖定 T1 292／T2 407／T1-only 48 unique declarations，production-consumed legacy names／files／pairs 均為 0。所有 production surfaces 已完成 cutover；下一個 atomic implementation slice 是 Phase 6 final deletion，只有通過完整 no-T1／scope／payload／import gate後才移除 T1 stylesheet 與 migration infrastructure。
+Phase 6 已將 v2 graph 原子移入 `src/styles/tokens.css`，刪除 T1 stylesheet、`tokens-v2.css`、legacy manifest／invalidation、generator／readiness scripts、npm commands與 registry migration status。三個 `UiModal` migration aliases同批改為正式 `inline-size` names後移除，stable graph為404個 unique names。永久 gate另修正6個既有未宣告 production references：BGM icon尺寸改用spacing foundation、Settings／Lyrics typography與muted color改用正式 semantics、Output mockup移除無owner尺寸上限。F8 final board、17個`DemoCandidate*.vue`、Studio Library Candidate、Folder component-owned exterior color與所有 feature artwork均保留；Candidate import boundary明確禁止進入production graph。下一步不再有Token migration phase，後續只依真實consumer另案審查component／View產品決策。

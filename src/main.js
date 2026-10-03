@@ -4,8 +4,6 @@ import { installRendererDiagnostics } from './utils/rendererDiagnostics.js';
 import { registerRendererSurfaceRoot } from './utils/rendererSurfaceRegistry.js';
 import { scheduleFirstPaintMilestone } from './utils/startupTrace.js';
 import './styles/tokens.css';
-import './styles/tokens-v2.css';
-import './styles/token-v1-invalidation.generated.css';
 import './styles/base.css';
 
 const surfaceRoot = registerRendererSurfaceRoot('main');

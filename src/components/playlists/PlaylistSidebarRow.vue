@@ -357,7 +357,7 @@ function toggleFromArtwork(event) {
    and useSidebarResize.js's snap-to-min behavior) — collapses straight to
    icon-only rather than letting the title/kind text get squeezed and
    clipped. Literal px value, kept in sync by hand with
-   --ui-sidebar-compact-threshold in tokens-v2.css since @container
+   --ui-sidebar-compact-threshold in tokens.css since @container
    conditions can't reference custom properties. Range syntax (strict `<`),
    not max-width — the default width equals this threshold, and
    max-width's inclusive `<=` would collapse it to icon-only on every

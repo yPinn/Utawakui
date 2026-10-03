@@ -269,7 +269,7 @@ function handleNoticeAction(operation) {
 
 .feedback-report__row dt {
   color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-xs);
+  font-size: var(--ui-font-size-sm);
 }
 
 .feedback-report__row dd {

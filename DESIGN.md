@@ -86,65 +86,32 @@ components:
     padding: '1rem'
 ---
 
-<!-- BASELINE: this is a first-pass scaffold and remains the current production
-     baseline. A successor direction (Studio Library／Architectural Slate) has
-     already been owner-approved as a development candidate — see the status
-     callout below — but has not been adopted here. Replace palette character,
-     final type choices, and component details once that adoption happens. -->
+> **Visual system status — 2026-10-03:** Token v2 is the sole control-panel
+> token system. `src/styles/tokens.css` is the only renderer token entry; every
+> registered Main／Performer surface uses the same v2 boundary contract. Token
+> v1, migration aliases, generated invalidation／manifest files and dual token
+> imports have been removed. The completed replacement record lives in
+> [Token v2 Replacement](docs/contracts/token-v2-replacement.md).
 
-> **Visual refresh status — 2026-09-30:** Token v2 is reviewed in strict
-> Foundation → primitive／Field family → compound component → View order. The
-> development-only F8 component review now covers all 30 catalogue sections,
-> from Foundation through UiModal; its recorded decisions and next gate live in
-> [Token v2 Component Review](docs/contracts/token-v2-component-review.md).
-> The later Scrollbar appearance checkpoint is now approved and adopted as the
-> shared production `UiScrollRegion`. The first controlled production baseline
-> also freezes `UiSeparator`、`UiStack`、`UiSurface` and
-> `UiSegmentedControl` after their real consumers proved the shared contracts.
-> The page-action baseline now also migrates `UiButton`、`UiIconButton` and
-> `UiTextButton`: F8 renders the same formal components in Token v2 and active
-> token scopes instead of maintaining parallel action implementations.
-> `UiButton` keeps action hierarchy and destructive meaning as separate axes:
-> `variant` selects Accent／Secondary／Ghost, while `intent="danger"` remaps the
-> same hierarchy through Button-owned danger aliases. Only irreversible or
-> explicitly confirmed loss consumes that intent; clear, stop and cancel do not
-> become destructive by wording alone.
-> Range is now formally split into the bare `UiRangeControl` and Field compound
-> `UiRange`. PlayerBar、Player Tools and OBS appearance use the same native-input
-> authority; the authored track／fill／interaction thumb remains Token v2-only,
-> while active tokens retain native appearance compatibility.
-> `InternalToolsView` is the first multi-workbench consumer that mounts the
-> Token v2 root scope for its full lifetime: Operations contains F5 Music
-> Analysis and F6 Live Diagnostics; Evaluation contains Music M2 and F7 Lyrics
-> Provider Corpus. These dev-only workbenches use the same `Ui*` primitives,
-> restore the prior root scope when leaving, and do not authorize a
-> production-wide Token v2 switch.
-> These adoptions do not authorize a production-wide Token v2 palette switch.
-> F8 Studio Library／Controlled Dossier is now an active development-only View
-> candidate. Its current owner checkpoint still cannot approve Candidate
-> production adoption by implication.
+F8 remains a development-only decision and regression surface. Its historical
+Candidate／Current specimens, Studio Library Candidate, final decision board and
+feature artwork are retained as review evidence, but they are not production
+implementation truth or an extra destination. New production work must use the
+formal `Ui*` components and the stable token entry. The component review history
+and unresolved product-level choices remain in
+[Token v2 Component Review](docs/contracts/token-v2-component-review.md).
 
-The accepted end state and migration boundary are defined in
-[Token v2 Replacement](docs/contracts/token-v2-replacement.md): Token v2 fully
-replaces Token v1 through fail-closed, registered surface cutovers. It does not
-permit permanent compatibility fallback or authorize changes to feature visual
-design outside each approved surface.
-
-The owner-selected replacement direction remains recorded in
+The adopted visual direction comes from
 [Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md):
-Direction B／Studio Library, Architectural Slate, semantic status signals, and the
-Controlled Dossier folder interior. Candidate values in
-`src/styles/tokens-v2.css` remain isolated from production until a separate
-page or global adoption decision. The active shared adoption subset is
-`UiScrollRegion`, the four token-compatible baseline primitives named above,
-and the three formal action primitives; the Architectural Slate palette itself
-remains opt-in.
+Direction B／Studio Library, Architectural Slate, semantic status signals and the
+Controlled Dossier folder interior. Folder exterior material remains owned by
+`AppFolderLayout`; feature surfaces own their content and approved artwork.
 
 ## Overview
 
 Utawakui is a product UI for live operation. The design system should support a calm desktop control panel first, then extend to responsive and OBS overlay surfaces without assuming that all surfaces share the same tokens.
 
-This scaffold started with a restrained, neutral product baseline: stable rem-based scales, semantic states, predictable components, visible focus, and responsive constraints. It also carries a more specific identity layer that remains the current production baseline: a local-media card sleeve, a quiet cat-card presence, and a restrained graphite / teal / paper / coral palette. An owner-approved successor direction already exists as a development candidate (see the status callout above) but has not replaced this baseline in production.
+The production baseline uses stable rem-based scales, semantic states, predictable components, visible focus, responsive constraints and the adopted Architectural Slate identity. Local-media sleeve, cat-card, paper and feature artwork remain feature-owned; status color never doubles as content material.
 
 **Key Characteristics:**
 
@@ -224,20 +191,19 @@ Rejected icon directions:
 ## Color Direction
 
 This section documents the palette currently shipping in production
-(`src/styles/tokens.css`). The owner-approved successor — Architectural Slate's
-indigo accent and folder-material roles, with the Clear Pastel status-color
-system — is recorded as a development candidate in
-[Visual System Foundation](docs/research/visual-system-foundation-2026-08-28.md)
-and is not reflected below until it is adopted.
+(`src/styles/tokens.css`): Architectural Slate uses neutral／warm-neutral canvas
+roles, Indigo for accent and selection, dedicated folder-material roles, and
+Clear Pastel signal primitives mapped through accessible semantic foregrounds.
 
-The brand should not be locked to folder blue. Use graphite, washed teal, paper, and coral as a restrained base.
+Folder color is a component material, not the global brand accent. Status roles
+remain independent from folder and artwork color.
 
 ```text
-Graphite      #1f2328
-Washed Teal   #3f8f94
-Paper         #f7f1e7
-Coral         #d26a45
-Mist          #b8d8d2
+Dark Canvas   #191a1e
+Dark Accent   #8296d0
+Light Canvas  #e8e4dd
+Light Accent  #3d578e
+Paper         #fbfaf7
 ```
 
 Use a 60/30/10 ratio:
@@ -478,10 +444,9 @@ The desktop shell projects one explicit density value onto the document root.
 A restored／windowed `BrowserWindow` uses `data-ui-density="compact"`; maximized
 and full-screen states use `data-ui-density="standard"`. Electron native window
 state is authoritative: manual resizing does not switch density, and CSS viewport
-or media queries must not guess it. Active production tokens consume this
-attribute only for explicitly reviewed surfaces; Token v2 surfaces that opt into
-`data-ui-system="v2"` may remap their broader dimensions. Content-driven
-responsive reflow remains a separate parent-layout responsibility.
+or media queries must not guess it. The stable production token entry consumes
+this attribute only for dimensions explicitly listed in its compact remap.
+Content-driven responsive reflow remains a separate parent-layout responsibility.
 
 The accompaniment toolbar popover is an explicit production opt-in to this native
 density projection. Compact／windowed uses 17–20rem by 14–21rem;
@@ -588,7 +553,7 @@ Add new global CSS files only when the purpose is real and shared. Likely future
 
 Component-specific styling stays inside Vue SFC `<style scoped>` blocks unless it becomes a reusable primitive or global rule.
 
-During Token v2 replacement, the document root remains the authority for theme／density／motion／language metadata and literal platform `color-scheme`, but it is not a v1／v2 visual-system root. Main and Performer register their full-viewport `#app` surface before Vue mount; nested surface recipes resolve from the nearest registered boundary. The complete transition inventory, shared-component coexistence rule and overlay-host contract live in [Token v2 完整替換契約](docs/contracts/token-v2-replacement.md).
+The document root remains the authority for theme／density／motion／language metadata and literal platform `color-scheme`, but it is not a visual-system root. Main and Performer register their full-viewport `#app` surface before Vue mount; nested recipes resolve from the nearest registered v2 boundary and Teleport content resolves through that surface's overlay host. The completed transition record and stable boundary contract live in [Token v2 完整替換契約](docs/contracts/token-v2-replacement.md).
 
 A component whose CSS outgrows its SFC may split it into sibling files imported with `<style scoped src="./Name.part.css">`, as `ObsTemplateMockup.vue` does. Keep the files beside the SFC (relative `url()` paths stay valid) and follow these rules:
 
@@ -700,7 +665,7 @@ The current palette is a placeholder baseline, not the final brand identity. Tre
 
 ### Color Rules
 
-**The Placeholder Color Rule.** These colors are structural placeholders. Do not treat the current teal accent or dark neutral surface as final brand identity — a successor palette (Architectural Slate) is already an owner-approved development candidate; see the status callout at the top of this document.
+**The Material Color Rule.** Folder、paper and artwork colors identify material or content. They do not replace Accent or semantic status roles.
 
 **The One Accent Rule.** A screen should have one primary accent role. Do not introduce competing highlight colors for decoration.
 
@@ -1052,10 +1017,10 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 ### Sliders / Transport Controls
 
 - **Sliders:** use for continuous values such as volume, pitch cents, and tempo rate.
-- **Primitive ownership:** `UiRangeControl` owns the single native range input, Token v2 track／fill／thumb, optional in-track stops and pointer-position preview. `UiRange` adds Field label／hint／error and optional current-value output; compact transport and tool recipes use the bare control instead of forcing a Field wrapper into dense chrome.
-- **Appearance:** Token v2 uses a neutral track and fill at rest, hides the thumb until hover／drag／focus, switches the fill to Accent during interaction, uses Accent Active while pressed, and lets invalid Danger override interaction color. Disabled controls remain at 50% and show neither preview nor interaction thumb.
+- **Primitive ownership:** `UiRangeControl` owns the single native range input, authored track／fill／thumb, optional in-track stops and pointer-position preview. `UiRange` adds Field label／hint／error and optional current-value output; compact transport and tool recipes use the bare control instead of forcing a Field wrapper into dense chrome.
+- **Appearance:** the production token system uses a neutral track and fill at rest, hides the thumb until hover／drag／focus, switches the fill to Accent during interaction, uses Accent Active while pressed, and lets invalid Danger override interaction color. Disabled controls remain at 50% and show neither preview nor interaction thumb.
 - **Preview:** mouse／pen movement previews the clamped, step-aligned pointer position without changing the model. The caller formats time, percentage, signed units or rate through `formatValue`; `valueText` continues to describe the current model for visible output and `aria-valuetext`. Touch does not open the hover preview.
-- **Compatibility:** the custom appearance and Range color aliases exist only in Token v2. Active／v1 keeps native Chromium appearance; do not add duplicate Range aliases to `tokens.css` merely for symmetry.
+- **Compatibility:** all production range consumers use this formal contract. Do not reintroduce native-appearance branches or duplicate Range aliases.
 - **Steppers:** use for discrete increments such as semitone changes.
 - **Transport:** play/pause/next/previous controls should be visually stable and never shift layout.
 
@@ -1074,7 +1039,7 @@ Do not place feature-specific behavior in `ui/`. A component belongs in `ui/` on
 
 ### Don't
 
-- **Don't** treat the current graphite/washed-teal palette as the final brand — the approved successor (Architectural Slate) is a development candidate, not yet adopted.
+- **Don't** reintroduce the retired graphite／washed-teal baseline or use Folder material as the global accent.
 - **Don't** use glow, glassmorphism, purple-blue gradients, beige/cream defaults, or decorative effects as the product identity.
 - **Don't** use nested cards as page structure.
 - **Don't** create hover-only controls that fail on touch.

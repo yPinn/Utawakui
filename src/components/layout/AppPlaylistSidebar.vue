@@ -138,7 +138,7 @@ async function handleResizeKeydown(event) {
   /* An inset box-shadow, not a border — this element is also the size
      container query root below, and a real border shrinks its content-box
      just enough to falsely trigger the compact-mode @container rule at the
-     sidebar's default width (see tokens-v2.css's compact-threshold token). */
+     sidebar's default width (see tokens.css's compact-threshold token). */
   box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
   /* Lets PlaylistSidebar.vue/PlaylistSidebarRow.vue's @container rules
      query this element's own width instead of the viewport. */

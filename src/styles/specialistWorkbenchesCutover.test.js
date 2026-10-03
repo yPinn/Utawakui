@@ -9,10 +9,7 @@ const navigationSource = readSource(
   '../components/internal-tools/InternalToolsNavigation.vue',
 );
 const registrySource = readSource('../utils/rendererSurfaceRegistry.js');
-const tokenV1Source = readSource('./tokens.css');
-const legacyManifest = JSON.parse(
-  readSource('./token-v1-legacy-manifest.generated.json'),
-);
+const tokenSource = readSource('./tokens.css');
 
 const specialistConsumerPaths = [
   '../components/analysis/MusicAnalysisBatchPanel.vue',
@@ -32,17 +29,15 @@ const retiredLegacyAliases = [
   '--ui-radius',
 ];
 
-const specialistLegacyTokens = [
-  ...new Set([...legacyManifest.legacyTokens, ...retiredLegacyAliases]),
-];
+const specialistLegacyTokens = retiredLegacyAliases;
 
 describe('Specialist workbench Token v2 cleanup', () => {
   it('keeps Internal Tools and its overlay as one registered v2 surface', () => {
     expect(registrySource).toMatch(
-      /'internal-tools':\s*createSurfaceDefinition\(\{(?=[^}]*migrationStatus:\s*'registered-v2')(?=[^}]*overlayHostId:\s*'internal-tools-overlay')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
+      /'internal-tools':\s*createSurfaceDefinition\(\{(?=[^}]*overlayHostId:\s*'internal-tools-overlay')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
     );
     expect(registrySource).toMatch(
-      /'internal-tools-overlay':\s*createSurfaceDefinition\(\{(?=[^}]*migrationStatus:\s*'registered-v2')(?=[^}]*parentSurfaceId:\s*'internal-tools')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
+      /'internal-tools-overlay':\s*createSurfaceDefinition\(\{(?=[^}]*parentSurfaceId:\s*'internal-tools')(?=[^}]*system:\s*'v2')[^}]*\}\)/su,
     );
     expect(internalToolsSource).toContain(
       "provideUiOverlayHost('internal-tools')",
@@ -58,9 +53,7 @@ describe('Specialist workbench Token v2 cleanup', () => {
     }
 
     for (const token of retiredLegacyAliases) {
-      expect(tokenV1Source, token).not.toMatch(
-        new RegExp(`${token}\\s*:`, 'u'),
-      );
+      expect(tokenSource, token).not.toMatch(new RegExp(`${token}\\s*:`, 'u'));
     }
   });
 
