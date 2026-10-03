@@ -775,6 +775,9 @@ onUnmounted(() => {
 
 <style scoped>
 .settings-view {
+  --settings-view-column-min-width: 22rem;
+  --settings-view-column-gap: var(--ui-space-4);
+
   height: 100%;
   min-height: 0;
   display: grid;
@@ -790,7 +793,7 @@ onUnmounted(() => {
   display: grid;
   grid-template-columns: repeat(
     auto-fit,
-    minmax(min(100%, var(--ui-settings-column-min-width)), 1fr)
+    minmax(min(100%, var(--settings-view-column-min-width)), 1fr)
   );
   gap: var(--ui-space-5);
   align-content: start;
@@ -800,6 +803,6 @@ onUnmounted(() => {
   min-width: 0;
   display: grid;
   align-content: start;
-  gap: var(--ui-settings-column-gap);
+  gap: var(--settings-view-column-gap);
 }
 </style>

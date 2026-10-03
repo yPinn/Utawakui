@@ -100,7 +100,7 @@ function openDownload(targetId) {
   gap: var(--ui-space-3);
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
@@ -126,7 +126,7 @@ function openDownload(targetId) {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 

@@ -109,7 +109,7 @@ describe('UiScrollRegion production migration', () => {
     const folderPageSource = batchOneConsumers[0].source;
     const sidebarSource = batchOneConsumers[1].source;
     const settingsSource = batchOneConsumers[3].source;
-    const utilitySource = readSource('../layout/AppUtilityFrame.vue');
+    const utilitySource = readSource('../layout/AppUtilityPage.vue');
 
     expect(folderPageSource).toMatch(
       /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
@@ -128,7 +128,7 @@ describe('UiScrollRegion production migration', () => {
       /\.settings-view\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*minmax\(0, 1fr\);/su,
     );
     expect(utilitySource).toMatch(
-      /\.app-utility-frame\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
+      /\.app-utility-page\s*\{[^}]*display:\s*grid;[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*gap:/su,
     );
   });
 
@@ -153,7 +153,7 @@ describe('UiScrollRegion production migration', () => {
     const popoverSource = batchTwoConsumers[3].source;
     const dockPanelSource = readSource('../layout/AppRightDockPanel.vue');
     const settingsSource = batchOneConsumers[3].source;
-    const utilitySource = readSource('../layout/AppUtilityFrame.vue');
+    const utilitySource = readSource('../layout/AppUtilityPage.vue');
     const trackTableSource = batchOneConsumers[2].source;
 
     expect(modalSource.indexOf('class="ui-modal__header"')).toBeLessThan(
@@ -169,8 +169,8 @@ describe('UiScrollRegion production migration', () => {
     );
     expect(settingsSource).not.toContain('class="settings-view__header"');
     expect(
-      utilitySource.indexOf('class="app-utility-frame__header"'),
-    ).toBeLessThan(utilitySource.indexOf('class="app-utility-frame__body"'));
+      utilitySource.indexOf('class="app-utility-page__header"'),
+    ).toBeLessThan(utilitySource.indexOf('class="app-utility-page__body"'));
     expect(
       trackTableSource.indexOf('class="studio-track-table__header"'),
     ).toBeLessThan(

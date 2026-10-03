@@ -49,7 +49,7 @@ describe('renderer surface registry', () => {
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.performer)).toBe(true);
   });
 
-  it('registers the Folder layout as v2 while Utility remains a v1 child', () => {
+  it('registers the Folder layout and Utility as sibling v2 surfaces', () => {
     expect(UI_SURFACE_REGISTRY['app-folder']).toMatchObject({
       entryOwner: 'src/App.vue',
       migrationStatus: 'registered-v2',
@@ -65,11 +65,17 @@ describe('renderer surface registry', () => {
       'data-ui-system': 'v2',
     });
     expect(UI_SURFACE_REGISTRY['app-utility']).toMatchObject({
-      migrationStatus: 'registered-v1',
+      migrationStatus: 'registered-v2',
       parentSurfaceId: 'app-shell',
       renderer: 'main',
       surfaceId: 'app-utility',
-      system: 'v1',
+      system: 'v2',
+    });
+    expect(registeredOverlayHostAttributes('app-utility')).toMatchObject({
+      id: 'app-utility-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'app-utility-overlay',
+      'data-ui-system': 'v2',
     });
   });
 

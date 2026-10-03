@@ -248,7 +248,6 @@
   --ui-notification-stack-gap: var(--ui-space-2);
   --ui-notification-motion-offset: var(--ui-space-4);
   --ui-notification-swipe-dismiss-distance: 4.5rem;
-  --ui-separation-mode-min-width: 8.5rem; /* mode label + native select affordance */
   /* --- Sizing: overlays --- */
   --ui-modal-width-default: 26.25rem; /* 420px: short forms */
   --ui-modal-width-notice: 40rem; /* 640px: confirmation copy with bullets */
@@ -408,13 +407,6 @@
   );
   --ui-right-dock-sticky-blur: 0.75rem;
   --ui-right-dock-sticky-shadow: 0 0.5rem 1.25rem -0.75rem rgb(0 0 0 / 48%);
-
-  /* --- Sizing: settings --- */
-  --ui-settings-row-copy-gap: var(--ui-space-1);
-  --ui-settings-column-min-width: 22rem;
-  --ui-settings-column-gap: var(--ui-space-4);
-  --ui-settings-column-header-gap: var(--ui-space-1);
-  --ui-settings-checkbox-size: var(--ui-space-4);
 
   /* --- Sizing: track rows & player bar --- */
   --ui-track-row-min-height: 3.25rem; /* 52px */

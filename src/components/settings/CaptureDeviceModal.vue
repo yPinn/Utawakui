@@ -256,7 +256,7 @@ function choose(deviceId) {
   min-height: var(--ui-control-height);
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font: inherit;
@@ -283,7 +283,7 @@ function choose(deviceId) {
   padding: var(--ui-space-2) var(--ui-space-1) 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-caption);
 }
 

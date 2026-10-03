@@ -84,9 +84,11 @@ function handlePresetChange(event) {
 }
 
 .separation-preset-control__row {
+  --separation-preset-mode-min-width: 8.5rem;
+
   display: grid;
   grid-template-columns:
-    max-content minmax(var(--ui-separation-mode-min-width), 1fr)
+    max-content minmax(var(--separation-preset-mode-min-width), 1fr)
     max-content;
   min-width: 0;
   align-items: center;
@@ -96,7 +98,7 @@ function handlePresetChange(event) {
 .separation-preset-control__label {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -108,7 +110,7 @@ function handlePresetChange(event) {
   min-inline-size: 0;
   padding-inline: var(--ui-space-2) var(--ui-space-5);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
@@ -129,9 +131,9 @@ function handlePresetChange(event) {
   height: var(--ui-control-height);
   align-items: center;
   justify-content: center;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 

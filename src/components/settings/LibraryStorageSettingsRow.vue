@@ -191,7 +191,7 @@ function updatePolicy(fields) {
 .library-storage__title {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 

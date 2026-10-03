@@ -17,16 +17,16 @@ describe('Token v2 migration inventory', () => {
   it('builds a deterministic canonical legacy manifest', () => {
     expect(inventory.schemaVersion).toBe(1);
     expect(inventory.declarations).toEqual({
-      v1: 305,
+      v1: 299,
       v2: 407,
-      v1Only: 61,
+      v1Only: 55,
     });
     expect(inventory.production).toMatchObject({
-      files: 20,
-      tokens: 11,
-      pairs: 33,
+      files: 12,
+      tokens: 7,
+      pairs: 17,
     });
-    expect(inventory.legacyTokens).toHaveLength(61);
+    expect(inventory.legacyTokens).toHaveLength(55);
     expect(inventory.legacyTokens).toEqual(
       [...inventory.legacyTokens].toSorted(),
     );
@@ -72,7 +72,7 @@ describe('Token v2 migration inventory', () => {
     const css = renderLegacyInvalidationCss(inventory.legacyTokens);
 
     expect(css).toContain("[data-ui-system='v2'] {");
-    expect(css.match(/^ {2}--ui-[\w-]+: initial;$/gmu)).toHaveLength(61);
+    expect(css.match(/^ {2}--ui-[\w-]+: initial;$/gmu)).toHaveLength(55);
     for (const token of inventory.legacyTokens) {
       expect(css).toContain(`  ${token}: initial;`);
     }
@@ -88,9 +88,9 @@ describe('Token v2 migration inventory', () => {
     });
 
     expect(summary).toEqual({
-      declarations: { v1: 305, v1Only: 61, v2: 407 },
+      declarations: { v1: 299, v1Only: 55, v2: 407 },
       mode: 'check',
-      production: { files: 20, pairs: 33, tokens: 11 },
+      production: { files: 12, pairs: 17, tokens: 7 },
     });
     expect(JSON.parse(output)).toEqual(summary);
   });

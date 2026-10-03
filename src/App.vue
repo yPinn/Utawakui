@@ -15,7 +15,7 @@ import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppRightDock from './components/layout/AppRightDock.vue';
 import AppSurfaceBoundary from './components/layout/AppSurfaceBoundary.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
-import AppUtilityFrame from './components/layout/AppUtilityFrame.vue';
+import AppUtilityPage from './components/layout/AppUtilityPage.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
@@ -437,7 +437,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
         class="shell__workspace"
         :class="{ 'shell__workspace--utility': isSettingsView }"
       >
-        <AppUtilityFrame
+        <AppUtilityPage
           v-if="isSettingsView"
           title="設定"
           description="管理曲庫、音訊、進階功能與應用程式行為。"
@@ -445,7 +445,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
           @back="leaveSettings"
         >
           <SettingsView />
-        </AppUtilityFrame>
+        </AppUtilityPage>
         <AppSurfaceBoundary v-else surface-id="app-folder">
           <AppFolderLayout
             :active-destination="folderActiveDestination"

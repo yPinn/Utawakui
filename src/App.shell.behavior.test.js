@@ -24,14 +24,15 @@ describe('App shell right Dock', () => {
     expect(source).not.toContain('v-model:active-view="activeView"');
   });
 
-  it('renders Settings in a mutually exclusive shell utility frame', () => {
+  it('renders Settings in a mutually exclusive shell utility page', () => {
     expect(source).toContain(
-      "import AppUtilityFrame from './components/layout/AppUtilityFrame.vue';",
+      "import AppUtilityPage from './components/layout/AppUtilityPage.vue';",
     );
     expect(source).toContain(':settings-active="isSettingsView"');
     expect(source).toContain(':update-available="appUpdateReady"');
     expect(source).toContain('@open-settings="openSettings"');
-    expect(source).toMatch(/<AppUtilityFrame\s+v-if="isSettingsView"/u);
+    expect(source).toMatch(/<AppUtilityPage\s+v-if="isSettingsView"/u);
+    expect(source).not.toContain('AppUtilityFrame');
     expect(source).toContain('@back="leaveSettings"');
     expect(source).toContain('<SettingsView />');
     expect(source).toMatch(

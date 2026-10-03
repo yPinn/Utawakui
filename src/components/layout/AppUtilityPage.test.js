@@ -1,7 +1,7 @@
 import { h, inject } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
-import AppUtilityFrame from './AppUtilityFrame.vue';
+import AppUtilityPage from './AppUtilityPage.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
@@ -14,7 +14,7 @@ import {
 } from '../ui/uiTestHost.js';
 
 for (const [component, filename] of [
-  [AppUtilityFrame, './AppUtilityFrame.vue'],
+  [AppUtilityPage, './AppUtilityPage.vue'],
   [UiButton, '../ui/UiButton.vue'],
   [UiSurface, '../ui/UiSurface.vue'],
 ]) {
@@ -22,12 +22,12 @@ for (const [component, filename] of [
 }
 
 const source = readFileSync(
-  new URL('./AppUtilityFrame.vue', import.meta.url),
+  new URL('./AppUtilityPage.vue', import.meta.url),
   'utf8',
 );
 
-describe('AppUtilityFrame', () => {
-  it('owns the complete registered-v1 Utility boundary and its overlay host', () => {
+describe('AppUtilityPage', () => {
+  it('owns the complete registered-v2 Utility boundary and its overlay host', () => {
     expect(source).toContain("provideUiOverlayHost('app-utility')");
     expect(source).toContain("registeredSurfaceAttributes('app-utility')");
     expect(source).toContain("registeredOverlayHostAttributes('app-utility')");
@@ -43,7 +43,7 @@ describe('AppUtilityFrame', () => {
       },
     };
     const { app, root } = mount(
-      AppUtilityFrame,
+      AppUtilityPage,
       { title: '設定' },
       { default: () => h(OverlayProbe) },
     );
@@ -56,7 +56,7 @@ describe('AppUtilityFrame', () => {
   it('provides one labelled utility surface and an explicit return action', () => {
     const onBack = vi.fn();
     const { app, root } = mount(
-      AppUtilityFrame,
+      AppUtilityPage,
       {
         title: '設定',
         description: '管理本機工作流程與應用程式行為。',
@@ -72,9 +72,9 @@ describe('AppUtilityFrame', () => {
     )[0];
     const surface = findAll(root, (node) => node.type === 'section')[0];
 
-    expect(heading.props.id).toBe('app-utility-frame-title');
+    expect(heading.props.id).toBe('app-utility-page-title');
     expect(heading.props.tabindex).toBe('-1');
-    expect(surface.props['aria-labelledby']).toBe('app-utility-frame-title');
+    expect(surface.props['aria-labelledby']).toBe('app-utility-page-title');
     expect(textContent(root)).toContain('管理本機工作流程與應用程式行為。');
     expect(textContent(root)).toContain('設定內容');
     trigger(back, 'onClick');
@@ -87,10 +87,10 @@ describe('AppUtilityFrame', () => {
     expect(source).toContain('onMounted(() => titleElement.value?.focus())');
     expect(source).not.toContain('UiScrollRegion');
     expect(source).toMatch(
-      /\.app-utility-frame\s*\{[^}]*height:\s*100%;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/su,
+      /\.app-utility-page\s*\{[^}]*height:\s*100%;[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/su,
     );
     expect(source).toMatch(
-      /\.app-utility-frame__body\s*\{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/su,
+      /\.app-utility-page__body\s*\{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/su,
     );
   });
 });

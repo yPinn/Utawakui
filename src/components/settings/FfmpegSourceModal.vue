@@ -292,7 +292,7 @@ async function chooseManaged() {
   min-height: var(--ui-control-height);
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font: inherit;
@@ -321,14 +321,14 @@ async function chooseManaged() {
 
 .ffmpeg-source-modal__label-group {
   display: grid;
-  gap: var(--ui-settings-row-copy-gap);
+  gap: var(--ui-space-1);
   min-width: 0;
   flex: 1;
 }
 
 .ffmpeg-source-modal__label {
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 

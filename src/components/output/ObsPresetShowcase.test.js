@@ -451,10 +451,12 @@ describe('OBS output workspace layout contract', () => {
     expect(settingsSource).toContain(
       'var(--ui-output-settings-column-min-width)',
     );
-    expect(settingsViewSource).toContain('var(--ui-settings-column-min-width)');
+    expect(settingsViewSource).toContain(
+      'var(--settings-view-column-min-width)',
+    );
     expect(settingsSource).toContain('var(--ui-checkbox-size)');
-    expect(tokenSource).toContain('--ui-settings-column-min-width: 22rem');
-    expect(tokenSource).toContain('--ui-settings-checkbox-size:');
+    expect(tokenSource).not.toContain('--ui-settings-column-min-width:');
+    expect(tokenSource).not.toContain('--ui-settings-checkbox-size:');
     expect(settingsSource).toContain('可用 Port');
     expect(previewTokenSource).toContain(
       '--ui-output-settings-column-min-width: 22rem',

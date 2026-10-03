@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "declarations": {
-    "v1": 305,
-    "v1Only": 61,
+    "v1": 299,
+    "v1Only": 55,
     "v2": 407
   },
   "production": {
-    "files": 20,
-    "pairs": 33,
+    "files": 12,
+    "pairs": 17,
     "references": [
       {
         "file": "src/components/analysis/MusicAnalysisBatchPanel.vue",
@@ -90,92 +90,12 @@
         "token": "--ui-titlebar-height"
       },
       {
-        "file": "src/components/separation/SeparationPresetControl.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/separation/SeparationPresetControl.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/separation/SeparationPresetControl.vue",
-        "surface": "other-feature",
-        "token": "--ui-separation-mode-min-width"
-      },
-      {
-        "file": "src/components/settings/CaptureDeviceModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/settings/CaptureDeviceModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/settings/FfmpegSourceModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/settings/FfmpegSourceModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/settings/FfmpegSourceModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-settings-row-copy-gap"
-      },
-      {
-        "file": "src/components/settings/LibraryStorageSettingsRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/settings/SettingsFeatureGateRow.vue",
-        "surface": "other-feature",
-        "token": "--ui-motion-fast"
-      },
-      {
-        "file": "src/components/settings/VirtualCableGuideModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/settings/VirtualCableGuideModal.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/views/SettingsView.vue",
-        "surface": "page",
-        "token": "--ui-settings-column-gap"
-      },
-      {
-        "file": "src/views/SettingsView.vue",
-        "surface": "page",
-        "token": "--ui-settings-column-min-width"
-      },
-      {
         "file": "src/performer/PerformerApp.vue",
         "surface": "performer-window",
         "token": "--ui-titlebar-height"
-      },
-      {
-        "file": "src/components/layout/AppUtilityFrame.vue",
-        "surface": "shell",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/layout/AppUtilityFrame.vue",
-        "surface": "shell",
-        "token": "--ui-line-height-headline"
       }
     ],
-    "tokens": 11
+    "tokens": 7
   },
   "legacyTokens": [
     "--ui-color-surface-playing",
@@ -227,12 +147,6 @@
     "--ui-playlist-toolbar-padding-block",
     "--ui-playlist-toolbar-padding-inline",
     "--ui-radius",
-    "--ui-separation-mode-min-width",
-    "--ui-settings-checkbox-size",
-    "--ui-settings-column-gap",
-    "--ui-settings-column-header-gap",
-    "--ui-settings-column-min-width",
-    "--ui-settings-row-copy-gap",
     "--ui-shell-panel-inset-block",
     "--ui-titlebar-height",
     "--ui-z-context-menu",

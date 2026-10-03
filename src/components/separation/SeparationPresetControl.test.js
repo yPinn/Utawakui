@@ -100,8 +100,11 @@ describe('SeparationPresetControl', () => {
     expect(componentSource).not.toContain('--ui-separation-preset-width');
     expect(componentSource).not.toContain('--ui-separation-action-width');
     expect(componentSource).toContain('font-variant-numeric: tabular-nums');
+    expect(componentSource).toContain(
+      '--separation-preset-mode-min-width: 8.5rem',
+    );
     expect(componentSource).toMatch(
-      /\.separation-preset-control__row\s*\{[^}]*grid-template-columns:[^;]*minmax\(\s*var\(--ui-separation-mode-min-width\),\s*1fr\s*\)/s,
+      /\.separation-preset-control__row\s*\{[^}]*grid-template-columns:[^;]*minmax\(\s*var\(--separation-preset-mode-min-width\),\s*1fr\s*\)/s,
     );
     expect(componentSource).toMatch(
       /\.separation-preset-control__select\s*\{[^}]*padding-inline:\s*var\(--ui-space-2\)\s+var\(--ui-space-5\)/s,

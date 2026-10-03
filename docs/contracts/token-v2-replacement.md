@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; Phase 3 primary feature surfaces active; replacement in progress.
+Status: replacement direction and migration architecture frozen; Phase 4 Settings Utility active; replacement in progress.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -233,7 +233,7 @@ Public Output 繼續只使用 `--ovl-*`。控制台 Output preview 可以保留�
 | `AppTopTabs`                  | Delete；只有 navigation 真有獨立 owner 時建立 internal `AppFolderNavigation` | Folder family cutover                                                  |
 | `AppInnerPage`                | `AppFolderPage`                                                              | Folder family cutover 時 rename，禁止 compatibility wrapper            |
 | `UiPageHeader`                | Retain                                                                       | 作為內容 primitive，由 `AppFolderPage` 擁有 placement                  |
-| `AppUtilityFrame`             | `AppUtilityPage`                                                             | Utility surface cutover；不提前 cosmetic rename                        |
+| `AppUtilityFrame`             | `AppUtilityPage`                                                             | 已隨 Settings Utility cutover 完成，舊檔與 selector 已刪除             |
 | `SessionPreparationWorkspace` | `PerformanceSessionWorkspace`                                                | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
 | `SessionPlanList`             | `PerformanceSessionPlanList`                                                 | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
 | `SessionPlanReviewEditor`     | `PerformanceSessionPlanEditor`                                               | 已隨 Performance Session cutover 完成，舊檔已刪除                      |
@@ -483,11 +483,11 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已完成 Phase 3.5，下一個階段是 Utility／specialist surfaces。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已完成 Phase 4.1 Settings Utility，下一個 slice 是 development specialist workbenches。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
-Phase 1 已把 Main `app-shell`、global overlay host、Titlebar、Sidebar navigation、Right Dock、PlayerBar、BGM placement 與 Electron main native background／titlebar palette 同批切為 v2。Utility content 仍是有同 system overlay host 的完整 registered-v1 child surface，等待 Phase 4。
+Phase 1 已把 Main `app-shell`、global overlay host、Titlebar、Sidebar navigation、Right Dock、PlayerBar、BGM placement 與 Electron main native background／titlebar palette 同批切為 v2。Settings Utility 曾以完整 registered-v1 child surface等待 Phase 4，現已由 Phase 4.1 原子切換。
 
 Phase 2 已以 `AppFolderLayout`／`AppFolderPage` 完整接手 Folder navigation、material、perimeter 與 document／workspace body mode；舊三件組、candidate-root override、`--ui-archive-*` 與 candidate Folder aliases 已同批刪除。F8 使用相同正式元件，只保留 specimen data／controls／content。
 
@@ -501,4 +501,6 @@ Phase 3.4 已將 Lyrics 與 `lyrics-overlay` 原子切為 v2，維持 `AppFolder
 
 Phase 3.5 已將 Output control panel 與 `output-overlay` 原子切為 v2，維持 `AppFolderPage` 的 `workspace` mode 與 Workbench stage／inspector、Gallery grid／detail、runtime Settings 的 bounded scroll owners。19 個 Output 專屬 geometry declarations 已從 T1 core 移入改名後的 `styles/features/output.css`，generic consumers 改用正式 v2 radius／weight／motion／checkbox semantics；stage fallback 保留原深／淺色值。Output render graph 共用的 `SettingsBlock`／`SettingsActionRow` 亦納入 no-T1 gate，7 個只服務這兩個 compound 的 global declarations 已原值收斂成 foundation／component-local recipe。Workbench、template artwork／motion、Browser Source preview、Spout settings 與 runtime／projection authority均未變更，public `overlay/` 仍只使用獨立 `--ovl-*`。
 
-Canonical generator 現在鎖定 T1 305／T2 407／T1-only 61 unique declarations、11 個 production-consumed legacy names、20 個 files 與 33 個 file-token pairs；Phase 3.5 移除 Output 自有的 45 pairs／19 個 feature declarations，以及 transitive shared compounds 的 11 pairs／7 個 global declarations。所有 primary Folder features 已完成 cutover；下一個 atomic implementation slice 依 phase order是 Utility／specialist surfaces。
+Phase 4.1 已將 `app-utility`、local overlay host 與 Settings page 原子切為 v2；`AppUtilityFrame` 同批收斂為 `AppUtilityPage`，舊檔、舊 selector 與雙 import path均已移除。Utility page 保留 fixed header／focus owner，`SettingsView` 保留唯一 body Scroll Region 與雙欄／窄版 stacking。8 個 production files 的 16 個 legacy pairs 已映射至正式 radius／typography／motion semantics或 component-local geometry，6 個 Settings／Separation declarations 已退出 T1 core。Settings blocks、feature gates、audio／OBS integration、modal flows 與資料 authority均未變更；其餘 component names 已符合 compound／domain control 角色。
+
+Canonical generator 現在鎖定 T1 299／T2 407／T1-only 55 unique declarations、7 個 production-consumed legacy names、12 個 files 與 17 個 file-token pairs。Settings Utility 已完成 cutover；下一個 atomic implementation slice 是已在 v2 boundary 內的 Analysis／provider specialist workbenches，Performer renderer仍維持獨立 Phase 5。

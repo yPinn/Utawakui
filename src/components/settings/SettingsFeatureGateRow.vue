@@ -122,8 +122,8 @@ const noticeLabel = computed(() => `${props.gate.title}的使用範圍說明`);
   gap: var(--ui-space-2);
   border-radius: var(--ui-radius-md);
   transition:
-    background-color var(--ui-motion-fast),
-    box-shadow var(--ui-motion-fast);
+    background-color var(--ui-motion-duration-fast),
+    box-shadow var(--ui-motion-duration-fast);
 }
 
 .settings-feature-gate-row--highlighted {

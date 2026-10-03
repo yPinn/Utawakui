@@ -63,9 +63,10 @@ renderer entry 同時載入 scoped v1／v2 token entries 與 generated invalidat
 system-neutral mount fallback，registered surface 才承接 canvas／text／font。Shared component
 recipe 由最近的 registered boundary 決定，production Teleport 進入同 system overlay host，F8 與
 isolated prototypes 也只登記自己的 v2 surface，不再寫 document root。Cross-version Lyrics／
-Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Utility content 目前仍是完整
-`registered-v1` child surface，包含同 system overlay host；Folder layout、Setlist、Performance
-Session、Import、Lyrics 與 Output 則各自維持完整 v2 boundary，外層 Shell 不向任何 child 補值。
+Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Settings Utility、Folder
+layout、Setlist、Performance Session、Import、Lyrics 與 Output 都各自維持完整 v2 boundary與同
+system overlay host，外層 Shell 不向任何 child 補值。Development-only Internal Tools boundary 也是
+v2；其 Analysis／provider workbench 的剩餘 legacy references 由後續 specialist slice 清理。
 Electron main native background／titlebar palette 已隨 Phase 1 同步換為 v2，
 Performer native background 仍維持 v1，留待其 renderer atomic cutover。
 
@@ -134,11 +135,12 @@ workspace mode，再進入 `performance-session-workspace` boundary；`Performan
 同樣使用 workspace mode；Workbench stage／inspector、Gallery grid／detail 與 runtime Settings
 各自擁有 bounded scroll，控制台 feature stylesheet 與 public `overlay/` 的 `--ovl-*` runtime 互不
 匯入。Settings 由
-Titlebar direct action 進入 shell-level `AppUtilityFrame`，不屬於 Folder destination。
+Titlebar direct action 進入 shell-level `AppUtilityPage`，不屬於 Folder destination。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。
-Utility frame 只擁有返回、頁名與焦點，`SettingsView` 繼續擁有內容 lifecycle 與唯一的
-body Scroll Region。
+Utility frame 是 registered-v2 surface，只擁有返回、頁名、焦點與 local overlay host；
+`SettingsView` 繼續擁有內容 lifecycle 與唯一的 body Scroll Region。雙欄與 Separation select 的
+特殊 geometry由各自 component-local custom property 擁有，不回填 core token graph。
 
 Windows notification-area lifecycle 由 main-owned
 `electron/main/windowsTrayController.js` 持有；`windowState.js` 仍是唯一主

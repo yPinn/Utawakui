@@ -30,44 +30,44 @@ onMounted(() => titleElement.value?.focus());
   <UiSurface
     v-bind="appUtilityAttributes"
     tag="section"
-    class="app-utility-frame"
+    class="app-utility-page"
     tone="surface"
     radius="sm"
-    aria-labelledby="app-utility-frame-title"
+    aria-labelledby="app-utility-page-title"
   >
     <div v-bind="appUtilityOverlayHostAttributes" class="ui-overlay-host" />
-    <header class="app-utility-frame__header">
+    <header class="app-utility-page__header">
       <UiButton
-        class="app-utility-frame__back"
+        class="app-utility-page__back"
         :icon="ArrowLeft"
         variant="ghost"
         @click="emit('back')"
       >
         {{ backLabel }}
       </UiButton>
-      <div class="app-utility-frame__copy">
+      <div class="app-utility-page__copy">
         <h1
-          id="app-utility-frame-title"
+          id="app-utility-page-title"
           ref="title"
-          class="app-utility-frame__title"
+          class="app-utility-page__title"
           tabindex="-1"
         >
           {{ title }}
         </h1>
-        <p v-if="description" class="app-utility-frame__description">
+        <p v-if="description" class="app-utility-page__description">
           {{ description }}
         </p>
       </div>
     </header>
 
-    <div class="app-utility-frame__body">
+    <div class="app-utility-page__body">
       <slot />
     </div>
   </UiSurface>
 </template>
 
 <style scoped>
-.app-utility-frame {
+.app-utility-page {
   height: 100%;
   min-width: 0;
   min-height: 0;
@@ -78,7 +78,7 @@ onMounted(() => titleElement.value?.focus());
   overflow: hidden;
 }
 
-.app-utility-frame__header {
+.app-utility-page__header {
   min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
@@ -86,53 +86,53 @@ onMounted(() => titleElement.value?.focus());
   gap: var(--ui-space-3);
 }
 
-.app-utility-frame__back {
+.app-utility-page__back {
   margin-top: var(--ui-space-1);
 }
 
-.app-utility-frame__copy {
+.app-utility-page__copy {
   min-width: 0;
   display: grid;
   gap: var(--ui-space-1);
 }
 
-.app-utility-frame__title,
-.app-utility-frame__description {
+.app-utility-page__title,
+.app-utility-page__description {
   margin: 0;
 }
 
-.app-utility-frame__title {
+.app-utility-page__title {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-heavy);
-  line-height: var(--ui-line-height-headline);
+  font-weight: var(--ui-font-weight-bold);
+  line-height: var(--ui-line-height-heading);
   text-wrap: balance;
 }
 
-.app-utility-frame__title:focus {
+.app-utility-page__title:focus {
   outline: none;
 }
 
-.app-utility-frame__description {
+.app-utility-page__description {
   max-width: 70ch;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
 }
 
-.app-utility-frame__body {
+.app-utility-page__body {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
 }
 
 @media (max-width: 760px) {
-  .app-utility-frame {
+  .app-utility-page {
     gap: var(--ui-space-3);
     padding: var(--ui-space-3);
   }
 
-  .app-utility-frame__header {
+  .app-utility-page__header {
     gap: var(--ui-space-2);
   }
 }
