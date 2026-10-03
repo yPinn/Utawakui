@@ -6,8 +6,8 @@
     "v2": 407
   },
   "production": {
-    "files": 54,
-    "pairs": 115,
+    "files": 51,
+    "pairs": 109,
     "references": [
       {
         "file": "src/components/lyrics/LyricsDocumentPanel.vue",
@@ -163,26 +163,6 @@
         "file": "src/components/analysis/MusicStructureSummary.vue",
         "surface": "other-feature",
         "token": "--ui-line-height-headline"
-      },
-      {
-        "file": "src/components/import/ImportCandidateOption.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/import/ImportCandidateOption.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/import/ProviderImportPanel.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/import/ProviderImportPanel.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
       },
       {
         "file": "src/components/lyrics-provider/LyricsProviderReviewForm.vue",
@@ -548,16 +528,6 @@
         "file": "src/components/output/ObsWidgetCapturePreview.vue",
         "surface": "output-feature",
         "token": "--ui-motion-fast"
-      },
-      {
-        "file": "src/views/ImportView.vue",
-        "surface": "page",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/views/ImportView.vue",
-        "surface": "page",
-        "token": "--ui-radius"
       },
       {
         "file": "src/views/SettingsView.vue",

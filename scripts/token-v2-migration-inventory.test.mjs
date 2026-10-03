@@ -22,9 +22,9 @@ describe('Token v2 migration inventory', () => {
       v1Only: 87,
     });
     expect(inventory.production).toMatchObject({
-      files: 54,
+      files: 51,
       tokens: 38,
-      pairs: 115,
+      pairs: 109,
     });
     expect(inventory.legacyTokens).toHaveLength(87);
     expect(inventory.legacyTokens).toEqual(
@@ -90,7 +90,7 @@ describe('Token v2 migration inventory', () => {
     expect(summary).toEqual({
       declarations: { v1: 331, v1Only: 87, v2: 407 },
       mode: 'check',
-      production: { files: 54, pairs: 115, tokens: 38 },
+      production: { files: 51, pairs: 109, tokens: 38 },
     });
     expect(JSON.parse(output)).toEqual(summary);
   });

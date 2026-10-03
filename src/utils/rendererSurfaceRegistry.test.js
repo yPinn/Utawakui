@@ -92,7 +92,7 @@ describe('renderer surface registry', () => {
   });
 
   it('keeps later Folder features in complete registered v1 surfaces', () => {
-    for (const surfaceId of ['lyrics', 'output', 'import']) {
+    for (const surfaceId of ['lyrics', 'output']) {
       expect(UI_SURFACE_REGISTRY[surfaceId]).toMatchObject({
         entryOwner: 'src/App.vue',
         migrationStatus: 'registered-v1',
@@ -109,6 +109,24 @@ describe('renderer surface registry', () => {
         'data-ui-system': 'v1',
       });
     }
+  });
+
+  it('registers Import and its overlay as one complete v2 surface', () => {
+    expect(UI_SURFACE_REGISTRY.import).toMatchObject({
+      entryOwner: 'src/App.vue',
+      migrationStatus: 'registered-v2',
+      overlayHostId: 'import-overlay',
+      parentSurfaceId: 'app-folder',
+      renderer: 'main',
+      surfaceId: 'import',
+      system: 'v2',
+    });
+    expect(registeredOverlayHostAttributes('import')).toMatchObject({
+      id: 'import-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'import-overlay',
+      'data-ui-system': 'v2',
+    });
   });
 
   it('registers the Performance Session workspace and overlay as v2', () => {

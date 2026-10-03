@@ -122,9 +122,10 @@ Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live�
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
-layout family 是 registered-v2 surface。Setlist、Performance Session workspace 與各自 local
-overlay host 已是完整 registered-v2 surface；Lyrics／Output／Import 仍各自維持有獨立 overlay host
-的 registered-v1 child surface。Setlist 開啟場次準備時，`AppFolderPage` 由 document mode 切為
+layout family 是 registered-v2 surface。Setlist、Performance Session workspace、Import 與各自
+local overlay host 已是完整 registered-v2 surface；Lyrics／Output 仍各自維持有獨立 overlay host
+的 registered-v1 child surface。Import 維持 document mode 與 Folder page 的唯一 page scroll，
+provider preview 只有 track list 使用 bounded internal scroll。Setlist 開啟場次準備時，`AppFolderPage` 由 document mode 切為
 workspace mode，再進入 `performance-session-workspace` boundary；`PerformanceSessionWorkspace`
 與兩個 pane 各自擁有 bounded layout／scroll，Folder page 不建立第二個 scroll owner。Shell 內的
 `PerformanceSessionPanel` 維持 Right Dock 的 v2 projection recipe，不嵌入 workspace editor 或形成

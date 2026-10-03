@@ -91,7 +91,7 @@ const localStatusTone = computed(
   padding: var(--ui-space-3);
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 
 .local-import-panel__top,
@@ -112,7 +112,7 @@ const localStatusTone = computed(
 .local-import-action__title {
   margin: 0;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .section-heading__title {

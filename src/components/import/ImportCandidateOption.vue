@@ -116,7 +116,7 @@ const metaParts = computed(() =>
   min-height: calc(var(--ui-space-5) + var(--ui-space-5) + var(--ui-space-2));
   padding: var(--ui-space-2);
   border: var(--ui-border-width) solid transparent;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font: inherit;
@@ -173,7 +173,7 @@ const metaParts = computed(() =>
 
 .candidate-option__title {
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .candidate-option__meta {

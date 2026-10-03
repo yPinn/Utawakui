@@ -566,7 +566,7 @@ function trackStatusIconLabel(track) {
   padding: var(--ui-space-3);
   background: var(--ui-color-surface);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 
 .provider-import-panel__header,
@@ -593,7 +593,7 @@ function trackStatusIconLabel(track) {
 .source-summary__title {
   margin: 0;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .section-heading__title,
@@ -653,7 +653,7 @@ function trackStatusIconLabel(track) {
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
 }
@@ -691,7 +691,7 @@ function trackStatusIconLabel(track) {
   padding: var(--ui-space-3);
   background: var(--ui-color-canvas);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
 }
 
 .preview-panel__meta {
@@ -752,12 +752,12 @@ function trackStatusIconLabel(track) {
   min-height: calc(var(--ui-space-5) + var(--ui-space-1));
   padding: 0 var(--ui-space-2);
   border: none;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: transparent;
   color: var(--ui-color-text-muted);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   cursor: pointer;
 }
