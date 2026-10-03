@@ -1,6 +1,10 @@
 :root {
-  /* Themes native form-control chrome (checkbox, range thumb) to match the app theme. */
-  color-scheme: var(--ui-color-scheme);
+  /* Platform chrome follows document metadata, not a visual-system token. */
+  color-scheme: dark;
+}
+
+:root[data-ui-theme='light'] {
+  color-scheme: light;
 }
 
 *,
@@ -10,17 +14,26 @@
   box-sizing: border-box;
 }
 
+html,
+body,
+#app {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
 body {
   margin: 0;
-  height: 100vh;
+  background: Canvas;
+  color: CanvasText;
+  font-family: system-ui, sans-serif;
+  font-size: 1rem;
+}
+
+#app[data-ui-surface][data-ui-system] {
   background: var(--ui-color-canvas);
   color: var(--ui-color-text);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-md);
-}
-
-#app {
-  height: 100%;
 }
 
 h1,

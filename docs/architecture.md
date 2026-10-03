@@ -52,6 +52,20 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 `StudioLibraryPrototypeView.vue`）與內部工具 composition surface
 `InternalToolsView.vue` 呈現；owner 檢查順序與現況見
 [Token v2 元件檢查契約](contracts/token-v2-component-review.md)，本文件不重複其細節。
+已鎖定且正分段實作的 production replacement boundary 見
+[Token v2 完整替換契約](contracts/token-v2-replacement.md)：它要求以登記的完整 surface
+原子切換、fail-closed scope、legacy ratchet 與 no-T1 harness 消除無聲 fallback；這項
+目標架構不改變本段所述的現行 production v1 ownership。
+Phase 0.1 已把 Main 與 Performer 的 `#app` 在 Vue mount 前登記為 full-viewport renderer
+surface；兩者目前皆為 `registered-v1`，仍只載入現行 Token v1 entry。Document root 只投影
+theme／density／motion／language metadata 與 literal platform `color-scheme`，`body` 只保留
+system-neutral mount fallback，registered `#app` 才承接 canvas／text／font。Scoped token
+entries、現行 `base.css` range recipe、Electron native background／main titlebar palette、
+F8／prototype root writers、production Teleport targets 與 legacy invalidation 仍待後續 Phase 0
+處理。這些 scope-dependent owners 必須在同一 atomic activation 切換，不能形成可合併的中間
+hybrid。Phase 0.2 已建立 deterministic legacy manifest、未啟用的 invalidation artifact 與六組
+readiness fixtures；production runtime 尚未 import generated invalidation。原生 substrate 只在
+各自 atomic renderer cutover 同步換色。
 
 `InternalToolsView.vue` 以純資料 `constants/internalTools.js` 將工具分成兩個平面：
 Operations 是可重複的產品／支援操作（F5 Music Analysis、F6 Live Diagnostics），

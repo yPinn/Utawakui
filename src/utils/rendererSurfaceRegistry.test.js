@@ -1,0 +1,162 @@
+import { describe, expect, it } from 'vitest';
+import {
+  RENDERER_SURFACE_REGISTRY,
+  registerRendererSurfaceRoot,
+} from './rendererSurfaceRegistry.js';
+
+function createDocument({ rootDataset = {}, documentDataset = {} } = {}) {
+  const root = { id: 'app', dataset: { ...rootDataset } };
+  const documentElement = { dataset: { ...documentDataset } };
+  const body = {};
+  return {
+    body,
+    documentElement,
+    root,
+    getElementById(id) {
+      return id === 'app' ? root : null;
+    },
+  };
+}
+
+describe('renderer surface registry', () => {
+  it('defines immutable v1 roots for both production renderers', () => {
+    expect(RENDERER_SURFACE_REGISTRY).toEqual({
+      main: {
+        entryOwner: 'src/main.js',
+        migrationStatus: 'registered-v1',
+        overlayHostId: null,
+        parentSurfaceId: null,
+        renderer: 'main',
+        surfaceId: 'app-shell',
+        system: 'v1',
+      },
+      performer: {
+        entryOwner: 'src/performer-main.js',
+        migrationStatus: 'registered-v1',
+        overlayHostId: null,
+        parentSurfaceId: null,
+        renderer: 'performer',
+        surfaceId: 'performer',
+        system: 'v1',
+      },
+    });
+    expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY)).toBe(true);
+    expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.main)).toBe(true);
+    expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.performer)).toBe(true);
+  });
+
+  it.each([
+    ['main', 'app-shell'],
+    ['performer', 'performer'],
+  ])('registers the %s #app root before mount', (renderer, surfaceId) => {
+    const documentRef = createDocument();
+
+    const root = registerRendererSurfaceRoot(renderer, documentRef);
+
+    expect(root).toBe(documentRef.root);
+    expect(root.dataset).toEqual({
+      uiRenderer: renderer,
+      uiSurface: surfaceId,
+      uiSystem: 'v1',
+    });
+    expect(documentRef.documentElement.dataset.uiSystem).toBeUndefined();
+  });
+
+  it('accepts an identical repeated registration without creating another owner', () => {
+    const documentRef = createDocument({
+      rootDataset: {
+        uiRenderer: 'main',
+        uiSurface: 'app-shell',
+        uiSystem: 'v1',
+      },
+    });
+
+    expect(registerRendererSurfaceRoot('main', documentRef)).toBe(
+      documentRef.root,
+    );
+  });
+
+  it.each([
+    [
+      'an unknown renderer',
+      () => registerRendererSurfaceRoot('preview', createDocument()),
+      'Unknown renderer surface: preview',
+    ],
+    [
+      'an inherited object key as a renderer',
+      () => registerRendererSurfaceRoot('toString', createDocument()),
+      'Unknown renderer surface: toString',
+    ],
+    [
+      'a missing document',
+      () => registerRendererSurfaceRoot('main', null),
+      'Renderer surface main requires a document',
+    ],
+    [
+      'a missing #app mount root',
+      () =>
+        registerRendererSurfaceRoot('main', {
+          body: {},
+          documentElement: { dataset: {} },
+          getElementById: () => null,
+        }),
+      'Renderer main mount root #app was not found',
+    ],
+    [
+      'document-root system ownership',
+      () =>
+        registerRendererSurfaceRoot(
+          'main',
+          createDocument({ documentDataset: { uiSystem: 'v1' } }),
+        ),
+      'Document root cannot own data-ui-system',
+    ],
+    [
+      'a document-element mount root',
+      () => {
+        const documentRef = createDocument();
+        documentRef.getElementById = () => documentRef.documentElement;
+        return registerRendererSurfaceRoot('main', documentRef);
+      },
+      'Renderer main mount root must be below the document root',
+    ],
+    [
+      'a body mount root',
+      () => {
+        const documentRef = createDocument();
+        documentRef.getElementById = () => documentRef.body;
+        return registerRendererSurfaceRoot('main', documentRef);
+      },
+      'Renderer main mount root must be below the document root',
+    ],
+    [
+      'a conflicting surface owner',
+      () =>
+        registerRendererSurfaceRoot(
+          'main',
+          createDocument({ rootDataset: { uiSurface: 'feature-island' } }),
+        ),
+      'Renderer main mount root has conflicting data-ui-surface',
+    ],
+    [
+      'a conflicting system owner',
+      () =>
+        registerRendererSurfaceRoot(
+          'main',
+          createDocument({ rootDataset: { uiSystem: 'v2' } }),
+        ),
+      'Renderer main mount root has conflicting data-ui-system',
+    ],
+    [
+      'a conflicting renderer owner',
+      () =>
+        registerRendererSurfaceRoot(
+          'main',
+          createDocument({ rootDataset: { uiRenderer: 'performer' } }),
+        ),
+      'Renderer main mount root has conflicting data-ui-renderer',
+    ],
+  ])('rejects %s', (_name, register, message) => {
+    expect(register).toThrow(message);
+  });
+});
