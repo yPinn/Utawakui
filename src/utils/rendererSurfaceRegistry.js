@@ -1,21 +1,125 @@
-const createRendererSurfaceDefinition = (renderer, surfaceId, entryOwner) =>
+const createSurfaceDefinition = ({
+  entryOwner,
+  migrationStatus,
+  overlayHostId = null,
+  parentSurfaceId = null,
+  renderer,
+  surfaceId,
+  system,
+}) =>
   Object.freeze({
     entryOwner,
-    migrationStatus: 'registered-v1',
-    overlayHostId: null,
-    parentSurfaceId: null,
+    migrationStatus,
+    overlayHostId,
+    parentSurfaceId,
     renderer,
     surfaceId,
-    system: 'v1',
+    system,
   });
 
+export const UI_SURFACE_REGISTRY = Object.freeze({
+  'app-shell': createSurfaceDefinition({
+    entryOwner: 'src/main.js',
+    migrationStatus: 'registered-v1',
+    overlayHostId: 'app-shell-overlay',
+    renderer: 'main',
+    surfaceId: 'app-shell',
+    system: 'v1',
+  }),
+  'app-shell-overlay': createSurfaceDefinition({
+    entryOwner: 'src/App.vue',
+    migrationStatus: 'registered-v1',
+    parentSurfaceId: 'app-shell',
+    renderer: 'main',
+    surfaceId: 'app-shell-overlay',
+    system: 'v1',
+  }),
+  performer: createSurfaceDefinition({
+    entryOwner: 'src/performer-main.js',
+    migrationStatus: 'registered-v1',
+    overlayHostId: 'performer-overlay',
+    renderer: 'performer',
+    surfaceId: 'performer',
+    system: 'v1',
+  }),
+  'performer-overlay': createSurfaceDefinition({
+    entryOwner: 'src/performer/PerformerApp.vue',
+    migrationStatus: 'registered-v1',
+    parentSurfaceId: 'performer',
+    renderer: 'performer',
+    surfaceId: 'performer-overlay',
+    system: 'v1',
+  }),
+  'visual-review': createSurfaceDefinition({
+    entryOwner: 'src/views/VisualSystemView.vue',
+    migrationStatus: 'registered-v2',
+    overlayHostId: 'visual-review-overlay',
+    parentSurfaceId: 'app-shell',
+    renderer: 'main',
+    surfaceId: 'visual-review',
+    system: 'v2',
+  }),
+  'visual-review-overlay': createSurfaceDefinition({
+    entryOwner: 'src/views/VisualSystemView.vue',
+    migrationStatus: 'registered-v2',
+    parentSurfaceId: 'visual-review',
+    renderer: 'main',
+    surfaceId: 'visual-review-overlay',
+    system: 'v2',
+  }),
+  'visual-review-navigation': createSurfaceDefinition({
+    entryOwner: 'src/components/layout/AppTopTabs.vue',
+    migrationStatus: 'registered-v2',
+    parentSurfaceId: 'app-shell',
+    renderer: 'main',
+    surfaceId: 'visual-review-navigation',
+    system: 'v2',
+  }),
+  'internal-tools': createSurfaceDefinition({
+    entryOwner: 'src/views/InternalToolsView.vue',
+    migrationStatus: 'registered-v2',
+    overlayHostId: 'internal-tools-overlay',
+    parentSurfaceId: 'app-shell',
+    renderer: 'main',
+    surfaceId: 'internal-tools',
+    system: 'v2',
+  }),
+  'internal-tools-overlay': createSurfaceDefinition({
+    entryOwner: 'src/views/InternalToolsView.vue',
+    migrationStatus: 'registered-v2',
+    parentSurfaceId: 'internal-tools',
+    renderer: 'main',
+    surfaceId: 'internal-tools-overlay',
+    system: 'v2',
+  }),
+  'component-lab': createSurfaceDefinition({
+    entryOwner: 'prototypes/ui-component-lab/src/App.vue',
+    migrationStatus: 'registered-v2',
+    overlayHostId: 'component-lab-overlay',
+    renderer: 'prototype',
+    surfaceId: 'component-lab',
+    system: 'v2',
+  }),
+  'component-lab-overlay': createSurfaceDefinition({
+    entryOwner: 'prototypes/ui-component-lab/src/App.vue',
+    migrationStatus: 'registered-v2',
+    parentSurfaceId: 'component-lab',
+    renderer: 'prototype',
+    surfaceId: 'component-lab-overlay',
+    system: 'v2',
+  }),
+  'studio-library-prototype': createSurfaceDefinition({
+    entryOwner: 'prototypes/studio-library-workspace/index.html',
+    migrationStatus: 'registered-v2',
+    renderer: 'prototype',
+    surfaceId: 'studio-library-prototype',
+    system: 'v2',
+  }),
+});
+
 export const RENDERER_SURFACE_REGISTRY = Object.freeze({
-  main: createRendererSurfaceDefinition('main', 'app-shell', 'src/main.js'),
-  performer: createRendererSurfaceDefinition(
-    'performer',
-    'performer',
-    'src/performer-main.js',
-  ),
+  main: UI_SURFACE_REGISTRY['app-shell'],
+  performer: UI_SURFACE_REGISTRY.performer,
 });
 
 const DATASET_FIELDS = Object.freeze([
@@ -23,6 +127,37 @@ const DATASET_FIELDS = Object.freeze([
   ['uiSurface', 'surfaceId'],
   ['uiSystem', 'system'],
 ]);
+
+function surfaceDefinition(surfaceId) {
+  if (!Object.hasOwn(UI_SURFACE_REGISTRY, surfaceId)) {
+    throw new Error(`Unknown UI surface: ${surfaceId}`);
+  }
+  return UI_SURFACE_REGISTRY[surfaceId];
+}
+
+export function registeredSurfaceAttributes(surfaceId) {
+  const definition = surfaceDefinition(surfaceId);
+  return Object.freeze({
+    'data-ui-renderer': definition.renderer,
+    'data-ui-surface': definition.surfaceId,
+    'data-ui-system': definition.system,
+  });
+}
+
+export function registeredOverlayHostAttributes(surfaceId) {
+  const definition = surfaceDefinition(surfaceId);
+  if (!definition.overlayHostId) {
+    throw new Error(`UI surface ${surfaceId} does not own an overlay host`);
+  }
+  return Object.freeze({
+    id: definition.overlayHostId,
+    ...registeredSurfaceAttributes(definition.overlayHostId),
+  });
+}
+
+export function registeredOverlayHostSelector(surfaceId) {
+  return `#${registeredOverlayHostAttributes(surfaceId).id}`;
+}
 
 export function registerRendererSurfaceRoot(
   renderer,

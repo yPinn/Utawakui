@@ -5,9 +5,7 @@ import FeedbackReportModal from './FeedbackReportModal.vue';
 import { useFeedbackReport } from '../../composables/useFeedbackReport.js';
 
 async function renderModal() {
-  const context = {};
-  await renderToString(createSSRApp(FeedbackReportModal), context);
-  return context.teleports?.body ?? '';
+  return renderToString(createSSRApp(FeedbackReportModal));
 }
 
 afterEach(() => {

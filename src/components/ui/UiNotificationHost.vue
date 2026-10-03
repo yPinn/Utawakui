@@ -1,9 +1,12 @@
 <script setup>
 import { computed, onBeforeUnmount, onMounted, reactive, watch } from 'vue';
 import { X } from '../../icons/index.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import { customLengthPixels } from './floatingPosition.js';
 import UiIconButton from './UiIconButton.vue';
 import UiNotice from './UiNotice.vue';
+
+const overlayHost = useUiOverlayHost();
 
 const LIFECYCLES = new Set(['persistent', 'progress', 'transient']);
 
@@ -253,7 +256,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <TransitionGroup
       tag="section"
       name="ui-notification"

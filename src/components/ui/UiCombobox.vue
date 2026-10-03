@@ -17,6 +17,7 @@ import {
 } from 'vue';
 import { ChevronDown, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import {
   anchoredFloatingPosition,
   customLengthPixels,
@@ -24,6 +25,8 @@ import {
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
+
+const overlayHost = useUiOverlayHost();
 
 defineOptions({ inheritAttrs: false });
 
@@ -327,7 +330,7 @@ onBeforeUnmount(() => {
     </template>
   </UiField>
 
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <UiScrollRegion
       v-if="isOpen"
       :id="listboxId"

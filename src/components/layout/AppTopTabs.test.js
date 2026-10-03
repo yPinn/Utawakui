@@ -138,8 +138,12 @@ describe('AppTopTabs', () => {
       'utf8',
     );
 
+    expect(source).toContain("@scope ([data-ui-system='v2'])");
     expect(source).toContain(
-      ":root[data-ui-system='v2'][data-ui-candidate-view='studio-library']",
+      ":scope.app-tabs[data-ui-candidate-view='studio-library']",
+    );
+    expect(source).toContain(
+      ".app-tabs[data-ui-candidate-view='studio-library']",
     );
     expect(source).toMatch(
       /data-ui-candidate-view='studio-library'[\s\S]*\.app-tabs__folder--active[\s\S]*background:\s*var\(--ui-color-folder-primary\)/u,
@@ -148,7 +152,7 @@ describe('AppTopTabs', () => {
       /\.app-tabs__folder--active::before\s*\{[^}]*background:\s*var\(--ui-color-accent\)/u,
     );
     expect(source).toMatch(
-      /data-ui-candidate-view='studio-library'[\s\S]*\.app-tabs\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
+      /\.app-tabs\[data-ui-candidate-view='studio-library'\]\s*\{[^}]*-webkit-user-select:\s*none;[^}]*user-select:\s*none;/u,
     );
   });
 

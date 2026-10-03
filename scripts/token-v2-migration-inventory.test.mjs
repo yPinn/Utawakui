@@ -17,16 +17,16 @@ describe('Token v2 migration inventory', () => {
   it('builds a deterministic canonical legacy manifest', () => {
     expect(inventory.schemaVersion).toBe(1);
     expect(inventory.declarations).toEqual({
-      v1: 413,
+      v1: 341,
       v2: 372,
-      v1Only: 169,
+      v1Only: 97,
     });
     expect(inventory.production).toMatchObject({
-      files: 74,
-      tokens: 149,
-      pairs: 273,
+      files: 69,
+      tokens: 85,
+      pairs: 198,
     });
-    expect(inventory.legacyTokens).toHaveLength(169);
+    expect(inventory.legacyTokens).toHaveLength(97);
     expect(inventory.legacyTokens).toEqual(
       [...inventory.legacyTokens].toSorted(),
     );
@@ -40,30 +40,21 @@ describe('Token v2 migration inventory', () => {
     expect(JSON.stringify(inventory)).not.toContain(root);
   });
 
-  it('pins the complete atomic scope activation set without changing runtime', () => {
-    expect(inventory.activation.rootBoundRecipes).toEqual([
-      { file: 'src/components/layout/AppTopTabs.vue', occurrences: 4 },
-      { file: 'src/components/ui/UiButton.vue', occurrences: 8 },
-      { file: 'src/components/ui/UiIconButton.vue', occurrences: 4 },
-      { file: 'src/components/ui/UiRange.vue', occurrences: 6 },
-      { file: 'src/components/ui/UiTextButton.vue', occurrences: 2 },
-      {
-        file: 'src/components/ui/range/UiRangeControl.vue',
-        occurrences: 26,
-      },
-    ]);
-    expect(inventory.activation.rootBoundRecipeOccurrences).toBe(50);
-    expect(inventory.activation.crossVersionFeatureTokens).toHaveLength(72);
+  it('pins the completed atomic scope activation set', () => {
+    expect(inventory.activation.rootBoundRecipes).toEqual([]);
+    expect(inventory.activation.rootBoundRecipeOccurrences).toBe(0);
+    expect(inventory.activation.crossVersionFeatureTokens).toEqual([]);
     expect(inventory.activation.teleports).toMatchObject({
-      demoCount: 2,
-      productionCount: 6,
+      demoCount: 0,
+      productionCount: 0,
     });
-    expect(inventory.activation.documentSystemWriters).toHaveLength(4);
-    expect(inventory.activation.documentSpecimenMarkers).toHaveLength(2);
-    expect(inventory.activation.prototypeDocumentRoots).toHaveLength(2);
-    expect(inventory.activation.baseVisualTokenReferences).toHaveLength(8);
+    expect(inventory.activation.documentSystemWriters).toEqual([]);
+    expect(inventory.activation.documentSpecimenMarkers).toEqual([]);
+    expect(inventory.activation.prototypeDocumentRoots).toEqual([]);
+    expect(inventory.activation.baseVisualTokenReferences).toEqual([]);
     expect(inventory.activation.reviewComposable).toMatchObject({
-      current: 'src/composables/useVisualSystemMode.js',
+      current: 'src/composables/useVisualReviewMode.js',
+      references: [],
       target: 'src/composables/useVisualReviewMode.js',
     });
   });
@@ -81,7 +72,7 @@ describe('Token v2 migration inventory', () => {
     const css = renderLegacyInvalidationCss(inventory.legacyTokens);
 
     expect(css).toContain("[data-ui-system='v2'] {");
-    expect(css.match(/^ {2}--ui-[\w-]+: initial;$/gmu)).toHaveLength(169);
+    expect(css.match(/^ {2}--ui-[\w-]+: initial;$/gmu)).toHaveLength(97);
     for (const token of inventory.legacyTokens) {
       expect(css).toContain(`  ${token}: initial;`);
     }
@@ -97,9 +88,9 @@ describe('Token v2 migration inventory', () => {
     });
 
     expect(summary).toEqual({
-      declarations: { v1: 413, v1Only: 169, v2: 372 },
+      declarations: { v1: 341, v1Only: 97, v2: 372 },
       mode: 'check',
-      production: { files: 74, pairs: 273, tokens: 149 },
+      production: { files: 69, pairs: 198, tokens: 85 },
     });
     expect(JSON.parse(output)).toEqual(summary);
   });

@@ -19,6 +19,12 @@ const tokenSource = readFileSync(
   fileURLToPath(new URL('../../styles/tokens.css', import.meta.url)),
   'utf8',
 );
+const previewTokenSource = readFileSync(
+  fileURLToPath(
+    new URL('../../styles/features/output-preview.css', import.meta.url),
+  ),
+  'utf8',
+);
 const previewSource = readFileSync(
   fileURLToPath(new URL('./ObsOverlayPreview.vue', import.meta.url)),
   'utf8',
@@ -136,7 +142,9 @@ describe('OBS output workspace layout contract', () => {
     expect(mockupSource).toContain(
       'max-inline-size: var(--ui-output-gallery-preview-max-width)',
     );
-    expect(tokenSource).toContain('--ui-output-preview-aspect-ratio: 16 / 9');
+    expect(previewTokenSource).toContain(
+      '--ui-output-preview-aspect-ratio: 16 / 9',
+    );
     expect(mockupSource).toContain(
       'aspect-ratio: var(--ui-output-preview-aspect-ratio)',
     );
@@ -222,23 +230,33 @@ describe('OBS output workspace layout contract', () => {
   });
 
   it('reuses shared preview tokens instead of hard-coded component values', () => {
-    expect(tokenSource).toContain('--ui-output-preview-canvas:');
-    expect(tokenSource).toContain('--ui-output-preview-surface:');
-    expect(tokenSource).toContain('--ui-output-preview-text:');
-    expect(tokenSource).toContain('--ui-output-preview-text-muted:');
-    expect(tokenSource).toContain('--ui-output-preview-accent:');
-    expect(tokenSource).toContain('--ui-output-preview-cycle-duration:');
-    expect(tokenSource).toContain('--ui-output-preview-cycle-ease:');
-    expect(tokenSource).toContain('--ui-output-preview-player-track-size:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-canvas:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-unsung:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-solo:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-male:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-female:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-fill-group:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-stroke-unsung:');
-    expect(tokenSource).toContain('--ui-output-preview-ktv-stroke-sung:');
-    expect(tokenSource).not.toContain('--ui-output-preview-ktv-shadow:');
+    expect(previewTokenSource).toContain('--ui-output-preview-canvas:');
+    expect(previewTokenSource).toContain('--ui-output-preview-surface:');
+    expect(previewTokenSource).toContain('--ui-output-preview-text:');
+    expect(previewTokenSource).toContain('--ui-output-preview-text-muted:');
+    expect(previewTokenSource).toContain('--ui-output-preview-accent:');
+    expect(previewTokenSource).toContain('--ui-output-preview-cycle-duration:');
+    expect(previewTokenSource).toContain('--ui-output-preview-cycle-ease:');
+    expect(previewTokenSource).toContain(
+      '--ui-output-preview-player-track-size:',
+    );
+    expect(previewTokenSource).toContain('--ui-output-preview-ktv-canvas:');
+    expect(previewTokenSource).toContain(
+      '--ui-output-preview-ktv-fill-unsung:',
+    );
+    expect(previewTokenSource).toContain('--ui-output-preview-ktv-fill-solo:');
+    expect(previewTokenSource).toContain('--ui-output-preview-ktv-fill-male:');
+    expect(previewTokenSource).toContain(
+      '--ui-output-preview-ktv-fill-female:',
+    );
+    expect(previewTokenSource).toContain('--ui-output-preview-ktv-fill-group:');
+    expect(previewTokenSource).toContain(
+      '--ui-output-preview-ktv-stroke-unsung:',
+    );
+    expect(previewTokenSource).toContain(
+      '--ui-output-preview-ktv-stroke-sung:',
+    );
+    expect(previewTokenSource).not.toContain('--ui-output-preview-ktv-shadow:');
     expect(tokenSource).toContain(
       '--ui-output-template-thumb-caption-font-size:',
     );

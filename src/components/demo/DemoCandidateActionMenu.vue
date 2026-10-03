@@ -12,7 +12,10 @@ import {
 } from 'vue';
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
+const overlayHost = useUiOverlayHost();
 
 defineOptions({ inheritAttrs: false });
 
@@ -491,7 +494,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <UiScrollRegion
       v-if="open"
       v-bind="attrs"

@@ -13,7 +13,10 @@ import {
 import UiButton from '../ui/UiButton.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import DemoCandidateActionMenu from './DemoCandidateActionMenu.vue';
+
+const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
   layer: { type: Object, required: true },
@@ -194,9 +197,17 @@ const menuRootAttributes = computed(() =>
 );
 
 function setCurrentMarker(isOpen) {
-  if (typeof document === 'undefined' || props.layer.key !== 'current') return;
-  if (isOpen) document.documentElement.dataset.demoActionMenuSource = 'current';
-  else delete document.documentElement.dataset.demoActionMenuSource;
+  if (
+    typeof document === 'undefined' ||
+    props.layer.key !== 'current' ||
+    !overlayHost
+  ) {
+    return;
+  }
+  const host = document.querySelector(overlayHost);
+  if (!host?.dataset) return;
+  if (isOpen) host.dataset.demoActionMenuSource = 'current';
+  else delete host.dataset.demoActionMenuSource;
 }
 
 function itemsForLayer(specimen, items) {

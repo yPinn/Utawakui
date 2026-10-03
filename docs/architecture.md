@@ -57,23 +57,23 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 原子切換、fail-closed scope、legacy ratchet 與 no-T1 harness 消除無聲 fallback；這項
 目標架構不改變本段所述的現行 production v1 ownership。
 Phase 0.1 已把 Main 與 Performer 的 `#app` 在 Vue mount 前登記為 full-viewport renderer
-surface；兩者目前皆為 `registered-v1`，仍只載入現行 Token v1 entry。Document root 只投影
-theme／density／motion／language metadata 與 literal platform `color-scheme`，`body` 只保留
-system-neutral mount fallback，registered `#app` 才承接 canvas／text／font。Scoped token
-entries、現行 `base.css` range recipe、Electron native background／main titlebar palette、
-F8／prototype root writers、production Teleport targets 與 legacy invalidation 仍待後續 Phase 0
-處理。這些 scope-dependent owners 必須在同一 atomic activation 切換，不能形成可合併的中間
-hybrid。Phase 0.2 已建立 deterministic legacy manifest、未啟用的 invalidation artifact 與六組
-readiness fixtures；production runtime 尚未 import generated invalidation。原生 substrate 只在
-各自 atomic renderer cutover 同步換色。
+surface；兩者目前皆為 `registered-v1`。Phase 0.3 已完成 scope foundation 原子切換：兩個
+renderer entry 同時載入 scoped v1／v2 token entries 與 generated invalidation，document root 只
+投影 theme／density／motion／language metadata 與 literal platform `color-scheme`，`body` 只保留
+system-neutral mount fallback，registered surface 才承接 canvas／text／font。Shared component
+recipe 由最近的 registered boundary 決定，production Teleport 進入同 system overlay host，F8 與
+isolated prototypes 也只登記自己的 v2 surface，不再寫 document root。Cross-version Lyrics／
+Output Preview／Performer tokens 已移到 feature-owned styles；Main／Performer production root 仍
+維持 v1，因此這項 infrastructure activation 不等於 production surface cutover。Electron native
+background／main titlebar palette 仍跟隨 v1，之後只在各自 atomic renderer cutover 同步換色。
 
 `InternalToolsView.vue` 以純資料 `constants/internalTools.js` 將工具分成兩個平面：
 Operations 是可重複的產品／支援操作（F5 Music Analysis、F6 Live Diagnostics），
 Evaluation 是有明確品質 gate 與結束條件的研究工作（Music M2、F7 Lyrics Provider
 Corpus）。F5／F6／F7 仍直達各自工具；Music M2 只由分類導覽進入。四個 View 都是薄
-wrapper，唯一 active workbench 才會 mount；composition surface 在 mount 時套用
-`data-ui-system="v2"`，unmount 時還原原值。這個 dev-only route graph 不改變產品 feature
-gate、IPC trust boundary 或正式 workflow ownership。
+wrapper，唯一 active workbench 才會 mount；`InternalToolsView.vue` 是 registry 中的 v2
+composition surface，擁有同 system overlay host，但不改 document root。這個 dev-only route
+graph 不改變產品 feature gate、IPC trust boundary 或正式 workflow ownership。
 
 主視窗右側 Dock 由 `App.vue` 與 `useAppRightDock.js` 共同擁有 shell geometry、
 surface stack 與 foreground navigation，不接管播放或處理資料。Token v2 Studio

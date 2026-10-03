@@ -204,10 +204,10 @@ describe('shared UI component token contract', () => {
       'var(--ui-right-dock-rail-width)',
     );
     expect(candidate).toMatch(
-      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{[^}]*--ui-panel-inset:\s*0\.75rem;[^}]*\}/su,
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{[^}]*--ui-panel-inset:\s*0\.75rem;[^}]*\}/su,
     );
     const compactBlock = candidate.match(
-      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/u,
     )?.[1];
     expect(compactBlock).not.toContain('--ui-right-dock-content-inset');
     expect(compactBlock).not.toContain('--ui-right-dock-track-row-min-height');
@@ -233,7 +233,7 @@ describe('shared UI component token contract', () => {
     const activeValues = declarations(active);
     const candidateValues = declarations(candidate);
     const candidateCompactBlock = candidate.match(
-      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/u,
     )?.[1];
 
     expect(activeValues.get('--ui-shell-panel-inset-block')).toMatch(

@@ -9,11 +9,14 @@ import {
   useTemplateRef,
   watch,
 } from 'vue';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import {
   anchoredFloatingPosition,
   customLengthPixels,
 } from './floatingPosition.js';
 import UiScrollRegion from './UiScrollRegion.vue';
+
+const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -152,7 +155,7 @@ onBeforeUnmount(() => {
   <span ref="anchor" class="ui-popover__anchor">
     <slot name="trigger" :open="props.open" :trigger-props="triggerProps" />
   </span>
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <section
       v-if="props.open"
       :id="panelId"

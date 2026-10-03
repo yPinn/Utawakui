@@ -153,7 +153,7 @@ describe('DemoPageLayoutAppearance', () => {
       source.match(/\.demo-page-layout__preview\s*\{[^}]*\}/su)?.[0] ?? '';
     const light =
       v2Tokens.match(
-        /:root\[data-ui-system='v2'\]\[data-ui-theme='light'\]\s*\{[\s\S]*?\n\}/u,
+        /:root\[data-ui-theme='light'\] \[data-ui-system='v2'\]\s*\{[\s\S]*?\n\}/u,
       )?.[0] ?? '';
 
     expect(source).not.toContain('FOLDER_REFERENCE_SWATCHES');

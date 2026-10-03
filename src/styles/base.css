@@ -29,13 +29,6 @@ body {
   font-size: 1rem;
 }
 
-#app[data-ui-surface][data-ui-system] {
-  background: var(--ui-color-canvas);
-  color: var(--ui-color-text);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-md);
-}
-
 h1,
 h2,
 h3,
@@ -54,13 +47,8 @@ textarea {
   font-family: inherit;
 }
 
-input[type='range'] {
-  accent-color: var(--ui-color-accent);
-}
-
-input[type='range']:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
+.ui-overlay-host {
+  display: contents;
 }
 
 .ui-visually-hidden {

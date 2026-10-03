@@ -61,9 +61,16 @@ const displayText = computed(() => String(props.text ?? ''));
   cursor: pointer;
 }
 
-:global(:root[data-ui-system='v2'] .ui-text-btn) {
-  -webkit-user-select: none;
-  user-select: none;
+@scope ([data-ui-system='v2']) to ([data-ui-system]) {
+  .ui-text-btn {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  .ui-text-btn:disabled {
+    opacity: var(--ui-opacity-disabled);
+    cursor: default;
+  }
 }
 
 .ui-text-btn__text {
@@ -82,11 +89,6 @@ const displayText = computed(() => String(props.text ?? ''));
 .ui-text-btn:focus-visible .ui-text-btn__text {
   text-decoration: underline;
   text-underline-offset: 0.18em;
-}
-
-:global(:root[data-ui-system='v2'] .ui-text-btn:disabled) {
-  opacity: var(--ui-opacity-disabled);
-  cursor: default;
 }
 
 .ui-text-btn:focus-visible {

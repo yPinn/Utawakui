@@ -242,7 +242,7 @@ describe('DemoRangeAppearance', () => {
       /::-webkit-slider-thumb\s*\{[\s\S]*?opacity:\s*0;/u,
     );
     expect(candidateSource).toMatch(
-      /:hover:not\(:disabled\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(:disabled\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
+      /:hover:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
     );
   });
 

@@ -75,14 +75,14 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(source).toContain('@activate-track="playTrackFromDossier"');
   });
 
-  it('activates candidate tokens only for the development view lifetime', () => {
-    const candidateTokenFile = ['tokens', 'v2.css'].join('-');
-    expect(source).toContain(`import '../styles/${candidateTokenFile}';`);
-    expect(source).toContain("root.dataset.uiSystem = 'v2'");
-    expect(source).toContain("root.dataset.uiCandidateView = 'studio-library'");
-    expect(source).toContain('delete root.dataset.uiSystem');
-    expect(source).toContain('delete root.dataset.uiCandidateView');
-    expect(source).toContain('onUnmounted');
+  it('inherits candidate tokens from the registered Visual Review surface', () => {
+    expect(source).not.toContain('tokens-v2.css');
+    expect(source).not.toContain('dataset.uiSystem');
+    expect(source).not.toContain('dataset.uiCandidateView');
+    expect(visualSystemSource).toContain(
+      "registeredSurfaceAttributes('visual-review')",
+    );
+    expect(appSource).toContain(':candidate-view="visualReviewCandidateView"');
     expect(setlistSource).not.toContain('tokens-v2.css');
   });
 
@@ -115,8 +115,9 @@ describe('StudioLibraryPrototypeView development integration', () => {
   it('lets the shell own the Candidate folder material without View CSS penetration', () => {
     expect(source).not.toContain('.app-tabs__folder--active');
     expect(source).not.toContain('.app-tabs__row::after');
+    expect(topTabsSource).toContain("@scope ([data-ui-system='v2'])");
     expect(topTabsSource).toContain(
-      ":root[data-ui-system='v2'][data-ui-candidate-view='studio-library']",
+      ".app-tabs[data-ui-candidate-view='studio-library']",
     );
     expect(topTabsSource).toContain(
       'background: var(--ui-color-folder-primary)',

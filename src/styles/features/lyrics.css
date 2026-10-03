@@ -1,0 +1,9 @@
+[data-ui-system] {
+  --ui-lyrics-live-control-height: 2.75rem;
+  --ui-lyrics-live-action-width: 4.5rem;
+  --ui-lyrics-live-display-width: 4.75rem;
+  --ui-lyrics-live-safe-area: 4.75rem;
+  --ui-lyrics-font-size-compact: 1.125rem;
+  --ui-lyrics-font-size-default: 1.375rem;
+  --ui-lyrics-font-size-large: 1.75rem;
+}

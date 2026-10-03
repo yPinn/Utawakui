@@ -1,14 +1,7 @@
-/* Candidate control-panel token system.
- *
- * This file is intentionally not imported by src/main.js or performer-main.js.
- * The active renderer continues to use tokens.css until the candidate system is
- * complete and explicitly accepted. The opt-in selector exists only for future
- * isolated prototypes; do not activate it in production flows yet.
- *
- * OBS Overlay tokens remain independent in overlay/shared/tokens.css.
- */
+/* Scoped control-panel token system. OBS Overlay tokens remain independent in
+ * overlay/shared/tokens.css. */
 
-:root[data-ui-system='v2'] {
+[data-ui-system='v2'] {
   /* Primitive colors: value-based names only. */
   --ui-palette-neutral-50: #f3f3f4;
   --ui-palette-neutral-100: #e2e2e4;
@@ -514,10 +507,16 @@
   --ui-folder-paper-bg: var(--ui-color-paper);
   --ui-folder-paper-text: var(--ui-color-paper-text);
   --ui-folder-selected-ring: var(--ui-color-accent);
+
+  color-scheme: var(--ui-color-scheme);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-md);
 }
 
 /* Compact is a discrete remap, not a multiplier or a smaller type ramp. */
-:root[data-ui-system='v2'][data-ui-density='compact'] {
+:root[data-ui-density='compact'] [data-ui-system='v2'] {
   --ui-control-height: 2rem;
   --ui-track-row-min-height: 2.75rem;
   --ui-track-artwork-size: var(--ui-track-artwork-size-dense);
@@ -532,14 +531,14 @@
 }
 
 /* A manual preference may only reduce motion; it cannot override the OS choice. */
-:root[data-ui-system='v2'][data-ui-motion='reduced'] {
+:root[data-ui-motion='reduced'] [data-ui-system='v2'] {
   --ui-motion-duration-fast: 0ms;
   --ui-motion-duration-standard: 0ms;
   --ui-motion-duration-slow: 0ms;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :root[data-ui-system='v2'] {
+  [data-ui-system='v2'] {
     --ui-motion-duration-fast: 0ms;
     --ui-motion-duration-standard: 0ms;
     --ui-motion-duration-slow: 0ms;
@@ -547,21 +546,21 @@
 }
 
 /* Language-aware Windows fallbacks keep one semantic UI-family token. */
-:root[data-ui-system='v2']:lang(ja),
-:root[data-ui-system='v2'] :lang(ja) {
+[data-ui-system='v2']:lang(ja),
+[data-ui-system='v2'] :lang(ja) {
   --ui-font-family-base:
     'Yu Gothic UI', 'Meiryo UI', 'Segoe UI Variable Text', 'Segoe UI',
     system-ui, sans-serif;
 }
 
-:root[data-ui-system='v2']:lang(ko),
-:root[data-ui-system='v2'] :lang(ko) {
+[data-ui-system='v2']:lang(ko),
+[data-ui-system='v2'] :lang(ko) {
   --ui-font-family-base:
     'Malgun Gothic', 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
 }
 
 /* Light is a semantic remap of the same primitives, not a color inversion. */
-:root[data-ui-system='v2'][data-ui-theme='light'] {
+:root[data-ui-theme='light'] [data-ui-system='v2'] {
   --ui-color-scheme: light;
   --ui-shadow-contact: 0 0.125rem 0.375rem rgb(39 41 40 / 10%);
   --ui-shadow-overlay: 0 0.75rem 1.875rem rgb(39 41 40 / 18%);

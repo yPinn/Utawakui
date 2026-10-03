@@ -41,7 +41,7 @@ function expectNoneRule(source, selector) {
 function expectV2NoneRule(source, selector) {
   const rule = source.match(
     new RegExp(
-      `:global\\(:root\\[data-ui-system='v2'\\]\\s+${selector}\\)\\s*\\{([^}]*)\\}`,
+      `@scope\\s*\\(\\[data-ui-system='v2'\\]\\)[\\s\\S]*?${selector}\\s*\\{([^}]*)\\}`,
       'su',
     ),
   );
@@ -64,7 +64,7 @@ describe('Token v2 Candidate text selection contract', () => {
       '\\.demo-candidate-checkbox :deep\\(\\.ui-field__label--inline\\)',
     );
     expect(formalRangeSource).toMatch(
-      /:global\(:root\[data-ui-system='v2'\] \.ui-range\) :deep\(\.ui-field__label\)\s*\{[^}]*-webkit-user-select: none;[^}]*user-select: none;/su,
+      /@scope \(\[data-ui-system='v2'\]\)[\s\S]*?\.ui-range :deep\(\.ui-field__label\)\s*\{[^}]*-webkit-user-select: none;[^}]*user-select: none;/su,
     );
     expectV2NoneRule(formalRangeSource, '\\.ui-range__value');
     expectV2NoneRule(formalRangeControlSource, '\\.ui-range-control');

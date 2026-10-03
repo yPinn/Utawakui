@@ -1,10 +1,21 @@
 <script setup>
-import { useId } from 'vue';
+import { computed, useId } from 'vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import { registeredSurfaceAttributes } from '../../utils/rendererSurfaceRegistry.js';
 
-defineProps({
+const props = defineProps({
   activeView: { type: String, required: true },
+  candidateView: { type: String, default: '' },
 });
+
+const reviewSurfaceAttributes = computed(() =>
+  props.candidateView
+    ? {
+        ...registeredSurfaceAttributes('visual-review-navigation'),
+        'data-ui-candidate-view': props.candidateView,
+      }
+    : {},
+);
 
 const emit = defineEmits(['update:activeView']);
 const tabShapeId = `app-tab-shape-${useId()}`;
@@ -33,7 +44,12 @@ function revealTab(event) {
 </script>
 
 <template>
-  <nav class="app-tabs" aria-label="主要功能" :style="tabShapeStyle">
+  <nav
+    v-bind="reviewSurfaceAttributes"
+    class="app-tabs"
+    aria-label="主要功能"
+    :style="tabShapeStyle"
+  >
     <!-- Shared curve, referenced by every tab's clip-path below.
          clipPathUnits="objectBoundingBox" makes the 0-1 coordinates
          fractions of each button's own box, so one definition scales to
@@ -194,25 +210,25 @@ function revealTab(event) {
   transform: translateY(var(--ui-archive-tab-label-optical-offset));
 }
 
-/* The development-only Studio Library Candidate supplies the root marker.
-   Folder material remains authored here by the global-navigation owner,
-   instead of a child View reaching through this component's internals. */
-:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
-  .app-tabs__row::after,
-:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
-  .app-tabs__folder--active::before {
-  background: var(--ui-color-folder-primary);
-}
+/* Folder material belongs to this layout component. The registered review
+   surface selects the complete v2 recipe without mutating document metadata. */
+@scope ([data-ui-system='v2']) to ([data-ui-system]) {
+  :scope.app-tabs[data-ui-candidate-view='studio-library']
+    .app-tabs__row::after,
+  :scope.app-tabs[data-ui-candidate-view='studio-library']
+    .app-tabs__folder--active::before {
+    background: var(--ui-color-folder-primary);
+  }
 
-:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
-  .app-tabs__folder--active {
-  color: var(--ui-color-text);
-}
+  :scope.app-tabs[data-ui-candidate-view='studio-library']
+    .app-tabs__folder--active {
+    color: var(--ui-color-text);
+  }
 
-:global(:root[data-ui-system='v2'][data-ui-candidate-view='studio-library'])
-  .app-tabs {
-  -webkit-user-select: none;
-  user-select: none;
+  :scope.app-tabs[data-ui-candidate-view='studio-library'] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
 }
 
 .app-tabs__folder:focus-visible {

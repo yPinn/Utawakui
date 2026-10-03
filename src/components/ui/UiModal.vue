@@ -13,8 +13,11 @@ const openModalStack = [];
 // content can contain drafts; only explicit close controls may discard them.
 import { nextTick, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import { X } from '../../icons/index.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import UiIconButton from './UiIconButton.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
+
+const overlayHost = useUiOverlayHost();
 
 // Multiple app-level workflows can legitimately overlap (for example, the
 // close decision arriving while an announcement is open). Keep keyboard
@@ -140,7 +143,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <div v-if="open" class="ui-modal-backdrop">
       <div
         ref="dialog"

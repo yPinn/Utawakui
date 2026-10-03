@@ -15,11 +15,15 @@ function viewSourceFor(filename) {
 }
 
 describe('InternalToolsView', () => {
-  it('owns the isolated Token v2 lifetime and restores the previous root scope', () => {
-    expect(viewSource).toContain("import '../styles/tokens-v2.css'");
-    expect(viewSource).toContain('previousUiSystem = root.dataset.uiSystem');
-    expect(viewSource).toContain("root.dataset.uiSystem = 'v2'");
-    expect(viewSource).toContain('delete root.dataset.uiSystem');
+  it('owns a registered Token v2 surface and local overlay host', () => {
+    expect(viewSource).toContain("provideUiOverlayHost('internal-tools')");
+    expect(viewSource).toContain(
+      "registeredSurfaceAttributes('internal-tools')",
+    );
+    expect(viewSource).toContain(
+      "registeredOverlayHostAttributes('internal-tools')",
+    );
+    expect(viewSource).not.toContain('dataset.uiSystem');
   });
 
   it('keeps one classified navigation owner outside the active workbench', () => {

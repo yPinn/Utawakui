@@ -9,8 +9,11 @@ import {
   watch,
 } from 'vue';
 import { X } from '../../icons/index.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+
+const overlayHost = useUiOverlayHost();
 
 defineOptions({ inheritAttrs: false });
 
@@ -144,7 +147,7 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <dialog
       v-bind="attrs"
       ref="dialog"

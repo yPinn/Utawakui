@@ -5,6 +5,7 @@ import * as Vue from 'vue';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import DemoCandidateActionMenu from './DemoCandidateActionMenu.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 
 const { createRenderer, h, nextTick, ssrContextKey } = Vue;
 
@@ -193,6 +194,7 @@ describe('DemoCandidateActionMenu behavior', () => {
         }),
     });
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
     animationFrames.splice(0).forEach((callback) => callback());

@@ -1,6 +1,7 @@
 <script setup>
 import ObsOutputWorkspace from '../components/output/ObsOutputWorkspace.vue';
 import { getOutputWorkbenchData } from '../constants/outputTemplates.js';
+import '../styles/features/output-preview.css';
 
 const {
   templates,

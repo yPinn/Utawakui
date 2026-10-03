@@ -14,15 +14,15 @@ import {
 } from '../../composables/useSidebarWidth.js';
 import {
   isStudioLibraryMode,
-  useVisualSystemMode,
-} from '../../composables/useVisualSystemMode.js';
+  useVisualReviewMode,
+} from '../../composables/useVisualReviewMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
 import PlaylistSidebar from '../playlists/PlaylistSidebar.vue';
 
 const { tracksById } = useLibrary();
 const { state: playlistState, setLibraryView } = usePlaylists();
 const { activeView, setActiveView } = useAppView();
-const { mode: visualSystemMode } = useVisualSystemMode();
+const { mode: visualReviewMode } = useVisualReviewMode();
 const {
   editDetailsPlaylist,
   editDetailsIsAlbum,
@@ -45,7 +45,7 @@ const sidebarCompact = computed(
 function activateSetlistView() {
   const isViewingStudioLibrary =
     activeView.value === 'visual-system' &&
-    isStudioLibraryMode(visualSystemMode.value);
+    isStudioLibraryMode(visualReviewMode.value);
   if (!isViewingStudioLibrary) setActiveView('setlist');
 }
 

@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "declarations": {
-    "v1": 413,
-    "v1Only": 169,
+    "v1": 341,
+    "v1Only": 97,
     "v2": 372
   },
   "production": {
-    "files": 74,
-    "pairs": 273,
+    "files": 69,
+    "pairs": 198,
     "references": [
       {
         "file": "src/components/playlists/PlaylistDetailsModal.vue",
@@ -202,52 +202,12 @@
       {
         "file": "src/components/lyrics/LyricsDocumentPanel.vue",
         "surface": "lyrics-feature",
-        "token": "--ui-lyrics-font-size-compact"
-      },
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-font-size-default"
-      },
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-font-size-large"
-      },
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-live-control-height"
-      },
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-live-safe-area"
-      },
-      {
-        "file": "src/components/lyrics/LyricsDocumentPanel.vue",
-        "surface": "lyrics-feature",
         "token": "--ui-radius"
       },
       {
         "file": "src/components/lyrics/LyricsDocumentPanel.vue",
         "surface": "lyrics-feature",
         "token": "--ui-z-dropdown"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLiveControls.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-live-action-width"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLiveControls.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-live-control-height"
-      },
-      {
-        "file": "src/components/lyrics/LyricsLiveControls.vue",
-        "surface": "lyrics-feature",
-        "token": "--ui-lyrics-live-display-width"
       },
       {
         "file": "src/components/lyrics/LyricsLiveControls.vue",
@@ -430,24 +390,9 @@
         "token": "--ui-font-weight-strong"
       },
       {
-        "file": "src/components/performer/PerformerLyricCue.vue",
-        "surface": "other-feature",
-        "token": "--ui-performer-lyric-current-font-size"
-      },
-      {
-        "file": "src/components/performer/PerformerLyricCue.vue",
-        "surface": "other-feature",
-        "token": "--ui-performer-ruby-font-size"
-      },
-      {
         "file": "src/components/performer/PerformerStage.vue",
         "surface": "other-feature",
         "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/performer/PerformerStage.vue",
-        "surface": "other-feature",
-        "token": "--ui-performer-lyrics-max-width"
       },
       {
         "file": "src/components/performer/PerformerWindowToolbar.vue",
@@ -647,11 +592,6 @@
       {
         "file": "src/components/output/ObsOverlayPreview.vue",
         "surface": "output-feature",
-        "token": "--ui-output-preview-aspect-ratio"
-      },
-      {
-        "file": "src/components/output/ObsOverlayPreview.vue",
-        "surface": "output-feature",
         "token": "--ui-output-workbench-stage-max-width"
       },
       {
@@ -695,81 +635,6 @@
         "token": "--ui-output-gallery-preview-max-width"
       },
       {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-accent"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-aspect-ratio"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-lyrics-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-lyrics-surface"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-manga-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-manga-ink"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-reading-accent"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-reading-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-stage-accent"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-stage-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-surface"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-text"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.base.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-text-muted"
-      },
-      {
         "file": "src/components/output/ObsTemplateMockup.cover-player.css",
         "surface": "output-feature",
         "token": "--ui-font-weight-heavy"
@@ -778,101 +643,6 @@
         "file": "src/components/output/ObsTemplateMockup.cover-player.css",
         "surface": "output-feature",
         "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-accent-contrast"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-canvas"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-player-track-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-surface-muted"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-text"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-text-muted"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-artist-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-artist-weight"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-copy-ink"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-copy-muted"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-dark"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-deck-metal"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-deck-metal-highlight"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-highlight"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-mid"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-neutral-accent"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-platter-rim"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-sleeve-paper"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.cover-player.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-vinyl-title-size"
       },
       {
         "file": "src/components/output/ObsTemplateMockup.cover-player.css",
@@ -895,99 +665,9 @@
         "token": "--ui-font-weight-strong"
       },
       {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-fill-female"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-fill-group"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-fill-male"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-fill-solo"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-fill-unsung"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-stroke-sung"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ktv-stroke-unsung"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ornate-detail-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.karaoke.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ornate-thumbnail-font-size"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-candy-deep"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-candy-light"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-cyan"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-ink"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-magenta"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-paper"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-red"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.kinetic-pop.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-kinetic-yellow"
-      },
-      {
         "file": "src/components/output/ObsTemplateMockup.live-stage.css",
         "surface": "output-feature",
         "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.live-stage.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-accent-contrast"
       },
       {
         "file": "src/components/output/ObsTemplateMockup.live-stage.css",
@@ -995,39 +675,9 @@
         "token": "--ui-output-template-thumb-caption-font-size"
       },
       {
-        "file": "src/components/output/ObsTemplateMockup.manga.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-manga-ink"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.manga.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-manga-paper"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.motion.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-cycle-duration"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.motion.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-cycle-ease"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.motion.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-surface-muted"
-      },
-      {
         "file": "src/components/output/ObsTemplateMockup.now-playing.css",
         "surface": "output-feature",
         "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/output/ObsTemplateMockup.now-playing.css",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-player-track-size"
       },
       {
         "file": "src/components/output/ObsTemplateMockup.now-playing.css",
@@ -1075,16 +725,6 @@
         "token": "--ui-output-template-thumb-title-font-size"
       },
       {
-        "file": "src/components/output/ObsTemplateThumbnail.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-aspect-ratio"
-      },
-      {
-        "file": "src/components/output/ObsTemplateThumbnail.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-canvas"
-      },
-      {
         "file": "src/components/output/ObsWidgetCapturePreview.vue",
         "surface": "output-feature",
         "token": "--ui-font-weight-strong"
@@ -1098,21 +738,6 @@
         "file": "src/components/output/ObsWidgetCapturePreview.vue",
         "surface": "output-feature",
         "token": "--ui-motion-fast"
-      },
-      {
-        "file": "src/components/output/OrnateVerticalPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ornate-echo"
-      },
-      {
-        "file": "src/components/output/OrnateVerticalPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ornate-paper"
-      },
-      {
-        "file": "src/components/output/OrnateVerticalPreview.vue",
-        "surface": "output-feature",
-        "token": "--ui-output-preview-ornate-shadow"
       },
       {
         "file": "src/views/ImportView.vue",
@@ -1375,7 +1000,7 @@
         "token": "--ui-line-height-headline"
       }
     ],
-    "tokens": 149
+    "tokens": 85
   },
   "legacyTokens": [
     "--ui-archive-content-inset",
@@ -1392,13 +1017,6 @@
     "--ui-font-weight-heavy",
     "--ui-font-weight-strong",
     "--ui-line-height-headline",
-    "--ui-lyrics-font-size-compact",
-    "--ui-lyrics-font-size-default",
-    "--ui-lyrics-font-size-large",
-    "--ui-lyrics-live-action-width",
-    "--ui-lyrics-live-control-height",
-    "--ui-lyrics-live-display-width",
-    "--ui-lyrics-live-safe-area",
     "--ui-motion-ease",
     "--ui-motion-fast",
     "--ui-motion-slow",
@@ -1410,68 +1028,6 @@
     "--ui-output-gallery-preview-max-width",
     "--ui-output-gallery-tile-min-width",
     "--ui-output-port-input-width",
-    "--ui-output-preview-accent",
-    "--ui-output-preview-accent-contrast",
-    "--ui-output-preview-aspect-ratio",
-    "--ui-output-preview-canvas",
-    "--ui-output-preview-cycle-duration",
-    "--ui-output-preview-cycle-ease",
-    "--ui-output-preview-kinetic-candy-deep",
-    "--ui-output-preview-kinetic-candy-light",
-    "--ui-output-preview-kinetic-cyan",
-    "--ui-output-preview-kinetic-ink",
-    "--ui-output-preview-kinetic-magenta",
-    "--ui-output-preview-kinetic-ochre",
-    "--ui-output-preview-kinetic-offset-end",
-    "--ui-output-preview-kinetic-offset-start",
-    "--ui-output-preview-kinetic-paper",
-    "--ui-output-preview-kinetic-red",
-    "--ui-output-preview-kinetic-yellow",
-    "--ui-output-preview-ktv-canvas",
-    "--ui-output-preview-ktv-fill-female",
-    "--ui-output-preview-ktv-fill-group",
-    "--ui-output-preview-ktv-fill-male",
-    "--ui-output-preview-ktv-fill-solo",
-    "--ui-output-preview-ktv-fill-unsung",
-    "--ui-output-preview-ktv-stroke-sung",
-    "--ui-output-preview-ktv-stroke-unsung",
-    "--ui-output-preview-lyrics-canvas",
-    "--ui-output-preview-lyrics-surface",
-    "--ui-output-preview-manga-border-width",
-    "--ui-output-preview-manga-canvas",
-    "--ui-output-preview-manga-dot-gap",
-    "--ui-output-preview-manga-dot-size",
-    "--ui-output-preview-manga-halftone",
-    "--ui-output-preview-manga-ink",
-    "--ui-output-preview-manga-paper",
-    "--ui-output-preview-manga-pattern-size",
-    "--ui-output-preview-ornate-detail-font-size",
-    "--ui-output-preview-ornate-echo",
-    "--ui-output-preview-ornate-paper",
-    "--ui-output-preview-ornate-shadow",
-    "--ui-output-preview-ornate-thumbnail-font-size",
-    "--ui-output-preview-player-track-size",
-    "--ui-output-preview-reading-accent",
-    "--ui-output-preview-reading-canvas",
-    "--ui-output-preview-stage-accent",
-    "--ui-output-preview-stage-canvas",
-    "--ui-output-preview-surface",
-    "--ui-output-preview-surface-muted",
-    "--ui-output-preview-text",
-    "--ui-output-preview-text-muted",
-    "--ui-output-preview-vinyl-artist-size",
-    "--ui-output-preview-vinyl-artist-weight",
-    "--ui-output-preview-vinyl-copy-ink",
-    "--ui-output-preview-vinyl-copy-muted",
-    "--ui-output-preview-vinyl-dark",
-    "--ui-output-preview-vinyl-deck-metal",
-    "--ui-output-preview-vinyl-deck-metal-highlight",
-    "--ui-output-preview-vinyl-highlight",
-    "--ui-output-preview-vinyl-mid",
-    "--ui-output-preview-vinyl-neutral-accent",
-    "--ui-output-preview-vinyl-platter-rim",
-    "--ui-output-preview-vinyl-sleeve-paper",
-    "--ui-output-preview-vinyl-title-size",
     "--ui-output-setting-label-width-min",
     "--ui-output-settings-command-button-width",
     "--ui-output-template-thumb-artwork-size",
@@ -1484,9 +1040,6 @@
     "--ui-output-template-thumb-title-font-size",
     "--ui-output-workbench-inspector-width",
     "--ui-output-workbench-stage-max-width",
-    "--ui-performer-lyric-current-font-size",
-    "--ui-performer-lyrics-max-width",
-    "--ui-performer-ruby-font-size",
     "--ui-player-bar-action-gap",
     "--ui-player-bar-action-size",
     "--ui-player-bar-artwork-size",
@@ -1549,208 +1102,32 @@
     "--ui-z-modal"
   ],
   "activation": {
-    "baseVisualTokenReferences": [
-      "--ui-color-accent",
-      "--ui-color-canvas",
-      "--ui-color-focus",
-      "--ui-color-text",
-      "--ui-focus-offset",
-      "--ui-focus-width",
-      "--ui-font-family-base",
-      "--ui-font-size-md"
-    ],
-    "crossVersionFeatureTokens": [
-      "--ui-lyrics-font-size-compact",
-      "--ui-lyrics-font-size-default",
-      "--ui-lyrics-font-size-large",
-      "--ui-lyrics-live-action-width",
-      "--ui-lyrics-live-control-height",
-      "--ui-lyrics-live-display-width",
-      "--ui-lyrics-live-safe-area",
-      "--ui-output-preview-accent",
-      "--ui-output-preview-accent-contrast",
-      "--ui-output-preview-aspect-ratio",
-      "--ui-output-preview-canvas",
-      "--ui-output-preview-cycle-duration",
-      "--ui-output-preview-cycle-ease",
-      "--ui-output-preview-kinetic-candy-deep",
-      "--ui-output-preview-kinetic-candy-light",
-      "--ui-output-preview-kinetic-cyan",
-      "--ui-output-preview-kinetic-ink",
-      "--ui-output-preview-kinetic-magenta",
-      "--ui-output-preview-kinetic-ochre",
-      "--ui-output-preview-kinetic-offset-end",
-      "--ui-output-preview-kinetic-offset-start",
-      "--ui-output-preview-kinetic-paper",
-      "--ui-output-preview-kinetic-red",
-      "--ui-output-preview-kinetic-yellow",
-      "--ui-output-preview-ktv-canvas",
-      "--ui-output-preview-ktv-fill-female",
-      "--ui-output-preview-ktv-fill-group",
-      "--ui-output-preview-ktv-fill-male",
-      "--ui-output-preview-ktv-fill-solo",
-      "--ui-output-preview-ktv-fill-unsung",
-      "--ui-output-preview-ktv-stroke-sung",
-      "--ui-output-preview-ktv-stroke-unsung",
-      "--ui-output-preview-lyrics-canvas",
-      "--ui-output-preview-lyrics-surface",
-      "--ui-output-preview-manga-border-width",
-      "--ui-output-preview-manga-canvas",
-      "--ui-output-preview-manga-dot-gap",
-      "--ui-output-preview-manga-dot-size",
-      "--ui-output-preview-manga-halftone",
-      "--ui-output-preview-manga-ink",
-      "--ui-output-preview-manga-paper",
-      "--ui-output-preview-manga-pattern-size",
-      "--ui-output-preview-ornate-detail-font-size",
-      "--ui-output-preview-ornate-echo",
-      "--ui-output-preview-ornate-paper",
-      "--ui-output-preview-ornate-shadow",
-      "--ui-output-preview-ornate-thumbnail-font-size",
-      "--ui-output-preview-player-track-size",
-      "--ui-output-preview-reading-accent",
-      "--ui-output-preview-reading-canvas",
-      "--ui-output-preview-stage-accent",
-      "--ui-output-preview-stage-canvas",
-      "--ui-output-preview-surface",
-      "--ui-output-preview-surface-muted",
-      "--ui-output-preview-text",
-      "--ui-output-preview-text-muted",
-      "--ui-output-preview-vinyl-artist-size",
-      "--ui-output-preview-vinyl-artist-weight",
-      "--ui-output-preview-vinyl-copy-ink",
-      "--ui-output-preview-vinyl-copy-muted",
-      "--ui-output-preview-vinyl-dark",
-      "--ui-output-preview-vinyl-deck-metal",
-      "--ui-output-preview-vinyl-deck-metal-highlight",
-      "--ui-output-preview-vinyl-highlight",
-      "--ui-output-preview-vinyl-mid",
-      "--ui-output-preview-vinyl-neutral-accent",
-      "--ui-output-preview-vinyl-platter-rim",
-      "--ui-output-preview-vinyl-sleeve-paper",
-      "--ui-output-preview-vinyl-title-size",
-      "--ui-performer-lyric-current-font-size",
-      "--ui-performer-lyrics-max-width",
-      "--ui-performer-ruby-font-size"
-    ],
-    "documentSpecimenMarkers": [
-      {
-        "file": "src/components/demo/DemoActionMenuLayer.vue",
-        "marker": "demoActionMenuSource"
-      },
-      {
-        "file": "src/components/demo/DemoModalLayer.vue",
-        "marker": "demoModalSource"
-      }
-    ],
-    "documentSystemWriters": [
-      {
-        "file": "prototypes/ui-component-lab/src/App.vue",
-        "occurrences": 1
-      },
-      {
-        "file": "src/views/DemoView.vue",
-        "occurrences": 1
-      },
-      {
-        "file": "src/views/InternalToolsView.vue",
-        "occurrences": 1
-      },
-      {
-        "file": "src/views/StudioLibraryPrototypeView.vue",
-        "occurrences": 1
-      }
-    ],
-    "generatedInvalidationImports": [],
-    "prototypeDocumentRoots": [
-      "prototypes/studio-library-workspace/index.html",
-      "prototypes/ui-component-lab/index.html"
-    ],
+    "baseVisualTokenReferences": [],
+    "crossVersionFeatureTokens": [],
+    "documentSpecimenMarkers": [],
+    "documentSystemWriters": [],
+    "generatedInvalidationImports": ["src/main.js", "src/performer-main.js"],
+    "prototypeDocumentRoots": [],
     "reviewComposable": {
-      "current": "src/composables/useVisualSystemMode.js",
-      "references": [
-        "src/App.vue",
-        "src/components/layout/AppPlaylistSidebar.vue",
-        "src/composables/useVisualSystemMode.js",
-        "src/composables/useVisualSystemMode.test.js",
-        "src/views/VisualSystemView.vue"
-      ],
+      "current": "src/composables/useVisualReviewMode.js",
+      "references": [],
       "target": "src/composables/useVisualReviewMode.js"
     },
-    "rootBoundRecipeOccurrences": 50,
-    "rootBoundRecipes": [
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "occurrences": 4
-      },
-      {
-        "file": "src/components/ui/UiButton.vue",
-        "occurrences": 8
-      },
-      {
-        "file": "src/components/ui/UiIconButton.vue",
-        "occurrences": 4
-      },
-      {
-        "file": "src/components/ui/UiRange.vue",
-        "occurrences": 6
-      },
-      {
-        "file": "src/components/ui/UiTextButton.vue",
-        "occurrences": 2
-      },
-      {
-        "file": "src/components/ui/range/UiRangeControl.vue",
-        "occurrences": 26
-      }
-    ],
+    "rootBoundRecipeOccurrences": 0,
+    "rootBoundRecipes": [],
     "teleports": {
-      "demo": [
-        {
-          "file": "src/components/demo/DemoCandidateActionMenu.vue",
-          "occurrences": 1
-        },
-        {
-          "file": "src/components/demo/DemoCandidateModal.vue",
-          "occurrences": 1
-        }
-      ],
-      "demoCount": 2,
-      "production": [
-        {
-          "file": "src/components/ui/UiCombobox.vue",
-          "occurrences": 1
-        },
-        {
-          "file": "src/components/ui/UiContextMenu.vue",
-          "occurrences": 1
-        },
-        {
-          "file": "src/components/ui/UiModal.vue",
-          "occurrences": 1
-        },
-        {
-          "file": "src/components/ui/UiNotificationHost.vue",
-          "occurrences": 1
-        },
-        {
-          "file": "src/components/ui/UiPopover.vue",
-          "occurrences": 1
-        },
-        {
-          "file": "src/components/ui/tooltip/UiTooltipSurface.vue",
-          "occurrences": 1
-        }
-      ],
-      "productionCount": 6
+      "demo": [],
+      "demoCount": 0,
+      "production": [],
+      "productionCount": 0
     },
     "tokenEntries": {
       "rendererImports": {
         "main": "import './styles/tokens.css';",
         "performer": "import './styles/tokens.css';"
       },
-      "v1DocumentRootSelectors": 4,
-      "v2DocumentRootSelectors": 9
+      "v1DocumentRootSelectors": 0,
+      "v2DocumentRootSelectors": 0
     }
   }
 }

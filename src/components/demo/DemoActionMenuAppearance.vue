@@ -154,7 +154,7 @@ const LAYERS = [
   --ui-shadow-overlay: 0 1rem 2.375rem rgb(31 35 40 / 16%);
 }
 
-:global(:root[data-demo-action-menu-source='current'] .ui-context-menu) {
+:global([data-demo-action-menu-source='current'] .ui-context-menu) {
   --ui-space-1: 0.25rem;
   --ui-space-2: 0.5rem;
   --ui-border-width: 1px;
@@ -181,7 +181,8 @@ const LAYERS = [
 }
 
 :global(
-  :root[data-ui-theme='light'][data-demo-action-menu-source='current']
+  :root[data-ui-theme='light']
+    [data-demo-action-menu-source='current']
     .ui-context-menu
 ) {
   --ui-color-surface: #fffdfa;

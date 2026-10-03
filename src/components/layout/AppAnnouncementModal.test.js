@@ -6,9 +6,7 @@ import { useAppAnnouncement } from '../../composables/useAppAnnouncement.js';
 import announcement from '../../../shared/releaseAnnouncement.json';
 
 async function renderModal() {
-  const context = {};
-  await renderToString(createSSRApp(AppAnnouncementModal), context);
-  return context.teleports?.body ?? '';
+  return renderToString(createSSRApp(AppAnnouncementModal));
 }
 
 afterEach(() => {

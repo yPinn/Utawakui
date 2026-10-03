@@ -105,40 +105,42 @@ defineExpose({ focus });
   text-align: end;
 }
 
-:global(:root[data-ui-system='v2'] .ui-range) :deep(.ui-field__label) {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  -webkit-user-select: none;
-  user-select: none;
-}
+@scope ([data-ui-system='v2']) to ([data-ui-system]) {
+  .ui-range :deep(.ui-field__label) {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 
-:global(:root[data-ui-system='v2'] .ui-range__value) {
-  min-inline-size: 2.5rem;
-  color: var(--ui-color-text-muted);
-  line-height: var(--ui-line-height-caption);
-  overflow-wrap: anywhere;
-  -webkit-user-select: none;
-  user-select: none;
-}
+  .ui-range__value {
+    min-inline-size: 2.5rem;
+    color: var(--ui-color-text-muted);
+    line-height: var(--ui-line-height-caption);
+    overflow-wrap: anywhere;
+    -webkit-user-select: none;
+    user-select: none;
+  }
 
-:global(:root[data-ui-system='v2'] .ui-range.is-disabled) {
-  opacity: var(--ui-opacity-disabled);
-}
+  .ui-range.is-disabled {
+    opacity: var(--ui-opacity-disabled);
+  }
 
-:global(
-  :root[data-ui-system='v2'] .ui-range.is-disabled .ui-range-control.is-disabled
-) {
-  opacity: 1;
+  .ui-range.is-disabled .ui-range-control.is-disabled {
+    opacity: 1;
+  }
 }
 
 @container (max-width: 18rem) {
-  :global(:root[data-ui-system='v2'] .ui-range__layout.has-value-text) {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 0;
-  }
+  @scope ([data-ui-system='v2']) to ([data-ui-system]) {
+    .ui-range__layout.has-value-text {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0;
+    }
 
-  :global(:root[data-ui-system='v2'] .ui-range__value) {
-    justify-self: end;
+    .ui-range__value {
+      justify-self: end;
+    }
   }
 }
 </style>

@@ -31,8 +31,8 @@ import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import {
   isStudioLibraryMode,
-  useVisualSystemMode,
-} from './composables/useVisualSystemMode.js';
+  useVisualReviewMode,
+} from './composables/useVisualReviewMode.js';
 import { useTheme } from './composables/useTheme.js';
 import { useUiDensity } from './composables/useUiDensity.js';
 import { useAudioOutput } from './composables/useAudioOutput.js';
@@ -55,6 +55,11 @@ import { usePerformanceSessionWorkspace } from './composables/usePerformanceSess
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 import { measureInteractionToNextPaint } from './utils/interactionPerformance.js';
+import { provideUiOverlayHost } from './composables/useUiOverlayHost.js';
+import { registeredOverlayHostAttributes } from './utils/rendererSurfaceRegistry.js';
+
+provideUiOverlayHost('app-shell');
+const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
 
 // Setlist is the only initial view. Keep inactive workflows out of Vite's first
 // renderer graph so a new dev server can show the working shell immediately.
@@ -202,11 +207,11 @@ function leaveSettings() {
 }
 // The Studio Library inspector only makes sense while VisualSystemView is
 // actually showing its Studio Library sub-mode, not its Demo sub-mode.
-const { mode: visualSystemMode } = useVisualSystemMode();
+const { mode: visualReviewMode } = useVisualReviewMode();
 const activeContextDefinition = computed(() => {
   if (
     activeView.value === 'visual-system' &&
-    visualSystemMode.value !== 'studio-library'
+    visualReviewMode.value !== 'studio-library'
   ) {
     return null;
   }
@@ -375,11 +380,17 @@ onUnmounted(() =>
 const archiveTabView = internalWorkbenchesEnabled
   ? computed(() =>
       activeView.value === 'visual-system' &&
-      isStudioLibraryMode(visualSystemMode.value)
+      isStudioLibraryMode(visualReviewMode.value)
         ? 'setlist'
         : activeView.value,
     )
   : activeView;
+const visualReviewCandidateView = computed(() =>
+  activeView.value === 'visual-system' &&
+  isStudioLibraryMode(visualReviewMode.value)
+    ? 'studio-library'
+    : '',
+);
 useKeyboardShortcuts({ internalViewShortcuts });
 </script>
 
@@ -391,6 +402,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
       '--ui-right-dock-width': `${rightDockWidth}px`,
     }"
   >
+    <div v-bind="appOverlayHostAttributes" class="ui-overlay-host" />
     <AppTitleBar
       class="shell__titlebar"
       :session-active="sessionExpanded"
@@ -424,6 +436,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
           v-else
           :active-view="activeView"
           :tab-active-view="archiveTabView"
+          :candidate-view="visualReviewCandidateView"
           @update:active-view="setActiveView"
         >
           <component :is="views[activeView]" />

@@ -62,7 +62,7 @@ describe('Token v2 scrollbar appearance checkpoint', () => {
     }
 
     const compactBlock = tokenSource.match(
-      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/u,
     )?.[1];
 
     expect(compactBlock).not.toContain('--ui-scrollbar-lane-size');

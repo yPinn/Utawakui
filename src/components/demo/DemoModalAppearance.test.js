@@ -128,9 +128,7 @@ describe('DemoModalAppearance Candidate and Current checkpoint', () => {
   });
 
   it('keeps Current on an explicit active-token snapshot', () => {
-    expect(appearanceSource).toContain(
-      ":root[data-demo-modal-source='current']",
-    );
+    expect(appearanceSource).toContain("[data-demo-modal-source='current']");
     expect(appearanceSource).toContain('--ui-color-surface: #292f35');
     expect(appearanceSource).toContain('--ui-color-surface-raised: #30383e');
     expect(appearanceSource).toContain('--ui-field-bg: #344046');

@@ -93,7 +93,9 @@ describe('Token v2 shared primitive adoption', () => {
 
     for (const [filename, source, componentSelector] of compiledStyles) {
       const css = compileScopedStyle(source, filename);
-      expect(css).toContain(`:root[data-ui-system='v2'] ${componentSelector}`);
+      expect(source).toContain("@scope ([data-ui-system='v2'])");
+      expect(css).toContain("@scope ([data-ui-system='v2'])");
+      expect(css).toContain(componentSelector);
       expect(css).not.toMatch(
         /:root\[data-ui-system=['"]v2['"]\]\s*\{[^}]*(?:background|opacity|box-sizing|user-select)\s*:/su,
       );

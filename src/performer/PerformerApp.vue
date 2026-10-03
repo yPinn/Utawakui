@@ -3,6 +3,13 @@ import PerformerStage from '../components/performer/PerformerStage.vue';
 import PerformerWindowToolbar from '../components/performer/PerformerWindowToolbar.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
 import { usePerformerViewState } from '../composables/usePerformerViewState.js';
+import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
+import { registeredOverlayHostAttributes } from '../utils/rendererSurfaceRegistry.js';
+import '../styles/features/performer.css';
+
+provideUiOverlayHost('performer');
+const performerOverlayHostAttributes =
+  registeredOverlayHostAttributes('performer');
 
 const {
   error,
@@ -17,6 +24,7 @@ const {
 
 <template>
   <div class="performer-app">
+    <div v-bind="performerOverlayHostAttributes" class="ui-overlay-host" />
     <PerformerWindowToolbar
       :full-screen="windowState.fullScreen"
       :always-on-top="windowState.alwaysOnTop"

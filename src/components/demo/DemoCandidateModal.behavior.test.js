@@ -7,6 +7,7 @@ import DemoCandidateModal from './DemoCandidateModal.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
+import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 
 const { createRenderer, h, nextTick, shallowRef, ssrContextKey } = Vue;
 
@@ -187,6 +188,7 @@ describe('DemoCandidateModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
 
     open.value = true;
@@ -234,6 +236,7 @@ describe('DemoCandidateModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
     await nextTick();
@@ -275,6 +278,7 @@ describe('DemoCandidateModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
     await nextTick();
@@ -326,6 +330,7 @@ describe('DemoCandidateModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
 
     const scrollBody = findAll(body, (node) =>

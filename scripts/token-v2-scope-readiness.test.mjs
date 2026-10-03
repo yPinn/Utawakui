@@ -22,36 +22,20 @@ describe('Token v2 scope readiness fixtures', () => {
       'portal-owner',
       'review-surface',
     ]);
-    expect(readiness.ready).toBe(false);
-    expect(readiness.fixtures.every(({ ready }) => ready === false)).toBe(true);
+    expect(readiness.ready).toBe(true);
+    expect(readiness.fixtures.every(({ ready }) => ready === true)).toBe(true);
   });
 
-  it('keeps isolation and both nesting directions blocked until one cutover', () => {
-    expect(fixture('no-t1-isolation').violations).toEqual([
-      'base-visual-token-consumers',
-      'generated-invalidation-inactive',
-      'token-entries-document-root',
-    ]);
+  it('proves isolation and both nesting directions in one cutover', () => {
+    expect(fixture('no-t1-isolation').violations).toEqual([]);
     for (const id of ['mixed-v1-to-v2', 'mixed-v2-to-v1']) {
-      expect(fixture(id).violations).toEqual([
-        'generated-invalidation-inactive',
-        'shared-recipes-document-root',
-      ]);
+      expect(fixture(id).violations).toEqual([]);
     }
   });
 
-  it('keeps metadata, portal, and review ownership individually diagnosable', () => {
-    expect(fixture('metadata-projection').violations).toEqual([
-      'token-entries-document-root',
-    ]);
-    expect(fixture('portal-owner').violations).toEqual([
-      'body-teleport-targets',
-    ]);
-    expect(fixture('review-surface').violations).toEqual([
-      'document-review-writers',
-      'document-specimen-markers',
-      'prototype-document-roots',
-      'review-composable-name',
-    ]);
+  it('proves metadata, portal, and review ownership independently', () => {
+    expect(fixture('metadata-projection').violations).toEqual([]);
+    expect(fixture('portal-owner').violations).toEqual([]);
+    expect(fixture('review-surface').violations).toEqual([]);
   });
 });

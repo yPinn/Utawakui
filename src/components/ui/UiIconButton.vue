@@ -111,8 +111,22 @@ function buttonAttrs(triggerProps) {
     opacity var(--ui-motion-duration-feedback) var(--ui-motion-easing-standard);
 }
 
-:global(:root[data-ui-system='v2'] .ui-icon-btn) {
-  box-sizing: border-box;
+@scope ([data-ui-system='v2']) to ([data-ui-system]) {
+  .ui-icon-btn {
+    box-sizing: border-box;
+  }
+
+  .ui-icon-btn--accent:not(:disabled):active {
+    background: var(--ui-color-accent-active);
+  }
+
+  .ui-icon-btn--overlay:not(:disabled):hover {
+    background: var(--ui-color-overlay-scrim-hover);
+  }
+
+  .ui-icon-btn--overlay:not(:disabled):active {
+    background: var(--ui-color-overlay-scrim-active);
+  }
 }
 
 .ui-icon-btn--md {
@@ -189,23 +203,9 @@ function buttonAttrs(triggerProps) {
   background: var(--ui-color-accent-hover);
 }
 
-:global(:root[data-ui-system='v2'] .ui-icon-btn--accent:not(:disabled):active) {
-  background: var(--ui-color-accent-active);
-}
-
 .ui-icon-btn--overlay {
   background: var(--ui-color-overlay-scrim);
   color: var(--ui-color-overlay-contrast);
-}
-
-:global(:root[data-ui-system='v2'] .ui-icon-btn--overlay:not(:disabled):hover) {
-  background: var(--ui-color-overlay-scrim-hover);
-}
-
-:global(
-  :root[data-ui-system='v2'] .ui-icon-btn--overlay:not(:disabled):active
-) {
-  background: var(--ui-color-overlay-scrim-active);
 }
 
 .ui-icon-btn:disabled,

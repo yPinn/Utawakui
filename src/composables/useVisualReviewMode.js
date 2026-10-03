@@ -8,7 +8,7 @@ export function isStudioLibraryMode(candidateMode) {
   return candidateMode === STUDIO_LIBRARY_MODE;
 }
 
-export function useVisualSystemMode() {
+export function useVisualReviewMode() {
   function setMode(nextMode) {
     if (MODES.has(nextMode)) mode.value = nextMode;
   }

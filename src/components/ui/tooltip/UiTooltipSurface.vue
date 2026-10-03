@@ -1,4 +1,8 @@
 <script setup>
+import { useUiOverlayHost } from '../../../composables/useUiOverlayHost.js';
+
+const overlayHost = useUiOverlayHost();
+
 defineProps({
   open: { type: Boolean, default: false },
   text: { type: String, required: true },
@@ -12,7 +16,7 @@ defineProps({
 </script>
 
 <template>
-  <Teleport v-if="open" to="body">
+  <Teleport v-if="open" :to="overlayHost || undefined" :disabled="!overlayHost">
     <span
       :id="tooltipId"
       :ref="setElement"

@@ -1,6 +1,6 @@
 /* --ui-* control-panel tokens only. Public overlay tokens live separately in
    overlay/shared/tokens.css and never inherit this theme. */
-:root {
+[data-ui-system='v1'] {
   /* Dark is default; light overrides are in the [data-ui-theme='light']
      block below — only --ui-color-* tokens differ by theme. */
 
@@ -249,11 +249,6 @@
   --ui-notification-motion-offset: var(--ui-space-4);
   --ui-notification-swipe-dismiss-distance: 4.5rem;
   --ui-separation-mode-min-width: 8.5rem; /* mode label + native select affordance */
-  --ui-lyrics-live-control-height: 2.75rem; /* 44px urgent live action target */
-  --ui-lyrics-live-action-width: 4.5rem;
-  --ui-lyrics-live-display-width: 4.75rem;
-  --ui-lyrics-live-safe-area: 4.75rem; /* floating control + reader breathing room */
-
   /* --- Sizing: overlays --- */
   --ui-modal-width-default: 26.25rem; /* 420px: short forms */
   --ui-modal-width-notice: 40rem; /* 640px: confirmation copy with bullets */
@@ -471,86 +466,6 @@
   --ui-output-template-thumb-tight-gap: var(--ui-space-1);
   --ui-output-template-thumb-group-gap: var(--ui-space-2);
   --ui-output-setting-label-width-min: 4rem; /* 64px: compact setting label column */
-  /* Template mockups represent an output canvas, so these colors stay
-     theme-independent while remaining centralized and reusable. */
-  --ui-output-preview-canvas: #14191d;
-  --ui-output-preview-stage-canvas: #19252a;
-  --ui-output-preview-lyrics-canvas: #162426;
-  --ui-output-preview-reading-canvas: #22201d;
-  --ui-output-preview-surface: rgb(8 11 13 / 74%);
-  --ui-output-preview-lyrics-surface: rgb(7 18 19 / 72%);
-  --ui-output-preview-surface-muted: rgb(255 255 255 / 18%);
-  --ui-output-preview-text: #fffdfa;
-  --ui-output-preview-text-muted: rgb(255 253 250 / 68%);
-  --ui-output-preview-accent: #72bec1;
-  --ui-output-preview-vinyl-dark: #07090a;
-  --ui-output-preview-vinyl-mid: #23272a;
-  --ui-output-preview-vinyl-highlight: #303538;
-  --ui-output-preview-vinyl-neutral-accent: #303538;
-  --ui-output-preview-vinyl-deck-metal: #373d3f;
-  --ui-output-preview-vinyl-deck-metal-highlight: #646b6d;
-  --ui-output-preview-vinyl-platter-rim: #8a9294;
-  --ui-output-preview-vinyl-sleeve-paper: #eee7dc;
-  --ui-output-preview-vinyl-copy-ink: #161a1d;
-  --ui-output-preview-vinyl-copy-muted: #54595d;
-  --ui-output-preview-vinyl-title-size: 1rem;
-  --ui-output-preview-vinyl-artist-size: 0.75rem;
-  --ui-output-preview-vinyl-artist-weight: 500;
-  --ui-output-preview-stage-accent: #78c9cb;
-  --ui-output-preview-reading-accent: #f0b49d;
-  --ui-output-preview-accent-contrast: #102326;
-  --ui-output-preview-ktv-canvas: #11151d;
-  --ui-output-preview-ktv-fill-unsung: #ffffff;
-  --ui-output-preview-ktv-fill-solo: #2344b5;
-  --ui-output-preview-ktv-fill-male: #2344b5;
-  --ui-output-preview-ktv-fill-female: #b5213f;
-  --ui-output-preview-ktv-fill-group: #178346;
-  --ui-output-preview-ktv-stroke-unsung: #0b2b75;
-  --ui-output-preview-ktv-stroke-sung: #ffffff;
-  --ui-output-preview-kinetic-ink: #10152f;
-  --ui-output-preview-kinetic-paper: #fff9ef;
-  --ui-output-preview-kinetic-yellow: #ffd92e;
-  --ui-output-preview-kinetic-red: #e42d5f;
-  --ui-output-preview-kinetic-ochre: #e29a1b;
-  --ui-output-preview-kinetic-cyan: #38d8e8;
-  --ui-output-preview-kinetic-magenta: #f24e9b;
-  --ui-output-preview-kinetic-candy-deep: #941361;
-  --ui-output-preview-kinetic-candy-light: #f33a52;
-  --ui-output-preview-ornate-paper: #fff8ec;
-  --ui-output-preview-ornate-echo: rgb(255 255 255 / 18%);
-  --ui-output-preview-ornate-shadow:
-    0 0.018em 0.012em rgb(0 0 0 / 76%), 0 0.055em 0.1em rgb(0 0 0 / 34%);
-  --ui-output-preview-ornate-detail-font-size: 0.9rem;
-  --ui-output-preview-ornate-thumbnail-font-size: 0.68rem;
-  --ui-output-preview-kinetic-offset-start: -0.6em;
-  --ui-output-preview-kinetic-offset-end: 0.7em;
-  --ui-output-preview-manga-canvas: #e8e8e5;
-  --ui-output-preview-manga-paper: #ffffff;
-  --ui-output-preview-manga-ink: #101010;
-  --ui-output-preview-manga-halftone: rgb(16 16 16 / 20%);
-  --ui-output-preview-manga-border-width: 0.125rem;
-  --ui-output-preview-manga-dot-size: 0.045rem;
-  --ui-output-preview-manga-dot-gap: 0.055rem;
-  --ui-output-preview-manga-pattern-size: 0.2rem;
-  --ui-output-preview-player-track-size: 0.125rem;
-  --ui-output-preview-aspect-ratio: 16 / 9;
-  --ui-output-preview-cycle-duration: 4.8s;
-  --ui-output-preview-cycle-ease: cubic-bezier(0.22, 1, 0.36, 1);
-
-  /* --- Sizing: performer view --- */
-  --ui-performer-lyrics-max-width: 72rem;
-  --ui-performer-lyric-current-font-size: 2.5rem; /* 40px: active performance line */
-  --ui-performer-ruby-font-size: 55%;
-
-  /* --- Sizing: lyrics workspace --- */
-  /* Own scale, not an alias of --ui-font-size-lg/xl: those are UI-chrome
-     sizes (buttons, labels), while lyric lines are the page's primary
-     reading content — performers read them at a glance mid-performance, so
-     the default tier is deliberately larger than a chrome "lg" text size. */
-  --ui-lyrics-font-size-compact: 1.125rem; /* 18px */
-  --ui-lyrics-font-size-default: 1.375rem; /* 22px */
-  --ui-lyrics-font-size-large: 1.75rem; /* 28px */
-
   /* --- Sizing: settings --- */
   --ui-settings-row-icon-size: 2.75rem; /* 44px: settings-specific icon tile */
   --ui-settings-row-min-height: 3.375rem; /* 54px: preserve the existing settings row rhythm */
@@ -667,25 +582,30 @@
   --ui-z-context-menu: var(--ui-z-popover); /* legacy alias */
   --ui-z-context-menu-submenu: 101;
   --ui-z-modal: var(--ui-z-dialog); /* legacy alias */
+
+  color-scheme: var(--ui-color-scheme);
+  background: var(--ui-color-canvas);
+  color: var(--ui-color-text);
+  font-family: var(--ui-font-family-base);
+  font-size: var(--ui-font-size-md);
 }
 
 /* PlayerBar trailing controls explicitly adopt the saved density preference.
    Keep this narrow: global control and row geometry remains fixed until each
    surface has its own reviewed compact contract. */
-:root[data-ui-density='standard'] {
+:root[data-ui-density='standard'] [data-ui-system='v1'] {
   --ui-player-bar-action-size: 2.25rem; /* 36px */
   --ui-player-bar-volume-slider-width: 6rem; /* 96px */
 }
 
-:root[data-ui-density='compact'] {
+:root[data-ui-density='compact'] [data-ui-system='v1'] {
   --ui-player-bar-action-size: var(--ui-space-6); /* 32px */
   --ui-player-bar-volume-slider-width: 5rem; /* 80px */
 }
 
 /* Light theme: only color tokens are redefined — spacing, typography,
    radius, opacity, motion, and z-index stay shared across themes. */
-:root[data-ui-theme='light'],
-.ui-theme-light {
+:root[data-ui-theme='light'] [data-ui-system='v1'] {
   /* --- Color: surfaces --- */
   --ui-color-canvas: #f7f1e7;
   --ui-color-surface: #fffdfa;

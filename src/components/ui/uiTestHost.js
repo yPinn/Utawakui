@@ -3,6 +3,7 @@ import { compile } from '@vue/compiler-dom';
 import { compileScript, parse } from '@vue/compiler-sfc';
 import * as Vue from 'vue';
 import { vi } from 'vitest';
+import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 
 const { createRenderer, h, ssrContextKey } = Vue;
 
@@ -132,11 +133,15 @@ const renderer = createRenderer({
 
 export function mount(component, props = {}, slots = {}) {
   const root = hostNode('root');
+  const overlayHost = hostNode('div');
+  overlayHost.props['data-ui-surface'] = 'ui-test-overlay';
+  globalThis.document?.body?.appendChild?.(overlayHost);
   const Root = { setup: () => () => h(component, props, slots) };
   const app = renderer.createApp(Root);
   app.provide(ssrContextKey, { modules: new Set() });
+  app.provide(UI_OVERLAY_HOST_KEY, overlayHost);
   app.mount(root);
-  return { app, root };
+  return { app, overlayHost, root };
 }
 
 export function findAll(node, predicate, matches = []) {

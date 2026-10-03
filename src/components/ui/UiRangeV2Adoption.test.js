@@ -67,15 +67,14 @@ describe('Token v2 Range formal adoption', () => {
   it('limits the custom track and interaction thumb to the v2 component scope', () => {
     const controlSource = read('./range/UiRangeControl.vue');
 
-    expect(controlSource).toContain(
-      ":global(:root[data-ui-system='v2'] .ui-range-control)",
-    );
+    expect(controlSource).toContain("@scope ([data-ui-system='v2'])");
+    expect(controlSource).toContain('.ui-range-control {');
     expect(controlSource).toContain('appearance: none;');
     expect(controlSource).toMatch(
       /::-webkit-slider-thumb\s*\{[\s\S]*?opacity:\s*0;/u,
     );
     expect(controlSource).toMatch(
-      /:hover:not\(:disabled\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(:disabled\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
+      /:hover:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(\s*:disabled\s*\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
     );
     expect(controlSource).toContain('@media (forced-colors: active)');
     expect(controlSource).toContain('@media (prefers-reduced-motion: reduce)');

@@ -80,14 +80,14 @@ describe('useUiDensity', () => {
 
   it('limits production density adoption to PlayerBar trailing geometry', () => {
     expect(candidateTokensSource).toContain(
-      ":root[data-ui-system='v2'][data-ui-density='compact']",
+      ":root[data-ui-density='compact'] [data-ui-system='v2']",
     );
 
     const standardBlock = activeTokensSource.match(
-      /:root\[data-ui-density='standard'\]\s*\{([^}]*)\}/su,
+      /:root\[data-ui-density='standard'\] \[data-ui-system='v1'\]\s*\{([^}]*)\}/su,
     )?.[1];
     const compactBlock = activeTokensSource.match(
-      /:root\[data-ui-density='compact'\]\s*\{([^}]*)\}/su,
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v1'\]\s*\{([^}]*)\}/su,
     )?.[1];
 
     expect(standardBlock).toContain('--ui-player-bar-action-size: 2.25rem');

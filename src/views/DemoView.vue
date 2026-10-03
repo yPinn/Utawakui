@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted, useTemplateRef } from 'vue';
+import { useTemplateRef } from 'vue';
 import DemoActions from '../components/demo/DemoActions.vue';
 import DemoContent from '../components/demo/DemoContent.vue';
 import DemoFeedback from '../components/demo/DemoFeedback.vue';
@@ -13,7 +13,6 @@ import {
   UI_DEMO_GROUP_REVIEW_STATUS,
   UI_DEMO_GROUPS,
 } from '../constants/uiDemoSections.js';
-import '../styles/tokens-v2.css';
 
 const GROUP_COMPONENTS = {
   foundations: DemoFoundations,
@@ -31,20 +30,7 @@ const GROUP_REVIEW_LABELS = Object.freeze({
   pending: '待審查',
 });
 
-let previousUiSystem;
 const scrollRegion = useTemplateRef('scrollRegion');
-
-onMounted(() => {
-  const root = document.documentElement;
-  previousUiSystem = root.dataset.uiSystem;
-  root.dataset.uiSystem = 'v2';
-});
-
-onUnmounted(() => {
-  const root = document.documentElement;
-  if (previousUiSystem) root.dataset.uiSystem = previousUiSystem;
-  else delete root.dataset.uiSystem;
-});
 
 function scrollToGroup(key) {
   const target = document.getElementById(`demo-group-${key}`);

@@ -307,10 +307,13 @@ describe('DemoFieldAppearance', () => {
   });
 
   it('locks every current dark and light snapshot value to its active token', () => {
-    const activeDark = declarationsFor(activeTokens, ':root {');
+    const activeDark = declarationsFor(activeTokens, "[data-ui-system='v1'] {");
     const activeLight = {
       ...activeDark,
-      ...declarationsFor(activeTokens, ":root[data-ui-theme='light'],"),
+      ...declarationsFor(
+        activeTokens,
+        ":root[data-ui-theme='light'] [data-ui-system='v1'] {",
+      ),
     };
     const snapshotDark = declarationsFor(
       componentSource,
@@ -352,19 +355,22 @@ describe('DemoFieldAppearance', () => {
     const html = await renderToString(createSSRApp(DemoFieldAppearance));
     const candidateDark = declarationsFor(
       candidateTokens,
-      ":root[data-ui-system='v2'] {",
+      "[data-ui-system='v2'] {",
     );
     const candidateLight = {
       ...candidateDark,
       ...declarationsFor(
         candidateTokens,
-        ":root[data-ui-system='v2'][data-ui-theme='light'] {",
+        ":root[data-ui-theme='light'] [data-ui-system='v2'] {",
       ),
     };
-    const activeDark = declarationsFor(activeTokens, ':root {');
+    const activeDark = declarationsFor(activeTokens, "[data-ui-system='v1'] {");
     const activeLight = {
       ...activeDark,
-      ...declarationsFor(activeTokens, ":root[data-ui-theme='light'],"),
+      ...declarationsFor(
+        activeTokens,
+        ":root[data-ui-theme='light'] [data-ui-system='v1'] {",
+      ),
     };
 
     for (const [label, tokens] of [

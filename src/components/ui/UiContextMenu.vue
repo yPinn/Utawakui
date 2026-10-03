@@ -10,7 +10,10 @@ import {
 } from 'vue';
 import { ChevronRight, ICON_SIZE } from '../../icons/index.js';
 import { useContextMenuGate } from '../../composables/useContextMenuGate.js';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import UiScrollRegion from './UiScrollRegion.vue';
+
+const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -364,7 +367,7 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <Teleport to="body">
+  <Teleport :to="overlayHost || undefined" :disabled="!overlayHost">
     <UiScrollRegion
       v-if="open"
       ref="menu"

@@ -4,8 +4,7 @@ import { renderToString } from '@vue/server-renderer';
 import WindowCloseDecisionModal from './WindowCloseDecisionModal.vue';
 
 async function renderModal(props) {
-  const context = {};
-  await renderToString(
+  return renderToString(
     createSSRApp(WindowCloseDecisionModal, {
       open: false,
       remember: false,
@@ -13,9 +12,7 @@ async function renderModal(props) {
       error: '',
       ...props,
     }),
-    context,
   );
-  return context.teleports?.body ?? '';
 }
 
 describe('WindowCloseDecisionModal', () => {

@@ -36,11 +36,10 @@ describe('DemoView scroll layout', () => {
     expect(indexStyle).toContain('background: var(--ui-color-surface)');
   });
 
-  it('activates the isolated F7 candidate token system for its lifetime', () => {
-    expect(source).toContain("import '../styles/tokens-v2.css'");
-    expect(source).toContain("root.dataset.uiSystem = 'v2'");
-    expect(source).toContain('previousUiSystem = root.dataset.uiSystem');
-    expect(source).toContain('delete root.dataset.uiSystem');
+  it('inherits the registered F8 review surface without mutating the document root', () => {
+    expect(source).not.toContain("import '../styles/tokens-v2.css'");
+    expect(source).not.toContain('dataset.uiSystem');
+    expect(source).not.toContain('document.documentElement');
   });
 
   it('renders the conventional catalogue order and its review boundary', async () => {

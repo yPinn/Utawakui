@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
   RENDERER_SURFACE_REGISTRY,
+  UI_SURFACE_REGISTRY,
   registerRendererSurfaceRoot,
+  registeredOverlayHostAttributes,
+  registeredOverlayHostSelector,
+  registeredSurfaceAttributes,
 } from './rendererSurfaceRegistry.js';
 
 function createDocument({ rootDataset = {}, documentDataset = {} } = {}) {
@@ -24,7 +28,7 @@ describe('renderer surface registry', () => {
       main: {
         entryOwner: 'src/main.js',
         migrationStatus: 'registered-v1',
-        overlayHostId: null,
+        overlayHostId: 'app-shell-overlay',
         parentSurfaceId: null,
         renderer: 'main',
         surfaceId: 'app-shell',
@@ -33,7 +37,7 @@ describe('renderer surface registry', () => {
       performer: {
         entryOwner: 'src/performer-main.js',
         migrationStatus: 'registered-v1',
-        overlayHostId: null,
+        overlayHostId: 'performer-overlay',
         parentSurfaceId: null,
         renderer: 'performer',
         surfaceId: 'performer',
@@ -43,6 +47,36 @@ describe('renderer surface registry', () => {
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY)).toBe(true);
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.main)).toBe(true);
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.performer)).toBe(true);
+  });
+
+  it('registers review surfaces and their local overlay hosts as explicit boundaries', () => {
+    expect(registeredSurfaceAttributes('visual-review')).toEqual({
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'visual-review',
+      'data-ui-system': 'v2',
+    });
+    expect(registeredOverlayHostAttributes('visual-review')).toEqual({
+      id: 'visual-review-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'visual-review-overlay',
+      'data-ui-system': 'v2',
+    });
+    expect(registeredOverlayHostSelector('visual-review')).toBe(
+      '#visual-review-overlay',
+    );
+    expect(UI_SURFACE_REGISTRY['visual-review'].parentSurfaceId).toBe(
+      'app-shell',
+    );
+    expect(Object.isFrozen(UI_SURFACE_REGISTRY)).toBe(true);
+  });
+
+  it('rejects unknown surfaces and surfaces without an overlay host', () => {
+    expect(() => registeredSurfaceAttributes('missing')).toThrow(
+      'Unknown UI surface: missing',
+    );
+    expect(() =>
+      registeredOverlayHostAttributes('visual-review-overlay'),
+    ).toThrow('UI surface visual-review-overlay does not own an overlay host');
   });
 
   it.each([

@@ -22,6 +22,16 @@ import UiTabs from '../../../src/components/ui/UiTabs.vue';
 import UiTextarea from '../../../src/components/ui/UiTextarea.vue';
 import UiTextField from '../../../src/components/ui/UiTextField.vue';
 import UiTrackRow from '../../../src/components/ui/UiTrackRow.vue';
+import { provideUiOverlayHost } from '../../../src/composables/useUiOverlayHost.js';
+import {
+  registeredOverlayHostAttributes,
+  registeredSurfaceAttributes,
+} from '../../../src/utils/rendererSurfaceRegistry.js';
+
+provideUiOverlayHost('component-lab');
+const componentLabAttributes = registeredSurfaceAttributes('component-lab');
+const componentLabOverlayHostAttributes =
+  registeredOverlayHostAttributes('component-lab');
 
 const requestedTheme = new URLSearchParams(window.location.search).get('theme');
 const requestedState = new URLSearchParams(window.location.search).get('state');
@@ -54,14 +64,12 @@ const modalOpen = shallowRef(false);
 const menuOpen = shallowRef(false);
 
 const originalDataset = {
-  system: document.documentElement.dataset.uiSystem,
   theme: document.documentElement.dataset.uiTheme,
   density: document.documentElement.dataset.uiDensity,
   motion: document.documentElement.dataset.uiMotion,
 };
 
 watchEffect(() => {
-  document.documentElement.dataset.uiSystem = 'v2';
   document.documentElement.dataset.uiTheme = theme.value;
   document.documentElement.dataset.uiDensity = density.value;
   document.documentElement.dataset.uiMotion = motion.value;
@@ -100,7 +108,8 @@ const menuItems = [
 </script>
 
 <template>
-  <main class="component-lab">
+  <main v-bind="componentLabAttributes" class="component-lab">
+    <div v-bind="componentLabOverlayHostAttributes" class="ui-overlay-host" />
     <UiPageHeader title="UI Component Foundation" />
     <UiHint>Real shared Vue components under isolated candidate tokens.</UiHint>
 

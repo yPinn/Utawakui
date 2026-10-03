@@ -1,5 +1,6 @@
 <script setup>
 import LyricsWorkspace from '../components/lyrics/LyricsWorkspace.vue';
+import '../styles/features/lyrics.css';
 </script>
 
 <template>

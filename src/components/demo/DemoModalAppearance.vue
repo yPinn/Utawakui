@@ -80,7 +80,7 @@ const LAYERS = Object.freeze([
 }
 
 .demo-modal-layer--current,
-:global(:root[data-demo-modal-source='current']) {
+:global([data-demo-modal-source='current']) {
   color-scheme: dark;
   --ui-color-canvas: #1f2328;
   --ui-color-surface: #292f35;
@@ -151,7 +151,7 @@ const LAYERS = Object.freeze([
 }
 
 :global(:root[data-ui-theme='light'] .demo-modal-layer--current),
-:global(:root[data-ui-theme='light'][data-demo-modal-source='current']) {
+:global(:root[data-ui-theme='light'] [data-demo-modal-source='current']) {
   color-scheme: light;
   --ui-color-canvas: #f7f1e7;
   --ui-color-surface: #fffdfa;

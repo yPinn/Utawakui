@@ -70,7 +70,7 @@ describe('development startup contract', () => {
     expect(appSource).toContain("f8: 'visual-system'");
     expect(appSource).toContain('isStudioLibraryMode');
     expect(appSource).toMatch(
-      /const archiveTabView = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?isStudioLibraryMode\(visualSystemMode\.value\)[\s\S]*?\? 'setlist'\s*:\s*activeView\.value/u,
+      /const archiveTabView = internalWorkbenchesEnabled\s*\? computed\([\s\S]*?activeView\.value === 'visual-system'[\s\S]*?isStudioLibraryMode\(visualReviewMode\.value\)[\s\S]*?\? 'setlist'\s*:\s*activeView\.value/u,
     );
   });
 

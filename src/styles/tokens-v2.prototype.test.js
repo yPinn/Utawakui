@@ -135,15 +135,25 @@ function mixColors(primary, secondary, primaryWeight) {
 }
 
 describe('Studio Library workspace prototype isolation', () => {
-  it('opts into the candidate system without changing production entries', () => {
+  it('registers the prototype and production-compatible scoped token entries', () => {
     expect(html).toContain('data-ui-system="v2"');
     expect(html).toContain('href="../../src/styles/tokens-v2.css"');
     expect(html).not.toContain('href="../../src/styles/tokens.css"');
-    expect(main).not.toContain('tokens-v2.css');
-    expect(performerMain).not.toContain('tokens-v2.css');
+    expect(main).toContain('tokens-v2.css');
+    expect(performerMain).toContain('tokens-v2.css');
+    expect(main).toContain('token-v1-invalidation.generated.css');
+    expect(performerMain).toContain('token-v1-invalidation.generated.css');
     expect(rootIndex).not.toContain('tokens-v2.css');
     expect(performerView).not.toContain('tokens-v2.css');
-    expect(candidateProductionReferences).toEqual([]);
+    expect(candidateProductionReferences).toHaveLength(2);
+    expect(
+      candidateProductionReferences.some((path) => path.endsWith('/main.js')),
+    ).toBe(true);
+    expect(
+      candidateProductionReferences.some((path) =>
+        path.endsWith('/performer-main.js'),
+      ),
+    ).toBe(true);
     expect(app).toContain(
       'const internalWorkbenchesEnabled = import.meta.env.DEV',
     );
@@ -154,12 +164,9 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(visualSystemView).toContain(
       "import DemoView from './DemoView.vue';",
     );
-    expect(
-      readFileSync(
-        new URL('../views/InternalToolsView.vue', import.meta.url),
-        'utf8',
-      ),
-    ).toContain("import '../styles/tokens-v2.css'");
+    expect(visualSystemView).toContain(
+      "registeredSurfaceAttributes('visual-review')",
+    );
   });
 
   it('covers the approved theme, density, motion, and state matrix', () => {
@@ -318,9 +325,9 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it('keeps current in the accent family without collapsing live and danger semantics', () => {
-    const dark = tokenBlock(":root[data-ui-system='v2']");
+    const dark = tokenBlock("[data-ui-system='v2']");
     const light = tokenBlock(
-      ":root[data-ui-system='v2'][data-ui-theme='light']",
+      ":root[data-ui-theme='light'] [data-ui-system='v2']",
     );
 
     expect(dark['--ui-color-current']).toBe('var(--ui-palette-indigo-300)');
@@ -410,7 +417,7 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it('keeps the desktop Inspector bay aligned with the current draggable maximum', () => {
-    const candidate = tokenBlock(":root[data-ui-system='v2']");
+    const candidate = tokenBlock("[data-ui-system='v2']");
 
     expect(candidate['--ui-right-dock-width']).toBe('17.5rem');
     expect(candidate['--ui-inspector-width']).toBe(
@@ -427,7 +434,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(designGuide).toContain('same `1rem` block inset as Sidebar');
   });
 
-  it('offers a dossier-only embed without leaking candidate tokens into Vue', () => {
+  it('offers a dossier-only embed while Vue activates the scoped entries', () => {
     expect(script).toContain("params.get('embed') === 'dossier'");
     expect(script).toContain("body.classList.add('is-dossier-embed'");
     expect(css).toMatch(
@@ -436,7 +443,7 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(css).toMatch(
       /body\.is-dossier-embed \.app-shell\s*\{[^}]*grid-template-areas:\s*'workspace'/su,
     );
-    expect(main).not.toContain('tokens-v2.css');
+    expect(main).toContain('tokens-v2.css');
   });
 
   it('synchronizes the embedded theme and forwards only app-owned shortcuts', () => {
@@ -448,11 +455,11 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it.each([
-    ['dark', ":root[data-ui-system='v2']"],
-    ['light', ":root[data-ui-system='v2'][data-ui-theme='light']"],
+    ['dark', "[data-ui-system='v2']"],
+    ['light', ":root[data-ui-theme='light'] [data-ui-system='v2']"],
   ])('keeps essential %s semantic text pairs at WCAG AA', (_, selector) => {
     const definitions = {
-      ...tokenBlock(":root[data-ui-system='v2']"),
+      ...tokenBlock("[data-ui-system='v2']"),
       ...(selector.includes("data-ui-theme='light'")
         ? tokenBlock(selector)
         : {}),
@@ -498,11 +505,11 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it.each([
-    ['dark', ":root[data-ui-system='v2']"],
-    ['light', ":root[data-ui-system='v2'][data-ui-theme='light']"],
+    ['dark', "[data-ui-system='v2']"],
+    ['light', ":root[data-ui-theme='light'] [data-ui-system='v2']"],
   ])('keeps %s destructive button fills at WCAG AA', (_, selector) => {
     const definitions = {
-      ...tokenBlock(":root[data-ui-system='v2']"),
+      ...tokenBlock("[data-ui-system='v2']"),
       ...(selector.includes("data-ui-theme='light'")
         ? tokenBlock(selector)
         : {}),
@@ -524,13 +531,13 @@ describe('Studio Library workspace prototype isolation', () => {
   });
 
   it.each([
-    ['dark', ":root[data-ui-system='v2']"],
-    ['light', ":root[data-ui-system='v2'][data-ui-theme='light']"],
+    ['dark', "[data-ui-system='v2']"],
+    ['light', ":root[data-ui-theme='light'] [data-ui-system='v2']"],
   ])(
     'keeps the default %s scrollbar thumb distinguishable from app surfaces',
     (_, selector) => {
       const definitions = {
-        ...tokenBlock(":root[data-ui-system='v2']"),
+        ...tokenBlock("[data-ui-system='v2']"),
         ...(selector.includes("data-ui-theme='light'")
           ? tokenBlock(selector)
           : {}),

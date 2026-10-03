@@ -7,6 +7,7 @@ import UiIconButton from './UiIconButton.vue';
 import UiModal from './UiModal.vue';
 import UiScrollRegion from './UiScrollRegion.vue';
 import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
+import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 
 const { createRenderer, h, nextTick, ref, ssrContextKey } = Vue;
 
@@ -153,6 +154,7 @@ describe('UiModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
 
     open.value = true;
@@ -179,6 +181,7 @@ describe('UiModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
 
@@ -228,6 +231,7 @@ describe('UiModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
 
@@ -257,6 +261,7 @@ describe('UiModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
 
@@ -284,6 +289,7 @@ describe('UiModal behavior', () => {
     const root = hostNode('root');
     const app = renderer.createApp(Root);
     app.provide(ssrContextKey, { modules: new Set() });
+    app.provide(UI_OVERLAY_HOST_KEY, body);
     app.mount(root);
     await nextTick();
 

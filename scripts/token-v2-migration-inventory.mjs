@@ -24,6 +24,8 @@ const CROSS_VERSION_FEATURE_PREFIXES = [
   '--ui-output-preview-',
   '--ui-performer-',
 ];
+const DOCUMENT_ROOT_DECLARATION_SELECTOR =
+  /^:root(?:\[[^\]]+\])*\s*(?:,\s*\.[\w-]+\s*)?\{/gmu;
 
 const REVIEW_RUNTIME_FILES = new Set([
   'src/views/DemoView.vue',
@@ -187,7 +189,11 @@ function buildActivationInventory({ root, sourceFiles, allFiles }) {
     })
     .map((path) => projectPath(root, path))
     .toSorted();
-  const currentComposable = 'src/composables/useVisualSystemMode.js';
+  const legacyComposable = 'src/composables/useVisualSystemMode.js';
+  const targetComposable = 'src/composables/useVisualReviewMode.js';
+  const currentComposable = existsSync(resolve(root, targetComposable))
+    ? targetComposable
+    : legacyComposable;
   const reviewComposableReferences = sourceFiles
     .filter((path) => {
       const pathFromRoot = projectPath(root, path);
@@ -224,7 +230,7 @@ function buildActivationInventory({ root, sourceFiles, allFiles }) {
     reviewComposable: {
       current: currentComposable,
       references: reviewComposableReferences,
-      target: 'src/composables/useVisualReviewMode.js',
+      target: targetComposable,
     },
     rootBoundRecipeOccurrences: rootBoundRecipes.reduce(
       (total, { occurrences: count }) => total + count,
@@ -248,10 +254,13 @@ function buildActivationInventory({ root, sourceFiles, allFiles }) {
         main: "import './styles/tokens.css';",
         performer: "import './styles/tokens.css';",
       },
-      v1DocumentRootSelectors: occurrences(v1Tokens, /:root/gu),
+      v1DocumentRootSelectors: occurrences(
+        v1Tokens,
+        DOCUMENT_ROOT_DECLARATION_SELECTOR,
+      ),
       v2DocumentRootSelectors: occurrences(
         v2Tokens,
-        /:root\[data-ui-system=['"]v2['"]/gu,
+        DOCUMENT_ROOT_DECLARATION_SELECTOR,
       ),
     },
   };

@@ -1,12 +1,21 @@
 <script setup>
-import { computed, defineAsyncComponent, onMounted, onUnmounted } from 'vue';
+import { computed, defineAsyncComponent } from 'vue';
 import InternalToolsNavigation from '../components/internal-tools/InternalToolsNavigation.vue';
 import { useAppView } from '../composables/useAppView.js';
 import {
   INTERNAL_TOOL_CATEGORIES,
   internalToolDefinition,
 } from '../constants/internalTools.js';
-import '../styles/tokens-v2.css';
+import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
+import {
+  registeredOverlayHostAttributes,
+  registeredSurfaceAttributes,
+} from '../utils/rendererSurfaceRegistry.js';
+
+provideUiOverlayHost('internal-tools');
+const internalToolsAttributes = registeredSurfaceAttributes('internal-tools');
+const internalToolsOverlayHostAttributes =
+  registeredOverlayHostAttributes('internal-tools');
 
 const props = defineProps({
   activeToolId: { type: String, required: true },
@@ -34,24 +43,15 @@ const activeTool = computed(() => {
   const component = TOOL_COMPONENTS[props.activeToolId];
   return definition && component ? { ...definition, component } : null;
 });
-
-let previousUiSystem;
-
-onMounted(() => {
-  const root = document.documentElement;
-  previousUiSystem = root.dataset.uiSystem;
-  root.dataset.uiSystem = 'v2';
-});
-
-onUnmounted(() => {
-  const root = document.documentElement;
-  if (previousUiSystem) root.dataset.uiSystem = previousUiSystem;
-  else delete root.dataset.uiSystem;
-});
 </script>
 
 <template>
-  <section class="internal-tools-view" aria-label="內部工具">
+  <section
+    v-bind="internalToolsAttributes"
+    class="internal-tools-view"
+    aria-label="內部工具"
+  >
+    <div v-bind="internalToolsOverlayHostAttributes" class="ui-overlay-host" />
     <InternalToolsNavigation
       :categories="INTERNAL_TOOL_CATEGORIES"
       :active-tool-id="activeToolId"

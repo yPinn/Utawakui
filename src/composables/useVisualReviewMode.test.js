@@ -1,13 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   isStudioLibraryMode,
-  useVisualSystemMode,
-} from './useVisualSystemMode.js';
+  useVisualReviewMode,
+} from './useVisualReviewMode.js';
 
-describe('useVisualSystemMode', () => {
+describe('useVisualReviewMode', () => {
   it('defaults to the final decision board and shares state across every consumer', () => {
-    const first = useVisualSystemMode();
-    const second = useVisualSystemMode();
+    const first = useVisualReviewMode();
+    const second = useVisualReviewMode();
 
     expect(first.mode.value).toBe('final-board');
 
@@ -19,7 +19,7 @@ describe('useVisualSystemMode', () => {
   });
 
   it('ignores an unrecognized mode', () => {
-    const workbench = useVisualSystemMode();
+    const workbench = useVisualReviewMode();
 
     workbench.setMode('not-a-real-mode');
 
@@ -27,7 +27,7 @@ describe('useVisualSystemMode', () => {
   });
 
   it('keeps Studio Library as the only full-page Candidate mode', () => {
-    const workbench = useVisualSystemMode();
+    const workbench = useVisualReviewMode();
 
     workbench.setMode('studio-library');
     expect(workbench.mode.value).toBe('studio-library');

@@ -256,7 +256,7 @@ describe('AppRightDock', () => {
     }
 
     const compactBlock = v2TokenSource.match(
-      /:root\[data-ui-system='v2'\]\[data-ui-density='compact'\]\s*\{([\s\S]*?)\n\}/u,
+      /:root\[data-ui-density='compact'\] \[data-ui-system='v2'\]\s*\{([\s\S]*?)\n\}/u,
     )?.[1];
     expect(compactBlock).not.toContain('--ui-right-dock-content-inset');
     expect(compactBlock).not.toContain('--ui-right-dock-track-row-min-height');

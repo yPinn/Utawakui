@@ -7,10 +7,13 @@ import UiModal from '../ui/UiModal.vue';
 import UiSelect from '../ui/UiSelect.vue';
 import UiTextField from '../ui/UiTextField.vue';
 import UiTextarea from '../ui/UiTextarea.vue';
+import { useUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import DemoCandidateCheckbox from './DemoCandidateCheckbox.vue';
 import DemoCandidateHint from './DemoCandidateHint.vue';
 import DemoCandidateModal from './DemoCandidateModal.vue';
 import DemoCandidateSelect from './DemoCandidateSelect.vue';
+
+const overlayHost = useUiOverlayHost();
 
 const props = defineProps({
   layer: { type: Object, required: true },
@@ -155,9 +158,13 @@ const modalProps = computed(() =>
 );
 
 function setCurrentMarker(open) {
-  if (typeof document === 'undefined' || isCandidate.value) return;
-  if (open) document.documentElement.dataset.demoModalSource = 'current';
-  else delete document.documentElement.dataset.demoModalSource;
+  if (typeof document === 'undefined' || isCandidate.value || !overlayHost) {
+    return;
+  }
+  const host = document.querySelector(overlayHost);
+  if (!host?.dataset) return;
+  if (open) host.dataset.demoModalSource = 'current';
+  else delete host.dataset.demoModalSource;
 }
 
 function openSize(size) {

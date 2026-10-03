@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; production cutover not started.
+Status: replacement direction and migration architecture frozen; Phase 0 scope foundation active; production surface cutover not started.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -40,22 +40,22 @@ Public Browser Source `overlay/` 維持獨立 `--ovl-*` 視覺系統，不參與
 
 Token v2 foundation 已足以開始 replacement infrastructure。現有 palette、semantic color、typography、spacing、shape、elevation、z-index、motion、density、dark／light、focus、forced-colors、reduced-motion，以及 Field／row／overlay／scroll 等基礎 recipe 不需要再以增加 generic token 數量為目標。
 
-| 指標                              | 數量 | 判斷                                          |
-| --------------------------------- | ---: | --------------------------------------------- |
-| T1 unique declared names          |  413 | Legacy source baseline                        |
-| T1 raw declarations               |  450 | 包含 theme 等重複宣告，不用作 migration 分母  |
-| T2 unique declared names          |  372 | Foundation 與已採用 component aliases         |
-| T2 raw declarations               |  432 | 包含 theme 等重複宣告，不用作 migration 分母  |
-| Production-consumed T1-only names |  149 | 不代表應新增 149 個 T2 core tokens            |
-| Production file／token pairs      |  273 | Migration ratchet baseline                    |
-| True legacy aliases               |   21 | 改寫後刪除                                    |
-| Cross-version feature tokens      |   64 | 移至 feature-token layer                      |
-| Component-local tokens            |   59 | 收回正確 component owner                      |
-| T2 semantic gaps                  |    5 | 由 persistent shell slice 以新 owner 名稱補齊 |
+| 指標                              | Phase 0 baseline | Phase 0.3 後 | 判斷                                           |
+| --------------------------------- | ---------------: | -----------: | ---------------------------------------------- |
+| T1 unique declared names          |              413 |          341 | 72 個 cross-version declarations 已抽離 core   |
+| T1 raw declarations               |              450 |          378 | 包含 theme 等重複宣告，不用作 migration 分母   |
+| T2 unique declared names          |              372 |          372 | Foundation 與已採用 component aliases          |
+| T2 raw declarations               |              432 |          432 | 包含 theme 等重複宣告，不用作 migration 分母   |
+| Production-consumed T1-only names |              149 |           85 | 64 個 feature names 已移至 feature-owned layer |
+| Production file／token pairs      |              273 |          198 | Ratchet 已下降，不得回升                       |
+| True legacy aliases               |               21 |           21 | 跟隨 atomic surface 改寫後刪除                 |
+| Cross-version feature tokens      |               64 |            0 | 已退出 T1 core，由 feature-owned styles 提供   |
+| Component-local tokens            |               59 |           59 | 跟隨 component owner 收回                      |
+| T2 semantic gaps                  |                5 |            5 | 由 persistent shell slice 以新 owner 名稱補齊  |
 
 主要缺口是正式 component consolidation、Shell／Folder ownership、fail-closed migration boundary、少量真實 consumer token 與命名一致性，不是 foundation 規模。
 
-以上是 2026-10-03 由 `tasks/token-v1-gap-audit.mjs` 與 stylesheet declaration inventory 重算的快照。Migration gate 只引用去重後的 `--ui-*` declared name 與 production `surface／file／token` pair；raw declarations 只用來解釋 theme override 等重複來源。`tokens-v2.prototype.test.js` 的 pinned unique-name baseline 同步為 372，後續數字只能由同一 canonical audit 更新。
+Baseline 是 2026-10-03 由 `tasks/token-v1-gap-audit.mjs` 與 stylesheet declaration inventory 重算的 Phase 0 起點；Phase 0.3 後數字由 `scripts/token-v2-migration-inventory.mjs` 產生的 checked-in manifest 驗證。Migration gate 只引用去重後的 `--ui-*` declared name 與 production `surface／file／token` pair；raw declarations只用來解釋 theme override 等重複來源。`tokens-v2.prototype.test.js` 的 pinned unique-name baseline 維持 372，後續數字只能由同一 canonical audit 更新。
 
 ## 設計方向
 
@@ -289,9 +289,9 @@ Scope contract：
 
 這種並存是有名稱、可計數、可整面移除的 migration boundary，不是允許元件從另一套系統補值的 compatibility hybrid。
 
-### Phase 0 scope inventory
+### Phase 0 pre-activation scope inventory
 
-| Inventory                           | Current evidence                                                                                                                                     | Phase 0 disposition                                                                                                                  |
+| Inventory                           | Pre-activation evidence                                                                                                                              | Phase 0 disposition                                                                                                                  |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
 | Token entries                       | `tokens.css` 以無條件 `:root` 提供 v1；`tokens-v2.css` 有 9 個 `:root[data-ui-system='v2']` selector                                                 | 改為明確 v1／v2 surface entries，metadata 由 document root 向 descendant surface 投影                                                |
 | Adopted component／layout selectors | 6 個檔案共 50 處 root-bound v2 selector：`UiRangeControl` 26、`UiButton` 8、`UiRange` 6、`UiIconButton` 4、`AppTopTabs` 4、`UiTextButton` 2          | 46 處正式 shared component selector 改成 nearest-boundary recipe；`AppTopTabs` 4 處先改成 scoped transition recipe，Phase 2 原子移除 |
@@ -306,7 +306,7 @@ Scope contract：
 
 ### Shared component coexistence
 
-遷移期共用 `Ui*` 可以同時服務 v1／v2 caller，但必須是一份正式 component contract，不是「未 scoped 的 v1 base 加 root-bound v2 override」。`UiButton` 的現行形式因此只算 Phase 0 前的過渡實作，不是核准的最終並存形式。
+遷移期共用 `Ui*` 可以同時服務 v1／v2 caller，但必須是一份正式 component contract，不是「未 scoped 的 v1 base 加 root-bound v2 override」。Phase 0.3 已把六個既有 root-bound component 改為 nearest-boundary `@scope` recipe；共用 semantic mapping 只有在兩套系統刻意相同且各自 token graph 完整時才共用，差異仍由互斥 scoped recipe 表達。
 
 Shared component contract 同時要求：
 
@@ -321,16 +321,16 @@ Shared component contract 同時要求：
 
 Vue Teleport 保留 logical component tree，因此 surface provider 可以用 provide／inject 向 primitive 提供 target host；實際 DOM destination 仍必須是 registry 中與 trigger owner 關聯的 overlay surface。
 
-| Primitive／surface        | Current target | Registered target owner                |
-| ------------------------- | -------------- | -------------------------------------- |
-| `UiTooltipSurface`        | `body`         | Trigger 所屬 surface 的 overlay host   |
-| `UiCombobox`              | `body`         | Trigger 所屬 surface 的 overlay host   |
-| `UiContextMenu`           | `body`         | Trigger 所屬 surface 的 overlay host   |
-| `UiModal`                 | `body`         | Feature owner 或其同 system modal host |
-| `UiNotificationHost`      | `body`         | App Shell global overlay host          |
-| `UiPopover`               | `body`         | Trigger 所屬 surface 的 overlay host   |
-| `DemoCandidateActionMenu` | `body`         | F8 specimen surface host               |
-| `DemoCandidateModal`      | `body`         | F8 specimen surface host               |
+| Primitive／surface        | Pre-activation target | Registered target owner                |
+| ------------------------- | --------------------- | -------------------------------------- |
+| `UiTooltipSurface`        | `body`                | Trigger 所屬 surface 的 overlay host   |
+| `UiCombobox`              | `body`                | Trigger 所屬 surface 的 overlay host   |
+| `UiContextMenu`           | `body`                | Trigger 所屬 surface 的 overlay host   |
+| `UiModal`                 | `body`                | Feature owner 或其同 system modal host |
+| `UiNotificationHost`      | `body`                | App Shell global overlay host          |
+| `UiPopover`               | `body`                | Trigger 所屬 surface 的 overlay host   |
+| `DemoCandidateActionMenu` | `body`                | F8 specimen surface host               |
+| `DemoCandidateModal`      | `body`                | F8 specimen surface host               |
 
 Host resolver 由 renderer／surface composition 提供，primitive 內部解析，不要求每個 caller 傳 DOM selector。Host 必須在 overlay 開啟前存在，帶有自己的 `data-ui-surface`／`data-ui-system` registry identity，並保留 viewport escape、focus trap／return、dismissal、stack order 與既有 module-level modal ordering。Production primitive 不得在 host 缺失時靜默回退 `body`；測試 harness 如需 fallback，必須顯式註冊。Global shell notification／menu 與 feature modal 可以使用不同 host，但同一 overlay stack 的 z-order 規則只有一份。
 
@@ -344,7 +344,7 @@ Machine-readable registry 記錄 surface id、system、renderer、parent boundar
 
 Phase 0 分成可獨立落地的 bootstrap、無 runtime 行為的 cutover preparation，以及單一 scope-foundation activation。CSS custom property 會穿過 descendant boundary 繼承；現行 root-bound component recipe、`body` Teleport 與 F8 document-root writer 又共同依賴舊 scope。因此 scoped token entry、shared recipe、overlay host、review surface 與 legacy invalidation 不能拆成先後啟用的 production states，否則中間狀態必然是無聲 hybrid 或視覺退化。
 
-以下 slices 依序完成。0.2 只產生 deterministic artifacts、RED fixtures 與 exact cutover map，不加入 runtime compatibility layer；0.3 才把所有 scope-dependent owners 原子啟用。每個已落地 slice 都可獨立 revert，整個 Phase 0 期間 production Main 與 Performer 均保持 v1 外觀。
+以下 slices 依序完成。0.2 只產生 deterministic artifacts、RED fixtures 與 exact cutover map，不加入 runtime compatibility layer；0.3 已把所有 scope-dependent owners 原子啟用。每個已落地 slice 都可獨立 revert，整個 Phase 0 期間 production Main 與 Performer 均保持 v1 外觀。
 
 | Slice | Ownership                                                                                                                                                                                                                                                                                                                                                                                                                  | Exit evidence                                                                                                                                                                                                |
 | ----: | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -366,7 +366,7 @@ Checked-in manifest 記錄每一個 T1-only `surface／file／token` pair 與 su
 
 Manifest 與 invalidation 名單都由同一 canonical token inventory 產生，不手抄第二份清單。Invalidation 只包含當下尚存的 T1-only names；已正式抽到 feature layer、正式跨系統 shared contract 或 T2 owner 的名稱不得被誤 poison。
 
-正式 generator 是 `scripts/token-v2-migration-inventory.mjs`；checked-in truth 為 `src/styles/token-v1-legacy-manifest.generated.json` 與 `src/styles/token-v1-invalidation.generated.css`。`npm run tokens:v2:check` 只檢查 byte-for-byte reproducibility，`npm run tokens:v2:generate` 才更新 artifacts。Generated invalidation 在 0.3 atomic activation 前不得被任何 renderer import。
+正式 generator 是 `scripts/token-v2-migration-inventory.mjs`；checked-in truth 為 `src/styles/token-v1-legacy-manifest.generated.json` 與 `src/styles/token-v1-invalidation.generated.css`。`npm run tokens:v2:check` 只檢查 byte-for-byte reproducibility，`npm run tokens:v2:generate` 才更新 artifacts。Phase 0.3 起兩個 renderer entry 都載入 generated invalidation；後續 surface cutover 必須靠它讓殘留 T1-only reference fail closed。
 
 ### No-T1 harness
 

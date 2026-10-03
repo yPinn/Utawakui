@@ -13,7 +13,7 @@ const cueSource = readFileSync(
   'utf8',
 );
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens.css', import.meta.url),
+  new URL('../../styles/features/performer.css', import.meta.url),
   'utf8',
 );
 const toolbarSource = readFileSync(

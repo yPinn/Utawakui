@@ -1,5 +1,5 @@
 <script setup>
-import { computed, onMounted, onUnmounted, shallowRef, watch } from 'vue';
+import { computed, onMounted, shallowRef, watch } from 'vue';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
@@ -7,7 +7,6 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import StudioLibraryDossier from '../components/playlists/StudioLibraryDossier.vue';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { createStudioLibraryPresentation } from '../utils/studioLibraryPresentation.js';
-import '../styles/tokens-v2.css';
 
 const {
   state: libraryState,
@@ -29,9 +28,6 @@ const presentation = computed(() =>
 const libraryErrorMessage = computed(
   () => libraryState.error?.message ?? libraryState.error?.title ?? '',
 );
-let previousUiSystem;
-let previousUiCandidateView;
-
 watch(
   [() => selectedPlaylist.value?.id ?? null, () => playlistState.libraryView],
   () => {
@@ -61,26 +57,9 @@ function playTrackFromDossier(track, tracks) {
 }
 
 onMounted(async () => {
-  const root = document.documentElement;
-  previousUiSystem = root.dataset.uiSystem;
-  previousUiCandidateView = root.dataset.uiCandidateView;
-  root.dataset.uiSystem = 'v2';
-  root.dataset.uiCandidateView = 'studio-library';
-
   const wasInitialized = libraryState.isInitialized;
   await initializeLibrary();
   if (wasInitialized) await refreshLibrary();
-});
-
-onUnmounted(() => {
-  const root = document.documentElement;
-  if (previousUiSystem) root.dataset.uiSystem = previousUiSystem;
-  else delete root.dataset.uiSystem;
-  if (previousUiCandidateView) {
-    root.dataset.uiCandidateView = previousUiCandidateView;
-  } else {
-    delete root.dataset.uiCandidateView;
-  }
 });
 </script>
 

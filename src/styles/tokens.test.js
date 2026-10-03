@@ -47,12 +47,12 @@ function contrastRatio(foreground, background) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
-// --color: dark is the first :root block; light is the
+// --color: dark is the v1 surface block; light is the projected
 // [data-ui-theme='light'] block. Only --ui-color-* tokens (plus
 // explicit theme-variant shadow tokens) are expected to differ between themes.
-const darkBlock = css.match(/:root\s*\{([\s\S]*?)\n\}/)[1];
+const darkBlock = css.match(/^\[data-ui-system='v1'\]\s*\{([\s\S]*?)\n\}/mu)[1];
 const lightBlock = css.match(
-  /:root\[data-ui-theme='light'\],\s*\.ui-theme-light\s*\{([\s\S]*?)\n\}/,
+  /:root\[data-ui-theme='light'\] \[data-ui-system='v1'\]\s*\{([\s\S]*?)\n\}/u,
 )[1];
 
 // Deliberately theme-invariant, see the comments in tokens.css:
@@ -83,7 +83,7 @@ describe('tokens.css theme parity', () => {
     expect(varsIn(lightBlock).sort()).toEqual(expected);
   });
 
-  it('non-color tokens are declared once, only in the dark :root block', () => {
+  it('non-color tokens are declared once, only in the dark v1 surface block', () => {
     const nonColorDark = varsIn(darkBlock).filter(
       (name) =>
         !name.startsWith('--ui-color-') &&

@@ -1,15 +1,25 @@
 <script setup>
-import { useVisualSystemMode } from '../composables/useVisualSystemMode.js';
+import { useVisualReviewMode } from '../composables/useVisualReviewMode.js';
 import UiTabs from '../components/ui/UiTabs.vue';
 import DemoFinalDecisionBoard from '../components/demo/DemoFinalDecisionBoard.vue';
 import DemoView from './DemoView.vue';
 import StudioLibraryPrototypeView from './StudioLibraryPrototypeView.vue';
+import { provideUiOverlayHost } from '../composables/useUiOverlayHost.js';
+import {
+  registeredOverlayHostAttributes,
+  registeredSurfaceAttributes,
+} from '../utils/rendererSurfaceRegistry.js';
+
+provideUiOverlayHost('visual-review');
+const visualReviewAttributes = registeredSurfaceAttributes('visual-review');
+const visualReviewOverlayHostAttributes =
+  registeredOverlayHostAttributes('visual-review');
 
 // Demo and Studio Library are both facets of the same not-yet-adopted
 // tokens-v2 visual-refresh exploration (see DESIGN.md's "Visual refresh
 // status" note) — one F-key switching between them internally instead of
 // two separate global shortcuts.
-const { mode, setMode } = useVisualSystemMode();
+const { mode, setMode } = useVisualReviewMode();
 
 const PANELS = [
   {
@@ -28,7 +38,8 @@ const TABS = PANELS.map(({ id, label }) => ({ id, label }));
 </script>
 
 <template>
-  <div class="visual-system-view">
+  <div v-bind="visualReviewAttributes" class="visual-system-view">
+    <div v-bind="visualReviewOverlayHostAttributes" class="ui-overlay-host" />
     <UiTabs
       class="visual-system-view__switch"
       :items="TABS"

@@ -41,7 +41,10 @@ describe('renderer viewport boundary', () => {
       expect(source).toContain('app.mount(surfaceRoot);');
       expect(source).not.toContain('document.documentElement.dataset.uiSystem');
       expect(source).toContain("import './styles/tokens.css';");
-      expect(source).not.toContain('tokens-v2.css');
+      expect(source).toContain("import './styles/tokens-v2.css';");
+      expect(source).toContain(
+        "import './styles/token-v1-invalidation.generated.css';",
+      );
     },
   );
 
@@ -61,7 +64,9 @@ describe('renderer viewport boundary', () => {
     const rootBlock = cssBlock(':root');
     const lightRootBlock = cssBlock(":root[data-ui-theme='light']");
     const bodyBlock = cssBlock('body');
-    const appBlock = cssBlock('#app[data-ui-surface][data-ui-system]');
+    const v1SurfaceBlock = tokens.match(
+      /^\[data-ui-system='v1'\]\s*\{([\s\S]*?)\n\}/mu,
+    )?.[1];
 
     expect(rootBlock).toContain('color-scheme: dark');
     expect(rootBlock).not.toContain('var(--ui-');
@@ -69,10 +74,11 @@ describe('renderer viewport boundary', () => {
     expect(bodyBlock).toContain('background: Canvas');
     expect(bodyBlock).toContain('color: CanvasText');
     expect(bodyBlock).not.toContain('var(--ui-');
-    expect(appBlock).toContain('background: var(--ui-color-canvas)');
-    expect(appBlock).toContain('color: var(--ui-color-text)');
-    expect(appBlock).toContain('font-family: var(--ui-font-family-base)');
-    expect(appBlock).toContain('font-size: var(--ui-font-size-md)');
+    expect(baseStyles).not.toContain('var(--ui-');
+    expect(v1SurfaceBlock).toContain('background: var(--ui-color-canvas)');
+    expect(v1SurfaceBlock).toContain('color: var(--ui-color-text)');
+    expect(v1SurfaceBlock).toContain('font-family: var(--ui-font-family-base)');
+    expect(v1SurfaceBlock).toContain('font-size: var(--ui-font-size-md)');
   });
 
   it('keeps native window substrates synchronized with the active v1 canvas', () => {
@@ -80,7 +86,7 @@ describe('renderer viewport boundary', () => {
       /--ui-color-canvas:\s*(#[\da-f]{6});/iu,
     )?.[1];
     const lightCanvas = tokens.match(
-      /:root\[data-ui-theme='light'\][\s\S]*?--ui-color-canvas:\s*(#[\da-f]{6});/iu,
+      /:root\[data-ui-theme='light'\] \[data-ui-system='v1'\][\s\S]*?--ui-color-canvas:\s*(#[\da-f]{6});/iu,
     )?.[1];
 
     expect(darkCanvas).toBe('#1f2328');

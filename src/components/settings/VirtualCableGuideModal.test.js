@@ -6,12 +6,9 @@ import VirtualCableGuideModal from './VirtualCableGuideModal.vue';
 
 describe('VirtualCableGuideModal', () => {
   it('renders vendor choices without embedding external URLs', async () => {
-    const context = {};
-    await renderToString(
+    const html = await renderToString(
       createSSRApp(VirtualCableGuideModal, { open: true }),
-      context,
     );
-    const html = context.teleports?.body ?? '';
 
     expect(html).toContain('VB-CABLE');
     expect(html).toContain('VoiceMeeter');
