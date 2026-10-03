@@ -113,7 +113,6 @@
   --ui-font-weight-heavy: var(--ui-font-weight-bold); /* legacy alias */
   --ui-line-height-display: 1.15;
   --ui-line-height-heading: 1.2;
-  --ui-line-height-headline: var(--ui-line-height-heading); /* legacy alias */
   --ui-line-height-title: 1.3;
   --ui-line-height-body: 1.5;
   --ui-line-height-label: 1.25;
@@ -125,7 +124,6 @@
   --ui-radius-xs: 0.125rem; /* 2px */
   --ui-radius-sm: 0.25rem; /* 4px */
   --ui-radius-md: 0.375rem; /* 6px */
-  --ui-radius: var(--ui-radius-md); /* legacy alias */
   --ui-radius-lg: 0.5rem; /* 8px */
   --ui-radius-pill: 999rem;
 
@@ -495,9 +493,7 @@
   --ui-motion-easing-enter: cubic-bezier(0.22, 1, 0.36, 1);
   --ui-motion-easing-exit: cubic-bezier(0.4, 0, 1, 1);
   --ui-motion-easing-standard: ease-out;
-  --ui-motion-fast: var(--ui-motion-duration-fast); /* legacy alias */
   --ui-motion-slow: var(--ui-motion-duration-standard); /* legacy alias */
-  --ui-motion-ease: var(--ui-motion-easing-standard); /* legacy alias */
   --ui-motion-spin: 1s linear;
 
   /* --- Z-index --- */

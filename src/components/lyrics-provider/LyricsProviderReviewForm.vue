@@ -508,7 +508,7 @@ function submitApproval() {
 .review-form__eyebrow {
   color: var(--ui-color-current);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .review-form__header h2 {
@@ -570,7 +570,7 @@ function submitApproval() {
 .review-form__lookup-identity > span {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .review-form__lookup-value {

@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; Phase 4 Settings Utility active; replacement in progress.
+Status: replacement direction and migration architecture frozen; Phase 4 complete; Phase 5 Performer next.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -483,7 +483,7 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已完成 Phase 4.1 Settings Utility，下一個 slice 是 development specialist workbenches。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已完成 Phase 4.2 specialist workbenches，下一個 slice 是 Phase 5 Performer renderer。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
@@ -503,4 +503,6 @@ Phase 3.5 已將 Output control panel 與 `output-overlay` 原子切為 v2，維
 
 Phase 4.1 已將 `app-utility`、local overlay host 與 Settings page 原子切為 v2；`AppUtilityFrame` 同批收斂為 `AppUtilityPage`，舊檔、舊 selector 與雙 import path均已移除。Utility page 保留 fixed header／focus owner，`SettingsView` 保留唯一 body Scroll Region 與雙欄／窄版 stacking。8 個 production files 的 16 個 legacy pairs 已映射至正式 radius／typography／motion semantics或 component-local geometry，6 個 Settings／Separation declarations 已退出 T1 core。Settings blocks、feature gates、audio／OBS integration、modal flows 與資料 authority均未變更；其餘 component names 已符合 compound／domain control 角色。
 
-Canonical generator 現在鎖定 T1 299／T2 407／T1-only 55 unique declarations、7 個 production-consumed legacy names、12 個 files 與 17 個 file-token pairs。Settings Utility 已完成 cutover；下一個 atomic implementation slice 是已在 v2 boundary 內的 Analysis／provider specialist workbenches，Performer renderer仍維持獨立 Phase 5。
+Phase 4.2 已清理 `internal-tools` 內 Music Analysis 與 Lyrics Provider Review 的完整 consumer graph；8 個 production files 的 12 個 legacy pairs 已映射至正式 typography／radius／motion semantics，4 個無 production consumer 的 generic aliases 同批退出 T1 core。既有 `MusicAnalysis*` 與 `LyricsProviderReviewForm` 名稱已符合 domain／role 結構，因此不做 cosmetic rename；分析資料、benchmark、annotation、provider review、分類導覽與工具 navigation 均未變更。
+
+Canonical generator 現在鎖定 T1 295／T2 407／T1-only 51 unique declarations、3 個 production-consumed legacy names、4 個 files 與 5 個 file-token pairs。所有 Main、Settings 與 specialist surfaces 已完成 cutover；下一個 atomic implementation slice 是獨立 Phase 5 Performer renderer。

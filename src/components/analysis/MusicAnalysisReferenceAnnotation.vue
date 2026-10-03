@@ -441,7 +441,7 @@ onUnmounted(structureSignals.clear);
 .reference-annotation__case-header > div > span {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .reference-annotation__summary strong {

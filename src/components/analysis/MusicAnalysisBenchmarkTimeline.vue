@@ -173,11 +173,12 @@ function seekTo(section) {
   color: var(--ui-color-accent-contrast);
   font: inherit;
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
   cursor: pointer;
-  transition: filter var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: filter var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .benchmark-timeline__segment:hover {
@@ -276,7 +277,7 @@ function seekTo(section) {
 
 .benchmark-timeline__role {
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .benchmark-timeline__time,

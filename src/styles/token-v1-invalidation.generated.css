@@ -3,9 +3,6 @@
   --ui-color-surface-playing: initial;
   --ui-font-weight-heavy: initial;
   --ui-font-weight-strong: initial;
-  --ui-line-height-headline: initial;
-  --ui-motion-ease: initial;
-  --ui-motion-fast: initial;
   --ui-motion-slow: initial;
   --ui-motion-spin: initial;
   --ui-player-bar-action-gap: initial;
@@ -48,7 +45,6 @@
   --ui-playlist-toolbar-height: initial;
   --ui-playlist-toolbar-padding-block: initial;
   --ui-playlist-toolbar-padding-inline: initial;
-  --ui-radius: initial;
   --ui-shell-panel-inset-block: initial;
   --ui-titlebar-height: initial;
   --ui-z-context-menu: initial;

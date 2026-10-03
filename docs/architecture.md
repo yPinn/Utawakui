@@ -64,9 +64,9 @@ system-neutral mount fallback，registered surface 才承接 canvas／text／fon
 recipe 由最近的 registered boundary 決定，production Teleport 進入同 system overlay host，F8 與
 isolated prototypes 也只登記自己的 v2 surface，不再寫 document root。Cross-version Lyrics／
 Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Settings Utility、Folder
-layout、Setlist、Performance Session、Import、Lyrics 與 Output 都各自維持完整 v2 boundary與同
-system overlay host，外層 Shell 不向任何 child 補值。Development-only Internal Tools boundary 也是
-v2；其 Analysis／provider workbench 的剩餘 legacy references 由後續 specialist slice 清理。
+layout、Setlist、Performance Session、Import、Lyrics、Output 與 development-only Internal Tools
+workbenches 都維持完整 v2 boundary 與同 system overlay host，外層 Shell 不向任何 child 補值。
+Analysis／provider review 已移除 T1-only references；production legacy consumers 只剩 Performer。
 Electron main native background／titlebar palette 已隨 Phase 1 同步換為 v2，
 Performer native background 仍維持 v1，留待其 renderer atomic cutover。
 

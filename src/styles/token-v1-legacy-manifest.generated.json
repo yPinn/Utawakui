@@ -1,74 +1,14 @@
 {
   "schemaVersion": 1,
   "declarations": {
-    "v1": 299,
-    "v1Only": 55,
+    "v1": 295,
+    "v1Only": 51,
     "v2": 407
   },
   "production": {
-    "files": 12,
-    "pairs": 17,
+    "files": 4,
+    "pairs": 5,
     "references": [
-      {
-        "file": "src/components/analysis/MusicAnalysisBatchPanel.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisBenchmarkReview.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisBenchmarkReview.vue",
-        "surface": "other-feature",
-        "token": "--ui-radius"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisBenchmarkTimeline.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisBenchmarkTimeline.vue",
-        "surface": "other-feature",
-        "token": "--ui-motion-ease"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisBenchmarkTimeline.vue",
-        "surface": "other-feature",
-        "token": "--ui-motion-fast"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisJobPanel.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisReferenceAnnotation.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicAnalysisTrackPicker.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicStructureSummary.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/analysis/MusicStructureSummary.vue",
-        "surface": "other-feature",
-        "token": "--ui-line-height-headline"
-      },
-      {
-        "file": "src/components/lyrics-provider/LyricsProviderReviewForm.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
       {
         "file": "src/components/performer/PerformerLyricCue.vue",
         "surface": "other-feature",
@@ -95,15 +35,12 @@
         "token": "--ui-titlebar-height"
       }
     ],
-    "tokens": 7
+    "tokens": 3
   },
   "legacyTokens": [
     "--ui-color-surface-playing",
     "--ui-font-weight-heavy",
     "--ui-font-weight-strong",
-    "--ui-line-height-headline",
-    "--ui-motion-ease",
-    "--ui-motion-fast",
     "--ui-motion-slow",
     "--ui-motion-spin",
     "--ui-player-bar-action-gap",
@@ -146,7 +83,6 @@
     "--ui-playlist-toolbar-height",
     "--ui-playlist-toolbar-padding-block",
     "--ui-playlist-toolbar-padding-inline",
-    "--ui-radius",
     "--ui-shell-panel-inset-block",
     "--ui-titlebar-height",
     "--ui-z-context-menu",

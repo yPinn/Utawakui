@@ -229,7 +229,7 @@ function sectionLabel(role) {
 .structure-summary__subheading {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 
@@ -277,14 +277,14 @@ function sectionLabel(role) {
 .structure-summary__metric dt {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .structure-summary__metric dd {
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -297,7 +297,7 @@ function sectionLabel(role) {
 
 .structure-summary__tempo-value {
   font-size: var(--ui-font-size-xl);
-  line-height: var(--ui-line-height-headline);
+  line-height: var(--ui-line-height-heading);
 }
 
 .structure-summary__confidence {
@@ -332,7 +332,7 @@ function sectionLabel(role) {
 
 .structure-summary__section-role {
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .structure-summary__section-confidence {

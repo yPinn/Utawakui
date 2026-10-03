@@ -619,18 +619,18 @@ Token names should describe role before value:
 
 Control-panel token categories:
 
-| Category    | Prefix               | Example                 |
-| ----------- | -------------------- | ----------------------- |
-| Color       | `--ui-color-*`       | `--ui-color-accent`     |
-| Typography  | `--ui-font-*`        | `--ui-font-size-md`     |
-| Line height | `--ui-line-height-*` | `--ui-line-height-body` |
-| Spacing     | `--ui-space-*`       | `--ui-space-4`          |
-| Radius      | `--ui-radius-*`      | `--ui-radius-lg`        |
-| Shadow      | `--ui-shadow-*`      | `--ui-shadow-overlay`   |
-| Opacity     | `--ui-opacity-*`     | `--ui-opacity-disabled` |
-| Motion      | `--ui-motion-*`      | `--ui-motion-fast`      |
-| Z-index     | `--ui-z-*`           | `--ui-z-dropdown`       |
-| Dimensions  | `--ui-*-height`      | `--ui-control-height`   |
+| Category    | Prefix               | Example                     |
+| ----------- | -------------------- | --------------------------- |
+| Color       | `--ui-color-*`       | `--ui-color-accent`         |
+| Typography  | `--ui-font-*`        | `--ui-font-size-md`         |
+| Line height | `--ui-line-height-*` | `--ui-line-height-body`     |
+| Spacing     | `--ui-space-*`       | `--ui-space-4`              |
+| Radius      | `--ui-radius-*`      | `--ui-radius-lg`            |
+| Shadow      | `--ui-shadow-*`      | `--ui-shadow-overlay`       |
+| Opacity     | `--ui-opacity-*`     | `--ui-opacity-disabled`     |
+| Motion      | `--ui-motion-*`      | `--ui-motion-duration-fast` |
+| Z-index     | `--ui-z-*`           | `--ui-z-dropdown`           |
+| Dimensions  | `--ui-*-height`      | `--ui-control-height`       |
 
 Deprecated text-size aliases should not be reintroduced; current component CSS should use `--ui-font-size-*`.
 
