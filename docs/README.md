@@ -59,6 +59,10 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 - Local library、playback、queue、playlists、可發聲節拍器、App CPU／RAM 顯示與
   Windows shell integration 已是預設核心；首次按 X 會詢問背景執行或退出，且可記住選擇，
   Settings 也能改回每次詢問。
+- Setlist 已有獨立的場次準備 workspace：可從 playlist／album 建立 current draft、逐曲連結與
+  驗證 session-local 名稱、貼上臨時曲目並在重啟後恢復。BGM monitor 基礎 slice 已加入本機
+  曲庫清單、獨立右側 BGM player 與演唱播放器互斥交接；app-owned OBS capture、場次
+  confirmed-playing snapshot／公開投影仍是下一階段。
 - Lyrics canonical timing、provider acquisition、reading、Self-View 與 Overlay 主路徑
   已建立；剩餘重點是人工視覺驗收與操作 polish。
 - `quick`／`general` audio processing 與 Music Analysis（BPM／節拍分析）已是產品能力；
@@ -106,6 +110,7 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
 | [0018](adr/0018-signed-update-manifest.md)                             | 已接受／待 production activation | Exact artifact binding、多簽章 rotation 與 package／sign／publish 分權已完成；目前僅有 development public key，production gate 明確關閉。         |
 | [0019](adr/0019-signalsmith-stretch-pitch-transpose.md)                | Proposed／已實作                 | Pitch transpose 已改用 Signalsmith Stretch；程式與單元測試完成，仍待實際聽感驗收。                                                                |
 | [0020](adr/0020-metronome-lookahead-audio-scheduling.md)               | Proposed／已實作                 | 可發聲節拍器、lookahead scheduling 與可信曲目 BPM 套用已完成，仍待外部節拍器對照的人工聽感驗收。                                                  |
+| [0021](adr/0021-bgm-standby-audio-and-handoff.md)                      | 已接受／monitor 基礎已實作       | 本機 BGM plan、單 deck monitor、互斥 handoff 與獨立 BGM player 已完成；OBS capture routing 與實際錄音聽感仍待驗收。                               |
 
 ## 常用文件
 
@@ -128,7 +133,9 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [BPM runtime-smoke config](contracts/music-analysis-bpm-smoke-run-config-template.json)、
   [M2 quality gate](contracts/music-analysis-m2-quality-gate.md)。
 - Integrations：[adapter contract](contracts/integration-adapter-contract.md)。
-- Playback：[播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)。
+- Playback：[播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)、
+  [演出場次準備契約](contracts/performance-session-preparation.md)、
+  [BGM 待機播放契約](contracts/bgm-standby-lane.md)。
 - Library：[曲庫空間管理契約](contracts/library-storage-management.md)。
 - Music identity：[identity／evidence contract](contracts/music-identity-evidence-contract.md)。
 - Codebase：[naming contract](contracts/codebase-naming.md)。
@@ -152,6 +159,6 @@ packaged verification 為證據；package 內容看 release inventory。若兩�
   [NetEase isolated validation report](research/netease-isolated-technical-validation-2026-08-28.md)
   與其他
   dated evidence。
-- Visual system live gate：
-  [Token v2 元件檢查契約](contracts/token-v2-component-review.md)。
+- Visual system：[Token v2 元件檢查契約](contracts/token-v2-component-review.md)、
+  [Token v2 完整替換契約](contracts/token-v2-replacement.md)。
 - Archive：[Lyrics T2 implementation plan](archive/lyrics-t2-implementation-plan.md)。
