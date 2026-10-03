@@ -1,17 +1,18 @@
 # 競品調查：歌回與 OBS 輔助工具
 
-> 研究日期：2026-09-25（第四輪；首次調查為 2026-08-13）。本文是產品與工程判斷用的 dated evidence，不構成法律意見，也不是 Utawakui 現況來源。
+> 研究日期：2026-09-25（第四輪；首次調查為 2026-08-13；Setlista 版本補查：2026-10-02）。本文是產品與工程判斷用的 dated evidence，不構成法律意見，也不是 Utawakui 現況來源。
 >
 > Utawakui 的目前狀態以[產品規格](../spec.md)與[文件導覽](../README.md)為準。前三輪完整內容保留在 Git history；本輪只保留仍影響決策的現況、變化與證據限制。
 
 ## 1. 範圍與證據規則
 
 本輪延續三個直接競品：Setlista、EliteSand Pro、歌回救星／Singing Stream
-Savior。觀察截止時間為 2026-09-25（Asia/Taipei）。
+Savior。第四輪觀察截止時間為 2026-09-25（Asia/Taipei）；2026-10-02 只補查 Setlista
+版本與既有演出操作，沒有重新查證其他產品。
 
 | 產品                             | 最新可驗證版本                                       | 現況來源                                                                                                                                                                     | 相對 2026-09-15     |
 | -------------------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------- |
-| Setlista／セトリスタ 3rd session | `0.23.0`，2026-03-25，仍標示試驗公開                 | [官方 3rd session 手冊](https://nekosogi.org/setlista3)                                                                                                                      | 無版本變化          |
+| Setlista／セトリスタ 3rd session | `0.24.0`，2026-09-20，仍標示試驗公開                 | [官方 3rd session 手冊](https://nekosogi.org/setlista3)、[Control](https://app.nekosogi.org/setlista3/control.html)                                                          | `0.23.0 → 0.24.0`   |
 | EliteSand Pro                    | `1.0.6`，2026-09-18 UTC／09-19 台灣時間              | [官方 repository](https://github.com/z22115554/elitesand-pro)、[v1.0.6 release](https://github.com/z22115554/elitesand-pro/releases/tag/v1.0.6)                              | `1.0.4 → 1.0.6`     |
 | 歌回救星／Singing Stream Savior  | App `2.1.6.1`、Launcher `1.2.0.8`、runtime `1.0.0.8` | [官方手冊](https://noonisawesome.github.io/Singing-Stream-Savior-Manual/)、[更新倉庫](https://github.com/NoonIsAwesome/Singing-Stream-Savior-Updates)、`updates/stable.json` | `2.1.4.3 → 2.1.6.1` |
 
@@ -29,12 +30,13 @@ Savior。觀察截止時間為 2026-09-25（Asia/Taipei）。
 
 ### 2.1 Setlista
 
-`0.23.0` 仍是最新版本，3rd session 仍標示試驗公開。Reserve／Now Singing／Set
-List、わんコメ時間戳、YouTube 章節複製、Browser Dock／Browser Source 與 skin
-生態都沒有新的公開版本變化。
+2026-10-02 補查時，`0.24.0`（2026-09-20）是最新版本，3rd session 仍標示試驗公開；該版只新增
+sidebar mascot，未改變核心演出流程。Control 仍以 Reserve List 每行一首、Now Singing、可編輯
+Set List、前進／返回與時間戳支援低摩擦現場操作。
 
-這次重新查證的價值是確認「無變化」：Setlista 仍代表低導入成本、窄場景打磨，而不是
-完整播放器或音訊處理工作站。
+這次補查的價值是確認資料模型沒有因版本增加而改變：Setlista 仍代表低導入成本、窄場景打磨，
+而不是完整播放器或音訊處理工作站。Utawakui 可參考其線性 review 節奏，但不能把任意文字直接
+當成可播放媒體或 canonical track identity。
 
 ### 2.2 EliteSand Pro
 
@@ -114,10 +116,11 @@ Stable manifest 在 2026-09-24 宣告 App `2.1.6.1`、Launcher `1.2.0.8`、runti
 
 | 面向                   | Setlista                | EliteSand Pro                                         | 歌回救星                                  | Utawakui 現況                                                           |
 | ---------------------- | ----------------------- | ----------------------------------------------------- | ----------------------------------------- | ----------------------------------------------------------------------- |
-| 版本／發布             | `0.23.0`，試驗公開      | `1.0.6`，Installer＋增量包                            | `2.1.6.1`，ZIP＋獨立 Launcher／packages   | Source tree；公開發行驗收持續進行                                       |
+| 版本／發布             | `0.24.0`，試驗公開      | `1.0.6`，Installer＋增量包                            | `2.1.6.1`，ZIP＋獨立 Launcher／packages   | Source tree；公開發行驗收持續進行                                       |
 | 本機曲庫／播放器       | 無                      | 有                                                    | 有，BGM／伴奏分 lane                      | 已實作                                                                  |
-| BGM 自動交接           | 無                      | `1.0.5` 起公開支援                                    | 核心能力，近期仍持續修正                  | 未納入產品範圍                                                          |
+| BGM 自動交接           | 無                      | `1.0.5` 起公開支援                                    | 核心能力，近期仍持續修正                  | 規劃中；獨立 lane 與嚴格互斥 handoff                                    |
 | 無伴奏演出項目         | 可用純文字 setlist 表達 | 未見專用資料模型                                      | 有，手動或計時結束                        | 尚待產品決策                                                            |
+| 逐曲演出準備           | Reserve → Now Singing   | 本輪未驗證 focused review                             | 本輪未驗證 focused review                 | 規劃中；placeholder 需 linked＋verified                                 |
 | OBS setlist            | 核心                    | 有，含 session／chapter                               | 有，多主題                                | 三個固定 slot MVP；session／chapter 已實作                              |
 | OBS lyrics             | 無                      | 11 個官方 performance templates；另有 source 分類差異 | 9 個 animated styles，另有 Basic／Classic | 6 個 presentation profiles                                              |
 | 歌詞來源               | 無                      | BetterLyrics／Apple／酷狗／QQ／LRCLIB／NetEase 等     | LRCLIB／YouTube captions／local           | LRCLIB／NetEase／Better Lyrics                                          |
@@ -205,7 +208,8 @@ EliteSand Pro 的優勢不只在 provider 數量；`1.0.6` 把日文發音分析
 
 本輪已完成：
 
-- 重新讀取 Setlista 官方手冊，確認 `0.23.0` 與試驗公開狀態未變。
+- 2026-09-25 第四輪重新讀取 Setlista 官方手冊，當時確認 `0.23.0`；2026-10-02 版本補查確認
+  `0.24.0` 只新增 sidebar mascot，Reserve／Now Singing／Set List 核心操作未變。
 - 以 EliteSand Pro 官方 remote refs、GitHub releases、tag source tree 與 assets 確認 `1.0.6`，補入
   BGM lane、公開點歌網址、日文諧音 override、MPL-2.0 公開原始碼與增量更新現況。
 - 以歌回救星官方 releases、manual repository 與 stable manifest 確認 App `2.1.6.1`、Launcher
@@ -221,6 +225,7 @@ EliteSand Pro 的優勢不只在 provider 數量；`1.0.6` 把日文發音分析
 
 - 未安裝並實機操作三個競品；官方 release／manual 能證明發布與宣稱，不能證明實際品質。
 - Setlista 沒有可對照的 desktop artifact；以官方頁面及其 changelog 為準。
+- 2026-10-02 Setlista 補查不是完整第五輪調查；其他競品版本仍以 2026-09-25 證據為準。
 - EliteSand Pro `1.0.6` README 的版本字串仍停在 `1.0.4`；本文以 release／tag／asset 為權威。
 - 歌回救星 manifest 與 privacy notice 是官方自述；未做 network capture、plugin crash test 或 VST3
   compatibility matrix。

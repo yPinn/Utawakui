@@ -1,0 +1,359 @@
+<script setup>
+import { computed, shallowRef, watch } from 'vue';
+import UiButton from '../ui/UiButton.vue';
+import UiHint from '../ui/UiHint.vue';
+import UiNotice from '../ui/UiNotice.vue';
+import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSelect from '../ui/UiSelect.vue';
+import UiTextField from '../ui/UiTextField.vue';
+
+const props = defineProps({
+  item: { type: Object, default: null },
+  tracks: { type: Array, default: () => [] },
+  saving: { type: Boolean, default: false },
+  validationError: { type: Object, default: null },
+});
+
+const emit = defineEmits(['saveDisplay', 'relink']);
+
+const displayTitle = shallowRef('');
+const displayArtist = shallowRef('');
+const trackId = shallowRef('');
+const trackFilter = shallowRef('');
+const editing = shallowRef(false);
+
+watch(
+  () => props.item,
+  (item) => {
+    displayTitle.value = item?.displayTitle ?? '';
+    displayArtist.value = item?.displayArtist ?? '';
+    trackId.value = item?.trackId ?? '';
+    trackFilter.value = '';
+    editing.value = false;
+  },
+  { immediate: true },
+);
+
+const needsTrackRecovery = computed(
+  () =>
+    props.item?.mode === 'placeholder' || props.item?.status === 'unavailable',
+);
+const showForm = computed(
+  () =>
+    editing.value || props.item?.mode === 'manual' || needsTrackRecovery.value,
+);
+
+const trackOptions = computed(() => {
+  const query = trackFilter.value.trim().toLocaleLowerCase();
+  const options = props.tracks
+    .filter(
+      (track) =>
+        !query ||
+        track.id === trackId.value ||
+        [track.title, track.artist, track.id].some((value) =>
+          String(value ?? '')
+            .toLocaleLowerCase()
+            .includes(query),
+        ),
+    )
+    .map((track) => ({
+      value: track.id,
+      label: track.artist ? `${track.title} — ${track.artist}` : track.title,
+    }));
+  if (
+    props.item?.trackId &&
+    !props.tracks.some((track) => track.id === props.item.trackId)
+  ) {
+    options.unshift({
+      value: props.item.trackId,
+      label: `原連結已不存在（${props.item.trackId}）`,
+      disabled: true,
+    });
+  }
+  options.unshift({ value: '', label: '選擇曲庫歌曲' });
+  return options;
+});
+
+const canSave = computed(
+  () =>
+    Boolean(displayTitle.value.trim()) &&
+    (!needsTrackRecovery.value || Boolean(trackId.value)),
+);
+
+function displayFields() {
+  return {
+    displayTitle: displayTitle.value,
+    displayArtist: displayArtist.value,
+  };
+}
+
+function submit() {
+  if (needsTrackRecovery.value) {
+    emit('relink', {
+      ...displayFields(),
+      trackId: trackId.value || null,
+    });
+    return;
+  }
+  emit('saveDisplay', displayFields());
+}
+
+function startEditing() {
+  editing.value = true;
+}
+
+function cancelEditing() {
+  displayTitle.value = props.item?.displayTitle ?? '';
+  displayArtist.value = props.item?.displayArtist ?? '';
+  trackId.value = props.item?.trackId ?? '';
+  trackFilter.value = '';
+  editing.value = false;
+}
+</script>
+
+<template>
+  <section class="session-review" aria-labelledby="session-review-title">
+    <UiScrollRegion class="session-review__body-scroll">
+      <div v-if="item" class="session-review__body">
+        <header class="session-review__header">
+          <p class="session-review__eyebrow">
+            {{ item.mode === 'manual' ? '手動項目' : '待唱曲目' }}
+          </p>
+          <h2
+            id="session-review-title"
+            class="session-review__title"
+            dir="auto"
+          >
+            {{ item.displayTitle }}
+          </h2>
+          <p
+            v-if="item.displayArtist"
+            class="session-review__artist"
+            dir="auto"
+          >
+            {{ item.displayArtist }}
+          </p>
+        </header>
+
+        <UiNotice
+          v-if="item.status === 'unavailable'"
+          tone="danger"
+          title="音檔已不存在"
+          message="請重新選擇一首曲庫歌曲。"
+          compact
+        />
+        <UiNotice
+          v-else-if="item.status === 'needs-link'"
+          tone="warning"
+          title="需要連結曲庫歌曲"
+          message="這是舊版文字項目；選擇音檔後即可演出。"
+          compact
+        />
+        <UiNotice
+          v-else-if="item.status === 'source-changed'"
+          tone="warning"
+          title="曲庫資料已變更"
+          message="場次顯示文字仍保留，可視需要調整。"
+          compact
+        />
+        <UiNotice
+          v-if="validationError"
+          tone="warning"
+          title="尚未儲存"
+          :message="validationError.message"
+          compact
+        />
+
+        <div
+          v-if="item.linkedTrack && !showForm"
+          class="session-review__source"
+        >
+          <span class="session-review__source-label">曲庫資料（唯讀）</span>
+          <dl class="session-review__source-details">
+            <div class="session-review__source-row">
+              <dt>曲庫曲名</dt>
+              <dd dir="auto">{{ item.linkedTrack.title }}</dd>
+            </div>
+            <div
+              v-if="item.linkedTrack.artist"
+              class="session-review__source-row"
+            >
+              <dt>歌手／藝人</dt>
+              <dd dir="auto">{{ item.linkedTrack.artist }}</dd>
+            </div>
+          </dl>
+        </div>
+
+        <form v-if="showForm" class="session-review__form" @submit.prevent>
+          <UiTextField
+            id="session-plan-display-title"
+            v-model="displayTitle"
+            label="顯示曲名"
+            hint="只用於本場輸出，不會修改曲庫曲名。"
+            :maxlength="200"
+            required
+          />
+          <UiTextField
+            id="session-plan-display-artist"
+            v-model="displayArtist"
+            label="第二行（選填）"
+            hint="可填原唱、演出者或版本資訊；留空則不顯示。"
+            :maxlength="200"
+          />
+          <template v-if="needsTrackRecovery">
+            <UiTextField
+              id="session-plan-track-filter"
+              v-model="trackFilter"
+              label="搜尋曲庫"
+              placeholder="曲名、演出者或 track id"
+            />
+            <UiSelect
+              id="session-plan-track-link"
+              v-model="trackId"
+              label="曲庫歌曲"
+              :options="trackOptions"
+            />
+            <UiHint v-if="trackOptions.length === 1 && trackFilter.trim()">
+              找不到符合的歌曲。
+            </UiHint>
+          </template>
+        </form>
+      </div>
+
+      <UiHint v-else id="session-review-title" padded center>
+        選擇一首曲目查看設定。
+      </UiHint>
+    </UiScrollRegion>
+
+    <div v-if="item" class="session-review__actions">
+      <template v-if="showForm">
+        <UiButton
+          v-if="!needsTrackRecovery && item.mode !== 'manual'"
+          :disabled="saving"
+          @click="cancelEditing"
+        >
+          取消
+        </UiButton>
+        <UiButton
+          variant="accent"
+          :disabled="saving || !canSave"
+          @click="submit"
+        >
+          {{ needsTrackRecovery ? '連結既有歌曲' : '儲存本場顯示' }}
+        </UiButton>
+      </template>
+      <template v-else>
+        <UiButton variant="secondary" :disabled="saving" @click="startEditing">
+          調整本場顯示
+        </UiButton>
+      </template>
+    </div>
+  </section>
+</template>
+
+<style scoped>
+.session-review {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.session-review__body-scroll {
+  flex: 1;
+  min-height: 0;
+}
+
+.session-review__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-4);
+  padding: var(--ui-space-4);
+}
+
+.session-review__header {
+  min-width: 0;
+}
+
+.session-review__eyebrow,
+.session-review__title,
+.session-review__artist {
+  margin: 0;
+}
+
+.session-review__eyebrow {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+}
+
+.session-review__title {
+  margin-top: var(--ui-space-1);
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-lg);
+  line-height: var(--ui-line-height-heading);
+  overflow-wrap: anywhere;
+}
+
+.session-review__artist {
+  margin-top: var(--ui-space-1);
+  color: var(--ui-color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+.session-review__source {
+  display: grid;
+  gap: var(--ui-space-1);
+  padding: var(--ui-space-3);
+  border: var(--ui-border-width) solid var(--ui-color-border);
+  border-radius: var(--ui-radius-md);
+  background: var(--ui-color-surface-raised);
+}
+
+.session-review__source-label {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+}
+
+.session-review__source-details {
+  display: grid;
+  gap: var(--ui-space-1);
+  margin: 0;
+}
+
+.session-review__source-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--ui-space-2);
+  align-items: baseline;
+}
+
+.session-review__source-row dt {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+}
+
+.session-review__source-row dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.session-review__form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ui-space-3);
+}
+
+.session-review__actions {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--ui-space-2);
+  padding: var(--ui-space-3) var(--ui-space-4);
+  border-top: var(--ui-border-width) solid var(--ui-color-border);
+}
+</style>

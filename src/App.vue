@@ -6,6 +6,7 @@ import {
   onMounted,
   onUnmounted,
   provide,
+  ref,
   watch,
 } from 'vue';
 import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
@@ -16,9 +17,11 @@ import AppUtilityFrame from './components/layout/AppUtilityFrame.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
 import AppAnnouncementModal from './components/layout/AppAnnouncementModal.vue';
 import WindowCloseDecisionModal from './components/layout/WindowCloseDecisionModal.vue';
+import BgmPlayer from './components/bgm/BgmPlayer.vue';
 import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
+import PerformanceSessionPanel from './components/performance-session/PerformanceSessionPanel.vue';
 import SetlistView from './views/SetlistView.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
@@ -44,9 +47,11 @@ import { usePlaybackResume } from './composables/usePlaybackResume.js';
 import {
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
+  RIGHT_DOCK_SURFACE_SESSION,
   useAppRightDock,
 } from './composables/useAppRightDock.js';
 import { useAppRightDockWidth } from './composables/useAppRightDockWidth.js';
+import { usePerformanceSessionWorkspace } from './composables/usePerformanceSessionWorkspace.js';
 import { OUTPUT_RUNTIME_KEY } from './composables/useOutputRuntimeContext.js';
 import { recordRendererMilestone } from './utils/startupTrace.js';
 import { measureInteractionToNextPaint } from './utils/interactionPerformance.js';
@@ -155,7 +160,10 @@ onMounted(announcement.initialize);
 const { width: sidebarWidth } = useSidebarWidth();
 const { width: rightDockWidth } = useAppRightDockWidth();
 const rightDock = useAppRightDock();
+const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 const RIGHT_DOCK_CONTENT_ID = 'app-right-dock-content';
+const BGM_PLAYER_ID = 'app-bgm-player';
+const bgmPlayerExpanded = ref(false);
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
@@ -214,11 +222,17 @@ const metadataSurfaceActive = computed(
 const queueSurfaceActive = computed(
   () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_QUEUE,
 );
+const sessionSurfaceActive = computed(
+  () => rightDock.topSurface.value === RIGHT_DOCK_SURFACE_SESSION,
+);
 const metadataExpanded = computed(
   () => rightDock.isExpanded.value && metadataSurfaceActive.value,
 );
 const queueExpanded = computed(
   () => rightDock.isExpanded.value && queueSurfaceActive.value,
+);
+const sessionExpanded = computed(
+  () => rightDock.isExpanded.value && sessionSurfaceActive.value,
 );
 const rightDockExpanded = computed(
   () => rightDock.isExpanded.value && Boolean(rightDock.topSurface.value),
@@ -232,9 +246,10 @@ const restorableDockSurface = computed(
       : RIGHT_DOCK_SURFACE_QUEUE),
 );
 const rightDockLabel = computed(() => {
-  return restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE
-    ? '播放佇列'
-    : '播放資訊';
+  if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_SESSION) return '場次';
+  if (restorableDockSurface.value === RIGHT_DOCK_SURFACE_QUEUE)
+    return '播放佇列';
+  return '播放資訊';
 });
 const rightDockExpandLabel = computed(() => `展開${rightDockLabel.value}`);
 
@@ -267,6 +282,30 @@ function toggleQueueSurface() {
   measureInteractionToNextPaint('utawakui:right-dock:queue-toggle', () =>
     rightDock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE),
   );
+}
+
+function toggleSessionSurface() {
+  rememberRightDockTrigger();
+  rightDock.toggleSurface(RIGHT_DOCK_SURFACE_SESSION);
+}
+
+function openBgmPlayer() {
+  bgmPlayerExpanded.value = true;
+}
+
+function closeBgmPlayer() {
+  if (!bgmPlayerExpanded.value) return;
+  bgmPlayerExpanded.value = false;
+}
+
+function toggleBgmPlayer() {
+  if (bgmPlayerExpanded.value) closeBgmPlayer();
+  else openBgmPlayer();
+}
+
+function openSessionPreparation() {
+  performanceSessionWorkspace.open();
+  rightDock.setExpanded(false);
 }
 
 function closeDockSurface(surface) {
@@ -354,8 +393,14 @@ useKeyboardShortcuts({ internalViewShortcuts });
   >
     <AppTitleBar
       class="shell__titlebar"
+      :session-active="sessionExpanded"
+      :session-controls="RIGHT_DOCK_CONTENT_ID"
+      :bgm-active="bgmPlayerExpanded"
+      :bgm-controls="BGM_PLAYER_ID"
       :settings-active="isSettingsView"
       :update-available="appUpdateReady"
+      @toggle-session="toggleSessionSurface"
+      @toggle-bgm="toggleBgmPlayer"
       @open-settings="openSettings"
     />
     <div class="shell__sidebar">
@@ -383,6 +428,20 @@ useKeyboardShortcuts({ internalViewShortcuts });
         >
           <component :is="views[activeView]" />
         </AppArchiveFrame>
+      </div>
+      <div
+        class="shell__bgm-boundary"
+        :class="{
+          'shell__bgm-boundary--beside-dock': rightDockExpanded,
+        }"
+      >
+        <BgmPlayer
+          :id="BGM_PLAYER_ID"
+          class="shell__bgm-player"
+          :expanded="bgmPlayerExpanded"
+          @request-expand="openBgmPlayer"
+          @request-close="closeBgmPlayer"
+        />
       </div>
       <div class="shell__dock">
         <AppRightDock
@@ -417,6 +476,17 @@ useKeyboardShortcuts({ internalViewShortcuts });
             :aria-hidden="!queueExpanded"
             :inert="!queueExpanded"
             @close="closeDockSurface(RIGHT_DOCK_SURFACE_QUEUE)"
+          />
+          <PerformanceSessionPanel
+            v-if="rightDock.mountedSurfaces[RIGHT_DOCK_SURFACE_SESSION]"
+            class="shell__dock-surface"
+            :class="{
+              'shell__dock-surface--active': sessionSurfaceActive,
+            }"
+            :aria-hidden="!sessionExpanded"
+            :inert="!sessionExpanded"
+            @close="closeDockSurface(RIGHT_DOCK_SURFACE_SESSION)"
+            @open-preparation="openSessionPreparation"
           />
         </AppRightDock>
       </div>
@@ -564,6 +634,35 @@ useKeyboardShortcuts({ internalViewShortcuts });
      Folder workflows intentionally remain flush to the row top because
      their tabs and cover rail own a separate silhouette above the page. */
   padding-top: var(--ui-shell-panel-inset-block);
+}
+
+.shell__bgm-boundary {
+  position: absolute;
+  z-index: var(--ui-z-popover);
+  inset-block-start: var(--ui-shell-panel-inset-block);
+  inset-block-end: var(--ui-shell-panel-inset-block);
+  inset-inline-start: var(--ui-shell-edge-inset-inline);
+  inset-inline-end: calc(
+    var(--ui-shell-edge-inset-inline) + var(--ui-right-dock-rail-width) +
+      var(--ui-space-2)
+  );
+  min-inline-size: 0;
+  min-block-size: 0;
+  pointer-events: none;
+}
+
+.shell__bgm-boundary--beside-dock {
+  inset-inline-end: calc(
+    var(--ui-right-dock-width) + var(--ui-space-3) +
+      var(--ui-shell-edge-inset-inline)
+  );
+}
+
+.shell__bgm-player {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-end: 0;
+  pointer-events: auto;
 }
 
 .shell__dock {

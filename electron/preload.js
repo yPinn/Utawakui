@@ -100,6 +100,65 @@ function libraryStoragePolicyIntent(value) {
   };
 }
 
+function performanceSessionPlanReplaceIntent(value) {
+  return {
+    sourceId: value?.sourceId,
+    replaceCurrent: value?.replaceCurrent === true,
+  };
+}
+
+function performanceSessionPlanUpdateIntent(value) {
+  const intent = {
+    itemId: value?.itemId,
+    expectedRevision: value?.expectedRevision,
+    displayTitle: value?.displayTitle,
+    displayArtist: value?.displayArtist,
+  };
+  if (value && Object.hasOwn(value, 'trackId')) intent.trackId = value.trackId;
+  return intent;
+}
+
+function performanceSessionPlanMoveIntent(value) {
+  return {
+    itemId: value?.itemId,
+    offset: value?.offset,
+  };
+}
+
+function performanceSessionPlanManualIntent(value) {
+  return {
+    displayTitle: value?.displayTitle,
+    displayArtist: value?.displayArtist,
+  };
+}
+
+function bgmStandbySettingsIntent(value) {
+  const source = value && typeof value === 'object' ? value : {};
+  const allowedKeys = [
+    'volume',
+    'isMuted',
+    'fadeInSeconds',
+    'fadeOutSeconds',
+    'dimDb',
+    'dimAttackMs',
+    'dimReleaseMs',
+    'preRollSeconds',
+    'postRollSeconds',
+  ];
+  return Object.fromEntries(
+    allowedKeys
+      .filter((key) => Object.hasOwn(source, key))
+      .map((key) => [key, source[key]]),
+  );
+}
+
+function bgmStandbyPositionIntent(value) {
+  return {
+    trackId: value?.trackId,
+    positionSeconds: value?.positionSeconds,
+  };
+}
+
 contextBridge.exposeInMainWorld('Utawakui', {
   startupTraceEnabled,
   recordStartupMilestone: (milestone) => {
@@ -499,6 +558,56 @@ contextBridge.exposeInMainWorld('Utawakui', {
     ipcRenderer.invoke('playlists:set-description', id, description),
   choosePlaylistCover: (id) => ipcRenderer.invoke('playlists:choose-cover', id),
   clearPlaylistCover: (id) => ipcRenderer.invoke('playlists:clear-cover', id),
+  getPerformanceSessionPlan: () =>
+    ipcRenderer.invoke('performance-session-plan:get'),
+  replacePerformanceSessionPlanFromCollection: (intent) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:replace-from-collection',
+      performanceSessionPlanReplaceIntent(intent),
+    ),
+  appendPerformanceSessionPlanPlaceholders: (text) =>
+    ipcRenderer.invoke('performance-session-plan:append-placeholders', text),
+  appendPerformanceSessionPlanLibraryTrack: (trackId) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:append-library-track',
+      trackId,
+    ),
+  appendPerformanceSessionPlanManualItem: (intent) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:append-manual-item',
+      performanceSessionPlanManualIntent(intent),
+    ),
+  updatePerformanceSessionPlanItem: (intent) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:update-item',
+      performanceSessionPlanUpdateIntent(intent),
+    ),
+  movePerformanceSessionPlanItem: (intent) =>
+    ipcRenderer.invoke(
+      'performance-session-plan:move-item',
+      performanceSessionPlanMoveIntent(intent),
+    ),
+  duplicatePerformanceSessionPlanItem: (itemId) =>
+    ipcRenderer.invoke('performance-session-plan:duplicate-item', itemId),
+  removePerformanceSessionPlanItem: (itemId) =>
+    ipcRenderer.invoke('performance-session-plan:remove-item', itemId),
+  setPerformanceSessionPlanReviewCursor: (itemId) =>
+    ipcRenderer.invoke('performance-session-plan:set-review-cursor', itemId),
+  clearPerformanceSessionPlan: () =>
+    ipcRenderer.invoke('performance-session-plan:clear'),
+  getBgmStandbyPlan: () => ipcRenderer.invoke('bgm-standby:get'),
+  setBgmStandbyTrack: (trackId) =>
+    ipcRenderer.invoke('bgm-standby:set-track', trackId),
+  updateBgmStandbySettings: (intent) =>
+    ipcRenderer.invoke(
+      'bgm-standby:update-settings',
+      bgmStandbySettingsIntent(intent),
+    ),
+  updateBgmStandbyPosition: (intent) =>
+    ipcRenderer.invoke(
+      'bgm-standby:update-position',
+      bgmStandbyPositionIntent(intent),
+    ),
   // Renderer sends product recipe intent only; main owns engine/model details.
   runSeparation: (trackId, recipeId) =>
     ipcRenderer.invoke('separation:run', trackId, recipeId),

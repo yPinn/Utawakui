@@ -21,6 +21,10 @@ const MAIN_INVOKE_CHANNELS = [
   'app-update:install',
   'app-usage:get-status',
   'app:get-version',
+  'bgm-standby:get',
+  'bgm-standby:set-track',
+  'bgm-standby:update-position',
+  'bgm-standby:update-settings',
   'config:choose-download-dir',
   'config:get',
   'config:get-capture-device',
@@ -127,6 +131,17 @@ const MAIN_INVOKE_CHANNELS = [
   'performer-view:get-status',
   'performer-view:open',
   'performer-view:publish',
+  'performance-session-plan:append-placeholders',
+  'performance-session-plan:append-library-track',
+  'performance-session-plan:append-manual-item',
+  'performance-session-plan:clear',
+  'performance-session-plan:duplicate-item',
+  'performance-session-plan:get',
+  'performance-session-plan:move-item',
+  'performance-session-plan:remove-item',
+  'performance-session-plan:replace-from-collection',
+  'performance-session-plan:set-review-cursor',
+  'performance-session-plan:update-item',
   'playback-history:clear',
   'playback-history:get',
   'playback-history:record',
@@ -636,6 +651,172 @@ describe('main preload bridge', () => {
         },
       ],
       ['library-storage:cleanup'],
+    ]);
+  });
+
+  it('exposes only bounded performance session plan intents', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.getPerformanceSessionPlan('E:\\private');
+    bridge.replacePerformanceSessionPlanFromCollection({
+      sourceId: 'playlist-1',
+      replaceCurrent: true,
+      sourceName: 'spoofed',
+      trackIds: ['track-private'],
+      privatePath: 'E:\\private',
+    });
+    bridge.appendPerformanceSessionPlanPlaceholders(
+      '第一首\n第二首',
+      'E:\\private',
+    );
+    bridge.appendPerformanceSessionPlanLibraryTrack(
+      'track-1',
+      'file:///private.wav',
+    );
+    bridge.appendPerformanceSessionPlanManualItem({
+      displayTitle: '自備伴奏',
+      displayArtist: '演出者',
+      bgm: true,
+      mediaUrl: 'file:///private.wav',
+    });
+    bridge.updatePerformanceSessionPlanItem({
+      itemId: 'item-1',
+      expectedRevision: 3,
+      displayTitle: '現場名稱',
+      displayArtist: '演出者',
+      trackId: 'track-1',
+      verify: true,
+      advance: true,
+      mediaUrl: 'file:///private.wav',
+      privatePath: 'E:\\private',
+    });
+    bridge.updatePerformanceSessionPlanItem({
+      itemId: 'item-2',
+      expectedRevision: 4,
+      displayTitle: '只改本場顯示',
+      displayArtist: '',
+      libraryTitle: '不可寫入',
+      artwork: 'file:///private.png',
+    });
+    bridge.movePerformanceSessionPlanItem({
+      itemId: 'item-1',
+      offset: 1,
+      targetIndex: 99,
+    });
+    bridge.duplicatePerformanceSessionPlanItem('item-1', 'E:\\private');
+    bridge.removePerformanceSessionPlanItem('item-2', 'E:\\private');
+    bridge.setPerformanceSessionPlanReviewCursor('item-3', 'E:\\private');
+    bridge.clearPerformanceSessionPlan('E:\\private');
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['performance-session-plan:get'],
+      [
+        'performance-session-plan:replace-from-collection',
+        { sourceId: 'playlist-1', replaceCurrent: true },
+      ],
+      ['performance-session-plan:append-placeholders', '第一首\n第二首'],
+      ['performance-session-plan:append-library-track', 'track-1'],
+      [
+        'performance-session-plan:append-manual-item',
+        { displayTitle: '自備伴奏', displayArtist: '演出者' },
+      ],
+      [
+        'performance-session-plan:update-item',
+        {
+          itemId: 'item-1',
+          expectedRevision: 3,
+          displayTitle: '現場名稱',
+          displayArtist: '演出者',
+          trackId: 'track-1',
+        },
+      ],
+      [
+        'performance-session-plan:update-item',
+        {
+          itemId: 'item-2',
+          expectedRevision: 4,
+          displayTitle: '只改本場顯示',
+          displayArtist: '',
+        },
+      ],
+      ['performance-session-plan:move-item', { itemId: 'item-1', offset: 1 }],
+      ['performance-session-plan:duplicate-item', 'item-1'],
+      ['performance-session-plan:remove-item', 'item-2'],
+      ['performance-session-plan:set-review-cursor', 'item-3'],
+      ['performance-session-plan:clear'],
+    ]);
+  });
+
+  it('exposes only bounded BGM preparation intents', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    expect(bridge).not.toHaveProperty('addBgmStandbyTrack');
+    expect(bridge).not.toHaveProperty('moveBgmStandbyTrack');
+    expect(bridge).not.toHaveProperty('removeBgmStandbyTrack');
+    expect(bridge).not.toHaveProperty('setBgmStandbyCurrentTrack');
+    expect(bridge).not.toHaveProperty('clearBgmStandbyPlan');
+
+    bridge.getBgmStandbyPlan('E:\\private');
+    bridge.setBgmStandbyTrack('track-3', 'file:///private.wav');
+    bridge.updateBgmStandbySettings({
+      volume: 0.4,
+      isMuted: true,
+      loop: false,
+      fadeInSeconds: 1.7,
+      fadeOutSeconds: 0.8,
+      dimDb: -14,
+      dimAttackMs: 120,
+      dimReleaseMs: 700,
+      preRollSeconds: 2.5,
+      postRollSeconds: 3,
+      captureDeviceId: 'private-device',
+      mediaUrl: 'file:///private.wav',
+    });
+    bridge.updateBgmStandbyPosition({
+      trackId: 'track-3',
+      positionSeconds: 32,
+      currentTime: 99,
+      privatePath: 'E:\\private',
+    });
+
+    expect(electron.ipcRenderer.invoke.mock.calls).toEqual([
+      ['bgm-standby:get'],
+      ['bgm-standby:set-track', 'track-3'],
+      [
+        'bgm-standby:update-settings',
+        {
+          volume: 0.4,
+          isMuted: true,
+          fadeInSeconds: 1.7,
+          fadeOutSeconds: 0.8,
+          dimDb: -14,
+          dimAttackMs: 120,
+          dimReleaseMs: 700,
+          preRollSeconds: 2.5,
+          postRollSeconds: 3,
+        },
+      ],
+      [
+        'bgm-standby:update-position',
+        { trackId: 'track-3', positionSeconds: 32 },
+      ],
+    ]);
+  });
+
+  it('preserves sparse BGM setting updates without forwarding omitted fields', async () => {
+    const bridge = await loadBridge('./preload.js', 'Utawakui');
+
+    bridge.updateBgmStandbySettings({
+      volume: 0.65,
+      mediaUrl: 'file:///private.wav',
+    });
+
+    expect(electron.ipcRenderer.invoke).toHaveBeenCalledWith(
+      'bgm-standby:update-settings',
+      { volume: 0.65 },
+    );
+    expect(Object.keys(electron.ipcRenderer.invoke.mock.calls[0][1])).toEqual([
+      'volume',
     ]);
   });
 

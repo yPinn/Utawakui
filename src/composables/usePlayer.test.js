@@ -249,13 +249,17 @@ describe('guide vocal defaults', () => {
         'clearTrack',
         'cyclePlaybackMode',
         'onEnded',
+        'onPaused',
+        'onPlaying',
         'onPlaybackProgress',
+        'onStopped',
         'pause',
         'play',
         'playTrack',
         'prepareCaptureDevice',
         'resetPitchTempo',
         'restartTrack',
+        'registerBeforePlaybackStart',
         'restorePlaybackState',
         'seek',
         'setCaptureGuideVocalOn',
@@ -536,6 +540,273 @@ describe('mix and transport controls', () => {
     MockAudio.latest.dispatch('ended');
     expect(listener).toHaveBeenCalledOnce();
   });
+
+  it('releases audio, subscriptions and transport hooks during teardown', async () => {
+    const module = await import('./usePlayer.js');
+    const player = module.usePlayer();
+    const audio = MockAudio.latest;
+    const stopped = vi.fn();
+    const playing = vi.fn();
+
+    player.onStopped(stopped);
+    player.onPlaying(playing);
+    player.registerBeforePlaybackStart(vi.fn(() => true));
+    await player.playTrack({
+      id: 'track-cleanup',
+      title: 'Cleanup',
+      url: 'utawakui-media://track/track-cleanup/audio.wav',
+    });
+
+    module.cleanupPlayerResources();
+
+    expect(audio.listeners.size).toBe(0);
+    expect(audio.pause).toHaveBeenCalled();
+    expect(audio.src).toBe('');
+    expect(audio.load).toHaveBeenCalled();
+    audio.dispatch('playing');
+    audio.dispatch('error');
+    expect(playing).not.toHaveBeenCalled();
+    expect(stopped).not.toHaveBeenCalled();
+  });
+
+  it('notifies terminal-stop listeners for clear and failed playback, but not pause', async () => {
+    const player = await loadPlayer();
+    const listener = vi.fn();
+    player.onStopped(listener);
+
+    await player.playTrack({
+      id: 'track-terminal',
+      title: 'Track Terminal',
+      url: 'utawakui-media://track/track-terminal/audio.wav',
+    });
+    player.pause();
+    expect(listener).not.toHaveBeenCalled();
+
+    expect(player.clearTrack('track-terminal')).toBe(true);
+    expect(listener).toHaveBeenCalledWith({
+      reason: 'cleared',
+      trackId: 'track-terminal',
+      playbackRevision: 1,
+    });
+
+    MockAudio.latest.failPlay = true;
+    await player.playTrack({
+      id: 'track-failed',
+      title: 'Track Failed',
+      url: 'utawakui-media://track/track-failed/audio.wav',
+    });
+    expect(listener).toHaveBeenLastCalledWith({
+      reason: 'error',
+      trackId: 'track-failed',
+      playbackRevision: 2,
+    });
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
+  it('runs the registered pre-start hook before changing track identity or source', async () => {
+    const player = await loadPlayer();
+    const audio = MockAudio.latest;
+    const observations = [];
+    const unregister = player.registerBeforePlaybackStart((request) => {
+      observations.push({
+        request,
+        track: player.state.track,
+        source: audio.src,
+      });
+      return true;
+    });
+
+    await expect(
+      player.playTrack({
+        id: 'track-gated',
+        title: 'Track Gated',
+        url: 'utawakui-media://track/track-gated/audio.wav',
+      }),
+    ).resolves.toBe(true);
+
+    expect(observations).toEqual([
+      {
+        request: { trackId: 'track-gated', requestRevision: 1 },
+        track: null,
+        source: undefined,
+      },
+    ]);
+    expect(player.state.track.id).toBe('track-gated');
+    expect(audio.play).toHaveBeenCalledOnce();
+
+    unregister();
+  });
+
+  it('runs the registered pre-start hook before resuming a paused track', async () => {
+    const player = await loadPlayer();
+    const audio = MockAudio.latest;
+    await player.playTrack({
+      id: 'track-resume',
+      title: 'Resume',
+      url: 'utawakui-media://track/track-resume/audio.wav',
+    });
+    player.pause();
+    audio.play.mockClear();
+    const gate = createDeferred();
+    const hook = vi.fn(() => gate.promise);
+    player.registerBeforePlaybackStart(hook);
+
+    const resume = player.play();
+
+    expect(hook).toHaveBeenCalledWith({
+      trackId: 'track-resume',
+      requestRevision: 2,
+      resume: true,
+    });
+    expect(audio.play).not.toHaveBeenCalled();
+
+    gate.resolve(true);
+    await resume;
+    expect(audio.play).toHaveBeenCalledOnce();
+  });
+
+  it('does not resume when the pre-start handoff is rejected', async () => {
+    const player = await loadPlayer();
+    const audio = MockAudio.latest;
+    await player.playTrack({
+      id: 'track-blocked-resume',
+      title: 'Blocked Resume',
+      url: 'utawakui-media://track/track-blocked-resume/audio.wav',
+    });
+    player.pause();
+    audio.play.mockClear();
+    player.registerBeforePlaybackStart(() => false);
+
+    await player.play();
+
+    expect(audio.play).not.toHaveBeenCalled();
+    expect(player.state.isPlaying).toBe(false);
+  });
+
+  it('never starts an older resume after a newer track request wins', async () => {
+    const player = await loadPlayer();
+    const audio = MockAudio.latest;
+    const resumeGate = createDeferred();
+    await player.playTrack({
+      id: 'track-paused',
+      title: 'Paused',
+      url: 'utawakui-media://track/track-paused/audio.wav',
+    });
+    player.pause();
+    audio.play.mockClear();
+    player.registerBeforePlaybackStart(({ resume }) =>
+      resume ? resumeGate.promise : true,
+    );
+
+    const staleResume = player.play();
+    const currentStart = player.playTrack({
+      id: 'track-current-after-resume',
+      title: 'Current',
+      url: 'utawakui-media://track/track-current-after-resume/audio.wav',
+    });
+
+    await expect(currentStart).resolves.toBe(true);
+    resumeGate.resolve(true);
+    await staleResume;
+
+    expect(player.state.track.id).toBe('track-current-after-resume');
+    expect(audio.play).toHaveBeenCalledOnce();
+  });
+
+  it('never starts an older track after a newer pre-start request wins', async () => {
+    const player = await loadPlayer();
+    const firstGate = createDeferred();
+    player.registerBeforePlaybackStart(({ trackId }) =>
+      trackId === 'track-old' ? firstGate.promise : true,
+    );
+
+    const oldRequest = player.playTrack({
+      id: 'track-old',
+      title: 'Old',
+      url: 'utawakui-media://track/track-old/audio.wav',
+    });
+    const currentRequest = player.playTrack({
+      id: 'track-current',
+      title: 'Current',
+      url: 'utawakui-media://track/track-current/audio.wav',
+    });
+
+    await expect(currentRequest).resolves.toBe(true);
+    firstGate.resolve(true);
+    await expect(oldRequest).resolves.toBe(false);
+
+    expect(player.state.track.id).toBe('track-current');
+    expect(MockAudio.latest.src).toContain('/track-current/audio.wav');
+    expect(MockAudio.latest.play).toHaveBeenCalledOnce();
+  });
+
+  it('stops the current performance before waiting on a new track handoff', async () => {
+    const player = await loadPlayer();
+    const gate = createDeferred();
+    await player.playTrack({
+      id: 'track-current',
+      title: 'Current',
+      url: 'utawakui-media://track/track-current/audio.wav',
+    });
+    MockAudio.latest.pause.mockClear();
+    player.registerBeforePlaybackStart(() => gate.promise);
+
+    const nextRequest = player.playTrack({
+      id: 'track-next',
+      title: 'Next',
+      url: 'utawakui-media://track/track-next/audio.wav',
+    });
+
+    expect(MockAudio.latest.pause).toHaveBeenCalledOnce();
+    expect(player.state.track.id).toBe('track-current');
+    expect(MockAudio.latest.src).toContain('/track-current/audio.wav');
+
+    gate.resolve(true);
+    await expect(nextRequest).resolves.toBe(true);
+    expect(player.state.track.id).toBe('track-next');
+  });
+
+  it('publishes confirmed playing identity and supports unsubscription', async () => {
+    const player = await loadPlayer();
+    const listener = vi.fn();
+    const unsubscribe = player.onPlaying(listener);
+    await player.playTrack({
+      id: 'track-confirmed',
+      title: 'Confirmed',
+      url: 'utawakui-media://track/track-confirmed/audio.wav',
+    });
+
+    MockAudio.latest.dispatch('playing');
+    expect(listener).toHaveBeenCalledWith({
+      trackId: 'track-confirmed',
+      playbackRevision: 1,
+    });
+
+    unsubscribe();
+    MockAudio.latest.dispatch('playing');
+    expect(listener).toHaveBeenCalledOnce();
+  });
+
+  it('publishes explicit pause identity and supports unsubscription', async () => {
+    const player = await loadPlayer();
+    const listener = vi.fn();
+    const unsubscribe = player.onPaused(listener);
+    await player.playTrack({
+      id: 'track-paused',
+      title: 'Paused',
+      url: 'utawakui-media://track/track-paused/audio.wav',
+    });
+
+    player.pause();
+    expect(listener).toHaveBeenCalledWith({
+      trackId: 'track-paused',
+      playbackRevision: 1,
+    });
+
+    unsubscribe();
+    player.pause();
+    expect(listener).toHaveBeenCalledOnce();
+  });
 });
 
 describe('library synchronization', () => {
@@ -616,6 +887,44 @@ describe('library synchronization', () => {
     expect(player.state.captureGuideVocalOn).toBe(true);
     expect(player.state.captureGuideVocalValue).toBe(0.3);
     expect(MockAudio.latest.play).toHaveBeenCalledOnce();
+  });
+
+  it('publishes a terminal stop when an active library reload cannot resume', async () => {
+    let libraryUpdated;
+    vi.stubGlobal('window', {
+      Utawakui: {
+        listTracks: vi.fn().mockResolvedValue([
+          {
+            id: 'track-sync',
+            title: 'Updated title',
+            url: 'utawakui-media://track/track-sync/audio-v2.wav',
+          },
+        ]),
+        onLibraryUpdated: vi.fn((listener) => {
+          libraryUpdated = listener;
+          return vi.fn();
+        }),
+      },
+    });
+    const player = await loadPlayer();
+    const stopped = vi.fn();
+    player.onStopped(stopped);
+    await player.playTrack({
+      id: 'track-sync',
+      title: 'Original title',
+      url: 'utawakui-media://track/track-sync/audio.wav',
+    });
+    MockAudio.latest.dispatch('playing');
+    MockAudio.latest.failPlay = true;
+
+    await libraryUpdated();
+
+    expect(player.state.playbackPhase).toBe('error');
+    expect(stopped).toHaveBeenCalledWith({
+      reason: 'error',
+      trackId: 'track-sync',
+      playbackRevision: 1,
+    });
   });
 });
 

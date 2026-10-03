@@ -6,7 +6,9 @@ import UiSeparator from '../ui/UiSeparator.vue';
 import {
   Cpu,
   ICON_SIZE,
+  ListOrdered,
   MemoryStick,
+  Music2,
   Moon,
   PictureInPicture2,
   Settings,
@@ -20,11 +22,15 @@ import { useTheme } from '../../composables/useTheme.js';
 import { formatElapsedClock } from '../../utils/format.js';
 
 const props = defineProps({
+  sessionActive: { type: Boolean, default: false },
+  sessionControls: { type: String, default: '' },
+  bgmActive: { type: Boolean, default: false },
+  bgmControls: { type: String, default: '' },
   settingsActive: { type: Boolean, default: false },
   updateAvailable: { type: Boolean, default: false },
 });
 
-const emit = defineEmits(['openSettings']);
+const emit = defineEmits(['toggleSession', 'toggleBgm', 'openSettings']);
 
 const { theme, toggleTheme } = useTheme();
 const { state: performerState, open: openPerformerView } =
@@ -203,6 +209,27 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
       </div>
 
       <div class="app-title-bar__controls">
+        <UiIconButton
+          :icon="ListOrdered"
+          label="場次"
+          variant="ghost"
+          size="md"
+          :active="sessionActive"
+          :aria-expanded="sessionActive"
+          :aria-controls="sessionControls || undefined"
+          @click="emit('toggleSession')"
+        />
+        <UiIconButton
+          data-app-bgm-trigger
+          :icon="Music2"
+          label="BGM 播放器"
+          variant="ghost"
+          size="md"
+          :active="bgmActive"
+          :aria-expanded="bgmActive"
+          :aria-controls="bgmControls || undefined"
+          @click="emit('toggleBgm')"
+        />
         <UiIconButton
           :icon="PictureInPicture2"
           :label="performerLabel"

@@ -62,6 +62,7 @@ const coveragePolicy = Object.freeze({
     'scripts/lyrics-provider-netease-sentinel.mjs',
     'scripts/lyrics-provider-probe-registry.mjs',
     'scripts/release-contract.mjs',
+    'src/bgm/**/*.js',
     'src/composables/**/*.js',
     'src/components/separation/*.js',
     'src/components/demo/trackThumbFallback.js',
@@ -558,7 +559,7 @@ function classifyAppSource(filePath) {
       /^src\/components\/separation\/.+\.js$/.test(normalized) ||
       normalized === 'src/components/demo/trackThumbFallback.js' ||
       /^src\/components\/ui\/.+\.js$/.test(normalized) ||
-      /^src\/(?:composables|constants|icons|utils)\/.+\.js$/.test(
+      /^src\/(?:bgm|composables|constants|icons|utils)\/.+\.js$/.test(
         normalized,
       )) &&
     !DEFERRED_SOURCES.has(normalized)

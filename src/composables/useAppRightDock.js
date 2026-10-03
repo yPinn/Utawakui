@@ -2,18 +2,22 @@ import { computed, reactive, readonly, shallowRef } from 'vue';
 
 export const RIGHT_DOCK_SURFACE_METADATA = 'metadata';
 export const RIGHT_DOCK_SURFACE_QUEUE = 'queue';
+export const RIGHT_DOCK_SURFACE_SESSION = 'session';
 
 const SURFACE_PRIORITY = [
   RIGHT_DOCK_SURFACE_METADATA,
   RIGHT_DOCK_SURFACE_QUEUE,
+  RIGHT_DOCK_SURFACE_SESSION,
 ];
 const surfaces = reactive({
   [RIGHT_DOCK_SURFACE_METADATA]: false,
   [RIGHT_DOCK_SURFACE_QUEUE]: false,
+  [RIGHT_DOCK_SURFACE_SESSION]: false,
 });
 const mountedSurfaces = reactive({
   [RIGHT_DOCK_SURFACE_METADATA]: false,
   [RIGHT_DOCK_SURFACE_QUEUE]: false,
+  [RIGHT_DOCK_SURFACE_SESSION]: false,
 });
 const isExpanded = shallowRef(false);
 const lastSurface = shallowRef(null);
@@ -77,35 +81,24 @@ function forgetSurface(surface) {
 function toggleSurface(surface) {
   assertSurface(surface);
 
-  // Metadata's artwork is a direct navigation target, not a toggle for a
-  // hidden underlay. Spotify's right rail closes Queue before presenting
-  // now-playing details, whether metadata had already been retained beneath
-  // Queue or needs to be added now.
-  if (
-    surface === RIGHT_DOCK_SURFACE_METADATA &&
-    topSurface.value !== RIGHT_DOCK_SURFACE_METADATA
-  ) {
-    mountedSurfaces[RIGHT_DOCK_SURFACE_METADATA] = true;
-    surfaces[RIGHT_DOCK_SURFACE_METADATA] = true;
-    surfaces[RIGHT_DOCK_SURFACE_QUEUE] = false;
-    lastSurface.value = RIGHT_DOCK_SURFACE_METADATA;
-    isExpanded.value = true;
-    return;
-  }
-
-  // A trigger on a physically collapsed Dock always means "show me this
-  // surface". It must not remove a surface that merely happens to be retained
-  // beneath the collapsed shell.
-  if (!isExpanded.value) {
+  // A surface trigger is direct navigation. Bring that surface to the front
+  // and dismiss only higher-priority layers; lower layers remain available
+  // when the foreground closes. A trigger on a physically collapsed Dock
+  // likewise means "show me this surface", never remove a retained layer.
+  if (!isExpanded.value || topSurface.value !== surface) {
+    const surfaceIndex = SURFACE_PRIORITY.indexOf(surface);
+    for (
+      let index = surfaceIndex + 1;
+      index < SURFACE_PRIORITY.length;
+      index += 1
+    ) {
+      surfaces[SURFACE_PRIORITY[index]] = false;
+    }
     showSurface(surface);
     return;
   }
 
-  if (surfaces[surface]) {
-    hideSurface(surface);
-  } else {
-    showSurface(surface);
-  }
+  hideSurface(surface);
 }
 
 function setExpanded(expanded) {

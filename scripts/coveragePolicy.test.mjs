@@ -46,6 +46,7 @@ describe('coverage policy', () => {
       'src/components/separation/separationQueuePresentation.js',
       'src/components/ui/fieldAttrs.js',
       'src/components/ui/floatingPosition.js',
+      'src/bgm/handoffCoordinator.js',
       'src/composables/usePlaylistActions.js',
       'src/composables/useMusicAnalysisSettings.js',
       'src/constants/featureGates.js',
@@ -177,6 +178,13 @@ describe('coverage policy', () => {
     expect(
       classifyAppSource('src/composables/player/usePlayerAudioGraph.js'),
     ).toEqual({ status: 'measured' });
+  });
+
+  it('measures the renderer BGM runtime domain', () => {
+    expect(coveragePolicy.include).toContain('src/bgm/**/*.js');
+    expect(classifyAppSource('src/bgm/audioDeck.js')).toEqual({
+      status: 'measured',
+    });
   });
 
   it('does not let imported static JSON inflate executable coverage', () => {

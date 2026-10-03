@@ -121,6 +121,12 @@ const {
 const { createLibraryStorageService } = require('./lib/library/storage');
 const { registerMediaProtocol } = require('./main/mediaProtocol');
 const { registerPlaylistsHandlers } = require('./main/playlistsHandlers');
+const {
+  registerPerformanceSessionPlanHandlers,
+} = require('./main/performanceSessionPlanHandlers');
+const {
+  registerBgmStandbyPlanHandlers,
+} = require('./main/bgmStandbyPlanHandlers');
 const { registerImportHandlers } = require('./main/importHandlers');
 const { registerSeparationHandlers } = require('./main/separationHandlers');
 const {
@@ -833,6 +839,20 @@ if (!gotSingleInstanceLock) {
       getMainWindow: windowState.getMainWindow,
       requireFeatureGate,
       featureIds: FEATURE_IDS,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+    });
+
+    registerPerformanceSessionPlanHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
+      recordDiagnostic: (event) => diagnosticsService.record(event),
+    });
+
+    registerBgmStandbyPlanHandlers({
+      ipcMain,
+      getConfig: configState.getConfig,
+      resolveDownloadDir: configState.resolveDownloadDir,
       recordDiagnostic: (event) => diagnosticsService.record(event),
     });
 

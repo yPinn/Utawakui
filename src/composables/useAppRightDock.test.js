@@ -5,13 +5,50 @@ describe('useAppRightDock', () => {
     vi.resetModules();
   });
 
-  it('limits the Dock to playback and metadata surfaces', async () => {
+  it('registers one session surface beside playback and metadata', async () => {
     const module = await import('./useAppRightDock.js');
     const dock = module.useAppRightDock();
 
     expect(module).not.toHaveProperty('RIGHT_DOCK_SURFACE_SEPARATION');
-    expect(Object.keys(dock.surfaces)).toEqual(['metadata', 'queue']);
-    expect(Object.keys(dock.mountedSurfaces)).toEqual(['metadata', 'queue']);
+    expect(module.RIGHT_DOCK_SURFACE_SESSION).toBe('session');
+    expect(Object.keys(dock.surfaces)).toEqual([
+      'metadata',
+      'queue',
+      'session',
+    ]);
+    expect(Object.keys(dock.mountedSurfaces)).toEqual([
+      'metadata',
+      'queue',
+      'session',
+    ]);
+  });
+
+  it('brings the requested surface to the foreground without leaving a higher layer above it', async () => {
+    const {
+      RIGHT_DOCK_SURFACE_METADATA,
+      RIGHT_DOCK_SURFACE_QUEUE,
+      RIGHT_DOCK_SURFACE_SESSION,
+      useAppRightDock,
+    } = await import('./useAppRightDock.js');
+    const dock = useAppRightDock();
+
+    dock.showSurface(RIGHT_DOCK_SURFACE_METADATA);
+    dock.showSurface(RIGHT_DOCK_SURFACE_QUEUE);
+    dock.showSurface(RIGHT_DOCK_SURFACE_SESSION);
+
+    dock.toggleSurface(RIGHT_DOCK_SURFACE_QUEUE);
+
+    expect(dock.surfaces.metadata).toBe(true);
+    expect(dock.surfaces.queue).toBe(true);
+    expect(dock.surfaces.session).toBe(false);
+    expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_QUEUE);
+
+    dock.toggleSurface(RIGHT_DOCK_SURFACE_METADATA);
+
+    expect(dock.surfaces.metadata).toBe(true);
+    expect(dock.surfaces.queue).toBe(false);
+    expect(dock.surfaces.session).toBe(false);
+    expect(dock.topSurface.value).toBe(RIGHT_DOCK_SURFACE_METADATA);
   });
 
   it('keeps metadata below queue and reveals it when queue is removed', async () => {

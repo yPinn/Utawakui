@@ -102,9 +102,26 @@ const {
 } = audioGraph;
 
 const endedListeners = new Set();
+const pausedListeners = new Set();
+const playingListeners = new Set();
+const stoppedListeners = new Set();
 const playbackProgressListeners = new Set();
+let beforePlaybackStartListener = null;
+let playbackStartRequestRevision = 0;
 let lastObservedCurrentTime = 0;
 let pendingRestorePosition = null;
+let terminalStopNotified = false;
+
+function notifyStopped(reason, track = state.track) {
+  if (!track || terminalStopNotified) return;
+  terminalStopNotified = true;
+  const stoppedEvent = {
+    reason,
+    trackId: track.id,
+    playbackRevision: state.playbackRevision,
+  };
+  stoppedListeners.forEach((listener) => listener(stoppedEvent));
+}
 
 function handlePlay() {
   state.isPlaying = true;
@@ -116,6 +133,12 @@ function handlePause() {
   state.isPlaying = false;
   state.currentTime = audio.currentTime || 0;
   state.playbackPhase = state.track ? 'paused' : 'idle';
+  if (!state.track) return;
+  const pausedEvent = {
+    trackId: state.track.id,
+    playbackRevision: state.playbackRevision,
+  };
+  pausedListeners.forEach((listener) => listener(pausedEvent));
 }
 
 function handleEnded() {
@@ -128,12 +151,20 @@ function handleEnded() {
   state.isPlaying = false;
   state.currentTime = audio.currentTime || state.currentTime;
   state.playbackPhase = 'ended';
+  terminalStopNotified = true;
   endedListeners.forEach((listener) => listener(endedEvent));
 }
 
 function handlePlaying() {
+  terminalStopNotified = false;
   state.currentTime = audio.currentTime || 0;
   state.playbackPhase = 'playing';
+  if (!state.track) return;
+  const playingEvent = {
+    trackId: state.track.id,
+    playbackRevision: state.playbackRevision,
+  };
+  playingListeners.forEach((listener) => listener(playingEvent));
 }
 
 function handleBuffering() {
@@ -210,6 +241,7 @@ function handleError() {
   );
   state.isPlaying = false;
   state.playbackPhase = 'error';
+  notifyStopped('error');
 }
 
 audio.addEventListener('play', handlePlay);
@@ -224,8 +256,45 @@ audio.addEventListener('timeupdate', handleTimeUpdate);
 audio.addEventListener('loadedmetadata', handleLoadedMetadata);
 audio.addEventListener('error', handleError);
 
+async function requestPlaybackStart({ trackId, requestRevision, resume }) {
+  try {
+    const request = { trackId, requestRevision };
+    if (resume) request.resume = true;
+    const allowed = await beforePlaybackStartListener?.(request);
+    if (allowed === false || requestRevision !== playbackStartRequestRevision) {
+      if (requestRevision === playbackStartRequestRevision) {
+        notifyStopped('start-cancelled');
+      }
+      return false;
+    }
+    return true;
+  } catch (error) {
+    if (requestRevision === playbackStartRequestRevision) {
+      state.error = reportPlayerError(
+        error,
+        'pre-start',
+        '曲目開始前的音訊交接未完成，請再試一次。',
+      );
+      notifyStopped('error');
+    }
+    return false;
+  }
+}
+
 async function playTrack(track) {
+  const requestRevision = ++playbackStartRequestRevision;
+  terminalStopNotified = false;
   state.error = null;
+  // A new explicit performance request owns a fresh, editable timeline
+  // boundary. Stop the current performance immediately, but keep its
+  // identity/source stable until the BGM handoff hook grants the new start.
+  if (state.isPlaying) audio.pause();
+  const allowed = await requestPlaybackStart({
+    trackId: track.id,
+    requestRevision,
+  });
+  if (!allowed) return false;
+
   state.track = track;
   state.playbackRevision += 1;
   state.currentTime = 0;
@@ -236,13 +305,20 @@ async function playTrack(track) {
   audio.src = track.url;
   try {
     await audioGraph.resume();
+    if (requestRevision !== playbackStartRequestRevision) return false;
     await audio.play();
+    return requestRevision === playbackStartRequestRevision;
   } catch (error) {
-    state.error = reportPlayerError(
-      error,
-      'play-track',
-      '目前無法播放這首曲目，請再試一次。',
-    );
+    if (requestRevision === playbackStartRequestRevision) {
+      state.error = reportPlayerError(
+        error,
+        'play-track',
+        '目前無法播放這首曲目，請再試一次。',
+      );
+      state.playbackPhase = 'error';
+      notifyStopped('error');
+    }
+    return false;
   }
 }
 
@@ -254,8 +330,10 @@ function restorePlaybackState({
   playbackMode = PLAYBACK_MODES.sequence,
 } = {}) {
   if (!track) return false;
+  playbackStartRequestRevision += 1;
   state.error = null;
   state.track = track;
+  terminalStopNotified = false;
   state.playbackRevision += 1;
   state.isPlaying = false;
   state.playbackPhase = 'paused';
@@ -273,16 +351,33 @@ function restorePlaybackState({
 }
 
 async function play() {
-  if (!state.track) return;
+  if (!state.track) return false;
+  const requestRevision = ++playbackStartRequestRevision;
+  terminalStopNotified = false;
+  state.error = null;
+  const allowed = await requestPlaybackStart({
+    trackId: state.track.id,
+    requestRevision,
+    resume: true,
+  });
+  if (!allowed) return false;
+
   try {
     await audioGraph.resume();
+    if (requestRevision !== playbackStartRequestRevision) return false;
     await audio.play();
+    return requestRevision === playbackStartRequestRevision;
   } catch (error) {
-    state.error = reportPlayerError(
-      error,
-      'resume',
-      '目前無法繼續播放，請再試一次。',
-    );
+    if (requestRevision === playbackStartRequestRevision) {
+      state.error = reportPlayerError(
+        error,
+        'resume',
+        '目前無法繼續播放，請再試一次。',
+      );
+      state.playbackPhase = 'error';
+      notifyStopped('error');
+    }
+    return false;
   }
 }
 
@@ -291,8 +386,8 @@ function pause() {
 }
 
 function toggle() {
-  if (state.isPlaying) pause();
-  else play();
+  if (state.isPlaying) return pause();
+  return play();
 }
 
 function seek(time) {
@@ -309,6 +404,8 @@ function restartTrack() {
 function clearTrack(trackId = null) {
   if (trackId !== null && state.track?.id !== trackId) return false;
 
+  playbackStartRequestRevision += 1;
+  notifyStopped('cleared');
   audio.pause();
   audio.removeAttribute('src');
   audio.load();
@@ -359,6 +456,9 @@ async function syncCurrentTrack(options) {
         'reload',
         '播放版本已更新，請重新播放。',
       );
+      state.isPlaying = false;
+      state.playbackPhase = 'error';
+      notifyStopped('error');
     }
   }
 }
@@ -393,12 +493,36 @@ function onEnded(listener) {
   return () => endedListeners.delete(listener);
 }
 
+function onPlaying(listener) {
+  playingListeners.add(listener);
+  return () => playingListeners.delete(listener);
+}
+
+function onPaused(listener) {
+  pausedListeners.add(listener);
+  return () => pausedListeners.delete(listener);
+}
+
+function onStopped(listener) {
+  stoppedListeners.add(listener);
+  return () => stoppedListeners.delete(listener);
+}
+
+function registerBeforePlaybackStart(listener) {
+  beforePlaybackStartListener = listener;
+  return () => {
+    if (beforePlaybackStartListener === listener) {
+      beforePlaybackStartListener = null;
+    }
+  };
+}
+
 function onPlaybackProgress(listener) {
   playbackProgressListeners.add(listener);
   return () => playbackProgressListeners.delete(listener);
 }
 
-function cleanupPlayerResources() {
+export function cleanupPlayerResources() {
   audio.removeEventListener('play', handlePlay);
   audio.removeEventListener('playing', handlePlaying);
   audio.removeEventListener('pause', handlePause);
@@ -411,7 +535,12 @@ function cleanupPlayerResources() {
   audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
   audio.removeEventListener('error', handleError);
   endedListeners.clear();
+  pausedListeners.clear();
+  playingListeners.clear();
+  stoppedListeners.clear();
   playbackProgressListeners.clear();
+  beforePlaybackStartListener = null;
+  playbackStartRequestRevision += 1;
   unsubscribeLibraryUpdated?.();
   audio.pause();
   audio.removeAttribute('src');
@@ -450,7 +579,11 @@ export function usePlayer() {
     setPitchCents,
     setTempoRate,
     resetPitchTempo,
+    registerBeforePlaybackStart,
     onEnded,
+    onPaused,
+    onPlaying,
+    onStopped,
     onPlaybackProgress,
   };
 }

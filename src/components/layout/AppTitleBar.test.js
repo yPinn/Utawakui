@@ -11,7 +11,9 @@ describe('AppTitleBar', () => {
     expect(source).toContain(
       "import SeparationToolbarPopover from '../separation/SeparationToolbarPopover.vue'",
     );
-    expect(source).toContain("const emit = defineEmits(['openSettings'])");
+    expect(source).toContain(
+      "const emit = defineEmits(['toggleSession', 'toggleBgm', 'openSettings'])",
+    );
     expect(source).toContain('<SeparationToolbarPopover />');
     expect(source).not.toContain('separationExpanded');
     expect(source).not.toContain('openSeparation');
@@ -41,18 +43,74 @@ describe('AppTitleBar', () => {
     expect(source).toContain('padding-right: var(--ui-space-2)');
   });
 
-  it('orders global utilities by performer, accompaniment, appearance, then destination', () => {
+  it('places the session entry before the remaining global utilities', () => {
+    const sessionIndex = source.indexOf(':icon="ListOrdered"');
+    const bgmIndex = source.indexOf(':icon="Music2"');
     const performerIndex = source.indexOf(':icon="PictureInPicture2"');
     const separationIndex = source.indexOf('<SeparationToolbarPopover');
     const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
     const settingsIndex = source.indexOf(':icon="Settings"');
 
-    expect(performerIndex).toBeGreaterThan(-1);
+    expect(sessionIndex).toBeGreaterThan(-1);
+    expect(bgmIndex).toBeGreaterThan(sessionIndex);
+    expect(performerIndex).toBeGreaterThan(bgmIndex);
     expect(separationIndex).toBeGreaterThan(performerIndex);
     expect(themeIndex).toBeGreaterThan(separationIndex);
     expect(settingsIndex).toBeGreaterThan(themeIndex);
-    expect(source.match(/variant="ghost"/gu)).toHaveLength(3);
+    expect(source.match(/variant="ghost"/gu)).toHaveLength(5);
     expect(source).not.toContain('variant="overlay"');
+  });
+
+  it('exposes BGM as its own disclosure instead of a session action', () => {
+    expect(source).toContain('Music2,');
+    expect(source).toContain('bgmActive: { type: Boolean, default: false }');
+    expect(source).toContain("bgmControls: { type: String, default: '' }");
+    expect(source).toContain(
+      "const emit = defineEmits(['toggleSession', 'toggleBgm', 'openSettings'])",
+    );
+    expect(source).toContain('label="BGM 播放器"');
+    expect(source).toContain(':active="bgmActive"');
+    expect(source).toContain(':aria-expanded="bgmActive"');
+    expect(source).toContain(':aria-controls="bgmControls || undefined"');
+    expect(source).toContain('@click="emit(\'toggleBgm\')"');
+  });
+
+  it('provides the single shell-level session entry before global utilities', () => {
+    expect(source).toContain('ListOrdered,');
+    expect(source).not.toContain('ListChecks,');
+    expect(source).toContain(
+      'sessionActive: { type: Boolean, default: false }',
+    );
+    expect(source).toContain(':active="sessionActive"');
+    expect(source).toContain(':aria-expanded="sessionActive"');
+    expect(source).toContain('@click="emit(\'toggleSession\')"');
+    expect(source).toContain('label="場次"');
+
+    const sessionIndex = source.indexOf(':icon="ListOrdered"');
+    const performerIndex = source.indexOf(':icon="PictureInPicture2"');
+    expect(sessionIndex).toBeGreaterThan(-1);
+    expect(performerIndex).toBeGreaterThan(sessionIndex);
+  });
+
+  it('keeps LIVE before REC and the operational control order stable', () => {
+    const liveIndex = source.indexOf(
+      '<span class="app-title-bar__obs-label">LIVE</span>',
+    );
+    const recordIndex = source.indexOf(
+      '<span class="app-title-bar__obs-label">REC</span>',
+    );
+    const sessionIndex = source.indexOf(':icon="ListOrdered"');
+    const performerIndex = source.indexOf(':icon="PictureInPicture2"');
+    const separationIndex = source.indexOf('<SeparationToolbarPopover');
+    const themeIndex = source.indexOf(':icon="isLight ? Moon : Sun"');
+    const settingsIndex = source.indexOf(':icon="Settings"');
+
+    expect(recordIndex).toBeGreaterThan(liveIndex);
+    expect(sessionIndex).toBeGreaterThan(recordIndex);
+    expect(performerIndex).toBeGreaterThan(sessionIndex);
+    expect(separationIndex).toBeGreaterThan(performerIndex);
+    expect(themeIndex).toBeGreaterThan(separationIndex);
+    expect(settingsIndex).toBeGreaterThan(themeIndex);
   });
 
   it('keeps open-window, momentary action, and current-destination semantics distinct', () => {
@@ -80,7 +138,9 @@ describe('AppTitleBar', () => {
     expect(source).toContain(
       'updateAvailable: { type: Boolean, default: false }',
     );
-    expect(source).toContain("const emit = defineEmits(['openSettings'])");
+    expect(source).toContain(
+      "const emit = defineEmits(['toggleSession', 'toggleBgm', 'openSettings'])",
+    );
     expect(source).toContain(':active="settingsActive"');
     expect(source).toContain(
       ':aria-current="settingsActive ? \'page\' : undefined"',
@@ -92,7 +152,11 @@ describe('AppTitleBar', () => {
     expect(source).toContain('aria-hidden="true"');
     expect(source).toContain('設定（有可用更新）');
     expect(source).not.toContain('aria-pressed');
-    expect(source).not.toContain('aria-expanded');
+    const settingsTriggerStart = source.indexOf('data-app-settings-trigger');
+    const settingsTriggerEnd = source.indexOf('/>', settingsTriggerStart);
+    expect(
+      source.slice(settingsTriggerStart, settingsTriggerEnd),
+    ).not.toContain('aria-expanded');
   });
 
   it('sources CPU/RAM from useAppUsage and has no GPU field', () => {

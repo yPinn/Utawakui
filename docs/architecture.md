@@ -76,8 +76,9 @@ header、單一 scroll owner 與 content inset；播放 queue authority 仍由
 main-owned separation queue 持有，實際進度與錯誤權威不移入 Renderer。工具列模式的名稱、順序
 與預設值由 Lyrics 同用的 `separationPresets.js` recipe catalog 投影；批次完成數屬於 header 摘要，
 目前歌曲百分比只由鄰接的單曲 progress 顯示一次。Right
-Dock 的共用 resize width、desktop reserved bay、compact overlay、Escape 與 focus restoration
-屬於 shell，不得回流到 PlayerBar 或 playlist component。
+Dock 的 expanded resize width、desktop reserved bay、compact overlay、Escape 與 focus restoration
+屬於 shell，不得回流到 PlayerBar 或 playlist component。Pointer／keyboard resize separator 只在
+expanded state 掛載；collapsed rail 不保留全高 resize hit target 或 value semantics。
 Queue surface 內的 `UiTabs` 只負責 tab semantics 與 keyboard；`QueuePanel.vue` 持有真實
 tabpanel ids、active state 與單一 scroll container。Header 留在該 scroll container 內 sticky，
 只有 `scrollTop > 0` 才使用 active／Token v2 共用的 Right Dock background、blur 與 shadow
@@ -92,6 +93,17 @@ paint containment，非拖曳 row 才可保留 `content-visibility` optimization
 shared `UiTrackRow` 不持有排序 semantics。最近播放由 feature adapter 直接
 組合 `UiTrackRow`，保留 52／40px recipe，但不繼承 Queue selection、reorder、drop target
 或整列 activation。
+
+shell-owned `BgmPlayer.vue` 是唯一 BGM presentation owner；它以獨立 Titlebar disclosure 開啟，
+在 bounded body 內組合 `BgmTrackPicker.vue` 的本機曲庫搜尋／單曲取代，並以
+`BgmPlayerTransport.vue` 呈現目前 BGM、進度與安全控制。它預設位於 PlayerBar 上方並避開目前 Dock
+footprint，但不是場次面板或 Right Dock surface；Dock footprint 只決定 home anchor／safe edge，
+不得覆寫 player-owned inline-size。使用者可在 shell 安全範圍移動並 Pin 位置。
+Transport 將曲名限制為單行，並固定 session／phase／deferred restore／time／primary-action 槽位；
+Play／Pause 共用同一節點，error 只替換 phase 投影，不插入會推動版面的臨時內容。
+Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live／record（同時作用時
+`live > record`）則自動保留 compact transport。元件只消費
+`useBgmSession.js` 的 readonly 投影與 actions，不成為 PlayerBar 模式或 Folder artifact。
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
 Lyrics／Output／Import 進入 `AppArchiveFrame` 的 Folder workflow branch；Settings 由
@@ -278,21 +290,24 @@ Canonical document 與模板 profile 之間另有單一 renderer-owned 文字顯
 
 ## 權威狀態與資料
 
-| 資料                                  | 權威 owner                        | 投影／持久化                                         |
-| ------------------------------------- | --------------------------------- | ---------------------------------------------------- |
-| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                  |
-| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影         |
-| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費    |
-| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids |
-| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用   |
-| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate         |
-| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent             |
-| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent               |
-| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy     |
-| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments        |
-| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent              |
-| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記           |
-| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection        |
+| 資料                                  | 權威 owner                        | 投影／持久化                                                        |
+| ------------------------------------- | --------------------------------- | ------------------------------------------------------------------- |
+| Track existence                       | Library filesystem                | `library.json` 只補 scalar metadata                                 |
+| Playback timing/state                 | Renderer HTML audio element       | Main、taskbar、SMTC 與 Output 只接收狀態投影                        |
+| Queue／playing track／lyrics state    | Renderer composables              | Projection Hub 驗證後供 Self-View 與 Overlay 消費                   |
+| Recent playback events                | Main playback persistence service | 本機 bounded JSON；Renderer 以目前曲庫解析 track ids                |
+| Complete last-played index            | Main playback persistence service | Main-private 本機 JSON；只供去人聲 LRU policy 使用                  |
+| Playback resume snapshot              | Renderer player／queue projection | Main 驗證並原子保存；啟動只 paused rehydrate                        |
+| Performance session current draft     | Main session plan store           | Library root bounded JSON；Renderer 提交 ids／labels／intent        |
+| BGM standby preparation               | Main BGM plan store               | Library root `bgm-standby.json`；Renderer 只提交 ids／scalar intent |
+| BGM transport／handoff                | Renderer BGM deck／coordinator    | HTML audio events、logical gain bus 與 readonly UI projection       |
+| Feature confirmation                  | Main config state                 | Renderer 只顯示與提交 allowlisted intent                            |
+| Lyrics／analysis／separation sidecars | Main library services             | Renderer 只提供 track id 與產品 intent                              |
+| Library storage policy／snapshot      | Main config／library service      | Renderer 只接收分類容量並提交 allowlisted policy                    |
+| Dependency registry                   | `shared/featureDependencies.json` | Main 解析 URL、hash、path、model 與 arguments                       |
+| OBS endpoint／credential              | Main config／encrypted file       | Renderer 只提交 bounded settings intent                             |
+| OBS session history                   | Main session history service      | 本機 JSON；Renderer 只讀並輸出場次時間標記                          |
+| App CPU／RAM observation              | Main usage service                | Titlebar 只接收 bounded percentage projection                       |
 
 Lyrics、provider import、artwork discovery 與未來 artist／album organization 共用
 `electron/lib/musicIdentity/` 的 provider-neutral observations 與逐軸 evidence。這個純 domain
@@ -352,6 +367,37 @@ paused；corrupt 或失效 current track 會降級並清除 snapshot。
 完整 schema 與 UI 邊界見
 [播放紀錄與啟動恢復契約](contracts/playback-history-and-resume.md)。
 
+演出場次準備由 `electron/lib/performanceSessionPlan.js` 在 library root 原子保存一份
+`performance-session-plan.json` current draft；schema 只接受 bounded source／item／track ids、
+item mode、session-local labels、verification compatibility state、cursor、revision 與 timestamp。
+`electron/main/performanceSessionPlanHandlers.js` 每次操作都以 main-derived playlist 與 library projection 驗證
+canonical order 與 track availability，preload 只暴露固定 intent。Renderer 的 module-scope
+`usePerformanceSessionPlan.js` 序列化 mutation 並消費完整 projected snapshot；Setlist preparation
+workspace 的預設路徑是搜尋曲庫後以 track id 立即加入 ready item；main 解析 canonical title／artist
+與 availability。非 App 控制的自行伴奏／外部來源使用明確 manual item，BGM 不是 plan item。舊版
+文字 placeholder 只保留為 recovery state；workspace 另負責 session-local label override、relink、
+duplicate、reorder 與 remove，不借用 playback Queue。曲庫刪除只解除 draft 中所有 occurrence 的
+track link，保留 authored label 供 operator 修復。Session details 將 canonical title／artist 視為唯讀
+projection，不提供或轉送 global metadata editor intent；display save 只送 session-local labels，relink
+才可另送既有 track id，兩者都不呼叫 library metadata write handler。
+`AppTitleBar.vue` 的場次 disclosure 是唯一固定入口，`PerformanceSessionPanel.vue` 在 shell Right
+Dock 投影 current draft summary 與目前 selected collection 的明確建立／取代 intent；入口 mount 只
+初始化讀取，不改寫 draft。`usePerformanceSessionWorkspace.js` 只協調完整 Setlist workspace 的
+open／return view，不擁有任何 session data。此 owner 目前交付 inactive preparation，並在同一
+Right Dock summary 不再組合 BGM source picker 或 transport；BGM／演唱 transport handoff 已接線，但 active item
+progress、confirmed-playing session projection 與 OBS history commit 仍未接線。完整邊界見
+[演出場次準備契約](contracts/performance-session-preparation.md)。
+
+BGM 準備由 `electron/lib/bgmStandbyPlan.js` 在 library root 原子保存
+`bgm-standby.json`。Main store 只接受單一 bounded track id、position 與 scalar 音量／
+mute／fade／Dim／pre-roll／post-roll settings；loop 固定為 true。每次投影都從 authoritative library 解析
+metadata 與 availability，曲庫刪除會清除 reference。`electron/main/bgmStandbyPlanHandlers.js`
+與 preload 只暴露固定 get／set-track／settings／position intents，不接受 path、
+URL 或 renderer metadata。Persisted schema v3 的 handoff defaults 是 fade-out `0.6s`、pre-roll
+`0.75s`、post-roll `1.0s` 與 fade-in `1.0s`；正常 BGM 音量預設為 `0.25`，Talk attenuation
+預設為 `-12 dB`。Active Talk 不持久化，完整啟動回到 disabled；deck 本身仍 paused，不會自動
+發聲。v1／v2 只有完整舊預設 tuple 會遷移，customized settings 保留。
+
 播放器的 renderer ownership 再分成兩層：`src/composables/usePlayer.js` 是模組單例、
 HTML audio event authority、transport actions 與既有 public composable facade；
 `src/composables/player/usePlayerAudioGraph.js` 是由 facade 建立的 Web Audio resource
@@ -363,6 +409,20 @@ Stretch pitch processing、capture sink 與 graph cleanup。Audio graph 不註�
 待啟用 intent，第一次播放才建立 capture context。裝置缺失、sink loss 或 native render error
 一律關閉 capture、清除 persisted device id 並保留 monitor playback；capture 不得 fallback 到
 系統預設喇叭。
+
+BGM transport 與演唱播放器分開：`src/bgm/audioDeck.js` 擁有第二個 HTML audio element、lazy
+AudioContext 與單一 logical gain bus；現行只連到系統預設 monitor destination。
+`src/bgm/handoffCoordinator.js` 分開仲裁目前 BGM request 與 performance 後 deferred restore，並擁有
+exact-zero fade gate、monotonic pre-roll／post-roll、manual hold 與 stale generation；performance
+start 取得優先權後會立即重置 BGM transport，BGM control／source action 不得取消其 fade／pre-roll。
+OBS-derived `live > record` mode
+只負責 session projection、compact auto-visibility 與 confirmed-exit cleanup。`useBgmSession.js` 組合 plan、library、
+OBS、deck、coordinator 與既有 player 的單一 pre-start hook；`usePlayer.js` 的 new-track 與 resume
+start 共用同一 request revision／gate，且仍是 performance timing
+權威，並以 confirmed playing／explicit pause／ended／terminal stop subscription 回報交接。明確
+pause 投影 `track-paused` 並恢復手動 BGM Play，但不自動播放；buffering／stalled／seek 仍保留
+performance lane lock。BGM 不進 Queue、history、resume、Output、SMTC 或 taskbar transport；OBS capture
+routing 尚未由 App 擁有，完整決策見 [ADR 0021](adr/0021-bgm-standby-audio-and-handoff.md)。
 
 節拍器由 `useMetronome.js` 擁有 session state，並以獨立 AudioContext 與 lookahead
 scheduler 發聲，不接入 player monitor／capture graph。`useMetronomeTrackTempo.js` 是唯一

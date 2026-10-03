@@ -190,6 +190,36 @@ describe('library metadata maintenance handlers', () => {
     expect(notifyLibraryUpdated).toHaveBeenCalledOnce();
   });
 
+  it('unlinks a deleted track from session preparation and the BGM list', async () => {
+    const removeTrackFromPlaylists = vi.fn();
+    const unlinkTrackFromPerformanceSessionPlan = vi.fn();
+    const removeTrackFromBgmStandbyPlan = vi.fn();
+    const handlers = registerHandlers({
+      findLibraryTrackRecord: vi.fn().mockReturnValue({ id: 'track-1' }),
+      deleteLibraryTrack: vi.fn().mockReturnValue(true),
+      removeTrackFromPlaylists,
+      unlinkTrackFromPerformanceSessionPlan,
+      removeTrackFromBgmStandbyPlan,
+    });
+
+    await expect(
+      handlers.get('library:delete-track')(null, 'track-1'),
+    ).resolves.toBe(true);
+
+    expect(removeTrackFromPlaylists).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+    );
+    expect(unlinkTrackFromPerformanceSessionPlan).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+    );
+    expect(removeTrackFromBgmStandbyPlan).toHaveBeenCalledWith(
+      'library-dir',
+      'track-1',
+    );
+  });
+
   it('does not allocate lyrics generations for missing track ids', async () => {
     const lyricsAcquisitionService = {
       scheduleAutomaticAcquisition: vi.fn(),

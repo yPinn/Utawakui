@@ -9,10 +9,12 @@ import { usePlayer } from '../composables/usePlayer.js';
 import { usePlaylistActions } from '../composables/usePlaylistActions.js';
 import { usePlaylists } from '../composables/usePlaylists.js';
 import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
+import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
 import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
+import SessionPreparationWorkspace from '../components/playlists/SessionPreparationWorkspace.vue';
 import TrackActionMenu from '../components/track/TrackActionMenu.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
@@ -61,6 +63,7 @@ const {
 const { resolvePlaylistTracks, confirmDeletePlaylist, openEditDetails } =
   usePlaylistActions();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
+const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 
 // Transient UI mode stays local; mutations persist immediately.
 const deleteError = ref(null);
@@ -371,7 +374,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="setlist-view">
+  <div
+    class="setlist-view"
+    :class="{
+      'setlist-view--session': performanceSessionWorkspace.isOpen.value,
+    }"
+  >
     <TrackMetadataModal
       :open="trackMetadataEditor.isOpen.value"
       :title="trackMetadataEditor.state.titleDraft"
@@ -405,124 +413,133 @@ onMounted(async () => {
     />
 
     <div class="setlist-view__main">
-      <SetlistPlaylistHeader
-        v-if="selectedPlaylist"
-        v-model:search-query="searchQuery"
-        :is-album="isAlbumSelected"
-        :title="pageTitle"
-        :meta="playlistMeta"
-        :cover-tracks="playlistCoverTracks"
-        :cover-url="playlistCoverUrl"
-        :description="playlistDescription"
-        :can-play="playlistTracks.length > 0"
-        @play="playPlaylist"
-        @open-edit-details="openEditDetails"
-        @delete="confirmDeletePlaylist()"
+      <SessionPreparationWorkspace
+        v-if="performanceSessionWorkspace.isOpen.value"
+        :tracks="libraryState.tracks"
+        @close="performanceSessionWorkspace.close"
       />
-
-      <UiPageHeader v-else :title="pageTitle">
-        <template #actions>
-          <UiSearchBox v-model="searchQuery" />
-        </template>
-      </UiPageHeader>
-
-      <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
-
-      <UiNotice
-        v-else-if="libraryState.error"
-        :notice="libraryState.error"
-        compact
-        @action="refreshLibrary"
-      />
-
-      <UiHint v-else-if="libraryState.tracks.length === 0">
-        還沒有任何曲目——前往「Import」匯入曲目。
-      </UiHint>
 
       <template v-else>
-        <UiNotice
-          v-if="pageError"
-          tone="danger"
-          title="播放清單操作未完成"
-          :message="pageError"
-          compact
+        <SetlistPlaylistHeader
+          v-if="selectedPlaylist"
+          v-model:search-query="searchQuery"
+          :is-album="isAlbumSelected"
+          :title="pageTitle"
+          :meta="playlistMeta"
+          :cover-tracks="playlistCoverTracks"
+          :cover-url="playlistCoverUrl"
+          :description="playlistDescription"
+          :can-play="playlistTracks.length > 0"
+          @play="playPlaylist"
+          @open-edit-details="openEditDetails"
+          @delete="confirmDeletePlaylist()"
         />
 
-        <template v-if="mode === 'all'">
-          <UiHint v-if="visibleTracks.length === 0">
-            {{ visibleTracksEmptyText }}
-          </UiHint>
-          <ul v-else class="tracks">
-            <UiTrackRow
-              v-for="track in visibleTracks"
-              :key="track.id"
-              :track="track"
-              :current="state.track?.id === track.id"
-              interactive
-              :title-clickable="Boolean(albumForTrack(track))"
-              :title-aria-label="`前往專輯：${track.title}`"
-              @click="playRow(track)"
-              @title-click="jumpToAlbum(track)"
-              @contextmenu="openAddMenu(track, $event)"
-            >
-              <template #trail>
-                <div class="row-actions" @click.stop>
-                  <UiButton
-                    :icon="Trash2"
-                    aria-label="刪除曲目"
-                    title="刪除曲目(同時刪除原始檔案與去人聲版本)"
-                    @click="removeTrack(track)"
-                  />
-                </div>
-              </template>
-            </UiTrackRow>
-          </ul>
-        </template>
+        <UiPageHeader v-else :title="pageTitle">
+          <template #actions>
+            <UiSearchBox v-model="searchQuery" />
+          </template>
+        </UiPageHeader>
+
+        <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
+
+        <UiNotice
+          v-else-if="libraryState.error"
+          :notice="libraryState.error"
+          compact
+          @action="refreshLibrary"
+        />
+
+        <UiHint v-else-if="libraryState.tracks.length === 0">
+          還沒有任何曲目——前往「Import」匯入曲目。
+        </UiHint>
 
         <template v-else>
-          <UiHint v-if="playlistTracks.length === 0">
-            這個歌單還沒有曲目。從任一曲目列右鍵加入。
-          </UiHint>
-          <UiHint v-else-if="visiblePlaylistEntries.length === 0">
-            找不到符合搜尋的曲目。
-          </UiHint>
-          <SetlistPlaylistTable
-            v-else
-            :entries="visiblePlaylistEntries"
-            :sort="playlistSort"
-            :is-album="isAlbumSelected"
-            :can-drag="canDragPlaylistRows"
-            :current-track-id="state.track?.id"
-            :dragging-track-id="draggingTrackId"
-            :drop-target-track-id="dropTargetTrackId"
-            :drop-position="dropPosition"
-            :jumpable-track-ids="jumpableTrackIds"
-            @toggle-sort="togglePlaylistSort"
-            @select-track="playRow"
-            @title-click="jumpToAlbum"
-            @open-menu="openAddMenu"
-            @track-drag-start="startDrag"
-            @track-drag-over="updateDropTarget"
-            @track-drag-leave="leaveDropTarget"
-            @track-drop="dropTrack"
-            @track-drag-end="clearDragState"
+          <UiNotice
+            v-if="pageError"
+            tone="danger"
+            title="播放清單操作未完成"
+            :message="pageError"
+            compact
           />
-        </template>
-      </template>
 
-      <TrackActionMenu
-        :open="Boolean(addMenu)"
-        :x="addMenu?.x ?? 0"
-        :y="addMenu?.y ?? 0"
-        :track="addMenu?.track ?? null"
-        :playlists="playlistState.playlists"
-        :current-track-id="state.track?.id ?? ''"
-        :queued-track-ids="queuedTrackIds"
-        :remove-from-playlist-id="addMenuRemoveFromPlaylistId"
-        :can-go-to-album="addMenuCanGoToAlbum"
-        @select="handleTrackMenuSelect"
-        @close="closeAddMenu"
-      />
+          <template v-if="mode === 'all'">
+            <UiHint v-if="visibleTracks.length === 0">
+              {{ visibleTracksEmptyText }}
+            </UiHint>
+            <ul v-else class="tracks">
+              <UiTrackRow
+                v-for="track in visibleTracks"
+                :key="track.id"
+                :track="track"
+                :current="state.track?.id === track.id"
+                interactive
+                :title-clickable="Boolean(albumForTrack(track))"
+                :title-aria-label="`前往專輯：${track.title}`"
+                @click="playRow(track)"
+                @title-click="jumpToAlbum(track)"
+                @contextmenu="openAddMenu(track, $event)"
+              >
+                <template #trail>
+                  <div class="row-actions" @click.stop>
+                    <UiButton
+                      :icon="Trash2"
+                      intent="danger"
+                      aria-label="刪除曲目"
+                      title="刪除曲目(同時刪除原始檔案與去人聲版本)"
+                      @click="removeTrack(track)"
+                    />
+                  </div>
+                </template>
+              </UiTrackRow>
+            </ul>
+          </template>
+
+          <template v-else>
+            <UiHint v-if="playlistTracks.length === 0">
+              這個歌單還沒有曲目。從任一曲目列右鍵加入。
+            </UiHint>
+            <UiHint v-else-if="visiblePlaylistEntries.length === 0">
+              找不到符合搜尋的曲目。
+            </UiHint>
+            <SetlistPlaylistTable
+              v-else
+              :entries="visiblePlaylistEntries"
+              :sort="playlistSort"
+              :is-album="isAlbumSelected"
+              :can-drag="canDragPlaylistRows"
+              :current-track-id="state.track?.id"
+              :dragging-track-id="draggingTrackId"
+              :drop-target-track-id="dropTargetTrackId"
+              :drop-position="dropPosition"
+              :jumpable-track-ids="jumpableTrackIds"
+              @toggle-sort="togglePlaylistSort"
+              @select-track="playRow"
+              @title-click="jumpToAlbum"
+              @open-menu="openAddMenu"
+              @track-drag-start="startDrag"
+              @track-drag-over="updateDropTarget"
+              @track-drag-leave="leaveDropTarget"
+              @track-drop="dropTrack"
+              @track-drag-end="clearDragState"
+            />
+          </template>
+        </template>
+
+        <TrackActionMenu
+          :open="Boolean(addMenu)"
+          :x="addMenu?.x ?? 0"
+          :y="addMenu?.y ?? 0"
+          :track="addMenu?.track ?? null"
+          :playlists="playlistState.playlists"
+          :current-track-id="state.track?.id ?? ''"
+          :queued-track-ids="queuedTrackIds"
+          :remove-from-playlist-id="addMenuRemoveFromPlaylistId"
+          :can-go-to-album="addMenuCanGoToAlbum"
+          @select="handleTrackMenuSelect"
+          @close="closeAddMenu"
+        />
+      </template>
     </div>
   </div>
 </template>
@@ -530,6 +547,18 @@ onMounted(async () => {
 <style scoped>
 .setlist-view {
   display: grid;
+}
+
+.setlist-view--session,
+.setlist-view--session .setlist-view__main {
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.setlist-view--session .setlist-view__main {
+  display: flex;
+  flex-direction: column;
 }
 
 .setlist-view__main {

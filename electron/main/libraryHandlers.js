@@ -19,6 +19,10 @@ const {
   enforceLibraryStoragePolicySafely,
 } = require('./libraryStorageHandlers');
 const { removeTrackFromAllPlaylists } = require('../lib/playlists');
+const {
+  createPerformanceSessionPlanStore,
+} = require('../lib/performanceSessionPlan');
+const { createBgmStandbyPlanStore } = require('../lib/bgmStandbyPlan');
 const { isFeatureGateEnabled } = require('../lib/featureGates');
 const {
   createArtworkDiscoveryService,
@@ -96,6 +100,10 @@ function registerLibraryHandlers({
   findLibraryTrackRecord = findTrackRecord,
   deleteLibraryTrack = deleteTrack,
   removeTrackFromPlaylists = removeTrackFromAllPlaylists,
+  unlinkTrackFromPerformanceSessionPlan = (directory, trackId) =>
+    createPerformanceSessionPlanStore({ directory }).unlinkTrack(trackId),
+  removeTrackFromBgmStandbyPlan = (directory, trackId) =>
+    createBgmStandbyPlanStore({ directory }).removeTrackReference(trackId),
   updateLibraryTrackMetadata = updateTrackMetadata,
   writeLibraryTrackArtworkFile = writeTrackArtworkFile,
   deleteLibraryTrackArtworkFile = deleteTrackArtworkFile,
@@ -293,6 +301,13 @@ function registerLibraryHandlers({
           // own comment) but pointless to leave behind when we already know
           // exactly which id just disappeared.
           removeTrackFromPlaylists(dir, trackId);
+          // The current session draft is intentionally not a live playlist.
+          // Keep its row and operator label, but remove the now-invalid media
+          // link so the preparation workspace can surface it for repair.
+          unlinkTrackFromPerformanceSessionPlan(dir, trackId);
+          // BGM owns an independent track-id list rather than authored
+          // labels, so a deleted local asset removes that reference outright.
+          removeTrackFromBgmStandbyPlan(dir, trackId);
         }
         return result;
       },
