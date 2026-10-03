@@ -23,7 +23,7 @@ function createDocument({ rootDataset = {}, documentDataset = {} } = {}) {
 }
 
 describe('renderer surface registry', () => {
-  it('defines an immutable v2 Main root while Performer remains v1', () => {
+  it('defines immutable v2 roots for Main and Performer', () => {
     expect(RENDERER_SURFACE_REGISTRY).toEqual({
       main: {
         entryOwner: 'src/main.js',
@@ -36,12 +36,12 @@ describe('renderer surface registry', () => {
       },
       performer: {
         entryOwner: 'src/performer-main.js',
-        migrationStatus: 'registered-v1',
+        migrationStatus: 'registered-v2',
         overlayHostId: 'performer-overlay',
         parentSurfaceId: null,
         renderer: 'performer',
         surfaceId: 'performer',
-        system: 'v1',
+        system: 'v2',
       },
     });
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY)).toBe(true);
@@ -203,7 +203,7 @@ describe('renderer surface registry', () => {
 
   it.each([
     ['main', 'app-shell', 'v2'],
-    ['performer', 'performer', 'v1'],
+    ['performer', 'performer', 'v2'],
   ])(
     'registers the %s #app root before mount',
     (renderer, surfaceId, system) => {

@@ -102,7 +102,7 @@ function createPerformerWindowManager(options) {
       ...bounds,
       minWidth: MIN_BOUNDS.width,
       minHeight: MIN_BOUNDS.height,
-      backgroundColor: initialTheme === 'light' ? '#f7f1e7' : '#1f2328',
+      backgroundColor: initialTheme === 'light' ? '#e8e4dd' : '#191a1e',
       title: 'Utawakui Performer View',
       show: false,
       frame: false,

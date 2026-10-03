@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; Phase 4 complete; Phase 5 Performer next.
+Status: replacement direction and migration architecture frozen; Phase 5 complete; Phase 6 final deletion next.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -15,7 +15,7 @@ Public Browser Source `overlay/` 維持獨立 `--ovl-*` 視覺系統，不參與
 - Folder 外觀色、navigation 與 perimeter 由 `AppFolderLayout` 擁有；feature 不再自行繪製 page chrome。
 - `AppFolderPage` 統一 header、body mode、focus 與 scroll ownership，feature 只負責內容與其內部 workspace。
 - Component、file、CSS、token、surface id 與測試名稱在各自 surface cutover 時同步收斂，不留下雙名稱。
-- Production 只以完整 registered surface 原子切換；已完成的 Main Shell 為 v2，尚未切換的 child／renderer 明確維持 v1。
+- Production 只以完整 registered surface 原子切換；Main、所有 child surfaces 與 Performer renderer 現已全數為 v2。
 - 最終只有在 legacy manifest 歸零、無 v1 scope／import／payload、無 migration alias 且所有 surface 通過 no-T1 驗證後刪除 Token v1。
 
 ## 範圍與非目標
@@ -112,7 +112,7 @@ Surface boundary 不能從 feature component 才開始。每個 renderer 都先�
 | --------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `html`／`body`                    | Viewport geometry、margin reset、system-neutral mount 前 fallback                                   | 不持有 `--ui-*` visual token，不作 v1／v2 system root                                            |
 | Document root                     | Theme、density、motion、language metadata 與對平台的 literal `color-scheme` projection              | 不宣告 `data-ui-system`，不以 `--ui-color-scheme` 取得平台值                                     |
-| Renderer `#app`                   | 在 Vue mount 前登記 renderer surface／system，佔滿 viewport，提供 canvas、text、font 與 token graph | Main 已於 Phase 1 切為 v2；Performer 維持 v1                                                     |
+| Renderer `#app`                   | 在 Vue mount 前登記 renderer surface／system，佔滿 viewport，提供 canvas、text、font 與 token graph | Main 已於 Phase 1 切為 v2；Performer 已於 Phase 5 切為 v2                                        |
 | App Shell／Performer visible root | 完整覆蓋各自 renderer canvas，承接該 renderer 的可見背景與內容                                      | 不依賴 `body` 從另一套 system 補色                                                               |
 | Native `BrowserWindow` substrate  | Mount 前與透明縫隙可見的 `backgroundColor`；main window 另含 titlebar overlay palette               | 不由 CSS inheritance 推導；Main Shell 與 Performer 各自在其 atomic cutover 同步更新              |
 | Formal native-control component   | Range accent、focus ring、field chrome 等 platform control 外觀                                     | `base.css` 不保留全域 visual-token recipe；現行 range rule 收回 `UiRangeControl`／正式 primitive |
@@ -483,7 +483,7 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-Production replacement 已完成 Phase 4.2 specialist workbenches，下一個 slice 是 Phase 5 Performer renderer。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已完成 Phase 5 Performer renderer，下一個 slice 是 Phase 6 final deletion。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
@@ -505,4 +505,6 @@ Phase 4.1 已將 `app-utility`、local overlay host 與 Settings page 原子切�
 
 Phase 4.2 已清理 `internal-tools` 內 Music Analysis 與 Lyrics Provider Review 的完整 consumer graph；8 個 production files 的 12 個 legacy pairs 已映射至正式 typography／radius／motion semantics，4 個無 production consumer 的 generic aliases 同批退出 T1 core。既有 `MusicAnalysis*` 與 `LyricsProviderReviewForm` 名稱已符合 domain／role 結構，因此不做 cosmetic rename；分析資料、benchmark、annotation、provider review、分類導覽與工具 navigation 均未變更。
 
-Canonical generator 現在鎖定 T1 295／T2 407／T1-only 51 unique declarations、3 個 production-consumed legacy names、4 個 files 與 5 個 file-token pairs。所有 Main、Settings 與 specialist surfaces 已完成 cutover；下一個 atomic implementation slice 是獨立 Phase 5 Performer renderer。
+Phase 5 已將 `performer`、`performer-overlay`、window toolbar、stage、lyric cue 與 Electron native substrate 原子切為 v2。最後 3 個 production-consumed legacy names／4 files／5 pairs 已清除；40px toolbar 改用正式 `--ui-window-titlebar-block-size`，字重改用 `semibold`／`bold`，native dark／light background同步為 `#191a1e`／`#e8e4dd`。Self-View snapshot authority、window controls、track／lyrics／reading／next-track anatomy與三個 Performer feature geometry names均未變更，既有 component names 已符合 renderer／role 結構，因此沒有 cosmetic rename。
+
+Canonical generator 現在鎖定 T1 292／T2 407／T1-only 48 unique declarations，production-consumed legacy names／files／pairs 均為 0。所有 production surfaces 已完成 cutover；下一個 atomic implementation slice 是 Phase 6 final deletion，只有通過完整 no-T1／scope／payload／import gate後才移除 T1 stylesheet 與 migration infrastructure。

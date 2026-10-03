@@ -48,7 +48,7 @@ defineEmits([
 
 <style scoped>
 .performer-toolbar {
-  height: var(--ui-titlebar-height);
+  height: var(--ui-window-titlebar-block-size);
   display: flex;
   align-items: center;
   justify-content: space-between;

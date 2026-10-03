@@ -51,7 +51,7 @@ const hasRuby = computed(() =>
 
 .performer-lyric-cue__text {
   font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-body);
 }
 
@@ -61,7 +61,7 @@ const hasRuby = computed(() =>
 
 .performer-lyric-cue--current .performer-lyric-cue__text {
   font-size: var(--ui-performer-lyric-current-font-size);
-  font-weight: var(--ui-font-weight-heavy);
+  font-weight: var(--ui-font-weight-bold);
   line-height: var(--ui-line-height-body);
 }
 

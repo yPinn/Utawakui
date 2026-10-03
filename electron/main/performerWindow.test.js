@@ -85,6 +85,10 @@ describe('performer window manager', () => {
       webviewTag: false,
       devTools: true,
     });
+    expect(window.options).toMatchObject({ backgroundColor: '#191a1e' });
+    expect(window.options.webPreferences.additionalArguments).toEqual([
+      '--ui-theme=dark',
+    ]);
     window.webContents.emit('did-finish-load');
     expect(window.webContents.send).toHaveBeenCalledWith(
       'performer-view:snapshot',
@@ -143,5 +147,26 @@ describe('performer window manager', () => {
       minWidth: 800,
       minHeight: 360,
     });
+  });
+
+  it('matches the light native substrate to the v2 renderer canvas', () => {
+    FakeWindow.instances = [];
+    const manager = createPerformerWindowManager({
+      BrowserWindow: FakeWindow,
+      isDev: false,
+      devUrl: '',
+      pagePath: 'dist/performer-view.html',
+      preloadPath: 'performerPreload.js',
+      getUiTheme: () => 'light',
+    });
+
+    manager.open();
+
+    expect(FakeWindow.instances[0].options).toMatchObject({
+      backgroundColor: '#e8e4dd',
+    });
+    expect(
+      FakeWindow.instances[0].options.webPreferences.additionalArguments,
+    ).toEqual(['--ui-theme=light']);
   });
 });

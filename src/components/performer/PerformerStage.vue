@@ -103,7 +103,7 @@ const modeMessages = {
 .performer-stage__track-copy strong {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 
@@ -168,7 +168,7 @@ const modeMessages = {
   flex: 0 0 auto;
   color: var(--ui-color-accent);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .performer-stage__next strong {

@@ -155,19 +155,19 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
   }),
   performer: createSurfaceDefinition({
     entryOwner: 'src/performer-main.js',
-    migrationStatus: 'registered-v1',
+    migrationStatus: 'registered-v2',
     overlayHostId: 'performer-overlay',
     renderer: 'performer',
     surfaceId: 'performer',
-    system: 'v1',
+    system: 'v2',
   }),
   'performer-overlay': createSurfaceDefinition({
     entryOwner: 'src/performer/PerformerApp.vue',
-    migrationStatus: 'registered-v1',
+    migrationStatus: 'registered-v2',
     parentSurfaceId: 'performer',
     renderer: 'performer',
     surfaceId: 'performer-overlay',
-    system: 'v1',
+    system: 'v2',
   }),
   'visual-review': createSurfaceDefinition({
     entryOwner: 'src/views/VisualSystemView.vue',

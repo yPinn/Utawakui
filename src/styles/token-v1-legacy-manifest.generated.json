@@ -1,46 +1,18 @@
 {
   "schemaVersion": 1,
   "declarations": {
-    "v1": 295,
-    "v1Only": 51,
+    "v1": 292,
+    "v1Only": 48,
     "v2": 407
   },
   "production": {
-    "files": 4,
-    "pairs": 5,
-    "references": [
-      {
-        "file": "src/components/performer/PerformerLyricCue.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-heavy"
-      },
-      {
-        "file": "src/components/performer/PerformerLyricCue.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/performer/PerformerStage.vue",
-        "surface": "other-feature",
-        "token": "--ui-font-weight-strong"
-      },
-      {
-        "file": "src/components/performer/PerformerWindowToolbar.vue",
-        "surface": "other-feature",
-        "token": "--ui-titlebar-height"
-      },
-      {
-        "file": "src/performer/PerformerApp.vue",
-        "surface": "performer-window",
-        "token": "--ui-titlebar-height"
-      }
-    ],
-    "tokens": 3
+    "files": 0,
+    "pairs": 0,
+    "references": [],
+    "tokens": 0
   },
   "legacyTokens": [
     "--ui-color-surface-playing",
-    "--ui-font-weight-heavy",
-    "--ui-font-weight-strong",
     "--ui-motion-slow",
     "--ui-motion-spin",
     "--ui-player-bar-action-gap",
@@ -84,7 +56,6 @@
     "--ui-playlist-toolbar-padding-block",
     "--ui-playlist-toolbar-padding-inline",
     "--ui-shell-panel-inset-block",
-    "--ui-titlebar-height",
     "--ui-z-context-menu",
     "--ui-z-context-menu-submenu",
     "--ui-z-dropdown",

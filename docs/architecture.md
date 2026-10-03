@@ -57,7 +57,7 @@ windowed／restored 投影 `compact`，maximize／full-screen 投影 `standard`�
 原子切換、fail-closed scope、legacy ratchet 與 no-T1 harness 消除無聲 fallback；這項
 目標架構以完整 registered surface 分段替換，不允許同一 surface 無聲混用。
 Phase 0.1 已把 Main 與 Performer 的 `#app` 在 Vue mount 前登記為 full-viewport renderer
-surface；Phase 1 後 Main `app-shell` 為 `registered-v2`，Performer 維持 `registered-v1`。Phase 0.3 已完成 scope foundation 原子切換：兩個
+surface；Phase 5 後 Main `app-shell` 與 Performer 均為 `registered-v2`。Phase 0.3 已完成 scope foundation 原子切換：兩個
 renderer entry 同時載入 scoped v1／v2 token entries 與 generated invalidation，document root 只
 投影 theme／density／motion／language metadata 與 literal platform `color-scheme`，`body` 只保留
 system-neutral mount fallback，registered surface 才承接 canvas／text／font。Shared component
@@ -66,9 +66,9 @@ isolated prototypes 也只登記自己的 v2 surface，不再寫 document root�
 Output Preview／Performer tokens 已移到 feature-owned styles。Main 的 Settings Utility、Folder
 layout、Setlist、Performance Session、Import、Lyrics、Output 與 development-only Internal Tools
 workbenches 都維持完整 v2 boundary 與同 system overlay host，外層 Shell 不向任何 child 補值。
-Analysis／provider review 已移除 T1-only references；production legacy consumers 只剩 Performer。
-Electron main native background／titlebar palette 已隨 Phase 1 同步換為 v2，
-Performer native background 仍維持 v1，留待其 renderer atomic cutover。
+Analysis／provider review 與 Performer render graph 已移除 T1-only references，production legacy
+consumer inventory 為零。Electron main native background／titlebar palette 已隨 Phase 1 同步換為
+v2；Performer native background 也已在 Phase 5 與 renderer canvas 同批切換。
 
 `InternalToolsView.vue` 以純資料 `constants/internalTools.js` 將工具分成兩個平面：
 Operations 是可重複的產品／支援操作（F5 Music Analysis、F6 Live Diagnostics），

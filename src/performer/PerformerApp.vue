@@ -51,7 +51,7 @@ const {
   width: 100%;
   height: 100%;
   display: grid;
-  grid-template-rows: var(--ui-titlebar-height) minmax(0, 1fr);
+  grid-template-rows: var(--ui-window-titlebar-block-size) minmax(0, 1fr);
   overflow: hidden;
   background: var(--ui-color-canvas);
 }

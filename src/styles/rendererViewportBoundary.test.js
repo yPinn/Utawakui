@@ -95,13 +95,6 @@ describe('renderer viewport boundary', () => {
     const mainLightText = tokensV2.match(
       /--ui-palette-neutral-900:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const performerDarkCanvas = tokens.match(
-      /--ui-color-canvas:\s*(#[\da-f]{6});/iu,
-    )?.[1];
-    const performerLightCanvas = tokens.match(
-      /:root\[data-ui-theme='light'\] \[data-ui-system='v1'\][\s\S]*?--ui-color-canvas:\s*(#[\da-f]{6});/iu,
-    )?.[1];
-
     expect(mainDarkCanvas).toBe('#191a1e');
     expect(mainLightCanvas).toBe('#e8e4dd');
     expect(mainDarkText).toBe('#f3f1ec');
@@ -120,7 +113,7 @@ describe('renderer viewport boundary', () => {
     );
     expect(windowState).toContain('height: 40');
     expect(performerWindow).toContain(
-      `initialTheme === 'light' ? '${performerLightCanvas}' : '${performerDarkCanvas}'`,
+      `initialTheme === 'light' ? '${mainLightCanvas}' : '${mainDarkCanvas}'`,
     );
   });
 });
