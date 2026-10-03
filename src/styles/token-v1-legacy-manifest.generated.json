@@ -1106,7 +1106,10 @@
     "crossVersionFeatureTokens": [],
     "documentSpecimenMarkers": [],
     "documentSystemWriters": [],
-    "generatedInvalidationImports": ["src/main.js", "src/performer-main.js"],
+    "generatedInvalidationImports": [
+      "src/main.js",
+      "src/performer-main.js"
+    ],
     "prototypeDocumentRoots": [],
     "reviewComposable": {
       "current": "src/composables/useVisualReviewMode.js",
