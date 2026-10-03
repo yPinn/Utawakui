@@ -1,3 +1,8 @@
+export const UI_DEMO_EXCLUDED_COMPONENTS = Object.freeze([
+  'UiFolderArtifact',
+  'UiFolderArtifactCanvas',
+]);
+
 export const UI_DEMO_GROUPS = Object.freeze([
   {
     key: 'foundations',
@@ -25,7 +30,7 @@ export const UI_DEMO_GROUPS = Object.freeze([
       {
         key: 'page-layout',
         title: '頁面版型',
-        components: ['UiFolderArtifact', 'UiFolderArtifactCanvas'],
+        components: ['AppFolderLayout target'],
         reviewed: false,
       },
       {
@@ -93,7 +98,12 @@ export const UI_DEMO_GROUPS = Object.freeze([
         components: ['UiSwitch'],
         reviewed: false,
       },
-      { key: 'range', title: '範圍控制', components: ['UiRange'] },
+      {
+        key: 'range',
+        title: '範圍控制',
+        components: ['UiRange'],
+        adopted: true,
+      },
       {
         key: 'color-field',
         title: '色彩欄位',

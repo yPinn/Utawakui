@@ -28,8 +28,8 @@ const checkboxSource = readFileSync(
   new URL('../ui/UiCheckbox.vue', import.meta.url),
   'utf8',
 );
-const rangeSource = readFileSync(
-  new URL('../ui/UiRange.vue', import.meta.url),
+const rangeControlSource = readFileSync(
+  new URL('../ui/range/UiRangeControl.vue', import.meta.url),
   'utf8',
 );
 const trackRowSource = readFileSync(
@@ -188,7 +188,7 @@ describe('DemoCoreMinimums', () => {
     expect(iconButtonSource).toContain('var(--ui-icon-button-size-md)');
     expect(iconButtonSource).toContain('min-width: var(--ui-icon-btn-size)');
     expect(checkboxSource).toContain('width: var(--ui-checkbox-size)');
-    expect(rangeSource).toContain('width: var(--ui-range-thumb-size)');
+    expect(rangeControlSource).toContain('width: var(--ui-range-thumb-size)');
     expect(trackRowSource).toContain(
       'min-height: var(--ui-track-row-min-height)',
     );

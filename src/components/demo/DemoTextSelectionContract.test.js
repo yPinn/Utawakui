@@ -10,7 +10,8 @@ const adoptedTextButtonSource = read('../ui/UiTextButton.vue');
 const candidateTabsSource = read('./DemoCandidateTabs.vue');
 const candidateChipSource = read('./DemoCandidateChip.vue');
 const candidateCheckboxSource = read('./DemoCandidateCheckbox.vue');
-const candidateRangeSource = read('./DemoCandidateRange.vue');
+const formalRangeSource = read('../ui/UiRange.vue');
+const formalRangeControlSource = read('../ui/range/UiRangeControl.vue');
 const candidateProgressSource = read('./DemoCandidateProgress.vue');
 const candidateMarqueeSource = read('./DemoCandidateMarqueeText.vue');
 const candidateHintSource = read('./DemoCandidateHint.vue');
@@ -23,7 +24,6 @@ const uiTextareaSource = read('../ui/UiTextarea.vue');
 const currentSources = [
   read('../ui/UiTabs.vue'),
   read('../ui/UiChip.vue'),
-  read('../ui/UiRange.vue'),
   read('../ui/UiProgress.vue'),
   read('../ui/UiMarqueeText.vue'),
 ];
@@ -63,11 +63,11 @@ describe('Token v2 Candidate text selection contract', () => {
       candidateCheckboxSource,
       '\\.demo-candidate-checkbox :deep\\(\\.ui-field__label--inline\\)',
     );
-    expectNoneRule(
-      candidateRangeSource,
-      '\\.demo-candidate-range :deep\\(\\.ui-field__label\\)',
+    expect(formalRangeSource).toMatch(
+      /:global\(:root\[data-ui-system='v2'\] \.ui-range\) :deep\(\.ui-field__label\)\s*\{[^}]*-webkit-user-select: none;[^}]*user-select: none;/su,
     );
-    expectNoneRule(candidateRangeSource, '\\.demo-candidate-range__value');
+    expectV2NoneRule(formalRangeSource, '\\.ui-range__value');
+    expectV2NoneRule(formalRangeControlSource, '\\.ui-range-control');
     expectNoneRule(candidateProgressSource, '\\.demo-candidate-progress__copy');
   });
 

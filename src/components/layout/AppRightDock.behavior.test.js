@@ -44,6 +44,83 @@ for (const [component, filename] of [
 }
 
 describe('AppRightDock', () => {
+  it('mounts the resize hook only while the Dock is expanded', () => {
+    expect(source).toContain('useAppRightDockWidth');
+    expect(source).toMatch(
+      /<div\s+v-if="expanded"\s+class="app-right-dock__handle"/u,
+    );
+    expect(source).toContain('role="separator"');
+    expect(source).toContain('@pointerdown="dockWidth.startResize($event)"');
+    expect(source).toContain('cursor: col-resize');
+    expect(source).toMatch(
+      /\.app-right-dock--expanded\s*\{[^}]*width:\s*var\(--ui-right-dock-width\);/su,
+    );
+
+    const collapsed = mount(AppRightDock, {
+      expanded: false,
+      label: '播放資訊',
+      contentId: 'app-right-dock-content',
+    });
+    const expanded = mount(AppRightDock, {
+      expanded: true,
+      label: '播放資訊',
+      contentId: 'app-right-dock-content',
+    });
+
+    expect(
+      findAll(collapsed.root, (node) => node.props.role === 'separator'),
+    ).toHaveLength(0);
+    expect(
+      findAll(expanded.root, (node) => node.props.role === 'separator'),
+    ).toHaveLength(1);
+    collapsed.app.unmount();
+    expanded.app.unmount();
+  });
+
+  it('keeps keyboard resizing and double-click folding on the expanded hook', () => {
+    const dockWidth = useAppRightDockWidth();
+    const originalWidth = dockWidth.width.value;
+    const onToggleExpanded = vi.fn();
+    dockWidth.width.value = 240;
+    const { app, root } = mount(AppRightDock, {
+      expanded: true,
+      label: '播放資訊',
+      contentId: 'app-right-dock-content',
+      onToggleExpanded,
+    });
+    const handle = findAll(root, (node) => node.props.role === 'separator')[0];
+    const key = (value) => ({ key: value, preventDefault: vi.fn() });
+
+    expect(handle.props).toMatchObject({
+      tabindex: '0',
+      'aria-orientation': 'vertical',
+      'aria-valuemin': RIGHT_DOCK_WIDTH_MIN,
+      'aria-valuemax': RIGHT_DOCK_WIDTH_MAX,
+      'aria-valuenow': 240,
+      'aria-controls': 'app-right-dock-content',
+      'aria-expanded': true,
+    });
+
+    const left = key('ArrowLeft');
+    trigger(handle, 'onKeydown', left);
+    expect(left.preventDefault).toHaveBeenCalledOnce();
+    expect(dockWidth.width.value).toBe(248);
+    trigger(handle, 'onKeydown', key('ArrowRight'));
+    expect(dockWidth.width.value).toBe(240);
+    trigger(handle, 'onKeydown', key('Home'));
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN);
+    trigger(handle, 'onKeydown', key('End'));
+    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MAX);
+    trigger(handle, 'onKeydown', key('Enter'));
+    trigger(handle, 'onKeydown', key(' '));
+    expect(onToggleExpanded).toHaveBeenCalledTimes(2);
+    trigger(handle, 'onDblclick');
+    expect(onToggleExpanded).toHaveBeenCalledTimes(3);
+
+    dockWidth.width.value = originalWidth;
+    app.unmount();
+  });
+
   it('hosts expanded content in one labelled right-side surface', () => {
     const { app, root } = mount(
       AppRightDock,
@@ -94,9 +171,30 @@ describe('AppRightDock', () => {
     expect(content.props['aria-hidden']).toBe(true);
     expect(expand.props['aria-controls']).toBe('app-right-dock-content');
     expect(expand.props['aria-expanded']).toBe(false);
+    expect(String(expand.props.class)).toContain('ui-icon-btn--lg');
+    expect(String(expand.props.class)).toContain('ui-icon-btn--accent');
+    expect(String(expand.props.class)).not.toContain('ui-icon-btn--stretch');
     trigger(expand, 'onClick');
     expect(onExpand).toHaveBeenCalledOnce();
     app.unmount();
+  });
+
+  it('keeps the collapsed rail geometry while anchoring a normal control at the lower right', () => {
+    expect(source).toMatch(
+      /\.app-right-dock--collapsed\s*\{[^}]*width:\s*var\(--ui-right-dock-rail-width\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock__expand\s*\{[^}]*position:\s*absolute;[^}]*inset-inline-end:\s*0;[^}]*inset-block-end:\s*var\(--ui-space-1\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock\.app-right-dock--collapsed\s*\{[^}]*overflow:\s*clip;[^}]*overflow-clip-margin:\s*var\(--ui-space-2\);/su,
+    );
+    expect(source).toMatch(
+      /\.app-right-dock\.app-right-dock--collapsed::after\s*\{[^}]*border-color:\s*transparent;/su,
+    );
+    expect(source).not.toMatch(
+      /<UiIconButton[\s\S]*?class="app-right-dock__expand"[\s\S]*?\sstretch(?:\s|\/>)/u,
+    );
   });
 
   it('keeps content mounted and animates only composited properties', () => {
@@ -114,87 +212,7 @@ describe('AppRightDock', () => {
     expect(source).toContain('prefers-reduced-motion: reduce');
   });
 
-  it('keeps the resize axis available for bidirectional double-click folding', () => {
-    const onToggleExpanded = vi.fn();
-    const expanded = mount(AppRightDock, {
-      expanded: true,
-      label: '播放資訊',
-      contentId: 'app-right-dock-content',
-      onToggleExpanded,
-    });
-    const expandedHandle = findAll(
-      expanded.root,
-      (node) => node.props.role === 'separator',
-    )[0];
-
-    expect(typeof expandedHandle.props.onPointerdown).toBe('function');
-    trigger(expandedHandle, 'onDblclick');
-    expect(onToggleExpanded).toHaveBeenCalledOnce();
-    expanded.app.unmount();
-
-    const collapsed = mount(AppRightDock, {
-      expanded: false,
-      label: '播放資訊',
-      expandLabel: '展開播放資訊',
-      contentId: 'app-right-dock-content',
-      onToggleExpanded,
-    });
-    const collapsedHandle = findAll(
-      collapsed.root,
-      (node) => node.props.role === 'separator',
-    )[0];
-
-    expect(typeof collapsedHandle.props.onDblclick).toBe('function');
-    trigger(collapsedHandle, 'onDblclick');
-    expect(onToggleExpanded).toHaveBeenCalledTimes(2);
-    collapsed.app.unmount();
-  });
-
-  it('exposes value semantics and keyboard-equivalent resize and folding', () => {
-    const dockWidth = useAppRightDockWidth();
-    const originalWidth = dockWidth.width.value;
-    const onToggleExpanded = vi.fn();
-    dockWidth.width.value = 240;
-    const { app, root } = mount(AppRightDock, {
-      expanded: true,
-      label: '播放資訊',
-      contentId: 'app-right-dock-content',
-      onToggleExpanded,
-    });
-    const handle = findAll(root, (node) => node.props.role === 'separator')[0];
-    const key = (value) => ({ key: value, preventDefault: vi.fn() });
-
-    expect(handle.props).toMatchObject({
-      tabindex: '0',
-      'aria-orientation': 'vertical',
-      'aria-valuemin': RIGHT_DOCK_WIDTH_MIN,
-      'aria-valuemax': RIGHT_DOCK_WIDTH_MAX,
-      'aria-valuenow': 240,
-      'aria-controls': 'app-right-dock-content',
-      'aria-expanded': true,
-    });
-
-    const left = key('ArrowLeft');
-    trigger(handle, 'onKeydown', left);
-    expect(left.preventDefault).toHaveBeenCalledOnce();
-    expect(dockWidth.width.value).toBe(248);
-
-    trigger(handle, 'onKeydown', key('ArrowRight'));
-    expect(dockWidth.width.value).toBe(240);
-    trigger(handle, 'onKeydown', key('Home'));
-    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MIN);
-    trigger(handle, 'onKeydown', key('End'));
-    expect(dockWidth.width.value).toBe(RIGHT_DOCK_WIDTH_MAX);
-
-    trigger(handle, 'onKeydown', key('Enter'));
-    trigger(handle, 'onKeydown', key(' '));
-    expect(onToggleExpanded).toHaveBeenCalledTimes(2);
-
-    dockWidth.width.value = originalWidth;
-    app.unmount();
-  });
-
-  it('uses shared optical and spacing tokens for the resize axis', () => {
+  it('uses shared optical and spacing tokens for the expanded resize axis', () => {
     for (const tokenSource of [activeTokenSource, v2TokenSource]) {
       expect(tokenSource).toContain(
         '--ui-resize-handle-hit-size: var(--ui-space-3);',

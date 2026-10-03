@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
+  UI_DEMO_EXCLUDED_COMPONENTS,
   UI_DEMO_GROUP_REVIEW_STATUS,
   UI_DEMO_GROUPS,
 } from './uiDemoSections.js';
@@ -81,17 +82,19 @@ describe('UI demo component order', () => {
     ).sort();
     const registeredSharedComponents = registeredComponents
       .map((name) => name.replace(/ (Candidate|Current)$/u, ''))
-      .filter((name) => name !== 'UiActionMenu')
+      .filter((name) => name !== 'UiActionMenu' && name.startsWith('Ui'))
       .sort();
     const sharedComponents = fs
       .readdirSync(new URL('../components/ui/', import.meta.url))
       .filter((filename) => /^Ui.+\.vue$/.test(filename))
       .map((filename) => filename.replace(/\.vue$/, ''))
+      .filter((name) => !UI_DEMO_EXCLUDED_COMPONENTS.includes(name))
       .sort();
 
     expect(registeredSharedComponents).toEqual(sharedComponents);
     expect(registeredComponents).toContain('UiActionMenu Candidate');
     expect(registeredComponents).toContain('UiContextMenu Current');
+    expect(registeredComponents).toContain('AppFolderLayout target');
     expect(new Set(registeredComponents).size).toBe(
       registeredComponents.length,
     );
@@ -130,6 +133,18 @@ describe('UI demo component order', () => {
         key,
       ).not.toBe(false);
     }
+  });
+
+  it('keeps rejected decorative artifacts out of the final page-layout review', () => {
+    const pageLayout = UI_DEMO_GROUPS.flatMap((group) => group.sections).find(
+      (section) => section.key === 'page-layout',
+    );
+
+    expect(pageLayout?.components).toEqual(['AppFolderLayout target']);
+    expect(UI_DEMO_EXCLUDED_COMPONENTS).toEqual([
+      'UiFolderArtifact',
+      'UiFolderArtifactCanvas',
+    ]);
   });
 
   it('derives group review status from section truth', () => {

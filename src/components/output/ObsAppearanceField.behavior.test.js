@@ -2,6 +2,8 @@ import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
+import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -18,6 +20,16 @@ attachClientRender(
 attachClientRender(
   ObsAppearanceField,
   './ObsAppearanceField.vue',
+  import.meta.url,
+);
+attachClientRender(
+  UiRangeControl,
+  '../ui/range/UiRangeControl.vue',
+  import.meta.url,
+);
+attachClientRender(
+  UiTooltipSurface,
+  '../ui/tooltip/UiTooltipSurface.vue',
   import.meta.url,
 );
 

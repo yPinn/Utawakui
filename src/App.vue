@@ -27,7 +27,7 @@ import { useMediaSession } from './composables/useMediaSession.js';
 import { useKeyboardShortcuts } from './composables/useKeyboardShortcuts.js';
 import { useSidebarWidth } from './composables/useSidebarWidth.js';
 import {
-  isStudioLibraryComparisonMode,
+  isStudioLibraryMode,
   useVisualSystemMode,
 } from './composables/useVisualSystemMode.js';
 import { useTheme } from './composables/useTheme.js';
@@ -330,13 +330,13 @@ onUnmounted(() =>
 );
 
 // Studio Library is a development preview of the Setlist interior. Keep the
-// real Setlist folder visibly selected while the hidden preview component is
-// active so the shell still communicates the owning workflow. This applies
-// to both Candidate and Current comparison panels, but not the component lab.
+// real Setlist folder visibly selected while the Candidate is active so the
+// shell still communicates the owning workflow. The component lab remains
+// visually separate.
 const archiveTabView = internalWorkbenchesEnabled
   ? computed(() =>
       activeView.value === 'visual-system' &&
-      isStudioLibraryComparisonMode(visualSystemMode.value)
+      isStudioLibraryMode(visualSystemMode.value)
         ? 'setlist'
         : activeView.value,
     )

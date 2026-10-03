@@ -1,17 +1,6 @@
 <script setup>
 import { computed, shallowRef, useId } from 'vue';
-import artCardThumbnail from '../../assets/output-template-thumbnails/art-card.jpg';
-import karaokeStackThumbnail from '../../assets/output-template-thumbnails/karaoke-stack.jpg';
-import liveStageThumbnail from '../../assets/output-template-thumbnails/live-stage.jpg';
-import trackThumbCropWide from '../../assets/demo/track-thumb/track-thumb-crop-wide.jpg';
-import { RotateCcw } from '../../icons/index.js';
-import {
-  nextFolderArtifactStackIndex,
-  previousFolderArtifactStackIndex,
-} from '../../utils/folderArtifactStack.js';
 import UiButton from '../ui/UiButton.vue';
-import UiFolderArtifact from '../ui/UiFolderArtifact.vue';
-import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';
 import UiPageHeader from '../ui/UiPageHeader.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
@@ -19,8 +8,6 @@ import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 const previewMode = shallowRef('wide');
 const contentMode = shallowRef('overflow');
 const activeFolderId = shallowRef('setlist');
-const stackImageIndex = shallowRef(0);
-const artifactCanvas = shallowRef(null);
 const instanceId = useId();
 const folderTabShapeId = `demo-folder-tab-shape-${instanceId}`;
 const specimenTitleId = `demo-page-layout-specimen-title-${instanceId}`;
@@ -45,28 +32,28 @@ const folderDefinitions = [
     id: 'setlist',
     label: 'Setlist',
     title: '夏季 Cover 工作集',
-    description: '整理曲目、錄音素材與輸出狀態，讓下一次錄製能立即繼續。',
+    description: '整理曲目、素材與輸出狀態。',
     action: '新增素材',
   },
   {
     id: 'lyrics',
     label: 'Lyrics',
     title: '同步歌詞工作區',
-    description: '集中確認歌詞來源、時間軸與演出時需要的提示內容。',
+    description: '確認歌詞、時間軸與演出提示。',
     action: '匯入歌詞',
   },
   {
     id: 'output',
     label: 'Output',
     title: '直播輸出工作區',
-    description: '檢查場景內容、版型與對外輸出的目前狀態。',
+    description: '檢查版型與公開輸出狀態。',
     action: '新增版型',
   },
   {
     id: 'import',
     label: 'Import',
     title: '素材匯入工作區',
-    description: '將本機素材加入曲庫，並在處理前確認來源與必要資訊。',
+    description: '加入本機素材並確認必要資訊。',
     action: '選擇檔案',
   },
 ];
@@ -75,39 +62,6 @@ const materialRows = [
   { name: '伴奏版本', detail: 'Instrumental', state: '待確認' },
   { name: '同步歌詞', detail: 'LRC · 繁體中文', state: '已完成' },
   { name: '封面影像', detail: 'PNG · 3000 × 3000', state: '需補充' },
-];
-const artifactDefinitions = [
-  {
-    id: 'session-photo',
-    kind: 'photo',
-    label: '不透明照片：直播舞台構圖',
-    initialX: 0.04,
-    initialY: 0.08,
-    rotation: -2.5,
-  },
-  {
-    id: 'session-stack',
-    kind: 'stack',
-    label: '重疊照片：封面與現場參考',
-    activatable: true,
-    activationLabel: '切換照片',
-    initialX: 0.38,
-    initialY: 0.03,
-    rotation: 1.5,
-  },
-  {
-    id: 'session-note',
-    kind: 'note',
-    label: '半透明便條：錄製前確認事項',
-    initialX: 0.66,
-    initialY: 0.54,
-    rotation: -1,
-  },
-];
-const stackImages = [
-  { src: artCardThumbnail, alt: '幾何封面版型參考' },
-  { src: trackThumbCropWide, alt: '寬幅曲目縮圖參考' },
-  { src: karaokeStackThumbnail, alt: '卡拉 OK 堆疊版型參考' },
 ];
 
 const previewClasses = computed(() => ({
@@ -130,45 +84,14 @@ function selectFolder(pageId, event) {
   activeFolderId.value = pageId;
   revealFolderTab(event);
 }
-
-function resetArtifacts() {
-  artifactCanvas.value?.reset();
-}
-
-function activateArtifact(artifactId, intent) {
-  if (artifactId !== 'session-stack') return;
-  if (intent === 'previous') {
-    showPreviousStackImage();
-    return;
-  }
-  showNextStackImage();
-}
-
-function showPreviousStackImage() {
-  stackImageIndex.value = previousFolderArtifactStackIndex(
-    stackImageIndex.value,
-    stackImages.length,
-  );
-}
-
-function showNextStackImage() {
-  stackImageIndex.value = nextFolderArtifactStackIndex(
-    stackImageIndex.value,
-    stackImages.length,
-  );
-}
 </script>
 
 <template>
   <div class="demo-page-layout">
     <header class="demo-page-layout__tools">
       <div class="demo-page-layout__tools-copy">
-        <strong>主要區塊 Folder layout</strong>
-        <p>
-          整個主要區塊就是資料夾：所有 workflow 共用低彩度 Indigo
-          material，色彩只出現在水平 tab 與 perimeter；中性文件面仍是內容主體。
-          這裡仍是外觀候選，不代表 production adoption。
-        </p>
+        <strong>Folder 外框</strong>
+        <p>Folder 外觀色屬於元件，內容保持中性。</p>
       </div>
       <div class="demo-page-layout__controls">
         <div class="demo-page-layout__control">
@@ -269,69 +192,26 @@ function showNextStackImage() {
                   :aria-labelledby="overviewTitleId"
                 >
                   <header class="demo-page-layout__section-heading">
-                    <h3 :id="overviewTitleId">工作集概覽</h3>
-                    <p>
-                      Folder shell
-                      負責識別與邊界，文件內容維持中性且可快速掃描。
-                    </p>
+                    <h3 :id="overviewTitleId">工作集摘要</h3>
+                    <p>12 首曲目，3 項待確認。</p>
                   </header>
-                  <div class="demo-page-layout__artifact-heading">
-                    <span>可移動參考物件</span>
-                    <UiButton
-                      :icon="RotateCcw"
-                      variant="secondary"
-                      @click="resetArtifacts"
-                    >
-                      重設物件位置
-                    </UiButton>
-                  </div>
-                  <UiFolderArtifactCanvas
-                    ref="artifactCanvas"
-                    :artifacts="artifactDefinitions"
-                    label="工作集可移動物件"
-                    @activate="activateArtifact"
-                  >
-                    <template #default="{ artifact }">
-                      <UiFolderArtifact
-                        v-if="artifact.kind === 'photo'"
-                        kind="photo"
-                        :src="liveStageThumbnail"
-                        alt="直播舞台版型參考"
-                        caption="不透明照片 · 舞台構圖"
-                      />
-                      <UiFolderArtifact
-                        v-else-if="artifact.kind === 'stack'"
-                        kind="stack"
-                        :images="stackImages"
-                        :active-index="stackImageIndex"
-                        title="重疊照片"
-                        @previous="showPreviousStackImage"
-                        @next="showNextStackImage"
-                      />
-                      <UiFolderArtifact
-                        v-else
-                        kind="note"
-                        material="translucent"
-                        eyebrow="錄製前確認"
-                        title="半透明便條"
-                        body="確認封面、歌詞時間軸與輸出場景；物件可以越過中間紙張，但不會跑出 Folder 操作邊界。"
-                      />
-                    </template>
-                  </UiFolderArtifactCanvas>
                   <dl class="demo-page-layout__facts">
                     <div>
-                      <dt>目前階段</dt>
-                      <dd>素材整理</dd>
+                      <dt>曲目</dt>
+                      <dd>12 首</dd>
                     </div>
                     <div>
-                      <dt>更新時間</dt>
-                      <dd>今天 18:40</dd>
+                      <dt>待確認</dt>
+                      <dd>3 項</dd>
                     </div>
                     <div>
-                      <dt>輸出目標</dt>
-                      <dd>直播＋Cover</dd>
+                      <dt>已完成</dt>
+                      <dd>9 項</dd>
                     </div>
                   </dl>
+                  <aside class="demo-page-layout__summary-note">
+                    先處理待確認素材，再檢查輸出。
+                  </aside>
                 </section>
 
                 <section
@@ -341,7 +221,6 @@ function showNextStackImage() {
                 >
                   <header class="demo-page-layout__section-heading">
                     <h3 :id="materialsTitleId">素材狀態</h3>
-                    <p>以列表與分隔線呈現，不在文件裡再堆疊卡片。</p>
                   </header>
                   <ul class="demo-page-layout__material-list">
                     <li v-for="material in materialRows" :key="material.name">
@@ -363,7 +242,6 @@ function showNextStackImage() {
                 >
                   <header class="demo-page-layout__section-heading">
                     <h3 :id="nextTitleId">接續工作</h3>
-                    <p>保留下一次操作需要的明確狀態與順序。</p>
                   </header>
                   <ol class="demo-page-layout__steps">
                     <li>確認伴奏版本與主唱錄音採樣率。</li>
@@ -378,11 +256,8 @@ function showNextStackImage() {
                   :aria-labelledby="notesTitleId"
                 >
                   <header class="demo-page-layout__section-heading">
-                    <h3 :id="notesTitleId">備註</h3>
-                    <p>
-                      長內容只在文件 body 內捲動；Folder tabs、彩色
-                      perimeter、頁面標題與主要操作都維持固定。
-                    </p>
+                    <h3 :id="notesTitleId">版面檢查</h3>
+                    <p>標題固定，內容獨立捲動。</p>
                   </header>
                 </section>
               </div>
@@ -393,9 +268,7 @@ function showNextStackImage() {
     </div>
 
     <p class="demo-page-layout__caption">
-      Tab row 永久保留 active 最大高度，選取切換只在固定 envelope
-      內移動；不會把文件起點往上或往下推。寬度切換模擬一般視窗與較窄
-      workspace，內容量切換確認 scrollbar 只在真正 overflow 時出現。
+      切換寬窄版與內容量，確認固定區與捲動範圍。
     </p>
   </div>
 </template>
@@ -689,19 +562,13 @@ function showNextStackImage() {
   border-block: var(--ui-border-width) solid var(--ui-color-border);
 }
 
-.demo-page-layout__artifact-heading {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-3);
-}
-
-.demo-page-layout__artifact-heading > span {
+.demo-page-layout__summary-note {
+  padding-inline-start: var(--ui-space-3);
+  border-inline-start: calc(var(--ui-border-width) * 2) solid
+    var(--ui-color-accent);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-label);
+  line-height: var(--ui-line-height-body);
 }
 
 .demo-page-layout__facts div {

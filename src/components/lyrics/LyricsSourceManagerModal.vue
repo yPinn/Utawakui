@@ -249,6 +249,7 @@ function sourceTierLabel(source) {
                 />
                 <UiButton
                   :icon="Trash2"
+                  intent="danger"
                   title="刪除這個歌詞來源"
                   aria-label="刪除這個歌詞來源"
                   @click="handleDelete(source)"

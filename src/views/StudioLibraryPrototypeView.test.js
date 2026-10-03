@@ -86,11 +86,18 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(setlistSource).not.toContain('tokens-v2.css');
   });
 
-  it('keeps Candidate and Current as mutually exclusive live View panels', () => {
+  it('separates the final board, live Candidate, and regression catalogue', () => {
+    expect(visualSystemSource).toContain(
+      "import DemoFinalDecisionBoard from '../components/demo/DemoFinalDecisionBoard.vue';",
+    );
+    expect(visualSystemSource).toContain("id: 'final-board'");
+    expect(visualSystemSource).toContain('最終決策板');
     expect(visualSystemSource).toContain("id: 'studio-library'");
-    expect(visualSystemSource).toContain("id: 'setlist-current'");
     expect(visualSystemSource).toContain('Studio Library Candidate');
-    expect(visualSystemSource).toContain('Setlist Current');
+    expect(visualSystemSource).toContain('元件回歸目錄');
+    expect(visualSystemSource).not.toContain('import SetlistView');
+    expect(visualSystemSource).not.toContain("id: 'setlist-current'");
+    expect(visualSystemSource).not.toContain('Setlist Current');
     expect(visualSystemSource).toContain('v-for="panel in PANELS"');
     expect(visualSystemSource).toContain(':hidden="mode !== panel.id"');
     expect(visualSystemSource).toContain('v-if="mode === panel.id"');
@@ -121,12 +128,12 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(archiveFrameSource).toContain(
       ':active-view="tabActiveView || activeView"',
     );
-    expect(appSource).toContain('isStudioLibraryComparisonMode');
+    expect(appSource).toContain('isStudioLibraryMode');
   });
 
   it('keeps real Sidebar collection changes inside the Visual System comparison view', () => {
     expect(sidebarSource).toContain("activeView.value === 'visual-system'");
-    expect(sidebarSource).toContain('isStudioLibraryComparisonMode');
+    expect(sidebarSource).toContain('isStudioLibraryMode');
     expect(sidebarSource).toContain("setActiveView('setlist')");
   });
 

@@ -74,12 +74,14 @@ function handleResizeKeydown(event) {
       :label="expandLabel"
       :aria-expanded="false"
       :aria-controls="contentId"
-      shape="inherit"
-      stretch
+      variant="accent"
+      size="lg"
+      tooltip-placement="start"
       @click="emit('expand')"
     />
 
     <div
+      v-if="expanded"
       class="app-right-dock__handle"
       :class="{
         'app-right-dock__handle--active': dockWidth.isResizing.value,
@@ -92,13 +94,9 @@ function handleResizeKeydown(event) {
       :aria-valuenow="dockWidth.width.value"
       :aria-valuetext="`${dockWidth.width.value} 像素`"
       :aria-controls="contentId"
-      :aria-expanded="expanded"
-      :aria-label="
-        expanded
-          ? '調整右側區塊寬度；方向鍵調整，Enter、空白鍵或雙擊切換摺疊'
-          : '展開右側區塊；Enter、空白鍵或雙擊'
-      "
-      @pointerdown="expanded && dockWidth.startResize($event)"
+      :aria-expanded="true"
+      aria-label="調整右側區塊寬度；方向鍵調整，Enter、空白鍵或雙擊收合"
+      @pointerdown="dockWidth.startResize($event)"
       @dblclick="emit('toggleExpanded')"
       @keydown="handleResizeKeydown"
     ></div>
@@ -142,6 +140,23 @@ function handleResizeKeydown(event) {
 
 .app-right-dock--collapsed {
   width: var(--ui-right-dock-rail-width);
+}
+
+.app-right-dock.app-right-dock--collapsed {
+  overflow: clip;
+  overflow-clip-margin: var(--ui-space-2);
+  background: transparent;
+}
+
+.app-right-dock.app-right-dock--collapsed::after {
+  border-color: transparent;
+}
+
+.app-right-dock__expand {
+  position: absolute;
+  z-index: 2;
+  inset-inline-end: 0;
+  inset-block-end: var(--ui-space-1);
 }
 
 .app-right-dock__content {

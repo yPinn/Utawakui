@@ -112,6 +112,28 @@ function contrastRatio(foreground, background) {
   return (lighter + 0.05) / (darker + 0.05);
 }
 
+function mixColors(primary, secondary, primaryWeight) {
+  const primaryChannels = primary
+    .slice(1)
+    .match(/.{2}/g)
+    .map((channel) => Number.parseInt(channel, 16));
+  const secondaryChannels = secondary
+    .slice(1)
+    .match(/.{2}/g)
+    .map((channel) => Number.parseInt(channel, 16));
+
+  return `#${primaryChannels
+    .map((channel, index) =>
+      Math.round(
+        channel * primaryWeight +
+          secondaryChannels[index] * (1 - primaryWeight),
+      )
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+}
+
 describe('Studio Library workspace prototype isolation', () => {
   it('opts into the candidate system without changing production entries', () => {
     expect(html).toContain('data-ui-system="v2"');
@@ -176,18 +198,49 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(339);
+    expect(uniqueNames.size).toBe(372);
+    for (const name of [
+      '--ui-bgm-player-min-inline-size',
+      '--ui-bgm-player-inline-size',
+      '--ui-bgm-player-max-inline-size',
+      '--ui-bgm-player-max-block-size',
+      '--ui-bgm-player-artwork-size',
+      '--ui-bgm-player-volume-inline-size',
+      '--ui-bgm-player-session-status-inline-size',
+      '--ui-bgm-player-phase-status-inline-size',
+      '--ui-bgm-player-restore-status-inline-size',
+      '--ui-bgm-player-time-inline-size',
+      '--ui-search-clear-hit-size',
+    ]) {
+      expect(uniqueNames).toContain(name);
+    }
+    expect(uniqueNames).toContain('--ui-control-track-size-md');
     expect(uniqueNames).toContain('--ui-resize-handle-hit-size');
     expect(uniqueNames).toContain('--ui-side-panel-content-inset');
     expect(uniqueNames).toContain('--ui-side-panel-section-gap');
     expect(uniqueNames).toContain('--ui-side-panel-content-gap');
     expect(uniqueNames).toContain('--ui-side-panel-list-gap');
+    expect(uniqueNames).toContain('--ui-track-list-gap');
     expect(uniqueNames).toContain('--ui-field-bg-readonly');
     expect(uniqueNames).toContain('--ui-field-bg-on-raised');
     expect(uniqueNames).toContain('--ui-kbd-min-block-size');
     expect(uniqueNames).toContain('--ui-skeleton-text-block-size');
     expect(uniqueNames).toContain('--ui-skeleton-pulse-duration');
     expect(uniqueNames).toContain('--ui-radio-size');
+    for (const token of [
+      '--ui-range-track',
+      '--ui-range-fill',
+      '--ui-range-fill-hover',
+      '--ui-range-fill-active',
+      '--ui-range-thumb',
+      '--ui-range-thumb-border',
+      '--ui-range-focus',
+      '--ui-range-invalid',
+      '--ui-range-stop',
+      '--ui-range-value',
+    ]) {
+      expect(uniqueNames).toContain(token);
+    }
     expect(uniqueNames).toContain('--ui-folder-tab-min-inline-size');
     expect(uniqueNames).toContain('--ui-folder-tab-min-inline-size-narrow');
     expect(uniqueNames).toContain('--ui-folder-artifact-canvas-min-height');
@@ -274,8 +327,14 @@ describe('Studio Library workspace prototype isolation', () => {
     expect(dark['--ui-color-current-soft']).toBe('var(--ui-color-accent-soft)');
     expect(dark['--ui-color-live']).toBe('var(--ui-palette-red-400)');
     expect(dark['--ui-color-danger']).toBe('var(--ui-palette-red-400)');
+    expect(dark['--ui-color-danger-contrast']).toBe(
+      'var(--ui-palette-neutral-950)',
+    );
     expect(light['--ui-color-live']).toBe('var(--ui-palette-red-700)');
     expect(light['--ui-color-danger']).toBe('var(--ui-palette-red-700)');
+    expect(light['--ui-color-danger-contrast']).toBe(
+      'var(--ui-palette-warm-neutral-50)',
+    );
     expect(light['--ui-color-current']).toBe('var(--ui-color-accent)');
     expect(tokens).not.toContain('--ui-color-current: var(--ui-color-live);');
   });
@@ -410,6 +469,7 @@ describe('Studio Library workspace prototype isolation', () => {
       ['--ui-color-current', '--ui-color-surface-hover'],
       ['--ui-color-current', '--ui-color-surface-selected'],
       ['--ui-color-accent-contrast', '--ui-color-accent'],
+      ['--ui-color-danger-contrast', '--ui-color-danger'],
       ['--ui-color-paper-text', '--ui-color-paper'],
     ];
     for (const status of [
@@ -433,6 +493,32 @@ describe('Studio Library workspace prototype isolation', () => {
           resolveColor(background, definitions),
         ),
         `${foreground} on ${background}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it.each([
+    ['dark', ":root[data-ui-system='v2']"],
+    ['light', ":root[data-ui-system='v2'][data-ui-theme='light']"],
+  ])('keeps %s destructive button fills at WCAG AA', (_, selector) => {
+    const definitions = {
+      ...tokenBlock(":root[data-ui-system='v2']"),
+      ...(selector.includes("data-ui-theme='light'")
+        ? tokenBlock(selector)
+        : {}),
+    };
+    const fill = resolveColor('--ui-color-danger', definitions);
+    const foreground = resolveColor('--ui-color-danger-contrast', definitions);
+
+    expect(definitions['--ui-button-danger-fill']).toBe(
+      'var(--ui-color-danger)',
+    );
+    expect(tokens).toContain('var(--ui-color-danger) 94%');
+    expect(tokens).toContain('var(--ui-color-danger) 88%');
+    for (const weight of [1, 0.94, 0.88]) {
+      expect(
+        contrastRatio(foreground, mixColors(fill, foreground, weight)),
+        `danger fill at ${weight * 100}%`,
       ).toBeGreaterThanOrEqual(4.5);
     }
   });

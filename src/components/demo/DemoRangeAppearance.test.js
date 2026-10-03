@@ -1,17 +1,19 @@
 import { readFileSync } from 'node:fs';
 import { createSSRApp, nextTick } from 'vue';
 import { renderToString } from '@vue/server-renderer';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import UiField from '../ui/UiField.vue';
 import UiRange from '../ui/UiRange.vue';
+import UiRangeControl from '../ui/range/UiRangeControl.vue';
+import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
+  hostNode,
   mount,
   textContent,
   trigger,
 } from '../ui/uiTestHost.js';
-import DemoCandidateRange from './DemoCandidateRange.vue';
 import DemoRangeAppearance from './DemoRangeAppearance.vue';
 
 const demoInputsSource = readFileSync(
@@ -23,22 +25,63 @@ const componentSource = readFileSync(
   'utf8',
 );
 const candidateSource = readFileSync(
-  new URL('./DemoCandidateRange.vue', import.meta.url),
+  new URL('../ui/range/UiRangeControl.vue', import.meta.url),
   'utf8',
 );
 const rangeSource = readFileSync(
   new URL('../ui/UiRange.vue', import.meta.url),
   'utf8',
 );
+const tokenSource = readFileSync(
+  new URL('../../styles/tokens-v2.css', import.meta.url),
+  'utf8',
+);
 
 for (const [component, filename] of [
   [DemoRangeAppearance, './DemoRangeAppearance.vue'],
-  [DemoCandidateRange, './DemoCandidateRange.vue'],
   [UiField, '../ui/UiField.vue'],
   [UiRange, '../ui/UiRange.vue'],
+  [UiRangeControl, '../ui/range/UiRangeControl.vue'],
+  [UiTooltipSurface, '../ui/tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }
+
+let body;
+
+beforeEach(() => {
+  body = hostNode('body');
+  const documentElement = hostNode('html');
+  vi.stubGlobal('document', {
+    activeElement: null,
+    body,
+    documentElement,
+    hidden: false,
+    querySelector: (selector) => (selector === 'body' ? body : null),
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  });
+  vi.stubGlobal('window', {
+    innerWidth: 1280,
+    innerHeight: 720,
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    getComputedStyle: () => ({
+      direction: 'ltr',
+      fontSize: '16px',
+      getPropertyValue: (name) =>
+        ({
+          '--ui-range-thumb-size': '1rem',
+          '--ui-floating-gap': '0.5rem',
+          '--ui-floating-viewport-inset': '0.5rem',
+        })[name] ?? '',
+    }),
+  });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe('DemoRangeAppearance', () => {
   it('mounts a dedicated Range phase after the accepted Checkbox phase', () => {
@@ -66,7 +109,7 @@ describe('DemoRangeAppearance', () => {
 
     expect(candidateIndex).toBeGreaterThanOrEqual(0);
     expect(currentIndex).toBeGreaterThan(candidateIndex);
-    expect(html).toContain('Token v2 候選 Range');
+    expect(html).toContain('Token v2／已遷移 UiRange');
     expect(html).toContain('現行 UiRange');
 
     const sequence = [
@@ -113,25 +156,28 @@ describe('DemoRangeAppearance', () => {
     expect(html).toContain('Thumb · 16 CSS px');
     expect(html).toContain('Width · 100% parent／min 0／max none');
     expect(componentSource).toContain(
-      '.demo-range-size--standard {\n  --demo-range-target-size: 2.25rem;',
+      '.demo-range-size--standard {\n  --ui-range-target-size: 2.25rem;',
     );
     expect(componentSource).toContain(
-      '.demo-range-size--compact {\n  --demo-range-target-size: 2rem;',
+      '.demo-range-size--compact {\n  --ui-range-target-size: 2rem;',
     );
     expect(componentSource).toContain(
-      '.demo-range-size--active {\n  --demo-range-target-size: 1.875rem;',
+      '.demo-range-size--active {\n  --ui-range-target-size: 1.875rem;',
     );
     expect(candidateSource).toContain(
-      'height: var(--demo-range-target-size, var(--ui-control-height));',
+      'height: var(--ui-range-target-size, var(--ui-control-height));',
     );
     expect(candidateSource).not.toContain(
-      '--demo-range-target-size: var(--ui-control-height);',
+      '--ui-range-target-size: var(--ui-control-height);',
     );
-    expect(candidateSource).toContain('--demo-range-track-size: 0.375rem;');
-    expect(candidateSource).toContain('height: var(--demo-range-track-size);');
-    expect(rangeSource).toContain('width: 100%;');
-    expect(rangeSource).toContain('min-width: 0;');
-    expect(rangeSource).not.toContain('max-width:');
+    expect(tokenSource).toContain('--ui-control-track-size-md: 0.375rem;');
+    expect(tokenSource).toContain(
+      '--ui-range-track-size: var(--ui-control-track-size-md);',
+    );
+    expect(candidateSource).toContain('height: var(--ui-range-track-size);');
+    expect(candidateSource).toContain('width: 100%;');
+    expect(candidateSource).toContain('min-width: 0;');
+    expect(candidateSource).not.toContain('max-width:');
   });
 
   it('keeps one native input over a project-owned track, fill, thumb, and optional output', async () => {
@@ -151,7 +197,9 @@ describe('DemoRangeAppearance', () => {
     }
     expect(html).toContain('Native input · full 36／32px track target');
     expect(html).toContain('Project-owned 6px track／fill');
-    expect(html).toContain('Project-owned 16px thumb');
+    expect(html).toContain(
+      'Project-owned 16px interaction thumb · hidden at rest',
+    );
     expect(html).toContain('Current Chromium native track／thumb');
     expect(candidateSource).toContain('type="range"');
     expect(candidateSource).toContain('appearance: none;');
@@ -161,11 +209,167 @@ describe('DemoRangeAppearance', () => {
     );
     expect(candidateSource).toContain('pointer-events: none;');
     expect(candidateSource).toContain('::-webkit-slider-thumb');
-    expect(candidateSource).toContain('var(--ui-color-text-muted) 70%');
-    expect(candidateSource).toContain(
-      'background: var(--demo-range-track-rest);',
-    );
+    expect(candidateSource).toContain('background: var(--ui-range-track);');
+    expect(candidateSource).toContain('background: var(--ui-range-fill);');
     expect(rangeSource).not.toContain('appearance: none;');
+  });
+
+  it('maps every Candidate color role through Token v2 range aliases', () => {
+    const aliases = [
+      '--ui-range-track: var(--ui-color-text-subtle);',
+      '--ui-range-fill: var(--ui-color-text);',
+      '--ui-range-fill-hover: var(--ui-color-accent);',
+      '--ui-range-fill-active: var(--ui-color-accent-active);',
+      '--ui-range-thumb: var(--ui-color-text);',
+      '--ui-range-thumb-border: var(--ui-color-canvas);',
+      '--ui-range-focus: var(--ui-color-focus);',
+      '--ui-range-invalid: var(--ui-color-danger);',
+      '--ui-range-stop: var(--ui-color-canvas);',
+      '--ui-range-value: var(--ui-color-text-muted);',
+    ];
+
+    for (const alias of aliases) expect(tokenSource).toContain(alias);
+    expect(candidateSource).not.toContain('--demo-range-track-rest');
+    expect(candidateSource).not.toContain('var(--ui-color-accent-soft)');
+    const styles = candidateSource.match(
+      /<style scoped>([\s\S]*?)<\/style>/u,
+    )?.[1];
+    expect(styles).not.toMatch(/#[\da-f]{3,8}\b/iu);
+  });
+
+  it('hides the thumb at rest and reveals it only for hover, active, or keyboard focus', () => {
+    expect(candidateSource).toMatch(
+      /::-webkit-slider-thumb\s*\{[\s\S]*?opacity:\s*0;/u,
+    );
+    expect(candidateSource).toMatch(
+      /:hover:not\(:disabled\)::-webkit-slider-thumb[\s\S]*?:focus-visible::-webkit-slider-thumb[\s\S]*?:active:not\(:disabled\)::-webkit-slider-thumb[\s\S]*?opacity:\s*1;/u,
+    );
+  });
+
+  it('previews a pointer-position time without changing the controlled value', async () => {
+    const { app, root } = mount(UiRangeControl, {
+      id: 'preview-time',
+      label: '播放位置',
+      modelValue: 60,
+      min: 0,
+      max: 180,
+      step: 1,
+      valueText: '1:00',
+      formatValue: (value) =>
+        `${Math.floor(value / 60)}:${String(value % 60).padStart(2, '0')}`,
+    });
+    const input = findAll(root, (node) => node.type === 'input')[0];
+    input.getBoundingClientRect = () => ({
+      bottom: 236,
+      height: 36,
+      left: 100,
+      right: 300,
+      top: 200,
+      width: 200,
+    });
+
+    trigger(input, 'onPointermove', {
+      clientX: 154,
+      pointerType: 'mouse',
+    });
+    await nextTick();
+
+    const tooltip = findAll(body, (node) => node.props.role === 'tooltip')[0];
+    expect(textContent(tooltip)).toBe('0:45');
+    expect(input.props.value).toBe(60);
+    expect(input.props['aria-valuetext']).toBe('1:00');
+    expect(input.props['aria-describedby']).toBeUndefined();
+
+    trigger(input, 'onPointerleave');
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    app.unmount();
+  });
+
+  it('clamps and step-aligns numeric pointer previews', async () => {
+    const { app, root } = mount(UiRangeControl, {
+      id: 'preview-number',
+      label: '變速',
+      modelValue: 0.65,
+      min: 0.5,
+      max: 1.5,
+      step: 0.05,
+      valueText: '0.65×',
+      formatValue: (value) => `${value.toFixed(2)}×`,
+    });
+    const input = findAll(root, (node) => node.type === 'input')[0];
+    input.getBoundingClientRect = () => ({
+      bottom: 136,
+      height: 36,
+      left: 0,
+      right: 216,
+      top: 100,
+      width: 216,
+    });
+
+    trigger(input, 'onPointermove', { clientX: 53, pointerType: 'mouse' });
+    await nextTick();
+    expect(
+      textContent(findAll(body, (node) => node.props.role === 'tooltip')[0]),
+    ).toBe('0.75×');
+
+    trigger(input, 'onPointermove', { clientX: -100, pointerType: 'mouse' });
+    await nextTick();
+    expect(
+      textContent(findAll(body, (node) => node.props.role === 'tooltip')[0]),
+    ).toBe('0.50×');
+
+    trigger(input, 'onPointermove', { clientX: 999, pointerType: 'mouse' });
+    await nextTick();
+    expect(
+      textContent(findAll(body, (node) => node.props.role === 'tooltip')[0]),
+    ).toBe('1.50×');
+    app.unmount();
+  });
+
+  it('keeps touch and disabled ranges free of pointer preview tooltips', async () => {
+    const enabled = mount(UiRangeControl, {
+      id: 'preview-touch',
+      label: '音量',
+      modelValue: 50,
+      formatValue: (value) => `${value}%`,
+    });
+    const enabledInput = findAll(
+      enabled.root,
+      (node) => node.type === 'input',
+    )[0];
+    trigger(enabledInput, 'onPointermove', {
+      clientX: 50,
+      pointerType: 'touch',
+    });
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    enabled.app.unmount();
+
+    const disabled = mount(UiRangeControl, {
+      id: 'preview-disabled',
+      label: '音量',
+      modelValue: 50,
+      disabled: true,
+      formatValue: (value) => `${value}%`,
+    });
+    const disabledInput = findAll(
+      disabled.root,
+      (node) => node.type === 'input',
+    )[0];
+    trigger(disabledInput, 'onPointermove', {
+      clientX: 50,
+      pointerType: 'mouse',
+    });
+    await nextTick();
+    expect(findAll(body, (node) => node.props.role === 'tooltip')).toHaveLength(
+      0,
+    );
+    disabled.app.unmount();
   });
 
   it('shows native step snapping with optional in-track ticks and no reserved marks row', async () => {
@@ -173,22 +377,21 @@ describe('DemoRangeAppearance', () => {
 
     expect(html.match(/data-range-stops/gu)).toHaveLength(2);
     expect(html).toContain('0／25／50／75／100 · native step 25');
-    expect(html).toContain('Candidate：5 個軌道內 ticks，不增加垂直預留');
+    expect(html).toContain('Token v2：5 個軌道內 ticks，不增加垂直預留');
     expect(html).toContain('Current：native step 吸附，沒有自訂 tick layer');
     expect(candidateSource).toContain(
       'marks: { type: Array, default: () => [] }',
     );
-    expect(candidateSource).toContain('class="demo-candidate-range__stops"');
+    expect(candidateSource).toContain('class="ui-range-control__stops"');
     expect(candidateSource).toContain('aria-hidden="true"');
     expect(candidateSource).toMatch(
-      /\.demo-candidate-range__stops[\s\S]*?pointer-events: none;/u,
+      /\.ui-range-control__stops[\s\S]*?pointer-events: none;/u,
     );
-    expect(candidateSource).toMatch(
-      /\.demo-candidate-range__value[\s\S]*?min-inline-size: 2\.5rem;[\s\S]*?font-variant-numeric: tabular-nums;/u,
-    );
+    expect(rangeSource).toContain('min-inline-size: 2.5rem;');
+    expect(rangeSource).toContain('font-variant-numeric: tabular-nums;');
     expect(candidateSource).not.toContain('min-width: 5ch;');
     expect(candidateSource).not.toContain('inline-size: 5ch;');
-    expect(candidateSource).not.toContain('demo-candidate-range__marks-row');
+    expect(candidateSource).not.toContain('ui-range-control__marks-row');
 
     const { app, root } = mount(DemoRangeAppearance);
     const input = findAll(
@@ -222,6 +425,7 @@ describe('DemoRangeAppearance', () => {
       'maximum',
       'negative',
       'fractional',
+      'time',
       'long-value-text',
       'native-value',
     ]) {
@@ -231,13 +435,14 @@ describe('DemoRangeAppearance', () => {
     }
     expect(html).toContain('−12 dB');
     expect(html).toContain('0.65×');
+    expect(html).toContain('0:59');
     expect(html).toContain('標準速度／100.0 percent');
     expect(html).toContain('No valueText · native numeric announcement');
-    expect(candidateSource).toContain("'--demo-range-ratio'");
+    expect(candidateSource).toContain("'--ui-range-ratio'");
     expect(candidateSource).toContain('Math.min(1, Math.max(0');
-    expect(candidateSource).toContain('@container (max-width: 18rem)');
-    expect(candidateSource).toContain('grid-template-columns: minmax(0, 1fr);');
-    expect(candidateSource).toMatch(
+    expect(rangeSource).toContain('@container (max-width: 18rem)');
+    expect(rangeSource).toContain('grid-template-columns: minmax(0, 1fr);');
+    expect(rangeSource).toMatch(
       /:deep\(\.ui-field__label\)[\s\S]*?overflow-wrap: anywhere;/u,
     );
     expect(componentSource).toMatch(
@@ -267,10 +472,10 @@ describe('DemoRangeAppearance', () => {
     expect(componentSource).not.toContain(':required');
     expect(componentSource).not.toContain(':readonly');
     expect(candidateSource).toMatch(
-      /:focus-visible::-webkit-slider-thumb[\s\S]*?var\(--ui-color-focus\)/u,
+      /:focus-visible::-webkit-slider-thumb[\s\S]*?var\(--ui-range-focus\)/u,
     );
     expect(candidateSource).toMatch(
-      /\[aria-invalid='true'\][\s\S]*?var\(--ui-color-danger\)/u,
+      /\[aria-invalid='true'\][\s\S]*?var\(--ui-range-invalid\)/u,
     );
   });
 
@@ -364,7 +569,7 @@ describe('DemoRangeAppearance', () => {
     expect(html).toContain('name · native attrs／listeners');
     expect(html).toContain('focus() · bounded native-control access');
     expect(html).toContain(
-      'Candidate visual track／thumb／optional in-track ticks · Native range input · No production marks／required／readonly／size prop',
+      'Formal Token v2 neutral rest fill／interaction-only thumb／pointer preview tooltip／optional in-track ticks · Native range input · No required／readonly／size prop',
     );
     expect(componentSource).toContain('demo-range-layer--candidate');
     expect(componentSource).toContain('.demo-range-layer--current');
@@ -373,6 +578,6 @@ describe('DemoRangeAppearance', () => {
     );
     expect(componentSource).toContain('@container (max-width: 48rem)');
     expect(rangeSource).not.toContain('data-range-state');
-    expect(rangeSource).not.toContain('marks:');
+    expect(rangeSource).toContain('marks:');
   });
 });

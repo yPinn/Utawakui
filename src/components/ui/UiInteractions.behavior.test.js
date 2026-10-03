@@ -153,6 +153,39 @@ describe('shared UI interaction contracts', () => {
     app.unmount();
   });
 
+  it('uses one custom search clear affordance and removes Chromium search chrome', () => {
+    const update = vi.fn();
+    const { app, root } = mount(UiSearchBox, {
+      modelValue: 'eup',
+      'onUpdate:modelValue': update,
+    });
+    const clear = findAll(
+      root,
+      (node) => node.props?.['aria-label'] === '清除搜尋',
+    )[0];
+    const source = readFileSync(
+      new URL('./UiSearchBox.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(
+      findAll(root, (node) => node.props?.['aria-label'] === '清除搜尋'),
+    ).toHaveLength(1);
+    trigger(clear, 'onClick');
+    expect(update).toHaveBeenCalledWith('');
+    expect(source).toMatch(
+      /\.ui-search-box__input::-webkit-search-cancel-button[\s\S]*appearance:\s*none;/u,
+    );
+    expect(source).toMatch(
+      /\.ui-search-box__clear\s*\{[^}]*min-inline-size:\s*var\(--ui-search-clear-hit-size\);[^}]*min-block-size:\s*var\(--ui-search-clear-hit-size\);/su,
+    );
+    expect(source).toContain("'ui-search-box__control--clearable': modelValue");
+    expect(source).toMatch(
+      /\.ui-search-box__control--clearable\s*\{[^}]*padding-inline-end:\s*var\(--ui-search-clear-hit-size\);/su,
+    );
+    app.unmount();
+  });
+
   it('turns a loading button into a disabled, announced action', () => {
     const { app, root } = mount(
       UiButton,

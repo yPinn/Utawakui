@@ -37,6 +37,7 @@ export {
   ListEnd,
   ListMinus,
   ListMusic,
+  ListOrdered,
   ListPlus,
   Loader2,
   LocateFixed,

@@ -15,6 +15,11 @@ defineProps({
     default: 'ghost',
     validator: (value) => ['ghost', 'secondary', 'accent'].includes(value),
   },
+  intent: {
+    type: String,
+    default: 'neutral',
+    validator: (value) => ['neutral', 'danger'].includes(value),
+  },
   active: { type: Boolean, default: false }, // toggle state, e.g. repeat-on
   disabled: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
@@ -30,6 +35,7 @@ defineProps({
     :aria-busy="loading || undefined"
     :class="[
       `ui-btn--${variant}`,
+      `ui-btn--intent-${intent}`,
       {
         'ui-btn--active': active,
         'ui-btn--icon-only': (icon || loading) && !$slots.default,
@@ -168,6 +174,67 @@ defineProps({
   background: var(--ui-color-accent-active);
 }
 
+.ui-btn--intent-danger.ui-btn--ghost {
+  color: var(--ui-button-danger-text);
+}
+
+.ui-btn--intent-danger.ui-btn--ghost:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
+  background: var(--ui-button-danger-surface-hover);
+  color: var(--ui-button-danger-text);
+}
+
+:global(
+  :root[data-ui-system='v2']
+    .ui-btn--intent-danger.ui-btn--ghost:not(:disabled):not(
+      [aria-disabled='true']
+    ):active
+) {
+  background: var(--ui-button-danger-surface-active);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-btn--intent-danger.ui-btn--secondary {
+  border-color: var(--ui-button-danger-border);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-btn--intent-danger.ui-btn--secondary:not(:disabled):not(
+    [aria-disabled='true']
+  ):hover {
+  border-color: var(--ui-button-danger-border);
+  background: var(--ui-button-danger-surface-hover);
+  color: var(--ui-button-danger-text);
+}
+
+:global(
+  :root[data-ui-system='v2']
+    .ui-btn--intent-danger.ui-btn--secondary:not(:disabled):not(
+      [aria-disabled='true']
+    ):active
+) {
+  border-color: var(--ui-button-danger-border);
+  background: var(--ui-button-danger-surface-active);
+  color: var(--ui-button-danger-text);
+}
+
+.ui-btn--intent-danger.ui-btn--accent {
+  background: var(--ui-button-danger-fill);
+  color: var(--ui-button-danger-contrast);
+}
+
+.ui-btn--intent-danger.ui-btn--accent:not(:disabled):hover {
+  background: var(--ui-button-danger-fill-hover);
+}
+
+:global(
+  :root[data-ui-system='v2']
+    .ui-btn--intent-danger.ui-btn--accent:not(:disabled):active
+) {
+  background: var(--ui-button-danger-fill-active);
+}
+
 .ui-btn:disabled,
 .ui-btn[aria-disabled='true'] {
   opacity: var(--ui-opacity-disabled);
@@ -188,6 +255,18 @@ defineProps({
 .ui-btn--accent:disabled,
 .ui-btn--accent[aria-disabled='true'] {
   color: var(--ui-color-accent-contrast-muted);
+}
+
+.ui-btn--intent-danger.ui-btn--ghost:disabled,
+.ui-btn--intent-danger.ui-btn--ghost[aria-disabled='true'],
+.ui-btn--intent-danger.ui-btn--secondary:disabled,
+.ui-btn--intent-danger.ui-btn--secondary[aria-disabled='true'] {
+  color: var(--ui-button-danger-text);
+}
+
+.ui-btn--intent-danger.ui-btn--accent:disabled,
+.ui-btn--intent-danger.ui-btn--accent[aria-disabled='true'] {
+  color: var(--ui-button-danger-contrast-muted);
 }
 
 .ui-btn:focus-visible {

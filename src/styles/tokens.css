@@ -156,6 +156,31 @@
   --ui-field-border: var(--ui-color-border);
   --ui-field-border-hover: var(--ui-color-border-strong);
   --ui-field-border-invalid: var(--ui-color-danger);
+  --ui-button-danger-text: var(--ui-color-danger);
+  --ui-button-danger-border: var(--ui-color-danger);
+  --ui-button-danger-surface-hover: var(--ui-color-danger-soft);
+  --ui-button-danger-surface-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 24%,
+    var(--ui-color-surface)
+  );
+  --ui-button-danger-fill: var(--ui-color-danger);
+  --ui-button-danger-fill-hover: color-mix(
+    in srgb,
+    var(--ui-color-danger) 94%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-fill-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 88%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-contrast: var(--ui-color-danger-contrast);
+  --ui-button-danger-contrast-muted: color-mix(
+    in srgb,
+    var(--ui-color-danger-contrast) 75%,
+    var(--ui-color-danger)
+  );
   --ui-checkbox-size: var(--ui-space-4);
   --ui-switch-track-width: var(--ui-space-6); /* 32px */
   --ui-switch-track-height: var(
@@ -591,6 +616,18 @@
   --ui-player-bar-panel-viewport-offset: calc(
     var(--ui-player-bar-height) + var(--ui-space-7)
   );
+  /* BGM is a shell-level floating player with its own object envelope. */
+  --ui-bgm-player-min-inline-size: 18rem;
+  --ui-bgm-player-inline-size: 20rem;
+  --ui-bgm-player-max-inline-size: 22rem;
+  --ui-bgm-player-max-block-size: 28rem;
+  --ui-bgm-player-artwork-size: 5rem;
+  --ui-bgm-player-volume-inline-size: 5rem;
+  --ui-bgm-player-session-status-inline-size: 5.5rem;
+  --ui-bgm-player-phase-status-inline-size: 4.25rem;
+  --ui-bgm-player-restore-status-inline-size: 4rem;
+  --ui-bgm-player-time-inline-size: 4.5rem;
+  --ui-search-clear-hit-size: var(--ui-field-height);
   --ui-player-tools-meter-control-height: 3.5rem; /* 56px: prominent but still compact */
   --ui-player-tools-beat-height: var(--ui-space-1);
   /* --- Shadow: row indicator --- */

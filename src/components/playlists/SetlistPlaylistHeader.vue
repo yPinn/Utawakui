@@ -87,6 +87,7 @@ const emit = defineEmits([
       />
       <UiButton
         :icon="Trash2"
+        intent="danger"
         aria-label="刪除歌單"
         title="刪除歌單(不會刪除音檔)"
         @click="emit('delete')"

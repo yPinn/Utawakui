@@ -29,7 +29,10 @@ function clear() {
 <template>
   <div class="ui-search-box" :class="attrs.class" :style="attrs.style">
     <label class="ui-search-box__label" :for="controlId">{{ label }}</label>
-    <div class="ui-search-box__control">
+    <div
+      class="ui-search-box__control"
+      :class="{ 'ui-search-box__control--clearable': modelValue }"
+    >
       <Search
         class="ui-search-box__icon"
         :size="ICON_SIZE"
@@ -78,17 +81,24 @@ function clear() {
 }
 
 .ui-search-box__control {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--ui-space-1);
   width: 100%;
   min-width: 0;
   min-height: var(--ui-field-height);
-  padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
+  padding-block: var(--ui-field-padding-block);
+  padding-inline-start: var(--ui-field-padding-inline);
+  padding-inline-end: var(--ui-field-padding-inline);
   border: var(--ui-border-width) solid var(--ui-field-border);
   border-radius: var(--ui-field-radius);
   background: var(--ui-field-bg);
   color: var(--ui-color-text-muted);
+}
+
+.ui-search-box__control--clearable {
+  padding-inline-end: var(--ui-search-clear-hit-size);
 }
 
 .ui-search-box__icon {
@@ -113,20 +123,42 @@ function clear() {
   color: var(--ui-field-placeholder);
 }
 
+.ui-search-box__input::-webkit-search-cancel-button,
+.ui-search-box__input::-webkit-search-decoration {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 .ui-search-box__clear {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-end: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
+  min-inline-size: var(--ui-search-clear-hit-size);
+  min-block-size: var(--ui-search-clear-hit-size);
   padding: 0;
   border: 0;
+  border-radius: calc(var(--ui-field-radius) - var(--ui-border-width));
   background: transparent;
   color: var(--ui-color-text-muted);
   cursor: pointer;
 }
 
 .ui-search-box__clear:hover {
+  background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
+}
+
+.ui-search-box__clear:active {
+  background: var(--ui-color-surface-active);
+}
+
+.ui-search-box__clear:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
 }
 
 .ui-search-box__clear:disabled,

@@ -18,6 +18,7 @@ import SeparationPresetControl from '../separation/SeparationPresetControl.vue';
 import PlayerBarPanel from './PlayerBarPanel.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
+import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -294,16 +295,17 @@ function handleSeparationPresetChange(presetId) {
             :title="row.minusTitle"
             @click="row.onMinus"
           />
-          <input
-            type="range"
-            :value="row.sliderValue"
+          <UiRangeControl
+            class="player-tools__range"
+            :model-value="row.sliderValue"
             :min="row.min"
             :max="row.max"
             :step="row.step"
             :disabled="!hasTrack"
+            :value-text="row.value"
+            :format-value="row.formatSliderValue"
             :aria-label="row.sliderLabel"
-            :aria-valuetext="row.value"
-            @input="row.onSliderInput($event.target.value)"
+            @update:model-value="row.onSliderInput"
           />
           <UiButton
             :icon="Plus"
@@ -353,16 +355,18 @@ function handleSeparationPresetChange(presetId) {
             </UiButton>
           </div>
           <div class="player-tools__control">
-            <input
-              type="range"
-              :value="row.sliderValue"
+            <UiRangeControl
+              class="player-tools__range"
+              :model-value="row.sliderValue"
               :min="row.min"
               :max="row.max"
               :step="row.step"
               :disabled="!hasTrack"
+              :marks="row.stops.map((stop) => stop.value)"
+              :value-text="row.value"
+              :format-value="row.formatSliderValue"
               :aria-label="row.sliderLabel"
-              :aria-valuetext="row.value"
-              @input="row.onSliderInput($event.target.value)"
+              @update:model-value="row.onSliderInput"
             />
           </div>
         </div>
@@ -660,7 +664,9 @@ function handleSeparationPresetChange(presetId) {
   gap: var(--ui-space-2);
 }
 
-.player-tools__control input {
+.player-tools__range {
+  --ui-range-target-size: var(--ui-control-height);
+
   flex: 1;
 }
 

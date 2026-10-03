@@ -65,6 +65,7 @@ const hasActiveSeparation = computed(() => props.activeWork === 'separation');
           取消
         </UiButton>
         <UiButton
+          :intent="hasActiveSeparation ? 'danger' : 'neutral'"
           :disabled="isResponding"
           :loading="pendingAction === 'quit'"
           loading-label="結束中"

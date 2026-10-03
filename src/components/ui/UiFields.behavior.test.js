@@ -4,9 +4,11 @@ import UiCheckbox from './UiCheckbox.vue';
 import UiField from './UiField.vue';
 import UiProgress from './UiProgress.vue';
 import UiRange from './UiRange.vue';
+import UiRangeControl from './range/UiRangeControl.vue';
 import UiSelect from './UiSelect.vue';
 import UiTextarea from './UiTextarea.vue';
 import UiTextField from './UiTextField.vue';
+import UiTooltipSurface from './tooltip/UiTooltipSurface.vue';
 import {
   attachClientRender,
   findAll,
@@ -20,9 +22,11 @@ for (const [component, filename] of [
   [UiCheckbox, './UiCheckbox.vue'],
   [UiProgress, './UiProgress.vue'],
   [UiRange, './UiRange.vue'],
+  [UiRangeControl, './range/UiRangeControl.vue'],
   [UiSelect, './UiSelect.vue'],
   [UiTextarea, './UiTextarea.vue'],
   [UiTextField, './UiTextField.vue'],
+  [UiTooltipSurface, './tooltip/UiTooltipSurface.vue'],
 ]) {
   attachClientRender(component, filename, import.meta.url);
 }

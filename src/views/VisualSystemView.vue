@@ -1,8 +1,8 @@
 <script setup>
 import { useVisualSystemMode } from '../composables/useVisualSystemMode.js';
 import UiTabs from '../components/ui/UiTabs.vue';
+import DemoFinalDecisionBoard from '../components/demo/DemoFinalDecisionBoard.vue';
 import DemoView from './DemoView.vue';
-import SetlistView from './SetlistView.vue';
 import StudioLibraryPrototypeView from './StudioLibraryPrototypeView.vue';
 
 // Demo and Studio Library are both facets of the same not-yet-adopted
@@ -12,13 +12,17 @@ import StudioLibraryPrototypeView from './StudioLibraryPrototypeView.vue';
 const { mode, setMode } = useVisualSystemMode();
 
 const PANELS = [
-  { id: 'demo', label: '元件展示', component: DemoView },
+  {
+    id: 'final-board',
+    label: '最終決策板',
+    component: DemoFinalDecisionBoard,
+  },
   {
     id: 'studio-library',
     label: 'Studio Library Candidate',
     component: StudioLibraryPrototypeView,
   },
-  { id: 'setlist-current', label: 'Setlist Current', component: SetlistView },
+  { id: 'demo', label: '元件回歸目錄', component: DemoView },
 ];
 const TABS = PANELS.map(({ id, label }) => ({ id, label }));
 </script>

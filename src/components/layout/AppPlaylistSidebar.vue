@@ -13,7 +13,7 @@ import {
   useSidebarWidth,
 } from '../../composables/useSidebarWidth.js';
 import {
-  isStudioLibraryComparisonMode,
+  isStudioLibraryMode,
   useVisualSystemMode,
 } from '../../composables/useVisualSystemMode.js';
 import PlaylistDetailsModal from '../playlists/PlaylistDetailsModal.vue';
@@ -45,7 +45,7 @@ const sidebarCompact = computed(
 function activateSetlistView() {
   const isViewingStudioLibrary =
     activeView.value === 'visual-system' &&
-    isStudioLibraryComparisonMode(visualSystemMode.value);
+    isStudioLibraryMode(visualSystemMode.value);
   if (!isViewingStudioLibrary) setActiveView('setlist');
 }
 

@@ -56,6 +56,7 @@ describe('WindowCloseDecisionModal', () => {
     expect(html).toContain('伴奏處理中');
     expect(html).toContain('停止並結束');
     expect(html).toContain('在背景繼續');
+    expect(html).toContain('ui-btn--intent-danger');
     expect(html).not.toContain('記住我的選擇');
   });
 });

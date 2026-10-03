@@ -26,9 +26,6 @@ function moveHandlerFrom(target) {
 }
 
 describe('useStudioLibraryInspectorWidth', () => {
-  // Module-scope singleton — re-import fresh per test so drag state from one
-  // test doesn't leak into the next, same isolation pattern this file's
-  // sibling composables rely on.
   beforeEach(() => {
     vi.resetModules();
   });
@@ -47,15 +44,14 @@ describe('useStudioLibraryInspectorWidth', () => {
       await import('./useStudioLibraryInspectorWidth.js');
     const { width, startResize } = useStudioLibraryInspectorWidth();
 
-    // Width opens at its max, so shrink first to leave headroom to grow into.
     const shrinkEvent = makeEvent({ clientX: 200 });
     startResize(shrinkEvent);
-    moveHandlerFrom(shrinkEvent.currentTarget)({ clientX: 240 }); // dragged right 40px
+    moveHandlerFrom(shrinkEvent.currentTarget)({ clientX: 240 });
     expect(width.value).toBe(240);
 
     const growEvent = makeEvent({ clientX: 200 });
     startResize(growEvent);
-    moveHandlerFrom(growEvent.currentTarget)({ clientX: 180 }); // dragged left 20px
+    moveHandlerFrom(growEvent.currentTarget)({ clientX: 180 });
 
     expect(width.value).toBe(260);
   });
@@ -67,7 +63,7 @@ describe('useStudioLibraryInspectorWidth', () => {
     const event = makeEvent({ clientX: 200 });
 
     startResize(event);
-    moveHandlerFrom(event.currentTarget)({ clientX: 210 }); // dragged right 10px
+    moveHandlerFrom(event.currentTarget)({ clientX: 210 });
 
     expect(width.value).toBe(270);
   });
@@ -79,7 +75,7 @@ describe('useStudioLibraryInspectorWidth', () => {
     const event = makeEvent({ clientX: 200 });
 
     startResize(event);
-    moveHandlerFrom(event.currentTarget)({ clientX: 1000 }); // dragged far right
+    moveHandlerFrom(event.currentTarget)({ clientX: 1000 });
 
     expect(width.value).toBe(224);
   });
@@ -91,7 +87,7 @@ describe('useStudioLibraryInspectorWidth', () => {
     const event = makeEvent({ clientX: 200 });
 
     startResize(event);
-    moveHandlerFrom(event.currentTarget)({ clientX: -1000 }); // dragged far left
+    moveHandlerFrom(event.currentTarget)({ clientX: -1000 });
 
     expect(width.value).toBe(280);
   });

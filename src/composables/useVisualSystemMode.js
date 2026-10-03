@@ -1,14 +1,11 @@
 import { readonly, ref } from 'vue';
 
-const STUDIO_LIBRARY_COMPARISON_MODES = new Set([
-  'studio-library',
-  'setlist-current',
-]);
-const MODES = new Set(['demo', ...STUDIO_LIBRARY_COMPARISON_MODES]);
-const mode = ref('demo');
+const STUDIO_LIBRARY_MODE = 'studio-library';
+const MODES = new Set(['final-board', STUDIO_LIBRARY_MODE, 'demo']);
+const mode = ref('final-board');
 
-export function isStudioLibraryComparisonMode(candidateMode) {
-  return STUDIO_LIBRARY_COMPARISON_MODES.has(candidateMode);
+export function isStudioLibraryMode(candidateMode) {
+  return candidateMode === STUDIO_LIBRARY_MODE;
 }
 
 export function useVisualSystemMode() {

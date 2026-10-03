@@ -43,6 +43,7 @@ import UiButton from '../ui/UiButton.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiMarqueeText from '../ui/UiMarqueeText.vue';
 import UiNotice from '../ui/UiNotice.vue';
+import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 defineProps({
   artworkExpandable: { type: Boolean, default: false },
@@ -109,6 +110,9 @@ const volume = computed({
 });
 
 const volumePercent = computed(() => Math.round(state.volume * 100));
+function formatVolumePercent(value) {
+  return `${Math.round(Number(value) * 100)}%`;
+}
 const canShuffle = computed(() => queueState.tracks.length > 1);
 const playbackModeIcon = computed(() =>
   state.playbackMode === PLAYBACK_MODES.repeatOne ? Repeat1 : Repeat,
@@ -327,6 +331,7 @@ const guideVocalRows = computed(() => {
       max: 1,
       step: GUIDE_VOCAL_STEP,
       sliderLabel: '導唱比例(監聽)',
+      formatSliderValue: formatVolumePercent,
       onSliderInput: throttledSetGuideVocalLevel,
     },
   ];
@@ -352,6 +357,7 @@ const guideVocalRows = computed(() => {
       max: 1,
       step: GUIDE_VOCAL_STEP,
       sliderLabel: '導唱比例(擷取)',
+      formatSliderValue: formatVolumePercent,
       onSliderInput: throttledSetCaptureGuideVocalLevel,
     });
   }
@@ -377,6 +383,8 @@ const pitchTempoRows = computed(() => [
     max: TRANSPOSE_SEMITONES_RANGE.max,
     step: 1,
     sliderLabel: '變調(半音)',
+    formatSliderValue: (value) =>
+      Number(value) > 0 ? `+${Number(value)}` : `${Number(value)}`,
     onSliderInput: (value) => setTransposeSemitones(Number(value)),
     plusDisabled:
       !state.track || state.transposeSemitones >= TRANSPOSE_SEMITONES_RANGE.max,
@@ -401,6 +409,8 @@ const pitchTempoRows = computed(() => [
     max: PITCH_CENTS_RANGE.max,
     step: 1,
     sliderLabel: '音高(音分微調)',
+    formatSliderValue: (value) =>
+      `${Number(value) > 0 ? '+' : ''}${Number(value)} cents`,
     onSliderInput: (value) => setPitchCents(Number(value)),
     plusDisabled: !state.track || state.pitchCents >= PITCH_CENTS_RANGE.max,
     plusLabel: '音高微調提高',
@@ -424,6 +434,7 @@ const pitchTempoRows = computed(() => [
     max: TEMPO_RATE_RANGE.max,
     step: 0.05,
     sliderLabel: '變速',
+    formatSliderValue: (value) => `${Number(value).toFixed(2)}x`,
     onSliderInput: (value) => setTempoRate(Number(value)),
     plusDisabled: !state.track || state.tempoRate >= TEMPO_RATE_RANGE.max,
     plusLabel: '加快',
@@ -600,15 +611,16 @@ onUnmounted(() => {
         <span class="player-bar__time">{{
           formatDuration(state.currentTime)
         }}</span>
-        <input
+        <UiRangeControl
           v-model="progress"
-          type="range"
-          min="0"
+          class="player-bar__progress-range"
+          :min="0"
           :max="state.duration || 0"
-          step="0.1"
+          :step="0.1"
           :disabled="!state.track"
+          :format-value="formatDuration"
+          :value-text="`${formatDuration(state.currentTime)} / ${formatDuration(state.duration)}`"
           aria-label="播放進度"
-          :aria-valuetext="`${formatDuration(state.currentTime)} / ${formatDuration(state.duration)}`"
         />
         <span class="player-bar__time player-bar__time--end">{{
           formatDuration(state.duration)
@@ -684,14 +696,15 @@ onUnmounted(() => {
           tooltip-suffix=" (M)"
           @click="toggleMute"
         />
-        <input
+        <UiRangeControl
           v-model="volume"
-          type="range"
-          min="0"
-          max="1"
-          step="0.01"
+          class="player-bar__volume-range"
+          :min="0"
+          :max="1"
+          :step="0.01"
+          :format-value="formatVolumePercent"
+          :value-text="`${volumePercent}%`"
           aria-label="音量"
-          :aria-valuetext="`${volumePercent}%`"
         />
       </div>
     </div>
@@ -865,7 +878,9 @@ onUnmounted(() => {
   gap: var(--ui-space-1);
 }
 
-.player-bar__progress input {
+.player-bar__progress-range {
+  --ui-range-target-size: var(--ui-space-4);
+
   flex: 1;
 }
 
@@ -939,9 +954,10 @@ onUnmounted(() => {
   gap: var(--ui-player-bar-action-gap);
 }
 
-.player-bar__volume input {
+.player-bar__volume-range {
+  --ui-range-target-size: var(--ui-space-4);
+
   width: var(--ui-player-bar-volume-slider-width);
-  margin: 0;
 }
 
 @media (forced-colors: active) {

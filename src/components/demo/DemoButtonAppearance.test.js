@@ -171,6 +171,34 @@ describe('DemoButtonAppearance', () => {
     expect(currentSource).toContain('ui-btn--secondary');
   });
 
+  it('keeps destructive intent orthogonal to action hierarchy', async () => {
+    const html = await renderToString(createSSRApp(DemoButtonAppearance));
+
+    expect(html.match(/data-button-intent="danger"/gu)).toHaveLength(2);
+    expect(html.match(/ui-btn--intent-danger/gu)).toHaveLength(6);
+    expect(html.match(/Destructive · Ghost／Secondary／Accent/gu)).toHaveLength(
+      2,
+    );
+    expect(candidateSource).toContain("['neutral', 'danger'].includes(value)");
+    expect(candidateSource).toContain('`ui-btn--intent-${intent}`');
+    expect(candidateSource).toMatch(
+      /\.ui-btn--intent-danger\.ui-btn--ghost\s*\{[^}]*color:\s*var\(--ui-button-danger-text\);/su,
+    );
+    expect(candidateSource).toMatch(
+      /\.ui-btn--intent-danger\.ui-btn--accent\s*\{[^}]*background:\s*var\(--ui-button-danger-fill\);[^}]*color:\s*var\(--ui-button-danger-contrast\);/su,
+    );
+
+    const danger = mount(
+      UiButton,
+      { variant: 'secondary', intent: 'danger' },
+      { default: () => '刪除曲目' },
+    );
+    const button = findAll(danger.root, (node) => node.type === 'button')[0];
+    expect(String(button.props.class)).toContain('ui-btn--secondary');
+    expect(String(button.props.class)).toContain('ui-btn--intent-danger');
+    danger.app.unmount();
+  });
+
   it('aligns real Field and Button controls through one density scope', async () => {
     const html = await renderToString(createSSRApp(DemoButtonAppearance));
 
@@ -268,7 +296,7 @@ describe('DemoButtonAppearance', () => {
     }
     expect(html.match(/data-button-coverage-matrix/gu)).toHaveLength(2);
     expect(html).toContain('Secondary／Accent');
-    expect(html.match(/Secondary／Accent/gu)).toHaveLength(2);
+    expect(html.match(/Secondary／Accent/gu)).toHaveLength(4);
     expect(candidateSource).toMatch(
       /\.ui-btn--ghost[^}]*background:\s*transparent/su,
     );
@@ -325,14 +353,13 @@ describe('DemoButtonAppearance', () => {
 
     expect(html).toContain('type · button／submit／reset');
     expect(html.match(/variant · secondary／ghost／accent/gu)).toHaveLength(2);
+    expect(html.match(/intent · neutral／danger/gu)).toHaveLength(2);
     expect(html).toContain(
       'active · visual state；toggle caller supplies aria-pressed',
     );
     expect(html).toContain('disabled · loading · loadingLabel');
     expect(html).toContain('icon · default slot · native attrs／events');
-    expect(html).toContain(
-      'No size prop · No readonly · No destructive variant',
-    );
+    expect(html).toContain('No size prop · No readonly');
     expect(componentSource).toContain('demo-button-layer--candidate');
     expect(componentSource).toContain('.demo-button-layer--current');
     expect(componentSource).toContain(

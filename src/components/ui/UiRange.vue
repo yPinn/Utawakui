@@ -2,6 +2,7 @@
 import { useAttrs, useTemplateRef } from 'vue';
 import { nativeControlAttrs } from './fieldAttrs.js';
 import UiField from './UiField.vue';
+import UiRangeControl from './range/UiRangeControl.vue';
 
 defineOptions({ inheritAttrs: false });
 
@@ -12,7 +13,9 @@ defineProps({
   min: { type: Number, default: 0 },
   max: { type: Number, default: 100 },
   step: { type: Number, default: 1 },
+  marks: { type: Array, default: () => [] },
   valueText: { type: String, default: '' },
+  formatValue: { type: Function, default: null },
   hint: { type: String, default: '' },
   error: { type: String, default: '' },
   disabled: { type: Boolean, default: false },
@@ -24,10 +27,7 @@ const emit = defineEmits(['update:modelValue']);
 const attrs = useAttrs();
 const rangeRef = useTemplateRef('range');
 
-function updateValue(event) {
-  const value = Number.isFinite(event.target.valueAsNumber)
-    ? event.target.valueAsNumber
-    : Number(event.target.value);
+function updateValue(value) {
   emit('update:modelValue', value);
 }
 
@@ -41,7 +41,7 @@ defineExpose({ focus });
 <template>
   <UiField
     :id="id"
-    :class="attrs.class"
+    :class="[attrs.class, 'ui-range', { 'is-disabled': disabled }]"
     :style="attrs.style"
     :label="label"
     :hint="hint"
@@ -51,22 +51,23 @@ defineExpose({ focus });
     :label-hidden="labelHidden"
   >
     <template #default="{ describedBy, invalid: fieldInvalid }">
-      <div class="ui-range">
-        <input
+      <div class="ui-range__layout" :class="{ 'has-value-text': valueText }">
+        <UiRangeControl
           v-bind="nativeControlAttrs(attrs)"
           :id="id"
           ref="range"
           class="ui-range__control"
-          type="range"
-          :value="modelValue"
+          :model-value="modelValue"
           :min="min"
           :max="max"
           :step="step"
+          :marks="marks"
+          :value-text="valueText"
+          :format-value="formatValue"
           :disabled="disabled"
+          :invalid="fieldInvalid"
           :aria-describedby="describedBy"
-          :aria-invalid="fieldInvalid || undefined"
-          :aria-valuetext="valueText || undefined"
-          @input="updateValue"
+          @update:model-value="updateValue"
         />
         <output v-if="valueText" class="ui-range__value" :for="id">
           {{ valueText }}
@@ -79,6 +80,11 @@ defineExpose({ focus });
 <style scoped>
 .ui-range {
   min-width: 0;
+  container-type: inline-size;
+}
+
+.ui-range__layout {
+  min-width: 0;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
@@ -87,27 +93,8 @@ defineExpose({ focus });
 }
 
 .ui-range__control {
-  width: 100%;
-  min-width: 0;
-  height: var(--ui-range-track-size);
-  margin: 0;
-  accent-color: var(--ui-color-accent);
-  cursor: pointer;
-}
-
-.ui-range__control::-webkit-slider-thumb {
-  width: var(--ui-range-thumb-size);
-  height: var(--ui-range-thumb-size);
-}
-
-.ui-range__control:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
-}
-
-.ui-range__control:disabled {
-  cursor: not-allowed;
-  opacity: var(--ui-opacity-disabled);
+  --ui-range-control-active-height: var(--ui-range-track-size);
+  --ui-range-target-size: var(--ui-control-height);
 }
 
 .ui-range__value {
@@ -116,5 +103,42 @@ defineExpose({ focus });
   font-size: var(--ui-font-size-sm);
   font-variant-numeric: tabular-nums;
   text-align: end;
+}
+
+:global(:root[data-ui-system='v2'] .ui-range) :deep(.ui-field__label) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:global(:root[data-ui-system='v2'] .ui-range__value) {
+  min-inline-size: 2.5rem;
+  color: var(--ui-color-text-muted);
+  line-height: var(--ui-line-height-caption);
+  overflow-wrap: anywhere;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+:global(:root[data-ui-system='v2'] .ui-range.is-disabled) {
+  opacity: var(--ui-opacity-disabled);
+}
+
+:global(
+  :root[data-ui-system='v2'] .ui-range.is-disabled .ui-range-control.is-disabled
+) {
+  opacity: 1;
+}
+
+@container (max-width: 18rem) {
+  :global(:root[data-ui-system='v2'] .ui-range__layout.has-value-text) {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  :global(:root[data-ui-system='v2'] .ui-range__value) {
+    justify-self: end;
+  }
 }
 </style>

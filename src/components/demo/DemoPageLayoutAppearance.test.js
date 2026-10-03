@@ -32,55 +32,39 @@ describe('DemoPageLayoutAppearance', () => {
     expect(html).toContain('aria-label="Folder 頁面"');
     expect(html).toContain('aria-current="page"');
     expect(html).toContain('夏季 Cover 工作集');
-    expect(html).toContain('工作集概覽');
+    expect(html).toContain('工作集摘要');
     expect(html).toContain('素材狀態');
     expect(html).toContain('demo-page-layout__body');
   });
 
-  it('demonstrates bounded photo, note, and stack artifacts with an explicit reset', async () => {
+  it('keeps the layout evidence without engineering annotations or decorative artifacts', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(source).toContain(
-      "import UiFolderArtifact from '../ui/UiFolderArtifact.vue';",
-    );
-    expect(source).toContain(
-      "import UiFolderArtifactCanvas from '../ui/UiFolderArtifactCanvas.vue';",
-    );
-    expect(html).toContain('aria-label="工作集可移動物件"');
-    expect(html).toContain('重設物件位置');
-    expect(html).toContain('半透明便條');
-    expect(html).toContain('不透明照片');
-    expect(html).toContain('重疊照片');
-    expect(source).toContain('artifactCanvas.value?.reset()');
+    expect(source).not.toContain('UiFolderArtifact');
+    expect(source).not.toContain('folderArtifactStack');
+    expect(source).not.toContain('artifactDefinitions');
+    expect(html).not.toContain('可移動參考物件');
+    expect(html).not.toContain('重設物件位置');
+    expect(html).toContain('工作集摘要');
+    expect(html).toContain('Folder 外觀色屬於元件，內容保持中性。');
+    expect(html).toContain('曲目');
+    expect(html).toContain('待確認');
+    expect(html).toContain('已完成');
+    expect(html).not.toContain('ownership');
+    expect(html).not.toContain('AppArchiveFrame');
+    expect(html).not.toContain('UiPageHeader');
+    expect(html).not.toContain('Feature content');
   });
 
-  it('navigates the photo stack in both directions as session-only page state', async () => {
+  it('removes migration status from the visible layout preview', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(source).toContain('const stackImageIndex = shallowRef(0);');
-    expect(source).toContain('nextFolderArtifactStackIndex');
-    expect(source).toContain('previousFolderArtifactStackIndex');
-    expect(source).toContain('function activateArtifact(artifactId, intent)');
-    expect(source).toContain("if (intent === 'previous')");
-    expect(source).toContain('function showPreviousStackImage()');
-    expect(source).toContain('function showNextStackImage()');
-    expect(source).toContain('@activate="activateArtifact"');
-    expect(source).toContain('@previous="showPreviousStackImage"');
-    expect(source).toContain('@next="showNextStackImage"');
-    expect(source).toContain(':active-index="stackImageIndex"');
-    expect(source).not.toContain('localStorage');
-    expect(html).toContain('1 / 3');
-  });
-
-  it('lets artifact kind own material without exposing appearance state', async () => {
-    const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
-
-    expect(source).not.toContain('appearance:');
-    expect(source).not.toContain(':appearance=');
-    expect(source).not.toContain('@appearance-change');
-    expect(source).not.toContain('changeArtifactAppearance');
-    expect(html).not.toContain('更多操作');
-    expect(source).not.toContain('localStorage');
+    expect(source).not.toContain('demo-page-layout__review-status');
+    expect(html).not.toContain('Candidate review');
+    expect(html).not.toContain('Layout contract');
+    expect(html).not.toContain('Production adoption');
+    expect(html).not.toContain('待 owner 拍板');
+    expect(html).not.toContain('尚未遷移');
   });
 
   it('keeps every specimen landmark id unique when embedded in the catalogue', async () => {

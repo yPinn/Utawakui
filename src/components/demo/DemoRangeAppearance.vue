@@ -2,7 +2,6 @@
 import { reactive } from 'vue';
 import UiRange from '../ui/UiRange.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
-import DemoCandidateRange from './DemoCandidateRange.vue';
 
 function formatPercent(value) {
   return `${value}%`;
@@ -11,6 +10,11 @@ function formatPercent(value) {
 function formatSignedDecibels(value) {
   const sign = value < 0 ? '−' : value > 0 ? '+' : '';
   return `${sign}${Math.abs(value)} dB`;
+}
+
+function formatDuration(value) {
+  const seconds = Math.max(0, Math.round(value));
+  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 const WIDTH_CASES = [
@@ -61,6 +65,16 @@ const CONTENT_CASES = [
     note: 'Number remains numeric through v-model',
   },
   {
+    key: 'time',
+    label: 'Time value',
+    value: 59,
+    min: 0,
+    max: 173,
+    step: 1,
+    formatValue: formatDuration,
+    note: 'Hover preview formats pointer position as time',
+  },
+  {
     key: 'long-value-text',
     label: 'Long valueText',
     value: 100,
@@ -93,8 +107,8 @@ const STATES = [
     formatValue: formatPercent,
     candidate: [
       ['complete', '36px'],
-      ['complete', 'Accent fill'],
-      ['complete', '16px'],
+      ['complete', 'Neutral fill'],
+      ['complete', 'Hidden'],
       ['complete', '50%'],
       ['complete', 'Numeric'],
     ],
@@ -154,7 +168,7 @@ const STATES = [
     candidate: [
       ['complete', '36px'],
       ['base', 'Stable'],
-      ['complete', 'Soft halo'],
+      ['complete', 'Visible'],
       ['complete', '60%'],
       ['complete', ':hover'],
     ],
@@ -173,8 +187,8 @@ const STATES = [
     formatValue: formatPercent,
     candidate: [
       ['complete', '36px'],
-      ['base', 'Stable'],
-      ['complete', 'Indigo ring'],
+      ['complete', 'Accent fill'],
+      ['complete', 'Visible + ring'],
       ['complete', '45%'],
       ['complete', 'Keyboard'],
     ],
@@ -247,16 +261,16 @@ const LAYERS = [
   {
     key: 'candidate',
     className: 'demo-range-layer--candidate',
-    title: 'Token v2 候選 Range',
-    note: 'Native input 擁有數值與互動；project-owned track／fill／thumb 只處理可見契約。',
+    title: 'Token v2／已遷移 UiRange',
+    note: '正式 UiRange 保留 native input 數值與互動權威；共用 control primitive 只擁有 track／fill／thumb 與 pointer preview。',
     geometryNote:
-      '完整軌道 target 隨離散 density 映射；6px track 與 16px thumb 保持固定。',
+      '完整軌道 target 隨離散 density 映射；6px track 固定，16px thumb 只在互動時顯示。',
     contracts: [
       'Track · 6 CSS px',
       'Thumb · 16 CSS px',
       'Width · 100% parent／min 0／max none',
     ],
-    component: DemoCandidateRange,
+    component: UiRange,
     sizes: [
       ['standard', 'Standard target · 36 CSS px'],
       ['compact', 'Compact target · 32 CSS px'],
@@ -314,6 +328,10 @@ function contentValueText(layer, content) {
 function stateValueText(layer, state) {
   return state.formatValue(values[layer.key].states[state.key]);
 }
+
+function candidatePreviewProps(layer, formatValue) {
+  return layer.key === 'candidate' ? { formatValue } : {};
+}
 </script>
 
 <template>
@@ -361,6 +379,7 @@ function stateValueText(layer, state) {
               v-model="values[layer.key].sizes[size[0]]"
               :label="`${size[1]} 音量`"
               :value-text="`${values[layer.key].sizes[size[0]]}%`"
+              v-bind="candidatePreviewProps(layer, formatPercent)"
             />
           </article>
         </div>
@@ -379,6 +398,7 @@ function stateValueText(layer, state) {
               v-model="values[layer.key].widths[width[0]]"
               :label="`${width[1]} output level`"
               :value-text="`${values[layer.key].widths[width[0]]}%`"
+              v-bind="candidatePreviewProps(layer, formatPercent)"
             />
           </article>
         </div>
@@ -400,6 +420,7 @@ function stateValueText(layer, state) {
             label="輸出音量"
             :value-text="`${values[layer.key].anatomy}%`"
             hint="方向鍵依 step 微調；Home／End 到達邊界。"
+            v-bind="candidatePreviewProps(layer, formatPercent)"
           />
           <ol class="demo-range-anatomy__map" aria-label="Range anatomy map">
             <li data-range-anatomy="input">
@@ -425,7 +446,7 @@ function stateValueText(layer, state) {
               <b>4</b
               ><span>{{
                 layer.key === 'candidate'
-                  ? 'Project-owned 16px thumb'
+                  ? 'Project-owned 16px interaction thumb · hidden at rest'
                   : 'Chromium native 16px thumb'
               }}</span>
             </li>
@@ -443,8 +464,8 @@ function stateValueText(layer, state) {
         <header class="demo-range-subsection__header">
           <h5>數值與格式內容</h5>
           <p>
-            modelValue 保持 Number；valueText 只負責可見格式與
-            aria-valuetext，不改變數值域。
+            modelValue 保持 Number；valueText 描述目前值並供
+            aria-valuetext，formatValue 只格式化 hover preview。
           </p>
         </header>
         <div class="demo-range-content-list">
@@ -464,6 +485,7 @@ function stateValueText(layer, state) {
               :max="content.max"
               :step="content.step"
               :value-text="contentValueText(layer, content)"
+              v-bind="candidatePreviewProps(layer, content.formatValue)"
             />
             <p>{{ content.note }}</p>
           </article>
@@ -488,12 +510,16 @@ function stateValueText(layer, state) {
             :max="100"
             :step="25"
             :value-text="`${values[layer.key].stops}%`"
-            v-bind="layer.key === 'candidate' ? { marks: STOP_VALUES } : {}"
+            v-bind="
+              layer.key === 'candidate'
+                ? { marks: STOP_VALUES, formatValue: formatPercent }
+                : {}
+            "
           />
           <p>
             {{
               layer.key === 'candidate'
-                ? 'Candidate：5 個軌道內 ticks，不增加垂直預留'
+                ? 'Token v2：5 個軌道內 ticks，不增加垂直預留'
                 : 'Current：native step 吸附，沒有自訂 tick layer'
             }}
           </p>
@@ -504,8 +530,9 @@ function stateValueText(layer, state) {
         <header class="demo-range-subsection__header">
           <h5>狀態外觀與覆蓋</h5>
           <p>
-            Range 沒有 empty／filled 二分；min、mid、max
-            都是有效值，鍵盤焦點落在 thumb。
+            Range 沒有 empty／filled 二分；min、mid、max 都是有效值。Rest 隱藏
+            thumb；hover 顯示 pointer preview，鍵盤焦點顯示 thumb 與 focus
+            ring。
           </p>
         </header>
         <div class="demo-range-state-list">
@@ -527,6 +554,7 @@ function stateValueText(layer, state) {
               :invalid="state.invalid"
               :error="state.error"
               :disabled="state.disabled"
+              v-bind="candidatePreviewProps(layer, state.formatValue)"
             />
           </article>
         </div>
@@ -589,6 +617,7 @@ function stateValueText(layer, state) {
               aria-describedby="range-external-note"
               :name="`demo-range-${layer.key}-level`"
               data-contract="native-forwarding"
+              v-bind="candidatePreviewProps(layer, formatPercent)"
             />
           </article>
           <b aria-hidden="true">→</b>
@@ -605,6 +634,9 @@ function stateValueText(layer, state) {
               hint="建議維持在 50% 至 120%。"
               error="速度超過這個處理流程的建議值。"
               aria-describedby="range-external-note"
+              v-bind="
+                candidatePreviewProps(layer, (value) => `超過建議值：${value}%`)
+              "
             />
           </article>
         </div>
@@ -623,7 +655,9 @@ function stateValueText(layer, state) {
           </div>
           <div>
             <dt>Display</dt>
-            <dd>valueText → output／aria-valuetext</dd>
+            <dd>
+              valueText → output／aria-valuetext · formatValue → hover preview
+            </dd>
           </div>
           <div>
             <dt>Browser</dt>
@@ -641,7 +675,7 @@ function stateValueText(layer, state) {
         <p>
           {{
             layer.key === 'candidate'
-              ? 'Candidate visual track／thumb／optional in-track ticks · Native range input · No production marks／required／readonly／size prop'
+              ? 'Formal Token v2 neutral rest fill／interaction-only thumb／pointer preview tooltip／optional in-track ticks · Native range input · No required／readonly／size prop'
               : 'Native visual track／thumb · No required／readonly／size prop'
           }}
         </p>
@@ -791,15 +825,15 @@ function stateValueText(layer, state) {
 }
 
 .demo-range-size--standard {
-  --demo-range-target-size: 2.25rem;
+  --ui-range-target-size: 2.25rem;
 }
 
 .demo-range-size--compact {
-  --demo-range-target-size: 2rem;
+  --ui-range-target-size: 2rem;
 }
 
 .demo-range-size--active {
-  --demo-range-target-size: 1.875rem;
+  --ui-range-target-size: 1.875rem;
 }
 
 .demo-range-width--narrow {
@@ -850,24 +884,27 @@ function stateValueText(layer, state) {
 }
 
 .demo-range-state[data-range-state='hover']
-  :deep(.demo-candidate-range__native::-webkit-slider-thumb) {
-  box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ui-color-canvas) 70%, transparent),
-    0 0 0 var(--ui-space-1) var(--ui-color-accent-soft);
+  :deep(.ui-range-control__native::-webkit-slider-thumb) {
+  opacity: 1;
+}
+
+.demo-range-state[data-range-state='hover'] :deep(.ui-range-control__fill),
+.demo-range-state[data-range-state='focus'] :deep(.ui-range-control__fill) {
+  background: var(--ui-range-fill-hover);
 }
 
 .demo-range-state[data-range-state='focus']
-  :deep(.demo-candidate-range__native::-webkit-slider-thumb) {
+  :deep(.ui-range-control__native::-webkit-slider-thumb) {
+  opacity: 1;
   box-shadow:
-    0 1px 2px color-mix(in srgb, var(--ui-color-canvas) 70%, transparent),
-    0 0 0 var(--ui-focus-offset) var(--ui-color-canvas),
+    0 0 0 var(--ui-focus-offset) var(--ui-range-thumb-border),
     0 0 0 calc(var(--ui-focus-offset) + var(--ui-focus-width))
-      var(--ui-color-focus);
+      var(--ui-range-focus);
 }
 
 .demo-range-layer--current
   .demo-range-state[data-range-state='focus']
-  :deep(.ui-range__control) {
+  :deep(.ui-range-control__native) {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
@@ -960,6 +997,32 @@ function stateValueText(layer, state) {
   --ui-color-text: #f7f1e7;
   --ui-color-text-muted: #aeb8b6;
   --ui-opacity-disabled: 0.5;
+}
+
+.demo-range-layer--current :deep(.ui-range-control) {
+  height: auto;
+}
+
+.demo-range-layer--current :deep(.ui-range-control__native) {
+  position: static;
+  height: var(--ui-range-track-size);
+  appearance: auto;
+  background: initial;
+}
+
+.demo-range-layer--current
+  :deep(.ui-range-control__native::-webkit-slider-thumb) {
+  margin-block-start: 0;
+  appearance: auto;
+  border: initial;
+  background: initial;
+  box-shadow: none;
+  opacity: 1;
+  transition: none;
+}
+
+.demo-range-layer--current :deep(.ui-range-control__track) {
+  display: none;
 }
 
 :global(:root[data-ui-theme='light'] .demo-range-layer--current) {

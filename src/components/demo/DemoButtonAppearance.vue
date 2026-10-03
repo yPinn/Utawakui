@@ -14,10 +14,11 @@ const LAYERS = [
     secondaryLabel: 'Secondary',
     statePair: 'Secondary／Accent',
     appearanceContract: 'variant · secondary／ghost／accent',
+    intentContract: 'intent · neutral／danger',
     publicNote:
       '正式元件將可辨識的 Secondary 與 contextual Ghost 分責，但不加入產品領域語意。',
     iconBoundary: '純圖示操作 → UiIconButton',
-    contractBoundary: 'No size prop · No readonly · No destructive variant',
+    contractBoundary: 'No size prop · No readonly',
     component: UiButton,
     sizes: [
       ['standard', 'Standard · 36 CSS px'],
@@ -34,11 +35,11 @@ const LAYERS = [
     secondaryLabel: 'Secondary',
     statePair: 'Secondary／Accent',
     appearanceContract: 'variant · secondary／ghost／accent',
+    intentContract: 'intent · neutral／danger',
     publicNote: '同一 bounded API 在 active token scope 下維持可用。',
     iconBoundary:
       '現行仍含 icon-only compatibility branch；新用法 → UiIconButton',
-    contractBoundary:
-      'No size prop · Legacy icon-only branch · No destructive variant',
+    contractBoundary: 'No size prop · Legacy icon-only branch · No readonly',
     component: UiButton,
     sizes: [['active', 'Current · 30 CSS px']],
   },
@@ -197,6 +198,22 @@ function stateProps(state, variant) {
             </component>
           </article>
         </div>
+        <article class="demo-button-intent" data-button-intent="danger">
+          <span>Destructive · Ghost／Secondary／Accent</span>
+          <div>
+            <component :is="layer.component" intent="danger"> 移除 </component>
+            <component
+              :is="layer.component"
+              variant="secondary"
+              intent="danger"
+            >
+              刪除
+            </component>
+            <component :is="layer.component" variant="accent" intent="danger">
+              確認刪除
+            </component>
+          </div>
+        </article>
       </section>
 
       <section class="demo-button-subsection">
@@ -422,6 +439,10 @@ function stateProps(state, variant) {
             <dd>{{ layer.appearanceContract }}</dd>
           </div>
           <div>
+            <dt>Intent</dt>
+            <dd>{{ layer.intentContract }}</dd>
+          </div>
+          <div>
             <dt>Toggle</dt>
             <dd>active · visual state；toggle caller supplies aria-pressed</dd>
           </div>
@@ -545,6 +566,26 @@ function stateProps(state, variant) {
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
+}
+
+.demo-button-intent {
+  min-width: 0;
+  display: grid;
+  gap: var(--ui-space-2);
+  padding-block-start: var(--ui-space-1);
+}
+
+.demo-button-intent > span {
+  color: var(--ui-color-text-subtle);
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.demo-button-intent > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2);
 }
 
 .demo-button-size--standard {

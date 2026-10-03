@@ -153,9 +153,9 @@ describe('PlayerBar responsive metadata layout', () => {
   it('uses density-aware action geometry and resets the native volume input box model', () => {
     const extrasRule = cssRule(componentSource, '.player-bar__extras');
     const volumeRule = cssRule(componentSource, '.player-bar__volume');
-    const volumeInputRule = cssRule(
+    const volumeRangeRule = cssRule(
       componentSource,
-      '.player-bar__volume input',
+      '.player-bar__volume-range',
     );
 
     expect(extrasRule).toContain(
@@ -166,10 +166,10 @@ describe('PlayerBar responsive metadata layout', () => {
       /\.player-bar__context-actions,[\s\S]*?gap:\s*var\(--ui-player-bar-action-gap\)/u,
     );
     expect(volumeRule).toContain('gap: var(--ui-player-bar-action-gap)');
-    expect(volumeInputRule).toContain(
+    expect(volumeRangeRule).toContain(
       'width: var(--ui-player-bar-volume-slider-width)',
     );
-    expect(volumeInputRule).toContain('margin: 0');
+    expect(componentSource).toContain('UiRangeControl');
     expect(tokenSource).toContain('--ui-player-bar-action-size:');
     expect(tokenSource).toContain('--ui-player-bar-action-gap:');
     expect(tokenSource).toContain('--ui-player-bar-group-gap:');
@@ -179,7 +179,7 @@ describe('PlayerBar responsive metadata layout', () => {
   });
 
   it('keeps the exact volume accessible without a persistent percentage label', () => {
-    expect(componentSource).toContain(':aria-valuetext="`${volumePercent}%`"');
+    expect(componentSource).toContain(':value-text="`${volumePercent}%`"');
     expect(componentSource).not.toContain('{{ volumePercent }}%');
     expect(componentSource).not.toContain('class="player-bar__volume-value"');
     expect(componentSource).not.toContain('.player-bar__volume-value');

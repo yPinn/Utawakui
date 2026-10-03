@@ -136,6 +136,7 @@
   --ui-control-height: 2.25rem;
   --ui-control-height-live: 2.75rem;
   --ui-control-height-emergency: 3rem;
+  --ui-control-track-size-md: 0.375rem;
   --ui-track-row-min-height: 3.25rem;
   --ui-sidebar-row-min-height: 3.25rem;
   --ui-track-artwork-size-dense: 2.25rem;
@@ -301,6 +302,7 @@
   --ui-color-warning: var(--ui-palette-amber-400);
   --ui-color-live: var(--ui-palette-red-400);
   --ui-color-danger: var(--ui-palette-red-400);
+  --ui-color-danger-contrast: var(--ui-palette-neutral-950);
   --ui-color-status-contrast: var(--ui-palette-neutral-950);
   --ui-color-status-outline: var(--ui-color-text);
 
@@ -375,14 +377,49 @@
   --ui-field-border: var(--ui-color-border);
   --ui-field-border-hover: var(--ui-color-border-strong);
   --ui-field-border-invalid: var(--ui-color-danger);
+  --ui-button-danger-text: var(--ui-color-danger);
+  --ui-button-danger-border: var(--ui-color-danger);
+  --ui-button-danger-surface-hover: var(--ui-color-danger-soft);
+  --ui-button-danger-surface-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 24%,
+    var(--ui-color-surface)
+  );
+  --ui-button-danger-fill: var(--ui-color-danger);
+  --ui-button-danger-fill-hover: color-mix(
+    in srgb,
+    var(--ui-color-danger) 94%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-fill-active: color-mix(
+    in srgb,
+    var(--ui-color-danger) 88%,
+    var(--ui-color-danger-contrast)
+  );
+  --ui-button-danger-contrast: var(--ui-color-danger-contrast);
+  --ui-button-danger-contrast-muted: color-mix(
+    in srgb,
+    var(--ui-color-danger-contrast) 75%,
+    var(--ui-color-danger)
+  );
   --ui-checkbox-size: var(--ui-space-4);
   --ui-switch-track-width: var(--ui-space-6);
   --ui-switch-track-height: var(--ui-space-4);
   --ui-switch-thumb-size: var(--ui-space-3);
   --ui-switch-thumb-inset: 2px;
   --ui-breadcrumb-segment-max-inline-size: 12rem;
-  --ui-range-track-size: var(--ui-space-1);
+  --ui-range-track-size: var(--ui-control-track-size-md);
   --ui-range-thumb-size: var(--ui-space-4);
+  --ui-range-track: var(--ui-color-text-subtle);
+  --ui-range-fill: var(--ui-color-text);
+  --ui-range-fill-hover: var(--ui-color-accent);
+  --ui-range-fill-active: var(--ui-color-accent-active);
+  --ui-range-thumb: var(--ui-color-text);
+  --ui-range-thumb-border: var(--ui-color-canvas);
+  --ui-range-focus: var(--ui-color-focus);
+  --ui-range-invalid: var(--ui-color-danger);
+  --ui-range-stop: var(--ui-color-canvas);
+  --ui-range-value: var(--ui-color-text-muted);
   --ui-progress-track-size: var(--ui-space-2);
   --ui-kbd-min-block-size: var(--ui-space-5);
   --ui-kbd-padding-inline: var(--ui-space-2);
@@ -434,6 +471,17 @@
   --ui-notification-swipe-dismiss-distance: 4.5rem;
   --ui-icon-button-size-md: var(--ui-control-height);
   --ui-icon-button-size-lg: var(--ui-control-height-live);
+  --ui-bgm-player-min-inline-size: 18rem;
+  --ui-bgm-player-inline-size: 20rem;
+  --ui-bgm-player-max-inline-size: 22rem;
+  --ui-bgm-player-max-block-size: 28rem;
+  --ui-bgm-player-artwork-size: 5rem;
+  --ui-bgm-player-volume-inline-size: 5rem;
+  --ui-bgm-player-session-status-inline-size: 5.5rem;
+  --ui-bgm-player-phase-status-inline-size: 4.25rem;
+  --ui-bgm-player-restore-status-inline-size: 4rem;
+  --ui-bgm-player-time-inline-size: 4.5rem;
+  --ui-search-clear-hit-size: var(--ui-field-height);
   --ui-menu-item-height: 2rem;
   --ui-modal-inline-size-small: 24rem;
   --ui-modal-inline-size-medium: 32rem;
@@ -454,6 +502,7 @@
   --ui-track-row-padding-block: var(--ui-space-1);
   --ui-track-row-padding-inline: var(--ui-space-3);
   --ui-track-row-state-surface-outset-inline: 0;
+  --ui-track-list-gap: var(--ui-space-1);
   --ui-row-active-shadow: inset 2px 0 0 var(--ui-color-accent);
   --ui-playlist-row-state-surface-outset-inline: var(
     --ui-side-panel-row-state-surface-outset-inline
@@ -547,6 +596,7 @@
   --ui-color-warning: var(--ui-palette-amber-800);
   --ui-color-live: var(--ui-palette-red-700);
   --ui-color-danger: var(--ui-palette-red-700);
+  --ui-color-danger-contrast: var(--ui-palette-warm-neutral-50);
   --ui-color-status-contrast: var(--ui-palette-neutral-900);
 
   /* Pastel identity remains in soft fills; foreground roles stay accessible. */

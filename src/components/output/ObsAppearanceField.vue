@@ -1,6 +1,7 @@
 <script setup>
 import { computed } from 'vue';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
+import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
   field: { type: Object, required: true },
@@ -10,22 +11,26 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'commit']);
 
 const controlId = computed(() => `output-appearance-${props.field.key}`);
+function formatRangeValue(value) {
+  const numericValue = Number(value);
+  const prefix = numericValue > 0 ? '+' : '';
+  return `${prefix}${numericValue}${props.field.unit ?? ''}`;
+}
+
 const valueText = computed(() => {
   if (props.field.control === 'color') {
     return String(props.modelValue).toUpperCase();
   }
   if (props.field.control !== 'range') return String(props.modelValue);
-  const numericValue = Number(props.modelValue);
-  const prefix = numericValue > 0 ? '+' : '';
-  return `${prefix}${numericValue}${props.field.unit ?? ''}`;
+  return formatRangeValue(props.modelValue);
 });
 
 function updateString(event) {
   emit('update:modelValue', event.target.value);
 }
 
-function updateNumber(event) {
-  emit('update:modelValue', event.target.valueAsNumber);
+function updateNumber(value) {
+  emit('update:modelValue', value);
 }
 </script>
 
@@ -68,16 +73,16 @@ function updateNumber(event) {
       v-else-if="field.control === 'range'"
       class="obs-appearance-field__compound obs-appearance-field__compound--range"
     >
-      <input
+      <UiRangeControl
         :id="controlId"
         class="obs-appearance-field__range"
-        type="range"
+        :model-value="Number(modelValue)"
         :min="field.min"
         :max="field.max"
         :step="field.step"
-        :value="modelValue"
-        :aria-valuetext="valueText"
-        @input="updateNumber"
+        :value-text="valueText"
+        :format-value="formatRangeValue"
+        @update:model-value="updateNumber"
         @change="emit('commit')"
       />
       <output class="obs-appearance-field__value" :for="controlId">
@@ -124,7 +129,7 @@ function updateNumber(event) {
 .obs-appearance-field__range {
   min-inline-size: 0;
   inline-size: 100%;
-  accent-color: var(--ui-color-accent);
+  --ui-range-target-size: var(--ui-control-height);
 }
 
 .obs-appearance-field__value {
@@ -134,8 +139,7 @@ function updateNumber(event) {
 }
 
 .obs-appearance-field__select:focus-visible,
-.obs-appearance-field__color:focus-visible,
-.obs-appearance-field__range:focus-visible {
+.obs-appearance-field__color:focus-visible {
   outline: var(--ui-focus-width) solid var(--ui-color-focus);
   outline-offset: var(--ui-focus-offset);
 }
