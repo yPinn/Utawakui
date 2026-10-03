@@ -49,12 +49,37 @@ describe('renderer surface registry', () => {
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.performer)).toBe(true);
   });
 
-  it('registers Folder and Utility as complete v1 child surfaces during cutover', () => {
-    for (const surfaceId of ['app-folder', 'app-utility']) {
-      const definition = UI_SURFACE_REGISTRY[surfaceId];
-      expect(definition).toMatchObject({
+  it('registers the Folder layout as v2 while Utility remains a v1 child', () => {
+    expect(UI_SURFACE_REGISTRY['app-folder']).toMatchObject({
+      entryOwner: 'src/App.vue',
+      migrationStatus: 'registered-v2',
+      parentSurfaceId: 'app-shell',
+      renderer: 'main',
+      surfaceId: 'app-folder',
+      system: 'v2',
+    });
+    expect(registeredOverlayHostAttributes('app-folder')).toMatchObject({
+      id: 'app-folder-overlay',
+      'data-ui-renderer': 'main',
+      'data-ui-surface': 'app-folder-overlay',
+      'data-ui-system': 'v2',
+    });
+    expect(UI_SURFACE_REGISTRY['app-utility']).toMatchObject({
+      migrationStatus: 'registered-v1',
+      parentSurfaceId: 'app-shell',
+      renderer: 'main',
+      surfaceId: 'app-utility',
+      system: 'v1',
+    });
+  });
+
+  it('keeps uncut Folder features in complete registered v1 surfaces', () => {
+    for (const surfaceId of ['setlist', 'lyrics', 'output', 'import']) {
+      expect(UI_SURFACE_REGISTRY[surfaceId]).toMatchObject({
+        entryOwner: 'src/App.vue',
         migrationStatus: 'registered-v1',
-        parentSurfaceId: 'app-shell',
+        overlayHostId: `${surfaceId}-overlay`,
+        parentSurfaceId: 'app-folder',
         renderer: 'main',
         surfaceId,
         system: 'v1',
@@ -84,7 +109,7 @@ describe('renderer surface registry', () => {
       '#visual-review-overlay',
     );
     expect(UI_SURFACE_REGISTRY['visual-review'].parentSurfaceId).toBe(
-      'app-shell',
+      'app-folder',
     );
     expect(Object.isFrozen(UI_SURFACE_REGISTRY)).toBe(true);
   });

@@ -209,7 +209,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(411);
+    expect(uniqueNames.size).toBe(407);
     for (const name of [
       '--ui-bgm-player-min-inline-size',
       '--ui-bgm-player-inline-size',

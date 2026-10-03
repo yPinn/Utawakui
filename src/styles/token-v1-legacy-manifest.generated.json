@@ -1,13 +1,13 @@
 {
   "schemaVersion": 1,
   "declarations": {
-    "v1": 341,
-    "v1Only": 97,
-    "v2": 411
+    "v1": 331,
+    "v1Only": 87,
+    "v2": 407
   },
   "production": {
-    "files": 59,
-    "pairs": 132,
+    "files": 57,
+    "pairs": 122,
     "references": [
       {
         "file": "src/components/playlists/SetlistPlaylistHeader.vue",
@@ -610,56 +610,6 @@
         "token": "--ui-titlebar-height"
       },
       {
-        "file": "src/components/layout/AppArchiveFrame.vue",
-        "surface": "shell",
-        "token": "--ui-archive-rail-size"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-rail-size"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-active-height"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-gap"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-label-block-size"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-label-optical-offset"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-label-rest-offset"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-min-width"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-archive-tab-rest-offset"
-      },
-      {
-        "file": "src/components/layout/AppTopTabs.vue",
-        "surface": "shell",
-        "token": "--ui-font-weight-strong"
-      },
-      {
         "file": "src/components/layout/AppUtilityFrame.vue",
         "surface": "shell",
         "token": "--ui-font-weight-heavy"
@@ -670,19 +620,9 @@
         "token": "--ui-line-height-headline"
       }
     ],
-    "tokens": 47
+    "tokens": 39
   },
   "legacyTokens": [
-    "--ui-archive-content-inset",
-    "--ui-archive-rail-size",
-    "--ui-archive-tab-active-height",
-    "--ui-archive-tab-gap",
-    "--ui-archive-tab-height",
-    "--ui-archive-tab-label-block-size",
-    "--ui-archive-tab-label-optical-offset",
-    "--ui-archive-tab-label-rest-offset",
-    "--ui-archive-tab-min-width",
-    "--ui-archive-tab-rest-offset",
     "--ui-color-surface-playing",
     "--ui-font-weight-heavy",
     "--ui-font-weight-strong",

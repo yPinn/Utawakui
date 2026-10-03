@@ -316,7 +316,7 @@ const CURRENT_MAPPINGS = [
     label: 'Shell gutter',
     sources: ['src/styles/tokens.css', 'src/views/DemoView.vue'],
     value: 'Shell gutter 尚無 active token',
-    // AppArchiveFrame.vue (production) briefly referenced this candidate
+    // The former production Folder frame briefly referenced this candidate
     // token without a real v1/v2 contract — fixed to use --ui-space-3
     // instead; DemoView.vue is this token's actual, correctly-gated
     // consumer.

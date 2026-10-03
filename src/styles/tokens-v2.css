@@ -230,6 +230,8 @@
   );
   --ui-player-tools-beat-block-size: var(--ui-space-1);
   --ui-player-tools-meter-control-block-size: 3.5rem;
+  --ui-folder-layout-background: var(--ui-color-folder-primary);
+  --ui-folder-page-background: var(--ui-color-surface);
   --ui-folder-perimeter: var(--ui-space-4);
   --ui-folder-tab-cover-size: var(--ui-space-2);
   --ui-folder-tab-min-inline-size: 8rem;
@@ -275,7 +277,7 @@
   );
   --ui-folder-artifact-note-bg: color-mix(
     in srgb,
-    var(--ui-folder-bg) 32%,
+    var(--ui-folder-layout-background) 32%,
     var(--ui-color-surface-raised)
   );
   --ui-folder-artifact-note-bg-translucent: color-mix(
@@ -552,13 +554,6 @@
   --ui-playlist-row-state-surface-outset-inline: var(
     --ui-side-panel-row-state-surface-outset-inline
   );
-
-  --ui-folder-bg: var(--ui-color-folder-primary);
-  --ui-folder-bg-secondary: var(--ui-color-folder-secondary);
-  --ui-folder-bg-tertiary: var(--ui-color-folder-tertiary);
-  --ui-folder-paper-bg: var(--ui-color-paper);
-  --ui-folder-paper-text: var(--ui-color-paper-text);
-  --ui-folder-selected-ring: var(--ui-color-accent);
 
   color-scheme: var(--ui-color-scheme);
   background: var(--ui-color-canvas);

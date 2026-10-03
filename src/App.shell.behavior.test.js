@@ -16,8 +16,8 @@ describe('App shell right Dock', () => {
     expect(source).toMatch(
       /const\s*\{[\s\S]*?activeView,[\s\S]*?setActiveView,[\s\S]*?\}\s*=\s*useAppView\(\);/u,
     );
-    expect(source).toContain(':active-view="activeView"');
-    expect(source).toContain('@update:active-view="setActiveView"');
+    expect(source).toContain(':active-destination="folderActiveDestination"');
+    expect(source).toContain('@navigate="setActiveView"');
     expect(source).toContain(
       'useKeyboardShortcuts({ internalViewShortcuts });',
     );
@@ -34,7 +34,11 @@ describe('App shell right Dock', () => {
     expect(source).toMatch(/<AppUtilityFrame\s+v-if="isSettingsView"/u);
     expect(source).toContain('@back="leaveSettings"');
     expect(source).toContain('<SettingsView />');
-    expect(source).toMatch(/<AppArchiveFrame\s+v-else/u);
+    expect(source).toMatch(
+      /<AppSurfaceBoundary v-else surface-id="app-folder">/u,
+    );
+    expect(source).toContain('<AppFolderLayout');
+    expect(source).toContain('<AppFolderPage :mode="folderPageMode">');
     expect(source).not.toContain('settings: SettingsView');
   });
 

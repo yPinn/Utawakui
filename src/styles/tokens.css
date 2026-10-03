@@ -254,24 +254,6 @@
   --ui-modal-width-notice: 40rem; /* 640px: confirmation copy with bullets */
   --ui-modal-width-wide: 45rem; /* 720px: row lists and multi-column content */
 
-  /* --- Sizing: archive tabs --- */
-  --ui-archive-rail-size: var(--ui-space-2);
-  --ui-archive-tab-min-width: 8.5rem;
-  --ui-archive-tab-height: 3.5rem;
-  --ui-archive-tab-active-height: 4.25rem;
-  --ui-archive-tab-rest-offset: calc(
-    var(--ui-archive-tab-active-height) - var(--ui-archive-tab-height)
-  );
-  --ui-archive-tab-label-block-size: calc(
-    var(--ui-archive-tab-active-height) - var(--ui-archive-rail-size)
-  );
-  --ui-archive-tab-label-optical-offset: 1px;
-  --ui-archive-tab-label-rest-offset: calc(
-    var(--ui-archive-tab-rest-offset) / 2 +
-      var(--ui-archive-tab-label-optical-offset)
-  );
-  --ui-archive-tab-gap: var(--ui-space-2);
-
   /* --- Sizing: reusable folder pages --- */
   --ui-folder-perimeter: var(--ui-space-4);
   --ui-folder-tab-cover-size: var(--ui-space-2);
@@ -330,17 +312,6 @@
   --ui-folder-artifact-drag-shadow: 0 0.75rem 1rem rgb(0 0 0 / 28%);
   --ui-folder-artifact-drag-scale: 1.0125;
   --ui-folder-artifact-z-active: 100;
-  /* How far the shared content baseline sits below the "sidebar main" grid
-     row's own top edge — the active tab's height (the row's tallest child,
-     since AppTopTabs.vue bottom-aligns its tabs) minus the rail overlap
-     AppInnerPage tucks under. App.vue's .shell__sidebar uses this as its
-     own top padding so the sidebar and the tabbed main column start at the
-     same visual baseline instead of the sidebar running flush to the row
-     top with nothing above it to match the tab row. */
-  --ui-archive-content-inset: calc(
-    var(--ui-archive-tab-active-height) - var(--ui-archive-rail-size)
-  );
-
   /* --- Sizing: shell inset planes, playlist sidebar & rows --- */
   --ui-shell-panel-inset-block: var(
     --ui-space-4

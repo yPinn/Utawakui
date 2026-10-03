@@ -22,8 +22,8 @@ const setlistSource = readFileSync(
   'utf8',
 );
 const appSource = readFileSync(new URL('../App.vue', import.meta.url), 'utf8');
-const archiveFrameSource = readFileSync(
-  new URL('../components/layout/AppArchiveFrame.vue', import.meta.url),
+const folderLayoutSource = readFileSync(
+  new URL('../components/layout/AppFolderLayout.vue', import.meta.url),
   'utf8',
 );
 const sidebarSource = readFileSync(
@@ -42,11 +42,6 @@ const rightDockSource = readFileSync(
   new URL('../components/layout/AppRightDock.vue', import.meta.url),
   'utf8',
 );
-const topTabsSource = readFileSync(
-  new URL('../components/layout/AppTopTabs.vue', import.meta.url),
-  'utf8',
-);
-
 describe('StudioLibraryPrototypeView development integration', () => {
   it('projects the real library into a native dossier without an iframe', () => {
     expect(source).toContain('import { useLibrary }');
@@ -82,7 +77,8 @@ describe('StudioLibraryPrototypeView development integration', () => {
     expect(visualSystemSource).toContain(
       "registeredSurfaceAttributes('visual-review')",
     );
-    expect(appSource).toContain(':candidate-view="visualReviewCandidateView"');
+    expect(appSource).toContain('<AppFolderLayout');
+    expect(appSource).not.toContain('visualReviewCandidateView');
     expect(setlistSource).not.toContain('tokens-v2.css');
   });
 
@@ -115,19 +111,16 @@ describe('StudioLibraryPrototypeView development integration', () => {
   it('lets the shell own the Candidate folder material without View CSS penetration', () => {
     expect(source).not.toContain('.app-tabs__folder--active');
     expect(source).not.toContain('.app-tabs__row::after');
-    expect(topTabsSource).toContain("@scope ([data-ui-system='v2'])");
-    expect(topTabsSource).toContain(
-      ".app-tabs[data-ui-candidate-view='studio-library']",
+    expect(folderLayoutSource).toContain(
+      'background: var(--ui-folder-layout-background)',
     );
-    expect(topTabsSource).toContain(
-      'background: var(--ui-color-folder-primary)',
-    );
+    expect(folderLayoutSource).not.toContain('data-ui-candidate-view');
   });
 
   it('lets internal content keep the Setlist workflow tab visibly selected', () => {
-    expect(archiveFrameSource).toContain('tabActiveView');
-    expect(archiveFrameSource).toContain(
-      ':active-view="tabActiveView || activeView"',
+    expect(appSource).toContain('const folderActiveDestination');
+    expect(appSource).toContain(
+      ':active-destination="folderActiveDestination"',
     );
     expect(appSource).toContain('isStudioLibraryMode');
   });
@@ -163,15 +156,15 @@ describe('StudioLibraryPrototypeView development integration', () => {
       '@close="closeDockSurface(RIGHT_DOCK_SURFACE_METADATA)"',
     );
     expect(appSource).not.toContain('#context');
-    expect(archiveFrameSource).not.toContain('<slot name="context" />');
-    expect(archiveFrameSource).not.toContain('app-archive-frame__context');
+    expect(folderLayoutSource).not.toContain('<slot name="context" />');
+    expect(folderLayoutSource).not.toContain('app-archive-frame__context');
     expect(dossierSource).not.toContain('StudioLibraryMetadataRail');
   });
 
   it('keeps the compact context plane temporary while preserving a full-height collapsed rail', () => {
     expect(appSource).toContain('position: absolute');
     expect(appSource).toContain('@media (max-width: 70rem)');
-    expect(archiveFrameSource).not.toContain('@media (max-width: 70rem)');
+    expect(folderLayoutSource).not.toContain('@media (max-width: 70rem)');
     expect(contextSource).toContain('TrackContextPanel');
     const inspectorSource = readFileSync(
       new URL('../components/playlists/TrackContextPanel.vue', import.meta.url),

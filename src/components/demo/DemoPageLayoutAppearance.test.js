@@ -8,8 +8,12 @@ const source = readFileSync(
   new URL('./DemoPageLayoutAppearance.vue', import.meta.url),
   'utf8',
 );
-const activeTokens = readFileSync(
-  new URL('../../styles/tokens.css', import.meta.url),
+const folderLayoutSource = readFileSync(
+  new URL('../layout/AppFolderLayout.vue', import.meta.url),
+  'utf8',
+);
+const folderPageSource = readFileSync(
+  new URL('../layout/AppFolderPage.vue', import.meta.url),
   'utf8',
 );
 const v2Tokens = readFileSync(
@@ -20,10 +24,10 @@ const v2Tokens = readFileSync(
 describe('DemoPageLayoutAppearance', () => {
   it('renders the main content as a folder shell with fixed chrome before the scroll body', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
-    const tabPosition = html.indexOf('demo-page-layout__folder-tabs');
-    const shellPosition = html.indexOf('demo-page-layout__folder-shell');
-    const headerPosition = html.indexOf('demo-page-layout__header');
-    const scrollPosition = html.indexOf('demo-page-layout__body-scroll');
+    const tabPosition = html.indexOf('app-folder-layout__navigation');
+    const shellPosition = html.indexOf('app-folder-layout__perimeter');
+    const headerPosition = html.indexOf('app-folder-page__header');
+    const scrollPosition = html.indexOf('app-folder-page__scroll');
 
     expect(tabPosition).toBeGreaterThan(-1);
     expect(shellPosition).toBeGreaterThan(tabPosition);
@@ -34,7 +38,13 @@ describe('DemoPageLayoutAppearance', () => {
     expect(html).toContain('夏季 Cover 工作集');
     expect(html).toContain('工作集摘要');
     expect(html).toContain('素材狀態');
-    expect(html).toContain('demo-page-layout__body');
+    expect(html).toContain('app-folder-page__body--document');
+    expect(source).toContain(
+      "import AppFolderLayout from '../layout/AppFolderLayout.vue'",
+    );
+    expect(source).toContain(
+      "import AppFolderPage from '../layout/AppFolderPage.vue'",
+    );
   });
 
   it('keeps the layout evidence without engineering annotations or decorative artifacts', async () => {
@@ -80,8 +90,9 @@ describe('DemoPageLayoutAppearance', () => {
     expect(
       ids.some((id) => id.startsWith('demo-page-layout-specimen-title-')),
     ).toBe(true);
+    expect(ids.some((id) => id.startsWith('app-folder-tab-shape-'))).toBe(true);
     expect(source).toContain('useId');
-    expect(source).toContain('--demo-folder-tab-shape');
+    expect(source).not.toContain('--demo-folder-tab-shape');
   });
 
   it('offers explicit wide and narrow previews without coupling to window density', async () => {
@@ -106,25 +117,22 @@ describe('DemoPageLayoutAppearance', () => {
   });
 
   it('uses one bounded document scroll owner and content-driven section collapse', () => {
-    expect(source).toMatch(
-      /\.demo-page-layout__document\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);[^}]*overflow:\s*hidden;/su,
+    expect(folderPageSource).toMatch(
+      /\.app-folder-page--with-header\s*\{[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__body-scroll\s*\{[^}]*min-height:\s*0;[^}]*height:\s*100%;/su,
+    expect(folderPageSource).toMatch(
+      /\.app-folder-page__scroll\s*\{[^}]*min-height:\s*0;[^}]*height:\s*100%;/su,
     );
-    expect(source).toContain('container-type: inline-size');
-    expect(source).toContain('container-name: demo-page-layout');
-    expect(source).toMatch(
-      /class="demo-page-layout__body-scroll"[\s\S]*?role="region"[\s\S]*?tabindex="0"/u,
-    );
+    expect(folderLayoutSource).toContain('container-type: inline-size');
+    expect(folderLayoutSource).toContain('container-name: app-folder-layout');
+    expect(source).toContain('<AppFolderPage');
+    expect(source).not.toContain('<UiScrollRegion');
   });
 
   it('treats folder choices as global page navigation instead of local tabpanels', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(source).toMatch(
-      /class="demo-page-layout__folder-tabs"[\s\S]*?viewport-tag="nav"/u,
-    );
+    expect(folderLayoutSource).toContain('viewport-tag="nav"');
     expect(html).toContain('<nav aria-label="Folder 頁面"');
     expect(html).toContain('aria-current="page"');
     expect(html).not.toContain('role="tablist"');
@@ -134,23 +142,17 @@ describe('DemoPageLayoutAppearance', () => {
 
   it('keeps the folder material colored while the document stays neutral', async () => {
     await renderToString(createSSRApp(DemoPageLayoutAppearance));
-    const previewRule =
-      source.match(/\.demo-page-layout__preview\s*\{[^}]*\}/su)?.[0] ?? '';
-    const shellRule =
-      source.match(/\.demo-page-layout__folder-shell\s*\{[^}]*\}/su)?.[0] ?? '';
-    const documentRule =
-      source.match(/\.demo-page-layout__document\s*\{[^}]*\}/su)?.[0] ?? '';
-
-    expect(previewRule).toContain('--demo-folder-color: var(--ui-folder-bg);');
-    expect(shellRule).toContain('var(--demo-folder-color)');
-    expect(documentRule).toContain('var(--ui-color-surface)');
-    expect(documentRule).not.toContain('--demo-folder-color');
+    expect(folderLayoutSource).toContain(
+      'background: var(--ui-folder-layout-background)',
+    );
+    expect(folderPageSource).toContain(
+      'background: var(--ui-folder-page-background)',
+    );
+    expect(source).not.toContain('--demo-folder-color');
     expect(source).not.toContain('demo-page-layout__folders');
   });
 
   it('uses one restrained indigo material for every workflow tab instead of indexed reference colors', () => {
-    const previewRule =
-      source.match(/\.demo-page-layout__preview\s*\{[^}]*\}/su)?.[0] ?? '';
     const light =
       v2Tokens.match(
         /:root\[data-ui-theme='light'\] \[data-ui-system='v2'\]\s*\{[\s\S]*?\n\}/u,
@@ -158,8 +160,12 @@ describe('DemoPageLayoutAppearance', () => {
 
     expect(source).not.toContain('FOLDER_REFERENCE_SWATCHES');
     expect(source).not.toContain('FOLDER_REFERENCE_SWATCHES[index]');
-    expect(previewRule).toContain('--demo-folder-color: var(--ui-folder-bg);');
-    expect(previewRule).toContain('--demo-folder-ink: var(--ui-color-text);');
+    expect(v2Tokens).toContain(
+      '--ui-folder-layout-background: var(--ui-color-folder-primary);',
+    );
+    expect(v2Tokens).toContain(
+      '--ui-folder-page-background: var(--ui-color-surface);',
+    );
     expect(v2Tokens).toContain(
       '--ui-color-folder-primary: var(--ui-palette-indigo-700);',
     );
@@ -170,35 +176,37 @@ describe('DemoPageLayoutAppearance', () => {
 
   it('keeps the selected folder tab motion inside a fixed token-sized envelope', () => {
     const tabSurfaceRule =
-      source.match(
-        /\.demo-page-layout__folder-tab::before\s*\{[^}]*\}/su,
+      folderLayoutSource.match(
+        /\.app-folder-layout__destination::before\s*\{[^}]*\}/su,
       )?.[0] ?? '';
 
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tabs\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-height-active\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__navigation\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-height-active\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-height-active\);[^}]*overflow:\s*hidden;/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-height-active\);[^}]*overflow:\s*hidden;/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab::before\s*\{[^}]*transform:\s*translateY\(var\(--ui-folder-tab-rest-offset\)\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination::before\s*\{[^}]*transform:\s*translateY\(var\(--ui-folder-tab-rest-offset\)\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab--active::before[^{]*\{[^}]*transform:\s*translateY\(0\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination--active::before[^{]*\{[^}]*transform:\s*translateY\(0\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab-label\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-label-block-size\);[^}]*transform:\s*translateY\(var\(--ui-folder-tab-label-rest-offset\)\);[^}]*transition:\s*transform\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination-label\s*\{[^}]*block-size:\s*var\(--ui-folder-tab-label-block-size\);[^}]*transform:\s*translateY\(var\(--ui-folder-tab-label-rest-offset\)\);[^}]*transition:\s*transform\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab--active\s+\.demo-page-layout__folder-tab-label[^{]*\{[^}]*transform:\s*translateY\(var\(--ui-folder-tab-label-optical-offset\)\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination--active\s+\.app-folder-layout__destination-label[^{]*\{[^}]*transform:\s*translateY\(var\(--ui-folder-tab-label-optical-offset\)\);/su,
     );
-    expect(source).toMatch(
+    expect(folderLayoutSource).toMatch(
       /transition:\s*transform\s+var\(--ui-motion-duration-fast\)\s+var\(--ui-motion-easing-standard\)/u,
     );
-    expect(tabSurfaceRule).not.toContain('background-color');
-    expect(source).not.toMatch(/transition:\s*(?:[^;]*,\s*)?height/u);
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab:focus-visible\s*\{[^}]*outline-offset:\s*var\(--ui-focus-offset-inset\);/su,
+    expect(tabSurfaceRule).toContain('background-color');
+    expect(folderLayoutSource).not.toMatch(
+      /transition:\s*(?:[^;]*,\s*)?height/u,
+    );
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination:focus-visible\s*\{[^}]*outline-offset:\s*var\(--ui-focus-offset-inset\);/su,
     );
   });
 
@@ -216,11 +224,13 @@ describe('DemoPageLayoutAppearance', () => {
     expect(restingVisibleCenter).toBe(20);
     expect(labelBlockSize / 2 + opticalOffset).toBe(19);
     expect(labelBlockSize / 2 + restOffset / 2 + opticalOffset).toBe(21);
-    expect(source).toContain('--ui-folder-tab-label-optical-offset');
-    expect(source).toContain(
+    expect(folderLayoutSource).toContain(
+      '--ui-folder-tab-label-optical-offset',
+    );
+    expect(folderLayoutSource).toContain(
       'block-size: var(--ui-folder-tab-label-block-size);',
     );
-    expect(source).toContain(
+    expect(folderLayoutSource).toContain(
       'transform: translateY(var(--ui-folder-tab-label-rest-offset));',
     );
   });
@@ -228,32 +238,34 @@ describe('DemoPageLayoutAppearance', () => {
   it('keeps equal folder-perimeter inset before the first tab and after the last tab', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(html).toContain('demo-page-layout__folder-tab-label');
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tabs\s+:deep\(\.demo-page-layout__folder-tabs-viewport\)\s*\{[^}]*box-sizing:\s*border-box;[^}]*padding-inline:\s*var\(--ui-folder-perimeter\);[^}]*scroll-padding-inline:\s*var\(--ui-folder-perimeter\);/su,
+    expect(html).toContain('app-folder-layout__destination-label');
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__navigation\s+:deep\(\.app-folder-layout__navigation-viewport\)\s*\{[^}]*box-sizing:\s*border-box;[^}]*padding-inline:\s*var\(--ui-folder-perimeter\);[^}]*scroll-padding-inline:\s*var\(--ui-folder-perimeter\);/su,
     );
   });
 
   it('compresses narrow tabs before exposing a partially clipped inactive tab', () => {
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab\s*\{[^}]*min-width:\s*var\(--ui-folder-tab-min-inline-size\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination\s*\{[^}]*min-width:\s*var\(--ui-folder-tab-min-inline-size\);/su,
     );
-    expect(source).toMatch(
-      /@container demo-page-layout \(max-width: 36rem\)[\s\S]*\.demo-page-layout__folder-tabs\s+:deep\(\.demo-page-layout__folder-tabs-viewport\)\s*\{[^}]*gap:\s*var\(--ui-space-1\);/u,
+    expect(folderLayoutSource).toMatch(
+      /@container app-folder-layout \(max-width: 36rem\)[\s\S]*\.app-folder-layout__navigation\s+:deep\(\.app-folder-layout__navigation-viewport\)\s*\{[^}]*gap:\s*var\(--ui-space-1\);/u,
     );
-    expect(source).toMatch(
-      /@container demo-page-layout \(max-width: 36rem\)[\s\S]*\.demo-page-layout__folder-tab\s*\{[^}]*min-width:\s*var\(--ui-folder-tab-min-inline-size-narrow\);[^}]*flex:\s*1 1 var\(--ui-folder-tab-min-inline-size-narrow\);/u,
+    expect(folderLayoutSource).toMatch(
+      /@container app-folder-layout \(max-width: 36rem\)[\s\S]*\.app-folder-layout__destination\s*\{[^}]*min-width:\s*var\(--ui-folder-tab-min-inline-size-narrow\);[^}]*flex:\s*1 1 var\(--ui-folder-tab-min-inline-size-narrow\);/u,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab-label\s*\{[^}]*min-width:\s*0;[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination-label\s*\{[^}]*min-width:\s*0;[^}]*max-width:\s*100%;[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/su,
     );
-    expect(source).toContain('@focus="revealFolderTab"');
-    expect(source).toContain('@click="selectFolder(page.id, $event)"');
-    expect(source).toMatch(
+    expect(folderLayoutSource).toContain('@focus="revealDestination"');
+    expect(folderLayoutSource).toContain(
+      '@click="navigate(destination.id, $event)"',
+    );
+    expect(folderLayoutSource).toMatch(
       /scrollIntoView\(\{\s*block:\s*'nearest',\s*inline:\s*'nearest',\s*\}\)/u,
     );
 
-    for (const tokens of [activeTokens, v2Tokens]) {
+    for (const tokens of [v2Tokens]) {
       expect(tokens).toContain('--ui-folder-tab-min-inline-size: 8rem;');
       expect(tokens).toContain('--ui-folder-tab-min-inline-size-narrow: 5rem;');
     }
@@ -262,41 +274,43 @@ describe('DemoPageLayoutAppearance', () => {
   it('uses scalable curved shoulders instead of a sharp polygon approximation', async () => {
     const html = await renderToString(createSSRApp(DemoPageLayoutAppearance));
 
-    expect(html).toMatch(/id="demo-folder-tab-shape-[^"]+"/u);
+    expect(html).toMatch(/id="app-folder-tab-shape-[^"]+"/u);
     expect(html).toMatch(
-      /<clipPath[^>]*id="demo-folder-tab-shape-[^"]+"[^>]*clipPathUnits="objectBoundingBox"/u,
+      /<clipPath[^>]*id="app-folder-tab-shape-[^"]+"[^>]*clipPathUnits="objectBoundingBox"/u,
     );
     expect(html).toMatch(/<path[^>]*d="[^"]*C[^"]*L1,1 L0,1[^"]*"/u);
-    expect(source).toContain('clip-path: var(--demo-folder-tab-shape);');
-    expect(source).not.toContain('clip-path: polygon(');
+    expect(folderLayoutSource).toContain(
+      'clip-path: var(--ui-folder-tab-shape);',
+    );
+    expect(folderLayoutSource).not.toContain('clip-path: polygon(');
   });
 
   it('keeps the active folder identifiable when forced colors replace material fills', () => {
-    expect(source).toMatch(
-      /@media \(forced-colors: active\)[\s\S]*\.demo-page-layout__folder-tab--active::before[\s\S]*border:\s*var\(--ui-border-width\) solid Highlight;/u,
+    expect(folderLayoutSource).toMatch(
+      /@media \(forced-colors: active\)[\s\S]*\.app-folder-layout__destination--active::before[\s\S]*border:\s*var\(--ui-border-width\) solid Highlight;/u,
     );
-    expect(source).toMatch(
-      /@media \(forced-colors: active\)[\s\S]*\.demo-page-layout__folder-tab--active\s*\{[^}]*color:\s*HighlightText;/u,
+    expect(folderLayoutSource).toMatch(
+      /@media \(forced-colors: active\)[\s\S]*\.app-folder-layout__destination--active\s*\{[^}]*color:\s*HighlightText;/u,
     );
   });
 
   it('layers inactive tabs behind a folder-colored cover rail and the active tab', () => {
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tabs::after\s*\{[^}]*z-index:\s*2;[^}]*block-size:\s*var\(--ui-folder-tab-cover-size\);[^}]*background:\s*var\(--demo-folder-color\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__navigation::after\s*\{[^}]*z-index:\s*2;[^}]*block-size:\s*var\(--ui-folder-tab-cover-size\);[^}]*background:\s*var\(--ui-folder-layout-background\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab\s*\{[^}]*z-index:\s*1;/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination\s*\{[^}]*z-index:\s*1;/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab--active\s*\{[^}]*z-index:\s*3;/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination--active\s*\{[^}]*z-index:\s*3;/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab:focus-visible\s*\{[^}]*z-index:\s*4;/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination:focus-visible\s*\{[^}]*z-index:\s*4;/su,
     );
   });
 
-  it('defines the folder tab boundary tokens in active and v2 scopes', () => {
-    for (const tokens of [activeTokens, v2Tokens]) {
+  it('defines the folder tab boundary tokens in the v2 scope', () => {
+    for (const tokens of [v2Tokens]) {
       expect(tokens).toContain('--ui-folder-tab-height: 2.5rem;');
       expect(tokens).toContain('--ui-folder-tab-height-active: 2.75rem;');
       expect(tokens).toContain('--ui-folder-tab-min-inline-size: 8rem;');
@@ -320,7 +334,7 @@ describe('DemoPageLayoutAppearance', () => {
 
   it('maps reusable folder spacing to component tokens without raw spacing values', () => {
     const spacingDeclarations = [
-      ...source.matchAll(
+      ...`${source}\n${folderLayoutSource}\n${folderPageSource}`.matchAll(
         /\b(?:gap|margin(?:-(?:block|inline)(?:-(?:start|end))?)?|padding(?:-(?:block|inline)(?:-(?:start|end))?)?)\s*:\s*([^;]+);/gu,
       ),
     ].map((match) => match[1]);
@@ -331,14 +345,14 @@ describe('DemoPageLayoutAppearance', () => {
         (value) => !/\b\d+(?:\.\d+)?(?:px|rem|em)\b/u.test(value),
       ),
     ).toBe(true);
-    expect(source).toMatch(
-      /\.demo-page-layout__header\s*\{[^}]*padding:\s*var\(--ui-folder-document-inset\);/su,
+    expect(folderPageSource).toMatch(
+      /\.app-folder-page__header\s*\{[^}]*padding:\s*var\(--ui-folder-document-inset\);/su,
     );
     expect(source).toMatch(
       /\.demo-page-layout__section\s*\{[^}]*gap:\s*var\(--ui-folder-section-gap\);[^}]*padding:\s*var\(--ui-folder-document-inset\) 0;/su,
     );
 
-    for (const tokens of [activeTokens, v2Tokens]) {
+    for (const tokens of [v2Tokens]) {
       expect(tokens).toContain(
         '--ui-folder-document-inset: var(--ui-space-5);',
       );
@@ -354,8 +368,8 @@ describe('DemoPageLayoutAppearance', () => {
     expect(source).toMatch(
       /\.demo-page-layout__tools-copy strong\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
     );
-    expect(source).toMatch(
-      /\.demo-page-layout__folder-tab\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
+    expect(folderLayoutSource).toMatch(
+      /\.app-folder-layout__destination\s*\{[^}]*font-size:\s*var\(--ui-font-size-sm\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-label\);/su,
     );
     expect(source).toMatch(
       /\.demo-page-layout__section-heading h3\s*\{[^}]*font-size:\s*var\(--ui-font-size-lg\);[^}]*font-weight:\s*var\(--ui-font-weight-semibold\);[^}]*line-height:\s*var\(--ui-line-height-title\);/su,

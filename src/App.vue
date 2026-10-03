@@ -9,9 +9,11 @@ import {
   ref,
   watch,
 } from 'vue';
-import AppArchiveFrame from './components/layout/AppArchiveFrame.vue';
+import AppFolderLayout from './components/layout/AppFolderLayout.vue';
+import AppFolderPage from './components/layout/AppFolderPage.vue';
 import AppPlaylistSidebar from './components/layout/AppPlaylistSidebar.vue';
 import AppRightDock from './components/layout/AppRightDock.vue';
+import AppSurfaceBoundary from './components/layout/AppSurfaceBoundary.vue';
 import AppTitleBar from './components/layout/AppTitleBar.vue';
 import AppUtilityFrame from './components/layout/AppUtilityFrame.vue';
 import AppFeatureNoticeModal from './components/layout/AppFeatureNoticeModal.vue';
@@ -373,11 +375,23 @@ onUnmounted(() =>
   document.removeEventListener('keydown', handleRightDockKeydown),
 );
 
-// Studio Library is a development preview of the Setlist interior. Keep the
-// real Setlist folder visibly selected while the Candidate is active so the
-// shell still communicates the owning workflow. The component lab remains
-// visually separate.
-const archiveTabView = internalWorkbenchesEnabled
+const folderFeatureSurfaces = Object.freeze({
+  setlist: 'setlist',
+  lyrics: 'lyrics',
+  output: 'output',
+  import: 'import',
+});
+const documentFolderViews = new Set(['setlist', 'import']);
+const activeFolderFeatureSurface = computed(
+  () => folderFeatureSurfaces[activeView.value] ?? '',
+);
+const folderPageMode = computed(() =>
+  documentFolderViews.has(activeView.value) ? 'document' : 'workspace',
+);
+
+// Studio Library reviews the Setlist interior. Keep the production Setlist
+// destination selected while the development-only review surface is active.
+const folderActiveDestination = internalWorkbenchesEnabled
   ? computed(() =>
       activeView.value === 'visual-system' &&
       isStudioLibraryMode(visualReviewMode.value)
@@ -385,12 +399,6 @@ const archiveTabView = internalWorkbenchesEnabled
         : activeView.value,
     )
   : activeView;
-const visualReviewCandidateView = computed(() =>
-  activeView.value === 'visual-system' &&
-  isStudioLibraryMode(visualReviewMode.value)
-    ? 'studio-library'
-    : '',
-);
 useKeyboardShortcuts({ internalViewShortcuts });
 </script>
 
@@ -432,15 +440,23 @@ useKeyboardShortcuts({ internalViewShortcuts });
         >
           <SettingsView />
         </AppUtilityFrame>
-        <AppArchiveFrame
-          v-else
-          :active-view="activeView"
-          :tab-active-view="archiveTabView"
-          :candidate-view="visualReviewCandidateView"
-          @update:active-view="setActiveView"
-        >
-          <component :is="views[activeView]" />
-        </AppArchiveFrame>
+        <AppSurfaceBoundary v-else surface-id="app-folder">
+          <AppFolderLayout
+            :active-destination="folderActiveDestination"
+            @navigate="setActiveView"
+          >
+            <AppFolderPage :mode="folderPageMode">
+              <AppSurfaceBoundary
+                v-if="activeFolderFeatureSurface"
+                :key="activeFolderFeatureSurface"
+                :surface-id="activeFolderFeatureSurface"
+              >
+                <component :is="views[activeView]" />
+              </AppSurfaceBoundary>
+              <component :is="views[activeView]" v-else />
+            </AppFolderPage>
+          </AppFolderLayout>
+        </AppSurfaceBoundary>
       </div>
       <div
         class="shell__bgm-boundary"
@@ -584,7 +600,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
 
 .shell__sidebar {
   grid-area: sidebar;
-  /* A plain, unstyled wrapper, like .shell__main owning AppInnerPage's card
+  /* A plain, unstyled wrapper, like .shell__main owning the Folder workspace
      below — AppPlaylistSidebar.vue's own root paints --ui-color-surface
      across its full box, so padding placed directly on it (via class
      fallthrough) just got filled by that same background instead of
@@ -613,8 +629,8 @@ useKeyboardShortcuts({ internalViewShortcuts });
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  /* AppInnerPage now owns the card-internal scroll (see its own CSS) —
-     this just needs to shrink to its grid row instead of growing with
+  /* AppFolderPage owns document scrolling while workspace views own their
+     internal regions. This shell row only needs to shrink instead of growing with
      content, so that scroll actually has a bounded box to work within. */
   min-width: 0;
   min-height: 0;

@@ -151,7 +151,7 @@ Right Dock 只負責單一入口的 preparation summary 與來源 intent，不�
 頁面開啟，完成後返回原本頁面。Desktop 使用 plan list＋focused review editor；窄視窗改為可返回
 清單的單欄 drill-in，不把兩欄壓到不可讀。
 
-Workspace 填滿 AppInnerPage 可用高度；header 與 aggregate state 固定，中間 grid 使用剩餘高度。
+Workspace 填滿 `AppFolderPage` workspace body 的可用高度；header 與 aggregate state 固定，中間 grid 使用剩餘高度。
 左 pane 的 library／manual composer 固定在上方，只有搜尋結果或 plan list 捲動；右 pane 只有 details
 body 捲動，必要 action footer 固定。窄視窗一次只顯示 list 或 details，返回動作不隨內容捲走。
 

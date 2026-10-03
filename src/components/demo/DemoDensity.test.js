@@ -396,7 +396,7 @@ describe('DemoDensity', () => {
     expect(
       sourceByName.get('../playlists/TrackContextPanel.vue'),
     ).not.toContain('--ui-right-dock-');
-    // AppArchiveFrame.vue is production and no longer references this
+    // Production Folder layout no longer references this
     // Candidate-only token (see its own comment) — DemoView.vue is the
     // real, correctly v2-gated consumer instead.
     expect(sourceByName.get('../../views/DemoView.vue')).toContain(

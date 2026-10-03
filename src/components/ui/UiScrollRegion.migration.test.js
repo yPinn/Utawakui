@@ -7,9 +7,9 @@ const baseStyles = readSource('../../styles/base.css');
 
 const batchOneConsumers = [
   {
-    name: 'inner page',
-    source: readSource('../layout/AppInnerPage.vue'),
-    marker: 'class="app-inner-page__scroll"',
+    name: 'Folder page',
+    source: readSource('../layout/AppFolderPage.vue'),
+    marker: 'class="app-folder-page__scroll"',
     component: 'UiScrollLayout',
   },
   {
@@ -106,16 +106,16 @@ describe('UiScrollRegion production migration', () => {
   );
 
   it('preserves padding and layout at the composition layer or explicit viewport', () => {
-    const innerPageSource = batchOneConsumers[0].source;
+    const folderPageSource = batchOneConsumers[0].source;
     const sidebarSource = batchOneConsumers[1].source;
     const settingsSource = batchOneConsumers[3].source;
     const utilitySource = readSource('../layout/AppUtilityFrame.vue');
 
-    expect(innerPageSource).toMatch(
-      /\.app-inner-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
+    expect(folderPageSource).toMatch(
+      /\.app-folder-page__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,
     );
-    expect(innerPageSource).not.toMatch(
-      /\.app-inner-page__content\s*\{[^}]*padding(?:-|:)/su,
+    expect(folderPageSource).not.toMatch(
+      /\.app-folder-page__body\s*\{[^}]*padding(?:-|:)/su,
     );
     expect(sidebarSource).toMatch(
       /\.playlist-sidebar__scroll\s*\{[^}]*--ui-scroll-layout-padding-block-start:/su,

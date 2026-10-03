@@ -121,7 +121,9 @@ Inactive 時可用同一 transport 明確試播本機 monitor；已確認 live�
 `useBgmSession.js` 的 readonly 投影與 actions，不成為 PlayerBar 模式或 Folder artifact。
 
 Renderer 的 app destination state 由 module-scope `useAppView.js` 單獨擁有。Setlist／
-Lyrics／Output／Import 進入 `AppArchiveFrame` 的 Folder workflow branch；Settings 由
+Lyrics／Output／Import 進入 `AppFolderLayout`＋`AppFolderPage` 的 Folder workflow branch；
+layout family 是 registered-v2 surface，各未遷移 feature body 仍是有獨立 overlay host 的
+完整 registered-v1 child surface。Settings 由
 Titlebar direct action 進入 shell-level `AppUtilityFrame`，不屬於 Folder destination。
 `openSettings()` 只在首次進入時保存來源，`returnFromSettings()` 回到最近的非 Settings
 view；F9、Tray 與 feature-gate／dependency setup request 都使用同一 action boundary。

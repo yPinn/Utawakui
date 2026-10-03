@@ -61,7 +61,8 @@ const componentFiles = fs
   }));
 
 const metadataFeatureFiles = [
-  '../components/layout/AppArchiveFrame.vue',
+  '../components/layout/AppFolderLayout.vue',
+  '../components/layout/AppFolderPage.vue',
   '../components/playback/PlayerBarArtwork.vue',
   '../components/playlists/TrackContextPanel.vue',
 ].map((filename) => ({
@@ -394,12 +395,17 @@ describe('shared UI component token contract', () => {
       ...declarations(active).keys(),
       ...declarations(candidate).keys(),
     ]);
-    const missing = metadataFeatureFiles.flatMap(({ name, source }) =>
-      [...source.matchAll(/var\((--ui-[\w-]+)\)/g)]
+    const missing = metadataFeatureFiles.flatMap(({ name, source }) => {
+      const localNames = new Set(
+        [...source.matchAll(/(--ui-[\w-]+)['"]?\s*:/g)].map(
+          (match) => match[1],
+        ),
+      );
+      return [...source.matchAll(/var\((--ui-[\w-]+)\)/g)]
         .map((match) => match[1])
-        .filter((token) => !globalNames.has(token))
-        .map((token) => `${name}: ${token}`),
-    );
+        .filter((token) => !globalNames.has(token) && !localNames.has(token))
+        .map((token) => `${name}: ${token}`);
+    });
 
     expect(missing).toEqual([]);
   });
