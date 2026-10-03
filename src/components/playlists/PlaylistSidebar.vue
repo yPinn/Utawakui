@@ -580,11 +580,11 @@ function startDrag(playlist, event) {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--ui-playlist-row-gap);
-  block-size: var(--ui-playlist-row-min-height);
-  min-height: var(--ui-playlist-row-min-height);
-  padding: var(--ui-playlist-row-padding-block)
-    var(--ui-playlist-row-padding-inline);
+  gap: var(--ui-sidebar-row-gap);
+  block-size: var(--ui-sidebar-row-min-height);
+  min-height: var(--ui-sidebar-row-min-height);
+  padding: var(--ui-sidebar-row-padding-block)
+    var(--ui-sidebar-row-padding-inline);
   border: var(--ui-border-width) solid transparent;
   border-radius: var(--ui-side-panel-row-radius);
   background: transparent;
@@ -623,7 +623,7 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__item--active .playlist-sidebar__item-state-surface {
   border-color: transparent;
-  background: var(--ui-playlist-row-selected-background);
+  background: var(--ui-sidebar-row-selected-bg);
 }
 
 .playlist-sidebar__item:active .playlist-sidebar__item-state-surface {
@@ -633,8 +633,8 @@ function startDrag(playlist, event) {
 .playlist-sidebar__toolbar {
   position: relative;
   margin-inline: var(--ui-playlist-sidebar-padding-inline);
-  block-size: var(--ui-playlist-toolbar-height);
-  min-height: var(--ui-playlist-toolbar-height);
+  block-size: var(--ui-sidebar-toolbar-block-size);
+  min-height: var(--ui-sidebar-toolbar-block-size);
   overflow: hidden;
 }
 
@@ -643,10 +643,10 @@ function startDrag(playlist, event) {
   inset: 0;
   display: flex;
   align-items: center;
-  gap: var(--ui-playlist-toolbar-gap);
+  gap: var(--ui-sidebar-toolbar-gap);
   min-width: 0;
-  padding: var(--ui-playlist-toolbar-padding-block)
-    var(--ui-playlist-toolbar-padding-inline);
+  padding: var(--ui-sidebar-toolbar-padding-block)
+    var(--ui-sidebar-toolbar-padding-inline);
   opacity: 1;
   visibility: visible;
   pointer-events: auto;
@@ -656,12 +656,12 @@ function startDrag(playlist, event) {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: var(--ui-playlist-toolbar-gap);
+  gap: var(--ui-sidebar-toolbar-gap);
   min-width: 0;
-  block-size: var(--ui-playlist-toolbar-control-size);
-  min-height: var(--ui-playlist-toolbar-control-size);
-  padding: var(--ui-playlist-search-padding-block)
-    var(--ui-playlist-search-padding-inline);
+  block-size: var(--ui-sidebar-toolbar-control-size);
+  min-height: var(--ui-sidebar-toolbar-control-size);
+  padding: var(--ui-sidebar-search-padding-block)
+    var(--ui-sidebar-search-padding-inline);
   border: var(--ui-border-width) solid var(--ui-color-border);
   border-radius: var(--ui-radius-sm);
   background: var(--ui-color-surface);
@@ -684,10 +684,10 @@ function startDrag(playlist, event) {
 .playlist-sidebar__search-icon-slot {
   position: relative;
   display: flex;
-  flex: 0 0 var(--ui-playlist-search-icon-slot-size);
+  flex: 0 0 var(--ui-sidebar-search-icon-inline-size);
   align-items: center;
   justify-content: center;
-  inline-size: var(--ui-playlist-search-icon-slot-size);
+  inline-size: var(--ui-sidebar-search-icon-inline-size);
   block-size: 100%;
   user-select: none;
   -webkit-user-select: none;
@@ -696,7 +696,7 @@ function startDrag(playlist, event) {
 .playlist-sidebar__search-icon-slot::after {
   content: '';
   position: absolute;
-  inset-block: var(--ui-playlist-search-separator-inset-block);
+  inset-block: var(--ui-sidebar-search-separator-inset-block);
   inset-inline-end: 0;
   width: var(--ui-border-width);
   background: var(--ui-color-border);
@@ -705,7 +705,7 @@ function startDrag(playlist, event) {
 .playlist-sidebar__search-input {
   flex: 1;
   min-width: 0;
-  padding: 0 var(--ui-playlist-search-input-padding-inline-end) 0 0;
+  padding: 0 var(--ui-sidebar-search-input-padding-inline-end) 0 0;
   border: none;
   background: transparent;
   color: var(--ui-color-text);
@@ -722,8 +722,8 @@ function startDrag(playlist, event) {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: var(--ui-playlist-toolbar-control-size);
-  height: var(--ui-playlist-toolbar-control-size);
+  width: var(--ui-sidebar-toolbar-control-size);
+  height: var(--ui-sidebar-toolbar-control-size);
   padding: 0;
   border: var(--ui-border-width) solid transparent;
   border-radius: var(--ui-radius-sm);
@@ -756,8 +756,8 @@ function startDrag(playlist, event) {
   position: absolute;
   inset-block-start: calc(
     (
-        var(--ui-playlist-toolbar-height) -
-          var(--ui-playlist-toolbar-control-size)
+        var(--ui-sidebar-toolbar-block-size) -
+          var(--ui-sidebar-toolbar-control-size)
       ) /
       2
   );
@@ -766,7 +766,7 @@ function startDrag(playlist, event) {
      then override below inside the compact query, so this fading control
      keeps the artwork centerline instead of jumping by those 2px. */
   inset-inline-start: calc(
-    var(--ui-playlist-row-padding-inline) + var(--ui-border-width)
+    var(--ui-sidebar-row-padding-inline) + var(--ui-border-width)
   );
   opacity: 0;
   visibility: hidden;
@@ -791,8 +791,8 @@ function startDrag(playlist, event) {
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  width: var(--ui-playlist-row-thumb-size);
-  height: var(--ui-playlist-row-thumb-size);
+  width: var(--ui-sidebar-artwork-size);
+  height: var(--ui-sidebar-artwork-size);
   border-radius: var(--ui-radius-sm);
   background: color-mix(
     in srgb,
@@ -801,7 +801,7 @@ function startDrag(playlist, event) {
   );
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   overflow: hidden;
 }
 
@@ -854,7 +854,7 @@ function startDrag(playlist, event) {
 
 .playlist-sidebar__empty {
   margin: 0;
-  padding: var(--ui-space-1) var(--ui-playlist-row-padding-inline);
+  padding: var(--ui-space-1) var(--ui-sidebar-row-padding-inline);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-body);
@@ -877,10 +877,10 @@ function startDrag(playlist, event) {
     align-self: center;
     justify-content: center;
     gap: 0;
-    inline-size: var(--ui-playlist-row-compact-hit-size);
-    block-size: var(--ui-playlist-row-compact-hit-size);
-    min-height: var(--ui-playlist-row-compact-hit-size);
-    padding: var(--ui-playlist-row-padding-block);
+    inline-size: var(--ui-sidebar-row-compact-hit-size);
+    block-size: var(--ui-sidebar-row-compact-hit-size);
+    min-height: var(--ui-sidebar-row-compact-hit-size);
+    padding: var(--ui-sidebar-row-padding-block);
   }
 
   .playlist-sidebar__info {
@@ -906,9 +906,9 @@ function startDrag(playlist, event) {
   .playlist-sidebar__toolbar {
     align-self: center;
     margin-inline: var(--ui-playlist-sidebar-padding-inline-compact);
-    inline-size: var(--ui-playlist-row-min-height);
-    block-size: var(--ui-playlist-toolbar-height);
-    min-height: var(--ui-playlist-toolbar-height);
+    inline-size: var(--ui-sidebar-row-min-height);
+    block-size: var(--ui-sidebar-toolbar-block-size);
+    min-height: var(--ui-sidebar-toolbar-block-size);
   }
 
   .playlist-sidebar__toolbar-expanded {
@@ -920,8 +920,8 @@ function startDrag(playlist, event) {
   .playlist-sidebar__toolbar-action--compact {
     inset-inline-start: calc(
       (
-          var(--ui-playlist-row-min-height) -
-            var(--ui-playlist-toolbar-control-size)
+          var(--ui-sidebar-row-min-height) -
+            var(--ui-sidebar-toolbar-control-size)
         ) /
         2
     );

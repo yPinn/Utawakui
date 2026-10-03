@@ -130,7 +130,7 @@ describe('windowState security boundary', () => {
       minHeight: 650,
       show: false,
       title: 'Utawakui',
-      backgroundColor: '#f7f1e7',
+      backgroundColor: '#e8e4dd',
       webPreferences: {
         contextIsolation: true,
         nodeIntegration: false,
@@ -153,6 +153,11 @@ describe('windowState security boundary', () => {
     expect(windowDouble.options.webPreferences.preload).toMatch(
       /electron[\\/]preload\.js$/,
     );
+    expect(windowDouble.options.titleBarOverlay).toEqual({
+      color: '#e8e4dd',
+      symbolColor: '#272928',
+      height: 40,
+    });
     expect(windowDouble.win.loadFile).toHaveBeenCalledWith(
       expect.stringMatching(/dist[\\/]index\.html$/),
     );

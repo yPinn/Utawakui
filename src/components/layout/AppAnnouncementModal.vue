@@ -41,7 +41,7 @@ function openReleaseNotes() {
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
 }
 
 .announcement-notice__summary {

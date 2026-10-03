@@ -1,6 +1,6 @@
 # Token v2 完整替換契約
 
-Status: replacement direction and migration architecture frozen; Phase 0 scope foundation active; production surface cutover not started.
+Status: replacement direction and migration architecture frozen; Phase 1 Persistent App Shell active; replacement in progress.
 
 本文件是控制台 Token v2 完整取代 Token v1 的單一實作計畫。它整合設計方向、Page／Layout ownership、component 與 token 命名、F8 review 邊界、surface 遷移順序、驗證與最終刪除條件。
 
@@ -15,7 +15,7 @@ Public Browser Source `overlay/` 維持獨立 `--ovl-*` 視覺系統，不參與
 - Folder 外觀色、navigation 與 perimeter 由 `AppFolderLayout` 擁有；feature 不再自行繪製 page chrome。
 - `AppFolderPage` 統一 header、body mode、focus 與 scroll ownership，feature 只負責內容與其內部 workspace。
 - Component、file、CSS、token、surface id 與測試名稱在各自 surface cutover 時同步收斂，不留下雙名稱。
-- Production 在 migration infrastructure 完整通過前維持 v1；單一 component adoption 不代表 production-wide v2 cutover。
+- Production 只以完整 registered surface 原子切換；已完成的 Main Shell 為 v2，尚未切換的 child／renderer 明確維持 v1。
 - 最終只有在 legacy manifest 歸零、無 v1 scope／import／payload、無 migration alias 且所有 surface 通過 no-T1 驗證後刪除 Token v1。
 
 ## 範圍與非目標
@@ -40,22 +40,22 @@ Public Browser Source `overlay/` 維持獨立 `--ovl-*` 視覺系統，不參與
 
 Token v2 foundation 已足以開始 replacement infrastructure。現有 palette、semantic color、typography、spacing、shape、elevation、z-index、motion、density、dark／light、focus、forced-colors、reduced-motion，以及 Field／row／overlay／scroll 等基礎 recipe 不需要再以增加 generic token 數量為目標。
 
-| 指標                              | Phase 0 baseline | Phase 0.3 後 | 判斷                                           |
-| --------------------------------- | ---------------: | -----------: | ---------------------------------------------- |
-| T1 unique declared names          |              413 |          341 | 72 個 cross-version declarations 已抽離 core   |
-| T1 raw declarations               |              450 |          378 | 包含 theme 等重複宣告，不用作 migration 分母   |
-| T2 unique declared names          |              372 |          372 | Foundation 與已採用 component aliases          |
-| T2 raw declarations               |              432 |          432 | 包含 theme 等重複宣告，不用作 migration 分母   |
-| Production-consumed T1-only names |              149 |           85 | 64 個 feature names 已移至 feature-owned layer |
-| Production file／token pairs      |              273 |          198 | Ratchet 已下降，不得回升                       |
-| True legacy aliases               |               21 |           21 | 跟隨 atomic surface 改寫後刪除                 |
-| Cross-version feature tokens      |               64 |            0 | 已退出 T1 core，由 feature-owned styles 提供   |
-| Component-local tokens            |               59 |           59 | 跟隨 component owner 收回                      |
-| T2 semantic gaps                  |                5 |            5 | 由 persistent shell slice 以新 owner 名稱補齊  |
+| 指標                              | Phase 0 baseline | Phase 0.3 後 | Phase 1 後 | 判斷                                                       |
+| --------------------------------- | ---------------: | -----------: | ---------: | ---------------------------------------------------------- |
+| T1 unique declared names          |              413 |          341 |        341 | 72 個 cross-version declarations 已抽離 core               |
+| T1 raw declarations               |              450 |          378 |        378 | 包含 theme 等重複宣告，不用作 migration 分母               |
+| T2 unique declared names          |              372 |          372 |        411 | 39 個 shell component／layout names 已由真實 consumer 證明 |
+| T2 raw declarations               |              432 |          432 |        472 | 包含 theme 等重複宣告，不用作 migration 分母               |
+| Production-consumed T1-only names |              149 |           85 |         47 | Persistent Shell 已移除 38 個 legacy names                 |
+| Production file／token pairs      |              273 |          198 |        132 | Persistent Shell 已移除 66 個 legacy pairs                 |
+| True legacy aliases               |               21 |           21 |         18 | 跟隨後續 atomic surface 改寫後刪除                         |
+| Cross-version feature tokens      |               64 |            0 |          0 | 已退出 T1 core，由 feature-owned styles 提供               |
+| Component-local tokens            |               59 |           59 |         28 | 跟隨 component owner 收回                                  |
+| T2 semantic gaps                  |                5 |            5 |          1 | Main Shell gaps 已補齊；只剩 Performer titlebar owner      |
 
 主要缺口是正式 component consolidation、Shell／Folder ownership、fail-closed migration boundary、少量真實 consumer token 與命名一致性，不是 foundation 規模。
 
-Baseline 是 2026-10-03 由 `tasks/token-v1-gap-audit.mjs` 與 stylesheet declaration inventory 重算的 Phase 0 起點；Phase 0.3 後數字由 `scripts/token-v2-migration-inventory.mjs` 產生的 checked-in manifest 驗證。Migration gate 只引用去重後的 `--ui-*` declared name 與 production `surface／file／token` pair；raw declarations只用來解釋 theme override 等重複來源。`tokens-v2.prototype.test.js` 的 pinned unique-name baseline 維持 372，後續數字只能由同一 canonical audit 更新。
+Baseline 是 2026-10-03 由 `tasks/token-v1-gap-audit.mjs` 與 stylesheet declaration inventory 重算的 Phase 0 起點；Phase 0.3 與 Phase 1 後數字由 `scripts/token-v2-migration-inventory.mjs` 產生的 checked-in manifest 驗證。Migration gate 只引用去重後的 `--ui-*` declared name 與 production `surface／file／token` pair；raw declarations 只用來解釋 theme override 等重複來源。`tokens-v2.prototype.test.js` 的 pinned unique-name baseline 現為 411，後續數字只能由同一 canonical audit 更新。
 
 ## 設計方向
 
@@ -112,7 +112,7 @@ Surface boundary 不能從 feature component 才開始。每個 renderer 都先�
 | --------------------------------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ |
 | `html`／`body`                    | Viewport geometry、margin reset、system-neutral mount 前 fallback                                   | 不持有 `--ui-*` visual token，不作 v1／v2 system root                                            |
 | Document root                     | Theme、density、motion、language metadata 與對平台的 literal `color-scheme` projection              | 不宣告 `data-ui-system`，不以 `--ui-color-scheme` 取得平台值                                     |
-| Renderer `#app`                   | 在 Vue mount 前登記 renderer surface／system，佔滿 viewport，提供 canvas、text、font 與 token graph | Main 與 Performer 分別登記；Phase 0 完成時仍均為 v1                                              |
+| Renderer `#app`                   | 在 Vue mount 前登記 renderer surface／system，佔滿 viewport，提供 canvas、text、font 與 token graph | Main 已於 Phase 1 切為 v2；Performer 維持 v1                                                     |
 | App Shell／Performer visible root | 完整覆蓋各自 renderer canvas，承接該 renderer 的可見背景與內容                                      | 不依賴 `body` 從另一套 system 補色                                                               |
 | Native `BrowserWindow` substrate  | Mount 前與透明縫隙可見的 `backgroundColor`；main window 另含 titlebar overlay palette               | 不由 CSS inheritance 推導；Main Shell 與 Performer 各自在其 atomic cutover 同步更新              |
 | Formal native-control component   | Range accent、focus ring、field chrome 等 platform control 外觀                                     | `base.css` 不保留全域 visual-token recipe；現行 range rule 收回 `UiRangeControl`／正式 primitive |
@@ -483,8 +483,10 @@ Token v1 can be deleted only when all conditions are machine-verifiable:
 
 Phase 0 contract audit 另確認並補齊 renderer viewport／native window substrate、6 檔 50 處 root-bound selector、shared component coexistence、6 個 production＋2 個 demo Teleport、三個 F8 system writer、兩個 F8 specimen marker、兩個 isolated prototype 與 `useVisualReviewMode` rename。這些原本會讓 document root 去 token 化後失去 owner，或讓 shared component／portal 繼續形成無聲 hybrid；現在都已進入 Phase 0 的固定 inventory、順序與驗證 gate。
 
-尚未開始 production cutover。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`，目前仍皆為 `registered-v1`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
+Production replacement 已進入 Phase 1。Phase 0.1–0.3 migration infrastructure 已完整啟用：Main／Performer 以同一 immutable registry 在 Vue mount 前登記 full-viewport `#app`；兩個 renderer entry 同時載入 scoped T1／T2 entries 與 generated invalidation。Document root 不持有 visual-system，`body` 不消費 `--ui-*`，canvas／text／font 由 registered surface 承接。
 
 Phase 0.3 已把 6 檔 50 處 root-bound recipe 改為 nearest-boundary `@scope` contract，6 個 production＋2 個 demo Teleport 改由 surface-local overlay host 承接，F8／Internal Tools／isolated prototypes 只登記自己的 v2 surface。`useVisualReviewMode` rename 與 72 個 cross-version feature-token extraction candidates 亦已完成，沒有保留 document-root writer、`body` portal fallback 或 compatibility alias。
 
-Canonical generator 現在鎖定 T1 341／T2 372／T1-only 97 unique declarations、85 個 production-consumed legacy names與 198 個 file-token pairs；六組 no-T1 isolation、雙向 mixed-boundary、metadata、portal 與 review-surface fixtures 均已轉綠。下一個 atomic implementation slice 是 Phase 1 Persistent App Shell；Main native background／titlebar palette 必須與 shell root、global overlay host、Titlebar、Sidebar navigation、Right Dock、PlayerBar 與 BGM placement 同批切換，Folder workflow 與 Utility content 則先保留為完整 registered-v1 child surfaces。
+Phase 1 已把 Main `app-shell`、global overlay host、Titlebar、Sidebar navigation、Right Dock、PlayerBar、BGM placement 與 Electron main native background／titlebar palette 同批切為 v2。Folder workflow 與 Utility content 各自成為完整 registered-v1 child surface，並擁有同 system overlay host；既有 feature visual、資料 owner 與互動未被刪除。粗粒度 inventory 仍把這三個 child layout 檔歸為 `shell`，但 parent `app-shell` cutover slice 已無 T1-only reference；剩餘 12 個 shell-category pairs 明確屬 Phase 2／4 child boundary。
+
+Canonical generator 現在鎖定 T1 341／T2 411／T1-only 97 unique declarations、47 個 production-consumed legacy names 與 132 個 file-token pairs；Phase 1 相較 Phase 0.3 移除 38 個 names／66 個 pairs。下一個 atomic implementation slice 是 Phase 2 Folder layout family：以 `AppFolderLayout`／`AppFolderPage` 完整取代 `AppArchiveFrame`／`AppTopTabs`／`AppInnerPage` ownership，並保留 Folder 外觀色作為 layout component contract。

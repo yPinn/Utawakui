@@ -108,8 +108,8 @@ async function handleResizeKeydown(event) {
 
     <!-- Independent of which playlist/album is currently selected/viewed —
          right-clicking any sidebar row opens this for that row without
-         changing what the active tab shows. UiModal teleports to <body>,
-         so its position here is purely logical, not visual. -->
+         changing what the active tab shows. UiModal teleports to the
+         app-shell v2 overlay host, so its position here is purely logical. -->
     <PlaylistDetailsModal
       :open="Boolean(editDetailsPlaylist)"
       :is-album="editDetailsIsAlbum"
@@ -138,7 +138,7 @@ async function handleResizeKeydown(event) {
   /* An inset box-shadow, not a border — this element is also the size
      container query root below, and a real border shrinks its content-box
      just enough to falsely trigger the compact-mode @container rule at the
-     sidebar's default width (see tokens.css's compact-threshold token). */
+     sidebar's default width (see tokens-v2.css's compact-threshold token). */
   box-shadow: inset 0 0 0 var(--ui-border-width) var(--ui-color-border);
   /* Lets PlaylistSidebar.vue/PlaylistSidebarRow.vue's @container rules
      query this element's own width instead of the viewport. */
@@ -180,7 +180,8 @@ async function handleResizeKeydown(event) {
   );
   inline-size: var(--ui-drag-indicator-width);
   background: transparent;
-  transition: background-color var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: background-color var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .app-playlist-sidebar__handle:hover::after,

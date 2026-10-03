@@ -194,7 +194,7 @@ describe('DemoCoreMinimums', () => {
     );
     expect(trackRowSource).toContain('size="var(--ui-track-row-thumb-size)"');
     expect(playlistSidebarRowSource).toContain(
-      'min-height: var(--ui-playlist-row-min-height)',
+      'min-height: var(--ui-sidebar-row-min-height)',
     );
     expect(playerBarSource).toContain('height: var(--ui-player-bar-height)');
   });

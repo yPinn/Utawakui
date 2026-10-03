@@ -70,7 +70,11 @@ const candidateProductionReferences = filesUnder(
   )
   .filter((file) => !file.pathname.endsWith('/views/DemoView.vue'))
   .filter((file) => !file.pathname.endsWith('/views/InternalToolsView.vue'))
-  .filter((file) => readFileSync(file, 'utf8').includes('tokens-v2.css'))
+  .filter((file) =>
+    /(?:import\s+['"][^'"]*tokens-v2\.css|href=['"][^'"]*tokens-v2\.css)/u.test(
+      readFileSync(file, 'utf8'),
+    ),
+  )
   .map((file) => file.pathname);
 
 function tokenBlock(selector) {
@@ -205,7 +209,7 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(372);
+    expect(uniqueNames.size).toBe(411);
     for (const name of [
       '--ui-bgm-player-min-inline-size',
       '--ui-bgm-player-inline-size',
@@ -427,7 +431,7 @@ describe('Studio Library workspace prototype isolation', () => {
 
   it('keeps the shared 16px shell panel inset owned by the production token layer', () => {
     expect(app).toMatch(
-      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(tokens).not.toContain('--ui-shell-sidebar-inset-block');
     expect(tokens).not.toContain('--ui-shell-panel-inset-block');

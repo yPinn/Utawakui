@@ -1,6 +1,16 @@
 <script setup>
+import { provideUiOverlayHost } from '../../composables/useUiOverlayHost.js';
+import {
+  registeredOverlayHostAttributes,
+  registeredSurfaceAttributes,
+} from '../../utils/rendererSurfaceRegistry.js';
 import AppInnerPage from './AppInnerPage.vue';
 import AppTopTabs from './AppTopTabs.vue';
+
+provideUiOverlayHost('app-folder');
+const appFolderAttributes = registeredSurfaceAttributes('app-folder');
+const appFolderOverlayHostAttributes =
+  registeredOverlayHostAttributes('app-folder');
 
 defineProps({
   activeView: { type: String, required: true },
@@ -12,7 +22,8 @@ const emit = defineEmits(['update:activeView']);
 </script>
 
 <template>
-  <section class="app-archive-frame">
+  <section v-bind="appFolderAttributes" class="app-archive-frame">
+    <div v-bind="appFolderOverlayHostAttributes" class="ui-overlay-host" />
     <div class="app-archive-frame__primary">
       <AppTopTabs
         class="app-archive-frame__tabs"

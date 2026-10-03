@@ -398,7 +398,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
   <div
     class="shell"
     :style="{
-      '--ui-playlist-sidebar-width': `${sidebarWidth}px`,
+      '--ui-shell-navigation-inline-size': `${sidebarWidth}px`,
       '--ui-right-dock-width': `${rightDockWidth}px`,
     }"
   >
@@ -565,14 +565,14 @@ useKeyboardShortcuts({ internalViewShortcuts });
   grid-template-columns:
     calc(
       clamp(
-          var(--ui-playlist-sidebar-width-min),
-          var(--ui-playlist-sidebar-width),
-          var(--ui-playlist-sidebar-width-max)
+          var(--ui-shell-navigation-inline-size-min),
+          var(--ui-shell-navigation-inline-size),
+          var(--ui-shell-navigation-inline-size-max)
         ) +
         var(--ui-shell-edge-inset-inline)
     )
     1fr;
-  grid-template-rows: var(--ui-titlebar-height) 1fr auto;
+  grid-template-rows: var(--ui-shell-titlebar-block-size) 1fr auto;
   height: 100%;
   /* Prevent 1fr content from forcing the fixed shell wider than viewport. */
   min-width: 0;
@@ -600,7 +600,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
   /* The Sidebar is its own inset plane rather than a continuation of the
      tabbed dossier baseline. The shared shell-panel token keeps its block
      breathing room aligned with Right Dock in production and Token v2. */
-  padding-block: var(--ui-shell-panel-inset-block);
+  padding-block: var(--ui-shell-content-inset-block);
   /* Matches .shell__main's own padding-right below — both are the shell's
      outermost edge insets (window edge to sidebar/main+context), kept to
      the same smaller value so the app doesn't run flush to the window but
@@ -624,7 +624,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
      (matches .shell__sidebar's own padding-left above). The two are
      different distances on purpose, not a shorthand that happens to cover
      both. */
-  padding-bottom: var(--ui-shell-panel-inset-block);
+  padding-bottom: var(--ui-shell-content-inset-block);
   padding-left: var(--ui-space-3);
   padding-right: var(--ui-shell-edge-inset-inline);
 }
@@ -646,14 +646,14 @@ useKeyboardShortcuts({ internalViewShortcuts });
   /* Neutral destinations share the Sidebar／Right Dock top boundary.
      Folder workflows intentionally remain flush to the row top because
      their tabs and cover rail own a separate silhouette above the page. */
-  padding-top: var(--ui-shell-panel-inset-block);
+  padding-top: var(--ui-shell-content-inset-block);
 }
 
 .shell__bgm-boundary {
   position: absolute;
   z-index: var(--ui-z-popover);
-  inset-block-start: var(--ui-shell-panel-inset-block);
-  inset-block-end: var(--ui-shell-panel-inset-block);
+  inset-block-start: var(--ui-shell-content-inset-block);
+  inset-block-end: var(--ui-shell-content-inset-block);
   inset-inline-start: var(--ui-shell-edge-inset-inline);
   inset-inline-end: calc(
     var(--ui-shell-edge-inset-inline) + var(--ui-right-dock-rail-width) +
@@ -686,7 +686,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
   /* The shell's shared bottom padding already leaves the panel inset above
      PlayerBar. This matching top inset makes the right plane independent of
      the workspace's taller archive-tab baseline, just like the Sidebar. */
-  padding-top: var(--ui-shell-panel-inset-block);
+  padding-top: var(--ui-shell-content-inset-block);
 }
 
 .shell__dock-surface {
@@ -734,7 +734,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
   .shell__dock {
     position: absolute;
     z-index: var(--ui-z-sticky);
-    inset-block: 0 var(--ui-shell-panel-inset-block);
+    inset-block: 0 var(--ui-shell-content-inset-block);
     inset-inline-end: var(--ui-shell-edge-inset-inline);
   }
 }
@@ -745,7 +745,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
 
 .shell__notice {
   position: fixed;
-  z-index: var(--ui-z-context-menu);
+  z-index: var(--ui-z-toast);
   right: var(--ui-space-4);
   bottom: calc(var(--ui-player-bar-height) + var(--ui-space-4));
   max-width: min(30rem, calc(100vw - 2 * var(--ui-space-4)));

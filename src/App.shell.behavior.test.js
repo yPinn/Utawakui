@@ -112,7 +112,7 @@ describe('App shell right Dock', () => {
       /\.shell__main\s*\{[^}]*position:\s*relative;[^}]*min-width:\s*0;[^}]*min-height:\s*0;/su,
     );
     expect(source).toMatch(
-      /\.shell__bgm-boundary\s*\{[^}]*position:\s*absolute;[^}]*inset-block-start:\s*var\(--ui-shell-panel-inset-block\);[^}]*inset-block-end:\s*var\(--ui-shell-panel-inset-block\);[^}]*pointer-events:\s*none;/su,
+      /\.shell__bgm-boundary\s*\{[^}]*position:\s*absolute;[^}]*inset-block-start:\s*var\(--ui-shell-content-inset-block\);[^}]*inset-block-end:\s*var\(--ui-shell-content-inset-block\);[^}]*pointer-events:\s*none;/su,
     );
     expect(source).not.toMatch(
       /\.shell__bgm-boundary\s*\{[^}]*inset-block-end:\s*calc\(/su,
@@ -141,16 +141,16 @@ describe('App shell right Dock', () => {
       /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );
     expect(source).toMatch(
-      /\.shell__dock\s*\{[^}]*justify-content:\s*flex-end;[^}]*padding-top:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+      /\.shell__dock\s*\{[^}]*justify-content:\s*flex-end;[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(source).toMatch(
-      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+      /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(source).toMatch(
-      /\.shell__main\s*\{[^}]*padding-bottom:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+      /\.shell__main\s*\{[^}]*padding-bottom:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(source).toMatch(
-      /\.shell__workspace--utility\s*\{[^}]*padding-top:\s*var\(--ui-shell-panel-inset-block\);[^}]*\}/su,
+      /\.shell__workspace--utility\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(source).not.toMatch(/\.shell__workspace\s*\{[^}]*padding-top:/su);
   });

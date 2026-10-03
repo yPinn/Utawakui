@@ -6,6 +6,7 @@ const readSource = (relativePath) =>
 
 const baseStyles = readSource('./base.css');
 const tokens = readSource('./tokens.css');
+const tokensV2 = readSource('./tokens-v2.css');
 const mainEntry = readSource('../main.js');
 const performerEntry = readSource('../performer-main.js');
 const mainHtml = readSource('../../index.html');
@@ -81,24 +82,45 @@ describe('renderer viewport boundary', () => {
     expect(v1SurfaceBlock).toContain('font-size: var(--ui-font-size-md)');
   });
 
-  it('keeps native window substrates synchronized with the active v1 canvas', () => {
-    const darkCanvas = tokens.match(
+  it('keeps each native window substrate synchronized with its registered renderer canvas', () => {
+    const mainDarkCanvas = tokensV2.match(
+      /--ui-palette-neutral-950:\s*(#[\da-f]{6});/iu,
+    )?.[1];
+    const mainLightCanvas = tokensV2.match(
+      /--ui-palette-warm-neutral-200:\s*(#[\da-f]{6});/iu,
+    )?.[1];
+    const mainDarkText = tokensV2.match(
+      /--ui-palette-warm-neutral-100:\s*(#[\da-f]{6});/iu,
+    )?.[1];
+    const mainLightText = tokensV2.match(
+      /--ui-palette-neutral-900:\s*(#[\da-f]{6});/iu,
+    )?.[1];
+    const performerDarkCanvas = tokens.match(
       /--ui-color-canvas:\s*(#[\da-f]{6});/iu,
     )?.[1];
-    const lightCanvas = tokens.match(
+    const performerLightCanvas = tokens.match(
       /:root\[data-ui-theme='light'\] \[data-ui-system='v1'\][\s\S]*?--ui-color-canvas:\s*(#[\da-f]{6});/iu,
     )?.[1];
 
-    expect(darkCanvas).toBe('#1f2328');
-    expect(lightCanvas).toBe('#f7f1e7');
-    expect(windowState).toContain(
-      `dark: { color: '${darkCanvas}', symbolColor: '${lightCanvas}' }`,
+    expect(mainDarkCanvas).toBe('#191a1e');
+    expect(mainLightCanvas).toBe('#e8e4dd');
+    expect(mainDarkText).toBe('#f3f1ec');
+    expect(mainLightText).toBe('#272928');
+    expect(tokensV2).toContain(
+      '--ui-color-canvas: var(--ui-palette-neutral-950)',
+    );
+    expect(tokensV2).toMatch(
+      /:root\[data-ui-theme='light'\] \[data-ui-system='v2'\][\s\S]*?--ui-color-canvas:\s*var\(--ui-palette-warm-neutral-200\);/u,
     );
     expect(windowState).toContain(
-      `light: { color: '${lightCanvas}', symbolColor: '${darkCanvas}' }`,
+      `dark: { color: '${mainDarkCanvas}', symbolColor: '${mainDarkText}' }`,
     );
+    expect(windowState).toContain(
+      `light: { color: '${mainLightCanvas}', symbolColor: '${mainLightText}' }`,
+    );
+    expect(windowState).toContain('height: 40');
     expect(performerWindow).toContain(
-      `initialTheme === 'light' ? '${lightCanvas}' : '${darkCanvas}'`,
+      `initialTheme === 'light' ? '${performerLightCanvas}' : '${performerDarkCanvas}'`,
     );
   });
 });

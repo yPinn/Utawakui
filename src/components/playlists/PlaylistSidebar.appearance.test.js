@@ -64,7 +64,7 @@ describe('PlaylistSidebar compact-to-expanded stability', () => {
     expect(source).toContain('playlist-sidebar__toolbar-expanded');
     expect(source).toContain('playlist-sidebar__toolbar-action--compact');
     expect(source).toContain(
-      'var(--ui-playlist-row-padding-inline) + var(--ui-border-width)',
+      'var(--ui-sidebar-row-padding-inline) + var(--ui-border-width)',
     );
     expect(source).toMatch(
       /\.playlist-sidebar__toolbar-expanded,[\s\S]*?\.playlist-sidebar__toolbar-action--compact\s*\{[^}]*transition:[^}]*var\(--ui-motion-duration-fast\)[^}]*var\(--ui-motion-easing-exit\)/u,

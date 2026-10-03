@@ -743,11 +743,11 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: var(--ui-space-4);
   height: var(--ui-player-bar-height);
-  padding-block: var(--ui-player-bar-padding-block);
+  padding-block: var(--ui-player-padding-block);
   /* Asymmetric — the artwork consumes the shell-owned leading axis while
      the end side keeps the shared window-edge gutter. */
-  padding-inline-start: var(--ui-player-bar-padding-inline-start);
-  padding-inline-end: var(--ui-player-bar-padding-inline);
+  padding-inline-start: var(--ui-player-leading-padding-inline);
+  padding-inline-end: var(--ui-player-padding-inline);
   background: var(--ui-color-surface);
   border-top: var(--ui-border-width) solid var(--ui-color-border);
   /* Otherwise dragging a slider triggers native text selection, which can
@@ -759,7 +759,7 @@ onUnmounted(() => {
   position: absolute;
   right: var(--ui-space-3);
   bottom: calc(100% + var(--ui-space-2));
-  z-index: var(--ui-z-dropdown);
+  z-index: var(--ui-z-popover);
   max-width: min(28rem, calc(100vw - 2 * var(--ui-space-3)));
 }
 
@@ -768,8 +768,8 @@ onUnmounted(() => {
      sidebar must not collapse this region around the artwork. It may yield
      some width to the center column, but keeps enough room for readable
      single-line metadata. */
-  flex: 0 1 var(--ui-player-bar-track-width);
-  min-width: var(--ui-player-bar-track-width-min);
+  flex: 0 1 var(--ui-player-track-inline-size);
+  min-width: var(--ui-player-track-min-inline-size);
   display: flex;
   align-items: center;
   gap: var(--ui-space-2);
@@ -793,7 +793,7 @@ onUnmounted(() => {
 .player-bar__track-title {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   text-decoration: none;
 }
@@ -858,7 +858,7 @@ onUnmounted(() => {
 .player-bar__center {
   flex: 1 1 auto;
   min-width: 0;
-  max-width: var(--ui-player-bar-center-max-width);
+  max-width: var(--ui-player-center-max-inline-size);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -905,11 +905,11 @@ onUnmounted(() => {
 }
 
 .player-bar__extras {
-  --ui-icon-button-size-override: var(--ui-player-bar-action-size);
+  --ui-icon-button-size-override: var(--ui-player-action-size);
 
   display: flex;
   align-items: center;
-  gap: var(--ui-player-bar-group-gap);
+  gap: var(--ui-player-group-gap);
   /* Fixed to its own content width, like .player-bar__track — icon
      buttons and a volume slider have nothing to truncate, so this side
      must never be squeezed narrower than it needs. */
@@ -921,7 +921,7 @@ onUnmounted(() => {
 .player-bar__performance-actions {
   display: inline-flex;
   align-items: center;
-  gap: var(--ui-player-bar-action-gap);
+  gap: var(--ui-player-action-gap);
 }
 
 .player-bar__performance-actions {
@@ -951,13 +951,13 @@ onUnmounted(() => {
 .player-bar__volume {
   display: flex;
   align-items: center;
-  gap: var(--ui-player-bar-action-gap);
+  gap: var(--ui-player-action-gap);
 }
 
 .player-bar__volume-range {
   --ui-range-target-size: var(--ui-space-4);
 
-  width: var(--ui-player-bar-volume-slider-width);
+  width: var(--ui-player-volume-inline-size);
 }
 
 @media (forced-colors: active) {

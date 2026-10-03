@@ -1,9 +1,10 @@
-import { h } from 'vue';
+import { h, inject } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import AppUtilityFrame from './AppUtilityFrame.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
+import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 import {
   attachClientRender,
   findAll,
@@ -26,6 +27,32 @@ const source = readFileSync(
 );
 
 describe('AppUtilityFrame', () => {
+  it('owns the complete registered-v1 Utility boundary and its overlay host', () => {
+    expect(source).toContain("provideUiOverlayHost('app-utility')");
+    expect(source).toContain("registeredSurfaceAttributes('app-utility')");
+    expect(source).toContain("registeredOverlayHostAttributes('app-utility')");
+    expect(source).toContain('v-bind="appUtilityAttributes"');
+    expect(source).toContain('v-bind="appUtilityOverlayHostAttributes"');
+  });
+
+  it('provides the Utility overlay host to slotted feature descendants', () => {
+    const OverlayProbe = {
+      setup() {
+        const host = inject(UI_OVERLAY_HOST_KEY);
+        return () => h('span', { 'data-overlay-host': host });
+      },
+    };
+    const { app, root } = mount(
+      AppUtilityFrame,
+      { title: '設定' },
+      { default: () => h(OverlayProbe) },
+    );
+    const probe = findAll(root, (node) => node.props?.['data-overlay-host'])[0];
+
+    expect(probe.props['data-overlay-host']).toBe('#app-utility-overlay');
+    app.unmount();
+  });
+
   it('provides one labelled utility surface and an explicit return action', () => {
     const onBack = vi.fn();
     const { app, root } = mount(

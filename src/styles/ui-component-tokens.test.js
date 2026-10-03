@@ -278,6 +278,15 @@ describe('shared UI component token contract', () => {
     expect(candidateValues.get('--ui-sidebar-artwork-size')).toBe(
       'var(--ui-track-artwork-size-standard)',
     );
+    expect(candidateValues.get('--ui-sidebar-artwork-centerline')).toContain(
+      'var(--ui-shell-leading-artwork-centerline)',
+    );
+    expect(candidateValues.get('--ui-sidebar-row-padding-inline')).toContain(
+      'var(--ui-playlist-sidebar-padding-inline)',
+    );
+    expect(candidateValues.get('--ui-player-leading-padding-inline')).toContain(
+      'var(--ui-shell-leading-artwork-centerline) - 1.5rem',
+    );
     expect(
       normalizedValue(
         candidateValues.get('--ui-playlist-row-state-surface-outset-inline'),

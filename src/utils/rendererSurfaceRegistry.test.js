@@ -23,16 +23,16 @@ function createDocument({ rootDataset = {}, documentDataset = {} } = {}) {
 }
 
 describe('renderer surface registry', () => {
-  it('defines immutable v1 roots for both production renderers', () => {
+  it('defines an immutable v2 Main root while Performer remains v1', () => {
     expect(RENDERER_SURFACE_REGISTRY).toEqual({
       main: {
         entryOwner: 'src/main.js',
-        migrationStatus: 'registered-v1',
+        migrationStatus: 'registered-v2',
         overlayHostId: 'app-shell-overlay',
         parentSurfaceId: null,
         renderer: 'main',
         surfaceId: 'app-shell',
-        system: 'v1',
+        system: 'v2',
       },
       performer: {
         entryOwner: 'src/performer-main.js',
@@ -47,6 +47,25 @@ describe('renderer surface registry', () => {
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY)).toBe(true);
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.main)).toBe(true);
     expect(Object.isFrozen(RENDERER_SURFACE_REGISTRY.performer)).toBe(true);
+  });
+
+  it('registers Folder and Utility as complete v1 child surfaces during cutover', () => {
+    for (const surfaceId of ['app-folder', 'app-utility']) {
+      const definition = UI_SURFACE_REGISTRY[surfaceId];
+      expect(definition).toMatchObject({
+        migrationStatus: 'registered-v1',
+        parentSurfaceId: 'app-shell',
+        renderer: 'main',
+        surfaceId,
+        system: 'v1',
+      });
+      expect(registeredOverlayHostAttributes(surfaceId)).toMatchObject({
+        id: `${surfaceId}-overlay`,
+        'data-ui-renderer': 'main',
+        'data-ui-surface': `${surfaceId}-overlay`,
+        'data-ui-system': 'v1',
+      });
+    }
   });
 
   it('registers review surfaces and their local overlay hosts as explicit boundaries', () => {
@@ -80,28 +99,31 @@ describe('renderer surface registry', () => {
   });
 
   it.each([
-    ['main', 'app-shell'],
-    ['performer', 'performer'],
-  ])('registers the %s #app root before mount', (renderer, surfaceId) => {
-    const documentRef = createDocument();
+    ['main', 'app-shell', 'v2'],
+    ['performer', 'performer', 'v1'],
+  ])(
+    'registers the %s #app root before mount',
+    (renderer, surfaceId, system) => {
+      const documentRef = createDocument();
 
-    const root = registerRendererSurfaceRoot(renderer, documentRef);
+      const root = registerRendererSurfaceRoot(renderer, documentRef);
 
-    expect(root).toBe(documentRef.root);
-    expect(root.dataset).toEqual({
-      uiRenderer: renderer,
-      uiSurface: surfaceId,
-      uiSystem: 'v1',
-    });
-    expect(documentRef.documentElement.dataset.uiSystem).toBeUndefined();
-  });
+      expect(root).toBe(documentRef.root);
+      expect(root.dataset).toEqual({
+        uiRenderer: renderer,
+        uiSurface: surfaceId,
+        uiSystem: system,
+      });
+      expect(documentRef.documentElement.dataset.uiSystem).toBeUndefined();
+    },
+  );
 
   it('accepts an identical repeated registration without creating another owner', () => {
     const documentRef = createDocument({
       rootDataset: {
         uiRenderer: 'main',
         uiSurface: 'app-shell',
-        uiSystem: 'v1',
+        uiSystem: 'v2',
       },
     });
 
@@ -177,7 +199,7 @@ describe('renderer surface registry', () => {
       () =>
         registerRendererSurfaceRoot(
           'main',
-          createDocument({ rootDataset: { uiSystem: 'v2' } }),
+          createDocument({ rootDataset: { uiSystem: 'v1' } }),
         ),
       'Renderer main mount root has conflicting data-ui-system',
     ],

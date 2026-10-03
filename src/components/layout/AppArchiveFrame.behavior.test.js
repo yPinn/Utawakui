@@ -1,4 +1,4 @@
-import { h } from 'vue';
+import { h, inject } from 'vue';
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import AppArchiveFrame from './AppArchiveFrame.vue';
@@ -7,6 +7,7 @@ import AppTopTabs from './AppTopTabs.vue';
 import UiSurface from '../ui/UiSurface.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import { UI_OVERLAY_HOST_KEY } from '../../composables/useUiOverlayHost.js';
 import {
   attachClientRender,
   findAll,
@@ -34,6 +35,37 @@ function findByClass(root, className) {
 }
 
 describe('AppArchiveFrame primary workspace', () => {
+  it('owns the complete registered-v1 Folder boundary and its overlay host', () => {
+    const source = readFileSync(
+      new URL('./AppArchiveFrame.vue', import.meta.url),
+      'utf8',
+    );
+
+    expect(source).toContain("provideUiOverlayHost('app-folder')");
+    expect(source).toContain("registeredSurfaceAttributes('app-folder')");
+    expect(source).toContain("registeredOverlayHostAttributes('app-folder')");
+    expect(source).toContain('v-bind="appFolderAttributes"');
+    expect(source).toContain('v-bind="appFolderOverlayHostAttributes"');
+  });
+
+  it('provides the Folder overlay host to slotted feature descendants', () => {
+    const OverlayProbe = {
+      setup() {
+        const host = inject(UI_OVERLAY_HOST_KEY);
+        return () => h('span', { 'data-overlay-host': host });
+      },
+    };
+    const { app, root } = mount(
+      AppArchiveFrame,
+      { activeView: 'setlist' },
+      { default: () => h(OverlayProbe) },
+    );
+    const probe = findAll(root, (node) => node.props?.['data-overlay-host'])[0];
+
+    expect(probe.props['data-overlay-host']).toBe('#app-folder-overlay');
+    app.unmount();
+  });
+
   it('does not create an empty outer rail when the page has no context content', () => {
     const { app, root } = mount(
       AppArchiveFrame,

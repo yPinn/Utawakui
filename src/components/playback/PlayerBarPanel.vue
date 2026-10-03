@@ -42,21 +42,21 @@ const emit = defineEmits(['close']);
 <style scoped>
 .player-bar-panel {
   position: fixed;
-  right: var(--ui-player-bar-panel-edge-offset);
+  right: var(--ui-player-panel-edge-offset);
   bottom: calc(
-    var(--ui-player-bar-height) + var(--ui-player-bar-panel-edge-offset)
+    var(--ui-player-bar-height) + var(--ui-player-panel-edge-offset)
   );
-  z-index: var(--ui-z-dropdown);
+  z-index: var(--ui-z-popover);
   width: min(
-    var(--ui-player-bar-panel-width),
+    var(--ui-player-panel-inline-size),
     calc(
-      100vw - var(--ui-player-bar-panel-edge-offset) -
-        var(--ui-player-bar-panel-edge-offset)
+      100vw - var(--ui-player-panel-edge-offset) -
+        var(--ui-player-panel-edge-offset)
     )
   );
   max-height: min(
-    var(--ui-player-bar-panel-max-height),
-    calc(100vh - var(--ui-player-bar-panel-viewport-offset))
+    var(--ui-player-panel-max-block-size),
+    calc(100vh - var(--ui-player-panel-viewport-offset))
   );
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -72,8 +72,7 @@ const emit = defineEmits(['close']);
 }
 
 .player-bar-panel__body :deep(.ui-scroll-region__viewport) {
-  padding: 0 var(--ui-player-bar-panel-padding)
-    var(--ui-player-bar-panel-padding);
+  padding: 0 var(--ui-player-panel-padding) var(--ui-player-panel-padding);
 }
 
 .player-bar-panel__header {
@@ -82,8 +81,7 @@ const emit = defineEmits(['close']);
   justify-content: space-between;
   gap: var(--ui-space-3);
   margin-bottom: var(--ui-space-3);
-  padding: var(--ui-player-bar-panel-padding) var(--ui-player-bar-panel-padding)
-    0;
+  padding: var(--ui-player-panel-padding) var(--ui-player-panel-padding) 0;
 }
 
 .player-bar-panel__heading {
@@ -94,7 +92,7 @@ const emit = defineEmits(['close']);
   margin: 0;
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 

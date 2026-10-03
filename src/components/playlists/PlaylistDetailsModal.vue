@@ -147,7 +147,8 @@ function save() {
 .playlist-details__cover-clear {
   position: absolute;
   opacity: 0;
-  transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .playlist-details__cover:hover .playlist-details__cover-edit,
@@ -228,7 +229,7 @@ function save() {
   background: var(--ui-color-surface-hover);
   color: var(--ui-color-text);
   border: none;
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   font-family: var(--ui-font-family-base);
   font-size: var(--ui-font-size-sm);
 }
@@ -237,7 +238,7 @@ function save() {
 .playlist-details__input {
   flex: 0 0 auto;
   font-size: var(--ui-font-size-lg);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 

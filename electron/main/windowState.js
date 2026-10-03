@@ -36,12 +36,12 @@ const iconPath = path.join(
   'app-icon.ico',
 );
 
-// Keep in sync with --ui-color-canvas / --ui-color-text in tokens.css —
+// Keep in sync with --ui-color-canvas / --ui-color-text in tokens-v2.css —
 // these paint the native Windows overlay buttons, which useTheme.js can't
 // reach. Also read by electron/main/configHandlers.js's config:set-ui-theme.
 const TITLEBAR_COLORS = {
-  dark: { color: '#1f2328', symbolColor: '#f7f1e7' },
-  light: { color: '#f7f1e7', symbolColor: '#1f2328' },
+  dark: { color: '#191a1e', symbolColor: '#f3f1ec' },
+  light: { color: '#e8e4dd', symbolColor: '#272928' },
 };
 
 function getAppUserModelId() {
@@ -212,11 +212,11 @@ function createMainWindow(
     minHeight: 650,
     backgroundColor: titlebarColors.color,
     titleBarStyle: 'hidden',
-    // Keep in sync with --ui-titlebar-height in src/styles/tokens.css.
+    // Keep in sync with --ui-shell-titlebar-block-size in tokens-v2.css.
     titleBarOverlay: {
       color: titlebarColors.color,
       symbolColor: titlebarColors.symbolColor,
-      height: 38,
+      height: 40,
     },
     title: APP_NAME,
     icon: iconPath,

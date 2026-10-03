@@ -1,8 +1,18 @@
 <script setup>
 import { onMounted, useTemplateRef } from 'vue';
+import { provideUiOverlayHost } from '../../composables/useUiOverlayHost.js';
 import { ArrowLeft } from '../../icons/index.js';
+import {
+  registeredOverlayHostAttributes,
+  registeredSurfaceAttributes,
+} from '../../utils/rendererSurfaceRegistry.js';
 import UiButton from '../ui/UiButton.vue';
 import UiSurface from '../ui/UiSurface.vue';
+
+provideUiOverlayHost('app-utility');
+const appUtilityAttributes = registeredSurfaceAttributes('app-utility');
+const appUtilityOverlayHostAttributes =
+  registeredOverlayHostAttributes('app-utility');
 
 defineProps({
   title: { type: String, required: true },
@@ -18,12 +28,14 @@ onMounted(() => titleElement.value?.focus());
 
 <template>
   <UiSurface
+    v-bind="appUtilityAttributes"
     tag="section"
     class="app-utility-frame"
     tone="surface"
     radius="sm"
     aria-labelledby="app-utility-frame-title"
   >
+    <div v-bind="appUtilityOverlayHostAttributes" class="ui-overlay-host" />
     <header class="app-utility-frame__header">
       <UiButton
         class="app-utility-frame__back"

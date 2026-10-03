@@ -18,13 +18,13 @@ describe('Token v2 migration inventory', () => {
     expect(inventory.schemaVersion).toBe(1);
     expect(inventory.declarations).toEqual({
       v1: 341,
-      v2: 372,
+      v2: 411,
       v1Only: 97,
     });
     expect(inventory.production).toMatchObject({
-      files: 69,
-      tokens: 85,
-      pairs: 198,
+      files: 59,
+      tokens: 47,
+      pairs: 132,
     });
     expect(inventory.legacyTokens).toHaveLength(97);
     expect(inventory.legacyTokens).toEqual(
@@ -88,9 +88,9 @@ describe('Token v2 migration inventory', () => {
     });
 
     expect(summary).toEqual({
-      declarations: { v1: 341, v1Only: 97, v2: 372 },
+      declarations: { v1: 341, v1Only: 97, v2: 411 },
       mode: 'check',
-      production: { files: 69, pairs: 198, tokens: 85 },
+      production: { files: 59, pairs: 132, tokens: 47 },
     });
     expect(JSON.parse(output)).toEqual(summary);
   });

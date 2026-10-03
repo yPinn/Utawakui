@@ -7,7 +7,7 @@ const componentSource = readFileSync(
   'utf8',
 );
 const tokenSource = readFileSync(
-  new URL('../../styles/tokens.css', import.meta.url),
+  new URL('../../styles/tokens-v2.css', import.meta.url),
   'utf8',
 );
 
@@ -97,20 +97,20 @@ describe('PlayerBar responsive metadata layout', () => {
   it('sizes now-playing independently from the collapsible playlist sidebar', () => {
     const trackRule = cssRule(componentSource, '.player-bar__track');
 
-    expect(tokenSource).toMatch(/--ui-player-bar-track-width:\s*[^;]+;/);
-    expect(tokenSource).toMatch(/--ui-player-bar-track-width-min:\s*[^;]+;/);
-    expect(trackRule).toContain('var(--ui-player-bar-track-width)');
-    expect(trackRule).toContain('var(--ui-player-bar-track-width-min)');
+    expect(tokenSource).toMatch(/--ui-player-track-inline-size:\s*[^;]+;/);
+    expect(tokenSource).toMatch(/--ui-player-track-min-inline-size:\s*[^;]+;/);
+    expect(trackRule).toContain('var(--ui-player-track-inline-size)');
+    expect(trackRule).toContain('var(--ui-player-track-min-inline-size)');
     expect(trackRule).not.toContain('--ui-playlist-sidebar-width');
   });
 
   it('aligns artwork to a shell-owned axis without consuming Playlist geometry', () => {
     expect(tokenSource).toContain('--ui-shell-leading-artwork-centerline:');
     expect(tokenSource).toMatch(
-      /--ui-player-bar-padding-inline-start:\s*calc\([\s\S]*?var\(--ui-shell-leading-artwork-centerline\)[\s\S]*?\);/u,
+      /--ui-player-leading-padding-inline:\s*calc\([\s\S]*?var\(--ui-shell-leading-artwork-centerline\)[\s\S]*?\);/u,
     );
     expect(tokenSource).not.toMatch(
-      /--ui-player-bar-padding-inline(?:-start)?:\s*[^;]*--ui-playlist-row/u,
+      /--ui-player-(?:leading-)?padding-inline:\s*[^;]*--ui-playlist-row/u,
     );
   });
 
@@ -159,22 +159,22 @@ describe('PlayerBar responsive metadata layout', () => {
     );
 
     expect(extrasRule).toContain(
-      '--ui-icon-button-size-override: var(--ui-player-bar-action-size)',
+      '--ui-icon-button-size-override: var(--ui-player-action-size)',
     );
-    expect(extrasRule).toContain('gap: var(--ui-player-bar-group-gap)');
+    expect(extrasRule).toContain('gap: var(--ui-player-group-gap)');
     expect(componentSource).toMatch(
-      /\.player-bar__context-actions,[\s\S]*?gap:\s*var\(--ui-player-bar-action-gap\)/u,
+      /\.player-bar__context-actions,[\s\S]*?gap:\s*var\(--ui-player-action-gap\)/u,
     );
-    expect(volumeRule).toContain('gap: var(--ui-player-bar-action-gap)');
+    expect(volumeRule).toContain('gap: var(--ui-player-action-gap)');
     expect(volumeRangeRule).toContain(
-      'width: var(--ui-player-bar-volume-slider-width)',
+      'width: var(--ui-player-volume-inline-size)',
     );
     expect(componentSource).toContain('UiRangeControl');
-    expect(tokenSource).toContain('--ui-player-bar-action-size:');
-    expect(tokenSource).toContain('--ui-player-bar-action-gap:');
-    expect(tokenSource).toContain('--ui-player-bar-group-gap:');
+    expect(tokenSource).toContain('--ui-player-action-size:');
+    expect(tokenSource).toContain('--ui-player-action-gap:');
+    expect(tokenSource).toContain('--ui-player-group-gap:');
     expect(tokenSource).toMatch(
-      /--ui-player-bar-group-gap:\s*var\(\s*--ui-space-1\s*\)/u,
+      /--ui-player-group-gap:\s*var\(\s*--ui-space-1\s*\)/u,
     );
   });
 

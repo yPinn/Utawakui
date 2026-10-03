@@ -429,7 +429,7 @@ function handleSeparationPresetChange(presetId) {
   gap: var(--ui-space-1);
   padding: var(--ui-space-1);
   margin-bottom: var(--ui-space-3);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
@@ -453,7 +453,7 @@ function handleSeparationPresetChange(presetId) {
   color: var(--ui-color-text-muted);
   font: inherit;
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
   cursor: pointer;
 }
@@ -481,7 +481,7 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__meter-card {
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
@@ -504,7 +504,7 @@ function handleSeparationPresetChange(presetId) {
   gap: var(--ui-space-1);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -527,19 +527,20 @@ function handleSeparationPresetChange(presetId) {
   align-items: center;
   justify-content: center;
   gap: var(--ui-space-2);
-  min-height: var(--ui-player-tools-meter-control-height);
+  min-height: var(--ui-player-tools-meter-control-block-size);
   margin-bottom: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-surface);
   color: var(--ui-color-text);
   font: inherit;
   font-size: var(--ui-font-size-xl);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
   font-variant-numeric: tabular-nums;
   cursor: pointer;
-  animation: player-tools-pulse var(--ui-motion-fast) var(--ui-motion-ease);
+  animation: player-tools-pulse var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .player-tools__metro-toggle--active {
@@ -556,7 +557,7 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__metro-toggle small {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-caption);
 }
 
@@ -567,7 +568,7 @@ function handleSeparationPresetChange(presetId) {
 }
 
 .player-tools__beat {
-  height: var(--ui-player-tools-beat-height);
+  height: var(--ui-player-tools-beat-block-size);
   border-radius: var(--ui-radius-pill);
   background: var(--ui-color-border);
   opacity: var(--ui-opacity-muted);
@@ -625,9 +626,10 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__tap-button {
   width: 100%;
   justify-content: center;
-  min-height: var(--ui-player-tools-meter-control-height);
+  min-height: var(--ui-player-tools-meter-control-block-size);
   font-size: var(--ui-font-size-md);
-  transition: transform var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: transform var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 .player-tools__tap-button:active {
@@ -646,7 +648,7 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__value {
   color: var(--ui-color-text);
   font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   font-variant-numeric: tabular-nums;
 }
 
@@ -690,7 +692,7 @@ function handleSeparationPresetChange(presetId) {
 .player-tools__process-item {
   padding: var(--ui-space-3);
   border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius);
+  border-radius: var(--ui-radius-md);
   background: var(--ui-color-canvas);
 }
 
@@ -728,7 +730,7 @@ function handleSeparationPresetChange(presetId) {
   margin: 0;
   overflow: hidden;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   text-overflow: ellipsis;
   white-space: nowrap;
 }

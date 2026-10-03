@@ -361,7 +361,7 @@ describe('DemoDensity', () => {
       'min-height: var(--ui-track-row-min-height)',
     );
     expect(sourceByName.get('../playlists/PlaylistSidebarRow.vue')).toContain(
-      'min-height: var(--ui-playlist-row-min-height)',
+      'min-height: var(--ui-sidebar-row-min-height)',
     );
     expect(
       sourceByName.get('../playlists/StudioLibraryTrackTable.vue'),

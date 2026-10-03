@@ -273,7 +273,7 @@ function resourceToneClass(value, warningPercent, dangerPercent) {
 <style scoped>
 .app-title-bar {
   position: relative;
-  height: var(--ui-titlebar-height);
+  height: var(--ui-shell-titlebar-block-size);
   border-bottom: var(--ui-border-width) solid var(--ui-color-border);
   background:
     linear-gradient(

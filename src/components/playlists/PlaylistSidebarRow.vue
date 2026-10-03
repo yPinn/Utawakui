@@ -186,11 +186,11 @@ function toggleFromArtwork(event) {
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--ui-playlist-row-gap);
-  block-size: var(--ui-playlist-row-min-height);
-  min-height: var(--ui-playlist-row-min-height);
-  padding: var(--ui-playlist-row-padding-block)
-    var(--ui-playlist-row-padding-inline);
+  gap: var(--ui-sidebar-row-gap);
+  block-size: var(--ui-sidebar-row-min-height);
+  min-height: var(--ui-sidebar-row-min-height);
+  padding: var(--ui-sidebar-row-padding-block)
+    var(--ui-sidebar-row-padding-inline);
   border: var(--ui-border-width) solid transparent;
   border-radius: var(--ui-side-panel-row-radius);
   background: transparent;
@@ -269,7 +269,7 @@ function toggleFromArtwork(event) {
 
 .playlist-sidebar-row--active .playlist-sidebar-row__state-surface {
   border-color: transparent;
-  background: var(--ui-playlist-row-selected-background);
+  background: var(--ui-sidebar-row-selected-bg);
 }
 
 .playlist-sidebar-row:has(.playlist-sidebar-row__select:active)
@@ -294,7 +294,8 @@ function toggleFromArtwork(event) {
   flex: 1 1 auto;
   border-radius: inherit;
   opacity: 0;
-  transition: opacity var(--ui-motion-fast) var(--ui-motion-ease);
+  transition: opacity var(--ui-motion-duration-fast)
+    var(--ui-motion-easing-standard);
 }
 
 /* The whole row reveals the playback affordance on pointer hover, matching
@@ -331,7 +332,7 @@ function toggleFromArtwork(event) {
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--ui-color-text);
-  font-weight: var(--ui-font-weight-strong);
+  font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-label);
 }
 
@@ -356,7 +357,7 @@ function toggleFromArtwork(event) {
    and useSidebarResize.js's snap-to-min behavior) — collapses straight to
    icon-only rather than letting the title/kind text get squeezed and
    clipped. Literal px value, kept in sync by hand with
-   --ui-playlist-sidebar-compact-threshold in tokens.css since @container
+   --ui-sidebar-compact-threshold in tokens-v2.css since @container
    conditions can't reference custom properties. Range syntax (strict `<`),
    not max-width — the default width equals this threshold, and
    max-width's inclusive `<=` would collapse it to icon-only on every
@@ -366,10 +367,10 @@ function toggleFromArtwork(event) {
     align-self: center;
     justify-content: center;
     gap: 0;
-    inline-size: var(--ui-playlist-row-compact-hit-size);
-    block-size: var(--ui-playlist-row-compact-hit-size);
-    min-height: var(--ui-playlist-row-compact-hit-size);
-    padding: var(--ui-playlist-row-padding-block);
+    inline-size: var(--ui-sidebar-row-compact-hit-size);
+    block-size: var(--ui-sidebar-row-compact-hit-size);
+    min-height: var(--ui-sidebar-row-compact-hit-size);
+    padding: var(--ui-sidebar-row-padding-block);
   }
 
   .playlist-sidebar-row__info {
