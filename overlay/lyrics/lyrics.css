@@ -758,6 +758,21 @@
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay {
+    --ovl-live-stage-inline-start: 6.25%;
+    --ovl-live-stage-inline-end: 5%;
+    --ovl-live-stage-block-start: 5.556%;
+    --ovl-live-stage-block-end: 8.333%;
+    --ovl-live-stage-caption-inline-size: min(34%, 42rem);
+    --ovl-live-stage-card-inline-size: min(32%, 39rem);
+    --ovl-live-stage-type-label: 1.125rem;
+    --ovl-live-stage-type-support: 1.5rem;
+    --ovl-live-stage-type-title: 2.5rem;
+    --ovl-live-stage-type-caption: 3.5em;
+    --ovl-live-stage-brand-mark-size: 4.5rem;
+    --ovl-live-stage-channel-size: 4rem;
+    --ovl-live-stage-card-block-size: 7.5rem;
+    --ovl-live-stage-card-mark-inline-size: 9rem;
+
     isolation: isolate;
     inset: 0;
     inline-size: auto;
@@ -774,8 +789,9 @@
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-chrome {
     position: absolute;
-    inset-block-start: 5.556%;
-    inset-inline: 6.25% 5%;
+    inset-block-start: var(--ovl-live-stage-block-start);
+    inset-inline: var(--ovl-live-stage-inline-start)
+      var(--ovl-live-stage-inline-end);
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -791,7 +807,7 @@
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand-mark {
-    inline-size: 4rem;
+    inline-size: var(--ovl-live-stage-brand-mark-size);
     aspect-ratio: 1;
     display: grid;
     place-items: center;
@@ -799,23 +815,25 @@
     background: var(--ovl-color-current);
     clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
     color: var(--ovl-color-ink);
-    font-size: 2.1rem;
+    font-size: 2.25rem;
     line-height: 1;
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-brand-copy {
     display: grid;
     gap: 0.08rem;
-    font-size: 1.15rem;
+    font-size: var(--ovl-live-stage-type-label);
     font-weight: 700;
     letter-spacing: 0.04em;
     line-height: 1;
+    -webkit-text-stroke: 0.04em var(--ovl-user-stroke-strong);
+    paint-order: stroke fill;
   }
 
   :root[data-ovl-template='live-stage']
     .lyrics-overlay__live-stage-brand-copy
     strong {
-    font-size: 1.4rem;
+    font-size: var(--ovl-live-stage-type-support);
     letter-spacing: -0.02em;
   }
 
@@ -823,9 +841,9 @@
     color: var(--ovl-color-text-primary);
     filter: var(--ovl-mark-shadow);
     font-family: var(--ovl-font-ui);
-    font-size: 3.25rem;
+    font-size: var(--ovl-live-stage-channel-size);
     font-weight: 800;
-    letter-spacing: -0.08em;
+    letter-spacing: -0.06em;
     line-height: 0.9;
     -webkit-text-stroke: var(--ovl-user-channel-stroke-width)
       var(--ovl-user-stroke-strong);
@@ -834,18 +852,18 @@
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__current {
     position: absolute;
-    inset-inline-start: 6.25%;
-    inset-block-end: 8.333%;
-    inline-size: min(20%, 24rem);
+    inset-inline-start: var(--ovl-live-stage-inline-start);
+    inset-block-end: var(--ovl-live-stage-block-end);
+    inline-size: var(--ovl-live-stage-caption-inline-size);
     max-inline-size: none;
     display: grid;
     justify-items: start;
     gap: 0.08em;
     color: var(--ovl-color-text-primary);
     font-family: var(--ovl-user-font-family);
-    font-size: 2.75em;
+    font-size: var(--ovl-live-stage-type-caption);
     font-weight: 700;
-    line-height: 1.08;
+    line-height: 1.06;
     text-align: left;
     text-shadow: var(--ovl-user-text-shadow);
     -webkit-text-stroke: var(--ovl-user-stage-stroke-width)
@@ -867,14 +885,16 @@
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-card {
     position: absolute;
-    inset-inline-end: 5%;
-    inset-block-end: 8.333%;
-    inline-size: min(40%, 46rem);
-    min-block-size: 6.25rem;
+    inset-inline-end: var(--ovl-live-stage-inline-end);
+    inset-block-end: var(--ovl-live-stage-block-end);
+    inline-size: var(--ovl-live-stage-card-inline-size);
+    min-block-size: var(--ovl-live-stage-card-block-size);
     display: grid;
-    grid-template-columns: 10rem minmax(0, 1fr);
+    grid-template-columns:
+      var(--ovl-live-stage-card-mark-inline-size)
+      minmax(0, 1fr);
     overflow: hidden;
-    border-radius: 0.45rem;
+    border-radius: var(--ovl-primitive-radius-md);
     background: var(--ovl-color-paper);
     box-shadow: var(--ovl-panel-shadow);
     color: var(--ovl-color-ink);
@@ -886,10 +906,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.55rem;
+    gap: 0.6rem;
     background: var(--ovl-color-current);
     color: var(--ovl-color-ink);
-    font-size: 1.2rem;
+    font-size: var(--ovl-live-stage-type-label);
     font-weight: 800;
     line-height: 1;
   }
@@ -897,21 +917,21 @@
   :root[data-ovl-template='live-stage']
     .lyrics-overlay__live-stage-card-mark
     strong {
-    inline-size: 2.5rem;
+    inline-size: 2.75rem;
     aspect-ratio: 1;
     display: grid;
     place-items: center;
     border: 0.14rem solid currentColor;
     clip-path: polygon(0 0, 100% 0, 100% 72%, 72% 100%, 0 100%);
-    font-size: 1.45rem;
+    font-size: var(--ovl-live-stage-type-support);
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-card-copy {
     min-inline-size: 0;
-    display: flex;
-    align-items: baseline;
-    gap: 0.85rem;
-    padding: 1.15rem 1.4rem;
+    display: grid;
+    align-content: center;
+    gap: 0.3rem;
+    padding: 1rem 1.5rem;
     overflow: hidden;
     white-space: nowrap;
   }
@@ -925,17 +945,15 @@
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-title {
-    flex: 1 1 auto;
-    font-size: 2rem;
+    font-size: var(--ovl-live-stage-type-title);
     font-weight: 700;
     letter-spacing: -0.025em;
     line-height: 1.05;
   }
 
   :root[data-ovl-template='live-stage'] .lyrics-overlay__live-stage-artist {
-    flex: 0 1 42%;
     color: var(--ovl-color-current);
-    font-size: 1.5rem;
+    font-size: var(--ovl-live-stage-type-support);
     font-weight: 700;
     line-height: 1.05;
   }

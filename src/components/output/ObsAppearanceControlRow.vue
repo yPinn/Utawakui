@@ -2,14 +2,22 @@
 defineProps({
   controlId: { type: String, required: true },
   label: { type: String, required: true },
+  labelsControl: { type: Boolean, default: true },
 });
 </script>
 
 <template>
   <div class="obs-appearance-control-row">
-    <label class="obs-appearance-control-row__label" :for="controlId">
+    <label
+      v-if="labelsControl"
+      class="obs-appearance-control-row__label"
+      :for="controlId"
+    >
       {{ label }}
     </label>
+    <span v-else class="obs-appearance-control-row__label" aria-hidden="true">
+      {{ label }}
+    </span>
     <div class="obs-appearance-control-row__control">
       <slot />
     </div>
@@ -19,7 +27,7 @@ defineProps({
 <style scoped>
 .obs-appearance-control-row {
   min-width: 0;
-  min-height: calc(var(--ui-control-height) + var(--ui-space-4));
+  min-height: calc(var(--ui-control-height) + var(--ui-space-2));
   display: grid;
   grid-template-columns: var(--ui-output-setting-label-width-min) minmax(
       0,
@@ -27,8 +35,7 @@ defineProps({
     );
   align-items: center;
   gap: var(--ui-space-3);
-  padding-block: var(--ui-space-2);
-  border-block-start: var(--ui-border-width) solid var(--ui-color-border);
+  padding-block: var(--ui-space-1);
 }
 
 .obs-appearance-control-row__label {

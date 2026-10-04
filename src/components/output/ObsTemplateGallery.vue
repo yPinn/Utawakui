@@ -2,12 +2,12 @@
 import { computed } from 'vue';
 import { Check, ICON_SIZE } from '../../icons/index.js';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
-import ObsOutputTabs from './ObsOutputTabs.vue';
 import ObsTemplatePreviewStage from './ObsTemplatePreviewStage.vue';
 import ObsTemplateThumbnail from './ObsTemplateThumbnail.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiTabs from '../ui/UiTabs.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
@@ -46,6 +46,16 @@ const isApplied = computed(
 const isSelectedPresetAvailable = computed(
   () => selectedPreset.value?.availability?.available !== false,
 );
+const selectedAvailabilitySummary = computed(() => {
+  const availability = selectedPreset.value?.availability;
+  if (
+    !availability?.summary ||
+    (availability.available !== false && availability.label === '可用')
+  ) {
+    return '';
+  }
+  return availability.summary;
+});
 const visibleGroups = computed(() =>
   props.templateGroups.filter((group) => group.templates.length),
 );
@@ -103,7 +113,7 @@ function applyPreset(preset) {
     >
       <template #main>
         <div class="obs-template-gallery__catalog" aria-label="模板縮圖">
-          <ObsOutputTabs
+          <UiTabs
             :items="categoryTabs"
             :active-id="activeGroup?.kind ?? null"
             aria-label="Overlay 類型"
@@ -111,7 +121,11 @@ function applyPreset(preset) {
             panel-id-prefix="output-kind"
             variant="panel"
             @update:active-id="selectKind"
-          />
+          >
+            <template #after="{ item }">
+              <UiChip tone="muted">{{ item.count }}</UiChip>
+            </template>
+          </UiTabs>
 
           <UiScrollRegion
             v-if="activeGroup"
@@ -192,13 +206,12 @@ function applyPreset(preset) {
             {{ selectedPreset.detail }}
           </p>
           <p
-            v-if="selectedPreset.availability?.summary"
+            v-if="selectedAvailabilitySummary"
             class="obs-template-gallery__availability"
           >
-            {{ selectedPreset.availability.summary }}
+            {{ selectedAvailabilitySummary }}
           </p>
           <div class="obs-template-gallery__tags" aria-label="模板特性">
-            <UiChip tone="accent">內建模板</UiChip>
             <UiChip v-for="tag in selectedPreset.tags" :key="tag" tone="muted">
               {{ tag }}
             </UiChip>
@@ -367,6 +380,7 @@ function applyPreset(preset) {
 .obs-template-gallery__detail-index,
 .obs-template-gallery__detail-summary,
 .obs-template-gallery__availability {
+  max-inline-size: 56ch;
   margin: 0;
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);

@@ -11,10 +11,6 @@ const splitLayoutSource = readFileSync(
   fileURLToPath(new URL('./ObsOutputSplitLayout.vue', import.meta.url)),
   'utf8',
 );
-const tabsSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputTabs.vue', import.meta.url)),
-  'utf8',
-);
 const tokenSource = readFileSync(
   fileURLToPath(new URL('../../styles/tokens.css', import.meta.url)),
   'utf8',
@@ -44,8 +40,8 @@ const workbenchSource = readFileSync(
   fileURLToPath(new URL('./ObsSlotWorkbench.vue', import.meta.url)),
   'utf8',
 );
-const briefSource = readFileSync(
-  fileURLToPath(new URL('./ObsOutputBrief.vue', import.meta.url)),
+const runtimeStatusSource = readFileSync(
+  fileURLToPath(new URL('./ObsOutputRuntimeStatus.vue', import.meta.url)),
   'utf8',
 );
 const preloadSource = readFileSync(
@@ -180,16 +176,25 @@ describe('OBS output workspace layout contract', () => {
       'preset.availability?.available === false',
     );
     expect(componentSource).not.toContain('雙擊套用');
-    expect(componentSource).toContain('內建模板');
+    expect(componentSource).not.toContain('內建模板');
+    expect(componentSource).toContain('selectedAvailabilitySummary');
     expect(componentSource).not.toContain('startOutput');
     expect(componentSource).toContain('ObsTemplateThumbnail');
     expect(componentSource).toContain('ObsTemplatePreviewStage');
     expect(componentSource).not.toContain('ObsOverlayPreview');
     expect(componentSource).not.toContain('previewUrl');
-    expect(tabsSource).toContain('role="tablist"');
-    expect(componentSource).toContain('ObsOutputTabs');
+    expect(componentSource).toContain('<UiTabs');
+    expect(componentSource).not.toContain('ObsOutputTabs');
+    expect(workbenchSource).toContain('<UiSegmentedControl');
     expect(componentSource).toContain('activeGroup.templates');
     expect(componentSource).not.toContain('v-for="preset in group.templates"');
+    expect(compactSplitLayoutSource).toMatch(
+      /@container app-folder-layout \(width < 40rem\) \{ \.obs-output-split-layout \{ grid-template-columns: 1fr; grid-template-rows: minmax\(0, 2fr\) minmax\(0, 1fr\);/,
+    );
+    expect(compactSplitLayoutSource).toMatch(
+      /\.obs-output-split-layout--main-gallery \{ grid-template-rows: minmax\(0, 1fr\) minmax\(0, 1fr\);/,
+    );
+    expect(splitLayoutSource).not.toContain('container-type: inline-size');
   });
 
   it('keeps thumbnails static and animates only the selected detail preview', () => {
@@ -312,6 +317,8 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).toContain('ref="previewStage"');
     expect(previewSource).toContain('new ResizeObserver(measurePreview)');
     expect(previewSource).toContain(':style="previewCanvasStyle"');
+    expect(previewSource).toContain(':style="previewFrameStyle"');
+    expect(previewSource).toContain('calculateCapturePreviewScale');
     expect(previewSource).toContain('transform-origin: left top');
     expect(previewSource).toContain("id: 'checker'");
     expect(previewSource).toContain("id: 'dark'");
@@ -358,16 +365,16 @@ describe('OBS output workspace layout contract', () => {
     expect(appearanceFieldSource).toContain(
       'const controlId = computed(() => `output-appearance-${props.field.key}`)',
     );
-    expect(appearanceFieldSource).toContain(
-      'class="obs-appearance-field__select"',
-    );
+    expect(appearanceFieldSource).toContain('<UiSelect');
+    expect(appearanceFieldSource).toContain('<UiColorField');
+    expect(appearanceFieldSource).toContain('label-hidden');
+    expect(appearanceFieldSource).not.toContain('<select');
+    expect(appearanceFieldSource).not.toContain('type="color"');
     expect(appearanceControlRowSource).toContain('<slot />');
     expect(compactAppearanceControlRowSource).toMatch(
       /grid-template-columns:\s*var\(--ui-output-setting-label-width-min\)\s*minmax\(\s*0,\s*1fr\s*\)/,
     );
-    expect(appearanceControlRowSource).toContain(
-      'border-block-start: var(--ui-border-width) solid var(--ui-color-border)',
-    );
+    expect(appearanceControlRowSource).not.toContain('border-block-start:');
     expect(appearanceControlRowSource).not.toContain('v-model');
   });
 
@@ -399,17 +406,14 @@ describe('OBS output workspace layout contract', () => {
     expect(workbenchSource).toContain('sanitizeOutputAppearanceSetting');
     expect(workbenchSource).toContain('configurationFieldGroups');
     expect(workbenchSource).toContain('captureSize: draft.captureSize');
-    expect(workbenchSource).toContain(
-      'class="obs-slot-workbench__capture-guide"',
-    );
-    expect(
-      workbenchSource.indexOf('obs-slot-workbench__capture-guide'),
-    ).toBeLessThan(workbenchSource.indexOf('<ObsOverlayPreview'));
+    expect(workbenchSource).not.toContain('obs-slot-workbench__capture-guide');
     expect(workbenchSource).toContain(
       ':supported-capture-sizes="supportedCaptureSizes"',
     );
-    expect(workbenchSource).toContain(
-      '{{ capturePreset.width }} × {{ capturePreset.height }} px',
+    expect(previewSource).toContain('obs-overlay-preview__capture-meta');
+    expect(previewSource).toContain('固定');
+    expect(previewSource).toContain(
+      '{{ PREVIEW_CANVAS_WIDTH }} × {{ PREVIEW_CANVAS_HEIGHT }}',
     );
     expect(settingsSource).toContain('type="text"');
     expect(settingsSource).toContain('inputmode="numeric"');
@@ -428,17 +432,17 @@ describe('OBS output workspace layout contract', () => {
     expect(previewSource).not.toContain('sourceDiagnostic');
     expect(previewSource).not.toContain('UiChip');
     expect(previewSource).not.toContain('UiNotice');
-    expect(workbenchSource).toContain('ObsOutputBrief');
+    expect(workbenchSource).toContain('ObsOutputRuntimeStatus');
     expect(workbenchSource).toContain(':output-status="outputStatus"');
     expect(workbenchSource).toContain(':error="outputError"');
     expect(workbenchSource).not.toContain('preset.detail');
     expect(workbenchSource).not.toContain('preset.tags');
-    expect(briefSource).toContain('preset?.summary');
-    expect(briefSource).toContain('describeOutputSourceStatus');
-    expect(briefSource).toContain('describeOutputClientStatus');
-    expect(briefSource).toContain('aria-label="輸出摘要"');
-    expect(briefSource).toContain('v-if="error"');
-    expect(briefSource).toContain('title="輸出未更新"');
+    expect(runtimeStatusSource).not.toContain('preset?.summary');
+    expect(runtimeStatusSource).toContain('describeOutputSourceStatus');
+    expect(runtimeStatusSource).toContain('describeOutputClientStatus');
+    expect(runtimeStatusSource).toContain('aria-label="輸出狀態"');
+    expect(runtimeStatusSource).toContain('v-if="error"');
+    expect(runtimeStatusSource).toContain('title="輸出未更新"');
     expect(workspaceSource).toContain('await initializeOutput()');
     expect(workspaceSource).toContain('await refreshOutputStatus()');
     expect(settingsSource).not.toContain('OBS 已連線');

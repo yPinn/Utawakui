@@ -5,6 +5,7 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
+const pageSource = readSource('../components/output/OutputPage.vue');
 const viewSource = readSource('../views/OutputView.vue');
 const workspaceSource = readSource(
   '../components/output/ObsOutputWorkspace.vue',
@@ -13,6 +14,9 @@ const splitLayoutSource = readSource(
   '../components/output/ObsOutputSplitLayout.vue',
 );
 const workbenchSource = readSource('../components/output/ObsSlotWorkbench.vue');
+const runtimeStatusSource = readSource(
+  '../components/output/ObsOutputRuntimeStatus.vue',
+);
 const gallerySource = readSource('../components/output/ObsTemplateGallery.vue');
 const settingsSource = readSource('../components/output/ObsOutputSettings.vue');
 const tokenSource = readSource('./tokens.css');
@@ -29,10 +33,9 @@ const publicOverlayTokens = readSource('../../overlay/shared/tokens.css');
 
 const outputConsumerPaths = [
   '../components/output/ObsAppearanceControlRow.vue',
-  '../components/output/ObsOutputBrief.vue',
+  '../components/output/ObsOutputRuntimeStatus.vue',
   '../components/output/ObsOutputSettings.vue',
   '../components/output/ObsOutputSplitLayout.vue',
-  '../components/output/ObsOutputTabs.vue',
   '../components/output/ObsOverlayPreview.vue',
   '../components/output/ObsSlotWorkbench.vue',
   '../components/output/ObsTemplateGallery.vue',
@@ -109,12 +112,14 @@ const outputOwnedTokens = [
 
 describe('Output Token v2 surface cutover', () => {
   it('keeps Output in Folder workspace mode with bounded feature scroll owners', () => {
-    expect(appSource).toContain(
-      "const documentFolderViews = new Set(['setlist', 'import'])",
-    );
+    expect(appSource).toContain('output: OutputPage');
+    expect(pageSource).toContain('<AppSurfaceBoundary surface-id="output">');
     expect(viewSource).toContain('<ObsOutputWorkspace');
+    expect(workspaceSource).toContain(
+      '<AppFolderPage mode="workspace" body-label="輸出工作區">',
+    );
     expect(workspaceSource).toMatch(
-      /\.obs-output-workspace\s*\{(?=[^}]*height:\s*100%)(?=[^}]*min-height:\s*0)(?=[^}]*grid-template-rows:\s*auto minmax\(0, 1fr\))[^}]*\}/su,
+      /\.obs-output-workspace\s*\{(?=[^}]*height:\s*100%)(?=[^}]*min-height:\s*0)(?=[^}]*grid-template-rows:\s*minmax\(0, 1fr\))[^}]*\}/su,
     );
     expect(splitLayoutSource).toContain('<UiScrollRegion');
     expect(workbenchSource).toContain('<UiScrollRegion');
@@ -177,11 +182,15 @@ describe('Output Token v2 surface cutover', () => {
   });
 
   it('preserves the workbench, gallery, settings, preview, and template anatomy', () => {
-    expect(workspaceSource).toContain('<ObsOutputTabs');
+    expect(workspaceSource).toContain('<UiTabs');
+    expect(gallerySource).toContain('<UiTabs');
+    expect(workbenchSource).toContain('<UiSegmentedControl');
     expect(workspaceSource).toContain('<ObsTemplateGallery');
     expect(workspaceSource).toContain('<ObsSlotWorkbench');
     expect(workspaceSource).toContain('<ObsOutputSettings');
     expect(workbenchSource).toContain('<ObsOverlayPreview');
+    expect(workbenchSource).toContain('<ObsOutputRuntimeStatus');
+    expect(runtimeStatusSource).toContain('aria-label="輸出狀態"');
     expect(gallerySource).toContain('<ObsTemplateThumbnail');
     expect(gallerySource).toContain('<ObsTemplatePreviewStage');
     expect(settingsSource).toContain('<ObsSpoutOutputSettings');

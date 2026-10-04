@@ -6,9 +6,10 @@ import { useOutputAppearanceAutosave } from '../../composables/output/useOutputA
 import { useSpoutOutput } from '../../composables/output/useSpoutOutput.js';
 import { buildAllOutputSlotUrls } from '../../utils/outputRoutes.js';
 import ObsOutputSettings from './ObsOutputSettings.vue';
-import ObsOutputTabs from './ObsOutputTabs.vue';
 import ObsTemplateGallery from './ObsTemplateGallery.vue';
 import ObsSlotWorkbench from './ObsSlotWorkbench.vue';
+import AppFolderPage from '../layout/AppFolderPage.vue';
+import UiTabs from '../ui/UiTabs.vue';
 
 const props = defineProps({
   presets: { type: Array, default: () => [] },
@@ -194,9 +195,9 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="obs-output-workspace">
-    <header class="obs-output-workspace__modebar">
-      <ObsOutputTabs
+  <AppFolderPage mode="workspace" body-label="輸出工作區">
+    <template #header>
+      <UiTabs
         :items="pages"
         :active-id="activePage"
         aria-label="輸出頁面"
@@ -205,84 +206,86 @@ onBeforeUnmount(() => {
         variant="panel"
         @update:active-id="selectPage"
       />
-    </header>
+    </template>
 
-    <section
-      v-show="activePage === 'gallery'"
-      id="obs-output-gallery-panel"
-      class="obs-output-workspace__panel"
-      role="tabpanel"
-      aria-labelledby="obs-output-gallery-tab"
-    >
-      <ObsTemplateGallery
-        :presets="orderedPresets"
-        :template-groups="templateGroups"
-        :preview-scene="previewScene"
-        :active-kind="activeKind"
-        :selected-preset-id="browsedPreset?.id ?? null"
-        :applied-preset-ids="appliedPresetIds"
-        :is-applying="outputState.isSavingSlot"
-        @update:active-kind="selectKind"
-        @update:selected-preset-id="selectPreset"
-        @apply-preset="applyPreset"
-        @open-workbench="selectPage('workbench')"
-      />
-    </section>
+    <div class="obs-output-workspace">
+      <section
+        v-show="activePage === 'gallery'"
+        id="obs-output-gallery-panel"
+        class="obs-output-workspace__panel"
+        role="tabpanel"
+        aria-labelledby="obs-output-gallery-tab"
+      >
+        <ObsTemplateGallery
+          :presets="orderedPresets"
+          :template-groups="templateGroups"
+          :preview-scene="previewScene"
+          :active-kind="activeKind"
+          :selected-preset-id="browsedPreset?.id ?? null"
+          :applied-preset-ids="appliedPresetIds"
+          :is-applying="outputState.isSavingSlot"
+          @update:active-kind="selectKind"
+          @update:selected-preset-id="selectPreset"
+          @apply-preset="applyPreset"
+          @open-workbench="selectPage('workbench')"
+        />
+      </section>
 
-    <section
-      v-if="activePage === 'workbench'"
-      id="obs-output-workbench-panel"
-      class="obs-output-workspace__panel"
-      role="tabpanel"
-      aria-labelledby="obs-output-workbench-tab"
-    >
-      <ObsSlotWorkbench
-        :preset="appliedPreset"
-        :output-slot="activeSlot"
-        :active-kind="activeKind"
-        :slot-definitions="slotDefinitions"
-        :output-status="outputState.status"
-        :preview-url="workbenchUrls.previewUrl"
-        :obs-url="workbenchUrls.obsUrl"
-        :output-error="outputState.error"
-        :save-status="appearanceSaveStatus"
-        @update:active-kind="selectKind"
-        @change-settings="queueAppearanceSave"
-        @retry-save="appearanceAutosave.retry"
-        @open-gallery="selectPage('gallery')"
-        @refresh-projection="refreshProjection"
-      />
-    </section>
+      <section
+        v-if="activePage === 'workbench'"
+        id="obs-output-workbench-panel"
+        class="obs-output-workspace__panel"
+        role="tabpanel"
+        aria-labelledby="obs-output-workbench-tab"
+      >
+        <ObsSlotWorkbench
+          :preset="appliedPreset"
+          :output-slot="activeSlot"
+          :active-kind="activeKind"
+          :slot-definitions="slotDefinitions"
+          :output-status="outputState.status"
+          :preview-url="workbenchUrls.previewUrl"
+          :obs-url="workbenchUrls.obsUrl"
+          :output-error="outputState.error"
+          :save-status="appearanceSaveStatus"
+          @update:active-kind="selectKind"
+          @change-settings="queueAppearanceSave"
+          @retry-save="appearanceAutosave.retry"
+          @open-gallery="selectPage('gallery')"
+          @refresh-projection="refreshProjection"
+        />
+      </section>
 
-    <section
-      v-show="activePage === 'settings'"
-      id="obs-output-settings-panel"
-      class="obs-output-workspace__panel"
-      role="tabpanel"
-      aria-labelledby="obs-output-settings-tab"
-    >
-      <ObsOutputSettings
-        :status="outputState.status"
-        :settings="outputState.settings"
-        :suggested-ports="outputState.suggestedPorts"
-        :busy="runtimeBusy"
-        :error="outputState.error"
-        :spout-status="spoutState.status"
-        :spout-busy="
-          spoutState.isConfiguring ||
-          spoutState.isStarting ||
-          spoutState.isStopping
-        "
-        :spout-error="spoutState.error"
-        @save="saveRuntimeSettings"
-        @start="startOutput"
-        @stop="stopOutput"
-        @spout-start="startSpoutOutput"
-        @spout-stop="stopSpoutOutput"
-        @spout-set-frame-rate-profile="setSpoutFrameRateProfile"
-      />
-    </section>
-  </div>
+      <section
+        v-show="activePage === 'settings'"
+        id="obs-output-settings-panel"
+        class="obs-output-workspace__panel"
+        role="tabpanel"
+        aria-labelledby="obs-output-settings-tab"
+      >
+        <ObsOutputSettings
+          :status="outputState.status"
+          :settings="outputState.settings"
+          :suggested-ports="outputState.suggestedPorts"
+          :busy="runtimeBusy"
+          :error="outputState.error"
+          :spout-status="spoutState.status"
+          :spout-busy="
+            spoutState.isConfiguring ||
+            spoutState.isStarting ||
+            spoutState.isStopping
+          "
+          :spout-error="spoutState.error"
+          @save="saveRuntimeSettings"
+          @start="startOutput"
+          @stop="stopOutput"
+          @spout-start="startSpoutOutput"
+          @spout-stop="stopSpoutOutput"
+          @spout-set-frame-rate-profile="setSpoutFrameRateProfile"
+        />
+      </section>
+    </div>
+  </AppFolderPage>
 </template>
 
 <style scoped>
@@ -290,31 +293,11 @@ onBeforeUnmount(() => {
   height: 100%;
   min-height: 0;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
-  gap: var(--ui-space-2);
-}
-
-.obs-output-workspace__modebar {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--ui-space-2);
+  grid-template-rows: minmax(0, 1fr);
 }
 
 .obs-output-workspace__panel {
   min-height: 0;
   min-width: 0;
-}
-
-@media (max-width: 680px) {
-  .obs-output-workspace__modebar {
-    align-items: flex-start;
-    flex-direction: column;
-  }
-
-  :deep(.obs-output-tabs) {
-    max-width: 100%;
-  }
 }
 </style>

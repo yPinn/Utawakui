@@ -376,7 +376,7 @@ const TEMPLATE_CONFIGS = Object.freeze({
   'live-stage': {
     keys: ['paletteId', 'fontFamily', 'fontScale', 'contrastStyle'],
     fields: {
-      fontFamily: { defaultValue: 'serif' },
+      fontFamily: { defaultValue: 'sans' },
       fontScale: { defaultValue: 'medium' },
     },
   },

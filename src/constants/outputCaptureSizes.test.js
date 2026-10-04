@@ -3,6 +3,7 @@ import {
   OUTPUT_LYRICS_CAPTURE_SIZE,
   OUTPUT_REFERENCE_CANVAS,
   OUTPUT_WIDGET_CAPTURE_SIZES,
+  calculateCapturePreviewScale,
   calculateWidgetPreviewScale,
   captureSizeForKind,
   defaultCaptureSizeIdForKind,
@@ -59,6 +60,32 @@ describe('output capture size contract', () => {
         rowGap: 8,
       }),
     ).toBeCloseTo(324 / 480);
+  });
+
+  it('fits a fixed capture preview within both available dimensions', () => {
+    expect(
+      calculateCapturePreviewScale({
+        availableWidth: 960,
+        availableHeight: 400,
+        captureSize: OUTPUT_LYRICS_CAPTURE_SIZE,
+      }),
+    ).toBeCloseTo(400 / 1080);
+
+    expect(
+      calculateCapturePreviewScale({
+        availableWidth: 640,
+        availableHeight: 540,
+        captureSize: OUTPUT_LYRICS_CAPTURE_SIZE,
+      }),
+    ).toBeCloseTo(640 / 1920);
+
+    expect(
+      calculateCapturePreviewScale({
+        availableWidth: 3840,
+        availableHeight: 2160,
+        captureSize: OUTPUT_LYRICS_CAPTURE_SIZE,
+      }),
+    ).toBe(1);
   });
 
   it('keeps Lyrics fixed at FHD while widgets use safe slot defaults', () => {

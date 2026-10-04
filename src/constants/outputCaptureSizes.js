@@ -20,6 +20,20 @@ export const OUTPUT_LYRICS_CAPTURE_SIZE = freezeCaptureSize(
 const WIDGET_SIZE_BY_ID = new Map(
   OUTPUT_WIDGET_CAPTURE_SIZES.map((size) => [size.id, size]),
 );
+
+export function calculateCapturePreviewScale({
+  availableWidth,
+  availableHeight,
+  captureSize,
+}) {
+  const width = Math.max(0, Number(availableWidth) || 0);
+  const height = Math.max(0, Number(availableHeight) || 0);
+  const captureWidth = Number(captureSize?.width) || 0;
+  const captureHeight = Number(captureSize?.height) || 0;
+  if (captureWidth <= 0 || captureHeight <= 0) return 0;
+  return Math.max(0, Math.min(1, width / captureWidth, height / captureHeight));
+}
+
 export function calculateWidgetPreviewScale({
   availableWidth,
   availableHeight,

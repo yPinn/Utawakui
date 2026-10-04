@@ -34,11 +34,9 @@ describe('OutputView', () => {
 
   it('renders three output categories while keeping one template grid active', async () => {
     const html = await renderOutputView();
-    const setlistTab = html.indexOf('id="output-workbench-kind-setlist-tab"');
-    const lyricsTab = html.indexOf('id="output-workbench-kind-lyrics-tab"');
-    const nowPlayingTab = html.indexOf(
-      'id="output-workbench-kind-now-playing-tab"',
-    );
+    const setlistOption = html.indexOf('歌單');
+    const lyricsOption = html.indexOf('歌詞');
+    const nowPlayingOption = html.indexOf('播放中');
 
     expect(html).toContain('模板庫');
     expect(html).toContain('工作台');
@@ -48,12 +46,13 @@ describe('OutputView', () => {
     expect(html).toContain('播放中');
     expect(html).toContain('歌單');
     expect(html).toContain('歌詞');
-    expect(setlistTab).toBeGreaterThan(-1);
-    expect(setlistTab).toBeLessThan(lyricsTab);
-    expect(lyricsTab).toBeLessThan(nowPlayingTab);
-    expect(html).not.toContain('id="output-workbench-kind-artwork-tab"');
+    expect(html).toContain('aria-label="目前編輯的 Overlay 類型"');
+    expect(setlistOption).toBeGreaterThan(-1);
+    expect(setlistOption).toBeLessThan(lyricsOption);
+    expect(lyricsOption).toBeLessThan(nowPlayingOption);
+    expect(html).not.toContain('>封面</button>');
     expect(html).toMatch(
-      /id="output-workbench-kind-setlist-tab"[^>]*aria-selected="true"/,
+      /<button[^>]*role="radio"[^>]*aria-checked="true"[^>]*>[\s\S]{0,80}歌單/,
     );
     expect(html).toContain('黑幕歌單');
     expect(html).not.toContain('聚焦歌詞');

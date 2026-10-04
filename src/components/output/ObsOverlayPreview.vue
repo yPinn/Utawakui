@@ -17,8 +17,10 @@ import {
 } from 'vue';
 import { Copy, Grid2X2, Moon, Sun } from '../../icons/index.js';
 import streamerPreviewImage from '../../assets/workbench-streamer-guide.png';
-import { OUTPUT_LYRICS_CAPTURE_SIZE } from '../../constants/outputCaptureSizes.js';
-import UiButton from '../ui/UiButton.vue';
+import {
+  calculateCapturePreviewScale,
+  OUTPUT_LYRICS_CAPTURE_SIZE,
+} from '../../constants/outputCaptureSizes.js';
 import UiIconButton from '../ui/UiIconButton.vue';
 import ObsStreamerPreview from './ObsStreamerPreview.vue';
 import ObsWidgetCapturePreview from './ObsWidgetCapturePreview.vue';
@@ -76,12 +78,20 @@ const previewCanvasStyle = computed(() => ({
   height: `${PREVIEW_CANVAS_HEIGHT}px`,
   transform: `scale(${previewScale.value})`,
 }));
+const previewFrameStyle = computed(() => ({
+  width: `${PREVIEW_CANVAS_WIDTH * previewScale.value}px`,
+  height: `${PREVIEW_CANVAS_HEIGHT * previewScale.value}px`,
+}));
 
 function measurePreview() {
   const availableWidth = previewStage.value?.clientWidth ?? 0;
-  if (availableWidth > 0) {
-    previewScale.value = availableWidth / PREVIEW_CANVAS_WIDTH;
-  }
+  const availableHeight = previewStage.value?.clientHeight ?? 0;
+  if (availableWidth <= 0 || availableHeight <= 0) return;
+  previewScale.value = calculateCapturePreviewScale({
+    availableWidth,
+    availableHeight,
+    captureSize: OUTPUT_LYRICS_CAPTURE_SIZE,
+  });
 }
 
 function handlePreviewLoad() {
@@ -127,6 +137,7 @@ onBeforeUnmount(() => {
         class="obs-overlay-preview__frame"
         :data-tone="preset?.tone"
         :data-backdrop="previewBackdrop"
+        :style="previewFrameStyle"
       >
         <ObsStreamerPreview
           v-if="!hasRuntimeTemplate"
@@ -171,17 +182,25 @@ onBeforeUnmount(() => {
     </div>
 
     <div class="obs-overlay-preview__toolbar">
-      <p
-        v-if="copyState !== 'idle'"
-        class="obs-overlay-preview__feedback"
-        :role="copyState === 'error' ? 'alert' : 'status'"
-        aria-live="polite"
-      >
-        <template v-if="copyState === 'copied'">
-          已複製 Browser Source URL
-        </template>
-        <template v-else-if="copyState === 'error'">無法複製 URL</template>
-      </p>
+      <div class="obs-overlay-preview__info">
+        <p v-if="isLyrics" class="obs-overlay-preview__capture-meta">
+          <span>固定</span>
+          <strong>
+            {{ PREVIEW_CANVAS_WIDTH }} × {{ PREVIEW_CANVAS_HEIGHT }}
+          </strong>
+        </p>
+        <p
+          v-if="copyState !== 'idle'"
+          class="obs-overlay-preview__feedback"
+          :role="copyState === 'error' ? 'alert' : 'status'"
+          aria-live="polite"
+        >
+          <template v-if="copyState === 'copied'">
+            已複製 Browser Source URL
+          </template>
+          <template v-else-if="copyState === 'error'">無法複製 URL</template>
+        </p>
+      </div>
       <div class="obs-overlay-preview__actions">
         <div
           class="obs-overlay-preview__backdrops"
@@ -198,11 +217,10 @@ onBeforeUnmount(() => {
             @click="previewBackdrop = backdrop.id"
           />
         </div>
-        <UiButton
+        <UiIconButton
           v-if="obsUrl"
           :icon="Copy"
-          title="複製目前類型的 Browser Source URL"
-          aria-label="複製目前類型的 Browser Source URL"
+          label="複製 Browser Source URL"
           @click="copyObsUrl"
         />
       </div>
@@ -227,7 +245,6 @@ onBeforeUnmount(() => {
   --ui-output-preview-layer-output: 2;
 
   position: relative;
-  inline-size: 100%;
   aspect-ratio: var(--ui-output-preview-aspect-ratio);
   min-width: 0;
   overflow: hidden;
@@ -319,10 +336,36 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__actions,
-.obs-overlay-preview__backdrops {
+.obs-overlay-preview__backdrops,
+.obs-overlay-preview__info,
+.obs-overlay-preview__capture-meta {
   min-width: 0;
   display: flex;
   align-items: center;
+}
+
+.obs-overlay-preview__info {
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: var(--ui-space-2) var(--ui-space-3);
+}
+
+.obs-overlay-preview__capture-meta,
+.obs-overlay-preview__feedback {
+  margin: 0;
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
+}
+
+.obs-overlay-preview__capture-meta {
+  gap: var(--ui-space-2);
+}
+
+.obs-overlay-preview__capture-meta strong {
+  color: var(--ui-color-text);
+  font-weight: var(--ui-font-weight-semibold);
+  font-variant-numeric: tabular-nums;
 }
 
 .obs-overlay-preview__actions {
@@ -338,10 +381,6 @@ onBeforeUnmount(() => {
 }
 
 .obs-overlay-preview__feedback {
-  margin: 0;
-  margin-inline-end: auto;
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
 }
 </style>

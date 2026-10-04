@@ -1,20 +1,19 @@
 <script setup>
-import { computed, reactive, watch } from 'vue';
+import { computed, onBeforeUnmount, reactive, shallowRef, watch } from 'vue';
 import { Palette } from '../../icons/index.js';
 import { sanitizeOutputAppearanceSetting } from '../../../shared/outputAppearance.mjs';
 import { normalizeLyricsPresentationPolicyId } from '../../../shared/presentation/lyricsPresentationPolicies.mjs';
 import {
-  captureSizeForKind,
   normalizeCaptureSizeId,
   supportedCaptureSizeIdsForTemplate,
 } from '../../constants/outputCaptureSizes.js';
 import ObsAppearanceField from './ObsAppearanceField.vue';
 import ObsOverlayPreview from './ObsOverlayPreview.vue';
-import ObsOutputBrief from './ObsOutputBrief.vue';
+import ObsOutputRuntimeStatus from './ObsOutputRuntimeStatus.vue';
 import ObsOutputSplitLayout from './ObsOutputSplitLayout.vue';
-import ObsOutputTabs from './ObsOutputTabs.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiScrollRegion from '../ui/UiScrollRegion.vue';
+import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
 
 const props = defineProps({
   preset: { type: Object, default: null },
@@ -81,7 +80,7 @@ const configurationFieldGroups = computed(() => {
   }
   return [...groups.values()];
 });
-const kindTabs = computed(() =>
+const kindOptions = computed(() =>
   props.slotDefinitions.map((definition) => ({
     id: definition.id,
     label: definition.label,
@@ -100,6 +99,8 @@ const saveStatusLabel = computed(() => {
   }
   return '已儲存';
 });
+const showSaveStatus = shallowRef(props.saveStatus !== 'saved');
+let saveStatusTimer = null;
 
 function normalizedControlValue(field, settings) {
   if (field.settingKind === 'lyrics-presentation') {
@@ -130,11 +131,6 @@ const isConfigurationAtDefaults = computed(() =>
   ),
 );
 
-const capturePreset = computed(() =>
-  captureSizeForKind(props.activeKind, draft.captureSize, templateId.value),
-);
-const isWidgetCapture = computed(() => props.activeKind !== 'lyrics');
-
 watch(
   [
     () => props.activeKind,
@@ -155,6 +151,28 @@ watch(
   },
   { immediate: true, deep: true },
 );
+
+watch(
+  () => props.saveStatus,
+  (status, previousStatus) => {
+    clearTimeout(saveStatusTimer);
+    if (status !== 'saved') {
+      showSaveStatus.value = true;
+      return;
+    }
+    if (previousStatus === undefined || previousStatus === 'saved') {
+      showSaveStatus.value = false;
+      return;
+    }
+    showSaveStatus.value = true;
+    saveStatusTimer = setTimeout(() => {
+      showSaveStatus.value = false;
+    }, 1800);
+  },
+  { immediate: true },
+);
+
+onBeforeUnmount(() => clearTimeout(saveStatusTimer));
 
 function settingsSnapshot() {
   return {
@@ -205,16 +223,14 @@ function resetAppearance() {
     <template #main>
       <main class="obs-slot-workbench__canvas">
         <header class="obs-slot-workbench__canvas-header">
-          <ObsOutputTabs
-            :items="kindTabs"
-            :active-id="activeKind"
+          <UiSegmentedControl
+            :items="kindOptions"
+            :model-value="activeKind"
             aria-label="目前編輯的 Overlay 類型"
-            tab-id-prefix="output-workbench-kind"
-            variant="bar"
-            @update:active-id="emit('update:activeKind', $event)"
+            @update:model-value="emit('update:activeKind', $event)"
           />
           <UiButton :icon="Palette" @click="emit('openGallery')">
-            模板
+            更換模板
           </UiButton>
         </header>
 
@@ -223,24 +239,6 @@ function resetAppearance() {
           axis="both"
           viewport-class="obs-slot-workbench__stage-viewport"
         >
-          <section
-            class="obs-slot-workbench__capture-guide"
-            aria-label="Browser Source 尺寸建議"
-          >
-            <span class="obs-slot-workbench__capture-guide-label">
-              Browser Source 尺寸建議
-            </span>
-            <strong class="obs-slot-workbench__capture-dimensions">
-              {{ capturePreset.width }} × {{ capturePreset.height }} px
-            </strong>
-            <span class="obs-slot-workbench__capture-guide-copy">
-              {{
-                isWidgetCapture
-                  ? `${capturePreset.label}型 Widget；僅顯示此模板支援的尺寸`
-                  : 'Lyrics 固定 FHD'
-              }}
-            </span>
-          </section>
           <ObsOverlayPreview
             :preset="preset"
             :active-kind="activeKind"
@@ -260,7 +258,11 @@ function resetAppearance() {
         <h2 class="obs-slot-workbench__title">
           {{ preset?.name ?? '未選擇模板' }}
         </h2>
-        <div class="obs-slot-workbench__save-state" :data-state="saveStatus">
+        <div
+          v-if="showSaveStatus"
+          class="obs-slot-workbench__save-state"
+          :data-state="saveStatus"
+        >
           <span role="status" aria-live="polite" aria-atomic="true">
             {{ saveStatusLabel }}
           </span>
@@ -272,8 +274,7 @@ function resetAppearance() {
     </template>
 
     <template #side>
-      <ObsOutputBrief
-        :preset="preset"
+      <ObsOutputRuntimeStatus
         :output-status="outputStatus"
         :error="outputError"
       />
@@ -333,41 +334,9 @@ function resetAppearance() {
 
 .obs-slot-workbench__stage :deep(.obs-slot-workbench__stage-viewport) {
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   align-items: stretch;
   justify-items: center;
-  gap: var(--ui-space-3);
-}
-
-.obs-slot-workbench__capture-guide {
-  width: min(100%, var(--ui-output-workbench-stage-max-width));
-  min-width: 0;
-  display: flex;
-  align-items: baseline;
-  gap: var(--ui-space-3);
-  padding: var(--ui-space-2) var(--ui-space-3);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface);
-  align-self: start;
-}
-
-.obs-slot-workbench__capture-guide-label,
-.obs-slot-workbench__capture-guide-copy {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-  line-height: var(--ui-line-height-label);
-}
-
-.obs-slot-workbench__capture-guide-label {
-  font-weight: var(--ui-font-weight-semibold);
-  white-space: nowrap;
-}
-
-.obs-slot-workbench__capture-guide-copy {
-  min-width: 0;
-  margin-inline-start: auto;
-  text-align: end;
 }
 
 .obs-slot-workbench__inspector-header,
@@ -409,7 +378,7 @@ function resetAppearance() {
 .obs-slot-workbench__section {
   min-width: 0;
   display: grid;
-  gap: var(--ui-space-1);
+  gap: var(--ui-space-2);
 }
 
 .obs-slot-workbench__title,
@@ -425,33 +394,13 @@ function resetAppearance() {
 }
 
 .obs-slot-workbench__section-title {
-  font-size: var(--ui-font-size-md);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-label);
 }
 
 .obs-slot-workbench__fields {
   min-width: 0;
   display: grid;
-}
-
-.obs-slot-workbench__capture-dimensions {
-  color: var(--ui-color-text);
-  font-size: var(--ui-font-size-md);
-  font-weight: var(--ui-font-weight-semibold);
-  line-height: var(--ui-line-height-title);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-@container (width < 48rem) {
-  .obs-slot-workbench__capture-guide {
-    align-items: flex-start;
-    flex-wrap: wrap;
-  }
-
-  .obs-slot-workbench__capture-guide-copy {
-    flex-basis: 100%;
-    margin-inline-start: 0;
-    text-align: start;
-  }
+  gap: var(--ui-space-1);
 }
 </style>

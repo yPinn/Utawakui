@@ -1,6 +1,8 @@
 <script setup>
 import { computed } from 'vue';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
+import UiColorField from '../ui/UiColorField.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 
 const props = defineProps({
@@ -11,6 +13,13 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'commit']);
 
 const controlId = computed(() => `output-appearance-${props.field.key}`);
+const selectOptions = computed(() =>
+  (props.field.options ?? []).map((option) => ({
+    value: option.id,
+    label: option.label,
+    disabled: option.disabled,
+  })),
+);
 function formatRangeValue(value) {
   const numericValue = Number(value);
   const prefix = numericValue > 0 ? '+' : '';
@@ -25,8 +34,8 @@ const valueText = computed(() => {
   return formatRangeValue(props.modelValue);
 });
 
-function updateString(event) {
-  emit('update:modelValue', event.target.value);
+function updateString(value) {
+  emit('update:modelValue', value);
 }
 
 function updateNumber(value) {
@@ -35,39 +44,30 @@ function updateNumber(value) {
 </script>
 
 <template>
-  <ObsAppearanceControlRow :control-id="controlId" :label="field.label">
-    <select
+  <ObsAppearanceControlRow
+    :control-id="controlId"
+    :label="field.label"
+    :labels-control="field.control === 'range'"
+  >
+    <UiSelect
       v-if="field.control === 'select'"
       :id="controlId"
-      class="obs-appearance-field__select"
-      :value="modelValue"
-      @change="updateString"
-    >
-      <option
-        v-for="option in field.options"
-        :key="option.id"
-        :value="option.id"
-      >
-        {{ option.label }}
-      </option>
-    </select>
+      :label="field.label"
+      :model-value="modelValue"
+      :options="selectOptions"
+      label-hidden
+      @update:model-value="updateString"
+    />
 
-    <div
+    <UiColorField
       v-else-if="field.control === 'color'"
-      class="obs-appearance-field__compound"
-    >
-      <input
-        :id="controlId"
-        class="obs-appearance-field__color"
-        type="color"
-        :value="modelValue"
-        @input="updateString"
-        @change="emit('commit')"
-      />
-      <output class="obs-appearance-field__value" :for="controlId">
-        {{ valueText }}
-      </output>
-    </div>
+      :id="controlId"
+      :label="field.label"
+      :model-value="String(modelValue)"
+      label-hidden
+      @update:model-value="updateString"
+      @commit="emit('commit')"
+    />
 
     <div
       v-else-if="field.control === 'range'"
@@ -93,17 +93,6 @@ function updateNumber(value) {
 </template>
 
 <style scoped>
-.obs-appearance-field__select {
-  min-width: 0;
-  width: 100%;
-  height: var(--ui-control-height);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface-raised);
-  color: var(--ui-color-text);
-  font: inherit;
-}
-
 .obs-appearance-field__compound {
   min-width: 0;
   display: grid;
@@ -116,16 +105,6 @@ function updateNumber(value) {
   grid-template-columns: minmax(7rem, 1fr) 3.5rem;
 }
 
-.obs-appearance-field__color {
-  inline-size: 100%;
-  min-inline-size: 0;
-  block-size: var(--ui-control-height);
-  padding: var(--ui-space-1);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-sm);
-  background: var(--ui-color-surface-raised);
-}
-
 .obs-appearance-field__range {
   min-inline-size: 0;
   inline-size: 100%;
@@ -136,11 +115,5 @@ function updateNumber(value) {
   color: var(--ui-color-text-muted);
   font-variant-numeric: tabular-nums;
   text-align: end;
-}
-
-.obs-appearance-field__select:focus-visible,
-.obs-appearance-field__color:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
 }
 </style>

@@ -367,10 +367,17 @@ describe('output template registry', () => {
     ).toMatchObject({
       kind: 'lyrics',
       tone: 'stage',
+      detail:
+        '寬幅歌詞固定在左下；開場時於右下短暫亮出精簡曲目字卡，中央保留給表演者。',
       preview: {
         layoutLabel: '舞台雙行',
         motionLabel: '字卡進場',
       },
+      settings: expect.arrayContaining([
+        { label: '歌詞', value: '左下寬幅、最多兩行' },
+        { label: '字卡', value: '右下精簡、播放後四至八秒' },
+        { label: '品牌', value: '上方低干擾舞台識別' },
+      ]),
     });
     expect(
       lyricsGroup.templates.find((template) => template.id === 'manga-frame'),

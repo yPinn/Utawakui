@@ -30,8 +30,8 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     const html = await renderRegisteredTemplate('queue-board');
 
     expect(html).toContain('aria-label="輸出工作台"');
-    expect(html).toContain('aria-label="Browser Source 尺寸建議"');
-    expect(html).toContain('Browser Source 尺寸建議');
+    expect(html).toContain('480 × 810');
+    expect(html).not.toContain('Browser Source 尺寸建議');
     expect(html).not.toContain('OBS 輸出工作台');
     expect(html).not.toContain('OBS 擷取建議');
   });
@@ -151,7 +151,7 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
     expect(html.indexOf('間距')).toBeLessThan(html.indexOf('內容寬度'));
   });
 
-  it('shows saved state instead of requiring a manual Appearance save', async () => {
+  it('keeps an initial saved state out of persistent chrome', async () => {
     const html = await renderToString(
       createSSRApp({
         render: () =>
@@ -168,9 +168,9 @@ describe('ObsSlotWorkbench template appearance compatibility', () => {
       }),
     );
 
-    expect(html).toContain('role="status"');
-    expect(html).toContain('aria-live="polite"');
-    expect(html).toContain('已儲存');
+    expect(html).not.toContain('role="status"');
+    expect(html).not.toContain('aria-live="polite"');
+    expect(html).not.toContain('已儲存');
     expect(html).not.toMatch(/<button[^>]*>\s*儲存\s*<\/button>/u);
   });
 

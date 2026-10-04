@@ -165,6 +165,11 @@ describe('output appearance schema', () => {
       fontWeight: 'bold',
       surface: 'transparent',
     });
+    expect(defaultsFor('live-stage')).toMatchObject({
+      fontFamily: 'sans',
+      fontScale: 'medium',
+      contrastStyle: 'balanced',
+    });
     expect(defaultsFor('queue-board')).toMatchObject({
       fontFamily: 'sans',
       fontWeight: 'semibold',

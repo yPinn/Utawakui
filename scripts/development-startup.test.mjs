@@ -19,10 +19,10 @@ const packageJson = JSON.parse(
 );
 
 const PUBLIC_INACTIVE_VIEWS = [
-  'OutputView',
-  'LyricsView',
-  'ImportView',
-  'SettingsView',
+  ['OutputPage', './components/output/OutputPage.vue'],
+  ['LyricsView', './views/LyricsView.vue'],
+  ['ImportPage', './components/import/ImportPage.vue'],
+  ['SettingsView', './views/SettingsView.vue'],
 ];
 const INTERNAL_VIEWS = [
   ['music-analysis', 'MusicAnalysisView'],
@@ -34,17 +34,17 @@ const INTERNAL_VIEWS = [
 describe('development startup contract', () => {
   it('keeps the initial Setlist view eager and lazy-loads every inactive view', () => {
     expect(appSource).toContain(
-      "import SetlistView from './views/SetlistView.vue';",
+      "import SetlistPage from './components/playlists/SetlistPage.vue';",
     );
 
-    for (const viewName of PUBLIC_INACTIVE_VIEWS) {
+    for (const [viewName, importPath] of PUBLIC_INACTIVE_VIEWS) {
       expect(appSource).not.toMatch(
         new RegExp(`import\\s+${viewName}\\s+from`, 'u'),
       );
       expect(appSource).toMatch(
         new RegExp(`const\\s+${viewName}\\s*=\\s*defineAsyncComponent`, 'u'),
       );
-      expect(appSource).toContain(`import('./views/${viewName}.vue')`);
+      expect(appSource).toContain(`import('${importPath}')`);
     }
 
     expect(appSource).toContain(

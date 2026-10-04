@@ -64,7 +64,6 @@ defineProps({
     minmax(0, 1fr)
     var(--ui-output-workbench-inspector-width);
   gap: var(--ui-space-4);
-  container-type: inline-size;
 }
 
 .obs-output-split-layout--main-gallery {
@@ -114,9 +113,18 @@ defineProps({
   gap: 0;
 }
 
-@container (width < 48rem) {
+@container app-folder-layout (width < 40rem) {
   .obs-output-split-layout {
     grid-template-columns: 1fr;
+    grid-template-rows: minmax(0, 2fr) minmax(0, 1fr);
+  }
+
+  .obs-output-split-layout--main-gallery {
+    grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .obs-output-split-layout--no-side {
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .obs-output-split-layout__side {

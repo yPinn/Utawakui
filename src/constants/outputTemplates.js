@@ -302,18 +302,18 @@ const OUTPUT_TEMPLATE_DEFINITIONS = [
     },
     summary: '舞台轉播風格的歌詞與開場字卡。',
     detail:
-      '歌詞固定在左下，可選轉播精簡、平衡分行或忠實原文；開場時於右下短暫亮出曲目字卡。',
+      '寬幅歌詞固定在左下；開場時於右下短暫亮出精簡曲目字卡，中央保留給表演者。',
     preview: {
       layoutLabel: '舞台雙行',
       motionLabel: '字卡進場',
     },
     tags: ['轉播字幕', '開場字卡', '舞台識別'],
     settings: [
-      { label: '歌詞', value: '左下、最多兩行' },
+      { label: '歌詞', value: '左下寬幅、最多兩行' },
       { label: '呈現', value: '精簡、平衡或忠實原文' },
-      { label: '字卡', value: '右下、播放後四至八秒' },
+      { label: '字卡', value: '右下精簡、播放後四至八秒' },
       { label: '成員', value: '解析但不顯示' },
-      { label: '品牌', value: 'Utawakui 舞台識別' },
+      { label: '品牌', value: '上方低干擾舞台識別' },
     ],
   },
   {

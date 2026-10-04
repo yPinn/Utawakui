@@ -41,6 +41,21 @@ describe('ObsOverlayPreview', () => {
     expect(html).not.toContain('obs-streamer-preview');
     expect(html.match(/<iframe/g)).toHaveLength(1);
     expect(html).not.toContain('/workbench/lyrics');
+    expect(html).toContain('class="obs-overlay-preview__capture-meta"');
+    expect(html).toContain('固定');
+    expect(html).toContain('1920 × 1080');
+  });
+
+  it('keeps icon-only preview actions on the icon button contract', async () => {
+    const html = await renderPreview({
+      obsUrl: 'http://127.0.0.1:8700/overlay/lyrics',
+    });
+
+    expect(html).toContain('class="ui-icon-btn');
+    expect(html).toContain('>複製 Browser Source URL</span>');
+    expect(html).not.toContain(
+      'aria-label="複製目前類型的 Browser Source URL"',
+    );
   });
 
   it('omits opt-in lyrics diagnostics from the inspection URL in production', async () => {

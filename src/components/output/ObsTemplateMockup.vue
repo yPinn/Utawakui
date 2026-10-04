@@ -256,7 +256,10 @@ const mangaBubbles = computed(() => {
       <template v-if="preset?.id === 'live-stage'">
         <span class="obs-template-mockup__live-stage-brand">
           <strong>U</strong>
-          <span>UTAWAKUI<br />LIVE STAGE</span>
+          <span class="obs-template-mockup__live-stage-brand-copy">
+            <span>UTAWAKUI</span>
+            <strong>LIVE STAGE</strong>
+          </span>
         </span>
         <strong class="obs-template-mockup__live-stage-channel">UW</strong>
         <strong

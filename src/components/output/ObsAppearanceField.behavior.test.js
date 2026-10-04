@@ -2,6 +2,9 @@ import { nextTick } from 'vue';
 import { describe, expect, it, vi } from 'vitest';
 import ObsAppearanceControlRow from './ObsAppearanceControlRow.vue';
 import ObsAppearanceField from './ObsAppearanceField.vue';
+import UiColorField from '../ui/UiColorField.vue';
+import UiField from '../ui/UiField.vue';
+import UiSelect from '../ui/UiSelect.vue';
 import UiRangeControl from '../ui/range/UiRangeControl.vue';
 import UiTooltipSurface from '../ui/tooltip/UiTooltipSurface.vue';
 import {
@@ -22,6 +25,9 @@ attachClientRender(
   './ObsAppearanceField.vue',
   import.meta.url,
 );
+attachClientRender(UiField, '../ui/UiField.vue', import.meta.url);
+attachClientRender(UiSelect, '../ui/UiSelect.vue', import.meta.url);
+attachClientRender(UiColorField, '../ui/UiColorField.vue', import.meta.url);
 attachClientRender(
   UiRangeControl,
   '../ui/range/UiRangeControl.vue',
@@ -59,7 +65,7 @@ describe('ObsAppearanceField', () => {
     app.unmount();
   });
 
-  it('renders color and range values without exposing CSS text input', () => {
+  it('renders shared color and range controls with explicit commit behavior', () => {
     const colorUpdate = vi.fn();
     const colorCommit = vi.fn();
     const colorMount = mount(ObsAppearanceField, {
@@ -77,10 +83,15 @@ describe('ObsAppearanceField', () => {
       (node) => node.props.type === 'color',
     )[0];
     trigger(color, 'onInput', { target: { value: '#112233' } });
-    trigger(color, 'onChange');
+    trigger(color, 'onChange', { target: { value: '#112233' } });
     expect(color.props.value).toBe('#fff8ec');
     expect(colorUpdate).toHaveBeenCalledWith('#112233');
     expect(colorCommit).toHaveBeenCalledTimes(1);
+    const hexInput = findAll(
+      colorMount.root,
+      (node) => node.props.type === 'text',
+    )[0];
+    expect(hexInput.props.id).toBe('output-appearance-textColor');
     colorMount.app.unmount();
 
     const rangeUpdate = vi.fn();
