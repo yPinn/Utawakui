@@ -168,7 +168,9 @@ describe('Studio Library workspace prototype isolation', () => {
       (reference) => !uniqueNames.has(reference),
     );
 
-    expect(uniqueNames.size).toBe(404);
+    expect(uniqueNames.size).toBe(406);
+    expect(uniqueNames).toContain('--ui-folder-content-background');
+    expect(uniqueNames).toContain('--ui-folder-content-state-min-block-size');
     for (const name of [
       '--ui-bgm-player-min-inline-size',
       '--ui-bgm-player-inline-size',
@@ -391,6 +393,9 @@ describe('Studio Library workspace prototype isolation', () => {
   it('keeps the shared 16px shell panel inset owned by the production token layer', () => {
     expect(app).toMatch(
       /\.shell__sidebar\s*\{[^}]*padding-block:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
+    );
+    expect(app).toMatch(
+      /\.shell__workspace\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(tokens).not.toContain('--ui-shell-sidebar-inset-block');
     expect(tokens).not.toContain('--ui-shell-panel-inset-block');

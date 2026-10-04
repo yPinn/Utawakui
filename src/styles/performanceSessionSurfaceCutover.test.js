@@ -5,6 +5,7 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
+const pageSource = readSource('../components/playlists/SetlistPage.vue');
 const setlistSource = readSource('../views/SetlistView.vue');
 const workspaceSource = readSource(
   '../components/performance-session/PerformanceSessionWorkspace.vue',
@@ -60,12 +61,13 @@ describe('Performance Session Token v2 surface cutover', () => {
   });
 
   it('switches only an open Setlist preparation surface to Folder workspace mode', () => {
-    expect(appSource).toMatch(
-      /const folderPageMode = computed\(\(\) => \{[\s\S]*?activeView\.value === 'setlist'[\s\S]*?performanceSessionWorkspace\.isOpen\.value[\s\S]*?return 'workspace';[\s\S]*?documentFolderViews\.has\(activeView\.value\)[\s\S]*?'document'[\s\S]*?'workspace'/u,
+    expect(pageSource).toContain(
+      "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
     );
     expect(appSource).toContain(
-      "const documentFolderViews = new Set(['setlist', 'import'])",
+      "const pageComposedFolderViews = new Set(['setlist', 'output', 'import'])",
     );
+    expect(appSource).toContain('v-if="activeViewOwnsFolderPage"');
   });
 
   it('keeps the Right Dock projection in its existing shell-owned component', () => {

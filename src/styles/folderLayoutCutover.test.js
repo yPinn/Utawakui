@@ -62,6 +62,9 @@ describe('Folder layout family cutover', () => {
     expect(tokens).toContain(
       '--ui-folder-page-background: var(--ui-color-surface)',
     );
+    expect(tokens).toContain(
+      '--ui-folder-content-background: var(--ui-color-canvas)',
+    );
     expect(tokens).not.toMatch(/--ui-folder-bg(?:\s|:|-)/u);
     expect(tokens).not.toContain('--ui-folder-paper-bg');
     expect(tokens).not.toContain('--ui-folder-paper-text');
@@ -71,12 +74,17 @@ describe('Folder layout family cutover', () => {
   it('keeps every feature behind a registered surface and overlay host', () => {
     const registry = readSource('../utils/rendererSurfaceRegistry.js');
     const app = readSource('../App.vue');
+    const importPage = readSource('../components/import/ImportPage.vue');
+    const outputPage = readSource('../components/output/OutputPage.vue');
 
     for (const surfaceId of ['lyrics', 'output', 'import']) {
       expect(registry).toContain(`surfaceId: '${surfaceId}'`);
       expect(registry).toContain(`overlayHostId: '${surfaceId}-overlay'`);
-      expect(app).toContain(`${surfaceId}: '${surfaceId}'`);
     }
+    expect(app).toContain("lyrics: 'lyrics'");
+    expect(app).not.toContain("output: 'output'");
+    expect(importPage).toContain('<AppSurfaceBoundary surface-id="import">');
+    expect(outputPage).toContain('<AppSurfaceBoundary surface-id="output">');
     expect(registry).toContain("surfaceId: 'setlist'");
     expect(registry).toContain("surfaceId: 'setlist-overlay'");
     expect(registry).toContain("surfaceId: 'performance-session-workspace'");

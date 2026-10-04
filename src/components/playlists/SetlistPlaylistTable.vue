@@ -1,11 +1,9 @@
 <script setup>
-// A hand-rolled 5-column grid table, not UiTrackRow — the header and rows
-// share one grid-template-columns rule (must move as a single CSS rule if
-// this file is ever touched again, never split across two selectors), the
-// layout model is grid rather than UiTrackRow's flex, and rows carry drag
-// reorder + a #-index column UiTrackRow has no slot for. Sort state stays
-// in the parent view (it doubles as playback queue order), so this
-// component only renders from props and emits intent.
+// A hand-rolled grid table, not UiTrackRow. Playlist rows use five tracks;
+// the Album variant removes only the inert drag track and keeps the same
+// metadata／interaction contract. Sort state stays in the parent view (it
+// doubles as playback queue order), so this component renders props and
+// emits intent only.
 import { GripVertical, ICON_SIZE } from '../../icons/index.js';
 import { formatDuration, formatAddedDate } from '../../utils/format.js';
 import { PLAYLIST_SORT_KEYS } from '../../utils/playlistSort.js';
@@ -24,10 +22,11 @@ const props = defineProps({
   entries: { type: Array, default: () => [] },
   sort: { type: Object, required: true },
   // Album track rows omit the thumbnail — every track on an album shares
-  // the same cover art (already shown once in the hero above), so a
+  // the same cover art (already shown once in the dossier above), so a
   // per-row thumbnail column would just repeat it 10+ times for nothing.
   isAlbum: { type: Boolean, default: false },
   canDrag: { type: Boolean, default: false },
+  selectedTrackId: { type: String, default: null },
   currentTrackId: { type: String, default: null },
   draggingTrackId: { type: String, default: null },
   dropTargetTrackId: { type: String, default: null },
@@ -41,6 +40,7 @@ const props = defineProps({
 const emit = defineEmits([
   'toggleSort',
   'selectTrack',
+  'activateTrack',
   'titleClick',
   'openMenu',
   'trackDragStart',
@@ -58,20 +58,14 @@ function sortLabel(key, label) {
   if (!isSortActive(key)) return `${label}排序`;
   return `${label}${props.sort.direction === 'asc' ? '升冪' : '降冪'}排序`;
 }
-
-// Rows are draggable <li>s, not <button>s, so Enter/Space needs a manual
-// synthesis of the 'selectTrack' click emit (see UiTrackRow.vue's twin).
-function handleRowKeydown(track, event) {
-  // Skip the nested titleClickable button so it doesn't double-fire this.
-  if (event.target !== event.currentTarget) return;
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  event.preventDefault();
-  emit('selectTrack', track);
-}
 </script>
 
 <template>
-  <div class="playlist-table" aria-label="播放清單曲目">
+  <div
+    class="playlist-table"
+    :class="{ 'playlist-table--album': isAlbum }"
+    :aria-label="isAlbum ? '專輯曲目' : '播放清單曲目'"
+  >
     <div class="playlist-table__head">
       <span class="playlist-table__drag"></span>
       <span class="playlist-table__index">#</span>
@@ -104,6 +98,7 @@ function handleRowKeydown(track, event) {
         :key="track.id"
         class="playlist-track"
         :class="{
+          'playlist-track--selected': selectedTrackId === track.id,
           'playlist-track--current': currentTrackId === track.id,
           'playlist-track--dragging': draggingTrackId === track.id,
           'playlist-track--drop-before':
@@ -113,10 +108,8 @@ function handleRowKeydown(track, event) {
           'playlist-track--drag-disabled': !canDrag,
         }"
         :draggable="canDrag"
-        tabindex="0"
-        role="button"
-        @click="emit('selectTrack', track)"
-        @keydown="handleRowKeydown(track, $event)"
+        role="listitem"
+        :aria-current="currentTrackId === track.id ? 'true' : undefined"
         @contextmenu="emit('openMenu', track, $event)"
         @dragstart="emit('trackDragStart', track, $event)"
         @dragover="emit('trackDragOver', track, $event)"
@@ -124,6 +117,17 @@ function handleRowKeydown(track, event) {
         @drop="emit('trackDrop', track, $event)"
         @dragend="emit('trackDragEnd')"
       >
+        <button
+          type="button"
+          class="playlist-track__action"
+          :aria-label="`選取：${track.title}`"
+          aria-description="單擊或空白鍵選取；雙擊或 Enter 播放"
+          :aria-pressed="selectedTrackId === track.id"
+          @click.stop="emit('selectTrack', track)"
+          @dblclick.stop="emit('activateTrack', track)"
+          @keydown.enter.prevent.stop="emit('activateTrack', track)"
+          @keydown.space.prevent.stop="emit('selectTrack', track)"
+        ></button>
         <!-- Always rendered, even for albums — .playlist-table__head and
              .playlist-track share one grid-template-columns rule (see the
              comment at the top of this file), so removing this child
@@ -131,8 +135,11 @@ function handleRowKeydown(track, event) {
              the icon inside is conditional. -->
         <span
           class="playlist-track__drag"
+          :class="{ 'playlist-track__drag--interactive': canDrag }"
           :title="isAlbum ? undefined : '拖曳排序'"
           aria-hidden="true"
+          @click.stop
+          @dblclick.stop
         >
           <GripVertical v-if="!isAlbum" :size="ICON_SIZE" aria-hidden="true" />
         </span>
@@ -147,10 +154,11 @@ function handleRowKeydown(track, event) {
           <span class="playlist-track__copy">
             <UiTextButton
               v-if="jumpableTrackIds.has(track.id)"
-              class="playlist-track__title"
+              class="playlist-track__title playlist-track__title--destination"
               :text="track.title"
               :aria-label="`前往專輯：${track.title}`"
               @click="emit('titleClick', track)"
+              @dblclick.stop
             />
             <UiMarqueeText
               v-else
@@ -186,6 +194,16 @@ function handleRowKeydown(track, event) {
   grid-template-columns: 24px 3ch minmax(0, 2fr) minmax(120px, 1fr) 64px;
   gap: var(--ui-track-row-gap);
   align-items: center;
+}
+
+.playlist-table--album .playlist-table__head,
+.playlist-table--album .playlist-track {
+  grid-template-columns: 3ch minmax(0, 2fr) minmax(120px, 1fr) 64px;
+}
+
+.playlist-table--album .playlist-table__drag,
+.playlist-table--album .playlist-track__drag {
+  display: none;
 }
 
 .playlist-table__head {
@@ -265,6 +283,26 @@ function handleRowKeydown(track, event) {
   cursor: grab;
 }
 
+.playlist-track__action {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: inherit;
+}
+
+.playlist-track:has(.playlist-track__action:focus-visible) {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset-inset);
+}
+
+.playlist-track__action:focus-visible {
+  outline: none;
+}
+
 .playlist-track:active {
   cursor: grabbing;
 }
@@ -301,27 +339,41 @@ function handleRowKeydown(track, event) {
   background: var(--ui-color-surface-hover);
 }
 
-.playlist-track:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset-inset);
+.playlist-track--selected {
+  background: var(
+    --ui-track-row-selected-surface,
+    var(--ui-color-surface-selected)
+  );
+  box-shadow: var(--ui-track-row-active-shadow, var(--ui-row-active-shadow));
 }
 
 .playlist-track__index,
 .playlist-track__added,
 .playlist-track__duration {
+  position: relative;
+  z-index: 1;
   color: var(--ui-color-text-muted);
 }
 
 .playlist-track__drag {
+  position: relative;
+  z-index: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 24px;
   height: 24px;
   color: var(--ui-color-text-muted);
+  pointer-events: none;
+}
+
+.playlist-track__drag--interactive {
+  pointer-events: auto;
 }
 
 .playlist-track__main {
+  position: relative;
+  z-index: 1;
   min-width: 0;
   display: flex;
   align-items: center;
@@ -332,6 +384,19 @@ function handleRowKeydown(track, event) {
   min-width: 0;
   display: flex;
   flex-direction: column;
+}
+
+.playlist-track__index,
+.playlist-track__main,
+.playlist-track__added,
+.playlist-track__duration {
+  pointer-events: none;
+}
+
+.playlist-track__title--destination {
+  position: relative;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .playlist-track__subtitle,

@@ -5,11 +5,11 @@ import { usePerformanceSessionPlan } from '../../composables/usePerformanceSessi
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { playlistDisplayName } from '../../utils/playlistMenu.js';
 import AppRightDockPanel from '../layout/AppRightDockPanel.vue';
+import AppRightDockSection from '../layout/AppRightDockSection.vue';
 import UiButton from '../ui/UiButton.vue';
 import UiChip from '../ui/UiChip.vue';
 import UiHint from '../ui/UiHint.vue';
 import UiNotice from '../ui/UiNotice.vue';
-import UiSeparator from '../ui/UiSeparator.vue';
 
 const emit = defineEmits(['close', 'openPreparation']);
 const {
@@ -107,9 +107,9 @@ async function prepareSelectedCollection() {
       compact
     />
 
-    <section
+    <AppRightDockSection
       class="performance-session-panel__current"
-      aria-label="目前待唱安排"
+      heading="待唱安排"
     >
       <template v-if="hasDraft">
         <div class="performance-session-panel__heading">
@@ -151,63 +151,50 @@ async function prepareSelectedCollection() {
           建立臨時場次
         </UiButton>
       </template>
-    </section>
+    </AppRightDockSection>
 
-    <template v-if="selectedPlaylist">
-      <UiSeparator />
-      <section
-        class="performance-session-panel__source"
-        aria-label="目前選取來源"
+    <AppRightDockSection
+      v-if="selectedPlaylist"
+      class="performance-session-panel__source"
+      :heading="`目前選取的${selectedCollectionKindLabel}`"
+      divided
+    >
+      <div class="performance-session-panel__heading">
+        <p class="performance-session-panel__source-name">
+          {{ selectedCollectionLabel }}
+        </p>
+        <p class="performance-session-panel__meta">
+          {{ selectedPlaylist.trackIds.length }} 首曲目
+        </p>
+      </div>
+      <UiButton
+        class="performance-session-panel__primary"
+        :icon="ListPlus"
+        :variant="hasDraft ? 'secondary' : 'accent'"
+        :loading="state.isSaving"
+        loading-label="建立中"
+        @click="prepareSelectedCollection"
       >
-        <div class="performance-session-panel__heading">
-          <h3 class="performance-session-panel__section-title">
-            目前選取的{{ selectedCollectionKindLabel }}
-          </h3>
-          <p class="performance-session-panel__source-name">
-            {{ selectedCollectionLabel }}
-          </p>
-          <p class="performance-session-panel__meta">
-            {{ selectedPlaylist.trackIds.length }} 首曲目
-          </p>
-        </div>
-        <UiButton
-          class="performance-session-panel__primary"
-          :icon="ListPlus"
-          :variant="hasDraft ? 'secondary' : 'accent'"
-          :loading="state.isSaving"
-          loading-label="建立中"
-          @click="prepareSelectedCollection"
-        >
-          {{ collectionActionLabel }}
-        </UiButton>
-        <UiButton
-          v-if="!hasDraft"
-          class="performance-session-panel__primary"
-          :icon="Plus"
-          @click="openPreparation"
-        >
-          建立臨時場次
-        </UiButton>
-      </section>
-    </template>
+        {{ collectionActionLabel }}
+      </UiButton>
+      <UiButton
+        v-if="!hasDraft"
+        class="performance-session-panel__primary"
+        :icon="Plus"
+        @click="openPreparation"
+      >
+        建立臨時場次
+      </UiButton>
+    </AppRightDockSection>
   </AppRightDockPanel>
 </template>
 
 <style scoped>
-.performance-session-panel__current,
-.performance-session-panel__source {
-  display: flex;
-  min-width: 0;
-  flex-direction: column;
-  gap: var(--ui-right-dock-content-gap);
-}
-
 .performance-session-panel__heading {
   min-width: 0;
 }
 
 .performance-session-panel__title,
-.performance-session-panel__section-title,
 .performance-session-panel__source-name,
 .performance-session-panel__meta {
   margin: 0;
@@ -224,16 +211,10 @@ async function prepareSelectedCollection() {
   white-space: nowrap;
 }
 
-.performance-session-panel__section-title,
 .performance-session-panel__meta {
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   line-height: var(--ui-line-height-caption);
-}
-
-.performance-session-panel__section-title {
-  margin-bottom: var(--ui-space-1);
-  font-weight: var(--ui-font-weight-semibold);
 }
 
 .performance-session-panel__summary {

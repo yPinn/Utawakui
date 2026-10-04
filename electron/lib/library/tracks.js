@@ -214,6 +214,17 @@ function compareTracks(a, b) {
   );
 }
 
+function fileModifiedAt(filePath) {
+  try {
+    const modifiedAt = fs.statSync(filePath).mtime;
+    return Number.isNaN(modifiedAt.getTime())
+      ? undefined
+      : modifiedAt.toISOString();
+  } catch {
+    return undefined;
+  }
+}
+
 function listStructuredTracks(dir) {
   const tracksRoot = path.join(dir, TRACKS_DIRNAME);
   let entries;
@@ -238,6 +249,7 @@ function listStructuredTracks(dir) {
         id: entry.name,
         filename: `${entry.name}${ext}`,
         audioFilename,
+        importedAt: fileModifiedAt(path.join(trackDir, audioFilename)),
         hasInfo: hasTrackInfo(trackDir),
         hasArtwork: Boolean(artworkFilename),
         lyrics,
@@ -273,6 +285,7 @@ function listLegacyTracks(dir, structuredIds) {
       id: trackIdFromFilename(filename),
       filename,
       audioFilename: filename,
+      importedAt: fileModifiedAt(path.join(dir, filename)),
       hasInfo: false,
       hasArtwork: false,
       lyrics: { status: 'unchecked', sources: [] },
@@ -328,7 +341,7 @@ function listTracks(dir) {
         sourceType: indexed?.sourceType,
         storageType: indexed?.storageType,
         originalFilename: indexed?.originalFilename,
-        importedAt: indexed?.importedAt,
+        importedAt: indexed?.importedAt || record.importedAt,
         fileSize: indexed?.fileSize,
         contentHash: indexed?.contentHash,
         needsBackfill: metadataNeedsBackfill || assetNeedsBackfill,

@@ -2,9 +2,10 @@ import { describe, it, expect } from 'vitest';
 import {
   PLAYLIST_MENU_ACTIONS,
   TRACK_MENU_ACTIONS,
-  playlistDisplayName,
   addToPlaylistTargets,
+  collectionAddToPlaylistItems,
   filterPlaylistTargets,
+  playlistDisplayName,
 } from './playlistMenu.js';
 
 describe('playlistDisplayName', () => {
@@ -69,6 +70,37 @@ describe('addToPlaylistTargets', () => {
         excludeTrackId: 't1',
       }).map((p) => p.id),
     ).toEqual(['p2']);
+  });
+});
+
+describe('collectionAddToPlaylistItems', () => {
+  it('keeps create and eligible destination actions identical across collection menus', () => {
+    const playlists = [
+      { id: 'source', name: '來源', kind: 'playlist', trackIds: [] },
+      { id: 'target', name: '目標', kind: 'playlist', trackIds: [] },
+      { id: 'album', name: '專輯', kind: 'album', trackIds: [] },
+    ];
+
+    expect(collectionAddToPlaylistItems(playlists, 'source')).toEqual([
+      {
+        key: 'create-playlist',
+        label: '建立新播放清單',
+        value: {
+          action: PLAYLIST_MENU_ACTIONS.createPlaylist,
+          sourcePlaylistId: 'source',
+        },
+      },
+      { key: 'targets-divider', separator: true },
+      {
+        key: 'target',
+        label: '目標',
+        value: {
+          action: PLAYLIST_MENU_ACTIONS.addToPlaylist,
+          playlistId: 'source',
+          targetPlaylistId: 'target',
+        },
+      },
+    ]);
   });
 });
 

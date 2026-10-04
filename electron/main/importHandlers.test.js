@@ -233,15 +233,18 @@ describe('generic import source resolution', () => {
 });
 
 describe('buildProviderIndexEntry', () => {
-  it('records provider provenance even when the provider has no artist', () => {
+  it('records provider provenance and the supplied import time', () => {
     expect(
-      buildProviderIndexEntry({
-        title: 'Song',
-        artist: undefined,
-        duration: 180,
-        album: 'Album',
-        releaseYear: 2026,
-      }),
+      buildProviderIndexEntry(
+        {
+          title: 'Song',
+          artist: undefined,
+          duration: 180,
+          album: 'Album',
+          releaseYear: 2026,
+        },
+        '2026-10-04T12:00:00.000Z',
+      ),
     ).toEqual({
       title: 'Song',
       titleOrigin: 'provider',
@@ -250,6 +253,7 @@ describe('buildProviderIndexEntry', () => {
       duration: 180,
       album: 'Album',
       releaseYear: 2026,
+      importedAt: '2026-10-04T12:00:00.000Z',
     });
   });
 });

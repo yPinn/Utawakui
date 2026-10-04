@@ -194,10 +194,6 @@ onUnmounted(() => window.removeEventListener('keydown', handleShortcut));
   background: var(--ui-color-canvas);
 }
 
-.lyrics-review__header :deep(.ui-page-header) {
-  margin-bottom: 0;
-}
-
 .lyrics-review__progress {
   min-width: 0;
   display: flex;

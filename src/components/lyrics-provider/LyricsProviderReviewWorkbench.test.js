@@ -31,8 +31,8 @@ describe('lyrics provider corpus review workbench contract', () => {
   it('uses five label-led strata plus explicit decision and reach filters', () => {
     const strata = source('./LyricsProviderReviewStrata.vue');
 
-    expect(strata).toContain('<UiTabs');
-    expect(strata).toContain('<UiSegmentedControl');
+    expect(strata).not.toContain('<UiTabs');
+    expect(strata.match(/<UiSegmentedControl/g)).toHaveLength(3);
     expect(strata).toContain('aria-label="審核狀態"');
     expect(strata).toContain('aria-label="曲庫觸及"');
     expect(strata).toContain('待審');

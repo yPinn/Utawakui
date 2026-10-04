@@ -2,14 +2,21 @@
 // The single "編輯詳細資料" entry point. Name and description are drafted locally
 // and committed only on Save, instead of relying on Enter/blur. A cover change
 // (choose/clear) still commits immediately, since it is an independent async IPC
-// round-trip. Album fields stay read-only here (source-normalized metadata, not
-// user-authored; see SetlistPlaylistHeader.vue).
-import { ref, watch } from 'vue';
+// round-trip. Album descriptions stay read-only here (source-normalized
+// metadata, not user-authored; see LibraryEntityDossier.vue).
+import { shallowRef, watch } from 'vue';
 import { ICON_SIZE, Pencil, X } from '../../icons/index.js';
 import UiButton from '../ui/UiButton.vue';
 import UiCollageThumb from '../ui/UiCollageThumb.vue';
 import UiIconButton from '../ui/UiIconButton.vue';
 import UiModal from '../ui/UiModal.vue';
+import UiTextarea from '../ui/UiTextarea.vue';
+import UiTextField from '../ui/UiTextField.vue';
+
+const PLAYLIST_DETAILS_COVER_SIZE = 160;
+const playlistDetailsStyle = Object.freeze({
+  '--playlist-details-cover-size': `${PLAYLIST_DETAILS_COVER_SIZE}px`,
+});
 
 const props = defineProps({
   open: { type: Boolean, default: false },
@@ -22,8 +29,8 @@ const props = defineProps({
 
 const emit = defineEmits(['close', 'save', 'chooseCover', 'clearCover']);
 
-const nameDraft = ref('');
-const descriptionDraft = ref('');
+const nameDraft = shallowRef('');
+const descriptionDraft = shallowRef('');
 
 // Re-seed the draft only when the modal opens — not on every prop change,
 // so a cover change committed mid-edit (chooseCover/clearCover updates
@@ -48,14 +55,19 @@ function save() {
 </script>
 
 <template>
-  <UiModal :open="open" title="編輯詳細資料" @close="emit('close')">
-    <div class="playlist-details">
+  <UiModal
+    :open="open"
+    title="編輯詳細資料"
+    size="notice"
+    @close="emit('close')"
+  >
+    <div class="playlist-details" :style="playlistDetailsStyle">
       <div class="playlist-details__cover">
         <UiCollageThumb
           :cover-url="coverUrl"
           :tracks="coverTracks"
           :can-collage="!isAlbum"
-          :size="120"
+          :size="PLAYLIST_DETAILS_COVER_SIZE"
         />
         <template v-if="!isAlbum">
           <button
@@ -80,35 +92,27 @@ function save() {
       </div>
 
       <div class="playlist-details__fields">
-        <label
-          class="playlist-details__label visually-hidden"
-          for="playlist-details-name"
-        >
-          名稱
-        </label>
-        <input
+        <UiTextField
           id="playlist-details-name"
           v-model="nameDraft"
-          class="playlist-details__input"
-          maxlength="200"
+          class="playlist-details__name-field"
+          label="名稱"
+          label-hidden
+          :maxlength="200"
           @keydown.enter="save"
         />
 
-        <template v-if="!isAlbum">
-          <label
-            class="playlist-details__label visually-hidden"
-            for="playlist-details-description"
-          >
-            說明
-          </label>
-          <textarea
-            id="playlist-details-description"
-            v-model="descriptionDraft"
-            class="playlist-details__textarea"
-            maxlength="500"
-            placeholder="新增說明"
-          ></textarea>
-        </template>
+        <UiTextarea
+          v-if="!isAlbum"
+          id="playlist-details-description"
+          v-model="descriptionDraft"
+          class="playlist-details__description-field"
+          label="說明"
+          label-hidden
+          :rows="3"
+          :maxlength="500"
+          placeholder="新增說明"
+        />
         <p
           v-else-if="description"
           class="playlist-details__readonly-description"
@@ -118,30 +122,34 @@ function save() {
       </div>
     </div>
 
-    <div class="playlist-details__actions">
+    <template #footer>
       <UiButton variant="accent" @click="save">儲存</UiButton>
-    </div>
+    </template>
   </UiModal>
 </template>
 
 <style scoped>
 .playlist-details {
+  min-inline-size: 0;
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  gap: var(--ui-space-4);
+  grid-template-columns:
+    var(--playlist-details-cover-size)
+    minmax(0, 1fr);
+  align-items: start;
+  gap: var(--ui-modal-section-gap);
 }
 
 /* Artwork tier — DESIGN.md's "dense thumbnails and artwork" radius. */
 .playlist-details__cover {
   position: relative;
-  width: 120px;
-  height: 120px;
+  inline-size: var(--playlist-details-cover-size);
+  block-size: var(--playlist-details-cover-size);
   border-radius: var(--ui-radius-sm);
   overflow: hidden;
 }
 
 /* Same hover-reveal idiom as the hero's own cover overlay (see
-   SetlistPlaylistHeader.vue) — this is its consolidated replacement, not a
+   SetlistCollectionHeader.vue) — this is its consolidated replacement, not a
    second independent implementation of the same interaction. */
 .playlist-details__cover-edit,
 .playlist-details__cover-clear {
@@ -182,96 +190,69 @@ function save() {
   top: var(--ui-space-2);
 }
 
-/* height: 120px is the same literal as .playlist-details__cover's width/
-   height above, deliberately — the field column (name input + gap +
-   description textarea) must total exactly the cover's size, not just
-   happen to look close. The name input keeps its own intrinsic height;
-   the textarea absorbs whatever's left via flex-grow below. */
 .playlist-details__fields {
-  min-width: 0;
-  height: 120px;
-  display: flex;
-  flex-direction: column;
-  gap: var(--ui-space-1);
-}
-
-/* Field purpose is already conveyed by the visible input value / the
-   textarea's own placeholder — a fully visible "名稱"/"說明" caption above
-   each field is redundant weight the row-height budget above can't afford.
-   Screen readers still get the association via the <label for>. */
-.playlist-details__label {
-  color: var(--ui-color-text-muted);
-  font-size: var(--ui-font-size-sm);
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.playlist-details__input,
-.playlist-details__textarea {
-  width: 100%;
-  padding: var(--ui-space-2) var(--ui-space-3);
-  /* One tier lighter than the modal's own --ui-color-surface (same token
-     UiContextMenu.vue's rows use for their own raised/interactive state) —
-     gives the field a visible fill against the panel without a border,
-     since the modal and a plain --ui-color-surface field would otherwise
-     be indistinguishable (identical background color, border-only
-     definition). */
-  background: var(--ui-color-surface-hover);
-  color: var(--ui-color-text);
-  border: none;
-  border-radius: var(--ui-radius-md);
-  font-family: var(--ui-font-family-base);
-  font-size: var(--ui-font-size-sm);
+  min-inline-size: 0;
+  min-block-size: var(--playlist-details-cover-size);
+  display: grid;
+  grid-template-rows: auto minmax(calc(var(--ui-field-height) * 2), 1fr);
+  align-content: start;
+  gap: var(--ui-modal-section-gap);
 }
 
 /* Title tier — DESIGN.md names active item titles explicitly. */
-.playlist-details__input {
-  flex: 0 0 auto;
+.playlist-details__name-field :deep(.ui-text-field) {
   font-size: var(--ui-font-size-lg);
   font-weight: var(--ui-font-weight-semibold);
   line-height: var(--ui-line-height-title);
 }
 
-.playlist-details__textarea {
-  flex: 1 1 auto;
-  /* Overrides the textarea default of min-height being its content size —
-     without this, flex-grow can't shrink it to fit the fixed-height
-     column above. Resize is off, not just vertical, because a
-     manually-dragged height would break the "matches the cover" contract
-     the height: 120px rule above exists to guarantee. */
-  min-height: 0;
-  resize: none;
+/* The right-hand lane shares the artwork's 160px visual baseline. The grid
+   track already owns the remaining height; carry it through UiField's wrappers
+   so the visible textarea — not just its parent row — reaches that baseline. */
+.playlist-details__description-field {
+  min-block-size: 0;
+  block-size: 100%;
 }
 
-.playlist-details__input:focus-visible,
-.playlist-details__textarea:focus-visible {
-  outline: var(--ui-focus-width) solid var(--ui-color-focus);
-  outline-offset: var(--ui-focus-offset);
+.playlist-details__description-field :deep(.ui-field__main),
+.playlist-details__description-field :deep(.ui-field__control),
+.playlist-details__description-field :deep(.ui-textarea) {
+  min-block-size: 0;
+  block-size: 100%;
+}
+
+.playlist-details__description-field :deep(.ui-textarea) {
+  resize: none;
 }
 
 .playlist-details__readonly-description {
   margin: 0;
+  padding: var(--ui-field-padding-block) var(--ui-field-padding-inline);
   color: var(--ui-color-text-muted);
   font-size: var(--ui-font-size-sm);
   font-weight: var(--ui-font-weight-regular);
-  line-height: var(--ui-line-height-caption);
+  line-height: var(--ui-line-height-body);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
-.playlist-details__actions {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: var(--ui-space-4);
+/* 160px artwork + 12px compact gap + a useful 200px field lane + modal
+   insets. Reflow before the text fields become a narrow residual column. */
+@container (max-width: 25.5rem) {
+  .playlist-details {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .playlist-details__fields {
+    min-block-size: 0;
+    grid-template-rows: auto auto;
+  }
+
+  .playlist-details__description-field,
+  .playlist-details__description-field :deep(.ui-field__main),
+  .playlist-details__description-field :deep(.ui-field__control),
+  .playlist-details__description-field :deep(.ui-textarea) {
+    block-size: auto;
+  }
 }
 </style>

@@ -9,7 +9,7 @@ const source = readFileSync(
 describe('PerformanceSessionPanel', () => {
   it('identifies the inactive panel as preparation rather than current or history', () => {
     expect(source).toContain('subtitle="錄製／直播待唱"');
-    expect(source).toContain('aria-label="目前待唱安排"');
+    expect(source).toContain('heading="待唱安排"');
     expect(source).toContain('首待唱');
     expect(source).not.toContain('subtitle="錄製／直播準備"');
   });

@@ -1,8 +1,16 @@
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue';
-import { Trash2 } from '../icons/index.js';
+import { computed, onMounted, ref, shallowRef, watch } from 'vue';
+import {
+  Disc3,
+  ListMusic,
+  ListPlus,
+  Pencil,
+  Plus,
+  Trash2,
+} from '../icons/index.js';
 import { useAlbumNavigation } from '../composables/useAlbumNavigation.js';
 import { useAppDiagnostics } from '../composables/useAppDiagnostics.js';
+import { useCollectionPlayback } from '../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../composables/useDragReorder.js';
 import { useLibrary } from '../composables/useLibrary.js';
 import { usePlayer } from '../composables/usePlayer.js';
@@ -12,20 +20,22 @@ import { usePlaybackQueue } from '../composables/usePlaybackQueue.js';
 import { usePerformanceSessionWorkspace } from '../composables/usePerformanceSessionWorkspace.js';
 import { useTrackMetadataEditor } from '../composables/useTrackMetadataEditor.js';
 import TrackMetadataModal from '../components/library/TrackMetadataModal.vue';
+import AppFolderContentField from '../components/layout/AppFolderContentField.vue';
 import AppSurfaceBoundary from '../components/layout/AppSurfaceBoundary.vue';
-import SetlistPlaylistHeader from '../components/playlists/SetlistPlaylistHeader.vue';
+import SetlistAlbumSupportingContent from '../components/playlists/SetlistAlbumSupportingContent.vue';
+import SetlistCollectionHeader from '../components/playlists/SetlistCollectionHeader.vue';
 import SetlistPlaylistTable from '../components/playlists/SetlistPlaylistTable.vue';
 import PerformanceSessionWorkspace from '../components/performance-session/PerformanceSessionWorkspace.vue';
 import TrackActionMenu from '../components/track/TrackActionMenu.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
-import UiPageHeader from '../components/ui/UiPageHeader.vue';
-import UiSearchBox from '../components/ui/UiSearchBox.vue';
 import UiTrackRow from '../components/ui/UiTrackRow.vue';
 import { formatLongDuration } from '../utils/format.js';
 import {
+  PLAYLIST_MENU_ACTIONS,
   TRACK_MENU_ACTIONS,
+  collectionAddToPlaylistItems,
   playlistDisplayName,
 } from '../utils/playlistMenu.js';
 import {
@@ -34,6 +44,7 @@ import {
 } from '../utils/playlistSort.js';
 import { toPlayableTrack } from '../utils/playableTrack.js';
 import { deriveAlbumSummary } from '../utils/albumSummary.js';
+import { deriveAlbumSupportingContent } from '../utils/albumSupportingContent.js';
 import {
   sortSetlistLibraryTracks,
   sortSetlistLocalTracks,
@@ -57,18 +68,24 @@ const {
   state: playlistState,
   selectedPlaylist,
   create: createPlaylistAction,
+  select: selectPlaylistAction,
   addTrack: addTrackToPlaylist,
   removeTrack: removeTrackFromPlaylist,
   setTracks: setPlaylistTracksAction,
 } = usePlaylists();
-const { resolvePlaylistTracks, confirmDeletePlaylist, openEditDetails } =
+const { resolvePlaylistTracks, openEditDetails, handlePlaylistMenuAction } =
   usePlaylistActions();
+const collectionPlayback = useCollectionPlayback();
 const { albumForTrack, jumpToAlbum } = useAlbumNavigation();
 const performanceSessionWorkspace = usePerformanceSessionWorkspace();
 
 // Transient UI mode stays local; mutations persist immediately.
 const deleteError = ref(null);
-const searchQuery = ref('');
+const selectedTrackId = shallowRef(null);
+const searchQuery = defineModel('searchQuery', {
+  type: String,
+  default: '',
+});
 const addMenu = ref(null);
 const playlistSort = ref({ key: null, direction: 'asc' });
 
@@ -122,18 +139,24 @@ const libraryViewTracks = computed(() =>
 const visibleTracks = computed(() =>
   libraryViewTracks.value.filter(matchesSearch),
 );
-const visiblePlaylistEntries = computed(() => {
-  const entries = playlistTracks.value
-    .map((track, playlistIndex) => ({
-      track,
-      playlistIndex,
-      addedAt: selectedPlaylist.value?.addedAt?.[track.id],
-    }))
-    .filter(({ track }) => matchesSearch(track));
+const orderedPlaylistEntries = computed(() => {
+  const entries = playlistTracks.value.map((track, playlistIndex) => ({
+    track,
+    playlistIndex,
+    addedAt: selectedPlaylist.value?.addedAt?.[track.id],
+  }));
 
-  const sorted = sortPlaylistEntries(entries, playlistSort.value);
-  return sorted.map((entry, visibleIndex) => ({ ...entry, visibleIndex }));
+  return sortPlaylistEntries(entries, playlistSort.value);
 });
+
+const visiblePlaylistEntries = computed(() =>
+  orderedPlaylistEntries.value
+    .filter(({ track }) => matchesSearch(track))
+    .map((entry, visibleIndex) => ({ ...entry, visibleIndex })),
+);
+const collectionPlaybackTracks = computed(() =>
+  orderedPlaylistEntries.value.map(({ track }) => track),
+);
 
 // UiCollageThumb.vue does its own first-4 slicing — passed the full list so
 // it stays the single place deciding how many tracks a collage shows.
@@ -157,6 +180,23 @@ const albumSummary = computed(() =>
     ? deriveAlbumSummary(playlistTracks.value)
     : { artist: undefined, releaseYear: undefined },
 );
+const albumEntries = computed(() =>
+  playlistState.playlists
+    .filter((playlist) => playlist.kind === 'album')
+    .map((collection) => ({
+      collection,
+      tracks: resolvePlaylistTracks(collection),
+    })),
+);
+const albumSupportingContent = computed(() => {
+  if (!isAlbumSelected.value || !selectedPlaylist.value) return null;
+  return deriveAlbumSupportingContent({
+    selectedAlbumId: selectedPlaylist.value.id,
+    selectedTracks: playlistTracks.value,
+    albumEntries: albumEntries.value,
+    libraryTracks: libraryState.tracks,
+  });
+});
 
 const playlistMeta = computed(() => {
   const count = playlistTracks.value.length;
@@ -166,9 +206,87 @@ const playlistMeta = computed(() => {
     : `${count} 首曲目`;
   if (!isAlbumSelected.value) return countLine;
 
-  const { artist, releaseYear } = albumSummary.value;
-  const byline = [artist, releaseYear].filter(Boolean).join(' · ');
-  return byline ? `${byline} · ${countLine}` : countLine;
+  const { releaseYear } = albumSummary.value;
+  return releaseYear ? `${releaseYear} · ${countLine}` : countLine;
+});
+const playlistArtist = computed(() => albumSummary.value.artist ?? '');
+
+const pageTitle = computed(() =>
+  selectedPlaylist.value
+    ? playlistDisplayName(selectedPlaylist.value)
+    : isLocalLibraryView.value
+      ? '本機曲目'
+      : '全部曲目',
+);
+
+const selectedCollectionPlaybackContext = computed(() => ({
+  sourceId: selectedPlaylist.value?.id ?? '',
+  sourceName: pageTitle.value,
+  tracks: collectionPlaybackTracks.value,
+}));
+const selectedCollectionIsPlaying = computed(() =>
+  collectionPlayback.isPlaying(selectedPlaylist.value?.id),
+);
+const selectedCollectionShuffleActive = computed(() =>
+  collectionPlayback.isShuffleActive(selectedPlaylist.value?.id),
+);
+
+const addToPlaylistItems = computed(() => {
+  const playlist = selectedPlaylist.value;
+  if (!playlist) return [];
+  return collectionAddToPlaylistItems(playlistState.playlists, playlist.id).map(
+    (item) => (item.key === 'create-playlist' ? { ...item, icon: Plus } : item),
+  );
+});
+
+const collectionMoreItems = computed(() => {
+  const playlist = selectedPlaylist.value;
+  if (!playlist) return [];
+  const isAlbum = playlist.kind === 'album';
+  const items = [];
+
+  if (playlistTracks.value.length > 0) {
+    items.push({
+      key: 'add-to-playlist',
+      label: isAlbum ? '新增專輯至播放清單' : '新增至別的播放清單',
+      icon: ListPlus,
+      children: addToPlaylistItems.value,
+      submenuWidth: 240,
+    });
+  }
+
+  items.push(
+    ...(items.length > 0 ? [{ key: 'manage-divider', separator: true }] : []),
+    {
+      key: 'edit-details',
+      label: '編輯詳細資料',
+      icon: Pencil,
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.editDetails,
+        playlistId: playlist.id,
+      },
+    },
+    {
+      key: 'convert-kind',
+      label: isAlbum ? '轉為播放清單' : '轉為專輯',
+      icon: isAlbum ? ListMusic : Disc3,
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.convertKind,
+        playlistId: playlist.id,
+      },
+    },
+    {
+      key: 'delete',
+      label: isAlbum ? '移除' : '刪除',
+      icon: Trash2,
+      danger: true,
+      value: {
+        action: PLAYLIST_MENU_ACTIONS.delete,
+        playlistId: playlist.id,
+      },
+    },
+  );
+  return items;
 });
 
 const canDragPlaylistRows = computed(
@@ -193,18 +311,29 @@ const addMenuCanGoToAlbum = computed(() => {
   return Boolean(track && !isAlbumSelected.value && albumForTrack(track));
 });
 
-const pageTitle = computed(() =>
-  selectedPlaylist.value
-    ? playlistDisplayName(selectedPlaylist.value)
-    : isLocalLibraryView.value
-      ? '本機曲目'
-      : '全部曲目',
-);
-
 const pageError = computed(() => playlistState.error || deleteError.value);
 const visibleTracksEmptyText = computed(() =>
   normalizedSearchQuery.value ? '找不到符合搜尋的曲目。' : '沒有曲目。',
 );
+const contentFieldVariant = computed(() => {
+  if (
+    libraryState.isLoading ||
+    libraryState.error ||
+    libraryState.tracks.length === 0
+  ) {
+    return 'state';
+  }
+  if (mode.value === 'all') {
+    return visibleTracks.value.length === 0 ? 'state' : 'content';
+  }
+  if (
+    playlistTracks.value.length === 0 ||
+    visiblePlaylistEntries.value.length === 0
+  ) {
+    return 'state';
+  }
+  return 'content';
+});
 
 // Selecting a different playlist/library-view (both now live in the shared
 // usePlaylists() state, driven by the persistent AppPlaylistSidebar) only
@@ -214,29 +343,44 @@ const visibleTracksEmptyText = computed(() =>
 watch(
   [() => selectedPlaylist.value?.id, () => playlistState.libraryView],
   () => {
+    selectedTrackId.value = null;
     closeAddMenu();
     clearDragState();
   },
 );
 
-function currentPlaybackQueueTracks() {
-  if (!selectedPlaylist.value) return null;
+function currentVisibleQueueTracks() {
+  if (!selectedPlaylist.value) return visibleTracks.value;
   return visiblePlaylistEntries.value.map(({ track }) => track);
 }
 
-function playRow(track) {
-  const queueTracks = currentPlaybackQueueTracks() ?? [track];
+function selectTrack(track) {
+  selectedTrackId.value = track?.id ?? null;
+}
+
+function activateTrack(track) {
+  const queueTracks = currentVisibleQueueTracks();
+  if (!queueTracks.some(({ id }) => id === track?.id)) return;
+  selectTrack(track);
   setQueue(queueTracks, track.id, {
-    sourceName: selectedPlaylist.value ? pageTitle.value : '',
+    sourceName: pageTitle.value,
     sourceId: selectedPlaylist.value?.id ?? null,
   });
   playTrack(toPlayableTrack(track));
 }
 
-function playPlaylist() {
-  const queueTracks = currentPlaybackQueueTracks() ?? [];
-  const track = queueTracks[0];
-  if (track) playRow(track);
+function toggleSelectedCollectionPlayback() {
+  collectionPlayback.togglePlayback(selectedCollectionPlaybackContext.value);
+}
+
+function toggleSelectedCollectionShuffle() {
+  collectionPlayback.toggleCollectionShuffle(
+    selectedCollectionPlaybackContext.value,
+  );
+}
+
+function enqueueSelectedCollection() {
+  collectionPlayback.enqueueCollection(selectedCollectionPlaybackContext.value);
 }
 
 function togglePlaylistSort(key) {
@@ -264,6 +408,7 @@ async function removeTrack(track) {
       return;
     }
     removeTrackFromQueue(track.id);
+    if (selectedTrackId.value === track.id) selectedTrackId.value = null;
   } catch (err) {
     deleteError.value = recordError(err, {
       code: 'LIBRARY_DELETE_FAILED',
@@ -304,6 +449,7 @@ async function handleTrackMenuSelect(value) {
     trackMetadataEditor.open(track);
   } else if (value.action === TRACK_MENU_ACTIONS.removeFromPlaylist) {
     removeTrackFromPlaylist(value.playlistId, track.id);
+    if (selectedTrackId.value === track.id) selectedTrackId.value = null;
   } else if (value.action === TRACK_MENU_ACTIONS.goToAlbum) {
     jumpToAlbum(track);
   }
@@ -427,111 +573,138 @@ onMounted(async () => {
       </AppSurfaceBoundary>
 
       <template v-else>
-        <SetlistPlaylistHeader
-          v-if="selectedPlaylist"
-          v-model:search-query="searchQuery"
-          :is-album="isAlbumSelected"
-          :title="pageTitle"
-          :meta="playlistMeta"
-          :cover-tracks="playlistCoverTracks"
-          :cover-url="playlistCoverUrl"
-          :description="playlistDescription"
-          :can-play="playlistTracks.length > 0"
-          @play="playPlaylist"
-          @open-edit-details="openEditDetails"
-          @delete="confirmDeletePlaylist()"
-        />
+        <div v-if="selectedPlaylist" class="setlist-view__collection-header">
+          <SetlistCollectionHeader
+            v-model:search-query="searchQuery"
+            :entity-kind="mode"
+            :title="pageTitle"
+            :artist="playlistArtist"
+            :meta="playlistMeta"
+            :cover-tracks="playlistCoverTracks"
+            :cover-url="playlistCoverUrl"
+            :description="playlistDescription"
+            :playing="selectedCollectionIsPlaying"
+            :shuffle-active="selectedCollectionShuffleActive"
+            :can-play="playlistTracks.length > 0"
+            :can-shuffle="playlistTracks.length > 1"
+            :can-add-to-queue="playlistTracks.length > 0"
+            :can-add-to-playlist="playlistTracks.length > 0"
+            :add-to-playlist-items="addToPlaylistItems"
+            :more-items="collectionMoreItems"
+            @toggle-playback="toggleSelectedCollectionPlayback"
+            @toggle-shuffle="toggleSelectedCollectionShuffle"
+            @add-to-queue="enqueueSelectedCollection"
+            @open-edit-details="openEditDetails"
+            @menu-action="handlePlaylistMenuAction"
+          />
+        </div>
 
-        <UiPageHeader v-else :title="pageTitle">
-          <template #actions>
-            <UiSearchBox v-model="searchQuery" />
-          </template>
-        </UiPageHeader>
+        <AppFolderContentField
+          :variant="contentFieldVariant"
+          aria-label="曲目清單與狀態"
+        >
+          <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
 
-        <UiHint v-if="libraryState.isLoading" role="status">載入中…</UiHint>
-
-        <UiNotice
-          v-else-if="libraryState.error"
-          :notice="libraryState.error"
-          compact
-          @action="refreshLibrary"
-        />
-
-        <UiHint v-else-if="libraryState.tracks.length === 0">
-          還沒有任何曲目——前往「Import」匯入曲目。
-        </UiHint>
-
-        <template v-else>
           <UiNotice
-            v-if="pageError"
-            tone="danger"
-            title="播放清單操作未完成"
-            :message="pageError"
+            v-else-if="libraryState.error"
+            :notice="libraryState.error"
             compact
+            @action="refreshLibrary"
           />
 
-          <template v-if="mode === 'all'">
-            <UiHint v-if="visibleTracks.length === 0">
-              {{ visibleTracksEmptyText }}
-            </UiHint>
-            <ul v-else class="tracks">
-              <UiTrackRow
-                v-for="track in visibleTracks"
-                :key="track.id"
-                :track="track"
-                :current="state.track?.id === track.id"
-                interactive
-                :title-clickable="Boolean(albumForTrack(track))"
-                :title-aria-label="`前往專輯：${track.title}`"
-                @click="playRow(track)"
-                @title-click="jumpToAlbum(track)"
-                @contextmenu="openAddMenu(track, $event)"
-              >
-                <template #trail>
-                  <div class="row-actions" @click.stop>
-                    <UiButton
-                      :icon="Trash2"
-                      intent="danger"
-                      aria-label="刪除曲目"
-                      title="刪除曲目(同時刪除原始檔案與去人聲版本)"
-                      @click="removeTrack(track)"
-                    />
-                  </div>
-                </template>
-              </UiTrackRow>
-            </ul>
-          </template>
+          <UiHint v-else-if="libraryState.tracks.length === 0">
+            還沒有任何曲目——前往「Import」匯入曲目。
+          </UiHint>
 
           <template v-else>
-            <UiHint v-if="playlistTracks.length === 0">
-              這個歌單還沒有曲目。從任一曲目列右鍵加入。
-            </UiHint>
-            <UiHint v-else-if="visiblePlaylistEntries.length === 0">
-              找不到符合搜尋的曲目。
-            </UiHint>
-            <SetlistPlaylistTable
-              v-else
-              :entries="visiblePlaylistEntries"
-              :sort="playlistSort"
-              :is-album="isAlbumSelected"
-              :can-drag="canDragPlaylistRows"
-              :current-track-id="state.track?.id"
-              :dragging-track-id="draggingTrackId"
-              :drop-target-track-id="dropTargetTrackId"
-              :drop-position="dropPosition"
-              :jumpable-track-ids="jumpableTrackIds"
-              @toggle-sort="togglePlaylistSort"
-              @select-track="playRow"
-              @title-click="jumpToAlbum"
-              @open-menu="openAddMenu"
-              @track-drag-start="startDrag"
-              @track-drag-over="updateDropTarget"
-              @track-drag-leave="leaveDropTarget"
-              @track-drop="dropTrack"
-              @track-drag-end="clearDragState"
+            <UiNotice
+              v-if="pageError"
+              tone="danger"
+              title="播放清單操作未完成"
+              :message="pageError"
+              compact
             />
+
+            <template v-if="mode === 'all'">
+              <UiHint v-if="visibleTracks.length === 0">
+                {{ visibleTracksEmptyText }}
+              </UiHint>
+              <ul v-else class="tracks">
+                <UiTrackRow
+                  v-for="track in visibleTracks"
+                  :key="track.id"
+                  :track="track"
+                  :active="selectedTrackId === track.id"
+                  :current="state.track?.id === track.id"
+                  interactive
+                  selection-action
+                  activate-on-enter
+                  :action-label="`選取：${track.title}`"
+                  action-description="單擊或空白鍵選取；雙擊或 Enter 播放"
+                  :title-clickable="Boolean(albumForTrack(track))"
+                  :title-aria-label="`前往專輯：${track.title}`"
+                  @row-click="selectTrack(track)"
+                  @row-dblclick="activateTrack(track)"
+                  @activate="activateTrack(track)"
+                  @title-click="jumpToAlbum(track)"
+                  @contextmenu="openAddMenu(track, $event)"
+                >
+                  <template #trail>
+                    <div class="row-actions" @click.stop @dblclick.stop>
+                      <UiButton
+                        :icon="Trash2"
+                        intent="danger"
+                        aria-label="刪除曲目"
+                        title="刪除曲目(同時刪除原始檔案與去人聲版本)"
+                        @click="removeTrack(track)"
+                      />
+                    </div>
+                  </template>
+                </UiTrackRow>
+              </ul>
+            </template>
+
+            <template v-else>
+              <UiHint v-if="playlistTracks.length === 0">
+                這個歌單還沒有曲目。從任一曲目列右鍵加入。
+              </UiHint>
+              <UiHint v-else-if="visiblePlaylistEntries.length === 0">
+                找不到符合搜尋的曲目。
+              </UiHint>
+              <SetlistPlaylistTable
+                v-else
+                :entries="visiblePlaylistEntries"
+                :sort="playlistSort"
+                :is-album="isAlbumSelected"
+                :can-drag="canDragPlaylistRows"
+                :selected-track-id="selectedTrackId"
+                :current-track-id="state.track?.id"
+                :dragging-track-id="draggingTrackId"
+                :drop-target-track-id="dropTargetTrackId"
+                :drop-position="dropPosition"
+                :jumpable-track-ids="jumpableTrackIds"
+                @toggle-sort="togglePlaylistSort"
+                @select-track="selectTrack"
+                @activate-track="activateTrack"
+                @title-click="jumpToAlbum"
+                @open-menu="openAddMenu"
+                @track-drag-start="startDrag"
+                @track-drag-over="updateDropTarget"
+                @track-drag-leave="leaveDropTarget"
+                @track-drop="dropTrack"
+                @track-drag-end="clearDragState"
+              />
+            </template>
           </template>
-        </template>
+        </AppFolderContentField>
+
+        <SetlistAlbumSupportingContent
+          v-if="albumSupportingContent"
+          :artist="albumSupportingContent.artist"
+          :related-albums="albumSupportingContent.relatedAlbums"
+          :summary="albumSupportingContent.summary"
+          @select-album="selectPlaylistAction"
+        />
 
         <TrackActionMenu
           :open="Boolean(addMenu)"
@@ -554,6 +727,7 @@ onMounted(async () => {
 <style scoped>
 .setlist-view {
   display: grid;
+  min-block-size: 100%;
 }
 
 .setlist-view--session,
@@ -570,6 +744,14 @@ onMounted(async () => {
 
 .setlist-view__main {
   min-width: 0;
+  min-block-size: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.setlist-view__collection-header {
+  min-width: 0;
+  flex: 0 0 auto;
 }
 
 .setlist-view__session-boundary {
@@ -591,7 +773,7 @@ onMounted(async () => {
 
 .tracks {
   list-style: none;
-  margin: var(--ui-space-4) 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;

@@ -6,27 +6,39 @@ import {
 } from './trackSourceDisplay.js';
 
 describe('sortSetlistLocalTracks', () => {
-  it('returns only local-file tracks sorted by title', () => {
+  it('returns only local-file tracks sorted by importedAt newest first', () => {
     const tracks = [
-      { id: 'yt-a', title: 'A Song', artist: 'Alpha Artist' },
+      {
+        id: 'yt-a',
+        title: 'A Song',
+        artist: 'Alpha Artist',
+        importedAt: '2026-10-04T10:00:00.000Z',
+      },
       {
         id: 'local-z',
         title: 'Zoo',
         artist: 'A Local Artist',
         sourceType: 'local-file',
+        importedAt: '2026-10-04T12:00:00.000Z',
       },
-      { id: 'yt-b', title: 'B Song', artist: 'Beta Artist' },
+      {
+        id: 'yt-b',
+        title: 'B Song',
+        artist: 'Beta Artist',
+        importedAt: '2026-10-04T11:00:00.000Z',
+      },
       {
         id: 'local-a',
         title: 'Apple',
         artist: 'Z Local Artist',
         sourceType: 'local-file',
+        importedAt: '2026-10-04T09:00:00.000Z',
       },
     ];
 
     expect(sortSetlistLocalTracks(tracks).map((track) => track.id)).toEqual([
-      'local-a',
       'local-z',
+      'local-a',
     ]);
     expect(tracks.map((track) => track.id)).toEqual([
       'yt-a',
@@ -36,7 +48,7 @@ describe('sortSetlistLocalTracks', () => {
     ]);
   });
 
-  it('uses id as the local title fallback for untitled tracks', () => {
+  it('uses the existing title/id order when added times are missing', () => {
     const tracks = [
       { id: 'zeta', sourceType: 'local-file' },
       { id: 'alpha', sourceType: 'local-file' },
@@ -50,13 +62,74 @@ describe('sortSetlistLocalTracks', () => {
 });
 
 describe('sortSetlistLibraryTracks', () => {
-  it('returns only non-local tracks sorted by artist, then title', () => {
+  it('returns only non-local tracks sorted by importedAt newest first', () => {
     const tracks = [
-      { id: 'local-a', title: 'Apple', sourceType: 'local-file' },
-      { id: 'song-z', title: 'Zoo', artist: 'Beta' },
-      { id: 'song-a2', title: 'Apple', artist: 'Alpha' },
-      { id: 'song-b', title: 'Ballad', artist: 'Alpha' },
-      { id: 'song-a1', title: 'Another', artist: 'Alpha' },
+      {
+        id: 'local-a',
+        title: 'Apple',
+        sourceType: 'local-file',
+        importedAt: '2026-10-05T00:00:00.000Z',
+      },
+      {
+        id: 'song-z',
+        title: 'Zoo',
+        artist: 'Beta',
+        importedAt: '2026-10-04T09:00:00.000Z',
+      },
+      {
+        id: 'song-a2',
+        title: 'Apple',
+        artist: 'Alpha',
+        importedAt: '2026-10-04T12:00:00.000Z',
+      },
+      {
+        id: 'song-b',
+        title: 'Ballad',
+        artist: 'Alpha',
+        importedAt: '2026-10-04T11:00:00.000Z',
+      },
+      {
+        id: 'song-a1',
+        title: 'Another',
+        artist: 'Alpha',
+        importedAt: '2026-10-04T10:00:00.000Z',
+      },
+    ];
+
+    expect(sortSetlistLibraryTracks(tracks).map((track) => track.id)).toEqual([
+      'song-a2',
+      'song-b',
+      'song-a1',
+      'song-z',
+    ]);
+  });
+
+  it('uses artist/title as a deterministic tie-breaker', () => {
+    const tracks = [
+      {
+        id: 'song-z',
+        title: 'Zoo',
+        artist: 'Beta',
+        importedAt: '2026-10-04T10:00:00.000Z',
+      },
+      {
+        id: 'song-a2',
+        title: 'Apple',
+        artist: 'Alpha',
+        importedAt: '2026-10-04T10:00:00.000Z',
+      },
+      {
+        id: 'song-b',
+        title: 'Ballad',
+        artist: 'Alpha',
+        importedAt: '2026-10-04T10:00:00.000Z',
+      },
+      {
+        id: 'song-a1',
+        title: 'Another',
+        artist: 'Alpha',
+        importedAt: '2026-10-04T10:00:00.000Z',
+      },
     ];
 
     expect(sortSetlistLibraryTracks(tracks).map((track) => track.id)).toEqual([
@@ -67,25 +140,17 @@ describe('sortSetlistLibraryTracks', () => {
     ]);
   });
 
-  it('sorts non-local tracks by artist, then title', () => {
-    const tracks = [
-      { id: 'song-z', title: 'Zoo', artist: 'Beta' },
-      { id: 'song-a2', title: 'Apple', artist: 'Alpha' },
-      { id: 'song-b', title: 'Ballad', artist: 'Alpha' },
-      { id: 'song-a1', title: 'Another', artist: 'Alpha' },
-    ];
-
-    expect(sortSetlistLibraryTracks(tracks).map((track) => track.id)).toEqual([
-      'song-a1',
-      'song-a2',
-      'song-b',
-      'song-z',
-    ]);
-  });
-
-  it('uses id as the alphabetic fallback for untitled tracks', () => {
+  it('places missing or invalid added times after dated tracks', () => {
     expect(
-      [{ id: 'zeta' }, { id: 'alpha' }].sort(compareSetlistLibraryTrackOrder),
-    ).toEqual([{ id: 'alpha' }, { id: 'zeta' }]);
+      [
+        { id: 'missing' },
+        { id: 'new', importedAt: '2026-10-04T10:00:00.000Z' },
+        { id: 'invalid', importedAt: 'not-a-date' },
+      ].sort(compareSetlistLibraryTrackOrder),
+    ).toEqual([
+      { id: 'new', importedAt: '2026-10-04T10:00:00.000Z' },
+      { id: 'invalid', importedAt: 'not-a-date' },
+      { id: 'missing' },
+    ]);
   });
 });

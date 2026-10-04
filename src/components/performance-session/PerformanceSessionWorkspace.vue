@@ -144,7 +144,10 @@ function clearDraft() {
     }"
     aria-label="待唱安排"
   >
-    <UiPageHeader title="待唱安排">
+    <UiPageHeader
+      class="performance-session-workspace__page-header"
+      title="待唱安排"
+    >
       <template #description>
         {{ sourceLabel }} · 只安排尚未開始的曲目。
       </template>
@@ -308,6 +311,10 @@ function clearDraft() {
   min-width: 0;
   min-height: 0;
   overflow: hidden;
+}
+
+.performance-session-workspace__page-header {
+  margin-block-end: var(--ui-folder-section-gap);
 }
 
 .performance-session-workspace__summary {

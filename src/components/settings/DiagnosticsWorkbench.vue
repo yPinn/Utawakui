@@ -185,10 +185,6 @@ onMounted(workbench.refresh);
   min-height: 0;
 }
 
-.diagnostics-workbench :deep(.ui-page-header) {
-  margin-bottom: 0;
-}
-
 .diagnostics-workbench__filters :deep(.ui-search-box) {
   flex: 1 1 16rem;
 }

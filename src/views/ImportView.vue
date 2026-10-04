@@ -5,7 +5,6 @@ import ProviderImportPanel from '../components/import/ProviderImportPanel.vue';
 import UiButton from '../components/ui/UiButton.vue';
 import UiHint from '../components/ui/UiHint.vue';
 import UiNotice from '../components/ui/UiNotice.vue';
-import UiPageHeader from '../components/ui/UiPageHeader.vue';
 import { useLocalImport } from '../composables/useLocalImport.js';
 
 const { state: localImportState, importFiles } = useLocalImport();
@@ -21,16 +20,10 @@ const localStatusTone = computed(
 
 <template>
   <div class="import-view">
-    <UiPageHeader title="匯入" />
-
     <section class="local-import-panel" aria-labelledby="local-import-title">
-      <div class="local-import-panel__top">
-        <div class="section-heading">
-          <h2 id="local-import-title" class="section-heading__title">
-            本機音訊
-          </h2>
-          <p class="section-heading__meta">複製到 Utawakui 曲庫</p>
-        </div>
+      <div class="section-heading">
+        <h2 id="local-import-title" class="section-heading__title">本機音訊</h2>
+        <p class="section-heading__meta">複製到 Utawakui 曲庫</p>
       </div>
 
       <div class="local-import-action">
@@ -44,6 +37,7 @@ const localStatusTone = computed(
           </p>
         </div>
         <UiButton
+          class="local-import-action__button"
           :icon="FolderPlus"
           variant="accent"
           :disabled="localImportState.isImporting"
@@ -81,20 +75,15 @@ const localStatusTone = computed(
 .import-view {
   display: flex;
   flex-direction: column;
-  gap: var(--ui-space-3);
+  gap: var(--ui-folder-section-gap);
 }
 
 .local-import-panel {
   display: grid;
   gap: var(--ui-space-3);
   min-width: 0;
-  padding: var(--ui-space-3);
-  background: var(--ui-color-surface);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
 }
 
-.local-import-panel__top,
 .section-heading,
 .local-import-action {
   display: flex;
@@ -106,6 +95,7 @@ const localStatusTone = computed(
 .section-heading {
   min-width: 0;
   align-items: baseline;
+  gap: var(--ui-folder-heading-gap);
 }
 
 .section-heading__title,
@@ -163,17 +153,14 @@ const localStatusTone = computed(
   line-height: var(--ui-line-height-label);
 }
 
-@media (max-width: 900px) {
-  .local-import-panel__top {
-    align-items: stretch;
-    flex-direction: column;
-  }
-}
-
 @media (max-width: 680px) {
   .local-import-action {
-    align-items: stretch;
+    align-items: center;
     flex-wrap: wrap;
+  }
+
+  .local-import-action__button {
+    flex: 1 0 100%;
   }
 }
 </style>

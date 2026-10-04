@@ -1,0 +1,203 @@
+<script setup>
+import { computed, useId } from 'vue';
+import UiCollageThumb from '../ui/UiCollageThumb.vue';
+
+const RELATED_ALBUM_COVER_SIZE = 96;
+
+const props = defineProps({
+  artist: { type: String, required: true },
+  relatedAlbums: { type: Array, default: () => [] },
+  summary: { type: Object, required: true },
+});
+
+const emit = defineEmits(['selectAlbum']);
+const instanceId = useId();
+const relatedTitleId = `setlist-related-albums-${instanceId}`;
+const summaryTitleId = `setlist-artist-summary-${instanceId}`;
+const yearLabel = computed(() => {
+  const { yearStart, yearEnd } = props.summary;
+  if (!yearStart) return '';
+  return yearEnd && yearEnd !== yearStart
+    ? `${yearStart}–${yearEnd}`
+    : String(yearStart);
+});
+
+function selectAlbum(album) {
+  emit('selectAlbum', album.id);
+}
+</script>
+
+<template>
+  <div class="setlist-album-supporting" aria-label="專輯延伸內容">
+    <section
+      v-if="relatedAlbums.length > 0"
+      class="setlist-album-supporting__section"
+      :aria-labelledby="relatedTitleId"
+    >
+      <h2 :id="relatedTitleId">更多來自{{ artist }}的專輯</h2>
+      <ul class="setlist-album-supporting__albums">
+        <li v-for="album in relatedAlbums" :key="album.id">
+          <button
+            type="button"
+            class="setlist-album-supporting__album"
+            :aria-label="`開啟專輯：${album.name}`"
+            @click="selectAlbum(album)"
+          >
+            <UiCollageThumb
+              :cover-url="album.coverUrl"
+              :tracks="album.tracks"
+              :can-collage="false"
+              :size="RELATED_ALBUM_COVER_SIZE"
+            />
+            <span class="setlist-album-supporting__album-copy">
+              <strong>{{ album.name }}</strong>
+              <span v-if="album.releaseYear">{{ album.releaseYear }}</span>
+            </span>
+          </button>
+        </li>
+      </ul>
+    </section>
+
+    <section
+      class="setlist-album-supporting__section"
+      :aria-labelledby="summaryTitleId"
+    >
+      <h2 :id="summaryTitleId">演出者曲庫摘要</h2>
+      <p class="setlist-album-supporting__summary-copy">
+        以下僅統計目前本機曲庫中標記為{{ artist }}的內容。
+      </p>
+      <dl class="setlist-album-supporting__facts">
+        <div>
+          <dt>曲目</dt>
+          <dd>{{ summary.trackCount }} 首曲目</dd>
+        </div>
+        <div>
+          <dt>專輯</dt>
+          <dd>{{ summary.albumCount }} 張專輯</dd>
+        </div>
+        <div v-if="yearLabel">
+          <dt>收錄年份</dt>
+          <dd>{{ yearLabel }}</dd>
+        </div>
+      </dl>
+    </section>
+  </div>
+</template>
+
+<style scoped>
+.setlist-album-supporting {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-space-6);
+  padding-block-start: var(--ui-space-6);
+}
+
+.setlist-album-supporting__section {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--ui-space-3);
+}
+
+.setlist-album-supporting__section h2,
+.setlist-album-supporting__summary-copy {
+  margin: 0;
+}
+
+.setlist-album-supporting__section h2 {
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-lg);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-title);
+}
+
+.setlist-album-supporting__albums {
+  min-inline-size: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6rem, 8rem));
+  gap: var(--ui-space-4);
+  list-style: none;
+}
+
+.setlist-album-supporting__album {
+  min-inline-size: 0;
+  padding: 0;
+  display: grid;
+  justify-items: start;
+  gap: var(--ui-space-2);
+  border: 0;
+  background: transparent;
+  color: var(--ui-color-text);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.setlist-album-supporting__album:focus-visible {
+  outline: var(--ui-focus-width) solid var(--ui-color-focus);
+  outline-offset: var(--ui-focus-offset);
+}
+
+.setlist-album-supporting__album:hover strong {
+  color: var(--ui-color-accent);
+}
+
+.setlist-album-supporting__album-copy {
+  min-inline-size: 0;
+  max-inline-size: 100%;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.setlist-album-supporting__album-copy strong,
+.setlist-album-supporting__album-copy span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.setlist-album-supporting__album-copy strong {
+  max-inline-size: 100%;
+  font-size: var(--ui-font-size-sm);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+
+.setlist-album-supporting__album-copy span,
+.setlist-album-supporting__summary-copy,
+.setlist-album-supporting__facts dt {
+  color: var(--ui-color-text-muted);
+  font-size: var(--ui-font-size-sm);
+  line-height: var(--ui-line-height-caption);
+}
+
+.setlist-album-supporting__summary-copy {
+  max-inline-size: 72ch;
+}
+
+.setlist-album-supporting__facts {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ui-space-5);
+}
+
+.setlist-album-supporting__facts div {
+  min-inline-size: 6rem;
+  display: grid;
+  gap: var(--ui-space-1);
+}
+
+.setlist-album-supporting__facts dt,
+.setlist-album-supporting__facts dd {
+  margin: 0;
+}
+
+.setlist-album-supporting__facts dd {
+  color: var(--ui-color-text);
+  font-size: var(--ui-font-size-md);
+  font-weight: var(--ui-font-weight-semibold);
+  line-height: var(--ui-line-height-label);
+}
+</style>

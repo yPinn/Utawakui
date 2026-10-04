@@ -72,7 +72,7 @@ describe('Specialist workbench Token v2 cleanup', () => {
     );
     expect(navigationSource).toContain(':items="categoryItems"');
     expect(navigationSource).toContain(':items="toolItems"');
-    expect(navigationSource).toContain('@update:active-id="selectCategory"');
+    expect(navigationSource).toContain('@update:model-value="selectCategory"');
     expect(navigationSource).toContain('@update:model-value="selectTool"');
     expect(navigationSource).toContain("emit('navigate', firstTool.route)");
     expect(navigationSource).toContain("emit('navigate', route)");

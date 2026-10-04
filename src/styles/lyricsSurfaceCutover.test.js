@@ -42,10 +42,8 @@ const legacyTokens = [
 
 describe('Lyrics Token v2 surface cutover', () => {
   it('keeps Lyrics in Folder workspace mode with feature-owned scroll regions', () => {
-    expect(appSource).toContain(
-      "const documentFolderViews = new Set(['setlist', 'import'])",
-    );
-    expect(appSource).toContain('<AppFolderPage :mode="folderPageMode">');
+    expect(appSource).toContain('<AppFolderPage v-else mode="workspace">');
+    expect(appSource).toContain("lyrics: 'lyrics'");
     expect(viewSource).toContain('<LyricsWorkspace />');
     expect(workspaceSource).toMatch(
       /\.lyrics-workspace\s*\{(?=[^}]*display:\s*flex)(?=[^}]*flex:\s*1)(?=[^}]*min-height:\s*0)[^}]*\}/su,

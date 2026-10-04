@@ -17,7 +17,23 @@ function compareText(a, b) {
   });
 }
 
+function importedAtTimestamp(track) {
+  const timestamp = Date.parse(track?.importedAt);
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function compareImportedAtNewest(a, b) {
+  const aTimestamp = importedAtTimestamp(a);
+  const bTimestamp = importedAtTimestamp(b);
+  if (aTimestamp === null && bTimestamp === null) return 0;
+  if (aTimestamp === null) return 1;
+  if (bTimestamp === null) return -1;
+  return bTimestamp - aTimestamp;
+}
+
 export function compareSetlistLocalTrackOrder(a, b) {
+  const importedAtDelta = compareImportedAtNewest(a, b);
+  if (importedAtDelta !== 0) return importedAtDelta;
   const titleDelta = compareText(titleKey(a), titleKey(b));
   if (titleDelta !== 0) return titleDelta;
 
@@ -25,6 +41,8 @@ export function compareSetlistLocalTrackOrder(a, b) {
 }
 
 export function compareSetlistLibraryTrackOrder(a, b) {
+  const importedAtDelta = compareImportedAtNewest(a, b);
+  if (importedAtDelta !== 0) return importedAtDelta;
   const artistDelta = compareText(a?.artist, b?.artist);
   if (artistDelta !== 0) return artistDelta;
   const titleDelta = compareText(titleKey(a), titleKey(b));

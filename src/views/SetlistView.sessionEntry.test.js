@@ -6,7 +6,10 @@ const viewSource = readFileSync(
   'utf8',
 );
 const headerSource = readFileSync(
-  new URL('../components/playlists/SetlistPlaylistHeader.vue', import.meta.url),
+  new URL(
+    '../components/playlists/SetlistCollectionHeader.vue',
+    import.meta.url,
+  ),
   'utf8',
 );
 

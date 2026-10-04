@@ -157,7 +157,10 @@ function scheduleOptionalLyricsAfterImport(
   }
 }
 
-function buildProviderIndexEntry(result) {
+function buildProviderIndexEntry(
+  result,
+  importedAt = new Date().toISOString(),
+) {
   return {
     title: result.title,
     titleOrigin: 'provider',
@@ -166,6 +169,7 @@ function buildProviderIndexEntry(result) {
     duration: result.duration,
     album: result.album,
     releaseYear: result.releaseYear,
+    importedAt,
   };
 }
 

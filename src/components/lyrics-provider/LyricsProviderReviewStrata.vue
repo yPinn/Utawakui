@@ -2,7 +2,6 @@
 import { computed } from 'vue';
 import UiSearchBox from '../ui/UiSearchBox.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
-import UiTabs from '../ui/UiTabs.vue';
 
 const props = defineProps({
   strata: { type: Array, default: () => [] },
@@ -32,7 +31,7 @@ const reachOptions = Object.freeze([
   { id: 'long-tail', label: '長尾' },
 ]);
 
-const stratumTabs = computed(() =>
+const stratumOptions = computed(() =>
   props.strata.map((stratum) => ({
     ...stratum,
     disabled: props.disabled,
@@ -42,21 +41,20 @@ const stratumTabs = computed(() =>
 
 <template>
   <div class="review-strata">
-    <UiTabs
-      class="review-strata__tabs"
-      :items="stratumTabs"
-      :active-id="selectedStratumId"
+    <UiSegmentedControl
+      class="review-strata__strata"
+      :items="stratumOptions"
+      :model-value="selectedStratumId"
+      :disabled="disabled"
       aria-label="歌詞語料分層"
-      tab-id-prefix="lyrics-review-stratum"
-      variant="bar"
-      @update:active-id="emit('update:selectedStratumId', $event)"
+      @update:model-value="emit('update:selectedStratumId', $event)"
     >
       <template #after="{ item }">
-        <span class="review-strata__tab-count">
+        <span class="review-strata__option-count">
           {{ item.counts.approved }}/{{ item.counts.total }}
         </span>
       </template>
-    </UiTabs>
+    </UiSegmentedControl>
 
     <div class="review-strata__filters">
       <div class="review-strata__filter-group">
@@ -103,11 +101,11 @@ const stratumTabs = computed(() =>
   background: var(--ui-color-canvas);
 }
 
-.review-strata__tabs {
+.review-strata__strata {
   min-width: 0;
 }
 
-.review-strata__tab-count {
+.review-strata__option-count {
   color: var(--ui-color-text-muted);
   font-weight: var(--ui-font-weight-regular);
   font-variant-numeric: tabular-nums;

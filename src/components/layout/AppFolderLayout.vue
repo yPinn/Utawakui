@@ -124,6 +124,7 @@ function navigate(destinationId, event) {
   inset-inline: 0;
   inset-block-end: 0;
   block-size: var(--ui-folder-tab-cover-size);
+  border-radius: var(--ui-radius-lg) var(--ui-radius-lg) 0 0;
   background: var(--ui-folder-layout-background);
   pointer-events: none;
 }
@@ -231,7 +232,7 @@ function navigate(destinationId, event) {
   height: 100%;
   padding: var(--ui-folder-perimeter);
   overflow: hidden;
-  border-radius: 0 var(--ui-radius-sm) var(--ui-radius-sm);
+  border-radius: var(--ui-radius-lg);
   background: var(--ui-folder-layout-background);
 }
 

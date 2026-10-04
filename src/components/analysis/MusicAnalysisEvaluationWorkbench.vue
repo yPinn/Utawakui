@@ -53,10 +53,6 @@ const mode = shallowRef('annotation');
   gap: var(--ui-space-3);
 }
 
-.analysis-evaluation :deep(.ui-page-header) {
-  margin-bottom: 0;
-}
-
 .analysis-evaluation__body {
   min-width: 0;
   min-height: 0;

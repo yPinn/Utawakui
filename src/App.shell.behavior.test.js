@@ -39,7 +39,8 @@ describe('App shell right Dock', () => {
       /<AppSurfaceBoundary v-else surface-id="app-folder">/u,
     );
     expect(source).toContain('<AppFolderLayout');
-    expect(source).toContain('<AppFolderPage :mode="folderPageMode">');
+    expect(source).toContain('v-if="activeViewOwnsFolderPage"');
+    expect(source).toContain('<AppFolderPage v-else mode="workspace">');
     expect(source).not.toContain('settings: SettingsView');
   });
 
@@ -139,9 +140,7 @@ describe('App shell right Dock', () => {
   });
 
   it('reserves the shared desktop bay and reuses the 16px shell panel inset', () => {
-    expect(source).toMatch(
-      /<div\s+class="shell__workspace"\s+:class="\{ 'shell__workspace--utility': isSettingsView \}"\s*>/u,
-    );
+    expect(source).toContain('<div class="shell__workspace">');
     expect(source).toMatch(
       /\.shell__main--with-dock\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+var\(--ui-right-dock-width\);[^}]*gap:\s*var\(--ui-space-3\);[^}]*\}/su,
     );
@@ -155,9 +154,9 @@ describe('App shell right Dock', () => {
       /\.shell__main\s*\{[^}]*padding-bottom:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
     expect(source).toMatch(
-      /\.shell__workspace--utility\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
+      /\.shell__workspace\s*\{[^}]*padding-top:\s*var\(--ui-shell-content-inset-block\);[^}]*\}/su,
     );
-    expect(source).not.toMatch(/\.shell__workspace\s*\{[^}]*padding-top:/su);
+    expect(source).not.toContain('shell__workspace--utility');
   });
 
   it('routes playback triggers to the Dock while accompaniment stays in the titlebar', () => {

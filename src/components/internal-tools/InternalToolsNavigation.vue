@@ -3,7 +3,6 @@ import { computed } from 'vue';
 import UiChip from '../ui/UiChip.vue';
 import UiKbd from '../ui/UiKbd.vue';
 import UiSegmentedControl from '../ui/UiSegmentedControl.vue';
-import UiTabs from '../ui/UiTabs.vue';
 
 const props = defineProps({
   categories: { type: Array, default: () => [] },
@@ -50,13 +49,11 @@ function selectTool(route) {
 <template>
   <nav class="internal-tools-nav" aria-label="內部工具">
     <div class="internal-tools-nav__topline">
-      <UiTabs
+      <UiSegmentedControl
         :items="categoryItems"
-        :active-id="activeCategory?.id ?? ''"
+        :model-value="activeCategory?.id ?? ''"
         aria-label="內部工具分類"
-        tab-id-prefix="internal-tools-category"
-        variant="bar"
-        @update:active-id="selectCategory"
+        @update:model-value="selectCategory"
       />
       <UiChip tone="gated">僅開發版本</UiChip>
     </div>
@@ -126,7 +123,6 @@ function selectTool(route) {
   line-height: var(--ui-line-height-caption);
 }
 
-.internal-tools-nav :deep(.ui-tabs__tab),
 .internal-tools-nav :deep(.ui-segmented-control__option) {
   gap: var(--ui-space-2);
 }

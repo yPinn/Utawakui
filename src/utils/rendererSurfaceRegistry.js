@@ -46,7 +46,7 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     system: 'v2',
   }),
   setlist: createSurfaceDefinition({
-    entryOwner: 'src/App.vue',
+    entryOwner: 'src/components/playlists/SetlistPage.vue',
     overlayHostId: 'setlist-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -54,7 +54,7 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     system: 'v2',
   }),
   'setlist-overlay': createSurfaceDefinition({
-    entryOwner: 'src/App.vue',
+    entryOwner: 'src/components/playlists/SetlistPage.vue',
     parentSurfaceId: 'setlist',
     renderer: 'main',
     surfaceId: 'setlist-overlay',
@@ -106,7 +106,7 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     system: 'v2',
   }),
   import: createSurfaceDefinition({
-    entryOwner: 'src/App.vue',
+    entryOwner: 'src/components/import/ImportPage.vue',
     overlayHostId: 'import-overlay',
     parentSurfaceId: 'app-folder',
     renderer: 'main',
@@ -114,7 +114,7 @@ export const UI_SURFACE_REGISTRY = Object.freeze({
     system: 'v2',
   }),
   'import-overlay': createSurfaceDefinition({
-    entryOwner: 'src/App.vue',
+    entryOwner: 'src/components/import/ImportPage.vue',
     parentSurfaceId: 'import',
     renderer: 'main',
     surfaceId: 'import-overlay',

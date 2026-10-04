@@ -68,6 +68,25 @@ describe('listTracks', () => {
     expect(track.needsBackfill).toBe(false);
   });
 
+  it('projects the indexed import time when it is available', () => {
+    fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
+    saveIndexEntry(dir, 'abc', {
+      title: 'Indexed Track',
+      importedAt: '2026-10-04T12:00:00.000Z',
+    });
+
+    expect(listTracks(dir)[0].importedAt).toBe('2026-10-04T12:00:00.000Z');
+  });
+
+  it('uses the audio file modified time for older entries without importedAt', () => {
+    const audioPath = path.join(dir, 'legacy.mp3');
+    const importedAt = new Date('2025-03-02T04:05:06.000Z');
+    fs.writeFileSync(audioPath, 'x');
+    fs.utimesSync(audioPath, importedAt, importedAt);
+
+    expect(listTracks(dir)[0].importedAt).toBe(importedAt.toISOString());
+  });
+
   it('merges album/releaseYear from the index but omits needsBackfill for missing album', () => {
     fs.writeFileSync(path.join(dir, 'abc.mp3'), 'x');
     saveIndexEntry(dir, 'abc', {

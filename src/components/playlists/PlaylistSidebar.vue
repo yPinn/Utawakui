@@ -15,18 +15,15 @@ import {
   Trash2,
 } from '../../icons/index.js';
 import { computed, ref, shallowRef } from 'vue';
+import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js';
 import { useDragReorder } from '../../composables/useDragReorder.js';
-import { usePlaybackQueue } from '../../composables/usePlaybackQueue.js';
-import { usePlayer } from '../../composables/usePlayer.js';
 import { usePlaylists } from '../../composables/usePlaylists.js';
 import { deriveAlbumSummary } from '../../utils/albumSummary.js';
 import {
   PLAYLIST_MENU_ACTIONS,
-  playlistDisplayName,
-  addToPlaylistTargets,
+  collectionAddToPlaylistItems,
 } from '../../utils/playlistMenu.js';
 import { orderPlaylistsForDisplay } from '../../utils/playlistOrdering.js';
-import { toPlayableTrack } from '../../utils/playableTrack.js';
 import PlaylistSidebarRow from './PlaylistSidebarRow.vue';
 import UiContextMenu from '../ui/UiContextMenu.vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
@@ -39,8 +36,7 @@ const props = defineProps({
 });
 
 const { state, select, create, reorderPlaylist } = usePlaylists();
-const { state: playerState, play, pause, playTrack } = usePlayer();
-const { state: queueState, setQueue } = usePlaybackQueue();
+const collectionPlayback = useCollectionPlayback();
 
 const emit = defineEmits([
   'activateSetlist',
@@ -49,7 +45,7 @@ const emit = defineEmits([
 ]);
 
 // A custom cover (album's own official artwork, or a playlist's manually
-// uploaded one — see SetlistPlaylistHeader.vue) always wins; otherwise the
+// uploaded one — see LibraryEntityDossier.vue) always wins; otherwise the
 // first 4 member tracks tile into the same UiCollageThumb collage the hero
 // shows, so the two can never show a different image.
 function coverTracksFor(playlist) {
@@ -67,32 +63,21 @@ function memberTracksFor(playlist) {
 
 // Compare stable sourceId, not display name.
 function isActiveSource(playlist) {
-  return queueState.sourceId === playlist.id;
+  return collectionPlayback.isActiveSource(playlist.id);
 }
 
 function isPlayingThis(playlist) {
-  return isActiveSource(playlist) && playerState.isPlaying;
+  return collectionPlayback.isPlaying(playlist.id);
 }
 
 // Play-only control: stop row navigation, then resume/pause or load this list.
 function togglePlayback(playlist, event) {
   event.stopPropagation();
-  if (isPlayingThis(playlist)) {
-    pause();
-    return;
-  }
-  if (isActiveSource(playlist)) {
-    play();
-    return;
-  }
-  const tracks = memberTracksFor(playlist);
-  const first = tracks[0];
-  if (!first) return;
-  setQueue(tracks, first.id, {
+  collectionPlayback.togglePlayback({
+    tracks: memberTracksFor(playlist),
     sourceName: playlist.name,
     sourceId: playlist.id,
   });
-  playTrack(toPlayableTrack(first));
 }
 
 // Playlists keep manual order; albums are sorted and not draggable.
@@ -151,42 +136,39 @@ const menuContext = ref(null);
 const isMenuOpen = computed(() => Boolean(menuContext.value));
 const menuX = computed(() => menuContext.value?.x ?? 0);
 const menuY = computed(() => menuContext.value?.y ?? 0);
-// Albums are excluded because their membership is read-only.
-function addToPlaylistChildren(playlist) {
-  const children = [
+
+function createCollectionItems() {
+  return [
     {
       key: 'create-playlist',
-      label: '建立新播放清單',
-      icon: Plus,
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.createPlaylist,
-        sourcePlaylistId: playlist.id,
-      },
+      label: '建立播放清單',
+      icon: ListPlus,
+      value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
+    },
+    {
+      key: 'create-folder',
+      label: '建立資料夾',
+      icon: FolderPlus,
+      status: '尚未支援',
+      disabled: true,
+      value: { action: PLAYLIST_MENU_ACTIONS.createFolder },
     },
   ];
-  const targets = addToPlaylistTargets(state.playlists, {
-    excludeId: playlist.id,
-  });
-  if (targets.length > 0) {
-    children.push({ key: 'targets-divider', separator: true });
-  }
-  children.push(
-    ...targets.map((target) => ({
-      key: target.id,
-      label: playlistDisplayName(target),
-      value: {
-        action: PLAYLIST_MENU_ACTIONS.addToPlaylist,
-        playlistId: playlist.id,
-        targetPlaylistId: target.id,
-      },
-    })),
+}
+
+// Albums are excluded because their membership is read-only.
+function addToPlaylistChildren(playlist) {
+  return collectionAddToPlaylistItems(state.playlists, playlist.id).map(
+    (item) => (item.key === 'create-playlist' ? { ...item, icon: Plus } : item),
   );
-  return children;
 }
 
 const menuItems = computed(() => {
-  const playlist = menuContext.value?.playlist;
-  if (!playlist) return [];
+  const context = menuContext.value;
+  if (!context) return [];
+  if (context.kind === 'global') return createCollectionItems();
+
+  const playlist = context.playlist;
   const isAlbum = playlist.kind === 'album';
 
   const items = [
@@ -257,30 +239,29 @@ const menuItems = computed(() => {
   if (!isAlbum) {
     items.push(
       { key: 'create-divider', separator: true },
-      {
-        key: 'create-playlist',
-        label: '建立播放清單',
-        icon: ListPlus,
-        value: { action: PLAYLIST_MENU_ACTIONS.createPlaylist },
-      },
-      {
-        key: 'create-folder',
-        label: '建立資料夾',
-        icon: FolderPlus,
-        status: '尚未支援',
-        disabled: true,
-        value: { action: PLAYLIST_MENU_ACTIONS.createFolder },
-      },
+      ...createCollectionItems(),
     );
   }
 
   return items;
 });
 
-function openPlaylistMenu(playlist, event) {
+function openMenuAt(event, context) {
   event.preventDefault();
   event.stopPropagation();
-  menuContext.value = { playlist, x: event.clientX, y: event.clientY };
+  menuContext.value = {
+    ...context,
+    x: event.clientX,
+    y: event.clientY,
+  };
+}
+
+function openGlobalMenu(event) {
+  openMenuAt(event, { kind: 'global' });
+}
+
+function openPlaylistMenu(playlist, event) {
+  openMenuAt(event, { kind: 'collection', playlist });
 }
 
 function closePlaylistMenu() {
@@ -307,7 +288,16 @@ function createPlaylist() {
 }
 
 function handleMenuSelect(value) {
+  const contextKind = menuContext.value?.kind;
   closePlaylistMenu();
+  if (
+    contextKind === 'global' &&
+    value.action === PLAYLIST_MENU_ACTIONS.createPlaylist
+  ) {
+    emit('activateSetlist');
+    create();
+    return;
+  }
   emit('playlistAction', value);
 }
 
@@ -388,6 +378,7 @@ function startDrag(playlist, event) {
       :scrollbar-visibility="compact ? 'hidden' : 'auto'"
       tabindex="0"
       aria-label="播放清單內容"
+      @contextmenu="openGlobalMenu"
     >
       <div class="playlist-sidebar__list">
         <button
@@ -405,6 +396,7 @@ function startDrag(playlist, event) {
           "
           title="全部曲目"
           @click="selectLibraryView('all')"
+          @contextmenu="openGlobalMenu"
         >
           <span
             class="playlist-sidebar__item-state-surface"
@@ -436,6 +428,7 @@ function startDrag(playlist, event) {
           "
           title="本機曲目"
           @click="selectLibraryView('local')"
+          @contextmenu="openGlobalMenu"
         >
           <span
             class="playlist-sidebar__item-state-surface"

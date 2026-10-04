@@ -232,6 +232,10 @@
   --ui-player-tools-meter-control-block-size: 3.5rem;
   --ui-folder-layout-background: var(--ui-color-folder-primary);
   --ui-folder-page-background: var(--ui-color-surface);
+  --ui-folder-content-background: var(--ui-color-canvas);
+  --ui-folder-content-state-min-block-size: calc(
+    var(--ui-space-8) + var(--ui-space-8)
+  );
   --ui-folder-perimeter: var(--ui-space-4);
   --ui-folder-tab-cover-size: var(--ui-space-2);
   --ui-folder-tab-min-inline-size: 8rem;

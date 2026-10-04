@@ -77,7 +77,7 @@ describe('renderer surface registry', () => {
 
   it('registers Setlist and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.setlist).toMatchObject({
-      entryOwner: 'src/App.vue',
+      entryOwner: 'src/components/playlists/SetlistPage.vue',
       overlayHostId: 'setlist-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
@@ -90,6 +90,9 @@ describe('renderer surface registry', () => {
       'data-ui-surface': 'setlist-overlay',
       'data-ui-system': 'v2',
     });
+    expect(UI_SURFACE_REGISTRY['setlist-overlay'].entryOwner).toBe(
+      'src/components/playlists/SetlistPage.vue',
+    );
   });
 
   it('registers Output and its overlay as one complete v2 surface', () => {
@@ -128,7 +131,7 @@ describe('renderer surface registry', () => {
 
   it('registers Import and its overlay as one complete v2 surface', () => {
     expect(UI_SURFACE_REGISTRY.import).toMatchObject({
-      entryOwner: 'src/App.vue',
+      entryOwner: 'src/components/import/ImportPage.vue',
       overlayHostId: 'import-overlay',
       parentSurfaceId: 'app-folder',
       renderer: 'main',
@@ -141,6 +144,9 @@ describe('renderer surface registry', () => {
       'data-ui-surface': 'import-overlay',
       'data-ui-system': 'v2',
     });
+    expect(UI_SURFACE_REGISTRY['import-overlay'].entryOwner).toBe(
+      'src/components/import/ImportPage.vue',
+    );
   });
 
   it('registers the Performance Session workspace and overlay as v2', () => {

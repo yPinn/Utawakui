@@ -189,13 +189,11 @@ function trackStatusIconLabel(track) {
     class="provider-import-panel"
     aria-labelledby="provider-import-title"
   >
-    <div class="provider-import-panel__header">
-      <div class="section-heading">
-        <h2 id="provider-import-title" class="section-heading__title">
-          外部來源
-        </h2>
-        <p class="section-heading__meta">YT Music / YouTube</p>
-      </div>
+    <div class="section-heading">
+      <h2 id="provider-import-title" class="section-heading__title">
+        外部來源
+      </h2>
+      <p class="section-heading__meta">YT Music / YouTube</p>
     </div>
 
     <div class="source-row">
@@ -563,13 +561,8 @@ function trackStatusIconLabel(track) {
   flex-direction: column;
   gap: var(--ui-space-3);
   min-width: 0;
-  padding: var(--ui-space-3);
-  background: var(--ui-color-surface);
-  border: var(--ui-border-width) solid var(--ui-color-border);
-  border-radius: var(--ui-radius-md);
 }
 
-.provider-import-panel__header,
 .section-heading,
 .preview-panel__header,
 .source-summary__bar {
@@ -579,13 +572,10 @@ function trackStatusIconLabel(track) {
   gap: var(--ui-space-3);
 }
 
-.provider-import-panel__header {
-  align-items: center;
-}
-
 .section-heading {
   min-width: 0;
   align-items: baseline;
+  gap: var(--ui-folder-heading-gap);
 }
 
 .section-heading__title,
@@ -841,7 +831,6 @@ function trackStatusIconLabel(track) {
 }
 
 @media (max-width: 900px) {
-  .provider-import-panel__header,
   .preview-tools {
     align-items: stretch;
     flex-direction: column;

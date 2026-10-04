@@ -45,6 +45,9 @@ describe('AppFolderPage', () => {
     expect(source).toContain(
       "import UiScrollLayout from '../ui/UiScrollLayout.vue'",
     );
+    expect(source).toContain(
+      'content-style="block-size: 100%; display: flex; flex-direction: column"',
+    );
     expect(source).toContain('background: var(--ui-folder-page-background)');
   });
 
@@ -59,5 +62,17 @@ describe('AppFolderPage', () => {
     expect(source).toMatch(
       /\.app-folder-page__body--workspace\s*\{[^}]*min-height:\s*0;[^}]*overflow:\s*hidden;/su,
     );
+  });
+
+  it('returns a document to its start when its identity changes', () => {
+    expect(source).toContain('documentKey: { type: [String, Number]');
+    expect(source).toContain(
+      "const scrollLayout = useTemplateRef('scrollLayout')",
+    );
+    expect(source).toMatch(/watch\(\s*\(\) => props\.documentKey/u);
+    expect(source).toContain(
+      "scrollLayout.value?.scrollTo({ top: 0, behavior: 'auto' })",
+    );
+    expect(source).toContain('ref="scrollLayout"');
   });
 });

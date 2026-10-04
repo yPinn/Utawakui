@@ -140,10 +140,6 @@ watch(
   user-select: none;
 }
 
-.analysis-workbench :deep(.ui-page-header) {
-  margin-bottom: 0;
-}
-
 .analysis-workbench__layout {
   min-height: 0;
   flex: 1;

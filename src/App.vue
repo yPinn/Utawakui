@@ -24,7 +24,7 @@ import UiNotice from './components/ui/UiNotice.vue';
 import PlayerBar from './components/playback/PlayerBar.vue';
 import QueuePanel from './components/queue/QueuePanel.vue';
 import PerformanceSessionPanel from './components/performance-session/PerformanceSessionPanel.vue';
-import SetlistView from './views/SetlistView.vue';
+import SetlistPage from './components/playlists/SetlistPage.vue';
 import { useAppView } from './composables/useAppView.js';
 import { useTaskbarControls } from './composables/useTaskbarControls.js';
 import { useWindowTitle } from './composables/useWindowTitle.js';
@@ -65,9 +65,13 @@ const appOverlayHostAttributes = registeredOverlayHostAttributes('app-shell');
 
 // Setlist is the only initial view. Keep inactive workflows out of Vite's first
 // renderer graph so a new dev server can show the working shell immediately.
-const OutputView = defineAsyncComponent(() => import('./views/OutputView.vue'));
+const OutputPage = defineAsyncComponent(
+  () => import('./components/output/OutputPage.vue'),
+);
 const LyricsView = defineAsyncComponent(() => import('./views/LyricsView.vue'));
-const ImportView = defineAsyncComponent(() => import('./views/ImportView.vue'));
+const ImportPage = defineAsyncComponent(
+  () => import('./components/import/ImportPage.vue'),
+);
 const SettingsView = defineAsyncComponent(
   () => import('./views/SettingsView.vue'),
 );
@@ -174,10 +178,10 @@ const bgmPlayerExpanded = ref(false);
 
 // No router: the Electron shell has fixed sections and no deep links.
 const views = {
-  setlist: SetlistView,
-  output: OutputView,
+  setlist: SetlistPage,
+  output: OutputPage,
   lyrics: LyricsView,
-  import: ImportView,
+  import: ImportPage,
   ...internalViews,
 };
 
@@ -376,24 +380,15 @@ onUnmounted(() =>
 );
 
 const folderFeatureSurfaces = Object.freeze({
-  setlist: 'setlist',
   lyrics: 'lyrics',
-  output: 'output',
-  import: 'import',
 });
-const documentFolderViews = new Set(['setlist', 'import']);
+const pageComposedFolderViews = new Set(['setlist', 'output', 'import']);
 const activeFolderFeatureSurface = computed(
   () => folderFeatureSurfaces[activeView.value] ?? '',
 );
-const folderPageMode = computed(() => {
-  if (
-    activeView.value === 'setlist' &&
-    performanceSessionWorkspace.isOpen.value
-  ) {
-    return 'workspace';
-  }
-  return documentFolderViews.has(activeView.value) ? 'document' : 'workspace';
-});
+const activeViewOwnsFolderPage = computed(() =>
+  pageComposedFolderViews.has(activeView.value),
+);
 
 // Studio Library reviews the Setlist interior. Keep the production Setlist
 // destination selected while the development-only review surface is active.
@@ -433,10 +428,7 @@ useKeyboardShortcuts({ internalViewShortcuts });
       <AppPlaylistSidebar />
     </div>
     <main class="shell__main shell__main--with-dock">
-      <div
-        class="shell__workspace"
-        :class="{ 'shell__workspace--utility': isSettingsView }"
-      >
+      <div class="shell__workspace">
         <AppUtilityPage
           v-if="isSettingsView"
           title="設定"
@@ -451,7 +443,11 @@ useKeyboardShortcuts({ internalViewShortcuts });
             :active-destination="folderActiveDestination"
             @navigate="setActiveView"
           >
-            <AppFolderPage :mode="folderPageMode">
+            <component
+              :is="views[activeView]"
+              v-if="activeViewOwnsFolderPage"
+            />
+            <AppFolderPage v-else mode="workspace">
               <AppSurfaceBoundary
                 v-if="activeFolderFeatureSurface"
                 :key="activeFolderFeatureSurface"
@@ -662,12 +658,6 @@ useKeyboardShortcuts({ internalViewShortcuts });
 .shell__workspace {
   min-width: 0;
   min-height: 0;
-}
-
-.shell__workspace--utility {
-  /* Neutral destinations share the Sidebar／Right Dock top boundary.
-     Folder workflows intentionally remain flush to the row top because
-     their tabs and cover rail own a separate silhouette above the page. */
   padding-top: var(--ui-shell-content-inset-block);
 }
 

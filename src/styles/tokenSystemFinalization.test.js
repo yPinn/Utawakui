@@ -33,7 +33,9 @@ describe('finalized control-panel token system', () => {
       ),
     );
 
-    expect(names.size).toBe(404);
+    expect(names.size).toBe(406);
+    expect(names).toContain('--ui-folder-content-background');
+    expect(names).toContain('--ui-folder-content-state-min-block-size');
     expect(tokens).toContain("[data-ui-system='v2'] {");
     expect(tokens).not.toContain("[data-ui-system='v1']");
     for (const path of retiredPaths) {

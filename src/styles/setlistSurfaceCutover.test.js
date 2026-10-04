@@ -5,9 +5,13 @@ const readSource = (path) =>
   readFileSync(new URL(path, import.meta.url), 'utf8');
 
 const appSource = readSource('../App.vue');
+const pageSource = readSource('../components/playlists/SetlistPage.vue');
 const setlistSource = readSource('../views/SetlistView.vue');
 const headerSource = readSource(
-  '../components/playlists/SetlistPlaylistHeader.vue',
+  '../components/playlists/SetlistCollectionHeader.vue',
+);
+const dossierSource = readSource(
+  '../components/playlists/LibraryEntityDossier.vue',
 );
 const tableSource = readSource(
   '../components/playlists/SetlistPlaylistTable.vue',
@@ -18,10 +22,13 @@ const studioTableSource = readSource(
 
 describe('Setlist Token v2 surface cutover', () => {
   it('keeps Setlist in the Folder document mode and leaves page scrolling with AppFolderPage', () => {
-    expect(appSource).toContain(
-      "const documentFolderViews = new Set(['setlist', 'import'])",
+    expect(appSource).toContain('setlist: SetlistPage');
+    expect(pageSource).toMatch(
+      /<AppSurfaceBoundary\s+surface-id="setlist">\s*<AppFolderPage\s+:mode="pageMode"/u,
     );
-    expect(appSource).toContain('<AppFolderPage :mode="folderPageMode">');
+    expect(pageSource).toContain(
+      "performanceSessionWorkspace.isOpen.value ? 'workspace' : 'document'",
+    );
     expect(setlistSource).not.toMatch(
       /\.setlist-view(?!--session)[^{]*\{[^}]*overflow-y\s*:/su,
     );
@@ -43,8 +50,11 @@ describe('Setlist Token v2 surface cutover', () => {
   });
 
   it('keeps Setlist-owned modal and action menu inside the Setlist feature owner', () => {
-    expect(appSource).toMatch(
-      /<AppSurfaceBoundary[\s\S]*?:surface-id="activeFolderFeatureSurface"[\s\S]*?<component :is="views\[activeView\]" \/>[\s\S]*?<\/AppSurfaceBoundary>/u,
+    expect(pageSource).toMatch(
+      /<AppSurfaceBoundary\s+surface-id="setlist">[\s\S]*?<AppFolderPage[\s\S]*?<SetlistView[\s\S]*?<\/AppFolderPage>[\s\S]*?<\/AppSurfaceBoundary>/u,
+    );
+    expect(pageSource).not.toMatch(
+      /<AppFolderPage[\s\S]*?<AppSurfaceBoundary\s+surface-id="setlist">/u,
     );
     expect(setlistSource).toContain('<TrackMetadataModal');
     expect(setlistSource).toContain('<TrackActionMenu');
@@ -53,7 +63,12 @@ describe('Setlist Token v2 surface cutover', () => {
   });
 
   it('uses only formal v2 names in the Setlist and Studio Library row slice', () => {
-    const sources = [headerSource, tableSource, studioTableSource];
+    const sources = [
+      headerSource,
+      dossierSource,
+      tableSource,
+      studioTableSource,
+    ];
     const forbidden = [
       '--ui-font-weight-heavy',
       '--ui-font-weight-strong',
@@ -67,8 +82,8 @@ describe('Setlist Token v2 surface cutover', () => {
       for (const token of forbidden) expect(source).not.toContain(token);
     }
 
-    expect(headerSource).toContain('var(--ui-font-weight-bold)');
-    expect(headerSource).toContain('var(--ui-font-weight-semibold)');
+    expect(dossierSource).toContain('var(--ui-font-weight-bold)');
+    expect(dossierSource).toContain('var(--ui-font-weight-semibold)');
     expect(headerSource).toContain('var(--ui-motion-duration-fast)');
     expect(headerSource).toContain('var(--ui-motion-easing-standard)');
     expect(tableSource).toContain('var(--ui-radius-md)');

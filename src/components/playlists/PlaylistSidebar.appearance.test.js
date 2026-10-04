@@ -11,6 +11,36 @@ const rowSource = readFileSync(
 );
 
 describe('PlaylistSidebar compact-to-expanded stability', () => {
+  it('delegates collection playback state and transitions to the shared controller', () => {
+    expect(source).toContain(
+      "import { useCollectionPlayback } from '../../composables/useCollectionPlayback.js'",
+    );
+    expect(source).toContain(
+      'const collectionPlayback = useCollectionPlayback();',
+    );
+    expect(source).not.toContain('import { usePlayer }');
+    expect(source).not.toContain('import { usePlaybackQueue }');
+    expect(source).not.toContain('playTrack(toPlayableTrack(first))');
+  });
+
+  it('covers fixed library rows, collection rows, and scroll blank space with scoped context menus', () => {
+    expect(source).toContain("kind: 'global'");
+    expect(source).toContain("kind: 'collection'");
+    expect(source).toContain('function openGlobalMenu(event)');
+    expect(source).toMatch(
+      /<UiScrollLayout[\s\S]*?@contextmenu="openGlobalMenu"[\s\S]*?>/u,
+    );
+    expect(source.match(/@contextmenu="openGlobalMenu"/gu)).toHaveLength(3);
+    expect(
+      source.match(/@contextmenu="openPlaylistMenu\(playlist, \$event\)"/gu),
+    ).toHaveLength(2);
+    expect(source).toContain("label: '建立播放清單'");
+    expect(source).toContain("label: '建立資料夾'");
+    expect(source).toMatch(
+      /label: '建立資料夾',[\s\S]*?status: '尚未支援',[\s\S]*?disabled: true,/u,
+    );
+  });
+
   it('keeps toolbar chrome fixed while only the collection list owns scrolling', () => {
     expect(source).toContain(
       "import UiScrollLayout from '../ui/UiScrollLayout.vue'",

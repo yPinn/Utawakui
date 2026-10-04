@@ -1,4 +1,5 @@
 <script setup>
+import { nextTick, useTemplateRef, watch } from 'vue';
 import UiScrollLayout from '../ui/UiScrollLayout.vue';
 
 defineOptions({ inheritAttrs: false });
@@ -10,7 +11,19 @@ const props = defineProps({
     validator: (value) => ['document', 'workspace'].includes(value),
   },
   bodyLabel: { type: String, default: '頁面內容' },
+  documentKey: { type: [String, Number], default: undefined },
 });
+
+const scrollLayout = useTemplateRef('scrollLayout');
+
+watch(
+  () => props.documentKey,
+  async (nextKey, previousKey) => {
+    if (nextKey === undefined || nextKey === previousKey) return;
+    await nextTick();
+    scrollLayout.value?.scrollTo({ top: 0, behavior: 'auto' });
+  },
+);
 </script>
 
 <template>
@@ -27,10 +40,11 @@ const props = defineProps({
 
     <UiScrollLayout
       v-if="props.mode === 'document'"
+      ref="scrollLayout"
       class="app-folder-page__scroll"
       axis="vertical"
       viewport-class="app-folder-page__body app-folder-page__body--document"
-      content-style="block-size: 100%"
+      content-style="block-size: 100%; display: flex; flex-direction: column"
       role="region"
       :aria-label="props.bodyLabel"
       tabindex="0"
